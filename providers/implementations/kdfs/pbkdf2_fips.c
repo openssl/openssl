@@ -13,8 +13,8 @@
  * For backwards compatibility reasons,
  * Extra checks are done by default in fips mode only.
  */
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 const int kdf_pbkdf2_default_checks = 1;
 #else
 const int kdf_pbkdf2_default_checks = 0;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */

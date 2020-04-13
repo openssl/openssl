@@ -176,7 +176,7 @@ err:
     return ok;
 }
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 /* In fips mode there are no multi-primes. */
 # define RSA_KEY_MP_TYPES()                                                    \
 OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR1, NULL, 0),                           \

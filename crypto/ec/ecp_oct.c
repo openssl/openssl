@@ -28,7 +28,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     BIGNUM *tmp1, *tmp2, *x, *y;
     int ret = 0;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* clear error queue */
     ERR_clear_error();
 #endif
@@ -107,7 +107,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     }
 
     if (!BN_mod_sqrt(y, tmp1, group->field, ctx)) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         unsigned long err = ERR_peek_last_error();
 
         if (ERR_GET_LIB(err) == ERR_LIB_BN

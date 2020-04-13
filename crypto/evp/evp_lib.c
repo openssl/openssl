@@ -18,7 +18,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     int ret = -1;                /* Assume the worst */
@@ -206,7 +206,7 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     }
     return i;
 }
-#endif /* !defined(FIPS_MODE) */
+#endif /* !defined(FIPS_MODULE) */
 
 /* Convert the various cipher NIDs and dummies to a proper OID NID */
 int EVP_CIPHER_type(const EVP_CIPHER *ctx)
@@ -258,7 +258,7 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
         return NID_des_cfb64;
 
     default:
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
         return NID_undef;
 #else
         {
@@ -548,7 +548,7 @@ const char *EVP_CIPHER_name(const EVP_CIPHER *cipher)
 {
     if (cipher->prov != NULL)
         return evp_first_name(cipher->prov, cipher->name_id);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     return OBJ_nid2sn(EVP_CIPHER_nid(cipher));
 #else
     return NULL;
@@ -589,7 +589,7 @@ const char *EVP_MD_name(const EVP_MD *md)
 {
     if (md->prov != NULL)
         return evp_first_name(md->prov, md->name_id);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     return OBJ_nid2sn(EVP_MD_nid(md));
 #else
     return NULL;
@@ -844,7 +844,7 @@ EVP_PKEY_CTX *EVP_MD_CTX_pkey_ctx(const EVP_MD_CTX *ctx)
     return ctx->pctx;
 }
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
 /* TODO(3.0): EVP_DigestSign* not yet supported in FIPS module */
 void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
 {
@@ -864,7 +864,7 @@ void EVP_MD_CTX_set_pkey_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pctx)
         EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
     }
 }
-#endif /* !defined(FIPS_MODE) */
+#endif /* !defined(FIPS_MODULE) */
 
 void *EVP_MD_CTX_md_data(const EVP_MD_CTX *ctx)
 {

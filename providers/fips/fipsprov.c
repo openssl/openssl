@@ -233,7 +233,7 @@ static int fips_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
 /* FIPS specific version of the function of the same name in provlib.c */
 const char *ossl_prov_util_nid_to_name(int nid)
 {
-    /* We don't have OBJ_nid2n() in FIPS_MODE so we have an explicit list */
+    /* We don't have OBJ_nid2n() in FIPS_MODULE so we have an explicit list */
 
     switch (nid) {
     /* Digests */

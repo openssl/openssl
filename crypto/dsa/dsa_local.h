@@ -25,7 +25,7 @@ struct dsa_st {
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
     CRYPTO_REF_COUNT references;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
 #endif
     const DSA_METHOD *meth;

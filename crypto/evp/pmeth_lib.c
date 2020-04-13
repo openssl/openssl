@@ -30,7 +30,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 typedef const EVP_PKEY_METHOD *(*pmeth_fn)(void);
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
@@ -135,7 +135,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
     return pmeth;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
@@ -165,7 +165,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         keytype = evp_first_name(pkey->keymgmt->prov, pkey->keymgmt->name_id);
         goto common;
     }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* TODO(3.0) Legacy code should be removed when all is provider based */
     /* BEGIN legacy */
     if (id == -1) {
@@ -221,7 +221,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         return NULL;
     }
     /* END legacy */
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
  common:
     /*
      * If there's no engine and there's a name, we try fetching a provider
@@ -237,7 +237,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         EVP_KEYMGMT_free(keymgmt);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
         ENGINE_finish(e);
 #endif
         EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
@@ -265,7 +265,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     return ret;
 }
 
-/*- All methods below can also be used in FIPS_MODE */
+/*- All methods below can also be used in FIPS_MODULE */
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
                                          const char *name,
@@ -296,7 +296,7 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         ctx->op.kex.exchange = NULL;
     }
 /* TODO(3.0): add dependancies and uncomment this when available for fips mode */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         if (ctx->op.ciph.ciphprovctx != NULL && ctx->op.ciph.cipher != NULL)
             ctx->op.ciph.cipher->freectx(ctx->op.ciph.ciphprovctx);
@@ -322,13 +322,13 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 
     EVP_PKEY_free(ctx->pkey);
     EVP_PKEY_free(ctx->peerkey);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE_finish(ctx->engine);
 #endif
     OPENSSL_free(ctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
                              const EVP_PKEY_METHOD *meth)
@@ -592,7 +592,7 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     return 0;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
@@ -670,7 +670,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
  *
  * In particular they return -2 if any of the params is not supported.
  *
- * They are not available in FIPS_MODE as they depend on
+ * They are not available in FIPS_MODULE as they depend on
  *      - EVP_PKEY_CTX_{get,set}_params()
  *      - EVP_PKEY_CTX_{gettable,settable}_params()
  *
@@ -1592,4 +1592,4 @@ void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
         *pdigest_custom = pmeth->digest_custom;
 }
 
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */

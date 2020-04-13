@@ -93,7 +93,7 @@ static const unsigned char digestinfo_##name##_der[] = {                       \
       ASN1_OCTET_STRING, sz                                                    \
 };
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_MD2
 ENCODE_DIGESTINFO_MD(md2, 0x02, MD2_DIGEST_LENGTH)
 # endif
@@ -123,7 +123,7 @@ static const unsigned char digestinfo_ripemd160_der[] = {
       ASN1_OCTET_STRING, RIPEMD160_DIGEST_LENGTH
 };
 # endif
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 /* SHA-1 (1 3 14 3 2 26) */
 static const unsigned char digestinfo_sha1_der[] = {
@@ -153,7 +153,7 @@ ENCODE_DIGESTINFO_SHA(sha3_512, 0x0a, SHA512_DIGEST_LENGTH)
 const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
 {
     switch (md_nid) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_MDC2
     MD_CASE(mdc2)
 # endif
@@ -169,7 +169,7 @@ const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
 # ifndef OPENSSL_NO_RMD160
     MD_CASE(ripemd160)
 # endif
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
     MD_CASE(sha1)
     MD_CASE(sha224)
     MD_CASE(sha256)
@@ -193,7 +193,7 @@ const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
 static int digest_sz_from_nid(int nid)
 {
     switch (nid) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_MDC2
     MD_NID_CASE(mdc2, MDC2_DIGEST_LENGTH)
 # endif
@@ -209,7 +209,7 @@ static int digest_sz_from_nid(int nid)
 # ifndef OPENSSL_NO_RMD160
     MD_NID_CASE(ripemd160, RIPEMD160_DIGEST_LENGTH)
 # endif
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
     MD_NID_CASE(sha1, SHA_DIGEST_LENGTH)
     MD_NID_CASE(sha224, SHA224_DIGEST_LENGTH)
     MD_NID_CASE(sha256, SHA256_DIGEST_LENGTH)
@@ -278,10 +278,10 @@ int RSA_sign(int type, const unsigned char *m, unsigned int m_len,
     unsigned char *tmps = NULL;
     const unsigned char *encoded = NULL;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (rsa->meth->rsa_sign != NULL)
         return rsa->meth->rsa_sign(type, m, m_len, sigret, siglen, rsa);
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     /* Compute the encoded digest. */
     if (type == NID_md5_sha1) {
@@ -354,7 +354,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
         goto err;
     decrypt_len = len;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (type == NID_md5_sha1) {
         /*
          * NID_md5_sha1 corresponds to the MD5/SHA1 combination in TLS 1.1 and
@@ -401,7 +401,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
             }
         }
     } else
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
     {
         /*
          * If recovering the digest, extract a digest-sized output from the end

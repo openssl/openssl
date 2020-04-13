@@ -46,8 +46,8 @@ char *BN_bn2hex(const BIGNUM *a)
     return buf;
 }
 
-#ifndef FIPS_MODE
-/* No BIO_snprintf in FIPS_MODE */
+#ifndef FIPS_MODULE
+/* No BIO_snprintf in FIPS_MODULE */
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2dec(const BIGNUM *a)
 {

@@ -47,7 +47,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
 static void evp_pkey_free_it(EVP_PKEY *key);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 /* The type of parameters selected in key parameter functions */
 # define SELECT_PARAMETERS OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
@@ -656,9 +656,9 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
     return ret;
 }
 # endif /*  OPENSSL_NO_DSA */
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_EC
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 {
@@ -752,7 +752,7 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
 
 int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (pkey->keymgmt == NULL) {
         /*
          * These hard coded cases are pure hackery to get around the fact
@@ -1064,9 +1064,9 @@ size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
     return rv;
 }
 
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
-/*- All methods below can also be used in FIPS_MODE */
+/*- All methods below can also be used in FIPS_MODULE */
 
 EVP_PKEY *EVP_PKEY_new(void)
 {
@@ -1085,7 +1085,7 @@ EVP_PKEY *EVP_PKEY_new(void)
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -1115,7 +1115,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
     ENGINE **eptr = (e == NULL) ? &e :  NULL;
 #endif
@@ -1133,13 +1133,13 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     if (pkey != NULL) {
         int free_it = 0;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         free_it = free_it || pkey->pkey.ptr != NULL;
 #endif
         free_it = free_it || pkey->keydata != NULL;
         if (free_it)
             evp_pkey_free_it(pkey);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         /*
          * If key type matches and a method exists then this lookup has
          * succeeded once so just indicate success.
@@ -1157,7 +1157,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 # endif
 #endif
     }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (str != NULL)
         ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
     else if (type != EVP_PKEY_NONE)
@@ -1172,7 +1172,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     {
         int check = 1;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         check = check && ameth == NULL;
 #endif
         check = check && keymgmt == NULL;
@@ -1192,7 +1192,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         pkey->save_type = type;
         pkey->type = type;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         /*
          * If the internal "origin" key is provider side, don't save |ameth|.
          * The main reason is that |ameth| is one factor to detect that the
@@ -1219,7 +1219,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static void find_ameth(const char *name, void *data)
 {
     const char **str = data;
@@ -1244,7 +1244,7 @@ static void find_ameth(const char *name, void *data)
 
 int EVP_PKEY_set_type_by_keymgmt(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # define EVP_PKEY_TYPE_STR str[0]
 # define EVP_PKEY_TYPE_STRLEN (str[0] == NULL ? -1 : (int)strlen(str[0]))
     /*
@@ -1283,7 +1283,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
     return ((i > 1) ? 1 : 0);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     if (x->ameth != NULL) {
@@ -1299,14 +1299,14 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
 # endif
     x->type = EVP_PKEY_NONE;
 }
-#endif  /* FIPS_MODE */
+#endif  /* FIPS_MODULE */
 
 static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
 
     evp_keymgmt_util_clear_operation_cache(x);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     evp_pkey_free_legacy(x);
 #endif
 
@@ -1331,11 +1331,11 @@ void EVP_PKEY_free(EVP_PKEY *x)
         return;
     REF_ASSERT_ISNT(i < 0);
     evp_pkey_free_it(x);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, x, &x->ex_data);
 #endif
     CRYPTO_THREAD_lock_free(x->lock);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
 #endif
     OPENSSL_free(x);
@@ -1347,7 +1347,7 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
 
     if (pkey != NULL) {
         size = pkey->cache.size;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         if (pkey->ameth != NULL && pkey->ameth->pkey_size != NULL)
             size = pkey->ameth->pkey_size(pkey);
 #endif
@@ -1369,14 +1369,14 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 
     /* No key data => nothing to export */
     check = 1;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     check = check && pk->pkey.ptr == NULL;
 #endif
     check = check && pk->keydata == NULL;
     if (check)
         return NULL;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         /*
          * If the legacy key doesn't have an dirty counter or export function,
@@ -1408,7 +1408,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     if (tmp_keymgmt == NULL)
         goto end;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         size_t i = 0;
 
@@ -1480,7 +1480,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
         goto end;
     }
-#endif  /* FIPS_MODE */
+#endif  /* FIPS_MODULE */
 
     keydata = evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt);
 
@@ -1500,7 +1500,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     return keydata;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int evp_pkey_downgrade(EVP_PKEY *pk)
 {
     EVP_KEYMGMT *keymgmt = pk->keymgmt;
@@ -1606,7 +1606,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
     evp_keymgmt_util_cache_keyinfo(pk);
     return 0;     /* No downgrade, but at least the key is restored */
 }
-#endif  /* FIPS_MODE */
+#endif  /* FIPS_MODULE */
 
 const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
 {

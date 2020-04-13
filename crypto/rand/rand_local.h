@@ -310,7 +310,7 @@ struct rand_drbg_st {
     size_t seedlen;
     DRBG_STATUS state;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
 #endif

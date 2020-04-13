@@ -200,7 +200,7 @@ static const struct {
     }
 };
 
-# ifndef FIPS_MODE
+# ifndef FIPS_MODULE
 /* the x9.62 prime curves (minus the nist prime curves) */
 static const struct {
     EC_CURVE_DATA h;
@@ -379,7 +379,7 @@ static const struct {
         0x43, 0x21, 0x46, 0x52, 0x65, 0x51
     }
 };
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 static const struct {
     EC_CURVE_DATA h;
@@ -419,7 +419,7 @@ static const struct {
     }
 };
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 /* the secg prime curves (minus the nist and x9.62 prime curves) */
 static const struct {
     EC_CURVE_DATA h;
@@ -841,13 +841,13 @@ static const struct {
         0x5C, 0x5C, 0x2A, 0x3D
     }
 };
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 #ifndef OPENSSL_NO_EC2M
 
 /* characteristic two curves */
 
-# ifndef FIPS_MODE
+# ifndef FIPS_MODULE
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[20 + 15 * 6];
@@ -975,7 +975,7 @@ static const struct {
         0x33, 0x04, 0x9B, 0xA9, 0x8F
     }
 };
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
 
 static const struct {
     EC_CURVE_DATA h;
@@ -1007,7 +1007,7 @@ static const struct {
     }
 };
 
-# ifndef FIPS_MODE
+# ifndef FIPS_MODULE
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[0 + 21 * 6];
@@ -1036,7 +1036,7 @@ static const struct {
         0xAA, 0xB6, 0x89, 0xC2, 0x9C, 0xA7, 0x10, 0x27, 0x9B
     }
 };
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
 
 static const struct {
     EC_CURVE_DATA h;
@@ -1067,7 +1067,7 @@ static const struct {
     }
 };
 
-# ifndef FIPS_MODE
+# ifndef FIPS_MODULE
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[20 + 25 * 6];
@@ -1143,7 +1143,7 @@ static const struct {
         0xD5
     }
 };
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
 
 static const struct {
     EC_CURVE_DATA h;
@@ -1219,7 +1219,7 @@ static const struct {
     }
 };
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[0 + 30 * 6];
@@ -1255,7 +1255,7 @@ static const struct {
         0x1D, 0xA8, 0x00, 0xE4, 0x78, 0xA5
     }
 };
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
 
 static const struct {
     EC_CURVE_DATA h;
@@ -1539,7 +1539,7 @@ static const struct {
     }
 };
 
-# ifndef FIPS_MODE
+# ifndef FIPS_MODULE
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[20 + 21 * 6];
@@ -2224,7 +2224,7 @@ static const struct {
         0xED, 0xF9, 0x7C, 0x44, 0xDB, 0x9F, 0x24, 0x20, 0xBA, 0xFC, 0xA7, 0x5E
     }
 };
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
 #endif /* OPENSSL_NO_EC2M */
 
 /*
@@ -2235,7 +2235,7 @@ static const struct {
  * generation mechanism is different from those defined in ANSI X9.62.
  */
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[0 + 20 * 6];
@@ -2775,9 +2775,9 @@ static const struct {
         0x9C, 0xA9, 0x00, 0x69
     }
 };
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
-#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODULE)
 static const struct {
     EC_CURVE_DATA h;
     unsigned char data[0 + 32 * 6];
@@ -2824,7 +2824,7 @@ typedef struct _ec_list_element_st {
     const char *comment;
 } ec_list_element;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 static const ec_list_element curve_list[] = {
     /* prime field curves */
     /* secg curves */
@@ -3113,7 +3113,7 @@ static const ec_list_element curve_list[] = {
      "SM2 curve over a 256 bit prime field"},
 # endif
 };
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 #define curve_list_length OSSL_NELEM(curve_list)
 
@@ -3165,7 +3165,7 @@ int ec_curve_name2nid(const char *name)
     if ((nid = EC_curve_nist2nid(name)) != NID_undef)
         return nid;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /*
      * TODO(3.0) Figure out if we can use other names than the NIST names
      * ("B-163", "K-163" & "P-192") in the FIPS module, or if other names
@@ -3302,7 +3302,7 @@ EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid)
     return ret;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new_by_curve_name(int nid)
 {
     return EC_GROUP_new_by_curve_name_ex(NULL, nid);

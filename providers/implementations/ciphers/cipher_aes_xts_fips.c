@@ -16,8 +16,8 @@
 
 #include "cipher_aes_xts.h"
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 const int allow_insecure_decrypt = 0;
 #else
 const int allow_insecure_decrypt = 1;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */

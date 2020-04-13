@@ -29,7 +29,7 @@
 
 static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 RSA *RSA_new(void)
 {
     return rsa_new_intern(NULL, NULL);
@@ -90,7 +90,7 @@ static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 
     ret->libctx = libctx;
     ret->meth = RSA_get_default_method();
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -111,7 +111,7 @@ static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 #endif
 
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_RSA, ret, &ret->ex_data)) {
         goto err;
     }
@@ -144,11 +144,11 @@ void RSA_free(RSA *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE_finish(r->engine);
 #endif
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RSA, r, &r->ex_data);
 #endif
 
@@ -162,8 +162,8 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
-    /* TODO(3.0): Support PSS in FIPS_MODE */
-#ifndef FIPS_MODE
+    /* TODO(3.0): Support PSS in FIPS_MODULE */
+#ifndef FIPS_MODULE
     RSA_PSS_PARAMS_free(r->pss);
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
 #endif
@@ -185,7 +185,7 @@ int RSA_up_ref(RSA *r)
     return i > 1 ? 1 : 0;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int RSA_set_ex_data(RSA *r, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
@@ -339,7 +339,7 @@ int RSA_security_bits(const RSA *rsa)
 {
     int bits = BN_num_bits(rsa->n);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (rsa->version == RSA_ASN1_VERSION_MULTI) {
         /* This ought to mean that we have private key at hand. */
         int ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos);
@@ -433,7 +433,7 @@ int RSA_set0_crt_params(RSA *r, BIGNUM *dmp1, BIGNUM *dmq1, BIGNUM *iqmp)
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 /*
  * Is it better to export RSA_PRIME_INFO structure
  * and related functions to let user pass a triplet?
@@ -523,7 +523,7 @@ void RSA_get0_factors(const RSA *r, const BIGNUM **p, const BIGNUM **q)
         *q = r->q;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int RSA_get_multi_prime_extra_count(const RSA *r)
 {
     int pnum;
@@ -567,7 +567,7 @@ void RSA_get0_crt_params(const RSA *r,
         *iqmp = r->iqmp;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int RSA_get0_multi_prime_crt_params(const RSA *r, const BIGNUM *exps[],
                                     const BIGNUM *coeffs[])
 {
@@ -661,7 +661,7 @@ int RSA_get_version(RSA *r)
     return r->version;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 ENGINE *RSA_get0_engine(const RSA *r)
 {
     return r->engine;
@@ -684,7 +684,7 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                         const STACK_OF(BIGNUM) *exps,
                         const STACK_OF(BIGNUM) *coeffs)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     STACK_OF(RSA_PRIME_INFO) *prime_infos, *old_infos = NULL;
 #endif
     int pnum;
@@ -705,12 +705,12 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                                 sk_BIGNUM_value(coeffs, 0)))
         return 0;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     old_infos = r->prime_infos;
 #endif
 
     if (pnum > 2) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         int i;
 
         prime_infos = sk_RSA_PRIME_INFO_new_reserve(NULL, pnum);
@@ -752,7 +752,7 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
 #endif
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (old_infos != NULL) {
         /*
          * This is hard to deal with, since the old infos could
@@ -768,7 +768,7 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
     r->dirty_cnt++;
 
     return 1;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
  err:
     /* r, d, t should not be freed */
     sk_RSA_PRIME_INFO_pop_free(prime_infos, rsa_multip_info_free_ex);
@@ -782,7 +782,7 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
                         STACK_OF(BIGNUM_const) *exps,
                         STACK_OF(BIGNUM_const) *coeffs)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     RSA_PRIME_INFO *pinfo;
     int i, pnum;
 #endif
@@ -800,7 +800,7 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
     sk_BIGNUM_const_push(exps, RSA_get0_dmq1(r));
     sk_BIGNUM_const_push(coeffs, RSA_get0_iqmp(r));
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     pnum = RSA_get_multi_prime_extra_count(r);
     for (i = 0; i < pnum; i++) {
         pinfo = sk_RSA_PRIME_INFO_value(r->prime_infos, i);
@@ -813,7 +813,7 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode)
 {
     OSSL_PARAM pad_params[2], *p = pad_params;

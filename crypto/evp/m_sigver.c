@@ -16,7 +16,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 {
@@ -354,7 +354,7 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
     return EVP_DigestUpdate(ctx, data, dsize);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
@@ -550,4 +550,4 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         return -1;
     return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */

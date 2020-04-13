@@ -306,7 +306,7 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
         else
             md = EVP_sha1();
     }
-# ifndef FIPS_MODE
+# ifndef FIPS_MODULE
     if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ffc_params_FIPS186_2_generate(libctx, &ret->params,
                                            FFC_PARAM_TYPE_DH,
@@ -346,7 +346,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
         return 1;
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (dctx->rfc5114_param) {
         switch (dctx->rfc5114_param) {
         case 1:
@@ -367,7 +367,7 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
         EVP_PKEY_assign(pkey, EVP_PKEY_DHX, dh);
         return 1;
     }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     if (ctx->pkey_gencb != NULL) {
         pcb = BN_GENCB_new();
@@ -375,9 +375,9 @@ static int pkey_dh_paramgen(EVP_PKEY_CTX *ctx,
             return 0;
         evp_pkey_set_cb_translate(pcb, ctx);
     }
-# ifdef FIPS_MODE
+# ifdef FIPS_MODULE
     dctx->paramgen_type = DH_PARAMGEN_TYPE_FIPS_186_4;
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2) {
         dh = ffc_params_generate(NULL, dctx, pcb);
         BN_GENCB_free(pcb);

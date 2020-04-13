@@ -24,7 +24,7 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
     if (ctx == NULL)
         return 1;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     /*
      * pctx should be freed by the user of EVP_MD_CTX
@@ -59,7 +59,7 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
         OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
     }
 
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(ctx->engine);
 #endif
 
@@ -94,7 +94,7 @@ int EVP_DigestInit(EVP_MD_CTX *ctx, const EVP_MD *type)
 
 int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 {
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
 #endif
 
@@ -114,7 +114,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         ctx->reqdigest = type;
 
     /* TODO(3.0): Legacy work around code below. Remove this */
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
      * this context may already have an ENGINE! Try to avoid releasing the
@@ -145,7 +145,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
      */
     if (ctx->engine != NULL
             || impl != NULL
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
             || tmpimpl != NULL
 #endif
             || (ctx->flags & EVP_MD_CTX_FLAG_NO_INIT) != 0) {
@@ -164,7 +164,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     /* TODO(3.0): Start of non-legacy code below */
 
     if (type->prov == NULL) {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
         /* We only do explicit fetches inside the FIPS module */
         EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
         return 0;
@@ -205,7 +205,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     /* TODO(3.0): Remove legacy code below */
  legacy:
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     if (type) {
         if (impl != NULL) {
             if (!ENGINE_init(impl)) {
@@ -257,10 +257,10 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
             }
         }
     }
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
  skip_to_init:
 #endif
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /*
      * TODO(3.0): Temporarily no support for EVP_DigestSign* inside FIPS module
      * or when using providers.
@@ -452,7 +452,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     /* copied EVP_MD_CTX should free the copied EVP_PKEY_CTX */
     EVP_MD_CTX_clear_flags(out, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (in->pctx != NULL) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
@@ -468,7 +468,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /* Make sure it's safe to copy a digest context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
         EVPerr(EVP_F_EVP_MD_CTX_COPY_EX, ERR_R_ENGINE_LIB);
@@ -509,7 +509,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 
     out->update = in->update;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* TODO(3.0): Temporarily no support for EVP_DigestSign* in FIPS module */
     if (in->pctx) {
         out->pctx = EVP_PKEY_CTX_dup(in->pctx);
@@ -724,7 +724,7 @@ EVP_MD *evp_md_new(void)
  * provider based, we know that none of its code depends on legacy
  * NIDs or any functionality that use them.
  */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 /* TODO(3.x) get rid of the need for legacy NIDs */
 static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
@@ -764,7 +764,7 @@ static void *evp_md_from_dispatch(int name_id,
         return NULL;
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     md->type = NID_undef;
     evp_names_do_all(prov, name_id, set_legacy_nid, &md->type);

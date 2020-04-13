@@ -349,7 +349,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
 
     if (getentropy != NULL)
         return getentropy(buf, buflen) == 0 ? (ssize_t)buflen : -1;
-#  elif !defined(FIPS_MODE)
+#  elif !defined(FIPS_MODULE)
     union {
         void *p;
         int (*f)(void *buffer, size_t length);
@@ -392,7 +392,7 @@ static int keep_random_devices_open = 1;
 #   if defined(__linux) && defined(DEVRANDOM_WAIT)
 static void *shm_addr;
 
-#    if !defined(FIPS_MODE)
+#    if !defined(FIPS_MODULE)
 static void cleanup_shm(void)
 {
     shmdt(shm_addr);
@@ -463,7 +463,7 @@ static int wait_random_seeded(void)
              * If this call fails, it isn't a big problem.
              */
             shm_addr = shmat(shm_id, NULL, SHM_RDONLY);
-#    ifndef FIPS_MODE
+#    ifndef FIPS_MODULE
             /* TODO 3.0: The FIPS provider doesn't have OPENSSL_atexit */
             if (shm_addr != (void *)-1)
                 OPENSSL_atexit(&cleanup_shm);

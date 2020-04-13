@@ -1912,7 +1912,7 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
 {
     int ret = 0;
     BIGNUM *curve_p, *curve_a, *curve_b;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL)
@@ -1939,7 +1939,7 @@ int ec_GFp_nistp256_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -2239,14 +2239,14 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     EC_POINT *generator = NULL;
     smallfelem tmp_smallfelems[32];
     felem x_tmp, y_tmp, z_tmp;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
     /* throw away old precomputation */
     EC_pre_comp_free(group);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL)
         ctx = new_ctx = BN_CTX_new();
 #endif
@@ -2370,7 +2370,7 @@ int ec_GFp_nistp256_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
  err:
     BN_CTX_end(ctx);
     EC_POINT_free(generator);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     EC_nistp256_pre_comp_free(pre);

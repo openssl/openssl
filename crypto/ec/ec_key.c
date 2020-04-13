@@ -26,7 +26,7 @@
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
                                       void *cbarg);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new(void)
 {
     return ec_key_new_method_int(NULL, NULL);
@@ -56,7 +56,7 @@ EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid)
     return ret;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new_by_curve_name(int nid)
 {
     return EC_KEY_new_by_curve_name_ex(NULL, nid);
@@ -79,14 +79,14 @@ void EC_KEY_free(EC_KEY *r)
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE_finish(r->engine);
 #endif
 
     if (r->group && r->group->meth->keyfinish)
         r->group->meth->keyfinish(r);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EC_KEY, r, &r->ex_data);
 #endif
     CRYPTO_THREAD_lock_free(r->lock);
@@ -108,7 +108,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
             dest->meth->finish(dest);
         if (dest->group && dest->group->meth->keyfinish)
             dest->group->meth->keyfinish(dest);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
         if (ENGINE_finish(dest->engine) == 0)
             return 0;
         dest->engine = NULL;
@@ -156,14 +156,14 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     dest->conv_form = src->conv_form;
     dest->version = src->version;
     dest->flags = src->flags;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_EC_KEY,
                             &dest->ex_data, &src->ex_data))
         return NULL;
 #endif
 
     if (src->meth != dest->meth) {
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
         if (src->engine != NULL && ENGINE_init(src->engine) == 0)
             return NULL;
         dest->engine = src->engine;
@@ -312,9 +312,9 @@ int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
 
     eckey->dirty_cnt++;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     pairwise_test = 1;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     ok = 1;
     if (pairwise_test) {

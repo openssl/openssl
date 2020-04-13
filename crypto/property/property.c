@@ -305,7 +305,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     int ret = 0;
     int j, best = -1, score, optional;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 

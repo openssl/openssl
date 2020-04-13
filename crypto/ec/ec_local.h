@@ -288,7 +288,7 @@ struct ec_key_st {
     point_conversion_form_t conv_form;
     CRYPTO_REF_COUNT references;
     int flags;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
 #endif
     CRYPTO_RWLOCK *lock;
