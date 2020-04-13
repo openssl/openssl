@@ -231,7 +231,14 @@ void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src)
     dst->ctrl = src->ctrl;
     dst->ctrl_str = src->ctrl_str;
 
+    dst->digestsign = src->digestsign;
+    dst->digestverify = src->digestverify;
+
     dst->check = src->check;
+    dst->public_check = src->public_check;
+    dst->param_check = src->param_check;
+
+    dst->digest_custom = src->digest_custom;
 }
 
 void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth)
