@@ -727,6 +727,7 @@ static void sv_usage(void)
     fprintf(stderr, " -should_reuse <number>     - The expected state of reusing the session\n");
     fprintf(stderr, " -no_ticket    - do not issue TLS session ticket\n");
     fprintf(stderr, " -provider <name>    - Load the given provider into the library context\n");
+    fprintf(stderr, " -config <cnf>    - Load the given config file into the library context\n");
 }
 
 static void print_key_details(BIO *out, EVP_PKEY *key)
@@ -1192,6 +1193,10 @@ int main(int argc, char *argv[])
             if (--argc < 1)
                 goto bad;
             provider = *(++argv);
+        } else if (strcmp(*argv, "-config") == 0) {
+            if (--argc < 1)
+                goto bad;
+            config = *(++argv);
         } else {
             int rv;
             arg = argv[0];
@@ -1365,6 +1370,10 @@ int main(int argc, char *argv[])
             goto end;
         libctx = OPENSSL_CTX_new();
         if (libctx == NULL)
+            goto end;
+
+        if (config != NULL
+                && !OPENSSL_CTX_load_config(libctx, config))
             goto end;
 
         thisprov = OSSL_PROVIDER_load(libctx, provider);
