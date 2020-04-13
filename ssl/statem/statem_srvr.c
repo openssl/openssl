@@ -2633,8 +2633,10 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
          * THIS IS TEMPORARY
          */
         EVP_PKEY_get0(s->s3.tmp.pkey);
-        if (EVP_PKEY_id(s->s3.tmp.pkey) == EVP_PKEY_NONE)
+        if (EVP_PKEY_id(s->s3.tmp.pkey) == EVP_PKEY_NONE) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, 0, ERR_R_EC_LIB);
             goto err;
+        }
 
         /* Encode the public key. */
         encodedlen = EVP_PKEY_get1_tls_encodedpoint(s->s3.tmp.pkey,
