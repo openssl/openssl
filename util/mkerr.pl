@@ -450,6 +450,7 @@ foreach my $lib ( keys %errorfile ) {
 
 #ifndef OPENSSL_${lib}ERR_H
 # define OPENSSL_${lib}ERR_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>

@@ -12,11 +12,6 @@
 # define OPENSSL_KDFERR_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_OSSL_KDFERR_H
-# endif
-
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
 

@@ -12,11 +12,6 @@
 # define OPENSSL_TSERR_H
 # pragma once
 
-# include <openssl/macros.h>
-# ifndef OPENSSL_NO_DEPRECATED_3_0
-#  define HEADER_TSERR_H
-# endif
-
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
 
