@@ -37,8 +37,8 @@
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
 
-OPENSSL_CTX *libctx = NULL;
-OSSL_PROVIDER *defctxnull = NULL;
+static OPENSSL_CTX *libctx = NULL;
+static OSSL_PROVIDER *defctxnull = NULL;
 
 #ifndef OPENSSL_NO_TLS1_3
 
