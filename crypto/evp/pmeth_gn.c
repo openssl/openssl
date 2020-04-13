@@ -20,7 +20,7 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#ifndef FIPS_MODE
+#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_EC)
 # define TMP_SM2_HACK
 #endif
 
