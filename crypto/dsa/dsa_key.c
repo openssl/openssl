@@ -21,7 +21,7 @@
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 # define MIN_STRENGTH 112
 #else
 # define MIN_STRENGTH 80
@@ -32,7 +32,7 @@ static int dsa_keygen_pairwise_test(DSA *dsa, OSSL_CALLBACK *cb, void *cbarg);
 
 int DSA_generate_key(DSA *dsa)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (dsa->meth->dsa_keygen != NULL)
         return dsa->meth->dsa_keygen(dsa);
 #endif
@@ -96,9 +96,9 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
     dsa->priv_key = priv_key;
     dsa->pub_key = pub_key;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     pairwise_test = 1;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     ok = 1;
     if (pairwise_test) {

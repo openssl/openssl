@@ -20,7 +20,7 @@
 #include "crypto/dh.h"
 #include "crypto/security_bits.h"
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 # define MIN_STRENGTH 112
 #else
 # define MIN_STRENGTH 80
@@ -39,7 +39,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
     BN_MONT_CTX *mont = NULL;
     BIGNUM *tmp;
     int ret = -1;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     int check_result;
 #endif
 
@@ -74,7 +74,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
             goto err;
     }
 /* TODO(3.0) : Solve in a PR related to Key validation for DH */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!DH_check_pub_key(dh, pub_key, &check_result) || check_result) {
         DHerr(0, DH_R_INVALID_PUBKEY);
         goto err;
@@ -95,7 +95,7 @@ static int compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 
 int DH_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return compute_key(key, pub_key, dh);
 #else
     return dh->meth->compute_key(key, pub_key, dh);
@@ -106,7 +106,7 @@ int DH_compute_key_padded(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     int rv, pad;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     rv = compute_key(key, pub_key, dh);
 #else
     rv = dh->meth->compute_key(key, pub_key, dh);
@@ -166,16 +166,16 @@ static int dh_finish(DH *dh)
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 void DH_set_default_method(const DH_METHOD *meth)
 {
     default_DH_method = meth;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 int DH_generate_key(DH *dh)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return generate_key(dh);
 #else
     return dh->meth->generate_key(dh);
@@ -214,7 +214,7 @@ static int generate_key(DH *dh)
 {
     int ok = 0;
     int generate_new_key = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     unsigned l;
 #endif
     BN_CTX *ctx = NULL;
@@ -264,7 +264,7 @@ static int generate_key(DH *dh)
                                           max_strength, priv_key))
                 goto err;
         } else {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
             if (dh->params.q == NULL)
                 goto err;
 #else

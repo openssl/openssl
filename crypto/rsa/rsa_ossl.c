@@ -119,7 +119,7 @@ static int rsa_ossl_public_encrypt(int flen, const unsigned char *from,
                                                         from, flen, NULL, 0,
                                                         NULL, NULL);
         break;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     case RSA_SSLV23_PADDING:
         i = rsa_padding_add_SSLv23_with_libctx(rsa->libctx, buf, num, from,
                                                flen);
@@ -492,7 +492,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     case RSA_PKCS1_OAEP_PADDING:
         r = RSA_padding_check_PKCS1_OAEP(to, num, buf, j, num, NULL, 0);
         break;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     case RSA_SSLV23_PADDING:
         r = RSA_padding_check_SSLv23(to, num, buf, j, num);
         break;
@@ -504,7 +504,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
         RSAerr(RSA_F_RSA_OSSL_PRIVATE_DECRYPT, RSA_R_UNKNOWN_PADDING_TYPE);
         goto err;
     }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /*
      * This trick doesn't work in the FIPS provider because libcrypto manages
      * the error stack. Instead we opt not to put an error on the stack at all
@@ -623,7 +623,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
     BIGNUM *r1, *m1, *vrfy;
     int ret = 0, smooth = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BIGNUM *r2, *m[RSA_MAX_PRIME_NUM - 2];
     int i, ex_primes = 0;
     RSA_PRIME_INFO *pinfo;
@@ -632,7 +632,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     BN_CTX_start(ctx);
 
     r1 = BN_CTX_get(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     r2 = BN_CTX_get(ctx);
 #endif
     m1 = BN_CTX_get(ctx);
@@ -640,7 +640,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     if (vrfy == NULL)
         goto err;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (rsa->version == RSA_ASN1_VERSION_MULTI
         && ((ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0
              || ex_primes > RSA_MAX_PRIME_NUM - 2))
@@ -666,7 +666,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
             BN_free(factor);
             goto err;
         }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         for (i = 0; i < ex_primes; i++) {
             pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
             BN_with_flags(factor, pinfo->r, BN_FLG_CONSTTIME);
@@ -682,7 +682,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         BN_free(factor);
 
         smooth = (rsa->meth->bn_mod_exp == BN_mod_exp_mont)
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
                  && (ex_primes == 0)
 #endif
                  && (BN_num_bits(rsa->q) == BN_num_bits(rsa->p));
@@ -790,7 +790,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         BN_free(dmp1);
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /*
      * calculate m_i in multi-prime case
      *
@@ -884,7 +884,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
     if (!BN_add(r0, r1, m1))
         goto err;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* add m_i to m in multi-prime case */
     if (ex_primes > 0) {
         BIGNUM *pr2 = BN_new();
@@ -1003,7 +1003,7 @@ static int rsa_ossl_init(RSA *rsa)
 
 static int rsa_ossl_finish(RSA *rsa)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     int i;
     RSA_PRIME_INFO *pinfo;
 

@@ -49,7 +49,7 @@ int RSA_generate_key_ex(RSA *rsa, int bits, BIGNUM *e_value, BN_GENCB *cb)
 int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
                                  BIGNUM *e_value, BN_GENCB *cb)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* multi-prime is only supported with the builtin key generation */
     if (rsa->meth->rsa_multi_prime_keygen != NULL) {
         return rsa->meth->rsa_multi_prime_keygen(rsa, bits, primes,
@@ -66,7 +66,7 @@ int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
         else
             return 0;
     }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
     return rsa_keygen(NULL, rsa, bits, primes, e_value, cb, 0);
 }
 
@@ -74,7 +74,7 @@ static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
                       BIGNUM *e_value, BN_GENCB *cb, int pairwise_test)
 {
     int ok = -1;
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     if (primes != 2)
         return 0;
     ok = rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
@@ -407,7 +407,7 @@ static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
     }
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     if (pairwise_test && ok > 0) {
         OSSL_CALLBACK *stcb = NULL;

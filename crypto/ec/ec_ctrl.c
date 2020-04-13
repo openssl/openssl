@@ -463,7 +463,7 @@ int EVP_PKEY_CTX_get_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid)
 {
     if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {

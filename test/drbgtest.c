@@ -111,7 +111,7 @@ typedef struct drbg_selftest_data_st {
     make_drbg_test_data(nid, 0, pr, p)
 
 static DRBG_SELFTEST_DATA drbg_test[] = {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* FIPS mode doesn't support CTR DRBG without a derivation function */
     make_drbg_test_data_no_df (NID_aes_128_ctr, aes_128_no_df,  0),
     make_drbg_test_data_no_df (NID_aes_192_ctr, aes_192_no_df,  0),
@@ -850,7 +850,7 @@ static int test_rand_drbg_reseed(void)
     /* fill 'randomness' buffer with some arbitrary data */
     memset(rand_add_buf, 'r', sizeof(rand_add_buf));
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /*
      * Test whether all three DRBGs are reseeded by RAND_add().
      * The before_reseed time has to be measured here and passed into the
@@ -876,7 +876,7 @@ static int test_rand_drbg_reseed(void)
     if (!TEST_true(test_drbg_reseed(0, master, public, private, 0, 0, 0, 0)))
         goto error;
     reset_drbg_hook_ctx();
-#else /* FIPS_MODE */
+#else /* FIPS_MODULE */
     /*
      * In FIPS mode, random data provided by the application via RAND_add()
      * is not considered a trusted entropy source. It is only treated as
@@ -1251,7 +1251,7 @@ static int test_set_defaults(void)
            && TEST_int_eq(public->flags, RAND_DRBG_FLAG_PUBLIC)
 
           /* FIPS mode doesn't support CTR DRBG without a derivation function */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
           /* Change DRBG defaults and change master and check again */
            && TEST_true(RAND_DRBG_set_defaults(NID_aes_256_ctr,
                                                RAND_DRBG_FLAG_CTR_NO_DF))
@@ -1347,7 +1347,7 @@ static int test_crngt(int n)
     crngt_case = n % crngt_num_cases;
     crngt_idx = 0;
     crngt_get_entropy = &crngt_entropy_cb;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, &rand_crngt_get_entropy,
                                            &rand_crngt_cleanup_entropy,
                                            &rand_drbg_get_nonce,

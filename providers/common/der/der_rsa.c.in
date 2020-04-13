@@ -50,7 +50,7 @@ int DER_w_algorithmIdentifier_RSA_with(WPACKET *pkt, int tag,
     size_t precompiled_sz = 0;
 
     switch (mdnid) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         MD_CASE(md2);
         MD_CASE(md5);
 #endif

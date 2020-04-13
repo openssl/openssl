@@ -118,9 +118,9 @@ void ffc_params_get_validate_params(const FFC_PARAMS *params,
 int ffc_params_copy(FFC_PARAMS *dst, const FFC_PARAMS *src);
 int ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent);
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 
 int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,

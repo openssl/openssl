@@ -301,7 +301,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     if (ret == NULL) {
         int code = EVP_R_FETCH_FAILED;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
         ERR_raise(ERR_LIB_EVP, code);
 #else
         ERR_raise_data(ERR_LIB_EVP, code,
@@ -339,7 +339,7 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
     if (ret == NULL) {
         int code = EVP_R_FETCH_FAILED;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
         ERR_raise(ERR_LIB_EVP, code);
 #else
         {

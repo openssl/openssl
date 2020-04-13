@@ -12,7 +12,7 @@
 #include "internal/ffc.h"
 #include "internal/param_build_set.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # include <openssl/asn1.h> /* ffc_params_print */
 #endif
 
@@ -231,7 +231,7 @@ int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent)
 {
     if (!ASN1_bn_print(bp, "prime P:", ffc->p, NULL, indent))
@@ -270,4 +270,4 @@ int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent)
 err:
     return 0;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */

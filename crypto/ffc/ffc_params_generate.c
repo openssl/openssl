@@ -772,7 +772,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     EVP_MD *evpmd_fetch = NULL;
 
     *res = 0;
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     /*
      * FIPS 186-4 states that validation can only be done for this pair.
      * (Even though the original spec allowed L = 512 + 64*j (j = 0.. 8))

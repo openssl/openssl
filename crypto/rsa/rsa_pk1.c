@@ -265,7 +265,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     }
 
     OPENSSL_clear_free(em, num);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /*
      * This trick doesn't work in the FIPS provider because libcrypto manages
      * the error stack. Instead we opt not to put an error on the stack at all

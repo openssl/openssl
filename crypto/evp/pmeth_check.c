@@ -38,7 +38,7 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     if (pkey->type == EVP_PKEY_NONE)
         goto not_supported;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* legacy */
     /* call customized public key check function first */
     if (ctx->pmeth->public_check != NULL)
@@ -76,7 +76,7 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
     if (pkey->type == EVP_PKEY_NONE)
         goto not_supported;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* legacy */
     /* call customized param check function first */
     if (ctx->pmeth->param_check != NULL)
@@ -156,7 +156,7 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
     if (pkey->type == EVP_PKEY_NONE)
         goto not_supported;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* legacy */
     /* call customized check function first */
     if (ctx->pmeth->check != NULL)

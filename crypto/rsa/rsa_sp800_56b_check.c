@@ -238,7 +238,7 @@ int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
 int rsa_sp800_56b_check_public(const RSA *rsa)
 {
     int ret = 0, status;
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     int nbits;
 #endif
     BN_CTX *ctx = NULL;
@@ -247,7 +247,7 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
     if (rsa->n == NULL || rsa->e == NULL)
         return 0;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     /*
      * (Step a): modulus must be 2048 or 3072 (caveat from SP800-56Br1)
      * NOTE: changed to allow keys >= 2048
