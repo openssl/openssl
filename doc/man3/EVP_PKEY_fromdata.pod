@@ -140,8 +140,8 @@ TODO Write a set of cookbook documents and link to them.
  };
  const OSSL_PARAM params[] = {
      OSSL_PARAM_utf8_string("curve-name", "prime256v1"),
-     OSSL_PARAM_BN("priv", priv, sizeof(priv));
-     OSSL_PARAM_BN("pub", pub, sizeof(pub));
+     OSSL_PARAM_BN("priv", priv, sizeof(priv)),
+     OSSL_PARAM_BN("pub", pub, sizeof(pub)),
      OSSL_PARAM_END
  };
 
@@ -204,7 +204,7 @@ TODO Write a set of cookbook documents and link to them.
  }
 
 The descriptor L<OSSL_PARAM(3)> returned by
-EVP_PKEY_key_fromdata_settable() may also be used programatically, for
+EVP_PKEY_key_fromdata_settable() may also be used programmatically, for
 example with L<OSSL_PARAM_allocate_from_text(3)>.
 
 =head1 SEE ALSO
