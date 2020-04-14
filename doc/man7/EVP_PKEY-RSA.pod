@@ -1,0 +1,185 @@
+=pod
+
+=head1 NAME
+
+EVP_PKEY-RSA, EVP_KEYMGMT-RSA, RSA
+- EVP_PKEY RSA keytype and algorithm support
+
+=head1 DESCRIPTION
+
+The B<RSA> keytype is implemented in OpenSSL's default and FIPS providers.
+That implementation supports the basic RSA keys, containing the modulus I<n>,
+the public exponent I<e>, the private exponent I<d>, and a collection of prime
+factors, exponents and coefficient for CRT calculations, of which the first
+few are known as I<p> and I<q>, I<dP> and I<dQ>, and I<qInv>.
+
+=head2 Common RSA parameters
+
+In addition to the common parameters that all keytypes should support (see
+L<provider-keymgmt(7)/Common parameters>), the B<RSA> keytype implementation
+supports the following.
+
+=over 4
+
+=item "n" (B<OSSL_PKEY_PARAM_RSA_N>) <unsigned integer>
+
+The RSA "n" value.
+
+=item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <unsigned integer>
+
+The RSA "e" value.
+
+=item "d" (B<OSSL_PKEY_PARAM_RSA_D>) <unsigned integer>
+
+The RSA "d" value.
+
+=item "rsa-factor1" (B<OSSL_PKEY_PARAM_RSA_FACTOR1>) <unsigned integer>
+
+=item "rsa-factor2" (B<OSSL_PKEY_PARAM_RSA_FACTOR2>) <unsigned integer>
+
+=item "rsa-factor3" (B<OSSL_PKEY_PARAM_RSA_FACTOR3>) <unsigned integer>
+
+=item "rsa-factor4" (B<OSSL_PKEY_PARAM_RSA_FACTOR4>) <unsigned integer>
+
+=item "rsa-factor5" (B<OSSL_PKEY_PARAM_RSA_FACTOR5>) <unsigned integer>
+
+=item "rsa-factor6" (B<OSSL_PKEY_PARAM_RSA_FACTOR6>) <unsigned integer>
+
+=item "rsa-factor7" (B<OSSL_PKEY_PARAM_RSA_FACTOR7>) <unsigned integer>
+
+=item "rsa-factor8" (B<OSSL_PKEY_PARAM_RSA_FACTOR8>) <unsigned integer>
+
+=item "rsa-factor9" (B<OSSL_PKEY_PARAM_RSA_FACTOR9>) <unsigned integer>
+
+=item "rsa-factor10" (B<OSSL_PKEY_PARAM_RSA_FACTOR10>) <unsigned integer>
+
+RSA prime factors. The factors are known as "p", "q" and "r_i" in RFC8017.
+Up to eight additional "r_i" prime factors are supported.
+
+=item "rsa-exponent1" (B<OSSL_PKEY_PARAM_RSA_EXPONENT1>) <unsigned integer>
+
+=item "rsa-exponent2" (B<OSSL_PKEY_PARAM_RSA_EXPONENT2>) <unsigned integer>
+
+=item "rsa-exponent3" (B<OSSL_PKEY_PARAM_RSA_EXPONENT3>) <unsigned integer>
+
+=item "rsa-exponent4" (B<OSSL_PKEY_PARAM_RSA_EXPONENT4>) <unsigned integer>
+
+=item "rsa-exponent5" (B<OSSL_PKEY_PARAM_RSA_EXPONENT5>) <unsigned integer>
+
+=item "rsa-exponent6" (B<OSSL_PKEY_PARAM_RSA_EXPONENT6>) <unsigned integer>
+
+=item "rsa-exponent7" (B<OSSL_PKEY_PARAM_RSA_EXPONENT7>) <unsigned integer>
+
+=item "rsa-exponent8" (B<OSSL_PKEY_PARAM_RSA_EXPONENT8>) <unsigned integer>
+
+=item "rsa-exponent9" (B<OSSL_PKEY_PARAM_RSA_EXPONENT9>) <unsigned integer>
+
+=item "rsa-exponent10" (B<OSSL_PKEY_PARAM_RSA_EXPONENT10>) <unsigned integer>
+
+RSA CRT (Chinese Remainder Theorem) exponents. The exponents are known
+as "dP", "dQ" and "d_i in RFC8017".
+Up to eight additional "d_i" exponents are supported.
+
+=item "rsa-coefficient1" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT1>) <unsigned integer>
+
+=item "rsa-coefficient2" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT2>) <unsigned integer>
+
+=item "rsa-coefficient3" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT3>) <unsigned integer>
+
+=item "rsa-coefficient4" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT4>) <unsigned integer>
+
+=item "rsa-coefficient5" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT5>) <unsigned integer>
+
+=item "rsa-coefficient6" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT6>) <unsigned integer>
+
+=item "rsa-coefficient7" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT7>) <unsigned integer>
+
+=item "rsa-coefficient8" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT8>) <unsigned integer>
+
+=item "rsa-coefficient9" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT9>) <unsigned integer>
+
+RSA CRT (Chinese Remainder Theorem) coefficients. The coefficients are known as
+"qInv" and "t_i".
+Up to eight additional "t_i" exponents are supported.
+
+=back
+
+=head2 RSA key generation parameters
+
+When generating RSA keys, the following key generation parameters may be used.
+
+=over 4
+
+=item "bits" (B<OSSL_PKEY_PARAM_RSA_BITS>) <unsigned integer>
+
+The value should be the cryptographic length for the B<RSA> cryptosystem, in
+bits.
+
+=item "primes" (B<OSSL_PKEY_PARAM_RSA_PRIMES>) <unsigned integer>
+
+The value should be the number of primes for the generated B<RSA> key.  The
+default is 2.  It isn't permitted to specify a larger number of primes than
+10.  Additionally, the number of primes is limited by the length of the key
+being generated so the maximum number could be less.
+
+=back
+
+=head1 CONFORMING TO
+
+=over 4
+
+=item RFC 8017, excluding RSA-PSS and RSA-OAEP
+
+=for comment RSA-PSS, and probably also RSA-OAEP, need separate keytypes,
+and will be described in separate pages for those RSA keytypes.
+
+=back
+
+=head1 EXAMPLES
+
+An B<EVP_PKEY> context can be obtained by calling:
+
+    EVP_PKEY_CTX *pctx =
+        EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+
+An B<RSA> key can be generated like this:
+
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx =
+        EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+
+    EVP_PKEY_keygen_init(pctx);
+    EVP_PKEY_gen(pctx, &pkey);
+    EVP_PKEY_CTX_free(pctx);
+
+An B<RSA> key can be generated with key generation parameters:
+
+    unsigned int primes = 3;
+    unsigned int bits = 4096;
+    OSSL_PARAM params[3];
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *pctx =
+        EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
+
+    params[0] = OSSL_PARAM_construct_uint("bits", bits);
+    params[1] = OSSL_PARAM_construct_uint("primes", primes);
+    params[2] = OSSL_PARAM_END;
+    EVP_PKEY_keygen_init(pctx);
+    EVP_PKEY_CTX_set_params(pctx, params);
+    EVP_PKEY_gen(pctx, &pkey);
+    EVP_PKEY_CTX_free(pctx);
+
+=head1 SEE ALSO
+
+L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

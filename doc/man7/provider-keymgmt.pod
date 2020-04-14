@@ -258,7 +258,7 @@ present as well.
 =head2 Key Object Information Functions
 
 OP_keymgmt_get_params() should extract information data associated
-with the given I<keydata>, see L</Information Parameters>.
+with the given I<keydata>, see L</Common Information Parameters>.
 
 OP_keymgmt_gettable_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_get_params()
@@ -268,7 +268,7 @@ If OP_keymgmt_gettable_params() is present, OP_keymgmt_get_params()
 must also be present, and vice versa.
 
 OP_keymgmt_set_params() should update information data associated
-with the given I<keydata>, see L</Information Parameters>.
+with the given I<keydata>, see L</Common Information Parameters>.
 
 OP_keymgmt_settable_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_set_params()
@@ -328,227 +328,12 @@ from I<keydata_from> to I<keydata_to>.  It is assumed that the caller
 has ensured that I<keydata_to> and I<keydata_from> are both owned by
 the implementation of this function.
 
-=head2 Built-in DSA Key Generation Types
-
-The following Key Generation types are available for the built-in DSA algorithm:
-
-=over 4
-
-=item "pbits" (B<OSSL_PKEY_PARAM_FFC_PBITS>) <unsigned integer>
-
-Sets the DSA size (in bits) of the prime 'p'.
-The value should be 2048 or 3072.
-
-=item "qbits" (B<OSSL_PKEY_PARAM_FFC_QBITS>) <unsigned integer>
-
-Sets the DSA size (in bits) of the prime 'q'.
-The value should be 224 or 256.
-
-=item "type" (B<OSSL_PKEY_PARAM_FFC_TYPE>) <integer>
-
-Sets the type of parameter generation.
-Use 0 for FIPS186-4,  or 1 for legacy FIPS186-2.
-The default is 0.
-
-=item "digest" (B<OSSL_PKEY_PARAM_FFC_DIGEST>)  <utf8_string>
-
-Sets the Digest algorithm to be used as part of the Key Generation Function
-associated with the given Key Generation I<ctx>.
-
-=item "properties" (B<OSSL_PKEY_PARAM_FFC_DIGEST_PROPS>) <utf8_string>
-
-Sets properties to be used upon look up of the implementation for the selected
-Digest algorithm for the Key Generation Function associated with the given key
-Generation I<ctx>.
-
-=item "gindex" (B<OSSL_PKEY_PARAM_FFC_GINDEX>) <integer>
-
-Sets the index to use for canonical generation and verification of the generator g.
-Set this to a positive value to use this mode. This I<index> can then be reused
-during key validation to verify the value of g. If this value is not set then
-g is not verifiable. The default value is -1.
-
-=item "seed" (B<OSSL_PKEY_PARAM_FFC_SEED>) <octet_string>
-
-Sets the I<seed> data to use instead of generating a random seed internally.
-This should be used for testing purposes only. This will either produced fixed
-values for the generated parameters OR it will fail if the seed did not
-generate valid primes.
-
-=back
-
-
-=head2 Built-in RSA Import/Export Types
-
-The following Import/Export types are available for the built-in RSA algorithm:
-
-=over 4
-
-=item "n" (B<OSSL_PKEY_PARAM_RSA_N>) <unsigned integer>
-
-The RSA "n" value.
-
-=item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <unsigned integer>
-
-The RSA "e" value.
-
-=item "d" (B<OSSL_PKEY_PARAM_RSA_D>) <unsigned integer>
-
-The RSA "d" value.
-
-=item "rsa-factor1" (B<OSSL_PKEY_PARAM_RSA_FACTOR1>) <unsigned integer>
-
-=item "rsa-factor2" (B<OSSL_PKEY_PARAM_RSA_FACTOR2>) <unsigned integer>
-
-=item "rsa-factor3" (B<OSSL_PKEY_PARAM_RSA_FACTOR3>) <unsigned integer>
-
-=item "rsa-factor4" (B<OSSL_PKEY_PARAM_RSA_FACTOR4>) <unsigned integer>
-
-=item "rsa-factor5" (B<OSSL_PKEY_PARAM_RSA_FACTOR5>) <unsigned integer>
-
-=item "rsa-factor6" (B<OSSL_PKEY_PARAM_RSA_FACTOR6>) <unsigned integer>
-
-=item "rsa-factor7" (B<OSSL_PKEY_PARAM_RSA_FACTOR7>) <unsigned integer>
-
-=item "rsa-factor8" (B<OSSL_PKEY_PARAM_RSA_FACTOR8>) <unsigned integer>
-
-=item "rsa-factor9" (B<OSSL_PKEY_PARAM_RSA_FACTOR9>) <unsigned integer>
-
-=item "rsa-factor10" (B<OSSL_PKEY_PARAM_RSA_FACTOR10>) <unsigned integer>
-
-RSA prime factors. The factors are known as "p", "q" and "r_i" in RFC8017.
-Up to eight additional "r_i" prime factors are supported.
-
-=item "rsa-exponent1" (B<OSSL_PKEY_PARAM_RSA_EXPONENT1>) <unsigned integer>
-
-=item "rsa-exponent2" (B<OSSL_PKEY_PARAM_RSA_EXPONENT2>) <unsigned integer>
-
-=item "rsa-exponent3" (B<OSSL_PKEY_PARAM_RSA_EXPONENT3>) <unsigned integer>
-
-=item "rsa-exponent4" (B<OSSL_PKEY_PARAM_RSA_EXPONENT4>) <unsigned integer>
-
-=item "rsa-exponent5" (B<OSSL_PKEY_PARAM_RSA_EXPONENT5>) <unsigned integer>
-
-=item "rsa-exponent6" (B<OSSL_PKEY_PARAM_RSA_EXPONENT6>) <unsigned integer>
-
-=item "rsa-exponent7" (B<OSSL_PKEY_PARAM_RSA_EXPONENT7>) <unsigned integer>
-
-=item "rsa-exponent8" (B<OSSL_PKEY_PARAM_RSA_EXPONENT8>) <unsigned integer>
-
-=item "rsa-exponent9" (B<OSSL_PKEY_PARAM_RSA_EXPONENT9>) <unsigned integer>
-
-=item "rsa-exponent10" (B<OSSL_PKEY_PARAM_RSA_EXPONENT10>) <unsigned integer>
-
-RSA CRT (Chinese Remainder Theorem) exponents. The exponents are known
-as "dP", "dQ" and "d_i in RFC8017".
-Up to eight additional "d_i" exponents are supported.
-
-=item "rsa-coefficient1" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT1>) <unsigned integer>
-
-=item "rsa-coefficient2" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT2>) <unsigned integer>
-
-=item "rsa-coefficient3" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT3>) <unsigned integer>
-
-=item "rsa-coefficient4" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT4>) <unsigned integer>
-
-=item "rsa-coefficient5" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT5>) <unsigned integer>
-
-=item "rsa-coefficient6" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT6>) <unsigned integer>
-
-=item "rsa-coefficient7" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT7>) <unsigned integer>
-
-=item "rsa-coefficient8" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT8>) <unsigned integer>
-
-=item "rsa-coefficient9" (B<OSSL_PKEY_PARAM_RSA_COEFFICIENT9>) <unsigned integer>
-
-RSA CRT (Chinese Remainder Theorem) coefficients. The coefficients are known as
-"qInv" and "t_i".
-Up to eight additional "t_i" exponents are supported.
-
-=back
-
-=head2 Built-in DSA and Diffie-Hellman Import/Export Types
-
-The following Import/Export types are available for the built-in DSA and
-Diffie-Hellman algorithms:
-
-=over 4
-
-=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <unsigned integer>
-
-The public key value.
-
-=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <unsigned integer>
-
-The private key value.
-
-=item "p" (B<OSSL_PKEY_PARAM_FFC_P>) <unsigned integer>
-
-A DSA or Diffie-Hellman "p" value.
-
-=item "q" (B<OSSL_PKEY_PARAM_FFC_Q>) <unsigned integer>
-
-A DSA or Diffie-Hellman "q" value.
-
-=item "g" (B<OSSL_PKEY_PARAM_FFC_G>) <unsigned integer>
-
-A DSA or Diffie-Hellman "g" value.
-
-=back
-
-=head2 Built-in X25519, X448, ED25519 and ED448 Import/Export Types
-
-The following Import/Export types are available for the built-in X25519, X448,
-ED25519 and X448 algorithms:
-
-=over 4
-
-=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
-
-The public key value.
-
-=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
-
-The private key value.
-
-=back
-
-=head2 Built-in EC Import/Export Types
-
-The following Import/Export types are available for the built-in EC algorithm:
-
-=over 4
-
-=item "curve-name" (B<OSSL_PKEY_PARAM_EC_NAME>) <utf8 string>
-
-The EC curve name.
-
-=item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
-
-Enable Cofactor DH (ECC CDH) if this value is 1, otherwise it uses normal EC DH
-if the value is zero. The cofactor variant multiplies the shared secret by the
-EC curve's cofactor (note for some curves the cofactor is 1).
-
-=item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
-
-The public key value in EC point format.
-
-=item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <unsigned integer>
-
-The private key value.
-
-=back
-
-=head2 Information Parameters
+=head2 Common Information Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-The Built-in Import/Export Types listed above are also Information Parameters.
-Not all parameters are relevant to, or are understood by all keymgmt
-algorithms:
-
-Parameters currently recognised by built-in keymgmt algorithms
-also include the following.
+Common information parameters currently recognised by all built-in
+keymgmt algorithms are as follows:
 
 =over 4
 
@@ -575,21 +360,6 @@ dimensions handled in the rest of the same provider.
 
 The value should be the number of security bits of the given key.
 Bits of security is defined in SP800-57.
-
-=item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_FLAG>,
-B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
-
-The value should be either 1 or 0, to respectively enable or disable
-use of the cofactor in operations using this key.
-
-In the context of a key that can be used to perform an Elliptic Curve
-Diffie-Hellman key exchange, this parameter can be used to mark a requirement
-for using the Cofactor Diffie-Hellman (CDH) variant of the key exchange
-algorithm.
-
-See also L<provider-keyexch(7)> for the related
-B<OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE> parameter that can be set on a
-per-operation basis.
 
 =back
 
@@ -618,7 +388,10 @@ always return a constant B<OSSL_PARAM> array.
 
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>,
+L<EVP_PKEY-X25519(7)>, L<EVP_PKEY-X448(7)>, L<EVP_PKEY-ED25519(7)>,
+L<EVP_PKEY-ED448(7)>, L<EVP_PKEY-EC(7)>, L<EVP_PKEY-RSA(7)>,
+L<EVP_PKEY-DSA(7)>, L<EVP_PKEY-DH(7)>
 
 =head1 HISTORY
 
