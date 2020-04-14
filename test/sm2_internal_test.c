@@ -21,7 +21,7 @@
 
 #ifndef OPENSSL_NO_SM2
 
-# include "internal/sm2.h"
+# include "crypto/sm2.h"
 
 static RAND_METHOD fake_rand;
 static const RAND_METHOD *saved_rand;

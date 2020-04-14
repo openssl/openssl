@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,8 +15,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
-#include "rand_lcl.h"
-#include "internal/rand_int.h"
+#include "rand_local.h"
+#include "crypto/rand.h"
 #include <stdio.h>
 #include "internal/dso.h"
 #ifdef __linux
@@ -80,7 +80,8 @@ static uint64_t get_timer_bits(void);
 #   define OSSL_POSIX_TIMER_OKAY
 #  endif
 # endif
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */
 
 #if defined(OPENSSL_RAND_SEED_NONE)
 /* none means none. this simplifies the following logic */
@@ -282,12 +283,58 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
 #  if defined(OPENSSL_RAND_SEED_GETRANDOM)
 
 #   if defined(__linux) && !defined(__NR_getrandom)
-#    if defined(__arm__) && defined(__NR_SYSCALL_BASE)
+#    if defined(__arm__)
 #     define __NR_getrandom    (__NR_SYSCALL_BASE+384)
 #    elif defined(__i386__)
 #     define __NR_getrandom    355
-#    elif defined(__x86_64__) && !defined(__ILP32__)
-#     define __NR_getrandom    318
+#    elif defined(__x86_64__)
+#     if defined(__ILP32__)
+#      define __NR_getrandom   (__X32_SYSCALL_BIT + 318)
+#     else
+#      define __NR_getrandom   318
+#     endif
+#    elif defined(__xtensa__)
+#     define __NR_getrandom    338
+#    elif defined(__s390__) || defined(__s390x__)
+#     define __NR_getrandom    349
+#    elif defined(__bfin__)
+#     define __NR_getrandom    389
+#    elif defined(__powerpc__)
+#     define __NR_getrandom    359
+#    elif defined(__mips__) || defined(__mips64)
+#     if _MIPS_SIM == _MIPS_SIM_ABI32
+#      define __NR_getrandom   (__NR_Linux + 353)
+#     elif _MIPS_SIM == _MIPS_SIM_ABI64
+#      define __NR_getrandom   (__NR_Linux + 313)
+#     elif _MIPS_SIM == _MIPS_SIM_NABI32
+#      define __NR_getrandom   (__NR_Linux + 317)
+#     endif
+#    elif defined(__hppa__)
+#     define __NR_getrandom    (__NR_Linux + 339)
+#    elif defined(__sparc__)
+#     define __NR_getrandom    347
+#    elif defined(__ia64__)
+#     define __NR_getrandom    1339
+#    elif defined(__alpha__)
+#     define __NR_getrandom    511
+#    elif defined(__sh__)
+#     if defined(__SH5__)
+#      define __NR_getrandom   373
+#     else
+#      define __NR_getrandom   384
+#     endif
+#    elif defined(__avr32__)
+#     define __NR_getrandom    317
+#    elif defined(__microblaze__)
+#     define __NR_getrandom    385
+#    elif defined(__m68k__)
+#     define __NR_getrandom    352
+#    elif defined(__cris__)
+#     define __NR_getrandom    356
+#    elif defined(__aarch64__)
+#     define __NR_getrandom    278
+#    else /* generic */
+#     define __NR_getrandom    278
 #    endif
 #   endif
 
@@ -814,4 +861,5 @@ static uint64_t get_timer_bits(void)
 # endif
     return time(NULL);
 }
-#endif /* defined(OPENSSL_SYS_UNIX) || defined(__DJGPP__) */
+#endif /* (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS))
+          || defined(__DJGPP__) */

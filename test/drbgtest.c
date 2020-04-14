@@ -15,8 +15,8 @@
 #include <openssl/obj_mac.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
-#include "../crypto/rand/rand_lcl.h"
-#include "../crypto/include/internal/rand_int.h"
+#include "../crypto/rand/rand_local.h"
+#include "../include/crypto/rand.h"
 
 #if defined(_WIN32)
 # include <windows.h>

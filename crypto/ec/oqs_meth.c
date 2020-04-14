@@ -27,8 +27,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
 
 #include <openssl/cms.h>
 

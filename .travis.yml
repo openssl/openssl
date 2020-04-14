@@ -16,6 +16,11 @@ before_install:
     - if expr "$CONFIG_OPTS" ":" ".*enable-external-tests" > /dev/null; then
           git submodule update --init --recursive;
       fi;
+    - eval "${MATRIX_EVAL}"
+
+arch:
+    - amd64
+    - arm64
 
 os:
     - linux
@@ -32,6 +37,31 @@ env:
 
 matrix:
     include:
+        - os: linux
+          arch: arm64
+          dist: bionic
+          compiler: clang
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+        - os: linux
+          arch: arm64
+          compiler: clang
+          addons:
+              apt:
+                  packages:
+                      - clang-6.0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - os: linux
+          arch: arm64
+          compiler: clang
+          addons:
+              apt:
+                  packages:
+                      - clang-6.0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -fno-sanitize=alignment -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -D__NO_STRING_INLINES -Wno-unused-command-line-argument" MATRIX_EVAL="CC=clang-6.0 && CXX=clang++-6.0"
+        - os: linux
+          arch: s390x
+          compiler: gcc
+          env: CONFIG_OPTS="--strict-warnings"
         - os: linux-ppc64le
           sudo: false
           compiler: clang
@@ -45,10 +75,10 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env: CONFIG_OPTS="--strict-warnings" COMMENT="Move to the BORINGTEST build when interoperable"
+          env: CONFIG_OPTS="--strict-warnings no-ec enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd" COMMENT="Move to the BORINGTEST build when interoperable"
         - os: linux
           compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated" BUILDONLY="yes"
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES no-deprecated"
         - os: linux
           addons:
               apt:
@@ -56,7 +86,7 @@ matrix:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes" DESTDIR="_install"
         # Uncomment if there is reason to believe that PPC-specific problem
         # can be diagnosed with this possibly >30 mins sanitizer build...
         #- os: linux-ppc64le
@@ -84,7 +114,8 @@ matrix:
                   sources:
                       - ubuntu-toolchain-r-test
           compiler: gcc-5
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS=95
+          # External test pyca-cryptography temporarily disabled due to long term travis failures
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests" BORINGSSL_TESTS="yes" CXX="g++-5" TESTS="test_external_boringssl test_external_krb5"
         - os: linux
           compiler: clang
           env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan -D__NO_STRING_INLINES -Wno-unused-command-line-argument"
@@ -132,16 +163,21 @@ matrix:
             # exit-zero treats all errors as warnings.  The GitHub editor is 127 chars wide
             - flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
           script: true
+        - os: linux
+          compiler: gcc
+          env: CONFIGURE_TARGET="linux-generic32" CONFIG_OPTS="--strict-warnings no-shared no-dso no-pic no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT"
     exclude:
         - os: linux
           compiler: clang
         - os: osx
           compiler: gcc
+        - arch: arm64
+          os: osx
 
 before_script:
     - env
     - if [ "$TRAVIS_PULL_REQUEST" != "false" -a -n "$EXTENDED_TEST" ]; then
-          (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || exit 0;
+          (git log -1 $TRAVIS_COMMIT_RANGE | grep '\[extended tests\]' > /dev/null) || travis_terminate 0;
       fi
     - if [ -n "$DESTDIR" ]; then
           sh .travis-create-release.sh $TRAVIS_OS_NAME;
@@ -175,7 +211,11 @@ before_script:
           elif which ccache >/dev/null; then
               CC="ccache $CC";
           fi;
-          $srcdir/config -v $CONFIG_OPTS;
+          if [ -n "$CONFIGURE_TARGET" ]; then
+              $srcdir/Configure $CONFIGURE_TARGET $CONFIG_OPTS;
+          else
+              $srcdir/config -v $CONFIG_OPTS;
+          fi;
       fi
     - ./configdata.pm --dump
     - cd $top

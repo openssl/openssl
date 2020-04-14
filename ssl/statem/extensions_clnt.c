@@ -16,9 +16,9 @@
 
 
 #include <openssl/ocsp.h>
-#include "../ssl_locl.h"
+#include "../ssl_local.h"
 #include "internal/cryptlib.h"
-#include "statem_locl.h"
+#include "statem_local.h"
 #include <oqs/oqs.h>
 #include "ext_oqs_extra.h"
 

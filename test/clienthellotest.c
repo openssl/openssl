@@ -21,7 +21,7 @@
 #include <openssl/err.h>
 #include <time.h>
 
-#include "../ssl/packet_locl.h"
+#include "../ssl/packet_local.h"
 
 #include "testutil.h"
 

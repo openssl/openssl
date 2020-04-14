@@ -18,7 +18,7 @@
 #include "testutil.h"
 
 /* for SSL_READ_ETM() */
-#include "../ssl/ssl_locl.h"
+#include "../ssl/ssl_local.h"
 
 static int debug = 0;
 
