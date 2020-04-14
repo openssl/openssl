@@ -124,7 +124,9 @@ The value of B<OPENSSL_FULL_VERSION_STR>
 
 The compiler flags set for the compilation process in the form
 C<compiler: ...>  if available, or C<compiler: information not available>
-otherwise.
+otherwise. The path specified in C<-fdebug-prefix-map=>,
+C<-fmacro-prefix-map=> and C<-ffile-prefix-map=> is replaced with a
+fixed string to avoid recording the build path.
 
 =item OPENSSL_BUILT_ON
 
