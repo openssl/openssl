@@ -215,7 +215,7 @@ int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
                                               ffc->seed, ffc->seedlen))
         return 0;
     if (ffc->nid != NID_undef) {
-        const char *name = ffc_named_group_from_nid(ffc->nid);
+        const char *name = ffc_named_group_from_uid(ffc->nid);
 
         if (name == NULL
             || !ossl_param_build_set_utf8_string(bld, params,
