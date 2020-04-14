@@ -63,8 +63,12 @@ IF[{- !$disabled{des} -}]
       cipher_tdes_default.c cipher_tdes_default_hw.c \
       cipher_tdes_wrap.c cipher_tdes_wrap_hw.c
   SOURCE[$DES_GOAL]=\
-      cipher_desx.c cipher_desx_hw.c cipher_tdes_common.c\
+      cipher_desx.c cipher_desx_hw.c \
       cipher_des.c cipher_des_hw.c
+ IF[{- !$disabled{module} -}]
+   SOURCE[$DES_GOAL]=\
+       cipher_tdes_common.c
+ ENDIF
 ENDIF
 
 IF[{- !$disabled{aria} -}]
