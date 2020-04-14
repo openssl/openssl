@@ -10,6 +10,8 @@ use strict;
 use warnings;
 
 my ($cflags, $platform) = @ARGV;
+
+$cflags =~ s@-fdebug-prefix-map=[^=]+=[^ ]+@-fdebug-prefix-map=<REPRODUCIBLE>@;
 $cflags = "compiler: $cflags";
 
 my $date = gmtime($ENV{'SOURCE_DATE_EPOCH'} || time()) . " UTC";
