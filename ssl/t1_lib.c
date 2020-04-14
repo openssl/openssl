@@ -261,73 +261,19 @@ static const uint16_t eccurves_default[] = {
     30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
-    /* FIXMEOQS: what should the code points be? TLS1.3 only specify DH and EC groups.
-       Also, shouldn't be in the default list; need to be added to s->ext.supportedgroups */
-    0x01FF, /* OQS default KEM */
-///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_START
-    0x0200, /* OQS frodo640aes */
-    0x0201, /* OQS frodo640shake */
-    0x0202, /* OQS frodo976aes */
-    0x0203, /* OQS frodo976shake */
-    0x0204, /* OQS frodo1344aes */
-    0x0205, /* OQS frodo1344shake */
-    0x0206, /* OQS bike1l1cpa */
-    0x0207, /* OQS bike1l3cpa */
-    0x0223, /* OQS bike1l1fo */
-    0x0224, /* OQS bike1l3fo */
-    0x020F, /* OQS kyber512 */
-    0x0210, /* OQS kyber768 */
-    0x0211, /* OQS kyber1024 */
-    0x0212, /* OQS newhope512cca */
-    0x0213, /* OQS newhope1024cca */
-    0x0214, /* OQS ntru_hps2048509 */
-    0x0215, /* OQS ntru_hps2048677 */
-    0x0216, /* OQS ntru_hps4096821 */
-    0x0217, /* OQS ntru_hrss701 */
-    0x0218, /* OQS lightsaber */
-    0x0219, /* OQS saber */
-    0x021A, /* OQS firesaber */
-    0x021B, /* OQS sidhp434 */
-    0x021C, /* OQS sidhp503 */
-    0x021D, /* OQS sidhp610 */
-    0x021E, /* OQS sidhp751 */
-    0x021F, /* OQS sikep434 */
-    0x0220, /* OQS sikep503 */
-    0x0221, /* OQS sikep610 */
-    0x0222, /* OQS sikep751 */
-///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_END
-    0x02FF, /* p256 - OQS default KEM hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_START
     0x0300, /* p256 - OQS frodo640aes hybrid */
     0x0301, /* p256 - OQS frodo640shake hybrid */
-    0x0302, /* p256 - OQS frodo976aes hybrid */
-    0x0303, /* p256 - OQS frodo976shake hybrid */
-    0x0304, /* p256 - OQS frodo1344aes hybrid */
-    0x0305, /* p256 - OQS frodo1344shake hybrid */
     0x0306, /* p256 - OQS bike1l1cpa hybrid */
-    0x0307, /* p256 - OQS bike1l3cpa hybrid */
     0x0323, /* p256 - OQS bike1l1fo hybrid */
-    0x0324, /* p256 - OQS bike1l3fo hybrid */
     0x030F, /* p256 - OQS kyber512 hybrid */
-    0x0310, /* p256 - OQS kyber768 hybrid */
-    0x0311, /* p256 - OQS kyber1024 hybrid */
     0x0312, /* p256 - OQS newhope512cca hybrid */
-    0x0313, /* p256 - OQS newhope1024cca hybrid */
     0x0314, /* p256 - OQS ntru_hps2048509 hybrid */
-    0x0315, /* p256 - OQS ntru_hps2048677 hybrid */
-    0x0316, /* p256 - OQS ntru_hps4096821 hybrid */
-    0x0317, /* p256 - OQS ntru_hrss701 hybrid */
     0x0318, /* p256 - OQS lightsaber hybrid */
-    0x0319, /* p256 - OQS saber hybrid */
-    0x031A, /* p256 - OQS firesaber hybrid */
     0x031B, /* p256 - OQS sidhp434 hybrid */
     0x031C, /* p256 - OQS sidhp503 hybrid */
-    0x031D, /* p256 - OQS sidhp610 hybrid */
-    0x031E, /* p256 - OQS sidhp751 hybrid */
     0x031F, /* p256 - OQS sikep434 hybrid */
     0x0320, /* p256 - OQS sikep503 hybrid */
-    0x0321, /* p256 - OQS sikep610 hybrid */
-    0x0322, /* p256 - OQS sikep751 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 

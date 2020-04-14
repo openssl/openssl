@@ -1,4 +1,4 @@
-{% for kem in config['kems'] %}
+{% for kem in config['kems'] if kem['bit_security'] == 128 %}
     {{ kem['nid_hybrid_p256'] }}, /* p256 - OQS {{ kem['name_group'] }} hybrid */
 {%- endfor %}
 

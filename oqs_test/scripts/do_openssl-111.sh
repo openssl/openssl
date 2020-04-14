@@ -17,7 +17,7 @@ if [ "x$OQS_LIBPATH" != "x" ]; then
 fi
 echo "DLD = $DYLD_LIBRARY_PATH"
 
-apps/openssl s_server -cert ${SIGALG}_srv.crt -key ${SIGALG}_srv.key -CAfile ${SIGALG}_CA.crt -tls1_3 -www -accept ${PORT} > s_server_${PORT}.out 2>&1 &
+apps/openssl s_server -curves "${KEXALG}" -cert ${SIGALG}_srv.crt -key ${SIGALG}_srv.key -CAfile ${SIGALG}_CA.crt -tls1_3 -www -accept ${PORT} > s_server_${PORT}.out 2>&1 &
 SERVER_PID=$!
 sleep 1
 
