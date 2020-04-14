@@ -282,6 +282,8 @@ ENGINE *ENGINE_by_id(const char *id)
         ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
+    ENGINE_load_builtin_engines();
+
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)) {
         ENGINEerr(ENGINE_F_ENGINE_BY_ID, ERR_R_MALLOC_FAILURE);
         return NULL;
