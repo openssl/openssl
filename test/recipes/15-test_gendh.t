@@ -16,8 +16,9 @@ use OpenSSL::Test::Utils;
 
 setup("test_gendh");
 
-plan tests => 9;
 plan skip_all => "This test is unsupported in a no-dh build" if disabled("dh");
+
+plan tests => 9;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DH',
