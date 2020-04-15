@@ -1540,6 +1540,47 @@ static int test_EVP_PKEY_set1_DH(void)
 }
 #endif
 
+/*
+ * We test what happens with an empty template.  For the sake of this test,
+ * the template must be ignored, and we know that's the case for RSA keys
+ * (this might arguably be a misfeature, but that's what we currently do,
+ * even in provider code, since that's how the legacy RSA implementation
+ * does things)
+ */
+static int test_keygen_with_empty_template(int n)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *tkey = NULL;
+    int ret = 0;
+
+    switch (n) {
+    case 0:
+        /* We do test with no template at all as well */
+        if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL)))
+            goto err;
+        break;
+    case 1:
+        /* Here we create an empty RSA key that serves as our template */
+        if (!TEST_ptr(tkey = EVP_PKEY_new())
+            || !TEST_true(EVP_PKEY_set_type(tkey, EVP_PKEY_RSA))
+            || !TEST_ptr(ctx = EVP_PKEY_CTX_new(tkey, NULL)))
+            goto err;
+        break;
+    }
+
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0))
+        goto err;
+
+    ret = 1;
+ err:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(tkey);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
@@ -1579,6 +1620,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_EVP_PKEY_set1_DH);
 #endif
+    ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
 
     return 1;
 }
