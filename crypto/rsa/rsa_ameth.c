@@ -1184,7 +1184,7 @@ static int rsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    RSA *rsa = RSA_new();
+    RSA *rsa = rsa_new_with_ctx(pctx->libctx);
 
     if (rsa == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
