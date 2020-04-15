@@ -369,7 +369,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     tmp_keymgmt = ctx->keymgmt;
     provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
                                           &tmp_keymgmt, ctx->propquery);
-    if (provkey == NULL)
+    if (tmp_keymgmt == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
         ERR_clear_last_mark();

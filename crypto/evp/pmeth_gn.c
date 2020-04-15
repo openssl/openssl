@@ -170,8 +170,12 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
             evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
                                         &tmp_keymgmt, ctx->propquery);
 
-        if (keydata == NULL)
+        if (tmp_keymgmt == NULL)
             goto not_supported;
+        /*
+         * It's ok if keydata is NULL here.  The backend is expected to deal
+         * with that as it sees fit.
+         */
         ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
                                            ctx->op.keymgmt.genctx, keydata);
     }

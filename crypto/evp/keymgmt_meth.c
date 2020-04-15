@@ -313,8 +313,15 @@ void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection)
 int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
                                  void *template)
 {
+    /*
+     * It's arguable if we actually should return success in this case, as
+     * it allows the caller to set a template key, which is then ignored.
+     * However, this is how the legacy methods (EVP_PKEY_METHOD) operate,
+     * so we do this in the interest of backward compatibility.
+     * TODO(3.0) Investigate if we should change this behaviour.
+     */
     if (keymgmt->gen_set_template == NULL)
-        return 0;
+        return 1;
     return keymgmt->gen_set_template(genctx, template);
 }
 
