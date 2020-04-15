@@ -1061,34 +1061,34 @@ static const unsigned char so[7845] = {
     0x2B,0x6F,0x02,0x8C,0x53,                      /* [ 7612] OBJ_ieee_siswg */
     0x2A,0x81,0x1C,0xCF,0x55,0x01,0x82,0x2D,       /* [ 7617] OBJ_sm2 */
     0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,       /* [ 7625] OBJ_id_tc26_cipher_gostr3412_2015_magma */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,       /* [ 7633] OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,            /* [ 7641] OBJ_id_tc26_wrap */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,       /* [ 7648] OBJ_id_tc26_wrap_gostr3412_2015_magma */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x02,       /* [ 7656] OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik */
-    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x02,  /* [ 7664] OBJ_id_tc26_gost_3410_2012_256_paramSetB */
-    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x03,  /* [ 7673] OBJ_id_tc26_gost_3410_2012_256_paramSetC */
-    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7682] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0C,       /* [ 7691] OBJ_hmacWithSHA512_224 */
-    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0D,       /* [ 7699] OBJ_hmacWithSHA512_256 */
-    0x28,0xCC,0x45,0x03,0x04,                      /* [ 7707] OBJ_gmac */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x13,  /* [ 7712] OBJ_kmac128 */
-    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x14,  /* [ 7721] OBJ_kmac256 */
-    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,  /* [ 7730] OBJ_blake2bmac */
-    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,  /* [ 7740] OBJ_blake2smac */
-    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x83,0x75,       /* [ 7750] OBJ_SM2_with_SM3 */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x09,       /* [ 7758] OBJ_id_on_SmtpUTF8Mailbox */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x05,       /* [ 7766] OBJ_XmppAddr */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x07,       /* [ 7774] OBJ_SRVName */
-    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x08,       /* [ 7782] OBJ_NAIRealm */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,0x01,  /* [ 7790] OBJ_magma_ctr_acpkm */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,0x02,  /* [ 7799] OBJ_magma_ctr_acpkm_omac */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,0x01,  /* [ 7808] OBJ_kuznyechik_ctr_acpkm */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,0x02,  /* [ 7817] OBJ_kuznyechik_ctr_acpkm_omac */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,0x01,  /* [ 7826] OBJ_magma_kexp15 */
-    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x02,0x01,  /* [ 7835] OBJ_kuznyechik_kexp15 */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,0x01,  /* [ 7633] OBJ_magma_ctr_acpkm */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x01,0x02,  /* [ 7642] OBJ_magma_ctr_acpkm_omac */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,       /* [ 7651] OBJ_id_tc26_cipher_gostr3412_2015_kuznyechik */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,0x01,  /* [ 7659] OBJ_kuznyechik_ctr_acpkm */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x05,0x02,0x02,  /* [ 7668] OBJ_kuznyechik_ctr_acpkm_omac */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,            /* [ 7677] OBJ_id_tc26_wrap */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,       /* [ 7684] OBJ_id_tc26_wrap_gostr3412_2015_magma */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x01,0x01,  /* [ 7692] OBJ_magma_kexp15 */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x02,       /* [ 7701] OBJ_id_tc26_wrap_gostr3412_2015_kuznyechik */
+    0x2A,0x85,0x03,0x07,0x01,0x01,0x07,0x02,0x01,  /* [ 7709] OBJ_kuznyechik_kexp15 */
+    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x02,  /* [ 7718] OBJ_id_tc26_gost_3410_2012_256_paramSetB */
+    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x03,  /* [ 7727] OBJ_id_tc26_gost_3410_2012_256_paramSetC */
+    0x2A,0x85,0x03,0x07,0x01,0x02,0x01,0x01,0x04,  /* [ 7736] OBJ_id_tc26_gost_3410_2012_256_paramSetD */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0C,       /* [ 7745] OBJ_hmacWithSHA512_224 */
+    0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x0D,       /* [ 7753] OBJ_hmacWithSHA512_256 */
+    0x28,0xCC,0x45,0x03,0x04,                      /* [ 7761] OBJ_gmac */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x13,  /* [ 7766] OBJ_kmac128 */
+    0x60,0x86,0x48,0x01,0x65,0x03,0x04,0x02,0x14,  /* [ 7775] OBJ_kmac256 */
+    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x01,  /* [ 7784] OBJ_blake2bmac */
+    0x2B,0x06,0x01,0x04,0x01,0x8D,0x3A,0x0C,0x02,0x02,  /* [ 7794] OBJ_blake2smac */
+    0x2A,0x81,0x1C,0xCF,0x55,0x01,0x83,0x75,       /* [ 7804] OBJ_SM2_with_SM3 */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x09,       /* [ 7812] OBJ_id_on_SmtpUTF8Mailbox */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x05,       /* [ 7820] OBJ_XmppAddr */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x07,       /* [ 7828] OBJ_SRVName */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x08,       /* [ 7836] OBJ_NAIRealm */
 };
 
-#define NUM_NID 1230
+#define NUM_NID 1218
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2102,12 +2102,12 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"gost89-cbc", "gost89-cbc", NID_gost89_cbc},
     {"gost89-ecb", "gost89-ecb", NID_gost89_ecb},
     {"gost89-ctr", "gost89-ctr", NID_gost89_ctr},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
+    {"kuznyechik-ecb", "kuznyechik-ecb", NID_kuznyechik_ecb},
+    {"kuznyechik-ctr", "kuznyechik-ctr", NID_kuznyechik_ctr},
+    {"kuznyechik-ofb", "kuznyechik-ofb", NID_kuznyechik_ofb},
+    {"kuznyechik-cbc", "kuznyechik-cbc", NID_kuznyechik_cbc},
+    {"kuznyechik-cfb", "kuznyechik-cfb", NID_kuznyechik_cfb},
+    {"kuznyechik-mac", "kuznyechik-mac", NID_kuznyechik_mac},
     {"ChaCha20-Poly1305", "chacha20-poly1305", NID_chacha20_poly1305},
     {"ChaCha20", "chacha20", NID_chacha20},
     {"tlsfeature", "TLS Feature", NID_tlsfeature, 8, &so[6619]},
@@ -2264,62 +2264,50 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"ieee-siswg", "IEEE Security in Storage Working Group", NID_ieee_siswg, 5, &so[7612]},
     {"SM2", "sm2", NID_sm2, 8, &so[7617]},
     {"id-tc26-cipher-gostr3412-2015-magma", "id-tc26-cipher-gostr3412-2015-magma", NID_id_tc26_cipher_gostr3412_2015_magma, 8, &so[7625]},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    {"id-tc26-cipher-gostr3412-2015-kuznyechik", "id-tc26-cipher-gostr3412-2015-kuznyechik", NID_id_tc26_cipher_gostr3412_2015_kuznyechik, 8, &so[7633]},
-    { NULL, NULL, NID_undef },
-    { NULL, NULL, NID_undef },
-    {"id-tc26-wrap", "id-tc26-wrap", NID_id_tc26_wrap, 7, &so[7641]},
-    {"id-tc26-wrap-gostr3412-2015-magma", "id-tc26-wrap-gostr3412-2015-magma", NID_id_tc26_wrap_gostr3412_2015_magma, 8, &so[7648]},
-    { NULL, NULL, NID_undef },
-    {"id-tc26-wrap-gostr3412-2015-kuznyechik", "id-tc26-wrap-gostr3412-2015-kuznyechik", NID_id_tc26_wrap_gostr3412_2015_kuznyechik, 8, &so[7656]},
-    { NULL, NULL, NID_undef },
-    {"id-tc26-gost-3410-2012-256-paramSetB", "GOST R 34.10-2012 (256 bit) ParamSet B", NID_id_tc26_gost_3410_2012_256_paramSetB, 9, &so[7664]},
-    {"id-tc26-gost-3410-2012-256-paramSetC", "GOST R 34.10-2012 (256 bit) ParamSet C", NID_id_tc26_gost_3410_2012_256_paramSetC, 9, &so[7673]},
-    {"id-tc26-gost-3410-2012-256-paramSetD", "GOST R 34.10-2012 (256 bit) ParamSet D", NID_id_tc26_gost_3410_2012_256_paramSetD, 9, &so[7682]},
+    {"magma-ctr-acpkm", "magma-ctr-acpkm", NID_magma_ctr_acpkm, 9, &so[7633]},
+    {"magma-ctr-acpkm-omac", "magma-ctr-acpkm-omac", NID_magma_ctr_acpkm_omac, 9, &so[7642]},
+    {"id-tc26-cipher-gostr3412-2015-kuznyechik", "id-tc26-cipher-gostr3412-2015-kuznyechik", NID_id_tc26_cipher_gostr3412_2015_kuznyechik, 8, &so[7651]},
+    {"kuznyechik-ctr-acpkm", "kuznyechik-ctr-acpkm", NID_kuznyechik_ctr_acpkm, 9, &so[7659]},
+    {"kuznyechik-ctr-acpkm-omac", "kuznyechik-ctr-acpkm-omac", NID_kuznyechik_ctr_acpkm_omac, 9, &so[7668]},
+    {"id-tc26-wrap", "id-tc26-wrap", NID_id_tc26_wrap, 7, &so[7677]},
+    {"id-tc26-wrap-gostr3412-2015-magma", "id-tc26-wrap-gostr3412-2015-magma", NID_id_tc26_wrap_gostr3412_2015_magma, 8, &so[7684]},
+    {"magma-kexp15", "magma-kexp15", NID_magma_kexp15, 9, &so[7692]},
+    {"id-tc26-wrap-gostr3412-2015-kuznyechik", "id-tc26-wrap-gostr3412-2015-kuznyechik", NID_id_tc26_wrap_gostr3412_2015_kuznyechik, 8, &so[7701]},
+    {"kuznyechik-kexp15", "kuznyechik-kexp15", NID_kuznyechik_kexp15, 9, &so[7709]},
+    {"id-tc26-gost-3410-2012-256-paramSetB", "GOST R 34.10-2012 (256 bit) ParamSet B", NID_id_tc26_gost_3410_2012_256_paramSetB, 9, &so[7718]},
+    {"id-tc26-gost-3410-2012-256-paramSetC", "GOST R 34.10-2012 (256 bit) ParamSet C", NID_id_tc26_gost_3410_2012_256_paramSetC, 9, &so[7727]},
+    {"id-tc26-gost-3410-2012-256-paramSetD", "GOST R 34.10-2012 (256 bit) ParamSet D", NID_id_tc26_gost_3410_2012_256_paramSetD, 9, &so[7736]},
     {"magma-ecb", "magma-ecb", NID_magma_ecb},
     {"magma-ctr", "magma-ctr", NID_magma_ctr},
     {"magma-ofb", "magma-ofb", NID_magma_ofb},
     {"magma-cbc", "magma-cbc", NID_magma_cbc},
     {"magma-cfb", "magma-cfb", NID_magma_cfb},
     {"magma-mac", "magma-mac", NID_magma_mac},
-    {"hmacWithSHA512-224", "hmacWithSHA512-224", NID_hmacWithSHA512_224, 8, &so[7691]},
-    {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7699]},
-    {"GMAC", "gmac", NID_gmac, 5, &so[7707]},
-    {"KMAC128", "kmac128", NID_kmac128, 9, &so[7712]},
-    {"KMAC256", "kmac256", NID_kmac256, 9, &so[7721]},
+    {"hmacWithSHA512-224", "hmacWithSHA512-224", NID_hmacWithSHA512_224, 8, &so[7745]},
+    {"hmacWithSHA512-256", "hmacWithSHA512-256", NID_hmacWithSHA512_256, 8, &so[7753]},
+    {"GMAC", "gmac", NID_gmac, 5, &so[7761]},
+    {"KMAC128", "kmac128", NID_kmac128, 9, &so[7766]},
+    {"KMAC256", "kmac256", NID_kmac256, 9, &so[7775]},
     {"AES-128-SIV", "aes-128-siv", NID_aes_128_siv},
     {"AES-192-SIV", "aes-192-siv", NID_aes_192_siv},
     {"AES-256-SIV", "aes-256-siv", NID_aes_256_siv},
-    {"BLAKE2BMAC", "blake2bmac", NID_blake2bmac, 10, &so[7730]},
-    {"BLAKE2SMAC", "blake2smac", NID_blake2smac, 10, &so[7740]},
+    {"BLAKE2BMAC", "blake2bmac", NID_blake2bmac, 10, &so[7784]},
+    {"BLAKE2SMAC", "blake2smac", NID_blake2smac, 10, &so[7794]},
     {"SSHKDF", "sshkdf", NID_sshkdf},
-    {"SM2-SM3", "SM2-with-SM3", NID_SM2_with_SM3, 8, &so[7750]},
+    {"SM2-SM3", "SM2-with-SM3", NID_SM2_with_SM3, 8, &so[7804]},
     {"SSKDF", "sskdf", NID_sskdf},
     {"X963KDF", "x963kdf", NID_x963kdf},
     {"X942KDF", "x942kdf", NID_x942kdf},
-    {"id-on-SmtpUTF8Mailbox", "Smtp UTF8 Mailbox", NID_id_on_SmtpUTF8Mailbox, 8, &so[7758]},
-    {"id-on-xmppAddr", "XmppAddr", NID_XmppAddr, 8, &so[7766]},
-    {"id-on-dnsSRV", "SRVName", NID_SRVName, 8, &so[7774]},
-    {"id-on-NAIRealm", "NAIRealm", NID_NAIRealm, 8, &so[7782]},
+    {"id-on-SmtpUTF8Mailbox", "Smtp UTF8 Mailbox", NID_id_on_SmtpUTF8Mailbox, 8, &so[7812]},
+    {"id-on-xmppAddr", "XmppAddr", NID_XmppAddr, 8, &so[7820]},
+    {"id-on-dnsSRV", "SRVName", NID_SRVName, 8, &so[7828]},
+    {"id-on-NAIRealm", "NAIRealm", NID_NAIRealm, 8, &so[7836]},
     {"modp_1536", "modp_1536", NID_modp_1536},
     {"modp_2048", "modp_2048", NID_modp_2048},
     {"modp_3072", "modp_3072", NID_modp_3072},
     {"modp_4096", "modp_4096", NID_modp_4096},
     {"modp_6144", "modp_6144", NID_modp_6144},
     {"modp_8192", "modp_8192", NID_modp_8192},
-    {"magma-ctr-acpkm", "magma-ctr-acpkm", NID_magma_ctr_acpkm, 9, &so[7790]},
-    {"magma-ctr-acpkm-omac", "magma-ctr-acpkm-omac", NID_magma_ctr_acpkm_omac, 9, &so[7799]},
-    {"kuznyechik-ctr-acpkm", "kuznyechik-ctr-acpkm", NID_kuznyechik_ctr_acpkm, 9, &so[7808]},
-    {"kuznyechik-ctr-acpkm-omac", "kuznyechik-ctr-acpkm-omac", NID_kuznyechik_ctr_acpkm_omac, 9, &so[7817]},
-    {"magma-kexp15", "magma-kexp15", NID_magma_kexp15, 9, &so[7826]},
-    {"kuznyechik-kexp15", "kuznyechik-kexp15", NID_kuznyechik_kexp15, 9, &so[7835]},
-    {"kuznyechik-ecb", "kuznyechik-ecb", NID_kuznyechik_ecb},
-    {"kuznyechik-ctr", "kuznyechik-ctr", NID_kuznyechik_ctr},
-    {"kuznyechik-ofb", "kuznyechik-ofb", NID_kuznyechik_ofb},
-    {"kuznyechik-cbc", "kuznyechik-cbc", NID_kuznyechik_cbc},
-    {"kuznyechik-cfb", "kuznyechik-cfb", NID_kuznyechik_cfb},
-    {"kuznyechik-mac", "kuznyechik-mac", NID_kuznyechik_mac},
 };
 
 #define NUM_SN 1209
@@ -3145,15 +3133,15 @@ static const unsigned int sn_objs[NUM_SN] = {
      956,    /* "jurisdictionST" */
      150,    /* "keyBag" */
       83,    /* "keyUsage" */
-    1227,    /* "kuznyechik-cbc" */
-    1228,    /* "kuznyechik-cfb" */
-    1225,    /* "kuznyechik-ctr" */
-    1220,    /* "kuznyechik-ctr-acpkm" */
-    1221,    /* "kuznyechik-ctr-acpkm-omac" */
-    1224,    /* "kuznyechik-ecb" */
-    1223,    /* "kuznyechik-kexp15" */
-    1229,    /* "kuznyechik-mac" */
-    1226,    /* "kuznyechik-ofb" */
+    1015,    /* "kuznyechik-cbc" */
+    1016,    /* "kuznyechik-cfb" */
+    1013,    /* "kuznyechik-ctr" */
+    1177,    /* "kuznyechik-ctr-acpkm" */
+    1178,    /* "kuznyechik-ctr-acpkm-omac" */
+    1012,    /* "kuznyechik-ecb" */
+    1183,    /* "kuznyechik-kexp15" */
+    1017,    /* "kuznyechik-mac" */
+    1014,    /* "kuznyechik-ofb" */
      477,    /* "lastModifiedBy" */
      476,    /* "lastModifiedTime" */
      157,    /* "localKeyID" */
@@ -3161,10 +3149,10 @@ static const unsigned int sn_objs[NUM_SN] = {
     1190,    /* "magma-cbc" */
     1191,    /* "magma-cfb" */
     1188,    /* "magma-ctr" */
-    1218,    /* "magma-ctr-acpkm" */
-    1219,    /* "magma-ctr-acpkm-omac" */
+    1174,    /* "magma-ctr-acpkm" */
+    1175,    /* "magma-ctr-acpkm-omac" */
     1187,    /* "magma-ecb" */
-    1222,    /* "magma-kexp15" */
+    1181,    /* "magma-kexp15" */
     1192,    /* "magma-mac" */
     1189,    /* "magma-ofb" */
      460,    /* "mail" */
@@ -4331,15 +4319,15 @@ static const unsigned int ln_objs[NUM_LN] = {
      773,    /* "kisa" */
     1196,    /* "kmac128" */
     1197,    /* "kmac256" */
-    1227,    /* "kuznyechik-cbc" */
-    1228,    /* "kuznyechik-cfb" */
-    1225,    /* "kuznyechik-ctr" */
-    1220,    /* "kuznyechik-ctr-acpkm" */
-    1221,    /* "kuznyechik-ctr-acpkm-omac" */
-    1224,    /* "kuznyechik-ecb" */
-    1223,    /* "kuznyechik-kexp15" */
-    1229,    /* "kuznyechik-mac" */
-    1226,    /* "kuznyechik-ofb" */
+    1015,    /* "kuznyechik-cbc" */
+    1016,    /* "kuznyechik-cfb" */
+    1013,    /* "kuznyechik-ctr" */
+    1177,    /* "kuznyechik-ctr-acpkm" */
+    1178,    /* "kuznyechik-ctr-acpkm-omac" */
+    1012,    /* "kuznyechik-ecb" */
+    1183,    /* "kuznyechik-kexp15" */
+    1017,    /* "kuznyechik-mac" */
+    1014,    /* "kuznyechik-ofb" */
     1063,    /* "kx-any" */
     1039,    /* "kx-dhe" */
     1041,    /* "kx-dhe-psk" */
@@ -4358,10 +4346,10 @@ static const unsigned int ln_objs[NUM_LN] = {
     1190,    /* "magma-cbc" */
     1191,    /* "magma-cfb" */
     1188,    /* "magma-ctr" */
-    1218,    /* "magma-ctr-acpkm" */
-    1219,    /* "magma-ctr-acpkm-omac" */
+    1174,    /* "magma-ctr-acpkm" */
+    1175,    /* "magma-ctr-acpkm-omac" */
     1187,    /* "magma-ecb" */
-    1222,    /* "magma-kexp15" */
+    1181,    /* "magma-kexp15" */
     1192,    /* "magma-mac" */
     1189,    /* "magma-ofb" */
      493,    /* "mailPreferenceOption" */
@@ -5456,12 +5444,12 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1120,    /* OBJ_aria_128_ccm                 1 2 410 200046 1 1 37 */
     1121,    /* OBJ_aria_192_ccm                 1 2 410 200046 1 1 38 */
     1122,    /* OBJ_aria_256_ccm                 1 2 410 200046 1 1 39 */
-    1218,    /* OBJ_magma_ctr_acpkm              1 2 643 7 1 1 5 1 1 */
-    1219,    /* OBJ_magma_ctr_acpkm_omac         1 2 643 7 1 1 5 1 2 */
-    1220,    /* OBJ_kuznyechik_ctr_acpkm         1 2 643 7 1 1 5 2 1 */
-    1221,    /* OBJ_kuznyechik_ctr_acpkm_omac    1 2 643 7 1 1 5 2 2 */
-    1222,    /* OBJ_magma_kexp15                 1 2 643 7 1 1 7 1 1 */
-    1223,    /* OBJ_kuznyechik_kexp15            1 2 643 7 1 1 7 2 1 */
+    1174,    /* OBJ_magma_ctr_acpkm              1 2 643 7 1 1 5 1 1 */
+    1175,    /* OBJ_magma_ctr_acpkm_omac         1 2 643 7 1 1 5 1 2 */
+    1177,    /* OBJ_kuznyechik_ctr_acpkm         1 2 643 7 1 1 5 2 1 */
+    1178,    /* OBJ_kuznyechik_ctr_acpkm_omac    1 2 643 7 1 1 5 2 2 */
+    1181,    /* OBJ_magma_kexp15                 1 2 643 7 1 1 7 1 1 */
+    1183,    /* OBJ_kuznyechik_kexp15            1 2 643 7 1 1 7 2 1 */
     1148,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetA 1 2 643 7 1 2 1 1 1 */
     1184,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetB 1 2 643 7 1 2 1 1 2 */
     1185,    /* OBJ_id_tc26_gost_3410_2012_256_paramSetC 1 2 643 7 1 2 1 1 3 */
