@@ -67,8 +67,8 @@ INCLUDE[cpuid.o]=..
 
 SOURCE[../libcrypto]=$CPUID_COMMON
 DEFINE[../libcrypto]=$CPUIDDEF
-SOURCE[../providers/fips]=$CPUID_COMMON
-DEFINE[../providers/fips]=$CPUIDDEF
+SOURCE[../providers/libfips.a]=$CPUID_COMMON
+DEFINE[../providers/libfips.a]=$CPUIDDEF
 # We only need to include the CPUID stuff in the legacy provider when it's a
 # separate module and it's dynamically linked with libcrypto.  Otherwise, it
 # already gets everything that the static libcrypto.a has, and doesn't need it
@@ -80,7 +80,6 @@ ENDIF
 
 # Implementations are now spread across several libraries, so the CPUID define
 # need to be applied to all affected libraries and modules.
-DEFINE[../providers/libfips.a]=$CPUIDDEF
 DEFINE[../providers/libimplementations.a]=$CPUIDDEF
 DEFINE[../providers/libcommon.a]=$CPUIDDEF
 
