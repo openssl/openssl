@@ -236,6 +236,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
+        EVP_KEYMGMT_free(keymgmt);
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
         ENGINE_finish(e);
 #endif
