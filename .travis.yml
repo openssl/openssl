@@ -61,6 +61,9 @@ jobs:
           env: CONFIG_OPTS="--strict-warnings"
         - os: linux-ppc64le
           compiler: gcc
+          env: CONFIG_OPTS="--strict-warnings" BUILDONLY="yes"
+        - os: linux-ppc64le
+          compiler: gcc
           env: CONFIG_OPTS="--strict-warnings"
         - os: linux
           compiler: gcc
