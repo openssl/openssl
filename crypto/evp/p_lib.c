@@ -1591,6 +1591,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
                  * reference count.
                  */
                 evp_keymgmt_util_cache_keydata(pk, 0, keymgmt, keydata);
+                EVP_PKEY_CTX_free(pctx);
 
                 /* Synchronize the dirty count */
                 pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
@@ -1599,6 +1600,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
                 EVP_KEYMGMT_free(keymgmt);
                 return 1;
             }
+            EVP_PKEY_CTX_free(pctx);
         }
 
         ERR_raise_data(ERR_LIB_EVP, EVP_R_KEYMGMT_EXPORT_FAILURE,
