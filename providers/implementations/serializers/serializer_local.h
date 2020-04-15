@@ -14,6 +14,7 @@
 #include <openssl/x509.h>        /* X509_SIG */
 #include <openssl/types.h>
 #include <crypto/ecx.h>
+#include "internal/ffc.h"
 
 struct pkcs8_encrypt_ctx_st {
     /* Set to 1 if intending to encrypt/decrypt, otherwise 0 */
@@ -54,6 +55,7 @@ int ossl_prov_prepare_ec_params(const void *eckey, int nid,
 int ossl_prov_ec_pub_to_der(const void *eckey, unsigned char **pder);
 int ossl_prov_ec_priv_to_der(const void *eckey, unsigned char **pder);
 
+int ffc_params_prov_print(BIO *out, const FFC_PARAMS *ffc);
 int ossl_prov_prepare_dh_params(const void *dh, int nid,
                                 void **pstr, int *pstrtype);
 int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder);

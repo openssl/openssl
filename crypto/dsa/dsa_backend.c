@@ -34,7 +34,7 @@ int dsa_key_fromdata(DSA *dsa, const OSSL_PARAM params[])
         return 1;
 
     /*
-     * DH documentation says that a public key must be present if a
+     * DSA documentation says that a public key must be present if a
      * private key is present.
      */
     if (param_priv_key != NULL && param_pub_key == NULL)

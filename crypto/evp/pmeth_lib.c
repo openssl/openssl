@@ -8,7 +8,7 @@
  */
 
 /*
- * DH low level APIs are deprecated for public use, but still ok for
+ * Low level key APIs (DH etc) are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -816,6 +816,18 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         }
     }
 # endif
+# ifndef OPENSSL_NO_DSA
+    if (keytype == EVP_PKEY_DSA) {
+        switch (cmd) {
+        case EVP_PKEY_CTRL_DSA_PARAMGEN_BITS:
+            return EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, p1);
+        case EVP_PKEY_CTRL_DSA_PARAMGEN_Q_BITS:
+            return EVP_PKEY_CTX_set_dsa_paramgen_q_bits(ctx, p1);
+        case EVP_PKEY_CTRL_DSA_PARAMGEN_MD:
+            return EVP_PKEY_CTX_set_dsa_paramgen_md(ctx, p2);
+        }
+    }
+# endif
 # ifndef OPENSSL_NO_EC
     if (keytype == EVP_PKEY_EC) {
         switch (cmd) {
@@ -1000,6 +1012,14 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_PKEY_PARAM_RSA_E;
     else if (strcmp(name, "rsa_keygen_primes") == 0)
         name = OSSL_PKEY_PARAM_RSA_PRIMES;
+# ifndef OPENSSL_NO_DSA
+    else if (strcmp(name, "dsa_paramgen_bits") == 0)
+        name = OSSL_PKEY_PARAM_FFC_PBITS;
+    else if (strcmp(name, "dsa_paramgen_q_bits") == 0)
+        name = OSSL_PKEY_PARAM_FFC_QBITS;
+    else if (strcmp(name, "dsa_paramgen_md") == 0)
+        name = OSSL_PKEY_PARAM_FFC_DIGEST;
+# endif
 # ifndef OPENSSL_NO_DH
     else if (strcmp(name, "dh_pad") == 0)
         name = OSSL_EXCHANGE_PARAM_PAD;

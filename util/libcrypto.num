@@ -5056,3 +5056,10 @@ d2i_PrivateKey_ex_fp                    ?	3_0_0	EXIST::FUNCTION:STDIO
 d2i_PrivateKey_ex_bio                   ?	3_0_0	EXIST::FUNCTION:
 PEM_read_bio_PrivateKey_ex              ?	3_0_0	EXIST::FUNCTION:
 PEM_read_PrivateKey_ex                  ?	3_0_0	EXIST::FUNCTION:STDIO
+EVP_PKEY_CTX_set_dsa_paramgen_bits      ?	3_0_0	EXIST::FUNCTION:DSA
+EVP_PKEY_CTX_set_dsa_paramgen_q_bits    ?	3_0_0	EXIST::FUNCTION:DSA
+EVP_PKEY_CTX_set_dsa_paramgen_md_props  ?	3_0_0	EXIST::FUNCTION:DSA
+EVP_PKEY_CTX_set_dsa_paramgen_gindex    ?	3_0_0	EXIST::FUNCTION:DSA
+EVP_PKEY_CTX_set_dsa_paramgen_type      ?	3_0_0	EXIST::FUNCTION:DSA
+EVP_PKEY_CTX_set_dsa_paramgen_seed      ?	3_0_0	EXIST::FUNCTION:DSA
+EVP_PKEY_CTX_set_dsa_paramgen_md        ?	3_0_0	EXIST::FUNCTION:DSA

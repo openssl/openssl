@@ -18,11 +18,11 @@
 #include <openssl/bn.h>
 #include <openssl/dh.h>
 #include <openssl/params.h>
+#include <openssl/param_build.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "crypto/dh.h"
-#include "openssl/param_build.h"
 
 static OSSL_OP_keymgmt_new_fn dh_newdata;
 static OSSL_OP_keymgmt_free_fn dh_freedata;
@@ -137,7 +137,7 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
         ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && ffc_fromdata(dh_get0_params(dh), params);
+        ok = ok && ffc_params_fromdata(dh_get0_params(dh), params);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && dh_key_fromdata(dh, params);
 
@@ -148,7 +148,7 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
                      void *cbarg)
 {
     DH *dh = keydata;
-    OSSL_PARAM_BLD *tmpl;
+    OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *params = NULL;
     int ok = 1;
 
@@ -166,13 +166,13 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL) {
-        OSSL_PARAM_BLD_free(tmpl);
-        return 0;
+        ok = 0;
+        goto err;
     }
-    OSSL_PARAM_BLD_free(tmpl);
-
     ok = param_cb(params, cbarg);
     OSSL_PARAM_BLD_free_params(params);
+err:
+    OSSL_PARAM_BLD_free(tmpl);
     return ok;
 }
 

@@ -14,6 +14,8 @@
 # include <openssl/bn.h>
 # include <openssl/evp.h>
 # include <openssl/dh.h> /* Uses Error codes from DH */
+# include <openssl/params.h>
+# include <openssl/param_build.h>
 
 /* Default value for gindex when canonical generation of g is not used */
 # define FFC_UNVERIFIABLE_GINDEX -1
@@ -100,6 +102,12 @@ void ffc_params_set0_pqg(FFC_PARAMS *params, BIGNUM *p, BIGNUM *q, BIGNUM *g);
 void ffc_params_get0_pqg(const FFC_PARAMS *params, const BIGNUM **p,
                          const BIGNUM **q, const BIGNUM **g);
 void ffc_params_set0_j(FFC_PARAMS *d, BIGNUM *j);
+int ffc_params_set_seed(FFC_PARAMS *params,
+                        const unsigned char *seed, size_t seedlen);
+void ffc_params_set_gindex(FFC_PARAMS *params, int index);
+void ffc_params_set_pcounter(FFC_PARAMS *params, int index);
+void ffc_params_set_h(FFC_PARAMS *params, int index);
+
 int ffc_params_set_validate_params(FFC_PARAMS *params,
                                    const unsigned char *seed, size_t seedlen,
                                    int counter);
@@ -155,6 +163,11 @@ int ffc_validate_public_key_partial(const FFC_PARAMS *params,
 int ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
                              int *ret);
 
-int ffc_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
+int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *tmpl,
+                              OSSL_PARAM params[]);
+int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
+int ffc_named_group_to_nid(const char *name);
+const char *ffc_named_group_from_nid(int nid);
+int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
 
 #endif /* OSSL_INTERNAL_FFC_H */

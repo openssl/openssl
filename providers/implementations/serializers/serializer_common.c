@@ -14,6 +14,7 @@
 #include <openssl/types.h>
 #include <openssl/x509.h>        /* i2d_X509_PUBKEY_bio() */
 #include "crypto/bn.h"           /* bn_get_words() */
+#include "crypto/ctype.h"
 #include "crypto/ecx.h"
 #include "prov/bio.h"            /* ossl_prov_bio_printf() */
 #include "prov/implementations.h"
@@ -161,11 +162,13 @@ OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns
 int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
                                    const BIGNUM *bn)
 {
-    const char *neg;
+    int ret = 0, use_sep = 0;
+    char *hex_str = NULL, *p;
+    const char spaces[] = "    ";
     const char *post_label_spc = " ";
+
+    const char *neg = "";
     int bytes;
-    BN_ULONG *words;
-    int n, i;
 
     if (bn == NULL)
         return 0;
@@ -174,74 +177,63 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
         post_label_spc = "";
     }
 
-    bytes = BN_num_bytes(bn);
-    words = bn_get_words(bn);
-    neg = BN_is_negative(bn) ? "-" : "";
-
     if (BN_is_zero(bn))
         return ossl_prov_bio_printf(out, "%s%s0\n", label, post_label_spc);
 
-    if (BN_num_bytes(bn) <= BN_BYTES)
+    if (BN_num_bytes(bn) <= BN_BYTES) {
+        BN_ULONG *words = bn_get_words(bn);
+
+        if (BN_is_negative(bn))
+            neg = "-";
+
         return ossl_prov_bio_printf(out,
                                     "%s%s%s" BN_FMTu " (%s0x" BN_FMTx ")\n",
                                     label, post_label_spc, neg, words[0],
                                     neg, words[0]);
+    }
 
-    if (neg[0] == '-')
+    hex_str = BN_bn2hex(bn);
+    p = hex_str;
+    if (*p == '-') {
+        ++p;
         neg = " (Negative)";
-
+    }
     if (ossl_prov_bio_printf(out, "%s%s\n", label, neg) <= 0)
-        return 0;
+        goto err;
 
     /* Keep track of how many bytes we have printed out so far */
-    n = 0;
+    bytes = 0;
 
-    /*
-     * OpenSSL BIGNUMs are little endian limbs, so we print them last to
-     * first limb.
-     * i is used as limb index, j is used as the "byte index" in the limb
-     */
-    for (i = bytes / BN_BYTES - 1; i >= 0; i--) {
-        BN_ULONG l = words[i];
-        int  j;
+    if (ossl_prov_bio_printf(out, "%s", spaces) <= 0)
+        goto err;
 
-        for (j = BN_BYTES - 1; j >= 0; j--) {
-            int o = 8 * j;
-            int b = ((l & (0xffLU << o)) >> o) & 0xff;
-
-            /* Indent every new line with 4 spaces */
-            if ((n % 15) == 0) {
-                if (n > 0)
-                    if (ossl_prov_bio_printf(out, "\n") <= 0)
-                        return 0;
-                if (ossl_prov_bio_printf(out, "    ") <= 0)
-                    return 0;
-            }
-
-            /*
-             * Upper bit set, then we print an extra zero and pretend the
-             * BIGNUM was one byte longer
-             */
-            if (n == 0 && b > 127) {
-                if (ossl_prov_bio_printf(out, "%02x:", 0) <= 0)
-                    return 0;
-                n++;
-                bytes++;
-            }
-
-            if (++n < bytes) {
-                if (ossl_prov_bio_printf(out, "%02x:", b) <= 0)
-                    return 0;
-            } else {
-                if (ossl_prov_bio_printf(out, "%02x", b) <= 0)
-                    return 0;
-            }
+    /* Add a leading 00 if the top bit is set */
+    if (*p >= '8') {
+        if (ossl_prov_bio_printf(out, "%02x", 0) <= 0)
+            goto err;
+        ++bytes;
+        use_sep = 1;
+    }
+    while (*p != '\0') {
+        /* Do a newline after every 15 hex bytes + add the space indent */
+        if ((bytes % 15) == 0 && bytes > 0) {
+            if (ossl_prov_bio_printf(out, ":\n%s", spaces) <= 0)
+                goto err;
+            use_sep = 0; /* The first byte on the next line doesnt have a : */
         }
+        if (ossl_prov_bio_printf(out, "%s%c%c", use_sep ? ":" : "",
+                                 ossl_tolower(p[0]), ossl_tolower(p[1])) <= 0)
+            goto err;
+        ++bytes;
+        p += 2;
+        use_sep = 1;
     }
     if (ossl_prov_bio_printf(out, "\n") <= 0)
-        return 0;
-
-    return 1;
+        goto err;
+    ret = 1;
+err:
+    OPENSSL_free(hex_str);
+    return ret;
 }
 
 /* Number of octets per line */

@@ -10,6 +10,7 @@
 #include "internal/ffc.h"
 
 /*
+ * For Fips mode:
  * SP800-56Ar3 5.6.1.1.4 Key pair generation by testing candidates.
  * Generates a private key in the interval [1, min(2 ^ N - 1, q - 1)].
  *
