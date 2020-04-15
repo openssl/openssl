@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
+#include <openssl/sha.h>
 #include "crypto/dh.h"
 #include "dh_local.h"
 
@@ -34,47 +35,45 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb);
 #endif /* FIPS_MODE */
 
-/*
- * TODO(3.0): keygen should be able to use this method to do a FIPS186-4 style
- * paramgen.
- */
-int dh_generate_ffc_parameters(DH *dh, int bits,
-                               int qbits, int gindex, BN_GENCB *cb)
+int dh_generate_ffc_parameters(DH *dh, int type, int pbits,
+                               int qbits, EVP_MD *md, BN_GENCB *cb)
 {
     int ret, res;
 
     if (qbits <= 0) {
-        const EVP_MD *evpmd = bits >= 2048 ? EVP_sha256() : EVP_sha1();
-
-        qbits = EVP_MD_size(evpmd) * 8;
+        if (md != NULL)
+            qbits = EVP_MD_size(md) * 8;
+        else
+            qbits = (pbits >= 2048 ? SHA256_DIGEST_LENGTH :
+                                     SHA_DIGEST_LENGTH) * 8;
     }
-    dh->params.gindex = gindex;
-    ret = ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
-                                        FFC_PARAM_TYPE_DH,
-                                        bits, qbits, NULL, &res, cb);
+#ifndef FIPS_MODE
+    if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
+        ret = ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
+                                            FFC_PARAM_TYPE_DH,
+                                            pbits, qbits, md, &res, cb);
+    else
+#endif
+        ret = ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
+                                            FFC_PARAM_TYPE_DH,
+                                            pbits, qbits, md, &res, cb);
     if (ret > 0)
         dh->dirty_cnt++;
     return ret;
 }
 
-int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
-                              BN_GENCB *cb)
+int dh_get_named_group_uid_from_size(int pbits)
 {
-#ifdef FIPS_MODE
     /*
      * Just choose an approved safe prime group.
      * The alternative to this is to generate FIPS186-4 domain parameters i.e.
-     * return dh_generate_ffc_parameters(ret, prime_len, -1, -1, cb);
+     * return dh_generate_ffc_parameters(ret, prime_len, 0, NULL, cb);
      * As the FIPS186-4 generated params are for backwards compatability,
      * the safe prime group should be used as the default.
      */
-    DH *dh = NULL;
-    int ok = 0, nid;
+    int nid;
 
-    if (generator != 2)
-        return 0;
-
-    switch (prime_len) {
+    switch (pbits) {
     case 2048:
         nid = NID_ffdhe2048;
         break;
@@ -92,15 +91,40 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
         break;
     /* unsupported prime_len */
     default:
-        return 0;
+        return NID_undef;
     }
-    dh = DH_new_by_nid(nid);
-    if (dh != NULL && ffc_params_copy(&ret->params, &dh->params)) {
+    return nid;
+}
+
+#ifdef FIPS_MODE
+
+static int dh_gen_named_group(OPENSSL_CTX *libctx, DH *ret, int prime_len)
+{
+    DH *dh;
+    int ok = 0;
+    int nid = dh_get_named_group_uid_from_size(prime_len);
+
+    if (nid == NID_undef)
+        return 0;
+
+    dh = dh_new_by_nid_with_libctx(libctx, nid);
+    if (dh != NULL
+        && ffc_params_copy(&ret->params, &dh->params)) {
         ok = 1;
         ret->dirty_cnt++;
     }
     DH_free(dh);
     return ok;
+}
+#endif /* FIPS_MODE */
+
+int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
+                              BN_GENCB *cb)
+{
+#ifdef FIPS_MODE
+    if (generator != 2)
+        return 0;
+    return dh_gen_named_group(ret->libctx, ret, prime_len);
 #else
     if (ret->meth->generate_params)
         return ret->meth->generate_params(ret, prime_len, generator, cb);

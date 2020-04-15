@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,8 +17,10 @@
 #include <openssl/bn.h>
 #include <openssl/engine.h>
 #include <openssl/obj_mac.h>
+#include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
+#include "crypto/evp.h"
 #include "crypto/dh.h"
 #include "dh_local.h"
 
@@ -61,7 +63,7 @@ DH *DH_new_method(ENGINE *engine)
 }
 #endif /* !FIPS_MODE */
 
-DH *dh_new_with_ctx(OPENSSL_CTX *libctx)
+DH *dh_new_with_libctx(OPENSSL_CTX *libctx)
 {
     return dh_new_intern(NULL, libctx);
 }
@@ -318,4 +320,215 @@ FFC_PARAMS *dh_get0_params(DH *dh)
 int dh_get0_nid(const DH *dh)
 {
     return dh->params.nid;
+}
+
+int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[])
+{
+    int ret;
+    FFC_PARAMS *ffc;
+
+    if (dh == NULL)
+        return 0;
+    ffc = dh_get0_params(dh);
+    if (ffc == NULL)
+        return 0;
+
+    ret = ffc_params_fromdata(ffc, params);
+    if (ret) {
+        DH_get_nid(dh);
+        dh->dirty_cnt++;
+    }
+    return ret;
+}
+
+static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
+{
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+    /* If key type not DH return error */
+    if (ctx->pmeth != NULL
+        && ctx->pmeth->pkey_id != EVP_PKEY_DH
+        && ctx->pmeth->pkey_id != EVP_PKEY_DHX)
+        return -1;
+    return 1;
+}
+
+int EVP_PKEY_CTX_set_dh_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GINDEX, &gindex);
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dh_paramgen_seed(EVP_PKEY_CTX *ctx,
+                                      const unsigned char *seed,
+                                      size_t seedlen)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_FFC_SEED,
+                                             (void *)seed, seedlen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dh_paramgen_type(EVP_PKEY_CTX *ctx, int typ)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+    const char *name;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+#if !defined(FIPS_MODE)
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
+                                 EVP_PKEY_CTRL_DH_PARAMGEN_TYPE, typ, NULL);
+#endif
+
+    name = dh_gen_type_id2name(typ);
+    if (name == NULL)
+        return 0;
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE,
+                                            (char *) name, 0);
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int pbits)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+    size_t bits = pbits;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+#if !defined(FIPS_MODE)
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
+                                 EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN, pbits,
+                                 NULL);
+#endif
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_PBITS, &bits);
+    *p++ = OSSL_PARAM_construct_end();
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int qbits)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+    size_t bits2 = qbits;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+#if !defined(FIPS_MODE)
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
+                                 EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN, qbits,
+                                 NULL);
+#endif
+    *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_QBITS, &bits2);
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+#if !defined(FIPS_MODE)
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
+                                 EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR, gen, NULL);
+#endif
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GENERATOR, &gen);
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+    const char *name;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+#if !defined(FIPS_MODE)
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN,
+                                 EVP_PKEY_CTRL_DH_RFC5114, gen, NULL);
+#endif
+    name = ffc_named_group_from_uid(gen);
+    if (name == NULL)
+        return 0;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_GROUP,
+                                            (void *)name, 0);
+    *p++ = OSSL_PARAM_construct_end();
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen)
+{
+    return EVP_PKEY_CTX_set_dh_rfc5114(ctx, gen);
+}
+
+int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
+{
+    int ret;
+    OSSL_PARAM params[2], *p = params;
+    const char *name;
+
+    if ((ret = dh_paramgen_check(ctx)) <= 0)
+        return ret;
+
+#if !defined(FIPS_MODE)
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.keymgmt.genctx == NULL)
+        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,
+                                 EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
+                                 EVP_PKEY_CTRL_DH_NID, nid, NULL);
+#endif
+    name = ffc_named_group_from_uid(nid);
+    if (name == NULL)
+        return 0;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_GROUP,
+                                            (void *)name, 0);
+    *p++ = OSSL_PARAM_construct_end();
+    return EVP_PKEY_CTX_set_params(ctx, params);
 }

@@ -15,7 +15,7 @@
 int ffc_params_prov_print(BIO *out, const FFC_PARAMS *ffc)
 {
     if (ffc->nid != NID_undef) {
-        const char *name = ffc_named_group_from_nid(ffc->nid);
+        const char *name = ffc_named_group_from_uid(ffc->nid);
 
         if (name == NULL)
             goto err;
