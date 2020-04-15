@@ -520,6 +520,7 @@ err:
     BN_free(priv);
     BN_free(pub_out);
     BN_free(priv_out);
+    EVP_PKEY_free(copy_pk);
     EVP_PKEY_free(pk);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_CTX_free(key_ctx);
