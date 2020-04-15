@@ -170,10 +170,15 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
             evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
                                         &tmp_keymgmt, ctx->propquery);
 
-        if (keydata == NULL)
+        if (tmp_keymgmt == NULL)
             goto not_supported;
-        ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
-                                           ctx->op.keymgmt.genctx, keydata);
+        /*
+         * If there is no keydata, then the given pkey is empty, so
+         * there is no template to set
+         */
+        if (keydata != NULL)
+            ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
+                                               ctx->op.keymgmt.genctx, keydata);
     }
 
     /*

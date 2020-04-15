@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-evp_pkey_export_to_provider, evp_pkey_upgrade_to_provider
+evp_pkey_export_to_provider, evp_pkey_downgrade
 - internal EVP_PKEY support functions for providers
 
 =head1 SYNOPSIS
@@ -13,9 +13,7 @@ evp_pkey_export_to_provider, evp_pkey_upgrade_to_provider
  void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                    EVP_KEYMGMT **keymgmt,
                                    const char *propquery);
- void *evp_pkey_upgrade_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                                    EVP_KEYMGMT **keymgmt,
-                                    const char *propquery);
+ int evp_pkey_downgrade(EVP_PKEY *pk);
 
 =head1 DESCRIPTION
 
@@ -31,29 +29,26 @@ default context), the name of the legacy type of I<pk>, and the I<propquery>
 If I<keymgmt> isn't NULL but I<*keymgmt> is, and the "origin" was successfully
 exported, then I<*keymgmt> is assigned the implicitly fetched B<EVP_KEYMGMT>.
 
-evp_pkey_upgrade_to_provider() exports the legacy "origin" key contained in
-I<pk> to it's provider side counterpart, then clears the legacy "origin" key
-along with other legacy data, and resets all the caches.  Otherwise, it works
-like evp_pkey_export_to_provider().
-
-I<evp_pkey_upgrade_to_provider() must be used with great care, only if there's
-no other way.>
-Most of the time, it's sufficient to use evp_pkey_export_to_provider(), but in
-case the key needs modification with data coming from a provided key, the key
-will need an upgrade.
+evp_pkey_downgrade() converts an B<EVP_PKEY> with a provider side "origin" key
+to one with a legacy "origin", if there's a corresponding legacy implementation.
+This clears the operation cache, except for the provider side "origin" key.
+This function is used in spots where provider side keys aren't yet supported,
+in an attempt to keep operating with available implementations.
 
 =head1 RETURN VALUES
 
-evp_pkey_export_to_provider() and evp_pkey_upgrade_to_provider() both return
-the provider key data that was exported if the "origin" was successfully
-exported to its target.  Otherwise, NULL is returned.
+evp_pkey_export_to_provider() returns the provider key data if there was any
+allocated.  It also either sets I<*keymgmt> to the B<EVP_KEYMGMT> associated
+with the returned key data, or NULL on error.
+
+evp_pkey_downgrade() returns 1 on success or 0 on error.
 
 =head1 NOTES
 
-Some functions calling evp_pkey_export_to_provider() or
-evp_pkey_upgrade_to_provider() may have received a const key, and may
-therefore have to cast the key to non-const form to call this function.  Since
-B<EVP_PKEY> is always dynamically allocated, this is OK.
+Some functions calling evp_pkey_export_to_provider() or evp_pkey_downgrade()
+may have received a const key, and may therefore have to cast the key to
+non-const form to call this function.  Since B<EVP_PKEY> is always dynamically
+allocated, this is OK.
 
 =head1 SEE ALSO
 
