@@ -335,8 +335,8 @@ sub testssl {
     my @ssltest = ("ssltest_old",
 		   "-s_key", $key, "-s_cert", $cert,
 		   "-c_key", $key, "-c_cert", $cert,
-           "-provider", $provider,
-           "-config", $configfile);
+		   "-provider", $provider,
+		   "-config", $configfile);
 
     my $serverinfo = srctop_file("test","serverinfo.pem");
 
