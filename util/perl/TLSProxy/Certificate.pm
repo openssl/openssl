@@ -54,49 +54,54 @@ sub parse
         die "Invalid Certificate List length"
             if length($remdata) != $certlistlen;
 
-        my ($hicertlen, $certlen) = unpack('Cn', $remdata);
-        $certlen += ($hicertlen << 16);
+        # client Certificate messages can be empty
+        if ($certlistlen > 0) {
+            my ($hicertlen, $certlen) = unpack('Cn', $remdata);
+            $certlen += ($hicertlen << 16);
 
-        die "Certificate too long" if ($certlen + 3) > $certlistlen;
+            die "Certificate too long" if ($certlen + 3) > $certlistlen;
 
-        $remdata = substr($remdata, 3);
+            $remdata = substr($remdata, 3);
 
-        my $certdata = substr($remdata, 0, $certlen);
+            my $certdata = substr($remdata, 0, $certlen);
 
-        $remdata = substr($remdata, $certlen);
+            $remdata = substr($remdata, $certlen);
 
-        my $extensions_len = unpack('n', $remdata);
-        $remdata = substr($remdata, 2);
+            my $extensions_len = unpack('n', $remdata);
+            $remdata = substr($remdata, 2);
 
-        die "Extensions too long"
-            if ($certlen + 3 + $extensions_len + 2) > $certlistlen;
+            die "Extensions too long"
+                if ($certlen + 3 + $extensions_len + 2) > $certlistlen;
 
-        my $extension_data = "";
-        if ($extensions_len != 0) {
-            $extension_data = substr($remdata, 0, $extensions_len);
+            my $extension_data = "";
+            if ($extensions_len != 0) {
+                $extension_data = substr($remdata, 0, $extensions_len);
 
-            if (length($extension_data) != $extensions_len) {
-                die "Invalid extension length\n";
+                if (length($extension_data) != $extensions_len) {
+                    die "Invalid extension length\n";
+                }
             }
-        }
-        my %extensions = ();
-        while (length($extension_data) >= 4) {
-            my ($type, $size) = unpack("nn", $extension_data);
-            my $extdata = substr($extension_data, 4, $size);
-            $extension_data = substr($extension_data, 4 + $size);
-            $extensions{$type} = $extdata;
-        }
-        $remdata = substr($remdata, $extensions_len);
+            my %extensions = ();
+            while (length($extension_data) >= 4) {
+                my ($type, $size) = unpack("nn", $extension_data);
+                my $extdata = substr($extension_data, 4, $size);
+                $extension_data = substr($extension_data, 4 + $size);
+                $extensions{$type} = $extdata;
+            }
+            $remdata = substr($remdata, $extensions_len);
 
-        $self->context($context);
-        $self->first_certificate($certdata);
-        $self->extension_data(\%extensions);
-        $self->remaining_certdata($remdata);
+            $self->context($context);
+            $self->first_certificate($certdata);
+            $self->extension_data(\%extensions);
+            $self->remaining_certdata($remdata);
 
-        print "    Context:".$context."\n";
-        print "    Certificate List Len:".$certlistlen."\n";
-        print "    Certificate Len:".$certlen."\n";
-        print "    Extensions Len:".$extensions_len."\n";
+            print "    Context:".$context."\n";
+            print "    Certificate List Len:".$certlistlen."\n";
+            print "    Certificate Len:".$certlen."\n";
+            print "    Extensions Len:".$extensions_len."\n";
+        } else {
+            print "    Empty Certificate message\n";
+        }
     } else {
         my ($hicertlistlen, $certlistlen) = unpack('Cn', $self->data);
         $certlistlen += ($hicertlistlen << 16);
