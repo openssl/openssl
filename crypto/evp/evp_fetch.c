@@ -83,7 +83,7 @@ static OSSL_METHOD_STORE *get_evp_method_store(OPENSSL_CTX *libctx)
  * |      name identity     | op id  |
  * +------------------------+--------+
  */
-static uint32_t evp_method_id(int name_idint name_id, unsigned int operation_id)
+static uint32_t evp_method_id(int name_id, unsigned int operation_id)
 {
     if (!ossl_assert(name_id > 0 && name_id < (1 << 24))
         || !ossl_assert(operation_id > 0 && operation_id < (1 << 8)))
