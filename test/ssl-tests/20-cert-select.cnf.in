@@ -54,7 +54,7 @@ my $server_pss_restrict_only = {
 
 my $server_rsa_all;
 
-if (NO_DEFLT_LIBCTX) {
+if ($no_deflt_libctx) {
     $server_rsa_all = {
         "Certificate" => test_pem("servercert.pem"),
         "PrivateKey" => test_pem("serverkey.pem"),
@@ -597,10 +597,10 @@ my @tests_tls_1_1 = (
 
 push @tests, @tests_non_fips unless FIPS_MODE;
 
-#TODO(3.0): Re-enable these PSS tests in a NO_DEFLT_LIBCTX build once we have
+#TODO(3.0): Re-enable these PSS tests in a $no_deflt_libctx build once we have
 #           support for it
-push @tests, @tests_pss unless NO_DEFLT_LIBCTX;
-push @tests, @tests_tls_1_1 unless disabled("tls1_1") || NO_DEFLT_LIBCTX;
+push @tests, @tests_pss unless $no_deflt_libctx;
+push @tests, @tests_tls_1_1 unless disabled("tls1_1") || $no_deflt_libctx;
 
 my $server_tls_1_3;
 
