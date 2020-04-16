@@ -14,7 +14,7 @@ B<openssl> B<s_time>
 [B<-cert filename>]
 [B<-key filename>]
 [B<-CApath directory>]
-[B<-cafile filename>]
+[B<-CAfile filename>]
 [B<-no-CAfile>]
 [B<-no-CApath>]
 [B<-reuse>]
