@@ -270,7 +270,7 @@ extern "C" {
  * SSL3_CT_NUMBER is used to size arrays and it must be large enough to
  * contain all of the cert types defined for *either* SSLv3 and TLSv1.
  */
-# define SSL3_CT_NUMBER                  10
+# define SSL3_CT_NUMBER                  12
 
 # if defined(TLS_CT_NUMBER)
 #  if TLS_CT_NUMBER != SSL3_CT_NUMBER
