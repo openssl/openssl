@@ -3467,7 +3467,7 @@ int speed_main(int argc, char **argv)
                 d = Time_F(STOP);
 
                 BIO_printf(bio_err,
-                           mr ? "+R8:%ld:%u:%s:%.2f\n" :
+                           mr ? "+R10:%ld:%u:%s:%.2f\n" :
                            "%ld %u bits %s signs in %.2fs \n",
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
@@ -3496,7 +3496,7 @@ int speed_main(int argc, char **argv)
                 count = run_benchmark(async_jobs, SM2_verify_loop, loopargs);
                 d = Time_F(STOP);
                 BIO_printf(bio_err,
-                           mr ? "+R9:%ld:%u:%s:%.2f\n"
+                           mr ? "+R11:%ld:%u:%s:%.2f\n"
                            : "%ld %u bits %s verify in %.2fs\n",
                            count, sm2_curves[testnum].bits,
                            sm2_curves[testnum].name, d);
@@ -3678,7 +3678,7 @@ int speed_main(int argc, char **argv)
         }
 
         if (mr)
-            printf("+F6:%u:%u:%s:%f:%f\n",
+            printf("+F7:%u:%u:%s:%f:%f\n",
                    k, sm2_curves[k].bits, sm2_curves[k].name,
                    sm2_results[k][0], sm2_results[k][1]);
         else
@@ -3973,6 +3973,7 @@ static int do_multi(int multi, int size_num)
 
                 p = buf + 4;
                 k = atoi(sstrsep(&p, sep));
+                sstrsep(&p, sep);
                 sstrsep(&p, sep);
 
                 d = atof(sstrsep(&p, sep));
