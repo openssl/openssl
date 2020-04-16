@@ -1576,7 +1576,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
             EVP_PKEY_CTX *pctx
                 = EVP_PKEY_CTX_new_from_pkey(
                     ossl_provider_library_context(keymgmt->prov), pk, NULL);
-                if (pctx == NULL)
+            if (pctx == NULL)
                 ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
 
             if (pctx != NULL
