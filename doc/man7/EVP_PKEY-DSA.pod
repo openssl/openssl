@@ -60,7 +60,7 @@ It is recommended to use a named safe prime group instead, if domain parameter
 validation is required. The default value is 2.
 
 These are not named safe prime groups so setting this value for the OpenSSL FIPS
-provider will instead choose a named safe prime group based on the size of I<q>.
+provider will instead choose a named safe prime group based on the size of I<p>.
 
 =back
 
@@ -189,7 +189,7 @@ This must also be set for key validation.
 
 Sets properties to be used upon look up of the implementation for the selected
 Digest algorithm for the Key Generation Function associated with the given key
-generation I<ctx>.
+generation I<ctx>. This may also be set for key validation.
 
 =item "seed" (B<OSSL_PKEY_PARAM_FFC_SEED>) <octet string>
 
