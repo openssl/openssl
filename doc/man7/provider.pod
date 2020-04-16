@@ -274,9 +274,10 @@ be loaded explicitly, either in code or through OpenSSL configuration
 (see L<config(5)>).
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "provider=fips" can
-be used as a search criterion for these implementations. All algorithm
+be used as a search criterion for these implementations. All approved algorithm
 implementations in the FIPS provider can also be selected with the property
-"fips=yes".
+"fips=yes". The FIPS provider also contains a number of non-approved algorithm
+implementations and these can be selected with the property "fips=no".
 
 =head2 Legacy provider
 
