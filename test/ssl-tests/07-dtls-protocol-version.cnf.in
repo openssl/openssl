@@ -16,9 +16,6 @@ use warnings;
 
 use protocol_version;
 
-our @tests;
-if (FIPS_MODE) {
-    @tests = generate_version_tests("DTLS", 1);
-} else {
-    @tests = generate_version_tests("DTLS", 0);
-}
+our $fips_mode;
+
+our @tests = generate_version_tests("DTLS", $fips_mode);

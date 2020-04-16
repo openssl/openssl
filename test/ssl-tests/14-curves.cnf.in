@@ -10,9 +10,11 @@ use warnings;
 use OpenSSL::Test;
 use OpenSSL::Test::Utils qw(anydisabled);
 
+our $fips_mode;
+
 my @curves;
 
-if (FIPS_MODE) {
+if ($fips_mode) {
     @curves = ("sect163k1", "sect163r2", "sect233k1", "sect233r1",
                "sect283k1", "sect283r1", "sect409k1", "sect409r1",
                "sect571k1", "sect571r1", "prime192v1", "secp224r1",
