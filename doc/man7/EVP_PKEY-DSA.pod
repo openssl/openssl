@@ -18,7 +18,7 @@ cryptography using finite field mathematics. DSA is an example of FFC and
 Diffie-Hellman key establishment algorithms specified in SP800-56A can also be
 implemented as FFC.
 
-For B<DH> FFC key agreement two classes of domain parameters can be used:
+For B<DH> FFC key agreement, two classes of domain parameters can be used:
 “safe” domain parameters that are associated with approved named safe-prime
 groups, and a class of “FIPS 186-type” domain parameters. FIPS 186-type domain
 parameters should only be used for backward compatibility with existing
@@ -30,7 +30,7 @@ for parameter validation.
 This means that optional FFC domain parameter values for I<seed>, I<pcounter>
 and I<gindex> may need to be stored for validation purposes.
 For B<DH> the I<seed> and I<pcounter> can be stored in ASN1 data
-(but the I<gindex> is not). For B<DSA> however these fields are not stored in
+(but the I<gindex> is not). For B<DSA> however, these fields are not stored in
 the ASN1 data so they need to be stored externally if validation is required.
 
 =head2 Common DH parameters
@@ -42,12 +42,12 @@ the ASN1 data so they need to be stored externally if validation is required.
 A string that associates a B<DH> named safe prime group with known values for
 I<p>, I<q> and I<g>.
 
-The following values can be used by OpenSSL's default and FIPS providers:
-"ffdhe2048", "ffdhe3072", "ffdhe4096", "ffdhe6144","ffdhe8192",
-"modp_2048", "modp_3072", "modp_4096", "modp_6144", "modp_8192"
+The following values can be used by the default and OpenSSL's FIPS providers:
+"ffdhe2048", "ffdhe3072", "ffdhe4096", "ffdhe6144", "ffdhe8192",
+"modp_2048", "modp_3072", "modp_4096", "modp_6144", "modp_8192".
 
-The following additional values can also be used by OpenSSL's default provider:
-"modp_1536", "dh_1024_160", "dh_2048_224", "dh_2048_256"
+The following additional values can also be used by the default provider:
+"modp_1536", "dh_1024_160", "dh_2048_224", "dh_2048_256".
 
 DH named groups can be easily validated since the parameters are well known.
 For protocols that only transfer I<p> and I<g> the value of I<q> can also be
@@ -56,11 +56,11 @@ retrieved.
 =item "safeprime-generator" (B<OSSL_PKEY_PARAM_FFC_GENERATOR>) <integer>
 
 Used for DH generation of safe primes using the old generator code.
-It is recommended to use a named safe prime group instead if domain parameter
+It is recommended to use a named safe prime group instead, if domain parameter
 validation is required. The default value is 2.
 
 These are not named safe prime groups so setting this value for the OpenSSL FIPS
-provider will instead chose a named safe prime group based on the size of I<q>.
+provider will instead choose a named safe prime group based on the size of I<q>.
 
 =back
 
@@ -104,7 +104,8 @@ Sets the index to use for canonical generation and verification of the generator
 I<g>.
 Set this to a positive value from 0..FF to use this mode. This I<gindex> can
 then be reused during key validation to verify the value of I<g>. If this value
-is not set or -1 then unverifiable generation of generator I<g> will be used.
+is not set or is -1 then unverifiable generation of the generator I<g> will be
+used.
 
 =item "pcounter" (B<OSSL_PKEY_PARAM_FFC_PCOUNTER>) <integer>
 
@@ -113,9 +114,9 @@ of I<p>. This value must be saved if domain parameter validation is required.
 
 =item "hindex" (B<OSSL_PKEY_PARAM_FFC_H>) <integer>
 
-For unverifiable generation of generator I<g> this value is output during 
-generation of I<g>. It value is the first integer larger than one that satisfies
-g = h^j mod p (where g != 1 and "j" is the cofactor).
+For unverifiable generation of the generator I<g> this value is output during 
+generation of I<g>. Its value is the first integer larger than one that
+satisfies g = h^j mod p (where g != 1 and "j" is the cofactor).
 
 =item "j" (B<OSSL_PKEY_PARAM_FFC_COFACTOR>) <unsigned integer>
 
@@ -147,7 +148,8 @@ It is currently set to "fips186_4".
 
 =item "group"
 
-If specified then a named safe prime named will be chosen using the "pbits" type.
+This specifies that a named safe prime name will be chosen using the "pbits"
+type.
 
 =item "fips186_2"
 
@@ -159,7 +161,7 @@ A safe prime generator. See the "safeprime-generator" type.
 
 =back
 
-For DSA Valid values are one of "default", "fips186_4" or "fips186_2" as
+For DSA valid values are one of "default", "fips186_4" or "fips186_2" as
 described above.
 
 =item "pbits" (B<OSSL_PKEY_PARAM_FFC_PBITS>) <unsigned integer>
@@ -187,7 +189,7 @@ This must also be set for key validation.
 
 Sets properties to be used upon look up of the implementation for the selected
 Digest algorithm for the Key Generation Function associated with the given key
-Generation I<ctx>.
+generation I<ctx>.
 
 =item "seed" (B<OSSL_PKEY_PARAM_FFC_SEED>) <octet string>
 
