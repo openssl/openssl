@@ -1561,7 +1561,7 @@ static int test_keygen_with_empty_template(int n)
             goto err;
         break;
     case 1:
-        /* Here we create an empty RSA key that serves as ou template */
+        /* Here we create an empty RSA key that serves as our template */
         if (!TEST_ptr(tkey = EVP_PKEY_new())
             || !TEST_true(EVP_PKEY_set_type(tkey, EVP_PKEY_RSA))
             || !TEST_ptr(ctx = EVP_PKEY_CTX_new(tkey, NULL)))
