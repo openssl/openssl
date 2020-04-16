@@ -4371,8 +4371,10 @@ int ssl3_get_req_cert_type(SSL *s, WPACKET *pkt)
 #ifndef OPENSSL_NO_GOST
     if (s->version >= TLS1_VERSION && (alg_k & SSL_kGOST))
             return WPACKET_put_bytes_u8(pkt, TLS_CT_GOST01_SIGN)
-                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_SIGN)
-                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_512_SIGN);
+                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_SIGN)
+                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_IANA_512_SIGN)
+                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_LEGACY_SIGN)
+                    && WPACKET_put_bytes_u8(pkt, TLS_CT_GOST12_LEGACY_512_SIGN);
 #endif
 
     if ((s->version == SSL3_VERSION) && (alg_k & SSL_kDHE)) {
