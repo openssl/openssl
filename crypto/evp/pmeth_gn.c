@@ -173,12 +173,11 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         if (tmp_keymgmt == NULL)
             goto not_supported;
         /*
-         * If there is no keydata, then the given pkey is empty, so
-         * there is no template to set
+         * It's ok if keydata is NULL here.  The backend is expected to deal
+         * with that as it sees fit.
          */
-        if (keydata != NULL)
-            ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
-                                               ctx->op.keymgmt.genctx, keydata);
+        ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
+                                           ctx->op.keymgmt.genctx, keydata);
     }
 
     /*
