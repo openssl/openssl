@@ -1569,8 +1569,8 @@ static int test_keygen_with_empty_template(int n)
         break;
     }
 
-    if (!TEST_int_le(EVP_PKEY_keygen_init(ctx), 0)
-        || !TEST_int_le(EVP_PKEY_keygen(ctx, &pkey), 0))
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0))
         goto err;
 
     ret = 1;
