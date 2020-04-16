@@ -29,6 +29,8 @@ sub new
         $startoffset,
         $message_frag_lens);
 
+    $self->{request_ctx_len} = 0;
+    $self->{request_ctx} = "";
     $self->{extension_data} = "";
 
     return $self;
@@ -42,6 +44,8 @@ sub parse
     if (TLSProxy::Proxy->is_tls13()) {
         my $request_ctx_len = unpack('C', $self->data);
         my $request_ctx = substr($self->data, $ptr, $request_ctx_len);
+        $self->{request_ctx_len} = $request_ctx_len;
+        $self->{request_ctx} = $request_ctx;
         $ptr += $request_ctx_len;
 
         my $extensions_len = unpack('n', substr($self->data, $ptr));
@@ -78,7 +82,9 @@ sub set_message_contents
         $extensions .= $extdata;
     }
 
-    $data = pack('n', length($extensions));
+    $data = pack('C', $self->{request_ctx_len});
+    $data .= $self->{request_ctx};
+    $data .= pack('n', length($extensions));
     $data .= $extensions;
     $self->data($data);
 }
