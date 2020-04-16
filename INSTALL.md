@@ -861,11 +861,11 @@ never be used in production environments.  It will only work when used with gcc
 or clang and should be used in conjunction with the `-DPEDANTIC` option
 (or the `--strict-warnings` option).
 
-### no-ui ###
+### no-ui-console ###
 
-Don't build with the User Interface (UI) capability
+Don't build with the User Interface (UI) console method
 
-The User Interface is the set of features enabling text based prompts.
+The User Interface console method enables text based console prompts.
 
 ### enable-unit-test ###
 
