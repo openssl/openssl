@@ -3771,7 +3771,6 @@ static int test_ciphersuite_change(void)
     SSL_free(clientssl);
     serverssl = clientssl = NULL;
 
-# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     /* Check we can resume a session with a different SHA-256 ciphersuite */
     if (!TEST_true(SSL_CTX_set_ciphersuites(cctx,
                                             "TLS_AES_128_CCM_SHA256"))
@@ -3790,7 +3789,6 @@ static int test_ciphersuite_change(void)
     SSL_free(serverssl);
     SSL_free(clientssl);
     serverssl = clientssl = NULL;
-# endif
 
     /*
      * Check attempting to resume a SHA-256 session with no SHA-256 ciphersuites
@@ -4955,7 +4953,6 @@ static int test_export_key_mat(int tst)
     if (tst == 1)
         return 1;
 #endif
-    /* TODO(3.0): No TLSv1.0/TLSv1.1 support with FIPS at the moment */
     if (is_fips && (tst == 0 || tst == 1))
         return 1;
 #ifdef OPENSSL_NO_TLS1_2
