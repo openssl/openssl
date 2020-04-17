@@ -138,6 +138,14 @@ INSTALL_ENGINES={-
                                && $unified_info{attributes}->{modules}->{$_}->{engine} }
                         @{$unified_info{modules}}))
 -}
+INSTALL_MODDULES={-
+        join(" \\\n" . ' ' x 16,
+             fill_lines(" ", $COLUMNS - 16,
+                        map { platform->dso($_) }
+                        grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                               && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                        @{$unified_info{modules}}))
+-}
 INSTALL_PROGRAMS={-
         join(" \\\n" . ' ' x 16,
              fill_lines(" ", $COLUMNS - 16, map { platform->bin($_) }
@@ -532,9 +540,9 @@ depend:
 
 # Install helper targets #############################################
 
-install_sw: install_dev install_engines install_runtime
+install_sw: install_dev install_engines install_modules install_runtime
 
-uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
+uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_dev
 
 install_docs: install_man_docs install_html_docs
 
@@ -702,10 +710,12 @@ uninstall_dev: uninstall_runtime_libs
 	-$(RMDIR) $(DESTDIR)$(libdir)/pkgconfig
 	-$(RMDIR) $(DESTDIR)$(libdir)
 
-install_engines: install_runtime_libs build_modules
+_install_modules_deps: install_runtime_libs build_modules
+
+install_engines: _install_modules_deps
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(ENGINESDIR)/
-	@$(ECHO) "*** Installing ENGINE modules"
+	@$(ECHO) "*** Installing engines"
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
@@ -717,7 +727,7 @@ install_engines: install_runtime_libs build_modules
 	done
 
 uninstall_engines:
-	@$(ECHO) "*** Uninstalling ENGINE modules"
+	@$(ECHO) "*** Uninstalling engines"
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
@@ -728,6 +738,33 @@ uninstall_engines:
 		$(RM) $(DESTDIR)$(ENGINESDIR)/$$fn; \
 	done
 	-$(RMDIR) $(DESTDIR)$(ENGINESDIR)
+
+install_modules: _install_modules_deps
+	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(MODULESDIR)/
+	@$(ECHO) "*** Installing modules"
+	@set -e; for e in dummy $(INSTALL_MODULES); do \
+		if [ "$$e" = "dummy" ]; then continue; fi; \
+		fn=`basename $$e`; \
+		$(ECHO) "install $$e -> $(DESTDIR)$(MODULESDIR)/$$fn"; \
+		cp $$e $(DESTDIR)$(MODULESDIR)/$$fn.new; \
+		chmod 755 $(DESTDIR)$(MODULESDIR)/$$fn.new; \
+		mv -f $(DESTDIR)$(MODULESDIR)/$$fn.new \
+		      $(DESTDIR)$(MODULESDIR)/$$fn; \
+	done
+
+uninstall_modules:
+	@$(ECHO) "*** Uninstalling modules"
+	@set -e; for e in dummy $(INSTALL_MODULES); do \
+		if [ "$$e" = "dummy" ]; then continue; fi; \
+		fn=`basename $$e`; \
+		if [ "$$fn" = '{- platform->dso("ossltest") -}' ]; then \
+			continue; \
+		fi; \
+		$(ECHO) "$(RM) $(DESTDIR)$(MODULESDIR)/$$fn"; \
+		$(RM) $(DESTDIR)$(MODULESDIR)/$$fn; \
+	done
+	-$(RMDIR) $(DESTDIR)$(MODULESDIR)
 
 install_runtime: install_programs
 
