@@ -261,11 +261,9 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
         dh->pub_key = pub_key;
     }
     if (priv_key != NULL) {
-        int bits = BN_num_bits(priv_key);
-
         BN_clear_free(dh->priv_key);
         dh->priv_key = priv_key;
-        dh->length = bits;
+        dh->length = BN_num_bits(priv_key);
     }
 
     dh->dirty_cnt++;
