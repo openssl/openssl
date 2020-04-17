@@ -215,19 +215,38 @@ These types are described above.
 
 =head1 CONFORMING TO
 
-RFC 7919 (TLS ffdhe named safe prime groups)
-RFC 3526 (IKE modp named safe prime groups)
-RFC 5114 (Additional DH named groups for dh_1024_160", "dh_2048_224"
+=over 4
+
+=item RFC 7919 (TLS ffdhe named safe prime groups)
+
+=item RFC 3526 (IKE modp named safe prime groups)
+
+=item RFC 5114 (Additional DH named groups for dh_1024_160", "dh_2048_224"
           and "dh_2048_256").
 
+=back
+
 The following sections of SP800-56Ar3:
-5.5.1.1 FFC Domain Parameter Selection/Generation
-Appendix D: FFC Safe-prime Groups
+
+=over 4
+
+=item 5.5.1.1 FFC Domain Parameter Selection/Generation
+
+=item Appendix D: FFC Safe-prime Groups
+
+=back
 
 The following sections of FIPS 186-4:
-A.1.1.2 Generation of Probable Primes p and q Using an Approved Hash Function.
-A.2.3 Generation of canonical generator g.
-A.2.1 Unverifiable Generation of the Generator g.
+
+=over 4
+
+=item A.1.1.2 Generation of Probable Primes p and q Using an Approved Hash Function.
+
+=item A.2.3 Generation of canonical generator g.
+
+=item A.2.1 Unverifiable Generation of the Generator g.
+
+=back
 
 =head1 SEE ALSO
 
