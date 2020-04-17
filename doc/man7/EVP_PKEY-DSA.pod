@@ -168,7 +168,7 @@ described above.
 
 Sets the size (in bits) of the prime 'p'.
 
-For "fips186_4" this can be either 2048 (DSA also allows 3072).
+For "fips186_4" this must be 2048 for DH, and either of 2048 or 3072 for DSA.
 For "fips186_2" this must be 1024.
 For "group" this can be any one of 2048, 3072, 4096, 6144 or 8192.
 
