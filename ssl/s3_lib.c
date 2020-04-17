@@ -4738,7 +4738,7 @@ EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id)
     }
     gtype = ginf->flags & TLS_GROUP_TYPE;
 
-    pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, ginf->keyname,
+    pctx = EVP_PKEY_CTX_new_from_name(s->ctx->libctx, ginf->keytype,
                                       s->ctx->propq);
 
     if (pctx == NULL) {
