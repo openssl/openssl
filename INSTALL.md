@@ -207,6 +207,9 @@ To avoid breaking other applications, install your copy of OpenSSL to a
 [different location](#installing-to-a-different-location) which is not in
 the global search path for system libraries.
 
+Finally, if you plan on using the FIPS module, you need to read the
+[Post-installation Notes](#post-installation-notes) further down.
+
 ### Unix / Linux / macOS ###
 
 Depending on your distribution, you need to run the following command as
@@ -1342,6 +1345,18 @@ access a structure's field directly.
 
 Some APIs have changed as well.  However, older APIs have been preserved when
 possible.
+
+
+Post-installation Notes
+-----------------------
+
+With the default OpenSSL installation comes a FIPS provider module, which
+needs some post-installation attention, without which it will not be usable.
+This involves using the following command:
+
+    openssl fipsinstall
+
+See the openssl-fipsinstall(1) manual for details and examples.
 
 
 Advanced Build Options

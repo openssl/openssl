@@ -50,6 +50,10 @@
       grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
              && $unified_info{attributes}->{modules}->{$_}->{engine} }
       @{$unified_info{modules}};
+  our @install_modules =
+      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+             && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+      @{$unified_info{modules}};
   our @install_programs =
       grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
       @{$unified_info{programs}};
@@ -132,6 +136,7 @@ GENERATED={- # common0.tmpl provides @generated
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
 INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
+INSTALL_MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @install_modules) -}
 INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @install_programs) -}
 BIN_SCRIPTS={- join(", ", @install_bin_scripts) -}
 MISC_SCRIPTS={- join(", ", @install_misc_scripts) -}
@@ -521,11 +526,11 @@ descrip.mms : FORCE
 
 # Install helper targets #############################################
 
-install_sw : install_dev install_engines install_runtime -
-             install_startup install_ivp
+install_sw : install_dev install_engines install_modules -
+             install_runtime install_startup install_ivp
 
-uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime -
-               uninstall_startup uninstall_ivp
+uninstall_sw : uninstall_dev uninstall_modules uninstall_engines -
+               uninstall_runtime uninstall_startup uninstall_ivp
 
 install_docs : install_html_docs
 
@@ -566,12 +571,21 @@ install_dev : check_INSTALLTOP install_runtime_libs
 
 install_engines : check_INSTALLTOP install_runtime_libs build_modules
         @ {- output_off() unless scalar @install_engines; "" -} !
-        @ WRITE SYS$OUTPUT "*** Installing ENGINE modules"
+        @ WRITE SYS$OUTPUT "*** Installing engines"
         - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
                 @install_engines) -}
         @ {- output_on() unless scalar @install_engines; "" -} !
+
+install_modules : check_INSTALLTOP install_runtime_libs build_modules
+        @ {- output_off() unless scalar @install_modules; "" -} !
+        @ WRITE SYS$OUTPUT "*** Installing modules"
+        - CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        {- join("\n        ",
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[MODULES$sover_dirname$target{pointer_size}.'arch']" }
+                @install_modules) -}
+        @ {- output_on() unless scalar @install_modules; "" -} !
 
 install_runtime : install_programs
 

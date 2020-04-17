@@ -94,6 +94,20 @@ INSTALL_ENGINEPDBS={-
                          && $unified_info{attributes}->{modules}->{$_}->{engine} }
                   @{$unified_info{modules}})
 -}
+INSTALL_MODDULES={-
+        join(" \\\n" . ' ' x 16,
+             fill_lines(" ", $COLUMNS - 16,
+                        map { platform->dso($_) }
+                        grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                               && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                        @{$unified_info{modules}}))
+-}
+INSTALL_MODULEPDBS={-
+        join(" ", map { quotify1(platform->dsopdb($_)) }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                         && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                  @{$unified_info{modules}})
+-}
 INSTALL_PROGRAMS={-
         join(" ", map { quotify1(platform->bin($_)) }
                   grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
@@ -441,9 +455,9 @@ depend:
 
 # Install helper targets #############################################
 
-install_sw: install_dev install_engines install_runtime
+install_sw: install_dev install_engines install_modules install_runtime
 
-uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
+uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_dev
 
 install_docs: install_html_docs
 
@@ -487,9 +501,11 @@ install_dev: install_runtime_libs
 
 uninstall_dev:
 
-install_engines: install_runtime_libs build_modules
+_install_modules_deps: install_runtime_libs build_modules
+
+install_engines: _install_modules_deps
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
-	@$(ECHO) "*** Installing ENGINE modules"
+	@$(ECHO) "*** Installing engines"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
 	@if not "$(INSTALL_ENGINES)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
@@ -497,6 +513,17 @@ install_engines: install_runtime_libs build_modules
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINEPDBS) "$(ENGINESDIR)"
 
 uninstall_engines:
+
+install_modules: _install_modules_deps
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing modules"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(MODULESDIR)"
+	@if not "$(INSTALL_MODULES)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_MODULES) "$(MODULESDIR)"
+	@if not "$(INSTALL_MODULES)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_MODULEPDBS) "$(MODULESDIR)"
+
+uninstall_modules:
 
 install_runtime: install_programs
 
