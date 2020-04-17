@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DH_new_by_nid, DH_get_nid - get or find DH named parameters
+DH_new_by_nid, DH_get_nid - create or get DH named parameters
 
 =head1 SYNOPSIS
 
@@ -13,7 +13,7 @@ Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
- int *DH_get_nid(const DH *dh);
+ int DH_get_nid(const DH *dh);
 
 =head1 DESCRIPTION
 
