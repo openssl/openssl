@@ -210,7 +210,7 @@ if (echo "$orig_branch" \
         | grep -E -q \
                -e '^master$' \
                -e '^OpenSSL_[0-9]+_[0-9]+_[0-9]+[a-z]*-stable$' \
-               -e '^openssl_[0-9]+\.[0-9]+\.x$'); then
+               -e '^openssl-[0-9]+\.[0-9]+\.x$'); then
     :
 elif $force; then
     :
