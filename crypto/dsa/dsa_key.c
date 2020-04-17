@@ -74,6 +74,11 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
         priv_key = dsa->priv_key;
     }
 
+    /*
+     * For FFC FIPS 186-4 keygen
+     * security strength s = 112,
+     * Max Private key size N = len(q)
+     */
     if (!ffc_generate_private_key(ctx, &dsa->params, BN_num_bits(dsa->params.q),
                                   MIN_STRENGTH, priv_key))
         goto err;

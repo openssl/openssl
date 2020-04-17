@@ -559,7 +559,7 @@ static int dh_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
         return 0;
     }
 
-    if (!ffc_params_fromdata(dh_get0_params(dh), params)
+    if (!dh_ffc_params_fromdata(dh, params)
         || !dh_key_fromdata(dh, params)
         || !EVP_PKEY_assign_DH(pkey, dh)) {
         DH_free(dh);

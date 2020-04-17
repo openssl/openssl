@@ -207,6 +207,7 @@ extern "C" {
 /* Diffie-Hellman params */
 #define OSSL_PKEY_PARAM_FFC_GROUP    "group"
 #define OSSL_PKEY_PARAM_FFC_GENERATOR "safeprime-generator"
+#define OSSL_PKEY_PARAM_DH_PRIV_LEN   "priv_len"
 
 /* Elliptic Curve Domain Parameters */
 #define OSSL_PKEY_PARAM_EC_NAME      "curve-name"

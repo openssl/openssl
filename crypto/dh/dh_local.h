@@ -21,7 +21,8 @@ struct dh_st {
     int pad;
     int version;
     FFC_PARAMS params;
-    int32_t length;             /* optional value of N (if there is no q) */
+    /* max generated private key length (can be less than len(q)) */
+    int32_t length;
     BIGNUM *pub_key;            /* g^x % p */
     BIGNUM *priv_key;           /* x */
     int flags;
