@@ -226,7 +226,7 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
 #endif
     }
     if (bodytype == OSSL_CMP_PKIBODY_KUR && refcert == NULL) {
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        CMPerr(0, CMP_R_MISSING_REFERENCE_CERT);
         return NULL;
     }
     if ((crm = OSSL_CRMF_MSG_new()) == NULL)

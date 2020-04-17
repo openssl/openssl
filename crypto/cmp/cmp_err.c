@@ -90,6 +90,8 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_MISSING_PRIVATE_KEY),
     "missing private key"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_MISSING_PROTECTION), "missing protection"},
+    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_MISSING_REFERENCE_CERT),
+    "missing reference cert"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_MISSING_SENDER_IDENTIFICATION),
     "missing sender identification"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_MISSING_TRUST_STORE),
