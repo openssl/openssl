@@ -754,6 +754,10 @@ X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
         CMPerr(0, CMP_R_INVALID_ARGS);
         return 0;
     }
+    if (ctx->oldCert == NULL) {
+        CMPerr(0, CMP_R_MISSING_REFERENCE_CERT);
+        return 0;
+    }
     ctx->status = -1;
 
     /* OSSL_CMP_rr_new() also checks if all necessary options are set */
