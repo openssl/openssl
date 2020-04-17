@@ -24,13 +24,13 @@
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 # include <openssl/dsa.h>
 #endif
 
 #define DEFBITS 2048
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int dh_cb(int p, int n, BN_GENCB *cb);
 #endif
 static int gendh_cb(EVP_PKEY_CTX *ctx);
@@ -87,7 +87,7 @@ int dhparam_main(int argc, char **argv)
     EVP_PKEY_CTX *ctx = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     ENGINE *e = NULL;
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     int dsaparam = 0;
 #endif
     int i, text = 0, C = 0, ret = 1, num = 0, g = 0;
@@ -172,7 +172,7 @@ int dhparam_main(int argc, char **argv)
     if (g && !num)
         num = DEFBITS;
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (dsaparam && g) {
         BIO_printf(bio_err,
                    "generator may not be chosen for DSA parameters\n");
@@ -191,7 +191,7 @@ int dhparam_main(int argc, char **argv)
     if (num) {
 
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (dsaparam) {
             DSA *dsa = DSA_new();
             BN_GENCB *cb  = BN_GENCB_new();
@@ -261,7 +261,7 @@ int dhparam_main(int argc, char **argv)
         if (in == NULL)
             goto end;
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (dsaparam) {
             DSA *dsa;
 
@@ -407,7 +407,7 @@ static int common_dh_cb(int p, BIO *b)
     return 1;
 }
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 static int dh_cb(int p, int n, BN_GENCB *cb)
 {
     return common_dh_cb(p, BN_GENCB_get_arg(cb));
