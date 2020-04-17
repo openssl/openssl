@@ -64,8 +64,8 @@ not supported by the public key algorithm.
 =head1 EXAMPLES
 
 These examples are very terse for the sake of staying on topic, which
-are the EVP_PKEY_fromdata() set of functions.  In real applications,
-BIGNUMs would be handled, and converted to byte arrays with
+is the EVP_PKEY_fromdata() set of functions.  In real applications,
+BIGNUMs would be handled and converted to byte arrays with
 BN_bn2nativepad(), but that's off topic here.
 
 =begin comment
@@ -115,7 +115,7 @@ TODO Write a set of cookbook documents and link to them.
   * These arrays represent large numbers, big endian organization.
   * In a real application, these would probably be bignums that get
   * converted to the native integer organization with BN_bn2nativepad().
-  * We're not doing that here, since this is not an of BIGNUM
+  * We're not doing that here, since this is not an example of BIGNUM
   * functionality, but an example of EVP_PKEY_fromdata().
   */
  #ifndef B_ENDIAN
@@ -165,7 +165,7 @@ TODO Write a set of cookbook documents and link to them.
  /* Program expects a key type as first argument */
  int main(int argc, char *argv[])
  {
-     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, argv[0], NULL);
+     EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, argv[1], NULL);
      const *OSSL_PARAM *settable_params = NULL;
 
      if (ctx == NULL
