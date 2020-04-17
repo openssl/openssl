@@ -224,9 +224,10 @@ fi
 
 echo "== Initializing work tree"
 
+get_version
+
 # Generate a cloned directory name
-clone_branch=$(eval $(git cat-file blob HEAD:VERSION)
-               echo "openssl-$MAJOR.$MINOR.x")
+clone_branch="openssl-$SERIES.x"
 release_clone="$clone_branch-release-tmp"
 
 echo "== Work tree will be in $release_clone"
@@ -238,9 +239,10 @@ if ! [ -d "$release_clone" ]; then
 fi
 cd "$release_clone"
 
+get_version
+
 current_branch="$(git rev-parse --abbrev-ref HEAD)"
-new_branch=$(eval $(git cat-file blob HEAD:VERSION)
-             echo "openssl-$MAJOR.$MINOR.x")
+new_branch="openssl-$SERIES.x"
 
 # Check that we're still on the same branch, or on a release branch
 if [ "$current_branch" = "$orig_branch" ]; then
@@ -268,7 +270,6 @@ $DEBUG >&2 "DEBUG: Source directory is $SOURCEDIR"
 
 # Release ############################################################
 
-get_version
 # We always expect to start from a state of development
 if [ "$TYPE" != 'dev' ]; then
     echo >&2 "Not in a development branch"
@@ -315,11 +316,13 @@ fi
 # Write the version information we updated
 set_version
 
-if [ -n "$PRE_RELEASE_TAG" ]; then
-    release=$MAJOR.$MINOR.$PATCH-$PRE_RELEASE_TAG$BUILD_METADATA
+if [ -n "$PRE_LABEL" ]; then
+    release="$VERSION-$PRE_RELEASE_TAG$BUILD_METADATA"
+    release_text="$SERIES$BUILD_METADATA $PRE_LABEL $PRE_NUM"
     announce_template=openssl-announce-pre-release.tmpl
 else
-    release=$MAJOR.$MINOR.$PATCH$BUILD_METADATA
+    release="$VERSION$BUILD_METADATA"
+    release_text="$release"
     announce_template=openssl-announce-release.tmpl
 fi
 tag="openssl-$release"
@@ -329,12 +332,13 @@ $VERBOSE "== Updating files with release date for $release : $RELEASE_DATE"
 for fixup in "$HERE/dev/release-aux"/fixup-*-release.pl; do
     file="$(basename "$fixup" | sed -e 's|^fixup-||' -e 's|-release\.pl$||')"
     $VERBOSE "> $file"
-    RELEASE="$release" RELEASE_DATE="$RELEASE_DATE" perl -pi $fixup $file
+    RELEASE="$release" RELEASE_TEXT="$release_text" RELEASE_DATE="$RELEASE_DATE" \
+        perl -pi $fixup $file
 done
 
 $VERBOSE "== Comitting updates and tagging"
 git add -u
-git commit $git_quiet -m "Prepare for release of $release"
+git commit $git_quiet -m "Prepare for release of $release_text"
 echo "Tagging release with tag $tag.  You may need to enter a pass phrase"
 git tag$tagkey "$tag" -m "OpenSSL $release release tag"
 
@@ -367,11 +371,10 @@ sha256hash=$(cat "../$tgzfile.sha256")
 $VERBOSE "== Generating announcement text: $announce"
 # Hack the announcement template
 cat "$HERE/dev/release-aux/$announce_template" \
-    | sed -e "s|\\\$release|$release|g" \
-          -e "s|\\\$LABEL|$PRE_LABEL|g" \
-          -e "s|\\\$MAJOR|$MAJOR|" \
-          -e "s|\\\$MINOR|$MINOR|" \
-          -e "s|\\\$PATCH|$PATCH|" \
+    | sed -e "s|\\\$release_text|$release_text|g" \
+          -e "s|\\\$release|$release|g" \
+          -e "s|\\\$series|$SERIES|g" \
+          -e "s|\\\$label|$PRE_LABEL|g" \
           -e "s|\\\$tarfile|$tgzfile|" \
           -e "s|\\\$length|$length|" \
           -e "s|\\\$sha1hash|$sha1hash|" \
@@ -407,37 +410,56 @@ fi
 
 # Post-release #######################################################
 
-saved_reldate="$RELEASE_DATE"
+prev_release_text="$release_text"
+prev_release_date="$RELEASE_DATE"
 
 next_release_state "$next_method2"
 set_version
 
-release=$MAJOR.$MINOR.$PATCH-$PRE_RELEASE_TAG$BUILD_METADATA
+release="$VERSION-$PRE_RELEASE_TAG$BUILD_METADATA"
+release_text="$VERSION$BUILD_METADATA"
+if [ -n "$PRE_LABEL" ]; then
+    release_text="$SERIES$BUILD_METADATA $PRE_LABEL $PRE_NUM"
+fi
 $VERBOSE "== Updated version information to $release"
 
-$VERBOSE "== Updating files with release date for $release"
+$VERBOSE "== Updating files for $release :"
 for fixup in "$HERE/dev/release-aux"/fixup-*-postrelease.pl; do
     file="$(basename "$fixup" | sed -e 's|^fixup-||' -e 's|-postrelease\.pl$||')"
     $VERBOSE "> $file"
-    RELEASE="$release" RELEASE_DATE="$saved_reldate" perl -pi $fixup $file
+    RELEASE="$release" RELEASE_TEXT="$release_text" \
+        PREV_RELEASE_TEXT="$prev_release_text" \
+        PREV_RELEASE_DATE="$prev_release_date" \
+        perl -pi $fixup $file
 done
 
 $VERBOSE "== Comitting updates"
 git add -u
-git commit $git_quiet -m "Prepare for $release"
+git commit $git_quiet -m "Prepare for $release_text"
 
 if $do_branch; then
     $VERBOSE "== Going back to the main branch $current_branch"
     git checkout $git_quiet "$current_branch"
+
     get_version
     next_release_state "minor"
     set_version
-    release=$MAJOR.$MINOR.$PATCH-$PRE_RELEASE_TAG$BUILD_METADATA
+
+    release="$VERSION-$PRE_RELEASE_TAG$BUILD_METADATA"
+    release_text="$SERIES$BUILD_METADATA"
     $VERBOSE "== Updated version information to $release"
+
+    $VERBOSE "== Updating files for $release :"
+    for fixup in "$HERE/dev/release-aux"/fixup-*-postrelease.pl; do
+        file="$(basename "$fixup" | sed -e 's|^fixup-||' -e 's|-postrelease\.pl$||')"
+        $VERBOSE "> $file"
+        RELEASE="$release" RELEASE_TEXT="$release_text" \
+            perl -pi $fixup $file
+    done
 
     $VERBOSE "== Comitting updates"
     git add -u
-    git commit $git_quiet -m "Prepare for $release"
+    git commit $git_quiet -m "Prepare for $release_text"
 fi
 
 # Done ###############################################################
@@ -539,21 +561,12 @@ B<release.sh> tries to be smart and figure out the next release if no hints
 are given through options, and will exit with an error in ambiguous cases.
 
 B<release.sh> always clones the current workspace into a sub-directory
-named C<< openssl-I<MAJOR>.I<MINOR>.I<PATCH>-tmp >>, where C<< I<MAJOR> >>,
-C<< I<MINOR> >> and C<< I<PATCH> >> are taken from the available version
-information in the source.
+named C<< openssl-I<SERIES>-tmp >>, where C<< I<SERIES> >> is taken from
+the available version information in the source.
 
 =head1 OPTIONS
 
 =over 4
-
-=item B<--major>, B<--minor>
-
-Increment the MAJOR or MINOR version number, and reset the lower numbers
-to zero (for B<--major>, the lower numbers are the I<MINOR> and I<PATCH>
-version numbers, for B<--minor>, the lower numbers is the I<PATCH> version
-number), and state of this branch to become "in development". No actual
-release is done.
 
 =item B<--alpha>, B<--beta>
 
@@ -580,9 +593,9 @@ This implies B<--branch>.
 
 =item B<--branch>
 
-Create a branch specific for the I<MAJOR>.I<MINOR>.x release series, if it
-doesn't already exist, and switch to it.  The exact branch name will be
-C<< openssl-I<MAJOR>.I<MINOR>.x >>.
+Create a branch specific for the I<SERIES>.x release series, if it doesn't
+already exist, and switch to it.  The exact branch name will be
+C<< openssl-I<SERIES>.x >>.
 
 =item B<--no-upload>
 
@@ -624,15 +637,15 @@ Display this manual and exit.
 =head1 RELEASE BRANCHES AND TAGS
 
 Prior to OpenSSL 3.0, the release branches were named
-C<< OpenSSL_I<version>-stable >>, and the release tags were named
-C<< OpenSSL_I<version> >> for regular releases, or
-C<< OpenSSL_I<version>-preI<n> >> for pre-releases.
+C<< OpenSSL_I<SERIES>-stable >>, and the release tags were named
+C<< OpenSSL_I<VERSION> >> for regular releases, or
+C<< OpenSSL_I<VERSION>-preI<n> >> for pre-releases.
 
 From OpenSSL 3.0 ongoing, the release branches are named
-C<< openssl-I<MAJOR>.I<MINOR>.x >>, and the release tags are named
-C<< openssl-I<MAJOR>.I<MINOR>.I<PATCH> >> for regular releases, or
-C<< openssl-I<MAJOR>.I<MINOR>.I<PATCH>-alphaI<n> >> for alpha releases
-and C<< openssl-I<MAJOR>.I<MINOR>.<PATCH>-betaI<n> >> for beta releases.
+C<< openssl-I<SERIES>.x >>, and the release tags are named
+C<< openssl-I<VERSION> >> for regular releases, or
+C<< openssl-I<VERSION>-alphaI<n> >> for alpha releases
+and C<< openssl-I<VERSION>-betaI<n> >> for beta releases.
 
 B<release.sh> recognises both forms.
 

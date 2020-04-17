@@ -17,7 +17,11 @@
 # |MAJOR| is to be increased for new major releases, |MINOR| for new
 # minor releases, and |PATCH| for update releases.
 #
-# |TYPE| says what state the source is in.  It may have an empty value
+# |SERIES| tells what release series the current version belongs to, and
+# is composed from |MAJOR| and |MINOR|.
+# |VERSION| tells what the current version is, and is composed from |MAJOR|,
+# |MINOR| and |PATCH|.
+# |TYPE| tells what state the source is in.  It may have an empty value
 # for released source, or 'dev' for "in development".
 # |PRE_LABEL| may be "alpha" or "beta" to signify an ongoing series of
 # alpha or beta releases.  |PRE_NUM| is a pre-release counter for the
@@ -32,7 +36,9 @@
 # OpenSSL source directory as value.
 
 get_version () {
-    . "$SOURCEDIR/VERSION"
+    eval $(git cat-file blob HEAD:VERSION)
+    VERSION="$MAJOR.$MINOR.$PATCH"
+    SERIES="$MAJOR.$MINOR"
     TYPE=$( echo "$PRE_RELEASE_TAG" \
                 | sed -E \
                       -e 's|^dev$|dev|' \
@@ -79,6 +85,9 @@ fixup_version () {
             PRE_NUM=0
             ;;
     esac
+
+    VERSION="$MAJOR.$MINOR.$PATCH"
+    SERIES="$MAJOR.$MINOR"
 }
 
 set_version () {
