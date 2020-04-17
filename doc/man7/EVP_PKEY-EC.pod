@@ -6,7 +6,7 @@ EVP_PKEY-EC - EVP_PKEY EC keytype and algorithm support
 
 =head1 DESCRIPTION
 
-The B<EC> keytypes is implemented in OpenSSL's default provider.
+The B<EC> keytype is implemented in OpenSSL's default provider.
 
 =head2 Common EC parameters
 
