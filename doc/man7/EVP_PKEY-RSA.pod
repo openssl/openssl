@@ -125,10 +125,14 @@ default is 2.  It isn't permitted to specify a larger amount of primes than
 
 =head1 CONFORMING TO
 
-RFC 8017, excluding RSA-PSS and RSA-OAEP
+=over 4
+
+=item RFC 8017, excluding RSA-PSS and RSA-OAEP
 
 =for comment RSA-PSS, and probably also RSA-OAEP, need separate keytypes,
 and will be described in separate pages for those RSA keytypes.
+
+=back
 
 =head1 EXAMPLES
 
@@ -147,7 +151,7 @@ An B<RSA> key can be generated like this:
     EVP_PKEY_gen(pctx, &pkey);
     EVP_PKEY_CTX_free(pctx);
 
-An B<RSA> key can be generated with key generation parameters
+An B<RSA> key can be generated with key generation parameters:
 
     unsigned int primes = 3;
     unsigned int bits = 4096;
