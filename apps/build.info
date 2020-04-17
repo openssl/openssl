@@ -34,18 +34,21 @@ ENDIF
 IF[{- !$disabled{'ts'} -}]
   $OPENSSLSRC=$OPENSSLSRC ts.c
 ENDIF
+IF[{- !$disabled{'dh'} -}]
+$OPENSSLSRC=$OPENSSLSRC dhparam.c
+ENDIF
+IF[{- !$disabled{'dsa'} -}]
+$OPENSSLSRC=$OPENSSLSRC dsa.c dsaparam.c gendsa.c
+ENDIF
+IF[{- !$disabled{'engine'} -}]
+$OPENSSLSRC=$OPENSSLSRC engine.c
+ENDIF
+IF[{- !$disabled{'rsa'} -}]
+$OPENSSLSRC=$OPENSSLSRC rsa.c genrsa.c
+ENDIF
 IF[{- !$disabled{'deprecated-3.0'} -}]
-  IF[{- !$disabled{'dh'} -}]
-    $OPENSSLSRC=$OPENSSLSRC dhparam.c
-  ENDIF
-  IF[{- !$disabled{'dsa'} -}]
-    $OPENSSLSRC=$OPENSSLSRC dsa.c dsaparam.c gendsa.c
-  ENDIF
-  IF[{- !$disabled{'engine'} -}]
-    $OPENSSLSRC=$OPENSSLSRC engine.c
-  ENDIF
   IF[{- !$disabled{'rsa'} -}]
-    $OPENSSLSRC=$OPENSSLSRC rsa.c rsautl.c genrsa.c
+    $OPENSSLSRC=$OPENSSLSRC rsautl.c
   ENDIF
 ENDIF
 IF[{- !$disabled{'cmp'} -}]
