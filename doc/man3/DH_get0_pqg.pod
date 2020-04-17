@@ -57,8 +57,9 @@ and therefore the values that have been passed in should not be freed directly
 after this function has been called. The I<q> parameter may be NULL.
 DH_set0_pqg() also checks if the parameters associated with I<p> and I<g> and
 optionally I<q> are associated with known safe prime groups. If it is a safe
-prime group then the value of I<q> will be set to q = (p - 1) / 2 if I<q> is NULL.
-The optional length parameter will be set if I<q> is not NULL to BN_num_bits(I<q>).
+prime group then the value of I<q> will be set to q = (p - 1) / 2 if I<q> is
+NULL. The optional length parameter will be set to BN_num_bits(I<q>) if I<q>
+is not NULL.
 
 To get the public and private key values use the DH_get0_key() function. A
 pointer to the public key will be stored in I<*pub_key>, and a pointer to the

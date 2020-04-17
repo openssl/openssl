@@ -126,11 +126,6 @@ static DH *dh_new_by_group_name(OPENSSL_CTX *libctx, const char *name)
 
     for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
         if (strcasecmp(dh_named_groups[i].name, name) == 0) {
-            /*
-             * The last parameter specified here is
-             * 2 * max_target_security_strength.
-             * See SP800-56Ar3 Table(s) 25 & 26.
-             */
             return dh_param_init(libctx, dh_named_groups[i].uid,
                                  dh_named_groups[i].p,
                                  dh_named_groups[i].q,

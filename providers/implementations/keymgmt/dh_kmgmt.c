@@ -433,20 +433,16 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
         gctx->gen_type = DH_PARAMGEN_TYPE_GROUP;
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_GENERATOR);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->generator))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->generator))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_GINDEX);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->gindex))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->gindex))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_PCOUNTER);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->pcounter))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->pcounter))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_H);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->hindex))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->hindex))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_SEED);
     if (p != NULL
@@ -478,8 +474,7 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
             return 0;
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_LEN);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->priv_len))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->priv_len))
         return 0;
     return 1;
 }
