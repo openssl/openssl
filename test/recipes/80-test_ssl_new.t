@@ -24,6 +24,8 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
 $ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
@@ -36,7 +38,8 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 31;  # = scalar @conf_srcs + fipsinstall
+plan tests => 30 # = scalar @conf_srcs
+              + ($no_fips ? 0 : 1); # fipsinstall
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -114,13 +117,15 @@ my %skip = (
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
 );
 
-ok(run(app(['openssl', 'fipsinstall',
-            '-out', bldtop_file('providers', 'fipsinstall.cnf'),
-            '-module', bldtop_file('providers', platform->dso('fips')),
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-            '-section_name', 'fips_sect'])),
-   "fipsinstall");
+unless ($no_fips) {
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
+                '-module', bldtop_file('providers', platform->dso('fips')),
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_sect'])),
+       "fipsinstall");
+}
 
 foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {
