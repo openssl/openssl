@@ -150,7 +150,7 @@ EC_POINT_set_Jprojective_coordinates_GFp() and
 EC_POINT_get_Jprojective_coordinates_GFp() respectively.
 Modern versions should instead use EC_POINT_set_affine_coordinates() and
 EC_POINT_get_affine_coordinates(), performing the conversion manually using the
-above maps if necessary.
+above maps in such rare circumstances.
 
 Points can also be described in terms of their compressed co-ordinates. For a
 point (x, y), for any given value for x such that the point is on the curve
@@ -256,7 +256,7 @@ EC_POINT_set_compressed_coordinates_GFp(),
 EC_POINT_set_affine_coordinates_GF2m(), EC_POINT_get_affine_coordinates_GF2m(),
 EC_POINT_set_compressed_coordinates_GF2m() were deprecated in OpenSSL 3.0.
 
-B<EC_POINT_set_affine_coordinates> and B<EC_POINT_set_affine_coordinates> were
+B<EC_POINT_set_affine_coordinates> and B<EC_POINT_get_affine_coordinates> were
 added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
