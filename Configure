@@ -518,7 +518,7 @@ my @disable_cascades = (
     "ssl3-method"       => [ "ssl3" ],
     "zlib"              => [ "zlib-dynamic" ],
     "des"               => [ "mdc2" ],
-    "ec"                => [ "ecdsa", "ecdh", "sm2" ],
+    "ec"                => [ "ecdsa", "ecdh", "sm2", "gost" ],
     sub { $disabled{"ec"} && $disabled{"dh"} }
                         => [ "tls1_3" ],
     "dgram"             => [ "dtls", "sctp" ],
