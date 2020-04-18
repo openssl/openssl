@@ -47,12 +47,7 @@ my @testdata = (
 
 unless ($no_fips) {
     push @setups, {
-        cmd     => app(['openssl', 'fipsinstall',
-                        '-out', bldtop_file('providers', 'fipsinstall.cnf'),
-                        '-module', bldtop_file('providers', platform->dso('fips')),
-                        '-provider_name', 'fips', '-mac_name', 'HMAC',
-                        '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                        '-section_name', 'fips_sect']),
+        cmd     => perltest(['fipsinstall.pl', bldtop_dir()]),
         message => "fipsinstall"
     };
     push @testdata, (
