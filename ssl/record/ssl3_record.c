@@ -1270,7 +1270,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         header[j++] = (unsigned char)(rec->length & 0xff);
 
         /* Final param == is SSLv3 */
-        if (ssl3_cbc_digest_record(hash,
+        if (ssl3_cbc_digest_record(ssl, hash,
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length + md_size, rec->orig_len,
@@ -1374,7 +1374,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
          * are hashing because that gives an attacker a timing-oracle.
          */
         /* Final param == not SSLv3 */
-        if (ssl3_cbc_digest_record(mac_ctx,
+        if (ssl3_cbc_digest_record(ssl, mac_ctx,
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length + md_size, rec->orig_len,
