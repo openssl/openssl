@@ -168,7 +168,7 @@ int ssl3_cbc_digest_record(SSL *s,
     size_t md_length_size = 8;
     char length_is_big_endian = 1;
     int ret = 0;
-    const EVP_MD *md;
+    const EVP_MD *md = NULL;
 
     /*
      * This is a, hopefully redundant, check that allows us to forget about
