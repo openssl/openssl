@@ -258,7 +258,7 @@ present as well.
 =head2 Key Object Information Functions
 
 OP_keymgmt_get_params() should extract information data associated
-with the given I<keydata>, see L</Information Parameters>.
+with the given I<keydata>, see L</Common Information Parameters>.
 
 OP_keymgmt_gettable_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_get_params()
@@ -268,7 +268,7 @@ If OP_keymgmt_gettable_params() is present, OP_keymgmt_get_params()
 must also be present, and vice versa.
 
 OP_keymgmt_set_params() should update information data associated
-with the given I<keydata>, see L</Information Parameters>.
+with the given I<keydata>, see L</Common Information Parameters>.
 
 OP_keymgmt_settable_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_set_params()
@@ -332,8 +332,8 @@ the implementation of this function.
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-Common information parameters currently recognised by built-in keymgmt
-algorithms are as follows:
+Common information parameters currently recognised by all built-in
+keymgmt algorithms are as follows:
 
 =over 4
 
