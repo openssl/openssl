@@ -41,7 +41,7 @@ EVP_PKEY_param_fromdata_init() or EVP_PKEY_key_fromdata_init().  The result is
 written to I<*ppkey>. The parameters that can be used for various types of key
 are as described by the diverse "Common parameters" sections of the
 L<B<EVP_PKEY-RSA>(7)|EVP_PKEY-RSA(7)/Common RSA parameters>,
-L<B<EVP_PKEY-DSA>(7)|EVP_PKEY-DSA(7)/Common DSA / DH parameters>,
+L<B<EVP_PKEY-DSA>(7)|EVP_PKEY-DSA(7)/Common DSA & DH parameters>,
 L<B<EVP_PKEY-DH>(7)|EVP_PKEY-DH(7)/Common DH parameters>,
 L<B<EVP_PKEY-EC>(7)|EVP_PKEY-EC(7)/Common EC parameters>,
 L<B<EVP_PKEY-ED448>(7)|EVP_PKEY-ED448(7)/Common X25519, X448, ED25519 and ED448 parameters>,

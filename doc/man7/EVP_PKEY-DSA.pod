@@ -19,8 +19,8 @@ Diffie-Hellman key establishment algorithms specified in SP800-56A can also be
 implemented as FFC.
 
 For B<DH> FFC key agreement, two classes of domain parameters can be used:
-“safe” domain parameters that are associated with approved named safe-prime
-groups, and a class of “FIPS 186-type” domain parameters. FIPS 186-type domain
+"safe" domain parameters that are associated with approved named safe-prime
+groups, and a class of "FIPS 186-type" domain parameters. FIPS 186-type domain
 parameters should only be used for backward compatibility with existing
 applications that cannot be upgraded to use the approved safe-prime groups.
 
@@ -64,7 +64,7 @@ provider will instead choose a named safe prime group based on the size of I<p>.
 
 =back
 
-=head2 Common DSA / DH parameters
+=head2 Common DSA & DH parameters
 
 In addition to the common parameters that all keytypes should support (see
 L<provider-keymgmt(7)/Common parameters>), the B<DSA> and B<DH> keytype
