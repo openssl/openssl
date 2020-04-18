@@ -2713,7 +2713,8 @@ __owur int ssl_log_secret(SSL *ssl, const char *label,
 
 /* s3_cbc.c */
 __owur char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-__owur int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
+__owur int ssl3_cbc_digest_record(SSL *s,
+                                  const EVP_MD_CTX *ctx,
                                   unsigned char *md_out,
                                   size_t *md_out_size,
                                   const unsigned char header[13],
