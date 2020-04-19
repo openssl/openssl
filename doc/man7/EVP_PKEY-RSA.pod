@@ -118,8 +118,9 @@ bits.
 =item "primes" (B<OSSL_PKEY_PARAM_RSA_PRIMES>) <unsigned integer>
 
 The value should be the number of primes for the generated B<RSA> key.  The
-default is 2.  It isn't permitted to specify a larger amount of primes than
-10.
+default is 2.  It isn't permitted to specify a larger number of primes than
+10.  Additionally, the number of primes is limited by the length of the key
+being generated so the maximum number could be less.
 
 =back
 
