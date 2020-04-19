@@ -245,7 +245,7 @@ int dhparam_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
-            
+
             if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num)) {
                 BIO_printf(bio_err, "Error, unable to set DH prime length\n");
                 ERR_print_errors(bio_err);
@@ -258,7 +258,6 @@ int dhparam_main(int argc, char **argv)
             }
         }
     } else {
-
         in = bio_open_default(infile, 'r', informat);
         if (in == NULL)
             goto end;
@@ -307,7 +306,6 @@ int dhparam_main(int argc, char **argv)
                 goto end;
             }
         }
-
         /* dh != NULL */
     }
 
