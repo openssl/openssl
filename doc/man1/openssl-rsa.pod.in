@@ -46,9 +46,6 @@ B<openssl> B<rsa>
 
 =head1 DESCRIPTION
 
-This command has been deprecated.
-The L<openssl-pkey(1)> command should be used instead.
-
 This command processes RSA keys. They can be converted between
 various forms and their components printed out. B<Note> this command uses the
 traditional SSLeay compatible format for private key encryption: newer
@@ -183,10 +180,6 @@ L<openssl-pkcs8(1)>,
 L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-gendsa(1)>
-
-=head1 HISTORY
-
-This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

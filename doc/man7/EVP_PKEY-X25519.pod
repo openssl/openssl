@@ -9,12 +9,18 @@ EVP_KEYMGMT-X25519, EVP_KEYMGMT-X448, EVP_KEYMGMT-ED25519, EVP_KEYMGMT-ED448
 =head1 DESCRIPTION
 
 The B<X25519>, B<X448>, B<ED25519> and B<ED448> keytypes are
-implemented in OpenSSL's default provider.
+implemented in OpenSSL's default and FIPS providers.  These implementations
+support the associated key, containing the public key I<pub> and the
+private key I<priv>.
+
+In the FIPS provider they are non-approved algorithms and do not have the
+"fips=yes" property set.
 
 =head2 Common X25519, X448, ED25519 and ED448 parameters
 
-The following Import/Export types are available for the built-in X25519, X448,
-ED25519 and X448 algorithms:
+In addition to the common parameters that all keytypes should support (see
+L<provider-keymgmt(7)/Common parameters>), the implementation of these keytypes
+support the following.
 
 =over 4
 
