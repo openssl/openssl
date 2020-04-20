@@ -101,13 +101,18 @@ ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
    "fipsinstall fails when the DRBG CTR result is corrupted");
 
 # corrupt a KAS test
-ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-            '-section_name', 'fips_install',
-            '-corrupt_desc', 'DH',
-            '-corrupt_type', 'KAT_KA'])),
-   "fipsinstall fails when the kas result is corrupted");
+SKIP: {
+    skip "Skipping KAS DH corruption test because of no dh in this build", 1
+        if disabled("dh");
+
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_install',
+                '-corrupt_desc', 'DH',
+                '-corrupt_type', 'KAT_KA'])),
+       "fipsinstall fails when the kas result is corrupted");
+}
 
 # corrupt a Signature test
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
