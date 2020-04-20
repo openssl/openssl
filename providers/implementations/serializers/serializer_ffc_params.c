@@ -15,6 +15,7 @@
 int ffc_params_prov_print(BIO *out, const FFC_PARAMS *ffc)
 {
     if (ffc->nid != NID_undef) {
+#ifndef OPENSSL_NO_DH
         const char *name = ffc_named_group_from_uid(ffc->nid);
 
         if (name == NULL)
@@ -22,6 +23,10 @@ int ffc_params_prov_print(BIO *out, const FFC_PARAMS *ffc)
         if (ossl_prov_bio_printf(out, "GROUP: %s\n", name) <= 0)
             goto err;
         return 1;
+#else
+        /* How could this be? We should not have a nid in a no-dh build. */
+        goto err;
+#endif
     }
 
     if (!ossl_prov_print_labeled_bignum(out, "P:   ", ffc->p))
