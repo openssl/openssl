@@ -49,6 +49,7 @@ static OSSL_OP_keymgmt_export_fn ec_export;
 static OSSL_OP_keymgmt_export_types_fn ec_export_types;
 static OSSL_OP_keymgmt_query_operation_name_fn ec_query_operation_name;
 
+#define EC_DEFAULT_MD "SHA256"
 #define EC_POSSIBLE_SELECTIONS                                                 \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)
 
@@ -490,6 +491,10 @@ int ec_get_params(void *key, OSSL_PARAM params[])
         if (!OSSL_PARAM_set_int(p, sec_bits))
             return 0;
     }
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
+        && !OSSL_PARAM_set_utf8_string(p, EC_DEFAULT_MD))
+        return 0;
 
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
     if (p != NULL) {
