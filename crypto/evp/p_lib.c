@@ -1007,28 +1007,10 @@ int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid)
 int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
                                      char *mdname, size_t mdname_sz)
 {
-    if (pkey->ameth == NULL) {
-        OSSL_PARAM params[3];
-        char mddefault[100] = "";
-        char mdmandatory[100] = "";
-
-        params[0] =
-            OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST,
-                                             mddefault, sizeof(mddefault));
-        params[1] =
-            OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST,
-                                             mdmandatory,
-                                             sizeof(mdmandatory));
-        params[2] = OSSL_PARAM_construct_end();
-        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
-            return 0;
-        if (mdmandatory[0] != '\0') {
-            OPENSSL_strlcpy(mdname, mdmandatory, mdname_sz);
-            return 2;
-        }
-        OPENSSL_strlcpy(mdname, mddefault, mdname_sz);
-        return 1;
-    }
+    if (pkey->ameth == NULL)
+        return evp_keymgmt_util_get_deflt_digest_name(pkey->keymgmt,
+                                                      pkey->keydata,
+                                                      mdname, mdname_sz);
 
     {
         int nid = NID_undef;
