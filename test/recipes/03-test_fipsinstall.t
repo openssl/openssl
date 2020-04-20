@@ -115,10 +115,14 @@ SKIP: {
 }
 
 # corrupt a Signature test
-ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-            '-section_name', 'fips_install',
-            '-corrupt_desc', 'DSA',
-            '-corrupt_type', 'KAT_Signature'])),
-   "fipsinstall fails when the signature result is corrupted");
+SKIP: {
+    skip "Skipping Signature DSA corruption test because of no dsa in this build", 1
+        if disabled("dsa");
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_install',
+                '-corrupt_desc', 'DSA',
+                '-corrupt_type', 'KAT_Signature'])),
+       "fipsinstall fails when the signature result is corrupted");
+}
