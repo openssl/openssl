@@ -8,16 +8,10 @@
 
 
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir/;
 use File::Temp qw(tempfile);
 
-BEGIN {
 setup("test_sslapi");
-}
-
-use lib srctop_dir('Configurations');
-use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -40,13 +34,7 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
              "running sslapitest");
 
 unless ($no_fips) {
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                '-section_name', 'fips_sect'])),
-       "fipsinstall");
+    ok(run(perltest(['fipsinstall.pl', bldtop_dir()])), 'fipsinstall');
 
     ok(run(test(["sslapitest", srctop_dir("test", "certs"),
                  srctop_file("test", "recipes", "90-test_sslapi_data",

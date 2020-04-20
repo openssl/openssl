@@ -13,16 +13,10 @@ use warnings;
 use POSIX;
 use File::Basename;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr/;
+use OpenSSL::Test qw/:DEFAULT with bldtop_dir srctop_file srctop_dir cmdstr/;
 use OpenSSL::Test::Utils;
 
-BEGIN {
 setup("test_ssl");
-}
-
-use lib srctop_dir('Configurations');
-use lib bldtop_dir('.');
-use platform;
 
 $ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
 $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
@@ -93,13 +87,7 @@ plan tests =>
     ;
 
 unless ($no_fips) {
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                '-section_name', 'fips_sect'])),
-       "fipsinstall");
+    ok(run(perltest(['fipsinstall.pl', bldtop_dir()])), 'fipsinstall');
 }
 
 subtest 'test_ss' => sub {

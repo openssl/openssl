@@ -13,16 +13,11 @@ use warnings;
 use File::Basename;
 use File::Compare qw/compare_text/;
 use OpenSSL::Glob;
-use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_file bldtop_dir/;
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir/;
 use OpenSSL::Test::Utils qw/disabled alldisabled available_protocols/;
 
-BEGIN {
 setup("test_ssl_new");
-}
 
-use lib srctop_dir('Configurations');
-use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -118,13 +113,7 @@ my %skip = (
 );
 
 unless ($no_fips) {
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                '-section_name', 'fips_sect'])),
-       "fipsinstall");
+    ok(run(perltest(['fipsinstall.pl', bldtop_dir()])), 'fipsinstall');
 }
 
 foreach my $conf (@conf_files) {
