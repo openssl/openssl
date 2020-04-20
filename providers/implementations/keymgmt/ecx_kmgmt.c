@@ -207,6 +207,17 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
     return key_to_params(ecx, NULL, params);
 }
 
+static int ed_get_params(void *key, OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params,
+                               OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
+        && !OSSL_PARAM_set_utf8_string(p, ""))
+        return 0;
+    return 1;
+}
+
 static int x25519_get_params(void *key, OSSL_PARAM params[])
 {
     return ecx_get_params(key, params, X25519_BITS, X25519_SECURITY_BITS,
@@ -222,13 +233,15 @@ static int x448_get_params(void *key, OSSL_PARAM params[])
 static int ed25519_get_params(void *key, OSSL_PARAM params[])
 {
     return ecx_get_params(key, params, ED25519_BITS, ED25519_SECURITY_BITS,
-                          ED25519_KEYLEN);
+                          ED25519_KEYLEN)
+        && ed_get_params(key, params);
 }
 
 static int ed448_get_params(void *key, OSSL_PARAM params[])
 {
     return ecx_get_params(key, params, ED448_BITS, ED448_SECURITY_BITS,
-                          ED448_KEYLEN);
+                          ED448_KEYLEN)
+        && ed_get_params(key, params);
 }
 
 static const OSSL_PARAM ecx_params[] = {
