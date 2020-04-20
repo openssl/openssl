@@ -13,7 +13,27 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 
-#define TLS13_MAX_LABEL_LEN     249
+/*
+ * RFC 8446, 7.1 Key Schedule, says:
+ * Note: With common hash functions, any label longer than 12 characters
+ * requires an additional iteration of the hash function to compute.
+ * The labels in this specification have all been chosen to fit within
+ * this limit.
+ *
+ * The longest IANA assigned label is:
+ * "EXPORTER-ETSI-TC-M2M-Connection"
+ *
+ * Please do not use longer labels than this, their use is not supported.
+ *
+ * Bernd Edlinger, 20.04.2020.
+ */
+#ifndef TLS13_MAX_LABEL_LEN
+# define TLS13_MAX_LABEL_LEN    31
+#elif TLS13_MAX_LABEL_LEN < 12
+# error TLS13_MAX_LABEL_LEN is too short
+#elif TLS13_MAX_LABEL_LEN > 249
+# error TLS13_MAX_LABEL_LEN is too long
+#endif
 
 /* Always filled with zeros */
 static const unsigned char default_zeros[EVP_MAX_MD_SIZE];
