@@ -152,10 +152,16 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         if (mdname == NULL)
             mdname = canon_mdname(EVP_MD_name(type));
     } else {
-        if (mdname == NULL
-            && EVP_PKEY_get_default_digest_name(locpctx->pkey, locmdname,
-                                                sizeof(locmdname)))
-            mdname = canon_mdname(locmdname);
+        if (mdname == NULL) {
+            if (evp_keymgmt_util_get_deflt_digest_name(tmp_keymgmt, provkey,
+                                                       locmdname,
+                                                       sizeof(locmdname)) > 0) {
+                mdname = canon_mdname(locmdname);
+            } else {
+                EVPerr(EVP_F_DO_SIGVER_INIT, EVP_R_NO_DEFAULT_DIGEST);
+                return 0;
+            }
+        }
 
         if (mdname != NULL) {
             /*
