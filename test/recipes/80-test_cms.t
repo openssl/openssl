@@ -640,8 +640,8 @@ subtest "CMS Decrypt message encrypted with OpenSSL 1.1.1\n" => sub {
     plan tests => 1;
 
     SKIP: {
-        skip "EC isn't supported in this build", 1
-            if disabled("ec");
+        skip "EC or DES isn't supported in this build", 1
+            if disabled("ec") || disabled("des");
 
         my $out = "smtst.txt";
 
