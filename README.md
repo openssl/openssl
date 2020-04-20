@@ -118,6 +118,9 @@ document.
  * [NOTES.VMS](NOTES.VMS)
  * [NOTES.WIN](NOTES.WIN)
 
+Specific notes on upgrading to OpenSSL 3.0 from previous versions, as well as
+known issues are available on the OpenSSL
+[wiki](https://wiki.openssl.org/index.php/OpenSSL_3.0).
 
 Documentation
 =============
