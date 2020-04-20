@@ -4624,13 +4624,23 @@ static int test_serverinfo_custom(const int idx)
  * produce the same results for different protocol versions.
  */
 #define SMALL_LABEL_LEN 10
-#define LONG_LABEL_LEN  249
+#if !defined(TLS13_MAX_LABEL_LEN) || TLS13_MAX_LABEL_LEN >= 31
+# define LONG_LABEL_LEN 31
+#else
+# define LONG_LABEL_LEN 12
+#endif
 static int test_export_key_mat(int tst)
 {
     int testresult = 0;
     SSL_CTX *cctx = NULL, *sctx = NULL, *sctx2 = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
-    const char label[LONG_LABEL_LEN + 1] = "test label";
+#if LONG_LABEL_LEN >= 31
+    /* longest IANA assigned label */
+    const char label[LONG_LABEL_LEN + 1] = "EXPORTER-ETSI-TC-M2M-Connection";
+#else
+    /* longest RFC 8446 assigned label */
+    const char label[LONG_LABEL_LEN + 1] = "e exp master";
+#endif
     const unsigned char context[] = "context";
     const unsigned char *emptycontext = NULL;
     unsigned char ckeymat1[80], ckeymat2[80], ckeymat3[80];
@@ -4694,7 +4704,7 @@ static int test_export_key_mat(int tst)
          */
         if (!TEST_int_le(SSL_export_keying_material(clientssl, ckeymat1,
                                                     sizeof(ckeymat1), label,
-                                                    LONG_LABEL_LEN + 1, context,
+                                                    249 + 1, context,
                                                     sizeof(context) - 1, 1), 0))
             goto end;
 
