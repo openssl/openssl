@@ -37,7 +37,7 @@ Plaintext = "Hello World"
 Ciphertext = 3CF55D656E9C0664513358
 
 Cipher = DESX-CBC
-Availablein = default
+Availablein = legacy
 Key = 0123456789abcdeff1e0d3c2b5a49786fedcba9876543210
 IV = fedcba9876543210
 Plaintext = 37363534333231204E6F77206973207468652074696D6520666F722000000000
