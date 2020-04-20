@@ -600,19 +600,19 @@ static int ffc_private_gen_test(int index)
 
     N = BN_num_bits(params->q);
     /* Fail since N < 2*s - where s = 112*/
-    if (!TEST_false(ffc_generate_private_key_fips(ctx, params, 220, 112, priv)))
+    if (!TEST_false(ffc_generate_private_key(ctx, params, 220, 112, priv)))
         goto err;
     /* fail since N > len(q) */
-    if (!TEST_false(ffc_generate_private_key_fips(ctx, params, N + 1, 112, priv)))
+    if (!TEST_false(ffc_generate_private_key(ctx, params, N + 1, 112, priv)))
         goto err;
     /* pass since 2s <= N <= len(q) */
-    if (!TEST_true(ffc_generate_private_key_fips(ctx, params, N, 112, priv)))
+    if (!TEST_true(ffc_generate_private_key(ctx, params, N, 112, priv)))
         goto err;
     /* pass since N = len(q) */
     if (!TEST_true(ffc_validate_private_key(params->q, priv, &res)))
         goto err;
     /* pass since 2s <= N < len(q) */
-    if (!TEST_true(ffc_generate_private_key_fips(ctx, params, N / 2, 112, priv)))
+    if (!TEST_true(ffc_generate_private_key(ctx, params, N / 2, 112, priv)))
         goto err;
     if (!TEST_true(ffc_validate_private_key(params->q, priv, &res)))
         goto err;

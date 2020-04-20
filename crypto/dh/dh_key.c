@@ -18,6 +18,7 @@
 #include "dh_local.h"
 #include "crypto/bn.h"
 #include "crypto/dh.h"
+#include "crypto/security_bits.h"
 
 #ifdef FIPS_MODE
 # define MIN_STRENGTH 112
@@ -252,16 +253,15 @@ static int generate_key(DH *dh)
     if (generate_new_key) {
         /* Is it an approved safe prime ?*/
         if (DH_get_nid(dh) != NID_undef) {
-            /*
-             * The safe prime group code sets N = 2*s
-             * (where s = max security strength supported).
-             * N = dh->length (N = maximum bit length of private key)
-             */
+            int max_strength =
+                    ifc_ffc_compute_security_bits(BN_num_bits(dh->params.p));
+
             if (dh->params.q == NULL
                 || dh->length > BN_num_bits(dh->params.q))
                 goto err;
+            /* dh->length = maximum bit length of generated private key */
             if (!ffc_generate_private_key(ctx, &dh->params, dh->length,
-                                          dh->length / 2, priv_key))
+                                          max_strength, priv_key))
                 goto err;
         } else {
 #ifdef FIPS_MODE

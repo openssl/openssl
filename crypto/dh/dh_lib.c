@@ -209,7 +209,8 @@ void DH_get0_pqg(const DH *dh,
 
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
-    /* If the fields p and g in d are NULL, the corresponding input
+    /*
+     * If the fields p and g in d are NULL, the corresponding input
      * parameters MUST be non-NULL.  q may remain NULL.
      */
     if ((dh->params.p == NULL && p == NULL)
@@ -217,7 +218,9 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         return 0;
 
     ffc_params_set0_pqg(&dh->params, p, q, g);
-    dh->params.nid = NID_undef;
+    dh_cache_named_group(dh);
+    if (q != NULL)
+        dh->length = BN_num_bits(q);
     /*
      * Check if this is a named group. If it finds a named group then the
      * 'q' and 'length' value are either already set or are set by the
@@ -260,6 +263,7 @@ int DH_set0_key(DH *dh, BIGNUM *pub_key, BIGNUM *priv_key)
     if (priv_key != NULL) {
         BN_clear_free(dh->priv_key);
         dh->priv_key = priv_key;
+        dh->length = BN_num_bits(priv_key);
     }
 
     dh->dirty_cnt++;
@@ -335,7 +339,7 @@ int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[])
 
     ret = ffc_params_fromdata(ffc, params);
     if (ret) {
-        DH_get_nid(dh);
+        dh_cache_named_group(dh);
         dh->dirty_cnt++;
     }
     return ret;

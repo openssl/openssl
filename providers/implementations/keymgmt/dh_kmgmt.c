@@ -65,6 +65,7 @@ struct dh_gen_ctx {
     int generator; /* Used by DH_PARAMGEN_TYPE_GENERATOR in non fips mode only */
     int pcounter;
     int hindex;
+    int priv_len;
 
     OSSL_CALLBACK *cb;
     void *cbarg;
@@ -432,20 +433,16 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
         gctx->gen_type = DH_PARAMGEN_TYPE_GROUP;
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_GENERATOR);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->generator))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->generator))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_GINDEX);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->gindex))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->gindex))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_PCOUNTER);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->pcounter))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->pcounter))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_H);
-    if (p != NULL
-        && !OSSL_PARAM_get_int(p, &gctx->hindex))
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->hindex))
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_SEED);
     if (p != NULL
@@ -476,6 +473,9 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (gctx->md == NULL)
             return 0;
     }
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_LEN);
+    if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->priv_len))
+        return 0;
     return 1;
 }
 
@@ -493,6 +493,7 @@ static const OSSL_PARAM *dh_gen_settable_params(void *provctx)
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_GENERATOR, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_PCOUNTER, NULL),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_FFC_H, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_DH_PRIV_LEN, NULL),
         OSSL_PARAM_END
     };
     return settable;
@@ -577,6 +578,8 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         if (ffc->p == NULL || ffc->g == NULL)
             goto end;
+        if (gctx->priv_len > 0)
+            DH_set_length(dh, (long)gctx->priv_len);
         if (DH_generate_key(dh) <= 0)
             goto end;
     }

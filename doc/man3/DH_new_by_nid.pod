@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-DH_new_by_nid, DH_get_nid - get or find DH named parameters
+DH_new_by_nid, DH_get_nid - create or get DH named parameters
 
 =head1 SYNOPSIS
 
@@ -13,7 +13,7 @@ Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
- int *DH_get_nid(DH *dh);
+ int DH_get_nid(const DH *dh);
 
 =head1 DESCRIPTION
 
@@ -26,12 +26,6 @@ B<NID_modp_4096>, B<NID_modp_6144> or B<NID_modp_8192>.
 DH_get_nid() determines if the parameters contained in B<dh> match
 any named safe prime group. It returns the NID corresponding to the matching
 parameters or B<NID_undef> if there is no match.
-Internally it caches the nid, so that any subsequent calls can fetch the
-cached value.
-If a matching p and g are not found and the value of parameter q is not set,
-then it is set to q = (p - 1) / 2.
-If parameter q is already set then it must also match the expected q otherwise
-no match will be found.
 This function is deprecated.
 
 =head1 RETURN VALUES

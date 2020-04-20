@@ -408,7 +408,8 @@ static int test_fromdata_dh_named_group(void)
 
     /*
      * DH key data was generated using the following:
-     * openssl genpkey -algorithm DH -pkeyopt group:ffdhe2048 -text
+     * openssl genpkey -algorithm DH -pkeyopt group:ffdhe2048
+     *                 -pkeyopt priv_len:224 -text
      */
     static const unsigned char priv_data[] = {
         0x88, 0x85, 0xe7, 0x9f, 0xee, 0x6d, 0xc5, 0x7c, 0x78, 0xaf, 0x63, 0x5d,
@@ -547,7 +548,8 @@ static int test_fromdata_dh_fips186_4(void)
 
     /*
      * DH key data was generated using the following:
-     * openssl genpkey -algorithm DH -pkeyopt group:ffdhe2048 -text
+     * openssl genpkey -algorithm DH
+     *                 -pkeyopt group:ffdhe2048 -pkeyopt priv_len:224 -text
      */
     static const unsigned char priv_data[] = {
        0x88, 0x85, 0xe7, 0x9f, 0xee, 0x6d, 0xc5, 0x7c, 0x78, 0xaf, 0x63, 0x5d,

@@ -10,7 +10,6 @@
 #include "internal/ffc.h"
 
 /*
- * For Fips mode:
  * SP800-56Ar3 5.6.1.1.4 Key pair generation by testing candidates.
  * Generates a private key in the interval [1, min(2 ^ N - 1, q - 1)].
  *
@@ -23,32 +22,18 @@
 int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
                              int N, int s, BIGNUM *priv)
 {
-#ifdef FIPS_MODE
-    return ffc_generate_private_key_fips(ctx, params, N, s, priv);
-#else
-    do {
-        if (!BN_priv_rand_range_ex(priv, params->q, ctx))
-            return 0;
-    } while (BN_is_zero(priv) || BN_is_one(priv));
-    return 1;
-#endif /* FIPS_MODE */
-}
-
-int ffc_generate_private_key_fips(BN_CTX *ctx, const FFC_PARAMS *params,
-                                  int N, int s, BIGNUM *priv)
-{
     int ret = 0, qbits = BN_num_bits(params->q);
     BIGNUM *m, *two_powN = NULL;
+
+    /* Deal with the edge case where the value of N is not set */
+    if (N == 0)
+        N = qbits;
+    if (s == 0)
+        s = N / 2;
 
     /* Step (2) : check range of N */
     if (N < 2 * s || N > qbits)
         return 0;
-
-    /* Deal with the edge case where the value of N is not set */
-    if (N == 0) {
-        N = qbits;
-        s = N / 2;
-    }
 
     two_powN = BN_new();
     /* 2^N */

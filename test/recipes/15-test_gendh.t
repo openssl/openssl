@@ -18,7 +18,7 @@ setup("test_gendh");
 
 plan skip_all => "This test is unsupported in a no-dh build" if disabled("dh");
 
-plan tests => 9;
+plan tests => 13;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DH',
@@ -80,4 +80,19 @@ ok(run(app([ 'openssl', 'genpkey',
  ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'DH'])),
    "genpkey DH with no params should fail");
-   
+
+ ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'DH', '-pkeyopt',
+               'group:ffdhe3072', '-pkeyopt', 'priv_len:255', '-text'])),
+    'genpkey DH with a small private len should fail');
+
+ ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'DH', '-pkeyopt',
+               'group:ffdhe3072', '-pkeyopt', 'priv_len:3072', '-text'])),
+    'genpkey DH with a large private len should fail');
+
+ ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'DH', '-pkeyopt',
+              'group:ffdhe3072', '-pkeyopt', 'priv_len:256', '-text'])),
+    'genpkey DH with a minimum strength private len');
+
+ ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'DH', '-pkeyopt',
+              'group:ffdhe2048', '-pkeyopt', 'priv_len:224', '-text'])),
+    'genpkey 2048 DH with a minimum strength private len');

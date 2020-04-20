@@ -23,19 +23,18 @@
 #include <openssl/objects.h>
 #include "crypto/bn_dh.h"
 #include "crypto/dh.h"
-#include "crypto/security_bits.h"
 #include "e_os.h" /* strcasecmp */
 
 #define FFDHE(sz) {                                                            \
     SN_ffdhe##sz, NID_ffdhe##sz,                                               \
     sz,                                                                        \
-    &_bignum_ffdhe##sz##_p, NULL, &_bignum_const_2                             \
+    &_bignum_ffdhe##sz##_p, &_bignum_ffdhe##sz##_q, &_bignum_const_2           \
 }
 
 #define MODP(sz)  {                                                            \
     SN_modp_##sz, NID_modp_##sz,                                               \
     sz,                                                                        \
-    &_bignum_modp_##sz##_p, NULL,  &_bignum_const_2                            \
+    &_bignum_modp_##sz##_p, &_bignum_modp_##sz##_q,  &_bignum_const_2          \
 }
 
 #define RFC5114(name, uid, sz, tag)  {                                         \
@@ -102,30 +101,18 @@ const char *ffc_named_group_from_uid(int uid)
 }
 
 static DH *dh_param_init(OPENSSL_CTX *libctx, int uid, const BIGNUM *p,
-                         const BIGNUM *q, const BIGNUM *g,
-                         int32_t nbits)
+                         const BIGNUM *q, const BIGNUM *g)
 {
-    BIGNUM *qtmp = NULL;
     DH *dh = dh_new_with_libctx(libctx);
 
     if (dh == NULL)
         return NULL;
 
-    if (q == NULL) {
-        qtmp = BN_dup(p);
-        /* Set q = (p - 1) / 2 (p is known to be odd so just shift right ) */
-        if (qtmp == NULL || !BN_rshift1(qtmp, qtmp)) {
-            BN_free(qtmp);
-            DH_free(dh);
-            return NULL;
-        }
-    }
     dh->params.nid = uid;
     dh->params.p = (BIGNUM *)p;
-    dh->params.q = (q != NULL ? (BIGNUM *)q : qtmp);
+    dh->params.q = (BIGNUM *)q;
     dh->params.g = (BIGNUM *)g;
-    /* Private key length = 2 * max_target_security_strength */
-    dh->length = nbits;
+    dh->length = BN_num_bits(q);
     dh->dirty_cnt++;
     return dh;
 }
@@ -139,19 +126,10 @@ static DH *dh_new_by_group_name(OPENSSL_CTX *libctx, const char *name)
 
     for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
         if (strcasecmp(dh_named_groups[i].name, name) == 0) {
-            int max_target_security_strength =
-                ifc_ffc_compute_security_bits(dh_named_groups[i].nbits);
-
-            /*
-             * The last parameter specified here is
-             * 2 * max_target_security_strength.
-             * See SP800-56Ar3 Table(s) 25 & 26.
-             */
             return dh_param_init(libctx, dh_named_groups[i].uid,
                                  dh_named_groups[i].p,
                                  dh_named_groups[i].q,
-                                 dh_named_groups[i].g,
-                                 2 * max_target_security_strength);
+                                 dh_named_groups[i].g);
         }
     }
     DHerr(0, DH_R_INVALID_PARAMETER_NID);
@@ -180,23 +158,10 @@ int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name)
 
     for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
         if (strcasecmp(dh_named_groups[i].name, group_name) == 0) {
-            if (dh_named_groups[i].q != NULL) {
-                /* For groups with a q */
-                ffc_params_set0_pqg(ffc,
-                                    (BIGNUM *)dh_named_groups[i].p,
-                                    (BIGNUM *)dh_named_groups[i].q,
-                                    (BIGNUM *)dh_named_groups[i].g);
-            } else {
-                /* For SAFE PRIME GROUPS */
-                /* Set q = (p - 1) / 2 (p is known to be odd so just shift right) */
-                q = BN_dup(dh_named_groups[i].p);
-                if (q == NULL || !BN_rshift1(q, q))
-                    break; /* exit with failure */
-
-                ffc_params_set0_pqg(ffc,
-                                    (BIGNUM *)dh_named_groups[i].p, q,
-                                    (BIGNUM *)dh_named_groups[i].g);
-            }
+            ffc_params_set0_pqg(ffc,
+                                (BIGNUM *)dh_named_groups[i].p,
+                                (BIGNUM *)dh_named_groups[i].q,
+                                (BIGNUM *)dh_named_groups[i].g);
             /* flush the cached nid, The DH layer is responsible for caching */
             ffc->nid = NID_undef;
             return 1;
@@ -207,63 +172,43 @@ int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name)
     return 0;
 }
 
-int DH_get_nid(DH *dh)
+void dh_cache_named_group(DH *dh)
 {
-    BIGNUM *q = NULL;
-    int i, nid;
+    int i;
 
+    if (dh == NULL)
+        return;
+
+    dh->params.nid = NID_undef; /* flush cached value */
+
+    /* Exit if p or g is not set */
+    if (dh->params.p == NULL
+        || dh->params.g == NULL)
+        return;
+
+    for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
+        /* Keep searching until a matching p and g is found */
+        if (BN_cmp(dh->params.p, dh_named_groups[i].p) == 0
+            && BN_cmp(dh->params.g, dh_named_groups[i].g) == 0) {
+                /* Verify q is correct if it exists */
+                if (dh->params.q != NULL) {
+                    if (BN_cmp(dh->params.q, dh_named_groups[i].q) != 0)
+                        continue;  /* ignore if q does not match */
+                } else {
+                    dh->params.q = (BIGNUM *)dh_named_groups[i].q;
+                }
+                dh->params.nid = dh_named_groups[i].uid; /* cache the nid */
+                dh->length = BN_num_bits(dh->params.q);
+                dh->dirty_cnt++;
+                break;
+        }
+    }
+}
+
+int DH_get_nid(const DH *dh)
+{
     if (dh == NULL)
         return NID_undef;
 
-    nid = dh->params.nid;
-    /* Just return if it is already cached */
-    if (nid != NID_undef)
-        return nid;
-
-    for (i = 0; i < (int)OSSL_NELEM(dh_named_groups); ++i) {
-        /* Keep searching until a matching p is found */
-        if (BN_cmp(dh->params.p, dh_named_groups[i].p) != 0)
-            continue;
-
-        /* Return an error if g is not matching */
-        if (BN_cmp(dh->params.g, dh_named_groups[i].g) != 0)
-            break;
-        if (dh_named_groups[i].q != NULL) {
-            /* RFC5114 NAMED GROUPS have q defined */
-
-            /* Verify q is correct if it exists */
-            if (dh->params.q != NULL) {
-                if (BN_cmp(dh->params.q, dh_named_groups[i].q) != 0)
-                    break;  /* returns nid = NID_undef if q does not match */
-            } else {
-                dh->params.q = (BIGNUM *)dh_named_groups[i].q;
-            }
-        } else {
-            /* For SAFE PRIME GROUPS */
-
-            /* Set q = (p - 1) / 2 (p is known to be odd so just shift right) */
-            q = BN_dup(dh->params.p);
-
-            if (q == NULL || !BN_rshift1(q, q))
-                break; /* returns nid = NID_undef on failure */
-
-            /* Verify q is correct if it exists */
-            if (dh->params.q != NULL) {
-                if (BN_cmp(dh->params.q, q) != 0)
-                    break;  /* returns nid = NID_undef if q does not match */
-            } else {
-                /* assign the calculated q */
-                dh->params.q = q;
-                q = NULL; /* set to NULL so it is not freed */
-            }
-        }
-        nid = dh->params.nid = dh_named_groups[i].uid; /* cache the nid */
-        dh->length =
-            2 * ifc_ffc_compute_security_bits(dh_named_groups[i].nbits);
-        dh->dirty_cnt++;
-        /* A matching p was found so break out of the loop */
-        break;
-    }
-    BN_free(q);
-    return nid;
+    return dh->params.nid;
 }

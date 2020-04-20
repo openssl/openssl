@@ -149,8 +149,6 @@ int ffc_params_FIPS186_2_validate(const FFC_PARAMS *params, int type,
 
 int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
                              int N, int s, BIGNUM *priv);
-int ffc_generate_private_key_fips(BN_CTX *ctx, const FFC_PARAMS *params,
-                                  int N, int s, BIGNUM *priv);
 
 int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
                                        const BIGNUM *p, const BIGNUM *q,
