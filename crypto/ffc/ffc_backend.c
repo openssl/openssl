@@ -31,7 +31,13 @@ int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
     if (prm != NULL) {
         if (prm->data_type != OSSL_PARAM_UTF8_STRING)
             goto err;
+#ifndef OPENSSL_NO_DH
+        /*
+         * In a no-dh build we just go straight to err because we have no
+         * support for this.
+         */
         if (!ffc_set_group_pqg(ffc, prm->data))
+#endif
             goto err;
     }
 
