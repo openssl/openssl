@@ -114,8 +114,9 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
  */
 static const char *improve_location_name(const char *func, const char *fallback)
 {
-    if (!ossl_assert(fallback != NULL))
-        return NULL;
+    if (fallback == NULL)
+        return func == NULL ? UNKNOWN_FUNC : func;
+
     return func == NULL || *func == '\0' || strcmp(func, UNKNOWN_FUNC) == 0
         ? fallback : func;
 }
