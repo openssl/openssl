@@ -17,7 +17,7 @@
 
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 {
-    EVP_MD *md5;
+    const EVP_MD *md5 = NULL, *sha1 = NULL;
     EVP_MD_CTX *m5;
     EVP_MD_CTX *s1;
     unsigned char buf[16], smd[SHA_DIGEST_LENGTH];
@@ -29,10 +29,11 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     c = os_toascii[c];          /* 'A' in ASCII */
 #endif
     k = 0;
-    md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");
+    md5 = ssl_evp_md_fetch(s->ctx->libctx, NID_md5, s->ctx->propq);
+    sha1 = ssl_evp_md_fetch(s->ctx->libctx, NID_sha1, s->ctx->propq);
     m5 = EVP_MD_CTX_new();
     s1 = EVP_MD_CTX_new();
-    if (md5 == NULL || m5 == NULL || s1 == NULL) {
+    if (md5 == NULL || sha1 == NULL || m5 == NULL || s1 == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GENERATE_KEY_BLOCK,
                  ERR_R_MALLOC_FAILURE);
         goto err;
@@ -49,7 +50,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
         for (j = 0; j < k; j++)
             buf[j] = c;
         c++;
-        if (!EVP_DigestInit_ex(s1, EVP_sha1(), NULL)
+        if (!EVP_DigestInit_ex(s1, sha1, NULL)
             || !EVP_DigestUpdate(s1, buf, k)
             || !EVP_DigestUpdate(s1, s->session->master_key,
                                  s->session->master_key_length)
@@ -87,6 +88,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     EVP_MD_CTX_free(m5);
     EVP_MD_CTX_free(s1);
     ssl_evp_md_free(md5);
+    ssl_evp_md_free(sha1);
     return ret;
 }
 
