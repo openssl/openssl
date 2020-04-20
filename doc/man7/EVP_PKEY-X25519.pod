@@ -28,6 +28,16 @@ The private key value.
 
 =back
 
+=head2 ED25519 and ED448 parameters
+
+=over 4
+
+=item "mandatory-digest" (B<OSSL_PKEY_PARAM_MANDATORY_DIGEST>) <utf8 string>
+
+The empty string, signifying that no digest may be specified.
+
+=back
+
 =head1 CONFORMING TO
 
 =over 4

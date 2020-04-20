@@ -42,7 +42,10 @@ static OSSL_OP_keymgmt_get_params_fn x25519_get_params;
 static OSSL_OP_keymgmt_get_params_fn x448_get_params;
 static OSSL_OP_keymgmt_get_params_fn ed25519_get_params;
 static OSSL_OP_keymgmt_get_params_fn ed448_get_params;
-static OSSL_OP_keymgmt_gettable_params_fn ecx_gettable_params;
+static OSSL_OP_keymgmt_gettable_params_fn x25519_gettable_params;
+static OSSL_OP_keymgmt_gettable_params_fn x448_gettable_params;
+static OSSL_OP_keymgmt_gettable_params_fn ed25519_gettable_params;
+static OSSL_OP_keymgmt_gettable_params_fn ed448_gettable_params;
 static OSSL_OP_keymgmt_has_fn ecx_has;
 static OSSL_OP_keymgmt_import_fn ecx_import;
 static OSSL_OP_keymgmt_import_types_fn ecx_imexport_types;
@@ -207,6 +210,17 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
     return key_to_params(ecx, NULL, params);
 }
 
+static int ed_get_params(void *key, OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+
+    if ((p = OSSL_PARAM_locate(params,
+                               OSSL_PKEY_PARAM_MANDATORY_DIGEST)) != NULL
+        && !OSSL_PARAM_set_utf8_string(p, ""))
+        return 0;
+    return 1;
+}
+
 static int x25519_get_params(void *key, OSSL_PARAM params[])
 {
     return ecx_get_params(key, params, X25519_BITS, X25519_SECURITY_BITS,
@@ -222,16 +236,27 @@ static int x448_get_params(void *key, OSSL_PARAM params[])
 static int ed25519_get_params(void *key, OSSL_PARAM params[])
 {
     return ecx_get_params(key, params, ED25519_BITS, ED25519_SECURITY_BITS,
-                          ED25519_KEYLEN);
+                          ED25519_KEYLEN)
+        && ed_get_params(key, params);
 }
 
 static int ed448_get_params(void *key, OSSL_PARAM params[])
 {
     return ecx_get_params(key, params, ED448_BITS, ED448_SECURITY_BITS,
-                          ED448_KEYLEN);
+                          ED448_KEYLEN)
+        && ed_get_params(key, params);
 }
 
 static const OSSL_PARAM ecx_params[] = {
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
+    ECX_KEY_TYPES(),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM ed_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
@@ -239,9 +264,24 @@ static const OSSL_PARAM ecx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *ecx_gettable_params(void)
+static const OSSL_PARAM *x25519_gettable_params(void)
 {
     return ecx_params;
+}
+
+static const OSSL_PARAM *x448_gettable_params(void)
+{
+    return ecx_params;
+}
+
+static const OSSL_PARAM *ed25519_gettable_params(void)
+{
+    return ed_params;
+}
+
+static const OSSL_PARAM *ed448_gettable_params(void)
+{
+    return ed_params;
 }
 
 static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
@@ -383,7 +423,7 @@ static void ecx_gen_cleanup(void *genctx)
         { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))alg##_new_key }, \
         { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ecx_key_free }, \
         { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))alg##_get_params }, \
-        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))ecx_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))alg##_gettable_params }, \
         { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ecx_has }, \
         { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ecx_import }, \
         { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ecx_imexport_types }, \
