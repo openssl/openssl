@@ -359,7 +359,10 @@ sub testssl {
 
       SKIP: {
 	  skip "SSLv3 is not supported by this OpenSSL build", 4
-	      if disabled("ssl3") || $provider eq "fips";
+	      if disabled("ssl3");
+
+	  skip "SSLv3 is not supported by the FIPS provider", 4
+	      if $provider eq "fips";
 
 	  ok(run(test([@ssltest, "-bio_pair", "-ssl3"])),
 	     'test sslv3 via BIO pair');
