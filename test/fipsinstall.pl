@@ -21,6 +21,11 @@ use FindBin;
 use lib "$FindBin::Bin/../Configurations";
 use platform;
 
+print STDERR "DEBUG[fipsinstall.pl]: Environment dump:\n";
+print STDERR "DEBUG[fipsinstall.pl]: > $_ = $ENV{$_}\n" foreach (sort keys %ENV);
+print STDERR "DEBUG[fipsinstall.pl]: \@ARGV dump:\n";
+print STDERR "DEBUG[fipsinstall.pl]: > $_\n" foreach (@ARGV);
+
 my @providers = ($bldtop_dir, 'providers');
 my $fips_cnf = File::Spec->catfile(@providers, 'fipsinstall.cnf');
 my $fips_module = File::Spec->catfile(@providers, platform->dso('fips'));
@@ -41,6 +46,8 @@ $cmd =~ s|\s+| |gm;
 $cmd =~ s|{fips_cnf}|$fips_cnf|;
 $cmd =~ s|{fips_module}|$fips_module|;
 
+print STDERR "DEBUG[fipsinstall.pl]: \$cmd = $cmd\n";
+
 my $exit = 0;
 system($cmd);
 die "Failed to run '$cmd'\n" if $? == -1;
@@ -48,6 +55,8 @@ die "Failed to run '$cmd'\n" if $? == -1;
 $exit = (($? & 255) | 128) if ($? & 255) != 0;
 # Otherwise, just return fipsinstall's exit code
 $exit = ($? >> 8);
+
+print STDERR "DEBUG[fipsinstall.pl]: \$exit = $exit\n";
 
 print STDERR "# fipsinstall.pl: $cmd => $exit\n"
     if $ENV{HARNESS_ACTIVE} && $ENV{HARNESS_VERBOSE};
