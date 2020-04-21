@@ -7,7 +7,7 @@
 
   Major changes between OpenSSL 1.1.1f and OpenSSL 1.1.1g [under development]
 
-      o
+      o Fixed segmentation fault in SSL_check_chain() (CVE-2020-1967)
 
   Major changes between OpenSSL 1.1.1e and OpenSSL 1.1.1f [31 Mar 2020]
 

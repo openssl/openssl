@@ -9,6 +9,16 @@
 
  Changes between 1.1.1f and 1.1.1g [xx XXX xxxx]
 
+  *) Fixed segmentation fault in SSL_check_chain()
+     Server or client applications that call the SSL_check_chain() function
+     during or after a TLS 1.3 handshake may crash due to a NULL pointer
+     dereference as a result of incorrect handling of the
+     "signature_algorithms_cert" TLS extension. The crash occurs if an invalid
+     or unrecognised signature algorithm is received from the peer. This could
+     be exploited by a malicious peer in a Denial of Service attack.
+     (CVE-2020-1967)
+     [Benjamin Kaduk]
+
   *) Added AES consttime code for no-asm configurations
      an optional constant time support for AES was added
      when building openssl for no-asm.
