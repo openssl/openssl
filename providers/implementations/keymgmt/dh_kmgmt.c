@@ -331,6 +331,8 @@ static int dh_validate_private(DH *dh)
     const BIGNUM *priv_key = NULL;
 
     DH_get0_key(dh, NULL, &priv_key);
+    if (priv_key == NULL)
+        return 0;
     return dh_check_priv_key(dh, priv_key, &status);;
 }
 
