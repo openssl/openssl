@@ -79,10 +79,16 @@ plan tests =>
     + scalar(@defltfiles);
 
 unless ($no_fips) {
+    my $infile = bldtop_file('providers', platform->dso('fips'));
     $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
     $ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 
-    ok(run(perltest(['fipsinstall.pl', bldtop_dir()])),
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
+                '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_sect'])),
        "fipsinstall");
 }
 
