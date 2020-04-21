@@ -7,6 +7,10 @@
  https://github.com/openssl/openssl/commits/ and pick the appropriate
  release branch.
 
+ Changes between 1.1.1g and 1.1.1h [xx XXX xxxx]
+
+  *)
+
  Changes between 1.1.1f and 1.1.1g [21 Apr 2020]
 
   *) Fixed segmentation fault in SSL_check_chain()
