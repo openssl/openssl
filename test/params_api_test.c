@@ -69,6 +69,7 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
     const int sizet = bit32 && sizeof(size_t) > sizeof(int32_t);
     const int signd = param->data_type == OSSL_PARAM_INTEGER;
 
+    OSSL_PARAM_set_unmodified(param);
     if (signd) {
         if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, &i32)))
             || !TEST_true(OSSL_PARAM_get_int64(param, &i64)))
@@ -80,6 +81,8 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
             || (sizet && !TEST_true(OSSL_PARAM_get_size_t(param, &s))))
             return 0;
     }
+    if (!TEST_false(OSSL_PARAM_modified(param)))
+        return 0;
 
     /* Check signed types */
     if (bit32) {
@@ -112,6 +115,8 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
                 || !TEST_size_t_eq((size_t)i64, 12345))
                 return 0;
         }
+        if (!TEST_true(OSSL_PARAM_modified(param)))
+            return 0;
     }
     return 1;
 }

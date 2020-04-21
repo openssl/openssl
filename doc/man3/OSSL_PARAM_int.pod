@@ -27,7 +27,7 @@ OSSL_PARAM_set_int64, OSSL_PARAM_set_long, OSSL_PARAM_set_size_t,
 OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32, OSSL_PARAM_set_uint64,
 OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN, OSSL_PARAM_set_utf8_string,
 OSSL_PARAM_set_octet_string, OSSL_PARAM_set_utf8_ptr,
-OSSL_PARAM_set_octet_ptr
+OSSL_PARAM_set_octet_ptr, OSSL_PARAM_UNMODIFIED
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -51,6 +51,8 @@ OSSL_PARAM_set_octet_ptr
  #define OSSL_PARAM_utf8_ptr(key, address, size)
  #define OSSL_PARAM_octet_ptr(key, address, size)
  #define OSSL_PARAM_END
+
+ #define OSSL_PARAM_UNMODIFIED
 
  OSSL_PARAM OSSL_PARAM_construct_TYPE(const char *key, TYPE *buf);
  OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
@@ -90,6 +92,9 @@ OSSL_PARAM_set_octet_ptr
                               size_t *used_len);
  int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                               size_t used_len);
+
+ int OSSL_PARAM_modified(const OSSL_PARAM *p);
+ void OSSL_PARAM_set_unmodified(OSSL_PARAM *p);
 
 =head1 DESCRIPTION
 
@@ -250,6 +255,16 @@ OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by B<p> to the values B<val>.
 The length of the OCTET string is provided by B<used_len>.
 
+The OSSL_PARAM_UNMODIFIED macro is used to detect if a parameter was set.  On
+creation, via either the macros or construct calls, the I<return_size> field
+is set to this.  If the parameter is set using the calls defined herein, the
+I<return_size> field is changed.
+
+OSSL_PARAM_modified() queries if the parameter has been set or not using the
+calls defined herein.
+
+OSSL_PARAM_set_unmodified() is used to reset unused indicator.
+
 =head1 RETURN VALUES
 
 OSSL_PARAM_construct_TYPE(), OSSL_PARAM_construct_BN(),
@@ -260,6 +275,8 @@ return a populated OSSL_PARAM structure.
 OSSL_PARAM_locate() and OSSL_PARAM_locate_const() return a pointer to
 the matching OSSL_PARAM object.  They return B<NULL> on error or when
 no object matching B<key> exists in the B<array>.
+
+OSSL_PARAM_modified() returns B<1> if the parameter was set and B<0> otherwise.
 
 All other functions return B<1> on success and B<0> on failure.
 
