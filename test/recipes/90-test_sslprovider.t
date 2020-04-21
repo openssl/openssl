@@ -30,7 +30,12 @@ SKIP: {
     skip "Skipping FIPS installation", 1
         if disabled("fips");
 
-    ok(run(perltest(['fipsinstall.pl', bldtop_dir()])),
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
+                '-module', bldtop_file('providers', platform->dso('fips')),
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_sect'])),
        "fipsinstall");
 }
 
