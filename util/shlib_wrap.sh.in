@@ -26,6 +26,7 @@ if [ -n "$OPENSSL_REGRESSION" ]; then
 fi
 
 [ $# -ne 0 ] || set -x		# debug mode without arguments:-)
+set -x                          # Temporary debug mode anyway
 
 THERE="`echo $0 | sed -e 's|[^/]*$||' 2>/dev/null`.."
 [ -d "${THERE}" ] || exec "$@"	# should never happen...
