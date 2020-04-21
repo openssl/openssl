@@ -688,7 +688,7 @@ int EC_KEY_set_private_key(EC_KEY *key, const BIGNUM *priv_key)
      * This is important also because `BN_dup()` (and `BN_copy()`) do not
      * propagate the `BN_FLG_CONSTTIME` flag from the source `BIGNUM`, and
      * this brings an extra risk of inadvertently losing the flag, even when
-     * the called specifically set it.
+     * the caller specifically set it.
      *
      * The propagation has been turned on and off a few times in the past
      * years because in some conditions has shown unintended consequences in
