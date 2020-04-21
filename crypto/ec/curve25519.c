@@ -5582,18 +5582,8 @@ int ED25519_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[32],
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     ge_p3 A;
-    int r;
-    EVP_MD *sha512 = NULL;
 
-    sha512 = EVP_MD_fetch(ctx, SN_sha512, NULL);
-    if (sha512 == NULL)
-        return 0;
-    r = EVP_Digest(private_key, 32, az, NULL, sha512, NULL);
-    EVP_MD_free(sha512);
-    if (!r) {
-        OPENSSL_cleanse(az, sizeof(az));
-        return 0;
-    }
+    SHA512(private_key, 32, az);
 
     az[0] &= 248;
     az[31] &= 63;
