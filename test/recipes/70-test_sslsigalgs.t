@@ -286,70 +286,65 @@ SKIP: {
     ok(TLSProxy::Message->fail, "No matching certificate for sigalgs_cert");
 }
 
-SKIP: {
-    skip "TLS 1.3 disabled", 4 if disabled("tls1_3");
-    #Test 25: Send an unrecognized signature_algorithms_cert
-    #        We should be able to skip over the unrecognized value and use a
-    #        valid one that appears later in the list.
-    $proxy->clear();
-    $proxy->filter(\&inject_unrecognized_sigalg);
-    $proxy->clientflags("-tls1_3");
-    # Use -xcert to get SSL_check_chain() to run in the cert_cb.  This is
-    # needed to trigger (e.g.) CVE-2020-1967
-    $proxy->serverflags("" .
-            " -xcert " . srctop_file("test", "certs", "servercert.pem") .
-            " -xkey " . srctop_file("test", "certs", "serverkey.pem") .
-            " -xchain " . srctop_file("test", "certs", "rootcert.pem"));
-    $testtype = UNRECOGNIZED_SIGALGS_CERT;
-    $proxy->start();
-    ok(TLSProxy::Message->success(), "Unrecognized sigalg_cert in ClientHello");
+#Test 25: Send an unrecognized signature_algorithms_cert
+#        We should be able to skip over the unrecognized value and use a
+#        valid one that appears later in the list.
+$proxy->clear();
+$proxy->filter(\&inject_unrecognized_sigalg);
+# Use -xcert to get SSL_check_chain() to run in the cert_cb.  This is
+# needed to trigger (e.g.) CVE-2020-1967
+$proxy->serverflags("" .
+	" -xcert " . srctop_file("test", "certs", "servercert.pem") .
+	" -xkey " . srctop_file("test", "certs", "serverkey.pem") .
+	" -xchain " . srctop_file("test", "certs", "rootcert.pem"));
+$testtype = UNRECOGNIZED_SIGALGS_CERT;
+$proxy->start();
+ok(TLSProxy::Message->success(), "Unrecognized sigalg_cert in ClientHello");
 
-    #Test 26: Send an unrecognized signature_algorithms
-    #        We should be able to skip over the unrecognized value and use a
-    #        valid one that appears later in the list.
-    $proxy->clear();
-    $proxy->filter(\&inject_unrecognized_sigalg);
-    $proxy->clientflags("-tls1_3");
-    $proxy->serverflags("" .
-            " -xcert " . srctop_file("test", "certs", "servercert.pem") .
-            " -xkey " . srctop_file("test", "certs", "serverkey.pem") .
-            " -xchain " . srctop_file("test", "certs", "rootcert.pem"));
-    $testtype = UNRECOGNIZED_SIGALG;
-    $proxy->start();
-    ok(TLSProxy::Message->success(), "Unrecognized sigalg in ClientHello");
+#Test 26: Send an unrecognized signature_algorithms
+#        We should be able to skip over the unrecognized value and use a
+#        valid one that appears later in the list.
+$proxy->clear();
+$proxy->filter(\&inject_unrecognized_sigalg);
+$proxy->serverflags("" .
+	" -xcert " . srctop_file("test", "certs", "servercert.pem") .
+	" -xkey " . srctop_file("test", "certs", "serverkey.pem") .
+	" -xchain " . srctop_file("test", "certs", "rootcert.pem"));
+$testtype = UNRECOGNIZED_SIGALG;
+$proxy->start();
+ok(TLSProxy::Message->success(), "Unrecognized sigalg in ClientHello");
 
-    #Test 27: Send an unrecognized signature_algorithms_cert in CR
-    #        We should be able to skip over the unrecognized value and use a
-    #        valid one that appears later in the list.
-    $proxy->clear();
-    $proxy->filter(\&inject_unrecognized_sigalg);
-    # Use -xcert to get SSL_check_chain() to run in the cert_cb.  This is
-    # needed to trigger (e.g.) CVE-2020-1967
-    $proxy->clientflags("-tls1_3" .
-            " -xcert " . srctop_file("test", "certs", "client-ed25519-cert.pem") .
-            " -xkey " . srctop_file("test", "certs", "client-ed25519-key.pem") .
-            " -xchain " . srctop_file("test", "certs", "rootcert.pem"));
-    # Request a certificate from the client
-    $proxy->serverflags("-verify 3");
-    $testtype = UNRECOGNIZED_CR_SIGALGS_CERT;
-    $proxy->start();
-    ok(TLSProxy::Message->success(),
-       "Unrecognized sigalg_cert in CertificateRequest");
+#Test 27: Send an unrecognized signature_algorithms_cert in CR
+#        We should be able to skip over the unrecognized value and use a
+#        valid one that appears later in the list.
+$proxy->clear();
+$proxy->filter(\&inject_unrecognized_sigalg);
+# Use -xcert to get SSL_check_chain() to run in the cert_cb.  This is
+# needed to trigger (e.g.) CVE-2020-1967
+$proxy->clientflags("-xcert " .
+        srctop_file("test", "certs", "client-ed25519-cert.pem") .
+	" -xkey " . srctop_file("test", "certs", "client-ed25519-key.pem") .
+	" -xchain " . srctop_file("test", "certs", "rootcert.pem"));
+# Request a certificate from the client
+$proxy->serverflags("-verify 3");
+$testtype = UNRECOGNIZED_CR_SIGALGS_CERT;
+$proxy->start();
+ok(TLSProxy::Message->success(),
+   "Unrecognized sigalg_cert in CertificateRequest");
 
-    #Test 28: Send an unrecognized signature_algorithms in CR
-    #        We should be able to skip over the unrecognized value and use a
-    #        valid one that appears later in the list.
-    $proxy->clear();
-    $proxy->filter(\&inject_unrecognized_sigalg);
-    $proxy->clientflags("-tls1_3" .
-            " -xcert " . srctop_file("test", "certs", "client-ed25519-cert.pem") .
-            " -xkey " . srctop_file("test", "certs", "client-ed25519-key.pem") .
-            " -xchain " . srctop_file("test", "certs", "rootcert.pem"));
-    $proxy->serverflags("-verify 3");
-    $testtype = UNRECOGNIZED_CR_SIGALG;
-    $proxy->start();
-    ok(TLSProxy::Message->success(), "Unrecognized sigalg in ClientHello");
-}
+#Test 28: Send an unrecognized signature_algorithms in CR
+#        We should be able to skip over the unrecognized value and use a
+#        valid one that appears later in the list.
+$proxy->clear();
+$proxy->filter(\&inject_unrecognized_sigalg);
+$proxy->clientflags("-xcert " .
+        srctop_file("test", "certs", "client-ed25519-cert.pem") .
+	" -xkey " . srctop_file("test", "certs", "client-ed25519-key.pem") .
+	" -xchain " . srctop_file("test", "certs", "rootcert.pem"));
+$proxy->serverflags("-verify 3");
+$testtype = UNRECOGNIZED_CR_SIGALG;
+$proxy->start();
+ok(TLSProxy::Message->success(), "Unrecognized sigalg in ClientHello");
 
 
 
