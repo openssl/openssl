@@ -31,7 +31,7 @@ SKIP: {
         if disabled("fips");
 
     ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsinstall.cnf'),
+                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
                 '-module', bldtop_file('providers', platform->dso('fips')),
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
