@@ -49,5 +49,8 @@ $exit = (($? & 255) | 128) if ($? & 255) != 0;
 # Otherwise, just return fipsinstall's exit code
 $exit = ($? >> 8);
 
+print STDERR "# fipsinstall.pl: $cmd => $exit\n"
+    if $ENV{HARNESS_ACTIVE} && $ENV{HARNESS_VERBOSE};
+
 exit($exit);
 
