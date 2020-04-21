@@ -12,6 +12,7 @@
 
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
+# include "internal/sockets.h" /* for openssl_fdset() */
 # include <assert.h>
 
 # include <sys/types.h>
@@ -34,13 +35,6 @@
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
-
-/* also in include/internal/sockets.h */
-# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
-#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
-# else
-#  define openssl_fdset(a,b) FD_SET(a, b)
-# endif
 
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
