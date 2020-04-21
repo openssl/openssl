@@ -322,6 +322,8 @@ static int dh_validate_public(DH *dh)
     const BIGNUM *pub_key = NULL;
 
     DH_get0_key(dh, &pub_key, NULL);
+    if (pub_key == NULL)
+        return 0;
     return DH_check_pub_key_ex(dh, pub_key);
 }
 
