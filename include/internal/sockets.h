@@ -154,9 +154,9 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 
 /* also in apps/include/apps.h */
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
-#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
+#  define openssl_fdset(a, b) FD_SET((unsigned int)(a), b)
 # else
-#  define openssl_fdset(a,b) FD_SET(a, b)
+#  define openssl_fdset(a, b) FD_SET(a, b)
 # endif
 
 #endif
