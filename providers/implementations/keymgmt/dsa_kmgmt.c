@@ -312,6 +312,8 @@ static int dsa_validate_public(DSA *dsa)
     const BIGNUM *pub_key = NULL;
 
     DSA_get0_key(dsa, &pub_key, NULL);
+    if (pub_key == NULL)
+        return 0;
     return dsa_check_pub_key(dsa, pub_key, &status);
 }
 
@@ -321,6 +323,8 @@ static int dsa_validate_private(DSA *dsa)
     const BIGNUM *priv_key = NULL;
 
     DSA_get0_key(dsa, NULL, &priv_key);
+    if (priv_key == NULL)
+        return 0;
     return dsa_check_priv_key(dsa, priv_key, &status);
 }
 
