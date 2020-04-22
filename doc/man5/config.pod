@@ -43,8 +43,9 @@ that point.  Included files can have B<.include> statements that specify
 other files.  If B<pathname> is a directory, all files within that directory
 that have a C<.cnf> or C<.conf> extension will be included.  (This is only
 available on systems with POSIX IO support.)  Any sub-directories found
-inside the B<pathname> are B<ignored>, as is a directory named in a file
-opened as part of a directory scan.
+inside the B<pathname> are B<ignored>.  Similarly, if a file is opened
+while scanning a directory, and that file has an B<.include> directive
+that specifies a directory, that is also ignored.
 
 As a general rule, the B<pathname> should be an absolute path.  Relative
 paths are evaluated based on the current working directory, so unless the
@@ -379,7 +380,7 @@ For example:
 
 =head1 EXAMPLES
 
-This example shows how to using quoting and escaping.
+This example shows how to use quoting and escaping.
 
  # This is the default section.
  HOME = /temp
@@ -456,8 +457,8 @@ are all null terminated so nulls cannot form part of the value.
 The escaping isn't quite right: if you want to use sequences like B<\n>
 you can't use any quote escaping on the same line.
 
-The limit that only one directory can be scanned at a time is a limitation
-that should be removed.
+The limit that only one directory can be opened and read at a time
+can be considered a bug and should be fixed.
 
 =head1 HISTORY
 
