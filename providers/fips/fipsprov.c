@@ -424,13 +424,8 @@ static const OSSL_ALGORITHM_CAPABLE fips_ciphers[] = {
 static OSSL_ALGORITHM exported_fips_ciphers[OSSL_NELEM(fips_ciphers)];
 
 static const OSSL_ALGORITHM fips_macs[] = {
-#ifndef OPENSSL_NO_CMAC
-    { "CMAC", "provider=fips,fips=yes", cmac_functions },
-#endif
     { "GMAC", "provider=fips,fips=yes", gmac_functions },
     { "HMAC", "provider=fips,fips=yes", hmac_functions },
-    { "KMAC-128:KMAC128", "provider=fips,fips=yes", kmac128_functions },
-    { "KMAC-256:KMAC256", "provider=fips,fips=yes", kmac256_functions },
     { NULL, NULL, NULL }
 };
 
@@ -439,7 +434,6 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { "SSKDF", "provider=fips,fips=yes", kdf_sskdf_functions },
     { "PBKDF2", "provider=fips,fips=yes", kdf_pbkdf2_functions },
     { "TLS1-PRF", "provider=fips,fips=yes", kdf_tls1_prf_functions },
-    { "KBKDF", "provider=fips,fips=yes", kdf_kbkdf_functions },
     { NULL, NULL, NULL }
 };
 
