@@ -588,12 +588,9 @@ int req_main(int argc, char **argv)
 
     if (keyfile != NULL) {
         pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
-        if (pkey == NULL) {
-            /* load_key() has already printed an appropriate message */
+        if (pkey == NULL)
             goto end;
-        } else {
-            app_RAND_load_conf(req_conf, section);
-        }
+        app_RAND_load_conf(req_conf, section);
     }
 
     if (newreq && (pkey == NULL)) {
