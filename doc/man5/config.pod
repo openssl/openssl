@@ -31,8 +31,8 @@ Two directives can be used to control the parsing of configuration files:
 B<.include> and B<.pragma>.
 
 For compatibility with older versions of OpenSSL, an equal sign after the
-directive will be ignored.  Older versions will treat it as an assignment.
-Doing this is dubious, and is unlikely to result in compatible behavior.
+directive will be ignored.  Older versions will treat it as an assignment,
+so care should be taken if the difference in semantics is important.
 
 A file can include other files using the include syntax:
 
@@ -42,8 +42,8 @@ If B<pathname> is a simple filename, that file is included directly at
 that point.  Included files can have B<.include> statements that specify
 other files.  If B<pathname> is a directory, all files within that directory
 that have a C<.cnf> or C<.conf> extension will be included.  (This is only
-available on systems with POSIX IO support.)  Multiple levels of directory
-inclusion are not supported.
+available on systems with POSIX IO support.)  Any sub-directories found
+inside the B<pathname> are B<ignored>.
 
 As a general rule, the B<pathname> should be an absolute path.  Relative
 paths are evaluated based on the current working directory, so unless the
@@ -86,8 +86,8 @@ Whitespace between the name and the brackets is removed.
 The first section of a configuration file is special and is referred to
 as the B<default> section. This section is usually unnamed and spans from
 the start of file until the first named section. When a name is being
-looked up it is first looked up in the current or named named section,
-and then the default section if necesssary.
+looked up, it is first looked up in the current or named section,
+and then the default section if necessary.
 
 The environment is mapped onto a section called B<ENV>.
 
@@ -109,7 +109,7 @@ Whitespace after the name and before the equal sign is ignored.
 
 If a name is repeated in the same section, then all but the last
 value are ignored. In certain circumstances, such as with
-DNs, the same field may occur multiple times.
+Certificate DNs, the same field may occur multiple times.
 In order to support this, commands like L<openssl-req(1)> ignore any
 leading text that is preceeded with a period. For example:
 
@@ -126,7 +126,7 @@ or C<${section::name}>.
 By using C<$ENV::name>, the value of the specified environment
 variable will be substituted.
 
-If a configuration file attempts to expand a variable that doesn't exist
+Variables must be defined before their value is referenced, otherwise
 an error is flagged and the file will not load.
 This can be worked around by specifying a default value in the B<default>
 section before the variable is used.
@@ -181,7 +181,7 @@ different name by calling CONF_modules_load_file(), for example, directly.
  ... SSL/TLS configuration properties here ...
 
  [engines]
- ... engine stuff here ...
+ ... engine properties here ...
 
 The semantics of each module are described below. The phrase "in the
 initialization section" refers to the section identified by the
@@ -193,8 +193,8 @@ is used to specify the individual sections.
 
 The name B<oid_section> in the initialization section names the section
 containing name/value pairs of OID's.
-The name is the short name, and the value is the optional long name,
-and numeric value.
+The name is the short name; the value is an optional long name followed
+by a comma, and the numeric value.
 While some OpenSSL commands have their own section for specifying OID's,
 this section makes them avilable to all commands and applications.
 
@@ -217,10 +217,10 @@ showing that the OID "newoid1" has been added as "1.2.3.4.1".
 =head2 Provider Configuration
 
 The name B<providers> in the initialization section names the section
-containing cryptographic provider configuration. That section has
-a list of provider names the section for each provider. The
-provider-specific section is used to specify how to load the module,
-activate it, and set other parameters.
+containing cryptographic provider configuration. The name/value assignments
+in this section each name a provider, and point to the configuration section
+for that provider. The provider-specific section is used to specify how
+to load the module, activate it, and set other parameters.
 
 Within a provider section, the following names have meaning:
 
@@ -243,7 +243,7 @@ Specifies the pathname of the module (typically a shared library) to load.
 
 =item B<activate>
 
-If present, the module is ativated. The value assigned to this name is not
+If present, the module is activated. The value assigned to this name is not
 significant.
 
 =back
@@ -302,7 +302,7 @@ to impose a system-wide minimum on protocol version:
  [tls_system_default]
  MinProtocol = TLSv1.2
 
-Each configuration section consists of name/value pairs as parsed
+Each configuration section consists of name/value pairs that are parsed
 by B<SSL_CONF_cmd(3)>, which will be called by SSL_CTX_config() or
 SSL_config(), appropriately.  Note that any characters before an initial
 dot in the configuration section are ignored, so that the same command can
@@ -320,7 +320,7 @@ containing the list of ENGINE configurations.
 As with the providers, each name in this section identifies an engine
 with the configuration for that engine.
 The engine-specific section is used to specify how to load the engine,
-active it, and set other parameters.
+activate it, and set other parameters.
 
 Within an engine section, the following names have meaning:
 
@@ -378,7 +378,7 @@ For example:
 
 =head1 EXAMPLES
 
-This example shows how to using quoting and escaping.
+This example shows how use using quoting and escaping.
 
  # This is the default section.
  HOME = /temp
@@ -420,7 +420,7 @@ F<sample>.
  alg_section = evp_properties
 
  [evp_properties]
- fips_mode = yes
+ default_properties = "fips=yes"
 
 =head1 ENVIRONMENT
 
@@ -454,9 +454,6 @@ are all null terminated so nulls cannot form part of the value.
 
 The escaping isn't quite right: if you want to use sequences like B<\n>
 you can't use any quote escaping on the same line.
-
-Files are loaded in a single pass. This means that variable expansion
-requires the referenced variables to be defined earlier in the file.
 
 =head1 HISTORY
 
