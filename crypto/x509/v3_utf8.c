@@ -36,11 +36,12 @@ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
         X509V3err(X509V3_F_I2S_ASN1_UTF8STRING, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if ((tmp = OPENSSL_zalloc(utf8->length + 1)) == NULL) {
+    if ((tmp = OPENSSL_malloc(utf8->length + 1)) == NULL) {
         X509V3err(X509V3_F_I2S_ASN1_UTF8STRING, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     memcpy(tmp, utf8->data, utf8->length);
+    tmp[utf8->length] = 0;
     return tmp;
 }
 
