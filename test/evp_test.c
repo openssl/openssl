@@ -568,7 +568,7 @@ static void cipher_test_cleanup(EVP_TEST *t)
     for (i = 0; i < AAD_NUM; i++)
         OPENSSL_free(cdat->aad[i]);
     OPENSSL_free(cdat->tag);
-    EVP_CIPHER_meth_free(cdat->fetched_cipher);
+    EVP_CIPHER_free(cdat->fetched_cipher);
 }
 
 static int cipher_test_parse(EVP_TEST *t, const char *keyword,
