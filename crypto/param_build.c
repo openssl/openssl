@@ -312,7 +312,7 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         param[i].key = pd->key;
         param[i].data_type = pd->type;
         param[i].data_size = pd->size;
-        param[i].return_size = 0;
+        param[i].return_size = OSSL_PARAM_UNMODIFIED;
 
         if (pd->secure) {
             p = secure;
