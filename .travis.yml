@@ -54,7 +54,7 @@ jobs:
         - os: linux
           arch: arm64
           compiler: gcc
-          env: CONFIG_OPTS="no-asm no-deprecated enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
+          env: CONFIG_OPTS="no-asm no-makedepend no-deprecated enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
         - os: linux
           arch: s390x
           compiler: gcc
