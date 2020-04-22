@@ -17,7 +17,7 @@ defined:
 
 =over 4
 
-"provider=default"
+=item "provider=default"
 
 =back
 

@@ -447,7 +447,7 @@ static int test_fromdata_dh_named_group(void)
         || !TEST_ptr(pub = BN_bin2bn(pub_data, sizeof(pub_data), NULL))
         || !TEST_ptr(priv = BN_bin2bn(priv_data, sizeof(priv_data), NULL))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
-                                                      OSSL_PKEY_PARAM_FFC_GROUP,
+                                                      OSSL_PKEY_PARAM_DH_GROUP,
                                                       group_name, 0))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
@@ -464,7 +464,7 @@ static int test_fromdata_dh_named_group(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 256))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_FFC_GROUP,
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_DH_GROUP,
                                                   name_out, sizeof(name_out),
                                                   &len))
         || !TEST_str_eq(name_out, group_name)
@@ -588,7 +588,7 @@ static int test_fromdata_dh_fips186_4(void)
         || !TEST_ptr(pub = BN_bin2bn(pub_data, sizeof(pub_data), NULL))
         || !TEST_ptr(priv = BN_bin2bn(priv_data, sizeof(priv_data), NULL))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
-                                                      OSSL_PKEY_PARAM_FFC_GROUP,
+                                                      OSSL_PKEY_PARAM_DH_GROUP,
                                                       group_name, 0))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
@@ -605,7 +605,7 @@ static int test_fromdata_dh_fips186_4(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 256))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_FFC_GROUP,
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_DH_GROUP,
                                                   name_out, sizeof(name_out),
                                                   &len))
         || !TEST_str_eq(name_out, group_name)
@@ -1143,7 +1143,7 @@ static int test_fromdata_dsa_fips186_4(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 2 * (3 + sizeof(q_data))))
         goto err;
 
-    if (!TEST_false(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_FFC_GROUP,
+    if (!TEST_false(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_DH_GROUP,
                                                    name_out, sizeof(name_out),
                                                    &len))
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_PUB_KEY,

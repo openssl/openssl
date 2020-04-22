@@ -20,7 +20,7 @@ defined:
 
 =over 4
 
-"provider=legacy"
+=item "provider=legacy"
 
 =back
 

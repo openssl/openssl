@@ -66,6 +66,53 @@ B<EVP_KDF_CTX> is a context type that holds the algorithm inputs.
 
 EVP_KDF_fetch() fetches an implementation of a KDF I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
+
+The OpenSSL default provider supports the following algorithms:
+
+=over 4
+
+=item "HKDF" <OSSL_KDF_NAME_HKDF>
+
+See L<EVP_KDF-HKDF(7)> for further information.
+
+=item "PBKDF2" <OSSL_KDF_NAME_PBKDF2>
+
+See L<EVP_KDF-PBKDF2(7)> for further information.
+
+=item "SCRYPT" <OSSL_KDF_NAME_SCRYPT>
+
+See L<EVP_KDF-SCRYPT(7)> for further information.
+
+=item "SSHKDF" <OSSL_KDF_NAME_SSHKDF>
+
+See L<EVP_KDF-SSHKDF(7)> for further information.
+
+=item "SSKDF" <OSSL_KDF_NAME_SSKDF>
+
+See L<EVP_KDF-SS(7)> for further information.
+
+=item "TLS1-PRF" <OSSL_KDF_NAME_TLS1_PRF>
+
+See L<EVP_KDF-TLS1_PRF(7)> for further information.
+
+=item "X942KDF" <OSSL_KDF_NAME_X942KDF>
+
+See L<EVP_KDF-X942(7)> for further information.
+
+=item "X963KDF" <OSSL_KDF_NAME_X963KDF>
+
+See L<EVP_KDF-X963(7)> for further information.
+
+=item "KBKDF" <OSSL_KDF_NAME_KBKDF>
+
+See L<EVP_KDF-KB(7)> for further information.
+
+=item "KRB5KDF"" <OSSL_KDF_NAME_KRB5KDF>
+
+See L<EVP_KDF-KRB5KDF(7)> for further information.
+
+=back
+
 See L<provider(7)/Fetching algorithms> for further information.
 
 The returned value must eventually be freed with
@@ -248,14 +295,16 @@ supported by the KDF algorithm.
 
 =head1 SEE ALSO
 
-L<EVP_KDF-SCRYPT(7)>
-L<EVP_KDF-TLS1_PRF(7)>
-L<EVP_KDF-PBKDF2(7)>
 L<EVP_KDF-HKDF(7)>
+L<EVP_KDF-KB(7)>
+L<EVP_KDF-KRB5KDF(7)>
+L<EVP_KDF-PBKDF2(7)>
+L<EVP_KDF-SCRYPT(7)>
 L<EVP_KDF-SS(7)>
 L<EVP_KDF-SSHKDF(7)>
-L<EVP_KDF-X963(7)>
+L<EVP_KDF-TLS1_PRF(7)>
 L<EVP_KDF-X942(7)>
+L<EVP_KDF-X963(7)>
 
 =head1 HISTORY
 

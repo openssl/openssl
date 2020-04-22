@@ -44,13 +44,12 @@ static OSSL_OP_asym_cipher_set_ctx_params_fn rsa_set_ctx_params;
 static OSSL_OP_asym_cipher_settable_ctx_params_fn rsa_settable_ctx_params;
 
 static OSSL_ITEM padding_item[] = {
-    { RSA_PKCS1_PADDING,        "pkcs1"  },
-    { RSA_SSLV23_PADDING,       "sslv23" },
-    { RSA_NO_PADDING,           "none"   },
-    { RSA_PKCS1_OAEP_PADDING,   "oaep"   }, /* Correct spelling first */
+    { RSA_PKCS1_PADDING,        OSSL_PKEY_RSA_PAD_MODE_PKCSV15 },
+    { RSA_SSLV23_PADDING,       OSSL_PKEY_RSA_PAD_MODE_SSLV23 },
+    { RSA_NO_PADDING,           OSSL_PKEY_RSA_PAD_MODE_NONE },
+    { RSA_PKCS1_OAEP_PADDING,   OSSL_PKEY_RSA_PAD_MODE_OAEP }, /* Correct spelling first */
     { RSA_PKCS1_OAEP_PADDING,   "oeap"   },
-    { RSA_X931_PADDING,         "x931"   },
-    { RSA_PKCS1_PSS_PADDING,    "pss"    },
+    { RSA_X931_PADDING,         OSSL_PKEY_RSA_PAD_MODE_X931 },
     { 0,                        NULL     }
 };
 

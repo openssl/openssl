@@ -56,7 +56,7 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     ECX_KEY *edkey = (ECX_KEY *)vedkey;
 
-    if (mdname != NULL) {
+    if (mdname != NULL && mdname[0] != '\0') {
         PROVerr(0, PROV_R_INVALID_DIGEST);
         return 0;
     }

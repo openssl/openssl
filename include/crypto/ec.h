@@ -63,6 +63,7 @@ int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private)
 int ec_key_domparams_fromdata(EC_KEY *ecx, const OSSL_PARAM params[]);
 int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_set_param_ecdh_cofactor_mode(EC_KEY *ec, const OSSL_PARAM *p);
+int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
 
 # endif /* OPENSSL_NO_EC */
 #endif

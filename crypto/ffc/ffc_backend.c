@@ -27,7 +27,7 @@ int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
     if (ffc == NULL)
         return 0;
 
-    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_GROUP);
+    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_GROUP);
     if (prm != NULL) {
         if (prm->data_type != OSSL_PARAM_UTF8_STRING)
             goto err;

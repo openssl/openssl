@@ -583,9 +583,9 @@ int ec_validate(void *keydata, int selection)
 
 struct ec_gen_ctx {
     OPENSSL_CTX *libctx;
-
     EC_GROUP *gen_group;
     int selection;
+    int ecdh_mode;
 };
 
 static void *ec_gen_init(void *provctx, int selection)
@@ -600,6 +600,7 @@ static void *ec_gen_init(void *provctx, int selection)
         gctx->libctx = libctx;
         gctx->gen_group = NULL;
         gctx->selection = selection;
+        gctx->ecdh_mode = 0;
     }
     return gctx;
 }
@@ -636,6 +637,11 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
     struct ec_gen_ctx *gctx = genctx;
     const OSSL_PARAM *p;
 
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH))
+        != NULL) {
+        if (!OSSL_PARAM_get_int(p, &gctx->ecdh_mode))
+            return 0;
+    }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME))
         != NULL) {
         const char *curve_name = NULL;
@@ -670,7 +676,8 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *ec_gen_settable_params(void *provctx)
 {
     static OSSL_PARAM settable[] = {
-        { OSSL_PKEY_PARAM_EC_NAME, OSSL_PARAM_UTF8_STRING, NULL, 0, 0 },
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_NAME, NULL, 0),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
         OSSL_PARAM_END
     };
 
@@ -704,6 +711,9 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     /* Whether you want it or not, you get a keypair, not just one half */
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ret = ret && EC_KEY_generate_key(ec);
+
+    if (gctx->ecdh_mode != -1)
+        ret = ret && ec_set_ecdh_cofactor_mode(ec, gctx->ecdh_mode);
 
     if (ret)
         return ec;
