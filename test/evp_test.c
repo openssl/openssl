@@ -369,7 +369,7 @@ static void digest_test_cleanup(EVP_TEST *t)
 
     sk_EVP_TEST_BUFFER_pop_free(mdat->input, evp_test_buffer_free);
     OPENSSL_free(mdat->output);
-    EVP_MD_meth_free(mdat->fetched_digest);
+    EVP_MD_free(mdat->fetched_digest);
 }
 
 static int digest_test_parse(EVP_TEST *t,
