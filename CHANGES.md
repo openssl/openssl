@@ -87,6 +87,18 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
+ * Added an implementation of CMP and CRMF (RFC 4210, RFC 4211 RFC 6712).
+   This adds crypto/cmp/, crpyto/crmf/, and test/cmp_*.
+   See L<OSSL_CMP_exec_IR_ses(3)> as starting point.
+
+   *David von Oheimb*
+
+ * Generalized the HTTP client code from crypto/ocsp/ into crpyto/http/.
+   The legacy OCSP-focused and only partly documented API is retained.
+   See L<OSSL_CMP_MSG_http_perform(3)> etc. for details.
+
+   *David von Oheimb*
+
  * All of the low level RSA functions have been deprecated including:
 
    RSA_new_method, RSA_bits, RSA_size, RSA_security_bits,

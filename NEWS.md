@@ -33,6 +33,12 @@ OpenSSL 3.0
     authenticate servers or clients.
   * enable-crypto-mdebug and enable-crypto-mdebug-backtrace were mostly
     disabled; the project uses address sanitize/leak-detect instead.
+  * Added a Certificate Management Protocol (CMP, RFC 4210) implementation
+    also covering CRMF (RFC 4211) and HTTP transfer (RFC 6712).
+    It is part of the crypto lib, while a 'cmp' app using it is in preparation.
+    All widely used CMP features are supported for both clients and servers.
+  * Added a proper HTTP(S) client to libcrypto supporting GET and POST,
+    redirection, plain and ASN.1-encoded contents, proxies, and timeouts.
   * Added OSSL_SERIALIZER, a generic serializer API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
