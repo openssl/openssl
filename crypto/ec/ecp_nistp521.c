@@ -43,6 +43,11 @@
 #include <openssl/err.h>
 #include "ec_local.h"
 
+#define STRICT_ALIGNMENT 1
+#ifndef PEDANTIC
+# undef STRICT_ALIGNMENT
+#endif
+
 #if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
@@ -143,6 +148,18 @@ static const limb bottom58bits = 0x3ffffffffffffff;
  */
 static void bin66_to_felem(felem out, const u8 in[66])
 {
+#ifdef STRICT_ALIGNMENT
+    memcpy(out, in, 66);
+    out[8] = (out[8] << 48 | out[7] >> 16) & bottom57bits;
+    out[7] = (out[7] << 42 | out[6] >> 22) & bottom58bits;
+    out[6] = (out[6] << 36 | out[5] >> 28) & bottom58bits;
+    out[5] = (out[5] << 30 | out[4] >> 34) & bottom58bits;
+    out[4] = (out[4] << 24 | out[3] >> 40) & bottom58bits;
+    out[3] = (out[3] << 18 | out[2] >> 46) & bottom58bits;
+    out[2] = (out[2] << 12 | out[1] >> 52) & bottom58bits;
+    out[1] = (out[1] << 6 | out[0] >> 58) & bottom58bits;
+    out[0] &= bottom58bits;
+#else
     out[0] = (*((limb *) & in[0])) & bottom58bits;
     out[1] = (*((limb *) & in[7]) >> 2) & bottom58bits;
     out[2] = (*((limb *) & in[14]) >> 4) & bottom58bits;
@@ -152,6 +169,7 @@ static void bin66_to_felem(felem out, const u8 in[66])
     out[6] = (*((limb *) & in[43]) >> 4) & bottom58bits;
     out[7] = (*((limb *) & in[50]) >> 6) & bottom58bits;
     out[8] = (*((limb *) & in[58])) & bottom57bits;
+#endif
 }
 
 /*
@@ -160,6 +178,19 @@ static void bin66_to_felem(felem out, const u8 in[66])
  */
 static void felem_to_bin66(u8 out[66], const felem in)
 {
+#ifdef STRICT_ALIGNMENT
+    felem squeeze;
+    squeeze[0] = in[0] | in[1] << 58;
+    squeeze[1] = in[2] << 52 | in[1] >> 6;
+    squeeze[2] = in[3] << 46 | in[2] >> 12;
+    squeeze[3] = in[4] << 40 | in[3] >> 18;
+    squeeze[4] = in[5] << 34 | in[4] >> 24;
+    squeeze[5] = in[6] << 28 | in[5] >> 30;
+    squeeze[6] = in[7] << 22 | in[6] >> 36;
+    squeeze[7] = in[8] << 16 | in[7] >> 42;
+    squeeze[8] = in[8] >> 48;
+    memcpy(out, squeeze, 66);
+#else
     memset(out, 0, 66);
     (*((limb *) & out[0])) = in[0];
     (*((limb *) & out[7])) |= in[1] << 2;
@@ -170,6 +201,7 @@ static void felem_to_bin66(u8 out[66], const felem in)
     (*((limb *) & out[43])) |= in[6] << 4;
     (*((limb *) & out[50])) |= in[7] << 6;
     (*((limb *) & out[58])) = in[8];
+#endif
 }
 
 /* BN_to_felem converts an OpenSSL BIGNUM into an felem */

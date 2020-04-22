@@ -43,6 +43,11 @@
 #include <openssl/err.h>
 #include "ec_local.h"
 
+#define STRICT_ALIGNMENT 1
+#ifndef PEDANTIC
+# undef STRICT_ALIGNMENT
+#endif
+
 #if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
@@ -313,10 +318,18 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
  */
 static void bin28_to_felem(felem out, const u8 in[28])
 {
+#ifdef STRICT_ALIGNMENT
+    memset(out, 0, sizeof(felem));
+    memcpy(out, in, 7);
+    memcpy(&out[1], in + 7, 7);
+    memcpy(&out[2], in + 14, 7);
+    memcpy(&out[3], in + 21, 7);
+#else
     out[0] = *((const uint64_t *)(in)) & 0x00ffffffffffffff;
     out[1] = (*((const uint64_t *)(in + 7))) & 0x00ffffffffffffff;
     out[2] = (*((const uint64_t *)(in + 14))) & 0x00ffffffffffffff;
     out[3] = (*((const uint64_t *)(in+20))) >> 8;
+#endif
 }
 
 static void felem_to_bin28(u8 out[28], const felem in)
