@@ -43,7 +43,8 @@ that point.  Included files can have B<.include> statements that specify
 other files.  If B<pathname> is a directory, all files within that directory
 that have a C<.cnf> or C<.conf> extension will be included.  (This is only
 available on systems with POSIX IO support.)  Any sub-directories found
-inside the B<pathname> are B<ignored>.
+inside the B<pathname> are B<ignored>, as is a directory named in a file
+opened as part of a directory scan.
 
 As a general rule, the B<pathname> should be an absolute path.  Relative
 paths are evaluated based on the current working directory, so unless the
@@ -189,7 +190,7 @@ B<openssl_conf> or other name (given as B<openssl_init> in the
 example above).  The examples below assume the configuration above
 is used to specify the individual sections.
 
-=head2 ASN1 Object Identifier Configuration
+=head2 ASN.1 Object Identifier Configuration
 
 The name B<oid_section> in the initialization section names the section
 containing name/value pairs of OID's.
@@ -199,7 +200,7 @@ While some OpenSSL commands have their own section for specifying OID's,
 this section makes them avilable to all commands and applications.
 
  [oids]
- shortName = some object long name, 1.2.3.4
+ shortName = a very long OID name, 1.2.3.4
  newoid1 = 1.2.3.4.1
  some_other_oid = 1.2.3.5
 
@@ -315,7 +316,7 @@ key types, as shown here:
 
 =head2 Engine Configuration
 
-The name B<ssl_conf> in the initialization section names the section
+The name B<engines> in the initialization section names the section
 containing the list of ENGINE configurations.
 As with the providers, each name in this section identifies an engine
 with the configuration for that engine.
@@ -378,7 +379,7 @@ For example:
 
 =head1 EXAMPLES
 
-This example shows how use using quoting and escaping.
+This example shows how to using quoting and escaping.
 
  # This is the default section.
  HOME = /temp
@@ -454,6 +455,9 @@ are all null terminated so nulls cannot form part of the value.
 
 The escaping isn't quite right: if you want to use sequences like B<\n>
 you can't use any quote escaping on the same line.
+
+The limit that only one directory can be scanned at a time is a limitation
+that should be removed.
 
 =head1 HISTORY
 
