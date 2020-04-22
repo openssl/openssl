@@ -76,13 +76,15 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
             goto err;
 
         /* ... but, we should get a return size too! */
-        if (params[0].return_size != 0
+        if (OSSL_PARAM_modified(params)
+            && params[0].return_size != 0
             && (der = OPENSSL_malloc(params[0].return_size)) != NULL) {
             params[0].data = der;
             params[0].data_size = params[0].return_size;
-            params[0].return_size = 0;
+            OSSL_PARAM_set_all_unmodified(params);
             derp = der;
             if (EVP_CIPHER_CTX_get_params(c, params)
+                && OSSL_PARAM_modified(params)
                 && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
                                  params[0].return_size) != NULL) {
                 ret = 1;
