@@ -37,10 +37,11 @@ SOURCE[../libssl]=\
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../libssl]=s3_cbc.c  ssl_rsa_legacy.c
 ENDIF
-
-SOURCE[../libssl]=ssl_quic.c statem/statem_quic.c
-
 DEFINE[../libssl]=$AESDEF
+
+IF[{- !$disabled{quic} -}]
+  SOURCE[../libssl]=ssl_quic.c statem/statem_quic.c
+ENDIF
 
 SOURCE[../providers/libcommon.a]=record/tls_pad.c
 SOURCE[../providers/libimplementations.a]=s3_cbc.c

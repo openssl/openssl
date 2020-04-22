@@ -1217,6 +1217,7 @@ struct quic_data_st {
     OSSL_ENCRYPTION_LEVEL level;
     size_t offset;
     size_t length;
+    /* char data[]; should be here but C90 VLAs not allowed here */
 };
 typedef struct quic_data_st QUIC_DATA;
 int quic_set_encryption_secrets(SSL *ssl, OSSL_ENCRYPTION_LEVEL level);

@@ -529,5 +529,5 @@ SSL_provide_quic_data                   ?	3_0_0	EXIST::FUNCTION:QUIC
 SSL_CTX_set_quic_method                 ?	3_0_0	EXIST::FUNCTION:QUIC
 SSL_set_quic_method                     ?	3_0_0	EXIST::FUNCTION:QUIC
 SSL_process_quic_post_handshake         ?	3_0_0	EXIST::FUNCTION:QUIC
-SSL_CIPHER_get_prf_nid                  ?	3_0_0	EXIST::FUNCTION:
+SSL_CIPHER_get_prf_nid                  ?	3_0_0	EXIST::FUNCTION:QUIC
 SSL_is_quic                             ?	3_0_0	EXIST::FUNCTION:QUIC
