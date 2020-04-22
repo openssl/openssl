@@ -574,10 +574,8 @@ int x509_main(int argc, char **argv)
         EVP_PKEY *pkey;
 
         req = load_csr(infile, informat, "certificate request input");
-        if (req == NULL) {
-            ERR_print_errors(bio_err);
+        if (req == NULL)
             goto end;
-        }
 
         if ((pkey = X509_REQ_get0_pubkey(req)) == NULL) {
             BIO_printf(bio_err, "error unpacking public key\n");

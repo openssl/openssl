@@ -1736,18 +1736,14 @@ int s_server_main(int argc, char *argv[])
     if (nocert == 0) {
         s_key = load_key(s_key_file, s_key_format, 0, pass, engine,
                          "server certificate private key file");
-        if (s_key == NULL) {
-            ERR_print_errors(bio_err);
+        if (s_key == NULL)
             goto end;
-        }
 
         s_cert = load_cert(s_cert_file, s_cert_format,
                            "server certificate file");
 
-        if (s_cert == NULL) {
-            ERR_print_errors(bio_err);
+        if (s_cert == NULL)
             goto end;
-        }
         if (s_chain_file != NULL) {
             if (!load_certs(s_chain_file, &s_chain, FORMAT_PEM, NULL,
                             "server certificate chain"))
@@ -1757,18 +1753,14 @@ int s_server_main(int argc, char *argv[])
         if (tlsextcbp.servername != NULL) {
             s_key2 = load_key(s_key_file2, s_key_format, 0, pass, engine,
                               "second server certificate private key file");
-            if (s_key2 == NULL) {
-                ERR_print_errors(bio_err);
+            if (s_key2 == NULL)
                 goto end;
-            }
 
             s_cert2 = load_cert(s_cert_file2, s_cert_format,
                                 "second server certificate file");
 
-            if (s_cert2 == NULL) {
-                ERR_print_errors(bio_err);
+            if (s_cert2 == NULL)
                 goto end;
-            }
         }
     }
 #if !defined(OPENSSL_NO_NEXTPROTONEG)
@@ -1806,10 +1798,8 @@ int s_server_main(int argc, char *argv[])
 
         s_dkey = load_key(s_dkey_file, s_dkey_format,
                           0, dpass, engine, "second certificate private key file");
-        if (s_dkey == NULL) {
-            ERR_print_errors(bio_err);
+        if (s_dkey == NULL)
             goto end;
-        }
 
         s_dcert = load_cert(s_dcert_file, s_dcert_format,
                             "second server certificate file");
