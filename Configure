@@ -290,8 +290,7 @@ collect_information(
                 my $k = $1;
                 my $v = $2;
                 # Some values are quoted.  Trim the quotes
-                $v =~ s|^"||;
-                $v =~ s|"$||;
+                $v = $1 if $v =~ /^"(.*)"$/;
                 $version{uc $k} = $v;
             }
         },
