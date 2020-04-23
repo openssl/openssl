@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 1 [23 Apr 2020] ###
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
  * Deprecated EC_POINT_set_Jprojective_coordinates_GFp() and
    EC_POINT_get_Jprojective_coordinates_GFp(). These functions are not widely
