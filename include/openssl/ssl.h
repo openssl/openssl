@@ -1393,7 +1393,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_get1_groups(s, glist) \
         SSL_ctrl(s,SSL_CTRL_GET_GROUPS,0,(int*)(glist))
 # define SSL_CTX_set1_groups(ctx, glist, glistlen) \
-        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(char *)(glist))
+        SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS,glistlen,(int *)(glist))
 # define SSL_CTX_set1_groups_list(ctx, s) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_GROUPS_LIST,0,(char *)(s))
 # define SSL_set1_groups(s, glist, glistlen) \
