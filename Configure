@@ -286,7 +286,13 @@ collect_information(
     qr/\s*(\w+)\s*=\s*(.*?)\s*$/ =>
         sub {
             # Only define it if there is a value at all
-            $version{uc $1} = $2 if $2 ne '';
+            if ($2 ne '') {
+                my $k = $1;
+                my $v = $2;
+                # Some values are quoted.  Trim the quotes
+                $v = $1 if $v =~ /^"(.*)"$/;
+                $version{uc $k} = $v;
+            }
         },
     "OTHERWISE" =>
         sub { die "Something wrong with this line:\n$_\nin $srcdir/VERSION" },
