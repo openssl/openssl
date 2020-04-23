@@ -19,7 +19,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development] ###
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 alpha 1 [in pre-release] ###
 
   * The X25519, X448, Ed25519, Ed448 and SHAKE256 algorithms are included in
     the FIPS provider.  None have the "fips=yes" property set and, as such,
