@@ -45,10 +45,11 @@ int OSSL_PARAM_modified(const OSSL_PARAM *p)
     return p != NULL && p->return_size != OSSL_PARAM_UNMODIFIED;
 }
 
-void OSSL_PARAM_set_unmodified(OSSL_PARAM *p)
+void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p)
 {
     if (p != NULL)
-        p->return_size = OSSL_PARAM_UNMODIFIED;
+        while (p->key != NULL)
+            p++->return_size = OSSL_PARAM_UNMODIFIED;
 }
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val)
