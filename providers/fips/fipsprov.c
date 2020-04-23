@@ -369,7 +369,7 @@ static const OSSL_ALGORITHM fips_digests[] = {
     { "SHA3-512", "provider=fips,fips=yes", sha3_512_functions },
 
     /* Non-FIPS algorithm to support oneshot_hash in the Ed448 code */
-    { "SHAKE-256:SHAKE256", "provider=fips,fips=no", shake_256_functions },
+    { "SHAKE-256:SHAKE256", "provider=fips,fips=yes", shake_256_functions },
     { NULL, NULL, NULL }
 };
 
@@ -437,8 +437,8 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
 #endif
 #ifndef OPENSSL_NO_EC
     { "ECDH", "provider=fips,fips=yes", ecdh_keyexch_functions },
-    { "X25519", "provider=fips,fips=no", x25519_keyexch_functions },
-    { "X448", "provider=fips,fips=no", x448_keyexch_functions },
+    { "X25519", "provider=fips,fips=yes", x25519_keyexch_functions },
+    { "X448", "provider=fips,fips=yes", x448_keyexch_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -449,8 +449,8 @@ static const OSSL_ALGORITHM fips_signature[] = {
 #endif
     { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_signature_functions },
 #ifndef OPENSSL_NO_EC
-    { "ED25519", "provider=fips,fips=no", ed25519_signature_functions },
-    { "ED448", "provider=fips,fips=no", ed448_signature_functions },
+    { "ED25519", "provider=fips,fips=yes", ed25519_signature_functions },
+    { "ED448", "provider=fips,fips=yes", ed448_signature_functions },
     { "ECDSA", "provider=fips,fips=yes", ecdsa_signature_functions },
 #endif
     { NULL, NULL, NULL }
@@ -471,10 +471,10 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_keymgmt_functions },
 #ifndef OPENSSL_NO_EC
     { "EC:id-ecPublicKey", "provider=fips,fips=yes", ec_keymgmt_functions },
-    { "X25519", "provider=fips,fips=no", x25519_keymgmt_functions },
-    { "X448", "provider=fips,fips=no", x448_keymgmt_functions },
-    { "ED25519", "provider=fips,fips=no", ed25519_keymgmt_functions },
-    { "ED448", "provider=fips,fips=no", ed448_keymgmt_functions },
+    { "X25519", "provider=fips,fips=yes", x25519_keymgmt_functions },
+    { "X448", "provider=fips,fips=yes", x448_keymgmt_functions },
+    { "ED25519", "provider=fips,fips=yes", ed25519_keymgmt_functions },
+    { "ED448", "provider=fips,fips=yes", ed448_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
