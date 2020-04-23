@@ -138,7 +138,7 @@ INSTALL_ENGINES={-
                                && $unified_info{attributes}->{modules}->{$_}->{engine} }
                         @{$unified_info{modules}}))
 -}
-INSTALL_MODDULES={-
+INSTALL_MODULES={-
         join(" \\\n" . ' ' x 16,
              fill_lines(" ", $COLUMNS - 16,
                         map { platform->dso($_) }
