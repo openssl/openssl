@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2004-2014, Akamai Technologies. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
