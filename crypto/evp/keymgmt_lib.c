@@ -432,25 +432,23 @@ int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
     params[0] =
         OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DEFAULT_DIGEST,
                                          mddefault, sizeof(mddefault));
-    params[0].return_size = sizeof(mddefault) + 1;
     params[1] =
         OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST,
                                          mdmandatory,
                                          sizeof(mdmandatory));
-    params[1].return_size = sizeof(mdmandatory) + 1;
     params[2] = OSSL_PARAM_construct_end();
 
     if (!evp_keymgmt_get_params(keymgmt, keydata, params))
         return 0;
 
-    if (params[1].return_size != sizeof(mdmandatory) + 1) {
-        if (params[1].return_size == 1) /* Only a NUL byte */
+    if (OSSL_PARAM_modified(params + 1)) {
+        if (params[1].return_size <= 1) /* Only a NUL byte */
             result = SN_undef;
         else
             result = mdmandatory;
         rv = 2;
-    } else if (params[0].return_size != sizeof(mddefault) + 1) {
-        if (params[0].return_size == 1) /* Only a NUL byte */
+    } else if (OSSL_PARAM_modified(params)) {
+        if (params[0].return_size <= 1) /* Only a NUL byte */
             result = SN_undef;
         else
             result = mddefault;
