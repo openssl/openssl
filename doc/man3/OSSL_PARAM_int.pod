@@ -93,8 +93,8 @@ OSSL_PARAM_set_octet_ptr, OSSL_PARAM_UNMODIFIED
  int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                               size_t used_len);
 
- int OSSL_PARAM_modified(const OSSL_PARAM *p);
- void OSSL_PARAM_set_unmodified(OSSL_PARAM *p);
+ int OSSL_PARAM_modified(const OSSL_PARAM *param);
+ void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *params);
 
 =head1 DESCRIPTION
 
@@ -260,10 +260,11 @@ creation, via either the macros or construct calls, the I<return_size> field
 is set to this.  If the parameter is set using the calls defined herein, the
 I<return_size> field is changed.
 
-OSSL_PARAM_modified() queries if the parameter has been set or not using the
-calls defined herein.
+OSSL_PARAM_modified() queries if the parameter B<param> has been set or not
+using the calls defined herein.
 
-OSSL_PARAM_set_unmodified() is used to reset unused indicator.
+OSSL_PARAM_set_all_unmodified() resets the unused indicator for all parameters
+in the array B<params>.
 
 =head1 RETURN VALUES
 

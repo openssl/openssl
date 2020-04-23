@@ -5078,4 +5078,4 @@ X509_ALGOR_copy                         ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set0_signature                 ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set1_signature_algo            ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_modified                     ?	3_0_0	EXIST::FUNCTION:
-OSSL_PARAM_set_unmodified               ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_set_all_unmodified           ?	3_0_0	EXIST::FUNCTION:

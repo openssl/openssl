@@ -69,7 +69,7 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
     const int sizet = bit32 && sizeof(size_t) > sizeof(int32_t);
     const int signd = param->data_type == OSSL_PARAM_INTEGER;
 
-    OSSL_PARAM_set_unmodified(param);
+    OSSL_PARAM_set_all_unmodified(param);
     if (signd) {
         if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, &i32)))
             || !TEST_true(OSSL_PARAM_get_int64(param, &i64)))
