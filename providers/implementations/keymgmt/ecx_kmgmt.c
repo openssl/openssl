@@ -161,10 +161,6 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
          && !key_to_params(key, tmpl, NULL))
         goto err;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0
-         && !key_to_params(key, tmpl, NULL))
-        goto err;
-
     params = OSSL_PARAM_BLD_to_param(tmpl);
     if (params == NULL)
         goto err;
