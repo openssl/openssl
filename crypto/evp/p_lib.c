@@ -381,7 +381,8 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
                                  size_t *len)
 {
     /* TODO(3.0) Do we need to do anything about provider side keys? */
-     if (pkey->ameth->get_priv_key == NULL) {
+     if (pkey->ameth == NULL
+         || pkey->ameth->get_priv_key == NULL) {
         EVPerr(EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
@@ -399,7 +400,8 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                 size_t *len)
 {
     /* TODO(3.0) Do we need to do anything about provider side keys? */
-     if (pkey->ameth->get_pub_key == NULL) {
+     if (pkey->ameth == NULL
+         || pkey->ameth->get_pub_key == NULL) {
         EVPerr(EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
