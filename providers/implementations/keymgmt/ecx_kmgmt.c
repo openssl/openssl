@@ -113,12 +113,11 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
     if (key == NULL)
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
 
     include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ecx_key_fromdata(key, params, include_private);
+    ok = ok && ecx_key_fromdata(key, params, include_private);
 
     return ok;
 }

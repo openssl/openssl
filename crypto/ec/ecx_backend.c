@@ -9,6 +9,8 @@
 
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include <openssl/ec.h>
+#include <openssl/err.h>
 #include "crypto/ecx.h"
 #include "ecx_backend.h"
 
@@ -18,10 +20,35 @@
  * implementations alike.
  */
 
+int ecx_public_from_private(ECX_KEY *key)
+{
+    switch (key->type) {
+    case ECX_KEY_TYPE_X25519:
+        X25519_public_from_private(key->pubkey, key->privkey);
+        break;
+    case ECX_KEY_TYPE_ED25519:
+        if (!ED25519_public_from_private(key->libctx, key->pubkey, key->privkey)) {
+            ECerr(0, EC_R_FAILED_MAKING_PUBLIC_KEY);
+            return 0;
+        }
+        break;
+    case ECX_KEY_TYPE_X448:
+        X448_public_from_private(key->pubkey, key->privkey);
+        break;
+    case ECX_KEY_TYPE_ED448:
+        if (!ED448_public_from_private(key->libctx, key->pubkey, key->privkey)) {
+            ECerr(0, EC_R_FAILED_MAKING_PUBLIC_KEY);
+            return 0;
+        }
+        break;
+    }
+    return 1;
+}
+
 int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
                      int include_private)
 {
-    size_t privkeylen = 0, pubkeylen;
+    size_t privkeylen = 0, pubkeylen = 0;
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
     unsigned char *pubkey;
 
@@ -32,11 +59,8 @@ int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
     if (include_private)
         param_priv_key =
             OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY);
-    /*
-     * If a private key is present then a public key must also be present.
-     * Alternatively we've just got a public key.
-     */
-    if (param_pub_key == NULL)
+
+    if (param_pub_key == NULL && param_priv_key == NULL)
         return 0;
 
     if (param_priv_key != NULL
@@ -46,13 +70,17 @@ int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
         return 0;
 
     pubkey = ecx->pubkey;
-    if (!OSSL_PARAM_get_octet_string(param_pub_key,
-                                     (void **)&pubkey,
-                                     sizeof(ecx->pubkey), &pubkeylen))
+    if (param_pub_key != NULL
+        && !OSSL_PARAM_get_octet_string(param_pub_key,
+                                        (void **)&pubkey,
+                                         sizeof(ecx->pubkey), &pubkeylen))
         return 0;
 
-    if (pubkeylen != ecx->keylen
+    if ((param_pub_key != NULL && pubkeylen != ecx->keylen)
         || (param_priv_key != NULL && privkeylen != ecx->keylen))
+        return 0;
+
+    if (param_pub_key == NULL && !ecx_public_from_private(ecx))
         return 0;
 
     ecx->haspubkey = 1;

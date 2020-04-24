@@ -88,25 +88,9 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         } else {
             memcpy(privkey, p, KEYLENID(id));
         }
-        switch (id) {
-        case EVP_PKEY_X25519:
-            X25519_public_from_private(pubkey, privkey);
-            break;
-        case EVP_PKEY_ED25519:
-            if (!ED25519_public_from_private(libctx, pubkey, privkey)) {
-                ECerr(EC_F_ECX_KEY_OP, EC_R_FAILED_MAKING_PUBLIC_KEY);
-                goto err;
-            }
-            break;
-        case EVP_PKEY_X448:
-            X448_public_from_private(pubkey, privkey);
-            break;
-        case EVP_PKEY_ED448:
-            if (!ED448_public_from_private(libctx, pubkey, privkey)) {
-                ECerr(EC_F_ECX_KEY_OP, EC_R_FAILED_MAKING_PUBLIC_KEY);
-                goto err;
-            }
-            break;
+        if (!ecx_public_from_private(key)) {
+            ECerr(EC_F_ECX_KEY_OP, EC_R_FAILED_MAKING_PUBLIC_KEY);
+            goto err;
         }
     }
 

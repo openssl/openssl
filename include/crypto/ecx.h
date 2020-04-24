@@ -109,6 +109,7 @@ void X448_public_from_private(uint8_t out_public_value[56],
                               const uint8_t private_key[56]);
 
 /* Backend support */
+int ecx_public_from_private(ECX_KEY *key);
 int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
                      int include_private);
 
