@@ -18,7 +18,7 @@
 #   else
 #    define __ARMEL__
 #   endif
-#  elif defined(__GNUC__)
+#  elif defined(__GNUC__) || defined(__lint__)
 #   if   defined(__aarch64__)
 #    define __ARM_ARCH__ 8
 #    if __BYTE_ORDER__==__ORDER_BIG_ENDIAN__
