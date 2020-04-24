@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -23,7 +23,7 @@ my $std_openssl_cnf =
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 5;
+plan tests => 6;
  SKIP: {
      $ENV{OPENSSL_CONFIG} = '-config "'.srctop_file("test", "CAss.cnf").'"';
      skip "failed creating CA structure", 4
@@ -32,12 +32,12 @@ plan tests => 5;
 
      $ENV{OPENSSL_CONFIG} = '-config "'.srctop_file("test", "Uss.cnf").'"';
      skip "failed creating new certificate request", 3
-	 if !ok(run(perlapp(["CA.pl","-newreq"])),
+	 if !ok(run(perlapp(["CA.pl","-newreq",
+                             "-extra-req","-outform DER"])),
 		'creating certificate request');
-
-     $ENV{OPENSSL_CONFIG} = '-rand_serial -config "'.$std_openssl_cnf.'"';
+     $ENV{OPENSSL_CONFIG} = '-rand_serial -inform DER -config "'.$std_openssl_cnf.'"';
      skip "failed to sign certificate request", 2
-	 if !is(yes(cmdstr(perlapp(["CA.pl", "-sign"]))), 0,
+	 if !is(yes(cmdstr(perlapp(["CA.pl", "-sign", "-extra-ca"]))), 0,
 		'signing certificate request');
 
      ok(run(perlapp(["CA.pl", "-verify", "newcert.pem"])),
@@ -51,10 +51,22 @@ plan tests => 5;
         'creating new pre-certificate');
 }
 
+SKIP: {
+    skip "SM2 is not supported by this OpenSSL build", 1
+	      if disabled("sm2");
 
-rmtree("demoCA", { safe => 0 });
-unlink "newcert.pem", "newreq.pem", "newkey.pem";
-
+    is(yes(cmdstr(app(["openssl", "ca", "-config",
+                       srctop_file("test", "CAss.cnf"),
+                       "-in", srctop_file("test", "certs", "sm2-csr.pem"),
+                       "-out", "sm2-test.crt",
+                       "-sigopt", "distid:1234567812345678",
+                       "-vfyopt", "distid:1234567812345678",
+                       "-md", "sm3",
+                       "-cert", srctop_file("test", "certs", "sm2-root.crt"),
+                       "-keyfile", srctop_file("test", "certs", "sm2-root.key")]))),
+       0,
+       "Signing SM2 certificate request");
+}
 
 sub yes {
     my $cntr = 10;

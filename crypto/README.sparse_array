@@ -43,7 +43,7 @@ The tree height is dynamically increased as needed based on additions.
 An empty tree is represented by a NULL root pointer.  Inserting a value at
 index 0 results in the allocation of a top level node full of null pointers
 except for the single pointer to the user's data (N = SA_BLOCK_MAX for
-breviety):
+brevity):
 
         +----+
         |Root|

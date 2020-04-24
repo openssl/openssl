@@ -6,7 +6,8 @@ test/recipes/, named {nn}-test_{name}.t, where {nn} is a two digit number and
 {name} is a unique name of your choice.
 
 Please note that if a test involves a new testing executable, you will need to
-do some additions in test/Makefile.  More on this later.
+do some additions in test/build.info. Please refer to the section "Changes to 
+test/build.info" below.
 
 
 Naming conventions
@@ -26,7 +27,10 @@ The number {nn} is (somewhat loosely) grouped as follows:
 20-24  openssl commands (some otherwise not tested)
 25-29  certificate forms, generation and verification
 30-35  engine and evp
-60-79  APIs
+60-79  APIs:
+   60  X509 subsystem
+   61  BIO subsystem
+   65  CMP subsystem
    70  PACKET layer
 80-89  "larger" protocols (CA, CMS, OCSP, SSL, TSA)
 90-98  misc
@@ -100,7 +104,7 @@ to modify the include paths and source files if you don't want to use the
 basic test framework:
 
     SOURCE[{name}]={name}.c
-    INCLUDE[{name}]=.. ../include
+    INCLUDE[{name}]=.. ../include ../apps/include
     DEPEND[{name}]=../libcrypto libtestutil.a
 
 Generic form of C test executables
@@ -114,7 +118,7 @@ Generic form of C test executables
         int observed;
 
         observed = function();              /* Call the code under test     */
-        if (!TEST_int_equal(observed, 2))   /* Check the result is correct  */
+        if (!TEST_int_eq(observed, 2))      /* Check the result is correct  */
             goto end;                       /* Exit on failure - optional   */
 
         testresult = 1;                     /* Mark the test case a success */

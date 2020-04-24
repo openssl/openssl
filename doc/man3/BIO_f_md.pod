@@ -6,7 +6,7 @@ BIO_f_md, BIO_set_md, BIO_get_md, BIO_get_md_ctx - message digest BIO filter
 
 =head1 SYNOPSIS
 
-=for comment multiple includes
+=for openssl multiple includes
 
  #include <openssl/bio.h>
  #include <openssl/evp.h>

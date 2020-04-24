@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -165,21 +165,28 @@ sub cbc
 	&jmp_ptr($count);
 
 &set_label("ej7");
+	&endbranch()
 	&movb(&HB("edx"),	&BP(6,$in,"",0));
 	&shl("edx",8);
 &set_label("ej6");
+	&endbranch()
 	&movb(&HB("edx"),	&BP(5,$in,"",0));
 &set_label("ej5");
+	&endbranch()
 	&movb(&LB("edx"),	&BP(4,$in,"",0));
 &set_label("ej4");
+	&endbranch()
 	&mov("ecx",		&DWP(0,$in,"",0));
 	&jmp(&label("ejend"));
 &set_label("ej3");
+	&endbranch()
 	&movb(&HB("ecx"),	&BP(2,$in,"",0));
 	&shl("ecx",8);
 &set_label("ej2");
+	&endbranch()
 	&movb(&HB("ecx"),	&BP(1,$in,"",0));
 &set_label("ej1");
+	&endbranch()
 	&movb(&LB("ecx"),	&BP(0,$in,"",0));
 &set_label("ejend");
 

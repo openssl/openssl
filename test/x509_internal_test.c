@@ -23,8 +23,8 @@
  *
  ***/
 
-#include "../crypto/x509v3/ext_dat.h"
-#include "../crypto/x509v3/standard_exts.h"
+#include "../crypto/x509/ext_dat.h"
+#include "../crypto/x509/standard_exts.h"
 
 static int test_standard_exts(void)
 {

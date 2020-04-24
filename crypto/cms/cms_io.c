@@ -12,7 +12,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/cms.h>
-#include "cms_lcl.h"
+#include "cms_local.h"
 
 /* unfortunately cannot constify BIO_new_NDEF() due to this and PKCS7_stream() */
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
@@ -43,7 +43,7 @@ int i2d_CMS_bio(BIO *bp, CMS_ContentInfo *cms)
     return ASN1_item_i2d_bio(ASN1_ITEM_rptr(CMS_ContentInfo), bp, cms);
 }
 
-IMPLEMENT_PEM_rw_const(CMS, CMS_ContentInfo, PEM_STRING_CMS, CMS_ContentInfo)
+IMPLEMENT_PEM_rw(CMS, CMS_ContentInfo, PEM_STRING_CMS, CMS_ContentInfo)
 
 BIO *BIO_new_CMS(BIO *out, CMS_ContentInfo *cms)
 {

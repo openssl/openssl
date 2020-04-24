@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -44,15 +44,16 @@
 # Ryzen			8.8
 #
 # (*)	Corresponds to SHA3-256. Improvement over compiler-generate
-#	varies a lot, most commont coefficient is 15% in comparison to
+#	varies a lot, most common coefficient is 15% in comparison to
 #	gcc-5.x, 50% for gcc-4.x, 90% for gcc-3.x.
 # (**)	Sandy Bridge has broken rotate instruction. Performance can be
 #	improved by 14% by replacing rotates with double-precision
 #	shift with same register as source and destination.
 
-$flavour = shift;
-$output  = shift;
-if ($flavour =~ /\./) { $output = $flavour; undef $flavour; }
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $win64=0; $win64=1 if ($flavour =~ /[nm]asm|mingw64/ || $output =~ /\.asm$/);
 
@@ -61,7 +62,8 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\"";
+open OUT,"| \"$^X\" \"$xlate\" $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 my @A = map([ 8*$_-100, 8*($_+1)-100, 8*($_+2)-100,
@@ -84,6 +86,7 @@ $code.=<<___;
 .type	__KeccakF1600,\@abi-omnipotent
 .align	32
 __KeccakF1600:
+.cfi_startproc
 	mov	$A[4][0](%rdi),@C[0]
 	mov	$A[4][1](%rdi),@C[1]
 	mov	$A[4][2](%rdi),@C[2]
@@ -342,6 +345,7 @@ $code.=<<___;
 
 	lea	-192($iotas),$iotas	# rewind iotas
 	ret
+.cfi_endproc
 .size	__KeccakF1600,.-__KeccakF1600
 
 .type	KeccakF1600,\@abi-omnipotent
@@ -604,4 +608,4 @@ foreach (split("\n",$code)) {
 	print $_, "\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

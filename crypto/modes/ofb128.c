@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include "modes_lcl.h"
 #include <string.h>
+#include <openssl/crypto.h>
+#include "crypto/modes.h"
 
 /*
  * The input and output encrypted as though 128bit ofb mode is being used.

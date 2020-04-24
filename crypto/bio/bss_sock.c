@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ktls.h"
 
@@ -108,11 +108,18 @@ static int sock_read(BIO *b, char *out, int outl)
 
     if (out != NULL) {
         clear_socket_error();
-        ret = readsocket(b->num, out, outl);
+# ifndef OPENSSL_NO_KTLS
+        if (BIO_get_ktls_recv(b))
+            ret = ktls_read_record(b->num, out, outl);
+        else
+# endif
+            ret = readsocket(b->num, out, outl);
         BIO_clear_retry_flags(b);
         if (ret <= 0) {
             if (BIO_sock_should_retry(ret))
                 BIO_set_retry_read(b);
+            else if (ret == 0)
+                b->flags |= BIO_FLAGS_IN_EOF;
         }
     }
     return ret;
@@ -147,7 +154,11 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
 # ifndef OPENSSL_NO_KTLS
+#  ifdef __FreeBSD__
+    struct tls_enable *crypto_info;
+#  else
     struct tls12_crypto_info_aes_gcm_128 *crypto_info;
+#  endif
 # endif
 
     switch (cmd) {
@@ -177,24 +188,33 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 1;
         break;
 # ifndef OPENSSL_NO_KTLS
-    case BIO_CTRL_SET_KTLS_SEND:
+    case BIO_CTRL_SET_KTLS:
+#  ifdef __FreeBSD__
+        crypto_info = (struct tls_enable *)ptr;
+#  else
         crypto_info = (struct tls12_crypto_info_aes_gcm_128 *)ptr;
+#  endif
         ret = ktls_start(b->num, crypto_info, sizeof(*crypto_info), num);
         if (ret)
-            BIO_set_ktls_flag(b);
+            BIO_set_ktls_flag(b, num);
         break;
     case BIO_CTRL_GET_KTLS_SEND:
-        return BIO_should_ktls_flag(b);
-    case BIO_CTRL_SET_KTLS_SEND_CTRL_MSG:
+        return BIO_should_ktls_flag(b, 1);
+    case BIO_CTRL_GET_KTLS_RECV:
+        return BIO_should_ktls_flag(b, 0);
+    case BIO_CTRL_SET_KTLS_TX_SEND_CTRL_MSG:
         BIO_set_ktls_ctrl_msg_flag(b);
         b->ptr = (void *)num;
         ret = 0;
         break;
-    case BIO_CTRL_CLEAR_KTLS_CTRL_MSG:
+    case BIO_CTRL_CLEAR_KTLS_TX_CTRL_MSG:
         BIO_clear_ktls_ctrl_msg_flag(b);
         ret = 0;
         break;
 # endif
+    case BIO_CTRL_EOF:
+        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0 ? 1 : 0;
+        break;
     default:
         ret = 0;
         break;

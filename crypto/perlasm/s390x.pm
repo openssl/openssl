@@ -6,23 +6,39 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Copyright IBM Corp. 2018
+# Copyright IBM Corp. 2018-2019
 # Author: Patrick Steuer <patrick.steuer@de.ibm.com>
 
 package perlasm::s390x;
 
 use strict;
 use warnings;
+use bigint;
 use Carp qw(confess);
 use Exporter qw(import);
 
 our @EXPORT=qw(PERLASM_BEGIN PERLASM_END);
-our @EXPORT_OK=qw(AUTOLOAD LABEL INCLUDE stfle);
+our @EXPORT_OK=qw(AUTOLOAD LABEL INCLUDE stfle stck);
 our %EXPORT_TAGS=(
+	# store-clock-fast facility
+	SCF => [qw(stckf)],
+	# general-instruction-extension facility
+	GE => [qw(risbg)],
+	# extended-immediate facility
+	EI => [qw(clfi clgfi lt)],
+	# miscellaneous-instruction-extensions facility 1
+	MI1 => [qw(risbgn)],
+	# message-security assist
 	MSA => [qw(kmac km kmc kimd klmd)],
+	# message-security-assist extension 4
 	MSA4 => [qw(kmf kmo pcc kmctr)],
+	# message-security-assist extension 5
 	MSA5 => [qw(ppno prno)],
+	# message-security-assist extension 8
 	MSA8 => [qw(kma)],
+	# message-security-assist extension 9
+	MSA9 => [qw(kdsa)],
+	# vector facility
 	VX => [qw(vgef vgeg vgbm vzero vone vgm vgmb vgmh vgmf vgmg
 	    vl vlr vlrep vlrepb vlreph vlrepf vlrepg vleb vleh vlef vleg vleib
 	    vleih vleif vleig vlgv vlgvb vlgvh vlgvf vlgvg vllez vllezb vllezh
@@ -71,6 +87,7 @@ our %EXPORT_TAGS=(
 	    wfmadb vfms vfmsdb wfmsdb vfpso vfpsodb wfpsodb vflcdb wflcdb
 	    vflndb wflndb vflpdb wflpdb vfsq vfsqdb wfsqdb vfs vfsdb wfsdb
 	    vftci vftcidb wftcidb)],
+	# vector-enhancements facility 1
 	VXE => [qw(vbperm vllezlf vmsl vmslg vnx vnn voc vpopctb vpopcth
 	    vpopctf vpopctg vfasb wfasb wfaxb wfcsb wfcxb wfksb wfkxb vfcesb
 	    vfcesbs wfcesb wfcesbs wfcexb wfcexbs vfchsb vfchsbs wfchsb wfchsbs
@@ -83,10 +100,11 @@ our %EXPORT_TAGS=(
 	    wfnmsxb vfpsosb wfpsosb vflcsb wflcsb vflnsb wflnsb vflpsb wflpsb
 	    vfpsoxb wfpsoxb vflcxb wflcxb vflnxb wflnxb vflpxb wflpxb vfsqsb
 	    wfsqsb wfsqxb vfssb wfssb wfsxb vftcisb wftcisb wftcixb)],
+	# vector-packed-decimal facility
 	VXD => [qw(vlrlr vlrl vstrlr vstrl vap vcp vcvb vcvbg vcvd vcvdg vdp
 	    vlip vmp vmsp vpkz vpsop vrp vsdp vsrp vsp vtp vupkz)],
 );
-Exporter::export_ok_tags(qw(MSA MSA4 MSA5 MSA8 VX VXE VXD));
+Exporter::export_ok_tags(qw(SCF GE EI MI1 MSA MSA4 MSA5 MSA8 MSA9 VX VXE VXD));
 
 our $AUTOLOAD;
 
@@ -114,7 +132,7 @@ sub AUTOLOAD {
 	confess(err("PARSE")) if (grep(!defined($_),@_));
 	my $token;
 	for ($AUTOLOAD) {
-		$token=".$1" if (/^.*::([A-Z_]+)$/);	# uppercase: directive
+		$token=lc(".$1") if (/^.*::([A-Z_]+)$/);# uppercase: directive
 		$token="\t$1" if (/^.*::([a-z]+)$/);	# lowercase: mnemonic
 		confess(err("PARSE")) if (!defined($token));
 	}
@@ -141,6 +159,49 @@ sub INCLUDE {
 sub stfle {
 	confess(err("ARGNUM")) if ($#_!=0);
 	S(0xb2b0,@_);
+}
+
+sub stck {
+	confess(err("ARGNUM")) if ($#_!=0);
+	S(0xb205,@_);
+}
+
+# store-clock-fast facility
+
+sub stckf {
+	confess(err("ARGNUM")) if ($#_!=0);
+	S(0xb27c,@_);
+}
+
+# extended-immediate facility
+
+sub clfi {
+	confess(err("ARGNUM")) if ($#_!=1);
+	RILa(0xc2f,@_);
+}
+
+sub clgfi {
+	confess(err("ARGNUM")) if ($#_!=1);
+	RILa(0xc2e,@_);
+}
+
+sub lt {
+	confess(err("ARGNUM")) if ($#_!=1);
+	RXYa(0xe312,@_);
+}
+
+# general-instruction-extension facility
+
+sub risbg {
+	confess(err("ARGNUM")) if ($#_<3||$#_>4);
+	RIEf(0xec55,@_);
+}
+
+# miscellaneous-instruction-extensions facility 1
+
+sub risbgn {
+	confess(err("ARGNUM")) if ($#_<3||$#_>4);
+	RIEf(0xec59,@_);
 }
 
 # MSA
@@ -210,6 +271,13 @@ sub kma {
 	RRFb(0xb929,@_);
 }
 
+# MSA9
+
+sub kdsa {
+	confess(err("ARGNUM")) if ($#_!=1);
+	RRE(0xb93a,@_);
+}
+
 # VX - Support Instructions
 
 sub vgef {
@@ -250,7 +318,7 @@ sub vgmg {
 }
 
 sub vl {
-	confess(err("ARGNUM")) if ($#_!=1);
+	confess(err("ARGNUM")) if ($#_<1||$#_>2);
 	VRX(0xe706,@_);
 }
 
@@ -345,7 +413,7 @@ sub vllezg {
 }
 
 sub vlm {
-	confess(err("ARGNUM")) if ($#_!=2);
+	confess(err("ARGNUM")) if ($#_<2||$#_>3);
 	VRSa(0xe736,@_);
 }
 
@@ -548,7 +616,7 @@ sub vsegf {
 }
 
 sub vst {
-	confess(err("ARGNUM")) if ($#_!=1);
+	confess(err("ARGNUM")) if ($#_<1||$#_>2);
 	VRX(0xe70e,@_);
 }
 
@@ -570,7 +638,7 @@ sub vsteg {
 }
 
 sub vstm {
-	confess(err("ARGNUM")) if ($#_!=2);
+	confess(err("ARGNUM")) if ($#_<2||$#_>3);
 	VRSa(0xe73e,@_);
 }
 
@@ -2486,6 +2554,36 @@ sub vupkz {
 # Instruction Formats
 #
 
+sub RIEf {
+	confess(err("ARGNUM")) if ($#_<4||5<$#_);
+	my $ops=join(',',@_[1..$#_]);
+	my $memn=(caller(1))[3];
+	$memn=~s/^.*:://;
+	my ($opcode,$r1,$r2,$i3,$i4,$i5)=(shift,get_R(shift),get_R(shift),
+					  get_I(shift,8),get_I(shift,8),
+					  get_I(shift,8));
+
+	$out.="\t.word\t";
+	$out.=sprintf("%#06x",(($opcode>>8)<<8|$r1<<4|$r2)).",";
+	$out.=sprintf("%#06x",($i3<<8)|$i4).",";
+	$out.=sprintf("%#06x",($i5<<8)|($opcode&0xff));
+	$out.="\t# $memn\t$ops\n";
+}
+
+sub RILa {
+	confess(err("ARGNUM")) if ($#_!=2);
+	my $ops=join(',',@_[1..$#_]);
+	my $memn=(caller(1))[3];
+	$memn=~s/^.*:://;
+	my ($opcode,$r1,$i2)=(shift,get_R(shift),get_I(shift,32));
+
+	$out.="\t.word\t";
+	$out.=sprintf("%#06x",(($opcode>>4)<<8|$r1<<4|($opcode&0xf))).",";
+	$out.=sprintf("%#06x",($i2>>16)).",";
+	$out.=sprintf("%#06x",($i2&0xffff));
+	$out.="\t# $memn\t$ops\n";
+}
+
 sub RRE {
 	confess(err("ARGNUM")) if ($#_<0||2<$#_);
 	my $ops=join(',',@_[1..$#_]);
@@ -2494,7 +2592,10 @@ sub RRE {
 	my ($opcode,$r1,$r2)=(shift,get_R(shift),get_R(shift));
 
 	$out.="\t.long\t".sprintf("%#010x",($opcode<<16|$r1<<4|$r2));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn";
+	# RRE can have 0 ops e.g., pcc.
+	$out.="\t$ops" if ((defined($ops))&&($ops ne ''));
+	$out.="\n";
 }
 
 sub RRFb {
@@ -2507,7 +2608,21 @@ sub RRFb {
 
 	$out.="\t.long\t"
 	    .sprintf("%#010x",($opcode<<16|$r3<<12|$m4<<8|$r1<<4|$r2));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
+}
+
+sub RXYa {
+	confess(err("ARGNUM")) if ($#_!=2);
+	my $ops=join(',',@_[1..$#_]);
+	my $memn=(caller(1))[3];
+	$memn=~s/^.*:://;
+	my ($opcode,$r1,$d2,$x2,$b2)=(shift,get_R(shift),get_DXB(shift));
+
+	$out.="\t.word\t";
+	$out.=sprintf("%#06x",(($opcode>>8)<<8|$r1<<4|$x2)).",";
+	$out.=sprintf("%#06x",($b2<<12|($d2&0xfff))).",";
+	$out.=sprintf("%#06x",(($d2>>12)<<8|$opcode&0xff));
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub S {
@@ -2518,7 +2633,7 @@ sub S {
 	my ($opcode,$d2,$b2)=(shift,get_DB(shift));
 
 	$out.="\t.long\t".sprintf("%#010x",($opcode<<16|$b2<<12|$d2));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIa {
@@ -2533,7 +2648,7 @@ sub VRIa {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)).",";
 	$out.=sprintf("%#06x",$i2).",";
 	$out.=sprintf("%#06x",($m3<<12|RXB($v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIb {
@@ -2548,7 +2663,7 @@ sub VRIb {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)).",";
 	$out.=sprintf("%#06x",($i2<<8|$i3)).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB($v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIc {
@@ -2563,7 +2678,7 @@ sub VRIc {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)|($v3&0xf)).",";
 	$out.=sprintf("%#06x",$i2).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB($v1,$v3)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRId {
@@ -2578,7 +2693,7 @@ sub VRId {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)|($v2&0xf)).",";
 	$out.=sprintf("%#06x",(($v3&0xf)<<12|$i4)).",";
 	$out.=sprintf("%#06x",($m5<<12|RXB($v1,$v2,$v3)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIe {
@@ -2593,7 +2708,7 @@ sub VRIe {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)|($v2&0xf)).",";
 	$out.=sprintf("%#06x",($i3<<4|$m5)).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB($v1,$v2)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIf {
@@ -2608,7 +2723,7 @@ sub VRIf {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)|($v2&0xf)).",";
 	$out.=sprintf("%#06x",(($v3&0xf)<<12|$m5<<4)|$i4>>4).",";
 	$out.=sprintf("%#06x",(($i4&0xf)<<12|RXB($v1,$v2,$v3)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIg {
@@ -2623,7 +2738,7 @@ sub VRIg {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)|($v2&0xf)).",";
 	$out.=sprintf("%#06x",($i4<<8|$m5<<4|$i3>>4)).",";
 	$out.=sprintf("%#06x",(($i3&0xf)<<12|RXB($v1,$v2)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIh {
@@ -2638,7 +2753,7 @@ sub VRIh {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)).",";
 	$out.=sprintf("%#06x",$i2).",";
 	$out.=sprintf("%#06x",($i3<<12|RXB($v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRIi {
@@ -2653,7 +2768,7 @@ sub VRIi {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4)|$r2).",";
 	$out.=sprintf("%#06x",($m4<<4|$i3>>4)).",";
 	$out.=sprintf("%#06x",(($i3&0xf)<<12|RXB($v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRa {
@@ -2668,7 +2783,7 @@ sub VRRa {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($v2&0xf))).",";
 	$out.=sprintf("%#06x",($m5<<4|$m4)).",";
 	$out.=sprintf("%#06x",($m3<<12|RXB($v1,$v2)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRb {
@@ -2683,7 +2798,7 @@ sub VRRb {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($v2&0xf))).",";
 	$out.=sprintf("%#06x",(($v3&0xf)<<12|$m5<<4)).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB($v1,$v2,$v3)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRc {
@@ -2698,7 +2813,7 @@ sub VRRc {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($v2&0xf))).",";
 	$out.=sprintf("%#06x",(($v3&0xf)<<12|$m6<<4|$m5)).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB($v1,$v2,$v3)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRd {
@@ -2713,7 +2828,7 @@ sub VRRd {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($v2&0xf))).",";
 	$out.=sprintf("%#06x",(($v3&0xf)<<12|$m5<<8|$m6<<4)).",";
 	$out.=sprintf("%#06x",(($v4&0xf)<<12|RXB($v1,$v2,$v3,$v4)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRe {
@@ -2728,7 +2843,7 @@ sub VRRe {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($v2&0xf))).",";
 	$out.=sprintf("%#06x",(($v3&0xf)<<12|$m6<<8|$m5)).",";
 	$out.=sprintf("%#06x",(($v4&0xf)<<12|RXB($v1,$v2,$v3,$v4)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRf {
@@ -2743,7 +2858,7 @@ sub VRRf {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|$r2)).",";
 	$out.=sprintf("%#06x",($r3<<12)).",";
 	$out.=sprintf("%#06x",(RXB($v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRg {
@@ -2757,7 +2872,7 @@ sub VRRg {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf))).",";
 	$out.=sprintf("%#06x",0x0000).",";
 	$out.=sprintf("%#06x",(RXB(0,$v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRh {
@@ -2772,7 +2887,7 @@ sub VRRh {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf))).",";
 	$out.=sprintf("%#06x",(($v2&0xf)<<12|$m3<<4)).",";
 	$out.=sprintf("%#06x",(RXB(0,$v1,$v2)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRRi {
@@ -2787,7 +2902,7 @@ sub VRRi {
 	$out.=sprintf("%#06x",($opcode&0xff00|$r1<<4|($v2&0xf))).",";
 	$out.=sprintf("%#06x",($m3<<4))."\,";
 	$out.=sprintf("%#06x",(RXB(0,$v2)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRSa {
@@ -2802,7 +2917,7 @@ sub VRSa {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($v3&0xf))).",";
 	$out.=sprintf("%#06x",($b2<<12|$d2)).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB($v1,$v3)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRSb {
@@ -2817,7 +2932,7 @@ sub VRSb {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|$r3)).",";
 	$out.=sprintf("%#06x",($b2<<12|$d2)).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB($v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRSc {
@@ -2832,7 +2947,7 @@ sub VRSc {
 	$out.=sprintf("%#06x",($opcode&0xff00|$r1<<4|($v3&0xf))).",";
 	$out.=sprintf("%#06x",($b2<<12|$d2)).",";
 	$out.=sprintf("%#06x",($m4<<12|RXB(0,$v3)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRSd {
@@ -2847,7 +2962,7 @@ sub VRSd {
 	$out.=sprintf("%#06x",($opcode&0xff00|$r3)).",";
 	$out.=sprintf("%#06x",($b2<<12|$d2)).",";
 	$out.=sprintf("%#06x",(($v1&0xf)<<12|RXB(0,0,0,$v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRV {
@@ -2862,7 +2977,7 @@ sub VRV {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($v2&0xf))).",";
 	$out.=sprintf("%#06x",($b2<<12|$d2)).",";
 	$out.=sprintf("%#06x",($m3<<12|RXB($v1,$v2)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VRX {
@@ -2877,7 +2992,7 @@ sub VRX {
 	$out.=sprintf("%#06x",($opcode&0xff00|($v1&0xf)<<4|($x2))).",";
 	$out.=sprintf("%#06x",($b2<<12|$d2)).",";
 	$out.=sprintf("%#06x",($m3<<12|RXB($v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 sub VSI {
@@ -2892,7 +3007,7 @@ sub VSI {
 	$out.=sprintf("%#06x",($opcode&0xff00|$i3)).",";
 	$out.=sprintf("%#06x",($b2<<12|$d2)).",";
 	$out.=sprintf("%#06x",(($v1&0xf)<<12|RXB(0,0,0,$v1)<<8|$opcode&0xff));
-	$out.="\t# $memn\t$ops\n"
+	$out.="\t# $memn\t$ops\n";
 }
 
 #

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,15 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RC5 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 
 #ifndef OPENSSL_NO_RC5
 
 # include <openssl/evp.h>
-# include "internal/evp_int.h"
+# include "crypto/evp.h"
 # include <openssl/objects.h>
-# include "evp_locl.h"
+# include "evp_local.h"
 # include <openssl/rc5.h>
 
 static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -66,9 +72,12 @@ static int rc5_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 static int r_32_12_16_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                                const unsigned char *iv, int enc)
 {
-    RC5_32_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),
-                   key, data(ctx)->rounds);
-    return 1;
+    if (EVP_CIPHER_CTX_key_length(ctx) > 255) {
+        EVPerr(EVP_F_R_32_12_16_INIT_KEY, EVP_R_BAD_KEY_LENGTH);
+        return 0;
+    }
+    return RC5_32_set_key(&data(ctx)->ks, EVP_CIPHER_CTX_key_length(ctx),
+                          key, data(ctx)->rounds);
 }
 
 #endif

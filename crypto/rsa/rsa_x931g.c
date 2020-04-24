@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 /* X9.31 RSA key derivation and generation */
 
@@ -131,10 +137,10 @@ int RSA_X931_derive_ex(RSA *rsa, BIGNUM *p1, BIGNUM *p2, BIGNUM *q1,
     if (rsa->iqmp == NULL)
         goto err;
 
+    rsa->dirty_cnt++;
     ret = 1;
  err:
-    if (ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     BN_CTX_free(ctx2);
 
@@ -185,11 +191,11 @@ int RSA_X931_generate_key_ex(RSA *rsa, int bits, const BIGNUM *e,
                             NULL, NULL, NULL, NULL, NULL, NULL, e, cb))
         goto error;
 
+    rsa->dirty_cnt++;
     ok = 1;
 
  error:
-    if (ctx)
-        BN_CTX_end(ctx);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
 
     if (ok)

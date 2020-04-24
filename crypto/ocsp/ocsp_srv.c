@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,11 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
-#include "ocsp_lcl.h"
+#include "ocsp_local.h"
+
+DEFINE_STACK_OF(OCSP_ONEREQ)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(OCSP_SINGLERESP)
 
 /*
  * Utility functions related to sending OCSP responses and extracting
@@ -259,45 +263,67 @@ int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert)
     return 1;
 }
 
-int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert)
+int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
+                              OPENSSL_CTX *libctx, const char *propq)
 {
     ASN1_OCTET_STRING *byKey = NULL;
     unsigned char md[SHA_DIGEST_LENGTH];
+    EVP_MD *sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+    int ret = 0;
+
+    if (sha1 == NULL)
+        return 0;
 
     /* RFC2560 requires SHA1 */
-    if (!X509_pubkey_digest(cert, EVP_sha1(), md, NULL))
-        return 0;
+    if (!X509_pubkey_digest(cert, sha1, md, NULL))
+        goto err;
 
     byKey = ASN1_OCTET_STRING_new();
     if (byKey == NULL)
-        return 0;
+        goto err;
 
     if (!(ASN1_OCTET_STRING_set(byKey, md, SHA_DIGEST_LENGTH))) {
         ASN1_OCTET_STRING_free(byKey);
-        return 0;
+        goto err;
     }
 
     respid->type = V_OCSP_RESPID_KEY;
     respid->value.byKey = byKey;
 
-    return 1;
+    ret = 1;
+ err:
+    EVP_MD_free(sha1);
+    return ret;
 }
 
-int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
+int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert)
 {
+    return OCSP_RESPID_set_by_key_ex(respid, cert, NULL, NULL);
+}
+
+int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OPENSSL_CTX *libctx,
+                         const char *propq)
+{
+    EVP_MD *sha1 = NULL;
+    int ret = 0;
+
     if (respid->type == V_OCSP_RESPID_KEY) {
         unsigned char md[SHA_DIGEST_LENGTH];
 
+        sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
+        if (sha1 == NULL)
+            goto err;
+
         if (respid->value.byKey == NULL)
-            return 0;
+            goto err;
 
         /* RFC2560 requires SHA1 */
-        if (!X509_pubkey_digest(cert, EVP_sha1(), md, NULL))
-            return 0;
+        if (!X509_pubkey_digest(cert, sha1, md, NULL))
+            goto err;
 
-        return (ASN1_STRING_length(respid->value.byKey) == SHA_DIGEST_LENGTH)
-            && (memcmp(ASN1_STRING_get0_data(respid->value.byKey), md,
-                       SHA_DIGEST_LENGTH) == 0);
+        ret = (ASN1_STRING_length(respid->value.byKey) == SHA_DIGEST_LENGTH)
+              && (memcmp(ASN1_STRING_get0_data(respid->value.byKey), md,
+                         SHA_DIGEST_LENGTH) == 0);
     } else if (respid->type == V_OCSP_RESPID_NAME) {
         if (respid->value.byName == NULL)
             return 0;
@@ -306,5 +332,12 @@ int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
                              X509_get_subject_name(cert)) == 0;
     }
 
-    return 0;
+ err:
+    EVP_MD_free(sha1);
+    return ret;
+}
+
+int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert)
+{
+    return OCSP_RESPID_match_ex(respid, cert, NULL, NULL);
 }

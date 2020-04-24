@@ -13,28 +13,38 @@
 #include <stdarg.h>
 #include <openssl/crypto.h>
 #include "internal/property.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
 #include "internal/thread_once.h"
-#include "internal/lhash.h"
-#include "internal/sparse_array.h"
-#include "property_lcl.h"
+#include "crypto/lhash.h"
+#include "crypto/sparse_array.h"
+#include "property_local.h"
 
-/* The number of elements in the query cache before we initiate a flush */
+/*
+ * The number of elements in the query cache before we initiate a flush.
+ * If reducing this, also ensure the stochastic test in test/property_test.c
+ * isn't likely to fail.
+ */
 #define IMPL_CACHE_FLUSH_THRESHOLD  500
 
 typedef struct {
-    OSSL_PROPERTY_LIST *properties;
     void *method;
-    void (*method_destruct)(void *);
+    int (*up_ref)(void *);
+    void (*free)(void *);
+} METHOD;
+
+typedef struct {
+    const OSSL_PROVIDER *provider;
+    OSSL_PROPERTY_LIST *properties;
+    METHOD method;
 } IMPLEMENTATION;
 
 DEFINE_STACK_OF(IMPLEMENTATION)
 
 typedef struct {
     const char *query;
-    void *method;
+    METHOD method;
     char body[1];
 } QUERY;
 
@@ -47,25 +57,34 @@ typedef struct {
 } ALGORITHM;
 
 struct ossl_method_store_st {
+    OPENSSL_CTX *ctx;
     size_t nelem;
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
     OSSL_PROPERTY_LIST *global_properties;
     int need_flush;
-    unsigned int nbits;
-    unsigned char rand_bits[(IMPL_CACHE_FLUSH_THRESHOLD + 7) / 8];
     CRYPTO_RWLOCK *lock;
 };
 
 typedef struct {
-    OSSL_METHOD_STORE *store;
     LHASH_OF(QUERY) *cache;
     size_t nelem;
+    uint32_t seed;
 } IMPL_CACHE_FLUSH;
 
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
 static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid);
 static void ossl_method_cache_flush_all(OSSL_METHOD_STORE *c);
+
+static int ossl_method_up_ref(METHOD *method)
+{
+    return (*method->up_ref)(method->method);
+}
+
+static void ossl_method_free(METHOD *method)
+{
+    (*method->free)(method->method);
+}
 
 int ossl_property_read_lock(OSSL_METHOD_STORE *p)
 {
@@ -82,31 +101,6 @@ int ossl_property_unlock(OSSL_METHOD_STORE *p)
     return p != 0 ? CRYPTO_THREAD_unlock(p->lock) : 0;
 }
 
-int ossl_method_store_init(void)
-{
-    if (ossl_property_string_init()
-            && ossl_prop_defn_init()
-            && ossl_property_parse_init())
-        return 1;
-
-    ossl_method_store_cleanup();
-    return 0;
-}
-
-void ossl_method_store_cleanup(void)
-{
-    ossl_property_string_cleanup();
-    ossl_prop_defn_cleanup();
-}
-
-static CRYPTO_ONCE method_store_init_flag = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(do_method_store_init)
-{
-    return OPENSSL_init_crypto(0, NULL)
-        && ossl_method_store_init()
-        && OPENSSL_atexit(&ossl_method_store_cleanup);
-}
-
 static unsigned long query_hash(const QUERY *a)
 {
     return OPENSSL_LH_strhash(a->query);
@@ -120,15 +114,17 @@ static int query_cmp(const QUERY *a, const QUERY *b)
 static void impl_free(IMPLEMENTATION *impl)
 {
     if (impl != NULL) {
-        if (impl->method_destruct)
-            impl->method_destruct(impl->method);
+        ossl_method_free(&impl->method);
         OPENSSL_free(impl);
     }
 }
 
 static void impl_cache_free(QUERY *elem)
 {
-    OPENSSL_free(elem);
+    if (elem != NULL) {
+        ossl_method_free(&elem->method);
+        OPENSSL_free(elem);
+    }
 }
 
 static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
@@ -141,21 +137,23 @@ static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
     }
 }
 
-OSSL_METHOD_STORE *ossl_method_store_new(void)
+/*
+ * The OPENSSL_CTX param here allows access to underlying property data needed
+ * for computation
+ */
+OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx)
 {
     OSSL_METHOD_STORE *res;
 
-    if (!RUN_ONCE(&method_store_init_flag, do_method_store_init))
-        return 0;
-
     res = OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
+        res->ctx = ctx;
         if ((res->algs = ossl_sa_ALGORITHM_new()) == NULL) {
             OPENSSL_free(res);
             return NULL;
         }
         if ((res->lock = CRYPTO_THREAD_lock_new()) == NULL) {
-            OPENSSL_free(res->algs);
+            ossl_sa_ALGORITHM_free(res->algs);
             OPENSSL_free(res);
             return NULL;
         }
@@ -184,13 +182,15 @@ static int ossl_method_store_insert(OSSL_METHOD_STORE *store, ALGORITHM *alg)
         return ossl_sa_ALGORITHM_set(store->algs, alg->nid, alg);
 }
 
-int ossl_method_store_add(OSSL_METHOD_STORE *store,
-                          int nid, const char *properties,
-                          void *method, void (*method_destruct)(void *))
+int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
+                          int nid, const char *properties, void *method,
+                          int (*method_up_ref)(void *),
+                          void (*method_destruct)(void *))
 {
     ALGORITHM *alg = NULL;
     IMPLEMENTATION *impl;
     int ret = 0;
+    int i;
 
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
@@ -201,8 +201,14 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
     impl = OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
         return 0;
-    impl->method = method;
-    impl->method_destruct = method_destruct;
+    impl->method.method = method;
+    impl->method.up_ref = method_up_ref;
+    impl->method.free = method_destruct;
+    if (!ossl_method_up_ref(&impl->method)) {
+        OPENSSL_free(impl);
+        return 0;
+    }
+    impl->provider = prov;
 
     /*
      * Insert into the hash table if required.
@@ -212,10 +218,11 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
      */
     ossl_property_write_lock(store);
     ossl_method_cache_flush(store, nid);
-    if ((impl->properties = ossl_prop_defn_get(properties)) == NULL) {
-        if ((impl->properties = ossl_parse_property(properties)) == NULL)
+    if ((impl->properties = ossl_prop_defn_get(store->ctx, properties)) == NULL) {
+        impl->properties = ossl_parse_property(store->ctx, properties);
+        if (impl->properties == NULL)
             goto err;
-        ossl_prop_defn_set(properties, impl->properties);
+        ossl_prop_defn_set(store->ctx, properties, impl->properties);
     }
 
     alg = ossl_method_store_retrieve(store, nid);
@@ -229,8 +236,16 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store,
             goto err;
     }
 
-    /* Push onto stack */
-    if (sk_IMPLEMENTATION_push(alg->impls, impl))
+    /* Push onto stack if there isn't one there already */
+    for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
+        const IMPLEMENTATION *tmpimpl = sk_IMPLEMENTATION_value(alg->impls, i);
+
+        if (tmpimpl->provider == impl->provider
+            && tmpimpl->properties == impl->properties)
+            break;
+    }
+    if (i == sk_IMPLEMENTATION_num(alg->impls)
+        && sk_IMPLEMENTATION_push(alg->impls, impl))
         ret = 1;
     ossl_property_unlock(store);
     if (ret == 0)
@@ -269,10 +284,10 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
     for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
         IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
 
-        if (impl->method == method) {
+        if (impl->method.method == method) {
+            impl_free(impl);
             sk_IMPLEMENTATION_delete(alg->impls, i);
             ossl_property_unlock(store);
-            impl_free(impl);
             return 1;
         }
     }
@@ -286,8 +301,13 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     ALGORITHM *alg;
     IMPLEMENTATION *impl;
     OSSL_PROPERTY_LIST *pq = NULL, *p2;
+    METHOD *best_method = NULL;
     int ret = 0;
-    int j;
+    int j, best = -1, score, optional;
+
+#ifndef FIPS_MODE
+    OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#endif
 
     if (nid <= 0 || method == NULL || store == NULL)
         return 0;
@@ -305,12 +325,12 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
 
     if (prop_query == NULL) {
         if ((impl = sk_IMPLEMENTATION_value(alg->impls, 0)) != NULL) {
-            *method = impl->method;
+            best_method = &impl->method;
             ret = 1;
         }
         goto fin;
     }
-    pq = ossl_parse_query(prop_query);
+    pq = ossl_parse_query(store->ctx, prop_query);
     if (pq == NULL)
         goto fin;
     if (store->global_properties != NULL) {
@@ -320,16 +340,23 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
         ossl_property_free(pq);
         pq = p2;
     }
+    optional = ossl_property_has_optional(pq);
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
         impl = sk_IMPLEMENTATION_value(alg->impls, j);
-
-        if (ossl_property_match(pq, impl->properties)) {
-            *method = impl->method;
+        score = ossl_property_match_count(pq, impl->properties);
+        if (score > best) {
+            best_method = &impl->method;
+            best = score;
             ret = 1;
-            goto fin;
+            if (!optional)
+                goto fin;
         }
     }
 fin:
+    if (ret && ossl_method_up_ref(best_method))
+        *method = best_method->method;
+    else
+        ret = 0;
     ossl_property_unlock(store);
     ossl_property_free(pq);
     return ret;
@@ -350,7 +377,7 @@ int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
         ossl_property_unlock(store);
         return 1;
     }
-    store->global_properties = ossl_parse_query(prop_query);
+    store->global_properties = ossl_parse_query(store->ctx, prop_query);
     ret = store->global_properties != NULL;
     ossl_property_unlock(store);
     return ret;
@@ -383,32 +410,38 @@ IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);
 /*
  * Flush an element from the query cache (perhaps).
  *
- * In order to avoid taking a write lock to keep accurate LRU information or
- * using atomic operations to approximate similar, the procedure used here
- * is to stochastically flush approximately half the cache.  Since generating
- * random numbers is relatively expensive, we produce them in blocks and
- * consume them as we go, saving generated bits between generations of flushes.
+ * In order to avoid taking a write lock or using atomic operations
+ * to keep accurate least recently used (LRU) or least frequently used
+ * (LFU) information, the procedure used here is to stochastically
+ * flush approximately half the cache.
  *
- * This procedure isn't ideal, LRU would be better.  However, in normal
- * operation, reaching a full cache would be quite unexpected.  It means
- * that no steady state of algorithm queries has been reached.  I.e. it is most
- * likely an attack of some form.  A suboptimal clearance strategy that doesn't
- * degrade performance of the normal case is preferable to a more refined
- * approach that imposes a performance impact.
+ * This procedure isn't ideal, LRU or LFU would be better.  However,
+ * in normal operation, reaching a full cache would be unexpected.
+ * It means that no steady state of algorithm queries has been reached.
+ * That is, it is most likely an attack of some form.  A suboptimal clearance
+ * strategy that doesn't degrade performance of the normal case is
+ * preferable to a more refined approach that imposes a performance
+ * impact.
  */
 static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
 {
-    OSSL_METHOD_STORE *store = state->store;
-    unsigned int n;
+    uint32_t n;
 
-    if (store->nbits == 0) {
-        if (!RAND_bytes(store->rand_bits, sizeof(store->rand_bits)))
-            return;
-        store->nbits = sizeof(store->rand_bits) * 8;
-    }
-    n = --store->nbits;
-    if ((store->rand_bits[n >> 3] & (1 << (n & 7))) != 0)
-        OPENSSL_free(lh_QUERY_delete(state->cache, c));
+    /*
+     * Implement the 32 bit xorshift as suggested by George Marsaglia in:
+     *      https://doi.org/10.18637/jss.v008.i14
+     *
+     * This is a very fast PRNG so there is no need to extract bits one at a
+     * time and use the entire value each time.
+     */
+    n = state->seed;
+    n ^= n << 13;
+    n ^= n >> 17;
+    n ^= n << 5;
+    state->seed = n;
+
+    if ((n & 1) != 0)
+        impl_cache_free(lh_QUERY_delete(state->cache, c));
     else
         state->nelem++;
 }
@@ -428,9 +461,10 @@ static void ossl_method_cache_flush_some(OSSL_METHOD_STORE *store)
     IMPL_CACHE_FLUSH state;
 
     state.nelem = 0;
-    state.store = store;
-    ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
+    if ((state.seed = OPENSSL_rdtsc()) == 0)
+        state.seed = 1;
     store->need_flush = 0;
+    ossl_sa_ALGORITHM_doall_arg(store->algs, &impl_cache_flush_one_alg, &state);
     store->nelem = state.nelem;
 }
 
@@ -439,34 +473,38 @@ int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,
 {
     ALGORITHM *alg;
     QUERY elem, *r;
+    int res = 0;
 
     if (nid <= 0 || store == NULL)
         return 0;
 
     ossl_property_read_lock(store);
     alg = ossl_method_store_retrieve(store, nid);
-    if (alg == NULL) {
-        ossl_property_unlock(store);
-        return 0;
-    }
+    if (alg == NULL)
+        goto err;
 
-    elem.query = prop_query;
+    elem.query = prop_query != NULL ? prop_query : "";
     r = lh_QUERY_retrieve(alg->cache, &elem);
-    if (r == NULL) {
-        ossl_property_unlock(store);
-        return 0;
+    if (r == NULL)
+        goto err;
+    if (ossl_method_up_ref(&r->method)) {
+        *method = r->method.method;
+        res = 1;
     }
-    *method = r->method;
+err:
     ossl_property_unlock(store);
-    return 1;
+    return res;
 }
 
 int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
-                                const char *prop_query, void *method)
+                                const char *prop_query, void *method,
+                                int (*method_up_ref)(void *),
+                                void (*method_destruct)(void *))
 {
     QUERY elem, *old, *p = NULL;
     ALGORITHM *alg;
     size_t len;
+    int res = 1;
 
     if (nid <= 0 || store == NULL)
         return 0;
@@ -477,33 +515,41 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
     if (store->need_flush)
         ossl_method_cache_flush_some(store);
     alg = ossl_method_store_retrieve(store, nid);
-    if (alg == NULL) {
-        ossl_property_unlock(store);
-        return 0;
-    }
+    if (alg == NULL)
+        goto err;
 
     if (method == NULL) {
         elem.query = prop_query;
-        lh_QUERY_delete(alg->cache, &elem);
-        ossl_property_unlock(store);
-        return 1;
+        if ((old = lh_QUERY_delete(alg->cache, &elem)) != NULL) {
+            impl_cache_free(old);
+            store->nelem--;
+        }
+        goto end;
     }
     p = OPENSSL_malloc(sizeof(*p) + (len = strlen(prop_query)));
     if (p != NULL) {
         p->query = p->body;
-        p->method = method;
+        p->method.method = method;
+        p->method.up_ref = method_up_ref;
+        p->method.free = method_destruct;
+        if (!ossl_method_up_ref(&p->method))
+            goto err;
         memcpy((char *)p->query, prop_query, len + 1);
-        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL)
-            OPENSSL_free(old);
-        if (old != NULL || !lh_QUERY_error(alg->cache)) {
-            store->nelem++;
-            if (store->nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
-                store->need_flush = 1;
-            ossl_property_unlock(store);
-            return 1;
+        if ((old = lh_QUERY_insert(alg->cache, p)) != NULL) {
+            impl_cache_free(old);
+            goto end;
         }
+        if (!lh_QUERY_error(alg->cache)) {
+            if (++store->nelem >= IMPL_CACHE_FLUSH_THRESHOLD)
+                store->need_flush = 1;
+            goto end;
+        }
+        ossl_method_free(&p->method);
     }
-    ossl_property_unlock(store);
+err:
+    res = 0;
     OPENSSL_free(p);
-    return 0;
+end:
+    ossl_property_unlock(store);
+    return res;
 }

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -73,8 +73,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC,"${dir}","${dir}../../perlasm");
 require "x86asm.pl";
 
-$output=pop;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 &asm_init($ARGV[0],$ARGV[$#ARGV] eq "386");
 
@@ -96,7 +95,7 @@ if ($xmm && !$avx && $ARGV[0] eq "win32" &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if ($xmm && !$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|based on LLVM) ([3-9]\.[0-9]+)/) {
+if ($xmm && !$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|based on LLVM) ([0-9]+\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
@@ -1293,4 +1292,4 @@ sub bodyx_00_15 () {			# +10%
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

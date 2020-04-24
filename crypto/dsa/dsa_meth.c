@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,10 +15,11 @@
  * or in the file LICENSE in the source distribution.
  */
 
-#include "dsa_locl.h"
+#include "dsa_local.h"
 #include <string.h>
 #include <openssl/err.h>
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 DSA_METHOD *DSA_meth_new(const char *name, int flags)
 {
     DSA_METHOD *dsam = OPENSSL_zalloc(sizeof(*dsam));
@@ -222,3 +223,4 @@ int DSA_meth_set_keygen(DSA_METHOD *dsam, int (*keygen) (DSA *))
     dsam->dsa_keygen = keygen;
     return 1;
 }
+#endif

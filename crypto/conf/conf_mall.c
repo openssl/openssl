@@ -14,7 +14,8 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/engine.h>
-#include "conf_lcl.h"
+#include "internal/provider.h"
+#include "conf_local.h"
 
 /* Load all OpenSSL builtin modules */
 
@@ -28,4 +29,5 @@ void OPENSSL_load_builtin_modules(void)
 #endif
     EVP_add_alg_module();
     conf_add_ssl_module();
+    ossl_provider_add_conf_module();
 }

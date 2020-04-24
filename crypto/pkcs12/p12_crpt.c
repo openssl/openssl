@@ -44,7 +44,7 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         return 0;
     }
 
-    if (!pbe->iter)
+    if (pbe->iter == NULL)
         iter = 1;
     else
         iter = ASN1_INTEGER_get(pbe->iter);

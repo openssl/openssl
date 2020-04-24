@@ -10,9 +10,10 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test;
+use OpenSSL::Test qw/:DEFAULT bldtop_dir/;
 
 setup("test_evp_extra");
 
 plan tests => 1;
+
 ok(run(test(["evp_extra_test"])), "running evp_extra_test");

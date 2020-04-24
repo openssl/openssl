@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 
 X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
                         const char *pass, int passlen,
@@ -28,7 +28,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
         ERR_clear_error();
         pbe = PKCS5_pbe_set(pbe_nid, iter, salt, saltlen);
     }
-    if (!pbe) {
+    if (pbe == NULL) {
         PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_ASN1_LIB);
         return NULL;
     }

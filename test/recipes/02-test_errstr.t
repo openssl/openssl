@@ -104,18 +104,31 @@ foreach my $errname (@posix_errors) {
         my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
                        capture => 1);
         $oerr[0] =~ s|\R$||;
-        $oerr[0] =~ s|.*system library:||g; # The actual message is last
-
-        ok($oerr[0] eq $perr, "($errnum) '$oerr[0]' == '$perr'");
+        @oerr = split_error($oerr[0]);
+        ok($oerr[3] eq $perr, "($errnum) '$oerr[3]' == '$perr'");
     }
 }
 
 my @after = run(app([ qw(openssl errstr 2000080) ]), capture => 1);
 $after[0] =~ s|\R$||;
-$after[0] =~ s|.*system library:||g;
-ok($after[0] eq "reason(128)", "(128) '$after[0]' == 'reason(128)'");
+@after = split_error($after[0]);
+ok($after[3] eq "reason(128)", "(128) '$after[3]' == 'reason(128)'");
 
 my @zero = run(app([ qw(openssl errstr 2000000) ]), capture => 1);
 $zero[0] =~ s|\R$||;
-$zero[0] =~ s|.*system library:||g;
-ok($zero[0] eq "system library", "(0) '$zero[0]' == 'system library'");
+@zero = split_error($zero[0]);
+ok($zero[3] eq "system library", "(0) '$zero[3]' == 'system library'");
+
+# For an error string "error:xxxxxxxx:lib:func:reason", this returns
+# the following array:
+#
+# ( "xxxxxxxx", "lib", "func", "reason" )
+sub split_error {
+    # Limit to 5 items, in case the reason contains a colon
+    my @erritems = split /:/, $_[0], 5;
+
+    # Remove the first item, which is always "error"
+    shift @erritems;
+
+    return @erritems;
+}

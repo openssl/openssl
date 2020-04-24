@@ -72,7 +72,8 @@ if ( $internal ) {
     die "Extra parameters given.\n" if @ARGV;
     $config = "crypto/err/openssl.ec" unless defined $config;
     @source = ( glob('crypto/*.c'), glob('crypto/*/*.c'),
-                glob('ssl/*.c'), glob('ssl/*/*.c') );
+                glob('ssl/*.c'), glob('ssl/*/*.c'), glob('providers/*.c'),
+                glob('providers/*/*.c'), glob('providers/*/*/*.c') );
 } else {
     die "Configuration file not given.\nSee '$0 -help' for information\n"
         unless defined $config;

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -25,8 +25,7 @@
 # for reference purposes, because T4 has dedicated Montgomery
 # multiplication and squaring *instructions* that deliver even more.
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 $frame = "STACK_FRAME";
 $bias = "STACK_BIAS";
@@ -381,4 +380,4 @@ foreach (split("\n",$code)) {
 	print $_,"\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

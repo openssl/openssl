@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../ssl_locl.h"
-#include "record_locl.h"
+#include "../ssl_local.h"
+#include "record_local.h"
 
 void SSL3_BUFFER_set_data(SSL3_BUFFER *b, const unsigned char *d, size_t n)
 {
@@ -164,7 +164,9 @@ int ssl3_release_write_buffer(SSL *s)
     while (pipes > 0) {
         wb = &RECORD_LAYER_get_wbuf(&s->rlayer)[pipes - 1];
 
-        if (s->wbio == NULL || !BIO_get_ktls_send(s->wbio))
+        if (SSL3_BUFFER_is_app_buffer(wb))
+            SSL3_BUFFER_set_app_buffer(wb, 0);
+        else
             OPENSSL_free(wb->buf);
         wb->buf = NULL;
         pipes--;

@@ -65,7 +65,7 @@ yet completed the authentication stage of the handshake.
 
 Early data has weaker security properties than other data sent over an SSL/TLS
 connection. In particular the data does not have forward secrecy. There are also
-additional considerations around replay attacks (see L<REPLAY PROTECTION>
+additional considerations around replay attacks (see L</REPLAY PROTECTION>
 below). For these reasons extreme care should be exercised when using early
 data. For specific details, consult the TLS 1.3 specification.
 
@@ -202,7 +202,7 @@ early data settings for the SSL_CTX and SSL objects respectively. Generally a
 server application will either use both of SSL_read_early_data() and
 SSL_CTX_set_max_early_data() (or SSL_set_max_early_data()), or neither of them,
 since there is no practical benefit from using only one of them. If the maximum
-early data setting for a server is non-zero then replay protection is
+early data setting for a server is nonzero then replay protection is
 automatically enabled (see L</REPLAY PROTECTION> below).
 
 If the server rejects the early data sent by a client then it will skip over
@@ -285,7 +285,7 @@ retry with a lower maximum protocol version.
 When early data is in use the TLS protocol provides no security guarantees that
 the same early data was not replayed across multiple connections. As a
 mitigation for this issue OpenSSL automatically enables replay protection if the
-server is configured with a non-zero max early data value. With replay
+server is configured with a nonzero max early data value. With replay
 protection enabled sessions are forced to be single use only. If a client
 attempts to reuse a session ticket more than once, then the second and
 subsequent attempts will fall back to a full handshake (and any early data that

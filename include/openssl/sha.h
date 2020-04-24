@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,15 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_SHA_H
-# define HEADER_SHA_H
+#ifndef OPENSSL_SHA_H
+# define OPENSSL_SHA_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_SHA_H
+# endif
 
 # include <openssl/e_os2.h>
 # include <stddef.h>
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 extern "C" {
-#endif
+# endif
 
 /*-
  * !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -83,13 +89,10 @@ void SHA256_Transform(SHA256_CTX *c, const unsigned char *data);
 # define SHA512_CBLOCK   (SHA_LBLOCK*8)
 # if (defined(_WIN32) || defined(_WIN64)) && !defined(__MINGW32__)
 #  define SHA_LONG64 unsigned __int64
-#  define U64(C)     C##UI64
 # elif defined(__arch64__)
 #  define SHA_LONG64 unsigned long
-#  define U64(C)     C##UL
 # else
 #  define SHA_LONG64 unsigned long long
-#  define U64(C)     C##ULL
 # endif
 
 typedef struct SHA512state_st {
@@ -112,8 +115,8 @@ int SHA512_Final(unsigned char *md, SHA512_CTX *c);
 unsigned char *SHA512(const unsigned char *d, size_t n, unsigned char *md);
 void SHA512_Transform(SHA512_CTX *c, const unsigned char *data);
 
-#ifdef  __cplusplus
+# ifdef  __cplusplus
 }
-#endif
+# endif
 
 #endif

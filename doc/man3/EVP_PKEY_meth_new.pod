@@ -8,14 +8,18 @@ EVP_PKEY_meth_set_init, EVP_PKEY_meth_set_copy, EVP_PKEY_meth_set_cleanup,
 EVP_PKEY_meth_set_paramgen, EVP_PKEY_meth_set_keygen, EVP_PKEY_meth_set_sign,
 EVP_PKEY_meth_set_verify, EVP_PKEY_meth_set_verify_recover, EVP_PKEY_meth_set_signctx,
 EVP_PKEY_meth_set_verifyctx, EVP_PKEY_meth_set_encrypt, EVP_PKEY_meth_set_decrypt,
-EVP_PKEY_meth_set_derive, EVP_PKEY_meth_set_ctrl, EVP_PKEY_meth_set_check,
+EVP_PKEY_meth_set_derive, EVP_PKEY_meth_set_ctrl,
+EVP_PKEY_meth_set_digestsign, EVP_PKEY_meth_set_digestverify,
+EVP_PKEY_meth_set_check,
 EVP_PKEY_meth_set_public_check, EVP_PKEY_meth_set_param_check,
 EVP_PKEY_meth_set_digest_custom,
 EVP_PKEY_meth_get_init, EVP_PKEY_meth_get_copy, EVP_PKEY_meth_get_cleanup,
 EVP_PKEY_meth_get_paramgen, EVP_PKEY_meth_get_keygen, EVP_PKEY_meth_get_sign,
 EVP_PKEY_meth_get_verify, EVP_PKEY_meth_get_verify_recover, EVP_PKEY_meth_get_signctx,
 EVP_PKEY_meth_get_verifyctx, EVP_PKEY_meth_get_encrypt, EVP_PKEY_meth_get_decrypt,
-EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl, EVP_PKEY_meth_get_check,
+EVP_PKEY_meth_get_derive, EVP_PKEY_meth_get_ctrl,
+EVP_PKEY_meth_get_digestsign, EVP_PKEY_meth_get_digestverify,
+EVP_PKEY_meth_get_check,
 EVP_PKEY_meth_get_public_check, EVP_PKEY_meth_get_param_check,
 EVP_PKEY_meth_get_digest_custom,
 EVP_PKEY_meth_remove
@@ -112,6 +116,18 @@ EVP_PKEY_meth_remove
                              int (*ctrl_str) (EVP_PKEY_CTX *ctx,
                                               const char *type,
                                               const char *value));
+ void EVP_PKEY_meth_set_digestsign(EVP_PKEY_METHOD *pmeth,
+                                   int (*digestsign) (EVP_MD_CTX *ctx,
+                                                      unsigned char *sig,
+                                                      size_t *siglen,
+                                                      const unsigned char *tbs,
+                                                      size_t tbslen));
+ void EVP_PKEY_meth_set_digestverify(EVP_PKEY_METHOD *pmeth,
+                                     int (*digestverify) (EVP_MD_CTX *ctx,
+                                                          const unsigned char *sig,
+                                                          size_t siglen,
+                                                          const unsigned char *tbs,
+                                                          size_t tbslen));
  void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
                               int (*check) (EVP_PKEY *pkey));
  void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
@@ -200,6 +216,18 @@ EVP_PKEY_meth_remove
                              int (**pctrl_str) (EVP_PKEY_CTX *ctx,
                                                 const char *type,
                                                 const char *value));
+ void EVP_PKEY_meth_get_digestsign(EVP_PKEY_METHOD *pmeth,
+                                   int (**digestsign) (EVP_MD_CTX *ctx,
+                                                       unsigned char *sig,
+                                                       size_t *siglen,
+                                                       const unsigned char *tbs,
+                                                       size_t tbslen));
+ void EVP_PKEY_meth_get_digestverify(EVP_PKEY_METHOD *pmeth,
+                                     int (**digestverify) (EVP_MD_CTX *ctx,
+                                                           const unsigned char *sig,
+                                                           size_t siglen,
+                                                           const unsigned char *tbs,
+                                                           size_t tbslen));
  void EVP_PKEY_meth_get_check(const EVP_PKEY_METHOD *pmeth,
                               int (**pcheck) (EVP_PKEY *pkey));
  void EVP_PKEY_meth_get_public_check(const EVP_PKEY_METHOD *pmeth,
@@ -286,7 +314,7 @@ L<EVP_PKEY_verify_recover_init(3)> and L<EVP_PKEY_verify_recover(3)>.
 
 The signctx_init() and signctx() methods are used to sign a digest present by
 a B<EVP_MD_CTX> object. They are called by the EVP_DigestSign functions. See
-L<EVP_DigestSignInit(3)> for detail.
+L<EVP_DigestSignInit(3)> for details.
 
  int (*verifyctx_init) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx);
  int (*verifyctx) (EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
@@ -294,7 +322,7 @@ L<EVP_DigestSignInit(3)> for detail.
 
 The verifyctx_init() and verifyctx() methods are used to verify a signature
 against the data in a B<EVP_MD_CTX> object. They are called by the various
-EVP_DigestVerify functions. See L<EVP_DigestVerifyInit(3)> for detail.
+EVP_DigestVerify functions. See L<EVP_DigestVerifyInit(3)> for details.
 
  int (*encrypt_init) (EVP_PKEY_CTX *ctx);
  int (*encrypt) (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
@@ -321,7 +349,7 @@ L<EVP_PKEY_derive_init(3)> and L<EVP_PKEY_derive(3)>.
  int (*ctrl_str) (EVP_PKEY_CTX *ctx, const char *type, const char *value);
 
 The ctrl() and ctrl_str() methods are used to adjust algorithm-specific
-settings. See L<EVP_PKEY_CTX_ctrl(3)> and related functions for detail.
+settings. See L<EVP_PKEY_CTX_ctrl(3)> and related functions for details.
 
  int (*digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
                     const unsigned char *tbs, size_t tbslen);
@@ -330,7 +358,7 @@ settings. See L<EVP_PKEY_CTX_ctrl(3)> and related functions for detail.
                       size_t tbslen);
 
 The digestsign() and digestverify() methods are used to generate or verify
-a signature in a one-shot mode. They could be called by L<EVP_DigetSign(3)>
+a signature in a one-shot mode. They could be called by L<EVP_DigestSign(3)>
 and L<EVP_DigestVerify(3)>.
 
  int (*check) (EVP_PKEY *pkey);

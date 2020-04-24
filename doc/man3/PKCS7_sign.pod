@@ -22,8 +22,6 @@ The data to be signed is read from BIO B<data>.
 
 B<flags> is an optional set of flags.
 
-=head1 NOTES
-
 Any of the following flags (ored together) can be passed in the B<flags>
 parameter.
 
@@ -65,8 +63,6 @@ way data can be signed in a single pass.
 
 If the B<PKCS7_PARTIAL> flag is set a partial B<PKCS7> structure is output to
 which additional signers and capabilities can be added before finalization.
-
-=head1 NOTES
 
 If the flag B<PKCS7_STREAM> is set the returned B<PKCS7> structure is B<not>
 complete and outputting its contents via a function that does not properly

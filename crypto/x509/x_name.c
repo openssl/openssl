@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,13 +8,16 @@
  */
 
 #include <stdio.h>
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
-#include "internal/asn1_int.h"
-#include "x509_lcl.h"
+#include "crypto/x509.h"
+#include "crypto/asn1.h"
+#include "x509_local.h"
+
+DEFINE_STACK_OF(X509_NAME_ENTRY)
+DEFINE_STACK_OF(ASN1_VALUE)
 
 /*
  * Maximum length of X509_NAME: much larger than anything we should
@@ -114,7 +117,7 @@ static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
 {
     X509_NAME *a;
 
-    if (!pval || !*pval)
+    if (pval == NULL || *pval == NULL)
         return;
     a = (X509_NAME *)*pval;
 
@@ -503,9 +506,9 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
     l = 80 - 2 - obase;
 
     b = X509_NAME_oneline(name, NULL, 0);
-    if (!b)
+    if (b == NULL)
         return 0;
-    if (!*b) {
+    if (*b == '\0') {
         OPENSSL_free(b);
         return 1;
     }
@@ -542,7 +545,7 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
     return 0;
 }
 
-int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder,
+int X509_NAME_get0_der(const X509_NAME *nm, const unsigned char **pder,
                        size_t *pderlen)
 {
     /* Make sure encoding is valid */

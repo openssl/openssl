@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include "modes_lcl.h"
 #include <string.h>
+#include <openssl/crypto.h>
+#include "crypto/modes.h"
 
 /*
  * NOTE: the IV/counter CTR mode is big-endian.  The code itself is

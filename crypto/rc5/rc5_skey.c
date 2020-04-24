@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,14 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/rc5.h>
-#include "rc5_locl.h"
+/*
+ * RC5 low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
 
-void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
-                    int rounds)
+#include <openssl/rc5.h>
+#include "rc5_local.h"
+
+int RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
+                   int rounds)
 {
     RC5_32_INT L[64], l, ll, A, B, *S, k;
     int i, j, m, c, t, ii, jj;
+
+    if (len > 255)
+        return 0;
 
     if ((rounds != RC5_16_ROUNDS) &&
         (rounds != RC5_12_ROUNDS) && (rounds != RC5_8_ROUNDS))
@@ -58,4 +67,6 @@ void RC5_32_set_key(RC5_32_KEY *key, int len, const unsigned char *data,
         if (++jj >= c)
             jj = 0;
     }
+
+    return 1;
 }

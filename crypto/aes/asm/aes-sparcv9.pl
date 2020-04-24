@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -37,8 +37,7 @@
 # optimal decrypt procedure]. Compared to GNU C generated code both
 # procedures are more than 60% faster:-)
 
-$output = pop;
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 $frame="STACK_FRAME";
 $bias="STACK_BIAS";
@@ -1189,4 +1188,4 @@ ___
 $code =~ s/fmovs.*$//gm;
 
 print $code;
-close STDOUT;	# ensure flush
+close STDOUT or die "error closing STDOUT: $!";	# ensure flush

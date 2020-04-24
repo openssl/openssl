@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,13 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CT_H
-# define HEADER_CT_H
+#ifndef OPENSSL_CT_H
+# define OPENSSL_CT_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_CT_H
+# endif
 
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_CT
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/safestack.h>
 # include <openssl/x509.h>
 # include <openssl/cterr.h>
@@ -27,6 +33,9 @@ extern "C" {
 
 /* All hashes are SHA256 in v1 of Certificate Transparency */
 # define CT_V1_HASHLEN SHA256_DIGEST_LENGTH
+
+DEFINE_OR_DECLARE_STACK_OF(SCT)
+DEFINE_OR_DECLARE_STACK_OF(CTLOG)
 
 typedef enum {
     CT_LOG_ENTRY_TYPE_NOT_SET = -1,
@@ -55,17 +64,22 @@ typedef enum {
     SCT_VALIDATION_STATUS_UNKNOWN_VERSION
 } sct_validation_status_t;
 
-DEFINE_STACK_OF(SCT)
-DEFINE_STACK_OF(CTLOG)
-
 /******************************************
  * CT policy evaluation context functions *
  ******************************************/
 
 /*
- * Creates a new, empty policy evaluation context.
+ * Creates a new, empty policy evaluation context associated with the given
+ * library context and property query string.
  * The caller is responsible for calling CT_POLICY_EVAL_CTX_free when finished
  * with the CT_POLICY_EVAL_CTX.
+ */
+CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
+                                                       const char *propq);
+                                                       
+/*
+ * The same as CT_POLICY_EVAL_CTX_new_with_libctx() but the default library
+ * context and property query string is used.
  */
 CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new(void);
 
@@ -403,18 +417,38 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
  ********************/
 
 /*
- * Creates a new CT log instance with the given |public_key| and |name|.
+ * Creates a new CT log instance with the given |public_key| and |name| and
+ * associates it with the give library context |libctx| and property query
+ * string |propq|.
  * Takes ownership of |public_key| but copies |name|.
  * Returns NULL if malloc fails or if |public_key| cannot be converted to DER.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
+ */
+CTLOG *CTLOG_new_with_libctx(EVP_PKEY *public_key, const char *name,
+                             OPENSSL_CTX *libctx, const char *propq);
+
+/*
+ * The same as CTLOG_new_with_libctx except that the default library context and
+ * property query string are used.
  */
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
 
 /*
  * Creates a new CTLOG instance with the base64-encoded SubjectPublicKeyInfo DER
- * in |pkey_base64|. The |name| is a string to help users identify this log.
+ * in |pkey_base64| and associated with the given library context |libctx| and
+ * property query string |propq|. The |name| is a string to help users identify
+ * this log.
  * Returns 1 on success, 0 on failure.
  * Should be deleted by the caller using CTLOG_free when no longer needed.
+ */
+int CTLOG_new_from_base64_with_libctx(CTLOG **ct_log, const char *pkey_base64,
+                                      const char *name, OPENSSL_CTX *libctx,
+                                      const char *propq);
+
+/*
+ * The same as CTLOG_new_from_base64_with_libctx() except that the default
+ * library context and property query string are used.
+ * Returns 1 on success, 0 on failure.
  */
 int CTLOG_new_from_base64(CTLOG ** ct_log,
                           const char *pkey_base64, const char *name);
@@ -437,7 +471,15 @@ EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
  **************************/
 
 /*
- * Creates a new CT log store.
+ * Creates a new CT log store and associates it with the given libctx and
+ * property query string.
+ * Should be deleted by the caller using CTLOG_STORE_free when no longer needed.
+ */
+CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
+
+/*
+ * Same as CTLOG_STORE_new_with_libctx except that the default libctx and
+ * property query string are used.
  * Should be deleted by the caller using CTLOG_STORE_free when no longer needed.
  */
 CTLOG_STORE *CTLOG_STORE_new(void);
@@ -463,8 +505,6 @@ __owur int CTLOG_STORE_load_file(CTLOG_STORE *store, const char *file);
 
 /*
  * Loads the default CT log list into a |store|.
- * See internal/cryptlib.h for the environment variable and file path that are
- * consulted to find the default file.
  * Returns 1 if loading is successful, or 0 otherwise.
  */
 __owur int CTLOG_STORE_load_default_file(CTLOG_STORE *store);

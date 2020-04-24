@@ -3,6 +3,8 @@
 =head1 NAME
 
 RAND_DRBG_set_callbacks,
+RAND_DRBG_set_callback_data,
+RAND_DRBG_get_callback_data,
 RAND_DRBG_get_entropy_fn,
 RAND_DRBG_cleanup_entropy_fn,
 RAND_DRBG_get_nonce_fn,
@@ -20,6 +22,9 @@ RAND_DRBG_cleanup_nonce_fn
                              RAND_DRBG_get_nonce_fn get_nonce,
                              RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
+ int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *ctx);
+
+ void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg);
 
 =head2 Callback Functions
 
@@ -53,7 +58,16 @@ the nonce when reseeding the given B<drbg>.
 The callback functions are implemented and provided by the caller.
 Their parameter lists need to match the function prototypes above.
 
-Setting the callbacks is allowed only if the DRBG has not been initialized yet.
+RAND_DRBG_set_callback_data() can be used to store a pointer to some context
+specific data, which can subsequently be retrieved by the entropy and nonce
+callbacks using RAND_DRBG_get_callback_data().
+The ownership of the context data remains with the caller, i.e., it is the
+caller's responsibility to keep it available as long as it is needed by the
+callbacks and free it after use.
+For more information about the the callback data see the NOTES section.
+
+Setting the callbacks or the callback data is allowed only if the DRBG has
+not been initialized yet.
 Otherwise, the operation will fail.
 To change the settings for one of the three shared DRBGs it is necessary to call
 RAND_DRBG_uninstantiate() first.
@@ -95,7 +109,12 @@ setting them to NULL.
 
 =head1 RETURN VALUES
 
-RAND_DRBG_set_callbacks() return 1 on success, and 0 on failure
+RAND_DRBG_set_callbacks() returns 1 on success, and 0 on failure.
+
+RAND_DRBG_set_callback_data() returns 1 on success, and 0 on failure.
+
+RAND_DRBG_get_callback_data() returns the pointer to the callback data,
+which is NULL if none has been set previously.
 
 =head1 NOTES
 
@@ -104,17 +123,14 @@ contents safely before freeing it, in order not to leave sensitive information
 about the DRBG's state in memory.
 
 A request for prediction resistance can only be satisfied by pulling fresh
-entropy from one of the approved entropy sources listed in section 5.5.2 of
-[NIST SP 800-90C].
-Since the default implementation of the get_entropy callback does not have access
-to such an approved entropy source, a request for prediction resistance will
-always fail.
-In other words, prediction resistance is currently not supported yet by the DRBG.
+entropy from a live entropy source (section 5.5.2 of [NIST SP 800-90C]).
+It is up to the user to ensure that a live entropy source is configured
+and is being used.
 
 The derivation function is disabled during initialization by calling the
 RAND_DRBG_set() function with the RAND_DRBG_FLAG_CTR_NO_DF flag.
 For more information on the derivation function and when it can be omitted,
-see [NIST SP 800-90A Rev. 1]. Roughly speeking it can be omitted if the random
+see [NIST SP 800-90A Rev. 1]. Roughly speaking it can be omitted if the random
 source has "full entropy", i.e., contains 8 bits of entropy per byte.
 
 Even if a nonce is required, the B<get_nonce>() and B<cleanup_nonce>()
@@ -124,10 +140,13 @@ In this case the DRBG will automatically request an extra amount of entropy
 utilize for the nonce, following the recommendations of [NIST SP 800-90A Rev. 1],
 section 8.6.7.
 
-
-=head1 HISTORY
-
-The RAND_DRBG functions were added in OpenSSL 1.1.1.
+The callback data is a rather specialized feature, because in general the
+random sources don't (and in fact, they must not) depend on any state provided
+by the DRBG.
+There are however exceptional cases where this feature is useful, most notably
+for implementing known answer tests (KATs) or deterministic signatures like
+those specified in RFC6979, which require passing a specified entropy and nonce
+for instantiating the DRBG.
 
 =head1 SEE ALSO
 
@@ -135,9 +154,13 @@ L<RAND_DRBG_new(3)>,
 L<RAND_DRBG_reseed(3)>,
 L<RAND_DRBG(7)>
 
+=head1 HISTORY
+
+The RAND_DRBG functions were added in OpenSSL 1.1.1.
+
 =head1 COPYRIGHT
 
-Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

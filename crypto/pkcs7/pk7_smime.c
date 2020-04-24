@@ -14,8 +14,12 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-
 #define BUFFERSIZE 4096
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_ATTRIBUTE)
+DEFINE_STACK_OF(X509_ALGOR)
+DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
 
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 
@@ -214,7 +218,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
     BIO *p7bio = NULL;
     BIO *tmpin = NULL, *tmpout = NULL;
 
-    if (!p7) {
+    if (p7 == NULL) {
         PKCS7err(PKCS7_F_PKCS7_VERIFY, PKCS7_R_INVALID_NULL_POINTER);
         return 0;
     }
@@ -379,7 +383,7 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
     X509 *signer;
     int i;
 
-    if (!p7) {
+    if (p7 == NULL) {
         PKCS7err(PKCS7_F_PKCS7_GET0_SIGNERS, PKCS7_R_INVALID_NULL_POINTER);
         return NULL;
     }
@@ -480,7 +484,7 @@ int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data, int flags)
     int ret = 0, i;
     char *buf = NULL;
 
-    if (!p7) {
+    if (p7 == NULL) {
         PKCS7err(PKCS7_F_PKCS7_DECRYPT, PKCS7_R_INVALID_NULL_POINTER);
         return 0;
     }

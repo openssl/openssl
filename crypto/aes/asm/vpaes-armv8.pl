@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -30,6 +30,7 @@
 # Denver(***)       16.6(**)    15.1/17.8(**)    [8.80/9.93         ]
 # Apple A7(***)     22.7(**)    10.9/14.3        [8.45/10.0         ]
 # Mongoose(***)     26.3(**)    21.0/25.0(**)    [13.3/16.8         ]
+# ThunderX2(***)    39.4(**)    33.8/48.6(**)
 #
 # (*)	ECB denotes approximate result for parallelizable modes
 #	such as CBC decrypt, CTR, etc.;
@@ -37,15 +38,18 @@
 #	code, but it's constant-time and therefore preferred;
 # (***)	presented for reference/comparison purposes;
 
-$flavour = shift;
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
 die "can't locate arm-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" $xlate $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 $code.=<<___;
@@ -1274,4 +1278,4 @@ ___
 }	}
 print $code;
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

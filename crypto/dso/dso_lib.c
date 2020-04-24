@@ -7,8 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "dso_locl.h"
+#include "dso_local.h"
 #include "internal/refcount.h"
+
+DEFINE_STACK_OF(void)
 
 static DSO_METHOD *default_DSO_meth = NULL;
 

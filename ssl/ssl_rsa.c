@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,13 +8,16 @@
  */
 
 #include <stdio.h>
-#include "ssl_locl.h"
-#include "packet_locl.h"
+#include "ssl_local.h"
+#include "internal/packet.h"
 #include <openssl/bio.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #include <openssl/pem.h>
+
+DEFINE_STACK_OF(X509)
 
 static int ssl_set_cert(CERT *c, X509 *x509);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey);
@@ -29,6 +32,10 @@ int SSL_use_certificate(SSL *ssl, X509 *x)
     int rv;
     if (x == NULL) {
         SSLerr(SSL_F_SSL_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509v3_cache_extensions(x, ssl->ctx->libctx, ssl->ctx->propq)) {
+        SSLerr(0, ERR_LIB_X509);
         return 0;
     }
     rv = ssl_security_cert(ssl, NULL, x, 0, 1);
@@ -259,12 +266,15 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
     }
     if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        pkey = PEM_read_bio_PrivateKey(in, NULL,
-                                       ssl->default_passwd_callback,
-                                       ssl->default_passwd_callback_userdata);
+        pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
+                                          ssl->default_passwd_callback,
+                                          ssl->default_passwd_callback_userdata,
+                                          ssl->ctx->libctx,
+                                          ssl->ctx->propq);
     } else if (type == SSL_FILETYPE_ASN1) {
         j = ERR_R_ASN1_LIB;
-        pkey = d2i_PrivateKey_bio(in, NULL);
+        pkey = d2i_PrivateKey_ex_bio(in, NULL, ssl->ctx->libctx,
+                                     ssl->ctx->propq);
     } else {
         SSLerr(SSL_F_SSL_USE_PRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
@@ -288,7 +298,8 @@ int SSL_use_PrivateKey_ASN1(int type, SSL *ssl, const unsigned char *d,
     EVP_PKEY *pkey;
 
     p = d;
-    if ((pkey = d2i_PrivateKey(type, NULL, &p, (long)len)) == NULL) {
+    if ((pkey = d2i_PrivateKey_ex(type, NULL, &p, (long)len, ssl->ctx->libctx,
+                                  ssl->ctx->propq)) == NULL) {
         SSLerr(SSL_F_SSL_USE_PRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
         return 0;
     }
@@ -303,6 +314,10 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
     int rv;
     if (x == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509v3_cache_extensions(x, ctx->libctx, ctx->propq)) {
+        SSLerr(0, ERR_LIB_X509);
         return 0;
     }
     rv = ssl_security_cert(NULL, ctx, x, 0, 1);
@@ -329,7 +344,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
         return 0;
     }
 #ifndef OPENSSL_NO_EC
-    if (i == SSL_PKEY_ECC && !EC_KEY_can_sign(EVP_PKEY_get0_EC_KEY(pkey))) {
+    if (i == SSL_PKEY_ECC && !EVP_PKEY_can_sign(pkey)) {
         SSLerr(SSL_F_SSL_SET_CERT, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
         return 0;
     }
@@ -542,12 +557,13 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     }
     if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        pkey = PEM_read_bio_PrivateKey(in, NULL,
+        pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
                                        ctx->default_passwd_callback,
-                                       ctx->default_passwd_callback_userdata);
+                                       ctx->default_passwd_callback_userdata,
+                                       ctx->libctx, ctx->propq);
     } else if (type == SSL_FILETYPE_ASN1) {
         j = ERR_R_ASN1_LIB;
-        pkey = d2i_PrivateKey_bio(in, NULL);
+        pkey = d2i_PrivateKey_ex_bio(in, NULL, ctx->libctx, ctx->propq);
     } else {
         SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
@@ -571,7 +587,8 @@ int SSL_CTX_use_PrivateKey_ASN1(int type, SSL_CTX *ctx,
     EVP_PKEY *pkey;
 
     p = d;
-    if ((pkey = d2i_PrivateKey(type, NULL, &p, (long)len)) == NULL) {
+    if ((pkey = d2i_PrivateKey_ex(type, NULL, &p, (long)len, ctx->libctx,
+                                  ctx->propq)) == NULL) {
         SSLerr(SSL_F_SSL_CTX_USE_PRIVATEKEY_ASN1, ERR_R_ASN1_LIB);
         return 0;
     }
@@ -914,8 +931,9 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
     long extension_length = 0;
     char *name = NULL;
     char *header = NULL;
-    char namePrefix1[] = "SERVERINFO FOR ";
-    char namePrefix2[] = "SERVERINFOV2 FOR ";
+    static const char namePrefix1[] = "SERVERINFO FOR ";
+    static const char namePrefix2[] = "SERVERINFOV2 FOR ";
+    unsigned int name_len;
     int ret = 0;
     BIO *bin = NULL;
     size_t num_extensions = 0, contextoff = 0;
@@ -951,19 +969,20 @@ int SSL_CTX_use_serverinfo_file(SSL_CTX *ctx, const char *file)
                 break;
         }
         /* Check that PEM name starts with "BEGIN SERVERINFO FOR " */
-        if (strlen(name) < strlen(namePrefix1)) {
+        name_len = strlen(name);
+        if (name_len < sizeof(namePrefix1) - 1) {
             SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE, SSL_R_PEM_NAME_TOO_SHORT);
             goto end;
         }
-        if (strncmp(name, namePrefix1, strlen(namePrefix1)) == 0) {
+        if (strncmp(name, namePrefix1, sizeof(namePrefix1) - 1) == 0) {
             version = SSL_SERVERINFOV1;
         } else {
-            if (strlen(name) < strlen(namePrefix2)) {
+            if (name_len < sizeof(namePrefix2) - 1) {
                 SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
                        SSL_R_PEM_NAME_TOO_SHORT);
                 goto end;
             }
-            if (strncmp(name, namePrefix2, strlen(namePrefix2)) != 0) {
+            if (strncmp(name, namePrefix2, sizeof(namePrefix2) - 1) != 0) {
                 SSLerr(SSL_F_SSL_CTX_USE_SERVERINFO_FILE,
                        SSL_R_PEM_NAME_BAD_PREFIX);
                 goto end;
@@ -1044,8 +1063,14 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
     int j;
     int rv;
     CERT *c = ssl != NULL ? ssl->cert : ctx->cert;
+    SSL_CTX *actualctx = ssl == NULL ? ctx : ssl->ctx;
     STACK_OF(X509) *dup_chain = NULL;
     EVP_PKEY *pubkey = NULL;
+
+    if (!X509v3_cache_extensions(x509, actualctx->libctx, actualctx->propq)) {
+        SSLerr(0, ERR_R_X509_LIB);
+        goto out;
+    }
 
     /* Do all security checks before anything else */
     rv = ssl_security_cert(ssl, ctx, x509, 0, 1);

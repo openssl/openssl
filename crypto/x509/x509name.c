@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,9 +14,12 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 
-int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
+DEFINE_STACK_OF(X509_NAME_ENTRY)
+
+int X509_NAME_get_text_by_NID(const X509_NAME *name, int nid,
+                              char *buf, int len)
 {
     ASN1_OBJECT *obj;
 
@@ -26,7 +29,7 @@ int X509_NAME_get_text_by_NID(X509_NAME *name, int nid, char *buf, int len)
     return X509_NAME_get_text_by_OBJ(name, obj, buf, len);
 }
 
-int X509_NAME_get_text_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj,
+int X509_NAME_get_text_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
                               char *buf, int len)
 {
     int i;
@@ -53,7 +56,7 @@ int X509_NAME_entry_count(const X509_NAME *name)
     return sk_X509_NAME_ENTRY_num(name->entries);
 }
 
-int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
+int X509_NAME_get_index_by_NID(const X509_NAME *name, int nid, int lastpos)
 {
     ASN1_OBJECT *obj;
 
@@ -64,7 +67,8 @@ int X509_NAME_get_index_by_NID(X509_NAME *name, int nid, int lastpos)
 }
 
 /* NOTE: you should be passing -1, not 0 as lastpos */
-int X509_NAME_get_index_by_OBJ(X509_NAME *name, const ASN1_OBJECT *obj, int lastpos)
+int X509_NAME_get_index_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
+                               int lastpos)
 {
     int n;
     X509_NAME_ENTRY *ne;
@@ -216,11 +220,7 @@ int X509_NAME_add_entry(X509_NAME *name, const X509_NAME_ENTRY *ne, int loc,
             set = sk_X509_NAME_ENTRY_value(sk, loc)->set;
     }
 
-    /*
-     * X509_NAME_ENTRY_dup is ASN1 generated code, that can't be easily
-     * const'ified; harmless cast since dup() don't modify its input.
-     */
-    if ((new_name = X509_NAME_ENTRY_dup((X509_NAME_ENTRY *)ne)) == NULL)
+    if ((new_name = X509_NAME_ENTRY_dup(ne)) == NULL)
         goto err;
     new_name->set = set;
     if (!sk_X509_NAME_ENTRY_insert(sk, new_name, loc)) {

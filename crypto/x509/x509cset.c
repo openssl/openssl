@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,9 @@
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
+
+DEFINE_STACK_OF(X509_REVOKED)
 
 int X509_CRL_set_version(X509_CRL *x, long version)
 {
@@ -27,7 +29,7 @@ int X509_CRL_set_version(X509_CRL *x, long version)
     return ASN1_INTEGER_set(x->crl.version, version);
 }
 
-int X509_CRL_set_issuer_name(X509_CRL *x, X509_NAME *name)
+int X509_CRL_set_issuer_name(X509_CRL *x, const X509_NAME *name)
 {
     if (x == NULL)
         return 0;
@@ -91,7 +93,7 @@ const ASN1_TIME *X509_CRL_get0_nextUpdate(const X509_CRL *crl)
     return crl->crl.nextUpdate;
 }
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 ASN1_TIME *X509_CRL_get_lastUpdate(X509_CRL *crl)
 {
     return crl->crl.lastUpdate;

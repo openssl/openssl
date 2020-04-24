@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,7 @@
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/trace.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 #include "internal/thread_once.h"
 
 static int stopped;
@@ -94,10 +94,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
      */
     SSL_COMP_get_compression_methods();
 #endif
-    /* initialize cipher/digest methods table */
-    if (!ssl_load_ciphers())
-        return 0;
-
+    ssl_sort_cipher_list();
     OSSL_TRACE(INIT,"ossl_init_ssl_base: SSL_add_ssl_module()\n");
     /*
      * We ignore an error return here. Not much we can do - but not that bad
@@ -181,8 +178,7 @@ int OPENSSL_init_ssl(uint64_t opts, const OPENSSL_INIT_SETTINGS * settings)
     }
 
     opts |= OPENSSL_INIT_ADD_ALL_CIPHERS
-         |  OPENSSL_INIT_ADD_ALL_DIGESTS
-         |  OPENSSL_INIT_ADD_ALL_MACS;
+         |  OPENSSL_INIT_ADD_ALL_DIGESTS;
 #ifndef OPENSSL_NO_AUTOLOAD_CONFIG
     if ((opts & OPENSSL_INIT_NO_LOAD_CONFIG) == 0)
         opts |= OPENSSL_INIT_LOAD_CONFIG;

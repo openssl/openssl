@@ -1,11 +1,17 @@
 /*
- * Copyright 2004-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * SHA256 low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <openssl/opensslconf.h>
 
@@ -128,7 +134,7 @@ static
 #endif
 void sha256_block_data_order(SHA256_CTX *ctx, const void *in, size_t num);
 
-#include "internal/md32_common.h"
+#include "crypto/md32_common.h"
 
 #ifndef SHA256_ASM
 static const SHA_LONG K256[64] = {

@@ -20,7 +20,7 @@
 #include "internal/numbers.h"
 #include "testutil.h"
 #include "bn_prime.h"
-#include "internal/bn_int.h"
+#include "crypto/bn.h"
 
 static BN_CTX *ctx;
 
@@ -73,8 +73,8 @@ static int test_bn_small_factors(void)
 
     for (i = 1; i < NUMPRIMES; i++) {
         prime_t p = primes[i];
-        if (p > 3 && p <= 751)
-            BN_mul_word(b, p);
+        if (p > 3 && p <= 751 && !BN_mul_word(b, p))
+            goto err;
         if (p > 751)
             break;
     }

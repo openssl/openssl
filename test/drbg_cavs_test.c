@@ -15,7 +15,7 @@
 #include <openssl/obj_mac.h>
 #include <openssl/evp.h>
 #include <openssl/aes.h>
-#include "../crypto/rand/rand_lcl.h"
+#include "../crypto/rand/rand_local.h"
 
 #include "testutil.h"
 #include "drbg_cavs_data.h"
@@ -254,6 +254,12 @@ static int test_cavs_kats(const struct drbg_kat *test[], int i)
     const struct drbg_kat *td = test[i];
     int rv = 0;
 
+#ifdef FIPS_MODE
+    /* FIPS mode doesn't support instantiating without a derivation function */
+    if ((td->flags & USE_DF) == 0)
+        return TEST_skip("instantiating without derivation function "
+                         "is not supported in FIPS mode");
+#endif
     switch (td->type) {
     case NO_RESEED:
         if (!single_kat_no_reseed(td))
@@ -267,7 +273,7 @@ static int test_cavs_kats(const struct drbg_kat *test[], int i)
         if (!single_kat_pr_true(td))
             goto err;
         break;
-    default:	/* cant happen */
+    default:    /* cant happen */
         goto err;
     }
     rv = 1;

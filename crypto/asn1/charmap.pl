@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -82,8 +82,8 @@ $arr[ord("?")] |= $PSTRING_CHAR;
 
 # Now generate the C code
 
-# Output year depends on the year of the script.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
+# Year the file was generated.
+my $YEAR = [localtime()]->[5] + 1900;
 print <<EOF;
 /*
  * WARNING: do not edit!

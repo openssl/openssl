@@ -1,0 +1,43 @@
+=pod
+
+=head1 NAME
+
+X509v3_cache_extensions
+- process any extensions in an X509 object
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509v3.h>
+
+ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq);
+
+=head1 DESCRIPTION
+
+This function processes any X509v3 extensions that might be present in an X509
+object and caches the result of that processing. Many OpenSSL functions that use
+an X509 object will cause extensions to be processed and cached implicitly. If
+this is done implicitly then the default library context and property query
+string will be used. In some cases it may be desirable to use some other library
+context and property query string. If so then an application can call
+X509v3_cache_extensions() explicitly. This should be done before any function
+that needs to use those extensions is called - otherwise calling
+X509v3_cache_extensions() will have no effect. Typically this means calling this
+soon after creation of the X509 object. The X509 object to be processed is
+given in I<x> and the library context and property query string to use are given
+in I<libctx> and I<propq>.
+
+=head1 RETURN VALUES
+
+This function returns 0 if the extensions are invalid or an error occurred.
+Otherwise it returns 1.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

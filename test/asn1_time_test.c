@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,8 +24,8 @@ struct testdata {
     int expected_type;      /* expected type after set/set_string_gmt */
     int check_result;       /* check result */
     time_t t;               /* expected time_t*/
-    int cmp_result;         /* compariston to baseline result */
-    int convert_result;     /* convertion result */
+    int cmp_result;         /* comparison to baseline result */
+    int convert_result;     /* conversion result */
 };
 
 static struct testdata tbl_testdata_pos[] = {
@@ -320,6 +320,65 @@ static int test_table_compare(int idx)
     return TEST_int_eq(ASN1_TIME_compare(&td->t1, &td->t2), td->result);
 }
 
+static int test_time_dup(void)
+{
+    int ret = 0;
+    ASN1_TIME *asn1_time = NULL;
+    ASN1_TIME *asn1_time_dup = NULL;
+    ASN1_TIME *asn1_gentime = NULL;
+
+    asn1_time = ASN1_TIME_adj(NULL, time(NULL), 0, 0);
+    if (asn1_time == NULL) {
+        TEST_info("Internal error.");
+        goto err;
+    }
+
+    asn1_gentime = ASN1_TIME_to_generalizedtime(asn1_time, NULL);
+    if (asn1_gentime == NULL) {
+        TEST_info("Internal error.");
+        goto err;
+    }
+
+    asn1_time_dup = ASN1_TIME_dup(asn1_time);
+    if (!TEST_ptr_ne(asn1_time_dup, NULL)) {
+        TEST_info("ASN1_TIME_dup() failed.");
+        goto err;
+    }
+    if (!TEST_int_eq(ASN1_TIME_compare(asn1_time, asn1_time_dup), 0)) {
+        TEST_info("ASN1_TIME_dup() duplicated non-identical value.");
+        goto err;
+    }
+    ASN1_STRING_free(asn1_time_dup);
+
+    asn1_time_dup = ASN1_UTCTIME_dup(asn1_time);
+    if (!TEST_ptr_ne(asn1_time_dup, NULL)) {
+        TEST_info("ASN1_UTCTIME_dup() failed.");
+        goto err;
+    }
+    if (!TEST_int_eq(ASN1_TIME_compare(asn1_time, asn1_time_dup), 0)) {
+        TEST_info("ASN1_UTCTIME_dup() duplicated non-identical UTCTIME value.");
+        goto err;
+    }
+    ASN1_STRING_free(asn1_time_dup);
+
+    asn1_time_dup = ASN1_GENERALIZEDTIME_dup(asn1_gentime);
+    if (!TEST_ptr_ne(asn1_time_dup, NULL)) {
+        TEST_info("ASN1_GENERALIZEDTIME_dup() failed.");
+        goto err;
+    }
+    if (!TEST_int_eq(ASN1_TIME_compare(asn1_gentime, asn1_time_dup), 0)) {
+        TEST_info("ASN1_GENERALIZEDTIME_dup() dup'ed non-identical value.");
+        goto err;
+    }
+
+    ret = 1;
+ err:
+    ASN1_STRING_free(asn1_time);
+    ASN1_STRING_free(asn1_gentime);
+    ASN1_STRING_free(asn1_time_dup);
+    return ret;
+}
+
 int setup_tests(void)
 {
     /*
@@ -354,5 +413,6 @@ int setup_tests(void)
 #endif
     }
     ADD_ALL_TESTS(test_table_compare, OSSL_NELEM(tbl_compare_testdata));
+    ADD_TEST(test_time_dup);
     return 1;
 }

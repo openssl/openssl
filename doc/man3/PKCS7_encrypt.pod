@@ -17,8 +17,6 @@ PKCS7_encrypt() creates and returns a PKCS#7 envelopedData structure. B<certs>
 is a list of recipient certificates. B<in> is the content to be encrypted.
 B<cipher> is the symmetric cipher to use. B<flags> is an optional set of flags.
 
-=head1 NOTES
-
 Only RSA keys are supported in PKCS#7 and envelopedData so the recipient
 certificates supplied to this function must all contain RSA public keys, though
 they do not have to be signed using the RSA algorithm.
@@ -51,8 +49,6 @@ B<PKCS7_TEXT> is ignored.
 
 If the B<PKCS7_STREAM> flag is set a partial B<PKCS7> structure is output
 suitable for streaming I/O: no data is read from the BIO B<in>.
-
-=head1 NOTES
 
 If the flag B<PKCS7_STREAM> is set the returned B<PKCS7> structure is B<not>
 complete and outputting its contents via a function that does not

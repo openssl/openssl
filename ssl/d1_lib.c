@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/rand.h>
-#include "ssl_locl.h"
+#include "ssl_local.h"
 
 static void get_current_time(struct timeval *t);
 static int dtls1_handshake_write(SSL *s);
@@ -378,7 +378,7 @@ int dtls1_check_timeout_num(SSL *s)
 
     if (s->d1->timeout.num_alerts > DTLS1_TMO_ALERT_COUNT) {
         /* fail the connection, enough alerts have been sent */
-        SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_DTLS1_CHECK_TIMEOUT_NUM,
+        SSLfatal(s, SSL_AD_NO_ALERT, 0,
                  SSL_R_READ_TIMEOUT_EXPIRED);
         return -1;
     }

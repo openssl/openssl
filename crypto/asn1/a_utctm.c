@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,7 +11,10 @@
 #include <time.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1.h>
-#include "asn1_locl.h"
+#include "asn1_local.h"
+#include <openssl/asn1t.h>
+
+IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_UTCTIME)
 
 /* This is the primary function used to parse ASN1_UTCTIME */
 int asn1_utctime_to_tm(struct tm *tm, const ASN1_UTCTIME *d)

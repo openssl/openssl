@@ -254,7 +254,7 @@ To obtain a functional reference from an existing structural reference,
 call the ENGINE_init() function. This returns zero if the ENGINE was not
 already operational and couldn't be successfully initialised (eg. lack of
 system drivers, no special hardware attached, etc), otherwise it will
-return non-zero to indicate that the ENGINE is now operational and will
+return nonzero to indicate that the ENGINE is now operational and will
 have allocated a new B<functional> reference to the ENGINE. All functional
 references are released by calling ENGINE_finish() (which removes the
 implicit structural reference as well).
@@ -333,7 +333,7 @@ acceleration hardware attached to the machine or some such thing. There are
 probably numerous other ways in which applications may prefer to handle
 things, so we will simply illustrate the consequences as they apply to a
 couple of simple cases and leave developers to consider these and the
-source code to openssl's builtin utilities as guides.
+source code to openssl's built-in utilities as guides.
 
 If no ENGINE API functions are called within an application, then OpenSSL
 will not allocate any internal resources.  Prior to OpenSSL 1.1.0, however,
@@ -346,7 +346,7 @@ Here we'll assume an application has been configured by its user or admin
 to want to use the "ACME" ENGINE if it is available in the version of
 OpenSSL the application was compiled with. If it is available, it should be
 used by default for all RSA, DSA, and symmetric cipher operations, otherwise
-OpenSSL should use its builtin software as per usual. The following code
+OpenSSL should use its built-in software as per usual. The following code
 illustrates how to approach this;
 
  ENGINE *e;
@@ -374,7 +374,7 @@ illustrates how to approach this;
  /* Release the structural reference from ENGINE_by_id() */
  ENGINE_free(e);
 
-I<Automatically using builtin ENGINE implementations>
+I<Automatically using built-in ENGINE implementations>
 
 Here we'll assume we want to load and register all ENGINE implementations
 bundled with OpenSSL, such that for any cryptographic algorithm required by
@@ -422,7 +422,7 @@ calling ENGINE_init(). The other class of commands consist of settings or
 operations that tweak certain behaviour or cause certain operations to take
 place, and these commands may work either before or after ENGINE_init(), or
 in some cases both. ENGINE implementations should provide indications of
-this in the descriptions attached to builtin control commands and/or in
+this in the descriptions attached to built-in control commands and/or in
 external product documentation.
 
 I<Issuing control commands to an ENGINE>
@@ -477,7 +477,7 @@ boolean success or failure.
  }
 
 Note that ENGINE_ctrl_cmd_string() accepts a boolean argument that can
-relax the semantics of the function - if set non-zero it will only return
+relax the semantics of the function - if set nonzero it will only return
 failure if the ENGINE supported the given command name but failed while
 executing it, if the ENGINE doesn't support the command name it will simply
 return success without doing anything. In this case we assume the user is

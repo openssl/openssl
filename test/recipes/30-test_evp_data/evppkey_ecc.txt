@@ -623,7 +623,6 @@ Derive=BOB_cf_c2pnb163v1
 PeerKey=MALICE_cf_c2pnb163v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -631,7 +630,6 @@ Derive=ALICE_cf_c2pnb163v1
 PeerKey=MALICE_cf_c2pnb163v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2pnb163v2 curve tests
@@ -695,7 +693,6 @@ Derive=BOB_cf_c2pnb163v2
 PeerKey=MALICE_cf_c2pnb163v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -703,7 +700,6 @@ Derive=ALICE_cf_c2pnb163v2
 PeerKey=MALICE_cf_c2pnb163v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2pnb163v3 curve tests
@@ -767,7 +763,6 @@ Derive=BOB_cf_c2pnb163v3
 PeerKey=MALICE_cf_c2pnb163v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -775,7 +770,6 @@ Derive=ALICE_cf_c2pnb163v3
 PeerKey=MALICE_cf_c2pnb163v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2pnb176v1 curve tests
@@ -839,7 +833,6 @@ Derive=BOB_cf_c2pnb176v1
 PeerKey=MALICE_cf_c2pnb176v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -847,7 +840,6 @@ Derive=ALICE_cf_c2pnb176v1
 PeerKey=MALICE_cf_c2pnb176v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2pnb208w1 curve tests
@@ -913,7 +905,6 @@ Derive=BOB_cf_c2pnb208w1
 PeerKey=MALICE_cf_c2pnb208w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -921,7 +912,6 @@ Derive=ALICE_cf_c2pnb208w1
 PeerKey=MALICE_cf_c2pnb208w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2pnb272w1 curve tests
@@ -987,7 +977,6 @@ Derive=BOB_cf_c2pnb272w1
 PeerKey=MALICE_cf_c2pnb272w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -995,7 +984,6 @@ Derive=ALICE_cf_c2pnb272w1
 PeerKey=MALICE_cf_c2pnb272w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2pnb304w1 curve tests
@@ -1061,7 +1049,6 @@ Derive=BOB_cf_c2pnb304w1
 PeerKey=MALICE_cf_c2pnb304w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1069,7 +1056,6 @@ Derive=ALICE_cf_c2pnb304w1
 PeerKey=MALICE_cf_c2pnb304w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2pnb368w1 curve tests
@@ -1138,7 +1124,6 @@ Derive=BOB_cf_c2pnb368w1
 PeerKey=MALICE_cf_c2pnb368w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1146,7 +1131,6 @@ Derive=ALICE_cf_c2pnb368w1
 PeerKey=MALICE_cf_c2pnb368w1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb191v1 curve tests
@@ -1212,7 +1196,6 @@ Derive=BOB_cf_c2tnb191v1
 PeerKey=MALICE_cf_c2tnb191v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1220,7 +1203,6 @@ Derive=ALICE_cf_c2tnb191v1
 PeerKey=MALICE_cf_c2tnb191v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb191v2 curve tests
@@ -1286,7 +1268,6 @@ Derive=BOB_cf_c2tnb191v2
 PeerKey=MALICE_cf_c2tnb191v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1294,7 +1275,6 @@ Derive=ALICE_cf_c2tnb191v2
 PeerKey=MALICE_cf_c2tnb191v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb191v3 curve tests
@@ -1360,7 +1340,6 @@ Derive=BOB_cf_c2tnb191v3
 PeerKey=MALICE_cf_c2tnb191v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1368,7 +1347,6 @@ Derive=ALICE_cf_c2tnb191v3
 PeerKey=MALICE_cf_c2tnb191v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb239v1 curve tests
@@ -1434,7 +1412,6 @@ Derive=BOB_cf_c2tnb239v1
 PeerKey=MALICE_cf_c2tnb239v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1442,7 +1419,6 @@ Derive=ALICE_cf_c2tnb239v1
 PeerKey=MALICE_cf_c2tnb239v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb239v2 curve tests
@@ -1508,7 +1484,6 @@ Derive=BOB_cf_c2tnb239v2
 PeerKey=MALICE_cf_c2tnb239v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1516,7 +1491,6 @@ Derive=ALICE_cf_c2tnb239v2
 PeerKey=MALICE_cf_c2tnb239v2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb239v3 curve tests
@@ -1582,7 +1556,6 @@ Derive=BOB_cf_c2tnb239v3
 PeerKey=MALICE_cf_c2tnb239v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1590,7 +1563,6 @@ Derive=ALICE_cf_c2tnb239v3
 PeerKey=MALICE_cf_c2tnb239v3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb359v1 curve tests
@@ -1659,7 +1631,6 @@ Derive=BOB_cf_c2tnb359v1
 PeerKey=MALICE_cf_c2tnb359v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1667,7 +1638,6 @@ Derive=ALICE_cf_c2tnb359v1
 PeerKey=MALICE_cf_c2tnb359v1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=c2tnb431r1 curve tests
@@ -1736,7 +1706,6 @@ Derive=BOB_cf_c2tnb431r1
 PeerKey=MALICE_cf_c2tnb431r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -1744,7 +1713,6 @@ Derive=ALICE_cf_c2tnb431r1
 PeerKey=MALICE_cf_c2tnb431r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=prime192v1 curve tests
@@ -2121,7 +2089,6 @@ Derive=BOB_cf_secp112r2
 PeerKey=MALICE_cf_secp112r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -2129,7 +2096,6 @@ Derive=ALICE_cf_secp112r2
 PeerKey=MALICE_cf_secp112r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=secp128r1 curve tests
@@ -2226,7 +2192,6 @@ Derive=BOB_cf_secp128r2
 PeerKey=MALICE_cf_secp128r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -2234,7 +2199,6 @@ Derive=ALICE_cf_secp128r2
 PeerKey=MALICE_cf_secp128r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=secp160k1 curve tests
@@ -2651,7 +2615,6 @@ Derive=BOB_cf_sect113r1
 PeerKey=MALICE_cf_sect113r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -2659,7 +2622,6 @@ Derive=ALICE_cf_sect113r1
 PeerKey=MALICE_cf_sect113r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect113r2 curve tests
@@ -2720,7 +2682,6 @@ Derive=BOB_cf_sect113r2
 PeerKey=MALICE_cf_sect113r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -2728,7 +2689,6 @@ Derive=ALICE_cf_sect113r2
 PeerKey=MALICE_cf_sect113r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect131r1 curve tests
@@ -2792,7 +2752,6 @@ Derive=BOB_cf_sect131r1
 PeerKey=MALICE_cf_sect131r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -2800,7 +2759,6 @@ Derive=ALICE_cf_sect131r1
 PeerKey=MALICE_cf_sect131r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect131r2 curve tests
@@ -2864,7 +2822,6 @@ Derive=BOB_cf_sect131r2
 PeerKey=MALICE_cf_sect131r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -2872,7 +2829,6 @@ Derive=ALICE_cf_sect131r2
 PeerKey=MALICE_cf_sect131r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect163k1 curve tests
@@ -2936,7 +2892,6 @@ Derive=BOB_cf_sect163k1
 PeerKey=MALICE_cf_sect163k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -2944,7 +2899,6 @@ Derive=ALICE_cf_sect163k1
 PeerKey=MALICE_cf_sect163k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect163r1 curve tests
@@ -3008,7 +2962,6 @@ Derive=BOB_cf_sect163r1
 PeerKey=MALICE_cf_sect163r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3016,7 +2969,6 @@ Derive=ALICE_cf_sect163r1
 PeerKey=MALICE_cf_sect163r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect163r2 curve tests
@@ -3080,7 +3032,6 @@ Derive=BOB_cf_sect163r2
 PeerKey=MALICE_cf_sect163r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3088,7 +3039,6 @@ Derive=ALICE_cf_sect163r2
 PeerKey=MALICE_cf_sect163r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect193r1 curve tests
@@ -3152,7 +3102,6 @@ Derive=BOB_cf_sect193r1
 PeerKey=MALICE_cf_sect193r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3160,7 +3109,6 @@ Derive=ALICE_cf_sect193r1
 PeerKey=MALICE_cf_sect193r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect193r2 curve tests
@@ -3224,7 +3172,6 @@ Derive=BOB_cf_sect193r2
 PeerKey=MALICE_cf_sect193r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3232,7 +3179,6 @@ Derive=ALICE_cf_sect193r2
 PeerKey=MALICE_cf_sect193r2_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect233k1 curve tests
@@ -3298,7 +3244,6 @@ Derive=BOB_cf_sect233k1
 PeerKey=MALICE_cf_sect233k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3306,7 +3251,6 @@ Derive=ALICE_cf_sect233k1
 PeerKey=MALICE_cf_sect233k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect233r1 curve tests
@@ -3372,7 +3316,6 @@ Derive=BOB_cf_sect233r1
 PeerKey=MALICE_cf_sect233r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3380,7 +3323,6 @@ Derive=ALICE_cf_sect233r1
 PeerKey=MALICE_cf_sect233r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect239k1 curve tests
@@ -3446,7 +3388,6 @@ Derive=BOB_cf_sect239k1
 PeerKey=MALICE_cf_sect239k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3454,7 +3395,6 @@ Derive=ALICE_cf_sect239k1
 PeerKey=MALICE_cf_sect239k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect283k1 curve tests
@@ -3520,7 +3460,6 @@ Derive=BOB_cf_sect283k1
 PeerKey=MALICE_cf_sect283k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3528,7 +3467,6 @@ Derive=ALICE_cf_sect283k1
 PeerKey=MALICE_cf_sect283k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect283r1 curve tests
@@ -3594,7 +3532,6 @@ Derive=BOB_cf_sect283r1
 PeerKey=MALICE_cf_sect283r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3602,7 +3539,6 @@ Derive=ALICE_cf_sect283r1
 PeerKey=MALICE_cf_sect283r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect409k1 curve tests
@@ -3671,7 +3607,6 @@ Derive=BOB_cf_sect409k1
 PeerKey=MALICE_cf_sect409k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3679,7 +3614,6 @@ Derive=ALICE_cf_sect409k1
 PeerKey=MALICE_cf_sect409k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect409r1 curve tests
@@ -3748,7 +3682,6 @@ Derive=BOB_cf_sect409r1
 PeerKey=MALICE_cf_sect409r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3756,7 +3689,6 @@ Derive=ALICE_cf_sect409r1
 PeerKey=MALICE_cf_sect409r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect571k1 curve tests
@@ -3825,7 +3757,6 @@ Derive=BOB_cf_sect571k1
 PeerKey=MALICE_cf_sect571k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3833,7 +3764,6 @@ Derive=ALICE_cf_sect571k1
 PeerKey=MALICE_cf_sect571k1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=sect571r1 curve tests
@@ -3902,7 +3832,6 @@ Derive=BOB_cf_sect571r1
 PeerKey=MALICE_cf_sect571r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3910,7 +3839,6 @@ Derive=ALICE_cf_sect571r1
 PeerKey=MALICE_cf_sect571r1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=wap-wsg-idm-ecid-wtls10 curve tests
@@ -3976,7 +3904,6 @@ Derive=BOB_cf_wap-wsg-idm-ecid-wtls10
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls10_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -3984,7 +3911,6 @@ Derive=ALICE_cf_wap-wsg-idm-ecid-wtls10
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls10_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=wap-wsg-idm-ecid-wtls11 curve tests
@@ -4050,7 +3976,6 @@ Derive=BOB_cf_wap-wsg-idm-ecid-wtls11
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls11_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -4058,7 +3983,6 @@ Derive=ALICE_cf_wap-wsg-idm-ecid-wtls11
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls11_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=wap-wsg-idm-ecid-wtls12 curve tests
@@ -4159,7 +4083,6 @@ Derive=BOB_cf_wap-wsg-idm-ecid-wtls1
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -4167,7 +4090,6 @@ Derive=ALICE_cf_wap-wsg-idm-ecid-wtls1
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls1_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=wap-wsg-idm-ecid-wtls3 curve tests
@@ -4231,7 +4153,6 @@ Derive=BOB_cf_wap-wsg-idm-ecid-wtls3
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -4239,7 +4160,6 @@ Derive=ALICE_cf_wap-wsg-idm-ecid-wtls3
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls3_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=wap-wsg-idm-ecid-wtls4 curve tests
@@ -4300,7 +4220,6 @@ Derive=BOB_cf_wap-wsg-idm-ecid-wtls4
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls4_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -4308,7 +4227,6 @@ Derive=ALICE_cf_wap-wsg-idm-ecid-wtls4
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls4_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=wap-wsg-idm-ecid-wtls5 curve tests
@@ -4372,7 +4290,6 @@ Derive=BOB_cf_wap-wsg-idm-ecid-wtls5
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls5_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 # ECC CDH Alice with Malice peer
@@ -4380,7 +4297,6 @@ Derive=ALICE_cf_wap-wsg-idm-ecid-wtls5
 PeerKey=MALICE_cf_wap-wsg-idm-ecid-wtls5_PUB
 Ctrl=ecdh_cofactor_mode:1
 Result=DERIVE_ERROR
-Function=EC_POINT_get_affine_coordinates
 Reason=point at infinity
 
 Title=wap-wsg-idm-ecid-wtls6 curve tests

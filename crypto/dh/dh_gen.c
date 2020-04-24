@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,48 +12,152 @@
  * dh_depr.c as wrappers to these ones.  - Geoff
  */
 
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ *
+ * NOTE: When generating keys for key-agreement schemes - FIPS 140-2 IG 9.9
+ * states that no additional pairwise tests are required (apart from the tests
+ * specified in SP800-56A) when generating keys. Hence DH pairwise tests are
+ * omitted here.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
-#include "dh_locl.h"
+#include <openssl/sha.h>
+#include "crypto/dh.h"
+#include "dh_local.h"
 
+#ifndef FIPS_MODE
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb);
+#endif /* FIPS_MODE */
+
+int dh_generate_ffc_parameters(DH *dh, int type, int pbits,
+                               int qbits, EVP_MD *md, BN_GENCB *cb)
+{
+    int ret, res;
+
+    if (qbits <= 0) {
+        if (md != NULL)
+            qbits = EVP_MD_size(md) * 8;
+        else
+            qbits = (pbits >= 2048 ? SHA256_DIGEST_LENGTH :
+                                     SHA_DIGEST_LENGTH) * 8;
+    }
+#ifndef FIPS_MODE
+    if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
+        ret = ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
+                                            FFC_PARAM_TYPE_DH,
+                                            pbits, qbits, md, &res, cb);
+    else
+#endif
+        ret = ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
+                                            FFC_PARAM_TYPE_DH,
+                                            pbits, qbits, md, &res, cb);
+    if (ret > 0)
+        dh->dirty_cnt++;
+    return ret;
+}
+
+int dh_get_named_group_uid_from_size(int pbits)
+{
+    /*
+     * Just choose an approved safe prime group.
+     * The alternative to this is to generate FIPS186-4 domain parameters i.e.
+     * return dh_generate_ffc_parameters(ret, prime_len, 0, NULL, cb);
+     * As the FIPS186-4 generated params are for backwards compatability,
+     * the safe prime group should be used as the default.
+     */
+    int nid;
+
+    switch (pbits) {
+    case 2048:
+        nid = NID_ffdhe2048;
+        break;
+    case 3072:
+        nid = NID_ffdhe3072;
+        break;
+    case 4096:
+        nid = NID_ffdhe4096;
+        break;
+    case 6144:
+        nid = NID_ffdhe6144;
+        break;
+    case 8192:
+        nid = NID_ffdhe8192;
+        break;
+    /* unsupported prime_len */
+    default:
+        return NID_undef;
+    }
+    return nid;
+}
+
+#ifdef FIPS_MODE
+
+static int dh_gen_named_group(OPENSSL_CTX *libctx, DH *ret, int prime_len)
+{
+    DH *dh;
+    int ok = 0;
+    int nid = dh_get_named_group_uid_from_size(prime_len);
+
+    if (nid == NID_undef)
+        return 0;
+
+    dh = dh_new_by_nid_with_libctx(libctx, nid);
+    if (dh != NULL
+        && ffc_params_copy(&ret->params, &dh->params)) {
+        ok = 1;
+        ret->dirty_cnt++;
+    }
+    DH_free(dh);
+    return ok;
+}
+#endif /* FIPS_MODE */
 
 int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
                               BN_GENCB *cb)
 {
+#ifdef FIPS_MODE
+    if (generator != 2)
+        return 0;
+    return dh_gen_named_group(ret->libctx, ret, prime_len);
+#else
     if (ret->meth->generate_params)
         return ret->meth->generate_params(ret, prime_len, generator, cb);
     return dh_builtin_genparams(ret, prime_len, generator, cb);
+#endif /* FIPS_MODE */
 }
 
+#ifndef FIPS_MODE
 /*-
  * We generate DH parameters as follows
- * find a prime q which is prime_len/2 bits long.
- * p=(2*q)+1 or (p-1)/2 = q
- * For this case, g is a generator if
- * g^((p-1)/q) mod p != 1 for values of q which are the factors of p-1.
- * Since the factors of p-1 are q and 2, we just need to check
- * g^2 mod p != 1 and g^q mod p != 1.
+ * find a prime p which is prime_len bits long,
+ * where q=(p-1)/2 is also prime.
+ * In the following we assume that g is not 0, 1 or p-1, since it
+ * would generate only trivial subgroups.
+ * For this case, g is a generator of the order-q subgroup if
+ * g^q mod p == 1.
+ * Or in terms of the Legendre symbol: (g/p) == 1.
  *
  * Having said all that,
  * there is another special case method for the generators 2, 3 and 5.
- * for 2, p mod 24 == 11
- * for 3, p mod 12 == 5  <<<<< does not work for safe primes.
- * for 5, p mod 10 == 3 or 7
+ * Using the quadratic reciprocity law it is possible to solve
+ * (g/p) == 1 for the special values 2, 3, 5:
+ * (2/p) == 1 if p mod 8 == 1 or 7.
+ * (3/p) == 1 if p mod 12 == 1 or 11.
+ * (5/p) == 1 if p mod 5 == 1 or 4.
+ * See for instance: https://en.wikipedia.org/wiki/Legendre_symbol
  *
- * Thanks to Phil Karn for the pointers about the
- * special generators and for answering some of my questions.
- *
- * I've implemented the second simple method :-).
- * Since DH should be using a safe prime (both p and q are prime),
- * this generator function can take a very very long time to run.
- */
-/*
- * Actually there is no reason to insist that 'generator' be a generator.
- * It's just as OK (and in some sense better) to use a generator of the
- * order-q subgroup.
+ * Since all safe primes > 7 must satisfy p mod 12 == 11
+ * and all safe primes > 11 must satisfy p mod 5 != 1
+ * we can further improve the condition for g = 2, 3 and 5:
+ * for 2, p mod 24 == 23
+ * for 3, p mod 12 == 11
+ * for 5, p mod 60 == 59
  */
 static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
                                 BN_GENCB *cb)
@@ -61,6 +165,16 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     BIGNUM *t1, *t2;
     int g, ok = -1;
     BN_CTX *ctx = NULL;
+
+    if (prime_len > OPENSSL_DH_MAX_MODULUS_BITS) {
+        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_LARGE);
+        return 0;
+    }
+
+    if (prime_len < DH_MIN_MODULUS_BITS) {
+        DHerr(DH_F_DH_BUILTIN_GENPARAMS, DH_R_MODULUS_TOO_SMALL);
+        return 0;
+    }
 
     ctx = BN_CTX_new();
     if (ctx == NULL)
@@ -72,9 +186,9 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         goto err;
 
     /* Make sure 'ret' has the necessary elements */
-    if (!ret->p && ((ret->p = BN_new()) == NULL))
+    if (ret->params.p == NULL && ((ret->params.p = BN_new()) == NULL))
         goto err;
-    if (!ret->g && ((ret->g = BN_new()) == NULL))
+    if (ret->params.g == NULL && ((ret->params.g = BN_new()) == NULL))
         goto err;
 
     if (generator <= 1) {
@@ -84,17 +198,14 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
     if (generator == DH_GENERATOR_2) {
         if (!BN_set_word(t1, 24))
             goto err;
-        if (!BN_set_word(t2, 11))
+        if (!BN_set_word(t2, 23))
             goto err;
         g = 2;
     } else if (generator == DH_GENERATOR_5) {
-        if (!BN_set_word(t1, 10))
+        if (!BN_set_word(t1, 60))
             goto err;
-        if (!BN_set_word(t2, 3))
+        if (!BN_set_word(t2, 59))
             goto err;
-        /*
-         * BN_set_word(t3,7); just have to miss out on these ones :-(
-         */
         g = 5;
     } else {
         /*
@@ -102,19 +213,20 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
          * not: since we are using safe primes, it will generate either an
          * order-q or an order-2q group, which both is OK
          */
-        if (!BN_set_word(t1, 2))
+        if (!BN_set_word(t1, 12))
             goto err;
-        if (!BN_set_word(t2, 1))
+        if (!BN_set_word(t2, 11))
             goto err;
         g = generator;
     }
 
-    if (!BN_generate_prime_ex(ret->p, prime_len, 1, t1, t2, cb))
+    if (!BN_generate_prime_ex(ret->params.p, prime_len, 1, t1, t2, cb))
         goto err;
     if (!BN_GENCB_call(cb, 3, 0))
         goto err;
-    if (!BN_set_word(ret->g, g))
+    if (!BN_set_word(ret->params.g, g))
         goto err;
+    ret->dirty_cnt++;
     ok = 1;
  err:
     if (ok == -1) {
@@ -122,9 +234,8 @@ static int dh_builtin_genparams(DH *ret, int prime_len, int generator,
         ok = 0;
     }
 
-    if (ctx != NULL) {
-        BN_CTX_end(ctx);
-        BN_CTX_free(ctx);
-    }
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
     return ok;
 }
+#endif /* FIPS_MODE */

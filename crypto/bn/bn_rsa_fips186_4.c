@@ -29,8 +29,29 @@
  */
 #include <stdio.h>
 #include <openssl/bn.h>
-#include "bn_lcl.h"
-#include "internal/bn_int.h"
+#include "bn_local.h"
+#include "crypto/bn.h"
+#include "internal/nelem.h"
+
+#if BN_BITS2 == 64
+# define BN_DEF(lo, hi) (BN_ULONG)hi<<32|lo
+#else
+# define BN_DEF(lo, hi) lo, hi
+#endif
+
+/* 1 / sqrt(2) * 2^256, rounded up */
+static const BN_ULONG inv_sqrt_2_val[] = {
+    BN_DEF(0x83339916UL, 0xED17AC85UL), BN_DEF(0x893BA84CUL, 0x1D6F60BAUL),
+    BN_DEF(0x754ABE9FUL, 0x597D89B3UL), BN_DEF(0xF9DE6484UL, 0xB504F333UL)
+};
+
+const BIGNUM bn_inv_sqrt_2 = {
+    (BN_ULONG *)inv_sqrt_2_val,
+    OSSL_NELEM(inv_sqrt_2_val),
+    OSSL_NELEM(inv_sqrt_2_val),
+    0,
+    BN_FLG_STATIC_DATA
+};
 
 /*
  * FIPS 186-4 Table B.1. "Min length of auxiliary primes p1, p2, q1, q2".
@@ -68,44 +89,6 @@ static int bn_rsa_fips186_4_aux_prime_max_sum_size_for_prob_primes(int nbits)
 }
 
 /*
- * FIPS 186-4 Table C.3 for error probability of 2^-100
- * Minimum number of Miller Rabin Rounds for p1, p2, q1 & q2.
- *
- * Params:
- *     aux_prime_bits The auxiliary prime size in bits.
- * Returns:
- *     The minimum number of Miller Rabin Rounds for an auxiliary prime, or
- *     0 if aux_prime_bits is invalid.
- */
-static int bn_rsa_fips186_4_aux_prime_MR_min_checks(int aux_prime_bits)
-{
-    if (aux_prime_bits > 170)
-        return 27;
-    if (aux_prime_bits > 140)
-        return 32;
-    return 0; /* Error case */
-}
-
-/*
- * FIPS 186-4 Table C.3 for error probability of 2^-100
- * Minimum number of Miller Rabin Rounds for p, q.
- *
- * Params:
- *     nbits The key size in bits.
- * Returns:
- *     The minimum number of Miller Rabin Rounds required,
- *     or 0 if nbits is invalid.
- */
-int bn_rsa_fips186_4_prime_MR_min_checks(int nbits)
-{
-    if (nbits >= 3072) /* > 170 */
-        return 3;
-    if (nbits == 2048) /* > 140 */
-        return 4;
-    return 0; /* Error case */
-}
-
-/*
  * Find the first odd integer that is a probable prime.
  *
  * See section FIPS 186-4 B.3.6 (Steps 4.2/5.2).
@@ -123,9 +106,8 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
 {
     int ret = 0;
     int i = 0;
-    int checks = bn_rsa_fips186_4_aux_prime_MR_min_checks(BN_num_bits(Xp1));
 
-    if (checks == 0 || BN_copy(p1, Xp1) == NULL)
+    if (BN_copy(p1, Xp1) == NULL)
         return 0;
 
     /* Find the first odd number >= Xp1 that is probably prime */
@@ -133,7 +115,7 @@ static int bn_rsa_fips186_4_find_aux_prob_prime(const BIGNUM *Xp1,
         i++;
         BN_GENCB_call(cb, 0, i);
         /* MR test with trial division */
-        if (BN_is_prime_fasttest_ex(p1, checks, ctx, 1, cb))
+        if (BN_check_prime(p1, ctx, cb))
             break;
         /* Get next odd number */
         if (!BN_add_word(p1, 2))
@@ -193,13 +175,15 @@ int bn_rsa_fips186_4_gen_prob_primes(BIGNUM *p, BIGNUM *Xpout,
     /* (Steps 4.1/5.1): Randomly generate Xp1 if it is not passed in */
     if (Xp1 == NULL) {
         /* Set the top and bottom bits to make it odd and the correct size */
-        if (!BN_priv_rand(Xp1i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+        if (!BN_priv_rand_ex(Xp1i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD,
+                             ctx))
             goto err;
     }
     /* (Steps 4.1/5.1): Randomly generate Xp2 if it is not passed in */
     if (Xp2 == NULL) {
         /* Set the top and bottom bits to make it odd and the correct size */
-        if (!BN_priv_rand(Xp2i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD))
+        if (!BN_priv_rand_ex(Xp2i, bitlen, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ODD,
+                             ctx))
             goto err;
     }
 
@@ -257,13 +241,13 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
     int ret = 0;
     int i, imax;
     int bits = nlen >> 1;
-    int checks = bn_rsa_fips186_4_prime_MR_min_checks(nlen);
     BIGNUM *tmp, *R, *r1r2x2, *y1, *r1x2;
+    BIGNUM *base, *range;
 
-    if (checks == 0)
-        return 0;
     BN_CTX_start(ctx);
 
+    base = BN_CTX_get(ctx);
+    range = BN_CTX_get(ctx);
     R = BN_CTX_get(ctx);
     tmp = BN_CTX_get(ctx);
     r1r2x2 = BN_CTX_get(ctx);
@@ -274,6 +258,24 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
 
     if (Xin != NULL && BN_copy(X, Xin) == NULL)
         goto err;
+
+    /*
+     * We need to generate a random number X in the range
+     * 1/sqrt(2) * 2^(nlen/2) <= X < 2^(nlen/2).
+     * We can rewrite that as:
+     * base = 1/sqrt(2) * 2^(nlen/2)
+     * range = ((2^(nlen/2))) - (1/sqrt(2) * 2^(nlen/2))
+     * X = base + random(range)
+     * We only have the first 256 bit of 1/sqrt(2)
+     */
+    if (Xin == NULL) {
+        if (bits < BN_num_bits(&bn_inv_sqrt_2))
+            goto err;
+        if (!BN_lshift(base, &bn_inv_sqrt_2, bits - BN_num_bits(&bn_inv_sqrt_2))
+            || !BN_lshift(range, BN_value_one(), bits)
+            || !BN_sub(range, range, base))
+            goto err;
+    }
 
     if (!(BN_lshift1(r1x2, r1)
             /* (Step 1) GCD(2r1, r2) = 1 */
@@ -297,15 +299,9 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
         if (Xin == NULL) {
             /*
              * (Step 3) Choose Random X such that
-             *    sqrt(2) * 2^(nlen/2-1) < Random X < (2^(nlen/2)) - 1.
-             *
-             * For the lower bound:
-             *   sqrt(2) * 2^(nlen/2 - 1) == sqrt(2)/2 * 2^(nlen/2)
-             *   where sqrt(2)/2 = 0.70710678.. = 0.B504FC33F9DE...
-             *   so largest number will have B5... as the top byte
-             *   Setting the top 2 bits gives 0xC0.
+             *    sqrt(2) * 2^(nlen/2-1) <= Random X <= (2^(nlen/2)) - 1.
              */
-            if (!BN_priv_rand(X, bits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY))
+            if (!BN_priv_rand_range_ex(X, range, ctx) || !BN_add(X, X, base))
                 goto end;
         }
         /* (Step 4) Y = X + ((R - X) mod 2r1r2) */
@@ -328,8 +324,7 @@ int bn_rsa_fips186_4_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
                     || !BN_sub_word(y1, 1)
                     || !BN_gcd(tmp, y1, e, ctx))
                 goto err;
-            if (BN_is_one(tmp)
-                    && BN_is_prime_fasttest_ex(Y, checks, ctx, 1, cb))
+            if (BN_is_one(tmp) && BN_check_prime(Y, ctx, cb))
                 goto end;
             /* (Step 8-10) */
             if (++i >= imax || !BN_add(Y, Y, r1r2x2))

@@ -9,7 +9,7 @@
  */
 
 #include "e_os.h"
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include <openssl/safestack.h>
 
 #if     defined(__i386)   || defined(__i386__)   || defined(_M_IX86) || \
@@ -18,7 +18,7 @@
 
 extern unsigned int OPENSSL_ia32cap_P[4];
 
-# if defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) && !defined(I386_ONLY)
+# if defined(OPENSSL_CPUID_OBJ)
 
 /*
  * Purpose of these minimalistic and character-type-agnostic subroutines
@@ -49,7 +49,7 @@ typedef char variant_char;
 #   define ossl_getenv getenv
 #  endif
 
-#  include "internal/ctype.h"
+#  include "crypto/ctype.h"
 
 static int todigit(variant_char c)
 {
@@ -84,7 +84,7 @@ static variant_char *ossl_strchr(const variant_char *str, char srch)
 
     while((c = *str)) {
         if (c == srch)
-	    return (variant_char *)str;
+            return (variant_char *)str;
         str++;
     }
 

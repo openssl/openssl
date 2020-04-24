@@ -43,7 +43,11 @@ use constant {
 #Test 1: A client should fail if the server changes the ciphersuite between the
 #        HRR and the SH
 $proxy->filter(\&hrr_filter);
-$proxy->serverflags("-curves P-256");
+if (disabled("ec")) {
+    $proxy->serverflags("-curves ffdhe3072");
+} else {
+    $proxy->serverflags("-curves P-256");
+}
 my $testtype = CHANGE_HRR_CIPHERSUITE;
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
 plan tests => 2;
@@ -52,7 +56,11 @@ ok(TLSProxy::Message->fail(), "Server ciphersuite changes");
 #Test 2: It is an error if the client changes the offered ciphersuites so that
 #        we end up selecting a different ciphersuite between HRR and the SH
 $proxy->clear();
-$proxy->serverflags("-curves P-256");
+if (disabled("ec")) {
+    $proxy->serverflags("-curves ffdhe3072");
+} else {
+    $proxy->serverflags("-curves P-256");
+}
 $proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
 $testtype = CHANGE_CH1_CIPHERSUITE;
 $proxy->start();

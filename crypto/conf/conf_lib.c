@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/conf.h"
-#include "internal/ctype.h"
+#include "crypto/ctype.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/conf.h>
@@ -174,7 +174,7 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
  * the "CONF classic" functions, for consistency.
  */
 
-CONF *NCONF_new(CONF_METHOD *meth)
+CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth)
 {
     CONF *ret;
 
@@ -183,11 +183,17 @@ CONF *NCONF_new(CONF_METHOD *meth)
 
     ret = meth->create(meth);
     if (ret == NULL) {
-        CONFerr(CONF_F_NCONF_NEW, ERR_R_MALLOC_FAILURE);
+        CONFerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+    ret->libctx = libctx;
 
     return ret;
+}
+
+CONF *NCONF_new(CONF_METHOD *meth)
+{
+    return NCONF_new_with_libctx(NULL, meth);
 }
 
 void NCONF_free(CONF *conf)
@@ -356,8 +362,10 @@ OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
 {
     OPENSSL_INIT_SETTINGS *ret = malloc(sizeof(*ret));
 
-    if (ret != NULL)
-        memset(ret, 0, sizeof(*ret));
+    if (ret == NULL)
+        return NULL;
+
+    memset(ret, 0, sizeof(*ret));
     ret->flags = DEFAULT_CONF_MFLAGS;
 
     return ret;

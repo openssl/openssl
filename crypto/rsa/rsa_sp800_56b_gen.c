@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -10,8 +10,9 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
-#include "internal/bn_int.h"
-#include "rsa_locl.h"
+#include "crypto/bn.h"
+#include "crypto/security_bits.h"
+#include "rsa_local.h"
 
 #define RSA_FIPS1864_MIN_KEYGEN_KEYSIZE 2048
 #define RSA_FIPS1864_MIN_KEYGEN_STRENGTH 112
@@ -71,7 +72,7 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
     if (!rsa_check_public_exponent(e)) {
         RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES,
                RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
-        goto err;
+        return 0;
     }
 
     /* (Step 3) Determine strength and check rand generator strength is ok -
@@ -118,6 +119,7 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
             continue;
         break; /* successfully finished */
     }
+    rsa->dirty_cnt++;
     ret = 1;
 err:
     /* Zeroize any internally generated values that are not returned */
@@ -143,7 +145,7 @@ err:
  */
 int rsa_sp800_56b_validate_strength(int nbits, int strength)
 {
-    int s = (int)rsa_compute_security_bits(nbits);
+    int s = (int)ifc_ffc_compute_security_bits(nbits);
 
     if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
             || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {
@@ -239,6 +241,7 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
             || BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
         goto err;
 
+    rsa->dirty_cnt++;
     ret = 1;
 err:
     if (ret != 1) {
@@ -295,7 +298,7 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     if (!rsa_sp800_56b_validate_strength(nbits, -1))
         return 0;
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         return 0;
 

@@ -1,11 +1,17 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +23,7 @@
 #include <openssl/bn.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/obj_mac.h>
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_DH
@@ -62,6 +69,22 @@ static int dh_test(void)
         || !TEST_true(DH_set0_pqg(dh, p, q, g)))
         goto err1;
 
+    /* check fails, because p is way too small */
+    if (!DH_check(dh, &i))
+        goto err2;
+    i ^= DH_MODULUS_TOO_SMALL;
+    if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
+            || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
+            || !TEST_false(i & DH_UNABLE_TO_CHECK_GENERATOR)
+            || !TEST_false(i & DH_NOT_SUITABLE_GENERATOR)
+            || !TEST_false(i & DH_CHECK_Q_NOT_PRIME)
+            || !TEST_false(i & DH_CHECK_INVALID_Q_VALUE)
+            || !TEST_false(i & DH_CHECK_INVALID_J_VALUE)
+            || !TEST_false(i & DH_MODULUS_TOO_SMALL)
+            || !TEST_false(i & DH_MODULUS_TOO_LARGE)
+            || !TEST_false(i))
+        goto err2;
+
     /* test the combined getter for p, q, and g */
     DH_get0_pqg(dh, &p2, &q2, &g2);
     if (!TEST_ptr_eq(p2, p)
@@ -91,25 +114,12 @@ static int dh_test(void)
         || !TEST_ptr_eq(DH_get0_priv_key(dh), priv_key2))
         goto err3;
 
-    /* now generate a key pair ... */
-    if (!DH_generate_key(dh))
+    /* now generate a key pair (expect failure since modulus is too small) */
+    if (!TEST_false(DH_generate_key(dh)))
         goto err3;
 
-    /* ... and check whether the private key was reused: */
-
-    /* test it with the combined getter for pub_key and priv_key */
-    DH_get0_key(dh, &pub_key2, &priv_key2);
-    if (!TEST_ptr(pub_key2)
-        || !TEST_ptr_eq(priv_key2, priv_key))
-        goto err3;
-
-    /* test it the simple getters for pub_key and priv_key */
-    if (!TEST_ptr_eq(DH_get0_pub_key(dh), pub_key2)
-        || !TEST_ptr_eq(DH_get0_priv_key(dh), priv_key2))
-        goto err3;
-
-    /* check whether the public key was calculated correctly */
-    TEST_uint_eq(BN_get_word(pub_key2), 3331L);
+    /* We'll have a stale error on the queue from the above test so clear it */
+    ERR_clear_error();
 
     /*
      * II) key generation
@@ -120,7 +130,7 @@ static int dh_test(void)
         goto err3;
     BN_GENCB_set(_cb, &cb, NULL);
     if (!TEST_ptr(a = DH_new())
-            || !TEST_true(DH_generate_parameters_ex(a, 64,
+            || !TEST_true(DH_generate_parameters_ex(a, 512,
                                                     DH_GENERATOR_5, _cb)))
         goto err3;
 
@@ -130,7 +140,13 @@ static int dh_test(void)
     if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
             || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
             || !TEST_false(i & DH_UNABLE_TO_CHECK_GENERATOR)
-            || !TEST_false(i & DH_NOT_SUITABLE_GENERATOR))
+            || !TEST_false(i & DH_NOT_SUITABLE_GENERATOR)
+            || !TEST_false(i & DH_CHECK_Q_NOT_PRIME)
+            || !TEST_false(i & DH_CHECK_INVALID_Q_VALUE)
+            || !TEST_false(i & DH_CHECK_INVALID_J_VALUE)
+            || !TEST_false(i & DH_MODULUS_TOO_SMALL)
+            || !TEST_false(i & DH_MODULUS_TOO_LARGE)
+            || !TEST_false(i))
         goto err3;
 
     DH_get0_pqg(a, &ap, NULL, &ag);
@@ -179,7 +195,7 @@ static int dh_test(void)
             || !TEST_true((cout = DH_compute_key(cbuf, apub_key, c)) != -1))
         goto err3;
 
-    if (!TEST_true(aout >= 4)
+    if (!TEST_true(aout >= 20)
             || !TEST_mem_eq(abuf, aout, bbuf, bout)
             || !TEST_mem_eq(abuf, aout, cbuf, cout))
         goto err3;
@@ -193,7 +209,7 @@ static int dh_test(void)
     BN_free(q);
     BN_free(g);
  err2:
-    /* an error occured before priv_key was assigned to dh */
+    /* an error occurred before priv_key was assigned to dh */
     BN_free(priv_key);
  err3:
  success:
@@ -609,6 +625,165 @@ static int rfc5114_test(void)
     TEST_error("Test failed RFC5114 set %d\n", i + 1);
     return 0;
 }
+
+static int rfc7919_test(void)
+{
+    DH *a = NULL, *b = NULL;
+    const BIGNUM *apub_key = NULL, *bpub_key = NULL;
+    unsigned char *abuf = NULL;
+    unsigned char *bbuf = NULL;
+    int i, alen, blen, aout, bout;
+    int ret = 0;
+
+    if (!TEST_ptr(a = DH_new_by_nid(NID_ffdhe2048)))
+         goto err;
+
+    if (!DH_check(a, &i))
+        goto err;
+    if (!TEST_false(i & DH_CHECK_P_NOT_PRIME)
+            || !TEST_false(i & DH_CHECK_P_NOT_SAFE_PRIME)
+            || !TEST_false(i & DH_UNABLE_TO_CHECK_GENERATOR)
+            || !TEST_false(i & DH_NOT_SUITABLE_GENERATOR)
+            || !TEST_false(i))
+        goto err;
+
+    if (!DH_generate_key(a))
+        goto err;
+    DH_get0_key(a, &apub_key, NULL);
+
+    /* now create another copy of the DH group for the peer */
+    if (!TEST_ptr(b = DH_new_by_nid(NID_ffdhe2048)))
+        goto err;
+
+    if (!DH_generate_key(b))
+        goto err;
+    DH_get0_key(b, &bpub_key, NULL);
+
+    alen = DH_size(a);
+    if (!TEST_ptr(abuf = OPENSSL_malloc(alen))
+            || !TEST_true((aout = DH_compute_key(abuf, bpub_key, a)) != -1))
+        goto err;
+
+    blen = DH_size(b);
+    if (!TEST_ptr(bbuf = OPENSSL_malloc(blen))
+            || !TEST_true((bout = DH_compute_key(bbuf, apub_key, b)) != -1))
+        goto err;
+
+    if (!TEST_true(aout >= 20)
+            || !TEST_mem_eq(abuf, aout, bbuf, bout))
+        goto err;
+
+    ret = 1;
+
+ err:
+    OPENSSL_free(abuf);
+    OPENSSL_free(bbuf);
+    DH_free(a);
+    DH_free(b);
+    return ret;
+}
+
+static int prime_groups[] = {
+    NID_ffdhe2048,
+    NID_ffdhe3072,
+    NID_ffdhe4096,
+    NID_ffdhe6144,
+    NID_ffdhe8192,
+    NID_modp_2048,
+    NID_modp_3072,
+    NID_modp_4096,
+    NID_modp_6144,
+};
+
+static int dh_test_prime_groups(int index)
+{
+    int ok = 0;
+    DH *dh = NULL;
+    const BIGNUM *p, *q, *g;
+    long len;
+
+    if (!TEST_ptr(dh = DH_new_by_nid(prime_groups[index])))
+        goto err;
+    DH_get0_pqg(dh, &p, &q, &g);
+    if (!TEST_ptr(p) || !TEST_ptr(q) || !TEST_ptr(g))
+        goto err;
+
+    if (!TEST_int_eq(DH_get_nid(dh), prime_groups[index]))
+        goto err;
+
+    len = DH_get_length(dh);
+    if (!TEST_true(len > 0)
+        || !TEST_true(len <= BN_num_bits(q)))
+        goto err;
+
+    ok = 1;
+err:
+    DH_free(dh);
+    return ok;
+}
+
+static int dh_get_nid(void)
+{
+    int ok = 0;
+    const BIGNUM *p, *q, *g;
+    BIGNUM *pcpy = NULL, *gcpy = NULL, *qcpy = NULL;
+    DH *dh1 = DH_new_by_nid(NID_ffdhe2048);
+    DH *dh2 = DH_new();
+
+    if (!TEST_ptr(dh1)
+        || !TEST_ptr(dh2))
+        goto err;
+
+    /* Set new DH parameters manually using a existing named group's p & g */
+    DH_get0_pqg(dh1, &p, &q, &g);
+    if (!TEST_ptr(p)
+        || !TEST_ptr(q)
+        || !TEST_ptr(g)
+        || !TEST_ptr(pcpy = BN_dup(p))
+        || !TEST_ptr(gcpy = BN_dup(g)))
+        goto err;
+
+    if (!TEST_true(DH_set0_pqg(dh2, pcpy, NULL, gcpy)))
+        goto err;
+    pcpy = gcpy = NULL;
+    /* Test q is set if p and g are provided */
+    if (!TEST_ptr(DH_get0_q(dh2)))
+        goto err;
+
+    /* Test that setting p & g manually returns that it is a named group */
+    if (!TEST_int_eq(DH_get_nid(dh2), NID_ffdhe2048))
+        goto err;
+
+    /* Test that after changing g it is no longer a named group */
+    if (!TEST_ptr(gcpy = BN_dup(BN_value_one())))
+       goto err;
+    if (!TEST_true(DH_set0_pqg(dh2, NULL, NULL, gcpy)))
+       goto err;
+    gcpy = NULL;
+    if (!TEST_int_eq(DH_get_nid(dh2), NID_undef))
+        goto err;
+
+    /* Test that setting an incorrect q results in this not being a named group */
+    if (!TEST_ptr(pcpy = BN_dup(p))
+        || !TEST_ptr(qcpy = BN_dup(q))
+        || !TEST_ptr(gcpy = BN_dup(g))
+        || !TEST_int_eq(BN_add_word(qcpy, 2), 1)
+        || !TEST_true(DH_set0_pqg(dh2, pcpy, qcpy, gcpy)))
+        goto err;
+    pcpy = qcpy = gcpy = NULL;
+    if (!TEST_int_eq(DH_get_nid(dh2), NID_undef))
+        goto err;
+
+    ok = 1;
+err:
+    BN_free(pcpy);
+    BN_free(qcpy);
+    BN_free(gcpy);
+    DH_free(dh2);
+    DH_free(dh1);
+    return ok;
+}
+
 #endif
 
 
@@ -619,6 +794,9 @@ int setup_tests(void)
 #else
     ADD_TEST(dh_test);
     ADD_TEST(rfc5114_test);
+    ADD_TEST(rfc7919_test);
+    ADD_ALL_TESTS(dh_test_prime_groups, OSSL_NELEM(prime_groups));
+    ADD_TEST(dh_get_nid);
 #endif
     return 1;
 }

@@ -16,10 +16,10 @@
 #undef _FORTIFY_SOURCE
 
 /* This must be the first #include file */
-#include "async_locl.h"
+#include "async_local.h"
 
 #include <openssl/err.h>
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 #include <string.h>
 
 #define ASYNC_JOB_RUNNING   0
@@ -30,11 +30,13 @@
 static CRYPTO_THREAD_LOCAL ctxkey;
 static CRYPTO_THREAD_LOCAL poolkey;
 
+static void async_delete_thread_state(void *arg);
+
 static async_ctx *async_ctx_new(void)
 {
     async_ctx *nctx;
 
-    if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ASYNC))
+    if (!ossl_init_thread_start(NULL, NULL, async_delete_thread_state))
         return NULL;
 
     nctx = OPENSSL_malloc(sizeof(*nctx));
@@ -285,7 +287,7 @@ static void async_empty_pool(async_pool *pool)
 {
     ASYNC_JOB *job;
 
-    if (!pool || !pool->jobs)
+    if (pool == NULL || pool->jobs == NULL)
         return;
 
     do {
@@ -326,7 +328,7 @@ int ASYNC_init_thread(size_t max_size, size_t init_size)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
         return 0;
 
-    if (!ossl_init_thread_start(OPENSSL_INIT_THREAD_ASYNC))
+    if (!ossl_init_thread_start(NULL, NULL, async_delete_thread_state))
         return 0;
 
     pool = OPENSSL_zalloc(sizeof(*pool));
@@ -374,7 +376,8 @@ err:
     return 0;
 }
 
-void async_delete_thread_state(void)
+/* TODO(3.0): arg ignored for now */
+static void async_delete_thread_state(void *arg)
 {
     async_pool *pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
 
@@ -393,7 +396,7 @@ void ASYNC_cleanup_thread(void)
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
         return;
 
-    async_delete_thread_state();
+    async_delete_thread_state(NULL);
 }
 
 ASYNC_JOB *ASYNC_get_current_job(void)

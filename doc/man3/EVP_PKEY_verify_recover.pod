@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover - recover signature using a public key algorithm
+EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover
+- recover signature using a public key algorithm
 
 =head1 SYNOPSIS
 
@@ -15,16 +16,19 @@ EVP_PKEY_verify_recover_init, EVP_PKEY_verify_recover - recover signature using 
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_verify_recover_init() function initializes a public key algorithm
-context using key B<pkey> for a verify recover operation.
+EVP_PKEY_verify_recover_init() initializes a public key algorithm context
+I<ctx> for signing using the algorithm given when the context was created
+using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
+fetch a B<EVP_SIGNATURE> method implicitly, see L<provider(7)/Implicit fetch>
+for more information about implict fetches.
 
 The EVP_PKEY_verify_recover() function recovers signed data
-using B<ctx>. The signature is specified using the B<sig> and
-B<siglen> parameters. If B<rout> is B<NULL> then the maximum size of the output
-buffer is written to the B<routlen> parameter. If B<rout> is not B<NULL> then
-before the call the B<routlen> parameter should contain the length of the
-B<rout> buffer, if the call is successful recovered data is written to
-B<rout> and the amount of data written to B<routlen>.
+using I<ctx>. The signature is specified using the I<sig> and
+I<siglen> parameters. If I<rout> is NULL then the maximum size of the output
+buffer is written to the I<routlen> parameter. If I<rout> is not NULL then
+before the call the I<routlen> parameter should contain the length of the
+I<rout> buffer, if the call is successful recovered data is written to
+I<rout> and the amount of data written to I<routlen>.
 
 =head1 NOTES
 
@@ -49,7 +53,7 @@ EVP_PKEY_verify_recover_init() and EVP_PKEY_verify_recover() return 1 for succes
 and 0 or a negative value for failure. In particular a return value of -2
 indicates the operation is not supported by the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Recover digest originally signed using PKCS#1 and SHA256 digest:
 

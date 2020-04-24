@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -10,9 +10,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 push(@INC, "${dir}perlasm", "perlasm");
 require "x86asm.pl";
 
-$output = pop;
-open OUT,">$output";
-*STDOUT=*OUT;
+$output = pop and open STDOUT,">$output";
 
 &asm_init($ARGV[0]);
 
@@ -506,4 +504,4 @@ my $rdop = shift;
 
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

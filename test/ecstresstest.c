@@ -144,7 +144,7 @@ int setup_tests(void)
            break;
         default:
         case OPT_ERR:
-	    return 0;
+            return 0;
         }
     }
 

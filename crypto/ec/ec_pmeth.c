@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,14 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDH and ECDSA low level APIs are deprecated for public use, but still ok
+ * for internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/ec.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 #include <openssl/evp.h>
-#include "internal/evp_int.h"
+#include "crypto/evp.h"
 
 /* EC pkey context structure */
 
@@ -323,7 +329,12 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             EVP_MD_type((const EVP_MD *)p2) != NID_sha224 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha256 &&
             EVP_MD_type((const EVP_MD *)p2) != NID_sha384 &&
-            EVP_MD_type((const EVP_MD *)p2) != NID_sha512) {
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha512 &&
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha3_224 &&
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha3_256 &&
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha3_384 &&
+            EVP_MD_type((const EVP_MD *)p2) != NID_sha3_512 &&
+            EVP_MD_type((const EVP_MD *)p2) != NID_sm3) {
             ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_DIGEST_TYPE);
             return 0;
         }
@@ -432,7 +443,7 @@ static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
     return ret ? EC_KEY_generate_key(ec) : 0;
 }
 
-const EVP_PKEY_METHOD ec_pkey_meth = {
+static const EVP_PKEY_METHOD ec_pkey_meth = {
     EVP_PKEY_EC,
     0,
     pkey_ec_init,
@@ -470,3 +481,8 @@ const EVP_PKEY_METHOD ec_pkey_meth = {
     pkey_ec_ctrl,
     pkey_ec_ctrl_str
 };
+
+const EVP_PKEY_METHOD *ec_pkey_method(void)
+{
+    return &ec_pkey_meth;
+}

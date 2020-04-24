@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ASN1T_H
-# define HEADER_ASN1T_H
+#ifndef OPENSSL_ASN1T_H
+# define OPENSSL_ASN1T_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_ASN1T_H
+# endif
 
 # include <stddef.h>
 # include <openssl/e_os2.h>
@@ -25,43 +31,23 @@
 extern "C" {
 #endif
 
-# ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
-
 /* Macro to obtain ASN1_ADB pointer from a type (only used internally) */
-#  define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)(iptr))
+# define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)((iptr)()))
 
 /* Macros for start and end of ASN1_ITEM definition */
 
-#  define ASN1_ITEM_start(itname) \
-        const ASN1_ITEM itname##_it = {
-
-#  define static_ASN1_ITEM_start(itname) \
-        static const ASN1_ITEM itname##_it = {
-
-#  define ASN1_ITEM_end(itname)                 \
-                };
-
-# else
-
-/* Macro to obtain ASN1_ADB pointer from a type (only used internally) */
-#  define ASN1_ADB_ptr(iptr) ((const ASN1_ADB *)((iptr)()))
-
-/* Macros for start and end of ASN1_ITEM definition */
-
-#  define ASN1_ITEM_start(itname) \
+# define ASN1_ITEM_start(itname) \
         const ASN1_ITEM * itname##_it(void) \
         { \
                 static const ASN1_ITEM local_it = {
 
-#  define static_ASN1_ITEM_start(itname) \
+# define static_ASN1_ITEM_start(itname) \
         static ASN1_ITEM_start(itname)
 
-#  define ASN1_ITEM_end(itname) \
+# define ASN1_ITEM_end(itname) \
                 }; \
         return &local_it; \
         }
-
-# endif
 
 /* Macros to aid ASN1 template writing */
 
@@ -165,10 +151,6 @@ extern "C" {
             {NULL, ASN1_AFLG_CONST_CB, 0, 0, cb, 0, const_cb}; \
         ASN1_SEQUENCE(tname)
 
-# define ASN1_BROKEN_SEQUENCE(tname) \
-        static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_BROKEN, 0, 0, NULL, 0, NULL}; \
-        ASN1_SEQUENCE(tname)
-
 # define ASN1_SEQUENCE_ref(tname, cb) \
         static const ASN1_AUX tname##_aux = {NULL, ASN1_AFLG_REFCOUNT, offsetof(tname, references), offsetof(tname, lock), cb, 0, NULL}; \
         ASN1_SEQUENCE(tname)
@@ -200,9 +182,6 @@ extern "C" {
                 #tname \
         ASN1_ITEM_end(tname)
 
-# define ASN1_BROKEN_SEQUENCE_END(stname) ASN1_SEQUENCE_END_ref(stname, stname)
-# define static_ASN1_BROKEN_SEQUENCE_END(stname) \
-        static_ASN1_SEQUENCE_END_ref(stname, stname)
 
 # define ASN1_SEQUENCE_END_enc(stname, tname) ASN1_SEQUENCE_END_ref(stname, tname)
 
@@ -342,13 +321,9 @@ extern "C" {
 
 /* Any defined by macros: the field used is in the table itself */
 
-# ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
-#  define ASN1_ADB_OBJECT(tblname) { ASN1_TFLG_ADB_OID, -1, 0, #tblname, (const ASN1_ITEM *)&(tblname##_adb) }
-#  define ASN1_ADB_INTEGER(tblname) { ASN1_TFLG_ADB_INT, -1, 0, #tblname, (const ASN1_ITEM *)&(tblname##_adb) }
-# else
-#  define ASN1_ADB_OBJECT(tblname) { ASN1_TFLG_ADB_OID, -1, 0, #tblname, tblname##_adb }
-#  define ASN1_ADB_INTEGER(tblname) { ASN1_TFLG_ADB_INT, -1, 0, #tblname, tblname##_adb }
-# endif
+# define ASN1_ADB_OBJECT(tblname) { ASN1_TFLG_ADB_OID, -1, 0, #tblname, tblname##_adb }
+# define ASN1_ADB_INTEGER(tblname) { ASN1_TFLG_ADB_INT, -1, 0, #tblname, tblname##_adb }
+
 /* Plain simple type */
 # define ASN1_SIMPLE(stname, field, type) ASN1_EX_TYPE(0,0, stname, field, type)
 /* Embedded simple type */
@@ -428,23 +403,7 @@ extern "C" {
 # define ASN1_ADB(name) \
         static const ASN1_ADB_TABLE name##_adbtbl[]
 
-# ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
-
-#  define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
-        ;\
-        static const ASN1_ADB name##_adb = {\
-                flags,\
-                offsetof(name, field),\
-                adb_cb,\
-                name##_adbtbl,\
-                sizeof(name##_adbtbl) / sizeof(ASN1_ADB_TABLE),\
-                def,\
-                none\
-        }
-
-# else
-
-#  define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
+# define ASN1_ADB_END(name, flags, field, adb_cb, def, none) \
         ;\
         static const ASN1_ITEM *name##_adb(void) \
         { \
@@ -461,8 +420,6 @@ extern "C" {
                 return (const ASN1_ITEM *) &internal_adb; \
         } \
         void dummy_function(void)
-
-# endif
 
 # define ADB_ENTRY(val, template) {val, template}
 
@@ -857,13 +814,13 @@ typedef struct ASN1_STREAM_ARG_st {
         } \
         int i2d_##fname(const stname *a, unsigned char **out) \
         { \
-                return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
+                return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
         }
 
 # define IMPLEMENT_ASN1_NDEF_FUNCTION(stname) \
         int i2d_##stname##_NDEF(const stname *a, unsigned char **out) \
         { \
-                return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
+                return ASN1_item_ndef_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
         }
 
 # define IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(stname) \
@@ -875,7 +832,7 @@ typedef struct ASN1_STREAM_ARG_st {
         } \
         static int i2d_##stname(const stname *a, unsigned char **out) \
         { \
-                return ASN1_item_i2d((ASN1_VALUE *)a, out, \
+                return ASN1_item_i2d((const ASN1_VALUE *)a, out, \
                                      ASN1_ITEM_rptr(stname)); \
         }
 
@@ -892,7 +849,7 @@ typedef struct ASN1_STREAM_ARG_st {
         int fname##_print_ctx(BIO *out, const stname *x, int indent, \
                                                 const ASN1_PCTX *pctx) \
         { \
-                return ASN1_item_print(out, (ASN1_VALUE *)x, indent, \
+                return ASN1_item_print(out, (const ASN1_VALUE *)x, indent, \
                         ASN1_ITEM_rptr(itname), pctx); \
         }
 
@@ -913,7 +870,7 @@ DECLARE_ASN1_ITEM(ZINT64)
 DECLARE_ASN1_ITEM(UINT64)
 DECLARE_ASN1_ITEM(ZUINT64)
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
  * LONG and ZLONG are strongly discouraged for use as stored data, as the
  * underlying C type (long) differs in size depending on the architecture.
@@ -923,7 +880,7 @@ DECLARE_ASN1_ITEM(LONG)
 DECLARE_ASN1_ITEM(ZLONG)
 # endif
 
-DEFINE_STACK_OF(ASN1_VALUE)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_VALUE)
 
 /* Functions used internally by the ASN1 code */
 

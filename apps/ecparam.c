@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,55 +9,62 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <time.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/ec.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
     OPT_CHECK, OPT_LIST_CURVES, OPT_NO_SEED, OPT_NOOUT, OPT_NAME,
-    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE,
-    OPT_R_ENUM
+    OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE, OPT_CHECK_NAMED,
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ecparam_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
-    {"in", OPT_IN, '<', "Input file  - default stdin"},
-    {"out", OPT_OUT, '>', "Output file - default stdout"},
-    {"text", OPT_TEXT, '-', "Print the ec parameters in text form"},
-    {"C", OPT_C, '-', "Print a 'C' function creating the parameters"},
-    {"check", OPT_CHECK, '-', "Validate the ec parameters"},
     {"list_curves", OPT_LIST_CURVES, '-',
      "Prints a list of all curve 'short names'"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+
+    {"genkey", OPT_GENKEY, '-', "Generate ec key"},
+    {"in", OPT_IN, '<', "Input file  - default stdin"},
+    {"inform", OPT_INFORM, 'F', "Input format - default PEM (DER or PEM)"},
+    {"out", OPT_OUT, '>', "Output file - default stdout"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
+
+    OPT_SECTION("Output"),
+    {"text", OPT_TEXT, '-', "Print the ec parameters in text form"},
+    {"C", OPT_C, '-', "Print a 'C' function creating the parameters"},
+    {"noout", OPT_NOOUT, '-', "Do not print the ec parameter"},
+    {"param_enc", OPT_PARAM_ENC, 's',
+     "Specifies the way the ec parameters are encoded"},
+
+    OPT_SECTION("Parameter"),
+    {"check", OPT_CHECK, '-', "Validate the ec parameters"},
+    {"check_named", OPT_CHECK_NAMED, '-',
+     "Check that named EC curve parameters have not been modified"},
     {"no_seed", OPT_NO_SEED, '-',
      "If 'explicit' parameters are chosen do not use the seed"},
-    {"noout", OPT_NOOUT, '-', "Do not print the ec parameter"},
     {"name", OPT_NAME, 's',
      "Use the ec parameters with specified 'short name'"},
     {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
-    {"param_enc", OPT_PARAM_ENC, 's',
-     "Specifies the way the ec parameters are encoded"},
-    {"genkey", OPT_GENKEY, '-', "Generate ec key"},
+
     OPT_R_OPTIONS,
-# ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -90,7 +97,7 @@ int ecparam_main(int argc, char **argv)
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
     int ret = 1, private = 0;
     int list_curves = 0, no_seed = 0, check = 0, new_form = 0;
-    int text = 0, i, genkey = 0;
+    int text = 0, i, genkey = 0, check_named = 0;
 
     prog = opt_init(argc, argv, ecparam_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -127,6 +134,9 @@ int ecparam_main(int argc, char **argv)
         case OPT_CHECK:
             check = 1;
             break;
+        case OPT_CHECK_NAMED:
+            check_named = 1;
+            break;
         case OPT_LIST_CURVES:
             list_curves = 1;
             break;
@@ -155,6 +165,10 @@ int ecparam_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_ENGINE:
@@ -264,6 +278,16 @@ int ecparam_main(int argc, char **argv)
     if (text) {
         if (!ECPKParameters_print(out, group, 0))
             goto end;
+    }
+
+    if (check_named) {
+        BIO_printf(bio_err, "validating named elliptic curve parameters: ");
+        if (EC_GROUP_check_named_curve(group, 0, NULL) <= 0) {
+            BIO_printf(bio_err, "failed\n");
+            ERR_print_errors(bio_err);
+            goto end;
+        }
+        BIO_printf(bio_err, "ok\n");
     }
 
     if (check) {
@@ -446,5 +470,3 @@ int ecparam_main(int argc, char **argv)
     BIO_free_all(out);
     return ret;
 }
-
-#endif

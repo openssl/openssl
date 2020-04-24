@@ -15,7 +15,9 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "x509_lcl.h"
+#include "x509_local.h"
+
+DEFINE_STACK_OF(X509_EXTENSION)
 
 int X509v3_get_ext_count(const STACK_OF(X509_EXTENSION) *x)
 {

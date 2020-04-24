@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,9 @@
 #include <openssl/tls1.h>
 #include <openssl/x509.h>
 
-#include "ct_locl.h"
+#include "ct_local.h"
+
+DEFINE_STACK_OF(SCT)
 
 SCT *SCT_new(void)
 {
@@ -312,7 +314,7 @@ int SCT_validate(SCT *sct, const CT_POLICY_EVAL_CTX *ctx)
         return 0;
     }
 
-    sctx = SCT_CTX_new();
+    sctx = SCT_CTX_new(ctx->libctx, ctx->propq);
     if (sctx == NULL)
         goto err;
 

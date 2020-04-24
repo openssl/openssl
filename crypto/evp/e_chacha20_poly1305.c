@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,13 +14,13 @@
 
 # include <openssl/evp.h>
 # include <openssl/objects.h>
-# include "internal/evp_int.h"
-# include "evp_locl.h"
-# include "internal/chacha.h"
+# include "crypto/evp.h"
+# include "evp_local.h"
+# include "crypto/chacha.h"
 
 typedef struct {
     union {
-        double align;   /* this ensures even sizeof(EVP_CHACHA_KEY)%8==0 */
+        OSSL_UNION_ALIGN;  /* this ensures even sizeof(EVP_CHACHA_KEY)%8==0 */
         unsigned int d[CHACHA_KEY_SIZE / 4];
     } key;
     unsigned int  counter[CHACHA_CTR_SIZE / 4];
@@ -146,7 +146,7 @@ const EVP_CIPHER *EVP_chacha20(void)
 }
 
 # ifndef OPENSSL_NO_POLY1305
-#  include "internal/poly1305.h"
+#  include "crypto/poly1305.h"
 
 typedef struct {
     EVP_CHACHA_KEY key;
@@ -534,6 +534,10 @@ static int chacha20_poly1305_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg,
         }
         return 1;
 
+    case EVP_CTRL_GET_IVLEN:
+        *(int *)ptr = actx->nonce_len;
+        return 1;
+
     case EVP_CTRL_AEAD_SET_IVLEN:
         if (arg <= 0 || arg > CHACHA20_POLY1305_MAX_IVLEN)
             return 0;
@@ -613,7 +617,8 @@ static EVP_CIPHER chacha20_poly1305 = {
     12,                 /* iv_len, 96-bit nonce in the context */
     EVP_CIPH_FLAG_AEAD_CIPHER | EVP_CIPH_CUSTOM_IV |
     EVP_CIPH_ALWAYS_CALL_INIT | EVP_CIPH_CTRL_INIT |
-    EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_CUSTOM_CIPHER,
+    EVP_CIPH_CUSTOM_COPY | EVP_CIPH_FLAG_CUSTOM_CIPHER |
+    EVP_CIPH_CUSTOM_IV_LENGTH,
     chacha20_poly1305_init_key,
     chacha20_poly1305_cipher,
     chacha20_poly1305_cleanup,

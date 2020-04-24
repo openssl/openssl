@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include "modes_lcl.h"
 #include <string.h>
+#include <openssl/crypto.h>
+#include "crypto/modes.h"
 
 #if !defined(STRICT_ALIGNMENT) && !defined(PEDANTIC)
 # define STRICT_ALIGNMENT 0

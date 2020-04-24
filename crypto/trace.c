@@ -10,12 +10,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "internal/thread_once.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/trace.h>
 #include "internal/bio.h"
 #include "internal/nelem.h"
-#include "internal/cryptlib_int.h"
+#include "crypto/cryptlib.h"
 
 #include "e_os.h"                /* strcasecmp for Windows */
 
@@ -119,12 +120,12 @@ struct trace_category_st {
 #define TRACE_CATEGORY_(name)       { #name, OSSL_TRACE_CATEGORY_##name }
 
 static const struct trace_category_st trace_categories[] = {
-    TRACE_CATEGORY_(ANY),
+    TRACE_CATEGORY_(ALL),
     TRACE_CATEGORY_(TRACE),
     TRACE_CATEGORY_(INIT),
     TRACE_CATEGORY_(TLS),
     TRACE_CATEGORY_(TLS_CIPHER),
-    TRACE_CATEGORY_(ENGINE_CONF),
+    TRACE_CATEGORY_(CONF),
     TRACE_CATEGORY_(ENGINE_TABLE),
     TRACE_CATEGORY_(ENGINE_REF_COUNT),
     TRACE_CATEGORY_(PKCS5V2),
@@ -132,6 +133,7 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(PKCS12_DECRYPT),
     TRACE_CATEGORY_(X509V3_POLICY),
     TRACE_CATEGORY_(BN_CTX),
+    TRACE_CATEGORY_(STORE),
 };
 
 const char *OSSL_trace_get_category_name(int num)
@@ -218,14 +220,29 @@ static int trace_detach_cb(int category, int type, const void *data)
     return 1;
 }
 
+static int do_ossl_trace_init(void);
+static CRYPTO_ONCE trace_inited = CRYPTO_ONCE_STATIC_INIT;
+DEFINE_RUN_ONCE_STATIC(ossl_trace_init)
+{
+    return do_ossl_trace_init();
+}
+
 static int set_trace_data(int category, int type, BIO **channel,
                           const char **prefix, const char **suffix,
                           int (*attach_cb)(int, int, const void *),
                           int (*detach_cb)(int, int, const void *))
 {
-    BIO *curr_channel = trace_channels[category].bio;
-    char *curr_prefix = trace_channels[category].prefix;
-    char *curr_suffix = trace_channels[category].suffix;
+    BIO *curr_channel = NULL;
+    char *curr_prefix = NULL;
+    char *curr_suffix = NULL;
+
+    /* Ensure do_ossl_trace_init() is called once */
+    if (!RUN_ONCE(&trace_inited, ossl_trace_init))
+        return 0;
+
+    curr_channel = trace_channels[category].bio;
+    curr_prefix = trace_channels[category].prefix;
+    curr_suffix = trace_channels[category].suffix;
 
     /* Make sure to run the detach callback first on all data */
     if (prefix != NULL && curr_prefix != NULL) {
@@ -290,18 +307,14 @@ static int set_trace_data(int category, int type, BIO **channel,
 
     return 1;
 }
-#endif
 
-int ossl_trace_init(void)
+static int do_ossl_trace_init(void)
 {
-#ifndef OPENSSL_NO_TRACE
     trace_lock = CRYPTO_THREAD_lock_new();
-    if (trace_lock == NULL)
-        return 0;
-#endif
-
-    return 1;
+    return trace_lock != NULL;
 }
+
+#endif
 
 void ossl_trace_cleanup(void)
 {
@@ -328,12 +341,11 @@ void ossl_trace_cleanup(void)
 int OSSL_trace_set_channel(int category, BIO *channel)
 {
 #ifndef OPENSSL_NO_TRACE
-    if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM
-        || !set_trace_data(category, SIMPLE_CHANNEL, &channel, NULL, NULL,
-                           trace_attach_cb, trace_detach_cb))
-        return 0;
+    if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
+        return set_trace_data(category, SIMPLE_CHANNEL, &channel, NULL, NULL,
+                              trace_attach_cb, trace_detach_cb);
 #endif
-    return 1;
+    return 0;
 }
 
 #ifndef OPENSSL_NO_TRACE
@@ -367,7 +379,7 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
     struct trace_data_st *trace_data = NULL;
 
     if (category < 0 || category >= OSSL_TRACE_CATEGORY_NUM)
-        goto err;
+        return 0;
 
     if (callback != NULL) {
         if ((channel = BIO_new(&trace_method)) == NULL
@@ -386,41 +398,34 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
                         trace_attach_w_callback_cb, trace_detach_cb))
         goto err;
 
-    goto done;
+    return 1;
 
  err:
     BIO_free(channel);
     OPENSSL_free(trace_data);
-    return 0;
- done:
 #endif
-    return 1;
+
+    return 0;
 }
 
 int OSSL_trace_set_prefix(int category, const char *prefix)
 {
-    int rv = 1;
-
 #ifndef OPENSSL_NO_TRACE
-    if (category >= 0 || category < OSSL_TRACE_CATEGORY_NUM)
+    if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, &prefix, NULL,
                               trace_attach_cb, trace_detach_cb);
-    rv = 0;
 #endif
-    return rv;
+    return 0;
 }
 
 int OSSL_trace_set_suffix(int category, const char *suffix)
 {
-    int rv = 1;
-
 #ifndef OPENSSL_NO_TRACE
-    if (category >= 0 || category < OSSL_TRACE_CATEGORY_NUM)
+    if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, NULL, &suffix,
                               trace_attach_cb, trace_detach_cb);
-    rv = 0;
 #endif
-    return rv;
+    return 0;
 }
 
 #ifndef OPENSSL_NO_TRACE
@@ -430,7 +435,7 @@ static int ossl_trace_get_category(int category)
         return -1;
     if (trace_channels[category].bio != NULL)
         return category;
-    return OSSL_TRACE_CATEGORY_ANY;
+    return OSSL_TRACE_CATEGORY_ALL;
 }
 #endif
 
@@ -439,7 +444,8 @@ int OSSL_trace_enabled(int category)
     int ret = 0;
 #ifndef OPENSSL_NO_TRACE
     category = ossl_trace_get_category(category);
-    ret = trace_channels[category].bio != NULL;
+    if (category >= 0)
+        ret = trace_channels[category].bio != NULL;
 #endif
     return ret;
 }
@@ -451,6 +457,9 @@ BIO *OSSL_trace_begin(int category)
     char *prefix = NULL;
 
     category = ossl_trace_get_category(category);
+    if (category < 0)
+        return NULL;
+
     channel = trace_channels[category].bio;
     prefix = trace_channels[category].prefix;
 

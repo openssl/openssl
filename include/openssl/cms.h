@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CMS_H
-# define HEADER_CMS_H
+#ifndef OPENSSL_CMS_H
+# define OPENSSL_CMS_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_CMS_H
+# endif
 
 # include <openssl/opensslconf.h>
 
@@ -16,7 +22,6 @@
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 # include <openssl/cmserr.h>
-# include <openssl/ess.h>
 # ifdef __cplusplus
 extern "C" {
 # endif
@@ -31,10 +36,11 @@ typedef struct CMS_Receipt_st CMS_Receipt;
 typedef struct CMS_RecipientEncryptedKey_st CMS_RecipientEncryptedKey;
 typedef struct CMS_OtherKeyAttribute_st CMS_OtherKeyAttribute;
 
-DEFINE_STACK_OF(CMS_SignerInfo)
-DEFINE_STACK_OF(CMS_RecipientEncryptedKey)
-DEFINE_STACK_OF(CMS_RecipientInfo)
-DEFINE_STACK_OF(CMS_RevocationInfoChoice)
+DEFINE_OR_DECLARE_STACK_OF(CMS_SignerInfo)
+DEFINE_OR_DECLARE_STACK_OF(CMS_RecipientEncryptedKey)
+DEFINE_OR_DECLARE_STACK_OF(CMS_RecipientInfo)
+DEFINE_OR_DECLARE_STACK_OF(CMS_RevocationInfoChoice)
+
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
@@ -75,6 +81,7 @@ DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 # define CMS_KEY_PARAM                   0x40000
 # define CMS_ASCIICRLF                   0x80000
 # define CMS_CADES                       0x100000
+# define CMS_USE_ORIGINATOR_KEYID        0x200000
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
 
@@ -85,8 +92,8 @@ ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms);
 int CMS_is_detached(CMS_ContentInfo *cms);
 int CMS_set_detached(CMS_ContentInfo *cms, int detached);
 
-# ifdef HEADER_PEM_H
-DECLARE_PEM_rw_const(CMS, CMS_ContentInfo)
+# ifdef OPENSSL_PEM_H
+DECLARE_PEM_rw(CMS, CMS_ContentInfo)
 # endif
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms);
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms);
@@ -145,6 +152,7 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
                 BIO *dcont, BIO *out, unsigned int flags);
 
 int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
+int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert, X509 *peer);
 int CMS_decrypt_set1_key(CMS_ContentInfo *cms,
                          unsigned char *key, size_t keylen,
                          const unsigned char *id, size_t idlen);
@@ -157,6 +165,8 @@ EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri);
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
                                            X509 *recip, unsigned int flags);
+CMS_RecipientInfo *CMS_add1_recipient(CMS_ContentInfo *cms, X509 *recip,
+     EVP_PKEY *originatorPrivKey, X509 * originator, unsigned int flags);
 int CMS_RecipientInfo_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pkey);
 int CMS_RecipientInfo_ktri_cert_cmp(CMS_RecipientInfo *ri, X509 *cert);
 int CMS_RecipientInfo_ktri_get0_algs(CMS_RecipientInfo *ri,
@@ -285,10 +295,6 @@ int CMS_unsigned_add1_attr_by_txt(CMS_SignerInfo *si,
                                   const void *bytes, int len);
 void *CMS_unsigned_get0_data_by_OBJ(CMS_SignerInfo *si, ASN1_OBJECT *oid,
                                     int lastpos, int type);
-int CMS_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc);
-int CMS_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc);
-
-# ifdef HEADER_X509V3_H
 
 int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr);
 CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
@@ -302,7 +308,6 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
                                     int *pallorfirst,
                                     STACK_OF(GENERAL_NAMES) **plist,
                                     STACK_OF(GENERAL_NAMES) **prto);
-# endif
 int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,
                                     X509_ALGOR **palg,
                                     ASN1_OCTET_STRING **pukm);
@@ -326,6 +331,7 @@ int CMS_RecipientEncryptedKey_get0_id(CMS_RecipientEncryptedKey *rek,
 int CMS_RecipientEncryptedKey_cert_cmp(CMS_RecipientEncryptedKey *rek,
                                        X509 *cert);
 int CMS_RecipientInfo_kari_set0_pkey(CMS_RecipientInfo *ri, EVP_PKEY *pk);
+int CMS_RecipientInfo_kari_set0_pkey_and_peer(CMS_RecipientInfo *ri, EVP_PKEY *pk, X509 *peer);
 EVP_CIPHER_CTX *CMS_RecipientInfo_kari_get0_ctx(CMS_RecipientInfo *ri);
 int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
                                    CMS_RecipientInfo *ri,

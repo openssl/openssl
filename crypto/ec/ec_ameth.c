@@ -1,11 +1,17 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * ECDH and ECDSA low level APIs are deprecated for public use, but still ok
+ * for internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -14,16 +20,18 @@
 #include <openssl/bn.h>
 #include <openssl/cms.h>
 #include <openssl/asn1t.h>
-#include "internal/asn1_int.h"
-#include "internal/evp_int.h"
-#include "ec_lcl.h"
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
+#include <openssl/core_names.h>
+#include "openssl/param_build.h"
+#include "ec_local.h"
 
 #ifndef OPENSSL_NO_CMS
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri);
 static int ecdh_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
-static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
+static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
 {
     const EC_GROUP *group;
     int nid;
@@ -57,7 +65,7 @@ static int eckey_param2type(int *pptype, void **ppval, EC_KEY *ec_key)
 
 static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
 {
-    EC_KEY *ec_key = pkey->pkey.ec;
+    const EC_KEY *ec_key = pkey->pkey.ec;
     void *pval = NULL;
     int ptype;
     unsigned char *penc = NULL, *p;
@@ -196,7 +204,7 @@ static int eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
 
     eckey = eckey_type2param(ptype, pval);
 
-    if (!eckey)
+    if (eckey == NULL)
         goto ecliberr;
 
     /* We have parameters now set private key */
@@ -507,9 +515,9 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         if (EVP_PKEY_id(pkey) == EVP_PKEY_SM2) {
             /* For SM2, the only valid digest-alg is SM3 */
             *(int *)arg2 = NID_sm3;
-        } else {
-            *(int *)arg2 = NID_sha256;
+            return 2;            /* Make it mandatory */
         }
+        *(int *)arg2 = NID_sha256;
         return 1;
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
@@ -568,6 +576,209 @@ static int ec_pkey_param_check(const EVP_PKEY *pkey)
     return EC_GROUP_check(eckey->group, NULL);
 }
 
+static
+size_t ec_pkey_dirty_cnt(const EVP_PKEY *pkey)
+{
+    return pkey->pkey.ec->dirty_cnt;
+}
+
+static ossl_inline
+int ecparams_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl)
+{
+    const EC_GROUP *ecg;
+    int curve_nid;
+
+    if (eckey == NULL)
+        return 0;
+
+    ecg = EC_KEY_get0_group(eckey);
+    if (ecg == NULL)
+        return 0;
+
+    curve_nid = EC_GROUP_get_curve_name(ecg);
+
+    if (curve_nid == NID_undef) {
+        /* explicit parameters */
+
+        /*
+         * TODO(3.0): should we support explicit parameters curves?
+         */
+        return 0;
+    } else {
+        /* named curve */
+        const char *curve_name = NULL;
+
+        if ((curve_name = OBJ_nid2sn(curve_nid)) == NULL)
+            return 0;
+
+        if (!OSSL_PARAM_BLD_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0))
+            return 0;
+    }
+
+    return 1;
+}
+
+static
+int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                      EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                      const char *propq)
+{
+    const EC_KEY *eckey = NULL;
+    const EC_GROUP *ecg = NULL;
+    unsigned char *pub_key_buf = NULL;
+    size_t pub_key_buflen;
+    OSSL_PARAM_BLD *tmpl;
+    OSSL_PARAM *params = NULL;
+    const BIGNUM *priv_key = NULL;
+    const EC_POINT *pub_point = NULL;
+    int selection = 0;
+    int rv = 0;
+    BN_CTX *bnctx = NULL;
+
+    if (from == NULL
+            || (eckey = from->pkey.ec) == NULL
+            || (ecg = EC_KEY_get0_group(eckey)) == NULL)
+        return 0;
+
+    /*
+     * If the EC_KEY method is foreign, then we can't be sure of anything,
+     * and can therefore not export or pretend to export.
+     */
+    if (EC_KEY_get_method(eckey) != EC_KEY_OpenSSL())
+        return 0;
+
+    tmpl = OSSL_PARAM_BLD_new();
+    if (tmpl == NULL)
+        return 0;
+
+    /* export the domain parameters */
+    if (!ecparams_to_params(eckey, tmpl))
+        goto err;
+    selection |= OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
+
+    priv_key = EC_KEY_get0_private_key(eckey);
+    pub_point = EC_KEY_get0_public_key(eckey);
+
+    if (pub_point != NULL) {
+        /*
+         * EC_POINT_point2buf() can generate random numbers in some
+         * implementations so we need to ensure we use the correct libctx.
+         */
+        bnctx = BN_CTX_new_ex(libctx);
+        if (bnctx == NULL)
+            goto err;
+
+        /* convert pub_point to a octet string according to the SECG standard */
+        if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
+                                                 POINT_CONVERSION_COMPRESSED,
+                                                 &pub_key_buf, bnctx)) == 0
+            || !OSSL_PARAM_BLD_push_octet_string(tmpl,
+                                                 OSSL_PKEY_PARAM_PUB_KEY,
+                                                 pub_key_buf,
+                                                 pub_key_buflen))
+            goto err;
+        selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+    }
+
+    if (priv_key != NULL) {
+        size_t sz;
+        int ecbits;
+        int ecdh_cofactor_mode;
+
+        /*
+         * Key import/export should never leak the bit length of the secret
+         * scalar in the key.
+         *
+         * For this reason, on export we use padded BIGNUMs with fixed length.
+         *
+         * When importing we also should make sure that, even if short lived,
+         * the newly created BIGNUM is marked with the BN_FLG_CONSTTIME flag as
+         * soon as possible, so that any processing of this BIGNUM might opt for
+         * constant time implementations in the backend.
+         *
+         * Setting the BN_FLG_CONSTTIME flag alone is never enough, we also have
+         * to preallocate the BIGNUM internal buffer to a fixed public size big
+         * enough that operations performed during the processing never trigger
+         * a realloc which would leak the size of the scalar through memory
+         * accesses.
+         *
+         * Fixed Length
+         * ------------
+         *
+         * The order of the large prime subgroup of the curve is our choice for
+         * a fixed public size, as that is generally the upper bound for
+         * generating a private key in EC cryptosystems and should fit all valid
+         * secret scalars.
+         *
+         * For padding on export we just use the bit length of the order
+         * converted to bytes (rounding up).
+         *
+         * For preallocating the BIGNUM storage we look at the number of "words"
+         * required for the internal representation of the order, and we
+         * preallocate 2 extra "words" in case any of the subsequent processing
+         * might temporarily overflow the order length.
+         */
+        ecbits = EC_GROUP_order_bits(ecg);
+        if (ecbits <= 0)
+            goto err;
+
+        sz = (ecbits + 7 ) / 8;
+        if (!OSSL_PARAM_BLD_push_BN_pad(tmpl,
+                                        OSSL_PKEY_PARAM_PRIV_KEY,
+                                        priv_key, sz))
+            goto err;
+        selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+
+        /*
+         * The ECDH Cofactor Mode is defined only if the EC_KEY actually
+         * contains a private key, so we check for the flag and export it only
+         * in this case.
+         */
+        ecdh_cofactor_mode =
+            (EC_KEY_get_flags(eckey) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
+
+        /* Export the ECDH_COFACTOR_MODE parameter */
+        if (!OSSL_PARAM_BLD_push_int(tmpl,
+                                     OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
+                                     ecdh_cofactor_mode))
+            goto err;
+        selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
+    }
+
+    params = OSSL_PARAM_BLD_to_param(tmpl);
+
+    /* We export, the provider imports */
+    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+
+ err:
+    OSSL_PARAM_BLD_free(tmpl);
+    OSSL_PARAM_BLD_free_params(params);
+    OPENSSL_free(pub_key_buf);
+    BN_CTX_free(bnctx);
+    return rv;
+}
+
+static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
+{
+    EVP_PKEY_CTX *pctx = vpctx;
+    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
+    EC_KEY *ec = EC_KEY_new_ex(pctx->libctx);
+
+    if (ec == NULL) {
+        ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    if (!ec_key_domparams_fromdata(ec, params)
+        || !ec_key_otherparams_fromdata(ec, params)
+        || !ec_key_fromdata(ec, params, 1)
+        || !EVP_PKEY_assign_EC_KEY(pkey, ec)) {
+        EC_KEY_free(ec);
+        return 0;
+    }
+    return 1;
+}
+
 const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     EVP_PKEY_EC,
     EVP_PKEY_EC,
@@ -605,7 +816,16 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 
     ec_pkey_check,
     ec_pkey_public_check,
-    ec_pkey_param_check
+    ec_pkey_param_check,
+
+    0, /* set_priv_key */
+    0, /* set_pub_key */
+    0, /* get_priv_key */
+    0, /* get_pub_key */
+
+    ec_pkey_dirty_cnt,
+    ec_pkey_export_to,
+    ec_pkey_import_from
 };
 
 #if !defined(OPENSSL_NO_SM2)
@@ -650,7 +870,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         const EC_GROUP *grp;
         EVP_PKEY *pk;
         pk = EVP_PKEY_CTX_get0_pkey(pctx);
-        if (!pk)
+        if (pk == NULL)
             goto err;
         grp = EC_KEY_get0_group(pk->pkey.ec);
         ecpeer = EC_KEY_new();
@@ -666,7 +886,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     /* We have parameters now set public key */
     plen = ASN1_STRING_length(pubkey);
     p = ASN1_STRING_get0_data(pubkey);
-    if (!p || !plen)
+    if (p == NULL || plen == 0)
         goto err;
     if (!o2i_ECPublicKey(&ecpeer, &p, plen))
         goto err;

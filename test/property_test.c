@@ -12,7 +12,7 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/property.h"
-#include "../crypto/property/property_lcl.h"
+#include "../crypto/property/property_local.h"
 
 static int add_property_names(const char *n, ...)
 {
@@ -21,11 +21,20 @@ static int add_property_names(const char *n, ...)
 
     va_start(args, n);
     do {
-        if (!TEST_int_ne(ossl_property_name(n, 1), 0))
+        if (!TEST_int_ne(ossl_property_name(NULL, n, 1), 0))
             res = 0;
     } while ((n = va_arg(args, const char *)) != NULL);
     va_end(args);
     return res;
+}
+
+static int up_ref(void *p)
+{
+    return 1;
+}
+
+static void down_ref(void *p)
+{
 }
 
 static int test_property_string(void)
@@ -34,24 +43,24 @@ static int test_property_string(void)
     int res = 0;
     OSSL_PROPERTY_IDX i, j;
 
-    if (TEST_ptr(store = ossl_method_store_new())
-        && TEST_int_eq(ossl_property_name("fnord", 0), 0)
-        && TEST_int_ne(ossl_property_name("fnord", 1), 0)
-        && TEST_int_ne(ossl_property_name("name", 1), 0)
+    if (TEST_ptr(store = ossl_method_store_new(NULL))
+        && TEST_int_eq(ossl_property_name(NULL, "fnord", 0), 0)
+        && TEST_int_ne(ossl_property_name(NULL, "fnord", 1), 0)
+        && TEST_int_ne(ossl_property_name(NULL, "name", 1), 0)
         /* Property value checks */
-        && TEST_int_eq(ossl_property_value("fnord", 0), 0)
-        && TEST_int_ne(i = ossl_property_value("no", 0), 0)
-        && TEST_int_ne(j = ossl_property_value("yes", 0), 0)
+        && TEST_int_eq(ossl_property_value(NULL, "fnord", 0), 0)
+        && TEST_int_ne(i = ossl_property_value(NULL, "no", 0), 0)
+        && TEST_int_ne(j = ossl_property_value(NULL, "yes", 0), 0)
         && TEST_int_ne(i, j)
-        && TEST_int_eq(ossl_property_value("yes", 1), j)
-        && TEST_int_eq(ossl_property_value("no", 1), i)
-        && TEST_int_ne(i = ossl_property_value("illuminati", 1), 0)
-        && TEST_int_eq(j = ossl_property_value("fnord", 1), i + 1)
-        && TEST_int_eq(ossl_property_value("fnord", 1), j)
+        && TEST_int_eq(ossl_property_value(NULL, "yes", 1), j)
+        && TEST_int_eq(ossl_property_value(NULL, "no", 1), i)
+        && TEST_int_ne(i = ossl_property_value(NULL, "illuminati", 1), 0)
+        && TEST_int_eq(j = ossl_property_value(NULL, "fnord", 1), i + 1)
+        && TEST_int_eq(ossl_property_value(NULL, "fnord", 1), j)
         /* Check name and values are distinct */
-        && TEST_int_eq(ossl_property_value("cold", 0), 0)
-        && TEST_int_ne(ossl_property_name("fnord", 0),
-                       ossl_property_value("fnord", 0)))
+        && TEST_int_eq(ossl_property_value(NULL, "cold", 0), 0)
+        && TEST_int_ne(ossl_property_name(NULL, "fnord", 0),
+                       ossl_property_value(NULL, "fnord", 0)))
         res = 1;
     ossl_method_store_free(store);
     return res;
@@ -62,31 +71,36 @@ static const struct {
     const char *query;
     int e;
 } parser_tests[] = {
-    { "", "sky=blue", 0 },
+    { "", "sky=blue", -1 },
     { "", "sky!=blue", 1 },
-    { "groan", "", 1 },
+    { "groan", "", 0 },
     { "cold=yes", "cold=yes", 1 },
     { "cold=yes", "cold", 1 },
     { "cold=yes", "cold!=no", 1 },
     { "groan", "groan=yes", 1 },
-    { "groan", "groan=no", 0 },
-    { "groan", "groan!=yes", 0 },
-    { "cold=no", "cold", 0 },
+    { "groan", "groan=no", -1 },
+    { "groan", "groan!=yes", -1 },
+    { "cold=no", "cold", -1 },
+    { "cold=no", "?cold", 0 },
     { "cold=no", "cold=no", 1 },
-    { "groan", "cold", 0 },
+    { "groan", "cold", -1 },
     { "groan", "cold=no", 1 },
     { "groan", "cold!=yes", 1 },
-    { "groan=blue", "groan=yellow", 0 },
+    { "groan=blue", "groan=yellow", -1 },
+    { "groan=blue", "?groan=yellow", 0 },
     { "groan=blue", "groan!=yellow", 1 },
+    { "groan=blue", "?groan!=yellow", 1 },
     { "today=monday, tomorrow=3", "today!=2", 1 },
-    { "today=monday, tomorrow=3", "today!='monday'", 0 },
+    { "today=monday, tomorrow=3", "today!='monday'", -1 },
     { "today=monday, tomorrow=3", "tomorrow=3", 1 },
     { "n=0x3", "n=3", 1 },
-    { "n=0x3", "n=-3", 0 },
+    { "n=0x3", "n=-3", -1 },
     { "n=0x33", "n=51", 1 },
     { "n=033", "n=27", 1 },
     { "n=0", "n=00", 1 },
     { "n=0x0", "n=0", 1 },
+    { "n=0, sky=blue", "?n=0, sky=blue", 2 },
+    { "n=1, sky=blue", "?n=0, sky=blue", 1 },
 };
 
 static int test_property_parse(int n)
@@ -95,12 +109,12 @@ static int test_property_parse(int n)
     OSSL_PROPERTY_LIST *p = NULL, *q = NULL;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new())
+    if (TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("sky", "groan", "cold", "today", "tomorrow", "n",
                               NULL)
-        && TEST_ptr(p = ossl_parse_property(parser_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(parser_tests[n].query))
-        && TEST_int_eq(ossl_property_match(q, p), parser_tests[n].e))
+        && TEST_ptr(p = ossl_parse_property(NULL, parser_tests[n].defn))
+        && TEST_ptr(q = ossl_parse_query(NULL, parser_tests[n].query))
+        && TEST_int_eq(ossl_property_match_count(q, p), parser_tests[n].e))
         r = 1;
     ossl_property_free(p);
     ossl_property_free(q);
@@ -141,14 +155,14 @@ static int test_property_merge(int n)
     OSSL_PROPERTY_LIST *q_combined = NULL, *prop = NULL;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new())
+    if (TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("colour", "urn", "clouds", "pot", "day", "night",
                               NULL)
-        && TEST_ptr(prop = ossl_parse_property(merge_tests[n].prop))
-        && TEST_ptr(q_global = ossl_parse_query(merge_tests[n].q_global))
-        && TEST_ptr(q_local = ossl_parse_query(merge_tests[n].q_local))
+        && TEST_ptr(prop = ossl_parse_property(NULL, merge_tests[n].prop))
+        && TEST_ptr(q_global = ossl_parse_query(NULL, merge_tests[n].q_global))
+        && TEST_ptr(q_local = ossl_parse_query(NULL, merge_tests[n].q_local))
         && TEST_ptr(q_combined = ossl_property_merge(q_local, q_global))
-        && TEST_true(ossl_property_match(q_combined, prop)))
+        && TEST_int_ge(ossl_property_match_count(q_combined, prop), 0))
         r = 1;
     ossl_property_free(q_global);
     ossl_property_free(q_local);
@@ -164,15 +178,15 @@ static int test_property_defn_cache(void)
     OSSL_PROPERTY_LIST *red, *blue;
     int r = 0;
 
-    if (TEST_ptr(store = ossl_method_store_new())
+    if (TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("red", "blue", NULL)
-        && TEST_ptr(red = ossl_parse_property("red"))
-        && TEST_ptr(blue = ossl_parse_property("blue"))
+        && TEST_ptr(red = ossl_parse_property(NULL, "red"))
+        && TEST_ptr(blue = ossl_parse_property(NULL, "blue"))
         && TEST_ptr_ne(red, blue)
-        && TEST_true(ossl_prop_defn_set("red", red))
-        && TEST_true(ossl_prop_defn_set("blue", blue))
-        && TEST_ptr_eq(ossl_prop_defn_get("red"), red)
-        && TEST_ptr_eq(ossl_prop_defn_get("blue"), blue))
+        && TEST_true(ossl_prop_defn_set(NULL, "red", red))
+        && TEST_true(ossl_prop_defn_set(NULL, "blue", blue))
+        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "red"), red)
+        && TEST_ptr_eq(ossl_prop_defn_get(NULL, "blue"), blue))
         r = 1;
     ossl_method_store_free(store);
     return r;
@@ -184,10 +198,16 @@ static const struct {
     int e;
 } definition_tests[] = {
     { "alpha", "alpha=yes", 1 },
-    { "alpha=no", "alpha", 0 },
+    { "alpha=no", "alpha", -1 },
     { "alpha=1", "alpha=1", 1 },
-    { "alpha=2", "alpha=1", 0 },
-    { "alpha", "omega", 0 }
+    { "alpha=2", "alpha=1",-1 },
+    { "alpha", "omega", -1 },
+    { "alpha", "?omega", 0 },
+    { "alpha", "?omega=1", 0 },
+    { "alpha", "?omega=no", 1 },
+    { "alpha", "?omega=yes", 0 },
+    { "alpha, omega", "?omega=yes", 1 },
+    { "alpha, omega", "?omega=no", 0 }
 };
 
 static int test_definition_compares(int n)
@@ -196,11 +216,11 @@ static int test_definition_compares(int n)
     OSSL_PROPERTY_LIST *d = NULL, *q = NULL;
     int r;
 
-    r = TEST_ptr(store = ossl_method_store_new())
+    r = TEST_ptr(store = ossl_method_store_new(NULL))
         && add_property_names("alpha", "omega", NULL)
-        && TEST_ptr(d = ossl_parse_property(definition_tests[n].defn))
-        && TEST_ptr(q = ossl_parse_query(definition_tests[n].query))
-        && TEST_int_eq(ossl_property_match(q, d), definition_tests[n].e);
+        && TEST_ptr(d = ossl_parse_property(NULL, definition_tests[n].defn))
+        && TEST_ptr(q = ossl_parse_query(NULL, definition_tests[n].query))
+        && TEST_int_eq(ossl_property_match_count(q, d), definition_tests[n].e);
 
     ossl_property_free(d);
     ossl_property_free(q);
@@ -224,13 +244,14 @@ static int test_register_deregister(void)
     int ret = 0;
     OSSL_METHOD_STORE *store;
 
-    if (!TEST_ptr(store = ossl_method_store_new())
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
         || !add_property_names("position", NULL))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(impls); i++)
-        if (!TEST_true(ossl_method_store_add(store, impls[i].nid, impls[i].prop,
-                                             impls[i].impl, NULL))) {
+        if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
+                                             impls[i].prop, impls[i].impl,
+                                             &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -291,13 +312,14 @@ static int test_property(void)
     int ret = 0;
     void *result;
 
-    if (!TEST_ptr(store = ossl_method_store_new())
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
         || !add_property_names("fast", "colour", "sky", "furry", NULL))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(impls); i++)
-        if (!TEST_true(ossl_method_store_add(store, impls[i].nid, impls[i].prop,
-                                             impls[i].impl, NULL))) {
+        if (!TEST_true(ossl_method_store_add(store, NULL, impls[i].nid,
+                                             impls[i].prop, impls[i].impl,
+                                             &up_ref, &down_ref))) {
             TEST_note("iteration %zd", i + 1);
             goto err;
         }
@@ -329,17 +351,20 @@ static int test_query_cache_stochastic(void)
     int errors = 0;
     int v[10001];
 
-    if (!TEST_ptr(store = ossl_method_store_new())
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
         || !add_property_names("n", NULL))
         goto err;
 
     for (i = 1; i <= max; i++) {
         v[i] = 2 * i;
         BIO_snprintf(buf, sizeof(buf), "n=%d\n", i);
-        if (!TEST_true(ossl_method_store_add(store, i, buf, "abc", NULL))
-                || !TEST_true(ossl_method_store_cache_set(store, i, buf, v + i))
+        if (!TEST_true(ossl_method_store_add(store, NULL, i, buf, "abc",
+                                             &up_ref, &down_ref))
+                || !TEST_true(ossl_method_store_cache_set(store, i, buf, v + i,
+                                                          &up_ref, &down_ref))
                 || !TEST_true(ossl_method_store_cache_set(store, i, "n=1234",
-                                                          "miss"))) {
+                                                          "miss", &up_ref,
+                                                          &down_ref))) {
             TEST_note("iteration %d", i);
             goto err;
         }

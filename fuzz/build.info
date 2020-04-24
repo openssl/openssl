@@ -11,6 +11,10 @@
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server x509
 
+  IF[{- !$disabled{"cmp"} -}]
+    PROGRAMS{noinst}=cmp
+  ENDIF
+
   IF[{- !$disabled{"cms"} -}]
     PROGRAMS{noinst}=cms
   ENDIF
@@ -38,6 +42,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[client]=client.c driver.c
   INCLUDE[client]=../include {- $ex_inc -}
   DEPEND[client]=../libcrypto ../libssl {- $ex_lib -}
+
+  SOURCE[cmp]=cmp.c driver.c
+  INCLUDE[cmp]=../include {- $ex_inc -}
+  DEPEND[cmp]=../libcrypto {- $ex_lib -}
 
   SOURCE[cms]=cms.c driver.c
   INCLUDE[cms]=../include {- $ex_inc -}
@@ -67,6 +75,10 @@ ENDIF
 IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test x509-test
 
+  IF[{- !$disabled{"cmp"} -}]
+    PROGRAMS{noinst}=cmp-test
+  ENDIF
+
   IF[{- !$disabled{"cms"} -}]
     PROGRAMS{noinst}=cms-test
   ENDIF
@@ -94,6 +106,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[client-test]=client.c test-corpus.c
   INCLUDE[client-test]=../include
   DEPEND[client-test]=../libcrypto ../libssl
+
+  SOURCE[cmp-test]=cmp.c test-corpus.c
+  INCLUDE[cmp-test]=../include
+  DEPEND[cmp-test]=../libcrypto.a
+  # referring to static lib allows using non-exported functions
 
   SOURCE[cms-test]=cms.c test-corpus.c
   INCLUDE[cms-test]=../include

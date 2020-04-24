@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,12 +11,8 @@ use Getopt::Std;
 our($opt_n);
 getopts('n');
 
-# Output year depends on the year of the script and the input file.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
-my $iYEAR = [localtime([stat($ARGV[0])]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
-$iYEAR = [localtime([stat($ARGV[1])]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
+# The year the output file is generated.
+my $YEAR = [localtime()]->[5] + 1900;
 
 open (NUMIN,"$ARGV[1]") || die "Can't open number file $ARGV[1]";
 $max_nid=0;

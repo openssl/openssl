@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include "bio_lcl.h"
+#include "bio_local.h"
 #include "internal/cryptlib.h"
 
 static int buffer_write(BIO *h, const char *buf, int num);
@@ -410,16 +410,9 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
 
 static long buffer_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 {
-    long ret = 1;
-
     if (b->next_bio == NULL)
         return 0;
-    switch (cmd) {
-    default:
-        ret = BIO_callback_ctrl(b->next_bio, cmd, fp);
-        break;
-    }
-    return ret;
+    return BIO_callback_ctrl(b->next_bio, cmd, fp);
 }
 
 static int buffer_gets(BIO *b, char *buf, int size)

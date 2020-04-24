@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,11 +8,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <limits.h>
 
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
-#include "ec_lcl.h"
+#include "ec_local.h"
 
 const EC_METHOD *EC_GFp_nist_method(void)
 {
@@ -33,8 +39,6 @@ const EC_METHOD *EC_GFp_nist_method(void)
         ec_GFp_simple_point_clear_finish,
         ec_GFp_simple_point_copy,
         ec_GFp_simple_point_set_to_infinity,
-        ec_GFp_simple_set_Jprojective_coordinates_GFp,
-        ec_GFp_simple_get_Jprojective_coordinates_GFp,
         ec_GFp_simple_point_set_affine_coordinates,
         ec_GFp_simple_point_get_affine_coordinates,
         0, 0, 0,
@@ -65,6 +69,9 @@ const EC_METHOD *EC_GFp_nist_method(void)
         0, /* keycopy */
         0, /* keyfinish */
         ecdh_simple_compute_key,
+        ecdsa_simple_sign_setup,
+        ecdsa_simple_sign_sig,
+        ecdsa_simple_verify_sig,
         0, /* field_inverse_mod_ord */
         ec_GFp_simple_blind_coordinates,
         ec_GFp_simple_ladder_pre,
@@ -89,7 +96,7 @@ int ec_GFp_nist_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL)
-        if ((ctx = new_ctx = BN_CTX_new()) == NULL)
+        if ((ctx = new_ctx = BN_CTX_new_ex(group->libctx)) == NULL)
             return 0;
 
     BN_CTX_start(ctx);
@@ -128,7 +135,7 @@ int ec_GFp_nist_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
         goto err;
     }
     if (!ctx)
-        if ((ctx_new = ctx = BN_CTX_new()) == NULL)
+        if ((ctx_new = ctx = BN_CTX_new_ex(group->libctx)) == NULL)
             goto err;
 
     if (!BN_mul(r, a, b, ctx))
@@ -153,7 +160,7 @@ int ec_GFp_nist_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
         goto err;
     }
     if (!ctx)
-        if ((ctx_new = ctx = BN_CTX_new()) == NULL)
+        if ((ctx_new = ctx = BN_CTX_new_ex(group->libctx)) == NULL)
             goto err;
 
     if (!BN_sqr(r, a, ctx))

@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_TESTUTIL_H
-# define HEADER_TESTUTIL_H
+#ifndef OSSL_TESTUTIL_H
+# define OSSL_TESTUTIL_H
 
 #include <stdarg.h>
 
@@ -194,6 +194,12 @@ char *test_get_argument(size_t n);
 size_t test_get_argument_count(void);
 
 /*
+ * Skip over common test options. Should be called before calling
+ * test_get_argument()
+ */
+int test_skip_common_options(void);
+
+/*
  * Internal helpers. Test programs shouldn't use these directly, but should
  * rather link to one of the helper main() methods.
  */
@@ -346,6 +352,9 @@ void test_info(const char *file, int line, const char *desc, ...)
     PRINTF_FORMAT(3, 4);
 void test_info_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_note(const char *desc, ...) PRINTF_FORMAT(1, 2);
+int test_skip(const char *file, int line, const char *desc, ...)
+    PRINTF_FORMAT(3, 4);
+int test_skip_c90(const char *desc, ...) PRINTF_FORMAT(1, 2);
 void test_openssl_errors(void);
 void test_perror(const char *s);
 
@@ -463,9 +472,11 @@ void test_perror(const char *s);
 # if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 199901L
 #  define TEST_error         test_error_c90
 #  define TEST_info          test_info_c90
+#  define TEST_skip          test_skip_c90
 # else
 #  define TEST_error(...)    test_error(__FILE__, __LINE__, __VA_ARGS__)
 #  define TEST_info(...)     test_info(__FILE__, __LINE__, __VA_ARGS__)
+#  define TEST_skip(...)     test_skip(__FILE__, __LINE__, __VA_ARGS__)
 # endif
 # define TEST_note           test_note
 # define TEST_openssl_errors test_openssl_errors
@@ -532,4 +543,15 @@ void test_clearstanza(STANZA *s);
  */
 char *glue_strings(const char *list[], size_t *out_len);
 
-#endif                          /* HEADER_TESTUTIL_H */
+/*
+ * Pseudo random number generator of low quality but having repeatability
+ * across platforms.  The two calls are replacements for random(3) and
+ * srandom(3).
+ */
+uint32_t test_random(void);
+void test_random_seed(uint32_t sd);
+
+/* Create a file path from a directory and a filename */
+char *test_mk_file_path(const char *dir, const char *file);
+
+#endif                          /* OSSL_TESTUTIL_H */

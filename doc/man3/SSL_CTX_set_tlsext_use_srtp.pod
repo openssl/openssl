@@ -97,6 +97,7 @@ object if one has been negotiated or NULL otherwise.
 
 =head1 SEE ALSO
 
+L<ssl(7)>,
 L<SSL_export_keying_material(3)>
 
 =head1 COPYRIGHT

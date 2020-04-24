@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,8 +11,14 @@
  * Header for dynamic hash table routines Author - Eric Young
  */
 
-#ifndef HEADER_LHASH_H
-# define HEADER_LHASH_H
+#ifndef OPENSSL_LHASH_H
+# define OPENSSL_LHASH_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_LHASH_H
+# endif
 
 # include <openssl/e_os2.h>
 # include <openssl/bio.h>
@@ -92,7 +98,7 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define _LHASH OPENSSL_LHASH
 #  define LHASH_NODE OPENSSL_LH_NODE
 #  define lh_error OPENSSL_LH_error
@@ -121,9 +127,8 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 
 # define DEFINE_LHASH_OF(type) \
     LHASH_OF(type) { union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; }; \
-    static ossl_inline LHASH_OF(type) * \
-        lh_##type##_new(unsigned long (*hfn)(const type *), \
-                        int (*cfn)(const type *, const type *)) \
+    static ossl_unused ossl_inline LHASH_OF(type) *lh_##type##_new(unsigned long (*hfn)(const type *), \
+                                                                   int (*cfn)(const type *, const type *)) \
     { \
         return (LHASH_OF(type) *) \
             OPENSSL_LH_new((OPENSSL_LH_HASHFUNC)hfn, (OPENSSL_LH_COMPFUNC)cfn); \

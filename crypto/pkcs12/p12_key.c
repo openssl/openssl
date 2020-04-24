@@ -26,7 +26,7 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     unsigned char *unipass;
     int uniplen;
 
-    if (!pass) {
+    if (pass == NULL) {
         unipass = NULL;
         uniplen = 0;
     } else if (!OPENSSL_asc2uni(pass, passlen, &unipass, &uniplen)) {
@@ -49,7 +49,7 @@ int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
     unsigned char *unipass;
     int uniplen;
 
-    if (!pass) {
+    if (pass == NULL) {
         unipass = NULL;
         uniplen = 0;
     } else if (!OPENSSL_utf82uni(pass, passlen, &unipass, &uniplen)) {

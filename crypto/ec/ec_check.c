@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,15 +7,60 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "ec_lcl.h"
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+#include "ec_local.h"
 #include <openssl/err.h>
+
+int EC_GROUP_check_named_curve(const EC_GROUP *group, int nist_only,
+                               BN_CTX *ctx)
+{
+    int nid;
+    BN_CTX *new_ctx = NULL;
+
+    if (group == NULL) {
+        ECerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return NID_undef;
+    }
+
+    if (ctx == NULL) {
+        ctx = new_ctx = BN_CTX_new_ex(NULL);
+        if (ctx == NULL) {
+            ECerr(0, ERR_R_MALLOC_FAILURE);
+            return NID_undef;
+        }
+    }
+
+    nid = ec_curve_nid_from_params(group, ctx);
+    if (nid > 0 && nist_only && EC_curve_nid2nist(nid) == NULL)
+        nid = NID_undef;
+
+    BN_CTX_free(new_ctx);
+    return nid;
+}
 
 int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
 {
+#ifdef FIPS_MODE
+    /*
+    * ECC domain parameter validation.
+    * See SP800-56A R3 5.5.2 "Assurances of Domain-Parameter Validity" Part 1b.
+    */
+    return EC_GROUP_check_named_curve(group, 1, ctx) >= 0 ? 1 : 0;
+#else
     int ret = 0;
     const BIGNUM *order;
     BN_CTX *new_ctx = NULL;
     EC_POINT *point = NULL;
+
+    if (group == NULL || group->meth == NULL) {
+        ECerr(EC_F_EC_GROUP_CHECK, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     /* Custom curves assumed to be correct */
     if ((group->meth->flags & EC_FLAGS_CUSTOM_CURVE) != 0)
@@ -69,4 +114,5 @@ int EC_GROUP_check(const EC_GROUP *group, BN_CTX *ctx)
     BN_CTX_free(new_ctx);
     EC_POINT_free(point);
     return ret;
+#endif /* FIPS_MODE */
 }

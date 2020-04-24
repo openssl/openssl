@@ -8,13 +8,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ENGINE_H
-# define HEADER_ENGINE_H
+#ifndef OPENSSL_ENGINE_H
+# define OPENSSL_ENGINE_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_ENGINE_H
+# endif
 
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_ENGINE
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/bn.h>
 #  include <openssl/rsa.h>
 #  include <openssl/dsa.h>
@@ -24,7 +30,7 @@
 #  include <openssl/ui.h>
 #  include <openssl/err.h>
 # endif
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/symhacks.h>
 # include <openssl/x509.h>
 # include <openssl/engineerr.h>
@@ -320,7 +326,7 @@ int ENGINE_remove(ENGINE *e);
 /* Retrieve an engine from the list by its unique "id" value. */
 ENGINE *ENGINE_by_id(const char *id);
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define ENGINE_load_openssl() \
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_OPENSSL, NULL)
 # define ENGINE_load_dynamic() \
@@ -494,7 +500,7 @@ int ENGINE_set_cmd_defns(ENGINE *e, const ENGINE_CMD_DEFN *defns);
 int ENGINE_set_ex_data(ENGINE *e, int idx, void *arg);
 void *ENGINE_get_ex_data(const ENGINE *e, int idx);
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * This function previously cleaned up anything that needs it. Auto-deinit will
  * now take care of it so it is no longer required to call this function.

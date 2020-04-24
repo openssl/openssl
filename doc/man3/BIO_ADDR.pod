@@ -50,7 +50,7 @@ therefore ignored) and populates the given B<BIO_ADDR> with them.
 In case this creates a B<AF_UNIX> B<BIO_ADDR>, B<wherelen> is expected
 to be the length of the path string (not including the terminating
 NUL, such as the result of a call to strlen()).
-I<Read on about the addresses in L</RAW ADDRESSES> below>.
+Read on about the addresses in L</RAW ADDRESSES> below.
 
 BIO_ADDR_family() returns the protocol family of the given
 B<BIO_ADDR>.  The possible non-error results are one of the
@@ -67,7 +67,7 @@ order, most significant byte first.
 In case this is a B<AF_UNIX> B<BIO_ADDR>, B<l> gets the length of the
 path string (not including the terminating NUL, such as the result of
 a call to strlen()).
-I<Read on about the addresses in L</RAW ADDRESSES> below>.
+Read on about the addresses in L</RAW ADDRESSES> below.
 
 BIO_ADDR_rawport() returns the raw port of the given B<BIO_ADDR>.
 The raw port will be in network byte order.

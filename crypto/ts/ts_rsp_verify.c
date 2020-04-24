@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,8 +12,15 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
-#include "ts_lcl.h"
-#include "internal/ess_int.h"
+#include "ts_local.h"
+#include "crypto/ess.h"
+
+DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(ESS_CERT_ID)
+DEFINE_STACK_OF(ESS_CERT_ID_V2)
+DEFINE_STACK_OF(ASN1_UTF8STRING)
+DEFINE_STACK_OF(GENERAL_NAME)
 
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain);
@@ -265,10 +272,11 @@ static int ts_find_cert(STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
     if (!cert_ids || !cert)
         return -1;
 
-    X509_digest(cert, EVP_sha1(), cert_sha1, NULL);
-
     /* Recompute SHA1 hash of certificate if necessary (side effect). */
     X509_check_purpose(cert, -1, 0);
+
+    if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
+        return -1;
 
     /* Look for cert in the cert_ids vector. */
     for (i = 0; i < sk_ESS_CERT_ID_num(cert_ids); ++i) {
@@ -302,7 +310,8 @@ static int ts_find_cert_v2(STACK_OF(ESS_CERT_ID_V2) *cert_ids, X509 *cert)
         else
             md = EVP_sha256();
 
-        X509_digest(cert, md, cert_digest, &len);
+        if (!X509_digest(cert, md, cert_digest, &len))
+            return -1;
         if (cid->hash->length != (int)len)
             return -1;
 
@@ -495,34 +504,7 @@ static int ts_check_status_info(TS_RESP *response)
 
 static char *ts_get_status_text(STACK_OF(ASN1_UTF8STRING) *text)
 {
-    int i;
-    int length = 0;
-    char *result = NULL;
-    char *p;
-
-    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); ++i) {
-        ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
-        if (ASN1_STRING_length(current) > TS_MAX_STATUS_LENGTH - length - 1)
-            return NULL;
-        length += ASN1_STRING_length(current);
-        length += 1;            /* separator character */
-    }
-    if ((result = OPENSSL_malloc(length)) == NULL) {
-        TSerr(TS_F_TS_GET_STATUS_TEXT, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i) {
-        ASN1_UTF8STRING *current = sk_ASN1_UTF8STRING_value(text, i);
-        length = ASN1_STRING_length(current);
-        if (i > 0)
-            *p++ = '/';
-        strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
-        p += length;
-    }
-    *p = '\0';
-
-    return result;
+    return sk_ASN1_UTF8STRING2text(text, "/", TS_MAX_STATUS_LENGTH);
 }
 
 static int ts_check_policy(const ASN1_OBJECT *req_oid,

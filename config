@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -349,17 +349,6 @@ if [ -d /usr/apollo ]; then
     exit 0
 fi
 
-# Now NeXT
-ISNEXT=`hostinfo 2>/dev/null`
-case "$ISNEXT" in
-    *'NeXT Mach 3.3'*)
-	echo "whatever-next-nextstep3.3"; exit 0
-	;;
-    *NeXT*)
-	echo "whatever-next-nextstep"; exit 0
-	;;
-esac
-
 # At this point we gone through all the one's
 # we know of: Punt
 
@@ -498,21 +487,18 @@ case "$GUESSOS" in
 	    OUT="darwin64-x86_64-cc"
 	fi ;;
   armv6+7-*-iphoneos)
-	__CNF_CFLAGS="$__CNF_CFLAGS -arch%20armv6 -arch%20armv7"
-	__CNF_CXXFLAGS="$__CNF_CXXFLAGS -arch%20armv6 -arch%20armv7"
+	__CNF_CFLAGS="$__CNF_CFLAGS -arch armv6 -arch armv7"
+	__CNF_CXXFLAGS="$__CNF_CXXFLAGS -arch armv6 -arch armv7"
 	OUT="iphoneos-cross" ;;
   *-*-iphoneos)
-	__CNF_CFLAGS="$__CNF_CFLAGS -arch%20${MACHINE}"
-	__CNF_CXXFLAGS="$__CNF_CXXFLAGS -arch%20${MACHINE}"
+	__CNF_CFLAGS="$__CNF_CFLAGS -arch ${MACHINE}"
+	__CNF_CXXFLAGS="$__CNF_CXXFLAGS -arch ${MACHINE}"
 	OUT="iphoneos-cross" ;;
   arm64-*-iphoneos|*-*-ios64)
 	OUT="ios64-cross" ;;
   alpha-*-linux2)
         ISA=`awk '/cpu model/{print$4;exit(0);}' /proc/cpuinfo`
-	case ${ISA:-generic} in
-	*[678])	OUT="linux-alpha+bwx-$CC" ;;
-	*)	OUT="linux-alpha-$CC" ;;
-	esac
+	OUT="linux-alpha-$CC"
 	if [ "$CC" = "gcc" ]; then
 	    case ${ISA:-generic} in
 	    EV5|EV45)		__CNF_CFLAGS="$__CNF_CFLAGS -mcpu=ev5"
@@ -562,6 +548,7 @@ case "$GUESSOS" in
   pentium-*-vxworks*) OUT="vxworks-pentium" ;;
   simlinux-*-vxworks*) OUT="vxworks-simlinux" ;;
   mips-*-vxworks*) OUT="vxworks-mips";;
+  e2k-*-linux*) OUT="linux-generic64 -DL_ENDIAN" ;;
   ia64-*-linux?) OUT="linux-ia64" ;;
   sparc64-*-linux2)
 	echo "WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI"
@@ -860,14 +847,6 @@ case "$GUESSOS" in
   i386-*) options="$options 386" ;;
 esac
 
-for i in aes aria bf camellia cast des dh dsa ec hmac idea md2 md5 mdc2 rc2 rc4 rc5 ripemd rsa seed sha sm2 sm3 sm4
-do
-  if [ ! -d $THERE/crypto/$i ]
-  then
-    options="$options no-$i"
-  fi
-done
-
 if [ -z "$OUT" ]; then
   OUT="$CC"
 fi
@@ -908,8 +887,12 @@ fi
 
 OUT="$OUT"
 
-$PERL $THERE/Configure LIST | grep "$OUT" > /dev/null
-if [ $? = "0" ]; then
+if [ "$OUT" = "darwin64-x86_64-cc" ]; then
+    echo "WARNING! If you wish to build 32-bit libraries, then you have to"
+    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
+fi
+
+if $PERL $THERE/Configure LIST | grep "$OUT" > /dev/null; then
   if [ "$VERBOSE" = "true" ]; then
     echo /usr/bin/env \
 	 __CNF_CPPDEFINES="'$__CNF_CPPDEFINES'" \
@@ -939,8 +922,5 @@ else
   exit 1
 fi
 
-if [ "$OUT" = "darwin64-x86_64-cc" ]; then
-    echo "WARNING! If you wish to build 32-bit libraries, then you have to"
-    echo "         invoke 'KERNEL_BITS=32 $THERE/config $options'."
-fi
+# Do not add anothing from here on, so we don't lose the Configure exit code
 )

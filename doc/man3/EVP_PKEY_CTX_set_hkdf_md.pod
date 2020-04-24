@@ -121,7 +121,7 @@ All these functions return 1 for success and 0 or a negative value for failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 This example derives 10 bytes using SHA-256 with the secret key "secret",
 salt value "salt" and info value "label":

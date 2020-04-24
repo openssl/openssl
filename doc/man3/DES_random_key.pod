@@ -16,6 +16,10 @@ DES_fcrypt, DES_crypt - DES encryption
 
  #include <openssl/des.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  void DES_random_key(DES_cblock *ret);
 
  int DES_set_key(const_DES_cblock *key, DES_key_schedule *schedule);
@@ -94,6 +98,10 @@ DES_fcrypt, DES_crypt - DES encryption
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated. Applications should
+instead use L<EVP_EncryptInit_ex(3)>, L<EVP_EncryptUpdate(3)> and
+L<EVP_EncryptFinal_ex(3)> or the equivalently named decrypt functions.
+
 This library contains a fast implementation of the DES encryption
 algorithm.
 
@@ -104,9 +112,11 @@ consists of 8 bytes with odd parity.  The least significant bit in
 each byte is the parity bit.  The key schedule is an expanded form of
 the key; it is used to speed the encryption process.
 
-DES_random_key() generates a random key.  The PRNG must be seeded
-prior to using this function (see L<RAND_bytes(3)>).  If the PRNG
-could not generate a secure key, 0 is returned.
+DES_random_key() generates a random key.  The random generator must be
+seeded when calling this function.
+If the automatic seeding or reseeding of the OpenSSL CSPRNG fails due to
+external circumstances (see L<RAND(7)>), the operation will fail.
+If the function fails, 0 is returned.
 
 Before a DES key can be used, it must be converted into the
 architecture dependent I<DES_key_schedule> via the
@@ -117,11 +127,8 @@ and is not a weak or semi-weak key.  If the parity is wrong, then -1
 is returned.  If the key is a weak key, then -2 is returned.  If an
 error is returned, the key schedule is not generated.
 
-DES_set_key() works like
-DES_set_key_checked() if the I<DES_check_key> flag is non-zero,
-otherwise like DES_set_key_unchecked().  These functions are available
-for compatibility; it is recommended to use a function that does not
-depend on a global variable.
+DES_set_key() works like DES_set_key_checked() and remains for
+backward compatibility.
 
 DES_set_odd_parity() sets the parity of the passed I<key> to odd.
 
@@ -135,7 +142,7 @@ DES_ecb_encrypt() is the basic DES encryption routine that encrypts or
 decrypts a single 8-byte I<DES_cblock> in I<electronic code book>
 (ECB) mode.  It always transforms the input data, pointed to by
 I<input>, into the output data, pointed to by the I<output> argument.
-If the I<encrypt> argument is non-zero (DES_ENCRYPT), the I<input>
+If the I<encrypt> argument is nonzero (DES_ENCRYPT), the I<input>
 (cleartext) is encrypted in to the I<output> (ciphertext) using the
 key_schedule specified by the I<schedule> argument, previously set via
 I<DES_set_key>. If I<encrypt> is zero (DES_DECRYPT), the I<input> (now
@@ -154,7 +161,7 @@ The macro DES_ecb2_encrypt() is provided to perform two-key Triple-DES
 encryption by using I<ks1> for the final encryption.
 
 DES_ncbc_encrypt() encrypts/decrypts using the I<cipher-block-chaining>
-(CBC) mode of DES.  If the I<encrypt> argument is non-zero, the
+(CBC) mode of DES.  If the I<encrypt> argument is nonzero, the
 routine cipher-block-chain encrypts the cleartext data pointed to by
 the I<input> argument into the ciphertext pointed to by the I<output>
 argument, using the key schedule provided by the I<schedule> argument,
@@ -296,7 +303,14 @@ last 4 bytes of the checksum of the input.
 DES_fcrypt() returns a pointer to the caller-provided buffer and DES_crypt() -
 to a static buffer on success; otherwise they return NULL.
 
+=head1 SEE ALSO
+
+L<des_modes(7)>,
+L<EVP_EncryptInit(3)>
+
 =head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 The requirement that the B<salt> parameter to DES_crypt() and DES_fcrypt()
 be two ASCII characters was first enforced in
@@ -304,14 +318,9 @@ OpenSSL 1.1.0.  Previous versions tried to use the letter uppercase B<A>
 if both character were not present, and could crash when given non-ASCII
 on some platforms.
 
-=head1 SEE ALSO
-
-L<des_modes(7)>,
-L<EVP_EncryptInit(3)>
-
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

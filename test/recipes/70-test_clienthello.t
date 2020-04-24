@@ -15,6 +15,10 @@ setup("test_clienthello");
 plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
     if alldisabled(grep { $_ ne "ssl3" } available_protocols("tls"));
 
+#No EC with TLSv1.3 confuses the padding calculations in this test
+plan skip_all => "No EC with TLSv1.3 is not supported by this test"
+    if disabled("ec") && !disabled("tls1_3");
+
 plan tests => 1;
 
 ok(run(test(["clienthellotest", srctop_file("test", "session.pem")])),

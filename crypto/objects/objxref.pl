@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 1998-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -14,12 +14,8 @@ my %oid_tbl;
 
 my ($mac_file, $xref_file) = @ARGV;
 
-# Output year depends on the year of the script and the input file.
-my $YEAR = [localtime([stat($0)]->[9])]->[5] + 1900;
-my $iYEAR = [localtime([stat($mac_file)]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
-$iYEAR = [localtime([stat($xref_file)]->[9])]->[5] + 1900;
-$YEAR = $iYEAR if $iYEAR > $YEAR;
+# The year the output file is generated.
+my $YEAR = [localtime()]->[5] + 1900;
 
 open(IN, $mac_file) || die "Can't open $mac_file, $!\n";
 

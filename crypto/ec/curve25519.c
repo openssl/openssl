@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
-#include "ec_lcl.h"
+#include "crypto/ecx.h"
+#include "ec_local.h"
+#include <openssl/evp.h>
 #include <openssl/sha.h>
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || \
@@ -254,6 +262,7 @@ static void x25519_scalar_mulx(uint8_t out[32], const uint8_t scalar[32],
 #if defined(X25519_ASM) \
     || ( (defined(__SIZEOF_INT128__) && __SIZEOF_INT128__ == 16) \
          && !defined(__sparc__) \
+         && (!defined(__SIZEOF_LONG__) || (__SIZEOF_LONG__ == 8)) \
          && !(defined(__ANDROID__) && !defined(__clang__)) )
 /*
  * Base 2^51 implementation. It's virtually no different from reference
@@ -5429,56 +5438,72 @@ static void sc_muladd(uint8_t *s, const uint8_t *a, const uint8_t *b,
 }
 
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t public_key[32], const uint8_t private_key[32])
+                 const uint8_t public_key[32], const uint8_t private_key[32],
+                 OPENSSL_CTX *libctx, const char *propq)
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     uint8_t nonce[SHA512_DIGEST_LENGTH];
     ge_p3 R;
     uint8_t hram[SHA512_DIGEST_LENGTH];
-    SHA512_CTX hash_ctx;
+    EVP_MD *sha512 = EVP_MD_fetch(libctx, SN_sha512, propq);
+    EVP_MD_CTX *hash_ctx = EVP_MD_CTX_new();
+    unsigned int sz;
+    int res = 0;
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, private_key, 32);
-    SHA512_Final(az, &hash_ctx);
+    if (sha512 == NULL || hash_ctx == NULL)
+        goto err;
+
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, private_key, 32)
+        || !EVP_DigestFinal_ex(hash_ctx, az, &sz))
+        goto err;
 
     az[0] &= 248;
     az[31] &= 63;
     az[31] |= 64;
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, az + 32, 32);
-    SHA512_Update(&hash_ctx, message, message_len);
-    SHA512_Final(nonce, &hash_ctx);
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, az + 32, 32)
+        || !EVP_DigestUpdate(hash_ctx, message, message_len)
+        || !EVP_DigestFinal_ex(hash_ctx, nonce, &sz))
+        goto err;
 
     x25519_sc_reduce(nonce);
     ge_scalarmult_base(&R, nonce);
     ge_p3_tobytes(out_sig, &R);
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, out_sig, 32);
-    SHA512_Update(&hash_ctx, public_key, 32);
-    SHA512_Update(&hash_ctx, message, message_len);
-    SHA512_Final(hram, &hash_ctx);
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, out_sig, 32)
+        || !EVP_DigestUpdate(hash_ctx, public_key, 32)
+        || !EVP_DigestUpdate(hash_ctx, message, message_len)
+        || !EVP_DigestFinal_ex(hash_ctx, hram, &sz))
+        goto err;
 
     x25519_sc_reduce(hram);
     sc_muladd(out_sig + 32, hram, az, nonce);
 
-    OPENSSL_cleanse(&hash_ctx, sizeof(hash_ctx));
+    res = 1;
+err:
     OPENSSL_cleanse(nonce, sizeof(nonce));
     OPENSSL_cleanse(az, sizeof(az));
-
-    return 1;
+    EVP_MD_free(sha512);
+    EVP_MD_CTX_free(hash_ctx);
+    return res;
 }
 
 static const char allzeroes[15];
 
 int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32])
+                   const uint8_t signature[64], const uint8_t public_key[32],
+                   OPENSSL_CTX *libctx, const char *propq)
 {
     int i;
     ge_p3 A;
     const uint8_t *r, *s;
-    SHA512_CTX hash_ctx;
+    EVP_MD *sha512;
+    EVP_MD_CTX *hash_ctx = NULL;
+    unsigned int sz;
+    int res = 0;
     ge_p2 R;
     uint8_t rcheck[32];
     uint8_t h[SHA512_DIGEST_LENGTH];
@@ -5525,11 +5550,19 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
     fe_neg(A.X, A.X);
     fe_neg(A.T, A.T);
 
-    SHA512_Init(&hash_ctx);
-    SHA512_Update(&hash_ctx, r, 32);
-    SHA512_Update(&hash_ctx, public_key, 32);
-    SHA512_Update(&hash_ctx, message, message_len);
-    SHA512_Final(h, &hash_ctx);
+    sha512 = EVP_MD_fetch(libctx, SN_sha512, propq);
+    if (sha512 == NULL)
+        return 0;
+    hash_ctx = EVP_MD_CTX_new();
+    if (hash_ctx == NULL)
+        goto err;
+
+    if (!EVP_DigestInit_ex(hash_ctx, sha512, NULL)
+        || !EVP_DigestUpdate(hash_ctx, r, 32)
+        || !EVP_DigestUpdate(hash_ctx, public_key, 32)
+        || !EVP_DigestUpdate(hash_ctx, message, message_len)
+        || !EVP_DigestFinal_ex(hash_ctx, h, &sz))
+        goto err;
 
     x25519_sc_reduce(h);
 
@@ -5537,16 +5570,30 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
 
     ge_tobytes(rcheck, &R);
 
-    return CRYPTO_memcmp(rcheck, r, sizeof(rcheck)) == 0;
+    res = CRYPTO_memcmp(rcheck, r, sizeof(rcheck)) == 0;
+err:
+    EVP_MD_free(sha512);
+    EVP_MD_CTX_free(hash_ctx);
+    return res;
 }
 
-void ED25519_public_from_private(uint8_t out_public_key[32],
-                                 const uint8_t private_key[32])
+int ED25519_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[32],
+                                const uint8_t private_key[32])
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     ge_p3 A;
+    int r;
+    EVP_MD *sha512 = NULL;
 
-    SHA512(private_key, 32, az);
+    sha512 = EVP_MD_fetch(ctx, SN_sha512, NULL);
+    if (sha512 == NULL)
+        return 0;
+    r = EVP_Digest(private_key, 32, az, NULL, sha512, NULL);
+    EVP_MD_free(sha512);
+    if (!r) {
+        OPENSSL_cleanse(az, sizeof(az));
+        return 0;
+    }
 
     az[0] &= 248;
     az[31] &= 63;
@@ -5556,6 +5603,7 @@ void ED25519_public_from_private(uint8_t out_public_key[32],
     ge_p3_tobytes(out_public_key, &A);
 
     OPENSSL_cleanse(az, sizeof(az));
+    return 1;
 }
 
 int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],

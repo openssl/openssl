@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_DRBG_RAND_H
-# define HEADER_DRBG_RAND_H
+#ifndef OPENSSL_RAND_DRBG_H
+# define OPENSSL_RAND_DRBG_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_DRBG_RAND_H
+# endif
 
 # include <time.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/obj_mac.h>
 
 /*
@@ -36,7 +42,7 @@
 /* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
 # define RAND_DRBG_FLAG_PRIVATE              0x10
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /* This #define was replaced by an internal constant and should not be used. */
 #  define RAND_DRBG_USED_FLAGS  (RAND_DRBG_FLAG_CTR_NO_DF)
 # endif
@@ -72,6 +78,10 @@ extern "C" {
 /*
  * Object lifetime functions.
  */
+RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx, int type, unsigned int flags,
+                            RAND_DRBG *parent);
+RAND_DRBG *RAND_DRBG_secure_new_ex(OPENSSL_CTX *ctx, int type,
+                                   unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent);
 int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags);
@@ -102,6 +112,9 @@ int RAND_DRBG_set_reseed_defaults(
                                   time_t slave_reseed_time_interval
                                   );
 
+RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx);
+RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
+RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
 RAND_DRBG *RAND_DRBG_get0_master(void);
 RAND_DRBG *RAND_DRBG_get0_public(void);
 RAND_DRBG *RAND_DRBG_get0_private(void);
@@ -110,7 +123,7 @@ RAND_DRBG *RAND_DRBG_get0_private(void);
  * EXDATA
  */
 # define RAND_DRBG_get_ex_new_index(l, p, newf, dupf, freef) \
-    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_DRBG, l, p, newf, dupf, freef)
+    CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_RAND_DRBG, l, p, newf, dupf, freef)
 int RAND_DRBG_set_ex_data(RAND_DRBG *drbg, int idx, void *arg);
 void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx);
 
@@ -136,6 +149,10 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_get_nonce_fn get_nonce,
                             RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
+
+int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *data);
+
+void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg);
 
 # ifdef  __cplusplus
 }

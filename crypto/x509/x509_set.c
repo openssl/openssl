@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,9 +15,9 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include "internal/asn1_int.h"
-#include "internal/x509_int.h"
-#include "x509_lcl.h"
+#include "crypto/asn1.h"
+#include "crypto/x509.h"
+#include "x509_local.h"
 
 int X509_set_version(X509 *x, long version)
 {
@@ -47,14 +47,14 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
     return 1;
 }
 
-int X509_set_issuer_name(X509 *x, X509_NAME *name)
+int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 {
     if (x == NULL)
         return 0;
     return X509_NAME_set(&x->cert_info.issuer, name);
 }
 
-int X509_set_subject_name(X509 *x, X509_NAME *name)
+int X509_set_subject_name(X509 *x, const X509_NAME *name)
 {
     if (x == NULL)
         return 0;
@@ -222,6 +222,20 @@ static void x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
         return;
     /* Security bits: half number of bits in digest */
     siginf->secbits = EVP_MD_size(md) * 4;
+    /*
+     * SHA1 and MD5 are known to be broken. Reduce security bits so that
+     * they're no longer accepted at security level 1. The real values don't
+     * really matter as long as they're lower than 80, which is our security
+     * level 1.
+     * https://eprint.iacr.org/2020/014 puts a chosen-prefix attack for SHA1 at
+     * 2^63.4
+     * https://documents.epfl.ch/users/l/le/lenstra/public/papers/lat.pdf
+     * puts a chosen-prefix attack for MD5 at 2^39.
+     */
+    if (mdnid == NID_sha1)
+        siginf->secbits = 63;
+    else if (mdnid == NID_md5)
+        siginf->secbits = 39;
     switch (mdnid) {
         case NID_sha1:
         case NID_sha256:

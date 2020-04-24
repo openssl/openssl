@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -38,14 +38,14 @@
 # Implement AES_set_[en|de]crypt_key. Key schedule setup is avoided
 # for 128-bit keys, if hardware support is detected.
 
-# Januray 2009.
+# January 2009.
 #
 # Add support for hardware AES192/256 and reschedule instructions to
 # minimize/avoid Address Generation Interlock hazard and to favour
 # dual-issue z10 pipeline. This gave ~25% improvement on z10 and
 # almost 50% on z9. The gain is smaller on z10, because being dual-
 # issue z10 makes it impossible to eliminate the interlock condition:
-# critial path is not long enough. Yet it spends ~24 cycles per byte
+# critical path is not long enough. Yet it spends ~24 cycles per byte
 # processed with 128-bit key.
 #
 # Unlike previous version hardware support detection takes place only
@@ -89,7 +89,10 @@
 # instructions, which deliver ~70% improvement at 8KB block size over
 # vanilla km-based code, 37% - at most like 512-bytes block size.
 
-$flavour = shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour =~ /3[12]/) {
 	$SIZE_T=4;
@@ -99,8 +102,7 @@ if ($flavour =~ /3[12]/) {
 	$g="g";
 }
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output and open STDOUT,">$output";
 
 $softonly=0;	# allow hardware support
 
@@ -1987,7 +1989,7 @@ $code.=<<___;
 
 .Lxts_enc_done:
 	stg	$sp,$tweak+0($sp)	# wipe tweak
-	stg	$sp,$twesk+8($sp)
+	stg	$sp,$tweak+8($sp)
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
 .size	AES_xts_encrypt,.-AES_xts_encrypt
@@ -2267,7 +2269,7 @@ $code.=<<___;
 	stg	$sp,$tweak-16+8($sp)
 .Lxts_dec_done:
 	stg	$sp,$tweak+0($sp)	# wipe tweak
-	stg	$sp,$twesk+8($sp)
+	stg	$sp,$tweak+8($sp)
 	lm${g}	%r6,$ra,6*$SIZE_T($sp)
 	br	$ra
 .size	AES_xts_decrypt,.-AES_xts_decrypt
@@ -2279,4 +2281,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
-close STDOUT;	# force flush
+close STDOUT or die "error closing STDOUT: $!";	# force flush

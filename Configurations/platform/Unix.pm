@@ -13,7 +13,8 @@ require platform::BASE;
 use configdata;
 
 sub binext              { $target{exe_extension} || '' }
-sub dsoext              { $target{dso_extension} || '.so' }
+sub dsoext              { $target{dso_extension} || platform->shlibextsimple()
+                              || '.so' }
 # Because these are also used in scripts and not just Makefile, we must
 # convert $(SHLIB_VERSION_NUMBER) to the actual number.
 sub shlibext            { (my $x = $target{shared_extension}

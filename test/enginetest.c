@@ -121,8 +121,12 @@ static int test_engines(void)
     display_engine_list();
 
     /*
-     * Depending on whether there's any hardware support compiled in, this
-     * remove may be destined to fail.
+     * At this point, we should have an empty list, unless some hardware
+     * support engine got added.  However, since we don't allow the config
+     * file to be loaded and don't otherwise load any built in engines,
+     * that is unlikely.  Still, we check, if for nothing else, then to
+     * notify that something is a little off (and might mean that |new_h1|
+     * wasn't unloaded when it should have)
      */
     if ((ptr = ENGINE_get_first()) != NULL) {
         if (!ENGINE_remove(ptr))
@@ -279,7 +283,7 @@ static int test_redirect(void)
      * Try setting test key engine. Both should fail because the
      * engine has no public key methods.
      */
-    if (!TEST_ptr_null(EVP_PKEY_CTX_new(pkey, e))
+    if (!TEST_ptr_null(ctx = EVP_PKEY_CTX_new(pkey, e))
             || !TEST_int_le(EVP_PKEY_set1_engine(pkey, e), 0))
         goto err;
 
@@ -346,6 +350,15 @@ static int test_redirect(void)
     return to_return;
 }
 #endif
+
+int global_init(void)
+{
+    /*
+     * If the config file gets loaded, the dynamic engine will be loaded,
+     * and that interferes with our test above.
+     */
+    return OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL);
+}
 
 int setup_tests(void)
 {

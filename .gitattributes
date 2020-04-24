@@ -10,3 +10,4 @@ util/mktar.sh                           export-ignore
 boringssl                               export-ignore
 krb5                                    export-ignore
 pyca-cryptography                       export-ignore
+dev                                     export-ignore

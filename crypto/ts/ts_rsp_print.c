@@ -13,7 +13,10 @@
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 #include <openssl/ts.h>
-#include "ts_lcl.h"
+#include "ts_local.h"
+
+DEFINE_STACK_OF(ASN1_UTF8STRING)
+DEFINE_STACK_OF(CONF_VALUE)
 
 struct status_map_st {
     int bit;

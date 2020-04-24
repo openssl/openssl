@@ -15,6 +15,10 @@
 #include <openssl/engine.h>
 #include <openssl/ts.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_INFO)
+DEFINE_STACK_OF(CONF_VALUE)
+
 /* Macro definitions for the configuration file. */
 #define BASE_SECTION                    "tsa"
 #define ENV_DEFAULT_TSA                 "default_tsa"
@@ -283,9 +287,10 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
 {
     int ret = 0;
     ASN1_OBJECT *policy_obj = NULL;
-    if (!policy)
+
+    if (policy == NULL)
         policy = NCONF_get_string(conf, section, ENV_DEFAULT_POLICY);
-    if (!policy) {
+    if (policy == NULL) {
         ts_CONF_lookup_fail(section, ENV_DEFAULT_POLICY);
         goto err;
     }

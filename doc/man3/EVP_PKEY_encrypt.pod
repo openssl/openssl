@@ -41,7 +41,7 @@ EVP_PKEY_encrypt_init() and EVP_PKEY_encrypt() return 1 for success and 0
 or a negative value for failure. In particular a return value of -2
 indicates the operation is not supported by the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Encrypt data using OAEP (for RSA keys). See also L<PEM_read_PUBKEY(3)> or
 L<d2i_X509(3)> for means to load a public key. You may also simply

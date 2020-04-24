@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,8 +24,7 @@
 # dependent on input length. This module on the other hand is free
 # from such limitation.
 
-$output=pop;
-open STDOUT,">$output";
+$output=pop and open STDOUT,">$output";
 
 ($OUT,$INP,$LEN,$KEYB,$COUNTERA)=("A4","B4","A6","B6","A8");
 ($KEYA,$COUNTERB,$STEP)=("A7","B7","A3");
@@ -923,4 +922,4 @@ $code.=<<___;
 ___
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

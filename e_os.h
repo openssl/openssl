@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_E_OS_H
-# define HEADER_E_OS_H
+#ifndef OSSL_E_OS_H
+# define OSSL_E_OS_H
 
 # include <limits.h>
 # include <openssl/opensslconf.h>
@@ -21,25 +21,6 @@
  * <openssl/e_os2.h> contains what we can justify to make visible to the
  * outside; this file e_os.h is not part of the exported interface.
  */
-
-# ifndef DEVRANDOM
-/*
- * set this to a comma-separated list of 'random' device files to try out. By
- * default, we will try to read at least one of these files
- */
-#  define DEVRANDOM "/dev/urandom", "/dev/random", "/dev/hwrng", "/dev/srandom"
-#  ifdef __linux
-#   define DEVRANDOM_WAIT "/dev/random"
-#  endif
-# endif
-# if !defined(OPENSSL_NO_EGD) && !defined(DEVRANDOM_EGD)
-/*
- * set this to a comma-separated list of 'egd' sockets to try out. These
- * sockets will be tried in the order listed in case accessing the device
- * files listed in DEVRANDOM did not return enough randomness.
- */
-#  define DEVRANDOM_EGD "/var/run/egd-pool", "/dev/egd-pool", "/etc/egd-pool", "/etc/entropy"
-# endif
 
 # if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
 #  define NO_CHMOD
@@ -84,7 +65,6 @@
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
-#   define HAS_LFN_SUPPORT(name)  (pathconf((name), _PC_NAME_MAX) > 12)
 #   undef DEVRANDOM_EGD  /*  Neither MS-DOS nor FreeDOS provide 'egd' sockets.  */
 #   undef DEVRANDOM
 #   define DEVRANDOM "/dev/urandom\x24"
@@ -210,7 +190,7 @@ extern FILE *_imp___iob;
 # else                          /* The non-microsoft world */
 
 #  if defined(OPENSSL_SYS_VXWORKS)
-#   include <sys/times.h>
+#   include <time.h>
 #  else
 #   include <sys/time.h>
 #  endif
@@ -260,11 +240,7 @@ extern FILE *_imp___iob;
 
 #  else
      /* !defined VMS */
-#   ifdef OPENSSL_UNISTD
-#    include OPENSSL_UNISTD
-#   else
-#    include <unistd.h>
-#   endif
+#   include <unistd.h>
 #   include <sys/types.h>
 #   ifdef OPENSSL_SYS_WIN32_CYGWIN
 #    include <io.h>
@@ -323,11 +299,16 @@ struct servent *getservbyname(const char *name, const char *proto);
 #  define CRYPTO_memcmp memcmp
 # endif
 
-/* unistd.h defines _POSIX_VERSION */
-# if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
-     && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
-          || defined(__sun) || defined(__hpux) || defined(__sgi)      \
-          || defined(__osf__) )
-#  define OPENSSL_SECURE_MEMORY  /* secure memory is implemented */
+# ifndef OPENSSL_NO_SECURE_MEMORY
+   /* unistd.h defines _POSIX_VERSION */
+#  if defined(OPENSSL_SYS_UNIX) \
+      && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
+           || defined(__sun) || defined(__hpux) || defined(__sgi)      \
+           || defined(__osf__) )
+      /* secure memory is implemented */
+#   else
+#     define OPENSSL_NO_SECURE_MEMORY
+#   endif
 # endif
+
 #endif

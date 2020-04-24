@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,11 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * BF low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #ifndef OPENSSL_NO_BF
 # include <openssl/evp.h>
-# include "internal/evp_int.h"
+# include "crypto/evp.h"
 # include <openssl/objects.h>
 # include <openssl/blowfish.h>
 

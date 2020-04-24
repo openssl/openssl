@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_ASN1_H
-# define HEADER_ASN1_H
+#ifndef OPENSSL_ASN1_H
+# define OPENSSL_ASN1_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_ASN1_H
+# endif
 
 # include <time.h>
 # include <openssl/e_os2.h>
@@ -18,10 +24,8 @@
 # include <openssl/asn1err.h>
 # include <openssl/symhacks.h>
 
-# include <openssl/ossl_typ.h>
-# if !OPENSSL_API_1_1_0
-#  include <openssl/bn.h>
-# endif
+# include <openssl/types.h>
+# include <openssl/bn.h>
 
 # ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #  undef OPENSSL_EXTERN
@@ -115,8 +119,14 @@ extern "C" {
 # define SMIME_OLDMIME           0x400
 # define SMIME_CRLFEOL           0x800
 # define SMIME_STREAM            0x1000
-    struct X509_algor_st;
-DEFINE_STACK_OF(X509_ALGOR)
+
+DEFINE_OR_DECLARE_STACK_OF(ASN1_GENERALSTRING)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_INTEGER)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_OBJECT)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_STRING_TABLE)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_UTF8STRING)
+DEFINE_OR_DECLARE_STACK_OF(X509_ALGOR)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_TYPE)
 
 # define ASN1_STRING_FLAG_BITS_LEFT 0x08/* Set if 0x07 has bits left value */
 /*
@@ -183,15 +193,14 @@ typedef struct ASN1_ENCODING_st {
  (B_ASN1_PRINTABLESTRING|B_ASN1_T61STRING|B_ASN1_BMPSTRING|B_ASN1_UTF8STRING)
 # define PKCS9STRING_TYPE (DIRSTRING_TYPE|B_ASN1_IA5STRING)
 
-typedef struct asn1_string_table_st {
+struct asn1_string_table_st {
     int nid;
     long minsize;
     long maxsize;
     unsigned long mask;
     unsigned long flags;
-} ASN1_STRING_TABLE;
+};
 
-DEFINE_STACK_OF(ASN1_STRING_TABLE)
 
 /* size limits: this stuff is taken straight from RFC2459 */
 
@@ -272,7 +281,8 @@ typedef struct ASN1_VALUE_st ASN1_VALUE;
 # define TYPEDEF_I2D_OF(type) typedef int i2d_of_##type(const type *,unsigned char **)
 # define TYPEDEF_D2I2D_OF(type) TYPEDEF_D2I_OF(type); TYPEDEF_I2D_OF(type)
 
-TYPEDEF_D2I2D_OF(void);
+typedef void *d2i_of_void(void **, const unsigned char **, long);
+typedef int i2d_of_void(const void *, unsigned char **);
 
 /*-
  * The following macros and typedefs allow an ASN1_ITEM
@@ -310,23 +320,6 @@ TYPEDEF_D2I2D_OF(void);
  *
  */
 
-# ifndef OPENSSL_EXPORT_VAR_AS_FUNCTION
-
-/* ASN1_ITEM pointer exported type */
-typedef const ASN1_ITEM ASN1_ITEM_EXP;
-
-/* Macro to obtain ASN1_ITEM pointer from exported type */
-#  define ASN1_ITEM_ptr(iptr) (iptr)
-
-/* Macro to include ASN1_ITEM pointer from base type */
-#  define ASN1_ITEM_ref(iptr) (&(iptr##_it))
-
-#  define ASN1_ITEM_rptr(ref) (&(ref##_it))
-
-#  define DECLARE_ASN1_ITEM(name) \
-        OPENSSL_EXTERN const ASN1_ITEM name##_it;
-
-# else
 
 /*
  * Platforms that can't easily handle shared global variables are declared as
@@ -337,17 +330,15 @@ typedef const ASN1_ITEM ASN1_ITEM_EXP;
 typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
 
 /* Macro to obtain ASN1_ITEM pointer from exported type */
-#  define ASN1_ITEM_ptr(iptr) (iptr())
+# define ASN1_ITEM_ptr(iptr) (iptr())
 
 /* Macro to include ASN1_ITEM pointer from base type */
-#  define ASN1_ITEM_ref(iptr) (iptr##_it)
+# define ASN1_ITEM_ref(iptr) (iptr##_it)
 
-#  define ASN1_ITEM_rptr(ref) (ref##_it())
+# define ASN1_ITEM_rptr(ref) (ref##_it())
 
-#  define DECLARE_ASN1_ITEM(name) \
+# define DECLARE_ASN1_ITEM(name) \
         const ASN1_ITEM * name##_it(void);
-
-# endif
 
 /* Parameters used by ASN1_STRING_print_ex() */
 
@@ -433,13 +424,8 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
                                 ASN1_STRFLGS_DUMP_UNKNOWN | \
                                 ASN1_STRFLGS_DUMP_DER)
 
-DEFINE_STACK_OF(ASN1_INTEGER)
 
-DEFINE_STACK_OF(ASN1_GENERALSTRING)
-
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-
-typedef struct asn1_type_st {
+struct asn1_type_st {
     int type;
     union {
         char *ptr;
@@ -468,9 +454,8 @@ typedef struct asn1_type_st {
         ASN1_STRING *sequence;
         ASN1_VALUE *asn1_value;
     } value;
-} ASN1_TYPE;
+};
 
-DEFINE_STACK_OF(ASN1_TYPE)
 
 typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 
@@ -525,7 +510,6 @@ ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t);
 void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 
 DECLARE_ASN1_FUNCTIONS(ASN1_OBJECT)
-DEFINE_STACK_OF(ASN1_OBJECT)
 
 ASN1_STRING *ASN1_STRING_new(void);
 void ASN1_STRING_free(ASN1_STRING *a);
@@ -612,6 +596,10 @@ DECLARE_ASN1_FUNCTIONS(ASN1_GENERALSTRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_UTCTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_GENERALIZEDTIME)
 DECLARE_ASN1_FUNCTIONS(ASN1_TIME)
+
+DECLARE_ASN1_DUP_FUNCTION(ASN1_TIME)
+DECLARE_ASN1_DUP_FUNCTION(ASN1_UTCTIME)
+DECLARE_ASN1_DUP_FUNCTION(ASN1_GENERALIZEDTIME)
 
 DECLARE_ASN1_ITEM(ASN1_OCTET_STRING_NDEF)
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 
-#include "../ssl/packet_locl.h"
+#include "internal/packet.h"
 
 #include "ssltestlib.h"
 #include "testutil.h"
@@ -150,24 +150,22 @@ static int test_func(int test)
     return result;
 }
 
-int global_init(void)
-{
-    CRYPTO_set_mem_debug(1);
-    CRYPTO_mem_ctrl(CRYPTO_MEM_CHECK_ON);
-    return 1;
-}
-
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
 {
     char *cert, *pkey;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(cert = test_get_argument(0))
             || !TEST_ptr(pkey = test_get_argument(1)))
         return 0;
 
-    if (!create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
                              TLS1_VERSION, 0,
                              &serverctx, &clientctx, cert, pkey)) {
         TEST_error("Failed to create SSL_CTX pair\n");

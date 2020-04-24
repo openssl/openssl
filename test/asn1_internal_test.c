@@ -59,7 +59,7 @@ static int test_tbl_standard(void)
  *
  ***/
 
-#include "internal/asn1_int.h"
+#include "crypto/asn1.h"
 #include "../crypto/asn1/standard_methods.h"
 
 static int test_standard_methods(void)

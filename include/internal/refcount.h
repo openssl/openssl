@@ -6,8 +6,8 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#ifndef HEADER_INTERNAL_REFCOUNT_H
-# define HEADER_INTERNAL_REFCOUNT_H
+#ifndef OSSL_INTERNAL_REFCOUNT_H
+# define OSSL_INTERNAL_REFCOUNT_H
 
 /* Used to checking reference counts, most while doing perl5 stuff :-) */
 # if defined(OPENSSL_NO_STDIO)
@@ -73,6 +73,21 @@ static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
     return 1;
 }
+#  elif defined(__ICL) && defined(_WIN32)
+#   define HAVE_ATOMICS 1
+typedef volatile int CRYPTO_REF_COUNT;
+
+static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, 1) + 1;
+    return 1;
+}
+
+static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
+{
+    *ret = _InterlockedExchangeAdd((void *)val, -1) - 1;
+    return 1;
+}
 
 #  elif defined(_MSC_VER) && _MSC_VER>=1200
 
@@ -80,7 +95,7 @@ static __inline__ int CRYPTO_DOWN_REF(int *val, int *ret, void *lock)
 
 typedef volatile int CRYPTO_REF_COUNT;
 
-#   if (defined(_M_ARM) && _M_ARM>=7) || defined(_M_ARM64)
+#   if (defined(_M_ARM) && _M_ARM>=7 && !defined(_WIN32_WCE)) || defined(_M_ARM64)
 #    include <intrin.h>
 #    if defined(_M_ARM64) && !defined(_ARM_BARRIER_ISH)
 #     define _ARM_BARRIER_ISH _ARM64_BARRIER_ISH
@@ -100,7 +115,17 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
     return 1;
 }
 #   else
-#    pragma intrinsic(_InterlockedExchangeAdd)
+#    if !defined(_WIN32_WCE)
+#     pragma intrinsic(_InterlockedExchangeAdd)
+#    else
+#     if _WIN32_WCE >= 0x600
+       extern long __cdecl _InterlockedExchangeAdd(long volatile*, long);
+#     else
+       /* under Windows CE we still have old-style Interlocked* functions */
+       extern long __cdecl InterlockedExchangeAdd(long volatile*, long);
+#      define _InterlockedExchangeAdd InterlockedExchangeAdd
+#     endif
+#    endif
 
 static __inline int CRYPTO_UP_REF(volatile int *val, int *ret, void *lock)
 {

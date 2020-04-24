@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,11 @@
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/ocsp.h>
-#include "ocsp_lcl.h"
+#include "ocsp_local.h"
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(OCSP_ONEREQ)
+DEFINE_STACK_OF(OCSP_SINGLERESP)
 
 /*
  * Utility functions related to sending OCSP requests and extracting relevant
@@ -48,7 +52,7 @@ OCSP_ONEREQ *OCSP_request_add0_id(OCSP_REQUEST *req, OCSP_CERTID *cid)
 
 /* Set requestorName from an X509_NAME structure */
 
-int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm)
+int OCSP_request_set1_name(OCSP_REQUEST *req, const X509_NAME *nm)
 {
     GENERAL_NAME *gen;
 

@@ -23,7 +23,7 @@ X509_STORE_up_ref() increments the reference count associated with the
 X509_STORE object.
 
 X509_STORE_lock() locks the store from modification by other threads,
-X509_STORE_unlock() locks it.
+X509_STORE_unlock() unlocks it.
 
 X509_STORE_free() frees up a single X509_STORE object.
 

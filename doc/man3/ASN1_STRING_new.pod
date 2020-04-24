@@ -19,10 +19,10 @@ ASN1_STRING_new() returns an allocated B<ASN1_STRING> structure. Its type
 is undefined.
 
 ASN1_STRING_type_new() returns an allocated B<ASN1_STRING> structure of
-type B<type>.
+type I<type>.
 
-ASN1_STRING_free() frees up B<a>.
-If B<a> is NULL nothing is done.
+ASN1_STRING_free() frees up I<a>.
+If I<a> is NULL nothing is done.
 
 =head1 NOTES
 
@@ -32,7 +32,7 @@ ASN1_OCTET_STRING_new() calls ASN1_STRING_type(V_ASN1_OCTET_STRING).
 =head1 RETURN VALUES
 
 ASN1_STRING_new() and ASN1_STRING_type_new() return a valid
-ASN1_STRING structure or B<NULL> if an error occurred.
+B<ASN1_STRING> structure or NULL if an error occurred.
 
 ASN1_STRING_free() does not return a value.
 

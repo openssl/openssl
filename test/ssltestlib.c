@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,53 +10,21 @@
 #include <string.h>
 
 #include "internal/nelem.h"
+#include "internal/cryptlib.h" /* for ossl_sleep() */
 #include "ssltestlib.h"
 #include "testutil.h"
 #include "e_os.h"
 
 #ifdef OPENSSL_SYS_UNIX
 # include <unistd.h>
-#ifndef OPENSSL_NO_KTLS
-# include <netinet/in.h>
-# include <netinet/in.h>
-# include <arpa/inet.h>
-# include <sys/socket.h>
-# include <unistd.h>
-# include <fcntl.h>
-#endif
-
-static ossl_inline void ossl_sleep(unsigned int millis)
-{
-# ifdef OPENSSL_SYS_VXWORKS
-    struct timespec ts;
-    ts.tv_sec = (long int) (millis / 1000);
-    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
-    nanosleep(&ts, NULL);
-# else
-    usleep(millis * 1000);
+# ifndef OPENSSL_NO_KTLS
+#  include <netinet/in.h>
+#  include <netinet/in.h>
+#  include <arpa/inet.h>
+#  include <sys/socket.h>
+#  include <unistd.h>
+#  include <fcntl.h>
 # endif
-}
-#elif defined(_WIN32)
-# include <windows.h>
-
-static ossl_inline void ossl_sleep(unsigned int millis)
-{
-    Sleep(millis);
-}
-#else
-/* Fallback to a busy wait */
-static ossl_inline void ossl_sleep(unsigned int millis)
-{
-    struct timeval start, now;
-    unsigned int elapsedms;
-
-    gettimeofday(&start, NULL);
-    do {
-        gettimeofday(&now, NULL);
-        elapsedms = (((now.tv_sec - start.tv_sec) * 1000000)
-                     + now.tv_usec - start.tv_usec) / 1000;
-    } while (elapsedms < millis);
-}
 #endif
 
 static int tls_dump_new(BIO *bi);
@@ -70,9 +38,11 @@ static int tls_dump_puts(BIO *bp, const char *str);
 /* Choose a sufficiently large type likely to be unused for this custom BIO */
 #define BIO_TYPE_TLS_DUMP_FILTER  (0x80 | BIO_TYPE_FILTER)
 #define BIO_TYPE_MEMPACKET_TEST    0x81
+#define BIO_TYPE_ALWAYS_RETRY      0x82
 
 static BIO_METHOD *method_tls_dump = NULL;
 static BIO_METHOD *meth_mem = NULL;
+static BIO_METHOD *meth_always_retry = NULL;
 
 /* Note: Not thread safe! */
 const BIO_METHOD *bio_f_tls_dump_filter(void)
@@ -620,7 +590,102 @@ static int mempacket_test_puts(BIO *bio, const char *str)
     return mempacket_test_write(bio, str, strlen(str));
 }
 
-int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
+static int always_retry_new(BIO *bi);
+static int always_retry_free(BIO *a);
+static int always_retry_read(BIO *b, char *out, int outl);
+static int always_retry_write(BIO *b, const char *in, int inl);
+static long always_retry_ctrl(BIO *b, int cmd, long num, void *ptr);
+static int always_retry_gets(BIO *bp, char *buf, int size);
+static int always_retry_puts(BIO *bp, const char *str);
+
+const BIO_METHOD *bio_s_always_retry(void)
+{
+    if (meth_always_retry == NULL) {
+        if (!TEST_ptr(meth_always_retry = BIO_meth_new(BIO_TYPE_ALWAYS_RETRY,
+                                                       "Always Retry"))
+            || !TEST_true(BIO_meth_set_write(meth_always_retry,
+                                             always_retry_write))
+            || !TEST_true(BIO_meth_set_read(meth_always_retry,
+                                            always_retry_read))
+            || !TEST_true(BIO_meth_set_puts(meth_always_retry,
+                                            always_retry_puts))
+            || !TEST_true(BIO_meth_set_gets(meth_always_retry,
+                                            always_retry_gets))
+            || !TEST_true(BIO_meth_set_ctrl(meth_always_retry,
+                                            always_retry_ctrl))
+            || !TEST_true(BIO_meth_set_create(meth_always_retry,
+                                              always_retry_new))
+            || !TEST_true(BIO_meth_set_destroy(meth_always_retry,
+                                               always_retry_free)))
+            return NULL;
+    }
+    return meth_always_retry;
+}
+
+void bio_s_always_retry_free(void)
+{
+    BIO_meth_free(meth_always_retry);
+}
+
+static int always_retry_new(BIO *bio)
+{
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+static int always_retry_free(BIO *bio)
+{
+    BIO_set_data(bio, NULL);
+    BIO_set_init(bio, 0);
+    return 1;
+}
+
+static int always_retry_read(BIO *bio, char *out, int outl)
+{
+    BIO_set_retry_read(bio);
+    return -1;
+}
+
+static int always_retry_write(BIO *bio, const char *in, int inl)
+{
+    BIO_set_retry_write(bio);
+    return -1;
+}
+
+static long always_retry_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    long ret = 1;
+
+    switch (cmd) {
+    case BIO_CTRL_FLUSH:
+        BIO_set_retry_write(bio);
+        /* fall through */
+    case BIO_CTRL_EOF:
+    case BIO_CTRL_RESET:
+    case BIO_CTRL_DUP:
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
+    default:
+        ret = 0;
+        break;
+    }
+    return ret;
+}
+
+static int always_retry_gets(BIO *bio, char *buf, int size)
+{
+    BIO_set_retry_read(bio);
+    return -1;
+}
+
+static int always_retry_puts(BIO *bio, const char *str)
+{
+    BIO_set_retry_write(bio);
+    return -1;
+}
+
+int create_ssl_ctx_pair(OPENSSL_CTX *libctx, const SSL_METHOD *sm,
+const SSL_METHOD *cm,
                         int min_proto_version, int max_proto_version,
                         SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,
                         char *privkeyfile)
@@ -628,9 +693,17 @@ int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
     SSL_CTX *serverctx = NULL;
     SSL_CTX *clientctx = NULL;
 
-    if (!TEST_ptr(serverctx = SSL_CTX_new(sm))
-            || (cctx != NULL && !TEST_ptr(clientctx = SSL_CTX_new(cm))))
+    if (*sctx != NULL)
+        serverctx = *sctx;
+    else if (!TEST_ptr(serverctx = SSL_CTX_new_with_libctx(libctx, NULL, sm)))
         goto err;
+
+    if (cctx != NULL) {
+        if (*cctx != NULL)
+            clientctx = *cctx;
+        else if (!TEST_ptr(clientctx = SSL_CTX_new_with_libctx(libctx, NULL, cm)))
+            goto err;
+    }
 
     if ((min_proto_version > 0
          && !TEST_true(SSL_CTX_set_min_proto_version(serverctx,
@@ -843,11 +916,14 @@ int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
 }
 
 /*
- * Create an SSL connection, but does not ready any post-handshake
+ * Create an SSL connection, but does not read any post-handshake
  * NewSessionTicket messages.
  * If |read| is set and we're using DTLS then we will attempt to SSL_read on
  * the connection once we've completed one half of it, to ensure any retransmits
  * get triggered.
+ * We stop the connection attempt (and return a failure value) if either peer
+ * has SSL_get_error() return the value in the |want| parameter. The connection
+ * attempt could be restarted by a subsequent call to this function.
  */
 int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                                int read)
@@ -866,6 +942,8 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
 
         if (!clienterr && retc <= 0 && err != SSL_ERROR_WANT_READ) {
             TEST_info("SSL_connect() failed %d, %d", retc, err);
+            if (want != SSL_ERROR_SSL)
+                TEST_openssl_errors();
             clienterr = 1;
         }
         if (want != SSL_ERROR_NONE && err == want)
@@ -882,6 +960,8 @@ int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,
                 && err != SSL_ERROR_WANT_READ
                 && err != SSL_ERROR_WANT_X509_LOOKUP) {
             TEST_info("SSL_accept() failed %d, %d", rets, err);
+            if (want != SSL_ERROR_SSL)
+                TEST_openssl_errors();
             servererr = 1;
         }
         if (want != SSL_ERROR_NONE && err == want)
@@ -940,7 +1020,7 @@ int create_ssl_connection(SSL *serverssl, SSL *clientssl, int want)
     /*
      * We attempt to read some data on the client side which we expect to fail.
      * This will ensure we have received the NewSessionTicket in TLSv1.3 where
-     * appropriate. We do this twice because there are 2 NewSesionTickets.
+     * appropriate. We do this twice because there are 2 NewSessionTickets.
      */
     for (i = 0; i < 2; i++) {
         if (SSL_read_ex(clientssl, &buf, sizeof(buf), &readbytes) > 0) {

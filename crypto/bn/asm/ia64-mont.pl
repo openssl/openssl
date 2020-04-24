@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -67,7 +67,8 @@
 # hereafter less for longer keys, while verify - by 74-13%.
 # DSA performance improves by 115-30%.
 
-$output=pop;
+# $output is the last argument if it looks like a file (it has an extension)
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 
 if ($^O eq "hpux") {
     $ADDP="addp4";
@@ -857,4 +858,4 @@ ___
 
 open STDOUT,">$output" if $output;
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,22 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
-#include "internal/constant_time_locl.h"
+#include "internal/constant_time.h"
+#include "rsa_local.h"
 
-int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
-                           const unsigned char *from, int flen)
+int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
+                                       int tlen, const unsigned char *from,
+                                       int flen)
 {
     int i, j;
     unsigned char *p;
 
-    if (flen > (tlen - 11)) {
-        RSAerr(RSA_F_RSA_PADDING_ADD_SSLV23,
-               RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
+    if (flen > (tlen - RSA_PKCS1_PADDING_SIZE)) {
+        RSAerr(0, RSA_R_DATA_TOO_LARGE_FOR_KEY_SIZE);
         return 0;
     }
 
@@ -34,12 +41,12 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
     /* pad out with non-zero random data */
     j = tlen - 3 - 8 - flen;
 
-    if (RAND_bytes(p, j) <= 0)
+    if (RAND_bytes_ex(libctx, p, j) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes(p, 1) <= 0)
+                if (RAND_bytes_ex(libctx, p, 1) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;
@@ -51,6 +58,12 @@ int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
 
     memcpy(p, from, (unsigned int)flen);
     return 1;
+}
+
+int RSA_padding_add_SSLv23(unsigned char *to, int tlen,
+                           const unsigned char *from, int flen)
+{
+    return rsa_padding_add_SSLv23_with_libctx(NULL, to, tlen, from, flen);
 }
 
 /*
@@ -70,7 +83,7 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     if (tlen <= 0 || flen <= 0)
         return -1;
 
-    if (flen > num || num < 11) {
+    if (flen > num || num < RSA_PKCS1_PADDING_SIZE) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_SSLV23, RSA_R_DATA_TOO_SMALL);
         return -1;
     }
@@ -141,25 +154,25 @@ int RSA_padding_check_SSLv23(unsigned char *to, int tlen,
     err = constant_time_select_int(mask | good, err, RSA_R_DATA_TOO_LARGE);
 
     /*
-     * Even though we can't fake result's length, we can pretend copying
-     * |tlen| bytes where |mlen| bytes would be real. Last |tlen| of |num|
-     * bytes are viewed as circular buffer with start at |tlen|-|mlen'|,
-     * where |mlen'| is "saturated" |mlen| value. Deducing information
-     * about failure or |mlen| would take attacker's ability to observe
-     * memory access pattern with byte granularity *as it occurs*. It
-     * should be noted that failure is indistinguishable from normal
-     * operation if |tlen| is fixed by protocol.
+     * Move the result in-place by |num|-RSA_PKCS1_PADDING_SIZE-|mlen| bytes to the left.
+     * Then if |good| move |mlen| bytes from |em|+RSA_PKCS1_PADDING_SIZE to |to|.
+     * Otherwise leave |to| unchanged.
+     * Copy the memory back in a way that does not reveal the size of
+     * the data being copied via a timing side channel. This requires copying
+     * parts of the buffer multiple times based on the bits set in the real
+     * length. Clear bits do a non-copy with identical access pattern.
+     * The loop below has overall complexity of O(N*log(N)).
      */
-    tlen = constant_time_select_int(constant_time_lt(num - 11, tlen),
-                                    num - 11, tlen);
-    msg_index = constant_time_select_int(good, msg_index, num - tlen);
-    mlen = num - msg_index;
-    for (mask = good, i = 0; i < tlen; i++) {
-        unsigned int equals = constant_time_eq(msg_index, num);
-
-        msg_index -= tlen & equals;  /* rewind at EOF */
-        mask &= ~equals;  /* mask = 0 at EOF */
-        to[i] = constant_time_select_8(mask, em[msg_index++], to[i]);
+    tlen = constant_time_select_int(constant_time_lt(num - RSA_PKCS1_PADDING_SIZE, tlen),
+                                    num - RSA_PKCS1_PADDING_SIZE, tlen);
+    for (msg_index = 1; msg_index < num - RSA_PKCS1_PADDING_SIZE; msg_index <<= 1) {
+        mask = ~constant_time_eq(msg_index & (num - RSA_PKCS1_PADDING_SIZE - mlen), 0);
+        for (i = RSA_PKCS1_PADDING_SIZE; i < num - msg_index; i++)
+            em[i] = constant_time_select_8(mask, em[i + msg_index], em[i]);
+    }
+    for (i = 0; i < tlen; i++) {
+        mask = good & constant_time_lt(i, mlen);
+        to[i] = constant_time_select_8(mask, em[i + RSA_PKCS1_PADDING_SIZE], to[i]);
     }
 
     OPENSSL_clear_free(em, num);

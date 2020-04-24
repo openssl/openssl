@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/x509.h>
 #include <openssl/asn1t.h>
-#include "rsa_locl.h"
+#include "rsa_local.h"
 
 /*
  * Override the default free and new methods,

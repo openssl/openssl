@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,8 @@
 #include <string.h>
 #include "ssltestlib.h"
 #include "testutil.h"
+
+DEFINE_STACK_OF(SSL_CIPHER)
 
 static int docorrupt = 0;
 
@@ -41,7 +43,7 @@ static int tls_corrupt_write(BIO *bio, const char *in, int inl)
     char *copy;
 
     if (docorrupt) {
-        if (!TEST_ptr(copy = BUF_memdup(in, inl)))
+        if (!TEST_ptr(copy = OPENSSL_memdup(in, inl)))
             return 0;
         /* corrupt last bit of application data */
         copy[inl-1] ^= 1;
@@ -193,7 +195,8 @@ static int test_ssl_corrupt(int testidx)
 
     TEST_info("Starting #%d, %s", testidx, cipher_list[testidx]);
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(), TLS_client_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
+                                       TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey)))
         return 0;
@@ -249,6 +252,11 @@ OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 int setup_tests(void)
 {
     int n;
+
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
 
     if (!TEST_ptr(cert = test_get_argument(0))
             || !TEST_ptr(privkey = test_get_argument(1)))

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_sign_init, EVP_PKEY_sign - sign using a public key algorithm
+EVP_PKEY_sign_init, EVP_PKEY_sign
+- sign using a public key algorithm
 
 =head1 SYNOPSIS
 
@@ -15,16 +16,19 @@ EVP_PKEY_sign_init, EVP_PKEY_sign - sign using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_sign_init() function initializes a public key algorithm
-context using key B<pkey> for a signing operation.
+EVP_PKEY_sign_init() initializes a public key algorithm context I<ctx> for
+signing using the algorithm given when the context was created
+using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
+fetch a B<EVP_SIGNATURE> method implicitly, see L<provider(7)/Implicit fetch>
+for more information about implict fetches.
 
 The EVP_PKEY_sign() function performs a public key signing operation
-using B<ctx>. The data to be signed is specified using the B<tbs> and
-B<tbslen> parameters. If B<sig> is B<NULL> then the maximum size of the output
-buffer is written to the B<siglen> parameter. If B<sig> is not B<NULL> then
-before the call the B<siglen> parameter should contain the length of the
-B<sig> buffer, if the call is successful the signature is written to
-B<sig> and the amount of data written to B<siglen>.
+using I<ctx>. The data to be signed is specified using the I<tbs> and
+I<tbslen> parameters. If I<sig> is NULL then the maximum size of the output
+buffer is written to the I<siglen> parameter. If I<sig> is not NULL then
+before the call the I<siglen> parameter should contain the length of the
+I<sig> buffer, if the call is successful the signature is written to
+I<sig> and the amount of data written to I<siglen>.
 
 =head1 NOTES
 
@@ -46,7 +50,7 @@ EVP_PKEY_sign_init() and EVP_PKEY_sign() return 1 for success and 0
 or a negative value for failure. In particular a return value of -2
 indicates the operation is not supported by the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Sign data using RSA with PKCS#1 padding and SHA256 digest:
 
@@ -105,7 +109,7 @@ These functions were added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

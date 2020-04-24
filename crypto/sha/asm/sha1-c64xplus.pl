@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2012-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -32,8 +32,7 @@
 # service routines are expected to preserve it and for own well-being
 # zero it upon entry.
 
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+$output = pop and open STDOUT,">$output";
 
 ($CTX,$INP,$NUM) = ("A4","B4","A6");		# arguments
 
@@ -334,4 +333,4 @@ $code.=<<___;
 ___
 
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

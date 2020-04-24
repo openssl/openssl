@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,7 +8,7 @@
  */
 
 /* This must be the first #include file */
-#include "../async_locl.h"
+#include "../async_local.h"
 
 #ifdef ASYNC_POSIX
 
@@ -34,7 +34,9 @@ void async_local_cleanup(void)
 
 int async_fibre_makecontext(async_fibre *fibre)
 {
+#ifndef USE_SWAPCONTEXT
     fibre->env_init = 0;
+#endif
     if (getcontext(&fibre->fibre) == 0) {
         fibre->fibre.uc_stack.ss_sp = OPENSSL_malloc(STACKSIZE);
         if (fibre->fibre.uc_stack.ss_sp != NULL) {

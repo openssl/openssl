@@ -1,9 +1,9 @@
 /*-
- * Copyright 2007-2018 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright Nokia 2007-2018
- * Copyright Siemens AG 2015-2018
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright Nokia 2007-2019
+ * Copyright Siemens AG 2015-2019
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -13,7 +13,7 @@
 
 #include <openssl/asn1t.h>
 
-#include "crmf_int.h"
+#include "crmf_local.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/crmf.h>
@@ -141,8 +141,8 @@ ASN1_CHOICE(OSSL_CRMF_POPO) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_POPO)
 
 
-ASN1_ADB_TEMPLATE(attributetypeandvalue_default) = ASN1_OPT(
-        OSSL_CRMF_ATTRIBUTETYPEANDVALUE, value.other, ASN1_ANY);
+ASN1_ADB_TEMPLATE(attributetypeandvalue_default) =
+    ASN1_OPT(OSSL_CRMF_ATTRIBUTETYPEANDVALUE, value.other, ASN1_ANY);
 ASN1_ADB(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) = {
     ADB_ENTRY(NID_id_regCtrl_regToken,
               ASN1_SIMPLE(OSSL_CRMF_ATTRIBUTETYPEANDVALUE,
@@ -187,7 +187,7 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_OPTIONALVALIDITY)
 
 
 ASN1_SEQUENCE(OSSL_CRMF_CERTTEMPLATE) = {
-    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, version,      ASN1_INTEGER, 0),
+    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, version, ASN1_INTEGER, 0),
     /*
      * serialNumber MUST be omitted. This field is assigned by the CA
      * during certificate creation.
@@ -197,16 +197,16 @@ ASN1_SEQUENCE(OSSL_CRMF_CERTTEMPLATE) = {
      * signingAlg MUST be omitted. This field is assigned by the CA
      * during certificate creation.
      */
-    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, signingAlg,   X509_ALGOR, 2),
-    ASN1_EXP_OPT(OSSL_CRMF_CERTTEMPLATE, issuer,       X509_NAME, 3),
+    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, signingAlg, X509_ALGOR, 2),
+    ASN1_EXP_OPT(OSSL_CRMF_CERTTEMPLATE, issuer, X509_NAME, 3),
     ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, validity,
                  OSSL_CRMF_OPTIONALVALIDITY, 4),
-    ASN1_EXP_OPT(OSSL_CRMF_CERTTEMPLATE, subject,      X509_NAME, 5),
-    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, publicKey,    X509_PUBKEY, 6),
+    ASN1_EXP_OPT(OSSL_CRMF_CERTTEMPLATE, subject, X509_NAME, 5),
+    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, publicKey, X509_PUBKEY, 6),
     /* issuerUID is deprecated in version 2 */
-    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, issuerUID,    ASN1_BIT_STRING, 7),
+    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, issuerUID, ASN1_BIT_STRING, 7),
     /* subjectUID is deprecated in version 2 */
-    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, subjectUID,   ASN1_BIT_STRING, 8),
+    ASN1_IMP_OPT(OSSL_CRMF_CERTTEMPLATE, subjectUID, ASN1_BIT_STRING, 8),
     ASN1_IMP_SEQUENCE_OF_OPT(OSSL_CRMF_CERTTEMPLATE, extensions,
                              X509_EXTENSION, 9),
 } ASN1_SEQUENCE_END(OSSL_CRMF_CERTTEMPLATE)
@@ -235,6 +235,5 @@ IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
 ASN1_ITEM_TEMPLATE(OSSL_CRMF_MSGS) =
     ASN1_EX_TEMPLATE_TYPE(ASN1_TFLG_SEQUENCE_OF, 0,
                           OSSL_CRMF_MSGS, OSSL_CRMF_MSG)
-    ASN1_ITEM_TEMPLATE_END(OSSL_CRMF_MSGS)
+ASN1_ITEM_TEMPLATE_END(OSSL_CRMF_MSGS)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CRMF_MSGS)
-

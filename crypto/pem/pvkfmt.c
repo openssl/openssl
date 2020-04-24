@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,12 @@
  * Support for PVK format keys and related structures (such a PUBLICKEYBLOB
  * and PRIVATEKEYBLOB).
  */
+
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
@@ -274,6 +280,9 @@ static EVP_PKEY *b2i_dss(const unsigned char **in,
         if (!read_lebn(&p, 20, &priv_key))
             goto memerr;
 
+        /* Set constant time flag before public key calculation */
+        BN_set_flags(priv_key, BN_FLG_CONSTTIME);
+
         /* Calculate public key */
         pub_key = BN_new();
         if (pub_key == NULL)
@@ -421,7 +430,7 @@ static int check_bitlen_dsa(DSA *dsa, int ispub, unsigned int *magic);
 static void write_rsa(unsigned char **out, RSA *rsa, int ispub);
 static void write_dsa(unsigned char **out, DSA *dsa, int ispub);
 
-static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
+static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
 {
     unsigned char *p;
     unsigned int bitlen, magic = 0, keyalg;
@@ -470,7 +479,7 @@ static int do_i2b(unsigned char **out, EVP_PKEY *pk, int ispub)
     return outlen;
 }
 
-static int do_i2b_bio(BIO *out, EVP_PKEY *pk, int ispub)
+static int do_i2b_bio(BIO *out, const EVP_PKEY *pk, int ispub)
 {
     unsigned char *tmp = NULL;
     int outlen, wrlen;
@@ -596,12 +605,12 @@ static void write_dsa(unsigned char **out, DSA *dsa, int ispub)
     return;
 }
 
-int i2b_PrivateKey_bio(BIO *out, EVP_PKEY *pk)
+int i2b_PrivateKey_bio(BIO *out, const EVP_PKEY *pk)
 {
     return do_i2b_bio(out, pk, 0);
 }
 
-int i2b_PublicKey_bio(BIO *out, EVP_PKEY *pk)
+int i2b_PublicKey_bio(BIO *out, const EVP_PKEY *pk)
 {
     return do_i2b_bio(out, pk, 1);
 }
@@ -614,6 +623,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
 {
     const unsigned char *p = *in;
     unsigned int pvk_magic, is_encrypted;
+
     if (skip_magic) {
         if (length < 20) {
             PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
@@ -642,7 +652,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
     if (*pkeylen > PVK_MAX_KEYLEN || *psaltlen > PVK_MAX_SALTLEN)
         return 0;
 
-    if (is_encrypted && !*psaltlen) {
+    if (is_encrypted && *psaltlen == 0) {
         PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);
         return 0;
     }
@@ -776,7 +786,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
     return ret;
 }
 
-static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
+static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
                    pem_password_cb *cb, void *u)
 {
     int outlen = 24, pklen;
@@ -861,7 +871,7 @@ static int i2b_PVK(unsigned char **out, EVP_PKEY *pk, int enclevel,
     return -1;
 }
 
-int i2b_PVK_bio(BIO *out, EVP_PKEY *pk, int enclevel,
+int i2b_PVK_bio(BIO *out, const EVP_PKEY *pk, int enclevel,
                 pem_password_cb *cb, void *u)
 {
     unsigned char *tmp = NULL;

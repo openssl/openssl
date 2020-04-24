@@ -19,6 +19,8 @@
 # define strcasecmp _stricmp
 #endif
 
+DEFINE_STACK_OF(GENERAL_NAME)
+
 static const char *const names[] = {
     "a", "b", ".", "*", "@",
     ".a", "a.", ".b", "b.", ".*", "*.", "*@", "@*", "a@", "@a", "b@", "..",

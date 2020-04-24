@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PKCS12_H
-# define HEADER_PKCS12_H
+#ifndef OPENSSL_PKCS12_H
+# define OPENSSL_PKCS12_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_PKCS12_H
+# endif
 
 # include <openssl/bio.h>
 # include <openssl/x509.h>
@@ -40,13 +46,13 @@ extern "C" {
 # define KEY_EX  0x10
 # define KEY_SIG 0x80
 
+DEFINE_OR_DECLARE_STACK_OF(PKCS12_SAFEBAG)
+
 typedef struct PKCS12_MAC_DATA_st PKCS12_MAC_DATA;
 
 typedef struct PKCS12_st PKCS12;
 
 typedef struct PKCS12_SAFEBAG_st PKCS12_SAFEBAG;
-
-DEFINE_STACK_OF(PKCS12_SAFEBAG)
 
 typedef struct pkcs12_bag_st PKCS12_BAGS;
 
@@ -55,7 +61,7 @@ typedef struct pkcs12_bag_st PKCS12_BAGS;
 
 /* Compatibility macros */
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 
 # define M_PKCS12_bag_type PKCS12_bag_type
 # define M_PKCS12_cert_bag_type PKCS12_cert_bag_type

@@ -1,11 +1,16 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * Low level APIs are deprecated for public use, but still ok for internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -21,7 +26,7 @@
 
 #ifndef OPENSSL_NO_SM2
 
-# include "internal/sm2.h"
+# include "crypto/sm2.h"
 
 static RAND_METHOD fake_rand;
 static const RAND_METHOD *saved_rand;
@@ -32,17 +37,18 @@ static size_t fake_rand_size = 0;
 
 static int get_faked_bytes(unsigned char *buf, int num)
 {
-    int i;
-
     if (fake_rand_bytes == NULL)
         return saved_rand->bytes(buf, num);
 
-    if (!TEST_size_t_le(fake_rand_bytes_offset + num, fake_rand_size))
+    if (!TEST_size_t_gt(fake_rand_size, 0))
         return 0;
 
-    for (i = 0; i != num; ++i)
-        buf[i] = fake_rand_bytes[fake_rand_bytes_offset + i];
-    fake_rand_bytes_offset += num;
+    while (num-- > 0) {
+        if (fake_rand_bytes_offset >= fake_rand_size)
+            fake_rand_bytes_offset = 0;
+        *buf++ = fake_rand_bytes[fake_rand_bytes_offset++];
+    }
+
     return 1;
 }
 
@@ -175,8 +181,7 @@ static int test_sm2_crypt(const EC_GROUP *group,
 
     start_fake_rand(k_hex);
     if (!TEST_true(sm2_encrypt(key, digest, (const uint8_t *)message, msg_len,
-                               ctext, &ctext_len))
-            || !TEST_size_t_eq(fake_rand_bytes_offset, fake_rand_size)) {
+                               ctext, &ctext_len))) {
         restore_rand();
         goto done;
     }
@@ -296,8 +301,7 @@ static int test_sm2_sign(const EC_GROUP *group,
     start_fake_rand(k_hex);
     sig = sm2_do_sign(key, EVP_sm3(), (const uint8_t *)userid, strlen(userid),
                       (const uint8_t *)message, msg_len);
-    if (!TEST_ptr(sig)
-            || !TEST_size_t_eq(fake_rand_bytes_offset, fake_rand_size)) {
+    if (!TEST_ptr(sig)) {
         restore_rand();
         goto done;
     }

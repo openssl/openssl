@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -51,6 +51,7 @@
 # Kryo		12
 # Denver	7.8
 # Apple A7	7.2
+# ThunderX2	9.7
 #
 # (*)	Corresponds to SHA3-256. No improvement coefficients are listed
 #	because they vary too much from compiler to compiler. Newer
@@ -58,15 +59,18 @@
 #	Cortex-A57 to 25% on Cortex-A53. While in comparison to older
 #	compiler this code is at least 2x faster...
 
-$flavour = shift;
-$output  = shift;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}arm-xlate.pl" and -f $xlate ) or
 ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
 die "can't locate arm-xlate.pl";
 
-open OUT,"| \"$^X\" $xlate $flavour $output";
+open OUT,"| \"$^X\" $xlate $flavour \"$output\""
+    or die "can't call $xlate: $!";
 *STDOUT=*OUT;
 
 my @rhotates = ([  0,  1, 62, 28, 27 ],
@@ -730,7 +734,7 @@ $code.=<<___;
 	blo	.Lprocess_block_ce
 	ldr	d31,[$inp],#8		// *inp++
 #ifdef	__AARCH64EB__
-	rev	v31.16b,v31.16b
+	rev64	v31.16b,v31.16b
 #endif
 	eor	$A[$j/5][$j%5],$A[$j/5][$j%5],v31.16b
 	beq	.Lprocess_block_ce
@@ -739,7 +743,7 @@ ___
 $code.=<<___;
 	ldr	d31,[$inp],#8		// *inp++
 #ifdef	__AARCH64EB__
-	rev	v31.16b,v31.16b
+	rev64	v31.16b,v31.16b
 #endif
 	eor	$A[4][4],$A[4][4],v31.16b
 
@@ -869,4 +873,4 @@ foreach(split("\n",$code)) {
 	print $_,"\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

@@ -8,11 +8,13 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/evp.h>
-#include "internal/objects.h"
+#include <openssl/kdf.h>
 #include <openssl/x509.h>
-#include "internal/evp_int.h"
+#include "internal/cryptlib.h"
+#include "internal/namemap.h"
+#include "crypto/objects.h"
+#include "crypto/evp.h"
 
 int EVP_add_cipher(const EVP_CIPHER *c)
 {
@@ -55,58 +57,99 @@ int EVP_add_digest(const EVP_MD *md)
     return r;
 }
 
-int EVP_add_mac(const EVP_MAC *m)
+static void cipher_from_name(const char *name, void *data)
 {
-    int r;
+    const EVP_CIPHER **cipher = data;
 
-    if (m == NULL)
-        return 0;
+    if (*cipher != NULL)
+        return;
 
-    r = OBJ_NAME_add(OBJ_nid2sn(m->type), OBJ_NAME_TYPE_MAC_METH,
-                     (const char *)m);
-    if (r == 0)
-        return 0;
-    r = OBJ_NAME_add(OBJ_nid2ln(m->type), OBJ_NAME_TYPE_MAC_METH,
-                     (const char *)m);
-    return r;
+    *cipher = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
 }
 
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
+    return evp_get_cipherbyname_ex(NULL, name);
+}
+
+const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name)
+{
     const EVP_CIPHER *cp;
+    OSSL_NAMEMAP *namemap;
+    int id;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL))
         return NULL;
 
     cp = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
+
+    if (cp != NULL)
+        return cp;
+
+    /*
+     * It's not in the method database, but it might be there under a different
+     * name. So we check for aliases in the EVP namemap and try all of those
+     * in turn.
+     */
+
+    namemap = ossl_namemap_stored(libctx);
+    id = ossl_namemap_name2num(namemap, name);
+    if (id == 0)
+        return NULL;
+
+    ossl_namemap_doall_names(namemap, id, cipher_from_name, &cp);
+
     return cp;
+}
+
+static void digest_from_name(const char *name, void *data)
+{
+    const EVP_MD **md = data;
+
+    if (*md != NULL)
+        return;
+
+    *md = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
 }
 
 const EVP_MD *EVP_get_digestbyname(const char *name)
 {
-    const EVP_MD *cp;
+    return evp_get_digestbyname_ex(NULL, name);
+}
+
+const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name)
+{
+    const EVP_MD *dp;
+    OSSL_NAMEMAP *namemap;
+    int id;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL))
         return NULL;
 
-    cp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
-    return cp;
-}
+    dp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
 
-const EVP_MAC *EVP_get_macbyname(const char *name)
-{
-    const EVP_MAC *mp;
+    if (dp != NULL)
+        return dp;
 
-    if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL))
+    /*
+     * It's not in the method database, but it might be there under a different
+     * name. So we check for aliases in the EVP namemap and try all of those
+     * in turn.
+     */
+
+    namemap = ossl_namemap_stored(libctx);
+    id = ossl_namemap_name2num(namemap, name);
+    if (id == 0)
         return NULL;
 
-    mp = (const EVP_MAC *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MAC_METH);
-    return mp;
+    ossl_namemap_doall_names(namemap, id, digest_from_name, &dp);
+
+    return dp;
 }
 
 void evp_cleanup_int(void)
 {
-    OBJ_NAME_cleanup(OBJ_NAME_TYPE_MAC_METH);
+    OBJ_NAME_cleanup(OBJ_NAME_TYPE_KDF_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_CIPHER_METH);
     OBJ_NAME_cleanup(OBJ_NAME_TYPE_MD_METH);
     /*
@@ -206,48 +249,3 @@ void EVP_MD_do_all_sorted(void (*fn) (const EVP_MD *md,
     dc.arg = arg;
     OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MD_METH, do_all_md_fn, &dc);
 }
-
-struct doall_mac {
-    void *arg;
-    void (*fn) (const EVP_MAC *ciph,
-                const char *from, const char *to, void *arg);
-};
-
-static void do_all_mac_fn(const OBJ_NAME *nm, void *arg)
-{
-    struct doall_mac *dc = arg;
-
-    if (nm->alias)
-        dc->fn(NULL, nm->name, nm->data, dc->arg);
-    else
-        dc->fn((const EVP_MAC *)nm->data, nm->name, NULL, dc->arg);
-}
-
-void EVP_MAC_do_all(void (*fn)
-                    (const EVP_MAC *ciph, const char *from, const char *to,
-                     void *x), void *arg)
-{
-    struct doall_mac dc;
-
-    /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL);
-
-    dc.fn = fn;
-    dc.arg = arg;
-    OBJ_NAME_do_all(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
-}
-
-void EVP_MAC_do_all_sorted(void (*fn)
-                           (const EVP_MAC *ciph, const char *from,
-                            const char *to, void *x), void *arg)
-{
-    struct doall_mac dc;
-
-    /* Ignore errors */
-    OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_MACS, NULL);
-
-    dc.fn = fn;
-    dc.arg = arg;
-    OBJ_NAME_do_all_sorted(OBJ_NAME_TYPE_MAC_METH, do_all_mac_fn, &dc);
-}
-

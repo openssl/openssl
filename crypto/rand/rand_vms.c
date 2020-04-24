@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,42 +9,52 @@
 
 #include "e_os.h"
 
-#if defined(OPENSSL_SYS_VMS)
-# define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
-# include <unistd.h>
-# include "internal/cryptlib.h"
-# include <openssl/rand.h>
-# include "internal/rand_int.h"
-# include "rand_lcl.h"
-# include <descrip.h>
-# include <dvidef.h>
-# include <jpidef.h>
-# include <rmidef.h>
-# include <syidef.h>
-# include <ssdef.h>
-# include <starlet.h>
-# include <efndef.h>
-# include <gen64def.h>
-# include <iosbdef.h>
-# include <iledef.h>
-# include <lib$routines.h>
-# ifdef __DECC
-#  pragma message disable DOLLARID
-# endif
+#define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
+#include <unistd.h>
+#include "internal/cryptlib.h"
+#include <openssl/rand.h>
+#include "crypto/rand.h"
+#include "rand_local.h"
+#include <descrip.h>
+#include <dvidef.h>
+#include <jpidef.h>
+#include <rmidef.h>
+#include <syidef.h>
+#include <ssdef.h>
+#include <starlet.h>
+#include <efndef.h>
+#include <gen64def.h>
+#include <iosbdef.h>
+#include <iledef.h>
+#include <lib$routines.h>
+#ifdef __DECC
+# pragma message disable DOLLARID
+#endif
 
-# ifndef OPENSSL_RAND_SEED_OS
-#  error "Unsupported seeding method configured; must be os"
-# endif
+#include <dlfcn.h>              /* SYS$GET_ENTROPY presence */
+
+#ifndef OPENSSL_RAND_SEED_OS
+# error "Unsupported seeding method configured; must be os"
+#endif
+
+/*
+ * DATA COLLECTION METHOD
+ * ======================
+ *
+ * This is a method to get low quality entropy.
+ * It works by collecting all kinds of statistical data that
+ * VMS offers and using them as random seed.
+ */
 
 /* We need to make sure we have the right size pointer in some cases */
-# if __INITIAL_POINTER_SIZE == 64
-#  pragma pointer_size save
-#  pragma pointer_size 32
-# endif
+#if __INITIAL_POINTER_SIZE == 64
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
 typedef uint32_t *uint32_t__ptr32;
-# if __INITIAL_POINTER_SIZE == 64
-#  pragma pointer_size restore
-# endif
+#if __INITIAL_POINTER_SIZE == 64
+# pragma pointer_size restore
+#endif
 
 struct item_st {
     short length, code;         /* length is number of bytes */
@@ -330,7 +340,7 @@ static void massage_JPI(ILE3 *items)
  */
 #define ENTROPY_FACTOR  20
 
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+size_t data_collect_method(RAND_POOL *pool)
 {
     ILE3 JPI_items_64bit[OSSL_NELEM(JPI_item_data_64bit) + 1];
     ILE3 RMI_items_64bit[OSSL_NELEM(RMI_item_data_64bit) + 1];
@@ -445,15 +455,9 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
      * If we can't feed the requirements from the caller, we're in deep trouble.
      */
     if (!ossl_assert(total_length >= bytes_needed)) {
-        char neededstr[20];
-        char availablestr[20];
-
-        BIO_snprintf(neededstr, sizeof(neededstr), "%zu", bytes_needed);
-        BIO_snprintf(availablestr, sizeof(availablestr), "%zu", total_length);
-        RANDerr(RAND_F_RAND_POOL_ACQUIRE_ENTROPY,
-                RAND_R_RANDOM_POOL_UNDERFLOW);
-        ERR_add_error_data(4, "Needed: ", neededstr, ", Available: ",
-                           availablestr);
+        ERR_raise_data(ERR_LIB_RAND, RAND_R_RANDOM_POOL_UNDERFLOW,
+                       "Needed: %zu, Available: %zu",
+                       bytes_needed, total_length);
         return 0;
     }
 
@@ -475,12 +479,15 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
         pid_t pid;
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add process id, thread id, and a high resolution timestamp
      * (where available, which is OpenVMS v8.4 and up) to ensure that
-     * the nonce is unique whith high probability for different process
+     * the nonce is unique with high probability for different process
      * instances.
      */
     data.pid = getpid();
@@ -494,12 +501,89 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
+/*
+ * SYS$GET_ENTROPY METHOD
+ * ======================
+ *
+ * This is a high entropy method based on a new system service that is
+ * based on getentropy() from FreeBSD 12.  It's only used if available,
+ * and its availability is detected at run-time.
+ *
+ * We assume that this function provides full entropy random output.
+ */
+#define PUBLIC_VECTORS "SYS$LIBRARY:SYS$PUBLIC_VECTORS.EXE"
+#define GET_ENTROPY "SYS$GET_ENTROPY"
+
+static int get_entropy_address_flag = 0;
+static int (*get_entropy_address)(void *buffer, size_t buffer_size) = NULL;
+static int init_get_entropy_address(void)
+{
+    if (get_entropy_address_flag == 0)
+        get_entropy_address = dlsym(dlopen(PUBLIC_VECTORS, 0), GET_ENTROPY);
+    get_entropy_address_flag = 1;
+    return get_entropy_address != NULL;
+}
+
+size_t get_entropy_method(RAND_POOL *pool)
+{
+    /*
+     * The documentation says that SYS$GET_ENTROPY will give a maximum of
+     * 256 bytes of data.
+     */
+    unsigned char buffer[256];
+    size_t bytes_needed;
+    size_t bytes_to_get = 0;
+    uint32_t status;
+
+    for (bytes_needed = rand_pool_bytes_needed(pool, 1);
+         bytes_needed > 0;
+         bytes_needed -= bytes_to_get) {
+        bytes_to_get =
+            bytes_needed > sizeof(buffer) ? sizeof(buffer) : bytes_needed;
+
+        status = get_entropy_address(buffer, bytes_to_get);
+        if (status == SS$_RETRY) {
+            /* Set to zero so the loop doesn't diminish |bytes_needed| */
+            bytes_to_get = 0;
+            /* Should sleep some amount of time */
+            continue;
+        }
+
+        if (status != SS$_NORMAL) {
+            lib$signal(status);
+            return 0;
+        }
+
+        rand_pool_add(pool, buffer, bytes_to_get, 8 * bytes_to_get);
+    }
+
+    return rand_pool_entropy_available(pool);
+}
+
+/*
+ * MAIN ENTROPY ACQUISITION FUNCTIONS
+ * ==================================
+ *
+ * These functions are called by the RAND / DRBG functions
+ */
+
+size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+{
+    if (init_get_entropy_address())
+        return get_entropy_method(pool);
+    return data_collect_method(pool);
+}
+
+
 int rand_pool_add_additional_data(RAND_POOL *pool)
 {
     struct {
         CRYPTO_THREAD_ID tid;
         uint64_t time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add some noise from the thread id and a high resolution timer.
@@ -528,5 +612,3 @@ void rand_pool_cleanup(void)
 void rand_pool_keep_random_devices_open(int keep)
 {
 }
-
-#endif

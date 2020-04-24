@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,8 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_CRYPTO_H
-# define HEADER_CRYPTO_H
+#ifndef OPENSSL_CRYPTO_H
+# define OPENSSL_CRYPTO_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_CRYPTO_H
+# endif
 
 # include <stdlib.h>
 # include <time.h>
@@ -22,7 +28,7 @@
 
 # include <openssl/safestack.h>
 # include <openssl/opensslv.h>
-# include <openssl/ossl_typ.h>
+# include <openssl/types.h>
 # include <openssl/opensslconf.h>
 # include <openssl/cryptoerr.h>
 
@@ -36,7 +42,7 @@
  */
 # include <openssl/symhacks.h>
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/opensslv.h>
 # endif
 
@@ -44,7 +50,7 @@
 extern "C" {
 #endif
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSLeay                  OpenSSL_version_num
 #  define SSLeay_version          OpenSSL_version
 #  define SSLEAY_VERSION_NUMBER   OPENSSL_VERSION_NUMBER
@@ -62,7 +68,7 @@ typedef struct {
     int dummy;
 } CRYPTO_dynlock;
 
-# endif /* OPENSSL_API_1_1_0 */
+# endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
 
 typedef void CRYPTO_RWLOCK;
 
@@ -74,46 +80,8 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 
-/*
- * The following can be used to detect memory leaks in the library. If
- * used, it turns on malloc checking
- */
-# define CRYPTO_MEM_CHECK_OFF     0x0   /* Control only */
-# define CRYPTO_MEM_CHECK_ON      0x1   /* Control and mode bit */
-# define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
-# define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
-
-struct crypto_ex_data_st {
-    STACK_OF(void) *sk;
-};
-DEFINE_STACK_OF(void)
-
-/*
- * Per class, we have a STACK of function pointers.
- */
-# define CRYPTO_EX_INDEX_SSL              0
-# define CRYPTO_EX_INDEX_SSL_CTX          1
-# define CRYPTO_EX_INDEX_SSL_SESSION      2
-# define CRYPTO_EX_INDEX_X509             3
-# define CRYPTO_EX_INDEX_X509_STORE       4
-# define CRYPTO_EX_INDEX_X509_STORE_CTX   5
-# define CRYPTO_EX_INDEX_DH               6
-# define CRYPTO_EX_INDEX_DSA              7
-# define CRYPTO_EX_INDEX_EC_KEY           8
-# define CRYPTO_EX_INDEX_RSA              9
-# define CRYPTO_EX_INDEX_ENGINE          10
-# define CRYPTO_EX_INDEX_UI              11
-# define CRYPTO_EX_INDEX_BIO             12
-# define CRYPTO_EX_INDEX_APP             13
-# define CRYPTO_EX_INDEX_UI_METHOD       14
-# define CRYPTO_EX_INDEX_DRBG            15
-# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
-# define CRYPTO_EX_INDEX__COUNT          17
-
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue
-
-int CRYPTO_mem_ctrl(int mode);
 
 # define OPENSSL_malloc(num) \
         CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE)
@@ -147,13 +115,28 @@ int CRYPTO_mem_ctrl(int mode);
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strnlen(const char *str, size_t maxlen);
-char *OPENSSL_buf2hexstr(const unsigned char *buffer, long len);
-unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
+int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
+                          const unsigned char *buf, size_t buflen);
+char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen);
+int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
+                          const char *str);
+unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
 int OPENSSL_hexchar2int(unsigned char c);
 
 # define OPENSSL_MALLOC_MAX_NELEMS(type)  (((1U<<(sizeof(int)*8-1))-1)/sizeof(type))
 
-DEPRECATEDIN_3(unsigned long OpenSSL_version_num(void))
+/*
+ * These functions return the values of OPENSSL_VERSION_MAJOR,
+ * OPENSSL_VERSION_MINOR, OPENSSL_VERSION_PATCH, OPENSSL_VERSION_PRE_RELEASE
+ * and OPENSSL_VERSION_BUILD_METADATA, respectively.
+ */
+unsigned int OPENSSL_version_major(void);
+unsigned int OPENSSL_version_minor(void);
+unsigned int OPENSSL_version_patch(void);
+const char *OPENSSL_version_pre_release(void);
+const char *OPENSSL_version_build_metadata(void);
+
+unsigned long OpenSSL_version_num(void);
 const char *OpenSSL_version(int type);
 # define OPENSSL_VERSION                0
 # define OPENSSL_CFLAGS                 1
@@ -163,8 +146,55 @@ const char *OpenSSL_version(int type);
 # define OPENSSL_ENGINES_DIR            5
 # define OPENSSL_VERSION_STRING         6
 # define OPENSSL_FULL_VERSION_STRING    7
+# define OPENSSL_MODULES_DIR            8
+# define OPENSSL_CPU_INFO               9
+
+const char *OPENSSL_info(int type);
+/*
+ * The series starts at 1001 to avoid confusion with the OpenSSL_version
+ * types.
+ */
+# define OPENSSL_INFO_CONFIG_DIR                1001
+# define OPENSSL_INFO_ENGINES_DIR               1002
+# define OPENSSL_INFO_MODULES_DIR               1003
+# define OPENSSL_INFO_DSO_EXTENSION             1004
+# define OPENSSL_INFO_DIR_FILENAME_SEPARATOR    1005
+# define OPENSSL_INFO_LIST_SEPARATOR            1006
+# define OPENSSL_INFO_SEED_SOURCE               1007
+# define OPENSSL_INFO_CPU_SETTINGS              1008
 
 int OPENSSL_issetugid(void);
+
+struct crypto_ex_data_st {
+    OPENSSL_CTX *ctx;
+    STACK_OF(void) *sk;
+};
+
+DEFINE_OR_DECLARE_STACK_OF(void)
+
+/*
+ * Per class, we have a STACK of function pointers.
+ */
+# define CRYPTO_EX_INDEX_SSL              0
+# define CRYPTO_EX_INDEX_SSL_CTX          1
+# define CRYPTO_EX_INDEX_SSL_SESSION      2
+# define CRYPTO_EX_INDEX_X509             3
+# define CRYPTO_EX_INDEX_X509_STORE       4
+# define CRYPTO_EX_INDEX_X509_STORE_CTX   5
+# define CRYPTO_EX_INDEX_DH               6
+# define CRYPTO_EX_INDEX_DSA              7
+# define CRYPTO_EX_INDEX_EC_KEY           8
+# define CRYPTO_EX_INDEX_RSA              9
+# define CRYPTO_EX_INDEX_ENGINE          10
+# define CRYPTO_EX_INDEX_UI              11
+# define CRYPTO_EX_INDEX_BIO             12
+# define CRYPTO_EX_INDEX_APP             13
+# define CRYPTO_EX_INDEX_UI_METHOD       14
+# define CRYPTO_EX_INDEX_RAND_DRBG       15
+# define CRYPTO_EX_INDEX_DRBG            CRYPTO_EX_INDEX_RAND_DRBG
+# define CRYPTO_EX_INDEX_OPENSSL_CTX     16
+# define CRYPTO_EX_INDEX_EVP_PKEY        17
+# define CRYPTO_EX_INDEX__COUNT          18
 
 typedef void CRYPTO_EX_new (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
                            int idx, long argl, void *argp);
@@ -173,8 +203,9 @@ typedef void CRYPTO_EX_free (void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 typedef int CRYPTO_EX_dup (CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                            void *from_d, int idx, long argl, void *argp);
 __owur int CRYPTO_get_ex_new_index(int class_index, long argl, void *argp,
-                            CRYPTO_EX_new *new_func, CRYPTO_EX_dup *dup_func,
-                            CRYPTO_EX_free *free_func);
+                                   CRYPTO_EX_new *new_func,
+                                   CRYPTO_EX_dup *dup_func,
+                                   CRYPTO_EX_free *free_func);
 /* No longer use an index. */
 int CRYPTO_free_ex_index(int class_index, int idx);
 
@@ -199,7 +230,7 @@ int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
 int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val);
 void *CRYPTO_get_ex_data(const CRYPTO_EX_DATA *ad, int idx);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * This function cleans up all "ex_data" state. It mustn't be called under
  * potential race-conditions.
@@ -246,11 +277,11 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_THREADID_cpy(dest, src)
 #  define CRYPTO_THREADID_hash(id)                      (0UL)
 
-#  if !OPENSSL_API_1_0_0
+#  ifndef OPENSSL_NO_DEPRECATED_1_0_0
 #   define CRYPTO_set_id_callback(func)
 #   define CRYPTO_get_id_callback()                     (NULL)
 #   define CRYPTO_thread_id()                           (0UL)
-#  endif /* OPENSSL_API_1_0_0 */
+#  endif /* OPENSSL_NO_DEPRECATED_1_0_0 */
 
 #  define CRYPTO_set_dynlock_create_callback(dyn_create_function)
 #  define CRYPTO_set_dynlock_lock_callback(dyn_lock_function)
@@ -258,17 +289,18 @@ typedef struct crypto_threadid_st {
 #  define CRYPTO_get_dynlock_create_callback()          (NULL)
 #  define CRYPTO_get_dynlock_lock_callback()            (NULL)
 #  define CRYPTO_get_dynlock_destroy_callback()         (NULL)
-# endif /* OPENSSL_API_1_1_0 */
+# endif /* OPENSSL_NO_DEPRECATED_1_1_0 */
 
-int CRYPTO_set_mem_functions(
-        void *(*m) (size_t, const char *, int),
-        void *(*r) (void *, size_t, const char *, int),
-        void (*f) (void *, const char *, int));
-int CRYPTO_set_mem_debug(int flag);
-void CRYPTO_get_mem_functions(
-        void *(**m) (size_t, const char *, int),
-        void *(**r) (void *, size_t, const char *, int),
-        void (**f) (void *, const char *, int));
+typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
+typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
+                                   int line);
+typedef void (*CRYPTO_free_fn)(void *addr, const char *file, int line);
+int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
+                             CRYPTO_realloc_fn realloc_fn,
+                             CRYPTO_free_fn free_fn);
+void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
+                              CRYPTO_realloc_fn *realloc_fn,
+                              CRYPTO_free_fn *free_fn);
 
 void *CRYPTO_malloc(size_t num, const char *file, int line);
 void *CRYPTO_zalloc(size_t num, const char *file, int line);
@@ -281,7 +313,7 @@ void *CRYPTO_realloc(void *addr, size_t num, const char *file, int line);
 void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
                            const char *file, int line);
 
-int CRYPTO_secure_malloc_init(size_t sz, int minsize);
+int CRYPTO_secure_malloc_init(size_t sz, size_t minsize);
 int CRYPTO_secure_malloc_done(void);
 void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
 void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
@@ -296,38 +328,48 @@ size_t CRYPTO_secure_used(void);
 void OPENSSL_cleanse(void *ptr, size_t len);
 
 # ifndef OPENSSL_NO_CRYPTO_MDEBUG
-#  define OPENSSL_mem_debug_push(info) \
-        CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
-#  define OPENSSL_mem_debug_pop() \
-        CRYPTO_mem_debug_pop()
-int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
-int CRYPTO_mem_debug_pop(void);
-void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
-
-/*-
- * Debugging functions (enabled by CRYPTO_set_mem_debug(1))
- * The flag argument has the following significance:
- *   0:   called before the actual memory allocation has taken place
- *   1:   called after the actual memory allocation has taken place
+/*
+ * The following can be used to detect memory leaks in the library. If
+ * used, it turns on malloc checking
  */
-void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag,
-        const char *file, int line);
-void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
-        const char *file, int line);
-void CRYPTO_mem_debug_free(void *addr, int flag,
-        const char *file, int line);
+# define CRYPTO_MEM_CHECK_OFF     0x0   /* Control only */
+# define CRYPTO_MEM_CHECK_ON      0x1   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_ENABLE  0x2   /* Control and mode bit */
+# define CRYPTO_MEM_CHECK_DISABLE 0x3   /* Control only */
 
-int CRYPTO_mem_leaks_cb(int (*cb) (const char *str, size_t len, void *u),
-                        void *u);
-#  ifndef OPENSSL_NO_STDIO
-int CRYPTO_mem_leaks_fp(FILE *);
+void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount);
+#  ifndef OPENSSL_NO_DEPRECATED_3_0
+#    define OPENSSL_mem_debug_push(info) \
+         CRYPTO_mem_debug_push(info, OPENSSL_FILE, OPENSSL_LINE)
+#    define OPENSSL_mem_debug_pop() \
+         CRYPTO_mem_debug_pop()
 #  endif
-int CRYPTO_mem_leaks(BIO *bio);
-# endif
+DEPRECATEDIN_3_0(int CRYPTO_set_mem_debug(int flag))
+DEPRECATEDIN_3_0(int CRYPTO_mem_ctrl(int mode))
+DEPRECATEDIN_3_0(int CRYPTO_mem_debug_push(const char *info,
+                                           const char *file, int line))
+DEPRECATEDIN_3_0(int CRYPTO_mem_debug_pop(void))
+
+DEPRECATEDIN_3_0(void CRYPTO_mem_debug_malloc(void *addr, size_t num,
+                                              int flag,
+                                              const char *file, int line))
+DEPRECATEDIN_3_0(void CRYPTO_mem_debug_realloc(void *addr1, void *addr2,
+                                               size_t num, int flag,
+                                               const char *file, int line))
+DEPRECATEDIN_3_0(void CRYPTO_mem_debug_free(void *addr, int flag,
+                                            const char *file, int line))
+
+DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_cb(
+                      int (*cb)(const char *str, size_t len, void *u), void *u))
+#  ifndef OPENSSL_NO_STDIO
+DEPRECATEDIN_3_0(int CRYPTO_mem_leaks_fp(FILE *))
+#  endif
+DEPRECATEDIN_3_0(int CRYPTO_mem_leaks(BIO *bio))
+# endif /* OPENSSL_NO_CRYPTO_MDEBUG */
 
 /* die if we have to */
 ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line);
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define OpenSSLDie(f,l,a) OPENSSL_die((a),(f),(l))
 # endif
 # define OPENSSL_assert(e) \
@@ -381,8 +423,8 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 /* OPENSSL_INIT_BASE_ONLY                    0x00040000L */
 # define OPENSSL_INIT_NO_ATEXIT              0x00080000L
 /* OPENSSL_INIT flag range 0x03f00000 reserved for OPENSSL_init_ssl() */
-# define OPENSSL_INIT_NO_ADD_ALL_MACS        0x04000000L
-# define OPENSSL_INIT_ADD_ALL_MACS           0x08000000L
+/* FREE: 0x04000000L */
+/* FREE: 0x08000000L */
 /* FREE: 0x10000000L */
 /* FREE: 0x20000000L */
 /* FREE: 0x40000000L */
@@ -401,6 +443,7 @@ void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
 int OPENSSL_atexit(void (*handler)(void));
 void OPENSSL_thread_stop(void);
+void OPENSSL_thread_stop_ex(OPENSSL_CTX *ctx);
 
 /* Low-level control of initialization */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void);
@@ -452,6 +495,7 @@ CRYPTO_THREAD_ID CRYPTO_THREAD_get_current_id(void);
 int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 
 OPENSSL_CTX *OPENSSL_CTX_new(void);
+int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file);
 void OPENSSL_CTX_free(OPENSSL_CTX *);
 
 # ifdef  __cplusplus

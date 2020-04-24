@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,8 +19,10 @@
 #endif
 
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
-#include "x509_lcl.h"
+#include "crypto/x509.h"
+#include "x509_local.h"
+
+DEFINE_STACK_OF(X509_OBJECT)
 
 struct lookup_dir_hashes_st {
     unsigned long hash;
@@ -45,7 +47,7 @@ static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type);
 static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
-                               X509_NAME *name, X509_OBJECT *ret);
+                               const X509_NAME *name, X509_OBJECT *ret);
 static X509_LOOKUP_METHOD x509_dir_lookup = {
     "Load certs from files in a directory",
     new_dir,                    /* new_item */
@@ -156,7 +158,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     size_t len;
     const char *s, *ss, *p;
 
-    if (dir == NULL || !*dir) {
+    if (dir == NULL || *dir == '\0') {
         X509err(X509_F_ADD_CERT_DIR, X509_R_INVALID_DIRECTORY);
         return 0;
     }
@@ -209,7 +211,7 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 }
 
 static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
-                               X509_NAME *name, X509_OBJECT *ret)
+                               const X509_NAME *name, X509_OBJECT *ret)
 {
     BY_DIR *ctx;
     union {
@@ -228,11 +230,11 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 
     stmp.type = type;
     if (type == X509_LU_X509) {
-        data.st_x509.cert_info.subject = name;
+        data.st_x509.cert_info.subject = (X509_NAME *)name; /* won't modify it */
         stmp.data.x509 = &data.st_x509;
         postfix = "";
     } else if (type == X509_LU_CRL) {
-        data.crl.crl.issuer = name;
+        data.crl.crl.issuer = (X509_NAME *)name; /* won't modify it */
         stmp.data.crl = &data.crl;
         postfix = "r";
     } else {
@@ -327,10 +329,10 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
         /*
          * we have added it to the cache so now pull it out again
          */
-        CRYPTO_THREAD_write_lock(ctx->lock);
+        X509_STORE_lock(xl->store_ctx);
         j = sk_X509_OBJECT_find(xl->store_ctx->objs, &stmp);
         tmp = sk_X509_OBJECT_value(xl->store_ctx->objs, j);
-        CRYPTO_THREAD_unlock(ctx->lock);
+        X509_STORE_unlock(xl->store_ctx);
 
         /* If a CRL, update the last file suffix added for this */
 

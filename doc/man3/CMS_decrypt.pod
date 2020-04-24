@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-CMS_decrypt - decrypt content from a CMS envelopedData structure
+CMS_decrypt, CMS_decrypt_set1_pkey_and_peer, CMS_decrypt_set1_pkey - decrypt
+content from a CMS envelopedData structure
 
 =head1 SYNOPSIS
 
@@ -10,6 +11,9 @@ CMS_decrypt - decrypt content from a CMS envelopedData structure
 
  int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
                  BIO *dcont, BIO *out, unsigned int flags);
+ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms,
+                 EVP_PKEY *pk, X509 *cert, X509 *peer);
+ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert);
 
 =head1 DESCRIPTION
 
@@ -20,6 +24,13 @@ B<flags> is an optional set of flags.
 
 The B<dcont> parameter is used in the rare case where the encrypted content
 is detached. It will normally be set to NULL.
+
+CMS_decrypt_set1_pkey_and_peer() associates the private key B<pkey>, the
+corresponding certificate B<cert> and the originator certificate B<peer> with
+the CMS_ContentInfo structure B<cms>.
+
+CMS_decrypt_set1_pkey() associates the private key B<pkey>, corresponding
+certificate B<cert> with the CMS_ContentInfo structure B<cms>.
 
 =head1 NOTES
 
@@ -70,9 +81,13 @@ mentioned in CMS_verify() also applies to CMS_decrypt().
 
 L<ERR_get_error(3)>, L<CMS_encrypt(3)>
 
+=head1 HISTORY
+
+B<CMS_decrypt_set1_pkey_and_peer> was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

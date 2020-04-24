@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -8,8 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/err.h>
-#include "ec_lcl.h"
+#include "crypto/bn.h"
+#include "ec_local.h"
 
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
                                  const BIGNUM *b, BN_CTX *ctx)
@@ -47,12 +54,12 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
         meth = EC_GFp_mont_method();
 #endif
 
-    ret = EC_GROUP_new(meth);
+    ret = EC_GROUP_new_ex(bn_get_lib_ctx(ctx), meth);
     if (ret == NULL)
         return NULL;
 
     if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
-        EC_GROUP_clear_free(ret);
+        EC_GROUP_free(ret);
         return NULL;
     }
 
@@ -68,12 +75,12 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
 
     meth = EC_GF2m_simple_method();
 
-    ret = EC_GROUP_new(meth);
+    ret = EC_GROUP_new_ex(bn_get_lib_ctx(ctx), meth);
     if (ret == NULL)
         return NULL;
 
     if (!EC_GROUP_set_curve(ret, p, a, b, ctx)) {
-        EC_GROUP_clear_free(ret);
+        EC_GROUP_free(ret);
         return NULL;
     }
 

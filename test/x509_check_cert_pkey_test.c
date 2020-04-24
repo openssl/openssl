@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -110,10 +110,11 @@ const OPTIONS *test_get_options(void)
 {
     enum { OPT_TEST_ENUM };
     static const OPTIONS test_options[] = {
-        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("certname key.pem type expected\n"),
-        { OPT_HELP_STR, 1, '-', "certname\tCertificate filename .pem/.req\n" },
-        { OPT_HELP_STR, 1, '-', "type\t\tvalue must be 'pem' or 'req'\n" },
-        { OPT_HELP_STR, 1, '-', "expected\tthe expected return value\n" },
+        OPT_TEST_OPTIONS_WITH_EXTRA_USAGE("cert key type expected\n"),
+        { OPT_HELP_STR, 1, '-', "cert\tcertificate or CSR filename in PEM\n" },
+        { OPT_HELP_STR, 1, '-', "key\tprivate key filename in PEM\n" },
+        { OPT_HELP_STR, 1, '-', "type\t\tvalue must be 'cert' or 'req'\n" },
+        { OPT_HELP_STR, 1, '-', "expected\tthe expected return value, either 'ok' or 'failed'\n" },
         { NULL }
     };
     return test_options;
@@ -121,6 +122,11 @@ const OPTIONS *test_get_options(void)
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(c = test_get_argument(0))
             || !TEST_ptr(k = test_get_argument(1))
             || !TEST_ptr(t = test_get_argument(2))

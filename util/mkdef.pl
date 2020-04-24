@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -31,6 +31,7 @@ my $version = undef;            # the version to use for the library
 my $OS = undef;                 # the operating system family
 my $verbose = 0;
 my $ctest = 0;
+my $debug = 0;
 
 # For VMS, some modules may have case insensitive names
 my $case_insensitive = 0;
@@ -100,33 +101,25 @@ die "Please supply arguments\n"
 #
 (my $SO_VARIANT = uc($target{"shlib_variant"} // '')) =~ s/\W/_/g;
 
-my $apiv = undef;
-$apiv = sprintf "%x%02x%02x", split(/\./, $config{api})
-    if $config{api};
-
 my $libname = platform->sharedname($name);
 
 my %OS_data = (
     solaris     => { writer     => \&writer_linux,
                      sort       => sorter_linux(),
-                     platforms  => { UNIX                       => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 0 } },
+                     platforms  => { UNIX                       => 1 } },
     linux       => 'solaris',   # alias
     "bsd-gcc"   => 'solaris',   # alias
     aix         => { writer     => \&writer_aix,
                      sort       => sorter_unix(),
-                     platforms  => { UNIX                       => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 0 } },
+                     platforms  => { UNIX                       => 1 } },
     VMS         => { writer     => \&writer_VMS,
                      sort       => OpenSSL::Ordinals::by_number(),
-                     platforms  => { VMS                        => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 0 } },
+                     platforms  => { VMS                        => 1 } },
     vms         => 'VMS',       # alias
     WINDOWS     => { writer     => \&writer_windows,
                      sort       => OpenSSL::Ordinals::by_name(),
                      platforms  => { WIN32                      => 1,
-                                     _WIN32                     => 1,
-                                     EXPORT_VAR_AS_FUNCTION     => 1 } },
+                                     _WIN32                     => 1 } },
     windows     => 'WINDOWS',   # alias
     WIN32       => 'WINDOWS',   # alias
     win32       => 'WIN32',     # alias
@@ -195,11 +188,13 @@ sub feature_filter {
 
     my $verdict = ! grep { $disabled_uc{$_} } @features;
 
-    if ($apiv) {
+    if ($disabled{deprecated}) {
         foreach (@features) {
-            next unless /^DEPRECATEDIN_(\d+)(?:_(\d+)_(\d+))?$/;
-            my $symdep = sprintf "%x%02x%02x", $1, ($2 // 0), ($3 // 0);
-            $verdict = 0 if $apiv ge $symdep;
+            next unless /^DEPRECATEDIN_(\d+)_(\d+)(?:_(\d+))?$/;
+            my $symdep = $1 * 10000 + $2 * 100 + ($3 // 0);
+            $verdict = 0 if $config{api} >= $symdep;
+            print STDERR "DEBUG: \$symdep = $symdep, \$verdict = $verdict\n"
+                if $debug && $1 == 0;
         }
     }
 
@@ -327,7 +322,10 @@ sub writer_VMS {
 
     my $last_num = 0;
     foreach (@_) {
-        while (++$last_num < $_->number()) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
+
+        while (++$last_num < $this_num) {
             push @slot_collection, $collector->(); # Just occupy a slot
         }
         my $type = {
@@ -410,12 +408,20 @@ int main()
 {
 _____
 
+    my $last_num = 0;
     for (@_) {
+        my $this_num = $_->number();
+        $this_num = $last_num + 1 if $this_num =~ m|^\?|;
+
         if ($_->type() eq 'VARIABLE') {
-            print "\textern int ", $_->name(), '; /* type unknown */ /* ', $_->number(), ' ', $_->version(), " */\n";
+            print "\textern int ", $_->name(), '; /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
         } else {
-            print "\textern int ", $_->name(), '(); /* type unknown */ /* ', $_->number(), ' ', $_->version(), " */\n";
+            print "\textern int ", $_->name(), '(); /* type unknown */ /* ',
+                  $this_num, ' ', $_->version(), " */\n";
         }
+
+        $last_num = $this_num;
     }
     print <<'_____';
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,7 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "internal/x509_int.h"
+#include "crypto/x509.h"
 
 /* Minor tweak to operation: zero private key data */
 static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -77,4 +77,15 @@ int PKCS8_pkey_add1_attr_by_NID(PKCS8_PRIV_KEY_INFO *p8, int nid, int type,
     if (X509at_add1_attr_by_NID(&p8->attributes, nid, type, bytes, len) != NULL)
         return 1;
     return 0;
+}
+
+int PKCS8_pkey_add1_attr_by_OBJ(PKCS8_PRIV_KEY_INFO *p8, const ASN1_OBJECT *obj, int type,
+                                const unsigned char *bytes, int len)
+{
+    return (X509at_add1_attr_by_OBJ(&p8->attributes, obj, type, bytes, len) != NULL);
+}
+
+int PKCS8_pkey_add1_attr(PKCS8_PRIV_KEY_INFO *p8, X509_ATTRIBUTE *attr)
+{
+    return (X509at_add1_attr(&p8->attributes, attr) != NULL);
 }

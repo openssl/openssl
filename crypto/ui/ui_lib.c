@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,7 +13,9 @@
 #include <openssl/buffer.h>
 #include <openssl/ui.h>
 #include <openssl/err.h>
-#include "ui_locl.h"
+#include "ui_local.h"
+
+DEFINE_STACK_OF(UI_STRING)
 
 UI *UI_new(void)
 {
@@ -500,6 +502,7 @@ int UI_process(UI *ui)
     if (ui->meth->ui_flush != NULL)
         switch (ui->meth->ui_flush(ui)) {
         case -1:               /* Interrupt/Cancel/something... */
+            ui->flags &= ~UI_FLAG_REDOABLE;
             ok = -2;
             goto err;
         case 0:                /* Errors */
@@ -517,6 +520,7 @@ int UI_process(UI *ui)
                                              sk_UI_STRING_value(ui->strings,
                                                                 i))) {
             case -1:           /* Interrupt/Cancel/something... */
+                ui->flags &= ~UI_FLAG_REDOABLE;
                 ok = -2;
                 goto err;
             case 0:            /* Errors */
@@ -576,7 +580,7 @@ int UI_set_ex_data(UI *r, int idx, void *arg)
     return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
 }
 
-void *UI_get_ex_data(UI *r, int idx)
+void *UI_get_ex_data(const UI *r, int idx)
 {
     return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
@@ -872,13 +876,6 @@ int UI_get_result_maxsize(UI_STRING *uis)
 
 int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 {
-#if 0
-    /*
-     * This is placed here solely to preserve UI_F_UI_SET_RESULT
-     * To be removed for OpenSSL 1.2.0
-     */
-    UIerr(UI_F_UI_SET_RESULT, ERR_R_DISABLED);
-#endif
     return UI_set_result_ex(ui, uis, result, strlen(result));
 }
 

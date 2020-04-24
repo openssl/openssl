@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,22 +19,35 @@
 #include <openssl/pem.h>
 #include <openssl/objects.h>
 
+DEFINE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_INFO)
+DEFINE_STACK_OF_STRING()
+
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOCRL, OPT_CERTFILE
+    OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_NOCRL, OPT_CERTFILE,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS crl2pkcs7_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
+    {"inform", OPT_INFORM, 'F', "Input format - DER or PEM"},
     {"nocrl", OPT_NOCRL, '-', "No crl to load, just certs from '-certfile'"},
     {"certfile", OPT_CERTFILE, '<',
      "File of chain of certs to a trusted CA; can be repeated"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - DER or PEM"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -86,6 +99,10 @@ int crl2pkcs7_main(int argc, char **argv)
                 && (certflst = sk_OPENSSL_STRING_new_null()) == NULL)
                 goto end;
             if (!sk_OPENSSL_STRING_push(certflst, opt_arg()))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         }

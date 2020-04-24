@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_verify_init, EVP_PKEY_verify - signature verification using a public key algorithm
+EVP_PKEY_verify_init, EVP_PKEY_verify
+- signature verification using a public key algorithm
 
 =head1 SYNOPSIS
 
@@ -15,13 +16,16 @@ EVP_PKEY_verify_init, EVP_PKEY_verify - signature verification using a public ke
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_verify_init() function initializes a public key algorithm
-context using key B<pkey> for a signature verification operation.
+EVP_PKEY_verify_init() initializes a public key algorithm context I<ctx> for
+signing using the algorithm given when the context was created
+using L<EVP_PKEY_CTX_new(3)> or variants thereof.  The algorithm is used to
+fetch a B<EVP_SIGNATURE> method implicitly, see L<provider(7)/Implicit fetch>
+for more information about implict fetches.
 
 The EVP_PKEY_verify() function performs a public key verification operation
-using B<ctx>. The signature is specified using the B<sig> and
-B<siglen> parameters. The verified data (i.e. the data believed originally
-signed) is specified using the B<tbs> and B<tbslen> parameters.
+using I<ctx>. The signature is specified using the I<sig> and
+I<siglen> parameters. The verified data (i.e. the data believed originally
+signed) is specified using the I<tbs> and I<tbslen> parameters.
 
 =head1 NOTES
 
@@ -44,7 +48,7 @@ A negative value indicates an error other that signature verification failure.
 In particular a return value of -2 indicates the operation is not supported by
 the public key algorithm.
 
-=head1 EXAMPLE
+=head1 EXAMPLES
 
 Verify signature using PKCS#1 and SHA256 digest:
 
@@ -93,7 +97,7 @@ These functions were added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

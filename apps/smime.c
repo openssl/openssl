@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,9 @@
 #include <openssl/err.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF_STRING()
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);
@@ -41,71 +44,90 @@ typedef enum OPTION_choice {
     OPT_CRLFEOL, OPT_ENGINE, OPT_PASSIN,
     OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP, OPT_MD,
     OPT_CIPHER, OPT_INKEY, OPT_KEYFORM, OPT_CERTFILE, OPT_CAFILE,
-    OPT_R_ENUM,
+    OPT_CAPATH, OPT_CASTORE, OPT_NOCAFILE, OPT_NOCAPATH, OPT_NOCASTORE,
+    OPT_R_ENUM, OPT_PROV_ENUM,
     OPT_V_ENUM,
-    OPT_CAPATH, OPT_NOCAFILE, OPT_NOCAPATH, OPT_IN, OPT_INFORM, OPT_OUT,
+    OPT_IN, OPT_INFORM, OPT_OUT,
     OPT_OUTFORM, OPT_CONTENT
 } OPTION_CHOICE;
 
 const OPTIONS smime_options[] = {
-    {OPT_HELP_STR, 1, '-', "Usage: %s [options] cert.pem...\n"},
-    {OPT_HELP_STR, 1, '-',
-        "  cert.pem... recipient certs for encryption\n"},
-    {OPT_HELP_STR, 1, '-', "Valid options are:\n"},
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [cert...]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"encrypt", OPT_ENCRYPT, '-', "Encrypt message"},
-    {"decrypt", OPT_DECRYPT, '-', "Decrypt encrypted message"},
-    {"sign", OPT_SIGN, '-', "Sign message"},
-    {"verify", OPT_VERIFY, '-', "Verify signed message"},
-    {"pk7out", OPT_PK7OUT, '-', "Output PKCS#7 structure"},
-    {"nointern", OPT_NOINTERN, '-',
-     "Don't search certificates in message for signer"},
-    {"nosigs", OPT_NOSIGS, '-', "Don't verify message signature"},
-    {"noverify", OPT_NOVERIFY, '-', "Don't verify signers certificate"},
-    {"nocerts", OPT_NOCERTS, '-',
-     "Don't include signers certificate when signing"},
-    {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
-    {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
-    {"binary", OPT_BINARY, '-', "Don't translate message to text"},
-    {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
-    {"signer", OPT_SIGNER, 's', "Signer certificate file"},
-    {"recip", OPT_RECIP, '<', "Recipient certificate file for decryption"},
     {"in", OPT_IN, '<', "Input file"},
     {"inform", OPT_INFORM, 'c', "Input format SMIME (default), PEM or DER"},
-    {"inkey", OPT_INKEY, 's',
-     "Input private key (if not signer or recipient)"},
-    {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
     {"out", OPT_OUT, '>', "Output file"},
     {"outform", OPT_OUTFORM, 'c',
      "Output format SMIME (default), PEM or DER"},
+    {"inkey", OPT_INKEY, 's',
+     "Input private key (if not signer or recipient)"},
+    {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+#endif
+    {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
+    {"indef", OPT_INDEF, '-', "Same as -stream" },
+    {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
+
+    OPT_SECTION("Action"),
+    {"encrypt", OPT_ENCRYPT, '-', "Encrypt message"},
+    {"decrypt", OPT_DECRYPT, '-', "Decrypt encrypted message"},
+    {"sign", OPT_SIGN, '-', "Sign message"},
+    {"resign", OPT_RESIGN, '-', "Resign a signed message"},
+    {"verify", OPT_VERIFY, '-', "Verify signed message"},
+
+    OPT_SECTION("Signing/Encryption"),
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
+    {"", OPT_CIPHER, '-', "Any supported cipher"},
+    {"pk7out", OPT_PK7OUT, '-', "Output PKCS#7 structure"},
+    {"nointern", OPT_NOINTERN, '-',
+     "Don't search certificates in message for signer"},
+    {"nodetach", OPT_NODETACH, '-', "Use opaque signing"},
+    {"noattr", OPT_NOATTR, '-', "Don't include any signed attributes"},
+    {"binary", OPT_BINARY, '-', "Don't translate message to text"},
+    {"signer", OPT_SIGNER, 's', "Signer certificate file"},
     {"content", OPT_CONTENT, '<',
      "Supply or override content for detached signature"},
+    {"nocerts", OPT_NOCERTS, '-',
+     "Don't include signers certificate when signing"},
+
+    OPT_SECTION("Verification/Decryption"),
+    {"nosigs", OPT_NOSIGS, '-', "Don't verify message signature"},
+    {"noverify", OPT_NOVERIFY, '-', "Don't verify signers certificate"},
+
+    {"certfile", OPT_CERTFILE, '<', "Other certificates file"},
+    {"recip", OPT_RECIP, '<', "Recipient certificate file for decryption"},
+
+    OPT_SECTION("Email"),
     {"to", OPT_TO, 's', "To address"},
     {"from", OPT_FROM, 's', "From address"},
     {"subject", OPT_SUBJECT, 's', "Subject"},
     {"text", OPT_TEXT, '-', "Include or delete text MIME headers"},
+    {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
+
+    OPT_SECTION("Certificate chain"),
     {"CApath", OPT_CAPATH, '/', "Trusted certificates directory"},
     {"CAfile", OPT_CAFILE, '<', "Trusted certificates file"},
+    {"CAstore", OPT_CASTORE, ':', "Trusted certificates store URI"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
-    {"resign", OPT_RESIGN, '-', "Resign a signed message"},
+    {"no-CAstore", OPT_NOCASTORE, '-',
+     "Do not load certificates from the default certificates store"},
     {"nochain", OPT_NOCHAIN, '-',
      "set PKCS7_NOCHAIN so certificates contained in the message are not used as untrusted CAs" },
-    {"nosmimecap", OPT_NOSMIMECAP, '-', "Omit the SMIMECapabilities attribute"},
-    {"stream", OPT_STREAM, '-', "Enable CMS streaming" },
-    {"indef", OPT_INDEF, '-', "Same as -stream" },
-    {"noindef", OPT_NOINDEF, '-', "Disable CMS streaming"},
     {"crlfeol", OPT_CRLFEOL, '-', "Use CRLF as EOL termination instead of CR only"},
+
     OPT_R_OPTIONS,
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"md", OPT_MD, 's', "Digest algorithm to use when signing or resigning"},
-    {"", OPT_CIPHER, '-', "Any supported cipher"},
     OPT_V_OPTIONS,
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-#endif
+    OPT_PROV_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"cert", 0, 0, "Recipient certs, used when encrypting"},
     {NULL}
 };
 
@@ -121,12 +143,12 @@ int smime_main(int argc, char **argv)
     X509_VERIFY_PARAM *vpm = NULL;
     const EVP_CIPHER *cipher = NULL;
     const EVP_MD *sign_md = NULL;
-    const char *CAfile = NULL, *CApath = NULL, *prog = NULL;
+    const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL, *prog = NULL;
     char *certfile = NULL, *keyfile = NULL, *contfile = NULL;
     char *infile = NULL, *outfile = NULL, *signerfile = NULL, *recipfile = NULL;
     char *passinarg = NULL, *passin = NULL, *to = NULL, *from = NULL, *subject = NULL;
     OPTION_CHOICE o;
-    int noCApath = 0, noCAfile = 0;
+    int noCApath = 0, noCAfile = 0, noCAstore = 0;
     int flags = PKCS7_DETACHED, operation = 0, ret = 0, indef = 0;
     int informat = FORMAT_SMIME, outformat = FORMAT_SMIME, keyform =
         FORMAT_PEM;
@@ -226,6 +248,10 @@ int smime_main(int argc, char **argv)
             if (!opt_rand(o))
                 goto end;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
@@ -302,11 +328,17 @@ int smime_main(int argc, char **argv)
         case OPT_CAPATH:
             CApath = opt_arg();
             break;
+        case OPT_CASTORE:
+            CAstore = opt_arg();
+            break;
         case OPT_NOCAFILE:
             noCAfile = 1;
             break;
         case OPT_NOCAPATH:
             noCApath = 1;
+            break;
+        case OPT_NOCASTORE:
+            noCAstore = 1;
             break;
         case OPT_CONTENT:
             contfile = opt_arg();
@@ -473,7 +505,8 @@ int smime_main(int argc, char **argv)
         goto end;
 
     if (operation == SMIME_VERIFY) {
-        if ((store = setup_verify(CAfile, CApath, noCAfile, noCApath)) == NULL)
+        if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,
+                                  CAstore, noCAstore)) == NULL)
             goto end;
         X509_STORE_set_verify_cb(store, smime_cb);
         if (vpmtouched)

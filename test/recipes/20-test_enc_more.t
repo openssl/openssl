@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2017 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2017, Oracle and/or its affiliates.  All rights reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -15,7 +15,7 @@ use File::Spec::Functions qw/catfile/;
 use File::Copy;
 use File::Compare qw/compare_text/;
 use File::Basename;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
 
 setup("test_evp_more");
 
@@ -25,19 +25,21 @@ my $cipherlist = undef;
 my $plaintext = catfile(".", "testdatafile");
 my $fail = "";
 my $cmd = "openssl";
+my $provpath = bldtop_dir("providers");
+my @prov = ("-provider_path", $provpath, "-provider", "default", "-provider", "legacy");
 
 my $ciphersstatus = undef;
 my @ciphers =
     grep(! /wrap|^$|^[^-]/,
          (map { split /\s+/ }
-          run(app([$cmd, "enc", "-ciphers"]),
+          run(app([$cmd, "enc", "-list"]),
               capture => 1, statusvar => \$ciphersstatus)));
 
 plan tests => 2 + scalar @ciphers;
 
 SKIP: {
     skip "Problems getting ciphers...", 1 + scalar(@ciphers)
-        unless ok($ciphersstatus, "Running 'openssl enc -ciphers'");
+        unless ok($ciphersstatus, "Running 'openssl enc -list'");
     unless (ok(copy($testsrc, $plaintext), "Copying $testsrc to $plaintext")) {
         diag($!);
         skip "Not initialized, skipping...", scalar(@ciphers);
@@ -49,13 +51,10 @@ SKIP: {
         my $clearfile = "$plaintext.$ciphername.clear";
         my @common = ( $cmd, "enc", "$cipher", "-k", "test" );
 
-        ok(run(app([@common, "-e", "-in", $plaintext, "-out", $cipherfile]))
+        ok(run(app([@common, @prov, "-e", "-in", $plaintext, "-out", $cipherfile]))
            && compare_text($plaintext, $cipherfile) != 0
-           && run(app([@common, "-d", "-in", $cipherfile, "-out", $clearfile]))
+           && run(app([@common, @prov, "-d", "-in", $cipherfile, "-out", $clearfile]))
            && compare_text($plaintext, $clearfile) == 0
            , $ciphername);
-        unlink $cipherfile, $clearfile;
     }
 }
-
-unlink $plaintext;

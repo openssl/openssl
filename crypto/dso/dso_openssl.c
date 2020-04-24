@@ -7,9 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "dso_locl.h"
+#include "dso_local.h"
 
-#if !defined(DSO_VMS) && !defined(DSO_DLCFN) && !defined(DSO_DL) && !defined(DSO_WIN32) && !defined(DSO_DLFCN)
+#ifdef DSO_NONE
 
 static DSO_METHOD dso_meth_null = {
     "NULL shared library method"

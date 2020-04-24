@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_TRACE_H
-# define OSSL_TRACE_H
+#ifndef OPENSSL_TRACE_H
+# define OPENSSL_TRACE_H
 
 # include <stdarg.h>
 
@@ -30,14 +30,18 @@ extern "C" {
  * BIO which sends all trace output it receives to the registered application
  * callback.
  *
- * The ANY category is used as a fallback category.
+ * The ALL category can be used as a fallback category to register a single
+ * channel which receives the output from all categories. However, if the
+ * application intends to print the trace channel name in the line prefix,
+ * it is better to register channels for all categories separately.
+ * (This is how the openssl application does it.)
  */
-# define OSSL_TRACE_CATEGORY_ANY                 0 /* The fallback */
+# define OSSL_TRACE_CATEGORY_ALL                 0 /* The fallback */
 # define OSSL_TRACE_CATEGORY_TRACE               1
 # define OSSL_TRACE_CATEGORY_INIT                2
 # define OSSL_TRACE_CATEGORY_TLS                 3
 # define OSSL_TRACE_CATEGORY_TLS_CIPHER          4
-# define OSSL_TRACE_CATEGORY_ENGINE_CONF         5
+# define OSSL_TRACE_CATEGORY_CONF                5
 # define OSSL_TRACE_CATEGORY_ENGINE_TABLE        6
 # define OSSL_TRACE_CATEGORY_ENGINE_REF_COUNT    7
 # define OSSL_TRACE_CATEGORY_PKCS5V2             8
@@ -45,7 +49,9 @@ extern "C" {
 # define OSSL_TRACE_CATEGORY_PKCS12_DECRYPT     10
 # define OSSL_TRACE_CATEGORY_X509V3_POLICY      11
 # define OSSL_TRACE_CATEGORY_BN_CTX             12
-# define OSSL_TRACE_CATEGORY_NUM                13
+# define OSSL_TRACE_CATEGORY_CMP                13
+# define OSSL_TRACE_CATEGORY_STORE              14
+# define OSSL_TRACE_CATEGORY_NUM                15
 
 /* Returns the trace category number for the given |name| */
 int OSSL_trace_get_category_num(const char *name);

@@ -12,8 +12,8 @@
 #include <openssl/evp.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
-#include "internal/evp_int.h"
-#include "evp_locl.h"
+#include "crypto/evp.h"
+#include "evp_local.h"
 
 /* Password based encryption (PBE) functions */
 
@@ -93,8 +93,9 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     if (!EVP_PBE_find(EVP_PBE_TYPE_OUTER, OBJ_obj2nid(pbe_obj),
                       &cipher_nid, &md_nid, &keygen)) {
         char obj_tmp[80];
+
         EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_PBE_ALGORITHM);
-        if (!pbe_obj)
+        if (pbe_obj == NULL)
             OPENSSL_strlcpy(obj_tmp, "NULL", sizeof(obj_tmp));
         else
             i2t_ASN1_OBJECT(obj_tmp, sizeof(obj_tmp), pbe_obj);
@@ -102,7 +103,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         return 0;
     }
 
-    if (!pass)
+    if (pass == NULL)
         passlen = 0;
     else if (passlen == -1)
         passlen = strlen(pass);

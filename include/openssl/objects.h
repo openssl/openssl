@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,8 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_OBJECTS_H
-# define HEADER_OBJECTS_H
+#ifndef OPENSSL_OBJECTS_H
+# define OPENSSL_OBJECTS_H
+# pragma once
+
+# include <openssl/macros.h>
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define HEADER_OBJECTS_H
+# endif
 
 # include <openssl/obj_mac.h>
 # include <openssl/bio.h>
@@ -21,7 +27,8 @@
 # define OBJ_NAME_TYPE_PKEY_METH         0x03
 # define OBJ_NAME_TYPE_COMP_METH         0x04
 # define OBJ_NAME_TYPE_MAC_METH          0x05
-# define OBJ_NAME_TYPE_NUM               0x06
+# define OBJ_NAME_TYPE_KDF_METH          0x06
+# define OBJ_NAME_TYPE_NUM               0x07
 
 # define OBJ_NAME_ALIAS                  0x8000
 
@@ -156,7 +163,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
 int OBJ_new_nid(int num);
 int OBJ_add_object(const ASN1_OBJECT *obj);
 int OBJ_create(const char *oid, const char *sn, const char *ln);
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define OBJ_cleanup() while(0) continue
 #endif
 int OBJ_create_objects(BIO *in);

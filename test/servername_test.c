@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2017 BaishanCloud. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -18,7 +18,7 @@
 #include <openssl/err.h>
 #include <time.h>
 
-#include "../ssl/packet_locl.h"
+#include "internal/packet.h"
 
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -35,9 +35,15 @@ static int get_sni_from_client_hello(BIO *bio, char **sni)
 {
     long len;
     unsigned char *data;
-    PACKET pkt = {0}, pkt2 = {0}, pkt3 = {0}, pkt4 = {0}, pkt5 = {0};
+    PACKET pkt, pkt2, pkt3, pkt4, pkt5;
     unsigned int servname_type = 0, type = 0;
     int ret = 0;
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&pkt2, 0, sizeof(pkt2));
+    memset(&pkt3, 0, sizeof(pkt3));
+    memset(&pkt4, 0, sizeof(pkt4));
+    memset(&pkt5, 0, sizeof(pkt5));
 
     len = BIO_get_mem_data(bio, (char **)&data);
     if (!TEST_true(PACKET_buf_init(&pkt, data, len))
@@ -184,7 +190,7 @@ static int server_setup_sni(void)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
 
-    if (!TEST_true(create_ssl_ctx_pair(TLS_server_method(),
+    if (!TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
                                        TLS_client_method(),
                                        TLS1_VERSION, 0,
                                        &sctx, &cctx, cert, privkey))
@@ -233,6 +239,11 @@ static int test_servername(int test)
 
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
     if (!TEST_ptr(cert = test_get_argument(0))
             || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;

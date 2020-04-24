@@ -30,7 +30,7 @@ to free up any configuration that module may have performed.
 
 CONF_modules_unload() finishes and unloads configuration modules. If
 B<all> is set to B<0> only modules loaded from DSOs will be unloads. If
-B<all> is B<1> all modules, including builtin modules will be unloaded.
+B<all> is B<1> all modules, including built-in modules will be unloaded.
 
 =head1 RETURN VALUES
 
@@ -39,7 +39,7 @@ None of the functions return a value.
 =head1 SEE ALSO
 
 L<config(5)>, L<OPENSSL_config(3)>,
-L<CONF_modules_load_file(3)>
+L<CONF_modules_load_file_with_libctx(3)>
 
 =head1 HISTORY
 
@@ -48,7 +48,7 @@ For more information see L<OPENSSL_init_crypto(3)>.
 
 =head1 COPYRIGHT
 
-Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

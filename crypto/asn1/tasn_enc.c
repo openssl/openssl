@@ -13,8 +13,8 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
-#include "internal/asn1_int.h"
-#include "asn1_locl.h"
+#include "crypto/asn1.h"
+#include "asn1_local.h"
 
 static int asn1_i2d_ex_primitive(const ASN1_VALUE **pval, unsigned char **out,
                                  const ASN1_ITEM *it, int tag, int aclass);
@@ -55,7 +55,7 @@ int ASN1_item_i2d(const ASN1_VALUE *val, unsigned char **out, const ASN1_ITEM *i
 static int asn1_item_flags_i2d(const ASN1_VALUE *val, unsigned char **out,
                                const ASN1_ITEM *it, int flags)
 {
-    if (out && !*out) {
+    if (out != NULL && *out == NULL) {
         unsigned char *p, *buf;
         int len;
 
@@ -89,7 +89,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     const ASN1_AUX *aux = it->funcs;
     ASN1_aux_const_cb *asn1_cb = NULL;
 
-    if ((it->itype != ASN1_ITYPE_PRIMITIVE) && !*pval)
+    if ((it->itype != ASN1_ITYPE_PRIMITIVE) && *pval == NULL)
         return 0;
 
     if (aux != NULL) {
@@ -258,7 +258,7 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         int skcontlen, sklen;
         const ASN1_VALUE *skitem;
 
-        if (!*pval)
+        if (*pval == NULL)
             return 0;
 
         if (flags & ASN1_TFLG_SET_OF) {
@@ -510,7 +510,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
     /* Should type be omitted? */
     if ((it->itype != ASN1_ITYPE_PRIMITIVE)
         || (it->utype != V_ASN1_BOOLEAN)) {
-        if (!*pval)
+        if (*pval == NULL)
             return -1;
     }
 

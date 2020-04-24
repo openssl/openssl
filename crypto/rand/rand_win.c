@@ -9,8 +9,8 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include "rand_lcl.h"
-#include "internal/rand_int.h"
+#include "rand_local.h"
+#include "crypto/rand.h"
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 # ifndef OPENSSL_RAND_SEED_OS
@@ -18,8 +18,9 @@
 # endif
 
 # include <windows.h>
-/* On Windows 7 or higher use BCrypt instead of the legacy CryptoAPI */
-# if defined(_MSC_VER) && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0601
+/* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
+# if defined(_MSC_VER) && _MSC_VER > 1500 /* 1500 = Visual Studio 2008 */ \
+     && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
 #  define USE_BCRYPTGENRANDOM
 # endif
 
@@ -125,11 +126,14 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
         DWORD pid;
         DWORD tid;
         FILETIME time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add process id, thread id, and a high resolution timestamp to
-     * ensure that the nonce is unique whith high probability for
+     * ensure that the nonce is unique with high probability for
      * different process instances.
      */
     data.pid = GetCurrentProcessId();
@@ -144,7 +148,10 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     struct {
         DWORD tid;
         LARGE_INTEGER time;
-    } data = { 0 };
+    } data;
+
+    /* Erase the entire structure including any padding */
+    memset(&data, 0, sizeof(data));
 
     /*
      * Add some noise from the thread id and a high resolution timer.
@@ -156,7 +163,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
 
-# if !OPENSSL_API_1_1_0
+# if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
 int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
 {
     RAND_poll();

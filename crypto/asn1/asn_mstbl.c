@@ -13,6 +13,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
+DEFINE_STACK_OF(CONF_VALUE)
 /* Multi string module: add table entries from a given section */
 
 static int do_tcreate(const char *value, const char *name);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -21,6 +21,9 @@
 #include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_CT
+
+DEFINE_STACK_OF(SCT)
+
 /* Used when declaring buffers to read text files into */
 # define CT_TEST_MAX_FILE_SIZE 8096
 
@@ -63,7 +66,7 @@ static CT_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         goto end;
     fixture->test_case_name = test_case_name;
-    fixture->epoch_time_in_ms = 1473269626000ULL; /* Sep 7 17:33:46 2016 GMT */
+    fixture->epoch_time_in_ms = 1580335307000ULL; /* Wed 29 Jan 2020 10:01:47 PM UTC */
     if (!TEST_ptr(fixture->ctlog_store = CTLOG_STORE_new())
             || !TEST_int_eq(
                     CTLOG_STORE_load_default_file(fixture->ctlog_store), 1))
@@ -87,29 +90,10 @@ static void tear_down(CT_TEST_FIXTURE *fixture)
     OPENSSL_free(fixture);
 }
 
-static char *mk_file_path(const char *dir, const char *file)
-{
-# ifndef OPENSSL_SYS_VMS
-    const char *sep = "/";
-# else
-    const char *sep = "";
-# endif
-    size_t len = strlen(dir) + strlen(sep) + strlen(file) + 1;
-    char *full_file = OPENSSL_zalloc(len);
-
-    if (full_file != NULL) {
-        OPENSSL_strlcpy(full_file, dir, len);
-        OPENSSL_strlcat(full_file, sep, len);
-        OPENSSL_strlcat(full_file, file, len);
-    }
-
-    return full_file;
-}
-
 static X509 *load_pem_cert(const char *dir, const char *file)
 {
     X509 *cert = NULL;
-    char *file_path = mk_file_path(dir, file);
+    char *file_path = test_mk_file_path(dir, file);
 
     if (file_path != NULL) {
         BIO *cert_io = BIO_new_file(file_path, "r");
@@ -127,7 +111,7 @@ static int read_text_file(const char *dir, const char *file,
                           char *buffer, int buffer_length)
 {
     int len = -1;
-    char *file_path = mk_file_path(dir, file);
+    char *file_path = test_mk_file_path(dir, file);
 
     if (file_path != NULL) {
         BIO *file_io = BIO_new_file(file_path, "r");
@@ -177,6 +161,10 @@ static int compare_extension_printout(X509_EXTENSION *extension,
     if (!TEST_ptr(text_buffer = BIO_new(BIO_s_mem()))
             || !TEST_true(X509V3_EXT_print(text_buffer, extension,
                                            X509V3_EXT_DEFAULT, 0)))
+        goto end;
+
+    /* Append \n because it's easier to create files that end with one. */
+    if (!TEST_true(BIO_write(text_buffer, "\n", 1)))
         goto end;
 
     /* Append \0 because we're about to use the buffer contents as a string. */

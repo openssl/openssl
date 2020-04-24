@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -54,9 +54,10 @@
 # has to content with 40-85% improvement depending on benchmark and
 # key length, more for longer keys.
 
-$flavour = shift || "o32";
-while (($output=shift) && ($output!~/\w[\w\-]*\.\w+$/)) {}
-open STDOUT,">$output";
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : "o32";
 
 if ($flavour =~ /64|n32/i) {
 	$LD="ld";
@@ -88,8 +89,10 @@ if ($flavour =~ /64|n32/i) {
 	$SZREG=4;
 	$REG_S="sw";
 	$REG_L="lw";
-	$code=".set	mips2\n";
+	$code="#if !(defined (__mips_isa_rev) && (__mips_isa_rev >= 6))\n.set     mips2\n#endif\n";
 }
+
+$output and open STDOUT,">$output";
 
 # Below is N32/64 register layout used in the original module.
 #
@@ -800,7 +803,7 @@ $code.=<<___;
 #if 0
 /*
  * The bn_div_3_words entry point is re-used for constant-time interface.
- * Implementation is retained as hystorical reference.
+ * Implementation is retained as historical reference.
  */
 .align 5
 .globl	bn_div_3_words
@@ -2259,4 +2262,4 @@ $code.=<<___;
 .end	bn_sqr_comba4
 ___
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

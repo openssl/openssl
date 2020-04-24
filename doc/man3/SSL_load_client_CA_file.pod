@@ -2,7 +2,11 @@
 
 =head1 NAME
 
-SSL_load_client_CA_file - load certificate names from file
+SSL_load_client_CA_file,
+SSL_add_file_cert_subjects_to_stack,
+SSL_add_dir_cert_subjects_to_stack,
+SSL_add_store_cert_subjects_to_stack
+- load certificate names
 
 =head1 SYNOPSIS
 
@@ -10,10 +14,28 @@ SSL_load_client_CA_file - load certificate names from file
 
  STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 
+ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+                                         const char *file)
+ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+                                        const char *dir)
+ int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
+                                          const char *store)
+
 =head1 DESCRIPTION
 
-SSL_load_client_CA_file() reads certificates from B<file> and returns
+SSL_load_client_CA_file() reads certificates from I<file> and returns
 a STACK_OF(X509_NAME) with the subject names found.
+
+SSL_add_file_cert_subjects_to_stack() reads certificates from I<file>,
+and adds their subject name to the already existing I<stack>.
+
+SSL_add_dir_cert_subjects_to_stack() reads certificates from every
+file in the directory I<dir>, and adds their subject name to the
+already existing I<stack>.
+
+SSL_add_store_cert_subjects_to_stack() loads certificates from the
+I<store> URI, and adds their subject name to the already existing
+I<stack>.
 
 =head1 NOTES
 
@@ -57,11 +79,16 @@ Load names of CAs from file and use it as a client CA list:
 =head1 SEE ALSO
 
 L<ssl(7)>,
+L<ossl_store(7)>,
 L<SSL_CTX_set_client_CA_list(3)>
+
+=head1 HISTORY
+
+SSL_add_store_cert_subjects_to_stack() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

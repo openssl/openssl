@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@
 
 static int openssl_configured = 0;
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 void OPENSSL_config(const char *appname)
 {
     OPENSSL_INIT_SETTINGS settings;
@@ -35,13 +35,14 @@ void OPENSSL_config(const char *appname)
     memset(&settings, 0, sizeof(settings));
     if (appname != NULL)
         settings.appname = strdup(appname);
+    settings.flags = DEFAULT_CONF_MFLAGS;
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, &settings);
 }
 #endif
 
 int openssl_config_int(const OPENSSL_INIT_SETTINGS *settings)
 {
-    int ret;
+    int ret = 0;
     const char *filename;
     const char *appname;
     unsigned long flags;
@@ -58,12 +59,6 @@ int openssl_config_int(const OPENSSL_INIT_SETTINGS *settings)
             filename, appname, flags);
 #endif
 
-    OPENSSL_load_builtin_modules();
-#ifndef OPENSSL_NO_ENGINE
-    /* Need to load ENGINEs */
-    ENGINE_load_builtin_engines();
-#endif
-    ERR_clear_error();
 #ifndef OPENSSL_SYS_UEFI
     ret = CONF_modules_load_file(filename, appname, flags);
 #endif

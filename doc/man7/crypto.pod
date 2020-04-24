@@ -10,13 +10,13 @@ See the individual manual pages for details.
 
 =head1 DESCRIPTION
 
-The OpenSSL B<crypto> library implements a wide range of cryptographic
-algorithms used in various Internet standards. The services provided
-by this library are used by the OpenSSL implementations of SSL, TLS
+The OpenSSL crypto library (C<libcrypto>) implements a wide range of
+cryptographic algorithms used in various Internet standards. The services
+provided by this library are used by the OpenSSL implementations of SSL, TLS
 and S/MIME, and they have also been used to implement SSH, OpenPGP, and
 other cryptographic standards.
 
-B<libcrypto> consists of a number of sub-libraries that implement the
+C<libcrypto> consists of a number of sub-libraries that implement the
 individual algorithms.
 
 The functionality includes symmetric encryption, public key
@@ -34,11 +34,11 @@ B<0> and B<1>. For example the functions:
 
 The B<0> version uses the supplied structure pointer directly
 in the parent and it will be freed up when the parent is freed.
-In the above example B<crl> would be freed but B<rev> would not.
+In the above example I<crl> would be freed but I<rev> would not.
 
 The B<1> function uses a copy of the supplied structure pointer
 (or in some cases increases its link count) in the parent and
-so both (B<x> and B<obj> above) should be freed up.
+so both (I<x> and I<obj> above) should be freed up.
 
 =head1 RETURN VALUES
 

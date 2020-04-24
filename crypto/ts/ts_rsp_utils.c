@@ -12,7 +12,9 @@
 #include <openssl/objects.h>
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
-#include "ts_lcl.h"
+#include "ts_local.h"
+
+DEFINE_STACK_OF(X509_EXTENSION)
 
 int TS_RESP_set_status_info(TS_RESP *a, TS_STATUS_INFO *status_info)
 {

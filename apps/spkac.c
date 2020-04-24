@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,26 +24,34 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_NOOUT, OPT_PUBKEY, OPT_VERIFY, OPT_IN, OPT_OUT,
     OPT_ENGINE, OPT_KEY, OPT_CHALLENGE, OPT_PASSIN, OPT_SPKAC,
-    OPT_SPKSECT, OPT_KEYFORM
+    OPT_SPKSECT, OPT_KEYFORM,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS spkac_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file"},
-    {"out", OPT_OUT, '>', "Output file"},
-    {"key", OPT_KEY, '<', "Create SPKAC using private key"},
-    {"keyform", OPT_KEYFORM, 'f', "Private key file format - default PEM (PEM, DER, or ENGINE)"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
-    {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
-    {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
-    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
-    {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
     {"spksect", OPT_SPKSECT, 's',
      "Specify the name of an SPKAC-dedicated section of configuration"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file"},
+    {"key", OPT_KEY, '<', "Create SPKAC using private key"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key file format - default PEM (PEM, DER, or ENGINE)"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"challenge", OPT_CHALLENGE, 's', "Challenge string"},
+    {"spkac", OPT_SPKAC, 's', "Alternative SPKAC name"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file"},
+    {"noout", OPT_NOOUT, '-', "Don't print SPKAC"},
+    {"pubkey", OPT_PUBKEY, '-', "Output public key"},
+    {"verify", OPT_VERIFY, '-', "Verify SPKAC signature"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -111,6 +119,10 @@ int spkac_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -133,8 +145,15 @@ int spkac_main(int argc, char **argv)
         if (challenge != NULL)
             ASN1_STRING_set(spki->spkac->challenge,
                             challenge, (int)strlen(challenge));
-        NETSCAPE_SPKI_set_pubkey(spki, pkey);
-        NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        if (!NETSCAPE_SPKI_set_pubkey(spki, pkey)) {
+            BIO_printf(bio_err, "Error setting public key\n");
+            goto end;
+        }
+        i = NETSCAPE_SPKI_sign(spki, pkey, EVP_md5());
+        if (i <= 0) {
+            BIO_printf(bio_err, "Error signing SPKAC\n");
+            goto end;
+        }
         spkstr = NETSCAPE_SPKI_b64_encode(spki);
         if (spkstr == NULL)
             goto end;

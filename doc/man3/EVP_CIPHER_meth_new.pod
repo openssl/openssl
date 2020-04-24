@@ -10,7 +10,8 @@ EVP_CIPHER_meth_set_set_asn1_params, EVP_CIPHER_meth_set_get_asn1_params,
 EVP_CIPHER_meth_set_ctrl, EVP_CIPHER_meth_get_init,
 EVP_CIPHER_meth_get_do_cipher, EVP_CIPHER_meth_get_cleanup,
 EVP_CIPHER_meth_get_set_asn1_params, EVP_CIPHER_meth_get_get_asn1_params,
-EVP_CIPHER_meth_get_ctrl - Routines to build up EVP_CIPHER methods
+EVP_CIPHER_meth_get_ctrl
+- Routines to build up EVP_CIPHER methods
 
 =head1 SYNOPSIS
 
@@ -233,11 +234,13 @@ respective B<cipher> function.
 
 =head1 SEE ALSO
 
-L<EVP_EncryptInit>
+L<EVP_EncryptInit(3)>
 
 =head1 HISTORY
 
 The functions described here were added in OpenSSL 1.1.0.
+The B<EVP_CIPHER> structure created with these functions became reference
+counted in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

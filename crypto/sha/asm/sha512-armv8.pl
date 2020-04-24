@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -28,6 +28,7 @@
 # X-Gene			20.0 (+100%)	12.8 (+300%(***))
 # Mongoose	2.36		13.0 (+50%)	8.36 (+33%)
 # Kryo		1.92		17.4 (+30%)	11.2 (+8%)
+# ThunderX2	2.54		13.2 (+40%)	8.40 (+18%)
 #
 # (*)	Software SHA256 results are of lesser relevance, presented
 #	mostly for informational purposes.
@@ -53,8 +54,10 @@
 # deliver much less improvement, likely *negative* on Cortex-A5x.
 # Which is why NEON support is limited to SHA256.]
 
-$output=pop;
-$flavour=pop;
+# $output is the last argument if it looks like a file (it has an extension)
+# $flavour is the first argument if it doesn't look like a file
+$output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
+$flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
 
 if ($flavour && $flavour ne "void") {
     $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
@@ -62,10 +65,11 @@ if ($flavour && $flavour ne "void") {
     ( $xlate="${dir}../../perlasm/arm-xlate.pl" and -f $xlate) or
     die "can't locate arm-xlate.pl";
 
-    open OUT,"| \"$^X\" $xlate $flavour $output";
+    open OUT,"| \"$^X\" $xlate $flavour \"$output\""
+        or die "can't call $xlate: $!";
     *STDOUT=*OUT;
 } else {
-    open STDOUT,">$output";
+    $output and open STDOUT,">$output";
 }
 
 if ($output =~ /512/) {
@@ -887,4 +891,4 @@ foreach(split("\n",$code)) {
 	print $_,"\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

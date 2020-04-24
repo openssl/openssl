@@ -37,7 +37,7 @@ file. B<buf> points to a buffer of size B<num> in which to store the
 filename.
 
 On all systems, if the environment variable B<RANDFILE> is set, its
-value will be used as the seed file name.
+value will be used as the seed filename.
 Otherwise, the file is called C<.rnd>, found in platform dependent locations:
 
 =over 4
@@ -57,7 +57,7 @@ Otherwise, the file is called C<.rnd>, found in platform dependent locations:
 =back
 
 If C<$HOME> (on non-Windows and non-VMS system) is not set either, or
-B<num> is too small for the path name, an error occurs.
+B<num> is too small for the pathname, an error occurs.
 
 =head1 RETURN VALUES
 

@@ -1,0 +1,22 @@
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
+
+$DSA_GOAL=../../libimplementations.a
+$EC_GOAL=../../libimplementations.a
+$ECDSA_GOAL=../../libimplementations.a
+
+IF[{- !$disabled{dsa} -}]
+  SOURCE[$DSA_GOAL]=dsa.c
+ENDIF
+
+IF[{- !$disabled{ec} -}]
+  SOURCE[$EC_GOAL]=eddsa.c
+  SOURCE[$ECDSA_GOAL]=ecdsa.c
+ENDIF
+
+SOURCE[../../libfips.a]=rsa.c
+SOURCE[../../libnonfips.a]=rsa.c
+
+DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
+DEPEND[dsa.o]=../../common/include/prov/der_dsa.h
+DEPEND[ecdsa.o]=../../common/include/prov/der_ec.h

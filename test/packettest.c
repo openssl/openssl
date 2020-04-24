@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../ssl/packet_locl.h"
+#include "internal/packet.h"
 #include "testutil.h"
 
 #define BUF_LEN 255
@@ -350,8 +350,9 @@ static int test_PACKET_get_length_prefixed_1(void)
     unsigned char buf1[BUF_LEN];
     const size_t len = 16;
     unsigned int i;
-    PACKET pkt, short_pkt, subpkt = {0};
+    PACKET pkt, short_pkt, subpkt;
 
+    memset(&subpkt, 0, sizeof(subpkt));
     buf1[0] = (unsigned char)len;
     for (i = 1; i < BUF_LEN; i++)
         buf1[i] = (i * 2) & 0xff;
@@ -374,8 +375,9 @@ static int test_PACKET_get_length_prefixed_2(void)
     unsigned char buf1[1024];
     const size_t len = 516;  /* 0x0204 */
     unsigned int i;
-    PACKET pkt, short_pkt, subpkt = {0};
+    PACKET pkt, short_pkt, subpkt;
 
+    memset(&subpkt, 0, sizeof(subpkt));
     for (i = 1; i <= 1024; i++)
         buf1[i - 1] = (i * 2) & 0xff;
 
@@ -397,8 +399,9 @@ static int test_PACKET_get_length_prefixed_3(void)
     unsigned char buf1[1024];
     const size_t len = 516;  /* 0x000204 */
     unsigned int i;
-    PACKET pkt, short_pkt, subpkt = {0};
+    PACKET pkt, short_pkt, subpkt;
 
+    memset(&subpkt, 0, sizeof(subpkt));
     for (i = 0; i < 1024; i++)
         buf1[i] = (i * 2) & 0xff;
 
@@ -420,8 +423,9 @@ static int test_PACKET_as_length_prefixed_1(void)
     unsigned char buf1[BUF_LEN];
     const size_t len = 16;
     unsigned int i;
-    PACKET pkt, exact_pkt, subpkt = {0};
+    PACKET pkt, exact_pkt, subpkt;
 
+    memset(&subpkt, 0, sizeof(subpkt));
     buf1[0] = (unsigned char)len;
     for (i = 1; i < BUF_LEN; i++)
         buf1[i] = (i * 2) & 0xff;
@@ -443,8 +447,9 @@ static int test_PACKET_as_length_prefixed_2(void)
     unsigned char buf[1024];
     const size_t len = 516;  /* 0x0204 */
     unsigned int i;
-    PACKET pkt, exact_pkt, subpkt = {0};
+    PACKET pkt, exact_pkt, subpkt;
 
+    memset(&subpkt, 0, sizeof(subpkt));
     for (i = 1; i <= 1024; i++)
         buf[i-1] = (i * 2) & 0xff;
 

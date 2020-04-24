@@ -20,6 +20,10 @@ HMAC_size
 
  #include <openssl/hmac.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  unsigned char *HMAC(const EVP_MD *evp_md, const void *key,
                      int key_len, const unsigned char *d, int n,
                      unsigned char *md, unsigned int *md_len);
@@ -49,6 +53,10 @@ L<openssl_user_macros(7)>:
 
 =head1 DESCRIPTION
 
+All of the functions described on this page are deprecated. Applications should
+instead use L<EVP_MAC_CTX_new(3)>, L<EVP_MAC_CTX_free(3)>, L<EVP_MAC_init(3)>,
+L<EVP_MAC_update(3)> and L<EVP_MAC_final(3)>.
+
 HMAC is a MAC (message authentication code), i.e. a keyed hash
 function used for message authentication, which is based on a hash
 function.
@@ -63,11 +71,13 @@ If B<md> is NULL, the digest is placed in a static array.  The size of
 the output is placed in B<md_len>, unless it is B<NULL>. Note: passing a NULL
 value for B<md>  to use the static array is not thread safe.
 
-B<evp_md> can be EVP_sha1(), EVP_ripemd160() etc.
+B<evp_md> is a message digest such as EVP_sha1(), EVP_ripemd160() etc. HMAC does
+not support variable output length digests such as EVP_shake128() and
+EVP_shake256().
 
 HMAC_CTX_new() creates a new HMAC_CTX in heap memory.
 
-HMAC_CTX_reset() zeroes an existing B<HMAC_CTX> and associated
+HMAC_CTX_reset() clears an existing B<HMAC_CTX> and associated
 resources, making it suitable for new computations as if it was newly
 created with HMAC_CTX_new().
 
@@ -136,6 +146,8 @@ L<SHA1(3)>, L<evp(7)>
 
 =head1 HISTORY
 
+All of these functions were deprecated in OpenSSL 3.0.
+
 HMAC_CTX_init() was replaced with HMAC_CTX_reset() in OpenSSL 1.1.0.
 
 HMAC_CTX_cleanup() existed in OpenSSL before version 1.1.0.
@@ -147,7 +159,7 @@ OpenSSL before version 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

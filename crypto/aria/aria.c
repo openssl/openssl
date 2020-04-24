@@ -19,7 +19,7 @@
  */
 
 #include <openssl/e_os2.h>
-#include "internal/aria.h"
+#include "crypto/aria.h"
 
 #include <assert.h>
 #include <string.h>
@@ -1007,7 +1007,7 @@ static void sl2(ARIA_c128 o, const ARIA_u128 *x, const ARIA_u128 *y)
 {
     unsigned int i;
     for (i = 0; i < ARIA_BLOCK_SIZE; i += 4) {
-        o[i    ] = sb3[x->c[i	 ] ^ y->c[i    ]];
+        o[i    ] = sb3[x->c[i    ] ^ y->c[i    ]];
         o[i + 1] = sb4[x->c[i + 1] ^ y->c[i + 1]];
         o[i + 2] = sb1[x->c[i + 2] ^ y->c[i + 2]];
         o[i + 3] = sb2[x->c[i + 3] ^ y->c[i + 3]];
