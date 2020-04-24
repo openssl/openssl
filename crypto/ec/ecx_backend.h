@@ -13,8 +13,8 @@
                                      : ((id) == EVP_PKEY_X448 ? X448_KEYLEN \
                                                               : ED448_KEYLEN))
 #define KEYNID2TYPE(id) \
-    (IS25519(id) ?  ECX_KEY_TYPE_X25519 \
+    (IS25519(id) ? ((id) == EVP_PKEY_X25519 ? ECX_KEY_TYPE_X25519 \
+                                            : ECX_KEY_TYPE_ED25519) \
                  : ((id) == EVP_PKEY_X448 ? ECX_KEY_TYPE_X448 \
-                                          : ((id) == EVP_PKEY_ED25519 ? ECX_KEY_TYPE_ED25519 \
-                                                                      : ECX_KEY_TYPE_ED448)))
+                                          : ECX_KEY_TYPE_ED448))
 #define KEYLEN(p)       KEYLENID((p)->ameth->pkey_id)
