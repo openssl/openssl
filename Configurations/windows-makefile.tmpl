@@ -95,12 +95,10 @@ INSTALL_ENGINEPDBS={-
                   @{$unified_info{modules}})
 -}
 INSTALL_MODULES={-
-        join(" \\\n" . ' ' x 16,
-             fill_lines(" ", $COLUMNS - 16,
-                        map { platform->dso($_) }
-                        grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
-                               && !$unified_info{attributes}->{modules}->{$_}->{engine} }
-                        @{$unified_info{modules}}))
+        join(" ", map { platform->dso($_) }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                          && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                  @{$unified_info{modules}})
 -}
 INSTALL_MODULEPDBS={-
         join(" ", map { quotify1(platform->dsopdb($_)) }
