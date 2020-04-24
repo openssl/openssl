@@ -72,6 +72,7 @@ static void test_fail_message(const char *prefix, const char *file, int line,
                               const char *fmt, ...)
             PRINTF_FORMAT(8, 9);
 
+PRINTF_FORMAT(8, 0)
 static void test_fail_message_va(const char *prefix, const char *file,
                                  int line, const char *type,
                                  const char *left, const char *right,
