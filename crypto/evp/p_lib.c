@@ -494,18 +494,61 @@ EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
     return new_raw_key_int(NULL, NULL, NULL, type, e, pub, len, 0);
 }
 
+struct raw_key_details_st
+{
+    unsigned char **key;
+    size_t *len;
+    int selection;
+};
+
+static OSSL_CALLBACK get_raw_key_details;
+static int get_raw_key_details(const OSSL_PARAM params[], void *arg)
+{
+    const OSSL_PARAM *p = NULL;
+    struct raw_key_details_st *raw_key = arg;
+
+    if (raw_key->selection == OSSL_KEYMGMT_SELECT_PRIVATE_KEY) {
+        if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PRIV_KEY))
+                != NULL)
+            return OSSL_PARAM_get_octet_string(p, (void **)raw_key->key,
+                                               SIZE_MAX, raw_key->len);
+    } else if (raw_key->selection == OSSL_KEYMGMT_SELECT_PUBLIC_KEY) {
+        if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PUB_KEY))
+                != NULL)
+            return OSSL_PARAM_get_octet_string(p, (void **)raw_key->key,
+                                               SIZE_MAX, raw_key->len);
+    }
+
+    return 0;
+}
+
 int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
                                  size_t *len)
 {
-    /* TODO(3.0) Do we need to do anything about provider side keys? */
-     if (pkey->ameth->get_priv_key == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    if (pkey->keymgmt != NULL) {
+        struct raw_key_details_st raw_key;
+
+        raw_key.key = &priv;
+        raw_key.len = len;
+        raw_key.selection = OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
+
+        return evp_keymgmt_export(pkey->keymgmt, pkey->keydata,
+                                  OSSL_KEYMGMT_SELECT_PRIVATE_KEY,
+                                  get_raw_key_details, &raw_key);
+    }
+
+    if (pkey->ameth == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return 0;
+    }
+
+    if (pkey->ameth->get_priv_key == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
     if (!pkey->ameth->get_priv_key(pkey, priv, len)) {
-        EVPerr(EVP_F_EVP_PKEY_GET_RAW_PRIVATE_KEY, EVP_R_GET_RAW_KEY_FAILED);
+        EVPerr(0, EVP_R_GET_RAW_KEY_FAILED);
         return 0;
     }
 
@@ -515,7 +558,23 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
 int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                 size_t *len)
 {
-    /* TODO(3.0) Do we need to do anything about provider side keys? */
+    if (pkey->keymgmt != NULL) {
+        struct raw_key_details_st raw_key;
+
+        raw_key.key = &pub;
+        raw_key.len = len;
+        raw_key.selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
+
+        return evp_keymgmt_export(pkey->keymgmt, pkey->keydata,
+                                  OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                                  get_raw_key_details, &raw_key);
+    }
+
+    if (pkey->ameth == NULL) {
+        EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return 0;
+    }
+
      if (pkey->ameth->get_pub_key == NULL) {
         EVPerr(EVP_F_EVP_PKEY_GET_RAW_PUBLIC_KEY,
                EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
