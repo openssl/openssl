@@ -614,7 +614,6 @@ install_dev: install_runtime_libs
 		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
-
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/include/oqs"
 	@set -e; for i in $(SRCDIR)/oqs/include/oqs/*.h; do \
 		fn=`basename $$i`; \

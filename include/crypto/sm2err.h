@@ -15,10 +15,6 @@
 #  include <openssl/symhacks.h>
 # endif
 
-# ifndef HEADER_SYMHACKS_H
-#  include <openssl/symhacks.h>
-# endif
-
 # include <openssl/opensslconf.h>
 
 # ifndef OPENSSL_NO_SM2

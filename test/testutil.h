@@ -466,4 +466,3 @@ void test_random_seed(uint32_t sd);
 char *test_mk_file_path(const char *dir, const char *file);
 
 #endif                          /* OSSL_TESTUTIL_H */
-

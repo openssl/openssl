@@ -27,6 +27,9 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
 static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
 static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
 
+static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
+
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
     tls1_mac,
@@ -2337,7 +2340,7 @@ static int tls1_check_sig_alg(SSL *s, X509 *x, int default_nid)
         sigalg = use_pc_sigalgs
                  ? tls1_lookup_sigalg(s->s3->tmp.peer_cert_sigalgs[i])
                  : s->shared_sigalgs[i];
-        if (sig_nid == sigalg->sigandhash)
+        if (sigalg != NULL && sig_nid == sigalg->sigandhash)
             return 1;
     }
     return 0;
