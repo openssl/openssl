@@ -2322,7 +2322,7 @@ int s_client_main(int argc, char **argv)
             do {
                 mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
             }
-            while (mbuf_len > 3 && (!isdigit(mbuf[0]) || !isdigit(mbuf[1]) || !isdigit(mbuf[2]) || mbuf[3] != ' '));
+            while (mbuf_len > 3 && (!isdigit((unsigned char)mbuf[0]) || !isdigit((unsigned char)mbuf[1]) || !isdigit((unsigned char)mbuf[2]) || mbuf[3] != ' '));
             (void)BIO_flush(fbio);
             BIO_pop(fbio);
             BIO_free(fbio);
@@ -2765,6 +2765,16 @@ int s_client_main(int argc, char **argv)
     for (;;) {
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
+        int fdin = fileno_stdin();
+        if (fdin < 0) {
+            BIO_printf(bio_err,"bad fileno for stdin\n");
+            goto shut;
+        }
+        int fdout = fileno_stdout();
+        if (fdout < 0) {
+            BIO_printf(bio_err,"bad fileno for stdout\n");
+            goto shut;
+        }
 
         if (SSL_is_dtls(con) && DTLSv1_get_timeout(con, &timeout))
             timeoutp = &timeout;
@@ -2819,10 +2829,10 @@ int s_client_main(int argc, char **argv)
                  * set the flag so we exit.
                  */
                 if (read_tty && !at_eof)
-                    openssl_fdset(fileno_stdin(), &readfds);
+                    openssl_fdset(fdin, &readfds);
 #if !defined(OPENSSL_SYS_VMS)
                 if (write_tty)
-                    openssl_fdset(fileno_stdout(), &writefds);
+                    openssl_fdset(fdout, &writefds);
 #endif
             }
             if (read_ssl)
@@ -2950,7 +2960,7 @@ int s_client_main(int argc, char **argv)
         /* Assume Windows/DOS/BeOS can always write */
         else if (!ssl_pending && write_tty)
 #else
-        else if (!ssl_pending && FD_ISSET(fileno_stdout(), &writefds))
+        else if (!ssl_pending && FD_ISSET(fdout, &writefds))
 #endif
         {
 #ifdef CHARSET_EBCDIC
@@ -3037,7 +3047,7 @@ int s_client_main(int argc, char **argv)
 #if defined(OPENSSL_SYS_MSDOS)
         else if (has_stdin_waiting())
 #else
-        else if (FD_ISSET(fileno_stdin(), &readfds))
+        else if (FD_ISSET(fdin, &readfds))
 #endif
         {
             if (crlf) {

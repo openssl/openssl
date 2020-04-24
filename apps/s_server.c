@@ -2301,7 +2301,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
     char *buf = NULL;
     fd_set readfds;
     int ret = 1, width;
-    int k, i;
+    int k, i, fdin;
     unsigned long l;
     SSL *con = NULL;
     BIO *sbio;
@@ -2488,9 +2488,14 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
                            || (async && SSL_waiting_for_async(con));
 
         if (!read_from_sslcon) {
+            fdin = fileno_stdin();
+            if (fdin < 0) {
+                BIO_printf(bio_err,"Bad fileno for stdin\n");
+                goto err;
+            }
             FD_ZERO(&readfds);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
-            openssl_fdset(fileno_stdin(), &readfds);
+            openssl_fdset(fdin, &readfds);
 #endif
             openssl_fdset(s, &readfds);
             /*
@@ -2527,7 +2532,7 @@ static int sv_body(int s, int stype, int prot, unsigned char *context)
 
             if (i <= 0)
                 continue;
-            if (FD_ISSET(fileno_stdin(), &readfds))
+            if (FD_ISSET(fdin, &readfds))
                 read_from_terminal = 1;
 #endif
             if (FD_ISSET(s, &readfds))
