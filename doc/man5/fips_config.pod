@@ -33,9 +33,9 @@ section, as desribed in L<config(5)/Provider Configuration Module>.
 
 =over 4
 
-=item B<module-checksum>
+=item B<module-mac>
 
-The calculated digest of the module file.
+The calculated MAC of the module file.
 
 =item B<install-version>
 
@@ -49,9 +49,9 @@ successfully passed its self tests during installation.
 If this field is not present, then the self tests will run when the module
 loads.
 
-=item B<install-checksum>
+=item B<install-mac>
 
-A MAC on the value of the B<install-status> option, to prevent accidental
+A MAC of the value of the B<install-status> option, to prevent accidental
 changes to that value.
 It is written-to at the same time as B<install-status> is updated.
 
@@ -61,8 +61,8 @@ For example:
 
  [fips_install]
  install-version = 1
- module-checksum = 41:D0:FA:C2:5D:41:75:CD:7D:C3:90:55:6F:A4:DC
- install-checksum = FE:10:13:5A:D3:B4:C7:82:1B:1E:17:4C:AC:84:0C
+ module-mac = 41:D0:FA:C2:5D:41:75:CD:7D:C3:90:55:6F:A4:DC
+ install-mac = FE:10:13:5A:D3:B4:C7:82:1B:1E:17:4C:AC:84:0C
  install-status = INSTALL_SELF_TEST_KATS_RUN
 
 =head1 SEE ALSO
