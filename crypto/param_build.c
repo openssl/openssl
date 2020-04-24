@@ -125,6 +125,8 @@ static void free_all_params(OSSL_PARAM_BLD *bld)
 
 void OSSL_PARAM_BLD_free(OSSL_PARAM_BLD *bld)
 {
+    if (bld == NULL)
+        return;
     free_all_params(bld);
     sk_OSSL_PARAM_BLD_DEF_free(bld->params);
     OPENSSL_free(bld);
