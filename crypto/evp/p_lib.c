@@ -28,6 +28,7 @@
 #include <openssl/cmac.h>
 #include <openssl/engine.h>
 #include <openssl/params.h>
+#include <openssl/param_build.h>
 #include <openssl/serializer.h>
 #include <openssl/core_names.h>
 
@@ -320,64 +321,156 @@ int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
-EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
-                                       const unsigned char *priv,
-                                       size_t len)
-{
-    EVP_PKEY *ret = EVP_PKEY_new();
 
-    if (ret == NULL
-        || !pkey_set_type(ret, e, type, NULL, -1, NULL)) {
+static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
+                                 const char *strtype,
+                                 const char *propq,
+                                 int nidtype,
+                                 ENGINE *e,
+                                 const unsigned char *key,
+                                 size_t len,
+                                 int key_is_priv)
+{
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    const EVP_PKEY_ASN1_METHOD *ameth = NULL;
+    int result = 0;
+
+# ifndef OPENSSL_NO_ENGINE
+    /* Check if there is an Engine for this type */
+    if (e == NULL) {
+        ENGINE *tmpe = NULL;
+
+        if (strtype != NULL)
+            ameth = EVP_PKEY_asn1_find_str(&tmpe, strtype, -1);
+        else if (nidtype != EVP_PKEY_NONE)
+            ameth = EVP_PKEY_asn1_find(&tmpe, nidtype);
+
+        /* If tmpe is NULL then no engine is claiming to support this type */
+        if (tmpe == NULL)
+            ameth = NULL;
+
+        ENGINE_finish(tmpe);
+    }
+# endif
+
+    if (e == NULL && ameth == NULL) {
+        /*
+         * No engine is claiming to support this type, so lets see if we have
+         * a provider.
+         */
+        ctx = EVP_PKEY_CTX_new_from_name(libctx,
+                                         strtype != NULL ? strtype
+                                                         : OBJ_nid2sn(nidtype),
+                                         propq);
+        if (ctx == NULL) {
+            EVPerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        /* May fail if no provider available */
+        ERR_set_mark();
+        if (EVP_PKEY_key_fromdata_init(ctx) == 1) {
+            OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+            ERR_clear_last_mark();
+            params[0] = OSSL_PARAM_construct_octet_string(
+                            key_is_priv ? OSSL_PKEY_PARAM_PRIV_KEY
+                                        : OSSL_PKEY_PARAM_PUB_KEY,
+                            (void *)key, len);
+
+            if (EVP_PKEY_fromdata(ctx, &pkey, params) != 1) {
+                EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+                goto err;
+            }
+
+            EVP_PKEY_CTX_free(ctx);
+
+            return pkey;
+        }
+        ERR_pop_to_mark();
+        /* else not supported so fallback to legacy */
+    }
+
+    /* Legacy code path */
+
+    pkey = EVP_PKEY_new();
+    if (pkey == NULL) {
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (!pkey_set_type(pkey, e, nidtype, strtype, -1, NULL)) {
         /* EVPerr already called */
         goto err;
     }
 
-    if (ret->ameth->set_priv_key == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PRIVATE_KEY,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    if (!ossl_assert(pkey->ameth != NULL))
         goto err;
+
+    if (key_is_priv) {
+        if (pkey->ameth->set_priv_key == NULL) {
+            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            goto err;
+        }
+
+        if (!pkey->ameth->set_priv_key(pkey, key, len)) {
+            EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+            goto err;
+        }
+    } else {
+        if (pkey->ameth->set_pub_key == NULL) {
+            EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+            goto err;
+        }
+
+        if (!pkey->ameth->set_pub_key(pkey, key, len)) {
+            EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+            goto err;
+        }
     }
 
-    if (!ret->ameth->set_priv_key(ret, priv, len)) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PRIVATE_KEY, EVP_R_KEY_SETUP_FAILED);
-        goto err;
-    }
-
-    return ret;
-
+    result = 1;
  err:
-    EVP_PKEY_free(ret);
-    return NULL;
+    if (!result) {
+        EVP_PKEY_free(pkey);
+        pkey = NULL;
+    }
+    EVP_PKEY_CTX_free(ctx);
+    return pkey;
+}
+
+EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OPENSSL_CTX *libctx,
+                                                   const char *keytype,
+                                                   const char *propq,
+                                                   const unsigned char *priv,
+                                                   size_t len)
+{
+    return new_raw_key_int(libctx, keytype, propq, EVP_PKEY_NONE, NULL, priv,
+                           len, 1);
+}
+
+EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
+                                       const unsigned char *priv,
+                                       size_t len)
+{
+    return new_raw_key_int(NULL, NULL, NULL, type, e, priv, len, 1);
+}
+
+EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OPENSSL_CTX *libctx,
+                                                  const char *keytype,
+                                                  const char *propq,
+                                                  const unsigned char *pub,
+                                                  size_t len)
+{
+    return new_raw_key_int(libctx, keytype, propq, EVP_PKEY_NONE, NULL, pub,
+                           len, 0);
 }
 
 EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
                                       const unsigned char *pub,
                                       size_t len)
 {
-    EVP_PKEY *ret = EVP_PKEY_new();
-
-    if (ret == NULL
-        || !pkey_set_type(ret, e, type, NULL, -1, NULL)) {
-        /* EVPerr already called */
-        goto err;
-    }
-
-    if (ret->ameth->set_pub_key == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PUBLIC_KEY,
-               EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
-        goto err;
-    }
-
-    if (!ret->ameth->set_pub_key(ret, pub, len)) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_RAW_PUBLIC_KEY, EVP_R_KEY_SETUP_FAILED);
-        goto err;
-    }
-
-    return ret;
-
- err:
-    EVP_PKEY_free(ret);
-    return NULL;
+    return new_raw_key_int(NULL, NULL, NULL, type, e, pub, len, 0);
 }
 
 int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
