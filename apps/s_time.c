@@ -46,7 +46,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_CONNECT, OPT_CIPHER, OPT_CIPHERSUITES, OPT_CERT, OPT_NAMEOPT, OPT_KEY,
     OPT_CAPATH, OPT_CAFILE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NEW, OPT_REUSE,
-    OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3,
+    OPT_BUGS, OPT_VERIFY, OPT_TIME, OPT_SSL3, OPT_CURVES,
     OPT_WWW
 } OPTION_CHOICE;
 
@@ -77,6 +77,7 @@ const OPTIONS s_time_options[] = {
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
+    {"curves", OPT_CURVES, 's', "Curves to be announced by client"},
     {NULL}
 };
 
@@ -97,6 +98,7 @@ int s_time_main(int argc, char **argv)
     char *CApath = NULL, *CAfile = NULL, *cipher = NULL, *ciphersuites = NULL;
     char *www_path = NULL;
     char *host = SSL_CONNECT_NAME, *certfile = NULL, *keyfile = NULL, *prog;
+    char *curves = NULL;
     double totalTime = 0.0;
     int noCApath = 0, noCAfile = 0;
     int maxtime = SECONDS, nConn = 0, perform = 3, ret = 1, i, st_bugs = 0;
@@ -180,6 +182,9 @@ int s_time_main(int argc, char **argv)
         case OPT_SSL3:
             max_version = SSL3_VERSION;
             break;
+        case OPT_CURVES:
+            curves = opt_arg();
+            break;
         }
     }
     argc = opt_num_rest();
@@ -210,6 +215,11 @@ int s_time_main(int argc, char **argv)
         ERR_print_errors(bio_err);
         goto end;
     }
+    if (curves && !SSL_CTX_set1_curves_list(ctx, curves)) {
+        ERR_print_errors(bio_err);
+        goto end;
+    }
+
     if (!(perform & 1))
         goto next;
     printf("Collecting connection statistics for %d seconds\n", maxtime);
