@@ -10,13 +10,14 @@
 #include <openssl/err.h>
 #include "crypto/ecx.h"
 
-ECX_KEY *ecx_key_new(ECX_KEY_TYPE type, int haspubkey)
+ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey)
 {
     ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         return NULL;
 
+    ret->libctx = libctx;
     ret->haspubkey = haspubkey;
     switch (type) {
     case ECX_KEY_TYPE_X25519:

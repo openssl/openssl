@@ -59,7 +59,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         }
     }
 
-    key = ecx_key_new(KEYNID2TYPE(id), 1);
+    key = ecx_key_new(libctx, KEYNID2TYPE(id), 1);
     if (key == NULL) {
         ECerr(EC_F_ECX_KEY_OP, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -439,7 +439,7 @@ static int ecx_generic_import_from(const OSSL_PARAM params[], void *vpctx,
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    ECX_KEY *ecx = ecx_key_new(KEYNID2TYPE(keytype), 0);
+    ECX_KEY *ecx = ecx_key_new(pctx->libctx, KEYNID2TYPE(keytype), 0);
 
     if (ecx == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
@@ -947,7 +947,7 @@ static int s390x_pkey_ecx_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X25519, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_X25519, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -989,7 +989,7 @@ static int s390x_pkey_ecx_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X448, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_X448, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -1034,7 +1034,7 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
     };
     unsigned char x_dst[32], buff[SHA512_DIGEST_LENGTH];
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED25519, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_ED25519, 1);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
 
@@ -1091,7 +1091,7 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x24, 0xbc, 0xb6, 0x6e, 0x71, 0x46, 0x3f, 0x69, 0x00
     };
     unsigned char x_dst[57], buff[114];
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED448, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_ED448, 1);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
 

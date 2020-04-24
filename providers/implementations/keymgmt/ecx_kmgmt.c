@@ -68,22 +68,22 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
 
 static void *x25519_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_X25519, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X25519, 0);
 }
 
 static void *x448_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_X448, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X448, 0);
 }
 
 static void *ed25519_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_ED25519, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED25519, 0);
 }
 
 static void *ed448_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_ED448, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED448, 0);
 }
 
 static int ecx_has(void *keydata, int selection)
@@ -325,7 +325,7 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
 
     if (gctx == NULL)
         return NULL;
-    if ((key = ecx_key_new(gctx->type, 0)) == NULL) {
+    if ((key = ecx_key_new(gctx->libctx, gctx->type, 0)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -449,7 +449,7 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X25519, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_X25519, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -489,7 +489,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X448, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_X448, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -532,7 +532,7 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
     };
     unsigned char x_dst[32], buff[SHA512_DIGEST_LENGTH];
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED25519, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_ED25519, 1);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
     EVP_MD *sha = NULL;
@@ -594,7 +594,7 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
         0x24, 0xbc, 0xb6, 0x6e, 0x71, 0x46, 0x3f, 0x69, 0x00
     };
     unsigned char x_dst[57], buff[114];
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED448, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_ED448, 1);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
     EVP_MD *shake = NULL;
