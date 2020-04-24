@@ -22,7 +22,7 @@ extern "C" {
  * The calculated MAC of the module file (Used for FIPS Self Testing)
  * Type: OSSL_PARAM_UTF8_STRING
  */
-# define OSSL_PROV_FIPS_PARAM_MODULE_MAC      "module-checksum"
+# define OSSL_PROV_FIPS_PARAM_MODULE_MAC      "module-mac"
 /*
  * A version number for the fips install process (Used for FIPS Self Testing)
  * Type: OSSL_PARAM_UTF8_STRING
@@ -32,7 +32,7 @@ extern "C" {
  * The calculated MAC of the install status indicator (Used for FIPS Self Testing)
  * Type: OSSL_PARAM_UTF8_STRING
  */
-# define OSSL_PROV_FIPS_PARAM_INSTALL_MAC     "install-checksum"
+# define OSSL_PROV_FIPS_PARAM_INSTALL_MAC     "install-mac"
 /*
  * The install status indicator (Used for FIPS Self Testing)
  * Type: OSSL_PARAM_UTF8_STRING
