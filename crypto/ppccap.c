@@ -171,6 +171,37 @@ void ecp_nistz256_from_mont(unsigned long res[4], const unsigned long in[4])
 }
 #endif
 
+size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
+    size_t r);
+void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
+
+size_t SHA3_absorb_default(uint64_t A[5][5], const unsigned char *inp,
+    size_t len, size_t r);
+void SHA3_squeeze_default(uint64_t A[5][5], unsigned char *out, size_t len,
+    size_t r);
+
+size_t SHA3_absorb_vsx(uint64_t A[5][5], const unsigned char *inp,
+    size_t len, size_t r);
+void SHA3_squeeze_vsx(uint64_t A[5][5], unsigned char *out, size_t len,
+    size_t r);
+
+size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
+    size_t r)
+{
+    return OPENSSL_ppccap_P & PPC_CRYPTO207
+        ? SHA3_absorb_vsx(A, inp, len, r)
+        : SHA3_absorb_default(A, inp, len, r);
+}
+
+void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
+{
+    OPENSSL_ppccap_P & PPC_CRYPTO207
+        ? SHA3_absorb_vsx(A, out, len, r)
+        : SHA3_squeeze_default(A, out, len, r);
+}
+
+
+
 static sigjmp_buf ill_jmp;
 static void ill_handler(int sig)
 {

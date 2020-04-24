@@ -409,10 +409,10 @@ dword_le_load:
 	.long	0
 .size	dword_le_load,.-dword_le_load
 
-.globl	SHA3_absorb
-.type	SHA3_absorb,\@function
+.globl	SHA3_absorb_vsx
+.type	SHA3_absorb_vsx,\@function
 .align	5
-SHA3_absorb:
+SHA3_absorb_vsx:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
@@ -631,15 +631,15 @@ SHA3_absorb:
 	.long	0
 	.byte	0,12,4,1,0x80,18,4,0
 	.long	0
-.size	SHA3_absorb,.-SHA3_absorb
+.size	SHA3_absorb_vsx,.-SHA3_absorb_vsx
 ___
 {
 my ($A_flat,$out,$len,$bsz) = map("r$_",(28..31));
 $code.=<<___;
-.globl	SHA3_squeeze
-.type	SHA3_squeeze,\@function
+.globl	SHA3_squeeze_vsx
+.type	SHA3_squeeze_vsx,\@function
 .align	5
-SHA3_squeeze:
+SHA3_squeeze_vsx:
 	$STU	$sp,`-10*$SIZE_T`($sp)
 	mflr	r0
 	$PUSH	r28,`6*$SIZE_T`($sp)
@@ -709,7 +709,7 @@ SHA3_squeeze:
 	.long	0
 	.byte	0,12,4,1,0x80,4,4,0
 	.long	0
-.size	SHA3_squeeze,.-SHA3_squeeze
+.size	SHA3_squeeze_vsx,.-SHA3_squeeze_vsx
 ___
 }
 

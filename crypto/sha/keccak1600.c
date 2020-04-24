@@ -11,6 +11,12 @@
 #include <string.h>
 #include <assert.h>
 
+#ifdef __powerpc__
+#define SHA3_absorb SHA3_absorb_default
+#define SHA3_squeeze SHA3_squeeze_default
+#undef KECCAK1600_ASM
+#endif
+
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
                    size_t r);
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r);
