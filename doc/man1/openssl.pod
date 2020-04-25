@@ -1124,7 +1124,7 @@ values larger than 127, as described in B<esc_ctrl>.
 
 Escapes some characters by surrounding the entire string with quotation
 marks, C<">.
-Without this option, individual special characters are preceeded with
+Without this option, individual special characters are preceded with
 a backslash character, C<\>.
 
 =item B<utf8>

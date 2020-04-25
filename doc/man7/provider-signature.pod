@@ -253,7 +253,7 @@ although this may be ignored by providers.
 OP_signature_digest_sign_update() provides data to be signed in the I<data>
 parameter which should be of length I<datalen>. A previously initialised
 signature context is passed in the I<ctx> parameter. This function may be called
-multiple times to cummulatively add data to be signed.
+multiple times to cumulatively add data to be signed.
 
 OP_signature_digest_sign_final() finalises a signature operation previously
 started through OP_signature_digest_sign_init() and
@@ -288,7 +288,7 @@ although this may be ignored by providers.
 OP_signature_digest_verify_update() provides data to be verified in the I<data>
 parameter which should be of length I<datalen>. A previously initialised
 verification context is passed in the I<ctx> parameter. This function may be
-called multiple times to cummulatively add data to be verified.
+called multiple times to cumulatively add data to be verified.
 
 OP_signature_digest_verify_final() finalises a verification operation previously
 started through OP_signature_digest_verify_init() and
@@ -347,7 +347,7 @@ By default it retries until a signature is calculated.
 Setting the value to 0 causes the sign operation to retry,
 otherwise the sign operation is only tried once and returns whether or not it
 was successful.
-Known answer tests can be performed if the random generator is overriden to
+Known answer tests can be performed if the random generator is overridden to
 supply known values that either pass or fail.
 
 =back
