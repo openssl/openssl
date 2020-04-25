@@ -24,7 +24,7 @@ X509_load_http() and X509_CRL_load_http() loads a certificate or a CRL,
 respectively, in ASN.1 format using HTTP from the given B<url>.
 
 If B<bio> is given and B<rbio> is NULL then this BIO is used instead of an
-interal one for connecting, writing the request, and reading the response.
+internal one for connecting, writing the request, and reading the response.
 If both B<bio> and B<rbio> are given (which may be memory BIOs, for instance)
 then no explicit connection is attempted,
 B<bio> is used for writing the request, and B<rbio> for reading the response.
@@ -36,7 +36,7 @@ while a value < 0 immediately leads to a timeout condition.
 
 X509_http_nbio() and X509_CRL_http_nbio() are macros for backward compatibility
 that have the same effect as the functions above but with infinite timeout
-and without the possiblity to specify custom BIOs.
+and without the possibility to specify custom BIOs.
 
 =head1 RETURN VALUES
 

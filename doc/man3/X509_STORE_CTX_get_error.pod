@@ -327,7 +327,7 @@ Unhandled critical CRL extension.
 
 Invalid non-CA certificate has CA markings.
 
-=item B<X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED: proxy path length contraint exceeded>
+=item B<X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED: proxy path length constraint exceeded>
 
 Proxy path length constraint exceeded.
 
@@ -340,7 +340,7 @@ certificates.
 
 Proxy certificates not allowed unless the  B<-allow_proxy_certs> option is used.
 
-=item B<X509_V_ERR_UNNESTED_RESOURCE: RFC 3779 resource not subset of parent's resrouces>
+=item B<X509_V_ERR_UNNESTED_RESOURCE: RFC 3779 resource not subset of parent's resources>
 
 See RFC 3779 for details.
 
@@ -415,7 +415,7 @@ recognized by the OCSP responder.
 
 The issuer certificate does not have a public key.
 
-=item B<X509_V_ERROR_SIGNATURE_ALGORITHM_MISMATCH, Subject signature algorithm and issuer public key algoritm mismatch>
+=item B<X509_V_ERROR_SIGNATURE_ALGORITHM_MISMATCH, Subject signature algorithm and issuer public key algorithm mismatch>
 
 The issuer's public key is not of the type required by the signature in
 the subject's certificate.
