@@ -250,6 +250,8 @@ static int kmac_init(void *vmacctx)
         return 0;
 
     block_len = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
+    if (block_len < 0)
+        return 0;
 
     /* Set default custom string if it is not already set */
     if (kctx->custom_len == 0) {
