@@ -24,8 +24,10 @@ SCT_CTX *SCT_CTX_new(OPENSSL_CTX *libctx, const char *propq)
 {
     SCT_CTX *sctx = OPENSSL_zalloc(sizeof(*sctx));
 
-    if (sctx == NULL)
+    if (sctx == NULL) {
         CTerr(CT_F_SCT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
 
     sctx->libctx = libctx;
     if (propq != NULL) {
