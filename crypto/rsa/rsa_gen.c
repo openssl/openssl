@@ -463,7 +463,7 @@ static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
     if (ciphertxt_len <= 0)
         goto err;
     if (ciphertxt_len == plaintxt_len
-        && memcmp(decoded, plaintxt, plaintxt_len) == 0)
+        && memcmp(ciphertxt, plaintxt, plaintxt_len) == 0)
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, ciphertxt);
