@@ -19,15 +19,13 @@
 #include <openssl/bn.h>
 #include <openssl/rsa.h>
 #include <openssl/rand.h>
-<<<<<<< HEAD
 #include <openssl/x509.h>
-=======
+
 /* Just for the SSL_MAX_MASTER_KEY_LENGTH value */
 #include <openssl/ssl.h>
 #include "internal/cryptlib.h"
 #include "crypto/rsa.h"
 #include "rsa_local.h"
->>>>>>> master
 
 int RSA_padding_add_PKCS1_type_1(unsigned char *to, int tlen,
                                  const unsigned char *from, int flen)

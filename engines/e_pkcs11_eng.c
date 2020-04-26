@@ -17,6 +17,9 @@
 #include <openssl/x509v3.h>
 #include <openssl/ui.h>
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_NAME)
+
 static int pkcs11_parse_items(PKCS11_CTX *ctx, const char *uri);
 static int pkcs11_parse(PKCS11_CTX *ctx, const char *path, int store);
 static char pkcs11_hex_int(char nib1, char nib2);
