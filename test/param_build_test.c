@@ -205,7 +205,7 @@ static int builder_limit_test(void)
     
     for (i = 0; i < n; i++) {
         names[i][0] = 'A' + (i / 26) - 1;
-        names[i][0] = 'a' + (i % 26) - 1;
+        names[i][1] = 'a' + (i % 26) - 1;
         names[i][2] = '\0';
         if (!TEST_true(OSSL_PARAM_BLD_push_int(bld, names[i], 3 * i + 1)))
             goto err;
