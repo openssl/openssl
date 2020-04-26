@@ -95,7 +95,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         case EVP_PKEY_ED25519:
             if (!ED25519_public_from_private(libctx, pubkey, privkey)) {
                 ECerr(EC_F_ECX_KEY_OP, EC_R_FAILED_MAKING_PUBLIC_KEY);
-                return 0;
+                goto err;
             }
             break;
         case EVP_PKEY_X448:
@@ -104,7 +104,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         case EVP_PKEY_ED448:
             if (!ED448_public_from_private(libctx, pubkey, privkey)) {
                 ECerr(EC_F_ECX_KEY_OP, EC_R_FAILED_MAKING_PUBLIC_KEY);
-                return 0;
+                goto err;
             }
             break;
         }
