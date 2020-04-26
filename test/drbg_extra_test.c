@@ -75,10 +75,8 @@ static int run_extra_kat(const struct drbg_extra_kat *td)
         failures++;
 
 err:
-    if (drbg != NULL) {
-        RAND_DRBG_uninstantiate(drbg);
-        RAND_DRBG_free(drbg);
-    }
+    RAND_DRBG_uninstantiate(drbg);
+    RAND_DRBG_free(drbg);
     return failures == 0;
 }
 
