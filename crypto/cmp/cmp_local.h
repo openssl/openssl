@@ -732,11 +732,7 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
                                         char **file, int *line);
 # define ossl_cmp_add_error_data(txt) ERR_add_error_txt(" : ", txt)
 # define ossl_cmp_add_error_line(txt) ERR_add_error_txt("\n", txt)
-/* functions manipulating lists of certificates etc could be generally useful */
-int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
-                               int no_dup, int prepend);
-int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
-                                int no_self_issued, int no_dups, int prepend);
+/* The two functions manipulating X509_STORE could be generally useful */
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
                                    int only_self_issued);
 STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store);

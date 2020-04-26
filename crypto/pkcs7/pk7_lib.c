@@ -13,7 +13,7 @@
 #include <openssl/x509.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "crypto/x509.h"
+#include "crypto/x509.h" /* for sk_X509_add1_cert() */
 #include "pk7_local.h"
 
 DEFINE_STACK_OF(X509)
@@ -262,18 +262,7 @@ int PKCS7_add_certificate(PKCS7 *p7, X509 *x509)
         return 0;
     }
 
-    if (*sk == NULL)
-        *sk = sk_X509_new_null();
-    if (*sk == NULL) {
-        PKCS7err(PKCS7_F_PKCS7_ADD_CERTIFICATE, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-    X509_up_ref(x509);
-    if (!sk_X509_push(*sk, x509)) {
-        X509_free(x509);
-        return 0;
-    }
-    return 1;
+    return X509_add_cert_new(sk, x509, X509_ADD_FLAG_UP_REF);
 }
 
 int PKCS7_add_crl(PKCS7 *p7, X509_CRL *crl)

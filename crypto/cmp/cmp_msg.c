@@ -440,7 +440,8 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
     if (sk_X509_num(chain) > 0) {
         msg->extraCerts = sk_X509_new_reserve(NULL, sk_X509_num(chain));
         if (msg->extraCerts == NULL
-            || !ossl_cmp_sk_X509_add1_certs(msg->extraCerts, chain, 0, 1, 0))
+                || !X509_add_certs(msg->extraCerts, chain,
+                                   X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         goto err;
     }
 

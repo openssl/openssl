@@ -4837,6 +4837,8 @@ OSSL_CMP_CTX_snprint_PKIStatus          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_transactionID         ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_HDR_get0_recipNonce            ?	3_0_0	EXIST::FUNCTION:CMP
 X509_LOOKUP_store                       ?	3_0_0	EXIST::FUNCTION:
+X509_add_cert                           ?	3_0_0	EXIST::FUNCTION:
+X509_add_certs                          ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_file                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_path                    ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_store                   ?	3_0_0	EXIST::FUNCTION:

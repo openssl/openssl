@@ -67,16 +67,13 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
     }
     if (!(flags & OCSP_NOVERIFY)) {
         int init_res;
+
         if (flags & OCSP_NOCHAIN) {
             untrusted = NULL;
         } else if (bs->certs && certs) {
             untrusted = sk_X509_dup(bs->certs);
-            for (i = 0; i < sk_X509_num(certs); i++) {
-                if (!sk_X509_push(untrusted, sk_X509_value(certs, i))) {
-                    OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_MALLOC_FAILURE);
-                    goto f_err;
-                }
-            }
+            if (!X509_add_certs(untrusted, certs, X509_ADD_FLAG_DEFAULT))
+                goto f_err;
         } else if (certs != NULL) {
             untrusted = certs;
         } else {

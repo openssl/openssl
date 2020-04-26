@@ -20,6 +20,7 @@
 #include "crypto/evp.h"
 #include "crypto/cms.h"
 #include "crypto/ess.h"
+#include "crypto/x509.h" /* for X509_add_cert_new() */
 
 DEFINE_STACK_OF(CMS_RevocationInfoChoice)
 DEFINE_STACK_OF(CMS_SignerInfo)
@@ -510,12 +511,8 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms)
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
         si = sk_CMS_SignerInfo_value(sinfos, i);
         if (si->signer != NULL) {
-            if (signers == NULL) {
-                signers = sk_X509_new_null();
-                if (signers == NULL)
-                    return NULL;
-            }
-            if (!sk_X509_push(signers, si->signer)) {
+            if (!X509_add_cert_new(&signers, si->signer,
+                                   X509_ADD_FLAG_DEFAULT)) {
                 sk_X509_free(signers);
                 return NULL;
             }

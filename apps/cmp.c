@@ -603,54 +603,6 @@ static int print_to_bio_out(const char *func, const char *file, int line,
     return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
 }
 
-/* code duplicated from crypto/cmp/cmp_util.c */
-static int sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
-                             int no_dup, int prepend)
-{
-    if (no_dup) {
-        /*
-         * not using sk_X509_set_cmp_func() and sk_X509_find()
-         * because this re-orders the certs on the stack
-         */
-        int i;
-
-        for (i = 0; i < sk_X509_num(sk); i++) {
-            if (X509_cmp(sk_X509_value(sk, i), cert) == 0)
-                return 1;
-        }
-    }
-    if (!X509_up_ref(cert))
-        return 0;
-    if (!sk_X509_insert(sk, cert, prepend ? 0 : -1)) {
-        X509_free(cert);
-        return 0;
-    }
-    return 1;
-}
-
-/* code duplicated from crypto/cmp/cmp_util.c */
-static int sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
-                              int no_self_signed, int no_dups, int prepend)
-/* compiler would allow 'const' for the list of certs, yet they are up-ref'ed */
-{
-    int i;
-
-    if (sk == NULL)
-        return 0;
-    if (certs == NULL)
-        return 1;
-    for (i = 0; i < sk_X509_num(certs); i++) {
-        X509 *cert = sk_X509_value(certs, i);
-
-        if (!no_self_signed || X509_check_issued(cert, cert) != X509_V_OK) {
-            if (!sk_X509_add1_cert(sk, cert, no_dups, prepend))
-                return 0;
-        }
-    }
-    return 1;
-}
-
-/* TODO potentially move to apps/lib/apps.c */
 static char *next_item(char *opt) /* in list separated by comma and/or space */
 {
     /* advance to separator (comma or whitespace), if any */
@@ -1210,7 +1162,8 @@ static STACK_OF(X509) *load_certs_multifile(char *files,
 
         if (!load_certs_autofmt(files, &certs, 0, pass, desc))
             goto err;
-        if (!sk_X509_add1_certs(result, certs, 0, 1 /* no dups */, 0))
+        if (!X509_add_certs(result, certs,
+                            X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
             goto oom;
         sk_X509_pop_free(certs, X509_free);
         certs = NULL;
@@ -1787,8 +1740,9 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             /* add any remaining certs to the list of untrusted certs */
             STACK_OF(X509) *untrusted = OSSL_CMP_CTX_get0_untrusted_certs(ctx);
             ok = untrusted != NULL ?
-                sk_X509_add1_certs(untrusted, certs, 0, 1 /* no dups */, 0) :
-                OSSL_CMP_CTX_set1_untrusted_certs(ctx, certs);
+                X509_add_certs(untrusted, certs,
+                               X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP)
+                : OSSL_CMP_CTX_set1_untrusted_certs(ctx, certs);
         }
         sk_X509_pop_free(certs, X509_free);
         if (!ok)

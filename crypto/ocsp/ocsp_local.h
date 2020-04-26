@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/x509.h" /* for X509_add_cert_new() */
+
 /*-  CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
  *       issuerNameHash     OCTET STRING, -- Hash of Issuer's DN

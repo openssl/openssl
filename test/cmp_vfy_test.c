@@ -186,8 +186,8 @@ static int add_trusted(OSSL_CMP_CTX *ctx, X509 *cert)
 
 static int add_untrusted(OSSL_CMP_CTX *ctx, X509 *cert)
 {
-    return ossl_cmp_sk_X509_add1_cert(OSSL_CMP_CTX_get0_untrusted_certs(ctx),
-                                      cert, 0, 0);
+    return X509_add_cert(OSSL_CMP_CTX_get0_untrusted_certs(ctx), cert,
+                         X509_ADD_FLAG_UP_REF);
 }
 
 static int test_validate_msg_signature_partial_chain(int expired)

@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include "crypto/x509.h" /* for X509_add_cert_new() */
 
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(PKCS7)
@@ -99,12 +100,8 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
             ERR_pop_to_mark();
         }
 
-        if (ca && x) {
-            if (*ca == NULL)
-                *ca = sk_X509_new_null();
-            if (*ca == NULL)
-                goto err;
-            if (!sk_X509_push(*ca, x))
+        if (ca != NULL && x != NULL) {
+            if (!X509_add_cert_new(ca, x, X509_ADD_FLAG_DEFAULT))
                 goto err;
             x = NULL;
         }

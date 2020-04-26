@@ -300,10 +300,9 @@ int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
 int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
 int x509v3_cache_extensions(X509 *x);
 int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq);
-
 void x509_init_sig_info(X509 *x);
-
 int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *type,
                                  void *data, unsigned char *md,
                                  unsigned int *len, OPENSSL_CTX *libctx,
                                  const char *propq);
+int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);

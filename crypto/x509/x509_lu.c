@@ -578,14 +578,9 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
         X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
 
-        if (cert != NULL) {
-            if (!X509_up_ref(cert))
-                goto err;
-            if (!sk_X509_push(sk, cert)) {
-                X509_free(cert);
-                goto err;
-            }
-        }
+        if (cert != NULL
+            && !X509_add_cert(sk, cert, X509_ADD_FLAG_UP_REF))
+            goto err;
     }
     X509_STORE_unlock(store);
     return sk;
@@ -638,14 +633,8 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
     for (i = 0; i < cnt; i++, idx++) {
         obj = sk_X509_OBJECT_value(store->objs, idx);
         x = obj->data.x509;
-        if (!X509_up_ref(x)) {
+        if (!X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF)) {
             X509_STORE_unlock(store);
-            sk_X509_pop_free(sk, X509_free);
-            return NULL;
-        }
-        if (!sk_X509_push(sk, x)) {
-            X509_STORE_unlock(store);
-            X509_free(x);
             sk_X509_pop_free(sk, X509_free);
             return NULL;
         }

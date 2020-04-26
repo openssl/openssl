@@ -603,16 +603,11 @@ STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
     for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
         cch = sk_CMS_CertificateChoices_value(*pcerts, i);
         if (cch->type == 0) {
-            if (!certs) {
-                certs = sk_X509_new_null();
-                if (!certs)
-                    return NULL;
-            }
-            if (!sk_X509_push(certs, cch->d.certificate)) {
+            if (!X509_add_cert_new(&certs, cch->d.certificate,
+                                   X509_ADD_FLAG_UP_REF)) {
                 sk_X509_pop_free(certs, X509_free);
                 return NULL;
             }
-            X509_up_ref(cch->d.certificate);
         }
     }
     return certs;

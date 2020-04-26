@@ -285,24 +285,10 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         return -1;
     }
 
-    if (!X509_up_ref(ctx->cert)) {
-        X509err(X509_F_X509_VERIFY_CERT, ERR_R_INTERNAL_ERROR);
-        ctx->error = X509_V_ERR_UNSPECIFIED;
-        return -1;
-    }
-
-    /*
-     * first we make sure the chain we are going to build is present and that
-     * the first entry is in place
-     */
-    if ((ctx->chain = sk_X509_new_null()) == NULL
-            || !sk_X509_push(ctx->chain, ctx->cert)) {
-        X509_free(ctx->cert);
-        X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
+    if (!X509_add_cert_new(&ctx->chain, ctx->cert, X509_ADD_FLAG_UP_REF)) {
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return -1;
     }
-
     ctx->num_untrusted = 1;
 
     /* If the peer's public key is too weak, we can stop early. */
@@ -395,18 +381,8 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
     for (i = 0; i < sk_X509_num(ctx->other_ctx); i++) {
         x = sk_X509_value(ctx->other_ctx, i);
         if (X509_NAME_cmp(nm, X509_get_subject_name(x)) == 0) {
-            if (!X509_up_ref(x)) {
+            if (!X509_add_cert_new(&sk, x, X509_ADD_FLAG_UP_REF)) {
                 sk_X509_pop_free(sk, X509_free);
-                X509err(X509_F_LOOKUP_CERTS_SK, ERR_R_INTERNAL_ERROR);
-                ctx->error = X509_V_ERR_UNSPECIFIED;
-                return NULL;
-            }
-            if (sk == NULL)
-                sk = sk_X509_new_null();
-            if (sk == NULL || !sk_X509_push(sk, x)) {
-                X509_free(x);
-                sk_X509_pop_free(sk, X509_free);
-                X509err(X509_F_LOOKUP_CERTS_SK, ERR_R_MALLOC_FAILURE);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return NULL;
             }
@@ -3053,13 +3029,10 @@ static int build_chain(X509_STORE_CTX *ctx)
             ctx->error = X509_V_ERR_OUT_OF_MEM;
             return 0;
         }
-        for (i = 0; i < sk_X509_num(dane->certs); ++i) {
-            if (!sk_X509_push(sktmp, sk_X509_value(dane->certs, i))) {
-                sk_X509_free(sktmp);
-                X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
-                ctx->error = X509_V_ERR_OUT_OF_MEM;
-                return 0;
-            }
+        if (!X509_add_certs(sktmp, dane->certs, X509_ADD_FLAG_DEFAULT)) {
+            sk_X509_free(sktmp);
+            ctx->error = X509_V_ERR_OUT_OF_MEM;
+            return 0;
         }
     }
 

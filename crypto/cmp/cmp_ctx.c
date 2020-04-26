@@ -78,7 +78,8 @@ int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
     }
     if ((untrusted_certs = sk_X509_new_null()) == NULL)
         return 0;
-    if (ossl_cmp_sk_X509_add1_certs(untrusted_certs, certs, 0, 1, 0) != 1)
+    if (X509_add_certs(untrusted_certs, certs,
+                       X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) != 1)
         goto err;
     sk_X509_pop_free(ctx->untrusted_certs, X509_free);
     ctx->untrusted_certs = untrusted_certs;
