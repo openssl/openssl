@@ -230,9 +230,11 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
      * us to compare types using legacy NIDs.
      */
     if ((a->type != EVP_PKEY_NONE
-         && !EVP_KEYMGMT_is_a(b->keymgmt, OBJ_nid2sn(a->type)))
+         && (b->keymgmt == NULL
+             || !EVP_KEYMGMT_is_a(b->keymgmt, OBJ_nid2sn(a->type))))
         || (b->type != EVP_PKEY_NONE
-            && !EVP_KEYMGMT_is_a(a->keymgmt, OBJ_nid2sn(b->type))))
+            && (a->keymgmt == NULL
+                || !EVP_KEYMGMT_is_a(a->keymgmt, OBJ_nid2sn(b->type)))))
         return -1;               /* not the same key type */
 
     /*
