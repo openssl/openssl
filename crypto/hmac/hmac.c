@@ -55,6 +55,8 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
         j = EVP_MD_block_size(md);
         if (!ossl_assert(j <= (int)sizeof(keytmp)))
             return 0;
+        if (j < 0)
+            return 0;
         if (j < len) {
             if (!EVP_DigestInit_ex(ctx->md_ctx, md, impl)
                     || !EVP_DigestUpdate(ctx->md_ctx, key, len)
