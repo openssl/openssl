@@ -153,7 +153,7 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
     size_t nextblocks;
     size_t outlint = 0;
 
-    if (bufsz != 0)
+    if (*bufsz != 0)
         nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
     else
         nextblocks = inl & ~(AES_BLOCK_SIZE-1);
