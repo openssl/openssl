@@ -376,6 +376,7 @@ static void *rsa_gen_init(void *provctx, int selection)
         if ((gctx->pub_exp = BN_new()) == NULL
             || !BN_set_word(gctx->pub_exp, RSA_F4)) {
             BN_free(gctx->pub_exp);
+            OPENSSL_free(gctx);
             gctx = NULL;
         } else {
             gctx->nbits = 2048;
