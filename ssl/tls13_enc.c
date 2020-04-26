@@ -608,6 +608,7 @@ int tls13_change_cipher_state(SSL *s, int which)
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS13_CHANGE_CIPHER_STATE,
                          SSL_R_ALGORITHM_FETCH_FAILED);
+                EVP_MD_CTX_free(mdctx);
                 goto err;
             }
 
