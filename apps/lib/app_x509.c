@@ -106,12 +106,15 @@ static int do_x509_ctrl_string(int (*ctrl)(void *object, int cmd,
         cmd = EVP_PKEY_CTRL_SET1_ID; /* ... except we put it in X509 */
 #endif
     } else if (strcmp(stmp, "hexdistid") == 0) {
-        long hexid_len = 0;
-        void *hexid = OPENSSL_hexstr2buf((const char *)vtmp, &hexid_len);
+        if (vtmp != NULL) {
+            void *hexid;
+            long hexid_len = 0;
 
-        OPENSSL_free(stmp);
-        stmp = vtmp = hexid;
-        vtmp_len = (size_t)hexid_len;
+            hexid = OPENSSL_hexstr2buf((const char *)vtmp, &hexid_len);
+            OPENSSL_free(stmp);
+            stmp = vtmp = hexid;
+            vtmp_len = (size_t)hexid_len;
+        }
 #ifdef EVP_PKEY_CTRL_SET1_ID
         cmd = EVP_PKEY_CTRL_SET1_ID; /* ... except we put it in X509 */
 #endif
