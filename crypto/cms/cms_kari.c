@@ -415,7 +415,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
 {
     EVP_CIPHER_CTX *ctx = kari->ctx;
     const EVP_CIPHER *kekcipher;
-    int keylen = EVP_CIPHER_key_length(cipher);
+    int keylen;
     int ret;
 
     /* If a suitable wrap algorithm is already set nothing to do */
@@ -425,8 +425,10 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
             return 0;
         return 1;
     }
-    else if (cipher != NULL
-         && (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER)) {
+    if (cipher == NULL)
+        return 0;
+    keylen = EVP_CIPHER_key_length(cipher);
+    if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER) != 0) {
         ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
                                                0, &kekcipher);
         if (ret <= 0)
