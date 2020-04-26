@@ -1212,10 +1212,12 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
          * to the |save_type| field, because |type| is supposed to be set
          * to EVP_PKEY_NONE in that case.
          */
-        if (keymgmt != NULL)
-            pkey->save_type = ameth->pkey_id;
-        else if (pkey->ameth != NULL)
-            pkey->type = ameth->pkey_id;
+        if (ameth != NULL) {
+            if (keymgmt != NULL)
+                pkey->save_type = ameth->pkey_id;
+            else if (pkey->ameth != NULL)
+                pkey->type = ameth->pkey_id;
+        }
 #endif
     }
     return 1;
