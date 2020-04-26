@@ -420,9 +420,13 @@ static int load_pkcs12(BIO *in, const char *desc,
     char tpass[PEM_BUFSIZE];
     int len, ret = 0;
     PKCS12 *p12;
+
     p12 = d2i_PKCS12_bio(in, NULL);
-    if (p12 == NULL && desc != NULL) {
-        BIO_printf(bio_err, "Error loading PKCS12 file for %s\n", desc);
+    if (p12 == NULL) {
+        if (desc != NULL)
+            BIO_printf(bio_err, "Error loading PKCS12 file for %s\n", desc);
+        else
+            BIO_printf(bio_err, "Error loading PKCS12 file\n");
         goto die;
     }
     /* See if an empty password will do */
