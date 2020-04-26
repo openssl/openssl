@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -11,6 +11,8 @@
 
 #include "cmp_testlib.h"
 #include <openssl/rsa.h> /* needed in case config no-deprecated */
+
+DEFINE_STACK_OF(X509)
 
 EVP_PKEY *load_pem_key(const char *file)
 {
@@ -38,6 +40,14 @@ X509 *load_pem_cert(const char *file)
 
     BIO_free(bio);
     return cert;
+}
+
+OSSL_CMP_MSG *load_pkimsg(const char *file)
+{
+    OSSL_CMP_MSG *msg;
+
+    (void)TEST_ptr((msg = ossl_cmp_msg_load(file)));
+    return msg;
 }
 
 X509_REQ *load_csr(const char *file)
@@ -117,4 +127,10 @@ int STACK_OF_X509_push1(STACK_OF(X509) *sk, X509 *cert)
     if (res <= 0)
         X509_free(cert); /* down-ref */
     return res;
+}
+
+int print_to_bio_out(const char *func, const char *file, int line,
+                     OSSL_CMP_severity level, const char *msg)
+{
+    return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
 }

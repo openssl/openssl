@@ -266,8 +266,10 @@ static void x942kdf_free(void *vctx)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
 
-    x942kdf_reset(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        x942kdf_reset(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static int x942kdf_set_buffer(unsigned char **out, size_t *out_len,

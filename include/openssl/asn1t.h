@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_ASN1T_H
 # endif
 
@@ -814,13 +814,13 @@ typedef struct ASN1_STREAM_ARG_st {
         } \
         int i2d_##fname(const stname *a, unsigned char **out) \
         { \
-                return ASN1_item_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
+                return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(itname));\
         }
 
 # define IMPLEMENT_ASN1_NDEF_FUNCTION(stname) \
         int i2d_##stname##_NDEF(const stname *a, unsigned char **out) \
         { \
-                return ASN1_item_ndef_i2d((ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
+                return ASN1_item_ndef_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(stname));\
         }
 
 # define IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(stname) \
@@ -832,7 +832,7 @@ typedef struct ASN1_STREAM_ARG_st {
         } \
         static int i2d_##stname(const stname *a, unsigned char **out) \
         { \
-                return ASN1_item_i2d((ASN1_VALUE *)a, out, \
+                return ASN1_item_i2d((const ASN1_VALUE *)a, out, \
                                      ASN1_ITEM_rptr(stname)); \
         }
 
@@ -849,7 +849,7 @@ typedef struct ASN1_STREAM_ARG_st {
         int fname##_print_ctx(BIO *out, const stname *x, int indent, \
                                                 const ASN1_PCTX *pctx) \
         { \
-                return ASN1_item_print(out, (ASN1_VALUE *)x, indent, \
+                return ASN1_item_print(out, (const ASN1_VALUE *)x, indent, \
                         ASN1_ITEM_rptr(itname), pctx); \
         }
 
@@ -870,7 +870,7 @@ DECLARE_ASN1_ITEM(ZINT64)
 DECLARE_ASN1_ITEM(UINT64)
 DECLARE_ASN1_ITEM(ZUINT64)
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /*
  * LONG and ZLONG are strongly discouraged for use as stored data, as the
  * underlying C type (long) differs in size depending on the architecture.
@@ -880,7 +880,7 @@ DECLARE_ASN1_ITEM(LONG)
 DECLARE_ASN1_ITEM(ZLONG)
 # endif
 
-DEFINE_STACK_OF(ASN1_VALUE)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_VALUE)
 
 /* Functions used internally by the ASN1 code */
 

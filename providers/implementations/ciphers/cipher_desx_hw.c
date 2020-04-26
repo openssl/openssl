@@ -1,11 +1,17 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
 
 #include <openssl/des.h>
 #include "cipher_tdes_default.h"
@@ -31,6 +37,16 @@ static int cipher_hw_desx_cbc_initkey(PROV_CIPHER_CTX *ctx,
     return 1;
 }
 
+static void cipher_hw_desx_copyctx(PROV_CIPHER_CTX *dst,
+                                   const PROV_CIPHER_CTX *src)
+{
+    PROV_TDES_CTX *sctx = (PROV_TDES_CTX *)src;
+    PROV_TDES_CTX *dctx = (PROV_TDES_CTX *)dst;
+
+    *dctx = *sctx;
+    dst->ks = &dctx->tks.ks;
+}
+
 static int cipher_hw_desx_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
                               const unsigned char *in, size_t inl)
 {
@@ -54,7 +70,8 @@ static int cipher_hw_desx_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
 static const PROV_CIPHER_HW desx_cbc =
 {
     cipher_hw_desx_cbc_initkey,
-    cipher_hw_desx_cbc
+    cipher_hw_desx_cbc,
+    cipher_hw_desx_copyctx
 };
 const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_desx_cbc(void)
 {

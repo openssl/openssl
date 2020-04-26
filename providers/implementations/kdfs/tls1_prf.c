@@ -106,8 +106,10 @@ static void kdf_tls1_prf_free(void *vctx)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
 
-    kdf_tls1_prf_reset(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        kdf_tls1_prf_reset(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static void kdf_tls1_prf_reset(void *vctx)

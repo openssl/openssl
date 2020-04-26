@@ -74,7 +74,7 @@ int X509_STORE_load_store(X509_STORE *ctx, const char *uri)
 }
 
 /* Deprecated */
-#if OPENSSL_API_LEVEL < 3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
                               const char *path)
 {

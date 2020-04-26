@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <openssl/core.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
+#include <openssl/provider.h>
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
@@ -18,6 +19,9 @@
 #include "internal/provider.h"
 #include "internal/refcount.h"
 #include "provider_local.h"
+#ifndef FIPS_MODE
+# include <openssl/self_test.h>
+#endif
 
 static OSSL_PROVIDER *provider_new(const char *name,
                                    OSSL_provider_init_fn *init_function);
@@ -89,6 +93,7 @@ static int ossl_provider_cmp(const OSSL_PROVIDER * const *a,
 struct provider_store_st {
     STACK_OF(OSSL_PROVIDER) *providers;
     CRYPTO_RWLOCK *lock;
+    char *default_path;
     unsigned int use_fallbacks:1;
 };
 
@@ -98,6 +103,7 @@ static void provider_store_free(void *vstore)
 
     if (store == NULL)
         return;
+    OPENSSL_free(store->default_path);
     sk_OSSL_PROVIDER_pop_free(store->providers, ossl_provider_free);
     CRYPTO_THREAD_lock_free(store->lock);
     OPENSSL_free(store);
@@ -381,6 +387,29 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
+int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *libctx, const char *path)
+{
+    struct provider_store_st *store;
+    char *p = NULL;
+
+    if (path != NULL) {
+        p = OPENSSL_strdup(path);
+        if (p == NULL) {
+            CRYPTOerr(0, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+    }
+    if ((store = get_provider_store(libctx)) != NULL
+            && CRYPTO_THREAD_write_lock(store->lock)) {
+        OPENSSL_free(store->default_path);
+        store->default_path = p;
+        CRYPTO_THREAD_unlock(store->lock);
+        return 1;
+    }
+    OPENSSL_free(p);
+    return 0;
+}
+
 /*
  * Internal version that doesn't affect the store flags, and thereby avoid
  * locking.  Direct callers must remember to set the store flags when
@@ -410,15 +439,24 @@ static int provider_activate(OSSL_PROVIDER *prov)
             char *allocated_path = NULL;
             const char *module_path = NULL;
             char *merged_path = NULL;
-            const char *load_dir = ossl_safe_getenv("OPENSSL_MODULES");
+            const char *load_dir = NULL;
+            struct provider_store_st *store;
 
             if ((prov->module = DSO_new()) == NULL) {
                 /* DSO_new() generates an error already */
                 return 0;
             }
 
-            if (load_dir == NULL)
-                load_dir = MODULESDIR;
+            if ((store = get_provider_store(prov->libctx)) == NULL
+                    || !CRYPTO_THREAD_read_lock(store->lock))
+                return 0;
+            load_dir = store->default_path;
+
+            if (load_dir == NULL) {
+                load_dir = ossl_safe_getenv("OPENSSL_MODULES");
+                if (load_dir == NULL)
+                    load_dir = MODULESDIR;
+            }
 
             DSO_ctrl(prov->module, DSO_CTRL_SET_FLAGS,
                      DSO_FLAG_NAME_TRANSLATION_EXT_ONLY, NULL);
@@ -429,6 +467,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
                     DSO_convert_filename(prov->module, prov->name);
             if (module_path != NULL)
                 merged_path = DSO_merge(prov->module, module_path, load_dir);
+            CRYPTO_THREAD_unlock(store->lock);
 
             if (merged_path == NULL
                 || (DSO_load(prov->module, merged_path, NULL, 0)) == NULL) {
@@ -501,12 +540,13 @@ static int provider_activate(OSSL_PROVIDER *prov)
          * with the error library number, so we need to make a copy of that
          * array either way.
          */
-        cnt = 1;                 /* One for the terminating item */
+        cnt = 0;
         while (reasonstrings[cnt].id != 0) {
             if (ERR_GET_LIB(reasonstrings[cnt].id) != 0)
                 return 0;
             cnt++;
         }
+        cnt++;                   /* One for the terminating item */
 
         /* Allocate one extra item for the "library" name */
         prov->error_strings =
@@ -771,6 +811,9 @@ static OSSL_core_get_library_context_fn core_get_libctx;
 static OSSL_core_new_error_fn core_new_error;
 static OSSL_core_set_error_debug_fn core_set_error_debug;
 static OSSL_core_vset_error_fn core_vset_error;
+static OSSL_core_set_error_mark_fn core_set_error_mark;
+static OSSL_core_clear_last_error_mark_fn core_clear_last_error_mark;
+static OSSL_core_pop_error_to_mark_fn core_pop_error_to_mark;
 #endif
 
 static const OSSL_PARAM *core_gettable_params(const OSSL_PROVIDER *prov)
@@ -854,7 +897,22 @@ static void core_vset_error(const OSSL_PROVIDER *prov,
         ERR_vset_error(prov->error_lib, (int)reason, fmt, args);
     }
 }
-#endif
+
+static int core_set_error_mark(const OSSL_PROVIDER *prov)
+{
+    return ERR_set_mark();
+}
+
+static int core_clear_last_error_mark(const OSSL_PROVIDER *prov)
+{
+    return ERR_clear_last_mark();
+}
+
+static int core_pop_error_to_mark(const OSSL_PROVIDER *prov)
+{
+    return ERR_pop_to_mark();
+}
+#endif /* FIPS_MODE */
 
 /*
  * Functions provided by the core.  Blank line separates "families" of related
@@ -869,12 +927,18 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_NEW_ERROR, (void (*)(void))core_new_error },
     { OSSL_FUNC_CORE_SET_ERROR_DEBUG, (void (*)(void))core_set_error_debug },
     { OSSL_FUNC_CORE_VSET_ERROR, (void (*)(void))core_vset_error },
+    { OSSL_FUNC_CORE_SET_ERROR_MARK, (void (*)(void))core_set_error_mark },
+    { OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK,
+      (void (*)(void))core_clear_last_error_mark },
+    { OSSL_FUNC_CORE_POP_ERROR_TO_MARK, (void (*)(void))core_pop_error_to_mark },
     { OSSL_FUNC_BIO_NEW_FILE, (void (*)(void))BIO_new_file },
     { OSSL_FUNC_BIO_NEW_MEMBUF, (void (*)(void))BIO_new_mem_buf },
     { OSSL_FUNC_BIO_READ_EX, (void (*)(void))BIO_read_ex },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))BIO_free },
+    { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))BIO_vprintf },
+    { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
+    { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))OSSL_SELF_TEST_get_callback },
 #endif
-
     { OSSL_FUNC_CRYPTO_MALLOC, (void (*)(void))CRYPTO_malloc },
     { OSSL_FUNC_CRYPTO_ZALLOC, (void (*)(void))CRYPTO_zalloc },
     { OSSL_FUNC_CRYPTO_FREE, (void (*)(void))CRYPTO_free },

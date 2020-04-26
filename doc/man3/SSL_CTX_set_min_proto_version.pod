@@ -54,6 +54,7 @@ All these functions are implemented using macros.
 
 =head1 SEE ALSO
 
+L<ssl(7)>,
 L<SSL_CTX_set_options(3)>, L<SSL_CONF_cmd(3)>
 
 =head1 HISTORY

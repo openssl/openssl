@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -297,7 +297,7 @@ void ossl_ctx_thread_stop(void *arg)
 
 static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
 {
-    THREAD_EVENT_HANDLER *curr, *prev = NULL;
+    THREAD_EVENT_HANDLER *curr, *prev = NULL, *tmp;
 
     /* Can't do much about this */
     if (hands == NULL)
@@ -306,15 +306,20 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands)
     curr = *hands;
     while (curr != NULL) {
         if (arg != NULL && curr->arg != arg) {
+            prev = curr;
             curr = curr->next;
             continue;
         }
         curr->handfn(curr->arg);
-        prev = curr;
+        if (prev == NULL)
+            *hands = curr->next;
+        else
+            prev->next = curr->next;
+
+        tmp = curr;
         curr = curr->next;
-        if (prev == *hands)
-            *hands = curr;
-        OPENSSL_free(prev);
+
+        OPENSSL_free(tmp);
     }
 }
 
@@ -380,6 +385,8 @@ static int init_thread_deregister(void *index, int all)
     int i;
 
     gtr = get_global_tevent_register();
+    if (gtr == NULL)
+        return 0;
     if (!all)
         CRYPTO_THREAD_write_lock(gtr->lock);
     for (i = 0; i < sk_THREAD_EVENT_HANDLER_PTR_num(gtr->skhands); i++) {

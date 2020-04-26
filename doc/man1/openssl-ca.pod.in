@@ -1,9 +1,5 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
@@ -16,6 +12,7 @@ B<openssl> B<ca>
 [B<-verbose>]
 [B<-config> I<filename>]
 [B<-name> I<section>]
+[B<-section> I<section>]
 [B<-gencrl>]
 [B<-revoke> I<file>]
 [B<-valid> I<file>]
@@ -27,6 +24,7 @@ B<openssl> B<ca>
 [B<-crl_CA_compromise> I<time>]
 [B<-crldays> I<days>]
 [B<-crlhours> I<hours>]
+[B<-crlsec> I<seconds>]
 [B<-crlexts> I<section>]
 [B<-startdate> I<date>]
 [B<-enddate> I<date>]
@@ -38,8 +36,10 @@ B<openssl> B<ca>
 [B<-key> I<arg>]
 [B<-passin> I<arg>]
 [B<-cert> I<file>]
+[B<-certform> B<DER>|<PEM>]
 [B<-selfsign>]
 [B<-in> I<file>]
+[B<-inform> B<DER>|<PEM>]
 [B<-out> I<file>]
 [B<-notext>]
 [B<-outdir> I<dir>]
@@ -52,25 +52,29 @@ B<openssl> B<ca>
 [B<-msie_hack>]
 [B<-extensions> I<section>]
 [B<-extfile> I<section>]
-[B<-engine> I<id>]
 [B<-subj> I<arg>]
 [B<-utf8>]
 [B<-sigopt> I<nm>:I<v>]
+[B<-vfyopt> I<nm>:I<v>]
 [B<-create_serial>]
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
-[B<-sm2-id> I<string>]
-[B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
+[I<certreq>...]
 
-=for openssl ifdef engine sm2-id sm2-hex-id
+=for openssl ifdef engine
 
 =head1 DESCRIPTION
 
 This command is a minimal CA application. It can be used
 to sign certificate requests in a variety of forms and generate
-CRLs it also maintains a text database of issued certificates
+CRLs. It also maintains a text database of issued certificates
 and their status.
+When signing certificates, a single certificate request can be specified
+with the B<-in> option, or multiple requests can be processed by
+specifying a set of B<certreq> files after all options.
 
 The options descriptions will be divided into each purpose.
 
@@ -92,7 +96,7 @@ Specifies the configuration file to use.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
 
-=item B<-name> I<section>
+=item B<-name> I<section>, B<-section> I<section>
 
 Specifies the configuration file section to use (overrides
 B<default_ca> in the B<ca> section).
@@ -101,6 +105,11 @@ B<default_ca> in the B<ca> section).
 
 An input filename containing a single certificate request to be
 signed by the CA.
+
+=item B<-inform> B<DER>|B<PEM>
+
+The format of the data in CSR input files.
+The default is PEM.
 
 =item B<-ss_cert> I<filename>
 
@@ -133,6 +142,11 @@ F<.pem> appended.
 
 The CA certificate file.
 
+=item B<-certform> B<DER>|B<PEM>
+
+The format of the data in certificate input files.
+The default is PEM.
+
 =item B<-keyfile> I<filename>
 
 The private key to sign requests with.
@@ -144,14 +158,26 @@ See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
 
-Pass options to the signature algorithm during sign or verify operations.
+Pass options to the signature algorithm during sign operations.
 Names and values of these options are algorithm-specific.
+
+=item B<-vfyopt> I<nm>:I<v>
+
+Pass options to the signature algorithm during verify operations.
+Names and values of these options are algorithm-specific.
+
+This often needs to be given while signing too, because the input
+certificate signature request is verified against its own public key,
+and that verification may need its own set of options.
 
 =item B<-key> I<password>
 
+=for openssl foreign manual ps(1)
+
 The password used to encrypt the private key. Since on some
-systems the command line arguments are visible (e.g. Unix with
-the L<ps(1)> utility) this option should be used with caution.
+systems the command line arguments are visible (e.g., when using
+L<ps(1)> on Unix),
+this option should be used with caution.
 
 =item B<-selfsign>
 
@@ -253,13 +279,6 @@ An additional configuration file to read certificate extensions from
 (using the default section unless the B<-extensions> option is also
 used).
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause B<ca>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
 =item B<-subj> I<arg>
 
 Supersedes subject name given in the request.
@@ -298,17 +317,11 @@ C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
 
-=item B<-sm2-id> I<string>
-
-Specify the ID string to use when verifying an SM2 certificate. The ID string is
-required by the SM2 signature algorithm for signing and verification.
-
-=item B<-sm2-hex-id> I<hex-string>
-
-Specify a binary ID string to use when signing or verifying using an SM2
-certificate. The argument for this option is string of hexadecimal digits.
-
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -328,6 +341,10 @@ now to place in the CRL nextUpdate field.
 =item B<-crlhours> I<num>
 
 The number of hours before the next CRL is due.
+
+=item B<-crlsec> I<num>
+
+The number of seconds before the next CRL is due.
 
 =item B<-revoke> I<filename>
 
@@ -442,7 +459,8 @@ CA private key. Mandatory.
 =item B<RANDFILE>
 
 At startup the specified file is loaded into the random number generator,
-and at exit 256 bytes will be written to it.
+and at exit 256 bytes will be written to it. (Note: Using a RANDFILE is
+not necessary anymore, see the L</HISTORY> section.
 
 =item B<default_days>
 
@@ -609,7 +627,9 @@ Sign a certificate request:
 
 Sign an SM2 certificate request:
 
- openssl ca -in sm2.csr -out sm2.crt -md sm3 -sigopt "sm2_id:1234567812345678" -sm2-id "1234567812345678"
+ openssl ca -in sm2.csr -out sm2.crt -md sm3 \
+         -sigopt "distid:1234567812345678" \
+         -vfyopt "distid:1234567812345678"
 
 Sign a certificate request, using CA extensions:
 
@@ -650,7 +670,6 @@ A sample configuration file with the relevant sections for this command:
  serial         = $dir/serial           # serial no file
  #rand_serial    = yes                  # for random serial#'s
  private_key    = $dir/private/cakey.pem# CA private key
- RANDFILE       = $dir/private/.rand    # random number file
 
  default_days   = 365                   # how long to certify for
  default_crl_days= 30                   # how long before next CRL
@@ -686,7 +705,6 @@ The values below reflect the default values.
  ./demoCA/index.txt             - CA text database file
  ./demoCA/index.txt.old         - CA text database backup file
  ./demoCA/certs                 - certificate output file
- ./demoCA/.rnd                  - CA random seed information
 
 =head1 RESTRICTIONS
 
@@ -707,8 +725,8 @@ numbers of certificates are present because, as the name implies
 the database has to be kept in memory.
 
 This command really needs rewriting or the required functionality
-exposed at either a command or interface level so a more friendly utility
-(perl script or GUI) can handle things properly. The script
+exposed at either a command or interface level so that a more user-friendly
+replacement could handle things properly. The script
 B<CA.pl> helps a little but not very much.
 
 Any fields in a request that are not present in a policy are silently
@@ -763,6 +781,13 @@ B<-enddate> and B<-days>) will be encoded as UTCTime if the dates are
 earlier than year 2049 (included), and as GeneralizedTime if the dates
 are in year 2050 or later.
 
+OpenSSL 1.1.1 introduced a new random generator (CSPRNG) with an improved
+seeding mechanism. The new seeding mechanism makes it unnecessary to
+define a RANDFILE for saving and restoring randomness. This option is
+retained mainly for compatibility reasons.
+
+The B<-section> option was added in OpenSSL 3.0.0.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
@@ -775,7 +800,7 @@ L<x509v3_config(5)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

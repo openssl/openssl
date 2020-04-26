@@ -19,6 +19,9 @@
 #include "crypto/ess.h"
 #include "crypto/cms.h"
 
+DEFINE_STACK_OF(GENERAL_NAMES)
+DEFINE_STACK_OF(CMS_SignerInfo)
+
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
 /* ESS services */

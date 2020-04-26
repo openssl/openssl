@@ -109,6 +109,10 @@ SSL_CTX_set_async_callback(), SSL_set_async_callback(),
 SSL_CTX_set_async_callback_arg(), SSL_CTX_set_async_callback_arg() and
 SSL_get_async_status() return 1 on success or 0 on error.
 
+=head1 SEE ALSO
+
+L<ssl(7)>
+
 =head1 HISTORY
 
 SSL_CTX_set_async_callback(), SSL_CTX_set_async_callback_arg(),

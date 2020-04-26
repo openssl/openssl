@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,7 @@
 
 /*-
  * Fujitsu SPARC64 X support for AES GCM.
- * This file is included by cipher_gcm_hw.c
+ * This file is included by cipher_aes_gcm_hw.c
  */
 
 static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
@@ -42,7 +42,7 @@ static const PROV_GCM_HW t4_aes_gcm = {
     t4_aes_gcm_initkey,
     gcm_setiv,
     gcm_aad_update,
-    gcm_cipher_update,
+    generic_aes_gcm_cipher_update,
     gcm_cipher_final,
     gcm_one_shot
 };

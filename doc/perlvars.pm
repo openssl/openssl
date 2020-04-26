@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -10,7 +10,9 @@
 
 # Verify options
 $OpenSSL::safe::opt_v_synopsis = ""
+. "[B<-allow_proxy_certs>]\n"
 . "[B<-attime> I<timestamp>]\n"
+. "[B<-no_check_time>]\n"
 . "[B<-check_ss_sig>]\n"
 . "[B<-crl_check>]\n"
 . "[B<-crl_check_all>]\n"
@@ -37,15 +39,16 @@ $OpenSSL::safe::opt_v_synopsis = ""
 . "[B<-verify_ip> I<ip>]\n"
 . "[B<-verify_name> I<name>]\n"
 . "[B<-x509_strict>]\n"
-. "[B<-certfile> I<file>]";
+. "[B<-issuer_checks>]\n";
 $OpenSSL::safe::opt_v_item = ""
-. "=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,\n"
+. "=item B<-allow_proxy_certs>, B<-attime>, B<-no_check_time>,\n"
+. "B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,\n"
 . "B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,\n"
 . "B<-inhibit_map>, B<-no_alt_chains>, B<-partial_chain>, B<-policy>,\n"
 . "B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,\n"
 . "B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,\n"
 . "B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,\n"
-. "B<-verify_ip>, B<-verify_name>, B<-x509_strict>\n"
+. "B<-verify_ip>, B<-verify_name>, B<-x509_strict> B<-issuer_checks>\n"
 . "\n"
 . "Set various options of certificate chain verification.\n"
 . "See L<openssl(1)/Verification Options> for details.";
@@ -62,11 +65,19 @@ $OpenSSL::safe::opt_x_synopsis = ""
 $OpenSSL::safe::opt_x_item = ""
 . "=item B<xkey> I<infile>, B<-xcert> I<file>, B<-xchain> I<file>,\n"
 . "B<-xchain_build> I<file>, B<-xcertform> B<DER>|B<PEM>,\n"
-. "B<-xkeyform> B<DER>|B<PEM>>\n"
+. "B<-xkeyform> B<DER>|B<PEM>\n"
 . "\n"
 . "Set extended certificate verification options.\n"
 . "See L<openssl(1)/Extended Verification Options> for details.";
 
+# Name output options
+$OpenSSL::safe::opt_name_synopsis = ""
+. "[B<-nameopt> I<option>]";
+$OpenSSL::safe::opt_name_item = ""
+. "=item B<-nameopt> I<option>\n"
+. "\n"
+. "This specifies how the subject or issuer names are displayed.\n"
+. "See L<openssl(1)/Name Format Options> for details.";
 
 # Random State Options
 $OpenSSL::safe::opt_r_synopsis = ""
@@ -76,6 +87,25 @@ $OpenSSL::safe::opt_r_item = ""
 . "=item B<-rand> I<files>, B<-writerand> I<file>\n"
 . "\n"
 . "See L<openssl(1)/Random State Options> for details.";
+
+# Provider options
+$OpenSSL::safe::opt_provider_synopsis = ""
+. "[B<-provider> I<name>]\n"
+. "[B<-provider_path> I<path>]";
+$OpenSSL::safe::opt_provider_item = ""
+. "=item B<-provider> I<name>\n"
+. "\n"
+. "=item B<-provider_path> I<path>\n"
+. "\n"
+. "See L<openssl(1)/Provider Options>.";
+
+# Engine option
+$OpenSSL::safe::opt_engine_synopsis = ""
+. "[B<-engine> I<id>]";
+$OpenSSL::safe::opt_engine_item = ""
+. "=item B<-engine> I<id>\n"
+. "\n"
+. "See L<openssl(1)/Engine Options>.";
 
 # Trusted certs options
 $OpenSSL::safe::opt_trust_synopsis = ""
@@ -91,18 +121,50 @@ $OpenSSL::safe::opt_trust_item = ""
 . "\n"
 . "See L<openssl(1)/Trusted Certificate Options> for details.";
 
+# TLS Version Options
+$OpenSSL::safe::opt_versiontls_synopsis = ""
+. "[B<-no_ssl3>]\n"
+. "[B<-no_tls1>]\n"
+. "[B<-no_tls1_1>]\n"
+. "[B<-no_tls1_2>]\n"
+. "[B<-no_tls1_3>]\n"
+. "[B<-ssl3>]\n"
+. "[B<-tls1>]\n"
+. "[B<-tls1_1>]\n"
+. "[B<-tls1_2>]\n"
+. "[B<-tls1_3>]";
+$OpenSSL::safe::opt_versiontls_item = ""
+. "=item B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>,\n"
+. "B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>\n"
+. "\n"
+. "See L<openssl(1)/TLS Version Options>.";
+
+# TLS/DTLS Version Options
+$OpenSSL::safe::opt_version_synopsis = ""
+. "$OpenSSL::safe::opt_versiontls_synopsis\n"
+. "[B<-dtls>]\n"
+. "[B<-dtls1>]\n"
+. "[B<-dtls1_2>]";
+$OpenSSL::safe::opt_version_item = "\n"
+. "$OpenSSL::safe::opt_versiontls_item\n"
+. "\n"
+. "=item B<-dtls>, B<-dtls1>, B<-dtls1_2>\n"
+. "\n"
+. "These specify the use of DTLS instead of TLS.\n"
+. "See L<openssl(1)/TLS Version Options>.";
+
 # SSL connection options.
-# TODO(3.0) Not currently used.  The refactoring needs to be done, and
-# the options will probably be re-ordered.
+# TODO # options will probably be re-ordered.
 $OpenSSL::safe::opt_s_synopsis = ""
 . "[B<-bugs>]\n"
 . "[B<-no_comp>]\n"
+. "[B<-comp>]\n"
 . "[B<-no_ticket>]\n"
 . "[B<-serverpref>]\n"
 . "[B<-legacy_renegotiation>]\n"
 . "[B<-no_renegotiation>]\n"
-. "[B<-legacy_server_connect>]\n"
 . "[B<-no_resumption_on_reneg>]\n"
+. "[B<-legacy_server_connect>]\n"
 . "[B<-no_legacy_server_connect>]\n"
 . "[B<-allow_no_dhe_kex>]\n"
 . "[B<-prioritize_chacha>]\n"
@@ -111,7 +173,7 @@ $OpenSSL::safe::opt_s_synopsis = ""
 . "[B<-client_sigalgs> I<algs>]\n"
 . "[B<-groups> I<groups>]\n"
 . "[B<-curves> I<curves>]\n"
-. "[B<-named_curve> I<curves>]\n"
+. "[B<-named_curve> I<curve>]\n"
 . "[B<-cipher> I<ciphers>]\n"
 . "[B<-ciphersuites> I<1.3ciphers>]\n"
 . "[B<-min_protocol> I<minprot>]\n"
@@ -120,13 +182,21 @@ $OpenSSL::safe::opt_s_synopsis = ""
 . "[B<-debug_broken_protocol>]\n"
 . "[B<-no_middlebox>]";
 $OpenSSL::safe::opt_s_item = ""
-. "=item B<-bugs>, B<-no_comp>, B<-no_ticket>, B<-serverpref>,"
-. "B<-legacy_renegotiation>, B<-no_renegotiation>, B<-legacy_server_connect>,\n"
-. "B<-no_resumption_on_reneg>, B<-no_legacy_server_connect>,\n"
+. "=item B<-bugs>, B<-comp>, B<-no_comp>, B<-no_ticket>, B<-serverpref>,\n"
+. "B<-legacy_renegotiation>, B<-no_renegotiation>, B<-no_resumption_on_reneg>,\n"
+. "B<-legacy_server_connect>, B<-no_legacy_server_connect>,\n"
 . "B<-allow_no_dhe_kex>, B<-prioritize_chacha>, B<-strict>, B<-sigalgs>\n"
 . "I<algs>, B<-client_sigalgs> I<algs>, B<-groups> I<groups>, B<-curves>\n"
-. "I<curves>, B<-named_curve> I<curves>, B<-cipher> I<ciphers>, B<-ciphersuites>\n"
+. "I<curves>, B<-named_curve> I<curve>, B<-cipher> I<ciphers>, B<-ciphersuites>\n"
 . "I<1.3ciphers>, B<-min_protocol> I<minprot>, B<-max_protocol> I<maxprot>,\n"
 . "B<-record_padding> I<padding>, B<-debug_broken_protocol>, B<-no_middlebox>\n"
 . "\n"
 . "See L<SSL_CONF_cmd(3)/SUPPORTED COMMAND LINE COMMANDS> for details.";
+
+package OpenSSL::safe;
+sub output_do_not_edit_headers {
+    return "\n=begin comment\n\n"
+        . join("\n", @autowarntext)
+        . "\n\n=end comment";
+}
+1;

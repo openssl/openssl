@@ -45,7 +45,8 @@ static void *poly1305_new(void *provctx)
 {
     struct poly1305_data_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    ctx->provctx = provctx;
+    if (ctx != NULL)
+        ctx->provctx = provctx;
     return ctx;
 }
 

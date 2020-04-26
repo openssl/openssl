@@ -297,6 +297,7 @@ static int test_kdf_x963(void)
     return ret;
 }
 
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
 /*
  * KBKDF test vectors from RFC 6803 (Camellia Encryption for Kerberos 5)
  * section 10.
@@ -421,6 +422,7 @@ static int test_kdf_kbkdf_6803_256(void)
 
     return ret;
 }
+#endif
 
 /* Two test vectors from RFC 8009 (AES Encryption with HMAC-SHA2 for Kerberos
  * 5) appendix A. */
@@ -771,8 +773,10 @@ static int test_kdf_krb5kdf(void)
 
 int setup_tests(void)
 {
+#if !defined(OPENSSL_NO_CMAC) && !defined(OPENSSL_NO_CAMELLIA)
     ADD_TEST(test_kdf_kbkdf_6803_128);
     ADD_TEST(test_kdf_kbkdf_6803_256);
+#endif
     ADD_TEST(test_kdf_kbkdf_8009_prf1);
     ADD_TEST(test_kdf_kbkdf_8009_prf2);
     ADD_TEST(test_kdf_get_kdf);

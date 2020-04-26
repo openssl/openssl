@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -13,13 +13,22 @@ use warnings;
 use POSIX;
 use File::Basename;
 use File::Copy;
-use OpenSSL::Test qw/:DEFAULT with bldtop_file srctop_file cmdstr/;
+use OpenSSL::Test qw/:DEFAULT with bldtop_file bldtop_dir srctop_file srctop_dir cmdstr/;
 use OpenSSL::Test::Utils;
 
+BEGIN {
 setup("test_ssl");
+}
 
-$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.conf");
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
+$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
+$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
+$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
+
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
@@ -36,7 +45,7 @@ my $digest = "-sha1";
 my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
 my @verifycmd = ("openssl", "verify");
-my @gendsacmd = ("openssl", "gendsa");
+my @genpkeycmd = ("openssl", "genpkey");
 my $dummycnf = srctop_file("apps", "openssl.cnf");
 
 my $CAkey = "keyCA.ss";
@@ -78,9 +87,20 @@ my $client_sess="client.ss";
 # If you're adding tests here, you probably want to convert them to the
 # new format in ssl_test.c and add recipes to 80-test_ssl_new.t instead.
 plan tests =>
-    1				# For testss
-    +5  			# For the first testssl
+   ($no_fips ? 0 : 1 + 5) # For fipsinstall + testssl with fips provider
+    + 1                   # For testss
+    + 5                   # For the testssl with default provider
     ;
+
+unless ($no_fips) {
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
+                '-module', bldtop_file('providers', platform->dso('fips')),
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-section_name', 'fips_sect'])),
+       "fipsinstall");
+}
 
 subtest 'test_ss' => sub {
     if (testss()) {
@@ -95,15 +115,14 @@ subtest 'test_ss' => sub {
 };
 
 note('test_ssl -- key U');
-testssl("keyU.ss", $Ucert, $CAcert);
+testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default.cnf"));
+unless ($no_fips) {
+    testssl("keyU.ss", $Ucert, $CAcert, "fips", srctop_file("test","fips.cnf"));
+}
 
 # -----------
 # subtest functions
 sub testss {
-    open RND, ">>", ".rnd";
-    print RND "string to make the random number generator think it has randomness";
-    close RND;
-
     my @req_dsa = ("-newkey",
                    "dsa:".srctop_file("apps", "dsa1024.pem"));
     my $dsaparams = srctop_file("apps", "dsa1024.pem");
@@ -182,8 +201,8 @@ sub testss {
             SKIP: {
                 $ENV{CN2} = "DSA Certificate";
                 skip 'failure', 4 unless
-                    ok(run(app([@gendsacmd, "-out", $Dkey,
-                                $dsaparams],
+                    ok(run(app([@genpkeycmd, "-out", $Dkey,
+                                "-paramfile", $dsaparams],
                                stdout => "err.ss")),
                        "make a DSA key");
                 skip 'failure', 3 unless
@@ -225,7 +244,10 @@ sub testss {
             SKIP: {
                 $ENV{CN2} = "ECDSA Certificate";
                 skip 'failure', 4 unless
-                    ok(run(app(["openssl", "ecparam", "-name", "P-256",
+                    ok(run(app(["openssl", "genpkey", "-genparam",
+                                "-algorithm", "EC",
+                                "-pkeyopt", "ec_paramgen_curve:P-256",
+                                "-pkeyopt", "ec_param_enc:named_curve",
                                 "-out", "ecp.ss"])),
                        "make EC parameters");
                 skip 'failure', 3 unless
@@ -311,12 +333,14 @@ sub testss {
 }
 
 sub testssl {
-    my ($key, $cert, $CAtmp) = @_;
+    my ($key, $cert, $CAtmp, $provider, $configfile) = @_;
     my @CA = $CAtmp ? ("-CAfile", $CAtmp) : ("-CApath", bldtop_dir("certs"));
 
     my @ssltest = ("ssltest_old",
 		   "-s_key", $key, "-s_cert", $cert,
-		   "-c_key", $key, "-c_cert", $cert);
+		   "-c_key", $key, "-c_cert", $cert,
+		   "-provider", $provider,
+		   "-config", $configfile);
 
     my $serverinfo = srctop_file("test","serverinfo.pem");
 
@@ -336,6 +360,9 @@ sub testssl {
       SKIP: {
 	  skip "SSLv3 is not supported by this OpenSSL build", 4
 	      if disabled("ssl3");
+
+	  skip "SSLv3 is not supported by the FIPS provider", 4
+	      if $provider eq "fips";
 
 	  ok(run(test([@ssltest, "-bio_pair", "-ssl3"])),
 	     'test sslv3 via BIO pair');
@@ -410,8 +437,8 @@ sub testssl {
 	# We only use the flags that ssltest_old understands
 	push @protocols, "-tls1_3" unless $no_tls1_3;
 	push @protocols, "-tls1_2" unless $no_tls1_2;
-	push @protocols, "-tls1" unless $no_tls1;
-	push @protocols, "-ssl3" unless $no_ssl3;
+	push @protocols, "-tls1" unless $no_tls1 || $provider eq "fips";
+	push @protocols, "-ssl3" unless $no_ssl3 || $provider eq "fips";
 	my $protocolciphersuitecount = 0;
 	my %ciphersuites = ();
 	my %ciphersstatus = ();
@@ -420,6 +447,7 @@ sub testssl {
 	    my @ciphers = run(app(["openssl", "ciphers", "-s", $protocol,
 				   "ALL:$ciphers"]),
 			      capture => 1, statusvar => \$ciphersstatus);
+	    @ciphers = grep {!/CAMELLIA|ARIA|CHACHA/} @ciphers;
 	    $ciphersstatus{$protocol} = $ciphersstatus;
 	    if ($ciphersstatus) {
 		$ciphersuites{$protocol} = [ map { s|\R||; split(/:/, $_) }
@@ -480,7 +508,7 @@ sub testssl {
 
       SKIP: {
 	  skip "TLSv1.0 is not supported by this OpenSSL build", 5
-	      if $no_tls1;
+	      if $no_tls1 || $provider eq "fips";
 
 	SKIP: {
 	    skip "skipping anonymous DH tests", 1
@@ -494,13 +522,13 @@ sub testssl {
 	    skip "skipping RSA tests", 2
 		if $no_rsa;
 
-	    ok(run(test(["ssltest_old", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time"])),
+	    ok(run(test(["ssltest_old", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-no_dhe", "-no_ecdhe", "-num", "10", "-f", "-time"])),
 	       'test tlsv1 with 1024bit RSA, no (EC)DHE, multiple handshakes');
 
 	    skip "skipping RSA+DHE tests", 1
 		if $no_dh;
 
-	    ok(run(test(["ssltest_old", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time"])),
+	    ok(run(test(["ssltest_old", "-provider", "default", "-v", "-bio_pair", "-tls1", "-s_cert", srctop_file("apps","server2.pem"), "-dhe1024dsa", "-num", "10", "-f", "-time"])),
 	       'test tlsv1 with 1024bit RSA, 1024bit DHE, multiple handshakes');
 	  }
 
@@ -525,7 +553,7 @@ sub testssl {
 
       SKIP: {
 	  skip "TLSv1.0 is not supported by this OpenSSL build", 1
-	      if $no_tls1;
+	      if $no_tls1 || $provider eq "fips";
 
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-custom_ext"])),
 	     'test tls1 with custom extensions');
@@ -539,7 +567,7 @@ sub testssl {
 
       SKIP: {
 	  skip "TLSv1.0 is not supported by this OpenSSL build", 5
-	      if $no_tls1;
+	      if $no_tls1 || $provider eq "fips";
 
 	  note('echo test tls1 with serverinfo');
 	  ok(run(test([@ssltest, "-bio_pair", "-tls1", "-serverinfo_file", $serverinfo])));
@@ -550,41 +578,3 @@ sub testssl {
 	}
     };
 }
-
-unlink $CAkey;
-unlink $CAcert;
-unlink $CAserial;
-unlink $CAreq;
-unlink $CAreq2;
-
-unlink $Ukey;
-unlink $Ureq;
-unlink $Ucert;
-unlink basename($Ucert, '.ss').'.srl';
-
-unlink $Dkey;
-unlink $Dreq;
-unlink $Dcert;
-
-unlink $Ekey;
-unlink $Ereq;
-unlink $Ecert;
-
-unlink $P1key;
-unlink $P1req;
-unlink $P1cert;
-unlink basename($P1cert, '.ss').'.srl';
-unlink $P1intermediate;
-unlink "intP1.ss";
-
-unlink $P2key;
-unlink $P2req;
-unlink $P2cert;
-unlink $P2intermediate;
-unlink "intP2.ss";
-
-unlink "ecp.ss";
-unlink "err.ss";
-
-unlink $server_sess;
-unlink $client_sess;

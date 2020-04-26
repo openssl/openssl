@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,12 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/crypto.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/params.h>
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "crypto/dh.h"
 
 static OSSL_OP_keyexch_newctx_fn dh_newctx;
 static OSSL_OP_keyexch_init_fn dh_init;
@@ -30,6 +38,7 @@ static OSSL_OP_keyexch_settable_ctx_params_fn dh_settable_ctx_params;
  */
 
 typedef struct {
+    OPENSSL_CTX *libctx;
     DH *dh;
     DH *dhpeer;
     unsigned int pad : 1;
@@ -37,7 +46,12 @@ typedef struct {
 
 static void *dh_newctx(void *provctx)
 {
-    return OPENSSL_zalloc(sizeof(PROV_DH_CTX));
+    PROV_DH_CTX *pdhctx = OPENSSL_zalloc(sizeof(PROV_DH_CTX));
+
+    if (pdhctx == NULL)
+        return NULL;
+    pdhctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    return pdhctx;
 }
 
 static int dh_init(void *vpdhctx, void *vdh)
@@ -83,8 +97,10 @@ static int dh_derive(void *vpdhctx, unsigned char *secret, size_t *secretlen,
         return 0;
 
     DH_get0_key(pdhctx->dhpeer, &pub_key, NULL);
-    ret = (pdhctx->pad) ? DH_compute_key_padded(secret, pub_key, pdhctx->dh)
-                        : DH_compute_key(secret, pub_key, pdhctx->dh);
+    if (pdhctx->pad)
+        ret = DH_compute_key_padded(secret, pub_key, pdhctx->dh);
+    else
+        ret = DH_compute_key(secret, pub_key, pdhctx->dh);
     if (ret <= 0)
         return 0;
 

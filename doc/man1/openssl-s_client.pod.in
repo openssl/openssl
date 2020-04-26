@@ -1,9 +1,5 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
@@ -13,7 +9,10 @@ openssl-s_client - SSL/TLS client program
 
 B<openssl> B<s_client>
 [B<-help>]
+[B<-ssl_config> I<section>]
 [B<-connect> I<host:port>]
+[B<-host> I<hostname>]
+[B<-port> I<port>]
 [B<-bind> I<host:port>]
 [B<-proxy> I<host:port>]
 [B<-proxy_user> I<userid>]
@@ -25,55 +24,41 @@ B<openssl> B<s_client>
 [B<-noservername>]
 [B<-verify> I<depth>]
 [B<-verify_return_error>]
+[B<-verify_quiet>]
+[B<-verifyCAfile> I<filename>]
+[B<-verifyCApath> I<dir>]
+[B<-verifyCAstore> I<uri>]
 [B<-cert> I<filename>]
 [B<-certform> B<DER>|B<PEM>]
-[B<-CRLform> B<DER>|B<PEM>]
-[B<-key> I<filename>]
-[B<-keyform> B<DER>|B<PEM>]
 [B<-cert_chain> I<filename>]
 [B<-build_chain>]
+[B<-CRL> I<filename>]
+[B<-CRLform> B<DER>|B<PEM>]
+[B<-crl_download>]
+[B<-key> I<filename>]
+[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-pass> I<arg>]
-[B<-chainCApath> I<directory>]
 [B<-chainCAfile> I<filename>]
+[B<-chainCApath> I<directory>]
 [B<-chainCAstore> I<uri>]
 [B<-requestCAfile> I<filename>]
 [B<-dane_tlsa_domain> I<domain>]
 [B<-dane_tlsa_rrdata> I<rrdata>]
 [B<-dane_ee_no_namechecks>]
-[B<-attime> I<timestamp>]
-[B<-check_ss_sig>]
-[B<-crl_check>]
-[B<-crl_check_all>]
-[B<-explicit_policy>]
-[B<-extended_crl>]
-[B<-ignore_critical>]
-[B<-inhibit_any>]
-[B<-inhibit_map>]
-[B<-no_check_time>]
-[B<-partial_chain>]
-[B<-policy> I<arg>]
-[B<-policy_check>]
-[B<-policy_print>]
-[B<-purpose> I<purpose>]
-[B<-suiteB_128>]
-[B<-suiteB_128_only>]
-[B<-suiteB_192>]
-[B<-trusted_first>]
-[B<-no_alt_chains>]
-[B<-use_deltas>]
-[B<-auth_level> I<num>]
-[B<-nameopt> I<option>]
-[B<-verify_depth> I<num>]
-[B<-verify_email> I<email>]
-[B<-verify_hostname> I<hostname>]
-[B<-verify_ip> I<ip>]
-[B<-verify_name> I<name>]
-[B<-build_chain>]
-[B<-x509_strict>]
 [B<-reconnect>]
 [B<-showcerts>]
+[B<-prexit>]
 [B<-debug>]
+[B<-trace>]
+[B<-nocommands>]
+[B<-security_debug>]
+[B<-security_debug_verbose>]
 [B<-msg>]
+[B<-timeout>]
+[B<-mtu> I<size>]
+[B<-keymatexport> I<label>]
+[B<-keymatexportlen> I<len>]
+[B<-msgfile> I<filename>]
 [B<-nbio_test>]
 [B<-state>]
 [B<-nbio>]
@@ -84,23 +69,11 @@ B<openssl> B<s_client>
 [B<-psk> I<key>]
 [B<-psk_session> I<file>]
 [B<-quiet>]
-[B<-ssl3>]
-[B<-tls1>]
-[B<-tls1_1>]
-[B<-tls1_2>]
-[B<-tls1_3>]
-[B<-no_ssl3>]
-[B<-no_tls1>]
-[B<-no_tls1_1>]
-[B<-no_tls1_2>]
-[B<-no_tls1_3>]
-[B<-dtls>]
-[B<-dtls1>]
-[B<-dtls1_2>]
 [B<-sctp>]
 [B<-sctp_label_bug>]
 [B<-fallback_scsv>]
 [B<-async>]
+[B<-maxfraglen> I<len>]
 [B<-max_send_frag>]
 [B<-split_send_frag>]
 [B<-max_pipelines>]
@@ -108,6 +81,7 @@ B<openssl> B<s_client>
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
+[B<-brief>]
 [B<-allow_no_dhe_kex>]
 [B<-sigalgs> I<sigalglist>]
 [B<-curves> I<curvelist>]
@@ -115,12 +89,13 @@ B<openssl> B<s_client>
 [B<-ciphersuites> I<val>]
 [B<-serverpref>]
 [B<-starttls> I<protocol>]
+[B<-name> I<hostname>]
 [B<-xmpphost> I<hostname>]
 [B<-name> I<hostname>]
-[B<-engine> I<id>]
 [B<-tlsextdebug>]
 [B<-no_ticket>]
 [B<-sess_out> I<filename>]
+[B<-serverinfo> I<types>]
 [B<-sess_in> I<filename>]
 [B<-serverinfo> I<types>]
 [B<-status>]
@@ -132,9 +107,22 @@ B<openssl> B<s_client>
 [B<-keylogfile> I<file>]
 [B<-early_data> I<file>]
 [B<-enable_pha>]
+[B<-use_srtp> I<value>]
+[B<-srpuser> I<value>]
+[B<-srppass> I<value>]
+[B<-srp_lateuser>]
+[B<-srp_moregroups>]
+[B<-srp_strength> I<number>]
+{- $OpenSSL::safe::opt_name_synopsis -}
+{- $OpenSSL::safe::opt_version_synopsis -}
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
+[B<-ssl_client_engine> I<id>]
+{- $OpenSSL::safe::opt_v_synopsis -}
 [I<host>:I<port>]
 
 =for openssl ifdef engine ssl_client_engine ct noct ctlogfile
@@ -166,12 +154,24 @@ manual page.
 
 Print out a usage message.
 
+=item B<-ssl_config> I<section>
+
+Use the specified section of the configuration file to configure the B<SSL_CTX> object.
+
 =item B<-connect> I<host>:I<port>
 
 This specifies the host and optional port to connect to. It is possible to
 select the host and port using the optional target positional argument instead.
 If neither this nor the target positional argument are specified then an attempt
 is made to connect to the local host on port 4433.
+
+=item B<-host> I<hostname>
+
+Host to connect to; use B<-connect> instead.
+
+=item B<-port> I<port>
+
+Connect to the specified port; use B<-connect> instead.
 
 =item B<-bind> I<host:port>
 
@@ -235,38 +235,48 @@ ClientHello message. Cannot be used in conjunction with the B<-servername> or
 
 =item B<-cert> I<certname>
 
-The certificate to use, if one is requested by the server. The default is
-not to use a certificate.
+The client certificate to use, if one is requested by the server.
+The default is not to use a certificate.
 
-=item B<-certform> I<format>
+The chain for the client certificate may be specified using B<-cert_chain>.
 
-The certificate format to use: DER or PEM. PEM is the default.
+=item B<-certform> B<DER>|B<PEM>
 
-=item B<-CRLform> B<DER>|B<PEM>
-
-The CRL format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
-
-=item B<-key> I<keyfile>
-
-The private key to use. If not specified then the certificate file will
-be used.
-
-=item B<-keyform> I<format>
-
-The key format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The client certificate file format to use; the default is B<PEM>.
+see L<openssl(1)/Format Options>.
 
 =item B<-cert_chain>
 
-A file containing trusted certificates to use when attempting to build the
-client/server certificate chain related to the certificate specified via the
-B<-cert> option.
+A file containing untrusted certificates to use when attempting to build the
+certificate chain related to the certificate specified via the B<-cert> option.
 
 =item B<-build_chain>
 
-Specify whether the application should build the certificate chain to be
+Specify whether the application should build the client certificate chain to be
 provided to the server.
+
+=item B<-CRL> I<filename>
+
+CRL file to use to check the server's certificate.
+
+=item B<-CRLform> B<DER>|B<PEM>
+
+The CRL file format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-crl_download>
+
+Download CRL from distribution points in the certificate.
+
+=item B<-key> I<keyfile>
+
+The client private key file to use.
+If not specified then the certificate file will be used to read also the key.
+
+=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+
+The key format; the default is B<PEM>.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<arg>
 
@@ -286,27 +296,48 @@ will never fail due to a server certificate verify failure.
 Return verification errors instead of continuing. This will typically
 abort the handshake with a fatal error.
 
-=item B<-nameopt> I<option>
+=item B<-verify_quiet>
 
-Option which determines how the subject or issuer names are displayed. The
-I<option> argument can be a single option or multiple options separated by
-commas.  Alternatively the B<-nameopt> switch may be used more than once to
-set multiple options. See the L<openssl-x509(1)> manual page for details.
+Limit verify output to only errors.
 
-=item B<-chainCApath> I<directory>
+=item B<-verifyCAfile> I<filename>
 
-The directory to use for building the chain provided to the server. This
-directory must be in "hash format", see L<openssl-verify(1)> for more
-information.
+A file in PEM format containing trusted certificates to use
+for verifying the server's certificate.
+
+=item B<-verifyCApath> I<dir>
+
+A directory containing trusted certificates to use
+for verifying the server's certificate.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
+
+=item B<-verifyCAstore> I<uri>
+
+The URI of a store containing trusted certificates to use
+for verifying the server's certificate.
 
 =item B<-chainCAfile> I<file>
 
-A file containing trusted certificates to use when attempting to build the
-client certificate chain.
+A file in PEM format containing trusted certificates to use
+when attempting to build the client certificate chain.
+
+=item B<-chainCApath> I<directory>
+
+A directory containing trusted certificates to use
+for building the client certificate chain provided to the server.
+This directory must be in "hash format",
+see L<openssl-verify(1)> for more information.
 
 =item B<-chainCAstore> I<uri>
 
-The URI to use when attempting to build the client certificate chain.
+The URI of a store containing trusted certificates to use
+when attempting to build the client certificate chain.
+The URI may indicate a single certificate, as well as a collection of them.
+With URIs in the C<file:> scheme, this acts as B<-chainCAfile> or
+B<-chainCApath>, depending on if the URI indicates a directory or a
+single file.
+See L<ossl_store-file(7)> for more information on the C<file:> scheme.
 
 =item B<-requestCAfile> I<file>
 
@@ -334,7 +365,7 @@ at a positive depth or else "matched EE certificate" at depth 0.
 
 Use one or more times to specify the RRDATA fields of the DANE TLSA
 RRset associated with the target service.  The I<rrdata> value is
-specied in "presentation form", that is four whitespace separated
+specified in "presentation form", that is four whitespace separated
 fields that specify the usage, selector, matching type and associated
 data, with the last of these encoded in hexadecimal.  Optional
 whitespace is ignored in the associated data field.  For example:
@@ -370,17 +401,6 @@ records already make it possible for a remote domain to redirect client
 connections to any server of its choice, and in any case SMTP and XMPP clients
 do not execute scripts downloaded from remote servers.
 
-=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
-B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
-
-Set various certificate chain validation options. See the
-L<openssl-verify(1)> manual page for details.
-
 =item B<-reconnect>
 
 Reconnects to the same server 5 times using the same session ID, this can
@@ -411,7 +431,37 @@ Prints out the SSL session states.
 
 Print extensive debugging information including a hex dump of all traffic.
 
+=item B<-nocommands>
+
+Do not use interactive command letters.
+
+=item B<-security_debug>
+
+Enable security debug messages.
+
+=item B<-security_debug_verbose>
+
+Output more security debug output.
+
 =item B<-msg>
+
+Show protocol messages.
+
+=item B<-timeout>
+
+Enable send/receive timeout on DTLS connections.
+
+=item B<-mtu> I<size>
+
+Set MTU of the link layer to the specified size.
+
+=item B<-keymatexport> I<label>
+
+Export keying material using the specified label.
+
+=item B<-keymatexportlen> I<len>
+
+Export the specified number of bytes of keying material; default is 20.
 
 Show all protocol messages with hex dump.
 
@@ -420,7 +470,7 @@ Show all protocol messages with hex dump.
 Show verbose trace output of protocol messages. OpenSSL needs to be compiled
 with B<enable-ssl-trace> for this option to work.
 
-=item B<-msgfile>
+=item B<-msgfile> I<filename>
 
 File to send output of B<-msg> or B<-trace> to, default standard output.
 
@@ -469,23 +519,6 @@ This option must be provided in order to use a PSK cipher.
 Use the pem encoded SSL_SESSION data stored in I<file> as the basis of a PSK.
 Note that this will only work if TLSv1.3 is negotiated.
 
-=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>, B<-no_ssl3>, B<-no_tls1>, B<-no_tls1_1>, B<-no_tls1_2>, B<-no_tls1_3>
-
-These options require or disable the use of the specified SSL or TLS protocols.
-By default, this command will negotiate the highest mutually supported protocol
-version.
-When a specific TLS version is required, only that version will be offered to
-and accepted from the server.
-Note that not all protocols and flags may be available, depending on how
-OpenSSL was built.
-
-=item B<-dtls>, B<-dtls1>, B<-dtls1_2>
-
-These options make this command use DTLS protocols instead of TLS.
-With B<-dtls>, it will negotiate any supported DTLS protocol version,
-whilst B<-dtls1> and B<-dtls1_2> will only support DTLS1.0 and DTLS1.2
-respectively.
-
 =item B<-sctp>
 
 Use SCTP for the transport protocol instead of UDP in DTLS. Must be used in
@@ -510,6 +543,11 @@ Switch on asynchronous mode. Cryptographic operations will be performed
 asynchronously. This will only have an effect if an asynchronous capable engine
 is also used via the B<-engine> option. For test purposes the dummy async engine
 (dasync) can be used (if available).
+
+=item B<-maxfraglen> I<len>
+
+Enable Maximum Fragment Length Negotiation; allowed values are
+C<512>, C<1024>, C<2048>, and C<4096>.
 
 =item B<-max_send_frag> I<int>
 
@@ -639,13 +677,6 @@ Output SSL session to I<filename>.
 Load SSL session from I<filename>. The client will attempt to resume a
 connection from this session.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
-
 =item B<-serverinfo> I<types>
 
 A list of comma-separated TLS Extension Types (numbers between 0 and
@@ -703,18 +734,61 @@ data and when the server accepts the early data.
 For TLSv1.3 only, send the Post-Handshake Authentication extension. This will
 happen whether or not a certificate has been provided via B<-cert>.
 
+=item B<-use_srtp> I<value>
+
+Offer SRTP key management, where B<value> is a colon-separated profile list.
+
+=item B<-srpuser> I<value>
+
+Set the SRP username to the specified value.
+
+=item B<-srppass> I<value>
+
+Set the SRP password to the specified value.
+
+=item B<-srp_lateuser>
+
+SRP username for the second ClientHello message.
+
+=item B<-srp_moregroups>
+
+Tolerate other than the known B<g> and B<N> values.
+
+=item B<-srp_strength> I<number>
+
+Set the minimal acceptable length, in bits, for B<N>.
+
+{- $OpenSSL::safe::opt_version_item -}
+
+{- $OpenSSL::safe::opt_name_item -}
+
+{- $OpenSSL::safe::opt_x_item -}
+
+{- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_s_item -}
+
+{- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
+
+=item B<-ssl_client_engine> I<id>
+
+Specify engine to be used for client certificate operations.
+
+{- $OpenSSL::safe::opt_v_item -}
+
+Verification errors are displayed, for debugging, but the command will
+proceed unless the B<-verify_return_error> option is used.
+
 =item I<host>:I<port>
 
 Rather than providing B<-connect>, the target hostname and optional port may
 be provided as a single positional argument after all options. If neither this
 nor B<-connect> are provided, falls back to attempting to connect to
 I<localhost> on port I<4433>.
-
-{- $OpenSSL::safe::opt_x_item -}
-
-{- $OpenSSL::safe::opt_trust_item -}
-
-{- $OpenSSL::safe::opt_r_item -}
 
 =back
 
@@ -822,7 +896,7 @@ The B<-name> option was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

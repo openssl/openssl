@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,13 @@
 #include "internal/dane.h"
 #include "crypto/x509.h"
 #include "x509_local.h"
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_REVOKED)
+DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(DIST_POINT)
+DEFINE_STACK_OF_STRING()
 
 /* CRL score values */
 
@@ -104,15 +111,12 @@ static int null_callback(int ok, X509_STORE_CTX *e)
     return ok;
 }
 
-/* Return 1 is a certificate is self signed */
-static int cert_self_signed(X509 *x)
+/* Return 1 is a certificate is self signed, 0 if not, or -1 on error */
+static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x)
 {
-    /*
-     * FIXME: x509v3_cache_extensions() needs to detect more failures and not
-     * set EXFLAG_SET when that happens.  Especially, if the failures are
-     * parse errors, rather than memory pressure!
-     */
-    X509_check_purpose(x, -1, 0);
+    if (!X509v3_cache_extensions(x, ctx->libctx, ctx->propq))
+        return -1;
+
     if (x->ex_flags & EXFLAG_SS)
         return 1;
     else
@@ -328,14 +332,26 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
     int ret;
-    if (x == issuer)
-        return cert_self_signed(x);
-    ret = X509_check_issued(issuer, x);
+    int ss;
+
+    if (x == issuer) {
+        ss = cert_self_signed(ctx, x);
+        if (ss < 0)
+            return 0;
+        return ss;
+    }
+
+    ret = x509_check_issued_int(issuer, x, ctx->libctx, ctx->propq);
     if (ret == X509_V_OK) {
         int i;
         X509 *ch;
+
+        ss = cert_self_signed(ctx, x);
+        if (ss < 0)
+            return 0;
+
         /* Special case: single self signed certificate */
-        if (cert_self_signed(x) && sk_X509_num(ctx->chain) == 1)
+        if (ss > 0 && sk_X509_num(ctx->chain) == 1)
             return 1;
         for (i = 0; i < sk_X509_num(ctx->chain); i++) {
             ch = sk_X509_value(ctx->chain, i);
@@ -361,7 +377,8 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
         return 0;
 }
 
-static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx, X509_NAME *nm)
+static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
+                                       const X509_NAME *nm)
 {
     STACK_OF(X509) *sk = NULL;
     X509 *x;
@@ -511,6 +528,12 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             } else
                 ret = 1;
             break;
+        }
+        if ((x->ex_flags & EXFLAG_CA) == 0
+            && x->ex_pathlen != -1
+            && (ctx->param->flags & X509_V_FLAG_X509_STRICT)) {
+            ctx->error = X509_V_ERR_INVALID_EXTENSION;
+            ret = 0;
         }
         if (ret == 0 && !verify_cb_cert(ctx, x, i, X509_V_OK))
             return 0;
@@ -1212,7 +1235,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
                            X509 **pissuer, int *pcrl_score)
 {
     X509 *crl_issuer = NULL;
-    X509_NAME *cnm = X509_CRL_get_issuer(crl);
+    const X509_NAME *cnm = X509_CRL_get_issuer(crl);
     int cidx = ctx->error_depth;
     int i;
 
@@ -1388,7 +1411,7 @@ static int idp_check_dp(DIST_POINT_NAME *a, DIST_POINT_NAME *b)
 static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 {
     int i;
-    X509_NAME *nm = X509_CRL_get_issuer(crl);
+    const X509_NAME *nm = X509_CRL_get_issuer(crl);
     /* If no CRLissuer return is successful iff don't need a match */
     if (!dp->CRLissuer)
         return ! !(crl_score & CRL_SCORE_ISSUER_NAME);
@@ -1447,7 +1470,7 @@ static int get_crl_delta(X509_STORE_CTX *ctx,
     unsigned int reasons;
     X509_CRL *crl = NULL, *dcrl = NULL;
     STACK_OF(X509_CRL) *skcrl;
-    X509_NAME *nm = X509_get_issuer_name(x);
+    const X509_NAME *nm = X509_get_issuer_name(x);
 
     reasons = ctx->current_reasons;
     ok = get_crl_sk(ctx, &crl, &dcrl,
@@ -1747,7 +1770,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 if (!verify_cb_cert(ctx, xi, xi != xs ? n+1 : n,
                         X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY))
                     return 0;
-            } else if (X509_verify(xs, pkey) <= 0) {
+            } else if (X509_verify_ex(xs, pkey, ctx->libctx, ctx->propq) <= 0) {
                 if (!verify_cb_cert(ctx, xs, n,
                                     X509_V_ERR_CERT_SIGNATURE_FAILURE))
                     return 0;
@@ -1849,6 +1872,31 @@ int X509_cmp_time(const ASN1_TIME *ctm, time_t *cmp_time)
  err:
     ASN1_TIME_free(asn1_cmp_time);
     return ret;
+}
+
+/*
+ * Return 0 if time should not be checked or reference time is in range,
+ * or else 1 if it is past the end, or -1 if it is before the start
+ */
+int X509_cmp_timeframe(const X509_VERIFY_PARAM *vpm,
+                       const ASN1_TIME *start, const ASN1_TIME *end)
+{
+    time_t ref_time;
+    time_t *time = NULL;
+    unsigned long flags = vpm == NULL ? 0 : X509_VERIFY_PARAM_get_flags(vpm);
+
+    if ((flags & X509_V_FLAG_USE_CHECK_TIME) != 0) {
+        ref_time = X509_VERIFY_PARAM_get_time(vpm);
+        time = &ref_time;
+    } else if ((flags & X509_V_FLAG_NO_CHECK_TIME) != 0) {
+        return 0; /* this means ok */
+    } /* else reference time is the current time */
+
+    if (end != NULL && X509_cmp_time(end, time) < 0)
+        return 1;
+    if (start != NULL && X509_cmp_time(start, time) > 0)
+        return -1;
+    return 0;
 }
 
 ASN1_TIME *X509_gmtime_adj(ASN1_TIME *s, long adj)
@@ -2027,12 +2075,12 @@ int X509_STORE_CTX_set_ex_data(X509_STORE_CTX *ctx, int idx, void *data)
     return CRYPTO_set_ex_data(&ctx->ex_data, idx, data);
 }
 
-void *X509_STORE_CTX_get_ex_data(X509_STORE_CTX *ctx, int idx)
+void *X509_STORE_CTX_get_ex_data(const X509_STORE_CTX *ctx, int idx)
 {
     return CRYPTO_get_ex_data(&ctx->ex_data, idx);
 }
 
-int X509_STORE_CTX_get_error(X509_STORE_CTX *ctx)
+int X509_STORE_CTX_get_error(const X509_STORE_CTX *ctx)
 {
     return ctx->error;
 }
@@ -2042,7 +2090,7 @@ void X509_STORE_CTX_set_error(X509_STORE_CTX *ctx, int err)
     ctx->error = err;
 }
 
-int X509_STORE_CTX_get_error_depth(X509_STORE_CTX *ctx)
+int X509_STORE_CTX_get_error_depth(const X509_STORE_CTX *ctx)
 {
     return ctx->error_depth;
 }
@@ -2052,7 +2100,7 @@ void X509_STORE_CTX_set_error_depth(X509_STORE_CTX *ctx, int depth)
     ctx->error_depth = depth;
 }
 
-X509 *X509_STORE_CTX_get_current_cert(X509_STORE_CTX *ctx)
+X509 *X509_STORE_CTX_get_current_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->current_cert;
 }
@@ -2062,29 +2110,29 @@ void X509_STORE_CTX_set_current_cert(X509_STORE_CTX *ctx, X509 *x)
     ctx->current_cert = x;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get0_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *X509_STORE_CTX_get0_chain(const X509_STORE_CTX *ctx)
 {
     return ctx->chain;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get1_chain(X509_STORE_CTX *ctx)
+STACK_OF(X509) *X509_STORE_CTX_get1_chain(const X509_STORE_CTX *ctx)
 {
     if (!ctx->chain)
         return NULL;
     return X509_chain_up_ref(ctx->chain);
 }
 
-X509 *X509_STORE_CTX_get0_current_issuer(X509_STORE_CTX *ctx)
+X509 *X509_STORE_CTX_get0_current_issuer(const X509_STORE_CTX *ctx)
 {
     return ctx->current_issuer;
 }
 
-X509_CRL *X509_STORE_CTX_get0_current_crl(X509_STORE_CTX *ctx)
+X509_CRL *X509_STORE_CTX_get0_current_crl(const X509_STORE_CTX *ctx)
 {
     return ctx->current_crl;
 }
 
-X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(X509_STORE_CTX *ctx)
+X509_STORE_CTX *X509_STORE_CTX_get0_parent_ctx(const X509_STORE_CTX *ctx)
 {
     return ctx->parent;
 }
@@ -2180,16 +2228,34 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
     return 1;
 }
 
-X509_STORE_CTX *X509_STORE_CTX_new(void)
+X509_STORE_CTX *X509_STORE_CTX_new_with_libctx(OPENSSL_CTX *libctx,
+                                               const char *propq)
 {
     X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
-        X509err(X509_F_X509_STORE_CTX_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+    ctx->libctx = libctx;
+    if (propq != NULL) {
+        ctx->propq = OPENSSL_strdup(propq);
+        if (ctx->propq == NULL) {
+            OPENSSL_free(ctx);
+            X509err(0, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+    }
+
     return ctx;
 }
+
+X509_STORE_CTX *X509_STORE_CTX_new(void)
+{
+    return X509_STORE_CTX_new_with_libctx(NULL, NULL);
+}
+
 
 void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
 {
@@ -2197,6 +2263,10 @@ void X509_STORE_CTX_free(X509_STORE_CTX *ctx)
         return;
 
     X509_STORE_CTX_cleanup(ctx);
+
+    /* libctx and propq survive X509_STORE_CTX_cleanup() */
+    OPENSSL_free(ctx->propq);
+
     OPENSSL_free(ctx);
 }
 
@@ -2391,12 +2461,12 @@ void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
     X509_VERIFY_PARAM_set_time(ctx->param, t);
 }
 
-X509 *X509_STORE_CTX_get0_cert(X509_STORE_CTX *ctx)
+X509 *X509_STORE_CTX_get0_cert(const X509_STORE_CTX *ctx)
 {
     return ctx->cert;
 }
 
-STACK_OF(X509) *X509_STORE_CTX_get0_untrusted(X509_STORE_CTX *ctx)
+STACK_OF(X509) *X509_STORE_CTX_get0_untrusted(const X509_STORE_CTX *ctx)
 {
     return ctx->untrusted;
 }
@@ -2418,7 +2488,7 @@ void X509_STORE_CTX_set_verify_cb(X509_STORE_CTX *ctx,
     ctx->verify_cb = verify_cb;
 }
 
-X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(X509_STORE_CTX *ctx)
+X509_STORE_CTX_verify_cb X509_STORE_CTX_get_verify_cb(const X509_STORE_CTX *ctx)
 {
     return ctx->verify_cb;
 }
@@ -2429,72 +2499,77 @@ void X509_STORE_CTX_set_verify(X509_STORE_CTX *ctx,
     ctx->verify = verify;
 }
 
-X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(X509_STORE_CTX *ctx)
+X509_STORE_CTX_verify_fn X509_STORE_CTX_get_verify(const X509_STORE_CTX *ctx)
 {
     return ctx->verify;
 }
 
-X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(X509_STORE_CTX *ctx)
+X509_STORE_CTX_get_issuer_fn X509_STORE_CTX_get_get_issuer(const X509_STORE_CTX *ctx)
 {
     return ctx->get_issuer;
 }
 
-X509_STORE_CTX_check_issued_fn X509_STORE_CTX_get_check_issued(X509_STORE_CTX *ctx)
+X509_STORE_CTX_check_issued_fn
+   X509_STORE_CTX_get_check_issued(const X509_STORE_CTX *ctx)
 {
     return ctx->check_issued;
 }
 
-X509_STORE_CTX_check_revocation_fn X509_STORE_CTX_get_check_revocation(X509_STORE_CTX *ctx)
+X509_STORE_CTX_check_revocation_fn
+    X509_STORE_CTX_get_check_revocation(const X509_STORE_CTX *ctx)
 {
     return ctx->check_revocation;
 }
 
-X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(X509_STORE_CTX *ctx)
+X509_STORE_CTX_get_crl_fn X509_STORE_CTX_get_get_crl(const X509_STORE_CTX *ctx)
 {
     return ctx->get_crl;
 }
 
-X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(X509_STORE_CTX *ctx)
+X509_STORE_CTX_check_crl_fn X509_STORE_CTX_get_check_crl(const X509_STORE_CTX *ctx)
 {
     return ctx->check_crl;
 }
 
-X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(X509_STORE_CTX *ctx)
+X509_STORE_CTX_cert_crl_fn X509_STORE_CTX_get_cert_crl(const X509_STORE_CTX *ctx)
 {
     return ctx->cert_crl;
 }
 
-X509_STORE_CTX_check_policy_fn X509_STORE_CTX_get_check_policy(X509_STORE_CTX *ctx)
+X509_STORE_CTX_check_policy_fn
+    X509_STORE_CTX_get_check_policy(const X509_STORE_CTX *ctx)
 {
     return ctx->check_policy;
 }
 
-X509_STORE_CTX_lookup_certs_fn X509_STORE_CTX_get_lookup_certs(X509_STORE_CTX *ctx)
+X509_STORE_CTX_lookup_certs_fn
+    X509_STORE_CTX_get_lookup_certs(const X509_STORE_CTX *ctx)
 {
     return ctx->lookup_certs;
 }
 
-X509_STORE_CTX_lookup_crls_fn X509_STORE_CTX_get_lookup_crls(X509_STORE_CTX *ctx)
+X509_STORE_CTX_lookup_crls_fn
+    X509_STORE_CTX_get_lookup_crls(const X509_STORE_CTX *ctx)
 {
     return ctx->lookup_crls;
 }
 
-X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(X509_STORE_CTX *ctx)
+X509_STORE_CTX_cleanup_fn X509_STORE_CTX_get_cleanup(const X509_STORE_CTX *ctx)
 {
     return ctx->cleanup;
 }
 
-X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(X509_STORE_CTX *ctx)
+X509_POLICY_TREE *X509_STORE_CTX_get0_policy_tree(const X509_STORE_CTX *ctx)
 {
     return ctx->tree;
 }
 
-int X509_STORE_CTX_get_explicit_policy(X509_STORE_CTX *ctx)
+int X509_STORE_CTX_get_explicit_policy(const X509_STORE_CTX *ctx)
 {
     return ctx->explicit_policy;
 }
 
-int X509_STORE_CTX_get_num_untrusted(X509_STORE_CTX *ctx)
+int X509_STORE_CTX_get_num_untrusted(const X509_STORE_CTX *ctx)
 {
     return ctx->num_untrusted;
 }
@@ -2509,7 +2584,7 @@ int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name)
     return X509_VERIFY_PARAM_inherit(ctx->param, param);
 }
 
-X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(X509_STORE_CTX *ctx)
+X509_VERIFY_PARAM *X509_STORE_CTX_get0_param(const X509_STORE_CTX *ctx)
 {
     return ctx->param;
 }
@@ -2741,7 +2816,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
         if (t->usage != DANETLS_USAGE_DANE_TA ||
             t->selector != DANETLS_SELECTOR_SPKI ||
             t->mtype != DANETLS_MATCHING_FULL ||
-            X509_verify(cert, t->spki) <= 0)
+            X509_verify_ex(cert, t->spki, ctx->libctx, ctx->propq) <= 0)
             continue;
 
         /* Clear any PKIX-?? matches that failed to extend to a full chain */
@@ -2865,7 +2940,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     X509 *cert = sk_X509_value(ctx->chain, num - 1);
-    int ss = cert_self_signed(cert);
+    int ss;
     STACK_OF(X509) *sktmp = NULL;
     unsigned int search;
     int may_trusted = 0;
@@ -2878,6 +2953,13 @@ static int build_chain(X509_STORE_CTX *ctx)
 
     /* Our chain starts with a single untrusted element. */
     if (!ossl_assert(num == 1 && ctx->num_untrusted == num))  {
+        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
+
+    ss = cert_self_signed(ctx, cert);
+    if (ss < 0) {
         X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -3055,7 +3137,12 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    ss = cert_self_signed(x);
+                    ss = cert_self_signed(ctx, x);
+                    if (ss < 0) {
+                        X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                        ctx->error = X509_V_ERR_UNSPECIFIED;
+                        return 0;
+                    }
                 } else if (num == ctx->num_untrusted) {
                     /*
                      * We have a self-signed certificate that has the same
@@ -3167,7 +3254,12 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             X509_up_ref(x = xtmp);
             ++ctx->num_untrusted;
-            ss = cert_self_signed(xtmp);
+            ss = cert_self_signed(ctx, xtmp);
+            if (ss < 0) {
+                X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                ctx->error = X509_V_ERR_UNSPECIFIED;
+                return 0;
+            }
 
             /*
              * Check for DANE-TA trust of the topmost untrusted certificate.

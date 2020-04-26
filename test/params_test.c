@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -467,8 +467,7 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
         || !TEST_size_t_eq(p->return_size, sizeof(p6_init)) /* "provider" value */
         || !TEST_str_eq(app_p6, p6_init)        /* "provider" value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo"))
-        || !TEST_int_eq(p->return_size, 0))
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo")))
         errcnt++;
 
     /*
@@ -519,8 +518,7 @@ static int test_case_variant(OSSL_PARAM *params, const struct provider_dispatch_
                            sizeof(app_p6_init)) /* app value */
         || !TEST_str_eq(app_p6, app_p6_init)    /* app value */
         || !TEST_char_eq(foo[0], app_foo_init)  /* Should remain untouched */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo"))
-        || !TEST_int_eq(p->return_size, 0))
+        || !TEST_ptr(p = OSSL_PARAM_locate(params, "foo")))
         errcnt++;
 
  fin:

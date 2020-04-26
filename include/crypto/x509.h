@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -71,9 +71,9 @@ struct X509_req_st {
     ASN1_BIT_STRING *signature; /* signature */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
-# ifndef OPENSSL_NO_SM2
-    ASN1_OCTET_STRING *sm2_id;
-# endif
+
+    /* Set on live certificates for authentication purposes */
+    ASN1_OCTET_STRING *distinguishing_id;
 };
 
 struct X509_crl_info_st {
@@ -186,9 +186,9 @@ struct x509_st {
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;
-# ifndef OPENSSL_NO_SM2
-    ASN1_OCTET_STRING *sm2_id;
-# endif
+
+    /* Set on live certificates for authentication purposes */
+    ASN1_OCTET_STRING *distinguishing_id;
 } /* X509 */ ;
 
 /*
@@ -227,8 +227,11 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     int (*cert_crl) (X509_STORE_CTX *ctx, X509_CRL *crl, X509 *x);
     /* Check policy status of the chain */
     int (*check_policy) (X509_STORE_CTX *ctx);
-    STACK_OF(X509) *(*lookup_certs) (X509_STORE_CTX *ctx, X509_NAME *nm);
-    STACK_OF(X509_CRL) *(*lookup_crls) (X509_STORE_CTX *ctx, X509_NAME *nm);
+    STACK_OF(X509) *(*lookup_certs) (X509_STORE_CTX *ctx,
+                                     const X509_NAME *nm);
+    /* cannot constify 'ctx' param due to lookup_certs_sk() in x509_vfy.c */
+    STACK_OF(X509_CRL) *(*lookup_crls) (const X509_STORE_CTX *ctx,
+                                        const X509_NAME *nm);
     int (*cleanup) (X509_STORE_CTX *ctx);
     /* The following is built up */
     /* if 0, rebuild chain */
@@ -259,6 +262,9 @@ struct x509_store_ctx_st {      /* X509_STORE_CTX */
     SSL_DANE *dane;
     /* signed via bare TA public key, rather than CA certificate */
     int bare_ta_signed;
+
+    OPENSSL_CTX *libctx;
+    char *propq;
 };
 
 /* PKCS#8 private key info structure */
@@ -288,5 +294,10 @@ struct x509_object_st {
 
 int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
+int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
 
 void x509_init_sig_info(X509 *x);
+
+
+int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
+                          const char *propq);

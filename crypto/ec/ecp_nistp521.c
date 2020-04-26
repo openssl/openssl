@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,12 @@
  */
 
 /*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+/*
  * A 64-bit implementation of the NIST P-521 elliptic curve point multiplication
  *
  * OpenSSL integration was taken from Emilia Kasper's work in ecp_nistp224.c.
@@ -32,21 +38,18 @@
  */
 
 #include <openssl/e_os2.h>
-#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <string.h>
-# include <openssl/err.h>
-# include "ec_local.h"
+#include <string.h>
+#include <openssl/err.h>
+#include "ec_local.h"
 
-# if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
+#if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
                                  * platforms */
-# else
-#  error "Your compiler doesn't appear to support 128-bit integer types"
-# endif
+#else
+# error "Your compiler doesn't appear to support 128-bit integer types"
+#endif
 
 typedef uint8_t u8;
 typedef uint64_t u64;
@@ -125,7 +128,7 @@ static const felem_bytearray nistp521_curve_params[5] = {
  * A field element with 64-bit limbs is an 'felem'. One with 128-bit limbs is a
  * 'largefelem' */
 
-# define NLIMBS 9
+#define NLIMBS 9
 
 typedef uint64_t limb;
 typedef limb felem[NLIMBS];
@@ -1158,6 +1161,7 @@ static void point_add(felem x3, felem y3, felem z3,
     felem ftmp, ftmp2, ftmp3, ftmp4, ftmp5, ftmp6, x_out, y_out, z_out;
     largefelem tmp, tmp2;
     limb x_equal, y_equal, z1_is_zero, z2_is_zero;
+    limb points_equal;
 
     z1_is_zero = felem_is_zero(z1);
     z2_is_zero = felem_is_zero(z2);
@@ -1242,7 +1246,24 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_scalar64(ftmp5, 2);
     /* ftmp5[i] < 2^61 */
 
-    if (x_equal && y_equal && !z1_is_zero && !z2_is_zero) {
+    /*
+     * The formulae are incorrect if the points are equal, in affine coordinates
+     * (X_1, Y_1) == (X_2, Y_2), so we check for this and do doubling if this
+     * happens.
+     *
+     * We use bitwise operations to avoid potential side-channels introduced by
+     * the short-circuiting behaviour of boolean operators.
+     *
+     * The special case of either point being the point at infinity (z1 and/or
+     * z2 are zero), is handled separately later on in this function, so we
+     * avoid jumping to point_double here in those special cases.
+     *
+     * Notice the comment below on the implications of this branching for timing
+     * leaks and why it is considered practically irrelevant.
+     */
+    points_equal = (x_equal & y_equal & (~z1_is_zero) & (~z2_is_zero));
+
+    if (points_equal) {
         /*
          * This is obviously not constant-time but it will almost-never happen
          * for ECDH / ECDSA. The case where it can happen is during scalar-mult
@@ -1617,8 +1638,6 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         ec_GFp_simple_point_clear_finish,
         ec_GFp_simple_point_copy,
         ec_GFp_simple_point_set_to_infinity,
-        ec_GFp_simple_set_Jprojective_coordinates_GFp,
-        ec_GFp_simple_get_Jprojective_coordinates_GFp,
         ec_GFp_simple_point_set_affine_coordinates,
         ec_GFp_nistp521_point_get_affine_coordinates,
         0 /* point_set_compressed_coordinates */ ,
@@ -1898,9 +1917,8 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
             ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
             goto err;
         }
-        if (!EC_POINT_set_Jprojective_coordinates_GFp(group,
-                                                      generator, x, y, z,
-                                                      ctx))
+        if (!ec_GFp_simple_set_Jprojective_coordinates_GFp(group, generator, x,
+                                                           y, z, ctx))
             goto err;
         if (0 == EC_POINT_cmp(group, generator, group->generator, ctx))
             /* precomputation matches generator */
@@ -2038,7 +2056,7 @@ int ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
         ECerr(EC_F_EC_GFP_NISTP521_POINTS_MUL, ERR_R_BN_LIB);
         goto err;
     }
-    ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
+    ret = ec_GFp_simple_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
 
  err:
     BN_CTX_end(ctx);
@@ -2169,5 +2187,3 @@ int ec_GFp_nistp521_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp521);
 }
-
-#endif

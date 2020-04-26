@@ -1,9 +1,4 @@
-#
-# SSLeay example configuration file.
-# This is mostly being used for generation of certificate requests.
-#
 
-RANDFILE		= ./.rnd
 CN2 = Brother 2
 
 ####################################################################

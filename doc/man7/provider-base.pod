@@ -112,8 +112,10 @@ provider):
  BIO_new_mem_buf                OSSL_FUNC_BIO_NEW_MEMBUF
  BIO_read_ex                    OSSL_FUNC_BIO_READ_EX
  BIO_free                       OSSL_FUNC_BIO_FREE
+ BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
  OPENSSL_hexstr2buf             OSSL_FUNC_OPENSSL_HEXSTR2BUF
+ OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
@@ -157,7 +159,7 @@ This corresponds to the OpenSSL function L<ERR_new(3)>.
 sets debugging information in the current thread specific error
 record.
 The debugging information includes the name of the file I<file>, the
-line I<line> and the function name I<func> where the error occured.
+line I<line> and the function name I<func> where the error occurred.
 
 This corresponds to the OpenSSL function L<ERR_set_debug(3)>.
 
@@ -171,7 +173,7 @@ The additional data is given as a format string I<fmt> and a set of
 arguments I<args>, which are treated in the same manner as with
 BIO_vsnprintf().
 I<file> and I<line> may also be passed to indicate exactly where the
-error occured or was reported.
+error occurred or was reported.
 
 This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
 
@@ -183,10 +185,12 @@ CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
 CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
 CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
 BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_free(),
-OPENSSL_cleanse(), and OPENSSL_hexstr2buf() correspond exactly to the
-public functions with the same name.
+BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
+correspond exactly to the public functions with the same name.
 As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are
 direct pointers to those public functions.
+OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
+passed into a provider. This may be ignored by a provider.
 
 =head2 Provider functions
 
@@ -483,7 +487,7 @@ introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

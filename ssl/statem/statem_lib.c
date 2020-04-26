@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -14,11 +14,16 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
+#include "internal/evp.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include <openssl/trace.h>
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_NAME)
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -247,7 +252,7 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
     }
     pkey = s->s3.tmp.cert->privatekey;
 
-    if (pkey == NULL || !tls1_lookup_md(lu, &md)) {
+    if (pkey == NULL || !tls1_lookup_md(s->ctx, lu, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -271,15 +276,10 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    siglen = EVP_PKEY_size(pkey);
-    sig = OPENSSL_malloc(siglen);
-    if (sig == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
-                 ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 
-    if (EVP_DigestSignInit(mctx, &pctx, md, NULL, pkey) <= 0) {
+    if (EVP_DigestSignInit_ex(mctx, &pctx,
+                              md == NULL ? NULL : EVP_MD_name(md),
+                              s->ctx->propq, pkey, s->ctx->libctx) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                  ERR_R_EVP_LIB);
         goto err;
@@ -295,6 +295,10 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         }
     }
     if (s->version == SSL3_VERSION) {
+        /*
+         * Here we use EVP_DigestSignUpdate followed by EVP_DigestSignFinal
+         * in order to add the EVP_CTRL_SSL3_MASTER_SECRET call between them.
+         */
         if (EVP_DigestSignUpdate(mctx, hdata, hdatalen) <= 0
             /*
              * TODO(3.0) Replace this when EVP_MD_CTX_ctrl() is deprecated
@@ -303,16 +307,36 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
             || EVP_MD_CTX_ctrl(mctx, EVP_CTRL_SSL3_MASTER_SECRET,
                                (int)s->session->master_key_length,
                                s->session->master_key) <= 0
-            || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+            || EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0) {
 
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                      ERR_R_EVP_LIB);
             goto err;
         }
-    } else if (EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
-                 ERR_R_EVP_LIB);
-        goto err;
+        sig = OPENSSL_malloc(siglen);
+        if (sig == NULL
+                || EVP_DigestSignFinal(mctx, sig, &siglen) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
+                     ERR_R_EVP_LIB);
+            goto err;
+        }
+    } else {
+        /*
+         * Here we *must* use EVP_DigestSign() because Ed25519/Ed448 does not
+         * support streaming via EVP_DigestSignUpdate/EVP_DigestSignFinal
+         */
+        if (EVP_DigestSign(mctx, NULL, &siglen, hdata, hdatalen) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
+                     ERR_R_EVP_LIB);
+            goto err;
+        }
+        sig = OPENSSL_malloc(siglen);
+        if (sig == NULL
+                || EVP_DigestSign(mctx, sig, &siglen, hdata, hdatalen) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
+                     ERR_R_EVP_LIB);
+            goto err;
+        }
     }
 
 #ifndef OPENSSL_NO_GOST
@@ -403,7 +427,7 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
             goto err;
     }
 
-    if (!tls1_lookup_md(s->s3.tmp.peer_sigalg, &md)) {
+    if (!tls1_lookup_md(s->ctx, s->s3.tmp.peer_sigalg, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -434,13 +458,6 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
         goto err;
     }
 
-    j = EVP_PKEY_size(pkey);
-    if (((int)len > j) || ((int)PACKET_remaining(pkt) > j)
-        || (PACKET_remaining(pkt) == 0)) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
-                 SSL_R_WRONG_SIGNATURE_SIZE);
-        goto err;
-    }
     if (!PACKET_get_bytes(pkt, &data, len)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  SSL_R_LENGTH_MISMATCH);
@@ -455,7 +472,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     OSSL_TRACE1(TLS, "Using client verify alg %s\n",
                 md == NULL ? "n/a" : EVP_MD_name(md));
 
-    if (EVP_DigestVerifyInit(mctx, &pctx, md, NULL, pkey) <= 0) {
+    if (EVP_DigestVerifyInit_ex(mctx, &pctx,
+                                md == NULL ? NULL : EVP_MD_name(md),
+                                s->ctx->propq, pkey, s->ctx->libctx) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  ERR_R_EVP_LIB);
         goto err;
@@ -850,9 +869,11 @@ MSG_PROCESS_RETURN tls_process_finished(SSL *s, PACKET *pkt)
                 return MSG_PROCESS_ERROR;
             }
         } else {
+            /* TLS 1.3 gets the secret size from the handshake md */
+            size_t dummy;
             if (!s->method->ssl3_enc->generate_master_secret(s,
                     s->master_secret, s->handshake_secret, 0,
-                    &s->session->master_key_length)) {
+                    &dummy)) {
                 /* SSLfatal() already called */
                 return MSG_PROCESS_ERROR;
             }
@@ -941,7 +962,8 @@ static int ssl_add_cert_chain(SSL *s, WPACKET *pkt, CERT_PKEY *cpk)
         chain_store = s->ctx->cert_store;
 
     if (chain_store != NULL) {
-        X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new();
+        X509_STORE_CTX *xs_ctx = X509_STORE_CTX_new_with_libctx(s->ctx->libctx,
+                                                                s->ctx->propq);
 
         if (xs_ctx == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ADD_CERT_CHAIN,
@@ -1515,7 +1537,6 @@ static int is_tls13_capable(const SSL *s)
     int i;
 #ifndef OPENSSL_NO_EC
     int curve;
-    EC_KEY *eckey;
 #endif
 
 #ifndef OPENSSL_NO_PSK
@@ -1547,10 +1568,8 @@ static int is_tls13_capable(const SSL *s)
          * more restrictive so check that our sig algs are consistent with this
          * EC cert. See section 4.2.3 of RFC8446.
          */
-        eckey = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
-        if (eckey == NULL)
-            continue;
-        curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(eckey));
+        curve = evp_pkey_get_EC_KEY_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
+                                              .privatekey);
         if (tls_check_sigalg_curve(s, curve))
             return 1;
 #else

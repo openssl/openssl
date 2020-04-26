@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+/*
+ * AES_encrypt/AES_decrypt are deprecated - but we need to use them to implement
+ * these functions
+ */
+#include "internal/deprecated.h"
 
-#if OPENSSL_API_3
-NON_EMPTY_TRANSLATION_UNIT
-#else
+#include "internal/cryptlib.h"
 
 #include <openssl/aes.h>
 #include "aes_local.h"
@@ -295,4 +297,3 @@ void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
         }
     }
 }
-#endif

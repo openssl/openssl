@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,23 +16,70 @@ use OpenSSL::Test::Utils;
 
 setup("test_ec");
 
-plan tests => 5;
+plan tests => 14;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 ok(run(test(["ectest"])), "running ectest");
 
- SKIP: {
-     skip "Skipping ec conversion test", 3
-	 if disabled("ec");
+# TODO: remove these when the 'ec' app is removed.
+# Also consider moving this to the 20-25 test section because it is testing
+# the command line tool in addition to the algorithm.
+SKIP: {
+    skip "Skipping EC conversion test", 3
+        if disabled("ec");
 
-     subtest 'ec conversions -- private key' => sub {
-	 tconversion("ec", srctop_file("test","testec-p256.pem"));
-     };
-     subtest 'ec conversions -- private key PKCS#8' => sub {
-	 tconversion("ec", srctop_file("test","testec-p256.pem"), "pkey");
-     };
-     subtest 'ec conversions -- public key' => sub {
-	 tconversion("ec", srctop_file("test","testecpub-p256.pem"), "ec", "-pubin", "-pubout");
-     };
+    subtest 'EC conversions -- private key' => sub {
+        tconversion("ec", srctop_file("test","testec-p256.pem"));
+    };
+    subtest 'EC conversions -- private key PKCS#8' => sub {
+        tconversion("ec", srctop_file("test","testec-p256.pem"), "pkey");
+    };
+    subtest 'EC conversions -- public key' => sub {
+        tconversion("ec", srctop_file("test","testecpub-p256.pem"),
+                    "ec", "-pubin", "-pubout");
+    };
+}
+
+SKIP: {
+    skip "Skipping PKEY conversion test", 3
+        if disabled("ec");
+
+    subtest 'PKEY conversions -- private key' => sub {
+        tconversion("pkey", srctop_file("test","testec-p256.pem"));
+    };
+    subtest 'PKEY conversions -- private key PKCS#8' => sub {
+        tconversion("pkey", srctop_file("test","testec-p256.pem"), "pkey");
+    };
+    subtest 'PKEY conversions -- public key' => sub {
+        tconversion("pkey", srctop_file("test","testecpub-p256.pem"),
+                    "pkey", "-pubin", "-pubout");
+    };
+}
+
+SKIP: {
+    skip "Skipping EdDSA conversion test", 6
+        if disabled("ec");
+
+    subtest 'Ed25519 conversions -- private key' => sub {
+        tconversion("pkey", srctop_file("test", "tested25519.pem"));
+    };
+    subtest 'Ed25519 conversions -- private key PKCS#8' => sub {
+        tconversion("pkey", srctop_file("test", "tested25519.pem"), "pkey");
+    };
+    subtest 'Ed25519 conversions -- public key' => sub {
+        tconversion("pkey", srctop_file("test", "tested25519pub.pem"),
+                    "pkey", "-pubin", "-pubout");
+    };
+
+    subtest 'Ed448 conversions -- private key' => sub {
+        tconversion("pkey", srctop_file("test", "tested448.pem"));
+    };
+    subtest 'Ed448 conversions -- private key PKCS#8' => sub {
+        tconversion("pkey", srctop_file("test", "tested448.pem"), "pkey");
+    };
+    subtest 'Ed448 conversions -- public key' => sub {
+        tconversion("pkey", srctop_file("test", "tested448pub.pem"),
+                    "pkey", "-pubin", "-pubout");
+    };
 }

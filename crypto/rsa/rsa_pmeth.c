@@ -1,11 +1,17 @@
 /*
- * Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * RSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include "internal/constant_time.h"
 
@@ -19,6 +25,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 #include "crypto/evp.h"
+#include "crypto/rsa.h"
 #include "rsa_local.h"
 
 /* RSA pkey context structure */
@@ -104,7 +111,7 @@ static int setup_tbuf(RSA_PKEY_CTX *ctx, EVP_PKEY_CTX *pk)
 {
     if (ctx->tbuf != NULL)
         return 1;
-    if ((ctx->tbuf = OPENSSL_malloc(EVP_PKEY_size(pk->pkey))) == NULL) {
+    if ((ctx->tbuf = OPENSSL_malloc(RSA_size(pk->pkey->pkey.rsa))) == NULL) {
         RSAerr(RSA_F_SETUP_TBUF, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -147,7 +154,7 @@ static int pkey_rsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
                 return ret;
             ret = sltmp;
         } else if (rctx->pad_mode == RSA_X931_PADDING) {
-            if ((size_t)EVP_PKEY_size(ctx->pkey) < tbslen + 1) {
+            if ((size_t)RSA_size(rsa) < tbslen + 1) {
                 RSAerr(RSA_F_PKEY_RSA_SIGN, RSA_R_KEY_SIZE_TOO_SMALL);
                 return -1;
             }

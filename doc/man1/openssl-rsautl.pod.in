@@ -1,19 +1,17 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-rsautl - RSA utility
+openssl-rsautl - RSA command
 
 =head1 SYNOPSIS
 
 B<openssl> B<rsautl>
 [B<-help>]
 [B<-in> I<file>]
+[B<-passin> I<arg>]
+[B<-rev>]
 [B<-out> I<file>]
 [B<-inkey> I<file>]
 [B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
@@ -24,15 +22,25 @@ B<openssl> B<rsautl>
 [B<-encrypt>]
 [B<-decrypt>]
 [B<-pkcs>]
+[B<-x931>]
+[B<-oaep>]
+[B<-ssl>]
+[B<-raw>]
+[B<-pkcs>]
 [B<-ssl>]
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
 =head1 DESCRIPTION
+
+This command has been deprecated.
+The L<openssl-pkeyutl(1)> command should be used instead.
 
 This command can be used to sign, verify, encrypt and decrypt
 data using the RSA algorithm.
@@ -49,6 +57,15 @@ Print out a usage message.
 
 This specifies the input filename to read data from or standard input
 if this option is not specified.
+
+=item B<-passin> I<arg>
+
+The passphrase used in the output file.
+See see L<openssl(1)/Pass Phrase Options>.
+
+=item B<-rev>
+
+Reverse the order of the input.
 
 =item B<-out> I<filename>
 
@@ -89,9 +106,10 @@ Encrypt the input data using an RSA public key.
 
 Decrypt the input data using an RSA private key.
 
-=item B<-pkcs>, B<-oaep>, B<-ssl>, B<-raw>
+=item B<-pkcs>, B<-oaep>, B<-x931> B<-ssl>, B<-raw>
 
 The padding to use: PKCS#1 v1.5 (the default), PKCS#1 OAEP,
+ANSI X9.31,
 special padding used in SSL v2 backwards compatible handshakes,
 or no padding, respectively.
 For signatures, only B<-pkcs> and B<-raw> can be used.
@@ -105,7 +123,11 @@ Hex dump the output data.
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verify> option.
 
+{- $OpenSSL::safe::opt_engine_item -}
+
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -115,6 +137,9 @@ Since this command uses the RSA algorithm directly, it can only be
 used to sign or verify small pieces of data.
 
 =head1 EXAMPLES
+
+Examples equivalent to these can be found in the documentation for the
+non-deprecated L<openssl-pkeyutl(1)> command.
 
 Sign some data using a private key:
 
@@ -142,7 +167,7 @@ encrypt and decrypt the block would have been of type 2 (the second byte)
 and random padding data visible instead of the 0xff bytes.
 
 It is possible to analyse the signature of certificates using this
-utility in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
+command in conjunction with L<openssl-asn1parse(1)>. Consider the self signed
 example in F<certs/pca-cert.pem>. Running L<openssl-asn1parse(1)> as follows
 yields:
 
@@ -203,13 +228,18 @@ which it can be seen agrees with the recovered value above.
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkeyutl(1)>,
 L<openssl-dgst(1)>,
 L<openssl-rsa(1)>,
 L<openssl-genrsa(1)>
 
+=head1 HISTORY
+
+This command was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

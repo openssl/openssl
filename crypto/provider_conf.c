@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,9 +14,11 @@
 #include <openssl/safestack.h>
 #include "internal/provider.h"
 
+DEFINE_STACK_OF(OSSL_PROVIDER)
+DEFINE_STACK_OF(CONF_VALUE)
+
 /* PROVIDER config module */
 
-DEFINE_STACK_OF(OSSL_PROVIDER)
 static STACK_OF(OSSL_PROVIDER) *activated_providers = NULL;
 
 static const char *skip_dot(const char *name)
@@ -164,7 +166,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
-        if (!provider_conf_load(NULL, cval->name, cval->value, cnf))
+        if (!provider_conf_load(cnf->libctx, cval->name, cval->value, cnf))
             return 0;
     }
 

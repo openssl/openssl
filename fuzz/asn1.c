@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
  *
  * asn1 <data structure>
  */
+
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
 #include <string.h>
@@ -108,7 +111,7 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(IPAddressRange),
 #endif
     ASN1_ITEM_ref(ISSUING_DIST_POINT),
-#if !OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(LONG),
 #endif
     ASN1_ITEM_ref(NAME_CONSTRAINTS),
@@ -189,7 +192,7 @@ static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(X509_REVOKED),
     ASN1_ITEM_ref(X509_SIG),
     ASN1_ITEM_ref(X509_VAL),
-#if !OPENSSL_API_3
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ASN1_ITEM_ref(ZLONG),
 #endif
     ASN1_ITEM_ref(INT32),
@@ -326,21 +329,23 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     DO_TEST_NO_PRINT(ESS_CERT_ID_V2, d2i_ESS_CERT_ID_V2, i2d_ESS_CERT_ID_V2);
     DO_TEST_NO_PRINT(ESS_SIGNING_CERT_V2, d2i_ESS_SIGNING_CERT_V2, i2d_ESS_SIGNING_CERT_V2);
 #ifndef OPENSSL_NO_DH
-    DO_TEST(DH, d2i_DHparams, i2d_DHparams, DHparams_print);
-    DO_TEST(DH, d2i_DHxparams, i2d_DHxparams, DHparams_print);
+    DO_TEST_NO_PRINT(DH, d2i_DHparams, i2d_DHparams);
+    DO_TEST_NO_PRINT(DH, d2i_DHxparams, i2d_DHxparams);
 #endif
 #ifndef OPENSSL_NO_DSA
     DO_TEST_NO_PRINT(DSA_SIG, d2i_DSA_SIG, i2d_DSA_SIG);
-    DO_TEST_PRINT_OFFSET(DSA, d2i_DSAPrivateKey, i2d_DSAPrivateKey, DSA_print);
-    DO_TEST_PRINT_OFFSET(DSA, d2i_DSAPublicKey, i2d_DSAPublicKey, DSA_print);
-    DO_TEST(DSA, d2i_DSAparams, i2d_DSAparams, DSAparams_print);
+    DO_TEST_NO_PRINT(DSA, d2i_DSAPrivateKey, i2d_DSAPrivateKey);
+    DO_TEST_NO_PRINT(DSA, d2i_DSAPublicKey, i2d_DSAPublicKey);
+    DO_TEST_NO_PRINT(DSA, d2i_DSAparams, i2d_DSAparams);
 #endif
-    DO_TEST_PRINT_OFFSET(RSA, d2i_RSAPublicKey, i2d_RSAPublicKey, RSA_print);
+    DO_TEST_NO_PRINT(RSA, d2i_RSAPublicKey, i2d_RSAPublicKey);
 #ifndef OPENSSL_NO_EC
     DO_TEST_PRINT_OFFSET(EC_GROUP, d2i_ECPKParameters, i2d_ECPKParameters, ECPKParameters_print);
     DO_TEST_PRINT_OFFSET(EC_KEY, d2i_ECPrivateKey, i2d_ECPrivateKey, EC_KEY_print);
     DO_TEST(EC_KEY, d2i_ECParameters, i2d_ECParameters, ECParameters_print);
+# ifndef OPENSSL_NO_DEPRECATED_3_0
     DO_TEST_NO_PRINT(ECDSA_SIG, d2i_ECDSA_SIG, i2d_ECDSA_SIG);
+# endif
 #endif
     DO_TEST_PRINT_PCTX(EVP_PKEY, d2i_AutoPrivateKey, i2d_PrivateKey, EVP_PKEY_print_private);
     DO_TEST(SSL_SESSION, d2i_SSL_SESSION, i2d_SSL_SESSION, SSL_SESSION_print);

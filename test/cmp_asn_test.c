@@ -40,8 +40,7 @@ static void tear_down(CMP_ASN_TEST_FIXTURE *fixture)
     OPENSSL_free(fixture);
 }
 
-static int execute_cmp_asn1_get_int_test(CMP_ASN_TEST_FIXTURE *
-                                                   fixture)
+static int execute_cmp_asn1_get_int_test(CMP_ASN_TEST_FIXTURE *fixture)
 {
     ASN1_INTEGER *asn1integer = ASN1_INTEGER_new();
     ASN1_INTEGER_set(asn1integer, 77);
@@ -115,8 +114,10 @@ int setup_tests(void)
     ADD_TEST(test_cmp_asn1_get_int);
     ADD_TEST(test_ASN1_OCTET_STRING_set);
     ADD_TEST(test_ASN1_OCTET_STRING_set_tgt_is_src);
-    /* TODO make sure that total number of tests (here currently 24) is shown,
-     also for other cmp_*text.c. Currently the test drivers always show 1. */
+    /*
+     * TODO make sure that total number of tests (here currently 24) is shown,
+     * also for other cmp_*text.c. Currently the test drivers always show 1.
+     */
 
     return 1;
 }

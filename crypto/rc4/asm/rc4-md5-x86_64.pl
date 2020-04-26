@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -486,6 +486,7 @@ $code.=<<___;
 .type	RC4_set_key,\@function,3
 .align	16
 RC4_set_key:
+.cfi_startproc
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -521,6 +522,7 @@ RC4_set_key:
 	mov	%eax,-8($dat)
 	mov	%eax,-4($dat)
 	ret
+.cfi_endproc
 .size	RC4_set_key,.-RC4_set_key
 
 .globl	RC4_options
@@ -660,4 +662,4 @@ $code =~ s/#rc4#//gm	if ($rc4);
 
 print $code;
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

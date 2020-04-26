@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -300,6 +300,12 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
             ret = BIO_read(s->rbio, pkt + len + left, max - left);
             if (ret >= 0)
                 bioread = ret;
+            if (ret <= 0
+                    && !BIO_should_retry(s->rbio)
+                    && BIO_eof(s->rbio)) {
+                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_READ_N,
+                         SSL_R_UNEXPECTED_EOF_WHILE_READING);
+            }
         } else {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_READ_N,
                      SSL_R_READ_BIO_NOT_SET);
@@ -765,6 +771,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          */
         SSL3_BUFFER_set_buf(&s->rlayer.wbuf[0], (unsigned char *)buf);
         SSL3_BUFFER_set_offset(&s->rlayer.wbuf[0], 0);
+        SSL3_BUFFER_set_app_buffer(&s->rlayer.wbuf[0], 1);
         goto wpacket_init_complete;
     }
 

@@ -24,7 +24,7 @@ static const version_test version_testdata[] = {
     {0,              0,              1, 1, 0,              0},
     {TLS1_VERSION,   TLS1_2_VERSION, 1, 1, TLS1_VERSION,   TLS1_2_VERSION},
     {TLS1_2_VERSION, TLS1_2_VERSION, 1, 1, TLS1_2_VERSION, TLS1_2_VERSION},
-    {TLS1_2_VERSION, TLS1_1_VERSION, 1, 0, TLS1_2_VERSION, 0},
+    {TLS1_2_VERSION, TLS1_1_VERSION, 1, 1, TLS1_2_VERSION, TLS1_1_VERSION},
     {7,              42,             0, 0, 0,              0},
 };
 

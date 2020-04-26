@@ -1,5 +1,5 @@
 # -*- mode: perl; -*-
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -21,55 +21,82 @@ use OpenSSL::Test::Utils qw/anydisabled alldisabled disabled/;
 setup("no_test_here");
 
 my @tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+my @tls_protocols_fips = ("TLSv1.2", "TLSv1.3");
 # undef stands for "no limit".
 my @min_tls_protocols = (undef, "SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3");
+my @min_tls_protocols_fips = (undef, "TLSv1.2", "TLSv1.3");
 my @max_tls_protocols = ("SSLv3", "TLSv1", "TLSv1.1", "TLSv1.2", "TLSv1.3", undef);
+my @max_tls_protocols_fips = ("TLSv1.2", "TLSv1.3", undef);
 
 my @is_tls_disabled = anydisabled("ssl3", "tls1", "tls1_1", "tls1_2", "tls1_3");
+my @is_tls_disabled_fips = anydisabled("tls1_2", "tls1_3");
 
 my $min_tls_enabled; my $max_tls_enabled;
+my $min_tls_enabled_fips; my $max_tls_enabled_fips;
 
 # Protocol configuration works in cascades, i.e.,
 # $no_tls1_1 disables TLSv1.1 and below.
 #
 # $min_enabled and $max_enabled will be correct if there is at least one
 # protocol enabled.
-foreach my $i (0..$#tls_protocols) {
-    if (!$is_tls_disabled[$i]) {
-        $min_tls_enabled = $i;
-        last;
+
+sub min_prot_enabled {
+    my $protref = shift;
+    my $disabledref = shift;
+    my @protocols = @{$protref};
+    my @is_disabled = @{$disabledref};
+    my $min_enabled;
+
+    foreach my $i (0..$#protocols) {
+        if (!$is_disabled[$i]) {
+            $min_enabled = $i;
+            last;
+        }
     }
+    return $min_enabled;
 }
 
-foreach my $i (0..$#tls_protocols) {
-    if (!$is_tls_disabled[$i]) {
-        $max_tls_enabled = $i;
+sub max_prot_enabled {
+    my $protref = shift;
+    my $disabledref = shift;
+    my @protocols = @{$protref};
+    my @is_disabled = @{$disabledref};
+    my $max_enabled;
+
+    foreach my $i (0..$#protocols) {
+        if (!$is_disabled[$i]) {
+            $max_enabled = $i;
+        }
     }
+    return $max_enabled;
 }
+
+$min_tls_enabled = min_prot_enabled(\@tls_protocols, \@is_tls_disabled);
+$max_tls_enabled = max_prot_enabled(\@tls_protocols, \@is_tls_disabled);
+$min_tls_enabled_fips = min_prot_enabled(\@tls_protocols_fips, \@is_tls_disabled_fips);
+$max_tls_enabled_fips = max_prot_enabled(\@tls_protocols_fips, \@is_tls_disabled_fips);
+
 
 my @dtls_protocols = ("DTLSv1", "DTLSv1.2");
+my @dtls_protocols_fips = ("DTLSv1.2");
 # undef stands for "no limit".
 my @min_dtls_protocols = (undef, "DTLSv1", "DTLSv1.2");
+my @min_dtls_protocols_fips = (undef, "DTLSv1.2");
 my @max_dtls_protocols = ("DTLSv1", "DTLSv1.2", undef);
+my @max_dtls_protocols_fips = ("DTLSv1.2", undef);
 
 my @is_dtls_disabled = anydisabled("dtls1", "dtls1_2");
+my @is_dtls_disabled_fips = anydisabled("dtls1_2");
 
 my $min_dtls_enabled; my $max_dtls_enabled;
+my $min_dtls_enabled_fips; my $max_dtls_enabled_fips;
 
 # $min_enabled and $max_enabled will be correct if there is at least one
 # protocol enabled.
-foreach my $i (0..$#dtls_protocols) {
-    if (!$is_dtls_disabled[$i]) {
-        $min_dtls_enabled = $i;
-        last;
-    }
-}
-
-foreach my $i (0..$#dtls_protocols) {
-    if (!$is_dtls_disabled[$i]) {
-        $max_dtls_enabled = $i;
-    }
-}
+$min_dtls_enabled = min_prot_enabled(\@dtls_protocols, \@is_dtls_disabled);
+$max_dtls_enabled = max_prot_enabled(\@dtls_protocols, \@is_dtls_disabled);
+$min_dtls_enabled_fips = min_prot_enabled(\@dtls_protocols_fips, \@is_dtls_disabled_fips);
+$max_dtls_enabled_fips = max_prot_enabled(\@dtls_protocols_fips, \@is_dtls_disabled_fips);
 
 sub no_tests {
     my ($dtls) = @_;
@@ -78,17 +105,31 @@ sub no_tests {
 }
 
 sub generate_version_tests {
-    my ($method) = @_;
+    my $method = shift;
+    my $fips = shift;
 
     my $dtls = $method eq "DTLS";
     # Don't write the redundant "Method = TLS" into the configuration.
     undef $method if !$dtls;
 
-    my @protocols = $dtls ? @dtls_protocols : @tls_protocols;
-    my @min_protocols = $dtls ? @min_dtls_protocols : @min_tls_protocols;
-    my @max_protocols = $dtls ? @max_dtls_protocols : @max_tls_protocols;
-    my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
-    my $max_enabled  = $dtls ? $max_dtls_enabled : $max_tls_enabled;
+    my @protocols;
+    my @min_protocols;
+    my @max_protocols;
+    my $min_enabled;
+    my $max_enabled;
+    if ($fips) {
+        @protocols = $dtls ? @dtls_protocols_fips : @tls_protocols_fips;
+        @min_protocols = $dtls ? @min_dtls_protocols_fips : @min_tls_protocols_fips;
+        @max_protocols = $dtls ? @max_dtls_protocols_fips : @max_tls_protocols_fips;
+        $min_enabled  = $dtls ? $min_dtls_enabled_fips : $min_tls_enabled_fips;
+        $max_enabled  = $dtls ? $max_dtls_enabled_fips : $max_tls_enabled_fips;
+    } else {
+        @protocols = $dtls ? @dtls_protocols : @tls_protocols;
+        @min_protocols = $dtls ? @min_dtls_protocols : @min_tls_protocols;
+        @max_protocols = $dtls ? @max_dtls_protocols : @max_tls_protocols;
+        $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
+        $max_enabled  = $dtls ? $max_dtls_enabled : $max_tls_enabled;
+    }
 
     if (no_tests($dtls)) {
         return;
@@ -166,15 +207,26 @@ sub generate_version_tests {
 }
 
 sub generate_resumption_tests {
-    my ($method) = @_;
+    my $method = shift;
+    my $fips = shift;
 
     my $dtls = $method eq "DTLS";
     # Don't write the redundant "Method = TLS" into the configuration.
     undef $method if !$dtls;
 
-    my @protocols = $dtls ? @dtls_protocols : @tls_protocols;
-    my $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
-    my $max_enabled = $dtls ? $max_dtls_enabled : $max_tls_enabled;
+    my @protocols;
+    my $min_enabled;
+    my $max_enabled;
+
+    if ($fips) {
+        @protocols = $dtls ? @dtls_protocols_fips : @tls_protocols_fips;
+        $min_enabled  = $dtls ? $min_dtls_enabled_fips : $min_tls_enabled_fips;
+        $max_enabled = $dtls ? $max_dtls_enabled_fips : $max_tls_enabled_fips;
+    } else {
+        @protocols = $dtls ? @dtls_protocols : @tls_protocols;
+        $min_enabled  = $dtls ? $min_dtls_enabled : $min_tls_enabled;
+        $max_enabled = $dtls ? $max_dtls_enabled : $max_tls_enabled;
+    }
 
     if (no_tests($dtls)) {
         return;

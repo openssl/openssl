@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -68,19 +68,19 @@ sub LL()
 					unshift(@_,pop(@_));
 				  }
 				}
-	else			{ die "unvalid SCALE value"; }
+	else			{ die "invalid SCALE value"; }
 }
 
 sub scale()
 {	if	($SCALE==2)	{ &lea(@_[0],&DWP(0,@_[1],@_[1])); }
 	elsif	($SCALE==8)	{ &lea(@_[0],&DWP(0,"",@_[1],8));  }
-	else			{ die "unvalid SCALE value";       }
+	else			{ die "invalid SCALE value";       }
 }
 
 sub row()
 {	if	($SCALE==2)	{ ((8-shift)&7); }
 	elsif	($SCALE==8)	{ (8*shift);     }
-	else			{ die "unvalid SCALE value"; }
+	else			{ die "invalid SCALE value"; }
 }
 
 $tbl="ebp";
@@ -503,4 +503,4 @@ for($i=0;$i<8;$i++) {
 &function_end_B("whirlpool_block_mmx");
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

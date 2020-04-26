@@ -1,13 +1,9 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-cms - CMS utility
+openssl-cms - CMS command
 
 =head1 SYNOPSIS
 
@@ -15,8 +11,13 @@ B<openssl> B<cms>
 [B<-help>]
 [B<-encrypt>]
 [B<-decrypt>]
+[B<-debug_decrypt>]
 [B<-sign>]
 [B<-verify>]
+[B<-verify_retcode>]
+[B<-no_attr_verify>]
+[B<-nosigs>]
+[B<-no_content_verify>]
 [B<-cmsout>]
 [B<-resign>]
 [B<-cades>]
@@ -26,6 +27,7 @@ B<openssl> B<cms>
 [B<-digest_verify>]
 [B<-compress>]
 [B<-uncompress>]
+[B<-EncryptedData_decrypt>]
 [B<-EncryptedData_encrypt>]
 [B<-sign_receipt>]
 [B<-verify_receipt> I<receipt>]
@@ -38,41 +40,13 @@ B<openssl> B<cms>
 [B<-stream>]
 [B<-indef>]
 [B<-noindef>]
-[B<-noindef>]
 [B<-content> I<filename>]
 [B<-text>]
 [B<-noout>]
 [B<-print>]
-[B<-attime> I<timestamp>]
-[B<-check_ss_sig>]
-[B<-crl_check>]
-[B<-crl_check_all>]
-[B<-explicit_policy>]
-[B<-extended_crl>]
-[B<-ignore_critical>]
-[B<-inhibit_any>]
-[B<-inhibit_map>]
-[B<-no_check_time>]
-[B<-partial_chain>]
-[B<-policy> I<arg>]
-[B<-policy_check>]
-[B<-policy_print>]
-[B<-purpose> I<purpose>]
-[B<-suiteB_128>]
-[B<-suiteB_128_only>]
-[B<-suiteB_192>]
-[B<-trusted_first>]
-[B<-no_alt_chains>]
-[B<-use_deltas>]
-[B<-auth_level> I<num>]
-[B<-verify_depth> I<num>]
-[B<-verify_email> I<email>]
-[B<-verify_hostname> I<hostname>]
-[B<-verify_ip> I<ip>]
-[B<-verify_name> I<name>]
-[B<-x509_strict>]
 [B<-md> I<digest>]
 [B<-I<cipher>>]
+[B<-wrap> I<cipher>]
 [B<-nointern>]
 [B<-noverify>]
 [B<-nocerts>]
@@ -85,6 +59,7 @@ B<openssl> B<cms>
 [B<-certfile> I<file>]
 [B<-certsout> I<file>]
 [B<-signer> I<file>]
+[B<-originator> I<file>]
 [B<-recip> I<file>]
 [B<-keyid>]
 [B<-receipt_request_all>]
@@ -92,6 +67,7 @@ B<openssl> B<cms>
 [B<-receipt_request_from> I<emailaddress>]
 [B<-receipt_request_to> I<emailaddress>]
 [B<-receipt_request_print>]
+[B<-pwri_password> I<password>]
 [B<-secretkey> I<key>]
 [B<-secretkeyid> I<id>]
 [B<-econtent_type> I<type>]
@@ -101,8 +77,11 @@ B<openssl> B<cms>
 [B<-to> I<addr>]
 [B<-from> I<addr>]
 [B<-subject> I<subj>]
+{- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<cert.pem> ...]
 
 =for openssl ifdef des-wrap engine
@@ -155,6 +134,22 @@ to the output file.
 Verify signed mail. Expects a signed mail message on input and outputs
 the signed data. Both clear text and opaque signing is supported.
 
+=item B<-verify_retcode>
+
+Exit nonzero on verification failure.
+
+=item B<-no_attr_verify>
+
+Do not verify signed attribute signatures.
+
+=item B<-no_content_verify>
+
+Do not verify signed content signatures.
+
+=item B<-nosigs>
+
+Don't verify message signature.
+
 =item B<-cmsout>
 
 Takes an input message and writes out a PEM encoded CMS structure.
@@ -195,6 +190,11 @@ support for this option to work, otherwise it will output an error.
 Uncompress a CMS B<CompressedData> type and output the content. OpenSSL must be
 compiled with B<zlib> support for this option to work, otherwise it will
 output an error.
+
+=item B<-EncryptedData_decrypt>
+
+Decrypt content using supplied symmetric key and algorithm using a CMS
+B<EncryptedData> type and output the content.
 
 =item B<-EncryptedData_encrypt>
 
@@ -246,7 +246,7 @@ The signed receipt format for use with the B<-receipt_verify>; the default
 is B<SMIME>.
 See L<openssl(1)/Format Options> for details.
 
-=item B<-stream>, B<-indef>, B<-noindef>
+=item B<-stream>, B<-indef>
 
 The B<-stream> and B<-indef> options are equivalent and enable streaming I/O
 for encoding operations. This permits single pass processing of data without
@@ -302,6 +302,12 @@ supported by your version of OpenSSL.
 
 If not specified triple DES is used. Only used with B<-encrypt> and
 B<-EncryptedData_create> commands.
+
+=item B<-wrap> I<cipher>
+
+Cipher algorithm to use for key wrap when encrypting the message using Key
+Agreement for key transport. The algorithm specified should be suitable for key
+wrap.
 
 =item B<-nointern>
 
@@ -377,6 +383,11 @@ used multiple times if more than one signer is required. If a message is being
 verified then the signers certificates will be written to this file if the
 verification was successful.
 
+=item B<-originator> I<file>
+
+A certificate of the originator of the encrypted message. Necessary for
+decryption when Key Agreement is in use for a shared key.
+
 =item B<-recip> I<file>
 
 When decrypting a message this specifies the recipients certificate. The
@@ -416,6 +427,10 @@ option B<must> but supplied if a signed receipt it requested.
 
 For the B<-verify> operation print out the contents of any signed receipt
 requests.
+
+=item B<-pwri_password> I<password>
+
+Specify password for recipient.
 
 =item B<-secretkey> I<key>
 
@@ -466,20 +481,17 @@ portion of a message so they may be included manually. If signing
 then many S/MIME mail clients check the signers certificate's email
 address matches that specified in the From: address.
 
-=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
-B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
+{- $OpenSSL::safe::opt_v_item -}
 
-Set various certificate chain validation options. See the
-L<openssl-verify(1)> manual page for details.
+Any verification errors cause the command to exit.
 
 {- $OpenSSL::safe::opt_trust_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item I<cert.pem> ...
 
@@ -756,7 +768,7 @@ The -no_alt_chains option was added in OpenSSL 1.0.2b.
 
 =head1 COPYRIGHT
 
-Copyright 2008-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

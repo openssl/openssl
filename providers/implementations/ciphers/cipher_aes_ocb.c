@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,9 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * AES low level APIs are deprecated for public use, but still ok for internal
+ * use where we're using them to implement the higher level EVP interface, as is
+ * the case here.
+ */
+#include "internal/deprecated.h"
+
 #include "cipher_aes_ocb.h"
 #include "prov/providercommonerr.h"
-#include "prov/cipher_aead.h"
+#include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
 
 #define AES_OCB_FLAGS AEAD_FLAGS
@@ -84,8 +91,8 @@ static ossl_inline int aes_generic_ocb_cipher(PROV_AES_OCB_CTX *ctx,
 static ossl_inline int aes_generic_ocb_copy_ctx(PROV_AES_OCB_CTX *dst,
                                                 PROV_AES_OCB_CTX *src)
 {
-    return (!CRYPTO_ocb128_copy_ctx(&dst->ocb, &src->ocb,
-                                    &src->ksenc.ks, &src->ksdec.ks));
+    return CRYPTO_ocb128_copy_ctx(&dst->ocb, &src->ocb,
+                                  &dst->ksenc.ks, &dst->ksdec.ks);
 }
 
 /*-
@@ -143,8 +150,13 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
                                          size_t outsize, const unsigned char *in,
                                          size_t inl, OSSL_ocb_cipher_fn ciph)
 {
-    size_t nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
+    size_t nextblocks;
     size_t outlint = 0;
+
+    if (bufsz != 0)
+        nextblocks = fillblock(buf, bufsz, AES_BLOCK_SIZE, &in, &inl);
+    else
+        nextblocks = inl & ~(AES_BLOCK_SIZE-1);
 
     if (*bufsz == AES_BLOCK_SIZE) {
         if (outsize < AES_BLOCK_SIZE) {
@@ -172,7 +184,7 @@ static int aes_ocb_block_update_internal(PROV_AES_OCB_CTX *ctx,
         in += nextblocks;
         inl -= nextblocks;
     }
-    if (!trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
+    if (inl != 0 && !trailingdata(buf, bufsz, AES_BLOCK_SIZE, &in, &inl)) {
         /* PROVerr already called */
         return 0;
     }
@@ -213,6 +225,11 @@ static int aes_ocb_block_update(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ctx->key_set || !update_iv(ctx))
         return 0;
+
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
+    }
 
     /* Are we dealing with AAD or normal data here? */
     if (out == NULL) {

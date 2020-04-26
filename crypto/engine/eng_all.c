@@ -15,9 +15,10 @@ void ENGINE_load_builtin_engines(void)
     OPENSSL_init_crypto(OPENSSL_INIT_ENGINE_ALL_BUILTIN, NULL);
 }
 
-#if (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__)) \
-    && !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# if (defined(__OpenBSD__) || defined(__FreeBSD__) || defined(__DragonFly__))
 void ENGINE_setup_bsd_cryptodev(void)
 {
 }
+# endif
 #endif

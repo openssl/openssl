@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -24,6 +24,9 @@
 #include "ssl_local.h"
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_NAME)
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
@@ -253,11 +256,20 @@ void ssl_cert_free(CERT *c)
 int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
 {
     int i, r;
-    CERT_PKEY *cpk = s ? s->cert->key : ctx->cert->key;
+    CERT_PKEY *cpk = s != NULL ? s->cert->key : ctx->cert->key;
+    SSL_CTX *realctx = s != NULL ? s->ctx : ctx;
+
     if (!cpk)
         return 0;
     for (i = 0; i < sk_X509_num(chain); i++) {
-        r = ssl_security_cert(s, ctx, sk_X509_value(chain, i), 0, 0);
+        X509 *x = sk_X509_value(chain, i);
+
+        if (!X509v3_cache_extensions(x, realctx->libctx, realctx->propq)) {
+            SSLerr(0, ERR_LIB_X509);
+            return 0;
+        }
+
+        r = ssl_security_cert(s, ctx, x, 0, 0);
         if (r != 1) {
             SSLerr(SSL_F_SSL_CERT_SET0_CHAIN, r);
             return 0;
@@ -377,7 +389,7 @@ int ssl_verify_cert_chain(SSL *s, STACK_OF(X509) *sk)
     else
         verify_store = s->ctx->cert_store;
 
-    ctx = X509_STORE_CTX_new();
+    ctx = X509_STORE_CTX_new_with_libctx(s->ctx->libctx, s->ctx->propq);
     if (ctx == NULL) {
         SSLerr(SSL_F_SSL_VERIFY_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -602,14 +614,6 @@ static unsigned long xname_hash(const X509_NAME *a)
     return X509_NAME_hash((X509_NAME *)a);
 }
 
-/**
- * Load CA certs from a file into a ::STACK. Note that it is somewhat misnamed;
- * it doesn't really have anything to do with clients (except that a common use
- * for a stack of CAs is to send it to the client). Actually, it doesn't have
- * much to do with CAs, either, since it will load any old cert.
- * \param file the file containing one or more certs.
- * \return a ::STACK containing the certs.
- */
 STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
 {
     BIO *in = BIO_new(BIO_s_file());
@@ -667,15 +671,6 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     return ret;
 }
 
-/**
- * Add a file of certs to a stack.
- * \param stack the stack to add to.
- * \param file the file to add from. All certs in this file that are not
- * already in the stack will be added.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
                                         const char *file)
 {
@@ -726,17 +721,6 @@ int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
-/**
- * Add a directory of certs to a stack.
- * \param stack the stack to append to.
- * \param dir the directory to append from. All files in this directory will be
- * examined as potential certs. Any that are acceptable to
- * SSL_add_dir_cert_subjects_to_stack() that are not already in the stack will be
- * included.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
                                        const char *dir)
 {
@@ -783,15 +767,6 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
     return ret;
 }
 
-/**
- * Add a container of certs to a stack.
- * \param stack the stack to add to.
- * \param file the file to add from. All certs in this file that are not
- * already in the stack will be added.
- * \return 1 for success, 0 for failure. Note that in the case of failure some
- * certs may have been added to \c stack.
- */
-
 static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
                               const char *uri, int depth)
 {
@@ -815,8 +790,9 @@ static int add_uris_recursive(STACK_OF(X509_NAME) *stack,
              * This is an entry in the "directory" represented by the current
              * uri.  if |depth| allows, dive into it.
              */
-            if (depth == 0)
-                ok = add_uris_recursive(stack, uri, depth - 1);
+            if (depth > 0)
+                ok = add_uris_recursive(stack, OSSL_STORE_INFO_get0_NAME(info),
+                                        depth - 1);
         } else if (infotype == OSSL_STORE_INFO_CERT) {
             if ((x = OSSL_STORE_INFO_get0_CERT(info)) == NULL
                 || (xn = X509_get_subject_name(x)) == NULL
@@ -896,7 +872,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             untrusted = cpk->chain;
     }
 
-    xs_ctx = X509_STORE_CTX_new();
+    xs_ctx = X509_STORE_CTX_new_with_libctx(s->ctx->libctx, s->ctx->propq);
     if (xs_ctx == NULL) {
         SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
         goto err;

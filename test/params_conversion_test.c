@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -328,8 +328,14 @@ OPT_TEST_DECLARE_USAGE("file...\n")
 
 int setup_tests(void)
 {
-    size_t n = test_get_argument_count();
+    size_t n;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    n = test_get_argument_count();
     if (n == 0)
         return 0;
 

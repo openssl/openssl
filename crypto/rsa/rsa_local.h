@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -30,10 +30,14 @@ DEFINE_STACK_OF(RSA_PRIME_INFO)
 
 struct rsa_st {
     /*
-     * The first parameter is used to pickup errors where this is passed
-     * instead of an EVP_PKEY, it is set to 0
+     * #legacy
+     * The first field is used to pickup errors where this is passed
+     * instead of an EVP_PKEY.  It is always zero.
+     * THIS MUST REMAIN THE FIRST FIELD.
      */
-    int pad;
+    int dummy_zero;
+
+    OPENSSL_CTX *libctx;
     int32_t version;
     const RSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
@@ -46,12 +50,14 @@ struct rsa_st {
     BIGNUM *dmp1;
     BIGNUM *dmq1;
     BIGNUM *iqmp;
-    /* for multi-prime RSA, defined in RFC 8017 */
-    STACK_OF(RSA_PRIME_INFO) *prime_infos;
     /* If a PSS only key this contains the parameter restrictions */
     RSA_PSS_PARAMS *pss;
-    /* be careful using this if the RSA structure is shared */
+#ifndef FIPS_MODE
+    /* for multi-prime RSA, defined in RFC 8017 */
+    STACK_OF(RSA_PRIME_INFO) *prime_infos;
+    /* Be careful using this if the RSA structure is shared */
     CRYPTO_EX_DATA ex_data;
+#endif
     CRYPTO_REF_COUNT references;
     int flags;
     /* Used to cache montgomery values */
@@ -117,10 +123,6 @@ struct rsa_meth_st {
                                    BIGNUM *e, BN_GENCB *cb);
 };
 
-extern int int_rsa_verify(int dtype, const unsigned char *m,
-                          unsigned int m_len, unsigned char *rm,
-                          size_t *prm_len, const unsigned char *sigbuf,
-                          size_t siglen, RSA *rsa);
 /* Macros to test if a pkey or ctx is for a PSS key */
 #define pkey_is_pss(pkey) (pkey->ameth->pkey_id == EVP_PKEY_RSA_PSS)
 #define pkey_ctx_is_pss(ctx) (ctx->pmeth->pkey_id == EVP_PKEY_RSA_PSS)
@@ -135,8 +137,6 @@ void rsa_multip_info_free(RSA_PRIME_INFO *pinfo);
 RSA_PRIME_INFO *rsa_multip_info_new(void);
 int rsa_multip_calc_product(RSA *rsa);
 int rsa_multip_cap(int bits);
-
-uint16_t rsa_compute_security_bits(int n);
 
 int rsa_sp800_56b_validate_strength(int nbits, int strength);
 int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
@@ -168,5 +168,20 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
                                   const BIGNUM *Xq, const BIGNUM *Xq1,
                                   const BIGNUM *Xq2, int nbits,
                                   const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
+
+int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
+                                       int tlen, const unsigned char *from,
+                                       int flen);
+int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
+                                             unsigned char *to, int tlen,
+                                             const unsigned char *from,
+                                             int flen);
+int rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(OPENSSL_CTX *libctx,
+                                                unsigned char *to, int tlen,
+                                                const unsigned char *from,
+                                                int flen,
+                                                const unsigned char *param,
+                                                int plen, const EVP_MD *md,
+                                                const EVP_MD *mgf1md);
 
 #endif /* OSSL_CRYPTO_RSA_LOCAL_H */

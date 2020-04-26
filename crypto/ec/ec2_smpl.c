@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -7,6 +7,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <openssl/err.h>
 
@@ -950,8 +956,6 @@ const EC_METHOD *EC_GF2m_simple_method(void)
         ec_GF2m_simple_point_clear_finish,
         ec_GF2m_simple_point_copy,
         ec_GF2m_simple_point_set_to_infinity,
-        0, /* set_Jprojective_coordinates_GFp */
-        0, /* get_Jprojective_coordinates_GFp */
         ec_GF2m_simple_point_set_affine_coordinates,
         ec_GF2m_simple_point_get_affine_coordinates,
         0, /* point_set_compressed_coordinates */

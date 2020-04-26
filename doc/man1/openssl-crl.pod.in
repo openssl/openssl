@@ -1,13 +1,9 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-crl - CRL utility
+openssl-crl - CRL command
 
 =head1 SYNOPSIS
 
@@ -15,17 +11,25 @@ B<openssl> B<crl>
 [B<-help>]
 [B<-inform> B<DER>|B<PEM>]
 [B<-outform> B<DER>|B<PEM>]
+[B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
 [B<-text>]
 [B<-in> I<filename>]
 [B<-out> I<filename>]
-[B<-nameopt> I<option>]
+[B<-gendelta> I<filename>]
+[B<-badsig>]
+[B<-verify>]
 [B<-noout>]
 [B<-hash>]
+[B<-hash_old>]
+[B<-fingerprint>]
+[B<-crlnumber>]
 [B<-issuer>]
 [B<-lastupdate>]
 [B<-nextupdate>]
+{- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef hash_old
 
@@ -46,6 +50,10 @@ Print out a usage message.
 The input and output formats of the CRL; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
+=item B<-key> I<filename>
+
+The private key to be used to sign the CRL.
+
 =item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
 
 The format of the private key file; the default is B<PEM>.
@@ -61,18 +69,34 @@ option is not specified.
 Specifies the output filename to write to or standard output by
 default.
 
+=item B<-gendelta> I<filename>
+
+Output a comparison of the main CRL and the one specified here.
+
+=item B<-badsig>
+
+Corrupt the signature before writing it; this can be useful
+for testing.
+
 =item B<-text>
 
 Print out the CRL in text form.
 
-=item B<-nameopt> I<option>
+=item B<-verify>
 
-Option which determines how the subject or issuer names are displayed. See
-the description of B<-nameopt> in L<openssl-x509(1)>.
+Verify the signature in the CRL.
 
 =item B<-noout>
 
 Don't output the encoded version of the CRL.
+
+=item B<-fingerprint>
+
+Output the fingerprint of the CRL.
+
+=item B<-crlnumber>
+
+Output the number of the CRL.
 
 =item B<-hash>
 
@@ -96,7 +120,11 @@ Output the lastUpdate field.
 
 Output the nextUpdate field.
 
+{- $OpenSSL::safe::opt_name_item -}
+
 {- $OpenSSL::safe::opt_trust_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -125,7 +153,7 @@ L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

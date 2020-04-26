@@ -30,11 +30,11 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
                       unsigned char *out, size_t *outl, size_t outsz);
 
  /* Digest parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_params(void);
+ const OSSL_PARAM *OP_digest_gettable_params(void);
 
  /* Digest operation parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
- const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
+ const OSSL_PARAM *OP_digest_gettable_ctx_params(void);
+ const OSSL_PARAM *OP_digest_settable_ctx_params(void);
 
  /* Digest parameters */
  int OP_digest_get_params(OSSL_PARAM params[]);
@@ -100,7 +100,7 @@ structure for holding context information during a digest operation.
 A pointer to this context will be passed back in a number of the other digest
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(3)>).
+initialisation (see L<provider(7)>).
 
 OP_digest_freectx() is passed a pointer to the provider side digest context in
 the I<dctx> parameter.
@@ -132,7 +132,7 @@ The digest should not exceed I<outsz> bytes.
 OP_digest_digest() is a "oneshot" digest function.
 No provider side digest context is used.
 Instead the provider context that was created during provider initialisation is
-passed in the I<provctx> parameter (see L<provider(3)>).
+passed in the I<provctx> parameter (see L<provider(7)>).
 I<inl> bytes at I<in> should be digested and the result should be stored at
 I<out>. The length of the digest should be stored in I<*outl> which should not
 exceed I<outsz> bytes.
@@ -227,44 +227,6 @@ values associated with the give provider side digest context I<dctx>
 and stores them in I<params>.
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-Parameters currently recognised by built-in digests are as follows. Not all
-parameters are relevant to, or are understood by all digests:
-
-=over 4
-
-=item "xoflen" (B<OSSL_DIGEST_PARAM_XOFLEN>) <unsigned integer>
-
-Sets the digest length for extendable output functions.
-The length of the "xoflen" parameter should not exceed that of a B<size_t>.
-
-=item "ssl3-ms" (B<OSSL_DIGEST_PARAM_SSL3_MS>) <octet string>
-
-This parameter is set by libssl in order to calculate a signature hash for an
-SSLv3 CertificateVerify message as per RFC6101.
-It is only set after all handshake messages have already been digested via
-OP_digest_update() calls.
-The parameter provides the master secret value to be added to the digest.
-The digest implementation should calculate the complete digest as per RFC6101
-section 5.6.8.
-The next call after setting this parameter will be OP_digest_final().
-This is only relevant for implementations of SHA1 or MD5_SHA1.
-
-=item "pad_type" (B<OSSL_DIGEST_PARAM_PAD_TYPE>) <unsigned integer>
-
-Sets the pad type to be used.
-The only built-in digest that uses this is MDC2.
-Normally the final MDC2 block is padded with 0s.
-If the pad type is set to 2 then the final block is padded with 0x80 followed by
-0s.
-
-=item "micalg" (B<OSSL_DIGEST_PARAM_MICALG>) <UTF8 string>
-
-Gets the digest Message Integrity Check algorithm string.
-This is used when creating S/MIME multipart/signed messages, as specified in
-RFC 5751.
-
-=back
-
 =head1 RETURN VALUES
 
 OP_digest_newctx() and OP_digest_dupctx() should return the newly created
@@ -281,7 +243,8 @@ algorithm.
 
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>, L<OSSL_PROVIDER-FIPS(7)>, L<OSSL_PROVIDER-default(7)>,
+L<OSSL_PROVIDER-legacy(7)>
 
 =head1 HISTORY
 
@@ -289,7 +252,7 @@ The provider DIGEST interface was introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

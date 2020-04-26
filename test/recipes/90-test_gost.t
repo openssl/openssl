@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,9 @@ plan skip_all => "TLSv1.3 or TLSv1.2 are disabled in this OpenSSL build"
 plan skip_all => "EC is disabled in this OpenSSL build"
     if disabled("ec");
 
+#Gost engine uses some deprecated functions
+plan skip_all => "Deprecated functions are disabled in this OpenSSL build"
+    if disabled("deprecated");
 
 plan skip_all => "No test GOST engine found"
     if !$ENV{OPENSSL_GOST_ENGINE_SO};
@@ -31,7 +34,7 @@ plan skip_all => "No test GOST engine found"
 plan tests => 1;
 
 $ENV{OPENSSL_CONF} = srctop_file("test", "recipes", "90-test_gost_data",
-                                 "gost.conf");
+                                 "gost.cnf");
 
 ok(run(test(["gosttest",
              srctop_file("test", "recipes", "90-test_gost_data",

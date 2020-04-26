@@ -25,6 +25,11 @@
 
 #ifndef OPENSSL_NO_RFC3779
 
+DEFINE_STACK_OF(IPAddressOrRange)
+DEFINE_STACK_OF(IPAddressFamily)
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(X509)
+
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
  */

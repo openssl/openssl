@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_PKCS7_H
 # endif
 
@@ -27,6 +27,7 @@
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
 
 /*-
 Encryption_ID           DES-CBC
@@ -51,8 +52,7 @@ typedef struct pkcs7_signer_info_st {
     /* The private key to sign with */
     EVP_PKEY *pkey;
 } PKCS7_SIGNER_INFO;
-
-DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
+DEFINE_OR_DECLARE_STACK_OF(PKCS7_SIGNER_INFO)
 
 typedef struct pkcs7_recip_info_st {
     ASN1_INTEGER *version;      /* version 0 */
@@ -61,8 +61,8 @@ typedef struct pkcs7_recip_info_st {
     ASN1_OCTET_STRING *enc_key;
     X509 *cert;                 /* get the pub-key from this */
 } PKCS7_RECIP_INFO;
+DEFINE_OR_DECLARE_STACK_OF(PKCS7_RECIP_INFO)
 
-DEFINE_STACK_OF(PKCS7_RECIP_INFO)
 
 typedef struct pkcs7_signed_st {
     ASN1_INTEGER *version;      /* version 1 */
@@ -148,8 +148,8 @@ typedef struct pkcs7_st {
         ASN1_TYPE *other;
     } d;
 } PKCS7;
+DEFINE_OR_DECLARE_STACK_OF(PKCS7)
 
-DEFINE_STACK_OF(PKCS7)
 
 # define PKCS7_OP_SET_DETACHED_SIGNATURE 1
 # define PKCS7_OP_GET_DETACHED_SIGNATURE 2

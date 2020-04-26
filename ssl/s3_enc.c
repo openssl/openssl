@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -17,7 +17,7 @@
 
 static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
 {
-    EVP_MD *md5;
+    const EVP_MD *md5 = NULL, *sha1 = NULL;
     EVP_MD_CTX *m5;
     EVP_MD_CTX *s1;
     unsigned char buf[16], smd[SHA_DIGEST_LENGTH];
@@ -29,10 +29,11 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     c = os_toascii[c];          /* 'A' in ASCII */
 #endif
     k = 0;
-    md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");
+    md5 = ssl_evp_md_fetch(s->ctx->libctx, NID_md5, s->ctx->propq);
+    sha1 = ssl_evp_md_fetch(s->ctx->libctx, NID_sha1, s->ctx->propq);
     m5 = EVP_MD_CTX_new();
     s1 = EVP_MD_CTX_new();
-    if (md5 == NULL || m5 == NULL || s1 == NULL) {
+    if (md5 == NULL || sha1 == NULL || m5 == NULL || s1 == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_GENERATE_KEY_BLOCK,
                  ERR_R_MALLOC_FAILURE);
         goto err;
@@ -49,7 +50,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
         for (j = 0; j < k; j++)
             buf[j] = c;
         c++;
-        if (!EVP_DigestInit_ex(s1, EVP_sha1(), NULL)
+        if (!EVP_DigestInit_ex(s1, sha1, NULL)
             || !EVP_DigestUpdate(s1, buf, k)
             || !EVP_DigestUpdate(s1, s->session->master_key,
                                  s->session->master_key_length)
@@ -86,7 +87,8 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
  err:
     EVP_MD_CTX_free(m5);
     EVP_MD_CTX_free(s1);
-    EVP_MD_free(md5);
+    ssl_evp_md_free(md5);
+    ssl_evp_md_free(sha1);
     return ret;
 }
 
@@ -257,13 +259,16 @@ int ssl3_setup_key_block(SSL *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(s->session, &c, &hash, NULL, NULL, &comp, 0)) {
+    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, NULL, NULL, &comp,
+                            0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
+    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
     s->s3.tmp.new_sym_enc = c;
+    ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
 #ifdef OPENSSL_NO_COMP
     s->s3.tmp.new_compression = NULL;

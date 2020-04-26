@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@
 # - code was made position-independent;
 # - rounds were folded into a loop resulting in >5x size reduction
 #   from 12.5KB to 2.2KB;
-# - above was possibile thanks to mixcolumns() modification that
+# - above was possible thanks to mixcolumns() modification that
 #   allowed to feed its output back to aesenc[last], this was
 #   achieved at cost of two additional inter-registers moves;
 # - some instruction reordering and interleaving;
@@ -1616,6 +1616,7 @@ $code.=<<___;
 .align	16
 bsaes_cbc_encrypt:
 .cfi_startproc
+	endbranch
 ___
 $code.=<<___ if ($win64);
 	mov	48(%rsp),$arg6		# pull direction flag
@@ -1921,6 +1922,7 @@ $code.=<<___;
 .align	16
 bsaes_ctr32_encrypt_blocks:
 .cfi_startproc
+	endbranch
 	mov	%rsp, %rax
 .Lctr_enc_prologue:
 	push	%rbp
@@ -3238,4 +3240,4 @@ $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 
 print $code;
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

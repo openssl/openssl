@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2009-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2009-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -604,4 +604,4 @@ $code =~ s/\b(alignaddr)\s+(%[goli][0-7]),(%[goli][0-7]),(%[goli][0-7])/
 		&unalignaddr($1,$2,$3,$4)
 	  /gem;
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

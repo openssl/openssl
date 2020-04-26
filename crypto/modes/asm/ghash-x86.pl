@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2010-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1377,7 +1377,7 @@ my ($Xhi,$Xi)=@_;
 &asciz("GHASH for x86, CRYPTOGAMS by <appro\@openssl.org>");
 &asm_finish();
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";
 
 # A question was risen about choice of vanilla MMX. Or rather why wasn't
 # SSE2 chosen instead? In addition to the fact that MMX runs on legacy

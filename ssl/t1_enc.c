@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -46,7 +46,7 @@ static int tls1_PRF(SSL *s,
             SSLerr(SSL_F_TLS1_PRF, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_TLS1_PRF, NULL);
+    kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_TLS1_PRF, s->ctx->propq);
     if (kdf == NULL)
         goto err;
     kctx = EVP_KDF_CTX_new(kdf);
@@ -55,7 +55,7 @@ static int tls1_PRF(SSL *s,
         goto err;
     mdname = EVP_MD_name(md);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
+                                            (char *)mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
                                              (unsigned char *)sec,
                                              (size_t)slen);
@@ -326,7 +326,9 @@ int tls1_change_cipher_state(SSL *s, int which)
         mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
                                                (int)*mac_secret_size);
         if (mac_key == NULL
-            || EVP_DigestSignInit(mac_ctx, NULL, m, NULL, mac_key) <= 0) {
+            || EVP_DigestSignInit_ex(mac_ctx, NULL,
+                                     EVP_MD_name(m), s->ctx->propq,
+                                     mac_key, s->ctx->libctx) <= 0) {
             EVP_PKEY_free(mac_key);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
                      ERR_R_INTERNAL_ERROR);
@@ -409,6 +411,9 @@ int tls1_change_cipher_state(SSL *s, int which)
             break;
         case SSL_SHA256:
             crypto_info.auth_algorithm = CRYPTO_SHA2_256_HMAC;
+            break;
+        case SSL_SHA384:
+            crypto_info.auth_algorithm = CRYPTO_SHA2_384_HMAC;
             break;
         default:
             goto skip_ktls;
@@ -535,14 +540,16 @@ int tls1_setup_key_block(SSL *s)
     if (s->s3.tmp.key_block_length != 0)
         return 1;
 
-    if (!ssl_cipher_get_evp(s->session, &c, &hash, &mac_type, &mac_secret_size,
-                            &comp, s->ext.use_etm)) {
+    if (!ssl_cipher_get_evp(s->ctx, s->session, &c, &hash, &mac_type,
+                            &mac_secret_size, &comp, s->ext.use_etm)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_SETUP_KEY_BLOCK,
                  SSL_R_CIPHER_OR_HASH_UNAVAILABLE);
         return 0;
     }
 
+    ssl_evp_cipher_free(s->s3.tmp.new_sym_enc);
     s->s3.tmp.new_sym_enc = c;
+    ssl_evp_md_free(s->s3.tmp.new_hash);
     s->s3.tmp.new_hash = hash;
     s->s3.tmp.new_mac_pkey_type = mac_type;
     s->s3.tmp.new_mac_secret_size = mac_secret_size;
@@ -638,7 +645,7 @@ int tls1_generate_master_secret(SSL *s, unsigned char *out, unsigned char *p,
         unsigned char hash[EVP_MAX_MD_SIZE * 2];
         size_t hashlen;
         /*
-         * Digest cached records keeping record buffer (if present): this wont
+         * Digest cached records keeping record buffer (if present): this won't
          * affect client auth because we're freezing the buffer at the same
          * point (after client key exchange and before certificate verify)
          */

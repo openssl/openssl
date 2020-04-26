@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -15,6 +15,10 @@
 #include <openssl/cmperr.h>
 #include <openssl/err.h> /* should be implied by cmperr.h */
 #include <openssl/x509v3.h>
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_OBJECT)
+DEFINE_STACK_OF(ASN1_UTF8STRING)
 
 /*
  * use trace API for CMP-specific logging, prefixed by "CMP " and severity
@@ -69,7 +73,8 @@ static OSSL_CMP_severity parse_level(const char *level)
 }
 
 const char *ossl_cmp_log_parse_metadata(const char *buf,
-                 OSSL_CMP_severity *level, char **func, char **file, int *line)
+                                        OSSL_CMP_severity *level,
+                                        char **func, char **file, int *line)
 {
     const char *p_func = buf;
     const char *p_file = buf == NULL ? NULL : strchr(buf, ':');
@@ -106,129 +111,76 @@ const char *ossl_cmp_log_parse_metadata(const char *buf,
     return msg;
 }
 
-
+#define UNKNOWN_FUNC "(unknown function)" /* the default for OPENSSL_FUNC */
 /*
- * auxiliary function for incrementally reporting texts via the error queue
+ * substitute fallback if component/function name is NULL or empty or contains
+ * just pseudo-information "(unknown function)" due to -pedantic and macros.h
  */
-static void put_error(int lib, const char *func, int reason,
-                      const char *file, int line)
+static const char *improve_location_name(const char *func, const char *fallback)
 {
-    ERR_new();
-    ERR_set_debug(file, line, func);
-    ERR_set_error(lib, reason, NULL /* no data here, so fmt is NULL */);
+    if (fallback == NULL)
+        return func == NULL ? UNKNOWN_FUNC : func;
+
+    return func == NULL || *func == '\0' || strcmp(func, UNKNOWN_FUNC) == 0
+        ? fallback : func;
 }
 
-#define ERR_print_errors_cb_LIMIT 4096 /* size of char buf[] variable there */
-#define TYPICAL_MAX_OUTPUT_BEFORE_DATA 100
-#define MAX_DATA_LEN (ERR_print_errors_cb_LIMIT-TYPICAL_MAX_OUTPUT_BEFORE_DATA)
-void ossl_cmp_add_error_txt(const char *separator, const char *txt)
+int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
+                          int line, OSSL_CMP_severity level, const char *msg)
 {
-    const char *file = NULL;
-    int line;
-    const char *func = NULL;
-    const char *data = NULL;
-    int flags;
-    unsigned long err = ERR_peek_last_error();
+    const char *level_string =
+        level == OSSL_CMP_LOG_EMERG ? "EMERG" :
+        level == OSSL_CMP_LOG_ALERT ? "ALERT" :
+        level == OSSL_CMP_LOG_CRIT ? "CRIT" :
+        level == OSSL_CMP_LOG_ERR ? "error" :
+        level == OSSL_CMP_LOG_WARNING ? "warning" :
+        level == OSSL_CMP_LOG_NOTICE ? "NOTE" :
+        level == OSSL_CMP_LOG_INFO ? "info" :
+        level == OSSL_CMP_LOG_DEBUG ? "DEBUG" : "(unknown level)";
 
-    if (separator == NULL)
-        separator = "";
-    if (err == 0)
-        put_error(ERR_LIB_CMP, NULL, 0, "", 0);
-
-    do {
-        size_t available_len, data_len;
-        const char *curr = txt, *next = txt;
-        char *tmp;
-
-        ERR_peek_last_error_all(&file, &line, &func, &data, &flags);
-        if ((flags & ERR_TXT_STRING) == 0) {
-            data = "";
-            separator = "";
-        }
-        data_len = strlen(data);
-
-        /* workaround for limit of ERR_print_errors_cb() */
-        if (data_len >= MAX_DATA_LEN
-                || strlen(separator) >= (size_t)(MAX_DATA_LEN - data_len))
-            available_len = 0;
-        else
-            available_len = MAX_DATA_LEN - data_len - strlen(separator) - 1;
-        /* MAX_DATA_LEN > available_len >= 0 */
-
-        if (separator[0] == '\0') {
-            const size_t len_next = strlen(next);
-
-            if (len_next <= available_len) {
-                next += len_next;
-                curr = NULL; /* no need to split */
-            }
-            else {
-                next += available_len;
-                curr = next; /* will split at this point */
-            }
-        } else {
-            while (*next != '\0' && (size_t)(next - txt) <= available_len) {
-                curr = next;
-                next = strstr(curr, separator);
-                if (next != NULL)
-                    next += strlen(separator);
-                else
-                    next = curr + strlen(curr);
-            }
-            if ((size_t)(next - txt) <= available_len)
-                curr = NULL; /* the above loop implies *next == '\0' */
-        }
-        if (curr != NULL) {
-            /* split error msg at curr since error data would get too long */
-            if (curr != txt) {
-                tmp = OPENSSL_strndup(txt, curr - txt);
-                if (tmp == NULL)
-                    return;
-                ERR_add_error_data(2, separator, tmp);
-                OPENSSL_free(tmp);
-            }
-            put_error(ERR_LIB_CMP, func, err, file, line);
-            txt = curr;
-        } else {
-            ERR_add_error_data(2, separator, txt);
-            txt = next; /* finished */
-        }
-    } while (*txt != '\0');
+#ifndef NDEBUG
+    if (BIO_printf(bio, "%s:%s:%d:", improve_location_name(component, "CMP"),
+                   file, line) < 0)
+        return 0;
+#endif
+    return BIO_printf(bio, OSSL_CMP_LOG_PREFIX"%s: %s\n",
+                      level_string, msg) >= 0;
 }
 
+#define ERR_PRINT_BUF_SIZE 4096
 /* this is similar to ERR_print_errors_cb, but uses the CMP-specific cb type */
-void OSSL_CMP_print_errors_cb(OSSL_cmp_log_cb_t log_fn)
+void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
 {
     unsigned long err;
-    char msg[ERR_print_errors_cb_LIMIT];
+    char msg[ERR_PRINT_BUF_SIZE];
     const char *file = NULL, *func = NULL, *data = NULL;
     int line, flags;
 
-    if (log_fn == NULL) {
-#ifndef OPENSSL_NO_STDIO
-        ERR_print_errors_fp(stderr);
-#else
-        /* CMPerr(0, CMP_R_NO_STDIO) makes no sense during error printing */
-#endif
-        return;
-    }
-
     while ((err = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
-        char component[128];
-        const char *func_ = func != NULL && *func != '\0' ? func : "<unknown>";
+        const char *component =
+            improve_location_name(func, ERR_lib_error_string(err));
 
         if (!(flags & ERR_TXT_STRING))
             data = NULL;
-#ifdef OSSL_CMP_PRINT_LIBINFO
-        BIO_snprintf(component, sizeof(component), "OpenSSL:%s:%s",
-                     ERR_lib_error_string(err), func_);
-#else
-        BIO_snprintf(component, sizeof(component), "%s",func_);
-#endif
         BIO_snprintf(msg, sizeof(msg), "%s%s%s", ERR_reason_error_string(err),
-                     data == NULL ? "" : " : ", data == NULL ? "" : data);
-        if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
-            break;              /* abort outputting the error report */
+                     data == NULL || *data == '\0' ? "" : " : ",
+                     data == NULL ? "" : data);
+        if (log_fn == NULL) {
+#ifndef OPENSSL_NO_STDIO
+            BIO *bio = BIO_new_fp(stderr, BIO_NOCLOSE);
+
+            if (bio != NULL) {
+                OSSL_CMP_print_to_bio(bio, component, file, line,
+                                      OSSL_CMP_LOG_ERR, msg);
+                BIO_free(bio);
+            }
+#else
+            /* CMPerr(0, CMP_R_NO_STDIO) makes no sense during error printing */
+#endif
+        } else {
+            if (log_fn(component, file, line, OSSL_CMP_LOG_ERR, msg) <= 0)
+                break; /* abort outputting the error report */
+        }
     }
 }
 
@@ -266,7 +218,7 @@ int ossl_cmp_sk_X509_add1_cert(STACK_OF(X509) *sk, X509 *cert,
 }
 
 int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
-                                int no_self_signed, int no_dups, int prepend)
+                                int no_self_issued, int no_dups, int prepend)
 /* compiler would allow 'const' for the list of certs, yet they are up-ref'ed */
 {
     int i;
@@ -278,7 +230,7 @@ int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
     for (i = 0; i < sk_X509_num(certs); i++) { /* certs may be NULL */
         X509 *cert = sk_X509_value(certs, i);
 
-        if (!no_self_signed || X509_check_issued(cert, cert) != X509_V_OK) {
+        if (!no_self_issued || X509_check_issued(cert, cert) != X509_V_OK) {
             if (!ossl_cmp_sk_X509_add1_cert(sk, cert, no_dups, prepend))
                 return 0;
         }
@@ -287,7 +239,7 @@ int ossl_cmp_sk_X509_add1_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs,
 }
 
 int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
-                                   int only_self_signed)
+                                   int only_self_issued)
 {
     int i;
 
@@ -300,43 +252,11 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
     for (i = 0; i < sk_X509_num(certs); i++) {
         X509 *cert = sk_X509_value(certs, i);
 
-        if (!only_self_signed || X509_check_issued(cert, cert) == X509_V_OK)
+        if (!only_self_issued || X509_check_issued(cert, cert) == X509_V_OK)
             if (!X509_STORE_add_cert(store, cert)) /* ups cert ref counter */
                 return 0;
     }
     return 1;
-}
-
-STACK_OF(X509) *ossl_cmp_X509_STORE_get1_certs(X509_STORE *store)
-{
-    int i;
-    STACK_OF(X509) *sk;
-    STACK_OF(X509_OBJECT) *objs;
-
-    if (store == NULL) {
-        CMPerr(0, CMP_R_NULL_ARGUMENT);
-        return 0;
-    }
-    if ((sk = sk_X509_new_null()) == NULL)
-        return NULL;
-    objs = X509_STORE_get0_objects(store);
-    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
-        X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
-
-        if (cert != NULL) {
-            if (!sk_X509_push(sk, cert))
-                goto err;
-            if (!X509_up_ref(cert)) {
-                (void)sk_X509_pop(sk);
-                goto err;
-            }
-        }
-    }
-    return sk;
-
- err:
-    sk_X509_pop_free(sk, X509_free);
-    return NULL;
 }
 
 /*-
@@ -390,10 +310,10 @@ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
 
     chain = X509_STORE_CTX_get0_chain(csc);
 
-    /* result list to store the up_ref'ed not self-signed certificates */
+    /* result list to store the up_ref'ed not self-issued certificates */
     if ((result = sk_X509_new_null()) == NULL)
         goto err;
-    if (!ossl_cmp_sk_X509_add1_certs(result, chain, 1 /* no self-signed */,
+    if (!ossl_cmp_sk_X509_add1_certs(result, chain, 1 /* no self-issued */,
                                      1 /* no duplicates */, 0)) {
         sk_X509_free(result);
         result = NULL;
@@ -405,24 +325,46 @@ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
     return result;
 }
 
+int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
+                                         const char *text)
+{
+    ASN1_UTF8STRING *utf8string;
+
+    if (!ossl_assert(sk != NULL && text != NULL))
+        return 0;
+    if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
+        return 0;
+    if (!ASN1_STRING_set(utf8string, text, -1))
+        goto err;
+    if (!sk_ASN1_UTF8STRING_push(sk, utf8string))
+        goto err;
+    return 1;
+
+ err:
+    ASN1_UTF8STRING_free(utf8string);
+    return 0;
+}
+
 int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
                                     const ASN1_OCTET_STRING *src)
 {
+    ASN1_OCTET_STRING *new;
     if (tgt == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
     if (*tgt == src) /* self-assignment */
         return 1;
-    ASN1_OCTET_STRING_free(*tgt);
 
     if (src != NULL) {
-        if ((*tgt = ASN1_OCTET_STRING_dup(src)) == NULL)
+        if ((new = ASN1_OCTET_STRING_dup(src)) == NULL)
             return 0;
     } else {
-        *tgt = NULL;
+        new = NULL;
     }
 
+    ASN1_OCTET_STRING_free(*tgt);
+    *tgt = new;
     return 1;
 }
 
@@ -436,7 +378,7 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
         return 0;
     }
     if (bytes != NULL) {
-        if ((new =  ASN1_OCTET_STRING_new()) == NULL
+        if ((new = ASN1_OCTET_STRING_new()) == NULL
                 || !(ASN1_OCTET_STRING_set(new, bytes, len))) {
             ASN1_OCTET_STRING_free(new);
             return 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -124,6 +124,9 @@ struct ossl_param_st {
  *
  * WARNING!  Using these is FRAGILE, as it assumes that the actual
  * data and its location are constant.
+ *
+ * EXTRA WARNING!  If you are not completely sure you most likely want
+ * to use the OSSL_PARAM_UTF8_STRING type.
  */
 # define OSSL_PARAM_UTF8_PTR             6
 /*-
@@ -140,6 +143,9 @@ struct ossl_param_st {
  *
  * WARNING!  Using these is FRAGILE, as it assumes that the actual
  * data and its location are constant.
+ *
+ * EXTRA WARNING!  If you are not completely sure you most likely want
+ * to use the OSSL_PARAM_OCTET_STRING type.
  */
 # define OSSL_PARAM_OCTET_PTR            7
 
@@ -186,6 +192,31 @@ extern OSSL_provider_init_fn OSSL_provider_init;
 # ifdef __VMS
 #  pragma names restore
 # endif
+
+/*
+ * Generic callback function signature.
+ *
+ * The expectation is that any provider function that wants to offer
+ * a callback / hook can do so by taking an argument with this type,
+ * as well as a pointer to caller-specific data.  When calling the
+ * callback, the provider function can populate an OSSL_PARAM array
+ * with data of its choice and pass that in the callback call, along
+ * with the caller data argument.
+ *
+ * libcrypto may use the OSSL_PARAM array to create arguments for an
+ * application callback it knows about.
+ */
+typedef int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
+
+/*
+ * Passphrase callback function signature
+ *
+ * This is similar to the generic callback function above, but adds a
+ * result parameter.
+ */
+typedef int (OSSL_PASSPHRASE_CALLBACK)(char *pass, size_t pass_size,
+                                       size_t *pass_len,
+                                       const OSSL_PARAM params[], void *arg);
 
 # ifdef __cplusplus
 }

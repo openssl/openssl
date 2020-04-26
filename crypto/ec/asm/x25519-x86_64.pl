@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -92,7 +92,7 @@ if (!$addx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$addx = ($1>=12);
 }
 
-if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9])\.([0-9]+)/) {
+if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([0-9]+)\.([0-9]+)/) {
 	my $ver = $2 + $3/100.0;	# 3.1->3.01, 3.10->3.10
 	$addx = ($ver>=3.03);
 }
@@ -490,12 +490,14 @@ $code.=<<___;
 .type	x25519_fe64_eligible,\@abi-omnipotent
 .align	32
 x25519_fe64_eligible:
+.cfi_startproc
 	mov	OPENSSL_ia32cap_P+8(%rip),%ecx
 	xor	%eax,%eax
 	and	\$0x80100,%ecx
 	cmp	\$0x80100,%ecx
 	cmove	%ecx,%eax
 	ret
+.cfi_endproc
 .size	x25519_fe64_eligible,.-x25519_fe64_eligible
 
 .globl	x25519_fe64_mul
@@ -724,6 +726,7 @@ x25519_fe64_sqr:
 .align	32
 x25519_fe64_mul121666:
 .Lfe64_mul121666_body:
+.cfi_startproc
 	mov	\$121666,%edx
 	mulx	8*0(%rsi),$acc0,%rcx
 	mulx	8*1(%rsi),$acc1,%rax
@@ -752,6 +755,7 @@ x25519_fe64_mul121666:
 
 .Lfe64_mul121666_epilogue:
 	ret
+.cfi_endproc
 .size	x25519_fe64_mul121666,.-x25519_fe64_mul121666
 
 .globl	x25519_fe64_add
@@ -759,6 +763,7 @@ x25519_fe64_mul121666:
 .align	32
 x25519_fe64_add:
 .Lfe64_add_body:
+.cfi_startproc
 	mov	8*0(%rsi),$acc0
 	mov	8*1(%rsi),$acc1
 	mov	8*2(%rsi),$acc2
@@ -787,6 +792,7 @@ x25519_fe64_add:
 
 .Lfe64_add_epilogue:
 	ret
+.cfi_endproc
 .size	x25519_fe64_add,.-x25519_fe64_add
 
 .globl	x25519_fe64_sub
@@ -794,6 +800,7 @@ x25519_fe64_add:
 .align	32
 x25519_fe64_sub:
 .Lfe64_sub_body:
+.cfi_startproc
 	mov	8*0(%rsi),$acc0
 	mov	8*1(%rsi),$acc1
 	mov	8*2(%rsi),$acc2
@@ -822,6 +829,7 @@ x25519_fe64_sub:
 
 .Lfe64_sub_epilogue:
 	ret
+.cfi_endproc
 .size	x25519_fe64_sub,.-x25519_fe64_sub
 
 .globl	x25519_fe64_tobytes
@@ -829,6 +837,7 @@ x25519_fe64_sub:
 .align	32
 x25519_fe64_tobytes:
 .Lfe64_to_body:
+.cfi_startproc
 	mov	8*0(%rsi),$acc0
 	mov	8*1(%rsi),$acc1
 	mov	8*2(%rsi),$acc2
@@ -864,6 +873,7 @@ x25519_fe64_tobytes:
 
 .Lfe64_to_epilogue:
 	ret
+.cfi_endproc
 .size	x25519_fe64_tobytes,.-x25519_fe64_tobytes
 ___
 } else {
@@ -872,8 +882,10 @@ $code.=<<___;
 .type	x25519_fe64_eligible,\@abi-omnipotent
 .align	32
 x25519_fe64_eligible:
+.cfi_startproc
 	xor	%eax,%eax
 	ret
+.cfi_endproc
 .size	x25519_fe64_eligible,.-x25519_fe64_eligible
 
 .globl	x25519_fe64_mul
@@ -889,8 +901,10 @@ x25519_fe64_mul121666:
 x25519_fe64_add:
 x25519_fe64_sub:
 x25519_fe64_tobytes:
+.cfi_startproc
 	.byte	0x0f,0x0b	# ud2
 	ret
+.cfi_endproc
 .size	x25519_fe64_mul,.-x25519_fe64_mul
 ___
 }
@@ -1116,4 +1130,4 @@ ___
 
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

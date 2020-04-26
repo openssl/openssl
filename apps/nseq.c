@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,16 +14,26 @@
 #include <openssl/pem.h>
 #include <openssl/err.h>
 
+DEFINE_STACK_OF(X509)
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_TOSEQ, OPT_IN, OPT_OUT
+    OPT_TOSEQ, OPT_IN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS nseq_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"toseq", OPT_TOSEQ, '-', "Output NS Sequence file"},
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
+
+    OPT_SECTION("Output"),
+    {"toseq", OPT_TOSEQ, '-', "Output NS Sequence file"},
     {"out", OPT_OUT, '>', "Output file"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -57,6 +67,10 @@ int nseq_main(int argc, char **argv)
         case OPT_OUT:
             outfile = opt_arg();
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -77,8 +91,10 @@ int nseq_main(int argc, char **argv)
         seq->certs = sk_X509_new_null();
         if (seq->certs == NULL)
             goto end;
-        while ((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL)))
-            sk_X509_push(seq->certs, x509);
+        while ((x509 = PEM_read_bio_X509(in, NULL, NULL, NULL))) {
+            if (!sk_X509_push(seq->certs, x509))
+                goto end;
+        }
 
         if (!sk_X509_num(seq->certs)) {
             BIO_printf(bio_err, "%s: Error reading certs file %s\n",

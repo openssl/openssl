@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_COMP_H
 # endif
 
@@ -41,8 +41,8 @@ int COMP_expand_block(COMP_CTX *ctx, unsigned char *out, int olen,
 
 COMP_METHOD *COMP_zlib(void);
 
-#if !OPENSSL_API_1_1_0
-#define COMP_zlib_cleanup() while(0) continue
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
+# define COMP_zlib_cleanup() while(0) continue
 #endif
 
 # ifdef OPENSSL_BIO_H

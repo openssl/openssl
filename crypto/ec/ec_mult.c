@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -7,6 +7,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <string.h>
 #include <openssl/err.h>
@@ -260,17 +266,10 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
         goto err;
     }
 
-    /*-
-     * Apply coordinate blinding for EC_POINT.
-     *
-     * The underlying EC_METHOD can optionally implement this function:
-     * ec_point_blind_coordinates() returns 0 in case of errors or 1 on
-     * success or if coordinate blinding is not implemented for this
-     * group.
-     */
-    if (!ec_point_blind_coordinates(group, p, ctx)) {
-        ECerr(EC_F_EC_SCALAR_MUL_LADDER, EC_R_POINT_COORDINATES_BLIND_FAILURE);
-        goto err;
+    /* ensure input point is in affine coords for ladder step efficiency */
+    if (!p->Z_is_one && !EC_POINT_make_affine(group, p, ctx)) {
+            ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_EC_LIB);
+            goto err;
     }
 
     /* Initialize the Montgomery ladder */
@@ -747,6 +746,20 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                     if (r_is_at_infinity) {
                         if (!EC_POINT_copy(r, val_sub[i][digit >> 1]))
                             goto err;
+
+                        /*-
+                         * Apply coordinate blinding for EC_POINT.
+                         *
+                         * The underlying EC_METHOD can optionally implement this function:
+                         * ec_point_blind_coordinates() returns 0 in case of errors or 1 on
+                         * success or if coordinate blinding is not implemented for this
+                         * group.
+                         */
+                        if (!ec_point_blind_coordinates(group, r, ctx)) {
+                            ECerr(EC_F_EC_WNAF_MUL, EC_R_POINT_COORDINATES_BLIND_FAILURE);
+                            goto err;
+                        }
+
                         r_is_at_infinity = 0;
                     } else {
                         if (!EC_POINT_add

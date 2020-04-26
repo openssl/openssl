@@ -18,7 +18,7 @@ IF[{- !$disabled{asm} -}]
   $ECASM_mips32=
   $ECASM_mips64=
 
-  $ECASM_s390x=ecp_s390x_nistp.c
+  $ECASM_s390x=ecp_s390x_nistp.c ecx_s390x.c
   $ECDEF_s390x=S390X_EC_ASM
 
   $ECASM_armv4=ecp_nistz256.c ecp_nistz256-armv4.S
@@ -43,19 +43,21 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-LIBS=../../libcrypto
-
 $COMMON=ec_lib.c ecp_smpl.c ecp_mont.c ecp_nist.c ec_cvt.c ec_mult.c \
-        ec_curve.c ec_check.c ec_print.c ec_key.c ec_asn1.c \
+        ec_curve.c ec_check.c ec_print.c ec_key.c ecx_key.c ec_asn1.c \
         ec2_smpl.c \
-        ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c \
         ecp_oct.c ec2_oct.c ec_oct.c ec_kmeth.c ecdh_ossl.c \
         ecdsa_ossl.c ecdsa_sign.c ecdsa_vrf.c curve25519.c \
         curve448/arch_32/f_impl.c curve448/f_generic.c curve448/scalar.c \
         curve448/curve448_tables.c curve448/eddsa.c curve448/curve448.c \
-        $ECASM
-SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ec_err.c \
-                        ecdh_kdf.c eck_prn.c
+        $ECASM ec_backend.c ecx_backend.c
+
+IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
+  $COMMON=$COMMON ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
+ENDIF
+
+SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
+                        ec_err.c ecdh_kdf.c eck_prn.c ec_ctrl.c
 SOURCE[../../providers/libfips.a]=$COMMON
 
 # Implementations are now spread across several libraries, so the defines
@@ -74,6 +76,7 @@ GENERATE[ecp_nistz256-sparcv9.S]=asm/ecp_nistz256-sparcv9.pl
 INCLUDE[ecp_nistz256-sparcv9.o]=..
 
 INCLUDE[ecp_s390x_nistp.o]=..
+INCLUDE[ecx_s390x.o]=..
 INCLUDE[ecx_meth.o]=..
 
 GENERATE[ecp_nistz256-armv4.S]=asm/ecp_nistz256-armv4.pl

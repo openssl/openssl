@@ -262,6 +262,11 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
 
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
+    }
+
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;

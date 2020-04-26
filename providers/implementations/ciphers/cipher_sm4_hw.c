@@ -26,10 +26,13 @@ static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
     return 1;
 }
 
+IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_sm4_copyctx, PROV_SM4_CTX)
+
 # define PROV_CIPHER_HW_sm4_mode(mode)                                         \
 static const PROV_CIPHER_HW sm4_##mode = {                                     \
     cipher_hw_sm4_initkey,                                                     \
-    cipher_hw_chunked_##mode                                                   \
+    cipher_hw_chunked_##mode,                                                  \
+    cipher_hw_sm4_copyctx                                                      \
 };                                                                             \
 const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_##mode(size_t keybits)                \
 {                                                                              \

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,7 +18,8 @@
 
 /* Extract a private key from a PKCS8 structure */
 
-EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
+EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
+                             const char *propq)
 {
     EVP_PKEY *pkey = NULL;
     const ASN1_OBJECT *algoid;
@@ -28,24 +29,29 @@ EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
         return NULL;
 
     if ((pkey = EVP_PKEY_new()) == NULL) {
-        EVPerr(EVP_F_EVP_PKCS82PKEY, ERR_R_MALLOC_FAILURE);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (!EVP_PKEY_set_type(pkey, OBJ_obj2nid(algoid))) {
-        EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
+        EVPerr(0, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
         i2t_ASN1_OBJECT(obj_tmp, 80, algoid);
         ERR_add_error_data(2, "TYPE=", obj_tmp);
         goto error;
     }
 
-    if (pkey->ameth->priv_decode) {
+    if (pkey->ameth->priv_decode_with_libctx != NULL) {
+        if (!pkey->ameth->priv_decode_with_libctx(pkey, p8, libctx, propq)) {
+            EVPerr(0, EVP_R_PRIVATE_KEY_DECODE_ERROR);
+            goto error;
+        }
+    } else if (pkey->ameth->priv_decode != NULL) {
         if (!pkey->ameth->priv_decode(pkey, p8)) {
-            EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_PRIVATE_KEY_DECODE_ERROR);
+            EVPerr(0, EVP_R_PRIVATE_KEY_DECODE_ERROR);
             goto error;
         }
     } else {
-        EVPerr(EVP_F_EVP_PKCS82PKEY, EVP_R_METHOD_NOT_SUPPORTED);
+        EVPerr(0, EVP_R_METHOD_NOT_SUPPORTED);
         goto error;
     }
 
@@ -54,6 +60,11 @@ EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
  error:
     EVP_PKEY_free(pkey);
     return NULL;
+}
+
+EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
+{
+    return evp_pkcs82pkey_int(p8, NULL, NULL);
 }
 
 /* Turn a private key into a PKCS8 structure */

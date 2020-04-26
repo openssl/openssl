@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,17 +24,32 @@ typedef enum OPTION_choice {
     OPT_ISSUER, OPT_LASTUPDATE, OPT_NEXTUPDATE, OPT_FINGERPRINT,
     OPT_CRLNUMBER, OPT_BADSIG, OPT_GENDELTA, OPT_CAPATH, OPT_CAFILE, OPT_CASTORE,
     OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_VERIFY, OPT_TEXT, OPT_HASH,
-    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD
+    OPT_HASH_OLD, OPT_NOOUT, OPT_NAMEOPT, OPT_MD, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS crl_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
+    {"verify", OPT_VERIFY, '-', "Verify CRL signature"},
+
+    OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
-    {"out", OPT_OUT, '>', "output file - default stdout"},
-    {"keyform", OPT_KEYFORM, 'F', "Private key file format (PEM or ENGINE)"},
+    {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
     {"key", OPT_KEY, '<', "CRL signing Private key to use"},
+    {"keyform", OPT_KEYFORM, 'F', "Private key file format (PEM or ENGINE)"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "output file - default stdout"},
+    {"outform", OPT_OUTFORM, 'F', "Output format - default PEM"},
+    {"text", OPT_TEXT, '-', "Print out a text format version"},
+    {"hash", OPT_HASH, '-', "Print hash value"},
+#ifndef OPENSSL_NO_MD5
+    {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
+#endif
+    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
+    {"", OPT_MD, '-', "Any supported digest"},
+
+    OPT_SECTION("CRL"),
     {"issuer", OPT_ISSUER, '-', "Print issuer DN"},
     {"lastupdate", OPT_LASTUPDATE, '-', "Set lastUpdate field"},
     {"nextupdate", OPT_NEXTUPDATE, '-', "Set nextUpdate field"},
@@ -43,6 +58,8 @@ const OPTIONS crl_options[] = {
     {"crlnumber", OPT_CRLNUMBER, '-', "Print CRL number"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of loaded CRL signature (for test)" },
     {"gendelta", OPT_GENDELTA, '<', "Other CRL to compare/diff to the Input one"},
+
+    OPT_SECTION("Certificate"),
     {"CApath", OPT_CAPATH, '/', "Verify CRL using certificates in dir"},
     {"CAfile", OPT_CAFILE, '<', "Verify CRL using certificates in file name"},
     {"CAstore", OPT_CASTORE, ':', "Verify CRL using certificates in store URI"},
@@ -52,14 +69,7 @@ const OPTIONS crl_options[] = {
      "Do not load certificates from the default certificates directory"},
     {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
-    {"verify", OPT_VERIFY, '-', "Verify CRL signature"},
-    {"text", OPT_TEXT, '-', "Print out a text format version"},
-    {"hash", OPT_HASH, '-', "Print hash value"},
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
-    {"", OPT_MD, '-', "Any supported digest"},
-#ifndef OPENSSL_NO_MD5
-    {"hash_old", OPT_HASH_OLD, '-', "Print old-style (MD5) hash value"},
-#endif
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -184,13 +194,18 @@ int crl_main(int argc, char **argv)
         case OPT_MD:
             if (!opt_md(opt_unknown(), &digest))
                 goto opthelp;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();
     if (argc != 0)
         goto opthelp;
 
-    x = load_crl(infile, informat);
+    x = load_crl(infile, informat, "CRL");
     if (x == NULL)
         goto end;
 
@@ -235,7 +250,7 @@ int crl_main(int argc, char **argv)
             BIO_puts(bio_err, "Missing CRL signing key\n");
             goto end;
         }
-        newcrl = load_crl(crldiff, informat);
+        newcrl = load_crl(crldiff, informat, "other CRL");
         if (!newcrl)
             goto end;
         pkey = load_key(keyfile, keyformat, 0, NULL, NULL, "CRL signing key");

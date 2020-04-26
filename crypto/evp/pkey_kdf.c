@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -186,8 +186,7 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case T_DIGEST:
         mdname = EVP_MD_name((const EVP_MD *)p2);
-        params[0] = OSSL_PARAM_construct_utf8_string(name, (char *)mdname,
-                                                     strlen(mdname) + 1);
+        params[0] = OSSL_PARAM_construct_utf8_string(name, (char *)mdname, 0);
         break;
 
         /*
@@ -225,7 +224,7 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
         type = OSSL_KDF_PARAM_SCRYPT_N;
 
     if (!OSSL_PARAM_allocate_from_text(&params[0], defs, type,
-                                       value, strlen(value)))
+                                       value, strlen(value), NULL))
         return 0;
 
     /*

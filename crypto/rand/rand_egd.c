@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,19 +8,16 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EGD
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <openssl/crypto.h>
-# include <openssl/e_os2.h>
-# include <openssl/rand.h>
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
+#include <openssl/rand.h>
 
 /*
  * Query an EGD
  */
 
-# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_UEFI)
+#if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_VMS) || defined(OPENSSL_SYS_MSDOS) || defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_VOS) || defined(OPENSSL_SYS_UEFI)
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     return -1;
@@ -36,26 +33,26 @@ int RAND_egd_bytes(const char *path, int bytes)
     return -1;
 }
 
-# else
+#else
 
-#  include <unistd.h>
-#  include <stddef.h>
-#  include <sys/types.h>
-#  include <sys/socket.h>
-#  ifndef NO_SYS_UN_H
-#   ifdef OPENSSL_SYS_VXWORKS
-#    include <streams/un.h>
-#   else
-#    include <sys/un.h>
-#   endif
+# include <unistd.h>
+# include <stddef.h>
+# include <sys/types.h>
+# include <sys/socket.h>
+# ifndef NO_SYS_UN_H
+#  ifdef OPENSSL_SYS_VXWORKS
+#   include <streams/un.h>
 #  else
+#   include <sys/un.h>
+#  endif
+# else
 struct sockaddr_un {
     short sun_family;           /* AF_UNIX */
     char sun_path[108];         /* path name (gag) */
 };
-#  endif                         /* NO_SYS_UN_H */
-#  include <string.h>
-#  include <errno.h>
+# endif                         /* NO_SYS_UN_H */
+# include <string.h>
+# include <errno.h>
 
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
@@ -83,23 +80,23 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     for ( ; ; ) {
         if (connect(fd, (struct sockaddr *)&addr, i) == 0)
             break;
-#  ifdef EISCONN
+# ifdef EISCONN
         if (errno == EISCONN)
             break;
-#  endif
+# endif
         switch (errno) {
-#  ifdef EINTR
+# ifdef EINTR
         case EINTR:
-#  endif
-#  ifdef EAGAIN
+# endif
+# ifdef EAGAIN
         case EAGAIN:
-#  endif
-#  ifdef EINPROGRESS
+# endif
+# ifdef EINPROGRESS
         case EINPROGRESS:
-#  endif
-#  ifdef EALREADY
+# endif
+# ifdef EALREADY
         case EALREADY:
-#  endif
+# endif
             /* No error, try again */
             break;
         default:
@@ -152,7 +149,5 @@ int RAND_egd(const char *path)
 {
     return RAND_egd_bytes(path, 255);
 }
-
-# endif
 
 #endif

@@ -15,6 +15,11 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 
+DEFINE_STACK_OF(X509_ALGOR)
+DEFINE_STACK_OF(X509_ATTRIBUTE)
+DEFINE_STACK_OF(PKCS7_RECIP_INFO)
+DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
+
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
                          void *value);
 static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
  *
@@ -14,7 +14,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_SSL_H
 # endif
 
@@ -22,7 +22,7 @@
 # include <openssl/opensslconf.h>
 # include <openssl/comp.h>
 # include <openssl/bio.h>
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  include <openssl/x509.h>
 #  include <openssl/crypto.h>
 #  include <openssl/buffer.h>
@@ -136,6 +136,7 @@ extern "C" {
 # define SSL_TXT_ARIA_GCM        "ARIAGCM"
 # define SSL_TXT_ARIA128         "ARIA128"
 # define SSL_TXT_ARIA256         "ARIA256"
+# define SSL_TXT_GOST2012_GOST8912_GOST8912 "GOST2012-GOST8912-GOST8912"
 
 # define SSL_TXT_MD5             "MD5"
 # define SSL_TXT_SHA1            "SHA1"
@@ -178,7 +179,7 @@ extern "C" {
  * DEPRECATED IN 3.0.0, in favor of OSSL_default_cipher_list()
  * Update both macro and function simultaneously
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_DEFAULT_CIPHER_LIST "ALL:!COMPLEMENTOFDEFAULT:!eNULL"
 /*
  * This is the default set of TLSv1.3 ciphersuites
@@ -229,8 +230,10 @@ typedef struct tls_sigalgs_st TLS_SIGALGS;
 typedef struct ssl_conf_ctx_st SSL_CONF_CTX;
 typedef struct ssl_comp_st SSL_COMP;
 
-STACK_OF(SSL_CIPHER);
-STACK_OF(SSL_COMP);
+DEFINE_OR_DECLARE_STACK_OF(SSL_CIPHER)
+DEFINE_OR_DECLARE_STACK_OF(SSL_COMP)
+DEFINE_OR_DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
+DEFINE_OR_DECLARE_STACK_OF(SSL_COMP)
 
 /* SRTP protection profiles for use with the use_srtp extension (RFC 5764)*/
 typedef struct srtp_protection_profile_st {
@@ -238,7 +241,6 @@ typedef struct srtp_protection_profile_st {
     unsigned long id;
 } SRTP_PROTECTION_PROFILE;
 
-DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
 
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data,
                                             int len, void *arg);
@@ -978,8 +980,6 @@ extern "C" {
  * These need to be after the above set of includes due to a compiler bug
  * in VisualStudio 2015
  */
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
-DEFINE_STACK_OF(SSL_COMP)
 
 /* compatibility */
 # define SSL_set_app_data(s,arg)         (SSL_set_ex_data(s,0,(char *)(arg)))
@@ -1125,7 +1125,7 @@ size_t SSL_get_peer_finished(const SSL *s, void *buf, size_t count);
 # define SSL_VERIFY_CLIENT_ONCE          0x04
 # define SSL_VERIFY_POST_HANDSHAKE       0x08
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define OpenSSL_add_ssl_algorithms()   SSL_library_init()
 #  define SSLeay_add_ssl_algorithms()    SSL_library_init()
 # endif
@@ -1269,7 +1269,9 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_CTRL_SET_TLSEXT_STATUS_REQ_IDS      69
 # define SSL_CTRL_GET_TLSEXT_STATUS_REQ_OCSP_RESP        70
 # define SSL_CTRL_SET_TLSEXT_STATUS_REQ_OCSP_RESP        71
-# define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB       72
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define SSL_CTRL_SET_TLSEXT_TICKET_KEY_CB      72
+# endif
 # define SSL_CTRL_SET_TLS_EXT_SRP_USERNAME_CB    75
 # define SSL_CTRL_SET_SRP_VERIFY_PARAM_CB                76
 # define SSL_CTRL_SET_SRP_GIVE_CLIENT_PWD_CB             77
@@ -1345,7 +1347,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
         SSL_ctrl(s,SSL_CTRL_SET_DH_AUTO,onoff,NULL)
 # define SSL_set_tmp_dh(ssl,dh) \
         SSL_ctrl(ssl,SSL_CTRL_SET_TMP_DH,0,(char *)(dh))
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SSL_CTX_set_tmp_ecdh(ctx,ecdh) \
         SSL_CTX_ctrl(ctx,SSL_CTRL_SET_TMP_ECDH,0,(char *)(ecdh))
 #  define SSL_set_tmp_ecdh(ssl,ecdh) \
@@ -1500,7 +1502,7 @@ DECLARE_PEM_rw(SSL_SESSION, SSL_SESSION)
 # define SSL_get_shared_curve          SSL_get_shared_group
 
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /* Provide some compatibility macros for removed functionality. */
 #  define SSL_CTX_need_tmp_RSA(ctx)                0
 #  define SSL_CTX_set_tmp_rsa(ctx,rsa)             1
@@ -1524,6 +1526,8 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
+__owur SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+                                        const SSL_METHOD *meth);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
 __owur long SSL_CTX_set_timeout(SSL_CTX *ctx, long t);
@@ -1630,7 +1634,7 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
 int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                        const char *uri);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_load_error_strings() \
     OPENSSL_init_ssl(OPENSSL_INIT_LOAD_SSL_STRINGS \
                      | OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL)
@@ -1987,7 +1991,7 @@ void SSL_set_accept_state(SSL *s);
 
 __owur long SSL_get_default_timeout(const SSL *s);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_library_init() OPENSSL_init_ssl(0, NULL)
 # endif
 
@@ -2020,7 +2024,7 @@ __owur int SSL_CTX_set_default_verify_store(SSL_CTX *ctx);
 __owur int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile);
 __owur int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath);
 __owur int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore);
-DEPRECATEDIN_3(__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx,
+DEPRECATEDIN_3_0(__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx,
                                                         const char *CAfile,
                                                         const char *CApath))
 # define SSL_get0_session SSL_get_session/* just peek at pointer */
@@ -2121,7 +2125,7 @@ __owur int SSL_COMP_get_id(const SSL_COMP *comp);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 __owur STACK_OF(SSL_COMP) *SSL_COMP_set0_compression_methods(STACK_OF(SSL_COMP)
                                                              *meths);
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_COMP_free_compression_methods() while(0) continue
 # endif
 __owur int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm);
@@ -2173,7 +2177,7 @@ size_t SSL_get_num_tickets(const SSL *s);
 int SSL_CTX_set_num_tickets(SSL_CTX *ctx, size_t num_tickets);
 size_t SSL_CTX_get_num_tickets(const SSL_CTX *ctx);
 
-# if !OPENSSL_API_1_1_0
+# ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define SSL_cache_hit(s) SSL_session_reused(s)
 # endif
 

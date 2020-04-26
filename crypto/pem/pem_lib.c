@@ -80,7 +80,7 @@ void PEM_proc_type(char *buf, int type)
     BIO_snprintf(p, PEM_BUFSIZE - (size_t)(p - buf), "Proc-Type: 4,%s\n", str);
 }
 
-void PEM_dek_info(char *buf, const char *type, int len, char *str)
+void PEM_dek_info(char *buf, const char *type, int len, const char *str)
 {
     long i;
     char *p = buf + strlen(buf);
@@ -288,8 +288,9 @@ int PEM_bytes_read_bio_secmem(unsigned char **pdata, long *plen, char **pnm,
 
 #ifndef OPENSSL_NO_STDIO
 int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
-                   void *x, const EVP_CIPHER *enc, unsigned char *kstr,
-                   int klen, pem_password_cb *callback, void *u)
+                   const void *x, const EVP_CIPHER *enc,
+                   const unsigned char *kstr, int klen,
+                   pem_password_cb *callback, void *u)
 {
     BIO *b;
     int ret;
@@ -306,8 +307,9 @@ int PEM_ASN1_write(i2d_of_void *i2d, const char *name, FILE *fp,
 #endif
 
 int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
-                       void *x, const EVP_CIPHER *enc, unsigned char *kstr,
-                       int klen, pem_password_cb *callback, void *u)
+                       const void *x, const EVP_CIPHER *enc,
+                       const unsigned char *kstr, int klen,
+                       pem_password_cb *callback, void *u)
 {
     EVP_CIPHER_CTX *ctx = NULL;
     int dsize = 0, i = 0, j = 0, ret = 0;

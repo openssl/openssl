@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,8 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <sys/stat.h>
+
+DEFINE_STACK_OF_STRING()
 
 #define KEY_NONE        0
 #define KEY_PRIVKEY     1
@@ -44,46 +46,55 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
-    OPT_KDFLEN, OPT_R_ENUM,
+    OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
 
 const OPTIONS pkeyutl_options[] = {
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-    {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"rawin", OPT_RAWIN, '-', "Indicate the input data is in raw form"},
-    {"digest", OPT_DIGEST, 's',
-     "Specify the digest algorithm when signing the raw input data"},
-    {"out", OPT_OUT, '>', "Output file - default stdout"},
-    {"pubin", OPT_PUBIN, '-', "Input is a public key"},
-    {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
-    {"asn1parse", OPT_ASN1PARSE, '-', "asn1parse the output data"},
-    {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
-    {"sign", OPT_SIGN, '-', "Sign input data with private key"},
-    {"verify", OPT_VERIFY, '-', "Verify with public key"},
-    {"verifyrecover", OPT_VERIFYRECOVER, '-',
-     "Verify with public key, recover original data"},
-    {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
-    {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
-    {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
-    {"derive", OPT_DERIVE, '-', "Derive shared secret"},
-    {"kdf", OPT_KDF, 's', "Use KDF algorithm"},
-    {"kdflen", OPT_KDFLEN, 'p', "KDF algorithm output length"},
-    {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
-    {"inkey", OPT_INKEY, 's', "Input private key file"},
-    {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
-    {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
-    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
-    {"pkeyopt_passin", OPT_PKEYOPT_PASSIN, 's',
-     "Public key option that is read as a passphrase argument opt:passphrase"},
-    OPT_R_OPTIONS,
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
     {"engine_impl", OPT_ENGINE_IMPL, '-',
      "Also use engine given by -engine for crypto operations"},
 #endif
+    {"sign", OPT_SIGN, '-', "Sign input data with private key"},
+    {"verify", OPT_VERIFY, '-', "Verify with public key"},
+    {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
+    {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
+    {"derive", OPT_DERIVE, '-', "Derive shared secret"},
+
+    OPT_SECTION("Input"),
+    {"in", OPT_IN, '<', "Input file - default stdin"},
+    {"rawin", OPT_RAWIN, '-', "Indicate the input data is in raw form"},
+    {"pubin", OPT_PUBIN, '-', "Input is a public key"},
+    {"inkey", OPT_INKEY, 's', "Input private key file"},
+    {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
+    {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
+    {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
+    {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
+    {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
+    {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
+
+    OPT_SECTION("Output"),
+    {"out", OPT_OUT, '>', "Output file - default stdout"},
+    {"asn1parse", OPT_ASN1PARSE, '-', "asn1parse the output data"},
+    {"hexdump", OPT_HEXDUMP, '-', "Hex dump output"},
+    {"verifyrecover", OPT_VERIFYRECOVER, '-',
+     "Verify with public key, recover original data"},
+
+    OPT_SECTION("Signing/Derivation"),
+    {"digest", OPT_DIGEST, 's',
+     "Specify the digest algorithm when signing the raw input data"},
+    {"pkeyopt", OPT_PKEYOPT, 's', "Public key options as opt:value"},
+    {"pkeyopt_passin", OPT_PKEYOPT_PASSIN, 's',
+     "Public key option that is read as a passphrase argument opt:passphrase"},
+    {"kdf", OPT_KDF, 's', "Use KDF algorithm"},
+    {"kdflen", OPT_KDFLEN, 'p', "KDF algorithm output length"},
+
+    OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -155,6 +166,10 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_ENGINE:
@@ -537,21 +552,6 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         if (pkey == NULL)
             goto end;
 
-#ifndef OPENSSL_NO_EC
-        /* SM2 needs a special treatment */
-        if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
-            EC_KEY *eckey = NULL;
-            const EC_GROUP *group = NULL;
-            int nid;
-
-            if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL
-                    || (group = EC_KEY_get0_group(eckey)) == NULL
-                    || (nid = EC_GROUP_get_curve_name(group)) == 0)
-                goto end;
-            if (nid == NID_sm2)
-                EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
-        }
-#endif
         *pkeysize = EVP_PKEY_size(pkey);
         ctx = EVP_PKEY_CTX_new(pkey, impl);
         if (ppkey != NULL)

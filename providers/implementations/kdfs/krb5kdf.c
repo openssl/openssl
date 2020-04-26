@@ -1,11 +1,17 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.  We access the DES_set_odd_parity(3) function here.
+ */
+#include "internal/deprecated.h"
 
 #include <stdlib.h>
 #include <stdarg.h>
@@ -63,8 +69,10 @@ static void krb5kdf_free(void *vctx)
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
 
-    krb5kdf_reset(ctx);
-    OPENSSL_free(ctx);
+    if (ctx != NULL) {
+        krb5kdf_reset(ctx);
+        OPENSSL_free(ctx);
+    }
 }
 
 static void krb5kdf_reset(void *vctx)
@@ -334,19 +342,25 @@ static int KRB5KDF(const EVP_CIPHER *cipher, ENGINE *engine,
     size_t blocksize;
     size_t cipherlen;
     size_t osize;
+#ifndef OPENSSL_NO_DES
     int des3_no_fixup = 0;
+#endif
     int ret;
 
     if (key_len != okey_len) {
+#ifndef OPENSSL_NO_DES
         /* special case for 3des, where the caller may be requesting
          * the random raw key, instead of the fixed up key  */
         if (EVP_CIPHER_nid(cipher) == NID_des_ede3_cbc &&
             key_len == 24 && okey_len == 21) {
                 des3_no_fixup = 1;
         } else {
+#endif
             ERR_raise(ERR_LIB_PROV, PROV_R_WRONG_OUTPUT_BUFFER_SIZE);
             return 0;
+#ifndef OPENSSL_NO_DES
         }
+#endif
     }
 
     ctx = EVP_CIPHER_CTX_new();

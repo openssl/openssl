@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_DRBG_RAND_H
 # endif
 
@@ -42,7 +42,7 @@
 /* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
 # define RAND_DRBG_FLAG_PRIVATE              0x10
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 /* This #define was replaced by an internal constant and should not be used. */
 #  define RAND_DRBG_USED_FLAGS  (RAND_DRBG_FLAG_CTR_NO_DF)
 # endif
@@ -149,6 +149,10 @@ int RAND_DRBG_set_callbacks(RAND_DRBG *drbg,
                             RAND_DRBG_get_nonce_fn get_nonce,
                             RAND_DRBG_cleanup_nonce_fn cleanup_nonce);
 
+
+int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *data);
+
+void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg);
 
 # ifdef  __cplusplus
 }

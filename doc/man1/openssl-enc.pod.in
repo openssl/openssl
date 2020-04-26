@@ -1,9 +1,5 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
@@ -39,12 +35,14 @@ B<openssl> B<enc>|I<cipher>
 [B<-P>]
 [B<-bufsize> I<number>]
 [B<-nopad>]
+[B<-v>]
 [B<-debug>]
 [B<-none>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef z engine
+=for openssl ifdef z engine ciphers
 
 B<openssl> I<cipher> [B<...>]
 
@@ -180,6 +178,10 @@ Set the buffer size for I/O.
 
 Disable standard block padding.
 
+=item B<-v>
+
+Verbose print; display some statistics about I/O and buffer sizes.
+
 =item B<-debug>
 
 Debug the BIOs used for I/O.
@@ -196,6 +198,10 @@ Use NULL cipher (no encryption or decryption of input).
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_engine_item -}
+
 =back
 
 =head1 NOTES
@@ -208,8 +214,8 @@ Use the L<openssl-list(1)> command to get a list of supported ciphers.
 
 Engines which provide entirely new encryption algorithms (such as the ccgost
 engine which provides gost89 algorithm) should be configured in the
-configuration file. Engines specified on the command line using -engine
-options can only be used for hardware-assisted implementations of
+configuration file. Engines specified on the command line using B<-engine>
+option can only be used for hardware-assisted implementations of
 ciphers which are supported by the OpenSSL core or another engine specified
 in the configuration file.
 
@@ -258,7 +264,7 @@ This command does not support authenticated encryption modes
 like CCM and GCM, and will not support such modes in the future.
 This is due to having to begin streaming output (e.g., to standard output
 when B<-out> is not used) before the authentication tag could be validated.
-When this command is used in a pipeline, the receiveing end will not be
+When this command is used in a pipeline, the receiving end will not be
 able to roll back upon authentication failure.  The AEAD modes currently in
 common use also suffer from catastrophic failure of confidentiality and/or
 integrity upon reuse of key/iv/nonce, and since B<openssl enc> places the
@@ -424,7 +430,7 @@ The B<-ciphers> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

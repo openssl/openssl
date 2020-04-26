@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2011-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -109,7 +109,7 @@ $avx=1 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 $avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
 	   $1>=10);
-$avx=1 if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/ && $2>=3.0);
+$avx=1 if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=3.0);
 
 $shaext=1;	### set to zero if compiling for 1.0.1
 
@@ -135,6 +135,7 @@ $code.=<<___;
 .type	aesni_cbc_sha1_enc,\@abi-omnipotent
 .align	32
 aesni_cbc_sha1_enc:
+.cfi_startproc
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11
@@ -153,6 +154,7 @@ ___
 $code.=<<___;
 	jmp	aesni_cbc_sha1_enc_ssse3
 	ret
+.cfi_endproc
 .size	aesni_cbc_sha1_enc,.-aesni_cbc_sha1_enc
 ___
 
@@ -842,6 +844,7 @@ $code.=<<___;
 .type	aesni256_cbc_sha1_dec,\@abi-omnipotent
 .align	32
 aesni256_cbc_sha1_dec:
+.cfi_startproc
 	# caller should check for SSSE3 and AES-NI bits
 	mov	OPENSSL_ia32cap_P+0(%rip),%r10d
 	mov	OPENSSL_ia32cap_P+4(%rip),%r11d
@@ -856,6 +859,7 @@ ___
 $code.=<<___;
 	jmp	aesni256_cbc_sha1_dec_ssse3
 	ret
+.cfi_endproc
 .size	aesni256_cbc_sha1_dec,.-aesni256_cbc_sha1_dec
 
 .type	aesni256_cbc_sha1_dec_ssse3,\@function,6
@@ -1762,6 +1766,7 @@ $code.=<<___;
 .type	aesni_cbc_sha1_enc_shaext,\@function,6
 .align	32
 aesni_cbc_sha1_enc_shaext:
+.cfi_startproc
 	mov	`($win64?56:8)`(%rsp),$inp	# load 7th argument
 ___
 $code.=<<___ if ($win64);
@@ -1913,6 +1918,7 @@ $code.=<<___ if ($win64);
 ___
 $code.=<<___;
 	ret
+.cfi_endproc
 .size	aesni_cbc_sha1_enc_shaext,.-aesni_cbc_sha1_enc_shaext
 ___
 						}}}
@@ -2139,4 +2145,4 @@ foreach (split("\n",$code)) {
 
 	print $_,"\n";
 }
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

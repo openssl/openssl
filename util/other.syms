@@ -11,13 +11,18 @@ OPENSSL_instrument_bus2                 assembler
 #
 ADMISSION_SYNTAX                        datatype
 ADMISSIONS                              datatype
+ASN1_ITEM                               datatype
 ASN1_STRING_TABLE                       datatype
+ASYNC_callback_fn                       datatype
 BIO_ADDR                                datatype
 BIO_ADDRINFO                            datatype
 BIO_callback_fn                         datatype
 BIO_callback_fn_ex                      datatype
 BIO_hostserv_priorities                 datatype
 BIO_lookup_type                         datatype
+CRYPTO_malloc_fn                        datatype
+CRYPTO_realloc_fn                       datatype
+CRYPTO_free_fn                          datatype
 CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype
@@ -34,8 +39,11 @@ GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
+OSSL_HTTP_bio_cb_t                      datatype
 OSSL_PARAM                              datatype
 OSSL_PROVIDER                           datatype
+OSSL_SERIALIZER                         datatype
+OSSL_SERIALIZER_CTX                     datatype
 OSSL_STORE_CTX                          datatype
 OSSL_STORE_INFO                         datatype
 OSSL_STORE_LOADER                       datatype
@@ -61,7 +69,11 @@ RAND_poll_cb                            datatype
 SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
 SSL_allow_early_data_cb_fn              datatype
+SSL_async_callback_fn                   datatype
 SSL_client_hello_cb_fn                  datatype
+SSL_custom_ext_add_cb_ex                datatype
+SSL_custom_ext_free_cb_ex               datatype
+SSL_custom_ext_parse_cb_ex              datatype
 SSL_psk_client_cb_func                  datatype
 SSL_psk_find_session_cb_func            datatype
 SSL_psk_server_cb_func                  datatype
@@ -85,11 +97,15 @@ X509_STORE_CTX_lookup_crls_fn           datatype
 X509_STORE_CTX_verify_cb                datatype
 X509_STORE_CTX_verify_fn                datatype
 X509_STORE_set_verify_cb_func           datatype
+X509_LOOKUP                             datatype
+X509_LOOKUP_METHOD                      datatype
+X509_LOOKUP_TYPE                        datatype
 X509_LOOKUP_get_by_alias_fn             datatype
 X509_LOOKUP_get_by_subject_fn           datatype
 X509_LOOKUP_get_by_fingerprint_fn       datatype
 X509_LOOKUP_ctrl_fn                     datatype
 X509_LOOKUP_get_by_issuer_serial_fn     datatype
+X509_STORE                              datatype
 bio_info_cb                             datatype
 BIO_info_cb                             datatype
 custom_ext_add_cb                       datatype
@@ -97,9 +113,8 @@ custom_ext_free_cb                      datatype
 custom_ext_parse_cb                     datatype
 pem_password_cb                         datatype
 ssl_ct_validation_cb                    datatype
-ASYNC_callback_fn                       datatype
-SSL_async_callback_fn                   datatype
 #
+ASN1_BIT_STRING_digest                  define
 BIO_append_filename                     define
 BIO_destroy_bio_pair                    define
 BIO_do_accept                           define
@@ -110,6 +125,8 @@ BIO_flush                               define
 BIO_get_accept_name                     define
 BIO_get_accept_port                     define
 BIO_get_accept_ip_family                define
+BIO_get_app_data                        define
+BIO_get_ex_new_index                    define
 BIO_get_peer_name                       define
 BIO_get_peer_port                       define
 BIO_get_bind_mode                       define
@@ -125,6 +142,7 @@ BIO_get_conn_port                       define
 BIO_get_conn_ip_family                  define
 BIO_get_fd                              define
 BIO_get_fp                              define
+BIO_get_indent                          define
 BIO_get_info_callback                   define
 BIO_get_md                              define
 BIO_get_md_ctx                          define
@@ -146,6 +164,7 @@ BIO_set_accept_bios                     define
 BIO_set_accept_name                     define
 BIO_set_accept_port                     define
 BIO_set_accept_ip_family                define
+BIO_set_app_data                        define
 BIO_set_bind_mode                       define
 BIO_set_buffer_read_data                define
 BIO_set_buffer_size                     define
@@ -156,12 +175,14 @@ BIO_set_conn_port                       define
 BIO_set_conn_ip_family                  define
 BIO_set_fd                              define
 BIO_set_fp                              define
+BIO_set_indent                          define
 BIO_set_info_callback                   define
 BIO_set_md                              define
 BIO_set_mem_buf                         define
 BIO_set_mem_eof_return                  define
 BIO_set_nbio                            define
 BIO_set_nbio_accept                     define
+BIO_set_prefix                          define
 BIO_set_read_buffer_size                define
 BIO_set_ssl                             define
 BIO_set_ssl_mode                        define
@@ -201,8 +222,6 @@ ERR_raise                               define
 ERR_raise_data                          define
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
-EVP_KDF_name                            define
-EVP_MAC_name                            define
 EVP_MD_CTX_block_size                   define
 EVP_MD_CTX_name                         define
 EVP_MD_CTX_size                         define
@@ -300,6 +319,12 @@ EVP_rc5_32_12_16_cfb                    define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 OBJ_cleanup                             define deprecated 1.1.0
+OCSP_parse_url                          define
+OPENSSL_FILE                            define
+OPENSSL_FUNC                            define
+OPENSSL_LINE                            define
+OPENSSL_MSTR                            define
+OPENSSL_MSTR_HELPER                     define
 OPENSSL_VERSION_MAJOR                   define
 OPENSSL_VERSION_MINOR                   define
 OPENSSL_VERSION_NUMBER                  define deprecated 3.0.0
@@ -332,7 +357,9 @@ OpenSSL_add_all_ciphers                 define deprecated 1.1.0
 OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
 OSSL_CMP_CTX_set_log_verbosity          define
-OSSL_CMP_DEFAULT_PORT                   define
+OSSL_CMP_CR                             define
+OSSL_CMP_IR                             define
+OSSL_CMP_KUR                            define
 OSSL_CMP_LOG_ALERT                      define
 OSSL_CMP_LOG_CRIT                       define
 OSSL_CMP_LOG_DEBUG                      define
@@ -341,17 +368,19 @@ OSSL_CMP_LOG_ERR                        define
 OSSL_CMP_LOG_INFO                       define
 OSSL_CMP_LOG_NOTICE                     define
 OSSL_CMP_LOG_WARNING                    define
-OSSL_CMP_alert                          define
-OSSL_CMP_debug                          define
-OSSL_CMP_err                            define
-OSSL_CMP_info                           define
-OSSL_CMP_log                            define
-OSSL_CMP_log1                           define
-OSSL_CMP_log2                           define
-OSSL_CMP_log3                           define
-OSSL_CMP_log4                           define
+OSSL_CMP_MSTR_HELPER                    define
+OSSL_CMP_MSTR                           define
+OSSL_CMP_P10CR                          define
+OSSL_CMP_certConf_cb_t                  datatype
+OSSL_CMP_log_cb_t                       datatype
 OSSL_CMP_severity                       datatype
-OSSL_CMP_warn                           define
+OSSL_CMP_transfer_cb_t                  datatype
+OSSL_CMP_SRV_cert_request_cb_t          datatype
+OSSL_CMP_SRV_rr_cb_t                    datatype
+OSSL_CMP_SRV_certConf_cb_t              datatype
+OSSL_CMP_SRV_genm_cb_t                  datatype
+OSSL_CMP_SRV_error_cb_t                 datatype
+OSSL_CMP_SRV_pollReq_cb_t               datatype
 OSSL_PARAM_TYPE                         define
 OSSL_PARAM_octet_ptr                    define
 OSSL_PARAM_octet_string                 define
@@ -363,6 +392,15 @@ OSSL_PARAM_utf8_string                  define
 OSSL_PARAM_get_TYPE                     generic
 OSSL_PARAM_END                          define
 OSSL_PARAM_set_TYPE                     generic
+OSSL_SERIALIZER_PUBKEY_TO_DER_PQ        define
+OSSL_SERIALIZER_PrivateKey_TO_DER_PQ    define
+OSSL_SERIALIZER_Parameters_TO_DER_PQ    define
+OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ        define
+OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ    define
+OSSL_SERIALIZER_Parameters_TO_PEM_PQ    define
+OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ       define
+OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ   define
+OSSL_SERIALIZER_Parameters_TO_TEXT_PQ   define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
@@ -522,6 +560,12 @@ SSLv23_client_method                    define
 SSLv23_method                           define
 SSLv23_server_method                    define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
+X509_CRL_http_nbio                      define
+X509_http_nbio                          define
+X509_LOOKUP_add_dir                     define
+X509_LOOKUP_add_store                   define
+X509_LOOKUP_load_file                   define
+X509_LOOKUP_load_store                  define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define
@@ -537,3 +581,4 @@ OSSL_TRACE_CANCEL                       define
 OSSL_TRACE1                             define
 OSSL_TRACE2                             define
 OSSL_TRACE9                             define
+TS_VERIFY_CTS_set_certs                 define deprecated 3.0.0

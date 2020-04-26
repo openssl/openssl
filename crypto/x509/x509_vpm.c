@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,10 @@
 #include "crypto/x509.h"
 
 #include "x509_local.h"
+
+DEFINE_STACK_OF(ASN1_OBJECT)
+DEFINE_STACK_OF(X509_VERIFY_PARAM)
+DEFINE_STACK_OF_STRING()
 
 /* X509_VERIFY_PARAM functions */
 
@@ -282,7 +286,7 @@ int X509_VERIFY_PARAM_clear_flags(X509_VERIFY_PARAM *param,
     return 1;
 }
 
-unsigned long X509_VERIFY_PARAM_get_flags(X509_VERIFY_PARAM *param)
+unsigned long X509_VERIFY_PARAM_get_flags(const X509_VERIFY_PARAM *param)
 {
     return param->flags;
 }
@@ -398,7 +402,7 @@ unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param)
     return param->hostflags;
 }
 
-char *X509_VERIFY_PARAM_get0_peername(X509_VERIFY_PARAM *param)
+char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *param)
 {
     return param->peername;
 }

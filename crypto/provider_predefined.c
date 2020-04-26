@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@
 #include "provider_local.h"
 
 OSSL_provider_init_fn ossl_default_provider_init;
+OSSL_provider_init_fn ossl_null_provider_init;
 OSSL_provider_init_fn fips_intern_provider_init;
 #ifdef STATIC_LEGACY
 OSSL_provider_init_fn ossl_legacy_provider_init;
@@ -23,6 +24,7 @@ const struct predefined_providers_st predefined_providers[] = {
 # ifdef STATIC_LEGACY
     { "legacy", ossl_legacy_provider_init, 0 },
 # endif
+    { "null", ossl_null_provider_init, 0 },
 #endif
     { NULL, NULL, 0 }
 };

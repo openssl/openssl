@@ -18,6 +18,8 @@
 #include "cms_local.h"
 #include "crypto/asn1.h"
 
+DEFINE_STACK_OF(CMS_RecipientInfo)
+
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
                                     unsigned char *pass, ossl_ssize_t passlen)
 {

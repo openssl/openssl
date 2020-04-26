@@ -1,11 +1,18 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * AES low level APIs are deprecated for public use, but still ok for internal
+ * use where we're using them to implement the higher level EVP interface, as is
+ * the case here.
+ */
+#include "internal/deprecated.h"
 
 #include "cipher_aes_xts.h"
 #include "prov/implementations.h"
@@ -134,7 +141,7 @@ static void *aes_xts_dupctx(void *vctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    *ret = *in;
+    in->base.hw->copyctx(&ret->base, &in->base);
     return ret;
 }
 
@@ -152,7 +159,7 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     /*
-     * Impose a limit of 2^20 blocks per data unit as specifed by
+     * Impose a limit of 2^20 blocks per data unit as specified by
      * IEEE Std 1619-2018.  The earlier and obsolete IEEE Std 1619-2007
      * indicated that this was a SHOULD NOT rather than a MUST NOT.
      * NIST SP 800-38E mandates the same limit.

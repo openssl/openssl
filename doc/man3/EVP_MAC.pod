@@ -151,7 +151,7 @@ defined by the implementation.
 
 EVP_MAC_gettable_params(), EVP_MAC_gettable_ctx_params() and
 EVP_MAC_settable_ctx_params() get a constant B<OSSL_PARAM> array that
-decribes the retrievable and settable parameters, i.e. parameters that
+describes the retrievable and settable parameters, i.e. parameters that
 can be used with EVP_MAC_get_params(), EVP_MAC_CTX_get_params()
 and EVP_MAC_CTX_set_params(), respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
@@ -331,7 +331,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
       if (!EVP_MAC_init(ctx))
           goto err;
 
-      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) < 0) {
+      while ( (read_l = read(STDIN_FILENO, buf, sizeof(buf))) > 0) {
           if (!EVP_MAC_update(ctx, buf, read_l))
               goto err;
       }
@@ -361,7 +361,7 @@ look like this:
 
   $ MY_MAC=cmac MY_KEY=secret0123456789 MY_MAC_CIPHER=aes-128-cbc \
     LD_LIBRARY_PATH=. ./foo < foo.c
-  Result: ECCAAFF041B22A2299EB90A1B53B6D45
+  Result: C5C06683CD9DDEF904D754505C560A4E
 
 (in this example, that program was stored in F<foo.c> and compiled to
 F<./foo>)
@@ -370,13 +370,13 @@ F<./foo>)
 
 L<property(7)>
 L<OSSL_PARAM(3)>,
-L<EVP_MAC_BLAKE2(7)>,
-L<EVP_MAC_CMAC(7)>,
-L<EVP_MAC_GMAC(7)>,
-L<EVP_MAC_HMAC(7)>,
-L<EVP_MAC_KMAC(7)>,
-L<EVP_MAC_SIPHASH(7)>,
-L<EVP_MAC_POLY1305(7)>
+L<EVP_MAC-BLAKE2(7)>,
+L<EVP_MAC-CMAC(7)>,
+L<EVP_MAC-GMAC(7)>,
+L<EVP_MAC-HMAC(7)>,
+L<EVP_MAC-KMAC(7)>,
+L<EVP_MAC-Siphash(7)>,
+L<EVP_MAC-Poly1305(7)>
 
 =head1 HISTORY
 
@@ -384,7 +384,7 @@ These functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

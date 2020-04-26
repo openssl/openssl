@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,8 @@
 #include "internal/cryptlib.h"
 #include "crypto/x509.h"
 #include "x509_local.h"
+
+DEFINE_STACK_OF_STRING()
 
 /* Generic object loader, given expected type and criterion */
 static int cache_objects(X509_LOOKUP *lctx, const char *uri,
@@ -151,9 +153,10 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 }
 
 static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                            X509_NAME *name, X509_OBJECT *ret)
+                            const X509_NAME *name, X509_OBJECT *ret)
 {
-    OSSL_STORE_SEARCH *criterion = OSSL_STORE_SEARCH_by_name(name);
+    OSSL_STORE_SEARCH *criterion =
+        OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
     int ok = by_store(ctx, type, criterion, ret);
     STACK_OF(X509_OBJECT) *store_objects =
         X509_STORE_get0_objects(X509_LOOKUP_get_store(ctx));

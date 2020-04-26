@@ -16,7 +16,7 @@
 #                       needed both by non-legacy and legacy code.
 #
 # libimplementations.a  Contains all non-legacy implementations.
-# liblegacy.a           Contains all legacy implementaions.
+# liblegacy.a           Contains all legacy implementations.
 #
 # libfips.a             Contains all things needed to support
 #                       FIPS implementations, such as code from
@@ -40,14 +40,14 @@ $LIBNONFIPS=libnonfips.a
 $LIBFIPS=libfips.a
 
 # Enough of our implementations include prov/ciphercommon.h (present in
-# providers/common/include), which includes crypto/ciphermode_platform.h
+# providers/implementations/include), which includes crypto/*_platform.h
 # (present in include), which in turn may include very internal header
 # files in crypto/, so let's have a common include list for them all.
-$COMMON_INCLUDES=../crypto ../include common/include
+$COMMON_INCLUDES=../crypto ../include implementations/include common/include
 
 INCLUDE[$LIBCOMMON]=$COMMON_INCLUDES
-INCLUDE[$LIBIMPLEMENTATIONS]=.. $COMMON_INCLUDES implementations/include
-INCLUDE[$LIBLEGACY]=$COMMON_INCLUDES implementations/include
+INCLUDE[$LIBIMPLEMENTATIONS]=.. $COMMON_INCLUDES
+INCLUDE[$LIBLEGACY]=.. $COMMON_INCLUDES
 INCLUDE[$LIBNONFIPS]=$COMMON_INCLUDES
 INCLUDE[$LIBFIPS]=.. $COMMON_INCLUDES
 DEFINE[$LIBFIPS]=FIPS_MODE
@@ -84,7 +84,7 @@ $DEFAULTGOAL=../libcrypto
 SOURCE[$DEFAULTGOAL]=$LIBIMPLEMENTATIONS $LIBNONFIPS
 SOURCE[$DEFAULTGOAL]=defltprov.c
 # Some legacy implementations depend on provider header files
-INCLUDE[../libcrypto]=implementations/include
+INCLUDE[$DEFAULTGOAL]=implementations/include
 
 LIBS=$DEFAULTGOAL
 
@@ -101,6 +101,7 @@ SUBDIRS=fips
 $FIPSGOAL=fips
 DEPEND[$FIPSGOAL]=$LIBIMPLEMENTATIONS $LIBFIPS
 INCLUDE[$FIPSGOAL]=../include
+DEFINE[$FIPSGOAL]=FIPS_MODE
 IF[{- defined $target{shared_defflag} -}]
   SOURCE[$FIPSGOAL]=fips.ld
   GENERATE[fips.ld]=../util/providers.num
@@ -150,3 +151,13 @@ IF[{- !$disabled{legacy} -}]
   SOURCE[$LEGACYGOAL]=legacyprov.c
   INCLUDE[$LEGACYGOAL]=../include implementations/include
 ENDIF
+
+#
+# Null provider stuff
+#
+# Because the null provider is built in, it means that libcrypto must
+# include all the object files that are needed.
+$NULLGOAL=../libcrypto
+SOURCE[$NULLGOAL]=nullprov.c
+
+

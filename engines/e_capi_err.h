@@ -21,7 +21,7 @@
 /*
  * CAPI function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define CAPI_F_CAPI_CERT_GET_FNAME                       0
 #  define CAPI_F_CAPI_CTRL                                 0
 #  define CAPI_F_CAPI_CTX_NEW                              0

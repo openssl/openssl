@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -32,6 +32,7 @@
         OPT_V__LAST
 
 # define OPT_V_OPTIONS \
+        OPT_SECTION("Validation"), \
         { "policy", OPT_V_POLICY, 's', "adds policy to the acceptable policy set"}, \
         { "purpose", OPT_V_PURPOSE, 's', \
             "certificate chain purpose"}, \
@@ -124,6 +125,7 @@
         OPT_X__LAST
 
 # define OPT_X_OPTIONS \
+        OPT_SECTION("Extended certificate"), \
         { "xkey", OPT_X_KEY, '<', "key for Extended certificates"}, \
         { "xcert", OPT_X_CERT, '<', "cert for Extended certificates"}, \
         { "xchain", OPT_X_CHAIN, '<', "chain for Extended certificates"}, \
@@ -161,6 +163,7 @@
         OPT_S_NO_RENEGOTIATION, OPT_S_NO_MIDDLEBOX, OPT_S__LAST
 
 # define OPT_S_OPTIONS \
+        OPT_SECTION("TLS/SSL"), \
         {"no_ssl3", OPT_S_NOSSL3, '-',"Just disable SSLv3" }, \
         {"no_tls1", OPT_S_NOTLS1, '-', "Just disable TLSv1"}, \
         {"no_tls1_1", OPT_S_NOTLS1_1, '-', "Just disable TLSv1.1" }, \
@@ -254,6 +257,7 @@
         OPT_R__FIRST=1500, OPT_R_RAND, OPT_R_WRITERAND, OPT_R__LAST
 
 # define OPT_R_OPTIONS \
+    OPT_SECTION("Random state"), \
     {"rand", OPT_R_RAND, 's', "Load the file(s) into the random number generator"}, \
     {"writerand", OPT_R_WRITERAND, '>', "Write random data to the specified file"}
 
@@ -262,11 +266,31 @@
         case OPT_R_RAND: case OPT_R_WRITERAND
 
 /*
+ * Provider options.
+ */
+# define OPT_PROV_ENUM \
+        OPT_PROV__FIRST=1600, \
+        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, \
+        OPT_PROV__LAST
+
+# define OPT_PROV_OPTIONS \
+        OPT_SECTION("Provider"), \
+        { "provider_path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
+        { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }
+
+# define OPT_PROV_CASES \
+        OPT_PROV__FIRST: case OPT_PROV__LAST: break; \
+        case OPT_PROV_PROVIDER: \
+        case OPT_PROV_PROVIDER_PATH
+
+/*
  * Option parsing.
  */
 extern const char OPT_HELP_STR[];
 extern const char OPT_MORE_STR[];
 extern const char OPT_SECTION_STR[];
+extern const char OPT_PARAM_STR[];
+
 typedef struct options_st {
     const char *name;
     int retval;
@@ -309,7 +333,8 @@ typedef struct string_int_pair_st {
         OPT_FMT_TEXT   | OPT_FMT_HTTP   | OPT_FMT_PVK)
 
 /* Divide options into sections when displaying usage */
-#define OPT_SECTION(sec) {OPT_SECTION_STR, 1, '-', sec " options:\n"}
+#define OPT_SECTION(sec) { OPT_SECTION_STR, 1, '-', sec " options:\n" }
+#define OPT_PARAMETERS() { OPT_PARAM_STR, 1, '-', "Parameters:\n" }
 
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
@@ -317,6 +342,7 @@ char *opt_init(int ac, char **av, const OPTIONS * o);
 int opt_next(void);
 void opt_begin(void);
 int opt_format(const char *s, unsigned long flags, int *result);
+const char *format2str(int format);
 int opt_int(const char *arg, int *result);
 int opt_ulong(const char *arg, unsigned long *result);
 int opt_long(const char *arg, long *result);
@@ -341,9 +367,11 @@ char **opt_rest(void);
 int opt_num_rest(void);
 int opt_verify(int i, X509_VERIFY_PARAM *vpm);
 int opt_rand(int i);
+int opt_provider(int i);
 void opt_help(const OPTIONS * list);
-void opt_print(const OPTIONS * opt, int width);
+void opt_print(const OPTIONS * opt, int doingparams, int width);
 int opt_format_error(const char *s, unsigned long flags);
+void print_format_error(int format, unsigned long flags);
 int opt_isdir(const char *name);
 int opt_printf_stderr(const char *fmt, ...);
 

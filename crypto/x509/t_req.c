@@ -17,6 +17,8 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 
+DEFINE_STACK_OF(X509_EXTENSION)
+
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, X509_REQ *x)
 {

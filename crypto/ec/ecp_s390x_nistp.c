@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -169,12 +169,13 @@ static ECDSA_SIG *ecdsa_s390x_nistp_sign_sig(const unsigned char *dgst,
 
     if (r == NULL || kinv == NULL) {
         /*
-         * Generate random k and copy to param param block. RAND_priv_bytes
+         * Generate random k and copy to param param block. RAND_priv_bytes_ex
          * is used instead of BN_priv_rand_range or BN_generate_dsa_nonce
          * because kdsa instruction constructs an in-range, invertible nonce
          * internally implementing counter-measures for RNG weakness.
          */
-         if (RAND_priv_bytes(param + S390X_OFF_RN(len), len) != 1) {
+         if (RAND_priv_bytes_ex(eckey->libctx, param + S390X_OFF_RN(len),
+                                len) != 1) {
              ECerr(EC_F_ECDSA_S390X_NISTP_SIGN_SIG,
                    EC_R_RANDOM_NUMBER_GENERATION_FAILED);
              goto ret;
@@ -331,8 +332,6 @@ const EC_METHOD *EC_GFp_s390x_nistp##bits##_method(void)                \
         ec_GFp_simple_point_clear_finish,                               \
         ec_GFp_simple_point_copy,                                       \
         ec_GFp_simple_point_set_to_infinity,                            \
-        ec_GFp_simple_set_Jprojective_coordinates_GFp,                  \
-        ec_GFp_simple_get_Jprojective_coordinates_GFp,                  \
         ec_GFp_simple_point_set_affine_coordinates,                     \
         ec_GFp_simple_point_get_affine_coordinates,                     \
         NULL, /* point_set_compressed_coordinates */                    \

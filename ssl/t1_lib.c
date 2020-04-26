@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,21 +7,31 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need access to the deprecated low level HMAC APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/core_names.h>
 #include <openssl/ocsp.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
 #include "internal/nelem.h"
+#include "internal/evp.h"
 #include "ssl_local.h"
 #include <openssl/ct.h>
 
+DEFINE_STACK_OF_CONST(SSL_CIPHER)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_NAME)
+
 static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
 
 SSL3_ENC_METHOD const TLSv1_enc_data = {
     tls1_enc,
@@ -136,44 +146,53 @@ int tls1_clear(SSL *s)
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static const TLS_GROUP_INFO nid_list[] = {
 # ifndef OPENSSL_NO_EC
-    {NID_sect163k1, 80, TLS_GROUP_CURVE_CHAR2, 0x0001}, /* sect163k1 (1) */
-    {NID_sect163r1, 80, TLS_GROUP_CURVE_CHAR2, 0x0002}, /* sect163r1 (2) */
-    {NID_sect163r2, 80, TLS_GROUP_CURVE_CHAR2, 0x0003}, /* sect163r2 (3) */
-    {NID_sect193r1, 80, TLS_GROUP_CURVE_CHAR2, 0x0004}, /* sect193r1 (4) */
-    {NID_sect193r2, 80, TLS_GROUP_CURVE_CHAR2, 0x0005}, /* sect193r2 (5) */
-    {NID_sect233k1, 112, TLS_GROUP_CURVE_CHAR2, 0x0006}, /* sect233k1 (6) */
-    {NID_sect233r1, 112, TLS_GROUP_CURVE_CHAR2, 0x0007}, /* sect233r1 (7) */
-    {NID_sect239k1, 112, TLS_GROUP_CURVE_CHAR2, 0x0008}, /* sect239k1 (8) */
-    {NID_sect283k1, 128, TLS_GROUP_CURVE_CHAR2, 0x0009}, /* sect283k1 (9) */
-    {NID_sect283r1, 128, TLS_GROUP_CURVE_CHAR2, 0x000A}, /* sect283r1 (10) */
-    {NID_sect409k1, 192, TLS_GROUP_CURVE_CHAR2, 0x000B}, /* sect409k1 (11) */
-    {NID_sect409r1, 192, TLS_GROUP_CURVE_CHAR2, 0x000C}, /* sect409r1 (12) */
-    {NID_sect571k1, 256, TLS_GROUP_CURVE_CHAR2, 0x000D}, /* sect571k1 (13) */
-    {NID_sect571r1, 256, TLS_GROUP_CURVE_CHAR2, 0x000E}, /* sect571r1 (14) */
-    {NID_secp160k1, 80, TLS_GROUP_CURVE_PRIME, 0x000F}, /* secp160k1 (15) */
-    {NID_secp160r1, 80, TLS_GROUP_CURVE_PRIME, 0x0010}, /* secp160r1 (16) */
-    {NID_secp160r2, 80, TLS_GROUP_CURVE_PRIME, 0x0011}, /* secp160r2 (17) */
-    {NID_secp192k1, 80, TLS_GROUP_CURVE_PRIME, 0x0012}, /* secp192k1 (18) */
-    {NID_X9_62_prime192v1, 80, TLS_GROUP_CURVE_PRIME, 0x0013}, /* secp192r1 (19) */
-    {NID_secp224k1, 112, TLS_GROUP_CURVE_PRIME, 0x0014}, /* secp224k1 (20) */
-    {NID_secp224r1, 112, TLS_GROUP_CURVE_PRIME, 0x0015}, /* secp224r1 (21) */
-    {NID_secp256k1, 128, TLS_GROUP_CURVE_PRIME, 0x0016}, /* secp256k1 (22) */
-    {NID_X9_62_prime256v1, 128, TLS_GROUP_CURVE_PRIME, 0x0017}, /* secp256r1 (23) */
-    {NID_secp384r1, 192, TLS_GROUP_CURVE_PRIME, 0x0018}, /* secp384r1 (24) */
-    {NID_secp521r1, 256, TLS_GROUP_CURVE_PRIME, 0x0019}, /* secp521r1 (25) */
-    {NID_brainpoolP256r1, 128, TLS_GROUP_CURVE_PRIME, 0x001A}, /* brainpoolP256r1 (26) */
-    {NID_brainpoolP384r1, 192, TLS_GROUP_CURVE_PRIME, 0x001B}, /* brainpoolP384r1 (27) */
-    {NID_brainpoolP512r1, 256, TLS_GROUP_CURVE_PRIME, 0x001C}, /* brainpool512r1 (28) */
-    {EVP_PKEY_X25519, 128, TLS_GROUP_CURVE_CUSTOM, 0x001D}, /* X25519 (29) */
-    {EVP_PKEY_X448, 224, TLS_GROUP_CURVE_CUSTOM, 0x001E}, /* X448 (30) */
+    {NID_sect163k1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0001}, /* sect163k1 (1) */
+    {NID_sect163r1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0002}, /* sect163r1 (2) */
+    {NID_sect163r2, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0003}, /* sect163r2 (3) */
+    {NID_sect193r1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0004}, /* sect193r1 (4) */
+    {NID_sect193r2, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0005}, /* sect193r2 (5) */
+    {NID_sect233k1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0006}, /* sect233k1 (6) */
+    {NID_sect233r1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0007}, /* sect233r1 (7) */
+    {NID_sect239k1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0008}, /* sect239k1 (8) */
+    {NID_sect283k1, "EC", 128, TLS_GROUP_CURVE_CHAR2, 0x0009}, /* sect283k1 (9) */
+    {NID_sect283r1, "EC", 128, TLS_GROUP_CURVE_CHAR2, 0x000A}, /* sect283r1 (10) */
+    {NID_sect409k1, "EC", 192, TLS_GROUP_CURVE_CHAR2, 0x000B}, /* sect409k1 (11) */
+    {NID_sect409r1, "EC", 192, TLS_GROUP_CURVE_CHAR2, 0x000C}, /* sect409r1 (12) */
+    {NID_sect571k1, "EC", 256, TLS_GROUP_CURVE_CHAR2, 0x000D}, /* sect571k1 (13) */
+    {NID_sect571r1, "EC", 256, TLS_GROUP_CURVE_CHAR2, 0x000E}, /* sect571r1 (14) */
+    {NID_secp160k1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x000F}, /* secp160k1 (15) */
+    {NID_secp160r1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0010}, /* secp160r1 (16) */
+    {NID_secp160r2, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0011}, /* secp160r2 (17) */
+    {NID_secp192k1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0012}, /* secp192k1 (18) */
+    {NID_X9_62_prime192v1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0013}, /* secp192r1 (19) */
+    {NID_secp224k1, "EC", 112, TLS_GROUP_CURVE_PRIME, 0x0014}, /* secp224k1 (20) */
+    {NID_secp224r1, "EC", 112, TLS_GROUP_CURVE_PRIME, 0x0015}, /* secp224r1 (21) */
+    {NID_secp256k1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x0016}, /* secp256k1 (22) */
+    {NID_X9_62_prime256v1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x0017}, /* secp256r1 (23) */
+    {NID_secp384r1, "EC", 192, TLS_GROUP_CURVE_PRIME, 0x0018}, /* secp384r1 (24) */
+    {NID_secp521r1, "EC", 256, TLS_GROUP_CURVE_PRIME, 0x0019}, /* secp521r1 (25) */
+    {NID_brainpoolP256r1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x001A}, /* brainpoolP256r1 (26) */
+    {NID_brainpoolP384r1, "EC", 192, TLS_GROUP_CURVE_PRIME, 0x001B}, /* brainpoolP384r1 (27) */
+    {NID_brainpoolP512r1, "EC", 256, TLS_GROUP_CURVE_PRIME, 0x001C}, /* brainpool512r1 (28) */
+    {EVP_PKEY_X25519, "X25519", 128, TLS_GROUP_CURVE_CUSTOM, 0x001D}, /* X25519 (29) */
+    {EVP_PKEY_X448, "X448", 224, TLS_GROUP_CURVE_CUSTOM, 0x001E}, /* X448 (30) */
 # endif /* OPENSSL_NO_EC */
+# ifndef OPENSSL_NO_GOST
+    {NID_id_tc26_gost_3410_2012_256_paramSetA, "GOST_2012_256", 112, TLS_GROUP_CURVE_PRIME, 0x0022}, /* GC256A (34) */
+    {NID_id_tc26_gost_3410_2012_256_paramSetB, "GOST_2012_256", 112, TLS_GROUP_CURVE_PRIME, 0x0023}, /* GC256B (35) */
+    {NID_id_tc26_gost_3410_2012_256_paramSetC, "GOST_2012_256", 112, TLS_GROUP_CURVE_PRIME, 0x0024}, /* GC256C (36) */
+    {NID_id_tc26_gost_3410_2012_256_paramSetD, "GOST_2012_256", 112, TLS_GROUP_CURVE_PRIME, 0x0025}, /* GC256D (37) */
+    {NID_id_tc26_gost_3410_2012_512_paramSetA, "GOST_2012_512", 112, TLS_GROUP_CURVE_PRIME, 0x0026}, /* GC512A (38) */
+    {NID_id_tc26_gost_3410_2012_512_paramSetB, "GOST_2012_512", 112, TLS_GROUP_CURVE_PRIME, 0x0027}, /* GC512B (39) */
+    {NID_id_tc26_gost_3410_2012_512_paramSetC, "GOST_2012_512", 112, TLS_GROUP_CURVE_PRIME, 0x0028}, /* GC512C (40) */
+# endif /* OPENSSL_NO_GOST */
 # ifndef OPENSSL_NO_DH
     /* Security bit values for FFDHE groups are updated as per RFC 7919 */
-    {NID_ffdhe2048, 103, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0100}, /* ffdhe2048 (0x0100) */
-    {NID_ffdhe3072, 125, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0101}, /* ffdhe3072 (0x0101) */
-    {NID_ffdhe4096, 150, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0102}, /* ffdhe4096 (0x0102) */
-    {NID_ffdhe6144, 175, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0103}, /* ffdhe6144 (0x0103) */
-    {NID_ffdhe8192, 192, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0104}, /* ffdhe8192 (0x0104) */
+    {NID_ffdhe2048, "DH", 103, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0100}, /* ffdhe2048 (0x0100) */
+    {NID_ffdhe3072, "DH", 125, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0101}, /* ffdhe3072 (0x0101) */
+    {NID_ffdhe4096, "DH", 150, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0102}, /* ffdhe4096 (0x0102) */
+    {NID_ffdhe6144, "DH", 175, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0103}, /* ffdhe6144 (0x0103) */
+    {NID_ffdhe8192, "DH", 192, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0104}, /* ffdhe8192 (0x0104) */
 # endif /* OPENSSL_NO_DH */
 };
 #endif
@@ -195,6 +214,15 @@ static const uint16_t supported_groups_default[] = {
     30,                      /* X448 (30) */
     25,                      /* secp521r1 (25) */
     24,                      /* secp384r1 (24) */
+# endif
+# ifndef OPENSSL_NO_GOST
+    34,                      /* GC256A (34) */
+    35,                      /* GC256B (35) */
+    36,                      /* GC256C (36) */
+    37,                      /* GC256D (37) */
+    38,                      /* GC512A (38) */
+    39,                      /* GC512B (39) */
+    40,                      /* GC512C (40) */
 # endif
 # ifndef OPENSSL_NO_DH
     0x100,                   /* ffdhe2048 (0x100) */
@@ -578,7 +606,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
     size_t i;
 
     /* If not an EC key nothing to check */
-    if (EVP_PKEY_id(pkey) != EVP_PKEY_EC)
+    if (!EVP_PKEY_is_a(pkey, "EC"))
         return 1;
     ec = EVP_PKEY_get0_EC_KEY(pkey);
     grp = EC_KEY_get0_group(ec);
@@ -619,13 +647,11 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
 /* Return group id of a key */
 static uint16_t tls1_get_group_id(EVP_PKEY *pkey)
 {
-    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
-    const EC_GROUP *grp;
+    int curve_nid = evp_pkey_get_EC_KEY_curve_nid(pkey);
 
-    if (ec == NULL)
+    if (curve_nid == NID_undef)
         return 0;
-    grp = EC_KEY_get0_group(ec);
-    return tls1_nid2group_id(EC_GROUP_get_curve_name(grp));
+    return tls1_nid2group_id(curve_nid);
 }
 
 /*
@@ -640,7 +666,7 @@ static int tls1_check_cert_param(SSL *s, X509 *x, int check_ee_md)
     if (pkey == NULL)
         return 0;
     /* If not EC nothing to do */
-    if (EVP_PKEY_id(pkey) != EVP_PKEY_EC)
+    if (!EVP_PKEY_is_a(pkey, "EC"))
         return 1;
     /* Check compression */
     if (!tls1_check_pkey_comp(s, pkey))
@@ -748,6 +774,8 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_dsa_sha512,
 #endif
 #ifndef OPENSSL_NO_GOST
+    TLSEXT_SIGALG_gostr34102012_256_intrinsic,
+    TLSEXT_SIGALG_gostr34102012_512_intrinsic,
     TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
     TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512,
     TLSEXT_SIGALG_gostr34102001_gostr3411,
@@ -836,6 +864,14 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
      NID_dsaWithSHA1, NID_undef},
 #endif
 #ifndef OPENSSL_NO_GOST
+    {NULL, TLSEXT_SIGALG_gostr34102012_256_intrinsic,
+     NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
+     NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
+     NID_undef, NID_undef},
+    {NULL, TLSEXT_SIGALG_gostr34102012_512_intrinsic,
+     NID_id_GostR3411_2012_512, SSL_MD_GOST12_512_IDX,
+     NID_id_GostR3410_2012_512, SSL_PKEY_GOST12_512,
+     NID_undef, NID_undef},
     {NULL, TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256,
      NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
      NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
@@ -868,8 +904,8 @@ static const uint16_t tls_default_sigalg[] = {
     TLSEXT_SIGALG_dsa_sha1, /* SSL_PKEY_DSA_SIGN */
     TLSEXT_SIGALG_ecdsa_sha1, /* SSL_PKEY_ECC */
     TLSEXT_SIGALG_gostr34102001_gostr3411, /* SSL_PKEY_GOST01 */
-    TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, /* SSL_PKEY_GOST12_256 */
-    TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, /* SSL_PKEY_GOST12_512 */
+    TLSEXT_SIGALG_gostr34102012_256_intrinsic, /* SSL_PKEY_GOST12_256 */
+    TLSEXT_SIGALG_gostr34102012_512_intrinsic, /* SSL_PKEY_GOST12_512 */
     0, /* SSL_PKEY_ED25519 */
     0, /* SSL_PKEY_ED448 */
 };
@@ -888,7 +924,7 @@ static const SIGALG_LOOKUP *tls1_lookup_sigalg(uint16_t sigalg)
     return NULL;
 }
 /* Lookup hash: return 0 if invalid or not enabled */
-int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
+int tls1_lookup_md(SSL_CTX *ctx, const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
 {
     const EVP_MD *md;
     if (lu == NULL)
@@ -897,7 +933,7 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
     if (lu->hash == NID_undef) {
         md = NULL;
     } else {
-        md = ssl_md(lu->hash_idx);
+        md = ssl_md(ctx, lu->hash_idx);
         if (md == NULL)
             return 0;
     }
@@ -914,22 +950,26 @@ int tls1_lookup_md(const SIGALG_LOOKUP *lu, const EVP_MD **pmd)
  * with a 128 byte (1024 bit) key.
  */
 #define RSA_PSS_MINIMUM_KEY_SIZE(md) (2 * EVP_MD_size(md) + 2)
-static int rsa_pss_check_min_key_size(const RSA *rsa, const SIGALG_LOOKUP *lu)
+static int rsa_pss_check_min_key_size(SSL_CTX *ctx, const EVP_PKEY *pkey,
+                                      const SIGALG_LOOKUP *lu)
 {
     const EVP_MD *md;
 
-    if (rsa == NULL)
+    if (pkey == NULL)
         return 0;
-    if (!tls1_lookup_md(lu, &md) || md == NULL)
+    if (!tls1_lookup_md(ctx, lu, &md) || md == NULL)
         return 0;
-    if (RSA_size(rsa) < RSA_PSS_MINIMUM_KEY_SIZE(md))
+    if (EVP_PKEY_size(pkey) < RSA_PSS_MINIMUM_KEY_SIZE(md))
         return 0;
     return 1;
 }
 
 /*
- * Return a signature algorithm for TLS < 1.2 where the signature type
- * is fixed by the certificate type.
+ * Returns a signature algorithm when the peer did not send a list of supported
+ * signature algorithms. The signature algorithm is fixed for the certificate
+ * type. |idx| is a certificate type index (SSL_PKEY_*). When |idx| is -1 the
+ * certificate type from |s| will be used.
+ * Returns the signature algorithm to use, or NULL on error.
  */
 static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
 {
@@ -970,10 +1010,14 @@ static const SIGALG_LOOKUP *tls1_get_legacy_sigalg(const SSL *s, int idx)
     if (SSL_USE_SIGALGS(s) || idx != SSL_PKEY_RSA) {
         const SIGALG_LOOKUP *lu = tls1_lookup_sigalg(tls_default_sigalg[idx]);
 
-        if (!tls1_lookup_md(lu, NULL))
+        if (!tls1_lookup_md(s->ctx, lu, NULL))
+            return NULL;
+        if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, lu))
             return NULL;
         return lu;
     }
+    if (!tls12_sigalg_allowed(s, SSL_SECOP_SIGALG_SUPPORTED, &legacy_rsa_sigalg))
+        return NULL;
     return &legacy_rsa_sigalg;
 }
 /* Set peer sigalg based key type */
@@ -1063,6 +1107,31 @@ int tls_check_sigalg_curve(const SSL *s, int curve)
 #endif
 
 /*
+ * Return the number of security bits for the signature algorithm, or 0 on
+ * error.
+ */
+static int sigalg_security_bits(SSL_CTX *ctx, const SIGALG_LOOKUP *lu)
+{
+    const EVP_MD *md = NULL;
+    int secbits = 0;
+
+    if (!tls1_lookup_md(ctx, lu, &md))
+        return 0;
+    if (md != NULL)
+    {
+        /* Security bits: half digest bits */
+        secbits = EVP_MD_size(md) * 4;
+    } else {
+        /* Values from https://tools.ietf.org/html/rfc8032#section-8.5 */
+        if (lu->sigalg == TLSEXT_SIGALG_ed25519)
+            secbits = 128;
+        else if (lu->sigalg == TLSEXT_SIGALG_ed448)
+            secbits = 224;
+    }
+    return secbits;
+}
+
+/*
  * Check signature algorithm is consistent with sent supported signature
  * algorithms and if so set relevant digest and signature scheme in
  * s.
@@ -1073,9 +1142,22 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     const EVP_MD *md = NULL;
     char sigalgstr[2];
     size_t sent_sigslen, i, cidx;
-    int pkeyid = EVP_PKEY_id(pkey);
+    int pkeyid = -1;
     const SIGALG_LOOKUP *lu;
+    int secbits = 0;
 
+    /*
+     * TODO(3.0) Remove this when we adapted this function for provider
+     * side keys.  We know that EVP_PKEY_get0() downgrades an EVP_PKEY
+     * to contain a legacy key.
+     *
+     * THIS IS TEMPORARY
+     */
+    EVP_PKEY_get0(pkey);
+    if (EVP_PKEY_id(pkey) == EVP_PKEY_NONE)
+        return 0;
+
+    pkeyid = EVP_PKEY_id(pkey);
     /* Should never happen */
     if (pkeyid == -1)
         return -1;
@@ -1124,8 +1206,7 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
 
         /* For TLS 1.3 or Suite B check curve matches signature algorithm */
         if (SSL_IS_TLS13(s) || tls1_suiteb(s)) {
-            EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
-            int curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
+            int curve = evp_pkey_get_EC_KEY_curve_nid(pkey);
 
             if (lu->curve != NID_undef && curve != lu->curve) {
                 SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
@@ -1171,25 +1252,25 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
                  SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    if (!tls1_lookup_md(lu, &md)) {
+    if (!tls1_lookup_md(s->ctx, lu, &md)) {
         SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
                  SSL_R_UNKNOWN_DIGEST);
         return 0;
     }
-    if (md != NULL) {
-        /*
-         * Make sure security callback allows algorithm. For historical
-         * reasons we have to pass the sigalg as a two byte char array.
-         */
-        sigalgstr[0] = (sig >> 8) & 0xff;
-        sigalgstr[1] = sig & 0xff;
-        if (!ssl_security(s, SSL_SECOP_SIGALG_CHECK,
-                    EVP_MD_size(md) * 4, EVP_MD_type(md),
-                    (void *)sigalgstr)) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
-                     SSL_R_WRONG_SIGNATURE_TYPE);
-            return 0;
-        }
+    /*
+     * Make sure security callback allows algorithm. For historical
+     * reasons we have to pass the sigalg as a two byte char array.
+     */
+    sigalgstr[0] = (sig >> 8) & 0xff;
+    sigalgstr[1] = sig & 0xff;
+    secbits = sigalg_security_bits(s->ctx, lu);
+    if (secbits == 0 ||
+        !ssl_security(s, SSL_SECOP_SIGALG_CHECK, secbits,
+                      md != NULL ? EVP_MD_type(md) : NID_undef,
+                      (void *)sigalgstr)) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS12_CHECK_PEER_SIGALG,
+                 SSL_R_WRONG_SIGNATURE_TYPE);
+        return 0;
     }
     /* Store the sigalg the peer uses */
     s->s3.tmp.peer_sigalg = lu;
@@ -1255,7 +1336,7 @@ int ssl_set_client_disabled(SSL *s)
  *
  * Returns 1 when it's disabled, 0 when enabled.
  */
-int ssl_cipher_disabled(SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
+int ssl_cipher_disabled(const SSL *s, const SSL_CIPHER *c, int op, int ecdhe)
 {
     if (c->algorithm_mkey & s->s3.tmp.mask_k
         || c->algorithm_auth & s->s3.tmp.mask_a)
@@ -1409,7 +1490,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     SSL_TICKET_STATUS ret = SSL_TICKET_FATAL_ERR_OTHER;
     size_t mlen;
     unsigned char tick_hmac[EVP_MAX_MD_SIZE];
-    HMAC_CTX *hctx = NULL;
+    SSL_HMAC *hctx = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     SSL_CTX *tctx = s->session_ctx;
 
@@ -1439,7 +1520,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
 
     /* Initialize session ticket encryption and HMAC contexts */
-    hctx = HMAC_CTX_new();
+    hctx = ssl_hmac_new(tctx);
     if (hctx == NULL) {
         ret = SSL_TICKET_FATAL_ERR_MALLOC;
         goto end;
@@ -1449,11 +1530,28 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         ret = SSL_TICKET_FATAL_ERR_MALLOC;
         goto end;
     }
-    if (tctx->ext.ticket_key_cb) {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (tctx->ext.ticket_key_evp_cb != NULL || tctx->ext.ticket_key_cb != NULL)
+#else
+    if (tctx->ext.ticket_key_evp_cb != NULL)
+#endif
+    {
         unsigned char *nctick = (unsigned char *)etick;
-        int rv = tctx->ext.ticket_key_cb(s, nctick,
+        int rv = 0;
+
+        if (tctx->ext.ticket_key_evp_cb != NULL)
+            rv = tctx->ext.ticket_key_evp_cb(s, nctick,
+                                             nctick + TLSEXT_KEYNAME_LENGTH,
+                                             ctx,
+                                             ssl_hmac_get0_EVP_MAC_CTX(hctx),
+                                             0);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+        else if (tctx->ext.ticket_key_cb != NULL)
+            /* if 0 is returned, write an empty ticket */
+            rv = tctx->ext.ticket_key_cb(s, nctick,
                                          nctick + TLSEXT_KEYNAME_LENGTH,
-                                         ctx, hctx, 0);
+                                         ctx, ssl_hmac_get0_HMAC_CTX(hctx), 0);
+#endif
         if (rv < 0) {
             ret = SSL_TICKET_FATAL_ERR_OTHER;
             goto end;
@@ -1465,21 +1563,29 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
         if (rv == 2)
             renew_ticket = 1;
     } else {
+        EVP_CIPHER *aes256cbc = NULL;
+
         /* Check key name matches */
         if (memcmp(etick, tctx->ext.tick_key_name,
                    TLSEXT_KEYNAME_LENGTH) != 0) {
             ret = SSL_TICKET_NO_DECRYPT;
             goto end;
         }
-        if (HMAC_Init_ex(hctx, tctx->ext.secure->tick_hmac_key,
-                         sizeof(tctx->ext.secure->tick_hmac_key),
-                         EVP_sha256(), NULL) <= 0
-            || EVP_DecryptInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+
+        aes256cbc = EVP_CIPHER_fetch(s->ctx->libctx, "AES-256-CBC",
+                                     s->ctx->propq);
+        if (aes256cbc == NULL
+            || ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,
+                             sizeof(tctx->ext.secure->tick_hmac_key),
+                             "SHA256") <= 0
+            || EVP_DecryptInit_ex(ctx, aes256cbc, NULL,
                                   tctx->ext.secure->tick_aes_key,
                                   etick + TLSEXT_KEYNAME_LENGTH) <= 0) {
+            EVP_CIPHER_free(aes256cbc);
             ret = SSL_TICKET_FATAL_ERR_OTHER;
             goto end;
         }
+        EVP_CIPHER_free(aes256cbc);
         if (SSL_IS_TLS13(s))
             renew_ticket = 1;
     }
@@ -1487,7 +1593,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
      * Attempt to process session ticket, first conduct sanity and integrity
      * checks on ticket.
      */
-    mlen = HMAC_size(hctx);
+    mlen = ssl_hmac_size(hctx);
     if (mlen == 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
@@ -1501,8 +1607,8 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
     }
     eticklen -= mlen;
     /* Check HMAC of encrypted ticket */
-    if (HMAC_Update(hctx, etick, eticklen) <= 0
-        || HMAC_Final(hctx, tick_hmac, NULL) <= 0) {
+    if (ssl_hmac_update(hctx, etick, eticklen) <= 0
+        || ssl_hmac_final(hctx, tick_hmac, NULL, sizeof(tick_hmac)) <= 0) {
         ret = SSL_TICKET_FATAL_ERR_OTHER;
         goto end;
     }
@@ -1565,7 +1671,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 
  end:
     EVP_CIPHER_CTX_free(ctx);
-    HMAC_CTX_free(hctx);
+    ssl_hmac_free(hctx);
 
     /*
      * If set, the decrypt_ticket_cb() is called unless a fatal error was
@@ -1635,13 +1741,13 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
 }
 
 /* Check to see if a signature algorithm is allowed */
-static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
+static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu)
 {
     unsigned char sigalgstr[2];
     int secbits;
 
     /* See if sigalgs is recognised and if hash is enabled */
-    if (!tls1_lookup_md(lu, NULL))
+    if (!tls1_lookup_md(s->ctx, lu, NULL))
         return 0;
     /* DSA is not allowed in TLS 1.3 */
     if (SSL_IS_TLS13(s) && lu->sig == EVP_PKEY_DSA)
@@ -1696,11 +1802,8 @@ static int tls12_sigalg_allowed(SSL *s, int op, const SIGALG_LOOKUP *lu)
         }
     }
 
-    if (lu->hash == NID_undef)
-        return 1;
-    /* Security bits: half digest bits */
-    secbits = EVP_MD_size(ssl_md(lu->hash_idx)) * 4;
     /* Finally see if security callback allows it */
+    secbits = sigalg_security_bits(s->ctx, lu);
     sigalgstr[0] = (lu->sigalg >> 8) & 0xff;
     sigalgstr[1] = lu->sigalg & 0xff;
     return ssl_security(s, op, secbits, lu->hash, (void *)sigalgstr);
@@ -2178,7 +2281,7 @@ static int tls1_check_sig_alg(SSL *s, X509 *x, int default_nid)
         sigalg = use_pc_sigalgs
                  ? tls1_lookup_sigalg(s->s3.tmp.peer_cert_sigalgs[i])
                  : s->shared_sigalgs[i];
-        if (sig_nid == sigalg->sigandhash)
+        if (sigalg != NULL && sig_nid == sigalg->sigandhash)
             return 1;
     }
     return 0;
@@ -2187,7 +2290,7 @@ static int tls1_check_sig_alg(SSL *s, X509 *x, int default_nid)
 /* Check to see if a certificate issuer name matches list of CA names */
 static int ssl_check_ca_name(STACK_OF(X509_NAME) *names, X509 *x)
 {
-    X509_NAME *nm;
+    const X509_NAME *nm;
     int i;
     nm = X509_get_issuer_name(x);
     for (i = 0; i < sk_X509_NAME_num(names); i++) {
@@ -2388,17 +2491,14 @@ int tls1_check_chain(SSL *s, X509 *x, EVP_PKEY *pk, STACK_OF(X509) *chain,
     if (!s->server && strict_mode) {
         STACK_OF(X509_NAME) *ca_dn;
         int check_type = 0;
-        switch (EVP_PKEY_id(pk)) {
-        case EVP_PKEY_RSA:
+
+        if (EVP_PKEY_is_a(pk, "RSA"))
             check_type = TLS_CT_RSA_SIGN;
-            break;
-        case EVP_PKEY_DSA:
+        else if (EVP_PKEY_is_a(pk, "DSA"))
             check_type = TLS_CT_DSS_SIGN;
-            break;
-        case EVP_PKEY_EC:
+        else if (EVP_PKEY_is_a(pk, "EC"))
             check_type = TLS_CT_ECDSA_SIGN;
-            break;
-        }
+
         if (check_type) {
             const uint8_t *ctypes = s->s3.tmp.ctype;
             size_t j;
@@ -2748,7 +2848,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
             || lu->sig == EVP_PKEY_RSA)
             continue;
         /* Check that we have a cert, and signature_algorithms_cert */
-        if (!tls1_lookup_md(lu, NULL))
+        if (!tls1_lookup_md(s->ctx, lu, NULL))
             continue;
         if ((pkey == NULL && !has_usable_cert(s, lu, -1))
                 || (pkey != NULL && !is_cert_usable(s, lu, x, pkey)))
@@ -2759,10 +2859,8 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
 
         if (lu->sig == EVP_PKEY_EC) {
 #ifndef OPENSSL_NO_EC
-            if (curve == -1) {
-                EC_KEY *ec = EVP_PKEY_get0_EC_KEY(tmppkey);
-                curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-            }
+            if (curve == -1)
+                curve = evp_pkey_get_EC_KEY_curve_nid(tmppkey);
             if (lu->curve != NID_undef && curve != lu->curve)
                 continue;
 #else
@@ -2770,7 +2868,7 @@ static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey)
 #endif
         } else if (lu->sig == EVP_PKEY_RSA_PSS) {
             /* validate that key is large enough for the signature algorithm */
-            if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(tmppkey), lu))
+            if (!rsa_pss_check_min_key_size(s->ctx, tmppkey, lu))
                 continue;
         }
         break;
@@ -2821,15 +2919,13 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
             size_t i;
             if (s->s3.tmp.peer_sigalgs != NULL) {
 #ifndef OPENSSL_NO_EC
-                int curve;
+                int curve = -1;
 
                 /* For Suite B need to match signature algorithm to curve */
-                if (tls1_suiteb(s)) {
-                    EC_KEY *ec = EVP_PKEY_get0_EC_KEY(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
-                    curve = EC_GROUP_get_curve_name(EC_KEY_get0_group(ec));
-                } else {
-                    curve = -1;
-                }
+                if (tls1_suiteb(s))
+                    curve =
+                        evp_pkey_get_EC_KEY_curve_nid(s->cert->pkeys[SSL_PKEY_ECC]
+                                                      .privatekey);
 #endif
 
                 /*
@@ -2856,7 +2952,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                         /* validate that key is large enough for the signature algorithm */
                         EVP_PKEY *pkey = s->cert->pkeys[sig_idx].privatekey;
 
-                        if (!rsa_pss_check_min_key_size(EVP_PKEY_get0(pkey), lu))
+                        if (!rsa_pss_check_min_key_size(s->ctx, pkey, lu))
                             continue;
                     }
 #ifndef OPENSSL_NO_EC
@@ -2864,6 +2960,26 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
 #endif
                         break;
                 }
+#ifndef OPENSSL_NO_GOST
+                /*
+                 * Some Windows-based implementations do not send GOST algorithms indication
+                 * in supported_algorithms extension, so when we have GOST-based ciphersuite,
+                 * we have to assume GOST support.
+                 */
+                if (i == s->shared_sigalgslen && s->s3.tmp.new_cipher->algorithm_auth & (SSL_aGOST01 | SSL_aGOST12)) {
+                  if ((lu = tls1_get_legacy_sigalg(s, -1)) == NULL) {
+                    if (!fatalerrs)
+                      return 1;
+                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
+                             SSL_F_TLS_CHOOSE_SIGALG,
+                             SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
+                    return 0;
+                  } else {
+                    i = 0;
+                    sig_idx = lu->sig_idx;
+                  }
+                }
+#endif
                 if (i == s->shared_sigalgslen) {
                     if (!fatalerrs)
                         return 1;
@@ -2883,7 +2999,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                     if (!fatalerrs)
                         return 1;
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CHOOSE_SIGALG,
-                             ERR_R_INTERNAL_ERROR);
+                             SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
                     return 0;
                 }
 
@@ -2908,7 +3024,7 @@ int tls_choose_sigalg(SSL *s, int fatalerrs)
                 if (!fatalerrs)
                     return 1;
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CHOOSE_SIGALG,
-                         ERR_R_INTERNAL_ERROR);
+                         SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM);
                 return 0;
             }
         }
@@ -2951,3 +3067,118 @@ uint8_t SSL_SESSION_get_max_fragment_length(const SSL_SESSION *session)
 {
     return session->ext.max_fragment_len_mode;
 }
+
+/*
+ * Helper functions for HMAC access with legacy support included.
+ */
+SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
+{
+    SSL_HMAC *ret = OPENSSL_zalloc(sizeof(*ret));
+    EVP_MAC *mac = NULL;
+
+    if (ret == NULL)
+        return NULL;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->ext.ticket_key_evp_cb == NULL
+            && ctx->ext.ticket_key_cb != NULL) {
+        ret->old_ctx = HMAC_CTX_new();
+        if (ret->old_ctx == NULL)
+            goto err;
+        return ret;
+    }
+#endif
+    mac = EVP_MAC_fetch(ctx->libctx, "HMAC", NULL);
+    if (mac == NULL || (ret->ctx = EVP_MAC_CTX_new(mac)) == NULL)
+        goto err;
+    EVP_MAC_free(mac);
+    return ret;
+ err:
+    EVP_MAC_CTX_free(ret->ctx);
+    EVP_MAC_free(mac);
+    OPENSSL_free(ret);
+    return NULL;
+}
+
+void ssl_hmac_free(SSL_HMAC *ctx)
+{
+    if (ctx != NULL) {
+        EVP_MAC_CTX_free(ctx->ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+        HMAC_CTX_free(ctx->old_ctx);
+#endif
+        OPENSSL_free(ctx);
+    }
+}
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+HMAC_CTX *ssl_hmac_get0_HMAC_CTX(SSL_HMAC *ctx)
+{
+    return ctx->old_ctx;
+}
+#endif
+
+EVP_MAC_CTX *ssl_hmac_get0_EVP_MAC_CTX(SSL_HMAC *ctx)
+{
+    return ctx->ctx;
+}
+
+int ssl_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
+{
+    OSSL_PARAM params[3], *p = params;
+
+    if (ctx->ctx != NULL) {
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, md, 0);
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key, len);
+        *p = OSSL_PARAM_construct_end();
+        if (EVP_MAC_CTX_set_params(ctx->ctx, params) && EVP_MAC_init(ctx->ctx))
+            return 1;
+    }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_Init_ex(ctx->old_ctx, key, len,
+                            EVP_get_digestbyname(md), NULL);
+#endif
+    return 0;
+}
+
+int ssl_hmac_update(SSL_HMAC *ctx, const unsigned char *data, size_t len)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_update(ctx->ctx, data, len);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_Update(ctx->old_ctx, data, len);
+#endif
+    return 0;
+}
+
+int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
+                   size_t max_size)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_final(ctx->ctx, md, len, max_size);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL) {
+        unsigned int l;
+
+        if (HMAC_Final(ctx->old_ctx, md, &l) > 0) {
+            if (len != NULL)
+                *len = l;
+            return 1;
+        }
+    }
+#endif
+    return 0;
+}
+
+size_t ssl_hmac_size(const SSL_HMAC *ctx)
+{
+    if (ctx->ctx != NULL)
+        return EVP_MAC_size(ctx->ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    if (ctx->old_ctx != NULL)
+        return HMAC_size(ctx->old_ctx);
+#endif
+    return 0;
+}
+

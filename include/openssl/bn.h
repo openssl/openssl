@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -13,7 +13,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_BN_H
 # endif
 
@@ -67,7 +67,7 @@ extern "C" {
 # define BN_FLG_CONSTTIME        0x04
 # define BN_FLG_SECURE           0x08
 
-# if !OPENSSL_API_0_9_8
+# ifndef OPENSSL_NO_DEPRECATED_0_9_8
 /* deprecated name for the flag */
 #  define BN_FLG_EXP_CONSTTIME BN_FLG_CONSTTIME
 #  define BN_FLG_FREE            0x8000 /* used for debugging */
@@ -109,7 +109,7 @@ void BN_GENCB_set(BN_GENCB *gencb, int (*callback) (int, int, BN_GENCB *),
 
 void *BN_GENCB_get_arg(BN_GENCB *cb);
 
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define BN_prime_checks 0      /* default: select number of iterations based
                                   * on the size of the number */
 
@@ -198,7 +198,7 @@ int BN_is_odd(const BIGNUM *a);
 
 void BN_zero_ex(BIGNUM *a);
 
-# if OPENSSL_API_0_9_8
+# if OPENSSL_API_LEVEL > 908
 #  define BN_zero(a)      BN_zero_ex(a)
 # else
 #  define BN_zero(a)      (BN_set_word((a),0))
@@ -355,8 +355,8 @@ DEPRECATEDIN_0_9_8(int
                                         BN_CTX *ctx, void *cb_arg,
                                         int do_trial_division))
 
-DEPRECATEDIN_3(int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb))
-DEPRECATEDIN_3(int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
+DEPRECATEDIN_3_0(int BN_is_prime_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx, BN_GENCB *cb))
+DEPRECATEDIN_3_0(int BN_is_prime_fasttest_ex(const BIGNUM *p, int nchecks, BN_CTX *ctx,
                             int do_trial_division, BN_GENCB *cb))
 /* Newer versions */
 int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
@@ -527,6 +527,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
                           const BIGNUM *priv, const unsigned char *message,
                           size_t message_len, BN_CTX *ctx);
 
+# ifndef OPENSSL_NO_DH
 /* Primes from RFC 2409 */
 BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
 BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
@@ -539,15 +540,16 @@ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
 BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
-# if !OPENSSL_API_1_1_0
-#  define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
-#  define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
-#  define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
-#  define get_rfc3526_prime_2048 BN_get_rfc3526_prime_2048
-#  define get_rfc3526_prime_3072 BN_get_rfc3526_prime_3072
-#  define get_rfc3526_prime_4096 BN_get_rfc3526_prime_4096
-#  define get_rfc3526_prime_6144 BN_get_rfc3526_prime_6144
-#  define get_rfc3526_prime_8192 BN_get_rfc3526_prime_8192
+#  ifndef OPENSSL_NO_DEPRECATED_1_1_0
+#   define get_rfc2409_prime_768 BN_get_rfc2409_prime_768
+#   define get_rfc2409_prime_1024 BN_get_rfc2409_prime_1024
+#   define get_rfc3526_prime_1536 BN_get_rfc3526_prime_1536
+#   define get_rfc3526_prime_2048 BN_get_rfc3526_prime_2048
+#   define get_rfc3526_prime_3072 BN_get_rfc3526_prime_3072
+#   define get_rfc3526_prime_4096 BN_get_rfc3526_prime_4096
+#   define get_rfc3526_prime_6144 BN_get_rfc3526_prime_6144
+#   define get_rfc3526_prime_8192 BN_get_rfc3526_prime_8192
+#  endif
 # endif
 
 int BN_bntest_rand(BIGNUM *rnd, int bits, int top, int bottom);

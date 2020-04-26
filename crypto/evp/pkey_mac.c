@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -51,17 +51,31 @@ static int pkey_mac_init(EVP_PKEY_CTX *ctx)
     MAC_PKEY_CTX *hctx;
     /* We're being smart and using the same base NIDs for PKEY and for MAC */
     int nid = ctx->pmeth->pkey_id;
-    EVP_MAC *mac = EVP_MAC_fetch(NULL, OBJ_nid2sn(nid), NULL);
+    EVP_MAC *mac;
+
+    ERR_set_mark();
+    mac = EVP_MAC_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propquery);
+    ERR_pop_to_mark();
+
+    /*
+     * mac == NULL may actually be ok in some situations. In an
+     * EVP_PKEY_new_mac_key() call a temporary EVP_PKEY_CTX is created with
+     * default libctx. We don't actually need the underlying MAC to be present
+     * to successfully set the key in that case. The resulting EVP_PKEY could
+     * then be used in some other libctx where the MAC *is* present
+     */
 
     if ((hctx = OPENSSL_zalloc(sizeof(*hctx))) == NULL) {
         EVPerr(EVP_F_PKEY_MAC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    hctx->ctx = EVP_MAC_CTX_new(mac);
-    if (hctx->ctx == NULL) {
-        OPENSSL_free(hctx);
-        return 0;
+    if (mac != NULL) {
+        hctx->ctx = EVP_MAC_CTX_new(mac);
+        if (hctx->ctx == NULL) {
+            OPENSSL_free(hctx);
+            return 0;
+        }
     }
 
     if (nid == EVP_PKEY_CMAC) {
@@ -83,6 +97,13 @@ static int pkey_mac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     MAC_PKEY_CTX *sctx, *dctx;
 
     sctx = EVP_PKEY_CTX_get_data(src);
+
+    if (sctx->ctx == NULL) {
+        /* This actually means the fetch failed during the init call */
+        EVPerr(0, EVP_R_FETCH_FAILED);
+        return 0;
+    }
+
     if (sctx->ctx->data == NULL)
         return 0;
 
@@ -142,7 +163,7 @@ static void pkey_mac_cleanup(EVP_PKEY_CTX *ctx)
     MAC_PKEY_CTX *hctx = ctx == NULL ? NULL : EVP_PKEY_CTX_get_data(ctx);
 
     if (hctx != NULL) {
-        EVP_MAC *mac = EVP_MAC_CTX_mac(hctx->ctx);
+        EVP_MAC *mac = hctx->ctx != NULL ? EVP_MAC_CTX_mac(hctx->ctx) : NULL;
 
         switch (hctx->type) {
         case MAC_TYPE_RAW:
@@ -177,8 +198,15 @@ static int pkey_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         break;
     case MAC_TYPE_MAC:
         {
-            EVP_MAC_CTX *cmkey = EVP_MAC_CTX_dup(hctx->ctx);
+            EVP_MAC_CTX *cmkey;
 
+            if (hctx->ctx == NULL) {
+                /* This actually means the fetch failed during the init call */
+                EVPerr(0, EVP_R_FETCH_FAILED);
+                return 0;
+            }
+
+            cmkey = EVP_MAC_CTX_dup(hctx->ctx);
             if (cmkey == NULL)
                 return 0;
             if (!EVP_MAC_up_ref(EVP_MAC_CTX_mac(hctx->ctx)))
@@ -219,6 +247,12 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     int set_key =
         hctx->type == MAC_TYPE_RAW
         && (ctx->pmeth->flags & EVP_PKEY_FLAG_SIGCTX_CUSTOM) != 0;
+
+    if (hctx->ctx == NULL) {
+        /* This actually means the fetch failed during the init call */
+        EVPerr(0, EVP_R_FETCH_FAILED);
+        return 0;
+    }
 
     if (set_key) {
         if (!EVP_MAC_is_a(EVP_MAC_CTX_mac(hctx->ctx),
@@ -285,6 +319,14 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                                      ciphname, 0);
                 params[params_n] = OSSL_PARAM_construct_end();
 
+                if (hctx->ctx == NULL) {
+                    /*
+                     * This actually means the fetch failed during the init call
+                     */
+                    EVPerr(0, EVP_R_FETCH_FAILED);
+                    return 0;
+                }
+
                 if (!EVP_MAC_CTX_set_params(hctx->ctx, params)
                     || !EVP_MAC_init(hctx->ctx))
                     return 0;
@@ -306,8 +348,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
                 if (ctx->pkey == NULL)
                     return 0;
-                new_mac_ctx = EVP_MAC_CTX_dup((EVP_MAC_CTX *)ctx->pkey
-                                              ->pkey.ptr);
+                new_mac_ctx = EVP_MAC_CTX_dup(ctx->pkey->pkey.ptr);
                 if (new_mac_ctx == NULL)
                     return 0;
                 EVP_MAC_CTX_free(hctx->ctx);
@@ -336,6 +377,14 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
             params[0] =
                 OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &size);
+
+            if (hctx->ctx == NULL) {
+                /*
+                 * This actually means the fetch failed during the init call
+                 */
+                EVPerr(0, EVP_R_FETCH_FAILED);
+                return 0;
+            }
 
             if (!EVP_MAC_CTX_set_params(hctx->ctx, params))
                 return 0;
@@ -373,6 +422,14 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                                       p2, p1);
                 params[params_n] = OSSL_PARAM_construct_end();
 
+                if (hctx->ctx == NULL) {
+                    /*
+                     * This actually means the fetch failed during the init call
+                     */
+                    EVPerr(0, EVP_R_FETCH_FAILED);
+                    return 0;
+                }
+
                 return EVP_MAC_CTX_set_params(hctx->ctx, params);
             }
             break;
@@ -385,6 +442,12 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DIGESTINIT:
         switch (hctx->type) {
         case MAC_TYPE_RAW:
+            if (hctx->ctx == NULL) {
+                /* This actually means the fetch failed during the init call */
+                EVPerr(0, EVP_R_FETCH_FAILED);
+                return 0;
+            }
+
             /* Ensure that we have attached the implementation */
             if (!EVP_MAC_init(hctx->ctx))
                 return 0;
@@ -453,9 +516,16 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
 
     if (!OSSL_PARAM_allocate_from_text(&params[0],
                                        EVP_MAC_settable_ctx_params(mac),
-                                       type, value, strlen(value) + 1))
+                                       type, value, strlen(value) + 1, NULL))
         return 0;
     params[1] = OSSL_PARAM_construct_end();
+
+    if (hctx->ctx == NULL) {
+        /* This actually means the fetch failed during the init call */
+        EVPerr(0, EVP_R_FETCH_FAILED);
+        return 0;
+    }
+
     ok = EVP_MAC_CTX_set_params(hctx->ctx, params);
     OPENSSL_free(params[0].data);
     return ok;

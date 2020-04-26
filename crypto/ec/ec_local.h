@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -76,14 +76,6 @@ struct ec_method_st {
      * EC_POINT_set_compressed_coordinates:
      */
     int (*point_set_to_infinity) (const EC_GROUP *, EC_POINT *);
-    int (*point_set_Jprojective_coordinates_GFp) (const EC_GROUP *,
-                                                  EC_POINT *, const BIGNUM *x,
-                                                  const BIGNUM *y,
-                                                  const BIGNUM *z, BN_CTX *);
-    int (*point_get_Jprojective_coordinates_GFp) (const EC_GROUP *,
-                                                  const EC_POINT *, BIGNUM *x,
-                                                  BIGNUM *y, BIGNUM *z,
-                                                  BN_CTX *);
     int (*point_set_affine_coordinates) (const EC_GROUP *, EC_POINT *,
                                          const BIGNUM *x, const BIGNUM *y,
                                          BN_CTX *);
@@ -301,6 +293,9 @@ struct ec_key_st {
 #endif
     CRYPTO_RWLOCK *lock;
     OPENSSL_CTX *libctx;
+
+    /* Provider data */
+    size_t dirty_cnt; /* If any key material changes, increment this */
 };
 
 struct ec_point_st {
@@ -676,17 +671,6 @@ ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
 int ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
                             const ECDSA_SIG *sig, EC_KEY *eckey);
 
-int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
-                 const uint8_t public_key[32], const uint8_t private_key[32]);
-int ED25519_verify(const uint8_t *message, size_t message_len,
-                   const uint8_t signature[64], const uint8_t public_key[32]);
-void ED25519_public_from_private(uint8_t out_public_key[32],
-                                 const uint8_t private_key[32]);
-
-int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-           const uint8_t peer_public_value[32]);
-void X25519_public_from_private(uint8_t out_public_value[32],
-                                const uint8_t private_key[32]);
 
 /*-
  * This functions computes a single point multiplication over the EC group,

@@ -60,7 +60,10 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 $COMMON=aes_misc.c aes_ecb.c $AESASM
-SOURCE[../../libcrypto]=$COMMON aes_cfb.c aes_ofb.c aes_ige.c aes_wrap.c
+SOURCE[../../libcrypto]=$COMMON aes_cfb.c aes_ofb.c aes_wrap.c
+IF[{- !$disabled{'deprecated-3.0'} -}]
+  SOURCE[../../libcrypto]=aes_ige.c
+ENDIF
 SOURCE[../../providers/libfips.a]=$COMMON
 
 # Implementations are now spread across several libraries, so the defines
@@ -68,8 +71,6 @@ SOURCE[../../providers/libfips.a]=$COMMON
 DEFINE[../../libcrypto]=$AESDEF
 DEFINE[../../providers/libfips.a]=$AESDEF
 DEFINE[../../providers/libimplementations.a]=$AESDEF
-# fipsprov.c needs access to AESNI.
-DEFINE[../../providers/fips]=$AESDEF
 
 GENERATE[aes-ia64.s]=asm/aes-ia64.S
 

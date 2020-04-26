@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
@@ -75,38 +75,41 @@ int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
  * See SP800-5bBr1 6.4.1.2.1 Part 5 (c) & (g) - used for both p and q.
  *
  * (√2)(2^(nbits/2 - 1) = (√2/2)(2^(nbits/2))
- * √2/2 = 0.707106781186547524400 = 0.B504F333F9DE6484597D8
- * 0.B504F334 gives an approximation to 11 decimal places.
- * The range is then from
- *   0xB504F334_0000.......................000 to
- *   0xFFFFFFFF_FFFF.......................FFF
  */
 int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx)
 {
     int ret = 0;
-    BIGNUM *tmp, *low;
+    BIGNUM *low;
+    int shift;
 
     nbits >>= 1;
+    shift = nbits - BN_num_bits(&bn_inv_sqrt_2);
 
     /* Upper bound check */
     if (BN_num_bits(p) != nbits)
         return 0;
 
     BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
     low = BN_CTX_get(ctx);
+    if (low == NULL)
+        goto err;
 
     /* set low = (√2)(2^(nbits/2 - 1) */
-    if (low == NULL || !BN_set_word(tmp, 0xB504F334))
+    if (!BN_copy(low, &bn_inv_sqrt_2))
         goto err;
 
-    if (nbits >= 32) {
-        if (!BN_lshift(low, tmp, nbits - 32))
+    if (shift >= 0) {
+        /*
+         * We don't have all the bits. bn_inv_sqrt_2 contains a rounded up
+         * value, so there is a very low probability that we'll reject a valid
+         * value.
+         */
+        if (!BN_lshift(low, low, shift))
             goto err;
-    } else if (!BN_rshift(low, tmp, 32 - nbits)) {
+    } else if (!BN_rshift(low, low, -shift)) {
         goto err;
     }
-    if (BN_cmp(p, low) < 0)
+    if (BN_cmp(p, low) <= 0)
         goto err;
     ret = 1;
 err:
@@ -234,13 +237,17 @@ int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
  */
 int rsa_sp800_56b_check_public(const RSA *rsa)
 {
-    int ret = 0, nbits, status;
+    int ret = 0, status;
+#ifdef FIPS_MODE
+    int nbits;
+#endif
     BN_CTX *ctx = NULL;
     BIGNUM *gcd = NULL;
 
     if (rsa->n == NULL || rsa->e == NULL)
         return 0;
 
+#ifdef FIPS_MODE
     /*
      * (Step a): modulus must be 2048 or 3072 (caveat from SP800-56Br1)
      * NOTE: changed to allow keys >= 2048
@@ -250,11 +257,11 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
         RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_KEY_LENGTH);
         return 0;
     }
+#endif
     if (!BN_is_odd(rsa->n)) {
         RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC, RSA_R_INVALID_MODULUS);
         return 0;
     }
-
     /* (Steps b-c): 2^16 < e < 2^256, n and e must be odd */
     if (!rsa_check_public_exponent(rsa->e)) {
         RSAerr(RSA_F_RSA_SP800_56B_CHECK_PUBLIC,
@@ -262,7 +269,7 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
         return 0;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     gcd = BN_new();
     if (ctx == NULL || gcd == NULL)
         goto err;
@@ -351,7 +358,7 @@ int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
         return 0;
     }
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(rsa->libctx);
     if (ctx == NULL)
         return 0;
 

@@ -1,9 +1,5 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
@@ -25,13 +21,17 @@ B<openssl dhparam>
 [B<-2>]
 [B<-3>]
 [B<-5>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 
 =for openssl ifdef dsaparam engine
 
 =head1 DESCRIPTION
+
+This command has been deprecated.
+The L<openssl-pkeyparam(1)> command should be used instead.
 
 This command is used to manipulate DH parameter files.
 
@@ -106,30 +106,23 @@ This option prints out the DH parameters in human readable form.
 This option converts the parameters into C code. The parameters can then
 be loaded by calling the get_dhNNNN() function.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause B<dhparam>
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+{- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
-=head1 WARNINGS
-
-This command combines the functionality of the L<openssl-dh(1)> and the
-L<openssl-gendh(1)> commands in previous OpenSSL versions.
-The L<openssl-dh(1)> and L<openssl-gendh(1)> commands are retained for now but
-may have different purposes in future versions of OpenSSL.
-
 =head1 NOTES
+
+This command replaces the B<dh> and B<gendh> commands of previous
+releases.
 
 OpenSSL currently only supports the older PKCS#3 DH, not the newer X9.42
 DH.
 
-This program manipulates DH parameters not keys.
+This command manipulates DH parameters not keys.
 
 =head1 BUGS
 
@@ -138,11 +131,16 @@ There should be a way to generate and manipulate DH keys.
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkeyparam(1)>,
 L<openssl-dsaparam(1)>
+
+=head1 HISTORY
+
+This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,8 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+
+DEFINE_STACK_OF(IPAddressFamily)
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
         ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
@@ -53,9 +55,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
-#ifndef OPENSSL_NO_SM2
-        ASN1_OCTET_STRING_free(ret->sm2_id);
-#endif
+        ASN1_OCTET_STRING_free(ret->distinguishing_id);
 
         /* fall thru */
 
@@ -76,9 +76,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->rfc3779_addr = NULL;
         ret->rfc3779_asid = NULL;
 #endif
-#ifndef OPENSSL_NO_SM2
-        ret->sm2_id = NULL;
-#endif
+        ret->distinguishing_id = NULL;
         ret->aux = NULL;
         ret->crldp = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
@@ -98,9 +96,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         sk_IPAddressFamily_pop_free(ret->rfc3779_addr, IPAddressFamily_free);
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
-#ifndef OPENSSL_NO_SM2
-        ASN1_OCTET_STRING_free(ret->sm2_id);
-#endif
+        ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
 
     }
@@ -123,7 +119,7 @@ int X509_set_ex_data(X509 *r, int idx, void *arg)
     return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
 }
 
-void *X509_get_ex_data(X509 *r, int idx)
+void *X509_get_ex_data(const X509 *r, int idx)
 {
     return CRYPTO_get_ex_data(&r->ex_data, idx);
 }
@@ -254,15 +250,13 @@ int X509_get_signature_nid(const X509 *x)
     return OBJ_obj2nid(x->sig_alg.algorithm);
 }
 
-#ifndef OPENSSL_NO_SM2
-void X509_set0_sm2_id(X509 *x, ASN1_OCTET_STRING *sm2_id)
+void X509_set0_distinguishing_id(X509 *x, ASN1_OCTET_STRING *d_id)
 {
-    ASN1_OCTET_STRING_free(x->sm2_id);
-    x->sm2_id = sm2_id;
+    ASN1_OCTET_STRING_free(x->distinguishing_id);
+    x->distinguishing_id = d_id;
 }
 
-ASN1_OCTET_STRING *X509_get0_sm2_id(X509 *x)
+ASN1_OCTET_STRING *X509_get0_distinguishing_id(X509 *x)
 {
-    return x->sm2_id;
+    return x->distinguishing_id;
 }
-#endif

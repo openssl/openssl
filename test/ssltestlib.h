@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,10 +12,10 @@
 
 # include <openssl/ssl.h>
 
-int create_ssl_ctx_pair(const SSL_METHOD *sm, const SSL_METHOD *cm,
-                        int min_proto_version, int max_proto_version,
-                        SSL_CTX **sctx, SSL_CTX **cctx, char *certfile,
-                        char *privkeyfile);
+int create_ssl_ctx_pair(OPENSSL_CTX *libctx, const SSL_METHOD *sm,
+                        const SSL_METHOD *cm, int min_proto_version,
+                        int max_proto_version, SSL_CTX **sctx, SSL_CTX **cctx,
+                        char *certfile, char *privkeyfile);
 int create_ssl_objects(SSL_CTX *serverctx, SSL_CTX *clientctx, SSL **sssl,
                        SSL **cssl, BIO *s_to_c_fbio, BIO *c_to_s_fbio);
 int create_bare_ssl_connection(SSL *serverssl, SSL *clientssl, int want,

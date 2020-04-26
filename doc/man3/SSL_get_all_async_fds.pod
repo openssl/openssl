@@ -69,6 +69,7 @@ windows.h prior to async.h.
 
 =head1 SEE ALSO
 
+L<ssl(7)>,
 L<SSL_get_error(3)>, L<SSL_CTX_set_mode(3)>
 
 =head1 HISTORY

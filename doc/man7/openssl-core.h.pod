@@ -10,7 +10,7 @@ openssl/core.h - OpenSSL Core types
 
 =head1 DESCRIPTION
 
-The <openssl/core.h> header file defines a number of public types that
+The F<< <openssl/core.h> >> header defines a number of public types that
 are used to communicate between the OpenSSL libraries and
 implementation providers.
 These types are designed to minimise the need for intimate knowledge
@@ -30,7 +30,7 @@ Arrays of this type must be terminated with a tuple having function
 identity zero and function pointer NULL.
 
 The available function identities and corresponding function
-signatures are defined by L<openssl-core_numbers.h(7)>.
+signatures are defined in L<openssl-core_numbers.h(7)>.
 
 Any function identity not recognised by the recipient of this type
 will be ignored.
@@ -73,6 +73,39 @@ These arrays can be used to set parameters for some object, to request
 parameters, and to describe parameters.
 
 B<OSSL_PARAM> is further described in L<OSSL_PARAM(3)>
+
+=item B<OSSL_CALLBACK>
+
+This is a function type for a generic feedback callback function:
+
+    typedef int (OSSL_CALLBACK)(const OSSL_PARAM params[], void *arg);
+
+A function that takes a pointer of this type should also take a
+pointer to caller data.  When calling this callback, the function is
+expected to build an B<OSSL_PARAM> array of data it wants or is
+expected to pass back, and pass that as I<params>, as well as
+the caller data pointer it received, as I<arg>.
+
+=item B<OSSL_PASSPHRASE_CALLBACK>
+
+This is a function type for a generic pass phrase callback function:
+
+    typedef int (OSSL_PASSPHRASE_CALLBACK)(char *pass, size_t pass_size,
+                                           size_t *pass_len,
+                                           const OSSL_PARAM params[],
+                                           void *arg);
+
+This callback can be used to prompt the user for a passphrase.  When
+calling it, a buffer to store the pass phrase needs to be given with
+I<pass>, and its size with I<pass_size>.  The length of the prompted
+pass phrase will be given back in I<*pass_len>.
+
+Additional parameters can be passed with the B<OSSL_PARAM> array
+I<params>.
+
+A function that takes a pointer of this type should also take a
+pointer to caller data, which should be passed as I<arg> to this
+callback.
 
 =back
 

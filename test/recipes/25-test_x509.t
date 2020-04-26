@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,24 +16,24 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_x509");
 
-plan tests => 10;
+plan tests => 11;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
 my $pem = srctop_file("test/certs", "cyrillic.pem");
-my $out = "cyrillic.out";
+my $out_msb = "out-cyrillic.msb";
+my $out_utf8 = "out-cyrillic.utf8";
 my $msb = srctop_file("test/certs", "cyrillic.msb");
 my $utf = srctop_file("test/certs", "cyrillic.utf8");
 
-ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out,
+ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_msb,
             "-nameopt", "esc_msb"])));
-is(cmp_text($out, srctop_file("test/certs", "cyrillic.msb")),
+is(cmp_text($out_msb, srctop_file("test/certs", "cyrillic.msb")),
    0, 'Comparing esc_msb output');
-ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out,
+ok(run(app(["openssl", "x509", "-text", "-in", $pem, "-out", $out_utf8,
             "-nameopt", "utf8"])));
-is(cmp_text($out, srctop_file("test/certs", "cyrillic.utf8")),
+is(cmp_text($out_utf8, srctop_file("test/certs", "cyrillic.utf8")),
    0, 'Comparing utf8 output');
-unlink $out;
 
 SKIP: {
     skip "EC disabled", 1 if disabled("ec");
@@ -54,8 +54,6 @@ SKIP: {
        &&
        run(app(["openssl", "verify", "-no_check_time",
                 "-trusted", $selfout, $testcert])));
-    unlink $pubkey;
-    unlink $selfout;
 }
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
@@ -70,4 +68,20 @@ subtest 'x509 -- second x.509 v3 certificate' => sub {
 
 subtest 'x509 -- pathlen' => sub {
     ok(run(test(["v3ext", srctop_file("test/certs", "pathlen.pem")])));
+};
+
+subtest 'x500 -- subjectAltName' => sub {
+     my $fp = srctop_file("test/certs", "fake-gp.pem");
+     my $out = "ext.out";
+     ok(run(app(["openssl", "x509", "-text", "-in", $fp, "-out", $out])));
+     ok(has_doctor_id($out));
+     unlink $out;
+};
+
+sub has_doctor_id { 
+    $_ = shift @_;
+    open(DATA,$_) or return 0;
+    $_= join('',<DATA>); 
+    close(DATA);
+    return m/2.16.528.1.1003.1.3.5.5.2-1-0000006666-Z-12345678-01.015-12345678/;
 }

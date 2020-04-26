@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,9 @@
 # ifdef __cplusplus
 extern "C" {
 # endif
+
+/* Set the default provider search path */
+int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *, const char *path);
 
 /* Load and unload a provider */
 OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);

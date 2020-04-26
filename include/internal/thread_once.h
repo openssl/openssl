@@ -15,7 +15,7 @@
  * OPENSSL_CTX object. In this way data will get cleaned up correctly when the
  * module gets unloaded.
  */
-#ifndef FIPS_MODE
+#if !defined(FIPS_MODE) || defined(ALLOW_RUN_ONCE_IN_FIPS)
 /*
  * DEFINE_RUN_ONCE: Define an initialiser function that should be run exactly
  * once. It takes no arguments and returns and int result (1 for success or

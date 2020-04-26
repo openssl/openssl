@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -71,7 +71,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
     /*
      * iterationCount identifies the number of times the hash is applied
      * during the key computation process.  The iterationCount MUST be a
-     * minimum of 100.      Many people suggest using values as high as 1000
+     * minimum of 100. Many people suggest using values as high as 1000
      * iterations as the minimum value.  The trade off here is between
      * protection of the password from attacks and the time spent by the
      * server processing all of the different iterations in deriving
@@ -133,8 +133,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     int ok = 0;
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *mctx = NULL;
-    OSSL_PARAM macparams[3] =
-        { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM macparams[3] = {OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END};
 
     if (out == NULL || pbmp == NULL || pbmp->mac == NULL
             || pbmp->mac->algorithm == NULL || msg == NULL || sec == NULL) {
@@ -193,16 +192,15 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     mac_nid = OBJ_obj2nid(pbmp->mac->algorithm);
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, mac_nid, NULL, &hmac_md_nid, NULL)
-        || ((mdname = OBJ_nid2sn(hmac_md_nid)) == NULL)) {
+            || (mdname = OBJ_nid2sn(hmac_md_nid)) == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
 
-    macparams[0] =
-        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                         (char *)mdname, 0);
-    macparams[1] =
-        OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, basekey, bklen);
+    macparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                    (char *)mdname, 0);
+    macparams[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                                     basekey, bklen);
     if ((mac = EVP_MAC_fetch(NULL, "HMAC", NULL)) == NULL
             || (mctx = EVP_MAC_CTX_new(mac)) == NULL
             || !EVP_MAC_CTX_set_params(mctx, macparams)

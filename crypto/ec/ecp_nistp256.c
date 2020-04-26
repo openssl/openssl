@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,12 @@
  */
 
 /*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
+/*
  * A 64-bit implementation of the NIST P-256 elliptic curve point multiplication
  *
  * OpenSSL integration was taken from Emilia Kasper's work in ecp_nistp224.c.
@@ -32,23 +38,20 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC_NISTP_64_GCC_128
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdint.h>
-# include <string.h>
-# include <openssl/err.h>
-# include "ec_local.h"
+#include <stdint.h>
+#include <string.h>
+#include <openssl/err.h>
+#include "ec_local.h"
 
-# if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
+#if defined(__SIZEOF_INT128__) && __SIZEOF_INT128__==16
   /* even with gcc, the typedef won't work for 32-bit platforms */
 typedef __uint128_t uint128_t;  /* nonstandard; implemented by gcc on 64-bit
                                  * platforms */
 typedef __int128_t int128_t;
-# else
-#  error "Your compiler doesn't appear to support 128-bit integer types"
-# endif
+#else
+# error "Your compiler doesn't appear to support 128-bit integer types"
+#endif
 
 typedef uint8_t u8;
 typedef uint32_t u32;
@@ -74,8 +77,8 @@ static const felem_bytearray nistp256_curve_params[5] = {
     {0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00, 0x01, /* a = -3 */
      0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
      0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff,
-     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfc}, /* b */
-    {0x5a, 0xc6, 0x35, 0xd8, 0xaa, 0x3a, 0x93, 0xe7,
+     0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xfc},
+    {0x5a, 0xc6, 0x35, 0xd8, 0xaa, 0x3a, 0x93, 0xe7, /* b */
      0xb3, 0xeb, 0xbd, 0x55, 0x76, 0x98, 0x86, 0xbc,
      0x65, 0x1d, 0x06, 0xb0, 0xcc, 0x53, 0xb0, 0xf6,
      0x3b, 0xce, 0x3c, 0x3e, 0x27, 0xd2, 0x60, 0x4b},
@@ -110,7 +113,7 @@ static const felem_bytearray nistp256_curve_params[5] = {
  * values are used as intermediate values before multiplication.
  */
 
-# define NLIMBS 4
+#define NLIMBS 4
 
 typedef uint128_t limb;
 typedef limb felem[NLIMBS];
@@ -242,9 +245,9 @@ static void longfelem_scalar(longfelem out, const u64 scalar)
     out[7] *= scalar;
 }
 
-# define two105m41m9 (((limb)1) << 105) - (((limb)1) << 41) - (((limb)1) << 9)
-# define two105 (((limb)1) << 105)
-# define two105m41p9 (((limb)1) << 105) - (((limb)1) << 41) + (((limb)1) << 9)
+#define two105m41m9 (((limb)1) << 105) - (((limb)1) << 41) - (((limb)1) << 9)
+#define two105 (((limb)1) << 105)
+#define two105m41p9 (((limb)1) << 105) - (((limb)1) << 41) + (((limb)1) << 9)
 
 /* zero105 is 0 mod p */
 static const felem zero105 =
@@ -287,9 +290,9 @@ static void felem_diff(felem out, const felem in)
     out[3] -= in[3];
 }
 
-# define two107m43m11 (((limb)1) << 107) - (((limb)1) << 43) - (((limb)1) << 11)
-# define two107 (((limb)1) << 107)
-# define two107m43p11 (((limb)1) << 107) - (((limb)1) << 43) + (((limb)1) << 11)
+#define two107m43m11 (((limb)1) << 107) - (((limb)1) << 43) - (((limb)1) << 11)
+#define two107 (((limb)1) << 107)
+#define two107m43p11 (((limb)1) << 107) - (((limb)1) << 43) + (((limb)1) << 11)
 
 /* zero107 is 0 mod p */
 static const felem zero107 =
@@ -358,10 +361,10 @@ static void longfelem_diff(longfelem out, const longfelem in)
     out[7] -= in[7];
 }
 
-# define two64m0 (((limb)1) << 64) - 1
-# define two110p32m0 (((limb)1) << 110) + (((limb)1) << 32) - 1
-# define two64m46 (((limb)1) << 64) - (((limb)1) << 46)
-# define two64m32 (((limb)1) << 64) - (((limb)1) << 32)
+#define two64m0 (((limb)1) << 64) - 1
+#define two110p32m0 (((limb)1) << 110) + (((limb)1) << 32) - 1
+#define two64m46 (((limb)1) << 64) - (((limb)1) << 46)
+#define two64m32 (((limb)1) << 64) - (((limb)1) << 32)
 
 /* zero110 is 0 mod p */
 static const felem zero110 = { two64m0, two110p32m0, two64m46, two64m32 };
@@ -711,9 +714,9 @@ static void felem_small_mul(longfelem out, const smallfelem small1,
     smallfelem_mul(out, small1, small2);
 }
 
-# define two100m36m4 (((limb)1) << 100) - (((limb)1) << 36) - (((limb)1) << 4)
-# define two100 (((limb)1) << 100)
-# define two100m36p4 (((limb)1) << 100) - (((limb)1) << 36) + (((limb)1) << 4)
+#define two100m36m4 (((limb)1) << 100) - (((limb)1) << 36) - (((limb)1) << 4)
+#define two100 (((limb)1) << 100)
+#define two100m36p4 (((limb)1) << 100) - (((limb)1) << 36) + (((limb)1) << 4)
 /* zero100 is 0 mod p */
 static const felem zero100 =
     { two100m36m4, two100, two100m36p4, two100m36p4 };
@@ -1241,6 +1244,7 @@ static void point_add(felem x3, felem y3, felem z3,
     longfelem tmp, tmp2;
     smallfelem small1, small2, small3, small4, small5;
     limb x_equal, y_equal, z1_is_zero, z2_is_zero;
+    limb points_equal;
 
     felem_shrink(small3, z1);
 
@@ -1340,7 +1344,26 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_shrink(small1, ftmp5);
     y_equal = smallfelem_is_zero(small1);
 
-    if (x_equal && y_equal && !z1_is_zero && !z2_is_zero) {
+    /*
+     * The formulae are incorrect if the points are equal, in affine coordinates
+     * (X_1, Y_1) == (X_2, Y_2), so we check for this and do doubling if this
+     * happens.
+     *
+     * We use bitwise operations to avoid potential side-channels introduced by
+     * the short-circuiting behaviour of boolean operators.
+     *
+     * The special case of either point being the point at infinity (z1 and/or
+     * z2 are zero), is handled separately later on in this function, so we
+     * avoid jumping to point_double here in those special cases.
+     */
+    points_equal = (x_equal & y_equal & (~z1_is_zero) & (~z2_is_zero));
+
+    if (points_equal) {
+        /*
+         * This is obviously not constant-time but, as mentioned before, this
+         * case never happens during single point multiplication, so there is no
+         * timing leak for ECDH or ECDSA signing.
+         */
         point_double(x3, y3, z3, x1, y1, z1);
         return;
     }
@@ -1775,8 +1798,6 @@ const EC_METHOD *EC_GFp_nistp256_method(void)
         ec_GFp_simple_point_clear_finish,
         ec_GFp_simple_point_copy,
         ec_GFp_simple_point_set_to_infinity,
-        ec_GFp_simple_set_Jprojective_coordinates_GFp,
-        ec_GFp_simple_get_Jprojective_coordinates_GFp,
         ec_GFp_simple_point_set_affine_coordinates,
         ec_GFp_nistp256_point_get_affine_coordinates,
         0 /* point_set_compressed_coordinates */ ,
@@ -2057,9 +2078,8 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
             ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
             goto err;
         }
-        if (!EC_POINT_set_Jprojective_coordinates_GFp(group,
-                                                      generator, x, y, z,
-                                                      ctx))
+        if (!ec_GFp_simple_set_Jprojective_coordinates_GFp(group, generator, x,
+                                                           y, z, ctx))
             goto err;
         if (0 == EC_POINT_cmp(group, generator, group->generator, ctx))
             /* precomputation matches generator */
@@ -2199,7 +2219,7 @@ int ec_GFp_nistp256_points_mul(const EC_GROUP *group, EC_POINT *r,
         ECerr(EC_F_EC_GFP_NISTP256_POINTS_MUL, ERR_R_BN_LIB);
         goto err;
     }
-    ret = EC_POINT_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
+    ret = ec_GFp_simple_set_Jprojective_coordinates_GFp(group, r, x, y, z, ctx);
 
  err:
     BN_CTX_end(ctx);
@@ -2361,4 +2381,3 @@ int ec_GFp_nistp256_have_precompute_mult(const EC_GROUP *group)
 {
     return HAVEPRECOMP(group, nistp256);
 }
-#endif

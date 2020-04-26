@@ -21,7 +21,7 @@
 /*
  * AFALG function codes.
  */
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define AFALG_F_AFALG_CHK_PLATFORM                       0
 #  define AFALG_F_AFALG_CREATE_SK                          0
 #  define AFALG_F_AFALG_INIT_AIO                           0

@@ -1,15 +1,13 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-ocsp - Online Certificate Status Protocol utility
+openssl-ocsp - Online Certificate Status Protocol command
 
 =head1 SYNOPSIS
+
+=head2 OCSP Client
 
 B<openssl> B<ocsp>
 [B<-help>]
@@ -20,49 +18,21 @@ B<openssl> B<ocsp>
 [B<-signer> I<file>]
 [B<-signkey> I<file>]
 [B<-sign_other> I<file>]
-[B<-no_certs>]
+[B<-nonce>]
+[B<-no_nonce>]
 [B<-req_text>]
 [B<-resp_text>]
 [B<-text>]
+[B<-no_certs>]
 [B<-reqout> I<file>]
 [B<-respout> I<file>]
 [B<-reqin> I<file>]
 [B<-respin> I<file>]
-[B<-nonce>]
-[B<-no_nonce>]
 [B<-url> I<URL>]
 [B<-host> I<host>:I<port>]
-[B<-multi> I<process-count>]
 [B<-header>]
+[B<-timeout> I<seconds>]
 [B<-path>]
-[B<-attime> I<timestamp>]
-[B<-check_ss_sig>]
-[B<-crl_check>]
-[B<-crl_check_all>]
-[B<-explicit_policy>]
-[B<-extended_crl>]
-[B<-ignore_critical>]
-[B<-inhibit_any>]
-[B<-inhibit_map>]
-[B<-no_check_time>]
-[B<-partial_chain>]
-[B<-policy> I<arg>]
-[B<-policy_check>]
-[B<-policy_print>]
-[B<-purpose> I<purpose>]
-[B<-suiteB_128>]
-[B<-suiteB_128_only>]
-[B<-suiteB_192>]
-[B<-trusted_first>]
-[B<-no_alt_chains>]
-[B<-use_deltas>]
-[B<-auth_level> I<num>]
-[B<-verify_depth> I<num>]
-[B<-verify_email> I<email>]
-[B<-verify_hostname> I<hostname>]
-[B<-verify_ip> I<ip>]
-[B<-verify_name> I<name>]
-[B<-x509_strict>]
 [B<-VAfile> I<file>]
 [B<-validity_period> I<n>]
 [B<-status_age> I<n>]
@@ -77,20 +47,30 @@ B<openssl> B<ocsp>
 [B<-no_explicit>]
 [B<-port> I<num>]
 [B<-ignore_err>]
+
+=head2 OCSP Server
+
+B<openssl> B<ocsp>
 [B<-index> I<file>]
 [B<-CA> I<file>]
 [B<-rsigner> I<file>]
 [B<-rkey> I<file>]
+[B<-passin> I<arg>]
 [B<-rother> I<file>]
 [B<-rsigopt> I<nm>:I<v>]
+[B<-rmd> I<digest>]
+[B<-badsig>]
 [B<-resp_no_certs>]
 [B<-nmin> I<n>]
 [B<-ndays> I<n>]
 [B<-resp_key_id>]
 [B<-nrequest> I<n>]
+[B<-multi> I<process-count>]
 [B<-rcid> I<digest>]
 [B<-I<digest>>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef multi
 
@@ -198,28 +178,6 @@ the time that the responder is willing to wait for the client request.
 This time is measured from the time the responder accepts the connection until
 the complete request is received.
 
-=item B<-multi> I<process-count>
-
-Run the specified number of OCSP responder child processes, with the parent
-process respawning child processes as needed.
-Child processes will detect changes in the CA index file and automatically
-reload it.
-When running as a responder B<-timeout> option is recommended to limit the time
-each child is willing to wait for the client's OCSP response.
-This option is available on POSIX systems (that support the fork() and other
-required unix system-calls).
-
-=item B<-attime>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>, B<-inhibit_any>,
-B<-inhibit_map>, B<-no_alt_chains>, B<-no_check_time>, B<-partial_chain>, B<-policy>,
-B<-policy_check>, B<-policy_print>, B<-purpose>, B<-suiteB_128>,
-B<-suiteB_128_only>, B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>,
-B<-auth_level>, B<-verify_depth>, B<-verify_email>, B<-verify_hostname>,
-B<-verify_ip>, B<-verify_name>, B<-x509_strict>
-
-Set different certificate verification options.
-See L<openssl-verify(1)> manual page for details.
-
 =item B<-verify_other> I<file>
 
 File containing additional certificates to search when attempting to locate
@@ -310,6 +268,10 @@ digest used by subsequent certificate identifiers.
 
 {- $OpenSSL::safe::opt_trust_item -}
 
+{- $OpenSSL::safe::opt_v_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head2 OCSP Server Options
@@ -339,9 +301,33 @@ file given with B<-index>.
 
 The certificate to sign OCSP responses with.
 
+=item B<-rkey> I<file>
+
+The private key to sign OCSP responses with: if not present the file
+specified in the B<-rsigner> option is used.
+
+=item B<-passin> I<arg>
+
+The private key password source. For more information about the format of I<arg>
+see L<openssl(1)/Pass Phrase Options>.
+
 =item B<-rother> I<file>
 
 Additional certificates to include in the OCSP response.
+
+=item B<-rsigopt> I<nm>:I<v>
+
+Pass options to the signature algorithm when signing OCSP responses.
+Names and values of these options are algorithm-specific.
+
+=item B<-rmd> I<digest>
+
+The digest to use when signing the response.
+
+=item B<-badsig>
+
+Corrupt the response signature before writing it; this can be useful
+for testing.
 
 =item B<-resp_no_certs>
 
@@ -351,16 +337,6 @@ Don't include any certificates in the OCSP response.
 
 Identify the signer certificate using the key ID, default is to use the
 subject name.
-
-=item B<-rkey> I<file>
-
-The private key to sign OCSP responses with: if not present the file
-specified in the B<-rsigner> option is used.
-
-=item B<-rsigopt> I<nm>:I<v>
-
-Pass options to the signature algorithm when signing OCSP responses.
-Names and values of these options are algorithm-specific.
 
 =item B<-port> I<portnum>
 
@@ -376,6 +352,18 @@ running instead of terminating upon receiving a malformed request.
 =item B<-nrequest> I<number>
 
 The OCSP server will exit after receiving I<number> requests, default unlimited.
+
+=item B<-multi> I<process-count>
+
+Run the specified number of OCSP responder child processes, with the parent
+process respawning child processes as needed.
+Child processes will detect changes in the CA index file and automatically
+reload it.
+When running as a responder B<-timeout> option is recommended to limit the time
+each child is willing to wait for the client's OCSP response.
+This option is available on POSIX systems (that support the fork() and other
+required unix system-calls).
+
 
 =item B<-nmin> I<minutes>, B<-ndays> I<days>
 
@@ -490,7 +478,7 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

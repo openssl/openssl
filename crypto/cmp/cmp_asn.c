@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -16,6 +16,8 @@
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/cmp.h>
 #include <openssl/crmf.h>
+
+DEFINE_STACK_OF(OSSL_CMP_ITAV)
 
 /* ASN.1 declarations from RFC4210 */
 ASN1_SEQUENCE(OSSL_CMP_REVANNCONTENT) = {
@@ -73,7 +75,8 @@ ASN1_SEQUENCE(OSSL_CMP_ERRORMSGCONTENT) = {
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_ERRORMSGCONTENT)
 
 ASN1_ADB_TEMPLATE(infotypeandvalue_default) = ASN1_OPT(OSSL_CMP_ITAV,
-        infoValue.other, ASN1_ANY);
+                                                       infoValue.other,
+                                                       ASN1_ANY);
 /* ITAV means InfoTypeAndValue */
 ASN1_ADB(OSSL_CMP_ITAV) = {
     /* OSSL_CMP_CMPCERTIFICATE is effectively X509 so it is used directly */
@@ -395,11 +398,11 @@ ASN1_SEQUENCE(OSSL_CMP_PKIHEADER) = {
 } ASN1_SEQUENCE_END(OSSL_CMP_PKIHEADER)
 IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_PKIHEADER)
 
-ASN1_SEQUENCE(CMP_PROTECTEDPART) = {
+ASN1_SEQUENCE(OSSL_CMP_PROTECTEDPART) = {
     ASN1_SIMPLE(OSSL_CMP_MSG, header, OSSL_CMP_PKIHEADER),
     ASN1_SIMPLE(OSSL_CMP_MSG, body, OSSL_CMP_PKIBODY)
-} ASN1_SEQUENCE_END(CMP_PROTECTEDPART)
-IMPLEMENT_ASN1_FUNCTIONS(CMP_PROTECTEDPART)
+} ASN1_SEQUENCE_END(OSSL_CMP_PROTECTEDPART)
+IMPLEMENT_ASN1_FUNCTIONS(OSSL_CMP_PROTECTEDPART)
 
 ASN1_SEQUENCE(OSSL_CMP_MSG) = {
     ASN1_SIMPLE(OSSL_CMP_MSG, header, OSSL_CMP_PKIHEADER),

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -114,6 +114,9 @@ static RAND_DRBG *rand_drbg_new(OPENSSL_CTX *ctx,
                                 int type,
                                 unsigned int flags,
                                 RAND_DRBG *parent);
+
+static int rand_drbg_set(RAND_DRBG *drbg, int type, unsigned int flags);
+static int rand_drbg_init_method(RAND_DRBG *drbg);
 
 static int is_ctr(int type)
 {
@@ -305,6 +308,34 @@ void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
 }
 
 /*
+ * Set the |drbg|'s callback data pointer for the entropy and nonce callbacks
+ *
+ * The ownership of the context data remains with the caller,
+ * i.e., it is the caller's responsibility to keep it available as long
+ * as it is need by the callbacks and free it after use.
+ *
+ * Setting the callback data is allowed only if the drbg has not been
+ * initialized yet. Otherwise, the operation will fail.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *data)
+{
+    if (drbg->state != DRBG_UNINITIALISED
+        || drbg->parent != NULL)
+        return 0;
+
+    drbg->callback_data = data;
+    return 1;
+}
+
+/* Retrieve the callback data pointer */
+void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg)
+{
+    return drbg->callback_data;
+}
+
+/*
  * Set/initialize |drbg| to be of type |type|, with optional |flags|.
  *
  * If |type| and |flags| are zero, use the defaults
@@ -313,8 +344,11 @@ void rand_drbg_cleanup_nonce(RAND_DRBG *drbg,
  */
 int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
 {
-    int ret = 1;
+    return rand_drbg_set(drbg, type, flags) && rand_drbg_init_method(drbg);
+}
 
+static int rand_drbg_set(RAND_DRBG *drbg, int type, unsigned int flags)
+{
     if (type == 0 && flags == 0) {
         type = rand_drbg_type[RAND_DRBG_TYPE_MASTER];
         flags = rand_drbg_flags[RAND_DRBG_TYPE_MASTER];
@@ -322,7 +356,8 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
 
     /* If set is called multiple times - clear the old one */
     if (drbg->type != 0 && (type != drbg->type || flags != drbg->flags)) {
-        drbg->meth->uninstantiate(drbg);
+        if (drbg->meth != NULL)
+            drbg->meth->uninstantiate(drbg);
         rand_pool_free(drbg->adin_pool);
         drbg->adin_pool = NULL;
     }
@@ -330,29 +365,43 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
     drbg->state = DRBG_UNINITIALISED;
     drbg->flags = flags;
     drbg->type = type;
+    drbg->meth = NULL;
 
-    if (type == 0) {
-        /* Uninitialized; that's okay. */
-        drbg->meth = NULL;
+    if (type == 0 || is_ctr(type) || is_digest(type))
         return 1;
-    } else if (is_ctr(type)) {
+
+    drbg->type = 0;
+    drbg->flags = 0;
+    RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_UNSUPPORTED_DRBG_TYPE);
+
+    return 0;
+}
+
+static int rand_drbg_init_method(RAND_DRBG *drbg)
+{
+    int ret;
+
+    if (drbg->meth != NULL)
+        return 1;
+
+    if (is_ctr(drbg->type)) {
         ret = drbg_ctr_init(drbg);
-    } else if (is_digest(type)) {
-        if (flags & RAND_DRBG_FLAG_HMAC)
+    } else if (is_digest(drbg->type)) {
+        if (drbg->flags & RAND_DRBG_FLAG_HMAC)
             ret = drbg_hmac_init(drbg);
         else
             ret = drbg_hash_init(drbg);
     } else {
+        /* other cases should already be excluded */
+        RANDerr(RAND_F_RAND_DRBG_INIT_METHOD, ERR_R_INTERNAL_ERROR);
         drbg->type = 0;
         drbg->flags = 0;
-        drbg->meth = NULL;
-        RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_UNSUPPORTED_DRBG_TYPE);
         return 0;
     }
 
     if (ret == 0) {
         drbg->state = DRBG_ERROR;
-        RANDerr(RAND_F_RAND_DRBG_SET, RAND_R_ERROR_INITIALISING_DRBG);
+        RANDerr(RAND_F_RAND_DRBG_INIT_METHOD, RAND_R_ERROR_INITIALISING_DRBG);
     }
     return ret;
 }
@@ -503,7 +552,9 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
         drbg->meth->uninstantiate(drbg);
     rand_pool_free(drbg->adin_pool);
     CRYPTO_THREAD_lock_free(drbg->lock);
+#ifndef FIPS_MODE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RAND_DRBG, drbg, &drbg->ex_data);
+#endif
 
     if (drbg->secure)
         OPENSSL_secure_clear_free(drbg, sizeof(*drbg));
@@ -524,19 +575,21 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
 {
     unsigned char *nonce = NULL, *entropy = NULL;
     size_t noncelen = 0, entropylen = 0;
-    size_t min_entropy = drbg->strength;
-    size_t min_entropylen = drbg->min_entropylen;
-    size_t max_entropylen = drbg->max_entropylen;
+    size_t min_entropy, min_entropylen, max_entropylen;
+
+    if (drbg->meth == NULL && !rand_drbg_init_method(drbg)) {
+        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
+                RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
+        goto end;
+    }
+
+    min_entropy = drbg->strength;
+    min_entropylen = drbg->min_entropylen;
+    max_entropylen = drbg->max_entropylen;
 
     if (perslen > drbg->max_perslen) {
         RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
                 RAND_R_PERSONALISATION_STRING_TOO_LONG);
-        goto end;
-    }
-
-    if (drbg->meth == NULL) {
-        RANDerr(RAND_F_RAND_DRBG_INSTANTIATE,
-                RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
         goto end;
     }
 
@@ -618,18 +671,10 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
 int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
 {
     int index = -1, type, flags;
-    if (drbg->meth == NULL) {
-        drbg->state = DRBG_ERROR;
-        RANDerr(RAND_F_RAND_DRBG_UNINSTANTIATE,
-                RAND_R_NO_DRBG_IMPLEMENTATION_SELECTED);
-        return 0;
+    if (drbg->meth != NULL) {
+        drbg->meth->uninstantiate(drbg);
+        drbg->meth = NULL;
     }
-
-    /* Clear the entire drbg->ctr struct, then reset some important
-     * members of the drbg->ctr struct (e.g. keysize, df_ks) to their
-     * initial values.
-     */
-    drbg->meth->uninstantiate(drbg);
 
     /* The reset uses the default values for type and flags */
     if (drbg->flags & RAND_DRBG_FLAG_MASTER)
@@ -646,7 +691,7 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
         flags = drbg->flags;
         type = drbg->type;
     }
-    return RAND_DRBG_set(drbg, type, flags);
+    return rand_drbg_set(drbg, type, flags);
 }
 
 /*
@@ -1098,6 +1143,7 @@ int rand_drbg_enable_locking(RAND_DRBG *drbg)
     return 1;
 }
 
+#ifndef FIPS_MODE
 /*
  * Get and set the EXDATA
  */
@@ -1110,7 +1156,7 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
 {
     return CRYPTO_get_ex_data(&drbg->ex_data, idx);
 }
-
+#endif
 
 /*
  * The following functions provide a RAND_METHOD that works on the
@@ -1350,7 +1396,12 @@ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
     drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
     if (drbg == NULL) {
         ctx = openssl_ctx_get_concrete(ctx);
-        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
+        /*
+         * If the private_drbg is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->private_drbg) == NULL
+                && !ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PUBLIC);
         CRYPTO_THREAD_set_local(&dgbl->public_drbg, drbg);
@@ -1378,7 +1429,12 @@ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
     drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
     if (drbg == NULL) {
         ctx = openssl_ctx_get_concrete(ctx);
-        if (!ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
+        /*
+         * If the public_drbg is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->public_drbg) == NULL
+                && !ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
         drbg = drbg_setup(ctx, dgbl->master_drbg, RAND_DRBG_TYPE_PRIVATE);
         CRYPTO_THREAD_set_local(&dgbl->private_drbg, drbg);

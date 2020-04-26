@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2005 Nokia. All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -56,6 +56,12 @@ typedef unsigned int u_int;
 # endif
 #endif
 
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(X509_NAME)
+DEFINE_STACK_OF(SCT)
+DEFINE_STACK_OF_STRING()
+
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
@@ -75,7 +81,6 @@ static void print_stuff(BIO *berr, SSL *con, int full);
 static int ocsp_resp_cb(SSL *s, void *arg);
 #endif
 static int ldap_ExtendedResponse_parse(const char *buf, long rem);
-static char *base64encode (const void *buf, size_t len);
 static int is_dNS_name(const char *host);
 
 static int saved_errno;
@@ -601,11 +606,27 @@ typedef enum OPTION_choice {
     OPT_DANE_TLSA_RRDATA, OPT_DANE_EE_NO_NAME,
     OPT_ENABLE_PHA,
     OPT_SCTP_LABEL_BUG,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS s_client_options[] = {
+    {OPT_HELP_STR, 1, '-', "Usage: %s [options] [host:port]\n"},
+
+    OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+#ifndef OPENSSL_NO_ENGINE
+    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
+    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
+     "Specify engine to be used for client certificate operations"},
+#endif
+    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified section for SSL_CTX configuration"},
+#ifndef OPENSSL_NO_CT
+    {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
+    {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
+    {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
+#endif
+
+    OPT_SECTION("Network"),
     {"host", OPT_HOST, 's', "Use -connect instead"},
     {"port", OPT_PORT, 'p', "Use -connect instead"},
     {"connect", OPT_CONNECT, 's',
@@ -622,22 +643,37 @@ const OPTIONS s_client_options[] = {
 #ifdef AF_INET6
     {"6", OPT_6, '-', "Use IPv6 only"},
 #endif
-    {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
-    {"cert", OPT_CERT, '<', "Certificate file to use, PEM format assumed"},
+    {"maxfraglen", OPT_MAXFRAGLEN, 'p',
+     "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
+    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
+    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
+     "Size used to split data for encrypt pipelines"},
+    {"max_pipelines", OPT_MAX_PIPELINES, 'p',
+     "Maximum number of encrypt/decrypt pipelines to be used"},
+    {"read_buf", OPT_READ_BUF, 'p',
+     "Default read buffer size to be used for connections"},
+    {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
+
+    OPT_SECTION("Identity"),
+    {"cert", OPT_CERT, '<', "Client certificate file to use"},
     {"certform", OPT_CERTFORM, 'F',
-     "Certificate format (PEM or DER) PEM default"},
-    {"nameopt", OPT_NAMEOPT, 's', "Various certificate name options"},
-    {"key", OPT_KEY, 's', "Private key file to use, if not in -cert file"},
+     "Client certificate file format (PEM or DER) PEM default"},
+    {"cert_chain", OPT_CERT_CHAIN, '<',
+     "Client certificate chain file (in PEM format)"},
+    {"build_chain", OPT_BUILD_CHAIN, '-', "Build client certificate chain"},
+    {"key", OPT_KEY, 's', "Private key file to use; default is: -cert file"},
     {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
+    {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
+    {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
     {"CApath", OPT_CAPATH, '/', "PEM format directory of CA's"},
     {"CAfile", OPT_CAFILE, '<', "PEM format file of CA's"},
-    {"CAstore", OPT_CAFILE, ':', "URI to store of CA's"},
+    {"CAstore", OPT_CASTORE, ':', "URI to store of CA's"},
     {"no-CAfile", OPT_NOCAFILE, '-',
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
-    {"no-CAstore", OPT_NOCAPATH, '-',
+    {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
     {"requestCAfile", OPT_REQCAFILE, '<',
       "PEM format file of CA names to send to the server"},
@@ -646,16 +682,19 @@ const OPTIONS s_client_options[] = {
      "DANE TLSA rrdata presentation form"},
     {"dane_ee_no_namechecks", OPT_DANE_EE_NO_NAME, '-',
      "Disable name checks when matching DANE-EE(3) TLSA records"},
+    {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
+    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
+    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
+    {"name", OPT_PROTOHOST, 's',
+     "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
+
+    OPT_SECTION("Session"),
     {"reconnect", OPT_RECONNECT, '-',
      "Drop and re-make the connection with the same Session-ID"},
-    {"showcerts", OPT_SHOWCERTS, '-',
-     "Show all certificates sent by the server"},
-    {"debug", OPT_DEBUG, '-', "Extra output"},
-    {"msg", OPT_MSG, '-', "Show protocol messages"},
-    {"msgfile", OPT_MSGFILE, '>',
-     "File to send output of -msg or -trace, instead of stdout"},
-    {"nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing"},
-    {"state", OPT_STATE, '-', "Print the ssl states"},
+    {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
+    {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
+
+    OPT_SECTION("Input/Output"),
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
     {"quiet", OPT_QUIET, '-', "No s_client output"},
     {"ign_eof", OPT_IGN_EOF, '-', "Ignore input eof (default when -quiet)"},
@@ -664,51 +703,35 @@ const OPTIONS s_client_options[] = {
      "Use the appropriate STARTTLS command before starting TLS"},
     {"xmpphost", OPT_XMPPHOST, 's',
      "Alias of -name option for \"-starttls xmpp[-server]\""},
-    OPT_R_OPTIONS,
-    {"sess_out", OPT_SESS_OUT, '>', "File to write SSL session to"},
-    {"sess_in", OPT_SESS_IN, '<', "File to read SSL session from"},
-#ifndef OPENSSL_NO_SRTP
-    {"use_srtp", OPT_USE_SRTP, 's',
-     "Offer SRTP key management with a colon-separated profile list"},
-#endif
-    {"keymatexport", OPT_KEYMATEXPORT, 's',
-     "Export keying material using label"},
-    {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
-     "Export len bytes of keying material (default 20)"},
-    {"maxfraglen", OPT_MAXFRAGLEN, 'p',
-     "Enable Maximum Fragment Length Negotiation (len values: 512, 1024, 2048 and 4096)"},
-    {"fallback_scsv", OPT_FALLBACKSCSV, '-', "Send the fallback SCSV"},
-    {"name", OPT_PROTOHOST, 's',
-     "Hostname to use for \"-starttls lmtp\", \"-starttls smtp\" or \"-starttls xmpp[-server]\""},
-    {"CRL", OPT_CRL, '<', "CRL file to use"},
-    {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
-    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
-    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
-     "Close connection on verification error"},
-    {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
     {"brief", OPT_BRIEF, '-',
      "Restrict output to brief summary of connection parameters"},
     {"prexit", OPT_PREXIT, '-',
      "Print session information when the program exits"},
+
+    OPT_SECTION("Debug"),
+    {"showcerts", OPT_SHOWCERTS, '-',
+     "Show all certificates sent by the server"},
+    {"debug", OPT_DEBUG, '-', "Extra output"},
+    {"msg", OPT_MSG, '-', "Show protocol messages"},
+    {"msgfile", OPT_MSGFILE, '>',
+     "File to send output of -msg or -trace, instead of stdout"},
+    {"nbio_test", OPT_NBIO_TEST, '-', "More ssl protocol testing"},
+    {"state", OPT_STATE, '-', "Print the ssl states"},
+    {"keymatexport", OPT_KEYMATEXPORT, 's',
+     "Export keying material using label"},
+    {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
+     "Export len bytes of keying material (default 20)"},
     {"security_debug", OPT_SECURITY_DEBUG, '-',
      "Enable security debug messages"},
     {"security_debug_verbose", OPT_SECURITY_DEBUG_VERBOSE, '-',
      "Output more security debug output"},
-    {"cert_chain", OPT_CERT_CHAIN, '<',
-     "Certificate chain file (in PEM format)"},
-    {"chainCApath", OPT_CHAINCAPATH, '/',
-     "Use dir as certificate store path to build CA certificate chain"},
-    {"verifyCApath", OPT_VERIFYCAPATH, '/',
-     "Use dir as certificate store path to verify CA certificate"},
-    {"build_chain", OPT_BUILD_CHAIN, '-', "Build certificate chain"},
-    {"chainCAfile", OPT_CHAINCAFILE, '<',
-     "CA file for certificate chain (PEM format)"},
-    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
-     "CA file for certificate verification (PEM format)"},
-    {"chainCAstore", OPT_CHAINCASTORE, ':',
-     "CA store URI for certificate chain"},
-    {"verifyCAstore", OPT_VERIFYCASTORE, ':',
-     "CA store URI for certificate verification"},
+#ifndef OPENSSL_NO_SSL_TRACE
+    {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
+#endif
+#ifdef WATT32
+    {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
+#endif
+    {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
     {"nocommands", OPT_NOCMDS, '-', "Do not use interactive command letters"},
     {"servername", OPT_SERVERNAME, 's',
      "Set TLS extension servername (SNI) in ClientHello (default)"},
@@ -724,17 +747,9 @@ const OPTIONS s_client_options[] = {
     {"alpn", OPT_ALPN, 's',
      "Enable ALPN extension, considering named protocols supported (comma-separated list)"},
     {"async", OPT_ASYNC, '-', "Support asynchronous operation"},
-    {"ssl_config", OPT_SSL_CONFIG, 's', "Use specified configuration file"},
-    {"max_send_frag", OPT_MAX_SEND_FRAG, 'p', "Maximum Size of send frames "},
-    {"split_send_frag", OPT_SPLIT_SEND_FRAG, 'p',
-     "Size used to split data for encrypt pipelines"},
-    {"max_pipelines", OPT_MAX_PIPELINES, 'p',
-     "Maximum number of encrypt/decrypt pipelines to be used"},
-    {"read_buf", OPT_READ_BUF, 'p',
-     "Default read buffer size to be used for connections"},
-    OPT_S_OPTIONS,
-    OPT_V_OPTIONS,
-    OPT_X_OPTIONS,
+    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
+
+    OPT_SECTION("Protocol and version"),
 #ifndef OPENSSL_NO_SSL3
     {"ssl3", OPT_SSL3, '-', "Just use SSLv3"},
 #endif
@@ -766,16 +781,16 @@ const OPTIONS s_client_options[] = {
     {"sctp", OPT_SCTP, '-', "Use SCTP"},
     {"sctp_label_bug", OPT_SCTP_LABEL_BUG, '-', "Enable SCTP label length bug"},
 #endif
-#ifndef OPENSSL_NO_SSL_TRACE
-    {"trace", OPT_TRACE, '-', "Show trace output of protocol messages"},
+#ifndef OPENSSL_NO_NEXTPROTONEG
+    {"nextprotoneg", OPT_NEXTPROTONEG, 's',
+     "Enable NPN extension, considering named protocols supported (comma-separated list)"},
 #endif
-#ifdef WATT32
-    {"wdebug", OPT_WDEBUG, '-', "WATT-32 tcp debugging"},
+    {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
+    {"enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication"},
+#ifndef OPENSSL_NO_SRTP
+    {"use_srtp", OPT_USE_SRTP, 's',
+     "Offer SRTP key management with a colon-separated profile list"},
 #endif
-    {"nbio", OPT_NBIO, '-', "Use non-blocking IO"},
-    {"psk_identity", OPT_PSK_IDENTITY, 's', "PSK identity"},
-    {"psk", OPT_PSK, 's', "PSK in hex (without 0x)"},
-    {"psk_session", OPT_PSK_SESS, '<', "File to read PSK SSL session from"},
 #ifndef OPENSSL_NO_SRP
     {"srpuser", OPT_SRPUSER, 's', "SRP authentication for 'user'"},
     {"srppass", OPT_SRPPASS, 's', "Password for 'user'"},
@@ -785,24 +800,34 @@ const OPTIONS s_client_options[] = {
      "Tolerate other than the known g N values."},
     {"srp_strength", OPT_SRP_STRENGTH, 'p', "Minimal length in bits for N"},
 #endif
-#ifndef OPENSSL_NO_NEXTPROTONEG
-    {"nextprotoneg", OPT_NEXTPROTONEG, 's',
-     "Enable NPN extension, considering named protocols supported (comma-separated list)"},
-#endif
-#ifndef OPENSSL_NO_ENGINE
-    {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-    {"ssl_client_engine", OPT_SSL_CLIENT_ENGINE, 's',
-     "Specify engine to be used for client certificate operations"},
-#endif
-#ifndef OPENSSL_NO_CT
-    {"ct", OPT_CT, '-', "Request and parse SCTs (also enables OCSP stapling)"},
-    {"noct", OPT_NOCT, '-', "Do not request or parse SCTs (default)"},
-    {"ctlogfile", OPT_CTLOG_FILE, '<', "CT log list CONF file"},
-#endif
-    {"keylogfile", OPT_KEYLOG_FILE, '>', "Write TLS secrets to file"},
-    {"early_data", OPT_EARLY_DATA, '<', "File to send as early data"},
-    {"enable_pha", OPT_ENABLE_PHA, '-', "Enable post-handshake-authentication"},
-    {NULL, OPT_EOF, 0x00, NULL}
+
+    OPT_R_OPTIONS,
+    OPT_S_OPTIONS,
+    OPT_V_OPTIONS,
+    {"CRL", OPT_CRL, '<', "CRL file to use"},
+    {"crl_download", OPT_CRL_DOWNLOAD, '-', "Download CRL from distribution points"},
+    {"CRLform", OPT_CRLFORM, 'F', "CRL format (PEM or DER) PEM is default"},
+    {"verify_return_error", OPT_VERIFY_RET_ERROR, '-',
+     "Close connection on verification error"},
+    {"verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors"},
+    {"chainCAfile", OPT_CHAINCAFILE, '<',
+     "CA file for certificate chain (PEM format)"},
+    {"chainCApath", OPT_CHAINCAPATH, '/',
+     "Use dir as certificate store path to build CA certificate chain"},
+    {"chainCAstore", OPT_CHAINCASTORE, ':',
+     "CA store URI for certificate chain"},
+    {"verifyCAfile", OPT_VERIFYCAFILE, '<',
+     "CA file for certificate verification (PEM format)"},
+    {"verifyCApath", OPT_VERIFYCAPATH, '/',
+     "Use dir as certificate store path to verify CA certificate"},
+    {"verifyCAstore", OPT_VERIFYCASTORE, ':',
+     "CA store URI for certificate verification"},
+    OPT_X_OPTIONS,
+    OPT_PROV_OPTIONS,
+
+    OPT_PARAMETERS(),
+    {"host:port", 0, 0, "Where to connect; same as -connect option"},
+    {NULL}
 };
 
 typedef enum PROTOCOL_choice {
@@ -930,7 +955,7 @@ int s_client_main(int argc, char **argv)
     int prexit = 0;
     int sdebug = 0;
     int reconnect = 0, verify = SSL_VERIFY_NONE, vpmtouched = 0;
-    int ret = 1, in_init = 1, i, nbio_test = 0, s = -1, k, width, state = 0;
+    int ret = 1, in_init = 1, i, nbio_test = 0, sock = -1, k, width, state = 0;
     int sbuf_len, sbuf_off, cmdletters = 1;
     int socket_family = AF_UNSPEC, socket_type = SOCK_STREAM, protocol = 0;
     int starttls_proto = PROTO_OFF, crl_format = FORMAT_PEM, crl_download = 0;
@@ -1205,6 +1230,10 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_IGN_EOF:
@@ -1685,18 +1714,14 @@ int s_client_main(int argc, char **argv)
     if (key_file != NULL) {
         key = load_key(key_file, key_format, 0, pass, e,
                        "client certificate private key file");
-        if (key == NULL) {
-            ERR_print_errors(bio_err);
+        if (key == NULL)
             goto end;
-        }
     }
 
     if (cert_file != NULL) {
         cert = load_cert(cert_file, cert_format, "client certificate file");
-        if (cert == NULL) {
-            ERR_print_errors(bio_err);
+        if (cert == NULL)
             goto end;
-        }
     }
 
     if (chain_file != NULL) {
@@ -1707,12 +1732,9 @@ int s_client_main(int argc, char **argv)
 
     if (crl_file != NULL) {
         X509_CRL *crl;
-        crl = load_crl(crl_file, crl_format);
-        if (crl == NULL) {
-            BIO_puts(bio_err, "Error loading CRL\n");
-            ERR_print_errors(bio_err);
+        crl = load_crl(crl_file, crl_format, "CRL");
+        if (crl == NULL)
             goto end;
-        }
         crls = sk_X509_CRL_new_null();
         if (crls == NULL || !sk_X509_CRL_push(crls, crl)) {
             BIO_puts(bio_err, "Error adding CRL\n");
@@ -2076,16 +2098,16 @@ int s_client_main(int argc, char **argv)
     }
 
  re_start:
-    if (init_client(&s, host, port, bindhost, bindport, socket_family,
+    if (init_client(&sock, host, port, bindhost, bindport, socket_family,
                     socket_type, protocol) == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
-        BIO_closesocket(s);
+        BIO_closesocket(sock);
         goto end;
     }
-    BIO_printf(bio_c_out, "CONNECTED(%08X)\n", s);
+    BIO_printf(bio_c_out, "CONNECTED(%08X)\n", sock);
 
     if (c_nbio) {
-        if (!BIO_socket_nbio(s, 1)) {
+        if (!BIO_socket_nbio(sock, 1)) {
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -2097,21 +2119,21 @@ int s_client_main(int argc, char **argv)
 
 #ifndef OPENSSL_NO_SCTP
         if (protocol == IPPROTO_SCTP)
-            sbio = BIO_new_dgram_sctp(s, BIO_NOCLOSE);
+            sbio = BIO_new_dgram_sctp(sock, BIO_NOCLOSE);
         else
 #endif
-            sbio = BIO_new_dgram(s, BIO_NOCLOSE);
+            sbio = BIO_new_dgram(sock, BIO_NOCLOSE);
 
         if ((peer_info.addr = BIO_ADDR_new()) == NULL) {
             BIO_printf(bio_err, "memory allocation failure\n");
-            BIO_closesocket(s);
+            BIO_closesocket(sock);
             goto end;
         }
-        if (!BIO_sock_info(s, BIO_SOCK_INFO_ADDRESS, &peer_info)) {
+        if (!BIO_sock_info(sock, BIO_SOCK_INFO_ADDRESS, &peer_info)) {
             BIO_printf(bio_err, "getsockname:errno=%d\n",
                        get_last_socket_error());
             BIO_ADDR_free(peer_info.addr);
-            BIO_closesocket(s);
+            BIO_closesocket(sock);
             goto end;
         }
 
@@ -2148,7 +2170,7 @@ int s_client_main(int argc, char **argv)
         }
     } else
 #endif /* OPENSSL_NO_DTLS */
-        sbio = BIO_new_socket(s, BIO_NOCLOSE);
+        sbio = BIO_new_socket(sock, BIO_NOCLOSE);
 
     if (nbio_test) {
         BIO *test;
@@ -2379,83 +2401,9 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_CONNECT:
-        {
-            enum {
-                error_proto,     /* Wrong protocol, not even HTTP */
-                error_connect,   /* CONNECT failed */
-                success
-            } foundit = error_connect;
-            BIO *fbio = BIO_new(BIO_f_buffer());
-
-            BIO_push(fbio, sbio);
-            BIO_printf(fbio, "CONNECT %s HTTP/1.0\r\n", connectstr);
-            /*
-             * Workaround for broken proxies which would otherwise close
-             * the connection when entering tunnel mode (eg Squid 2.6)
-             */
-            BIO_printf(fbio, "Proxy-Connection: Keep-Alive\r\n");
-
-            /* Support for basic (base64) proxy authentication */
-            if (proxyuser != NULL) {
-                size_t l;
-                char *proxyauth, *proxyauthenc;
-
-                l = strlen(proxyuser);
-                if (proxypass != NULL)
-                    l += strlen(proxypass);
-                proxyauth = app_malloc(l + 2, "Proxy auth string");
-                BIO_snprintf(proxyauth, l + 2, "%s:%s", proxyuser,
-                             (proxypass != NULL) ? proxypass : "");
-                proxyauthenc = base64encode(proxyauth, strlen(proxyauth));
-                BIO_printf(fbio, "Proxy-Authorization: Basic %s\r\n",
-                           proxyauthenc);
-                OPENSSL_clear_free(proxyauth, strlen(proxyauth));
-                OPENSSL_clear_free(proxyauthenc, strlen(proxyauthenc));
-            }
-
-            /* Terminate the HTTP CONNECT request */
-            BIO_printf(fbio, "\r\n");
-            (void)BIO_flush(fbio);
-            /*
-             * The first line is the HTTP response.  According to RFC 7230,
-             * it's formatted exactly like this:
-             *
-             * HTTP/d.d ddd Reason text\r\n
-             */
-            mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-            if (mbuf_len < (int)strlen("HTTP/1.0 200")) {
-                BIO_printf(bio_err,
-                           "%s: HTTP CONNECT failed, insufficient response "
-                           "from proxy (got %d octets)\n", prog, mbuf_len);
-                (void)BIO_flush(fbio);
-                BIO_pop(fbio);
-                BIO_free(fbio);
-                goto shut;
-            }
-            if (mbuf[8] != ' ') {
-                BIO_printf(bio_err,
-                           "%s: HTTP CONNECT failed, incorrect response "
-                           "from proxy\n", prog);
-                foundit = error_proto;
-            } else if (mbuf[9] != '2') {
-                BIO_printf(bio_err, "%s: HTTP CONNECT failed: %s ", prog,
-                           &mbuf[9]);
-            } else {
-                foundit = success;
-            }
-            if (foundit != error_proto) {
-                /* Read past all following headers */
-                do {
-                    mbuf_len = BIO_gets(fbio, mbuf, BUFSIZZ);
-                } while (mbuf_len > 2);
-            }
-            (void)BIO_flush(fbio);
-            BIO_pop(fbio);
-            BIO_free(fbio);
-            if (foundit != success) {
-                goto shut;
-            }
-        }
+        if (!OSSL_HTTP_proxy_connect(sbio, host, port, proxyuser, proxypass,
+                                     0 /* no timeout */, bio_err, prog))
+            goto shut;
         break;
     case PROTO_IRC:
         {
@@ -3173,8 +3121,8 @@ int s_client_main(int argc, char **argv)
     timeout.tv_usec = 500000;  /* some extreme round-trip */
     do {
         FD_ZERO(&readfds);
-        openssl_fdset(s, &readfds);
-    } while (select(s + 1, &readfds, NULL, NULL, &timeout) > 0
+        openssl_fdset(sock, &readfds);
+    } while (select(sock + 1, &readfds, NULL, NULL, &timeout) > 0
              && BIO_read(sbio, sbuf, BUFSIZZ) > 0);
 
     BIO_closesocket(SSL_get_fd(con));
@@ -3549,29 +3497,6 @@ static int ldap_ExtendedResponse_parse(const char *buf, long rem)
     /* There is more data, but we don't care... */
  end:
     return ret;
-}
-
-/*
- * BASE64 encoder: used only for encoding basic proxy authentication credentials
- */
-static char *base64encode (const void *buf, size_t len)
-{
-    int i;
-    size_t outl;
-    char  *out;
-
-    /* Calculate size of encoded data */
-    outl = (len / 3);
-    if (len % 3 > 0)
-        outl++;
-    outl <<= 2;
-    out = app_malloc(outl + 1, "base64 encode buffer");
-
-    i = EVP_EncodeBlock((unsigned char *)out, buf, len);
-    assert(i <= (int)outl);
-    if (i < 0)
-        *out = '\0';
-    return out;
 }
 
 /*

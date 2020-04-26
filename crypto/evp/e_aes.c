@@ -1,11 +1,17 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to implement the EVP AES ciphers.
+ */
+#include "internal/deprecated.h"
 
 #include <string.h>
 #include <assert.h>
@@ -20,7 +26,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/modes.h"
 #include "crypto/siv.h"
-#include "crypto/ciphermode_platform.h"
+#include "crypto/aes_platform.h"
 #include "evp_local.h"
 
 typedef struct {
@@ -130,8 +136,6 @@ static void ctr64_inc(unsigned char *counter)
 
 #if defined(AESNI_CAPABLE)
 # if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
-#  define AES_gcm_encrypt aesni_gcm_encrypt
-#  define AES_gcm_decrypt aesni_gcm_decrypt
 #  define AES_GCM_ASM2(gctx)      (gctx->gcm.block==(block128_f)aesni_encrypt && \
                                  gctx->gcm.ghash==gcm_ghash_avx)
 #  undef AES_GCM_ASM2          /* minor size optimization */
@@ -915,7 +919,7 @@ typedef struct {
                 } icv;
                 unsigned char k[32];
             } kmac_param;
-            /* KMAC-AES paramater block - end */
+            /* KMAC-AES parameter block - end */
 
             union {
                 unsigned long long g[2];
@@ -3228,7 +3232,7 @@ static int aes_xts_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         return 0;
 
     /*
-     * Impose a limit of 2^20 blocks per data unit as specifed by
+     * Impose a limit of 2^20 blocks per data unit as specified by
      * IEEE Std 1619-2018.  The earlier and obsolete IEEE Std 1619-2007
      * indicated that this was a SHOULD NOT rather than a MUST NOT.
      * NIST SP 800-38E mandates the same limit.

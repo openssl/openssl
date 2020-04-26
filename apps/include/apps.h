@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,12 +28,14 @@
 # include <openssl/txt_db.h>
 # include <openssl/engine.h>
 # include <openssl/ocsp.h>
+# include <openssl/http.h>
 # include <signal.h>
 # include "apps_ui.h"
 # include "opt.h"
 # include "fmt.h"
 # include "platform.h"
 
+/* also in include/internal/sockets.h */
 # if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
 #  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
 # else
@@ -57,20 +59,6 @@ extern BIO *bio_err;
 extern const unsigned char tls13_aes128gcmsha256_id[];
 extern const unsigned char tls13_aes256gcmsha384_id[];
 extern BIO_ADDR *ourpeer;
-
-BIO_METHOD *apps_bf_prefix(void);
-/*
- * The control used to set the prefix with BIO_ctrl()
- * We make it high enough so the chance of ever clashing with the BIO library
- * remains unlikely for the foreseeable future and beyond.
- */
-#define PREFIX_CTRL_SET_PREFIX  (1 << 15)
-/*
- * apps_bf_prefix() returns a dynamically created BIO_METHOD, which we
- * need to destroy at some point.  When created internally, it's stored
- * in an internal pointer which can be freed with the following function
- */
-void destroy_prefix_method(void);
 
 BIO *dup_bio_in(int format);
 BIO *dup_bio_out(int format);
@@ -103,7 +91,7 @@ int wrap_password_callback(char *buf, int bufsiz, int verify, void *cb_data);
 
 int chopup_args(ARGS *arg, char *buf);
 int dump_cert_text(BIO *out, X509 *x);
-void print_name(BIO *out, const char *title, X509_NAME *nm,
+void print_name(BIO *out, const char *title, const X509_NAME *nm,
                 unsigned long lflags);
 void print_bignum_var(BIO *, const BIGNUM *, const char*,
                       int, unsigned char *);
@@ -116,16 +104,17 @@ int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
 int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
-X509 *load_cert(const char *file, int format, const char *cert_descrip);
-X509_CRL *load_crl(const char *infile, int format);
+X509_REQ *load_csr(const char *file, int format, const char *desc);
+X509 *load_cert(const char *file, int format, const char *desc);
+X509_CRL *load_crl(const char *infile, int format, const char *desc);
 EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
-                   const char *pass, ENGINE *e, const char *key_descrip);
+                   const char *pass, ENGINE *e, const char *desc);
 EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
-                      const char *pass, ENGINE *e, const char *key_descrip);
+                      const char *pass, ENGINE *e, const char *desc);
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
-               const char *pass, const char *cert_descrip);
+               const char *pass, const char *desc);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
-              const char *pass, const char *cert_descrip);
+              const char *pass, const char *desc);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
                          const char *CApath, int noCApath,
                          const char *CAstore, int noCAstore);
@@ -209,12 +198,17 @@ X509_NAME *parse_name(const char *str, long chtype, int multirdn);
 void policies_print(X509_STORE_CTX *ctx);
 int bio_to_mem(unsigned char **out, int maxlen, BIO *in);
 int pkey_ctrl_string(EVP_PKEY_CTX *ctx, const char *value);
+int x509_ctrl_string(X509 *x, const char *value);
+int x509_req_ctrl_string(X509_REQ *x, const char *value);
 int init_gen_str(EVP_PKEY_CTX **pctx,
                  const char *algname, ENGINE *e, int do_param);
 int do_X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md,
                  STACK_OF(OPENSSL_STRING) *sigopts);
+int do_X509_verify(X509 *x, EVP_PKEY *pkey, STACK_OF(OPENSSL_STRING) *vfyopts);
 int do_X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
+int do_X509_REQ_verify(X509_REQ *x, EVP_PKEY *pkey,
+                       STACK_OF(OPENSSL_STRING) *vfyopts);
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
 
@@ -228,6 +222,30 @@ void print_cert_checks(BIO *bio, X509 *x,
                        const char *checkemail, const char *checkip);
 
 void store_setup_crl_download(X509_STORE *st);
+
+typedef struct app_http_tls_info_st {
+    const char *server;
+    const char *port;
+    int use_proxy;
+    long timeout;
+    SSL_CTX *ssl_ctx;
+} APP_HTTP_TLS_INFO;
+BIO *app_http_tls_cb(BIO *hbio, /* APP_HTTP_TLS_INFO */ void *arg,
+                     int connect, int detail);
+# ifndef OPENSSL_NO_SOCK
+ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
+                              const char *no_proxy, SSL_CTX *ssl_ctx,
+                              const STACK_OF(CONF_VALUE) *headers,
+                              long timeout, const char *expected_content_type,
+                              const ASN1_ITEM *it);
+ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
+                               const char *path, const char *proxy,
+                               const char *no_proxy, SSL_CTX *ctx,
+                               const STACK_OF(CONF_VALUE) *headers,
+                               const char *content_type,
+                               ASN1_VALUE *req, const ASN1_ITEM *req_it,
+                               long timeout, const ASN1_ITEM *rsp_it);
+# endif
 
 # define EXT_COPY_NONE   0
 # define EXT_COPY_ADD    1
@@ -269,5 +287,6 @@ extern VERIFY_CB_ARGS verify_args;
 OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
                                      const OSSL_PARAM *paramdefs);
 void app_params_free(OSSL_PARAM *params);
+void app_providers_cleanup(void);
 
 #endif

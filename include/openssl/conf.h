@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,7 @@
 # pragma once
 
 # include <openssl/macros.h>
-# if !OPENSSL_API_3
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define HEADER_CONF_H
 # endif
 
@@ -33,7 +33,9 @@ typedef struct {
     char *value;
 } CONF_VALUE;
 
-DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_OR_DECLARE_STACK_OF(CONF_VALUE)
+DEFINE_OR_DECLARE_STACK_OF(CONF_MODULE)
+
 DEFINE_LHASH_OF(CONF_VALUE);
 
 struct conf_st;
@@ -58,8 +60,7 @@ struct conf_method_st {
 typedef struct conf_imodule_st CONF_IMODULE;
 typedef struct conf_module_st CONF_MODULE;
 
-DEFINE_STACK_OF(CONF_MODULE)
-DEFINE_STACK_OF(CONF_IMODULE)
+STACK_OF(CONF_IMODULE);
 
 /* DSO module function typedefs */
 typedef int conf_init_func (CONF_IMODULE *md, const CONF *cnf);
@@ -96,7 +97,7 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out);
 
 DEPRECATEDIN_1_1_0(void OPENSSL_config(const char *config_name))
 
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define OPENSSL_no_config() \
     OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG, NULL)
 #endif
@@ -110,11 +111,14 @@ struct conf_st {
     CONF_METHOD *meth;
     void *meth_data;
     LHASH_OF(CONF_VALUE) *data;
+    unsigned int flag_dollarid:1;
+    OPENSSL_CTX *libctx;
 };
 
+CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
-DEPRECATEDIN_3(CONF_METHOD *NCONF_WIN32(void))
+DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 
@@ -139,11 +143,13 @@ int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
                       unsigned long flags);
+int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx, const char *filename,
+                                       const char *appname, unsigned long flags);
 int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);
 void CONF_modules_finish(void);
-#if !OPENSSL_API_1_1_0
+#ifndef OPENSSL_NO_DEPRECATED_1_1_0
 # define CONF_modules_free() while(0) continue
 #endif
 int CONF_module_add(const char *name, conf_init_func *ifunc,

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -23,6 +23,7 @@
 # include <openssl/crypto.h>
 # include <openssl/buffer.h>
 # include <openssl/bio.h>
+# include <openssl/asn1.h>
 # include <openssl/err.h>
 # include "internal/nelem.h"
 
@@ -154,7 +155,9 @@ typedef struct ossl_ex_data_global_st {
 # define OPENSSL_CTX_RAND_CRNGT_INDEX               7
 # define OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX     8
 # define OPENSSL_CTX_FIPS_PROV_INDEX                9
-# define OPENSSL_CTX_MAX_INDEXES                   10
+# define OPENSSL_CTX_SERIALIZER_STORE_INDEX        10
+# define OPENSSL_CTX_SELF_TEST_CB_INDEX            11
+# define OPENSSL_CTX_MAX_INDEXES                   12
 
 typedef struct openssl_ctx_method {
     void *(*new_func)(OPENSSL_CTX *ctx);
@@ -162,6 +165,7 @@ typedef struct openssl_ctx_method {
 } OPENSSL_CTX_METHOD;
 
 OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx);
+int openssl_ctx_is_default(OPENSSL_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
 void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */,
@@ -195,5 +199,44 @@ int crypto_free_ex_index_ex(OPENSSL_CTX *ctx, int class_index, int idx);
 const void *ossl_bsearch(const void *key, const void *base, int num,
                          int size, int (*cmp) (const void *, const void *),
                          int flags);
+
+/* system-specific variants defining ossl_sleep() */
+#ifdef OPENSSL_SYS_UNIX
+# include <unistd.h>
+static ossl_inline void ossl_sleep(unsigned long millis)
+{
+# ifdef OPENSSL_SYS_VXWORKS
+    struct timespec ts;
+    ts.tv_sec = (long int) (millis / 1000);
+    ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
+    nanosleep(&ts, NULL);
+# else
+    usleep(millis * 1000);
+# endif
+}
+#elif defined(_WIN32)
+# include <windows.h>
+static ossl_inline void ossl_sleep(unsigned long millis)
+{
+    Sleep(millis);
+}
+#else
+/* Fallback to a busy wait */
+static ossl_inline void ossl_sleep(unsigned long millis)
+{
+    struct timeval start, now;
+    unsigned long elapsedms;
+
+    gettimeofday(&start, NULL);
+    do {
+        gettimeofday(&now, NULL);
+        elapsedms = (((now.tv_sec - start.tv_sec) * 1000000)
+                     + now.tv_usec - start.tv_usec) / 1000;
+    } while (elapsedms < millis);
+}
+#endif /* defined OPENSSL_SYS_UNIX */
+
+char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
+                              size_t max_len);
 
 #endif

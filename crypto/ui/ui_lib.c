@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,8 @@
 #include <openssl/ui.h>
 #include <openssl/err.h>
 #include "ui_local.h"
+
+DEFINE_STACK_OF(UI_STRING)
 
 UI *UI_new(void)
 {
@@ -578,7 +580,7 @@ int UI_set_ex_data(UI *r, int idx, void *arg)
     return CRYPTO_set_ex_data(&r->ex_data, idx, arg);
 }
 
-void *UI_get_ex_data(UI *r, int idx)
+void *UI_get_ex_data(const UI *r, int idx)
 {
     return CRYPTO_get_ex_data(&r->ex_data, idx);
 }

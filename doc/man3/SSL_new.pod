@@ -32,6 +32,19 @@ settings are inherited from the original B<SSL> structure. Dynamic data (i.e.
 existing connection details) are not copied, the new B<SSL> is set into an
 initial accept (server) or connect (client) state.
 
+SSL_dup() allows applications to configure an SSL handle for use in multiple
+SSL connections, and then duplicate it prior to initiating each connection
+with the duplicated handle.  Use of SSL_dup() avoids the need to repeat
+the configuration of the handles for each connection.
+
+For SSL_dup() to work, the connection MUST be in its initial state and
+MUST NOT have not yet have started the SSL handshake.  For connections
+that are not in their initial state SSL_dup() just increments an internal
+reference count and returns the I<same> handle.  It may be possible to
+use L<SSL_clear(3)> to recycle an SSL handle that is not in its initial
+state for re-use, but this is best avoided.  Instead, save and restore
+the session, if desired, and construct a fresh handle for each connection.
+
 =head1 RETURN VALUES
 
 The following return values can occur:

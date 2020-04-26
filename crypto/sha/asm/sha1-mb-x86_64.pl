@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -50,6 +50,11 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
+push(@INC,"${dir}","${dir}../../perlasm");
+require "x86_64-support.pl";
+
+$ptr_size=&pointer_size($flavour);
+
 $avx=0;
 
 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
@@ -67,7 +72,7 @@ if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	$avx = ($1>=10) + ($1>=11);
 }
 
-if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([3-9]\.[0-9]+)/) {
+if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:^clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
 	$avx = ($2>=3.0) + ($2>3.0);
 }
 
@@ -89,6 +94,7 @@ $inp="%rsi";	# 2nd arg
 $num="%edx";
 @ptr=map("%r$_",(8..11));
 $Tbl="%rbp";
+$inp_elm_size=2*$ptr_size;
 
 @V=($A,$B,$C,$D,$E)=map("%xmm$_",(0..4));
 ($t0,$t1,$t2,$t3,$tx)=map("%xmm$_",(5..9));
@@ -409,9 +415,12 @@ $code.=<<___;
 	xor	$num,$num
 ___
 for($i=0;$i<4;$i++) {
+    $ptr_reg=&pointer_register($flavour,@ptr[$i]);
     $code.=<<___;
-	mov	`16*$i+0`($inp),@ptr[$i]	# input pointer
-	mov	`16*$i+8`($inp),%ecx		# number of blocks
+	# input pointer
+	mov	`$inp_elm_size*$i+0`($inp),$ptr_reg
+	# number of blocks
+	mov	`$inp_elm_size*$i+$ptr_size`($inp),%ecx
 	cmp	$num,%ecx
 	cmovg	%ecx,$num			# find maximum
 	test	%ecx,%ecx
@@ -488,7 +497,7 @@ $code.=<<___;
 
 	mov	`$REG_SZ*17+8`(%rsp),$num
 	lea	$REG_SZ($ctx),$ctx
-	lea	`16*$REG_SZ/4`($inp),$inp
+	lea	`$inp_elm_size*$REG_SZ/4`($inp),$inp
 	dec	$num
 	jnz	.Loop_grande
 
@@ -566,9 +575,12 @@ $code.=<<___;
 	xor	$num,$num
 ___
 for($i=0;$i<2;$i++) {
+    $ptr_reg=&pointer_register($flavour,@ptr[$i]);
     $code.=<<___;
-	mov	`16*$i+0`($inp),@ptr[$i]	# input pointer
-	mov	`16*$i+8`($inp),%ecx		# number of blocks
+	# input pointer
+	mov	`$inp_elm_size*$i+0`($inp),$ptr_reg
+	# number of blocks
+	mov	`$inp_elm_size*$i+$ptr_size`($inp),%ecx
 	cmp	$num,%ecx
 	cmovg	%ecx,$num			# find maximum
 	test	%ecx,%ecx
@@ -751,7 +763,7 @@ $code.=<<___;
 	movq		$E0,0x80-0x40($ctx)	# e1.e0
 
 	lea	`$REG_SZ/2`($ctx),$ctx
-	lea	`16*2`($inp),$inp
+	lea	`$inp_elm_size*2`($inp),$inp
 	dec	$num
 	jnz	.Loop_grande_shaext
 
@@ -1071,9 +1083,12 @@ $code.=<<___;
 	xor	$num,$num
 ___
 for($i=0;$i<4;$i++) {
+    $ptr_reg=&pointer_register($flavour,@ptr[$i]);
     $code.=<<___;
-	mov	`16*$i+0`($inp),@ptr[$i]	# input pointer
-	mov	`16*$i+8`($inp),%ecx		# number of blocks
+	# input pointer
+	mov	`$inp_elm_size*$i+0`($inp),$ptr_reg
+	# number of blocks
+	mov	`$inp_elm_size*$i+$ptr_size`($inp),%ecx
 	cmp	$num,%ecx
 	cmovg	%ecx,$num			# find maximum
 	test	%ecx,%ecx
@@ -1144,7 +1159,7 @@ $code.=<<___;
 
 	mov	`$REG_SZ*17+8`(%rsp),$num
 	lea	$REG_SZ($ctx),$ctx
-	lea	`16*$REG_SZ/4`($inp),$inp
+	lea	`$inp_elm_size*$REG_SZ/4`($inp),$inp
 	dec	$num
 	jnz	.Loop_grande_avx
 
@@ -1240,9 +1255,12 @@ $code.=<<___;
 	lea	`$REG_SZ*16`(%rsp),%rbx
 ___
 for($i=0;$i<8;$i++) {
+    $ptr_reg=&pointer_register($flavour,@ptr[$i]);
     $code.=<<___;
-	mov	`16*$i+0`($inp),@ptr[$i]	# input pointer
-	mov	`16*$i+8`($inp),%ecx		# number of blocks
+	# input pointer
+	mov	`$inp_elm_size*$i+0`($inp),$ptr_reg
+	# number of blocks
+	mov	`$inp_elm_size*$i+$ptr_size`($inp),%ecx
 	cmp	$num,%ecx
 	cmovg	%ecx,$num			# find maximum
 	test	%ecx,%ecx
@@ -1313,7 +1331,7 @@ $code.=<<___;
 
 	#mov	`$REG_SZ*17+8`(%rsp),$num
 	#lea	$REG_SZ($ctx),$ctx
-	#lea	`16*$REG_SZ/4`($inp),$inp
+	#lea	`$inp_elm_size*$REG_SZ/4`($inp),$inp
 	#dec	$num
 	#jnz	.Loop_grande_avx2
 
@@ -1627,4 +1645,4 @@ foreach (split("\n",$code)) {
 	print $_,"\n";
 }
 
-close STDOUT;
+close STDOUT or die "error closing STDOUT: $!";

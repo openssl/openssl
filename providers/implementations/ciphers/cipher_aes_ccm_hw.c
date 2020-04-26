@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,8 +9,13 @@
 
 /* AES CCM mode */
 
-#include "prov/ciphercommon.h"
-#include "prov/cipher_ccm.h"
+/*
+ * This file uses the low level AES functions (which are deprecated for
+ * non-internal use) in order to implement provider AES ciphers.
+ */
+#include "internal/deprecated.h"
+
+#include "cipher_aes_ccm.h"
 
 #define AES_HW_CCM_SET_KEY_FN(fn_set_enc_key, fn_blk, fn_ccm_enc, fn_ccm_dec)  \
     fn_set_enc_key(key, keylen * 8, &actx->ccm.ks.ks);                         \

@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -40,6 +40,14 @@ my @autowarntext = (
         . (scalar(@ARGV) > 0 ? " from " .join(", ", @ARGV) : "")
 );
 
+if (defined($opts{s})) {
+    local $/ = undef;
+    open VARS, $opts{s} or die "Couldn't open $opts{s}, $!";
+    my $contents = <VARS>;
+    close VARS;
+    eval $contents;
+    die $@ if $@;
+}
 die "Must have input files"
    if defined($opts{i}) and scalar(@ARGV) == 0;
 
@@ -63,8 +71,6 @@ sub errorcallback {
 
 my $prepend = <<"_____";
 use File::Spec::Functions;
-_____
-$prepend .= <<"_____" if defined $target{perl_platform};
 use lib "$FindBin::Bin/../Configurations";
 use lib '$config{builddir}';
 use platform;

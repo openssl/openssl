@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,8 @@
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
 #include "apps.h"
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
@@ -23,6 +25,11 @@
 #include "s_apps.h"
 
 #define COOKIE_SECRET_LENGTH    16
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(X509_NAME)
+DEFINE_STACK_OF_STRING()
 
 VERIFY_CB_ARGS verify_args = { -1, 0, X509_V_OK, 0 };
 
@@ -188,6 +195,7 @@ static STRINT_PAIR cert_type_list[] = {
     {"RSA fixed ECDH", TLS_CT_RSA_FIXED_ECDH},
     {"ECDSA fixed ECDH", TLS_CT_ECDSA_FIXED_ECDH},
     {"GOST01 Sign", TLS_CT_GOST01_SIGN},
+    {"GOST12 Sign", TLS_CT_GOST12_IANA_SIGN},
     {NULL}
 };
 
@@ -729,10 +737,14 @@ void tlsext_cb(SSL *s, int client_server, int type,
 int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
                              unsigned int *cookie_len)
 {
-    unsigned char *buffer;
+    unsigned char *buffer = NULL;
     size_t length = 0;
     unsigned short port;
     BIO_ADDR *lpeer = NULL, *peer = NULL;
+    int res = 0;
+    EVP_MAC *hmac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    OSSL_PARAM params[3], *p = params;
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
@@ -770,13 +782,42 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL);
 
     /* Calculate HMAC of buffer using the secret */
-    HMAC(EVP_sha1(), cookie_secret, COOKIE_SECRET_LENGTH,
-         buffer, length, cookie, cookie_len);
-
+    hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    if (hmac == NULL) {
+            BIO_printf(bio_err, "HMAC not found\n");
+            goto end;
+    }
+    ctx = EVP_MAC_CTX_new(hmac);
+    if (ctx == NULL) {
+            BIO_printf(bio_err, "HMAC context allocation failed\n");
+            goto end;
+    }
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA1", 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, cookie_secret,
+                                             COOKIE_SECRET_LENGTH);
+    *p = OSSL_PARAM_construct_end();
+    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+            BIO_printf(bio_err, "HMAC context parameter setting failed\n");
+            goto end;
+    }
+    if (!EVP_MAC_init(ctx)) {
+            BIO_printf(bio_err, "HMAC context initialisation failed\n");
+            goto end;
+    }
+    if (!EVP_MAC_update(ctx, buffer, length)) {
+            BIO_printf(bio_err, "HMAC context update failed\n");
+            goto end;
+    }
+    if (!EVP_MAC_final(ctx, cookie, NULL, (size_t)cookie_len)) {
+            BIO_printf(bio_err, "HMAC context final failed\n");
+            goto end;
+    }
+    res = 1;
+end:
     OPENSSL_free(buffer);
     BIO_ADDR_free(lpeer);
 
-    return 1;
+    return res;
 }
 
 int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
@@ -1398,7 +1439,20 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
     case SSL_SECOP_OTHER_DH:
         {
             DH *dh = other;
-            BIO_printf(sdb->out, "%d", DH_bits(dh));
+            EVP_PKEY *pkey = EVP_PKEY_new();
+            int fail = 1;
+
+            if (pkey != NULL) {
+                if (EVP_PKEY_set1_DH(pkey, dh)) {
+                    BIO_printf(sdb->out, "%d", EVP_PKEY_bits(pkey));
+                    fail = 0;
+                }
+
+                EVP_PKEY_free(pkey);
+            }
+            if (fail)
+                BIO_printf(sdb->out, "s_cb.c:security_callback_debug op=0x%x",
+                           op);
             break;
         }
 #endif

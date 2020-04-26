@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,8 @@
 # include <openssl/lhash.h>
 # include "opt.h"
 
+#define DEPRECATED_NO_ALTERNATIVE   "unknown"
+
 typedef enum FUNC_TYPE {
     FT_none, FT_general, FT_md, FT_cipher, FT_pkey,
     FT_md_alg, FT_cipher_alg
@@ -23,6 +25,8 @@ typedef struct function_st {
     const char *name;
     int (*func)(int argc, char *argv[]);
     const OPTIONS *help;
+    const char *deprecated_alternative;
+    const char *deprecated_version;
 } FUNCTION;
 
 DEFINE_LHASH_OF(FUNCTION);

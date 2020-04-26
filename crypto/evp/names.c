@@ -8,11 +8,12 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include "crypto/objects.h"
 #include <openssl/x509.h>
+#include "internal/cryptlib.h"
+#include "internal/namemap.h"
+#include "crypto/objects.h"
 #include "crypto/evp.h"
 
 int EVP_add_cipher(const EVP_CIPHER *c)
@@ -56,26 +57,94 @@ int EVP_add_digest(const EVP_MD *md)
     return r;
 }
 
+static void cipher_from_name(const char *name, void *data)
+{
+    const EVP_CIPHER **cipher = data;
+
+    if (*cipher != NULL)
+        return;
+
+    *cipher = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
+}
+
 const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
 {
+    return evp_get_cipherbyname_ex(NULL, name);
+}
+
+const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name)
+{
     const EVP_CIPHER *cp;
+    OSSL_NAMEMAP *namemap;
+    int id;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS, NULL))
         return NULL;
 
     cp = (const EVP_CIPHER *)OBJ_NAME_get(name, OBJ_NAME_TYPE_CIPHER_METH);
+
+    if (cp != NULL)
+        return cp;
+
+    /*
+     * It's not in the method database, but it might be there under a different
+     * name. So we check for aliases in the EVP namemap and try all of those
+     * in turn.
+     */
+
+    namemap = ossl_namemap_stored(libctx);
+    id = ossl_namemap_name2num(namemap, name);
+    if (id == 0)
+        return NULL;
+
+    ossl_namemap_doall_names(namemap, id, cipher_from_name, &cp);
+
     return cp;
+}
+
+static void digest_from_name(const char *name, void *data)
+{
+    const EVP_MD **md = data;
+
+    if (*md != NULL)
+        return;
+
+    *md = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
 }
 
 const EVP_MD *EVP_get_digestbyname(const char *name)
 {
-    const EVP_MD *cp;
+    return evp_get_digestbyname_ex(NULL, name);
+}
+
+const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name)
+{
+    const EVP_MD *dp;
+    OSSL_NAMEMAP *namemap;
+    int id;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_DIGESTS, NULL))
         return NULL;
 
-    cp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
-    return cp;
+    dp = (const EVP_MD *)OBJ_NAME_get(name, OBJ_NAME_TYPE_MD_METH);
+
+    if (dp != NULL)
+        return dp;
+
+    /*
+     * It's not in the method database, but it might be there under a different
+     * name. So we check for aliases in the EVP namemap and try all of those
+     * in turn.
+     */
+
+    namemap = ossl_namemap_stored(libctx);
+    id = ossl_namemap_name2num(namemap, name);
+    if (id == 0)
+        return NULL;
+
+    ossl_namemap_doall_names(namemap, id, digest_from_name, &dp);
+
+    return dp;
 }
 
 void evp_cleanup_int(void)

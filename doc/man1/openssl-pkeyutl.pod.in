@@ -1,13 +1,9 @@
 =pod
-
-=begin comment
-{- join("\n", @autowarntext) -}
-
-=end comment
+{- OpenSSL::safe::output_do_not_edit_headers(); -}
 
 =head1 NAME
 
-openssl-pkeyutl - public key algorithm utility
+openssl-pkeyutl - public key algorithm command
 
 =head1 SYNOPSIS
 
@@ -38,9 +34,10 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 [B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine engine_impl
 
@@ -183,12 +180,7 @@ hex dump the output data.
 Parse the ASN.1 output data, this is useful when combined with the
 B<-verifyrecover> option when an ASN1 structure is signed.
 
-=item B<-engine> I<id>
-
-Specifying an engine (by its unique I<id> string) will cause this command
-to attempt to obtain a functional reference to the specified engine,
-thus initialising it if needed. The engine will then be set as the default
-for all available algorithms.
+{- $OpenSSL::safe::opt_engine_item -}
 
 =item B<-engine_impl>
 
@@ -196,6 +188,8 @@ When used with the B<-engine> option, it specifies to also use
 engine I<id> for crypto operations.
 
 {- $OpenSSL::safe::opt_r_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -327,18 +321,18 @@ must be known for this to work. If the size of the file cannot be determined
 =head1 SM2
 
 The SM2 algorithm supports sign, verify, encrypt and decrypt operations. For
-the sign and verify operations, SM2 requires an ID string to be passed in. The
-following B<-pkeyopt> value is supported:
+the sign and verify operations, SM2 requires an Distinguishing ID string to
+be passed in. The following B<-pkeyopt> value is supported:
 
 =over 4
 
-=item B<sm2_id:>I<string>
+=item B<distid:>I<string>
 
 This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.
 Otherwise the verification will fail.
 
-=item B<sm2_hex_id:>I<hex_string>
+=item B<hexdistid:>I<hex_string>
 
 This sets the ID string used in SM2 sign or verify operations. While verifying
 an SM2 signature, the ID string must be the same one used when signing the data.
@@ -388,12 +382,12 @@ Derive using the same algorithm, but read key from environment variable MYPASS:
 Sign some data using an L<SM2(7)> private key and a specific ID:
 
  openssl pkeyutl -sign -in file -inkey sm2.key -out sig -rawin -digest sm3 \
-    -pkeyopt sm2_id:someid
+    -pkeyopt distid:someid
 
 Verify some data using an L<SM2(7)> certificate and a specific ID:
 
  openssl pkeyutl -verify -certin -in file -inkey sm2.cert -sigfile sig \
-    -rawin -digest sm3 -pkeyopt sm2_id:someid
+    -rawin -digest sm3 -pkeyopt distid:someid
 
 =head1 SEE ALSO
 
@@ -411,7 +405,7 @@ L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 
 =head1 COPYRIGHT
 
-Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
