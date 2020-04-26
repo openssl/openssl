@@ -3258,6 +3258,7 @@ static int build_chain(X509_STORE_CTX *ctx)
             if (ss < 0) {
                 X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
                 ctx->error = X509_V_ERR_UNSPECIFIED;
+                sk_X509_free(sktmp);
                 return 0;
             }
 
