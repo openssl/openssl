@@ -114,6 +114,7 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_KEYMGMT_PRESENT), "no keymgmt present"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_KEY_SET), "no key set"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NO_OPERATION_SET), "no operation set"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_NULL_MAC_PKEY_CTX), "null mac pkey ctx"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_ONLY_ONESHOT_SUPPORTED),
     "only oneshot supported"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),

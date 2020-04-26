@@ -10,6 +10,7 @@
 
 #ifndef OPENSSL_EVPERR_H
 # define OPENSSL_EVPERR_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -223,6 +224,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_NO_KEYMGMT_PRESENT                         196
 # define EVP_R_NO_KEY_SET                                 154
 # define EVP_R_NO_OPERATION_SET                           149
+# define EVP_R_NULL_MAC_PKEY_CTX                          208
 # define EVP_R_ONLY_ONESHOT_SUPPORTED                     177
 # define EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE   150
 # define EVP_R_OPERATON_NOT_INITIALIZED                   151

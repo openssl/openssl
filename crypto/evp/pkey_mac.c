@@ -493,12 +493,23 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 }
 
 static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
-                              const char *type, const char *value)
+                             const char *type, const char *value)
 {
     MAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
-    const EVP_MAC *mac = EVP_MAC_CTX_mac(hctx->ctx);
+    const EVP_MAC *mac;
     OSSL_PARAM params[2];
     int ok = 0;
+
+    if (hctx == NULL) {
+        EVPerr(0, EVP_R_NULL_MAC_PKEY_CTX);
+        return 0;
+    }
+    if (hctx->ctx == NULL) {
+        /* This actually means the fetch failed during the init call */
+        EVPerr(0, EVP_R_FETCH_FAILED);
+        return 0;
+    }
+    mac = EVP_MAC_CTX_mac(hctx->ctx);
 
     /*
      * Translation of some control names that are equivalent to a single
@@ -519,12 +530,6 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
                                        type, value, strlen(value) + 1, NULL))
         return 0;
     params[1] = OSSL_PARAM_construct_end();
-
-    if (hctx->ctx == NULL) {
-        /* This actually means the fetch failed during the init call */
-        EVPerr(0, EVP_R_FETCH_FAILED);
-        return 0;
-    }
 
     ok = EVP_MAC_CTX_set_params(hctx->ctx, params);
     OPENSSL_free(params[0].data);
