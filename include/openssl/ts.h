@@ -37,8 +37,6 @@ extern "C" {
 # include <openssl/x509.h>
 # include <openssl/x509v3.h>
 
-DEFINE_OR_DECLARE_STACK_OF(EVP_MD)
-
 typedef struct TS_msg_imprint_st TS_MSG_IMPRINT;
 typedef struct TS_req_st TS_REQ;
 typedef struct TS_accuracy_st TS_ACCURACY;
