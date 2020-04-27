@@ -93,7 +93,7 @@ struct TS_tst_info_st {
 };
 
 /* Use in TS_status_info_st */
-DEFINE_STACK_OF(EVP_MD)
+DEFINE_STACK_OF_CONST(EVP_MD)
 
 struct TS_status_info_st {
     ASN1_INTEGER *status;
