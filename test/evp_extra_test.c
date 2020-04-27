@@ -29,6 +29,8 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 
+static OPENSSL_CTX *testctx = NULL;
+
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
  * should never use this key anywhere but in an example.
@@ -1005,7 +1007,7 @@ static struct keys_st {
 #endif
 };
 
-static int test_set_get_raw_keys_int(int tst, int pub)
+static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
 {
     int ret = 0;
     unsigned char buf[80];
@@ -1022,17 +1024,34 @@ static int test_set_get_raw_keys_int(int tst, int pub)
     if (pub) {
         inlen = strlen(keys[tst].pub);
         in = (unsigned char *)keys[tst].pub;
-        pkey = EVP_PKEY_new_raw_public_key(keys[tst].type,
-                                           NULL,
-                                           in,
-                                           inlen);
+        if (uselibctx) {
+            pkey = EVP_PKEY_new_raw_public_key_with_libctx(
+                        testctx,
+                        OBJ_nid2sn(keys[tst].type),
+                        NULL,
+                        in,
+                        inlen);
+        } else {
+            pkey = EVP_PKEY_new_raw_public_key(keys[tst].type,
+                                               NULL,
+                                               in,
+                                               inlen);
+        }
     } else {
         inlen = strlen(keys[tst].priv);
         in = (unsigned char *)keys[tst].priv;
-        pkey = EVP_PKEY_new_raw_private_key(keys[tst].type,
-                                            NULL,
-                                            in,
-                                            inlen);
+        if (uselibctx) {
+            pkey = EVP_PKEY_new_raw_private_key_with_libctx(
+                        testctx, OBJ_nid2sn(keys[tst].type),
+                        NULL,
+                        in,
+                        inlen);
+        } else {
+            pkey = EVP_PKEY_new_raw_private_key(keys[tst].type,
+                                                NULL,
+                                                in,
+                                                inlen);
+        }
     }
 
     if (!TEST_ptr(pkey)
@@ -1052,8 +1071,10 @@ static int test_set_get_raw_keys_int(int tst, int pub)
 
 static int test_set_get_raw_keys(int tst)
 {
-    return test_set_get_raw_keys_int(tst, 0)
-           && test_set_get_raw_keys_int(tst, 1);
+    return test_set_get_raw_keys_int(tst, 0, 0)
+           && test_set_get_raw_keys_int(tst, 0, 1)
+           && test_set_get_raw_keys_int(tst, 1, 0)
+           && test_set_get_raw_keys_int(tst, 1, 1);
 }
 
 static int pkey_custom_check(EVP_PKEY *pkey)
@@ -1583,6 +1604,11 @@ static int test_keygen_with_empty_template(int n)
 
 int setup_tests(void)
 {
+    testctx = OPENSSL_CTX_new();
+
+    if (!TEST_ptr(testctx))
+        return 0;
+
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Enveloped);
@@ -1623,4 +1649,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
 
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    OPENSSL_CTX_free(testctx);
 }
