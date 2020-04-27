@@ -33,14 +33,11 @@
 extern "C" {
 # endif
 
-DEFINE_OR_DECLARE_STACK_OF(SRP_gN_cache)
-DEFINE_OR_DECLARE_STACK_OF(SRP_user_pwd)
-DEFINE_OR_DECLARE_STACK_OF(SRP_gN)
-
 typedef struct SRP_gN_cache_st {
     char *b64_bn;
     BIGNUM *bn;
 } SRP_gN_cache;
+DEFINE_OR_DECLARE_STACK_OF(SRP_gN_cache)
 
 typedef struct SRP_user_pwd_st {
     /* Owned by us. */
@@ -53,6 +50,7 @@ typedef struct SRP_user_pwd_st {
     /* Owned by us. */
     char *info;
 } SRP_user_pwd;
+DEFINE_OR_DECLARE_STACK_OF(SRP_user_pwd)
 
 SRP_user_pwd *SRP_user_pwd_new(void);
 void SRP_user_pwd_free(SRP_user_pwd *user_pwd);
@@ -60,7 +58,6 @@ void SRP_user_pwd_free(SRP_user_pwd *user_pwd);
 void SRP_user_pwd_set_gN(SRP_user_pwd *user_pwd, const BIGNUM *g, const BIGNUM *N);
 int SRP_user_pwd_set1_ids(SRP_user_pwd *user_pwd, const char *id, const char *info);
 int SRP_user_pwd_set0_sv(SRP_user_pwd *user_pwd, BIGNUM *s, BIGNUM *v);
-
 
 typedef struct SRP_VBASE_st {
     STACK_OF(SRP_user_pwd) *users_pwd;
@@ -79,7 +76,7 @@ typedef struct SRP_gN_st {
     const BIGNUM *g;
     const BIGNUM *N;
 } SRP_gN;
-
+DEFINE_OR_DECLARE_STACK_OF(SRP_gN)
 
 SRP_VBASE *SRP_VBASE_new(char *seed_key);
 void SRP_VBASE_free(SRP_VBASE *vb);

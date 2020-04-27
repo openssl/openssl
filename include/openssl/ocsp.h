@@ -102,16 +102,14 @@ extern "C" {
 #  define OCSP_RESPID_KEY                 0x400
 #  define OCSP_NOTIME                     0x800
 
-DEFINE_OR_DECLARE_STACK_OF(OCSP_CERTID)
-DEFINE_OR_DECLARE_STACK_OF(OCSP_ONEREQ)
-DEFINE_OR_DECLARE_STACK_OF(OCSP_RESPID)
-DEFINE_OR_DECLARE_STACK_OF(OCSP_SINGLERESP)
-
 typedef struct ocsp_cert_id_st OCSP_CERTID;
 typedef struct ocsp_one_request_st OCSP_ONEREQ;
 typedef struct ocsp_req_info_st OCSP_REQINFO;
 typedef struct ocsp_signature_st OCSP_SIGNATURE;
 typedef struct ocsp_request_st OCSP_REQUEST;
+
+DEFINE_OR_DECLARE_STACK_OF(OCSP_CERTID)
+DEFINE_OR_DECLARE_STACK_OF(OCSP_ONEREQ)
 
 #  define OCSP_RESPONSE_STATUS_SUCCESSFUL           0
 #  define OCSP_RESPONSE_STATUS_MALFORMEDREQUEST     1
@@ -125,6 +123,7 @@ typedef struct ocsp_resp_bytes_st OCSP_RESPBYTES;
 #  define V_OCSP_RESPID_NAME 0
 #  define V_OCSP_RESPID_KEY  1
 
+DEFINE_OR_DECLARE_STACK_OF(OCSP_RESPID)
 
 typedef struct ocsp_revoked_info_st OCSP_REVOKEDINFO;
 
@@ -135,6 +134,7 @@ typedef struct ocsp_revoked_info_st OCSP_REVOKEDINFO;
 typedef struct ocsp_cert_status_st OCSP_CERTSTATUS;
 typedef struct ocsp_single_response_st OCSP_SINGLERESP;
 
+DEFINE_OR_DECLARE_STACK_OF(OCSP_SINGLERESP)
 
 typedef struct ocsp_response_data_st OCSP_RESPDATA;
 

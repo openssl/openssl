@@ -40,6 +40,11 @@
 extern "C" {
 #endif
 
+/* Needed stacks for types defined in other headers */
+DEFINE_OR_DECLARE_STACK_OF(X509_NAME)
+DEFINE_OR_DECLARE_STACK_OF(X509)
+DEFINE_OR_DECLARE_STACK_OF(X509_REVOKED)
+DEFINE_OR_DECLARE_STACK_OF(X509_CRL)
 
 /* Flags for X509_get_signature_info() */
 /* Signature info is valid */
@@ -77,12 +82,8 @@ typedef struct X509_val_st {
 typedef struct X509_sig_st X509_SIG;
 
 typedef struct X509_name_entry_st X509_NAME_ENTRY;
-
 DEFINE_OR_DECLARE_STACK_OF(X509_NAME_ENTRY)
-DEFINE_OR_DECLARE_STACK_OF(X509_NAME)
-DEFINE_OR_DECLARE_STACK_OF(X509)
-DEFINE_OR_DECLARE_STACK_OF(X509_REVOKED)
-DEFINE_OR_DECLARE_STACK_OF(X509_CRL)
+
 
 # define X509_EX_V_NETSCAPE_HACK         0x8000
 # define X509_EX_V_INIT                  0x0001
