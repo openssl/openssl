@@ -92,6 +92,9 @@ struct TS_tst_info_st {
     STACK_OF(X509_EXTENSION) *extensions;
 };
 
+/* Use in TS_status_info_st */
+DEFINE_STACK_OF(EVP_MD)
+
 struct TS_status_info_st {
     ASN1_INTEGER *status;
     STACK_OF(ASN1_UTF8STRING) *text;
