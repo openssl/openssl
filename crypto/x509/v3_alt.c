@@ -82,7 +82,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                                        STACK_OF(CONF_VALUE) *ret)
 {
     unsigned char *p;
-    char othername[256];
+    char othername[300];
     char oline[256], htmp[5];
     int i;
 
