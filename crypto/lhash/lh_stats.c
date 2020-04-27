@@ -19,7 +19,6 @@
 #ifndef OPENSSL_NO_STDIO
 void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
-# ifndef OPENSSL_NO_DEPRECATED_3_0
     BIO *bp;
 
     bp = BIO_new(BIO_s_file());
@@ -28,12 +27,10 @@ void OPENSSL_LH_stats(const OPENSSL_LHASH *lh, FILE *fp)
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
     OPENSSL_LH_stats_bio(lh, bp);
     BIO_free(bp);
-# endif
 }
 
 void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
-# ifndef OPENSSL_NO_DEPRECATED_3_0
     BIO *bp;
 
     bp = BIO_new(BIO_s_file());
@@ -42,12 +39,10 @@ void OPENSSL_LH_node_stats(const OPENSSL_LHASH *lh, FILE *fp)
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
     OPENSSL_LH_node_stats_bio(lh, bp);
     BIO_free(bp);
-# endif
 }
 
 void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
 {
-# ifndef OPENSSL_NO_DEPRECATED_3_0
     BIO *bp;
 
     bp = BIO_new(BIO_s_file());
@@ -56,14 +51,11 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp)
     BIO_set_fp(bp, fp, BIO_NOCLOSE);
     OPENSSL_LH_node_usage_stats_bio(lh, bp);
     BIO_free(bp);
-# endif
 }
-
 #endif
 
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     BIO_printf(out, "num_items             = %lu\n", lh->num_items);
     BIO_printf(out, "num_nodes             = %u\n",  lh->num_nodes);
     BIO_printf(out, "num_alloc_nodes       = %u\n",  lh->num_alloc_nodes);
@@ -80,12 +72,10 @@ void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
     BIO_printf(out, "num_retrieve          = %lu\n", lh->num.retrieve);
     BIO_printf(out, "num_retrieve_miss     = %lu\n", lh->num.retrieve_miss);
     BIO_printf(out, "num_hash_comps        = %lu\n", lh->num.hash_comps);
-#endif
 }
 
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     OPENSSL_LH_NODE *n;
     unsigned int i, num;
 
@@ -94,12 +84,10 @@ void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
             num++;
         BIO_printf(out, "node %6u -> %3u\n", i, num);
     }
-#endif
 }
 
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
 {
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     OPENSSL_LH_NODE *n;
     unsigned long num;
     unsigned int i;
@@ -121,5 +109,4 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out)
                (int)(total / lh->num_nodes),
                (int)((total % lh->num_nodes) * 100 / lh->num_nodes),
                (int)(total / n_used), (int)((total % n_used) * 100 / n_used));
-#endif
 }

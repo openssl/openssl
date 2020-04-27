@@ -87,14 +87,7 @@ void OPENSSL_LH_doall_arg(OPENSSL_LHASH *lh, OPENSSL_LH_DOALL_FUNCARG func, void
 unsigned long OPENSSL_LH_strhash(const char *c);
 unsigned long OPENSSL_LH_num_items(const OPENSSL_LHASH *lh);
 
-/*
- * We would like to deprecate these functions, but doing so gets errors in
- * builds when allowing deprecated, and we'd have to annotate this file
- * which is include'd in several other files, so that's not good.
- * Instead, we just declare these as normal, and the |DEFINE_LASH_OF|
- * macro includes the type-safe wrapper functions or not, depending on
- * deprecation.
- */
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 unsigned long OPENSSL_LH_get_down_load(const OPENSSL_LHASH *lh);
 void OPENSSL_LH_set_down_load(OPENSSL_LHASH *lh, unsigned long down_load);
 # ifndef OPENSSL_NO_STDIO
@@ -105,6 +98,7 @@ void OPENSSL_LH_node_usage_stats(const OPENSSL_LHASH *lh, FILE *fp);
 void OPENSSL_LH_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
+# endif
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #  define _LHASH OPENSSL_LHASH

@@ -1,5 +1,8 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=\
-        lhash.c lh_stats.c
-SOURCE[../../providers/libfips.a]=\
-        lhash.c
+
+SOURCE[../../libcrypto]=lhash.c
+SOURCE[../../providers/libfips.a]=lhash.c
+
+IF[{- !$disabled{'deprecated-3.0'} -}]
+  SOURCE[../../libcrypto]=lh_stats.c
+ENDIF
