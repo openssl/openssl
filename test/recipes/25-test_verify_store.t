@@ -18,7 +18,7 @@ plan tests => 10;
 
 my $dummycnf = srctop_file("apps", "openssl.cnf");
 
-my $cnf=srctop_file("test","ca-and-certs.cnf");
+my $cnf = srctop_file("test", "ca-and-certs.cnf");
 my $CAkey = "keyCA.ss";
 my $CAcert="certCA.ss";
 my $CAserial="certCA.srl";

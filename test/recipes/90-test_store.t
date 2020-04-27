@@ -16,7 +16,7 @@ my $test_name = "test_store";
 setup($test_name);
 
 my $mingw = config('target') =~ m|^mingw|;
-my $cnf=srctop_file("test","ca-and-certs.cnf");
+my $cnf = srctop_file("test", "ca-and-certs.cnf");
 
 my @noexist_files =
     ( "test/blahdiblah.pem",
