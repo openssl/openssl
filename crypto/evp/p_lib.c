@@ -333,8 +333,6 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
-    OSSL_PARAM_BLD *tmpl = NULL;
-    OSSL_PARAM *params = NULL;
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
     int result = 0;
 
@@ -367,44 +365,26 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
             EVPerr(0, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        /* May fail if no provider available */
+        ERR_set_mark();
         if (EVP_PKEY_key_fromdata_init(ctx) == 1) {
-            tmpl = OSSL_PARAM_BLD_new();
-            if (tmpl == NULL) {
-                EVPerr(0, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
+            OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-            if (!priv && !OSSL_PARAM_BLD_push_octet_string(tmpl,
-                                                           OSSL_PKEY_PARAM_PUB_KEY,
-                                                           key, len)) {
-                EVPerr(0, EVP_R_KEY_SETUP_FAILED);
-                goto err;
-            }
-
-            if (priv && !OSSL_PARAM_BLD_push_octet_string(tmpl,
-                                                          OSSL_PKEY_PARAM_PRIV_KEY,
-                                                          key, len)) {
-                EVPerr(0, EVP_R_KEY_SETUP_FAILED);
-                goto err;
-            }
-
-            params = OSSL_PARAM_BLD_to_param(tmpl);
-            if (params == NULL) {
-                EVPerr(0, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
+            ERR_clear_last_mark();
+            params[0] = OSSL_PARAM_construct_octet_string(
+                            priv ? OSSL_PKEY_PARAM_PRIV_KEY
+                                 : OSSL_PKEY_PARAM_PUB_KEY, (void *)key, len);
 
             if (EVP_PKEY_fromdata(ctx, &pkey, params) != 1) {
                 EVPerr(0, EVP_R_KEY_SETUP_FAILED);
                 goto err;
             }
 
-            OSSL_PARAM_BLD_free(tmpl);
-            OSSL_PARAM_BLD_free_params(params);
             EVP_PKEY_CTX_free(ctx);
 
             return pkey;
         }
+        ERR_pop_to_mark();
         /* else not supported so fallback to legacy */
     }
 
@@ -421,10 +401,8 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
         goto err;
     }
 
-    if (pkey->ameth == NULL) {
-        /* Shouldn't happen */
+    if (!ossl_assert(pkey->ameth != NULL))
         goto err;
-    }
 
     if (priv) {
         if (pkey->ameth->set_priv_key == NULL) {
@@ -450,8 +428,6 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
 
     result = 1;
  err:
-    OSSL_PARAM_BLD_free(tmpl);
-    OSSL_PARAM_BLD_free_params(params);
     if (!result) {
         EVP_PKEY_free(pkey);
         pkey = NULL;
