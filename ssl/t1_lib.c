@@ -360,8 +360,17 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 
     default:
         if (s->ext.supportedgroups == NULL) {
+#ifndef OQS_DEFAULT_GROUPS
             *pgroups = eccurves_default;
             *pgroupslen = OSSL_NELEM(eccurves_default);
+#else
+#define STRINGIZE(x) #x
+#define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
+            if (!tls1_set_groups_list(pgroups, pgroupslen, STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS))) {
+               *pgroups = eccurves_default;
+               *pgroupslen = OSSL_NELEM(eccurves_default);
+            }
+#endif
         } else {
             *pgroups = s->ext.supportedgroups;
             *pgroupslen = s->ext.supportedgroups_len;
