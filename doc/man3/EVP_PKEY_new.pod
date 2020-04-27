@@ -5,7 +5,9 @@
 EVP_PKEY_new,
 EVP_PKEY_up_ref,
 EVP_PKEY_free,
+EVP_PKEY_new_raw_private_key_with_libctx,
 EVP_PKEY_new_raw_private_key,
+EVP_PKEY_new_raw_public_key_with_libctx,
 EVP_PKEY_new_raw_public_key,
 EVP_PKEY_new_CMAC_key,
 EVP_PKEY_new_mac_key,
@@ -21,8 +23,18 @@ EVP_PKEY_get_raw_public_key
  int EVP_PKEY_up_ref(EVP_PKEY *key);
  void EVP_PKEY_free(EVP_PKEY *key);
 
+ EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OPENSSL_CTX *libctx,
+                                                    const char *keytype,
+                                                    const char *propq,
+                                                    const unsigned char *key,
+                                                    size_t keylen);
  EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
                                         const unsigned char *key, size_t keylen);
+ EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OPENSSL_CTX *libctx,
+                                                   const char *keytype,
+                                                   const char *propq,
+                                                   const unsigned char *key,
+                                                   size_t keylen);
  EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
                                        const unsigned char *key, size_t keylen);
  EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
@@ -46,16 +58,34 @@ EVP_PKEY_up_ref() increments the reference count of B<key>.
 EVP_PKEY_free() decrements the reference count of B<key> and, if the reference
 count is zero, frees it up. If B<key> is NULL, nothing is done.
 
-EVP_PKEY_new_raw_private_key() allocates a new B<EVP_PKEY>. If B<e> is non-NULL
-then the new B<EVP_PKEY> structure is associated with the engine B<e>. The
-B<type> argument indicates what kind of key this is. The value should be a NID
-for a public key algorithm that supports raw private keys, i.e. one of
-B<EVP_PKEY_HMAC>, B<EVP_PKEY_POLY1305>, B<EVP_PKEY_SIPHASH>, B<EVP_PKEY_X25519>,
-B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>. B<key> points to the
-raw private key data for this B<EVP_PKEY> which should be of length B<keylen>.
-The length should be appropriate for the type of the key. The public key data
-will be automatically derived from the given private key data (if appropriate
-for the algorithm type).
+EVP_PKEY_new_raw_private_key_with_libctx() allocates a new B<EVP_PKEY>. Unless
+an engine should be used for the key type, a provider for the key is found using
+the library context I<libctx> and the property query string I<propq>. The
+I<keytype> argument indicates what kind of key this is. The value should be a
+string for a public key algorithm that supports raw private keys, i.e one of
+"POLY1305", "SIPHASH", "X25519", "ED25519", "X448" or "ED448". Note that you may
+also use "HMAC" which is not a public key algorithm but is treated as such by
+some OpenSSL APIs. You are encouraged to use the EVP_MAC APIs instead for HMAC
+(see L<EVP_MAC(3)>). I<key> points to the raw private key data for this
+B<EVP_PKEY> which should be of length I<keylen>. The length should be
+appropriate for the type of the key. The public key data will be automatically
+derived from the given private key data (if appropriate for the algorithm type).
+
+EVP_PKEY_new_raw_private_key() does the same as
+EVP_PKEY_new_raw_private_key_with_libctx() except that the default library
+context and default property query are used instead. If B<e> is non-NULL then
+the new B<EVP_PKEY> structure is associated with the engine B<e>. The B<type>
+argument indicates what kind of key this is. The value should be a NID for a
+public key algorithm that supports raw private keys, i.e. one of
+B<EVP_PKEY_POLY1305>, B<EVP_PKEY_SIPHASH>, B<EVP_PKEY_X25519>,
+B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>. As for
+EVP_PKEY_new_raw_private_key_with_libctx() you may also use B<EVP_PKEY_HMAC>.
+
+EVP_PKEY_new_raw_public_key_with_libctx() works in the same way as
+EVP_PKEY_new_raw_private_key_with_libctx() except that B<key> points to the raw
+public key data. The B<EVP_PKEY> structure will be initialised without any
+private key information. Algorithm types that support raw public keys are
+"X25519", "ED25519", "X448" or "ED448".
 
 EVP_PKEY_new_raw_public_key() works in the same way as
 EVP_PKEY_new_raw_private_key() except that B<key> points to the raw public key
@@ -126,6 +156,9 @@ The
 EVP_PKEY_new_raw_private_key(), EVP_PKEY_new_raw_public_key(),
 EVP_PKEY_new_CMAC_key(), EVP_PKEY_new_raw_private_key() and
 EVP_PKEY_get_raw_public_key() functions were added in OpenSSL 1.1.1.
+
+The EVP_PKEY_new_raw_private_key_with_libctx and
+EVP_PKEY_new_raw_public_key_with_libctx functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
