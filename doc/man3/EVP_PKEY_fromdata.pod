@@ -94,10 +94,10 @@ TODO Write a set of cookbook documents and link to them.
   * and secure application is expected to use BIGNUMs, and to build
   * this array dynamically.
   */
- const unsigned long rsa_n = 0xbc747fc5;
- const unsigned long rsa_e = 0x10001;
- const unsigned long rsa_d = 0x7b133399;
- const OSSL_PARAM[] = {
+ unsigned long rsa_n = 0xbc747fc5;
+ unsigned long rsa_e = 0x10001;
+ unsigned long rsa_d = 0x7b133399;
+ OSSL_PARAM params[] = {
      OSSL_PARAM_ulong("n", &rsa_n),
      OSSL_PARAM_ulong("e", &rsa_e),
      OSSL_PARAM_ulong("d", &rsa_d),
