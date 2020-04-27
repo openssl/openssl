@@ -210,6 +210,16 @@ on **Ubuntu**, run:
 
 The fork can also be built as a set of shared libraries by specifying `shared` instead of `no-shared` in the above commands; We have used `no-shared` to avoid having to get the libraries in the right place for the runtime linker.
 
+#### Build options
+
+##### Default algorithms announced
+
+By default, this OpenSSL is built to only announce 128-bit strength QSC hybrid KEM algorithms in the initial TLS handshake (EC groups announced extension). This algorithm set can be changed to an arbitrary desired mix at build time by setting the variable `OQS_DEFAULT_GROUPS` to a colon-separated list of [KEM algorithms supported](#key-exchange), e.g., running 
+```
+./Configure no-shared linux-x86_64 -DOQS_DEFAULT_GROUPS=\"p256_kyber768:X25519:newhope1024cca\" -lm
+```
+This is the same syntax that can be used at runtime to select the announced algorithms (by setting the `-curves` parameter with clients supporting this option, e.g., `openssl s_client` or `openssl s_server`). 
+
 ### Running
 
 #### TLS demo
