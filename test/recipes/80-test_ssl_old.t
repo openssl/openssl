@@ -44,7 +44,7 @@ my @verifycmd = ("openssl", "verify");
 my @genpkeycmd = ("openssl", "genpkey");
 my $dummycnf = srctop_file("apps", "openssl.cnf");
 
-my $cnf=srctop_file("test","ca-and-certs.cnf");
+my $cnf = srctop_file("test", "ca-and-certs.cnf");
 my $CAkey = "keyCA.ss";
 my $CAcert="certCA.ss";
 my $CAserial="certCA.srl";
@@ -60,7 +60,7 @@ my $Ekey="keyE.ss";
 my $Ereq="reqE.ss";
 my $Ecert="certE.ss";
 
-my $proxycnf=srctop_file("test","proxy.cnf");
+my $proxycnf=srctop_file("test", "proxy.cnf");
 my $P1key="keyP1.ss";
 my $P1req="reqP1.ss";
 my $P1cert="certP1.ss";
