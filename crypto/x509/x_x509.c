@@ -15,7 +15,9 @@
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
 
+#ifndef OPENSSL_NO_RFC3779
 DEFINE_STACK_OF(IPAddressFamily)
+#endif
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
         ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
