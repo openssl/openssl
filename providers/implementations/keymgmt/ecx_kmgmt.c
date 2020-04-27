@@ -47,6 +47,7 @@ static OSSL_OP_keymgmt_gettable_params_fn x448_gettable_params;
 static OSSL_OP_keymgmt_gettable_params_fn ed25519_gettable_params;
 static OSSL_OP_keymgmt_gettable_params_fn ed448_gettable_params;
 static OSSL_OP_keymgmt_has_fn ecx_has;
+static OSSL_OP_keymgmt_match_fn ecx_match;
 static OSSL_OP_keymgmt_import_fn ecx_import;
 static OSSL_OP_keymgmt_import_types_fn ecx_imexport_types;
 static OSSL_OP_keymgmt_export_fn ecx_export;
@@ -100,6 +101,36 @@ static int ecx_has(void *keydata, int selection)
 
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
             ok = ok && key->privkey != NULL;
+    }
+    return ok;
+}
+
+static int ecx_match(const void *keydata1, const void *keydata2, int selection)
+{
+    const ECX_KEY *key1 = keydata1;
+    const ECX_KEY *key2 = keydata2;
+    int ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && key1->type == key2->type;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if ((key1->privkey == NULL && key2->privkey != NULL)
+                || (key1->privkey != NULL && key2->privkey == NULL)
+                || key1->type != key2->type)
+            ok = 0;
+        else
+            ok = ok && (key1->privkey == NULL /* implies key2->privkey == NULL */
+                        || CRYPTO_memcmp(key1->privkey, key2->privkey,
+                                         key1->keylen) == 0);
+    }
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (key1->haspubkey != key2->haspubkey
+                || key1->type != key2->type)
+            ok = 0;
+        else
+            ok = ok && (key1->haspubkey == 0 /* implies key2->haspubkey == 0 */
+                        || CRYPTO_memcmp(key1->pubkey, key2->pubkey,
+                                         key1->keylen) == 0);
     }
     return ok;
 }
@@ -420,6 +451,7 @@ static void ecx_gen_cleanup(void *genctx)
         { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))alg##_get_params }, \
         { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))alg##_gettable_params }, \
         { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ecx_has }, \
+        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ecx_match }, \
         { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ecx_import }, \
         { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ecx_imexport_types }, \
         { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ecx_export }, \
