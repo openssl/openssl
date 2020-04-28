@@ -385,6 +385,9 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri,  X509 *recip, EVP_PKEY *r
         /* Use originator key */
         CMS_OriginatorIdentifierOrKey *oik = ri->d.kari->originator;
 
+        if (originatorPrivKey == NULL || originator == NULL)
+            return 0;
+
         if (flags & CMS_USE_ORIGINATOR_KEYID) {
              oik->type = CMS_OIK_KEYIDENTIFIER;
              oik->d.subjectKeyIdentifier = ASN1_OCTET_STRING_new();
