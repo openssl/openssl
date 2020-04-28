@@ -233,7 +233,9 @@ OSSL_PARAM_get_octet_string() retrieves an OCTET string from the parameter
 pointed to by B<p>.
 The OCTETs are either stored into B<*val> with a length limit of B<max_len> or,
 in the case when B<*val> is B<NULL>, memory is allocated and
-B<max_len> is ignored.
+B<max_len> is ignored. B<*used_len> is populated with the number of OCTETs
+stored. If B<val> is NULL then the OCTETS are not stored, but B<*used_len> is
+still populated.
 If memory is allocated by this function, it must be freed by the caller.
 
 OSSL_PARAM_set_octet_string() sets an OCTET string from the parameter
