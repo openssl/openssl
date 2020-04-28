@@ -366,7 +366,8 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 #else
 #define STRINGIZE(x) #x
 #define STRINGIZE_VALUE_OF(x) STRINGIZE(x)
-            if (!tls1_set_groups_list(pgroups, pgroupslen, STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS))) {
+            if (!tls1_set_groups_list((uint16_t **)pgroups, pgroupslen, STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS))) {
+               fprintf(stderr, "Failed to set default curves to '%s'. Falling back to default.\n", STRINGIZE_VALUE_OF(OQS_DEFAULT_GROUPS));
                *pgroups = eccurves_default;
                *pgroupslen = OSSL_NELEM(eccurves_default);
             }
