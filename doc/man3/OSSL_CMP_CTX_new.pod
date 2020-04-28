@@ -226,18 +226,18 @@ The following options can be set:
 
 =item B<OSSL_CMP_OPT_DIGEST_ALGNID>
 
-        The digest algorithm NID to be used in RFC 4210's MSG_SIG_ALG,
-        if applicable used for message protection and Proof-of-Possession.
+        The NID of the digest algorithm to be used in RFC 4210's MSG_SIG_ALG
+        for signature-based message protection and Proof-of-Possession (POPO).
         Default is SHA256.
 
-    OSSL_CMP_OPT_OWF_ALGNID
-        The digest algorithm NID to be used as one-way function (OWF)
-        in RFC 4210's MSG_MAC_ALG, if applicable used for message protection.
+=item B<OSSL_CMP_OPT_OWF_ALGNID>
+        The NID of the digest algorithm to be used as one-way function (OWF)
+        in RFC 4210's MSG_MAC_ALG for PBM-based message protection.
         Default is SHA256.
 
-    OSSL_CMP_OPT_MAC_ALGNID
-        The MAC algorithm NID to be used in RFC 4210's MSG_MAC_ALG,
-        if applicable used for message protection.
+=item B<OSSL_CMP_OPT_MAC_ALGNID>
+        The NID of the MAC algorithm to be used in RFC 4210's MSG_MAC_ALG
+        for PBM-based message protection.
         Default is HMAC-SHA1 as per RFC 4210.
 
 =item B<OSSL_CMP_OPT_REVOCATION_REASON>
