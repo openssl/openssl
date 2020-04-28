@@ -504,7 +504,7 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
     if (pkey->keymgmt != NULL) {
         struct raw_key_details_st raw_key;
 
-        raw_key.key = &priv;
+        raw_key.key = priv == NULL ? NULL : &priv;
         raw_key.len = len;
         raw_key.selection = OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
@@ -537,7 +537,7 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
     if (pkey->keymgmt != NULL) {
         struct raw_key_details_st raw_key;
 
-        raw_key.key = &pub;
+        raw_key.key = pub == NULL ? NULL : &pub;
         raw_key.len = len;
         raw_key.selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
