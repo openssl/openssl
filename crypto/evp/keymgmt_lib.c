@@ -378,8 +378,10 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
         import_data.selection = selection;
 
         if (!evp_keymgmt_export(from->keymgmt, from->keydata, selection,
-                                &try_import, &import_data))
+                                &try_import, &import_data)) {
+            evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
+        }
 
         /*
          * In case to_keydata was previously unallocated, try_import()
