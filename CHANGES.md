@@ -101,24 +101,22 @@ OpenSSL 3.0
 
  * All of the low level RSA functions have been deprecated including:
 
-   RSA_new_method, RSA_bits, RSA_size, RSA_security_bits,
-   RSA_get0_pss_params, RSA_get_version, RSA_get0_engine,
-   RSA_generate_key_ex, RSA_generate_multi_prime_key,
-   RSA_X931_derive_ex, RSA_X931_generate_key_ex, RSA_check_key,
-   RSA_check_key_ex, RSA_public_encrypt, RSA_private_encrypt,
+   RSA_new_method, RSA_size, RSA_security_bits, RSA_get0_pss_params,
+   RSA_get_version, RSA_get0_engine, RSA_generate_key_ex,
+   RSA_generate_multi_prime_key, RSA_X931_derive_ex, RSA_X931_generate_key_ex,
+   RSA_check_key, RSA_check_key_ex, RSA_public_encrypt, RSA_private_encrypt,
    RSA_public_decrypt, RSA_private_decrypt, RSA_set_default_method,
    RSA_get_default_method, RSA_null_method, RSA_get_method, RSA_set_method,
    RSA_PKCS1_OpenSSL, RSA_print_fp, RSA_print, RSA_sign, RSA_verify,
-   RSA_sign_ASN1_OCTET_STRING, RSA_verify_ASN1_OCTET_STRING,
-   RSA_blinding_on, RSA_blinding_off, RSA_setup_blinding,
-   RSA_padding_add_PKCS1_type_1, RSA_padding_check_PKCS1_type_1,
-   RSA_padding_add_PKCS1_type_2, RSA_padding_check_PKCS1_type_2,
-   PKCS1_MGF1, RSA_padding_add_PKCS1_OAEP, RSA_padding_check_PKCS1_OAEP,
-   RSA_padding_add_PKCS1_OAEP_mgf1, RSA_padding_check_PKCS1_OAEP_mgf1,
-   RSA_padding_add_SSLv23, RSA_padding_check_SSLv23,
-   RSA_padding_add_none, RSA_padding_check_none, RSA_padding_add_X931,
-   RSA_padding_check_X931, RSA_X931_hash_id, RSA_verify_PKCS1_PSS,
-   RSA_padding_add_PKCS1_PSS, RSA_verify_PKCS1_PSS_mgf1,
+   RSA_sign_ASN1_OCTET_STRING, RSA_verify_ASN1_OCTET_STRING, RSA_blinding_on,
+   RSA_blinding_off, RSA_setup_blinding, RSA_padding_add_PKCS1_type_1,
+   RSA_padding_check_PKCS1_type_1, RSA_padding_add_PKCS1_type_2,
+   RSA_padding_check_PKCS1_type_2, PKCS1_MGF1, RSA_padding_add_PKCS1_OAEP,
+   RSA_padding_check_PKCS1_OAEP, RSA_padding_add_PKCS1_OAEP_mgf1,
+   RSA_padding_check_PKCS1_OAEP_mgf1, RSA_padding_add_SSLv23,
+   RSA_padding_check_SSLv23, RSA_padding_add_none, RSA_padding_check_none,
+   RSA_padding_add_X931, RSA_padding_check_X931, RSA_X931_hash_id,
+   RSA_verify_PKCS1_PSS, RSA_padding_add_PKCS1_PSS, RSA_verify_PKCS1_PSS_mgf1,
    RSA_padding_add_PKCS1_PSS_mgf1, RSA_set_ex_data, RSA_get_ex_data,
    RSA_meth_new, RSA_meth_free, RSA_meth_dup, RSA_meth_get0_name,
    RSA_meth_set1_name, RSA_meth_get_flags, RSA_meth_set_flags,
@@ -171,20 +169,19 @@ OpenSSL 3.0
 
  * All of the low level DH functions have been deprecated including:
 
-   DH_OpenSSL, DH_set_default_method, DH_get_default_method,
-   DH_set_method, DH_new_method, DH_bits, DH_size, DH_security_bits,
-   DH_get_ex_new_index, DH_set_ex_data, DH_get_ex_data,
-   DH_generate_parameters_ex, DH_check_params_ex, DH_check_ex,
-   DH_check_pub_key_ex, DH_check, DH_check_pub_key, DH_generate_key,
-   DH_compute_key, DH_compute_key_padded, DHparams_print_fp,
-   DHparams_print, DH_get_nid, DH_KDF_X9_42, DH_get0_engine, DH_meth_new,
-   DH_meth_free, DH_meth_dup, DH_meth_get0_name, DH_meth_set1_name,
-   DH_meth_get_flags, DH_meth_set_flags, DH_meth_get0_app_data,
-   DH_meth_set0_app_data, DH_meth_get_generate_key, DH_meth_set_generate_key,
-   DH_meth_get_compute_key, DH_meth_set_compute_key, DH_meth_get_bn_mod_exp,
-   DH_meth_set_bn_mod_exp, DH_meth_get_init, DH_meth_set_init,
-   DH_meth_get_finish, DH_meth_set_finish, DH_meth_get_generate_params
-   and DH_meth_set_generate_params.
+   DH_OpenSSL, DH_set_default_method, DH_get_default_method, DH_set_method,
+   DH_new_method, DH_size, DH_security_bits, DH_get_ex_new_index,
+   DH_set_ex_data, DH_get_ex_data, DH_generate_parameters_ex,
+   DH_check_params_ex, DH_check_ex, DH_check_pub_key_ex,
+   DH_check, DH_check_pub_key, DH_generate_key, DH_compute_key,
+   DH_compute_key_padded, DHparams_print_fp, DHparams_print, DH_get_nid,
+   DH_KDF_X9_42, DH_get0_engine, DH_meth_new, DH_meth_free, DH_meth_dup,
+   DH_meth_get0_name, DH_meth_set1_name, DH_meth_get_flags, DH_meth_set_flags,
+   DH_meth_get0_app_data, DH_meth_set0_app_data, DH_meth_get_generate_key,
+   DH_meth_set_generate_key, DH_meth_get_compute_key, DH_meth_set_compute_key,
+   DH_meth_get_bn_mod_exp, DH_meth_set_bn_mod_exp, DH_meth_get_init,
+   DH_meth_set_init, DH_meth_get_finish, DH_meth_set_finish,
+   DH_meth_get_generate_params and DH_meth_set_generate_params.
 
    Use of these low level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_PKEY_derive_init(3)>
@@ -195,18 +192,19 @@ OpenSSL 3.0
  * All of the low level DSA functions have been deprecated including:
 
    DSA_do_sign, DSA_do_verify, DSA_OpenSSL, DSA_set_default_method,
-   DSA_get_default_method, DSA_set_method, DSA_get_method, DSA_new_method,
-   DSA_sign_setup, DSA_sign, DSA_verify, DSA_get_ex_new_index,
-   DSA_set_ex_data, DSA_get_ex_data, DSA_generate_parameters_ex,
-   DSA_generate_key, DSA_meth_new, DSA_get0_engine, DSA_meth_free,
-   DSA_meth_dup, DSA_meth_get0_name, DSA_meth_set1_name, DSA_meth_get_flags,
-   DSA_meth_set_flags, DSA_meth_get0_app_data, DSA_meth_set0_app_data,
-   DSA_meth_get_sign, DSA_meth_set_sign, DSA_meth_get_sign_setup,
-   DSA_meth_set_sign_setup, DSA_meth_get_verify, DSA_meth_set_verify,
-   DSA_meth_get_mod_exp, DSA_meth_set_mod_exp, DSA_meth_get_bn_mod_exp,
-   DSA_meth_set_bn_mod_exp, DSA_meth_get_init, DSA_meth_set_init,
-   DSA_meth_get_finish, DSA_meth_set_finish, DSA_meth_get_paramgen,
-   DSA_meth_set_paramgen, DSA_meth_get_keygen and DSA_meth_set_keygen.
+   DSA_get_default_method, DSA_set_method, DSA_get_method,
+   DSA_new_method, DSA_size, DSA_security_bits, DSA_sign_setup, DSA_sign,
+   DSA_verify, DSA_get_ex_new_index, DSA_set_ex_data, DSA_get_ex_data,
+   DSA_generate_parameters_ex, DSA_generate_key, DSA_meth_new, DSA_get0_engine,
+   DSA_meth_free, DSA_meth_dup, DSA_meth_get0_name, DSA_meth_set1_name,
+   DSA_meth_get_flags, DSA_meth_set_flags, DSA_meth_get0_app_data,
+   DSA_meth_set0_app_data, DSA_meth_get_sign, DSA_meth_set_sign,
+   DSA_meth_get_sign_setup, DSA_meth_set_sign_setup, DSA_meth_get_verify,
+   DSA_meth_set_verify, DSA_meth_get_mod_exp, DSA_meth_set_mod_exp,
+   DSA_meth_get_bn_mod_exp, DSA_meth_set_bn_mod_exp, DSA_meth_get_init,
+   DSA_meth_set_init, DSA_meth_get_finish, DSA_meth_set_finish,
+   DSA_meth_get_paramgen, DSA_meth_set_paramgen, DSA_meth_get_keygen and
+   DSA_meth_set_keygen.
 
    Use of these low level functions has been informally discouraged for a long
    time.  Instead applications should use L<EVP_DigestSignInit_ex(3)>,

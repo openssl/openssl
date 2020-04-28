@@ -146,7 +146,7 @@ DEPRECATEDIN_3_0(DH *DH_new_method(ENGINE *engine))
 DH *DH_new(void);
 void DH_free(DH *dh);
 int DH_up_ref(DH *dh);
-DEPRECATEDIN_3_0(int DH_bits(const DH *dh))
+int DH_bits(const DH *dh);
 DEPRECATEDIN_3_0(int DH_size(const DH *dh))
 DEPRECATEDIN_3_0(int DH_security_bits(const DH *dh))
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
