@@ -48,7 +48,7 @@ int ecx_public_from_private(ECX_KEY *key)
 int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
                      int include_private)
 {
-    size_t privkeylen = 0, pubkeylen;
+    size_t privkeylen = 0, pubkeylen = 0;
     const OSSL_PARAM *param_priv_key = NULL, *param_pub_key;
     unsigned char *pubkey;
 
