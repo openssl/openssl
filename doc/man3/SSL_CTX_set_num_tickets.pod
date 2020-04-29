@@ -50,13 +50,12 @@ The ticket generation and transmission are delayed until the server is
 starting a new write operation, so that it is bundled with other application
 data being written and properly aligned to a record boundary.
 SSL_new_session_ticket() can be called more than once to request additional
-tickets be sent; all such requests are queued until and the multiple tickets
-written together when it is safe to do so.  Note that a successful return
-from SSL_new_session_ticket() indicates only that the request to send a
-ticket was processed, not that the ticket itself was sent.  To be notified
-when the ticket itself is sent, a new-session callback can be registered
-with L<SSL_CTX_sess_set_new_cb(3)> that will be invoked as the ticket or
-tickets are generated.
+tickets be sent; all such requests are queued and written together when it is
+safe to do so.  Note that a successful return from SSL_new_session_ticket()
+indicates only that the request to send a ticket was processed, not that the
+ticket itself was sent.  To be notified when the ticket itself is sent, a
+new-session callback can be registered with L<SSL_CTX_sess_set_new_cb(3)> that
+will be invoked as the ticket or tickets are generated.
 
 SSL_CTX_get_num_tickets() and SSL_get_num_tickets() return the number of
 tickets set by a previous call to SSL_CTX_set_num_tickets() or
@@ -76,7 +75,9 @@ L<ssl(7)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 1.1.1.
+SSL_new_session_ticket() was added in OpenSSL 3.0.0.
+SSL_set_num_tickets(), SSL_get_num_tickets(), SSL_CTX_set_num_tickets(), and
+SSL_CTX_get_num_tickets() were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
