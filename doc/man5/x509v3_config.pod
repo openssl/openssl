@@ -255,7 +255,7 @@ Example:
 =head2 Authority Info Access
 
 This extension gives details about how to retrieve information that
-the CA makes available related to the certificate.  The syntax is
+related to the certificate that the CA makes available. The syntax is
 B<access_id;location>, where B<access_id> is an object identifier
 (although only a few values are well-known) and B<location> has the same
 syntax as subject alternative name (except that B<email:copy> is not supported).
