@@ -35,7 +35,7 @@ section, as desribed in L<config(5)/Provider Configuration Module>.
 
 =item B<module-mac>
 
-The calculated MAC of the module file.
+The calculated MAC of the FIPS provider file.
 
 =item B<install-version>
 
