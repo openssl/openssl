@@ -59,7 +59,7 @@ EVP_PKEY_free() decrements the reference count of B<key> and, if the reference
 count is zero, frees it up. If B<key> is NULL, nothing is done.
 
 EVP_PKEY_new_raw_private_key_with_libctx() allocates a new B<EVP_PKEY>. Unless
-an engine should be used for the key type a provider for the key is found using
+an engine should be used for the key type, a provider for the key is found using
 the library context I<libctx> and the property query string I<propq>. The
 I<keytype> argument indicates what kind of key this is. The value should be a
 string for a public key algorithm that supports raw private keys, i.e one of
@@ -73,7 +73,7 @@ derived from the given private key data (if appropriate for the algorithm type).
 
 EVP_PKEY_new_raw_private_key() does the same as
 EVP_PKEY_new_raw_private_key_with_libctx() except that the default library
-context is and default property query is used instead. If B<e> is non-NULL then
+context and default property query are used instead. If B<e> is non-NULL then
 the new B<EVP_PKEY> structure is associated with the engine B<e>. The B<type>
 argument indicates what kind of key this is. The value should be a NID for a
 public key algorithm that supports raw private keys, i.e. one of
