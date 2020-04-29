@@ -329,13 +329,14 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
                                  ENGINE *e,
                                  const unsigned char *key,
                                  size_t len,
-                                 int priv)
+                                 int key_is_priv)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
     int result = 0;
 
+# ifndef OPENSSL_NO_ENGINE
     /* Check if there is an Engine for this type */
     if (e == NULL) {
         ENGINE *tmpe = NULL;
@@ -351,6 +352,7 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
 
         ENGINE_finish(tmpe);
     }
+# endif
 
     if (e == NULL && ameth == NULL) {
         /*
@@ -372,8 +374,9 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
 
             ERR_clear_last_mark();
             params[0] = OSSL_PARAM_construct_octet_string(
-                            priv ? OSSL_PKEY_PARAM_PRIV_KEY
-                                 : OSSL_PKEY_PARAM_PUB_KEY, (void *)key, len);
+                            key_is_priv ? OSSL_PKEY_PARAM_PRIV_KEY
+                                        : OSSL_PKEY_PARAM_PUB_KEY,
+                            (void *)key, len);
 
             if (EVP_PKEY_fromdata(ctx, &pkey, params) != 1) {
                 EVPerr(0, EVP_R_KEY_SETUP_FAILED);
@@ -404,7 +407,7 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
     if (!ossl_assert(pkey->ameth != NULL))
         goto err;
 
-    if (priv) {
+    if (key_is_priv) {
         if (pkey->ameth->set_priv_key == NULL) {
             EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             goto err;
