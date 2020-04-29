@@ -308,11 +308,14 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 OSSL_PARAM params[3];
                 size_t params_n = 0;
                 char *ciphname = (char *)OBJ_nid2sn(EVP_CIPHER_nid(p2));
-#ifndef OPENSSL_NO_ENGINE
-                char *engineid = (char *)ENGINE_get_id(ctx->engine);
 
-                params[params_n++] =
-                    OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
+#ifndef OPENSSL_NO_ENGINE
+                if (ctx->engine != NULL) {
+                    char *engid = (char *)ENGINE_get_id(ctx->engine);
+
+                    params[params_n++] =
+                        OSSL_PARAM_construct_utf8_string("engine", engid, 0);
+                }
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
@@ -458,13 +461,14 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 size_t params_n = 0;
                 char *mdname =
                     (char *)OBJ_nid2sn(EVP_MD_nid(hctx->raw_data.md));
-#ifndef OPENSSL_NO_ENGINE
-                char *engineid = ctx->engine == NULL
-                    ? NULL : (char *)ENGINE_get_id(ctx->engine);
 
-                if (engineid != NULL)
+#ifndef OPENSSL_NO_ENGINE
+                if (ctx->engine != NULL) {
+                    char *engid = (char *)ENGINE_get_id(ctx->engine);
+
                     params[params_n++] =
-                        OSSL_PARAM_construct_utf8_string("engine", engineid, 0);
+                        OSSL_PARAM_construct_utf8_string("engine", engid, 0);
+                }
 #endif
                 params[params_n++] =
                     OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
