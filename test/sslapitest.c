@@ -2121,13 +2121,13 @@ static int test_extra_tickets(int idx)
 
     /* Now try a (real) write to actually send the tickets */
     c = '1';
-    if (!TEST_true(SSL_write_ex(serverssl, &c, 0, &nbytes))
-            || !TEST_size_t_eq(0, nbytes)
+    if (!TEST_true(SSL_write_ex(serverssl, &c, 1, &nbytes))
+            || !TEST_size_t_eq(1, nbytes)
             || !TEST_int_eq(idx * 2 + 2, new_called)
-            || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
+            || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes))
             || !TEST_int_eq(idx * 2 + 4, new_called)
-            /* || !TEST_int_eq(sizeof(buf), nbytes)*/
-            /* || !TEST_int_eq(c, buf[0]) */
+            || !TEST_int_eq(sizeof(buf), nbytes)
+            || !TEST_int_eq(c, buf[0])
             || !TEST_false(SSL_read_ex(clientssl, buf, sizeof(buf), &nbytes)))
         goto end;
 
