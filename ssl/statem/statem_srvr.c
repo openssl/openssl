@@ -730,7 +730,8 @@ WORK_STATE ossl_statem_server_pre_work(SSL *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_IS_TLS13(s) && s->sent_tickets == 0 && s->ext.extra_tickets_expected == 0) {
+        if (SSL_IS_TLS13(s) && s->sent_tickets == 0
+                && s->ext.extra_tickets_expected == 0) {
             /*
              * Actually this is the end of the handshake, but we're going
              * straight into writing the session ticket out. So we finish off
