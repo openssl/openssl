@@ -221,7 +221,8 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         if (si == NULL)
             goto err;
         /* set OSSL_CMP_OPT_IMPLICIT_CONFIRM if and only if transaction ends */
-        if (!OSSL_CMP_CTX_set_option(srv_ctx->ctx, OSSL_CMP_OPT_IMPLICIT_CONFIRM,
+        if (!OSSL_CMP_CTX_set_option(srv_ctx->ctx,
+                                     OSSL_CMP_OPT_IMPLICIT_CONFIRM,
                                      ossl_cmp_hdr_has_implicitConfirm(hdr)
                                          && srv_ctx->grantImplicitConfirm
                                          /* do not set if polling starts: */

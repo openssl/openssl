@@ -85,6 +85,7 @@ B<openssl> B<cmp>
 [B<-batch>]
 [B<-repeat> I<number>]
 [B<-reqin>] I<filenames>
+[B<-reqin_new_tid>]
 [B<-reqout>] I<filenames>
 [B<-rspin>] I<filenames>
 [B<-rspout>] I<filenames>
@@ -797,6 +798,13 @@ Take sequence of CMP requests from file(s).
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 As many files are read as needed for a complete transaction.
+
+=item B<-reqin_new_tid>
+
+Use a fresh transactionID for CMP request messages read using B<-reqin>,
+which requires re-protecting them as far as they were protected before.
+This may be needed in case the sequence of requests is reused
+and the CMP server complains that the transaction ID has already been used.
 
 =item B<-reqout> I<filenames>
 

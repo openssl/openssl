@@ -314,6 +314,7 @@ static char *opt_tls_host = NULL;
 static int opt_batch = 0;
 static int opt_repeat = 1;
 static char *opt_reqin = NULL;
+static int opt_reqin_new_tid = 0;
 static char *opt_reqout = NULL;
 static char *opt_rspin = NULL;
 static char *opt_rspout = NULL;
@@ -391,7 +392,7 @@ typedef enum OPTION_choice {
     OPT_TLS_EXTRA, OPT_TLS_TRUSTED, OPT_TLS_HOST,
 
     OPT_BATCH, OPT_REPEAT,
-    OPT_REQIN, OPT_REQOUT, OPT_RSPIN, OPT_RSPOUT,
+    OPT_REQIN, OPT_REQIN_NEW_TID, OPT_REQOUT, OPT_RSPIN, OPT_RSPOUT,
 
     OPT_USE_MOCK_SRV, OPT_PORT, OPT_MAX_MSGS,
     OPT_SRV_REF, OPT_SRV_SECRET,
@@ -594,6 +595,8 @@ const OPTIONS cmp_options[] = {
     {"repeat", OPT_REPEAT, 'n',
      "Invoke the transaction the given number of times. Default 1"},
     {"reqin", OPT_REQIN, 's', "Take sequence of CMP requests from file(s)"},
+    {"reqin_new_tid", OPT_REQIN_NEW_TID, '-',
+     "Use fresh transactionID for CMP requests read from -reqin"},
     {"reqout", OPT_REQOUT, 's', "Save sequence of CMP requests to file(s)"},
     {"rspin", OPT_RSPIN, 's',
      "Process sequence of CMP responses provided in file(s), skipping server"},
@@ -706,7 +709,8 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {&opt_tls_extra}, {&opt_tls_trusted}, {&opt_tls_host},
 
     {(char **)&opt_batch}, {(char **)&opt_repeat},
-    {&opt_reqin}, {&opt_reqout}, {&opt_rspin}, {&opt_rspout},
+    {&opt_reqin}, {(char **)&opt_reqin_new_tid},
+    {&opt_reqout}, {&opt_rspin}, {&opt_rspout},
 
     {(char **)&opt_use_mock_srv}, {&opt_port}, {(char **)&opt_max_msgs},
     {&opt_srv_ref}, {&opt_srv_secret},
@@ -1161,26 +1165,17 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
     if (req != NULL && opt_reqout != NULL
             && !write_PKIMESSAGE(req, &opt_reqout))
         goto err;
-    if (opt_reqin != NULL) {
-        if (opt_rspin != NULL) {
-            CMP_warn("-reqin is ignored since -rspin is present");
-        } else {
-            if ((req_new = read_PKIMESSAGE(&opt_reqin)) == NULL)
-                goto err;
-            /*-
-             * The transaction ID in req_new may not be fresh.
-             * In this case the Insta Demo CA correctly complains:
-             * "Transaction id already in use."
-             * The following workaround unfortunately requires re-protection.
-             * See also https://github.com/mpeylo/cmpossl/issues/8
-             */
-#if defined(USE_TRANSACTIONID_WORKAROUND)
-            hdr = OSSL_CMP_MSG_get0_header(req_new);
-            if (!OSSL_CMP_CTX_set1_transactionID(hdr, NULL)
-                    || !ossl_cmp_msg_protect(ctx, req_new))
-                goto err;
-#endif
-        }
+    if (opt_reqin != NULL && opt_rspin == NULL) {
+        if ((req_new = read_PKIMESSAGE(&opt_reqin)) == NULL)
+            goto err;
+        /*-
+         * The transaction ID in req_new read from opt_reqin may not be fresh.
+         * In this case the server may complain "Transaction id already in use."
+         * The following workaround unfortunately requires re-protection.
+         */
+        if (opt_reqin_new_tid
+                && !OSSL_CMP_MSG_update_transactionID(ctx, req_new))
+            goto err;
     }
 
     if (opt_rspin != NULL) {
@@ -2325,6 +2320,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
         (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_TOTAL_TIMEOUT,
                                       opt_total_timeout);
 
+    if (opt_reqin != NULL && opt_rspin != NULL)
+        CMP_warn("-reqin is ignored since -rspin is present");
+    if (opt_reqin_new_tid && opt_reqin == NULL)
+        CMP_warn("-reqin_new_tid is ignored since -reqin is not present");
     if (opt_reqin != NULL || opt_reqout != NULL
             || opt_rspin != NULL || opt_rspout != NULL || opt_use_mock_srv)
         (void)OSSL_CMP_CTX_set_transfer_cb(ctx, read_write_req_resp);
@@ -2898,6 +2897,9 @@ static int get_opts(int argc, char **argv)
             break;
         case OPT_REQIN:
             opt_reqin = opt_str("reqin");
+            break;
+        case OPT_REQIN_NEW_TID:
+            opt_reqin_new_tid = 1;
             break;
         case OPT_REQOUT:
             opt_reqout = opt_str("reqout");

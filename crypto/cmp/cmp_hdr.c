@@ -41,7 +41,8 @@ int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr)
     return (int)pvno;
 }
 
-ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const OSSL_CMP_PKIHEADER *hdr)
+ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
+                                                   OSSL_CMP_PKIHEADER *hdr)
 {
     if (hdr == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
@@ -266,6 +267,25 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
     return 0;
 }
 
+/*
+ * set ctx->transactionID in CMP header
+ * if ctx->transactionID is NULL, a random one is created with 128 bit
+ * according to section 5.1.1:
+ *
+ * It is RECOMMENDED that the clients fill the transactionID field with
+ * 128 bits of (pseudo-) random data for the start of a transaction to
+ * reduce the probability of having the transactionID in use at the server.
+ */
+int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
+{
+    if (ctx->transactionID == NULL
+            && !set1_aostr_else_random(&ctx->transactionID, NULL,
+                                       OSSL_CMP_TRANSACTIONID_LENGTH))
+        return 0;
+    return ossl_cmp_asn1_octet_string_set1(&hdr->transactionID,
+                                           ctx->transactionID);
+}
+
 /* fill in all fields of the hdr according to the info given in ctx */
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
@@ -316,21 +336,7 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
                                                 ctx->recipNonce))
         return 0;
 
-    /*
-     * set ctx->transactionID in CMP header
-     * if ctx->transactionID is NULL, a random one is created with 128 bit
-     * according to section 5.1.1:
-     *
-     * It is RECOMMENDED that the clients fill the transactionID field with
-     * 128 bits of (pseudo-) random data for the start of a transaction to
-     * reduce the probability of having the transactionID in use at the server.
-     */
-    if (ctx->transactionID == NULL
-            && !set1_aostr_else_random(&ctx->transactionID, NULL,
-                                       OSSL_CMP_TRANSACTIONID_LENGTH))
-        return 0;
-    if (!ossl_cmp_asn1_octet_string_set1(&hdr->transactionID,
-                                         ctx->transactionID))
+    if (!ossl_cmp_hdr_set_transactionID(ctx, hdr))
         return 0;
 
     /*-

@@ -584,9 +584,9 @@ int ossl_cmp_msg_gen_push1_ITAVs(OSSL_CMP_MSG *msg,
         return 0;
 
     for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++) {
-        if ((itav = OSSL_CMP_ITAV_dup(sk_OSSL_CMP_ITAV_value(itavs, i))) == NULL)
-            return 0;
-        if (!ossl_cmp_msg_gen_push0_ITAV(msg, itav)) {
+        itav = OSSL_CMP_ITAV_dup(sk_OSSL_CMP_ITAV_value(itavs, i));
+        if (itav == NULL
+                || !ossl_cmp_msg_gen_push0_ITAV(msg, itav)) {
             OSSL_CMP_ITAV_free(itav);
             return 0;
         }
@@ -980,6 +980,18 @@ X509 *ossl_cmp_certresponse_get1_certificate(EVP_PKEY *privkey,
     if (crt == NULL)
         CMPerr(0, CMP_R_CERTIFICATE_NOT_FOUND);
     return crt;
+}
+
+int OSSL_CMP_MSG_update_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
+{
+    if (ctx == NULL || msg == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+    if (!ossl_cmp_hdr_set_transactionID(ctx, msg->header))
+        return 0;
+    return msg->header->protectionAlg == NULL
+            || ossl_cmp_msg_protect(ctx, msg);
 }
 
 OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file)
