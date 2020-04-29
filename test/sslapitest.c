@@ -2090,13 +2090,19 @@ static int test_extra_tickets(int idx)
     BIO *bretry = BIO_new(bio_s_always_retry());
     BIO *tmp = NULL;
     int testresult = 0;
+    int stateful = 0;
     size_t nbytes;
     unsigned char c, buf[1];
 
     new_called = 0;
     do_cache = 1;
 
-    if (!TEST_ptr(bretry) || !setup_ticket_test(0, idx, &sctx, &cctx))
+    if (idx >= 3) {
+        idx -= 3;
+        stateful = 1;
+    }
+
+    if (!TEST_ptr(bretry) || !setup_ticket_test(stateful, idx, &sctx, &cctx))
         goto end;
     SSL_CTX_sess_set_new_cb(sctx, new_session_cb);
     /* setup_ticket_test() uses new_cachesession_cb which we don't need. */
@@ -7445,7 +7451,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_stateful_tickets, 3);
     ADD_ALL_TESTS(test_stateless_tickets, 3);
     ADD_TEST(test_psk_tickets);
-    ADD_ALL_TESTS(test_extra_tickets, 3);
+    ADD_ALL_TESTS(test_extra_tickets, 6);
 #endif
     ADD_ALL_TESTS(test_ssl_set_bio, TOTAL_SSL_SET_BIO_TESTS);
     ADD_TEST(test_ssl_bio_pop_next_bio);
