@@ -192,26 +192,17 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
 
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 {
-    int i, len;
-    unsigned char *p;
-    p = ip->data;
-    len = ip->length;
-    BIO_puts(bp, "IP:");
-    if (len == 8) {
-        BIO_printf(bp, "%d.%d.%d.%d/%d.%d.%d.%d",
-                   p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-    } else if (len == 32) {
-        for (i = 0; i < 16; i++) {
-            BIO_printf(bp, "%X", p[0] << 8 | p[1]);
-            p += 2;
-            if (i == 7)
-                BIO_puts(bp, "/");
-            else if (i != 15)
-                BIO_puts(bp, ":");
-        }
-    } else
-        BIO_printf(bp, "IP Address:<invalid>");
-    return 1;
+    /* ip->length should be 8 or 32 and len1 == len2 == 4 or len1 == len2 == 16 */
+    int len1 = ip->length >= 16 ? 16 : ip->length >= 4 ? 4 : ip->length;
+    int len2 = ip->length - len1;
+    char *ip1 = ipaddr_to_asc(ip->data, len1);
+    char *ip2 = ipaddr_to_asc(ip->data + len1, len2);
+    int ret = ret = ip1 != NULL && ip2 != NULL
+        && BIO_printf(bp, "IP:%s/%s", ip1, ip2) > 0;
+
+    OPENSSL_free(ip1);
+    OPENSSL_free(ip2);
+    return ret;
 }
 
 #define NAME_CHECK_MAX (1 << 20)

@@ -452,17 +452,46 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
 {
     if (ok == 0 && ctx != NULL) {
         int cert_error = X509_STORE_CTX_get_error(ctx);
-        int depth = X509_STORE_CTX_get_error_depth(ctx);
-        X509 *cert = X509_STORE_CTX_get_current_cert(ctx);
         BIO *bio = BIO_new(BIO_s_mem()); /* may be NULL */
 
-        BIO_printf(bio, "%s at depth=%d error=%d (%s)\n",
+        BIO_printf(bio, "%s at depth = %d error = %d (%s)\n",
                    X509_STORE_CTX_get0_parent_ctx(ctx) != NULL
-                   ? "CRL path validation" : "certificate verification",
-                   depth, cert_error,
-                   X509_verify_cert_error_string(cert_error));
-        BIO_printf(bio, "failure for:\n");
-        x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
+                   ? "CRL path validation"
+                   : "Certificate verification",
+                   X509_STORE_CTX_get_error_depth(ctx),
+                   cert_error, X509_verify_cert_error_string(cert_error));
+        {
+            X509_STORE *ts = X509_STORE_CTX_get0_store(ctx);
+            X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
+            char *str;
+            int idx = 0;
+
+            switch (cert_error) {
+            case X509_V_ERR_HOSTNAME_MISMATCH:
+                BIO_printf(bio, "Expected hostname(s) = ");
+                while ((str = X509_VERIFY_PARAM_get0_host(vpm, idx++)) != NULL)
+                    BIO_printf(bio, "%s%s", idx == 1 ? "" : ", ", str);
+                BIO_printf(bio, "\n");
+                break;
+            case X509_V_ERR_EMAIL_MISMATCH:
+                str = X509_VERIFY_PARAM_get0_email(vpm);
+                if (str != NULL)
+                    BIO_printf(bio, "Expected email address = %s\n", str);
+                break;
+            case X509_V_ERR_IP_ADDRESS_MISMATCH:
+                str = X509_VERIFY_PARAM_get1_ip_asc(vpm);
+                if (str != NULL)
+                    BIO_printf(bio, "Expected IP address = %s\n", str);
+                OPENSSL_free(str);
+                break;
+            default:
+                break;
+            }
+        }
+
+        BIO_printf(bio, "Failure for:\n");
+        x509_print_ex_brief(bio, X509_STORE_CTX_get_current_cert(ctx),
+                            X509_FLAG_NO_EXTENSIONS);
         if (cert_error == X509_V_ERR_CERT_UNTRUSTED
                 || cert_error == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT
                 || cert_error == X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN
@@ -470,9 +499,9 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
                 || cert_error == X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY
                 || cert_error == X509_V_ERR_UNABLE_TO_GET_CRL_ISSUER
                 || cert_error == X509_V_ERR_STORE_LOOKUP) {
-            BIO_printf(bio, "non-trusted certs:\n");
+            BIO_printf(bio, "Non-trusted certs:\n");
             print_certs(bio, X509_STORE_CTX_get0_untrusted(ctx));
-            BIO_printf(bio, "certs in trust store:\n");
+            BIO_printf(bio, "Certs in trust store:\n");
             print_store_certs(bio, X509_STORE_CTX_get0_store(ctx));
         }
         X509err(0, X509_R_CERTIFICATE_VERIFICATION_FAILED);

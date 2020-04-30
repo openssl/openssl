@@ -5072,6 +5072,9 @@ EVP_PKEY_CTX_set_dh_paramgen_generator  ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set_dh_nid                 ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set_dh_rfc5114             ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set_dhx_rfc5114            ?	3_0_0	EXIST::FUNCTION:DH
+X509_VERIFY_PARAM_get0_host             ?	3_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get0_email            ?	3_0_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_get1_ip_asc           ?	3_0_0	EXIST::FUNCTION:
 X509_verify_ex                          ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_verify_ex                      ?	3_0_0	EXIST::FUNCTION:
 X509_ALGOR_copy                         ?	3_0_0	EXIST::FUNCTION:
