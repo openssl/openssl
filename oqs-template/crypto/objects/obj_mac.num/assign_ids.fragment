@@ -1,22 +1,22 @@
 {%- set count = namespace(val=1195) -%}
-oqs_kem_default	{{ count.val }}
+oqs_kem_default		{{ count.val }}
 {% set count.val = count.val + 1 -%}
 {%- for kem in config['kems'] -%}
-{{ kem['name_group'] }}	      {{ count.val }}
+{{ kem['name_group'] }}		{{ count.val }}
 {% set count.val = count.val + 1 -%}
 {%- endfor -%}
-p256_oqs_kem_default	{{ count.val }}
+p256_oqs_kem_default		{{ count.val }}
 {% set count.val = count.val + 1 -%}
 {%- for kem in config['kems'] -%}
-p256_{{ kem['name_group'] }}	{{ count.val }}
+p256_{{ kem['name_group'] }}		{{ count.val }}
 {% set count.val = count.val + 1 -%}
 {%- endfor -%}
 {%- for sig in config['sigs'] -%}
     {%- for variant in sig['variants'] -%}
-{{ variant['name'] }}	{{ count.val }}
+{{ variant['name'] }}		{{ count.val }}
 {% set count.val = count.val + 1 -%}
         {%- for classical_alg in variant['mix_with'] -%}
-{{ classical_alg['name'] }}_{{ variant['name'] }}	{{ count.val }}
+{{ classical_alg['name'] }}_{{ variant['name'] }}		{{ count.val }}
 {% set count.val = count.val + 1 -%}
         {%- endfor %}
     {%- endfor %}

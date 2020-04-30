@@ -470,6 +470,18 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0220: return "sikep503";
   case 0x0221: return "sikep610";
   case 0x0222: return "sikep751";
+  case 0x0225: return "ledacryptkemlt12";
+  case 0x0226: return "ledacryptkemlt32";
+  case 0x0227: return "ledacryptkemlt52";
+  case 0x022C: return "kyber90s512";
+  case 0x022D: return "kyber90s768";
+  case 0x022E: return "kyber90s1024";
+  case 0x0230: return "babybear";
+  case 0x0231: return "mamabear";
+  case 0x0232: return "papabear";
+  case 0x0233: return "babybearephem";
+  case 0x0234: return "mamabearephem";
+  case 0x0235: return "papabearephem";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
   case 0x02FF: return "p256_oqs_kem_default hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_START
@@ -503,6 +515,18 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0320: return "p256_sikep503 hybrid";
   case 0x0321: return "p256_sikep610 hybrid";
   case 0x0322: return "p256_sikep751 hybrid";
+  case 0x0325: return "p256_ledacryptkemlt12 hybrid";
+  case 0x0326: return "p256_ledacryptkemlt32 hybrid";
+  case 0x0327: return "p256_ledacryptkemlt52 hybrid";
+  case 0x032C: return "p256_kyber90s512 hybrid";
+  case 0x032D: return "p256_kyber90s768 hybrid";
+  case 0x032E: return "p256_kyber90s1024 hybrid";
+  case 0x0330: return "p256_babybear hybrid";
+  case 0x0331: return "p256_mamabear hybrid";
+  case 0x0332: return "p256_papabear hybrid";
+  case 0x0333: return "p256_babybearephem hybrid";
+  case 0x0334: return "p256_mamabearephem hybrid";
+  case 0x0335: return "p256_papabearephem hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_END
   default: return "";
   }
