@@ -212,6 +212,18 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_sikep503, 128, TLS_CURVE_CUSTOM}, /* sikep503 (0x0220) */
     {NID_sikep610, 192, TLS_CURVE_CUSTOM}, /* sikep610 (0x0221) */
     {NID_sikep751, 256, TLS_CURVE_CUSTOM}, /* sikep751 (0x0222) */
+    {NID_ledacryptkemlt12, 128, TLS_CURVE_CUSTOM}, /* ledacryptkemlt12 (0x0225) */
+    {NID_ledacryptkemlt32, 192, TLS_CURVE_CUSTOM}, /* ledacryptkemlt32 (0x0226) */
+    {NID_ledacryptkemlt52, 256, TLS_CURVE_CUSTOM}, /* ledacryptkemlt52 (0x0227) */
+    {NID_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* kyber90s512 (0x022C) */
+    {NID_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* kyber90s768 (0x022D) */
+    {NID_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* kyber90s1024 (0x022E) */
+    {NID_babybear, 128, TLS_CURVE_CUSTOM}, /* babybear (0x0230) */
+    {NID_mamabear, 192, TLS_CURVE_CUSTOM}, /* mamabear (0x0231) */
+    {NID_papabear, 256, TLS_CURVE_CUSTOM}, /* papabear (0x0232) */
+    {NID_babybearephem, 128, TLS_CURVE_CUSTOM}, /* babybearephem (0x0233) */
+    {NID_mamabearephem, 192, TLS_CURVE_CUSTOM}, /* mamabearephem (0x0234) */
+    {NID_papabearephem, 256, TLS_CURVE_CUSTOM}, /* papabearephem (0x0235) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_END
 };
     /* Hybrid OQS groups. Security level is classical. */
@@ -248,6 +260,18 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_p256_sikep503, 128, TLS_CURVE_CUSTOM}, /* p256 + sikep503 hybrid (0x0220) */
     {NID_p256_sikep610, 192, TLS_CURVE_CUSTOM}, /* p256 + sikep610 hybrid (0x0221) */
     {NID_p256_sikep751, 256, TLS_CURVE_CUSTOM}, /* p256 + sikep751 hybrid (0x0222) */
+    {NID_p256_ledacryptkemlt12, 128, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt12 hybrid (0x0225) */
+    {NID_p256_ledacryptkemlt32, 192, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt32 hybrid (0x0226) */
+    {NID_p256_ledacryptkemlt52, 256, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt52 hybrid (0x0227) */
+    {NID_p256_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* p256 + kyber90s512 hybrid (0x022C) */
+    {NID_p256_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* p256 + kyber90s768 hybrid (0x022D) */
+    {NID_p256_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* p256 + kyber90s1024 hybrid (0x022E) */
+    {NID_p256_babybear, 128, TLS_CURVE_CUSTOM}, /* p256 + babybear hybrid (0x0230) */
+    {NID_p256_mamabear, 192, TLS_CURVE_CUSTOM}, /* p256 + mamabear hybrid (0x0231) */
+    {NID_p256_papabear, 256, TLS_CURVE_CUSTOM}, /* p256 + papabear hybrid (0x0232) */
+    {NID_p256_babybearephem, 128, TLS_CURVE_CUSTOM}, /* p256 + babybearephem hybrid (0x0233) */
+    {NID_p256_mamabearephem, 192, TLS_CURVE_CUSTOM}, /* p256 + mamabearephem hybrid (0x0234) */
+    {NID_p256_papabearephem, 256, TLS_CURVE_CUSTOM}, /* p256 + papabearephem hybrid (0x0235) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_END
 };
 
@@ -277,6 +301,10 @@ static const uint16_t eccurves_default[] = {
     0x031C, /* p256 - OQS sidhp503 hybrid */
     0x031F, /* p256 - OQS sikep434 hybrid */
     0x0320, /* p256 - OQS sikep503 hybrid */
+    0x0325, /* p256 - OQS ledacryptkemlt12 hybrid */
+    0x032C, /* p256 - OQS kyber90s512 hybrid */
+    0x0330, /* p256 - OQS babybear hybrid */
+    0x0333, /* p256 - OQS babybearephem hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 

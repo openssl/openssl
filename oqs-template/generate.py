@@ -50,8 +50,6 @@ config = load_config()
 populate('crypto/asn1/standard_methods.h', config, '/////')
 populate('crypto/ec/oqs_meth.c', config, '/////')
 populate('crypto/evp/pmeth_lib.c', config, '/////')
-populate('crypto/include/internal/asn1_int.h', config, '/////')
-populate('crypto/include/internal/evp_int.h', config, '/////')
 # We remove the delimiter comments from obj_mac.num
 populate('crypto/objects/obj_mac.num', config, '#####', True)
 populate('crypto/objects/obj_xref.txt', config, '#####')
@@ -62,7 +60,7 @@ populate('ssl/ssl_cert_table.h', config, '/////')
 
 # both
 populate('apps/s_cb.c', config, '/////')
-populate('ssl/ssl_locl.h', config, '/////')
+populate('ssl/ssl_local.h', config, '/////')
 populate('ssl/t1_lib.c', config, '/////')
 populate('ssl/t1_trce.c', config, '/////')
 populate('oqs_test/tests/test_openssl.py', config, '#####')

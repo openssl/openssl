@@ -72,11 +72,13 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 - `oqs_kem_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 - **BIKE**: `bike1l1cpa`, `bike1l3cpa`, `bike1l1fo`, `bike1l3fo`
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
-- **Kyber**: `kyber512`, `kyber768`, `kyber1024`
+- **Kyber**: `kyber512`, `kyber768`, `kyber1024`, `kyber90s512`, `kyber90s768`, `kyber90s1024`
+- **LEDA**: `ledacryptkemlt12`, `ledacryptkemlt32`, `ledacryptkemlt52`
 - **NewHope**: `newhope512cca`, `newhope1024cca`
 - **NTRU**: `ntru_hps2048509`, `ntru_hps2048677`, `ntru_hps4096821`, `ntru_hrss701`
 - **Saber**: `lightsaber`, `saber`, `firesaber`
 - **SIDH** and **SIKE**: `sidhp434`, `sidhp503`, `sidhp610`, `sidhp751`, `sikep434`, `sikep503`, `sikep610`, `sikep751`
+- **ThreeBears**: `babybear`,`mamabear`,`papabear`,`babybearephem`,`mamabearephem`,`papabearephem`
 
 The following hybrid algorithms are supported only for L1 schemes; they combine an L1 quantum-safe algorithm listed above with ECDH that uses NIST's P256 curve:
 - `p256_<KEX>`, where ``<KEX>`` is any one of the L1 algorithms listed above.
