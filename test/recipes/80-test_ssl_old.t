@@ -24,10 +24,6 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
-$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
-
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,

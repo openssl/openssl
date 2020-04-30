@@ -27,7 +27,6 @@ plan skip_all => "Test only supported in a fips build" if disabled("fips");
 plan tests => 12;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
 
 # fail if no module name
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module',
