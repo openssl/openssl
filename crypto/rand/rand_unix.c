@@ -270,7 +270,7 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
     mib[1] = KERN_ARND;
 
     do {
-        len = buflen;
+        len = buflen > 256 ? 256 : buflen;
         if (sysctl(mib, 2, buf, &len, NULL, 0) == -1)
             return done > 0 ? done : -1;
         done += len;
