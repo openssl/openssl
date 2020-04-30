@@ -889,7 +889,7 @@ Trusted certificates for client authentication.
 
 =item B<-srv_untrusted> I<filenames>
 
-Intermediate certs for constructing chains for CMP protection by client.
+Intermediate CA certs that may be useful when verifying client certificates.
 
 =item B<-rsp_cert> I<filename>
 
