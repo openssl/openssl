@@ -36,6 +36,7 @@ int ERR_load_RAND_strings(void);
 #  define RAND_F_RAND_DRBG_GENERATE                        0
 #  define RAND_F_RAND_DRBG_GET_ENTROPY                     0
 #  define RAND_F_RAND_DRBG_GET_NONCE                       0
+#  define RAND_F_RAND_DRBG_INIT_METHOD                     0
 #  define RAND_F_RAND_DRBG_INSTANTIATE                     0
 #  define RAND_F_RAND_DRBG_NEW                             0
 #  define RAND_F_RAND_DRBG_RESEED                          0
@@ -79,6 +80,7 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_FUNC_NOT_IMPLEMENTED                      101
 # define RAND_R_FWRITE_ERROR                              123
 # define RAND_R_GENERATE_ERROR                            112
+# define RAND_R_INSUFFICIENT_DRBG_STRENGTH                139
 # define RAND_R_INTERNAL_ERROR                            113
 # define RAND_R_IN_ERROR_STATE                            114
 # define RAND_R_NOT_A_REGULAR_FILE                        122
@@ -96,6 +98,10 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_SELFTEST_FAILURE                          119
 # define RAND_R_TOO_LITTLE_NONCE_REQUESTED                135
 # define RAND_R_TOO_MUCH_NONCE_REQUESTED                  136
+# define RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER  141
+# define RAND_R_UNABLE_TO_GET_PARENT_STRENGTH             138
+# define RAND_R_UNABLE_TO_GET_RESEED_PROP_CTR             142
+# define RAND_R_UNABLE_TO_LOCK_PARENT                     140
 # define RAND_R_UNSUPPORTED_DRBG_FLAGS                    132
 # define RAND_R_UNSUPPORTED_DRBG_TYPE                     120
 

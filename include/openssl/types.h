@@ -114,6 +114,9 @@ typedef struct evp_keymgmt_st EVP_KEYMGMT;
 typedef struct evp_kdf_st EVP_KDF;
 typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
+typedef struct evp_rand_st EVP_RAND;
+typedef struct evp_rand_ctx_st EVP_RAND_CTX;
+
 typedef struct evp_keyexch_st EVP_KEYEXCH;
 
 typedef struct evp_signature_st EVP_SIGNATURE;

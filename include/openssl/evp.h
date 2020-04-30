@@ -1071,6 +1071,50 @@ void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
                             void (*fn)(EVP_MD *md, void *arg),
                             void *arg);
 
+/* RAND stuff */
+EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+                       const char *properties);
+int EVP_RAND_up_ref(EVP_RAND *rand);
+void EVP_RAND_free(EVP_RAND *rand);
+int EVP_RAND_number(const EVP_RAND *rand);
+const char *EVP_RAND_name(const EVP_RAND *rand);
+int EVP_RAND_is_a(const EVP_RAND *rand, const char *name);
+const OSSL_PROVIDER *EVP_RAND_provider(const EVP_RAND *rand);
+int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[]);
+
+EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, int secure, unsigned int df,
+                               EVP_RAND_CTX *parent);
+void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx);
+EVP_RAND *EVP_RAND_CTX_rand(EVP_RAND_CTX *ctx);
+int EVP_RAND_CTX_get_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
+int EVP_RAND_CTX_set_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[]);
+const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
+
+void EVP_RAND_do_all_provided(OPENSSL_CTX *libctx,
+                              void (*fn)(EVP_RAND *rand, void *arg),
+                              void *arg);
+void EVP_RAND_names_do_all(const EVP_RAND *rand,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
+
+int EVP_RAND_CTX_instantiate(EVP_RAND_CTX *ctx, int strength,
+                             int prediction_resistance,
+                             const unsigned char *pstr, size_t pstr_len);
+int EVP_RAND_CTX_uninstantiate(EVP_RAND_CTX *ctx);
+int EVP_RAND_CTX_generate(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen,
+                          int strength, int prediction_resistance,
+                          const unsigned char *addin, size_t addin_len);
+int EVP_RAND_CTX_reseed(EVP_RAND_CTX *ctx, int prediction_resistance,
+                        const unsigned char *addin, size_t addin_len);
+int EVP_RAND_CTX_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen);
+int EVP_RAND_CTX_set_callbacks(const EVP_RAND_CTX *rand,
+                               OSSL_CALLBACK *get_entropy,
+                               OSSL_CALLBACK *cleanup_entropy,
+                               OSSL_CALLBACK *get_nonce,
+                               OSSL_CALLBACK *cleanup_nonce);
+
 /* PKEY stuff */
 DEPRECATEDIN_3_0(int EVP_PKEY_decrypt_old(unsigned char *dec_key,
                                           const unsigned char *enc_key,

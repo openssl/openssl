@@ -178,6 +178,7 @@ OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
 # define OSSL_OP_CIPHER                              2   /* Symmetric Ciphers */
 # define OSSL_OP_MAC                                 3
 # define OSSL_OP_KDF                                 4
+# define OSSL_OP_RAND                                5
 # define OSSL_OP_KEYMGMT                            10
 # define OSSL_OP_KEYEXCH                            11
 # define OSSL_OP_SIGNATURE                          12
@@ -338,6 +339,59 @@ OSSL_CORE_MAKE_FUNC(int, OP_kdf_get_ctx_params,
                     (void *kctx, OSSL_PARAM params[]))
 OSSL_CORE_MAKE_FUNC(int, OP_kdf_set_ctx_params,
                     (void *kctx, const OSSL_PARAM params[]))
+
+/* RAND */
+
+# define OSSL_FUNC_RAND_NEWCTX                        1
+# define OSSL_FUNC_RAND_FREECTX                       2
+# define OSSL_FUNC_RAND_INSTANTIATE                   3
+# define OSSL_FUNC_RAND_UNINSTANTIATE                 4
+# define OSSL_FUNC_RAND_GENERATE                      5
+# define OSSL_FUNC_RAND_RESEED                        6
+# define OSSL_FUNC_RAND_NONCE                         7
+# define OSSL_FUNC_RAND_ENABLE_LOCKING                8
+# define OSSL_FUNC_RAND_LOCK                          9
+# define OSSL_FUNC_RAND_UNLOCK                       10
+# define OSSL_FUNC_RAND_GETTABLE_PARAMS              11
+# define OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS          12
+# define OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS          13
+# define OSSL_FUNC_RAND_GET_PARAMS                   14
+# define OSSL_FUNC_RAND_GET_CTX_PARAMS               15
+# define OSSL_FUNC_RAND_SET_CTX_PARAMS               16
+# define OSSL_FUNC_RAND_SET_CALLBACKS                17
+
+OSSL_CORE_MAKE_FUNC(void *, OP_rand_newctx,
+                    (void *provctx, int secure, unsigned int df, void *parent,
+                    const OSSL_DISPATCH *parent_calls))
+OSSL_CORE_MAKE_FUNC(void, OP_rand_freectx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_instantiate,
+                    (void *vdrbg, int strength, int prediction_resistance,
+                     const unsigned char *pstr, size_t pstr_len))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_uninstantiate, (void *vdrbg))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_generate,
+                    (void *vctx, unsigned char *out, size_t outlen,
+                     int strength, int prediction_resistance,
+                     const unsigned char *addin, size_t addin_len))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_reseed,
+                    (void *vctx, int prediction_resistance,
+                     const unsigned char *addin, size_t addin_len))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_nonce,
+                    (void *vctx, unsigned char *out, size_t outlen))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_set_callbacks,
+                    (void *vctx,
+                     OSSL_CALLBACK *get_entropy, OSSL_CALLBACK *cleanup_entropy,
+                     OSSL_CALLBACK *get_nonce, OSSL_CALLBACK *cleanup_nonce))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_enable_locking, (void *vctx))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_lock, (void *vctx))
+OSSL_CORE_MAKE_FUNC(void, OP_rand_unlock, (void *vctx))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_gettable_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_gettable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_settable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_get_ctx_params,
+                    (void *vctx, OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, OP_rand_set_ctx_params,
+                    (void *vctx, const OSSL_PARAM params[]))
 
 /*-
  * Key management
