@@ -129,6 +129,8 @@ static int rsa_get_md_nid(const EVP_MD *md)
         { NID_sha256,    OSSL_DIGEST_NAME_SHA2_256  },
         { NID_sha384,    OSSL_DIGEST_NAME_SHA2_384  },
         { NID_sha512,    OSSL_DIGEST_NAME_SHA2_512  },
+        { NID_sha512_224, OSSL_DIGEST_NAME_SHA2_512_224 },
+        { NID_sha512_256, OSSL_DIGEST_NAME_SHA2_512_256 },
         { NID_md5,       OSSL_DIGEST_NAME_MD5       },
         { NID_md5_sha1,  OSSL_DIGEST_NAME_MD5_SHA1  },
         { NID_md2,       OSSL_DIGEST_NAME_MD2       },
