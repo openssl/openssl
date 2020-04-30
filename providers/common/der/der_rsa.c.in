@@ -62,6 +62,8 @@ int DER_w_algorithmIdentifier_RSA_with(WPACKET *pkt, int tag,
         MD_CASE(sha256);
         MD_CASE(sha384);
         MD_CASE(sha512);
+        MD_CASE(sha512_224);
+        MD_CASE(sha512_256);
         MD_CASE(sha3_224);
         MD_CASE(sha3_256);
         MD_CASE(sha3_384);
