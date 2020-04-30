@@ -375,10 +375,10 @@ CRMF_F_OSSL_CRMF_MSG_PUSH0_REGCTRL:110:OSSL_CRMF_MSG_push0_regCtrl
 CRMF_F_OSSL_CRMF_MSG_PUSH0_REGINFO:111:OSSL_CRMF_MSG_push0_regInfo
 CRMF_F_OSSL_CRMF_MSG_SET0_EXTENSIONS:112:OSSL_CRMF_MSG_set0_extensions
 CRMF_F_OSSL_CRMF_MSG_SET0_SINGLEPUBINFO:113:OSSL_CRMF_MSG_set0_SinglePubInfo
+CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY:116:OSSL_CRMF_MSG_set0_validity
 CRMF_F_OSSL_CRMF_MSG_SET_CERTREQID:114:OSSL_CRMF_MSG_set_certReqId
 CRMF_F_OSSL_CRMF_MSG_SET_PKIPUBLICATIONINFO_ACTION:115:\
 	OSSL_CRMF_MSG_set_PKIPublicationInfo_action
-CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY:116:OSSL_CRMF_MSG_set0_validity
 CRMF_F_OSSL_CRMF_PBMP_NEW:117:OSSL_CRMF_pbmp_new
 CRMF_F_OSSL_CRMF_PBM_NEW:118:OSSL_CRMF_pbm_new
 CRYPTO_F_CMAC_CTX_NEW:120:CMAC_CTX_new
@@ -2537,6 +2537,7 @@ EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
 EVP_R_FETCH_FAILED:202:fetch failed
 EVP_R_FINAL_ERROR:188:final error
 EVP_R_FIPS_MODE_NOT_SUPPORTED:167:fips mode not supported
+EVP_R_GENERATE_ERROR:214:generate error
 EVP_R_GET_RAW_KEY_FAILED:182:get raw key failed
 EVP_R_ILLEGAL_SCRYPT_PARAMETERS:171:illegal scrypt parameters
 EVP_R_INACCESSIBLE_DOMAIN_PARAMETERS:204:inaccessible domain parameters
@@ -2549,12 +2550,14 @@ EVP_R_INVALID_FIPS_MODE:168:invalid fips mode
 EVP_R_INVALID_IV_LENGTH:194:invalid iv length
 EVP_R_INVALID_KEY:163:invalid key
 EVP_R_INVALID_KEY_LENGTH:130:invalid key length
+EVP_R_INVALID_NULL_ALGORITHM:218:invalid null algorithm
 EVP_R_INVALID_OPERATION:148:invalid operation
 EVP_R_INVALID_PROVIDER_FUNCTIONS:193:invalid provider functions
 EVP_R_INVALID_SALT_LENGTH:186:invalid salt length
 EVP_R_KEYGEN_FAILURE:120:keygen failure
 EVP_R_KEYMGMT_EXPORT_FAILURE:205:keymgmt export failure
 EVP_R_KEY_SETUP_FAILED:180:key setup failed
+EVP_R_LOCKING_NOT_SUPPORTED:213:locking not supported
 EVP_R_MEMORY_LIMIT_EXCEEDED:172:memory limit exceeded
 EVP_R_MESSAGE_DIGEST_IS_NULL:159:message digest is null
 EVP_R_METHOD_NOT_SUPPORTED:144:method not supported
@@ -2584,6 +2587,11 @@ EVP_R_PRIVATE_KEY_ENCODE_ERROR:146:private key encode error
 EVP_R_PUBLIC_KEY_NOT_RSA:106:public key not rsa
 EVP_R_SET_DEFAULT_PROPERTY_FAILURE:209:set default property failure
 EVP_R_TOO_MANY_RECORDS:183:too many records
+EVP_R_UNABLE_TO_ENABLE_PARENT_LOCKING:212:unable to enable parent locking
+EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE:215:unable to get maximum request size
+EVP_R_UNABLE_TO_GET_RANDOM_STRENGTH:216:unable to get random strength
+EVP_R_UNABLE_TO_LOCK_CONTEXT:211:unable to lock context
+EVP_R_UNABLE_TO_SET_CALLBACKS:217:unable to set callbacks
 EVP_R_UNKNOWN_CIPHER:160:unknown cipher
 EVP_R_UNKNOWN_DIGEST:161:unknown digest
 EVP_R_UNKNOWN_KEY_TYPE:207:unknown key type
@@ -2813,8 +2821,10 @@ PROP_R_NO_VALUE:107:no value
 PROP_R_PARSE_FAILED:108:parse failed
 PROP_R_STRING_TOO_LONG:109:string too long
 PROP_R_TRAILING_CHARACTERS:110:trailing characters
+PROV_R_ADDITIONAL_INPUT_TOO_LONG:184:additional input too long
 PROV_R_AES_KEY_SETUP_FAILED:101:aes key setup failed
 PROV_R_ALGORITHM_MISMATCH:173:algorithm mismatch
+PROV_R_ALREADY_INSTANTIATED:185:already instantiated
 PROV_R_BAD_DECRYPT:100:bad decrypt
 PROV_R_BAD_ENCODING:141:bad encoding
 PROV_R_BAD_LENGTH:142:bad length
@@ -2822,16 +2832,26 @@ PROV_R_BAD_TLS_CLIENT_VERSION:161:bad tls client version
 PROV_R_BN_ERROR:160:bn error
 PROV_R_BOTH_MODE_AND_MODE_INT:127:both mode and mode int
 PROV_R_CIPHER_OPERATION_FAILED:102:cipher operation failed
+PROV_R_DERIVATION_FUNCTION_INIT_FAILED:205:derivation function init failed
+PROV_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS:186:\
+	derivation function mandatory for fips
 PROV_R_DIGEST_NOT_ALLOWED:174:digest not allowed
+PROV_R_DRBG_ALREADY_INITIALIZED:187:drbg already initialized
+PROV_R_ERROR_INSTANTIATING_DRBG:188:error instantiating drbg
+PROV_R_ERROR_RETRIEVING_ENTROPY:189:error retrieving entropy
+PROV_R_ERROR_RETRIEVING_NONCE:190:error retrieving nonce
 PROV_R_FAILED_DURING_DERIVATION:164:failed during derivation
+PROV_R_FAILED_TO_CREATE_LOCK:180:failed to create lock
 PROV_R_FAILED_TO_DECRYPT:162:failed to decrypt
 PROV_R_FAILED_TO_GENERATE_KEY:121:failed to generate key
 PROV_R_FAILED_TO_GET_PARAMETER:103:failed to get parameter
 PROV_R_FAILED_TO_SET_PARAMETER:104:failed to set parameter
 PROV_R_FAILED_TO_SIGN:175:failed to sign
+PROV_R_GENERATE_ERROR:191:generate error
 PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:165:\
 	illegal or unsupported padding mode
 PROV_R_INAVLID_UKM_LENGTH:146:inavlid ukm length
+PROV_R_INSUFFICIENT_DRBG_STRENGTH:181:insufficient drbg strength
 PROV_R_INVALID_AAD:108:invalid aad
 PROV_R_INVALID_CONSTANT_LENGTH:157:invalid constant length
 PROV_R_INVALID_CURVE:176:invalid curve
@@ -2858,6 +2878,7 @@ PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAGLEN:118:invalid taglen
 PROV_R_INVALID_X931_DIGEST:170:invalid x931 digest
+PROV_R_IN_ERROR_STATE:192:in error state
 PROV_R_KEY_SIZE_TOO_SMALL:171:key size too small
 PROV_R_MISSING_CEK_ALG:144:missing cek alg
 PROV_R_MISSING_CIPHER:155:missing cipher
@@ -2872,6 +2893,7 @@ PROV_R_MISSING_SEED:140:missing seed
 PROV_R_MISSING_SESSION_ID:133:missing session id
 PROV_R_MISSING_TYPE:134:missing type
 PROV_R_MISSING_XCGHASH:135:missing xcghash
+PROV_R_NOT_INSTANTIATED:193:not instantiated
 PROV_R_NOT_SUPPORTED:136:not supported
 PROV_R_NOT_XOF_OR_INVALID_LENGTH:113:not xof or invalid length
 PROV_R_NO_KEY_SET:114:no key set
@@ -2879,12 +2901,28 @@ PROV_R_NO_PARAMETERS_SET:177:no parameters set
 PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE:178:\
 	operation not supported for this keytype
 PROV_R_OUTPUT_BUFFER_TOO_SMALL:106:output buffer too small
+PROV_R_PARENT_LOCKING_NOT_ENABLED:182:parent locking not enabled
+PROV_R_PARENT_STRENGTH_TOO_WEAK:194:parent strength too weak
+PROV_R_PERSONALISATION_STRING_TOO_LONG:195:personalisation string too long
 PROV_R_PSS_SALTLEN_TOO_SMALL:172:pss saltlen too small
 PROV_R_READ_KEY:159:read key
+PROV_R_REQUEST_TOO_LARGE_FOR_DRBG:196:request too large for drbg
+PROV_R_REQUIRE_CTR_MODE_CIPHER:206:require ctr mode cipher
+PROV_R_RESEED_ERROR:197:reseed error
 PROV_R_TAG_NOTSET:119:tag notset
 PROV_R_TAG_NOT_NEEDED:120:tag not needed
+PROV_R_UNABLE_TO_FIND_CIPHERS:207:unable to find ciphers
+PROV_R_UNABLE_TO_GET_ENTROPY:202:unable to get entropy
+PROV_R_UNABLE_TO_GET_NONCE:203:unable to get nonce
+PROV_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:198:\
+	unable to get parent reseed prop counter
+PROV_R_UNABLE_TO_GET_PARENT_STRENGTH:199:unable to get parent strength
+PROV_R_UNABLE_TO_GET_RESEED_PROP_CTR:200:unable to get reseed prop ctr
+PROV_R_UNABLE_TO_INITIALISE_CIPHERS:208:unable to initialise ciphers
 PROV_R_UNABLE_TO_LOAD_SHA1:143:unable to load sha1
 PROV_R_UNABLE_TO_LOAD_SHA256:147:unable to load sha256
+PROV_R_UNABLE_TO_LOCK_PARENT:201:unable to lock parent
+PROV_R_UNABLE_TO_RESEED:204:unable to reseed
 PROV_R_UNKNOWN_PADDING_TYPE:163:unknown padding type
 PROV_R_UNSUPPORTED_CEK_ALG:145:unsupported cek alg
 PROV_R_UNSUPPORTED_KEY_SIZE:153:unsupported key size
@@ -2893,6 +2931,7 @@ PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS:152:unsupported number of rounds
 PROV_R_VALUE_ERROR:138:value error
 PROV_R_WRONG_FINAL_BLOCK_LENGTH:107:wrong final block length
 PROV_R_WRONG_OUTPUT_BUFFER_SIZE:139:wrong output buffer size
+PROV_R_XOF_DIGESTS_NOT_ALLOWED:183:xof digests not allowed
 PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE:148:xts data unit is too large
 PROV_R_XTS_DUPLICATED_KEYS:149:xts duplicated keys
 RAND_R_ADDITIONAL_INPUT_TOO_LONG:102:additional input too long
@@ -2915,6 +2954,7 @@ RAND_R_FAILED_TO_CREATE_LOCK:126:failed to create lock
 RAND_R_FUNC_NOT_IMPLEMENTED:101:Function not implemented
 RAND_R_FWRITE_ERROR:123:Error writing file
 RAND_R_GENERATE_ERROR:112:generate error
+RAND_R_INSUFFICIENT_DRBG_STRENGTH:139:insufficient drbg strength
 RAND_R_INTERNAL_ERROR:113:internal error
 RAND_R_IN_ERROR_STATE:114:in error state
 RAND_R_NOT_A_REGULAR_FILE:122:Not a regular file
@@ -2933,6 +2973,11 @@ RAND_R_RESEED_ERROR:118:reseed error
 RAND_R_SELFTEST_FAILURE:119:selftest failure
 RAND_R_TOO_LITTLE_NONCE_REQUESTED:135:too little nonce requested
 RAND_R_TOO_MUCH_NONCE_REQUESTED:136:too much nonce requested
+RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:141:\
+	unable to get parent reseed prop counter
+RAND_R_UNABLE_TO_GET_PARENT_STRENGTH:138:unable to get parent strength
+RAND_R_UNABLE_TO_GET_RESEED_PROP_CTR:142:unable to get reseed prop ctr
+RAND_R_UNABLE_TO_LOCK_PARENT:140:unable to lock parent
 RAND_R_UNSUPPORTED_DRBG_FLAGS:132:unsupported drbg flags
 RAND_R_UNSUPPORTED_DRBG_TYPE:120:unsupported drbg type
 RSA_R_ALGORITHM_MISMATCH:100:algorithm mismatch
