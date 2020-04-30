@@ -439,7 +439,6 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
         }
         if (s->ext.extra_tickets_expected > 0) {
             st->hand_state = TLS_ST_SW_SESSION_TICKET;
-            s->ext.extra_tickets_expected--;
             return WRITE_TRAN_CONTINUE;
         }
         /* Try to read from the client instead */
@@ -533,7 +532,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL *s)
          * been configured for.
          */
         if (!SSL_IS_FIRST_HANDSHAKE(s) && s->ext.extra_tickets_expected > 0) {
-            s->ext.extra_tickets_expected--;
+            return WRITE_TRAN_CONTINUE;
         } else if (s->hit || s->num_tickets <= s->sent_tickets) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
@@ -4124,10 +4123,13 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
         /*
          * Increment both |sent_tickets| and |next_ticket_nonce|. |sent_tickets|
          * gets reset to 0 if we send more tickets following a post-handshake
-         * auth, but |next_ticket_nonce| does not.
+         * auth, but |next_ticket_nonce| does not.  If we're sending extra
+         * tickets, decrement the count of pending extra tickets.
          */
         s->sent_tickets++;
         s->next_ticket_nonce++;
+        if (s->ext.extra_tickets_expected > 0)
+            s->ext.extra_tickets_expected--;
         ssl_update_cache(s, SSL_SESS_CACHE_SERVER);
     }
 
