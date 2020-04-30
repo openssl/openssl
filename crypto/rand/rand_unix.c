@@ -227,10 +227,12 @@ static ssize_t sysctl_random(char *buf, size_t buflen)
      * when the sysctl returns long and we want to request something not a
      * multiple of longs, which should never be the case.
      */
+#if   defined(__FreeBSD__)
     if (!ossl_assert(buflen % sizeof(long) == 0)) {
         errno = EINVAL;
         return -1;
     }
+#endif
 
     /*
      * On NetBSD before 4.0 KERN_ARND was an alias for KERN_URND, and only
