@@ -23,9 +23,6 @@ plan skip_all => "No TLS/SSL protocols are supported by this OpenSSL build"
 
 plan tests => 3;
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
-
 SKIP: {
     skip "Skipping FIPS installation", 1
         if disabled("fips");

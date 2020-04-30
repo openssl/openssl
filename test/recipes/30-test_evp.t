@@ -80,8 +80,6 @@ plan tests =>
 
 unless ($no_fips) {
     my $infile = bldtop_file('providers', platform->dso('fips'));
-    $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-    $ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),

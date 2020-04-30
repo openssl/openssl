@@ -10,6 +10,8 @@ setup("test_includes");
 plan skip_all => "test_includes doesn't work without posix-io"
     if disabled("posix-io");
 
+delete $ENV{OPENSSL_CONF_INCLUDE};
+
 plan tests =>                   # The number of tests being performed
     5
     + ($^O eq "VMS" ? 2 : 0);

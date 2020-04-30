@@ -151,3 +151,7 @@ works fine and can be used in place of:
 
 The former produces a more meaningful message on failure than the latter.
 
+Note that the test infrastructure automatically sets up all required environment
+variables (such as OPENSSL_MODULES, OPENSSL_CONF etc) for the tests. Individual
+tests may choose to override the default settings as required.
+

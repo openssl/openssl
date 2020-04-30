@@ -30,9 +30,6 @@ plan tests =>
 
 (undef, my $tmpfilename) = tempfile();
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
-
 ok(run(test(["sslapitest", srctop_dir("test", "certs"),
              srctop_file("test", "recipes", "90-test_sslapi_data",
                          "passwd.txt"), $tmpfilename, "default",

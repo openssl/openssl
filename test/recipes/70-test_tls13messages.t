@@ -32,8 +32,6 @@ plan skip_all => "$test_name needs EC enabled"
     if disabled("ec");
 
 $ENV{OPENSSL_ia32cap} = '~0x200000200000000';
-$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
-
 
 @handmessages = (
     [TLSProxy::Message::MT_CLIENT_HELLO,
