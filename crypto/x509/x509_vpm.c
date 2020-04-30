@@ -146,14 +146,14 @@ void X509_VERIFY_PARAM_free(X509_VERIFY_PARAM *param)
 /* Macro to test if a field should be copied from src to dest */
 
 #define test_x509_verify_param_copy(field, def) \
-        (to_overwrite || \
-                ((src->field != def) && (to_default || (dest->field == def))))
+    (to_overwrite \
+         || ((src->field != def) && (to_default || (dest->field == def))))
 
 /* Macro to test and copy a field if necessary */
 
 #define x509_verify_param_copy(field, def) \
-        if (test_x509_verify_param_copy(field, def)) \
-                dest->field = src->field
+    if (test_x509_verify_param_copy(field, def)) \
+        dest->field = src->field;
 
 int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
                               const X509_VERIFY_PARAM *src)
@@ -243,14 +243,16 @@ int X509_VERIFY_PARAM_set1(X509_VERIFY_PARAM *to,
 static int int_x509_param_set1(char **pdest, size_t *pdestlen,
                                const char *src, size_t srclen)
 {
-    void *tmp;
+    char *tmp;
     if (src) {
         if (srclen == 0)
             srclen = strlen(src);
 
-        tmp = OPENSSL_memdup(src, srclen);
+        tmp = OPENSSL_malloc(srclen + 1);
         if (tmp == NULL)
             return 0;
+        memcpy(tmp, src, srclen);
+        tmp[srclen] = '\0'; /* enforce NUL termination */
     } else {
         tmp = NULL;
         srclen = 0;
@@ -379,6 +381,11 @@ int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
     return 1;
 }
 
+char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx)
+{
+    return sk_OPENSSL_STRING_value(param->hosts, idx);
+}
+
 int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
                                 const char *name, size_t namelen)
 {
@@ -425,11 +432,34 @@ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
         from->peername = NULL;
 }
 
+char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param)
+{
+    return param->email;
+}
+
 int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                  const char *email, size_t emaillen)
 {
     return int_x509_param_set1(&param->email, &param->emaillen,
                                email, emaillen);
+}
+
+static unsigned char
+*int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *param, size_t *plen)
+{
+    if (param == NULL || param->ip == NULL)
+        return NULL;
+    if (plen != NULL)
+        *plen = param->iplen;
+    return param->ip;
+}
+
+char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param)
+{
+    size_t iplen;
+    unsigned char *ip = int_X509_VERIFY_PARAM_get0_ip(param, &iplen);
+
+    return  ip == NULL ? NULL : ipaddr_to_asc(ip, iplen);
 }
 
 int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,

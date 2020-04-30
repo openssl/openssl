@@ -238,5 +238,6 @@ static ossl_inline void ossl_sleep(unsigned long millis)
 
 char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
                               size_t max_len);
+char *ipaddr_to_asc(unsigned char *p, int len);
 
 #endif
