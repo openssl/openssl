@@ -31,8 +31,6 @@ static OSSL_OP_keymgmt_gen_init_fn ec_gen_init;
 static OSSL_OP_keymgmt_gen_set_template_fn ec_gen_set_template;
 static OSSL_OP_keymgmt_gen_set_params_fn ec_gen_set_params;
 static OSSL_OP_keymgmt_gen_settable_params_fn ec_gen_settable_params;
-static OSSL_OP_keymgmt_gen_get_params_fn ec_gen_get_params;
-static OSSL_OP_keymgmt_gen_gettable_params_fn ec_gen_gettable_params;
 static OSSL_OP_keymgmt_gen_fn ec_gen;
 static OSSL_OP_keymgmt_gen_cleanup_fn ec_gen_cleanup;
 static OSSL_OP_keymgmt_free_fn ec_freedata;
@@ -679,39 +677,6 @@ static const OSSL_PARAM *ec_gen_settable_params(void *provctx)
     return settable;
 }
 
-static int ec_gen_get_params(void *genctx, OSSL_PARAM params[])
-{
-    struct ec_gen_ctx *gctx = genctx;
-    OSSL_PARAM *p;
-
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_NAME)) != NULL) {
-        int nid = EC_GROUP_get_curve_name(gctx->gen_group);
-        int ret = 0;
-        const char *curve_name = ec_curve_nid2name(nid);
-
-        switch (p->data_type) {
-        case OSSL_PARAM_UTF8_STRING:
-            ret = OSSL_PARAM_set_utf8_string(p, curve_name);
-            break;
-        case OSSL_PARAM_UTF8_PTR:
-            ret = OSSL_PARAM_set_utf8_ptr(p, curve_name);
-            break;
-        }
-        return ret;
-    }
-    return 1;
-}
-
-static const OSSL_PARAM *ec_gen_gettable_params(void *provctx)
-{
-    static OSSL_PARAM gettable[] = {
-        { OSSL_PKEY_PARAM_EC_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END
-    };
-
-    return gettable;
-}
-
 static int ec_gen_assign_group(EC_KEY *ec, EC_GROUP *group)
 {
     if (group == NULL) {
@@ -767,9 +732,6 @@ const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
       (void (*)(void))ec_gen_settable_params },
-    { OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS, (void (*)(void))ec_gen_get_params },
-    { OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS,
-      (void (*)(void))ec_gen_gettable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ec_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },

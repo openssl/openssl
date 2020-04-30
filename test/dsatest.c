@@ -155,6 +155,7 @@ static int dsa_keygen_test(void)
     unsigned char seed_out[32];
     char group_out[32];
     size_t len = 0;
+    const OSSL_PARAM *settables = NULL;
     static const unsigned char seed_data[] = {
         0xa6, 0xf5, 0x28, 0x8c, 0x50, 0x77, 0xa5, 0x68,
         0x6d, 0x3a, 0xf5, 0xf1, 0xc6, 0x4c, 0xdc, 0x35,
@@ -244,6 +245,10 @@ static int dsa_keygen_test(void)
         goto end;
     if (!TEST_ptr(pg_ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL))
         || !TEST_int_gt(EVP_PKEY_paramgen_init(pg_ctx), 0)
+        || !TEST_ptr_null(EVP_PKEY_CTX_gettable_params(pg_ctx))
+        || !TEST_ptr(settables = EVP_PKEY_CTX_settable_params(pg_ctx))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settables,
+                                             OSSL_PKEY_PARAM_FFC_PBITS))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_bits(pg_ctx, 2048))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_q_bits(pg_ctx, 224))
         || !TEST_true(EVP_PKEY_CTX_set_dsa_paramgen_seed(pg_ctx, seed_data,

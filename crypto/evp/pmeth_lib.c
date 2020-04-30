@@ -613,12 +613,6 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
             && ctx->op.ciph.cipher->get_ctx_params != NULL)
         return ctx->op.ciph.cipher->get_ctx_params(ctx->op.ciph.ciphprovctx,
                                                    params);
-    if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-        && ctx->op.keymgmt.genctx != NULL
-        && ctx->keymgmt != NULL
-        && ctx->keymgmt->gen_get_params != NULL)
-        return evp_keymgmt_gen_get_params(ctx->keymgmt, ctx->op.keymgmt.genctx,
-                                          params);
     return 0;
 }
 
@@ -632,12 +626,10 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
             && ctx->op.sig.signature != NULL
             && ctx->op.sig.signature->gettable_ctx_params != NULL)
         return ctx->op.sig.signature->gettable_ctx_params();
-
     if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
             && ctx->op.ciph.cipher->gettable_ctx_params != NULL)
         return ctx->op.ciph.cipher->gettable_ctx_params();
-
     return NULL;
 }
 
@@ -656,8 +648,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
             && ctx->op.ciph.cipher->settable_ctx_params != NULL)
         return ctx->op.ciph.cipher->settable_ctx_params();
     if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-            && ctx->keymgmt != NULL
-            && ctx->keymgmt->gen_settable_params != NULL)
+            && ctx->keymgmt != NULL)
         return evp_keymgmt_gen_settable_params(ctx->keymgmt);
 
     return NULL;

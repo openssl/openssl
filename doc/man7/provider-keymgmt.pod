@@ -22,8 +22,6 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  int OP_keymgmt_gen_set_template(void *genctx, void *template);
  int OP_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
  const OSSL_PARAM *OP_keymgmt_gen_settable_params(void *provctx);
- int OP_keymgmt_gen_get_params(void *genctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OP_keymgmt_gen_gettable_params(void *provctx);
  void *OP_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
  void OP_keymgmt_gen_cleanup(void *genctx);
 
@@ -93,8 +91,6 @@ macros in L<openssl-core_numbers.h(7)>, as follows:
  OP_keymgmt_gen_set_template     OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE
  OP_keymgmt_gen_set_params       OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS
  OP_keymgmt_gen_settable_params  OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS
- OP_keymgmt_gen_get_params       OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS
- OP_keymgmt_gen_gettable_params  OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS
  OP_keymgmt_gen                  OSSL_FUNC_KEYMGMT_GEN
  OP_keymgmt_gen_cleanup          OSSL_FUNC_KEYMGMT_GEN_CLEANUP
 
@@ -213,7 +209,6 @@ OP_keymgmt_free() should free the passed I<keydata>.
 
 OP_keymgmt_gen_init(), OP_keymgmt_gen_set_template(),
 OP_keymgmt_gen_set_params(), OP_keymgmt_gen_settable_params(),
-OP_keymgmt_gen_get_params(), OP_keymgmt_gen_gettable_params(),
 OP_keymgmt_gen() and OP_keymgmt_gen_cleanup() work together as a more
 elaborate context based key object constructor.
 
@@ -233,13 +228,6 @@ I<params> in the key object generation context I<genctx>.
 
 OP_keymgmt_gen_settable_params() should return a constant array of
 descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_gen_set_params() 
-can handle.
-
-OP_keymgmt_gen_get_params() should extract information data associated
-with the key object generation context I<genctx>.
-
-OP_keymgmt_gen_gettable_params() should return a constant array of
-descriptor B<OSSL_PARAM>, for parameters that OP_keymgmt_gen_get_params() 
 can handle.
 
 OP_keymgmt_gen() should perform the key object generation itself, and
