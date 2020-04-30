@@ -619,7 +619,7 @@ const OPTIONS cmp_options[] = {
     {"srv_trusted", OPT_SRV_TRUSTED, 's',
      "Trusted certificates for client authentication"},
     {"srv_untrusted", OPT_SRV_UNTRUSTED, 's',
-     "Intermediate certs for constructing chains for CMP protection by client"},
+     "Intermediate certs that may be useful for verifying CMP protection"},
     {"rsp_cert", OPT_RSP_CERT, 's',
      "Certificate to be returned as mock enrollment result"},
     {"rsp_extracerts", OPT_RSP_EXTRACERTS, 's',

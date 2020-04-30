@@ -403,13 +403,13 @@ parameter the entry is cleared.
 OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the certificate store
 containing trusted root CA certificates, which may be empty if unset.
 
-OSSL_CMP_CTX_set1_untrusted_certs() takes over a list of certificates containing
-non-trusted intermediate certs used for path construction in authentication
-of the CMP server and potentially others (TLS server, newly enrolled cert).
+OSSL_CMP_CTX_set1_untrusted_certs() sets up a list of non-trusted certificates
+of intermediate CAs that may be useful for path construction when authenticating
+the CMP server and when verifying newly enrolled certificates.
 The reference counts of those certificates handled successfully are increased.
 
 OSSL_CMP_CTX_get0_untrusted_certs(OSSL_CMP_CTX *ctx) returns a pointer to the
-list of untrusted certs, which my be empty if unset.
+list of untrusted certs, which may be empty if unset.
 
 OSSL_CMP_CTX_set1_clCert() sets the client certificate in the given B<ctx>.
 The public key of this B<clCert> must correspond to
