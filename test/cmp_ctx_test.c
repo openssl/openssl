@@ -525,7 +525,7 @@ static X509_STORE *X509_STORE_new_1(void)
 #define DEFINE_SET_TEST_DEFAULT(OSSL_CMP, CTX, N, DUP, FIELD, TYPE, DEFAULT) \
     static TYPE *OSSL_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
     { \
-        return ctx == NULL ? ERR(NULL) : (TYPE *)ctx->FIELD; \
+        return ctx == NULL ? (TYPE *) ERR(NULL) : (TYPE *)ctx->FIELD; \
     } \
     DEFINE_SET_GET_TEST_DEFAULT(OSSL_CMP, CTX, N, 0, DUP, FIELD, TYPE, DEFAULT)
 #define DEFINE_SET_TEST(OSSL_CMP, CTX, N, DUP, FIELD, TYPE) \
@@ -534,7 +534,7 @@ static X509_STORE *X509_STORE_new_1(void)
 #define DEFINE_SET_SK_TEST(OSSL_CMP, CTX, N, FIELD, TYPE) \
     static STACK_OF(TYPE) *OSSL_CMP_CTX_get0_##FIELD(const CMP_CTX *ctx) \
     { \
-        return ctx == NULL ? ERR(NULL) : ctx->FIELD; \
+        return ctx == NULL ? (STACK_OF(TYPE) *) ERR(NULL) : ctx->FIELD; \
     } \
     DEFINE_SET_GET_BASE_TEST(OSSL_CMP##_##CTX, set##N, get0, 1, FIELD, \
                              STACK_OF(TYPE)*, NULL, IS_0, \
@@ -587,7 +587,7 @@ typedef OSSL_HTTP_bio_cb_t OSSL_CMP_http_cb_t;
     \
     static char *OSSL_CMP_CTX_get1_##FIELD##_str(const CMP_CTX *ctx) \
     { \
-        const ASN1_OCTET_STRING *bytes = ctx == NULL ? ERR(NULL) : ctx->FIELD; \
+        const ASN1_OCTET_STRING *bytes = ctx == NULL ? (const ASN1_OCTET_STRING *) ERR(NULL) : ctx->FIELD; \
         \
         return bytes == NULL ? NULL : \
             OPENSSL_strndup((char *)bytes->data, bytes->length); \
