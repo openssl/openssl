@@ -265,7 +265,9 @@ static int wpacket_intern_close(WPACKET *pkt, WPACKET_SUB *sub, int doclose)
                 && !put_value(&buf[sub->packet_len], packlen,
                               sub->lenbytes))
             return 0;
-    } else if (pkt->endfirst && sub->parent != NULL) {
+    } else if (pkt->endfirst && sub->parent != NULL
+               && (packlen != 0
+                   || (sub->flags & WPACKET_FLAGS_NON_ZERO_LENGTH) == 0)) {
         size_t tmplen = packlen;
         size_t numlenbytes = 1;
 
