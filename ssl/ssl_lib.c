@@ -3166,6 +3166,10 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
     /* initialize cipher/digest methods table */
     if (!ssl_load_ciphers(ret))
         goto err2;
+    /* initialise sig algs */
+    if (!ssl_setup_sig_algs(ret))
+        goto err2;
+
 
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
@@ -3385,6 +3389,8 @@ void SSL_CTX_free(SSL_CTX *a)
         ssl_evp_cipher_free(a->ssl_cipher_methods[i]);
     for (i = 0; i < SSL_MD_NUM_IDX; i++)
         ssl_evp_md_free(a->ssl_digest_methods[i]);
+
+    OPENSSL_free(a->sigalg_lookup_cache);
 
     CRYPTO_THREAD_lock_free(a->lock);
 

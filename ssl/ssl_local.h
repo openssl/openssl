@@ -1157,6 +1157,9 @@ struct ssl_ctx_st {
     const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX];
     const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX];
     size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
+
+    /* Cache of all sigalgs we know and whether they are available or not */
+    struct sigalg_lookup_st *sigalg_lookup_cache;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1776,6 +1779,8 @@ typedef struct sigalg_lookup_st {
     int sigandhash;
     /* Required public key curve (ECDSA only) */
     int curve;
+    /* Whether this signature algorithm is actually available for use */
+    int enabled;
 } SIGALG_LOOKUP;
 
 typedef struct tls_group_info_st {
@@ -2432,6 +2437,7 @@ __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
+__owur int ssl_setup_sig_algs(SSL_CTX *ctx);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
                                  size_t len, DOWNGRADE dgrd);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
