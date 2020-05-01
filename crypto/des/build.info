@@ -14,7 +14,7 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 LIBS=../../libcrypto
-$COMMON=set_key.c ecb3_enc.c $DESASM
+$COMMON=set_key.c ecb3_enc.c
 $ALL=$COMMON\
      ecb_enc.c  cbc_enc.c \
      cfb64enc.c cfb64ede.c cfb_enc.c \
@@ -22,8 +22,10 @@ $ALL=$COMMON\
      str2key.c  pcbc_enc.c qud_cksm.c rand_key.c \
      fcrypt.c xcbc_enc.c cbc_cksm.c
 
-SOURCE[../../libcrypto]=$ALL
-SOURCE[../../providers/libfips.a]=$COMMON
+SOURCE[../../libcrypto]=$ALL $DESASM
+SOURCE[../../providers/libfips.a]=$COMMON $DESASM
+SOURCE[../../providers/liblegacy.a]=$DESASM
+
 DEFINE[../../libcrypto]=$DESDEF
 DEFINE[../../providers/libfips.a]=$DESDEF
 DEFINE[../../providers/liblegacy.a]=$DESDEF

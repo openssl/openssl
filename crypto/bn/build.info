@@ -112,16 +112,18 @@ $COMMON=bn_add.c bn_div.c bn_exp.c bn_lib.c bn_ctx.c bn_mul.c \
         bn_kron.c bn_sqrt.c bn_gcd.c bn_prime.c bn_sqr.c \
         bn_recp.c bn_mont.c bn_mpi.c bn_exp2.c bn_gf2m.c bn_nist.c \
         bn_x931p.c bn_intern.c bn_dh.c \
-        bn_rsa_fips186_4.c $BNDH $BNASM
-SOURCE[../../libcrypto]=$COMMON bn_print.c bn_err.c bn_srp.c
+        bn_rsa_fips186_4.c $BNDH
+SOURCE[../../libcrypto]=$COMMON $BNASM bn_print.c bn_err.c bn_srp.c
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=bn_depr.c
 ENDIF
-SOURCE[../../providers/libfips.a]=$COMMON
+SOURCE[../../providers/libfips.a]=$COMMON $BNASM
+SOURCE[../../providers/liblegacy.a]=$BNASM
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$BNDEF
 DEFINE[../../providers/libfips.a]=$BNDEF
+DEFINE[../../providers/liblegacy.a]=$BNDEF
 DEFINE[../../providers/libimplementations.a]=$BNDEF
 
 INCLUDE[../../libcrypto]=../../crypto/include

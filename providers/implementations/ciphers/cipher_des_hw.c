@@ -65,7 +65,13 @@ static int cipher_hw_des_ecb_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
 static int cipher_hw_des_cbc_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
                                     const unsigned char *in, size_t len)
 {
-    DES_key_schedule *key = &(((PROV_DES_CTX *)ctx)->dks.ks);
+    PROV_DES_CTX *dctx = (PROV_DES_CTX *)ctx;
+    DES_key_schedule *key = &(dctx->dks.ks);
+
+    if (dctx->dstream.cbc != NULL) {
+        (*dctx->dstream.cbc) (in, out, len, key, ctx->iv);
+        return 1;
+    }
 
     while (len >= MAXCHUNK) {
         DES_ncbc_encrypt(in, out, MAXCHUNK, key, (DES_cblock *)ctx->iv,
