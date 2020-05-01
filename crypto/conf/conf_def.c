@@ -420,6 +420,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     OPENSSL_strlcpy(include_path, include_dir, newlen);
                     OPENSSL_strlcat(include_path, "/", newlen);
                     OPENSSL_strlcat(include_path, include, newlen);
+                    OPENSSL_free(include);
                 } else {
                     include_path = include;
                 }
@@ -429,15 +430,11 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 next = process_include(include_path, &dirctx, &dirpath);
                 if (include_path != dirpath) {
                     /* dirpath will contain include in case of a directory */
-                    OPENSSL_free(include);
-                    if (include_path != include)
-                        OPENSSL_free(include_path);
+                    OPENSSL_free(include_path);
                 }
 #else
                 next = BIO_new_file(include_path, "r");
-                OPENSSL_free(include);
-                if (include_path != include)
-                    OPENSSL_free(include_path);
+                OPENSSL_free(include_path);
 #endif
 
                 if (next != NULL) {
