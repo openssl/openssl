@@ -53,6 +53,9 @@ int DER_w_algorithmIdentifier_RSA_with(WPACKET *pkt, int tag,
 #ifndef FIPS_MODULE
         MD_CASE(md2);
         MD_CASE(md5);
+        MD_CASE(md4);
+        MD_CASE(ripemd160);
+/* TODO(3.0) Decide what to do about mdc2 and md5_sha1 */
 #endif
         MD_CASE(sha1);
         MD_CASE(sha224);
