@@ -1596,8 +1596,16 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(const SSL_METHOD *ssl_method,
 
     /* Add TLSv1.3 ciphers first - we always prefer those if possible */
     for (i = 0; i < sk_SSL_CIPHER_num(tls13_ciphersuites); i++) {
-        if (!sk_SSL_CIPHER_push(cipherstack,
-                                sk_SSL_CIPHER_value(tls13_ciphersuites, i))) {
+        const SSL_CIPHER *sslc = sk_SSL_CIPHER_value(tls13_ciphersuites, i);
+
+        /* Don't include any TLSv1.3 ciphers that are disabled */
+        if ((sslc->algorithm_enc & disabled_enc) != 0
+                || (ssl_cipher_table_mac[sslc->algorithm2
+                                         & SSL_HANDSHAKE_MAC_MASK].mask
+                    & disabled_mac_mask) != 0)
+            continue;
+
+        if (!sk_SSL_CIPHER_push(cipherstack, sslc)) {
             sk_SSL_CIPHER_free(cipherstack);
             return NULL;
         }
