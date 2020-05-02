@@ -46,6 +46,7 @@ B<openssl> B<s_server>
 [B<-www>]
 [B<-WWW>]
 [B<-http_server_binmode>]
+[B<-no_ca_names>]
 [B<-servername>]
 [B<-servername_fatal>]
 [B<-tlsextdebug>]
@@ -410,6 +411,12 @@ Neither of these options can be used in conjunction with B<-early_data>.
 
 When acting as web-server (using option B<-WWW> or B<-HTTP>) open files requested
 by the client in binary mode.
+
+=item B<-no_ca_names>
+
+Disable TLS Extension CA Names. You may want to disable it for security reasons
+or for compatibility with some Windows TLS implementations crashing when this
+extension is larger than 1024 bytes.
 
 =item B<-id_prefix> I<val>
 
