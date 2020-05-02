@@ -2763,14 +2763,16 @@ int s_client_main(int argc, char **argv)
     }
 
     for (;;) {
+        int fdin, fdout;
+
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
-        int fdin = fileno_stdin();
+	fdin = fileno_stdin();
         if (fdin < 0) {
             BIO_printf(bio_err,"bad fileno for stdin\n");
             goto shut;
         }
-        int fdout = fileno_stdout();
+        fdout = fileno_stdout();
         if (fdout < 0) {
             BIO_printf(bio_err,"bad fileno for stdout\n");
             goto shut;
