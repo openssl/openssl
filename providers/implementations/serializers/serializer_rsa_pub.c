@@ -72,7 +72,10 @@ static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 static int rsa_pub_der(void *ctx, void *rsa, BIO *out,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return i2d_RSA_PUBKEY_bio(out, rsa);
+    return ossl_prov_write_pub_der_from_obj(out, rsa,
+                                            ossl_prov_rsa_type_to_evp(rsa),
+                                            ossl_prov_prepare_rsa_params,
+                                            (i2d_of_void *)i2d_RSAPublicKey);
 }
 
 /* Public key : PEM */
@@ -100,7 +103,10 @@ static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
 static int rsa_pub_pem(void *ctx, void *rsa, BIO *out,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return PEM_write_bio_RSA_PUBKEY(out, rsa);
+    return ossl_prov_write_pub_pem_from_obj(out, rsa,
+                                            ossl_prov_rsa_type_to_evp(rsa),
+                                            ossl_prov_prepare_rsa_params,
+                                            (i2d_of_void *)i2d_RSAPublicKey);
 }
 
 static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,

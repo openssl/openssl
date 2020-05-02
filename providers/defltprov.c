@@ -383,6 +383,18 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
       rsa_priv_pem_serializer_functions },
     { "RSA", "provider=default,fips=yes,format=pem,type=public",
       rsa_pub_pem_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=text,type=private",
+      rsa_priv_text_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=text,type=public",
+      rsa_pub_text_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=der,type=private",
+      rsa_priv_der_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=der,type=public",
+      rsa_pub_der_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=pem,type=private",
+      rsa_priv_pem_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=pem,type=public",
+      rsa_pub_pem_serializer_functions },
 
 #ifndef OPENSSL_NO_DH
     { "DH", "provider=default,fips=yes,format=text,type=private",

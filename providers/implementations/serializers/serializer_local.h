@@ -82,6 +82,14 @@ int ossl_prov_prepare_all_dsa_params(const void *dsa, int nid,
 int ossl_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder);
 int ossl_prov_dsa_priv_to_der(const void *dsa, unsigned char **pder);
 
+/*
+ * ossl_prov_prepare_rsa_params() is designed to work with the ossl_prov_write_
+ * functions, hence 'void *rsa' rather than 'RSA *rsa'.
+ */
+int ossl_prov_prepare_rsa_params(const void *rsa, int nid,
+                                 void **pstr, int *pstrtype);
+int ossl_prov_rsa_type_to_evp(const RSA *rsa);
+
 int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
                                    const BIGNUM *bn);
 int ossl_prov_print_labeled_buf(BIO *out, const char *label,
