@@ -280,7 +280,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
         break;
     }
 
-    snprintf(pidbuf, sizeof(pidbuf), "[%u] ", GetCurrentProcessId());
+    snprintf(pidbuf, sizeof(pidbuf), "[%lu] ", GetCurrentProcessId());
     lpszStrings[0] = pidbuf;
     lpszStrings[1] = string;
 
