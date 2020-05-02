@@ -354,6 +354,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { "DSA:dsaEncryption", "provider=default", dsa_keymgmt_functions },
 #endif
     { "RSA:rsaEncryption", "provider=default", rsa_keymgmt_functions },
+    { "RSA-PSS:RSASSA-PSS", "provider=default", rsapss_keymgmt_functions },
 #ifndef OPENSSL_NO_EC
     { "EC:id-ecPublicKey", "provider=default", ec_keymgmt_functions },
     { "X25519", "provider=default", x25519_keymgmt_functions },

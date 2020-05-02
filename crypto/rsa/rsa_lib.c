@@ -184,6 +184,11 @@ int RSA_up_ref(RSA *r)
     return i > 1 ? 1 : 0;
 }
 
+OPENSSL_CTX *rsa_get0_libctx(RSA *r)
+{
+    return r->libctx;
+}
+
 #ifndef FIPS_MODULE
 int RSA_set_ex_data(RSA *r, int idx, void *arg)
 {
