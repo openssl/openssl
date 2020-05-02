@@ -10,7 +10,10 @@ $ECX_GOAL=../../libimplementations.a
 $EC_GOAL=../../libimplementations.a
 
 SOURCE[$SERIALIZER_GOAL]=serializer_common.c
+
 SOURCE[$RSA_GOAL]=serializer_rsa.c serializer_rsa_priv.c serializer_rsa_pub.c
+DEPEND[serializer_rsa.o]=../../common/include/prov/der_rsa.h
+
 IF[{- !$disabled{"dh"} || !$disabled{"dsa"} -}]
   SOURCE[$FFC_GOAL]=serializer_ffc_params.c
 ENDIF

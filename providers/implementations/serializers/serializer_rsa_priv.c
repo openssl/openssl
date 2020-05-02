@@ -21,6 +21,7 @@
 #include <openssl/types.h>
 #include <openssl/params.h>
 #include <openssl/safestack.h>
+#include "crypto/rsa.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
@@ -48,34 +49,6 @@ struct rsa_priv_ctx_st {
 
     struct pkcs8_encrypt_ctx_st sc;
 };
-
-/* Helper functions to prepare RSA-PSS params for serialization */
-
-static int prepare_rsa_params(const void *rsa, int nid,
-                              void **pstr, int *pstrtype)
-{
-    const RSA_PSS_PARAMS *pss = RSA_get0_pss_params(rsa);
-    *pstr = NULL;
-
-    /* If RSA it's just NULL type */
-    if (nid != EVP_PKEY_RSA_PSS) {
-        *pstrtype = V_ASN1_NULL;
-        return 1;
-    }
-    /* If no PSS parameters we omit parameters entirely */
-    if (pss == NULL) {
-        *pstrtype = V_ASN1_UNDEF;
-        return 1;
-    }
-    /* Encode PSS parameters */
-    if (ASN1_item_pack((void *)pss, ASN1_ITEM_rptr(RSA_PSS_PARAMS),
-                       (ASN1_STRING **)pstr)
-        == NULL)
-        return 0;
-
-    *pstrtype = V_ASN1_SEQUENCE;
-    return 1;
-}
 
 /* Private key : context */
 static void *rsa_priv_newctx(void *provctx)
@@ -176,8 +149,9 @@ static int rsa_priv_der(void *vctx, void *rsa, BIO *out,
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    ret = ossl_prov_write_priv_der_from_obj(out, rsa, EVP_PKEY_RSA,
-                                            prepare_rsa_params,
+    ret = ossl_prov_write_priv_der_from_obj(out, rsa,
+                                            ossl_prov_rsa_type_to_evp(rsa),
+                                            ossl_prov_prepare_rsa_params,
                                             (i2d_of_void *)i2d_RSAPrivateKey,
                                             &ctx->sc);
 
@@ -215,8 +189,9 @@ static int rsa_pem_priv(void *vctx, void *rsa, BIO *out,
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    ret = ossl_prov_write_priv_pem_from_obj(out, rsa, EVP_PKEY_RSA,
-                                            prepare_rsa_params,
+    ret = ossl_prov_write_priv_pem_from_obj(out, rsa,
+                                            ossl_prov_rsa_type_to_evp(rsa),
+                                            ossl_prov_prepare_rsa_params,
                                             (i2d_of_void *)i2d_RSAPrivateKey,
                                             &ctx->sc);
 
