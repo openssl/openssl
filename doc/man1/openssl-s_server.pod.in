@@ -692,6 +692,105 @@ has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
 
+=item B<ssl_config> I<val>
+
+Configure SSL_CTX using the section I<val> from the config file
+
+=item B<cert2> I<infile>
+
+Certificate file to use for the servername given via the B<-servername> option;
+default is server2.pem
+
+=item B<key2> I<infile>
+
+Private Key file to use for the servername given via the B<-servername> option
+if not in B<-cert2>
+
+=item B<servername> I<val>
+
+Servername for the HostName TLS extension
+
+=item B<servername_fatal>
+
+Returns a fatal error to the client if the requested hostname does not match
+the hostname given via the B<-servername> option (default is a warning alert)
+
+=item B<no_resume_ephemeral>
+
+Disable caching and tickets if ephemeral (EC)DH is used
+
+=item B<keymatexport> I<val>
+
+Export keying material using the label B<val>
+
+=item B<keymatexportlen> I<+int>
+
+Export len bytes of keying material (default 20)
+
+=item B<no_cache>
+
+Disable the session cache
+
+=item B<ext_cache>
+
+Disable the internal session cache and instead setup and use an external
+session cache
+
+=item B<verify_quiet>
+
+Do no give any certificate verification output except verification errors
+
+=item B<ign_eof>
+
+Ignore input EOF from stdin (default when B<-quiet> is given)
+
+=item B<no_ign_eof>
+
+Do not ignore input EOF from stdin
+
+=item B<security_debug>
+
+Print output from the SSL/TLS security framework
+
+=item B<security_debug_verbose>
+
+Print verbose output from the SSL/TLS security framework
+
+=item B<timeout>
+
+Enable timeouts on DTLS sockets rather than blocking infinitely
+
+=item B<srpvfile> I<infile>
+
+The verifier file for SRP. See L<SRP_VBASE_init(3)> for information about
+verifier files.
+
+=item B<srpuserseed> I<val>
+
+A seed string for a default SRP user salt
+
+=item B<tls1>
+
+Only use TLSv1
+
+=item B<tls1_1>
+
+Only use TLSv1.1
+
+=item B<tls1_2>
+
+Only use TLSv1.2
+
+=item B<tls1_3>
+
+Only use TLSv1.3
+
+=item B<use_srtp> I<val>
+
+Offer DTLS SRTP key management with a colon-separated profile list given in
+I<val>. The supported protection profiles are as defined for
+L<SSL_CTX_set_tlsext_use_srtp(3)>
+
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_version_item -}
