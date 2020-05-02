@@ -1100,10 +1100,6 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 {
     RSA *rsa = from->pkey.rsa;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
-    const BIGNUM *n = RSA_get0_n(rsa), *e = RSA_get0_e(rsa);
-    const BIGNUM *d = RSA_get0_d(rsa);
-    STACK_OF(BIGNUM_const) *primes = NULL, *exps = NULL, *coeffs = NULL;
-    int numprimes = 0, numexps = 0, numcoeffs = 0;
     OSSL_PARAM *params = NULL;
     int selection = 0;
     int rv = 0;
@@ -1118,65 +1114,16 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
         goto err;
 
     /* Public parameters must always be present */
-    if (n == NULL || e == NULL)
+    if (RSA_get0_n(rsa) == NULL || RSA_get0_e(rsa) == NULL)
         goto err;
 
-    /* |e| and |n| are always present */
-    if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_E, e))
+    if (!rsa_todata(rsa, tmpl, NULL))
         goto err;
-    if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_N, n))
-        goto err;
+
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
-
-    if (d != NULL) {
-        int i;
-
-        /* Get all the primes and CRT params */
-        if ((primes = sk_BIGNUM_const_new_null()) == NULL
-            || (exps = sk_BIGNUM_const_new_null()) == NULL
-            || (coeffs = sk_BIGNUM_const_new_null()) == NULL)
-            goto err;
-
-        if (!rsa_get0_all_params(rsa, primes, exps, coeffs))
-            goto err;
-
-        numprimes = sk_BIGNUM_const_num(primes);
-        numexps = sk_BIGNUM_const_num(exps);
-        numcoeffs = sk_BIGNUM_const_num(coeffs);
-
-        /*
-         * It's permisssible to have zero primes, i.e. no CRT params.
-         * Otherwise, there must be at least two, as many exponents,
-         * and one coefficient less.
-         */
-        if (numprimes != 0
-            && (numprimes < 2 || numexps < 2 || numcoeffs < 1))
-            goto err;
-
-        if (!OSSL_PARAM_BLD_push_BN(tmpl, OSSL_PKEY_PARAM_RSA_D, d))
-            goto err;
+    if (RSA_get0_d(rsa) != NULL)
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
-        for (i = 0; i < numprimes  && rsa_mp_factor_names[i] != NULL; i++) {
-            const BIGNUM *num = sk_BIGNUM_const_value(primes, i);
-
-            if (!OSSL_PARAM_BLD_push_BN(tmpl, rsa_mp_factor_names[i], num))
-                goto err;
-        }
-
-        for (i = 0; i < numexps && rsa_mp_exp_names[i] != NULL; i++) {
-            const BIGNUM *num = sk_BIGNUM_const_value(exps, i);
-
-            if (!OSSL_PARAM_BLD_push_BN(tmpl, rsa_mp_exp_names[i], num))
-                goto err;
-        }
-
-        for (i = 0; i < numcoeffs && rsa_mp_coeff_names[i] != NULL; i++) {
-            const BIGNUM *num = sk_BIGNUM_const_value(coeffs, i);
-
-            if (!OSSL_PARAM_BLD_push_BN(tmpl, rsa_mp_coeff_names[i], num))
-                goto err;
-        }
     }
 
     if ((params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
