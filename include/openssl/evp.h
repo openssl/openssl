@@ -437,7 +437,9 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 
 # ifndef OPENSSL_NO_RSA
 #  define EVP_PKEY_assign_RSA(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA,\
-                                        (rsa))
+                                                        (rsa))
+#  define EVP_PKEY_assign_RSA_PSS(pkey,rsa) EVP_PKEY_assign((pkey),EVP_PKEY_RSA_PSS, \
+                                                            (rsa))
 # endif
 
 # ifndef OPENSSL_NO_DSA

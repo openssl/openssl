@@ -1092,11 +1092,9 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
     return pkey->pkey.rsa->dirty_cnt;
 }
 
-DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
-
-static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
-                              const char *propq)
+static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
+                             void *to_keydata, EVP_KEYMGMT *to_keymgmt,
+                             OPENSSL_CTX *libctx, const char *propq)
 {
     RSA *rsa = from->pkey.rsa;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
@@ -1124,6 +1122,26 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     if (RSA_get0_d(rsa) != NULL)
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
+    /*
+     * These methods only use rsa->pss.
+     * rsa->pss_params is used by our providers only
+     */
+    if (rsa->pss != NULL) {
+        const EVP_MD *md = NULL, *mgf1md = NULL;
+        int md_nid, mgf1md_nid, saltlen;
+        RSA_PSS_PARAMS_30 pss_params;
+
+        if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &saltlen))
+            goto err;
+        md_nid = EVP_MD_type(md);
+        mgf1md_nid = EVP_MD_type(mgf1md);
+        if (!rsa_pss_params_30_set_defaults(&pss_params)
+            || !rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
+            || !rsa_pss_params_30_set_maskgenhashalg(&pss_params, mgf1md_nid)
+            || !rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
+            || !rsa_pss_params_30_todata(&pss_params, propq, tmpl, NULL))
+            goto err;
+        selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
     }
 
     if ((params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
@@ -1133,31 +1151,104 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
-    sk_BIGNUM_const_free(primes);
-    sk_BIGNUM_const_free(exps);
-    sk_BIGNUM_const_free(coeffs);
     OSSL_PARAM_BLD_free_params(params);
     OSSL_PARAM_BLD_free(tmpl);
     return rv;
 }
 
-static int rsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
+static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
+                               int rsa_type)
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     RSA *rsa = rsa_new_with_ctx(pctx->libctx);
+    RSA_PSS_PARAMS_30 rsa_pss_params = { 0, };
+    int ok = 0;
 
     if (rsa == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
         return 0;
     }
 
-    if (!rsa_fromdata(rsa, params)
-        || !EVP_PKEY_assign_RSA(pkey, rsa)) {
-        RSA_free(rsa);
-        return 0;
+    RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+    RSA_set_flags(rsa, rsa_type);
+
+    if (!rsa_pss_params_30_fromdata(&rsa_pss_params, params, pctx->libctx))
+        goto err;
+
+    switch (rsa_type) {
+    case RSA_FLAG_TYPE_RSA:
+        /*
+         * Were PSS parameters filled in?
+         * In that case, something's wrong
+         */
+        if (!rsa_pss_params_30_is_unrestricted(&rsa_pss_params))
+            goto err;
+        break;
+    case RSA_FLAG_TYPE_RSASSAPSS:
+        /*
+         * Were PSS parameters filled in?  In that case, create the old
+         * RSA_PSS_PARAMS structure.  Otherwise, this is an unrestricted key.
+         */
+        if (!rsa_pss_params_30_is_unrestricted(&rsa_pss_params)) {
+            /* Create the older RSA_PSS_PARAMS from RSA_PSS_PARAMS_30 data */
+            int mdnid = rsa_pss_params_30_hashalg(&rsa_pss_params);
+            int mgf1mdnid = rsa_pss_params_30_maskgenhashalg(&rsa_pss_params);
+            int saltlen = rsa_pss_params_30_saltlen(&rsa_pss_params);
+            const EVP_MD *md = EVP_get_digestbynid(mdnid);
+            const EVP_MD *mgf1md = EVP_get_digestbynid(mgf1mdnid);
+
+            if ((rsa->pss = rsa_pss_params_create(md, mgf1md, saltlen)) == NULL)
+                goto err;
+        }
+        break;
+    default:
+        /* RSA key sub-types we don't know how to handle yet */
+        goto err;
     }
-    return 1;
+
+    if (!rsa_fromdata(rsa, params))
+        goto err;
+
+    switch (rsa_type) {
+    case RSA_FLAG_TYPE_RSA:
+        ok = EVP_PKEY_assign_RSA(pkey, rsa);
+        break;
+    case RSA_FLAG_TYPE_RSASSAPSS:
+        ok = EVP_PKEY_assign_RSA_PSS(pkey, rsa);
+        break;
+    }
+
+ err:
+    if (!ok)
+        RSA_free(rsa);
+    return ok;
+}
+
+static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                              const char *propq)
+{
+    return rsa_int_export_to(from, RSA_FLAG_TYPE_RSA, to_keydata,
+                             to_keymgmt, libctx, propq);
+}
+
+static int rsa_pss_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
+                                  EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                                  const char *propq)
+{
+    return rsa_int_export_to(from, RSA_FLAG_TYPE_RSASSAPSS, to_keydata,
+                             to_keymgmt, libctx, propq);
+}
+
+static int rsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
+{
+    return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSA);
+}
+
+static int rsa_pss_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
+{
+    return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
 const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2] = {
@@ -1244,6 +1335,6 @@ const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth = {
      0, 0, 0, 0,
 
      rsa_pkey_dirty_cnt,
-     rsa_pkey_export_to,
-     rsa_pkey_import_from
+     rsa_pss_pkey_export_to,
+     rsa_pss_pkey_import_from
 };
