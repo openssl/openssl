@@ -107,6 +107,24 @@ extern "C" {
 #   define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME
 #  endif
 
+/*-
+ * New with 3.0: use part of the flags to denote exact type of RSA key,
+ * some of which are limited to specific signature and encryption schemes.
+ * These different types share the same RSA structure, but indicate the
+ * use of certain fields in that structure.
+ * Currently known are:
+ * RSA          - this is the "normal" unlimited RSA structure (typenum 0)
+ * RSASSA-PSS   - indicates that the PSS parameters are used.
+ * RSAES-OAEP   - no specific field used for the moment, but OAEP padding
+ *                is expected.  (currently unused)
+ *
+ * 4 bits allow for 16 types
+ */
+#  define RSA_FLAG_TYPE_MASK            0xF000
+#  define RSA_FLAG_TYPE_RSA             0x0000
+#  define RSA_FLAG_TYPE_RSASSAPSS       0x1000
+#  define RSA_FLAG_TYPE_RSAESOAEP       0x2000
+
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode);
 int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode);
 
