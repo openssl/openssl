@@ -162,7 +162,6 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
-    /* TODO(3.0): Support PSS in FIPS_MODULE */
 #ifndef FIPS_MODULE
     RSA_PSS_PARAMS_free(r->pss);
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
@@ -637,7 +636,17 @@ const BIGNUM *RSA_get0_iqmp(const RSA *r)
 
 const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 {
+#ifdef FIPS_MODULE
+    return NULL;
+#else
     return r->pss;
+#endif
+}
+
+/* Internal */
+RSA_PSS_PARAMS_30 *rsa_get0_pss_params_30(RSA *r)
+{
+    return &r->pss_params;
 }
 
 void RSA_clear_flags(RSA *r, int flags)
