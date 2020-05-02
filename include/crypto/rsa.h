@@ -21,6 +21,8 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
 int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
                         STACK_OF(BIGNUM_const) *exps,
                         STACK_OF(BIGNUM_const) *coeffs);
+
+int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[]);
 
 int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *ctx, unsigned char *to,

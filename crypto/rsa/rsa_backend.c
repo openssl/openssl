@@ -97,3 +97,52 @@ int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[])
     return 0;
 }
 
+DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
+
+int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
+{
+    int ret = 0;
+    const BIGNUM *rsa_d = NULL, *rsa_n = NULL, *rsa_e = NULL;
+    STACK_OF(BIGNUM_const) *factors = sk_BIGNUM_const_new_null();
+    STACK_OF(BIGNUM_const) *exps = sk_BIGNUM_const_new_null();
+    STACK_OF(BIGNUM_const) *coeffs = sk_BIGNUM_const_new_null();
+
+    if (rsa == NULL || factors == NULL || exps == NULL || coeffs == NULL)
+        goto err;
+
+    RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
+    rsa_get0_all_params(rsa, factors, exps, coeffs);
+
+    /* Check private key data integrity */
+    if (rsa_d != NULL) {
+        int numprimes = sk_BIGNUM_const_num(factors);
+        int numexps = sk_BIGNUM_const_num(exps);
+        int numcoeffs = sk_BIGNUM_const_num(coeffs);
+
+        /*
+         * It's permisssible to have zero primes, i.e. no CRT params.
+         * Otherwise, there must be at least two, as many exponents,
+         * and one coefficient less.
+         */
+        if (numprimes != 0
+            && (numprimes < 2 || numexps < 2 || numcoeffs < 1))
+            goto err;
+    }
+
+    if (!ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_N, rsa_n)
+        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_E, rsa_e)
+        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_D, rsa_d)
+        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_factor_names,
+                                              factors)
+        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_exp_names,
+                                              exps)
+        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_coeff_names,
+                                              coeffs))
+        goto err;
+    ret = 1;
+ err:
+    sk_BIGNUM_const_free(factors);
+    sk_BIGNUM_const_free(exps);
+    sk_BIGNUM_const_free(coeffs);
+    return ret;
+}
