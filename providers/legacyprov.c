@@ -79,8 +79,8 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
 #ifndef OPENSSL_NO_CAST
     ALG("CAST5-ECB", cast5128ecb_functions),
     ALG("CAST5-CBC:CAST-CBC:CAST", cast5128cbc_functions),
-    ALG("CAST5-OFB", cast564ofb64_functions),
-    ALG("CAST5-CFB", cast564cfb64_functions),
+    ALG("CAST5-OFB", cast5128ofb64_functions),
+    ALG("CAST5-CFB", cast5128cfb64_functions),
 #endif /* OPENSSL_NO_CAST */
 #ifndef OPENSSL_NO_BF
     ALG("BF-ECB", blowfish128ecb_functions),

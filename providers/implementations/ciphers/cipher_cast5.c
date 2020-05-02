@@ -49,7 +49,7 @@ static void *cast5_dupctx(void *ctx)
 IMPLEMENT_var_keylen_cipher(cast5, CAST, ecb, ECB, CAST5_FLAGS, 128, 64, 0, block)
 /* cast5128cbc_functions */
 IMPLEMENT_var_keylen_cipher(cast5, CAST, cbc, CBC, CAST5_FLAGS, 128, 64, 64, block)
-/* cast564ofb64_functions */
-IMPLEMENT_var_keylen_cipher(cast5, CAST, ofb64, OFB, CAST5_FLAGS, 64, 8, 64, stream)
-/* cast564cfb64_functions */
-IMPLEMENT_var_keylen_cipher(cast5, CAST, cfb64,  CFB, CAST5_FLAGS, 64, 8, 64, stream)
+/* cast5128ofb64_functions */
+IMPLEMENT_var_keylen_cipher(cast5, CAST, ofb64, OFB, CAST5_FLAGS, 128, 8, 64, stream)
+/* cast5128cfb64_functions */
+IMPLEMENT_var_keylen_cipher(cast5, CAST, cfb64,  CFB, CAST5_FLAGS, 128, 8, 64, stream)
