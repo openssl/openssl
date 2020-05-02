@@ -275,7 +275,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      */
     ERR_pop_to_mark();
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return 0;
 #else
     if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
@@ -323,7 +323,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
     return ctx->op.kex.exchange->set_peer(ctx->op.kex.exchprovctx, provkey);
 
  legacy:
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return ret;
 #else
     /*

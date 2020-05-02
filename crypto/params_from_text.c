@@ -157,7 +157,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
     *to = *paramdef;
     to->data = buf;
     to->data_size = buf_n;
-    to->return_size = 0;
+    to->return_size = OSSL_PARAM_UNMODIFIED;
 
     return 1;
 }

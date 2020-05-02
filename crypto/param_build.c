@@ -312,7 +312,7 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         param[i].key = pd->key;
         param[i].data_type = pd->type;
         param[i].data_size = pd->size;
-        param[i].return_size = 0;
+        param[i].return_size = OSSL_PARAM_UNMODIFIED;
 
         if (pd->secure) {
             p = secure;
@@ -361,14 +361,12 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
         if (s == NULL) {
             CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM,
                       CRYPTO_R_SECURE_MALLOC_FAILURE);
-            OPENSSL_free(bld);
             return NULL;
         }
     }
     params = OPENSSL_malloc(total);
     if (params == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(bld);
         OPENSSL_secure_free(s);
         return NULL;
     }

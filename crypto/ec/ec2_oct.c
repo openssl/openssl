@@ -43,7 +43,7 @@ int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
 {
     BIGNUM *tmp, *x, *y, *z;
     int ret = 0, z0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 
     /* clear error queue */
@@ -81,7 +81,7 @@ int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
         if (!BN_GF2m_add(tmp, x, tmp))
             goto err;
         if (!BN_GF2m_mod_solve_quad_arr(z, tmp, group->poly, ctx)) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
             unsigned long err = ERR_peek_last_error();
 
             if (ERR_GET_LIB(err) == ERR_LIB_BN
@@ -113,7 +113,7 @@ int ec_GF2m_simple_set_compressed_coordinates(const EC_GROUP *group,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -132,7 +132,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
     int used_ctx = 0;
     BIGNUM *x, *y, *yxi;
     size_t field_len, i, skip;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
@@ -168,7 +168,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
             goto err;
         }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         if (ctx == NULL) {
             ctx = new_ctx = BN_CTX_new();
             if (ctx == NULL)
@@ -236,7 +236,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 
     if (used_ctx)
         BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -244,7 +244,7 @@ size_t ec_GF2m_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
  err:
     if (used_ctx)
         BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return 0;
@@ -263,7 +263,7 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     BIGNUM *x, *y, *yxi;
     size_t field_len, enc_len;
     int ret = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
@@ -305,7 +305,7 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
         return 0;
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
@@ -358,7 +358,7 @@ int ec_GF2m_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;

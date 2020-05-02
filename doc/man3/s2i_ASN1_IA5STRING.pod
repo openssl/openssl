@@ -32,7 +32,7 @@ i2s_ASN1_ENUMERATED_TABLE,
 =head1 DESCRIPTION
 
 These functions convert OpenSSL objects to and from their ASN.1/string
-representation. This function is used for B<X509v3> extentions.
+representation. This function is used for B<X509v3> extensions.
 
 =head1 NOTES
 

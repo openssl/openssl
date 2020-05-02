@@ -18,7 +18,7 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 {
     BIGNUM *i, *j, *k, *l, *m;
@@ -228,7 +228,7 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
     BN_CTX_free(ctx);
     return ret;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 int rsa_validate_public(const RSA *key)
 {
@@ -242,7 +242,7 @@ int rsa_validate_private(const RSA *key)
 
 int rsa_validate_pairwise(const RSA *key)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key));
 #else
     return rsa_validate_keypair_multiprime(key, NULL);
@@ -256,11 +256,11 @@ int RSA_check_key(const RSA *key)
 
 int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return rsa_validate_public(key)
            && rsa_validate_private(key)
            && rsa_validate_pairwise(key);
 #else
     return rsa_validate_keypair_multiprime(key, cb);
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 }

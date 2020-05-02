@@ -36,7 +36,7 @@ int dsa_generate_ffc_parameters(DSA *dsa, int type,
             qbits = (pbits >= 2048 ? SHA256_DIGEST_LENGTH :
                                      SHA_DIGEST_LENGTH) * 8;
     }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (type == DSA_PARAMGEN_TYPE_FIPS_186_2)
         ret = ffc_params_FIPS186_2_generate(dsa->libctx, &dsa->params,
                                             FFC_PARAM_TYPE_DSA,
@@ -51,13 +51,13 @@ int dsa_generate_ffc_parameters(DSA *dsa, int type,
     return ret;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                const unsigned char *seed_in, int seed_len,
                                int *counter_ret, unsigned long *h_ret,
                                BN_GENCB *cb)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (dsa->meth->dsa_paramgen)
         return dsa->meth->dsa_paramgen(dsa, bits, seed_in, seed_len,
                                        counter_ret, h_ret, cb);
@@ -66,7 +66,7 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
         && !ffc_params_set_validate_params(&dsa->params, seed_in, seed_len, -1))
         return 0;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* The old code used FIPS 186-2 DSA Parameter generation */
     if (bits <= 1024 && seed_len == 20) {
         if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_2,

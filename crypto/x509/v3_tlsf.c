@@ -91,7 +91,7 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
 {
     TLS_FEATURE *tlsf;
     char *extval, *endptr;
-    ASN1_INTEGER *ai;
+    ASN1_INTEGER *ai = NULL;
     CONF_VALUE *val;
     int i;
     size_t j;
@@ -130,10 +130,13 @@ static TLS_FEATURE *v2i_TLS_FEATURE(const X509V3_EXT_METHOD *method,
             X509V3err(X509V3_F_V2I_TLS_FEATURE, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        /* So it doesn't get purged if an error occurs next time around */
+        ai = NULL;
     }
     return tlsf;
 
  err:
     sk_ASN1_INTEGER_pop_free(tlsf, ASN1_INTEGER_free);
+    ASN1_INTEGER_free(ai);
     return NULL;
 }

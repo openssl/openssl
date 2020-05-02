@@ -23,7 +23,7 @@ static CRYPTO_malloc_fn malloc_impl = CRYPTO_malloc;
 static CRYPTO_realloc_fn realloc_impl = CRYPTO_realloc;
 static CRYPTO_free_fn free_impl = CRYPTO_free;
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
 # include "internal/tsan_assist.h"
 
 static TSAN_QUALIFIER int malloc_count;
@@ -75,7 +75,7 @@ void CRYPTO_get_mem_functions(CRYPTO_malloc_fn *malloc_fn,
         *free_fn = free_impl;
 }
 
-#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_CRYPTO_MDEBUG) && !defined(FIPS_MODULE)
 void CRYPTO_get_alloc_counts(int *mcount, int *rcount, int *fcount)
 {
     if (mcount != NULL)

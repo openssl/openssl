@@ -176,7 +176,7 @@ err:
     return ok;
 }
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 /* In fips mode there are no multi-primes. */
 # define RSA_KEY_MP_TYPES()                                                    \
 OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_FACTOR1, NULL, 0),                           \
@@ -376,6 +376,7 @@ static void *rsa_gen_init(void *provctx, int selection)
         if ((gctx->pub_exp = BN_new()) == NULL
             || !BN_set_word(gctx->pub_exp, RSA_F4)) {
             BN_free(gctx->pub_exp);
+            OPENSSL_free(gctx);
             gctx = NULL;
         } else {
             gctx->nbits = 2048;

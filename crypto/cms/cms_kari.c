@@ -382,27 +382,27 @@ int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri,  X509 *recip, EVP_PKEY *r
         if (!cms_kari_create_ephemeral_key(kari, recipPubKey))
             return 0;
     } else {
-         /* Use originator key */
-         CMS_OriginatorIdentifierOrKey *oik = ri->d.kari->originator;
+        /* Use originator key */
+        CMS_OriginatorIdentifierOrKey *oik = ri->d.kari->originator;
 
-         if (originatorPrivKey == NULL && originator == NULL)
+        if (originatorPrivKey == NULL || originator == NULL)
             return 0;
 
-         if (flags & CMS_USE_ORIGINATOR_KEYID) {
-              oik->type = CMS_OIK_KEYIDENTIFIER;
-              oik->d.subjectKeyIdentifier = ASN1_OCTET_STRING_new();
-              if (oik->d.subjectKeyIdentifier == NULL)
-                   return 0;
-              if (!cms_set1_keyid(&oik->d.subjectKeyIdentifier, originator))
-                   return 0;
-         } else {
-              oik->type = CMS_REK_ISSUER_SERIAL;
-              if (!cms_set1_ias(&oik->d.issuerAndSerialNumber, originator))
-                   return 0;
-         }
+        if (flags & CMS_USE_ORIGINATOR_KEYID) {
+             oik->type = CMS_OIK_KEYIDENTIFIER;
+             oik->d.subjectKeyIdentifier = ASN1_OCTET_STRING_new();
+             if (oik->d.subjectKeyIdentifier == NULL)
+                  return 0;
+             if (!cms_set1_keyid(&oik->d.subjectKeyIdentifier, originator))
+                  return 0;
+        } else {
+             oik->type = CMS_REK_ISSUER_SERIAL;
+             if (!cms_set1_ias(&oik->d.issuerAndSerialNumber, originator))
+                  return 0;
+        }
 
-         if (!cms_kari_set_originator_private_key(kari, originatorPrivKey))
-             return 0;
+        if (!cms_kari_set_originator_private_key(kari, originatorPrivKey))
+            return 0;
     }
 
     EVP_PKEY_up_ref(recipPubKey);
@@ -415,7 +415,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
 {
     EVP_CIPHER_CTX *ctx = kari->ctx;
     const EVP_CIPHER *kekcipher;
-    int keylen = EVP_CIPHER_key_length(cipher);
+    int keylen;
     int ret;
 
     /* If a suitable wrap algorithm is already set nothing to do */
@@ -425,8 +425,10 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
             return 0;
         return 1;
     }
-    else if (cipher != NULL
-         && (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER)) {
+    if (cipher == NULL)
+        return 0;
+    keylen = EVP_CIPHER_key_length(cipher);
+    if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER) != 0) {
         ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
                                                0, &kekcipher);
         if (ret <= 0)

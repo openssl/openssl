@@ -192,7 +192,7 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label);
 
 RSA *RSA_new(void);
 DEPRECATEDIN_3_0(RSA *RSA_new_method(ENGINE *engine))
-DEPRECATEDIN_3_0(int RSA_bits(const RSA *rsa))
+int RSA_bits(const RSA *rsa);
 DEPRECATEDIN_3_0(int RSA_size(const RSA *rsa))
 DEPRECATEDIN_3_0(int RSA_security_bits(const RSA *rsa))
 

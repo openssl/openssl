@@ -21,11 +21,11 @@
 # libfips.a             Contains all things needed to support
 #                       FIPS implementations, such as code from
 #                       crypto/ and object files that contain
-#                       FIPS-specific code.  FIPS_MODE is defined
+#                       FIPS-specific code.  FIPS_MODULE is defined
 #                       for this library.  The FIPS module uses
 #                       this.
 # libnonfips.a          Corresponds to libfips.a, but built with
-#                       FIPS_MODE undefined.  The default and legacy
+#                       FIPS_MODULE undefined.  The default and legacy
 #                       providers use this.
 
 SUBDIRS=common implementations
@@ -50,7 +50,7 @@ INCLUDE[$LIBIMPLEMENTATIONS]=.. $COMMON_INCLUDES
 INCLUDE[$LIBLEGACY]=.. $COMMON_INCLUDES
 INCLUDE[$LIBNONFIPS]=$COMMON_INCLUDES
 INCLUDE[$LIBFIPS]=.. $COMMON_INCLUDES
-DEFINE[$LIBFIPS]=FIPS_MODE
+DEFINE[$LIBFIPS]=FIPS_MODULE
 
 # Weak dependencies to provide library order information.
 # We make it weak so they aren't both used always; what is
@@ -101,7 +101,7 @@ SUBDIRS=fips
 $FIPSGOAL=fips
 DEPEND[$FIPSGOAL]=$LIBIMPLEMENTATIONS $LIBFIPS
 INCLUDE[$FIPSGOAL]=../include
-DEFINE[$FIPSGOAL]=FIPS_MODE
+DEFINE[$FIPSGOAL]=FIPS_MODULE
 IF[{- defined $target{shared_defflag} -}]
   SOURCE[$FIPSGOAL]=fips.ld
   GENERATE[fips.ld]=../util/providers.num

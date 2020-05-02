@@ -40,6 +40,7 @@ CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
             CTerr(0, ERR_R_MALLOC_FAILURE);
+            OPENSSL_free(ctx);
             return NULL;
         }
     }

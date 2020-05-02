@@ -44,7 +44,7 @@ int DH_check_params_ex(const DH *dh)
     return errflags == 0;
 }
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 int DH_check_params(const DH *dh, int *ret)
 {
     int nid;
@@ -102,7 +102,7 @@ int DH_check_params(const DH *dh, int *ret)
     BN_CTX_free(ctx);
     return ok;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 /*-
  * Check that p is a safe prime and
@@ -140,7 +140,7 @@ int DH_check_ex(const DH *dh)
 /* Note: according to documentation - this only checks the params */
 int DH_check(const DH *dh, int *ret)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return DH_check_params(dh, ret);
 #else
     int ok = 0, r;
@@ -210,7 +210,7 @@ int DH_check(const DH *dh, int *ret)
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     return ok;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 }
 
 int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)

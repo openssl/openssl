@@ -17,7 +17,7 @@
 #include "rand_local.h"
 #include "e_os.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_ENGINE
 /* non-NULL if default_RAND_meth is ENGINE-provided */
 static ENGINE *funct_ref;
@@ -28,7 +28,7 @@ static const RAND_METHOD *default_RAND_meth;
 static CRYPTO_ONCE rand_init = CRYPTO_ONCE_STATIC_INIT;
 
 static int rand_inited = 0;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
@@ -238,7 +238,7 @@ void rand_drbg_cleanup_additional_data(RAND_POOL *pool, unsigned char *out)
     rand_pool_reattach(pool, out);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 DEFINE_RUN_ONCE_STATIC(do_rand_init)
 {
 # ifndef OPENSSL_NO_ENGINE
@@ -354,7 +354,7 @@ int RAND_poll(void)
 
     return ret;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 /*
  * Allocate memory and initialize a new random pool
@@ -753,7 +753,7 @@ int rand_pool_add_end(RAND_POOL *pool, size_t len, size_t entropy)
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int RAND_set_rand_method(const RAND_METHOD *meth)
 {
     if (!RUN_ONCE(&rand_init, do_rand_init))
@@ -772,7 +772,7 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
 
 const RAND_METHOD *RAND_get_rand_method(void)
 {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return NULL;
 #else
     const RAND_METHOD *tmp_meth = NULL;
@@ -804,7 +804,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
 #endif
 }
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
 int RAND_set_rand_engine(ENGINE *engine)
 {
     const RAND_METHOD *tmp_meth = NULL;
@@ -899,7 +899,7 @@ int RAND_bytes(unsigned char *buf, int num)
     return RAND_bytes_ex(NULL, buf, num);
 }
 
-#if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODULE)
 int RAND_pseudo_bytes(unsigned char *buf, int num)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();

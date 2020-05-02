@@ -27,7 +27,7 @@
 
 static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 int DSA_set_ex_data(DSA *d, int idx, void *arg)
 {
@@ -124,7 +124,7 @@ int DSA_set_method(DSA *dsa, const DSA_METHOD *meth)
         meth->init(dsa);
     return 1;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 
 const DSA_METHOD *DSA_get_method(DSA *d)
@@ -151,7 +151,7 @@ static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 
     ret->libctx = libctx;
     ret->meth = DSA_get_default_method();
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW; /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -172,7 +172,7 @@ static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!crypto_new_ex_data_ex(libctx, CRYPTO_EX_INDEX_DSA, ret, &ret->ex_data))
         goto err;
 #endif
@@ -199,7 +199,7 @@ DSA *dsa_new_with_ctx(OPENSSL_CTX *libctx)
     return dsa_new_intern(NULL, libctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 DSA *DSA_new(void)
 {
     return dsa_new_intern(NULL, NULL);
@@ -221,11 +221,11 @@ void DSA_free(DSA *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(r->engine);
 #endif
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_DSA, r, &r->ex_data);
 #endif
 
@@ -430,7 +430,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_bits(EVP_PKEY_CTX *ctx, int nbits)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
@@ -452,7 +452,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_q_bits(EVP_PKEY_CTX *ctx, int qbits)
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DSA,  EVP_PKEY_OP_PARAMGEN,
@@ -475,7 +475,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
     if ((ret = dsa_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL) {
         const EVP_MD *md = EVP_get_digestbyname(md_name);
@@ -495,7 +495,7 @@ int EVP_PKEY_CTX_set_dsa_paramgen_md_props(EVP_PKEY_CTX *ctx,
     return EVP_PKEY_CTX_set_params(ctx, params);
 }
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
 int EVP_PKEY_CTX_set_dsa_paramgen_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
 {
     const char *md_name = (md == NULL) ? "" : EVP_MD_name(md);

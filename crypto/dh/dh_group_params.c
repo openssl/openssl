@@ -59,7 +59,7 @@ static const DH_NAMED_GROUP dh_named_groups[] = {
     FFDHE(4096),
     FFDHE(6144),
     FFDHE(8192),
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     MODP(1536),
 #endif
     MODP(2048),
@@ -71,7 +71,7 @@ static const DH_NAMED_GROUP dh_named_groups[] = {
      * Additional dh named groups from RFC 5114 that have a different g.
      * The uid can be any unique identifier.
      */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     RFC5114("dh_1024_160", 1, 1024, 1024_160),
     RFC5114("dh_2048_224", 2, 2048, 2048_224),
     RFC5114("dh_2048_256", 3, 2048, 2048_256),

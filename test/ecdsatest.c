@@ -123,10 +123,10 @@ static int x9_62_tests(int n)
 
     TEST_info("ECDSA KATs for curve %s", OBJ_nid2sn(nid));
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     if (EC_curve_nid2nist(nid) == NULL)
         return TEST_skip("skip non approved curves");
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     if (!TEST_ptr(mctx = EVP_MD_CTX_new())
         /* get the message digest */

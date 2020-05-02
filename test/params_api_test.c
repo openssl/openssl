@@ -69,7 +69,11 @@ static int test_param_type_extra(OSSL_PARAM *param, const unsigned char *cmp,
     const int sizet = bit32 && sizeof(size_t) > sizeof(int32_t);
     const int signd = param->data_type == OSSL_PARAM_INTEGER;
 
-    OSSL_PARAM_set_unmodified(param);
+    /*
+     * Set the unmodified sentinal directly because there is no param array
+     * for these tests.
+     */
+    param->return_size = OSSL_PARAM_UNMODIFIED;
     if (signd) {
         if ((bit32 && !TEST_true(OSSL_PARAM_get_int32(param, &i32)))
             || !TEST_true(OSSL_PARAM_get_int64(param, &i64)))
@@ -568,6 +572,33 @@ err:
     return ret;
 }
 
+static int test_param_modified(void)
+{
+    OSSL_PARAM param[3] = { OSSL_PARAM_int("a", NULL),
+                            OSSL_PARAM_int("b", NULL),
+                            OSSL_PARAM_END };
+    int a, b;
+
+    param->data = &a;
+    param[1].data = &b;
+    if (!TEST_false(OSSL_PARAM_modified(param))
+            && !TEST_true(OSSL_PARAM_set_int32(param, 1234))
+            && !TEST_true(OSSL_PARAM_modified(param))
+            && !TEST_false(OSSL_PARAM_modified(param + 1))
+            && !TEST_true(OSSL_PARAM_set_int32(param + 1, 1))
+            && !TEST_true(OSSL_PARAM_modified(param + 1)))
+        return 0;
+    OSSL_PARAM_set_all_unmodified(param);
+    if (!TEST_false(OSSL_PARAM_modified(param))
+            && !TEST_true(OSSL_PARAM_set_int32(param, 4321))
+            && !TEST_true(OSSL_PARAM_modified(param))
+            && !TEST_false(OSSL_PARAM_modified(param + 1))
+            && !TEST_true(OSSL_PARAM_set_int32(param + 1, 2))
+            && !TEST_true(OSSL_PARAM_modified(param + 1)))
+        return 0;
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_param_int, OSSL_NELEM(raw_values));
@@ -582,5 +613,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_bignum, OSSL_NELEM(raw_values));
     ADD_TEST(test_param_real);
     ADD_TEST(test_param_construct);
+    ADD_TEST(test_param_modified);
     return 1;
 }

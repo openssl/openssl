@@ -138,7 +138,7 @@ int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                              size_t used_len);
 
 int OSSL_PARAM_modified(const OSSL_PARAM *p);
-void OSSL_PARAM_set_unmodified(OSSL_PARAM *p);
+void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p);
 
 # ifdef  __cplusplus
 }

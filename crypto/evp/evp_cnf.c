@@ -19,7 +19,6 @@ DEFINE_STACK_OF(CONF_VALUE)
 
 /* Algorithm configuration module. */
 
-/* TODO(3.0): the config module functions should be passed a library context */
 static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 {
     int i;
@@ -46,14 +45,17 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
             }
             /*
              * fips_mode is deprecated and should not be used in new
-             * configurations.  Old configurations are likely to ONLY
-             * have this, so we assume that no default properties have
-             * been set before this.
+             * configurations.
              */
-            if (m > 0)
-                EVP_set_default_properties(NULL, "fips=yes");
+            if (!EVP_default_properties_enable_fips(cnf->libctx, m > 0)) {
+                EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
+                return 0;
+            }
         } else if (strcmp(oval->name, "default_properties") == 0) {
-            EVP_set_default_properties(NULL, oval->value);
+            if (!EVP_set_default_properties(cnf->libctx, oval->value)) {
+                EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
+                return 0;
+            }
         } else {
             EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_UNKNOWN_OPTION);
             ERR_add_error_data(4, "name=", oval->name,

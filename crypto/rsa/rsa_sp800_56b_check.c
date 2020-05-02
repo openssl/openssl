@@ -2,7 +2,7 @@
  * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2018-2019, Oracle and/or its affiliates.  All rights reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -238,7 +238,7 @@ int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
 int rsa_sp800_56b_check_public(const RSA *rsa)
 {
     int ret = 0, status;
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     int nbits;
 #endif
     BN_CTX *ctx = NULL;
@@ -247,7 +247,7 @@ int rsa_sp800_56b_check_public(const RSA *rsa)
     if (rsa->n == NULL || rsa->e == NULL)
         return 0;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     /*
      * (Step a): modulus must be 2048 or 3072 (caveat from SP800-56Br1)
      * NOTE: changed to allow keys >= 2048

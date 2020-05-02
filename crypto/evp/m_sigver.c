@@ -16,7 +16,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
 {
@@ -317,11 +317,13 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
                                                       data, dsize);
 
  legacy:
-    /* do_sigver_init() checked that |digest_custom| is non-NULL */
-    if (pctx->flag_call_digest_custom
-        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
-        return 0;
-    pctx->flag_call_digest_custom = 0;
+    if (pctx != NULL) {
+        /* do_sigver_init() checked that |digest_custom| is non-NULL */
+        if (pctx->flag_call_digest_custom
+            && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
+            return 0;
+        pctx->flag_call_digest_custom = 0;
+    }
 
     return EVP_DigestUpdate(ctx, data, dsize);
 }
@@ -345,16 +347,18 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
                                                         data, dsize);
 
  legacy:
-    /* do_sigver_init() checked that |digest_custom| is non-NULL */
-    if (pctx->flag_call_digest_custom
-        && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
-        return 0;
-    pctx->flag_call_digest_custom = 0;
+    if (pctx != NULL) {
+        /* do_sigver_init() checked that |digest_custom| is non-NULL */
+        if (pctx->flag_call_digest_custom
+            && !ctx->pctx->pmeth->digest_custom(ctx->pctx, ctx))
+            return 0;
+        pctx->flag_call_digest_custom = 0;
+    }
 
     return EVP_DigestUpdate(ctx, data, dsize);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                         size_t *siglen)
 {
@@ -550,4 +554,4 @@ int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
         return -1;
     return EVP_DigestVerifyFinal(ctx, sigret, siglen);
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */

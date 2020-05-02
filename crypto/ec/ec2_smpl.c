@@ -182,7 +182,7 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
 {
     int ret = 0;
     BIGNUM *b;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 
     if (ctx == NULL) {
@@ -213,7 +213,7 @@ int ec_GF2m_simple_group_check_discriminant(const EC_GROUP *group,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -361,7 +361,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 {
     BIGNUM *x0, *y0, *x1, *y1, *x2, *y2, *s, *t;
     int ret = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
@@ -377,7 +377,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
         return 1;
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
@@ -467,7 +467,7 @@ int ec_GF2m_simple_add(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -514,7 +514,7 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     int (*field_mul) (const EC_GROUP *, BIGNUM *, const BIGNUM *,
                       const BIGNUM *, BN_CTX *);
     int (*field_sqr) (const EC_GROUP *, BIGNUM *, const BIGNUM *, BN_CTX *);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
@@ -528,7 +528,7 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
     if (!point->Z_is_one)
         return -1;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
@@ -566,7 +566,7 @@ int ec_GF2m_simple_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -584,7 +584,7 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 {
     BIGNUM *aX, *aY, *bX, *bY;
     int ret = -1;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
@@ -599,7 +599,7 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
         return ((BN_cmp(a->X, b->X) == 0) && BN_cmp(a->Y, b->Y) == 0) ? 0 : 1;
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
@@ -623,7 +623,7 @@ int ec_GF2m_simple_cmp(const EC_GROUP *group, const EC_POINT *a,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
@@ -635,14 +635,14 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
 {
     BIGNUM *x, *y;
     int ret = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
 
     if (point->Z_is_one || EC_POINT_is_at_infinity(group, point))
         return 1;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new();
         if (ctx == NULL)
@@ -670,7 +670,7 @@ int ec_GF2m_simple_make_affine(const EC_GROUP *group, EC_POINT *point,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;

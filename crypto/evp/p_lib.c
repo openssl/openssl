@@ -47,7 +47,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt);
 static void evp_pkey_free_it(EVP_PKEY *key);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 /* The type of parameters selected in key parameter functions */
 # define SELECT_PARAMETERS OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
@@ -230,9 +230,11 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
      * us to compare types using legacy NIDs.
      */
     if ((a->type != EVP_PKEY_NONE
-         && !EVP_KEYMGMT_is_a(b->keymgmt, OBJ_nid2sn(a->type)))
+         && (b->keymgmt == NULL
+             || !EVP_KEYMGMT_is_a(b->keymgmt, OBJ_nid2sn(a->type))))
         || (b->type != EVP_PKEY_NONE
-            && !EVP_KEYMGMT_is_a(a->keymgmt, OBJ_nid2sn(b->type))))
+            && (a->keymgmt == NULL
+                || !EVP_KEYMGMT_is_a(a->keymgmt, OBJ_nid2sn(b->type)))))
         return -1;               /* not the same key type */
 
     /*
@@ -656,9 +658,9 @@ DSA *EVP_PKEY_get1_DSA(EVP_PKEY *pkey)
     return ret;
 }
 # endif /*  OPENSSL_NO_DSA */
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # ifndef OPENSSL_NO_EC
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, EC_KEY *key)
 {
@@ -752,7 +754,7 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
 
 int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (pkey->keymgmt == NULL) {
         /*
          * These hard coded cases are pure hackery to get around the fact
@@ -1064,9 +1066,9 @@ size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
     return rv;
 }
 
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
-/*- All methods below can also be used in FIPS_MODE */
+/*- All methods below can also be used in FIPS_MODULE */
 
 EVP_PKEY *EVP_PKEY_new(void)
 {
@@ -1085,7 +1087,7 @@ EVP_PKEY *EVP_PKEY_new(void)
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -1115,7 +1117,7 @@ EVP_PKEY *EVP_PKEY_new(void)
 static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
                          int len, EVP_KEYMGMT *keymgmt)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     const EVP_PKEY_ASN1_METHOD *ameth = NULL;
     ENGINE **eptr = (e == NULL) ? &e :  NULL;
 #endif
@@ -1133,13 +1135,13 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     if (pkey != NULL) {
         int free_it = 0;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         free_it = free_it || pkey->pkey.ptr != NULL;
 #endif
         free_it = free_it || pkey->keydata != NULL;
         if (free_it)
             evp_pkey_free_it(pkey);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         /*
          * If key type matches and a method exists then this lookup has
          * succeeded once so just indicate success.
@@ -1157,7 +1159,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 # endif
 #endif
     }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (str != NULL)
         ameth = EVP_PKEY_asn1_find_str(eptr, str, len);
     else if (type != EVP_PKEY_NONE)
@@ -1172,7 +1174,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     {
         int check = 1;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         check = check && ameth == NULL;
 #endif
         check = check && keymgmt == NULL;
@@ -1192,7 +1194,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         pkey->save_type = type;
         pkey->type = type;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         /*
          * If the internal "origin" key is provider side, don't save |ameth|.
          * The main reason is that |ameth| is one factor to detect that the
@@ -1210,16 +1212,18 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
          * to the |save_type| field, because |type| is supposed to be set
          * to EVP_PKEY_NONE in that case.
          */
-        if (keymgmt != NULL)
-            pkey->save_type = ameth->pkey_id;
-        else if (pkey->ameth != NULL)
-            pkey->type = ameth->pkey_id;
+        if (ameth != NULL) {
+            if (keymgmt != NULL)
+                pkey->save_type = ameth->pkey_id;
+            else if (pkey->ameth != NULL)
+                pkey->type = ameth->pkey_id;
+        }
 #endif
     }
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static void find_ameth(const char *name, void *data)
 {
     const char **str = data;
@@ -1244,7 +1248,7 @@ static void find_ameth(const char *name, void *data)
 
 int EVP_PKEY_set_type_by_keymgmt(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 # define EVP_PKEY_TYPE_STR str[0]
 # define EVP_PKEY_TYPE_STRLEN (str[0] == NULL ? -1 : (int)strlen(str[0]))
     /*
@@ -1283,7 +1287,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
     return ((i > 1) ? 1 : 0);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 void evp_pkey_free_legacy(EVP_PKEY *x)
 {
     if (x->ameth != NULL) {
@@ -1299,14 +1303,14 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
 # endif
     x->type = EVP_PKEY_NONE;
 }
-#endif  /* FIPS_MODE */
+#endif  /* FIPS_MODULE */
 
 static void evp_pkey_free_it(EVP_PKEY *x)
 {
     /* internal function; x is never NULL */
 
     evp_keymgmt_util_clear_operation_cache(x);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     evp_pkey_free_legacy(x);
 #endif
 
@@ -1331,11 +1335,11 @@ void EVP_PKEY_free(EVP_PKEY *x)
         return;
     REF_ASSERT_ISNT(i < 0);
     evp_pkey_free_it(x);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, x, &x->ex_data);
 #endif
     CRYPTO_THREAD_lock_free(x->lock);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     sk_X509_ATTRIBUTE_pop_free(x->attributes, X509_ATTRIBUTE_free);
 #endif
     OPENSSL_free(x);
@@ -1347,7 +1351,7 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
 
     if (pkey != NULL) {
         size = pkey->cache.size;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         if (pkey->ameth != NULL && pkey->ameth->pkey_size != NULL)
             size = pkey->ameth->pkey_size(pkey);
 #endif
@@ -1369,14 +1373,14 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 
     /* No key data => nothing to export */
     check = 1;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     check = check && pk->pkey.ptr == NULL;
 #endif
     check = check && pk->keydata == NULL;
     if (check)
         return NULL;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         /*
          * If the legacy key doesn't have an dirty counter or export function,
@@ -1408,7 +1412,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     if (tmp_keymgmt == NULL)
         goto end;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         size_t i = 0;
 
@@ -1480,7 +1484,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
         pk->dirty_cnt_copy = pk->ameth->dirty_cnt(pk);
         goto end;
     }
-#endif  /* FIPS_MODE */
+#endif  /* FIPS_MODULE */
 
     keydata = evp_keymgmt_util_export_to_provider(pk, tmp_keymgmt);
 
@@ -1500,7 +1504,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
     return keydata;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int evp_pkey_downgrade(EVP_PKEY *pk)
 {
     EVP_KEYMGMT *keymgmt = pk->keymgmt;
@@ -1606,7 +1610,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
     evp_keymgmt_util_cache_keyinfo(pk);
     return 0;     /* No downgrade, but at least the key is restored */
 }
-#endif  /* FIPS_MODE */
+#endif  /* FIPS_MODULE */
 
 const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
 {
@@ -1617,23 +1621,11 @@ const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
     return evp_keymgmt_gettable_params(pkey->keymgmt);
 }
 
-/*
- * For the following methods param->return_size is set to a value
- * larger than can be returned by the call to evp_keymgmt_get_params().
- * If it is still this value then the parameter was ignored - and in this
- * case it returns an error..
- */
-
 int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
 {
     int ret = 0;
     OSSL_PARAM params[2];
     unsigned char buffer[2048];
-    /*
-     * Use -1 as the terminator here instead of sizeof(buffer) + 1 since
-     * -1 is less likely to be a valid value.
-     */
-    const size_t not_set = (size_t)-1;
     unsigned char *buf = NULL;
     size_t buf_sz = 0;
 
@@ -1646,12 +1638,9 @@ int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
 
     memset(buffer, 0, sizeof(buffer));
     params[0] = OSSL_PARAM_construct_BN(key_name, buffer, sizeof(buffer));
-    /* If the return_size is still not_set then we know it was not found */
-    params[0].return_size = not_set;
     params[1] = OSSL_PARAM_construct_end();
     if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)) {
-        if (params[0].return_size == not_set
-            || params[0].return_size == 0)
+        if (!OSSL_PARAM_modified(params) || params[0].return_size == 0)
             return 0;
         buf_sz = params[0].return_size;
         /*
@@ -1668,7 +1657,7 @@ int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
             goto err;
     }
     /* Fail if the param was not found */
-    if (params[0].return_size == not_set)
+    if (!OSSL_PARAM_modified(params))
         goto err;
     ret = OSSL_PARAM_get_BN(params, bn);
 err:
@@ -1681,7 +1670,6 @@ int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
                                     size_t *out_sz)
 {
     OSSL_PARAM params[2];
-    const size_t not_set = max_buf_sz + 1;
 
     if (pkey == NULL
         || pkey->keymgmt == NULL
@@ -1690,11 +1678,9 @@ int EVP_PKEY_get_octet_string_param(EVP_PKEY *pkey, const char *key_name,
         return 0;
 
     params[0] = OSSL_PARAM_construct_octet_string(key_name, buf, max_buf_sz);
-    params[0].return_size = not_set;
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
-        return 0;
-    if (params[0].return_size == not_set)
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     if (out_sz != NULL)
         *out_sz = params[0].return_size;
@@ -1706,7 +1692,6 @@ int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
                                     size_t *out_sz)
 {
     OSSL_PARAM params[2];
-    const size_t not_set = max_buf_sz + 1;
 
     if (pkey == NULL
         || pkey->keymgmt == NULL
@@ -1715,11 +1700,9 @@ int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
         return 0;
 
     params[0] = OSSL_PARAM_construct_utf8_string(key_name, str, max_buf_sz);
-    params[0].return_size = not_set;
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
-        return 0;
-    if (params[0].return_size == not_set)
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     if (out_sz != NULL)
         *out_sz = params[0].return_size;
@@ -1729,7 +1712,6 @@ int EVP_PKEY_get_utf8_string_param(EVP_PKEY *pkey, const char *key_name,
 int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out)
 {
     OSSL_PARAM params[2];
-    const size_t not_set = sizeof(int) + 1;
 
     if (pkey == NULL
         || pkey->keymgmt == NULL
@@ -1738,11 +1720,9 @@ int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out)
         return 0;
 
     params[0] = OSSL_PARAM_construct_int(key_name, out);
-    params[0].return_size = not_set;
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
-        return 0;
-    if (params[0].return_size == not_set)
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return 1;
 }
@@ -1750,7 +1730,6 @@ int EVP_PKEY_get_int_param(EVP_PKEY *pkey, const char *key_name, int *out)
 int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out)
 {
     OSSL_PARAM params[2];
-    const size_t not_set = sizeof(size_t) + 1;
 
     if (pkey == NULL
         || pkey->keymgmt == NULL
@@ -1759,11 +1738,9 @@ int EVP_PKEY_get_size_t_param(EVP_PKEY *pkey, const char *key_name, size_t *out)
         return 0;
 
     params[0] = OSSL_PARAM_construct_size_t(key_name, out);
-    params[0].return_size = not_set;
     params[1] = OSSL_PARAM_construct_end();
-    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
-        return 0;
-    if (params[0].return_size == not_set)
+    if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params)
+        || !OSSL_PARAM_modified(params))
         return 0;
     return 1;
 }

@@ -63,11 +63,8 @@ int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
         ffc->pcounter = i;
     }
     prm = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_COFACTOR);
-    if (prm != NULL) {
-        if (!OSSL_PARAM_get_BN(prm, &j))
-            goto err;
-        j = NULL;
-    }
+    if (prm != NULL && !OSSL_PARAM_get_BN(prm, &j))
+        goto err;
     prm = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_H);
     if (prm != NULL) {
         if (!OSSL_PARAM_get_int(prm, &i))

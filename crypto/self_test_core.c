@@ -55,7 +55,7 @@ static SELF_TEST_CB *get_self_test_callback(OPENSSL_CTX *libctx)
                                 &self_test_set_callback_method);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 void OSSL_SELF_TEST_set_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK *cb,
                                  void *cbarg)
 {
@@ -66,7 +66,7 @@ void OSSL_SELF_TEST_set_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK *cb,
         stcb->cbarg = cbarg;
     }
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 void OSSL_SELF_TEST_get_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK **cb,
                                  void **cbarg)

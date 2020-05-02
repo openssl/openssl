@@ -26,7 +26,7 @@
 
 static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int DH_set_method(DH *dh, const DH_METHOD *meth)
 {
     /*
@@ -61,7 +61,7 @@ DH *DH_new_method(ENGINE *engine)
 {
     return dh_new_intern(engine, NULL);
 }
-#endif /* !FIPS_MODE */
+#endif /* !FIPS_MODULE */
 
 DH *dh_new_with_libctx(OPENSSL_CTX *libctx)
 {
@@ -87,7 +87,7 @@ static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 
     ret->libctx = libctx;
     ret->meth = DH_get_default_method();
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     ret->flags = ret->meth->flags;  /* early default init */
     if (engine) {
         if (!ENGINE_init(engine)) {
@@ -108,10 +108,10 @@ static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 
     ret->flags = ret->meth->flags;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_DH, ret, &ret->ex_data))
         goto err;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     if ((ret->meth->init != NULL) && !ret->meth->init(ret)) {
         DHerr(0, ERR_R_INIT_FAIL);
@@ -140,7 +140,7 @@ void DH_free(DH *r)
 
     if (r->meth != NULL && r->meth->finish != NULL)
         r->meth->finish(r);
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
 # if !defined(OPENSSL_NO_ENGINE)
     ENGINE_finish(r->engine);
 # endif
@@ -167,7 +167,7 @@ int DH_up_ref(DH *r)
     return ((i > 1) ? 1 : 0);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int DH_set_ex_data(DH *d, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&d->ex_data, idx, arg);
@@ -310,12 +310,12 @@ void DH_set_flags(DH *dh, int flags)
     dh->flags |= flags;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 ENGINE *DH_get0_engine(DH *dh)
 {
     return dh->engine;
 }
-#endif /*FIPS_MODE */
+#endif /*FIPS_MODULE */
 
 FFC_PARAMS *dh_get0_params(DH *dh)
 {
@@ -400,7 +400,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_type(EVP_PKEY_CTX *ctx, int typ)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
@@ -426,7 +426,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int pbits)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
@@ -447,7 +447,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int qbits)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
@@ -468,7 +468,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
@@ -490,7 +490,7 @@ int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN,
@@ -520,7 +520,7 @@ int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-#if !defined(FIPS_MODE)
+#if !defined(FIPS_MODULE)
     /* TODO(3.0): Remove this eventually when no more legacy */
     if (ctx->op.keymgmt.genctx == NULL)
         return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,

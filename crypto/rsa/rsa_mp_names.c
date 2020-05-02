@@ -23,7 +23,7 @@
 const char *rsa_mp_factor_names[] = {
     OSSL_PKEY_PARAM_RSA_FACTOR1,
     OSSL_PKEY_PARAM_RSA_FACTOR2,
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     OSSL_PKEY_PARAM_RSA_FACTOR3,
     OSSL_PKEY_PARAM_RSA_FACTOR4,
     OSSL_PKEY_PARAM_RSA_FACTOR5,
@@ -43,7 +43,7 @@ const char *rsa_mp_factor_names[] = {
 const char *rsa_mp_exp_names[] = {
     OSSL_PKEY_PARAM_RSA_EXPONENT1,
     OSSL_PKEY_PARAM_RSA_EXPONENT2,
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     OSSL_PKEY_PARAM_RSA_EXPONENT3,
     OSSL_PKEY_PARAM_RSA_EXPONENT4,
     OSSL_PKEY_PARAM_RSA_EXPONENT5,
@@ -63,7 +63,7 @@ const char *rsa_mp_exp_names[] = {
 const char *rsa_mp_coeff_names[] = {
     OSSL_PKEY_PARAM_RSA_COEFFICIENT1,
     OSSL_PKEY_PARAM_RSA_COEFFICIENT2,
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     OSSL_PKEY_PARAM_RSA_COEFFICIENT3,
     OSSL_PKEY_PARAM_RSA_COEFFICIENT4,
     OSSL_PKEY_PARAM_RSA_COEFFICIENT5,
