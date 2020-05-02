@@ -13,6 +13,10 @@
 #include <openssl/core.h>
 #include <openssl/rsa.h>
 
+const char *rsa_mgf_nid2name(int mgf);
+int rsa_oaeppss_md2nid(const EVP_MD *md);
+const char *rsa_oaeppss_nid2name(int md);
+
 RSA *rsa_new_with_ctx(OPENSSL_CTX *libctx);
 
 int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
