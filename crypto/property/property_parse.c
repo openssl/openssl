@@ -469,7 +469,7 @@ int ossl_property_is_enabled(OPENSSL_CTX *ctx,  const char *property_name,
     prop = prop_list->properties;
     for (i = 0; i < prop_list->n; ++i) {
         if (prop[i].name_idx == name_id) {
-            /* Do a seperate check for override as it does not set type */
+            /* Do a separate check for override as it does not set type */
             if (prop[i].optional || prop[i].oper == PROPERTY_OVERRIDE)
                 return 0;
             return (prop[i].type == PROPERTY_TYPE_STRING
