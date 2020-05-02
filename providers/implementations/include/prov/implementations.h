@@ -257,6 +257,7 @@ extern const OSSL_DISPATCH kdf_krb5kdf_functions[];
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
 extern const OSSL_DISPATCH dsa_keymgmt_functions[];
 extern const OSSL_DISPATCH rsa_keymgmt_functions[];
+extern const OSSL_DISPATCH rsapss_keymgmt_functions[];
 extern const OSSL_DISPATCH x25519_keymgmt_functions[];
 extern const OSSL_DISPATCH x448_keymgmt_functions[];
 extern const OSSL_DISPATCH ed25519_keymgmt_functions[];

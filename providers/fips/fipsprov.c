@@ -477,6 +477,7 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { "DSA", "provider=fips,fips=yes", dsa_keymgmt_functions },
 #endif
     { "RSA:rsaEncryption", "provider=fips,fips=yes", rsa_keymgmt_functions },
+    { "RSA-PSS:RSASSA-PSS", "provider=default", rsapss_keymgmt_functions },
 #ifndef OPENSSL_NO_EC
     { "EC:id-ecPublicKey", "provider=fips,fips=yes", ec_keymgmt_functions },
     { "X25519", "provider=fips,fips=no", x25519_keymgmt_functions },

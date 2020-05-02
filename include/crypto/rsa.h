@@ -49,6 +49,7 @@ int rsa_oaeppss_md2nid(const EVP_MD *md);
 const char *rsa_oaeppss_nid2name(int md);
 
 RSA *rsa_new_with_ctx(OPENSSL_CTX *libctx);
+OPENSSL_CTX *rsa_get0_libctx(RSA *r);
 
 int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                         const STACK_OF(BIGNUM) *exps,
