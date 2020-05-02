@@ -235,6 +235,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_PRIVATE_KEY_DECODE_ERROR                   145
 # define EVP_R_PRIVATE_KEY_ENCODE_ERROR                   146
 # define EVP_R_PUBLIC_KEY_NOT_RSA                         106
+# define EVP_R_SET_DEFAULT_PROPERTY_FAILURE               208
 # define EVP_R_TOO_MANY_RECORDS                           183
 # define EVP_R_UNKNOWN_CIPHER                             160
 # define EVP_R_UNKNOWN_DIGEST                             161

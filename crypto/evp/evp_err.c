@@ -133,6 +133,8 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_PRIVATE_KEY_ENCODE_ERROR),
     "private key encode error"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_PUBLIC_KEY_NOT_RSA), "public key not rsa"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_SET_DEFAULT_PROPERTY_FAILURE),
+    "set default property failure"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_TOO_MANY_RECORDS), "too many records"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNKNOWN_CIPHER), "unknown cipher"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_UNKNOWN_DIGEST), "unknown digest"},
