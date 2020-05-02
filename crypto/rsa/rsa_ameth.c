@@ -43,7 +43,7 @@ static int rsa_param_encode(const EVP_PKEY *pkey,
 
     *pstr = NULL;
     /* If RSA it's just NULL type */
-    if (pkey->ameth->pkey_id != EVP_PKEY_RSA_PSS) {
+    if (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK) != RSA_FLAG_TYPE_RSASSAPSS) {
         *pstrtype = V_ASN1_NULL;
         return 1;
     }
@@ -196,6 +196,20 @@ static int rsa_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         RSA_free(rsa);
         return 0;
     }
+
+    RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+    switch (pkey->ameth->pkey_id) {
+    case EVP_PKEY_RSA:
+        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
+        break;
+    case EVP_PKEY_RSA_PSS:
+        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
+        break;
+    default:
+        /* Leave the type bits zero */
+        break;
+    }
+
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
     return 1;
 }
