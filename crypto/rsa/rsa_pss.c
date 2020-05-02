@@ -256,6 +256,142 @@ int RSA_padding_add_PKCS1_PSS_mgf1(RSA *rsa, unsigned char *EM,
 
 }
 
+/*
+ * The defaults for PSS restrictions are defined in RFC 8017, A.2.3 RSASSA-PSS
+ * (https://tools.ietf.org/html/rfc8017#appendix-A.2.3):
+ *
+ * If the default values of the hashAlgorithm, maskGenAlgorithm, and
+ * trailerField fields of RSASSA-PSS-params are used, then the algorithm
+ * identifier will have the following value:
+ *
+ *     rSASSA-PSS-Default-Identifier    RSASSA-AlgorithmIdentifier ::= {
+ *         algorithm   id-RSASSA-PSS,
+ *         parameters  RSASSA-PSS-params : {
+ *             hashAlgorithm       sha1,
+ *             maskGenAlgorithm    mgf1SHA1,
+ *             saltLength          20,
+ *             trailerField        trailerFieldBC
+ *         }
+ *     }
+ *
+ *     RSASSA-AlgorithmIdentifier ::= AlgorithmIdentifier {
+ *         {PKCS1Algorithms}
+ *     }
+ */
+static const RSA_PSS_PARAMS_30 default_RSASSA_PSS_params = {
+    NID_sha1,                    /* default hashAlgorithm */
+    {
+        NID_mgf1,                /* default maskGenAlgorithm */
+        NID_sha1                 /* default MGF1 hash */
+    },
+    20,                          /* default saltLength */
+    1                            /* default trailerField (0xBC) */
+};
+
+int rsa_pss_params_30_set_defaults(RSA_PSS_PARAMS_30 *rsa_pss_params)
+{
+    if (rsa_pss_params == NULL)
+        return 0;
+    *rsa_pss_params = default_RSASSA_PSS_params;
+    return 1;
+}
+
+int rsa_pss_params_30_is_unrestricted(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+{
+    static RSA_PSS_PARAMS_30 pss_params_cmp = { 0, };
+
+    return rsa_pss_params == NULL
+        || memcmp(rsa_pss_params, &pss_params_cmp,
+                  sizeof(*rsa_pss_params)) == 0;
+}
+
+int rsa_pss_params_30_copy(RSA_PSS_PARAMS_30 *to,
+                           const RSA_PSS_PARAMS_30 *from)
+{
+    memcpy(to, from, sizeof(*to));
+    return 1;
+}
+
+int rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                  int hashalg_nid)
+{
+    if (rsa_pss_params == NULL)
+        return 0;
+    rsa_pss_params->hash_algorithm_nid = hashalg_nid;
+    return 1;
+}
+
+int rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                     int maskgenalg_nid)
+{
+    if (rsa_pss_params == NULL)
+        return 0;
+    rsa_pss_params->mask_gen.algorithm_nid = maskgenalg_nid;
+    return 1;
+}
+
+int rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                         int maskgenhashalg_nid)
+{
+    if (rsa_pss_params == NULL)
+        return 0;
+    rsa_pss_params->mask_gen.hash_algorithm_nid = maskgenhashalg_nid;
+    return 1;
+}
+
+int rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                  int saltlen)
+{
+    if (rsa_pss_params == NULL)
+        return 0;
+    rsa_pss_params->salt_len = saltlen;
+    return 1;
+}
+
+int rsa_pss_params_30_set_trailerfield(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                       int trailerfield)
+{
+    if (rsa_pss_params == NULL)
+        return 0;
+    rsa_pss_params->trailer_field = trailerfield;
+    return 1;
+}
+
+int rsa_pss_params_30_hashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+{
+    if (rsa_pss_params == NULL)
+        return default_RSASSA_PSS_params.hash_algorithm_nid;
+    return rsa_pss_params->hash_algorithm_nid;
+}
+
+int rsa_pss_params_30_maskgenalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+{
+    if (rsa_pss_params == NULL)
+        return default_RSASSA_PSS_params.mask_gen.algorithm_nid;
+    return rsa_pss_params->mask_gen.algorithm_nid;
+}
+
+int rsa_pss_params_30_maskgenhashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+{
+    if (rsa_pss_params == NULL)
+        return default_RSASSA_PSS_params.hash_algorithm_nid;
+    return rsa_pss_params->mask_gen.hash_algorithm_nid;
+}
+
+int rsa_pss_params_30_saltlen(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+{
+    if (rsa_pss_params == NULL)
+        return default_RSASSA_PSS_params.salt_len;
+    return rsa_pss_params->salt_len;
+}
+
+int rsa_pss_params_30_trailerfield(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+{
+    if (rsa_pss_params == NULL)
+        return default_RSASSA_PSS_params.trailer_field;
+    return rsa_pss_params->trailer_field;
+}
+
 #if defined(_MSC_VER)
 # pragma optimize("",on)
 #endif

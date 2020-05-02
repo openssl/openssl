@@ -13,6 +13,37 @@
 #include <openssl/core.h>
 #include <openssl/rsa.h>
 
+typedef struct rsa_pss_params_30_st {
+    int hash_algorithm_nid;
+    struct {
+        int algorithm_nid;       /* Currently always NID_mgf1 */
+        int hash_algorithm_nid;
+    } mask_gen;
+    unsigned int salt_len;
+    unsigned int trailer_field;
+} RSA_PSS_PARAMS_30;
+
+RSA_PSS_PARAMS_30 *rsa_get0_pss_params_30(RSA *r);
+int rsa_pss_params_30_set_defaults(RSA_PSS_PARAMS_30 *rsa_pss_params);
+int rsa_pss_params_30_copy(RSA_PSS_PARAMS_30 *to,
+                           const RSA_PSS_PARAMS_30 *from);
+int rsa_pss_params_30_is_unrestricted(const RSA_PSS_PARAMS_30 *rsa_pss_params);
+int rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                  int hashalg_nid);
+int rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                     int maskgenalg_nid);
+int rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                         int maskgenhashalg_nid);
+int rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                  int saltlen);
+int rsa_pss_params_30_set_trailerfield(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                       int trailerfield);
+int rsa_pss_params_30_hashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params);
+int rsa_pss_params_30_maskgenalg(const RSA_PSS_PARAMS_30 *rsa_pss_params);
+int rsa_pss_params_30_maskgenhashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params);
+int rsa_pss_params_30_saltlen(const RSA_PSS_PARAMS_30 *rsa_pss_params);
+int rsa_pss_params_30_trailerfield(const RSA_PSS_PARAMS_30 *rsa_pss_params);
+
 const char *rsa_mgf_nid2name(int mgf);
 int rsa_oaeppss_md2nid(const EVP_MD *md);
 const char *rsa_oaeppss_nid2name(int md);
@@ -28,6 +59,10 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
 
 int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[]);
+int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss, const char *propq,
+                             OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
+int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
+                               const OSSL_PARAM params[], OPENSSL_CTX *libctx);
 
 int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *ctx, unsigned char *to,
                                        size_t tlen, const unsigned char *from,
