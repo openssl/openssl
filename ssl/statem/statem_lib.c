@@ -2342,7 +2342,7 @@ int construct_ca_names(SSL *s, const STACK_OF(X509_NAME) *ca_sk, WPACKET *pkt)
         return 0;
     }
 
-    if (ca_sk != NULL) {
+    if ((ca_sk != NULL) && !(s->options & SSL_OP_DISABLE_TLSEXT_CA_NAMES)) {
         int i;
 
         for (i = 0; i < sk_X509_NAME_num(ca_sk); i++) {

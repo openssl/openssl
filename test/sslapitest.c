@@ -1481,7 +1481,7 @@ static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
 }
 
 static int execute_test_session(int maxprot, int use_int_cache,
-                                int use_ext_cache)
+                                int use_ext_cache, long s_options)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl1 = NULL, *clientssl1 = NULL;
@@ -1522,6 +1522,10 @@ static int execute_test_session(int maxprot, int use_int_cache,
         SSL_CTX_set_session_cache_mode(cctx,
                                        SSL_SESS_CACHE_CLIENT
                                        | SSL_SESS_CACHE_NO_INTERNAL_STORE);
+    }
+
+    if (s_options) {
+        SSL_CTX_set_options(sctx, s_options);
     }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl1, &clientssl1,
@@ -1768,12 +1772,12 @@ static int execute_test_session(int maxprot, int use_int_cache,
 static int test_session_with_only_int_cache(void)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    if (!execute_test_session(TLS1_3_VERSION, 1, 0))
+    if (!execute_test_session(TLS1_3_VERSION, 1, 0, 0))
         return 0;
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-    return execute_test_session(TLS1_2_VERSION, 1, 0);
+    return execute_test_session(TLS1_2_VERSION, 1, 0, 0);
 #else
     return 1;
 #endif
@@ -1782,12 +1786,12 @@ static int test_session_with_only_int_cache(void)
 static int test_session_with_only_ext_cache(void)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    if (!execute_test_session(TLS1_3_VERSION, 0, 1))
+    if (!execute_test_session(TLS1_3_VERSION, 0, 1, 0))
         return 0;
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-    return execute_test_session(TLS1_2_VERSION, 0, 1);
+    return execute_test_session(TLS1_2_VERSION, 0, 1, 0);
 #else
     return 1;
 #endif
@@ -1796,16 +1800,31 @@ static int test_session_with_only_ext_cache(void)
 static int test_session_with_both_cache(void)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    if (!execute_test_session(TLS1_3_VERSION, 1, 1))
+    if (!execute_test_session(TLS1_3_VERSION, 1, 1, 0))
         return 0;
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-    return execute_test_session(TLS1_2_VERSION, 1, 1);
+    return execute_test_session(TLS1_2_VERSION, 1, 1, 0);
 #else
     return 1;
 #endif
 }
+
+static int test_session_wo_ca_names(void)
+{
+#ifndef OPENSSL_NO_TLS1_3
+    if (!execute_test_session(TLS1_3_VERSION, 1, 0, SSL_OP_DISABLE_TLSEXT_CA_NAMES))
+        return 0;
+#endif
+
+#ifndef OPENSSL_NO_TLS1_2
+    return execute_test_session(TLS1_2_VERSION, 1, 0, SSL_OP_DISABLE_TLSEXT_CA_NAMES);
+#else
+    return 1;
+#endif
+}
+
 
 #ifndef OPENSSL_NO_TLS1_3
 static SSL_SESSION *sesscache[6];
@@ -7585,6 +7604,7 @@ int setup_tests(void)
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
+    ADD_TEST(test_session_wo_ca_names);
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_stateful_tickets, 3);
     ADD_ALL_TESTS(test_stateless_tickets, 3);
