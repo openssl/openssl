@@ -101,6 +101,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "not xof or invalid length"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NO_KEY_SET), "no key set"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NO_PARAMETERS_SET), "no parameters set"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE),
+    "operation not supported for this keytype"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_OUTPUT_BUFFER_TOO_SMALL),
     "output buffer too small"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_PSS_SALTLEN_TOO_SMALL),
