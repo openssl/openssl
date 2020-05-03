@@ -320,6 +320,7 @@ CMS_F_CMS_SET_DETACHED:147:CMS_set_detached
 CMS_F_CMS_SIGN:148:CMS_sign
 CMS_F_CMS_SIGNED_DATA_INIT:149:cms_signed_data_init
 CMS_F_CMS_SIGNERINFO_CONTENT_SIGN:150:cms_SignerInfo_content_sign
+CMS_F_CMS_SIGNERINFO_GET_CHAIN:184:cms_signerinfo_get_chain
 CMS_F_CMS_SIGNERINFO_SIGN:151:CMS_SignerInfo_sign
 CMS_F_CMS_SIGNERINFO_VERIFY:152:CMS_SignerInfo_verify
 CMS_F_CMS_SIGNERINFO_VERIFY_CERT:153:cms_signerinfo_verify_cert
@@ -329,6 +330,7 @@ CMS_F_CMS_SI_CHECK_ATTRIBUTES:183:CMS_si_check_attributes
 CMS_F_CMS_STREAM:155:CMS_stream
 CMS_F_CMS_UNCOMPRESS:156:CMS_uncompress
 CMS_F_CMS_VERIFY:157:CMS_verify
+CMS_F_ESS_CHECK_SIGNING_CERTS:185:ess_check_signing_certs
 CMS_F_KEK_UNWRAP_KEY:180:kek_unwrap_key
 COMP_F_BIO_ZLIB_FLUSH:99:bio_zlib_flush
 COMP_F_BIO_ZLIB_NEW:100:bio_zlib_new
@@ -2188,6 +2190,8 @@ CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE:114:\
 	error reading messagedigest attribute
 CMS_R_ERROR_SETTING_KEY:115:error setting key
 CMS_R_ERROR_SETTING_RECIPIENTINFO:116:error setting recipientinfo
+CMS_R_ESS_NO_SIGNING_CERTID_ATTRIBUTE:182:ess no signing certid attribute
+CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR:183:ess signing certid mismatch error
 CMS_R_INVALID_ENCRYPTED_KEY_LENGTH:117:invalid encrypted key length
 CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER:176:invalid key encryption parameter
 CMS_R_INVALID_KEY_LENGTH:118:invalid key length
