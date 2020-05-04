@@ -2167,7 +2167,7 @@ void SSL_CTX_set_record_padding_callback_arg(SSL_CTX *ctx, void *arg);
 void *SSL_CTX_get_record_padding_callback_arg(const SSL_CTX *ctx);
 int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size);
 
-void SSL_set_record_padding_callback(SSL *ssl,
+int SSL_set_record_padding_callback(SSL *ssl,
                                     size_t (*cb) (SSL *ssl, int type,
                                                   size_t len, void *arg));
 void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg);

@@ -4645,11 +4645,18 @@ int SSL_CTX_set_block_padding(SSL_CTX *ctx, size_t block_size)
     return 1;
 }
 
-void SSL_set_record_padding_callback(SSL *ssl,
+int SSL_set_record_padding_callback(SSL *ssl,
                                      size_t (*cb) (SSL *ssl, int type,
                                                    size_t len, void *arg))
 {
-    ssl->record_padding_cb = cb;
+    BIO *b;
+
+    b = SSL_get_wbio(ssl);
+    if (b == NULL || !BIO_get_ktls_send(b)) {
+        ssl->record_padding_cb = cb;
+        return 1;
+    }
+    return 0;
 }
 
 void SSL_set_record_padding_callback_arg(SSL *ssl, void *arg)
