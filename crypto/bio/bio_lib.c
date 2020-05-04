@@ -788,7 +788,9 @@ void bio_cleanup(void)
 /* Internal variant of the below BIO_wait() not calling BIOerr() */
 static int bio_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
 {
+#ifndef OPENSSL_NO_SOCK
     int fd;
+#endif
 
     if (max_time == 0)
         return 1;
