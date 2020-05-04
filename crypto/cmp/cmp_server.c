@@ -489,9 +489,9 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
                           tid);
             OPENSSL_free(tid);
         }
-        /* start of a new transaction, set transactionID and senderNonce */
-        if (!OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID)
-                || !ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
+        /* start of a new transaction, reset transactionID and senderNonce */
+        if (!OSSL_CMP_CTX_set1_transactionID(ctx, NULL)
+                || !OSSL_CMP_CTX_set1_senderNonce(ctx, NULL))
             goto err;
         break;
     default:
@@ -594,7 +594,9 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
     case OSSL_CMP_PKIBODY_GENP:
     case OSSL_CMP_PKIBODY_ERROR:
         /* TODO possibly support further terminating response message types */
-        (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL); /* ignore any error */
+        /* prepare for next transaction, ignoring any errors here: */
+        (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
+        (void)OSSL_CMP_CTX_set1_senderNonce(ctx, NULL);
 
     default: /* not closing transaction in other cases */
         break;
