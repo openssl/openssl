@@ -27,7 +27,7 @@ typedef OCSP_REQ_CTX OSSL_HTTP_REQ_CTX;
 # define OSSL_HTTP_REQ_CTX_get0_mem_bio OCSP_REQ_CTX_get0_mem_bio /* undoc'd */
 # define OSSL_HTTP_REQ_CTX_set_max_response_length OCSP_set_max_response_length
 
-BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, ASN1_VALUE *val);
+BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val);
 OSSL_HTTP_REQ_CTX *HTTP_REQ_CTX_new(BIO *wbio, BIO *rbio, int use_http_proxy,
                                     const char *server, const char *port,
                                     const char *path,
