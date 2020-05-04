@@ -5097,3 +5097,4 @@ EC_GROUP_get_field_type                 ?	3_0_0	EXIST::FUNCTION:EC
 X509_PUBKEY_eq                          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_eq                             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_parameters_eq                  ?	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_query_operation           ?	3_0_0	EXIST::FUNCTION:

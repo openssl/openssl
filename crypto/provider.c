@@ -57,6 +57,15 @@ int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     return ossl_provider_get_params(prov, params);
 }
 
+
+const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
+                                                    int operation_id,
+                                                    int *no_cache)
+{
+    return ossl_provider_query_operation(prov, operation_id, no_cache);
+}
+
+
 int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
                               OSSL_provider_init_fn *init_fn)
 {

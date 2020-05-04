@@ -6,7 +6,8 @@ OSSL_PROVIDER_set_default_search_path,
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
 OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
-OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
+OSSL_PROVIDER_query_operation, OSSL_PROVIDER_add_builtin,
+OSSL_PROVIDER_name - provider routines
 
 =head1 SYNOPSIS
 
@@ -26,6 +27,10 @@ OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
 
  const OSSL_PARAM *OSSL_PROVIDER_gettable_params(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
+
+ const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
+                                                     int operation_id,
+                                                     int *no_cache);
 
  int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
                                ossl_provider_init_fn *init_fn);
@@ -82,6 +87,16 @@ The caller must prepare the B<OSSL_PARAM> array before calling this
 function, and the variables acting as buffers for this parameter array
 should be filled with data when it returns successfully.
 
+OSSL_PROVIDER_query_operation() calls the provider's I<query_operation>
+function (see L<provider(7)>), if the provider has one. It should return an
+array of I<OSSL_ALGORITHM> for the given I<operation_id> terminated by an all
+NULL OSSL_ALGORITHM entry. This is considered a low-level function that most
+applications should not need to call.
+
+If it is permissible to cache references to this array then I<*no_store> is set
+to 0 or 1 otherwise. If the array is not cacheable then it should be assumed to
+have a short lifetime.
+
 OSSL_PROVIDER_name() returns the name of the given provider.
 
 =head1 RETURN VALUES
@@ -100,6 +115,9 @@ OSSL_PROVIDER_gettable_params() returns a pointer to an array
 of constant B<OSSL_PARAM>, or NULL if none is provided.
 
 OSSL_PROVIDER_get_params() returns 1 on success, or 0 on error.
+
+OSSL_PROVIDER_query_operation() returns an array of OSSL_ALGORITHM or NULL on
+error.
 
 =head1 EXAMPLES
 
