@@ -2305,11 +2305,11 @@ int SSL_renegotiate_pending(const SSL *s)
 
 int SSL_new_session_ticket(SSL *s)
 {
-        if (SSL_in_init(s) || SSL_IS_FIRST_HANDSHAKE(s) || !s->server
-                || !SSL_IS_TLS13(s))
-            return 0;
-        s->ext.extra_tickets_expected++;
-        return 1;
+    if (SSL_in_init(s) || SSL_IS_FIRST_HANDSHAKE(s) || !s->server
+            || !SSL_IS_TLS13(s))
+        return 0;
+    s->ext.extra_tickets_expected++;
+    return 1;
 }
 
 long SSL_ctrl(SSL *s, int cmd, long larg, void *parg)
