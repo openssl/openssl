@@ -6082,7 +6082,9 @@ static struct {
         "AES256-SHA",
         "AES256-SHA"
     },
-# if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+# if !defined(OPENSSL_NO_CHACHA) \
+     && !defined(OPENSSL_NO_POLY1305) \
+     && !defined(OPENSSL_NO_EC)
     {
         TLS1_2_VERSION,
         "AES128-SHA:ECDHE-RSA-CHACHA20-POLY1305",
