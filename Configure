@@ -1831,23 +1831,13 @@ if ($builder eq "unified") {
         my $variable_name_re = qr/(?P<VARIABLE>[[:alpha:]][[:alnum:]_]*)/;
         # Value modifier syntaxes
         my $variable_subst_re = qr/\/(?P<RE>(?:\\\/|.)*?)\/(?P<SUBST>.*?)/;
-        # Put it all together
-        my $variable_re = qr/\$
-                             (?|
-                                 # Simple case, just the name
-                                 ${variable_name_re}
-                             |
-                                 # Expressive case, with braces and possible
-                                 # modifier expressions
-                                 \{
-                                 ${variable_name_re}
-                                 (?:
-                                     # Pile on modifier expressions,
-                                     # separated by |
-                                     ${variable_subst_re}
-                                 )
-                                 \}
-                             )/x;
+        # Variable reference
+        my $variable_simple_re = qr/(?<!\\)\$${variable_name_re}/;
+        my $variable_w_mod_re =
+            qr/(?<!\\)\$\{${variable_name_re}(?P<MOD>(?:\\\/|.)*?)\}/;
+        # Tie it all together
+        my $variable_re = qr/${variable_simple_re}|${variable_w_mod_re}/;
+
         my $expand_variables = sub {
             my $value = '';
             my $value_rest = shift;
@@ -1856,25 +1846,29 @@ if ($builder eq "unified") {
                 print STDERR
                     "DEBUG[\$expand_variables] Parsed '$value_rest' ...\n"
             }
-            while ($value_rest =~ /(?<!\\)${variable_re}/) {
+
+            while ($value_rest =~ /${variable_re}/) {
+                # We must save important regexp values, because the next
+                # regexp clears them
+                my $mod = $+{MOD};
+                my $variable_value = $variables{$+{VARIABLE}};
+
                 $value_rest = $';
                 $value .= $`;
 
-                my $variable_value = $variables{$+{VARIABLE}};
-
                 # Process modifier expressions, if present
-                if (defined $+{RE}) {
-                    # We must save important %+ values, because the s///
-                    # below clears them
-                    my $re = $+{RE};
-                    my $subst = $+{SUBST};
+                if (defined $mod) {
+                    if ($mod =~ /^${variable_subst_re}$/) {
+                        my $re = $+{RE};
+                        my $subst = $+{SUBST};
 
-                    $variable_value =~ s/\Q$re\E/$subst/g;
+                        $variable_value =~ s/\Q$re\E/$subst/g;
 
-                    if ($ENV{CONFIGURE_DEBUG_VARIABLE_EXPAND}) {
-                        print STDERR
-                            "DEBUG[\$expand_variables] ... and substituted ",
-                            "'$re' with '$subst'\n";
+                        if ($ENV{CONFIGURE_DEBUG_VARIABLE_EXPAND}) {
+                            print STDERR
+                                "DEBUG[\$expand_variables] ... and substituted ",
+                                "'$re' with '$subst'\n";
+                        }
                     }
                 }
 
