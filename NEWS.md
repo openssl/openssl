@@ -69,7 +69,7 @@ OpenSSL 1.1.1
 
 ### Major changes between OpenSSL 1.1.1e and OpenSSL 1.1.1f [under development] ###
 
-  * 
+  *
 
 ### Major changes between OpenSSL 1.1.1d and OpenSSL 1.1.1e [17 Mar 2020] ###
 
