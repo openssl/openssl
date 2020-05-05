@@ -11,36 +11,36 @@ source control.
 Groups
 ------
 
- *  OpenSSL Software Services, Inc.
- *  OpenSSL Software Foundation, Inc.
+ * OpenSSL Software Services, Inc.
+ * OpenSSL Software Foundation, Inc.
 
 
 Individuals
 -----------
 
- *  Andy Polyakov
- *  Ben Laurie
- *  Ben Kaduk
- *  Bernd Edlinger
- *  Bodo Möller
- *  David Benjamin
- *  Emilia Käsper
- *  Eric Young
- *  Geoff Thorpe
- *  Holger Reif
- *  Kurt Roeckx
- *  Lutz Jänicke
- *  Mark J. Cox
- *  Matt Caswell
- *  Matthias St. Pierre
- *  Nils Larsch
- *  Paul Dale
- *  Paul C. Sutton
- *  Ralf S. Engelschall
- *  Rich Salz
- *  Richard Levitte
- *  Stephen Henson
- *  Steve Marquess
- *  Tim Hudson
- *  Ulf Möller
- *  Viktor Dukhovni
+ * Andy Polyakov
+ * Ben Laurie
+ * Ben Kaduk
+ * Bernd Edlinger
+ * Bodo Möller
+ * David Benjamin
+ * Emilia Käsper
+ * Eric Young
+ * Geoff Thorpe
+ * Holger Reif
+ * Kurt Roeckx
+ * Lutz Jänicke
+ * Mark J. Cox
+ * Matt Caswell
+ * Matthias St. Pierre
+ * Nils Larsch
+ * Paul Dale
+ * Paul C. Sutton
+ * Ralf S. Engelschall
+ * Rich Salz
+ * Richard Levitte
+ * Stephen Henson
+ * Steve Marquess
+ * Tim Hudson
+ * Ulf Möller
+ * Viktor Dukhovni
