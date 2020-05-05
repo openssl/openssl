@@ -3,8 +3,6 @@
 =head1 NAME
 
 EVP_PKEY-EC,
-EVP_PKEY-ECDH,
-EVP_PKEY-ECDSA,
 EVP_KEYMGMT-EC
 - EVP_PKEY EC keytype and algorithm support
 

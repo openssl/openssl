@@ -76,7 +76,7 @@ Key Derivation Function associated with the given key exchange ctx.
 =head1 EXAMPLES
 
 Keys for the host and peer must be generated as shown in
-L<EVP_PKEY-ECDH(7)/Examples> using the same curve name.
+L<EVP_PKEY-EC(7)/Examples> using the same curve name.
 
 The code to generate a shared secret for the normal case is identical to
 L<EVP_KEYEXCH-DH(7)/Examples>. 

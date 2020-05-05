@@ -2,9 +2,10 @@
 
 =head1 NAME
 
-EVP_PKEY-FFC - EVP_PKEY FFC key type and algorithm support
+EVP_PKEY-FFC - EVP_PKEY DSA and DH shared FFC parameters.
 
 =head1 DESCRIPTION
+
 
 Finite field cryptography (FFC) is a method of implementing discrete logarithm
 cryptography using finite field mathematics. DSA is an example of FFC and

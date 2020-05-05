@@ -314,10 +314,8 @@ OP_signature_set_ctx_params() sets the signature parameters associated with the
 given provider side signature context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-Parameters currently recognised by built-in signature algorithms are as
+Common parameters currently recognised by built-in signature algorithms are as
 follows.
-Not all parameters are relevant to, or are understood by all signature
-algorithms:
 
 =over 4
 
