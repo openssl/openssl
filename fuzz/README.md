@@ -1,4 +1,6 @@
-# I Can Haz Fuzz?
+# Fuzzing OpenSSL #
+
+OpenSSL can use either LibFuzzer or AFL to do fuzzing.
 
 LibFuzzer
 =========
