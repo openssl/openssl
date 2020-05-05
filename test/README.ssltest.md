@@ -227,8 +227,8 @@ client => {
 ```
 $ ./config
 $ cd test
-$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/my.cnf.in default \
-  > ssl-tests/my.cnf
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl \
+  ssl-tests/my.cnf.in default > ssl-tests/my.cnf
 ```
 
 where `my.cnf.in` is your test input file and `default` is the provider to use.
@@ -237,7 +237,8 @@ For all the pre-generated test files you should use the default provider.
 For example, to generate the test cases in `ssl-tests/01-simple.cnf.in`, do
 
 ```
-$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl ssl-tests/01-simple.cnf.in default > ssl-tests/01-simple.cnf
+$ TOP=.. perl -I ../util/perl/ generate_ssl_tests.pl \
+  ssl-tests/01-simple.cnf.in default > ssl-tests/01-simple.cnf
 ```
 
 Alternatively (hackish but simple), you can comment out
