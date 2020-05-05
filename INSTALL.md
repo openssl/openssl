@@ -1256,7 +1256,7 @@ The above commands will install all the software components in this
 directory tree under PREFIX (the directory given with `--prefix` or
 its default):
 
-#### Unix / Linux / macOS ####
+### Unix / Linux / macOS ###
 
     bin/           Contains the openssl binary and a few other
                    utility scripts.
@@ -1278,7 +1278,7 @@ its default):
     share/doc/openssl/html/man7
                    Contains the HTML rendition of the man-pages.
 
-#### OpenVMS ####
+### OpenVMS ###
 
 'arch' is replaced with the architecture name, "Alpha" or "ia64",
 'sover' is replaced with the shared library version (0101 for 1.1), and
@@ -1300,7 +1300,7 @@ its default):
     [.HTML]        Contains the HTML rendition of the manual pages.
 
 
-#### Additional Directories ####
+### Additional Directories ###
 
 Additionally, install will add the following directories under
 OPENSSLDIR (the directory given with `--openssldir` or its default)
@@ -1328,9 +1328,9 @@ packaged, can use
 The specified destination directory will be prepended to all installation
 target paths.
 
-### Compatibility issues with previous OpenSSL versions ###
+## Compatibility issues with previous OpenSSL versions ##
 
-#### COMPILING existing applications ####
+### COMPILING existing applications ###
 
 Starting with version 1.1.0, OpenSSL hides a number of structures that were
 previously open.  This includes all internal libssl structures and a number
