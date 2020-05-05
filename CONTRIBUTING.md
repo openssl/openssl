@@ -30,14 +30,17 @@ guidelines:
     [CLA]: https://www.openssl.org/policies/cla.html
 
     To amend a missing "`CLA: trivial`" line after submission, do the following:
+
     ```
         git commit --amend
         [add the line, save and quit the editor]
         git push -f
     ```
+
  2. All source files should start with the following text (with
     appropriate comment characters at the start of each line and the
     year(s) updated):
+
     ```
         Copyright 20xx-20yy The OpenSSL Project Authors. All Rights Reserved.
 
