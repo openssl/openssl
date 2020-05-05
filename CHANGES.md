@@ -4421,6 +4421,7 @@ OpenSSL 1.0.2
    *Emilia Käsper*
 
 ### Changes between 1.0.2e and 1.0.2f [28 Jan 2016] ###
+
  * DH small subgroups
 
    Historically OpenSSL only ever generated DH parameters based on "safe"
@@ -5721,6 +5722,7 @@ OpenSSL 1.0.1
    *Stephen Henson*
 
 ### Changes between 1.0.1n and 1.0.1o [12 Jun 2015] ###
+
  * Fix HMAC ABI incompatibility. The previous version introduced an ABI
    incompatibility in the handling of HMAC. The previous ABI has now been
    restored.
