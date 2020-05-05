@@ -15287,7 +15287,7 @@ ndif
    *Martin Kraemer <Martin.Kraemer@Mch.SNI.De>*
 
  * Source code cleanups: use const where appropriate, eliminate casts,
-   use void * instead of char * in lhash.
+   use `void *` instead of `char *` in lhash.
 
    *Ulf Möller*
 
@@ -16642,7 +16642,6 @@ ndif
 
    *Bodo Moeller*
 
-f 0
  * DES CBC did not update the IV. Weird.
 
    *Ben Laurie*
@@ -16723,7 +16722,7 @@ ndif
 
    *Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>*
 
- * Make callbacks for key generation use void * instead of char *.
+ * Make callbacks for key generation use `void *` instead of `char *`.
 
    *Ben Laurie*
 

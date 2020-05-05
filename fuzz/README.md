@@ -139,6 +139,7 @@ Updating the corpus
 ===================
 
 The client and server corpus is generated with multiple config options:
+
 - The options as documented above
 - Without enable-ec_nistp_64_gcc_128 and without --debug
 - With no-asm
