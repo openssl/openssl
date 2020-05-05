@@ -303,8 +303,13 @@ int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
             if (ret <= 0
                     && !BIO_should_retry(s->rbio)
                     && BIO_eof(s->rbio)) {
-                SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_READ_N,
-                         SSL_R_UNEXPECTED_EOF_WHILE_READING);
+                if (s->options & SSL_OP_IGNORE_UNEXPECTED_EOF) {
+                    SSL_set_shutdown(s, SSL_RECEIVED_SHUTDOWN);
+                    s->s3.warn_alert = SSL_AD_CLOSE_NOTIFY;
+                } else {
+                    SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_READ_N,
+                             SSL_R_UNEXPECTED_EOF_WHILE_READING);
+                }
             }
         } else {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_READ_N,

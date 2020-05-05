@@ -325,14 +325,9 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 /* Allow initial connection to servers that don't support RI */
 # define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U
 
-/* Reserved value (until OpenSSL 3.0.0)                  0x00000008U */
 # define SSL_OP_TLSEXT_PADDING                           0x00000010U
-/* Reserved value (until OpenSSL 3.0.0)                  0x00000020U */
 # define SSL_OP_SAFARI_ECDHE_ECDSA_BUG                   0x00000040U
-/*
- * Reserved value (until OpenSSL 3.0.0)                  0x00000080U
- * Reserved value (until OpenSSL 3.0.0)                  0x00000100U
- */
+# define SSL_OP_IGNORE_UNEXPECTED_EOF                    0x00000080U
 
 # define SSL_OP_DISABLE_TLSEXT_CA_NAMES                  0x00000200U
 

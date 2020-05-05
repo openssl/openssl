@@ -217,6 +217,20 @@ not propose, and servers will not accept the extension.
 Disable all renegotiation in TLSv1.2 and earlier. Do not send HelloRequest
 messages, and ignore renegotiation requests via ClientHello.
 
+=item SSL_OP_IGNORE_UNEXPECTED_EOF
+
+Some TLS implementations do not send the mandatory close_notify alert on
+shutdown. If the application tries to wait for the close_notify alert but the
+peer closes the connection without sending it, an error is generated. When this
+option is enabled the peer does not need to send the close_notify alert and a
+closed connection will be treated as if the close_notify alert was received.
+
+You should only enable this option if the protocol running over TLS
+can detect a truncation attack itself, and that the application is checking for
+that truncation attack.
+
+For more information on shutting down a connection, see L<SSL_shutdown(3)>.
+
 =item SSL_OP_ALLOW_NO_DHE_KEX
 
 In TLSv1.3 allow a non-(ec)dhe based key exchange mode on resumption. This means
@@ -367,7 +381,7 @@ secure renegotiation and 0 if it does not.
 
 =head1 SEE ALSO
 
-L<ssl(7)>, L<SSL_new(3)>, L<SSL_clear(3)>,
+L<ssl(7)>, L<SSL_new(3)>, L<SSL_clear(3)>, L<SSL_shutdown(3)>
 L<SSL_CTX_set_tmp_dh_callback(3)>,
 L<SSL_CTX_set_min_proto_version(3)>,
 L<openssl-dhparam(1)>
@@ -380,7 +394,8 @@ OpenSSL 0.9.8m.
 The B<SSL_OP_PRIORITIZE_CHACHA> and B<SSL_OP_NO_RENEGOTIATION> options
 were added in OpenSSL 1.1.1.
 
-The B<SSL_OP_NO_EXTENDED_MASTER_SECRET> option was added in OpenSSL 3.0.
+The B<SSL_OP_NO_EXTENDED_MASTER_SECRET> and B<SSL_OP_IGNORE_UNEXPECTED_EOF>
+options were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

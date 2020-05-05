@@ -47,6 +47,7 @@ B<openssl> B<s_server>
 [B<-WWW>]
 [B<-http_server_binmode>]
 [B<-no_ca_names>]
+[B<-ignore_unexpected_eof>]
 [B<-servername>]
 [B<-servername_fatal>]
 [B<-tlsextdebug>]
@@ -419,6 +420,15 @@ by the client in binary mode.
 Disable TLS Extension CA Names. You may want to disable it for security reasons
 or for compatibility with some Windows TLS implementations crashing when this
 extension is larger than 1024 bytes.
+
+=item B<-ignore_unexpected_eof>
+
+Some TLS implementations do not send the mandatory close_notify alert on
+shutdown. If the application tries to wait for the close_notify alert but the
+peer closes the connection without sending it, an error is generated. When this
+option is enabled the peer does not need to send the close_notify alert and a
+closed connection will be treated as if the close_notify alert was received.
+For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
 =item B<-id_prefix> I<val>
 

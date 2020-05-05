@@ -83,8 +83,10 @@ message, otherwise an unexpected EOF will be reported.
 There are implementations that do not send the required close_notify alert.
 If there is a need to communicate with such an implementation, and it's clear
 that all data has been received, do not wait for the peer's close_notify alert.
-Waiting for the close_notify alert when the peer just closes the connection will
-result in an error being generated.
+Waiting for the close_notify alert when the peer just closes the connection
+will result in an error being generated.
+The error can be ignored using the B<SSL_OP_IGNORE_UNEXPECTED_EOF>.
+For more information see L<SSL_CTX_set_options(3)>.
 
 =head2 First to close the connection
 
@@ -159,7 +161,7 @@ It can also occur when not all data was read using SSL_read().
 
 L<SSL_get_error(3)>, L<SSL_connect(3)>,
 L<SSL_accept(3)>, L<SSL_set_shutdown(3)>,
-L<SSL_CTX_set_quiet_shutdown(3)>,
+L<SSL_CTX_set_quiet_shutdown(3)>, L<SSL_CTX_set_options(3)>
 L<SSL_clear(3)>, L<SSL_free(3)>,
 L<ssl(7)>, L<bio(7)>
 

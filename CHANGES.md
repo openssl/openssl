@@ -42,6 +42,12 @@ OpenSSL 3.0
 
    *Shane Lontis*
 
+ * The SSL option SSL_OP_IGNORE_UNEXPECTED_EOF is introduced. If that option
+   is set, an unexpected EOF is ignored, it pretends a close notify was received
+   instead and so the returned error becomes SSL_ERROR_ZERO_RETURN.
+
+   *Dmitry Belyavskiy*
+
  * Deprecated EC_POINT_set_Jprojective_coordinates_GFp() and
    EC_POINT_get_Jprojective_coordinates_GFp(). These functions are not widely
    used and applications should instead use the

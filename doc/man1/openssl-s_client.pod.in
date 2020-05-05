@@ -78,6 +78,7 @@ B<openssl> B<s_client>
 [B<-split_send_frag>]
 [B<-max_pipelines>]
 [B<-read_buf>]
+[B<-ignore_unexpected_eof>]
 [B<-bugs>]
 [B<-comp>]
 [B<-no_comp>]
@@ -577,6 +578,15 @@ The default read buffer size to be used for connections. This will only have an
 effect if the buffer size is larger than the size that would otherwise be used
 and pipelining is in use (see L<SSL_CTX_set_default_read_buffer_len(3)> for
 further information).
+
+=item B<-ignore_unexpected_eof>
+
+Some TLS implementations do not send the mandatory close_notify alert on
+shutdown. If the application tries to wait for the close_notify alert but the
+peer closes the connection without sending it, an error is generated. When this
+option is enabled the peer does not need to send the close_notify alert and a
+closed connection will be treated as if the close_notify alert was received.
+For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 
 =item B<-bugs>
 
