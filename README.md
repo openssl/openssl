@@ -47,13 +47,13 @@ The OpenSSL toolkit includes:
 - **openssl**
   the OpenSSL command line tool, a swiss army knife for cryptographic tasks,
   testing and analyzing. It can be used for
-   - creation of key parameters
-   - creation of X.509 certificates, CSRs and CRLs
-   - calculation of message digests
-   - encryption and decryption
-   - SSL/TLS client and server tests
-   - handling of S/MIME signed or encrypted mail
-   - and more...
+  - creation of key parameters
+  - creation of X.509 certificates, CSRs and CRLs
+  - calculation of message digests
+  - encryption and decryption
+  - SSL/TLS client and server tests
+  - handling of S/MIME signed or encrypted mail
+  - and more...
 
 Download
 ========

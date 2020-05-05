@@ -112,17 +112,17 @@ OpenSSL 1.1.1
 ### Major changes between OpenSSL 1.1.0i and OpenSSL 1.1.1 [11 Sep 2018] ###
 
   * Support for TLSv1.3 added. The TLSv1.3 implementation includes:
-      * Fully compliant implementation of RFC8446 (TLSv1.3) on by default
-      * Early data (0-RTT)
-      * Post-handshake authentication and key update
-      * Middlebox Compatibility Mode
-      * TLSv1.3 PSKs
-      * Support for all five RFC8446 ciphersuites
-      * RSA-PSS signature algorithms (backported to TLSv1.2)
-      * Configurable session ticket support
-      * Stateless server support
-      * Rewrite of the packet construction code for "safer" packet handling
-      * Rewrite of the extension handling code
+    * Fully compliant implementation of RFC8446 (TLSv1.3) on by default
+    * Early data (0-RTT)
+    * Post-handshake authentication and key update
+    * Middlebox Compatibility Mode
+    * TLSv1.3 PSKs
+    * Support for all five RFC8446 ciphersuites
+    * RSA-PSS signature algorithms (backported to TLSv1.2)
+    * Configurable session ticket support
+    * Stateless server support
+    * Rewrite of the packet construction code for "safer" packet handling
+    * Rewrite of the extension handling code
     For further important information, see the [TLS1.3 page](
     https://wiki.openssl.org/index.php/TLS1.3) in the OpenSSL Wiki.
 

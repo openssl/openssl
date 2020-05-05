@@ -2615,12 +2615,12 @@ OpenSSL 1.1.0
    *Todd Short*
 
  * Changes to the DEFAULT cipherlist:
-     - Prefer (EC)DHE handshakes over plain RSA.
-     - Prefer AEAD ciphers over legacy ciphers.
-     - Prefer ECDSA over RSA when both certificates are available.
-     - Prefer TLSv1.2 ciphers/PRF.
-     - Remove DSS, SEED, IDEA, CAMELLIA, and AES-CCM from the
-       default cipherlist.
+   - Prefer (EC)DHE handshakes over plain RSA.
+   - Prefer AEAD ciphers over legacy ciphers.
+   - Prefer ECDSA over RSA when both certificates are available.
+   - Prefer TLSv1.2 ciphers/PRF.
+   - Remove DSS, SEED, IDEA, CAMELLIA, and AES-CCM from the
+     default cipherlist.
 
    *Emilia Käsper*
 
@@ -3237,16 +3237,16 @@ OpenSSL 1.1.0
    *Rich Salz*
 
  * Clean up OPENSSL_NO_xxx #define's
-    - Use setbuf() and remove OPENSSL_NO_SETVBUF_IONBF
-    - Rename OPENSSL_SYSNAME_xxx to OPENSSL_SYS_xxx
-    - OPENSSL_NO_EC{DH,DSA} merged into OPENSSL_NO_EC
-    - OPENSSL_NO_RIPEMD160, OPENSSL_NO_RIPEMD merged into OPENSSL_NO_RMD160
-    - OPENSSL_NO_FP_API merged into OPENSSL_NO_STDIO
-    - Remove OPENSSL_NO_BIO OPENSSL_NO_BUFFER OPENSSL_NO_CHAIN_VERIFY
-      OPENSSL_NO_EVP OPENSSL_NO_FIPS_ERR OPENSSL_NO_HASH_COMP
-      OPENSSL_NO_LHASH OPENSSL_NO_OBJECT OPENSSL_NO_SPEED OPENSSL_NO_STACK
-      OPENSSL_NO_X509 OPENSSL_NO_X509_VERIFY
-    - Remove MS_STATIC; it's a relic from platforms <32 bits.
+   - Use setbuf() and remove OPENSSL_NO_SETVBUF_IONBF
+   - Rename OPENSSL_SYSNAME_xxx to OPENSSL_SYS_xxx
+   - OPENSSL_NO_EC{DH,DSA} merged into OPENSSL_NO_EC
+   - OPENSSL_NO_RIPEMD160, OPENSSL_NO_RIPEMD merged into OPENSSL_NO_RMD160
+   - OPENSSL_NO_FP_API merged into OPENSSL_NO_STDIO
+   - Remove OPENSSL_NO_BIO OPENSSL_NO_BUFFER OPENSSL_NO_CHAIN_VERIFY
+     OPENSSL_NO_EVP OPENSSL_NO_FIPS_ERR OPENSSL_NO_HASH_COMP
+     OPENSSL_NO_LHASH OPENSSL_NO_OBJECT OPENSSL_NO_SPEED OPENSSL_NO_STACK
+     OPENSSL_NO_X509 OPENSSL_NO_X509_VERIFY
+   - Remove MS_STATIC; it's a relic from platforms <32 bits.
 
    *Rich Salz*
 
@@ -6472,12 +6472,12 @@ OpenSSL 1.0.1
 
  * Extensive assembler packs updates, most notably:
 
-    - x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
-    - x86[_64]:     SSSE3 support (SHA1, vector-permutation AES);
-    - x86_64:       bit-sliced AES implementation;
-    - ARM:          NEON support, contemporary platforms optimizations;
-    - s390x:        z196 support;
-    - *:            GHASH and GF(2^m) multiplication implementations;
+   - x86[_64]:     AES-NI, PCLMULQDQ, RDRAND support;
+   - x86[_64]:     SSSE3 support (SHA1, vector-permutation AES);
+   - x86_64:       bit-sliced AES implementation;
+   - ARM:          NEON support, contemporary platforms optimizations;
+   - s390x:        z196 support;
+   - *:            GHASH and GF(2^m) multiplication implementations;
 
    *Andy Polyakov*
 
@@ -9301,9 +9301,9 @@ OpenSSL 0.9.x
 
  * Disable rogue ciphersuites:
 
-    - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
-    - SSLv3/TLSv1 0x00 0x61 ("EXP1024-RC2-CBC-MD5")
-    - SSLv3/TLSv1 0x00 0x60 ("EXP1024-RC4-MD5")
+   - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
+   - SSLv3/TLSv1 0x00 0x61 ("EXP1024-RC2-CBC-MD5")
+   - SSLv3/TLSv1 0x00 0x60 ("EXP1024-RC4-MD5")
 
    The latter two were purportedly from
    draft-ietf-tls-56-bit-ciphersuites-0[01].txt, but do not really
@@ -10450,9 +10450,9 @@ OpenSSL 0.9.8.]
 
  * Disable rogue ciphersuites:
 
-    - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
-    - SSLv3/TLSv1 0x00 0x61 ("EXP1024-RC2-CBC-MD5")
-    - SSLv3/TLSv1 0x00 0x60 ("EXP1024-RC4-MD5")
+   - SSLv2 0x08 0x00 0x80 ("RC4-64-MD5")
+   - SSLv3/TLSv1 0x00 0x61 ("EXP1024-RC2-CBC-MD5")
+   - SSLv3/TLSv1 0x00 0x60 ("EXP1024-RC4-MD5")
 
    The latter two were purportedly from
    draft-ietf-tls-56-bit-ciphersuites-0[01].txt, but do not really
@@ -10651,11 +10651,11 @@ OpenSSL 0.9.8.]
    side effect always do the following basic checks on extensions,
    not just when there's an associated purpose to the check:
 
-    - if there is an unhandled critical extension (unless the user
-      has chosen to ignore this fault)
-    - if the path length has been exceeded (if one is set at all)
-    - that certain extensions fit the associated purpose (if one has
-      been given)
+   - if there is an unhandled critical extension (unless the user
+     has chosen to ignore this fault)
+   - if the path length has been exceeded (if one is set at all)
+   - that certain extensions fit the associated purpose (if one has
+     been given)
 
    *Richard Levitte*
 
