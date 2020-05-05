@@ -36,7 +36,7 @@
 DEFINE_STACK_OF(X509)
 
 #ifdef _WIN32
-# define stat    _stat
+# define stat _stat
 #endif
 
 #ifndef S_ISDIR
@@ -266,7 +266,7 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                     osi_pkey = NULL;
                     osi_cert = NULL;
 
-                    while(sk_X509_num(chain) > 0) {
+                    while (sk_X509_num(chain) > 0) {
                         X509 *ca = sk_X509_value(chain, 0);
 
                         if ((osi_ca = OSSL_STORE_INFO_new_CERT(ca)) == NULL
@@ -326,7 +326,7 @@ static FILE_HANDLER PKCS12_handler = {
     try_decode_PKCS12,
     eof_PKCS12,
     destroy_ctx_PKCS12,
-    1                            /* repeatable */
+    1 /* repeatable */
 };
 
 /*
@@ -772,7 +772,7 @@ struct ossl_store_loader_ctx_st {
 #define FILE_FLAG_ATTACHED       (1<<1)
     unsigned int flags;
     union {
-        struct {                 /* Used with is_raw and is_pem */
+        struct { /* Used with is_raw and is_pem */
             BIO *file;
 
             /*
@@ -782,7 +782,7 @@ struct ossl_store_loader_ctx_st {
             const FILE_HANDLER *last_handler;
             void *last_handler_ctx;
         } file;
-        struct {                 /* Used with is_dir */
+        struct { /* Used with is_dir */
             OPENSSL_DIR_CTX *ctx;
             int end_reached;
 
@@ -1316,10 +1316,10 @@ static int ends_with_dirsep(const char *uri)
 {
     if (*uri != '\0')
         uri += strlen(uri) - 1;
-#if defined __VMS
+#if defined(__VMS)
     if (*uri == ']' || *uri == '>' || *uri == ':')
         return 1;
-#elif defined _WIN32
+#elif defined(_WIN32)
     if (*uri == '\\')
         return 1;
 #endif
@@ -1394,7 +1394,7 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
     while (ossl_isdigit(*p))
         p++;
 
-# ifdef __VMS
+#ifdef __VMS
     /*
      * One extra step here, check for a possible generation number.
      */
@@ -1402,7 +1402,7 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
         for (p++; *p != '\0'; p++)
             if (!ossl_isdigit(*p))
                 break;
-# endif
+#endif
 
     /*
      * If we've reached the end of the string at this point, we've successfully
