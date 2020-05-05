@@ -361,6 +361,7 @@ sub init {
                           }
                           run(app(["openssl", "pkcs12", "-inkey", $srckey,
                                    "-in", $srccert, "-passout", "pass:password",
+                                   "-chain", "-CAfile", "cacert.pem",
                                    "-export", "-macalg", $macalg,
                                    "-certpbe", $certpbe, "-keypbe", $keypbe,
                                    "-out", $dstfile]));
