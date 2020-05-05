@@ -1017,6 +1017,12 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_PKEY_PARAM_RSA_E;
     else if (strcmp(name, "rsa_keygen_primes") == 0)
         name = OSSL_PKEY_PARAM_RSA_PRIMES;
+    else if (strcmp(name, "rsa_pss_keygen_md") == 0)
+        name = OSSL_PKEY_PARAM_RSA_DIGEST;
+    else if (strcmp(name, "rsa_pss_keygen_mgf1_md") == 0)
+        name = OSSL_PKEY_PARAM_RSA_MGF1_DIGEST;
+    else if (strcmp(name, "rsa_pss_keygen_saltlen") == 0)
+        name = OSSL_PKEY_PARAM_RSA_PSS_SALTLEN;
 # ifndef OPENSSL_NO_DSA
     else if (strcmp(name, "dsa_paramgen_bits") == 0)
         name = OSSL_PKEY_PARAM_FFC_PBITS;
@@ -1066,7 +1072,8 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         if (!OSSL_PARAM_allocate_from_text(&params[0], settable, name, value,
                                            strlen(value), &exists)) {
             if (!exists) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+                ERR_raise_data(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED,
+                               "name=%s,value=%s", name, value);
                 return -2;
             }
             return 0;

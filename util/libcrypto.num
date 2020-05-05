@@ -5089,3 +5089,6 @@ EVP_PKEY_new_raw_private_key_with_libctx ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_raw_public_key_with_libctx ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_attach                       ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_set_attach            ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen ?	3_0_0	EXIST::FUNCTION:RSA
+EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md ?	3_0_0	EXIST::FUNCTION:RSA
+EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name ?	3_0_0	EXIST::FUNCTION:RSA
