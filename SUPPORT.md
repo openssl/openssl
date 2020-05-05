@@ -1,4 +1,3 @@
-
 OpenSSL User Support resources
 ==============================
 
