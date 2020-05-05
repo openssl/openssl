@@ -960,7 +960,7 @@ OpenSSL 3.0
    the attacked described in "Efficient Instantiations of Tweakable
    Blockciphers and Refinements to Modes OCB and PMAC" by Phillip Rogaway.
    Details of this attack can be obtained from:
-   http://web.cs.ucdavis.edu/%7Erogaway/papers/offsets.pdf
+   <http://web.cs.ucdavis.edu/%7Erogaway/papers/offsets.pdf>
 
    *Paul Dale*
 
@@ -1555,7 +1555,7 @@ OpenSSL 1.1.1
  * Support for TLSv1.3 added. Note that users upgrading from an earlier
    version of OpenSSL should review their configuration settings to ensure
    that they are still appropriate for TLSv1.3. For further information see:
-   https://wiki.openssl.org/index.php/TLS1.3
+   <https://wiki.openssl.org/index.php/TLS1.3>
 
    *Matt Caswell*
 
@@ -1808,7 +1808,7 @@ OpenSSL 1.1.1
 
  * 'openssl passwd' can now produce SHA256 and SHA512 based output,
    using the algorithm defined in
-   https://www.akkadia.org/drepper/SHA-crypt.txt
+   <https://www.akkadia.org/drepper/SHA-crypt.txt>
 
    *Richard Levitte*
 
@@ -2844,7 +2844,7 @@ OpenSSL 1.1.0
 
  * The GOST engine was out of date and therefore it has been removed. An up
    to date GOST engine is now being maintained in an external repository.
-   See: https://wiki.openssl.org/index.php/Binaries. Libssl still retains
+   See: <https://wiki.openssl.org/index.php/Binaries>. Libssl still retains
    support for GOST ciphersuites (these are only activated if a GOST engine
    is present).
 
@@ -3198,7 +3198,7 @@ OpenSSL 1.1.0
 
  * Added support for OCB mode. OpenSSL has been granted a patent license
    compatible with the OpenSSL license for use of OCB. Details are available
-   at https://www.openssl.org/source/OCB-patent-grant-OpenSSL.pdf. Support
+   at <https://www.openssl.org/source/OCB-patent-grant-OpenSSL.pdf>. Support
    for OCB can be removed by calling config with no-ocb.
 
    *Matt Caswell*
@@ -3304,7 +3304,7 @@ OpenSSL 1.1.0
  * Fix for the attack described in the paper "Recovering OpenSSL
    ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
    by Yuval Yarom and Naomi Benger. Details can be obtained from:
-   http://eprint.iacr.org/2014/140
+   <http://eprint.iacr.org/2014/140>
 
    Thanks to Yuval Yarom and Naomi Benger for discovering this
    flaw and to Yuval Yarom for supplying a fix [CVE-2014-0076][]
@@ -4408,7 +4408,7 @@ OpenSSL 1.0.2
    This issue was reported to OpenSSL by Yuval Yarom, The University of
    Adelaide and NICTA, Daniel Genkin, Technion and Tel Aviv University, and
    Nadia Heninger, University of Pennsylvania with more information at
-   http://cachebleed.info.
+   <http://cachebleed.info>.
    [CVE-2016-0702][]
 
    *Andy Polyakov*
@@ -5612,7 +5612,7 @@ OpenSSL 1.0.1
    This issue was reported to OpenSSL by Yuval Yarom, The University of
    Adelaide and NICTA, Daniel Genkin, Technion and Tel Aviv University, and
    Nadia Heninger, University of Pennsylvania with more information at
-   http://cachebleed.info.
+   <http://cachebleed.info>.
    [CVE-2016-0702][]
 
    *Andy Polyakov*
@@ -6258,7 +6258,7 @@ OpenSSL 1.0.1
  * Fix for the attack described in the paper "Recovering OpenSSL
    ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
    by Yuval Yarom and Naomi Benger. Details can be obtained from:
-   http://eprint.iacr.org/2014/140
+   <http://eprint.iacr.org/2014/140>
 
    Thanks to Yuval Yarom and Naomi Benger for discovering this
    flaw and to Yuval Yarom for supplying a fix [CVE-2014-0076][]
@@ -6310,7 +6310,7 @@ OpenSSL 1.0.1
 
    This addresses the flaw in CBC record processing discovered by
    Nadhem Alfardan and Kenny Paterson. Details of this attack can be found
-   at: http://www.isg.rhul.ac.uk/tls/
+   at: <http://www.isg.rhul.ac.uk/tls/>
 
    Thanks go to Nadhem Alfardan and Kenny Paterson of the Information
    Security Group at Royal Holloway, University of London
@@ -6341,7 +6341,7 @@ OpenSSL 1.0.1
  * Call OCSP Stapling callback after ciphersuite has been chosen, so
    the right response is stapled. Also change SSL_get_certificate()
    so it returns the certificate actually sent.
-   See http://rt.openssl.org/Ticket/Display.html?id=2836.
+   See <http://rt.openssl.org/Ticket/Display.html?id=2836>.
 
    *Rob Stradling <rob.stradling@comodo.com>*
 
@@ -6495,7 +6495,7 @@ OpenSSL 1.0.1
    *Eric Rescorla*
 
  * Add Next Protocol Negotiation,
-   http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00. Can be
+   <http://tools.ietf.org/html/draft-agl-tls-nextprotoneg-00>. Can be
    disabled with a no-npn flag to config or Configure. Code donated
    by Google.
 
@@ -7232,7 +7232,7 @@ OpenSSL 1.0.0
  * Fix for the attack described in the paper "Recovering OpenSSL
    ECDSA Nonces Using the FLUSH+RELOAD Cache Side-channel Attack"
    by Yuval Yarom and Naomi Benger. Details can be obtained from:
-   http://eprint.iacr.org/2014/140
+   <http://eprint.iacr.org/2014/140>
 
    Thanks to Yuval Yarom and Naomi Benger for discovering this
    flaw and to Yuval Yarom for supplying a fix [CVE-2014-0076][]
@@ -7262,7 +7262,7 @@ OpenSSL 1.0.0
 
    This addresses the flaw in CBC record processing discovered by
    Nadhem Alfardan and Kenny Paterson. Details of this attack can be found
-   at: http://www.isg.rhul.ac.uk/tls/
+   at: <http://www.isg.rhul.ac.uk/tls/>
 
    Thanks go to Nadhem Alfardan and Kenny Paterson of the Information
    Security Group at Royal Holloway, University of London
@@ -7280,7 +7280,7 @@ OpenSSL 1.0.0
  * Call OCSP Stapling callback after ciphersuite has been chosen, so
    the right response is stapled. Also change SSL_get_certificate()
    so it returns the certificate actually sent.
-   See http://rt.openssl.org/Ticket/Display.html?id=2836.
+   See <http://rt.openssl.org/Ticket/Display.html?id=2836>.
    (This is a backport)
 
    *Rob Stradling <rob.stradling@comodo.com>*
@@ -7357,7 +7357,7 @@ OpenSSL 1.0.1.]
    the OpenSSL implementation of DTLS. Their attack exploits timing
    differences arising during decryption processing. A research
    paper describing this attack can be found at:
-           http://www.isg.rhul.ac.uk/~kp/dtls.pdf
+   <http://www.isg.rhul.ac.uk/~kp/dtls.pdf>
    Thanks go to Nadhem Alfardan and Kenny Paterson of the Information
    Security Group at Royal Holloway, University of London
    (www.isg.rhul.ac.uk) for discovering this flaw and to Robin Seggelmann
@@ -7443,9 +7443,7 @@ OpenSSL 1.0.1.]
 
  * Add protection against ECDSA timing attacks as mentioned in the paper
    by Billy Bob Brumley and Nicola Tuveri, see:
-
-      http://eprint.iacr.org/2011/232.pdf
-
+   <http://eprint.iacr.org/2011/232.pdf>
 
    *Billy Bob Brumley and Nicola Tuveri*
 
@@ -9114,7 +9112,7 @@ OpenSSL 0.9.x
    *Dean Gaudet (Google)*
 
  * Add the Korean symmetric 128-bit cipher SEED (see
-   http://www.kisa.or.kr/kisa/seed/jsp/seed_eng.jsp) and
+   <http://www.kisa.or.kr/kisa/seed/jsp/seed_eng.jsp>) and
    add SEED ciphersuites from RFC 4162:
 
            TLS_RSA_WITH_SEED_CBC_SHA      =  "SEED-SHA"
@@ -9131,7 +9129,7 @@ OpenSSL 0.9.x
  * Mitigate branch prediction attacks, which can be practical if a
    single processor is shared, allowing a spy process to extract
    information.  For detailed background information, see
-   http://eprint.iacr.org/2007/039 (O. Aciicmez, S. Gueron,
+   <http://eprint.iacr.org/2007/039> (O. Aciicmez, S. Gueron,
    J.-P. Seifert, "New Branch Prediction Vulnerabilities in OpenSSL
    and Necessary Software Countermeasures").  The core of the change
    are new versions BN_div_no_branch() and
@@ -9324,7 +9322,7 @@ OpenSSL 0.9.x
 
  * Add the symmetric cipher Camellia (128-bit, 192-bit, 256-bit key
    versions), which is now available for royalty-free use
-   (see http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html).
+   (see <http://info.isl.ntt.co.jp/crypt/eng/info/chiteki.html>).
    Also, add Camellia TLS ciphersuites from RFC 4132.
 
    To minimize changes between patchlevels in the OpenSSL 0.9.8
@@ -9368,7 +9366,7 @@ OpenSSL 0.9.x
  * Fixes and enhancements to zlib compression code. We now only use
    "zlib1.dll" and use the default `__cdecl` calling convention on Win32
    to conform with the standards mentioned here:
-         http://www.zlib.net/DLL_FAQ.txt
+   <http://www.zlib.net/DLL_FAQ.txt>
    Static zlib linking now works on Windows and the new --with-zlib-include
    --with-zlib-lib options to Configure can be used to supply the location
    of the headers and library. Gracefully handle case where zlib library
@@ -13854,7 +13852,7 @@ ndif
  * Check the result of RSA-CRT (see D. Boneh, R. DeMillo, R. Lipton:
    On the Importance of Eliminating Errors in Cryptographic
    Computations, J. Cryptology 14 (2001) 2, 101-119,
-   http://theory.stanford.edu/~dabo/papers/faults.ps.gz).
+   <http://theory.stanford.edu/~dabo/papers/faults.ps.gz>).
 
    *Ulf Moeller*
 
@@ -14402,7 +14400,7 @@ ndif
    *Andreas Schneider <andreas@ds3.etech.fh-hamburg.de>*
 
  * A demo state-machine implementation was sponsored by
-   Nuron (http://www.nuron.com/) and is now available in
+   Nuron (<http://www.nuron.com/>) and is now available in
    demos/state_machine.
 
    *Ben Laurie*
@@ -17498,7 +17496,7 @@ ndif
 
  * Experiment with doxygen documentation. Currently only partially applied to
    ssl/ssl_lib.c.
-   See http://www.stack.nl/~dimitri/doxygen/index.html, and run doxygen with
+   See <http://www.stack.nl/~dimitri/doxygen/index.html>, and run doxygen with
    openssl.doxy as the configuration file.
 
    *Ben Laurie*

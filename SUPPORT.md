@@ -7,7 +7,7 @@ _Under Construction; not more than a collection of text fragments yet._
 See the OpenSSL website www.openssl.org for details on how to obtain
 commercial technical support. Free community support is available through the
 openssl-users email list (see
-https://www.openssl.org/community/mailinglists.html for further details).
+<https://www.openssl.org/community/mailinglists.html for> further details).
 
 If you have any problems with OpenSSL then please take the following steps
 first:
@@ -41,7 +41,7 @@ OpenSSL community (which includes the developers as time permits).
 
 Only subscribers can post to openssl-users@openssl.org (although the
 archives are public).
-For more information, see https://www.openssl.org/community/mailinglists.html
+For more information, see <https://www.openssl.org/community/mailinglists.html>
 
 
 

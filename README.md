@@ -188,32 +188,32 @@ All rights reserved.
 <!-- Links  -->
 
 [www.openssl.org]:
-    https://www.openssl.org
+    <https://www.openssl.org>
     "OpenSSL Homepage"
 
 [git.openssl.org]:
-    https://git.openssl.org
+    <https://git.openssl.org>
     "OpenSSL Git Repository"
 
 [git.openssl.org]:
-    https://git.openssl.org
+    <https://git.openssl.org>
     "OpenSSL Git Repository"
 
 [github.com/openssl/openssl]:
-    https://github.com/openssl/openssl
+    <https://github.com/openssl/openssl>
     "OpenSSL GitHub Mirror"
 
 [openssl.github.io]:
-    https://mspncp.github.io
+    <https://mspncp.github.io>
     "OpenSSL Project Pages"
 
 [wiki.openssl.org]:
-    https://wiki.openssl.org
+    <https://wiki.openssl.org>
     "OpenSSL Wiki"
 
 
 [RFC 8446]:
-     https://tools.ietf.org/html/rfc8446
+     <https://tools.ietf.org/html/rfc8446>
 
 
 <!-- Logos and Badges -->
@@ -230,17 +230,17 @@ All rights reserved.
     "OpenSSL Logo"
 
 [travis badge]:
-    https://travis-ci.org/openssl/openssl.svg?branch=master
+    <https://travis-ci.org/openssl/openssl.svg?branch=master>
     "Travis Build Status"
 
 [travis jobs]:
-    https://travis-ci.org/openssl/openssl
+    <https://travis-ci.org/openssl/openssl>
     "Travis Jobs"
 
 [appveyor badge]:
-    https://ci.appveyor.com/api/projects/status/ikn2l4u1xsume63u/branch/master?svg=true
+    <https://ci.appveyor.com/api/projects/status/ikn2l4u1xsume63u/branch/master?svg=true>
     "AppVeyor Build Status"
 
 [appveyor jobs]:
-    https://ci.appveyor.com/project/openssl/openssl/branch/master
+    <https://ci.appveyor.com/project/openssl/openssl/branch/master>
     "AppVeyor Jobs"

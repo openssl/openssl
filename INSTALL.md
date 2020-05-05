@@ -1713,7 +1713,7 @@ compiler optimization flags from the CFLAGS line in Makefile and
 run "make clean; make" or corresponding.
 
 To report a bug please open an issue on GitHub, at
-https://github.com/openssl/openssl/issues.
+<https://github.com/openssl/openssl/issues>.
 
 For more details on how the make variables TESTS can be used,
 see section [Running Selected Tests](#running-selected-tests) below.
@@ -1807,16 +1807,16 @@ RAND_bytes(), RAND_egd(), and the FAQ for more information.
 <!-- Links  -->
 
 [openssl-users]:
-    https://mta.openssl.org/mailman/listinfo/openssl-users
+    <https://mta.openssl.org/mailman/listinfo/openssl-users>
 
 [SUPPORT]:
     ./SUPPORT.md
 
 [GitHub Issues]:
-    https://github.com/openssl/openssl/issues
+    <https://github.com/openssl/openssl/issues>
 
 [raise an issue]:
-    https://github.com/openssl/openssl/issues/new/choose
+    <https://github.com/openssl/openssl/issues/new/choose>
 
 [10-main.conf]:
     Configurations/10-main.conf
