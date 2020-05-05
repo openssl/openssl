@@ -14278,7 +14278,7 @@ ndif
 
    *Ben Laurie*
 
- * Add a few more EBCDIC conditionals that make `req' and `x509'
+ * Add a few more EBCDIC conditionals that make `req` and `x509`
    work better on such systems.
 
    *Martin Kraemer <Martin.Kraemer@MchP.Siemens.De>*
@@ -14901,7 +14901,7 @@ ndif
    NCONF_dump_* dump the internal storage of the configuration file,
    which is useful for debugging.  All other functions take the same
    arguments as the old CONF_* functions with the exception of the
-   first that must be a `CONF *' instead of a `LHASH *'.
+   first that must be a `CONF *` instead of a `LHASH *`.
 
    To make it easier to use the new classes with the old CONF_* functions,
    the function CONF_set_default_method is provided.
@@ -17158,9 +17158,9 @@ ndif
 
    *Massimiliano Pala <madwolf@openca.org>, Ralf S. Engelschall*
 
- * Fix `openssl crl -noout -text' combination where `-noout' killed the
-   `-text' option at all and this way the `-noout -text' combination was
-   inconsistent in `openssl crl' with the friends in `openssl x509|rsa|dsa'.
+ * Fix `openssl crl -noout -text` combination where `-noout` killed the
+   `-text` option at all and this way the `-noout -text` combination was
+   inconsistent in `openssl crl` with the friends in `openssl x509|rsa|dsa`.
 
    *Ralf S. Engelschall*
 
@@ -17544,13 +17544,13 @@ ndif
 
    *Richard Levitte <levitte@stacken.kth.se>*
 
- * Fix 'port' variable from `int' to `unsigned int' in crypto/bio/b_sock.c
+ * Fix `port` variable from `int` to `unsigned int` in crypto/bio/b_sock.c
 
    *Richard Levitte <levitte@stacken.kth.se>*
 
  * Change type of another md_len variable in pk7_doit.c:PKCS7_dataFinal()
-   from `int' to `unsigned int' because it's a length and initialized by
-   EVP_DigestFinal() which expects an `unsigned int *'.
+   from `int` to `unsigned int` because it is a length and initialized by
+   EVP_DigestFinal() which expects an `unsigned int *`.
 
    *Richard Levitte <levitte@stacken.kth.se>*
 
@@ -17741,7 +17741,7 @@ ndif
 
    *Eric A. Young, (from changes to C2Net SSLeay, integrated by Mark Cox)*
 
- * Make sure `make rehash' target really finds the `openssl' program.
+ * Make sure `make rehash` target really finds the `openssl` program.
 
    *Ralf S. Engelschall, Matthias Loepfe <Matthias.Loepfe@adnovum.ch>*
 
@@ -17754,7 +17754,7 @@ ndif
 
    *Alan Batie <batie@aahz.jf.intel.com>*
 
- * Fixed ms/32all.bat script: `no_asm' -> `no-asm'
+ * Fixed ms/32all.bat script: `no_asm` -> `no-asm`
 
    *Rainer W. Gerling <gerling@mpg-gv.mpg.de>*
 
