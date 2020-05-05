@@ -1,12 +1,10 @@
+# Welcome to the OpenSSL Project #
+
 [![openssl logo][]][www.openssl.org]
 
 [![travis badge][]][travis jobs]
 [![appveyor badge][]][appveyor jobs]
 
-
-
-Welcome to the OpenSSL Project
-==============================
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
 for the Transport Layer Security (TLS) protocol formerly known as the
@@ -86,17 +84,17 @@ which is updated automatically from the former on every commit.
 A local copy of the Git Repository can be obtained by cloning it from
 the original OpenSSL repository using
 
-        git clone git://git.openssl.org/openssl.git
+    git clone git://git.openssl.org/openssl.git
 
 or from the GitHub mirror using
 
-        git clone https://github.com/openssl/openssl.git
+    git clone https://github.com/openssl/openssl.git
 
 If you intend to contribute to OpenSSL, either to fix bugs or contribute
 new features, you need to fork the OpenSSL repository openssl/openssl on
 GitHub and clone your public fork instead.
 
-        git clone https://github.com/yourname/openssl.git
+    git clone https://github.com/yourname/openssl.git
 
 This is necessary, because all development of OpenSSL nowadays is done via
 GitHub pull requests. For more details, see [Contributing](#contributing).
