@@ -18,7 +18,7 @@ OpenSSL Releases
  - [OpenSSL 1.0.1](#openssl-101)
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
-)
+
 OpenSSL 3.0
 -----------
 
