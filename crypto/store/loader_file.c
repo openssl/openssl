@@ -219,7 +219,6 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
     if (ctx == NULL) {
         /* Initial parsing */
         PKCS12 *p12;
-        int ok = 0;
 
         if (pem_name != NULL)
             /* No match, there is no PEM PKCS12 tag */
@@ -256,37 +255,46 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                 OSSL_STORE_INFO *osi_pkey = NULL;
                 OSSL_STORE_INFO *osi_cert = NULL;
                 OSSL_STORE_INFO *osi_ca = NULL;
+                int ok = 1;
 
-                if ((ctx = sk_OSSL_STORE_INFO_new_null()) != NULL
-                    && (osi_pkey = OSSL_STORE_INFO_new_PKEY(pkey)) != NULL
-                    && sk_OSSL_STORE_INFO_push(ctx, osi_pkey) != 0
-                    && (osi_cert = OSSL_STORE_INFO_new_CERT(cert)) != NULL
-                    && sk_OSSL_STORE_INFO_push(ctx, osi_cert) != 0) {
-                    ok = 1;
-                    osi_pkey = NULL;
-                    osi_cert = NULL;
-
-                    while (sk_X509_num(chain) > 0) {
+                if ((ctx = sk_OSSL_STORE_INFO_new_null()) != NULL) {
+                    if (pkey != NULL) {
+                        if ((osi_pkey = OSSL_STORE_INFO_new_PKEY(pkey)) != NULL
+                            /* clearing pkey here avoids case distinctions */
+                            && (pkey = NULL) == NULL
+                            && sk_OSSL_STORE_INFO_push(ctx, osi_pkey) != 0)
+                            osi_pkey = NULL;
+                        else
+                            ok = 0;
+                    }
+                    if (ok && cert != NULL) {
+                        if ((osi_cert = OSSL_STORE_INFO_new_CERT(cert)) != NULL
+                            /* clearing cert here avoids case distinctions */
+                            && (cert = NULL) == NULL
+                            && sk_OSSL_STORE_INFO_push(ctx, osi_cert) != 0)
+                            osi_cert = NULL;
+                        else
+                            ok = 0;
+                    }
+                    while (ok && sk_X509_num(chain) > 0) {
                         X509 *ca = sk_X509_value(chain, 0);
 
-                        if ((osi_ca = OSSL_STORE_INFO_new_CERT(ca)) == NULL
-                            || sk_OSSL_STORE_INFO_push(ctx, osi_ca) == 0) {
+                        if ((osi_ca = OSSL_STORE_INFO_new_CERT(ca)) != NULL
+                            && sk_X509_shift(chain) != NULL
+                            && sk_OSSL_STORE_INFO_push(ctx, osi_ca) != 0)
+                            osi_ca = NULL;
+                        else
                             ok = 0;
-                            break;
-                        }
-                        osi_ca = NULL;
-                        (void)sk_X509_shift(chain);
                     }
                 }
-                sk_X509_free(chain);
+                EVP_PKEY_free(pkey);
+                X509_free(cert);
+                sk_X509_pop_free(chain, X509_free);
+                OSSL_STORE_INFO_free(osi_pkey);
+                OSSL_STORE_INFO_free(osi_cert);
+                OSSL_STORE_INFO_free(osi_ca);
                 if (!ok) {
-                    OSSL_STORE_INFO_free(osi_ca);
-                    OSSL_STORE_INFO_free(osi_cert);
-                    OSSL_STORE_INFO_free(osi_pkey);
                     sk_OSSL_STORE_INFO_pop_free(ctx, OSSL_STORE_INFO_free);
-                    EVP_PKEY_free(pkey);
-                    X509_free(cert);
-                    sk_X509_pop_free(chain, X509_free);
                     ctx = NULL;
                 }
                 *pctx = ctx;
@@ -294,15 +302,12 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
         }
      p12_end:
         PKCS12_free(p12);
-        if (!ok)
+        if (ctx == NULL)
             return NULL;
     }
 
-    if (ctx != NULL) {
-        *matchcount = 1;
-        store_info = sk_OSSL_STORE_INFO_shift(ctx);
-    }
-
+    *matchcount = 1;
+    store_info = sk_OSSL_STORE_INFO_shift(ctx);
     return store_info;
 }
 
