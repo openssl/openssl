@@ -51,7 +51,7 @@ const OPTIONS rsautl_options[] = {
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file"},
     {"inkey", OPT_INKEY, 's', "Input key"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
     {"pubin", OPT_PUBIN, '-', "Input is an RSA public"},
     {"certin", OPT_CERTIN, '-', "Input is a cert carrying an RSA public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
@@ -101,7 +101,7 @@ int rsautl_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyformat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -197,7 +197,7 @@ int rsautl_main(int argc, char **argv)
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyformat, "Certificate");
+        x = load_cert(keyfile, FORMAT_UNDEF, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);

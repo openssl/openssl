@@ -29,14 +29,14 @@ B<openssl> B<s_client>
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<uri>]
 [B<-cert> I<filename>]
-[B<-certform> B<DER>|B<PEM>]
+[B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-cert_chain> I<filename>]
 [B<-build_chain>]
 [B<-CRL> I<filename>]
 [B<-CRLform> B<DER>|B<PEM>]
 [B<-crl_download>]
 [B<-key> I<filename>]
-[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<arg>]
 [B<-chainCAfile> I<filename>]
 [B<-chainCApath> I<directory>]
@@ -240,10 +240,10 @@ The default is not to use a certificate.
 
 The chain for the client certificate may be specified using B<-cert_chain>.
 
-=item B<-certform> B<DER>|B<PEM>
+=item B<-certform> B<DER>|B<PEM>|B<P12>
 
 The client certificate file format to use; the default is B<PEM>.
-see L<openssl(1)/Format Options>.
+This option has no effect and is retained for backward compatibility only.
 
 =item B<-cert_chain>
 
@@ -273,9 +273,10 @@ Download CRL from distribution points in the certificate.
 The client private key file to use.
 If not specified then the certificate file will be used to read also the key.
 
-=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<arg>
@@ -893,6 +894,11 @@ L<ossl_store-file(7)>
 
 The B<-no_alt_chains> option was added in OpenSSL 1.1.0.
 The B<-name> option was added in OpenSSL 1.1.1.
+
+The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
 
 =head1 COPYRIGHT
 

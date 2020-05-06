@@ -20,19 +20,19 @@ B<openssl> B<s_server>
 [B<-Verify> I<int>]
 [B<-cert> I<infile>]
 [B<-cert2> I<infile>]
-[B<-certform> B<DER>|B<PEM>]
+[B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-cert_chain> I<infile>]
 [B<-build_chain>]
 [B<-serverinfo> I<val>]
 [B<-key> I<infile>]
 [B<-key2> I<infile>]
-[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pass> I<val>]
 [B<-dcert> I<infile>]
-[B<-dcertform> B<DER>|B<PEM>]
+[B<-dcertform> B<DER>|B<PEM>|B<P12>]
 [B<-dcert_chain> I<infile>]
 [B<-dkey> I<infile>]
-[B<-dkeyform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-dpass> I<val>]
 [B<-nbio_test>]
 [B<-crlf>]
@@ -220,10 +220,10 @@ certificate and some require a certificate with a certain public key type:
 for example the DSS cipher suites require a certificate containing a DSS
 (DSA) key. If not specified then the filename F<server.pem> will be used.
 
-=item B<-certform> B<DER>|B<PEM>
+=item B<-certform> B<DER>|B<PEM>|B<P12>
 
-The server certificate file format; the default is B<PEM>.
-See L<openssl(1)/Format Options> for details.
+The server certificate file format.
+This option has no effect and is retained for backward compatibility only.
 
 =item B<-cert_chain>
 
@@ -248,9 +248,10 @@ ServerHello extension will be returned.
 The private key to use. If not specified then the certificate file will
 be used.
 
-=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<val>
@@ -276,14 +277,15 @@ A file containing untrusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
 
-=item B<-dcertform> B<DER>|B<PEM>
+=item B<-dcertform> B<DER>|B<PEM>|B<P12>
 
-The format of the additional certificate file; the default is B<PEM>.
-See L<openssl(1)/Format Options>.
+The format of the additional certificate file.
+This option has no effect and is retained for backward compatibility only.
 
-=item B<-dkeyform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-dkeyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The format of the additional private key; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options>.
 
 =item B<-dpass> I<val>
@@ -821,6 +823,12 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 
 The
 -allow-no-dhe-kex and -prioritize_chacha options were added in OpenSSL 1.1.1.
+
+All B<-keyform> and B<-dkeyform> values except B<ENGINE>
+have become obsolete in OpenSSL 3.0.0 and have no effect.
+
+The B<-certform> and B<-dcertform> options have become obsolete in OpenSSL 3.0.0
+and have no effect.
 
 =head1 COPYRIGHT
 

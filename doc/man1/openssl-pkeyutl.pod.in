@@ -15,10 +15,10 @@ B<openssl> B<pkeyutl>
 [B<-out> I<file>]
 [B<-sigfile> I<file>]
 [B<-inkey> I<file>]
-[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-peerkey> I<file>]
-[B<-peerform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-pubin>]
 [B<-certin>]
 [B<-rev>]
@@ -89,9 +89,10 @@ Signature file, required for B<-verify> operations only
 
 The input key file, by default it should be a private key.
 
-=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-passin> I<arg>
@@ -103,9 +104,10 @@ see L<openssl(1)/Pass Phrase Options>.
 
 The peer key file, used by key derivation (agreement) operations.
 
-=item B<-peerform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-peerform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The peer key format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-pubin>
@@ -402,6 +404,10 @@ L<openssl-kdf(1)>
 L<EVP_PKEY_CTX_set_hkdf_md(3)>,
 L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 
+=head1 HISTORY
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
 
 =head1 COPYRIGHT
 

@@ -636,12 +636,12 @@ const OPTIONS s_client_options[] = {
     OPT_SECTION("Identity"),
     {"cert", OPT_CERT, '<', "Client certificate file to use"},
     {"certform", OPT_CERTFORM, 'F',
-     "Client certificate file format (PEM or DER) PEM default"},
+     "Client certificate file format (PEM/DER/P12); has no effect"},
     {"cert_chain", OPT_CERT_CHAIN, '<',
      "Client certificate chain file (in PEM format)"},
     {"build_chain", OPT_BUILD_CHAIN, '-', "Build client certificate chain"},
     {"key", OPT_KEY, 's', "Private key file to use; default is: -cert file"},
-    {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
+    {"keyform", OPT_KEYFORM, 'E', "Key format (ENGINE, other values ignored)"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
@@ -1144,7 +1144,7 @@ int s_client_main(int argc, char **argv)
             sess_in = opt_arg();
             break;
         case OPT_CERTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &cert_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &cert_format))
                 goto opthelp;
             break;
         case OPT_CRLFORM:
@@ -1378,7 +1378,7 @@ int s_client_main(int argc, char **argv)
             fallback_scsv = 1;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &key_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &key_format))
                 goto opthelp;
             break;
         case OPT_PASS:
@@ -3137,8 +3137,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_clear_free(cbuf, BUFSIZZ);
     OPENSSL_clear_free(sbuf, BUFSIZZ);
     OPENSSL_clear_free(mbuf, BUFSIZZ);
-    if (proxypass != NULL)
-        OPENSSL_clear_free(proxypass, strlen(proxypass));
+    clear_free(proxypass);
     release_engine(e);
     BIO_free(bio_c_out);
     bio_c_out = NULL;

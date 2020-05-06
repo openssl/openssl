@@ -525,7 +525,12 @@ parameters start with a minus sign:
 =head2 Format Options
 
 Several OpenSSL commands can take input or generate output in a variety
-of formats. The list of acceptable formats, and the default, is
+of formats.
+Since OpenSSL 3.0 keys, single certificates, and CRLs can be read from
+files in any of the B<DER>, B<PEM>, or B<P12> formats,
+while specifying their input format is no more needed.
+
+The list of acceptable formats, and the default, is
 described in each command documentation.  The list of formats is
 described below. Both uppercase and lowercase are accepted.
 
@@ -618,6 +623,8 @@ The format of the input or output streams.
 =item B<-keyform> I<format>
 
 Format of a private key input source.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl(1)/Format Options> for details.
 
 =item B<-CRLform> I<format>
 
@@ -789,12 +796,6 @@ OpenSSL command to generate an alternative chain.
 
 =over 4
 
-=item B<-xchain_build>
-
-Specify whether the application should build the certificate chain to be
-provided to the server for the extra certificates via the B<-xkey>,
-B<-xcert>, and B<-xchain> options.
-
 =item B<-xkey> I<infile>, B<-xcert> I<infile>, B<-xchain>
 
 Specify an extra certificate, private key and certificate chain. These behave
@@ -802,21 +803,21 @@ in the same manner as the B<-cert>, B<-key> and B<-cert_chain> options.  When
 specified, the callback returning the first valid chain will be in use by the
 client.
 
-=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
-
-The input format for the extra certificate and key, respectively.
-See L<openssl(1)/Format Options> for details.
-
 =item B<-xchain_build>
 
 Specify whether the application should build the certificate chain to be
 provided to the server for the extra certificates via the B<-xkey>,
 B<-xcert>, and B<-xchain> options.
 
-=item B<-xcertform> B<DER>|B<PEM>, B<-xkeyform> B<DER>|B<PEM>
+=item B<-xcertform> B<DER>|B<PEM>|B<P12>
 
-The input format for the extra certificate and key, respectively.
-See L<openssl(1)/Format Options> for details.
+The input format for the extra certificate.
+This option has no effect and is retained for backward compatibility only.
+
+=item B<-xkeyform> B<DER>|B<PEM>|B<P12>
+
+The input format for the extra key.
+This option has no effect and is retained for backward compatibility only.
 
 =back
 
@@ -1402,6 +1403,9 @@ manual pages.
 
 The B<-issuer_checks> option is deprecated as of OpenSSL 1.1.0 and
 is silently ignored.
+
+The B<-xcertform> and B<-xkeyform> options
+are obsolete since OpenSSL 3.0.0 and have no effect.
 
 =head1 COPYRIGHT
 

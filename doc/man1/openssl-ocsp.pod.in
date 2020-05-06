@@ -103,8 +103,8 @@ specify output filename, default is standard output.
 =item B<-issuer> I<filename>
 
 This specifies the current issuer certificate. This option can be used
-multiple times. The certificate specified in I<filename> must be in
-PEM format. This option B<MUST> come before any B<-cert> options.
+multiple times.
+This option B<MUST> come before any B<-cert> options.
 
 =item B<-cert> I<filename>
 
