@@ -524,7 +524,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_keyexch_gettable_ctx_params,
 # define OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS      24
 # define OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS 25
 
-OSSL_CORE_MAKE_FUNC(void *, OP_signature_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void *, OP_signature_newctx, (void *provctx,
+                                                  const char *propq))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_sign_init, (void *ctx, void *provkey))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_sign, (void *ctx,  unsigned char *sig,
                                              size_t *siglen, size_t sigsize,
@@ -545,8 +546,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_verify_recover, (void *ctx,
                                                        const unsigned char *sig,
                                                        size_t siglen))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_sign_init,
-                    (void *ctx, const char *mdname, const char *props,
-                     void *provkey))
+                    (void *ctx, const char *mdname, void *provkey))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_sign_update,
                     (void *ctx, const unsigned char *data, size_t datalen))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_sign_final,
@@ -556,8 +556,7 @@ OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_sign,
                     (void *ctx, unsigned char *sigret, size_t *siglen,
                      size_t sigsize, const unsigned char *tbs, size_t tbslen))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify_init,
-                    (void *ctx, const char *mdname, const char *props,
-                     void *provkey))
+                    (void *ctx, const char *mdname, void *provkey))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify_update,
                     (void *ctx, const unsigned char *data, size_t datalen))
 OSSL_CORE_MAKE_FUNC(int, OP_signature_digest_verify_final,
