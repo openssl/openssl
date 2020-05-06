@@ -326,7 +326,7 @@ OpenSSL 3.0
 
    *Paul Dale*
 
- * Corrected the documentation of the return values from the EVP_DigestSign*
+ * Corrected the documentation of the return values from the `EVP_DigestSign*`
    set of functions.  The documentation mentioned negative values for some
    errors, but this was never the case, so the mention of negative values
    was removed.
@@ -631,7 +631,7 @@ OpenSSL 3.0
    when primes for RSA keys are computed.
    Since we previously always generated primes == 2 (mod 3) for RSA keys,
    the 2-prime and 3-prime RSA modules were easy to distinguish, since
-   N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore fingerprinting
+   `N = p*q = 1 (mod 3)`, but `N = p*q*r = 2 (mod 3)`. Therefore fingerprinting
    2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
    This avoids possible fingerprinting of newly generated RSA modules.
 
@@ -682,7 +682,7 @@ OpenSSL 3.0
 
    *Paul Dale*
 
- * {CRYPTO,OPENSSL}_mem_debug_{push,pop} are now no-ops and have been
+ * `{CRYPTO,OPENSSL}_mem_debug_{push,pop}` are now no-ops and have been
    deprecated.
 
    *Rich Salz*
@@ -797,7 +797,7 @@ OpenSSL 3.0
    *Paul Dale*
 
  * Added newline escaping functionality to a filename when using openssl dgst.
-   This output format is to replicate the output format found in the '*sum'
+   This output format is to replicate the output format found in the `*sum`
    checksum programs. This aims to preserve backward compatibility.
 
    *Matt Eaton, Richard Levitte, and Paul Dale*
@@ -1027,7 +1027,7 @@ OpenSSL 1.1.1
    *Richard Levitte*
 
  * Added newline escaping functionality to a filename when using openssl dgst.
-   This output format is to replicate the output format found in the '*sum'
+   This output format is to replicate the output format found in the `*sum`
    checksum programs. This aims to preserve backward compatibility.
 
    *Matt Eaton, Richard Levitte, and Paul Dale*
@@ -2238,7 +2238,7 @@ OpenSSL 1.1.0
 
  * ChaCha20/Poly1305 heap-buffer-overflow
 
-   TLS connections using *-CHACHA20-POLY1305 ciphersuites are susceptible to
+   TLS connections using `*-CHACHA20-POLY1305` ciphersuites are susceptible to
    a DoS attack by corrupting larger payloads. This can result in an OpenSSL
    crash. This issue is not considered to be exploitable beyond a DoS.
 
@@ -2430,8 +2430,8 @@ OpenSSL 1.1.0
 
    *Joseph Wylie Yandle, Rich Salz*
 
- * The stack and lhash API's were renamed to start with OPENSSL_SK_
-   and OPENSSL_LH_, respectively.  The old names are available
+ * The stack and lhash API's were renamed to start with `OPENSSL_SK_`
+   and `OPENSSL_LH_`, respectively.  The old names are available
    with API compatibility.  They new names are now completely documented.
 
    *Rich Salz*
@@ -2776,8 +2776,8 @@ OpenSSL 1.1.0
 
  * The signature of the session callback configured with
    SSL_CTX_sess_set_get_cb was changed. The read-only input buffer
-   was explicitly marked as 'const unsigned char*' instead of
-   'unsigned char*'.
+   was explicitly marked as `const unsigned char*` instead of
+   `unsigned char*`.
 
    *Emilia Käsper*
 
@@ -2809,7 +2809,7 @@ OpenSSL 1.1.0
    Makefile.  Instead, Configure produces a perl module in
    configdata.pm which holds most of the config data (in the hash
    table %config), the target data that comes from the target
-   configuration in one of the Configurations/*.conf files (in
+   configuration in one of the `Configurations/*.conf~ files (in
    %target).
 
    *Richard Levitte*
@@ -3528,7 +3528,7 @@ OpenSSL 1.1.0
    *Steve Henson*
 
  * Initial, experimental EVP support for AES-GCM. AAD can be input by
-   setting output buffer to NULL. The *Final function must be
+   setting output buffer to NULL. The `*Final` function must be
    called although it will not retrieve any additional data. The tag
    can be set or retrieved with a ctrl. The IV length is by default 12
    bytes (96 bits) but can be set to an alternative value. If the IV
@@ -4196,7 +4196,7 @@ OpenSSL 1.0.2
    corruption.
 
    Internally to OpenSSL the EVP_EncodeUpdate() function is primarily used by
-   the PEM_write_bio* family of functions. These are mainly used within the
+   the `PEM_write_bio*` family of functions. These are mainly used within the
    OpenSSL command line applications, so any application which processes data
    from an untrusted source and outputs it as a PEM file should be considered
    vulnerable to this issue. User applications that call these APIs directly
@@ -4358,10 +4358,10 @@ OpenSSL 1.0.2
 
    *Matt Caswell*
 
- * Fix memory issues in BIO_*printf functions
+ * Fix memory issues in `BIO_*printf` functions
 
    The internal |fmtstr| function used in processing a "%s" format string in
-   the BIO_*printf functions could overflow while calculating the length of a
+   the `BIO_*printf` functions could overflow while calculating the length of a
    string and cause an OOB read when printing very long strings.
 
    Additionally the internal |doapr_outch| function can attempt to write to an
@@ -4373,7 +4373,7 @@ OpenSSL 1.0.2
 
    The first issue may mask the second issue dependent on compiler behaviour.
    These problems could enable attacks where large amounts of untrusted data
-   is passed to the BIO_*printf functions. If applications use these functions
+   is passed to the `BIO_*printf` functions. If applications use these functions
    in this way then they could be vulnerable. OpenSSL itself uses these
    functions when printing out human-readable dumps of ASN.1 data. Therefore
    applications that print this data could be vulnerable if the data is from
@@ -4953,7 +4953,7 @@ OpenSSL 1.0.2
 
    *Steve Henson*
 
- * SSL_CONF* functions. These provide a common framework for application
+ * `SSL_CONF*` functions. These provide a common framework for application
    configuration using configuration files or command lines.
 
    *Steve Henson*
@@ -5398,7 +5398,7 @@ OpenSSL 1.0.1
    corruption.
 
    Internally to OpenSSL the EVP_EncodeUpdate() function is primarly used by
-   the PEM_write_bio* family of functions. These are mainly used within the
+   the `PEM_write_bio*` family of functions. These are mainly used within the
    OpenSSL command line applications, so any application which processes data
    from an untrusted source and outputs it as a PEM file should be considered
    vulnerable to this issue. User applications that call these APIs directly
@@ -5560,10 +5560,10 @@ OpenSSL 1.0.1
 
    *Matt Caswell*
 
- * Fix memory issues in BIO_*printf functions
+ * Fix memory issues in `BIO_*printf` functions
 
    The internal |fmtstr| function used in processing a "%s" format string in
-   the BIO_*printf functions could overflow while calculating the length of a
+   the `BIO_*printf` functions could overflow while calculating the length of a
    string and cause an OOB read when printing very long strings.
 
    Additionally the internal |doapr_outch| function can attempt to write to an
@@ -5575,7 +5575,7 @@ OpenSSL 1.0.1
 
    The first issue may mask the second issue dependent on compiler behaviour.
    These problems could enable attacks where large amounts of untrusted data
-   is passed to the BIO_*printf functions. If applications use these functions
+   is passed to the `BIO_*printf` functions. If applications use these functions
    in this way then they could be vulnerable. OpenSSL itself uses these
    functions when printing out human-readable dumps of ASN.1 data. Therefore
    applications that print this data could be vulnerable if the data is from
@@ -6466,7 +6466,7 @@ OpenSSL 1.0.1
    - x86_64:       bit-sliced AES implementation;
    - ARM:          NEON support, contemporary platforms optimizations;
    - s390x:        z196 support;
-   - *:            GHASH and GF(2^m) multiplication implementations;
+   - `*`:            GHASH and GF(2^m) multiplication implementations;
 
    *Andy Polyakov*
 
@@ -6592,7 +6592,7 @@ OpenSSL 1.0.1
  * Add GCM support to TLS library. Some custom code is needed to split
    the IV between the fixed (from PRF) and explicit (from TLS record)
    portions. This adds all GCM ciphersuites supported by RFC5288 and
-   RFC5289. Generalise some AES* cipherstrings to include GCM and
+   RFC5289. Generalise some `AES*` cipherstrings to include GCM and
    add a special AESGCM string for GCM only.
 
    *Steve Henson*
@@ -6654,7 +6654,7 @@ OpenSSL 1.0.1
 
  * Low level digest APIs are not approved in FIPS mode: any attempt
    to use these will cause a fatal error. Applications that *really* want
-   to use them can use the private_* version instead.
+   to use them can use the `private_*` version instead.
 
    *Steve Henson*
 
@@ -7025,7 +7025,7 @@ OpenSSL 1.0.0
 
     *Andy Polyakov*
 
- * Fix various certificate fingerprint issues.
+ *) Fix various certificate fingerprint issues.
 
    By using non-DER or invalid encodings outside the signed portion of a
    certificate the fingerprint can be changed without breaking the signature.
@@ -7388,7 +7388,7 @@ OpenSSL 1.0.1.]
    *Emilia Käsper (Google)*
 
  * Fix the BIO_f_buffer() implementation (which was mixing different
-   interpretations of the '..._len' fields).
+   interpretations of the `..._len` fields).
 
    *Adam Langley (Google)*
 
@@ -7557,7 +7557,7 @@ OpenSSL 1.0.1.]
 
  * Add "missing" function EVP_MD_flags() (without this the only way to
    retrieve a digest flags is by accessing the structure directly. Update
-   EVP_MD_do_all*() and EVP_CIPHER_do_all*() to include the name a digest
+   `EVP_MD_do_all*()` and `EVP_CIPHER_do_all*()` to include the name a digest
    or cipher is registered as in the "from" argument. Print out all
    registered digests in the dgst usage message instead of manually
    attempting to work them out.
@@ -7643,7 +7643,7 @@ OpenSSL 1.0.1.]
  * New function OPENSSL_gmtime_adj() to add a specific number of days and
    seconds to a tm structure directly, instead of going through OS
    specific date routines. This avoids any issues with OS routines such
-   as the year 2038 bug. New *_adj() functions for ASN1 time structures
+   as the year 2038 bug. New `*_adj()` functions for ASN1 time structures
    and X509_time_adj_ex() to cover the extended range. The existing
    X509_time_adj() is still usable and will no longer have any date issues.
 
@@ -7909,7 +7909,7 @@ OpenSSL 1.0.1.]
    *Steve Henson*
 
  * Experimental support for use of HMAC via EVP_PKEY interface. This
-   allows HMAC to be handled via the EVP_DigestSign*() interface. The
+   allows HMAC to be handled via the `EVP_DigestSign*()` interface. The
    EVP_PKEY "key" in this case is the HMAC key, potentially allowing
    ENGINE support for HMAC keys which are unextractable. New -mac and
    -macopt options to dgst utility.
@@ -7917,7 +7917,7 @@ OpenSSL 1.0.1.]
    *Steve Henson*
 
  * New option -sigopt to dgst utility. Update dgst to use
-   EVP_Digest{Sign,Verify}*. These two changes make it possible to use
+   `EVP_Digest{Sign,Verify}*`. These two changes make it possible to use
    alternative signing parameters such as X9.31 or PSS in the dgst
    utility.
 
@@ -8144,8 +8144,8 @@ OpenSSL 1.0.1.]
 
    *Steve Henson*
 
- * New functions EVP_Digest{Sign,Verify)*. These are enhanced versions of
-   EVP_{Sign,Verify}* which allow an application to customise the signature
+ * New functions `EVP_Digest{Sign,Verify)*`. These are enhanced versions of
+   `EVP_{Sign,Verify}*` which allow an application to customise the signature
    process.
 
    *Steve Henson*
@@ -8253,8 +8253,8 @@ OpenSSL 1.0.1.]
    *Steve Henson*
 
  * Add functions for main EVP_PKEY_method operations. The undocumented
-   functions EVP_PKEY_{encrypt,decrypt} have been renamed to
-   EVP_PKEY_{encrypt,decrypt}_old.
+   functions `EVP_PKEY_{encrypt,decrypt}` have been renamed to
+   `EVP_PKEY_{encrypt,decrypt}_old`.
 
    *Steve Henson*
 
@@ -8330,7 +8330,7 @@ OpenSSL 1.0.1.]
  * Add initial support for TLS extensions, specifically for the server_name
    extension so far.  The SSL_SESSION, SSL_CTX, and SSL data structures now
    have new members for a host name.  The SSL data structure has an
-   additional member SSL_CTX *initial_ctx so that new sessions can be
+   additional member `SSL_CTX *initial_ctx` so that new sessions can be
    stored in that context to allow for session resumption, even after the
    SSL has been switched to a new SSL_CTX in reaction to a client's
    server_name extension.
@@ -8644,7 +8644,7 @@ OpenSSL 0.9.x
 
    *Darryl Miles <darryl-mailinglists@netbauds.net>*
 
- * Add 2.5.4.* OIDs
+ * Add `2.5.4.*` OIDs
 
    *Ilya O. <vrghost@gmail.com>*
 
@@ -8662,7 +8662,7 @@ OpenSSL 0.9.x
 ### Changes between 0.9.8j and 0.9.8k  [25 Mar 2009]
 
  * Don't set val to NULL when freeing up structures, it is freed up by
-   underlying code. If sizeof(void *) > sizeof(long) this can result in
+   underlying code. If `sizeof(void *) > sizeof(long)` this can result in
    zeroing past the valid field. [CVE-2009-0789][]
 
    *Paolo Ganci <Paolo.Ganci@AdNovum.CH>*
@@ -8768,7 +8768,7 @@ OpenSSL 0.9.x
    *PR #1679*
 
  * Fix a state transition in s3_srvr.c and d1_srvr.c
-   (was using SSL3_ST_CW_CLNT_HELLO_B, should be ..._ST_SW_SRVR_...).
+   (was using SSL3_ST_CW_CLNT_HELLO_B, should be `..._ST_SW_SRVR_...`).
 
    *Nagendra Modadugu*
 
@@ -9037,7 +9037,7 @@ OpenSSL 0.9.x
  * Add initial support for TLS extensions, specifically for the server_name
    extension so far.  The SSL_SESSION, SSL_CTX, and SSL data structures now
    have new members for a host name.  The SSL data structure has an
-   additional member SSL_CTX *initial_ctx so that new sessions can be
+   additional member `SSL_CTX *initial_ctx` so that new sessions can be
    stored in that context to allow for session resumption, even after the
    SSL has been switched to a new SSL_CTX in reaction to a client's
    server_name extension.
@@ -9132,9 +9132,9 @@ OpenSSL 0.9.x
 
    BN_BLINDING_new() will now use BN_dup() for the modulus so that
    the BN_BLINDING structure gets an independent copy of the
-   modulus.  This means that the previous "BIGNUM *m" argument to
+   modulus.  This means that the previous `BIGNUM *m` argument to
    BN_BLINDING_new() and to BN_BLINDING_create_param() now
-   essentially becomes "const BIGNUM *m", although we can't actually
+   essentially becomes `const BIGNUM *m`, although we can't actually
    change this in the header file before 0.9.9.  It allows
    RSA_setup_blinding() to use BN_with_flags() on the modulus to
    enable BN_FLG_CONSTTIME.
@@ -9377,7 +9377,7 @@ OpenSSL 0.9.x
 
    *Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
    for Information Security, National Institute of Advanced Industrial
-   Science and Technology [AIST*, Japan)]
+   Science and Technology [AIST, Japan)]*
 
  * Add two function to clear and return the verify parameter flags.
 
@@ -9546,7 +9546,7 @@ OpenSSL 0.9.8.]
 
    *Michal Ludvig <michal@logix.cz>, with help from Andy Polyakov*
 
- * Deprecate BN_[get|set]_params() functions (they were ignored internally).
+ * Deprecate `BN_[get|set]_params()` functions (they were ignored internally).
 
    *Geoff Thorpe*
 
@@ -9695,7 +9695,7 @@ OpenSSL 0.9.8.]
    to clean up those corresponding objects before destroying the hash table
    (and losing the object pointers). So some over-zealous constifications in
    LHASH have been relaxed so that lh_insert() does not take (nor store) the
-   objects as "const" and the lh_doall[_arg] callback wrappers are not
+   objects as "const" and the `lh_doall[_arg]` callback wrappers are not
    prototyped to have "const" restrictions on the object pointers they are
    given (and so aren't required to cast them away any more).
 
@@ -9704,8 +9704,9 @@ OpenSSL 0.9.8.]
  * The tmdiff.h API was so ugly and minimal that our own timing utility
    (speed) prefers to use its own implementation. The two implementations
    haven't been consolidated as yet (volunteers?) but the tmdiff API has had
-   its object type properly exposed (MS_TM) instead of casting to/from "char
-   *". This may still change yet if someone realises MS_TM and "ms_time_***"
+   its object type properly exposed (MS_TM) instead of casting to/from
+   `char *`. This may still change yet if someone realises MS_TM and
+   `ms_time_***`
    aren't necessarily the greatest nomenclatures - but this is what was used
    internally to the implementation so I've used that for now.
 
@@ -9938,7 +9939,7 @@ OpenSSL 0.9.8.]
 
  * Change the "progress" mechanism used in key-generation and
    primality testing to functions that take a new BN_GENCB pointer in
-   place of callback/argument pairs. The new API functions have "_ex"
+   place of callback/argument pairs. The new API functions have `_ex`
    postfixes and the older functions are reimplemented as wrappers for
    the new ones. The OPENSSL_NO_DEPRECATED symbol can be used to hide
    declarations of the old functions to help (graceful) attempts to
@@ -10099,8 +10100,7 @@ OpenSSL 0.9.8.]
  * Add named elliptic curves over binary fields from X9.62, SECG,
    and WAP/WTLS; add OIDs that were still missing.
 
-   *Sheueling Chang Shantz and Douglas Stebila
-   (Sun Microsystems Laboratories)*
+   *Sheueling Chang Shantz and Douglas Stebila (Sun Microsystems Laboratories)*
 
  * Extend the EC library for elliptic curves over binary fields
    (new files ec2_smpl.c, ec2_smpt.c, ec2_mult.c in crypto/ec/).
@@ -10124,16 +10124,15 @@ OpenSSL 0.9.8.]
    As binary polynomials are represented as BIGNUMs, various members
    of the EC_GROUP and EC_POINT data structures can be shared
    between the implementations for prime fields and binary fields;
-   the above ..._GF2m functions (except for EX_GROUP_new_curve_GF2m)
-   are essentially identical to their ..._GFp counterparts.
-   (For simplicity, the '..._GFp' prefix has been dropped from
+   the above `..._GF2m functions` (except for EX_GROUP_new_curve_GF2m)
+   are essentially identical to their `..._GFp` counterparts.
+   (For simplicity, the `..._GFp` prefix has been dropped from
    various internal method names.)
 
    An internal 'field_div' method (similar to 'field_mul' and
    'field_sqr') has been added; this is used only for binary fields.
 
-   *Sheueling Chang Shantz and Douglas Stebila
-   (Sun Microsystems Laboratories)*
+   *Sheueling Chang Shantz and Douglas Stebila (Sun Microsystems Laboratories)*
 
  * Optionally dispatch EC_POINT_mul(), EC_POINT_precompute_mult()
    through methods ('mul', 'precompute_mult').
@@ -10142,21 +10141,18 @@ OpenSSL 0.9.8.]
    and 'ec_wNAF_precomputed_mult') remain the default if these
    methods are undefined.
 
-   *Sheueling Chang Shantz and Douglas Stebila
-   (Sun Microsystems Laboratories)*
+   *Sheueling Chang Shantz and Douglas Stebila (Sun Microsystems Laboratories)*
 
  * New function EC_GROUP_get_degree, which is defined through
    EC_METHOD.  For curves over prime fields, this returns the bit
    length of the modulus.
 
-   *Sheueling Chang Shantz and Douglas Stebila
-   (Sun Microsystems Laboratories)*
+   *Sheueling Chang Shantz and Douglas Stebila (Sun Microsystems Laboratories)*
 
  * New functions EC_GROUP_dup, EC_POINT_dup.
    (These simply call ..._new  and ..._copy).
 
-   *Sheueling Chang Shantz and Douglas Stebila
-   (Sun Microsystems Laboratories)*
+   *Sheueling Chang Shantz and Douglas Stebila (Sun Microsystems Laboratories)*
 
  * Add binary polynomial arithmetic software in crypto/bn/bn_gf2m.c.
    Polynomials are represented as BIGNUMs (where the sign bit is not
@@ -10209,8 +10205,7 @@ OpenSSL 0.9.8.]
    if OPENSSL_SUN_GF2M_DIV is defined (patent pending; read the
    copyright notice in crypto/bn/bn_gf2m.c before enabling it).
 
-   *Sheueling Chang Shantz and Douglas Stebila
-   (Sun Microsystems Laboratories)*
+   *Sheueling Chang Shantz and Douglas Stebila (Sun Microsystems Laboratories)*
 
  * Add new error code 'ERR_R_DISABLED' that can be used when some
    functionality is disabled at compile-time.
@@ -10481,7 +10476,7 @@ OpenSSL 0.9.8.]
 
    *Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
    for Information Security, National Institute of Advanced Industrial
-   Science and Technology [AIST*, Japan)]
+   Science and Technology [AIST, Japan)]*
 
  * Minimal support for X9.31 signatures and PSS padding modes. This is
    mainly for FIPS compliance and not fully integrated at this stage.
@@ -11146,7 +11141,7 @@ OpenSSL 0.9.7.]
 
  * Remove most calls to EVP_CIPHER_CTX_cleanup() in evp_enc.c, this
    allows existing EVP_CIPHER_CTX structures to be reused after
-   calling EVP_*Final(). This behaviour is used by encryption
+   calling `EVP_*Final()`. This behaviour is used by encryption
    BIOs and some applications. This has the side effect that
    applications must explicitly clean up cipher contexts with
    EVP_CIPHER_CTX_cleanup() or they will leak memory.
@@ -11401,12 +11396,12 @@ OpenSSL 0.9.7.]
 
    *Massimiliano Pala madwolf@openca.org*
 
- * Change all functions with names starting with des_ to be starting
-   with DES_ instead.  Add wrappers that are compatible with libdes,
-   but are named _ossl_old_des_*.  Finally, add macros that map the
-   des_* symbols to the corresponding _ossl_old_des_* if libdes
+ * Change all functions with names starting with `des_` to be starting
+   with `DES_` instead.  Add wrappers that are compatible with libdes,
+   but are named `_ossl_old_des_*`.  Finally, add macros that map the
+   `des_*` symbols to the corresponding `_ossl_old_des_*` if libdes
    compatibility is desired.  If OpenSSL 0.9.6c compatibility is
-   desired, the des_* symbols will be mapped to DES_*, with one
+   desired, the `des_*` symbols will be mapped to `DES_*`, with one
    exception.
 
    Since we provide two compatibility mappings, the user needs to
@@ -11424,7 +11419,7 @@ OpenSSL 0.9.7.]
    won't work.
 
    NOTE: This is a major break of an old API into a new one.  Software
-   authors are encouraged to switch to the DES_ style functions.  Some
+   authors are encouraged to switch to the `DES_` style functions.  Some
    time in the future, des_old.h and the libdes compatibility functions
    will be disable (i.e. OPENSSL_DISABLE_OLD_DES_SUPPORT will be the
    default), and then completely removed.
@@ -11484,7 +11479,7 @@ OpenSSL 0.9.7.]
    deal more passive and at run-time, operations deal directly with
    RSA_METHODs, DSA_METHODs (etc) as they did before, rather than
    dereferencing through an ENGINE pointer any more. Also, the ENGINE
-   functions dealing with BN_MOD_EXP[_CRT] handlers have been removed -
+   functions dealing with `BN_MOD_EXP[_CRT]` handlers have been removed -
    they were not being used by the framework as there is no concept of a
    BIGNUM_METHOD and they could not be generalised to the new
    'ENGINE_TABLE' mechanism that underlies the new code. Similarly,
@@ -11498,7 +11493,7 @@ OpenSSL 0.9.7.]
    *Steve Henson*
 
  * Change mkdef.pl to sort symbols that get the same entry number,
-   and make sure the automatically generated functions ERR_load_*
+   and make sure the automatically generated functions `ERR_load_*`
    become part of libeay.num as well.
 
    *Richard Levitte*
@@ -11530,7 +11525,7 @@ OpenSSL 0.9.7.]
    *Steve Henson*
 
  * Make maximum certificate chain size accepted from the peer application
-   settable (SSL*_get/set_max_cert_list()), as proposed by
+   settable (`SSL*_get/set_max_cert_list()`), as proposed by
    "Douglas E. Engert" <deengert@anl.gov>.
 
    *Lutz Jaenicke*
@@ -11624,7 +11619,7 @@ OpenSSL 0.9.7.]
 
    *Geoff Thorpe*
 
- * Give DH, DSA, and RSA types their own "**_up_ref()" function to increment
+ * Give DH, DSA, and RSA types their own `*_up_ref()` function to increment
    reference counts. This performs normal REF_PRINT/REF_CHECK macros on
    the operation, and provides a more encapsulated way for external code
    (crypto/evp/ and ssl/) to do this. Also changed the evp and ssl code
@@ -11702,8 +11697,8 @@ OpenSSL 0.9.7.]
 
    *Ben Laurie*
 
- * Change historical references to {NID,SN,LN}_des_ede and ede3 to add the
-   correct _ecb suffix.
+ * Change historical references to `{NID,SN,LN}_des_ede` and ede3 to add the
+   correct `_ecb suffix`.
 
    *Ben Laurie*
 
@@ -11728,9 +11723,8 @@ OpenSSL 0.9.7.]
    and authenticator structs; see crypto/krb5/.
 
    Generalized Kerberos calls to support multiple Kerberos libraries.
-   *Vern Staats <staatsvr@asc.hpc.mil>,
-    Jeffrey Altman <jaltman@columbia.edu>
-    via Richard Levitte*
+   *Vern Staats <staatsvr@asc.hpc.mil>, Jeffrey Altman <jaltman@columbia.edu>
+   via Richard Levitte*
 
  * Cause 'openssl speed' to use fully hard-coded DSA keys as it
    already does with RSA. testdsa.h now has 'priv_key/pub_key'
@@ -12072,7 +12066,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Bodo Moeller*
 
- * Modify EVP_Digest*() routines so they now return values. Although the
+ * Modify `EVP_Digest*()` routines so they now return values. Although the
    internal software routines can never fail additional hardware versions
    might.
 
@@ -12218,14 +12212,14 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  * Make all configuration macros available for application by making
    sure they are available in opensslconf.h, by giving them names starting
-   with "OPENSSL_" to avoid conflicts with other packages and by making
+   with `OPENSSL_` to avoid conflicts with other packages and by making
    sure e_os2.h will cover all platform-specific cases together with
    opensslconf.h.
    Additionally, it is now possible to define configuration/platform-
    specific names (called "system identities").  In the C code, these
-   are prefixed with "OPENSSL_SYSNAME_".  e_os2.h will create another
-   macro with the name beginning with "OPENSSL_SYS_", which is determined
-   from "OPENSSL_SYSNAME_*" or compiler-specific macros depending on
+   are prefixed with `OPENSSL_SYSNAME_`.  e_os2.h will create another
+   macro with the name beginning with `OPENSSL_SYS_`, which is determined
+   from `OPENSSL_SYSNAME_*` or compiler-specific macros depending on
    what is available.
 
    *Richard Levitte*
@@ -12274,7 +12268,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  * Disable stdin buffering in load_cert (apps/apps.c) so that no certs are
    skipped when using openssl x509 multiple times on a single input file,
-   e.g. "(openssl x509 -out cert1; openssl x509 -out cert2) <certs".
+   e.g. `(openssl x509 -out cert1; openssl x509 -out cert2) <certs`.
 
    *Bodo Moeller*
 
@@ -12468,7 +12462,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  * Allowing defining memory allocation callbacks that will be given
    file name and line number information in additional arguments
-   (a const char* and an int).  The basic functionality remains, as
+   (a `const char*` and an int).  The basic functionality remains, as
    well as the original possibility to just replace malloc(),
    realloc() and free() by functions that do not know about these
    additional arguments.  To register and find out the current
@@ -12481,9 +12475,9 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
            CRYPTO_get_locked_mem_ex_functions
 
    These work the same way as CRYPTO_set_mem_functions and friends.
-   CRYPTO_get_[locked_]mem_functions now writes 0 where such an
+   `CRYPTO_get_[locked_]mem_functions` now writes 0 where such an
    extended allocation function is enabled.
-   Similarly, CRYPTO_get_[locked_]mem_ex_functions writes 0 where
+   Similarly, `CRYPTO_get_[locked_]mem_ex_functions` writes 0 where
    a conventional allocation function is enabled.
 
    *Richard Levitte, Bodo Moeller*
@@ -12591,7 +12585,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
  * New functions or ASN1_item_d2i_fp() and ASN1_item_d2i_bio(). These
    replace the old function pointer based I/O routines. Change most of
-   the *_d2i_bio() and *_d2i_fp() functions to use these.
+   the `*_d2i_bio()` and `*_d2i_fp()` functions to use these.
 
    *Steve Henson*
 
@@ -12718,7 +12712,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  * Added Kerberos Cipher Suites to be used with TLS, as written in
    RFC 2712.
    *Veers Staats <staatsvr@asc.hpc.mil>,
-    Jeffrey Altman <jaltman@columbia.edu>, via Richard Levitte*
+   Jeffrey Altman <jaltman@columbia.edu>, via Richard Levitte*
 
  * Reformat the FAQ so the different questions and answers can be divided
    in sections depending on the subject.
@@ -12784,7 +12778,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Bodo Moeller*
 
- * Move BN_mod_... functions into new file crypto/bn/bn_mod.c
+ * Move `BN_mod_...` functions into new file crypto/bn/bn_mod.c
    (except for exponentiation, which stays in crypto/bn/bn_exp.c,
    and BN_mod_mul_reciprocal, which stays in crypto/bn/bn_recp.c)
    and add new functions:
@@ -12948,7 +12942,7 @@ ndif
 
  * NCONF changes.
    NCONF_get_number() has no error checking at all.  As a replacement,
-   NCONF_get_number_e() is defined (_e for "error checking") and is
+   NCONF_get_number_e() is defined (`_e` for "error checking") and is
    promoted strongly.  The old NCONF_get_number is kept around for
    binary backward compatibility.
    Make it possible for methods to load from something other than a BIO,
@@ -13150,7 +13144,7 @@ ndif
 ### Changes between 0.9.6f and 0.9.6g  [9 Aug 2002]
 
  * [In 0.9.6g-engine release:]
-   Fix crypto/engine/vendor_defns/cswift.h for WIN32 (use '_stdcall').
+   Fix crypto/engine/vendor_defns/cswift.h for WIN32 (use `_stdcall`).
 
    *Lynn Gazis <lgazis@rainbow.com>*
 
@@ -13159,8 +13153,7 @@ ndif
  * Fix ASN1 checks. Check for overflow by comparing with LONG_MAX
    and get fix the header length calculation.
    *Florian Weimer <Weimer@CERT.Uni-Stuttgart.DE>,
-      Alon Kantor <alonk@checkpoint.com> (and others),
-      Steve Henson*
+   Alon Kantor <alonk@checkpoint.com> (and others), Steve Henson*
 
  * Use proper error handling instead of 'assertions' in buffer
    overflow checks added in 0.9.6e.  This prevents DoS (the
@@ -13222,7 +13215,7 @@ ndif
 
  * Various temporary buffers to hold ASCII versions of integers were
    too small for 64 bit platforms. [CVE-2002-0655][]
-   *Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>
+   *Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>*
 
  * Remote buffer overflow in SSL3 protocol - an attacker could
    supply an oversized session ID to a client. [CVE-2002-0656][]
@@ -13241,7 +13234,7 @@ ndif
 
    *Nils Larsch <nla@trustcenter.de>; problem pointed out by Bodo Moeller*
 
- * Check various X509_...() return values in apps/req.c.
+ * Check various `X509_...()` return values in apps/req.c.
 
    *Nils Larsch <nla@trustcenter.de>*
 
@@ -13381,8 +13374,8 @@ ndif
 
  * Fix BN_rand_range bug pointed out by Dominikus Scherkl
    <Dominikus.Scherkl@biodata.com>.  (The previous implementation
-   worked incorrectly for those cases where  range = 10..._2  and
-   3*range  is two bits longer than  range.)
+   worked incorrectly for those cases where range = `10..._2`  and
+   `3*range`  is two bits longer than  range.)
 
    *Bodo Moeller*
 
@@ -13453,7 +13446,7 @@ ndif
    instead.  BIO_gethostbyname() does not know what timeouts are
    appropriate, so entries would stay in cache even when they have
    become invalid.
-   *Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>
+   *Bodo Moeller; problem pointed out by Rich Salz <rsalz@zolera.com>*
 
  * Change ssl23_get_client_hello (ssl/s23_srvr.c) behaviour when
    faced with a pathologically small ClientHello fragment that does
@@ -13550,7 +13543,7 @@ ndif
 
    *Lutz Jaenicke*
 
- * Add alert descriptions for TLSv1 to SSL_alert_desc_string[_long]().
+ * Add alert descriptions for TLSv1 to `SSL_alert_desc_string[_long]()`.
 
    *Lutz Jaenicke*
 
@@ -13702,7 +13695,7 @@ ndif
 
    *Bodo Moeller*
 
- * Don't change *pointer in CRYPTO_add_lock() is add_lock_callback is
+ * Don't change `*pointer` in CRYPTO_add_lock() is add_lock_callback is
    used: it isn't thread safe and the add_lock_callback should handle
    that itself.
 
@@ -13863,7 +13856,7 @@ ndif
 
    *Bodo Moeller*
 
- * Replace rdtsc with _emit statements for VC++ version 5.
+ * Replace rdtsc with `_emit` statements for VC++ version 5.
 
    *Jeremy Cooper <jeremy@baymoo.org>*
 
@@ -13907,7 +13900,7 @@ ndif
 
  * Fix CPU detection on Irix 6.x.
    *Kurt Hockenbury <khockenb@stevens-tech.edu> and
-    "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>*
+   "Bruce W. Forsberg" <bruce.forsberg@baesystems.com>*
 
  * Fix X509_NAME bug which produced incorrect encoding if X509_NAME
    was empty.
@@ -13930,7 +13923,7 @@ ndif
 
    *Ulf Moeller, Bodo Moeller*
 
- * In the NCONF_...-based implementations for CONF_... queries
+ * In the `NCONF_...`-based implementations for `CONF_...` queries
    (crypto/conf/conf_lib.c), if the input LHASH is NULL, avoid using
    a temporary CONF structure with the data component set to NULL
    (which gives segmentation faults in lh_retrieve).
@@ -14014,7 +14007,7 @@ ndif
    *Bodo Moeller; problem reported by Eric Day <eday@concentric.net>*
 
  * In RSA_eay_public_{en,ed}crypt and RSA_eay_mod_exp (rsa_eay.c),
-   obtain lock CRYPTO_LOCK_RSA before setting rsa->_method_mod_{n,p,q}.
+   obtain lock CRYPTO_LOCK_RSA before setting `rsa->_method_mod_{n,p,q}`.
 
    (RSA objects have a reference count access to which is protected
    by CRYPTO_LOCK_RSA [see rsa_lib.c, s3_srvr.c, ssl_cert.c, ssl_rsa.c],
@@ -14426,7 +14419,7 @@ ndif
    and as before, if none of those prefixes are present at the
    beginning of the string, LOG_ERR is chosen.
 
-   On Win32, the LOG_* levels are mapped according to this:
+   On Win32, the `LOG_*` levels are mapped according to this:
 
            LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR => EVENTLOG_ERROR_TYPE
            LOG_WARNING                             => EVENTLOG_WARNING_TYPE
@@ -14513,8 +14506,8 @@ ndif
 
    *Steve Henson*
 
- * crypto/err.c locking bugfix: Use write locks (CRYPTO_w_[un]lock),
-   not read locks (CRYPTO_r_[un]lock).
+ * crypto/err.c locking bugfix: Use write locks (`CRYPTO_w_[un]lock)`,
+   not read locks (`CRYPTO_r_[un]lock`).
 
    *Bodo Moeller*
 
@@ -14550,7 +14543,7 @@ ndif
 
    *Steve Henson*
 
- * New ASN1 functions, i2c_* and c2i_* for INTEGER and BIT
+ * New ASN1 functions, `i2c_*` and `c2i_*` for INTEGER and BIT
    STRING types. These convert content octets to and from the
    underlying type. The actual tag and length octets are
    already assumed to have been read in and checked. These
@@ -14651,7 +14644,7 @@ ndif
 
    *Bodo Moeller*
 
- * Increase maximum window size in BN_mod_exp_... to 6 bits instead of 5
+ * Increase maximum window size in `BN_mod_exp_...` to 6 bits instead of 5
    (meaning that now 2^5 values will be precomputed, which is only 4 KB
    plus overhead for 1024 bit moduli).
    This makes exponentiations about 0.5 % faster for 1024 bit
@@ -14691,7 +14684,7 @@ ndif
    also involved a cleanup of sorts in safestack.h to more correctly
    map type-safe stack functions onto their plain stack counterparts.
    This work has also resulted in a variety of "const"ifications of
-   lots of the code, especially "_cmp" operations which should normally
+   lots of the code, especially `_cmp` operations which should normally
    be prototyped with "const" parameters anyway.
 
    *Geoff Thorpe*
@@ -14754,7 +14747,7 @@ ndif
 
    *Bodo Moeller*
 
- * Call dh_tmp_cb (set by ..._TMP_DH_CB) with correct 'is_export' flag;
+ * Call dh_tmp_cb (set by `..._TMP_DH_CB`) with correct 'is_export' flag;
    i.e. non-zero for export ciphersuites, zero otherwise.
    Previous versions had this flag inverted, inconsistent with
    rsa_tmp_cb (..._TMP_RSA_CB).
@@ -14844,13 +14837,13 @@ ndif
 
  * CONF library reworked to become more general.  A new CONF
    configuration file reader "class" is implemented as well as a
-   new functions (NCONF_*, for "New CONF") to handle it.  The now
-   old CONF_* functions are still there, but are reimplemented to
+   new functions (`NCONF_*`, for "New CONF") to handle it.  The now
+   old `CONF_*` functions are still there, but are reimplemented to
    work in terms of the new functions.  Also, a set of functions
    to handle the internal storage of the configuration data is
    provided to make it easier to write new configuration file
    reader "classes" (I can definitely see something reading a
-   configuration file in XML format, for example), called _CONF_*,
+   configuration file in XML format, for example), called `_CONF_*`,
    or "the configuration storage API"...
 
    The new configuration file reading functions are:
@@ -14865,12 +14858,12 @@ ndif
    NCONF_default and NCONF_WIN32 are method (or "class") choosers,
    NCONF_new creates a new CONF object.  This works in the same way
    as other interfaces in OpenSSL, like the BIO interface.
-   NCONF_dump_* dump the internal storage of the configuration file,
+   `NCONF_dump_*` dump the internal storage of the configuration file,
    which is useful for debugging.  All other functions take the same
-   arguments as the old CONF_* functions with the exception of the
+   arguments as the old `CONF_*` functions with the exception of the
    first that must be a `CONF *` instead of a `LHASH *`.
 
-   To make it easier to use the new classes with the old CONF_* functions,
+   To make it easier to use the new classes with the old `CONF_*` functions,
    the function CONF_set_default_method is provided.
 
    *Richard Levitte*
@@ -14915,7 +14908,7 @@ ndif
 
  * des_quad_cksum() byte order bug fix.
    *Ulf Möller, using the problem description in krb4-0.9.7, where
-    the solution is attributed to Derrick J Brashear <shadow@DEMENTIA.ORG>*
+   the solution is attributed to Derrick J Brashear <shadow@DEMENTIA.ORG>*
 
  * Fix so V_ASN1_APP_CHOOSE works again: however its use is strongly
    discouraged.
@@ -15076,7 +15069,7 @@ ndif
 
  * Change names of new functions to the new get1/get0 naming
    convention: After 'get1', the caller owns a reference count
-   and has to call ..._free; 'get0' returns a pointer to some
+   and has to call `..._free`; 'get0' returns a pointer to some
    data structure without incrementing reference counters.
    (Some of the existing 'get' functions increment a reference
    counter, some don't.)
@@ -15092,7 +15085,7 @@ ndif
 
  * Fix potential buffer overrun problem in BIO_printf().
    *Ulf Möller, using public domain code by Patrick Powell; problem
-    pointed out by David Sacerdote <das33@cornell.edu>*
+   pointed out by David Sacerdote <das33@cornell.edu>*
 
  * Support EGD <http://www.lothar.com/tech/crypto/>.  New functions
    RAND_egd() and RAND_status().  In the command line application,
@@ -15119,19 +15112,19 @@ ndif
 
    *Steve Henson*
 
- * ..._ctrl functions now have corresponding ..._callback_ctrl functions
-   where the 'void *' argument is replaced by a function pointer argument.
-   Previously 'void *' was abused to point to functions, which works on
+ * `..._ctrl` functions now have corresponding `..._callback_ctrl` functions
+   where the `void *` argument is replaced by a function pointer argument.
+   Previously `void *` was abused to point to functions, which works on
    many platforms, but is not correct.  As these functions are usually
    called by macros defined in OpenSSL header files, most source code
    should work without changes.
 
    *Richard Levitte*
 
- * <openssl/opensslconf.h> (which is created by Configure) now contains
+ * `<openssl/opensslconf.h>` (which is created by Configure) now contains
    sections with information on -D... compiler switches used for
    compiling the library so that applications can see them.  To enable
-   one of these sections, a pre-processor symbol OPENSSL_..._DEFINES
+   one of these sections, a pre-processor symbol `OPENSSL_..._DEFINES`
    must be defined.  E.g.,
            #define OPENSSL_ALGORITHM_DEFINES
            #include <openssl/opensslconf.h>
@@ -15210,7 +15203,7 @@ ndif
    *Andy Polyakov*
 
  * Bug fix for BN_div() when the first words of num and divisor are
-   equal (it gave wrong results if (rem=(n1-q*d0)&BN_MASK2) < d0).
+   equal (it gave wrong results if `(rem=(n1-q*d0)&BN_MASK2) < d0)`.
 
    *Ulf Möller*
 
@@ -15229,7 +15222,7 @@ ndif
 
    *Ulf Möller*
 
- * Change the SSLeay_add_all_*() functions to OpenSSL_add_all_*() and
+ * Change the `SSLeay_add_all_*()` functions to `OpenSSL_add_all_*()` and
    include a #define from the old name to the new. The original intent
    was that statically linked binaries could for example just call
    SSLeay_add_all_ciphers() to just add ciphers to the table and not
@@ -15329,7 +15322,7 @@ ndif
    *Ulf Möller, Bodo Möller*
 
  * Clean up CRYPTO_EX_DATA functions, some of these didn't have prototypes
-   used (char *) instead of (void *) and had casts all over the place.
+   used `char *` instead of `void *` and had casts all over the place.
 
    *Steve Henson*
 
@@ -15394,7 +15387,7 @@ ndif
    *Steve Henson*
 
  * Changes to X509_ATTRIBUTE utilities. These have been renamed from
-   X509_*() to X509at_*() on the grounds that they don't handle X509
+   `X509_*()` to `X509at_*()` on the grounds that they don't handle X509
    structures and behave in an analogous way to the X509v3 functions:
    they shouldn't be called directly but wrapper functions should be used
    instead.
@@ -15409,7 +15402,7 @@ ndif
 
  * Add missing #ifndefs that caused missing symbols when building libssl
    as a shared library without RSA.  Use #ifndef NO_SSL2 instead of
-   NO_RSA in ssl/s2*.c.
+   NO_RSA in `ssl/s2*.c`.
 
    *Kris Kennaway <kris@hub.freebsd.org>, modified by Ulf Möller*
 
@@ -15722,8 +15715,8 @@ ndif
    There are two big advantages in doing things this way. The extensions
    can be looked up immediately and no longer need to be "added" using
    X509V3_add_standard_extensions(): this function now does nothing.
-   *Side note: I get *lots* of email saying the extension code doesn't
-    work because people forget to call this function*
+   Side note: I get *lots* of email saying the extension code doesn't
+   work because people forget to call this function.
    Also no dynamic allocation is done unless new extensions are added:
    so if we don't add custom extensions there is no need to call
    X509V3_EXT_cleanup().
@@ -15803,10 +15796,10 @@ ndif
    it clearly returns an error if you try to read the wrong kind of key.
 
    Added a -pubkey option to the 'x509' utility to output the public key.
-   Also rename the EVP_PKEY_get_*() to EVP_PKEY_rget_*()
-   (renamed to EVP_PKEY_get1_*() in the OpenSSL 0.9.5 release) and add
-   EVP_PKEY_rset_*() functions (renamed to EVP_PKEY_set1_*())
-   that do the same as the EVP_PKEY_assign_*() except they up the
+   Also rename the `EVP_PKEY_get_*()` to `EVP_PKEY_rget_*()`
+   (renamed to `EVP_PKEY_get1_*()` in the OpenSSL 0.9.5 release) and add
+   `EVP_PKEY_rset_*()` functions (renamed to `EVP_PKEY_set1_*()`)
+   that do the same as the `EVP_PKEY_assign_*()` except they up the
    reference count of the added key (they don't "swallow" the
    supplied key).
 
@@ -15941,7 +15934,7 @@ ndif
 
    *Steve Henson*
 
- * Fix assembler for Alpha (tested only on DEC OSF not Linux or *BSD).
+ * Fix assembler for Alpha (tested only on DEC OSF not Linux or `*BSD`).
    The problem was that one of the replacement routines had not been working
    since SSLeay releases.  For now the offending routine has been replaced
    with non-optimised assembler.  Even so, this now gives around 95%
@@ -16032,8 +16025,8 @@ ndif
    *Steve Henson*
 
  * Add function equivalents to the various macros in asn1.h. The old
-   macros are retained with an M_ prefix. Code inside the library can
-   use the M_ macros. External code (including the openssl utility)
+   macros are retained with an `M_` prefix. Code inside the library can
+   use the `M_` macros. External code (including the openssl utility)
    should *NOT* in order to be "shared library friendly".
 
    *Steve Henson*
@@ -16052,7 +16045,7 @@ ndif
 
    *Steve Henson*
 
- * New X509V3_{X509,CRL,REVOKED}_get_d2i() functions. These will search
+ * New `X509V3_{X509,CRL,REVOKED}_get_d2i()` functions. These will search
    for, obtain and decode and extension and obtain its critical flag.
    This allows all the necessary extension code to be handled in a
    single function call.
@@ -16114,7 +16107,7 @@ ndif
    usual with these problems it takes *ages* to find and the fix is
    trivial: move one line.
 
-   *Steve Henson, reported by ian@uns.ns.ac.yu (Ivan Nejgebauer) *
+   *Steve Henson, reported by ian@uns.ns.ac.yu (Ivan Nejgebauer)*
 
  * Ugly workaround to get s_client and s_server working under Windows. The
    old code wouldn't work because it needed to select() on sockets and the
@@ -16297,7 +16290,7 @@ ndif
 
    *Ralf S. Engelschall*
 
- * A few more ``#ifndef NO_FP_API / #endif'' pairs for consistency.
+ * A few more `#ifndef NO_FP_API / #endif` pairs for consistency.
 
    *Andrija Antonijevic <TheAntony2@bigfoot.com>*
 
@@ -16312,7 +16305,7 @@ ndif
 
    For 1024-bit p, DSA_generate_parameters followed by DSA_dup_DH is
    much faster than DH_generate_parameters (which creates parameters
-   where p = 2*q + 1), and also the smaller q makes DH computations
+   where `p = 2*q + 1`), and also the smaller q makes DH computations
    much more efficient (160-bit exponentiation instead of 1024-bit
    exponentiation); so this provides a convenient way to support DHE
    ciphersuites in SSL/TLS servers (see ssl/ssltest.c).  It is of
@@ -16360,7 +16353,7 @@ ndif
    to
            ....(char *buf, int size, int rwflag, void *userdata);
    so that applications can pass data to their callbacks:
-   The PEM[_ASN1]_{read,write}... functions and macros now take an
+   The `PEM[_ASN1]_{read,write}...` functions and macros now take an
    additional void * argument, which is just handed through whenever
    the password callback is called.
 
@@ -16510,8 +16503,7 @@ ndif
    store the length when it is first determined and use it later, rather
    than trying to keep track of where data is copied and updating it to
    point to the end.
-   *Steve Henson, reported by Brien Wheeler
-    <bwheeler@authentica-security.com>*
+   *Steve Henson, reported by Brien Wheeler <bwheeler@authentica-security.com>*
 
  * Add a new function PKCS7_signatureVerify. This allows the verification
    of a PKCS#7 signature but with the signing certificate passed to the
@@ -16522,7 +16514,7 @@ ndif
 
    *Steve Henson*
 
- * Complete the PEM_* macros with DECLARE_PEM versions to replace the
+ * Complete the `PEM_*` macros with DECLARE_PEM versions to replace the
    function prototypes in pem.h, also change util/mkdef.pl to add the
    necessary function names.
 
@@ -16580,7 +16572,7 @@ ndif
    *Steve Henson*
 
  * Fix determination of Perl interpreter: A perl or perl5
-   _directory_ in $PATH was also accepted as the interpreter.
+   *directory* in $PATH was also accepted as the interpreter.
 
    *Ralf S. Engelschall*
 
@@ -16805,8 +16797,8 @@ ndif
    *Steve Henson*
 
  * Make SSL library a little more fool-proof by not requiring any longer
-   that SSL_set_{accept,connect}_state be called before
-   SSL_{accept,connect} may be used (SSL_set_..._state is omitted
+   that `SSL_set_{accept,connect}_state` be called before
+   `SSL_{accept,connect}` may be used (`SSL_set_..._state` is omitted
    in many applications because usually everything *appeared* to work as
    intended anyway -- now it really works as intended).
 
@@ -16816,9 +16808,9 @@ ndif
 
    *Ulf Möller*
 
- * Fix various things to let OpenSSL even pass ``egcc -pipe -O2 -Wall
+ * Fix various things to let OpenSSL even pass "egcc -pipe -O2 -Wall
    -Wshadow -Wpointer-arith -Wcast-align -Wmissing-prototypes
-   -Wmissing-declarations -Wnested-externs -Winline'' with EGCS 1.1.2+
+   -Wmissing-declarations -Wnested-externs -Winline" with EGCS 1.1.2+
 
    *Ralf S. Engelschall*
 
@@ -16830,7 +16822,7 @@ ndif
  * Create a duplicate of the SSL_CTX's CERT in SSL_new instead of
    copying pointers.  The cert_st handling is changed by this in
    various ways (and thus what used to be known as ctx->default_cert
-   is now called ctx->cert, since we don't resort to s->ctx->[default_]cert
+   is now called ctx->cert, since we don't resort to `s->ctx->[default_]cert`
    any longer when s->cert does not give us what we need).
    ssl_cert_instantiate becomes obsolete by this change.
    As soon as we've got the new code right (possibly it already is?),
@@ -16839,7 +16831,7 @@ ndif
 
    Note that using the SSL API in certain dirty ways now will result
    in different behaviour than observed with earlier library versions:
-   Changing settings for an SSL_CTX *ctx after having done s = SSL_new(ctx)
+   Changing settings for an `SSL_CTX *ctx` after having done s = SSL_new(ctx)
    does not influence s as it used to.
 
    In order to clean up things more thoroughly, inside SSL_SESSION
@@ -17427,7 +17419,7 @@ ndif
 
    *Steve Henson*
 
- * Added the new `Includes OpenSSL Cryptography Software' button as
+ * Added the new 'Includes OpenSSL Cryptography Software' button as
    doc/openssl_button.{gif,html} which is similar in style to the old SSLeay
    button and can be used by applications based on OpenSSL to show the
    relationship to the OpenSSL project.
@@ -17587,7 +17579,7 @@ ndif
    foundations than the ad-hoc padding used in PKCS #1 v1.5. It is secure
    against Bleichbacher's attack on RSA.
    *Ulf Moeller <ulf@fitug.de>, reformatted, corrected and integrated by
-    Ben Laurie*
+   Ben Laurie*
 
  * Updates to the new SSL compression code
 
@@ -17667,7 +17659,7 @@ ndif
 
    *Steve Henson*
 
- * Overhauled the Perl interface (perl/*):
+ * Overhauled the Perl interface:
    - ported BN stuff to OpenSSL's different BN library
    - made the perl/ source tree CVS-aware
    - renamed the package from SSLeay to OpenSSL (the files still contain
@@ -17872,7 +17864,7 @@ ndif
 
    *Steve Henson*
 
- * Make _all_ *_free functions accept a NULL pointer.
+ * Make *all* `*_free` functions accept a NULL pointer.
 
    *Frans Heymans <fheymans@isaserver.be>*
 
@@ -18052,7 +18044,7 @@ ndif
 
    *Andrew Cooke / Interrader Ldt., Ralf S. Engelschall*
 
- * Fixed nasty rehash problem under `make -f Makefile.ssl links'
+ * Fixed nasty rehash problem under `make -f Makefile.ssl links`
    when "ssleay" is still not found.
 
    *Ralf S. Engelschall*
