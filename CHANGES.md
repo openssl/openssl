@@ -9377,7 +9377,7 @@ OpenSSL 0.9.x
 
    *Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
    for Information Security, National Institute of Advanced Industrial
-   Science and Technology [AIST, Japan)]*
+   Science and Technology [AIST], Japan)*
 
  * Add two function to clear and return the verify parameter flags.
 
@@ -14006,7 +14006,7 @@ ndif
 
    *Bodo Moeller; problem reported by Eric Day <eday@concentric.net>*
 
- * In RSA_eay_public_{en,ed}crypt and RSA_eay_mod_exp (rsa_eay.c),
+ * In `RSA_eay_public_{en,ed}crypt` and RSA_eay_mod_exp (rsa_eay.c),
    obtain lock CRYPTO_LOCK_RSA before setting `rsa->_method_mod_{n,p,q}`.
 
    (RSA objects have a reference count access to which is protected
@@ -14506,7 +14506,7 @@ ndif
 
    *Steve Henson*
 
- * crypto/err.c locking bugfix: Use write locks (`CRYPTO_w_[un]lock)`,
+ * crypto/err.c locking bugfix: Use write locks (`CRYPTO_w_[un]lock`),
    not read locks (`CRYPTO_r_[un]lock`).
 
    *Bodo Moeller*
