@@ -264,6 +264,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
     return ret ? 1 : 0;
  err:
+    evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return 0;
 

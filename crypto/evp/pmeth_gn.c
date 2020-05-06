@@ -93,8 +93,10 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 #endif
 
  end:
-    if (ret <= 0 && ctx != NULL)
+    if (ret <= 0 && ctx != NULL) {
+        evp_pkey_ctx_free_old_ops(ctx);
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    }
     return ret;
 
  not_supported:

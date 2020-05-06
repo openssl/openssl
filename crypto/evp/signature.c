@@ -503,6 +503,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     return ret;
 
  err:
+    evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
 }
