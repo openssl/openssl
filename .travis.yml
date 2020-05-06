@@ -207,7 +207,7 @@ script:
     - if test -n "$MARKDOWNLINT" ; then
           echo -e "====START MARKDOWNLINT====";
           gem install mdl || travis_terminate 1;
-          mdl -s util/style.rb README.md || travis_terminate 1;
+          mdl -s util/markdownlint.rb README.md || travis_terminate 1;
           echo -e "====END MARKDOWNLINT====";
       fi
     - if ! $make2; then
