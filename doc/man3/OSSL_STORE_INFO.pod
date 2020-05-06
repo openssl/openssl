@@ -54,25 +54,24 @@ loaders to create B<OSSL_STORE_INFO> holders.
 =head2 Types
 
 B<OSSL_STORE_INFO> is an opaque type that's just an intermediary holder for
-the objects that have been retrieved by OSSL_STORE_load() and similar
-functions.
+the objects that have been retrieved by OSSL_STORE_load() and similar functions.
 Supported OpenSSL type object can be extracted using one of
-STORE_INFO_get0_TYPE().
+STORE_INFO_get0_<TYPE>() where <TYPE> can be NAME, PARAMS, PKEY, CERT, or CRL.
 The life time of this extracted object is as long as the life time of
 the B<OSSL_STORE_INFO> it was extracted from, so care should be taken not
 to free the latter too early.
-As an alternative, STORE_INFO_get1_TYPE() extracts a duplicate (or the
+As an alternative, STORE_INFO_get1_<TYPE>() extracts a duplicate (or the
 same object with its reference count increased), which can be used
 after the containing B<OSSL_STORE_INFO> has been freed.
-The object returned by STORE_INFO_get1_TYPE() must be freed separately
+The object returned by STORE_INFO_get1_<TYPE>() must be freed separately
 by the caller.
-See L</SUPPORTED OBJECTS> for more information on the types that are
-supported.
+See L</SUPPORTED OBJECTS> for more information on the types that are supported.
 
 =head2 Functions
 
 OSSL_STORE_INFO_get_type() takes a B<OSSL_STORE_INFO> and returns the STORE
 type number for the object inside.
+
 STORE_INFO_get_type_string() takes a STORE type number and returns a
 short string describing it.
 
@@ -94,6 +93,8 @@ OSSL_STORE_INFO_new_NAME() , OSSL_STORE_INFO_new_PARAMS(),
 OSSL_STORE_INFO_new_PKEY(), OSSL_STORE_INFO_new_CERT() and
 OSSL_STORE_INFO_new_CRL() create a B<OSSL_STORE_INFO>
 object to hold the given input object.
+On success the input object is consumed.
+
 Additionally, for B<OSSL_STORE_INFO_NAME>` objects,
 OSSL_STORE_INFO_set0_NAME_description() can be used to add an extra
 description.
@@ -162,9 +163,9 @@ OSSL_STORE_INFO_get0_PARAMS(), OSSL_STORE_INFO_get0_PKEY(),
 OSSL_STORE_INFO_get0_CERT() and OSSL_STORE_INFO_get0_CRL() all return
 a pointer to the OpenSSL object on success, NULL otherwise.
 
-OSSL_STORE_INFO_get0_NAME(), OSSL_STORE_INFO_get0_NAME_description(),
-OSSL_STORE_INFO_get0_PARAMS(), OSSL_STORE_INFO_get0_PKEY(),
-OSSL_STORE_INFO_get0_CERT() and OSSL_STORE_INFO_get0_CRL() all return
+OSSL_STORE_INFO_get1_NAME(), OSSL_STORE_INFO_get1_NAME_description(),
+OSSL_STORE_INFO_get1_PARAMS(), OSSL_STORE_INFO_get1_PKEY(),
+OSSL_STORE_INFO_get1_CERT() and OSSL_STORE_INFO_get1_CRL() all return
 a pointer to a duplicate of the OpenSSL object on success, NULL otherwise.
 
 OSSL_STORE_INFO_type_string() returns a string on success, or B<NULL> on
@@ -184,13 +185,7 @@ L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OSSL_STORE_register_loader(3)>
 
 =head1 HISTORY
 
-OSSL_STORE_INFO(), OSSL_STORE_INFO_get_type(), OSSL_STORE_INFO_get0_NAME(),
-OSSL_STORE_INFO_get0_PARAMS(), OSSL_STORE_INFO_get0_PKEY(),
-OSSL_STORE_INFO_get0_CERT(), OSSL_STORE_INFO_get0_CRL(),
-OSSL_STORE_INFO_type_string(), OSSL_STORE_INFO_free(), OSSL_STORE_INFO_new_NAME(),
-OSSL_STORE_INFO_new_PARAMS(), OSSL_STORE_INFO_new_PKEY(),
-OSSL_STORE_INFO_new_CERT() and OSSL_STORE_INFO_new_CRL()
-were added in OpenSSL 1.1.1.
+The OSSL_STORE API was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
