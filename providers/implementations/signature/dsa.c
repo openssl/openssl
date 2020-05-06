@@ -63,6 +63,7 @@ static OSSL_OP_signature_settable_ctx_md_params_fn dsa_settable_ctx_md_params;
 
 typedef struct {
     OPENSSL_CTX *libctx;
+    char *propq;
     DSA *dsa;
 
     /*
@@ -131,7 +132,7 @@ static int dsa_get_md_nid(const EVP_MD *md)
     return mdnid;
 }
 
-static void *dsa_newctx(void *provctx)
+static void *dsa_newctx(void *provctx, const char *propq)
 {
     PROV_DSA_CTX *pdsactx = OPENSSL_zalloc(sizeof(PROV_DSA_CTX));
 
@@ -140,12 +141,20 @@ static void *dsa_newctx(void *provctx)
 
     pdsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     pdsactx->flag_allow_md = 1;
+    if (propq != NULL && (pdsactx->propq = OPENSSL_strdup(propq)) == NULL) {
+        OPENSSL_free(pdsactx);
+        pdsactx = NULL;
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+    }
     return pdsactx;
 }
 
 static int dsa_setup_md(PROV_DSA_CTX *ctx,
                         const char *mdname, const char *mdprops)
 {
+    if (mdprops == NULL)
+        mdprops = ctx->propq;
+
     if (mdname != NULL) {
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int md_nid = dsa_get_md_nid(md);
@@ -234,7 +243,7 @@ static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
 }
 
 static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
-                                      const char *props, void *vdsa)
+                                      void *vdsa)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -242,7 +251,7 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
     if (!dsa_signature_init(vpdsactx, vdsa))
         return 0;
 
-    if (!dsa_setup_md(pdsactx, mdname, props))
+    if (!dsa_setup_md(pdsactx, mdname, NULL))
         return 0;
 
     pdsactx->mdctx = EVP_MD_CTX_new();
