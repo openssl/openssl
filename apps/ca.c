@@ -573,8 +573,7 @@ end_of_options:
         }
     }
     pkey = load_key(keyfile, keyformat, 0, key, e, "CA private key");
-    if (key != NULL)
-        OPENSSL_cleanse(key, strlen(key));
+    cleanse(key);
     if (pkey == NULL)
         /* load_key() has already printed an appropriate message */
         goto end;
