@@ -126,11 +126,8 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
         goto err;
     }
 
-    if (ret <= 0) {
-        cipher->freectx(ctx->op.ciph.ciphprovctx);
-        ctx->op.ciph.ciphprovctx = NULL;
+    if (ret <= 0)
         goto err;
-    }
     return 1;
 
  legacy:
@@ -162,8 +159,10 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
     }
 
  err:
-    if (ret <= 0)
+    if (ret <= 0) {
+        evp_pkey_ctx_free_old_ops(ctx);
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    }
     return ret;
 }
 
