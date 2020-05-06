@@ -684,7 +684,7 @@ OpenSSL 1.0.0
   * EAP-FAST and other applications using tls_session_secret_cb
     wont resume sessions. Fixed in 1.0.0n-dev
   * Compilation failure of s3_pkt.c on some platforms due to missing
-    <limits.h> include. Fixed in 1.0.0n-dev
+    `<limits.h>` include. Fixed in 1.0.0n-dev
 
 ### Major changes between OpenSSL 1.0.0l and OpenSSL 1.0.0m [5 Jun 2014] ###
 

@@ -12466,9 +12466,9 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    *Steve Henson*
 
  * New subcommands for 'openssl ca':
-   'openssl ca -status <serial>' prints the status of the cert with
+   `openssl ca -status <serial>` prints the status of the cert with
    the given serial number (according to the index file).
-   'openssl ca -updatedb' updates the expiry status of certificates
+   `openssl ca -updatedb` updates the expiry status of certificates
    in the index file.
 
    *Massimiliano Pala <madwolf@comune.modena.it>*
@@ -14639,7 +14639,7 @@ ndif
 
  * Reorganisation of the stack code. The macros are now all
    collected in safestack.h . Each macro is defined in terms of
-   a "stack macro" of the form SKM_<name>(type, a, b). The
+   a "stack macro" of the form `SKM_<name>(type, a, b)`. The
    DEBUG_SAFESTACK is now handled in terms of function casts,
    this has the advantage of retaining type safety without the
    use of additional functions. If DEBUG_SAFESTACK is not defined
@@ -15166,7 +15166,7 @@ ndif
    must be defined.  E.g.,
            #define OPENSSL_ALGORITHM_DEFINES
            #include <openssl/opensslconf.h>
-   defines all pertinent NO_<algo> symbols, such as NO_IDEA, NO_RSA, etc.
+   defines all pertinent `NO_<algo>` symbols, such as NO_IDEA, NO_RSA, etc.
 
    *Richard Levitte, Ulf and Bodo Möller*
 
@@ -16448,7 +16448,7 @@ ndif
    1. Casts to avoid "loss of data" warnings in p5_crpt2.c
    2. Change unsigned int to int in b_dump.c to avoid "signed/unsigned
       comparison" warnings.
-   3. Add sk_<TYPE>_sort to DEF file generator and do make update.
+   3. Add `sk_<TYPE>_sort` to DEF file generator and do make update.
 
    *Steve Henson*
 
@@ -16934,7 +16934,7 @@ ndif
 
    *Anonymous*
 
- * Add missing sk_<type>_unshift() function to safestack.h
+ * Add missing `sk_<type>_unshift()` function to safestack.h
 
    *Ralf S. Engelschall*
 
@@ -16994,7 +16994,7 @@ ndif
 
    *Niels Poppe <niels@netbox.org>*
 
- * New Configure option no-<cipher> (rsa, idea, rc5, ...).
+ * New Configure option `no-<cipher>` (rsa, idea, rc5, ...).
 
    *Ulf Möller*
 
@@ -17029,7 +17029,7 @@ ndif
 
    *Steve Henson*
 
- * Change #include filenames from <foo.h> to <openssl/foo.h>.
+ * Change #include filenames from `<foo.h>` to `<openssl/foo.h>`.
 
    *Bodo Moeller*
 
@@ -17149,8 +17149,8 @@ ndif
 
    *Ben Laurie*
 
- * Add `openssl ca -revoke <certfile>' facility which revokes a certificate
-   specified in <certfile> by updating the entry in the index.txt file.
+ * Add `openssl ca -revoke <certfile>` facility which revokes a certificate
+   specified in `<certfile>` by updating the entry in the index.txt file.
    This way one no longer has to edit the index.txt file manually for
    revoking a certificate. The -revoke option does the gory details now.
 
@@ -17168,12 +17168,12 @@ ndif
 
    *Ralf S. Engelschall*
 
- * Bugfix: In test/testenc, don't test "openssl <cipher>" for
+ * Bugfix: In test/testenc, don't test `openssl <cipher>` for
    ciphers that were excluded, e.g. by -DNO_IDEA.  Also, test
    all available ciphers including rc5, which was forgotten until now.
    In order to let the testing shell script know which algorithms
    are available, a new (up to now undocumented) command
-   "openssl list-cipher-commands" is used.
+   `openssl list-cipher-commands` is used.
 
    *Bodo Moeller*
 
@@ -17393,13 +17393,14 @@ ndif
 
  * Add a useful kludge to allow package maintainers to specify compiler and
    other platforms details on the command line without having to patch the
-   Configure script every time: One now can use ``perl Configure
-   <id>:<details>'', i.e. platform ids are allowed to have details appended
+   Configure script every time: One now can use
+   `perl Configure <id>:<details>`,
+   i.e. platform ids are allowed to have details appended
    to them (separated by colons). This is treated as there would be a static
-   pre-configured entry in Configure's %table under key <id> with value
-   <details> and ``perl Configure <id>'' is called.  So, when you want to
+   pre-configured entry in Configure's %table under key `<id>` with value
+   `<details>` and `perl Configure <id>` is called.  So, when you want to
    perform a quick test-compile under FreeBSD 3.1 with pgcc and without
-   assembler stuff you can use ``perl Configure "FreeBSD-elf:pgcc:-O6:::"''
+   assembler stuff you can use `perl Configure "FreeBSD-elf:pgcc:-O6:::"`
    now, which overrides the FreeBSD-elf entry on-the-fly.
 
    *Ralf S. Engelschall*
@@ -17968,10 +17969,10 @@ ndif
 
    *Steve Henson and Ben Laurie*
 
- * First cut of a cleanup for apps/. First the `ssleay' program is now named
-   `openssl' and second, the shortcut symlinks for the `openssl <command>'
+ * First cut of a cleanup for apps/. First the `ssleay` program is now named
+   `openssl` and second, the shortcut symlinks for the `openssl <command>`
    are no longer created. This way we have a single and consistent command
-   line interface `openssl <command>', similar to `cvs <command>'.
+   line interface `openssl <command>`, similar to `cvs <command>`.
 
    *Ralf S. Engelschall, Paul Sutton and Ben Laurie*
 
