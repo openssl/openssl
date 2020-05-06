@@ -19,6 +19,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+#include "prov/provider_ctx.h"
 #include "internal/nelem.h"
 
 /*
@@ -566,7 +567,7 @@ static const OSSL_DISPATCH deflt_dispatch_table[] = {
 
 OSSL_provider_init_fn ossl_default_provider_init;
 
-int ossl_default_provider_init(const OSSL_PROVIDER *provider,
+int ossl_default_provider_init(const OSSL_CORE_PROVIDER *provider,
                                const OSSL_DISPATCH *in,
                                const OSSL_DISPATCH **out,
                                void **provctx)

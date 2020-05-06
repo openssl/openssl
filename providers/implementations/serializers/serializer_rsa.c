@@ -55,15 +55,14 @@ int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
     rsa_get0_all_params(rsa, factors, exps, coeffs);
 
     if (priv && rsa_d != NULL) {
-        if (ossl_prov_bio_printf(out, "Private-Key: (%d bit, %d primes)\n",
-                                 BN_num_bits(rsa_n),
-                                 sk_BIGNUM_const_num(factors)) <= 0)
+        if (BIO_printf(out, "Private-Key: (%d bit, %d primes)\n",
+                       BN_num_bits(rsa_n),
+                       sk_BIGNUM_const_num(factors)) <= 0)
             goto err;
         modulus_label = "modulus:";
         exponent_label = "publicExponent:";
     } else {
-        if (ossl_prov_bio_printf(out, "Public-Key: (%d bit)\n",
-                                 BN_num_bits(rsa_n)) <= 0)
+        if (BIO_printf(out, "Public-Key: (%d bit)\n", BN_num_bits(rsa_n)) <= 0)
             goto err;
         modulus_label = "Modulus:";
         exponent_label = "Exponent:";
@@ -93,18 +92,18 @@ int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
                                             sk_BIGNUM_const_value(coeffs, 0)))
             goto err;
         for (i = 2; i < sk_BIGNUM_const_num(factors); i++) {
-            if (ossl_prov_bio_printf(out, "prime%d:", i + 1) <= 0)
+            if (BIO_printf(out, "prime%d:", i + 1) <= 0)
                 goto err;
             if (!ossl_prov_print_labeled_bignum(out, NULL,
                                                 sk_BIGNUM_const_value(factors,
                                                                       i)))
                 goto err;
-            if (ossl_prov_bio_printf(out, "exponent%d:", i + 1) <= 0)
+            if (BIO_printf(out, "exponent%d:", i + 1) <= 0)
                 goto err;
             if (!ossl_prov_print_labeled_bignum(out, NULL,
                                                 sk_BIGNUM_const_value(exps, i)))
                 goto err;
-            if (ossl_prov_bio_printf(out, "coefficient%d:", i + 1) <= 0)
+            if (BIO_printf(out, "coefficient%d:", i + 1) <= 0)
                 goto err;
             if (!ossl_prov_print_labeled_bignum(out, NULL,
                                                 sk_BIGNUM_const_value(coeffs,

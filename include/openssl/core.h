@@ -25,6 +25,11 @@ extern "C" {
  * to communicate data between them.
  */
 
+/* Opaque handles used by functions from the core */
+typedef void *OSSL_CORE_PROVIDER;
+typedef void *OPENSSL_CORE_CTX;
+typedef void *OSSL_CORE_BIO;
+
 /*
  * Dispatch table element.  function_id numbers are defined further down,
  * see macros with '_FUNC' in their names.
@@ -180,7 +185,7 @@ typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
  *              provider needs it.  This value is passed to other provider
  *              functions, notably other context constructors.
  */
-typedef int (OSSL_provider_init_fn)(const OSSL_PROVIDER *provider,
+typedef int (OSSL_provider_init_fn)(const OSSL_CORE_PROVIDER *provider,
                                     const OSSL_DISPATCH *in,
                                     const OSSL_DISPATCH **out,
                                     void **provctx);

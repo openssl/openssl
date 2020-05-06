@@ -255,7 +255,7 @@ static int serializer_write_cb(const OSSL_PARAM params[], void *arg)
     OSSL_SERIALIZER_CTX *ctx = write_data->ctx;
     BIO *out = write_data->out;
 
-    return ctx->ser->serialize_data(ctx->serctx, params, out,
+    return ctx->ser->serialize_data(ctx->serctx, params, (OSSL_CORE_BIO *)out,
                                     serializer_passphrase_out_cb, ctx);
 }
 
@@ -291,7 +291,8 @@ static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
                                   &serializer_write_cb, &write_data);
     }
 
-    return ctx->ser->serialize_object(ctx->serctx, keydata, out,
+    return ctx->ser->serialize_object(ctx->serctx, keydata,
+                                      (OSSL_CORE_BIO *)out,
                                       serializer_passphrase_out_cb, ctx);
 }
 

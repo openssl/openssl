@@ -61,6 +61,7 @@ extern "C" {
 # ifndef OPENSSL_NO_SCTP
 #  define BIO_TYPE_DGRAM_SCTP    (24|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
 # endif
+# define BIO_TYPE_CORE_TO_PROV   (25|BIO_TYPE_FILTER)
 
 #define BIO_TYPE_START           128
 

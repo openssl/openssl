@@ -20,7 +20,7 @@ int ffc_params_prov_print(BIO *out, const FFC_PARAMS *ffc)
 
         if (name == NULL)
             goto err;
-        if (ossl_prov_bio_printf(out, "GROUP: %s\n", name) <= 0)
+        if (BIO_printf(out, "GROUP: %s\n", name) <= 0)
             goto err;
         return 1;
 #else
@@ -46,15 +46,15 @@ int ffc_params_prov_print(BIO *out, const FFC_PARAMS *ffc)
             goto err;
     }
     if (ffc->gindex != -1) {
-        if (ossl_prov_bio_printf(out, "gindex: %d\n", ffc->gindex) <= 0)
+        if (BIO_printf(out, "gindex: %d\n", ffc->gindex) <= 0)
             goto err;
     }
     if (ffc->pcounter != -1) {
-        if (ossl_prov_bio_printf(out, "pcounter: %d\n", ffc->pcounter) <= 0)
+        if (BIO_printf(out, "pcounter: %d\n", ffc->pcounter) <= 0)
             goto err;
     }
     if (ffc->h != 0) {
-        if (ossl_prov_bio_printf(out, "h: %d\n", ffc->h) <= 0)
+        if (BIO_printf(out, "h: %d\n", ffc->h) <= 0)
             goto err;
     }
     return 1;

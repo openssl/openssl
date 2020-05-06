@@ -73,8 +73,7 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
     if (p == NULL)
         goto null_err;
 
-    if (ossl_prov_bio_printf(out, "%s: (%d bit)\n", type_label,
-                             BN_num_bits(p)) <= 0)
+    if (BIO_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p)) <= 0)
         goto err;
     if (priv_key != NULL
         && !ossl_prov_print_labeled_bignum(out, "priv:", priv_key))

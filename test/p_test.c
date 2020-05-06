@@ -50,7 +50,7 @@ static const OSSL_PARAM *p_gettable_params(void *_)
 
 static int p_get_params(void *vprov, OSSL_PARAM params[])
 {
-    const OSSL_PROVIDER *prov = vprov;
+    const OSSL_CORE_PROVIDER *prov = vprov;
     OSSL_PARAM *p = params;
     int ok = 1;
 
@@ -119,7 +119,7 @@ static const OSSL_DISPATCH p_test_table[] = {
     { 0, NULL }
 };
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
+int OSSL_provider_init(const OSSL_CORE_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)

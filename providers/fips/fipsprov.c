@@ -81,7 +81,7 @@ static OSSL_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
 static OSSL_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 
 typedef struct fips_global_st {
-    const OSSL_PROVIDER *prov;
+    const OSSL_CORE_PROVIDER *prov;
 } FIPS_GLOBAL;
 
 static void *fips_prov_ossl_ctx_new(OPENSSL_CTX *libctx)
@@ -546,7 +546,7 @@ static const OSSL_DISPATCH intern_dispatch_table[] = {
 };
 
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
+int OSSL_provider_init(const OSSL_CORE_PROVIDER *provider,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
@@ -706,7 +706,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
  * that was used in the EVP call that initiated this recursive call.
  */
 OSSL_provider_init_fn fips_intern_provider_init;
-int fips_intern_provider_init(const OSSL_PROVIDER *provider,
+int fips_intern_provider_init(const OSSL_CORE_PROVIDER *provider,
                               const OSSL_DISPATCH *in,
                               const OSSL_DISPATCH **out,
                               void **provctx)
@@ -781,7 +781,7 @@ int ERR_pop_to_mark(void)
  * is also called from other parts of libcrypto, which all pass around a
  * OPENSSL_CTX pointer)
  */
-const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *libctx)
+const OSSL_CORE_PROVIDER *FIPS_get_provider(OPENSSL_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = openssl_ctx_get_data(libctx,
                                              OPENSSL_CTX_FIPS_PROV_INDEX,

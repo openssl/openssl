@@ -25,6 +25,7 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn rsa_priv_newctx;
@@ -119,7 +120,8 @@ static int rsa_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 /* Private key : DER */
-static int rsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int rsa_priv_der_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
@@ -140,11 +142,16 @@ static int rsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int rsa_priv_der(void *vctx, void *rsa, BIO *out,
+static int rsa_priv_der(void *vctx, void *rsa, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
     int ret;
+    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
+                                     cout);
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
@@ -154,12 +161,14 @@ static int rsa_priv_der(void *vctx, void *rsa, BIO *out,
                                             ossl_prov_prepare_rsa_params,
                                             (i2d_of_void *)i2d_RSAPrivateKey,
                                             &ctx->sc);
+    BIO_free(out);
 
     return ret;
 }
 
 /* Private key : PEM */
-static int rsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int rsa_pem_priv_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
@@ -180,11 +189,16 @@ static int rsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int rsa_pem_priv(void *vctx, void *rsa, BIO *out,
+static int rsa_pem_priv(void *vctx, void *rsa, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
     int ret;
+    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
+                                     cout);
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
@@ -194,6 +208,7 @@ static int rsa_pem_priv(void *vctx, void *rsa, BIO *out,
                                             ossl_prov_prepare_rsa_params,
                                             (i2d_of_void *)i2d_RSAPrivateKey,
                                             &ctx->sc);
+    BIO_free(out);
 
     return ret;
 }
@@ -211,7 +226,7 @@ static void rsa_print_freectx(void *ctx)
 }
 
 static int rsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
-                               BIO *out,
+                               OSSL_CORE_BIO *out,
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
@@ -232,10 +247,20 @@ static int rsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
     return ok;
 }
 
-static int rsa_priv_print(void *ctx, void *rsa, BIO *out,
+static int rsa_priv_print(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                           OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_rsa(out, rsa, 1);
+    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx),
+                                     cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_rsa(out, rsa, 1);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH rsa_priv_der_serializer_functions[] = {
