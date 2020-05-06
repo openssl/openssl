@@ -552,6 +552,7 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
 
 static void deflt_teardown(void *provctx)
 {
+    BIO_meth_free(PROV_CTX_get0_core_bio_method(provctx));
     PROV_CTX_free(provctx);
 }
 
@@ -566,12 +567,13 @@ static const OSSL_DISPATCH deflt_dispatch_table[] = {
 
 OSSL_provider_init_fn ossl_default_provider_init;
 
-int ossl_default_provider_init(const OSSL_PROVIDER *provider,
+int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
                                const OSSL_DISPATCH *in,
                                const OSSL_DISPATCH **out,
                                void **provctx)
 {
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    BIO_METHOD *corebiometh;
 
     if (!ossl_prov_bio_from_dispatch(in))
         return 0;
@@ -598,15 +600,20 @@ int ossl_default_provider_init(const OSSL_PROVIDER *provider,
     /*
      * We want to make sure that all calls from this provider that requires
      * a library context use the same context as the one used to call our
-     * functions.  We do that by passing it along as the provider context.
+     * functions.  We do that by passing it along in the provider context.
      *
-     * This is special for built-in providers.  External providers should
+     * This only works for built-in providers.  Most providers should
      * create their own library context.
      */
-    if ((*provctx = PROV_CTX_new()) == NULL)
+    if ((*provctx = PROV_CTX_new()) == NULL
+            || (corebiometh = bio_prov_init_bio_method()) == NULL) {
+        PROV_CTX_free(*provctx);
+        *provctx = NULL;
         return 0;
-    PROV_CTX_set0_library_context(*provctx, c_get_libctx(provider));
-    PROV_CTX_set0_provider(*provctx, provider);
+    }
+    PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
+    PROV_CTX_set0_handle(*provctx, handle);
+    PROV_CTX_set0_core_bio_method(*provctx, corebiometh);
 
     *out = deflt_dispatch_table;
 

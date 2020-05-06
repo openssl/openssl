@@ -22,6 +22,7 @@
 #include <openssl/params.h>
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn dh_priv_newctx;
@@ -117,7 +118,8 @@ static int dh_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 /* Private key : DER */
-static int dh_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int dh_priv_der_data(void *vctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
@@ -138,11 +140,15 @@ static int dh_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dh_priv_der(void *vctx, void *dh, BIO *out,
+static int dh_priv_der(void *vctx, void *dh, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
     int ret;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
@@ -151,12 +157,14 @@ static int dh_priv_der(void *vctx, void *dh, BIO *out,
                                             ossl_prov_prepare_dh_params,
                                             ossl_prov_dh_priv_to_der,
                                             &ctx->sc);
+    BIO_free(out);
 
     return ret;
 }
 
 /* Private key : PEM */
-static int dh_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int dh_pem_priv_data(void *vctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
@@ -177,11 +185,15 @@ static int dh_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dh_pem_priv(void *vctx, void *dh, BIO *out,
+static int dh_pem_priv(void *vctx, void *dh, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
     int ret;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
@@ -190,6 +202,7 @@ static int dh_pem_priv(void *vctx, void *dh, BIO *out,
                                             ossl_prov_prepare_dh_params,
                                             ossl_prov_dh_priv_to_der,
                                             &ctx->sc);
+    BIO_free(out);
 
     return ret;
 }
@@ -206,7 +219,8 @@ static void dh_print_freectx(void *ctx)
 {
 }
 
-static int dh_priv_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int dh_priv_print_data(void *vctx, const OSSL_PARAM params[],
+                              OSSL_CORE_BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
@@ -227,10 +241,19 @@ static int dh_priv_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dh_priv_print(void *ctx, void *dh, BIO *out,
+static int dh_priv_print(void *ctx, void *dh, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_dh(out, dh, dh_print_priv);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_dh(out, dh, dh_print_priv);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH dh_priv_der_serializer_functions[] = {

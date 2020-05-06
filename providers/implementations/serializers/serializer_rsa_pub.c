@@ -21,6 +21,7 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn rsa_pub_newctx;
@@ -48,7 +49,8 @@ static void rsa_pub_freectx(void *ctx)
 }
 
 /* Public key : DER */
-static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
@@ -69,17 +71,27 @@ static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int rsa_pub_der(void *ctx, void *rsa, BIO *out,
+static int rsa_pub_der(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_write_pub_der_from_obj(out, rsa,
-                                            ossl_prov_rsa_type_to_evp(rsa),
-                                            ossl_prov_prepare_rsa_params,
-                                            (i2d_of_void *)i2d_RSAPublicKey);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_write_pub_der_from_obj(out, rsa,
+                                           ossl_prov_rsa_type_to_evp(rsa),
+                                           ossl_prov_prepare_rsa_params,
+                                           (i2d_of_void *)i2d_RSAPublicKey);
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Public key : PEM */
-static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
@@ -100,16 +112,26 @@ static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int rsa_pub_pem(void *ctx, void *rsa, BIO *out,
+static int rsa_pub_pem(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_write_pub_pem_from_obj(out, rsa,
-                                            ossl_prov_rsa_type_to_evp(rsa),
-                                            ossl_prov_prepare_rsa_params,
-                                            (i2d_of_void *)i2d_RSAPublicKey);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_write_pub_pem_from_obj(out, rsa,
+                                           ossl_prov_rsa_type_to_evp(rsa),
+                                           ossl_prov_prepare_rsa_params,
+                                           (i2d_of_void *)i2d_RSAPublicKey);
+    BIO_free(out);
+
+    return ret;
 }
 
-static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[],
+                              OSSL_CORE_BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
@@ -130,10 +152,19 @@ static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int rsa_pub_print(void *ctx, void *rsa, BIO *out,
+static int rsa_pub_print(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_rsa(out, rsa, 0);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_rsa(out, rsa, 0);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH rsa_pub_der_serializer_functions[] = {

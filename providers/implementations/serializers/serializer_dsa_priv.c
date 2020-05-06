@@ -22,6 +22,7 @@
 #include <openssl/params.h>
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn dsa_priv_newctx;
@@ -117,7 +118,8 @@ static int dsa_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 /* Private key : DER */
-static int dsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_priv_der_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dsa_priv_ctx_st *ctx = vctx;
@@ -138,22 +140,31 @@ static int dsa_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dsa_priv_der(void *vctx, void *dsa, BIO *out,
+static int dsa_priv_der(void *vctx, void *dsa, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dsa_priv_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    return ossl_prov_write_priv_der_from_obj(out, dsa, EVP_PKEY_DSA,
-                                             ossl_prov_prepare_dsa_params,
-                                             ossl_prov_dsa_priv_to_der,
-                                             &ctx->sc);
+    ret = ossl_prov_write_priv_der_from_obj(out, dsa, EVP_PKEY_DSA,
+                                            ossl_prov_prepare_dsa_params,
+                                            ossl_prov_dsa_priv_to_der,
+                                            &ctx->sc);
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Private key : PEM */
-static int dsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_pem_priv_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dsa_priv_ctx_st *ctx = vctx;
@@ -174,18 +185,26 @@ static int dsa_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dsa_pem_priv(void *vctx, void *dsa, BIO *out,
+static int dsa_pem_priv(void *vctx, void *dsa, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dsa_priv_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    return ossl_prov_write_priv_pem_from_obj(out, dsa, EVP_PKEY_DSA,
-                                             ossl_prov_prepare_dsa_params,
-                                             ossl_prov_dsa_priv_to_der,
-                                             &ctx->sc);
+    ret = ossl_prov_write_priv_pem_from_obj(out, dsa, EVP_PKEY_DSA,
+                                            ossl_prov_prepare_dsa_params,
+                                            ossl_prov_dsa_priv_to_der,
+                                            &ctx->sc);
+    BIO_free(out);
+
+    return ret;
 }
 
 /*
@@ -201,7 +220,7 @@ static void dsa_print_freectx(void *ctx)
 }
 
 static int dsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
-                               BIO *out,
+                               OSSL_CORE_BIO *out,
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dsa_priv_ctx_st *ctx = vctx;
@@ -222,10 +241,19 @@ static int dsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
     return ok;
 }
 
-static int dsa_priv_print(void *ctx, void *dsa, BIO *out,
+static int dsa_priv_print(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
                           OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_dsa(out, dsa, dsa_print_priv);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_dsa(out, dsa, dsa_print_priv);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH dsa_priv_der_serializer_functions[] = {

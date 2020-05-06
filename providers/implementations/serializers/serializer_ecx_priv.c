@@ -16,6 +16,7 @@
 #include "crypto/ecx.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn x25519_priv_newctx;
@@ -134,7 +135,8 @@ static int ecx_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 /* Private key : DER */
-static int ecx_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int ecx_priv_der_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_priv_ctx_st *ctx = vctx;
@@ -157,13 +159,17 @@ static int ecx_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ecx_priv_der(void *vctx, void *vecxkey, BIO *out,
+static int ecx_priv_der(void *vctx, void *vecxkey, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_priv_ctx_st *ctx = vctx;
     ECX_KEY *ecxkey = vecxkey;
     int ret;
     int nid = KEYTYPE2NID(ctx->type);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
@@ -173,12 +179,14 @@ static int ecx_priv_der(void *vctx, void *vecxkey, BIO *out,
                                             NULL,
                                             ossl_prov_ecx_priv_to_der,
                                             &ctx->sc);
+    BIO_free(out);
 
     return ret;
 }
 
 /* Private key : PEM */
-static int ecx_priv_pem_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int ecx_priv_pem_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_priv_ctx_st *ctx = vctx;
@@ -201,12 +209,16 @@ static int ecx_priv_pem_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ecx_priv_pem(void *vctx, void *ecxkey, BIO *out,
+static int ecx_priv_pem(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_priv_ctx_st *ctx = vctx;
     int ret;
     int nid = KEYTYPE2NID(ctx->type);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
@@ -216,11 +228,13 @@ static int ecx_priv_pem(void *vctx, void *ecxkey, BIO *out,
                                             NULL,
                                             ossl_prov_ecx_priv_to_der,
                                             &ctx->sc);
+    BIO_free(out);
 
     return ret;
 }
 
-static int ecx_priv_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int ecx_priv_print_data(void *vctx, const OSSL_PARAM params[],
+                               OSSL_CORE_BIO *out,
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_priv_ctx_st *ctx = vctx;
@@ -243,10 +257,20 @@ static int ecx_priv_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ecx_priv_print(void *ctx, void *ecxkey, BIO *out,
+static int ecx_priv_print(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_ecx(out, ecxkey, ecx_print_priv);
+    struct ecx_priv_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_ecx(out, ecxkey, ecx_print_priv);
+    BIO_free(out);
+
+    return ret;
 }
 
 #define MAKE_SERIALIZER_FUNCTIONS(alg, type) \

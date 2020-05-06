@@ -170,7 +170,7 @@ static const OSSL_DISPATCH legacy_dispatch_table[] = {
     { 0, NULL }
 };
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
@@ -206,7 +206,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         return 0;
     }
     PROV_CTX_set0_library_context(*provctx, libctx);
-    PROV_CTX_set0_provider(*provctx, provider);
+    PROV_CTX_set0_handle(*provctx, handle);
 
     *out = legacy_dispatch_table;
 

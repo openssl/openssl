@@ -16,6 +16,7 @@
 #include <openssl/params.h>
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn ec_priv_newctx;
@@ -111,8 +112,9 @@ static int ec_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 /* Private key : DER */
-static int ec_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
-                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int ec_priv_der_data(void *vctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
+                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ec_priv_ctx_st *ctx = vctx;
     OSSL_OP_keymgmt_new_fn *ec_new;
@@ -134,23 +136,32 @@ static int ec_priv_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ec_priv_der(void *vctx, void *eckey, BIO *out,
+static int ec_priv_der(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ec_priv_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    return ossl_prov_write_priv_der_from_obj(out, eckey, EVP_PKEY_EC,
-                                             ossl_prov_prepare_ec_params,
-                                             ossl_prov_ec_priv_to_der,
-                                             &ctx->sc);
+    ret = ossl_prov_write_priv_der_from_obj(out, eckey, EVP_PKEY_EC,
+                                            ossl_prov_prepare_ec_params,
+                                            ossl_prov_ec_priv_to_der,
+                                            &ctx->sc);
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Private key : PEM */
-static int ec_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
-                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int ec_pem_priv_data(void *vctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
+                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ec_priv_ctx_st *ctx = vctx;
     OSSL_OP_keymgmt_new_fn *ec_new;
@@ -172,18 +183,26 @@ static int ec_pem_priv_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ec_pem_priv(void *vctx, void *eckey, BIO *out,
+static int ec_pem_priv(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ec_priv_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
 
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    return ossl_prov_write_priv_pem_from_obj(out, eckey, EVP_PKEY_EC,
-                                             ossl_prov_prepare_ec_params,
-                                             ossl_prov_ec_priv_to_der,
-                                             &ctx->sc);
+    ret = ossl_prov_write_priv_pem_from_obj(out, eckey, EVP_PKEY_EC,
+                                            ossl_prov_prepare_ec_params,
+                                            ossl_prov_ec_priv_to_der,
+                                            &ctx->sc);
+    BIO_free(out);
+
+    return ret;
 }
 
 /*
@@ -198,7 +217,8 @@ static void ec_print_freectx(void *ctx)
 {
 }
 
-static int ec_priv_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int ec_priv_print_data(void *vctx, const OSSL_PARAM params[],
+                              OSSL_CORE_BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ec_priv_ctx_st *ctx = vctx;
@@ -221,10 +241,19 @@ static int ec_priv_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ec_priv_print(void *vctx, void *eckey, BIO *out,
+static int ec_priv_print(void *ctx, void *eckey, OSSL_CORE_BIO *cout,
                           OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_eckey(out, eckey, ec_print_priv);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_eckey(out, eckey, ec_print_priv);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH ec_priv_der_serializer_functions[] = {

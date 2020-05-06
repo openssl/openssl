@@ -81,7 +81,7 @@ static OSSL_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
 static OSSL_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 
 typedef struct fips_global_st {
-    const OSSL_PROVIDER *prov;
+    const OSSL_CORE_HANDLE *handle;
 } FIPS_GLOBAL;
 
 static void *fips_prov_ossl_ctx_new(OPENSSL_CTX *libctx)
@@ -546,7 +546,7 @@ static const OSSL_DISPATCH intern_dispatch_table[] = {
 };
 
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
@@ -647,7 +647,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     }
 
     if (stcbfn != NULL && c_get_libctx != NULL) {
-        stcbfn(c_get_libctx(provider), &selftest_params.cb,
+        stcbfn(c_get_libctx(handle), &selftest_params.cb,
                &selftest_params.cb_arg);
     }
     else {
@@ -655,7 +655,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         selftest_params.cb_arg = NULL;
     }
 
-    if (!c_get_params(provider, core_params))
+    if (!c_get_params(handle, core_params))
         return 0;
 
     /*  Create a context. */
@@ -670,13 +670,13 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         goto err;
     }
     PROV_CTX_set0_library_context(*provctx, libctx);
-    PROV_CTX_set0_provider(*provctx, provider);
+    PROV_CTX_set0_handle(*provctx, handle);
 
     if ((fgbl = openssl_ctx_get_data(libctx, OPENSSL_CTX_FIPS_PROV_INDEX,
                                      &fips_prov_ossl_ctx_method)) == NULL)
         goto err;
 
-    fgbl->prov = provider;
+    fgbl->handle = handle;
 
     selftest_params.libctx = libctx;
     if (!SELF_TEST_post(&selftest_params, 0))
@@ -706,7 +706,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
  * that was used in the EVP call that initiated this recursive call.
  */
 OSSL_provider_init_fn fips_intern_provider_init;
-int fips_intern_provider_init(const OSSL_PROVIDER *provider,
+int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
                               const OSSL_DISPATCH *in,
                               const OSSL_DISPATCH **out,
                               void **provctx)
@@ -728,8 +728,13 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
 
     if ((*provctx = PROV_CTX_new()) == NULL)
         return 0;
-    PROV_CTX_set0_library_context(*provctx, c_get_libctx(provider));
-    PROV_CTX_set0_provider(*provctx, provider);
+    /*
+     * Using the parent library context only works because we are a built-in
+     * internal provider. This is not something that most providers would be
+     * able to do.
+     */
+    PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
+    PROV_CTX_set0_handle(*provctx, handle);
 
     *out = intern_dispatch_table;
     return 1;
@@ -781,7 +786,7 @@ int ERR_pop_to_mark(void)
  * is also called from other parts of libcrypto, which all pass around a
  * OPENSSL_CTX pointer)
  */
-const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *libctx)
+const OSSL_CORE_HANDLE *FIPS_get_core_handle(OPENSSL_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = openssl_ctx_get_data(libctx,
                                              OPENSSL_CTX_FIPS_PROV_INDEX,
@@ -790,7 +795,7 @@ const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *libctx)
     if (fgbl == NULL)
         return NULL;
 
-    return fgbl->prov;
+    return fgbl->handle;
 }
 
 void *CRYPTO_malloc(size_t num, const char *file, int line)

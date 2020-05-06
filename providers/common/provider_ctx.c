@@ -9,6 +9,7 @@
 
 #include <stdlib.h>
 #include "prov/provider_ctx.h"
+#include "prov/bio.h"
 
 PROV_CTX *PROV_CTX_new(void)
 {
@@ -26,12 +27,17 @@ void PROV_CTX_set0_library_context(PROV_CTX *ctx, OPENSSL_CTX *libctx)
         ctx->libctx = libctx;
 }
 
-void PROV_CTX_set0_provider(PROV_CTX *ctx, const OSSL_PROVIDER *provider)
+void PROV_CTX_set0_handle(PROV_CTX *ctx, const OSSL_CORE_HANDLE *handle)
 {
     if (ctx != NULL)
-        ctx->provider = provider;
+        ctx->handle = handle;
 }
 
+void PROV_CTX_set0_core_bio_method(PROV_CTX *ctx, BIO_METHOD *corebiometh)
+{
+    if (ctx != NULL)
+        ctx->corebiometh = corebiometh;
+}
 
 OPENSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx)
 {
@@ -40,9 +46,16 @@ OPENSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx)
     return ctx->libctx;
 }
 
-const OSSL_PROVIDER *PROV_CTX_get0_provider(PROV_CTX *ctx)
+const OSSL_CORE_HANDLE *PROV_CTX_get0_handle(PROV_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;
-    return ctx->provider;
+    return ctx->handle;
+}
+
+BIO_METHOD *PROV_CTX_get0_core_bio_method(PROV_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->corebiometh;
 }

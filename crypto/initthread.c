@@ -360,7 +360,7 @@ int ossl_init_thread_start(const void *index, void *arg,
          * libcrypto to tell us about later thread stop events. c_thread_start
          * is a callback to libcrypto defined in fipsprov.c
          */
-        if (!c_thread_start(FIPS_get_provider(ctx), ossl_ctx_thread_stop))
+        if (!c_thread_start(FIPS_get_core_handle(ctx), ossl_ctx_thread_stop))
             return 0;
     }
 #endif

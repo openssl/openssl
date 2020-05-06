@@ -15,6 +15,7 @@
 #include "crypto/ecx.h"
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn x25519_pub_newctx;
@@ -76,7 +77,8 @@ static void ecx_pub_freectx(void *ctx)
 }
 
 /* Public key : DER */
-static int ecx_pub_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int ecx_pub_der_data(void *vctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
@@ -99,19 +101,28 @@ static int ecx_pub_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ecx_pub_der(void *vctx, void *ecxkey, BIO *out,
+static int ecx_pub_der(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
 
-    return ossl_prov_write_pub_der_from_obj(out, ecxkey,
-                                            KEYTYPE2NID(ctx->type),
-                                            NULL,
-                                            ossl_prov_ecx_pub_to_der);
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_write_pub_der_from_obj(out, ecxkey,
+                                           KEYTYPE2NID(ctx->type),
+                                           NULL,
+                                           ossl_prov_ecx_pub_to_der);
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Public key : PEM */
-static int ecx_pub_pem_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int ecx_pub_pem_data(void *vctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
@@ -134,19 +145,27 @@ static int ecx_pub_pem_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ecx_pub_pem(void *vctx, void *ecxkey, BIO *out,
+static int ecx_pub_pem(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
 
-    return ossl_prov_write_pub_pem_from_obj(out, ecxkey,
-                                            KEYTYPE2NID(ctx->type),
-                                            NULL,
-                                            ossl_prov_ecx_pub_to_der);
+    if (out == NULL)
+        return 0;
 
+    ret = ossl_prov_write_pub_pem_from_obj(out, ecxkey,
+                                           KEYTYPE2NID(ctx->type),
+                                           NULL,
+                                           ossl_prov_ecx_pub_to_der);
+    BIO_free(out);
+
+    return ret;
 }
 
-static int ecx_pub_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
+static int ecx_pub_print_data(void *vctx, const OSSL_PARAM params[],
+                              OSSL_CORE_BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
@@ -169,10 +188,20 @@ static int ecx_pub_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ecx_pub_print(void *ctx, void *ecxkey, BIO *out,
+static int ecx_pub_print(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_ecx(out, ecxkey, ecx_print_pub);
+    struct ecx_pub_ctx_st *ctx = vctx;
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_ecx(out, ecxkey, ecx_print_pub);
+    BIO_free(out);
+
+    return ret;
 }
 
 #define MAKE_SERIALIZER_FUNCTIONS(alg, type) \
