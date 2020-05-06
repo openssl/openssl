@@ -538,7 +538,7 @@ int enc_main(int argc, char **argv)
                 goto end;
             }
             /* wiping secret data as we no longer need it */
-            OPENSSL_cleanse(hkey, strlen(hkey));
+            cleanse(hkey);
         }
 
         if ((benc = BIO_new(BIO_f_cipher())) == NULL)

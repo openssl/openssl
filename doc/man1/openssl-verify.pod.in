@@ -99,7 +99,6 @@ with a B<->.
 
 One or more certificates to verify. If no certificates are given,
 this command will attempt to read a certificate from standard input.
-Certificates must be in PEM format.
 If a certificate chain has multiple problems, this program tries to
 display all of them.
 

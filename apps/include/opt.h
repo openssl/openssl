@@ -132,9 +132,9 @@
         { "xchain_build", OPT_X_CHAIN_BUILD, '-', \
             "build certificate chain for the extended certificates"}, \
         { "xcertform", OPT_X_CERTFORM, 'F', \
-            "format of Extended certificate (PEM or DER) PEM default " }, \
+            "format of Extended certificate (PEM/DER/P12); has no effect" }, \
         { "xkeyform", OPT_X_KEYFORM, 'F', \
-            "format of Extended certificate's key (PEM or DER) PEM default"}
+            "format of Extended certificate's key (DER/PEM/P12); has no effect"}
 
 # define OPT_X_CASES \
         OPT_X__FIRST: case OPT_X__LAST: break; \

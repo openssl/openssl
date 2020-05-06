@@ -231,6 +231,8 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
 {
     int loader_ret;
 
+    if (ctx == NULL)
+        return 1;
     OSSL_TRACE1(STORE, "Closing %p\n", (void *)ctx->loader_ctx);
     loader_ret = ctx->loader->close(ctx->loader_ctx);
 

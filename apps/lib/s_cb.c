@@ -1094,11 +1094,11 @@ int args_excert(int opt, SSL_EXCERT **pexc)
         exc->build_chain = 1;
         break;
     case OPT_X_CERTFORM:
-        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->certform))
+        if (!opt_format(opt_arg(), OPT_FMT_ANY, &exc->certform))
             return 0;
         break;
     case OPT_X_KEYFORM:
-        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->keyform))
+        if (!opt_format(opt_arg(), OPT_FMT_ANY, &exc->keyform))
             return 0;
         break;
     }

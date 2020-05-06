@@ -34,9 +34,9 @@ const OPTIONS crl_options[] = {
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"inform", OPT_INFORM, 'F', "Input format; default PEM"},
+    {"inform", OPT_INFORM, 'F', "CRL input format (DER or PEM); has no effect"},
     {"key", OPT_KEY, '<', "CRL signing Private key to use"},
-    {"keyform", OPT_KEYFORM, 'F', "Private key file format (PEM or ENGINE)"},
+    {"keyform", OPT_KEYFORM, 'F', "Private key file format (DER/PEM/P12); has no effect"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "output file - default stdout"},
@@ -122,7 +122,7 @@ int crl_main(int argc, char **argv)
             outfile = opt_arg();
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyformat))
                 goto opthelp;
             break;
         case OPT_KEY:

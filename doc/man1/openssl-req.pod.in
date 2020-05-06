@@ -25,7 +25,7 @@ B<openssl> B<req>
 [B<-pkeyopt> I<opt>:I<value>]
 [B<-nodes>]
 [B<-key> I<filename>]
-[B<-keyform> B<DER>|B<PEM>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-keyout> I<filename>]
 [B<-keygen_engine> I<id>]
 [B<-I<digest>>]
@@ -186,9 +186,10 @@ See L<openssl-genpkey(1)/KEY GENERATION OPTIONS> for more details.
 This specifies the file to read the private key from. It also
 accepts PKCS#8 format private keys for PEM format files.
 
-=item B<-keyform> B<DER>|B<PEM>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The format of the private key; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-keyout> I<filename>
@@ -690,6 +691,9 @@ L<x509v3_config(5)>
 =head1 HISTORY
 
 The B<-section> option was added in OpenSSL 3.0.0.
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
 
 =head1 COPYRIGHT
 

@@ -16,7 +16,7 @@ B<openssl> B<spkac>
 [B<-in> I<filename>]
 [B<-out> I<filename>]
 [B<-key> I<keyfile>]
-[B<-keyform> B<DER>|B<PEM>|B<ENGINE>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-passin> I<arg>]
 [B<-challenge> I<string>]
 [B<-pubkey>]
@@ -59,9 +59,10 @@ Create an SPKAC file using the private key in I<keyfile>. The
 B<-in>, B<-noout>, B<-spksect> and B<-verify> options are ignored if
 present.
 
-=item B<-keyform> B<DER>|B<PEM>|B<ENGINE>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The key format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-passin> I<arg>
@@ -147,6 +148,11 @@ to be used in a "replay attack".
 
 L<openssl(1)>,
 L<openssl-ca(1)>
+
+=head1 HISTORY
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
 
 =head1 COPYRIGHT
 
