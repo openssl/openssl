@@ -22,7 +22,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * Deprecated EC_POINT_set_Jprojective_coordinates_GFp() and
    EC_POINT_get_Jprojective_coordinates_GFp(). These functions are not widely
@@ -985,10 +985,10 @@ OpenSSL 3.0
 OpenSSL 1.1.1
 -------------
 
-### Changes between 1.1.1e and 1.1.1f [xx XXX xxxx] ###
+### Changes between 1.1.1e and 1.1.1f [xx XXX xxxx]
 
 
-### Changes between 1.1.1d and 1.1.1e [17 Mar 2020] ###
+### Changes between 1.1.1d and 1.1.1e [17 Mar 2020]
 
  * Properly detect EOF while reading in libssl. Previously if we hit an EOF
    while reading in libssl then we would report an error back to the
@@ -1042,7 +1042,7 @@ OpenSSL 1.1.1
 
    *Jon Spillett*
 
-### Changes between 1.1.1c and 1.1.1d [10 Sep 2019] ###
+### Changes between 1.1.1c and 1.1.1d [10 Sep 2019]
 
  * Fixed a fork protection issue. OpenSSL 1.1.1 introduced a rewritten random
    number generator (RNG). This was intended to include protection in the
@@ -1147,7 +1147,7 @@ OpenSSL 1.1.1
 
    *Matthias St. Pierre*
 
-### Changes between 1.1.1b and 1.1.1c [28 May 2019] ###
+### Changes between 1.1.1b and 1.1.1c [28 May 2019]
 
  * Add build tests for C++.  These are generated files that only do one
    thing, to include one public OpenSSL head file each.  This tests that
@@ -1238,7 +1238,7 @@ OpenSSL 1.1.1
 
    *Paul Yang*
 
-### Changes between 1.1.1a and 1.1.1b [26 Feb 2019] ###
+### Changes between 1.1.1a and 1.1.1b [26 Feb 2019]
 
  * Change the info callback signals for the start and end of a post-handshake
    message exchange in TLSv1.3. In 1.1.1/1.1.1a we used SSL_CB_HANDSHAKE_START
@@ -1252,7 +1252,7 @@ OpenSSL 1.1.1
 
    *Matt Caswell*
 
-### Changes between 1.1.1 and 1.1.1a [20 Nov 2018] ###
+### Changes between 1.1.1 and 1.1.1a [20 Nov 2018]
 
  * Timing vulnerability in DSA signature generation
 
@@ -1285,7 +1285,7 @@ OpenSSL 1.1.1
    automatically and is fully functional even without additional randomness
    provided by the application.
 
-### Changes between 1.1.0i and 1.1.1 [11 Sep 2018] ###
+### Changes between 1.1.0i and 1.1.1 [11 Sep 2018]
 
  * Add a new ClientHello callback. Provides a callback interface that gives
    the application the ability to adjust the nascent SSL object at the
@@ -1829,7 +1829,7 @@ OpenSSL 1.1.0
 -------------
 
 
-### Changes between 1.1.0k and 1.1.0l [10 Sep 2019] ###
+### Changes between 1.1.0k and 1.1.0l [10 Sep 2019]
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
    used even when parsing explicit parameters, when loading a serialized key
@@ -1875,7 +1875,7 @@ OpenSSL 1.1.0
 
    *Richard Levitte*
 
-### Changes between 1.1.0j and 1.1.0k [28 May 2019] ###
+### Changes between 1.1.0j and 1.1.0k [28 May 2019]
 
  * Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
    This changes the size when using the genpkey app when no size is given. It
@@ -1938,7 +1938,7 @@ OpenSSL 1.1.0
 
    *Richard Levitte*
 
-### Changes between 1.1.0i and 1.1.0j [20 Nov 2018] ###
+### Changes between 1.1.0i and 1.1.0j [20 Nov 2018]
 
  * Timing vulnerability in DSA signature generation
 
@@ -1968,7 +1968,7 @@ OpenSSL 1.1.0
 
    *Sohaib ul Hassan, Nicola Tuveri, Billy Bob Brumley*
 
-### Changes between 1.1.0h and 1.1.0i [14 Aug 2018] ###
+### Changes between 1.1.0h and 1.1.0i [14 Aug 2018]
 
  * Client DoS due to large DH parameter
 
@@ -2053,7 +2053,7 @@ OpenSSL 1.1.0
 
    *Matt Caswell*
 
-### Changes between 1.1.0g and 1.1.0h [27 Mar 2018] ###
+### Changes between 1.1.0g and 1.1.0h [27 Mar 2018]
 
  * Constructed ASN.1 types with a recursive definition could exceed the stack
 
@@ -2132,7 +2132,7 @@ OpenSSL 1.1.0
 
    *Andy Polyakov*
 
-### Changes between 1.1.0f and 1.1.0g [2 Nov 2017] ###
+### Changes between 1.1.0f and 1.1.0g [2 Nov 2017]
 
  * bn_sqrx8x_internal carry bug on x86_64
 
@@ -2167,7 +2167,7 @@ OpenSSL 1.1.0
 
    *Rich Salz*
 
-### Changes between 1.1.0e and 1.1.0f [25 May 2017] ###
+### Changes between 1.1.0e and 1.1.0f [25 May 2017]
 
  * Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
    platform rather than 'mingw'.
@@ -2180,7 +2180,7 @@ OpenSSL 1.1.0
 
    *Richard Levitte*
 
-### Changes between 1.1.0d and 1.1.0e [16 Feb 2017] ###
+### Changes between 1.1.0d and 1.1.0e [16 Feb 2017]
 
  * Encrypt-Then-Mac renegotiation crash
 
@@ -2194,7 +2194,7 @@ OpenSSL 1.1.0
 
    *Matt Caswell*
 
-### Changes between 1.1.0c and 1.1.0d [26 Jan 2017] ###
+### Changes between 1.1.0c and 1.1.0d [26 Jan 2017]
 
  * Truncated packet could crash via OOB read
 
@@ -2240,7 +2240,7 @@ OpenSSL 1.1.0
 
    *Andy Polyakov*
 
-### Changes between 1.1.0b and 1.1.0c [10 Nov 2016] ###
+### Changes between 1.1.0b and 1.1.0c [10 Nov 2016]
 
  * ChaCha20/Poly1305 heap-buffer-overflow
 
@@ -2296,7 +2296,7 @@ OpenSSL 1.1.0
 
    *Richard Levitte*
 
-### Changes between 1.1.0a and 1.1.0b [26 Sep 2016] ###
+### Changes between 1.1.0a and 1.1.0b [26 Sep 2016]
 
  * Fix Use After Free for large message sizes
 
@@ -2314,7 +2314,7 @@ OpenSSL 1.1.0
 
    *Matt Caswell*
 
-### Changes between 1.1.0 and 1.1.0a [22 Sep 2016] ###
+### Changes between 1.1.0 and 1.1.0a [22 Sep 2016]
 
  * OCSP Status Request extension unbounded memory growth
 
@@ -2393,7 +2393,7 @@ OpenSSL 1.1.0
 
    *Andy Polyakov*
 
-### Changes between 1.0.2h and 1.1.0  [25 Aug 2016] ###
+### Changes between 1.0.2h and 1.1.0  [25 Aug 2016]
 
  * Windows command-line tool supports UTF-8 opt-in option for arguments
    and console input. Setting OPENSSL_WIN32_UTF8 environment variable
@@ -3627,7 +3627,7 @@ OpenSSL 1.1.0
 OpenSSL 1.0.2
 -------------
 
-### Changes between 1.0.2s and 1.0.2t [10 Sep 2019] ###
+### Changes between 1.0.2s and 1.0.2t [10 Sep 2019]
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
    used even when parsing explicit parameters, when loading a serialized key
@@ -3673,7 +3673,7 @@ OpenSSL 1.0.2
 
    *Richard Levitte*
 
-### Changes between 1.0.2r and 1.0.2s [28 May 2019] ###
+### Changes between 1.0.2r and 1.0.2s [28 May 2019]
 
  * Change the default RSA, DSA and DH size to 2048 bit instead of 1024.
    This changes the size when using the genpkey app when no size is given. It
@@ -3692,7 +3692,7 @@ OpenSSL 1.0.2
 
    *Matthias St. Pierre*
 
-### Changes between 1.0.2q and 1.0.2r [26 Feb 2019] ###
+### Changes between 1.0.2q and 1.0.2r [26 Feb 2019]
 
  * 0-byte record padding oracle
 
@@ -3721,7 +3721,7 @@ OpenSSL 1.0.2
 
    *Richard Levitte*
 
-### Changes between 1.0.2p and 1.0.2q [20 Nov 2018] ###
+### Changes between 1.0.2p and 1.0.2q [20 Nov 2018]
 
  * Microarchitecture timing vulnerability in ECC scalar multiplication
 
@@ -3754,7 +3754,7 @@ OpenSSL 1.0.2
 
    *Nicola Tuveri*
 
-### Changes between 1.0.2o and 1.0.2p [14 Aug 2018] ###
+### Changes between 1.0.2o and 1.0.2p [14 Aug 2018]
 
  * Client DoS due to large DH parameter
 
@@ -3821,7 +3821,7 @@ OpenSSL 1.0.2
 
    *Emilia Käsper*
 
-### Changes between 1.0.2n and 1.0.2o [27 Mar 2018] ###
+### Changes between 1.0.2n and 1.0.2o [27 Mar 2018]
 
  * Constructed ASN.1 types with a recursive definition could exceed the stack
 
@@ -3837,7 +3837,7 @@ OpenSSL 1.0.2
 
    *Matt Caswell*
 
-### Changes between 1.0.2m and 1.0.2n [7 Dec 2017] ###
+### Changes between 1.0.2m and 1.0.2n [7 Dec 2017]
 
  * Read/write after SSL object in error state
 
@@ -3884,7 +3884,7 @@ OpenSSL 1.0.2
 
    *Andy Polyakov*
 
-### Changes between 1.0.2l and 1.0.2m [2 Nov 2017] ###
+### Changes between 1.0.2l and 1.0.2m [2 Nov 2017]
 
  * bn_sqrx8x_internal carry bug on x86_64
 
@@ -3919,14 +3919,14 @@ OpenSSL 1.0.2
 
    *Rich Salz*
 
-### Changes between 1.0.2k and 1.0.2l [25 May 2017] ###
+### Changes between 1.0.2k and 1.0.2l [25 May 2017]
 
  * Have 'config' recognise 64-bit mingw and choose 'mingw64' as the target
    platform rather than 'mingw'.
 
    *Richard Levitte*
 
-### Changes between 1.0.2j and 1.0.2k [26 Jan 2017] ###
+### Changes between 1.0.2j and 1.0.2k [26 Jan 2017]
 
  * Truncated packet could crash via OOB read
 
@@ -3991,7 +3991,7 @@ OpenSSL 1.0.2
 
    *Matt Caswell*
 
-### Changes between 1.0.2i and 1.0.2j [26 Sep 2016] ###
+### Changes between 1.0.2i and 1.0.2j [26 Sep 2016]
 
  * Missing CRL sanity check
 
@@ -4004,7 +4004,7 @@ OpenSSL 1.0.2
 
    *Matt Caswell*
 
-### Changes between 1.0.2h and 1.0.2i [22 Sep 2016] ###
+### Changes between 1.0.2h and 1.0.2i [22 Sep 2016]
 
  * OCSP Status Request extension unbounded memory growth
 
@@ -4175,7 +4175,7 @@ OpenSSL 1.0.2
 
    *Stephen Henson*
 
-### Changes between 1.0.2g and 1.0.2h [3 May 2016] ###
+### Changes between 1.0.2g and 1.0.2h [3 May 2016]
 
  * Prevent padding oracle in AES-NI CBC MAC check
 
@@ -4280,7 +4280,7 @@ OpenSSL 1.0.2
 
    *Kurt Roeckx*
 
-### Changes between 1.0.2f and 1.0.2g [1 Mar 2016] ###
+### Changes between 1.0.2f and 1.0.2g [1 Mar 2016]
 
 * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
   Builds that are not configured with "enable-weak-ssl-ciphers" will not
@@ -4420,7 +4420,7 @@ OpenSSL 1.0.2
 
    *Emilia Käsper*
 
-### Changes between 1.0.2e and 1.0.2f [28 Jan 2016] ###
+### Changes between 1.0.2e and 1.0.2f [28 Jan 2016]
 
  * DH small subgroups
 
@@ -4467,7 +4467,7 @@ OpenSSL 1.0.2
 
    *Viktor Dukhovni*
 
-### Changes between 1.0.2d and 1.0.2e [3 Dec 2015] ###
+### Changes between 1.0.2d and 1.0.2e [3 Dec 2015]
 
  * BN_mod_exp may produce incorrect results on x86_64
 
@@ -4530,7 +4530,7 @@ OpenSSL 1.0.2
 
    *Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>*
 
-### Changes between 1.0.2c and 1.0.2d [9 Jul 2015] ###
+### Changes between 1.0.2c and 1.0.2d [9 Jul 2015]
 
  * Alternate chains certificate forgery
 
@@ -4546,7 +4546,7 @@ OpenSSL 1.0.2
 
    *Matt Caswell*
 
-### Changes between 1.0.2b and 1.0.2c [12 Jun 2015] ###
+### Changes between 1.0.2b and 1.0.2c [12 Jun 2015]
 
  * Fix HMAC ABI incompatibility. The previous version introduced an ABI
    incompatibility in the handling of HMAC. The previous ABI has now been
@@ -4554,7 +4554,7 @@ OpenSSL 1.0.2
 
    *Matt Caswell*
 
-### Changes between 1.0.2a and 1.0.2b [11 Jun 2015] ###
+### Changes between 1.0.2a and 1.0.2b [11 Jun 2015]
 
  * Malformed ECParameters causes infinite loop
 
@@ -4633,7 +4633,7 @@ OpenSSL 1.0.2
 
    *Emilia Kasper*
 
-### Changes between 1.0.2 and 1.0.2a [19 Mar 2015] ###
+### Changes between 1.0.2 and 1.0.2a [19 Mar 2015]
 
  * ClientHello sigalgs DoS fix
 
@@ -4809,7 +4809,7 @@ OpenSSL 1.0.2
 
    *Kurt Roeckx*
 
-### Changes between 1.0.1l and 1.0.2 [22 Jan 2015] ###
+### Changes between 1.0.1l and 1.0.2 [22 Jan 2015]
 
  * Facilitate "universal" ARM builds targeting range of ARM ISAs, e.g.
    ARMv5 through ARMv8, as opposite to "locking" it to single one.
@@ -5208,7 +5208,7 @@ OpenSSL 1.0.2
 OpenSSL 1.0.1
 -------------
 
-### Changes between 1.0.1t and 1.0.1u [22 Sep 2016] ###
+### Changes between 1.0.1t and 1.0.1u [22 Sep 2016]
 
  * OCSP Status Request extension unbounded memory growth
 
@@ -5379,7 +5379,7 @@ OpenSSL 1.0.1
 
    *Stephen Henson*
 
-### Changes between 1.0.1s and 1.0.1t [3 May 2016] ###
+### Changes between 1.0.1s and 1.0.1t [3 May 2016]
 
  * Prevent padding oracle in AES-NI CBC MAC check
 
@@ -5484,7 +5484,7 @@ OpenSSL 1.0.1
 
    *Kurt Roeckx*
 
-### Changes between 1.0.1r and 1.0.1s [1 Mar 2016] ###
+### Changes between 1.0.1r and 1.0.1s [1 Mar 2016]
 
 * Disable weak ciphers in SSLv3 and up in default builds of OpenSSL.
   Builds that are not configured with "enable-weak-ssl-ciphers" will not
@@ -5624,7 +5624,7 @@ OpenSSL 1.0.1
 
    *Emilia Käsper*
 
-### Changes between 1.0.1q and 1.0.1r [28 Jan 2016] ###
+### Changes between 1.0.1q and 1.0.1r [28 Jan 2016]
 
  * Protection for DH small subgroup attacks
 
@@ -5651,7 +5651,7 @@ OpenSSL 1.0.1
 
    *Kurt Roeckx*
 
-### Changes between 1.0.1p and 1.0.1q [3 Dec 2015] ###
+### Changes between 1.0.1p and 1.0.1q [3 Dec 2015]
 
  * Certificate verify crash with missing PSS parameter
 
@@ -5694,7 +5694,7 @@ OpenSSL 1.0.1
 
    *Rich Salz and Ismo Puustinen <ismo.puustinen@intel.com>*
 
-### Changes between 1.0.1o and 1.0.1p [9 Jul 2015] ###
+### Changes between 1.0.1o and 1.0.1p [9 Jul 2015]
 
  * Alternate chains certificate forgery
 
@@ -5721,13 +5721,13 @@ OpenSSL 1.0.1
 
    *Stephen Henson*
 
-### Changes between 1.0.1n and 1.0.1o [12 Jun 2015] ###
+### Changes between 1.0.1n and 1.0.1o [12 Jun 2015]
 
  * Fix HMAC ABI incompatibility. The previous version introduced an ABI
    incompatibility in the handling of HMAC. The previous ABI has now been
    restored.
 
-### Changes between 1.0.1m and 1.0.1n [11 Jun 2015] ###
+### Changes between 1.0.1m and 1.0.1n [11 Jun 2015]
 
  * Malformed ECParameters causes infinite loop
 
@@ -5808,7 +5808,7 @@ OpenSSL 1.0.1
 
    *Kurt Roeckx and Emilia Kasper*
 
-### Changes between 1.0.1l and 1.0.1m [19 Mar 2015] ###
+### Changes between 1.0.1l and 1.0.1m [19 Mar 2015]
 
  * Segmentation fault in ASN1_TYPE_cmp fix
 
@@ -5892,13 +5892,13 @@ OpenSSL 1.0.1
 
    *Kurt Roeckx*
 
-### Changes between 1.0.1k and 1.0.1l [15 Jan 2015] ###
+### Changes between 1.0.1k and 1.0.1l [15 Jan 2015]
 
  * Build fixes for the Windows and OpenVMS platforms
 
    *Matt Caswell and Richard Levitte*
 
-### Changes between 1.0.1j and 1.0.1k [8 Jan 2015] ###
+### Changes between 1.0.1j and 1.0.1k [8 Jan 2015]
 
  * Fix DTLS segmentation fault in dtls1_get_record. A carefully crafted DTLS
    message can cause a segmentation fault in OpenSSL due to a NULL pointer
@@ -6040,7 +6040,7 @@ OpenSSL 1.0.1
 
    *Emilia Käsper*
 
-### Changes between 1.0.1i and 1.0.1j [15 Oct 2014] ###
+### Changes between 1.0.1i and 1.0.1j [15 Oct 2014]
 
  * SRTP Memory Leak.
 
@@ -6096,7 +6096,7 @@ OpenSSL 1.0.1
 
    *Steve Henson*
 
-### Changes between 1.0.1h and 1.0.1i [6 Aug 2014] ###
+### Changes between 1.0.1h and 1.0.1i [6 Aug 2014]
 
  * Fix SRP buffer overrun vulnerability. Invalid parameters passed to the
    SRP code can be overrun an internal buffer. Add sanity check that
@@ -6192,7 +6192,7 @@ OpenSSL 1.0.1
 
    *Bodo Moeller*
 
-### Changes between 1.0.1g and 1.0.1h [5 Jun 2014] ###
+### Changes between 1.0.1g and 1.0.1h [5 Jun 2014]
 
  * Fix for SSL/TLS MITM flaw. An attacker using a carefully crafted
    handshake can force the use of weak keying material in OpenSSL
@@ -6243,7 +6243,7 @@ OpenSSL 1.0.1
 
    *mancha <mancha1@zoho.com>*
 
-### Changes between 1.0.1f and 1.0.1g [7 Apr 2014] ###
+### Changes between 1.0.1f and 1.0.1g [7 Apr 2014]
 
  * A missing bounds check in the handling of the TLS heartbeat extension
    can be used to reveal up to 64k of memory to a connected client or
@@ -6275,7 +6275,7 @@ OpenSSL 1.0.1
 
    *Adam Langley, Steve Henson*
 
-### Changes between 1.0.1e and 1.0.1f [6 Jan 2014] ###
+### Changes between 1.0.1e and 1.0.1f [6 Jan 2014]
 
  * Fix for TLS record tampering bug. A carefully crafted invalid
    handshake could crash OpenSSL with a NULL pointer exception.
@@ -6297,14 +6297,14 @@ OpenSSL 1.0.1
 
    *Rob Stradling, Adam Langley*
 
-### Changes between 1.0.1d and 1.0.1e [11 Feb 2013] ###
+### Changes between 1.0.1d and 1.0.1e [11 Feb 2013]
 
  * Correct fix for CVE-2013-0169. The original didn't work on AES-NI
    supporting platforms or when small records were transferred.
 
    *Andy Polyakov, Steve Henson*
 
-### Changes between 1.0.1c and 1.0.1d [5 Feb 2013] ###
+### Changes between 1.0.1c and 1.0.1d [5 Feb 2013]
 
  * Make the decoding of SSLv3, TLS and DTLS CBC records constant time.
 
@@ -6354,7 +6354,7 @@ OpenSSL 1.0.1
 
    *Steve Henson*
 
-### Changes between 1.0.1b and 1.0.1c [10 May 2012] ###
+### Changes between 1.0.1b and 1.0.1c [10 May 2012]
 
  * Sanity check record length before skipping explicit IV in TLS
    1.2, 1.1 and DTLS to fix DoS attack.
@@ -6375,7 +6375,7 @@ OpenSSL 1.0.1
 
    *Steve Henson*
 
-### Changes between 1.0.1a and 1.0.1b [26 Apr 2012] ###
+### Changes between 1.0.1a and 1.0.1b [26 Apr 2012]
 
  * OpenSSL 1.0.0 sets SSL_OP_ALL to 0x80000FFFL and OpenSSL 1.0.1 and
    1.0.1a set SSL_OP_NO_TLSv1_1 to 0x00000400L which would unfortunately
@@ -6400,7 +6400,7 @@ OpenSSL 1.0.1
 
    *Andy Polyakov*
 
-### Changes between 1.0.1 and 1.0.1a [19 Apr 2012] ###
+### Changes between 1.0.1 and 1.0.1a [19 Apr 2012]
 
  * Check for potentially exploitable overflows in asn1_d2i_read_bio
    BUF_mem_grow and BUF_mem_grow_clean. Refuse attempts to shrink buffer
@@ -6435,7 +6435,7 @@ OpenSSL 1.0.1
 
    *Andy Polyakov*
 
-### Changes between 1.0.0h and 1.0.1  [14 Mar 2012] ###
+### Changes between 1.0.0h and 1.0.1  [14 Mar 2012]
 
  * Add compatibility with old MDC2 signatures which use an ASN1 OCTET
    STRING form instead of a DigestInfo.
@@ -6777,7 +6777,7 @@ OpenSSL 1.0.1
 OpenSSL 1.0.0
 -------------
 
-### Changes between 1.0.0s and 1.0.0t [3 Dec 2015] ###
+### Changes between 1.0.0s and 1.0.0t [3 Dec 2015]
 
  * X509_ATTRIBUTE memory leak
 
@@ -6802,7 +6802,7 @@ OpenSSL 1.0.0
 
    *Stephen Henson*
 
-### Changes between 1.0.0r and 1.0.0s [11 Jun 2015] ###
+### Changes between 1.0.0r and 1.0.0s [11 Jun 2015]
 
  * Malformed ECParameters causes infinite loop
 
@@ -6875,7 +6875,7 @@ OpenSSL 1.0.0
 
    *Matt Caswell*
 
-### Changes between 1.0.0q and 1.0.0r [19 Mar 2015] ###
+### Changes between 1.0.0q and 1.0.0r [19 Mar 2015]
 
  * Segmentation fault in ASN1_TYPE_cmp fix
 
@@ -6959,13 +6959,13 @@ OpenSSL 1.0.0
 
    *Kurt Roeckx*
 
-### Changes between 1.0.0p and 1.0.0q [15 Jan 2015] ###
+### Changes between 1.0.0p and 1.0.0q [15 Jan 2015]
 
  * Build fixes for the Windows and OpenVMS platforms
 
    *Matt Caswell and Richard Levitte*
 
-### Changes between 1.0.0o and 1.0.0p [8 Jan 2015] ###
+### Changes between 1.0.0o and 1.0.0p [8 Jan 2015]
 
  * Fix DTLS segmentation fault in dtls1_get_record. A carefully crafted DTLS
    message can cause a segmentation fault in OpenSSL due to a NULL pointer
@@ -7074,7 +7074,7 @@ OpenSSL 1.0.0
 
    *Steve Henson*
 
-### Changes between 1.0.0n and 1.0.0o [15 Oct 2014] ###
+### Changes between 1.0.0n and 1.0.0o [15 Oct 2014]
 
  * Session Ticket Memory Leak.
 
@@ -7115,7 +7115,7 @@ OpenSSL 1.0.0
 
    *Steve Henson*
 
-### Changes between 1.0.0m and 1.0.0n [6 Aug 2014] ###
+### Changes between 1.0.0m and 1.0.0n [6 Aug 2014]
 
  * OpenSSL DTLS clients enabling anonymous (EC)DH ciphersuites are subject
    to a denial of service attack. A malicious server can crash the client
@@ -7178,7 +7178,7 @@ OpenSSL 1.0.0
 
    *Bodo Moeller*
 
-### Changes between 1.0.0l and 1.0.0m [5 Jun 2014] ###
+### Changes between 1.0.0l and 1.0.0m [5 Jun 2014]
 
  * Fix for SSL/TLS MITM flaw. An attacker using a carefully crafted
    handshake can force the use of weak keying material in OpenSSL
@@ -7239,7 +7239,7 @@ OpenSSL 1.0.0
 
    *Yuval Yarom and Naomi Benger*
 
-### Changes between 1.0.0k and 1.0.0l [6 Jan 2014] ###
+### Changes between 1.0.0k and 1.0.0l [6 Jan 2014]
 
  * Keep original DTLS digest and encryption contexts in retransmission
    structures so we can use the previous session parameters if they need
@@ -7256,7 +7256,7 @@ OpenSSL 1.0.0
 
    *Rob Stradling, Adam Langley*
 
-### Changes between 1.0.0j and 1.0.0k [5 Feb 2013] ###
+### Changes between 1.0.0j and 1.0.0k [5 Feb 2013]
 
  * Make the decoding of SSLv3, TLS and DTLS CBC records constant time.
 
@@ -7289,7 +7289,7 @@ OpenSSL 1.0.0
 
    *Steve Henson*
 
-### Changes between 1.0.0i and 1.0.0j [10 May 2012] ###
+### Changes between 1.0.0i and 1.0.0j [10 May 2012]
 
 [NB: OpenSSL 1.0.0i and later 1.0.0 patch levels were released after
 OpenSSL 1.0.1.]
@@ -7308,7 +7308,7 @@ OpenSSL 1.0.1.]
 
    *Steve Henson*
 
-### Changes between 1.0.0h and 1.0.0i [19 Apr 2012] ###
+### Changes between 1.0.0h and 1.0.0i [19 Apr 2012]
 
  * Check for potentially exploitable overflows in asn1_d2i_read_bio
    BUF_mem_grow and BUF_mem_grow_clean. Refuse attempts to shrink buffer
@@ -7320,7 +7320,7 @@ OpenSSL 1.0.1.]
 
    *Adam Langley (Google), Tavis Ormandy, Google Security Team*
 
-### Changes between 1.0.0g and 1.0.0h [12 Mar 2012] ###
+### Changes between 1.0.0g and 1.0.0h [12 Mar 2012]
 
  * Fix MMA (Bleichenbacher's attack on PKCS #1 v1.5 RSA padding) weakness
    in CMS and PKCS7 code. When RSA decryption fails use a random key for
@@ -7340,7 +7340,7 @@ OpenSSL 1.0.1.]
 
    *Steve Henson*
 
-### Changes between 1.0.0f and 1.0.0g [18 Jan 2012] ###
+### Changes between 1.0.0f and 1.0.0g [18 Jan 2012]
 
  * Fix for DTLS DoS issue introduced by fix for CVE-2011-4109.
    Thanks to Antonio Martin, Enterprise Secure Access Research and
@@ -7349,7 +7349,7 @@ OpenSSL 1.0.1.]
 
    *Antonio Martin*
 
-### Changes between 1.0.0e and 1.0.0f [4 Jan 2012] ###
+### Changes between 1.0.0e and 1.0.0f [4 Jan 2012]
 
  * Nadhem Alfardan and Kenny Paterson have discovered an extension
    of the Vaudenay padding oracle attack on CBC mode encryption
@@ -7419,7 +7419,7 @@ OpenSSL 1.0.1.]
 
    *Bob Buckholz (Google)*
 
-### Changes between 1.0.0d and 1.0.0e [6 Sep 2011] ###
+### Changes between 1.0.0d and 1.0.0e [6 Sep 2011]
 
  * Fix bug where CRLs with nextUpdate in the past are sometimes accepted
    by initialising X509_STORE_CTX properly. [CVE-2011-3207][]
@@ -7447,7 +7447,7 @@ OpenSSL 1.0.1.]
 
    *Billy Bob Brumley and Nicola Tuveri*
 
-### Changes between 1.0.0c and 1.0.0d [8 Feb 2011] ###
+### Changes between 1.0.0c and 1.0.0d [8 Feb 2011]
 
  * Fix parsing of OCSP stapling ClientHello extension. CVE-2011-0014
 
@@ -7459,7 +7459,7 @@ OpenSSL 1.0.1.]
 
    *Steve Henson*
 
-### Changes between 1.0.0b and 1.0.0c  [2 Dec 2010] ###
+### Changes between 1.0.0b and 1.0.0c  [2 Dec 2010]
 
  * Disable code workaround for ancient and obsolete Netscape browsers
    and servers: an attacker can use it in a ciphersuite downgrade attack.
@@ -7473,7 +7473,7 @@ OpenSSL 1.0.1.]
 
    *Ben Laurie*
 
-### Changes between 1.0.0a and 1.0.0b  [16 Nov 2010] ###
+### Changes between 1.0.0a and 1.0.0b  [16 Nov 2010]
 
  * Fix extension code to avoid race conditions which can result in a buffer
    overrun vulnerability: resumed sessions must not be modified as they can
@@ -7486,14 +7486,14 @@ OpenSSL 1.0.1.]
 
    *Steve Henson*
 
-### Changes between 1.0.0 and 1.0.0a  [01 Jun 2010] ###
+### Changes between 1.0.0 and 1.0.0a  [01 Jun 2010]
 
  * Check return value of int_rsa_verify in pkey_rsa_verifyrecover
    [CVE-2010-1633][]
 
    *Steve Henson, Peter-Michael Hager <hager@dortmund.net>*
 
-### Changes between 0.9.8n and 1.0.0  [29 Mar 2010] ###
+### Changes between 0.9.8n and 1.0.0  [29 Mar 2010]
 
  * Add "missing" function EVP_CIPHER_CTX_copy(). This copies a cipher
    context. The operation can be customised via the ctrl mechanism in
@@ -8461,7 +8461,7 @@ OpenSSL 1.0.1.]
 OpenSSL 0.9.x
 -------------
 
-### Changes between 0.9.8m and 0.9.8n [24 Mar 2010] ###
+### Changes between 0.9.8m and 0.9.8n [24 Mar 2010]
 
  * When rejecting SSL/TLS records due to an incorrect version number, never
    update s->server with a new major version number.  As of
@@ -8478,7 +8478,7 @@ OpenSSL 0.9.x
 
    *Tomas Hoger <thoger@redhat.com>*
 
-### Changes between 0.9.8l and 0.9.8m [25 Feb 2010] ###
+### Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
 
  * Always check bn_wexpand() return values for failure.  [CVE-2009-3245][]
 
@@ -8666,7 +8666,7 @@ OpenSSL 0.9.x
 
    *Ilya O. <vrghost@gmail.com>*
 
-### Changes between 0.9.8k and 0.9.8l  [5 Nov 2009] ###
+### Changes between 0.9.8k and 0.9.8l  [5 Nov 2009]
 
  * Disable renegotiation completely - this fixes a severe security
    problem [CVE-2009-3555][] at the cost of breaking all
@@ -8677,7 +8677,7 @@ OpenSSL 0.9.x
 
    *Ben Laurie*
 
-### Changes between 0.9.8j and 0.9.8k  [25 Mar 2009] ###
+### Changes between 0.9.8j and 0.9.8k  [25 Mar 2009]
 
  * Don't set val to NULL when freeing up structures, it is freed up by
    underlying code. If sizeof(void *) > sizeof(long) this can result in
@@ -8731,7 +8731,7 @@ OpenSSL 0.9.x
 
    *Ben Laurie*
 
-### Changes between 0.9.8i and 0.9.8j  [07 Jan 2009] ###
+### Changes between 0.9.8i and 0.9.8j  [07 Jan 2009]
 
  * Properly check EVP_VerifyFinal() and similar return values
    [CVE-2008-5077][].
@@ -8778,7 +8778,7 @@ OpenSSL 0.9.x
 
    *Bodo Moeller*
 
-### Changes between 0.9.8h and 0.9.8i  [15 Sep 2008] ###
+### Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
 
  * Fix NULL pointer dereference if a DTLS server received
    ChangeCipherSpec as first record [CVE-2009-1386][].
@@ -8852,7 +8852,7 @@ OpenSSL 0.9.x
 
    *Steve Henson*
 
-### Changes between 0.9.8g and 0.9.8h  [28 May 2008] ###
+### Changes between 0.9.8g and 0.9.8h  [28 May 2008]
 
  * Fix flaw if 'Server Key exchange message' is omitted from a TLS
    handshake which could lead to a client crash as found using the
@@ -9004,7 +9004,7 @@ OpenSSL 0.9.x
 
    *Steve Henson*
 
-### Changes between 0.9.8f and 0.9.8g  [19 Oct 2007] ###
+### Changes between 0.9.8f and 0.9.8g  [19 Oct 2007]
 
  * Fix various bugs:
    + Binary incompatibility of ssl_ctx_st structure
@@ -9014,7 +9014,7 @@ OpenSSL 0.9.x
 
    *Andy Polyakov, Steve Henson*
 
-### Changes between 0.9.8e and 0.9.8f  [11 Oct 2007] ###
+### Changes between 0.9.8e and 0.9.8f  [11 Oct 2007]
 
  * DTLS Handshake overhaul. There were longstanding issues with
    OpenSSL DTLS implementation, which were making it impossible for
@@ -9186,7 +9186,7 @@ OpenSSL 0.9.x
    not complete and could lead to a possible single byte overflow
    [CVE-2007-5135][] [Ben Laurie]
 
-### Changes between 0.9.8d and 0.9.8e  [23 Feb 2007] ###
+### Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
  * Since AES128 and AES256 (and similarly Camellia128 and
    Camellia256) share a single mask bit in the logic of
@@ -9228,7 +9228,7 @@ OpenSSL 0.9.x
 
    *Goetz Babin-Ebell*
 
-### Changes between 0.9.8c and 0.9.8d  [28 Sep 2006] ###
+### Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
  * Introduce limits to prevent malicious keys being able to
    cause a denial of service.  [CVE-2006-2940][]
@@ -9274,7 +9274,7 @@ OpenSSL 0.9.x
 
    *Bodo Moeller*
 
-### Changes between 0.9.8b and 0.9.8c  [05 Sep 2006] ###
+### Changes between 0.9.8b and 0.9.8c  [05 Sep 2006]
 
  * Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
    [CVE-2006-4339][]  [Ben Laurie and Google Security Team]
@@ -9340,7 +9340,7 @@ OpenSSL 0.9.x
 
    *Steve Henson*
 
-### Changes between 0.9.8a and 0.9.8b  [04 May 2006] ###
+### Changes between 0.9.8a and 0.9.8b  [04 May 2006]
 
  * When applying a cipher rule check to see if string match is an explicit
    cipher suite and only match that one cipher suite if it is.
@@ -9391,7 +9391,7 @@ OpenSSL 0.9.x
 
    *Richard Levitte*
 
-### Changes between 0.9.8 and 0.9.8a  [11 Oct 2005] ###
+### Changes between 0.9.8 and 0.9.8a  [11 Oct 2005]
 
  * Remove the functionality of SSL_OP_MSIE_SSLV2_RSA_PADDING
    (part of SSL_OP_ALL).  This option used to disable the
@@ -9435,7 +9435,7 @@ OpenSSL 0.9.x
 
    *Steve Henson*
 
-### Changes between 0.9.7h and 0.9.8  [05 Jul 2005] ###
+### Changes between 0.9.7h and 0.9.8  [05 Jul 2005]
 
 [NB: OpenSSL 0.9.7i and later 0.9.7 patch levels were released after
 OpenSSL 0.9.8.]
@@ -10359,7 +10359,7 @@ OpenSSL 0.9.8.]
 
    *Richard Levitte*
 
-### Changes between 0.9.7l and 0.9.7m  [23 Feb 2007] ###
+### Changes between 0.9.7l and 0.9.7m  [23 Feb 2007]
 
  * Cleanse PEM buffers before freeing them since they may contain
    sensitive data.
@@ -10409,7 +10409,7 @@ OpenSSL 0.9.8.]
 
    *Steve Henson*
 
-### Changes between 0.9.7k and 0.9.7l  [28 Sep 2006] ###
+### Changes between 0.9.7k and 0.9.7l  [28 Sep 2006]
 
  * Introduce limits to prevent malicious keys being able to
    cause a denial of service.  [CVE-2006-2940][]
@@ -10437,7 +10437,7 @@ OpenSSL 0.9.8.]
 
    *Bodo Moeller*
 
-### Changes between 0.9.7j and 0.9.7k  [05 Sep 2006] ###
+### Changes between 0.9.7j and 0.9.7k  [05 Sep 2006]
 
  * Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
    [CVE-2006-4339][]  [Ben Laurie and Google Security Team]
@@ -10469,7 +10469,7 @@ OpenSSL 0.9.8.]
 
    *Bodo Moeller*
 
-### Changes between 0.9.7i and 0.9.7j  [04 May 2006] ###
+### Changes between 0.9.7i and 0.9.7j  [04 May 2006]
 
  * Adapt fipsld and the build system to link against the validated FIPS
    module in FIPS mode.
@@ -10487,7 +10487,7 @@ OpenSSL 0.9.8.]
 
    *Steve Henson*
 
-### Changes between 0.9.7h and 0.9.7i  [14 Oct 2005] ###
+### Changes between 0.9.7h and 0.9.7i  [14 Oct 2005]
 
  * Wrapped the definition of EVP_MAX_MD_SIZE in a #ifdef OPENSSL_FIPS.
    The value now differs depending on if you build for FIPS or not.
@@ -10497,7 +10497,7 @@ OpenSSL 0.9.8.]
 
    *Andy Polyakov*
 
-### Changes between 0.9.7g and 0.9.7h  [11 Oct 2005] ###
+### Changes between 0.9.7g and 0.9.7h  [11 Oct 2005]
 
  * Remove the functionality of SSL_OP_MSIE_SSLV2_RSA_PADDING
    (part of SSL_OP_ALL).  This option used to disable the
@@ -10563,7 +10563,7 @@ OpenSSL 0.9.8.]
 
    *Steve Henson*
 
-### Changes between 0.9.7f and 0.9.7g  [11 Apr 2005] ###
+### Changes between 0.9.7f and 0.9.7g  [11 Apr 2005]
 
 [NB: OpenSSL 0.9.7h and later 0.9.7 patch levels were released after
 OpenSSL 0.9.8.]
@@ -10588,7 +10588,7 @@ OpenSSL 0.9.8.]
 
    *Richard Levitte*
 
-### Changes between 0.9.7e and 0.9.7f  [22 Mar 2005] ###
+### Changes between 0.9.7e and 0.9.7f  [22 Mar 2005]
 
  * Use (SSL_RANDOM_VALUE - 4) bytes of pseudo random data when generating
    server and client random values. Previously
@@ -10659,7 +10659,7 @@ OpenSSL 0.9.8.]
 
    *Richard Levitte*
 
-### Changes between 0.9.7d and 0.9.7e  [25 Oct 2004] ###
+### Changes between 0.9.7d and 0.9.7e  [25 Oct 2004]
 
  * Avoid a race condition when CRLs are checked in a multi threaded
    environment. This would happen due to the reordering of the revoked
@@ -10687,7 +10687,7 @@ OpenSSL 0.9.8.]
 
    *Steve Henson*
 
-### Changes between 0.9.7c and 0.9.7d  [17 Mar 2004] ###
+### Changes between 0.9.7c and 0.9.7d  [17 Mar 2004]
 
  * Fix null-pointer assignment in do_change_cipher_spec() revealed
    by using the Codenomicon TLS Test Tool [CVE-2004-0079][]
@@ -10740,7 +10740,7 @@ OpenSSL 0.9.8.]
 
    *Steve Henson*
 
-### Changes between 0.9.7b and 0.9.7c  [30 Sep 2003] ###
+### Changes between 0.9.7b and 0.9.7c  [30 Sep 2003]
 
  * Fix various bugs revealed by running the NISCC test suite:
 
@@ -10799,7 +10799,7 @@ OpenSSL 0.9.8.]
 
    *Steve Henson*
 
-### Changes between 0.9.7a and 0.9.7b  [10 Apr 2003] ###
+### Changes between 0.9.7a and 0.9.7b  [10 Apr 2003]
 
  * Countermeasure against the Klima-Pokorny-Rosa extension of
    Bleichbacher's attack on PKCS #1 v1.5 padding: treat
@@ -10839,7 +10839,7 @@ OpenSSL 0.9.8.]
 
    *Ulf Moeller*
 
-### Changes between 0.9.7 and 0.9.7a  [19 Feb 2003] ###
+### Changes between 0.9.7 and 0.9.7a  [19 Feb 2003]
 
  * In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
    via timing by performing a MAC computation even if incorrect
@@ -10930,7 +10930,7 @@ OpenSSL 0.9.8.]
 
    *Richard Levitte & Kris Kennaway <kris@obsecurity.org>*
 
-### Changes between 0.9.6h and 0.9.7  [31 Dec 2002] ###
+### Changes between 0.9.6h and 0.9.7  [31 Dec 2002]
 
 [NB: OpenSSL 0.9.6i and later 0.9.6 patch levels were released after
 OpenSSL 0.9.7.]
@@ -11749,9 +11749,9 @@ OpenSSL 0.9.7.]
    *Richard Levitte*
 
  * Changes to Kerberos SSL for RFC 2712 compliance:
-   1.  Implemented real KerberosWrapper, instead of just using
-       KRB5 AP_REQ message.  [Thanks to Simon Wilkinson <sxw@sxw.org.uk>]
-   2.  Implemented optional authenticator field of KerberosWrapper.
+   1. Implemented real KerberosWrapper, instead of just using
+      KRB5 AP_REQ message.  [Thanks to Simon Wilkinson <sxw@sxw.org.uk>]
+   2. Implemented optional authenticator field of KerberosWrapper.
 
    Added openssl-style ASN.1 macros for Kerberos ticket, ap_req,
    and authenticator structs; see crypto/krb5/.
@@ -13011,14 +13011,14 @@ ndif
 
    *Richard Levitte*
 
-### Changes between 0.9.6l and 0.9.6m  [17 Mar 2004] ###
+### Changes between 0.9.6l and 0.9.6m  [17 Mar 2004]
 
  * Fix null-pointer assignment in do_change_cipher_spec() revealed
    by using the Codenomicon TLS Test Tool [CVE-2004-0079][]
 
    *Joe Orton, Steve Henson*
 
-### Changes between 0.9.6k and 0.9.6l  [04 Nov 2003] ###
+### Changes between 0.9.6k and 0.9.6l  [04 Nov 2003]
 
  * Fix additional bug revealed by the NISCC test suite:
 
@@ -13027,7 +13027,7 @@ ndif
 
    *Steve Henson*
 
-### Changes between 0.9.6j and 0.9.6k  [30 Sep 2003] ###
+### Changes between 0.9.6j and 0.9.6k  [30 Sep 2003]
 
  * Fix various bugs revealed by running the NISCC test suite:
 
@@ -13057,7 +13057,7 @@ ndif
 
    *Richard Levitte*
 
-### Changes between 0.9.6i and 0.9.6j  [10 Apr 2003] ###
+### Changes between 0.9.6i and 0.9.6j  [10 Apr 2003]
 
  * Countermeasure against the Klima-Pokorny-Rosa extension of
    Bleichbacher's attack on PKCS #1 v1.5 padding: treat
@@ -13085,7 +13085,7 @@ ndif
 
    *Bodo Moeller*
 
-### Changes between 0.9.6h and 0.9.6i  [19 Feb 2003] ###
+### Changes between 0.9.6h and 0.9.6i  [19 Feb 2003]
 
  * In ssl3_get_record (ssl/s3_pkt.c), minimize information leaked
    via timing by performing a MAC computation even if incorrect
@@ -13097,7 +13097,7 @@ ndif
    Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
    Martin Vuagnoux (EPFL, Ilion)*
 
-### Changes between 0.9.6g and 0.9.6h  [5 Dec 2002] ###
+### Changes between 0.9.6g and 0.9.6h  [5 Dec 2002]
 
  * New function OPENSSL_cleanse(), which is used to cleanse a section of
    memory from its contents.  This is done with a counter that will
@@ -13177,14 +13177,14 @@ ndif
 
    *Steve Henson*
 
-### Changes between 0.9.6f and 0.9.6g  [9 Aug 2002] ###
+### Changes between 0.9.6f and 0.9.6g  [9 Aug 2002]
 
  * [In 0.9.6g-engine release:]
    Fix crypto/engine/vendor_defns/cswift.h for WIN32 (use '_stdcall').
 
    *Lynn Gazis <lgazis@rainbow.com>*
 
-### Changes between 0.9.6e and 0.9.6f  [8 Aug 2002] ###
+### Changes between 0.9.6e and 0.9.6f  [8 Aug 2002]
 
  * Fix ASN1 checks. Check for overflow by comparing with LONG_MAX
    and get fix the header length calculation.
@@ -13198,7 +13198,7 @@ ndif
 
    *Arne Ansper <arne@ats.cyber.ee>, Bodo Moeller*
 
-### Changes between 0.9.6d and 0.9.6e  [30 Jul 2002] ###
+### Changes between 0.9.6d and 0.9.6e  [30 Jul 2002]
 
  * Add various sanity checks to asn1_get_length() to reject
    the ASN1 length bytes if they exceed sizeof(long), will appear
@@ -13264,7 +13264,7 @@ ndif
 
    *Ben Laurie (CHATS)*
 
-### Changes between 0.9.6c and 0.9.6d  [9 May 2002] ###
+### Changes between 0.9.6c and 0.9.6d  [9 May 2002]
 
  * Fix crypto/asn1/a_sign.c so that 'parameters' is omitted (not
    encoded as NULL) with id-dsa-with-sha1.
@@ -13407,7 +13407,7 @@ ndif
 
    *D P Chang <dpc@qualys.com>*
 
-### Changes between 0.9.6b and 0.9.6c  [21 dec 2001] ###
+### Changes between 0.9.6b and 0.9.6c  [21 dec 2001]
 
  * Fix BN_rand_range bug pointed out by Dominikus Scherkl
    <Dominikus.Scherkl@biodata.com>.  (The previous implementation
@@ -13686,7 +13686,7 @@ ndif
 
    *Richard Levitte*
 
-### Changes between 0.9.6a and 0.9.6b  [9 Jul 2001] ###
+### Changes between 0.9.6a and 0.9.6b  [9 Jul 2001]
 
  * Change ssleay_rand_bytes (crypto/rand/md_rand.c)
    to avoid a SSLeay/OpenSSL PRNG weakness pointed out by
@@ -13814,7 +13814,7 @@ ndif
 
    *Bodo Moeller*
 
-### Changes between 0.9.6 and 0.9.6a  [5 Apr 2001] ###
+### Changes between 0.9.6 and 0.9.6a  [5 Apr 2001]
 
  * Fix a couple of memory leaks in PKCS7_dataDecode()
 
@@ -14156,7 +14156,7 @@ ndif
 
    *Lutz Jaenicke*
 
-### Changes between 0.9.5a and 0.9.6  [24 Sep 2000] ###
+### Changes between 0.9.5a and 0.9.6  [24 Sep 2000]
 
  * In ssl23_get_client_hello, generate an error message when faced
    with an initial SSL 3.0/TLS record that is too small to contain the
@@ -14919,7 +14919,7 @@ ndif
 
    *Geoff Thorpe, with contributions from Richard Levitte*
 
-### Changes between 0.9.5 and 0.9.5a  [1 Apr 2000] ###
+### Changes between 0.9.5 and 0.9.5a  [1 Apr 2000]
 
  * Make sure _lrotl and _lrotr are only used with MSVC.
 
@@ -15074,7 +15074,7 @@ ndif
 
    *Lutz Behnke <behnke@trustcenter.de>*
 
-### Changes between 0.9.4 and 0.9.5  [28 Feb 2000] ###
+### Changes between 0.9.4 and 0.9.5  [28 Feb 2000]
 
  * PKCS7_encrypt() was adding text MIME headers twice because they
    were added manually and by SMIME_crlf_copy().
@@ -16322,7 +16322,7 @@ ndif
 
    *Bodo Moeller*
 
-### Changes between 0.9.3a and 0.9.4  [09 Aug 1999] ###
+### Changes between 0.9.3a and 0.9.4  [09 Aug 1999]
 
  * Install libRSAglue.a when OpenSSL is built with RSAref.
 
@@ -16737,7 +16737,7 @@ ndif
    *Bodo Moeller*
 
 
-### Changes between 0.9.3 and 0.9.3a  [29 May 1999] ###
+### Changes between 0.9.3 and 0.9.3a  [29 May 1999]
 
  * New configuration variant "sco5-gcc".
 
@@ -16771,7 +16771,7 @@ ndif
    *Richard Levitte*
 
 
-### Changes between 0.9.2b and 0.9.3  [24 May 1999] ###
+### Changes between 0.9.2b and 0.9.3  [24 May 1999]
 
  * Bignum library bug fix. IRIX 6 passes "make test" now!
    This also avoids the problems with SC4.2 and unpatched SC5.
@@ -17263,7 +17263,7 @@ ndif
    *Soren S. Jorvang <soren@t.dk>*
 
 
-### Changes between 0.9.1c and 0.9.2b  [22 Mar 1999] ###
+### Changes between 0.9.1c and 0.9.2b  [22 Mar 1999]
 
  * Make SSL_get_peer_cert_chain() work in servers. Unfortunately, it still
    doesn't work when the session is reused. Coming soon!
@@ -18066,7 +18066,7 @@ ndif
    *Ben Laurie*
 
 
-### Changes between 0.9.1b and 0.9.1c  [23-Dec-1998] ###
+### Changes between 0.9.1b and 0.9.1c  [23-Dec-1998]
 
  * Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and
    changed SSLeay to OpenSSL in version strings.
@@ -18140,7 +18140,7 @@ ndif
    *The OpenSSL Project*
 
 
-### Changes between 0.9.0b and 0.9.1b  [not released] ###
+### Changes between 0.9.0b and 0.9.1b  [not released]
 
  * Updated a few CA certificates under certs/
 

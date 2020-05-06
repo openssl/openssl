@@ -2,6 +2,8 @@
 
 all
 
+# We want to use --- and === for H1 and H2.
+rule 'MD003', :style => :setext_with_atx
 rule 'MD046', :style => :indented
 
 exclude_rule 'MD004' # Unordered list style TODO(fix?)
@@ -11,4 +13,5 @@ exclude_rule 'MD012' # Multiple consecutive blank lines
 exclude_rule 'MD014' # Dollar signs used before commands without showing output
 exclude_rule 'MD024' # Multiple headers with the same content
 exclude_rule 'MD025' # Multiple top level headers in the same document
+exclude_rule 'MD029' # Ordered list item prefix
 exclude_rule 'MD036'  # Emphasis used instead of a header

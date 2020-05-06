@@ -1,4 +1,5 @@
-# SSL tests
+SSL tests
+=========
 
 SSL testcases are configured in the `ssl-tests` directory.
 
@@ -14,7 +15,8 @@ corresponding to the default configuration. These testcases live in
 
 For more details, see `ssl-tests/01-simple.cnf.in` for an example.
 
-## Configuring the test
+Configuring the test
+--------------------
 
 First, give your test a name. The names do not have to be unique.
 
@@ -109,7 +111,8 @@ handshake.
   If this is "empty" the list is expected to be empty otherwise it is a file
   of certificates whose subject names form the list.
 
-## Configuring the client and server
+Configuring the client and server
+---------------------------------
 
 The client and server configurations can be any valid `SSL_CTX`
 configurations. For details, see the manpages for `SSL_CONF_cmd`.
@@ -206,7 +209,8 @@ or by deleting them
         "VerifyCAFile" => undef
     }
 
-## Adding a test to the test harness
+Adding a test to the test harness
+---------------------------------
 
 1. Add a new test configuration to `test/ssl-tests`, following the examples of
    existing `*.cnf.in` files (for example, `01-simple.cnf.in`).
@@ -241,11 +245,13 @@ This will save the generated output in a `*.tmp` file in the build directory.
    the test suite has any skip conditions, update those too (see
    `test/recipes/80-test_ssl_new.t` for details).
 
-## Running the tests with the test harness
+Running the tests with the test harness
+---------------------------------------
 
     HARNESS_VERBOSE=yes make TESTS=test_ssl_new test
 
-## Running a test manually
+Running a test manually
+-----------------------
 
 These steps are only needed during development. End users should run `make test`
 or follow the instructions above to run the SSL test suite.
