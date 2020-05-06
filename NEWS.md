@@ -158,7 +158,6 @@ OpenSSL 1.1.1
   * Claim the namespaces OSSL and OPENSSL, represented as symbol prefixes
   * Rewrite of devcrypto engine
 
-
 OpenSSL 1.1.0
 -------------
 
@@ -278,7 +277,6 @@ OpenSSL 1.1.0
   * KDF algorithm support. Implement TLS PRF as a KDF.
   * Support for Certificate Transparency
   * HKDF support.
-
 
 OpenSSL 1.0.2
 -------------
@@ -438,7 +436,6 @@ OpenSSL 1.0.2
   * TLS Brainpool support.
   * ALPN support.
   * CMS support for RSA-PSS, RSA-OAEP, ECDH and X9.42 DH.
-
 
 OpenSSL 1.0.1
 -------------
@@ -621,7 +618,6 @@ OpenSSL 1.0.1
   * Preliminary FIPS capability for unvalidated 2.0 FIPS module.
   * SRP support.
 
-
 OpenSSL 1.0.0
 -------------
 
@@ -712,7 +708,6 @@ OpenSSL 1.0.0
 ### Major changes between OpenSSL 1.0.0h and OpenSSL 1.0.0i [19 Apr 2012]
 
   * Fix for ASN1 overflow bug [CVE-2012-2110][]
-
 
 ### Major changes between OpenSSL 1.0.0g and OpenSSL 1.0.0h [12 Mar 2012]
 
@@ -1305,8 +1300,6 @@ OpenSSL 0.9.x
   * Extended ASN.1 parser routines
   * Adjustments of the source tree for CVS
   * Support for various new platforms
-
-
 
 <!-- Links -->
 

@@ -41,7 +41,6 @@ Table of Contents
    - [Notes on shared libraries](#notes-on-shared-libraries)
    - [Notes on random number generation](#notes-on-random-number-generation)
 
-
 Prerequisites
 =============
 
@@ -65,7 +64,6 @@ issues and other details, please read one of these:
  * [NOTES.ANDROID](NOTES.ANDROID) - building for Android platforms (using NDK)
  * [NOTES.VALGRIND](NOTES.VALGRIND) - testing with Valgrind
  * [NOTES.PERL](NOTES.PERL) - some notes on Perl
-
 
 Notational conventions
 ======================
@@ -128,7 +126,6 @@ A simple example would be
 which is to be understood to use the command `type` on some file name
 determined by the user.
 
-
 **Optional Arguments** are enclosed in double square brackets.
 
     [[ options ]]
@@ -136,7 +133,6 @@ determined by the user.
 Note that the notation assumes spaces around {, }, [, ], {{, }} and
 [[, ]].  This is to differentiate from OpenVMS directory
 specifications, which also use [ and ], but without spaces.
-
 
 Quick Installation Guide
 ========================
@@ -263,7 +259,6 @@ for native binaries, or
 
 for 32bit binaries on 64bit Windows (WOW64).
 
-
 #### Installing to a different location
 
 To install OpenSSL to a different location (for example into your home
@@ -278,10 +273,9 @@ directory for testing purposes) run config like this:
     $ @config --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 
 Note: if you do add options to the configuration command, please make sure
-you've read more than just this Quick Start, such as relevant NOTES.* files,
+you've read more than just this Quick Start, such as relevant `NOTES.*` files,
 the options outline below, as configuration options may change the outcome
 in otherwise unexpected ways.
-
 
 Configuration Options
 =====================
@@ -309,7 +303,6 @@ If you just intend to remove all deprecated APIs up to the current version
 entirely, just specify [no-deprecated](#no-deprecated).
 If `--api` isn't given, it defaults to the current (minor) OpenSSL version.
 
-
 Cross Compile Prefix
 --------------------
 
@@ -332,7 +325,6 @@ mention that you have to invoke `./Configure`, not `./config`, and pass your tar
 name explicitly.  Also, note that `--openssldir` refers to target's file system,
 not one you are building on.
 
-
 Build Type
 ----------
 
@@ -343,7 +335,6 @@ Build OpenSSL with debugging symbols and zero optimization level.
     --release
 
 Build OpenSSL without debugging symbols.  This is the default.
-
 
 Directories
 -----------
@@ -382,7 +373,6 @@ The top of the installation directory tree.  Defaults are:
     Windows:        C:\Program Files\OpenSSL
     OpenVMS:        SYS$COMMON:[OPENSSL-'version']
 
-
 Compiler Warnings
 -----------------
 
@@ -419,7 +409,6 @@ then this flag is optional and defaults to "ZLIB1" if not provided.
 **On VMS:** this is the filename of the zlib library (with or without a path).
 This flag is optional and if not provided then "GNV$LIBZSHR", "GNV$LIBZSHR32"
 or "GNV$LIBZSHR64" is used by default depending on the pointer size chosen.
-
 
 Seeding the Random Generator
 ----------------------------
@@ -473,7 +462,6 @@ at the end of this document.
 
 [rng]: #notes-on-random-number-generation
 
-
 Enable and Disable Features
 ---------------------------
 
@@ -486,7 +474,6 @@ Whether a feature is enabled or disabled by default, depends on the feature.
 In the following list, always the non-default variant is documented: if
 feature xxxx is disabled by default then enable-xxxx is documented and
 if feature xxxx is enabled by default then no-xxxx is documented.
-
 
 ### no-afalgeng
 
@@ -699,7 +686,6 @@ Don't build the legacy provider.
 
 Disabling this also disables the legacy algorithms: MD2 (already disabled by default).
 
-
 ### no-makedepend
 
 Don't generate dependencies.
@@ -723,7 +709,6 @@ Don't build support for the Next Protocol Negotiation (NPN) TLS extension.
 ### no-ocsp
 
 Don't build support for Online Certificate Status Protocol (OCSP).
-
 
 ### no-padlockeng
 
@@ -778,7 +763,6 @@ Build support for Stream Control Transmission Protocol (SCTP).
 ### no-shared
 
 Do not create shared libraries, only static ones.
-
 
 See [Notes on shared libraries](#notes-on-shared-libraries) below.
 
@@ -1150,7 +1134,6 @@ run:
 
     $ ./Configure linux-elf [[ options ]]
 
-
 ### Creating your own Configuration
 
 If your system isn't listed, you will have to create a configuration
@@ -1204,7 +1187,6 @@ or
 Paths can be relative just as well as absolute.  Configure will do its best
 to translate them to relative paths whenever possible.
 
-
 Build OpenSSL
 -------------
 
@@ -1237,7 +1219,6 @@ your privileges temporarily if your platform allows it).
 
 If some tests fail, take a look at the [Test Failures](#test-failures)
 subsection of the [Troubleshooting](#troubleshooting) section.
-
 
 Install OpenSSL
 ---------------
@@ -1298,7 +1279,6 @@ its default):
     [.SYSTEST]     Contains the installation verification procedure.
     [.HTML]        Contains the HTML rendition of the manual pages.
 
-
 ### Additional Directories
 
 Additionally, install will add the following directories under
@@ -1346,7 +1326,6 @@ access a structure's field directly.
 Some APIs have changed as well.  However, older APIs have been preserved when
 possible.
 
-
 Post-installation Notes
 -----------------------
 
@@ -1358,10 +1337,8 @@ This involves using the following command:
 
 See the openssl-fipsinstall(1) manual for details and examples.
 
-
 Advanced Build Options
 ======================
-
 
 Environment Variables
 ---------------------
@@ -1436,7 +1413,6 @@ platforms.
 
     WINDRES
                    See RC.
-
 
 Makefile Targets
 ----------------
@@ -1637,7 +1613,6 @@ Note: To make the output readable, pleace add a 'code fence' (three backquotes
 
      ```
 
-
 Build Failures
 --------------
 
@@ -1667,7 +1642,6 @@ list or the [GitHub Issues][] for existing solutions. If you think you
 encountered an OpenSSL bug, please [raise an issue][] to file a bug report.
 Please take the time to review the existing issues first; maybe the bug was
 already reported or has already been fixed.
-
 
 Test Failures
 -------------
@@ -1717,7 +1691,6 @@ To report a bug please open an issue on GitHub, at
 
 For more details on how the make variables TESTS can be used,
 see section [Running Selected Tests](#running-selected-tests) below.
-
 
 Notes
 =====
@@ -1802,7 +1775,6 @@ and reseeding is disabled (--with-rand-seed=none) and it may be necessary
 to install additional support software to obtain a random seed and reseed
 the CSPRNG manually.  Please check out the manual pages for RAND_add(),
 RAND_bytes(), RAND_egd(), and the FAQ for more information.
-
 
 <!-- Links  -->
 

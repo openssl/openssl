@@ -5,7 +5,6 @@ Please visit our [Getting Started][gs] page for other ideas about how to contrib
 
   [gs]: https://www.openssl.org/community/getting-started.html
 
-
 Development is done on GitHub in the [openssl/openssl][gh] repository.
 
   [gh]: https://github.com/openssl/openssl

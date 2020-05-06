@@ -7,7 +7,6 @@ pick the appropriate release branch.
 
   [log]: https://github.com/openssl/openssl/commits/
 
-
 OpenSSL Releases
 ----------------
 
@@ -79,7 +78,6 @@ OpenSSL 3.0
      [indented code blocks]: https://github.github.com/gfm/#indented-code-blocks
 
    *Matthias St. Pierre*
-
 
  * The test suite is changed to preserve results of each test recipe.
    A new directory test-runs/ with subdirectories named like the
@@ -582,7 +580,6 @@ OpenSSL 3.0
            $ mms /macro=(VF=1) test                   ! OpenVMS
            $ nmake VF=1 test                          # Windows
 
-
    *Richard Levitte*
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
@@ -981,12 +978,10 @@ OpenSSL 3.0
 
    *Boris Pismenny*
 
-
 OpenSSL 1.1.1
 -------------
 
 ### Changes between 1.1.1e and 1.1.1f [xx XXX xxxx]
-
 
 ### Changes between 1.1.1d and 1.1.1e [17 Mar 2020]
 
@@ -1827,7 +1822,6 @@ OpenSSL 1.1.1
 
 OpenSSL 1.1.0
 -------------
-
 
 ### Changes between 1.1.0k and 1.1.0l [10 Sep 2019]
 
@@ -3328,7 +3322,6 @@ OpenSSL 1.1.0
    effect.
 
    WARNING: EXPERIMENTAL, SUBJECT TO CHANGE.
-
 
    *Steve Henson*
 
@@ -5028,7 +5021,6 @@ OpenSSL 1.0.2
    Note: if the CERT based stores are not set then the parent SSL_CTX
    store is used to retain compatibility with existing behaviour.
 
-
    *Steve Henson*
 
  * New function ssl_set_client_disabled to set a ciphersuite disabled
@@ -5203,7 +5195,6 @@ OpenSSL 1.0.2
    Note: Related 1.0.2-beta specific macros X509_get_cert_info,
    X509_CINF_set_modified, X509_CINF_get_issuer, X509_CINF_get_extensions and
    X509_CINF_get_signature were reverted post internal team review.
-
 
 OpenSSL 1.0.1
 -------------
@@ -6093,7 +6084,6 @@ OpenSSL 1.0.1
 
    Note: this is a precautionary measure and no attacks are currently known.
 
-
    *Steve Henson*
 
 ### Changes between 1.0.1h and 1.0.1i [6 Aug 2014]
@@ -6271,7 +6261,6 @@ OpenSSL 1.0.1
    TLS client Hello record length value would otherwise be > 255 and
    less that 512 pad with a dummy extension containing zeroes so it
    is at least 512 bytes long.
-
 
    *Adam Langley, Steve Henson*
 
@@ -7112,7 +7101,6 @@ OpenSSL 1.0.0
 
    Note: this is a precautionary measure and no attacks are currently known.
 
-
    *Steve Henson*
 
 ### Changes between 1.0.0m and 1.0.0n [6 Aug 2014]
@@ -7603,7 +7591,6 @@ OpenSSL 1.0.1.]
 
    and this works for ENGINE based algorithms too.
 
-
    *Steve Henson*
 
  * Update Gost ENGINE to support parameter files.
@@ -7874,12 +7861,10 @@ OpenSSL 1.0.1.]
    SSL_set_options(ssl, SSL_OP_NO_SSLv2) is especially recommended
    for applications that need to enforce opaque PRF input.
 
-
    *Bodo Moeller*
 
  * Update ssl code to support digests other than SHA1+MD5 for handshake
    MAC.
-
 
    *Victor B. Wagner <vitus@cryptocom.ru>*
 
@@ -8141,7 +8126,6 @@ OpenSSL 1.0.1.]
            AECDH    - anonymous ECDH
            EECDH    - non-anonymous ephemeral ECDH (equivalent to "kEECDH:-AECDH")
 
-
    *Bodo Moeller*
 
  * Add additional S/MIME capabilities for AES and GOST ciphers if supported.
@@ -8336,7 +8320,6 @@ OpenSSL 1.0.1.]
            SSL_get_psk_identity
            SSL_use_psk_identity_hint
 
-
    *Mika Kousa and Pasi Eronen of Nokia Corporation*
 
  * Add RFC 3161 compliant time stamp request creation, response generation
@@ -8375,7 +8358,6 @@ OpenSSL 1.0.1.]
    negotiation).  If the unrecognized_name alert has to be sent, this by
    default is a warning; it becomes fatal with the '-servername_fatal'
    option.
-
 
    *Peter Sylvester,  Remy Allais, Christophe Renou*
 
@@ -8798,7 +8780,6 @@ OpenSSL 0.9.x
    So now fix this for real by retiring the MONT_HELPER macro
    in crypto/rsa/rsa_eay.c.
 
-
    *Bodo Moeller; problem pointed out by Marius Schilder*
 
  * Various precautionary measures:
@@ -8814,7 +8795,6 @@ OpenSSL 0.9.x
 
    - Enforce the 'num' check in BN_div() (bn_div.c) for non-BN_DEBUG
      builds.
-
 
    *Neel Mehta, Bodo Moeller*
 
@@ -8906,7 +8886,6 @@ OpenSSL 0.9.x
    backported from 0.9.9-dev for further performance improvements,
    namely BN_from_montgomery_word.  (To enable this otherwise,
    e.g. x86_64, try `-DMONT_FROM_WORD___NON_DEFAULT_0_9_8_BUILD`.)
-
 
    *Andy Polyakov (backport partially by Bodo Moeller)*
 
@@ -9087,7 +9066,6 @@ OpenSSL 0.9.x
    default is a warning; it becomes fatal with the '-servername_fatal'
    option.
 
-
    *Peter Sylvester,  Remy Allais, Christophe Renou, Steve Henson*
 
  * Add AES and SSE2 assembly language support to VC++ build.
@@ -9160,7 +9138,6 @@ OpenSSL 0.9.x
    change this in the header file before 0.9.9.  It allows
    RSA_setup_blinding() to use BN_with_flags() on the modulus to
    enable BN_FLG_CONSTTIME.
-
 
    *Matthew D Wood (Intel Corp)*
 
@@ -9270,7 +9247,6 @@ OpenSSL 0.9.x
    (not just a patchlevel) when we can change the SSL_CIPHER
    definition to split the single 'unsigned long mask' bitmap into
    multiple values to extend the available space.
-
 
    *Bodo Moeller*
 
@@ -9525,7 +9501,6 @@ OpenSSL 0.9.8.]
    fee for non-commercial use.  As before, "no-idea" can be used to
    avoid this algorithm.)
 
-
    *Bodo Moeller*
 
  * Add processing of proxy certificates (see RFC 3820).  This work was
@@ -9547,7 +9522,6 @@ OpenSSL 0.9.8.]
    =for comment openssl_section:XXX
 
    The blank line is mandatory.
-
 
    *Steve Henson*
 
@@ -10535,7 +10509,6 @@ OpenSSL 0.9.8.]
    RSA_FLAG_NO_EXP_CONSTTIME, DSA_FLAG_NO_EXP_CONSTTIME, or
    DH_FLAG_NO_EXP_CONSTTIME, respectively, is set.
 
-
    *Matthew D Wood (Intel Corp), with some changes by Bodo Moeller*
 
  * Change the client implementation for SSLv23_method() and
@@ -10751,7 +10724,6 @@ OpenSSL 0.9.8.]
 
    If verify callback ignores invalid public key errors don't try to check
    certificate signature with the NULL public key.
-
 
    *Steve Henson*
 
@@ -11699,7 +11671,6 @@ OpenSSL 0.9.7.]
            EVP_DigestUpdate(&md, in, len);
            EVP_DigestFinal(&md, out, NULL);
            EVP_MD_CTX_cleanup(&md);          /* new function call */
-
 
    *Ben Laurie*
 
@@ -13036,7 +13007,6 @@ ndif
 
    If verify callback ignores invalid public key errors don't try to check
    certificate signature with the NULL public key.
-
 
    *Steve Henson*
 
@@ -14461,7 +14431,6 @@ ndif
            LOG_EMERG, LOG_ALERT, LOG_CRIT, LOG_ERR => EVENTLOG_ERROR_TYPE
            LOG_WARNING                             => EVENTLOG_WARNING_TYPE
            LOG_NOTICE, LOG_INFO, LOG_DEBUG         => EVENTLOG_INFORMATION_TYPE
-
 
    *Richard Levitte*
 
@@ -16736,7 +16705,6 @@ ndif
 
    *Bodo Moeller*
 
-
 ### Changes between 0.9.3 and 0.9.3a  [29 May 1999]
 
  * New configuration variant "sco5-gcc".
@@ -16769,7 +16737,6 @@ ndif
  * Improvements for VMS support.
 
    *Richard Levitte*
-
 
 ### Changes between 0.9.2b and 0.9.3  [24 May 1999]
 
@@ -17261,7 +17228,6 @@ ndif
    so they no longer are missing under -DNOPROTO.
 
    *Soren S. Jorvang <soren@t.dk>*
-
 
 ### Changes between 0.9.1c and 0.9.2b  [22 Mar 1999]
 
@@ -18065,7 +18031,6 @@ ndif
 
    *Ben Laurie*
 
-
 ### Changes between 0.9.1b and 0.9.1c  [23-Dec-1998]
 
  * Added OPENSSL_VERSION_NUMBER to crypto/crypto.h and
@@ -18138,7 +18103,6 @@ ndif
    summer 1998.
 
    *The OpenSSL Project*
-
 
 ### Changes between 0.9.0b and 0.9.1b  [not released]
 
@@ -18270,7 +18234,6 @@ ndif
    bytes sent in the client random.
 
    *Edward Bishop <ebishop@spyglass.com>*
-
 
 <!-- Links -->
 

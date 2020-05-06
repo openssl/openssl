@@ -7,13 +7,11 @@ since in some cases, their employer may be the copyright holder.
 To see the full list of contributors, see the revision history in
 source control.
 
-
 Groups
 ------
 
  * OpenSSL Software Services, Inc.
  * OpenSSL Software Foundation, Inc.
-
 
 Individuals
 -----------

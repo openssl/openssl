@@ -6,7 +6,6 @@ Welcome to the OpenSSL Project
 [![travis badge][]][travis jobs]
 [![appveyor badge][]][appveyor jobs]
 
-
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
 for the Transport Layer Security (TLS) protocol formerly known as the
 Secure Sockets Layer (SSL) protocol. The protocol implementation is based
@@ -17,7 +16,6 @@ OpenSSL is descended from the SSLeay library developed by Eric A. Young
 and Tim J. Hudson.
 
 The official Home Page of the OpenSSL Project is [www.openssl.org][].
-
 
 Table of Contents
 =================
@@ -69,7 +67,6 @@ of the OpenSSL toolkit are available. In particular on Linux and other
 Unix operating systems it is normally recommended to link against the
 precompiled shared libraries provided by the distributor or vendor.
 
-
 For Testing and Development
 ---------------------------
 
@@ -99,7 +96,6 @@ GitHub and clone your public fork instead.
 
 This is necessary, because all development of OpenSSL nowadays is done via
 GitHub pull requests. For more details, see [Contributing](#contributing).
-
 
 Build and Install
 =================
@@ -165,14 +161,12 @@ platform. The OpenSSL Project Pages at [openssl.github.io][] are a
 valuable source of information if you want to get familiar with our
 development process on GitHub.
 
-
 Legalities
 ==========
 
 A number of nations restrict the use or export of cryptography. If you are
 potentially subject to such restrictions you should seek legal advice before
 attempting to develop or distribute cryptographic code.
-
 
 Copyright
 =========
@@ -182,7 +176,6 @@ Copyright (c) 1998-2020 The OpenSSL Project
 Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
 
 All rights reserved.
-
 
 <!-- Links  -->
 
@@ -210,10 +203,8 @@ All rights reserved.
     <https://wiki.openssl.org>
     "OpenSSL Wiki"
 
-
 [RFC 8446]:
      <https://tools.ietf.org/html/rfc8446>
-
 
 <!-- Logos and Badges -->
 <!--
