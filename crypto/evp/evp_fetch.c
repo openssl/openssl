@@ -17,6 +17,7 @@
 #include "internal/core.h"
 #include "internal/provider.h"
 #include "internal/namemap.h"
+#include "internal/property.h"
 #include "crypto/evp.h"    /* evp_local.h needs it */
 #include "evp_local.h"
 
@@ -368,6 +369,14 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
     return ret;
 }
 
+void evp_method_store_flush(OPENSSL_CTX *libctx)
+{
+    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+
+    if (store != NULL)
+        ossl_method_store_flush_cache(store, 1);
+}
+
 static int evp_set_default_properties(OPENSSL_CTX *libctx,
                                       OSSL_PROPERTY_LIST *def_prop)
 {
@@ -378,7 +387,7 @@ static int evp_set_default_properties(OPENSSL_CTX *libctx,
         ossl_property_free(*plp);
         *plp = def_prop;
         if (store != NULL)
-            ossl_method_store_flush_cache(store);
+            ossl_method_store_flush_cache(store, 0);
         return 1;
     }
     EVPerr(0, ERR_R_INTERNAL_ERROR);

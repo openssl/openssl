@@ -8,7 +8,8 @@ OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_query_operation, OSSL_PROVIDER_get0_provider_ctx,
 OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name,
-OSSL_PROVIDER_get_capabilities - provider routines
+OSSL_PROVIDER_get_capabilities, OSSL_PROVIDER_self_test
+- provider routines
 
 =head1 SYNOPSIS
 
@@ -43,7 +44,7 @@ OSSL_PROVIDER_get_capabilities - provider routines
                                     const char *capability,
                                     OSSL_CALLBACK *cb,
                                     void *arg);
-
+ int OSSL_PROVIDER_self_test(const OSSL_PROVIDER *prov);
 
 =head1 DESCRIPTION
 
@@ -95,6 +96,11 @@ The caller must prepare the B<OSSL_PARAM> array before calling this
 function, and the variables acting as buffers for this parameter array
 should be filled with data when it returns successfully.
 
+OSSL_PROVIDER_self_test() is used to run a provider's self tests on demand.
+If the self tests fail then the provider will fail to provide any further
+services and algorithms. L<OSSL_SELF_TEST_set_callback(3)> may be called
+beforehand in order to display diagnostics for the running self tests.
+
 OSSL_PROVIDER_query_operation() calls the provider's I<query_operation>
 function (see L<provider(7)>), if the provider has one. It returns an
 array of I<OSSL_ALGORITHM> for the given I<operation_id> terminated by an all
@@ -133,10 +139,12 @@ otherwise 0.
 OSSL_PROVIDER_gettable_params() returns a pointer to an array
 of constant B<OSSL_PARAM>, or NULL if none is provided.
 
-OSSL_PROVIDER_get_params() returns 1 on success, or 0 on error.
+OSSL_PROVIDER_get_params() and returns 1 on success, or 0 on error.
 
 OSSL_PROVIDER_query_operation() returns an array of OSSL_ALGORITHM or NULL on
 error.
+
+OSSL_PROVIDER_self_test() returns 1 if the self tests pass, or 0 on error.
 
 =head1 EXAMPLES
 

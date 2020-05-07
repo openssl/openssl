@@ -69,6 +69,8 @@ static OSSL_FUNC_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
 static OSSL_FUNC_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
 static OSSL_FUNC_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
 static OSSL_FUNC_BIO_vsnprintf_fn *c_BIO_vsnprintf;
+static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
+static OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
 
 typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;
@@ -97,6 +99,7 @@ static const OSSL_PARAM fips_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_STATUS, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -144,8 +147,27 @@ static int fips_get_params(void *provctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_BUILDINFO);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_FULL_VERSION_STR))
         return 0;
-
+    p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_STATUS);
+    if (p != NULL && !OSSL_PARAM_set_uint(p, FIPS_is_running()))
+        return 0;
     return 1;
+}
+
+static void set_self_test_cb(const OSSL_CORE_HANDLE *handle)
+{
+    if (c_stcbfn != NULL && c_get_libctx != NULL) {
+        c_stcbfn(c_get_libctx(handle), &selftest_params.cb,
+                              &selftest_params.cb_arg);
+    } else {
+        selftest_params.cb = NULL;
+        selftest_params.cb_arg = NULL;
+    }
+}
+
+static int fips_self_test(void *provctx)
+{
+    set_self_test_cb(FIPS_get_core_handle(selftest_params.libctx));
+    return SELF_TEST_post(&selftest_params, 1) ? 1 : 0;
 }
 
 /* FIPS specific version of the function of the same name in provlib.c */
@@ -444,6 +466,10 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
                                         int *no_cache)
 {
     *no_cache = 0;
+
+    if (!FIPS_is_running())
+        return NULL;
+
     switch (operation_id) {
     case OSSL_OP_DIGEST:
         return fips_digests;
@@ -489,7 +515,9 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))fips_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
-    { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))provider_get_capabilities },
+    { OSSL_FUNC_PROVIDER_GET_CAPABILITIES,
+      (void (*)(void))provider_get_capabilities },
+    { OSSL_FUNC_PROVIDER_SELF_TEST, (void (*)(void))fips_self_test },
     { 0, NULL }
 };
 
@@ -500,7 +528,6 @@ static const OSSL_DISPATCH intern_dispatch_table[] = {
     { 0, NULL }
 };
 
-
 int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
@@ -508,8 +535,6 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 {
     FIPS_GLOBAL *fgbl;
     OPENSSL_CTX *libctx = NULL;
-    OSSL_FUNC_self_test_cb_fn *stcbfn = NULL;
-    OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -592,7 +617,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
             c_BIO_vsnprintf = OSSL_FUNC_BIO_vsnprintf(in);
             break;
         case OSSL_FUNC_SELF_TEST_CB: {
-            stcbfn = OSSL_FUNC_self_test_cb(in);
+            c_stcbfn = OSSL_FUNC_self_test_cb(in);
             break;
         }
         default:
@@ -601,14 +626,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         }
     }
 
-    if (stcbfn != NULL && c_get_libctx != NULL) {
-        stcbfn(c_get_libctx(handle), &selftest_params.cb,
-               &selftest_params.cb_arg);
-    }
-    else {
-        selftest_params.cb = NULL;
-        selftest_params.cb_arg = NULL;
-    }
+    set_self_test_cb(handle);
 
     if (!c_get_params(handle, core_params)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
@@ -665,29 +683,31 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
                               const OSSL_DISPATCH **out,
                               void **provctx)
 {
-    OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
+    OSSL_FUNC_core_get_library_context_fn *c_internal_get_libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_FUNC_core_get_library_context(in);
+            c_internal_get_libctx = OSSL_FUNC_core_get_library_context(in);
             break;
         default:
             break;
         }
     }
 
-    if (c_get_libctx == NULL)
+    if (c_internal_get_libctx == NULL)
         return 0;
 
     if ((*provctx = PROV_CTX_new()) == NULL)
         return 0;
+
     /*
      * Using the parent library context only works because we are a built-in
      * internal provider. This is not something that most providers would be
      * able to do.
      */
-    PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
+    PROV_CTX_set0_library_context(*provctx,
+                                  (OPENSSL_CTX *)c_internal_get_libctx(handle));
     PROV_CTX_set0_handle(*provctx, handle);
 
     *out = intern_dispatch_table;

@@ -34,3 +34,4 @@ typedef struct self_test_post_params_st {
 
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
 int SELF_TEST_kats(OSSL_SELF_TEST *event, OPENSSL_CTX *libctx);
+unsigned int FIPS_is_running(void);

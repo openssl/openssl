@@ -305,3 +305,10 @@ end:
 
     return ok;
 }
+
+
+unsigned int FIPS_is_running(void)
+{
+    return FIPS_state == FIPS_STATE_RUNNING
+           || FIPS_state == FIPS_STATE_SELFTEST;
+}

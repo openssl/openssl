@@ -176,6 +176,8 @@ OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
 # define OSSL_FUNC_PROVIDER_GET_CAPABILITIES   1029
 OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
                     const char *capability, OSSL_CALLBACK *cb, void *arg))
+# define OSSL_FUNC_PROVIDER_SELF_TEST          1030
+OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
 
 /* Operations */
 
