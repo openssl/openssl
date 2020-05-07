@@ -2320,17 +2320,30 @@ double app_tminterval(int stop, int usertime)
 double app_tminterval(int stop, int usertime)
 {
     double ret = 0;
-    struct tms rus;
-    clock_t now = times(&rus);
+    clock_t now;
     static clock_t tmstart;
+    long int tck = sysconf(_SC_CLK_TCK);
+# ifdef __TMS
+    struct tms rus;
 
+    now = times(&rus);
     if (usertime)
         now = rus.tms_utime;
+# else
+    if (usertime)
+        now = clock();          /* sum of user and kernel times */
+    else {
+        struct timeval tv;
+        gettimeofday(&tv, NULL);
+        now = (clock_t)((unsigned long long)tv.tv_sec * tck +
+                        (unsigned long long)tv.tv_usec * (1000000 / tck)
+            );
+    }
+# endif
 
     if (stop == TM_START) {
         tmstart = now;
     } else {
-        long int tck = sysconf(_SC_CLK_TCK);
         ret = (now - tmstart) / (double)tck;
     }
 
