@@ -1,4 +1,3 @@
-
 OpenSSL User Support resources
 ==============================
 
@@ -7,7 +6,7 @@ _Under Construction; not more than a collection of text fragments yet._
 See the OpenSSL website www.openssl.org for details on how to obtain
 commercial technical support. Free community support is available through the
 openssl-users email list (see
-https://www.openssl.org/community/mailinglists.html for further details).
+<https://www.openssl.org/community/mailinglists.html for> further details).
 
 If you have any problems with OpenSSL then please take the following steps
 first:
@@ -32,8 +31,6 @@ Just because something doesn't work the way you expect does not mean it
 is necessarily a bug in OpenSSL. Use the openssl-users email list for this type
 of query.
 
-
-
 For *questions* on how to use OpenSSL or what went wrong when you
 tried something, our primary resource is the mailing list
 openssl-users@openssl.org, where you can get help from others in the
@@ -41,10 +38,7 @@ OpenSSL community (which includes the developers as time permits).
 
 Only subscribers can post to openssl-users@openssl.org (although the
 archives are public).
-For more information, see https://www.openssl.org/community/mailinglists.html
-
-
-
+For more information, see <https://www.openssl.org/community/mailinglists.html>
 
 You have general questions about using OpenSSL
 ----------------------------------------------
@@ -97,10 +91,6 @@ pull request. The details are covered in the [Contributing](#contributing) secti
 Don't hesitate to open a pull request, even if it's only a small change
 like a grammatical or typographical error in the documentation.
 
-
-
-
-
 Mailing Lists
 =============
 
@@ -120,7 +110,6 @@ The most important lists are:
 The openssl-dev list has been discontinued since development is now taking
 place in form of GitHub pull requests. Although not active anymore, the
 searchable archive may still contain useful information.
-
 
 <!-- Links -->
 

@@ -1,12 +1,10 @@
+Welcome to the OpenSSL Project
+==============================
+
 [![openssl logo][]][www.openssl.org]
 
 [![travis badge][]][travis jobs]
 [![appveyor badge][]][appveyor jobs]
-
-
-
-Welcome to the OpenSSL Project
-==============================
 
 OpenSSL is a robust, commercial-grade, full-featured Open Source Toolkit
 for the Transport Layer Security (TLS) protocol formerly known as the
@@ -18,7 +16,6 @@ OpenSSL is descended from the SSLeay library developed by Eric A. Young
 and Tim J. Hudson.
 
 The official Home Page of the OpenSSL Project is [www.openssl.org][].
-
 
 Table of Contents
 =================
@@ -47,13 +44,13 @@ The OpenSSL toolkit includes:
 - **openssl**
   the OpenSSL command line tool, a swiss army knife for cryptographic tasks,
   testing and analyzing. It can be used for
-   - creation of key parameters
-   - creation of X.509 certificates, CSRs and CRLs
-   - calculation of message digests
-   - encryption and decryption
-   - SSL/TLS client and server tests
-   - handling of S/MIME signed or encrypted mail
-   - and more...
+  - creation of key parameters
+  - creation of X.509 certificates, CSRs and CRLs
+  - calculation of message digests
+  - encryption and decryption
+  - SSL/TLS client and server tests
+  - handling of S/MIME signed or encrypted mail
+  - and more...
 
 Download
 ========
@@ -70,7 +67,6 @@ of the OpenSSL toolkit are available. In particular on Linux and other
 Unix operating systems it is normally recommended to link against the
 precompiled shared libraries provided by the distributor or vendor.
 
-
 For Testing and Development
 ---------------------------
 
@@ -86,21 +82,20 @@ which is updated automatically from the former on every commit.
 A local copy of the Git Repository can be obtained by cloning it from
 the original OpenSSL repository using
 
-        git clone git://git.openssl.org/openssl.git
+    git clone git://git.openssl.org/openssl.git
 
 or from the GitHub mirror using
 
-        git clone https://github.com/openssl/openssl.git
+    git clone https://github.com/openssl/openssl.git
 
 If you intend to contribute to OpenSSL, either to fix bugs or contribute
 new features, you need to fork the OpenSSL repository openssl/openssl on
 GitHub and clone your public fork instead.
 
-        git clone https://github.com/yourname/openssl.git
+    git clone https://github.com/yourname/openssl.git
 
 This is necessary, because all development of OpenSSL nowadays is done via
 GitHub pull requests. For more details, see [Contributing](#contributing).
-
 
 Build and Install
 =================
@@ -166,14 +161,12 @@ platform. The OpenSSL Project Pages at [openssl.github.io][] are a
 valuable source of information if you want to get familiar with our
 development process on GitHub.
 
-
 Legalities
 ==========
 
 A number of nations restrict the use or export of cryptography. If you are
 potentially subject to such restrictions you should seek legal advice before
 attempting to develop or distribute cryptographic code.
-
 
 Copyright
 =========
@@ -184,37 +177,34 @@ Copyright (c) 1995-1998 Eric A. Young, Tim J. Hudson
 
 All rights reserved.
 
-
 <!-- Links  -->
 
 [www.openssl.org]:
-    https://www.openssl.org
+    <https://www.openssl.org>
     "OpenSSL Homepage"
 
 [git.openssl.org]:
-    https://git.openssl.org
+    <https://git.openssl.org>
     "OpenSSL Git Repository"
 
 [git.openssl.org]:
-    https://git.openssl.org
+    <https://git.openssl.org>
     "OpenSSL Git Repository"
 
 [github.com/openssl/openssl]:
-    https://github.com/openssl/openssl
+    <https://github.com/openssl/openssl>
     "OpenSSL GitHub Mirror"
 
 [openssl.github.io]:
-    https://mspncp.github.io
+    <https://mspncp.github.io>
     "OpenSSL Project Pages"
 
 [wiki.openssl.org]:
-    https://wiki.openssl.org
+    <https://wiki.openssl.org>
     "OpenSSL Wiki"
 
-
 [RFC 8446]:
-     https://tools.ietf.org/html/rfc8446
-
+     <https://tools.ietf.org/html/rfc8446>
 
 <!-- Logos and Badges -->
 <!--
@@ -230,17 +220,17 @@ All rights reserved.
     "OpenSSL Logo"
 
 [travis badge]:
-    https://travis-ci.org/openssl/openssl.svg?branch=master
+    <https://travis-ci.org/openssl/openssl.svg?branch=master>
     "Travis Build Status"
 
 [travis jobs]:
-    https://travis-ci.org/openssl/openssl
+    <https://travis-ci.org/openssl/openssl>
     "Travis Jobs"
 
 [appveyor badge]:
-    https://ci.appveyor.com/api/projects/status/ikn2l4u1xsume63u/branch/master?svg=true
+    <https://ci.appveyor.com/api/projects/status/ikn2l4u1xsume63u/branch/master?svg=true>
     "AppVeyor Build Status"
 
 [appveyor jobs]:
-    https://ci.appveyor.com/project/openssl/openssl/branch/master
+    <https://ci.appveyor.com/project/openssl/openssl/branch/master>
     "AppVeyor Jobs"
