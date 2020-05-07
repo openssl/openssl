@@ -86,8 +86,6 @@ struct evp_keymgmt_st {
     OSSL_OP_keymgmt_gen_set_template_fn *gen_set_template;
     OSSL_OP_keymgmt_gen_set_params_fn *gen_set_params;
     OSSL_OP_keymgmt_gen_settable_params_fn *gen_settable_params;
-    OSSL_OP_keymgmt_gen_get_params_fn *gen_get_params;
-    OSSL_OP_keymgmt_gen_gettable_params_fn *gen_gettable_params;
     OSSL_OP_keymgmt_gen_fn *gen;
     OSSL_OP_keymgmt_gen_cleanup_fn *gen_cleanup;
 

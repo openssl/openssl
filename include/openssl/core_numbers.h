@@ -392,10 +392,8 @@ OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_new, (void *provctx))
 # define OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE            3
 # define OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS              4
 # define OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS         5
-# define OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS              6
-# define OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS         7
-# define OSSL_FUNC_KEYMGMT_GEN                         8
-# define OSSL_FUNC_KEYMGMT_GEN_CLEANUP                 9
+# define OSSL_FUNC_KEYMGMT_GEN                         6
+# define OSSL_FUNC_KEYMGMT_GEN_CLEANUP                 7
 OSSL_CORE_MAKE_FUNC(void *, OP_keymgmt_gen_init,
                     (void *provctx, int selection))
 OSSL_CORE_MAKE_FUNC(int, OP_keymgmt_gen_set_template,
