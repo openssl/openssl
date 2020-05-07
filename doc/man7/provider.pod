@@ -42,16 +42,15 @@ If it's built-in, the initialization function may have any name.
 
 The initialization function must have the following signature:
 
- int NAME(const OSSL_PROVIDER *provider,
+ int NAME(const OSSL_CORE_HANDLE *handle,
           const OSSL_DISPATCH *in, const OSSL_DISPATCH **out,
           void **provctx);
 
-I<provider> is the OpenSSL library object for the provider, and works
+I<handle> is the OpenSSL library object for the provider, and works
 as a handle for everything the OpenSSL libraries need to know about
 the provider.
-For the provider itself, it may hold some interesting information,
-and is also passed to some of the functions given in the dispatch
-array I<in>.
+For the provider itself, it is passed to some of the functions given in the
+dispatch array I<in>.
 
 I<in> is a dispatch array of base functions offered by the OpenSSL
 libraries, and the available functions are further described in
@@ -287,6 +286,13 @@ be loaded explicitly, either in code or through OpenSSL configuration
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "provider=legacy" can be
 used as a search criterion for these implementations.
+
+=head2 Null provider
+
+The null provider is built in as part of the F<libcrypto> library. It contains
+no algorithms in it at all. When fetching algorithms the default provider will
+be automatically loaded if no other provider has been explicitly loaded. To
+prevent that from happening you can explicitly load the null provider.
 
 =head1 EXAMPLES
 
