@@ -107,7 +107,7 @@ Print out a usage message.
 
 Encrypt mail for the given recipient certificates. Input file is the message
 to be encrypted. The output file is the encrypted mail in MIME format. The
-actual CMS type is <B>EnvelopedData<B>.
+actual CMS type is B<EnvelopedData>.
 
 Note that no revocation check is done for the recipient cert, so if that
 key has been compromised, others may be able to decrypt the text.
