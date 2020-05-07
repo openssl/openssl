@@ -28,10 +28,10 @@ Future development will also include deserializing functions.
 
  /* Functions to serialize object data */
  int OP_serializer_serialize_data(void *ctx, const OSSL_PARAM *data,
-                                  BIO *out,
+                                  OSSL_CORE_BIO *out,
                                   OSSL_PASSPHRASE_CALLBACK *cb,
                                   void *cbarg);
- int OP_serializer_serialize_object(void *ctx, void *obj, BIO *out,
+ int OP_serializer_serialize_object(void *ctx, void *obj, OSSL_CORE_BIO *out,
                                     OSSL_PASSPHRASE_CALLBACK *cb,
                                     void *cbarg);
 
@@ -39,11 +39,11 @@ Future development will also include deserializing functions.
 
 The SERIALIZER is a generic method to serialize any set of object data
 in L<OSSL_PARAM(3)> array form, or any provider side object into
-serialized form, and write it to the given BIO.  If the caller wants
+serialized form, and write it to the given OSSL_CORE_BIO.  If the caller wants
 to get the serialized stream to memory, it should provide a
 L<BIO_s_membuf(3)>.
 
-The serializer doesn't need to know more about the B<BIO> pointer than
+The serializer doesn't need to know more about the B<OSSL_CORE_BIO> pointer than
 being able to pass it to the appropriate BIO upcalls (see
 L<provider-base(7)/Core functions>).
 
@@ -71,7 +71,7 @@ For example, the "function" OP_serializer_serialize_data() has these:
  typedef int
      (OSSL_OP_serializer_serialize_data_fn)(void *provctx,
                                             const OSSL_PARAM params[],
-                                            BIO *out);
+                                            OSSL_CORE_BIO *out);
  static ossl_inline OSSL_OP_serializer_serialize_data_fn
      OSSL_get_OP_serializer_serialize_data(const OSSL_DISPATCH *opf);
 
@@ -180,11 +180,11 @@ by OP_serializer_set_ctx_params() and OP_serializer_settable_ctx_params().
 OP_serializer_serialize_data() should take an array of B<OSSL_PARAM>,
 I<data>, and if it contains the data necessary for the object type
 that the implementation handles, it should output the object in
-serialized form to the B<BIO>.
+serialized form to the B<OSSL_CORE_BIO>.
 
 OP_serializer_serialize_object() should take a pointer to an object
 that it knows intimately, and output that object in serialized form to
-the B<BIO>.  The caller I<must> ensure that this function is called
+the B<OSSL_CORE_BIO>.  The caller I<must> ensure that this function is called
 with a pointer that the provider of this function is familiar with.
 It is not suitable to use with object pointers coming from other
 providers.
