@@ -24,6 +24,13 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx] ###
 
+*  Removed FIPS_mode() and FIPS_mode_set(). These functions are legacy API's
+   that are not applicable to the new provider model. Applications should
+   instead use EVP_default_properties_is_fips_enabled() and
+   EVP_default_properties_enable_fips().
+
+   *Shane Lontis*
+
  * Deprecated EC_POINT_set_Jprojective_coordinates_GFp() and
    EC_POINT_get_Jprojective_coordinates_GFp(). These functions are not widely
    used and applications should instead use the

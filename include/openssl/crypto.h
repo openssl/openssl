@@ -377,9 +377,6 @@ ossl_noreturn void OPENSSL_die(const char *assertion, const char *file, int line
 
 int OPENSSL_isservice(void);
 
-int FIPS_mode(void);
-int FIPS_mode_set(int r);
-
 void OPENSSL_init(void);
 # ifdef OPENSSL_SYS_UNIX
 void OPENSSL_fork_prepare(void);
