@@ -44,7 +44,15 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
+#else   
+/*
+ *  On modern system use CNG API, but on older ones fallback to CryptoAPI
+ */
+    typedef NTSTATUS (WINAPI *PFN_BCryptGenRandom)(BCRYPT_ALG_HANDLE,PUCHAR,ULONG,ULONG);
+    static PFN_BCryptGenRandom s_pfnBCryptGenRandom = (PFN_BCryptGenRandom)-1; /* unset yet */
+    PFN_BCryptGenRandom pfnBCryptGenRandom;
 # endif
+     
     unsigned char *buffer;
     size_t bytes_needed;
     size_t entropy_available = 0;
@@ -63,20 +71,39 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 # endif
 
 # ifdef USE_BCRYPTGENRANDOM
-    bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
-    buffer = rand_pool_add_begin(pool, bytes_needed);
-    if (buffer != NULL) {
-        size_t bytes = 0;
-        if (BCryptGenRandom(NULL, buffer, bytes_needed,
-                            BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
-            bytes = bytes_needed;
-
-        rand_pool_add_end(pool, bytes, 8 * bytes);
-        entropy_available = rand_pool_entropy_available(pool);
+    pfnBCryptGenRandom=(PFN_BCryptGenRandom)InterlockedCompareExchangePointer((volatile LPVOID *)&s_pfnBCryptGenRandom,0,0);     
+    if(pfnBCryptGenRandom == (PFN_BCryptGenRandom)-1) {
+        HMODULE hmBCrypt;
+        PFN_BCryptGenRandom pfnBCryptGenRandom2; 
+         
+        hmBCrypt=LoadLibraryExA("BCRYPT.dll",NULL,LOAD_LIBRARY_SEARCH_SYSTEM32);
+        if(hmBCrypt!=NULL)
+             pfnBCryptGenRandom=(PFN_BCryptGenRandom)GetProcAddress(hmBCrypt,"BCryptGenRandom");
+        else
+             pfnBCryptGenRandom=NULL;
+         
+        pfnBCryptGenRandom2 = (PFN_BCryptGenRandom)InterlockedCompareExchangePointer((volatile LPVOID *)&s_pfnBCryptGenRandom,pfnBCryptGenRandom,(void *)-1);
+        if(pfnBCryptGenRandom2!=(PFN_BCryptGenRandom)-1) {
+             if(hmBCrypt!=NULL) FreeLibrary(hmBCrypt); /* some other thread has was faster */
+             pfnBCryptGenRandom = pfnBCryptGenRandom2;
+        }
     }
-    if (entropy_available > 0)
-        return entropy_available;
-# else
+    if(pfnBCryptGenRandom != NULL) {     
+        bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
+        buffer = rand_pool_add_begin(pool, bytes_needed);
+        if (buffer != NULL) {
+            size_t bytes = 0;
+            if (pfnBCryptGenRandom(NULL, buffer, bytes_needed,
+                                BCRYPT_USE_SYSTEM_PREFERRED_RNG) == STATUS_SUCCESS)
+                bytes = bytes_needed;
+
+            rand_pool_add_end(pool, bytes, 8 * bytes);
+            entropy_available = rand_pool_entropy_available(pool);
+        }
+        if (entropy_available > 0)
+            return entropy_available;
+    }
+# endif
     bytes_needed = rand_pool_bytes_needed(pool, 1 /*entropy_factor*/);
     buffer = rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
@@ -114,7 +141,6 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
     }
     if (entropy_available > 0)
         return entropy_available;
-# endif
 
     return rand_pool_entropy_available(pool);
 }
