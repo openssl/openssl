@@ -52,6 +52,8 @@ the provider.
 For the provider itself, it may hold some interesting information,
 and is also passed to some of the functions given in the dispatch
 array I<in>.
+If the provider is linked with OpenSSL libraries, objects like this
+must be treated carefully, see L</WARNINGS> below.
 
 I<in> is a dispatch array of base functions offered by the OpenSSL
 libraries, and the available functions are further described in
@@ -351,6 +353,21 @@ other providers:
  EVP_MD_meth_free(md_whirlpool);
  EVP_MD_meth_free(md_sha256);
 
+=head1 WARNINGS
+
+For a dynamically loadable provider module, any object with an opaque
+type passed from the OpenSSL libraries to any provider funtion I<must
+only> be used as arguments to OpenSSL library upcalls, i.e. the
+functions available through the I<in> dispatch table passed to the
+initialization functions described in L</Provider> above.  Any other
+use of such objects is forbidden.
+
+A provider that's built-in to the application or OpenSSL's F<libcrypto>
+may be more relaxed in this regard and can pass such objects to any
+F<libcrypto> function that takes them.  This is generally seen as a
+bad habit and therefore still not recommended.
+
+=for comment OpenSSL's default provider is an exception to the above.
 
 =head1 SEE ALSO
 
