@@ -130,7 +130,12 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
     if (!TEST_ptr(membio))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_print_private(membio, pk, 0, NULL))
+    if (/* Output Encrypted private key in PEM form */
+        !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
+                                            (unsigned char *)"pass", 4,
+                                            NULL, NULL))
+        /* Private key in text form */
+        || !TEST_true(EVP_PKEY_print_private(membio, pk, 0, NULL))
         || !TEST_true(compare_with_file(alg, PRIV_TEXT, membio))
         /* Public key in PEM form */
         || !TEST_true(PEM_write_bio_PUBKEY(membio, pk))
@@ -138,11 +143,7 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
         /* Unencrypted private key in PEM form */
         || !TEST_true(PEM_write_bio_PrivateKey(membio, pk,
                                                NULL, NULL, 0, NULL, NULL))
-        || !TEST_true(compare_with_file(alg, PRIV_PEM, membio))
-        /* Encrypted private key in PEM form */
-        || !TEST_true(PEM_write_bio_PrivateKey(bio_out, pk, EVP_aes_256_cbc(),
-                                               (unsigned char *)"pass", 4,
-                                               NULL, NULL)))
+        || !TEST_true(compare_with_file(alg, PRIV_PEM, membio)))
         goto err;
 
     ret = 1;
