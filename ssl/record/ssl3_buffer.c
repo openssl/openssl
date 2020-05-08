@@ -94,7 +94,7 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
             headerlen = SSL3_RT_HEADER_LENGTH;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-        align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
+        align = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
         len = ssl_get_max_send_fragment(s)
