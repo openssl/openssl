@@ -989,7 +989,12 @@ doc-nits: build_generated
 cmd-nits: build_generated apps/openssl
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c
 
-# Needs ruby and "gem install mdl"
+# This uses "mdl", the markdownlint application, which is written in ruby.
+# The source is at https://github.com/markdownlint/markdownlint
+# If you have ruby installed, "gem install mdl" should work.
+# Another option is at https://snapcraft.io/install/mdl/debian
+# Finally, there's a Node.js version, which we haven't tried, that
+# can be found at https://github.com/DavidAnson/markdownlint
 md-nits:
 	mdl -s util/markdownlint.rb .
 

@@ -208,11 +208,11 @@ script:
           if ! gem install mdl ; then
               echo -e '\052\052 FAILED -- GEM INSTALL MDL';
               travis_terminate 1;
-          fi
+          fi;
           if ! $make md-nits ; then
               echo -e '\052\052 FAILED -- MAKE MD-NITS';
               travis_terminate 1;
-          fi
+          fi;
       fi
     - if ! $make2; then
           echo -e '\052\052 FAILED -- MAKE';
