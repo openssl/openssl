@@ -746,7 +746,7 @@ DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trustedStore,
                          DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
 DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted_certs)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, clCert, X509)
+DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, cert, X509)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
 
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, recipient, X509_NAME)
@@ -829,7 +829,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set0_get0_trustedStore);
     ADD_TEST(test_CTX_set1_get0_untrusted_certs);
     /* client authentication: */
-    ADD_TEST(test_CTX_set1_get0_clCert);
+    ADD_TEST(test_CTX_set1_get0_cert);
     ADD_TEST(test_CTX_set1_get0_pkey);
     /* the following two also test ossl_cmp_asn1_octet_string_set1_bytes(): */
     ADD_TEST(test_CTX_set1_get1_referenceValue_str);
