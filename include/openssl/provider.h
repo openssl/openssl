@@ -33,6 +33,7 @@ int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
 const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);
+void *OSSL_PROVIDER_get0_provider_ctx(const OSSL_PROVIDER *prov);
 
 /* Add a built in providers */
 int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,

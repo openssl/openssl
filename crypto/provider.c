@@ -65,6 +65,10 @@ const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
     return ossl_provider_query_operation(prov, operation_id, no_cache);
 }
 
+void *OSSL_PROVIDER_get0_provider_ctx(const OSSL_PROVIDER *prov)
+{
+    return ossl_provider_prov_ctx(prov);
+}
 
 int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
                               OSSL_provider_init_fn *init_fn)
