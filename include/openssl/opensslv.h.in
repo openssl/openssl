@@ -81,13 +81,13 @@ extern "C" {
  *
  * These strings are defined separately to allow them to be parsable.
  */
-# define OPENSSL_RELEASE_DATE "{- $config{release_date} -}"
+# define OPENSSL_RELEASE_DATE {- $config{release_date} -}
 
 /*
  * SECTION 4: BACKWARD COMPATIBILITY
  */
 
-# define OPENSSL_VERSION_TEXT "OpenSSL {- "$config{full_version} $config{release_date}" -}"
+# define OPENSSL_VERSION_TEXT "OpenSSL " OPENSSL_FULL_VERSION_STR "  " OPENSSL_RELEASE_DATE
 
 /* Synthesize OPENSSL_VERSION_NUMBER with the layout 0xMNN00PPSL */
 # ifdef OPENSSL_VERSION_PRE_RELEASE
