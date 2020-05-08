@@ -469,6 +469,21 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_rands[] = {
+    /*
+     * The TEST RNG must be first, so it can be suppressed after the power up
+     * tests are completed.
+     */
+    { "TEST-RAND", "provider=fips", test_rng_functions },
+    { "HASH-DRBG", "provider=fips", drbg_hash_functions },
+/*
+    { "HMAC-DRBG", "provider=fips", drbg_hmac_functions },
+    { "CTR-DRBG", "provider=fips", drbg_ctr_functions },
+*/
+    { "CRNGT:continuous-rng-test", "provider=fips", crngt_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM fips_keyexch[] = {
 #ifndef OPENSSL_NO_DH
     { "DH:dhKeyAgreement", "provider=fips,fips=yes", dh_keyexch_functions },
@@ -533,6 +548,8 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
         return fips_macs;
     case OSSL_OP_KDF:
         return fips_kdfs;
+    case OSSL_OP_RAND:
+        return fips_rands;
     case OSSL_OP_KEYMGMT:
         return fips_keymgmt;
     case OSSL_OP_KEYEXCH:

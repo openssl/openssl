@@ -337,6 +337,17 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM deflt_rands[] = {
+    { "TEST-RAND", "provider=default", test_rng_functions },
+    { "HASH-DRBG", "provider=default", drbg_hash_functions },
+/*
+    { "HMAC-DRBG", "provider=default", drbg_hmac_functions },
+    { "CTR-DRBG", "provider=default", drbg_ctr_functions },
+*/
+    { "CRNGT:continuous-rng-test", "provider=default", crngt_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM deflt_signature[] = {
 #ifndef OPENSSL_NO_DSA
     { "DSA:dsaEncryption", "provider=default", dsa_signature_functions },
@@ -536,6 +547,8 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
         return deflt_macs;
     case OSSL_OP_KDF:
         return deflt_kdfs;
+    case OSSL_OP_RAND:
+        return deflt_rands;
     case OSSL_OP_KEYMGMT:
         return deflt_keymgmt;
     case OSSL_OP_KEYEXCH:
