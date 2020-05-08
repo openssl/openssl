@@ -65,7 +65,7 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
      * Signature Generation and Key Agree/Transport.
      */
     if (nbits < RSA_FIPS1864_MIN_KEYGEN_KEYSIZE) {
-        RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES, RSA_R_INVALID_KEY_LENGTH);
+        RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES, RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
     }
 
@@ -146,12 +146,13 @@ err:
 int rsa_sp800_56b_validate_strength(int nbits, int strength)
 {
     int s = (int)ifc_ffc_compute_security_bits(nbits);
-
+#ifdef FIPS_MODULE
     if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
             || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {
         RSAerr(RSA_F_RSA_SP800_56B_VALIDATE_STRENGTH, RSA_R_INVALID_MODULUS);
         return 0;
     }
+#endif
     if (strength != -1 && s != strength) {
         RSAerr(RSA_F_RSA_SP800_56B_VALIDATE_STRENGTH, RSA_R_INVALID_STRENGTH);
         return 0;

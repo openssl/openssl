@@ -123,6 +123,12 @@ default is 2.  It isn't permitted to specify a larger number of primes than
 being generated so the maximum number could be less.
 Some providers may only support a value of 2.
 
+=item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <unsigned integer>
+
+The RSA "e" value. The value may be any odd number greater than or equal to
+65537. The default value is 65537.
+For legacy reasons a value of 3 is currently accepted but is deprecated.
+
 =back
 
 =head1 CONFORMING TO

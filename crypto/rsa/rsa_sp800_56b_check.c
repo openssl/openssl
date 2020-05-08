@@ -189,12 +189,30 @@ int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
     return ret;
 }
 
+#ifndef FIPS_MODULE
+static int bn_is_three(const BIGNUM *bn)
+{
+    BIGNUM *num = BN_dup(bn);
+    int ret = (num != NULL && BN_sub_word(num, 3) && BN_is_zero(num));
+
+    BN_free(num);
+    return ret;
+}
+#endif /* FIPS_MODULE */
+
 /* Check exponent is odd, and has a bitlen ranging from [17..256] */
 int rsa_check_public_exponent(const BIGNUM *e)
 {
-    int bitlen = BN_num_bits(e);
+    int bitlen;
 
-    return (BN_is_odd(e) &&  bitlen > 16 && bitlen < 257);
+    /* For legacy purposes RSA_3 is allowed in non fips mode */
+#ifndef FIPS_MODULE
+    if (bn_is_three(e))
+        return 1;
+#endif /* FIPS_MODULE */
+
+    bitlen = BN_num_bits(e);
+    return (BN_is_odd(e) && bitlen > 16 && bitlen < 257);
 }
 
 /*

@@ -48,7 +48,7 @@ const OPTIONS genrsa_options[] = {
 #endif
 
     OPT_SECTION("Input"),
-    {"3", OPT_3, '-', "Use 3 for the E value"},
+    {"3", OPT_3, '-', "(deprecated) Use 3 for the E value"},
     {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
     {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
 
