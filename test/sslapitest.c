@@ -28,6 +28,7 @@
 #include <openssl/aes.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
+#include <openssl/core_numbers.h>
 #include <openssl/provider.h>
 
 #include "ssltestlib.h"
@@ -36,6 +37,10 @@
 #include "internal/nelem.h"
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
+
+/* Defined in filterprov.c */
+OSSL_provider_init_fn filter_provider_init;
+int filter_provider_set_filter(int operation, const char *name);
 
 DEFINE_STACK_OF(OCSP_RESPID)
 DEFINE_STACK_OF(X509)
@@ -65,6 +70,8 @@ static SSL_SESSION *create_a_psk(SSL *ssl);
 static char *certsdir = NULL;
 static char *cert = NULL;
 static char *privkey = NULL;
+static char *cert2 = NULL;
+static char *privkey2 = NULL;
 static char *srpvfile = NULL;
 static char *tmpfilename = NULL;
 
@@ -7664,6 +7671,131 @@ static int test_servername(int tst)
     return testresult;
 }
 
+#ifndef OPENSSL_NO_EC
+/*
+ * Test that if signature algorithms are not available, then we do not offer or
+ * accept them.
+ * Test 0: Two RSA sig algs available: both RSA sig algs shared
+ * Test 1: The client only has SHA2-256: only SHA2-256 algorithms shared
+ * Test 2: The server only has SHA2-256: only SHA2-256 algorithms shared
+ * Test 3: An RSA and an ECDSA sig alg available: both sig algs shared
+ * Test 4: The client only has an ECDSA sig alg: only ECDSA algorithms shared
+ * Test 5: The server only has an ECDSA sig alg: only ECDSA algorithms shared
+ */
+static int test_sigalgs_available(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    OPENSSL_CTX *tmpctx = OPENSSL_CTX_new();
+    OPENSSL_CTX *clientctx = libctx, *serverctx = libctx;
+    OSSL_PROVIDER *filterprov = NULL;
+    int sig, hash;
+
+    if (!TEST_ptr(tmpctx))
+        goto end;
+
+    if (idx != 0 && idx != 3) {
+        if (!TEST_true(OSSL_PROVIDER_add_builtin(tmpctx, "filter",
+                                                 filter_provider_init)))
+            goto end;
+
+        filterprov = OSSL_PROVIDER_load(tmpctx, "filter");
+        if (!TEST_ptr(filterprov))
+            goto end;
+
+        if (idx < 3) {
+            /*
+             * Only enable SHA2-256 so rsa_pss_rsae_sha384 should not be offered
+             * or accepted for the peer that uses this libctx. Note that libssl
+             * *requires* SHA2-256 to be available so we cannot disable that. We
+             * also need SHA1 for our certificate.
+             */
+            if (!TEST_true(filter_provider_set_filter(OSSL_OP_DIGEST,
+                                                      "SHA2-256:SHA1")))
+                goto end;
+        } else {
+            if (!TEST_true(filter_provider_set_filter(OSSL_OP_SIGNATURE,
+                                                      "ECDSA"))
+                    || !TEST_true(filter_provider_set_filter(OSSL_OP_KEYMGMT,
+                                                             "EC:X25519:X448")))
+                goto end;
+        }
+
+        if (idx == 1 || idx == 4)
+            clientctx = tmpctx;
+        else
+            serverctx = tmpctx;
+    }
+
+    cctx = SSL_CTX_new_with_libctx(clientctx, NULL, TLS_client_method());
+    sctx = SSL_CTX_new_with_libctx(serverctx, NULL, TLS_server_method());
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_VERSION,
+                                       0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (idx < 3) {
+        if (!SSL_CTX_set1_sigalgs_list(cctx,
+                                       "rsa_pss_rsae_sha384"
+                                       ":rsa_pss_rsae_sha256")
+                || !SSL_CTX_set1_sigalgs_list(sctx,
+                                              "rsa_pss_rsae_sha384"
+                                              ":rsa_pss_rsae_sha256"))
+            goto end;
+    } else {
+        if (!SSL_CTX_set1_sigalgs_list(cctx, "rsa_pss_rsae_sha256:ECDSA+SHA256")
+                || !SSL_CTX_set1_sigalgs_list(sctx,
+                                              "rsa_pss_rsae_sha256:ECDSA+SHA256"))
+            goto end;
+    }
+
+    if (!TEST_int_eq(SSL_CTX_use_certificate_file(sctx, cert2,
+                                                  SSL_FILETYPE_PEM), 1)
+            || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx,
+                                                        privkey2,
+                                                        SSL_FILETYPE_PEM), 1)
+            || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* For tests 0 and 3 we expect 2 shared sigalgs, otherwise exactly 1 */
+    if (!TEST_int_eq(SSL_get_shared_sigalgs(serverssl, 0, &sig, &hash, NULL,
+                                            NULL, NULL),
+                     (idx == 0 || idx == 3) ? 2 : 1))
+        goto end;
+
+    if (!TEST_int_eq(hash, idx == 0 ? NID_sha384 : NID_sha256))
+        goto end;
+
+    if (!TEST_int_eq(sig, (idx == 4 || idx == 5) ? EVP_PKEY_EC
+                                                 : NID_rsassaPss))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(filterprov);
+    OPENSSL_CTX_free(tmpctx);
+
+    return testresult;
+}
+#endif /* OPENSSL_NO_EC */
+
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config\n")
 
 int setup_tests(void)
@@ -7730,13 +7862,19 @@ int setup_tests(void)
 
     cert = test_mk_file_path(certsdir, "servercert.pem");
     if (cert == NULL)
-        return 0;
+        goto err;
 
     privkey = test_mk_file_path(certsdir, "serverkey.pem");
-    if (privkey == NULL) {
-        OPENSSL_free(cert);
-        return 0;
-    }
+    if (privkey == NULL)
+        goto err;
+
+    cert2 = test_mk_file_path(certsdir, "server-ecdsa-cert.pem");
+    if (cert2 == NULL)
+        goto err;
+
+    privkey2 = test_mk_file_path(certsdir, "server-ecdsa-key.pem");
+    if (privkey2 == NULL)
+        goto err;
 
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OPENSSL_NO_KTLS) \
     && !defined(OPENSSL_NO_SOCK)
@@ -7859,13 +7997,25 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_multiblock_write, OSSL_NELEM(multiblock_cipherlist_data));
 #endif
     ADD_ALL_TESTS(test_servername, 10);
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_sigalgs_available, 6);
+#endif
     return 1;
+
+ err:
+    OPENSSL_free(cert);
+    OPENSSL_free(privkey);
+    OPENSSL_free(cert2);
+    OPENSSL_free(privkey2);
+    return 0;
 }
 
 void cleanup_tests(void)
 {
     OPENSSL_free(cert);
     OPENSSL_free(privkey);
+    OPENSSL_free(cert2);
+    OPENSSL_free(privkey2);
     bio_s_mempacket_test_free();
     bio_s_always_retry_free();
     OSSL_PROVIDER_unload(defctxnull);
