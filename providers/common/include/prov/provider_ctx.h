@@ -11,7 +11,7 @@
 #include <openssl/crypto.h>
 
 typedef struct prov_ctx_st {
-    const OSSL_PROVIDER *provider;
+    const OSSL_CORE_HANDLE *handle;
     OPENSSL_CTX *libctx;         /* For all provider modules */
 } PROV_CTX;
 
@@ -25,6 +25,6 @@ typedef struct prov_ctx_st {
 PROV_CTX *PROV_CTX_new(void);
 void PROV_CTX_free(PROV_CTX *ctx);
 void PROV_CTX_set0_library_context(PROV_CTX *ctx, OPENSSL_CTX *libctx);
-void PROV_CTX_set0_provider(PROV_CTX *ctx, const OSSL_PROVIDER *libctx);
+void PROV_CTX_set0_handle(PROV_CTX *ctx, const OSSL_CORE_HANDLE *handle);
 OPENSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx);
-const OSSL_PROVIDER *PROV_CTX_get0_provider(PROV_CTX *ctx);
+const OSSL_CORE_HANDLE *PROV_CTX_get0_handle(PROV_CTX *ctx);

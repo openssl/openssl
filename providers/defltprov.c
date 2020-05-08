@@ -567,7 +567,7 @@ static const OSSL_DISPATCH deflt_dispatch_table[] = {
 
 OSSL_provider_init_fn ossl_default_provider_init;
 
-int ossl_default_provider_init(const OSSL_CORE_PROVIDER *provider,
+int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
                                const OSSL_DISPATCH *in,
                                const OSSL_DISPATCH **out,
                                void **provctx)
@@ -606,8 +606,8 @@ int ossl_default_provider_init(const OSSL_CORE_PROVIDER *provider,
      */
     if ((*provctx = PROV_CTX_new()) == NULL)
         return 0;
-    PROV_CTX_set0_library_context(*provctx, c_get_libctx(provider));
-    PROV_CTX_set0_provider(*provctx, provider);
+    PROV_CTX_set0_library_context(*provctx, c_get_libctx(handle));
+    PROV_CTX_set0_handle(*provctx, handle);
 
     *out = deflt_dispatch_table;
 

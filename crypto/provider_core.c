@@ -488,7 +488,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
 
     /* Call the initialise function for the provider. */
     if (prov->init_function == NULL
-        || !prov->init_function((OSSL_CORE_PROVIDER *)prov, core_dispatch,
+        || !prov->init_function((OSSL_CORE_HANDLE *)prov, core_dispatch,
                                 &provider_dispatch, &tmp_provctx)) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL, NULL,
                        "name=%s", prov->name);
@@ -818,12 +818,12 @@ static OSSL_core_clear_last_error_mark_fn core_clear_last_error_mark;
 static OSSL_core_pop_error_to_mark_fn core_pop_error_to_mark;
 #endif
 
-static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_PROVIDER *prov)
+static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_HANDLE *handle)
 {
     return param_types;
 }
 
-static int core_get_params(const OSSL_CORE_PROVIDER *cprov, OSSL_PARAM params[])
+static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
 {
     int i;
     OSSL_PARAM *p;
@@ -831,7 +831,7 @@ static int core_get_params(const OSSL_CORE_PROVIDER *cprov, OSSL_PARAM params[])
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)cprov;
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
     if ((p = OSSL_PARAM_locate(params, "openssl-version")) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
@@ -855,25 +855,25 @@ static int core_get_params(const OSSL_CORE_PROVIDER *cprov, OSSL_PARAM params[])
     return 1;
 }
 
-static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_PROVIDER *cprov)
+static OPENSSL_CORE_CTX *core_get_libctx(const OSSL_CORE_HANDLE *handle)
 {
     /*
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)cprov;
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
     return (OPENSSL_CORE_CTX *)ossl_provider_library_context(prov);
 }
 
-static int core_thread_start(const OSSL_CORE_PROVIDER *cprov,
+static int core_thread_start(const OSSL_CORE_HANDLE *handle,
                              OSSL_thread_stop_handler_fn handfn)
 {
     /*
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)cprov;
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
     return ossl_init_thread_start(prov, prov->provctx, handfn);
 }
@@ -885,31 +885,31 @@ static int core_thread_start(const OSSL_CORE_PROVIDER *cprov,
  */
 #ifndef FIPS_MODULE
 /*
- * TODO(3.0) These error functions should use |prov| to select the proper
+ * TODO(3.0) These error functions should use |handle| to select the proper
  * library context to report in the correct error stack, at least if error
  * stacks become tied to the library context.
  * We cannot currently do that since there's no support for it in the
  * ERR subsystem.
  */
-static void core_new_error(const OSSL_CORE_PROVIDER *prov)
+static void core_new_error(const OSSL_CORE_HANDLE *handle)
 {
     ERR_new();
 }
 
-static void core_set_error_debug(const OSSL_CORE_PROVIDER *prov,
+static void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
                                  const char *file, int line, const char *func)
 {
     ERR_set_debug(file, line, func);
 }
 
-static void core_vset_error(const OSSL_CORE_PROVIDER *cprov,
+static void core_vset_error(const OSSL_CORE_HANDLE *handle,
                             uint32_t reason, const char *fmt, va_list args)
 {
     /*
      * We created this object originally and we know it is actually an
      * OSSL_PROVIDER *, so the cast is safe
      */
-    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)cprov;
+    OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
     /*
      * If the uppermost 8 bits are non-zero, it's an OpenSSL library
@@ -923,17 +923,17 @@ static void core_vset_error(const OSSL_CORE_PROVIDER *cprov,
     }
 }
 
-static int core_set_error_mark(const OSSL_CORE_PROVIDER *prov)
+static int core_set_error_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_set_mark();
 }
 
-static int core_clear_last_error_mark(const OSSL_CORE_PROVIDER *prov)
+static int core_clear_last_error_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_clear_last_mark();
 }
 
-static int core_pop_error_to_mark(const OSSL_CORE_PROVIDER *prov)
+static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
 {
     return ERR_pop_to_mark();
 }
