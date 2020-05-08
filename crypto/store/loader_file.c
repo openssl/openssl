@@ -949,6 +949,8 @@ static OSSL_STORE_LOADER_CTX *file_attach(const OSSL_STORE_LOADER *loader,
     ctx->flags |= FILE_FLAG_ATTACHED;
     ctx->_.file.file = bp;
     if (!file_find_type(ctx)) {
+        /* Safety measure */
+        ctx->_.file.file = NULL;
         OSSL_STORE_LOADER_CTX_free(ctx);
         ctx = NULL;
     }
@@ -1537,6 +1539,19 @@ static int file_close(OSSL_STORE_LOADER_CTX *ctx)
             OPENSSL_DIR_end(&ctx->_.dir.ctx);
         else
             BIO_free_all(ctx->_.file.file);
+    } else {
+        /*
+         * Because file_attach() called file_find_type(), we know that a
+         * BIO_f_buffer() has been pushed on top of the regular BIO.
+         */
+        BIO *buff = ctx->_.file.file;
+
+        /* Detach buff */
+        (void)BIO_pop(ctx->_.file.file);
+        /* Safety measure */
+        ctx->_.file.file = NULL;
+
+        BIO_free(buff);
     }
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
