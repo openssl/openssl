@@ -180,6 +180,26 @@ extern "C" {
 #define OSSL_KDF_NAME_KBKDF         "KBKDF"
 #define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
 
+/* Know RAND names */
+#define OSSL_RAND_PARAM_STATUS                  "status"
+#define OSSL_RAND_PARAM_STRENGTH                "strength"
+#define OSSL_RAND_PARAM_RESEED_REQUESTS         "reseed_requests"
+#define OSSL_RAND_PARAM_RESEED_TIME_INTERVAL    "reseed_time_interval"
+#define OSSL_RAND_PARAM_MAX_REQUEST             "max_request"
+#define OSSL_RAND_PARAM_MIN_ENTROPYLEN          "min_entropylen"
+#define OSSL_RAND_PARAM_MAX_ENTROPYLEN          "max_entropylen"
+#define OSSL_RAND_PARAM_MIN_NONCELEN            "min_noncelen"
+#define OSSL_RAND_PARAM_MAX_NONCELEN            "max_noncelen"
+#define OSSL_RAND_PARAM_MAX_PERSLEN             "max_perslen"
+#define OSSL_RAND_PARAM_MAX_ADINLEN             "max_adinlen"
+#define OSSL_RAND_PARAM_RESEED_CTR              "reseed_counter"
+#define OSSL_RAND_PARAM_RESEED_PROP_CTR         "reseed_prop_counter"
+#define OSSL_RAND_PARAM_PROPERTIES              OSSL_ALG_PARAM_PROPERTIES
+#define OSSL_RAND_PARAM_DIGEST                  OSSL_ALG_PARAM_DIGEST
+#define OSSL_RAND_PARAM_CIPHER                  OSSL_ALG_PARAM_CIPHER
+#define OSSL_RAND_PARAM_TEST_ENTROPY            "test_entropy"
+#define OSSL_RAND_PARAM_TEST_NONCE              "test_nonce"
+
 /* PKEY parameters */
 /* Common PKEY parameters */
 #define OSSL_PKEY_PARAM_BITS                "bits" /* integer */

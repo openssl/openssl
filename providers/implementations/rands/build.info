@@ -1,0 +1,7 @@
+
+# Missing: drbg_ctr.c
+SOURCE[../../libfips.a]=drbg.c
+SOURCE[../../libnonfips.a]=drbg.c
+
+# Missing: drbg_hmac.c crngt.c
+SOURCE[../../libimplementations.a]=test_rng.c drbg_hash.c

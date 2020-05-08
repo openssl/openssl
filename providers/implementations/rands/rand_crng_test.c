@@ -17,16 +17,42 @@
 #include "crypto/rand.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
-#include "rand_local.h"
+#include "crypto/rand_pool.h"
+#include "drbg_local.h"
+#include "crypto/rand_pool.h"
+#include "seeding/seeding.h"
 
 typedef struct crng_test_global_st {
     unsigned char crngt_prev[EVP_MAX_MD_SIZE];
     RAND_POOL *crngt_pool;
 } CRNG_TEST_GLOBAL;
 
-int (*crngt_get_entropy)(OPENSSL_CTX *, RAND_POOL *, unsigned char *,
-                         unsigned char *, unsigned int *)
-    = &rand_crngt_get_entropy_cb;
+static int crngt_get_entropy(OPENSSL_CTX *ctx, RAND_POOL *pool,
+                             unsigned char *buf, unsigned char *md,
+                             unsigned int *md_size)
+{
+    int r;
+    size_t n;
+    unsigned char *p;
+
+    if (pool == NULL)
+        return 0;
+
+    n = prov_pool_acquire_entropy(pool);
+    if (n >= CRNGT_BUFSIZ) {
+        EVP_MD *fmd = EVP_MD_fetch(ctx, "SHA256", "");
+        if (fmd == NULL)
+            return 0;
+        p = rand_pool_detach(pool);
+        r = EVP_Digest(p, CRNGT_BUFSIZ, md, md_size, fmd, NULL);
+        if (r != 0)
+            memcpy(buf, p, CRNGT_BUFSIZ);
+        rand_pool_reattach(pool, p);
+        EVP_MD_free(fmd);
+        return r;
+    }
+    return 0;
+}
 
 static void rand_crng_ossl_ctx_free(void *vcrngt_glob)
 {
@@ -137,3 +163,24 @@ void rand_crngt_cleanup_entropy(RAND_DRBG *drbg,
 {
     OPENSSL_secure_clear_free(out, outlen);
 }
+
+#if 0
+const OSSL_DISPATCH crngt_functions[] = {
+    { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))crngt_new },
+    { OSSL_FUNC_RAND_FREECTX, (void(*)(void))crngt_free },
+    { OSSL_FUNC_RAND_INSTANTIATE, (void(*)(void))crngt_instantiate },
+    { OSSL_FUNC_RAND_UNINSTANTIATE, (void(*)(void))crngt_uninstantiate },
+    { OSSL_FUNC_RAND_GENERATE, (void(*)(void))crngt_generate },
+    { OSSL_FUNC_RAND_RESEED, (void(*)(void))crngt_reseed },
+    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))drbg_enable_locking },
+    { OSSL_FUNC_RAND_LOCK, (void(*)(void))drbg_lock },
+    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))drbg_unlock },
+    { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
+      (void(*)(void))crngt_settable_ctx_params },
+    { OSSL_FUNC_RAND_SET_CTX_PARAMS, (void(*)(void))crngt_set_ctx_params },
+    { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
+      (void(*)(void))crngt_gettable_ctx_params },
+    { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))crngt_get_ctx_params },
+    { 0, NULL }
+};
+#endif
