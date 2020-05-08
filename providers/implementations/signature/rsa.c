@@ -306,26 +306,29 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
         {
             const RSA_PSS_PARAMS_30 *pss =
                 rsa_get0_pss_params_30(prsactx->rsa);
-            int md_nid = rsa_pss_params_30_hashalg(pss);
-            int mgf1md_nid = rsa_pss_params_30_maskgenhashalg(pss);
-            int min_saltlen = rsa_pss_params_30_saltlen(pss);
-            const char *mdname, *mgf1mdname;
 
-            mdname = rsa_oaeppss_nid2name(md_nid);
-            mgf1mdname = rsa_oaeppss_nid2name(mgf1md_nid);
-            prsactx->min_saltlen = min_saltlen;
+            if (!rsa_pss_params_30_is_unrestricted(pss)) {
+                int md_nid = rsa_pss_params_30_hashalg(pss);
+                int mgf1md_nid = rsa_pss_params_30_maskgenhashalg(pss);
+                int min_saltlen = rsa_pss_params_30_saltlen(pss);
+                const char *mdname, *mgf1mdname;
 
-            if (mdname == NULL || mgf1mdname == NULL)
-                return 0;
+                mdname = rsa_oaeppss_nid2name(md_nid);
+                mgf1mdname = rsa_oaeppss_nid2name(mgf1md_nid);
+                prsactx->min_saltlen = min_saltlen;
 
-            strncpy(prsactx->mdname, mdname, sizeof(prsactx->mdname));
-            strncpy(prsactx->mgf1_mdname, mgf1mdname,
-                    sizeof(prsactx->mgf1_mdname));
-            prsactx->saltlen = min_saltlen;
+                if (mdname == NULL || mgf1mdname == NULL)
+                    return 0;
 
-            return rsa_setup_md(prsactx, mdname, prsactx->propq)
-                && rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
-                && rsa_check_parameters(prsactx->md, prsactx);
+                strncpy(prsactx->mdname, mdname, sizeof(prsactx->mdname));
+                strncpy(prsactx->mgf1_mdname, mgf1mdname,
+                        sizeof(prsactx->mgf1_mdname));
+                prsactx->saltlen = min_saltlen;
+
+                return rsa_setup_md(prsactx, mdname, prsactx->propq)
+                    && rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
+                    && rsa_check_parameters(prsactx->md, prsactx);
+            }
         }
 
         break;
