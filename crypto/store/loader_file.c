@@ -1204,12 +1204,9 @@ static OSSL_STORE_INFO *file_try_read_msblob(BIO *bp, int *matchcount)
     (*matchcount)++;
 
     {
-        EVP_PKEY *tmp = NULL;
-
-        if (ispub)
-            tmp = b2i_PublicKey_bio(bp);
-        else
-            tmp = b2i_PrivateKey_bio(bp);
+        EVP_PKEY *tmp = ispub
+            ? b2i_PublicKey_bio(bp)
+            : b2i_PrivateKey_bio(bp);
 
         if (tmp == NULL
             || (result = OSSL_STORE_INFO_new_PKEY(tmp)) == NULL) {
