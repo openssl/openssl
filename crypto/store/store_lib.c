@@ -662,7 +662,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
 
     if ((loader =
-         ossl_store_get0_loader_int(scheme == NULL ? scheme : "file")) == NULL
+         ossl_store_get0_loader_int(scheme != NULL ? scheme : "file")) == NULL
         || (loader_ctx = loader->attach(loader, bp, libctx, propq,
                                         ui_method, ui_data)) == NULL)
         return NULL;

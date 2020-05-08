@@ -794,10 +794,8 @@ static int file_find_type(OSSL_STORE_LOADER_CTX *ctx)
     BIO *buff = NULL;
     char peekbuf[4096] = { 0, };
 
-    if ((buff = BIO_new(BIO_f_buffer())) == NULL) {
-        BIO_free_all(buff);
+    if ((buff = BIO_new(BIO_f_buffer())) == NULL)
         return 0;
-    }
 
     ctx->_.file.file = BIO_push(buff, ctx->_.file.file);
     if (BIO_buffer_peek(ctx->_.file.file, peekbuf, sizeof(peekbuf) - 1) > 0) {
@@ -938,7 +936,7 @@ static OSSL_STORE_LOADER_CTX *file_attach(const OSSL_STORE_LOADER *loader,
                                           const UI_METHOD *ui_method,
                                           void *ui_data)
 {
-    OSSL_STORE_LOADER_CTX *ctx = NULL;
+    OSSL_STORE_LOADER_CTX *ctx;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL
         || (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)) {
@@ -1538,11 +1536,10 @@ static int file_eof(OSSL_STORE_LOADER_CTX *ctx)
 static int file_close(OSSL_STORE_LOADER_CTX *ctx)
 {
     if ((ctx->flags & FILE_FLAG_ATTACHED) == 0) {
-        if (ctx->type == is_dir) {
+        if (ctx->type == is_dir)
             OPENSSL_DIR_end(&ctx->_.dir.ctx);
-        } else {
+        else
             BIO_free_all(ctx->_.file.file);
-        }
     }
     OSSL_STORE_LOADER_CTX_free(ctx);
     return 1;
