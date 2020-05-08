@@ -599,10 +599,7 @@ my @tests_tls_1_1 = (
 );
 
 push @tests, @tests_non_fips unless $fips_mode;
-
-#TODO(3.0): Re-enable these PSS tests in a $no_deflt_libctx build once we have
-#           support for it
-push @tests, @tests_pss unless $no_deflt_libctx;
+push @tests, @tests_pss;
 push @tests, @tests_tls_1_1 unless disabled("tls1_1") || $no_deflt_libctx;
 
 my $server_tls_1_3;
