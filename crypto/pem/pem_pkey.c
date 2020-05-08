@@ -56,6 +56,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
             break;
         }
         OSSL_STORE_INFO_free(info);
+        info = NULL;
     }
 
     if (ret != NULL && x != NULL)
@@ -115,6 +116,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
             break;
         }
         OSSL_STORE_INFO_free(info);
+        info = NULL;
     }
 
     if (ret != NULL && x != NULL)
@@ -213,6 +215,7 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
             }
         }
         OSSL_STORE_INFO_free(info);
+        info = NULL;
     }
 
     if (ret != NULL && x != NULL)
