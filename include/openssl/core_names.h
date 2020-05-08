@@ -180,25 +180,37 @@ extern "C" {
 #define OSSL_KDF_NAME_KBKDF         "KBKDF"
 #define OSSL_KDF_NAME_KRB5KDF       "KRB5KDF"
 
-/* Know RAND names */
-#define OSSL_RAND_PARAM_STATUS                  "status"
+/* Known RAND names */
+#define OSSL_RAND_PARAM_STATE                   "state"
 #define OSSL_RAND_PARAM_STRENGTH                "strength"
-#define OSSL_RAND_PARAM_RESEED_REQUESTS         "reseed_requests"
-#define OSSL_RAND_PARAM_RESEED_TIME_INTERVAL    "reseed_time_interval"
-#define OSSL_RAND_PARAM_MAX_REQUEST             "max_request"
-#define OSSL_RAND_PARAM_MIN_ENTROPYLEN          "min_entropylen"
-#define OSSL_RAND_PARAM_MAX_ENTROPYLEN          "max_entropylen"
-#define OSSL_RAND_PARAM_MIN_NONCELEN            "min_noncelen"
-#define OSSL_RAND_PARAM_MAX_NONCELEN            "max_noncelen"
-#define OSSL_RAND_PARAM_MAX_PERSLEN             "max_perslen"
-#define OSSL_RAND_PARAM_MAX_ADINLEN             "max_adinlen"
-#define OSSL_RAND_PARAM_RESEED_CTR              "reseed_counter"
-#define OSSL_RAND_PARAM_RESEED_PROP_CTR         "reseed_prop_counter"
-#define OSSL_RAND_PARAM_PROPERTIES              OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_RAND_PARAM_DIGEST                  OSSL_ALG_PARAM_DIGEST
-#define OSSL_RAND_PARAM_CIPHER                  OSSL_ALG_PARAM_CIPHER
 #define OSSL_RAND_PARAM_TEST_ENTROPY            "test_entropy"
 #define OSSL_RAND_PARAM_TEST_NONCE              "test_nonce"
+
+/* RAND/DRBG names */
+#define OSSL_DRBG_PARAM_RESEED_REQUESTS         "reseed_requests"
+#define OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL    "reseed_time_interval"
+#define OSSL_DRBG_PARAM_MAX_REQUEST             "max_request"
+#define OSSL_DRBG_PARAM_MIN_ENTROPYLEN          "min_entropylen"
+#define OSSL_DRBG_PARAM_MAX_ENTROPYLEN          "max_entropylen"
+#define OSSL_DRBG_PARAM_MIN_NONCELEN            "min_noncelen"
+#define OSSL_DRBG_PARAM_MAX_NONCELEN            "max_noncelen"
+#define OSSL_DRBG_PARAM_MAX_PERSLEN             "max_perslen"
+#define OSSL_DRBG_PARAM_MAX_ADINLEN             "max_adinlen"
+#define OSSL_DRBG_PARAM_RESEED_CTR              "reseed_counter"
+#define OSSL_DRBG_PARAM_RESEED_TIME             "reseed_time"
+#define OSSL_DRBG_PARAM_PROPERTIES              OSSL_ALG_PARAM_PROPERTIES
+#define OSSL_DRBG_PARAM_DIGEST                  OSSL_ALG_PARAM_DIGEST
+#define OSSL_DRBG_PARAM_CIPHER                  OSSL_ALG_PARAM_CIPHER
+#define OSSL_DRBG_PARAM_MAC                     OSSL_ALG_PARAM_MAC
+#define OSSL_DRBG_PARAM_USE_DF                  "use_derivation_function"
+
+/* DRBG call back parameters */
+#define OSSL_DRBG_PARAM_ENTROPY_REQUIRED        "entropy_required"
+#define OSSL_DRBG_PARAM_PREDICTION_RESISTANCE   "prediction_resistance"
+#define OSSL_DRBG_PARAM_MIN_LENGTH              "minium_length"
+#define OSSL_DRBG_PARAM_MAX_LENGTH              "maxium_length"
+#define OSSL_DRBG_PARAM_RANDOM_DATA             "random_data"
+#define OSSL_DRBG_PARAM_SIZE                    "size"
 
 /* PKEY parameters */
 /* Common PKEY parameters */

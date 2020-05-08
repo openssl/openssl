@@ -1,16 +1,10 @@
 LIBS=../../libcrypto
 
-$COMMON=rand_pool.c rand_lib.c drbg_lib.c drbg_ctr.c drbg_hash.c drbg_hmac.c
-$CRYPTO=rand_unix.c rand_win.c randfile.c rand_err.c
+$COMMON=drbg_lib.c rand_lib.c
+$CRYPTO=randfile.c rand_err.c
 
 IF[{- !$disabled{'egd'} -}]
-  $CYPTO=$CYPTO rand_egd.c
-ENDIF
-IF[{- $config{target} =~ /vxworks/i -}]
-  $CYPTO=$CYPTO rand_vxworks.c
-ENDIF
-IF[{- $config{target} =~ /vms/i -}]
-  $CYPTO=$CYPTO rand_vms.c
+  $CRYPTO=$CRYPTO rand_egd.c
 ENDIF
 
 

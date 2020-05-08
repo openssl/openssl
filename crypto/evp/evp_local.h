@@ -69,16 +69,18 @@ struct evp_kdf_ctx_st {
 struct evp_rand_ctx_st {
     EVP_RAND *meth;             /* Method structure */
     void *data;                 /* Algorithm-specific data */
-    EVP_RAND_CTX *parent;       /* Parent seed source */
-    size_t max_request;         /* Cached: maximum number of bytes generated */
-    unsigned int strength;      /* Cache: bit strenght of generator */
+    size_t max_request;         /*
+                                 * Cached: maximum number of bytes generated 
+                                 * in a single call to the generate function
+                                 */
+    unsigned int strength;      /* Cached: bit strength of generator */
 } /* EVP_RAND_CTX */ ;
 
 struct evp_rand_st {
     OSSL_PROVIDER *prov;
     int name_id;
     CRYPTO_REF_COUNT refcnt;
-    CRYPTO_RWLOCK *lock;
+    CRYPTO_RWLOCK *refcnt_lock;
 
     const OSSL_DISPATCH *dispatch;
     OSSL_OP_rand_newctx_fn *newctx;
@@ -88,16 +90,16 @@ struct evp_rand_st {
     OSSL_OP_rand_generate_fn *generate;
     OSSL_OP_rand_reseed_fn *reseed;
     OSSL_OP_rand_nonce_fn *nonce;
-    OSSL_OP_rand_set_callbacks_fn *set_callbacks;
-    OSSL_OP_rand_enable_locking_fn *enable_prov_locking;
-    OSSL_OP_rand_lock_fn *prov_lock;
-    OSSL_OP_rand_unlock_fn *prov_unlock;
+    OSSL_OP_rand_enable_locking_fn *enable_locking;
+    OSSL_OP_rand_lock_fn *lock;
+    OSSL_OP_rand_unlock_fn *unlock;
     OSSL_OP_rand_gettable_params_fn *gettable_params;
     OSSL_OP_rand_gettable_ctx_params_fn *gettable_ctx_params;
     OSSL_OP_rand_settable_ctx_params_fn *settable_ctx_params;
     OSSL_OP_rand_get_params_fn *get_params;
     OSSL_OP_rand_get_ctx_params_fn *get_ctx_params;
     OSSL_OP_rand_set_ctx_params_fn *set_ctx_params;
+    OSSL_OP_rand_set_callbacks_fn *set_callbacks;
     OSSL_OP_rand_verify_zeroization_fn *verify_zeroization;
 } /* EVP_RAND */ ;
 

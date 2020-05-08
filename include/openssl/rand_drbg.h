@@ -80,11 +80,9 @@ extern "C" {
  */
 RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx, int type, unsigned int flags,
                             RAND_DRBG *parent);
-RAND_DRBG *RAND_DRBG_secure_new_ex(OPENSSL_CTX *ctx, int type,
-                                   unsigned int flags, RAND_DRBG *parent);
 RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent);
-RAND_DRBG *RAND_DRBG_secure_new(int type, unsigned int flags, RAND_DRBG *parent);
-int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags);
+DEPRECATEDIN_3_0(int RAND_DRBG_set(RAND_DRBG *drbg, int type,
+                                   unsigned int flags))
 int RAND_DRBG_set_defaults(int type, unsigned int flags);
 int RAND_DRBG_instantiate(RAND_DRBG *drbg,
                           const unsigned char *pers, size_t perslen);

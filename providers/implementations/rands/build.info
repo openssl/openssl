@@ -1,8 +1,6 @@
 SUBDIRS=seeding
 
-# Missing: drbg_ctr.c
-SOURCE[../../libfips.a]=drbg.c
-SOURCE[../../libnonfips.a]=drbg.c
+$COMMON=drbg.c test_rng.c drbg_ctr.c drbg_hash.c drbg_hmac.c crngt.c rand_pool.c
 
-# Missing: drbg_hmac.c
-SOURCE[../../libimplementations.a]=test_rng.c drbg_hash.c crngt.c
+SOURCE[../../libfips.a]=$COMMON
+SOURCE[../../libnonfips.a]=$COMMON
