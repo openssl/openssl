@@ -115,8 +115,8 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
  * Note that this function is considered unsafe, all depending on what the
  * BIO actually reads.
  */
-OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, const char *scheme,
-                                  OPENSSL_CTX *libctx, const char *propq,
+OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, OPENSSL_CTX *libctx,
+                                  const char *scheme, const char *propq,
                                   const UI_METHOD *ui_method, void *ui_data,
                                   OSSL_STORE_post_process_info_fn post_process,
                                   void *post_process_data);
