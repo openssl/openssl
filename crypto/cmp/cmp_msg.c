@@ -218,7 +218,7 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, X509 *refcert,
 static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
 {
     OSSL_CRMF_MSG *crm = NULL;
-    X509 *refcert = ctx->oldCert != NULL ? ctx->oldCert : ctx->clCert;
+    X509 *refcert = ctx->oldCert != NULL ? ctx->oldCert : ctx->cert;
     /* refcert defaults to current client cert */
     EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx, 0);
     STACK_OF(GENERAL_NAME) *default_sans = NULL;

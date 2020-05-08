@@ -1535,7 +1535,8 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *e)
     if (opt_srv_cert != NULL) {
         X509 *srv_cert = load_cert_pwd(opt_srv_cert, opt_srv_keypass,
                                        "certificate of the server");
-        if (srv_cert == NULL || !OSSL_CMP_CTX_set1_clCert(ctx, srv_cert)) {
+
+        if (srv_cert == NULL || !OSSL_CMP_CTX_set1_cert(ctx, srv_cert)) {
             X509_free(srv_cert);
             goto err;
         }
@@ -1939,7 +1940,7 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
     }
 
     if (opt_cert != NULL) {
-        X509 *clcert;
+        X509 *cert;
         STACK_OF(X509) *certs = NULL;
         int ok;
 
@@ -1948,14 +1949,14 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
             /* opt_keypass is needed if opt_cert is an encrypted PKCS#12 file */
             goto err;
 
-        clcert = sk_X509_delete(certs, 0);
-        if (clcert == NULL) {
+        cert = sk_X509_delete(certs, 0);
+        if (cert == NULL) {
             CMP_err("no client certificate found");
             sk_X509_pop_free(certs, X509_free);
             goto err;
         }
-        ok = OSSL_CMP_CTX_set1_clCert(ctx, clcert);
-        X509_free(clcert);
+        ok = OSSL_CMP_CTX_set1_cert(ctx, cert);
+        X509_free(cert);
 
         if (ok) {
             /* add any remaining certs to the list of untrusted certs */

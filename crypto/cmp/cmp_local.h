@@ -68,8 +68,8 @@ struct ossl_cmp_ctx_st {
 
     /* client authentication */
     int unprotectedSend; /* send unprotected PKI messages */
-    X509 *clCert; /* client cert used to identify and sign for MSG_SIG_ALG */
-    EVP_PKEY *pkey; /* the key pair corresponding to clCert */
+    X509 *cert; /* protection cert used to identify and sign for MSG_SIG_ALG */
+    EVP_PKEY *pkey; /* the key pair corresponding to cert */
     ASN1_OCTET_STRING *referenceValue; /* optional user name for MSG_MAC_ALG */
     ASN1_OCTET_STRING *secretValue; /* password/shared secret for MSG_MAC_ALG */
     /* PBMParameters for MSG_MAC_ALG */

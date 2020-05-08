@@ -165,7 +165,7 @@ static int test_cmp_create_ir_protection_fails(void)
     if (!TEST_true(OSSL_CMP_CTX_set1_pkey(fixture->cmp_ctx, newkey))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 0))
             /* newkey used by default for signing does not match cert: */
-            || !TEST_true(OSSL_CMP_CTX_set1_clCert(fixture->cmp_ctx, cert))) {
+            || !TEST_true(OSSL_CMP_CTX_set1_cert(fixture->cmp_ctx, cert))) {
         tear_down(fixture);
         fixture = NULL;
     }

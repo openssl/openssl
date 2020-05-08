@@ -4771,7 +4771,7 @@ OSSL_CMP_CTX_set0_trustedStore          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_trustedStore          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_untrusted_certs       ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_untrusted_certs       ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_CTX_set1_clCert                ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_set1_cert                  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_pkey                  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_referenceValue        ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_secretValue           ?	3_0_0	EXIST::FUNCTION:CMP

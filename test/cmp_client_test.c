@@ -67,7 +67,7 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
             || !ossl_cmp_mock_srv_set1_certOut(fixture->srv_ctx, client_cert)
             || (srv_cmp_ctx =
                 OSSL_CMP_SRV_CTX_get0_cmp_ctx(fixture->srv_ctx)) == NULL
-            || !OSSL_CMP_CTX_set1_clCert(srv_cmp_ctx, server_cert)
+            || !OSSL_CMP_CTX_set1_cert(srv_cmp_ctx, server_cert)
             || !OSSL_CMP_CTX_set1_pkey(srv_cmp_ctx, server_key))
         goto err;
     if (!TEST_ptr(fixture->cmp_ctx = ctx = OSSL_CMP_CTX_new())

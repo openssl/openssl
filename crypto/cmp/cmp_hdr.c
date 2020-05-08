@@ -303,8 +303,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
      * The sender name is copied from the subject of the client cert, if any,
      * or else from the subject name provided for certification requests.
      */
-    sender = ctx->clCert != NULL ?
-        X509_get_subject_name(ctx->clCert) : ctx->subjectName;
+    sender = ctx->cert != NULL ?
+        X509_get_subject_name(ctx->cert) : ctx->subjectName;
     if (!ossl_cmp_hdr_set1_sender(hdr, sender))
         return 0;
 
@@ -321,8 +321,8 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         rcp = ctx->issuer;
     } else if (ctx->oldCert != NULL) {
         rcp = X509_get_issuer_name(ctx->oldCert);
-    } else if (ctx->clCert != NULL) {
-        rcp = X509_get_issuer_name(ctx->clCert);
+    } else if (ctx->cert != NULL) {
+        rcp = X509_get_issuer_name(ctx->cert);
     }
     if (!ossl_cmp_hdr_set1_recipient(hdr, rcp))
         return 0;
