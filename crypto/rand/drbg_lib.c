@@ -14,6 +14,7 @@
 #include "rand_local.h"
 #include "internal/thread_once.h"
 #include "crypto/rand.h"
+#include "crypto/rand_pool.h"
 #include "crypto/cryptlib.h"
 
 /*
@@ -468,13 +469,8 @@ static RAND_DRBG *rand_drbg_new(OPENSSL_CTX *ctx,
     drbg->parent = parent;
 
     if (parent == NULL) {
-#ifdef FIPS_MODULE
-        drbg->get_entropy = rand_crngt_get_entropy;
-        drbg->cleanup_entropy = rand_crngt_cleanup_entropy;
-#else
         drbg->get_entropy = rand_drbg_get_entropy;
         drbg->cleanup_entropy = rand_drbg_cleanup_entropy;
-#endif
 #ifndef RAND_DRBG_GET_RANDOM_NONCE
         drbg->get_nonce = rand_drbg_get_nonce;
         drbg->cleanup_nonce = rand_drbg_cleanup_nonce;
