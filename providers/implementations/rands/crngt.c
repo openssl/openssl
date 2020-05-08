@@ -14,12 +14,13 @@
 
 #include <string.h>
 #include <openssl/evp.h>
-#include "crypto/rand.h"
-#include "internal/thread_once.h"
+#include <openssl/core_numbers.h>
+#include <openssl/params.h>
+#include "prov/providercommon.h"
+#include "prov/provider_ctx.h"
 #include "internal/cryptlib.h"
-#include "crypto/rand_pool.h"
+#include "prov/rand_pool.h"
 #include "drbg_local.h"
-#include "crypto/rand_pool.h"
 #include "seeding/seeding.h"
 
 typedef struct crng_test_global_st {
@@ -34,13 +35,14 @@ static int crngt_get_entropy(OPENSSL_CTX *ctx, RAND_POOL *pool,
     int r;
     size_t n;
     unsigned char *p;
+    EVP_MD *fmd;
 
     if (pool == NULL)
         return 0;
 
     n = prov_pool_acquire_entropy(pool);
     if (n >= CRNGT_BUFSIZ) {
-        EVP_MD *fmd = EVP_MD_fetch(ctx, "SHA256", "");
+        fmd = EVP_MD_fetch(ctx, "SHA256", "");
         if (fmd == NULL)
             return 0;
         p = rand_pool_detach(pool);
@@ -90,36 +92,7 @@ static const OPENSSL_CTX_METHOD rand_crng_ossl_ctx_method = {
     rand_crng_ossl_ctx_free,
 };
 
-int rand_crngt_get_entropy_cb(OPENSSL_CTX *ctx,
-                              RAND_POOL *pool,
-                              unsigned char *buf,
-                              unsigned char *md,
-                              unsigned int *md_size)
-{
-    int r;
-    size_t n;
-    unsigned char *p;
-
-    if (pool == NULL)
-        return 0;
-
-    n = rand_pool_acquire_entropy(pool);
-    if (n >= CRNGT_BUFSIZ) {
-        EVP_MD *fmd = EVP_MD_fetch(ctx, "SHA256", "");
-        if (fmd == NULL)
-            return 0;
-        p = rand_pool_detach(pool);
-        r = EVP_Digest(p, CRNGT_BUFSIZ, md, md_size, fmd, NULL);
-        if (r != 0)
-            memcpy(buf, p, CRNGT_BUFSIZ);
-        rand_pool_reattach(pool, p);
-        EVP_MD_free(fmd);
-        return r;
-    }
-    return 0;
-}
-
-size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
+size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
                               int prediction_resistance)
@@ -129,8 +102,9 @@ size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
     RAND_POOL *pool;
     size_t q, r = 0, s, t = 0;
     int attempts = 3;
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
     CRNG_TEST_GLOBAL *crngt_glob
-        = openssl_ctx_get_data(drbg->libctx, OPENSSL_CTX_RAND_CRNGT_INDEX,
+        = openssl_ctx_get_data(libctx, OPENSSL_CTX_RAND_CRNGT_INDEX,
                                &rand_crng_ossl_ctx_method);
 
     if (crngt_glob == NULL)
@@ -141,7 +115,7 @@ size_t rand_crngt_get_entropy(RAND_DRBG *drbg,
 
     while ((q = rand_pool_bytes_needed(pool, 1)) > 0 && attempts-- > 0) {
         s = q > sizeof(buf) ? sizeof(buf) : q;
-        if (!crngt_get_entropy(drbg->libctx, crngt_glob->crngt_pool, buf, md,
+        if (!crngt_get_entropy(libctx, crngt_glob->crngt_pool, buf, md,
                                &sz)
             || memcmp(crngt_glob->crngt_prev, md, sz) == 0
             || !rand_pool_add(pool, buf, s, s * 8))
@@ -158,29 +132,8 @@ err:
     return r;
 }
 
-void rand_crngt_cleanup_entropy(RAND_DRBG *drbg,
+void prov_crngt_cleanup_entropy(PROV_DRBG *drbg,
                                 unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(out, outlen);
 }
-
-#if 0
-const OSSL_DISPATCH crngt_functions[] = {
-    { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))crngt_new },
-    { OSSL_FUNC_RAND_FREECTX, (void(*)(void))crngt_free },
-    { OSSL_FUNC_RAND_INSTANTIATE, (void(*)(void))crngt_instantiate },
-    { OSSL_FUNC_RAND_UNINSTANTIATE, (void(*)(void))crngt_uninstantiate },
-    { OSSL_FUNC_RAND_GENERATE, (void(*)(void))crngt_generate },
-    { OSSL_FUNC_RAND_RESEED, (void(*)(void))crngt_reseed },
-    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))drbg_enable_locking },
-    { OSSL_FUNC_RAND_LOCK, (void(*)(void))drbg_lock },
-    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))drbg_unlock },
-    { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
-      (void(*)(void))crngt_settable_ctx_params },
-    { OSSL_FUNC_RAND_SET_CTX_PARAMS, (void(*)(void))crngt_set_ctx_params },
-    { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
-      (void(*)(void))crngt_gettable_ctx_params },
-    { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))crngt_get_ctx_params },
-    { 0, NULL }
-};
-#endif
