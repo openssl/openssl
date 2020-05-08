@@ -759,6 +759,11 @@ const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 #endif
 }
 
+void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov)
+{
+    return prov->provctx;
+}
+
 OPENSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov)
 {
     /* TODO(3.0) just: return prov->libctx; */
