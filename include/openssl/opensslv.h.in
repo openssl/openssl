@@ -81,7 +81,7 @@ extern "C" {
  *
  * These strings are defined separately to allow them to be parsable.
  */
-# define OPENSSL_RELEASE_DATE {- $config{release_date} -}
+# define OPENSSL_RELEASE_DATE "{- $config{release_date} -}"
 
 /*
  * SECTION 4: BACKWARD COMPATIBILITY
