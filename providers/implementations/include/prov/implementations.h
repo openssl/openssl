@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core.h>
+#include <openssl/types.h>
+
 /* Digests */
 extern const OSSL_DISPATCH sha1_functions[];
 extern const OSSL_DISPATCH sha224_functions[];
@@ -252,6 +255,12 @@ extern const OSSL_DISPATCH kdf_x942_kdf_functions[];
 #endif
 extern const OSSL_DISPATCH kdf_krb5kdf_functions[];
 
+/* RNGs */
+extern const OSSL_DISPATCH test_rng_functions[];
+extern const OSSL_DISPATCH drbg_hash_functions[];
+extern const OSSL_DISPATCH drbg_hmac_functions[];
+extern const OSSL_DISPATCH drbg_ctr_functions[];
+extern const OSSL_DISPATCH crngt_functions[];
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
