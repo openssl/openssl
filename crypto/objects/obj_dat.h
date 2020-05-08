@@ -1088,7 +1088,7 @@ static const unsigned char so[7845] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x08,       /* [ 7836] OBJ_NAIRealm */
 };
 
-#define NUM_NID 1218
+#define NUM_NID 1219
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2308,9 +2308,10 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"modp_4096", "modp_4096", NID_modp_4096},
     {"modp_6144", "modp_6144", NID_modp_6144},
     {"modp_8192", "modp_8192", NID_modp_8192},
+    {"KxGOST18", "kx-gost18", NID_kx_gost18},
 };
 
-#define NUM_SN 1209
+#define NUM_SN 1210
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2489,6 +2490,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1038,    /* "KxECDHE" */
     1040,    /* "KxECDHE-PSK" */
     1045,    /* "KxGOST" */
+    1218,    /* "KxGOST18" */
     1043,    /* "KxPSK" */
     1037,    /* "KxRSA" */
     1042,    /* "KxRSA_PSK" */
@@ -3523,7 +3525,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1209
+#define NUM_LN 1210
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -4334,6 +4336,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1038,    /* "kx-ecdhe" */
     1040,    /* "kx-ecdhe-psk" */
     1045,    /* "kx-gost" */
+    1218,    /* "kx-gost18" */
     1043,    /* "kx-psk" */
     1037,    /* "kx-rsa" */
     1042,    /* "kx-rsa-psk" */
