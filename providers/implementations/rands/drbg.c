@@ -11,12 +11,15 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/evp.h>
 #include "crypto/rand.h"
 #include "drbg_local.h"
 #include "internal/thread_once.h"
 #include "crypto/cryptlib.h"
-#include "seeding/seeding.h"
-#include "crypto/rand_pool.h"
+#include "prov/seeding.h"
+#include "prov/rand_pool.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommonerr.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG
@@ -31,25 +34,13 @@
  * a much bigger deal than just re-setting an allocated resource.)
  */
 
-#ifdef FIPS_MODULE
-# define get_entropy        prov_crngt_get_entropy
-# define cleanup_entropy    prov_crngt_cleanup_entropy
-#else
-# define get_entropy        prov_drbg_get_entropy
-# define cleanup_entropy    prov_drbg_cleanup_entropy
-#endif
-
 /* NIST SP 800-90A DRBG recommends the use of a personalization string. */
 static const char ossl_pers_string[] = DRBG_DEFAULT_PERS_STRING;
 
-static unsigned int master_reseed_interval = MASTER_RESEED_INTERVAL;
-static unsigned int slave_reseed_interval  = SLAVE_RESEED_INTERVAL;
-
-static time_t master_reseed_time_interval = MASTER_RESEED_TIME_INTERVAL;
-static time_t slave_reseed_time_interval  = SLAVE_RESEED_TIME_INTERVAL;
-
 static const OSSL_DISPATCH *find_call(const OSSL_DISPATCH *dispatch,
                                       int function);
+
+static int rand_drbg_restart(PROV_DRBG *drbg);
 
 int drbg_lock(void *vctx)
 {
@@ -71,14 +62,12 @@ void drbg_unlock(void *vctx)
 static int drbg_lock_parent(PROV_DRBG *drbg)
 {
     void *parent = drbg->parent;
-    const OSSL_DISPATCH *pfunc;
 
-    if (parent != NULL) {
-        pfunc = find_call(drbg->parent_dispatch, OSSL_FUNC_RAND_LOCK);
-        if (pfunc != NULL && !OSSL_get_OP_rand_lock(pfunc)(parent)) {
-            ERR_raise(ERR_LIB_PROV, RAND_R_PARENT_LOCKING_NOT_ENABLED);
-            return 0;
-        }
+    if (parent != NULL
+            && drbg->parent_lock != NULL
+            && !drbg->parent_lock(parent)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_LOCKING_NOT_ENABLED);
+        return 0;
     }
     return 1;
 }
@@ -86,74 +75,62 @@ static int drbg_lock_parent(PROV_DRBG *drbg)
 static void drbg_unlock_parent(PROV_DRBG *drbg)
 {
     void *parent = drbg->parent;
-    const OSSL_DISPATCH *pfunc;
 
-    if (parent != NULL) {
-        pfunc = find_call(drbg->parent_dispatch, OSSL_FUNC_RAND_UNLOCK);
-        if (pfunc != NULL)
-            OSSL_get_OP_rand_unlock(pfunc)(parent);
-    }
+    if (parent != NULL && drbg->parent_unlock != NULL)
+        drbg->parent_unlock(parent);
 }
 
-static int get_parent_strength(PROV_DRBG *drbg, int *str)
+static int get_parent_strength(PROV_DRBG *drbg, unsigned int *str)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    const OSSL_DISPATCH *pfunc;
     void *parent = drbg->parent;
+    int res;
 
-    pfunc = find_call(drbg->parent_dispatch, OSSL_FUNC_RAND_GET_CTX_PARAMS);
-    if (pfunc == NULL) {
-        ERR_raise(ERR_LIB_PROV, RAND_R_UNABLE_TO_GET_PARENT_STRENGTH);
+    if (drbg->parent_get_ctx_params == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PARENT_STRENGTH);
         return 0;
     }
-    *params = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_STRENGTH, str);
+
+    *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, str);
     if (!drbg_lock_parent(drbg)) {
-        ERR_raise(ERR_LIB_PROV, RAND_R_UNABLE_TO_LOCK_PARENT);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         return 0;
     }
-    if (!OSSL_get_OP_rand_get_ctx_params(pfunc)(parent, params)) {
-        drbg_unlock_parent(drbg);
-        ERR_raise(ERR_LIB_PROV, RAND_R_UNABLE_TO_GET_PARENT_STRENGTH);
-        return 0;
-    }
+    res = drbg->parent_get_ctx_params(parent, params);
     drbg_unlock_parent(drbg);
+    if (!res) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_PARENT_STRENGTH);
+        return 0;
+    }
     return 1;
 }
 
 static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    const OSSL_DISPATCH *pfunc;
     void *parent = drbg->parent;
     unsigned int r;
 
-    pfunc = find_call(drbg->parent_dispatch, OSSL_FUNC_RAND_GET_CTX_PARAMS);
-    if (pfunc == NULL) {
-        ERR_raise(ERR_LIB_PROV,
-                  RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER);
-        goto err;
-    }
-    *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_RESEED_PROP_CTR, &r);
+    *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_CTR, &r);
     if (!drbg_lock_parent(drbg)) {
-        ERR_raise(ERR_LIB_PROV, RAND_R_UNABLE_TO_LOCK_PARENT);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         goto err;
     }
-    if (!OSSL_get_OP_rand_get_ctx_params(pfunc)(parent, params)) {
+    if (!drbg->parent_get_ctx_params(parent, params)) {
         drbg_unlock_parent(drbg);
-        ERR_raise(ERR_LIB_PROV, RAND_R_UNABLE_TO_GET_RESEED_PROP_CTR);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_RESEED_PROP_CTR);
         goto err;
     }
     drbg_unlock_parent(drbg);
     return r;
 
  err:
-    r = tsan_load(&drbg->reseed_prop_counter) - 2;
+    r = tsan_load(&drbg->reseed_counter) - 2;
     if (r == 0)
         r = UINT_MAX;
     return r;
 }
 
-#ifndef FIPS_MODULE
 /*
  * Implements the get_entropy() callback (see RAND_DRBG_set_callbacks())
  *
@@ -161,20 +138,19 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
  * is fetched using the parent's RAND_DRBG_generate().
  *
  * Otherwise, the entropy is polled from the system entropy sources
- * using rand_pool_acquire_entropy().
+ * using prov_pool_acquire_entropy().
  *
  * If a random pool has been added to the DRBG using RAND_add(), then
  * its entropy will be used up first.
  */
 static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
-                                    int entropy, size_t min_len, size_t max_len,
-                                    int prediction_resistance)
+                                    int entropy, size_t min_len,
+                                    size_t max_len, int prediction_resistance)
 {
     size_t ret = 0;
     size_t entropy_available = 0;
     RAND_POOL *pool;
-    int p_str;
-    const OSSL_DISPATCH *pfunc;
+    unsigned int p_str;
 
     if (drbg->parent != NULL) {
         if (!get_parent_strength(drbg, &p_str))
@@ -184,7 +160,7 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
              * We currently don't support the algorithm from NIST SP 800-90C
              * 10.1.2 to use a weaker DRBG as source
              */
-            RANDerr(0, RAND_R_PARENT_STRENGTH_TOO_WEAK);
+            RANDerr(0, PROV_R_PARENT_STRENGTH_TOO_WEAK);
             return 0;
         }
     }
@@ -193,9 +169,11 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
         pool = drbg->seed_pool;
         pool->entropy_requested = entropy;
     } else {
-        pool = rand_pool_new(entropy, drbg->secure, min_len, max_len);
-        if (pool == NULL)
+        pool = rand_pool_new(entropy, 1, min_len, max_len);
+        if (pool == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
+        }
     }
 
     if (drbg->parent != NULL) {
@@ -213,25 +191,23 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
              * generating bits from it. (Note: taking the lock will be a no-op
              * if locking if drbg->parent->lock == NULL.)
              */
-            pfunc = find_call(drbg->parent_dispatch, OSSL_FUNC_RAND_GENERATE);
-            if (pfunc == NULL)
-                return 0;
+            if (drbg->parent_generate == NULL)
+                goto err;
             drbg_lock_parent(drbg);
-            if (OSSL_get_OP_rand_generate(pfunc)(drbg->parent, buffer, bytes_needed,
-                                                 drbg->strength,
-                                                 prediction_resistance,
-                                                 (unsigned char *)&drbg,
-                                                 sizeof(drbg)) != 0)
+            if (drbg->parent_generate(drbg->parent, buffer, bytes_needed,
+                                      drbg->strength, prediction_resistance,
+                                      (unsigned char *)&drbg,
+                                      sizeof(drbg)) != 0)
                 bytes = bytes_needed;
-            drbg->reseed_next_counter = get_parent_reseed_count(drbg);
             drbg_unlock_parent(drbg);
+            drbg->parent_reseed_counter = get_parent_reseed_count(drbg);
 
             rand_pool_add_end(pool, bytes, 8 * bytes);
             entropy_available = rand_pool_entropy_available(pool);
         }
     } else {
         /* Get entropy by polling system entropy sources. */
-        entropy_available = rand_pool_acquire_entropy(pool);
+        entropy_available = prov_pool_acquire_entropy(pool);
     }
 
     if (entropy_available > 0) {
@@ -239,6 +215,7 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
         *pout = rand_pool_detach(pool);
     }
 
+err:
     if (drbg->seed_pool == NULL)
         rand_pool_free(pool);
     return ret;
@@ -251,14 +228,68 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
 static void prov_drbg_cleanup_entropy(PROV_DRBG *drbg,
                                       unsigned char *out, size_t outlen)
 {
-    if (drbg->seed_pool == NULL) {
-        if (drbg->secure)
-            OPENSSL_secure_clear_free(out, outlen);
-        else
-            OPENSSL_clear_free(out, outlen);
+    OSSL_PARAM params[3], *p = params;
+
+    if (drbg->get_entropy_fn != NULL) {
+        if (drbg->cleanup_entropy_fn != NULL) {
+            *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_SIZE,
+                                               &outlen);
+            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
+                                                  (void **)&out, 0);
+            *p = OSSL_PARAM_construct_end();
+
+            drbg->cleanup_entropy_fn(params, drbg->callback_arg);
+        }
+    } else if (drbg->seed_pool == NULL) {
+        OPENSSL_secure_clear_free(out, outlen);
     }
 }
+
+static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
+                          size_t min_len, size_t max_len,
+                          int prediction_resistance)
+{
+    if (drbg->get_entropy_fn != NULL) {
+        OSSL_PARAM params[6], *p = params;
+        OSSL_PARAM out[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_ENTROPY_REQUIRED,
+                                        &entropy);
+        *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_PREDICTION_RESISTANCE,
+                                        &prediction_resistance);
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MIN_LENGTH,
+                                           &min_len);
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MAX_LENGTH,
+                                           &max_len);
+        *p = OSSL_PARAM_construct_end();
+        *out = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
+                                              (void **)pout, 0);
+
+        if (drbg->get_entropy_fn(params, out, drbg->callback_arg))
+            return out->return_size;
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_ENTROPY);
+        return 0;
+    }
+
+#ifdef FIPS_MODULE
+    if (drbg->parent == NULL)
+        return prov_crngt_get_entropy(drbg, pout, entropy, min_len, max_len,
+                                      prediction_resistance);
 #endif
+
+    return prov_drbg_get_entropy(drbg, pout, entropy, min_len, max_len,
+                                 prediction_resistance);
+}
+
+static void cleanup_entropy(PROV_DRBG *drbg, unsigned char *out, size_t outlen)
+{
+#ifdef FIPS_MODULE
+    if (drbg->parent == NULL)
+        prov_crngt_cleanup_entropy(drbg, out, outlen);
+    else
+#endif
+        prov_drbg_cleanup_entropy(drbg, out, outlen);
+}
 
 #ifndef PROV_RAND_GET_RANDOM_NONCE
 typedef struct prov_drbg_nonce_global_st {
@@ -311,26 +342,63 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
                                   unsigned char **pout,
                                   int entropy, size_t min_len, size_t max_len)
 {
-    size_t ret = 0;
+    size_t ret = 0, n;
     RAND_POOL *pool;
+    unsigned char *buf = NULL;
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
     PROV_DRBG_NONCE_GLOBAL *dngbl
-        = openssl_ctx_get_data(drbg->libctx, OPENSSL_CTX_DRBG_NONCE_INDEX,
+        = openssl_ctx_get_data(libctx, OPENSSL_CTX_DRBG_NONCE_INDEX,
                                &drbg_nonce_ossl_ctx_method);
+    OSSL_PARAM params[5], *p = params;
+    OSSL_PARAM out[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     struct {
         void *instance;
         int count;
     } data;
     
-
     if (dngbl == NULL)
         return 0;
 
+    if (drbg->get_nonce_fn != NULL) {
+        *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_ENTROPY_REQUIRED,
+                                        &entropy);
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MIN_LENGTH,
+                                           &min_len);
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MAX_LENGTH,
+                                           &max_len);
+        *p = OSSL_PARAM_construct_end();
+        *out = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
+                                              (void **)pout, 0);
+
+        if (drbg->get_nonce_fn(params, out, drbg->callback_arg))
+            return out->return_size;
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_NONCE);
+        return 0;
+    }
+    if (drbg->parent != NULL) {
+        if (drbg->parent_nonce != NULL) {
+            n = drbg->parent_nonce(drbg->parent, NULL, 0, drbg->min_noncelen,
+                                   drbg->max_noncelen);
+            if (n > 0 && (buf = OPENSSL_malloc(n)) != NULL) {
+                ret = drbg->parent_nonce(drbg->parent, buf, 0,
+                                         drbg->min_noncelen,
+                                         drbg->max_noncelen);
+                if (ret == n) {
+                    *pout = buf;
+                    return ret;
+                }
+                OPENSSL_free(buf);
+            }
+        }
+    }
+
+    /* Use the built in nonce source */
     memset(&data, 0, sizeof(data));
     pool = rand_pool_new(0, 0, min_len, max_len);
     if (pool == NULL)
         return 0;
 
-    if (rand_pool_add_nonce_data(pool) == 0)
+    if (prov_pool_add_nonce_data(pool) == 0)
         goto err;
 
     data.instance = drbg;
@@ -348,17 +416,30 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
 
     return ret;
 }
-#endif
 
-/*
- * Implements the cleanup_nonce() callback (see PROV_DRBG_set_callbacks())
- *
- */
-static void prov_drbg_cleanup_nonce(PROV_DRBG *drbg,
-                                    unsigned char *out, size_t outlen)
+static void prov_drbg_clear_nonce(PROV_DRBG *drbg, unsigned char *nonce,
+                                  size_t noncelen)
 {
-    OPENSSL_clear_free(out, outlen);
+    OSSL_PARAM params[3], *p = params;
+
+    if (drbg->get_nonce_fn != NULL) {
+        if (drbg->cleanup_nonce_fn != NULL) {
+            *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_SIZE,
+                                               &noncelen);
+            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
+                                                  (void **)&nonce, 0);
+            *p = OSSL_PARAM_construct_end();
+
+            drbg->cleanup_nonce_fn(params, drbg->callback_arg);
+        }
+    } else {
+        OPENSSL_clear_free(nonce, noncelen);
+    }
 }
+#else
+# define prov_drbg_clear_nonce(drbg, nonce, len) \
+    OPENSSL_clear_free((nonce), (len))
+#endif /* PROV_RAND_GET_RANDOM_NONCE */
 
 /*
  * Instantiate |drbg|, after it has been initialized.  Use |pers| and
@@ -368,23 +449,16 @@ static void prov_drbg_cleanup_nonce(PROV_DRBG *drbg,
  *
  * Returns 1 on success, 0 on failure.
  */
-int PROV_DRBG_instantiate(PROV_DRBG *drbg, int strength,
+int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
                           int prediction_resistance,
-                          const unsigned char *pers, size_t perslen,
-                          int (*ifnc)(PROV_DRBG *drbg,
-                                      const unsigned char *ent, size_t ent_len,
-                                      const unsigned char *nonce,
-                                      size_t nonce_len,
-                                      const unsigned char *pstr,
-                                      size_t pstr_len))
+                          const unsigned char *pers, size_t perslen)
 {
     unsigned char *nonce = NULL, *entropy = NULL;
     size_t noncelen = 0, entropylen = 0;
     size_t min_entropy, min_entropylen, max_entropylen;
-    const OSSL_DISPATCH *pnonce;
 
     if (strength > drbg->strength) {
-        PROVerr(0, RAND_R_INSUFFICIENT_DRBG_STRENGTH);
+        PROVerr(0, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
         goto end;
     }
     min_entropy = drbg->strength;
@@ -396,50 +470,54 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, int strength,
         perslen = sizeof(ossl_pers_string);
     }
     if (perslen > drbg->max_perslen) {
-        PROVerr(0, RAND_R_PERSONALISATION_STRING_TOO_LONG);
+        PROVerr(0, PROV_R_PERSONALISATION_STRING_TOO_LONG);
         goto end;
     }
 
-    if (drbg->state != DRBG_UNINITIALISED) {
-        if (drbg->state == DRBG_ERROR)
-            PROVerr(0, RAND_R_IN_ERROR_STATE);
+    if (drbg->state != EVP_RAND_STATE_UNINITIALISED) {
+        if (drbg->state == EVP_RAND_STATE_ERROR)
+            PROVerr(0, PROV_R_IN_ERROR_STATE);
         else
-            PROVerr(0, RAND_R_ALREADY_INSTANTIATED);
+            PROVerr(0, PROV_R_ALREADY_INSTANTIATED);
         goto end;
     }
 
-    drbg->state = DRBG_ERROR;
+    drbg->state = EVP_RAND_STATE_ERROR;
 
     if (drbg->min_noncelen > 0) {
-#ifndef PROV_RAND_GET_RANDOM_NONCE
-        if (drbg->parent != NULL)
-#endif
-        {
-            pnonce = find_call(drbg->parent_dispatch, OSSL_FUNC_RAND_NONCE);
-            if (pnonce == NULL) {
-                /*
-                 * NIST SP800-90Ar1 section 9.1 says you can combine getting
-                 * the entropy and nonce in 1 call by increasing the entropy
-                 * with 50% and increasing the minimum length to accommodate
-                 * the length of the nonce. We do this in case a nonce is
-                 * required and there is no parental nonce capability.
-                 */
-                min_entropy += drbg->strength / 2;
-                min_entropylen += drbg->min_noncelen;
-                max_entropylen += drbg->max_noncelen;
-            } else {
-                drbg_lock_parent(drbg);
-                noncelen = OSSL_get_OP_rand_nonce(pnonce)(drbg->parent, &nonce,
-                                                          drbg->strength / 2,
-                                                          drbg->min_noncelen,
-                                                          drbg->max_noncelen);
-                drbg_unlock_parent(drbg);
-                if (noncelen < drbg->min_noncelen
-                        || noncelen > drbg->max_noncelen) {
-                    PROVerr(0, RAND_R_ERROR_RETRIEVING_NONCE);
-                    goto end;
-                }
+        if (drbg->parent_nonce != NULL) {
+            noncelen = drbg->parent_nonce(drbg->parent, NULL, drbg->strength,
+                                          drbg->min_noncelen,
+                                          drbg->max_noncelen);
+            if (noncelen == 0) {
+                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
+                goto end;
             }
+            nonce = OPENSSL_malloc(noncelen);
+            if (nonce == NULL) {
+                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
+                goto end;
+            }
+            if (noncelen != drbg->parent_nonce(drbg->parent, nonce,
+                                               drbg->strength,
+                                               drbg->min_noncelen,
+                                               drbg->max_noncelen)) {
+                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
+                OPENSSL_free(nonce);
+            }
+#ifndef PROV_RAND_GET_RANDOM_NONCE
+        } else if (drbg->parent != NULL) {
+#endif
+            /*
+             * NIST SP800-90Ar1 section 9.1 says you can combine getting
+             * the entropy and nonce in 1 call by increasing the entropy
+             * with 50% and increasing the minimum length to accommodate
+             * the length of the nonce. We do this in case a nonce is
+             * required and there is no parental nonce capability.
+             */
+            min_entropy += drbg->strength / 2;
+            min_entropylen += drbg->min_noncelen;
+            max_entropylen += drbg->max_noncelen;
         }
 #ifndef PROV_RAND_GET_RANDOM_NONCE
         else { /* parent == NULL */
@@ -448,17 +526,17 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, int strength,
                                            drbg->max_noncelen);
             if (noncelen < drbg->min_noncelen
                     || noncelen > drbg->max_noncelen) {
-                PROVerr(0, RAND_R_ERROR_RETRIEVING_NONCE);
+                PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
                 goto end;
             }
         }
 #endif
     }
 
-    drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
+    drbg->reseed_next_counter = tsan_load(&drbg->reseed_counter);
     if (drbg->reseed_next_counter) {
         drbg->reseed_next_counter++;
-        if(!drbg->reseed_next_counter)
+        if (!drbg->reseed_next_counter)
             drbg->reseed_next_counter = 1;
     }
 
@@ -467,28 +545,41 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, int strength,
                              prediction_resistance);
     if (entropylen < min_entropylen
             || entropylen > max_entropylen) {
-        PROVerr(0, RAND_R_ERROR_RETRIEVING_ENTROPY);
+        PROVerr(0, PROV_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
-    if (!ifnc(drbg, entropy, entropylen, nonce, noncelen, pers, perslen)) {
-        PROVerr(0, RAND_R_ERROR_INSTANTIATING_DRBG);
+    if (!drbg->instantiate(drbg, entropy, entropylen, nonce, noncelen,
+                           pers, perslen)) {
+        PROVerr(0, PROV_R_ERROR_INSTANTIATING_DRBG);
         goto end;
     }
 
-    drbg->state = DRBG_READY;
+    drbg->state = EVP_RAND_STATE_READY;
     drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
-    tsan_store(&drbg->reseed_prop_counter, drbg->reseed_next_counter);
+    tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
 
  end:
     if (entropy != NULL)
         cleanup_entropy(drbg, entropy, entropylen);
-    if (nonce != NULL)
-        prov_drbg_cleanup_nonce(drbg, nonce, noncelen);
-    if (drbg->state == DRBG_READY)
+    prov_drbg_clear_nonce(drbg, nonce, noncelen);
+    if (drbg->state == EVP_RAND_STATE_READY)
         return 1;
     return 0;
+}
+
+/*
+ * Uninstantiate |drbg|. Must be instantiated before it can be used.
+ *
+ * Requires that drbg->lock is already locked for write, if non-null.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+int PROV_DRBG_uninstantiate(PROV_DRBG *drbg)
+{
+    drbg->state = EVP_RAND_STATE_UNINITIALISED;
+    return 1;
 }
 
 /*
@@ -500,60 +591,101 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, int strength,
  */
 int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
                      const unsigned char *ent, size_t ent_len,
-                     const unsigned char *adin, size_t adinlen,
-                     int (*reseed)(PROV_DRBG *drbg,
-                                   const unsigned char *ent, size_t ent_len,
-                                   const unsigned char *adin, size_t adin_len))
+                     const unsigned char *adin, size_t adinlen)
 {
     unsigned char *entropy = NULL;
     size_t entropylen = 0;
 
-    if (drbg->state == DRBG_ERROR) {
-        PROVerr(0, RAND_R_IN_ERROR_STATE);
-        return 0;
+    if (drbg->state != EVP_RAND_STATE_READY) {
+        /* try to recover from previous errors */
+        rand_drbg_restart(drbg);
+
+        if (drbg->state == EVP_RAND_STATE_ERROR) {
+            PROVerr(0, PROV_R_IN_ERROR_STATE);
+            return 0;
+        }
+        if (drbg->state == EVP_RAND_STATE_UNINITIALISED) {
+            PROVerr(0, PROV_R_NOT_INSTANTIATED);
+            return 0;
+        }
     }
-    if (drbg->state == DRBG_UNINITIALISED) {
-        PROVerr(0, RAND_R_NOT_INSTANTIATED);
-        return 0;
+
+    if (ent != NULL) {
+        if (ent_len < drbg->min_entropylen) {
+            RANDerr(0, RAND_R_ENTROPY_OUT_OF_RANGE);
+            drbg->state = EVP_RAND_STATE_ERROR;
+            return 0;
+        }
+        if (ent_len > drbg->max_entropylen) {
+            RANDerr(0, RAND_R_ENTROPY_INPUT_TOO_LONG);
+            drbg->state = EVP_RAND_STATE_ERROR;
+            return 0;
+        }
     }
 
     if (adin == NULL) {
         adinlen = 0;
     } else if (adinlen > drbg->max_adinlen) {
-        PROVerr(0, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
+        PROVerr(0, PROV_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
     }
 
-    drbg->state = DRBG_ERROR;
+    drbg->state = EVP_RAND_STATE_ERROR;
 
-    drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
+    drbg->reseed_next_counter = tsan_load(&drbg->reseed_counter);
     if (drbg->reseed_next_counter) {
         drbg->reseed_next_counter++;
-        if(!drbg->reseed_next_counter)
+        if (!drbg->reseed_next_counter)
             drbg->reseed_next_counter = 1;
     }
 
+    if (ent != NULL) {
+#ifdef FIP_MODULE
+        /*
+         * NIST SP-800-90A mandates that entropy *shall not* be provided
+         * by the consuming application. Instead the data is added as additional
+         * input.
+         *
+         * (NIST SP-800-90Ar1, Sections 9.1 and 9.2)
+         */
+        if (!drbg->reseed(drbg, NULL, 0, ent, ent_len)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_RESEED);
+            return 0;
+        }
+#else
+        if (!drbg->reseed(drbg, ent, ent_len, adin, adinlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_RESEED);
+            return 0;
+        }
+        /* There isn't much point adding the same additional input twice */
+        adin = NULL;
+        adinlen = 0;
+#endif
+    }
+
+    /* Reseed using our sources in addition */
     entropylen = get_entropy(drbg, &entropy, drbg->strength,
                              drbg->min_entropylen, drbg->max_entropylen,
                              prediction_resistance);
     if (entropylen < drbg->min_entropylen
             || entropylen > drbg->max_entropylen) {
-        PROVerr(0, RAND_R_ERROR_RETRIEVING_ENTROPY);
+        PROVerr(0, PROV_R_ERROR_RETRIEVING_ENTROPY);
         goto end;
     }
 
-    if (!reseed(drbg, entropy, entropylen, adin, adinlen))
+    if (!drbg->reseed(drbg, entropy, entropylen, adin, adinlen))
         goto end;
 
-    drbg->state = DRBG_READY;
+    drbg->state = EVP_RAND_STATE_READY;
     drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
-    tsan_store(&drbg->reseed_prop_counter, drbg->reseed_next_counter);
+    tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
+    if (drbg->parent != NULL)
+        drbg->parent_reseed_counter = get_parent_reseed_count(drbg);
 
  end:
-    if (entropy != NULL)
-        OPENSSL_cleanse(entropy, entropylen);
-    if (drbg->state == DRBG_READY)
+    cleanup_entropy(drbg, entropy, entropylen);
+    if (drbg->state == EVP_RAND_STATE_READY)
         return 1;
     return 0;
 }
@@ -569,35 +701,36 @@ int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
  *
  */
 int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
-                       int strength, int prediction_resistance,
-                       const unsigned char *adin, size_t adinlen,
-                       int (*generate)(PROV_DRBG *, unsigned char *out,
-                                       size_t outlen, const unsigned char *adin,
-                                       size_t adin_len),
-                       int (*reseed)(PROV_DRBG *drbg, const unsigned char *ent,
-                                     size_t ent_len, const unsigned char *adin,
-                                     size_t adin_len))
+                       unsigned int strength, int prediction_resistance,
+                       const unsigned char *adin, size_t adinlen)
 {
     int fork_id;
     int reseed_required = 0;
 
-    if (drbg->state != DRBG_READY) {
-        if (drbg->state == DRBG_ERROR) {
-            PROVerr(0, RAND_R_IN_ERROR_STATE);
+    if (drbg->state != EVP_RAND_STATE_READY) {
+        /* try to recover from previous errors */
+        rand_drbg_restart(drbg);
+
+        if (drbg->state == EVP_RAND_STATE_ERROR) {
+            PROVerr(0, PROV_R_IN_ERROR_STATE);
             return 0;
         }
-        if (drbg->state == DRBG_UNINITIALISED) {
-            PROVerr(0, RAND_R_NOT_INSTANTIATED);
+        if (drbg->state == EVP_RAND_STATE_UNINITIALISED) {
+            PROVerr(0, PROV_R_NOT_INSTANTIATED);
             return 0;
         }
+    }
+    if (strength > drbg->strength) {
+        PROVerr(0, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
+        return 0;
     }
 
     if (outlen > drbg->max_request) {
-        PROVerr(0, RAND_R_REQUEST_TOO_LARGE_FOR_DRBG);
+        PROVerr(0, PROV_R_REQUEST_TOO_LARGE_FOR_DRBG);
         return 0;
     }
     if (adinlen > drbg->max_adinlen) {
-        PROVerr(0, RAND_R_ADDITIONAL_INPUT_TOO_LONG);
+        PROVerr(0, PROV_R_ADDITIONAL_INPUT_TOO_LONG);
         return 0;
     }
 
@@ -618,28 +751,23 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
             || now - drbg->reseed_time >= drbg->reseed_time_interval)
             reseed_required = 1;
     }
-    if (drbg->parent != NULL) {
-        unsigned int reseed_counter = 0;
-
-        if (reseed_counter > 0
-            && get_parent_reseed_count(drbg) !=
-               tsan_load(&drbg->reseed_prop_counter))
-            reseed_required = 1;
-    }
+    if (drbg->parent != NULL
+            && get_parent_reseed_count(drbg) != drbg->parent_reseed_counter)
+        reseed_required = 1;
 
     if (reseed_required || prediction_resistance) {
         if (!PROV_DRBG_reseed(drbg, prediction_resistance, NULL, 0,
-                              adin, adinlen, reseed)) {
-            PROVerr(0, RAND_R_RESEED_ERROR);
+                              adin, adinlen)) {
+            PROVerr(0, PROV_R_RESEED_ERROR);
             return 0;
         }
         adin = NULL;
         adinlen = 0;
     }
 
-    if (!generate(drbg, out, outlen, adin, adinlen)) {
-        drbg->state = DRBG_ERROR;
-        PROVerr(0, RAND_R_GENERATE_ERROR);
+    if (!drbg->generate(drbg, out, outlen, adin, adinlen)) {
+        drbg->state = EVP_RAND_STATE_ERROR;
+        PROVerr(0, PROV_R_GENERATE_ERROR);
         return 0;
     }
 
@@ -648,83 +776,73 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     return 1;
 }
 
-#if 0
 /*
- * Calculates the minimum length of a full entropy buffer
- * which is necessary to seed (i.e. instantiate) the DRBG
- * successfully.
+ * Restart |drbg|, using the specified entropy or additional input
+ *
+ * Tries its best to get the drbg instantiated by all means,
+ * regardless of its current state.
+ *
+ * Optionally, a |buffer| of |len| random bytes can be passed,
+ * which is assumed to contain at least |entropy| bits of entropy.
+ *
+ * If |entropy| > 0, the buffer content is used as entropy input.
+ *
+ * If |entropy| == 0, the buffer content is used as additional input
+ *
+ * Returns 1 on success, 0 on failure.
+ *
+ * This function is used internally only.
  */
-size_t prov_drbg_seedlen(PROV_DRBG *drbg)
+static int rand_drbg_restart(PROV_DRBG *drbg)
 {
-    /*
-     * If no os entropy source is available then PROV_seed(buffer, bufsize)
-     * is expected to succeed if and only if the buffer length satisfies
-     * the following requirements, which follow from the calculations
-     * in PROV_DRBG_instantiate().
-     */
-    size_t min_entropy = drbg->strength;
-    size_t min_entropylen = drbg->min_entropylen;
-
-    /*
-     * Extra entropy for the random nonce in the absence of a
-     * get_nonce callback, see comment in PROV_DRBG_instantiate().
-     */
-    if (drbg->min_noncelen > 0) {
-#ifndef PROV_RAND_GET_RANDOM_NONCE
-        if (drbg->parent != NULL)
-#endif
-            if (find_call(drbg->parent_dispatch,
-                          OSSL_FUNC_RAND_NONCE) == NULL) {
-                min_entropy += drbg->strength / 2;
-                min_entropylen += drbg->min_noncelen;
-            }
+    if (drbg->seed_pool != NULL) {
+        drbg->state = EVP_RAND_STATE_ERROR;
+        rand_pool_free(drbg->seed_pool);
+        drbg->seed_pool = NULL;
+        RANDerr(0, ERR_R_INTERNAL_ERROR);
+        return 0;
     }
 
-    /*
-     * Convert entropy requirement from bits to bytes
-     * (dividing by 8 without rounding upwards, because
-     * all entropy requirements are divisible by 8).
-     */
-    min_entropy >>= 3;
+    /* repair error state */
+    if (drbg->state == EVP_RAND_STATE_ERROR)
+        drbg->uninstantiate(drbg);
 
-    /* Return a value that satisfies both requirements */
-    return min_entropy > min_entropylen ? min_entropy : min_entropylen;
+    /* repair uninitialized state */
+    if (drbg->state == EVP_RAND_STATE_UNINITIALISED)
+        /* reinstantiate drbg */
+        PROV_DRBG_instantiate(drbg, drbg->strength, 0, NULL, 0);
+
+    rand_pool_free(drbg->seed_pool);
+    drbg->seed_pool = NULL;
+    return drbg->state == EVP_RAND_STATE_READY;
 }
-#endif
 
 /* Provider support from here down */
 static const OSSL_DISPATCH *find_call(const OSSL_DISPATCH *dispatch,
                                       int function)
 {
     if (dispatch != NULL)
-        while (dispatch->function_id != 0)
+        while (dispatch->function_id != 0) {
             if (dispatch->function_id == function)
                 return dispatch;
+            dispatch++;
+        }
     return NULL;
 }
 
 int drbg_enable_locking(void *vctx)
 {
     PROV_DRBG *drbg = vctx;
-    const OSSL_DISPATCH *pfunc;
 
-    if (drbg == NULL)
-        return 1;
-    if (drbg->lock == NULL) {
-        if (drbg->state != DRBG_UNINITIALISED) {
-            ERR_raise(ERR_LIB_PROV, RAND_R_DRBG_ALREADY_INITIALIZED);
-            return 0;
-        }
-
-        pfunc = find_call(drbg->parent_dispatch, OSSL_FUNC_RAND_ENABLE_LOCKING);
-        if (pfunc != NULL)
-            if (!OSSL_get_OP_rand_enable_locking(pfunc)(drbg->parent)) {
-                ERR_raise(ERR_LIB_PROV, RAND_R_PARENT_LOCKING_NOT_ENABLED);
+    if (drbg != NULL && drbg->lock == NULL) {
+        if (drbg->parent_enable_locking != NULL)
+            if (!drbg->parent_enable_locking(drbg->parent)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_LOCKING_NOT_ENABLED);
                 return 0;
             }
         drbg->lock = CRYPTO_THREAD_lock_new();
         if (drbg->lock == NULL) {
-            ERR_raise(ERR_LIB_PROV, RAND_R_FAILED_TO_CREATE_LOCK);
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_CREATE_LOCK);
             return 0;
         }
     }
@@ -739,22 +857,49 @@ int drbg_enable_locking(void *vctx)
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-PROV_DRBG *prov_rand_drbg_new(void *provctx, int secure, void *parent,
-                              const OSSL_DISPATCH *parent_dispatch,
-                              int (*dnew)(PROV_DRBG *ctx, int secure))
+PROV_DRBG *prov_rand_drbg_new
+    (void *provctx, void *parent, const OSSL_DISPATCH *p_dispatch,
+     int (*dnew)(PROV_DRBG *ctx),
+     int (*instantiate)(PROV_DRBG *drbg,
+                        const unsigned char *entropy, size_t entropylen,
+                        const unsigned char *nonce, size_t noncelen,
+                        const unsigned char *pers, size_t perslen),
+     int (*uninstantiate)(PROV_DRBG *ctx),
+     int (*reseed)(PROV_DRBG *drbg, const unsigned char *ent, size_t ent_len,
+                   const unsigned char *adin, size_t adin_len),
+     int (*generate)(PROV_DRBG *, unsigned char *out, size_t outlen,
+                     const unsigned char *adin, size_t adin_len))
 {
     PROV_DRBG *drbg = OPENSSL_zalloc(sizeof(*drbg));
-    int p_str;
+    unsigned int p_str;
+    const OSSL_DISPATCH *pfunc;
 
     if (drbg == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
-    drbg->libctx = provctx;
-    drbg->secure = secure;
+    drbg->provctx = provctx;
+    drbg->instantiate = instantiate;
+    drbg->uninstantiate = uninstantiate;
+    drbg->reseed = reseed;
+    drbg->generate = generate;
+    drbg->fork_id = openssl_get_fork_id();
+
+    /* Extract parent's functions */
     drbg->parent = parent;
-    drbg->parent_dispatch = parent_dispatch;
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_ENABLE_LOCKING)) != NULL)
+        drbg->parent_enable_locking = OSSL_get_OP_rand_enable_locking(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_LOCK)) != NULL)
+        drbg->parent_lock = OSSL_get_OP_rand_lock(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_UNLOCK)) != NULL)
+        drbg->parent_unlock = OSSL_get_OP_rand_unlock(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GET_CTX_PARAMS)) != NULL)
+        drbg->parent_get_ctx_params = OSSL_get_OP_rand_get_ctx_params(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GENERATE)) != NULL)
+        drbg->parent_generate = OSSL_get_OP_rand_generate(pfunc);
+    if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_NONCE)) != NULL)
+        drbg->parent_nonce = OSSL_get_OP_rand_nonce(pfunc);
 
     /* Set some default maximums up */
     drbg->max_entropylen = DRBG_MAX_LENGTH;
@@ -762,21 +907,11 @@ PROV_DRBG *prov_rand_drbg_new(void *provctx, int secure, void *parent,
     drbg->max_perslen = DRBG_MAX_LENGTH;
     drbg->max_adinlen = DRBG_MAX_LENGTH;
     drbg->reseed_gen_counter = 1;
+    drbg->reseed_counter = 1;
+    drbg->reseed_interval = RESEED_INTERVAL;
+    drbg->reseed_time_interval = TIME_INTERVAL;
 
-    /* TODO(3.0) clean this up */
-    if (parent == NULL) {
-        drbg->reseed_interval = master_reseed_interval;
-        drbg->reseed_time_interval = master_reseed_time_interval;
-    } else {
-        /*
-         * Do not provide nonce callbacks, the child DRBGs will
-         * obtain their nonce using random bits from the parent.
-         */
-        drbg->reseed_interval = slave_reseed_interval;
-        drbg->reseed_time_interval = slave_reseed_time_interval;
-    }
-
-    if (!dnew(drbg, secure))
+    if (!dnew(drbg))
         goto err;
 
     if (parent != NULL) {
@@ -787,7 +922,7 @@ PROV_DRBG *prov_rand_drbg_new(void *provctx, int secure, void *parent,
              * We currently don't support the algorithm from NIST SP 800-90C
              * 10.1.2 to use a weaker DRBG as source
              */
-            ERR_raise(ERR_LIB_PROV, RAND_R_PARENT_STRENGTH_TOO_WEAK);
+            ERR_raise(ERR_LIB_PROV, PROV_R_PARENT_STRENGTH_TOO_WEAK);
             goto err;
         }
     }
@@ -805,16 +940,14 @@ void prov_rand_drbg_free(PROV_DRBG *drbg)
 
     rand_pool_free(drbg->adin_pool);
     CRYPTO_THREAD_lock_free(drbg->lock);
-#ifndef FIPS_MODULE
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RAND_DRBG, drbg, &drbg->ex_data);
-#endif
+    OPENSSL_free(drbg);
 }
 
 int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_STATUS);
+    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_STATE);
     if (p != NULL && !OSSL_PARAM_set_int(p, drbg->state))
         return 0;
 
@@ -822,49 +955,49 @@ int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_int(p, drbg->strength))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_REQUEST);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MAX_REQUEST);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->max_request))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MIN_ENTROPYLEN);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MIN_ENTROPYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->min_entropylen))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_ENTROPYLEN);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MAX_ENTROPYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->max_entropylen))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MIN_NONCELEN);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MIN_NONCELEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->min_noncelen))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_NONCELEN);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MAX_NONCELEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->max_noncelen))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_PERSLEN);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MAX_PERSLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->max_perslen))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_MAX_ADINLEN);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MAX_ADINLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, drbg->max_adinlen))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_RESEED_CTR);
-    if (p != NULL && !OSSL_PARAM_set_uint(p, drbg->reseed_gen_counter))
-        return 0;
-
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_RESEED_REQUESTS);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_REQUESTS);
     if (p != NULL && !OSSL_PARAM_set_uint(p, drbg->reseed_interval))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_RESEED_TIME_INTERVAL);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_TIME);
+    if (p != NULL && !OSSL_PARAM_set_time_t(p, drbg->reseed_time))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL);
     if (p != NULL && !OSSL_PARAM_set_time_t(p, drbg->reseed_time_interval))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_RAND_PARAM_RESEED_PROP_CTR);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_CTR);
     if (p != NULL
-            && !OSSL_PARAM_set_uint(p, tsan_load(&drbg->reseed_prop_counter)))
+            && !OSSL_PARAM_set_uint(p, tsan_load(&drbg->reseed_counter)))
         return 0;
     return 1;
 }
@@ -873,12 +1006,31 @@ int drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_RAND_PARAM_RESEED_REQUESTS);
+    p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_REQUESTS);
     if (p != NULL && !OSSL_PARAM_get_uint(p, &drbg->reseed_interval))
         return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_RAND_PARAM_RESEED_TIME_INTERVAL);
+    p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL);
     if (p != NULL && !OSSL_PARAM_get_time_t(p, &drbg->reseed_time_interval))
         return 0;
+    return 1;
+}
+
+int drbg_set_callbacks(void *vctx, OSSL_INOUT_CALLBACK *get_entropy_fn,
+                       OSSL_CALLBACK *cleanup_entropy_fn,
+                       OSSL_INOUT_CALLBACK *get_nonce_fn,
+                       OSSL_CALLBACK *cleanup_nonce_fn, void *arg)
+{
+    PROV_DRBG *drbg = vctx;
+
+    if (drbg->state != EVP_RAND_STATE_UNINITIALISED
+            || drbg->parent != NULL)
+        return 0;
+
+    drbg->get_entropy_fn = get_entropy_fn;
+    drbg->cleanup_entropy_fn = cleanup_entropy_fn;
+    drbg->get_nonce_fn = get_nonce_fn;
+    drbg->cleanup_nonce_fn = cleanup_nonce_fn;
+    drbg->callback_arg = arg;
     return 1;
 }

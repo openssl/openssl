@@ -7,20 +7,38 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * HMAC low level APIs are deprecated for public use, but still ok for internal
- * use.
- */
-#include "internal/deprecated.h"
-
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "prov/provider_util.h"
 #include "internal/thread_once.h"
 #include "prov/providercommon.h"
-#include "rand_local.h"
+#include "prov/providercommonerr.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "drbg_local.h"
+
+static OSSL_OP_rand_newctx_fn drbg_hmac_new_wrapper;
+static OSSL_OP_rand_freectx_fn drbg_hmac_free;
+static OSSL_OP_rand_instantiate_fn drbg_hmac_instantiate_wrapper;
+static OSSL_OP_rand_uninstantiate_fn drbg_hmac_uninstantiate_wrapper;
+static OSSL_OP_rand_generate_fn drbg_hmac_generate_wrapper;
+static OSSL_OP_rand_reseed_fn drbg_hmac_reseed_wrapper;
+static OSSL_OP_rand_settable_ctx_params_fn drbg_hmac_settable_ctx_params;
+static OSSL_OP_rand_set_ctx_params_fn drbg_hmac_set_ctx_params;
+static OSSL_OP_rand_gettable_ctx_params_fn drbg_hmac_gettable_ctx_params;
+static OSSL_OP_rand_get_ctx_params_fn drbg_hmac_get_ctx_params;
+static OSSL_OP_rand_verify_zeroization_fn drbg_hmac_verify_zeroization;
+
+typedef struct rand_drbg_hmac_st {
+    EVP_MAC_CTX *ctx;            /* H(x) = HMAC_hash OR H(x) = KMAC */
+    PROV_DIGEST digest;          /* H(x) = hash(x) */
+    size_t blocklen;
+    unsigned char K[EVP_MAX_MD_SIZE];
+    unsigned char V[EVP_MAX_MD_SIZE];
+} PROV_DRBG_HMAC;
 
 /*
  * Called twice by SP800-90Ar1 10.1.2.2 HMAC_DRBG_Update_Process.
@@ -36,25 +54,34 @@
  *
  * Returns zero if an error occurs otherwise it returns 1.
  */
-static int do_hmac(RAND_DRBG_HMAC *hmac, unsigned char inbyte,
+static int do_hmac(PROV_DRBG_HMAC *hmac, unsigned char inbyte,
                    const unsigned char *in1, size_t in1len,
                    const unsigned char *in2, size_t in2len,
                    const unsigned char *in3, size_t in3len)
 {
-    HMAC_CTX *ctx = hmac->ctx;
+    EVP_MAC_CTX *ctx = hmac->ctx;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    return HMAC_Init_ex(ctx, hmac->K, hmac->blocklen, hmac->md, NULL)
-           /* K = HMAC(K, V || inbyte || [in1] || [in2] || [in3]) */
-           && HMAC_Update(ctx, hmac->V, hmac->blocklen)
-           && HMAC_Update(ctx, &inbyte, 1)
-           && (in1 == NULL || in1len == 0 || HMAC_Update(ctx, in1, in1len))
-           && (in2 == NULL || in2len == 0 || HMAC_Update(ctx, in2, in2len))
-           && (in3 == NULL || in3len == 0 || HMAC_Update(ctx, in3, in3len))
-           && HMAC_Final(ctx, hmac->K, NULL)
-           /* V = HMAC(K, V) */
-           && HMAC_Init_ex(ctx, hmac->K, hmac->blocklen, hmac->md, NULL)
-           && HMAC_Update(ctx, hmac->V, hmac->blocklen)
-           && HMAC_Final(ctx, hmac->V, NULL);
+    *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, hmac->K,
+                                                hmac->blocklen);
+    if (!EVP_MAC_set_ctx_params(ctx, params)
+            || !EVP_MAC_init(ctx)
+            /* K = HMAC(K, V || inbyte || [in1] || [in2] || [in3]) */
+            || !EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
+            || !EVP_MAC_update(ctx, &inbyte, 1)
+            || !(in1 == NULL || in1len == 0 || EVP_MAC_update(ctx, in1, in1len))
+            || !(in2 == NULL || in2len == 0 || EVP_MAC_update(ctx, in2, in2len))
+            || !(in3 == NULL || in3len == 0 || EVP_MAC_update(ctx, in3, in3len))
+            || !EVP_MAC_final(ctx, hmac->K, NULL, sizeof(hmac->K)))
+        return 0;
+
+   /* V = HMAC(K, V) */
+    *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, hmac->K,
+                                                hmac->blocklen);
+    return EVP_MAC_set_ctx_params(ctx, params)
+           && EVP_MAC_init(ctx)
+           && EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
+           && EVP_MAC_final(ctx, hmac->V, NULL, sizeof(hmac->V));
 }
 
 /*
@@ -71,12 +98,12 @@ static int do_hmac(RAND_DRBG_HMAC *hmac, unsigned char inbyte,
  *
  * Returns zero if an error occurs otherwise it returns 1.
  */
-static int drbg_hmac_update(RAND_DRBG *drbg,
+static int drbg_hmac_update(PROV_DRBG *drbg,
                             const unsigned char *in1, size_t in1len,
                             const unsigned char *in2, size_t in2len,
                             const unsigned char *in3, size_t in3len)
 {
-    RAND_DRBG_HMAC *hmac = &drbg->data.hmac;
+    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
 
     /* (Steps 1-2) K = HMAC(K, V||0x00||provided_data). V = HMAC(K,V) */
     if (!do_hmac(hmac, 0x00, in1, in1len, in2, in2len, in3, in3len))
@@ -99,12 +126,17 @@ static int drbg_hmac_update(RAND_DRBG *drbg,
  *
  * Returns zero if an error occurs otherwise it returns 1.
  */
-static int drbg_hmac_instantiate(RAND_DRBG *drbg,
+static int drbg_hmac_instantiate(PROV_DRBG *drbg,
                                  const unsigned char *ent, size_t ent_len,
                                  const unsigned char *nonce, size_t nonce_len,
                                  const unsigned char *pstr, size_t pstr_len)
 {
-    RAND_DRBG_HMAC *hmac = &drbg->data.hmac;
+    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
+
+    if (hmac->ctx == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MAC);
+        return 0;
+    }
 
     /* (Step 2) Key = 0x00 00...00 */
     memset(hmac->K, 0x00, hmac->blocklen);
@@ -113,6 +145,17 @@ static int drbg_hmac_instantiate(RAND_DRBG *drbg,
     /* (Step 4) (K,V) = HMAC_DRBG_Update(entropy||nonce||pers string, K, V) */
     return drbg_hmac_update(drbg, ent, ent_len, nonce, nonce_len, pstr,
                             pstr_len);
+}
+
+static int drbg_hmac_instantiate_wrapper(void *vdrbg, unsigned int strength,
+                                         int prediction_resistance,
+                                         const unsigned char *pstr,
+                                         size_t pstr_len)
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return PROV_DRBG_instantiate(drbg, strength, prediction_resistance,
+                                 pstr, pstr_len);
 }
 
 /*
@@ -125,12 +168,22 @@ static int drbg_hmac_instantiate(RAND_DRBG *drbg,
  *
  * Returns zero if an error occurs otherwise it returns 1.
  */
-static int drbg_hmac_reseed(RAND_DRBG *drbg,
+static int drbg_hmac_reseed(PROV_DRBG *drbg,
                             const unsigned char *ent, size_t ent_len,
                             const unsigned char *adin, size_t adin_len)
 {
     /* (Step 2) (K,V) = HMAC_DRBG_Update(entropy||additional_input, K, V) */
     return drbg_hmac_update(drbg, ent, ent_len, adin, adin_len, NULL, 0);
+}
+
+static int drbg_hmac_reseed_wrapper(void *vdrbg, int prediction_resistance,
+                                    const unsigned char *ent, size_t ent_len,
+                                    const unsigned char *adin, size_t adin_len)
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return PROV_DRBG_reseed(drbg, prediction_resistance, ent, ent_len,
+                            adin, adin_len);
 }
 
 /*
@@ -142,13 +195,14 @@ static int drbg_hmac_reseed(RAND_DRBG *drbg,
  *
  * Returns zero if an error occurs otherwise it returns 1.
  */
-static int drbg_hmac_generate(RAND_DRBG *drbg,
+static int drbg_hmac_generate(PROV_DRBG *drbg,
                               unsigned char *out, size_t outlen,
                               const unsigned char *adin, size_t adin_len)
 {
-    RAND_DRBG_HMAC *hmac = &drbg->data.hmac;
-    HMAC_CTX *ctx = hmac->ctx;
+    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
+    EVP_MAC_CTX *ctx = hmac->ctx;
     const unsigned char *temp = hmac->V;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     /* (Step 2) if adin != NULL then (K,V) = HMAC_DRBG_Update(adin, K, V) */
     if (adin != NULL
@@ -164,16 +218,19 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
      *             }
      */
     for (;;) {
-        if (!HMAC_Init_ex(ctx, hmac->K, hmac->blocklen, hmac->md, NULL)
-                || !HMAC_Update(ctx, temp, hmac->blocklen))
+        *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                                    hmac->K, hmac->blocklen);
+        if (!EVP_MAC_set_ctx_params(ctx, params)
+            || !EVP_MAC_init(ctx)
+            || !EVP_MAC_update(ctx, temp, hmac->blocklen))
             return 0;
 
         if (outlen > hmac->blocklen) {
-            if (!HMAC_Final(ctx, out, NULL))
+            if (!EVP_MAC_final(ctx, out, NULL, outlen))
                 return 0;
             temp = out;
         } else {
-            if (!HMAC_Final(ctx, hmac->V, NULL))
+            if (!EVP_MAC_final(ctx, hmac->V, NULL, sizeof(hmac->V)))
                 return 0;
             memcpy(out, hmac->V, outlen);
             break;
@@ -188,69 +245,171 @@ static int drbg_hmac_generate(RAND_DRBG *drbg,
     return 1;
 }
 
-static int drbg_hmac_uninstantiate(RAND_DRBG *drbg)
+static int drbg_hmac_generate_wrapper
+    (void *vdrbg, unsigned char *out, size_t outlen, unsigned int strength,
+     int prediction_resistance, const unsigned char *adin, size_t adin_len)
 {
-    EVP_MD_free(drbg->data.hmac.md);
-    HMAC_CTX_free(drbg->data.hmac.ctx);
-    OPENSSL_cleanse(&drbg->data.hmac, sizeof(drbg->data.hmac));
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return PROV_DRBG_generate(drbg, out, outlen, strength,
+                              prediction_resistance, adin, adin_len);
+}
+
+static int drbg_hmac_uninstantiate(PROV_DRBG *drbg)
+{
+    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
+
+    OPENSSL_cleanse(hmac->K, sizeof(hmac->K));
+    OPENSSL_cleanse(hmac->V, sizeof(hmac->V));
+    return PROV_DRBG_uninstantiate(drbg);
+}
+
+static int drbg_hmac_uninstantiate_wrapper(void *vdrbg)
+{
+    return drbg_hmac_uninstantiate((PROV_DRBG *)vdrbg);
+}
+
+static int drbg_hmac_verify_zeroization(void *vdrbg)
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
+
+    PROV_DRBG_VERYIFY_ZEROIZATION(hmac->K);
+    PROV_DRBG_VERYIFY_ZEROIZATION(hmac->V);
     return 1;
 }
 
-static RAND_DRBG_METHOD drbg_hmac_meth = {
-    drbg_hmac_instantiate,
-    drbg_hmac_reseed,
-    drbg_hmac_generate,
-    drbg_hmac_uninstantiate
-};
-
-int drbg_hmac_init(RAND_DRBG *drbg)
+static int drbg_hmac_new(PROV_DRBG *drbg)
 {
-    EVP_MD *md = NULL;
-    RAND_DRBG_HMAC *hmac = &drbg->data.hmac;
+    PROV_DRBG_HMAC *hmac;
+
+    hmac = OPENSSL_secure_zalloc(sizeof(*hmac));
+    if (hmac == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    drbg->data = hmac;
+    /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */
+    drbg->max_entropylen = DRBG_MAX_LENGTH;
+    drbg->max_noncelen = DRBG_MAX_LENGTH;
+    drbg->max_perslen = DRBG_MAX_LENGTH;
+    drbg->max_adinlen = DRBG_MAX_LENGTH;
+
+    /* Maximum number of bits per request = 2^19  = 2^16 bytes */
+    drbg->max_request = 1 << 16;
+    return 1;
+}
+
+static void *drbg_hmac_new_wrapper(void *provctx, void *parent,
+                                   const OSSL_DISPATCH *parent_dispatch)
+{
+    return prov_rand_drbg_new(provctx, parent, parent_dispatch, &drbg_hmac_new,
+                              &drbg_hmac_instantiate, &drbg_hmac_uninstantiate,
+                              &drbg_hmac_reseed, &drbg_hmac_generate);
+}
+
+static void drbg_hmac_free(void *vdrbg)
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    PROV_DRBG_HMAC *hmac;
+
+    if (drbg != NULL && (hmac = (PROV_DRBG_HMAC *)drbg->data) != NULL) {
+        EVP_MAC_free_ctx(hmac->ctx);
+        ossl_prov_digest_reset(&hmac->digest);
+        OPENSSL_secure_clear_free(hmac, sizeof(*hmac));
+    }
+    prov_rand_drbg_free(drbg);
+}
+
+static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return drbg_get_ctx_params(drbg, params);
+}
+
+static const OSSL_PARAM *drbg_hmac_gettable_ctx_params(void)
+{
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_DRBG_GETABLE_CTX_COMMON,
+        OSSL_PARAM_END
+    };
+    return known_gettable_ctx_params;
+}
+
+static int drbg_hmac_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    PROV_DRBG *ctx = (PROV_DRBG *)vctx;
+    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)ctx->data;
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    const EVP_MD *md;
+
+    if (!ossl_prov_digest_load_from_params(&hmac->digest, params, libctx))
+        return 0;
 
     /*
      * Confirm digest is allowed. We allow all digests that are not XOF
      * (such as SHAKE).  In FIPS mode, the fetch will fail for non-approved
      * digests.
      */
-    md = EVP_MD_fetch(drbg->libctx, ossl_prov_util_nid_to_name(drbg->type), "");
-    if (md == NULL)
+    md = ossl_prov_digest_md(&hmac->digest);
+    if (md != NULL && (EVP_MD_flags(md) & EVP_MD_FLAG_XOF) != 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_XOF_DIGESTS_NOT_ALLOWED);
         return 0;
-
-    if ((EVP_MD_flags(md) & EVP_MD_FLAG_XOF) != 0)
-        return 0;
-
-    drbg->meth = &drbg_hmac_meth;
-
-    if (hmac->ctx == NULL) {
-        hmac->ctx = HMAC_CTX_new();
-        if (hmac->ctx == NULL) {
-            EVP_MD_free(md);
-            return 0;
-        }
     }
 
-    /* These are taken from SP 800-90 10.1 Table 2 */
-    EVP_MD_free(hmac->md);
-    hmac->md = md;
-    hmac->blocklen = EVP_MD_size(md);
-    /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */
-    drbg->strength = 64 * (int)(hmac->blocklen >> 3);
-    if (drbg->strength > 256)
-        drbg->strength = 256;
-    drbg->seedlen = hmac->blocklen;
+    if (!ossl_prov_macctx_load_from_params(&hmac->ctx, params,
+                                           NULL, NULL, NULL, libctx))
+        return 0;
 
-    drbg->min_entropylen = drbg->strength / 8;
-    drbg->max_entropylen = DRBG_MAX_LENGTH;
+    if (hmac->ctx != NULL) {
+        /* These are taken from SP 800-90 10.1 Table 2 */
+        hmac->blocklen = EVP_MD_size(md);
+        /* See SP800-57 Part1 Rev4 5.6.1 Table 3 */
+        ctx->strength = 64 * (int)(hmac->blocklen >> 3);
+        if (ctx->strength > 256)
+            ctx->strength = 256;
+        ctx->seedlen = hmac->blocklen;
+        ctx->min_entropylen = ctx->strength / 8;
+        ctx->min_noncelen = ctx->min_entropylen / 2;
+    }
 
-    drbg->min_noncelen = drbg->min_entropylen / 2;
-    drbg->max_noncelen = DRBG_MAX_LENGTH;
-
-    drbg->max_perslen = DRBG_MAX_LENGTH;
-    drbg->max_adinlen = DRBG_MAX_LENGTH;
-
-    /* Maximum number of bits per request = 2^19 = 2^16 bytes*/
-    drbg->max_request = 1 << 16;
-
-    return 1;
+    return drbg_set_ctx_params(ctx, params);
 }
+
+static const OSSL_PARAM *drbg_hmac_settable_ctx_params(void)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_DIGEST, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_MAC, NULL, 0),
+        OSSL_PARAM_DRBG_SETABLE_CTX_COMMON,
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+const OSSL_DISPATCH drbg_hmac_functions[] = {
+    { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))drbg_hmac_new_wrapper },
+    { OSSL_FUNC_RAND_FREECTX, (void(*)(void))drbg_hmac_free },
+    { OSSL_FUNC_RAND_INSTANTIATE,
+      (void(*)(void))drbg_hmac_instantiate_wrapper },
+    { OSSL_FUNC_RAND_UNINSTANTIATE,
+      (void(*)(void))drbg_hmac_uninstantiate_wrapper },
+    { OSSL_FUNC_RAND_GENERATE, (void(*)(void))drbg_hmac_generate_wrapper },
+    { OSSL_FUNC_RAND_RESEED, (void(*)(void))drbg_hmac_reseed_wrapper },
+    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))drbg_enable_locking },
+    { OSSL_FUNC_RAND_LOCK, (void(*)(void))drbg_lock },
+    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))drbg_unlock },
+    { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
+      (void(*)(void))drbg_hmac_settable_ctx_params },
+    { OSSL_FUNC_RAND_SET_CTX_PARAMS, (void(*)(void))drbg_hmac_set_ctx_params },
+    { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
+      (void(*)(void))drbg_hmac_gettable_ctx_params },
+    { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))drbg_hmac_get_ctx_params },
+    { OSSL_FUNC_RAND_SET_CALLBACKS, (void(*)(void))drbg_set_callbacks },
+    { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
+      (void(*)(void))drbg_hmac_verify_zeroization },
+    { 0, NULL }
+};

@@ -470,17 +470,10 @@ static const OSSL_ALGORITHM fips_kdfs[] = {
 };
 
 static const OSSL_ALGORITHM fips_rands[] = {
-    /*
-     * The TEST RNG must be first, so it can be suppressed after the power up
-     * tests are completed.
-     */
-    { "TEST-RAND", "provider=fips", test_rng_functions },
-    { "HASH-DRBG", "provider=fips", drbg_hash_functions },
-/*
-    { "HMAC-DRBG", "provider=fips", drbg_hmac_functions },
     { "CTR-DRBG", "provider=fips", drbg_ctr_functions },
-*/
-    { "CRNGT:continuous-rng-test", "provider=fips", crngt_functions },
+    { "HASH-DRBG", "provider=fips", drbg_hash_functions },
+    { "HMAC-DRBG", "provider=fips", drbg_hmac_functions },
+    { "TEST-RAND", "provider=fips", test_rng_functions },
     { NULL, NULL, NULL }
 };
 

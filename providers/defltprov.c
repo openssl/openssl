@@ -338,13 +338,10 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
 };
 
 static const OSSL_ALGORITHM deflt_rands[] = {
-    { "TEST-RAND", "provider=default", test_rng_functions },
-    { "HASH-DRBG", "provider=default", drbg_hash_functions },
-/*
-    { "HMAC-DRBG", "provider=default", drbg_hmac_functions },
     { "CTR-DRBG", "provider=default", drbg_ctr_functions },
-*/
-    { "CRNGT:continuous-rng-test", "provider=default", crngt_functions },
+    { "HASH-DRBG", "provider=default", drbg_hash_functions },
+    { "HMAC-DRBG", "provider=default", drbg_hmac_functions },
+    { "TEST-RAND", "provider=default", test_rng_functions },
     { NULL, NULL, NULL }
 };
 

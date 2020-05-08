@@ -21,7 +21,7 @@
 #include "internal/cryptlib.h"
 #include "prov/rand_pool.h"
 #include "drbg_local.h"
-#include "seeding/seeding.h"
+#include "prov/seeding.h"
 
 typedef struct crng_test_global_st {
     unsigned char crngt_prev[EVP_MAX_MD_SIZE];

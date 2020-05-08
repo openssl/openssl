@@ -36,7 +36,7 @@ typedef struct {
     unsigned int strength;
 } PROV_TEST_RNG;
 
-static int test_rng_new(PROV_DRBG *ctx, int secure)
+static int test_rng_new(PROV_DRBG *ctx)
 {
     PROV_TEST_RNG *t;
 
@@ -50,15 +50,7 @@ static int test_rng_new(PROV_DRBG *ctx, int secure)
     ctx->max_perslen = INT_MAX;
     ctx->max_adinlen = INT_MAX;
     ctx->max_request = INT_MAX;
-    ctx->strength = 1024;
     return 1;
-}
-
-static void *test_rng_new_wrapper(void *provctx, int secure, void *parent,
-                                   const OSSL_DISPATCH *parent_dispatch)
-{
-    return prov_rand_drbg_new(provctx, secure, parent, parent_dispatch,
-                              &test_rng_new);
 }
 
 static void test_rng_free(void *vdrbg)
@@ -111,7 +103,7 @@ static int test_rng_uninstantiate(PROV_DRBG *drbg)
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)drbg->data;
 
     t->entropy_pos = 0;
-    return 1;
+    return PROV_DRBG_uninstantiate(drbg);
 }
 
 static int test_rng_uninstantiate_wrapper(void *vdrbg)
@@ -167,15 +159,6 @@ static int test_rng_reseed_wrapper(void *vdrbg, int prediction_resistance,
                                    const unsigned char *adin, size_t adin_len)
 {
     return test_rng_reseed((PROV_DRBG *)vdrbg, ent, ent_len, adin, adin_len);
-}
-
-static void *test_rng_new_wrapper(void *provctx, void *parent,
-                                   const OSSL_DISPATCH *parent_dispatch)
-{
-    return prov_rand_drbg_new(provctx, parent, parent_dispatch,
-                              &test_rng_new, &test_rng_instantiate,
-                              &test_rng_uninstantiate, &test_rng_reseed,
-                              &test_rng_generate);
 }
 
 static size_t test_rng_nonce(void *vdrbg, unsigned char *out,
@@ -305,6 +288,15 @@ static const OSSL_PARAM *test_rng_settable_ctx_params(void)
 static int test_rng_verify_zeroization(void *vdrbg)
 {
     return 1;
+}
+
+static void *test_rng_new_wrapper(void *provctx, void *parent,
+                                   const OSSL_DISPATCH *parent_dispatch)
+{
+    return prov_rand_drbg_new(provctx, parent, parent_dispatch,
+                              &test_rng_new, &test_rng_instantiate,
+                              &test_rng_uninstantiate, &test_rng_reseed,
+                              &test_rng_generate);
 }
 
 const OSSL_DISPATCH test_rng_functions[] = {

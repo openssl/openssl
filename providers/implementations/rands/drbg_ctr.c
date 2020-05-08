@@ -12,14 +12,50 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include <openssl/aes.h>
+#include "e_os.h" /* strcasecmp */
 #include "crypto/modes.h"
 #include "internal/thread_once.h"
-#include "rand_local.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommonerr.h"
+#include "drbg_local.h"
+
+static OSSL_OP_rand_newctx_fn drbg_ctr_new_wrapper;
+static OSSL_OP_rand_freectx_fn drbg_ctr_free;
+static OSSL_OP_rand_instantiate_fn drbg_ctr_instantiate_wrapper;
+static OSSL_OP_rand_uninstantiate_fn drbg_ctr_uninstantiate_wrapper;
+static OSSL_OP_rand_generate_fn drbg_ctr_generate_wrapper;
+static OSSL_OP_rand_reseed_fn drbg_ctr_reseed_wrapper;
+static OSSL_OP_rand_settable_ctx_params_fn drbg_ctr_settable_ctx_params;
+static OSSL_OP_rand_set_ctx_params_fn drbg_ctr_set_ctx_params;
+static OSSL_OP_rand_gettable_ctx_params_fn drbg_ctr_gettable_ctx_params;
+static OSSL_OP_rand_get_ctx_params_fn drbg_ctr_get_ctx_params;
+static OSSL_OP_rand_verify_zeroization_fn drbg_ctr_verify_zeroization;
+
+/*
+ * The state of a DRBG AES-CTR.
+ */
+typedef struct rand_drbg_ctr_st {
+    EVP_CIPHER_CTX *ctx_ecb;
+    EVP_CIPHER_CTX *ctx_ctr;
+    EVP_CIPHER_CTX *ctx_df;
+    EVP_CIPHER *cipher_ecb;
+    EVP_CIPHER *cipher_ctr;
+    size_t keylen;
+    int use_df;
+    unsigned char K[32];
+    unsigned char V[16];
+    /* Temporary block storage used by ctr_df */
+    unsigned char bltmp[16];
+    size_t bltmp_pos;
+    unsigned char KX[48];
+} PROV_DRBG_CTR;
 
 /*
  * Implementation of NIST SP 800-90A CTR DRBG.
  */
-static void inc_128(RAND_DRBG_CTR *ctr)
+static void inc_128(PROV_DRBG_CTR *ctr)
 {
     unsigned char *p = &ctr->V[0];
     u32 n = 16, c = 1;
@@ -32,7 +68,7 @@ static void inc_128(RAND_DRBG_CTR *ctr)
     } while (n);
 }
 
-static void ctr_XOR(RAND_DRBG_CTR *ctr, const unsigned char *in, size_t inlen)
+static void ctr_XOR(PROV_DRBG_CTR *ctr, const unsigned char *in, size_t inlen)
 {
     size_t i, n;
 
@@ -61,7 +97,7 @@ static void ctr_XOR(RAND_DRBG_CTR *ctr, const unsigned char *in, size_t inlen)
 /*
  * Process a complete block using BCC algorithm of SP 800-90A 10.3.3
  */
-__owur static int ctr_BCC_block(RAND_DRBG_CTR *ctr, unsigned char *out,
+__owur static int ctr_BCC_block(PROV_DRBG_CTR *ctr, unsigned char *out,
                                 const unsigned char *in, int len)
 {
     int i, outlen = AES_BLOCK_SIZE;
@@ -79,7 +115,7 @@ __owur static int ctr_BCC_block(RAND_DRBG_CTR *ctr, unsigned char *out,
 /*
  * Handle several BCC operations for as much data as we need for K and X
  */
-__owur static int ctr_BCC_blocks(RAND_DRBG_CTR *ctr, const unsigned char *in)
+__owur static int ctr_BCC_blocks(PROV_DRBG_CTR *ctr, const unsigned char *in)
 {
     unsigned char in_tmp[48];
     unsigned char num_of_blk = 2;
@@ -97,7 +133,7 @@ __owur static int ctr_BCC_blocks(RAND_DRBG_CTR *ctr, const unsigned char *in)
  * Initialise BCC blocks: these have the value 0,1,2 in leftmost positions:
  * see 10.3.1 stage 7.
  */
-__owur static int ctr_BCC_init(RAND_DRBG_CTR *ctr)
+__owur static int ctr_BCC_init(PROV_DRBG_CTR *ctr)
 {
     unsigned char bltmp[48] = {0};
     unsigned char num_of_blk;
@@ -112,7 +148,7 @@ __owur static int ctr_BCC_init(RAND_DRBG_CTR *ctr)
 /*
  * Process several blocks into BCC algorithm, some possibly partial
  */
-__owur static int ctr_BCC_update(RAND_DRBG_CTR *ctr,
+__owur static int ctr_BCC_update(PROV_DRBG_CTR *ctr,
                                  const unsigned char *in, size_t inlen)
 {
     if (in == NULL || inlen == 0)
@@ -147,7 +183,7 @@ __owur static int ctr_BCC_update(RAND_DRBG_CTR *ctr,
     return 1;
 }
 
-__owur static int ctr_BCC_final(RAND_DRBG_CTR *ctr)
+__owur static int ctr_BCC_final(PROV_DRBG_CTR *ctr)
 {
     if (ctr->bltmp_pos) {
         memset(ctr->bltmp + ctr->bltmp_pos, 0, 16 - ctr->bltmp_pos);
@@ -157,7 +193,7 @@ __owur static int ctr_BCC_final(RAND_DRBG_CTR *ctr)
     return 1;
 }
 
-__owur static int ctr_df(RAND_DRBG_CTR *ctr,
+__owur static int ctr_df(PROV_DRBG_CTR *ctr,
                          const unsigned char *in1, size_t in1len,
                          const unsigned char *in2, size_t in2len,
                          const unsigned char *in3, size_t in3len)
@@ -220,12 +256,12 @@ __owur static int ctr_df(RAND_DRBG_CTR *ctr,
  * zeroes if necessary and have up to two parameters XORed together,
  * so we handle both cases in this function instead.
  */
-__owur static int ctr_update(RAND_DRBG *drbg,
+__owur static int ctr_update(PROV_DRBG *drbg,
                              const unsigned char *in1, size_t in1len,
                              const unsigned char *in2, size_t in2len,
                              const unsigned char *nonce, size_t noncelen)
 {
-    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
     int outlen = AES_BLOCK_SIZE;
     unsigned char V_tmp[48], out[48];
     unsigned char len;
@@ -247,7 +283,7 @@ __owur static int ctr_update(RAND_DRBG *drbg,
     memcpy(ctr->K, out, ctr->keylen);
     memcpy(ctr->V, out + ctr->keylen, 16);
 
-    if ((drbg->flags & RAND_DRBG_FLAG_CTR_NO_DF) == 0) {
+    if (ctr->use_df) {
         /* If no input reuse existing derived value */
         if (in1 != NULL || nonce != NULL || in2 != NULL)
             if (!ctr_df(ctr, in1, in1len, nonce, noncelen, in2, in2len))
@@ -266,12 +302,12 @@ __owur static int ctr_update(RAND_DRBG *drbg,
     return 1;
 }
 
-__owur static int drbg_ctr_instantiate(RAND_DRBG *drbg,
-                                       const unsigned char *entropy, size_t entropylen,
-                                       const unsigned char *nonce, size_t noncelen,
-                                       const unsigned char *pers, size_t perslen)
+static int drbg_ctr_instantiate(PROV_DRBG *drbg,
+                                const unsigned char *entropy, size_t entropylen,
+                                const unsigned char *nonce, size_t noncelen,
+                                const unsigned char *pers, size_t perslen)
 {
-    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
 
     if (entropy == NULL)
         return 0;
@@ -287,11 +323,22 @@ __owur static int drbg_ctr_instantiate(RAND_DRBG *drbg,
     return 1;
 }
 
-__owur static int drbg_ctr_reseed(RAND_DRBG *drbg,
-                                  const unsigned char *entropy, size_t entropylen,
-                                  const unsigned char *adin, size_t adinlen)
+static int drbg_ctr_instantiate_wrapper(void *vdrbg, unsigned int strength,
+                                        int prediction_resistance,
+                                        const unsigned char *pstr,
+                                        size_t pstr_len)
 {
-    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return PROV_DRBG_instantiate(drbg, strength, prediction_resistance,
+                                 pstr, pstr_len);
+}
+
+static int drbg_ctr_reseed(PROV_DRBG *drbg,
+                           const unsigned char *entropy, size_t entropylen,
+                           const unsigned char *adin, size_t adinlen)
+{
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
 
     if (entropy == NULL)
         return 0;
@@ -300,6 +347,16 @@ __owur static int drbg_ctr_reseed(RAND_DRBG *drbg,
     if (!ctr_update(drbg, entropy, entropylen, adin, adinlen, NULL, 0))
         return 0;
     return 1;
+}
+
+static int drbg_ctr_reseed_wrapper(void *vdrbg, int prediction_resistance,
+                                   const unsigned char *ent, size_t ent_len,
+                                   const unsigned char *adin, size_t adin_len)
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return PROV_DRBG_reseed(drbg, prediction_resistance, ent, ent_len,
+                            adin, adin_len);
 }
 
 static void ctr96_inc(unsigned char *counter)
@@ -314,11 +371,11 @@ static void ctr96_inc(unsigned char *counter)
     } while (n);
 }
 
-__owur static int drbg_ctr_generate(RAND_DRBG *drbg,
-                                    unsigned char *out, size_t outlen,
-                                    const unsigned char *adin, size_t adinlen)
+static int drbg_ctr_generate(PROV_DRBG *drbg,
+                             unsigned char *out, size_t outlen,
+                             const unsigned char *adin, size_t adinlen)
 {
-    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
     unsigned int ctr32, blocks;
     int outl, buflen;
 
@@ -328,7 +385,7 @@ __owur static int drbg_ctr_generate(RAND_DRBG *drbg,
         if (!ctr_update(drbg, adin, adinlen, NULL, 0, NULL, 0))
             return 0;
         /* This means we reuse derived value */
-        if ((drbg->flags & RAND_DRBG_FLAG_CTR_NO_DF) == 0) {
+        if (ctr->use_df) {
             adin = NULL;
             adinlen = 1;
         }
@@ -388,116 +445,299 @@ __owur static int drbg_ctr_generate(RAND_DRBG *drbg,
     return 1;
 }
 
-static int drbg_ctr_uninstantiate(RAND_DRBG *drbg)
+static int drbg_ctr_generate_wrapper
+    (void *vdrbg, unsigned char *out, size_t outlen,
+     unsigned int strength, int prediction_resistance,
+     const unsigned char *adin, size_t adin_len)
 {
-    EVP_CIPHER_CTX_free(drbg->data.ctr.ctx_ecb);
-    EVP_CIPHER_CTX_free(drbg->data.ctr.ctx_ctr);
-    EVP_CIPHER_CTX_free(drbg->data.ctr.ctx_df);
-    EVP_CIPHER_free(drbg->data.ctr.cipher_ecb);
-    EVP_CIPHER_free(drbg->data.ctr.cipher_ctr);
-    OPENSSL_cleanse(&drbg->data.ctr, sizeof(drbg->data.ctr));
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return PROV_DRBG_generate(drbg, out, outlen, strength,
+                              prediction_resistance, adin, adin_len);
+}
+
+static int drbg_ctr_uninstantiate(PROV_DRBG *drbg)
+{
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
+
+    OPENSSL_cleanse(ctr->K, sizeof(ctr->K));
+    OPENSSL_cleanse(ctr->V, sizeof(ctr->V));
+    OPENSSL_cleanse(ctr->bltmp, sizeof(ctr->bltmp));
+    OPENSSL_cleanse(ctr->KX, sizeof(ctr->KX));
+    ctr->bltmp_pos = 0;
+    return PROV_DRBG_uninstantiate(drbg);
+}
+
+static int drbg_ctr_uninstantiate_wrapper(void *vdrbg)
+{
+    return drbg_ctr_uninstantiate((PROV_DRBG *)vdrbg);
+}
+
+static int drbg_ctr_verify_zeroization(void *vdrbg)
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
+
+    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->K);
+    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->V);
+    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->bltmp);
+    PROV_DRBG_VERYIFY_ZEROIZATION(ctr->KX);
+    if (ctr->bltmp_pos != 0)
+        return 0;
     return 1;
 }
 
-static RAND_DRBG_METHOD drbg_ctr_meth = {
-    drbg_ctr_instantiate,
-    drbg_ctr_reseed,
-    drbg_ctr_generate,
-    drbg_ctr_uninstantiate
-};
-
-int drbg_ctr_init(RAND_DRBG *drbg)
+static int drbg_ctr_init_lengths(PROV_DRBG *drbg)
 {
-    RAND_DRBG_CTR *ctr = &drbg->data.ctr;
-    size_t keylen;
-    EVP_CIPHER *cipher_ecb = NULL;
-    EVP_CIPHER *cipher_ctr = NULL;
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
+    int res = 1;
 
-    switch (drbg->type) {
-    default:
-        /* This can't happen, but silence the compiler warning. */
-        return 0;
-    case NID_aes_128_ctr:
-        keylen = 16;
-        cipher_ecb = EVP_CIPHER_fetch(drbg->libctx, "AES-128-ECB", "");
-        cipher_ctr = EVP_CIPHER_fetch(drbg->libctx, "AES-128-CTR", "");
-        break;
-    case NID_aes_192_ctr:
-        keylen = 24;
-        cipher_ecb = EVP_CIPHER_fetch(drbg->libctx, "AES-192-ECB", "");
-        cipher_ctr = EVP_CIPHER_fetch(drbg->libctx, "AES-192-CTR", "");
-        break;
-    case NID_aes_256_ctr:
-        keylen = 32;
-        cipher_ecb = EVP_CIPHER_fetch(drbg->libctx, "AES-256-ECB", "");
-        cipher_ctr = EVP_CIPHER_fetch(drbg->libctx, "AES-256-CTR", "");
-        break;
+#ifdef FIPS_MODULE
+    if (!ctr->use_df) {
+        PROVerr(0, RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS);
+        ctr->use_df = 1;
+        res = 0;
     }
-    if (cipher_ecb == NULL || cipher_ctr == NULL)
-        return 0;
+#endif
+    /* Maximum number of bits per request = 2^19  = 2^16 bytes */
+    drbg->max_request = 1 << 16;
+    if (ctr->use_df) {
+        drbg->min_entropylen = 0;
+        drbg->max_entropylen = DRBG_MAX_LENGTH;
+        drbg->min_noncelen = 0;
+        drbg->max_noncelen = DRBG_MAX_LENGTH;
+        drbg->max_perslen = DRBG_MAX_LENGTH;
+        drbg->max_adinlen = DRBG_MAX_LENGTH;
 
-    EVP_CIPHER_free(ctr->cipher_ecb);
-    ctr->cipher_ecb = cipher_ecb;
-    EVP_CIPHER_free(ctr->cipher_ctr);
-    ctr->cipher_ctr = cipher_ctr;
+        if (ctr->keylen > 0) {
+            drbg->min_entropylen = ctr->keylen;
+            drbg->min_noncelen = drbg->min_entropylen / 2;
+        }
+    } else {
+        const size_t len = ctr->keylen > 0 ? drbg->seedlen : DRBG_MAX_LENGTH;
+
+        drbg->min_entropylen = len;
+        drbg->max_entropylen = len;
+        /* Nonce not used */
+        drbg->min_noncelen = 0;
+        drbg->max_noncelen = 0;
+        drbg->max_perslen = len;
+        drbg->max_adinlen = len;
+    }
+    return res;
+}
+
+static int drbg_ctr_init(PROV_DRBG *drbg)
+{
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
+    const size_t keylen = EVP_CIPHER_key_length(ctr->cipher_ctr);
 
     ctr->keylen = keylen;
     if (ctr->ctx_ecb == NULL)
         ctr->ctx_ecb = EVP_CIPHER_CTX_new();
     if (ctr->ctx_ctr == NULL)
         ctr->ctx_ctr = EVP_CIPHER_CTX_new();
-    if (ctr->ctx_ecb == NULL || ctr->ctx_ctr == NULL
-        || !EVP_CipherInit_ex(ctr->ctx_ecb,
-                              ctr->cipher_ecb, NULL, NULL, NULL, 1)
-        || !EVP_CipherInit_ex(ctr->ctx_ctr,
-                              ctr->cipher_ctr, NULL, NULL, NULL, 1))
-        return 0;
-
-    drbg->meth = &drbg_ctr_meth;
-    drbg->strength = keylen * 8;
-    drbg->seedlen = keylen + 16;
-
-    if ((drbg->flags & RAND_DRBG_FLAG_CTR_NO_DF) == 0) {
-        /* df initialisation */
-        static const unsigned char df_key[32] = {
-            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-            0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-            0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
-        };
-
-        if (ctr->ctx_df == NULL)
-            ctr->ctx_df = EVP_CIPHER_CTX_new();
-        if (ctr->ctx_df == NULL)
-            return 0;
-        /* Set key schedule for df_key */
-        if (!EVP_CipherInit_ex(ctr->ctx_df,
-                               ctr->cipher_ecb, NULL, df_key, NULL, 1))
-            return 0;
-
-        drbg->min_entropylen = ctr->keylen;
-        drbg->max_entropylen = DRBG_MAX_LENGTH;
-        drbg->min_noncelen = drbg->min_entropylen / 2;
-        drbg->max_noncelen = DRBG_MAX_LENGTH;
-        drbg->max_perslen = DRBG_MAX_LENGTH;
-        drbg->max_adinlen = DRBG_MAX_LENGTH;
-    } else {
-#ifdef FIPS_MODULE
-        RANDerr(RAND_F_DRBG_CTR_INIT,
-                RAND_R_DERIVATION_FUNCTION_MANDATORY_FOR_FIPS);
-        return 0;
-#else
-        drbg->min_entropylen = drbg->seedlen;
-        drbg->max_entropylen = drbg->seedlen;
-        /* Nonce not used */
-        drbg->min_noncelen = 0;
-        drbg->max_noncelen = 0;
-        drbg->max_perslen = drbg->seedlen;
-        drbg->max_adinlen = drbg->seedlen;
-#endif
+    if (ctr->ctx_ecb == NULL || ctr->ctx_ctr == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        goto err;
     }
 
-    drbg->max_request = 1 << 16;
+    if (ctr->cipher_ctr != NULL) {
+        if (!EVP_CipherInit_ex(ctr->ctx_ecb,
+                               ctr->cipher_ecb, NULL, NULL, NULL, 1)
+            || !EVP_CipherInit_ex(ctr->ctx_ctr,
+                                  ctr->cipher_ctr, NULL, NULL, NULL, 1)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_INITIALISE_CIPHERS);
+            goto err;
+        }
 
-    return 1;
+        drbg->strength = keylen * 8;
+        drbg->seedlen = keylen + 16;
+
+        if (ctr->use_df) {
+            /* df initialisation */
+            static const unsigned char df_key[32] = {
+                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+                0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+                0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
+            };
+
+            if (ctr->ctx_df == NULL)
+                ctr->ctx_df = EVP_CIPHER_CTX_new();
+            if (ctr->ctx_df == NULL) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+            /* Set key schedule for df_key */
+            if (!EVP_CipherInit_ex(ctr->ctx_df,
+                                   ctr->cipher_ecb, NULL, df_key, NULL, 1)) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_DERIVATION_FUNCTION_INIT_FAILED);
+                goto err;
+            }
+        }
+    }
+    return drbg_ctr_init_lengths(drbg);
+
+err:
+    EVP_CIPHER_CTX_free(ctr->ctx_ecb);
+    EVP_CIPHER_CTX_free(ctr->ctx_ctr);
+    ctr->ctx_ecb = ctr->ctx_ctr = NULL;
+    return 0;    
 }
+
+static int drbg_ctr_new(PROV_DRBG *drbg)
+{
+    PROV_DRBG_CTR *ctr;
+
+    ctr = OPENSSL_secure_zalloc(sizeof(*ctr));
+    if (ctr == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    ctr->use_df = 1;
+    drbg->data = ctr;
+    return drbg_ctr_init_lengths(drbg);
+}
+
+static void *drbg_ctr_new_wrapper(void *provctx, void *parent,
+                                   const OSSL_DISPATCH *parent_dispatch)
+{
+    return prov_rand_drbg_new(provctx, parent, parent_dispatch, &drbg_ctr_new,
+                              &drbg_ctr_instantiate, &drbg_ctr_uninstantiate,
+                              &drbg_ctr_reseed, &drbg_ctr_generate);
+}
+
+static void drbg_ctr_free(void *vdrbg)
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    PROV_DRBG_CTR *ctr;
+
+    if (drbg != NULL && (ctr = (PROV_DRBG_CTR *)drbg->data) != NULL) {
+        EVP_CIPHER_CTX_free(ctr->ctx_ecb);
+        EVP_CIPHER_CTX_free(ctr->ctx_ctr);
+        EVP_CIPHER_CTX_free(ctr->ctx_df);
+        EVP_CIPHER_free(ctr->cipher_ecb);
+        EVP_CIPHER_free(ctr->cipher_ctr);
+
+        OPENSSL_secure_clear_free(ctr, sizeof(*ctr));
+    }
+    prov_rand_drbg_free(drbg);
+}
+
+static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
+{
+    PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+
+    return drbg_get_ctx_params(drbg, params);
+}
+
+static const OSSL_PARAM *drbg_ctr_gettable_ctx_params(void)
+{
+    static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_DRBG_GETABLE_CTX_COMMON,
+        OSSL_PARAM_END
+    };
+    return known_gettable_ctx_params;
+}
+
+static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+{
+    PROV_DRBG *ctx = (PROV_DRBG *)vctx;
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)ctx->data;
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    const OSSL_PARAM *p;
+    char *ecb;
+    const char *propquery = NULL;
+    int i, cipher_init = 0;
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_USE_DF)) != NULL
+            && OSSL_PARAM_get_int(p, &i)) {
+        /* FIPS errors out in the drbg_ctr_init() call later */
+        ctr->use_df = i != 0;
+        cipher_init = 1;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_DRBG_PARAM_PROPERTIES)) != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        propquery = (const char *)p->data;
+    }
+
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_CIPHER)) != NULL) {
+        const char *base = (const char *)p->data;
+
+        if (p->data_type != OSSL_PARAM_UTF8_STRING
+                || p->data_size < 3)
+            return 0;
+        if (strcasecmp("CTR", base + p->data_size - sizeof("CTR")) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_REQUIRE_CTR_MODE_CIPHER);
+            return 0;
+        }
+        if ((ecb = OPENSSL_strdup(base)) == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        strcpy(ecb + p->data_size - sizeof("ECB"), "ECB");
+        EVP_CIPHER_free(ctr->cipher_ecb);
+        EVP_CIPHER_free(ctr->cipher_ctr);
+        ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
+        ctr->cipher_ecb = EVP_CIPHER_fetch(libctx, ecb, propquery);
+        OPENSSL_free(ecb);
+        if (ctr->cipher_ctr == NULL || ctr->cipher_ecb == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_FIND_CIPHERS);
+            return 0;
+        }
+        cipher_init = 1;
+    }
+
+    if (cipher_init && !drbg_ctr_init(ctx))
+        return 0;
+
+    return drbg_set_ctx_params(ctx, params);
+}
+
+static const OSSL_PARAM *drbg_ctr_settable_ctx_params(void)
+{
+    static const OSSL_PARAM known_settable_ctx_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_CIPHER, NULL, 0),
+#ifndef FIPS_MODULE
+        /*
+         * Don't advertise this for FIPS, it isn't allowed to change.
+         * The parameter can still be passed and will be processed but errors
+         * out.
+         */
+        OSSL_PARAM_int(OSSL_DRBG_PARAM_USE_DF, NULL),
+#endif
+        OSSL_PARAM_DRBG_SETABLE_CTX_COMMON,
+        OSSL_PARAM_END
+    };
+    return known_settable_ctx_params;
+}
+
+const OSSL_DISPATCH drbg_ctr_functions[] = {
+    { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))drbg_ctr_new_wrapper },
+    { OSSL_FUNC_RAND_FREECTX, (void(*)(void))drbg_ctr_free },
+    { OSSL_FUNC_RAND_INSTANTIATE,
+      (void(*)(void))drbg_ctr_instantiate_wrapper },
+    { OSSL_FUNC_RAND_UNINSTANTIATE,
+      (void(*)(void))drbg_ctr_uninstantiate_wrapper },
+    { OSSL_FUNC_RAND_GENERATE, (void(*)(void))drbg_ctr_generate_wrapper },
+    { OSSL_FUNC_RAND_RESEED, (void(*)(void))drbg_ctr_reseed_wrapper },
+    { OSSL_FUNC_RAND_ENABLE_LOCKING, (void(*)(void))drbg_enable_locking },
+    { OSSL_FUNC_RAND_LOCK, (void(*)(void))drbg_lock },
+    { OSSL_FUNC_RAND_UNLOCK, (void(*)(void))drbg_unlock },
+    { OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS,
+      (void(*)(void))drbg_ctr_settable_ctx_params },
+    { OSSL_FUNC_RAND_SET_CTX_PARAMS, (void(*)(void))drbg_ctr_set_ctx_params },
+    { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
+      (void(*)(void))drbg_ctr_gettable_ctx_params },
+    { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))drbg_ctr_get_ctx_params },
+    { OSSL_FUNC_RAND_SET_CALLBACKS, (void(*)(void))drbg_set_callbacks },
+    { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
+      (void(*)(void))drbg_ctr_verify_zeroization },
+    { 0, NULL }
+};
