@@ -13,7 +13,16 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "prov/provider_ctx.h"
 #include "prov/implementations.h"
+
+/*
+ * Forward declarations to ensure that interface functions are correctly
+ * defined.
+ */
+static OSSL_provider_gettable_params_fn legacy_gettable_params;
+static OSSL_provider_get_params_fn legacy_get_params;
+static OSSL_provider_query_operation_fn legacy_query;
 
 #define ALG(NAMES, FUNC) { NAMES, "provider=legacy", FUNC }
 
@@ -27,19 +36,19 @@ static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Parameters we provide to the core */
-static const OSSL_ITEM legacy_param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_NAME },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_VERSION },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_BUILDINFO },
-    { 0, NULL }
+static const OSSL_PARAM legacy_param_types[] = {
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_END
 };
 
-static const OSSL_ITEM *legacy_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *legacy_gettable_params(void *provctx)
 {
     return legacy_param_types;
 }
 
-static int legacy_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int legacy_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -133,8 +142,7 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *legacy_query(OSSL_PROVIDER *prov,
-                                          int operation_id,
+static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
                                           int *no_cache)
 {
     *no_cache = 0;

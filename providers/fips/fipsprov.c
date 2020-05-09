@@ -34,6 +34,15 @@
 #include "prov/provider_util.h"
 #include "self_test.h"
 
+/*
+ * Forward declarations to ensure that interface functions are correctly
+ * defined.
+ */
+static OSSL_provider_teardown_fn fips_teardown;
+static OSSL_provider_gettable_params_fn fips_gettable_params;
+static OSSL_provider_get_params_fn fips_get_params;
+static OSSL_provider_query_operation_fn fips_query;
+
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, "provider=fips,fips=yes", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
@@ -127,9 +136,8 @@ static OSSL_PARAM core_params[] =
 };
 
 /* TODO(3.0): To be removed */
-static int dummy_evp_call(void *provctx)
+static int dummy_evp_call(OPENSSL_CTX *libctx)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
     EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, NULL);
@@ -208,12 +216,12 @@ static int dummy_evp_call(void *provctx)
     return ret;
 }
 
-static const OSSL_PARAM *fips_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *fips_gettable_params(void *provctx)
 {
     return fips_param_types;
 }
 
-static int fips_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int fips_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -479,9 +487,8 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
-                                         int operation_id,
-                                         int *no_cache)
+static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
+                                        int *no_cache)
 {
     *no_cache = 0;
     switch (operation_id) {
@@ -506,13 +513,14 @@ static const OSSL_ALGORITHM *fips_query(OSSL_PROVIDER *prov,
     return NULL;
 }
 
+static void fips_teardown(void *provctx)
+{
+    OPENSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH fips_dispatch_table[] = {
-    /*
-     * To release our resources we just need to free the OPENSSL_CTX so we just
-     * use OPENSSL_CTX_free directly as our teardown function
-     */
-    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OPENSSL_CTX_free },
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))fips_teardown },
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))fips_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
@@ -532,7 +540,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        void **provctx)
 {
     FIPS_GLOBAL *fgbl;
-    OPENSSL_CTX *ctx;
+    OPENSSL_CTX *libctx;
     OSSL_self_test_cb_fn *stcbfn = NULL;
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
 
@@ -639,35 +647,34 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         return 0;
 
     /*  Create a context. */
-    if ((ctx = OPENSSL_CTX_new()) == NULL)
+    if ((libctx = OPENSSL_CTX_new()) == NULL)
         return 0;
-    if ((fgbl = openssl_ctx_get_data(ctx, OPENSSL_CTX_FIPS_PROV_INDEX,
-                                     &fips_prov_ossl_ctx_method)) == NULL) {
-        OPENSSL_CTX_free(ctx);
-        return 0;
-    }
+    *provctx = libctx;
+
+    if ((fgbl = openssl_ctx_get_data(libctx, OPENSSL_CTX_FIPS_PROV_INDEX,
+                                     &fips_prov_ossl_ctx_method)) == NULL)
+        goto err;
 
     fgbl->prov = provider;
 
-    selftest_params.libctx = PROV_LIBRARY_CONTEXT_OF(ctx);
-    if (!SELF_TEST_post(&selftest_params, 0)) {
-        OPENSSL_CTX_free(ctx);
-        return 0;
-    }
+    selftest_params.libctx = libctx;
+    if (!SELF_TEST_post(&selftest_params, 0))
+        goto err;
 
     /*
      * TODO(3.0): Remove me. This is just a dummy call to demonstrate making
      * EVP calls from within the FIPS module.
      */
-    if (!dummy_evp_call(ctx)) {
-        OPENSSL_CTX_free(ctx);
-        return 0;
-    }
+    if (!dummy_evp_call(libctx))
+        goto err;
 
     *out = fips_dispatch_table;
-    *provctx = ctx;
 
     return 1;
+ err:
+    fips_teardown(*provctx);
+    *provctx = NULL;
+    return 0;
 }
 
 /*
@@ -750,9 +757,17 @@ int ERR_pop_to_mark(void)
     return c_pop_error_to_mark(NULL);
 }
 
-const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx)
+/*
+ * This must take a library context, since it's called from the depths
+ * of crypto/initthread.c code, where it's (correctly) assumed that the
+ * passed caller argument is an OPENSSL_CTX pointer (since the same routine
+ * is also called from other parts of libcrypto, which all pass around a
+ * OPENSSL_CTX pointer)
+ */
+const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *libctx)
 {
-    FIPS_GLOBAL *fgbl = openssl_ctx_get_data(ctx, OPENSSL_CTX_FIPS_PROV_INDEX,
+    FIPS_GLOBAL *fgbl = openssl_ctx_get_data(libctx,
+                                             OPENSSL_CTX_FIPS_PROV_INDEX,
                                              &fips_prov_ossl_ctx_method);
 
     if (fgbl == NULL)

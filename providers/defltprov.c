@@ -15,10 +15,19 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "prov/bio.h"
+#include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "internal/nelem.h"
+
+/*
+ * Forward declarations to ensure that interface functions are correctly
+ * defined.
+ */
+static OSSL_provider_gettable_params_fn deflt_gettable_params;
+static OSSL_provider_get_params_fn deflt_get_params;
+static OSSL_provider_query_operation_fn deflt_query;
 
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, "provider=default", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
@@ -35,12 +44,12 @@ static const OSSL_PARAM deflt_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *deflt_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *deflt_gettable_params(void *provctx)
 {
     return deflt_param_types;
 }
 
-static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int deflt_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -500,8 +509,7 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
-                                         int operation_id,
+static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
     *no_cache = 0;
