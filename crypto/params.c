@@ -617,6 +617,33 @@ OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf)
                                 sizeof(size_t));
 }
 
+int OSSL_PARAM_get_time_t(const OSSL_PARAM *p, time_t *val)
+{
+    switch (sizeof(time_t)) {
+    case sizeof(int32_t):
+        return OSSL_PARAM_get_int32(p, (int32_t *)val);
+    case sizeof(int64_t):
+        return OSSL_PARAM_get_int64(p, (int64_t *)val);
+    }
+    return 0;
+}
+
+int OSSL_PARAM_set_time_t(OSSL_PARAM *p, time_t val)
+{
+    switch (sizeof(time_t)) {
+    case sizeof(int32_t):
+        return OSSL_PARAM_set_int32(p, (int32_t)val);
+    case sizeof(int64_t):
+        return OSSL_PARAM_set_int64(p, (int64_t)val);
+    }
+    return 0;
+}
+
+OSSL_PARAM OSSL_PARAM_construct_time_t(const char *key, time_t *buf)
+{
+    return ossl_param_construct(key, OSSL_PARAM_INTEGER, buf, sizeof(time_t));
+}
+
 int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
 {
     BIGNUM *b;

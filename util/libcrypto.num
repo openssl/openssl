@@ -5114,6 +5114,10 @@ EVP_default_properties_is_fips_enabled  ?	3_0_0	EXIST::FUNCTION:
 EVP_default_properties_enable_fips      ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_raw_private_key_with_libctx ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_raw_public_key_with_libctx ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_BLD_push_time_t              ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_construct_time_t             ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_get_time_t                   ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_set_time_t                   ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_attach                       ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_set_attach            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen ?	3_0_0	EXIST::FUNCTION:RSA

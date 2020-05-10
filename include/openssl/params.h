@@ -49,6 +49,8 @@ extern "C" {
                     sizeof(uint64_t))
 # define OSSL_PARAM_size_t(key, addr) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_UNSIGNED_INTEGER, (addr), sizeof(size_t))
+# define OSSL_PARAM_time_t(key, addr) \
+    OSSL_PARAM_DEFN((key), OSSL_PARAM_INTEGER, (addr), sizeof(time_t))
 # define OSSL_PARAM_double(key, addr) \
     OSSL_PARAM_DEFN((key), OSSL_PARAM_REAL, (addr), sizeof(double))
 
@@ -78,6 +80,7 @@ OSSL_PARAM OSSL_PARAM_construct_uint32(const char *key, uint32_t *buf);
 OSSL_PARAM OSSL_PARAM_construct_int64(const char *key, int64_t *buf);
 OSSL_PARAM OSSL_PARAM_construct_uint64(const char *key, uint64_t *buf);
 OSSL_PARAM OSSL_PARAM_construct_size_t(const char *key, size_t *buf);
+OSSL_PARAM OSSL_PARAM_construct_time_t(const char *key, time_t *buf);
 OSSL_PARAM OSSL_PARAM_construct_BN(const char *key, unsigned char *buf,
                                    size_t bsize);
 OSSL_PARAM OSSL_PARAM_construct_double(const char *key, double *buf);
@@ -105,6 +108,7 @@ int OSSL_PARAM_get_uint32(const OSSL_PARAM *p, uint32_t *val);
 int OSSL_PARAM_get_int64(const OSSL_PARAM *p, int64_t *val);
 int OSSL_PARAM_get_uint64(const OSSL_PARAM *p, uint64_t *val);
 int OSSL_PARAM_get_size_t(const OSSL_PARAM *p, size_t *val);
+int OSSL_PARAM_get_time_t(const OSSL_PARAM *p, time_t *val);
 
 int OSSL_PARAM_set_int(OSSL_PARAM *p, int val);
 int OSSL_PARAM_set_uint(OSSL_PARAM *p, unsigned int val);
@@ -115,6 +119,7 @@ int OSSL_PARAM_set_uint32(OSSL_PARAM *p, uint32_t val);
 int OSSL_PARAM_set_int64(OSSL_PARAM *p, int64_t val);
 int OSSL_PARAM_set_uint64(OSSL_PARAM *p, uint64_t val);
 int OSSL_PARAM_set_size_t(OSSL_PARAM *p, size_t val);
+int OSSL_PARAM_set_time_t(OSSL_PARAM *p, time_t val);
 
 int OSSL_PARAM_get_double(const OSSL_PARAM *p, double *val);
 int OSSL_PARAM_set_double(OSSL_PARAM *p, double val);
