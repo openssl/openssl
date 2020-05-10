@@ -136,9 +136,8 @@ static OSSL_PARAM core_params[] =
 };
 
 /* TODO(3.0): To be removed */
-static int dummy_evp_call(void *provctx)
+static int dummy_evp_call(OPENSSL_CTX *libctx)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA256", NULL);
     EVP_KDF *kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, NULL);
@@ -756,9 +755,15 @@ int ERR_pop_to_mark(void)
     return c_pop_error_to_mark(NULL);
 }
 
-const OSSL_PROVIDER *FIPS_get_provider(void *provctx)
+/*
+ * This must take a library context, since it's called from the depths
+ * of crypto/initthread.c code, where it's (correctly) assumed that the
+ * passed caller argument is an OPENSSL_CTX pointer (since the same routine
+ * is also called from other parts of libcrypto, which all pass around a
+ * OPENSSL_CTX pointer)
+ */
+const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *libctx)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     FIPS_GLOBAL *fgbl = openssl_ctx_get_data(libctx,
                                              OPENSSL_CTX_FIPS_PROV_INDEX,
                                              &fips_prov_ossl_ctx_method);
