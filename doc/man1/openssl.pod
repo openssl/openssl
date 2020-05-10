@@ -1298,9 +1298,9 @@ General SSL/TLS.
 
 SSL/TLS cipher.
 
-=item B<ENGINE_CONF>
+=item B<CONF>
 
-ENGINE configuration.
+Show details about provider and engine configuration.
 
 =item B<ENGINE_TABLE>
 
