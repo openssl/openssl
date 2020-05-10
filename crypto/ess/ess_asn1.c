@@ -58,6 +58,9 @@ ASN1_SEQUENCE(ESS_SIGNING_CERT_V2) = {
 IMPLEMENT_ASN1_FUNCTIONS(ESS_SIGNING_CERT_V2)
 IMPLEMENT_ASN1_DUP_FUNCTION(ESS_SIGNING_CERT_V2)
 
+/* No cms support means no CMS_SignerInfo* definitions */
+#ifndef OPENSSL_NO_CMS
+
 /*
  * Returns < 0 if attribute is not found, 1 if found, or 
  * -1 on attribute parsing failure.
@@ -111,3 +114,4 @@ int cms_signerinfo_get_signing_cert(CMS_SignerInfo *si,
         ESS_SIGNING_CERT_free(sc);
     return 1;
 }
+#endif  /* !OPENSSL_NO_CMS */
