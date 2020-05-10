@@ -16,7 +16,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_genrsa");
 
-plan tests => 10;
+plan tests => 12;
 
 # We want to know that an absurdly small number of bits isn't support
 if (disabled("deprecated-3.0")) {
@@ -75,13 +75,23 @@ ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', "rsa_keygen_bits:$good",
              '-out', 'genrsatest.pem' ])),
    "genpkey -f4 $good");
-ok(run(app([ 'openssl', 'pkey', '-check', '-in', 'genrsatest.pem', '-noout' ])),
+
+ok(run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
+             '-pkeyopt', 'rsa_keygen_bits:2048',
+             '-out', 'genrsatest2048.pem' ])),
+   "genpkey 2048 bits");
+ok(run(app([ 'openssl', 'pkey', '-check', '-in', 'genrsatest2048.pem', '-noout' ])),
    "pkey -check");
 
 ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
              '-pkeyopt', 'hexe:02',
              '-out', 'genrsatest.pem' ])),
    "genpkey with a bad public exponent should fail");
+ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
+             '-pkeyopt', 'e:65538',
+             '-out', 'genrsatest.pem' ])),
+   "genpkey with a even public exponent should fail");
+
 
  SKIP: {
     skip "Skipping rsa command line test", 4 if disabled("deprecated-3.0");
