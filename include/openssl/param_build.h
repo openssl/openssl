@@ -33,6 +33,8 @@ int OSSL_PARAM_BLD_push_uint64(OSSL_PARAM_BLD *bld, const char *key,
                                uint64_t val);
 int OSSL_PARAM_BLD_push_size_t(OSSL_PARAM_BLD *bld, const char *key,
                                size_t val);
+int OSSL_PARAM_BLD_push_time_t(OSSL_PARAM_BLD *bld, const char *key,
+                               time_t val);
 int OSSL_PARAM_BLD_push_double(OSSL_PARAM_BLD *bld, const char *key,
                                double val);
 int OSSL_PARAM_BLD_push_BN(OSSL_PARAM_BLD *bld, const char *key,
