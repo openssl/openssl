@@ -58,12 +58,11 @@ static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params,
                                const OSSL_PARAM params[], int rsa_type,
                                OPENSSL_CTX *libctx)
 {
-    if (!rsa_pss_params_30_fromdata(pss_params, params, libctx))
+    /* If not a PSS type RSA, sending us PSS parameters is wrong */
+    if (rsa_type != RSA_FLAG_TYPE_RSASSAPSS)
         return 0;
 
-    /* If not a PSS type RSA, sending us PSS parameters is wrong */
-    if (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
-        && !rsa_pss_params_30_is_unrestricted(pss_params))
+    if (!rsa_pss_params_30_fromdata(pss_params, params, libctx))
         return 0;
 
     return 1;
@@ -179,7 +178,7 @@ static int rsa_export(void *keydata, int selection,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && (pss_params == NULL
+        ok = ok && (rsa_pss_params_30_is_unrestricted(pss_params)
                     || rsa_pss_params_30_todata(pss_params, NULL, tmpl, NULL));
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && rsa_todata(rsa, tmpl, NULL);
@@ -317,7 +316,7 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         && rsa_type == RSA_FLAG_TYPE_RSASSAPSS) {
         const char *mdname = RSA_PSS_DEFAULT_MD;
 
-        if (pss_params != NULL) {
+        if (!rsa_pss_params_30_is_unrestricted(pss_params)) {
             mdname =
                 rsa_oaeppss_nid2name(rsa_pss_params_30_hashalg(pss_params));
 
@@ -501,7 +500,10 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
             goto err;
         break;
     case RSA_FLAG_TYPE_RSASSAPSS:
-        /* For plain RSA-PSS keys, PSS parameters may be set, so not check */
+        /*
+         * For plain RSA-PSS keys, PSS parameters may be set but don't have
+         * to, so not check.
+         */
         break;
     default:
         /* Unsupported RSA key sub-type... */
