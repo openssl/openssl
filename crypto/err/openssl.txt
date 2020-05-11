@@ -2843,6 +2843,7 @@ PROV_R_INVALID_PADDING_MODE:168:invalid padding mode
 PROV_R_INVALID_PSS_SALTLEN:169:invalid pss saltlen
 PROV_R_INVALID_SALT_LENGTH:112:invalid salt length
 PROV_R_INVALID_SEED_LENGTH:154:invalid seed length
+PROV_R_INVALID_SIGNATURE_SIZE:179:invalid signature size
 PROV_R_INVALID_TAG:110:invalid tag
 PROV_R_INVALID_TAGLEN:118:invalid taglen
 PROV_R_INVALID_X931_DIGEST:170:invalid x931 digest

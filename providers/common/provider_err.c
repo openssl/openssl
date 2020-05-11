@@ -75,6 +75,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "invalid salt length"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_SEED_LENGTH),
     "invalid seed length"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_SIGNATURE_SIZE),
+    "invalid signature size"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_TAG), "invalid tag"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_TAGLEN), "invalid taglen"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_X931_DIGEST),

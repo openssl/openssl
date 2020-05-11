@@ -157,9 +157,6 @@ static int rsa_get_md_nid(const EVP_MD *md)
         }
     }
 
-    if (mdnid == NID_undef)
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-
  end:
     return mdnid;
 }
@@ -200,18 +197,20 @@ static int rsa_check_parameters(EVP_MD *md, PROV_RSA_CTX *prsactx)
 
 static void *rsa_newctx(void *provctx, const char *propq)
 {
-    PROV_RSA_CTX *prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
+    PROV_RSA_CTX *prsactx = NULL;
+    char *propq_copy = NULL;
 
-    if (prsactx == NULL)
+    if ((prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX))) == NULL
+        || (propq != NULL
+            && (propq_copy = OPENSSL_strdup(propq)) == NULL)) {
+        OPENSSL_free(prsactx);
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     prsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     prsactx->flag_allow_md = 1;
-    if (propq != NULL && (prsactx->propq = OPENSSL_strdup(propq)) == NULL) {
-        OPENSSL_free(prsactx);
-        prsactx = NULL;
-        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-    }
+    prsactx->propq = propq_copy;
     return prsactx;
 }
 
@@ -233,6 +232,12 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
             || md_nid == NID_undef
             || !rsa_check_padding(md_nid, ctx->pad_mode)
             || !rsa_check_parameters(md, ctx)) {
+            if (md == NULL)
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                               "%s could not be fetched", mdname);
+            if (md_nid == NID_undef)
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                               "digest=%s", mdname);
             EVP_MD_free(md);
             return 0;
         }
@@ -274,8 +279,11 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
     if (ctx->mgf1_mdname[0] != '\0')
         EVP_MD_free(ctx->mgf1_md);
 
-    if ((ctx->mgf1_md = EVP_MD_fetch(ctx->libctx, mdname, mdprops)) == NULL)
+    if ((ctx->mgf1_md = EVP_MD_fetch(ctx->libctx, mdname, mdprops)) == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "%s could not be fetched", mdname);
         return 0;
+    }
     OPENSSL_strlcpy(ctx->mgf1_mdname, mdname, sizeof(ctx->mgf1_mdname));
 
     return 1;
@@ -317,8 +325,16 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
                 mgf1mdname = rsa_oaeppss_nid2name(mgf1md_nid);
                 prsactx->min_saltlen = min_saltlen;
 
-                if (mdname == NULL || mgf1mdname == NULL)
+                if (mdname == NULL) {
+                    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                                   "PSS restrictions lack hash algorithm");
                     return 0;
+                }
+                if (mgf1mdname == NULL) {
+                    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                                   "PSS restrictions lack MGF1 hash algorithm");
+                    return 0;
+                }
 
                 strncpy(prsactx->mdname, mdname, sizeof(prsactx->mdname));
                 strncpy(prsactx->mgf1_mdname, mgf1mdname,
@@ -326,8 +342,7 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
                 prsactx->saltlen = min_saltlen;
 
                 return rsa_setup_md(prsactx, mdname, prsactx->propq)
-                    && rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq)
-                    && rsa_check_parameters(prsactx->md, prsactx);
+                    && rsa_setup_mgf1_md(prsactx, mgf1mdname, prsactx->propq);
             }
         }
 
@@ -382,8 +397,11 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
         return 1;
     }
 
-    if (sigsize < (size_t)rsasize)
+    if (sigsize < rsasize) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SIGNATURE_SIZE,
+                       "is %zu, should be at least %zu", sigsize, rsasize);
         return 0;
+    }
 
     if (mdsize != 0) {
         if (tbslen != mdsize) {
@@ -681,12 +699,14 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
 
     prsactx->flag_allow_md = 0;
     if (!rsa_signature_init(vprsactx, vrsa, operation)
-        || !rsa_setup_md(prsactx, mdname, NULL))
+        || !rsa_setup_md(prsactx, mdname, NULL)) /* TODO RL */
         return 0;
 
     prsactx->mdctx = EVP_MD_CTX_new();
-    if (prsactx->mdctx == NULL)
+    if (prsactx->mdctx == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto error;
+    }
 
     if (!EVP_DigestInit_ex(prsactx->mdctx, prsactx->md, NULL))
         goto error;
@@ -800,8 +820,10 @@ static void *rsa_dupctx(void *vprsactx)
     PROV_RSA_CTX *dstctx;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
-    if (dstctx == NULL)
+    if (dstctx == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
+    }
 
     *dstctx = *srcctx;
     dstctx->rsa = NULL;
@@ -1018,9 +1040,6 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             }
             if (prsactx->md == NULL
                 && !rsa_setup_md(prsactx, OSSL_DIGEST_NAME_SHA1, NULL)) {
-                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
-                               "%s could not be fetched",
-                               OSSL_DIGEST_NAME_SHA1);
                 return 0;
             }
             break;
