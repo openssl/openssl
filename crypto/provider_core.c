@@ -418,6 +418,7 @@ int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *libctx, const char *path)
 static int provider_activate(OSSL_PROVIDER *prov)
 {
     const OSSL_DISPATCH *provider_dispatch = NULL;
+    void *tmp_provctx = NULL;    /* safety measure */
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODULE
     OSSL_provider_get_reason_strings_fn *p_get_reason_strings = NULL;
@@ -488,7 +489,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
     /* Call the initialise function for the provider. */
     if (prov->init_function == NULL
         || !prov->init_function(prov, core_dispatch, &provider_dispatch,
-                                &prov->provctx)) {
+                                &tmp_provctx)) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INIT_FAIL, NULL,
                        "name=%s", prov->name);
 #ifndef FIPS_MODULE
@@ -497,6 +498,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
 #endif
         return 0;
     }
+    prov->provctx = tmp_provctx;
 
     for (; provider_dispatch->function_id != 0; provider_dispatch++) {
         switch (provider_dispatch->function_id) {
