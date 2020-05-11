@@ -138,25 +138,26 @@ int UI_dup_error_string(UI *ui, const char *text);
 # define UI_INPUT_FLAG_USER_BASE 16
 
 /*-
- * The following function helps construct a prompt.  object_desc is a
- * textual short description of the object, for example "pass phrase",
- * and object_name is the name of the object (might be a card name or
- * a file name.
+ * The following function helps construct a prompt.
+ * phrase_desc is a textual short description of the phrase to enter,
+ * for example "pass phrase", and
+ * object_name is the name of the object
+ * (which might be a card name or a file name) or NULL.
  * The returned string shall always be allocated on the heap with
  * OPENSSL_malloc(), and need to be free'd with OPENSSL_free().
  *
  * If the ui_method doesn't contain a pointer to a user-defined prompt
  * constructor, a default string is built, looking like this:
  *
- *       "Enter {object_desc} for {object_name}:"
+ *       "Enter {phrase_desc} for {object_name}:"
  *
- * So, if object_desc has the value "pass phrase" and object_name has
+ * So, if phrase_desc has the value "pass phrase" and object_name has
  * the value "foo.key", the resulting string is:
  *
  *       "Enter pass phrase for foo.key:"
 */
 char *UI_construct_prompt(UI *ui_method,
-                          const char *object_desc, const char *object_name);
+                          const char *phrase_desc, const char *object_name);
 
 /*
  * The following function is used to store a pointer to user-specific data.
@@ -315,7 +316,7 @@ int UI_method_set_data_duplicator(UI_METHOD *method,
 int UI_method_set_prompt_constructor(UI_METHOD *method,
                                      char *(*prompt_constructor) (UI *ui,
                                                                   const char
-                                                                  *object_desc,
+                                                                  *phrase_desc,
                                                                   const char
                                                                   *object_name));
 int UI_method_set_ex_data(UI_METHOD *method, int idx, void *data);

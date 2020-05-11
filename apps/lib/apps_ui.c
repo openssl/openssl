@@ -99,6 +99,19 @@ static int ui_close(UI *ui)
     return 1;
 }
 
+/* object_name defaults to prompt_info from ui user data if present */
+static char *ui_prompt_construct(UI *ui, const char *phrase_desc,
+                                 const char *object_name)
+{
+    PW_CB_DATA *cb_data = (PW_CB_DATA *)UI_get0_user_data(ui);
+
+    if (phrase_desc == NULL)
+        phrase_desc = "pass phrase";
+    if (object_name == NULL && cb_data != NULL)
+        object_name = cb_data->prompt_info;
+    return UI_construct_prompt(NULL, phrase_desc, object_name);
+}
+
 int setup_ui_method(void)
 {
     ui_fallback_method = UI_null();
