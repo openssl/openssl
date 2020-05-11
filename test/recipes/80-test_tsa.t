@@ -97,7 +97,7 @@ indir "tsa" => sub
      $ENV{TSDNSECT} = "ts_ca_dn";
      skip "failed", 19
          unless ok(run(app(["openssl", "req", "-config", $openssl_conf,
-                            "-new", "-x509", "-nodes",
+                            "-new", "-x509", "-noenc",
                             "-out", "tsaca.pem", "-keyout", "tsacakey.pem"])),
                    'creating a new CA for the TSA tests');
 

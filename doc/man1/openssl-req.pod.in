@@ -23,6 +23,7 @@ B<openssl> B<req>
 [B<-new>]
 [B<-newkey> I<arg>]
 [B<-pkeyopt> I<opt>:I<value>]
+[B<-noenc>]
 [B<-nodes>]
 [B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
@@ -198,10 +199,14 @@ This gives the filename to write the newly created private key to.
 If this option is not specified then the filename present in the
 configuration file is used.
 
-=item B<-nodes>
+=item B<-noenc>
 
 If this option is specified then if a private key is created it
 will not be encrypted.
+
+=item B<-nodes>
+
+This option is deprecated since OpenSSL 3.0; use B<-noenc> instead.
 
 =item B<-I<digest>>
 
@@ -394,7 +399,7 @@ It is used for private key generation.
 =item B<encrypt_key>
 
 If this is set to B<no> then if a private key is generated it is
-B<not> encrypted. This is equivalent to the B<-nodes> command line
+B<not> encrypted. This is equivalent to the B<-noenc> command line
 option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
@@ -696,6 +701,7 @@ All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
+The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 
 =head1 COPYRIGHT
 

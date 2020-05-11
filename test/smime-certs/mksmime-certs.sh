@@ -14,22 +14,22 @@ OPENSSL_CONF=./ca.cnf
 export OPENSSL_CONF
 
 # Root CA: create certificate directly
-CN="Test S/MIME RSA Root" $OPENSSL req -config ca.cnf -x509 -nodes \
+CN="Test S/MIME RSA Root" $OPENSSL req -config ca.cnf -x509 -noenc \
 	-keyout smroot.pem -out smroot.pem -newkey rsa:2048 -days 3650
 
 # EE RSA certificates: create request first
-CN="Test S/MIME EE RSA #1" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE RSA #1" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smrsa1.pem -out req.pem -newkey rsa:2048
 # Sign request: end entity extensions
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smrsa1.pem
 
-CN="Test S/MIME EE RSA #2" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE RSA #2" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smrsa2.pem -out req.pem -newkey rsa:2048
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smrsa2.pem
 
-CN="Test S/MIME EE RSA #3" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE RSA #3" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smrsa3.pem -out req.pem -newkey rsa:2048
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smrsa3.pem
@@ -38,15 +38,15 @@ $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 
 $OPENSSL dsaparam -out dsap.pem 2048
 
-CN="Test S/MIME EE DSA #1" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE DSA #1" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smdsa1.pem -out req.pem -newkey dsa:dsap.pem
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smdsa1.pem
-CN="Test S/MIME EE DSA #2" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE DSA #2" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smdsa2.pem -out req.pem -newkey dsa:dsap.pem
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smdsa2.pem
-CN="Test S/MIME EE DSA #3" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE DSA #3" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smdsa3.pem -out req.pem -newkey dsa:dsap.pem
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smdsa3.pem
@@ -56,15 +56,15 @@ $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 $OPENSSL ecparam -out ecp.pem -name P-256
 $OPENSSL ecparam -out ecp2.pem -name K-283
 
-CN="Test S/MIME EE EC #1" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE EC #1" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smec1.pem -out req.pem -newkey ec:ecp.pem
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smec1.pem
-CN="Test S/MIME EE EC #2" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE EC #2" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smec2.pem -out req.pem -newkey ec:ecp2.pem
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smec2.pem
-CN="Test S/MIME EE EC #3" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE EC #3" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smec3.pem -out req.pem -newkey ec:ecp.pem
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \
 	-extfile ca.cnf -extensions usr_cert -CAcreateserial >>smec3.pem
@@ -75,7 +75,7 @@ $OPENSSL genpkey -genparam -algorithm DH -pkeyopt dh_paramgen_type:2 \
 $OPENSSL genpkey -paramfile dhp.pem -out smdh.pem
 $OPENSSL pkey -pubout -in smdh.pem -out dhpub.pem
 # Generate dummy request.
-CN="Test S/MIME EE DH #1" $OPENSSL req -config ca.cnf -nodes \
+CN="Test S/MIME EE DH #1" $OPENSSL req -config ca.cnf -noenc \
 	-keyout smtmp.pem -out req.pem -newkey rsa:2048
 # Sign request but force public key to DH
 $OPENSSL x509 -req -in req.pem -CA smroot.pem -days 3600 \

@@ -317,7 +317,7 @@ sub init {
                       }, grep(/-key-pkcs8-pbes2-sha256\.pem$/, @generated_files))
             # *-cert.pem (intermediary for the .p12 inits)
             && run(app(["openssl", "req", "-x509",
-                        "-config", $cnf, "-nodes",
+                        "-config", $cnf, "-noenc",
                         "-key", $cakey, "-out", "cacert.pem"]))
             && runall(sub {
                           my $srckey = shift;
