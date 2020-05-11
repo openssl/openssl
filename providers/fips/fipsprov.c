@@ -649,6 +649,8 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     /*  Create a context. */
     if ((libctx = OPENSSL_CTX_new()) == NULL)
         return 0;
+    *provctx = libctx;
+
     if ((fgbl = openssl_ctx_get_data(libctx, OPENSSL_CTX_FIPS_PROV_INDEX,
                                      &fips_prov_ossl_ctx_method)) == NULL)
         goto err;
@@ -667,11 +669,11 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         goto err;
 
     *out = fips_dispatch_table;
-    *provctx = libctx;
 
     return 1;
  err:
     fips_teardown(*provctx);
+    *provctx = NULL;
     return 0;
 }
 
