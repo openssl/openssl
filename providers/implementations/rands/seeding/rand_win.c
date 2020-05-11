@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,8 +9,9 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include "rand_local.h"
+#include "crypto/rand_pool.h"
 #include "crypto/rand.h"
+#include "seeding.h"
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 # ifndef OPENSSL_RAND_SEED_OS
@@ -40,7 +41,7 @@
 #  define INTEL_DEF_PROV L"Intel Hardware Cryptographic Service Provider"
 # endif
 
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 {
 # ifndef USE_BCRYPTGENRANDOM
     HCRYPTPROV hProvider;
@@ -120,7 +121,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 }
 
 
-int rand_pool_add_nonce_data(RAND_POOL *pool)
+int prov_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         DWORD pid;
@@ -162,19 +163,6 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     QueryPerformanceCounter(&data.time);
     return rand_pool_add(pool, (unsigned char *)&data, sizeof(data), 0);
 }
-
-# if !defined(OPENSSL_NO_DEPRECATED_1_1_0) && !defined(FIPS_MODULE)
-int RAND_event(UINT iMsg, WPARAM wParam, LPARAM lParam)
-{
-    RAND_poll();
-    return RAND_status();
-}
-
-void RAND_screen(void)
-{
-    RAND_poll();
-}
-# endif
 
 int rand_pool_init(void)
 {

@@ -14,7 +14,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "crypto/rand.h"
-#include "rand_local.h"
+#include "crypto/rand_pool.h"
+#include "seeding.h"
 #include <descrip.h>
 #include <dvidef.h>
 #include <jpidef.h>
@@ -473,7 +474,7 @@ size_t data_collect_method(RAND_POOL *pool)
     return rand_pool_entropy_available(pool);
 }
 
-int rand_pool_add_nonce_data(RAND_POOL *pool)
+int prov_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         pid_t pid;
@@ -567,7 +568,7 @@ size_t get_entropy_method(RAND_POOL *pool)
  * These functions are called by the RAND / DRBG functions
  */
 
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 {
     if (init_get_entropy_address())
         return get_entropy_method(pool);

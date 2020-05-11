@@ -10,15 +10,16 @@
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE
 #endif
-#include "e_os.h"
+#include "../e_os.h"
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
-#include "rand_local.h"
+#include "crypto/rand_pool.h"
 #include "crypto/rand.h"
 #include <stdio.h>
 #include "internal/dso.h"
+#include "seeding.h"
 
 #ifdef __linux
 # include <sys/syscall.h>
@@ -131,7 +132,7 @@ static uint64_t get_timer_bits(void);
  *
  * As a precaution, we assume only 2 bits of entropy per byte.
  */
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 {
     short int code;
     int i, k;
@@ -603,7 +604,7 @@ void rand_pool_keep_random_devices_open(int keep)
  * of input from the different entropy sources (trust, quality,
  * possibility of blocking).
  */
-size_t rand_pool_acquire_entropy(RAND_POOL *pool)
+size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 {
 #  if defined(OPENSSL_RAND_SEED_NONE)
     return rand_pool_entropy_available(pool);
@@ -729,7 +730,7 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
      || defined(__DJGPP__)
-int rand_pool_add_nonce_data(RAND_POOL *pool)
+int prov_pool_add_nonce_data(RAND_POOL *pool)
 {
     struct {
         pid_t pid;
