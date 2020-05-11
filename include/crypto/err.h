@@ -15,4 +15,7 @@ void err_cleanup(void);
 int err_shelve_state(void **);
 void err_unshelve_state(void *);
 
+char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
+unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
+                                      const char sep);
 #endif

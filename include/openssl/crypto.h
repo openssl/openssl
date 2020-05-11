@@ -118,6 +118,7 @@ size_t OPENSSL_strnlen(const char *str, size_t maxlen);
 int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
                           const unsigned char *buf, size_t buflen);
 char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen);
+
 int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
                           const char *str);
 unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen);
