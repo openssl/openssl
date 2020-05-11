@@ -967,8 +967,27 @@ int SSL_add1_host(SSL *s, const char *hostname)
 {
     /* If a hostname is provided and parses as an IP address,
      * treat it as such. */
-    if (hostname && X509_VERIFY_PARAM_set1_ip_asc(s->param, hostname) == 1)
-        return 1;
+    if (hostname)
+    {
+        ASN1_OCTET_STRING *ip;
+        char *old_ip;
+
+        ip = a2i_IPADDRESS(hostname);
+        if (ip) {
+            /* We didn't want it; only to check if it *is* an IP address */
+            ASN1_OCTET_STRING_free(ip);
+
+            old_ip = X509_VERIFY_PARAM_get1_ip_asc(s->param);
+            if (old_ip)
+            {
+                free(old_ip);
+                /* There can be only one IP address */
+                return 0;
+            }
+
+            return X509_VERIFY_PARAM_set1_ip_asc(s->param, hostname);
+        }
+    }
 
     return X509_VERIFY_PARAM_add1_host(s->param, hostname, 0);
 }
