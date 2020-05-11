@@ -235,6 +235,7 @@ int pkcs12_main(int argc, char **argv)
             maciter = 1;
             break;
         case OPT_NOMAC:
+            cert_pbe = -1;
             maciter = -1;
             break;
         case OPT_MACALG:
