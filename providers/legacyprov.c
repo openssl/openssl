@@ -37,9 +37,9 @@ static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Parameters we provide to the core */
 static const OSSL_PARAM legacy_param_types[] = {
-    OSSL_PARAM_utf8_string(OSSL_PROV_PARAM_NAME, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_PROV_PARAM_VERSION, NULL, 0),
-    OSSL_PARAM_utf8_string(OSSL_PROV_PARAM_BUILDINFO, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_END
 };
 
