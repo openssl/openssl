@@ -445,8 +445,10 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_E)) != NULL
         && !OSSL_PARAM_get_BN(p, &gctx->pub_exp))
         return 0;
-    if (!pss_params_fromdata(&gctx->pss_params, params, gctx->rsa_type,
-                             gctx->libctx))
+    /* Only attempt to get PSS parameters when generating an RSA-PSS key */
+    if (gctx->rsa_type == RSA_FLAG_TYPE_RSASSAPSS
+        && !pss_params_fromdata(&gctx->pss_params, params, gctx->rsa_type,
+                                gctx->libctx))
         return 0;
     return 1;
 }
