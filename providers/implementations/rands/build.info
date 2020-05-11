@@ -1,3 +1,4 @@
+SUBDIRS=seeding
 
 # Missing: drbg_ctr.c
 SOURCE[../../libfips.a]=drbg.c
