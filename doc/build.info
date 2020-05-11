@@ -56,7 +56,6 @@ DEPEND[$manfile]=$podfile
 GENERATE[$manfile]=$podfile
 _____
          $OUT .= << "_____" if $podinfile;
-DEPEND[$podfile]=$podinfile ../configdata.pm
 GENERATE[$podfile]=$podinfile
 _____
      }
