@@ -350,6 +350,7 @@ int DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
     int rsa_nid = NID_undef;
     const unsigned char *rsa_oid = NULL;
     size_t rsa_oid_sz = 0;
+    RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30(rsa);
 
     switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
@@ -363,7 +364,8 @@ int DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
 
     return DER_w_begin_sequence(pkt, tag)
         && (rsa_nid != NID_rsassaPss
-            || DER_w_RSASSA_PSS_params(pkt, -1, rsa_get0_pss_params_30(rsa)))
+            || rsa_pss_params_30_is_unrestricted(pss_params)
+            || DER_w_RSASSA_PSS_params(pkt, -1, pss_params))
         && DER_w_precompiled(pkt, -1, rsa_oid, rsa_oid_sz)
         && DER_w_end_sequence(pkt, tag);
 }
