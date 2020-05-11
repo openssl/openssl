@@ -57,7 +57,7 @@ typedef enum OPTION_choice {
     OPT_CIPHER, OPT_NOKEYS, OPT_KEYEX, OPT_KEYSIG, OPT_NOCERTS, OPT_CLCERTS,
     OPT_CACERTS, OPT_NOOUT, OPT_INFO, OPT_CHAIN, OPT_TWOPASS, OPT_NOMACVER,
     OPT_DESCERT, OPT_EXPORT, OPT_ITER, OPT_NOITER, OPT_MACITER, OPT_NOMACITER,
-    OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
+    OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_NOENC, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
     OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
@@ -129,7 +129,8 @@ const OPTIONS pkcs12_options[] = {
     {"maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility"},
     {"nomaciter", OPT_NOMACITER, '-', "Don't use MAC iteration"},
     {"nomac", OPT_NOMAC, '-', "Don't generate MAC"},
-    {"nodes", OPT_NODES, '-', "Don't encrypt private keys"},
+    {"noenc", OPT_NOENC, '-', "Don't encrypt private keys"},
+    {"nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated"},
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 
     OPT_R_OPTIONS,
@@ -240,6 +241,7 @@ int pkcs12_main(int argc, char **argv)
             macalg = opt_arg();
             break;
         case OPT_NODES:
+        case OPT_NOENC:
             enc = NULL;
             break;
         case OPT_CERTPBE:

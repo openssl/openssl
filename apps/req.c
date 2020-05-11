@@ -93,7 +93,7 @@ typedef enum OPTION_choice {
     OPT_PUBKEY, OPT_NEW, OPT_CONFIG, OPT_KEYFORM, OPT_IN, OPT_OUT,
     OPT_KEYOUT, OPT_PASSIN, OPT_PASSOUT, OPT_NEWKEY,
     OPT_PKEYOPT, OPT_SIGOPT, OPT_VFYOPT, OPT_BATCH, OPT_NEWHDR, OPT_MODULUS,
-    OPT_VERIFY, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
+    OPT_VERIFY, OPT_NOENC, OPT_NODES, OPT_NOOUT, OPT_VERBOSE, OPT_UTF8,
     OPT_NAMEOPT, OPT_REQOPT, OPT_SUBJ, OPT_SUBJECT, OPT_TEXT, OPT_X509,
     OPT_MULTIVALUE_RDN, OPT_DAYS, OPT_SET_SERIAL, OPT_ADDEXT, OPT_EXTENSIONS,
     OPT_REQEXTS, OPT_PRECERT, OPT_MD,
@@ -157,7 +157,8 @@ const OPTIONS req_options[] = {
     {"batch", OPT_BATCH, '-',
      "Do not ask anything during request generation"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
-    {"nodes", OPT_NODES, '-', "Don't encrypt the output key"},
+    {"noenc", OPT_NOENC, '-', "Don't encrypt private keys"},
+    {"nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated"},
     {"noout", OPT_NOOUT, '-', "Do not output REQ"},
     {"newhdr", OPT_NEWHDR, '-', "Output \"NEW\" in the header lines"},
     {"modulus", OPT_MODULUS, '-', "RSA modulus"},
@@ -257,7 +258,7 @@ int req_main(int argc, char **argv)
     int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
     int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
-    int nodes = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
+    int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
 
@@ -375,7 +376,8 @@ int req_main(int argc, char **argv)
             verify = 1;
             break;
         case OPT_NODES:
-            nodes = 1;
+        case OPT_NOENC:
+            noenc = 1;
             break;
         case OPT_NOOUT:
             noout = 1;
@@ -693,7 +695,7 @@ int req_main(int argc, char **argv)
         }
         if ((p != NULL) && (strcmp(p, "no") == 0))
             cipher = NULL;
-        if (nodes)
+        if (noenc)
             cipher = NULL;
 
         i = 0;
