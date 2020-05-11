@@ -58,7 +58,8 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
      */
 
     if (pass == NULL || *pass == '\0') {
-        if (PKCS12_verify_mac(p12, NULL, 0))
+        if (!PKCS12_mac_present(p12)
+            || PKCS12_verify_mac(p12, NULL, 0))
             pass = NULL;
         else if (PKCS12_verify_mac(p12, "", 0))
             pass = "";
