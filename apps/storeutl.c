@@ -395,17 +395,19 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
             info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);
 
         if (info == NULL) {
-            if (OSSL_STORE_eof(store_ctx))
-                break;
-
             if (OSSL_STORE_error(store_ctx)) {
                 if (recursive)
                     ERR_clear_error();
                 else
                     ERR_print_errors(bio_err);
+                if (OSSL_STORE_eof(store_ctx))
+                    break;
                 ret++;
                 continue;
             }
+
+            if (OSSL_STORE_eof(store_ctx))
+                break;
 
             BIO_printf(bio_err,
                        "ERROR: OSSL_STORE_load() returned NULL without "
