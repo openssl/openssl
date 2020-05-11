@@ -15,7 +15,6 @@
 static UI_METHOD *ui_method = NULL;
 static const UI_METHOD *ui_fallback_method = NULL;
 
-
 static int ui_open(UI *ui)
 {
     int (*opener)(UI *ui) = UI_method_get_opener(ui_fallback_method);
@@ -72,7 +71,8 @@ static int ui_write(UI *ui, UI_STRING *uis)
             {
                 const char *password =
                     ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-                if (password && password[0] != '\0')
+
+                if (password != NULL)
                     return 1;
             }
             break;
