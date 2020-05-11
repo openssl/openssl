@@ -134,6 +134,28 @@ of your system.  Certain tests may require more installed packages to run.  No
 tests are expected to fail.
 
 
+GOST engine test suite
+===============
+
+Much like the PYCA/Cryptography test suite, this builds and runs the GOST engine
+tests against the local OpenSSL build.
+
+You will need a git checkout of gost-engine at the top level:
+
+$ git submodule update --init
+
+Then configure/build OpenSSL enabling external tests:
+
+$ ./config shared enable-external-tests
+$ make
+
+GOST engine requires CMake for the build process.
+
+GOST engine tests will then be run as part of the rest of the suite, or can be
+explicitly run (with more debugging):
+
+$ make test VERBOSE=1 TESTS=test_external_gost_engine
+
 Updating test suites
 ====================
 
