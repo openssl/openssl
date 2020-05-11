@@ -824,7 +824,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
         flags_mask = ~0u;
         len = BIO_gets(bp, linebuf, LINESIZE);
         if (len <= 0) {
-            PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_SHORT_HEADER);
+            PEMerr(PEM_F_GET_HEADER_AND_DATA, PEM_R_BAD_END_LINE);
             goto err;
         }
 
