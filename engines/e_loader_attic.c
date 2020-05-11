@@ -322,7 +322,8 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
 
             *matchcount = 1;
 
-            if (PKCS12_verify_mac(p12, "", 0)
+            if (!PKCS12_mac_present(p12)
+                || PKCS12_verify_mac(p12, "", 0)
                 || PKCS12_verify_mac(p12, NULL, 0)) {
                 pass = "";
             } else {
