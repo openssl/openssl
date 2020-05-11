@@ -1851,31 +1851,31 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_OQSKEM
         if (strcmp(*argv, "oqskem") == 0) {
             for (loop = 0; loop < OSSL_NELEM(oqskem_doit); loop++)
-                oqskem_doit[loop] = 1;
+                oqskem_doit[loop] = OQS_KEM_alg_is_enabled(OQS_KEM_alg_identifier(loop));
             continue;
         }
         if (found(*argv, oqskem_choices, &i)) {
-            oqskem_doit[i] = 2;
+            oqskem_doit[i] = 2*OQS_KEM_alg_is_enabled(OQS_KEM_alg_identifier(i));
             continue;
         }
 #endif
 #ifndef OPENSSL_NO_OQSSIG
         if (strcmp(*argv, "oqssig") == 0) {
             for (loop = 0; loop < OSSL_NELEM(oqssig_doit); loop++)
-                oqssig_doit[loop] = 1;
+                oqssig_doit[loop] = OQS_SIG_alg_is_enabled(OQS_SIG_alg_identifier(loop));
             continue;
         }
         if (found(*argv, oqssig_choices, &i)) {
-            oqssig_doit[i] = 2;
+            oqssig_doit[i] = 2*OQS_SIG_alg_is_enabled(OQS_SIG_alg_identifier(i));
             continue;
         }
 #endif
         BIO_printf(bio_err, "%s: Unknown algorithm %s\n", prog, *argv);
 #ifndef OPENSSL_NO_OQSKEM
-        BIO_printf(bio_err, "OQSKEM config: %s", OQSKEM_options());
+        BIO_printf(bio_err, "OQSKEM config: %s\n", OQSKEM_options());
 #endif
 #ifndef OPENSSL_NO_OQSSIG
-        BIO_printf(bio_err, "OQSSIG config: %s", OQSSIG_options());
+        BIO_printf(bio_err, "OQSSIG config: %s\n", OQSSIG_options());
 #endif
         goto end;
     }
@@ -1980,11 +1980,11 @@ int speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_OQSKEM
     	for (i = 0; i < OQSKEM_NUM; i++) 
-            oqskem_doit[i] = 1;
+            oqskem_doit[i] = OQS_KEM_alg_is_enabled(OQS_KEM_alg_identifier(i));
 #endif
 #ifndef OPENSSL_NO_OQSSIG
     	for (i = 0; i < OQSSIG_NUM; i++) 
-            oqssig_doit[i] = 1;
+            oqssig_doit[i] = OQS_SIG_alg_is_enabled(OQS_SIG_alg_identifier(i));
 #endif
     }
     for (i = 0; i < ALGOR_NUM; i++)

@@ -266,15 +266,16 @@ static int get_classical_sig_len(int classical_id)
  */
 const char *OQSKEM_options(void)
 {
-    const char* OQSKEMALGS = "OQS KEM build : ";
     int offset;
 // TODO: Revisit which OQS_COMPILE_FLAGS to show
 #ifdef OQS_COMPILE_CFLAGS
+    const char* OQSKEMALGS = "OQS KEM build : ";
     char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
     memcpy(result+offset, OQS_COMPILE_CFLAGS, strlen(OQS_COMPILE_CFLAGS));
     offset += strlen(OQS_COMPILE_CFLAGS);
 #else 
+    const char* OQSKEMALGS = "";
     char* result =  OPENSSL_zalloc(OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
 #endif
@@ -282,11 +283,13 @@ const char *OQSKEM_options(void)
     result[offset++]='-';
     int i;
     for (i=0; i<OQS_KEM_algs_length;i++) {
-       int l = strlen(OQS_KEM_alg_identifier(i));
-       memcpy(result+offset, OQS_KEM_alg_identifier(i), l);
-       if (i<OQS_KEM_algs_length-1) {
-          result[offset+l]=',';
-          offset = offset+l+1;
+       if (OQS_KEM_alg_is_enabled(OQS_KEM_alg_identifier(i))) {
+           int l = strlen(OQS_KEM_alg_identifier(i));
+           memcpy(result+offset, OQS_KEM_alg_identifier(i), l);
+           if (i<OQS_KEM_algs_length-1) {
+              result[offset+l]=',';
+              offset = offset+l+1;
+           }
        }
     }
     return result;
@@ -297,15 +300,16 @@ const char *OQSKEM_options(void)
  */
 const char *OQSSIG_options(void)
 {
-    const char* OQSSIGALGS = "OQS SIG build : ";
     int offset;
 // TODO: Revisit which OQS_COMPILE_FLAGS to show
 #ifdef OQS_COMPILE_CFLAGS
+    const char* OQSSIGALGS = "OQS SIG build : ";
     char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_OPENSSL_SIG_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSSIGALGS, offset = strlen(OQSSIGALGS));
     memcpy(result+offset, OQS_COMPILE_CFLAGS, strlen(OQS_COMPILE_CFLAGS));
     offset += strlen(OQS_COMPILE_CFLAGS);
 #else
+    const char* OQSSIGALGS = "";
     char* result =  OPENSSL_zalloc(OQS_OPENSSL_SIG_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSSIGALGS, offset = strlen(OQSSIGALGS));
 #endif
@@ -314,11 +318,13 @@ const char *OQSSIG_options(void)
     int i;
     for (i=0; i<OQS_OPENSSL_SIG_algs_length;i++) {
        const char* name = OBJ_nid2sn(oqssl_sig_nids_list[i]);
-       int l = strlen(name);
-       memcpy(result+offset, name, l);
-       if (i<OQS_OPENSSL_SIG_algs_length-1) {
-          result[offset+l]=',';
-          offset = offset+l+1;
+       if (OQS_SIG_alg_is_enabled(get_oqs_alg_name(oqssl_sig_nids_list[i]))) {
+           int l = strlen(name);
+           memcpy(result+offset, name, l);
+           if (i<OQS_OPENSSL_SIG_algs_length-1) {
+              result[offset+l]=',';
+              offset = offset+l+1;
+           }
        }
     }
     return result;

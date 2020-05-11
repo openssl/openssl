@@ -635,10 +635,10 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
 
       oqs_cleanup:
         if (has_error) {
-          OQS_MEM_secure_free(s->s3->tmp.oqs_kem_client, s->s3->tmp.oqs_kem->length_secret_key);
+          if (s->s3->tmp.oqs_kem_client) OQS_MEM_secure_free(s->s3->tmp.oqs_kem_client, s->s3->tmp.oqs_kem->length_secret_key);
           OQS_MEM_insecure_free(oqs_encoded_point);
           s->s3->tmp.oqs_kem_client = NULL;
-          OQS_KEM_free(s->s3->tmp.oqs_kem);
+          if (s->s3->tmp.oqs_kem) OQS_KEM_free(s->s3->tmp.oqs_kem);
           s->s3->tmp.oqs_kem = NULL;
           return 0;
         }

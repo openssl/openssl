@@ -557,8 +557,13 @@ static int nid_cb(const char *elem, int len, void *arg)
     memcpy(etmp, elem, len);
     etmp[len] = 0;
     nid = EC_curve_nist2nid(etmp);
-    if (nid == NID_undef)
+    if (nid == NID_undef) {
         nid = OBJ_sn2nid(etmp);
+        if (nid == NID_undef) fprintf(stderr, "Warning: Algorithm name '%s' unknown. Check https://github.com/open-quantum-safe/openssl#supported-algorithms\n", etmp);
+        else {
+             if (!OQS_KEM_alg_is_enabled(etmp)) fprintf(stderr, "Warning: Algorithm '%s' is not enabled in liboqs. \n", etmp);
+        }
+    }
     if (nid == NID_undef)
         nid = OBJ_ln2nid(etmp);
     if (nid == NID_undef)
