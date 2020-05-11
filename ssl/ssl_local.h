@@ -2910,6 +2910,18 @@ __owur EVP_PKEY *ssl_generate_param_group(uint16_t id);
 #  endif                        /* OPENSSL_NO_EC */
 
 __owur int tls_curve_allowed(SSL *s, uint16_t curve, int op);
+
+/**
+ * OQS note: since it would be too unwieldy to add the
+ * group IDs and keyshares of all of liboqs's alogrithms
+ * (and their corresponding hybrid variants) to the ClientHello,
+ * tls1_get_supported_groups, which is used to populate the ClientHello,
+ * returns only the level-1 P-256 hybrids.
+ * This function returns all supported key-exchange algorithms, and
+ * is used by the server to determine the shared group.
+ */
+void oqs_tls13_get_server_supported_groups(SSL *s, const uint16_t **pgroups,
+                                  size_t *pgroupslen);
 void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
                                size_t *pgroupslen);
 

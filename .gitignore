@@ -187,8 +187,8 @@ pod2htmd.tmp
 doc-nits
 
 # OQS stuff
-/oqs_test/tests/__pycache__
-/oqs_test/tmp/
+/oqs-test/tests/__pycache__
+/oqs-test/tmp/
 /*.crt
 /*.key
 /*.csr

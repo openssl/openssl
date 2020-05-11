@@ -653,7 +653,7 @@ int tls_parse_ctos_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     }
 
     /* Get our list of supported groups */
-    tls1_get_supported_groups(s, &srvrgroups, &srvr_num_groups);
+    oqs_tls13_get_server_supported_groups(s, &srvrgroups, &srvr_num_groups);
     /* Get the clients list of supported groups. */
     tls1_get_peer_groups(s, &clntgroups, &clnt_num_groups);
     if (clnt_num_groups == 0) {

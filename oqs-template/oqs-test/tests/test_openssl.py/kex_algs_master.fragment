@@ -1,0 +1,6 @@
+
+    # post-quantum key exchanges
+    {% for kem in config['kems'] %}'{{ kem['name_group'] }}', {%- endfor %}
+    # post-quantum + classical key exchanges
+    {% for kem in config['kems'] %}'p256_{{ kem['name_group'] }}', {%- endfor %}
+

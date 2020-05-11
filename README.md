@@ -110,11 +110,11 @@ The steps below have been confirmed to work on macOS 10.14 (clang 10.0.0), Ubunt
 
 On **Ubuntu**, you need to install the following packages:
 
-	sudo apt install cmake gcc libtool libssl-dev make ninja-build unzip xsltproc git
+	sudo apt install cmake gcc libtool libssl-dev make ninja-build git
 
 On **macOS**, you need to install the following packages using `brew` (or a package manager of your choice):
 
-	brew install cmake ninja libtool openssl@1.1 wget
+	brew install cmake ninja libtool openssl@1.1
 
 Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choosing):
 

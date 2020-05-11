@@ -308,6 +308,107 @@ static const uint16_t eccurves_default[] = {
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 
+/* OQS note: We introduced this list for use
+ * by oqs_tls13_get_server_supported_groups(). See that
+ * function's documentation in ssl_local.h
+ * for the explanation.
+ */
+static const uint16_t oqs_all_tls13_server_groups[] = {
+    29,                      /* X25519 (29) */
+    23,                      /* secp256r1 (23) */
+    30,                      /* X448 (30) */
+    25,                      /* secp521r1 (25) */
+    24,                      /* secp384r1 (24) */
+    0x01FF, /* oqs_kem_default */
+    0x02FF, /* p256 - oqs_kem_default */
+///// OQS_TEMPLATE_FRAGMENT_ALL_OQS_CURVEIDS_START
+    0x0200, /* frodo640aes */
+    0x0300, /* p256 - OQS frodo640aes hybrid */
+    0x0201, /* frodo640shake */
+    0x0301, /* p256 - OQS frodo640shake hybrid */
+    0x0202, /* frodo976aes */
+    0x0302, /* p256 - OQS frodo976aes hybrid */
+    0x0203, /* frodo976shake */
+    0x0303, /* p256 - OQS frodo976shake hybrid */
+    0x0204, /* frodo1344aes */
+    0x0304, /* p256 - OQS frodo1344aes hybrid */
+    0x0205, /* frodo1344shake */
+    0x0305, /* p256 - OQS frodo1344shake hybrid */
+    0x0206, /* bike1l1cpa */
+    0x0306, /* p256 - OQS bike1l1cpa hybrid */
+    0x0207, /* bike1l3cpa */
+    0x0307, /* p256 - OQS bike1l3cpa hybrid */
+    0x0223, /* bike1l1fo */
+    0x0323, /* p256 - OQS bike1l1fo hybrid */
+    0x0224, /* bike1l3fo */
+    0x0324, /* p256 - OQS bike1l3fo hybrid */
+    0x020F, /* kyber512 */
+    0x030F, /* p256 - OQS kyber512 hybrid */
+    0x0210, /* kyber768 */
+    0x0310, /* p256 - OQS kyber768 hybrid */
+    0x0211, /* kyber1024 */
+    0x0311, /* p256 - OQS kyber1024 hybrid */
+    0x0212, /* newhope512cca */
+    0x0312, /* p256 - OQS newhope512cca hybrid */
+    0x0213, /* newhope1024cca */
+    0x0313, /* p256 - OQS newhope1024cca hybrid */
+    0x0214, /* ntru_hps2048509 */
+    0x0314, /* p256 - OQS ntru_hps2048509 hybrid */
+    0x0215, /* ntru_hps2048677 */
+    0x0315, /* p256 - OQS ntru_hps2048677 hybrid */
+    0x0216, /* ntru_hps4096821 */
+    0x0316, /* p256 - OQS ntru_hps4096821 hybrid */
+    0x0217, /* ntru_hrss701 */
+    0x0317, /* p256 - OQS ntru_hrss701 hybrid */
+    0x0218, /* lightsaber */
+    0x0318, /* p256 - OQS lightsaber hybrid */
+    0x0219, /* saber */
+    0x0319, /* p256 - OQS saber hybrid */
+    0x021A, /* firesaber */
+    0x031A, /* p256 - OQS firesaber hybrid */
+    0x021B, /* sidhp434 */
+    0x031B, /* p256 - OQS sidhp434 hybrid */
+    0x021C, /* sidhp503 */
+    0x031C, /* p256 - OQS sidhp503 hybrid */
+    0x021D, /* sidhp610 */
+    0x031D, /* p256 - OQS sidhp610 hybrid */
+    0x021E, /* sidhp751 */
+    0x031E, /* p256 - OQS sidhp751 hybrid */
+    0x021F, /* sikep434 */
+    0x031F, /* p256 - OQS sikep434 hybrid */
+    0x0220, /* sikep503 */
+    0x0320, /* p256 - OQS sikep503 hybrid */
+    0x0221, /* sikep610 */
+    0x0321, /* p256 - OQS sikep610 hybrid */
+    0x0222, /* sikep751 */
+    0x0322, /* p256 - OQS sikep751 hybrid */
+    0x0225, /* ledacryptkemlt12 */
+    0x0325, /* p256 - OQS ledacryptkemlt12 hybrid */
+    0x0226, /* ledacryptkemlt32 */
+    0x0326, /* p256 - OQS ledacryptkemlt32 hybrid */
+    0x0227, /* ledacryptkemlt52 */
+    0x0327, /* p256 - OQS ledacryptkemlt52 hybrid */
+    0x022C, /* kyber90s512 */
+    0x032C, /* p256 - OQS kyber90s512 hybrid */
+    0x022D, /* kyber90s768 */
+    0x032D, /* p256 - OQS kyber90s768 hybrid */
+    0x022E, /* kyber90s1024 */
+    0x032E, /* p256 - OQS kyber90s1024 hybrid */
+    0x0230, /* babybear */
+    0x0330, /* p256 - OQS babybear hybrid */
+    0x0231, /* mamabear */
+    0x0331, /* p256 - OQS mamabear hybrid */
+    0x0232, /* papabear */
+    0x0332, /* p256 - OQS papabear hybrid */
+    0x0233, /* babybearephem */
+    0x0333, /* p256 - OQS babybearephem hybrid */
+    0x0234, /* mamabearephem */
+    0x0334, /* p256 - OQS mamabearephem hybrid */
+    0x0235, /* papabearephem */
+    0x0335, /* p256 - OQS papabearephem hybrid */
+///// OQS_TEMPLATE_FRAGMENT_ALL_OQS_CURVEIDS_END
+};
+
 static const uint16_t suiteb_curves[] = {
     TLSEXT_curve_P_256,
     TLSEXT_curve_P_384
@@ -359,6 +460,18 @@ static uint16_t tls1_nid2group_id(int nid)
             return (uint16_t)(i + 1);
     }
     return 0;
+}
+
+void oqs_tls13_get_server_supported_groups(SSL *s, const uint16_t **pgroups,
+                                           size_t *pgroupslen)
+{
+    if (s->ext.supportedgroups == NULL) {
+        *pgroups = oqs_all_tls13_server_groups;
+        *pgroupslen = OSSL_NELEM(oqs_all_tls13_server_groups);
+    } else {
+        *pgroups = s->ext.supportedgroups;
+        *pgroupslen = s->ext.supportedgroups_len;
+    }
 }
 
 /*
