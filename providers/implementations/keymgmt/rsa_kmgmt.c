@@ -58,11 +58,12 @@ static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params,
                                const OSSL_PARAM params[], int rsa_type,
                                OPENSSL_CTX *libctx)
 {
-    /* If not a PSS type RSA, sending us PSS parameters is wrong */
-    if (rsa_type != RSA_FLAG_TYPE_RSASSAPSS)
+    if (!rsa_pss_params_30_fromdata(pss_params, params, libctx))
         return 0;
 
-    if (!rsa_pss_params_30_fromdata(pss_params, params, libctx))
+    /* If not a PSS type RSA, sending us PSS parameters is wrong */
+    if (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
+        && !rsa_pss_params_30_is_unrestricted(pss_params))
         return 0;
 
     return 1;
