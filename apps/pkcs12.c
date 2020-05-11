@@ -573,7 +573,7 @@ int pkcs12_main(int argc, char **argv)
         if (add_lmk && key != NULL)
             EVP_PKEY_add1_attr_by_NID(key, NID_LocalKeySet, 0, NULL, -1);
 
-        if (!noprompt) {
+        if (!noprompt && !(enc == NULL && maciter == -1)) {
             /* To avoid bit rot */
             if (1) {
 #ifndef OPENSSL_NO_UI_CONSOLE
