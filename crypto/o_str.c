@@ -13,7 +13,7 @@
 #include "crypto/err.h"
 #include "internal/cryptlib.h"
 
-#define DEFAULT_SEPERATOR ':'
+#define DEFAULT_SEPARATOR ':'
 #define CH_ZERO '\0'
 
 char *CRYPTO_strdup(const char *str, const char* file, int line)
@@ -179,7 +179,7 @@ static int hexstr2buf_sep(unsigned char *buf, size_t buf_n, size_t *buflen,
 int OPENSSL_hexstr2buf_ex(unsigned char *buf, size_t buf_n, size_t *buflen,
                           const char *str)
 {
-    return hexstr2buf_sep(buf, buf_n, buflen, str, DEFAULT_SEPERATOR);
+    return hexstr2buf_sep(buf, buf_n, buflen, str, DEFAULT_SEPARATOR);
 }
 
 unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
@@ -208,7 +208,7 @@ unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
 
 unsigned char *OPENSSL_hexstr2buf(const char *str, long *buflen)
 {
-    return openssl_hexstr2buf_sep(str, buflen, DEFAULT_SEPERATOR);
+    return openssl_hexstr2buf_sep(str, buflen, DEFAULT_SEPARATOR);
 }
 
 static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlen,
@@ -252,7 +252,7 @@ static int buf2hexstr_sep(char *str, size_t str_n, size_t *strlen,
 int OPENSSL_buf2hexstr_ex(char *str, size_t str_n, size_t *strlen,
                           const unsigned char *buf, size_t buflen)
 {
-    return buf2hexstr_sep(str, str_n, strlen, buf, buflen, DEFAULT_SEPERATOR);
+    return buf2hexstr_sep(str, str_n, strlen, buf, buflen, DEFAULT_SEPARATOR);
 }
 
 char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep)
