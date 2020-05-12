@@ -63,6 +63,10 @@ static void list_ciphers(void)
     STACK_OF(EVP_CIPHER) *ciphers = sk_EVP_CIPHER_new(cipher_cmp);
     int i;
 
+    if (ciphers == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
     BIO_printf(bio_out, "Legacy:\n");
     EVP_CIPHER_do_all_sorted(legacy_cipher_fn, bio_out);
 
@@ -134,6 +138,10 @@ static void list_digests(void)
     STACK_OF(EVP_MD) *digests = sk_EVP_MD_new(md_cmp);
     int i;
 
+    if (digests == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
     BIO_printf(bio_out, "Legacy:\n");
     EVP_MD_do_all_sorted(list_md_fn, bio_out);
 
@@ -191,6 +199,10 @@ static void list_macs(void)
     STACK_OF(EVP_MAC) *macs = sk_EVP_MAC_new(mac_cmp);
     int i;
 
+    if (macs == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
     BIO_printf(bio_out, "Provided MACs:\n");
     EVP_MAC_do_all_provided(NULL, collect_macs, macs);
     sk_EVP_MAC_sort(macs);
@@ -248,6 +260,10 @@ static void list_kdfs(void)
     STACK_OF(EVP_KDF) *kdfs = sk_EVP_KDF_new(kdf_cmp);
     int i;
 
+    if (kdfs == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
     BIO_printf(bio_out, "Provided KDFs and PDFs:\n");
     EVP_KDF_do_all_provided(NULL, collect_kdfs, kdfs);
     sk_EVP_KDF_sort(kdfs);
@@ -275,6 +291,61 @@ static void list_kdfs(void)
         }
     }
     sk_EVP_KDF_pop_free(kdfs, EVP_KDF_free);
+}
+
+/*
+ * RANDs
+ */
+DEFINE_STACK_OF(EVP_RAND)
+
+static int rand_cmp(const EVP_RAND * const *a, const EVP_RAND * const *b)
+{
+    int ret = strcasecmp(EVP_RAND_name(*a), EVP_RAND_name(*b));
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_RAND_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_RAND_provider(*b)));
+
+    return ret;
+}
+
+static void collect_rands(EVP_RAND *rand, void *stack)
+{
+    STACK_OF(EVP_RAND) *rand_stack = stack;
+
+    sk_EVP_RAND_push(rand_stack, rand);
+    EVP_RAND_up_ref(rand);
+}
+
+static void list_random_generators(void)
+{
+    STACK_OF(EVP_RAND) *rands = sk_EVP_RAND_new(rand_cmp);
+    int i;
+
+    if (rands == NULL) {
+        BIO_printf(bio_err, "ERROR: Memory allocation\n");
+        return;
+    }
+    BIO_printf(bio_out, "Provided RNGs and seed sources:\n");
+    EVP_RAND_do_all_provided(NULL, collect_rands, rands);
+    sk_EVP_RAND_sort(rands);
+    for (i = 0; i < sk_EVP_RAND_num(rands); i++) {
+        const EVP_RAND *m = sk_EVP_RAND_value(rands, i);
+
+        BIO_printf(bio_out, "  %s", EVP_RAND_name(m));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_RAND_provider(m)));
+
+        if (verbose) {
+            print_param_types("retrievable algorithm parameters",
+                              EVP_RAND_gettable_params(m), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_RAND_gettable_ctx_params(m), 4);
+            print_param_types("settable operation parameters",
+                              EVP_RAND_settable_ctx_params(m), 4);
+        }
+    }
+    sk_EVP_RAND_pop_free(rands, EVP_RAND_free);
 }
 
 static void list_missing_help(void)
@@ -619,7 +690,7 @@ typedef enum HELPLIST_CHOICE {
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
-    OPT_KDF_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS,
+    OPT_KDF_ALGORITHMS, OPT_RANDOM_GENERATORS, OPT_MISSING_HELP, OPT_OBJECTS,
     OPT_PROV_ENUM
 } HELPLIST_CHOICE;
 
@@ -639,6 +710,8 @@ const OPTIONS list_options[] = {
      "List of message digest algorithms"},
     {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
      "List of key derivation and pseudo random function algorithms"},
+    {"random-generators", OPT_RANDOM_GENERATORS, '-',
+      "List of random number generators"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
      "List of message authentication code algorithms"},
     {"cipher-commands", OPT_CIPHER_COMMANDS, '-', "List of cipher commands"},
@@ -670,6 +743,7 @@ int list_main(int argc, char **argv)
     int one = 0, done = 0;
     struct {
         unsigned int commands:1;
+        unsigned int random_generators:1;
         unsigned int digest_commands:1;
         unsigned int digest_algorithms:1;
         unsigned int kdf_algorithms:1;
@@ -712,6 +786,9 @@ opthelp:
             break;
         case OPT_KDF_ALGORITHMS:
             todo.kdf_algorithms = 1;
+            break;
+        case OPT_RANDOM_GENERATORS:
+            todo.random_generators = 1;
             break;
         case OPT_MAC_ALGORITHMS:
             todo.mac_algorithms = 1;
@@ -760,6 +837,8 @@ opthelp:
 
     if (todo.commands)
         list_type(FT_general, one);
+    if (todo.random_generators)
+        list_random_generators();
     if (todo.digest_commands)
         list_type(FT_md, one);
     if (todo.digest_algorithms)
