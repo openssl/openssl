@@ -200,7 +200,7 @@ int ossl_prov_prepare_rsa_params(const void *rsa, int nid,
             ASN1_STRING *astr = NULL;
             WPACKET pkt;
             unsigned char *str = NULL;
-            size_t str_sz;
+            size_t str_sz = 0;
             int i;
 
             for (i = 0; i < 2; i++) {
