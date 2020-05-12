@@ -1215,7 +1215,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
         ok = EVP_PKEY_assign_RSA(pkey, rsa);
         break;
     case RSA_FLAG_TYPE_RSASSAPSS:
-        ok = EVP_PKEY_assign_RSA_PSS(pkey, rsa);
+        ok = EVP_PKEY_assign(pkey, EVP_PKEY_RSA_PSS, rsa);
         break;
     }
 
