@@ -31,7 +31,7 @@ compiler:
 env:
     # Note: env entry here must exactly match the value in the exclude: table below that contains env:, otherwise it will not find a match.
     - CONFIG_OPTS="" DESTDIR="_install"
-    - CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
+    - CONFIG_OPTS="no-asm --debug --strict-warnings no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
     - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
 
 jobs:
@@ -45,7 +45,7 @@ jobs:
         - os: osx
           compiler: gcc
         - os: osx
-          env: CONFIG_OPTS="no-asm -Werror --debug no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
+          env: CONFIG_OPTS="no-asm --debug --strict-warnings no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
     include:
         - os: linux
           arch: arm64
