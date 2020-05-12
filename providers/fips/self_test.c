@@ -37,9 +37,16 @@ static int FIPS_state = FIPS_STATE_INIT;
 static CRYPTO_RWLOCK *self_test_lock = NULL;
 static unsigned char fixed_key[32] = { 0 };
 
+#if !defined(_WIN32) && !defined(__CYGWIN__)                                   \
+    && !defined(_AIX) && !defined(__sun)                                       \
+    && !defined(__hpux) && !defined(__GNUC__)
+# error "Platform does not support fips: to build add 'disable-fips' to the config options"
+#endif
+
 static CRYPTO_ONCE fips_self_test_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
 {
+    int ret = 0;
     /*
      * This lock gets freed in platform specific ways that may occur after we
      * do mem leak checking. If we don't know how to free it for a particular
@@ -47,7 +54,16 @@ DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
      * mem leak checking while we allocate this.
      */
     self_test_lock = CRYPTO_THREAD_lock_new();
-    return self_test_lock != NULL;
+    ret = (self_test_lock != NULL);
+
+    /*
+     * For platforms that have no support for a DEP such as AIX we progress the
+     * state in the same manner as the DEP would.
+     */
+#if defined(_AIX)
+    FIPS_state = FIPS_STATE_SELFTEST;
+#endif
+    return ret;
 }
 
 #define DEP_DECLARE()                                                          \
