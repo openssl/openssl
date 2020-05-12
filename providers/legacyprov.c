@@ -155,8 +155,15 @@ static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
     return NULL;
 }
 
+static void legacy_teardown(void *provctx)
+{
+    OPENSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
+    PROV_CTX_free(provctx);
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH legacy_dispatch_table[] = {
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))legacy_teardown },
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))legacy_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))legacy_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))legacy_query },
@@ -169,6 +176,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        void **provctx)
 {
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    OPENSSL_CTX *libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -190,13 +198,17 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     if (c_get_libctx == NULL)
         return 0;
 
+    if ((*provctx = PROV_CTX_new()) == NULL
+        || (libctx = OPENSSL_CTX_new()) == NULL) {
+        OPENSSL_CTX_free(libctx);
+        legacy_teardown(*provctx);
+        *provctx = NULL;
+        return 0;
+    }
+    PROV_CTX_set0_library_context(*provctx, libctx);
+    PROV_CTX_set0_provider(*provctx, provider);
+
     *out = legacy_dispatch_table;
 
-    /*
-     * We want to make sure that all calls from this provider that requires
-     * a library context use the same context as the one used to call our
-     * functions.  We do that by passing it along as the provider context.
-     */
-    *provctx = c_get_libctx(provider);
     return 1;
 }

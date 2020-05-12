@@ -537,8 +537,14 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
     return NULL;
 }
 
+static void deflt_teardown(void *provctx)
+{
+    PROV_CTX_free(provctx);
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH deflt_dispatch_table[] = {
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))deflt_teardown },
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))deflt_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))deflt_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))deflt_query },
@@ -576,13 +582,20 @@ int ossl_default_provider_init(const OSSL_PROVIDER *provider,
     if (c_get_libctx == NULL)
         return 0;
 
-    *out = deflt_dispatch_table;
-
     /*
      * We want to make sure that all calls from this provider that requires
      * a library context use the same context as the one used to call our
      * functions.  We do that by passing it along as the provider context.
+     *
+     * This is special for built-in providers.  External providers should
+     * create their own library context.
      */
-    *provctx = c_get_libctx(provider);
+    if ((*provctx = PROV_CTX_new()) == NULL)
+        return 0;
+    PROV_CTX_set0_library_context(*provctx, c_get_libctx(provider));
+    PROV_CTX_set0_provider(*provctx, provider);
+
+    *out = deflt_dispatch_table;
+
     return 1;
 }

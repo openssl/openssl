@@ -516,6 +516,16 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
 static void fips_teardown(void *provctx)
 {
     OPENSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
+    PROV_CTX_free(provctx);
+}
+
+static void fips_intern_teardown(void *provctx)
+{
+    /*
+     * We know that the library context is the same as for the outer provider,
+     * so no need to destroy it here.
+     */
+    PROV_CTX_free(provctx);
 }
 
 /* Functions we provide to the core */
@@ -529,6 +539,7 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
 
 /* Functions we provide to ourself */
 static const OSSL_DISPATCH intern_dispatch_table[] = {
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))fips_intern_teardown },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
     { 0, NULL }
 };
@@ -540,7 +551,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        void **provctx)
 {
     FIPS_GLOBAL *fgbl;
-    OPENSSL_CTX *libctx;
+    OPENSSL_CTX *libctx = NULL;
     OSSL_self_test_cb_fn *stcbfn = NULL;
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
 
@@ -647,9 +658,18 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
         return 0;
 
     /*  Create a context. */
-    if ((libctx = OPENSSL_CTX_new()) == NULL)
-        return 0;
-    *provctx = libctx;
+    if ((*provctx = PROV_CTX_new()) == NULL
+        || (libctx = OPENSSL_CTX_new()) == NULL) {
+        /*
+         * We free libctx separately here and only here because it hasn't
+         * been attached to *provctx.  All other error paths below rely
+         * solely on fips_teardown.
+         */
+        OPENSSL_CTX_free(libctx);
+        goto err;
+    }
+    PROV_CTX_set0_library_context(*provctx, libctx);
+    PROV_CTX_set0_provider(*provctx, provider);
 
     if ((fgbl = openssl_ctx_get_data(libctx, OPENSSL_CTX_FIPS_PROV_INDEX,
                                      &fips_prov_ossl_ctx_method)) == NULL)
@@ -705,14 +725,10 @@ int fips_intern_provider_init(const OSSL_PROVIDER *provider,
     if (c_get_libctx == NULL)
         return 0;
 
-    *provctx = c_get_libctx(provider);
-
-    /*
-     * Safety measure...  we should get the library context that was
-     * created up in OSSL_provider_init().
-     */
-    if (*provctx == NULL)
+    if ((*provctx = PROV_CTX_new()) == NULL)
         return 0;
+    PROV_CTX_set0_library_context(*provctx, c_get_libctx(provider));
+    PROV_CTX_set0_provider(*provctx, provider);
 
     *out = intern_dispatch_table;
     return 1;
