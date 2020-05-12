@@ -551,7 +551,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
                        void **provctx)
 {
     FIPS_GLOBAL *fgbl;
-    OPENSSL_CTX *libctx;
+    OPENSSL_CTX *libctx = NULL;
     OSSL_self_test_cb_fn *stcbfn = NULL;
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
 
