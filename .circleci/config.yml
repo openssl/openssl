@@ -26,10 +26,10 @@ localCheckout: &localCheckout
         command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_openssl.sh
     - run:
         name: Run OpenSSL tests
-        command: .circleci/git_no_checkin_in_last_day.sh || make test
+        command: .circleci/git_no_checkin_in_last_day.sh || (env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test)
     - run:
         name: Run OQS connection and CMS tests
-        command: .circleci/git_no_checkin_in_last_day.sh || (env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=8 oqs-test/test_conn_full.py oqs-test/test_cms.py)
+        command: .circleci/git_no_checkin_in_last_day.sh || (env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=8 oqs-test/test_conn_full.py oqs-test/test_cms.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs-test/tmp/test-results
 
@@ -42,7 +42,6 @@ localCheckout: &localCheckout
             name: Install dependencies
             command: |
               .circleci/git_no_checkin_in_last_day.sh || (
-              brew update &&
               brew unlink python@2 &&
               brew install cmake ninja &&
               pip3 install --user pytest pytest-xdist
@@ -55,10 +54,10 @@ localCheckout: &localCheckout
             command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_liboqs.sh
         - run:
             name: Build OpenSSL
-            command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_openssl.sh
+            command: .circleci/git_no_checkin_in_last_day.sh || (./Configure ${OPENSSL_LIBTYPE} darwin64-x86_64-cc no-tests && make -j3)
         - run:
             name: Run connection and CMS tests
-            command: .circleci/git_no_checkin_in_last_day.sh || (env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=4 oqs-test/test_conn_full.py oqs-test/test_cms.py)
+            command: .circleci/git_no_checkin_in_last_day.sh || (env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=4 oqs-test/test_conn_full.py oqs-test/test_cms.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
         - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
             path: oqs-test/tmp/test-results
 
@@ -91,7 +90,7 @@ workflows:
   build:
     jobs:
       - macOS-shared_oqs-shared_ossl
-      - ubuntu_bionic-static_oqs-static_ossl
+      - ubuntu_bionic-shared_oqs-shared_ossl
   nightly:
     triggers:
       - schedule:
@@ -101,9 +100,9 @@ workflows:
               only:
                 - OQS-OpenSSL_1_1_1-stable
     jobs:
+      - debian_buster-shared_oqs-static_ossl
       - macOS-shared_oqs-shared_ossl
       - macOS-static_oqs-static_ossl
-      - debian_buster-shared_oqs-static_ossl
       - ubuntu_bionic-shared_oqs-shared_ossl
       - ubuntu_bionic-static_oqs-static_ossl
 
