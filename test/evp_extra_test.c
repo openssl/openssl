@@ -1179,6 +1179,27 @@ static int test_EVP_PKEY_check(int i)
     return ret;
 }
 
+static int test_CMAC_keygen(void)
+{
+    /*
+     * This is a legacy method for CMACs, but should still work.
+     * This verifies that it works without an ENGINE.
+     */
+    EVP_PKEY_CTX *kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_CMAC, NULL);
+    int ret = 0;
+
+    if (!TEST_true(EVP_PKEY_keygen_init(kctx) > 0)
+        && !TEST_true(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
+                                        EVP_PKEY_CTRL_CIPHER,
+                                        0, (void *)EVP_aes_256_ecb()) > 0))
+        goto done;
+    ret = 1;
+
+ done:
+    EVP_PKEY_CTX_free(kctx);
+    return ret;
+}
+
 static int test_HKDF(void)
 {
     EVP_PKEY_CTX *pctx;
@@ -1630,6 +1651,7 @@ int setup_tests(void)
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
+    ADD_TEST(test_CMAC_keygen);
     ADD_TEST(test_HKDF);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_X509_PUBKEY_inplace);
