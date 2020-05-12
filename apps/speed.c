@@ -213,7 +213,10 @@ static int do_multi(int multi, int size_num);
 #endif
 
 static const int lengths_list[] = {
-    16, 64, 256, 1024, 8 * 1024, 16 * 1024
+  16, 64, 256, 1024, 8 * 1024, 16 * 1024
+#ifndef OPENSSL_NO_OQSSIG
+  , 35000 // OQS note: need larger buffer for OQS signatures
+#endif
 };
 static const int *lengths = lengths_list;
 
