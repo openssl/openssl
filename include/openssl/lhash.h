@@ -230,6 +230,7 @@ DEFINE_LHASH_OF(OPENSSL_CSTRING);
  */
 # ifdef __SUNPRO_C
 #  pragma weak OPENSSL_LH_new
+#  pragma weak OPENSSL_LH_flush
 #  pragma weak OPENSSL_LH_free
 #  pragma weak OPENSSL_LH_insert
 #  pragma weak OPENSSL_LH_delete
