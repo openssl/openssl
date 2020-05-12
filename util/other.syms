@@ -49,6 +49,7 @@ OSSL_STORE_INFO                         datatype
 OSSL_STORE_LOADER                       datatype
 OSSL_STORE_LOADER_CTX                   datatype
 OSSL_STORE_SEARCH                       datatype
+OSSL_STORE_attach_fn                    datatype
 OSSL_STORE_close_fn                     datatype
 OSSL_STORE_ctrl_fn                      datatype
 OSSL_STORE_expect_fn                    datatype
