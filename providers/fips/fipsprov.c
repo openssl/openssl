@@ -785,7 +785,7 @@ int ERR_pop_to_mark(void)
  * is also called from other parts of libcrypto, which all pass around a
  * OPENSSL_CTX pointer)
  */
-const OSSL_CORE_HANDLE *FIPS_get_provider(OPENSSL_CTX *libctx)
+const OSSL_CORE_HANDLE *FIPS_get_core_handle(OPENSSL_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = openssl_ctx_get_data(libctx,
                                              OPENSSL_CTX_FIPS_PROV_INDEX,
