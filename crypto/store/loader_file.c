@@ -278,6 +278,7 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                         (void)sk_X509_shift(chain);
                     }
                 }
+                sk_X509_free(chain);
                 if (!ok) {
                     OSSL_STORE_INFO_free(osi_ca);
                     OSSL_STORE_INFO_free(osi_cert);
