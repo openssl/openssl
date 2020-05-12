@@ -164,7 +164,6 @@ my @clang_devteam_warn = qw(
     -Wconditional-uninitialized
     -Wincompatible-pointer-types-discards-qualifiers
     -Wmissing-variable-declarations
-    -Wno-unneeded-internal-declaration
 );
 
 my @cl_devteam_warn = qw(
