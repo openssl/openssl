@@ -15,11 +15,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include <openssl/crypto.h>
-#include "crypto/rand_pool.h"
+#include "prov/rand_pool.h"
 #include "crypto/rand.h"
 #include <stdio.h>
 #include "internal/dso.h"
-#include "seeding.h"
+#include "prov/seeding.h"
 
 #ifdef __linux
 # include <sys/syscall.h>

@@ -9,9 +9,10 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
-#include "crypto/rand_pool.h"
+#include "prov/rand_pool.h"
 #include "crypto/rand.h"
-#include "seeding.h"
+#include "prov/seeding.h"
+
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 
 # ifndef OPENSSL_RAND_SEED_OS
