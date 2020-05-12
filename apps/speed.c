@@ -1862,11 +1862,11 @@ int speed_main(int argc, char **argv)
 #ifndef OPENSSL_NO_OQSSIG
         if (strcmp(*argv, "oqssig") == 0) {
             for (loop = 0; loop < OSSL_NELEM(oqssig_doit); loop++)
-                oqssig_doit[loop] = OQS_SIG_alg_is_enabled(OQS_SIG_alg_identifier(loop));
+                oqssig_doit[loop] = OQS_SIG_alg_is_enabled(get_oqs_alg_name(oqssl_sig_nids_list[loop]));
             continue;
         }
         if (found(*argv, oqssig_choices, &i)) {
-            oqssig_doit[i] = 2*OQS_SIG_alg_is_enabled(OQS_SIG_alg_identifier(i));
+            oqssig_doit[i] = 2*OQS_SIG_alg_is_enabled(get_oqs_alg_name(oqssl_sig_nids_list[i]));
             continue;
         }
 #endif
@@ -1984,7 +1984,7 @@ int speed_main(int argc, char **argv)
 #endif
 #ifndef OPENSSL_NO_OQSSIG
     	for (i = 0; i < OQSSIG_NUM; i++) 
-            oqssig_doit[i] = OQS_SIG_alg_is_enabled(OQS_SIG_alg_identifier(i));
+            oqssig_doit[i] = OQS_SIG_alg_is_enabled(get_oqs_alg_name(oqssl_sig_nids_list[i]));
 #endif
     }
     for (i = 0; i < ALGOR_NUM; i++)

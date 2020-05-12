@@ -111,7 +111,7 @@ int* get_oqssl_sig_nids() {
 /*
  * Maps OpenSSL NIDs to OQS IDs
  */
-static char* get_oqs_alg_name(int openssl_nid)
+char* get_oqs_alg_name(int openssl_nid)
 {
   switch (openssl_nid)
   {
@@ -464,6 +464,8 @@ static int oqs_key_init(OQS_KEY **p_oqs_key, int nid, oqs_key_type_t keytype) {
       goto err;
     }
     oqs_key->nid = nid;
+    if (!OQS_SIG_alg_is_enabled(oqs_alg_name))
+      fprintf(stderr, "Warning: OQS algorithm '%s' not enabled.\n", oqs_alg_name);
     oqs_key->s = OQS_SIG_new(oqs_alg_name);
     if (oqs_key->s == NULL) {
       /* TODO: Perhaps even check if the alg is available earlier in the stack. */

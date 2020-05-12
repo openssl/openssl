@@ -90,6 +90,7 @@ const char *OQSKEM_options(void);
 const char *OQSSIG_options(void);
 int oqs_size(const EVP_PKEY *pkey);
 int* get_oqssl_sig_nids();
+char* get_oqs_alg_name(int openssl_nid);
 
 
 #ifdef  __cplusplus
