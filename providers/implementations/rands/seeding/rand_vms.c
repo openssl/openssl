@@ -14,8 +14,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "crypto/rand.h"
-#include "crypto/rand_pool.h"
-#include "seeding.h"
+#include "prov/rand_pool.h"
+#include "prov/seeding.h"
 #include <descrip.h>
 #include <dvidef.h>
 #include <jpidef.h>
