@@ -15,9 +15,7 @@
 #include "internal/param_build_set.h"
 #include "crypto/rsa.h"
 
-#ifdef _WIN32
-# define strcasecmp _stricmp
-#endif
+#include "e_os.h"                /* strcasecmp for Windows() */
 
 /*
  * The intention with the "backend" source file is to offer backend support
