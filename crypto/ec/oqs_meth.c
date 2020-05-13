@@ -98,7 +98,55 @@ int oqssl_sig_nids_list[] = {
 /////// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_NIDS_END
 };
 
+int oqssl_kem_nids_list[] = {
+///// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_KEM_NIDS_START
+        NID_frodo640aes,
+        NID_frodo640shake,
+        NID_frodo976aes,
+        NID_frodo976shake,
+        NID_frodo1344aes,
+        NID_frodo1344shake,
+        NID_bike1l1cpa,
+        NID_bike1l3cpa,
+        NID_bike1l1fo,
+        NID_bike1l3fo,
+        NID_kyber512,
+        NID_kyber768,
+        NID_kyber1024,
+        NID_newhope512cca,
+        NID_newhope1024cca,
+        NID_ntru_hps2048509,
+        NID_ntru_hps2048677,
+        NID_ntru_hps4096821,
+        NID_ntru_hrss701,
+        NID_lightsaber,
+        NID_saber,
+        NID_firesaber,
+        NID_sidhp434,
+        NID_sidhp503,
+        NID_sidhp610,
+        NID_sidhp751,
+        NID_sikep434,
+        NID_sikep503,
+        NID_sikep610,
+        NID_sikep751,
+        NID_ledacryptkemlt12,
+        NID_ledacryptkemlt32,
+        NID_ledacryptkemlt52,
+        NID_kyber90s512,
+        NID_kyber90s768,
+        NID_kyber90s1024,
+        NID_babybear,
+        NID_mamabear,
+        NID_papabear,
+        NID_babybearephem,
+        NID_mamabearephem,
+        NID_papabearephem,
+/////// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_KEM_NIDS_END
+};
+
 static int* sig_nid_list = NULL;
+static int* kem_nid_list = NULL;
 
 int* get_oqssl_sig_nids() {
    if (!sig_nid_list) {
@@ -106,6 +154,14 @@ int* get_oqssl_sig_nids() {
       memcpy(sig_nid_list, oqssl_sig_nids_list, sizeof(oqssl_sig_nids_list));
    }
    return sig_nid_list;
+}
+
+int* get_oqssl_kem_nids() {
+   if (!kem_nid_list) {
+      kem_nid_list = OPENSSL_malloc(sizeof(oqssl_kem_nids_list));
+      memcpy(kem_nid_list, oqssl_kem_nids_list, sizeof(oqssl_kem_nids_list));
+   }
+   return kem_nid_list;
 }
 
 /*
@@ -144,6 +200,90 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_qteslapiii:
     case NID_p384_qteslapiii:
       return OQS_SIG_alg_qTesla_p_III;
+    case NID_frodo640aes:
+      return OQS_KEM_alg_frodokem_640_aes;
+    case NID_frodo640shake:
+      return OQS_KEM_alg_frodokem_640_shake;
+    case NID_frodo976aes:
+      return OQS_KEM_alg_frodokem_976_aes;
+    case NID_frodo976shake:
+      return OQS_KEM_alg_frodokem_976_shake;
+    case NID_frodo1344aes:
+      return OQS_KEM_alg_frodokem_1344_aes;
+    case NID_frodo1344shake:
+      return OQS_KEM_alg_frodokem_1344_shake;
+    case NID_bike1l1cpa:
+      return OQS_KEM_alg_bike1_l1_cpa;
+    case NID_bike1l3cpa:
+      return OQS_KEM_alg_bike1_l3_cpa;
+    case NID_bike1l1fo:
+      return OQS_KEM_alg_bike1_l1_fo;
+    case NID_bike1l3fo:
+      return OQS_KEM_alg_bike1_l3_fo;
+    case NID_kyber512:
+      return OQS_KEM_alg_kyber_512;
+    case NID_kyber768:
+      return OQS_KEM_alg_kyber_768;
+    case NID_kyber1024:
+      return OQS_KEM_alg_kyber_1024;
+    case NID_newhope512cca:
+      return OQS_KEM_alg_newhope_512cca;
+    case NID_newhope1024cca:
+      return OQS_KEM_alg_newhope_1024cca;
+    case NID_ntru_hps2048509:
+      return OQS_KEM_alg_ntru_hps2048509;
+    case NID_ntru_hps2048677:
+      return OQS_KEM_alg_ntru_hps2048677;
+    case NID_ntru_hps4096821:
+      return OQS_KEM_alg_ntru_hps4096821;
+    case NID_ntru_hrss701:
+      return OQS_KEM_alg_ntru_hrss701;
+    case NID_lightsaber:
+      return OQS_KEM_alg_saber_lightsaber;
+    case NID_saber:
+      return OQS_KEM_alg_saber_saber;
+    case NID_firesaber:
+      return OQS_KEM_alg_saber_firesaber;
+    case NID_sidhp434:
+      return OQS_KEM_alg_sidh_p434;
+    case NID_sidhp503:
+      return OQS_KEM_alg_sidh_p503;
+    case NID_sidhp610:
+      return OQS_KEM_alg_sidh_p610;
+    case NID_sidhp751:
+      return OQS_KEM_alg_sidh_p751;
+    case NID_sikep434:
+      return OQS_KEM_alg_sike_p434;
+    case NID_sikep503:
+      return OQS_KEM_alg_sike_p503;
+    case NID_sikep610:
+      return OQS_KEM_alg_sike_p610;
+    case NID_sikep751:
+      return OQS_KEM_alg_sike_p751;
+    case NID_ledacryptkemlt12:
+      return OQS_KEM_alg_ledacrypt_ledakemlt12;
+    case NID_ledacryptkemlt32:
+      return OQS_KEM_alg_ledacrypt_ledakemlt32;
+    case NID_ledacryptkemlt52:
+      return OQS_KEM_alg_ledacrypt_ledakemlt52;
+    case NID_kyber90s512:
+      return OQS_KEM_alg_kyber_512_90s;
+    case NID_kyber90s768:
+      return OQS_KEM_alg_kyber_768_90s;
+    case NID_kyber90s1024:
+      return OQS_KEM_alg_kyber_1024_90s;
+    case NID_babybear:
+      return OQS_KEM_alg_threebears_babybear;
+    case NID_mamabear:
+      return OQS_KEM_alg_threebears_mamabear;
+    case NID_papabear:
+      return OQS_KEM_alg_threebears_papabear;
+    case NID_babybearephem:
+      return OQS_KEM_alg_threebears_babybear_ephem;
+    case NID_mamabearephem:
+      return OQS_KEM_alg_threebears_mamabear_ephem;
+    case NID_papabearephem:
+      return OQS_KEM_alg_threebears_papabear_ephem;
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_END
     default:
       return NULL;
@@ -270,23 +410,24 @@ const char *OQSKEM_options(void)
 // TODO: Revisit which OQS_COMPILE_FLAGS to show
 #ifdef OQS_COMPILE_CFLAGS
     const char* OQSKEMALGS = "OQS KEM build : ";
-    char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
+    char* result =  OPENSSL_zalloc(strlen(OQS_COMPILE_CFLAGS)+OQS_OPENSSL_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
     memcpy(result+offset, OQS_COMPILE_CFLAGS, strlen(OQS_COMPILE_CFLAGS));
     offset += strlen(OQS_COMPILE_CFLAGS);
 #else 
     const char* OQSKEMALGS = "";
-    char* result =  OPENSSL_zalloc(OQS_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
+    char* result =  OPENSSL_zalloc(OQS_OPENSSL_KEM_algs_length*40); // OK, a bit pessimistic but this will be removed very soon...
     memcpy(result, OQSKEMALGS, offset = strlen(OQSKEMALGS));
 #endif
 
     result[offset++]='-';
     int i;
-    for (i=0; i<OQS_KEM_algs_length;i++) {
-       if (OQS_KEM_alg_is_enabled(OQS_KEM_alg_identifier(i))) {
-           int l = strlen(OQS_KEM_alg_identifier(i));
-           memcpy(result+offset, OQS_KEM_alg_identifier(i), l);
-           if (i<OQS_KEM_algs_length-1) {
+    for (i=0; i<OQS_OPENSSL_KEM_algs_length;i++) {
+       const char* name = OBJ_nid2sn(oqssl_kem_nids_list[i]);
+       if (OQS_KEM_alg_is_enabled(get_oqs_alg_name(oqssl_kem_nids_list[i]))) {
+           int l = strlen(name);
+           memcpy(result+offset, name, l);
+           if (i<OQS_OPENSSL_KEM_algs_length-1) {
               result[offset+l]=',';
               offset = offset+l+1;
            }

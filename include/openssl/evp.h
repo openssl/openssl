@@ -85,11 +85,13 @@
 # define EVP_PKEY_QTESLAPIII NID_qteslapiii
 # define EVP_PKEY_P384_QTESLAPIII NID_p384_qteslapiii
 #define OQS_OPENSSL_SIG_algs_length 20
+#define OQS_OPENSSL_KEM_algs_length 42
 /////// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END
 const char *OQSKEM_options(void);
 const char *OQSSIG_options(void);
 int oqs_size(const EVP_PKEY *pkey);
 int* get_oqssl_sig_nids();
+int* get_oqssl_kem_nids();
 char* get_oqs_alg_name(int openssl_nid);
 
 

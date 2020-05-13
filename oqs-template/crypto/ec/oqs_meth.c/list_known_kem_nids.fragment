@@ -1,0 +1,4 @@
+{%- for kem in config['kems'] %}
+        NID_{{ kem['name_group'] }},
+{%- endfor %}
+//

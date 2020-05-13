@@ -10,4 +10,5 @@
     {%- endfor %}
 {%- endfor %}
 #define OQS_OPENSSL_SIG_algs_length {{ count.val }}
+#define OQS_OPENSSL_KEM_algs_length {{ config['kems']|length }}
 //

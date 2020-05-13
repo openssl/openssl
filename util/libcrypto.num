@@ -4592,3 +4592,4 @@ OQSSIG_options                          4545	1_1_1e	EXIST::FUNCTION:
 oqs_size                                4546	1_1_1e	EXIST::FUNCTION:
 get_oqssl_sig_nids                      4547	1_1_1e	EXIST::FUNCTION:
 get_oqs_alg_name                        4548	1_1_1g	EXIST::FUNCTION:
+get_oqssl_kem_nids                      4549	1_1_1g	EXIST::FUNCTION:

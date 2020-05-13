@@ -7,4 +7,8 @@
       return {{ variant['oqs_meth'] }};
     {%- endfor %}
 {%- endfor %}
+{%- for kem in config['kems'] %}
+    case NID_{{ kem['name_group'] }}:
+      return {{ kem['oqs_alg'] }};
+{%- endfor %}
 
