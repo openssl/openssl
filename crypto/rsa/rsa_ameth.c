@@ -1092,6 +1092,17 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
     return pkey->pkey.rsa->dirty_cnt;
 }
 
+/*
+ * For the moment, we trust the call path, where keys going through
+ * rsa_pkey_export_to() match a KEYMGMT for the "RSA" keytype, while
+ * keys going through rsa_pss_pkey_export_to() match a KEYMGMT for the
+ * "RSA-PSS" keytype.
+ * TODO(3.0) Investigate whether we should simply continue to trust the
+ * call path, or if we should strengthen this function by checking that
+ * |rsa_type| matches the RSA key subtype.  The latter requires ensuring
+ * that the type flag for the RSA key is properly set by other functions
+ * in this file.
+ */
 static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
                              void *to_keydata, EVP_KEYMGMT *to_keymgmt,
                              OPENSSL_CTX *libctx, const char *propq)
@@ -1122,10 +1133,6 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     if (RSA_get0_d(rsa) != NULL)
         selection |= OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
-    /*
-     * These methods only use rsa->pss.
-     * rsa->pss_params is used by our providers only
-     */
     if (rsa->pss != NULL) {
         const EVP_MD *md = NULL, *mgf1md = NULL;
         int md_nid, mgf1md_nid, saltlen;
