@@ -143,26 +143,17 @@ int ossl_cmp_hdr_update_messageTime(OSSL_CMP_PKIHEADER *hdr)
     return ASN1_GENERALIZEDTIME_set(hdr->messageTime, time(NULL)) != NULL;
 }
 
-/* assign to *tgt a copy of src (or if NULL a random byte array of given len) */
-static int set1_aostr_else_random(ASN1_OCTET_STRING **tgt,
-                                  const ASN1_OCTET_STRING *src, size_t len)
+/* assign to *tgt a random byte array of given length */
+static int set_random(ASN1_OCTET_STRING **tgt, OSSL_CMP_CTX *ctx, size_t len)
 {
-    unsigned char *bytes = NULL;
+    unsigned char *bytes = OPENSSL_malloc(len);
     int res = 0;
 
-    if (src == NULL) { /* generate a random value if src == NULL */
-        if ((bytes = OPENSSL_malloc(len)) == NULL)
-            goto err;
-        if (RAND_bytes(bytes, len) <= 0) {
-            CMPerr(0, CMP_R_FAILURE_OBTAINING_RANDOM);
-            goto err;
-        }
+    if (bytes == NULL
+            || RAND_bytes_ex(ctx->libctx, bytes, len) <= 0)
+        CMPerr(0, CMP_R_FAILURE_OBTAINING_RANDOM);
+    else
         res = ossl_cmp_asn1_octet_string_set1_bytes(tgt, bytes, len);
-    } else {
-        res = ossl_cmp_asn1_octet_string_set1(tgt, src);
-    }
-
- err:
     OPENSSL_free(bytes);
     return res;
 }
@@ -287,8 +278,7 @@ int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr)
 int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
 {
     if (ctx->transactionID == NULL
-            && !set1_aostr_else_random(&ctx->transactionID, NULL,
-                                       OSSL_CMP_TRANSACTIONID_LENGTH))
+        && !set_random(&ctx->transactionID, ctx, OSSL_CMP_TRANSACTIONID_LENGTH))
         return 0;
     return ossl_cmp_asn1_octet_string_set1(&hdr->transactionID,
                                            ctx->transactionID);
@@ -355,8 +345,7 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
      * is copied from the senderNonce of the previous message in the
      * transaction.
      */
-    if (!set1_aostr_else_random(&hdr->senderNonce, NULL,
-                                OSSL_CMP_SENDERNONCE_LENGTH))
+    if (!set_random(&hdr->senderNonce, ctx, OSSL_CMP_SENDERNONCE_LENGTH))
         return 0;
 
     /* store senderNonce - for cmp with recipNonce in next outgoing msg */
