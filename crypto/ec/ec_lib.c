@@ -1041,6 +1041,7 @@ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
  * methods.
  */
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                   size_t num, const EC_POINT *points[],
                   const BIGNUM *scalars[], BN_CTX *ctx)
@@ -1086,21 +1087,46 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 #endif
     return ret;
 }
+#endif
 
 int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
                  const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
 {
-    /* just a convenient interface to EC_POINTs_mul() */
+    int ret = 0;
+#ifndef FIPS_MODULE
+    BN_CTX *new_ctx = NULL;
+#endif
 
-    const EC_POINT *points[1];
-    const BIGNUM *scalars[1];
+    if (!ec_point_is_compat(r, group)
+        || (point != NULL && !ec_point_is_compat(point, group))) {
+        ECerr(EC_F_EC_POINT_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+        return 0;
+    }
 
-    points[0] = point;
-    scalars[0] = p_scalar;
+    if (g_scalar == NULL && p_scalar == NULL)
+        return EC_POINT_set_to_infinity(group, r);
 
-    return EC_POINTs_mul(group, r, g_scalar,
-                         (point != NULL
-                          && p_scalar != NULL), points, scalars, ctx);
+#ifndef FIPS_MODULE
+    if (ctx == NULL)
+        ctx = new_ctx = BN_CTX_secure_new();
+#endif
+    if (ctx == NULL) {
+        ECerr(EC_F_EC_POINT_MUL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    if (group->meth->mul != NULL)
+        ret = group->meth->mul(group, r, g_scalar, point != NULL
+                               && p_scalar != NULL, &point, &p_scalar, ctx);
+    else
+        /* use default */
+        ret = ec_wNAF_mul(group, r, g_scalar, point != NULL
+                          && p_scalar != NULL, &point, &p_scalar, ctx);
+
+#ifndef FIPS_MODULE
+    BN_CTX_free(new_ctx);
+#endif
+    return ret;
 }
 
 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)

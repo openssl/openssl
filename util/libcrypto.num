@@ -144,7 +144,7 @@ IDEA_set_decrypt_key                    146	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 X509_STORE_CTX_set_flags                147	3_0_0	EXIST::FUNCTION:
 BIO_ADDR_rawmake                        148	3_0_0	EXIST::FUNCTION:SOCK
 EVP_PKEY_asn1_set_ctrl                  149	3_0_0	EXIST::FUNCTION:
-EC_POINTs_mul                           150	3_0_0	EXIST::FUNCTION:EC
+EC_POINTs_mul                           150	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 ASN1_get_object                         151	3_0_0	EXIST::FUNCTION:
 i2d_IPAddressFamily                     152	3_0_0	EXIST::FUNCTION:RFC3779
 ENGINE_get_ctrl_function                153	3_0_0	EXIST::FUNCTION:ENGINE
