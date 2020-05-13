@@ -605,11 +605,8 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
      * This only works for built-in providers.  Most providers should
      * create their own library context.
      */
-    if ((*provctx = PROV_CTX_new()) == NULL)
-        return 0;
-
-    corebiometh = bio_prov_init_bio_method();
-    if (corebiometh == NULL) {
+    if ((*provctx = PROV_CTX_new()) == NULL
+            || (corebiometh = bio_prov_init_bio_method()) == NULL) {
         PROV_CTX_free(*provctx);
         *provctx = NULL;
         return 0;

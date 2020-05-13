@@ -729,8 +729,9 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
     if ((*provctx = PROV_CTX_new()) == NULL)
         return 0;
     /*
-     * Only works because we are a built-in internal provider. This is not
-     * something that most providers would be able to do.
+     * Using the parent library context only works because we are a built-in
+     * internal provider. This is not something that most providers would be
+     * able to do.
      */
     PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
     PROV_CTX_set0_handle(*provctx, handle);
