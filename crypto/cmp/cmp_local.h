@@ -75,9 +75,9 @@ struct ossl_cmp_ctx_st {
     ASN1_OCTET_STRING *referenceValue; /* optional user name for MSG_MAC_ALG */
     ASN1_OCTET_STRING *secretValue; /* password/shared secret for MSG_MAC_ALG */
     /* PBMParameters for MSG_MAC_ALG */
-    size_t pbm_slen; /* currently fixed to 16 */
+    size_t pbm_slen; /* salt length, currently fixed to 16 */
     int pbm_owf; /* NID of one-way function (OWF), default: SHA256 */
-    int pbm_itercnt; /* currently fixed to 500 */
+    int pbm_itercnt; /* OWF iteration count, currently fixed to 500 */
     int pbm_mac; /* NID of MAC algorithm, default: HMAC-SHA1 as per RFC 4210 */
 
     /* CMP message header and extra certificates */

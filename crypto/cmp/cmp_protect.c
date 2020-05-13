@@ -195,8 +195,8 @@ static X509_ALGOR *create_pbmac_algor(OSSL_CMP_CTX *ctx)
         return NULL;
 
     alg = X509_ALGOR_new();
-    pbm = OSSL_CRMF_pbmp_new(ctx->pbm_slen, ctx->pbm_owf, ctx->pbm_itercnt,
-                             ctx->pbm_mac);
+    pbm = OSSL_CRMF_pbmp_new(ctx->libctx, ctx->pbm_slen,
+                             ctx->pbm_owf, ctx->pbm_itercnt, ctx->pbm_mac);
     pbm_str = ASN1_STRING_new();
     if (alg == NULL || pbm == NULL || pbm_str == NULL)
         goto err;
