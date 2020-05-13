@@ -8,6 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * We need access to the deprecated EC_POINTs_mul for testing purposes
+ * when the deprecated calls are not hidden
+ */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include <string.h>
 #include "internal/nelem.h"
 #include "testutil.h"

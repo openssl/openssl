@@ -1041,6 +1041,7 @@ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
  * methods.
  */
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                   size_t num, const EC_POINT *points[],
                   const BIGNUM *scalars[], BN_CTX *ctx)
@@ -1086,21 +1087,18 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
 #endif
     return ret;
 }
+#endif
 
 int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
                  const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
 {
-    /* just a convenient interface to EC_POINTs_mul() */
-
-    const EC_POINT *points[1];
-    const BIGNUM *scalars[1];
-
-    points[0] = point;
-    scalars[0] = p_scalar;
-
-    return EC_POINTs_mul(group, r, g_scalar,
-                         (point != NULL
-                          && p_scalar != NULL), points, scalars, ctx);
+    if (group->meth->mul != NULL)
+        return group->meth->mul(group, r, g_scalar, point != NULL
+                                && p_scalar != NULL, &point, &p_scalar, ctx);
+    else
+        /* use default */
+        return ec_wNAF_mul(group, r, g_scalar, point != NULL
+                           && p_scalar != NULL, &point, &p_scalar, ctx);
 }
 
 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)

@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated EC_POINTs_mul(). This function is not widely used and applications
+   should instead use the L<EC_POINT_mul(3)> function.
+
+   *Billy Bob Brumley*
+
  * Removed FIPS_mode() and FIPS_mode_set(). These functions are legacy API's
    that are not applicable to the new provider model. Applications should
    instead use EVP_default_properties_is_fips_enabled() and
