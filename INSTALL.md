@@ -262,13 +262,14 @@ for 32bit binaries on 64bit Windows (WOW64).
 #### Installing to a different location
 
 To install OpenSSL to a different location (for example into your home
-directory for testing purposes) run config like this:
+directory for testing purposes) run config as shown in the following
+examples.
 
-**On Unix**
+On Unix:
 
     $ ./config --prefix=/opt/openssl --openssldir=/usr/local/ssl
 
-**On OpenVMS**
+On OpenVMS:
 
     $ @config --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 

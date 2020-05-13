@@ -18,4 +18,3 @@ exclude_rule 'MD014' # Dollar signs used before commands without showing output
 exclude_rule 'MD024' # Multiple headers with the same content
 exclude_rule 'MD025' # Multiple top level headers in the same document
 exclude_rule 'MD029' # Ordered list item prefix
-exclude_rule 'MD036' # Emphasis used instead of a header
