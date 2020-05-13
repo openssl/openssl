@@ -58,10 +58,11 @@ SSL_set_allow_early_data_cb
 These functions are used to send and receive early data where TLSv1.3 has been
 negotiated. Early data can be sent by the client immediately after its initial
 ClientHello without having to wait for the server to complete the handshake.
-Early data can only be sent if a session has previously been established with
-the server, and the server is known to support it. Additionally these functions
-can be used to send data from the server to the client when the client has not
-yet completed the authentication stage of the handshake.
+Early data can be sent if a session has previously been established with the
+server or when establishing a new session using an out-of-band PSK, and only
+when the server is known to support it. Additionally these functions can be used
+to send data from the server to the client when the client has not yet completed
+the authentication stage of the handshake.
 
 Early data has weaker security properties than other data sent over an SSL/TLS
 connection. In particular the data does not have forward secrecy. There are also
