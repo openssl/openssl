@@ -552,6 +552,7 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
 
 static void deflt_teardown(void *provctx)
 {
+    BIO_meth_free(PROV_CTX_get0_core_bio_method(provctx));
     PROV_CTX_free(provctx);
 }
 
@@ -572,6 +573,7 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
                                void **provctx)
 {
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    BIO_METHOD *corebiometh;
 
     if (!ossl_prov_bio_from_dispatch(in))
         return 0;
@@ -605,8 +607,16 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
      */
     if ((*provctx = PROV_CTX_new()) == NULL)
         return 0;
+
+    corebiometh = bio_prov_init_bio_method();
+    if (corebiometh == NULL) {
+        PROV_CTX_free(*provctx);
+        *provctx = NULL;
+        return 0;
+    }
     PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
     PROV_CTX_set0_handle(*provctx, handle);
+    PROV_CTX_set0_core_bio_method(*provctx, corebiometh);
 
     *out = deflt_dispatch_table;
 

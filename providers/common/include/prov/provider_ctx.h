@@ -13,6 +13,7 @@
 # include <openssl/types.h>
 # include <openssl/crypto.h>
 # include <openssl/bio.h>
+# include <openssl/core.h>
 
 typedef struct prov_ctx_st {
     const OSSL_CORE_HANDLE *handle;
@@ -31,6 +32,7 @@ PROV_CTX *PROV_CTX_new(void);
 void PROV_CTX_free(PROV_CTX *ctx);
 void PROV_CTX_set0_library_context(PROV_CTX *ctx, OPENSSL_CTX *libctx);
 void PROV_CTX_set0_handle(PROV_CTX *ctx, const OSSL_CORE_HANDLE *handle);
+void PROV_CTX_set0_core_bio_method(PROV_CTX *ctx, BIO_METHOD *corebiometh);
 OPENSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx);
 const OSSL_CORE_HANDLE *PROV_CTX_get0_handle(PROV_CTX *ctx);
 BIO_METHOD *PROV_CTX_get0_core_bio_method(PROV_CTX *ctx);

@@ -13,27 +13,11 @@
 
 PROV_CTX *PROV_CTX_new(void)
 {
-    PROV_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
-
-    if (ctx == NULL)
-        return NULL;
-
-# ifndef FIPS_MODULE
-    ctx->corebiometh = bio_prov_init_bio_method();
-    if (ctx->corebiometh == NULL) {
-        OPENSSL_free(ctx);
-        return NULL;
-    }
-# endif
-
-    return ctx;
+    return OPENSSL_zalloc(sizeof(PROV_CTX));
 }
 
 void PROV_CTX_free(PROV_CTX *ctx)
 {
-# ifndef FIPS_MODULE
-    BIO_meth_free(ctx->corebiometh);
-# endif
     OPENSSL_free(ctx);
 }
 
@@ -49,6 +33,11 @@ void PROV_CTX_set0_handle(PROV_CTX *ctx, const OSSL_CORE_HANDLE *handle)
         ctx->handle = handle;
 }
 
+void PROV_CTX_set0_core_bio_method(PROV_CTX *ctx, BIO_METHOD *corebiometh)
+{
+    if (ctx != NULL)
+        ctx->corebiometh = corebiometh;
+}
 
 OPENSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx)
 {
