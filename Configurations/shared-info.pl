@@ -36,7 +36,7 @@ my %shared_info;
                 (grep /(?:^|\s)-fsanitize/,
                  @{$config{CFLAGS}}, @{$config{cflags}})
                 ? ''
-                : '-z defs',
+                : '-Wl,-z,defs',
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
