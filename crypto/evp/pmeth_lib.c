@@ -137,6 +137,40 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 }
 #endif /* FIPS_MODULE */
 
+static int is_legacy_alg(int id, const char *keytype)
+{
+#ifndef FIPS_MODULE
+    /* Certain EVP_PKEY keytypes are only available in legacy form */
+    if (id == -1) {
+        id = OBJ_sn2nid(keytype);
+        if (id == NID_undef)
+            id = OBJ_ln2nid(keytype);
+        if (id == NID_undef)
+            return  0;
+    }
+    switch (id) {
+    /*
+     * TODO(3.0): Remove SM2 and DHX when they are converted to have provider
+     * support
+     */
+    case EVP_PKEY_SM2:
+    case EVP_PKEY_DHX:
+    case EVP_PKEY_SCRYPT:
+    case EVP_PKEY_TLS1_PRF:
+    case EVP_PKEY_HKDF:
+    case EVP_PKEY_CMAC:
+    case EVP_PKEY_HMAC:
+    case EVP_PKEY_SIPHASH:
+    case EVP_PKEY_POLY1305:
+        return 1;
+    default:
+        return 0;
+    }
+#else
+    return 0;
+#endif
+}
+
 static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
                                  const char *keytype, const char *propquery,
@@ -228,10 +262,20 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * implementation.
      */
     if (e == NULL && keytype != NULL) {
-        /* This could fail so ignore errors */
-        ERR_set_mark();
+        int legacy = is_legacy_alg(id, keytype);
+
+        if (legacy) {
+            /* This could fail so ignore errors */
+            ERR_set_mark();
+        }
+
         keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
-        ERR_pop_to_mark();
+        if (legacy) {
+            ERR_pop_to_mark();
+        } else if (keymgmt == NULL) {
+            EVPerr(EVP_F_INT_CTX_NEW, EVP_R_FETCH_FAILED);
+            return NULL;
+        }
     }
 
     ret = OPENSSL_zalloc(sizeof(*ret));
