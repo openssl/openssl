@@ -9,14 +9,31 @@
 
 #include <stdlib.h>
 #include "prov/provider_ctx.h"
+#include "prov/bio.h"
 
 PROV_CTX *PROV_CTX_new(void)
 {
-    return OPENSSL_zalloc(sizeof(PROV_CTX));
+    PROV_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL)
+        return NULL;
+
+# ifndef FIPS_MODULE
+    ctx->corebiometh = bio_prov_init_bio_method();
+    if (ctx->corebiometh == NULL) {
+        OPENSSL_free(ctx);
+        return NULL;
+    }
+# endif
+
+    return ctx;
 }
 
 void PROV_CTX_free(PROV_CTX *ctx)
 {
+# ifndef FIPS_MODULE
+    BIO_meth_free(ctx->corebiometh);
+# endif
     OPENSSL_free(ctx);
 }
 
@@ -45,4 +62,11 @@ const OSSL_CORE_HANDLE *PROV_CTX_get0_handle(PROV_CTX *ctx)
     if (ctx == NULL)
         return NULL;
     return ctx->handle;
+}
+
+BIO_METHOD *PROV_CTX_get0_core_bio_method(PROV_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->corebiometh;
 }

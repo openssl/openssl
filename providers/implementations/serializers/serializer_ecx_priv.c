@@ -166,8 +166,7 @@ static int ecx_priv_der(void *vctx, void *vecxkey, OSSL_CORE_BIO *cout,
     ECX_KEY *ecxkey = vecxkey;
     int ret;
     int nid = KEYTYPE2NID(ctx->type);
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
 
     if (out == NULL)
         return 0;
@@ -216,8 +215,7 @@ static int ecx_priv_pem(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
     struct ecx_priv_ctx_st *ctx = vctx;
     int ret;
     int nid = KEYTYPE2NID(ctx->type);
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
 
     if (out == NULL)
         return 0;
@@ -263,8 +261,7 @@ static int ecx_priv_print(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_priv_ctx_st *ctx = vctx;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
     int ret;
 
     if (out == NULL)

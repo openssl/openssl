@@ -74,8 +74,7 @@ static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[],
 static int rsa_pub_der(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
 
     if (out == NULL)
@@ -116,8 +115,7 @@ static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[],
 static int rsa_pub_pem(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
 
     if (out == NULL)
@@ -157,8 +155,7 @@ static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[],
 static int rsa_pub_print(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
 
     if (out == NULL)

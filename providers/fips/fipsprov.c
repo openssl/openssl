@@ -670,7 +670,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         goto err;
     }
     PROV_CTX_set0_library_context(*provctx, libctx);
-    PROV_CTX_set0_provider(*provctx, provider);
+    PROV_CTX_set0_handle(*provctx, handle);
 
     if ((fgbl = openssl_ctx_get_data(libctx, OPENSSL_CTX_FIPS_PROV_INDEX,
                                      &fips_prov_ossl_ctx_method)) == NULL)
@@ -732,7 +732,7 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
      * Only works because we are a built-in internal provider. This is not
      * something that most providers would be able to do.
      */
-    PROV_CTX_set0_library_context(*provctx, c_get_libctx(handle));
+    PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
     PROV_CTX_set0_handle(*provctx, handle);
 
     *out = intern_dispatch_table;

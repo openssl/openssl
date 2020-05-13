@@ -147,8 +147,7 @@ static int rsa_priv_der(void *vctx, void *rsa, OSSL_CORE_BIO *cout,
 {
     struct rsa_priv_ctx_st *ctx = vctx;
     int ret;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
 
     if (out == NULL)
         return 0;
@@ -194,8 +193,7 @@ static int rsa_pem_priv(void *vctx, void *rsa, OSSL_CORE_BIO *cout,
 {
     struct rsa_priv_ctx_st *ctx = vctx;
     int ret;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
 
     if (out == NULL)
         return 0;
@@ -250,8 +248,7 @@ static int rsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
 static int rsa_priv_print(void *ctx, void *rsa, OSSL_CORE_BIO *cout,
                           OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
 
     if (out == NULL)

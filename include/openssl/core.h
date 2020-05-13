@@ -25,11 +25,6 @@ extern "C" {
  * to communicate data between them.
  */
 
-/* Opaque handles to be used with core upcall functions */
-typedef void *OSSL_CORE_HANDLE;
-typedef void *OPENSSL_CORE_CTX;
-typedef void *OSSL_CORE_BIO;
-
 /*
  * Dispatch table element.  function_id numbers are defined further down,
  * see macros with '_FUNC' in their names.

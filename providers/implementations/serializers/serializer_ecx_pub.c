@@ -105,8 +105,7 @@ static int ecx_pub_der(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
     int ret;
 
     if (out == NULL)
@@ -150,8 +149,7 @@ static int ecx_pub_pem(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
     int ret;
 
     if (out == NULL)
@@ -194,8 +192,7 @@ static int ecx_pub_print(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
     int ret;
 
     if (out == NULL)

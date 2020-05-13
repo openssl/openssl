@@ -19,7 +19,6 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
-#include "prov/provider_ctx.h"
 #include "internal/nelem.h"
 
 /*
@@ -599,14 +598,14 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
     /*
      * We want to make sure that all calls from this provider that requires
      * a library context use the same context as the one used to call our
-     * functions.  We do that by passing it along as the provider context.
+     * functions.  We do that by passing it along in the provider context.
      *
-     * This is special for built-in providers.  External providers should
+     * This only works for built-in providers.  Most providers should
      * create their own library context.
      */
     if ((*provctx = PROV_CTX_new()) == NULL)
         return 0;
-    PROV_CTX_set0_library_context(*provctx, c_get_libctx(handle));
+    PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
     PROV_CTX_set0_handle(*provctx, handle);
 
     *out = deflt_dispatch_table;

@@ -160,55 +160,35 @@ static int bio_core_free(BIO *bio)
     return 1;
 }
 
-typedef struct bio_prov_global_st {
-    BIO_METHOD *biocoremeth;
-} BIO_PROV_GLOBAL;
-
-static void *bio_prov_ossl_ctx_new(OPENSSL_CTX *libctx)
+BIO_METHOD *bio_prov_init_bio_method(void)
 {
-    BIO_PROV_GLOBAL *bpgbl = OPENSSL_zalloc(sizeof(*bpgbl));
-    BIO_METHOD *biocoremeth = NULL;
+    BIO_METHOD *corebiometh = NULL;
 
-    biocoremeth = BIO_meth_new(BIO_TYPE_CORE_TO_PROV, "BIO to Core filter");
-    if (biocoremeth == NULL
-            || !BIO_meth_set_write_ex(biocoremeth, bio_core_write_ex)
-            || !BIO_meth_set_read_ex(biocoremeth, bio_core_read_ex)
-            || !BIO_meth_set_puts(biocoremeth, bio_core_puts)
-            || !BIO_meth_set_gets(biocoremeth, bio_core_gets)
-            || !BIO_meth_set_ctrl(biocoremeth, bio_core_ctrl)
-            || !BIO_meth_set_create(biocoremeth, bio_core_new)
-            || !BIO_meth_set_destroy(biocoremeth, bio_core_free)) {
-        OPENSSL_free(bpgbl);
-        BIO_meth_free(biocoremeth);
+    corebiometh = BIO_meth_new(BIO_TYPE_CORE_TO_PROV, "BIO to Core filter");
+    if (corebiometh == NULL
+            || !BIO_meth_set_write_ex(corebiometh, bio_core_write_ex)
+            || !BIO_meth_set_read_ex(corebiometh, bio_core_read_ex)
+            || !BIO_meth_set_puts(corebiometh, bio_core_puts)
+            || !BIO_meth_set_gets(corebiometh, bio_core_gets)
+            || !BIO_meth_set_ctrl(corebiometh, bio_core_ctrl)
+            || !BIO_meth_set_create(corebiometh, bio_core_new)
+            || !BIO_meth_set_destroy(corebiometh, bio_core_free)) {
+        BIO_meth_free(corebiometh);
         return NULL;
     }
 
-    bpgbl->biocoremeth = biocoremeth;
-
-    return bpgbl;
+    return corebiometh;
 }
 
-static void bio_prov_ossl_ctx_free(void *vbpgbl)
+BIO *bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
 {
-    BIO_PROV_GLOBAL *bpgbl = vbpgbl;
+    BIO *outbio;
+    BIO_METHOD *corebiometh = PROV_CTX_get0_core_bio_method(provctx);
 
-    BIO_meth_free(bpgbl->biocoremeth);
-    OPENSSL_free(bpgbl);
-}
+    if (corebiometh == NULL)
+        return NULL;
 
-static const OPENSSL_CTX_METHOD bio_prov_ossl_ctx_method = {
-    bio_prov_ossl_ctx_new,
-    bio_prov_ossl_ctx_free,
-};
-
-BIO *BIO_new_from_core_bio(OPENSSL_CTX *libctx, OSSL_CORE_BIO *corebio)
-{
-    BIO_PROV_GLOBAL *bpgbl = openssl_ctx_get_data(libctx,
-                                                  OPENSSL_CTX_BIO_PROV_INDEX,
-                                                  &bio_prov_ossl_ctx_method);
-
-    BIO *outbio = BIO_new(bpgbl->biocoremeth);
-
+    outbio = BIO_new(corebiometh);
     if (outbio != NULL)
         BIO_set_data(outbio, corebio);
 

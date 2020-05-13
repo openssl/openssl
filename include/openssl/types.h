@@ -229,6 +229,11 @@ typedef long ossl_intmax_t;
 typedef unsigned long ossl_uintmax_t;
 #endif
 
+/* Opaque handles to be used with core upcall functions from providers */
+typedef struct ossl_core_handle_st OSSL_CORE_HANDLE;
+typedef struct openssl_core_ctx_st OPENSSL_CORE_CTX;
+typedef struct ossl_core_bio_st OSSL_CORE_BIO;
+
 #ifdef  __cplusplus
 }
 #endif

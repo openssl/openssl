@@ -67,7 +67,7 @@ static int ec_param_der_data(void *vctx, const OSSL_PARAM params[],
 static int ec_param_der(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(vctx), cout);
+    BIO *out = bio_new_from_core_bio(vctx, cout);
     int ret;
 
     if (out == NULL)
@@ -107,7 +107,7 @@ static int ec_param_pem_data(void *vctx, const OSSL_PARAM params[],
 static int ec_param_pem(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(vctx), cout);
+    BIO *out = bio_new_from_core_bio(vctx, cout);
     int ret;
 
     if (out == NULL)
@@ -146,7 +146,7 @@ static int ec_param_print_data(void *vctx, const OSSL_PARAM params[],
 static int ec_param_print(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(vctx), cout);
+    BIO *out = bio_new_from_core_bio(vctx, cout);
     int ret;
 
     if (out == NULL)

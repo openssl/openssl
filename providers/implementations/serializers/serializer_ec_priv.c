@@ -140,8 +140,7 @@ static int ec_priv_der(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ec_priv_ctx_st *ctx = vctx;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
     int ret;
 
     if (out == NULL)
@@ -188,8 +187,7 @@ static int ec_pem_priv(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ec_priv_ctx_st *ctx = vctx;
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx->provctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
     int ret;
 
     if (out == NULL)
@@ -246,8 +244,7 @@ static int ec_priv_print_data(void *vctx, const OSSL_PARAM params[],
 static int ec_priv_print(void *ctx, void *eckey, OSSL_CORE_BIO *cout,
                           OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    BIO *out = BIO_new_from_core_bio(PROV_LIBRARY_CONTEXT_OF(ctx),
-                                     cout);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
 
     if (out == NULL)
