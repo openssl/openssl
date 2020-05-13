@@ -33,7 +33,7 @@ static CMP_SRV_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->srv_ctx = OSSL_CMP_SRV_CTX_new()))
+    if (!TEST_ptr(fixture->srv_ctx = OSSL_CMP_SRV_CTX_new(NULL, NULL)))
         goto err;
     return fixture;
 
@@ -67,7 +67,7 @@ static int execute_test_handle_request(CMP_SRV_TEST_FIXTURE *fixture)
     OSSL_CMP_ERRORMSGCONTENT *errorContent;
     int res = 0;
 
-    if (!TEST_ptr(client_ctx = OSSL_CMP_CTX_new())
+    if (!TEST_ptr(client_ctx = OSSL_CMP_CTX_new(NULL, NULL))
             || !TEST_true(OSSL_CMP_CTX_set_transfer_cb_arg(client_ctx, ctx)))
         goto end;
 

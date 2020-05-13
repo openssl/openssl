@@ -243,7 +243,7 @@ void OSSL_CMP_ITAV_free(OSSL_CMP_ITAV *itav);
 void OSSL_CMP_MSG_free(OSSL_CMP_MSG *msg);
 
 /* from cmp_ctx.c */
-OSSL_CMP_CTX *OSSL_CMP_CTX_new(void);
+OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq);
 void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
 int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
 /* various CMP options: */
@@ -375,7 +375,7 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                            const OSSL_CMP_MSG *req);
 OSSL_CMP_MSG * OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
                                            const OSSL_CMP_MSG *req);
-OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(void);
+OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OPENSSL_CTX *libctx, const char *propq);
 void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx);
 typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_cert_request_cb_t)
     (OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *req, int certReqId,

@@ -56,7 +56,7 @@ static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
         return NULL;
     fixture->test_case_name = test_case_name;
     if (ts == NULL
-            || !TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new())
+            || !TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new(NULL, NULL))
             || !OSSL_CMP_CTX_set0_trustedStore(fixture->cmp_ctx, ts)
             || !OSSL_CMP_CTX_set_log_cb(fixture->cmp_ctx, print_to_bio_out)) {
         tear_down(fixture);

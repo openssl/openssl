@@ -1156,7 +1156,8 @@ static int transform_opts(void)
 static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
 {
     OSSL_CMP_CTX *ctx; /* extra CMP (client) ctx partly used by server */
-    OSSL_CMP_SRV_CTX *srv_ctx = ossl_cmp_mock_srv_new();
+    OSSL_CMP_SRV_CTX *srv_ctx = ossl_cmp_mock_srv_new(app_get0_libctx(),
+                                                      app_get0_propq());
 
     if (srv_ctx == NULL)
         return NULL;
@@ -2776,10 +2777,9 @@ int cmp_main(int argc, char **argv)
         }
     }
 
-    if ((cmp_ctx = OSSL_CMP_CTX_new()) == NULL) {
-        CMP_err("out of memory");
+    cmp_ctx = OSSL_CMP_CTX_new(app_get0_libctx(), app_get0_propq());
+    if (cmp_ctx == NULL)
         goto err;
-    }
     if (!OSSL_CMP_CTX_set_log_cb(cmp_ctx, print_to_bio_out)) {
         CMP_err1("cannot set up error reporting and logging for %s", prog);
         goto err;

@@ -29,7 +29,7 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
                                             const OSSL_CMP_MSG *req);
  OSSL_CMP_MSG *OSSL_CMP_CTX_server_perform(OSSL_CMP_CTX *client_ctx,
                                            const OSSL_CMP_MSG *req);
- OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(void);
+ OSSL_CMP_SRV_CTX *OSSL_CMP_SRV_CTX_new(OPENSSL_CTX *libctx, const char *propq);
  void OSSL_CMP_SRV_CTX_free(OSSL_CMP_SRV_CTX *srv_ctx);
 
  typedef OSSL_CMP_PKISI *(*OSSL_CMP_SRV_cert_request_cb_t)(
@@ -95,8 +95,9 @@ B<OSSL_CMP_SRV_process_request()> that can be used by a CMP client
 in the same way as B<OSSL_CMP_MSG_http_perform()>.
 The B<OSSL_CMP_SRV_CTX> must be set as I<transfer_cb_arg> of I<client_ctx>.
 
-OSSL_CMP_SRV_CTX_new() creates and initializes an OSSL_CMP_SRV_CTX structure
-and returns a pointer to it on success, NULL on error.
+OSSL_CMP_SRV_CTX_new() creates and initializes an B<OSSL_CMP_SRV_CTX> structure
+associated with the library context I<libctx> and property query string 
+I<propq>, both of which may be NULL to select the defaults.
 
 OSSL_CMP_SRV_CTX_free() deletes the given I<srv_ctx>.
 

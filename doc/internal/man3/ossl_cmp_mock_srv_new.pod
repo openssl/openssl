@@ -15,9 +15,9 @@ ossl_cmp_mock_srv_set_checkAfterTime
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include "apps/cmp_mock_srv.h"
 
- OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(void);
+ OSSL_CMP_SRV_CTX *ossl_cmp_mock_srv_new(OPENSSL_CTX *libctx, const char *propq);
  void ossl_cmp_mock_srv_free(OSSL_CMP_SRV_CTX *srv_ctx);
 
  int ossl_cmp_mock_srv_set1_certOut(OSSL_CMP_SRV_CTX *srv_ctx, X509 *cert);
@@ -33,7 +33,9 @@ ossl_cmp_mock_srv_set_checkAfterTime
 
 =head1 DESCRIPTION
 
-ossl_cmp_mock_srv_new() allocates the contexts for the CMP mock server.
+ossl_cmp_mock_srv_new() allocates the contexts for the CMP mock server
+associated with the library context I<libctx> and property query string
+I<propq>, both of which may be NULL to select the defaults.
 
 ossl_cmp_mock_srv_free() deallocates the contexts for the CMP mock server.
 
