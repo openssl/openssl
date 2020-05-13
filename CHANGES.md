@@ -6001,40 +6001,40 @@ OpenSSL 1.0.1
 
    *Steve Henson*
 
- *) Correct Bignum squaring. Bignum squaring (BN_sqr) may produce incorrect
-    results on some platforms, including x86_64. This bug occurs at random
-    with a very low probability, and is not known to be exploitable in any
-    way, though its exact impact is difficult to determine. Thanks to Pieter
-    Wuille (Blockstream) who reported this issue and also suggested an initial
-    fix. Further analysis was conducted by the OpenSSL development team and
-    Adam Langley of Google. The final fix was developed by Andy Polyakov of
-    the OpenSSL core team.
-    [CVE-2014-3570][]
+ * Correct Bignum squaring. Bignum squaring (BN_sqr) may produce incorrect
+   results on some platforms, including x86_64. This bug occurs at random
+   with a very low probability, and is not known to be exploitable in any
+   way, though its exact impact is difficult to determine. Thanks to Pieter
+   Wuille (Blockstream) who reported this issue and also suggested an initial
+   fix. Further analysis was conducted by the OpenSSL development team and
+   Adam Langley of Google. The final fix was developed by Andy Polyakov of
+   the OpenSSL core team.
+   [CVE-2014-3570][]
 
    *Andy Polyakov*
 
- *) Do not resume sessions on the server if the negotiated protocol
-    version does not match the session's version. Resuming with a different
-    version, while not strictly forbidden by the RFC, is of questionable
-    sanity and breaks all known clients.
+ * Do not resume sessions on the server if the negotiated protocol
+   version does not match the session's version. Resuming with a different
+   version, while not strictly forbidden by the RFC, is of questionable
+   sanity and breaks all known clients.
 
    *David Benjamin, Emilia Käsper*
 
- *) Tighten handling of the ChangeCipherSpec (CCS) message: reject
-    early CCS messages during renegotiation. (Note that because
-    renegotiation is encrypted, this early CCS was not exploitable.)
+ * Tighten handling of the ChangeCipherSpec (CCS) message: reject
+   early CCS messages during renegotiation. (Note that because
+   renegotiation is encrypted, this early CCS was not exploitable.)
 
    *Emilia Käsper*
 
- *) Tighten client-side session ticket handling during renegotiation:
-    ensure that the client only accepts a session ticket if the server sends
-    the extension anew in the ServerHello. Previously, a TLS client would
-    reuse the old extension state and thus accept a session ticket if one was
-    announced in the initial ServerHello.
+ * Tighten client-side session ticket handling during renegotiation:
+   ensure that the client only accepts a session ticket if the server sends
+   the extension anew in the ServerHello. Previously, a TLS client would
+   reuse the old extension state and thus accept a session ticket if one was
+   announced in the initial ServerHello.
 
-    Similarly, ensure that the client requires a session ticket if one
-    was advertised in the ServerHello. Previously, a TLS client would
-    ignore a missing NewSessionTicket message.
+   Similarly, ensure that the client requires a session ticket if one
+   was advertised in the ServerHello. Previously, a TLS client would
+   ignore a missing NewSessionTicket message.
 
    *Emilia Käsper*
 
@@ -7020,19 +7020,19 @@ OpenSSL 1.0.0
 
    *Steve Henson*
 
- *) Correct Bignum squaring. Bignum squaring (BN_sqr) may produce incorrect
-    results on some platforms, including x86_64. This bug occurs at random
-    with a very low probability, and is not known to be exploitable in any
-    way, though its exact impact is difficult to determine. Thanks to Pieter
-    Wuille (Blockstream) who reported this issue and also suggested an initial
-    fix. Further analysis was conducted by the OpenSSL development team and
-    Adam Langley of Google. The final fix was developed by Andy Polyakov of
-    the OpenSSL core team.
-    [CVE-2014-3570][]
+ * Correct Bignum squaring. Bignum squaring (BN_sqr) may produce incorrect
+   results on some platforms, including x86_64. This bug occurs at random
+   with a very low probability, and is not known to be exploitable in any
+   way, though its exact impact is difficult to determine. Thanks to Pieter
+   Wuille (Blockstream) who reported this issue and also suggested an initial
+   fix. Further analysis was conducted by the OpenSSL development team and
+   Adam Langley of Google. The final fix was developed by Andy Polyakov of
+   the OpenSSL core team.
+   [CVE-2014-3570][]
 
-    *Andy Polyakov*
+   *Andy Polyakov*
 
- *) Fix various certificate fingerprint issues.
+ * Fix various certificate fingerprint issues.
 
    By using non-DER or invalid encodings outside the signed portion of a
    certificate the fingerprint can be changed without breaking the signature.
