@@ -22,7 +22,7 @@ ossl_cmp_hdr_init
 
 =head1 SYNOPSIS
 
-  #include "cmp_int.h"
+  #include "cmp_local.h"
 
   int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
   int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
