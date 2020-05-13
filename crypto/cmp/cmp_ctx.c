@@ -93,12 +93,16 @@ int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
  * Allocates and initializes OSSL_CMP_CTX context structure with default values.
  * Returns new context on success, NULL on error
  */
-OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
+OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq)
 {
     OSSL_CMP_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
-        return NULL;
+        goto err;
+
+    ctx->libctx = libctx;
+    if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)
+        goto err;
 
     ctx->log_verbosity = OSSL_CMP_LOG_INFO;
 
@@ -124,6 +128,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
 
  err:
     OSSL_CMP_CTX_free(ctx);
+    X509err(0, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 

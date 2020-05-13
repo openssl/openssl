@@ -64,7 +64,7 @@ OSSL_CMP_CTX_set1_senderNonce
 
  #include <openssl/cmp.h>
 
- OSSL_CMP_CTX *OSSL_CMP_CTX_new(void);
+ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq);
  void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx);
  int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val);
@@ -158,8 +158,13 @@ OSSL_CMP_CTX_set1_senderNonce
 This is the context API for using CMP (Certificate Management Protocol) with
 OpenSSL.
 
-OSSL_CMP_CTX_new() allocates and initializes an OSSL_CMP_CTX structure to
-default values, e.g., proof-of-possession method is set to POPOSigningKey.
+OSSL_CMP_CTX_new() allocates an B<OSSL_CMP_CTX> structure associated with
+the library context I<libctx> and property query string I<propq>,
+both of which may be NULL to select the defaults.
+It initializes the remaining fields to their default values - for instance,
+the logging verbosity is set to OSSL_CMP_LOG_INFO,
+the message timeout is set to 120 seconds,
+and the proof-of-possession method is set to OSSL_CRMF_POPO_SIGNATURE.
 
 OSSL_CMP_CTX_free() deallocates an OSSL_CMP_CTX structure.
 

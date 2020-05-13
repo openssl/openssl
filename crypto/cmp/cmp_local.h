@@ -28,6 +28,8 @@
  * this structure is used to store the context for CMP sessions
  */
 struct ossl_cmp_ctx_st {
+    OPENSSL_CTX *libctx;
+    const char *propq;
     OSSL_CMP_log_cb_t log_cb; /* log callback for error/debug/etc. output */
     OSSL_CMP_severity log_verbosity; /* level of verbosity of log output */
 
