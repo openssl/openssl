@@ -12,7 +12,7 @@ ossl_cmp_msg_gen_ITAVs_push1
 
 =head1 SYNOPSIS
 
-  #include "cmp_int.h"
+  #include "cmp_local.h"
 
   const char *ossl_cmp_bodytype_to_string(int type);
   int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg);
