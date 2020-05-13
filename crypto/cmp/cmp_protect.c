@@ -154,7 +154,8 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         /* if we have untrusted certs, try to add intermediate certs */
         if (ctx->untrusted_certs != NULL) {
             STACK_OF(X509) *chain =
-                ossl_cmp_build_cert_chain(ctx->untrusted_certs, ctx->cert);
+                ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
+                                          ctx->untrusted_certs, ctx->cert);
             int res = X509_add_certs(msg->extraCerts, chain,
                                      X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                                      | X509_ADD_FLAG_NO_SS);

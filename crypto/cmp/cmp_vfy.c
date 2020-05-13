@@ -151,7 +151,7 @@ int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
         return 0;
     }
 
-    if ((csc = X509_STORE_CTX_new()) == NULL
+    if ((csc = X509_STORE_CTX_new_with_libctx(ctx->libctx, ctx->propq)) == NULL
             || !X509_STORE_CTX_init(csc, trusted_store,
                                     cert, ctx->untrusted_certs))
         goto err;

@@ -335,14 +335,16 @@ static int test_MSG_add_extraCerts(void)
 /* The cert chain tests use EC certs so we skip them in no-ec builds */
 static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
-    STACK_OF(X509) *result = NULL;
     int ret = 0;
+    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    STACK_OF(X509) *chain =
+        ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
+                                  fixture->certs, fixture->cert);
 
-    if (TEST_ptr(result = ossl_cmp_build_cert_chain(fixture->certs,
-                                                    fixture->cert))) {
+    if (TEST_ptr(chain)) {
         /* Check whether chain built is equal to the expected one */
-        ret = TEST_int_eq(0, STACK_OF_X509_cmp(result, fixture->chain));
-        sk_X509_pop_free(result, X509_free);
+        ret = TEST_int_eq(0, STACK_OF_X509_cmp(chain, fixture->chain));
+        sk_X509_pop_free(chain, X509_free);
     }
     return ret;
 }

@@ -206,19 +206,19 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
 }
 
 /*-
- * Builds up the certificate chain of certs as high up as possible using
- * the given list of certs containing all possible intermediate certificates and
- * optionally the (possible) trust anchor(s). See also ssl_add_cert_chain().
+ * Builds up the chain of intermediate CA certificates
+ * starting from of the given certificate <cert> as high up as possible using
+ * the given list of candidate certificates, similarly to ssl_add_cert_chain().
  *
  * Intended use of this function is to find all the certificates above the trust
  * anchor needed to verify an EE's own certificate.  Those are supposed to be
- * included in the ExtraCerts field of every first sent message of a transaction
+ * included in the ExtraCerts field of every first CMP message of a transaction
  * when MSG_SIG_ALG is utilized.
  *
  * NOTE: This allocates a stack and increments the reference count of each cert,
  * so when not needed any more the stack and all its elements should be freed.
- * NOTE: in case there is more than one possibility for the chain,
- * OpenSSL seems to take the first one, check X509_verify_cert() for details.
+ * NOTE: In case there is more than one possibility for the chain,
+ * OpenSSL seems to take the first one; check X509_verify_cert() for details.
  *
  * returns a pointer to a stack of (up_ref'ed) X509 certificates containing:
  *      - the EE certificate given in the function arguments (cert)
@@ -226,7 +226,9 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
  *        whereas the (self-signed) trust anchor is not included
  * returns NULL on error
  */
-STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
+STACK_OF(X509)
+    *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
+                               STACK_OF(X509) *certs, X509 *cert)
 {
     STACK_OF(X509) *chain = NULL, *result = NULL;
     X509_STORE *store = X509_STORE_new();
@@ -237,7 +239,7 @@ STACK_OF(X509) *ossl_cmp_build_cert_chain(STACK_OF(X509) *certs, X509 *cert)
         goto err;
     }
 
-    csc = X509_STORE_CTX_new();
+    csc = X509_STORE_CTX_new_with_libctx(libctx, propq);
     if (csc == NULL)
         goto err;
 
