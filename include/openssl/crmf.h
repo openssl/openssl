@@ -67,8 +67,9 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSGS)
 typedef struct ossl_crmf_optionalvalidity_st OSSL_CRMF_OPTIONALVALIDITY;
 
 /* crmf_pbm.c */
-OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
-                                           int itercnt, int macnid);
+OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
+                                           int owfnid, size_t itercnt,
+                                           int macnid);
 int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
                       const unsigned char *sec, size_t seclen,

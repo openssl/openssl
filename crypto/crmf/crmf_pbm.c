@@ -29,14 +29,15 @@
 
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)
- * |slen| SHOULD be > 8    (16 is common)
+ * |slen| SHOULD be at least 8 (16 is common)
  * |owfnid| e.g., NID_sha256
- * |itercnt| MUST be > 100 (500 is common)
+ * |itercnt| MUST be >= 100 (e.g., 500) and <= OSSL_CRMF_PBM_MAX_ITERATION_COUNT
  * |macnid| e.g., NID_hmac_sha1
  * returns pointer to OSSL_CRMF_PBMPARAMETER on success, NULL on error
  */
-OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
-                                           int itercnt, int macnid)
+OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
+                                           int owfnid, size_t itercnt,
+                                           int macnid)
 {
     OSSL_CRMF_PBMPARAMETER *pbm = NULL;
     unsigned char *salt = NULL;
@@ -51,7 +52,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
      */
     if ((salt = OPENSSL_malloc(slen)) == NULL)
         goto err;
-    if (RAND_bytes(salt, (int)slen) <= 0) {
+    if (RAND_bytes_ex(libctx, salt, (int)slen) <= 0) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_FAILURE_OBTAINING_RANDOM);
         goto err;
     }
@@ -80,6 +81,10 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
      */
     if (itercnt < 100) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_ITERATIONCOUNT_BELOW_100);
+        goto err;
+    }
+    if (itercnt > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
+        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_BAD_PBM_ITERATIONCOUNT);
         goto err;
     }
 
