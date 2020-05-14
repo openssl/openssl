@@ -674,7 +674,7 @@ static int nid_cb(const char *elem, int len, void *arg)
         nid = OBJ_sn2nid(etmp);
         if (nid == NID_undef) fprintf(stderr, "Warning: Algorithm name '%s' unknown. Check https://github.com/open-quantum-safe/openssl#supported-algorithms\n", etmp);
         else {
-             if (!OQS_KEM_alg_is_enabled(etmp)) fprintf(stderr, "Warning: Algorithm '%s' is not enabled in liboqs. \n", etmp);
+             if (!OQS_KEM_alg_is_enabled(get_oqs_alg_name(nid))) fprintf(stderr, "Warning: Algorithm '%s' is not enabled in liboqs. \n", etmp);
         }
     }
     if (nid == NID_undef)
