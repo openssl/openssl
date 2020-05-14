@@ -32,9 +32,11 @@ doc/man1/openssl-*.pod
 providers/common/der/der_dsa.c
 providers/common/der/der_ec.c
 providers/common/der/der_rsa.c
+providers/common/der/der_digests.c
 providers/common/include/prov/der_dsa.h
 providers/common/include/prov/der_ec.h
 providers/common/include/prov/der_rsa.h
+providers/common/include/prov/der_digests.h
 
 # error code files
 /crypto/err/openssl.txt.old
