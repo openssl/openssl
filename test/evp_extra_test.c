@@ -1179,6 +1179,7 @@ static int test_EVP_PKEY_check(int i)
     return ret;
 }
 
+#ifndef OPENSSL_NO_CMAC
 static int test_CMAC_keygen(void)
 {
     /*
@@ -1199,6 +1200,7 @@ static int test_CMAC_keygen(void)
     EVP_PKEY_CTX_free(kctx);
     return ret;
 }
+#endif
 
 static int test_HKDF(void)
 {
@@ -1651,7 +1653,9 @@ int setup_tests(void)
     if (!TEST_int_eq(EVP_PKEY_meth_add0(custom_pmeth), 1))
         return 0;
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
+#ifndef OPENSSL_NO_CMAC
     ADD_TEST(test_CMAC_keygen);
+#endif
     ADD_TEST(test_HKDF);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_X509_PUBKEY_inplace);
