@@ -1625,6 +1625,47 @@ static int test_keygen_with_empty_template(int n)
     return ret;
 }
 
+/*
+ * Test that we fail if we attempt to use an algorithm that is not available
+ * in the current library context (unless we are using an algorithm that should
+ * be made available via legacy codepaths).
+ */
+static int test_pkey_ctx_fail_without_provider(int tst)
+{
+    OPENSSL_CTX *tmpctx = OPENSSL_CTX_new();
+    OSSL_PROVIDER *nullprov = NULL;
+    EVP_PKEY_CTX *pctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(tmpctx))
+        goto err;
+
+    nullprov = OSSL_PROVIDER_load(tmpctx, "null");
+    if (!TEST_ptr(nullprov))
+        goto err;
+
+    pctx = EVP_PKEY_CTX_new_from_name(tmpctx, tst == 0 ? "RSA" : "HMAC", "");
+
+    /* RSA is not available via any provider so we expect this to fail */
+    if (tst == 0 && !TEST_ptr_null(pctx))
+        goto err;
+
+    /*
+     * HMAC is always available because it is implemented via legacy codepaths
+     * and not in a provider at all. We expect this to pass.
+     */
+    if (tst == 1 && !TEST_ptr(pctx))
+        goto err;
+
+    ret = 1;
+
+ err:
+    EVP_PKEY_CTX_free(pctx);
+    OSSL_PROVIDER_unload(nullprov);
+    OPENSSL_CTX_free(tmpctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     testctx = OPENSSL_CTX_new();
@@ -1673,6 +1714,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_PKEY_set1_DH);
 #endif
     ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
+    ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
 
     return 1;
 }
