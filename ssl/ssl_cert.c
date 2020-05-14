@@ -1075,7 +1075,8 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx)
 
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->nid))
             || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->nid))) {
-            *pidx = i;
+            if (pidx != NULL)
+                *pidx = i;
             return tmp_lu;
         }
     }
