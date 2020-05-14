@@ -88,7 +88,7 @@ function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_get_{name}>.
 For example, the "function" core_gettable_params() has these:
 
- typedef OSSL_ITEM *
+ typedef OSSL_PARAM *
      (OSSL_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
  static ossl_inline OSSL_NAME_core_gettable_params_fn
      OSSL_get_core_gettable_params(const OSSL_DISPATCH *opf);
@@ -148,14 +148,14 @@ parameters.
 
 =for comment core_thread_start() TBA
 
-core_get_library_context() retrieves the library context in which the
-B<OSSL_CORE_HANDLE> object I<handle> is stored.
+core_get_library_context() retrieves the library context in which the library
+object for the current provider is stored, accessible through the I<handle>.
 This may sometimes be useful if the provider wishes to store a
 reference to its context in the same library context.
 
 core_new_error(), core_set_error_debug() and core_set_error() are
 building blocks for reporting an error back to the core, with
-reference to the handle object I<handle>.
+reference to the I<handle>.
 
 =over 4
 
