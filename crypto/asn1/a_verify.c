@@ -85,30 +85,33 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
 
 #endif
 
-int ASN1_item_verify(const ASN1_ITEM *it, X509_ALGOR *a,
-                     ASN1_BIT_STRING *signature, void *asn, EVP_PKEY *pkey)
+int ASN1_item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                     const ASN1_BIT_STRING *signature, const void *data,
+                     EVP_PKEY *pkey)
 {
+    return ASN1_item_verify_with_libctx(it, alg, signature, data, NULL, pkey,
+                                        NULL, NULL);
+}
+
+int ASN1_item_verify_with_libctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                                 const ASN1_BIT_STRING *signature,
+                                 const void *data,
+                                 const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
+                                 OPENSSL_CTX *libctx, const char *propq)
+{
+    EVP_MD_CTX *ctx;
     int rv = -1;
-    EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new(pkey, NULL);
 
-    if (ctx == NULL || pctx == NULL) {
-        ASN1err(0, ERR_R_MALLOC_FAILURE);
-        goto err;
+    if ((ctx = evp_md_ctx_new_with_libctx(pkey, id, libctx, propq)) != NULL) {
+        rv = ASN1_item_verify_ctx(it, alg, signature, data, ctx);
+        EVP_PKEY_CTX_free(EVP_MD_CTX_pkey_ctx(ctx));
+        EVP_MD_CTX_free(ctx);
     }
-
-    EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
-
-    rv = ASN1_item_verify_ctx(it, a, signature, asn, ctx);
-
- err:
-    EVP_PKEY_CTX_free(pctx);
-    EVP_MD_CTX_free(ctx);
     return rv;
 }
 
-int ASN1_item_verify_ctx(const ASN1_ITEM *it, X509_ALGOR *a,
-                         ASN1_BIT_STRING *signature, void *asn,
+int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                         const ASN1_BIT_STRING *signature, const void *data,
                          EVP_MD_CTX *ctx)
 {
     EVP_PKEY *pkey;
@@ -130,7 +133,7 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, X509_ALGOR *a,
     }
 
     /* Convert signature OID into digest and public key OIDs */
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->algorithm), &mdnid, &pknid)) {
+    if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), &mdnid, &pknid)) {
         ASN1err(0, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
         goto err;
     }
@@ -140,7 +143,7 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, X509_ALGOR *a,
             ASN1err(0, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
             goto err;
         }
-        ret = pkey->ameth->item_verify(ctx, it, asn, a, signature, pkey);
+        ret = pkey->ameth->item_verify(ctx, it, data, alg, signature, pkey);
         /*
          * Return values meaning:
          * <=0: error.
@@ -172,7 +175,7 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, X509_ALGOR *a,
         }
     }
 
-    inl = ASN1_item_i2d(asn, &buf_in, it);
+    inl = ASN1_item_i2d(data, &buf_in, it);
     if (inl <= 0) {
         ASN1err(0, ERR_R_INTERNAL_ERROR);
         goto err;

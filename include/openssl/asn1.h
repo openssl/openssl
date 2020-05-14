@@ -678,6 +678,16 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x);
                      CHECKED_PTR_OF(const type, x)))
 
 void *ASN1_item_dup(const ASN1_ITEM *it, const void *x);
+int ASN1_item_sign_with_libctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
+                               X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+                               const void *data, const ASN1_OCTET_STRING *id,
+                               EVP_PKEY *pkey, const EVP_MD *md,
+                               OPENSSL_CTX *libctx, const char *propq);
+int ASN1_item_verify_with_libctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                                 const ASN1_BIT_STRING *signature,
+                                 const void *data,
+                                 const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
+                                 OPENSSL_CTX *libctx, const char *propq);
 
 /* ASN1 alloc/free macros for when a type is only used internally */
 

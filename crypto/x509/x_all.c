@@ -27,76 +27,23 @@
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 
-static void clean_id_ctx(EVP_MD_CTX *ctx)
-{
-    EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
-
-    EVP_PKEY_CTX_free(pctx);
-    EVP_MD_CTX_free(ctx);
-}
-
-static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id,
-                               OPENSSL_CTX *libctx, const char *propq)
-{
-    EVP_MD_CTX *ctx = NULL;
-    EVP_PKEY_CTX *pctx = NULL;
-
-    if ((ctx = EVP_MD_CTX_new()) == NULL
-        || (pctx = EVP_PKEY_CTX_new_from_pkey(libctx, r, propq)) == NULL) {
-        X509err(0, ERR_R_MALLOC_FAILURE);
-        goto error;
-    }
-
-#ifndef OPENSSL_NO_EC
-    if (id != NULL) {
-        if (EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
-            X509err(0, ERR_R_MALLOC_FAILURE);
-            goto error;
-        }
-    }
-#endif
-
-    EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
-
-    return ctx;
- error:
-    EVP_PKEY_CTX_free(pctx);
-    EVP_MD_CTX_free(ctx);
-    return NULL;
-}
-
 int X509_verify(X509 *a, EVP_PKEY *r)
 {
-    int rv = 0;
-    EVP_MD_CTX *ctx = NULL;
-    ASN1_OCTET_STRING *id = NULL;
-
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
 
-    id = a->distinguishing_id;
-    if ((ctx = make_id_ctx(r, id, a->libctx, a->propq)) != NULL) {
-        rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
-                                  &a->signature, &a->cert_info, ctx);
-        clean_id_ctx(ctx);
-    }
-    return rv;
+    return ASN1_item_verify_with_libctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
+                                        &a->signature, &a->cert_info,
+                                        a->distinguishing_id, r,
+                                        a->libctx, a->propq);
 }
 
 int X509_REQ_verify_with_libctx(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
                                 const char *propq)
 {
-    int rv = 0;
-    EVP_MD_CTX *ctx = NULL;
-    ASN1_OCTET_STRING *id = NULL;
-
-    id = a->distinguishing_id;
-    if ((ctx = make_id_ctx(r, id, libctx, propq)) != NULL) {
-        rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
-                                  a->signature, &a->req_info, ctx);
-        clean_id_ctx(ctx);
-    }
-    return rv;
+    return ASN1_item_verify_with_libctx(ASN1_ITEM_rptr(X509_REQ_INFO),
+                                        &a->sig_alg, a->signature, &a->req_info,
+                                        a->distinguishing_id, r, libctx, propq);
 }
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)

@@ -696,7 +696,7 @@ static ASN1_STRING *rsa_ctx_to_pss_string(EVP_PKEY_CTX *pkctx)
  */
 
 static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
-                          X509_ALGOR *sigalg, EVP_PKEY *pkey)
+                          const X509_ALGOR *sigalg, EVP_PKEY *pkey)
 {
     int rv = -1;
     int saltlen;
@@ -876,9 +876,9 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
  * is encountered requiring special handling. We currently only handle PSS.
  */
 
-static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                           X509_ALGOR *sigalg, ASN1_BIT_STRING *sig,
-                           EVP_PKEY *pkey)
+static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
+                           const void *asn, const X509_ALGOR *sigalg,
+                           const ASN1_BIT_STRING *sig, EVP_PKEY *pkey)
 {
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
@@ -920,7 +920,7 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
 }
 #endif
 
-static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
                          X509_ALGOR *alg1, X509_ALGOR *alg2,
                          ASN1_BIT_STRING *sig)
 {
