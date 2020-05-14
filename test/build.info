@@ -44,7 +44,7 @@ IF[{- !$disabled{tests} -}]
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test param_build_test \
-          bioprinttest sslapitest sslprovidertest dtlstest sslcorrupttest \
+          bioprinttest sslapitest dtlstest sslcorrupttest \
           bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
@@ -293,10 +293,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sslapitest]=sslapitest.c ssltestlib.c
   INCLUDE[sslapitest]=../include ../apps/include ..
   DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
-
-  SOURCE[sslprovidertest]=sslprovidertest.c ssltestlib.c
-  INCLUDE[sslprovidertest]=../include ../apps/include ..
-  DEPEND[sslprovidertest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[ocspapitest]=ocspapitest.c
   INCLUDE[ocspapitest]=../include ../apps/include
