@@ -13,7 +13,7 @@ ASN1_STRING_TABLE_cleanup - ASN1_STRING_TABLE manipulation functions
 
  int ASN1_STRING_TABLE_add(int nid, long minsize, long maxsize,
                            unsigned long mask, unsigned long flags);
- ASN1_STRING_TABLE * ASN1_STRING_TABLE_get(int nid);
+ ASN1_STRING_TABLE *ASN1_STRING_TABLE_get(int nid);
  void ASN1_STRING_TABLE_cleanup(void);
 
 =head1 DESCRIPTION

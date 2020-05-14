@@ -9,8 +9,8 @@ ASN1_STRING allocation functions
 
  #include <openssl/asn1.h>
 
- ASN1_STRING * ASN1_STRING_new(void);
- ASN1_STRING * ASN1_STRING_type_new(int type);
+ ASN1_STRING *ASN1_STRING_new(void);
+ ASN1_STRING *ASN1_STRING_type_new(int type);
  void ASN1_STRING_free(ASN1_STRING *a);
 
 =head1 DESCRIPTION
