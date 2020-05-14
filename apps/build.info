@@ -67,6 +67,9 @@ IF[{- !$disabled{apps} -}]
   # progs.pl tries to read all 'openssl' sources, including progs.c, so we make
   # sure things are generated in the correct order.
   DEPEND[progs.h]=progs.c
+  # Because the files to look through may change (depends on $OPENSSLSRC),
+  # always depend on a changed configuration.
+  DEPEND[progs.c]=../configdata.pm
 
   IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-)/ -}]
     GENERATE[openssl.rc]=../util/mkrc.pl openssl
