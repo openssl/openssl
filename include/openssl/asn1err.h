@@ -59,7 +59,6 @@ int ERR_load_ASN1_strings(void);
 #  define ASN1_F_ASN1_ITEM_I2D_BIO                         0
 #  define ASN1_F_ASN1_ITEM_I2D_FP                          0
 #  define ASN1_F_ASN1_ITEM_PACK                            0
-#  define ASN1_F_ASN1_ITEM_SIGN                            0
 #  define ASN1_F_ASN1_ITEM_SIGN_CTX                        0
 #  define ASN1_F_ASN1_ITEM_UNPACK                          0
 #  define ASN1_F_ASN1_ITEM_VERIFY                          0

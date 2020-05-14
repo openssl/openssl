@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/ec.h>
 #include <openssl/engine.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
@@ -72,6 +73,37 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 
     return 1;
 }
+
+#ifndef FIPS_MODULE
+EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
+                                       const ASN1_OCTET_STRING *id,
+                                       OPENSSL_CTX *libctx, const char *propq)
+{
+    EVP_MD_CTX *ctx;
+    EVP_PKEY_CTX *pctx = NULL;
+
+    if ((ctx = EVP_MD_CTX_new()) == NULL
+        || (pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq)) == NULL) {
+        ASN1err(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+# ifndef OPENSSL_NO_EC
+    if (id != NULL && EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
+        ASN1err(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+# endif
+
+    EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
+    return ctx;
+
+ err:
+    EVP_PKEY_CTX_free(pctx);
+    EVP_MD_CTX_free(ctx);
+    return NULL;
+}
+#endif
 
 EVP_MD_CTX *EVP_MD_CTX_new(void)
 {

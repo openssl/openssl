@@ -769,6 +769,9 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 
 EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
                              const char *propq);
+EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
+                                       const ASN1_OCTET_STRING *id,
+                                       OPENSSL_CTX *libctx, const char *propq);
 #endif /* !defined(FIPS_MODULE) */
 void evp_method_store_flush(OPENSSL_CTX *libctx);
 int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,

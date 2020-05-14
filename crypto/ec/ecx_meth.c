@@ -570,9 +570,9 @@ static int ecd_size448(const EVP_PKEY *pkey)
     return ED448_SIGSIZE;
 }
 
-static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
-                           X509_ALGOR *sigalg, ASN1_BIT_STRING *str,
-                           EVP_PKEY *pkey)
+static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
+                           const void *asn, const X509_ALGOR *sigalg,
+                           const ASN1_BIT_STRING *str, EVP_PKEY *pkey)
 {
     const ASN1_OBJECT *obj;
     int ptype;
@@ -592,7 +592,8 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
     return 2;
 }
 
-static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
+                              const void *asn,
                               X509_ALGOR *alg1, X509_ALGOR *alg2,
                               ASN1_BIT_STRING *str)
 {
@@ -612,7 +613,8 @@ static int ecd_sig_info_set25519(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     return 1;
 }
 
-static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it, void *asn,
+static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
+                            const void *asn,
                             X509_ALGOR *alg1, X509_ALGOR *alg2,
                             ASN1_BIT_STRING *str)
 {
