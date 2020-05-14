@@ -1578,7 +1578,7 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_ENGINE:
 #ifndef OPENSSL_NO_ENGINE
-            engine = setup_engine_flags(opt_arg(), ENGINE_METHOD_ALL, s_debug);
+            engine = setup_engine(opt_arg(), s_debug);
 #endif
             break;
         case OPT_R_CASES:

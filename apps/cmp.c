@@ -212,13 +212,6 @@ static int read_config(void);
 static CONF *conf = NULL; /* OpenSSL config file context structure */
 static OSSL_CMP_CTX *cmp_ctx = NULL; /* the client-side CMP context */
 
-/* TODO remove when new setup_engine_flags() is in apps/lib/apps.c (PR #4277) */
-static
-ENGINE *setup_engine_flags(const char *engine, unsigned int flags, int debug)
-{
-    return setup_engine(engine, debug);
-}
-
 /* the type of cmp command we want to send */
 typedef enum {
     CMP_IR,
@@ -3089,7 +3082,7 @@ int cmp_main(int argc, char **argv)
     }
 
     if (opt_engine != NULL)
-        e = setup_engine_flags(opt_engine, 0 /* not: ENGINE_METHOD_ALL */, 0);
+        e = setup_engine_methods(opt_engine, 0 /* not: ENGINE_METHOD_ALL */, 0);
 
     if (opt_port != NULL) {
         if (opt_use_mock_srv) {

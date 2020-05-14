@@ -128,12 +128,8 @@ __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
 # endif
 
-ENGINE *setup_engine_flags(const char *engine, unsigned int flags, int debug);
-# ifndef OPENSSL_NO_ENGINE
-#  define setup_engine(e, debug) setup_engine_flags(e, ENGINE_METHOD_ALL, debug)
-# else
-#  define setup_engine(e, debug) setup_engine_flags(e, 0, debug)
-# endif
+ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
+# define setup_engine(e, debug) setup_engine_methods(e, (unsigned int)-1, debug)
 void release_engine(ENGINE *e);
 
 # ifndef OPENSSL_NO_OCSP
