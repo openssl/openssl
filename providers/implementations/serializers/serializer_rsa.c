@@ -115,14 +115,13 @@ int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
     switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
         if (!rsa_pss_params_30_is_unrestricted(pss_params)) {
-            if (ossl_prov_bio_printf(out, "(INVALID PSS PARAMETERS)\n") <= 0)
+            if (BIO_printf(out, "(INVALID PSS PARAMETERS)\n") <= 0)
                 goto err;
         }
         break;
     case RSA_FLAG_TYPE_RSASSAPSS:
         if (rsa_pss_params_30_is_unrestricted(pss_params)) {
-            if (ossl_prov_bio_printf(out,
-                                     "No PSS parameter restrictions\n") <= 0)
+            if (BIO_printf(out, "No PSS parameter restrictions\n") <= 0)
                 goto err;
         } else {
             int hashalg_nid = rsa_pss_params_30_hashalg(pss_params);
@@ -132,23 +131,23 @@ int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
             int saltlen = rsa_pss_params_30_saltlen(pss_params);
             int trailerfield = rsa_pss_params_30_trailerfield(pss_params);
 
-            if (ossl_prov_bio_printf(out, "PSS parameter restrictions:\n") <= 0)
+            if (BIO_printf(out, "PSS parameter restrictions:\n") <= 0)
                 goto err;
-            if (ossl_prov_bio_printf(out, "  Hash Algorithm: %s%s\n",
-                                     rsa_oaeppss_nid2name(hashalg_nid),
-                                     (hashalg_nid == NID_sha1
-                                      ? " (default)" : "")) <= 0)
+            if (BIO_printf(out, "  Hash Algorithm: %s%s\n",
+                           rsa_oaeppss_nid2name(hashalg_nid),
+                           (hashalg_nid == NID_sha1
+                           ? " (default)" : "")) <= 0)
                 goto err;
-            if (ossl_prov_bio_printf(out, "  Mask Algorithm: %s with %s%s\n",
-                                     rsa_mgf_nid2name(maskgenalg_nid),
-                                     rsa_oaeppss_nid2name(maskgenhashalg_nid),
-                                     (maskgenalg_nid == NID_mgf1
-                                      && maskgenhashalg_nid == NID_sha1
-                                      ? " (default)" : "")) <= 0)
+            if (BIO_printf(out, "  Mask Algorithm: %s with %s%s\n",
+                           rsa_mgf_nid2name(maskgenalg_nid),
+                           rsa_oaeppss_nid2name(maskgenhashalg_nid),
+                           (maskgenalg_nid == NID_mgf1
+                            && maskgenhashalg_nid == NID_sha1
+                            ? " (default)" : "")) <= 0)
                 goto err;
-            if (ossl_prov_bio_printf(out, "  Minimum Salt Length: %d%s\n",
-                                     saltlen,
-                                     (saltlen == 20 ? " (default)" : "")) <= 0)
+            if (BIO_printf(out, "  Minimum Salt Length: %d%s\n",
+                           saltlen,
+                           (saltlen == 20 ? " (default)" : "")) <= 0)
                 goto err;
             /*
              * TODO(3.0) Should we show the ASN.1 trailerField value, or
@@ -157,9 +156,9 @@ int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
              * does display 0xBC when the default applies, but the ASN.1
              * trailerField value otherwise...
              */
-            if (ossl_prov_bio_printf(out, "  Trailer Field: 0x%x%s\n",
-                                     trailerfield,
-                                     (trailerfield == 1 ? " (default)" : ""))
+            if (BIO_printf(out, "  Trailer Field: 0x%x%s\n",
+                           trailerfield,
+                           (trailerfield == 1 ? " (default)" : ""))
                 <= 0)
                 goto err;
         }
