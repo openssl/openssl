@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 2 [15 May 2020]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * Removed FIPS_mode() and FIPS_mode_set(). These functions are legacy API's
    that are not applicable to the new provider model. Applications should
