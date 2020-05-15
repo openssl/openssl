@@ -672,13 +672,13 @@ static int nid_cb(const char *elem, int len, void *arg)
     nid = EC_curve_nist2nid(etmp);
     if (nid == NID_undef) {
         nid = OBJ_sn2nid(etmp);
-        if (nid == NID_undef) fprintf(stderr, "Warning: Algorithm name '%s' unknown. Check https://github.com/open-quantum-safe/openssl#supported-algorithms\n", etmp);
-        else {
+        if (nid != NID_undef) // also OQS names would be found here, so test for enablement; std curves will only be found by ln2nid below
              if (!OQS_KEM_alg_is_enabled(get_oqs_alg_name(nid))) fprintf(stderr, "Warning: Algorithm '%s' is not enabled in liboqs. \n", etmp);
-        }
     }
-    if (nid == NID_undef)
+    if (nid == NID_undef) {
         nid = OBJ_ln2nid(etmp);
+        if (nid == NID_undef) fprintf(stderr, "Warning: Algorithm name '%s' unknown. Check https://github.com/open-quantum-safe/openssl#supported-algorithms\n", etmp);
+    }
     if (nid == NID_undef)
         return 0;
     for (i = 0; i < narg->nidcnt; i++)

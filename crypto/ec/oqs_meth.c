@@ -200,6 +200,8 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_qteslapiii:
     case NID_p384_qteslapiii:
       return OQS_SIG_alg_qTesla_p_III;
+    case NID_oqs_kem_default:
+      return OQS_KEM_alg_default;
     case NID_frodo640aes:
       return OQS_KEM_alg_frodokem_640_aes;
     case NID_frodo640shake:
