@@ -6783,6 +6783,61 @@ static int test_ticket_callbacks(int tst)
 }
 
 /*
+ * Test incorrect shutdown.
+ * Test 0: client does not shutdown properly,
+ *         server does not set SSL_OP_IGNORE_UNEXPECTED_EOF,
+ *         server should get SSL_ERROR_SSL
+ * Test 1: client does not shutdown properly,
+ *         server sets SSL_OP_IGNORE_UNEXPECTED_EOF,
+ *         server should get SSL_ERROR_ZERO_RETURN
+ */
+static int test_incorrect_shutdown(int tst)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    char buf[80];
+    BIO *c2s;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), 0, 0,
+                                       &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (tst == 1)
+        SSL_CTX_set_options(sctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                            NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                              SSL_ERROR_NONE)))
+        goto end;
+
+    c2s = SSL_get_rbio(serverssl);
+    BIO_set_mem_eof_return(c2s, 0);
+
+    if (!TEST_false(SSL_read(serverssl, buf, sizeof(buf))))
+        goto end;
+
+    if (tst == 0 && !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_SSL) )
+        goto end;
+    if (tst == 1 && !TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_ZERO_RETURN) )
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
  * Test bi-directional shutdown.
  * Test 0: TLSv1.2
  * Test 1: TLSv1.2, server continues to read/write after client shutdown
@@ -7796,6 +7851,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ssl_get_shared_ciphers, OSSL_NELEM(shared_ciphers_data));
     ADD_ALL_TESTS(test_ticket_callbacks, 16);
     ADD_ALL_TESTS(test_shutdown, 7);
+    ADD_ALL_TESTS(test_incorrect_shutdown, 2);
     ADD_ALL_TESTS(test_cert_cb, 6);
     ADD_ALL_TESTS(test_client_cert_cb, 2);
     ADD_ALL_TESTS(test_ca_names, 3);
