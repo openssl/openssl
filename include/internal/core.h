@@ -50,9 +50,13 @@ void *ossl_method_construct(OPENSSL_CTX *ctx, int operation_id,
 
 void ossl_algorithm_do_all(OPENSSL_CTX *libctx, int operation_id,
                            OSSL_PROVIDER *provider,
+                           int (*pre)(OSSL_PROVIDER *, int operation_id,
+                                      void *data, int *result),
                            void (*fn)(OSSL_PROVIDER *provider,
                                       const OSSL_ALGORITHM *algo,
                                       int no_store, void *data),
+                           int (*post)(OSSL_PROVIDER *, int operation_id,
+                                       int no_store, void *data, int *result),
                            void *data);
 
 #endif

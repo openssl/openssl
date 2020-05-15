@@ -13,7 +13,8 @@ ossl_provider_name, ossl_provider_dso,
 ossl_provider_module_name, ossl_provider_module_path,
 ossl_provider_library_context,
 ossl_provider_teardown, ossl_provider_gettable_params,
-ossl_provider_get_params, ossl_provider_query_operation
+ossl_provider_get_params, ossl_provider_query_operation,
+ossl_provider_set_operation_bit, ossl_provider_test_operation_bit
 - internal provider routines
 
 =head1 SYNOPSIS
@@ -62,6 +63,10 @@ ossl_provider_get_params, ossl_provider_query_operation
  const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                      int operation_id,
                                                      int *no_cache);
+
+ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
+ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
+                                      int *result);
 
 =head1 DESCRIPTION
 
@@ -208,6 +213,13 @@ I<query_operation> function, if the provider has one.
 It should return an array of I<OSSL_ALGORITHM> for the given
 I<operation_id>.
 
+ossl_provider_set_operation_bit() registers a 1 for operation I<bitnum>
+in a bitstring that's internal to I<provider>.
+
+ossl_provider_tests_operation_bit() checks if the bit operation I<bitnum>
+is set (1) or not (0) in the internal I<provider> bitstring, and sets
+I<*result> to 1 or 0 accorddingly. 
+
 =head1 NOTES
 
 Locating a provider module happens as follows:
@@ -269,6 +281,9 @@ otherwise NULL.
 
 ossl_provider_get_params() returns 1 on success, or 0 on error.
 If this function isn't available in the provider, 0 is returned.
+
+ossl_provider_set_operation_bit() and ossl_provider_test_operation_bit()
+return 1 on success, or 0 on error.
 
 =head1 SEE ALSO
 
