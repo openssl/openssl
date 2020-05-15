@@ -72,6 +72,11 @@ static int group_order_tests(EC_GROUP *group)
         goto err;
 
     for (i = 1; i <= 2; i++) {
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+        const BIGNUM *scalars[6];
+        const EC_POINT *points[6];
+# endif
+
         if (!TEST_true(BN_set_word(n1, i))
             /*
              * If i == 1, P will be the predefined generator for which
@@ -107,9 +112,6 @@ static int group_order_tests(EC_GROUP *group)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
         /* Exercise EC_POINTs_mul, including corner cases. */
-        const BIGNUM *scalars[6];
-        const EC_POINT *points[6];
-
         scalars[0] = scalars[1] = BN_value_one();
         points[0]  = points[1]  = P;
 
@@ -161,6 +163,10 @@ static int prime_field_tests(void)
              *P_256 = NULL, *P_384 = NULL, *P_521 = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *yplusone = NULL;
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    const EC_POINT *points[4];
+    const BIGNUM *scalars[4];
+# endif
     unsigned char buf[100];
     size_t len, r = 0;
     int k;
@@ -557,9 +563,6 @@ static int prime_field_tests(void)
         goto err;
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-    const EC_POINT *points[4];
-    const BIGNUM *scalars[4];
-
     TEST_note("combined multiplication ...");
     points[0] = Q;
     points[1] = Q;
@@ -813,6 +816,10 @@ static int char2_curve_test(int n)
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *cof = NULL, *yplusone = NULL;
     EC_GROUP *group = NULL, *variable = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    const EC_POINT *points[3];
+    const BIGNUM *scalars[3];
+# endif
     struct c2_curve_test *const test = char2_curve_tests + n;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
@@ -897,9 +904,6 @@ static int char2_curve_test(int n)
             goto err;
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-        const EC_POINT *points[3];
-        const BIGNUM *scalars[3];
-
         TEST_note("combined multiplication ...");
         points[0] = Q;
         points[1] = Q;
