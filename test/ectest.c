@@ -72,9 +72,6 @@ static int group_order_tests(EC_GROUP *group)
         goto err;
 
     for (i = 1; i <= 2; i++) {
-        const BIGNUM *scalars[6];
-        const EC_POINT *points[6];
-
         if (!TEST_true(BN_set_word(n1, i))
             /*
              * If i == 1, P will be the predefined generator for which
@@ -105,10 +102,13 @@ static int group_order_tests(EC_GROUP *group)
             /* Add P to verify the result. */
             || !TEST_true(EC_POINT_add(group, Q, Q, P, ctx))
             || !TEST_true(EC_POINT_is_at_infinity(group, Q))
-
-            /* Exercise EC_POINTs_mul, including corner cases. */
             || !TEST_false(EC_POINT_is_at_infinity(group, P)))
             goto err;
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+        /* Exercise EC_POINTs_mul, including corner cases. */
+        const BIGNUM *scalars[6];
+        const EC_POINT *points[6];
 
         scalars[0] = scalars[1] = BN_value_one();
         points[0]  = points[1]  = P;
@@ -133,6 +133,7 @@ static int group_order_tests(EC_GROUP *group)
         if (!TEST_true(EC_POINTs_mul(group, P, NULL, 6, points, scalars, ctx))
             || !TEST_true(EC_POINT_is_at_infinity(group, P)))
             goto err;
+# endif
     }
 
     r = 1;
@@ -160,8 +161,6 @@ static int prime_field_tests(void)
              *P_256 = NULL, *P_384 = NULL, *P_521 = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *yplusone = NULL;
-    const EC_POINT *points[4];
-    const BIGNUM *scalars[4];
     unsigned char buf[100];
     size_t len, r = 0;
     int k;
@@ -556,6 +555,12 @@ static int prime_field_tests(void)
         || !TEST_true(EC_POINT_is_at_infinity(group, R))    /* R = P + 2Q */
         || !TEST_false(EC_POINT_is_at_infinity(group, Q)))
         goto err;
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+    const EC_POINT *points[4];
+    const BIGNUM *scalars[4];
+
+    TEST_note("combined multiplication ...");
     points[0] = Q;
     points[1] = Q;
     points[2] = Q;
@@ -566,10 +571,9 @@ static int prime_field_tests(void)
         || !TEST_BN_even(y)
         || !TEST_true(BN_rshift1(y, y)))
         goto err;
+
     scalars[0] = y;         /* (group order + 1)/2, so y*Q + y*Q = Q */
     scalars[1] = y;
-
-    TEST_note("combined multiplication ...");
 
     /* z is still the group order */
     if (!TEST_true(EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
@@ -601,10 +605,8 @@ static int prime_field_tests(void)
     if (!TEST_true(EC_POINTs_mul(group, P, NULL, 4, points, scalars, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, P)))
         goto err;
-
+# endif
     TEST_note(" ok\n");
-
-
     r = 1;
 err:
     BN_CTX_free(ctx);
@@ -811,8 +813,6 @@ static int char2_curve_test(int n)
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *cof = NULL, *yplusone = NULL;
     EC_GROUP *group = NULL, *variable = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
-    const EC_POINT *points[3];
-    const BIGNUM *scalars[3];
     struct c2_curve_test *const test = char2_curve_tests + n;
 
     if (!TEST_ptr(ctx = BN_CTX_new())
@@ -896,6 +896,11 @@ static int char2_curve_test(int n)
             || !TEST_false(EC_POINT_is_at_infinity(group, Q)))
             goto err;
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+        const EC_POINT *points[3];
+        const BIGNUM *scalars[3];
+
+        TEST_note("combined multiplication ...");
         points[0] = Q;
         points[1] = Q;
         points[2] = Q;
@@ -906,8 +911,6 @@ static int char2_curve_test(int n)
             goto err;
         scalars[0] = y;         /* (group order + 1)/2, so y*Q + y*Q = Q */
         scalars[1] = y;
-
-        TEST_note("combined multiplication ...");
 
         /* z is still the group order */
         if (!TEST_true(EC_POINTs_mul(group, P, NULL, 2, points, scalars, ctx))
@@ -937,7 +940,8 @@ static int char2_curve_test(int n)
 
         if (!TEST_true(EC_POINTs_mul(group, P, NULL, 3, points, scalars, ctx))
             || !TEST_true(EC_POINT_is_at_infinity(group, P)))
-            goto err;;
+            goto err;
+# endif
     }
 
     r = 1;
