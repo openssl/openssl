@@ -74,6 +74,11 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);
 
+/* Cache of bits to see if we already queried an operation */
+int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
+int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
+                                     int *result);
+
 /* Configuration */
 void ossl_provider_add_conf_module(void);
 

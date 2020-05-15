@@ -71,6 +71,13 @@ struct ossl_provider_st {
     OSSL_provider_get_params_fn *get_params;
     OSSL_provider_query_operation_fn *query_operation;
 
+    /*
+     * Cache of bit to indicate of query_operation() has been called on
+     * a specific operation or not.
+     */
+    unsigned char *operation_bits;
+    size_t operation_bits_sz;
+
     /* Provider side data */
     void *provctx;
 };
@@ -317,6 +324,9 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
             }
 # endif
 #endif
+            OPENSSL_free(prov->operation_bits);
+            prov->operation_bits = NULL;
+            prov->operation_bits_sz = 0;
             prov->flag_initialized = 0;
         }
 
@@ -780,6 +790,42 @@ const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int *no_cache)
 {
     return prov->query_operation(prov->provctx, operation_id, no_cache);
+}
+
+int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
+{
+    size_t byte = bitnum / 8;
+    unsigned char bit = (1 << (bitnum % 8)) & 0xFF;
+
+    if (provider->operation_bits_sz <= byte) {
+        provider->operation_bits = OPENSSL_realloc(provider->operation_bits,
+                                                   byte + 1);
+        if (provider->operation_bits == NULL) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        memset(provider->operation_bits + provider->operation_bits_sz,
+               '\0', byte + 1 - provider->operation_bits_sz);
+    }
+    provider->operation_bits[byte] |= bit;
+    return 1;
+}
+
+int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
+                                     int *result)
+{
+    size_t byte = bitnum / 8;
+    unsigned char bit = (1 << (bitnum % 8)) & 0xFF;
+
+    if (!ossl_assert(result != NULL)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    *result = 0;
+    if (provider->operation_bits_sz > byte)
+        *result = ((provider->operation_bits[byte] & bit) != 0);
+    return 1;
 }
 
 /*-
