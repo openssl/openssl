@@ -1500,9 +1500,10 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 #  define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN             (EVP_PKEY_ALG_CTRL + 8)
 #  define EVP_PKEY_CTRL_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 9)
 #  define EVP_PKEY_CTRL_GET_EC_KDF_UKM                (EVP_PKEY_ALG_CTRL + 10)
-#  define EVP_PKEY_CTRL_SET1_ID                       (EVP_PKEY_ALG_CTRL + 11)
-#  define EVP_PKEY_CTRL_GET1_ID                       (EVP_PKEY_ALG_CTRL + 12)
-#  define EVP_PKEY_CTRL_GET1_ID_LEN                   (EVP_PKEY_ALG_CTRL + 13)
+/* TODO move next three #defines to evp.h when 'breaking' change is possible */
+#  define EVP_PKEY_CTRL_SET1_ID                       15
+#  define EVP_PKEY_CTRL_GET1_ID                       16
+#  define EVP_PKEY_CTRL_GET1_ID_LEN                   17
 
 /* KDF types */
 #  define EVP_PKEY_ECDH_KDF_NONE                      1
