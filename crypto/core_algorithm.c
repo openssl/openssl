@@ -37,11 +37,11 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
          cur_operation <= last_operation;
          cur_operation++) {
         const OSSL_ALGORITHM *map =
-            ossl_provider_query_operation(provider, data->operation_id,
+            ossl_provider_query_operation(provider, cur_operation,
                                           &no_store);
 
         if (map == NULL)
-            break;
+            continue;
 
         ok = 1;                  /* As long as we've found *something* */
         while (map->algorithm_names != NULL) {
