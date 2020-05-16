@@ -3277,9 +3277,9 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                     EVP_PKEY_free(public_key);
                 }
                 BIO_printf(bio, "   v:NotBefore: ");
-                ASN1_TIME_print(bio, X509_get_notBefore(sk_X509_value(sk, i)));
+                ASN1_TIME_print(bio, X509_get0_notBefore(sk_X509_value(sk, i)));
                 BIO_printf(bio, "; NotAfter: ");
-                ASN1_TIME_print(bio, X509_get_notAfter(sk_X509_value(sk, i)));
+                ASN1_TIME_print(bio, X509_get0_notAfter(sk_X509_value(sk, i)));
                 BIO_puts(bio, "\n");
                 if (c_showcerts)
                     PEM_write_bio_X509(bio, sk_X509_value(sk, i));
