@@ -3049,7 +3049,6 @@ int speed_main(int argc, char **argv)
             rsa_count = 1;
         } else {
             for (i = 0; i < loopargs_len; i++) {
-                EC_KEY_precompute_mult(loopargs[i].ecdsa[testnum], NULL);
                 /* Perform ECDSA signature test */
                 EC_KEY_generate_key(loopargs[i].ecdsa[testnum]);
                 st = ECDSA_sign(0, loopargs[i].buf, 20, loopargs[i].buf2,

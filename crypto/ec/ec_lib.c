@@ -1129,6 +1129,7 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     if (group->meth->mul == 0)
@@ -1153,6 +1154,7 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
         return 0;               /* cannot tell whether precomputation has
                                  * been performed */
 }
+#endif
 
 /*
  * ec_precompute_mont_data sets |group->mont_data| from |group->order| and

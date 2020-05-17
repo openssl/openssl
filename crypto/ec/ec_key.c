@@ -781,12 +781,14 @@ void EC_KEY_set_asn1_flag(EC_KEY *key, int flag)
         EC_GROUP_set_asn1_flag(key->group, flag);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx)
 {
     if (key->group == NULL)
         return 0;
     return EC_GROUP_precompute_mult(key->group, ctx);
 }
+#endif
 
 int EC_KEY_get_flags(const EC_KEY *key)
 {

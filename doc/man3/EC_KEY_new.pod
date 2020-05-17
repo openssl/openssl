@@ -40,7 +40,6 @@ EC_KEY objects
  point_conversion_form_t EC_KEY_get_conv_form(const EC_KEY *key);
  void EC_KEY_set_conv_form(EC_KEY *eckey, point_conversion_form_t cform);
  void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
- int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
  int EC_KEY_generate_key(EC_KEY *key);
  int EC_KEY_check_key(const EC_KEY *key);
  int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x, BIGNUM *y);
@@ -55,6 +54,10 @@ EC_KEY objects
  size_t EC_KEY_priv2oct(const EC_KEY *eckey, unsigned char *buf, size_t len);
 
  size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf);
+
+Deprecated since OpenSSL 3.0:
+
+ int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
 
 =head1 DESCRIPTION
 
@@ -136,8 +139,11 @@ EC_KEY_set_asn1_flag() sets the asn1_flag on the underlying EC_GROUP object
 (if set). Refer to L<EC_GROUP_copy(3)> for further information on the
 asn1_flag.
 
+Although deprecated in OpenSSL 3.0 and should no longer be used,
 EC_KEY_precompute_mult() stores multiples of the underlying EC_GROUP generator
 for faster point multiplication. See also L<EC_POINT_add(3)>.
+Modern versions should instead switch to named curves which OpenSSL has
+hardcoded lookup tables for.
 
 EC_KEY_oct2key() and EC_KEY_key2buf() are identical to the functions
 EC_POINT_oct2point() and EC_KEY_point2buf() except they use the public key
@@ -194,6 +200,10 @@ L<EC_POINT_add(3)>,
 L<EC_GFp_simple_method(3)>,
 L<d2i_ECPKParameters(3)>,
 L<OPENSSL_CTX(3)>
+
+=head1 HISTORY
+
+EC_KEY_precompute_mult() was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
