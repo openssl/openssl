@@ -21,12 +21,12 @@ EC_POINT_add, EC_POINT_dbl, EC_POINT_invert, EC_POINT_is_at_infinity, EC_POINT_i
  int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
                   const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
 
- Deprecated since OpenSSL 3.0:
+Deprecated since OpenSSL 3.0:
 
  int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, size_t num,
                    const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
-int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
-int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
+ int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 
 =head1 DESCRIPTION
 
