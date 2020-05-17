@@ -1124,6 +1124,9 @@ if (scalar(@seed_sources) == 0) {
     print "Using os-specific seed configuration\n";
     push @seed_sources, 'os';
 }
+if (scalar(grep { $_ eq 'egd' } @seed_sources) > 0) {
+    delete $disabled{'egd'};
+}
 if (scalar(grep { $_ eq 'none' } @seed_sources) > 0) {
     die "Cannot seed with none and anything else" if scalar(@seed_sources) > 1;
     warn <<_____ if scalar(@seed_sources) == 1;
