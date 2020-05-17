@@ -20,13 +20,13 @@ EC_POINT_add, EC_POINT_dbl, EC_POINT_invert, EC_POINT_is_at_infinity, EC_POINT_i
                            EC_POINT *points[], BN_CTX *ctx);
  int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
                   const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
- int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
- int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 
- Deprecated since OpenSSL 3.0:
+Deprecated since OpenSSL 3.0:
 
  int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, size_t num,
                    const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
+ int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+ int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
 
 =head1 DESCRIPTION
 
@@ -56,8 +56,9 @@ Modern versions should instead use EC_POINT_mul(), combined (if needed) with EC_
 
 The function EC_GROUP_precompute_mult stores multiples of the generator for faster point multiplication, whilst
 EC_GROUP_have_precompute_mult tests whether precomputation has already been done. See L<EC_GROUP_copy(3)> for information
-about the generator.
-
+about the generator. Precomputation functionality was deprecated in OpenSSL 3.0.
+Users of EC_GROUP_precompute_mult() and EC_GROUP_have_precompute_mult() should
+switch to named curves which OpenSSL has hardcoded lookup tables for.
 
 =head1 RETURN VALUES
 
@@ -80,7 +81,8 @@ L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =head1 HISTORY
 
-EC_POINTs_mul() was deprecated in OpenSSL 3.0.
+EC_POINTs_mul(), EC_GROUP_precompute_mult(), and EC_GROUP_have_precompute_mult()
+were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

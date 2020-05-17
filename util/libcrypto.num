@@ -1106,7 +1106,7 @@ EXTENDED_KEY_USAGE_it                   1132	3_0_0	EXIST::FUNCTION:
 EVP_CipherInit                          1133	3_0_0	EXIST::FUNCTION:
 PKCS12_add_safe                         1134	3_0_0	EXIST::FUNCTION:
 ENGINE_get_digest                       1135	3_0_0	EXIST::FUNCTION:ENGINE
-EC_GROUP_have_precompute_mult           1136	3_0_0	EXIST::FUNCTION:EC
+EC_GROUP_have_precompute_mult           1136	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 OPENSSL_gmtime                          1137	3_0_0	EXIST::FUNCTION:
 X509_set_issuer_name                    1138	3_0_0	EXIST::FUNCTION:
 RSA_new                                 1139	3_0_0	EXIST::FUNCTION:RSA
@@ -1232,7 +1232,7 @@ OPENSSL_sk_shift                        1259	3_0_0	EXIST::FUNCTION:
 i2d_X509_REVOKED                        1260	3_0_0	EXIST::FUNCTION:
 CMS_sign                                1261	3_0_0	EXIST::FUNCTION:CMS
 X509_STORE_add_cert                     1262	3_0_0	EXIST::FUNCTION:
-EC_GROUP_precompute_mult                1263	3_0_0	EXIST::FUNCTION:EC
+EC_GROUP_precompute_mult                1263	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 d2i_DISPLAYTEXT                         1265	3_0_0	EXIST::FUNCTION:
 HMAC_CTX_copy                           1266	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 CRYPTO_gcm128_init                      1267	3_0_0	EXIST::FUNCTION:
@@ -2786,7 +2786,7 @@ ASN1_TYPE_set1                          2846	3_0_0	EXIST::FUNCTION:
 d2i_X509_CRL_bio                        2847	3_0_0	EXIST::FUNCTION:
 PKCS12_SAFEBAG_get1_cert                2848	3_0_0	EXIST::FUNCTION:
 ASN1_UNIVERSALSTRING_free               2849	3_0_0	EXIST::FUNCTION:
-EC_KEY_precompute_mult                  2850	3_0_0	EXIST::FUNCTION:EC
+EC_KEY_precompute_mult                  2850	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 CRYPTO_mem_debug_realloc                2851	3_0_0	EXIST::FUNCTION:CRYPTO_MDEBUG,DEPRECATEDIN_3_0
 PKCS7_new                               2852	3_0_0	EXIST::FUNCTION:
 BASIC_CONSTRAINTS_it                    2853	3_0_0	EXIST::FUNCTION:

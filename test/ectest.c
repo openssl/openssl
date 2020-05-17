@@ -9,7 +9,8 @@
  */
 
 /*
- * We need access to the deprecated EC_POINTs_mul for testing purposes
+ * We need access to the deprecated EC_POINTs_mul, EC_GROUP_precompute_mult,
+ * and EC_GROUP_have_precompute_mult for testing purposes
  * when the deprecated calls are not hidden
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -58,7 +59,9 @@ static int group_order_tests(EC_GROUP *group)
     if (!TEST_true(EC_GROUP_get_order(group, order, ctx))
         || !TEST_true(EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, Q))
+# ifndef OPENSSL_NO_DEPRECATED_3_0
         || !TEST_true(EC_GROUP_precompute_mult(group, ctx))
+# endif
         || !TEST_true(EC_POINT_mul(group, Q, order, NULL, NULL, ctx))
         || !TEST_true(EC_POINT_is_at_infinity(group, Q))
         || !TEST_true(EC_POINT_copy(P, G))
@@ -1388,16 +1391,14 @@ static int nistp_single_test(int idx)
     /* random point multiplication */
     EC_POINT_mul(NISTP, Q, NULL, P, m, ctx);
     if (!TEST_int_eq(0, EC_POINT_cmp(NISTP, Q, Q_CHECK, ctx))
-
-    /*
-     * We have not performed precomputation so have_precompute mult should be
-     * false
-     */
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+        /* We have not performed precomp so this should be false */
         || !TEST_false(EC_GROUP_have_precompute_mult(NISTP))
-
-    /* now repeat all tests with precomputation */
+        /* now repeat all tests with precomputation */
         || !TEST_true(EC_GROUP_precompute_mult(NISTP, ctx))
-        || !TEST_true(EC_GROUP_have_precompute_mult(NISTP)))
+        || !TEST_true(EC_GROUP_have_precompute_mult(NISTP))
+# endif
+        )
         goto err;
 
     /* fixed point multiplication */

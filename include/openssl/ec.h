@@ -797,13 +797,13 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
  *  \param  ctx    BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred
  */
-int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
+DEPRECATEDIN_3_0(int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx))
 
 /** Reports whether a precomputation has been done
  *  \param  group  EC_GROUP object
  *  \return 1 if a pre-computation has been done and 0 otherwise
  */
-int EC_GROUP_have_precompute_mult(const EC_GROUP *group);
+DEPRECATEDIN_3_0(int EC_GROUP_have_precompute_mult(const EC_GROUP *group))
 
 /********************************************************************/
 /*                       ASN1 stuff                                 */
@@ -991,7 +991,7 @@ void EC_KEY_set_asn1_flag(EC_KEY *eckey, int asn1_flag);
  *  \param  ctx  BN_CTX object (optional)
  *  \return 1 on success and 0 if an error occurred.
  */
-int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx);
+DEPRECATEDIN_3_0(int EC_KEY_precompute_mult(EC_KEY *key, BN_CTX *ctx))
 
 /** Creates a new ec private (and optional a new public) key.
  *  \param  key  EC_KEY object
