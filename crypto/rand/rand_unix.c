@@ -391,7 +391,8 @@ static struct random_device {
 } random_devices[OSSL_NELEM(random_device_paths)];
 static int keep_random_devices_open = 1;
 
-#   if defined(__linux) && defined(DEVRANDOM_WAIT)
+#   if defined(__linux) && defined(DEVRANDOM_WAIT) \
+       && defined(OPENSSL_RAND_SEED_GETRANDOM)
 static void *shm_addr;
 
 #    if !defined(FIPS_MODULE)
