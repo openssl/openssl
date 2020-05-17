@@ -377,7 +377,7 @@ static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
     *issuer = find_issuer(ctx, ctx->other_ctx, x);
 
-    if (!*issuer || !X509_up_ref(*issuer))
+    if (*issuer == NULL || !X509_up_ref(*issuer))
         goto err;
 
     return 1;
