@@ -169,8 +169,11 @@ EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
 EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
 {
     EVP_PKEY *ret = X509_PUBKEY_get0(key);
-    if (ret != NULL)
-        EVP_PKEY_up_ref(ret);
+
+    if (ret != NULL && !EVP_PKEY_up_ref(ret)) {
+        X509err(X509_F_X509_PUBKEY_GET, ERR_R_INTERNAL_ERROR);
+        ret = NULL;
+    }
     return ret;
 }
 
