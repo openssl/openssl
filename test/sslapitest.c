@@ -8039,6 +8039,8 @@ static int test_sigalgs_available(int idx)
 
     cctx = SSL_CTX_new_with_libctx(clientctx, NULL, TLS_client_method());
     sctx = SSL_CTX_new_with_libctx(serverctx, NULL, TLS_server_method());
+    if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
+        goto end;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),

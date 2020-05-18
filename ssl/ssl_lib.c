@@ -3171,6 +3171,9 @@ SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
         goto err2;
 
 
+    if (!ssl_load_groups(ret))
+        goto err2;
+
     if (!SSL_CTX_set_ciphersuites(ret, OSSL_default_ciphersuites()))
         goto err;
 
@@ -3326,6 +3329,7 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
 void SSL_CTX_free(SSL_CTX *a)
 {
     int i;
+    size_t j;
 
     if (a == NULL)
         return;
@@ -3385,10 +3389,16 @@ void SSL_CTX_free(SSL_CTX *a)
     ssl_evp_md_free(a->md5);
     ssl_evp_md_free(a->sha1);
 
-    for (i = 0; i < SSL_ENC_NUM_IDX; i++)
-        ssl_evp_cipher_free(a->ssl_cipher_methods[i]);
-    for (i = 0; i < SSL_MD_NUM_IDX; i++)
-        ssl_evp_md_free(a->ssl_digest_methods[i]);
+    for (j = 0; j < SSL_ENC_NUM_IDX; j++)
+        ssl_evp_cipher_free(a->ssl_cipher_methods[j]);
+    for (j = 0; j < SSL_MD_NUM_IDX; j++)
+        ssl_evp_md_free(a->ssl_digest_methods[j]);
+    for (j = 0; j < a->group_list_len; j++) {
+        OPENSSL_free(a->group_list[j].tlsname);
+        OPENSSL_free(a->group_list[j].realname);
+        OPENSSL_free(a->group_list[j].algorithm);
+    }
+    OPENSSL_free(a->group_list);
 
     OPENSSL_free(a->sigalg_lookup_cache);
 

@@ -21,6 +21,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/dh.h>
 #include <openssl/bn.h>
+#include <openssl/provider.h>
 #include "internal/nelem.h"
 #include "internal/evp.h"
 #include "ssl_local.h"
@@ -140,60 +141,54 @@ int tls1_clear(SSL *s)
     return 1;
 }
 
-/*
- * Table of group information.
- */
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-static const TLS_GROUP_INFO nid_list[] = {
-# ifndef OPENSSL_NO_EC
-    {NID_sect163k1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0001}, /* sect163k1 (1) */
-    {NID_sect163r1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0002}, /* sect163r1 (2) */
-    {NID_sect163r2, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0003}, /* sect163r2 (3) */
-    {NID_sect193r1, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0004}, /* sect193r1 (4) */
-    {NID_sect193r2, "EC", 80, TLS_GROUP_CURVE_CHAR2, 0x0005}, /* sect193r2 (5) */
-    {NID_sect233k1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0006}, /* sect233k1 (6) */
-    {NID_sect233r1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0007}, /* sect233r1 (7) */
-    {NID_sect239k1, "EC", 112, TLS_GROUP_CURVE_CHAR2, 0x0008}, /* sect239k1 (8) */
-    {NID_sect283k1, "EC", 128, TLS_GROUP_CURVE_CHAR2, 0x0009}, /* sect283k1 (9) */
-    {NID_sect283r1, "EC", 128, TLS_GROUP_CURVE_CHAR2, 0x000A}, /* sect283r1 (10) */
-    {NID_sect409k1, "EC", 192, TLS_GROUP_CURVE_CHAR2, 0x000B}, /* sect409k1 (11) */
-    {NID_sect409r1, "EC", 192, TLS_GROUP_CURVE_CHAR2, 0x000C}, /* sect409r1 (12) */
-    {NID_sect571k1, "EC", 256, TLS_GROUP_CURVE_CHAR2, 0x000D}, /* sect571k1 (13) */
-    {NID_sect571r1, "EC", 256, TLS_GROUP_CURVE_CHAR2, 0x000E}, /* sect571r1 (14) */
-    {NID_secp160k1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x000F}, /* secp160k1 (15) */
-    {NID_secp160r1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0010}, /* secp160r1 (16) */
-    {NID_secp160r2, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0011}, /* secp160r2 (17) */
-    {NID_secp192k1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0012}, /* secp192k1 (18) */
-    {NID_X9_62_prime192v1, "EC", 80, TLS_GROUP_CURVE_PRIME, 0x0013}, /* secp192r1 (19) */
-    {NID_secp224k1, "EC", 112, TLS_GROUP_CURVE_PRIME, 0x0014}, /* secp224k1 (20) */
-    {NID_secp224r1, "EC", 112, TLS_GROUP_CURVE_PRIME, 0x0015}, /* secp224r1 (21) */
-    {NID_secp256k1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x0016}, /* secp256k1 (22) */
-    {NID_X9_62_prime256v1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x0017}, /* secp256r1 (23) */
-    {NID_secp384r1, "EC", 192, TLS_GROUP_CURVE_PRIME, 0x0018}, /* secp384r1 (24) */
-    {NID_secp521r1, "EC", 256, TLS_GROUP_CURVE_PRIME, 0x0019}, /* secp521r1 (25) */
-    {NID_brainpoolP256r1, "EC", 128, TLS_GROUP_CURVE_PRIME, 0x001A}, /* brainpoolP256r1 (26) */
-    {NID_brainpoolP384r1, "EC", 192, TLS_GROUP_CURVE_PRIME, 0x001B}, /* brainpoolP384r1 (27) */
-    {NID_brainpoolP512r1, "EC", 256, TLS_GROUP_CURVE_PRIME, 0x001C}, /* brainpool512r1 (28) */
-    {EVP_PKEY_X25519, "X25519", 128, TLS_GROUP_CURVE_CUSTOM, 0x001D}, /* X25519 (29) */
-    {EVP_PKEY_X448, "X448", 224, TLS_GROUP_CURVE_CUSTOM, 0x001E}, /* X448 (30) */
-# endif /* OPENSSL_NO_EC */
-# ifndef OPENSSL_NO_GOST
-    {NID_id_tc26_gost_3410_2012_256_paramSetA, "GOST_2012_256", 128, TLS_GROUP_CURVE_PRIME, 0x0022}, /* GC256A (34) */
-    {NID_id_tc26_gost_3410_2012_256_paramSetB, "GOST_2012_256", 128, TLS_GROUP_CURVE_PRIME, 0x0023}, /* GC256B (35) */
-    {NID_id_tc26_gost_3410_2012_256_paramSetC, "GOST_2012_256", 128, TLS_GROUP_CURVE_PRIME, 0x0024}, /* GC256C (36) */
-    {NID_id_tc26_gost_3410_2012_256_paramSetD, "GOST_2012_256", 128, TLS_GROUP_CURVE_PRIME, 0x0025}, /* GC256D (37) */
-    {NID_id_tc26_gost_3410_2012_512_paramSetA, "GOST_2012_512", 256, TLS_GROUP_CURVE_PRIME, 0x0026}, /* GC512A (38) */
-    {NID_id_tc26_gost_3410_2012_512_paramSetB, "GOST_2012_512", 256, TLS_GROUP_CURVE_PRIME, 0x0027}, /* GC512B (39) */
-    {NID_id_tc26_gost_3410_2012_512_paramSetC, "GOST_2012_512", 256, TLS_GROUP_CURVE_PRIME, 0x0028}, /* GC512C (40) */
-# endif /* OPENSSL_NO_GOST */
-# ifndef OPENSSL_NO_DH
-    /* Security bit values for FFDHE groups are updated as per RFC 7919 */
-    {NID_ffdhe2048, "DH", 103, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0100}, /* ffdhe2048 (0x0100) */
-    {NID_ffdhe3072, "DH", 125, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0101}, /* ffdhe3072 (0x0101) */
-    {NID_ffdhe4096, "DH", 150, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0102}, /* ffdhe4096 (0x0102) */
-    {NID_ffdhe6144, "DH", 175, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0103}, /* ffdhe6144 (0x0103) */
-    {NID_ffdhe8192, "DH", 192, TLS_GROUP_FFDHE_FOR_TLS1_3, 0x0104}, /* ffdhe8192 (0x0104) */
-# endif /* OPENSSL_NO_DH */
+/* Legacy NID to group_id mapping. Only works for groups we know about */
+static struct {
+    int nid;
+    uint16_t group_id;
+} nid_to_group[] = {
+    {NID_sect163k1, 0x0001},
+    {NID_sect163r1, 0x0002},
+    {NID_sect163r2, 0x0003},
+    {NID_sect193r1, 0x0004},
+    {NID_sect193r2, 0x0005},
+    {NID_sect233k1, 0x0006},
+    {NID_sect233r1, 0x0007},
+    {NID_sect239k1, 0x0008},
+    {NID_sect283k1, 0x0009},
+    {NID_sect283r1, 0x000A},
+    {NID_sect409k1, 0x000B},
+    {NID_sect409r1, 0x000C},
+    {NID_sect571k1, 0x000D},
+    {NID_sect571r1, 0x000E},
+    {NID_secp160k1, 0x000F},
+    {NID_secp160r1, 0x0010},
+    {NID_secp160r2, 0x0011},
+    {NID_secp192k1, 0x0012},
+    {NID_X9_62_prime192v1, 0x0013},
+    {NID_secp224k1, 0x0014},
+    {NID_secp224r1, 0x0015},
+    {NID_secp256k1, 0x0016},
+    {NID_X9_62_prime256v1, 0x0017},
+    {NID_secp384r1, 0x0018},
+    {NID_secp521r1, 0x0019},
+    {NID_brainpoolP256r1, 0x001A},
+    {NID_brainpoolP384r1, 0x001B},
+    {NID_brainpoolP512r1, 0x001C},
+    {EVP_PKEY_X25519, 0x001D},
+    {EVP_PKEY_X448, 0x001E},
+    {NID_id_tc26_gost_3410_2012_256_paramSetA, 0x0022},
+    {NID_id_tc26_gost_3410_2012_256_paramSetB, 0x0023},
+    {NID_id_tc26_gost_3410_2012_256_paramSetC, 0x0024},
+    {NID_id_tc26_gost_3410_2012_256_paramSetD, 0x0025},
+    {NID_id_tc26_gost_3410_2012_512_paramSetA, 0x0026},
+    {NID_id_tc26_gost_3410_2012_512_paramSetB, 0x0027},
+    {NID_id_tc26_gost_3410_2012_512_paramSetC, 0x0028},
+    {NID_ffdhe2048, 0x0100},
+    {NID_ffdhe3072, 0x0101},
+    {NID_ffdhe4096, 0x0102},
+    {NID_ffdhe6144, 0x0103},
+    {NID_ffdhe8192, 0x0104}
 };
 #endif
 
@@ -241,36 +236,213 @@ static const uint16_t suiteb_curves[] = {
 };
 #endif
 
-const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t group_id)
+struct provider_group_data_st {
+    SSL_CTX *ctx;
+    OSSL_PROVIDER *provider;
+};
+
+#define TLS_GROUP_LIST_MALLOC_BLOCK_SIZE        10
+static OSSL_CALLBACK add_provider_groups;
+static int add_provider_groups(const OSSL_PARAM params[], void *data)
 {
-#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+    struct provider_group_data_st *pgd = data;
+    SSL_CTX *ctx = pgd->ctx;
+    OSSL_PROVIDER *provider = pgd->provider;
+    const OSSL_PARAM *p;
+    TLS_GROUP_INFO *ginf = NULL;
+    EVP_KEYMGMT *keymgmt;
+    unsigned int gid;
+    int ret = 0;
+
+    if (ctx->group_list_max_len == ctx->group_list_len) {
+        TLS_GROUP_INFO *tmp = NULL;
+
+        if (ctx->group_list_max_len == 0)
+            tmp = OPENSSL_malloc(sizeof(TLS_GROUP_INFO)
+                                 * TLS_GROUP_LIST_MALLOC_BLOCK_SIZE);
+        else
+            tmp = OPENSSL_realloc(ctx->group_list,
+                                  (ctx->group_list_max_len
+                                   + TLS_GROUP_LIST_MALLOC_BLOCK_SIZE)
+                                  * sizeof(TLS_GROUP_INFO));
+        if (tmp == NULL) {
+            SSLerr(0, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        ctx->group_list = tmp;
+        memset(tmp + ctx->group_list_max_len,
+               0,
+               sizeof(TLS_GROUP_INFO) * TLS_GROUP_LIST_MALLOC_BLOCK_SIZE);
+        ctx->group_list_max_len += TLS_GROUP_LIST_MALLOC_BLOCK_SIZE;
+    }
+
+    ginf = &ctx->group_list[ctx->group_list_len];
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_NAME);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    ginf->tlsname = OPENSSL_strdup(p->data);
+    if (ginf->tlsname == NULL) {
+        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    ginf->realname = OPENSSL_strdup(p->data);
+    if (ginf->realname == NULL) {
+        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_ID);
+    if (p == NULL || !OSSL_PARAM_get_uint(p, &gid) || gid > UINT16_MAX) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    ginf->group_id = (uint16_t)gid;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_ALG);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    ginf->algorithm = OPENSSL_strdup(p->data);
+    if (ginf->algorithm == NULL) {
+        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS);
+    if (p == NULL || !OSSL_PARAM_get_uint(p, &ginf->secbits)) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_TLS);
+    if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->mintls)) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MAX_TLS);
+    if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->maxtls)) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS);
+    if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->mindtls)) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS);
+    if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->maxdtls)) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    /*
+     * Now check that the algorithm is actually usable for our property query
+     * string. Regardless of the result we still return success because we have
+     * successfully processed this group, even though we may decide not to use
+     * it.
+     */
+    ret = 1;
+    keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ginf->algorithm, ctx->propq);
+    if (keymgmt != NULL) {
+        /*
+         * We have successfully fetched the algorithm - however if the provider
+         * doesn't match this one then we ignore it.
+         *
+         * Note: We're cheating a little here. Technically if the same algorithm
+         * is available from more than one provider then it is undefined which
+         * implementation you will get back. Theoretically this could be
+         * different every time...we assume here that you'll always get the
+         * same one back if you repeat the exact same fetch. Is this a reasonable
+         * assumption to make (in which case perhaps we should document this
+         * behaviour)?
+         */
+        if (EVP_KEYMGMT_provider(keymgmt) == provider) {
+            /* We have a match - so we will use this group */
+            ctx->group_list_len++;
+            ginf = NULL;
+        }
+        EVP_KEYMGMT_free(keymgmt);
+    }
+ err:
+    if (ginf != NULL) {
+        OPENSSL_free(ginf->tlsname);
+        OPENSSL_free(ginf->realname);
+        OPENSSL_free(ginf->algorithm);
+        ginf->tlsname = ginf->realname = NULL;
+    }
+    return ret;
+}
+
+static int discover_provider_groups(OSSL_PROVIDER *provider, void *vctx)
+{
+    struct provider_group_data_st pgd;
+
+    pgd.ctx = vctx;
+    pgd.provider = provider;
+    return OSSL_PROVIDER_get_capabilities(provider, "TLS-GROUP",
+                                          add_provider_groups, &pgd);
+}
+
+int ssl_load_groups(SSL_CTX *ctx)
+{
+    return OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx);
+}
+
+const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t group_id)
+{
     size_t i;
 
-    /* ECC curves from RFC 4492 and RFC 7027 FFDHE group from RFC 8446 */
-    for (i = 0; i < OSSL_NELEM(nid_list); i++) {
-        if (nid_list[i].group_id == group_id)
-            return &nid_list[i];
+    for (i = 0; i < ctx->group_list_len; i++) {
+        if (ctx->group_list[i].group_id == group_id)
+            return &ctx->group_list[i];
     }
-#endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
+
     return NULL;
 }
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 int tls1_group_id2nid(uint16_t group_id)
 {
-    const TLS_GROUP_INFO *ginf = tls1_group_id_lookup(group_id);
+    size_t i;
 
-    return ginf == NULL ? NID_undef : ginf->nid;
+    /*
+     * Return well known Group NIDs - for backwards compatibility. This won't
+     * work for groups we don't know about.
+     */
+    for (i = 0; i < OSSL_NELEM(nid_to_group); i++)
+    {
+        if (nid_to_group[i].group_id == group_id)
+            return nid_to_group[i].nid;
+    }
+    return NID_undef;
 }
 
 static uint16_t tls1_nid2group_id(int nid)
 {
     size_t i;
 
-    for (i = 0; i < OSSL_NELEM(nid_list); i++) {
-        if (nid_list[i].nid == nid)
-            return nid_list[i].group_id;
+    /*
+     * Return well known Group ids - for backwards compatibility. This won't
+     * work for groups we don't know about.
+     */
+    for (i = 0; i < OSSL_NELEM(nid_to_group); i++)
+    {
+        if (nid_to_group[i].nid == nid)
+            return nid_to_group[i].group_id;
     }
+
     return 0;
 }
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
@@ -318,36 +490,50 @@ void tls1_get_supported_groups(SSL *s, const uint16_t **pgroups,
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
-int tls_valid_group(SSL *s, uint16_t group_id, int version)
+int tls_valid_group(SSL *s, uint16_t group_id, int minversion, int maxversion)
 {
-    const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(group_id);
+    const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(s->ctx, group_id);
+    int ret;
 
-    if (version < TLS1_3_VERSION) {
-        if ((ginfo->flags & TLS_GROUP_ONLY_FOR_TLS1_3) != 0)
+    if (ginfo == NULL)
+        return 0;
+
+    if (SSL_IS_DTLS(s)) {
+        if (ginfo->mindtls < 0 || ginfo->maxdtls < 0)
             return 0;
+        if (ginfo->maxdtls == 0)
+            ret = 1;
+        else
+            ret = DTLS_VERSION_LE(minversion, ginfo->maxdtls);
+        if (ginfo->mindtls > 0)
+            ret &= DTLS_VERSION_GE(maxversion, ginfo->mindtls);
+    } else {
+        if (ginfo->mintls < 0 || ginfo->maxtls < 0)
+            return 0;
+        if (ginfo->maxtls == 0)
+            ret = 1;
+        else
+            ret = (minversion <= ginfo->maxtls);
+        if (ginfo->mintls > 0)
+            ret &= (maxversion >= ginfo->mintls);
     }
-    return 1;
+
+    return ret;
 }
 
 /* See if group is allowed by security callback */
 int tls_group_allowed(SSL *s, uint16_t group, int op)
 {
-    const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(group);
+    const TLS_GROUP_INFO *ginfo = tls1_group_id_lookup(s->ctx, group);
     unsigned char gtmp[2];
 
     if (ginfo == NULL)
         return 0;
-#ifdef OPENSSL_NO_EC2M
-    if (ginfo->flags & TLS_GROUP_CURVE_CHAR2)
-        return 0;
-#endif
-#ifdef OPENSSL_NO_DH
-    if (ginfo->flags & TLS_GROUP_FFDHE)
-        return 0;
-#endif
+
     gtmp[0] = group >> 8;
     gtmp[1] = group & 0xff;
-    return ssl_security(s, op, ginfo->secbits, ginfo->nid, (void *)gtmp);
+    return ssl_security(s, op, ginfo->secbits,
+                        tls1_group_id2nid(ginfo->group_id), (void *)gtmp);
 }
 
 /* Return 1 if "id" is in "list" */
@@ -470,7 +656,8 @@ err:
 }
 
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-# define MAX_GROUPLIST   OSSL_NELEM(nid_list)
+/* TODO(3.0): An arbitrary amount for now. Take another look at this */
+# define MAX_GROUPLIST   40
 
 typedef struct {
     size_t nidcnt;
