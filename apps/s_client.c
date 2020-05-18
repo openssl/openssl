@@ -3272,8 +3272,10 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                 BIO_puts(bio, "\n");
                 public_key = X509_get_pubkey(sk_X509_value(sk, i));
                 if (public_key != NULL) {
-                    BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n", OBJ_nid2sn(EVP_PKEY_base_id(public_key)), EVP_PKEY_bits(public_key),
-                        OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(sk, i))));
+                    BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
+                               OBJ_nid2sn(EVP_PKEY_base_id(public_key)),
+                               EVP_PKEY_bits(public_key),
+                               OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(sk, i))));
                     EVP_PKEY_free(public_key);
                 }
                 BIO_printf(bio, "   v:NotBefore: ");
