@@ -770,8 +770,8 @@ static int test_EVP_PKCS82PKEY(void)
 /* This uses kExampleRSAKeyDER and kExampleRSAKeyPKCS8 to verify encoding */
 static int test_privatekey_to_pkcs8(void)
 {
-    EVP_PKEY *pkey;
-    BIO *membio;
+    EVP_PKEY *pkey = NULL;
+    BIO *membio = NULL;
     char *membuf = NULL;
     size_t membuf_len = 0;
     int ok = 0;
