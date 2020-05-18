@@ -15,6 +15,7 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
+#include <openssl/serializer.h>
 
 static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder,
                       int nid, const EVP_CIPHER *enc,
@@ -66,49 +67,95 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                       const EVP_CIPHER *enc, const char *kstr, int klen,
                       pem_password_cb *cb, void *u)
 {
-    X509_SIG *p8;
-    PKCS8_PRIV_KEY_INFO *p8inf;
-    char buf[PEM_BUFSIZE];
-    int ret;
+    int ret = 0;
+    const char *pq = isder
+        ? OSSL_SERIALIZER_PrivateKey_TO_DER_PQ
+        : OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ;
+    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(x, pq);
 
-    if ((p8inf = EVP_PKEY2PKCS8(x)) == NULL) {
-        PEMerr(PEM_F_DO_PK8PKEY, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
+    if (ctx == NULL)
         return 0;
-    }
-    if (enc || (nid != -1)) {
-        if (!kstr) {
-            if (!cb)
-                klen = PEM_def_callback(buf, PEM_BUFSIZE, 1, u);
-            else
-                klen = cb(buf, PEM_BUFSIZE, 1, u);
-            if (klen <= 0) {
-                PEMerr(PEM_F_DO_PK8PKEY, PEM_R_READ_KEY);
-                PKCS8_PRIV_KEY_INFO_free(p8inf);
-                return 0;
-            }
 
-            kstr = buf;
+    /*
+     * If no keystring or callback is set, OpenSSL traditionally uses the
+     * user's cb argument as a password string, or if that's NULL, it falls
+     * back on PEM_def_callback().
+     */
+    if (kstr == NULL && cb == NULL) {
+        if (u != NULL) {
+            kstr = u;
+            klen = strlen(u);
+        } else {
+            cb = PEM_def_callback;
         }
-        p8 = PKCS8_encrypt(nid, enc, kstr, klen, NULL, 0, 0, p8inf);
-        if (kstr == buf)
-            OPENSSL_cleanse(buf, klen);
-        PKCS8_PRIV_KEY_INFO_free(p8inf);
-        if (p8 == NULL)
-            return 0;
-        if (isder)
-            ret = i2d_PKCS8_bio(bp, p8);
-        else
-            ret = PEM_write_bio_PKCS8(bp, p8);
-        X509_SIG_free(p8);
-        return ret;
-    } else {
-        if (isder)
-            ret = i2d_PKCS8_PRIV_KEY_INFO_bio(bp, p8inf);
-        else
-            ret = PEM_write_bio_PKCS8_PRIV_KEY_INFO(bp, p8inf);
-        PKCS8_PRIV_KEY_INFO_free(p8inf);
-        return ret;
     }
+
+    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL) {
+        ret = 1;
+        if (enc != NULL) {
+            ret = 0;
+            if (OSSL_SERIALIZER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),
+                                               NULL)) {
+                const unsigned char *ukstr = (const unsigned char *)kstr;
+
+                /*
+                 * Try to pass the passphrase if one was given, or the
+                 * passphrase callback if one was given.  If none of them
+                 * are given and that's wrong, we rely on the _to_bio()
+                 * call to generate errors.
+                 */
+                ret = 1;
+                if (kstr != NULL
+                    && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, ukstr, klen))
+                    ret = 0;
+                else if (cb != NULL
+                         && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, 1,
+                                                                   cb, u))
+                    ret = 0;
+            }
+        }
+        ret = ret && OSSL_SERIALIZER_to_bio(ctx, bp);
+    } else {
+        X509_SIG *p8;
+        PKCS8_PRIV_KEY_INFO *p8inf;
+        char buf[PEM_BUFSIZE];
+
+        ret = 0;
+        if ((p8inf = EVP_PKEY2PKCS8(x)) == NULL) {
+            PEMerr(PEM_F_DO_PK8PKEY, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
+            goto legacy_end;
+        }
+        if (enc || (nid != -1)) {
+            if (kstr == NULL) {
+                klen = cb(buf, PEM_BUFSIZE, 1, u);
+                if (klen <= 0) {
+                    PEMerr(PEM_F_DO_PK8PKEY, PEM_R_READ_KEY);
+                    goto legacy_end;
+                }
+
+                kstr = buf;
+            }
+            p8 = PKCS8_encrypt(nid, enc, kstr, klen, NULL, 0, 0, p8inf);
+            if (kstr == buf)
+                OPENSSL_cleanse(buf, klen);
+            if (p8 == NULL)
+                goto legacy_end;
+            if (isder)
+                ret = i2d_PKCS8_bio(bp, p8);
+            else
+                ret = PEM_write_bio_PKCS8(bp, p8);
+            X509_SIG_free(p8);
+        } else {
+            if (isder)
+                ret = i2d_PKCS8_PRIV_KEY_INFO_bio(bp, p8inf);
+            else
+                ret = PEM_write_bio_PKCS8_PRIV_KEY_INFO(bp, p8inf);
+        }
+     legacy_end:
+        PKCS8_PRIV_KEY_INFO_free(p8inf);
+    }
+    OSSL_SERIALIZER_CTX_free(ctx);
+    return ret;
 }
 
 EVP_PKEY *d2i_PKCS8PrivateKey_bio(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
