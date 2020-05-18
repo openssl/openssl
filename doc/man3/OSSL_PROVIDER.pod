@@ -4,7 +4,7 @@
 
 OSSL_PROVIDER_set_default_search_path,
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
-OSSL_PROVIDER_available,
+OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
 
@@ -20,6 +20,9 @@ OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
  OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *libctx, const char *name);
  int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_available(OPENSSL_CTX *libctx, const char *name);
+ int OSSL_PROVIDER_do_all(OPENSSL_CTX *ctx,
+                          int (*cb)(OSSL_PROVIDER *provider, void *cbdata),
+                          void *cbdata);
 
  const OSSL_PARAM *OSSL_PROVIDER_gettable_params(OSSL_PROVIDER *prov);
  int OSSL_PROVIDER_get_params(OSSL_PROVIDER *prov, OSSL_PARAM params[]);
@@ -65,6 +68,10 @@ runs its teardown function.
 
 OSSL_PROVIDER_available() checks if a named provider is available
 for use.
+
+OSSL_PROVIDER_do_all() iterates over all loaded providers, calling
+I<cb> for each one, with the current provider in I<provider> and the
+I<cbdata> that comes from the caller.
 
 OSSL_PROVIDER_gettable_params() is used to get a provider parameter
 descriptor set as a constant B<OSSL_PARAM> array.

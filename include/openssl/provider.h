@@ -23,6 +23,9 @@ int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *, const char *path);
 OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
 int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 int OSSL_PROVIDER_available(OPENSSL_CTX *, const char *name);
+int OSSL_PROVIDER_do_all(OPENSSL_CTX *ctx,
+                         int (*cb)(OSSL_PROVIDER *provider, void *cbdata),
+                         void *cbdata);
 
 const OSSL_PARAM *OSSL_PROVIDER_gettable_params(const OSSL_PROVIDER *prov);
 int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);

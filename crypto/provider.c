@@ -85,3 +85,11 @@ const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_name(prov);
 }
+
+int OSSL_PROVIDER_do_all(OPENSSL_CTX *ctx,
+                         int (*cb)(OSSL_PROVIDER *provider,
+                                   void *cbdata),
+                         void *cbdata)
+{
+    return ossl_provider_forall_loaded(ctx, cb, cbdata);
+}
