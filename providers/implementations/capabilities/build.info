@@ -1,0 +1,4 @@
+
+SOURCE[../../libfips.a]=tls.c
+SOURCE[../../libnonfips.a]=tls.c
+
