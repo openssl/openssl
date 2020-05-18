@@ -4,7 +4,7 @@
 
 OSSL_PROVIDER_set_default_search_path,
 OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
-OSSL_PROVIDER_available,
+OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name - provider routines
 
