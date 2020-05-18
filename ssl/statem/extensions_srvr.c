@@ -1424,6 +1424,7 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
 {
     const uint16_t *groups;
     size_t numgroups, i, first = 1;
+    int version;
 
     /* s->s3.group_id is non zero if we accepted a key_share */
     if (s->s3.group_id == 0)
@@ -1438,10 +1439,11 @@ EXT_RETURN tls_construct_stoc_supported_groups(SSL *s, WPACKET *pkt,
     }
 
     /* Copy group ID if supported */
+    version = SSL_version(s);
     for (i = 0; i < numgroups; i++) {
         uint16_t group = groups[i];
 
-        if (tls_valid_group(s, group, SSL_version(s))
+        if (tls_valid_group(s, group, version, version)
                 && tls_group_allowed(s, group, SSL_SECOP_CURVE_SUPPORTED)) {
             if (first) {
                 /*
