@@ -5099,3 +5099,4 @@ EVP_PKEY_eq                             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_parameters_eq                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_query_operation           ?	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_get0_provider_ctx         ?	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_get_capabilities          ?	3_0_0	EXIST::FUNCTION:
