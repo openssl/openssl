@@ -767,6 +767,40 @@ static int test_EVP_PKCS82PKEY(void)
 }
 #endif
 
+/* This uses kExampleRSAKeyDER and kExampleRSAKeyPKCS8 to verify encoding */
+static int test_privatekey_to_pkcs8(void)
+{
+    EVP_PKEY *pkey = NULL;
+    BIO *membio = NULL;
+    char *membuf = NULL;
+    size_t membuf_len = 0;
+    int ok = 0;
+
+    if (!TEST_ptr(membio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_int_gt(i2d_PKCS8PrivateKey_bio(membio, pkey, NULL,
+                                                NULL, 0, NULL, NULL),
+                        0)
+        || !TEST_ptr((membuf_len = (size_t)BIO_get_mem_data(membio, &membuf),
+                      membuf))
+        || !TEST_mem_eq(membuf, membuf_len,
+                        kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8))
+        /*
+         * We try to write PEM as well, just to see that it doesn't err, but
+         * assume that the result is correct.
+         */
+        || !TEST_int_gt(PEM_write_bio_PKCS8PrivateKey(membio, pkey, NULL,
+                                                      NULL, 0, NULL, NULL),
+                        0))
+        goto done;
+
+    ok = 1;
+ done:
+    EVP_PKEY_free(pkey);
+    BIO_free_all(membio);
+    return ok;
+}
+
 #if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODULE)
 
 static int test_EVP_SM2_verify(void)
@@ -1718,6 +1752,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Enveloped);
     ADD_ALL_TESTS(test_d2i_AutoPrivateKey, OSSL_NELEM(keydata));
+    ADD_TEST(test_privatekey_to_pkcs8);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
 #endif
