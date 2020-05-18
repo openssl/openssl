@@ -475,7 +475,7 @@ static int wait_random_seeded(void)
     }
     return seeded;
 }
-#   else /* defined __linux */
+#   else /* defined __linux && DEVRANDOM_WAIT && OPENSSL_RAND_SEED_GETRANDOM */
 static int wait_random_seeded(void)
 {
     return 1;
