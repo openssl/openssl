@@ -13,14 +13,16 @@
 /* Well known OIDs precompiled */
 {-
     $OUT = oids_to_c::process_leaves('providers/common/der/NIST.asn1',
-                                     'providers/common/der/DIGESTS.asn1',
                                      'providers/common/der/RSA.asn1',
                                      { dir => $config{sourcedir},
                                        filter => \&oids_to_c::filter_to_H });
 -}
 
+/* PSS parameters */
 int DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
                             const RSA_PSS_PARAMS_30 *pss);
+/* Subject Public Key Info */
 int DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa);
-int DER_w_algorithmIdentifier_RSA_with(WPACKET *pkt, int tag,
-                                       RSA *rsa, int mdnid);
+/* Signature */
+int DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
+                                                  RSA *rsa, int mdnid);

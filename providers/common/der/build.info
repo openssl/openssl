@@ -1,32 +1,36 @@
-$FIPSABLE=der_rsa.c der_dsa.c der_ec.c der_digests.c
+$FIPSABLE=\
+        der_rsa_gen.c der_rsa_key.c der_rsa_sig.c \
+        der_dsa_gen.c der_dsa_key.c der_dsa_sig.c \
+        der_ec_gen.c der_ec_key.c der_ec_sig.c \
+        der_digests_gen.c
 
 SOURCE[../../libfips.a]=$FIPSABLE
 SOURCE[../../libnonfips.a]=$FIPSABLE
 
-GENERATE[der_rsa.c]=der_rsa.c.in
-DEPEND[der_rsa.c]=oids_to_c.pm
+GENERATE[der_rsa_gen.c]=der_rsa_gen.c.in
+DEPEND[der_rsa_gen.c]=oids_to_c.pm
 
-DEPEND[der_rsa.o]=../include/prov/der_rsa.h ../include/prov/der_digests.h
+DEPEND[der_rsa_gen.o]=../include/prov/der_rsa.h ../include/prov/der_digests.h
 GENERATE[../include/prov/der_rsa.h]=der_rsa.h.in
 DEPEND[../include/prov/der_rsa.h]=oids_to_c.pm
 
-GENERATE[der_dsa.c]=der_dsa.c.in
-DEPEND[der_dsa.c]=oids_to_c.pm
+GENERATE[der_dsa_gen.c]=der_dsa_gen.c.in
+DEPEND[der_dsa_gen.c]=oids_to_c.pm
 
-DEPEND[der_dsa.o]=../include/prov/der_dsa.h
+DEPEND[der_dsa_gen.o]=../include/prov/der_dsa.h
 GENERATE[../include/prov/der_dsa.h]=der_dsa.h.in
 DEPEND[../include/prov/der_dsa.h]=oids_to_c.pm
 
-GENERATE[der_ec.c]=der_ec.c.in
-DEPEND[der_ec.c]=oids_to_c.pm
+GENERATE[der_ec_gen.c]=der_ec_gen.c.in
+DEPEND[der_ec_gen.c]=oids_to_c.pm
 
-DEPEND[der_ec.o]=../include/prov/der_ec.h
+DEPEND[der_ec_gen.o]=../include/prov/der_ec.h
 GENERATE[../include/prov/der_ec.h]=der_ec.h.in
 DEPEND[../include/prov/der_ec.h]=oids_to_c.pm
 
-GENERATE[der_digests.c]=der_digests.c.in
-DEPEND[der_digests.c]=oids_to_c.pm
+GENERATE[der_digests_gen.c]=der_digests_gen.c.in
+DEPEND[der_digests_gen.c]=oids_to_c.pm
 
-DEPEND[der_digests.o]=../include/prov/der_digests.h
+DEPEND[der_digests_gen.o]=../include/prov/der_digests.h
 GENERATE[../include/prov/der_digests.h]=der_digests.h.in
 DEPEND[../include/prov/der_digests.h]=oids_to_c.pm

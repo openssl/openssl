@@ -1,5 +1,22 @@
 -- -------------------------------------------------------------------
--- Taken from https://csrc.nist.gov/projects/computer-security-objects-register/algorithm-registration
+-- From https://tools.ietf.org/html/rfc4055#section-2.1
+
+id-sha1  OBJECT IDENTIFIER  ::=  { iso(1)
+                     identified-organization(3) oiw(14)
+                     secsig(3) algorithms(2) 26 }
+
+-- -------------------------------------------------------------------
+-- From https://tools.ietf.org/html/rfc5480#appendix-A
+-- (OIDs for MD2 and MD5 are allowed only in EMSA-PKCS1-v1_5)
+
+id-md2  OBJECT IDENTIFIER ::= {
+  iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 2 }
+
+id-md5  OBJECT IDENTIFIER ::= {
+  iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 5 }
+
+-- -------------------------------------------------------------------
+-- From https://csrc.nist.gov/projects/computer-security-objects-register/algorithm-registration
 
 id-sha256 OBJECT IDENTIFIER ::= { hashAlgs 1 }
 id-sha384 OBJECT IDENTIFIER ::= { hashAlgs 2 }
