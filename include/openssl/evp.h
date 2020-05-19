@@ -1886,6 +1886,9 @@ int EVP_str2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
 int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
                  void *ctx, int cmd, const char *hex);
 
+int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name);
+int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen);
+
 # ifdef  __cplusplus
 }
 # endif

@@ -228,7 +228,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     {
         char curve_name[OSSL_MAX_NAME_SIZE] = "";
 
-        if (!EVP_PKEY_get_utf8_string_param(*ppkey, OSSL_PKEY_PARAM_EC_NAME,
+        if (!EVP_PKEY_get_utf8_string_param(*ppkey, OSSL_PKEY_PARAM_GROUP_NAME,
                                             curve_name, sizeof(curve_name),
                                             NULL)
             || strcmp(curve_name, "SM2") != 0)

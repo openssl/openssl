@@ -1450,10 +1450,6 @@ DEPRECATEDIN_3_0(void EC_KEY_METHOD_get_verify
 #   endif
 #  endif
 
-int EVP_PKEY_CTX_set_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            const char *name);
-int EVP_PKEY_CTX_get_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            char *name, size_t namelen);
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
 
 #  define EVP_PKEY_CTX_set_ec_param_enc(ctx, flag) \

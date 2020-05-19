@@ -16,9 +16,9 @@ The following Import/Export types are available for the built-in EC algorithm:
 
 =over 4
 
-=item "curve-name" (B<OSSL_PKEY_PARAM_EC_NAME>) <utf8 string>
+=item "group-name" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <utf8 string>
 
-The EC curve name.
+The curve name.
 
 =item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
 

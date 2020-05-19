@@ -605,7 +605,6 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     return 0;
 }
 
-#ifndef FIPS_MODULE
 int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
@@ -629,6 +628,7 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
     return 0;
 }
 
+#ifndef FIPS_MODULE
 const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
 {
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
@@ -1064,7 +1064,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
 # endif
 # ifndef OPENSSL_NO_EC
     else if (strcmp(name, "ec_paramgen_curve") == 0)
-        name = OSSL_PKEY_PARAM_EC_NAME;
+        name = OSSL_PKEY_PARAM_GROUP_NAME;
     else if (strcmp(name, "ecdh_cofactor_mode") == 0)
         name = OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE;
     else if (strcmp(name, "ecdh_kdf_md") == 0)
