@@ -665,7 +665,7 @@ static int ssl_print_random(BIO *bio, int indent,
 
     if (*pmsglen < 32)
         return 0;
-    tm = ((uint32_t)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+    tm = ((unsigned int)p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
     p += 4;
     BIO_indent(bio, indent, 80);
     BIO_puts(bio, "Random:\n");
@@ -870,7 +870,7 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
             break;
         if (extlen != 4)
             return 0;
-        max_early_data = ((uint32_t)ext[0] << 24) | (ext[1] << 16) | (ext[2] << 8)
+        max_early_data = ((unsigned int)ext[0] << 24) | (ext[1] << 16) | (ext[2] << 8)
                          | ext[3];
         BIO_indent(bio, indent + 2, 80);
         BIO_printf(bio, "max_early_data=%u\n", max_early_data);
@@ -1366,7 +1366,7 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
     }
     if (msglen < 4)
         return 0;
-    tick_life = ((uint32_t)msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8) | msg[3];
+    tick_life = ((unsigned int)msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8) | msg[3];
     msglen -= 4;
     msg += 4;
     BIO_indent(bio, indent + 2, 80);
@@ -1377,7 +1377,7 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
         if (msglen < 4)
             return 0;
         ticket_age_add =
-            ((uint32_t)msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8) | msg[3];
+            ((unsigned int)msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8) | msg[3];
         msglen -= 4;
         msg += 4;
         BIO_indent(bio, indent + 2, 80);
