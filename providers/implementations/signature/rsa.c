@@ -227,17 +227,22 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int md_nid = rsa_get_md_nid(md);
         WPACKET pkt;
+        size_t mdname_len = strlen(mdname);
 
         if (md == NULL
             || md_nid == NID_undef
             || !rsa_check_padding(md_nid, ctx->pad_mode)
-            || !rsa_check_parameters(md, ctx)) {
+            || !rsa_check_parameters(md, ctx)
+            || mdname_len >= sizeof(ctx->mdname)) {
             if (md == NULL)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                                "%s could not be fetched", mdname);
             if (md_nid == NID_undef)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                                "digest=%s", mdname);
+            if (mdname_len >= sizeof(ctx->mdname))
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                               "%s exceeds name buffer length", mdname);
             EVP_MD_free(md);
             return 0;
         }
@@ -274,6 +279,8 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
 static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
                              const char *mdprops)
 {
+    size_t len;
+
     if (mdprops == NULL)
         mdprops = ctx->propq;
 
@@ -285,7 +292,12 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
                        "%s could not be fetched", mdname);
         return 0;
     }
-    OPENSSL_strlcpy(ctx->mgf1_mdname, mdname, sizeof(ctx->mgf1_mdname));
+    len = OPENSSL_strlcpy(ctx->mgf1_mdname, mdname, sizeof(ctx->mgf1_mdname));
+    if (len >= sizeof(ctx->mgf1_mdname)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "%s exceeds name buffer length", mdname);
+        return 0;
+    }
 
     return 1;
 }
@@ -321,6 +333,7 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
                 int mgf1md_nid = rsa_pss_params_30_maskgenhashalg(pss);
                 int min_saltlen = rsa_pss_params_30_saltlen(pss);
                 const char *mdname, *mgf1mdname;
+                size_t len;
 
                 mdname = rsa_oaeppss_nid2name(md_nid);
                 mgf1mdname = rsa_oaeppss_nid2name(mgf1md_nid);
@@ -337,9 +350,20 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
                     return 0;
                 }
 
-                strncpy(prsactx->mdname, mdname, sizeof(prsactx->mdname));
-                strncpy(prsactx->mgf1_mdname, mgf1mdname,
-                        sizeof(prsactx->mgf1_mdname));
+                len = OPENSSL_strlcpy(prsactx->mdname, mdname,
+                                      sizeof(prsactx->mdname));
+                if (len >= sizeof(prsactx->mdname)) {
+                    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                                   "hash algorithm name too long");
+                    return 0;
+                }
+                len = OPENSSL_strlcpy(prsactx->mgf1_mdname, mgf1mdname,
+                                      sizeof(prsactx->mgf1_mdname));
+                if (len >= sizeof(prsactx->mgf1_mdname)) {
+                    ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                                   "MGF1 hash algorithm name too long");
+                    return 0;
+                }
                 prsactx->saltlen = min_saltlen;
 
                 return rsa_setup_md(prsactx, mdname, prsactx->propq)

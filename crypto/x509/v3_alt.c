@@ -128,7 +128,7 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                 BIO_snprintf(othername, sizeof(othername), "othername: %s:",
                              oline);
             else
-                strncpy(othername, "othername:", sizeof(othername));
+                OPENSSL_strlcpy(othername, "othername:", sizeof(othername));
 
             /* check if the value is something printable */
             if (gen->d.otherName->value->type == V_ASN1_IA5STRING) {
