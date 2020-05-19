@@ -1,6 +1,6 @@
 
 #define OQS_KEM_HYBRID_CURVEID(nid) \
-  (nid == NID_p256_oqs_kem_default      ? 0x02FF : \
+  (nid == NID_p256_oqs_kem_default      ? 0x2FFF : \
 {%- for kem in config['kems'] %}
   (nid == NID_p256_{{ kem['name_group'] }} ? {{ kem['nid_hybrid_p256'] }} : \
 {%- endfor %}
