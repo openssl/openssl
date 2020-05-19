@@ -203,88 +203,130 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_oqs_kem_default:
       return OQS_KEM_alg_default;
     case NID_frodo640aes:
+    case NID_p256_frodo640aes:
       return OQS_KEM_alg_frodokem_640_aes;
     case NID_frodo640shake:
+    case NID_p256_frodo640shake:
       return OQS_KEM_alg_frodokem_640_shake;
     case NID_frodo976aes:
+    case NID_p256_frodo976aes:
       return OQS_KEM_alg_frodokem_976_aes;
     case NID_frodo976shake:
+    case NID_p256_frodo976shake:
       return OQS_KEM_alg_frodokem_976_shake;
     case NID_frodo1344aes:
+    case NID_p256_frodo1344aes:
       return OQS_KEM_alg_frodokem_1344_aes;
     case NID_frodo1344shake:
+    case NID_p256_frodo1344shake:
       return OQS_KEM_alg_frodokem_1344_shake;
     case NID_bike1l1cpa:
+    case NID_p256_bike1l1cpa:
       return OQS_KEM_alg_bike1_l1_cpa;
     case NID_bike1l3cpa:
+    case NID_p256_bike1l3cpa:
       return OQS_KEM_alg_bike1_l3_cpa;
     case NID_bike1l1fo:
+    case NID_p256_bike1l1fo:
       return OQS_KEM_alg_bike1_l1_fo;
     case NID_bike1l3fo:
+    case NID_p256_bike1l3fo:
       return OQS_KEM_alg_bike1_l3_fo;
     case NID_kyber512:
+    case NID_p256_kyber512:
       return OQS_KEM_alg_kyber_512;
     case NID_kyber768:
+    case NID_p256_kyber768:
       return OQS_KEM_alg_kyber_768;
     case NID_kyber1024:
+    case NID_p256_kyber1024:
       return OQS_KEM_alg_kyber_1024;
     case NID_newhope512cca:
+    case NID_p256_newhope512cca:
       return OQS_KEM_alg_newhope_512cca;
     case NID_newhope1024cca:
+    case NID_p256_newhope1024cca:
       return OQS_KEM_alg_newhope_1024cca;
     case NID_ntru_hps2048509:
+    case NID_p256_ntru_hps2048509:
       return OQS_KEM_alg_ntru_hps2048509;
     case NID_ntru_hps2048677:
+    case NID_p256_ntru_hps2048677:
       return OQS_KEM_alg_ntru_hps2048677;
     case NID_ntru_hps4096821:
+    case NID_p256_ntru_hps4096821:
       return OQS_KEM_alg_ntru_hps4096821;
     case NID_ntru_hrss701:
+    case NID_p256_ntru_hrss701:
       return OQS_KEM_alg_ntru_hrss701;
     case NID_lightsaber:
+    case NID_p256_lightsaber:
       return OQS_KEM_alg_saber_lightsaber;
     case NID_saber:
+    case NID_p256_saber:
       return OQS_KEM_alg_saber_saber;
     case NID_firesaber:
+    case NID_p256_firesaber:
       return OQS_KEM_alg_saber_firesaber;
     case NID_sidhp434:
+    case NID_p256_sidhp434:
       return OQS_KEM_alg_sidh_p434;
     case NID_sidhp503:
+    case NID_p256_sidhp503:
       return OQS_KEM_alg_sidh_p503;
     case NID_sidhp610:
+    case NID_p256_sidhp610:
       return OQS_KEM_alg_sidh_p610;
     case NID_sidhp751:
+    case NID_p256_sidhp751:
       return OQS_KEM_alg_sidh_p751;
     case NID_sikep434:
+    case NID_p256_sikep434:
       return OQS_KEM_alg_sike_p434;
     case NID_sikep503:
+    case NID_p256_sikep503:
       return OQS_KEM_alg_sike_p503;
     case NID_sikep610:
+    case NID_p256_sikep610:
       return OQS_KEM_alg_sike_p610;
     case NID_sikep751:
+    case NID_p256_sikep751:
       return OQS_KEM_alg_sike_p751;
     case NID_ledacryptkemlt12:
+    case NID_p256_ledacryptkemlt12:
       return OQS_KEM_alg_ledacrypt_ledakemlt12;
     case NID_ledacryptkemlt32:
+    case NID_p256_ledacryptkemlt32:
       return OQS_KEM_alg_ledacrypt_ledakemlt32;
     case NID_ledacryptkemlt52:
+    case NID_p256_ledacryptkemlt52:
       return OQS_KEM_alg_ledacrypt_ledakemlt52;
     case NID_kyber90s512:
+    case NID_p256_kyber90s512:
       return OQS_KEM_alg_kyber_512_90s;
     case NID_kyber90s768:
+    case NID_p256_kyber90s768:
       return OQS_KEM_alg_kyber_768_90s;
     case NID_kyber90s1024:
+    case NID_p256_kyber90s1024:
       return OQS_KEM_alg_kyber_1024_90s;
     case NID_babybear:
+    case NID_p256_babybear:
       return OQS_KEM_alg_threebears_babybear;
     case NID_mamabear:
+    case NID_p256_mamabear:
       return OQS_KEM_alg_threebears_mamabear;
     case NID_papabear:
+    case NID_p256_papabear:
       return OQS_KEM_alg_threebears_papabear;
     case NID_babybearephem:
+    case NID_p256_babybearephem:
       return OQS_KEM_alg_threebears_babybear_ephem;
     case NID_mamabearephem:
+    case NID_p256_mamabearephem:
       return OQS_KEM_alg_threebears_mamabear_ephem;
     case NID_papabearephem:
+    case NID_p256_papabearephem:
       return OQS_KEM_alg_threebears_papabear_ephem;
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_END
     default:

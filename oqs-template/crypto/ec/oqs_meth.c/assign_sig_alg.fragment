@@ -11,6 +11,7 @@
       return OQS_KEM_alg_default;
 {%- for kem in config['kems'] %}
     case NID_{{ kem['name_group'] }}:
+    case NID_p256_{{ kem['name_group'] }}:
       return {{ kem['oqs_alg'] }};
 {%- endfor %}
 
