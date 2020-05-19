@@ -36,10 +36,10 @@ static unsigned int read_ledword(const unsigned char **in)
 {
     const unsigned char *p = *in;
     unsigned int ret;
-    ret = *p++;
-    ret |= (*p++ << 8);
-    ret |= (*p++ << 16);
-    ret |= (*p++ << 24);
+    ret = (unsigned int)*p++;
+    ret |= (unsigned int)*p++ << 8;
+    ret |= (unsigned int)*p++ << 16;
+    ret |= (unsigned int)*p++ << 24;
     *in = p;
     return ret;
 }
