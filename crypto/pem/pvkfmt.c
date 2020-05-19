@@ -39,7 +39,7 @@ static unsigned int read_ledword(const unsigned char **in)
     ret = *p++;
     ret |= (*p++ << 8);
     ret |= (*p++ << 16);
-    ret |= ((*p++ + 0U) << 24);
+    ret |= ((uint32_t)*p++ << 24);
     *in = p;
     return ret;
 }
