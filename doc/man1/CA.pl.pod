@@ -113,7 +113,7 @@ written to standard output.
 
 =item B<-signCA>
 
-This option is the same as the B<-signreq> option except it uses the
+This option is the same as the B<-sign> option except it uses the
 configuration file section B<v3_ca> and so makes the signed request a
 valid CA certificate. This is useful when creating intermediate CA from
 a root CA.  Extra params are passed to L<openssl-ca(1)>.
@@ -165,7 +165,7 @@ the request and finally create a PKCS#12 file containing it.
 
  CA.pl -newca
  CA.pl -newreq
- CA.pl -signreq
+ CA.pl -sign
  CA.pl -pkcs12 "My Test Certificate"
 
 =head1 ENVIRONMENT
