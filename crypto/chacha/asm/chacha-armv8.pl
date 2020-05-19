@@ -43,6 +43,15 @@
 # ThunderX2		7.22/+48%	5.64		4.10
 #
 # (*)	slower than 4+1:-(
+#
+#
+# September 2020
+#
+# Use MIDR_EL1 system register to determine cpu core at runtime, and
+# code path is chosen accordingly.
+#
+# Micro architectures using 4xNEON+1xIALU: Cortex-A53, Cortex-A55, Cortex-A57,
+# and Cortex-A72. Other platforms still in 6xNEON+2xIALU.
 
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
@@ -136,6 +145,8 @@ $code.=<<___;
 # include "arm_arch.h"
 .extern	OPENSSL_armcap_P
 .hidden	OPENSSL_armcap_P
+.extern	OPENSSL_arm_chacha_choose
+.hidden	OPENSSL_arm_chacha_choose
 #endif
 
 .text
@@ -443,9 +454,17 @@ ChaCha20_neon:
 	stp	x23,x24,[sp,#48]
 	stp	x25,x26,[sp,#64]
 	stp	x27,x28,[sp,#80]
+
+#ifndef __KERNEL__
+	adrp	x17,OPENSSL_arm_chacha_choose
+	ldr	w17,[x17,#:lo12:OPENSSL_arm_chacha_choose]
+	cbnz	w17,.Loop_320_neon
+#endif
+
 	cmp	$len,#512
 	b.hs	.L512_or_more_neon
 
+.Loop_320_neon:
 	sub	sp,sp,#64
 
 	ldp	@d[0],@d[1],[@x[0]]		// load sigma

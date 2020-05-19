@@ -72,6 +72,7 @@
 # ifndef __ASSEMBLER__
 extern unsigned int OPENSSL_armcap_P;
 extern unsigned int OPENSSL_arm_midr;
+extern unsigned int OPENSSL_arm_chacha_choose;
 # endif
 
 # define ARMV7_NEON      (1<<0)
@@ -95,6 +96,9 @@ extern unsigned int OPENSSL_arm_midr;
 
 # define ARM_CPU_IMP_ARM           0x41
 
+# define ARM_CPU_PART_CORTEX_A53   0xD03
+# define ARM_CPU_PART_CORTEX_A55   0xD05
+# define ARM_CPU_PART_CORTEX_A57   0xD07
 # define ARM_CPU_PART_CORTEX_A72   0xD08
 # define ARM_CPU_PART_N1           0xD0C
 
