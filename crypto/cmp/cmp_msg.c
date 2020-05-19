@@ -228,7 +228,7 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
     X509_EXTENSIONS *exts = NULL;
 
     if (rkey == NULL)
-        rkey = ctx->pkey; /* default is independent of ctx->oldClCert */
+        rkey = ctx->pkey; /* default is independent of ctx->oldCert */
     if (rkey == NULL) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_NULL_ARGUMENT);

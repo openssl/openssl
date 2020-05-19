@@ -309,22 +309,21 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     /* determine recipient entry in PKIHeader */
-    if (ctx->srvCert != NULL) {
-        rcp = X509_get_subject_name(ctx->srvCert);
-        /* set also as expected_sender of responses unless set explicitly */
-        if (ctx->expected_sender == NULL && rcp != NULL
-                && !OSSL_CMP_CTX_set1_expected_sender(ctx, rcp))
-            return 0;
-    } else if (ctx->recipient != NULL) {
+    if (ctx->recipient != NULL)
         rcp = ctx->recipient;
-    } else if (ctx->issuer != NULL) {
+    else if (ctx->srvCert != NULL)
+        rcp = X509_get_subject_name(ctx->srvCert);
+    else if (ctx->issuer != NULL)
         rcp = ctx->issuer;
-    } else if (ctx->oldCert != NULL) {
+    else if (ctx->oldCert != NULL)
         rcp = X509_get_issuer_name(ctx->oldCert);
-    } else if (ctx->cert != NULL) {
+    else if (ctx->cert != NULL)
         rcp = X509_get_issuer_name(ctx->cert);
-    }
     if (!ossl_cmp_hdr_set1_recipient(hdr, rcp))
+        return 0;
+    /* set also as expected_sender of responses unless set explicitly */
+    if (ctx->expected_sender == NULL && rcp != NULL
+        && !OSSL_CMP_CTX_set1_expected_sender(ctx, rcp))
         return 0;
 
     /* set current time as message time */

@@ -559,6 +559,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     int nid = NID_undef, pk_nid = NID_undef;
     const ASN1_OBJECT *algorOID = NULL;
     X509 *scrt;
+    const X509_NAME *expected_sender;
 
     if (ctx == NULL || msg == NULL
             || msg->header == NULL || msg->body == NULL) {
@@ -642,9 +643,12 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
          * Mitigates risk to accept misused certificate of an unauthorized
          * entity of a trusted hierarchy.
          */
+        expected_sender = ctx->expected_sender;
+        if (expected_sender == NULL && ctx->srvCert != NULL)
+            expected_sender = X509_get_subject_name(ctx->srvCert);
         if (!check_name(ctx, "sender DN field",
                         msg->header->sender->d.directoryName,
-                        "expected sender", ctx->expected_sender))
+                        "expected sender", expected_sender))
             break;
         /* Note: if recipient was NULL-DN it could be learned here if needed */
 
