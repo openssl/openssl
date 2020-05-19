@@ -380,28 +380,35 @@ OSSL_CMP_CTX_get_transfer_cb_arg() gets the argument, respectively the pointer
 to a structure containing arguments, previously set by
 OSSL_CMP_CTX_set_transfer_cb_arg() or NULL if unset.
 
-OSSL_CMP_CTX_set1_srvCert() pins the given server certificate B<srvCert>
-directly trusts it (even if it is expired) for verifying response messages.
+OSSL_CMP_CTX_set1_srvCert() sets the expected server cert B<srvCert> and trusts
+it directly (even if it is expired) when verifying signed response messages.
+May be used alternatively to OSSL_CMP_CTX_set0_trustedStore()
+to pin the accepted server.
+Any previously set value is freed.
 The B<cert> argument may be NULL to clear the entry.
+If set, the subject of the certificate is also used
+as default value for the recipient of CMP requests
+and as default value for the expected sender of CMP responses.
 
-OSSL_CMP_CTX_set1_expected_sender() sets the Distinguished Name (DN) expected to
-be given in the sender response for messages protected with MSG_SIG_ALG. This
-may be used to enforce that during validation of received messages the given DN
-matches the sender field of the PKIMessage header, which in turn is used to
-identify the server certificate.
-This can be used to ensure that only a particular entity is accepted to act as
-CMP server, and attackers are not able to use arbitrary certificates of a
-trusted PKI hierarchy to fraudulently pose as server.
-This defaults to the subject of the B<srvCert>, if any.
+OSSL_CMP_CTX_set1_expected_sender() sets the Distinguished Name (DN)
+expected in the sender field of signature-protected response messages.
+Defaults to the subject of the pinned server certificate B<-srvcert>, if any.
+This can be used to make sure that only a particular entity is accepted as
+CMP message signer, and attackers are not able to use arbitrary certificates
+of a trusted PKI hierarchy to fraudulently pose as CMP server.
+Note that this gives slightly more freedom than OSSL_CMP_CTX_set1_srvCert(),
+which pins the server to the holder of a particular certificate, while the
+expected sender name will continue to match after updates of the server cert.
 
-OSSL_CMP_CTX_set0_trustedStore() sets the X509_STORE type certificate store
-containing trusted (root) CA certificates. The certificate store may also hold
-CRLs and a certificate verification callback function used for CMP server
-authentication. Any already existing store entry is freed. When given a NULL
-parameter the entry is cleared.
+OSSL_CMP_CTX_set0_trustedStore() sets the certificate store of type X509_STORE
+containing trusted (root) CA certificates.
+The store may also hold CRLs and
+a certificate verification callback function used for CMP server authentication.
+Any store entry already set before is freed.
+When given a NULL parameter the entry is cleared.
 
-OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the certificate store
-containing trusted root CA certificates, which may be empty if unset.
+OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the currently set
+certificate store containing trusted cert etc., or an empty store if unset.
 
 OSSL_CMP_CTX_set1_untrusted_certs() sets up a list of non-trusted certificates
 of intermediate CAs that may be useful for path construction when authenticating
@@ -422,7 +429,7 @@ the B<subjectName> set via B<OSSL_CMP_CTX_set1_subjectName()>.
 The B<cert> argument may be NULL to clear the entry.
 
 OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to the
-protecting certificate B<cert> set via B<OSSL_CMP_CTX_set1_cert()>.
+protection certificate B<cert> set via B<OSSL_CMP_CTX_set1_cert()>.
 This key is used create signature-based protection (protectionAlg = MSG_SIG_ALG)
 of outgoing messages
 unless a PBM secret has been set via  B<OSSL_CMP_CTX_set1_secretValue()>.
@@ -438,21 +445,24 @@ PBM-based protection takes precedence over signature-based protection.
 OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue B<ref> with
 length B<len> in the given B<ctx> or clears it if the B<ref> argument is NULL.
 According to RFC 4210 section 5.1.1, if no value for the "sender" field in
-CMP message headers can be determined (i.e., no protecting certificate B<cert>
+CMP message headers can be determined (i.e., no protection certificate B<cert>
 and no B<subjectName> is given) then the "sender" field will contain the NULL-DN
 and the senderKID field of the CMP message header must be set.
 When signature-based protection is used the senderKID will be set to
-the subjectKeyIdentifier of the protecting B<cert> as far as present.
+the subjectKeyIdentifier of the protection B<cert> as far as present.
 If not present or when PBM-based protection is used
 the B<ref> value is taken as the fallback value for the senderKID.
 
 OSSL_CMP_CTX_set1_recipient() sets the recipient name that will be used in the
-PKIHeader of a request message, i.e. the X509 name of the (CA) server.
-Setting is overruled by subject of B<srvCert> if set.
-If neither B<srvCert> nor recipient are set, the recipient of the PKI message is
-determined in the following order: issuer, issuer of old cert (oldCert),
-issuer of protecting certificate (B<cert>), else NULL-DN.
-When a response is received, its sender must match the recipient of the request.
+PKIHeader of CMP request messages, i.e. the X509 name of the (CA) server.
+
+The recipient field in the header of a CMP message is mandatory.
+If not given explicitly the recipient is determined in the following order:
+the subject of the CMP server certificate set using OSSL_CMP_CTX_set1_srvCert(),
+the value set using OSSL_CMP_CTX_set1_issuer(),
+the issuer of the certificate set using OSSL_CMP_CTX_set1_oldCert(),
+the issuer of the protection certificate (B<cert>),
+as far as any of those is present, else the NULL-DN as last resort.
 
 OSSL_CMP_CTX_push0_geninfo_ITAV() adds B<itav> to the stack in the B<ctx> to be
 added to the GeneralInfo field of the CMP PKIMessage header of a request
@@ -507,7 +517,7 @@ to the X509_EXTENSIONS of the requested certificate template.
 
 OSSL_CMP_CTX_set1_oldCert() sets the old certificate to be updated in
 Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
-It must be given for RR, else it defaults to the protecting B<cert>.
+It must be given for RR, else it defaults to the protection B<cert>.
 The B<reference certificate> determined in this way, if any, is also used for
 deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
 Its issuer, if any, is used as default recipient in the CMP message header.

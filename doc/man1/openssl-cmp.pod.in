@@ -268,8 +268,8 @@ This default is used for IR and CR only if no SANs are set.
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
 characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
 
-In case B<-cert> is not set, for instance when using MSG_MAC_ALG,
-the subject DN is also used as sender of the PKI message.
+The subject DN is also used as fallback sender of outgoing CMP messages
+if no B<-cert> and no B<-oldcert> are given.
 
 =item B<-issuer> I<name>
 
@@ -473,8 +473,9 @@ Default is 0 (infinite).
 When verifying signature-based protection of CMP response messages,
 these are the CA certificate(s) to trust while checking certificate chains
 during CMP server authentication.
-This option gives more flexibility than the B<-srvcert> option because
-it does not pin down the expected CMP server by allowing only one certificate.
+This option gives more flexibility than the B<-srvcert> option because the
+protection certificate is not pinned but may be any certificate
+for which a chain to one of the given trusted certificates can be constructed.
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -494,53 +495,45 @@ Each file may contain multiple certificates.
 
 =item B<-srvcert> I<filename>
 
-The specific CMP server certificate to use and directly trust (even if it is
+The specific CMP server certificate to expect and directly trust (even if it is
 expired) when verifying signature-based protection of CMP response messages.
-May be set alternatively to the B<-trusted> option
-if the certificate is available and only this one shall be accepted.
+May be set alternatively to the B<-trusted> option to pin the accepted server.
 
-If set, the issuer of the certificate is also used as the recipient of the CMP
-request and as the expected sender of the CMP response,
-overriding any potential B<-recipient> option.
+If set, the subject of the certificate is also used
+as default value for the recipient of CMP requests
+and as default value for the expected sender of CMP responses.
 
 =item B<-recipient> I<name>
 
-This option may be used to explicitly set the Distinguished Name (DN)
-of the CMP message recipient, i.e., the CMP server (usually a CA or RA entity).
+Distinguished Name (DN) to use in the recipient field of CMP request messages,
+i.e., the CMP server (usually a CA or RA entity).
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
 characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
 
-If a CMP server certificate is given with the B<-srvcert> option, its subject
-name is taken as the recipient name and the B<-recipient> option is ignored.
-If neither of the two are given, the recipient of the PKI message is
-determined in the following order: from the B<-issuer> option if present,
-the issuer of old cert given with the B<-oldcert> option if present,
-the issuer of the client certificate (B<-cert> option) if present.
-
-The recipient field in the header of CMP messagese is mandatory.
-If none of the options that enable the derivation of the recipient name are
-given, no suitable value for the recipient in the PKIHeader is available.
-As a last resort it is set to NULL-DN.
-
-When a response is received, its sender must match the recipient of the request.
+The recipient field in the header of a CMP message is mandatory.
+If not given explicitly the recipient is determined in the following order:
+the subject of the CMP server certificate given with the B<-srvcert> option,
+the B<-issuer> option,
+the issuer of the certificate given with the B<-oldcert> option,
+the issuer of the CMP client certificate (B<-cert> option),
+as far as any of those is present, else the NULL-DN as last resort.
 
 =item B<-expect_sender> I<name>
 
-Distinguished Name (DN) of the expected sender of CMP response messages when
-MSG_SIG_ALG is used for protection.
-This can be used to ensure that only a particular entity is accepted
-as the CMP server, and attackers are not able to use arbitrary certificates
-of a trusted PKI hierarchy to fraudulently pose as a CMP server.
-Note that this option gives slightly more freedom than B<-srvcert>,
-which pins down the server to a particular certificate,
-while B<-expect_sender> I<name> will continue to match after updates of the
-server cert.
+Distinguished Name (DN)
+expected in the sender field of signature-protected response messages.
+Defaults to the subject DN of the pinned B<-srvcert>, if any.
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
 characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
 
-If not given, the subject DN of B<-srvcert>, if provided, will be used.
+This can be used to make sure that only a particular entity is accepted as
+CMP message signer, and attackers are not able to use arbitrary certificates
+of a trusted PKI hierarchy to fraudulently pose as a CMP server.
+Note that this option gives slightly more freedom than setting the B<-srvcert>,
+which pins the server to the holder of a particular certificate, while the
+expected sender name will continue to match after updates of the server cert.
 
 =item B<-ignore_keyusage>
 
