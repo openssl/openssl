@@ -23,12 +23,18 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
-* Deprecated EC_GROUP_precompute_mult(), EC_GROUP_have_precompute_mult(), and
-  EC_KEY_precompute_mult() These functions are not widely used and applications
-  should instead switch to named curves which OpenSSL has hardcoded lookup
-  tables for.
+ * Deprecated EC_POINT_make_affine() and EC_POINTs_make_affine(). These
+   functions are not widely used and now OpenSSL automatically perform this
+   conversion when needed.
 
-  *Billy Bob Brumley*
+   *Billy Bob Brumley*
+
+ * Deprecated EC_GROUP_precompute_mult(), EC_GROUP_have_precompute_mult(), and
+   EC_KEY_precompute_mult(). These functions are not widely used and
+   applications should instead switch to named curves which OpenSSL has
+   hardcoded lookup tables for.
+
+   *Billy Bob Brumley*
 
  * Deprecated EC_POINTs_mul(). This function is not widely used and applications
    should instead use the L<EC_POINT_mul(3)> function.

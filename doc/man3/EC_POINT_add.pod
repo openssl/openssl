@@ -15,14 +15,14 @@ EC_POINT_add, EC_POINT_dbl, EC_POINT_invert, EC_POINT_is_at_infinity, EC_POINT_i
  int EC_POINT_is_at_infinity(const EC_GROUP *group, const EC_POINT *p);
  int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point, BN_CTX *ctx);
  int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b, BN_CTX *ctx);
- int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
- int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
-                           EC_POINT *points[], BN_CTX *ctx);
  int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n,
                   const EC_POINT *q, const BIGNUM *m, BN_CTX *ctx);
 
 Deprecated since OpenSSL 3.0:
 
+ int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
+ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
+                           EC_POINT *points[], BN_CTX *ctx);
  int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *n, size_t num,
                    const EC_POINT *p[], const BIGNUM *m[], BN_CTX *ctx);
  int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx);
@@ -43,7 +43,8 @@ EC_POINT_cmp compares the two supplied points and tests whether or not they are 
 
 The functions EC_POINT_make_affine and EC_POINTs_make_affine force the internal representation of the EC_POINT(s) into the affine
 co-ordinate system. In the case of EC_POINTs_make_affine the value B<num> provides the number of points in the array B<points> to be
-forced.
+forced. These functions were deprecated in OpenSSL 3.0 and should no longer be used.
+Modern versions automatically perform this conversion when needed.
 
 EC_POINT_mul calculates the value generator * B<n> + B<q> * B<m> and stores the result in B<r>.
 The value B<n> may be NULL in which case the result is just B<q> * B<m> (variable point multiplication). Alternatively, both B<q> and B<m> may be NULL, and B<n> non-NULL, in which case the result is just generator * B<n> (fixed point multiplication).
@@ -81,7 +82,8 @@ L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =head1 HISTORY
 
-EC_POINTs_mul(), EC_GROUP_precompute_mult(), and EC_GROUP_have_precompute_mult()
+EC_POINT_make_affine(), EC_POINTs_make_affine(), EC_POINTs_mul(),
+EC_GROUP_precompute_mult(), and EC_GROUP_have_precompute_mult()
 were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
