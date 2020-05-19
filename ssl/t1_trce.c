@@ -665,8 +665,10 @@ static int ssl_print_random(BIO *bio, int indent,
 
     if (*pmsglen < 32)
         return 0;
-    tm = ((unsigned int)p[0] << 24) | ((unsigned int)p[1] << 16)
-         | ((unsigned int)p[2] << 8) | (unsigned int)p[3];
+    tm = ((unsigned int)p[0] << 24)
+         | ((unsigned int)p[1] << 16)
+         | ((unsigned int)p[2] << 8)
+         | (unsigned int)p[3];
     p += 4;
     BIO_indent(bio, indent, 80);
     BIO_puts(bio, "Random:\n");
@@ -1369,8 +1371,10 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
     }
     if (msglen < 4)
         return 0;
-    tick_life = ((unsigned int)msg[0] << 24) | ((unsigned int)msg[1] << 16)
-                | ((unsigned int)msg[2] << 8) | (unsigned int)msg[3];
+    tick_life = ((unsigned int)msg[0] << 24)
+                | ((unsigned int)msg[1] << 16)
+                | ((unsigned int)msg[2] << 8)
+                | (unsigned int)msg[3];
     msglen -= 4;
     msg += 4;
     BIO_indent(bio, indent + 2, 80);
@@ -1381,8 +1385,10 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
         if (msglen < 4)
             return 0;
         ticket_age_add =
-            ((unsigned int)msg[0] << 24) | ((unsigned int)msg[1] << 16)
-            | ((unsigned int)msg[2] << 8) | (unsigned int)msg[3];
+            ((unsigned int)msg[0] << 24)
+            | ((unsigned int)msg[1] << 16)
+            | ((unsigned int)msg[2] << 8)
+            | (unsigned int)msg[3];
         msglen -= 4;
         msg += 4;
         BIO_indent(bio, indent + 2, 80);
