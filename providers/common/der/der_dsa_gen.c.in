@@ -7,17 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/der.h"
+#include "prov/der_dsa.h"
 
 /* Well known OIDs precompiled */
 {-
-    $OUT = oids_to_c::process_leaves('providers/common/der/EC.asn1',
+    $OUT = oids_to_c::process_leaves('providers/common/der/DSA.asn1',
                                      { dir => $config{sourcedir},
-                                       filter => \&oids_to_c::filter_to_H });
+                                       filter => \&oids_to_c::filter_to_C });
 -}
-
-/* Subject Public Key Info */
-int DER_w_algorithmIdentifier_EC(WPACKET *pkt, int cont, EC_KEY *ec);
-/* Signature */
-int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
-                                            EC_KEY *ec, int mdnid);

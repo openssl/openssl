@@ -7,33 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/bn.h>
 #include <openssl/obj_mac.h>
-#include "prov/der_dsa.h"
+#include "internal/packet.h"
+#include "prov/der_ec.h"
 
-/* Well known OIDs precompiled */
-{-
-    $OUT = oids_to_c::process_leaves('providers/common/der/DSA.asn1',
-                                     { dir => $config{sourcedir},
-                                       filter => \&oids_to_c::filter_to_C });
--}
-
-int DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa)
-{
-    return DER_w_begin_sequence(pkt, tag)
-        /* No parameters (yet?) */
-        && DER_w_precompiled(pkt, -1, der_oid_id_dsa, sizeof(der_oid_id_dsa))
-        && DER_w_end_sequence(pkt, tag);
-}
+/* Aliases so we can have a uniform MD_CASE */
+#define der_oid_id_ecdsa_with_sha1   der_oid_ecdsa_with_SHA1
+#define der_oid_id_ecdsa_with_sha224 der_oid_ecdsa_with_SHA224
+#define der_oid_id_ecdsa_with_sha256 der_oid_ecdsa_with_SHA256
+#define der_oid_id_ecdsa_with_sha384 der_oid_ecdsa_with_SHA384
+#define der_oid_id_ecdsa_with_sha512 der_oid_ecdsa_with_SHA512
 
 #define MD_CASE(name)                                                   \
     case NID_##name:                                                    \
-        precompiled = der_oid_id_dsa_with_##name;                \
-        precompiled_sz = sizeof(der_oid_id_dsa_with_##name);     \
+        precompiled = der_oid_id_ecdsa_with_##name;                     \
+        precompiled_sz = sizeof(der_oid_id_ecdsa_with_##name);          \
         break;
 
-int DER_w_algorithmIdentifier_DSA_with(WPACKET *pkt, int tag,
-                                       DSA *dsa, int mdnid)
+int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
+                                            EC_KEY *ec, int mdnid)
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
@@ -52,8 +44,8 @@ int DER_w_algorithmIdentifier_DSA_with(WPACKET *pkt, int tag,
         return 0;
     }
 
-    return DER_w_begin_sequence(pkt, tag)
+    return DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
         && DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
-        && DER_w_end_sequence(pkt, tag);
+        && DER_w_end_sequence(pkt, cont);
 }

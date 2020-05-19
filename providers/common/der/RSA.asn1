@@ -53,25 +53,6 @@ sha512-224WithRSAEncryption  OBJECT IDENTIFIER ::= { pkcs-1 15 }
 sha512-256WithRSAEncryption  OBJECT IDENTIFIER ::= { pkcs-1 16 }
 
 --
--- This OID really belongs in a module with the secsig OIDs.
---
-id-sha1    OBJECT IDENTIFIER ::= {
-    iso(1) identified-organization(3) oiw(14) secsig(3) algorithms(2)
-    26
-}
-
---
--- OIDs for MD2 and MD5, allowed only in EMSA-PKCS1-v1_5.
---
-id-md2 OBJECT IDENTIFIER ::= {
-    iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 2
-}
-
-id-md5 OBJECT IDENTIFIER ::= {
-    iso(1) member-body(2) us(840) rsadsi(113549) digestAlgorithm(2) 5
-}
-
---
 -- When id-mgf1 is used in an AlgorithmIdentifier, the parameters
 -- MUST be present and MUST be a HashAlgorithm, for example, sha1.
 --

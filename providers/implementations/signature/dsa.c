@@ -177,7 +177,8 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
          */
         ctx->aid_len = 0;
         if (WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf))
-            && DER_w_algorithmIdentifier_DSA_with(&pkt, -1, ctx->dsa, md_nid)
+            && DER_w_algorithmIdentifier_DSA_with_MD(&pkt, -1, ctx->dsa,
+                                                     md_nid)
             && WPACKET_finish(&pkt)) {
             WPACKET_get_total_written(&pkt, &ctx->aid_len);
             ctx->aid = WPACKET_get_curr(&pkt);

@@ -254,7 +254,8 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
          */
         ctx->aid_len = 0;
         if (WPACKET_init_der(&pkt, ctx->aid_buf, sizeof(ctx->aid_buf))
-            && DER_w_algorithmIdentifier_RSA_with(&pkt, -1, ctx->rsa, md_nid)
+            && DER_w_algorithmIdentifier_MDWithRSAEncryption(&pkt, -1, ctx->rsa,
+                                                             md_nid)
             && WPACKET_finish(&pkt)) {
             WPACKET_get_total_written(&pkt, &ctx->aid_len);
             ctx->aid = WPACKET_get_curr(&pkt);

@@ -28,12 +28,19 @@ use Data::Dumper;
 sub filter_to_H {
     my ($name, $comment) = @{ shift() };
     my @oid_nums = @_;
+    my $oid_size = scalar @oid_nums;
 
+    (my $C_comment = $comment) =~ s|^| * |msg;
+    $C_comment = "\n/*\n${C_comment}\n */" if $C_comment ne '';
     (my $C_name = $name) =~ s|-|_|g;
     my $C_bytes_size = 2 + scalar @_;
+    my $C_bytes = join(', ', map { sprintf("0x%02X", $_) } @oid_nums );
 
     return <<"_____";
-extern const unsigned char der_oid_${C_name}[$C_bytes_size];
+$C_comment
+#define DER_OID_V_${C_name} DER_P_OBJECT, $oid_size, ${C_bytes}
+#define DER_OID_SZ_${C_name} ${C_bytes_size}
+extern const unsigned char der_oid_${C_name}[DER_OID_SZ_${C_name}];
 _____
 }
 
@@ -48,12 +55,9 @@ sub filter_to_C {
     $C_comment = "\n/*\n${C_comment}\n */" if $C_comment ne '';
     (my $C_name = $name) =~ s|-|_|g;
     my $C_bytes_size = 2 + $oid_size;
-    my $C_bytes = join(', ', map { sprintf("0x%02X", $_) } @oid_nums );
 
     return <<"_____";
 $C_comment
-#define DER_OID_V_${C_name} DER_P_OBJECT, $oid_size, ${C_bytes}
-#define DER_OID_SZ_${C_name} ${C_bytes_size}
 const unsigned char der_oid_${C_name}[DER_OID_SZ_${C_name}] = {
     DER_OID_V_${C_name}
 };
