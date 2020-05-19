@@ -156,6 +156,10 @@ occurred.
 OCSP_resp_get0_signer() returns 1 if the signing certificate was located,
 or 0 on error.
 
+OCSP_check_validity() returns 1 if B<thisupd> and B<nextupd> are valid time 
+bounds for an OCSP response given the current time and the constraints
+specified by B<sec> and B<maxsec>; otherwise, returns 0 to indicate an error.
+
 OCSP_basic_verify() returns 1 on success, 0 on error, or -1 on fatal error such
 as malloc failure.
 
