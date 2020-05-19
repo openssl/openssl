@@ -611,7 +611,7 @@ int ecparams_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl)
         if ((curve_name = OBJ_nid2sn(curve_nid)) == NULL)
             return 0;
 
-        if (!OSSL_PARAM_BLD_push_utf8_string(tmpl, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0))
+        if (!OSSL_PARAM_BLD_push_utf8_string(tmpl, OSSL_PKEY_PARAM_GROUP_NAME, curve_name, 0))
             return 0;
     }
 

@@ -9,6 +9,8 @@ EVP_PKEY_CTX_md,
 EVP_PKEY_CTX_set_signature_md,
 EVP_PKEY_CTX_get_signature_md,
 EVP_PKEY_CTX_set_mac_key,
+EVP_PKEY_CTX_set_group_name,
+EVP_PKEY_CTX_get_group_name,
 EVP_PKEY_CTX_set_rsa_padding,
 EVP_PKEY_CTX_get_rsa_padding,
 EVP_PKEY_CTX_set_rsa_pss_saltlen,
@@ -53,8 +55,6 @@ EVP_PKEY_CTX_set_dh_kdf_outlen,
 EVP_PKEY_CTX_get_dh_kdf_outlen,
 EVP_PKEY_CTX_set0_dh_kdf_ukm,
 EVP_PKEY_CTX_get0_dh_kdf_ukm,
-EVP_PKEY_CTX_set_ec_paramgen_curve_name,
-EVP_PKEY_CTX_get_ec_paramgen_curve_name,
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid,
 EVP_PKEY_CTX_set_ec_param_enc,
 EVP_PKEY_CTX_set_ecdh_cofactor_mode,
@@ -88,6 +88,8 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 
  int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
                               int len);
+ int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name);
+ int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen);
 
  #include <openssl/rsa.h>
 
@@ -154,10 +156,6 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 
  #include <openssl/ec.h>
 
- int EVP_PKEY_CTX_set_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                             const char *name);
- int EVP_PKEY_CTX_get_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                             char *name, size_t namelen);
  int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
  int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
  int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
@@ -220,6 +218,15 @@ L<EVP_PKEY_new_raw_private_key(3)> or similar functions instead of this macro.
 
 The EVP_PKEY_CTX_set_mac_key() macro can be used with any of the algorithms
 supported by the L<EVP_PKEY_new_raw_private_key(3)> function.
+
+EVP_PKEY_CTX_set_group_name() sets the group name to I<name> for parameter and
+key generation. For example for EC keys this will set the curve name and for
+DH keys it will set the name of the finite field group.
+
+EVP_PKEY_CTX_get_group_name() finds the group name that's currently
+set with I<ctx>, and writes it to the location that I<name> points at, as long
+as its size I<namelen> is large enough to store that name, including a
+terminating NUL byte.
 
 =head2 RSA parameters
 
@@ -524,23 +531,21 @@ by the library and should not be freed by the caller.
 
 =head2 EC parameters
 
-EVP_PKEY_CTX_set_ec_paramgen_curve_name() sets the EC curve to I<name> for EC
-parameter generation.
+Use EVP_PKEY_CTX_set_group_name() (described above) to set the curve name to
+I<name> for parameter and key generation.
 
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid() does the same as
-EVP_PKEY_CTX_set_ec_paramgen_curve_name(), but uses a I<nid> rather than a
-name string.
+EVP_PKEY_CTX_set_group_name(), but is specific to EC and uses a I<nid> rather
+than a name string.
 
-For EC parameter generation, one of EVP_PKEY_CTX_set_ec_paramgen_curve_name()
+For EC parameter generation, one of EVP_PKEY_CTX_set_group_name()
 or EVP_PKEY_CTX_set_ec_paramgen_curve_nid() must be called or an error occurs
 because there is no default curve.
 These function can also be called to set the curve explicitly when
 generating an EC key.
 
-EVP_PKEY_CTX_get_ec_paramgen_curve_name() finds the curve name that's currently
-set with I<ctx>, and writes it to the location that I<name> points at, as long
-as its size I<namelen> is large enough to store that name, including a
-terminating NUL byte.
+EVP_PKEY_CTX_get_group_name() (described above) can be used to obtain the curve
+name that's currently set with I<ctx>.
 
 The EVP_PKEY_CTX_set_ec_param_enc() macro sets the EC parameter encoding to
 I<param_enc> when generating EC parameters or an EC key. The encoding can be
@@ -642,7 +647,8 @@ From OpenSSL 3.0 they are functions.
 EVP_PKEY_CTX_get_rsa_oaep_md_name(), EVP_PKEY_CTX_get_rsa_mgf1_md_name(),
 EVP_PKEY_CTX_set_rsa_mgf1_md_name(), EVP_PKEY_CTX_set_rsa_oaep_md_name(),
 EVP_PKEY_CTX_set_dsa_paramgen_md_props(), EVP_PKEY_CTX_set_dsa_paramgen_gindex(),
-EVP_PKEY_CTX_set_dsa_paramgen_type() and EVP_PKEY_CTX_set_dsa_paramgen_seed()
+EVP_PKEY_CTX_set_dsa_paramgen_type(), EVP_PKEY_CTX_set_dsa_paramgen_seed(),
+EVP_PKEY_CTX_set_group_name() and EVP_PKEY_CTX_get_group_name()
 were added in OpenSSL 3.0.
 
 The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and

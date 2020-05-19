@@ -940,3 +940,43 @@ int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
     OPENSSL_free(bin);
     return rv;
 }
+
+int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name)
+{
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM *p = params;
+
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    if (name == NULL)
+        return -1;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+                                            (char *)name, 0);
+    return EVP_PKEY_CTX_set_params(ctx, params);
+}
+
+int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen)
+{
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    OSSL_PARAM *p = params;
+
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    if (name == NULL)
+        return -1;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+                                            name, namelen);
+    if (!EVP_PKEY_CTX_get_params(ctx, params))
+        return -1;
+    return 1;
+}

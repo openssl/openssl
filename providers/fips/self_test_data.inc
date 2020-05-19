@@ -739,7 +739,7 @@ static const unsigned char ecdh_peer_pub[] = {
 };
 
 static const ST_KAT_PARAM ecdh_group[] = {
-    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_EC_NAME, ecdh_curve_name),
+    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecdh_curve_name),
     ST_KAT_PARAM_END()
 };
 static const ST_KAT_PARAM ecdh_host_key[] = {
@@ -1015,7 +1015,7 @@ static const unsigned char ecd_pub[] = {
 };
 
 static const ST_KAT_PARAM ecdsa_key[] = {
-    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_EC_NAME, ecd_curve_name),
+    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecd_curve_name),
     ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, ecd_pub),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, ecd_priv),
     ST_KAT_PARAM_END()

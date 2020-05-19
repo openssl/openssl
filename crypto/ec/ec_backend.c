@@ -173,7 +173,7 @@ int ec_key_domparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
     if (ec == NULL)
         return 0;
 
-    param_ec_name = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME);
+    param_ec_name = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (param_ec_name == NULL) {
         /* explicit parameters */
 

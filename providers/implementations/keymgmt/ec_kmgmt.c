@@ -89,7 +89,7 @@ int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
         if ((curve_name = ec_curve_nid2name(curve_nid)) == NULL)
             return 0;
         if (!ossl_param_build_set_utf8_string(tmpl, params,
-                                              OSSL_PKEY_PARAM_EC_NAME,
+                                              OSSL_PKEY_PARAM_GROUP_NAME,
                                               curve_name))
 
             return 0;
@@ -412,7 +412,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 /* IMEXPORT = IMPORT + EXPORT */
 
 # define EC_IMEXPORTABLE_DOM_PARAMETERS                          \
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_NAME, NULL, 0)
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0)
 # define EC_IMEXPORTABLE_PUBLIC_KEY                              \
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0)
 # define EC_IMEXPORTABLE_PRIVATE_KEY                             \
@@ -699,7 +699,7 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_int(p, &gctx->ecdh_mode))
             return 0;
     }
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME))
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME))
         != NULL) {
         const char *curve_name = NULL;
         int ret = 0;
@@ -733,7 +733,7 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *ec_gen_settable_params(void *provctx)
 {
     static OSSL_PARAM settable[] = {
-        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_NAME, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
         OSSL_PARAM_END
     };

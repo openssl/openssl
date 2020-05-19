@@ -5048,8 +5048,8 @@ CTLOG_new_from_base64_with_libctx       ?	3_0_0	EXIST::FUNCTION:CT
 CTLOG_STORE_new_with_libctx             ?	3_0_0	EXIST::FUNCTION:CT
 EVP_PKEY_set_ex_data                    ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_ex_data                    ?	3_0_0	EXIST::FUNCTION:
-EVP_PKEY_CTX_set_ec_paramgen_curve_name ?	3_0_0	EXIST::FUNCTION:EC
-EVP_PKEY_CTX_get_ec_paramgen_curve_name ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_set_group_name             ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_get_group_name             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_ec_paramgen_curve_nid  ?	3_0_0	EXIST::FUNCTION:EC
 d2i_PrivateKey_ex                       ?	3_0_0	EXIST::FUNCTION:
 d2i_AutoPrivateKey_ex                   ?	3_0_0	EXIST::FUNCTION:
