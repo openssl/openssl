@@ -336,9 +336,9 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
                     return 0;
                 }
 
-                strncpy(prsactx->mdname, mdname, sizeof(prsactx->mdname));
+                strncpy(prsactx->mdname, mdname, sizeof(prsactx->mdname) - 1);
                 strncpy(prsactx->mgf1_mdname, mgf1mdname,
-                        sizeof(prsactx->mgf1_mdname));
+                        sizeof(prsactx->mgf1_mdname) - 1);
                 prsactx->saltlen = min_saltlen;
 
                 return rsa_setup_md(prsactx, mdname, prsactx->propq)
