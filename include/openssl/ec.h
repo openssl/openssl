@@ -761,9 +761,10 @@ int EC_POINT_is_on_curve(const EC_GROUP *group, const EC_POINT *point,
 int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
                  BN_CTX *ctx);
 
-int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx);
-int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
-                          EC_POINT *points[], BN_CTX *ctx);
+DEPRECATEDIN_3_0(int EC_POINT_make_affine(const EC_GROUP *group,
+                                          EC_POINT *point, BN_CTX *ctx))
+DEPRECATEDIN_3_0(int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
+                                           EC_POINT *points[], BN_CTX *ctx))
 
 /** Computes r = generator * n + sum_{i=0}^{num-1} p[i] * m[i]
  *  \param  group  underlying EC_GROUP object

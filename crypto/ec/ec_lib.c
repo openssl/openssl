@@ -1004,6 +1004,7 @@ int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
     return group->meth->point_cmp(group, a, b, ctx);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 {
     if (group->meth->make_affine == 0) {
@@ -1034,6 +1035,7 @@ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
     }
     return group->meth->points_make_affine(group, num, points, ctx);
 }
+#endif
 
 /*
  * Functions for point multiplication. If group->meth->mul is 0, we use the

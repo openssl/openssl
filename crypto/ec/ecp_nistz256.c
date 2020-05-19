@@ -897,7 +897,8 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
              * It would be faster to use EC_POINTs_make_affine and
              * make multiple points affine at the same time.
              */
-            if (!EC_POINT_make_affine(group, P, ctx))
+            if (group->meth->make_affine == NULL
+                || !group->meth->make_affine(group, P, ctx))
                 goto err;
             if (!ecp_nistz256_bignum_to_field_elem(temp.X, P->X) ||
                 !ecp_nistz256_bignum_to_field_elem(temp.Y, P->Y)) {

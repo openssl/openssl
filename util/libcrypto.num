@@ -837,7 +837,7 @@ EVP_PKEY_CTX_get_cb                     857	3_0_0	EXIST::FUNCTION:
 X509_STORE_free                         858	3_0_0	EXIST::FUNCTION:
 ECDSA_sign_ex                           859	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 TXT_DB_insert                           860	3_0_0	EXIST::FUNCTION:
-EC_POINTs_make_affine                   861	3_0_0	EXIST::FUNCTION:EC
+EC_POINTs_make_affine                   861	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 RSA_padding_add_PKCS1_PSS               862	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
 BF_options                              863	3_0_0	EXIST::FUNCTION:BF,DEPRECATEDIN_3_0
 OCSP_BASICRESP_it                       864	3_0_0	EXIST::FUNCTION:OCSP
@@ -3318,7 +3318,7 @@ EVP_camellia_256_cfb1                   3385	3_0_0	EXIST::FUNCTION:CAMELLIA
 CRYPTO_secure_actual_size               3387	3_0_0	EXIST::FUNCTION:
 COMP_CTX_free                           3388	3_0_0	EXIST::FUNCTION:COMP
 i2d_PBE2PARAM                           3389	3_0_0	EXIST::FUNCTION:
-EC_POINT_make_affine                    3390	3_0_0	EXIST::FUNCTION:EC
+EC_POINT_make_affine                    3390	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
 DSA_generate_parameters                 3391	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_0_9_8,DSA
 ASN1_BIT_STRING_num_asc                 3392	3_0_0	EXIST::FUNCTION:
 X509_INFO_free                          3394	3_0_0	EXIST::FUNCTION:

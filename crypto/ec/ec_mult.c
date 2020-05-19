@@ -267,7 +267,8 @@ int ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     }
 
     /* ensure input point is in affine coords for ladder step efficiency */
-    if (!p->Z_is_one && !EC_POINT_make_affine(group, p, ctx)) {
+    if (!p->Z_is_one && (group->meth->make_affine == NULL
+                         || !group->meth->make_affine(group, p, ctx))) {
             ECerr(EC_F_EC_SCALAR_MUL_LADDER, ERR_R_EC_LIB);
             goto err;
     }
@@ -711,7 +712,8 @@ int ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         }
     }
 
-    if (!EC_POINTs_make_affine(group, num_val, val, ctx))
+    if (group->meth->points_make_affine == NULL
+        || !group->meth->points_make_affine(group, num_val, val, ctx))
         goto err;
 
     r_is_at_infinity = 1;
@@ -949,7 +951,8 @@ int ec_wNAF_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
         }
     }
 
-    if (!EC_POINTs_make_affine(group, num, points, ctx))
+    if (group->meth->points_make_affine == NULL
+        || !group->meth->points_make_affine(group, num, points, ctx))
         goto err;
 
     pre_comp->group = group;
