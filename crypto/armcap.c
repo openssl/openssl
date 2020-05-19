@@ -19,6 +19,7 @@
 
 unsigned int OPENSSL_armcap_P = 0;
 unsigned int OPENSSL_arm_midr = 0;
+unsigned int OPENSSL_arm_chacha_choose = 0;
 
 #if __ARM_MAX_ARCH__<7
 void OPENSSL_cpuid_setup(void)
@@ -220,6 +221,13 @@ void OPENSSL_cpuid_setup(void)
 # ifdef __aarch64__
     if (OPENSSL_armcap_P & ARMV8_CPUID)
         OPENSSL_arm_midr = _armv8_cpuid_probe();
+
+    if (MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A53)
+        || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A55)
+        || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A57)
+        || MIDR_IS_CPU_MODEL(OPENSSL_arm_midr, ARM_CPU_IMP_ARM, ARM_CPU_PART_CORTEX_A72)) {
+        OPENSSL_arm_chacha_choose = 1;
+    }
 # endif
 }
 #endif
