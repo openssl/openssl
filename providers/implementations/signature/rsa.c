@@ -320,6 +320,7 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
                 int mgf1md_nid = rsa_pss_params_30_maskgenhashalg(pss);
                 int min_saltlen = rsa_pss_params_30_saltlen(pss);
                 const char *mdname, *mgf1mdname;
+                size_t len;
 
                 mdname = rsa_oaeppss_nid2name(md_nid);
                 mgf1mdname = rsa_oaeppss_nid2name(mgf1md_nid);
@@ -336,16 +337,16 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
                     return 0;
                 }
 
-                if (OPENSSL_strlcpy(prsactx->mdname, mdname,
-                                    sizeof(prsactx->mdname))
-                        >= sizeof(prsactx->mdname)) {
+                len = OPENSSL_strlcpy(prsactx->mdname, mdname,
+                                      sizeof(prsactx->mdname));
+                if (len >= sizeof(prsactx->mdname)) {
                     ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                                    "hash algorithm name too long");
                     return 0;
                 }
-                if (OPENSSL_strlcpy(prsactx->mgf1_mdname, mgf1mdname,
-                                sizeof(prsactx->mgf1_mdname))
-                        >= sizeof(prsactx->mgf1_mdname)) {
+                len = OPENSSL_strlcpy(prsactx->mgf1_mdname, mgf1mdname,
+                                      sizeof(prsactx->mgf1_mdname));
+                if (len >= sizeof(prsactx->mgf1_mdname)) {
                     ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                                    "MGF1 hash algorithm name too long");
                     return 0;
