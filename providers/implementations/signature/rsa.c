@@ -227,17 +227,22 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
         int md_nid = rsa_get_md_nid(md);
         WPACKET pkt;
+        size_t mdname_len = strlen(mdname);
 
         if (md == NULL
             || md_nid == NID_undef
             || !rsa_check_padding(md_nid, ctx->pad_mode)
-            || !rsa_check_parameters(md, ctx)) {
+            || !rsa_check_parameters(md, ctx)
+            || mdname_len >= sizeof(ctx->mdname)) {
             if (md == NULL)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                                "%s could not be fetched", mdname);
             if (md_nid == NID_undef)
                 ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                                "digest=%s", mdname);
+            if (mdname_len >= sizeof(ctx->mdname))
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                               "%s exceeds name buffer length", mdname);
             EVP_MD_free(md);
             return 0;
         }
@@ -273,6 +278,8 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
 static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
                              const char *mdprops)
 {
+    size_t len;
+
     if (mdprops == NULL)
         mdprops = ctx->propq;
 
@@ -284,7 +291,12 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
                        "%s could not be fetched", mdname);
         return 0;
     }
-    OPENSSL_strlcpy(ctx->mgf1_mdname, mdname, sizeof(ctx->mgf1_mdname));
+    len = OPENSSL_strlcpy(ctx->mgf1_mdname, mdname, sizeof(ctx->mgf1_mdname));
+    if (len >= sizeof(ctx->mgf1_mdname)) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                       "%s exceeds name buffer length", mdname);
+        return 0;
+    }
 
     return 1;
 }
