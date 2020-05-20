@@ -921,6 +921,7 @@ int s_client_main(int argc, char **argv)
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
+    char *thost = NULL, *tport = NULL;
     char *port = OPENSSL_strdup(PORT);
     char *bindhost = NULL, *bindport = NULL;
     char *passarg = NULL, *pass = NULL;
@@ -1599,29 +1600,12 @@ int s_client_main(int argc, char **argv)
         goto opthelp;
     }
 #endif
-    if (proxystr != NULL) {
+
+    if (connectstr != NULL) {
         int res;
         char *tmp_host = host, *tmp_port = port;
-        if (connectstr == NULL) {
-            BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
-            goto opthelp;
-        }
-        res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
-        if (tmp_host != host)
-            OPENSSL_free(tmp_host);
-        if (tmp_port != port)
-            OPENSSL_free(tmp_port);
-        if (!res) {
-            BIO_printf(bio_err,
-                       "%s: -proxy argument malformed or ambiguous\n", prog);
-            goto end;
-        }
-    } else {
-        int res = 1;
-        char *tmp_host = host, *tmp_port = port;
-        if (connectstr != NULL)
-            res = BIO_parse_hostserv(connectstr, &host, &port,
-                                     BIO_PARSE_PRIO_HOST);
+
+        res = BIO_parse_hostserv(connectstr, &host, &port, BIO_PARSE_PRIO_HOST);
         if (tmp_host != host)
             OPENSSL_free(tmp_host);
         if (tmp_port != port)
@@ -1630,6 +1614,35 @@ int s_client_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "%s: -connect argument or target parameter malformed or ambiguous\n",
                        prog);
+            goto end;
+        }
+    }
+
+    if (proxystr != NULL) {
+        int res;
+        char *tmp_host = host, *tmp_port = port;
+
+        if (host == NULL || port == NULL) {
+            BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
+            goto opthelp;
+        }
+
+        /* Retain the original target host:port for use in the HTTP proxy connect string */
+        thost = OPENSSL_strdup(host);
+        tport = OPENSSL_strdup(port);
+        if (thost == NULL || tport == NULL) {
+            BIO_printf(bio_err, "%s: out of memory\n", prog);
+            goto end;
+        }
+
+        res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
+        if (tmp_host != host)
+            OPENSSL_free(tmp_host);
+        if (tmp_port != port)
+            OPENSSL_free(tmp_port);
+        if (!res) {
+            BIO_printf(bio_err,
+                       "%s: -proxy argument malformed or ambiguous\n", prog);
             goto end;
         }
     }
@@ -2389,7 +2402,8 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_CONNECT:
-        if (!OSSL_HTTP_proxy_connect(sbio, host, port, proxyuser, proxypass,
+        /* Here we must use the connect string target host & port */
+        if (!OSSL_HTTP_proxy_connect(sbio, thost, tport, proxyuser, proxypass,
                                      0 /* no timeout */, bio_err, prog))
             goto shut;
         break;
@@ -3138,6 +3152,8 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(bindstr);
     OPENSSL_free(host);
     OPENSSL_free(port);
+    OPENSSL_free(thost);
+    OPENSSL_free(tport);
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
