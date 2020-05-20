@@ -7,6 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * RAND_DRBG_set is deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -433,6 +439,7 @@ void RAND_DRBG_free(RAND_DRBG *drbg)
         return;
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RAND_DRBG, drbg, &drbg->ex_data);
+    EVP_RAND_CTX_free(drbg->rand);
     OPENSSL_free(drbg);
 }
 

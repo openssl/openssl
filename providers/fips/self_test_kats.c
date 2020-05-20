@@ -10,17 +10,12 @@
 #include <string.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/rand_drbg.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "self_test.h"
 #include "self_test_data.inc"
-#include "../../crypto/rand/rand_local.h"
-
-#define DRBG_PARAM_ENTROPY "DRBG-ENTROPY"
-#define DRBG_PARAM_NONCE   "DRBG-NONCE"
 
 static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_SELF_TEST *st,
                             OPENSSL_CTX *libctx)
@@ -240,86 +235,90 @@ err:
     return ret;
 }
 
-static size_t drbg_kat_entropy_cb(RAND_DRBG *drbg, unsigned char **pout,
-                                  int entropy, size_t min_len, size_t max_len,
-                                  int prediction_resistance)
-{
-    OSSL_PARAM *drbg_params = RAND_DRBG_get_callback_data(drbg);
-    OSSL_PARAM *p = OSSL_PARAM_locate(drbg_params, DRBG_PARAM_ENTROPY);
-
-    if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
-        return 0;
-    *pout = (unsigned char *)p->data;
-    return p->data_size;
-}
-
-static size_t drbg_kat_nonce_cb(RAND_DRBG *drbg, unsigned char **pout,
-                                int entropy, size_t min_len, size_t max_len)
-{
-    OSSL_PARAM *drbg_params = RAND_DRBG_get_callback_data(drbg);
-    OSSL_PARAM *p = OSSL_PARAM_locate(drbg_params, DRBG_PARAM_NONCE);
-
-    if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
-        return 0;
-    *pout = (unsigned char *)p->data;
-    return p->data_size;
-}
-
 static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
                           OPENSSL_CTX *libctx)
 {
     int ret = 0;
     unsigned char out[256];
-    RAND_DRBG *drbg = NULL;
-    unsigned int flags = 0;
+    EVP_RAND *rand;
+    EVP_RAND_CTX *test = NULL, *drbg = NULL;
+    unsigned int strength = 256;
     int prediction_resistance = 1; /* Causes a reseed */
     OSSL_PARAM drbg_params[3] = {
         OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END
     };
-    static const unsigned char zero[sizeof(drbg->data)] = { 0 };
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
 
-    if (strcmp(t->desc, OSSL_SELF_TEST_DESC_DRBG_HMAC) == 0)
-        flags |= RAND_DRBG_FLAG_HMAC;
+    rand = EVP_RAND_fetch(libctx, "TEST-RAND", NULL);
+    if (rand == NULL)
+        goto err;
 
-    drbg = RAND_DRBG_new_ex(libctx, t->nid, flags, NULL);
+    test = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    if (test == NULL)
+        goto err;
+
+    drbg_params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
+                                               &strength);
+    if (!EVP_RAND_set_ctx_params(test, drbg_params))
+        goto err;
+
+    rand = EVP_RAND_fetch(libctx, t->algorithm, NULL);
+    if (rand == NULL)
+        goto err;
+
+    drbg = EVP_RAND_CTX_new(rand, test);
+    EVP_RAND_free(rand);
     if (drbg == NULL)
         goto err;
 
-    if (!RAND_DRBG_set_callback_data(drbg, drbg_params))
-        goto err;
+    strength = EVP_RAND_strength(drbg);
 
-    if (!RAND_DRBG_set_callbacks(drbg, drbg_kat_entropy_cb, NULL,
-                                 drbg_kat_nonce_cb, NULL))
-        goto err;
-
-    drbg_params[0] =
-        OSSL_PARAM_construct_octet_string(DRBG_PARAM_ENTROPY,
-                                          (void *)t->entropyin, t->entropyinlen);
+    drbg_params[0] = OSSL_PARAM_construct_utf8_string(t->param_name,
+                                                      t->param_value, 0);
+    /* This is only used by HMAC-DRBG but it is ignored by the others */
     drbg_params[1] =
-        OSSL_PARAM_construct_octet_string(DRBG_PARAM_NONCE,
-                                          (void *)t->nonce, t->noncelen);
-
-    if (!RAND_DRBG_instantiate(drbg, t->persstr, t->persstrlen))
+        OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
+    if (!EVP_RAND_set_ctx_params(drbg, drbg_params))
         goto err;
 
     drbg_params[0] =
-        OSSL_PARAM_construct_octet_string(DRBG_PARAM_ENTROPY,
+        OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                          (void *)t->entropyin,
+                                          t->entropyinlen);
+    drbg_params[1] =
+        OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
+                                          (void *)t->nonce, t->noncelen);
+    if (!EVP_RAND_set_ctx_params(test, drbg_params)
+            || !EVP_RAND_instantiate(test, strength, 0, NULL, 0))
+        goto err;
+    if (!EVP_RAND_instantiate(drbg, strength, 0, t->persstr, t->persstrlen))
+        goto err;
+
+    drbg_params[0] =
+        OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
                                           (void *)t->entropyinpr1,
                                           t->entropyinpr1len);
+    if (!EVP_RAND_set_ctx_params(test, drbg_params))
+        goto err;
 
-    if (!RAND_DRBG_generate(drbg, out, t->expectedlen, prediction_resistance,
-                            t->entropyaddin1, t->entropyaddin1len))
+    if (!EVP_RAND_generate(drbg, out, t->expectedlen, strength,
+                           prediction_resistance,
+                           t->entropyaddin1, t->entropyaddin1len))
         goto err;
 
     drbg_params[0] =
-        OSSL_PARAM_construct_octet_string(DRBG_PARAM_ENTROPY,
+        OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
                                          (void *)t->entropyinpr2,
                                          t->entropyinpr2len);
+    if (!EVP_RAND_set_ctx_params(test, drbg_params))
+        goto err;
+
     /* This calls RAND_DRBG_reseed() internally when prediction_resistance = 1 */
-    if (!RAND_DRBG_generate(drbg, out,  t->expectedlen, prediction_resistance,
-                            t->entropyaddin2, t->entropyaddin2len))
+    if (!EVP_RAND_generate(drbg, out, t->expectedlen, strength,
+                           prediction_resistance,
+                           t->entropyaddin2, t->entropyaddin2len))
         goto err;
 
     OSSL_SELF_TEST_oncorrupt_byte(st, out);
@@ -327,17 +326,18 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
     if (memcmp(out, t->expected, t->expectedlen) != 0)
         goto err;
 
-    if (!RAND_DRBG_uninstantiate(drbg))
+    if (!EVP_RAND_uninstantiate(drbg))
         goto err;
     /*
      * Check that the DRBG data has been zeroized after RAND_DRBG_uninstantiate.
      */
-    if (memcmp((unsigned char *)&drbg->data, zero, sizeof(drbg->data)) != 0)
+    if (!EVP_RAND_verify_zeroization(drbg))
         goto err;
 
     ret = 1;
 err:
-    RAND_DRBG_free(drbg);
+    EVP_RAND_CTX_free(drbg);
+    EVP_RAND_CTX_free(test);
     OSSL_SELF_TEST_onend(st, ret);
     return ret;
 }

@@ -152,6 +152,8 @@ int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *data);
 
 void *RAND_DRBG_get_callback_data(RAND_DRBG *drbg);
 
+int RAND_DRBG_verify_zeroization(RAND_DRBG *drbg);
+
 # ifdef  __cplusplus
 }
 # endif
