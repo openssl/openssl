@@ -60,7 +60,8 @@ typedef struct st_kat_kdf_st {
 typedef struct st_kat_drbg_st {
     const char *desc;
     const char *algorithm;
-    int nid;
+    const char *param_name;
+    char *param_value;
     const unsigned char *entropyin;
     size_t entropyinlen;
     const unsigned char *nonce;
@@ -458,8 +459,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
 {
     {
         OSSL_SELF_TEST_DESC_DRBG_HASH,
-        "SHA256",
-        NID_sha256,
+        "HASH-DRBG", "digest", "SHA256",
         ITM(drbg_hash_sha256_pr_entropyin),
         ITM(drbg_hash_sha256_pr_nonce),
         ITM(drbg_hash_sha256_pr_persstr),
@@ -471,8 +471,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
     },
     {
         OSSL_SELF_TEST_DESC_DRBG_CTR,
-        "AES-128",
-        NID_aes_128_ctr,
+        "CTR-DRBG", "cipher", "AES-128-CTR",
         ITM(drbg_ctr_aes128_pr_df_entropyin),
         ITM(drbg_ctr_aes128_pr_df_nonce),
         ITM(drbg_ctr_aes128_pr_df_persstr),
@@ -484,8 +483,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
     },
     {
         OSSL_SELF_TEST_DESC_DRBG_HMAC,
-        "SHA1",
-        NID_sha1,
+        "HMAC-DRBG", "digest", "SHA1",
         ITM(drbg_hmac_sha1_pr_entropyin),
         ITM(drbg_hmac_sha1_pr_nonce),
         ITM(drbg_hmac_sha1_pr_persstr),
