@@ -1599,8 +1599,26 @@ int s_client_main(int argc, char **argv)
         goto opthelp;
     }
 #endif
+
+    if (connectstr != NULL) {
+        int res = 0;
+        char *tmp_host = host, *tmp_port = port;
+            res = BIO_parse_hostserv(connectstr, &host, &port,
+                                     BIO_PARSE_PRIO_HOST);
+        if (tmp_host != host)
+            OPENSSL_free(tmp_host);
+        if (tmp_port != port)
+            OPENSSL_free(tmp_port);
+        if (!res) {
+            BIO_printf(bio_err,
+                       "%s: -connect argument or target parameter malformed or ambiguous\n",
+                       prog);
+            goto end;
+        }
+    }
+
     if (proxystr != NULL) {
-        int res;
+        int res = 0;
         char *tmp_host = host, *tmp_port = port;
         if (connectstr == NULL) {
             BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
@@ -1614,22 +1632,6 @@ int s_client_main(int argc, char **argv)
         if (!res) {
             BIO_printf(bio_err,
                        "%s: -proxy argument malformed or ambiguous\n", prog);
-            goto end;
-        }
-    } else {
-        int res = 1;
-        char *tmp_host = host, *tmp_port = port;
-        if (connectstr != NULL)
-            res = BIO_parse_hostserv(connectstr, &host, &port,
-                                     BIO_PARSE_PRIO_HOST);
-        if (tmp_host != host)
-            OPENSSL_free(tmp_host);
-        if (tmp_port != port)
-            OPENSSL_free(tmp_port);
-        if (!res) {
-            BIO_printf(bio_err,
-                       "%s: -connect argument or target parameter malformed or ambiguous\n",
-                       prog);
             goto end;
         }
     }
@@ -2389,9 +2391,19 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_CONNECT:
-        if (!OSSL_HTTP_proxy_connect(sbio, host, port, proxyuser, proxypass,
-                                     0 /* no timeout */, bio_err, prog))
-            goto shut;
+	{
+	    /* Need to parse the actual connect target now */
+            char *thost, *tport;
+            /* connectstr was already validated, so we can assume success below */
+            BIO_parse_hostserv(connectstr, &thost, &tport,
+                                         BIO_PARSE_PRIO_HOST);
+
+            if (!OSSL_HTTP_proxy_connect(sbio, thost, tport, proxyuser, proxypass,
+                                         0 /* no timeout */, bio_err, prog))
+                goto shut;
+            OPENSSL_free(thost);
+            OPENSSL_free(tport);
+        }
         break;
     case PROTO_IRC:
         {
