@@ -2221,7 +2221,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
     if (!set_name(opt_recipient, OSSL_CMP_CTX_set1_recipient, ctx, "recipient")
             || !set_name(opt_expect_sender, OSSL_CMP_CTX_set1_expected_sender,
                          ctx, "expected sender"))
-        goto oom;
+        goto err;
 
     if (opt_geninfo != NULL && !handle_opt_geninfo(ctx))
         goto err;
