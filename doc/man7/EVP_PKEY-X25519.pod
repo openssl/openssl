@@ -34,6 +34,11 @@ The public key value.
 
 The private key value.
 
+=item "tls-encoded-pt" (B<OSSL_PKEY_PARAM_TLS_ENCODED_PT>) <octet string>
+
+Used for getting and setting the encoding of the public key used in a key exchange
+message for the TLS protocol.
+
 =back
 
 =head2 ED25519 and ED448 parameters

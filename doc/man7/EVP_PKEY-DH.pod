@@ -54,6 +54,11 @@ validation is required. The default value is 2.
 These are not named safe prime groups so setting this value for the OpenSSL FIPS
 provider will instead choose a named safe prime group based on the size of I<p>.
 
+=item "tls-encoded-pt" (B<OSSL_PKEY_PARAM_TLS_ENCODED_PT>) <octet string>
+
+Used for getting and setting the encoding of the DH public key used in a key
+exchange message for the TLS protocol.
+
 =back
 
 =head2 DH domain parameter / key generation parameters

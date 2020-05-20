@@ -438,7 +438,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
         return dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2);
+        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2, 0, 1);
     default:
         return -2;
     }

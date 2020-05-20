@@ -32,3 +32,6 @@ int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret);
 int dh_check_pairwise(DH *dh);
 
 const DH_METHOD *dh_get_method(const DH *dh);
+
+int dh_buf2key(DH *key, const unsigned char *buf, size_t len);
+size_t dh_key2buf(const DH *dh, unsigned char **pbuf, size_t size, int alloc);

@@ -39,6 +39,11 @@ The public key value in EC point format.
 
 The private key value.
 
+=item "tls-encoded-pt" (B<OSSL_PKEY_PARAM_TLS_ENCODED_PT>) <octet string>
+
+Used for getting and setting the encoding of the EC public key used in key
+exchange message for the TLS protocol.
+
 =back
 
 =head1 EXAMPLES
