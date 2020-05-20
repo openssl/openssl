@@ -1604,8 +1604,8 @@ int s_client_main(int argc, char **argv)
     if (connectstr != NULL) {
         int res = 0;
         char *tmp_host = host, *tmp_port = port;
-            res = BIO_parse_hostserv(connectstr, &host, &port,
-                                     BIO_PARSE_PRIO_HOST);
+
+        res = BIO_parse_hostserv(connectstr, &host, &port, BIO_PARSE_PRIO_HOST);
         if (tmp_host != host)
             OPENSSL_free(tmp_host);
         if (tmp_port != port)
@@ -1621,6 +1621,7 @@ int s_client_main(int argc, char **argv)
     if (proxystr != NULL) {
         int res = 0;
         char *tmp_host = host, *tmp_port = port;
+
         if (connectstr == NULL) {
             BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
             goto opthelp;
@@ -1629,6 +1630,10 @@ int s_client_main(int argc, char **argv)
         /* Retain the original target host:port for use in the HTTP proxy connect string */
         thost=OPENSSL_strdup(host);
         tport=OPENSSL_strdup(port);
+        if (thost == NULL || tport == NULL) {
+            BIO_printf(bio_err, "%s: out of memory\n", prog);
+            goto end;
+        }
 
         res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
         if (tmp_host != host)
@@ -2397,12 +2402,10 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_CONNECT:
-	{
-            /* Here we must use the connect string target host & port */
-            if (!OSSL_HTTP_proxy_connect(sbio, thost, tport, proxyuser, proxypass,
-                                         0 /* no timeout */, bio_err, prog))
-                goto shut;
-        }
+        /* Here we must use the connect string target host & port */
+        if (!OSSL_HTTP_proxy_connect(sbio, thost, tport, proxyuser, proxypass,
+                                     0 /* no timeout */, bio_err, prog))
+            goto shut;
         break;
     case PROTO_IRC:
         {
@@ -3149,8 +3152,8 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(bindstr);
     OPENSSL_free(host);
     OPENSSL_free(port);
-    if (thost != NULL) OPENSSL_free(thost);
-    if (tport != NULL) OPENSSL_free(tport);
+    OPENSSL_free(thost);
+    OPENSSL_free(tport);
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
