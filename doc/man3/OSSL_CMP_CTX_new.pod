@@ -391,7 +391,7 @@ as default value for the recipient of CMP requests
 and as default value for the expected sender of CMP responses.
 
 OSSL_CMP_CTX_set1_expected_sender() sets the Distinguished Name (DN)
-expected in the sender field of signature-protected response messages.
+expected in the sender field of CMP response messages.
 Defaults to the subject of the pinned server certificate B<-srvcert>, if any.
 This can be used to make sure that only a particular entity is accepted as
 CMP message signer, and attackers are not able to use arbitrary certificates

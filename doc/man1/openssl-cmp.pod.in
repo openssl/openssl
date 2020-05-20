@@ -521,8 +521,7 @@ as far as any of those is present, else the NULL-DN as last resort.
 
 =item B<-expect_sender> I<name>
 
-Distinguished Name (DN)
-expected in the sender field of signature-protected response messages.
+Distinguished Name (DN) expected in the sender field of CMP response messages.
 Defaults to the subject DN of the pinned B<-srvcert>, if any.
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>,

@@ -567,6 +567,25 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         return 0;
     }
 
+    /* validate sender name of received msg */
+    if (msg->header->sender->type != GEN_DIRNAME) {
+        CMPerr(0, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
+        return 0; /* TODO FR#42: support for more than X509_NAME */
+    }
+    /*
+     * Compare actual sender name of response with expected sender name.
+     * Mitigates risk to accept misused PBM secret
+     * or misused certificate of an unauthorized entity of a trusted hierarchy.
+     */
+    expected_sender = ctx->expected_sender;
+    if (expected_sender == NULL && ctx->srvCert != NULL)
+        expected_sender = X509_get_subject_name(ctx->srvCert);
+    if (!check_name(ctx, "sender DN field",
+                    msg->header->sender->d.directoryName,
+                    "expected sender", expected_sender))
+        return 0;
+    /* Note: if recipient was NULL-DN it could be learned here if needed */
+
     if ((alg = msg->header->protectionAlg) == NULL /* unprotected message */
             || msg->protection == NULL || msg->protection->data == NULL) {
         CMPerr(0, CMP_R_MISSING_PROTECTION);
@@ -632,26 +651,6 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
             break;
         }
-        /* validate sender name of received msg */
-        if (msg->header->sender->type != GEN_DIRNAME) {
-            CMPerr(0, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
-            break; /* FR#42: support for more than X509_NAME */
-        }
-        /*
-         * Compare actual sender name of response with expected sender name.
-         * Expected name can be set explicitly or the subject of ctx->srvCert.
-         * Mitigates risk to accept misused certificate of an unauthorized
-         * entity of a trusted hierarchy.
-         */
-        expected_sender = ctx->expected_sender;
-        if (expected_sender == NULL && ctx->srvCert != NULL)
-            expected_sender = X509_get_subject_name(ctx->srvCert);
-        if (!check_name(ctx, "sender DN field",
-                        msg->header->sender->d.directoryName,
-                        "expected sender", expected_sender))
-            break;
-        /* Note: if recipient was NULL-DN it could be learned here if needed */
-
         scrt = ctx->srvCert;
         if (scrt == NULL) {
             if (check_msg_find_cert(ctx, msg))
