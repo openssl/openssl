@@ -504,6 +504,20 @@ int ec_get_params(void *key, OSSL_PARAM params[])
         if (!OSSL_PARAM_set_int(p, ecdh_cofactor_mode))
             return 0;
     }
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
+        BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
+
+        if (ctx == NULL)
+            return 0;
+        p->return_size = EC_POINT_point2oct(EC_KEY_get0_group(key),
+                                            EC_KEY_get0_public_key(key),
+                                            POINT_CONVERSION_UNCOMPRESSED,
+                                            p->data, p->return_size, ctx);
+        BN_CTX_free(ctx);
+        if (p->return_size == 0)
+            return 0;
+    }
+
     ret = domparams_to_params(eck, NULL, params)
           && key_to_params(eck, NULL, params, 1, &pub_key)
           && otherparams_to_params(eck, NULL, params);
@@ -515,6 +529,7 @@ static const OSSL_PARAM ec_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
     EC_IMEXPORTABLE_DOM_PARAMETERS,
     EC_IMEXPORTABLE_PUBLIC_KEY,
     EC_IMEXPORTABLE_PRIVATE_KEY,
@@ -530,6 +545,7 @@ const OSSL_PARAM *ec_gettable_params(void)
 
 static const OSSL_PARAM ec_known_settable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -543,6 +559,21 @@ static
 int ec_set_params(void *key, const OSSL_PARAM params[])
 {
     EC_KEY *eck = key;
+    const OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
+    if (p != NULL) {
+        BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
+        int ret = 1;
+
+        if (ctx == NULL
+                || p->data_type != OSSL_PARAM_OCTET_STRING
+                || !EC_KEY_oct2key(key, p->data, p->data_size, ctx))
+            ret = 0;
+        BN_CTX_free(ctx);
+        if (!ret)
+            return 0;
+    }
 
     return ec_key_otherparams_fromdata(eck, params);
 }

@@ -1215,6 +1215,18 @@ int EVP_PKEY_supports_digest_nid(EVP_PKEY *pkey, int nid)
 int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
                                const unsigned char *pt, size_t ptlen)
 {
+    if (pkey->ameth == NULL) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        if (pkey->keymgmt == NULL || pkey->keydata == NULL)
+            return 0;
+
+        params[0] =
+            OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT,
+                                              (unsigned char *)pt, ptlen);
+        return evp_keymgmt_set_params(pkey->keymgmt, pkey->keydata, params);
+    }
+
     if (ptlen > INT_MAX)
         return 0;
     if (evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SET1_TLS_ENCPT, ptlen,
@@ -1226,6 +1238,33 @@ int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
 size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
 {
     int rv;
+
+    if (pkey->ameth == NULL) {
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+        if (pkey->keymgmt == NULL || pkey->keydata == NULL)
+            return 0;
+
+        params[0] =
+            OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT,
+                                              NULL, 0);
+        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+            return 0;
+
+        *ppt = OPENSSL_malloc(params[0].return_size);
+        if (*ppt == NULL)
+            return 0;
+
+        params[0] =
+            OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT,
+                                              *ppt, params[0].return_size);
+        if (!evp_keymgmt_get_params(pkey->keymgmt, pkey->keydata, params))
+            return 0;
+
+        return params[0].return_size;
+    }
+
+
     rv = evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_GET1_TLS_ENCPT, 0, ppt);
     if (rv <= 0)
         return 0;
