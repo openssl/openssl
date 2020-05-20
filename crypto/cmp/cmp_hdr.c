@@ -300,11 +300,12 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         return 0;
 
     /*
-     * The sender name is copied from the subject of the client cert, if any,
-     * or else from the subject name provided for certification requests.
+     * If neither protection cert nor oldCert nor subject are given,
+     * sender name is not known to the client and thus set to NULL-DN
      */
-    sender = ctx->cert != NULL ?
-        X509_get_subject_name(ctx->cert) : ctx->subjectName;
+    sender = ctx->cert != NULL ? X509_get_subject_name(ctx->cert) :
+        ctx->oldCert != NULL ? X509_get_subject_name(ctx->oldCert) :
+        ctx->subjectName;
     if (!ossl_cmp_hdr_set1_sender(hdr, sender))
         return 0;
 
