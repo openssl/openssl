@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <string.h>
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
@@ -66,6 +67,7 @@ static OSSL_OP_keymgmt_export_types_fn ecx_imexport_types;
 struct ecx_gen_ctx {
     OPENSSL_CTX *libctx;
     ECX_KEY_TYPE type;
+    int selection;
 };
 
 #ifdef S390X_EC_ASM
@@ -404,12 +406,10 @@ static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct ecx_gen_ctx *gctx = NULL;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
-        return NULL;
-
     if ((gctx = OPENSSL_malloc(sizeof(*gctx))) != NULL) {
         gctx->libctx = libctx;
         gctx->type = type;
+        gctx->selection = selection;
     }
     return gctx;
 }
@@ -434,6 +434,54 @@ static void *ed448_gen_init(void *provctx, int selection)
     return ecx_gen_init(provctx, selection, ECX_KEY_TYPE_ED448);
 }
 
+static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
+{
+    struct ecx_gen_ctx *gctx = genctx;
+    const OSSL_PARAM *p;
+
+    if (gctx == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
+    if (p != NULL) {
+        const char *groupname = NULL;
+
+        /*
+         * We optionally allow setting a group name - but each algorithm only
+         * support one such name, so all we do is verify that it is the one we
+         * expected.
+         */
+        switch (gctx->type) {
+            case ECX_KEY_TYPE_X25519:
+                groupname = "x25519";
+                break;
+            case ECX_KEY_TYPE_X448:
+                groupname = "x448";
+                break;
+            default:
+                /* We only support this for key exchange at the moment */
+                break;
+        }
+        if (p->data_type != OSSL_PARAM_UTF8_STRING
+                || groupname == NULL
+                || strcmp(p->data, groupname) != 0) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+static const OSSL_PARAM *ecx_gen_settable_params(void *provctx)
+{
+    static OSSL_PARAM settable[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
+        OSSL_PARAM_END
+    };
+    return settable;
+}
+
 static void *ecx_gen(struct ecx_gen_ctx *gctx)
 {
     ECX_KEY *key;
@@ -445,6 +493,11 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
+
+    /* If we're doing parameter generation then we just return a blank key */
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return key;
+
     if ((privkey = ecx_key_allocate_privkey(key)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -472,6 +525,7 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
             goto err;
         break;
     }
+    key->haspubkey = 1;
     return key;
 err:
     ecx_key_free(key);
@@ -548,6 +602,9 @@ static void ecx_gen_cleanup(void *genctx)
         { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ecx_export }, \
         { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ecx_imexport_types }, \
         { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))alg##_gen_init }, \
+        { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ecx_gen_set_params }, \
+        { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS, \
+          (void (*)(void))ecx_gen_settable_params }, \
         { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))alg##_gen }, \
         { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ecx_gen_cleanup }, \
         { 0, NULL } \
@@ -576,6 +633,10 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
+    /* If we're doing parameter generation then we just return a blank key */
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return key;
+
     pubkey = key->pubkey;
 
     privkey = ecx_key_allocate_privkey(key);
@@ -593,6 +654,7 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
 
     if (s390x_x25519_mul(pubkey, generator, privkey) != 1)
         goto err;
+    key->haspubkey = 1;
     return key;
  err:
     ecx_key_free(key);
@@ -616,6 +678,10 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
+    /* If we're doing parameter generation then we just return a blank key */
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return key;
+
     pubkey = key->pubkey;
 
     privkey = ecx_key_allocate_privkey(key);
@@ -632,6 +698,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
 
     if (s390x_x448_mul(pubkey, generator, privkey) != 1)
         goto err;
+    key->haspubkey = 1;
     return key;
  err:
     ecx_key_free(key);
@@ -662,6 +729,10 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
         goto err;
     }
 
+    /* If we're doing parameter generation then we just return a blank key */
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return key;
+
     pubkey = key->pubkey;
 
     privkey = ecx_key_allocate_privkey(key);
@@ -690,6 +761,7 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
         goto err;
 
     pubkey[31] |= ((x_dst[0] & 0x01) << 7);
+    key->haspubkey = 1;
     return key;
  err:
     ecx_key_free(key);
@@ -722,6 +794,10 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
+
+    /* If we're doing parameter generation then we just return a blank key */
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return key;
 
     pubkey = key->pubkey;
 
@@ -758,6 +834,7 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
     pubkey[56] |= ((x_dst[0] & 0x01) << 7);
     EVP_MD_CTX_free(hashctx);
     EVP_MD_free(shake);
+    key->haspubkey = 1;
     return key;
  err:
     ecx_key_free(key);
