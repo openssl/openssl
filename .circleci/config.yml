@@ -29,7 +29,8 @@ localCheckout: &localCheckout
         command: .circleci/git_no_checkin_in_last_day.sh || (env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" make test)
     - run:
         name: Run OQS connection and CMS tests
-        command: .circleci/git_no_checkin_in_last_day.sh || (env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=8 oqs-test/test_conn_full.py oqs-test/test_cms.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
+        # TODO: Add psutil to CI images.
+        command: .circleci/git_no_checkin_in_last_day.sh || (apt install python3-psutil && env LD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
     - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
         path: oqs-test/tmp/test-results
 
@@ -44,7 +45,7 @@ localCheckout: &localCheckout
               .circleci/git_no_checkin_in_last_day.sh || (
               brew unlink python@2 &&
               brew install cmake ninja &&
-              pip3 install --user pytest pytest-xdist
+              pip3 install --user pytest pytest-xdist psutil
               )
         - run:
             name: Clone liboqs
@@ -57,7 +58,7 @@ localCheckout: &localCheckout
             command: .circleci/git_no_checkin_in_last_day.sh || (./Configure ${OPENSSL_LIBTYPE} darwin64-x86_64-cc no-tests && make -j3)
         - run:
             name: Run connection and CMS tests
-            command: .circleci/git_no_checkin_in_last_day.sh || (env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=4 oqs-test/test_conn_full.py oqs-test/test_cms.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
+            command: .circleci/git_no_checkin_in_last_day.sh || (env DYLD_LIBRARY_PATH="$(pwd):$(pwd)/oqs/lib" python3 -m pytest --numprocesses=auto oqs-test/test_tls_full.py oqs-test/test_cms.py --junitxml=oqs-test/tmp/test-results/pytest/test-results.xml)
         - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
             path: oqs-test/tmp/test-results
 

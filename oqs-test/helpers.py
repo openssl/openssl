@@ -1,6 +1,8 @@
 import os
 import subprocess
-from pathlib import Path
+import pathlib
+import psutil
+import time
 
 def run_subprocess(command, working_dir='.', expected_returncode=0, input=None):
     """
@@ -24,25 +26,29 @@ def run_subprocess(command, working_dir='.', expected_returncode=0, input=None):
         assert False, "Got unexpected return code {}".format(result.returncode)
     return result.stdout.decode('utf-8')
 
-def start_ossl_server(ossl, test_artifacts_dir, sig_alg, worker_id):
+def start_server(ossl, test_artifacts_dir, sig_alg, worker_id):
     command = [ossl, 's_server',
                       '-cert', os.path.join(test_artifacts_dir, '{}_{}_srv.crt'.format(worker_id, sig_alg)),
                       '-key', os.path.join(test_artifacts_dir, '{}_{}_srv.key'.format(worker_id, sig_alg)),
                       '-CAfile', os.path.join(test_artifacts_dir, '{}_{}_CA.crt'.format(worker_id, sig_alg)),
                       '-tls1_3',
                       '-quiet',
-                      '-accept', str(44433 + worker_id_to_num(worker_id))]
-    print(" > " + " ".join(command))
-    return subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                      # On UNIX-like systems, binding to TCP port 0
+                      # is a request to dynamically generate an unused
+                      # port number.
+                      # TODO: Check if Windows behaves similarly
+                      '-accept', '0']
 
-def worker_id_to_num(worker_id):
-    if worker_id == 'master':
-        return 0
-    else: # pytest-xdist labels workers as gw[n] for some n
-        return int(worker_id[2:])
+    print(" > " + " ".join(command))
+    s_server = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    time.sleep(1)
+
+    # Find and return the port that s_server is bound to.
+    s_server_info = psutil.Process(s_server.pid).connections()[0]
+    return s_server, s_server_info.laddr.port
 
 def gen_keys(ossl, ossl_config, sig_alg, test_artifacts_dir, filename_prefix):
-    Path(test_artifacts_dir).mkdir(parents=True, exist_ok=True)
+    pathlib.Path(test_artifacts_dir).mkdir(parents=True, exist_ok=True)
     if sig_alg == 'ecdsap256':
         run_subprocess([ossl, 'ecparam',
                               '-name', 'prime256v1',

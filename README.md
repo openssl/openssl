@@ -16,7 +16,12 @@ OQS-OpenSSL\_1\_1\_1 is a fork of OpenSSL 1.1.1 that adds quantum-safe key excha
     * [Linux and macOS](#linux-and-macOS)
     * [Windows](#windows)
     * [Cross-compiling for Windows on Linux](#cross-compiling-for-windows-on-linux)
+    * [Build Options](#build-options)
   * [Running](#running)
+    * [TLS demo](#tls-demo)
+    * [CMS demo](#cms-demo)
+    * [Performance testing](#performance-testing)
+    * [Integration testing](#integration-testing)
 - [Third Party Integrations](#third-party-integrations)
 - [Contributing](#contributing)
 - [License](#license)
@@ -25,11 +30,13 @@ OQS-OpenSSL\_1\_1\_1 is a fork of OpenSSL 1.1.1 that adds quantum-safe key excha
 
 ## Overview
 
-**liboqs** is an open source C library for [quantum-resistant cryptographic](#terminology) algorithms. See [here](https://github.com/open-quantum-safe/liboqs/) for more information.
+**liboqs** is an open source C library for quantum-resistant cryptographic algorithms. See [here](https://github.com/open-quantum-safe/liboqs/) for more information.
 
 **OQS-OpenSSL\_1\_1\_1-stable** is a fork that integrates liboqs into OpenSSL 1.1.1.  The goal of this integration is to provide easy prototyping of quantum-safe cryptography in the TLS 1.3 protocol. (For TLS 1.2, see the [OQS-OpenSSL\_1\_0\_2-stable](https://github.com/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_0_2-stable) branch.)
 
-Both liboqs and this fork are part of the **Open Quantum Safe (OQS) project**, which aims to develop and prototype [quantum-safe cryptography (QSC)](#terminology) . More information about the project can be found [here](https://openquantumsafe.org/).
+Both liboqs and this fork are part of the **Open Quantum Safe (OQS) project**, which aims to develop and prototype quantum-safe cryptography (QSC). More information about the project can be found [here](https://openquantumsafe.org/).
+
+Note that, referencing the terminology defined by [ETSI](https://www.etsi.org/technologies/quantum-safe-cryptography) and [CSA](https://downloads.cloudsecurityalliance.org/assets/research/quantum-safe-security/applied-quantum-safe-security.pdf), the terms "post-quantum cryptography" (PQC), "quantum-safe cryptography" (QSC) and "quantum-resistant cryptography" (QRC) all refer to the same class of cryptographic algorithms that is made available for use via this fork.
 
 ## Status
 
@@ -50,6 +57,7 @@ For more information, see the [release notes](RELEASE.md).
 liboqs and our integration into OpenSSL is provided "as is", without warranty of any kind.  See the [LICENSE](https://github.com/open-quantum-safe/liboqs/blob/master/LICENSE.txt) for the full disclaimer.
 
 ### Limitations and security
+
 As research advances, the supported algorithms may see rapid changes in their security, and may even prove insecure against both classical and quantum computers.
 
 We believe that the NIST Post-Quantum Cryptography standardization project is currently the best avenue to identifying potentially quantum-resistant algorithms, and strongly recommend that applications and protocols rely on the outcomes of the NIST standardization project when deploying quantum-safe cryptography.
@@ -192,7 +200,7 @@ Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choos
 
 	git clone --branch OQS-OpenSSL_1_1_1-stable https://github.com/open-quantum-safe/openssl.git <OPENSSL_DIR>
 
-#### Step 1: 	Build and install liboqs
+#### Step 1: Build and install liboqs
 
 	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
 	cd liboqs
@@ -216,11 +224,12 @@ The fork can also be built as a set of shared libraries by specifying `shared` i
 
 ##### Default algorithms announced
 
-By default, this OpenSSL is built to only announce 128-bit strength QSC hybrid KEM algorithms in the initial TLS handshake (EC groups announced extension). This algorithm set can be changed to an arbitrary desired mix at build time by setting the variable `OQS_DEFAULT_GROUPS` to a colon-separated list of [KEM algorithms supported](#key-exchange), e.g., running 
+By default, the fork is built to only announce 128-bit strength QSC hybrid KEM algorithms in the initial TLS handshake (using the EC groups announced extension). This algorithm set can be changed to an arbitrary collection at build time by setting the variable `OQS_DEFAULT_GROUPS` to a colon-separated list of [KEM algorithms supported](#key-exchange), e.g., by running
 ```
 ./Configure no-shared linux-x86_64 -DOQS_DEFAULT_GROUPS=\"p256_kyber768:X25519:newhope1024cca\" -lm
 ```
-This is the same syntax that can be used at runtime to select the announced algorithms (by setting the `-curves` parameter with clients supporting this option, e.g., `openssl s_client` or `openssl s_server`). 
+
+The announced algorithms can also be modified at runtime by setting the `-curves` or `-groups` parameter with programs supporting this option (e.g., `openssl s_client` or `openssl s_server`) or by using the `SSL_CTX_set1_groups_list` API call.
 
 ### Running
 
@@ -256,28 +265,13 @@ To run a basic TLS server with all libOQS ciphersuites enabled, run the followin
 
 In another terminal window, you can run a TLS client requesting one of the supported ciphersuites (`<KEX>` = one of the quantum-safe or hybrid key exchange algorithms listed in the [Supported Algorithms section above](#key-exchange):
 
-	apps/openssl s_client -groups <KEX> -CAfile <SIG>_CA.crt 
-
-#### Performance testing
-
-In order to do TLS-level end-to-end performance testing, one can run "empty" TLS handshakes via the standard `openssl s_time` command. In order to suitably trigger this with an OQS KEM/SIG pair of choice, one can follow all steps outlined above to obtain an OQS-signed server certificate. As the `openssl s_time` command does not permit selection of suitable groups --which are used to encode the OQS-KEM--, you have to exchange the two last commands in the description above as follows to facilitate timed OQS-TLS handshake performance testing (exchanging SERVER and KEX variables as per the instructions above):
-
-	apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3 -groups <KEX>
-
-and
-
-	apps/openssl s_time 
-
-##### Performance testing simplified
-
-If you don't want to build all components but just want to do comparative QSC as well as "classic crypto" TLS handshake performance testing a [docker-based performance test environment is available in the `oqs-demos` subproject](https://github.com/open-quantum-safe/oqs-demos/tree/master/curl#performance-testing).
-
+	apps/openssl s_client -groups <KEX> -CAfile <SIG>_CA.crt
 
 #### CMS demo
 
-OpenSSL has facilities to perform signing operations pursuant [RFC 5652](https://datatracker.ietf.org/doc/rfc5652). This can now be used to demonstrate data or code signing utilizing quantum-safe algorithms. 
+OpenSSL has facilities to perform signing operations pursuant to [RFC 5652](https://datatracker.ietf.org/doc/rfc5652). Our fork can be used to perform such operations with QSC algorithms.
 
-Building on the artifacts created in the TLS setup above (CA and server certificate creation using a specific (QS) SIG algorithm), the following command can be used to generate a (QS-)signed file from some inputfile:
+Building on the artifacts created in the TLS setup above (CA and server certificate creation using a specific (QS) SIG algorithm), the following command can be used to generate a (QS-)signed file from some input file:
 
 	apps/openssl cms -in inputfile -sign -signer <SIG>_srv.crt -inkey <SIG>_srv.key -nodetach -outform pem -binary -out signedfile.cms 
 
@@ -285,21 +279,71 @@ This command can be used to verify (and extract the contents) of the CMS file re
 
 	apps/openssl cms -verify -CAfile <SIG>_CA.crt -inform pem -in signedfile.cms -crlfeol -out signeddatafile
 
-It would be expected that the contents of `inputfile` and the resultant `signeddatafile` are the same.
+The contents of `inputfile` and the resultant `signeddatafile` should be the same.
 
-#### Speed
+#### Performance testing
 
-OpenSSL has facilities to perform pure speed tests of the cryptographic algorithms supported. This can now also be used to compare relative performance of OQS algorithms.
+##### TLS end-to-end testing
 
-This command can be used to determine the speed of all KEM algorithms supported by the underlying `liboqs`:
+"Empty" TLS handshakes can be performance tested via the standard `openssl s_time` command. In order to suitably trigger this with an OQS KEM/SIG pair of choice, first follow all steps outlined in the [TLS demo](#tls-demo) section to obtain an OQS-algorithm-signed server certificate. You can then run the performance test in one of two ways:
+
+- Start the server with the desired certificate and key exchange algorithm as follows (`<SERVER>` and `<KEX>` are defined in the [TLS demo](#tls-demo) section above):
+
+```
+apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3 -groups <KEX>
+```
+
+Then run `apps/openssl s_time`
+
+- Start the server with the desired certificate:
+
+```
+apps/openssl s_server -cert <SERVER>.crt -key <SERVER>.key -www -tls1_3
+```
+
+and specify the key-exchange algorithm through `s_time` using `apps/openssl s_time -curves <KEX>`.
+
+##### Algorithm speed testing
+
+OpenSSL also has facilities to perform pure speed tests of the cryptographic algorithms supported. This can be used to compare the relative performance of OQS algorithms.
+
+To measure the speed of all KEM algorithms supported by the underlying `liboqs`:
 
 	apps/openssl speed oqskem
 
-This command can be used to determine the speed of all OQS signature algorithms supported by OQS-openssl:
+Similarly, to measure the speed of all OQS signature algorithms:
 
 	apps/openssl speed oqssig
 
-As with standard OpenSSL one can also pass the specific algorithm name to be tested, e.g., `apps/openssl speed dilithium2`.
+As with standard OpenSSL, one can also pass a particular algorithm name to be tested, e.g., `apps/openssl speed dilithium2`.
+
+##### Docker images
+
+If you don't want to build all components but just want to do comparative QSC as well as "classic crypto" TLS handshake performance testing a [docker-based performance test environment is available in the `oqs-demos` subproject](https://github.com/open-quantum-safe/oqs-demos/tree/master/curl#performance-testing).
+
+#### Integration testing
+
+We have various `pytest` test suites for the TLS and CMS functionalities:
+
+- A "basic" TLS test suite, which sets the server signature algorithm to `oqs_sig_default` and establishes a TLS connection for each key-exchange algorithm, and which subsequently sets server key-exchange algorithm to `oqs_kem_default` and establishes a TLS connection for each signature algorithm, can be run by executing the following command in the source root directory:
+
+```
+python3 -m pytest oqs-test/test_tls_basic.py
+```
+
+- A "full" TLS test suite, which tests TLS connections for all possible pairs of signature and key-exchange algorithms and can be run by executing the following command in the source root directory:
+
+```
+python3 -m pytest oqs-test/test_tls_full.py
+```
+
+- A CMS test suite, which tests the CMS functionality for all signature algorithms and can be run by executing the following command in the source root directory:
+
+```
+python3 -m pytest oqs-test/test_cms.py
+```
+
+Note that all the above test suites can be parallelized using `pytest-xdist`'s `--numprocesses` option.
 
 
 ## Third Party Integrations
@@ -325,10 +369,6 @@ Contributors to OQS-OpenSSL\_1\_1\_1 include:
 - Douglas Stebila (University of Waterloo)
 - Goutam Tamvada (University of Waterloo)
 - Michael Baentsch (IBM Research Zurich)
-
-## Terminology
-
-Referencing the terminology defined by [ETSI](https://www.etsi.org/technologies/quantum-safe-cryptography) and [CSA](https://downloads.cloudsecurityalliance.org/assets/research/quantum-safe-security/applied-quantum-safe-security.pdf) the terms "post-quantum cryptography" (PQC), "quantum-safe cryptography" (QSC) or "quantum-resistant cryptography" (QRC) are meant to mean the same class of cryptographic algorithms made available for use via this project.
 
 ## Acknowledgments
 
