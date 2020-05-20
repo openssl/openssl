@@ -195,7 +195,7 @@ extern "C" {
 #define OSSL_PKEY_PARAM_MGF1_DIGEST         "mgf1-digest"
 #define OSSL_PKEY_PARAM_MGF1_PROPERTIES     "mgf1-properties"
 #define OSSL_PKEY_PARAM_TLS_ENCODED_PT      "tls-encoded-pt"
-#define OSSL_PKEY_PARAM_GROUP_NAME          "group-name"
+#define OSSL_PKEY_PARAM_GROUP_NAME          "group"
 
 /* Diffie-Hellman/DSA public/private key */
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
@@ -218,7 +218,6 @@ extern "C" {
 #define OSSL_FFC_PARAM_VALIDATE_PQG         "validate-pqg"
 
 /* Diffie-Hellman params */
-#define OSSL_PKEY_PARAM_DH_GROUP            "group"
 #define OSSL_PKEY_PARAM_DH_GENERATOR        "safeprime-generator"
 #define OSSL_PKEY_PARAM_DH_PRIV_LEN         "priv_len"
 
