@@ -29,7 +29,7 @@ implementation supports the following:
 
 =over 4
 
-=item "group" (B<OSSL_PKEY_PARAM_DH_GROUP>) <UTF8 string>
+=item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <UTF8 string>
 
 Set or gets a string that associates a B<DH> named safe prime group with known
 values for I<p>, I<q> and I<g>.
