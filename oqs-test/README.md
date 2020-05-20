@@ -1,43 +1,63 @@
 OQS-OpenSSL Integration Testing
 ===============================
 
-[![CircleCI](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable.svg?style=svg)](https://circleci.com/gh/open-quantum-safe/openssl/tree/OQS-OpenSSL_1_1_1-stable)
+This directory contains test suites for all the OQS-added algorithms. The [README.md file for OQS-OpenSSL fork](https://github.com/open-quantum-safe/openssl#supported-algorithms) lists all supported OQS key exchange and authentication mechanisms.
 
----
+**We can only guarantee the tests work on UNIX-like systems**. We regularly run these tests on macOS 10.14, Debian 10 (Buster) and Ubuntu 18.04 (Bionic).
 
-This directory contains scripts for testing the OQS fork of OpenSSL with liboqs, using all supported algorithms. The [README.md file for the OQS-OpenSSL fork](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README.md) describes the various key exchange and authentication mechanisms supported.
+1. First make sure you have **the necessary dependencies**:
 
-First make sure you have **installed the dependencies** for the target OS as indicated in the [top-level testing README](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/README.md).
 
-Testing on Linux and macOS
---------------------------
+- On **Ubuntu**
 
-The scripts have been tested on macOS 10.14, Debian 10 (Buster) and Ubuntu 18.04 (Bionic).
+```
+sudo apt install python3 python3-pytest python3-pytest-xdist python3-psutil
+```
 
-### Running directly
+- On **macOS**
 
-Run:
+```
+brew install python3
+pip3 install --user pytest pytest-xdist psutil
+```
 
-	cd oqs_test
-	./run.sh
+2. From the project root directory, the following test suites can be executed:
 
-Alternatively, to log the run.sh output while following live, try:
+- The "basic" TLS test suite: This sets the server signature algorithm to `oqs_sig_default` and establishes a TLS connection for each key-exchange algorithm, and which subsequently sets server key-exchange algorithm to `oqs_kem_default` and establishes a TLS connection for each signature algorithm, can be run by executing the following command:
 
-    ./run.sh | tee `date "+%Y%m%d-%Hh%Mm%Ss-openssl.log.txt"`
-	
-### Running using CircleCI
+```
+python3 -m pytest oqs-test/test_tls_basic.py
+```
 
-You can locally run any of the integration tests that CircleCI runs.  First, you need to install CircleCI's local command line interface as indicated in the [installation instructions](https://circleci.com/docs/2.0/local-cli/).  Then:
+- The "full" TLS test suite, which tests TLS connections for all possible pairs of signature and key-exchange algorithms and can be run by executing the following command:
+
+```
+python3 -m pytest oqs-test/test_tls_full.py
+```
+
+- A CMS test suite, which tests the CMS functionality for all signature algorithms and can be run by executing the following command:
+
+```
+python3 -m pytest oqs-test/test_cms.py
+```
+
+Note that all the above test suites can be parallelized using `pytest-xdist`'s `--numprocesses` option.
+
+## Running using CircleCI
+
+You can locally run any of the integration tests that CircleCI runs.  First, you need to install CircleCI's local command line interface as indicated in the [installation instructions](https://circleci.com/docs/2.0/local-cli/). Then:
 
 	circleci local execute --job <jobname>
 
 where `<jobname>` is one of the following:
 
-- `debian-buster-amd64`
-- `ubuntu-bionic-x86_64`
-- `ubuntu-bionic-x86_64-shared`
+- `debian_buster-shared_oqs-static_ossl`
+- `macOS-shared_oqs-shared_ossl`
+- `macOS-static_oqs-static_ossl`
+- `ubuntu_bionic-shared_oqs-shared_ossl`
+- `ubuntu_bionic-static_oqs-static_ossl`
 
-By default, these jobs will use the current Github versions of liboqs and OQS-OpenSSL.  You can override these by passing environment variables to CircleCI:
+By default, these jobs will use the current GitHub versions of liboqs and OQS-OpenSSL.  You can override these by passing environment variables to CircleCI:
 
 	circleci local execute --job <jobname> --env <NAME>=<VALUE> --env <NAME>=<VALUE> ...
 
