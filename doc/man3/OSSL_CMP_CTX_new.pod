@@ -520,7 +520,8 @@ Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
 It must be given for RR, else it defaults to the protection B<cert>.
 The B<reference certificate> determined in this way, if any, is also used for
 deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
-Its issuer, if any, is used as default recipient in the CMP message header.
+Its subject is used as sender in CMP message headers if no protection cert is given.
+Its issuer is used as default recipient in CMP message headers.
 
 OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to be used in P10CR.
 
