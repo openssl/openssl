@@ -450,6 +450,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
         }
     } else {
         int i;
+#ifndef OPENSSL_NO_ENGINE
         ENGINE *curengine = ENGINE_get_first();
 
         while (curengine != NULL) {
@@ -485,6 +486,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
             }
             curengine = ENGINE_get_next(curengine);
         }
+#endif
 
         for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
             EVP_PKEY *tmp_pkey = NULL;
