@@ -921,6 +921,7 @@ int s_client_main(int argc, char **argv)
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
+    char *thost = NULL, *tport = NULL;
     char *port = OPENSSL_strdup(PORT);
     char *bindhost = NULL, *bindport = NULL;
     char *passarg = NULL, *pass = NULL;
@@ -1624,6 +1625,11 @@ int s_client_main(int argc, char **argv)
             BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
             goto opthelp;
         }
+
+        /* Retain the original target host:port for use in the HTTP proxy connect string */
+        thost=OPENSSL_strdup(host);
+        tport=OPENSSL_strdup(port);
+
         res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
         if (tmp_host != host)
             OPENSSL_free(tmp_host);
@@ -2392,17 +2398,10 @@ int s_client_main(int argc, char **argv)
         break;
     case PROTO_CONNECT:
 	{
-	    /* Need to parse the actual connect target now */
-            char *thost, *tport;
-            /* connectstr was already validated, so we can assume success below */
-            BIO_parse_hostserv(connectstr, &thost, &tport,
-                                         BIO_PARSE_PRIO_HOST);
-
+            /* Here we must use the connect string target host & port */
             if (!OSSL_HTTP_proxy_connect(sbio, thost, tport, proxyuser, proxypass,
                                          0 /* no timeout */, bio_err, prog))
                 goto shut;
-            OPENSSL_free(thost);
-            OPENSSL_free(tport);
         }
         break;
     case PROTO_IRC:
@@ -3150,6 +3149,8 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(bindstr);
     OPENSSL_free(host);
     OPENSSL_free(port);
+    if (thost != NULL) OPENSSL_free(thost);
+    if (tport != NULL) OPENSSL_free(tport);
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
