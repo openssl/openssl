@@ -855,7 +855,8 @@ static int test_fromdata_ecx(int tst)
         goto err;
 
     if (!TEST_ptr(copy_pk = EVP_PKEY_new())
-        || !TEST_false(EVP_PKEY_copy_parameters(copy_pk, pk)))
+           /* This should succeed because there are no parameters to copy */
+        || !TEST_true(EVP_PKEY_copy_parameters(copy_pk, pk)))
         goto err;
 
     if (!TEST_true(EVP_PKEY_get_octet_string_param(
