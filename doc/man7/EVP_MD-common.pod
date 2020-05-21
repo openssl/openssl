@@ -7,11 +7,8 @@ EVP_MD-common - The OpenSSL EVP_MD implementations, common things
 =head1 DESCRIPTION
 
 All the OpenSSL EVP_MD implementations understand the following
-L<OSSL_PARAM(3)> entries:
-
-=over 4
-
-Gettable with L<EVP_MD_get_params(3)>:
+L<OSSL_PARAM(3)> entries that are
+gettable with L<EVP_MD_get_params(3)>, as well as these:
 
 =over 4
 
@@ -46,8 +43,6 @@ EVP_MD_FLAG_FIPS isn't relevant any more.
 =end comment
 
 This value can also be retrieved with L<EVP_MD_flags(3)>.
-
-=back
 
 =back
 
