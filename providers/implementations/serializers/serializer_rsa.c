@@ -215,9 +215,9 @@ int ossl_prov_prepare_rsa_params(const void *rsa, int nid,
                     break;
                 }
                 if (!DER_w_RSASSA_PSS_params(&pkt, -1, pss)
-                    || !WPACKET_finish(&pkt))
+                    || !WPACKET_finish(&pkt)
+                    || !WPACKET_get_total_written(&pkt, &str_sz))
                     goto err;
-                WPACKET_get_total_written(&pkt, &str_sz);
                 WPACKET_cleanup(&pkt);
 
                 /*
