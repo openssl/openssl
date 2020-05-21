@@ -101,8 +101,11 @@ static int ecx_has(void *keydata, int selection)
     int ok = 0;
 
     if (key != NULL) {
-        if ((selection & ECX_POSSIBLE_SELECTIONS) != 0)
-            ok = 1;
+        /*
+         * ECX keys always have all the parameters they need (i.e. none).
+         * Therefore we always return with 1, if asked about parameters.
+         */
+        ok = 1;
 
         if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
             ok = ok && key->haspubkey;
