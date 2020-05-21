@@ -43,6 +43,21 @@
 #include <openssl/aes.h>
 #include "aes_local.h"
 
+#if defined(OPENSSL_CPUID_OBJ) && !defined(AES_ASM)
+int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+int aes_set_decrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+void aes_encrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+void aes_decrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+# define AES_set_encrypt_key aes_set_encrypt_key
+# define AES_set_decrypt_key aes_set_decrypt_key
+# define AES_encrypt aes_encrypt
+# define AES_decrypt aes_decrypt
+#endif
+
 #if defined(OPENSSL_AES_CONST_TIME) && !defined(AES_ASM)
 typedef union {
     unsigned char b[8];
