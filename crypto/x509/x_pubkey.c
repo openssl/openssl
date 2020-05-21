@@ -472,3 +472,24 @@ ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
         return NULL;
     return x->cert_info.key->public_key;
 }
+
+/* Returns 1 for equal, 0, for non-equal, < 0 on error */
+int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b)
+{
+    X509_ALGOR *algA, *algB;
+    EVP_PKEY *pA, *pB;
+
+    if (a == b)
+        return 1;
+    if (a == NULL || b == NULL)
+        return 0;
+    if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a) || algA == NULL
+        || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b) || algB == NULL)
+        return -2;
+    if (X509_ALGOR_cmp(algA, algB) != 0)
+        return 0;
+    if ((pA = X509_PUBKEY_get0(a)) == NULL
+        || (pB = X509_PUBKEY_get0(b)) == NULL)
+        return -2;
+    return EVP_PKEY_cmp(pA, pB);
+}

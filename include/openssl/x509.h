@@ -1053,6 +1053,7 @@ int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
 int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                            const unsigned char **pk, int *ppklen,
                            X509_ALGOR **pa, const X509_PUBKEY *pub);
+int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b);
 
 int X509_check_trust(X509 *x, int id, int flags);
 int X509_TRUST_get_count(void);

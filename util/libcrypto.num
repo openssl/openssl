@@ -5094,3 +5094,4 @@ EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name ?	3_0_0	EXIST::FUNCTION:RSA
 OSSL_PROVIDER_do_all                    ?	3_0_0	EXIST::FUNCTION:
+X509_PUBKEY_eq                          ?	3_0_0	EXIST::FUNCTION:

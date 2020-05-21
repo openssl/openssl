@@ -461,25 +461,6 @@ int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
     return 0;
 }
 
-/* returns 0 for equal, -1 for a < b or error on a, 1 for a > b or error on b */
-static int X509_PUBKEY_cmp(X509_PUBKEY *a, X509_PUBKEY *b)
-{
-    X509_ALGOR *algA = NULL, *algB = NULL;
-    int res = 0;
-
-    if (a == b)
-        return 0;
-    if (a == NULL || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a)
-            || algA == NULL)
-        return -1;
-    if (b == NULL || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b)
-            || algB == NULL)
-        return 1;
-    if ((res = X509_ALGOR_cmp(algA, algB)) != 0)
-        return res;
-    return EVP_PKEY_cmp(X509_PUBKEY_get0(a), X509_PUBKEY_get0(b));
-}
-
 /* verifies the Proof-of-Possession of the request with the given rid in reqs */
 int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                                int rid, int acceptRAVerified)
@@ -522,7 +503,7 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
                 CRMFerr(0, CRMF_R_POPO_MISSING_PUBLIC_KEY);
                 return 0;
             }
-            if (X509_PUBKEY_cmp(pubkey, sig->poposkInput->publicKey) != 0) {
+            if (X509_PUBKEY_eq(pubkey, sig->poposkInput->publicKey) != 1) {
                 CRMFerr(0, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
                 return 0;
             }
