@@ -5,8 +5,8 @@
 X509_PUBKEY_new, X509_PUBKEY_free, X509_PUBKEY_dup,
 X509_PUBKEY_set, X509_PUBKEY_get0, X509_PUBKEY_get,
 d2i_PUBKEY, i2d_PUBKEY, d2i_PUBKEY_bio, d2i_PUBKEY_fp,
-i2d_PUBKEY_fp, i2d_PUBKEY_bio, X509_PUBKEY_set0_param,
-X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
+i2d_PUBKEY_fp, i2d_PUBKEY_bio, X509_PUBKEY_set0_param, X509_PUBKEY_get0_param,
+X509_PUBKEY_eq - SubjectPublicKeyInfo public key functions
 
 =head1 SYNOPSIS
 
@@ -35,6 +35,7 @@ X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
  int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                             const unsigned char **pk, int *ppklen,
                             X509_ALGOR **pa, const X509_PUBKEY *pub);
+ int X509_PUBKEY_eq(X509_PUBKEY *a, X509_PUBKEY *b);
 
 =head1 DESCRIPTION
 
@@ -81,6 +82,8 @@ parameters is not required it can be set to B<NULL>. All of the
 retrieved pointers are internal and must not be freed after the
 call.
 
+X509_PUBKEY_eq() compares two B<X509_PUBKEY> values.
+
 =head1 NOTES
 
 The B<X509_PUBKEY> functions can be used to encode and decode public keys
@@ -104,11 +107,17 @@ structure or B<NULL> if an error occurs.
 X509_PUBKEY_set(), X509_PUBKEY_set0_param() and X509_PUBKEY_get0_param()
 return 1 for success and 0 if an error occurred.
 
+X509_PUBKEY_eq() returns 1 for equal, 0 for different, and < 0 on error.
+
 =head1 SEE ALSO
 
 L<d2i_X509(3)>,
 L<ERR_get_error(3)>,
 L<X509_get_pubkey(3)>,
+
+=head1 HISTORY
+
+The X509_PUBKEY_eq() function was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
