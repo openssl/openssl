@@ -197,7 +197,7 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
     int len2 = ip->length - len1;
     char *ip1 = ipaddr_to_asc(ip->data, len1);
     char *ip2 = ipaddr_to_asc(ip->data + len1, len2);
-    int ret = ret = ip1 != NULL && ip2 != NULL
+    int ret = ip1 != NULL && ip2 != NULL
         && BIO_printf(bp, "IP:%s/%s", ip1, ip2) > 0;
 
     OPENSSL_free(ip1);
