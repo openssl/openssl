@@ -39,19 +39,19 @@ static int try_import(const OSSL_PARAM params[], void *arg)
 {
     struct import_data_st *data = arg;
 
+    /* Just in time creation of keydata */
+    if (data->keydata == NULL
+        && (data->keydata = evp_keymgmt_newdata(data->keymgmt)) == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
     /*
      * It's fine if there was no data to transfer, we just end up with an
      * empty destination key.
      */
     if (params[0].key == NULL)
         return 1;
-
-    /* Just in time creation of keydata, if needed */
-    if (data->keydata == NULL
-        && (data->keydata = evp_keymgmt_newdata(data->keymgmt)) == NULL) {
-        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
 
     return evp_keymgmt_import(data->keymgmt, data->keydata, data->selection,
                               params);
