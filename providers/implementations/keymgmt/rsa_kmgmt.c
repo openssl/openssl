@@ -411,8 +411,8 @@ static void *gen_init(void *provctx, int selection, int rsa_type)
         } else {
             gctx->nbits = 2048;
             gctx->primes = RSA_DEFAULT_PRIME_NUM;
+            gctx->rsa_type = rsa_type;
         }
-        gctx->rsa_type = rsa_type;
     }
     return gctx;
 }
