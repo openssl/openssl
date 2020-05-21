@@ -15,11 +15,7 @@ provider has been loaded.
 The implementations in this provider specifically have this property
 defined:
 
-=over 4
-
-"provider=default"
-
-=back
+    provider=default
 
 It may be used in a property query string with fetching functions such as
 L<EVP_MD_fetch(3)> or L<EVP_CIPHER_fetch(3)>, as well as with other

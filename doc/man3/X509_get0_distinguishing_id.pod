@@ -21,7 +21,9 @@ The Distinguishing ID is defined in FIPS 196 as follows:
 
 =over 4
 
-I<Distinguishing  identifier>: information which unambiguously distinguishes
+=item I<Distinguishing  identifier>
+
+Information which unambiguously distinguishes
 an entity in the authentication process.
 
 =back
