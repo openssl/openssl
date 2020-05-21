@@ -10,21 +10,21 @@ SOURCE[../../libnonfips.a]=$FIPSABLE
 GENERATE[der_rsa_gen.c]=der_rsa_gen.c.in
 DEPEND[der_rsa_gen.c]=oids_to_c.pm
 
-DEPEND[der_rsa_gen.o]=../include/prov/der_rsa.h ../include/prov/der_digests.h
+DEPEND[der_rsa_gen.o der_rsa_key.o der_rsa_sig.o]=../include/prov/der_rsa.h ../include/prov/der_digests.h
 GENERATE[../include/prov/der_rsa.h]=der_rsa.h.in
 DEPEND[../include/prov/der_rsa.h]=oids_to_c.pm
 
 GENERATE[der_dsa_gen.c]=der_dsa_gen.c.in
 DEPEND[der_dsa_gen.c]=oids_to_c.pm
 
-DEPEND[der_dsa_gen.o]=../include/prov/der_dsa.h
+DEPEND[der_dsa_gen.o der_dsa_key.o der_dsa_sig.o]=../include/prov/der_dsa.h
 GENERATE[../include/prov/der_dsa.h]=der_dsa.h.in
 DEPEND[../include/prov/der_dsa.h]=oids_to_c.pm
 
 GENERATE[der_ec_gen.c]=der_ec_gen.c.in
 DEPEND[der_ec_gen.c]=oids_to_c.pm
 
-DEPEND[der_ec_gen.o]=../include/prov/der_ec.h
+DEPEND[der_ec_gen.o der_ec_key.o der_ec_sig.o]=../include/prov/der_ec.h
 GENERATE[../include/prov/der_ec.h]=der_ec.h.in
 DEPEND[../include/prov/der_ec.h]=oids_to_c.pm
 
