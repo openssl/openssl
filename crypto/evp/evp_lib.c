@@ -26,6 +26,8 @@
 #include <openssl/ec.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
+#include "crypto/modes.h"
+#include "crypto/aes_platform.h"
 #include "evp_local.h"
 
 #if !defined(FIPS_MODULE)
@@ -1190,3 +1192,65 @@ EVP_PKEY *EVP_PKEY_Q_keygen(OSSL_LIB_CTX *libctx, const char *propq,
     va_end(args);
     return ret;
 }
+
+#if defined(OPENSSL_CPUID_OBJ) && !defined(AES_ASM)
+int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        return aesni_set_encrypt_key(userKey, bits, key);
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        return vpaes_set_encrypt_key(userKey, bits, key);
+# endif
+    return aes_set_encrypt_key(userKey, bits, key);
+}
+
+int AES_set_decrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        return aesni_set_decrypt_key(userKey, bits, key);
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        return vpaes_set_decrypt_key(userKey, bits, key);
+# endif
+    return aes_set_decrypt_key(userKey, bits, key);
+}
+
+void AES_encrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        aesni_encrypt(in, out, key);
+    else
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        vpaes_encrypt(in, out, key);
+    else
+# endif
+    aes_encrypt(in, out, key);
+}
+
+void AES_decrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        aesni_decrypt(in, out, key);
+    else
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        vpaes_decrypt(in, out, key);
+    else
+# endif
+    aes_decrypt(in, out, key);
+}
+#endif

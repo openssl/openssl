@@ -13,6 +13,17 @@
 
 # include <openssl/aes.h>
 
+# if defined(OPENSSL_CPUID_OBJ) && !defined(AES_ASM)
+int aes_set_encrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+int aes_set_decrypt_key(const unsigned char *userKey, const int bits,
+                        AES_KEY *key);
+void aes_encrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+void aes_decrypt(const unsigned char *in, unsigned char *out,
+                 const AES_KEY *key);
+# endif
+
 # ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
                           AES_KEY *key);
