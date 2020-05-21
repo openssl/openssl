@@ -3653,13 +3653,10 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                     const TLS_GROUP_INFO *cinf
                         = tls1_group_id_lookup(s->ctx, clist[i]);
 
-                    if (cinf != NULL)  {
-                        cptr[i] = tls1_group_id2nid(cinf->group_id);
-                        if (cptr[i] == NID_undef)
-                            cptr[i] = TLSEXT_nid_unknown | clist[i];
-                    } else {
+                    if (cinf != NULL)
+                        cptr[i] = tls1_group_id2nid(cinf->group_id, 1);
+                    else
                         cptr[i] = TLSEXT_nid_unknown | clist[i];
-                    }
                 }
             }
             return (int)clistlen;
@@ -3670,7 +3667,7 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
                                &s->ext.supportedgroups_len, parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(&s->ext.supportedgroups,
+        return tls1_set_groups_list(s->ctx, &s->ext.supportedgroups,
                                     &s->ext.supportedgroups_len, parg);
 
     case SSL_CTRL_GET_SHARED_GROUP:
@@ -3678,11 +3675,11 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             uint16_t id = tls1_shared_group(s, larg);
 
             if (larg != -1)
-                return tls1_group_id2nid(id);
+                return tls1_group_id2nid(id, 1);
             return id;
         }
     case SSL_CTRL_GET_NEGOTIATED_GROUP:
-        ret = tls1_group_id2nid(s->s3.group_id);
+        ret = tls1_group_id2nid(s->s3.group_id, 1);
         break;
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
@@ -3967,7 +3964,7 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                                parg, larg);
 
     case SSL_CTRL_SET_GROUPS_LIST:
-        return tls1_set_groups_list(&ctx->ext.supportedgroups,
+        return tls1_set_groups_list(ctx, &ctx->ext.supportedgroups,
                                     &ctx->ext.supportedgroups_len,
                                     parg);
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */

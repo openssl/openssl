@@ -400,6 +400,31 @@ int ssl_load_groups(SSL_CTX *ctx)
     return OSSL_PROVIDER_do_all(ctx->libctx, discover_provider_groups, ctx);
 }
 
+static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
+{
+    size_t i;
+    int nid = NID_undef;
+
+    /* See if we can identify a nid for this name */
+#ifndef OPENSSL_NO_EC
+    nid = EC_curve_nist2nid(name);
+#endif
+    if (nid == NID_undef)
+        nid = OBJ_sn2nid(name);
+    if (nid == NID_undef)
+        nid = OBJ_ln2nid(name);
+
+    for (i = 0; i < ctx->group_list_len; i++) {
+        if (strcmp(ctx->group_list[i].tlsname, name) == 0
+                || (nid != NID_undef
+                    && nid == tls1_group_id2nid(ctx->group_list[i].group_id,
+                                                0)))
+            return ctx->group_list[i].group_id;
+    }
+
+    return 0;
+}
+
 const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t group_id)
 {
     size_t i;
@@ -413,9 +438,12 @@ const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t group_id)
 }
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-int tls1_group_id2nid(uint16_t group_id)
+int tls1_group_id2nid(uint16_t group_id, int include_unknown)
 {
     size_t i;
+
+    if (group_id == 0)
+        return NID_undef;
 
     /*
      * Return well known Group NIDs - for backwards compatibility. This won't
@@ -426,7 +454,9 @@ int tls1_group_id2nid(uint16_t group_id)
         if (nid_to_group[i].group_id == group_id)
             return nid_to_group[i].nid;
     }
-    return NID_undef;
+    if (!include_unknown)
+        return NID_undef;
+    return TLSEXT_nid_unknown | (int)group_id;
 }
 
 static uint16_t tls1_nid2group_id(int nid)
@@ -533,7 +563,7 @@ int tls_group_allowed(SSL *s, uint16_t group, int op)
     gtmp[0] = group >> 8;
     gtmp[1] = group & 0xff;
     return ssl_security(s, op, ginfo->secbits,
-                        tls1_group_id2nid(ginfo->group_id), (void *)gtmp);
+                        tls1_group_id2nid(ginfo->group_id, 0), (void *)gtmp);
 }
 
 /* Return 1 if "id" is in "list" */
@@ -655,60 +685,65 @@ err:
 #endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 }
 
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
 /* TODO(3.0): An arbitrary amount for now. Take another look at this */
 # define MAX_GROUPLIST   40
 
 typedef struct {
-    size_t nidcnt;
-    int nid_arr[MAX_GROUPLIST];
-} nid_cb_st;
+    SSL_CTX *ctx;
+    size_t gidcnt;
+    uint16_t gid_arr[MAX_GROUPLIST];
+} gid_cb_st;
 
-static int nid_cb(const char *elem, int len, void *arg)
+static int gid_cb(const char *elem, int len, void *arg)
 {
-    nid_cb_st *narg = arg;
+    gid_cb_st *garg = arg;
     size_t i;
-    int nid = NID_undef;
+    uint16_t gid = 0;
     char etmp[20];
+
     if (elem == NULL)
         return 0;
-    if (narg->nidcnt == MAX_GROUPLIST)
+    if (garg->gidcnt == MAX_GROUPLIST)
         return 0;
     if (len > (int)(sizeof(etmp) - 1))
         return 0;
     memcpy(etmp, elem, len);
     etmp[len] = 0;
-# ifndef OPENSSL_NO_EC
-    nid = EC_curve_nist2nid(etmp);
-# endif
-    if (nid == NID_undef)
-        nid = OBJ_sn2nid(etmp);
-    if (nid == NID_undef)
-        nid = OBJ_ln2nid(etmp);
-    if (nid == NID_undef)
+
+    gid = tls1_group_name2id(garg->ctx, etmp);
+    if (gid == 0)
         return 0;
-    for (i = 0; i < narg->nidcnt; i++)
-        if (narg->nid_arr[i] == nid)
+    for (i = 0; i < garg->gidcnt; i++)
+        if (garg->gid_arr[i] == gid)
             return 0;
-    narg->nid_arr[narg->nidcnt++] = nid;
+    garg->gid_arr[garg->gidcnt++] = gid;
     return 1;
 }
-#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH) */
 
-/* Set groups based on a colon separate list */
-int tls1_set_groups_list(uint16_t **pext, size_t *pextlen, const char *str)
+/* Set groups based on a colon separated list */
+int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
+                         const char *str)
 {
-#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DH)
-    nid_cb_st ncb;
-    ncb.nidcnt = 0;
-    if (!CONF_parse_list(str, ':', 1, nid_cb, &ncb))
+    gid_cb_st gcb;
+    uint16_t *tmparr;
+
+    gcb.gidcnt = 0;
+    gcb.ctx = ctx;
+    if (!CONF_parse_list(str, ':', 1, gid_cb, &gcb))
         return 0;
     if (pext == NULL)
         return 1;
-    return tls1_set_groups(pext, pextlen, ncb.nid_arr, ncb.nidcnt);
-#else
-    return 0;
-#endif
+
+    /*
+     * gid_cb ensurse there are no duplicates so we can just go ahead and set
+     * the result
+     */
+    tmparr = OPENSSL_memdup(gcb.gid_arr, gcb.gidcnt * sizeof(*tmparr));
+    if (tmparr == NULL)
+        return 0;
+    *pext = tmparr;
+    *pextlen = gcb.gidcnt;
+    return 1;
 }
 
 /* Check a group id matches preferences */
