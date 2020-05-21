@@ -171,6 +171,7 @@ void engine_cleanup_int(void)
         cleanup_stack = NULL;
     }
     CRYPTO_THREAD_lock_free(global_engine_lock);
+    global_engine_lock = NULL;
 }
 
 /* Now the "ex_data" support */
