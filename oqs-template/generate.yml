@@ -274,10 +274,21 @@ sigs:
                     "pretty_name": "RSA3072",
                     "oid": "1.3.9999.1.3"}]
   -
+    # OID scheme for hybrid variants of Dilithium:
     # iso (1)
     # identified-organization (3)
     # reserved (9999)
     # dilithium (2)
+    # OID scheme for plain Dilithium:
+    # iso (1)
+    # identified-organization (3)
+    # dod (6)
+    # internet (1)
+    # private (4)
+    # enterprise (1)
+    # IBM (2)
+    # qsc (267)
+    # Dilithium-raw (6)
     variants:
       -
         name: "dilithium2"
