@@ -1602,7 +1602,7 @@ int s_client_main(int argc, char **argv)
 #endif
 
     if (connectstr != NULL) {
-        int res = 0;
+        int res;
         char *tmp_host = host, *tmp_port = port;
 
         res = BIO_parse_hostserv(connectstr, &host, &port, BIO_PARSE_PRIO_HOST);
@@ -1619,17 +1619,17 @@ int s_client_main(int argc, char **argv)
     }
 
     if (proxystr != NULL) {
-        int res = 0;
+        int res;
         char *tmp_host = host, *tmp_port = port;
 
-        if (connectstr == NULL) {
+        if (host == NULL || port == NULL) {
             BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
             goto opthelp;
         }
 
         /* Retain the original target host:port for use in the HTTP proxy connect string */
-        thost=OPENSSL_strdup(host);
-        tport=OPENSSL_strdup(port);
+        thost = OPENSSL_strdup(host);
+        tport = OPENSSL_strdup(port);
         if (thost == NULL || tport == NULL) {
             BIO_printf(bio_err, "%s: out of memory\n", prog);
             goto end;
