@@ -91,7 +91,7 @@ to standard output. Leverages B<openssl ca> command.
 
 =item B<-signCA>
 
-This option is the same as the B<-signreq> option except it uses the
+This option is the same as the B<-sign> option except it uses the
 configuration file section B<v3_ca> and so makes the signed request a
 valid CA certificate. This is useful when creating intermediate CA from
 a root CA.  Extra params are passed on to B<openssl ca> command.
@@ -143,7 +143,7 @@ the request and finally create a PKCS#12 file containing it.
 
  CA.pl -newca
  CA.pl -newreq
- CA.pl -signreq
+ CA.pl -sign
  CA.pl -pkcs12 "My Test Certificate"
 
 =head1 DSA CERTIFICATES
@@ -173,7 +173,7 @@ can optionally be created first):
 
 Sign the request:
 
- CA.pl -signreq
+ CA.pl -sign
 
 =head1 NOTES
 
