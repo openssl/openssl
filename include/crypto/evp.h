@@ -518,9 +518,25 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
  *     (type != EVP_PKEY_NONE && pkey.ptr != NULL)      ## legacy (libcrypto only)
  *     || (keymgmt != NULL && keydata != NULL)          ## provider side
  *
- * The easiest way to detect a legacy key is:           type != EVP_PKEY_NONE
- * The easiest way to detect a provider side key is:    keymgmt != NULL
+ * The easiest way to detect a legacy key is:
+ *
+ *     keymgmt == NULL && type != EVP_PKEY_NONE
+ *
+ * The easiest way to detect a provider side key is:
+ *
+ *     keymgmt != NULL
  */
+#define evp_pkey_is_blank(pk)                                   \
+    ((pk)->type == EVP_PKEY_NONE && (pk)->keymgmt == NULL)
+#define evp_pkey_is_typed(pk)                                   \
+    ((pk)->type != EVP_PKEY_NONE || (pk)->keymgmt != NULL)
+#define evp_pkey_is_assigned(pk)                                \
+    ((pk)->pkey.ptr != NULL || (pk)->keydata != NULL)
+#define evp_pkey_is_legacy(pk)                                  \
+    ((pk)->type != EVP_PKEY_NONE && (pk)->keymgmt == NULL)
+#define evp_pkey_is_provided(pk)                                \
+    ((pk)->keymgmt != NULL)
+
 struct evp_pkey_st {
     /* == Legacy attributes == */
     int type;

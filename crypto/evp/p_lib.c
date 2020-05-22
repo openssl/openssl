@@ -119,7 +119,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
      * If |to| is a legacy key and |from| isn't, we must downgrade |from|.
      * If that fails, this function fails.
      */
-    if (to->type != EVP_PKEY_NONE && from->keymgmt != NULL)
+    if (evp_pkey_is_legacy(to) && evp_pkey_is_provided(from))
         if (!evp_pkey_downgrade((EVP_PKEY *)from))
             return 0;
 
@@ -135,15 +135,15 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
      * like evp_keymgmt_util_copy() and evp_pkey_export_to_provider() called
      * further down help us find out if they are the same or not.
      */
-    if (to->type == EVP_PKEY_NONE && to->keymgmt == NULL) {
-        if (from->type != EVP_PKEY_NONE) {
+    if (evp_pkey_is_blank(to)) {
+        if (evp_pkey_is_legacy(from)) {
             if (EVP_PKEY_set_type(to, from->type) == 0)
                 return 0;
         } else {
             if (EVP_PKEY_set_type_by_keymgmt(to, from->keymgmt) == 0)
                 return 0;
         }
-    } else if (to->type != EVP_PKEY_NONE) {
+    } else if (evp_pkey_is_legacy(to)) {
         if (to->type != from->type) {
             EVPerr(EVP_F_EVP_PKEY_COPY_PARAMETERS, EVP_R_DIFFERENT_KEY_TYPES);
             goto err;
@@ -1357,19 +1357,17 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
         pkey->engine = e;
 
         /*
-         * The EVP_PKEY_ASN1_METHOD |pkey_id| serves different purposes,
-         * depending on if we're setting this key to contain a legacy or
-         * a provider side "origin" key.  For a legacy key, we assign it
-         * to the |type| field, but for a provider side key, we assign it
-         * to the |save_type| field, because |type| is supposed to be set
-         * to EVP_PKEY_NONE in that case.
+         * The EVP_PKEY_ASN1_METHOD |pkey_id| retains its legacy key purpose
+         * for any key type that has a legacy implementation, regardless of
+         * if the internal key is a legacy or a provider side one.  When
+         * there is no legacy implementation for the key, the type becomes
+         * EVP_PKEY_KEYMGMT, which indicates that one should be cautious
+         * with functions that expect legacy internal keys.
          */
-        if (ameth != NULL) {
-            if (keymgmt != NULL)
-                pkey->save_type = ameth->pkey_id;
-            else if (pkey->ameth != NULL)
-                pkey->type = ameth->pkey_id;
-        }
+        if (ameth != NULL)
+            pkey->type = ameth->pkey_id;
+        else
+            pkey->type = EVP_PKEY_KEYMGMT;
 #endif
     }
     return 1;
@@ -1453,7 +1451,6 @@ void evp_pkey_free_legacy(EVP_PKEY *x)
     ENGINE_finish(x->pmeth_engine);
     x->pmeth_engine = NULL;
 # endif
-    x->type = EVP_PKEY_NONE;
 }
 #endif  /* FIPS_MODULE */
 
@@ -1472,6 +1469,7 @@ static void evp_pkey_free_it(EVP_PKEY *x)
         x->keymgmt = NULL;
         x->keydata = NULL;
     }
+    x->type = EVP_PKEY_NONE;
 }
 
 void EVP_PKEY_free(EVP_PKEY *x)
@@ -1661,31 +1659,32 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 {
     EVP_KEYMGMT *keymgmt = pk->keymgmt;
     void *keydata = pk->keydata;
-    int type = pk->save_type;
+    int type = pk->type;
     const char *keytype = NULL;
 
     /* If this isn't a provider side key, we're done */
     if (keymgmt == NULL)
         return 1;
 
-    /* Get the key type name for error reporting */
-    if (type != EVP_PKEY_NONE)
-        keytype = OBJ_nid2sn(type);
-    else
-        keytype =
-            evp_first_name(EVP_KEYMGMT_provider(keymgmt), keymgmt->name_id);
+    keytype = evp_first_name(EVP_KEYMGMT_provider(keymgmt), keymgmt->name_id);
 
     /*
-     * |save_type| was set when any of the EVP_PKEY_set_type functions
-     * was called.  It was set to EVP_PKEY_NONE if the key type wasn't
-     * recognised to be any of the legacy key types, and the downgrade
-     * isn't possible.
+     * If the type is EVP_PKEY_NONE, then we have a problem somewhere else
+     * in our code.  If it's not one of the well known EVP_PKEY_xxx values,
+     * it should at least be EVP_PKEY_KEYMGMT at this point.
+     * TODO(3.0) remove this check when we're confident that the rest of the
+     * code treats this correctly.
      */
-    if (type == EVP_PKEY_NONE) {
-        ERR_raise_data(ERR_LIB_EVP, EVP_R_UNKNOWN_KEY_TYPE,
-                       "key type = %s, can't downgrade", keytype);
+    if (!ossl_assert(type != EVP_PKEY_NONE)) {
+        ERR_raise_data(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR,
+                       "keymgmt key type = %s but legacy type = EVP_PKEY_NONE",
+                       keytype);
         return 0;
     }
+
+    /* Prefer the legacy key type name for error reporting */
+    if (type != EVP_PKEY_KEYMGMT)
+        keytype = OBJ_nid2sn(type);
 
     /*
      * To be able to downgrade, we steal the provider side "origin" keymgmt
