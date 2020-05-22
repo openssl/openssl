@@ -124,6 +124,10 @@ static void *keymgmt_from_dispatch(int name_id,
             if (keymgmt->has == NULL)
                 keymgmt->has = OSSL_get_OP_keymgmt_has(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_COPY:
+            if (keymgmt->copy == NULL)
+                keymgmt->copy = OSSL_get_OP_keymgmt_copy(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_VALIDATE:
             if (keymgmt->validate == NULL)
                 keymgmt->validate = OSSL_get_OP_keymgmt_validate(fns);
