@@ -19,7 +19,8 @@
 # include <errno.h>
 #endif
 
-#define IS_HEX(ch) ((ch >= '0' && ch <='9') || (ch >= 'A' && ch <='F'))
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define IS_HEX(ch) ((ch >= '0' && ch <='9') || (ch >= 'A' && ch <='F'))
 
 static int test_print_error_format(void)
 {
@@ -52,6 +53,7 @@ err:
     BIO_free(bio);
     return ret;
 }
+#endif
 
 /* Test that querying the error queue preserves the OS error. */
 static int preserves_system_error(void)
@@ -114,6 +116,8 @@ int setup_tests(void)
     ADD_TEST(preserves_system_error);
     ADD_TEST(vdata_appends);
     ADD_TEST(raised_error);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_print_error_format);
+#endif
     return 1;
 }
