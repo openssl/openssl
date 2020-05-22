@@ -3147,7 +3147,7 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
     ckey = EVP_PKEY_new();
     if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_DHE,
-                 SSL_R_BN_LIB);
+                 SSL_R_COPY_PARAMETERS_FAILED);
         goto err;
     }
 
@@ -3216,7 +3216,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt)
         ckey = EVP_PKEY_new();
         if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_ECDHE,
-                     ERR_R_EVP_LIB);
+                     SSL_R_COPY_PARAMETERS_FAILED);
             goto err;
         }
 
