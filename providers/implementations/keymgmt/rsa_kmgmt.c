@@ -504,11 +504,9 @@ static const OSSL_PARAM *rsapss_gen_settable_params(void *provctx)
 
 static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    int ret = 0;
     struct rsa_gen_ctx *gctx = genctx;
     RSA *rsa = NULL, *rsa_tmp = NULL;
     BN_GENCB *gencb = NULL;
-    OSSL_PARAM *params = NULL;
 
     if (gctx == NULL)
         return NULL;
@@ -541,7 +539,7 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     if (gctx->acvp_test_params != NULL) {
-        if (!rsa_acvp_test_set_params(rsa, gctx->acvp_test_params))
+        if (!rsa_acvp_test_set_params(rsa_tmp, gctx->acvp_test_params))
             goto err;
     }
 #endif
