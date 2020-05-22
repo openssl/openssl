@@ -218,7 +218,11 @@ int OSSL_STORE_eof(OSSL_STORE_CTX *ctx)
 
 int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
 {
-    int loader_ret = ctx->loader->close(ctx->loader_ctx);
+    int loader_ret;
+
+    if (ctx == NULL)
+        return 1;
+    loader_ret = ctx->loader->close(ctx->loader_ctx);
 
     OPENSSL_free(ctx);
     return loader_ret;
