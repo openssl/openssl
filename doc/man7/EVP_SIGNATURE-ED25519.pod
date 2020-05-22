@@ -49,26 +49,25 @@ since version 1.1.1.
 Valid algorithm names are B<ed25519>, B<ed448> and B<eddsa>. If B<eddsa> is
 specified, then both Ed25519 and Ed448 are benchmarked.
 
-
 =head1 EXAMPLES
 
 To sign a message using a ED25519 or ED448 key:
 
-    do_sign(EVP_PKEY *ed_key, unsigned char *msg, size_t msg_len)
+    void do_sign(EVP_PKEY *ed_key, unsigned char *msg, size_t msg_len)
     {
-    size_t sig_len;
-    unsigned char *sig = NULL;
-    EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
+        size_t sig_len;
+        unsigned char *sig = NULL;
+        EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
 
-    EVP_DigestSignInit(md_ctx, NULL, NULL, NULL, ed_key);
-    /* Calculate the requires size for the signature by passing a NULL buffer */
-    EVP_DigestSign(md_ctx, NULL, &sig_len, msg, msg_len);
-    sig = OPENSSL_zalloc(sig_len);
+        EVP_DigestSignInit(md_ctx, NULL, NULL, NULL, ed_key);
+        /* Calculate the requires size for the signature by passing a NULL buffer */
+        EVP_DigestSign(md_ctx, NULL, &sig_len, msg, msg_len);
+        sig = OPENSSL_zalloc(sig_len);
 
-    EVP_DigestSign(md_ctx, sig, &sig_len, msg, msg_len);
-    ...
-    OPENSSL_free(sig);
-    EVP_MD_CTX_free(md_ctx);
+        EVP_DigestSign(md_ctx, sig, &sig_len, msg, msg_len);
+        ...
+        OPENSSL_free(sig);
+        EVP_MD_CTX_free(md_ctx);
     }
 
 =head1 SEE ALSO

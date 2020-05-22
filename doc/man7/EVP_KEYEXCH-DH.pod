@@ -46,32 +46,31 @@ To convert the received peer's public key from DER format on the host:
 To derive a shared secret on the host using the host's key and the peer's public
 key:
     /* It is assumed that the host_key and peer_pub_key are set up */
-    derive_secret(EVP_KEY *host_key, EVP_PKEY *peer_pub_key)
+    void derive_secret(EVP_KEY *host_key, EVP_PKEY *peer_pub_key)
     {
-    unsigned int pad = 1;
-    OSSL_PARAM params[2];
-    unsigned char *secret = NULL;
-    size_t secret_len = 0;
-    EVP_PKEY_CTX *dctx =
-        EVP_PKEY_CTX_new_from_pkey(NULL, host_key, NULL);
+        unsigned int pad = 1;
+        OSSL_PARAM params[2];
+        unsigned char *secret = NULL;
+        size_t secret_len = 0;
+        EVP_PKEY_CTX *dctx = EVP_PKEY_CTX_new_from_pkey(NULL, host_key, NULL);
 
-    EVP_PKEY_derive_init(dctx);
+        EVP_PKEY_derive_init(dctx);
 
-    /* Optionally set the padding */
-    params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &pad);
-    params[1] = OSSL_PARAM_construct_end();
-    EVP_PKEY_CTX_set_params(dctx, params);
+        /* Optionally set the padding */
+        params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &pad);
+        params[1] = OSSL_PARAM_construct_end();
+        EVP_PKEY_CTX_set_params(dctx, params);
 
-    EVP_PKEY_derive_set_peer(dctx, peer_pub_key);
+        EVP_PKEY_derive_set_peer(dctx, peer_pub_key);
 
-    /* Get the size by passing NULL as the buffer */
-    EVP_PKEY_derive(dctx, NULL, &secret_len);
-    secret = OPENSSL_zalloc(secret_len);
+        /* Get the size by passing NULL as the buffer */
+        EVP_PKEY_derive(dctx, NULL, &secret_len);
+        secret = OPENSSL_zalloc(secret_len);
 
-    EVP_PKEY_derive(dctx, secret, &secret_len);
-    ...
-    OPENSSL_clear_free(secret, secret_len);
-    EVP_PKEY_CTX_free(dctx);
+        EVP_PKEY_derive(dctx, secret, &secret_len);
+        ...
+        OPENSSL_clear_free(secret, secret_len);
+        EVP_PKEY_CTX_free(dctx);
     }
 
 Very similar code can be used by the peer to derive the same shared secret

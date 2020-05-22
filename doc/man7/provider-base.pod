@@ -236,7 +236,7 @@ provider_get_params().
 
 =head2 Provider parameters
 
-provider_get_params() can return the following provider parameters to the core.
+provider_get_params() can return the following provider parameters to the core:
 
 =over 4
 

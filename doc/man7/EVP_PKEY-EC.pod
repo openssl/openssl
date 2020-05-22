@@ -70,7 +70,8 @@ calling:
     EVP_PKEY_free(key);
     EVP_PKEY_CTX_free(gctx);
 
-An B<EVP_PKEY> ECCDH key can be generated with a "K-571" named group by calling:
+An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
+"K-571" named group by calling:
 
     int use_cdh = 1;
     EVP_PKEY *key = NULL;

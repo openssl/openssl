@@ -926,10 +926,15 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
                 value = OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO;
                 break;
             default:
-                if (BIO_snprintf(p->data, p->data_size, "%d", prsactx->saltlen)
-                    <= 0)
-                    return 0;
-                break;
+                {
+                    int len = BIO_snprintf(p->data, p->data_size, "%d",
+                                           prsactx->saltlen);
+
+                    if (len <= 0)
+                        return 0;
+                    p->return_size = len;
+                    break;
+                }
             }
             if (value != NULL
                 && !OSSL_PARAM_set_utf8_string(p, value))

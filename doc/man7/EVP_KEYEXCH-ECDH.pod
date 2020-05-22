@@ -81,36 +81,35 @@ To derive a shared secret on the host using the host's key and the peer's public
 key but also using X963KDF with a user key material:
 
     /* It is assumed that the host_key, peer_pub_key and ukm are set up */
-    derive_secret(EVP_PKEY *host_key, EVP_PKEY *peer_key,
-                  unsigned char *ukm, size_t ukm_len)
+    void derive_secret(EVP_PKEY *host_key, EVP_PKEY *peer_key,
+                       unsigned char *ukm, size_t ukm_len)
     {
-    unsigned char secret[64];
-    size_t out_len = sizeof(secret);
-    size_t secret_len = out_len;
-    unsigned int pad = 1;
-    OSSL_PARAM params[6];
-    EVP_PKET_CTX *dctx =
-        EVP_PKEY_CTX_new_from_pkey(NULL, host_key, NULL);
+        unsigned char secret[64];
+        size_t out_len = sizeof(secret);
+        size_t secret_len = out_len;
+        unsigned int pad = 1;
+        OSSL_PARAM params[6];
+        EVP_PKET_CTX *dctx = EVP_PKEY_CTX_new_from_pkey(NULL, host_key, NULL);
 
-    EVP_PKEY_derive_init(dctx);
+        EVP_PKEY_derive_init(dctx);
 
-    params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &pad);
-    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
-                                                 "X963KDF", 0);
-    params[2] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
-                                                 "SHA1", 0);
-    params[3] = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
-                                            &out_len);
-    params[4] = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
-                                                  ukm, ukm_len);
-    params[5] = OSSL_PARAM_construct_end();
-    EVP_PKEY_CTX_set_params(dctx, params);
+        params[0] = OSSL_PARAM_construct_uint(OSSL_EXCHANGE_PARAM_PAD, &pad);
+        params[1] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
+                                                     "X963KDF", 0);
+        params[2] = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
+                                                     "SHA1", 0);
+        params[3] = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
+                                                &out_len);
+        params[4] = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
+                                                      ukm, ukm_len);
+        params[5] = OSSL_PARAM_construct_end();
+        EVP_PKEY_CTX_set_params(dctx, params);
 
-    EVP_PKEY_derive_set_peer(dctx, peer_pub_key);
-    EVP_PKEY_derive(dctx, secret, &secret_len);
-    ...
-    OPENSSL_clear_free(secret, secret_len);
-    EVP_PKEY_CTX_free(dctx);
+        EVP_PKEY_derive_set_peer(dctx, peer_pub_key);
+        EVP_PKEY_derive(dctx, secret, &secret_len);
+        ...
+        OPENSSL_clear_free(secret, secret_len);
+        EVP_PKEY_CTX_free(dctx);
     }
 
 =head1 SEE ALSO
