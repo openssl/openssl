@@ -14,4 +14,4 @@ LIBOQS_REPO=${LIBOQS_REPO:-"https://github.com/open-quantum-safe/liboqs.git"}
 LIBOQS_BRANCH=${LIBOQS_BRANCH:-"master"}
 
 rm -rf oqs-test/tmp/liboqs
-git clone --branch ${LIBOQS_BRANCH} --single-branch ${LIBOQS_REPO} oqs-test/tmp/liboqs
+git clone --depth 1 --branch ${LIBOQS_BRANCH} --single-branch ${LIBOQS_REPO} oqs-test/tmp/liboqs
