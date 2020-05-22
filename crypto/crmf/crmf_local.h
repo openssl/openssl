@@ -108,7 +108,6 @@ struct ossl_crmf_certid_st {
     GENERAL_NAME *issuer;
     ASN1_INTEGER *serialNumber;
 } /* OSSL_CRMF_CERTID */;
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
 
 /*-
  * SinglePubInfo ::= SEQUENCE {

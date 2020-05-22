@@ -51,6 +51,7 @@ typedef struct ossl_crmf_poposigningkey_st OSSL_CRMF_POPOSIGNINGKEY;
 typedef struct ossl_crmf_certrequest_st OSSL_CRMF_CERTREQUEST;
 typedef struct ossl_crmf_certid_st OSSL_CRMF_CERTID;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_CERTID)
+DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
 DEFINE_OR_DECLARE_STACK_OF(OSSL_CRMF_CERTID)
 
 typedef struct ossl_crmf_pkipublicationinfo_st OSSL_CRMF_PKIPUBLICATIONINFO;
