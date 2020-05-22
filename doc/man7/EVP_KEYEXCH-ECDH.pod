@@ -8,7 +8,6 @@ EVP_KEYEXCH-ECDH - ECDH Key Exchange algorithm support
 
 Key exchange support for the B<ECDH> key type.
 
-
 =head2 ECDH Key Exchange parameters
 
 =over 4
@@ -36,8 +35,6 @@ per-key basis.
 
 Sets or gets the Key Derivation Function type to apply within the associated key
 exchange ctx.
-
-
 
 =item "kdf-digest" (B<OSSL_EXCHANGE_PARAM_KDF_DIGEST>) <utf8_string>
 
@@ -71,7 +68,6 @@ Gets the size of the User Key Material to be used as part of the selected
 Key Derivation Function associated with the given key exchange ctx.
 
 =back
-
 
 =head1 EXAMPLES
 

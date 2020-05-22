@@ -80,46 +80,10 @@ rely on an underlying computation algorithm.
 
 EVP_MAC_fetch() fetches an implementation of a MAC I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
-
-The OpenSSL default provider supports the following algorithms:
-
-=over 4
-
-=item ""BLAKE2BMAC" <OSSL_MAC_NAME_BLAKE2BMAC>
-
-=item ""BLAKE2SMAC" <OSSL_MAC_NAME_BLAKE2SMAC>
-
-See L<EVP_MAC-BLAKE2(7)> for further information.
-
-=item "CMAC" <OSSL_MAC_NAME_CMAC>
-
-See L<EVP_MAC-CMAC(7)> for further information.
-
-=item "GMAC <OSSL_MAC_NAME_GMAC>
-
-See L<EVP_MAC-GMAC(7)> for further information.
-
-=item "HMAC" <OSSL_MAC_NAME_HMAC>
-
-See L<EVP_MAC-HMAC(7)> for further information.
-
-=item "KMAC128" <OSSL_MAC_NAME_KMAC128>
-
-=item "KMAC256" <OSSL_MAC_NAME_KMAC256>
-
-See L<EVP_MAC-KMAC(7)> for further information.
-
-=item "POLY1305" <OSSL_MAC_NAME_POLY1305>
-
-See L<EVP_MAC-Poly1305(7)> for further information.
-
-=item "SIPHASH" <OSSL_MAC_NAME_SIPHASH>
-
-See L<EVP_MAC-Siphash(7)> for further information.
-
-=back
-
 See L<provider(7)/Fetching algorithms> for further information.
+
+See L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)> for the list
+of algorithms supported by the default provider.
 
 The returned value must eventually be freed with
 L<EVP_MAC_free(3)>.

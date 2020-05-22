@@ -913,21 +913,17 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
             if (!OSSL_PARAM_set_int(p, prsactx->saltlen))
                 return 0;
         } else if (p->data_type == OSSL_PARAM_UTF8_STRING) {
+            const *value = NULL;
+
             switch (prsactx->saltlen) {
             case RSA_PSS_SALTLEN_DIGEST:
-                if (!OSSL_PARAM_set_utf8_string(p,
-                        OSSL_PKEY_RSA_PSS_SALT_LEN_DIGEST))
-                    return 0;
+                value = OSSL_PKEY_RSA_PSS_SALT_LEN_DIGEST;
                 break;
             case RSA_PSS_SALTLEN_MAX:
-                if (!OSSL_PARAM_set_utf8_string(p,
-                        OSSL_PKEY_RSA_PSS_SALT_LEN_MAX))
-                    return 0;
+                value = OSSL_PKEY_RSA_PSS_SALT_LEN_MAX;
                 break;
             case RSA_PSS_SALTLEN_AUTO:
-                if (!OSSL_PARAM_set_utf8_string(p,
-                        OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO))
-                    return 0;
+                value = OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO;
                 break;
             default:
                 if (BIO_snprintf(p->data, p->data_size, "%d", prsactx->saltlen)
@@ -935,6 +931,9 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
                     return 0;
                 break;
             }
+            if (value != NULL
+                && !OSSL_PARAM_set_utf8_string(p, value))
+                return 0;
         }
     }
 

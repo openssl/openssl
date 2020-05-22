@@ -543,13 +543,8 @@ static
 int ec_set_params(void *key, const OSSL_PARAM params[])
 {
     EC_KEY *eck = key;
-    const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
-    if (p != NULL && !ec_set_param_ecdh_cofactor_mode(eck, p))
-        return 0;
-
-    return 1;
+    return ec_key_otherparams_fromdata(eck, params);
 }
 
 static

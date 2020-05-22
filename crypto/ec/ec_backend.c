@@ -48,15 +48,6 @@ int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
     return 1;
 }
 
-int ec_set_param_ecdh_cofactor_mode(EC_KEY *ec, const OSSL_PARAM *p)
-{
-    int mode;
-
-    if (!OSSL_PARAM_get_int(p, &mode))
-        return 0;
-    return ec_set_ecdh_cofactor_mode(ec, mode);
-}
-
 /*
  * Callers of ec_key_fromdata MUST make sure that ec_key_params_fromdata has
  * been called before!
@@ -228,8 +219,12 @@ int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
-    if (p != NULL && !ec_set_param_ecdh_cofactor_mode(ec, p))
-        return 0;
+    if (p != NULL) {
+        int mode;
 
+        if (!OSSL_PARAM_get_int(p, &mode)
+            || !ec_set_ecdh_cofactor_mode(ec, mode))
+            return 0;
+    }
     return 1;
 }

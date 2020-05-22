@@ -6,7 +6,6 @@ EVP_PKEY-FFC - EVP_PKEY DSA and DH shared FFC parameters.
 
 =head1 DESCRIPTION
 
-
 Finite field cryptography (FFC) is a method of implementing discrete logarithm
 cryptography using finite field mathematics. DSA is an example of FFC and
 Diffie-Hellman key establishment algorithms specified in SP800-56A can also be
@@ -26,7 +25,6 @@ and I<gindex> may need to be stored for validation purposes.
 For B<DH> the I<seed> and I<pcounter> can be stored in ASN1 data
 (but the I<gindex> is not). For B<DSA> however, these fields are not stored in
 the ASN1 data so they need to be stored externally if validation is required.
-
 
 =head2 FFC parameters
 
@@ -87,7 +85,6 @@ satisfies g = h^j mod p (where g != 1 and "j" is the cofactor).
 An optional informational cofactor parameter that should equal to (p - 1) / q.
 
 =back
-
 
 =head2 FFC key generation parameters
 
@@ -155,7 +152,6 @@ parameters OR it will fail if the seed did not generate valid primes.
 These types are described above.
 
 =back
-
 
 =head1 CONFORMING TO
 
