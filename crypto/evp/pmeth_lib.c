@@ -155,8 +155,8 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         goto common;
 
     /*
-     * If the key doesn't contain anything legacy, then it must be provided,
-     * so we extract the necessary information and use that.
+     * If the internal key is provided, we extract the keytype from its
+     * keymgmt and skip over the legacy code.
      */
     if (pkey != NULL && evp_pkey_is_provided(pkey)) {
         /* If we have an engine, something went wrong somewhere... */
