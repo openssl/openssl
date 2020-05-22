@@ -438,10 +438,6 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
 
     if (desc == NULL)
         desc = "certificate";
-    if (uri == NULL) {
-        unbuffer(stdin);
-        uri = "";
-    }
     (void)load_key_cert_crl(uri, maybe_stdin, pass, desc, NULL, &cert, NULL);
     if (cert == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
