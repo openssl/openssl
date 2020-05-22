@@ -1095,6 +1095,7 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
                  const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
 {
     int ret = 0;
+    size_t num;
 #ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
 #endif
@@ -1117,13 +1118,12 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
         return 0;
     }
 
+    num = (point != NULL && p_scalar != NULL) ? 1 : 0;
     if (group->meth->mul != NULL)
-        ret = group->meth->mul(group, r, g_scalar, point != NULL
-                               && p_scalar != NULL, &point, &p_scalar, ctx);
+        ret = group->meth->mul(group, r, g_scalar, num, &point, &p_scalar, ctx);
     else
         /* use default */
-        ret = ec_wNAF_mul(group, r, g_scalar, point != NULL
-                          && p_scalar != NULL, &point, &p_scalar, ctx);
+        ret = ec_wNAF_mul(group, r, g_scalar, num, &point, &p_scalar, ctx);
 
 #ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
