@@ -3098,6 +3098,7 @@ SSL_R_CONNECTION_TYPE_NOT_SET:144:connection type not set
 SSL_R_CONTEXT_NOT_DANE_ENABLED:167:context not dane enabled
 SSL_R_COOKIE_GEN_CALLBACK_FAILURE:400:cookie gen callback failure
 SSL_R_COOKIE_MISMATCH:308:cookie mismatch
+SSL_R_COPY_PARAMETERS_FAILED:296:copy parameters failed
 SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED:206:\
 	custom ext handler already installed
 SSL_R_DANE_ALREADY_ENABLED:172:dane already enabled

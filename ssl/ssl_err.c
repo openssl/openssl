@@ -109,6 +109,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_COOKIE_GEN_CALLBACK_FAILURE),
     "cookie gen callback failure"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_COOKIE_MISMATCH), "cookie mismatch"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_COPY_PARAMETERS_FAILED),
+    "copy parameters failed"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED),
     "custom ext handler already installed"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_DANE_ALREADY_ENABLED),
