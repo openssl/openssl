@@ -61,9 +61,12 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
     unsigned char cert_sha1[SHA_DIGEST_LENGTH];
 
     /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(cert, -1, 0);
+    if (!X509v3_cache_extensions(cert, NULL, NULL))
+        return NULL;
+
     if ((cid = ESS_CERT_ID_new()) == NULL)
         goto err;
+    /* TODO(3.0): fetch sha1 algorithm from providers */
     if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
         goto err;
     if (!ASN1_OCTET_STRING_set(cid->hash, cert_sha1, SHA_DIGEST_LENGTH))
@@ -159,6 +162,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
         cid->hash_alg = NULL;
     }
 
+    /* TODO(3.0): fetch sha1 algorithm from providers */
     if (!X509_digest(cert, hash_alg, hash, &hash_len))
         goto err;
 
@@ -287,10 +291,7 @@ static int ess_issuer_serial_cmp(const ESS_ISSUER_SERIAL *is, const X509 *cert)
         || X509_NAME_cmp(issuer->d.dirn, X509_get_issuer_name(cert)) != 0)
         return -1;
 
-    if (ASN1_INTEGER_cmp(is->serial, X509_get_serialNumber((X509 *)cert)) != 0)
-        return -1;
-
-    return 0;
+    return ASN1_INTEGER_cmp(is->serial, X509_get0_serialNumber(cert));
 }
 
 /* Returns < 0 if certificate is not found, certificate index otherwise. */
@@ -303,8 +304,10 @@ int ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
         return -1;
 
     /* Recompute SHA1 hash of certificate if necessary (side effect). */
-    X509_check_purpose(cert, -1, 0);
+    if (!X509v3_cache_extensions(cert, NULL, NULL))
+        return -1;
 
+    /* TODO(3.0): fetch sha1 algorithm from providers */
     if (!X509_digest(cert, EVP_sha1(), cert_sha1, NULL))
         return -1;
 
@@ -341,6 +344,7 @@ int ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids, const X509 *cert)
         else
             md = EVP_sha256();
 
+        /* TODO(3.0): fetch sha1 algorithm from providers */
         if (!X509_digest(cert, md, cert_digest, &len))
             return -1;
 

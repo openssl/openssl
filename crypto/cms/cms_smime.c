@@ -284,7 +284,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     X509 *signer;
     int i, scount = 0, ret = 0;
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
-    unsigned char cadesVerify = (flags & CMS_CADES) ? 1 : 0;
+    int cadesVerify = (flags & CMS_CADES) != 0;
 
     if (!dcont && !check_content(cms))
         return 0;
@@ -319,6 +319,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     }
 
     /* Attempt to verify all signers certs */
+    /* at this point scount == sk_CMS_SignerInfo_num(sinfos) */
 
     if ((flags & CMS_NO_SIGNER_CERT_VERIFY) == 0 || cadesVerify) {
         if (cadesVerify) {
@@ -332,7 +333,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         cms_certs = CMS_get1_certs(cms);
         if (!(flags & CMS_NOCRL))
             crls = CMS_get1_crls(cms);
-        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
 
             if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls,
@@ -344,7 +345,7 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     /* Attempt to verify all SignerInfo signed attribute signatures */
 
     if ((flags & CMS_NO_ATTR_VERIFY) == 0 || cadesVerify) {
-        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
             if (CMS_signed_get_attr_count(si) < 0)
                 continue;

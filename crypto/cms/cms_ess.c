@@ -64,7 +64,7 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
     X509 *cert;
     int i = 0, ret = 0;
 
-    if (cms_signerinfo_get_signing_cert(si, &ss) > 0) {
+    if (cms_signerinfo_get_signing_cert(si, &ss) > 0 && ss->cert_ids != NULL) {
         STACK_OF(ESS_CERT_ID) *cert_ids = ss->cert_ids;
 
         cert = sk_X509_value(chain, 0);
@@ -83,7 +83,8 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
                     goto err;
             }
         }
-    } else if (cms_signerinfo_get_signing_cert_v2(si, &ssv2) > 0) {
+    } else if (cms_signerinfo_get_signing_cert_v2(si, &ssv2) > 0
+                   && ssv2->cert_ids!= NULL) {
         STACK_OF(ESS_CERT_ID_V2) *cert_ids_v2 = ssv2->cert_ids;
 
         cert = sk_X509_value(chain, 0);
