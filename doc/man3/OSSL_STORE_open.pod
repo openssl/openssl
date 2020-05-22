@@ -94,6 +94,7 @@ OSSL_STORE_eof() shows that the end of data has been reached.
 OSSL_STORE_close() takes a B<OSSL_STORE_CTX>, closes the channel that was opened
 by OSSL_STORE_open() and frees all other information that was stored in the
 B<OSSL_STORE_CTX>, as well as the B<OSSL_STORE_CTX> itself.
+If B<ctx> is NULL it does nothing.
 
 =head1 SUPPORTED SCHEMES
 
