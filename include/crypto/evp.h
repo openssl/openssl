@@ -526,7 +526,7 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
  *
  *     keymgmt != NULL
  */
-#define evp_pkey_is_unknown(pk)                                 \
+#define evp_pkey_is_blank(pk)                                   \
     ((pk)->type == EVP_PKEY_NONE && (pk)->keymgmt == NULL)
 #define evp_pkey_is_typed(pk)                                   \
     ((pk)->type != EVP_PKEY_NONE || (pk)->keymgmt != NULL)

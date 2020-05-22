@@ -135,7 +135,7 @@ int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
      * like evp_keymgmt_util_copy() and evp_pkey_export_to_provider() called
      * further down help us find out if they are the same or not.
      */
-    if (evp_pkey_is_unknown(to)) {
+    if (evp_pkey_is_blank(to)) {
         if (evp_pkey_is_legacy(from)) {
             if (EVP_PKEY_set_type(to, from->type) == 0)
                 return 0;
