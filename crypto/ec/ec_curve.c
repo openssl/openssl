@@ -2858,12 +2858,12 @@ static const ec_list_element curve_list[] = {
     {"prime192v1", NID_X9_62_prime192v1, &_EC_NIST_PRIME_192.h, 0,
      "NIST/X9.62/SECG curve over a 192 bit prime field"},
     {"prime256v1", NID_X9_62_prime256v1, &_EC_X9_62_PRIME_256V1.h,
-# if defined(ECP_NISTZ256_ASM)
+# if !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+     EC_GFp_nistp256_method,
+# elif defined(ECP_NISTZ256_ASM)
      EC_GFp_nistz256_method,
 # elif defined(S390X_EC_ASM)
      EC_GFp_s390x_nistp256_method,
-# elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
-     EC_GFp_nistp256_method,
 # else
      0,
 # endif
