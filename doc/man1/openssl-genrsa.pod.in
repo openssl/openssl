@@ -33,7 +33,7 @@ B<openssl> B<genrsa>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [B<numbits>]
 
-=for openssl ifdef engine
+=for openssl ifdef engine 3
 
 =head1 DESCRIPTION
 

@@ -54,8 +54,8 @@ const OPTIONS genrsa_options[] = {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     {"3", OPT_3, '-', "(deprecated) Use 3 for the E value"},
 #endif
-    {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
-    {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
+    {"F4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
+    {"f4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output the key to specified file"},
