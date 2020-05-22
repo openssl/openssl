@@ -913,7 +913,7 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
             if (!OSSL_PARAM_set_int(p, prsactx->saltlen))
                 return 0;
         } else if (p->data_type == OSSL_PARAM_UTF8_STRING) {
-            const *value = NULL;
+            const char *value = NULL;
 
             switch (prsactx->saltlen) {
             case RSA_PSS_SALTLEN_DIGEST:
