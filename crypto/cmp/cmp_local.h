@@ -283,7 +283,6 @@ struct ossl_cmp_pkisi_st {
     OSSL_CMP_PKIFREETEXT *statusString;
     OSSL_CMP_PKIFAILUREINFO *failInfo;
 } /* OSSL_CMP_PKISI */;
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
 
 /*-
  *  RevReqContent ::= SEQUENCE OF RevDetails
