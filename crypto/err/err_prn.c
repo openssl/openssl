@@ -15,7 +15,6 @@
 #include <openssl/crypto.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
-#include "crypto/err.h"
 #include "err_local.h"
 
 #define ERR_PRINT_BUF_SIZE 4096

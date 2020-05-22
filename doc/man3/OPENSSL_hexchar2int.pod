@@ -59,8 +59,8 @@ or -1 on error.
 OPENSSL_buf2hexstr() and OPENSSL_hexstr2buf()
 return a pointer to allocated memory, or NULL on error.
 
-OPENSSL_buf2hexstr_ex() and OPENSSL_hexstr2buf_ex() return 1 on success,
-or 0 on error.
+OPENSSL_buf2hexstr_ex() and OPENSSL_hexstr2buf_ex() return 1 on
+success, or 0 on error.
 
 =head1 COPYRIGHT
 

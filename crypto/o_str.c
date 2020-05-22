@@ -10,7 +10,6 @@
 #include "e_os.h"
 #include <limits.h>
 #include <openssl/crypto.h>
-#include "crypto/err.h"
 #include "internal/cryptlib.h"
 
 #define DEFAULT_SEPARATOR ':'
