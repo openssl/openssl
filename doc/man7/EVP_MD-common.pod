@@ -8,7 +8,7 @@ EVP_MD-common - The OpenSSL EVP_MD implementations, common things
 
 All the OpenSSL EVP_MD implementations understand the following
 L<OSSL_PARAM(3)> entries that are
-gettable with L<EVP_MD_get_params(3)>:
+gettable with L<EVP_MD_get_params(3)>, as well as these:
 
 =over 4
 
