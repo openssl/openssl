@@ -14,7 +14,6 @@
 
 #include "internal/nelem.h"
 #include "internal/cryptlib.h"
-#include "crypto/err.h"
 #include "testutil.h"
 
 struct testdata
