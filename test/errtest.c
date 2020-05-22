@@ -26,7 +26,11 @@ static int test_print_error_format(void)
 {
     static const char expected[] =
         ":error::system library:test_print_error_format:Operation not permitted:"
+# ifndef OPENSSL_NO_FILENAMES
         "errtest.c:30:";
+# else
+        ":0:";
+# endif
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
