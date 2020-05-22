@@ -15,10 +15,14 @@ We can consider this the retirement home of cryptographic algorithms.
 
 =head2 Properties
 
-The implementations in this provider specifically have this property
+The implementations in this provider specifically have these property
 defined:
 
-    provider=legacy
+=over 4
+
+"provider=legacy"
+
+=back
 
 It may be used in a property query string with fetching functions such as
 L<EVP_MD_fetch(3)> or L<EVP_CIPHER_fetch(3)>, as well as with other
