@@ -731,6 +731,11 @@ IF[{- !$disabled{tests} -}]
   DEPEND[]=provider_internal_test.cnf
   GENERATE[provider_internal_test.cnf]=provider_internal_test.cnf.in
 
+  PROGRAMS{noinst}=provider_fallback_test
+  SOURCE[provider_fallback_test]=provider_fallback_test.c
+  INCLUDE[provider_fallback_test]=../include ../apps/include
+  DEPEND[provider_fallback_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
