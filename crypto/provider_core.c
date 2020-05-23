@@ -42,7 +42,8 @@ struct provider_store_st;        /* Forward declaration */
 struct ossl_provider_st {
     /* Flag bits */
     unsigned int flag_initialized:1;
-    unsigned int flag_fallback:1;
+    unsigned int flag_fallback:1; /* Can be used as fallback */
+    unsigned int flag_activated_as_fallback:1;
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
@@ -104,6 +105,24 @@ struct provider_store_st {
     unsigned int use_fallbacks:1;
 };
 
+/*
+ * provider_deactivate_free() is a wrapper around ossl_provider_free()
+ * that also makes sure that activated fallback providers are deactivated.
+ * This is simply done by freeing them an extra time, to compensate for the
+ * refcount that provider_activate_fallbacks() gives them.
+ * Since this is only called when the provider store is being emptied, we
+ * don't need to care about any lock.
+ */
+static void provider_deactivate_free(OSSL_PROVIDER *prov)
+{
+    int extra_free = (prov->flag_initialized
+                      && prov->flag_activated_as_fallback);
+
+    if (extra_free)
+        ossl_provider_free(prov);
+    ossl_provider_free(prov);
+}
+
 static void provider_store_free(void *vstore)
 {
     struct provider_store_st *store = vstore;
@@ -111,7 +130,7 @@ static void provider_store_free(void *vstore)
     if (store == NULL)
         return;
     OPENSSL_free(store->default_path);
-    sk_OSSL_PROVIDER_pop_free(store->providers, ossl_provider_free);
+    sk_OSSL_PROVIDER_pop_free(store->providers, provider_deactivate_free);
     CRYPTO_THREAD_lock_free(store->lock);
     OPENSSL_free(store);
 }
@@ -654,13 +673,22 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
             OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
 
             /*
-             * Note that we don't care if the activation succeeds or not.
-             * If it doesn't succeed, then any attempt to use any of the
-             * fallback providers will fail anyway.
+             * Activated fallback providers get an extra refcount, to
+             * simulate a regular load.
+             * Note that we don't care if the activation succeeds or not,
+             * other than to maintain a correct refcount.  If the activation
+             * doesn't succeed, then any future attempt to use the fallback
+             * provider will fail anyway.
              */
             if (prov->flag_fallback) {
-                activated_fallback_count++;
-                provider_activate(prov);
+                if (ossl_provider_up_ref(prov)) {
+                    if (!provider_activate(prov)) {
+                        ossl_provider_free(prov);
+                    } else {
+                        prov->flag_activated_as_fallback = 1;
+                        activated_fallback_count++;
+                    }
+                }
             }
         }
 
