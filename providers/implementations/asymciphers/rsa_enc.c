@@ -257,6 +257,7 @@ static void rsa_freectx(void *vprsactx)
 
     EVP_MD_free(prsactx->oaep_md);
     EVP_MD_free(prsactx->mgf1_md);
+    OPENSSL_free(prsactx->oaep_label);
 
     OPENSSL_free(prsactx);
 }
