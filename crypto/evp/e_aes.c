@@ -109,10 +109,14 @@ void aes_encrypt(const unsigned char *in, unsigned char *out,
                  const AES_KEY *key);
 void aes_decrypt(const unsigned char *in, unsigned char *out,
                  const AES_KEY *key);
+void aes_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec, const int enc);
 # define AES_set_encrypt_key aes_set_encrypt_key
 # define AES_set_decrypt_key aes_set_decrypt_key
 # define AES_encrypt aes_encrypt
 # define AES_decrypt aes_decrypt
+# define AES_cbc_encrypt aes_cbc_encrypt
 #endif
 
 #ifdef VPAES_ASM
@@ -4307,6 +4311,7 @@ BLOCK_CIPHER_custom(NID_aes, 256, 16, 12, ocb, OCB,
 # undef AES_set_decrypt_key
 # undef AES_encrypt
 # undef AES_decrypt
+# undef AES_cbc_encrypt
 
 int AES_set_encrypt_key(const unsigned char *userKey, const int bits,
                         AES_KEY *key)
@@ -4366,5 +4371,22 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
     else
 # endif
     aes_decrypt(in, out, key);
+}
+
+void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec, const int enc)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        aesni_cbc_encrypt(in, out, len, key, ivec, enc);
+    else
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        vpaes_cbc_encrypt(in, out, len, key, ivec, enc);
+    else
+# endif
+    aes_cbc_encrypt(in, out, len, key, ivec, enc);
 }
 #endif
