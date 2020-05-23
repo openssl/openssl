@@ -10,6 +10,13 @@
 #include <openssl/aes.h>
 #include <openssl/modes.h>
 
+#if defined(OPENSSL_CPUID_OBJ) && !defined(AES_ASM)
+void aes_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec, const int enc);
+# define AES_cbc_encrypt aes_cbc_encrypt
+#endif
+
 void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
                      size_t len, const AES_KEY *key,
                      unsigned char *ivec, const int enc)
