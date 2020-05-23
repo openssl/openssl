@@ -42,7 +42,8 @@ struct provider_store_st;        /* Forward declaration */
 struct ossl_provider_st {
     /* Flag bits */
     unsigned int flag_initialized:1;
-    unsigned int flag_fallback:1;
+    unsigned int flag_fallback:1; /* Can be used as fallback */
+    unsigned int flag_activated_as_fallback:1;
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
@@ -114,7 +115,8 @@ struct provider_store_st {
  */
 static void provider_deactivate_free(OSSL_PROVIDER *prov)
 {
-    int extra_free = (prov->flag_initialized && prov->flag_fallback);
+    int extra_free = (prov->flag_initialized
+                      && prov->flag_activated_as_fallback);
 
     if (extra_free)
         ossl_provider_free(prov);
@@ -680,9 +682,12 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
              */
             if (prov->flag_fallback) {
                 activated_fallback_count++;
+
                 if (ossl_provider_up_ref(prov)
                     && !provider_activate(prov))
                     ossl_provider_free(prov);
+                else
+                    prov->flag_activated_as_fallback = 1;
             }
         }
 
