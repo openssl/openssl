@@ -22,6 +22,9 @@ void aes_encrypt(const unsigned char *in, unsigned char *out,
                  const AES_KEY *key);
 void aes_decrypt(const unsigned char *in, unsigned char *out,
                  const AES_KEY *key);
+void aes_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec, const int enc);
 # endif
 
 # ifdef VPAES_ASM

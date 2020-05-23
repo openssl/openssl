@@ -1253,4 +1253,21 @@ void AES_decrypt(const unsigned char *in, unsigned char *out,
 # endif
     aes_decrypt(in, out, key);
 }
+
+void AES_cbc_encrypt(const unsigned char *in, unsigned char *out,
+                     size_t len, const AES_KEY *key,
+                     unsigned char *ivec, const int enc)
+{
+# ifdef AESNI_CAPABLE
+    if (AESNI_CAPABLE)
+        aesni_cbc_encrypt(in, out, len, key, ivec, enc);
+    else
+# endif
+# ifdef VPAES_CAPABLE
+    if (VPAES_CAPABLE)
+        vpaes_cbc_encrypt(in, out, len, key, ivec, enc);
+    else
+# endif
+    aes_cbc_encrypt(in, out, len, key, ivec, enc);
+}
 #endif
