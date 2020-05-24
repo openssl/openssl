@@ -27,8 +27,6 @@ plan skip_all => "$test_name needs the sock feature enabled"
 plan skip_all => "$test_name needs TLSv1.3 or TLSv1.2 enabled"
     if disabled("tls1_3") && disabled("tls1_2");
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
-
 use constant {
     MULTIPLE_COMPRESSIONS => 0,
     NON_NULL_COMPRESSION => 1
