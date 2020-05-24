@@ -1221,8 +1221,6 @@ static const struct rsa_siggen_st rsa_siggen_data[] = {
         ITM(rsa_siggen0_msg),
         NO_PSS_SALT_LEN,
     },
-#if 0
-    /* TODO(3.0) Add back in when RSA PSS is working */
     {
         "pss",
         2048,
@@ -1230,7 +1228,6 @@ static const struct rsa_siggen_st rsa_siggen_data[] = {
         ITM(rsa_siggen0_msg),
         62
     },
-#endif
 };
 
 struct rsa_sigver_st {
@@ -1394,8 +1391,6 @@ static const unsigned char rsa_sigver15_1_sig[] = {
     0x82, 0xf3, 0xc8, 0x32, 0xb8, 0x25, 0xef, 0xdc,
 };
 
-/* TODO(3.0) Add back in when RSA PSS is working */
-#if 0
 static const unsigned char rsa_sigverpss_0_n[] = {
     0xb2, 0xee, 0xdd, 0xdf, 0xa0, 0x35, 0x92, 0x21,
     0xf4, 0x8e, 0xc3, 0x24, 0x39, 0xed, 0xe2, 0x38,
@@ -1636,7 +1631,6 @@ static const unsigned char rsa_sigverpss_1_sig[] = {
     0xf0, 0xf8, 0x56, 0x35, 0xb8, 0x1d, 0xc3, 0x39,
     0x5c, 0xea, 0x8a, 0x92, 0x31, 0xd2, 0x11, 0x4b,
 };
-#endif
 
 static const unsigned char rsa_sigverx931_0_n[] = {
     0xa0, 0x16, 0x14, 0x80, 0x8b, 0x17, 0x2b, 0xad,
@@ -1879,8 +1873,6 @@ static const struct rsa_sigver_st rsa_sigver_data[] = {
         NO_PSS_SALT_LEN,
         FAIL
     },
-#if 0
-    /* TODO(3.0) Add back in when RSA PSS is working */
     {
         "pss",
         4096,
@@ -1903,7 +1895,6 @@ static const struct rsa_sigver_st rsa_sigver_data[] = {
         62,
         FAIL
     },
-#endif
 };
 
 struct rsa_decrypt_prim_st {

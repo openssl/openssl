@@ -13,42 +13,67 @@
 #include "crypto/rsa.h"
 #include "rsa_local.h"
 
-int rsa_acvp_test_copy_params(const OSSL_PARAM src[], OSSL_PARAM **dst)
+int rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[])
 {
-    const OSSL_PARAM *s;
-    OSSL_PARAM *d;
-    size_t sz;
+    const OSSL_PARAM *p, *s;
+    OSSL_PARAM *d, *alloc = NULL;
+    int ret = 1;
 
     static const OSSL_PARAM settable[] = {
-        OSSL_PARAM_BN(OSSL_PKEY_PARAM_TEST_XP, NULL, 0),
-        OSSL_PARAM_BN(OSSL_PKEY_PARAM_TEST_XP1, NULL, 0),
-        OSSL_PARAM_BN(OSSL_PKEY_PARAM_TEST_XP2, NULL, 0),
-        OSSL_PARAM_BN(OSSL_PKEY_PARAM_TEST_XQ, NULL, 0),
-        OSSL_PARAM_BN(OSSL_PKEY_PARAM_TEST_XQ1, NULL, 0),
-        OSSL_PARAM_BN(OSSL_PKEY_PARAM_TEST_XQ2, NULL, 0),
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_TEST_XP, NULL, 0),
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_TEST_XP1, NULL, 0),
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_TEST_XP2, NULL, 0),
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_TEST_XQ, NULL, 0),
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_TEST_XQ1, NULL, 0),
+        OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_TEST_XQ2, NULL, 0),
         OSSL_PARAM_END
     };
 
-    /* Assume the first element is a required filed if this feature is used */
-    s = OSSL_PARAM_locate_const(src, settable[0].key);
-    if (s == NULL)
+    /* Assume the first element is a required field if this feature is used */
+    p = OSSL_PARAM_locate_const(src, settable[0].key);
+    if (p == NULL)
         return 1;
 
-    sz = sizeof(settable);
-
-    d = OPENSSL_zalloc(sz);
-    if (d == NULL)
+    /* Zeroing here means the terminator is always set at the end */
+    alloc = OPENSSL_zalloc(sizeof(settable));
+    if (alloc == NULL)
         return 0;
-    *dst = d;
-    memcpy(d, settable, sz);
 
-    for ( ; d->key != NULL; ++d) {
-        /* For each key in the dest shallow copy the equivalent src */
-        s = OSSL_PARAM_locate_const(src, d->key);
-        if (s != NULL)
-            *d = *s;
+    d = alloc;
+    for (s = settable; s->key != NULL; ++s) {
+        /* If src contains a key from settable then copy the src to the dest */
+        p = OSSL_PARAM_locate_const(src, s->key);
+        if (p != NULL) {
+            *d = *s; /* shallow copy from the static settable[] */
+            d->data_size = p->data_size;
+            d->data = OPENSSL_memdup(p->data, p->data_size);
+            if (d->data == NULL)
+                ret = 0;
+            ++d;
+        }
     }
-    return 1;
+    if (ret == 0) {
+        rsa_acvp_test_gen_params_free(alloc);
+        alloc = NULL;
+    }
+    if (*dst != NULL)
+        rsa_acvp_test_gen_params_free(*dst);
+    *dst = alloc;
+    return ret;
+}
+
+void rsa_acvp_test_gen_params_free(OSSL_PARAM *dst)
+{
+    OSSL_PARAM *p;
+
+    if (dst == NULL)
+        return;
+
+    for (p = dst; p->key != NULL; ++p) {
+        OPENSSL_free(p->data);
+        p->data = NULL;
+    }
+    OPENSSL_free(dst);
 }
 
 int rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[])
@@ -66,22 +91,22 @@ int rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[])
         return 0;
 
     /* Set the input parameters */
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TEST_XP1)) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_TEST_XP1)) != NULL
          && !OSSL_PARAM_get_BN(p, &t->Xp1))
         goto err;
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TEST_XP2)) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_TEST_XP2)) != NULL
          && !OSSL_PARAM_get_BN(p, &t->Xp2))
         goto err;
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TEST_XP)) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_TEST_XP)) != NULL
          && !OSSL_PARAM_get_BN(p, &t->Xp))
         goto err;
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TEST_XQ1)) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_TEST_XQ1)) != NULL
          && !OSSL_PARAM_get_BN(p, &t->Xq1))
         goto err;
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TEST_XQ2)) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_TEST_XQ2)) != NULL
          && !OSSL_PARAM_get_BN(p, &t->Xq2))
         goto err;
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TEST_XQ)) != NULL
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_TEST_XQ)) != NULL
          && !OSSL_PARAM_get_BN(p, &t->Xq))
         goto err;
 
@@ -107,16 +132,16 @@ int rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[])
 
     t = r->acvp_test;
     if (t != NULL) {
-        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TEST_P1)) != NULL
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_TEST_P1)) != NULL
              && !OSSL_PARAM_set_BN(p, t->p1))
                     return 0;
-        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TEST_P2)) != NULL
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_TEST_P2)) != NULL
              && !OSSL_PARAM_set_BN(p, t->p2))
                     return 0;
-        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TEST_Q1)) != NULL
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_TEST_Q1)) != NULL
              && !OSSL_PARAM_set_BN(p, t->q1))
                     return 0;
-        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TEST_Q2)) != NULL
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_RSA_TEST_Q2)) != NULL
              && !OSSL_PARAM_set_BN(p, t->q2))
                     return 0;
     }

@@ -511,19 +511,6 @@ int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen)
     return EVP_PKEY_CTX_set_dh_rfc5114(ctx, gen);
 }
 
-int EVP_PKEY_CTX_set_dh_group_name(EVP_PKEY_CTX *ctx, const char *group_name)
-{
-    OSSL_PARAM params[2], *p = params;
-
-    if (ffc_named_group_to_uid(group_name) == NID_undef)
-        return 0;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_GROUP,
-                                            (void *)group_name, 0);
-    *p++ = OSSL_PARAM_construct_end();
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
 int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
 {
     int ret;

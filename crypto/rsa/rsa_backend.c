@@ -127,7 +127,7 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         int numcoeffs = sk_BIGNUM_const_num(coeffs);
 
         /*
-         * It's permisssible to have zero primes, i.e. no CRT params.
+         * It's permissible to have zero primes, i.e. no CRT params.
          * Otherwise, there must be at least two, as many exponents,
          * and one coefficient less.
          */

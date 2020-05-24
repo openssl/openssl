@@ -94,7 +94,9 @@ extern const char *rsa_mp_exp_names[];
 extern const char *rsa_mp_coeff_names[];
 
 # if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
-int rsa_acvp_test_copy_params(const OSSL_PARAM params[], OSSL_PARAM **dst);
+int rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[]);
+void rsa_acvp_test_gen_params_free(OSSL_PARAM *dst);
+
 int rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[]);
 int rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[]);
 typedef struct rsa_acvp_test_st RSA_ACVP_TEST;

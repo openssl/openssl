@@ -372,16 +372,16 @@ extern "C" {
 #define OSSL_GEN_PARAM_ITERATION            "iteration" /* integer */
 
 /* ACVP Test parameters : These should not be used normally */
-#define OSSL_PKEY_PARAM_TEST_XP1 "xp1"
-#define OSSL_PKEY_PARAM_TEST_XP2 "xp2"
-#define OSSL_PKEY_PARAM_TEST_XP  "xp"
-#define OSSL_PKEY_PARAM_TEST_XQ1 "xq1"
-#define OSSL_PKEY_PARAM_TEST_XQ2 "xq2"
-#define OSSL_PKEY_PARAM_TEST_XQ  "xq"
-#define OSSL_PKEY_PARAM_TEST_P1  "p1"
-#define OSSL_PKEY_PARAM_TEST_P2  "p2"
-#define OSSL_PKEY_PARAM_TEST_Q1  "q1"
-#define OSSL_PKEY_PARAM_TEST_Q2  "q2"
+#define OSSL_PKEY_PARAM_RSA_TEST_XP1 "xp1"
+#define OSSL_PKEY_PARAM_RSA_TEST_XP2 "xp2"
+#define OSSL_PKEY_PARAM_RSA_TEST_XP  "xp"
+#define OSSL_PKEY_PARAM_RSA_TEST_XQ1 "xq1"
+#define OSSL_PKEY_PARAM_RSA_TEST_XQ2 "xq2"
+#define OSSL_PKEY_PARAM_RSA_TEST_XQ  "xq"
+#define OSSL_PKEY_PARAM_RSA_TEST_P1  "p1"
+#define OSSL_PKEY_PARAM_RSA_TEST_P2  "p2"
+#define OSSL_PKEY_PARAM_RSA_TEST_Q1  "q1"
+#define OSSL_PKEY_PARAM_RSA_TEST_Q2  "q2"
 #define OSSL_SIGNATURE_PARAM_KAT "kat"
 
 # ifdef __cplusplus

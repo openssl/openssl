@@ -338,13 +338,17 @@ int dsa_digest_verify_final(void *vpdsactx, const unsigned char *sig,
 
 static void dsa_freectx(void *vpdsactx)
 {
-    PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+    PROV_DSA_CTX *ctx = (PROV_DSA_CTX *)vpdsactx;
 
-    DSA_free(pdsactx->dsa);
-    EVP_MD_CTX_free(pdsactx->mdctx);
-    EVP_MD_free(pdsactx->md);
-
-    OPENSSL_free(pdsactx);
+    OPENSSL_free(ctx->propq);
+    EVP_MD_CTX_free(ctx->mdctx);
+    EVP_MD_free(ctx->md);
+    ctx->propq = NULL;
+    ctx->mdctx = NULL;
+    ctx->md = NULL;
+    ctx->mdsize = 0;
+    DSA_free(ctx->dsa);
+    OPENSSL_free(ctx);
 }
 
 static void *dsa_dupctx(void *vpdsactx)

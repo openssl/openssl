@@ -205,8 +205,10 @@ static int get_md_nid(const EVP_MD *md)
 
 static void free_md(PROV_ECDSA_CTX *ctx)
 {
+    OPENSSL_free(ctx->propq);
     EVP_MD_CTX_free(ctx->mdctx);
     EVP_MD_free(ctx->md);
+    ctx->propq = NULL;
     ctx->mdctx = NULL;
     ctx->md = NULL;
     ctx->mdsize = 0;

@@ -166,7 +166,7 @@ void RSA_free(RSA *r)
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     rsa_acvp_test_free(r->acvp_test);
 #endif
-    /* TODO(3.0): Support PSS in FIPS_MODULE */
+
 #ifndef FIPS_MODULE
     RSA_PSS_PARAMS_free(r->pss);
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
