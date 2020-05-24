@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <math.h>
 #include "internal/cryptlib.h"
 #include "crypto/ctype.h"
 #include "internal/numbers.h"
@@ -635,10 +636,16 @@ fmtfp(char **sbuffer,
             fvalue = tmpvalue;
     }
     ufvalue = abs_val(fvalue);
-    if (ufvalue > ULONG_MAX) {
-        /* Number too big */
+    /*
+     * Check if the real value is too large to be displayed via an
+     * unsigned long int.
+     *
+     * The obvious comparison ufvalue > ULONG_MAX doesn't work because
+     * ULONG_MAX cannot be converted to a double without accuracy loss.
+     */
+    if (ufvalue >= ldexp(1., sizeof(unsigned long) * 8))
         return 0;
-    }
+
     intpart = (unsigned long)ufvalue;
 
     /*
