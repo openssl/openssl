@@ -377,6 +377,7 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx, X509_NAME *nm)
         x = sk_X509_value(ctx->other_ctx, i);
         if (X509_NAME_cmp(nm, X509_get_subject_name(x)) == 0) {
             if (!X509_up_ref(x)) {
+                sk_X509_pop_free(sk, X509_free);
                 X509err(X509_F_LOOKUP_CERTS_SK, ERR_R_INTERNAL_ERROR);
                 ctx->error = X509_V_ERR_UNSPECIFIED;
                 return NULL;
