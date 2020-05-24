@@ -145,8 +145,8 @@ HTMLDOCS5_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS5;
 HTMLDOCS7_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS7;
                      join(' ', sort keys %dirs) -}
 
-APPS_OPENSSL="{- use File::Spec::Functions;
-                 catfile("apps","openssl") -}"
+APPS_OPENSSL={- use File::Spec::Functions;
+                 catfile("apps","openssl") -}
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
@@ -376,6 +376,7 @@ PROCESSOR= {- $config{processor} -}
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
+{- dependmagic('build_the_app'); -}: build_the_app_nodep
 
 build_docs: build_html_docs
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
@@ -384,6 +385,7 @@ build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_import($_) // () } @{$unified_info{libraries}}) -}
 build_modules_nodep: $(MODULES)
 build_programs_nodep: $(PROGRAMS) $(SCRIPTS)
+build_the_app_nodep: $(APPS_OPENSSL) $(SCRIPTS)
 
 # Kept around for backward compatibility
 build_apps build_tests: build_programs

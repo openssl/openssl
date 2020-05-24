@@ -145,8 +145,8 @@ HTMLDOCS3={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man3}}) -
 HTMLDOCS5={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man5}}) -}
 HTMLDOCS7={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man7}}) -}
 
-APPS_OPENSSL="{- use File::Spec::Functions;
-                 catfile("apps","openssl") -}"
+APPS_OPENSSL={- use File::Spec::Functions;
+                 catfile("apps","openssl") -}
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
@@ -413,11 +413,13 @@ NODEBUG=@
 {- dependmagic('build_libs'); -} : build_libs_nodep
 {- dependmagic('build_modules'); -} : build_modules_nodep
 {- dependmagic('build_programs'); -} : build_programs_nodep
+{- dependmagic('build_the_app'); -} : build_the_app_nodep
 
 build_generated : $(GENERATED_MANDATORY)
 build_libs_nodep : $(LIBS), $(SHLIBS)
 build_modules_nodep : $(MODULES)
 build_programs_nodep : $(PROGRAMS), $(SCRIPTS)
+build_the_app_nodep : $(APPS_OPENSSL), $(SCRIPTS)
 
 build_docs: build_html_docs
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7)
