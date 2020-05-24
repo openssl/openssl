@@ -52,7 +52,7 @@ static void int_dh_free(EVP_PKEY *pkey)
     DH_free(pkey->pkey.dh);
 }
 
-static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
+static int dh_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;

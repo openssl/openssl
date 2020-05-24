@@ -141,7 +141,7 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval)
     return NULL;
 }
 
-static int eckey_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
+static int eckey_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 {
     const unsigned char *p = NULL;
     const void *pval;
