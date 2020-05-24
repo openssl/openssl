@@ -28,7 +28,6 @@ plan skip_all => "$test_name needs TLS <= 1.2 enabled"
 
 plan tests => 5;
 
-$ENV{OPENSSL_ia32cap} = '~0x200000200000000';
 my $proxy = TLSProxy::Proxy->new(
     undef,
     cmdstr(app(["openssl"]), display => 1),
