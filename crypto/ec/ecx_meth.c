@@ -126,7 +126,7 @@ static int ecx_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     return 1;
 }
 
-static int ecx_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
+static int ecx_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 {
     const unsigned char *p;
     int pklen;

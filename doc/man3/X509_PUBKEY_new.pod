@@ -17,8 +17,8 @@ X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
  X509_PUBKEY *X509_PUBKEY_dup(const X509_PUBKEY *a);
 
  int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
- EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key);
- EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
+ EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key);
+ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key);
 
  EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length);
  int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp);
@@ -34,7 +34,7 @@ X509_PUBKEY_get0_param - SubjectPublicKeyInfo public key functions
                             unsigned char *penc, int penclen);
  int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                             const unsigned char **pk, int *ppklen,
-                            X509_ALGOR **pa, X509_PUBKEY *pub);
+                            X509_ALGOR **pa, const X509_PUBKEY *pub);
 
 =head1 DESCRIPTION
 

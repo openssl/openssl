@@ -30,7 +30,7 @@ struct X509_pubkey_st {
     EVP_PKEY *pkey;
 };
 
-static int x509_pubkey_decode(EVP_PKEY **pk, X509_PUBKEY *key);
+static int x509_pubkey_decode(EVP_PKEY **pk, const X509_PUBKEY *key);
 
 /* Minor tweak to operation: free up EVP_PKEY */
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -151,7 +151,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
  */
 
 
-static int x509_pubkey_decode(EVP_PKEY **ppkey, X509_PUBKEY *key)
+static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 {
     EVP_PKEY *pkey = EVP_PKEY_new();
 
@@ -188,7 +188,7 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, X509_PUBKEY *key)
     return 0;
 }
 
-EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
+EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key)
 {
     EVP_PKEY *ret = NULL;
 
@@ -216,7 +216,7 @@ EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
     return NULL;
 }
 
-EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
+EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
 {
     EVP_PKEY *ret = X509_PUBKEY_get0(key);
 
@@ -453,7 +453,7 @@ int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
 
 int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                            const unsigned char **pk, int *ppklen,
-                           X509_ALGOR **pa, X509_PUBKEY *pub)
+                           X509_ALGOR **pa, const X509_PUBKEY *pub)
 {
     if (ppkalg)
         *ppkalg = pub->algor->algorithm;
