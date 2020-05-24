@@ -63,7 +63,9 @@ const Flag<bool> kBoolFlags[] = {
   { "-use-export-context", &TestConfig::use_export_context },
   { "-expect-ticket-renewal", &TestConfig::expect_ticket_renewal },
   { "-expect-no-session", &TestConfig::expect_no_session },
+#ifndef OPENSSL_NO_DEPRECATED_3_0
   { "-use-ticket-callback", &TestConfig::use_ticket_callback },
+#endif
   { "-renew-ticket", &TestConfig::renew_ticket },
   { "-enable-client-custom-extension",
     &TestConfig::enable_client_custom_extension },
