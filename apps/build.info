@@ -70,7 +70,7 @@ IF[{- !$disabled{apps} -}]
 
   {- join("\n  ", map { (my $x = $_) =~ s|\.c$|.o|; "DEPEND[$x]=progs.h" }
                   @apps_openssl_src) -}
-  GENERATE[progs.h]=progs.pl $(APPS_OPENSSL)
+  GENERATE[progs.h]=progs.pl "$(APPS_OPENSSL)"
   DEPEND[progs.h]=../configdata.pm
 
   SCRIPTS=CA.pl tsget.pl
