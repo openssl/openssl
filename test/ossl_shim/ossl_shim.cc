@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * HMAC low level APIs are deprecated for public use but might be used here.
+ */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #if !defined(__STDC_FORMAT_MACROS)
 #define __STDC_FORMAT_MACROS
 #endif
@@ -369,6 +374,7 @@ static int NewSessionCallback(SSL *ssl, SSL_SESSION *session) {
   return 1;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
                              EVP_CIPHER_CTX *ctx, HMAC_CTX *hmac_ctx,
                              int encrypt) {
@@ -401,6 +407,7 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
   }
   return 1;
 }
+#endif
 
 // kCustomExtensionValue is the extension value that the custom extension
 // callbacks will add.
@@ -624,9 +631,11 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
   SSL_CTX_set_info_callback(ssl_ctx.get(), InfoCallback);
   SSL_CTX_sess_set_new_cb(ssl_ctx.get(), NewSessionCallback);
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
   if (config->use_ticket_callback) {
     SSL_CTX_set_tlsext_ticket_key_cb(ssl_ctx.get(), TicketKeyCallback);
   }
+#endif
 
   if (config->enable_client_custom_extension &&
       !SSL_CTX_add_client_custom_ext(
