@@ -236,8 +236,8 @@ int evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
  * but also in the operation cache to see if there's any common keymgmt that
  * supplies OP_keymgmt_match.
  *
- * evp_keymgmt_util_match() adheres to the return values that EVP_PKEY_cmp()
- * and EVP_PKEY_cmp_parameters() return, i.e.:
+ * evp_keymgmt_util_match() adheres to the return values that EVP_PKEY_eq()
+ * and EVP_PKEY_parameters_eq() return, i.e.:
  *
  *  1   same key
  *  0   not same key

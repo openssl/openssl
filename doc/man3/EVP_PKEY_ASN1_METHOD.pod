@@ -170,7 +170,7 @@ They're called by L<X509_PUBKEY_get0(3)> and L<X509_PUBKEY_set(3)>.
 The pub_cmp() method is called when two public keys are to be
 compared.
 It MUST return 1 when the keys are equal, 0 otherwise.
-It's called by L<EVP_PKEY_cmp(3)>.
+It's called by L<EVP_PKEY_eq(3)>.
 
 The pub_print() method is called to print a public key in humanly
 readable text to B<out>, indented B<indent> spaces.
@@ -228,7 +228,7 @@ It's called by L<EVP_PKEY_copy_parameters(3)>.
 The param_cmp() method compares the parameters of keys B<a> and B<b>.
 It MUST return 1 when the keys are equal, 0 when not equal, or a
 negative number on error.
-It's called by L<EVP_PKEY_cmp_parameters(3)>.
+It's called by L<EVP_PKEY_parameters_eq(3)>.
 
 The param_print() method prints the private key parameters in humanly
 readable text to B<out>, indented B<indent> spaces.
