@@ -35,6 +35,8 @@ EVP_MAC_CTX                             datatype
 EVP_PKEY_gen_cb                         datatype
 EVP_PKEY_METHOD                         datatype
 EVP_PKEY_ASN1_METHOD                    datatype
+EVP_RAND                                datatype
+EVP_RAND_CTX                            datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OPENSSL_CTX                             datatype
@@ -300,6 +302,9 @@ EVP_PKEY_assign_EC_KEY                  define
 EVP_PKEY_assign_POLY1305                define
 EVP_PKEY_assign_RSA                     define
 EVP_PKEY_assign_SIPHASH                 define
+EVP_RAND_STATE_ERROR                    define
+EVP_RAND_STATE_READY                    define
+EVP_RAND_STATE_UNINITIALISED            define
 EVP_SealUpdate                          define
 EVP_SignInit                            define
 EVP_SignInit_ex                         define
