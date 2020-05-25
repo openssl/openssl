@@ -2643,7 +2643,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      1,
      "IANA-GOST2012-GOST8912-GOST8912",
      NULL,
-     0x0300c102,
+     SSL3_CK_IANA_GOST2012_GOST8912_GOST8912,
      SSL_kGOST,
      SSL_aGOST12 | SSL_aGOST01,
      SSL_eGOST2814789CNT12,
@@ -2691,7 +2691,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      1,
      "GOST2012-KUZNYECHIK-KUZNYECHIKOMAC",
      NULL,
-     0x0300C100,
+     SSL3_CK_GOST2012_KUZNYECHIK_KUZNYECHIKOMAC,
      SSL_kGOST18,
      SSL_aGOST12,
      SSL_KUZNYECHIK,
@@ -2707,7 +2707,7 @@ static SSL_CIPHER ssl3_ciphers[] = {
      1,
      "GOST2012-MAGMA-MAGMAOMAC",
      NULL,
-     0x0300C101,
+     SSL3_CK_GOST2012_MAGMA_MAGMAOMAC,
      SSL_kGOST18,
      SSL_aGOST12,
      SSL_MAGMA,
@@ -4311,6 +4311,14 @@ const SSL_CIPHER *ssl3_choose_cipher(SSL *s, STACK_OF(SSL_CIPHER) *clnt,
             (DTLS_VERSION_LT(s->version, c->min_dtls) ||
              DTLS_VERSION_GT(s->version, c->max_dtls)))
             continue;
+
+        /* Skip GOST TLS 1.2 ciphers is Extender Master Secter is not recieved */
+        switch (SSL_CIPHER_get_id(c)) {
+            case SSL3_CK_GOST2012_KUZNYECHIK_KUZNYECHIKOMAC:
+            case SSL3_CK_GOST2012_MAGMA_MAGMAOMAC:
+                if ((s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS) == 0)
+                    continue;
+        }
 
         /*
          * Since TLS 1.3 ciphersuites can be used with any auth or

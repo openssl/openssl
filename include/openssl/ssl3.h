@@ -75,6 +75,11 @@ extern "C" {
 # define SSL3_CK_ADH_DES_64_CBC_SHA              0x0300001A
 # define SSL3_CK_ADH_DES_192_CBC_SHA             0x0300001B
 
+# define SSL3_CK_GOST2012_KUZNYECHIK_KUZNYECHIKOMAC 0x0300C100
+# define SSL3_CK_GOST2012_MAGMA_MAGMAOMAC           0x0300C101
+# define SSL3_CK_IANA_GOST2012_GOST8912_GOST8912    0x0300c102
+
+
 /* a bundle of RFC standard cipher names, generated from ssl3_ciphers[] */
 # define SSL3_RFC_RSA_NULL_MD5                   "TLS_RSA_WITH_NULL_MD5"
 # define SSL3_RFC_RSA_NULL_SHA                   "TLS_RSA_WITH_NULL_SHA"
