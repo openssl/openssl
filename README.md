@@ -323,7 +323,7 @@ If you don't want to build all components but just want to do comparative QSC as
 
 #### Integration testing
 
-We have various `pytest` test suites for the TLS and CMS functionalities. Consult the [oqs-test](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/oqs-test/README.md) for more information.
+We have various `pytest` test suites for the TLS and CMS functionalities. Consult the [oqs-test/ README](https://github.com/open-quantum-safe/openssl/blob/OQS-OpenSSL_1_1_1-stable/oqs-test/README.md) for more information.
 
 ## Third Party Integrations
 

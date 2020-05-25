@@ -189,6 +189,9 @@ doc-nits
 # OQS stuff
 /oqs-test/tests/__pycache__
 /oqs-test/tmp/
+/oqs-interop-test/tests/__pycache__
+/oqs-interop-test/tmp/
+/oqs-interop-test/bssl_algorithms.py
 /*.crt
 /*.key
 /*.csr

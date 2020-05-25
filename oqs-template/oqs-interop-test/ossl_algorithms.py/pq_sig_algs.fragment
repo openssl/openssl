@@ -1,0 +1,4 @@
+{% for sig in config['sigs'] %}
+    {% for variant in sig['variants'] %}'{{ variant['name'] }}', {%- endfor %}
+{%- endfor %}
+

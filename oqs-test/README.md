@@ -23,7 +23,7 @@ pip3 install --user pytest pytest-xdist psutil
 
 2. From the project root directory, the following test suites can be executed:
 
-- The "basic" TLS test suite: This sets the server signature algorithm to `oqs_sig_default` and establishes a TLS connection for each key-exchange algorithm, and which subsequently sets server key-exchange algorithm to `oqs_kem_default` and establishes a TLS connection for each signature algorithm, can be run by executing the following command:
+- The "basic" TLS test suite: This first sets the server signature algorithm to `oqs_sig_default` and establishes a TLS connection for each key-exchange algorithm, and then sets the server key-exchange algorithm to `oqs_kem_default` and establishes a TLS connection for each signature algorithm. This can be run by executing the following command:
 
 ```
 python3 -m pytest oqs-test/test_tls_basic.py

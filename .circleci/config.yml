@@ -1,5 +1,7 @@
 version: 2
 
+# TODO: Add psutil to CI images.
+
 # CircleCI doesn't handle large file sets properly for local builds
 # https://github.com/CircleCI-Public/circleci-cli/issues/281#issuecomment-472808051
 localCheckout: &localCheckout
@@ -62,6 +64,32 @@ localCheckout: &localCheckout
         - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
             path: oqs-test/tmp/test-results
 
+.boringssl_interop_job: &boringsslinteropjob
+  docker:
+    - image: ${IMAGE}
+  steps:
+    - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
+    - run:
+        name: Clone liboqs and BoringSSL
+        command: ./oqs-scripts/clone_liboqs.sh && ./oqs-scripts/clone_boringssl.sh
+    - run:
+        name: Build liboqs
+        command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_liboqs.sh
+    - run:
+        name: Build BoringSSL
+        command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_boringssl.sh
+    - run:
+        name: Build OpenSSL
+        command: .circleci/git_no_checkin_in_last_day.sh || (./Configure linux-x86_64 no-shared no-tests && make -j15)
+    - run:
+        name: Test BoringSSL client against OpenSSL server
+        command: .circleci/git_no_checkin_in_last_day.sh || (python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-prog=boringssl/build/ssl/test/bssl_shim --client-type=bssl --server-prog=apps/openssl --server-type=ossl --junitxml=oqs-interop-test/tmp/test-results/pytest/bssl_client-test-results.xml)
+    - run:
+        name: Test OpenSSL client against BoringSSL server
+        command: .circleci/git_no_checkin_in_last_day.sh || (python3 -m pytest --numprocesses=auto oqs-interop-test/test_full.py --client-prog=apps/openssl --client-type=ossl --server-prog=boringssl/build/tool/bssl --server-type=bssl --junitxml=oqs-interop-test/tmp/test-results/pytest/ossl_client-test-results.xml)
+    - store_test_results: # Note that this command will fail when running CircleCI locally, that is expected behaviour
+        path: oqs-interop-test/tmp/test-results
+
 jobs:
   debian_buster-shared_oqs-static_ossl:
     <<: *openssljob
@@ -78,6 +106,11 @@ jobs:
     <<: *openssljob
     environment:
       IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+  ubuntu_bionic-static_oqs-static_ossl-boringssl-interop:
+    <<: *boringsslinteropjob
+    environment:
+      IMAGE: openquantumsafe/ci-ubuntu-bionic-x86_64:latest
+      LIBOQS_USE_OPENSSL: OFF
   macOS-shared_oqs-shared_ossl:
     <<: *macopenssljob
     environment:
@@ -106,4 +139,4 @@ workflows:
       - macOS-static_oqs-static_ossl
       - ubuntu_bionic-shared_oqs-shared_ossl
       - ubuntu_bionic-static_oqs-static_ossl
-
+      - ubuntu_bionic-static_oqs-static_ossl-boringssl-interop
