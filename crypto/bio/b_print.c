@@ -635,7 +635,13 @@ fmtfp(char **sbuffer,
             fvalue = tmpvalue;
     }
     ufvalue = abs_val(fvalue);
-    if (ufvalue > ULONG_MAX) {
+    /*
+     * By subtracting 65535 (2^16-1) we cancel the low order 15 bits
+     * of ULONG_MAX to avoid using imprecise floating point values.
+     * The second condition is necessary to catch NaN values.
+     */
+    if (ufvalue >= (double)(ULONG_MAX - 65535) + 65536.0
+            || !(ufvalue == ufvalue) /* NaN */) {
         /* Number too big */
         return 0;
     }
