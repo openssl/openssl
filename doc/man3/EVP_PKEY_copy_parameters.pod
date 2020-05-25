@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_copy_parameters, EVP_PKEY_missing_parameters, EVP_PKEY_cmp_parameters,
+EVP_PKEY_missing_parameters, EVP_PKEY_copy_parameters, EVP_PKEY_parameters_eq,
+EVP_PKEY_cmp_parameters, EVP_PKEY_eq,
 EVP_PKEY_cmp - public key parameter and comparison functions
 
 =head1 SYNOPSIS
@@ -12,7 +13,9 @@ EVP_PKEY_cmp - public key parameter and comparison functions
  int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
  int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
 
+ int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b);
  int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
+ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b);
  int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
 
 =head1 DESCRIPTION
@@ -26,11 +29,11 @@ B<from> to key B<to>. An error is returned if the parameters are missing in
 B<from> or present in both B<from> and B<to> and mismatch. If the parameters
 in B<from> and B<to> are both present and match this function has no effect.
 
-The function EVP_PKEY_cmp_parameters() compares the parameters of keys
-B<a> and B<b>.
+The function EVP_PKEY_parameters_eq() checks the parameters of keys
+B<a> and B<b> for equality.
 
-The function EVP_PKEY_cmp() compares the public key components and parameters
-(if present) of keys B<a> and B<b>.
+The function EVP_PKEY_eq() checks the public key components and parameters
+(if present) of keys B<a> and B<b> for equality.
 
 =head1 NOTES
 
@@ -40,7 +43,7 @@ parameters are sometimes omitted from a public key if they are inherited from
 the CA that signed it.
 
 Since OpenSSL private keys contain public key components too the function
-EVP_PKEY_cmp() can also be used to determine if a private key matches
+EVP_PKEY_eq() can also be used to determine if a private key matches
 a public key.
 
 =head1 RETURN VALUES
@@ -52,14 +55,22 @@ doesn't use parameters.
 These functions EVP_PKEY_copy_parameters() returns 1 for success and 0 for
 failure.
 
-The function EVP_PKEY_cmp_parameters() and EVP_PKEY_cmp() return 1 if the
-keys match, 0 if they don't match, -1 if the key types are different and
+The function EVP_PKEY_parameters_eq() and EVP_PKEY_eq() return 1 if their
+inputs match, 0 if they don't match, -1 if the key types are different and
 -2 if the operation is not supported.
 
 =head1 SEE ALSO
 
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_keygen(3)>
+
+=head1 HISTORY
+
+The function EVP_PKEY_cmp was deprecated and renamed to B<EVP_PKEY_eq> and
+EVP_PKEY_cmp_parameters was deprecated and renamed to B<EVP_PKEY_parameters_eq>
+(without changing semantics) in OpenSSL 3.0.
+This was done to avoid confusion on their return values with other _cmp()
+functions that return 0 in case their arguments are equal.
 
 =head1 COPYRIGHT
 

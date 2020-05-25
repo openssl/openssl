@@ -491,5 +491,5 @@ int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b)
     if ((pA = X509_PUBKEY_get0(a)) == NULL
         || (pB = X509_PUBKEY_get0(b)) == NULL)
         return -2;
-    return EVP_PKEY_cmp(pA, pB);
+    return EVP_PKEY_eq(pA, pB);
 }
