@@ -69,7 +69,8 @@ chroot(2) jail without the associated device nodes being available. When
 the B<keep> argument is zero, this call disables the retention of file
 descriptors. Conversely, a nonzero argument enables the retention of
 file descriptors. This function is usually called during initialization
-and it takes effect immediately.
+and it takes effect immediately. This capability only applies to the default
+provider.
 
 RAND_event() and RAND_screen() are equivalent to RAND_poll() and exist
 for compatibility reasons only. See HISTORY section below.

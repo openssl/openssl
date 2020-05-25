@@ -16,6 +16,7 @@ B<openssl list>
 [B<-digest-algorithms>]
 [B<-kdf-algorithms>]
 [B<-mac-algorithms>]
+[B<-random-generators>]
 [B<-cipher-commands>]
 [B<-cipher-algorithms>]
 [B<-public-key-algorithms>]
@@ -67,6 +68,16 @@ to the L<openssl-dgst(1)> or L<openssl-speed(1)> commands.
 B<-cipher-algorithms>
 
 Display a list of cipher, digest, kdf and mac algorithms.
+See L</Display of algorithm names> for a description of how names are
+displayed.
+
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
+
+=item B<-random-generators>
+
+Display a list of random number generators.
+
 See L</Display of algorithm names> for a description of how names are
 displayed.
 
