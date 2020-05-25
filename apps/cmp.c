@@ -2100,6 +2100,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
     (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s%s%s/%s",
                        opt_tls_used ? "s" : "", opt_server,
                        server_port == 0 ? "" : ":", server_port_s,
+                       opt_path == NULL ? "" :
                        opt_path[0] == '/' ? opt_path + 1 : opt_path);
 
     if (opt_proxy != NULL)
@@ -2977,12 +2978,13 @@ int cmp_main(int argc, char **argv)
         if ((acbio = http_server_init_bio(prog, opt_port)) == NULL)
             goto err;
         while (opt_max_msgs <= 0 || msgs < opt_max_msgs) {
+            char *path = NULL;
             OSSL_CMP_MSG *req = NULL;
             OSSL_CMP_MSG *resp = NULL;
 
             ret = http_server_get_asn1_req(ASN1_ITEM_rptr(OSSL_CMP_MSG),
-                                           (ASN1_VALUE **)&req, &cbio, acbio,
-                                           prog, 0, 0);
+                                           (ASN1_VALUE **)&req, &path,
+                                           &cbio, acbio, prog, 0, 0);
             if (ret == 0)
                 continue;
             if (ret++ == -1)
@@ -2991,17 +2993,32 @@ int cmp_main(int argc, char **argv)
             ret = 0;
             msgs++;
             if (req != NULL) {
+                if (strcmp(path, "") != 0 && strcmp(path, "pkix/") != 0) {
+                    (void)http_server_send_status(cbio, 404, "Not Found");
+                    CMP_err1("Expecting empty path or 'pkix/' but got '%s'\n",
+                             path);
+                    OPENSSL_free(path);
+                    OSSL_CMP_MSG_free(req);
+                    goto cont;
+                }
+                OPENSSL_free(path);
                 resp = OSSL_CMP_CTX_server_perform(cmp_ctx, req);
                 OSSL_CMP_MSG_free(req);
-                if (resp == NULL)
+                if (resp == NULL) {
+                    (void)http_server_send_status(cbio,
+                                                  500, "Internal Server Error");
                     break; /* treated as fatal error */
+                }
                 ret = http_server_send_asn1_resp(cbio, "application/pkixcmp",
                                                  ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                                  (const ASN1_VALUE *)resp);
                 OSSL_CMP_MSG_free(resp);
                 if (!ret)
                     break; /* treated as fatal error */
+            } else {
+                (void)http_server_send_status(cbio, 400, "Bad Request");
             }
+        cont:
             BIO_free_all(cbio);
             cbio = NULL;
         }

@@ -60,23 +60,29 @@ void log_message(const char *prog, int level, const char *fmt, ...);
  * returns a BIO for accepting requests, NULL on error
  */
 BIO *http_server_init_bio(const char *prog, const char *port);
+
 /*-
  * Accept an ASN.1-formatted HTTP request
  * it: the expected request ASN.1 type
  * preq: pointer to variable where to place the parsed request
  * pcbio: pointer to variable where to place the BIO for sending the response to
+ * ppath: pointer to variable where to place the request path, or NULL
  * acbio: the listening bio (typically as returned by http_server_init_bio())
  * prog: the name of the current app
- * accept_get: wheter to accept GET requests (in addition to POST requests)
+ * accept_get: whether to accept GET requests (in addition to POST requests)
  * timeout: connection timeout (in seconds), or 0 for none/infinite
- * returns 0 in case caller should retry, then *preq == *pcbio == NULL
- * returns -1 on fatal error; also in this case *preq == *pcbio == NULL
- * returns 1 otherwise. In this case it is guaranteed that *pcbio != NULL
- *                      while *preq == NULL if and only if request is invalid
+ * returns 0 in case caller should retry, then *preq == *ppath == *pcbio == NULL
+ * returns -1 on fatal error; also then holds *preq == *ppath == *pcbio == NULL
+ * returns 1 otherwise. In this case it is guaranteed that *pcbio != NULL while
+ * *ppath == NULL and *preq == NULL if and only if the request is invalid,
+ * On return value 1 the caller is responsible for sending an HTTP response,
+ * using http_server_send_asn1_resp() or http_server_send_status().
+ * The caller must free any non-NULL *preq, *ppath, and *pcbio pointers.
  */
 int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
-                        BIO **pcbio, BIO *acbio,
-                        const char *prog, int accept_get, int timeout);
+                             char **ppath, BIO **pcbio, BIO *acbio,
+                             const char *prog, int accept_get, int timeout);
+
 /*-
  * Send an ASN.1-formatted HTTP response
  * cbio: destination BIO (typically as returned by http_server_get_asn1_req())
@@ -89,6 +95,16 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
  */
 int http_server_send_asn1_resp(BIO *cbio, const char *content_type,
                                const ASN1_ITEM *it, const ASN1_VALUE *resp);
+
+/*-
+ * Send a trivial HTTP response, typically to report an error or OK
+ * cbio: destination BIO (typically as returned by http_server_get_asn1_req())
+ * status: the status code to send
+ * reason: the corresponding human-readable string
+ * returns 1 on success, 0 on failure
+ */
+int http_server_send_status(BIO *cbio, int status, const char *reason);
+
 # endif
 
 # ifdef HTTP_DAEMON
