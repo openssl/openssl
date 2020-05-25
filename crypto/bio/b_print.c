@@ -635,7 +635,7 @@ fmtfp(char **sbuffer,
             fvalue = tmpvalue;
     }
     ufvalue = abs_val(fvalue);
-    if (ufvalue > ULONG_MAX) {
+    if (ufvalue >= (double)(ULONG_MAX - 65535) + 65536.0) {
         /* Number too big */
         return 0;
     }
