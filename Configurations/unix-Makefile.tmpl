@@ -1484,8 +1484,11 @@ EOF
                  grep { platform->isdef($_) }
                  @{$args{objs}};
       my @deps = compute_lib_depends(@{$args{deps}});
-      my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
-
+      if (m/providers\/fips/ && defined $target{shared_fipsflag}) {
+        $shared_def = join("", map { ' '.$target{shared_fipsflag}.$_ } @defs);
+      } else {
+        $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
+      }
       my $objs = join(" \\\n\t\t", fill_lines(' ', $COLUMNS - 16, @objs));
       my $deps = join(" \\\n" . ' ' x (length($dso) + 2),
                       fill_lines(' ', $COLUMNS - length($dso) - 2,
