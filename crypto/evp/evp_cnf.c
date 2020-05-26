@@ -22,6 +22,7 @@ DEFINE_STACK_OF(CONF_VALUE)
 static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
 {
     int i;
+    OPENSSL_CTX *libctx;
     const char *oid_section;
     STACK_OF(CONF_VALUE) *sktmp;
     CONF_VALUE *oval;
@@ -29,6 +30,7 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
     OSSL_TRACE2(CONF, "Loading EVP module: name %s, value %s\n",
                 CONF_imodule_get_name(md), CONF_imodule_get_value(md));
 
+    libctx = NCONF_get_libctx(cnf);
     oid_section = CONF_imodule_get_value(md);
     if ((sktmp = NCONF_get_section(cnf, oid_section)) == NULL) {
         EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_ERROR_LOADING_SECTION);
@@ -47,12 +49,12 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
              * fips_mode is deprecated and should not be used in new
              * configurations.
              */
-            if (!EVP_default_properties_enable_fips(cnf->libctx, m > 0)) {
+            if (!EVP_default_properties_enable_fips(libctx, m > 0)) {
                 EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }
         } else if (strcmp(oval->name, "default_properties") == 0) {
-            if (!EVP_set_default_properties(cnf->libctx, oval->value)) {
+            if (!EVP_set_default_properties(libctx, oval->value)) {
                 EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }

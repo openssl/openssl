@@ -148,12 +148,15 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
 
 static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 {
+    OPENSSL_CTX *libctx;
     STACK_OF(CONF_VALUE) *elist;
     CONF_VALUE *cval;
     int i;
 
     OSSL_TRACE1(CONF, "Loading providers module: section %s\n",
                 CONF_imodule_get_value(md));
+
+    libctx = NCONF_get_libctx(cnf);
 
     /* Value is a section containing PROVIDERs to configure */
     elist = NCONF_get_section(cnf, CONF_imodule_get_value(md));
@@ -166,7 +169,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 
     for (i = 0; i < sk_CONF_VALUE_num(elist); i++) {
         cval = sk_CONF_VALUE_value(elist, i);
-        if (!provider_conf_load(cnf->libctx, cval->name, cval->value, cnf))
+        if (!provider_conf_load(libctx, cval->name, cval->value, cnf))
             return 0;
     }
 

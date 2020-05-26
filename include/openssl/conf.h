@@ -115,10 +115,11 @@ struct conf_st {
     OPENSSL_CTX *libctx;
 };
 
-CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
 DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
+int NCONF_set_libctx(CONF *confxb, OPENSSL_CTX *libctx);
+OPENSSL_CTX *NCONF_get_libctx(const CONF *conf);
 void NCONF_free(CONF *conf);
 void NCONF_free_data(CONF *conf);
 

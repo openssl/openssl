@@ -129,8 +129,7 @@ int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
     CONF *conf = NULL;
     int ret = 0;
 
-    conf = NCONF_new_with_libctx(libctx, NULL);
-    if (conf == NULL)
+    if ((conf = NCONF_new(NULL)) == NULL || !NCONF_set_libctx(conf, libctx))
         goto err;
 
     if (filename == NULL) {

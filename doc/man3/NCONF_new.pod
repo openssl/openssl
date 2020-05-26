@@ -2,29 +2,34 @@
 
 =head1 NAME
 
-NCONF_new_with_libctx, NCONF_new, NCONF_free, NCONF_default, NCONF_load
+NCONF_new, NCONF_set_libctx, NCONF_get_libctx, NCONF_free, NCONF_default,
+NCONF_load
 - functionality to Load and parse configuration files manually
 
 =head1 SYNOPSIS
 
  #include <openssl/conf.h>
 
- CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
  CONF *NCONF_new(CONF_METHOD *meth);
+ int NCONF_set_libctx(CONF *conf, OPENSSL_CTX *libctx);
+ OPENSSL_CTX *NCONF_get_libctx(const CONF *conf);
  void NCONF_free(CONF *conf);
  CONF_METHOD *NCONF_default(void);
  int NCONF_load(CONF *conf, const char *file, long *eline);
 
 =head1 DESCRIPTION
 
-NCONF_new_with_libctx() creates a new CONF object in heap memory and assigns to
-it a context I<libctx> that can be used during loading. If the method table
-I<meth> is set to NULL then the default value of NCONF_default() is used.
-
-NCONF_new() is similar to NCONF_new_with_libctx() but sets the I<libctx> to NULL.
+NCONF_new() creates a new CONF object. If the method table I<meth> is set to
+NULL then the default value of NCONF_default() is used.
 
 NCONF_free() frees the data associated with I<conf> and then frees the I<conf>
 object.
+
+NCONF_set_libctx() assigns the context I<libctx> to the CONF object I<conf>.
+This library context can be used when needed when processing I<conf>, such
+as when calling L<CONF_modules_load(3)> with it.
+
+NCONF_get_libctx() returns the library context that is assigned to I<conf>.
 
 NCONF_load() parses the file named I<filename> and adds the values found to
 I<conf>. If an error occurs I<file> and I<eline> list the file and line that
@@ -34,10 +39,14 @@ NCONF_default() gets the default method table for processing a configuration fil
 
 =head1 RETURN VALUES
 
-NCONF_load() returns 1 on success or 0 on error.
+NCONF_new() return a newly created I<CONF> object or NULL if an error occurs.
 
-NCONF_new_with_libctx() and NCONF_new() return a newly created I<CONF> object
-or NULL if an error occurs.
+NCONF_set_libctx() returns 1 on success or 0 on error.
+
+NCONF_get_libctx() returns the library context assigned to the B<CONF>.
+NULL is the default library context.
+
+NCONF_load() returns 1 on success or 0 on error.
 
 =head1 SEE ALSO
 

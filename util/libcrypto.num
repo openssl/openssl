@@ -5000,7 +5000,6 @@ EVP_PKEY_gen                            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_keygen_bits        ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_keygen_pubexp      ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_keygen_primes      ?	3_0_0	EXIST::FUNCTION:RSA
-NCONF_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:
 CONF_modules_load_file_with_libctx      ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_load_config                 ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_BLD_to_param                 ?	3_0_0	EXIST::FUNCTION:
@@ -5097,3 +5096,5 @@ OSSL_PROVIDER_do_all                    ?	3_0_0	EXIST::FUNCTION:
 X509_PUBKEY_eq                          ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_eq                             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_parameters_eq                  ?	3_0_0	EXIST::FUNCTION:
+NCONF_set_libctx                        ?	3_0_0	EXIST::FUNCTION:
+NCONF_get_libctx                        ?	3_0_0	EXIST::FUNCTION:

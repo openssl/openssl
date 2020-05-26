@@ -174,7 +174,7 @@ int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
  * the "CONF classic" functions, for consistency.
  */
 
-CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth)
+CONF *NCONF_new(CONF_METHOD *meth)
 {
     CONF *ret;
 
@@ -186,14 +186,23 @@ CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth)
         CONFerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
-    ret->libctx = libctx;
 
     return ret;
 }
 
-CONF *NCONF_new(CONF_METHOD *meth)
+int NCONF_set_libctx(CONF *conf, OPENSSL_CTX *libctx)
 {
-    return NCONF_new_with_libctx(NULL, meth);
+    if (conf == NULL)
+        return 0;
+    conf->libctx = libctx;
+    return 1;
+}
+
+OPENSSL_CTX *NCONF_get_libctx(const CONF *conf)
+{
+    if (conf == NULL)
+        return NULL;
+    return conf->libctx;
 }
 
 void NCONF_free(CONF *conf)
