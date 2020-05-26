@@ -22,6 +22,7 @@ SOURCE[../../providers/libimplementations.a]=$COMMON
 # need to be applied to all affected libraries and modules.
 DEFINE[../../libcrypto]=$MD5DEF
 DEFINE[../../providers/libimplementations.a]=$MD5DEF
+DEFINE[../../providers/liblegacy.a]=$MD5DEF
 
 GENERATE[md5-586.s]=asm/md5-586.pl
 
