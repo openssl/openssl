@@ -209,6 +209,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
 {
     switch (*s) {
     default:
+        opt_printf_stderr("%s: Bad format \"%s\"\n", prog, s);
         return 0;
     case 'D':
     case 'd':
@@ -275,6 +276,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
                 return opt_format_error(s, flags);
             *result = FORMAT_PKCS12;
         } else {
+            opt_printf_stderr("%s: Bad format \"%s\"\n", prog, s);
             return 0;
         }
         break;
