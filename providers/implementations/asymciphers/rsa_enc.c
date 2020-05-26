@@ -138,11 +138,13 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             PROVerr(0, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        ret = RSA_padding_add_PKCS1_OAEP_mgf1(tbuf, rsasize, in, inlen,
-                                              prsactx->oaep_label,
-                                              prsactx->oaep_labellen,
-                                              prsactx->oaep_md,
-                                              prsactx->mgf1_md);
+        ret =
+            rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(prsactx->libctx, tbuf,
+                                                        rsasize, in, inlen,
+                                                        prsactx->oaep_label,
+                                                        prsactx->oaep_labellen,
+                                                        prsactx->oaep_md,
+                                                        prsactx->mgf1_md);
 
         if (!ret) {
             OPENSSL_free(tbuf);
