@@ -681,13 +681,14 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
              * provider will fail anyway.
              */
             if (prov->flag_fallback) {
-                activated_fallback_count++;
-
-                if (ossl_provider_up_ref(prov)
-                    && !provider_activate(prov))
-                    ossl_provider_free(prov);
-                else
-                    prov->flag_activated_as_fallback = 1;
+                if (ossl_provider_up_ref(prov)) {
+                    if (!provider_activate(prov)) {
+                        ossl_provider_free(prov);
+                    } else {
+                        prov->flag_activated_as_fallback = 1;
+                        activated_fallback_count++;
+                    }
+                }
             }
         }
 
