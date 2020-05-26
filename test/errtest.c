@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/opensslconf.h>
 #include <openssl/err.h>
 
@@ -16,6 +17,46 @@
 # include <windows.h>
 #else
 # include <errno.h>
+#endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define IS_HEX(ch) ((ch >= '0' && ch <='9') || (ch >= 'A' && ch <='F'))
+
+static int test_print_error_format(void)
+{
+    static const char expected[] =
+        ":error::system library:test_print_error_format:Operation not permitted:"
+# ifndef OPENSSL_NO_FILENAMES
+        "errtest.c:30:";
+# else
+        ":0:";
+# endif
+    char *out = NULL, *p = NULL;
+    int ret = 0, len;
+    BIO *bio = NULL;
+
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
+        return 0;
+
+    ERR_PUT_error(ERR_LIB_SYS, 0, 1, "errtest.c", 30);
+    ERR_print_errors(bio);
+
+    if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
+        goto err;
+    /* Skip over the variable thread id at the start of the string */
+    for (p = out; *p != ':' && *p != 0; ++p) {
+        if (!TEST_true(IS_HEX(*p)))
+            goto err;
+    }
+    if (!TEST_true(*p != 0)
+        || !TEST_strn_eq(expected, p, strlen(expected)))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free(bio);
+    return ret;
+}
 #endif
 
 /* Test that querying the error queue preserves the OS error. */
@@ -79,5 +120,8 @@ int setup_tests(void)
     ADD_TEST(preserves_system_error);
     ADD_TEST(vdata_appends);
     ADD_TEST(raised_error);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_print_error_format);
+#endif
     return 1;
 }

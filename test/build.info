@@ -54,7 +54,7 @@ IF[{- !$disabled{tests} -}]
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
-          keymgmt_internal_test
+          keymgmt_internal_test hexstr_test
 
   SOURCE[confdump]=confdump.c
   INCLUDE[confdump]=../include ../apps/include
@@ -735,6 +735,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
   DEPEND[params_test]=../libcrypto.a libtestutil.a
+
+  PROGRAMS{noinst}=hexstr_test
+  SOURCE[hexstr_test]=hexstr_test.c
+  INCLUDE[hexstr_test]=.. ../include ../apps/include
+  DEPEND[hexstr_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=namemap_internal_test
   SOURCE[namemap_internal_test]=namemap_internal_test.c

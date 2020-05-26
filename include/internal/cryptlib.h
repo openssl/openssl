@@ -241,4 +241,8 @@ char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
                               size_t max_len);
 char *ipaddr_to_asc(unsigned char *p, int len);
 
+char *openssl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
+unsigned char *openssl_hexstr2buf_sep(const char *str, long *buflen,
+                                      const char sep);
+
 #endif
