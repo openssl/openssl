@@ -137,7 +137,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 }
 #endif /* FIPS_MODULE */
 
-static int legacyalg(int id, const char *keytype)
+static int is_legacy_alg(int id, const char *keytype)
 {
 #ifndef FIPS_MODULE
     /* Certain EVP_PKEY keytypes are only available in legacy form */
@@ -262,7 +262,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * implementation.
      */
     if (e == NULL && keytype != NULL) {
-        int legacy = legacyalg(id, keytype);
+        int legacy = is_legacy_alg(id, keytype);
 
         if (legacy) {
             /* This could fail so ignore errors */

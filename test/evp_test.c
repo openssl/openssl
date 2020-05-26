@@ -2995,7 +2995,8 @@ static int key_unsupported(void)
     long err = ERR_peek_error();
 
     if (ERR_GET_LIB(err) == ERR_LIB_EVP
-            && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
+            && (ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM
+                || ERR_GET_REASON(err) == EVP_R_FETCH_FAILED)) {
         ERR_clear_error();
         return 1;
     }
