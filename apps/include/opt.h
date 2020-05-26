@@ -270,17 +270,22 @@
  */
 # define OPT_PROV_ENUM \
         OPT_PROV__FIRST=1600, \
-        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, \
+        OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, OPT_PROV_LOAD_CONFIG, \
         OPT_PROV__LAST
+
+# define OPT_LIBCTX_OPTIONS \
+        { "use_libctx", OPT_LIBCTX, '-', "Create a library context to load providers into (use before provider options)" }
 
 # define OPT_PROV_OPTIONS \
         OPT_SECTION("Provider"), \
         { "provider_path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
+        { "provider_config", OPT_PROV_LOAD_CONFIG, 's', "Load provider using a configuration file" }, \
         { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }
 
 # define OPT_PROV_CASES \
         OPT_PROV__FIRST: case OPT_PROV__LAST: break; \
         case OPT_PROV_PROVIDER: \
+        case OPT_PROV_LOAD_CONFIG: \
         case OPT_PROV_PROVIDER_PATH
 
 /*

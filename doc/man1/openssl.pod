@@ -780,6 +780,18 @@ multiple time to load more than one provider.
 Specify the search I<path> that is used to locate provider modules.  The format
 of I<path> varies depending on the operating system being used.
 
+=item B<-provider_config> I<filename>
+
+Load a provider using a configuration I<filename>.  This option can be used by
+any provider that requires additional configuration data in order to load.
+
+=item B<-use_libctx>
+
+Create the library context that providers can be loaded into, and load the
+"null" provider into the default (NULL) library context.
+This option should appear before any other provider options.
+Most openssl applications do not currently support this option.
+
 =back
 
 =head2 Extended Verification Options

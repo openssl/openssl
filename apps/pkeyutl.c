@@ -25,7 +25,8 @@ DEFINE_STACK_OF_STRING()
 static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
-                              const int impl, int rawin, EVP_PKEY **ppkey);
+                              const int impl, int rawin, EVP_PKEY **ppkey,
+                              OPENSSL_CTX *libctx, const char *propq);
 
 static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
                       ENGINE *e);
@@ -47,6 +48,7 @@ typedef enum OPTION_choice {
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
     OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
+    OPT_LIBCTX,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
 
@@ -95,6 +97,7 @@ const OPTIONS pkeyutl_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
+    OPT_LIBCTX_OPTIONS,
     {NULL}
 };
 
@@ -122,6 +125,8 @@ int pkeyutl_main(int argc, char **argv)
     int rawin = 0;
     const EVP_MD *md = NULL;
     int filesize = -1;
+    OPENSSL_CTX *libctx = NULL;
+    const char *propq = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -166,6 +171,11 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_LIBCTX:
+            libctx = opt_provider_libctx();
+            if (libctx == NULL)
                 goto end;
             break;
         case OPT_PROV_CASES:
@@ -281,7 +291,8 @@ int pkeyutl_main(int argc, char **argv)
         goto opthelp;
     }
     ctx = init_ctx(kdfalg, &keysize, inkey, keyform, key_type,
-                   passinarg, pkey_op, e, engine_impl, rawin, &pkey);
+                   passinarg, pkey_op, e, engine_impl, rawin, &pkey,
+                   libctx, propq);
     if (ctx == NULL) {
         BIO_printf(bio_err, "%s: Error initializing context\n", prog);
         ERR_print_errors(bio_err);
@@ -491,7 +502,8 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                               const char *keyfile, int keyform, int key_type,
                               char *passinarg, int pkey_op, ENGINE *e,
                               const int engine_impl, int rawin,
-                              EVP_PKEY **ppkey)
+                              EVP_PKEY **ppkey,
+                              OPENSSL_CTX *libctx, const char *propq)
 {
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -547,13 +559,19 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                 goto end;
             }
         }
-        ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
+        if (libctx != NULL)
+            ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
+        else
+            ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
     } else {
         if (pkey == NULL)
             goto end;
 
         *pkeysize = EVP_PKEY_size(pkey);
-        ctx = EVP_PKEY_CTX_new(pkey, impl);
+        if (libctx != NULL)
+            ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
+        else
+            ctx = EVP_PKEY_CTX_new(pkey, impl);
         if (ppkey != NULL)
             *ppkey = pkey;
         EVP_PKEY_free(pkey);
