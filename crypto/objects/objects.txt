@@ -1739,12 +1739,6 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p256_sikep610 : p256_sikep610
  : sikep751 : sikep751
  : p256_sikep751 : p256_sikep751
- : ledacryptkemlt12 : ledacryptkemlt12
- : p256_ledacryptkemlt12 : p256_ledacryptkemlt12
- : ledacryptkemlt32 : ledacryptkemlt32
- : p256_ledacryptkemlt32 : p256_ledacryptkemlt32
- : ledacryptkemlt52 : ledacryptkemlt52
- : p256_ledacryptkemlt52 : p256_ledacryptkemlt52
  : kyber90s512 : kyber90s512
  : p256_kyber90s512 : p256_kyber90s512
  : kyber90s768 : kyber90s768

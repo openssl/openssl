@@ -130,9 +130,6 @@ int oqssl_kem_nids_list[] = {
         NID_sikep503,
         NID_sikep610,
         NID_sikep751,
-        NID_ledacryptkemlt12,
-        NID_ledacryptkemlt32,
-        NID_ledacryptkemlt52,
         NID_kyber90s512,
         NID_kyber90s768,
         NID_kyber90s1024,
@@ -292,15 +289,6 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_sikep751:
     case NID_p256_sikep751:
       return OQS_KEM_alg_sike_p751;
-    case NID_ledacryptkemlt12:
-    case NID_p256_ledacryptkemlt12:
-      return OQS_KEM_alg_ledacrypt_ledakemlt12;
-    case NID_ledacryptkemlt32:
-    case NID_p256_ledacryptkemlt32:
-      return OQS_KEM_alg_ledacrypt_ledakemlt32;
-    case NID_ledacryptkemlt52:
-    case NID_p256_ledacryptkemlt52:
-      return OQS_KEM_alg_ledacrypt_ledakemlt52;
     case NID_kyber90s512:
     case NID_p256_kyber90s512:
       return OQS_KEM_alg_kyber_512_90s;

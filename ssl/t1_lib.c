@@ -212,9 +212,6 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_sikep503, 128, TLS_CURVE_CUSTOM}, /* sikep503 (0x0220) */
     {NID_sikep610, 192, TLS_CURVE_CUSTOM}, /* sikep610 (0x0221) */
     {NID_sikep751, 256, TLS_CURVE_CUSTOM}, /* sikep751 (0x0222) */
-    {NID_ledacryptkemlt12, 128, TLS_CURVE_CUSTOM}, /* ledacryptkemlt12 (0x0226) */
-    {NID_ledacryptkemlt32, 192, TLS_CURVE_CUSTOM}, /* ledacryptkemlt32 (0x0227) */
-    {NID_ledacryptkemlt52, 256, TLS_CURVE_CUSTOM}, /* ledacryptkemlt52 (0x0228) */
     {NID_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* kyber90s512 (0x0229) */
     {NID_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* kyber90s768 (0x022A) */
     {NID_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* kyber90s1024 (0x022B) */
@@ -260,9 +257,6 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
     {NID_p256_sikep503, 128, TLS_CURVE_CUSTOM}, /* p256 + sikep503 hybrid (0x0220) */
     {NID_p256_sikep610, 192, TLS_CURVE_CUSTOM}, /* p256 + sikep610 hybrid (0x0221) */
     {NID_p256_sikep751, 256, TLS_CURVE_CUSTOM}, /* p256 + sikep751 hybrid (0x0222) */
-    {NID_p256_ledacryptkemlt12, 128, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt12 hybrid (0x0226) */
-    {NID_p256_ledacryptkemlt32, 192, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt32 hybrid (0x0227) */
-    {NID_p256_ledacryptkemlt52, 256, TLS_CURVE_CUSTOM}, /* p256 + ledacryptkemlt52 hybrid (0x0228) */
     {NID_p256_kyber90s512, 128, TLS_CURVE_CUSTOM}, /* p256 + kyber90s512 hybrid (0x0229) */
     {NID_p256_kyber90s768, 192, TLS_CURVE_CUSTOM}, /* p256 + kyber90s768 hybrid (0x022A) */
     {NID_p256_kyber90s1024, 256, TLS_CURVE_CUSTOM}, /* p256 + kyber90s1024 hybrid (0x022B) */
@@ -301,7 +295,6 @@ static const uint16_t eccurves_default[] = {
     0x2F1C, /* p256 - OQS sidhp503 hybrid */
     0x2F1F, /* p256 - OQS sikep434 hybrid */
     0x2F20, /* p256 - OQS sikep503 hybrid */
-    0x2F26, /* p256 - OQS ledacryptkemlt12 hybrid */
     0x2F29, /* p256 - OQS kyber90s512 hybrid */
     0x2F2C, /* p256 - OQS babybear hybrid */
     0x2F2F, /* p256 - OQS babybearephem hybrid */
@@ -382,12 +375,6 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x2F21, /* p256 - OQS sikep610 hybrid */
     0x0222, /* sikep751 */
     0x2F22, /* p256 - OQS sikep751 hybrid */
-    0x0226, /* ledacryptkemlt12 */
-    0x2F26, /* p256 - OQS ledacryptkemlt12 hybrid */
-    0x0227, /* ledacryptkemlt32 */
-    0x2F27, /* p256 - OQS ledacryptkemlt32 hybrid */
-    0x0228, /* ledacryptkemlt52 */
-    0x2F28, /* p256 - OQS ledacryptkemlt52 hybrid */
     0x0229, /* kyber90s512 */
     0x2F29, /* p256 - OQS kyber90s512 hybrid */
     0x022A, /* kyber90s768 */

@@ -179,24 +179,24 @@ kems:
     nid_hybrid_p256: "0x2F22"
     oqs_alg: "OQS_KEM_alg_sike_p751"
     bit_security: 256
-  -
-    name_group: "ledacryptkemlt12"
-    nid: "0x0226"
-    nid_hybrid_p256: "0x2F26"
-    oqs_alg: "OQS_KEM_alg_ledacrypt_ledakemlt12"
-    bit_security: 128
-  -
-    name_group: "ledacryptkemlt32"
-    nid: "0x0227"
-    nid_hybrid_p256: "0x2F27"
-    oqs_alg: "OQS_KEM_alg_ledacrypt_ledakemlt32"
-    bit_security: 192
-  -
-    name_group: "ledacryptkemlt52"
-    nid: "0x0228"
-    nid_hybrid_p256: "0x2F28"
-    oqs_alg: "OQS_KEM_alg_ledacrypt_ledakemlt52"
-    bit_security: 256
+  # -
+  #   name_group: "ledacryptkemlt12"
+  #   nid: "0x0226"
+  #   nid_hybrid_p256: "0x2F26"
+  #   oqs_alg: "OQS_KEM_alg_ledacrypt_ledakemlt12"
+  #   bit_security: 128
+  # -
+  #   name_group: "ledacryptkemlt32"
+  #   nid: "0x0227"
+  #   nid_hybrid_p256: "0x2F27"
+  #   oqs_alg: "OQS_KEM_alg_ledacrypt_ledakemlt32"
+  #   bit_security: 192
+  # -
+  #   name_group: "ledacryptkemlt52"
+  #   nid: "0x0228"
+  #   nid_hybrid_p256: "0x2F28"
+  #   oqs_alg: "OQS_KEM_alg_ledacrypt_ledakemlt52"
+  #   bit_security: 256
   -
     name_group: "kyber90s512"
     nid: "0x0229"

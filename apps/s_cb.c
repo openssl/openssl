@@ -470,9 +470,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0220: return "sikep503";
   case 0x0221: return "sikep610";
   case 0x0222: return "sikep751";
-  case 0x0226: return "ledacryptkemlt12";
-  case 0x0227: return "ledacryptkemlt32";
-  case 0x0228: return "ledacryptkemlt52";
   case 0x0229: return "kyber90s512";
   case 0x022A: return "kyber90s768";
   case 0x022B: return "kyber90s1024";
@@ -515,9 +512,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x2F20: return "p256_sikep503 hybrid";
   case 0x2F21: return "p256_sikep610 hybrid";
   case 0x2F22: return "p256_sikep751 hybrid";
-  case 0x2F26: return "p256_ledacryptkemlt12 hybrid";
-  case 0x2F27: return "p256_ledacryptkemlt32 hybrid";
-  case 0x2F28: return "p256_ledacryptkemlt52 hybrid";
   case 0x2F29: return "p256_kyber90s512 hybrid";
   case 0x2F2A: return "p256_kyber90s768 hybrid";
   case 0x2F2B: return "p256_kyber90s1024 hybrid";
