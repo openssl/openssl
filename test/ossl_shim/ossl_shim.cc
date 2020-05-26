@@ -7,11 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * HMAC low level APIs are deprecated for public use but might be used here.
- */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #if !defined(__STDC_FORMAT_MACROS)
 #define __STDC_FORMAT_MACROS
 #endif
@@ -374,10 +369,11 @@ static int NewSessionCallback(SSL *ssl, SSL_SESSION *session) {
   return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
-                             EVP_CIPHER_CTX *ctx, HMAC_CTX *hmac_ctx,
+                             EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hmac_ctx,
                              int encrypt) {
+  OSSL_PARAM params[3], *p = params;
+
   if (!encrypt) {
     if (GetTestState(ssl)->ticket_decrypt_done) {
       fprintf(stderr, "TicketKeyCallback called after completion.\n");
@@ -397,8 +393,14 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
     return 0;
   }
 
-  if (!HMAC_Init_ex(hmac_ctx, kZeros, sizeof(kZeros), EVP_sha256(), NULL) ||
-      !EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, kZeros, iv, encrypt)) {
+  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA256", 0);
+  *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, kZeros,
+                                           sizeof(kZeros));
+  *p = OSSL_PARAM_construct_end();
+
+  if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, kZeros, iv, encrypt)
+      || !EVP_MAC_init(hmac_ctx)
+      || !EVP_MAC_CTX_set_params(hmac_ctx, params)) {
     return -1;
   }
 
@@ -407,7 +409,6 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
   }
   return 1;
 }
-#endif
 
 // kCustomExtensionValue is the extension value that the custom extension
 // callbacks will add.
@@ -631,11 +632,9 @@ static bssl::UniquePtr<SSL_CTX> SetupCtx(const TestConfig *config) {
   SSL_CTX_set_info_callback(ssl_ctx.get(), InfoCallback);
   SSL_CTX_sess_set_new_cb(ssl_ctx.get(), NewSessionCallback);
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
   if (config->use_ticket_callback) {
-    SSL_CTX_set_tlsext_ticket_key_cb(ssl_ctx.get(), TicketKeyCallback);
+    SSL_CTX_set_tlsext_ticket_key_evp_cb(ssl_ctx.get(), TicketKeyCallback);
   }
-#endif
 
   if (config->enable_client_custom_extension &&
       !SSL_CTX_add_client_custom_ext(

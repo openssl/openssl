@@ -62,9 +62,7 @@ struct TestConfig {
   bool use_export_context = false;
   bool expect_ticket_renewal = false;
   bool expect_no_session = false;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
   bool use_ticket_callback = false;
-#endif
   bool renew_ticket = false;
   bool enable_client_custom_extension = false;
   bool enable_server_custom_extension = false;
