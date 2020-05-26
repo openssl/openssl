@@ -43,7 +43,6 @@ EVP_PKEY_CTX_set_dh_rfc5114,
 EVP_PKEY_CTX_set_dhx_rfc5114,
 EVP_PKEY_CTX_set_dh_pad,
 EVP_PKEY_CTX_set_dh_nid,
-EVP_PKEY_CTX_set_dh_group_name,
 EVP_PKEY_CTX_set_dh_kdf_type,
 EVP_PKEY_CTX_get_dh_kdf_type,
 EVP_PKEY_CTX_set0_dh_kdf_oid,
@@ -136,7 +135,6 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_set_dh_paramgen_type(EVP_PKEY_CTX *ctx, int type);
  int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
  int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid);
- int EVP_PKEY_CTX_set_dh_group_name(EVP_PKEY_CTX *ctx, const char *group_name);
  int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int rfc5114);
  int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int rfc5114);
  int EVP_PKEY_CTX_set_dh_paramgen_gindex(EVP_PKEY_CTX *ctx, int gindex);
@@ -463,12 +461,6 @@ B<NID_ffdhe8192>, B<NID_modp_1536>, B<NID_modp_2048>, B<NID_modp_3072>,
 B<NID_modp_4096>, B<NID_modp_6144>, B<NID_modp_8192> or B<NID_undef> to clear
 the stored value. This macro can be called during parameter or key generation.
 The nid parameter and the rfc5114 parameter are mutually exclusive.
-
-EVP_PKEY_CTX_set_dh_group_name() is similar to EVP_PKEY_CTX_set_dh_nid() except
-that is uses a string corresponding to values defined in RFC7919 or RFC3526.
-The I<group_name> should be one of  "ffdhe2048", "ffdhe3072", "ffdhe4096",
-"ffdhe6144", "ffdhe8192", "modp_1536", "modp_2048", "modp_3072", "modp_4096",
-"modp_6144" or "modp_8192"
 
 The EVP_PKEY_CTX_set_dh_rfc5114() and EVP_PKEY_CTX_set_dhx_rfc5114() macros are
 synonymous. They set the DH parameters to the values defined in RFC5114. The
