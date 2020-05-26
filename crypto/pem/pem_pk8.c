@@ -78,7 +78,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
 
     /*
      * If no keystring or callback is set, OpenSSL traditionally uses the
-     * user cb argument as a password string, or if that's NULL, it falls
+     * user's cb argument as a password string, or if that's NULL, it falls
      * back on PEM_def_callback().
      */
     if (kstr == NULL && cb == NULL) {
@@ -98,6 +98,12 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                                                NULL)) {
                 const unsigned char *ukstr = (const unsigned char *)kstr;
 
+                /*
+                 * Try to pass the passphrase if one was given, of the
+                 * passphrase callback if one was given.  If none of them
+                 * are given and that's wrong, we rely on the _to_bio()
+                 * call to generate errors.
+                 */
                 ret = 1;
                 if (kstr != NULL
                     && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, ukstr, klen))
