@@ -902,7 +902,7 @@ static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || (group_name != NULL
             && !TEST_int_gt(OSSL_PARAM_BLD_push_utf8_string(
-                              bld, OSSL_PKEY_PARAM_FFC_GROUP,
+                              bld, OSSL_PKEY_PARAM_DH_GROUP,
                               group_name, 0), 0)))
         goto err;
 
@@ -946,7 +946,7 @@ static int dh_safe_prime_keygen_test(int id)
     OSSL_PARAM params[2];
     const struct dh_safe_prime_keygen_st *tst = &dh_safe_prime_keygen_data[id];
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_GROUP,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DH_GROUP,
                                                  (char *)tst->group_name, 0);
     params[1] = OSSL_PARAM_construct_end();
 
