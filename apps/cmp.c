@@ -2097,6 +2097,8 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
         goto oom;
     if (opt_proxy != NULL && !OSSL_CMP_CTX_set1_proxy(ctx, opt_proxy))
         goto oom;
+    if (opt_no_proxy != NULL && !OSSL_CMP_CTX_set1_no_proxy(ctx, opt_no_proxy))
+        goto oom;
     (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s%s%s/%s",
                        opt_tls_used ? "s" : "", opt_server,
                        server_port == 0 ? "" : ":", server_port_s,
