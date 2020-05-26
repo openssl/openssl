@@ -69,6 +69,13 @@ int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *ctx, unsigned char *to,
                                        size_t tlen, const unsigned char *from,
                                        size_t flen, int client_version,
                                        int alt_version);
+int rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(OPENSSL_CTX *libctx,
+                                                unsigned char *to, int tlen,
+                                                const unsigned char *from,
+                                                int flen,
+                                                const unsigned char *param,
+                                                int plen, const EVP_MD *md,
+                                                const EVP_MD *mgf1md);
 
 int rsa_validate_public(const RSA *key);
 int rsa_validate_private(const RSA *key);

@@ -187,12 +187,5 @@ int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
                                              unsigned char *to, int tlen,
                                              const unsigned char *from,
                                              int flen);
-int rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(OPENSSL_CTX *libctx,
-                                                unsigned char *to, int tlen,
-                                                const unsigned char *from,
-                                                int flen,
-                                                const unsigned char *param,
-                                                int plen, const EVP_MD *md,
-                                                const EVP_MD *mgf1md);
 
 #endif /* OSSL_CRYPTO_RSA_LOCAL_H */
