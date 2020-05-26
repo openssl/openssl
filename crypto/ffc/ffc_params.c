@@ -220,7 +220,7 @@ int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
 
         if (name == NULL
             || !ossl_param_build_set_utf8_string(bld, params,
-                                                 OSSL_PKEY_PARAM_FFC_GROUP,
+                                                 OSSL_PKEY_PARAM_DH_GROUP,
                                                  name))
             return 0;
 #else

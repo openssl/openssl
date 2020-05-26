@@ -475,7 +475,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen)
                                  EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR, gen, NULL);
 #endif
 
-    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_FFC_GENERATOR, &gen);
+    *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_DH_GENERATOR, &gen);
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -500,7 +500,7 @@ int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
     if (name == NULL)
         return 0;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_GROUP,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DH_GROUP,
                                             (void *)name, 0);
     *p++ = OSSL_PARAM_construct_end();
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -531,7 +531,7 @@ int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
     if (name == NULL)
         return 0;
 
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_FFC_GROUP,
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DH_GROUP,
                                             (void *)name, 0);
     *p++ = OSSL_PARAM_construct_end();
     return EVP_PKEY_CTX_set_params(ctx, params);

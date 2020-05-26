@@ -15,12 +15,12 @@ We can consider this the retirement home of cryptographic algorithms.
 
 =head2 Properties
 
-The implementations in this provider specifically have these property
+The implementations in this provider specifically has this property
 defined:
 
 =over 4
 
-"provider=legacy"
+=item "provider=legacy"
 
 =back
 

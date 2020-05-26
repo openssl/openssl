@@ -68,6 +68,9 @@ EVP_KDF_fetch() fetches an implementation of a KDF I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
+See L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)> for the lists of
+algorithms supported by the default provider.
+
 The returned value must eventually be freed with
 L<EVP_KDF_free(3)>.
 
@@ -248,14 +251,7 @@ supported by the KDF algorithm.
 
 =head1 SEE ALSO
 
-L<EVP_KDF-SCRYPT(7)>
-L<EVP_KDF-TLS1_PRF(7)>
-L<EVP_KDF-PBKDF2(7)>
-L<EVP_KDF-HKDF(7)>
-L<EVP_KDF-SS(7)>
-L<EVP_KDF-SSHKDF(7)>
-L<EVP_KDF-X963(7)>
-L<EVP_KDF-X942(7)>
+L<OSSL_PROVIDER-default(7)/Key Derivation Function (KDF)>
 
 =head1 HISTORY
 

@@ -1033,7 +1033,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
 # endif
 # ifndef OPENSSL_NO_DH
     else if (strcmp(name, "dh_paramgen_generator") == 0)
-        name = OSSL_PKEY_PARAM_FFC_GENERATOR;
+        name = OSSL_PKEY_PARAM_DH_GENERATOR;
     else if (strcmp(name, "dh_paramgen_prime_len") == 0)
         name = OSSL_PKEY_PARAM_FFC_PBITS;
     else if (strcmp(name, "dh_paramgen_subprime_len") == 0)
@@ -1042,9 +1042,9 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_PKEY_PARAM_FFC_TYPE;
         value = dh_gen_type_id2name(atoi(value));
     } else if (strcmp(name, "dh_param") == 0)
-        name = OSSL_PKEY_PARAM_FFC_GROUP;
+        name = OSSL_PKEY_PARAM_DH_GROUP;
     else if (strcmp(name, "dh_rfc5114") == 0) {
-        name = OSSL_PKEY_PARAM_FFC_GROUP;
+        name = OSSL_PKEY_PARAM_DH_GROUP;
         value = ffc_named_group_from_uid(atoi(value));
     } else if (strcmp(name, "dh_pad") == 0)
         name = OSSL_EXCHANGE_PARAM_PAD;

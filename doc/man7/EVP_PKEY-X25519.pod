@@ -15,6 +15,8 @@ private key I<priv>.
 
 In the FIPS provider they are non-approved algorithms and do not have the
 "fips=yes" property set.
+No additional parameters can be set during key generation.
+
 
 =head2 Common X25519, X448, ED25519 and ED448 parameters
 
@@ -49,6 +51,8 @@ The empty string, signifying that no digest may be specified.
 =over 4
 
 =item RFC 8032
+
+=item RFC 8410
 
 =back
 

@@ -14,11 +14,15 @@
 extern "C" {
 # endif
 
+/* Well known parameter names that core passes to providers */
+#define OSSL_PROV_PARAM_CORE_VERSION         "openssl-version" /* utf8_ptr */
+#define OSSL_PROV_PARAM_CORE_PROV_NAME       "provider-name"   /* utf8_ptr */
+#define OSSL_PROV_PARAM_CORE_MODULE_FILENAME "module-filename" /* utf8_ptr */
+
 /* Well known parameter names that Providers can define */
 #define OSSL_PROV_PARAM_NAME            "name"                /* utf8_string */
 #define OSSL_PROV_PARAM_VERSION         "version"             /* utf8_string */
 #define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_string */
-#define OSSL_PROV_PARAM_MODULE_FILENAME "module-filename"     /* octet_string */
 
 /* Self test callback parameters */
 #define OSSL_PROV_PARAM_SELF_TEST_PHASE  "st-phase" /* utf8_string */
@@ -29,6 +33,8 @@ extern "C" {
  * Algorithm parameters
  * If "engine" or "properties" are specified, they should always be paired
  * with the algorithm type.
+ * Note these are common names that are shared by many types (such as kdf, mac,
+ * and pkey) e.g: see OSSL_MAC_PARAM_DIGEST below.
  */
 #define OSSL_ALG_PARAM_DIGEST       "digest"    /* utf8_string */
 #define OSSL_ALG_PARAM_CIPHER       "cipher"    /* utf8_string */
@@ -123,11 +129,16 @@ extern "C" {
 #define OSSL_MAC_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
 #define OSSL_MAC_PARAM_SIZE         "size"       /* size_t */
 
-/* Known MAC names (not a complete list) */
+/* Known MAC names */
+#define OSSL_MAC_NAME_BLAKE2BMAC    "BLAKE2BMAC"
+#define OSSL_MAC_NAME_BLAKE2SMAC    "BLAKE2SMAC"
 #define OSSL_MAC_NAME_CMAC          "CMAC"
+#define OSSL_MAC_NAME_GMAC          "GMAC"
 #define OSSL_MAC_NAME_HMAC          "HMAC"
 #define OSSL_MAC_NAME_KMAC128       "KMAC128"
 #define OSSL_MAC_NAME_KMAC256       "KMAC256"
+#define OSSL_MAC_NAME_POLY1305      "POLY1305"
+#define OSSL_MAC_NAME_SIPHASH       "SIPHASH"
 
 /* KDF / PRF parameters */
 #define OSSL_KDF_PARAM_SECRET       "secret"    /* octet string */
@@ -179,8 +190,6 @@ extern "C" {
 #define OSSL_PKEY_PARAM_DEFAULT_DIGEST      "default-digest" /* utf8 string */
 #define OSSL_PKEY_PARAM_MANDATORY_DIGEST    "mandatory-digest" /* utf8 string */
 #define OSSL_PKEY_PARAM_PAD_MODE            "pad-mode"
-#define OSSL_PKEY_PARAM_DIGEST              OSSL_ALG_PARAM_DIGEST
-#define OSSL_PKEY_PARAM_PROPERTIES          OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_PKEY_PARAM_DIGEST_SIZE         "digest-size"
 #define OSSL_PKEY_PARAM_MASKGENFUNC         "mgf"
 #define OSSL_PKEY_PARAM_MGF1_DIGEST         "mgf1-digest"
@@ -199,17 +208,10 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_SEED     "seed"
 #define OSSL_PKEY_PARAM_FFC_COFACTOR "j"
 #define OSSL_PKEY_PARAM_FFC_H        "hindex"
-#define OSSL_PKEY_PARAM_FFC_GROUP    "group"
-
-#define OSSL_PKEY_PARAM_FFC_GINDEX   "gindex"
-#define OSSL_PKEY_PARAM_FFC_PCOUNTER "pcounter"
-#define OSSL_PKEY_PARAM_FFC_SEED     "seed"
-#define OSSL_PKEY_PARAM_FFC_COFACTOR "j"
-#define OSSL_PKEY_PARAM_FFC_H        "hindex"
 
 /* Diffie-Hellman params */
-#define OSSL_PKEY_PARAM_FFC_GROUP    "group"
-#define OSSL_PKEY_PARAM_FFC_GENERATOR "safeprime-generator"
+#define OSSL_PKEY_PARAM_DH_GROUP     "group"
+#define OSSL_PKEY_PARAM_DH_GENERATOR "safeprime-generator"
 #define OSSL_PKEY_PARAM_DH_PRIV_LEN   "priv_len"
 
 /* Elliptic Curve Domain Parameters */
@@ -270,6 +272,18 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_COEFFICIENT8 OSSL_PKEY_PARAM_RSA_COEFFICIENT"8"
 #define OSSL_PKEY_PARAM_RSA_COEFFICIENT9 OSSL_PKEY_PARAM_RSA_COEFFICIENT"9"
 
+/* RSA padding modes */
+#define OSSL_PKEY_RSA_PAD_MODE_NONE    "none"
+#define OSSL_PKEY_RSA_PAD_MODE_PKCSV15 "pkcs1"
+#define OSSL_PKEY_RSA_PAD_MODE_SSLV23  "sslv23"
+#define OSSL_PKEY_RSA_PAD_MODE_OAEP    "oaep"
+#define OSSL_PKEY_RSA_PAD_MODE_X931    "x931"
+#define OSSL_PKEY_RSA_PAD_MODE_PSS     "pss"
+
+/* RSA pss padding salt length */
+#define OSSL_PKEY_RSA_PSS_SALT_LEN_DIGEST "digest"
+#define OSSL_PKEY_RSA_PSS_SALT_LEN_MAX    "max"
+#define OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO   "auto"
 
 /* Key generation parameters */
 #define OSSL_PKEY_PARAM_RSA_BITS            OSSL_PKEY_PARAM_BITS
@@ -287,7 +301,6 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_DIGEST_PROPS OSSL_PKEY_PARAM_PROPERTIES
 
 /* Key Exchange parameters */
-
 #define OSSL_EXCHANGE_PARAM_PAD                   "pad" /* uint */
 #define OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE "ecdh-cofactor-mode" /* int */
 #define OSSL_EXCHANGE_PARAM_KDF_TYPE              "kdf-type" /* utf8_string */

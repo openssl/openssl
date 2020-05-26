@@ -82,6 +82,9 @@ EVP_MAC_fetch() fetches an implementation of a MAC I<algorithm>, given
 a library context I<libctx> and a set of I<properties>.
 See L<provider(7)/Fetching algorithms> for further information.
 
+See L<OSSL_PROVIDER-default(7)/Message Authentication Code (MAC)> for the list
+of algorithms supported by the default provider.
+
 The returned value must eventually be freed with
 L<EVP_MAC_free(3)>.
 

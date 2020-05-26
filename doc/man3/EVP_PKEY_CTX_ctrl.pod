@@ -2,10 +2,6 @@
 
 =head1 NAME
 
-EVP_PKEY_CTX_get_params,
-EVP_PKEY_CTX_gettable_params,
-EVP_PKEY_CTX_set_params,
-EVP_PKEY_CTX_settable_params,
 EVP_PKEY_CTX_ctrl,
 EVP_PKEY_CTX_ctrl_str,
 EVP_PKEY_CTX_ctrl_uint64,
@@ -77,11 +73,6 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 =head1 SYNOPSIS
 
  #include <openssl/evp.h>
-
- int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
- const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx);
- int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
- const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx);
 
  int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                        int cmd, int p1, void *p2);
@@ -185,49 +176,6 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len);
 
 =head1 DESCRIPTION
-
-The EVP_PKEY_CTX_get_params() and EVP_PKEY_CTX_set_params() functions get and
-send arbitrary parameters from and to the algorithm implementation respectively.
-Not all parameters may be supported by all providers.
-See L<OSSL_PROVIDER(3)> for more information on providers.
-See L<OSSL_PARAM(3)> for more information on parameters.
-These functions must only be called after the EVP_PKEY_CTX has been initialised
-for use in an operation.
-
-The parameters currently supported by the default provider are:
-
-=over 4
-
-=item "pad" (B<OSSL_EXCHANGE_PARAM_PAD>) <unsigned integer>
-
-Sets the DH padding mode.
-If B<OSSL_EXCHANGE_PARAM_PAD> is 1 then the  shared secret is padded with zeros
-up to the size of the DH prime I<p>.
-If B<OSSL_EXCHANGE_PARAM_PAD> is zero (the default) then no padding is
-performed.
-
-=item "digest" (B<OSSL_SIGNATURE_PARAM_DIGEST>) <UTF8 string>
-
-Gets and sets the name of the digest algorithm used for the input to the
-signature functions.
-
-=item "digest-size" (B<OSSL_SIGNATURE_PARAM_DIGEST_SIZE>) <unsigned integer>
-
-Gets and sets the output size of the digest algorithm used for the input to the
-signature functions.
-The length of the "digest-size" parameter should not exceed that of a B<size_t>.
-The internal algorithm that supports this parameter is DSA.
-
-=back
-
-EVP_PKEY_CTX_gettable_params() and EVP_PKEY_CTX_settable_params() gets a
-constant B<OSSL_PARAM> array that describes the  gettable and
-settable parameters for the current algorithm implementation, i.e. parameters
-that can be used with EVP_PKEY_CTX_get_params() and EVP_PKEY_CTX_set_params()
-respectively.
-See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
-These functions must only be called after the EVP_PKEY_CTX has been initialised
-for use in an operation.
 
 The function EVP_PKEY_CTX_ctrl() sends a control operation to the context
 I<ctx>. The key type used must match I<keytype> if it is not -1. The parameter
@@ -662,17 +610,13 @@ allocate adequate memory space for the I<id> before calling EVP_PKEY_CTX_get1_id
 
 =head1 RETURN VALUES
 
-EVP_PKEY_CTX_set_params() returns 1 for success or 0 otherwise.
-EVP_PKEY_CTX_settable_params() returns an OSSL_PARAM array on success or NULL on
-error.
-It may also return NULL if there are no settable parameters available.
-
 All other functions and macros described on this page return a positive value
 for success and 0 or a negative value for failure. In particular a return value
 of -2 indicates the operation is not supported by the public key algorithm.
 
 =head1 SEE ALSO
 
+L<EVP_PKEY_CTX_set_params(3)>,
 L<EVP_PKEY_CTX_new(3)>,
 L<EVP_PKEY_encrypt(3)>,
 L<EVP_PKEY_decrypt(3)>,

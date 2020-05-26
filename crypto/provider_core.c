@@ -841,8 +841,13 @@ int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
  * never knows.
  */
 static const OSSL_PARAM param_types[] = {
-    OSSL_PARAM_DEFN("openssl-version", OSSL_PARAM_UTF8_PTR, NULL, 0),
-    OSSL_PARAM_DEFN("provider-name", OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_CORE_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_CORE_PROV_NAME, OSSL_PARAM_UTF8_PTR,
+                    NULL, 0),
+#ifndef FIPS_MODULE
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_CORE_MODULE_FILENAME, OSSL_PARAM_UTF8_PTR,
+                    NULL, 0),
+#endif
     OSSL_PARAM_END
 };
 
@@ -879,13 +884,14 @@ static int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[])
      */
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
-    if ((p = OSSL_PARAM_locate(params, "openssl-version")) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_CORE_VERSION)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, OPENSSL_VERSION_STR);
-    if ((p = OSSL_PARAM_locate(params, "provider-name")) != NULL)
+    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_CORE_PROV_NAME)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, prov->name);
 
 #ifndef FIPS_MODULE
-    if ((p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_MODULE_FILENAME)) != NULL)
+    if ((p = OSSL_PARAM_locate(params,
+                               OSSL_PROV_PARAM_CORE_MODULE_FILENAME)) != NULL)
         OSSL_PARAM_set_utf8_ptr(p, ossl_provider_module_path(prov));
 #endif
 

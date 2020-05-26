@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-EVP_PKEY-EC - EVP_PKEY EC keytype and algorithm support
+EVP_PKEY-EC,
+EVP_KEYMGMT-EC
+- EVP_PKEY EC keytype and algorithm support
 
 =head1 DESCRIPTION
 
@@ -24,9 +26,8 @@ Enable Cofactor DH (ECC CDH) if this value is 1, otherwise it uses normal EC DH
 if the value is zero. The cofactor variant multiplies the shared secret by the
 EC curve's cofactor (note for some curves the cofactor is 1).
 
-=for comment The following link should become L<EVP_KEYEXCH-ECDH(7)>
 
-See also L<provider-keyexch(7)> for the related
+See also L<EVP_KEYEXCH-ECDH(7)> for the related
 B<OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE> parameter that can be set on a
 per-operation basis.
 
@@ -47,10 +48,68 @@ An B<EVP_PKEY> context can be obtained by calling:
     EVP_PKEY_CTX *pctx =
         EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
 
+An B<EVP_PKEY> ECDSA or ECDH key can be generated with a "P-256" named group by
+calling:
+
+    EVP_PKEY *key = NULL;
+    OSSL_PARAM params[2];
+    EVP_PKEY_CTX *gctx =
+        EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
+
+    EVP_PKEY_keygen_init(gctx);
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME,
+                                                 "P-256", 0);
+    params[1] = OSSL_PARAM_construct_end();
+    EVP_PKEY_CTX_set_params(gctx, params);
+
+    EVP_PKEY_gen(gctx, &key);
+
+    EVP_PKEY_print_private(bio_out, key, 0, NULL);
+    ...
+    EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(gctx);
+
+An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
+"K-571" named group by calling:
+
+    int use_cdh = 1;
+    EVP_PKEY *key = NULL;
+    OSSL_PARAM params[3];
+    EVP_PKEY_CTX *gctx =
+        EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
+
+    EVP_PKEY *key = NULL;
+    OSSL_PARAM params[3];
+    EVP_PKEY_CTX *gctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
+
+    EVP_PKEY_keygen_init(gctx);
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME,
+                                                 "K-571", 0);
+    /*
+     * This curve has a cofactor that is not 1 - so setting CDH mode changes
+     * the behaviour. For many curves the cofactor is 1 - so setting this has
+     * no effect.
+     */
+    params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,
+                                         &use_cdh);
+    params[2] = OSSL_PARAM_construct_end();
+    EVP_PKEY_CTX_set_params(gctx, params);
+
+    EVP_PKEY_gen(gctx, &key);
+    EVP_PKEY_print_private(bio_out, key, 0, NULL);
+    ...
+    EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(gctx);
+
 =head1 SEE ALSO
 
-L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>,
-L<EVP_SIGNATURE-ECDSA(7)>, L<EVP_KEYEXCH-ECDH(7)>
+L<EVP_KEYMGMT(3)>,
+L<EVP_PKEY(3)>,
+L<provider-keymgmt(7)>,
+L<EVP_SIGNATURE-ECDSA(7)>,
+L<EVP_KEYEXCH-ECDH(7)>
 
 =head1 COPYRIGHT
 

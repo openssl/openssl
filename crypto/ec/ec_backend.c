@@ -19,15 +19,10 @@
  * implementations alike.
  */
 
-int ec_set_param_ecdh_cofactor_mode(EC_KEY *ec, const OSSL_PARAM *p)
+int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
 {
     const EC_GROUP *ecg = EC_KEY_get0_group(ec);
     const BIGNUM *cofactor;
-    int mode;
-
-    if (!OSSL_PARAM_get_int(p, &mode))
-        return 0;
-
     /*
      * mode can be only 0 for disable, or 1 for enable here.
      *
@@ -224,8 +219,12 @@ int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
-    if (p != NULL && !ec_set_param_ecdh_cofactor_mode(ec, p))
-        return 0;
+    if (p != NULL) {
+        int mode;
 
+        if (!OSSL_PARAM_get_int(p, &mode)
+            || !ec_set_ecdh_cofactor_mode(ec, mode))
+            return 0;
+    }
     return 1;
 }
