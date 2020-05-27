@@ -45,7 +45,7 @@ close F;
 unlink $opt_o;
 
 $contents =~
-    s|href="http://man\.he\.net/(man\d/[^"]+)(?:\.html)?"|href="../$1.html|g;
+    s|href="http://man\.he\.net/(man\d/[^"]+)(?:\.html)?"|href="../$1.html"|g;
 open F, ">$opt_o"
     or die "Can't write $opt_o, $!";
 print F $contents;
