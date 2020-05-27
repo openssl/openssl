@@ -22,8 +22,6 @@ EC_GROUP_get_pentanomial_basis, EC_GROUP_get0_field
  int EC_GROUP_copy(EC_GROUP *dst, const EC_GROUP *src);
  EC_GROUP *EC_GROUP_dup(const EC_GROUP *src);
 
- const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group);
-
  int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
                             const BIGNUM *order, const BIGNUM *cofactor);
  const EC_POINT *EC_GROUP_get0_generator(const EC_GROUP *group);
@@ -63,6 +61,10 @@ EC_GROUP_get_pentanomial_basis, EC_GROUP_get0_field
  int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
                                     unsigned int *k2, unsigned int *k3);
 
+Deprecated since OpenSSL 3.0:
+
+ const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group);
+
 =head1 DESCRIPTION
 
 EC_GROUP_copy() copies the curve B<src> into B<dst>. Both B<src> and B<dst> must use the same EC_METHOD.
@@ -71,6 +73,7 @@ EC_GROUP_dup() creates a new EC_GROUP object and copies the content from B<src> 
 EC_GROUP object.
 
 EC_GROUP_method_of() obtains the EC_METHOD of B<group>.
+This function was deprecated in OpenSSL 3.0, since EC_METHOD is no longer a public concept.
 
 EC_GROUP_set_generator() sets curve parameters that must be agreed by all participants using the curve. These
 parameters include the B<generator>, the B<order> and the B<cofactor>. The B<generator> is a well defined point on the
@@ -140,8 +143,12 @@ built-in curves within the library provide seed values that can be obtained. It 
 EC_GROUP_set_seed() and passing a pointer to a memory block, along with the length of the seed. Again, the EC library will not use
 this seed value, although it will be preserved in any ASN1 based communications.
 
-EC_GROUP_get_degree() gets the degree of the field. For Fp fields this will be the number of bits in p.  For F2^m fields this will be
-the value m.
+EC_GROUP_get_degree() gets the degree of the field.
+For Fp fields this will be the number of bits in p.
+For F2^m fields this will be the value m.
+
+EC_GROUP_get_field_type() identifies what type of field the EC_GROUP structure supports,
+which will be either F2^m or Fp.
 
 The function EC_GROUP_check_discriminant() calculates the discriminant for the curve and verifies that it is valid.
 For a curve defined over Fp the discriminant is given by the formula 4*a^3 + 27*b^2 whilst for F2^m curves the discriminant is
@@ -202,6 +209,10 @@ EC_GROUP_get_point_conversion_form() returns the point_conversion_form for B<gro
 
 EC_GROUP_get_degree() returns the degree for B<group> or 0 if the operation is not supported by the underlying group implementation.
 
+EC_GROUP_get_field_type() returns either B<NID_X9_62_prime_field> for prime curves
+or B<NID_X9_62_characteristic_two_field> for binary curves;
+these values are defined in the obj_mac.h header file.
+
 EC_GROUP_check_named_curve() returns the nid of the matching named curve, otherwise it returns 0 for no match, or -1 on error.
 
 EC_GROUP_get0_order() returns an internal pointer to the group order.
@@ -229,7 +240,9 @@ L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =head1 HISTORY
 
-The EC_GROUP_check_named_curve() function was added in OpenSSL 3.0.
+EC_GROUP_method_of() was deprecated in OpenSSL 3.0.
+
+EC_GROUP_check_named_curve() and EC_GROUP_get_field_type() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

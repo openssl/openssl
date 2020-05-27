@@ -115,7 +115,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
         /* explicit parameters */
         int is_char_two = 0;
         point_conversion_form_t form;
-        int tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(x));
+        int tmp_nid = EC_GROUP_get_field_type(x);
 
         if (tmp_nid == NID_X9_62_characteristic_two_field)
             is_char_two = 1;

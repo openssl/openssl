@@ -23,6 +23,26 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated EC_METHOD_get_field_type(). Applications should switch to
+   EC_GROUP_get_field_type().
+
+   *Billy Bob Brumley*
+
+ * Deprecated EC_GFp_simple_method(), EC_GFp_mont_method(),
+   EC_GF2m_simple_method(), EC_GFp_nist_method(), EC_GFp_nistp224_method()
+   EC_GFp_nistp256_method(), and EC_GFp_nistp521_method().
+   Applications should rely on the library automatically assigning a suitable
+   EC_METHOD internally upon EC_GROUP construction.
+
+   *Billy Bob Brumley*
+
+ * Deprecated EC_GROUP_new(), EC_GROUP_method_of(), and EC_POINT_method_of().
+   EC_METHOD is now an internal-only concept and a suitable EC_METHOD is
+   assigned internally without application intervention.
+   Users of EC_GROUP_new() should switch to a different suitable constructor.
+
+   *Billy Bob Brumley*
+
  * Add CAdES-BES signature verification support, mostly derived
    from ESSCertIDv2 TS (RFC 5816) contribution by Marek Klein.
 

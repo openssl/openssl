@@ -117,10 +117,9 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     dest->libctx = src->libctx;
     /* copy the parameters */
     if (src->group != NULL) {
-        const EC_METHOD *meth = EC_GROUP_method_of(src->group);
         /* clear the old group */
         EC_GROUP_free(dest->group);
-        dest->group = EC_GROUP_new_ex(src->libctx, meth);
+        dest->group = ec_group_new_ex(src->libctx, src->group->meth);
         if (dest->group == NULL)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))
@@ -398,7 +397,7 @@ static int ec_key_public_range_check(BN_CTX *ctx, const EC_KEY *key)
     if (!EC_POINT_get_affine_coordinates(key->group, key->pub_key, x, y, ctx))
         goto err;
 
-    if (EC_METHOD_get_field_type(key->group->meth) == NID_X9_62_prime_field) {
+    if (EC_GROUP_get_field_type(key->group) == NID_X9_62_prime_field) {
         if (BN_is_negative(x)
             || BN_cmp(x, key->group->field) >= 0
             || BN_is_negative(y)

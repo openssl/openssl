@@ -31,6 +31,10 @@
 /* Curve does not support signing operations */
 #define EC_FLAGS_NO_SIGN        0x4
 
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+typedef struct ec_method_st EC_METHOD;
+#endif
+
 /*
  * Structure details are not part of the exported interface, so all this may
  * change in future versions.
@@ -584,6 +588,15 @@ void ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
                                      unsigned char *digit, unsigned char in);
 #endif
 int ec_group_simple_order_bits(const EC_GROUP *group);
+
+/**
+ *  Creates a new EC_GROUP object
+ *  \param   libctx The associated library context or NULL for the default
+ *                  library context
+ *  \param   meth   EC_METHOD to use
+ *  \return  newly created EC_GROUP object or NULL in case of an error.
+ */
+EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth);
 
 #ifdef ECP_NISTZ256_ASM
 /** Returns GFp methods using montgomery multiplication, with x86-64 optimized

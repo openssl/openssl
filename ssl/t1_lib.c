@@ -621,7 +621,7 @@ static int tls1_check_pkey_comp(SSL *s, EVP_PKEY *pkey)
              */
             return 1;
     } else {
-        int field_type = EC_METHOD_get_field_type(EC_GROUP_method_of(grp));
+        int field_type = EC_GROUP_get_field_type(grp);
 
         if (field_type == NID_X9_62_prime_field)
             comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
