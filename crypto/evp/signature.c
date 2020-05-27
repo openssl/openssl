@@ -302,7 +302,7 @@ EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                    const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
-                             evp_signature_from_dispatch,
+                             evp_signature_from_dispatch, NULL,
                              (int (*)(void *))EVP_SIGNATURE_up_ref,
                              (void (*)(void *))EVP_SIGNATURE_free);
 }
@@ -324,7 +324,7 @@ void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
                        (void (*)(void *, void *))fn, arg,
-                       evp_signature_from_dispatch,
+                       evp_signature_from_dispatch, NULL,
                        (void (*)(void *))EVP_SIGNATURE_free);
 }
 

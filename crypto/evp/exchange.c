@@ -170,7 +170,7 @@ EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
-                             evp_keyexch_from_dispatch,
+                             evp_keyexch_from_dispatch, NULL,
                              (int (*)(void *))EVP_KEYEXCH_up_ref,
                              (void (*)(void *))EVP_KEYEXCH_free);
 }
@@ -443,7 +443,7 @@ void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
 {
     evp_generic_do_all(libctx, OSSL_OP_KEYEXCH,
                        (void (*)(void *, void *))fn, arg,
-                       evp_keyexch_from_dispatch,
+                       evp_keyexch_from_dispatch, NULL,
                        (void (*)(void *))EVP_KEYEXCH_free);
 }
 
