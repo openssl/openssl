@@ -206,6 +206,7 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
+                        int (*post_new_method)(void *),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
@@ -280,6 +281,10 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
             meth_id = evp_method_id(name_id, operation_id);
             ossl_method_store_cache_set(store, meth_id, properties, method,
                                         up_ref_method, free_method);
+            if (post_new_method != NULL && !post_new_method(method)) {
+                free_method(method);
+                method = NULL;
+            }
         }
     }
 
@@ -291,12 +296,14 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
+                        int (*post_new_method)(void *),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
     void *ret = inner_evp_generic_fetch(libctx,
                                         operation_id, 0, name, properties,
-                                        new_method, up_ref_method, free_method);
+                                        new_method, post_new_method,
+                                        up_ref_method, free_method);
 
     if (ret == NULL) {
         int code = EVP_R_FETCH_FAILED;
@@ -328,13 +335,14 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
                                   void *(*new_method)(int name_id,
                                                       const OSSL_DISPATCH *fns,
                                                       OSSL_PROVIDER *prov),
+                                  int (*post_new_method)(void *),
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *))
 {
     void *ret = inner_evp_generic_fetch(libctx,
-                                        operation_id, name_id, NULL,
-                                        properties, new_method, up_ref_method,
-                                        free_method);
+                                        operation_id, name_id, NULL, properties,
+                                        new_method, post_new_method,
+                                        up_ref_method, free_method);
 
     if (ret == NULL) {
         int code = EVP_R_FETCH_FAILED;
@@ -408,6 +416,7 @@ struct do_all_data_st {
     void *user_arg;
     void *(*new_method)(const int name_id, const OSSL_DISPATCH *fns,
                         OSSL_PROVIDER *prov);
+    int (*post_new_method)(void *);
     void (*free_method)(void *);
 };
 
@@ -425,7 +434,8 @@ static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
         method = data->new_method(name_id, algo->implementation, provider);
 
     if (method != NULL) {
-        data->user_fn(method, data->user_arg);
+        if (data->post_new_method == NULL || data->post_new_method(method))
+            data->user_fn(method, data->user_arg);
         data->free_method(method);
     }
 }
@@ -436,11 +446,13 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
+                        int (*post_new_method)(void *),
                         void (*free_method)(void *))
 {
     struct do_all_data_st data;
 
     data.new_method = new_method;
+    data.post_new_method = post_new_method;
     data.free_method = free_method;
     data.user_fn = user_fn;
     data.user_arg = user_arg;

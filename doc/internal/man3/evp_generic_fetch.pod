@@ -14,9 +14,8 @@ evp_generic_fetch, evp_generic_fetch_by_number
                          const char *name, const char *properties,
                          void *(*new_method)(int name_id,
                                              const OSSL_DISPATCH *fns,
-                                             OSSL_PROVIDER *prov,
-                                             void *method_data),
-                         void *method_data,
+                                             OSSL_PROVIDER *prov),
+                         int (*post_new_method)(void *),
                          int (*up_ref_method)(void *),
                          void (*free_method)(void *));
 
@@ -24,9 +23,8 @@ evp_generic_fetch, evp_generic_fetch_by_number
                                    int name_id, const char *properties,
                                    void *(*new_method)(int name_id,
                                                        const OSSL_DISPATCH *fns,
-                                                       OSSL_PROVIDER *prov,
-                                                       void *method_data),
-                                   void *method_data,
+                                                       OSSL_PROVIDER *prov),
+                                   int (*post_new_method)(void *),
                                    int (*up_ref_method)(void *),
                                    void (*free_method)(void *));
 
@@ -35,7 +33,8 @@ evp_generic_fetch, evp_generic_fetch_by_number
 evp_generic_fetch() calls ossl_method_construct() with the given
 I<libctx>, I<operation_id>, I<name>, and I<properties> and uses
 it to create an EVP method with the help of the functions
-I<new_method>, I<up_ref_method>, and I<free_method>.
+I<new_method>, I<post_new_method>, I<up_ref_method>, and
+I<free_method>.
 
 evp_generic_fetch_by_number() does the same thing as evp_generic_fetch(), 
 but takes a I<name_id> instead of a number.
@@ -45,8 +44,8 @@ This is meant to be used when one method needs to fetch an associated
 other method, and is typically called from inside the given function
 I<new_method>.
 
-The three functions I<new_method>, I<up_ref_method>, and
-I<free_method> are supposed to:
+The four functions I<new_method>, I<post_new_method>,
+I<up_ref_method>, and I<free_method> are supposed to:
 
 =over 4
 
@@ -56,6 +55,12 @@ creates an internal method from function pointers found in the
 dispatch table I<fns>, with name identity I<name_id>.
 The provider I<prov> and I<method_data> are also passed to be used as
 new_method() sees fit.
+
+=item post_new_method()
+
+on a successfully created method, perform arbitrary additional work.
+This function may return 1 for success or 0 for failure.  If it
+returns 0 the method is freed.
 
 =item up_ref_method()
 
@@ -115,8 +120,7 @@ And here's the implementation of the FOO method fetcher:
      */
     EVP_FOO *EVP_FOO_meth_from_dispatch(int name_id,
                                         const OSSL_DISPATCH *fns,
-                                        OSSL_PROVIDER *prov,
-                                        void *data)
+                                        OSSL_PROVIDER *prov)
     {
         EVP_FOO *foo = NULL;
 
@@ -161,7 +165,8 @@ And here's the implementation of the FOO method fetcher:
         }
     }
 
-    static void *foo_from_dispatch(const OSSL_DISPATCH *fns,
+    static void *foo_from_dispatch(int name_id,
+                                   const OSSL_DISPATCH *fns,
                                    OSSL_PROVIDER *prov)
     {
         return EVP_FOO_meth_from_dispatch(fns, prov);
@@ -187,7 +192,7 @@ And here's the implementation of the FOO method fetcher:
     {
         EVP_FOO *foo =
             evp_generic_fetch(ctx, OSSL_OP_FOO, name, properties,
-                              foo_from_dispatch, foo_up_ref, foo_free);
+                              foo_from_dispatch, NULL, foo_up_ref, foo_free);
 
         /*
          * If this method exists in legacy form, with a constant NID for the

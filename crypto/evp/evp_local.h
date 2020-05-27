@@ -207,6 +207,7 @@ void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
+                        int (*post_new_method)(void *),
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *));
 void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
@@ -214,6 +215,7 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
                                   void *(*new_method)(int name_id,
                                                       const OSSL_DISPATCH *fns,
                                                       OSSL_PROVIDER *prov),
+                                  int (*post_new_method)(void *),
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *));
 void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
@@ -222,6 +224,7 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
                         void *(*new_method)(int name_id,
                                             const OSSL_DISPATCH *fns,
                                             OSSL_PROVIDER *prov),
+                        int (*post_new_method)(void *),
                         void (*free_method)(void *));
 
 /* Internal fetchers for method types that are to be combined with others */
@@ -285,4 +288,3 @@ int evp_is_a(OSSL_PROVIDER *prov, int number,
 void evp_names_do_all(OSSL_PROVIDER *prov, int number,
                       void (*fn)(const char *name, void *data),
                       void *data);
-int evp_cipher_cache_constants(EVP_CIPHER *cipher);
