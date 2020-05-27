@@ -274,35 +274,6 @@ int EVP_CIPHER_type(const EVP_CIPHER *ctx)
     }
 }
 
-int evp_cipher_cache_constants(EVP_CIPHER *cipher)
-{
-    int ok;
-    size_t ivlen = 0;
-    size_t blksz = 0;
-    size_t keylen = 0;
-    unsigned int mode = 0;
-    unsigned long flags = 0;
-    OSSL_PARAM params[6];
-
-    params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &blksz);
-    params[1] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_IVLEN, &ivlen);
-    params[2] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_KEYLEN, &keylen);
-    params[3] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_MODE, &mode);
-    params[4] = OSSL_PARAM_construct_ulong(OSSL_CIPHER_PARAM_FLAGS, &flags);
-    params[5] = OSSL_PARAM_construct_end();
-    ok = evp_do_ciph_getparams(cipher, params);
-    if (ok) {
-        /* Provided implementations may have a custom cipher_cipher */
-        if (cipher->prov != NULL && cipher->ccipher != NULL)
-            flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
-        cipher->block_size = blksz;
-        cipher->iv_len = ivlen;
-        cipher->key_len = keylen;
-        cipher->flags = flags | mode;
-    }
-    return ok;
-}
-
 int EVP_CIPHER_block_size(const EVP_CIPHER *cipher)
 {
     return cipher->block_size;
