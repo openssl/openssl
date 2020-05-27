@@ -494,7 +494,7 @@ IF[{- !$disabled{tests} -}]
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
                      asn1_dsa_internal_test dsatest dsa_no_digest_size_test \
-                     dhtest ssltest_old
+                     dhtest ssltest_old cmactest
 
     IF[{- !$disabled{poly1305} -}]
       PROGRAMS{noinst}=poly1305_internal_test
@@ -586,6 +586,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[hmactest]=hmactest.c
     INCLUDE[hmactest]=../include ../apps/include
     DEPEND[hmactest]=../libcrypto.a libtestutil.a
+
+    SOURCE[cmactest]=cmactest.c
+    INCLUDE[cmactest]=../include ../apps/include
+    DEPEND[cmactest]=../libcrypto.a libtestutil.a
 
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../apps/include
