@@ -1625,8 +1625,11 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
         if ((sslc->algorithm_enc & disabled_enc) != 0
                 || (ssl_cipher_table_mac[sslc->algorithm2
                                          & SSL_HANDSHAKE_MAC_MASK].mask
-                    & ctx->disabled_mac_mask) != 0)
+                    & ctx->disabled_mac_mask) != 0) {
+            sk_SSL_CIPHER_delete(tls13_ciphersuites, i);
+            i--;
             continue;
+        }
 
         if (!sk_SSL_CIPHER_push(cipherstack, sslc)) {
             sk_SSL_CIPHER_free(cipherstack);
