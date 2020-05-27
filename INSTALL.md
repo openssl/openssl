@@ -511,7 +511,6 @@ access to algorithm internals that are not normally accessible.
 Additional information related to ACVP can be found at
 <https://github.com/usnistgov/ACVP>.
 
-
 ### no-asm
 
 Do not use assembler code.
