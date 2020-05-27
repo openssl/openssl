@@ -244,7 +244,7 @@ static int test_fp(int i)
 static int test_big(void)
 {
     char buf[80];
-    double d, z, inf, nan;
+    volatile double d, z, inf, nan;
 
     /* Test excessively big number. Should fail */
     if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
