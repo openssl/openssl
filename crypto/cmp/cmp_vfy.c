@@ -95,7 +95,7 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
 
  sig_err:
     res = x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
-    CMPerr(0, CMP_R_ERROR_VALIDATING_PROTECTION);
+    CMPerr(0, CMP_R_ERROR_VALIDATING_SIGNATURE);
     if (res)
         ERR_add_error_mem_bio("\n", bio);
     res = 0;
