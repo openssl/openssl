@@ -8,8 +8,30 @@
  */
 
 #include <assert.h>
+/* For SSL3_VERSION, TLS1_VERSION etc */
+#include <openssl/ssl.h>
+#include <openssl/rand.h>
+#include "internal/constant_time.h"
 #include "ciphercommon_local.h"
 #include "prov/providercommonerr.h"
+
+/* Functions defined in ssl/tls_pad.c */
+int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
+                                    size_t origreclen,
+                                    unsigned char *recdata,
+                                    unsigned char **mac,
+                                    int *alloced,
+                                    size_t block_size, size_t mac_size,
+                                    OPENSSL_CTX *libctx);
+
+int tls1_cbc_remove_padding_and_mac(size_t *reclen,
+                                    size_t origreclen,
+                                    unsigned char *recdata,
+                                    unsigned char **mac,
+                                    int *alloced,
+                                    size_t block_size, size_t mac_size,
+                                    int aead,
+                                    OPENSSL_CTX *libctx);
 
 /*
  * Fills a single block of buffered data from the input, and returns the amount
@@ -109,4 +131,57 @@ int unpadblock(unsigned char *buf, size_t *buflen, size_t blocksize)
     }
     *buflen = len;
     return 1;
+}
+
+/*-
+ * tlsunpadblock removes the CBC padding from the decrypted, TLS, CBC
+ * record in constant time. Also removes the MAC from the record in constant
+ * time.
+ *
+ * libctx: Our library context
+ * tlsversion: The TLS version in use, e.g. SSL3_VERSION, TLS1_VERSION, etc
+ * buf: The decrypted TLS record data
+ * buflen: The length of the decrypted TLS record data. Updated with the new
+ *         length after the padding is removed
+ * block_size: the block size of the cipher used to encrypt the record.
+ * mac: Location to store the pointer to the MAC
+ * alloced: Whether the MAC is stored in a newly allocated buffer, or whether
+ *          *mac points into *buf
+ * macsize: the size of the MAC inside the record (or 0 if there isn't one)
+ * aead: whether this is an aead cipher
+ * returns:
+ *   0: (in non-constant time) if the record is publicly invalid.
+ *   1: (in constant time) Record is publicly valid. If padding is invalid then
+ *      the mac is random
+ */
+int tlsunpadblock(OPENSSL_CTX *libctx, unsigned int tlsversion,
+                  unsigned char *buf, size_t *buflen, size_t blocksize,
+                  unsigned char **mac, int *alloced, size_t macsize, int aead)
+{
+    int ret;
+
+    switch (tlsversion) {
+    case SSL3_VERSION:
+        return ssl3_cbc_remove_padding_and_mac(buflen, *buflen, buf, mac,
+                                               alloced, blocksize, macsize,
+                                               libctx);
+
+    case TLS1_2_VERSION:
+    case DTLS1_2_VERSION:
+    case TLS1_1_VERSION:
+    case DTLS1_VERSION:
+    case DTLS1_BAD_VER:
+        /* Remove the explicit IV */
+        buf += blocksize;
+        *buflen -= blocksize;
+        /* Fall through */
+    case TLS1_VERSION:
+        ret = tls1_cbc_remove_padding_and_mac(buflen, *buflen, buf, mac,
+                                              alloced, blocksize, macsize,
+                                              aead, libctx);
+        return ret;
+
+    default:
+        return 0;
+    }
 }

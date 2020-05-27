@@ -29,3 +29,5 @@ SOURCE[../libssl]=\
         record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
         statem/statem.c record/ssl3_record_tls13.c record/tls_pad.c
 DEFINE[../libssl]=$AESDEF
+
+SOURCE[../providers/libcommon.a]=record/tls_pad.c

@@ -31,6 +31,9 @@ typedef struct prov_cipher_ctx_st PROV_CIPHER_CTX;
 typedef int (PROV_CIPHER_HW_FN)(PROV_CIPHER_CTX *dat, unsigned char *out,
                                 const unsigned char *in, size_t len);
 
+/* TODO(3.0): VERIFY ME */
+#define MAX_TLS_MAC_SIZE    48
+
 struct prov_cipher_ctx_st {
     block128_f block;
     union {
@@ -47,6 +50,14 @@ struct prov_cipher_ctx_st {
     unsigned int pad : 1;    /* Whether padding should be used or not */
     unsigned int enc : 1;    /* Set to 1 for encrypt, or 0 otherwise */
     unsigned int iv_set : 1; /* Set when the iv is copied to the iv/oiv buffers */
+
+    unsigned int tlsversion; /* If TLS padding is in use the TLS version number */
+    unsigned char *tlsmac;   /* tls MAC extracted from the last record */
+    int alloced;             /*
+                              * Whether the tlsmac data has been allocated or
+                              * points into the user buffer.
+                              */
+    size_t tlsmacsize;       /* Size of the TLS MAC */
 
     /*
      * num contains the number of bytes of |iv| which are valid for modes that
