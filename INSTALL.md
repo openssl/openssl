@@ -508,7 +508,9 @@ tests.
 
 This is required for FIPS validation purposes. Certain ACVP tests require
 access to algorithm internals that are not normally accessible.
-See https://github.com/usnistgov/ACVP for more details.
+Additional information related to ACVP can be found at
+<https://github.com/usnistgov/ACVP>.
+
 
 ### no-asm
 
