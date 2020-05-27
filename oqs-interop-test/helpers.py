@@ -56,7 +56,7 @@ def gen_openssl_keys(ossl, ossl_config, sig_alg, test_artifacts_dir, filename_pr
                                   '-CAcreateserial',
                                   '-days', '365'])
 
-    with open(os.path.join(test_artifacts_dir, '{}_cert_chain'.format(filename_prefix)),'wb') as out_file:
+    with open(os.path.join(test_artifacts_dir, '{}_{}_cert_chain'.format(filename_prefix, sig_alg)),'wb') as out_file:
         for f in [server_cert_path, CA_cert_path]:
             with open(f, 'rb') as in_file:
                 shutil.copyfileobj(in_file, out_file)

@@ -1,3 +1,5 @@
+# N.B: For interoperability, NIDS must match the curve IDs used in
+# https://docs.google.com/spreadsheets/d/12YarzaNv3XQNLnvDsWLlRKwtZFhRrDdWf36YlzwrPeg/edit#gid=0
 kems:
   -
     name_group: "frodo640aes"

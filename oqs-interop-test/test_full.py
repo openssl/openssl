@@ -58,7 +58,7 @@ def test_kex_sig_pair(kex_name, parametrized_sig_server, client_prog, client_typ
             kex_full_name = "{} hybrid".format(kex_name)
         else:
             kex_full_name = kex_name
-        if not (("Server Temp Key: {}".format(kex_full_name) in client_output) or (not "issuer=C = US, O = BoringSSL" in client_output)):
+        if (not "Server Temp Key: {}".format(kex_full_name) in client_output) or (not "issuer=C = US, O = BoringSSL" in client_output):
             print(client_output)
             assert False
     elif client_type == "bssl":
@@ -67,7 +67,7 @@ def test_kex_sig_pair(kex_name, parametrized_sig_server, client_prog, client_typ
                                              '-curves', bssl_algorithms.kex_to_nid[kex_name],
                                              '-expect-curve-id', bssl_algorithms.kex_to_nid[kex_name],
                                              '-expect-peer-signature-algorithm', bssl_algorithms.sig_to_code_point[server_sig],
-                                             '-expect-peer-cert-file', os.path.join(test_artifacts_dir, '{}_cert_chain'.format(worker_id)),
+                                             '-expect-peer-cert-file', os.path.join(test_artifacts_dir, '{}_{}_cert_chain'.format(worker_id, server_sig)),
                                              '-verify-fail',
                                              '-shim-shuts-down'])
 
