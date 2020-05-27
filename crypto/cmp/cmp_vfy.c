@@ -659,9 +659,6 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             /* use ctx->srvCert for signature check even if not acceptable */
             if (verify_signature(ctx, msg, scrt))
                 return 1;
-            /* call cert_acceptable() for adding diagnostic information */
-            (void)cert_acceptable(ctx, "explicitly set", "sender cert", scrt,
-                                  NULL, NULL, msg);
             ossl_cmp_warn(ctx, "msg signature verification failed");
             CMPerr(0, CMP_R_SRVCERT_DOES_NOT_VALIDATE_MSG);
         }
