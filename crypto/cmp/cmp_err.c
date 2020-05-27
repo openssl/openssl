@@ -76,6 +76,8 @@ static const ERR_STRING_DATA CMP_str_reasons[] = {
     "error unexpected certconf"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_ERROR_VALIDATING_PROTECTION),
     "error validating protection"},
+    {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_ERROR_VALIDATING_SIGNATURE),
+    "error validating signature"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_FAILED_EXTRACTING_PUBKEY),
     "failed extracting pubkey"},
     {ERR_PACK(ERR_LIB_CMP, 0, CMP_R_FAILURE_OBTAINING_RANDOM),
