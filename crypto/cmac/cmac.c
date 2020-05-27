@@ -125,12 +125,18 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
         return 1;
     }
     /* Initialise context */
-    if (cipher && !EVP_EncryptInit_ex(ctx->cctx, cipher, impl, NULL, NULL))
-        return 0;
+    if (cipher != NULL) {
+        /* Ensure we can't use this ctx until we also have a key */
+        ctx->nlast_block = -1;
+        if (!EVP_EncryptInit_ex(ctx->cctx, cipher, impl, NULL, NULL))
+            return 0;
+    }
     /* Non-NULL key means initialisation complete */
-    if (key) {
+    if (key != NULL) {
         int bl;
 
+        /* If anything fails then ensure we can't use this ctx */
+        ctx->nlast_block = -1;
         if (!EVP_CIPHER_CTX_cipher(ctx->cctx))
             return 0;
         if (!EVP_CIPHER_CTX_set_key_length(ctx->cctx, keylen))
