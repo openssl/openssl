@@ -161,9 +161,7 @@ static int prime_field_tests(void)
 {
     BN_CTX *ctx = NULL;
     BIGNUM *p = NULL, *a = NULL, *b = NULL, *scalar3 = NULL;
-    EC_GROUP *group = NULL, *tmp = NULL;
-    EC_GROUP *P_160 = NULL, *P_192 = NULL, *P_224 = NULL,
-             *P_256 = NULL, *P_384 = NULL, *P_521 = NULL;
+    EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *yplusone = NULL;
 # ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -181,20 +179,8 @@ static int prime_field_tests(void)
         || !TEST_true(BN_hex2bn(&p, "17"))
         || !TEST_true(BN_hex2bn(&a, "1"))
         || !TEST_true(BN_hex2bn(&b, "1"))
-        /*
-         * applications should use EC_GROUP_new_curve_GFp so
-         * that the library gets to choose the EC_METHOD
-         */
-        || !TEST_ptr(group = EC_GROUP_new(EC_GFp_mont_method()))
-        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
-        || !TEST_ptr(tmp = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(tmp, group)))
-        goto err;
-    EC_GROUP_free(group);
-    group = tmp;
-    tmp = NULL;
-
-    if (!TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx)))
+        || !TEST_ptr(group = EC_GROUP_new_curve_GFp(p, a, b, ctx))
+        || !TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx)))
         goto err;
 
     TEST_info("Curve defined by Weierstrass equation");
@@ -327,8 +313,6 @@ static int prime_field_tests(void)
         || !TEST_BN_eq(y, z)
         || !TEST_int_eq(EC_GROUP_get_degree(group), 160)
         || !group_order_tests(group)
-        || !TEST_ptr(P_160 = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(P_160, group))
 
     /* Curve P-192 (FIPS PUB 186-2, App. 6) */
 
@@ -366,8 +350,6 @@ static int prime_field_tests(void)
                                                        ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 192)
         || !group_order_tests(group)
-        || !TEST_ptr(P_192 = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(P_192, group))
 
     /* Curve P-224 (FIPS PUB 186-2, App. 6) */
 
@@ -405,8 +387,6 @@ static int prime_field_tests(void)
                                                        ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 224)
         || !group_order_tests(group)
-        || !TEST_ptr(P_224 = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(P_224, group))
 
     /* Curve P-256 (FIPS PUB 186-2, App. 6) */
 
@@ -445,8 +425,6 @@ static int prime_field_tests(void)
                                                        ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 256)
         || !group_order_tests(group)
-        || !TEST_ptr(P_256 = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(P_256, group))
 
     /* Curve P-384 (FIPS PUB 186-2, App. 6) */
 
@@ -491,8 +469,6 @@ static int prime_field_tests(void)
                                                        ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 384)
         || !group_order_tests(group)
-        || !TEST_ptr(P_384 = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(P_384, group))
 
     /* Curve P-521 (FIPS PUB 186-2, App. 6) */
         || !TEST_true(BN_hex2bn(&p,                              "1FF"
@@ -547,8 +523,6 @@ static int prime_field_tests(void)
                                                        ctx))
         || !TEST_int_eq(EC_GROUP_get_degree(group), 521)
         || !group_order_tests(group)
-        || !TEST_ptr(P_521 = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(P_521, group))
 
     /* more tests using the last curve */
 
@@ -620,7 +594,6 @@ err:
     BN_free(a);
     BN_free(b);
     EC_GROUP_free(group);
-    EC_GROUP_free(tmp);
     EC_POINT_free(P);
     EC_POINT_free(Q);
     EC_POINT_free(R);
@@ -629,13 +602,6 @@ err:
     BN_free(z);
     BN_free(yplusone);
     BN_free(scalar3);
-
-    EC_GROUP_free(P_160);
-    EC_GROUP_free(P_192);
-    EC_GROUP_free(P_224);
-    EC_GROUP_free(P_256);
-    EC_GROUP_free(P_384);
-    EC_GROUP_free(P_521);
     return r;
 }
 
@@ -817,7 +783,7 @@ static int char2_curve_test(int n)
     BN_CTX *ctx = NULL;
     BIGNUM *p = NULL, *a = NULL, *b = NULL;
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *cof = NULL, *yplusone = NULL;
-    EC_GROUP *group = NULL, *variable = NULL;
+    EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
 # ifndef OPENSSL_NO_DEPRECATED_3_0
     const EC_POINT *points[3];
@@ -836,8 +802,7 @@ static int char2_curve_test(int n)
         || !TEST_true(BN_hex2bn(&p, test->p))
         || !TEST_true(BN_hex2bn(&a, test->a))
         || !TEST_true(BN_hex2bn(&b, test->b))
-        || !TEST_true(group = EC_GROUP_new(EC_GF2m_simple_method()))
-        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
+        || !TEST_true(group = EC_GROUP_new_curve_GF2m(p, a, b, ctx))
         || !TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(Q = EC_POINT_new(group))
         || !TEST_ptr(R = EC_POINT_new(group))
@@ -887,9 +852,7 @@ static int char2_curve_test(int n)
 # endif
 
     if (!TEST_int_eq(EC_GROUP_get_degree(group), test->degree)
-        || !group_order_tests(group)
-        || !TEST_ptr(variable = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(variable, group)))
+        || !group_order_tests(group))
         goto err;
 
     /* more tests using the last curve */
@@ -966,7 +929,6 @@ err:
     EC_POINT_free(Q);
     EC_POINT_free(R);
     EC_GROUP_free(group);
-    EC_GROUP_free(variable);
     return r;
 }
 
@@ -974,7 +936,7 @@ static int char2_field_tests(void)
 {
     BN_CTX *ctx = NULL;
     BIGNUM *p = NULL, *a = NULL, *b = NULL;
-    EC_GROUP *group = NULL, *tmp = NULL;
+    EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *Q = NULL, *R = NULL;
     BIGNUM *x = NULL, *y = NULL, *z = NULL, *cof = NULL, *yplusone = NULL;
     unsigned char buf[100];
@@ -990,20 +952,8 @@ static int char2_field_tests(void)
         || !TEST_true(BN_hex2bn(&b, "1")))
         goto err;
 
-    group = EC_GROUP_new(EC_GF2m_simple_method()); /* applications should use
-                                                    * EC_GROUP_new_curve_GF2m
-                                                    * so that the library gets
-                                                    * to choose the EC_METHOD */
-    if (!TEST_ptr(group)
-        || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
-        || !TEST_ptr(tmp = EC_GROUP_new(EC_GROUP_method_of(group)))
-        || !TEST_true(EC_GROUP_copy(tmp, group)))
-        goto err;
-    EC_GROUP_free(group);
-    group = tmp;
-    tmp = NULL;
-
-    if (!TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx)))
+    if (!TEST_ptr(group = EC_GROUP_new_curve_GF2m(p, a, b, ctx))
+        || !TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx)))
         goto err;
 
     TEST_info("Curve defined by Weierstrass equation");
@@ -1124,7 +1074,6 @@ err:
     BN_free(a);
     BN_free(b);
     EC_GROUP_free(group);
-    EC_GROUP_free(tmp);
     EC_POINT_free(P);
     EC_POINT_free(Q);
     EC_POINT_free(R);
@@ -1207,13 +1156,12 @@ static int group_field_test(void)
     return r;
 }
 
-# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
 /*
- * nistp_test_params contains magic numbers for testing our optimized
- * implementations of several NIST curves with characteristic > 3.
+ * nistp_test_params contains magic numbers for testing
+ * several NIST curves with characteristic > 3.
  */
 struct nistp_test_params {
-    const EC_METHOD *(*meth) (void);
+    const int nid;
     int degree;
     /*
      * Qx, Qy and D are taken from
@@ -1226,7 +1174,7 @@ struct nistp_test_params {
 static const struct nistp_test_params nistp_tests_params[] = {
     {
      /* P-224 */
-     EC_GFp_nistp224_method,
+     NID_secp224r1,
      224,
      /* p */
      "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF000000000000000000000001",
@@ -1249,7 +1197,7 @@ static const struct nistp_test_params nistp_tests_params[] = {
      },
     {
      /* P-256 */
-     EC_GFp_nistp256_method,
+     NID_X9_62_prime256v1,
      256,
      /* p */
      "ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
@@ -1272,7 +1220,7 @@ static const struct nistp_test_params nistp_tests_params[] = {
      },
     {
      /* P-521 */
-     EC_GFp_nistp521_method,
+     NID_secp521r1,
      521,
      /* p */
                                                                   "1ff"
@@ -1336,7 +1284,7 @@ static int nistp_single_test(int idx)
         || !TEST_ptr(order = BN_new())
         || !TEST_ptr(yplusone = BN_new())
 
-        || !TEST_ptr(NISTP = EC_GROUP_new(test->meth()))
+        || !TEST_ptr(NISTP = EC_GROUP_new_by_curve_name(test->nid))
         || !TEST_true(BN_hex2bn(&p, test->p))
         || !TEST_int_eq(1, BN_check_prime(p, ctx, NULL))
         || !TEST_true(BN_hex2bn(&a, test->a))
@@ -1396,7 +1344,6 @@ static int nistp_single_test(int idx)
         || !TEST_false(EC_GROUP_have_precompute_mult(NISTP))
         /* now repeat all tests with precomputation */
         || !TEST_true(EC_GROUP_precompute_mult(NISTP, ctx))
-        || !TEST_true(EC_GROUP_have_precompute_mult(NISTP))
 # endif
         )
         goto err;
@@ -1430,7 +1377,7 @@ static int nistp_single_test(int idx)
         || !TEST_int_eq(0, EC_POINT_cmp(NISTP, Q, G, ctx)))
       goto err;
 
-    r = group_order_tests(NISTP);
+    r = 1;
 err:
     EC_GROUP_free(NISTP);
     EC_POINT_free(G);
@@ -1449,7 +1396,6 @@ err:
     BN_CTX_free(ctx);
     return r;
 }
-# endif
 
 static const unsigned char p521_named[] = {
     0x06, 0x05, 0x2b, 0x81, 0x04, 0x00, 0x23,
@@ -1543,7 +1489,7 @@ static int check_named_curve_test(int id)
 
     /* Determine if the built-in curve has a seed field set */
     has_seed = (EC_GROUP_get_seed_len(group) > 0);
-    field_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+    field_nid = EC_GROUP_get_field_type(group);
     if (field_nid == NID_X9_62_characteristic_two_field) {
         if (!TEST_ptr(other_p = BN_dup(group_p))
             || !TEST_true(BN_lshift1(other_p, other_p)))
@@ -2158,7 +2104,7 @@ static int cofactor_range_test(void)
  */
 static int cardinality_test(int n)
 {
-    int ret = 0;
+    int ret = 0, is_binary = 0;
     int nid = curves[n].nid;
     BN_CTX *ctx = NULL;
     EC_GROUP *g1 = NULL, *g2 = NULL;
@@ -2169,13 +2115,12 @@ static int cardinality_test(int n)
     TEST_info("Curve %s cardinality test", OBJ_nid2sn(nid));
 
     if (!TEST_ptr(ctx = BN_CTX_new())
-        || !TEST_ptr(g1 = EC_GROUP_new_by_curve_name(nid))
-        || !TEST_ptr(g2 = EC_GROUP_new(EC_GROUP_method_of(g1)))) {
-        EC_GROUP_free(g1);
-        EC_GROUP_free(g2);
+        || !TEST_ptr(g1 = EC_GROUP_new_by_curve_name(nid))) {
         BN_CTX_free(ctx);
         return 0;
     }
+
+    is_binary = (EC_GROUP_get_field_type(g1) == NID_X9_62_characteristic_two_field);
 
     BN_CTX_start(ctx);
     g1_p = BN_CTX_get(ctx);
@@ -2194,7 +2139,14 @@ static int cardinality_test(int n)
         || !TEST_true(BN_copy(g1_order, EC_GROUP_get0_order(g1)))
         || !TEST_true(EC_GROUP_get_cofactor(g1, g1_cf, ctx))
         /* construct g2 manually with g1 parameters */
-        || !TEST_true(EC_GROUP_set_curve(g2, g1_p, g1_a, g1_b, ctx))
+# ifndef OPENSSL_NO_EC2M
+        || !TEST_ptr(g2 = (is_binary) ?
+                           EC_GROUP_new_curve_GF2m(g1_p, g1_a, g1_b, ctx) :
+                           EC_GROUP_new_curve_GFp(g1_p, g1_a, g1_b, ctx))
+# else
+        || !TEST_int_eq(0, is_binary)
+        || !TEST_ptr(g2 = EC_GROUP_new_curve_GFp(g1_p, g1_a, g1_b, ctx))
+# endif
         || !TEST_ptr(g2_gen = EC_POINT_new(g2))
         || !TEST_true(EC_POINT_set_affine_coordinates(g2, g2_gen, g1_x, g1_y, ctx))
         /* pass NULL cofactor: lib should compute it */
@@ -2238,7 +2190,6 @@ static int check_ec_key_field_public_range_test(int id)
     int ret = 0, type = 0;
     const EC_POINT *pub = NULL;
     const EC_GROUP *group = NULL;
-    const EC_METHOD *meth = NULL;
     const BIGNUM *field = NULL;
     BIGNUM *x = NULL, *y = NULL;
     EC_KEY *key = NULL;
@@ -2247,7 +2198,6 @@ static int check_ec_key_field_public_range_test(int id)
             || !TEST_ptr(y = BN_new())
             || !TEST_ptr(key = EC_KEY_new_by_curve_name(curves[id].nid))
             || !TEST_ptr(group = EC_KEY_get0_group(key))
-            || !TEST_ptr(meth = EC_GROUP_method_of(group))
             || !TEST_ptr(field = EC_GROUP_get0_field(group))
             || !TEST_int_gt(EC_KEY_generate_key(key), 0)
             || !TEST_int_gt(EC_KEY_check_key(key), 0)
@@ -2260,7 +2210,7 @@ static int check_ec_key_field_public_range_test(int id)
      * Make the public point out of range by adding the field (which will still
      * be the same point on the curve). The add is different for char2 fields.
      */
-    type = EC_METHOD_get_field_type(meth);
+    type = EC_GROUP_get_field_type(group);
 #ifndef OPENSSL_NO_EC2M
     if (type == NID_X9_62_characteristic_two_field) {
         /* test for binary curves */
@@ -2405,9 +2355,7 @@ int setup_tests(void)
     ADD_TEST(char2_field_tests);
     ADD_ALL_TESTS(char2_curve_test, OSSL_NELEM(char2_curve_tests));
 # endif
-# ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     ADD_ALL_TESTS(nistp_single_test, OSSL_NELEM(nistp_tests_params));
-# endif
     ADD_ALL_TESTS(internal_curve_test, crv_len);
     ADD_ALL_TESTS(internal_curve_test_method, crv_len);
     ADD_TEST(group_field_test);

@@ -3195,7 +3195,7 @@ static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
 
     /* If no curve data curve method must handle everything */
     if (curve.data == NULL)
-        return EC_GROUP_new_ex(libctx,
+        return ec_group_new_ex(libctx,
                                curve.meth != NULL ? curve.meth() : NULL);
 
     if ((ctx = BN_CTX_new_ex(libctx)) == NULL) {
@@ -3218,7 +3218,7 @@ static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
 
     if (curve.meth != 0) {
         meth = curve.meth();
-        if (((group = EC_GROUP_new_ex(libctx, meth)) == NULL) ||
+        if (((group = ec_group_new_ex(libctx, meth)) == NULL) ||
             (!(group->meth->group_set_curve(group, p, a, b, ctx)))) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_EC_LIB);
             goto err;
@@ -3388,17 +3388,13 @@ int ec_curve_nid_from_params(const EC_GROUP *group, BN_CTX *ctx)
     unsigned char *param_bytes = NULL;
     const EC_CURVE_DATA *data;
     const EC_POINT *generator = NULL;
-    const EC_METHOD *meth;
     const BIGNUM *cofactor = NULL;
     /* An array of BIGNUMs for (p, a, b, x, y, order) */
     BIGNUM *bn[NUM_BN_FIELDS] = {NULL, NULL, NULL, NULL, NULL, NULL};
 
-    meth = EC_GROUP_method_of(group);
-    if (meth == NULL)
-        return -1;
     /* Use the optional named curve nid as a search field */
     nid = EC_GROUP_get_curve_name(group);
-    field_type = EC_METHOD_get_field_type(meth);
+    field_type = EC_GROUP_get_field_type(group);
     seed_len = EC_GROUP_get_seed_len(group);
     seed = EC_GROUP_get0_seed(group);
     cofactor = EC_GROUP_get0_cofactor(group);

@@ -38,7 +38,6 @@ EC_POINT_hex2point
  void EC_POINT_clear_free(EC_POINT *point);
  int EC_POINT_copy(EC_POINT *dst, const EC_POINT *src);
  EC_POINT *EC_POINT_dup(const EC_POINT *src, const EC_GROUP *group);
- const EC_METHOD *EC_POINT_method_of(const EC_POINT *point);
  int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point);
  int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *p,
                                      const BIGNUM *x, const BIGNUM *y,
@@ -68,6 +67,7 @@ EC_POINT_hex2point
 
 Deprecated since OpenSSL 3.0:
 
+ const EC_METHOD *EC_POINT_method_of(const EC_POINT *point);
  int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
                                               EC_POINT *p,
                                               const BIGNUM *x, const BIGNUM *y,
@@ -116,6 +116,8 @@ EC_POINT_dup() creates a new B<EC_POINT> object and copies the content from
 B<src> to the newly created B<EC_POINT> object.
 
 EC_POINT_method_of() obtains the B<EC_METHOD> associated with B<point>.
+This function was deprecated in OpenSSL 3.0, since EC_METHOD is no longer a
+public concept.
 
 A valid point on a curve is the special point at infinity. A point is set to
 be at infinity by calling EC_POINT_set_to_infinity().
@@ -249,6 +251,7 @@ L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>
 
 =head1 HISTORY
 
+EC_POINT_method_of(),
 EC_POINT_set_Jprojective_coordinates_GFp(),
 EC_POINT_get_Jprojective_coordinates_GFp(),
 EC_POINT_set_affine_coordinates_GFp(), EC_POINT_get_affine_coordinates_GFp(),

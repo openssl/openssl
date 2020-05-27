@@ -23,7 +23,7 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
+EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
@@ -65,11 +65,13 @@ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
     return NULL;
 }
 
-#ifndef FIPS_MODULE
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 {
-    return EC_GROUP_new_ex(NULL, meth);
+    return ec_group_new_ex(NULL, meth);
 }
+# endif
 #endif
 
 void EC_pre_comp_free(EC_GROUP *group)
@@ -255,7 +257,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
     if (a == NULL)
         return NULL;
 
-    if ((t = EC_GROUP_new_ex(a->libctx, a->meth)) == NULL)
+    if ((t = ec_group_new_ex(a->libctx, a->meth)) == NULL)
         return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;
@@ -270,6 +272,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
         return t;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group)
 {
     return group->meth;
@@ -279,6 +282,7 @@ int EC_METHOD_get_field_type(const EC_METHOD *meth)
 {
     return meth->field_type;
 }
+#endif
 
 static int ec_precompute_mont_data(EC_GROUP *);
 
@@ -475,6 +479,11 @@ const BIGNUM *EC_GROUP_get0_field(const EC_GROUP *group)
     return group->field;
 }
 
+int EC_GROUP_get_field_type(const EC_GROUP *group)
+{
+    return group->meth->field_type;
+}
+
 void EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag)
 {
     group->asn1_flag = flag;
@@ -602,8 +611,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 #endif
 
     /* compare the field types */
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(a)) !=
-        EC_METHOD_get_field_type(EC_GROUP_method_of(b)))
+    if (EC_GROUP_get_field_type(a) != EC_GROUP_get_field_type(b))
         return 1;
     /* compare the curve name (if present in both) */
     if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
@@ -777,10 +785,12 @@ EC_POINT *EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
     return t;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EC_METHOD *EC_POINT_method_of(const EC_POINT *point)
 {
     return point->meth;
 }
+#endif
 
 int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 {
