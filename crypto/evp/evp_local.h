@@ -285,4 +285,3 @@ int evp_is_a(OSSL_PROVIDER *prov, int number,
 void evp_names_do_all(OSSL_PROVIDER *prov, int number,
                       void (*fn)(const char *name, void *data),
                       void *data);
-int evp_cipher_cache_constants(EVP_CIPHER *cipher);
