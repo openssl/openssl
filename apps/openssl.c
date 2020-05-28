@@ -222,7 +222,6 @@ int main(int argc, char *argv[])
     arg.size = 0;
 
     /* Set up some of the environment. */
-    default_config_file = CONF_get1_default_config_file();
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
     bio_err = dup_bio_err(FORMAT_TEXT);
@@ -262,6 +261,10 @@ int main(int argc, char *argv[])
         goto end;
     }
     pname = opt_progname(argv[0]);
+
+    default_config_file = CONF_get1_default_config_file();
+    if (default_config_file == NULL)
+        app_bail_out("%s: could not get default config file\n", pname);
 
     /* first check the program name */
     f.name = pname;

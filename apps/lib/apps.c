@@ -671,16 +671,24 @@ static int load_certs_crls(const char *file, int format,
     return rv;
 }
 
+void app_bail_out(char *fmt, ...)
+{
+    va_list args;
+
+    va_start(args, fmt);
+    BIO_vprintf(bio_err, fmt, args);
+    va_end(args);
+    ERR_print_errors(bio_err);
+    exit(1);
+}
+
 void* app_malloc(int sz, const char *what)
 {
     void *vp = OPENSSL_malloc(sz);
 
-    if (vp == NULL) {
-        BIO_printf(bio_err, "%s: Could not allocate %d bytes for %s\n",
-                opt_getprog(), sz, what);
-        ERR_print_errors(bio_err);
-        exit(1);
-    }
+    if (vp == NULL)
+        app_bail_out("%s: Could not allocate %d bytes for %s\n",
+                     opt_getprog(), sz, what);
     return vp;
 }
 
