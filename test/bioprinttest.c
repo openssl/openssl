@@ -241,6 +241,7 @@ static int test_fp(int i)
     return r;
 }
 
+extern double zero_value;
 double zero_value = 0.0;
 
 static int test_big(void)
