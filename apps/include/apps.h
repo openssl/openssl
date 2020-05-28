@@ -15,6 +15,7 @@
 # include "internal/sockets.h" /* for openssl_fdset() */
 # include <assert.h>
 
+# include <stdarg.h>
 # include <sys/types.h>
 # ifndef OPENSSL_NO_POSIX_IO
 #  include <sys/stat.h>
@@ -179,6 +180,7 @@ typedef struct ca_db_st {
 # endif
 } CA_DB;
 
+void app_bail_out(char *fmt, ...);
 void* app_malloc(int sz, const char *what);
 BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai);
 int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,

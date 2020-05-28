@@ -80,27 +80,6 @@ static void apps_shutdown(void)
     destroy_ui_method();
 }
 
-static char *make_config_name(void)
-{
-    const char *t;
-    size_t len;
-    char *p;
-
-    if ((t = getenv("OPENSSL_CONF")) != NULL)
-        return OPENSSL_strdup(t);
-
-    t = X509_get_default_cert_area();
-    len = strlen(t) + 1 + strlen(OPENSSL_CONF) + 1;
-    p = app_malloc(len, "config filename buffer");
-    strcpy(p, t);
-#ifndef OPENSSL_SYS_VMS
-    strcat(p, "/");
-#endif
-    strcat(p, OPENSSL_CONF);
-
-    return p;
-}
-
 
 #ifndef OPENSSL_NO_TRACE
 typedef struct tracedata_st {
@@ -243,7 +222,6 @@ int main(int argc, char *argv[])
     arg.size = 0;
 
     /* Set up some of the environment. */
-    default_config_file = make_config_name();
     bio_in = dup_bio_in(FORMAT_TEXT);
     bio_out = dup_bio_out(FORMAT_TEXT);
     bio_err = dup_bio_err(FORMAT_TEXT);
@@ -278,6 +256,10 @@ int main(int argc, char *argv[])
         goto end;
     }
     pname = opt_progname(argv[0]);
+
+    default_config_file = CONF_get1_default_config_file();
+    if (default_config_file == NULL)
+        app_bail_out("%s: could not get default config file\n", pname);
 
     /* first check the program name */
     f.name = pname;
