@@ -112,7 +112,7 @@ static double tm_Time_F(int s)
     return app_tminterval(s, 1);
 }
 
-int s_time_main(int argc, char **argv)
+int s_time_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     char buf[1024 * 8];
     SSL *scon = NULL;

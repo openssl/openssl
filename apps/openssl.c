@@ -287,18 +287,14 @@ int main(int argc, char *argv[])
     /* first check the program name */
     f.name = pname;
     fp = lh_FUNCTION_retrieve(prog, &f);
-    if (fp != NULL) {
-        argv[0] = pname;
-        if (fp->deprecated_alternative != NULL)
-            warn_deprecated(fp);
-        ret = fp->func(argc, argv);
-        goto end;
-    }
-
-    /* If there is stuff on the command line, run with that. */
-    if (argc != 1) {
+    if (fp == NULL) {
+        /* We assume we've been called as 'openssl cmd' */
         argc--;
         argv++;
+    }
+
+    /* If there's a command, run with that. */
+    if (argc > 0) {
         ret = do_cmd(prog, argc, argv);
         if (ret < 0)
             ret = 0;
@@ -400,7 +396,7 @@ const OPTIONS help_options[] = {
 };
 
 
-int help_main(int argc, char **argv)
+int help_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     FUNCTION *fp;
     int i, nl;
@@ -485,9 +481,21 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
         }
     }
     if (fp != NULL) {
+        int ret = 1;
+        OPENSSL_CTX *libctx = NULL;
+
         if (fp->deprecated_alternative != NULL)
             warn_deprecated(fp);
-        return fp->func(argc, argv);
+
+        if ((libctx = OPENSSL_CTX_new()) != NULL
+            && OPENSSL_CTX_load_config(libctx, NULL)) {
+            ret = fp->func(libctx, argc, argv);
+        } else {
+            BIO_printf(bio_err, "Error creating library context");
+            ERR_print_errors(bio_err);
+        }
+        OPENSSL_CTX_free(libctx);
+        return ret;
     }
     if ((strncmp(argv[0], "no-", 3)) == 0) {
         /*

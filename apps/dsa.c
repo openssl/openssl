@@ -65,7 +65,7 @@ const OPTIONS dsa_options[] = {
     {NULL}
 };
 
-int dsa_main(int argc, char **argv)
+int dsa_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *out = NULL;
     DSA *dsa = NULL;

@@ -55,7 +55,7 @@ const OPTIONS spkac_options[] = {
     {NULL}
 };
 
-int spkac_main(int argc, char **argv)
+int spkac_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *out = NULL;
     CONF *conf = NULL;

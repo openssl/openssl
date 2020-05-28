@@ -234,7 +234,7 @@ const OPTIONS cms_options[] = {
     {NULL}
 };
 
-int cms_main(int argc, char **argv)
+int cms_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ASN1_OBJECT *econtent_type = NULL;
     BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;

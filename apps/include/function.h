@@ -23,7 +23,7 @@ typedef enum FUNC_TYPE {
 typedef struct function_st {
     FUNC_TYPE type;
     const char *name;
-    int (*func)(int argc, char *argv[]);
+    int (*func)(OPENSSL_CTX *libctx, int argc, char *argv[]);
     const OPTIONS *help;
     const char *deprecated_alternative;
     const char *deprecated_version;

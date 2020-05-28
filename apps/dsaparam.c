@@ -63,7 +63,7 @@ const OPTIONS dsaparam_options[] = {
     {NULL}
 };
 
-int dsaparam_main(int argc, char **argv)
+int dsaparam_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     DSA *dsa = NULL;

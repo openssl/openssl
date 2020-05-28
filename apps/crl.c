@@ -73,7 +73,7 @@ const OPTIONS crl_options[] = {
     {NULL}
 };
 
-int crl_main(int argc, char **argv)
+int crl_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     X509_CRL *x = NULL;
     BIO *out = NULL;

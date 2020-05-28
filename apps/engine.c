@@ -294,7 +294,7 @@ static void util_store_cap(const OSSL_STORE_LOADER *loader, void *arg)
     }
 }
 
-int engine_main(int argc, char **argv)
+int engine_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     int ret = 1, i;
     int verbose = 0, list_cap = 0, test_avail = 0, test_avail_noise = 0;

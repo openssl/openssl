@@ -226,7 +226,7 @@ const OPTIONS srp_options[] = {
     {NULL}
 };
 
-int srp_main(int argc, char **argv)
+int srp_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     CA_DB *db = NULL;

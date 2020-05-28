@@ -37,7 +37,7 @@ const OPTIONS nseq_options[] = {
     {NULL}
 };
 
-int nseq_main(int argc, char **argv)
+int nseq_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     X509 *x509 = NULL;

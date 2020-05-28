@@ -92,7 +92,7 @@ static char *dummy_srp(SSL *ssl, void *arg)
 }
 #endif
 
-int ciphers_main(int argc, char **argv)
+int ciphers_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     SSL_CTX *ctx = NULL;
     SSL *ssl = NULL;

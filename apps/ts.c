@@ -155,7 +155,7 @@ static char* opt_helplist[] = {
     NULL,
 };
 
-int ts_main(int argc, char **argv)
+int ts_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     CONF *conf = NULL;
     const char *CAfile = NULL, *untrusted = NULL, *prog;

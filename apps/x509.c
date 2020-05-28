@@ -168,7 +168,7 @@ const OPTIONS x509_options[] = {
     {NULL}
 };
 
-int x509_main(int argc, char **argv)
+int x509_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ASN1_INTEGER *sno = NULL;
     ASN1_OBJECT *objtmp = NULL;

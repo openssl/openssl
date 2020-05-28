@@ -46,7 +46,7 @@ const OPTIONS kdf_options[] = {
     {NULL}
 };
 
-int kdf_main(int argc, char **argv)
+int kdf_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     int ret = 1, out_bin = 0;
     OPTION_CHOICE o;

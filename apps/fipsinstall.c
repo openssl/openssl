@@ -264,7 +264,7 @@ end:
     return ret;
 }
 
-int fipsinstall_main(int argc, char **argv)
+int fipsinstall_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     int ret = 1, verify = 0;
     BIO *module_bio = NULL, *mem_bio = NULL, *fout = NULL;

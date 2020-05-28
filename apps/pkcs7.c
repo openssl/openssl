@@ -54,7 +54,7 @@ const OPTIONS pkcs7_options[] = {
     {NULL}
 };
 
-int pkcs7_main(int argc, char **argv)
+int pkcs7_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     PKCS7 *p7 = NULL;

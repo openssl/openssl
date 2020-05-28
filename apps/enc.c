@@ -101,7 +101,7 @@ const OPTIONS enc_options[] = {
     {NULL}
 };
 
-int enc_main(int argc, char **argv)
+int enc_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     static char buf[128];
     static const char magic[] = "Salted__";

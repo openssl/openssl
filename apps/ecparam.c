@@ -81,7 +81,7 @@ static OPT_PAIR encodings[] = {
     {NULL}
 };
 
-int ecparam_main(int argc, char **argv)
+int ecparam_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     BIGNUM *ec_gen = NULL, *ec_order = NULL, *ec_cofactor = NULL;

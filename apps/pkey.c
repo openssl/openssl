@@ -77,7 +77,7 @@ const OPTIONS pkey_options[] = {
     {NULL}
 };
 
-int pkey_main(int argc, char **argv)
+int pkey_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;

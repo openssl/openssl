@@ -66,7 +66,7 @@ const OPTIONS storeutl_options[] = {
     {NULL}
 };
 
-int storeutl_main(int argc, char *argv[])
+int storeutl_main(OPENSSL_CTX *libctx, int argc, char *argv[])
 {
     int ret = 1, noout = 0, text = 0, recursive = 0;
     char *outfile = NULL, *passin = NULL, *passinarg = NULL;

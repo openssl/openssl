@@ -50,7 +50,7 @@ const OPTIONS mac_options[] = {
     {NULL}
 };
 
-int mac_main(int argc, char **argv)
+int mac_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     int ret = 1;
     char *prog;

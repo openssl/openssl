@@ -897,7 +897,7 @@ static int new_session_cb(SSL *s, SSL_SESSION *sess)
     return 0;
 }
 
-int s_client_main(int argc, char **argv)
+int s_client_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *sbio;
     EVP_PKEY *key = NULL;

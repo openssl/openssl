@@ -80,7 +80,7 @@ const OPTIONS verify_options[] = {
     {NULL}
 };
 
-int verify_main(int argc, char **argv)
+int verify_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     STACK_OF(X509) *untrusted = NULL, *trusted = NULL;

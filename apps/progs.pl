@@ -19,7 +19,9 @@ die "Unrecognised option, must be -C or -H\n"
     unless ($opt eq '-H' || $opt eq '-C');
 
 my %commands     = ();
-my $cmdre        = qr/^\s*int\s+([a-z_][a-z0-9_]*)_main\(\s*int\s+argc\s*,/;
+my $cmdre        = qr/^\s*int\s+([a-z_][a-z0-9_]*)_main\(
+                      \s*OPENSSL_CTX\s*\*\s*libctx\s*,
+                      \s*int\s+argc\s*,/x;
 my $apps_openssl = shift @ARGV;
 my $YEAR         = [localtime()]->[5] + 1900;
 
@@ -61,7 +63,7 @@ if ($opt eq '-H') {
 EOF
 
     foreach (@ARGV) {
-        printf "extern int %s_main(int argc, char *argv[]);\n", $_;
+        printf "extern int %s_main(OPENSSL_CTX *libctx, int argc, char *argv[]);\n", $_;
     }
     print "\n";
 

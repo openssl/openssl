@@ -2847,7 +2847,7 @@ static int get_opts(int argc, char **argv)
     return 0;
 }
 
-int cmp_main(int argc, char **argv)
+int cmp_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     char *configfile = NULL;
     int i;

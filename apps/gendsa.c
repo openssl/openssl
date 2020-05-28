@@ -50,7 +50,7 @@ const OPTIONS gendsa_options[] = {
     {NULL}
 };
 
-int gendsa_main(int argc, char **argv)
+int gendsa_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     BIO *out = NULL, *in = NULL;

@@ -482,7 +482,7 @@ const OPTIONS rehash_options[] = {
 };
 
 
-int rehash_main(int argc, char **argv)
+int rehash_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     const char *env, *prog;
     char *e, *m;
@@ -546,7 +546,7 @@ const OPTIONS rehash_options[] = {
     {NULL}
 };
 
-int rehash_main(int argc, char **argv)
+int rehash_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO_printf(bio_err, "Not available; use c_rehash script\n");
     return 1;

@@ -1437,7 +1437,7 @@ static int run_benchmark(int async_jobs,
 #define stop_it(do_it, test_num)\
     memset(do_it + test_num, 0, OSSL_NELEM(do_it) - test_num);
 
-int speed_main(int argc, char **argv)
+int speed_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     loopargs_t *loopargs = NULL;

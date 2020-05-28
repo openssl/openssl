@@ -254,7 +254,7 @@ const OPTIONS ca_options[] = {
     {NULL}
 };
 
-int ca_main(int argc, char **argv)
+int ca_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     CONF *conf = NULL;
     ENGINE *e = NULL;

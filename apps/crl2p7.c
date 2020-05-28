@@ -51,7 +51,7 @@ const OPTIONS crl2pkcs7_options[] = {
     {NULL}
 };
 
-int crl2pkcs7_main(int argc, char **argv)
+int crl2pkcs7_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     PKCS7 *p7 = NULL;

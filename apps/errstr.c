@@ -31,7 +31,7 @@ const OPTIONS errstr_options[] = {
     {NULL}
 };
 
-int errstr_main(int argc, char **argv)
+int errstr_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     OPTION_CHOICE o;
     char buf[256], *prog;

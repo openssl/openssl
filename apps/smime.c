@@ -131,7 +131,7 @@ const OPTIONS smime_options[] = {
     {NULL}
 };
 
-int smime_main(int argc, char **argv)
+int smime_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL, *indata = NULL;
     EVP_PKEY *key = NULL;

@@ -663,7 +663,7 @@ const OPTIONS list_options[] = {
     {NULL}
 };
 
-int list_main(int argc, char **argv)
+int list_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     char *prog;
     HELPLIST_CHOICE o;

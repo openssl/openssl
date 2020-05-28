@@ -40,7 +40,7 @@ const OPTIONS version_options[] = {
     {NULL}
 };
 
-int version_main(int argc, char **argv)
+int version_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     int ret = 1, dirty = 0, seed = 0;
     int cflags = 0, version = 0, date = 0, options = 0, platform = 0, dir = 0;

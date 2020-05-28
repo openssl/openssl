@@ -137,7 +137,7 @@ const OPTIONS pkcs12_options[] = {
     {NULL}
 };
 
-int pkcs12_main(int argc, char **argv)
+int pkcs12_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
     char *name = NULL, *csp_name = NULL;

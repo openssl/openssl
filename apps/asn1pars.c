@@ -61,7 +61,7 @@ const OPTIONS asn1parse_options[] = {
 
 static int do_generate(char *genstr, const char *genconf, BUF_MEM *buf);
 
-int asn1parse_main(int argc, char **argv)
+int asn1parse_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ASN1_TYPE *at = NULL;
     BIO *in = NULL, *b64 = NULL, *derout = NULL;

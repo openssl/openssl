@@ -386,7 +386,7 @@ CONF *app_load_config_quiet(const char *filename)
     return conf;
 }
 
-int app_load_modules(const CONF *config)
+int app_load_modules(OPENSSL_CTX *libctx, CONF *config)
 {
     CONF *to_free = NULL;
 

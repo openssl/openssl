@@ -199,7 +199,7 @@ const OPTIONS ocsp_options[] = {
     {NULL}
 };
 
-int ocsp_main(int argc, char **argv)
+int ocsp_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *acbio = NULL, *cbio = NULL, *derbio = NULL, *out = NULL;
     const EVP_MD *cert_id_md = NULL, *rsign_md = NULL;

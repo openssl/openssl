@@ -98,7 +98,7 @@ const OPTIONS pkeyutl_options[] = {
     {NULL}
 };
 
-int pkeyutl_main(int argc, char **argv)
+int pkeyutl_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;

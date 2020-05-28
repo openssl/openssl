@@ -67,7 +67,7 @@ const OPTIONS genrsa_options[] = {
     {NULL}
 };
 
-int genrsa_main(int argc, char **argv)
+int genrsa_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BN_GENCB *cb = BN_GENCB_new();
     ENGINE *eng = NULL;

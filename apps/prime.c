@@ -40,7 +40,7 @@ const OPTIONS prime_options[] = {
     {NULL}
 };
 
-int prime_main(int argc, char **argv)
+int prime_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIGNUM *bn = NULL;
     int hex = 0, generate = 0, bits = 0, safe = 0, ret = 1;

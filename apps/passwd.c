@@ -97,7 +97,7 @@ const OPTIONS passwd_options[] = {
     {NULL}
 };
 
-int passwd_main(int argc, char **argv)
+int passwd_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *in = NULL;
     char *infile = NULL, *salt = NULL, *passwd = NULL, **passwds = NULL;

@@ -45,7 +45,7 @@ const OPTIONS sess_id_options[] = {
 
 static SSL_SESSION *load_sess_id(char *file, int format);
 
-int sess_id_main(int argc, char **argv)
+int sess_id_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     SSL_SESSION *x = NULL;
     X509 *peer = NULL;

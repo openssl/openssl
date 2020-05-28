@@ -227,7 +227,7 @@ static int duplicated(LHASH_OF(OPENSSL_STRING) *addexts, char *kv)
     return 0;
 }
 
-int req_main(int argc, char **argv)
+int req_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ASN1_INTEGER *serial = NULL;
     BIO *out = NULL;

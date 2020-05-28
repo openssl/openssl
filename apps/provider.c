@@ -239,7 +239,7 @@ static void do_signature(EVP_SIGNATURE *signature, void *meta)
               meta);
 }
 
-int provider_main(int argc, char **argv)
+int provider_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     int ret = 1, i;
     int verbose = 0;

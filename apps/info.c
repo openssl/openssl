@@ -35,7 +35,7 @@ const OPTIONS info_options[] = {
     {NULL}
 };
 
-int info_main(int argc, char **argv)
+int info_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     int ret = 1, dirty = 0, type = 0;
     char *prog;

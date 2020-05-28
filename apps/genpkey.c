@@ -55,7 +55,7 @@ const OPTIONS genpkey_options[] = {
     {NULL}
 };
 
-int genpkey_main(int argc, char **argv)
+int genpkey_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;

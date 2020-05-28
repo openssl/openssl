@@ -71,7 +71,7 @@ const OPTIONS rsa_options[] = {
     {NULL}
 };
 
-int rsa_main(int argc, char **argv)
+int rsa_main(OPENSSL_CTX *libctx, int argc, char **argv)
 {
     ENGINE *e = NULL;
     BIO *out = NULL;
