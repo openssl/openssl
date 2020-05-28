@@ -146,7 +146,7 @@ Modern versions should instead switch to named curves which OpenSSL has
 hardcoded lookup tables for.
 
 EC_KEY_oct2key() and EC_KEY_key2buf() are identical to the functions
-EC_POINT_oct2point() and EC_KEY_point2buf() except they use the public key
+EC_POINT_oct2point() and EC_POINT_point2buf() except they use the public key
 EC_POINT in B<eckey>.
 
 EC_KEY_oct2priv() and EC_KEY_priv2oct() convert between the private key
