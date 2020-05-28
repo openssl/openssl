@@ -29,17 +29,6 @@ The macros described here were added in OpenSSL 3.0.
 
 =head1 CAVEATS
 
-=begin comment
-
-CAVEATS is a section name borrowed from OpenBSD, where mdoc(7)
-explains it like this:
-
-    CAVEATS
-    Common misuses and misunderstandings should be explained in this
-    section.
-
-=end comment
-
 I<This header file does not constitute a general registry of names>.
 Providers that implement new algorithms are to be responsible for
 their own parameter names.
