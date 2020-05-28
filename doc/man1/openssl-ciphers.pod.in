@@ -406,8 +406,8 @@ permissible.
 =item B<CBC>
 
 All cipher suites using encryption algorithm in Cipher Block Chaining (CBC)
-mode. These cipher suites are only supported in TLS v1.2. Currently it's alias
-for following cipherstrings: B<SSL_DES>, B<SSL_3DES>, B<SSL_RC2>, B<SSL_IDEA>,
+mode. These cipher suites are only supported in TLS v1.2 and earlier. Currently
+it's alias for following cipherstrings: B<SSL_DES>, B<SSL_3DES>, B<SSL_RC2>, B<SSL_IDEA>,
 B<SSL_AES128>, B<SSL_AES256>, B<SSL_CAMELLIA128>, B<SSL_CAMELLIA256>, B<SSL_SEED>.
 
 =back
