@@ -487,7 +487,11 @@ end_of_options:
 
     if ((conf = app_load_config(configfile)) == NULL)
         goto end;
-    if (configfile != default_config_file && !app_load_modules(conf))
+    /*
+     * TODO(3.0) When we feel confident enough, use |libctx| as first
+     * argument for app_load_modules()
+     */
+    if (configfile != default_config_file && !app_load_modules(NULL, conf))
         goto end;
 
     /* Lets get the config section we are using */

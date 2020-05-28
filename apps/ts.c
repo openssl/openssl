@@ -297,7 +297,11 @@ int ts_main(OPENSSL_CTX *libctx, int argc, char **argv)
 
     if ((conf = load_config_file(configfile)) == NULL)
         goto end;
-    if (configfile != default_config_file && !app_load_modules(conf))
+    /*
+     * TODO(3.0) When we feel confident enough, use |libctx| as first
+     * argument for app_load_modules()
+     */
+    if (configfile != default_config_file && !app_load_modules(NULL, conf))
         goto end;
 
     /* Check parameter consistency and execute the appropriate function. */

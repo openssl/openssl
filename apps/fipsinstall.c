@@ -185,6 +185,12 @@ static CONF *generate_config_and_load(const char *prov_name,
     if (conf == NULL)
         goto end;
 
+    /* TODO(3.0) When we feel confident enough, assign |libctx| to |conf| */
+#if 0
+    if (!NCONF_set_libctx(conf, libctx))
+        goto end;
+#endif
+
     if (CONF_modules_load(conf, NULL, 0) <= 0)
         goto end;
     BIO_free(mem_bio);

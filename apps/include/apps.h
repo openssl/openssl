@@ -63,7 +63,7 @@ BIO *bio_open_default_quiet(const char *filename, char mode, int format);
 CONF *app_load_config_bio(BIO *in, const char *filename);
 CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
-int app_load_modules(const CONF *config);
+int app_load_modules(OPENSSL_CTX *libctx, CONF *config);
 void unbuffer(FILE *fp);
 void wait_for_async(SSL *s);
 # if defined(OPENSSL_SYS_MSDOS)

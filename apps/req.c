@@ -476,7 +476,11 @@ int req_main(OPENSSL_CTX *libctx, int argc, char **argv)
         if ((addext_conf = app_load_config_bio(addext_bio, NULL)) == NULL)
             goto end;
     }
-    if (template != default_config_file && !app_load_modules(req_conf))
+    /*
+     * TODO(3.0) When we feel confident enough, use |libctx| as first
+     * argument for app_load_modules()
+     */
+    if (template != default_config_file && !app_load_modules(NULL, req_conf))
         goto end;
 
     if (req_conf != NULL) {

@@ -395,7 +395,8 @@ int app_load_modules(OPENSSL_CTX *libctx, CONF *config)
     if (config == NULL)
         return 1;
 
-    if (CONF_modules_load(config, NULL, 0) <= 0) {
+    if (!NCONF_set_libctx(config, libctx)
+        || CONF_modules_load(config, NULL, 0) <= 0) {
         BIO_printf(bio_err, "Error configuring OpenSSL modules\n");
         ERR_print_errors(bio_err);
         NCONF_free(to_free);
