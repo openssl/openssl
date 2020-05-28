@@ -3,8 +3,8 @@
 =head1 NAME
 
 ossl_cmp_allow_unprotected_cb_t,
-ossl_cmp_msg_check_received
-- does all checks on a received CMP message that can be done generically
+ossl_cmp_msg_check_update
+- generic checks on a received CMP message, updating the context
 
 =head1 SYNOPSIS
 
@@ -14,26 +14,29 @@ ossl_cmp_msg_check_received
                                                 const OSSL_CMP_MSG *msg,
                                                 int invalid_protection, int arg);
 
- int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
-                                 ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
+ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
+                               ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
 
 =head1 DESCRIPTION
 
-ossl_cmp_msg_check_received() checks the given message B<msg>,
-which may be a server response or a request by some client.
+ossl_cmp_msg_check_update() does all generic checks on the given message B<msg>,
+which may be a server response or a request by some client,
+and updates the B<ctx> accordingly.
 
-It is ensured for the B<msg> that
+The B<msg> is checked for the following:
 
 =over 4
-
-=item it has a valid body type,
 
 =item its protection is present and valid (or a callback function B<cb>
 is present and indicates that a missing or invalid protection is acceptable),
 
-=item its recipNonce matches any previous senderNonce stored in B<ctx>, and
+=item its CMP protocol version is acceptable, namely B<OSSL_CMP_PVNO>,
 
-=item its transaction ID matches any previous transaction ID stored in B<ctx>.
+=item its body type is valid,
+
+=item its transaction ID matches any transaction ID given in B<ctx>, and
+
+=item its recipNonce matches any senderNonce given in B<ctx>.
 
 =back
 
@@ -43,28 +46,24 @@ case an invalid protection is present the B<invalid_protection> parameter is 1.
 The callback is passed also the arguments B<ctx>, B<msg>, and <cb_arg>
 (which typically contains the expected message type).
 The callback should return 1 on acceptance, 0 on rejection, or -1 on error.
-It should not put and error on the error stack since this could be misleading.
+It should not put an error on the error stack since this could be misleading.
 
-If all checks pass then ossl_cmp_msg_check_received()
-
-=over 4
-
-=item learns the senderNonce from the received message,
-
-=item learns the transaction ID if it is not yet in B<ctx>, and
-
-=item adds any extraCerts contained in the <msg> to the list of untrusted
-certificates in B<ctx> for future use, such that
-they are available already to the certificate confirmation callback and the
+ossl_cmp_msg_check_update() adds all extraCerts contained in the <msg> to
+the list of untrusted certificates in B<ctx> such that they are already usable
+for OSSL_CMP_validate_msg(), which is called internally, and for future use.
+Thus they are available also to the certificate confirmation callback, and the
 peer does not need to send them again (at least not in the same transaction).
+Note that it does not help validating the message before storing the extraCerts
+because they are not part of the protected portion of the message anyway.
 For efficiency, the extraCerts are prepended to the list so they get used first.
 
-=back
+If all checks pass then ossl_cmp_msg_check_update()
+records in B<ctx> the senderNonce of the received message as the new recipNonce
+and learns the transaction ID if none is currently present in B<ctx>.
 
 =head1 RETURN VALUES
 
-ossl_cmp_msg_check_received() returns the message body type (which is >= 0)
-on success, -1 on error.
+ossl_cmp_msg_check_update() returns 1 on success, -1 on error.
 
 =head1 SEE ALSO
 
