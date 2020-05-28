@@ -387,6 +387,8 @@ int BIO_socket_wait(int fd, int for_read, time_t max_time)
     struct timeval tv;
     time_t now;
 
+    if (fd < 0 || fd >= FD_SETSIZE)
+        return -1;
     if (max_time == 0)
         return 1;
 

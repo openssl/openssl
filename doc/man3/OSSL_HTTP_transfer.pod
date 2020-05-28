@@ -154,7 +154,7 @@ B<bio_update_fn> is a BIO connect/disconnect callback function with prototype
 The callback may modify the HTTP BIO provided in the B<bio> argument,
 whereby it may make use of a custom defined argument B<arg>,
 which may for instance refer to an I<SSL_CTX> structure.
-During connection establishment, just after calling BIO_connect_retry(),
+During connection establishment, just after calling BIO_do_connect_retry(),
 the function is invoked with the B<connect> argument being 1 and the B<detail>
 argument being 1 if HTTPS is requested, i.e., SSL/TLS should be enabled.
 On disconnect B<connect> is 0 and B<detail> is 1 if no error occurred, else 0.
