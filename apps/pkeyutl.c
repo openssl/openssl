@@ -367,12 +367,8 @@ int pkeyutl_main(int argc, char **argv)
             if (stat(infile, &st) == 0 && st.st_size <= INT_MAX)
                 filesize = (int)st.st_size;
         }
-        if (in == NULL)
-            goto end;
     }
     out = bio_open_default(outfile, 'w', FORMAT_BINARY);
-    if (out == NULL)
-        goto end;
 
     if (sigfile != NULL) {
         BIO *sigbio = BIO_new_file(sigfile, "rb");

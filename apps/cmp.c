@@ -809,7 +809,14 @@ static int load_certs_preliminary(const char *file, STACK_OF(X509) **certs,
     int ret = 0;
 
     if (format == FORMAT_PKCS12) {
-        BIO *bio = bio_open_default(file, 'r', format);
+        FILE *fp = fopen(file, "r");
+        BIO *bio = NULL;
+
+        if (fp != NULL) {
+            bio = BIO_new_fp(fp, format);
+            if (bio == NULL)
+                fclose(fp);
+        }
 
         if (bio != NULL) {
             EVP_PKEY *pkey = NULL; /* pkey is needed until PR #4930 is merged */

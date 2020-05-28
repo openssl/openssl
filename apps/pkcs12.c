@@ -515,8 +515,6 @@ int pkcs12_main(int argc, char **argv)
         assert(private);
 
         out = bio_open_owner(outfile, FORMAT_PKCS12, private);
-        if (out == NULL)
-            goto end;
 
         i2d_PKCS12_bio(out, p12);
 
@@ -533,11 +531,7 @@ int pkcs12_main(int argc, char **argv)
     }
 
     in = bio_open_default(infile, 'r', FORMAT_PKCS12);
-    if (in == NULL)
-        goto end;
     out = bio_open_owner(outfile, FORMAT_PEM, private);
-    if (out == NULL)
-        goto end;
 
     if ((p12 = d2i_PKCS12_bio(in, NULL)) == NULL) {
         ERR_print_errors(bio_err);

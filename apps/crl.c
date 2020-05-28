@@ -336,8 +336,6 @@ int crl_main(int argc, char **argv)
         }
     }
     out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (text)
         X509_CRL_print_ex(out, x, get_nameopt());

@@ -116,8 +116,6 @@ int pkcs7_main(int argc, char **argv)
         goto opthelp;
 
     in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
 
     if (informat == FORMAT_ASN1)
         p7 = d2i_PKCS7_bio(in, NULL);
@@ -130,8 +128,6 @@ int pkcs7_main(int argc, char **argv)
     }
 
     out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (p7_print)
         PKCS7_print_ctx(out, p7, 0, NULL);

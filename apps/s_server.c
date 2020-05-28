@@ -631,10 +631,7 @@ static int cert_status_cb(SSL *s, void *arg)
 
     if (srctx->respin != NULL) {
         BIO *derbio = bio_open_default(srctx->respin, 'r', FORMAT_ASN1);
-        if (derbio == NULL) {
-            BIO_puts(bio_err, "cert_status: Cannot open OCSP response file\n");
-            goto err;
-        }
+
         resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
         BIO_free(derbio);
         if (resp == NULL) {
@@ -1834,9 +1831,8 @@ int s_server_main(int argc, char *argv[])
             bio_s_out = BIO_new(BIO_s_null());
             if (s_msg && bio_s_msg == NULL)
                 bio_s_msg = dup_bio_out(FORMAT_TEXT);
-        } else {
-            if (bio_s_out == NULL)
-                bio_s_out = dup_bio_out(FORMAT_TEXT);
+        } else if (bio_s_out == NULL) {
+            bio_s_out = dup_bio_out(FORMAT_TEXT);
         }
     }
 #if !defined(OPENSSL_NO_RSA) || !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_EC)

@@ -529,16 +529,12 @@ int ocsp_main(int argc, char **argv)
         goto opthelp;
 
     out = bio_open_default(outfile, 'w', FORMAT_TEXT);
-    if (out == NULL)
-        goto end;
 
     if (req == NULL && (add_nonce != 2))
         add_nonce = 0;
 
     if (req == NULL && reqin != NULL) {
         derbio = bio_open_default(reqin, 'r', FORMAT_ASN1);
-        if (derbio == NULL)
-            goto end;
         req = d2i_OCSP_REQUEST_bio(derbio, NULL);
         BIO_free(derbio);
         if (req == NULL) {
@@ -682,8 +678,6 @@ redo_accept:
 
     if (reqout != NULL) {
         derbio = bio_open_default(reqout, 'w', FORMAT_ASN1);
-        if (derbio == NULL)
-            goto end;
         i2d_OCSP_REQUEST_bio(derbio, req);
         BIO_free(derbio);
     }
@@ -707,8 +701,6 @@ redo_accept:
 #endif
     } else if (respin != NULL) {
         derbio = bio_open_default(respin, 'r', FORMAT_ASN1);
-        if (derbio == NULL)
-            goto end;
         resp = d2i_OCSP_RESPONSE_bio(derbio, NULL);
         BIO_free(derbio);
         if (resp == NULL) {
@@ -724,8 +716,6 @@ redo_accept:
 
     if (respout != NULL) {
         derbio = bio_open_default(respout, 'w', FORMAT_ASN1);
-        if (derbio == NULL)
-            goto end;
         i2d_OCSP_RESPONSE_bio(derbio, resp);
         BIO_free(derbio);
     }

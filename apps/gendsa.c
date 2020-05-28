@@ -116,8 +116,6 @@ int gendsa_main(int argc, char **argv)
     }
 
     in = bio_open_default(dsaparams, 'r', FORMAT_PEM);
-    if (in == NULL)
-        goto end2;
 
     if ((dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL)) == NULL) {
         BIO_printf(bio_err, "unable to load DSA parameter file\n");
@@ -127,8 +125,6 @@ int gendsa_main(int argc, char **argv)
     in = NULL;
 
     out = bio_open_owner(outfile, FORMAT_PEM, private);
-    if (out == NULL)
-        goto end2;
 
     DSA_get0_pqg(dsa, &p, NULL, NULL);
 
@@ -174,7 +170,6 @@ int gendsa_main(int argc, char **argv)
  end:
     if (ret != 0)
         ERR_print_errors(bio_err);
- end2:
     BIO_free(in);
     BIO_free_all(out);
     DSA_free(dsa);

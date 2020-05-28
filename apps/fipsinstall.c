@@ -351,10 +351,6 @@ opthelp:
         OSSL_SELF_TEST_set_callback(NULL, self_test_events, NULL);
 
     module_bio = bio_open_default(module_fname, 'r', FORMAT_BINARY);
-    if (module_bio == NULL) {
-        BIO_printf(bio_err, "Failed to open module file\n");
-        goto end;
-    }
 
     read_buffer = app_malloc(BUFSIZE, "I/O buffer");
     if (read_buffer == NULL)
@@ -424,10 +420,6 @@ opthelp:
             goto end;
 
         fout = bio_open_default(out_fname, 'w', FORMAT_TEXT);
-        if (fout == NULL) {
-            BIO_printf(bio_err, "Failed to open file\n");
-            goto end;
-        }
         if (!write_config_fips_section(fout, section_name, module_mac,
                                        module_mac_len, install_mac,
                                        install_mac_len))

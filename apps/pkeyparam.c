@@ -95,11 +95,7 @@ int pkeyparam_main(int argc, char **argv)
         goto opthelp;
 
     in = bio_open_default(infile, 'r', FORMAT_PEM);
-    if (in == NULL)
-        goto end;
     out = bio_open_default(outfile, 'w', FORMAT_PEM);
-    if (out == NULL)
-        goto end;
     pkey = PEM_read_bio_Parameters(in, NULL);
     if (pkey == NULL) {
         BIO_printf(bio_err, "Error reading parameters\n");

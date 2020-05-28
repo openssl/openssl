@@ -113,8 +113,6 @@ int crl2pkcs7_main(int argc, char **argv)
 
     if (!nocrl) {
         in = bio_open_default(infile, 'r', informat);
-        if (in == NULL)
-            goto end;
 
         if (informat == FORMAT_ASN1)
             crl = d2i_X509_CRL_bio(in, NULL);
@@ -160,8 +158,6 @@ int crl2pkcs7_main(int argc, char **argv)
         }
 
     out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (outformat == FORMAT_ASN1)
         i = i2d_PKCS7_bio(out, p7);

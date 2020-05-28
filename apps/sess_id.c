@@ -119,11 +119,8 @@ int sess_id_main(int argc, char **argv)
         }
     }
 
-    if (!noout || text) {
+    if (!noout || text)
         out = bio_open_default(outfile, 'w', outformat);
-        if (out == NULL)
-            goto end;
-    }
 
     if (text) {
         SSL_SESSION_print(out, x);
@@ -178,8 +175,6 @@ static SSL_SESSION *load_sess_id(char *infile, int format)
     BIO *in = NULL;
 
     in = bio_open_default(infile, 'r', format);
-    if (in == NULL)
-        goto end;
     if (format == FORMAT_ASN1)
         x = d2i_SSL_SESSION_bio(in, NULL);
     else

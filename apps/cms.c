@@ -820,8 +820,6 @@ int cms_main(int argc, char **argv)
     }
 
     in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
 
     if (operation & SMIME_IP) {
         if (informat == FORMAT_SMIME) {
@@ -884,8 +882,6 @@ int cms_main(int argc, char **argv)
     }
 
     out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if ((operation == SMIME_VERIFY) || (operation == SMIME_VERIFY_RECEIPT)) {
         if ((store = setup_verify(CAfile, noCAfile, CApath, noCApath,

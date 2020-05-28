@@ -236,8 +236,6 @@ int enc_main(int argc, char **argv)
             break;
         case OPT_KFILE:
             in = bio_open_default(opt_arg(), 'r', FORMAT_TEXT);
-            if (in == NULL)
-                goto opthelp;
             i = BIO_gets(in, buf, sizeof(buf));
             BIO_free(in);
             in = NULL;
@@ -335,13 +333,10 @@ int enc_main(int argc, char **argv)
     strbuf = app_malloc(SIZE, "strbuf");
     buff = app_malloc(EVP_ENCODE_LENGTH(bsize), "evp buffer");
 
-    if (infile == NULL) {
+    if (infile == NULL)
         in = dup_bio_in(informat);
-    } else {
+    else
         in = bio_open_default(infile, 'r', informat);
-    }
-    if (in == NULL)
-        goto end;
 
     if (str == NULL && passarg != NULL) {
         if (!app_passwd(passarg, NULL, &pass, NULL)) {
@@ -383,8 +378,6 @@ int enc_main(int argc, char **argv)
     }
 
     out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (debug) {
         BIO_set_callback(in, BIO_debug_callback);

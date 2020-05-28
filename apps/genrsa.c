@@ -159,8 +159,6 @@ opthelp:
     }
 
     out = bio_open_owner(outfile, FORMAT_PEM, private);
-    if (out == NULL)
-        goto end;
 
     if (!init_gen_str(&ctx, "RSA", eng, 0))
         goto end;

@@ -208,11 +208,7 @@ int pkcs8_main(int argc, char **argv)
         cipher = EVP_aes_256_cbc();
 
     in = bio_open_default(infile, 'r', informat);
-    if (in == NULL)
-        goto end;
     out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
 
     if (topk8) {
         pkey = load_key(infile, informat, 1, passin, e, "key");

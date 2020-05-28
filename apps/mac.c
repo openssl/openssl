@@ -140,12 +140,7 @@ opthelp:
     if (infile == NULL || strcmp(infile, "-") == 0)
         inform = FORMAT_TEXT;
     in = bio_open_default(infile, 'r', inform);
-    if (in == NULL)
-        goto err;
-
     out = bio_open_default(outfile, 'w', out_bin ? FORMAT_BINARY : FORMAT_TEXT);
-    if (out == NULL)
-        goto err;
 
     if (!EVP_MAC_init(ctx)) {
         BIO_printf(bio_err, "EVP_MAC_Init failed\n");

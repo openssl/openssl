@@ -199,8 +199,6 @@ int pkey_main(int argc, char **argv)
     }
 
     out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
 
     if (pubin)
         pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");

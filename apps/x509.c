@@ -647,8 +647,6 @@ int x509_main(int argc, char **argv)
     }
 
     out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     if (!noout || text || next_serial)
         OBJ_create("2.99999.3", "SET.ex3", "SET x509v3 extension 3");

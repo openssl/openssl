@@ -218,11 +218,7 @@ int rsautl_main(int argc, char **argv)
     }
 
     in = bio_open_default(infile, 'r', FORMAT_BINARY);
-    if (in == NULL)
-        goto end;
     out = bio_open_default(outfile, 'w', FORMAT_BINARY);
-    if (out == NULL)
-        goto end;
 
     keysize = RSA_size(rsa);
 

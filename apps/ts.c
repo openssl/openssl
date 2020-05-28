@@ -392,26 +392,22 @@ static int query_command(const char *data, const char *digest, const EVP_MD *md,
 
     /* Build query object. */
     if (in != NULL) {
-        if ((in_bio = bio_open_default(in, 'r', FORMAT_ASN1)) == NULL)
-            goto end;
+        in_bio = bio_open_default(in, 'r', FORMAT_ASN1);
         query = d2i_TS_REQ_bio(in_bio, NULL);
     } else {
-        if (digest == NULL
-            && (data_bio = bio_open_default(data, 'r', FORMAT_ASN1)) == NULL)
-            goto end;
+        if (digest == NULL)
+            data_bio = bio_open_default(data, 'r', FORMAT_ASN1);
         query = create_query(data_bio, digest, md, policy, no_nonce, cert);
     }
     if (query == NULL)
         goto end;
 
     if (text) {
-        if ((out_bio = bio_open_default(out, 'w', FORMAT_TEXT)) == NULL)
-            goto end;
+        out_bio = bio_open_default(out, 'w', FORMAT_TEXT);
         if (!TS_REQ_print_bio(out_bio, query))
             goto end;
     } else {
-        if ((out_bio = bio_open_default(out, 'w', FORMAT_ASN1)) == NULL)
-            goto end;
+        out_bio = bio_open_default(out, 'w', FORMAT_ASN1);
         if (!i2d_TS_REQ_bio(out_bio, query))
             goto end;
     }
@@ -605,8 +601,7 @@ static int reply_command(CONF *conf, const char *section, const char *engine,
 
     /* Write response. */
     if (text) {
-        if ((out_bio = bio_open_default(out, 'w', FORMAT_TEXT)) == NULL)
-        goto end;
+        out_bio = bio_open_default(out, 'w', FORMAT_TEXT);
         if (token_out) {
             TS_TST_INFO *tst_info = TS_RESP_get_tst_info(response);
             if (!TS_TST_INFO_print_bio(out_bio, tst_info))
@@ -616,8 +611,7 @@ static int reply_command(CONF *conf, const char *section, const char *engine,
                 goto end;
         }
     } else {
-        if ((out_bio = bio_open_default(out, 'w', FORMAT_ASN1)) == NULL)
-            goto end;
+        out_bio = bio_open_default(out, 'w', FORMAT_ASN1);
         if (token_out) {
             PKCS7 *token = TS_RESP_get_token(response);
             if (!i2d_PKCS7_bio(out_bio, token))

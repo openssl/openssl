@@ -78,11 +78,7 @@ int nseq_main(int argc, char **argv)
         goto opthelp;
 
     in = bio_open_default(infile, 'r', FORMAT_PEM);
-    if (in == NULL)
-        goto end;
     out = bio_open_default(outfile, 'w', FORMAT_PEM);
-    if (out == NULL)
-        goto end;
 
     if (toseq) {
         seq = NETSCAPE_CERT_SEQUENCE_new();

@@ -156,8 +156,6 @@ int genpkey_main(int argc, char **argv)
     }
 
     out = bio_open_owner(outfile, outformat, private);
-    if (out == NULL)
-        goto end;
 
     EVP_PKEY_CTX_set_cb(ctx, genpkey_cb);
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);

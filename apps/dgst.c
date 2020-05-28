@@ -258,8 +258,6 @@ int dgst_main(int argc, char **argv)
     }
 
     out = bio_open_default(outfile, 'w', out_bin ? FORMAT_BINARY : FORMAT_TEXT);
-    if (out == NULL)
-        goto end;
 
     if ((!(mac_name == NULL) + !(keyfile == NULL) + !(hmac_key == NULL)) > 1) {
         BIO_printf(bio_err, "MAC and Signing key cannot both be specified\n");

@@ -127,8 +127,6 @@ opthelp:
     }
 
     out = bio_open_default(outfile, 'w', out_bin ? FORMAT_BINARY : FORMAT_TEXT);
-    if (out == NULL)
-        goto err;
 
     if (dkm_len <= 0) {
         BIO_printf(bio_err, "Invalid derived key length.\n");

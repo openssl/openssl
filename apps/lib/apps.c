@@ -75,6 +75,7 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
+static BIO *check_bio(BIO *bp, const char *what, int flags);
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
@@ -299,10 +300,6 @@ static char *app_get_pass(const char *arg, int keepbio)
 #endif
         } else if (strcmp(arg, "stdin") == 0) {
             pwdbio = dup_bio_in(FORMAT_TEXT);
-            if (pwdbio == NULL) {
-                BIO_printf(bio_err, "Can't open BIO for stdin\n");
-                return NULL;
-            }
         } else {
             /* argument syntax error; do not reveal too much about arg */
             tmp = strchr(arg, ':');
@@ -364,23 +361,28 @@ CONF *app_load_config(const char *filename)
     CONF *conf;
 
     in = bio_open_default(filename, 'r', FORMAT_TEXT);
-    if (in == NULL)
-        return NULL;
 
     conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
 }
 
-CONF *app_load_config_quiet(const char *filename)
+/*
+ * Try to open |filename|.  If we can, make it a BIO and load it as a
+ * conf. If we can't, return NULL.
+ */
+static CONF *app_load_config_quiet(const char *filename)
 {
+    FILE *fp;
     BIO *in;
     CONF *conf;
+    int mode = BIO_FP_TEXT;
 
-    in = bio_open_default_quiet(filename, 'r', FORMAT_TEXT);
-    if (in == NULL)
+    if (filename == NULL || (fp = fopen(filename, "r")) == NULL)
         return NULL;
 
+    /* If we fail now, it's likely malloc or similar internal error. */
+    in = check_bio(BIO_new_fp(fp, mode), filename, mode);
     conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
@@ -479,8 +481,6 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
     if (desc == NULL)
         desc = "CSR";
     in = bio_open_default(file, 'r', format);
-    if (in == NULL)
-        goto end;
 
     if (format == FORMAT_ASN1)
         req = d2i_X509_REQ_bio(in, NULL);
@@ -489,7 +489,6 @@ X509_REQ *load_csr(const char *file, int format, const char *desc)
     else
         print_format_error(format, OPT_FMT_PEMDER);
 
- end:
     if (req == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -611,8 +610,6 @@ static int load_certs_crls(const char *file, int format,
     }
 
     bio = bio_open_default(file, 'r', FORMAT_PEM);
-    if (bio == NULL)
-        return 0;
 
     xis = PEM_X509_INFO_read_bio(bio, NULL,
                                  (pem_password_cb *)password_callback,
@@ -2377,42 +2374,61 @@ int raw_write_stdout(const void *buf, int siz)
  * and is therefore a show of intent more than anything else.  However, it
  * does impact behavior on some platforms, such as differentiating between
  * text and binary input/output on non-Unix platforms
+ *
+ * The routines below call check_bio() in case of failure, and therefore
+ * don't free up other resources on the error path because they know it will
+ * be handled when the process exits.
  */
+static BIO *check_bio(BIO *bp, const char *what, int mode)
+{
+    if (bp == NULL)
+        app_bail_out("%s: Could not open %s in mode 0x%x\n",
+                     opt_getprog(), what, mode);
+    return bp;
+}
+
 BIO *dup_bio_in(int format)
 {
-    return BIO_new_fp(stdin,
-                      BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
+    int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
+
+    return check_bio(BIO_new_fp(stdin, mode), "stdin", mode);
 }
 
 BIO *dup_bio_out(int format)
 {
-    BIO *b = BIO_new_fp(stdout,
-                        BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
+    int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
+    BIO *b = check_bio(BIO_new_fp(stdout, mode), "stdout", mode);
     void *prefix = NULL;
 
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
-        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+        b = BIO_push(check_bio(BIO_new(BIO_f_linebuffer()),
+                               "linebuffer stdout", mode),
+                     b);
 #endif
 
     if (FMT_istext(format)
-        && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
-        b = BIO_push(BIO_new(BIO_f_prefix()), b);
+            && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
+        b = BIO_push(check_bio(BIO_new(BIO_f_prefix()), "prefix stdout", mode),
+                     b);
         BIO_set_prefix(b, prefix);
     }
 
-    return b;
+    return check_bio(b, "stdout", mode);
 }
 
 BIO *dup_bio_err(int format)
 {
-    BIO *b = BIO_new_fp(stderr,
-                        BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0));
+    int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
+    BIO *b = check_bio(BIO_new_fp(stderr, mode), "stderr", mode);
+
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
-        b = BIO_push(BIO_new(BIO_f_linebuffer()), b);
+        b = BIO_push(check_bio(BIO_new(BIO_f_linebuffer()),
+                               "linebuffer stderr", mode),
+                     b);
 #endif
-    return b;
+    return check_bio(b, "stderr", mode);
 }
 
 void unbuffer(FILE *fp)
@@ -2450,44 +2466,33 @@ static const char *modestr(char mode, int format)
     return NULL;
 }
 
-static const char *modeverb(char mode)
-{
-    switch (mode) {
-    case 'a':
-        return "appending";
-    case 'r':
-        return "reading";
-    case 'w':
-        return "writing";
-    }
-    return "(doing something)";
-}
-
 /*
- * Open a file for writing, owner-read-only.
+ * Open a file for writing, owner-read-only.  Return the BIO on
+ * success or print errors and exit on failure.
  */
 BIO *bio_open_owner(const char *filename, int format, int private)
 {
     FILE *fp = NULL;
     BIO *b = NULL;
-    int fd = -1, bflags, mode, textmode;
+    int fd = -1, bflags = BIO_CLOSE, flags = O_WRONLY, textmode;
 
     if (!private || filename == NULL || strcmp(filename, "-") == 0)
         return bio_open_default(filename, 'w', format);
 
-    mode = O_WRONLY;
 #ifdef O_CREAT
-    mode |= O_CREAT;
+    flags |= O_CREAT;
 #endif
 #ifdef O_TRUNC
-    mode |= O_TRUNC;
+    flags |= O_TRUNC;
 #endif
     textmode = FMT_istext(format);
-    if (!textmode) {
+    if (textmode) {
+        bflags |= BIO_FP_TEXT;
+    } else {
 #ifdef O_BINARY
-        mode |= O_BINARY;
+        flags |= O_BINARY;
 #elif defined(_O_BINARY)
-        mode |= _O_BINARY;
+        flags |= _O_BINARY;
 #endif
     }
 
@@ -2498,74 +2503,37 @@ BIO *bio_open_owner(const char *filename, int format, int private)
      * context is.
      */
     if (!textmode)
-        fd = open(filename, mode, 0600, "ctx=bin");
+        fd = open(filename, flags, 0600, "ctx=bin");
     else
 #endif
-        fd = open(filename, mode, 0600);
-    if (fd < 0)
-        goto err;
-    fp = fdopen(fd, modestr('w', format));
-    if (fp == NULL)
-        goto err;
-    bflags = BIO_CLOSE;
-    if (textmode)
-        bflags |= BIO_FP_TEXT;
-    b = BIO_new_fp(fp, bflags);
-    if (b)
-        return b;
-
- err:
-    BIO_printf(bio_err, "%s: Can't open \"%s\" for writing, %s\n",
-               opt_getprog(), filename, strerror(errno));
-    ERR_print_errors(bio_err);
-    /* If we have fp, then fdopen took over fd, so don't close both. */
-    if (fp)
-        fclose(fp);
-    else if (fd >= 0)
-        close(fd);
-    return NULL;
-}
-
-static BIO *bio_open_default_(const char *filename, char mode, int format,
-                              int quiet)
-{
-    BIO *ret;
-
-    if (filename == NULL || strcmp(filename, "-") == 0) {
-        ret = mode == 'r' ? dup_bio_in(format) : dup_bio_out(format);
-        if (quiet) {
-            ERR_clear_error();
-            return ret;
-        }
-        if (ret != NULL)
-            return ret;
-        BIO_printf(bio_err,
-                   "Can't open %s, %s\n",
-                   mode == 'r' ? "stdin" : "stdout", strerror(errno));
-    } else {
-        ret = BIO_new_file(filename, modestr(mode, format));
-        if (quiet) {
-            ERR_clear_error();
-            return ret;
-        }
-        if (ret != NULL)
-            return ret;
-        BIO_printf(bio_err,
-                   "Can't open %s for %s, %s\n",
-                   filename, modeverb(mode), strerror(errno));
+        fd = open(filename, flags, 0600);
+    if (fd < 0
+            || (fp = fdopen(fd, modestr('w', format))) == NULL
+            || (b = BIO_new_fp(fp, bflags)) == NULL) {
+        BIO_printf(bio_err, "%s: Can't open \"%s\" for writing, %s\n",
+                   opt_getprog(), filename, strerror(errno));
+        ERR_print_errors(bio_err);
+        if (fp != NULL)
+            fclose(fp);
+        else if (fd >= 0)
+            close(fd);
+        exit(1);
     }
-    ERR_print_errors(bio_err);
-    return NULL;
+    return b;
 }
 
 BIO *bio_open_default(const char *filename, char mode, int format)
 {
-    return bio_open_default_(filename, mode, format, 0);
-}
+    BIO *b;
 
-BIO *bio_open_default_quiet(const char *filename, char mode, int format)
-{
-    return bio_open_default_(filename, mode, format, 1);
+    /* Using stdin or stdout? */
+    if (filename == NULL || strcmp(filename, "-") == 0)
+        return mode == 'r' ? dup_bio_in(format) : dup_bio_out(format);
+
+    b = BIO_new_file(filename, modestr(mode, format));
+    if (mode == 'r')
+        return check_bio(b, "stdin", format);
+    return check_bio(b, "stdout", format);
 }
 
 void wait_for_async(SSL *s)

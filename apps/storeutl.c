@@ -317,8 +317,6 @@ int storeutl_main(int argc, char *argv[])
     pw_cb_data.prompt_info = argv[0];
 
     out = bio_open_default(outfile, 'w', FORMAT_TEXT);
-    if (out == NULL)
-        goto end;
 
     ret = process(argv[0], get_ui_method(), &pw_cb_data,
                   expected, criterion, search,

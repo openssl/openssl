@@ -229,8 +229,6 @@ int passwd_main(int argc, char **argv)
          * bio_open_default() will give us back an alias for stdin.
          */
         in = bio_open_default(infile, 'r', FORMAT_TEXT);
-        if (in == NULL)
-            goto end;
     }
 
     if (mode == passwd_crypt)

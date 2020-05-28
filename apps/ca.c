@@ -1081,8 +1081,6 @@ end_of_options:
 
             Sout = bio_open_default(outfile, 'w',
                                     output_der ? FORMAT_ASN1 : FORMAT_TEXT);
-            if (Sout == NULL)
-                goto end;
 
             Cout = BIO_new_file(new_cert, "w");
             if (Cout == NULL) {
@@ -1244,8 +1242,6 @@ end_of_options:
 
         Sout = bio_open_default(outfile, 'w',
                                 output_der ? FORMAT_ASN1 : FORMAT_TEXT);
-        if (Sout == NULL)
-            goto end;
 
         PEM_write_bio_X509_CRL(Sout, crl);
 

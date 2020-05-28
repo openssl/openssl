@@ -183,8 +183,6 @@ int dhparam_main(int argc, char **argv)
 #endif
 
     out = bio_open_default(outfile, 'w', outformat);
-    if (out == NULL)
-        goto end;
 
     /* DH parameters */
     if (num && !g)
@@ -259,8 +257,6 @@ int dhparam_main(int argc, char **argv)
         }
     } else {
         in = bio_open_default(infile, 'r', informat);
-        if (in == NULL)
-            goto end;
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (dsaparam) {

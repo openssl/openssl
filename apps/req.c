@@ -678,8 +678,6 @@ int req_main(int argc, char **argv)
         else
             BIO_printf(bio_err, "writing new private key to '%s'\n", keyout);
         out = bio_open_owner(keyout, outformat, private);
-        if (out == NULL)
-            goto end;
 
         p = NCONF_get_string(req_conf, section, "encrypt_rsa_key");
         if (p == NULL) {
@@ -887,8 +885,6 @@ int req_main(int argc, char **argv)
                            keyout != NULL && outfile != NULL &&
                            strcmp(keyout, outfile) == 0 ? 'a' : 'w',
                            outformat);
-    if (out == NULL)
-        goto end;
 
     if (pubkey) {
         EVP_PKEY *tpubkey = X509_REQ_get0_pubkey(req);
