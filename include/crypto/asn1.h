@@ -94,8 +94,18 @@ extern const EVP_PKEY_ASN1_METHOD dilithium2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p256_dilithium2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa3072_dilithium2_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dilithium3_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_dilithium3_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_dilithium3_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dilithium4_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p384_dilithium4_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD falcon512_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_falcon512_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_falcon512_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD falcon1024_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p521_falcon1024_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD mqdss3148_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_mqdss3148_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_mqdss3148_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD picnicl1fs_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p256_picnicl1fs_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa3072_picnicl1fs_asn1_meth;
@@ -106,8 +116,7 @@ extern const EVP_PKEY_ASN1_METHOD qteslapi_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p256_qteslapi_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa3072_qteslapi_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslapiii_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p384_qteslapiii_asn1_meth;
-///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_END
+extern const EVP_PKEY_ASN1_METHOD p384_qteslapiii_asn1_meth;///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_END
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the

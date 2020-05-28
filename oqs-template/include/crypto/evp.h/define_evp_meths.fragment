@@ -1,0 +1,8 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+extern const EVP_PKEY_METHOD {{ variant['name'] }}_pkey_meth;
+        {%- for classical_alg in variant['mix_with'] %}
+extern const EVP_PKEY_METHOD {{ classical_alg['name'] }}_{{ variant['name'] }}_pkey_meth;
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}

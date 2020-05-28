@@ -97,6 +97,8 @@ The following digital signature algorithms from liboqs are supported (assuming t
 
 - `oqs_sig_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 - **Dilithium**: `dilithium2`, `dilithium3`, `dilithium4` (not currently on Windows)
+- **falcon**: `falcon512`, `falcon1024`
+- **MQDSS**: `mqdss3148`
 - **Picnic**: `picnicl1fs`
 - **qTesla**: `qteslapi`, `qteslapiii`
 

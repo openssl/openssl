@@ -50,6 +50,8 @@ config = load_config()
 populate('crypto/asn1/standard_methods.h', config, '/////')
 populate('crypto/ec/oqs_meth.c', config, '/////')
 populate('crypto/evp/pmeth_lib.c', config, '/////')
+populate('include/crypto/asn1.h', config, '/////')
+populate('include/crypto/evp.h', config, '/////')
 # We remove the delimiter comments from obj_mac.num
 populate('crypto/objects/obj_mac.num', config, '#####', True)
 populate('crypto/objects/obj_xref.txt', config, '#####')
