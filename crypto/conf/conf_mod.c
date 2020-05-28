@@ -518,7 +518,7 @@ char *CONF_get1_default_config_file(void)
 {
     const char *t;
     char *file, *sep = "";
-    int size;
+    size_t size;
 
     if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
         return OPENSSL_strdup(file);
