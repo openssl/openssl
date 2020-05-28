@@ -702,19 +702,29 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
  * learns the senderNonce from the received message,
  * learns the transaction ID if it is not yet in ctx.
  *
- * returns body type (which is >= 0) of the message on success, -1 on error
+ * returns 1 on success, 0 on error
  */
-int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
-                                ossl_cmp_allow_unprotected_cb_t cb, int cb_arg)
+int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
+                              ossl_cmp_allow_unprotected_cb_t cb, int cb_arg)
 {
-    int rcvd_type;
-
     if (!ossl_assert(ctx != NULL && msg != NULL))
-        return -1;
+        return 0;
 
     if (sk_X509_num(msg->extraCerts) > 10)
         ossl_cmp_warn(ctx,
                       "received CMP message contains more than 10 extraCerts");
+    /*
+     * Store any provided extraCerts in ctx for use in OSSL_CMP_validate_msg()
+     * and for future use, such that they are available to ctx->certConf_cb and
+     * the peer does not need to send them again in the same transaction.
+     * Note that it does not help validating the message before storing the
+     * extraCerts because they do not belong to the protected msg part anyway.
+     * For efficiency, the extraCerts are prepended so they get used first.
+     */
+    if (!ossl_cmp_sk_X509_add1_certs(ctx->untrusted_certs, msg->extraCerts,
+                                     0 /* this allows self-issued certs */,
+                                     1 /* no_dups */, 1 /* prepend */))
+        return 0;
 
     /* validate message protection */
     if (msg->header->protectionAlg != 0) {
@@ -723,7 +733,7 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                 && (cb == NULL || (*cb)(ctx, msg, 1, cb_arg) <= 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             CMPerr(0, CMP_R_ERROR_VALIDATING_PROTECTION);
-            return -1;
+            return 0;
 #endif
         }
     } else {
@@ -731,7 +741,7 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         if (cb == NULL || (*cb)(ctx, msg, 0, cb_arg) <= 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             CMPerr(0, CMP_R_MISSING_PROTECTION);
-            return -1;
+            return 0;
 #endif
         }
     }
@@ -740,14 +750,14 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     if (ossl_cmp_hdr_get_pvno(OSSL_CMP_MSG_get0_header(msg)) != OSSL_CMP_PVNO) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_UNEXPECTED_PVNO);
-        return -1;
+        return 0;
 #endif
     }
 
-    if ((rcvd_type = ossl_cmp_msg_get_bodytype(msg)) < 0) {
+    if (ossl_cmp_msg_get_bodytype(msg) < 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_PKIBODY_ERROR);
-        return -1;
+        return 0;
 #endif
     }
 
@@ -758,7 +768,7 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                          msg->header->transactionID) != 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_TRANSACTIONID_UNMATCHED);
-        return -1;
+        return 0;
 #endif
     }
 
@@ -769,7 +779,7 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                          msg->header->recipNonce) != 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_RECIPNONCE_UNMATCHED);
-        return -1;
+        return 0;
 #endif
     }
 
@@ -779,25 +789,14 @@ int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * --> Store for setting in next message
      */
     if (!ossl_cmp_ctx_set1_recipNonce(ctx, msg->header->senderNonce))
-        return -1;
+        return 0;
 
     /* if not yet present, learn transactionID */
     if (ctx->transactionID == NULL
         && !OSSL_CMP_CTX_set1_transactionID(ctx, msg->header->transactionID))
-        return -1;
+        return 0;
 
-    /*
-     * Store any provided extraCerts in ctx for future use,
-     * such that they are available to ctx->certConf_cb and
-     * the peer does not need to send them again in the same transaction.
-     * For efficiency, the extraCerts are prepended so they get used first.
-     */
-    if (!ossl_cmp_sk_X509_add1_certs(ctx->untrusted_certs, msg->extraCerts,
-                                     0 /* this allows self-issued certs */,
-                                     1 /* no_dups */, 1 /* prepend */))
-        return -1;
-
-    return rcvd_type;
+    return 1;
 }
 
 int ossl_cmp_verify_popo(const OSSL_CMP_MSG *msg, int accept_RAVerified)

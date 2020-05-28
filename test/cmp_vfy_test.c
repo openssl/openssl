@@ -387,19 +387,19 @@ static int test_validate_cert_path_expired(void)
     return result;
 }
 
-static int execute_MSG_check_received_test(CMP_VFY_TEST_FIXTURE *fixture)
+static int execute_msg_check_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
     const OSSL_CMP_PKIHEADER *hdr = OSSL_CMP_MSG_get0_header(fixture->msg);
     const ASN1_OCTET_STRING *tid = OSSL_CMP_HDR_get0_transactionID(hdr);
 
     if (!TEST_int_eq(fixture->expected,
-                     ossl_cmp_msg_check_received(fixture->cmp_ctx,
-                                                 fixture->msg,
-                                                 fixture->allow_unprotected_cb,
-                                                 fixture->additional_arg)))
+                     ossl_cmp_msg_check_update(fixture->cmp_ctx,
+                                               fixture->msg,
+                                               fixture->allow_unprotected_cb,
+                                               fixture->additional_arg)))
         return 0;
 
-    if (fixture->expected < 0) /* error expected aready during above check */
+    if (fixture->expected == 0) /* error expected aready during above check */
         return 1;
     return
         TEST_int_eq(0,
@@ -416,10 +416,10 @@ static int allow_unprotected(const OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     return allow;
 }
 
-static void setup_check_received(CMP_VFY_TEST_FIXTURE **fixture, int expected,
-                                 ossl_cmp_allow_unprotected_cb_t cb, int arg,
-                                 const unsigned char *trid_data,
-                                 const unsigned char *nonce_data)
+static void setup_check_update(CMP_VFY_TEST_FIXTURE **fixture, int expected,
+                               ossl_cmp_allow_unprotected_cb_t cb, int arg,
+                               const unsigned char *trid_data,
+                               const unsigned char *nonce_data)
 {
     OSSL_CMP_CTX *ctx = (*fixture)->cmp_ctx;
     int nonce_len = OSSL_CMP_SENDERNONCE_LENGTH;
@@ -448,33 +448,32 @@ static void setup_check_received(CMP_VFY_TEST_FIXTURE **fixture, int expected,
 }
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-static int test_MSG_check_received_no_protection_no_cb(void)
+static int test_msg_check_no_protection_no_cb(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_received(&fixture, -1, NULL, 0, NULL, NULL);
-    EXECUTE_TEST(execute_MSG_check_received_test, tear_down);
+    setup_check_update(&fixture, 0, NULL, 0, NULL, NULL);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 
-static int test_MSG_check_received_no_protection_restrictive_cb(void)
+static int test_msg_check_no_protection_restrictive_cb(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_received(&fixture, -1, allow_unprotected, 0, NULL, NULL);
-    EXECUTE_TEST(execute_MSG_check_received_test, tear_down);
+    setup_check_update(&fixture, 0, allow_unprotected, 0, NULL, NULL);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 #endif
 
-static int test_MSG_check_received_no_protection_permissive_cb(void)
+static int test_msg_check_no_protection_permissive_cb(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_received(&fixture, OSSL_CMP_PKIBODY_IP, allow_unprotected, 1,
-                         NULL, NULL);
-    EXECUTE_TEST(execute_MSG_check_received_test, tear_down);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, NULL, NULL);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 
-static int test_MSG_check_received_check_transaction_id(void)
+static int test_msg_check_transaction_id(void)
 {
     /* Transaction id belonging to CMP_IR_rmprotection.der */
     const unsigned char trans_id[OSSL_CMP_TRANSACTIONID_LENGTH] = {
@@ -483,23 +482,22 @@ static int test_MSG_check_received_check_transaction_id(void)
     };
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_received(&fixture, OSSL_CMP_PKIBODY_IP, allow_unprotected, 1,
-                         trans_id, NULL);
-    EXECUTE_TEST(execute_MSG_check_received_test, tear_down);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, trans_id, NULL);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-static int test_MSG_check_received_check_transaction_id_bad(void)
+static int test_msg_check_transaction_id_bad(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_received(&fixture, -1, allow_unprotected, 1, rand_data, NULL);
-    EXECUTE_TEST(execute_MSG_check_received_test, tear_down);
+    setup_check_update(&fixture, 0, allow_unprotected, 1, rand_data, NULL);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 #endif
 
-static int test_MSG_check_received_check_recipient_nonce(void)
+static int test_msg_check_recipient_nonce(void)
 {
     /* Recipient nonce belonging to CMP_IP_ir_rmprotection.der */
     const unsigned char rec_nonce[OSSL_CMP_SENDERNONCE_LENGTH] = {
@@ -508,18 +506,17 @@ static int test_MSG_check_received_check_recipient_nonce(void)
     };
 
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_received(&fixture, OSSL_CMP_PKIBODY_IP, allow_unprotected, 1,
-                         NULL, rec_nonce);
-    EXECUTE_TEST(execute_MSG_check_received_test, tear_down);
+    setup_check_update(&fixture, 1, allow_unprotected, 1, NULL, rec_nonce);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-static int test_MSG_check_received_check_recipient_nonce_bad(void)
+static int test_msg_check_recipient_nonce_bad(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_check_received(&fixture, -1, allow_unprotected, 1, NULL, rand_data);
-    EXECUTE_TEST(execute_MSG_check_received_test, tear_down);
+    setup_check_update(&fixture, 0, allow_unprotected, 1, NULL, rand_data);
+    EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
 #endif
@@ -629,17 +626,17 @@ int setup_tests(void)
     ADD_TEST(test_validate_cert_path_wrong_anchor);
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    ADD_TEST(test_MSG_check_received_no_protection_no_cb);
-    ADD_TEST(test_MSG_check_received_no_protection_restrictive_cb);
+    ADD_TEST(test_msg_check_no_protection_no_cb);
+    ADD_TEST(test_msg_check_no_protection_restrictive_cb);
 #endif
-    ADD_TEST(test_MSG_check_received_no_protection_permissive_cb);
-    ADD_TEST(test_MSG_check_received_check_transaction_id);
+    ADD_TEST(test_msg_check_no_protection_permissive_cb);
+    ADD_TEST(test_msg_check_transaction_id);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    ADD_TEST(test_MSG_check_received_check_transaction_id_bad);
+    ADD_TEST(test_msg_check_transaction_id_bad);
 #endif
-    ADD_TEST(test_MSG_check_received_check_recipient_nonce);
+    ADD_TEST(test_msg_check_recipient_nonce);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-    ADD_TEST(test_MSG_check_received_check_recipient_nonce_bad);
+    ADD_TEST(test_msg_check_recipient_nonce_bad);
 #endif
 
     return 1;

@@ -508,8 +508,8 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         }
     }
 
-    if (ossl_cmp_msg_check_received(ctx, req, unprotected_exception,
-                                    srv_ctx->acceptUnprotected) < 0)
+    if (!ossl_cmp_msg_check_update(ctx, req, unprotected_exception,
+                                   srv_ctx->acceptUnprotected))
         goto err;
 
     switch (req_type) {

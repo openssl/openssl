@@ -252,7 +252,8 @@ static int execute_try_certreq_poll_test(CMP_SES_TEST_FIXTURE *fixture)
         && check_after == CHECK_AFTER
         && TEST_ptr_eq(OSSL_CMP_CTX_get0_newCert(ctx), NULL)
         && TEST_int_eq(fixture->expected, OSSL_CMP_try_certreq(ctx, TYPE, NULL))
-        && TEST_int_eq(0, X509_cmp(OSSL_CMP_CTX_get0_newCert(ctx), client_cert));
+        && TEST_int_eq(0,
+                       X509_cmp(OSSL_CMP_CTX_get0_newCert(ctx), client_cert));
 }
 
 static int test_try_certreq_poll(void)
