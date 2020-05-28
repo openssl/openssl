@@ -186,8 +186,17 @@ static int conn_state(BIO *b, BIO_CONNECT *c)
 
         case BIO_CONN_S_BLOCKED_CONNECT:
             i = BIO_sock_error(b->num);
-            if (i) {
+            if (i != 0) {
                 BIO_clear_retry_flags(b);
+                if ((c->addr_iter = BIO_ADDRINFO_next(c->addr_iter)) != NULL) {
+                    /*
+                     * if there are more addresses to try, do that first
+                     */
+                    BIO_closesocket(b->num);
+                    c->state = BIO_CONN_S_CREATE_SOCKET;
+                    ERR_clear_error();
+                    break;
+                }
                 SYSerr(SYS_F_CONNECT, i);
                 ERR_add_error_data(4,
                                    "hostname=", c->param_hostname,
