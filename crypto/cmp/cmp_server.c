@@ -485,9 +485,10 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
 
             tid = OPENSSL_buf2hexstr(ctx->transactionID->data,
                                      ctx->transactionID->length);
-            ossl_cmp_log1(WARN, ctx,
-                          "Assuming that last transaction with ID=%s got aborted",
-                          tid);
+            if (tid != NULL)
+                ossl_cmp_log1(WARN, ctx,
+                              "Assuming that last transaction with ID=%s got aborted",
+                              tid);
             OPENSSL_free(tid);
         }
         /* start of a new transaction, reset transactionID and senderNonce */
@@ -500,9 +501,6 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         if (ctx->transactionID == NULL) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             CMPerr(0, CMP_R_UNEXPECTED_PKIBODY);
-            /* ignore any (extra) error in next two function calls: */
-            (void)OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID);
-            (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
             goto err;
 #endif
         }
@@ -567,6 +565,12 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         int fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_badRequest;
         /* TODO fail_info could be more specific */
         OSSL_CMP_PKISI *si = NULL;
+
+        if (ctx->transactionID == NULL) {
+            /* ignore any (extra) error in next two function calls: */
+            (void)OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID);
+            (void)ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce);
+        }
 
         if ((si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
                                           fail_info, NULL)) == NULL)
