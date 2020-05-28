@@ -253,6 +253,7 @@ static const SSL_CIPHER cipher_aliases[] = {
     {0, SSL_TXT_ARIA_GCM, NULL, 0, 0, 0, SSL_ARIA128GCM | SSL_ARIA256GCM},
     {0, SSL_TXT_ARIA128, NULL, 0, 0, 0, SSL_ARIA128GCM},
     {0, SSL_TXT_ARIA256, NULL, 0, 0, 0, SSL_ARIA256GCM},
+    {0, SSL_TXT_CBC, NULL, 0, 0, 0, SSL_CBC},
 
     /* MAC aliases */
     {0, SSL_TXT_MD5, NULL, 0, 0, 0, 0, SSL_MD5},
