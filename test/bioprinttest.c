@@ -241,10 +241,12 @@ static int test_fp(int i)
     return r;
 }
 
+double zero_value = 0.0;
+
 static int test_big(void)
 {
     char buf[80];
-    volatile double d, z, inf, nan;
+    double d, z, inf, nan;
 
     /* Test excessively big number. Should fail */
     if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
@@ -252,7 +254,7 @@ static int test_big(void)
         return 0;
 
     d = 1.0;
-    z = 0.0;
+    z = zero_value;
     inf = d / z;
     nan = z / z;
 
