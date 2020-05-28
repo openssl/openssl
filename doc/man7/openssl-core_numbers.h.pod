@@ -3,7 +3,7 @@
 =head1 NAME
 
 openssl/core_numbers.h
-- OpenSSL provider interface numbers and function types
+- OpenSSL provider dispatch numbers and function types
 
 =head1 SYNOPSIS
 
