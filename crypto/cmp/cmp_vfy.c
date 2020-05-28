@@ -176,7 +176,7 @@ int OSSL_CMP_validate_cert_path(OSSL_CMP_CTX *ctx, X509_STORE *trusted_store,
 }
 
 /* Return 0 if expect_name != NULL and there is no matching actual_name */
-static int check_name(OSSL_CMP_CTX *ctx,
+static int check_name(OSSL_CMP_CTX *ctx, int log_success,
                       const char *actual_desc, const X509_NAME *actual_name,
                       const char *expect_desc, const X509_NAME *expect_name)
 {
@@ -190,10 +190,16 @@ static int check_name(OSSL_CMP_CTX *ctx,
         ossl_cmp_log1(WARN, ctx, "missing %s", actual_desc);
         return 0;
     }
-    if (X509_NAME_cmp(actual_name, expect_name) == 0)
+    str = X509_NAME_oneline(actual_name, NULL, 0);
+    if (X509_NAME_cmp(actual_name, expect_name) == 0) {
+        if (log_success && str != NULL)
+            ossl_cmp_log2(INFO, ctx, " subject matches %s: %s", expect_desc,
+                          str);
+        OPENSSL_free(str);
         return 1;
+    }
 
-    if ((str = X509_NAME_oneline(actual_name, NULL, 0)) != NULL)
+    if (str != NULL)
         ossl_cmp_log2(INFO, ctx, " actual name in %s = %s", actual_desc, str);
     OPENSSL_free(str);
     if ((str = X509_NAME_oneline(expect_name, NULL, 0)) != NULL)
@@ -206,7 +212,7 @@ static int check_name(OSSL_CMP_CTX *ctx,
 static int check_kid(OSSL_CMP_CTX *ctx,
                      X509 *cert, const ASN1_OCTET_STRING *skid)
 {
-    char *actual, *expect;
+    char *str;
     const ASN1_OCTET_STRING *ckid = X509_get0_subject_key_id(cert);
 
     if (skid == NULL)
@@ -217,15 +223,20 @@ static int check_kid(OSSL_CMP_CTX *ctx,
         ossl_cmp_warn(ctx, "missing Subject Key Identifier in certificate");
         return 0;
     }
-    if (ASN1_OCTET_STRING_cmp(ckid, skid) == 0)
+    str = OPENSSL_buf2hexstr(ckid->data, ckid->length);
+    if (ASN1_OCTET_STRING_cmp(ckid, skid) == 0) {
+        if (str != NULL)
+            ossl_cmp_log1(INFO, ctx, " subjectKID matches senderKID: %s", str);
+        OPENSSL_free(str);
         return 1;
+    }
 
-    if ((actual = OPENSSL_buf2hexstr(ckid->data, ckid->length)) != NULL)
-        ossl_cmp_log1(INFO, ctx, " cert Subject Key Identifier = %s", actual);
-    if ((expect = OPENSSL_buf2hexstr(skid->data, skid->length)) != NULL)
-        ossl_cmp_log1(INFO, ctx, " does not match senderKID    = %s", expect);
-    OPENSSL_free(expect);
-    OPENSSL_free(actual);
+    if (str != NULL)
+        ossl_cmp_log1(INFO, ctx, " cert Subject Key Identifier = %s", str);
+    OPENSSL_free(str);
+    if ((str = OPENSSL_buf2hexstr(skid->data, skid->length)) != NULL)
+        ossl_cmp_log1(INFO, ctx, " does not match senderKID    = %s", str);
+    OPENSSL_free(str);
     return 0;
 }
 
@@ -285,7 +296,7 @@ static int cert_acceptable(OSSL_CMP_CTX *ctx,
         return 0;
     }
 
-    if (!check_name(ctx,
+    if (!check_name(ctx, 1,
                     "cert subject", X509_get_subject_name(cert),
                     "sender field", msg->header->sender->d.directoryName))
         return 0;
@@ -359,6 +370,15 @@ static int check_msg_valid_cert_3gpp(OSSL_CMP_CTX *ctx, X509 *scrt,
  err:
     X509_STORE_free(store);
     return valid;
+}
+
+static int check_msg_given_cert(OSSL_CMP_CTX *ctx, X509 *cert,
+                                const OSSL_CMP_MSG *msg)
+{
+    return cert_acceptable(ctx, "previously validated", "sender cert",
+                           cert, NULL, NULL, msg)
+        && (check_msg_valid_cert(ctx, ctx->trusted, cert, msg)
+            || check_msg_valid_cert_3gpp(ctx, cert, msg));
 }
 
 /*
@@ -472,29 +492,28 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     /* dump any hitherto errors to avoid confusion when printing further ones */
     OSSL_CMP_CTX_print_errors(ctx);
 
+    /* enable clearing irrelevant errors in attempts to validate sender certs */
+    (void)ERR_set_mark();
+    ctx->log_cb = no_log_cb; /* temporarily disable logging */
+
     /*
      * try first cached scrt, used successfully earlier in same transaction,
      * for validating this and any further msgs where extraCerts may be left out
      */
     if (scrt != NULL) {
-        (void)ERR_set_mark();
-        ossl_cmp_info(ctx,
-                      "trying to verify msg signature with previously validated cert");
-        if (cert_acceptable(ctx, "previously validated", "sender cert", scrt,
-                            NULL, NULL, msg)
-                && (check_msg_valid_cert(ctx, ctx->trusted, scrt, msg)
-                    || check_msg_valid_cert_3gpp(ctx, scrt, msg))) {
+        if (check_msg_given_cert(ctx, scrt, msg)) {
+            ctx->log_cb = backup_log_cb;
             (void)ERR_pop_to_mark();
             return 1;
         }
-        (void)ERR_pop_to_mark();
         /* cached sender cert has shown to be no more successfully usable */
         (void)ossl_cmp_ctx_set0_validatedSrvCert(ctx, NULL);
+        /* re-do the above check (just) for adding diagnostic information */
+        ossl_cmp_info(ctx,
+                      "trying to verify msg signature with previously validated cert");
+        (void)check_msg_given_cert(ctx, scrt, msg);
     }
 
-    /* enable clearing irrelevant errors in attempts to validate sender certs */
-    (void)ERR_set_mark();
-    ctx->log_cb = no_log_cb; /* temporarily disable logging */
     res = check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */)
             || check_msg_all_certs(ctx, msg, 1 /* 3gpp */);
     ctx->log_cb = backup_log_cb;
@@ -518,8 +537,8 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         else
             ossl_cmp_info(ctx, "while msg header does not contain senderKID");
         /* re-do the above checks (just) for adding diagnostic information */
-        check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */);
-        check_msg_all_certs(ctx, msg, 1 /* 3gpp */);
+        (void)check_msg_all_certs(ctx, msg, 0 /* using ctx->trusted */);
+        (void)check_msg_all_certs(ctx, msg, 1 /* 3gpp */);
     }
 
     CMPerr(0, CMP_R_NO_SUITABLE_SENDER_CERT);
@@ -580,7 +599,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     expected_sender = ctx->expected_sender;
     if (expected_sender == NULL && ctx->srvCert != NULL)
         expected_sender = X509_get_subject_name(ctx->srvCert);
-    if (!check_name(ctx, "sender DN field",
+    if (!check_name(ctx, 0, "sender DN field",
                     msg->header->sender->d.directoryName,
                     "expected sender", expected_sender))
         return 0;
