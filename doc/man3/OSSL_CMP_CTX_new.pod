@@ -337,7 +337,7 @@ function, which has the prototype
 The callback may modify the BIO B<bio> provided by OSSL_CMP_MSG_http_perform(),
 whereby it may make use of a custom defined argument B<ctx>
 stored in the OSSL_CMP_CTX by means of OSSL_CMP_CTX_set_http_cb_arg().
-During connection establishment, just after calling BIO_connect_retry(),
+During connection establishment, just after calling BIO_do_connect_retry(),
 the function is invoked with the B<connect> argument being 1 and the B<detail>
 argument being 1 if HTTPS is requested, i.e., SSL/TLS should be enabled. On
 disconnect B<connect> is 0 and B<detail> is 1 in case no error occurred, else 0.
