@@ -46,13 +46,6 @@ according to TS 33.310 [Network Domain Security (NDS); Authentication Framework
 Any cert that has been found as described above is cached and tried first when
 validating the signatures of subsequent messages in the same transaction.
 
-After successful validation of PBM-based protection of a certificate response
-the certificates in the caPubs field (if any) are added to the trusted
-certificates provided via L<OSSL_CMP_CTX_set0_trustedStore(3)>, such that
-they are available for validating subsequent messages in the same context.
-Those could apply to any Polling Response (pollRep), error, or PKI Confirmation
-(PKIConf) messages following in the same or future transactions.
-
 OSSL_CMP_validate_cert_path() attempts to validate the given certificate and its
 path using the given store of trusted certs (possibly including CRLs and a cert
 verification callback) and non-trusted intermediate certs from the B<ctx>.

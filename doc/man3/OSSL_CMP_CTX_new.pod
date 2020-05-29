@@ -73,7 +73,7 @@ OSSL_CMP_CTX_set1_senderNonce
  /* logging and error reporting: */
  int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb);
  #define OSSL_CMP_CTX_set_log_verbosity(ctx, level)
- void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx);
+ void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx);
 
  /* message transfer: */
  int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path);

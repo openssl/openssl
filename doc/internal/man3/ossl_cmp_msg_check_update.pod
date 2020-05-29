@@ -27,6 +27,9 @@ The B<msg> is checked for the following:
 
 =over 4
 
+=item its sender is of appropriate type (currently only B<X509_NAME>)
+      and matches any expected sender or srvCert subject given in B<ctx>,
+
 =item its protection is present and valid (or a callback function B<cb>
 is present and indicates that a missing or invalid protection is acceptable),
 
@@ -60,6 +63,13 @@ For efficiency, the extraCerts are prepended to the list so they get used first.
 If all checks pass then ossl_cmp_msg_check_update()
 records in B<ctx> the senderNonce of the received message as the new recipNonce
 and learns the transaction ID if none is currently present in B<ctx>.
+
+Moreover, according to RFC 4210 section 5.3.2, if the message protection is
+PBM-based then any certificates in the caPubs field are added to the list of
+trusted certificates (if set via L<OSSL_CMP_CTX_set0_trustedStore(3)>).
+This way these certs are available for validating subsequent messages in the
+same context and could apply to any Polling Response (pollRep), error, or PKI
+Confirmation (PKIConf) messages following in the same or future transactions.
 
 =head1 RETURN VALUES
 
