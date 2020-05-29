@@ -99,7 +99,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                 const unsigned char *ukstr = (const unsigned char *)kstr;
 
                 /*
-                 * Try to pass the passphrase if one was given, of the
+                 * Try to pass the passphrase if one was given, or the
                  * passphrase callback if one was given.  If none of them
                  * are given and that's wrong, we rely on the _to_bio()
                  * call to generate errors.
@@ -122,9 +122,8 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
 
         if ((p8inf = EVP_PKEY2PKCS8(x)) == NULL) {
             PEMerr(PEM_F_DO_PK8PKEY, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
-            return 0;
-        }
-        if (enc || (nid != -1)) {
+            ret = 0;
+        } else if (enc || (nid != -1)) {
             if (kstr == NULL) {
                 klen = cb(buf, PEM_BUFSIZE, 1, u);
                 if (klen <= 0) {
