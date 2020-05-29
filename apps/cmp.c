@@ -350,7 +350,7 @@ const OPTIONS cmp_options[] = {
      "Certificates to trust as chain roots when verifying signed CMP responses"},
     {OPT_MORE_STR, 0, 0, "unless -srvcert is given"},
     {"untrusted", OPT_UNTRUSTED, 's',
-     "Intermediate certs for chain construction verifying CMP/TLS/enrolled certs"},
+     "Intermediate CA certs for chain construction for CMP/TLS/enrolled certs"},
     {"srvcert", OPT_SRVCERT, 's',
      "Server cert to pin and trust directly when verifying signed CMP responses"},
     {"recipient", OPT_RECIPIENT, 's',
@@ -1637,8 +1637,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
 
         /*
          * Any further certs and any untrusted certs are used for constructing
-         * the client cert chain to be provided along with the TLS client cert
-         * to the TLS server.
+         * the chain to be provided with the TLS client cert to the TLS server.
          */
         if (!SSL_CTX_set0_chain(ssl_ctx, certs)) {
             CMP_err("could not set TLS client cert chain");

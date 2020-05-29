@@ -151,7 +151,7 @@ The B<cmp> command is a client implementation for the Certificate
 Management Protocol (CMP) as defined in RFC4210.
 It can be used to request certificates from a CA server,
 update their certificates,
-request certificates to be revoked, and perform other CMP requests.
+request certificates to be revoked, and perform other types of CMP requests.
 
 =head1 OPTIONS
 
@@ -206,16 +206,16 @@ Currently implemented commands are:
 
 =back
 
-B<ir> requests initialization of an End Entity into a PKI hierarchy by means of
-issuance of a first certificate.
+B<ir> requests initialization of an End Entity into a PKI hierarchy
+by issuing a first certificate.
 
-B<cr> requests issuance of an additional certificate for an End Entity already
+B<cr> requests issuing an additional certificate for an End Entity already
 initialized to the PKI hierarchy.
 
-B<p10cr> requests issuance of an additional certificate similarly to B<cr>
+B<p10cr> requests issuing an additional certificate similarly to B<cr>
 but uses PKCS#10 CSR format.
 
-B<kur> requests (key) update for an existing, given certificate.
+B<kur> requests a (key) update for an existing, given certificate.
 
 B<rr> requests revocation of an existing, given certificate.
 
@@ -393,7 +393,7 @@ It must be given for RR, while for KUR it defaults to B<-cert>.
 
 The reference certificate determined in this way, if any, is also used for
 deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
-Its subject is used as sender in CMP message headers if B<-cert> is not given.
+Its subject is used as sender of outgoing messages if B<-cert> is not given.
 Its issuer is used as default recipient in CMP message headers
 if neither B<-recipient>, B<-srvcert>, nor B<-issuer> is given.
 
@@ -429,13 +429,13 @@ Reason numbers defined in RFC 5280 are:
 
 The IP address or DNS hostname and optionally port (defaulting to 80 or 443)
 of the CMP server to connect to using HTTP(S) transport.
-The optional "http://" or "https://" prefix is ignored.
+The optional I<http://> or I<https://> prefix is ignored.
 
 =item B<-proxy> I<[http[s]://]address[:port][/path]>
 
 The HTTP(S) proxy server to use for reaching the CMP server unless B<no_proxy>
 applies, see below.
-The optional "http://" or "https://" prefix and any trailing path are ignored.
+The optional I<http://> or I<https://> prefix and any trailing path are ignored.
 Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
 
@@ -448,7 +448,7 @@ Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 =item B<-path> I<remote_path>
 
 HTTP path at the CMP server (aka CMP alias) to use for POST requests.
-Defaults to "/".
+Defaults to I</>.
 
 =item B<-msg_timeout> I<seconds>
 
@@ -484,12 +484,11 @@ Each source may contain multiple certificates.
 
 =item B<-untrusted> I<sources>
 
-Non-trusted intermediate certificate(s) that may be useful
-for constructing the TLS client certificate chain (if TLS is enabled) and
-for building certificate chains while verifying the CMP server certificate
-(when checking signature-based CMP message protection)
-and while verifying the newly enrolled certificate.
-These may get added to the extraCerts field sent in requests as far as needed.
+Non-trusted intermediate CA certificate(s) that may be useful for cert path
+construction for the CMP client certificate (to include in the extraCerts field
+of outgoing messages), for the TLS client certificate (if TLS is enabled),
+when verifying the CMP server certificate (checking signature-based
+CMP message protection), and when verifying newly enrolled certificates.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
 Each file may contain multiple certificates.
@@ -502,7 +501,7 @@ May be set alternatively to the B<-trusted> option to pin the accepted server.
 
 If set, the subject of the certificate is also used
 as default value for the recipient of CMP requests
-and as default value for the expected sender of CMP responses.
+and as default value for the expected sender of incoming CMP messages.
 
 =item B<-recipient> I<name>
 
@@ -522,7 +521,7 @@ as far as any of those is present, else the NULL-DN as last resort.
 
 =item B<-expect_sender> I<name>
 
-Distinguished Name (DN) expected in the sender field of CMP response messages.
+Distinguished Name (DN) expected in the sender field of incoming CMP messages.
 Defaults to the subject DN of the pinned B<-srvcert>, if any.
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
@@ -614,8 +613,8 @@ B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 The client's current certificate.
 Requires the corresponding key to be given with B<-key>.
-The subject of this certificate will be used as the "sender" field
-of outgoing CMP messages, while B<-subjectName> may provide a fallback value.
+The subject of this certificate will be used as sender of outgoing CMP messages,
+while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
 When using signature-based message protection, this "protection certificate"
 will be included first in the extraCerts field of outgoing messages.
 In Initialization Request (IR) messages this can be used for authenticating
@@ -623,7 +622,6 @@ using an external entity certificate as defined in appendix E.7 of RFC 4210.
 For Key Update Request (KUR) messages this is also used as
 the certificate to be updated if the B<-oldcert> option is not given.
 If the file includes further certs, they are appended to the untrusted certs.
-These may get added to the extraCerts field sent in requests as far as needed.
 
 =item B<-key> I<filename>
 
@@ -733,8 +731,8 @@ when connecting to CMP server.
 =item B<-tls_cert> I<filename>
 
 Client's TLS certificate.
-If the file includes further certificates,
-they are used for constructing the client cert chain provided to the TLS server.
+If the file includes further certs they are used (along with B<-untrusted>
+certs) for constructing the client cert chain provided to the TLS server.
 
 =item B<-tls_key> I<filename>
 
@@ -1008,7 +1006,7 @@ the CMP command-line argument B<-proxy>, for example
   -proxy http://192.168.1.1:8080
 
 In the Insta Demo CA scenario both clients and the server may use the pre-shared
-secret "insta" and the reference value "3078" to authenticate to each other.
+secret I<insta> and the reference value I<3078> to authenticate to each other.
 
 Alternatively, CMP messages may be protected in signature-based manner,
 where the trust anchor in this case is F<insta.ca.crt>
@@ -1053,7 +1051,7 @@ and/or on the command line.
 
 The following examples at first do not make use of a configuration file.
 They assume that a CMP server can be contacted on the local TCP port 80
-and accepts requests under the alias "/pkix/".
+and accepts requests under the alias I</pkix/>.
 
 For enrolling its very first certificate the client generates a first client key
 and sends an initial request message to the local CMP server
