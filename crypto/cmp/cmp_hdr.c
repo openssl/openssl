@@ -41,6 +41,14 @@ int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr)
     return (int)pvno;
 }
 
+int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER *hdr)
+{
+    if (!ossl_assert(hdr != NULL)
+            || hdr->protectionAlg == NULL)
+        return NID_undef;
+    return OBJ_obj2nid(hdr->protectionAlg->algorithm);
+}
+
 ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
                                                    OSSL_CMP_PKIHEADER *hdr)
 {

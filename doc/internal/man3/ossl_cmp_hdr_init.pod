@@ -4,6 +4,7 @@
 
 ossl_cmp_hdr_set_pvno,
 ossl_cmp_hdr_get_pvno,
+ossl_cmp_hdr_get_protection_nid,
 ossl_cmp_hdr_get0_sendernonce,
 ossl_cmp_general_name_is_NULL_DN,
 ossl_cmp_hdr_set1_sender,
@@ -25,6 +26,7 @@ ossl_cmp_hdr_init
 
   int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
   int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
+  int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER *hdr);
   ASN1_OCTET_STRING
      *ossl_cmp_hdr_get0_sendernonce(const OSSL_CMP_PKIHEADER *hdr);
   int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
@@ -51,6 +53,9 @@ ossl_cmp_hdr_init
 ossl_cmp_hdr_set_pvno() sets hdr->pvno to the given B<pvno>.
 
 ossl_cmp_hdr_get_pvno() returns the pvno of the given B<hdr> or -1 on error.
+
+ossl_cmp_hdr_get_protection_nid returns the NID of the protection algorithm
+in B<hdr> or NID_undef on error.
 
 ossl_cmp_hdr_get0_sendernonce() returns the sender nonce of the given PKIHeader.
 
@@ -110,7 +115,9 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 
 ossl_cmp_hdr_get_pvno() returns the pvno of the given B<hdr> or -1 on error.
 
-ossl_cmp_hdr_get0_sendernonce() returns the respective nonce.
+ossl_cmp_hdr_get_protection_nid returns the respective NID, NID_undef on error.
+
+ossl_cmp_hdr_get0_sendernonce() returns the respective nonce, or NULL.
 
 ossl_cmp_general_name_is_NULL_DN() returns 1 given a NULL-DN, else 0.
 
