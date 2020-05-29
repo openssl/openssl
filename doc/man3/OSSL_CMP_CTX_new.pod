@@ -306,7 +306,7 @@ B<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
 OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host,
 also known as "CMP alias".
-The default is "/".
+The default is I</>.
 
 OSSL_CMP_CTX_set1_server() sets the given server B<address>
 (which may be a hostname or IP address or NULL) in the given B<ctx>.
@@ -323,7 +323,7 @@ Otherwise defaults to the value of B<https_proxy> if set, else B<HTTPS_PROXY>.
 An empty proxy string specifies not to use a proxy.
 Else the format is I<[http[s]://]address[:port][/path]>,
 where any path given is ignored.
-The default port number is 80, or 443 in case "https:" is given.
+The default port number is 80, or 443 in case I<https:> is given.
 
 OSSL_CMP_CTX_set1_no_proxy() sets the list of server hostnames not to use
 an HTTP proxy for. The names may be separated by commas and/or whitespace.
@@ -411,8 +411,9 @@ OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the currently set
 certificate store containing trusted cert etc., or an empty store if unset.
 
 OSSL_CMP_CTX_set1_untrusted_certs() sets up a list of non-trusted certificates
-of intermediate CAs that may be useful for path construction when authenticating
-the CMP server and when verifying newly enrolled certificates.
+of intermediate CAs that may be useful for path construction for the CMP client
+certificate, for the TLS client certificate (if any), when verifying
+the CMP server certificate, and when verifying newly enrolled certificates.
 The reference counts of those certificates handled successfully are increased.
 
 OSSL_CMP_CTX_get0_untrusted_certs(OSSL_CMP_CTX *ctx) returns a pointer to the
@@ -423,9 +424,9 @@ The public key of this B<cert> must correspond to
 the private key set via B<OSSL_CMP_CTX_set1_pkey()>.
 When using signature-based protection of CMP request messages
 this "protection certificate" will be included first in the extraCerts field.
-The subject of this B<cert> will be used as the "sender" field
-of outgoing CMP messages, with the fallback being
-the B<subjectName> set via B<OSSL_CMP_CTX_set1_subjectName()>.
+The subject of this B<cert> will be used as the sender field of outgoing
+messages, while the subject of any cert set via B<OSSL_CMP_CTX_set1_oldCert()>
+and any value set via B<OSSL_CMP_CTX_set1_subjectName()> are used as fallback.
 The B<cert> argument may be NULL to clear the entry.
 
 OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to the
@@ -444,9 +445,9 @@ PBM-based protection takes precedence over signature-based protection.
 
 OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue B<ref> with
 length B<len> in the given B<ctx> or clears it if the B<ref> argument is NULL.
-According to RFC 4210 section 5.1.1, if no value for the "sender" field in
+According to RFC 4210 section 5.1.1, if no value for the sender field in
 CMP message headers can be determined (i.e., no protection certificate B<cert>
-and no B<subjectName> is given) then the "sender" field will contain the NULL-DN
+and no B<subjectName> is given) then the sender field will contain the NULL-DN
 and the senderKID field of the CMP message header must be set.
 When signature-based protection is used the senderKID will be set to
 the subjectKeyIdentifier of the protection B<cert> as far as present.
@@ -490,8 +491,8 @@ the CertTemplate structure when requesting a new cert. For Key Update Requests
 (KUR), it defaults to the subject DN of the B<reference certificate>,
 see B<OSSL_CMP_CTX_set1_oldCert()>. This default is used for Initialization
 Requests (IR) and Certification Requests (CR) only if no SANs are set.
-The B<subjectName> is also used as the "sender" field for outgoing CMP messages
-if no B<cert> has been set (e.g., in case requests are protected using PBM).
+The B<subjectName> is also used as fallback for the sender field
+of outgoing CMP messages if no B<cert> and no B<oldcert> are available.
 
 OSSL_CMP_CTX_push1_subjectAltName() adds the given X509 name to the list of
 alternate names on the certificate template request. This cannot be used if
