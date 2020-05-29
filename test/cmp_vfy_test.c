@@ -123,7 +123,8 @@ static int test_verify_popo_bad(void)
 static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
     return TEST_int_eq(fixture->expected,
-                       OSSL_CMP_validate_msg(fixture->cmp_ctx, fixture->msg));
+                       ossl_cmp_msg_check_update(fixture->cmp_ctx, fixture->msg,
+                                                 NULL, 0));
 }
 
 static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)

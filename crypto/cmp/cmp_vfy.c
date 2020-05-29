@@ -24,7 +24,7 @@
 
 DEFINE_STACK_OF(X509)
 
-/*
+/*-
  * Verify a message protected by signature according to section 5.1.3.3
  * (sha1+RSA/DSA or any other algorithm supported by OpenSSL).
  *
@@ -132,15 +132,15 @@ static int verify_PBMAC(const OSSL_CMP_MSG *msg,
     return valid;
 }
 
-/*
+/*-
  * Attempt to validate certificate and path using any given store with trusted
  * certs (possibly including CRLs and a cert verification callback function)
  * and non-trusted intermediate certs from the given ctx.
  *
  * Returns 1 on successful validation and 0 otherwise.
  */
-int OSSL_CMP_validate_cert_path(OSSL_CMP_CTX *ctx, X509_STORE *trusted_store,
-                                X509 *cert)
+int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
+                                X509_STORE *trusted_store, X509 *cert)
 {
     int valid = 0;
     X509_STORE_CTX *csc = NULL;
@@ -176,7 +176,7 @@ int OSSL_CMP_validate_cert_path(OSSL_CMP_CTX *ctx, X509_STORE *trusted_store,
 }
 
 /* Return 0 if expect_name != NULL and there is no matching actual_name */
-static int check_name(OSSL_CMP_CTX *ctx, int log_success,
+static int check_name(const OSSL_CMP_CTX *ctx, int log_success,
                       const char *actual_desc, const X509_NAME *actual_name,
                       const char *expect_desc, const X509_NAME *expect_name)
 {
@@ -209,11 +209,11 @@ static int check_name(OSSL_CMP_CTX *ctx, int log_success,
 }
 
 /* Return 0 if skid != NULL and there is no matching subject key ID in cert */
-static int check_kid(OSSL_CMP_CTX *ctx,
-                     X509 *cert, const ASN1_OCTET_STRING *skid)
+static int check_kid(const OSSL_CMP_CTX *ctx,
+                     const ASN1_OCTET_STRING *ckid,
+                     const ASN1_OCTET_STRING *skid)
 {
     char *str;
-    const ASN1_OCTET_STRING *ckid = X509_get0_subject_key_id(cert);
 
     if (skid == NULL)
         return 1; /* no expectation, thus trivially fulfilled */
@@ -240,7 +240,8 @@ static int check_kid(OSSL_CMP_CTX *ctx,
     return 0;
 }
 
-static int already_checked(X509 *cert, const STACK_OF(X509) *already_checked)
+static int already_checked(const X509 *cert,
+                           const STACK_OF(X509) *already_checked)
 {
     int i;
 
@@ -250,7 +251,7 @@ static int already_checked(X509 *cert, const STACK_OF(X509) *already_checked)
     return 0;
 }
 
-/*
+/*-
  * Check if the given cert is acceptable as sender cert of the given message.
  * The subject DN must match, the subject key ID as well if present in the msg,
  * and the cert must be current (checked if ctx->trusted is not NULL).
@@ -258,7 +259,7 @@ static int already_checked(X509 *cert, const STACK_OF(X509) *already_checked)
  *
  * Returns 0 on error or not acceptable, else 1.
  */
-static int cert_acceptable(OSSL_CMP_CTX *ctx,
+static int cert_acceptable(const OSSL_CMP_CTX *ctx,
                            const char *desc1, const char *desc2, X509 *cert,
                            const STACK_OF(X509) *already_checked1,
                            const STACK_OF(X509) *already_checked2,
@@ -301,14 +302,14 @@ static int cert_acceptable(OSSL_CMP_CTX *ctx,
                     "sender field", msg->header->sender->d.directoryName))
         return 0;
 
-    if (!check_kid(ctx, cert, msg->header->senderKID))
+    if (!check_kid(ctx, X509_get0_subject_key_id(cert), msg->header->senderKID))
         return 0;
     /* acceptable also if there is no senderKID in msg header */
     ossl_cmp_info(ctx, " cert seems acceptable");
     return 1;
 }
 
-static int check_msg_valid_cert(OSSL_CMP_CTX *ctx, X509_STORE *store,
+static int check_msg_valid_cert(const OSSL_CMP_CTX *ctx, X509_STORE *store,
                                 X509 *scrt, const OSSL_CMP_MSG *msg)
 {
     if (!verify_signature(ctx, msg, scrt)) {
@@ -330,7 +331,7 @@ static int check_msg_valid_cert(OSSL_CMP_CTX *ctx, X509_STORE *store,
  * from extraCerts as trust anchor to validate sender cert and msg -
  * provided it also can validate the newly enrolled certificate
  */
-static int check_msg_valid_cert_3gpp(OSSL_CMP_CTX *ctx, X509 *scrt,
+static int check_msg_valid_cert_3gpp(const OSSL_CMP_CTX *ctx, X509 *scrt,
                                      const OSSL_CMP_MSG *msg)
 {
     int valid = 0;
@@ -372,7 +373,7 @@ static int check_msg_valid_cert_3gpp(OSSL_CMP_CTX *ctx, X509 *scrt,
     return valid;
 }
 
-static int check_msg_given_cert(OSSL_CMP_CTX *ctx, X509 *cert,
+static int check_msg_given_cert(const OSSL_CMP_CTX *ctx, X509 *cert,
                                 const OSSL_CMP_MSG *msg)
 {
     return cert_acceptable(ctx, "previously validated", "sender cert",
@@ -381,11 +382,12 @@ static int check_msg_given_cert(OSSL_CMP_CTX *ctx, X509 *cert,
             || check_msg_valid_cert_3gpp(ctx, cert, msg));
 }
 
-/*
+/*-
  * Try all certs in given list for verifying msg, normally or in 3GPP mode.
  * If already_checked1 == NULL then certs are assumed to be the msg->extraCerts.
+ * On success cache the found cert using ossl_cmp_ctx_set0_validatedSrvCert().
  */
-static int check_msg_with_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
+static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
                                 const char *desc,
                                 const STACK_OF(X509) *already_checked1,
                                 const STACK_OF(X509) *already_checked2,
@@ -426,9 +428,10 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs,
     return 0;
 }
 
-/*
+/*-
  * Verify msg trying first ctx->untrusted_certs, which should include extraCerts
  * at its front, then trying the trusted certs in truststore (if any) of ctx.
+ * On success cache the found cert using ossl_cmp_ctx_set0_validatedSrvCert().
  */
 static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                                int mode_3gpp)
@@ -471,7 +474,10 @@ static int no_log_cb(const char *func, const char *file, int line,
     return 1;
 }
 
-/* verify message signature with any acceptable and valid candidate cert */
+/*-
+ * Verify message signature with any acceptable and valid candidate cert.
+ * On success cache the found cert using ossl_cmp_ctx_set0_validatedSrvCert().
+ */
 static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
     X509 *scrt = ctx->validatedSrvCert; /* previous successful sender cert */
@@ -557,12 +563,13 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     return res;
 }
 
-/*
+/*-
  * Validate the protection of the given PKIMessage using either password-
  * based mac (PBM) or a signature algorithm. In the case of signature algorithm,
  * the sender certificate can have been pinned by providing it in ctx->srvCert,
  * else it is searched in msg->extraCerts, ctx->untrusted_certs, in ctx->trusted
  * (in this order) and is path is validated against ctx->trusted.
+ * On success cache the found cert using ossl_cmp_ctx_set0_validatedSrvCert().
  *
  * If ctx->permitTAInExtraCertsForIR is true and when validating a CMP IP msg,
  * the trust anchor for validating the IP msg may be taken from msg->extraCerts
@@ -575,32 +582,12 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
     X509 *scrt;
-    const X509_NAME *expected_sender;
 
     if (ctx == NULL || msg == NULL
             || msg->header == NULL || msg->body == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-
-    /* validate sender name of received msg */
-    if (msg->header->sender->type != GEN_DIRNAME) {
-        CMPerr(0, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
-        return 0; /* TODO FR#42: support for more than X509_NAME */
-    }
-    /*
-     * Compare actual sender name of response with expected sender name.
-     * Mitigates risk to accept misused PBM secret
-     * or misused certificate of an unauthorized entity of a trusted hierarchy.
-     */
-    expected_sender = ctx->expected_sender;
-    if (expected_sender == NULL && ctx->srvCert != NULL)
-        expected_sender = X509_get_subject_name(ctx->srvCert);
-    if (!check_name(ctx, 0, "sender DN field",
-                    msg->header->sender->d.directoryName,
-                    "expected sender", expected_sender))
-        return 0;
-    /* Note: if recipient was NULL-DN it could be learned here if needed */
 
     if (msg->header->protectionAlg == NULL /* unprotected message */
             || msg->protection == NULL || msg->protection->data == NULL) {
@@ -616,34 +603,8 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             break;
         }
 
-        if (verify_PBMAC(msg, ctx->secretValue)) {
-            /*
-             * RFC 4210, 5.3.2: 'Note that if the PKI Message Protection is
-             * "shared secret information", then any certificate transported in
-             * the caPubs field may be directly trusted as a root CA
-             * certificate by the initiator.'
-             */
-            switch (ossl_cmp_msg_get_bodytype(msg)) {
-            case -1:
-                return 0;
-            case OSSL_CMP_PKIBODY_IP:
-            case OSSL_CMP_PKIBODY_CP:
-            case OSSL_CMP_PKIBODY_KUP:
-            case OSSL_CMP_PKIBODY_CCP:
-                if (ctx->trusted != NULL) {
-                    STACK_OF(X509) *certs = msg->body->value.ip->caPubs;
-                    /* value.ip is same for cp, kup, and ccp */
-
-                    if (!ossl_cmp_X509_STORE_add1_certs(ctx->trusted, certs, 0))
-                        /* adds both self-issued and not self-issued certs */
-                        return 0;
-                }
-                break;
-            default:
-                break;
-            }
+        if (verify_PBMAC(msg, ctx->secretValue))
             return 1;
-        }
         break;
 
         /*
@@ -677,9 +638,11 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 
 /*-
  * Check received message (i.e., response by server or request from client)
- * Any msg->extraCerts are prepended to ctx->untrusted_certs
+ * Any msg->extraCerts are prepended to ctx->untrusted_certs.
  *
  * Ensures that:
+ * its sender is of appropriate type (curently only X509_NAME) and
+ *     matches any expected sender or srvCert subject given in the ctx
  * it has a valid body type
  * its protection is valid (or invalid/absent, but only if a callback function
  *     is present and yields a positive result using also the supplied argument)
@@ -688,15 +651,38 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
  *
  * If everything is fine:
  * learns the senderNonce from the received message,
- * learns the transaction ID if it is not yet in ctx.
+ * learns the transaction ID if it is not yet in ctx,
+ * and makes any certs in caPubs directly trusted.
  *
- * returns 1 on success, 0 on error
+ * Returns 1 on success, 0 on error.
  */
 int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                               ossl_cmp_allow_unprotected_cb_t cb, int cb_arg)
 {
-    if (!ossl_assert(ctx != NULL && msg != NULL))
+    OSSL_CMP_PKIHEADER *hdr;
+    const X509_NAME *expected_sender;
+
+    if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
+    hdr = OSSL_CMP_MSG_get0_header(msg);
+
+    /* validate sender name of received msg */
+    if (hdr->sender->type != GEN_DIRNAME) {
+        CMPerr(0, CMP_R_SENDER_GENERALNAME_TYPE_NOT_SUPPORTED);
+        return 0; /* TODO FR#42: support for more than X509_NAME */
+    }
+    /*
+     * Compare actual sender name of response with expected sender name.
+     * Mitigates risk to accept misused PBM secret
+     * or misused certificate of an unauthorized entity of a trusted hierarchy.
+     */
+    expected_sender = ctx->expected_sender;
+    if (expected_sender == NULL && ctx->srvCert != NULL)
+        expected_sender = X509_get_subject_name(ctx->srvCert);
+    if (!check_name(ctx, 0, "sender DN field", hdr->sender->d.directoryName,
+                    "expected sender", expected_sender))
+        return 0;
+    /* Note: if recipient was NULL-DN it could be learned here if needed */
 
     if (sk_X509_num(msg->extraCerts) > 10)
         ossl_cmp_warn(ctx,
@@ -715,7 +701,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
 
     /* validate message protection */
-    if (msg->header->protectionAlg != NULL) {
+    if (hdr->protectionAlg != NULL) {
         /* detect explicitly permitted exceptions for invalid protection */
         if (!OSSL_CMP_validate_msg(ctx, msg)
                 && (cb == NULL || (*cb)(ctx, msg, 1, cb_arg) <= 0)) {
@@ -735,7 +721,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     }
 
     /* check CMP version number in header */
-    if (ossl_cmp_hdr_get_pvno(OSSL_CMP_MSG_get0_header(msg)) != OSSL_CMP_PVNO) {
+    if (ossl_cmp_hdr_get_pvno(hdr) != OSSL_CMP_PVNO) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_UNEXPECTED_PVNO);
         return 0;
@@ -751,9 +737,9 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 
     /* compare received transactionID with the expected one in previous msg */
     if (ctx->transactionID != NULL
-            && (msg->header->transactionID == NULL
+            && (hdr->transactionID == NULL
                 || ASN1_OCTET_STRING_cmp(ctx->transactionID,
-                                         msg->header->transactionID) != 0)) {
+                                         hdr->transactionID) != 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_TRANSACTIONID_UNMATCHED);
         return 0;
@@ -764,7 +750,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     if (ctx->senderNonce != NULL
             && (msg->header->recipNonce == NULL
                 || ASN1_OCTET_STRING_cmp(ctx->senderNonce,
-                                         msg->header->recipNonce) != 0)) {
+                                         hdr->recipNonce) != 0)) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         CMPerr(0, CMP_R_RECIPNONCE_UNMATCHED);
         return 0;
@@ -776,14 +762,39 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * the senderNonce of the previous message in the transaction.
      * --> Store for setting in next message
      */
-    if (!ossl_cmp_ctx_set1_recipNonce(ctx, msg->header->senderNonce))
+    if (!ossl_cmp_ctx_set1_recipNonce(ctx, hdr->senderNonce))
         return 0;
 
     /* if not yet present, learn transactionID */
     if (ctx->transactionID == NULL
-        && !OSSL_CMP_CTX_set1_transactionID(ctx, msg->header->transactionID))
+        && !OSSL_CMP_CTX_set1_transactionID(ctx, hdr->transactionID))
         return 0;
 
+    if (ossl_cmp_hdr_get_protection_nid(hdr) == NID_id_PasswordBasedMAC) {
+        /*
+         * RFC 4210, 5.3.2: 'Note that if the PKI Message Protection is
+         * "shared secret information", then any certificate transported in
+         * the caPubs field may be directly trusted as a root CA
+         * certificate by the initiator.'
+         */
+        switch (ossl_cmp_msg_get_bodytype(msg)) {
+        case OSSL_CMP_PKIBODY_IP:
+        case OSSL_CMP_PKIBODY_CP:
+        case OSSL_CMP_PKIBODY_KUP:
+        case OSSL_CMP_PKIBODY_CCP:
+            if (ctx->trusted != NULL) {
+                STACK_OF(X509) *certs = msg->body->value.ip->caPubs;
+                /* value.ip is same for cp, kup, and ccp */
+
+                if (!ossl_cmp_X509_STORE_add1_certs(ctx->trusted, certs, 0))
+                    /* adds both self-issued and not self-issued certs */
+                    return 0;
+                }
+            break;
+        default:
+            break;
+        }
+    }
     return 1;
 }
 
