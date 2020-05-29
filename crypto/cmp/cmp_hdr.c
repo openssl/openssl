@@ -330,10 +330,6 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         rcp = X509_get_issuer_name(ctx->cert);
     if (!ossl_cmp_hdr_set1_recipient(hdr, rcp))
         return 0;
-    /* set also as expected_sender of responses unless set explicitly */
-    if (ctx->expected_sender == NULL && rcp != NULL
-        && !OSSL_CMP_CTX_set1_expected_sender(ctx, rcp))
-        return 0;
 
     /* set current time as message time */
     if (!ossl_cmp_hdr_update_messageTime(hdr))
