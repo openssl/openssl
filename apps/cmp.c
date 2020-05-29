@@ -2996,7 +2996,7 @@ int cmp_main(int argc, char **argv)
             if (req != NULL) {
                 if (strcmp(path, "") != 0 && strcmp(path, "pkix/") != 0) {
                     (void)http_server_send_status(cbio, 404, "Not Found");
-                    CMP_err1("Expecting empty path or 'pkix/' but got '%s'\n",
+                    CMP_err1("Expecting empty path or 'pkix/' but got '%s'",
                              path);
                     OPENSSL_free(path);
                     OSSL_CMP_MSG_free(req);

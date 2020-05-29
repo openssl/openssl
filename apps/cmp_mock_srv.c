@@ -208,6 +208,7 @@ static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
     }
     if (ctx->certOut != NULL
             && (*certOut = X509_dup(ctx->certOut)) == NULL)
+        /* TODO better return a cert produced from data in request template */
         goto err;
     if (ctx->chainOut != NULL
             && (*chainOut = X509_chain_up_ref(ctx->chainOut)) == NULL)
