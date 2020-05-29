@@ -23,6 +23,7 @@
 DEFINE_STACK_OF(OSSL_CMP_CERTSTATUS)
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
 DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(X509_EXTENSION)
 DEFINE_STACK_OF(OSSL_CMP_PKISI)
 DEFINE_STACK_OF(OSSL_CRMF_MSG)
@@ -426,9 +427,12 @@ OSSL_CMP_MSG *ossl_cmp_certRep_new(OSSL_CMP_CTX *ctx, int bodytype,
     if (bodytype == OSSL_CMP_PKIBODY_IP && caPubs != NULL
             && (repMsg->caPubs = X509_chain_up_ref(caPubs)) == NULL)
         goto err;
-    if (chain != NULL
-            && !ossl_cmp_sk_X509_add1_certs(msg->extraCerts, chain, 0, 1, 0))
+    if (sk_X509_num(chain) > 0) {
+        msg->extraCerts = sk_X509_new_reserve(NULL, sk_X509_num(chain));
+        if (msg->extraCerts == NULL
+            || !ossl_cmp_sk_X509_add1_certs(msg->extraCerts, chain, 0, 1, 0))
         goto err;
+    }
 
     if (!unprotectedErrors
             || ossl_cmp_pkisi_get_status(si) != OSSL_CMP_PKISTATUS_rejection)
