@@ -120,16 +120,17 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         PKCS8_PRIV_KEY_INFO *p8inf;
         char buf[PEM_BUFSIZE];
 
+        ret = 0;
         if ((p8inf = EVP_PKEY2PKCS8(x)) == NULL) {
             PEMerr(PEM_F_DO_PK8PKEY, PEM_R_ERROR_CONVERTING_PRIVATE_KEY);
-            ret = 0;
-        } else if (enc || (nid != -1)) {
+            goto legacy_end;
+        }
+        if (enc || (nid != -1)) {
             if (kstr == NULL) {
                 klen = cb(buf, PEM_BUFSIZE, 1, u);
                 if (klen <= 0) {
                     PEMerr(PEM_F_DO_PK8PKEY, PEM_R_READ_KEY);
-                    PKCS8_PRIV_KEY_INFO_free(p8inf);
-                    return 0;
+                    goto legacy_end;
                 }
 
                 kstr = buf;
@@ -137,9 +138,8 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
             p8 = PKCS8_encrypt(nid, enc, kstr, klen, NULL, 0, 0, p8inf);
             if (kstr == buf)
                 OPENSSL_cleanse(buf, klen);
-            PKCS8_PRIV_KEY_INFO_free(p8inf);
             if (p8 == NULL)
-                return 0;
+                goto legacy_end;
             if (isder)
                 ret = i2d_PKCS8_bio(bp, p8);
             else
@@ -150,8 +150,9 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                 ret = i2d_PKCS8_PRIV_KEY_INFO_bio(bp, p8inf);
             else
                 ret = PEM_write_bio_PKCS8_PRIV_KEY_INFO(bp, p8inf);
-            PKCS8_PRIV_KEY_INFO_free(p8inf);
         }
+     legacy_end:
+        PKCS8_PRIV_KEY_INFO_free(p8inf);
     }
     OSSL_SERIALIZER_CTX_free(ctx);
     return ret;
