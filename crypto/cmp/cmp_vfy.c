@@ -70,7 +70,7 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     prot_part_der_len = (size_t) len;
 
     /* verify signature of protected part */
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(msg->header->protectionAlg->algorithm),
+    if (!OBJ_find_sigid_algs(ossl_cmp_hdr_get_protection_nid(msg->header),
                              &digest_nid, &pk_nid)
             || digest_nid == NID_undef || pk_nid == NID_undef
             || (digest = EVP_get_digestbynid(digest_nid)) == NULL) {
@@ -574,9 +574,6 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
  */
 int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
-    X509_ALGOR *alg;
-    int nid = NID_undef, pk_nid = NID_undef;
-    const ASN1_OBJECT *algorOID = NULL;
     X509 *scrt;
     const X509_NAME *expected_sender;
 
@@ -605,17 +602,13 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
         return 0;
     /* Note: if recipient was NULL-DN it could be learned here if needed */
 
-    if ((alg = msg->header->protectionAlg) == NULL /* unprotected message */
+    if (msg->header->protectionAlg == NULL /* unprotected message */
             || msg->protection == NULL || msg->protection->data == NULL) {
         CMPerr(0, CMP_R_MISSING_PROTECTION);
         return 0;
     }
 
-    /* determine the nid for the used protection algorithm */
-    X509_ALGOR_get0(&algorOID, NULL, NULL, alg);
-    nid = OBJ_obj2nid(algorOID);
-
-    switch (nid) {
+    switch (ossl_cmp_hdr_get_protection_nid(msg->header)) {
         /* 5.1.3.1.  Shared Secret Information */
     case NID_id_PasswordBasedMAC:
         if (ctx->secretValue == 0) {
@@ -665,11 +658,6 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
          * 5.1.3.3.  Signature
          */
     default:
-        if (!OBJ_find_sigid_algs(OBJ_obj2nid(alg->algorithm), NULL, &pk_nid)
-                || pk_nid == NID_undef) {
-            CMPerr(0, CMP_R_UNKNOWN_ALGORITHM_ID);
-            break;
-        }
         scrt = ctx->srvCert;
         if (scrt == NULL) {
             if (check_msg_find_cert(ctx, msg))
@@ -727,7 +715,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         return 0;
 
     /* validate message protection */
-    if (msg->header->protectionAlg != 0) {
+    if (msg->header->protectionAlg != NULL) {
         /* detect explicitly permitted exceptions for invalid protection */
         if (!OSSL_CMP_validate_msg(ctx, msg)
                 && (cb == NULL || (*cb)(ctx, msg, 1, cb_arg) <= 0)) {

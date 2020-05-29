@@ -259,10 +259,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             goto err;
         }
 
-        if (msg->header->protectionAlg == NULL)
-            if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
-                goto err;
-
+        if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
+            goto err;
         if (!OBJ_find_sigid_by_algs(&algNID, ctx->digest,
                                     EVP_PKEY_id(ctx->pkey))) {
             CMPerr(0, CMP_R_UNSUPPORTED_KEY_TYPE);
