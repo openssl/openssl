@@ -510,9 +510,9 @@ int X509_LOOKUP_shutdown(X509_LOOKUP *ctx);
 int X509_STORE_load_file(X509_STORE *ctx, const char *file);
 int X509_STORE_load_path(X509_STORE *ctx, const char *path);
 int X509_STORE_load_store(X509_STORE *ctx, const char *store);
-DEPRECATEDIN_3_0(int X509_STORE_load_locations(X509_STORE *ctx,
+int X509_STORE_load_locations(X509_STORE *ctx,
                                                const char *file,
-                                               const char *dir))
+                                               const char *dir);
 int X509_STORE_set_default_paths(X509_STORE *ctx);
 
 #define X509_STORE_CTX_get_ex_new_index(l, p, newf, dupf, freef) \

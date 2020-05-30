@@ -2025,9 +2025,9 @@ __owur int SSL_CTX_set_default_verify_store(SSL_CTX *ctx);
 __owur int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile);
 __owur int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath);
 __owur int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore);
-DEPRECATEDIN_3_0(__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx,
+__owur int SSL_CTX_load_verify_locations(SSL_CTX *ctx,
                                                         const char *CAfile,
-                                                        const char *CApath))
+                                                        const char *CApath);
 # define SSL_get0_session SSL_get_session/* just peek at pointer */
 __owur SSL_SESSION *SSL_get_session(const SSL *ssl);
 __owur SSL_SESSION *SSL_get1_session(SSL *ssl); /* obtain a reference count */
