@@ -542,13 +542,6 @@ OpenSSL 3.0
    - SSL_CTX_load_verify_dir()
    - SSL_CTX_load_verify_store()
 
-   Also, the following functions are now deprecated:
-
-   - X509_STORE_load_locations() (use X509_STORE_load_file(),
-     X509_STORE_load_path() or X509_STORE_load_store() instead)
-   - SSL_CTX_load_verify_locations() (use SSL_CTX_load_verify_file(),
-     SSL_CTX_load_verify_dir() or SSL_CTX_load_verify_store() instead)
-
    *Richard Levitte*
 
  * Added a new method to gather entropy on VMS, based on SYS$GET_ENTROPY.
