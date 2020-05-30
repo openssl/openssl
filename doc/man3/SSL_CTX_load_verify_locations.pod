@@ -22,20 +22,16 @@ SSL_CTX_set_default_verify_store, SSL_CTX_load_verify_locations
  int SSL_CTX_set_default_verify_file(SSL_CTX *ctx);
  int SSL_CTX_set_default_verify_store(SSL_CTX *ctx);
 
-Deprecated since OpenSSL 3.0, can be hidden entirely by defining
-B<OPENSSL_API_COMPAT> with a suitable version value, see
-L<openssl_user_macros(7)>:
-
  int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,
                                    const char *CApath);
 
 =head1 DESCRIPTION
 
-SSL_CTX_load_verify_dir(), SSL_CTX_load_verify_file(),
-SSL_CTX_load_verify_store() specifies the locations for B<ctx>, at
-which CA certificates for verification purposes are located. The
-certificates available via B<CAfile>, B<CApath> and B<CAstore> are
-trusted.
+SSL_CTX_load_verify_locations(), SSL_CTX_load_verify_dir(),
+SSL_CTX_load_verify_file(), SSL_CTX_load_verify_store() specifies the
+locations for B<ctx>, at which CA certificates for verification purposes
+are located. The certificates available via B<CAfile>, B<CApath> and
+B<CAstore> are trusted.
 
 SSL_CTX_set_default_verify_paths() specifies that the default locations from
 which CA certificates are loaded should be used. There is one default directory,
