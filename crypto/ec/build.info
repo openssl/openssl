@@ -3,7 +3,7 @@ IF[{- !$disabled{asm} -}]
   $ECASM_x86=ecp_nistz256.c ecp_nistz256-x86.s
   $ECDEF_x86=ECP_NISTZ256_ASM
 
-  $ECASM_x86_64=ecp_nistz256.c ecp_nistz256-x86_64.s x25519-x86_64.s
+  $ECASM_x86_64=ecp_nistz256.c ecp_nistz256-x86_64.s x25519-x86_64.s ecp_sm2z256.c ecp_sm2z256-x86_64.s
   $ECDEF_x86_64=ECP_NISTZ256_ASM X25519_ASM
 
   $ECASM_ia64=
@@ -57,7 +57,7 @@ IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
 ENDIF
 
 SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
-                        ec_err.c ecdh_kdf.c eck_prn.c ec_ctrl.c
+                        ec_err.c ecdh_kdf.c eck_prn.c ec_ctrl.c ecp_sm2p256.c
 SOURCE[../../providers/libfips.a]=$COMMON
 
 # Implementations are now spread across several libraries, so the defines
@@ -87,6 +87,7 @@ GENERATE[ecp_nistz256-ppc64.s]=asm/ecp_nistz256-ppc64.pl
 
 GENERATE[x25519-x86_64.s]=asm/x25519-x86_64.pl
 GENERATE[x25519-ppc64.s]=asm/x25519-ppc64.pl
+GENERATE[ecp_sm2z256-x86_64.s]=asm/ecp_sm2z256-x86_64.pl
 
 INCLUDE[curve448/arch_32/f_impl.o]=curve448/arch_32 curve448
 INCLUDE[curve448/f_generic.o]=curve448/arch_32 curve448

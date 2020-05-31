@@ -3108,10 +3108,17 @@ static const ec_list_element curve_list[] = {
      "RFC 5639 curve over a 512 bit prime field"},
     {"brainpoolP512t1", NID_brainpoolP512t1, &_EC_brainpoolP512t1.h, 0,
      "RFC 5639 curve over a 512 bit prime field"},
-# ifndef OPENSSL_NO_SM2
-    {"SM2", NID_sm2, &_EC_sm2p256v1.h, 0,
+#ifndef OPENSSL_NO_SM2
+    {"SM2", NID_sm2, &_EC_sm2p256v1.h,
+#if defined(ECP_NISTZ256_ASM) && BN_BITS2 == 64 && !defined(GMSSL_NO_TURBO)
+    EC_GFp_sm2z256_method,
+#elif !defined(OPENSSL_NO_EC_NISTP_64_GCC_128)
+    EC_GFp_sm2p256_method,
+#else
+    0,
+#endif
      "SM2 curve over a 256 bit prime field"},
-# endif
+#endif
 };
 #endif /* FIPS_MODULE */
 
@@ -3348,7 +3355,9 @@ static EC_NIST_NAME nist_curves[] = {
     {"P-224", NID_secp224r1},
     {"P-256", NID_X9_62_prime256v1},
     {"P-384", NID_secp384r1},
-    {"P-521", NID_secp521r1}
+    {"P-521", NID_secp521r1},
+    {"SM2",   NID_sm2}
+
 };
 
 const char *EC_curve_nid2nist(int nid)
