@@ -241,46 +241,13 @@ static int test_fp(int i)
     return r;
 }
 
-extern double zero_value;
-double zero_value = 0.0;
-
 static int test_big(void)
 {
     char buf[80];
-    double d, z, inf, nan;
 
     /* Test excessively big number. Should fail */
     if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
                                   "%f\n", 2 * (double)ULONG_MAX), -1))
-        return 0;
-
-    d = 1.0;
-    z = zero_value;
-    inf = d / z;
-    nan = z / z;
-
-    /*
-     * Test +/-inf, nan. Should fail.
-     * Test +/-1.0, +/-0.0. Should work.
-     */
-    if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                  "%f", inf), -1)
-            || !TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                         "%f", -inf), -1)
-            || !TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                         "%f", nan), -1)
-            || !TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                         "%f", d), 8)
-            || !TEST_str_eq(buf, "1.000000")
-            || !TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                         "%f", z), 8)
-            || !TEST_str_eq(buf, "0.000000")
-            || !TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                         "%f", -d), 9)
-            || !TEST_str_eq(buf, "-1.000000")
-            || !TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
-                                         "%f", -z), 8)
-            || !TEST_str_eq(buf, "0.000000"))
         return 0;
 
     return 1;
