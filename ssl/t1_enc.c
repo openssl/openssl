@@ -595,7 +595,6 @@ int tls1_setup_key_block(SSL *s)
     }
 
     OSSL_TRACE_BEGIN(TLS) {
-        BIO_dump_indent(trc_out, p, num, 4);
         BIO_printf(trc_out, "key block\n");
         BIO_dump_indent(trc_out, p, num, 4);
     } OSSL_TRACE_END(TLS);
