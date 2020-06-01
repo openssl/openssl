@@ -742,7 +742,7 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     }
 
     if (drbg->reseed_interval > 0) {
-        if (drbg->reseed_gen_counter > drbg->reseed_interval)
+        if (drbg->reseed_gen_counter >= drbg->reseed_interval)
             reseed_required = 1;
     }
     if (drbg->reseed_time_interval > 0) {
