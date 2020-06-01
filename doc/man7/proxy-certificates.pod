@@ -101,7 +101,7 @@ more than a few lines, such as XML or other markup.
 
 =back
 
-Not that the proxy policy value is what determines the rights granted
+Note that the proxy policy value is what determines the rights granted
 to the process during the proxy certificate, and it is up to the
 application to interpret and combine these policies.>
 
