@@ -578,6 +578,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3.tmp.key_block = p;
 
     OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "key block length: %d\n", num);
         BIO_printf(trc_out, "client random\n");
         BIO_dump_indent(trc_out, s->s3.client_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "server random\n");
@@ -594,6 +595,7 @@ int tls1_setup_key_block(SSL *s)
     }
 
     OSSL_TRACE_BEGIN(TLS) {
+        BIO_dump_indent(trc_out, p, num, 4);
         BIO_printf(trc_out, "key block\n");
         BIO_dump_indent(trc_out, p, num, 4);
     } OSSL_TRACE_END(TLS);
