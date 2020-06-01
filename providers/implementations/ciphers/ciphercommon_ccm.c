@@ -160,7 +160,7 @@ int ccm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
-        if (ccm_get_ivlen(ctx) != p->data_size) {
+        if (ccm_get_ivlen(ctx) > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IVLEN);
             return 0;
         }
