@@ -172,6 +172,12 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
+ * BIO_do_connect and BIO_do_handshake have been extended:
+   If domain name resolution yields multiple IP addresses all of them are tried
+   after connect() failures.
+
+   *David von Oheimb*
+
  * All of the low level RSA functions have been deprecated including:
 
    RSA_new_method, RSA_size, RSA_security_bits, RSA_get0_pss_params,
