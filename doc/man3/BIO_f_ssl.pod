@@ -95,13 +95,15 @@ chain B<bio>. It does this by locating the SSL BIO in the
 chain and calling SSL_shutdown() on its internal SSL
 pointer.
 
-BIO_do_handshake() attempts to complete an SSL handshake on the
-supplied BIO and establish the SSL connection. It returns 1
-if the connection was established successfully. A zero or negative
-value is returned if the connection could not be established, the
-call BIO_should_retry() should be used for non blocking connect BIOs
-to determine if the call should be retried. If an SSL connection has
-already been established this call has no effect.
+BIO_do_handshake() attempts to connect the supplied BIO, doing an SSL handshake
+and establishing an SSL/TLS connection as far as supported by the BIO.
+For non-SSL BIOs the connection is done typically at TCP level.
+If domain name resolution yields multiple IP addresses all of them are tried.
+The function returns 1 if the connection was established successfully.
+A zero or negative value is returned if the connection could not be established.
+The call BIO_should_retry() should be used for non-blocking connect BIOs
+to determine if the call should be retried.
+If a connection has already been established this call has no effect.
 
 =head1 NOTES
 
