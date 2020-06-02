@@ -648,21 +648,6 @@ static int add_key_share(SSL *s, WPACKET *pkt, unsigned int curve_id)
             /* SSLfatal() already called */
             return 0;
         }
-
-        /*
-         * TODO(3.0) Remove this when EVP_PKEY_get1_tls_encodedpoint()
-         * knows how to get a key from an encoded point with the help of
-         * a OSSL_SERIALIZER deserializer.  We know that EVP_PKEY_get0()
-         * downgrades an EVP_PKEY to contain a legacy key.
-         *
-         * THIS IS TEMPORARY
-         */
-        EVP_PKEY_get0(key_share_key);
-        if (EVP_PKEY_id(key_share_key) == EVP_PKEY_NONE) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_ADD_KEY_SHARE,
-                     ERR_R_EC_LIB);
-            goto err;
-        }
     }
 
     /* Encode the public key. */
@@ -1923,22 +1908,6 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     if (skey == NULL || EVP_PKEY_copy_parameters(skey, ckey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
                  ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-
-    /*
-     * TODO(3.0) Remove this when EVP_PKEY_get1_tls_encodedpoint()
-     * knows how to get a key from an encoded point with the help of
-     * a OSSL_SERIALIZER deserializer.  We know that EVP_PKEY_get0()
-     * downgrades an EVP_PKEY to contain a legacy key.
-     *
-     * THIS IS TEMPORARY
-     */
-    EVP_PKEY_get0(skey);
-    if (EVP_PKEY_id(skey) == EVP_PKEY_NONE) {
-        EVP_PKEY_free(skey);
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
-                 ERR_R_INTERNAL_ERROR);
         return 0;
     }
 

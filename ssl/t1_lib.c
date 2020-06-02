@@ -1217,17 +1217,6 @@ int tls12_check_peer_sigalg(SSL *s, uint16_t sig, EVP_PKEY *pkey)
     const SIGALG_LOOKUP *lu;
     int secbits = 0;
 
-    /*
-     * TODO(3.0) Remove this when we adapted this function for provider
-     * side keys.  We know that EVP_PKEY_get0() downgrades an EVP_PKEY
-     * to contain a legacy key.
-     *
-     * THIS IS TEMPORARY
-     */
-    EVP_PKEY_get0(pkey);
-    if (EVP_PKEY_id(pkey) == EVP_PKEY_NONE)
-        return 0;
-
     pkeyid = EVP_PKEY_id(pkey);
     /* Should never happen */
     if (pkeyid == -1)
