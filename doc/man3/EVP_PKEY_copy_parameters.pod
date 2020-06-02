@@ -46,6 +46,9 @@ Since OpenSSL private keys contain public key components too the function
 EVP_PKEY_eq() can also be used to determine if a private key matches
 a public key.
 
+EVP_PKEY_cmp() and EVP_PKEY_cmp_parameters() differ in their return values 
+compared to other _cmp() functions.
+
 =head1 RETURN VALUES
 
 The function EVP_PKEY_missing_parameters() returns 1 if the public key
@@ -55,7 +58,8 @@ doesn't use parameters.
 These functions EVP_PKEY_copy_parameters() returns 1 for success and 0 for
 failure.
 
-The function EVP_PKEY_parameters_eq() and EVP_PKEY_eq() return 1 if their
+The functions EVP_PKEY_cmp_parameters(), EVP_PKEY_parameters_eq(), 
+EVP_PKEY_cmp() and EVP_PKEY_eq() return 1 if their
 inputs match, 0 if they don't match, -1 if the key types are different and
 -2 if the operation is not supported.
 
