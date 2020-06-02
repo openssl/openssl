@@ -95,8 +95,8 @@ chain B<bio>. It does this by locating the SSL BIO in the
 chain and calling SSL_shutdown() on its internal SSL
 pointer.
 
-BIO_do_handshake() attempts to connect the supplied BIO, doing an SSL handshake
-and establishing an SSL/TLS connection as far as supported by the BIO.
+BIO_do_handshake() attempts to complete an SSL handshake on the
+-supplied BIO and establish the SSL connection.
 For non-SSL BIOs the connection is done typically at TCP level.
 If domain name resolution yields multiple IP addresses all of them are tried.
 The function returns 1 if the connection was established successfully.
