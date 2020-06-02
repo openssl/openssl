@@ -369,8 +369,8 @@ __owur static int drbg_ctr_generate(RAND_DRBG *drbg,
             if (ctr32 != 0) {
                 blocks -= ctr32;
                 buflen = blocks * 16;
+                ctr32 = 0;
             }
-            ctr32 = 0;
             ctr96_inc(ctr->V);
         }
         PUTU32(ctr->V + 12, ctr32);
