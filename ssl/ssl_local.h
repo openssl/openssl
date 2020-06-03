@@ -2069,7 +2069,7 @@ typedef struct cert_st {
  * of a mess of functions, but hell, think of it as an opaque structure :-)
  */
 typedef struct ssl3_enc_method {
-    int (*enc) (SSL *, SSL3_RECORD *, size_t, int);
+    int (*enc) (SSL *, SSL3_RECORD *, size_t, int, SSL_MAC_BUF *, size_t);
     int (*mac) (SSL *, SSL3_RECORD *, unsigned char *, int);
     int (*setup_key_block) (SSL *);
     int (*generate_master_secret) (SSL *, unsigned char *, unsigned char *,
