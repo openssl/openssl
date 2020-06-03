@@ -158,7 +158,8 @@ OpenSSL 3.0
    *David von Oheimb*
 
  * BIO_do_connect and BIO_do_handshake have been extended:
-   if domain name resolution yields multiple IP addresses all of them are tried.
+   If domain name resolution yields multiple IP addresses all of them are tried
+   after connect() failures.
 
    *David von Oheimb*
 
