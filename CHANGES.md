@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Dropped interactive mode from the 'openssl' program.  From now on,
+   the `openssl` command alone is equivalent to `openssl help`.
+   
+   *Richard Levitte*
+
  * Deprecated EC_METHOD_get_field_type(). Applications should switch to
    EC_GROUP_get_field_type().
 

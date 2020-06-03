@@ -30,9 +30,6 @@
 #include "apps.h"
 #include "progs.h"
 
-/* Special sentinel to exit the program. */
-#define EXIT_THE_PROGRAM (-1)
-
 /*
  * The LHASH callbacks ("hash" & "cmp") have been replaced by functions with
  * the base prototypes (we cast each variable inside the function to the
@@ -212,11 +209,9 @@ int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
     LHASH_OF(FUNCTION) *prog = NULL;
-    char *p, *pname;
-    char buf[1024];
-    const char *prompt;
+    char *pname;
     ARGS arg;
-    int first, n, i, ret = 0;
+    int ret = 0;
 
     arg.argv = NULL;
     arg.size = 0;
@@ -264,89 +259,17 @@ int main(int argc, char *argv[])
     /* first check the program name */
     f.name = pname;
     fp = lh_FUNCTION_retrieve(prog, &f);
-    if (fp != NULL) {
-        argv[0] = pname;
-        if (fp->deprecated_alternative != NULL)
-            warn_deprecated(fp);
-        ret = fp->func(argc, argv);
-        goto end;
-    }
-
-    /* If there is stuff on the command line, run with that. */
-    if (argc != 1) {
+    if (fp == NULL) {
+        /* We assume we've been called as 'openssl cmd' */
         argc--;
         argv++;
-        ret = do_cmd(prog, argc, argv);
-        if (ret < 0)
-            ret = 0;
-        goto end;
     }
 
-    /* ok, lets enter interactive mode */
-    for (;;) {
-        ret = 0;
-        /* Read a line, continue reading if line ends with \ */
-        for (p = buf, n = sizeof(buf), i = 0, first = 1; n > 0; first = 0) {
-            prompt = first ? "OpenSSL> " : "> ";
-            p[0] = '\0';
-#ifndef READLINE
-            fputs(prompt, stdout);
-            fflush(stdout);
-            if (!fgets(p, n, stdin))
-                goto end;
-            if (p[0] == '\0')
-                goto end;
-            i = strlen(p);
-            if (i <= 1)
-                break;
-            if (p[i - 2] != '\\')
-                break;
-            i -= 2;
-            p += i;
-            n -= i;
-#else
-            {
-                extern char *readline(const char *);
-                extern void add_history(const char *cp);
-                char *text;
+    /* If there's a command, run with that, otherwise "help". */
+    ret = argc > 0
+        ? do_cmd(prog, argc, argv)
+        : help_main(argc, argv);
 
-                text = readline(prompt);
-                if (text == NULL)
-                    goto end;
-                i = strlen(text);
-                if (i == 0 || i > n)
-                    break;
-                if (text[i - 1] != '\\') {
-                    p += strlen(strcpy(p, text));
-                    free(text);
-                    add_history(buf);
-                    break;
-                }
-
-                text[i - 1] = '\0';
-                p += strlen(strcpy(p, text));
-                free(text);
-                n -= i;
-            }
-#endif
-        }
-
-        if (!chopup_args(&arg, buf)) {
-            BIO_printf(bio_err, "Can't parse (no memory?)\n");
-            break;
-        }
-
-        ret = do_cmd(prog, arg.argc, arg.argv);
-        if (ret == EXIT_THE_PROGRAM) {
-            ret = 0;
-            goto end;
-        }
-        if (ret != 0)
-            BIO_printf(bio_err, "error in %s\n", arg.argv[0]);
-        (void)BIO_flush(bio_out);
-        (void)BIO_flush(bio_err);
-    }
-    ret = 1;
  end:
     app_providers_cleanup();
     OPENSSL_free(default_config_file);
@@ -479,10 +402,6 @@ static int do_cmd(LHASH_OF(FUNCTION) *prog, int argc, char *argv[])
         BIO_printf(bio_out, "%s\n", argv[0] + 3);
         return 1;
     }
-    if (strcmp(argv[0], "quit") == 0 || strcmp(argv[0], "q") == 0 ||
-        strcmp(argv[0], "exit") == 0 || strcmp(argv[0], "bye") == 0)
-        /* Special value to mean "exit the program. */
-        return EXIT_THE_PROGRAM;
 
     BIO_printf(bio_err, "Invalid command '%s'; type \"help\" for a list.\n",
                argv[0]);
