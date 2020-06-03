@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -115,7 +115,7 @@ int filter_provider_init(const OSSL_CORE_HANDLE *handle,
     if (ourglobals.deflt == NULL)
         goto err;
 
-    *provctx = OSSL_PROVIDER_get_provider_ctx(ourglobals.deflt);
+    *provctx = OSSL_PROVIDER_get0_provider_ctx(ourglobals.deflt);
     *out = filter_dispatch_table;
     return 1;
 
