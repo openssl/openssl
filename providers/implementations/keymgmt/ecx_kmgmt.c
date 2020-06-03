@@ -342,7 +342,7 @@ static int ecx_set_params(void *key, const OSSL_PARAM params[])
                 || !OSSL_PARAM_get_octet_string(p, &buf, sizeof(ecxkey->pubkey),
                                                 NULL))
             return 0;
-        OPENSSL_free(ecxkey->privkey);
+        OPENSSL_clear_free(ecxkey->privkey, ecxkey->keylen);
         ecxkey->privkey = NULL;
         ecxkey->haspubkey = 1;
     }
