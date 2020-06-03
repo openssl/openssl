@@ -7742,13 +7742,13 @@ static int test_sigalgs_available(int idx)
         if (!SSL_CTX_set1_sigalgs_list(cctx,
                                        "rsa_pss_rsae_sha384"
                                        ":rsa_pss_rsae_sha256")
-                || !SSL_CTX_set1_sigalgs_list(cctx,
+                || !SSL_CTX_set1_sigalgs_list(sctx,
                                               "rsa_pss_rsae_sha384"
                                               ":rsa_pss_rsae_sha256"))
             goto end;
     } else {
         if (!SSL_CTX_set1_sigalgs_list(cctx, "rsa_pss_rsae_sha256:ECDSA+SHA256")
-                || !SSL_CTX_set1_sigalgs_list(cctx,
+                || !SSL_CTX_set1_sigalgs_list(sctx,
                                               "rsa_pss_rsae_sha256:ECDSA+SHA256"))
             goto end;
     }
