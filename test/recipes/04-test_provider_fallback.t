@@ -7,6 +7,12 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
+use File::Spec;
 use OpenSSL::Test::Simple;
+
+# We must ensure that OPENSSL_CONF points at an empty file.  Otherwise, we
+# risk that the configuration file contains statements that load providers,
+# which defeats the purpose of this test.  The NUL device is good enough.
+%ENV{OPENSSL_CONF} = File::Spec->devnull();
 
 simple_test("test_provider_fallback", "provider_fallback_test");

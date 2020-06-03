@@ -50,22 +50,6 @@ static int test_explicit_provider(void)
 
 int setup_tests(void)
 {
-    /*
-     * We must ensure that there is no OPENSSL_CONF defined.  Otherwise,
-     * we risk that the configuration file contains statements that load
-     * providers, which defeats the purpose of this test.
-     */
-#ifndef _WIN32
-    unsetenv("OPENSSL_CONF");
-#else
-    /*
-     * Windows doesn't have unsetenv().  However, using _putenv() and giving
-     * the environment variable the empty value has the same effect, according
-     * to documentation.
-     */
-    _putenv("OPENSSL_CONF=");
-#endif
-
     ADD_TEST(test_fallback_provider);
     ADD_TEST(test_explicit_provider);
     return 1;
