@@ -383,7 +383,8 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc
          * key with zeros to the size of p
          */
         if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
-            OPENSSL_free(pbuf);
+            if (alloc)
+                OPENSSL_free(pbuf);
             DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
             return 0;
         }
