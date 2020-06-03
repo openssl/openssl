@@ -2,7 +2,10 @@
 #define OQS_HYBRID_KEM_NID(curveID) \
   (curveID == 0x2FFF ? NID_p256_oqs_kem_default : \
 {%- for kem in config['kems'] %}
-  (curveID == {{ kem['nid_hybrid_p256'] }} ? NID_p256_{{ kem['name_group'] }} : \
+    {% if kem['bit_security'] == 128 -%} (curveID == {{ kem['nid_hybrid'] }} ? NID_p256_{{ kem['name_group'] }} : \ {%- endif -%}
+    {% if kem['bit_security'] == 192 -%} (curveID == {{ kem['nid_hybrid'] }} ? NID_p384_{{ kem['name_group'] }} : \ {%- endif -%}
+    {% if kem['bit_security'] == 256 -%} (curveID == {{ kem['nid_hybrid'] }} ? NID_p521_{{ kem['name_group'] }} : \ {%- endif -%}
+
 {%- endfor %}
   0 \
   {% for kem in config['kems'] %}){% endfor %})

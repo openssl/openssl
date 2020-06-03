@@ -3,6 +3,8 @@
  : p256_oqs_kem_default : p256_oqs_kem_default
 {%- for kem in config['kems'] %}
  : {{ kem['name_group'] }} : {{ kem['name_group'] }}
- : p256_{{ kem['name_group'] }} : p256_{{ kem['name_group'] }}
+ {% if kem['bit_security'] == 128 -%} : p256_{{ kem['name_group'] }} : p256_{{ kem['name_group'] }} {%- endif -%}
+ {% if kem['bit_security'] == 192 -%} : p384_{{ kem['name_group'] }} : p384_{{ kem['name_group'] }} {%- endif -%}
+ {% if kem['bit_security'] == 256 -%} : p521_{{ kem['name_group'] }} : p521_{{ kem['name_group'] }} {%- endif -%}
 {%- endfor %}
 

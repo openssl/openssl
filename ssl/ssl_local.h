@@ -553,45 +553,45 @@
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_START
 #define OQS_KEM_HYBRID_CURVEID(nid) \
   (nid == NID_p256_oqs_kem_default      ? 0x2FFF : \
-  (nid == NID_p256_frodo640aes ? 0x2F00 : \
-  (nid == NID_p256_frodo640shake ? 0x2F01 : \
-  (nid == NID_p256_frodo976aes ? 0x2F02 : \
-  (nid == NID_p256_frodo976shake ? 0x2F03 : \
-  (nid == NID_p256_frodo1344aes ? 0x2F04 : \
-  (nid == NID_p256_frodo1344shake ? 0x2F05 : \
-  (nid == NID_p256_bike1l1cpa ? 0x2F06 : \
-  (nid == NID_p256_bike1l3cpa ? 0x2F07 : \
-  (nid == NID_p256_bike1l1fo ? 0x2F23 : \
-  (nid == NID_p256_bike1l3fo ? 0x2F24 : \
-  (nid == NID_p256_kyber512 ? 0x2F0F : \
-  (nid == NID_p256_kyber768 ? 0x2F10 : \
-  (nid == NID_p256_kyber1024 ? 0x2F11 : \
-  (nid == NID_p256_newhope512cca ? 0x2F12 : \
-  (nid == NID_p256_newhope1024cca ? 0x2F13 : \
-  (nid == NID_p256_ntru_hps2048509 ? 0x2F14 : \
-  (nid == NID_p256_ntru_hps2048677 ? 0x2F15 : \
-  (nid == NID_p256_ntru_hps4096821 ? 0x2F16 : \
-  (nid == NID_p256_ntru_hrss701 ? 0x2F17 : \
-  (nid == NID_p256_lightsaber ? 0x2F18 : \
-  (nid == NID_p256_saber ? 0x2F19 : \
-  (nid == NID_p256_firesaber ? 0x2F1A : \
-  (nid == NID_p256_sidhp434 ? 0x2F1B : \
-  (nid == NID_p256_sidhp503 ? 0x2F1C : \
-  (nid == NID_p256_sidhp610 ? 0x2F1D : \
-  (nid == NID_p256_sidhp751 ? 0x2F1E : \
-  (nid == NID_p256_sikep434 ? 0x2F1F : \
-  (nid == NID_p256_sikep503 ? 0x2F20 : \
-  (nid == NID_p256_sikep610 ? 0x2F21 : \
-  (nid == NID_p256_sikep751 ? 0x2F22 : \
-  (nid == NID_p256_kyber90s512 ? 0x2F29 : \
-  (nid == NID_p256_kyber90s768 ? 0x2F2A : \
-  (nid == NID_p256_kyber90s1024 ? 0x2F2B : \
-  (nid == NID_p256_babybear ? 0x2F2C : \
-  (nid == NID_p256_mamabear ? 0x2F2D : \
-  (nid == NID_p256_papabear ? 0x2F2E : \
-  (nid == NID_p256_babybearephem ? 0x2F2F : \
-  (nid == NID_p256_mamabearephem ? 0x2F30 : \
-  (nid == NID_p256_papabearephem ? 0x2F31 : \
+    (nid == NID_p256_frodo640aes ? 0x2F00 : \
+    (nid == NID_p256_frodo640shake ? 0x2F01 : \
+    (nid == NID_p384_frodo976aes ? 0x2F02 : \
+    (nid == NID_p384_frodo976shake ? 0x2F03 : \
+    (nid == NID_p521_frodo1344aes ? 0x2F04 : \
+    (nid == NID_p521_frodo1344shake ? 0x2F05 : \
+    (nid == NID_p256_bike1l1cpa ? 0x2F06 : \
+    (nid == NID_p384_bike1l3cpa ? 0x2F07 : \
+    (nid == NID_p256_bike1l1fo ? 0x2F23 : \
+    (nid == NID_p384_bike1l3fo ? 0x2F24 : \
+    (nid == NID_p256_kyber512 ? 0x2F0F : \
+    (nid == NID_p384_kyber768 ? 0x2F10 : \
+    (nid == NID_p521_kyber1024 ? 0x2F11 : \
+    (nid == NID_p256_newhope512cca ? 0x2F12 : \
+    (nid == NID_p521_newhope1024cca ? 0x2F13 : \
+    (nid == NID_p256_ntru_hps2048509 ? 0x2F14 : \
+    (nid == NID_p384_ntru_hps2048677 ? 0x2F15 : \
+    (nid == NID_p521_ntru_hps4096821 ? 0x2F16 : \
+    (nid == NID_p384_ntru_hrss701 ? 0x2F17 : \
+    (nid == NID_p256_lightsaber ? 0x2F18 : \
+    (nid == NID_p384_saber ? 0x2F19 : \
+    (nid == NID_p521_firesaber ? 0x2F1A : \
+    (nid == NID_p256_sidhp434 ? 0x2F1B : \
+    (nid == NID_p256_sidhp503 ? 0x2F1C : \
+    (nid == NID_p384_sidhp610 ? 0x2F1D : \
+    (nid == NID_p521_sidhp751 ? 0x2F1E : \
+    (nid == NID_p256_sikep434 ? 0x2F1F : \
+    (nid == NID_p256_sikep503 ? 0x2F20 : \
+    (nid == NID_p384_sikep610 ? 0x2F21 : \
+    (nid == NID_p521_sikep751 ? 0x2F22 : \
+    (nid == NID_p256_kyber90s512 ? 0x2F29 : \
+    (nid == NID_p384_kyber90s768 ? 0x2F2A : \
+    (nid == NID_p521_kyber90s1024 ? 0x2F2B : \
+    (nid == NID_p256_babybear ? 0x2F2C : \
+    (nid == NID_p384_mamabear ? 0x2F2D : \
+    (nid == NID_p521_papabear ? 0x2F2E : \
+    (nid == NID_p256_babybearephem ? 0x2F2F : \
+    (nid == NID_p384_mamabearephem ? 0x2F30 : \
+    (nid == NID_p521_papabearephem ? 0x2F31 : \
   0 \
   ))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
@@ -647,45 +647,45 @@
 ///// OQS_TEMPLATE_FRAGMENT_OQS_HYBRID_KEM_NID_START
 #define OQS_HYBRID_KEM_NID(curveID) \
   (curveID == 0x2FFF ? NID_p256_oqs_kem_default : \
-  (curveID == 0x2F00 ? NID_p256_frodo640aes : \
-  (curveID == 0x2F01 ? NID_p256_frodo640shake : \
-  (curveID == 0x2F02 ? NID_p256_frodo976aes : \
-  (curveID == 0x2F03 ? NID_p256_frodo976shake : \
-  (curveID == 0x2F04 ? NID_p256_frodo1344aes : \
-  (curveID == 0x2F05 ? NID_p256_frodo1344shake : \
-  (curveID == 0x2F06 ? NID_p256_bike1l1cpa : \
-  (curveID == 0x2F07 ? NID_p256_bike1l3cpa : \
-  (curveID == 0x2F23 ? NID_p256_bike1l1fo : \
-  (curveID == 0x2F24 ? NID_p256_bike1l3fo : \
-  (curveID == 0x2F0F ? NID_p256_kyber512 : \
-  (curveID == 0x2F10 ? NID_p256_kyber768 : \
-  (curveID == 0x2F11 ? NID_p256_kyber1024 : \
-  (curveID == 0x2F12 ? NID_p256_newhope512cca : \
-  (curveID == 0x2F13 ? NID_p256_newhope1024cca : \
-  (curveID == 0x2F14 ? NID_p256_ntru_hps2048509 : \
-  (curveID == 0x2F15 ? NID_p256_ntru_hps2048677 : \
-  (curveID == 0x2F16 ? NID_p256_ntru_hps4096821 : \
-  (curveID == 0x2F17 ? NID_p256_ntru_hrss701 : \
-  (curveID == 0x2F18 ? NID_p256_lightsaber : \
-  (curveID == 0x2F19 ? NID_p256_saber : \
-  (curveID == 0x2F1A ? NID_p256_firesaber : \
-  (curveID == 0x2F1B ? NID_p256_sidhp434 : \
-  (curveID == 0x2F1C ? NID_p256_sidhp503 : \
-  (curveID == 0x2F1D ? NID_p256_sidhp610 : \
-  (curveID == 0x2F1E ? NID_p256_sidhp751 : \
-  (curveID == 0x2F1F ? NID_p256_sikep434 : \
-  (curveID == 0x2F20 ? NID_p256_sikep503 : \
-  (curveID == 0x2F21 ? NID_p256_sikep610 : \
-  (curveID == 0x2F22 ? NID_p256_sikep751 : \
-  (curveID == 0x2F29 ? NID_p256_kyber90s512 : \
-  (curveID == 0x2F2A ? NID_p256_kyber90s768 : \
-  (curveID == 0x2F2B ? NID_p256_kyber90s1024 : \
-  (curveID == 0x2F2C ? NID_p256_babybear : \
-  (curveID == 0x2F2D ? NID_p256_mamabear : \
-  (curveID == 0x2F2E ? NID_p256_papabear : \
-  (curveID == 0x2F2F ? NID_p256_babybearephem : \
-  (curveID == 0x2F30 ? NID_p256_mamabearephem : \
-  (curveID == 0x2F31 ? NID_p256_papabearephem : \
+    (curveID == 0x2F00 ? NID_p256_frodo640aes : \
+    (curveID == 0x2F01 ? NID_p256_frodo640shake : \
+    (curveID == 0x2F02 ? NID_p384_frodo976aes : \
+    (curveID == 0x2F03 ? NID_p384_frodo976shake : \
+    (curveID == 0x2F04 ? NID_p521_frodo1344aes : \
+    (curveID == 0x2F05 ? NID_p521_frodo1344shake : \
+    (curveID == 0x2F06 ? NID_p256_bike1l1cpa : \
+    (curveID == 0x2F07 ? NID_p384_bike1l3cpa : \
+    (curveID == 0x2F23 ? NID_p256_bike1l1fo : \
+    (curveID == 0x2F24 ? NID_p384_bike1l3fo : \
+    (curveID == 0x2F0F ? NID_p256_kyber512 : \
+    (curveID == 0x2F10 ? NID_p384_kyber768 : \
+    (curveID == 0x2F11 ? NID_p521_kyber1024 : \
+    (curveID == 0x2F12 ? NID_p256_newhope512cca : \
+    (curveID == 0x2F13 ? NID_p521_newhope1024cca : \
+    (curveID == 0x2F14 ? NID_p256_ntru_hps2048509 : \
+    (curveID == 0x2F15 ? NID_p384_ntru_hps2048677 : \
+    (curveID == 0x2F16 ? NID_p521_ntru_hps4096821 : \
+    (curveID == 0x2F17 ? NID_p384_ntru_hrss701 : \
+    (curveID == 0x2F18 ? NID_p256_lightsaber : \
+    (curveID == 0x2F19 ? NID_p384_saber : \
+    (curveID == 0x2F1A ? NID_p521_firesaber : \
+    (curveID == 0x2F1B ? NID_p256_sidhp434 : \
+    (curveID == 0x2F1C ? NID_p256_sidhp503 : \
+    (curveID == 0x2F1D ? NID_p384_sidhp610 : \
+    (curveID == 0x2F1E ? NID_p521_sidhp751 : \
+    (curveID == 0x2F1F ? NID_p256_sikep434 : \
+    (curveID == 0x2F20 ? NID_p256_sikep503 : \
+    (curveID == 0x2F21 ? NID_p384_sikep610 : \
+    (curveID == 0x2F22 ? NID_p521_sikep751 : \
+    (curveID == 0x2F29 ? NID_p256_kyber90s512 : \
+    (curveID == 0x2F2A ? NID_p384_kyber90s768 : \
+    (curveID == 0x2F2B ? NID_p521_kyber90s1024 : \
+    (curveID == 0x2F2C ? NID_p256_babybear : \
+    (curveID == 0x2F2D ? NID_p384_mamabear : \
+    (curveID == 0x2F2E ? NID_p521_papabear : \
+    (curveID == 0x2F2F ? NID_p256_babybearephem : \
+    (curveID == 0x2F30 ? NID_p384_mamabearephem : \
+    (curveID == 0x2F31 ? NID_p521_papabearephem : \
   0 \
   ))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_HYBRID_KEM_NID_END
@@ -745,8 +745,55 @@
   ))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 
-/* Returns the classical nid for an hybrid alg (FIXMEOQS: only secp256r1 (23) is supported for now) */
-#define OQS_KEM_CLASSICAL_CURVEID(curveID) (IS_OQS_KEM_HYBRID_CURVEID(curveID) ? 23 : 0)
+/* Returns the classic curve ID for a given hybrid curve */
+///// OQS_TEMPLATE_FRAGMENT_OQS_MAP_HYBRID_START
+#define OQS_MAP_HYBRID2CURVE(cid) \
+  (cid == 0x01FF || cid == 0x2FFF ? 23 : \
+  (cid == 0x2F00 ?23: \
+  (cid == 0x2F01 ?23: \
+  (cid == 0x2F02 ?24: \
+  (cid == 0x2F03 ?24: \
+  (cid == 0x2F04 ?25: \
+  (cid == 0x2F05 ?25: \
+  (cid == 0x2F06 ?23: \
+  (cid == 0x2F07 ?24: \
+  (cid == 0x2F23 ?23: \
+  (cid == 0x2F24 ?24: \
+  (cid == 0x2F0F ?23: \
+  (cid == 0x2F10 ?24: \
+  (cid == 0x2F11 ?25: \
+  (cid == 0x2F12 ?23: \
+  (cid == 0x2F13 ?25: \
+  (cid == 0x2F14 ?23: \
+  (cid == 0x2F15 ?24: \
+  (cid == 0x2F16 ?25: \
+  (cid == 0x2F17 ?24: \
+  (cid == 0x2F18 ?23: \
+  (cid == 0x2F19 ?24: \
+  (cid == 0x2F1A ?25: \
+  (cid == 0x2F1B ?23: \
+  (cid == 0x2F1C ?23: \
+  (cid == 0x2F1D ?24: \
+  (cid == 0x2F1E ?25: \
+  (cid == 0x2F1F ?23: \
+  (cid == 0x2F20 ?23: \
+  (cid == 0x2F21 ?24: \
+  (cid == 0x2F22 ?25: \
+  (cid == 0x2F29 ?23: \
+  (cid == 0x2F2A ?24: \
+  (cid == 0x2F2B ?25: \
+  (cid == 0x2F2C ?23: \
+  (cid == 0x2F2D ?24: \
+  (cid == 0x2F2E ?25: \
+  (cid == 0x2F2F ?23: \
+  (cid == 0x2F30 ?24: \
+  (cid == 0x2F31 ?25: \
+  23 \
+  ))))))))))))))))))))))))))))))))))))))))
+///// OQS_TEMPLATE_FRAGMENT_OQS_MAP_HYBRID_END
+
+/* Returns the classical nid for an hybrid alg */
+#define OQS_KEM_CLASSICAL_CURVEID(curveID) (IS_OQS_KEM_HYBRID_CURVEID(curveID) ? OQS_MAP_HYBRID2CURVE(curveID) : 0)
 
 /* Post-Handshake Authentication state */
 typedef enum {

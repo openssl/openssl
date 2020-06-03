@@ -138,4 +138,5 @@ workflows:
       - macOS-shared_oqs-shared_ossl
       - macOS-static_oqs-static_ossl
       - ubuntu_bionic-shared_oqs-shared_ossl
+      - ubuntu_bionic-static_oqs-static_ossl
       - ubuntu_bionic-static_oqs-static_ossl-boringssl-interop

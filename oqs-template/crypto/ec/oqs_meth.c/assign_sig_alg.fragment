@@ -11,7 +11,10 @@
       return OQS_KEM_alg_default;
 {%- for kem in config['kems'] %}
     case NID_{{ kem['name_group'] }}:
-    case NID_p256_{{ kem['name_group'] }}:
+    {% if kem['bit_security'] == 128 -%} case NID_p256_{{ kem['name_group'] }}: 
+    {%- elif kem['bit_security'] == 192 -%} case NID_p384_{{ kem['name_group'] }}: 
+    {%- elif kem['bit_security'] == 256 -%} case NID_p521_{{ kem['name_group'] }}: 
+    {%- endif %}
       return {{ kem['oqs_alg'] }};
 {%- endfor %}
 

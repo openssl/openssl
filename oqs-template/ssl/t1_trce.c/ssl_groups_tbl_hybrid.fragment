@@ -1,4 +1,6 @@
 {% for kem in config['kems'] %}
-    {OQS_KEM_CURVEID(NID_p256_{{ kem['name_group'] }}), "p256 - {{ kem['name_group'] }} hybrid"},
+    {% if kem['bit_security'] == 128 -%} {OQS_KEM_CURVEID(NID_p256_{{ kem['name_group'] }}), "p256 - {{ kem['name_group'] }} hybrid"}, {%- endif -%}
+    {% if kem['bit_security'] == 192 -%} {OQS_KEM_CURVEID(NID_p384_{{ kem['name_group'] }}), "p384 - {{ kem['name_group'] }} hybrid"}, {%- endif -%}
+    {% if kem['bit_security'] == 256 -%} {OQS_KEM_CURVEID(NID_p521_{{ kem['name_group'] }}), "p521 - {{ kem['name_group'] }} hybrid"}, {%- endif -%}
 {%- endfor %}
 

@@ -1,4 +1,7 @@
 {% for kem in config['kems'] %}
-  case {{ kem['nid_hybrid_p256'] }}: return "p256_{{ kem['name_group'] }} hybrid";
+   {% if kem['bit_security'] == 128 -%} case {{ kem['nid_hybrid'] }}: return "p256_{{ kem['name_group'] }} hybrid"; {%- endif -%}
+   {% if kem['bit_security'] == 192 -%} case {{ kem['nid_hybrid'] }}: return "p384_{{ kem['name_group'] }} hybrid"; {%- endif -%}
+   {% if kem['bit_security'] == 256 -%} case {{ kem['nid_hybrid'] }}: return "p521_{{ kem['name_group'] }} hybrid"; {%- endif -%}
+
 {%- endfor %}
   

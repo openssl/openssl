@@ -1,0 +1,13 @@
+
+#define OQS_MAP_HYBRID2CURVE(cid) \
+  (cid == 0x01FF || cid == 0x2FFF ? 23 : \
+{%- for kem in config['kems'] %}
+  (cid == {{ kem['nid_hybrid'] }} ?  
+    {%- if kem['bit_security'] == 128 -%} 23 {%- endif -%}
+    {%- if kem['bit_security'] == 192 -%} 24 {%- endif -%}
+    {%- if kem['bit_security'] == 256 -%} 25 {%- endif -%}
+ : \
+{%- endfor %}
+  23 \
+  {% for kem in config['kems'] %}){% endfor %})
+

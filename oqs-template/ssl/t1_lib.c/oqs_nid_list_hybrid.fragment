@@ -1,4 +1,7 @@
 {% for kem in config['kems'] %}
-    {NID_p256_{{ kem['name_group'] }}, {{ kem['bit_security'] }}, TLS_CURVE_CUSTOM}, /* p256 + {{ kem['name_group'] }} hybrid ({{ kem['nid'] }}) */
+ {% if kem['bit_security'] == 128 -%} {NID_p256_{{ kem['name_group'] }} {%- endif -%}
+ {% if kem['bit_security'] == 192 -%} {NID_p384_{{ kem['name_group'] }} {%- endif -%}
+ {% if kem['bit_security'] == 256 -%} {NID_p521_{{ kem['name_group'] }} {%- endif -%}
+    , {{ kem['bit_security'] }}, TLS_CURVE_CUSTOM}, /* p256/384/521 + {{ kem['name_group'] }} hybrid ({{ kem['nid'] }}) */
 {%- endfor %}
 

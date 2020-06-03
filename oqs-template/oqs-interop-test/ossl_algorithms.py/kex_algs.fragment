@@ -2,5 +2,9 @@
     # post-quantum key exchanges
     {% for kem in config['kems'] %}'{{ kem['name_group'] }}', {%- endfor %}
     # post-quantum + classical key exchanges
-    {% for kem in config['kems'] %}'p256_{{ kem['name_group'] }}', {%- endfor %}
+    {% for kem in config['kems'] %}
+      {%- if kem['bit_security'] == 128 -%} 'p256_{{ kem['name_group'] }}', {%- endif -%}
+      {%- if kem['bit_security'] == 192 -%} 'p384_{{ kem['name_group'] }}', {%- endif -%}
+      {%- if kem['bit_security'] == 256 -%} 'p521_{{ kem['name_group'] }}', {%- endif -%}
+    {%- endfor %}
 
