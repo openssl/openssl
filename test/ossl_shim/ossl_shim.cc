@@ -394,8 +394,10 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
     return 0;
   }
 
-  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, "SHA256", 0);
-  *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, kZeros,
+  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                          const_cast<char *>("SHA256"), 0);
+  *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                           (void *)kZeros,
                                            sizeof(kZeros));
   *p = OSSL_PARAM_construct_end();
 
