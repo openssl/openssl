@@ -251,12 +251,15 @@ sigs:
         oqs_meth: "OQS_SIG_alg_default"
         security: 128
         oid: "1.3.9999.1.1"
+        code_point: "0xfe00"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.1.2"},
+                    "oid": "1.3.9999.1.2",
+                    "code_point": "0xfe01"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.1.3"}]
+                    "oid": "1.3.9999.1.3",
+                    "code_point": "0xfe02"}]
   -
     # OID scheme for hybrid variants of Dilithium:
     # iso (1)
@@ -280,33 +283,41 @@ sigs:
         oqs_meth: "OQS_SIG_alg_dilithium_2"
         security: 128
         oid: "1.3.6.1.4.1.2.267.6.4.3"
+        code_point: "0xfe03"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.2.2"},
+                    "oid": "1.3.9999.2.2",
+                    "code_point": "0xfe04"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.2.3"}]
+                    "oid": "1.3.9999.2.3",
+                    "code_point": "0xfe05"}]
       -
         name: "dilithium3"
         pretty_name: "Dilithium-3"
         oqs_meth: "OQS_SIG_alg_dilithium_3"
         security: 128
         oid: "1.3.6.1.4.1.2.267.6.5.4"
+        code_point: "0xfe06"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.2.4"},
+                    "oid": "1.3.9999.2.4",
+                    "code_point": "0xfe07"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.2.5"}]
+                    "oid": "1.3.9999.2.5",
+                    "code_point": "0xfe08"}]
       -
         name: "dilithium4"
         pretty_name: "Dilithium-4"
         oqs_meth: "OQS_SIG_alg_dilithium_4"
         security: 192
         oid: "1.3.6.1.4.1.2.267.6.6.5"
+        code_point: "0xfe09"
         mix_with: [{"name": "p384",
                     "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.2.6"}]
+                    "oid": "1.3.9999.2.6",
+                    "code_point": "0xfe0a"}]
   -
     # iso (1)
     # identified-organization (3)
@@ -319,21 +330,26 @@ sigs:
         oqs_meth: "OQS_SIG_alg_falcon_512"
         security: 128
         oid: "1.3.9999.3.1"
+        code_point: "0xfe0b"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.3.2"},
+                    "oid": "1.3.9999.3.2",
+                    "code_point": "0xfe0c"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.3.3"}]
+                    "oid": "1.3.9999.3.3",
+                    "code_point": "0xfe0d"}]
       -
         name: "falcon1024"
         pretty_name: "Falcon-1024"
         oqs_meth: "OQS_SIG_alg_falcon_1024"
         security: 256
         oid: "1.3.9999.3.4"
+        code_point: "0xfe0e"
         mix_with: [{"name": "p521",
                     "pretty_name": "ECDSA p521",
-                    "oid": "1.3.9999.3.5"}]
+                    "oid": "1.3.9999.3.5",
+                    "code_point": "0xfe0f"}]
   -
     # iso (1)
     # identified-organization (3)
@@ -346,12 +362,15 @@ sigs:
         oqs_meth: "OQS_SIG_alg_mqdss_31_48"
         security: 128
         oid: "1.3.9999.4.1"
+        code_point: "0xfe10"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.4.2"},
+                    "oid": "1.3.9999.4.2",
+                    "code_point": "0xfe11"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.4.3"}]
+                    "oid": "1.3.9999.4.3",
+                    "code_point": "0xfe12"}]
   -
     # iso (1)
     # identified-organization (3)
@@ -370,24 +389,30 @@ sigs:
         oqs_meth: "OQS_SIG_alg_picnic_L1_FS"
         security: 128
         oid: "1.3.6.1.4.1.311.89.2.1.1"
+        code_point: "0xfe13"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.2"},
+                    "oid": "1.3.6.1.4.1.311.89.2.1.2",
+                    "code_point": "0xfe14"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.3"}]
+                    "oid": "1.3.6.1.4.1.311.89.2.1.3",
+                    "code_point": "0xfe15"}]
       -
         name: "picnic2l1fs"
         pretty_name: "Picnic2 L1 FS"
         oqs_meth: "OQS_SIG_alg_picnic2_L1_FS"
         security: 128
         oid: "1.3.6.1.4.1.311.89.2.1.11"
+        code_point: "0xfe16"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.12"},
+                    "oid": "1.3.6.1.4.1.311.89.2.1.12",
+                    "code_point": "0xfe17"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.1.13"}]
+                    "oid": "1.3.6.1.4.1.311.89.2.1.13",
+                    "code_point": "0xfe18"}]
   -
     # iso (1)
     # identified-organization (3)
@@ -406,18 +431,23 @@ sigs:
         oqs_meth: "OQS_SIG_alg_qTesla_p_I"
         security: 128
         oid: "1.3.6.1.4.1.311.89.2.2.10"
+        code_point: "0xfe19"
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.11"},
+                    "oid": "1.3.6.1.4.1.311.89.2.2.11",
+                    "code_point": "0xfe1a"},
                    {"name": "rsa3072",
                     "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.12"}]
+                    "oid": "1.3.6.1.4.1.311.89.2.2.12",
+                    "code_point": "0xfe1b"}]
       -
         name: "qteslapiii"
         pretty_name: "qTESLA-p-III"
         oqs_meth: "OQS_SIG_alg_qTesla_p_III"
         security: 192
         oid: "1.3.6.1.4.1.311.89.2.2.20"
+        code_point: "0xfe1c"
         mix_with: [{"name": "p384",
                     "pretty_name": "ECDSA p384",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.21"}]
+                    "oid": "1.3.6.1.4.1.311.89.2.2.21",
+                    "code_point": "0xfe1d"}]

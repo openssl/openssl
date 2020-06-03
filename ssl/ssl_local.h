@@ -2407,66 +2407,37 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_ed448                                     0x0808
 
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_CODE_POINTS_START
-#define TLSEXT_SIGALG_oqs_sig_default \
-      0xfe00 /* private use code point */
-#define TLSEXT_SIGALG_p256_oqs_sig_default \
-      0xfe01 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_oqs_sig_default \
-      0xfe02 /* private use code point */
-#define TLSEXT_SIGALG_dilithium2 \
-      0xfe03 /* private use code point */
-#define TLSEXT_SIGALG_p256_dilithium2 \
-      0xfe04 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_dilithium2 \
-      0xfe05 /* private use code point */
-#define TLSEXT_SIGALG_dilithium3 \
-      0xfe06 /* private use code point */
-#define TLSEXT_SIGALG_p256_dilithium3 \
-      0xfe07 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_dilithium3 \
-      0xfe08 /* private use code point */
-#define TLSEXT_SIGALG_dilithium4 \
-      0xfe09 /* private use code point */
-#define TLSEXT_SIGALG_p384_dilithium4 \
-      0xfe0a /* private use code point */
-#define TLSEXT_SIGALG_falcon512 \
-      0xfe0b /* private use code point */
-#define TLSEXT_SIGALG_p256_falcon512 \
-      0xfe0c /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_falcon512 \
-      0xfe0d /* private use code point */
-#define TLSEXT_SIGALG_falcon1024 \
-      0xfe0e /* private use code point */
-#define TLSEXT_SIGALG_p521_falcon1024 \
-      0xfe0f /* private use code point */
-#define TLSEXT_SIGALG_mqdss3148 \
-      0xfe10 /* private use code point */
-#define TLSEXT_SIGALG_p256_mqdss3148 \
-      0xfe11 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_mqdss3148 \
-      0xfe12 /* private use code point */
-#define TLSEXT_SIGALG_picnicl1fs \
-      0xfe13 /* private use code point */
-#define TLSEXT_SIGALG_p256_picnicl1fs \
-      0xfe14 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_picnicl1fs \
-      0xfe15 /* private use code point */
-#define TLSEXT_SIGALG_picnic2l1fs \
-      0xfe16 /* private use code point */
-#define TLSEXT_SIGALG_p256_picnic2l1fs \
-      0xfe17 /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_picnic2l1fs \
-      0xfe18 /* private use code point */
-#define TLSEXT_SIGALG_qteslapi \
-      0xfe19 /* private use code point */
-#define TLSEXT_SIGALG_p256_qteslapi \
-      0xfe1a /* private use code point */
-#define TLSEXT_SIGALG_rsa3072_qteslapi \
-      0xfe1b /* private use code point */
-#define TLSEXT_SIGALG_qteslapiii \
-      0xfe1c /* private use code point */
-#define TLSEXT_SIGALG_p384_qteslapiii \
-      0xfe1d /* private use code point */
+/* The following are all private use code points */
+#define TLSEXT_SIGALG_oqs_sig_default 0xfe00
+#define TLSEXT_SIGALG_p256_oqs_sig_default 0xfe01
+#define TLSEXT_SIGALG_rsa3072_oqs_sig_default 0xfe02
+#define TLSEXT_SIGALG_dilithium2 0xfe03
+#define TLSEXT_SIGALG_p256_dilithium2 0xfe04
+#define TLSEXT_SIGALG_rsa3072_dilithium2 0xfe05
+#define TLSEXT_SIGALG_dilithium3 0xfe06
+#define TLSEXT_SIGALG_p256_dilithium3 0xfe07
+#define TLSEXT_SIGALG_rsa3072_dilithium3 0xfe08
+#define TLSEXT_SIGALG_dilithium4 0xfe09
+#define TLSEXT_SIGALG_p384_dilithium4 0xfe0a
+#define TLSEXT_SIGALG_falcon512 0xfe0b
+#define TLSEXT_SIGALG_p256_falcon512 0xfe0c
+#define TLSEXT_SIGALG_rsa3072_falcon512 0xfe0d
+#define TLSEXT_SIGALG_falcon1024 0xfe0e
+#define TLSEXT_SIGALG_p521_falcon1024 0xfe0f
+#define TLSEXT_SIGALG_mqdss3148 0xfe10
+#define TLSEXT_SIGALG_p256_mqdss3148 0xfe11
+#define TLSEXT_SIGALG_rsa3072_mqdss3148 0xfe12
+#define TLSEXT_SIGALG_picnicl1fs 0xfe13
+#define TLSEXT_SIGALG_p256_picnicl1fs 0xfe14
+#define TLSEXT_SIGALG_rsa3072_picnicl1fs 0xfe15
+#define TLSEXT_SIGALG_picnic2l1fs 0xfe16
+#define TLSEXT_SIGALG_p256_picnic2l1fs 0xfe17
+#define TLSEXT_SIGALG_rsa3072_picnic2l1fs 0xfe18
+#define TLSEXT_SIGALG_qteslapi 0xfe19
+#define TLSEXT_SIGALG_p256_qteslapi 0xfe1a
+#define TLSEXT_SIGALG_rsa3072_qteslapi 0xfe1b
+#define TLSEXT_SIGALG_qteslapiii 0xfe1c
+#define TLSEXT_SIGALG_p384_qteslapiii 0xfe1d
 ///// OQS_TEMPLATE_FRAGMENT_DEFINE_SIG_CODE_POINTS_END
 
 /* Known PSK key exchange modes */

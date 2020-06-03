@@ -15,4 +15,9 @@ rm -rf build
 mkdir build && cd build
 
 cmake .. -G"Ninja" -DLIBOQS_DIR="${PROJECT_ROOT}/oqs"
-ninja
+
+if [ "x${CIRCLECI}" == "xtrue" ]; then
+    ninja -j4
+else
+    ninja
+fi

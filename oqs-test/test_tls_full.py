@@ -1,22 +1,21 @@
-import helpers
-import oqs_algorithms
+import common
 import pytest
 import sys
 import os
 
-@pytest.fixture(params=oqs_algorithms.signatures)
+@pytest.fixture(params=common.signatures)
 def server(ossl, ossl_config, test_artifacts_dir, request, worker_id):
     # Setup: start ossl server
-    helpers.gen_keys(ossl, ossl_config, request.param, test_artifacts_dir, worker_id)
-    server, port = helpers.start_server(ossl, test_artifacts_dir, request.param, worker_id)
+    common.gen_keys(ossl, ossl_config, request.param, test_artifacts_dir, worker_id)
+    server, port = common.start_server(ossl, test_artifacts_dir, request.param, worker_id)
     # Run tests
     yield (request.param, port)
     # Teardown: stop ossl server
     server.kill()
 
-@pytest.mark.parametrize('kex_name', oqs_algorithms.key_exchanges)
+@pytest.mark.parametrize('kex_name', common.key_exchanges)
 def test_sig_kem_pair(ossl, server, test_artifacts_dir, kex_name, worker_id):
-    client_output = helpers.run_subprocess([ossl, 's_client',
+    client_output = common.run_subprocess([ossl, 's_client',
                                                   '-groups', kex_name,
                                                   '-CAfile', os.path.join(test_artifacts_dir, '{}_{}_CA.crt'.format(worker_id, server[0])),
                                                   '-verify_return_error',

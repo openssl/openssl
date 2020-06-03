@@ -196,7 +196,7 @@ Now we follow the standard instructions for building OpenSSL:
 
 On **Ubuntu**, you need to install the following packages:
 
-	sudo apt install cmake gcc libtool libssl-dev make ninja-build unzip xsltproc gcc-mingw-w64 git
+	sudo apt install cmake gcc libtool libssl-dev make ninja-build unzip gcc-mingw-w64 git
 
 Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choosing):
 

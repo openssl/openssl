@@ -1,13 +1,10 @@
-{% set code_point = namespace(val=65024) %}
+
+/* The following are all private use code points */
 {%- for sig in config['sigs'] %}
     {%- for variant in sig['variants'] %}
-#define TLSEXT_SIGALG_{{ variant['name'] }} \
-      {{ "{0:#0{1}x}".format(code_point.val,6) }} /* private use code point */
-        {%- set code_point.val = code_point.val + 1 -%}
+#define TLSEXT_SIGALG_{{ variant['name'] }} {{ variant['code_point'] }}
         {%- for classical_alg in variant['mix_with'] %}
-#define TLSEXT_SIGALG_{{ classical_alg['name'] }}_{{ variant['name'] }} \
-      {{ "{0:#0{1}x}".format(code_point.val,6) }} /* private use code point */
-        {%- set code_point.val = code_point.val + 1 -%}
+#define TLSEXT_SIGALG_{{ classical_alg['name'] }}_{{ variant['name'] }} {{ classical_alg['code_point'] }}
         {%- endfor %}
     {%- endfor %}
 {%- endfor %}

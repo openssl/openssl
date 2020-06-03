@@ -18,8 +18,8 @@ case "${OSTYPE}" in
     *)        echo "Unknown operating system: $OSTYPE" ; exit 1 ;;
 esac
 make clean
-if [ "x${CIRCLECI}" == "xtrue" ] || [ "x${TRAVIS}" == "xtrue" ]; then
+if [ "x${CIRCLECI}" == "xtrue" ]; then
     make -j2
 else
-    make -j # note make -j fails on OpenSSL <= 1.0.2
+    make -j
 fi

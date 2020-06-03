@@ -1,6 +1,6 @@
 import ossl_algorithms
 import bssl_algorithms
-import helpers
+import common
 import pytest
 import sys
 import subprocess
@@ -8,67 +8,24 @@ import time
 import os
 import psutil
 
-@pytest.fixture()
-def sig_default_server_port(server_prog, server_type, test_artifacts_dir, worker_id):
-    # Setup: start server
-    sig_alg = 'oqs_sig_default'
-    if server_type == "ossl":
-        helpers.gen_openssl_keys(server_prog, os.path.join('apps', 'openssl.cnf'), sig_alg, test_artifacts_dir, worker_id)
-        command = [server_prog, 's_server',
-                                '-cert', os.path.join(test_artifacts_dir, '{}_{}_srv.crt'.format(worker_id, sig_alg)),
-                                '-key', os.path.join(test_artifacts_dir, '{}_{}_srv.key'.format(worker_id, sig_alg)),
-                                '-CAfile', os.path.join(test_artifacts_dir, '{}_{}_CA.crt'.format(worker_id, sig_alg)),
-                                '-tls1_3',
-                                '-quiet',
-                                '-accept', '0']
-    elif server_type == "bssl":
-        command = [server_prog, 'server',
-                                '-accept', '0',
-                                '-sig-alg', sig_alg,
-                                '-loop']
-    print(" > " + " ".join(command))
-    server = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    time.sleep(1)
+PORT_BIND_TIMEOUT = 100
 
-    # Find and return the port that the server is bound to.
-    server_conn = psutil.Process(server.pid).connections()[0]
+@pytest.fixture()
+def sig_default_server_port(server_prog, server_type, client_prog, client_type, test_artifacts_dir, worker_id):
+    server, server_port = common.start_server(server_prog, server_type, client_prog, client_type, test_artifacts_dir, "oqs_sig_default", worker_id)
 
     # Run tests
-    yield server_conn.laddr.port
+    yield server_port
 
     # Teardown: stop server
     server.kill()
 
 @pytest.fixture(params=ossl_algorithms.signatures)
-def parametrized_sig_server(request, server_prog, server_type, test_artifacts_dir, worker_id):
-    sig_alg = request.param
-    if sig_alg not in bssl_algorithms.sig_to_code_point:
-        pytest.skip("{} is unsupported by OQS-BoringSSL.".format(sig_alg))
-
-    # Setup: start server
-    if server_type == "ossl":
-        helpers.gen_openssl_keys(server_prog, os.path.join('apps', 'openssl.cnf'), sig_alg, test_artifacts_dir, worker_id)
-        command = [server_prog, 's_server',
-                                '-cert', os.path.join(test_artifacts_dir, '{}_{}_srv.crt'.format(worker_id, sig_alg)),
-                                '-key', os.path.join(test_artifacts_dir, '{}_{}_srv.key'.format(worker_id, sig_alg)),
-                                '-CAfile', os.path.join(test_artifacts_dir, '{}_{}_CA.crt'.format(worker_id, sig_alg)),
-                                '-tls1_3',
-                                '-quiet',
-                                '-accept', '0']
-    elif server_type == "bssl":
-        command = [server_prog, 'server',
-                                '-accept', '0',
-                                '-sig-alg', sig_alg,
-                                '-loop']
-    print(" > " + " ".join(command))
-    server = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    time.sleep(1)
-
-    # Find and return the port that the server is bound to.
-    server_conn = psutil.Process(server.pid).connections()[0]
+def parametrized_sig_server(request, server_prog, server_type, client_prog, client_type, test_artifacts_dir, worker_id):
+    server, server_port = common.start_server(server_prog, server_type, client_prog, client_type, test_artifacts_dir, request.param, worker_id)
 
     # Run tests
-    yield sig_alg, server_conn.laddr.port
+    yield request.param, server_port
 
     # Teardown: stop server
     server.kill()
@@ -78,7 +35,7 @@ def test_kex(kex_name, test_artifacts_dir, sig_default_server_port, client_prog,
     if kex_name not in bssl_algorithms.kex_to_nid:
         pytest.skip("{} is unsupported by OQS-BoringSSL.".format(kex_name))
     if client_type == "ossl":
-        client_output = helpers.run_subprocess([client_prog, 's_client',
+        client_output = common.run_subprocess([client_prog, 's_client',
                                                              '-groups', kex_name,
                                                              '-connect', 'localhost:{}'.format(sig_default_server_port)],
                                          input='Q'.encode())
@@ -90,7 +47,7 @@ def test_kex(kex_name, test_artifacts_dir, sig_default_server_port, client_prog,
             print(client_output)
             assert False
     elif client_type == "bssl":
-        helpers.run_subprocess([client_prog, '-port', str(sig_default_server_port),
+        common.run_subprocess([client_prog, '-port', str(sig_default_server_port),
                                              '-expect-version', 'TLSv1.3',
                                              '-curves', bssl_algorithms.kex_to_nid[kex_name],
                                              '-expect-curve-id', bssl_algorithms.kex_to_nid[kex_name],
@@ -105,7 +62,7 @@ def test_sig(parametrized_sig_server, client_prog, client_type, test_artifacts_d
 
 
     if client_type == "ossl":
-        client_output = helpers.run_subprocess([client_prog, 's_client',
+        client_output = common.run_subprocess([client_prog, 's_client',
                                                              '-groups', 'oqs_kem_default',
                                                              '-connect', 'localhost:{}'.format(server_port)],
                                          input='Q'.encode())
@@ -113,7 +70,7 @@ def test_sig(parametrized_sig_server, client_prog, client_type, test_artifacts_d
             print(client_output)
             assert False
     elif client_type == "bssl":
-        helpers.run_subprocess([client_prog, '-port', str(server_port),
+        common.run_subprocess([client_prog, '-port', str(server_port),
                                              '-expect-version', 'TLSv1.3',
                                              '-curves', bssl_algorithms.kex_to_nid['oqs_kem_default'],
                                              '-expect-curve-id', bssl_algorithms.kex_to_nid['oqs_kem_default'],

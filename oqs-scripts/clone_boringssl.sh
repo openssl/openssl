@@ -18,4 +18,4 @@ git clone --depth 1 --branch "${BSSL_BRANCH}" --single-branch "${BSSL_REPO}" bor
 
 # The interop tests need to know what is enabled in BoringSSL,
 # and this seems to be the least cumbersome way to do so.
-cp boringssl/oqs_test/oqs_algorithms.py oqs-interop-test/bssl_algorithms.py
+cp boringssl/oqs_test/common.py oqs-interop-test/bssl_algorithms.py
