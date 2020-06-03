@@ -23,6 +23,15 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Renamed EVP_PKEY_cmp() to EVP_PKEY_eq() and
+   EVP_PKEY_cmp_parameters() to EVP_PKEY_parameters_eq().
+   While the old function names have been retained for backward compatibility
+   they should not be used in new developments
+   because their return values are confusing: Unlike other `_cmp()` functions
+   they do not return 0 in case their arguments are equal.
+
+   *David von Oheimb*
+
  * Deprecated EC_METHOD_get_field_type(). Applications should switch to
    EC_GROUP_get_field_type().
 
