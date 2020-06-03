@@ -1409,7 +1409,7 @@ are obsolete since OpenSSL 3.0 and have no effect.
 
 The interactive mode, which could be invoked by running C<openssl>
 with no further arguments, was removed in OpenSSL 3.0, and running
-that program with not arguments is now equivalent to C<openssl help>.
+that program with no arguments is now equivalent to C<openssl help>.
 
 =head1 COPYRIGHT
 
