@@ -66,9 +66,8 @@ const OPTIONS dsaparam_options[] = {
 int dsaparam_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
-    DSA *dsa = NULL;
     BIO *in = NULL, *out = NULL;
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int numbits = -1, num = 0, genkey = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
@@ -181,51 +180,34 @@ int dsaparam_main(int argc, char **argv)
                        "Error, DSA key generation setting bit length failed\n");
             goto end;
         }
-        if (EVP_PKEY_paramgen(ctx, &pkey) <= 0) {
+        if (EVP_PKEY_paramgen(ctx, &params) <= 0) {
             ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
             goto end;
         }
-        dsa = EVP_PKEY_get1_DSA(pkey);
-        if (dsa == NULL) {
-            ERR_print_errors(bio_err);
-            BIO_printf(bio_err, "Error, DSA key extraction failed\n");
-            goto end;
-        }
     } else if (informat == FORMAT_ASN1) {
-        dsa = d2i_DSAparams_bio(in, NULL);
+        params = d2i_KeyParams_bio(EVP_PKEY_DSA, NULL, in);
     } else {
-        dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL);
+        params = PEM_read_bio_Parameters(in, NULL);
     }
-    if (dsa == NULL) {
+    if (params == NULL) {
         BIO_printf(bio_err, "unable to load DSA parameters\n");
         ERR_print_errors(bio_err);
         goto end;
     }
 
-    if (pkey == NULL) {
-        pkey = EVP_PKEY_new();
-        if (pkey == NULL) {
-            BIO_printf(bio_err, "Error, unable to allocate PKEY object\n");
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-        if (!EVP_PKEY_set1_DSA(pkey, dsa)) {
-            BIO_printf(bio_err, "Error, unable to set DSA parameters\n");
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
     if (text) {
-        EVP_PKEY_print_params(out, pkey, 0, NULL);
+        EVP_PKEY_print_params(out, params, 0, NULL);
     }
 
     if (C) {
-        const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+        BIGNUM *p = NULL, *q = NULL, *g = NULL;
         unsigned char *data;
         int len, bits_p;
 
-        DSA_get0_pqg(dsa, &p, &q, &g);
+        EVP_PKEY_get_bn_param(params, "p", &p);
+        EVP_PKEY_get_bn_param(params, "q", &q);
+        EVP_PKEY_get_bn_param(params, "g", &g);
         len = BN_num_bytes(p);
         bits_p = BN_num_bits(p);
 
@@ -261,9 +243,9 @@ int dsaparam_main(int argc, char **argv)
 
     if (!noout) {
         if (outformat == FORMAT_ASN1)
-            i = i2d_DSAparams_bio(out, dsa);
+            i = i2d_KeyParams_bio(out, params);
         else
-            i = PEM_write_bio_DSAparams(out, dsa);
+            i = PEM_write_bio_Parameters(out, params);
         if (!i) {
             BIO_printf(bio_err, "unable to write DSA parameters\n");
             ERR_print_errors(bio_err);
@@ -271,10 +253,8 @@ int dsaparam_main(int argc, char **argv)
         }
     }
     if (genkey) {
-        DSA *dsakey;
-
         EVP_PKEY_CTX_free(ctx);
-        ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL);
+        ctx = EVP_PKEY_CTX_new(params, NULL);
         if (ctx == NULL) {
             ERR_print_errors(bio_err);
             BIO_printf(bio_err,
@@ -291,18 +271,11 @@ int dsaparam_main(int argc, char **argv)
             ERR_print_errors(bio_err);
             goto end;
         }
-        dsakey = EVP_PKEY_get0_DSA(pkey);
-        if (dsakey == NULL) {
-            BIO_printf(bio_err, "unable to extract generated key\n");
-            ERR_print_errors(bio_err);
-            goto end;
-        }
         assert(private);
         if (outformat == FORMAT_ASN1)
-            i = i2d_DSAPrivateKey_bio(out, dsakey);
+            i = i2d_PrivateKey_bio(out, pkey);
         else
-            i = PEM_write_bio_DSAPrivateKey(out, dsakey, NULL, NULL, 0, NULL,
-                                            NULL);
+            i = PEM_write_bio_PrivateKey(out, pkey, NULL, NULL, 0, NULL, NULL);
     }
     ret = 0;
  end:
@@ -310,7 +283,7 @@ int dsaparam_main(int argc, char **argv)
     BIO_free_all(out);
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(pkey);
-    DSA_free(dsa);
+    EVP_PKEY_free(params);
     release_engine(e);
     return ret;
 }
