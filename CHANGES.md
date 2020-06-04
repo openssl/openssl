@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 3 [4 Jun 2020]
 
  * Deprecated EC_METHOD_get_field_type(). Applications should switch to
    EC_GROUP_get_field_type().
