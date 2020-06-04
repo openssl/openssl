@@ -245,7 +245,7 @@ RSA_get_ex_data                         249	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 EVP_PKEY_meth_get_decrypt               250	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 DES_cfb_encrypt                         251	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DES
 CMS_SignerInfo_set1_signer_cert         252	3_0_0	EXIST::FUNCTION:CMS
-X509_CRL_load_http                      253	3_0_0	EXIST::FUNCTION:SOCK
+X509_CRL_load_http                      253	3_0_0	EXIST::FUNCTION:
 ENGINE_register_all_ciphers             254	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
 SXNET_new                               255	3_0_0	EXIST::FUNCTION:
 EVP_camellia_256_ctr                    256	3_0_0	EXIST::FUNCTION:CAMELLIA
@@ -1243,7 +1243,7 @@ TS_REQ_set_cert_req                     1271	3_0_0	EXIST::FUNCTION:TS
 TXT_DB_get_by_index                     1272	3_0_0	EXIST::FUNCTION:
 X509_check_ca                           1273	3_0_0	EXIST::FUNCTION:
 DH_get_2048_224                         1274	3_0_0	EXIST::FUNCTION:DH
-X509_load_http                          1275	3_0_0	EXIST::FUNCTION:SOCK
+X509_load_http                          1275	3_0_0	EXIST::FUNCTION:
 i2d_AUTHORITY_INFO_ACCESS               1276	3_0_0	EXIST::FUNCTION:
 EVP_get_cipherbyname                    1277	3_0_0	EXIST::FUNCTION:
 CONF_dump_fp                            1278	3_0_0	EXIST::FUNCTION:STDIO
