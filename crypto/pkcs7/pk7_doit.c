@@ -57,6 +57,14 @@ static ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7)
     return NULL;
 }
 
+static ASN1_STRING *PKCS7_get_sequence(PKCS7 *p7)
+{
+    if (PKCS7_type_is_other(p7) && p7->d.other
+        && (p7->d.other->type == V_ASN1_SEQUENCE))
+        return p7->d.other->value.sequence;
+    return NULL;
+}
+
 static int PKCS7_bio_add_digest(BIO **pbio, X509_ALGOR *alg)
 {
     BIO *btmp;
@@ -207,6 +215,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     X509_ALGOR *xalg = NULL;
     PKCS7_RECIP_INFO *ri = NULL;
     ASN1_OCTET_STRING *os = NULL;
+    ASN1_STRING *seq = NULL;
 
     if (p7 == NULL) {
         PKCS7err(PKCS7_F_PKCS7_DATAINIT, PKCS7_R_INVALID_NULL_POINTER);
@@ -234,6 +243,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     case NID_pkcs7_signed:
         md_sk = p7->d.sign->md_algs;
         os = PKCS7_get_octet_string(p7->d.sign->contents);
+        if (os == NULL)
+            seq = PKCS7_get_sequence(p7->d.sign->contents);
         break;
     case NID_pkcs7_signedAndEnveloped:
         rsk = p7->d.signed_and_enveloped->recipientinfo;
@@ -324,6 +335,16 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     if (bio == NULL) {
         if (PKCS7_is_detached(p7)) {
             bio = BIO_new(BIO_s_null());
+        } else if (seq) {
+            long len;
+            int tag, xclass;
+            const unsigned char *p = seq->data;
+
+            /* Skip past the SEQUENCE header */
+
+            ASN1_get_object(&p, &len, &tag, &xclass, seq->length);
+
+            bio = BIO_new_mem_buf(p, len);
         } else if (os && os->length > 0) {
             bio = BIO_new_mem_buf(os->data, os->length);
         } else {
