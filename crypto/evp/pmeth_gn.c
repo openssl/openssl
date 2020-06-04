@@ -144,6 +144,8 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     int ret = 0;
     OSSL_CALLBACK cb;
     EVP_PKEY *allocated_pkey = NULL;
+    /* Legacy compatible keygen callback info, only used with provider impls */
+    int gentmp[2];
 
     if (ppkey == NULL)
         return -1;
@@ -164,6 +166,18 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
     if (ctx->op.keymgmt.genctx == NULL)
         goto legacy;
+
+    /*
+     * Asssigning gentmp to ctx->keygen_info is something our legacy
+     * implementations do.  Because the provider implementations aren't
+     * allowed to reach into our EVP_PKEY_CTX, we need to provide similar
+     * space for backward compatibility.  It's ok that we attach a local
+     * variable, as it should only be useful in the calls down from here.
+     * This is cleared as soon as it isn't useful any more, i.e. directly
+     * after the evp_keymgmt_util_gen() call.
+     */
+    ctx->keygen_info = gentmp;
+    ctx->keygen_info_count = 2;
 
     ret = 1;
     if (ctx->pkey != NULL) {
@@ -190,6 +204,8 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         && (evp_keymgmt_util_gen(*ppkey, ctx->keymgmt, ctx->op.keymgmt.genctx,
                                  ossl_callback_to_pkey_gencb, ctx)
             != NULL);
+
+    ctx->keygen_info = NULL;
 
 #ifndef FIPS_MODULE
     /* In case |*ppkey| was originally a legacy key */
