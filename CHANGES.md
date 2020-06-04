@@ -26,7 +26,7 @@ OpenSSL 3.0
  * Dropped interactive mode from the 'openssl' program.  From now on,
    the `openssl` command without arguments is equivalent to `openssl
    help`.
-   
+
    *Richard Levitte*
 
  * Deprecated EC_METHOD_get_field_type(). Applications should switch to
