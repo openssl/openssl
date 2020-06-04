@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Handshake now fails if Extended Master Secret extension is dropped
+   on renegotiation.
+
+   *Tomas Mraz*
+
  * Dropped interactive mode from the 'openssl' program.  From now on,
    the `openssl` command without arguments is equivalent to `openssl
    help`.
