@@ -16,12 +16,15 @@ ERR_print_errors, ERR_print_errors_fp, ERR_print_errors_cb
 
 =head1 DESCRIPTION
 
-ERR_print_errors() is a convenience function that prints the error
+ERR_print_errors() prints the contents of the current
+error stack to the BIO B<bp>, and empties the error queue.
 strings for all errors that OpenSSL has recorded to B<bp>, thus
 emptying the error queue.
+No output is generated if B<bp> is NULL.
 
-ERR_print_errors_fp() is the same, except that the output goes to a
-B<FILE>.
+ERR_print_errors_fp() is the same, except that the output goes to the
+specified B<FILE>.
+No output is generated if B<fp> is NULL.
 
 ERR_print_errors_cb() is the same, except that the callback function,
 B<cb>, is called for each error line with the string, length, and userdata
@@ -32,8 +35,9 @@ The error strings will have the following format:
  [pid]:error:[error code]:[library name]:[function name]:[reason string]:[filename]:[line]:[optional text message]
 
 I<error code> is an 8 digit hexadecimal number. I<library name>,
-I<function name> and I<reason string> are ASCII text, as is I<optional
-text message> if one was set for the respective error code.
+I<function name> and I<reason string> are ASCII text, as is
+I<optional text message>
+if one was set for the respective error code.
 
 If there is no text string registered for the given error code,
 the error string will contain the numeric code.

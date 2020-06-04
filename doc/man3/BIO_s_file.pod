@@ -45,9 +45,9 @@ BIO_eof() calls feof().
 Setting the BIO_CLOSE flag calls fclose() on the stream when the BIO
 is freed.
 
-BIO_new_file() creates a new file BIO with mode B<mode> the meaning
-of B<mode> is the same as the stdio function fopen(). The BIO_CLOSE
-flag is set on the returned BIO.
+BIO_new_file() creates a new file BIO. The B<mode> argument has the
+same meaning as the B<mode> argument to the stdio fopen() function.
+The BIO_CLOSE flag is set on the returned BIO.
 
 BIO_new_fp() creates a file BIO wrapping B<stream>. Flags can be:
 BIO_CLOSE, BIO_NOCLOSE (the close flag) BIO_FP_TEXT (sets the underlying
