@@ -177,6 +177,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
      * after the evp_keymgmt_util_gen() call.
      */
     ctx->keygen_info = gentmp;
+    ctx->keygen_info_count = 2;
 
     ret = 1;
     if (ctx->pkey != NULL) {
