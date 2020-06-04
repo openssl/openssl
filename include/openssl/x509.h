@@ -383,12 +383,10 @@ int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
                      unsigned char *md, unsigned int *len);
 
-# if !defined(OPENSSL_NO_SOCK)
 X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-#  define X509_http_nbio(url) X509_load_http(url, NULL, NULL, 0)
+# define X509_http_nbio(url) X509_load_http(url, NULL, NULL, 0)
 X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout);
-#  define X509_CRL_http_nbio(url) X509_CRL_load_http(url, NULL,  NULL, 0)
-# endif
+# define X509_CRL_http_nbio(url) X509_CRL_load_http(url, NULL,  NULL, 0)
 
 # ifndef OPENSSL_NO_STDIO
 X509 *d2i_X509_fp(FILE *fp, X509 **x509);
