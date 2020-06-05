@@ -288,7 +288,7 @@ static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
 {
     int ret = 0;
     unsigned char *refd;
-    size_t refdatalen;
+    size_t refdatalen = 0;
 
     if (enc)
         refd = multihexstr2buf(recd->ciphertext, &refdatalen);
