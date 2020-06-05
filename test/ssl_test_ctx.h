@@ -110,6 +110,8 @@ typedef struct {
     char *srp_password;
     /* PHA enabled */
     int enable_pha;
+    /* Do not send extms on renegotiation */
+    int no_extms_on_reneg;
 } SSL_TEST_CLIENT_CONF;
 
 typedef struct {
