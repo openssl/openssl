@@ -18,8 +18,6 @@ ERR_print_errors, ERR_print_errors_fp, ERR_print_errors_cb
 
 ERR_print_errors() prints the contents of the current
 error stack to the BIO B<bp>, and empties the error queue.
-strings for all errors that OpenSSL has recorded to B<bp>, thus
-emptying the error queue.
 No output is generated if B<bp> is NULL.
 
 ERR_print_errors_fp() is the same, except that the output goes to the
