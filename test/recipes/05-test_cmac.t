@@ -9,4 +9,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_cmac", "cmactest");
+simple_test("test_cmac", "cmactest", "cmac");
