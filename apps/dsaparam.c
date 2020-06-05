@@ -67,7 +67,7 @@ int dsaparam_main(int argc, char **argv)
 {
     ENGINE *e = NULL;
     BIO *in = NULL, *out = NULL;
-    EVP_PKEY *params, *pkey = NULL;
+    EVP_PKEY *params = NULL, *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     int numbits = -1, num = 0, genkey = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, noout = 0, C = 0;
