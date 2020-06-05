@@ -42,7 +42,8 @@ static void test_fail_string_common(const char *prefix, const char *file,
                                     const char *op, const char *m1, size_t l1,
                                     const char *m2, size_t l2)
 {
-    const size_t width = (MAX_STRING_WIDTH - subtest_level() - 12) / 16 * 16;
+    const size_t width =
+        (MAX_STRING_WIDTH - BIO_get_indent(bio_err) - 12) / 16 * 16;
     char b1[MAX_STRING_WIDTH + 1], b2[MAX_STRING_WIDTH + 1];
     char bdiff[MAX_STRING_WIDTH + 1];
     size_t n1, n2, i;
