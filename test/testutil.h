@@ -496,7 +496,7 @@ void test_output_memory(const char *name, const unsigned char *m, size_t l);
 /*
  * Utilities to parse a test file.
  */
-#define TESTMAXPAIRS        20
+#define TESTMAXPAIRS        150
 
 typedef struct pair_st {
     char *key;

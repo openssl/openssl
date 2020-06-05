@@ -2048,6 +2048,291 @@ static const EVP_TEST_METHOD encode_test_method = {
 
 
 /**
+***  RAND TESTS
+**/
+
+#define MAX_RAND_REPEATS    15
+
+typedef struct rand_data_pass_st {
+    unsigned char *entropy;
+    unsigned char *reseed_entropy;
+    unsigned char *nonce;
+    unsigned char *pers;
+    unsigned char *reseed_addin;
+    unsigned char *addinA;
+    unsigned char *addinB;
+    unsigned char *pr_entropyA;
+    unsigned char *pr_entropyB;
+    unsigned char *output;
+    size_t entropy_len, nonce_len, pers_len, addinA_len, addinB_len,
+           pr_entropyA_len, pr_entropyB_len, output_len, reseed_entropy_len,
+           reseed_addin_len;
+} RAND_DATA_PASS;
+
+typedef struct rand_data_st {
+    /* Context for this operation */
+    EVP_RAND_CTX *ctx;
+    EVP_RAND_CTX *parent;
+    int n;
+    int prediction_resistance;
+    int use_df;
+    unsigned int generate_bits;
+    char *cipher;
+    char *digest;
+
+    /* Expected output */
+    RAND_DATA_PASS data[MAX_RAND_REPEATS];
+} RAND_DATA;
+
+static int rand_test_init(EVP_TEST *t, const char *name)
+{
+    RAND_DATA *rdata;
+    EVP_RAND *rand;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    unsigned int strength = 256;
+
+    if (!TEST_ptr(rdata = OPENSSL_zalloc(sizeof(*rdata))))
+        return 0;
+
+    rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
+    if (rand == NULL)
+        goto err;
+    rdata->parent = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    if (rdata->parent == NULL)
+        goto err;
+
+    *params = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    if (!EVP_RAND_set_ctx_params(rdata->parent, params))
+        goto err;
+
+    rand = EVP_RAND_fetch(NULL, name, NULL);
+    if (rand == NULL)
+        goto err;
+    rdata->ctx = EVP_RAND_CTX_new(rand, rdata->parent);
+    EVP_RAND_free(rand);
+    if (rdata->ctx == NULL)
+        goto err;
+
+    rdata->n = -1;
+    t->data = rdata;
+    return 1;
+ err:
+    EVP_RAND_CTX_free(rdata->parent);
+    OPENSSL_free(rdata);
+    return 0;
+}
+
+static void rand_test_cleanup(EVP_TEST *t)
+{
+    RAND_DATA *rdata = t->data;
+    int i;
+
+    OPENSSL_free(rdata->cipher);
+    OPENSSL_free(rdata->digest);
+
+    for (i = 0; i <= rdata->n; i++) {
+        OPENSSL_free(rdata->data[i].entropy);
+        OPENSSL_free(rdata->data[i].reseed_entropy);
+        OPENSSL_free(rdata->data[i].nonce);
+        OPENSSL_free(rdata->data[i].pers);
+        OPENSSL_free(rdata->data[i].reseed_addin);
+        OPENSSL_free(rdata->data[i].addinA);
+        OPENSSL_free(rdata->data[i].addinB);
+        OPENSSL_free(rdata->data[i].pr_entropyA);
+        OPENSSL_free(rdata->data[i].pr_entropyB);
+        OPENSSL_free(rdata->data[i].output);
+    }
+    EVP_RAND_CTX_free(rdata->ctx);
+    EVP_RAND_CTX_free(rdata->parent);
+}
+
+static int rand_test_parse(EVP_TEST *t,
+                          const char *keyword, const char *value)
+{
+    RAND_DATA *rdata = t->data;
+    RAND_DATA_PASS *item;
+    const char *p;
+    int n;
+
+    if ((p = strchr(keyword, '.')) != NULL) {
+        n = atoi(++p);
+        if (n >= MAX_RAND_REPEATS)
+            return 0;
+        if (n > rdata->n)
+            rdata->n = n;
+        item = rdata->data + n;
+        if (strncmp(keyword, "Entropy.", sizeof("Entropy")) == 0)
+            return parse_bin(value, &item->entropy, &item->entropy_len);
+        if (strncmp(keyword, "ReseedEntropy.", sizeof("ReseedEntropy")) == 0)
+            return parse_bin(value, &item->reseed_entropy,
+                             &item->reseed_entropy_len);
+        if (strncmp(keyword, "Nonce.", sizeof("Nonce")) == 0)
+            return parse_bin(value, &item->nonce, &item->nonce_len);
+        if (strncmp(keyword, "PersonalisationString.",
+                    sizeof("PersonalisationString")) == 0)
+            return parse_bin(value, &item->pers, &item->pers_len);
+        if (strncmp(keyword, "ReseedAdditionalInput.",
+                    sizeof("ReseedAdditionalInput")) == 0)
+            return parse_bin(value, &item->reseed_addin,
+                             &item->reseed_addin_len);
+        if (strncmp(keyword, "AdditionalInputA.",
+                    sizeof("AdditionalInputA")) == 0)
+            return parse_bin(value, &item->addinA, &item->addinA_len);
+        if (strncmp(keyword, "AdditionalInputB.",
+                    sizeof("AdditionalInputB")) == 0)
+            return parse_bin(value, &item->addinB, &item->addinB_len);
+        if (strncmp(keyword, "EntropyPredictionResistanceA.",
+                    sizeof("EntropyPredictionResistanceA")) == 0)
+            return parse_bin(value, &item->pr_entropyA, &item->pr_entropyA_len);
+        if (strncmp(keyword, "EntropyPredictionResistanceB.",
+                    sizeof("EntropyPredictionResistanceB")) == 0)
+            return parse_bin(value, &item->pr_entropyB, &item->pr_entropyB_len);
+        if (strncmp(keyword, "Output.", sizeof("Output")) == 0)
+            return parse_bin(value, &item->output, &item->output_len);
+    } else {
+        if (strcmp(keyword, "Cipher") == 0)
+            return TEST_ptr(rdata->cipher = OPENSSL_strdup(value));
+        if (strcmp(keyword, "Digest") == 0)
+            return TEST_ptr(rdata->digest = OPENSSL_strdup(value));
+        if (strcmp(keyword, "DerivationFunction") == 0) {
+            rdata->use_df = atoi(value) != 0;
+            return 1;
+        }
+        if (strcmp(keyword, "GenerateBits") == 0) {
+            if ((n = atoi(value)) <= 0 || n % 8 != 0)
+                return 0;
+            rdata->generate_bits = (unsigned int)n;
+            return 1;
+        }
+        if (strcmp(keyword, "PredictionResistance") == 0) {
+            rdata->prediction_resistance = atoi(value) != 0;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int rand_test_run(EVP_TEST *t)
+{
+    RAND_DATA *expected = t->data;
+    RAND_DATA_PASS *item;
+    unsigned char *got;
+    size_t got_len = expected->generate_bits / 8;
+    OSSL_PARAM params[5], *p = params;
+    int i = -1, ret = 0;
+    unsigned int strength;
+    unsigned char *z;
+
+    if (!TEST_ptr(got = OPENSSL_malloc(got_len)))
+        return 0;
+
+    *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_USE_DF, &expected->use_df);
+    if (expected->cipher != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+                                                expected->cipher, 0);
+    if (expected->digest != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
+                                                expected->digest, 0);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_MAC, "HMAC", 0);
+    *p = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_set_ctx_params(expected->ctx, params)))
+        goto err;
+
+    strength = EVP_RAND_strength(expected->ctx);
+    for (i = 0; i <= expected->n; i++) {
+        item = expected->data + i;
+
+        p = params;
+        z = item->entropy != NULL ? item->entropy : (unsigned char *)"";
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                                 z, item->entropy_len);
+        z = item->nonce != NULL ? item->nonce : (unsigned char *)"";
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
+                                                 z, item->nonce_len);
+        *p = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params))
+                || !TEST_true(EVP_RAND_instantiate(expected->parent, strength,
+                                                   0, NULL, 0)))
+            goto err;
+
+        z = item->pers != NULL ? item->pers : (unsigned char *)"";
+        if (!TEST_true(EVP_RAND_instantiate
+                           (expected->ctx, strength,
+                            expected->prediction_resistance, z,
+                            item->pers_len)))
+            goto err;
+
+        if (item->reseed_entropy != NULL) {
+            params[0] = OSSL_PARAM_construct_octet_string
+                           (OSSL_RAND_PARAM_TEST_ENTROPY, item->reseed_entropy,
+                            item->reseed_entropy_len);
+            params[1] = OSSL_PARAM_construct_end();
+            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+                goto err;
+
+            if (!TEST_true(EVP_RAND_reseed
+                               (expected->ctx, expected->prediction_resistance,
+                                NULL, 0, item->reseed_addin,
+                                item->reseed_addin_len)))
+                goto err;
+        }
+        if (item->pr_entropyA != NULL) {
+            params[0] = OSSL_PARAM_construct_octet_string
+                           (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyA,
+                            item->pr_entropyA_len);
+            params[1] = OSSL_PARAM_construct_end();
+            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+                goto err;
+        }
+        if (!TEST_true(EVP_RAND_generate
+                           (expected->ctx, got, got_len,
+                            strength, expected->prediction_resistance,
+                            item->addinA, item->addinA_len)))
+            goto err;
+
+        if (item->pr_entropyB != NULL) {
+            params[0] = OSSL_PARAM_construct_octet_string
+                           (OSSL_RAND_PARAM_TEST_ENTROPY, item->pr_entropyB,
+                            item->pr_entropyB_len);
+            params[1] = OSSL_PARAM_construct_end();
+            if (!TEST_true(EVP_RAND_set_ctx_params(expected->parent, params)))
+                return 0;
+        }
+        if (!TEST_true(EVP_RAND_generate
+                           (expected->ctx, got, got_len,
+                            strength, expected->prediction_resistance,
+                            item->addinB, item->addinB_len)))
+            goto err;
+        if (!TEST_mem_eq(got, got_len, item->output, item->output_len))
+            goto err;
+        if (!TEST_true(EVP_RAND_uninstantiate(expected->ctx))
+                || !TEST_true(EVP_RAND_uninstantiate(expected->parent))
+                || !TEST_true(EVP_RAND_verify_zeroization(expected->ctx))
+                || !TEST_int_eq(EVP_RAND_state(expected->ctx),
+                                EVP_RAND_STATE_UNINITIALISED))
+            goto err;
+    }
+    t->err = NULL;
+    ret = 1;
+
+ err:
+    if (ret == 0 && i >= 0)
+        TEST_info("Error in test case %d of %d\n", i, expected->n + 1);
+    OPENSSL_free(got);
+    return ret;
+}
+
+static const EVP_TEST_METHOD rand_test_method = {
+    "RAND",
+    rand_test_init,
+    rand_test_cleanup,
+    rand_test_parse,
+    rand_test_run
+};
+
+
+/**
 ***  KDF TESTS
 **/
 
@@ -2819,6 +3104,7 @@ static const EVP_TEST_METHOD oneshot_digestverify_test_method = {
 **/
 
 static const EVP_TEST_METHOD *evp_test_list[] = {
+    &rand_test_method,
     &cipher_test_method,
     &digest_test_method,
     &digestsign_test_method,
