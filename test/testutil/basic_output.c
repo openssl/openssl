@@ -14,11 +14,11 @@
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 
-/* The are available for any test program */
+/* These are available for any test program */
 BIO *bio_out = NULL;
 BIO *bio_err = NULL;
 
-/* The are available for TAP output only (internally) */
+/* These are available for TAP output only (internally) */
 static BIO *tap_out = NULL;
 static BIO *tap_err = NULL;
 
