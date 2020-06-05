@@ -57,6 +57,7 @@ int ERR_load_DSA_strings(void);
 /*
  * DSA reason codes.
  */
+#  define DSA_R_BAD_FFC_PARAMETERS                         114
 #  define DSA_R_BAD_Q_VALUE                                102
 #  define DSA_R_BN_DECODE_ERROR                            108
 #  define DSA_R_BN_ERROR                                   109

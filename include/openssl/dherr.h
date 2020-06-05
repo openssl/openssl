@@ -62,6 +62,7 @@ int ERR_load_DH_strings(void);
 /*
  * DH reason codes.
  */
+#  define DH_R_BAD_FFC_PARAMETERS                          127
 #  define DH_R_BAD_GENERATOR                               101
 #  define DH_R_BN_DECODE_ERROR                             109
 #  define DH_R_BN_ERROR                                    106

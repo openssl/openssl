@@ -68,7 +68,7 @@ int dh_get_named_group_uid_from_size(int pbits)
      * Just choose an approved safe prime group.
      * The alternative to this is to generate FIPS186-4 domain parameters i.e.
      * return dh_generate_ffc_parameters(ret, prime_len, 0, NULL, cb);
-     * As the FIPS186-4 generated params are for backwards compatability,
+     * As the FIPS186-4 generated params are for backwards compatibility,
      * the safe prime group should be used as the default.
      */
     int nid;
