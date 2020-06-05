@@ -84,7 +84,7 @@ const OPTIONS dhparam_options[] = {
 int dhparam_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
-    DH *dh = NULL;
+    DH *dh = NULL, *alloc_dh = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -216,7 +216,7 @@ int dhparam_main(int argc, char **argv)
                 goto end;
             }
 
-            dh = DSA_dup_DH(dsa);
+            dh = alloc_dh = DSA_dup_DH(dsa);
             DSA_free(dsa);
             BN_GENCB_free(cb);
             if (dh == NULL) {
@@ -256,6 +256,7 @@ int dhparam_main(int argc, char **argv)
                 ERR_print_errors(bio_err);
                 goto end;
             }
+            dh = EVP_PKEY_get0_DH(pkey);
         }
     } else {
         in = bio_open_default(infile, 'r', informat);
@@ -277,7 +278,7 @@ int dhparam_main(int argc, char **argv)
                 goto end;
             }
 
-            dh = DSA_dup_DH(dsa);
+            dh = alloc_dh = DSA_dup_DH(dsa);
             DSA_free(dsa);
             if (dh == NULL) {
                 ERR_print_errors(bio_err);
@@ -291,13 +292,13 @@ int dhparam_main(int argc, char **argv)
                  * We have no PEM header to determine what type of DH params it
                  * is. We'll just try both.
                  */
-                dh = ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, in, NULL);
+                dh = alloc_dh = ASN1_d2i_bio_of(DH, DH_new, d2i_DHparams, in, NULL);
                 /* BIO_reset() returns 0 for success for file BIOs only!!! */
                 if (dh == NULL && BIO_reset(in) == 0)
-                    dh = ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, in, NULL);
+                    dh = alloc_dh = ASN1_d2i_bio_of(DH, DH_new, d2i_DHxparams, in, NULL);
             } else {
                 /* informat == FORMAT_PEM */
-                dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
+                dh = alloc_dh = PEM_read_bio_DHparams(in, NULL, NULL, NULL);
             }
 
             if (dh == NULL) {
@@ -389,6 +390,7 @@ int dhparam_main(int argc, char **argv)
     }
     ret = 0;
  end:
+    DH_free(alloc_dh);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
