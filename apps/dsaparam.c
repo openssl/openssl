@@ -149,7 +149,6 @@ int dsaparam_main(int argc, char **argv)
 
     ctx = EVP_PKEY_CTX_new_from_name(NULL, "DSA", NULL);
     if (ctx == NULL) {
-        ERR_print_errors(bio_err);
         BIO_printf(bio_err,
                    "Error, DSA parameter generation context allocation failed\n");
         goto end;
@@ -169,19 +168,16 @@ int dsaparam_main(int argc, char **argv)
             BIO_printf(bio_err, "This could take some time\n");
         }
         if (EVP_PKEY_paramgen_init(ctx) <= 0) {
-            ERR_print_errors(bio_err);
             BIO_printf(bio_err,
                        "Error, DSA key generation paramgen init failed\n");
             goto end;
         }
         if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
-            ERR_print_errors(bio_err);
             BIO_printf(bio_err,
                        "Error, DSA key generation setting bit length failed\n");
             goto end;
         }
         if (EVP_PKEY_paramgen(ctx, &params) <= 0) {
-            ERR_print_errors(bio_err);
             BIO_printf(bio_err, "Error, DSA key generation failed\n");
             goto end;
         }
@@ -191,8 +187,7 @@ int dsaparam_main(int argc, char **argv)
         params = PEM_read_bio_Parameters(in, NULL);
     }
     if (params == NULL) {
-        BIO_printf(bio_err, "unable to load DSA parameters\n");
-        ERR_print_errors(bio_err);
+        BIO_printf(bio_err, "Error, unable to load DSA parameters\n");
         goto end;
     }
 
@@ -247,8 +242,7 @@ int dsaparam_main(int argc, char **argv)
         else
             i = PEM_write_bio_Parameters(out, params);
         if (!i) {
-            BIO_printf(bio_err, "unable to write DSA parameters\n");
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error, unable to write DSA parameters\n");
             goto end;
         }
     }
@@ -256,19 +250,17 @@ int dsaparam_main(int argc, char **argv)
         EVP_PKEY_CTX_free(ctx);
         ctx = EVP_PKEY_CTX_new(params, NULL);
         if (ctx == NULL) {
-            ERR_print_errors(bio_err);
             BIO_printf(bio_err,
                        "Error, DSA key generation context allocation failed\n");
             goto end;
         }
         if (!EVP_PKEY_keygen_init(ctx)) {
-            BIO_printf(bio_err, "unable to initialise for key generation\n");
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err,
+                       "Error, unable to initialise for key generation\n");
             goto end;
         }
         if (!EVP_PKEY_keygen(ctx, &pkey)) {
-            BIO_printf(bio_err, "unable to generate key\n");
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error, unable to generate key\n");
             goto end;
         }
         assert(private);
@@ -279,6 +271,8 @@ int dsaparam_main(int argc, char **argv)
     }
     ret = 0;
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_CTX_free(ctx);
