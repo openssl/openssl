@@ -177,7 +177,7 @@ int dhparam_main(int argc, char **argv)
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     if (dsaparam && g) {
         BIO_printf(bio_err,
-                   "generator may not be chosen for DSA parameters\n");
+                   "Error, generator may not be chosen for DSA parameters\n");
         goto end;
     }
 #endif
@@ -198,10 +198,8 @@ int dhparam_main(int argc, char **argv)
             DSA *dsa = DSA_new();
             BN_GENCB *cb  = BN_GENCB_new();
 
-            if (cb == NULL) {
-                ERR_print_errors(bio_err);
+            if (cb == NULL)
                 goto end;
-            }
 
             BN_GENCB_set(cb, dh_cb, bio_err);
 
@@ -212,23 +210,20 @@ int dhparam_main(int argc, char **argv)
                                                cb)) {
                 DSA_free(dsa);
                 BN_GENCB_free(cb);
-                ERR_print_errors(bio_err);
+                BIO_printf(bio_err, "Error, unable to generate DSA parameters\n");
                 goto end;
             }
 
             dh = alloc_dh = DSA_dup_DH(dsa);
             DSA_free(dsa);
             BN_GENCB_free(cb);
-            if (dh == NULL) {
-                ERR_print_errors(bio_err);
+            if (dh == NULL)
                 goto end;
-            }
         } else
 #endif
         {
             ctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL);
             if (ctx == NULL) {
-                ERR_print_errors(bio_err);
                 BIO_printf(bio_err,
                            "Error, DH key generation context allocation failed\n");
                 goto end;
@@ -242,18 +237,15 @@ int dhparam_main(int argc, char **argv)
             if (!EVP_PKEY_paramgen_init(ctx)) {
                 BIO_printf(bio_err,
                            "Error, unable to initialise DH param generation\n");
-                ERR_print_errors(bio_err);
                 goto end;
             }
 
             if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num)) {
                 BIO_printf(bio_err, "Error, unable to set DH prime length\n");
-                ERR_print_errors(bio_err);
                 goto end;
             }
             if (!EVP_PKEY_paramgen(ctx, &pkey)) {
                 BIO_printf(bio_err, "Error, DH generation failed\n");
-                ERR_print_errors(bio_err);
                 goto end;
             }
             dh = EVP_PKEY_get0_DH(pkey);
@@ -273,17 +265,14 @@ int dhparam_main(int argc, char **argv)
                 dsa = PEM_read_bio_DSAparams(in, NULL, NULL, NULL);
 
             if (dsa == NULL) {
-                BIO_printf(bio_err, "unable to load DSA parameters\n");
-                ERR_print_errors(bio_err);
+                BIO_printf(bio_err, "Error, unable to load DSA parameters\n");
                 goto end;
             }
 
             dh = alloc_dh = DSA_dup_DH(dsa);
             DSA_free(dsa);
-            if (dh == NULL) {
-                ERR_print_errors(bio_err);
+            if (dh == NULL)
                 goto end;
-            }
         } else
 #endif
         {
@@ -302,8 +291,7 @@ int dhparam_main(int argc, char **argv)
             }
 
             if (dh == NULL) {
-                BIO_printf(bio_err, "unable to load DH parameters\n");
-                ERR_print_errors(bio_err);
+                BIO_printf(bio_err, "Error, unable to load DH parameters\n");
                 goto end;
             }
         }
@@ -315,8 +303,7 @@ int dhparam_main(int argc, char **argv)
 
     if (check) {
         if (!EVP_PKEY_param_check(ctx) /* DH_check(dh, &i) */) {
-            ERR_print_errors(bio_err);
-            BIO_printf(bio_err, "ERROR: Invalid parameters generated\n");
+            BIO_printf(bio_err, "Error, invalid parameters generated\n");
             goto end;
         }
         BIO_printf(bio_err, "DH parameters appear to be ok.\n");
@@ -325,7 +312,7 @@ int dhparam_main(int argc, char **argv)
              * We have generated parameters but DH_check() indicates they are
              * invalid! This should never happen!
              */
-            BIO_printf(bio_err, "ERROR: Invalid parameters generated\n");
+            BIO_printf(bio_err, "Error, invalid parameters generated\n");
             goto end;
         }
     }
@@ -383,13 +370,14 @@ int dhparam_main(int argc, char **argv)
             i = PEM_write_bio_DHparams(out, dh);
         }
         if (!i) {
-            BIO_printf(bio_err, "unable to write DH parameters\n");
-            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Error, unable to write DH parameters\n");
             goto end;
         }
     }
     ret = 0;
  end:
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     DH_free(alloc_dh);
     BIO_free(in);
     BIO_free_all(out);
