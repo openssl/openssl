@@ -310,6 +310,13 @@ int dhparam_main(int argc, char **argv)
         EVP_PKEY_print_params(out, pkey, 4, NULL);
 
     if (check) {
+        EVP_PKEY_CTX_free(ctx);
+        ctx = EVP_PKEY_CTX_new(pkey. NULL);
+        if (ctx == NULL) {
+            BIO_printf(bio_err,
+                       "Error, DH key check context allocation failed\n");
+            goto end;
+        }
         if (!EVP_PKEY_param_check(ctx) /* DH_check(dh, &i) */) {
             BIO_printf(bio_err, "Error, invalid parameters generated\n");
             goto end;
