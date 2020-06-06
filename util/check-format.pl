@@ -1074,7 +1074,11 @@ while (<>) { # loop over all lines of all input files
         $hanging_offset = 0; # compensate for this in case macro ends, e.g., as 'while (0)'
     }
 
-    unless (m/^\s*$/) { # essentially empty line: just whitespace (and maybe a '\')
+    unless (m/^\s*$/) { # not essentially empty line: just whitespace (and maybe a '\')
+        if ($line_before > 0) {
+            my $linediff = $line - $line_before - 1;
+            report("$linediff empty lines before") if $linediff > 1;
+        }
         $line_before2      = $line_before;
         $contents_before2  = $contents_before;
         $contents_before_2 = $contents_before_;
