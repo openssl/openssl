@@ -317,19 +317,11 @@ int dhparam_main(int argc, char **argv)
                        "Error, DH key check context allocation failed\n");
             goto end;
         }
-        if (!EVP_PKEY_param_check(ctx) /* DH_check(dh, &i) */) {
+        if (!EVP_PKEY_param_check(ctx)) {
             BIO_printf(bio_err, "Error, invalid parameters generated\n");
             goto end;
         }
         BIO_printf(bio_err, "DH parameters appear to be ok.\n");
-        if (num != 0) {
-            /*
-             * We have generated parameters but DH_check() indicates they are
-             * invalid! This should never happen!
-             */
-            BIO_printf(bio_err, "Error, invalid parameters generated\n");
-            goto end;
-        }
     }
     if (C) {
         unsigned char *data;
