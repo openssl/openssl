@@ -205,6 +205,8 @@ static void setup_trace(const char *str)
 }
 #endif /* OPENSSL_NO_TRACE */
 
+static char *help_argv[] = { "help" };
+
 int main(int argc, char *argv[])
 {
     FUNCTION f, *fp;
@@ -268,7 +270,7 @@ int main(int argc, char *argv[])
     /* If there's a command, run with that, otherwise "help". */
     ret = argc > 0
         ? do_cmd(prog, argc, argv)
-        : help_main(argc, argv);
+        : do_cmd(prog, 1, help_argv);
 
  end:
     app_providers_cleanup();
