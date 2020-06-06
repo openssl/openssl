@@ -85,6 +85,7 @@ int dhparam_main(int argc, char **argv)
 {
     BIO *in = NULL, *out = NULL;
     DH *dh = NULL, *alloc_dh = NULL;
+    DSA *dsa = NULL;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
@@ -195,29 +196,19 @@ int dhparam_main(int argc, char **argv)
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         if (dsaparam) {
-            DSA *dsa = DSA_new();
-            BN_GENCB *cb  = BN_GENCB_new();
+            BN_GENCB *cb  = NULL;
+            int ok;
 
-            if (cb == NULL)
+            if ((dsa = DSA_new()) == NULL
+                || (cb = BN_GENCB_new()) == NULL)
                 goto end;
-
-            BN_GENCB_set(cb, dh_cb, bio_err);
 
             BIO_printf(bio_err,
                        "Generating DSA parameters, %d bit long prime\n", num);
-            if (dsa == NULL
-                || !DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL,
-                                               cb)) {
-                DSA_free(dsa);
-                BN_GENCB_free(cb);
-                BIO_printf(bio_err, "Error, unable to generate DSA parameters\n");
-                goto end;
-            }
-
-            dh = alloc_dh = DSA_dup_DH(dsa);
-            DSA_free(dsa);
+            BN_GENCB_set(cb, dh_cb, bio_err);
+            ok = DSA_generate_parameters_ex(dsa, num, NULL, 0, NULL, NULL, cb);
             BN_GENCB_free(cb);
-            if (dh == NULL)
+            if (!ok)
                 goto end;
         } else
 #endif
@@ -272,11 +263,6 @@ int dhparam_main(int argc, char **argv)
                 BIO_printf(bio_err, "Error, unable to load DSA parameters\n");
                 goto end;
             }
-
-            dh = alloc_dh = DSA_dup_DH(dsa);
-            DSA_free(dsa);
-            if (dh == NULL)
-                goto end;
         } else
 #endif
         {
@@ -299,8 +285,17 @@ int dhparam_main(int argc, char **argv)
                 goto end;
             }
         }
-        /* dh != NULL */
     }
+
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+    if (dsaparam) {
+        dh = alloc_dh = DSA_dup_DH(dsa);
+        DSA_free(dsa);
+    }
+#endif
+
+    if (dh == NULL)
+        goto end;
 
     if (text)
         EVP_PKEY_print_params(out, pkey, 4, NULL);
@@ -383,6 +378,7 @@ int dhparam_main(int argc, char **argv)
     if (ret != 0)
         ERR_print_errors(bio_err);
     DH_free(alloc_dh);
+    DSA_free(dsa);
     BIO_free(in);
     BIO_free_all(out);
     EVP_PKEY_free(pkey);
