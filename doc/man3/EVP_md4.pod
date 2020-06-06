@@ -14,7 +14,8 @@ EVP_md4
 =head1 DESCRIPTION
 
 MD4 is a cryptographic hash function standardized in RFC 1320 and designed by
-Ronald Rivest, first published in 1990.
+Ronald Rivest, first published in 1990. This implementation is only available
+with the legacy provider.
 
 =over 4
 
@@ -38,6 +39,7 @@ IETF RFC 1320.
 =head1 SEE ALSO
 
 L<evp(7)>,
+L<provider(7)>,
 L<EVP_DigestInit(3)>
 
 =head1 COPYRIGHT
