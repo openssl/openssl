@@ -297,6 +297,15 @@ int dhparam_main(int argc, char **argv)
     if (dh == NULL)
         goto end;
 
+    /* If |pkey| is non-NULL, we know it contains |dh| */
+    if (pkey == NULL) {
+        if ((pkey = EVP_PKEY_new()) == NULL
+            || !EVP_PKEY_assign_DH(pkey, dh))
+            goto end;
+    }
+
+    /* At this point, |pkey| contains |dh|, without a doubt */
+
     if (text)
         EVP_PKEY_print_params(out, pkey, 4, NULL);
 
