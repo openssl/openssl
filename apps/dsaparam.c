@@ -160,8 +160,6 @@ int dsaparam_main(int argc, char **argv)
                        "         Your key size is %d! Larger key size may behave not as expected.\n",
                        OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
 
-        EVP_PKEY_CTX_set_cb(ctx, gendsa_cb);
-        EVP_PKEY_CTX_set_app_data(ctx, bio_err);
         if (verbose) {
             BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
                        num);
@@ -172,6 +170,8 @@ int dsaparam_main(int argc, char **argv)
                        "Error, DSA key generation paramgen init failed\n");
             goto end;
         }
+        EVP_PKEY_CTX_set_cb(ctx, gendsa_cb);
+        EVP_PKEY_CTX_set_app_data(ctx, bio_err);
         if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
             BIO_printf(bio_err,
                        "Error, DSA key generation setting bit length failed\n");

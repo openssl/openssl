@@ -228,8 +228,6 @@ int dhparam_main(int argc, char **argv)
                            "Error, DH key generation context allocation failed\n");
                 goto end;
             }
-            EVP_PKEY_CTX_set_cb(ctx, gendh_cb);
-            EVP_PKEY_CTX_set_app_data(ctx, bio_err);
             BIO_printf(bio_err,
                        "Generating DH parameters, %d bit long safe prime, generator %d\n",
                        num, g);
@@ -240,8 +238,14 @@ int dhparam_main(int argc, char **argv)
                 goto end;
             }
 
+            EVP_PKEY_CTX_set_cb(ctx, gendh_cb);
+            EVP_PKEY_CTX_set_app_data(ctx, bio_err);
             if (!EVP_PKEY_CTX_set_dh_paramgen_prime_len(ctx, num)) {
                 BIO_printf(bio_err, "Error, unable to set DH prime length\n");
+                goto end;
+            }
+            if (!EVP_PKEY_CTX_set_dh_paramgen_generator(ctx, g)) {
+                BIO_printf(bio_err, "Error, unable to set DH generator\n");
                 goto end;
             }
             if (!EVP_PKEY_paramgen(ctx, &pkey)) {
