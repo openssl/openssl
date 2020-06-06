@@ -1233,10 +1233,13 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
                 }
                 if (result == NULL)
                     result = tmp_result;
+                if (result == NULL) /* e.g., PKCS#12 file decryption error */
+                    break;
             }
         }
 
-        if (*matchcount == 1 && matching_handlers[0]->repeatable) {
+        if (result != NULL
+                && *matchcount == 1 && matching_handlers[0]->repeatable) {
             ctx->_.file.last_handler = matching_handlers[0];
             ctx->_.file.last_handler_ctx = handler_ctx;
         }
