@@ -217,6 +217,7 @@ int do_X509_REQ_verify(X509_REQ *x, EVP_PKEY *pkey,
                        STACK_OF(OPENSSL_STRING) *vfyopts);
 int do_X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md,
                      STACK_OF(OPENSSL_STRING) *sigopts);
+EVP_PKEY *do_gendsa_params(EVP_PKEY_CTX *ctx, int numbits, int verbose);
 
 extern char *psk_key;
 

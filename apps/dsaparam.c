@@ -154,33 +154,7 @@ int dsaparam_main(int argc, char **argv)
         goto end;
     }
     if (numbits > 0) {
-        if (numbits > OPENSSL_DSA_MAX_MODULUS_BITS)
-            BIO_printf(bio_err,
-                       "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
-                       "         Your key size is %d! Larger key size may behave not as expected.\n",
-                       OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
-
-        if (verbose) {
-            BIO_printf(bio_err, "Generating DSA parameters, %d bit long prime\n",
-                       num);
-            BIO_printf(bio_err, "This could take some time\n");
-        }
-        if (EVP_PKEY_paramgen_init(ctx) <= 0) {
-            BIO_printf(bio_err,
-                       "Error, DSA key generation paramgen init failed\n");
-            goto end;
-        }
-        EVP_PKEY_CTX_set_cb(ctx, gendsa_cb);
-        EVP_PKEY_CTX_set_app_data(ctx, bio_err);
-        if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, num)) {
-            BIO_printf(bio_err,
-                       "Error, DSA key generation setting bit length failed\n");
-            goto end;
-        }
-        if (EVP_PKEY_paramgen(ctx, &params) <= 0) {
-            BIO_printf(bio_err, "Error, DSA key generation failed\n");
-            goto end;
-        }
+        params = do_gendsa_params(ctx, numbits, verbose);
     } else if (informat == FORMAT_ASN1) {
         params = d2i_KeyParams_bio(EVP_PKEY_DSA, NULL, in);
     } else {
@@ -299,4 +273,42 @@ static int gendsa_cb(EVP_PKEY_CTX *ctx)
     BIO_write(b, &c, 1);
     (void)BIO_flush(b);
     return 1;
+}
+
+EVP_PKEY *do_gendsa_params(EVP_PKEY_CTX *ctx, int numbits, int v)
+{
+    EVP_PKEY *pkey = NULL;
+
+    if (numbits > OPENSSL_DSA_MAX_MODULUS_BITS)
+        BIO_printf(bio_err,
+                   "Warning: It is not recommended to use more than %d bit for DSA keys.\n"
+                   "         Your key size is %d! Larger key size may behave not as expected.\n",
+                   OPENSSL_DSA_MAX_MODULUS_BITS, numbits);
+
+    if (v) {
+        BIO_printf(bio_err,
+                   "Generating DSA parameters, %d bit long prime\n"
+                   "This could take some time\n",
+                   numbits);
+    }
+    if (EVP_PKEY_paramgen_init(ctx) <= 0) {
+        BIO_printf(bio_err,
+                   "Error, DSA key generation paramgen init failed\n");
+        goto err;
+    }
+    EVP_PKEY_CTX_set_cb(ctx, gendsa_cb);
+    EVP_PKEY_CTX_set_app_data(ctx, bio_err);
+    if (!EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx, numbits)) {
+        BIO_printf(bio_err,
+                   "Error, DSA key generation setting bit length failed\n");
+        goto err;
+    }
+    if (EVP_PKEY_paramgen(ctx, &pkey) <= 0) {
+        BIO_printf(bio_err, "Error, DSA key generation failed\n");
+        goto err;
+    }
+    return pkey;
+ err:
+    EVP_PKEY_free(pkey);
+    return NULL;
 }
