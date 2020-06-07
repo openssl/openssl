@@ -87,7 +87,6 @@ typedef struct {
     int key_set;                /* Set if key initialised */
     int iv_set;                 /* Set if an iv is set */
     OCB128_CONTEXT ocb;
-    unsigned char *iv;          /* Temporary IV store */
     unsigned char tag[16];
     unsigned char data_buf[16]; /* Store partial data blocks */
     unsigned char aad_buf[16];  /* Store partial AAD blocks */
@@ -530,7 +529,7 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * If we have an iv we can set it directly, otherwise use saved IV.
          */
         if (iv == NULL && octx->iv_set)
-            iv = octx->iv;
+            iv = ctx->iv;
         if (iv) {
             if (CRYPTO_ocb128_setiv(&octx->ocb, iv, octx->ivlen, octx->taglen)
                 != 1)
@@ -543,7 +542,7 @@ static int aesni_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         if (octx->key_set)
             CRYPTO_ocb128_setiv(&octx->ocb, iv, octx->ivlen, octx->taglen);
         else
-            memcpy(octx->iv, iv, octx->ivlen);
+            memcpy(ctx->iv, iv, octx->ivlen);
         octx->iv_set = 1;
     }
     return 1;
@@ -953,7 +952,7 @@ static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * If we have an iv we can set it directly, otherwise use saved IV.
          */
         if (iv == NULL && octx->iv_set)
-            iv = octx->iv;
+            iv = ctx->iv;
         if (iv) {
             if (CRYPTO_ocb128_setiv(&octx->ocb, iv, octx->ivlen, octx->taglen)
                 != 1)
@@ -966,7 +965,7 @@ static int aes_t4_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         if (octx->key_set)
             CRYPTO_ocb128_setiv(&octx->ocb, iv, octx->ivlen, octx->taglen);
         else
-            memcpy(octx->iv, iv, octx->ivlen);
+            memcpy(ctx->iv, iv, octx->ivlen);
         octx->iv_set = 1;
     }
     return 1;
@@ -3804,8 +3803,7 @@ typedef struct {
         double align;
         AES_KEY ks;
     } ks;
-    /* Indicates if IV has been set */
-    unsigned char *iv;
+    int iv_set;
 } EVP_AES_WRAP_CTX;
 
 static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
@@ -3821,12 +3819,11 @@ static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         else
             AES_set_decrypt_key(key, EVP_CIPHER_CTX_key_length(ctx) * 8,
                                 &wctx->ks.ks);
-        if (!iv)
-            wctx->iv = NULL;
     }
+    wctx->iv_set = 0;
     if (iv) {
         memcpy(EVP_CIPHER_CTX_iv_noconst(ctx), iv, EVP_CIPHER_CTX_iv_length(ctx));
-        wctx->iv = EVP_CIPHER_CTX_iv_noconst(ctx);
+        wctx->iv_set = 1;
     }
     return 1;
 }
@@ -3868,19 +3865,23 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     if (pad) {
         if (EVP_CIPHER_CTX_encrypting(ctx))
-            rv = CRYPTO_128_wrap_pad(&wctx->ks.ks, wctx->iv,
+            rv = CRYPTO_128_wrap_pad(&wctx->ks.ks,
+                                     wctx->iv_set ? ctx->iv : NULL,
                                      out, in, inlen,
                                      (block128_f) AES_encrypt);
         else
-            rv = CRYPTO_128_unwrap_pad(&wctx->ks.ks, wctx->iv,
+            rv = CRYPTO_128_unwrap_pad(&wctx->ks.ks,
+                                       wctx->iv_set ? ctx->iv : NULL,
                                        out, in, inlen,
                                        (block128_f) AES_decrypt);
     } else {
         if (EVP_CIPHER_CTX_encrypting(ctx))
-            rv = CRYPTO_128_wrap(&wctx->ks.ks, wctx->iv,
+            rv = CRYPTO_128_wrap(&wctx->ks.ks,
+                                 wctx->iv_set ? ctx->iv : NULL,
                                  out, in, inlen, (block128_f) AES_encrypt);
         else
-            rv = CRYPTO_128_unwrap(&wctx->ks.ks, wctx->iv,
+            rv = CRYPTO_128_unwrap(&wctx->ks.ks,
+                                   wctx->iv_set ? ctx->iv : NULL,
                                    out, in, inlen, (block128_f) AES_decrypt);
     }
     return rv ? (int)rv : -1;
@@ -3986,7 +3987,6 @@ static int aes_ocb_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         octx->key_set = 0;
         octx->iv_set = 0;
         octx->ivlen = EVP_CIPHER_iv_length(c->cipher);
-        octx->iv = EVP_CIPHER_CTX_iv_noconst(c);
         octx->taglen = 16;
         octx->data_buf_len = 0;
         octx->aad_buf_len = 0;
@@ -4122,7 +4122,7 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
          * If we have an iv we can set it directly, otherwise use saved IV.
          */
         if (iv == NULL && octx->iv_set)
-            iv = octx->iv;
+            iv = ctx->iv;
         if (iv) {
             if (CRYPTO_ocb128_setiv(&octx->ocb, iv, octx->ivlen, octx->taglen)
                 != 1)
@@ -4135,7 +4135,7 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         if (octx->key_set)
             CRYPTO_ocb128_setiv(&octx->ocb, iv, octx->ivlen, octx->taglen);
         else
-            memcpy(octx->iv, iv, octx->ivlen);
+            memcpy(ctx->iv, iv, octx->ivlen);
         octx->iv_set = 1;
     }
     return 1;
