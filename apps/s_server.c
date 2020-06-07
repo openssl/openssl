@@ -3183,7 +3183,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
                  * we're expecting to come from the client. If they haven't
                  * sent one there's not much we can do.
                  */
-                BIO_gets(io, buf, bufsize - 1);
+                BIO_read(io, buf, bufsize - 1);
             }
 
             BIO_puts(io,

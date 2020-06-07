@@ -488,6 +488,10 @@ void apps_ssl_info_callback(const SSL *s, int where, int ret)
         else if (ret < 0)
             BIO_printf(bio_err, "%s:error in %s\n",
                        str, SSL_state_string_long(s));
+    } else if (where & SSL_CB_HANDSHAKE_START) {
+        BIO_puts(bio_err, "TLS handshake: start\n");
+    } else if (where & SSL_CB_HANDSHAKE_DONE) {
+        BIO_puts(bio_err, "TLS handshake: done\n");
     }
 }
 
