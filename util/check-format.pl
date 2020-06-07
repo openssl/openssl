@@ -1075,11 +1075,11 @@ while (<>) { # loop over all lines of all input files
     }
 
     if (m/^\s*$/) { # essentially empty line: just whitespace (and maybe a '\')
-            report("empty line at beginnig of file") if $line == 1;
+            report("empty line at beginnig of file") if $line == 1 && !$sloppy_SPC;
     } else {
         if ($line_before > 0) {
             my $linediff = $line - $line_before - 1;
-            report("$linediff empty lines before") if $linediff > 1;
+            report("$linediff empty lines before") if $linediff > 1 && !$sloppy_SPC;
         }
         $line_before2      = $line_before;
         $contents_before2  = $contents_before;
@@ -1103,7 +1103,7 @@ while (<>) { # loop over all lines of all input files
     if (eof) {
         # check for essentially empty line (which may include a '\') just before EOF
         report(($1 eq "\n" ? "empty line" : $2 ne "" ? "'\\'" : "whitespace")." at EOF")
-            if $contents =~ m/^(\s*(\\?)\s*)$/;
+            if $contents =~ m/^(\s*(\\?)\s*)$/ && !$sloppy_SPC;
 
         # report unclosed expression-level nesting
         check_nested_nonblock_indents("expr at EOF"); # also adapts @nested_block_indents
