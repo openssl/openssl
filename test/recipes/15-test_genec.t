@@ -106,9 +106,9 @@ my @binary_curves = qw(
     Oakley-EC2N-4
 );
 
-my @other_curves = qw(
-    SM2
-);
+my @other_curves = ();
+push(@other_curves, 'SM2')
+    if !disabled("sm2");
 
 my @curve_aliases = qw(
     P-256
