@@ -14,6 +14,10 @@ use warnings;
 BEGIN {
     $ENV{HARNESS_VERBOSE} = "yes" if $ENV{VERBOSE} || $ENV{V};
     $ENV{HARNESS_VERBOSE_FAILURE} = "yes" if $ENV{VERBOSE_FAILURE} || $ENV{VF};
+    $ENV{HARNESS_VERBOSE_FAILURES_ONLY} = "yes"
+        if $ENV{VERBOSE_FAILURES_ONLY} || $ENV{VFO};
+    $ENV{HARNESS_VERBOSE_FAILURES_PROGRESS} = "yes"
+        if $ENV{VERBOSE_FAILURES_PROGRESS} || $ENV{VFP};
 }
 
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
@@ -45,8 +49,10 @@ my %tapargs =
 # TAP::Parser::OpenSSL implementation further down
 my %openssl_args = ();
 
-$openssl_args{'failure_verbosity'} =
-    $ENV{HARNESS_VERBOSE_FAILURE} && $tapargs{verbosity} < 1 ? 1 : 0;
+$openssl_args{'failure_verbosity'} = $ENV{HARNESS_VERBOSE} ? 0 :
+    $ENV{HARNESS_VERBOSE_FAILURE} ? 3 :
+    $ENV{HARNESS_VERBOSE_FAILURES_PROGRESS} ? 2 :
+    $ENV{HARNESS_VERBOSE_FAILURES_ONLY} ? 1 : 0;
 
 my $outfilename = $ENV{HARNESS_TAP_COPY};
 open $openssl_args{'tap_copy'}, ">$outfilename"
@@ -110,7 +116,7 @@ sub find_matching_tests {
 
 # The following is quite a bit of hackery to adapt to both TAP::Harness
 # and Test::Harness, depending on what's available.
-# The TAP::Harness hack allows support for HARNESS_VERBOSE_FAILURE and
+# The TAP::Harness hack allows support for HARNESS_VERBOSE_FAILURE* and
 # HARNESS_TAP_COPY, while the Test::Harness hack can't, because the pre
 # TAP::Harness Test::Harness simply doesn't have support for this sort of
 # thing.
@@ -127,26 +133,55 @@ $eres = eval {
     sub new {
         my $class = shift;
         my %opts = %{ shift() };
+        my $failure_verbosity = $openssl_args{failure_verbosity};
+        print "\n" if $failure_verbosity == 1 || $failure_verbosity == 2;
+        my @plans = (); # initial level, no plan yet
+        my $output_buffer = "";
 
         # We rely heavily on perl closures to make failure verbosity work
         # We need to do so, because there's no way to safely pass extra
         # objects down all the way to the TAP::Parser::Result object
         my @failure_output = ();
         my %callbacks = ();
-        if ($openssl_args{failure_verbosity}
-            || defined $openssl_args{tap_copy}) {
-            $callbacks{ALL} = sub {
+        if ($failure_verbosity > 0 || defined $openssl_args{tap_copy}) {
+            $callbacks{ALL} = sub { # on each line of test output
                 my $self = shift;
                 my $fh = $openssl_args{tap_copy};
-
                 print $fh $self->as_string, "\n"
                     if defined $fh;
-                push @failure_output, $self->as_string
-                    if $openssl_args{failure_verbosity} > 0;
-            };
+
+                my $failure_verbosity = $openssl_args{failure_verbosity};
+                if ($failure_verbosity == 3) {
+                    push @failure_output, $self->as_string;
+                } elsif ($failure_verbosity > 0) {
+                    my $is_plan = $self->is_plan;
+                    my $tests_planned = $is_plan && $self->tests_planned;
+                    my $is_test = $self->is_test;
+                    my $is_ok = $is_test && $self->is_ok;
+                    # workaround in case parser not coping with indentation:
+                    if ($self->is_unknown) {
+                        ($is_plan, $tests_planned) = (1, $1)
+                            if ($self->as_string =~ m/^\s+1\.\.(\d+)/);
+                        ($is_test, $is_ok) = (1, !$1)
+                            if ($self->as_string =~ m/^\s+(not )?ok /);
+                    }
+                    if ($is_plan) {
+                        push @plans, $tests_planned;
+                        $output_buffer = ""; # ignore comments etc. until plan
+                    } elsif ($is_test) { # result of a test
+                        pop @plans if @plans && --($plans[-1]) <= 0;
+                        print $output_buffer if !$is_ok;
+                        print $self->as_string."\n"
+                            if !$is_ok || $failure_verbosity == 2;
+                        $output_buffer = "";
+                    } else { # typically comment or unknown
+                        $output_buffer .= $self->as_string."\n";
+                    }
+                }
+            }
         }
 
-        if ($openssl_args{failure_verbosity} > 0) {
+        if ($failure_verbosity > 0) {
             $callbacks{EOF} = sub {
                 my $self = shift;
 
@@ -157,6 +192,8 @@ $eres = eval {
                     # line.
                     print $_, "\n" foreach (("", @failure_output));
                 }
+                # Echo any trailing comments etc.
+                print "$output_buffer" if $failure_verbosity != 3;
             };
         }
 
