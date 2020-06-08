@@ -57,7 +57,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                             + 1 + EVP_MAX_MD_SIZE];
     WPACKET pkt;
 
-    kctx = EVP_KDF_CTX_new(kdf);
+    kctx = EVP_KDF_new_ctx(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
@@ -73,7 +73,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
              */
             SSLerr(SSL_F_TLS13_HKDF_EXPAND, SSL_R_TLS_ILLEGAL_EXPORTER_LABEL);
         }
-        EVP_KDF_CTX_free(kctx);
+        EVP_KDF_free_ctx(kctx);
         return 0;
     }
 
@@ -88,7 +88,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
             || !WPACKET_sub_memcpy_u8(&pkt, data, (data == NULL) ? 0 : datalen)
             || !WPACKET_get_total_written(&pkt, &hkdflabellen)
             || !WPACKET_finish(&pkt)) {
-        EVP_KDF_CTX_free(kctx);
+        EVP_KDF_free_ctx(kctx);
         WPACKET_cleanup(&pkt);
         if (fatal)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_HKDF_EXPAND,
@@ -107,10 +107,10 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                                              hkdflabel, hkdflabellen);
     *p++ = OSSL_PARAM_construct_end();
 
-    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
+    ret = EVP_KDF_set_ctx_params(kctx, params) <= 0
         || EVP_KDF_derive(kctx, out, outlen) <= 0;
 
-    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free_ctx(kctx);
 
     if (ret != 0) {
         if (fatal)
@@ -198,7 +198,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
     kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_HKDF, s->ctx->propq);
-    kctx = EVP_KDF_CTX_new(kdf);
+    kctx = EVP_KDF_new_ctx(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
@@ -211,7 +211,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     if (!ossl_assert(mdleni >= 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
-        EVP_KDF_CTX_free(kctx);
+        EVP_KDF_free_ctx(kctx);
         return 0;
     }
     mdlen = (size_t)mdleni;
@@ -234,7 +234,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                      ERR_R_INTERNAL_ERROR);
             EVP_MD_CTX_free(mctx);
-            EVP_KDF_CTX_free(kctx);
+            EVP_KDF_free_ctx(kctx);
             return 0;
         }
         EVP_MD_CTX_free(mctx);
@@ -245,7 +245,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                                sizeof(derived_secret_label) - 1, hash, mdlen,
                                preextractsec, mdlen, 1)) {
             /* SSLfatal() already called */
-            EVP_KDF_CTX_free(kctx);
+            EVP_KDF_free_ctx(kctx);
             return 0;
         }
 
@@ -264,14 +264,14 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
                                              prevsecretlen);
     *p++ = OSSL_PARAM_construct_end();
 
-    ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
+    ret = EVP_KDF_set_ctx_params(kctx, params) <= 0
         || EVP_KDF_derive(kctx, outsecret, mdlen) <= 0;
 
     if (ret != 0)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS13_GENERATE_SECRET,
                  ERR_R_INTERNAL_ERROR);
 
-    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free_ctx(kctx);
     if (prevsecret == preextractsec)
         OPENSSL_cleanse(preextractsec, mdlen);
     return ret == 0;
