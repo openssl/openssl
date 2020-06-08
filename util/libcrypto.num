@@ -4467,7 +4467,7 @@ ASYNC_WAIT_CTX_set_callback             ?	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_set_status               ?	3_0_0	EXIST::FUNCTION:
 ASYNC_WAIT_CTX_get_status               ?	3_0_0	EXIST::FUNCTION:
 ERR_load_ESS_strings                    ?	3_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_free                        ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_free_ctx                        ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_reset                           ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_size                            ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_derive                          ?	3_0_0	EXIST::FUNCTION:
@@ -4617,8 +4617,8 @@ EVP_CIPHER_up_ref                       ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_fetch                        ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_mode                         ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_info                            ?	3_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_new                         ?	3_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_kdf                         ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_new_ctx                         ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_get_ctx_kdf                     ?	3_0_0	EXIST::FUNCTION:
 i2d_KeyParams                           ?	3_0_0	EXIST::FUNCTION:
 d2i_KeyParams                           ?	3_0_0	EXIST::FUNCTION:
 i2d_KeyParams_bio                       ?	3_0_0	EXIST::FUNCTION:
@@ -4715,11 +4715,11 @@ EVP_CIPHER_free                         ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_up_ref                          ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_free                            ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_fetch                           ?	3_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_dup                         ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_dup_ctx                         ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_provider                        ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_get_params                      ?	3_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_get_params                  ?	3_0_0	EXIST::FUNCTION:
-EVP_KDF_CTX_set_params                  ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_get_ctx_params                  ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_set_ctx_params                  ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_gettable_params                 ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_gettable_ctx_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_settable_ctx_params             ?	3_0_0	EXIST::FUNCTION:

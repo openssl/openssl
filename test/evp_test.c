@@ -2095,7 +2095,7 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
         OPENSSL_free(kdata);
         return 0;
     }
-    kdata->ctx = EVP_KDF_CTX_new(kdf);
+    kdata->ctx = EVP_KDF_new_ctx(kdf);
     EVP_KDF_free(kdf);
     if (kdata->ctx == NULL) {
         OPENSSL_free(kdata);
@@ -2113,7 +2113,7 @@ static void kdf_test_cleanup(EVP_TEST *t)
     for (p = kdata->params; p->key != NULL; p++)
         OPENSSL_free(p->data);
     OPENSSL_free(kdata->output);
-    EVP_KDF_CTX_free(kdata->ctx);
+    EVP_KDF_free_ctx(kdata->ctx);
 }
 
 static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
@@ -2122,7 +2122,8 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     KDF_DATA *kdata = t->data;
     int rv;
     char *p, *name;
-    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_kdf(kctx));
+    const OSSL_PARAM *defs =
+        EVP_KDF_settable_ctx_params(EVP_KDF_get_ctx_kdf(kctx));
 
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
@@ -2178,7 +2179,7 @@ static int kdf_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len = expected->output_len;
 
-    if (!EVP_KDF_CTX_set_params(expected->ctx, expected->params)) {
+    if (!EVP_KDF_set_ctx_params(expected->ctx, expected->params)) {
         t->err = "KDF_CTRL_ERROR";
         return 1;
     }

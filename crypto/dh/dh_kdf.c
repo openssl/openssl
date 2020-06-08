@@ -46,7 +46,7 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
         return 0;
 
     kdf = EVP_KDF_fetch(provctx, OSSL_KDF_NAME_X942KDF, NULL);
-    if ((kctx = EVP_KDF_CTX_new(kdf)) == NULL)
+    if ((kctx = EVP_KDF_new_ctx(kdf)) == NULL)
         goto err;
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)mdname, 0);
@@ -58,10 +58,10 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
                                             (char *)oid_sn, 0);
     *p = OSSL_PARAM_construct_end();
-    ret = EVP_KDF_CTX_set_params(kctx, params) > 0
+    ret = EVP_KDF_set_ctx_params(kctx, params) > 0
         && EVP_KDF_derive(kctx, out, outlen) > 0;
 err:
-    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free_ctx(kctx);
     EVP_KDF_free(kdf);
     return ret;
 }
