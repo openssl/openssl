@@ -111,8 +111,24 @@ push(@other_curves, 'SM2')
     if !disabled("sm2");
 
 my @curve_aliases = qw(
+    P-192
+    P-224
     P-256
+    P-384
+    P-521
 );
+push(@curve_aliases, qw(
+    B-163
+    B-233
+    B-283
+    B-409
+    B-571
+    K-163
+    K-233
+    K-283
+    K-409
+    K-571
+)) if !disabled("ec2m");
 
 my @curve_list = ();
 push(@curve_list, @prime_curves);
