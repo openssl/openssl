@@ -108,6 +108,16 @@ int OCSP_request_sign(OCSP_REQUEST *req,
     if ((req->optionalSignature = OCSP_SIGNATURE_new()) == NULL)
         goto err;
     if (key) {
+#ifndef OPENSSL_NO_RSA
+    /*
+     * Don't check the public/private key, this is mostly for smart
+     * cards.
+     */
+    if ((EVP_PKEY_id(key) == EVP_PKEY_RSA)
+            && (RSA_flags(EVP_PKEY_get0_RSA(key)) & RSA_METHOD_FLAG_NO_CHECK))
+        ;
+    else
+#endif
         if (!X509_check_private_key(signer, key)) {
             OCSPerr(OCSP_F_OCSP_REQUEST_SIGN,
                     OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
