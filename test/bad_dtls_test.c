@@ -305,14 +305,14 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
 
     /* Append HMAC to data */
     hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
-    ctx = EVP_MAC_CTX_new(hmac);
+    ctx = EVP_MAC_new_ctx(hmac);
     EVP_MAC_free(hmac);
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                  "SHA1", 0);
     params[1] = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                                   mac_key, 20);
     params[2] = OSSL_PARAM_construct_end();
-    EVP_MAC_CTX_set_params(ctx, params);
+    EVP_MAC_set_ctx_params(ctx, params);
     EVP_MAC_init(ctx);
     EVP_MAC_update(ctx, epoch, 2);
     EVP_MAC_update(ctx, seq, 6);
@@ -323,7 +323,7 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     EVP_MAC_update(ctx, lenbytes, 2); /* Length */
     EVP_MAC_update(ctx, enc, len); /* Finally the data itself */
     EVP_MAC_final(ctx, enc + len, NULL, SHA_DIGEST_LENGTH);
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx);
 
     /* Append padding bytes */
     len += SHA_DIGEST_LENGTH;

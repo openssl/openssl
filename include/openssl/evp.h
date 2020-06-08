@@ -26,6 +26,8 @@
 # include <openssl/evperr.h>
 # include <openssl/params.h>
 
+# include <openssl/evp_mac.h>
+
 # define EVP_MAX_MD_SIZE                 64/* longest known is SHA512 */
 # define EVP_MAX_KEY_LENGTH              64
 # define EVP_MAX_IV_LENGTH               16
@@ -1068,40 +1070,6 @@ void EVP_MD_do_all_sorted(void (*fn)
 void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
                             void (*fn)(EVP_MD *md, void *arg),
                             void *arg);
-
-/* MAC stuff */
-
-EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
-                       const char *properties);
-int EVP_MAC_up_ref(EVP_MAC *mac);
-void EVP_MAC_free(EVP_MAC *mac);
-int EVP_MAC_number(const EVP_MAC *mac);
-int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
-const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
-int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
-
-EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac);
-void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
-EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src);
-EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
-int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[]);
-int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
-
-size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
-int EVP_MAC_init(EVP_MAC_CTX *ctx);
-int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen);
-int EVP_MAC_final(EVP_MAC_CTX *ctx,
-                  unsigned char *out, size_t *outl, size_t outsize);
-const OSSL_PARAM *EVP_MAC_gettable_params(const EVP_MAC *mac);
-const OSSL_PARAM *EVP_MAC_gettable_ctx_params(const EVP_MAC *mac);
-const OSSL_PARAM *EVP_MAC_settable_ctx_params(const EVP_MAC *mac);
-
-void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
-                             void (*fn)(EVP_MAC *mac, void *arg),
-                             void *arg);
-void EVP_MAC_names_do_all(const EVP_MAC *mac,
-                          void (*fn)(const char *name, void *data),
-                          void *data);
 
 /* PKEY stuff */
 DEPRECATEDIN_3_0(int EVP_PKEY_decrypt_old(unsigned char *dec_key,

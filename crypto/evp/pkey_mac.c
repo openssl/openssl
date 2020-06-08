@@ -71,7 +71,7 @@ static int pkey_mac_init(EVP_PKEY_CTX *ctx)
     }
 
     if (mac != NULL) {
-        hctx->ctx = EVP_MAC_CTX_new(mac);
+        hctx->ctx = EVP_MAC_new_ctx(mac);
         if (hctx->ctx == NULL) {
             OPENSSL_free(hctx);
             return 0;
@@ -116,7 +116,7 @@ static int pkey_mac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     EVP_PKEY_CTX_set_data(dst, dctx);
     dst->keygen_info_count = 0;
 
-    dctx->ctx = EVP_MAC_CTX_dup(sctx->ctx);
+    dctx->ctx = EVP_MAC_dup_ctx(sctx->ctx);
     if (dctx->ctx == NULL)
         goto err;
 
@@ -128,7 +128,7 @@ static int pkey_mac_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
      * fetches the MAC method anew in this case.  Therefore, its reference
      * count must be adjusted here.
      */
-    if (!EVP_MAC_up_ref(EVP_MAC_CTX_mac(dctx->ctx)))
+    if (!EVP_MAC_up_ref(EVP_MAC_get_ctx_mac(dctx->ctx)))
         goto err;
 
     dctx->type = sctx->type;
@@ -163,7 +163,8 @@ static void pkey_mac_cleanup(EVP_PKEY_CTX *ctx)
     MAC_PKEY_CTX *hctx = ctx == NULL ? NULL : EVP_PKEY_CTX_get_data(ctx);
 
     if (hctx != NULL) {
-        EVP_MAC *mac = hctx->ctx != NULL ? EVP_MAC_CTX_mac(hctx->ctx) : NULL;
+        EVP_MAC *mac = hctx->ctx != NULL ? EVP_MAC_get_ctx_mac(hctx->ctx)
+                                         : NULL;
 
         switch (hctx->type) {
         case MAC_TYPE_RAW:
@@ -171,7 +172,7 @@ static void pkey_mac_cleanup(EVP_PKEY_CTX *ctx)
                                hctx->raw_data.ktmp.length);
             break;
         }
-        EVP_MAC_CTX_free(hctx->ctx);
+        EVP_MAC_free_ctx(hctx->ctx);
         EVP_MAC_free(mac);
         OPENSSL_free(hctx);
         EVP_PKEY_CTX_set_data(ctx, NULL);
@@ -206,10 +207,10 @@ static int pkey_mac_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
                 return 0;
             }
 
-            cmkey = EVP_MAC_CTX_dup(hctx->ctx);
+            cmkey = EVP_MAC_dup_ctx(hctx->ctx);
             if (cmkey == NULL)
                 return 0;
-            if (!EVP_MAC_up_ref(EVP_MAC_CTX_mac(hctx->ctx)))
+            if (!EVP_MAC_up_ref(EVP_MAC_get_ctx_mac(hctx->ctx)))
                 return 0;
             EVP_PKEY_assign(pkey, nid, cmkey);
         }
@@ -255,7 +256,7 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     }
 
     if (set_key) {
-        if (!EVP_MAC_is_a(EVP_MAC_CTX_mac(hctx->ctx),
+        if (!EVP_MAC_is_a(EVP_MAC_get_ctx_mac(hctx->ctx),
                           OBJ_nid2sn(EVP_PKEY_id(EVP_PKEY_CTX_get0_pkey(ctx)))))
             return 0;
         key = EVP_PKEY_get0(EVP_PKEY_CTX_get0_pkey(ctx));
@@ -280,7 +281,7 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
                 OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                   key->data, key->length);
         params[params_n++] = OSSL_PARAM_construct_end();
-        rv = EVP_MAC_CTX_set_params(hctx->ctx, params);
+        rv = EVP_MAC_set_ctx_params(hctx->ctx, params);
     }
     return rv;
 }
@@ -330,7 +331,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                     return 0;
                 }
 
-                if (!EVP_MAC_CTX_set_params(hctx->ctx, params)
+                if (!EVP_MAC_set_ctx_params(hctx->ctx, params)
                     || !EVP_MAC_init(hctx->ctx))
                     return 0;
             }
@@ -351,10 +352,10 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
                 if (ctx->pkey == NULL)
                     return 0;
-                new_mac_ctx = EVP_MAC_CTX_dup(ctx->pkey->pkey.ptr);
+                new_mac_ctx = EVP_MAC_dup_ctx(ctx->pkey->pkey.ptr);
                 if (new_mac_ctx == NULL)
                     return 0;
-                EVP_MAC_CTX_free(hctx->ctx);
+                EVP_MAC_free_ctx(hctx->ctx);
                 hctx->ctx = new_mac_ctx;
             }
             break;
@@ -389,13 +390,13 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 return 0;
             }
 
-            if (!EVP_MAC_CTX_set_params(hctx->ctx, params))
+            if (!EVP_MAC_set_ctx_params(hctx->ctx, params))
                 return 0;
 
             params[0] =
                 OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE, &verify);
 
-            if (!EVP_MAC_CTX_get_params(hctx->ctx, params))
+            if (!EVP_MAC_get_ctx_params(hctx->ctx, params))
                 return 0;
 
             /*
@@ -433,7 +434,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                     return 0;
                 }
 
-                return EVP_MAC_CTX_set_params(hctx->ctx, params);
+                return EVP_MAC_set_ctx_params(hctx->ctx, params);
             }
             break;
         default:
@@ -478,7 +479,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                                                       key->data, key->length);
                 params[params_n] = OSSL_PARAM_construct_end();
 
-                return EVP_MAC_CTX_set_params(hctx->ctx, params);
+                return EVP_MAC_set_ctx_params(hctx->ctx, params);
             }
             break;
         case MAC_TYPE_MAC:
@@ -513,7 +514,7 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
         EVPerr(0, EVP_R_FETCH_FAILED);
         return 0;
     }
-    mac = EVP_MAC_CTX_mac(hctx->ctx);
+    mac = EVP_MAC_get_ctx_mac(hctx->ctx);
 
     /*
      * Translation of some control names that are equivalent to a single
@@ -535,7 +536,7 @@ static int pkey_mac_ctrl_str(EVP_PKEY_CTX *ctx,
         return 0;
     params[1] = OSSL_PARAM_construct_end();
 
-    ok = EVP_MAC_CTX_set_params(hctx->ctx, params);
+    ok = EVP_MAC_set_ctx_params(hctx->ctx, params);
     OPENSSL_free(params[0].data);
     return ok;
 }
