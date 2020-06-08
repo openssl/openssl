@@ -189,8 +189,8 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
     if (macname != NULL) {
         EVP_MAC *mac = EVP_MAC_fetch(libctx, macname, properties);
 
-        EVP_MAC_CTX_free(*macctx);
-        *macctx = mac == NULL ? NULL : EVP_MAC_CTX_new(mac);
+        EVP_MAC_free_ctx(*macctx);
+        *macctx = mac == NULL ? NULL : EVP_MAC_new_ctx(mac);
         /* The context holds on to the MAC */
         EVP_MAC_free(mac);
         if (*macctx == NULL)
@@ -241,10 +241,10 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
 #endif
     *mp = OSSL_PARAM_construct_end();
 
-    if (EVP_MAC_CTX_set_params(*macctx, mac_params))
+    if (EVP_MAC_set_ctx_params(*macctx, mac_params))
         return 1;
 
-    EVP_MAC_CTX_free(*macctx);
+    EVP_MAC_free_ctx(*macctx);
     *macctx = NULL;
     return 0;
 }

@@ -1323,12 +1323,12 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     params[params_n] = OSSL_PARAM_construct_end();
 
-    if ((ctx = EVP_MAC_CTX_new(expected->mac)) == NULL) {
+    if ((ctx = EVP_MAC_new_ctx(expected->mac)) == NULL) {
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
 
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+    if (!EVP_MAC_set_ctx_params(ctx, params)) {
         t->err = "MAC_BAD_PARAMS";
         goto err;
     }
@@ -1360,7 +1360,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     while (params_n-- > params_n_allocstart) {
         OPENSSL_free(params[params_n].data);
     }
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx);
     OPENSSL_free(got);
     return 1;
 }

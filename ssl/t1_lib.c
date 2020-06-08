@@ -3149,12 +3149,12 @@ SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
     }
 #endif
     mac = EVP_MAC_fetch(ctx->libctx, "HMAC", NULL);
-    if (mac == NULL || (ret->ctx = EVP_MAC_CTX_new(mac)) == NULL)
+    if (mac == NULL || (ret->ctx = EVP_MAC_new_ctx(mac)) == NULL)
         goto err;
     EVP_MAC_free(mac);
     return ret;
  err:
-    EVP_MAC_CTX_free(ret->ctx);
+    EVP_MAC_free_ctx(ret->ctx);
     EVP_MAC_free(mac);
     OPENSSL_free(ret);
     return NULL;
@@ -3163,7 +3163,7 @@ SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
 void ssl_hmac_free(SSL_HMAC *ctx)
 {
     if (ctx != NULL) {
-        EVP_MAC_CTX_free(ctx->ctx);
+        EVP_MAC_free_ctx(ctx->ctx);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         HMAC_CTX_free(ctx->old_ctx);
 #endif
@@ -3191,7 +3191,7 @@ int ssl_hmac_init(SSL_HMAC *ctx, void *key, size_t len, char *md)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST, md, 0);
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, key, len);
         *p = OSSL_PARAM_construct_end();
-        if (EVP_MAC_CTX_set_params(ctx->ctx, params) && EVP_MAC_init(ctx->ctx))
+        if (EVP_MAC_set_ctx_params(ctx->ctx, params) && EVP_MAC_init(ctx->ctx))
             return 1;
     }
 #ifndef OPENSSL_NO_DEPRECATED_3_0

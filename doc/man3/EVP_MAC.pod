@@ -5,8 +5,8 @@
 EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free,
 EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_names_do_all,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
-EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
-EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
+EVP_MAC_CTX, EVP_MAC_new_ctx, EVP_MAC_free_ctx, EVP_MAC_dup_ctx,
+EVP_MAC_get_ctx_mac, EVP_MAC_get_ctx_params, EVP_MAC_set_ctx_params,
 EVP_MAC_size, EVP_MAC_init, EVP_MAC_update, EVP_MAC_final,
 EVP_MAC_gettable_ctx_params, EVP_MAC_settable_ctx_params,
 EVP_MAC_do_all_provided - EVP MAC routines
@@ -30,12 +30,12 @@ EVP_MAC_do_all_provided - EVP MAC routines
  const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
  int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
 
- EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac);
- void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx);
- EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src);
- EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx);
- int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[]);
- int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
+ EVP_MAC_CTX *EVP_MAC_new_ctx(EVP_MAC *mac);
+ void EVP_MAC_free_ctx(EVP_MAC_CTX *ctx);
+ EVP_MAC_CTX *EVP_MAC_dup_ctx(const EVP_MAC_CTX *src);
+ EVP_MAC *EVP_MAC_get_ctx_mac(EVP_MAC_CTX *ctx);
+ int EVP_MAC_get_ctx_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[]);
+ int EVP_MAC_set_ctx_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[]);
 
  size_t EVP_MAC_size(EVP_MAC_CTX *ctx);
  int EVP_MAC_init(EVP_MAC_CTX *ctx);
@@ -96,18 +96,18 @@ NULL is a valid parameter, for which this function is a no-op.
 
 =head2 Context manipulation functions
 
-EVP_MAC_CTX_new() creates a new context for the MAC type I<mac>.
+EVP_MAC_new_ctx() creates a new context for the MAC type I<mac>.
 The created context can then be used with most other functions
 described here.
 
-EVP_MAC_CTX_free() frees the contents of the context, including an
+EVP_MAC_free_ctx() frees the contents of the context, including an
 underlying context if there is one, as well as the context itself.
 NULL is a valid parameter, for which this function is a no-op.
 
-EVP_MAC_CTX_dup() duplicates the I<src> context and returns a newly allocated
+EVP_MAC_dup_ctx() duplicates the I<src> context and returns a newly allocated
 context.
 
-EVP_MAC_CTX_mac() returns the B<EVP_MAC> associated with the context
+EVP_MAC_get_ctx_mac() returns the B<EVP_MAC> associated with the context
 I<ctx>.
 
 =head2 Computing functions
@@ -136,14 +136,14 @@ parameters should be retrieved.
 Note that a parameter that is unknown in the underlying context is
 simply ignored.
 
-EVP_MAC_CTX_get_params() retrieves chosen parameters, given the
+EVP_MAC_get_ctx_params() retrieves chosen parameters, given the
 context I<ctx> and its underlying context.
 The set of parameters given with I<params> determine exactly what
 parameters should be retrieved.
 Note that a parameter that is unknown in the underlying context is
 simply ignored.
 
-EVP_MAC_CTX_set_params() passes chosen parameters to the underlying
+EVP_MAC_set_ctx_params() passes chosen parameters to the underlying
 context, given a context I<ctx>.
 The set of parameters given with I<params> determine exactly what
 parameters are passed down.
@@ -155,8 +155,8 @@ defined by the implementation.
 EVP_MAC_gettable_params(), EVP_MAC_gettable_ctx_params() and
 EVP_MAC_settable_ctx_params() get a constant B<OSSL_PARAM> array that
 describes the retrievable and settable parameters, i.e. parameters that
-can be used with EVP_MAC_get_params(), EVP_MAC_CTX_get_params()
-and EVP_MAC_CTX_set_params(), respectively.
+can be used with EVP_MAC_get_params(), EVP_MAC_get_ctx_params()
+and EVP_MAC_set_ctx_params(), respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =head2 Information functions
@@ -270,12 +270,12 @@ the given name, otherwise 0.
 EVP_MAC_provider() returns a pointer to the provider for the MAC, or
 NULL on error.
 
-EVP_MAC_CTX_new() and EVP_MAC_CTX_dup() return a pointer to a newly
+EVP_MAC_new_ctx() and EVP_MAC_dup_ctx() return a pointer to a newly
 created EVP_MAC_CTX, or NULL if allocation failed.
 
-EVP_MAC_CTX_free() returns nothing at all.
+EVP_MAC_free_ctx() returns nothing at all.
 
-EVP_MAC_CTX_get_params() and EVP_MAC_CTX_set_params() return 1 on
+EVP_MAC_get_ctx_params() and EVP_MAC_set_ctx_params() return 1 on
 success, 0 on error.
 
 EVP_MAC_init(), EVP_MAC_update(), and EVP_MAC_final() return 1 on success, 0
@@ -327,8 +327,8 @@ EVP_MAC_do_all_provided() returns nothing at all.
 
       if (mac == NULL
           || key == NULL
-          || (ctx = EVP_MAC_CTX_new(mac)) == NULL
-          || EVP_MAC_CTX_set_params(ctx, params) <= 0)
+          || (ctx = EVP_MAC_new_ctx(mac)) == NULL
+          || EVP_MAC_set_ctx_params(ctx, params) <= 0)
           goto err;
 
       if (!EVP_MAC_init(ctx))
@@ -347,12 +347,12 @@ EVP_MAC_do_all_provided() returns nothing at all.
           printf("%02X", buf[i]);
       printf("\n");
 
-      EVP_MAC_CTX_free(ctx);
+      EVP_MAC_free_ctx(ctx);
       EVP_MAC_free(mac);
       exit(0);
 
    err:
-      EVP_MAC_CTX_free(ctx);
+      EVP_MAC_free_ctx(ctx);
       EVP_MAC_free(mac);
       fprintf(stderr, "Something went wrong\n");
       ERR_print_errors_fp(stderr);

@@ -6922,7 +6922,7 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
     params[2] = OSSL_PARAM_construct_end();
     if (aes128cbc == NULL
             || !EVP_CipherInit_ex(ctx, aes128cbc, NULL, tick_aes_key, iv, enc)
-            || !EVP_MAC_CTX_set_params(hctx, params)
+            || !EVP_MAC_set_ctx_params(hctx, params)
             || !EVP_MAC_init(hctx))
         ret = -1;
     else

@@ -4425,10 +4425,10 @@ OCSP_resp_get0_respdata                 4530	3_0_0	EXIST::FUNCTION:OCSP
 EVP_MD_CTX_set_pkey_ctx                 4531	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_set_digest_custom         4532	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get_digest_custom         4533	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_new                         ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_free                        ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_dup                         ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_mac                         ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_new_ctx                         ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_free_ctx                        ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_dup_ctx                         ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_get_ctx_mac                     ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_size                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_init                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_update                          ?	3_0_0	EXIST::FUNCTION:
@@ -4701,8 +4701,8 @@ EVP_CIPHER_gettable_ctx_params          ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_get_params                       ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_fetch                           ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_settable_ctx_params             ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_set_params                  ?	3_0_0	EXIST::FUNCTION:
-EVP_MAC_CTX_get_params                  ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_set_ctx_params                  ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_get_ctx_params                  ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_gettable_ctx_params             ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_free                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_up_ref                          ?	3_0_0	EXIST::FUNCTION:

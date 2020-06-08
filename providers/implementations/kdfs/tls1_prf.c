@@ -116,8 +116,8 @@ static void kdf_tls1_prf_reset(void *vctx)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
 
-    EVP_MAC_CTX_free(ctx->P_hash);
-    EVP_MAC_CTX_free(ctx->P_sha1);
+    EVP_MAC_free_ctx(ctx->P_hash);
+    EVP_MAC_free_ctx(ctx->P_sha1);
     OPENSSL_clear_free(ctx->sec, ctx->seclen);
     OPENSSL_cleanse(ctx->seed, ctx->seedlen);
     memset(ctx, 0, sizeof(*ctx));
@@ -163,7 +163,7 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                                                       NULL, SN_sha1, libctx))
                 return 0;
         } else {
-            EVP_MAC_CTX_free(ctx->P_sha1);
+            EVP_MAC_free_ctx(ctx->P_sha1);
             if (!ossl_prov_macctx_load_from_params(&ctx->P_hash, params,
                                                    OSSL_MAC_NAME_HMAC,
                                                    NULL, NULL, libctx))
@@ -280,7 +280,7 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                              (void *)sec, sec_len);
     *p = OSSL_PARAM_construct_end();
-    if (!EVP_MAC_CTX_set_params(ctx_init, params))
+    if (!EVP_MAC_set_ctx_params(ctx_init, params))
         goto err;
     if (!EVP_MAC_init(ctx_init))
         goto err;
@@ -288,7 +288,7 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
     if (chunk == 0)
         goto err;
     /* A(0) = seed */
-    ctx_Ai = EVP_MAC_CTX_dup(ctx_init);
+    ctx_Ai = EVP_MAC_dup_ctx(ctx_init);
     if (ctx_Ai == NULL)
         goto err;
     if (seed != NULL && !EVP_MAC_update(ctx_Ai, seed, seed_len))
@@ -298,18 +298,18 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
         /* calc: A(i) = HMAC_<hash>(secret, A(i-1)) */
         if (!EVP_MAC_final(ctx_Ai, Ai, &Ai_len, sizeof(Ai)))
             goto err;
-        EVP_MAC_CTX_free(ctx_Ai);
+        EVP_MAC_free_ctx(ctx_Ai);
         ctx_Ai = NULL;
 
         /* calc next chunk: HMAC_<hash>(secret, A(i) + seed) */
-        ctx = EVP_MAC_CTX_dup(ctx_init);
+        ctx = EVP_MAC_dup_ctx(ctx_init);
         if (ctx == NULL)
             goto err;
         if (!EVP_MAC_update(ctx, Ai, Ai_len))
             goto err;
         /* save state for calculating next A(i) value */
         if (olen > chunk) {
-            ctx_Ai = EVP_MAC_CTX_dup(ctx);
+            ctx_Ai = EVP_MAC_dup_ctx(ctx);
             if (ctx_Ai == NULL)
                 goto err;
         }
@@ -324,15 +324,15 @@ static int tls1_prf_P_hash(EVP_MAC_CTX *ctx_init,
         }
         if (!EVP_MAC_final(ctx, out, NULL, olen))
             goto err;
-        EVP_MAC_CTX_free(ctx);
+        EVP_MAC_free_ctx(ctx);
         ctx = NULL;
         out += chunk;
         olen -= chunk;
     }
     ret = 1;
  err:
-    EVP_MAC_CTX_free(ctx);
-    EVP_MAC_CTX_free(ctx_Ai);
+    EVP_MAC_free_ctx(ctx);
+    EVP_MAC_free_ctx(ctx_Ai);
     OPENSSL_cleanse(Ai, sizeof(Ai));
     return ret;
 }

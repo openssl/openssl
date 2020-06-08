@@ -360,9 +360,9 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     }
     *p++ = OSSL_PARAM_construct_end();
 
-    ctx = EVP_MAC_CTX_new(hmac);
+    ctx = EVP_MAC_new_ctx(hmac);
     if (ctx == NULL
-            || !EVP_MAC_CTX_set_params(ctx, params)
+            || !EVP_MAC_set_ctx_params(ctx, params)
             || !EVP_MAC_init(ctx)
             || !EVP_MAC_update(ctx, hash, hashlen)
                /* outsize as per sizeof(peer_finish_md) */
@@ -375,7 +375,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
     ret = hashlen;
  err:
     OPENSSL_cleanse(finsecret, sizeof(finsecret));
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx);
     EVP_MAC_free(hmac);
     return ret;
 }

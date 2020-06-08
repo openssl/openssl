@@ -202,8 +202,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     macparams[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                      basekey, bklen);
     if ((mac = EVP_MAC_fetch(NULL, "HMAC", NULL)) == NULL
-            || (mctx = EVP_MAC_CTX_new(mac)) == NULL
-            || !EVP_MAC_CTX_set_params(mctx, macparams)
+            || (mctx = EVP_MAC_new_ctx(mac)) == NULL
+            || !EVP_MAC_set_ctx_params(mctx, macparams)
             || !EVP_MAC_init(mctx)
             || !EVP_MAC_update(mctx, msg, msglen)
             || !EVP_MAC_final(mctx, mac_res, outlen, EVP_MAX_MD_SIZE))
@@ -214,7 +214,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
  err:
     /* cleanup */
     OPENSSL_cleanse(basekey, bklen);
-    EVP_MAC_CTX_free(mctx);
+    EVP_MAC_free_ctx(mctx);
     EVP_MAC_free(mac);
     EVP_MD_CTX_free(ctx);
 
