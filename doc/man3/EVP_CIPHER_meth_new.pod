@@ -153,15 +153,11 @@ decryption is to be understood as the number of bits instead of
 bytes for this implementation.
 This is only useful for CFB1 ciphers.
 
-=begin comment
-The FIPS flags seem to be unused, so I'm hiding them until I get an
-explanation or they get removed.  /RL
+=item EVP_CIPH_FLAG_CTS
 
-=item EVP_CIPH_FLAG_FIPS
-
-=item EVP_CIPH_FLAG_NON_FIPS_ALLOW
-
-=end comment
+Indicates that the cipher uses ciphertext stealing. This is currently
+used to indicate that the cipher is a one shot that only allows a single call to
+EVP_CipherUpdate().
 
 =item EVP_CIPH_FLAG_CUSTOM_CIPHER
 

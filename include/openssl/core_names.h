@@ -66,6 +66,7 @@ extern "C" {
 #define OSSL_CIPHER_PARAM_RANDOM_KEY           "randkey"      /* octet_string */
 #define OSSL_CIPHER_PARAM_RC2_KEYBITS          "keybits"      /* size_t */
 #define OSSL_CIPHER_PARAM_SPEED                "speed"        /* uint */
+#define OSSL_CIPHER_PARAM_CTS_MODE             "cts_mode"     /* utf8_string */
 /* For passing the AlgorithmIdentifier parameter in DER form */
 #define OSSL_CIPHER_PARAM_ALG_ID               "alg_id_param" /* octet_string */
 
@@ -85,6 +86,11 @@ extern "C" {
     "tls1multi_encin"      /* octet_string */
 #define OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_LEN                              \
     "tls1multi_enclen"     /* size_t */
+
+/* OSSL_CIPHER_PARAM_CTS_MODE Values */
+#define OSSL_CIPHER_CTS_MODE_CS1 "CS1"
+#define OSSL_CIPHER_CTS_MODE_CS2 "CS2"
+#define OSSL_CIPHER_CTS_MODE_CS3 "CS3"
 
 /* digest parameters */
 #define OSSL_DIGEST_PARAM_XOFLEN     "xoflen"    /* size_t */

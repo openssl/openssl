@@ -287,13 +287,15 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 /* Free:                                         0x1000 */
 /* Buffer length in bits not bytes: CFB1 mode only */
 # define         EVP_CIPH_FLAG_LENGTH_BITS       0x2000
-/* Note if suitable for use in FIPS mode */
-# define         EVP_CIPH_FLAG_FIPS              0x4000
-/* Allow non FIPS cipher in FIPS mode */
-# define         EVP_CIPH_FLAG_NON_FIPS_ALLOW    0x8000
+/* Deprecated FIPS flag: was 0x4000 */
+# define         EVP_CIPH_FLAG_FIPS              0
+/* Deprecated FIPS flag: was 0x8000 */
+# define         EVP_CIPH_FLAG_NON_FIPS_ALLOW    0
+
 /*
  * Cipher handles any and all padding logic as well as finalisation.
  */
+# define         EVP_CIPH_FLAG_CTS               0x4000
 # define         EVP_CIPH_FLAG_CUSTOM_CIPHER     0x100000
 # define         EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
 # define         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0x400000

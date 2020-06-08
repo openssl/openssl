@@ -514,6 +514,7 @@ typedef struct cipher_data_st {
     unsigned char *aad[AAD_NUM];
     size_t aad_len[AAD_NUM];
     unsigned char *tag;
+    const char *cts_mode;
     size_t tag_len;
     int tag_late;
 } CIPHER_DATA;
@@ -628,6 +629,10 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
             return -1;
         return 1;
     }
+    if (strcmp(keyword, "CTSMode") == 0) {
+        cdat->cts_mode = value;
+        return 1;
+    }
     return 0;
 }
 
@@ -686,6 +691,18 @@ static int cipher_test_enc(EVP_TEST *t, int enc,
     if (!EVP_CipherInit_ex(ctx_base, expected->cipher, NULL, NULL, NULL, enc)) {
         t->err = "CIPHERINIT_ERROR";
         goto err;
+    }
+    if (expected->cts_mode != NULL) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE,
+                                                     (char *)expected->cts_mode,
+                                                     0);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!EVP_CIPHER_CTX_set_params(ctx_base, params)) {
+            t->err = "INVALID_CTS_MODE";
+            goto err;
+        }
     }
     if (expected->iv) {
         if (expected->aead) {
@@ -939,6 +956,7 @@ static int cipher_test_run(EVP_TEST *t)
              * lengths so we don't fragment for those
              */
             if (cdat->aead == EVP_CIPH_CCM_MODE
+                    || ((EVP_CIPHER_flags(cdat->cipher) & EVP_CIPH_FLAG_CTS) != 0)
                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_SIV_MODE
                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_XTS_MODE
                     || EVP_CIPHER_mode(cdat->cipher) == EVP_CIPH_WRAP_MODE)

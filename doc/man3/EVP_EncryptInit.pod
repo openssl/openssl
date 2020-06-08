@@ -800,6 +800,50 @@ with a 128-bit key:
      return 1;
  }
 
+Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
+
+ int encrypt(const unsigned char *key, const unsigned char *iv,
+             const unsigned char *msg, size_t msg_len, unsigned char *out)
+ {
+    /*
+     * This assumes that key size is 32 bytes and the iv is 16 bytes.
+     * For ciphertext stealing mode the length of the ciphertext "out" will be
+     * the same size as the plaintext size "msg_len".
+     * The "msg_len" can be any size >= 16.
+     */
+     int ret = 0, encrypt = 1, outlen, len;
+     EVP_CIPHER_CTX *ctx = NULL;
+     EVP_CIPHER *cipher = NULL;
+     OSSL_PARAM params[2];
+
+     ctx = EVP_CIPHER_CTX_new();
+     cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC-CTS", NULL);
+     if (ctx == NULL || cipher == NULL)
+         goto err;
+
+     if (!EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, encrypt))
+         goto err;
+     /*
+      * The default is "CS1" so this is not really needed,
+      * but would be needed to set either "CS2" or "CS3".
+      */
+     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE,
+                                                  "CS1", 0);
+     params[1] = OSSL_PARAM_construct_end();
+     if (!EVP_CIPHER_CTX_set_params(ctx, params))
+         goto err;
+
+     /* NOTE: CTS mode does not support multiple calls to EVP_CipherUpdate() */
+     if (!EVP_CipherUpdate(ctx, encrypted, &outlen, msg, msglen))
+         goto err;
+      if (!EVP_CipherFinal_ex(ctx, encrypted + outlen, &len))
+         goto err;
+     ret = 1;
+ err:
+     EVP_CIPHER_free(cipher);
+     EVP_CIPHER_CTX_free(ctx);
+     return ret;
+ }
 
 =head1 SEE ALSO
 

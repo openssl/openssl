@@ -23,6 +23,11 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Added ciphertext stealing algorithms AES-128-CBC-CTS, AES-192-CBC-CTS and
+   AES-256-CBC-CTS to the providers. CS1, CS2 and CS3 variants are supported.
+
+   *Shane Lontis*
+
  * 'Configure' has been changed to figure out the configuration target if
    none is given on the command line.  Consequently, the 'config' script is
    now only a mere wrapper.  All documentation is changed to only mention
