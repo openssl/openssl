@@ -144,6 +144,7 @@ my @output_formats = ('PEM', 'DER');
 plan tests => scalar(@curve_list) * scalar(@params_encodings)
     * (1 + scalar(@output_formats)) # Try listed @output_formats and text output
     + 1                             # Checking that with no curve it fails
+    + 1                             # Checking that with unknown curve it fails
     ;
 
 foreach my $curvename (@curve_list) {
@@ -171,3 +172,8 @@ foreach my $curvename (@curve_list) {
 ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'EC'])),
    "genpkey EC with no params should fail");
+
+ok(!run(app([ 'openssl', 'genpkey',
+              '-algorithm', 'EC',
+              '-pkeyopt', 'ec_paramgen_curve:bogus_foobar_curve'])),
+   "genpkey EC with unknown curve name should fail");
