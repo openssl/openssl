@@ -2965,6 +2965,8 @@ RAND_R_PARENT_STRENGTH_TOO_WEAK:131:parent strength too weak
 RAND_R_PERSONALISATION_STRING_TOO_LONG:116:personalisation string too long
 RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED:133:\
 	prediction resistance not supported
+RAND_R_PRIMARY_LOCKING_NOT_ENABLED:138:primary locking not enabled
+RAND_R_PRIMARY_STRENGTH_TOO_WEAK:143:primary strength too weak
 RAND_R_PRNG_NOT_SEEDED:100:PRNG not seeded
 RAND_R_RANDOM_POOL_OVERFLOW:125:random pool overflow
 RAND_R_RANDOM_POOL_UNDERFLOW:134:random pool underflow
@@ -2975,7 +2977,7 @@ RAND_R_TOO_LITTLE_NONCE_REQUESTED:135:too little nonce requested
 RAND_R_TOO_MUCH_NONCE_REQUESTED:136:too much nonce requested
 RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:141:\
 	unable to get parent reseed prop counter
-RAND_R_UNABLE_TO_GET_PARENT_STRENGTH:138:unable to get parent strength
+RAND_R_UNABLE_TO_GET_PARENT_STRENGTH:144:unable to get parent strength
 RAND_R_UNABLE_TO_GET_RESEED_PROP_CTR:142:unable to get reseed prop ctr
 RAND_R_UNABLE_TO_LOCK_PARENT:140:unable to lock parent
 RAND_R_UNSUPPORTED_DRBG_FLAGS:132:unsupported drbg flags

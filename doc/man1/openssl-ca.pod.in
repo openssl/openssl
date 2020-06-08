@@ -697,7 +697,7 @@ Note: the location of all files can change either by compile time options,
 configuration file entries, environment variables or command line options.
 The values below reflect the default values.
 
- /usr/local/ssl/lib/openssl.cnf - master configuration file
+ /usr/local/ssl/lib/openssl.cnf - main configuration file
  ./demoCA                       - main CA directory
  ./demoCA/cacert.pem            - CA certificate
  ./demoCA/private/cakey.pem     - CA private key

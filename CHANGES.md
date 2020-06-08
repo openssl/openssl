@@ -6041,7 +6041,7 @@ OpenSSL 1.0.1
    certificate the fingerprint can be changed without breaking the signature.
    Although no details of the signed portion of the certificate can be changed
    this can cause problems with some applications: e.g. those using the
-   certificate fingerprint for blacklists.
+   certificate fingerprint for block lists.
 
    1. Reject signatures with non zero unused bits.
 
@@ -7110,7 +7110,7 @@ OpenSSL 1.0.0
    certificate the fingerprint can be changed without breaking the signature.
    Although no details of the signed portion of the certificate can be changed
    this can cause problems with some applications: e.g. those using the
-   certificate fingerprint for blacklists.
+   certificate fingerprint for block lists.
 
    1. Reject signatures with non zero unused bits.
 

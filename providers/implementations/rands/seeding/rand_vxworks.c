@@ -88,7 +88,7 @@ int rand_pool_add_additional_data(RAND_POOL *pool)
     /*
      * Add some noise from the thread id and a high resolution timer.
      * The thread id adds a little randomness if the drbg is accessed
-     * concurrently (which is the case for the <master> drbg).
+     * concurrently (which is the case for the primary drbg).
      */
     data.tid = CRYPTO_THREAD_get_current_id();
     data.time = get_timer_bits();

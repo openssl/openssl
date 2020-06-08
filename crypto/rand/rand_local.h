@@ -26,10 +26,11 @@
 # define MAX_RESEED_TIME_INTERVAL                (1 << 20) /* approx. 12 days */
 
 /* Default reseed intervals */
-# define MASTER_RESEED_INTERVAL                  (1 << 8)
-# define SLAVE_RESEED_INTERVAL                   (1 << 16)
-# define MASTER_RESEED_TIME_INTERVAL             (60 * 60) /* 1 hour */
-# define SLAVE_RESEED_TIME_INTERVAL              (7 * 60)  /* 7 minutes */
+# define PRIMARY_RESEED_INTERVAL                 (1 << 8)
+# define SECONDARY_RESEED_INTERVAL               (1 << 16)
+# define PRIMARY_RESEED_TIME_INTERVAL            (60*60)   /* 1 hour */
+# define SECONDARY_RESEED_TIME_INTERVAL          (7*60)    /* 7 minutes */
+
 /*
  * The state of all types of DRBGs.
  */
@@ -37,7 +38,7 @@ struct rand_drbg_st {
     CRYPTO_RWLOCK *lock;
     /* The library context this DRBG is associated with, if any */
     OPENSSL_CTX *libctx;
-    RAND_DRBG *parent;
+    RAND_DRBG *primary;
     int type; /* the nid of the underlying algorithm */
     unsigned short flags; /* various external flags */
 

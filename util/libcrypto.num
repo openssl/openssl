@@ -4281,7 +4281,7 @@ RSA_set0_multi_prime_params             4376	3_0_0	EXIST::FUNCTION:RSA
 RSA_get_version                         4377	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
 RSA_meth_get_multi_prime_keygen         4378	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
 RSA_meth_set_multi_prime_keygen         4379	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
-RAND_DRBG_get0_master                   4380	3_0_0	EXIST::FUNCTION:
+RAND_DRBG_get0_primary                  4380	3_0_0	EXIST::FUNCTION:
 RAND_DRBG_set_reseed_time_interval      4381	3_0_0	EXIST::FUNCTION:
 PROFESSION_INFO_get0_addProfessionInfo  4382	3_0_0	EXIST::FUNCTION:
 ADMISSION_SYNTAX_free                   4383	3_0_0	EXIST::FUNCTION:
@@ -4642,7 +4642,7 @@ ERR_load_CMP_strings                    ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_MD_CTX_set_params                   ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get_params                   ?	3_0_0	EXIST::FUNCTION:
 RAND_DRBG_new_ex                        ?	3_0_0	EXIST::FUNCTION:
-OPENSSL_CTX_get0_master_drbg            ?	3_0_0	EXIST::FUNCTION:
+OPENSSL_CTX_get0_primary_drbg           ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_get0_public_drbg            ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_get0_private_drbg           ?	3_0_0	EXIST::FUNCTION:
 BN_CTX_new_ex                           ?	3_0_0	EXIST::FUNCTION:

@@ -293,7 +293,7 @@ sub name_synopsis {
     foreach my $n ( split ',', $tmp ) {
         $n =~ s/^\s+//;
         $n =~ s/\s+$//;
-        err($id, "The name '$n' contains white-space")
+        err($id, "The name '$n' contains whitespace")
             if $n =~ /\s/;
         $names{$n} = 1;
         $foundfilename++ if $n eq $simplename;
@@ -587,6 +587,7 @@ my %preferred_words = (
     'useable'       => 'usable',
     'userspace'     => 'user space',
     'user name'     => 'username',
+    'white space'   => 'whitespace',
     'zeroes'        => 'zeros'
 );
 

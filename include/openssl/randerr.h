@@ -90,6 +90,8 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_PARENT_STRENGTH_TOO_WEAK                  131
 # define RAND_R_PERSONALISATION_STRING_TOO_LONG           116
 # define RAND_R_PREDICTION_RESISTANCE_NOT_SUPPORTED       133
+# define RAND_R_PRIMARY_LOCKING_NOT_ENABLED               138
+# define RAND_R_PRIMARY_STRENGTH_TOO_WEAK                 139
 # define RAND_R_PRNG_NOT_SEEDED                           100
 # define RAND_R_RANDOM_POOL_OVERFLOW                      125
 # define RAND_R_RANDOM_POOL_UNDERFLOW                     134

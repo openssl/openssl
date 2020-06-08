@@ -19,11 +19,11 @@ RAND_DRBG_verify_zeroization
  RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx,
                              int type,
                              unsigned int flags,
-                             RAND_DRBG *parent);
+                             RAND_DRBG *primary);
 
  RAND_DRBG *RAND_DRBG_new(int type,
                           unsigned int flags,
-                          RAND_DRBG *parent);
+                          RAND_DRBG *primary);
 
  int RAND_DRBG_set_defaults(int type, unsigned int flags);
 
@@ -84,7 +84,7 @@ see [NIST SP 800-90A Rev. 1].
 
 Enables use of HMAC instead of the HASH DRBG.
 
-=item RAND_DRBG_FLAG_MASTER
+=item RAND_DRBG_FLAG_PRIMARY
 
 =item RAND_DRBG_FLAG_PUBLIC
 
@@ -93,13 +93,13 @@ Enables use of HMAC instead of the HASH DRBG.
 These 3 flags can be used to set the individual DRBG types created. Multiple
 calls are required to set the types to different values. If none of these 3
 flags are used, then the same type and flags are used for all 3 DRBGs in the
-B<drbg> chain (<master>, <public> and <private>).
+B<drbg> chain (I<primary>, I<public> and I<private>).
 
 =back
 
-If a B<parent> instance is specified then this will be used instead of
+If a B<primary> instance is specified then this will be used instead of
 the default entropy source for reseeding the B<drbg>. It is said that the
-B<drbg> is I<chained> to its B<parent>.
+B<drbg> is I<chained> to its B<primary>.
 For more information, see the NOTES section.
 
 RAND_DRBG_instantiate()
@@ -134,16 +134,16 @@ RAND_DRBG_free() does not return a value.
 =head1 NOTES
 
 The DRBG design supports I<chaining>, which means that a DRBG instance can
-use another B<parent> DRBG instance instead of the default entropy source
-to obtain fresh random input for reseeding, provided that B<parent> DRBG
+use another B<primary> DRBG instance instead of the default entropy source
+to obtain fresh random input for reseeding, provided that B<primary> DRBG
 instance was properly instantiated, either from a trusted entropy source,
-or from yet another parent DRBG instance.
+or from yet another primary DRBG instance.
 For a detailed description of the reseeding process, see L<RAND_DRBG(7)>.
 
 The default DRBG type and flags are applied only during creation of a DRBG
 instance.
 To ensure that they are applied to the global and thread-local DRBG instances
-(<master>, resp. <public> and <private>), it is necessary to call
+(I<primary>, and I<public> and I<private>), it is necessary to call
 RAND_DRBG_set_defaults() before creating any thread and before calling any
 cryptographic routines that obtain random data directly or indirectly.
 

@@ -167,7 +167,7 @@ struct prov_drbg_st {
      * Counts the number of reseeds since instantiation.
      * This value is ignored if it is zero.
      *
-     * This counter is used only for seed propagation from the <master> DRBG
+     * This counter is used only for seed propagation from the primary DRBG
      * to its two children, the <public> and <private> DRBG. This feature is
      * very special and its sole purpose is to ensure that any randomness which
      * is added by PROV_add() or PROV_seed() will have an immediate effect on

@@ -156,8 +156,9 @@ be examined using the option C<-strparse 229> to yield:
 If an OID is not part of OpenSSL's internal table it will be represented in
 numerical form (for example 1.2.3.4). The file passed to the B<-oid> option
 allows additional OIDs to be included. Each line consists of three columns,
-the first column is the OID in numerical format and should be followed by white
-space. The second column is the "short name" which is a single word followed
+the first column is the OID in numerical format and should be followed by
+whitespace. The second column is the "short name" which is a single word
+followed
 by whitespace. The final column is the rest of the line and is the
 "long name". Example:
 

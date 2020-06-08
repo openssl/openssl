@@ -505,7 +505,7 @@ int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher)
         return 0;
     header += strspn(header, " \t");
 
-    /* We expect "ENCRYPTED" followed by optional white-space + line break */
+    /* We expect "ENCRYPTED" followed by optional whitespace + line break */
     if (strncmp(header, ENCRYPTED, sizeof(ENCRYPTED)-1) != 0 ||
         strspn(header+sizeof(ENCRYPTED)-1, " \t\r\n") == 0) {
         PEMerr(PEM_F_PEM_GET_EVP_CIPHER_INFO, PEM_R_NOT_ENCRYPTED);

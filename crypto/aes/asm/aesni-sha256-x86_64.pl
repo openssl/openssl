@@ -1549,11 +1549,11 @@ ___
 	&$aesenc();
 $code.=<<___;
 	sha256rnds2	$CDGH,$ABEF
-	#pxor		$CDGH,$rndkey0		# black magic
+	#pxor		$CDGH,$rndkey0		# magic
 ___
 	while ($r<40)	{ &$aesenc(); }		# remaining aesenc's
 $code.=<<___;
-	#xorps		$CDGH,$rndkey0		# black magic
+	#xorps		$CDGH,$rndkey0		# magic
 	paddd		$CDGH_SAVE,$CDGH
 	paddd		$ABEF_SAVE,$ABEF
 

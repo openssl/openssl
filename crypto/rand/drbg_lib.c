@@ -41,73 +41,73 @@ typedef struct drbg_global_st {
     /*
      * The three shared DRBG instances
      *
-     * There are three shared DRBG instances: <master>, <public>, and <private>.
+     * There are three shared DRBG instances: primary, public, and private.
      */
     CRYPTO_RWLOCK *lock;
 
     /*
-     * The <master> DRBG
+     * The primary DRBG
      *
      * Not used directly by the application, only for reseeding the two other
      * DRBGs. It reseeds itself by pulling either randomness from os entropy
      * sources or by consuming randomness which was added by RAND_add().
      *
-     * The <master> DRBG is a global instance which is accessed concurrently by
+     * The primary DRBG is a global instance which is accessed concurrently by
      * all threads. The necessary locking is managed automatically by its child
      * DRBG instances during reseeding.
      */
-    RAND_DRBG *master_drbg;
+    RAND_DRBG *primary_drbg;
     /*
-     * The <public> DRBG
+     * The public DRBG
      *
      * Used by default for generating random bytes using RAND_bytes().
      *
-     * The <public> DRBG is thread-local, i.e., there is one instance per
+     * The public DRBG is thread-local, i.e., there is one instance per
      * thread.
      */
     CRYPTO_THREAD_LOCAL public_drbg;
     /*
-     * The <private> DRBG
+     * The private DRBG
      *
      * Used by default for generating private keys using RAND_priv_bytes()
      *
-     * The <private> DRBG is thread-local, i.e., there is one instance per
+     * The private DRBG is thread-local, i.e., there is one instance per
      * thread.
      */
     CRYPTO_THREAD_LOCAL private_drbg;
 } DRBG_GLOBAL;
 
 #define RAND_DRBG_TYPE_FLAGS    ( \
-    RAND_DRBG_FLAG_MASTER | RAND_DRBG_FLAG_PUBLIC | RAND_DRBG_FLAG_PRIVATE )
+    RAND_DRBG_FLAG_PRIMARY | RAND_DRBG_FLAG_PUBLIC | RAND_DRBG_FLAG_PRIVATE )
 
-#define RAND_DRBG_TYPE_MASTER                     0
+#define RAND_DRBG_TYPE_PRIMARY                    0
 #define RAND_DRBG_TYPE_PUBLIC                     1
 #define RAND_DRBG_TYPE_PRIVATE                    2
 
 /* Defaults */
 static int rand_drbg_type[3] = {
-    RAND_DRBG_TYPE, /* Master */
+    RAND_DRBG_TYPE, /* Primary */
     RAND_DRBG_TYPE, /* Public */
     RAND_DRBG_TYPE  /* Private */
 };
 static unsigned int rand_drbg_flags[3] = {
-    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_MASTER, /* Master */
-    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PUBLIC, /* Public */
-    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PRIVATE /* Private */
+    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PRIMARY, /* Primary */
+    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PUBLIC,  /* Public */
+    RAND_DRBG_FLAGS | RAND_DRBG_FLAG_PRIVATE  /* Private */
 };
 
-static unsigned int master_reseed_interval = MASTER_RESEED_INTERVAL;
-static unsigned int slave_reseed_interval  = SLAVE_RESEED_INTERVAL;
+static unsigned int primary_reseed_interval = PRIMARY_RESEED_INTERVAL;
+static unsigned int secondary_reseed_interval  = SECONDARY_RESEED_INTERVAL;
 
-static time_t master_reseed_time_interval = MASTER_RESEED_TIME_INTERVAL;
-static time_t slave_reseed_time_interval  = SLAVE_RESEED_TIME_INTERVAL;
+static time_t primary_reseed_time_interval = PRIMARY_RESEED_TIME_INTERVAL;
+static time_t secondary_reseed_time_interval  = SECONDARY_RESEED_TIME_INTERVAL;
 
 /* A logical OR of all used DRBG flag bits (currently there is only one) */
 static const unsigned int rand_drbg_used_flags =
     RAND_DRBG_FLAG_CTR_NO_DF | RAND_DRBG_FLAG_HMAC | RAND_DRBG_TYPE_FLAGS;
 
 
-static RAND_DRBG *drbg_setup(OPENSSL_CTX *ctx, RAND_DRBG *parent, int drbg_type);
+static RAND_DRBG *drbg_setup(OPENSSL_CTX *ctx, RAND_DRBG *primary, int drbg_type);
 
 static int get_drbg_params(int type, unsigned int flags, const char **name,
                            OSSL_PARAM params[3])
@@ -229,7 +229,7 @@ static void drbg_ossl_ctx_free(void *vdgbl)
         return;
 
     CRYPTO_THREAD_lock_free(dgbl->lock);
-    RAND_DRBG_free(dgbl->master_drbg);
+    RAND_DRBG_free(dgbl->primary_drbg);
     CRYPTO_THREAD_cleanup_local(&dgbl->private_drbg);
     CRYPTO_THREAD_cleanup_local(&dgbl->public_drbg);
 
@@ -262,7 +262,7 @@ static DRBG_GLOBAL *drbg_get_global(OPENSSL_CTX *libctx)
 int RAND_DRBG_set_callback_data(RAND_DRBG *drbg, void *data)
 {
     if (EVP_RAND_state(drbg->rand) != EVP_RAND_STATE_UNINITIALISED
-            || drbg->parent != NULL)
+            || drbg->primary != NULL)
         return 0;
 
     drbg->callback_data = data;
@@ -293,16 +293,16 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
     int use_df;
 
     if (type == 0 && flags == 0) {
-        type = rand_drbg_type[RAND_DRBG_TYPE_MASTER];
-        flags = rand_drbg_flags[RAND_DRBG_TYPE_MASTER];
+        type = rand_drbg_type[RAND_DRBG_TYPE_PRIMARY];
+        flags = rand_drbg_flags[RAND_DRBG_TYPE_PRIMARY];
     }
 
-    if (drbg->parent == NULL) {
-        reseed_interval = master_reseed_interval;
-        reseed_time_interval = master_reseed_time_interval;
+    if (drbg->primary == NULL) {
+        reseed_interval = primary_reseed_interval;
+        reseed_time_interval = primary_reseed_time_interval;
     } else {
-        reseed_interval = slave_reseed_interval;
-        reseed_time_interval = slave_reseed_time_interval;
+        reseed_interval = secondary_reseed_interval;
+        reseed_time_interval = secondary_reseed_time_interval;
     }
     *p++ = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
                                      &reseed_interval);
@@ -328,7 +328,7 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
     drbg->flags = flags;
     drbg->type = type;
 
-    pctx = drbg->parent != NULL ? drbg->parent->rand : NULL;
+    pctx = drbg->primary != NULL ? drbg->primary->rand : NULL;
     drbg->rand = EVP_RAND_CTX_new(rand, pctx);
     EVP_RAND_free(rand);
     if (drbg->rand == NULL) {
@@ -371,9 +371,9 @@ int RAND_DRBG_set_defaults(int type, unsigned int flags)
     }
 
     all = ((flags & RAND_DRBG_TYPE_FLAGS) == 0);
-    if (all || (flags & RAND_DRBG_FLAG_MASTER) != 0) {
-        rand_drbg_type[RAND_DRBG_TYPE_MASTER] = type;
-        rand_drbg_flags[RAND_DRBG_TYPE_MASTER] = flags | RAND_DRBG_FLAG_MASTER;
+    if (all || (flags & RAND_DRBG_FLAG_PRIMARY) != 0) {
+        rand_drbg_type[RAND_DRBG_TYPE_PRIMARY] = type;
+        rand_drbg_flags[RAND_DRBG_TYPE_PRIMARY] = flags | RAND_DRBG_FLAG_PRIMARY;
     }
     if (all || (flags & RAND_DRBG_FLAG_PUBLIC) != 0) {
         rand_drbg_type[RAND_DRBG_TYPE_PUBLIC]  = type;
@@ -389,14 +389,14 @@ int RAND_DRBG_set_defaults(int type, unsigned int flags)
 
 /*
  * Allocate memory and initialize a new DRBG.
- * The |parent|, if not NULL, will be used as random source for reseeding.
+ * The |primary|, if not NULL, will be used as random source for reseeding.
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
 static RAND_DRBG *rand_drbg_new(OPENSSL_CTX *ctx,
                                 int type,
                                 unsigned int flags,
-                                RAND_DRBG *parent)
+                                RAND_DRBG *primary)
 {
     RAND_DRBG *drbg = OPENSSL_zalloc(sizeof(*drbg));
 
@@ -406,7 +406,7 @@ static RAND_DRBG *rand_drbg_new(OPENSSL_CTX *ctx,
     }
 
     drbg->libctx = ctx;
-    drbg->parent = parent;
+    drbg->primary = primary;
 
     if (RAND_DRBG_set(drbg, type, flags) == 0)
         goto err;
@@ -420,14 +420,14 @@ static RAND_DRBG *rand_drbg_new(OPENSSL_CTX *ctx,
 }
 
 RAND_DRBG *RAND_DRBG_new_ex(OPENSSL_CTX *ctx, int type, unsigned int flags,
-                            RAND_DRBG *parent)
+                            RAND_DRBG *primary)
 {
-    return rand_drbg_new(ctx, type, flags, parent);
+    return rand_drbg_new(ctx, type, flags, primary);
 }
 
-RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *parent)
+RAND_DRBG *RAND_DRBG_new(int type, unsigned int flags, RAND_DRBG *primary)
 {
-    return RAND_DRBG_new_ex(NULL, type, flags, parent);
+    return rand_drbg_new(NULL, type, flags, primary);
 }
 
 /*
@@ -473,8 +473,8 @@ int RAND_DRBG_uninstantiate(RAND_DRBG *drbg)
         return 0;
 
     /* The reset uses the default values for type and flags */
-    if (drbg->flags & RAND_DRBG_FLAG_MASTER)
-        index = RAND_DRBG_TYPE_MASTER;
+    if (drbg->flags & RAND_DRBG_FLAG_PRIMARY)
+        index = RAND_DRBG_TYPE_PRIMARY;
     else if (drbg->flags & RAND_DRBG_FLAG_PRIVATE)
         index = RAND_DRBG_TYPE_PRIVATE;
     else if (drbg->flags & RAND_DRBG_FLAG_PUBLIC)
@@ -730,32 +730,32 @@ int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval)
 /*
  * Set the default values for reseed (time) intervals of new DRBG instances
  *
- * The default values can be set independently for master DRBG instances
- * (without a parent) and slave DRBG instances (with parent).
+ * The default values can be set independently for primary DRBG instances
+ * and secondary DRBG instances.
  *
  * Returns 1 on success, 0 on failure.
  */
 
 int RAND_DRBG_set_reseed_defaults(
-                                  unsigned int _master_reseed_interval,
-                                  unsigned int _slave_reseed_interval,
-                                  time_t _master_reseed_time_interval,
-                                  time_t _slave_reseed_time_interval
+                                  unsigned int _primary_reseed_interval,
+                                  unsigned int _secondary_reseed_interval,
+                                  time_t _primary_reseed_time_interval,
+                                  time_t _secondary_reseed_time_interval
                                   )
 {
-    if (_master_reseed_interval > MAX_RESEED_INTERVAL
-        || _slave_reseed_interval > MAX_RESEED_INTERVAL)
+    if (_primary_reseed_interval > MAX_RESEED_INTERVAL
+        || _secondary_reseed_interval > MAX_RESEED_INTERVAL)
         return 0;
 
-    if (_master_reseed_time_interval > MAX_RESEED_TIME_INTERVAL
-        || _slave_reseed_time_interval > MAX_RESEED_TIME_INTERVAL)
+    if (_primary_reseed_time_interval > MAX_RESEED_TIME_INTERVAL
+        || _secondary_reseed_time_interval > MAX_RESEED_TIME_INTERVAL)
         return 0;
 
-    master_reseed_interval = _master_reseed_interval;
-    slave_reseed_interval = _slave_reseed_interval;
+    primary_reseed_interval = _primary_reseed_interval;
+    secondary_reseed_interval = _secondary_reseed_interval;
 
-    master_reseed_time_interval = _master_reseed_time_interval;
-    slave_reseed_time_interval = _slave_reseed_time_interval;
+    primary_reseed_time_interval = _primary_reseed_time_interval;
+    secondary_reseed_time_interval = _secondary_reseed_time_interval;
 
     return 1;
 }
@@ -784,17 +784,17 @@ void *RAND_DRBG_get_ex_data(const RAND_DRBG *drbg, int idx)
  *
  * Returns a pointer to the new DRBG instance on success, NULL on failure.
  */
-static RAND_DRBG *drbg_setup(OPENSSL_CTX *ctx, RAND_DRBG *parent, int drbg_type)
+static RAND_DRBG *drbg_setup(OPENSSL_CTX *ctx, RAND_DRBG *primary, int drbg_type)
 {
     RAND_DRBG *drbg;
 
     drbg = RAND_DRBG_new_ex(ctx, rand_drbg_type[drbg_type],
-                            rand_drbg_flags[drbg_type], parent);
+                            rand_drbg_flags[drbg_type], primary);
     if (drbg == NULL)
         return NULL;
 
     /* Only the master DRBG needs to have a lock */
-    if (parent == NULL && EVP_RAND_enable_locking(drbg->rand) == 0)
+    if (primary == NULL && EVP_RAND_enable_locking(drbg->rand) == 0)
         goto err;
 
     /*
@@ -845,7 +845,7 @@ static int drbg_bytes(unsigned char *out, int count)
 /* Implements the default OpenSSL RAND_add() method */
 static int drbg_add(const void *buf, int num, double randomness)
 {
-    RAND_DRBG *drbg = RAND_DRBG_get0_master();
+    RAND_DRBG *drbg = RAND_DRBG_get0_primary();
 
     if (drbg == NULL || num <= 0)
         return 0;
@@ -863,7 +863,7 @@ static int drbg_seed(const void *buf, int num)
 static int drbg_status(void)
 {
     int ret;
-    RAND_DRBG *drbg = RAND_DRBG_get0_master();
+    RAND_DRBG *drbg = RAND_DRBG_get0_primary();
 
     if (drbg == NULL)
         return 0;
@@ -878,30 +878,30 @@ int RAND_DRBG_verify_zeroization(RAND_DRBG *drbg)
 }
 
 /*
- * Get the master DRBG.
+ * Get the primary DRBG.
  * Returns pointer to the DRBG on success, NULL on failure.
  *
  */
-RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx)
+RAND_DRBG *OPENSSL_CTX_get0_primary_drbg(OPENSSL_CTX *ctx)
 {
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
 
     if (dgbl == NULL)
         return NULL;
 
-    if (dgbl->master_drbg == NULL) {
+    if (dgbl->primary_drbg == NULL) {
         if (!CRYPTO_THREAD_write_lock(dgbl->lock))
             return NULL;
-        if (dgbl->master_drbg == NULL)
-            dgbl->master_drbg = drbg_setup(ctx, NULL, RAND_DRBG_TYPE_MASTER);
+        if (dgbl->primary_drbg == NULL)
+            dgbl->primary_drbg = drbg_setup(ctx, NULL, RAND_DRBG_TYPE_PRIMARY);
         CRYPTO_THREAD_unlock(dgbl->lock);
     }
-    return dgbl->master_drbg;
+    return dgbl->primary_drbg;
 }
 
-RAND_DRBG *RAND_DRBG_get0_master(void)
+RAND_DRBG *RAND_DRBG_get0_primary(void)
 {
-    return OPENSSL_CTX_get0_master_drbg(NULL);
+    return OPENSSL_CTX_get0_primary_drbg(NULL);
 }
 
 /*
@@ -911,15 +911,15 @@ RAND_DRBG *RAND_DRBG_get0_master(void)
 RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
 {
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
-    RAND_DRBG *drbg, *master;
+    RAND_DRBG *drbg, *primary;
 
     if (dgbl == NULL)
         return NULL;
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->public_drbg);
     if (drbg == NULL) {
-        master = OPENSSL_CTX_get0_master_drbg(ctx);
-        if (master == NULL)
+        primary = OPENSSL_CTX_get0_primary_drbg(ctx);
+        if (primary == NULL)
             return NULL;
 
         ctx = openssl_ctx_get_concrete(ctx);
@@ -930,7 +930,7 @@ RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx)
         if (CRYPTO_THREAD_get_local(&dgbl->private_drbg) == NULL
                 && !ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
-        drbg = drbg_setup(ctx, master, RAND_DRBG_TYPE_PUBLIC);
+        drbg = drbg_setup(ctx, primary, RAND_DRBG_TYPE_PUBLIC);
         CRYPTO_THREAD_set_local(&dgbl->public_drbg, drbg);
     }
     return drbg;
@@ -948,15 +948,15 @@ RAND_DRBG *RAND_DRBG_get0_public(void)
 RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
 {
     DRBG_GLOBAL *dgbl = drbg_get_global(ctx);
-    RAND_DRBG *drbg, *master;
+    RAND_DRBG *drbg, *primary;
 
     if (dgbl == NULL)
         return NULL;
 
     drbg = CRYPTO_THREAD_get_local(&dgbl->private_drbg);
     if (drbg == NULL) {
-        master = OPENSSL_CTX_get0_master_drbg(ctx);
-        if (master == NULL)
+        primary = OPENSSL_CTX_get0_primary_drbg(ctx);
+        if (primary == NULL)
             return NULL;
 
         ctx = openssl_ctx_get_concrete(ctx);
@@ -967,7 +967,7 @@ RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx)
         if (CRYPTO_THREAD_get_local(&dgbl->public_drbg) == NULL
                 && !ossl_init_thread_start(NULL, ctx, drbg_delete_thread_state))
             return NULL;
-        drbg = drbg_setup(ctx, master, RAND_DRBG_TYPE_PRIVATE);
+        drbg = drbg_setup(ctx, primary, RAND_DRBG_TYPE_PRIVATE);
         CRYPTO_THREAD_set_local(&dgbl->private_drbg, drbg);
     }
     return drbg;

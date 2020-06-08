@@ -59,51 +59,51 @@ implementation to meet specific requirements.
 
 A DRBG instance can be used as the entropy source of another DRBG instance,
 provided it has itself access to a valid entropy source.
-The DRBG instance which acts as entropy source is called the I<parent> DRBG,
-the other instance the I<child> DRBG.
+The DRBG instance which acts as entropy source is called the I<primary> DRBG,
+the other instance is the I<child> DRBG.
 
 This is called chaining. A chained DRBG instance is created by passing
-a pointer to the parent DRBG as argument to the RAND_DRBG_new() call.
+a pointer to the primary DRBG as argument to the RAND_DRBG_new() call.
 It is possible to create chains of more than two DRBG in a row.
 
 =head1 THE THREE SHARED DRBG INSTANCES
 
 Currently, there are three shared DRBG instances,
-the <master>, <public>, and <private> DRBG.
-While the <master> DRBG is a single global instance, the <public> and <private>
+the I<primary>, I<public>, and I<private> DRBG.
+While the I<primary> DRBG is a single global instance,
+the I<public> and I<private>
 DRBG are created per thread and accessed through thread-local storage.
 
 By default, the functions L<RAND_bytes(3)> and L<RAND_priv_bytes(3)> use
-the thread-local <public> and <private> DRBG instance, respectively.
+the thread-local I<public> and I<private> DRBG instance, respectively.
 
-=head2 The <master> DRBG instance
+=head2 The I<primary> DRBG instance
 
-The <master> DRBG is not used directly by the application, only for reseeding
+The I<primary> DRBG is not used directly by the application, only for reseeding
 the two other two DRBG instances. It reseeds itself by obtaining randomness
 either from os entropy sources or by consuming randomness which was added
 previously by L<RAND_add(3)>.
 
-=head2 The <public> DRBG instance
+=head2 The I<public> DRBG instance
 
 This instance is used per default by L<RAND_bytes(3)>.
 
-=head2 The <private> DRBG instance
+=head2 The I<private> DRBG instance
 
 This instance is used per default by L<RAND_priv_bytes(3)>
 
-
 =head1 LOCKING
 
-The <master> DRBG is intended to be accessed concurrently for reseeding
+The I<primary> DRBG is intended to be accessed concurrently for reseeding
 by its child DRBG instances. The necessary locking is done internally.
-It is I<not> thread-safe to access the <master> DRBG directly via the
+It is I<not> thread-safe to access the I<primary> DRBG directly via the
 RAND_DRBG interface.
-The <public> and <private> DRBG are thread-local, i.e. there is an
+The I<public> and I<private> DRBG are thread-local, i.e. there is an
 instance of each per thread. So they can safely be accessed without
 locking via the RAND_DRBG interface.
 
 Pointers to these DRBG instances can be obtained using
-RAND_DRBG_get0_master(),
+RAND_DRBG_get0_primary(),
 RAND_DRBG_get0_public(), and
 RAND_DRBG_get0_private(), respectively.
 Note that it is not allowed to store a pointer to one of the thread-local
@@ -114,9 +114,9 @@ All other DRBG instances created by an application don't support locking,
 because they are intended to be used by a single thread.
 Instead of accessing a single DRBG instance concurrently from different
 threads, it is recommended to instantiate a separate DRBG instance per
-thread. Using the <master> DRBG as entropy source for multiple DRBG
+thread. Using the I<primary> DRBG as entropy source for multiple DRBG
 instances on different threads is thread-safe, because the DRBG instance
-will lock the <master> DRBG automatically for obtaining random input.
+will lock the I<primary> DRBG automatically for obtaining random input.
 
 =head1 THE OVERALL PICTURE
 
@@ -128,14 +128,14 @@ together and are being used.
                +--------------------+
                         |
                         v           +-----------------------------+
-      RAND_add() ==> <master>     <-| shared DRBG (with locking)  |
+      RAND_add() ==> primary     <--| shared DRBG (with locking)  |
                       /   \         +-----------------------------+
                      /     \              +---------------------------+
-              <public>     <private>   <- | per-thread DRBG instances |
+               public      private     <--| per-thread DRBG instances |
                  |             |          +---------------------------+
                  v             v
                RAND_bytes()   RAND_priv_bytes()
-                    |               ^
+                    ^               ^
                     |               |
     +------------------+      +------------------------------------+
     | general purpose  |      | used for secrets like session keys |
@@ -145,7 +145,7 @@ together and are being used.
 
 The usual way to obtain random bytes is to call RAND_bytes(...) or
 RAND_priv_bytes(...). These calls are roughly equivalent to calling
-RAND_DRBG_bytes(<public>, ...) and RAND_DRBG_bytes(<private>, ...),
+RAND_DRBG_bytes(I<public>, ...) and RAND_DRBG_bytes(I<private>, ...),
 respectively. The method L<RAND_DRBG_bytes(3)> is a convenience method
 wrapping the L<RAND_DRBG_generate(3)> function, which serves the actual
 request for random data.
@@ -201,13 +201,12 @@ and is being used.
 For the three shared DRBGs (and only for these) there is another way to
 reseed them manually:
 If L<RAND_add(3)> is called with a positive I<randomness> argument
-(or L<RAND_seed(3)>), then this will immediately reseed the <master> DRBG.
-The <public> and <private> DRBG will detect this on their next generate
-call and reseed, pulling randomness from <master>.
+(or L<RAND_seed(3)>), then this will immediately reseed the I<primary> DRBG.
+The I<public> and I<private> DRBG will detect this on their next generate
+call and reseed, pulling randomness from I<primary>.
 
 The last feature has been added to support the common practice used with
 previous OpenSSL versions to call RAND_add() before calling RAND_bytes().
-
 
 =head2 Entropy Input and Additional Data
 
@@ -218,21 +217,19 @@ It is possible to add I<additional input> not only during reseeding,
 but also for every generate request.
 This is in fact done automatically by L<RAND_DRBG_bytes(3)>.
 
-
 =head2 Configuring the Random Seed Source
 
 In most cases OpenSSL will automatically choose a suitable seed source
-for automatically seeding and reseeding its <master> DRBG. In some cases
+for automatically seeding and reseeding its I<primary> DRBG. In some cases
 however, it will be necessary to explicitly specify a seed source during
 configuration, using the --with-rand-seed option. For more information,
 see the INSTALL instructions. There are also operating systems where no
 seed source is available and automatic reseeding is disabled by default.
 
-The following two sections describe the reseeding process of the master
+The following two sections describe the reseeding process of the primary
 DRBG, depending on whether automatic reseeding is available or not.
 
-
-=head2 Reseeding the master DRBG with automatic seeding enabled
+=head2 Reseeding the primary DRBG with automatic seeding enabled
 
 Calling RAND_poll() or RAND_add() is not necessary, because the DRBG
 pulls the necessary entropy from its source automatically.
@@ -271,7 +268,7 @@ reseeding (Section 9.2). For that reason, the I<randomness>
 argument is ignored and the random bytes provided by the L<RAND_add(3)> and
 L<RAND_seed(3)> calls are treated as additional data.
 
-=head2 Reseeding the master DRBG with automatic seeding disabled
+=head2 Reseeding the primary DRBG with automatic seeding disabled
 
 Calling RAND_poll() will always fail.
 
@@ -289,7 +286,7 @@ I<security strength> of the DRBG, which is set to 256 by default.
 L<RAND_DRBG_bytes(3)>,
 L<RAND_DRBG_generate(3)>,
 L<RAND_DRBG_reseed(3)>,
-L<RAND_DRBG_get0_master(3)>,
+L<RAND_DRBG_get0_primary(3)>,
 L<RAND_DRBG_get0_public(3)>,
 L<RAND_DRBG_get0_private(3)>,
 L<RAND_DRBG_set_reseed_interval(3)>,

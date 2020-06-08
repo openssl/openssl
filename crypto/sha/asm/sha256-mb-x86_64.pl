@@ -542,23 +542,23 @@ $code.=<<___;
 	movdqa		0*16-0x80($Tbl),$Wi
 	pshufb		$TMPx,@MSG0[1]
 	paddd		@MSG0[0],$Wi
-	pxor		$ABEF0,@MSG0[0]		# black magic
+	pxor		$ABEF0,@MSG0[0]		# magic
 	movdqa		$Wi,$TMP0
 	 movdqa		0*16-0x80($Tbl),$TMP1
 	 pshufb		$TMPx,@MSG1[1]
 	 paddd		@MSG1[0],$TMP1
 	movdqa		$CDGH0,0x50(%rsp)	# offload
 	sha256rnds2	$ABEF0,$CDGH0		# 0-3
-	 pxor		$ABEF1,@MSG1[0]		# black magic
+	 pxor		$ABEF1,@MSG1[0]		# magic
 	 movdqa		$TMP1,$Wi
 	 movdqa		$CDGH1,0x70(%rsp)
 	 sha256rnds2	$ABEF1,$CDGH1		# 0-3
 	pshufd		\$0x0e,$TMP0,$Wi
-	pxor		$ABEF0,@MSG0[0]		# black magic
+	pxor		$ABEF0,@MSG0[0]		# magic
 	movdqa		$ABEF0,0x40(%rsp)	# offload
 	sha256rnds2	$CDGH0,$ABEF0
 	 pshufd		\$0x0e,$TMP1,$Wi
-	 pxor		$ABEF1,@MSG1[0]		# black magic
+	 pxor		$ABEF1,@MSG1[0]		# magic
 	 movdqa		$ABEF1,0x60(%rsp)
 	movdqa		1*16-0x80($Tbl),$TMP0
 	paddd		@MSG0[1],$TMP0

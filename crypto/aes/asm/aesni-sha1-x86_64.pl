@@ -1817,11 +1817,11 @@ $code.=<<___;
 	paddd		@MSG[0],$E
 	movdqu		0x20($inp),@MSG[2]
 	lea		0x40($inp),$inp
-	pxor		$E_SAVE,@MSG[0]		# black magic
+	pxor		$E_SAVE,@MSG[0]		# magic
 ___
 	&$aesenc();
 $code.=<<___;
-	pxor		$E_SAVE,@MSG[0]		# black magic
+	pxor		$E_SAVE,@MSG[0]		# magic
 	movdqa		$ABCD,$E_
 	pshufb		$BSWAP,@MSG[2]
 	sha1rnds4	\$0,$E,$ABCD		# 0-3
