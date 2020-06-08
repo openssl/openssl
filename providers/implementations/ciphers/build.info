@@ -49,9 +49,9 @@ SOURCE[$AES_GOAL]=\
         cipher_aes_cbc_hmac_sha256_hw.c cipher_aes_cbc_hmac_sha1_hw.c
 
 # Extra code to satisfy the FIPS and non-FIPS separation.
-# When the AES-xxx-XTS moves to legacy, this can be removed.
-SOURCE[../../libfips.a]=cipher_aes_xts_fips.c
-SOURCE[../../libnonfips.a]=cipher_aes_xts_fips.c
+# When the AES-xxx-XTS moves to legacy, cipher_aes_xts_fips.c can be removed.
+SOURCE[../../libfips.a]=cipher_aes_xts_fips.c cipher_aes_cts_fips.c
+SOURCE[../../libnonfips.a]=cipher_aes_xts_fips.c cipher_aes_cts_fips.c
 
 IF[{- !$disabled{siv} -}]
   SOURCE[$SIV_GOAL]=\

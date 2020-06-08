@@ -410,6 +410,38 @@ Byte 11-12: Input length (Always 0)
 
 Gets the result of running the "tls1multi_aad" operation.
 
+=item "cts_mode" (B<OSSL_CIPHER_PARAM_CTS_MODE>) <utf8 string>
+
+Sets the cipher text stealing mode. For all modes the output size is the same as
+the input size.
+
+Valid values for the mode are:
+
+=over 4
+
+=item "CS1"
+
+The NIST variant of cipher text stealing.
+For message lengths that are multiples of the block size it is equivalent to
+using a "AES-CBC" cipher otherwise the second last cipher text block is a
+partial block.
+
+=item "CS2"
+
+For message lengths that are multiples of the block size it is equivalent to
+using a "AES-CBC" cipher, otherwise it is the same as "CS3".
+
+=item "CS3"
+
+The Kerberos5 variant of cipher text stealing which always swaps the last
+cipher text block with the previous block (which may be a partial or full block
+depending on the input length).
+
+=back
+
+The default is "CS1".
+This is only supported for "AES-128-CBC-CTS", "AES-192-CBC-CTS" and "AES-256-CBC-CTS".
+
 =back
 
 =head1 RETURN VALUES

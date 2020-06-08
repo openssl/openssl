@@ -32,7 +32,8 @@ my @configs = ( $defaultcnf );
 push @configs, 'fips.cnf' unless $no_fips;
 
 my @files = qw( evprand.txt evpciph.txt evpdigest.txt evppkey.txt
-    evppkey_ecc.txt );
+    evppkey_ecc.txt evpciph_aes_cts.txt);
+
 my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
     evppbe.txt evpcase.txt evpccmcavs.txt );
 my @ideafiles = qw( evpciph_idea.txt );
