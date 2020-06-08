@@ -35,6 +35,8 @@ OpenSSL::Test - a private extension of Test::More
 
   setup("my_test_name");
 
+  plan tests => 2;
+
   ok(run(app(["openssl", "version"])), "check for openssl presence");
 
   indir "subdir" => sub {
