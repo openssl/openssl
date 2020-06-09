@@ -25,8 +25,10 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
 /*
  * Top secret. This algorithm only works if no one knows what this number is.
  * Please don't tell anyone what it is.
+ * 
+ * This algorithm is for testing only - don't really use it!
  */
-const unsigned char private_constant[XOR_KEY_SIZE] = {
+static const unsigned char private_constant[XOR_KEY_SIZE] = {
     0xd3, 0x6b, 0x54, 0xec, 0x5b, 0xac, 0x89, 0x96, 0x8c, 0x2c, 0x66, 0xa5,
     0x67, 0x0d, 0xe3, 0xdd, 0x43, 0x69, 0xbc, 0x83, 0x3d, 0x60, 0xc7, 0xb8,
     0x2b, 0x1c, 0x5a, 0xfd, 0xb5, 0xcd, 0xd0, 0xf8
@@ -42,12 +44,12 @@ typedef struct xorkey_st {
 
 /* We define a dummy TLS group called "xorgroup" for test purposes */
 
-unsigned int group_id = 65137; /* IANA reserved for private use */
-unsigned int secbits = 128;
-unsigned int mintls = TLS1_3_VERSION;
-unsigned int maxtls = 0;
-unsigned int mindtls = -1;
-unsigned int maxdtls = -1;
+static unsigned int group_id = 0; /* IANA reserved for private use */
+static unsigned int secbits = 128;
+static unsigned int mintls = TLS1_3_VERSION;
+static unsigned int maxtls = 0;
+static unsigned int mindtls = -1;
+static unsigned int maxdtls = -1;
 
 #define GROUP_NAME "xorgroup"
 #define GROUP_NAME_INTERNAL "xorgroup-int"
@@ -168,7 +170,7 @@ static void *xor_dupctx(void *vpxorctx)
     return dstctx;
 }
 
-const OSSL_DISPATCH xor_keyexch_functions[] = {
+static const OSSL_DISPATCH xor_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))xor_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))xor_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))xor_derive },
@@ -312,8 +314,7 @@ static const OSSL_PARAM xor_known_settable_params[] = {
     OSSL_PARAM_END
 };
 
-static
-const OSSL_PARAM *xor_settable_params(void)
+static const OSSL_PARAM *xor_settable_params(void)
 {
     return xor_known_settable_params;
 }
@@ -395,7 +396,7 @@ static void xor_gen_cleanup(void *genctx)
     OPENSSL_free(genctx);
 }
 
-const OSSL_DISPATCH xor_keymgmt_functions[] = {
+static const OSSL_DISPATCH xor_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))xor_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))xor_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))xor_gen_set_params },
@@ -447,6 +448,19 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     OPENSSL_CTX *libctx = OPENSSL_CTX_new();
 
     *provctx = libctx;
+
+    /*
+     * Randomise the group_id we're going to use to ensure we don't interoperate
+     * with anything but ourselves.
+     */
+    if (!RAND_bytes_ex(libctx, (unsigned char *)&group_id, sizeof(group_id)))
+        return 0;
+    /*
+     * Ensure group_id is within the IANA Reserved for private use range
+     * (65024-65279)
+     */
+    group_id %= 65279 - 65024;
+    group_id += 65024;
 
     *out = tls_prov_dispatch_table;
     return 1;
