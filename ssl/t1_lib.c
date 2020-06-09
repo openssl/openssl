@@ -249,9 +249,10 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     SSL_CTX *ctx = pgd->ctx;
     OSSL_PROVIDER *provider = pgd->provider;
     const OSSL_PARAM *p;
-    TLS_GROUP_INFO *ginf;
+    TLS_GROUP_INFO *ginf = NULL;
     EVP_KEYMGMT *keymgmt;
     unsigned int gid;
+    int ret = 0;
 
     if (ctx->group_list_max_len == ctx->group_list_len) {
         TLS_GROUP_INFO *tmp = NULL;
@@ -280,61 +281,53 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_NAME);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
-    ginf->tlsname = OPENSSL_malloc(strlen(p->data) + 1);
+    ginf->tlsname = OPENSSL_strdup(p->data);
     if (ginf->tlsname == NULL) {
         SSLerr(0, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
-    strcpy(ginf->tlsname, p->data);
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
-        OPENSSL_free(ginf->tlsname);
-        ginf->tlsname = NULL;
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
-    ginf->realname = OPENSSL_malloc(strlen(p->data) + 1);
+    ginf->realname = OPENSSL_strdup(p->data);
     if (ginf->realname == NULL) {
         SSLerr(0, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
-    strcpy(ginf->realname, p->data);
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_ID);
     if (p == NULL || !OSSL_PARAM_get_uint(p, &gid) || gid > UINT16_MAX) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
     ginf->group_id = (uint16_t)gid;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_ALG);
     if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
-    ginf->algorithm = OPENSSL_malloc(strlen(p->data) + 1);
+    ginf->algorithm = OPENSSL_strdup(p->data);
     if (ginf->algorithm == NULL) {
-        OPENSSL_free(ginf->tlsname);
-        OPENSSL_free(ginf->realname);
-        ginf->tlsname = ginf->realname = NULL;
         SSLerr(0, ERR_R_MALLOC_FAILURE);
-        return 0;
+        goto err;
     }
-    strcpy(ginf->algorithm, p->data);
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS);
     if (p == NULL || !OSSL_PARAM_get_uint(p, &ginf->secbits)) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_TLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->mintls)) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MAX_TLS);
@@ -346,18 +339,21 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->mindtls)) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->maxdtls)) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
     /*
      * Now check that the algorithm is actually usable for our property query
-     * string.
+     * string. Regardless of the result we still return success because we have
+     * successfully processed this group, even though we may decide not to use
+     * it.
      */
+    ret = 1;
     keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ginf->algorithm, ctx->propq);
     if (keymgmt != NULL) {
         /*
@@ -375,11 +371,18 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         if (EVP_KEYMGMT_provider(keymgmt) == provider) {
             /* We have a match - so we will use this group */
             ctx->group_list_len++;
+            ginf = NULL;
         }
         EVP_KEYMGMT_free(keymgmt);
     }
-
-    return 1;
+ err:
+    if (ginf != NULL) {
+        OPENSSL_free(ginf->tlsname);
+        OPENSSL_free(ginf->realname);
+        OPENSSL_free(ginf->algorithm);
+        ginf->tlsname = ginf->realname = NULL;
+    }
+    return ret;
 }
 
 static int discover_provider_groups(OSSL_PROVIDER *provider, void *vctx)
