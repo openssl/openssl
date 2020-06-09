@@ -214,9 +214,9 @@ It should treat the given I<OSSL_PARAM> array as described in
 L<OSSL_PARAM(3)>.
 
 ossl_provider_get_capabilties() calls the provider's I<get_capabilties> function,
-if the provider has one. It provides the name of the I<capability> and a callback
-in th I<cb> parameter to call for each capability that has that name in the
-provider. The callback gets passed OSSL_PARAM details about the capability as
+if the provider has one. It provides the name of the I<capability> and a
+callback I<cb> parameter to call for each capability that has a matching name in
+the provider. The callback gets passed OSSL_PARAM details about the capability as
 well as the caller supplied argument I<arg>.
 
 ossl_provider_query_operation() calls the provider's
