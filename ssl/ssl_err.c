@@ -232,6 +232,8 @@ static const ERR_STRING_DATA SSL_str_reasons[] = {
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_LIBRARY_BUG), "library bug"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_LIBRARY_HAS_NO_CIPHERS),
     "library has no ciphers"},
+    {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MAX_SEQUENCE_NUMBER_EXCEEDED),
+    "max sequence number exceeded"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_DSA_SIGNING_CERT),
     "missing dsa signing cert"},
     {ERR_PACK(ERR_LIB_SSL, 0, SSL_R_MISSING_ECDSA_SIGNING_CERT),

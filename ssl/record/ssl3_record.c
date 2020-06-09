@@ -935,6 +935,35 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending)
             /* otherwise, rec->length >= bs */
         }
 
+#ifndef OPENSSL_NO_GOST
+        if (EVP_CIPHER_CTX_nid(ds) == NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm
+            || EVP_CIPHER_CTX_nid(ds) == NID_id_tc26_cipher_gostr3412_2015_kuznyechik_ctracpkm_omac) {
+            unsigned char *seq;
+            unsigned char max_seq_num[] = {0xff, 0xff, 0xff, 0xff,
+                                           0xff, 0xff, 0xff, 0xff};
+            seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
+                : RECORD_LAYER_get_read_sequence(&s->rlayer);
+            if (memcmp(seq, max_seq_num, sizeof(max_seq_num)) == 0) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS1_ENC,
+                         SSL_R_MAX_SEQUENCE_NUMBER_EXCEEDED);
+                return -1;
+            }
+        }
+
+        if (EVP_CIPHER_CTX_nid(ds) == NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm
+           || EVP_CIPHER_CTX_nid(ds) == NID_id_tc26_cipher_gostr3412_2015_magma_ctracpkm_omac) {
+            unsigned char *seq;
+            unsigned char max_seq_num[] = {0xff, 0xff, 0xff, 0xff};
+            seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
+                : RECORD_LAYER_get_read_sequence(&s->rlayer);
+            if (memcmp(seq, max_seq_num, sizeof(max_seq_num)) == 0) {
+                SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS1_ENC,
+                         SSL_R_MAX_SEQUENCE_NUMBER_EXCEEDED);
+                return -1;
+            }
+        }
+#endif
+
         /* TODO(size_t): Convert this call */
         if (EVP_Cipher(ds, rec->data, rec->input, (unsigned int)l) < 1)
             return -1;
