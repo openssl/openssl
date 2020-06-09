@@ -188,19 +188,8 @@ int genpkey_main(int argc, char **argv)
     EVP_PKEY_CTX_set_cb(ctx, genpkey_cb);
     EVP_PKEY_CTX_set_app_data(ctx, bio_err);
 
-    if (do_param) {
-        if (EVP_PKEY_paramgen(ctx, &pkey) <= 0) {
-            BIO_puts(bio_err, "Error generating parameters\n");
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    } else {
-        if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
-            BIO_puts(bio_err, "Error generating key\n");
-            ERR_print_errors(bio_err);
-            goto end;
-        }
-    }
+    pkey = do_param ? app_paramgen(ctx, algname)
+                    : app_keygen(ctx, algname, 0, 0 /* not verbose */);
 
     if (do_param) {
         rv = PEM_write_bio_Parameters(out, pkey);
@@ -219,7 +208,6 @@ int genpkey_main(int argc, char **argv)
 
     if (rv <= 0) {
         BIO_puts(bio_err, "Error writing key\n");
-        ERR_print_errors(bio_err);
         ret = 1;
     }
 
@@ -231,13 +219,14 @@ int genpkey_main(int argc, char **argv)
 
         if (rv <= 0) {
             BIO_puts(bio_err, "Error printing key\n");
-            ERR_print_errors(bio_err);
             ret = 1;
         }
     }
 
  end:
     sk_OPENSSL_STRING_free(keyopt);
+    if (ret != 0)
+        ERR_print_errors(bio_err);
     EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(ctx);
     EVP_CIPHER_free(cipher);

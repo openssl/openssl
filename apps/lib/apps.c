@@ -35,6 +35,7 @@
 #include <openssl/ui.h>
 #include <openssl/safestack.h>
 #include <openssl/rsa.h>
+#include <openssl/rand.h>
 #include <openssl/bn.h>
 #include <openssl/ssl.h>
 #include <openssl/store.h>
@@ -629,7 +630,7 @@ void app_bail_out(char *fmt, ...)
     BIO_vprintf(bio_err, fmt, args);
     va_end(args);
     ERR_print_errors(bio_err);
-    exit(1);
+    exit(EXIT_FAILURE);
 }
 
 void *app_malloc(size_t sz, const char *what)
@@ -3257,4 +3258,37 @@ void app_params_free(OSSL_PARAM *params)
             OPENSSL_free(params[i].data);
         OPENSSL_free(params);
     }
+}
+
+EVP_PKEY *app_keygen(EVP_PKEY_CTX *ctx, const char *alg, int bits, int verbose)
+{
+    EVP_PKEY *res = NULL;
+
+    if (verbose && alg != NULL) {
+        BIO_printf(bio_err, "Generating %s key", alg);
+        if (bits > 0)
+            BIO_printf(bio_err, " with %d bits\n", bits);
+        else
+            BIO_printf(bio_err, "\n");
+    }
+    if (!RAND_status())
+        BIO_printf(bio_err, "Warning: generating random key material may take a long time\n"
+                   "if the system has a poor entropy source\n");
+    if (EVP_PKEY_keygen(ctx, &res) <= 0)
+        app_bail_out("%s: Error generating %s key\n", opt_getprog(),
+                     alg != NULL ? alg : "asymmetric");
+    return res;
+}
+
+EVP_PKEY *app_paramgen(EVP_PKEY_CTX *ctx, const char *alg)
+{
+    EVP_PKEY *res = NULL;
+
+    if (!RAND_status())
+        BIO_printf(bio_err, "Warning: generating random key parameters may take a long time\n"
+                   "if the system has a poor entropy source\n");
+    if (EVP_PKEY_paramgen(ctx, &res) <= 0)
+        app_bail_out("%s: Generating %s key parameters failed\n",
+                     opt_getprog(), alg != NULL ? alg : "asymmetric");
+    return res;
 }
