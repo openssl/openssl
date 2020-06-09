@@ -131,12 +131,11 @@ push(@curve_aliases, qw(
 )) if !disabled("ec2m");
 
 my @curve_list = ();
-# push(@curve_list, @prime_curves);
-# push(@curve_list, @binary_curves)
-#     if !disabled("ec2m");
-# push(@curve_list, @other_curves);
-# push(@curve_list, @curve_aliases);
-push(@curve_list, 'P-256');
+push(@curve_list, @prime_curves);
+push(@curve_list, @binary_curves)
+    if !disabled("ec2m");
+push(@curve_list, @other_curves);
+push(@curve_list, @curve_aliases);
 
 my %params_encodings =
     (
@@ -144,8 +143,7 @@ my %params_encodings =
      'explicit'         => \&unsupported
     );
 
-# my @output_formats = ('PEM', 'DER');
-my @output_formats = ();
+my @output_formats = ('PEM', 'DER');
 
 plan tests => scalar(@curve_list) * scalar(keys %params_encodings)
     * (1 + scalar(@output_formats)) # Try listed @output_formats and text output
