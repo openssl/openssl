@@ -137,35 +137,40 @@ push(@curve_list, @binary_curves)
 push(@curve_list, @other_curves);
 push(@curve_list, @curve_aliases);
 
-my @params_encodings = ('named_curve', 'explicit');
+my %params_encodings =
+    (
+     'named_curve'      => \&supported,
+     'explicit'         => \&unsupported
+    );
 
 my @output_formats = ('PEM', 'DER');
 
-plan tests => scalar(@curve_list) * scalar(@params_encodings)
+plan tests => scalar(@curve_list) * scalar(keys %params_encodings)
     * (1 + scalar(@output_formats)) # Try listed @output_formats and text output
     + 1                             # Checking that with no curve it fails
     + 1                             # Checking that with unknown curve it fails
     ;
 
 foreach my $curvename (@curve_list) {
-    foreach my $paramenc (@params_encodings) {
-        ok(run(app([ 'openssl', 'genpkey',
-                     '-algorithm', 'EC',
-                     '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
-                     '-pkeyopt', 'ec_param_enc:'.$paramenc,
-                     '-text'])),
-           "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (text)");
+    foreach my $paramenc (sort keys %params_encodings) {
+        my $fn = $params_encodings{$paramenc};
+        $fn->("genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (text)",
+              app([ 'openssl', 'genpkey',
+                    '-algorithm', 'EC',
+                    '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                    '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                    '-text']));
 
         foreach my $outform (@output_formats) {
             my $outfile = "ecgen.${curvename}.${paramenc}." . lc $outform;
-            ok(run(app([ 'openssl', 'genpkey', '-genparam',
-                         '-algorithm', 'EC',
-                         '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
-                         '-pkeyopt', 'ec_param_enc:'.$paramenc,
-                         '-outform', $outform,
-                         '-out', $outfile])),
-               "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
-       }
+            $fn->("genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (${outform})",
+                  app([ 'openssl', 'genpkey', '-genparam',
+                        '-algorithm', 'EC',
+                        '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                        '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                        '-outform', $outform,
+                        '-out', $outfile]));
+        }
     }
 }
 
@@ -177,3 +182,27 @@ ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'EC',
               '-pkeyopt', 'ec_paramgen_curve:bogus_foobar_curve'])),
    "genpkey EC with unknown curve name should fail");
+
+# 'supported' and 'unsupported' reflect the current state of things.  In
+# Test::More terms, 'supported' works exactly like ok(run(whatever)), while
+# 'unsupported' wraps that in a TODO: { } block.
+#
+# The first argument is the test name (this becomes the last argument to
+# 'ok')
+# The remaining argument are passed unchecked to 'run'.
+
+# 1:    the result of app() or similar, i.e. something you can pass to 
+sub supported {
+    my $str = shift;
+
+    ok(run(@_), $str);
+}
+
+sub unsupported {
+    my $str = shift;
+ TODO: {
+        local $TODO = "Currently not supported";
+
+        ok(run(@_), $str);
+    }
+}
