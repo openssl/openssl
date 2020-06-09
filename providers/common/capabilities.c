@@ -150,7 +150,6 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
     return 1;
 }
 
-
 int provider_get_capabilities(void *provctx, const char *capability,
                               OSSL_CALLBACK *cb, void *arg)
 {
