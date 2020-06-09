@@ -65,11 +65,11 @@ cipher string for TLSv1.3 ciphersuites.
 
 =head1 NOTES
 
-The control string B<str> for SSL_CTX_set_cipher_list() and
-SSL_set_cipher_list() should be universally usable and not depend
-on details of the library configuration (ciphers compiled in). Thus no
-syntax checking takes place. Items that are not recognized, because the
-corresponding ciphers are not compiled in or because they are mistyped,
+The control string B<str> for SSL_CTX_set_cipher_list(), SSL_set_cipher_list(),
+SSL_CTX_set_ciphersuites() and SSL_set_ciphersuites() should be universally
+usable and not depend on details of the library configuration (ciphers compiled
+in). Thus no syntax checking takes place. Items that are not recognized, because
+the corresponding ciphers are not compiled in or because they are mistyped,
 are simply ignored. Failure is only flagged if no ciphers could be collected
 at all.
 
