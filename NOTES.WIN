@@ -35,24 +35,51 @@
  In addition to the requirements and instructions listed in INSTALL,
  these are required as well:
 
- - Perl. We recommend ActiveState Perl, available from
-   https://www.activestate.com/ActivePerl. Another viable alternative
-   appears to be Strawberry Perl, http://strawberryperl.com.
-   You also need the perl module Text::Template, available on CPAN.
-   Please read NOTES.PERL for more information.
+ - Perl.
+   We recommend Strawberry Perl, available from http://strawberryperl.com.
+   Please read NOTES.PERL for more information, including the use of CPAN.
+   An alternative is ActiveState Perl, https://www.activestate.com/ActivePerl
+   for which you may need to explicitly select the Perl module Win32/Console.pm
+   available via https://platform.activestate.com/ActiveState.
 
- - Microsoft Visual C compiler. Since we can't test them all, there is
-   unavoidable uncertainty about which versions are supported. Latest
-   version along with couple of previous are certainly supported. On
-   the other hand oldest one is known not to work. Everything between
-   falls into best-effort category.
+ - Microsoft Visual C compiler.
+   Since these are proprietry and ever-changing and we cannot test them all,
+   there is unavoidable uncertainty about which versions are supported.
+   Latest version along with couple of previous are certainly supported.
+   On the other hand oldest one is known not to work.
+   Everything between falls into best-effort category.
 
- - Netwide Assembler, a.k.a. NASM, available from https://www.nasm.us,
-   is required. Note that NASM is the only supported assembler. Even
-   though Microsoft provided assembler is NOT supported, contemporary
-   64-bit version is exercised through continuous integration of
-   VC-WIN64A-masm target.
+ - Netwide Assembler, a.k.a. NASM, available from https://www.nasm.us.
+   Note that NASM is the only supported assembler.
+   Even though Microsoft provided assembler is NOT supported, contemporary
+   64-bit version is exercised through CI of the VC-WIN64A-masm target.
 
+ Quick start
+ -----------
+
+ 1. Install Perl
+
+ 2. Install NASM
+
+ 3. Make sure both Perl and NASM are on your %PATH%
+
+ 4. Run a Visual Studio Developer Command Prompt with administrative privileges
+    (make sure you use the 32-bit one if you are building 32-bit OpenSSL,
+    or the 64-bit one if you are building 64-bit OpenSSL).
+    This sets up the environment variables needed to find make.exe, cl.exe, etc.
+
+ 5. From the root of the OpenSSL source directory enter
+    perl Configure VC-WIN32    if you want 32-bit OpenSSL or
+    perl Configure VC-WIN64A   if you want 64-bit OpenSSL
+
+ 6. nmake
+
+ 7. nmake test
+
+ 8. nmake install
+
+For the full installation instructions, of if anything goes wrong at any stage,
+check the INSTALL.md file.
 
  Installation directories
  ------------------------
