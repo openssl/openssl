@@ -14,6 +14,31 @@ use File::Spec;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 use OpenSSL::Test::Utils;
 
+# 'supported' and 'unsupported' reflect the current state of things.  In
+# Test::More terms, 'supported' works exactly like ok(run(whatever)), while
+# 'unsupported' wraps that in a TODO: { } block.
+#
+# The first argument is the test name (this becomes the last argument to
+# 'ok')
+# The remaining argument are passed unchecked to 'run'.
+
+# 1:    the result of app() or similar, i.e. something you can pass to
+sub supported {
+    my $str = shift;
+
+    ok(run(@_), $str);
+}
+
+sub unsupported {
+    my $str = shift;
+ TODO: {
+        local $TODO = "Currently not supported";
+
+        ok(run(@_), $str);
+    }
+}
+
+
 setup("test_genec");
 
 plan skip_all => "This test is unsupported in a no-ec build"
@@ -183,26 +208,4 @@ ok(!run(app([ 'openssl', 'genpkey',
               '-pkeyopt', 'ec_paramgen_curve:bogus_foobar_curve'])),
    "genpkey EC with unknown curve name should fail");
 
-# 'supported' and 'unsupported' reflect the current state of things.  In
-# Test::More terms, 'supported' works exactly like ok(run(whatever)), while
-# 'unsupported' wraps that in a TODO: { } block.
-#
-# The first argument is the test name (this becomes the last argument to
-# 'ok')
-# The remaining argument are passed unchecked to 'run'.
 
-# 1:    the result of app() or similar, i.e. something you can pass to 
-sub supported {
-    my $str = shift;
-
-    ok(run(@_), $str);
-}
-
-sub unsupported {
-    my $str = shift;
- TODO: {
-        local $TODO = "Currently not supported";
-
-        ok(run(@_), $str);
-    }
-}
