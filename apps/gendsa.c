@@ -145,12 +145,7 @@ int gendsa_main(int argc, char **argv)
         BIO_printf(bio_err, "unable to set up for key generation\n");
         goto end;
     }
-    if (verbose)
-        BIO_printf(bio_err, "Generating DSA key, %d bits\n", nbits);
-    if (EVP_PKEY_keygen(ctx, &pkey) <= 0) {
-        BIO_printf(bio_err, "unable to generate key\n");
-        goto end;
-    }
+    pkey = app_keygen(ctx, "DSA", nbits, verbose);
 
     assert(private);
     if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout)) {

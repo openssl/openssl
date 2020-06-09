@@ -217,11 +217,7 @@ int dhparam_main(int argc, char **argv)
             }
         }
 
-        if (!EVP_PKEY_paramgen(ctx, &tmppkey)) {
-            BIO_printf(bio_err, "Error, %s generation failed\n", alg);
-            goto end;
-        }
-
+        tmppkey = app_paramgen(ctx, alg);
         EVP_PKEY_CTX_free(ctx);
         ctx = NULL;
         if (dsaparam) {

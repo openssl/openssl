@@ -511,15 +511,12 @@ int req_main(int argc, char **argv)
         if (p == NULL)
             ERR_clear_error();
         if (p != NULL) {
-            BIO *oid_bio;
+            BIO *oid_bio = BIO_new_file(p, "r");
 
-            oid_bio = BIO_new_file(p, "r");
             if (oid_bio == NULL) {
-                if (verbose) {
+                if (verbose)
                     BIO_printf(bio_err,
                                "Problems opening '%s' for extra OIDs\n", p);
-                    ERR_print_errors(bio_err);
-                }
             } else {
                 OBJ_create_objects(oid_bio);
                 BIO_free(oid_bio);
@@ -627,9 +624,8 @@ int req_main(int argc, char **argv)
     if (newreq && pkey == NULL) {
         app_RAND_load_conf(req_conf, section);
 
-        if (!NCONF_get_number(req_conf, section, BITS, &newkey_len)) {
+        if (!NCONF_get_number(req_conf, section, BITS, &newkey_len))
             newkey_len = DEFAULT_KEY_LENGTH;
-        }
 
         genctx = set_keygen_ctx(keyalg, &keyalgstr, &newkey_len, gen_eng);
         if (genctx == NULL)
@@ -639,8 +635,7 @@ int req_main(int argc, char **argv)
             && (EVP_PKEY_CTX_is_a(genctx, "RSA")
                 || EVP_PKEY_CTX_is_a(genctx, "RSA-PSS")
                 || EVP_PKEY_CTX_is_a(genctx, "DSA"))) {
-            BIO_printf(bio_err, "Private key length is too short,\n");
-            BIO_printf(bio_err, "it needs to be at least %d bits, not %ld.\n",
+            BIO_printf(bio_err, "Private key length too short, needs to be at least %d bits, not %ld.\n",
                        MIN_KEY_LENGTH, newkey_len);
             goto end;
         }
@@ -673,15 +668,10 @@ int req_main(int argc, char **argv)
             }
         }
 
-        BIO_printf(bio_err, "Generating a %s private key\n", keyalgstr);
-
         EVP_PKEY_CTX_set_cb(genctx, genpkey_cb);
         EVP_PKEY_CTX_set_app_data(genctx, bio_err);
 
-        if (EVP_PKEY_keygen(genctx, &pkey) <= 0) {
-            BIO_puts(bio_err, "Error generating key\n");
-            goto end;
-        }
+        pkey = app_keygen(genctx, keyalgstr, newkey_len, verbose);
 
         EVP_PKEY_CTX_free(genctx);
         genctx = NULL;
@@ -927,14 +917,12 @@ int req_main(int argc, char **argv)
 
         i = do_X509_REQ_verify(req, tpubkey, vfyopts);
 
-        if (i < 0) {
+        if (i < 0)
             goto end;
-        } else if (i == 0) {
+        if (i == 0)
             BIO_printf(bio_err, "Certificate request self-signature verify failure\n");
-            ERR_print_errors(bio_err);
-        } else { /* i > 0 */
+        else /* i > 0 */
             BIO_printf(bio_err, "Certificate request self-signature verify OK\n");
-        }
     }
 
     if (noout && !text && !modulus && !subject && !pubkey) {
@@ -1389,7 +1377,6 @@ static int add_attribute_object(X509_REQ *req, char *text, const char *def,
     if (!X509_REQ_add1_attr_by_NID(req, nid, chtype,
                                    (unsigned char *)buf, -1)) {
         BIO_printf(bio_err, "Error adding attribute\n");
-        ERR_print_errors(bio_err);
         ret = 0;
     }
 
