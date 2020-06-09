@@ -1300,6 +1300,8 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     if (cipher == NULL) {
         ERR_raise(ERR_LIB_SSL, SSL_R_NO_CIPHER_MATCH);
         return 0;
+        /* Ciphersuite not found but return 1 to parse rest of the list */
+        return 1;
     }
 
     if (!sk_SSL_CIPHER_push(ciphersuites, cipher)) {
@@ -1319,7 +1321,8 @@ static __owur int set_ciphersuites(STACK_OF(SSL_CIPHER) **currciphers, const cha
 
     /* Parse the list. We explicitly allow an empty list */
     if (*str != '\0'
-            && !CONF_parse_list(str, ':', 1, ciphersuite_cb, newciphers)) {
+            && (CONF_parse_list(str, ':', 1, ciphersuite_cb, newciphers) <= 0
+                || sk_SSL_CIPHER_num(newciphers) == 0 )) {
         sk_SSL_CIPHER_free(newciphers);
         return 0;
     }
