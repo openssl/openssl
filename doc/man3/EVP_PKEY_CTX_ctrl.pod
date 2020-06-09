@@ -647,11 +647,9 @@ From OpenSSL 3.0 they are functions.
 EVP_PKEY_CTX_get_rsa_oaep_md_name(), EVP_PKEY_CTX_get_rsa_mgf1_md_name(),
 EVP_PKEY_CTX_set_rsa_mgf1_md_name(), EVP_PKEY_CTX_set_rsa_oaep_md_name(),
 EVP_PKEY_CTX_set_dsa_paramgen_md_props(), EVP_PKEY_CTX_set_dsa_paramgen_gindex(),
-EVP_PKEY_CTX_set_dsa_paramgen_type() and EVP_PKEY_CTX_set_dsa_paramgen_seed()
+EVP_PKEY_CTX_set_dsa_paramgen_type(), EVP_PKEY_CTX_set_dsa_paramgen_seed(),
+EVP_PKEY_CTX_set_group_name() and EVP_PKEY_CTX_get_group_name()
 were added in OpenSSL 3.0.
-
-EVP_PKEY_CTX_set_group_name() and EVP_PKEY_CTX_get_group_name() were added in
-OpenSSL 3.0.
 
 The EVP_PKEY_CTX_set1_id(), EVP_PKEY_CTX_get1_id() and
 EVP_PKEY_CTX_get1_id_len() macros were added in 1.1.1, other functions were
