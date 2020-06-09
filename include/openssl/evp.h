@@ -26,7 +26,7 @@
 # include <openssl/evperr.h>
 # include <openssl/params.h>
 
-# include <openssl/evp_mac.h>
+# include <openssl/mac.h>
 
 # define EVP_MAX_MD_SIZE                 64/* longest known is SHA512 */
 # define EVP_MAX_KEY_LENGTH              64
