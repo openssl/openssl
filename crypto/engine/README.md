@@ -1,12 +1,12 @@
-Notes: 2001-09-24
------------------
+Notes on engines of 2001-09-24
+==============================
 
 This "description" (if one chooses to call it that) needed some major updating
 so here goes. This update addresses a change being made at the same time to
 OpenSSL, and it pretty much completely restructures the underlying mechanics of
 the "ENGINE" code. So it serves a double purpose of being a "ENGINE internals
 for masochists" document *and* a rather extensive commit log message. (I'd get
-lynched for sticking all this in CHANGES or the commit mails :-).
+lynched for sticking all this in CHANGES.md or the commit mails :-).
 
 ENGINE_TABLE underlies this restructuring, as described in the internal header
 "eng_local.h", implemented in eng_table.c, and used in each of the "class" files;
@@ -21,16 +21,16 @@ or can be loaded "en masse" into EVP storage so that they can be catalogued and
 searched in various ways, ie. two ways of encrypting with the "des_cbc"
 algorithm/mode pair are;
 
-(i) directly;
-     const EVP_CIPHER *cipher = EVP_des_cbc();
-     EVP_EncryptInit(&ctx, cipher, key, iv);
-     [ ... use EVP_EncryptUpdate() and EVP_EncryptFinal() ...]
+    (i) directly;
+         const EVP_CIPHER *cipher = EVP_des_cbc();
+         EVP_EncryptInit(&ctx, cipher, key, iv);
+         [ ... use EVP_EncryptUpdate() and EVP_EncryptFinal() ...]
 
-(ii) indirectly;
-     OpenSSL_add_all_ciphers();
-     cipher = EVP_get_cipherbyname("des_cbc");
-     EVP_EncryptInit(&ctx, cipher, key, iv);
-     [ ... etc ... ]
+    (ii) indirectly;
+         OpenSSL_add_all_ciphers();
+         cipher = EVP_get_cipherbyname("des_cbc");
+         EVP_EncryptInit(&ctx, cipher, key, iv);
+         [ ... etc ... ]
 
 The latter is more generally used because it also allows ciphers/digests to be
 looked up based on other identifiers which can be useful for automatic cipher
@@ -177,7 +177,7 @@ is deliberately a distinct step. Moreover, registration and unregistration has
 nothing to do with whether an ENGINE is *functional* or not (ie. you can even
 register an ENGINE and its implementations without it being operational, you may
 not even have the drivers to make it operate). What actually happens with
-respect to cleanup is managed inside eng_lib.c with the "engine_cleanup_***"
+respect to cleanup is managed inside eng_lib.c with the `engine_cleanup_***`
 functions. These functions are internal-only and each part of ENGINE code that
 could require cleanup will, upon performing its first allocation, register a
 callback with the "engine_cleanup" code. The other part of this that makes it
@@ -208,4 +208,3 @@ hooking of ENGINE is now automatic (and passive, it can internally use a NULL
 ENGINE pointer to simply ignore ENGINE from then on).
 
 Hell, that should be enough for now ... comments welcome.
-

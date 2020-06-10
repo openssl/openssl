@@ -1,5 +1,5 @@
- TOC
- ===
+TOC
+===
 
  - Notes on Perl
  - Notes on Perl on Windows
@@ -18,10 +18,10 @@
  installed properly.  We do not claim to know them all, but experience
  has told us the following:
 
- - on Linux distributions based on Debian, the package 'perl' will
+ - on Linux distributions based on Debian, the package `perl` will
    install the core Perl modules as well, so you will be fine.
  - on Linux distributions based on RPMs, you will need to install
-   'perl-core' rather than just 'perl'.
+   `perl-core` rather than just `perl`.
 
  You MUST have at least Perl version 5.10.0 installed.  This minimum
  requirement is due to our use of regexp backslash sequence \R among
@@ -31,23 +31,23 @@
  ------------------------
 
  There are a number of build targets that can be viewed as "Windows".
- Indeed, there are VC-* configs targeting VisualStudio C, as well as
+ Indeed, there are `VC-*` configs targeting VisualStudio C, as well as
  MinGW and Cygwin. The key recommendation is to use "matching" Perl,
  one that matches build environment. For example, if you will build
  on Cygwin be sure to use the Cygwin package manager to install Perl.
  For MSYS builds use the MSYS provided Perl.
- For VC-* builds we recommend Strawberry Perl, from http://strawberryperl.com.
- An alternative is ActiveState Perl, from http://www.activestate.com/ActivePerl
+ For VC-* builds we recommend Strawberry Perl, from <http://strawberryperl.com>.
+ An alternative is ActiveState Perl, from <http://www.activestate.com/ActivePerl>
  for which you may need to explicitly select the Perl module Win32/Console.pm
- available via https://platform.activestate.com/ActiveState.
+ available via <https://platform.activestate.com/ActiveState>.
 
  Notes on Perl on VMS
  --------------------
 
  You will need to install Perl separately.  One way to do so is to
- download the source from http://perl.org/, unpacking it, reading
- README.vms and follow the instructions.  Another way is to download a
- .PCSI file from http://www.vmsperl.com/ and install it using the
+ download the source from <http://perl.org/>, unpacking it, reading
+ `README-VMS.md` and follow the instructions.  Another way is to download a
+ `.PCSI` file from <http://www.vmsperl.com/> and install it using the
  POLYCENTER install tool.
 
  Notes on Perl modules we use
@@ -57,18 +57,22 @@
  ourselves to core Perl modules to keep the requirements down.  There
  are just a few exceptions:
 
- Test::More         We require the minimum version to be 0.96, which
-                    appeared in Perl 5.13.4, because that version was
-                    the first to have all the features we're using.
-                    This module is required for testing only!  If you
-                    don't plan on running the tests, you don't need to
-                    bother with this one.
+  * `Test::More`
 
- Text::Template     This module is not part of the core Perl modules.
-                    As a matter of fact, the core Perl modules do not
-                    include any templating module to date.
-                    This module is absolutely needed, configuration
-                    depends on it.
+    We require the minimum version to be 0.96, which
+    appeared in Perl 5.13.4, because that version was
+    the first to have all the features we're using.
+    This module is required for testing only!
+    If you don't plan on running the tests,
+    you don't need to bother with this one.
+
+  * `Text::Template`
+
+    This module is not part of the core Perl modules.
+    As a matter of fact, the core Perl modules do not
+    include any templating module to date.
+    This module is absolutely needed,
+    configuration depends on it.
 
  To avoid unnecessary initial hurdles, we have bundled a copy of the
  following modules in our source.  They will work as fallbacks if
@@ -80,7 +84,7 @@
  ---------------------------------
 
  There are a number of ways to install a perl module.  In all
- descriptions below, Text::Template will serve as an example.
+ descriptions below, `Text::Template` will serve as an example.
 
  1. for Linux users, the easiest is to install with the use of your
     favorite package manager.  Usually, all you need to do is search

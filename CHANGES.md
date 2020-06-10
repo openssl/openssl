@@ -174,12 +174,12 @@ OpenSSL 3.0
    *Richard Levitte*
 
  * Project text documents not yet having a proper file name extension
-   (HACKING, LICENSE, NOTES*, README*, VERSION) have been renamed to *.md
-   as far as reasonable, else to *.txt, for better use with file managers.
+   (`HACKING`, `LICENSE`, `NOTES*`, `README*`, `VERSION`) have been renamed to
+   `*.md` as far as reasonable, else `*.txt`, for better use with file managers.
 
    *David von Oheimb*
 
-*  The main project documents (README, NEWS, CHANGES, INSTALL, SUPPORT)
+ * The main project documents (README, NEWS, CHANGES, INSTALL, SUPPORT)
    have been converted to Markdown with the goal to produce documents
    which not only look pretty when viewed online in the browser, but
    remain well readable inside a plain text editor.
@@ -1060,7 +1060,7 @@ OpenSSL 3.0
  * Added EVP_MAC, an EVP layer MAC API, to simplify adding MAC
    implementations.  This includes a generic EVP_PKEY to EVP_MAC bridge,
    to facilitate the continued use of MACs through raw private keys in
-   functionality such as EVP_DigestSign* and EVP_DigestVerify*.
+   functionality such as `EVP_DigestSign*` and `EVP_DigestVerify*`.
 
    *Richard Levitte*
 
@@ -1732,9 +1732,9 @@ OpenSSL 1.1.1
    *Paul Yang*
 
  * Add SM3 implemented according to GB/T 32905-2016
-   * Jack Lloyd <jack.lloyd@ribose.com>,
-     Ronald Tse <ronald.tse@ribose.com>,
-     Erick Borsboom <erick.borsboom@ribose.com> *
+   *Jack Lloyd <jack.lloyd@ribose.com>,*
+   *Ronald Tse <ronald.tse@ribose.com>,*
+   *Erick Borsboom <erick.borsboom@ribose.com>*
 
  * Add 'Maximum Fragment Length' TLS extension negotiation and support
    as documented in RFC6066.
@@ -1743,9 +1743,9 @@ OpenSSL 1.1.1
    *Filipe Raimundo da Silva*
 
  * Add SM4 implemented according to GB/T 32907-2016.
-   * Jack Lloyd <jack.lloyd@ribose.com>,
-     Ronald Tse <ronald.tse@ribose.com>,
-     Erick Borsboom <erick.borsboom@ribose.com> *
+   *Jack Lloyd <jack.lloyd@ribose.com>,*
+   *Ronald Tse <ronald.tse@ribose.com>,*
+   *Erick Borsboom <erick.borsboom@ribose.com>*
 
  * Reimplement -newreq-nodes and ERR_error_string_n; the
    original author does not agree with the license change.
@@ -2931,7 +2931,7 @@ OpenSSL 1.1.0
    Makefile.  Instead, Configure produces a perl module in
    configdata.pm which holds most of the config data (in the hash
    table %config), the target data that comes from the target
-   configuration in one of the `Configurations/*.conf~ files (in
+   configuration in one of the `Configurations/*.conf` files (in
    %target).
 
    *Richard Levitte*
@@ -3062,21 +3062,21 @@ OpenSSL 1.1.0
    opaque.  For HMAC_CTX, the following constructors and destructors
    were added:
 
-      HMAC_CTX *HMAC_CTX_new(void);
-      void HMAC_CTX_free(HMAC_CTX *ctx);
+       HMAC_CTX *HMAC_CTX_new(void);
+       void HMAC_CTX_free(HMAC_CTX *ctx);
 
    For EVP_MD and EVP_CIPHER, complete APIs to create, fill and
    destroy such methods has been added.  See EVP_MD_meth_new(3) and
    EVP_CIPHER_meth_new(3) for documentation.
 
    Additional changes:
-   1) EVP_MD_CTX_cleanup(), EVP_CIPHER_CTX_cleanup() and
-      HMAC_CTX_cleanup() were removed.  HMAC_CTX_reset() and
-      EVP_MD_CTX_reset() should be called instead to reinitialise
+   1) `EVP_MD_CTX_cleanup()`, `EVP_CIPHER_CTX_cleanup()` and
+      `HMAC_CTX_cleanup()` were removed. `HMAC_CTX_reset()` and
+      `EVP_MD_CTX_reset()` should be called instead to reinitialise
       an already created structure.
    2) For consistency with the majority of our object creators and
-      destructors, EVP_MD_CTX_(create|destroy) were renamed to
-      EVP_MD_CTX_(new|free).  The old names are retained as macros
+      destructors, `EVP_MD_CTX_(create|destroy)` were renamed to
+      `EVP_MD_CTX_(new|free)`.  The old names are retained as macros
       for deprecated builds.
 
    *Richard Levitte*
@@ -3174,8 +3174,8 @@ OpenSSL 1.1.0
    *Emilia Käsper*
 
  * Fix no-stdio build.
-   * David Woodhouse <David.Woodhouse@intel.com> and also
-    Ivan Nestlerode <ivan.nestlerode@sonos.com> *
+   *David Woodhouse <David.Woodhouse@intel.com> and also*
+   *Ivan Nestlerode <ivan.nestlerode@sonos.com>*
 
  * New testing framework
    The testing framework has been largely rewritten and is now using
@@ -3579,7 +3579,7 @@ OpenSSL 1.1.0
 
    *Steve Henson*
 
- * Rename old X9.31 PRNG functions of the form FIPS_rand* to FIPS_x931*.
+ * Rename old X9.31 PRNG functions of the form `FIPS_rand*` to `FIPS_x931*`.
    This shouldn't present any incompatibility problems because applications
    shouldn't be using these directly and any that are will need to rethink
    anyway as the X9.31 PRNG is now deprecated by FIPS 140-2
@@ -4458,11 +4458,11 @@ OpenSSL 1.0.2
  * Fix BN_hex2bn/BN_dec2bn NULL pointer deref/heap corruption
 
    In the BN_hex2bn function the number of hex digits is calculated using an
-   int value |i|. Later |bn_expand| is called with a value of |i * 4|. For
-   large values of |i| this can result in |bn_expand| not allocating any
-   memory because |i * 4| is negative. This can leave the internal BIGNUM data
+   int value `i`. Later `bn_expand` is called with a value of `i * 4`. For
+   large values of `i` this can result in `bn_expand` not allocating any
+   memory because `i * 4` is negative. This can leave the internal BIGNUM data
    field as NULL leading to a subsequent NULL ptr deref. For very large values
-   of |i|, the calculation |i * 4| could be a positive value smaller than |i|.
+   of `i`, the calculation `i * 4` could be a positive value smaller than `i`.
    In this case memory is allocated to the internal BIGNUM data field, but it
    is insufficiently sized leading to heap corruption. A similar issue exists
    in BN_dec2bn. This could have security consequences if BN_hex2bn/BN_dec2bn
@@ -4482,11 +4482,11 @@ OpenSSL 1.0.2
 
  * Fix memory issues in `BIO_*printf` functions
 
-   The internal |fmtstr| function used in processing a "%s" format string in
+   The internal `fmtstr` function used in processing a "%s" format string in
    the `BIO_*printf` functions could overflow while calculating the length of a
    string and cause an OOB read when printing very long strings.
 
-   Additionally the internal |doapr_outch| function can attempt to write to an
+   Additionally the internal `doapr_outch` function can attempt to write to an
    OOB memory location (at an offset from the NULL pointer) in the event of a
    memory allocation failure. In 1.0.2 and below this could be caused where
    the size of a buffer to be allocated is greater than INT_MAX. E.g. this
@@ -5660,11 +5660,11 @@ OpenSSL 1.0.1
  * Fix BN_hex2bn/BN_dec2bn NULL pointer deref/heap corruption
 
    In the BN_hex2bn function the number of hex digits is calculated using an
-   int value |i|. Later |bn_expand| is called with a value of |i * 4|. For
-   large values of |i| this can result in |bn_expand| not allocating any
-   memory because |i * 4| is negative. This can leave the internal BIGNUM data
+   int value `i`. Later `bn_expand` is called with a value of `i * 4`. For
+   large values of `i` this can result in `bn_expand` not allocating any
+   memory because `i * 4` is negative. This can leave the internal BIGNUM data
    field as NULL leading to a subsequent NULL ptr deref. For very large values
-   of |i|, the calculation |i * 4| could be a positive value smaller than |i|.
+   of `i`, the calculation `i * 4` could be a positive value smaller than `i`.
    In this case memory is allocated to the internal BIGNUM data field, but it
    is insufficiently sized leading to heap corruption. A similar issue exists
    in BN_dec2bn. This could have security consequences if BN_hex2bn/BN_dec2bn
@@ -5684,11 +5684,11 @@ OpenSSL 1.0.1
 
  * Fix memory issues in `BIO_*printf` functions
 
-   The internal |fmtstr| function used in processing a "%s" format string in
+   The internal `fmtstr` function used in processing a "%s" format string in
    the `BIO_*printf` functions could overflow while calculating the length of a
    string and cause an OOB read when printing very long strings.
 
-   Additionally the internal |doapr_outch| function can attempt to write to an
+   Additionally the internal `doapr_outch` function can attempt to write to an
    OOB memory location (at an offset from the NULL pointer) in the event of a
    memory allocation failure. In 1.0.2 and below this could be caused where
    the size of a buffer to be allocated is greater than INT_MAX. E.g. this
@@ -6505,8 +6505,8 @@ OpenSSL 1.0.1
    disable just protocol X, but all protocols above X *if* there are
    protocols *below* X still enabled. In more practical terms it means
    that if application wants to disable TLS1.0 in favor of TLS1.1 and
-   above, it's not sufficient to pass SSL_OP_NO_TLSv1, one has to pass
-   SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2. This applies to
+   above, it's not sufficient to pass `SSL_OP_NO_TLSv1`, one has to pass
+   `SSL_OP_NO_TLSv1|SSL_OP_NO_SSLv3|SSL_OP_NO_SSLv2`. This applies to
    client side.
 
    *Andy Polyakov*
@@ -12328,8 +12328,8 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    *Geoff Thorpe, Lutz Jaenicke*
 
  * Modify mkdef.pl to recognise and parse preprocessor conditionals
-   of the form '#if defined(...) || defined(...) || ...' and
-   '#if !defined(...) && !defined(...) && ...'.  This also avoids
+   of the form `#if defined(...) || defined(...) || ...` and
+   `#if !defined(...) && !defined(...) && ...`.  This also avoids
    the growing number of special cases it was previously handling.
 
    *Richard Levitte*
@@ -12902,9 +12902,9 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    *Bodo Moeller*
 
- * Move `BN_mod_...` functions into new file crypto/bn/bn_mod.c
-   (except for exponentiation, which stays in crypto/bn/bn_exp.c,
-   and BN_mod_mul_reciprocal, which stays in crypto/bn/bn_recp.c)
+ * Move `BN_mod_...` functions into new file `crypto/bn/bn_mod.c`
+   (except for exponentiation, which stays in `crypto/bn/bn_exp.c`,
+   and `BN_mod_mul_reciprocal`, which stays in `crypto/bn/bn_recp.c`)
    and add new functions:
 
            BN_nnmod
@@ -12920,16 +12920,16 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 
    These functions always generate non-negative results.
 
-   BN_nnmod otherwise is like BN_mod (if BN_mod computes a remainder  r
-   such that  |m| < r < 0,  BN_nnmod will output  rem + |m|  instead).
+   `BN_nnmod` otherwise is `like BN_mod` (if `BN_mod` computes a remainder `r`
+   such that `|m| < r < 0`, `BN_nnmod` will output `rem + |m|` instead).
 
-   BN_mod_XXX_quick(r, a, [b,] m) generates the same result as
-   BN_mod_XXX(r, a, [b,] m, ctx), but requires that  a  [and  b]
-   be reduced modulo  m.
+   `BN_mod_XXX_quick(r, a, [b,] m)` generates the same result as
+   `BN_mod_XXX(r, a, [b,] m, ctx)`, but requires that `a` [and  `b`]
+   be reduced modulo `m`.
 
    *Lenka Fibikova <fibikova@exp-math.uni-essen.de>, Bodo Moeller*
 
-f 0
+<!--
    The following entry accidentally appeared in the CHANGES file
    distributed with OpenSSL 0.9.7.  The modifications described in
    it do *not* apply to OpenSSL 0.9.7.
@@ -12943,7 +12943,7 @@ f 0
    differing sizes.
 
    *Richard Levitte*
-ndif
+-->
 
  * In 'openssl passwd', verify passwords read from the terminal
    unless the '-salt' option is used (which usually means that
@@ -14683,7 +14683,7 @@ ndif
  * Change the handling of OID objects as follows:
 
    - New object identifiers are inserted in objects.txt, following
-     the syntax given in objects.README.
+     the syntax given in [crypto/objects/README.md](crypto/objects/README.md).
    - objects.pl is used to process obj_mac.num and create a new
      obj_mac.h.
    - obj_dat.pl is used to create a new obj_dat.h, using the data in
@@ -17399,10 +17399,10 @@ ndif
    *Steve Henson*
 
  * Be less restrictive and allow also `perl util/perlpath.pl
-   /path/to/bin/perl' in addition to `perl util/perlpath.pl /path/to/bin',
-   because this way one can also use an interpreter named `perl5' (which is
+   /path/to/bin/perl` in addition to `perl util/perlpath.pl /path/to/bin`,
+   because this way one can also use an interpreter named `perl5` (which is
    usually the name of Perl 5.xxx on platforms where an Perl 4.x is still
-   installed as `perl').
+   installed as `perl`).
 
    *Matthias Loepfe <Matthias.Loepfe@adnovum.ch>*
 
@@ -17435,7 +17435,7 @@ ndif
 
    *Steve Henson*
 
- * Make `openssl version' output lines consistent.
+ * Make `openssl version` output lines consistent.
 
    *Ralf S. Engelschall*
 
@@ -17492,7 +17492,7 @@ ndif
    *Ben Laurie*
 
  * Allow DSO flags like -fpic, -fPIC, -KPIC etc. to be specified
-   on the `perl Configure ...' command line. This way one can compile
+   on the `perl Configure ...` command line. This way one can compile
    OpenSSL libraries with Position Independent Code (PIC) which is needed
    for linking it into DSOs.
 
@@ -17511,9 +17511,9 @@ ndif
 
    *Ralf S. Engelschall*
 
- * General source tree makefile cleanups: Made `making xxx in yyy...'
-   display consistent in the source tree and replaced `/bin/rm' by `rm'.
-   Additionally cleaned up the `make links' target: Remove unnecessary
+ * General source tree makefile cleanups: Made `making xxx in yyy...`
+   display consistent in the source tree and replaced `/bin/rm` by `rm`.
+   Additionally cleaned up the `make links` target: Remove unnecessary
    semicolons, subsequent redundant removes, inline point.sh into mklink.sh
    to speed processing and no longer clutter the display with confusing
    stuff. Instead only the actually done links are displayed.
@@ -17640,12 +17640,12 @@ ndif
 
    *Ralf S. Engelschall*
 
- * Make `openssl x509 -noout -modulus' functional also for DSA certificates
+ * Make `openssl x509 -noout -modulus`' functional also for DSA certificates
    (in addition to RSA certificates) to match the behaviour of `openssl dsa
-   -noout -modulus' as it's already the case for `openssl rsa -noout
-   -modulus'.  For RSA the -modulus is the real "modulus" while for DSA
+   -noout -modulus` as it's already the case for `openssl rsa -noout
+   -modulus`.  For RSA the -modulus is the real "modulus" while for DSA
    currently the public key is printed (a decision which was already done by
-   `openssl dsa -modulus' in the past) which serves a similar purpose.
+   `openssl dsa -modulus` in the past) which serves a similar purpose.
    Additionally the NO_RSA no longer completely removes the whole -modulus
    option; it now only avoids using the RSA stuff. Same applies to NO_DSA
    now, too.
