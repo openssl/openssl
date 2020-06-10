@@ -128,20 +128,23 @@
 
    - MSYS2 shell, from https://www.msys2.org/
 
+   - Perl, at least version 5.10.0, which usually comes pre-installed with MSYS2
+
+   - make, installed using "pacman -S make" into the MSYS2 environment
+
    - MinGW[64] compiler: mingw-w64-i686-gcc and/or mingw-w64-x86_64-gcc.
      These compilers must be on your MSYS2 $PATH.
      A common error is to not have these on your $PATH.
      The MSYS2 version of gcc will not work correctly here.
-
-   - Perl, at least version 5.10.0, installed into the MSYS2 environment
-
-   - make, installed into the MSYS2 environment
 
    In the MSYS2 shell do the configuration depending on the target architecture:
 
      ./Configure mingw ...
    or
      ./Configure mingw64 ...
+   or
+     ./config ...
+   for the default architecture.
 
    Apart from that, follow the Unix / Linux instructions in INSTALL.md.
 
@@ -154,8 +157,8 @@
    or
      ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- ...
 
-   This naturally requires that you've installed corresponding add-on packages.
-
+   This requires that you've installed the necessary add-on packages for
+   mingw[64] cross compilation.
 
  Linking your application
  ========================
@@ -185,7 +188,7 @@
 
  If you link with OpenSSL .DLLs, then you're expected to include into
  your application code small "shim" snippet, which provides glue between
- OpenSSL BIO layer and your compiler run-time.
+ the OpenSSL BIO layer and your compiler run-time.
  See also the OPENSSL_Applink manual page.
 
 
