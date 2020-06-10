@@ -109,6 +109,16 @@ INCLUDE[$DEFAULTGOAL]=implementations/include
 LIBS=$DEFAULTGOAL
 
 #
+# Base provider stuff
+#
+# Because the base provider is built in, it means that libcrypto
+# must include all of the object files that are needed.
+$BASEGOAL=../libcrypto
+SOURCE[$BASEGOAL]=$LIBIMPLEMENTATIONS $LIBNONFIPS
+SOURCE[$BASEGOAL]=baseprov.c
+INCLUDE[$BASEGOAL]=implementations/include
+
+#
 # FIPS provider stuff
 #
 # We define it this way to ensure that configdata.pm will have all the

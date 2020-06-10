@@ -19,6 +19,7 @@ B<openssl list>
 [B<-random-generators>]
 [B<-cipher-commands>]
 [B<-cipher-algorithms>]
+[B<-serializers>]
 [B<-public-key-algorithms>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-public-key-methods>]
@@ -79,7 +80,12 @@ information on what parameters each implementation supports.
 =item B<-random-generators>
 
 Display a list of random number generators.
+See L</Display of algorithm names> for a description of how names are
+displayed.
 
+=item B<-serializers>
+
+Display a list of serializers.
 See L</Display of algorithm names> for a description of how names are
 displayed.
 

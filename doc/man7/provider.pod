@@ -268,6 +268,14 @@ algorithm identifier to the appropriate fetching function.
 The default provider is built in as part of the F<libcrypto> library.
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "provider=default"
+can be used as a search criterion for these implementations.  The default
+provider includes all the functionality of the base provider below.
+
+=head2 Base provider
+
+The base provider is built in as part of the F<libcrypto> library.
+Should it be needed (if other providers are loaded and offer
+implementations of the same algorithms), the property "provider=base"
 can be used as a search criterion for these implementations. Some
 non-cryptographic algorithms (such as serializers for loading keys and
 parameters from files) are not FIPS algorithm implementations in themselves but
