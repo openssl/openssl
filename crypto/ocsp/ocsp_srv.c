@@ -188,16 +188,6 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
     }
 
     pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_pkey_ctx(ctx));
-#ifndef OPENSSL_NO_RSA
-    /*
-     * Don't check the public/private key, this is mostly for smart
-     * cards.
-     */
-    if ((pkey == NULL) && (EVP_PKEY_id(pkey) == EVP_PKEY_RSA)
-            && (RSA_flags(EVP_PKEY_get0_RSA(pkey)) & RSA_METHOD_FLAG_NO_CHECK))
-        ;
-    else
-#endif
     if (pkey == NULL || !X509_check_private_key(signer, pkey)) {
         OCSPerr(OCSP_F_OCSP_BASIC_SIGN_CTX,
                 OCSP_R_PRIVATE_KEY_DOES_NOT_MATCH_CERTIFICATE);
