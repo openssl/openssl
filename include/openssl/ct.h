@@ -331,7 +331,7 @@ __owur int SCT_LIST_validate(const STACK_OF(SCT) *scts,
 
 
 /*********************************
- * SCT parsing and serialisation *
+ * SCT parsing and serialization *
  *********************************/
 
 /*

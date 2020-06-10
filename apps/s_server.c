@@ -3647,7 +3647,7 @@ static int generate_session_id(SSL *ssl, unsigned char *id,
 
 /*
  * By default s_server uses an in-memory cache which caches SSL_SESSION
- * structures without any serialisation. This hides some bugs which only
+ * structures without any serialization. This hides some bugs which only
  * become apparent in deployed servers. By implementing a basic external
  * session cache some issues can be debugged using s_server.
  */

@@ -55,7 +55,7 @@ typedef uint8_t u8;
 typedef uint64_t u64;
 
 /*
- * The underlying field. P521 operates over GF(2^521-1). We can serialise an
+ * The underlying field. P521 operates over GF(2^521-1). We can serialize an
  * element of this field into 66 bytes where the most significant byte
  * contains only a single bit. We call this an felem_bytearray.
  */
@@ -156,7 +156,7 @@ static void bin66_to_felem(felem out, const u8 in[66])
 }
 
 /*
- * felem_to_bin66 takes an felem and serialises into a little endian, 66 byte
+ * felem_to_bin66 takes an felem and serializes into a little endian, 66 byte
  * array. This assumes that the CPU is little-endian.
  */
 static void felem_to_bin66(u8 out[66], const felem in)

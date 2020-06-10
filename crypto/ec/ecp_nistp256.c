@@ -59,7 +59,7 @@ typedef uint64_t u64;
 
 /*
  * The underlying field. P256 operates over GF(2^256-2^224+2^192+2^96-1). We
- * can serialise an element of this field into 32 bytes. We call this an
+ * can serialize an element of this field into 32 bytes. We call this an
  * felem_bytearray.
  */
 
@@ -138,7 +138,7 @@ static void bin32_to_felem(felem out, const u8 in[32])
 }
 
 /*
- * smallfelem_to_bin32 takes a smallfelem and serialises into a little
+ * smallfelem_to_bin32 takes a smallfelem and serializes into a little
  * endian, 32 byte array. This assumes that the CPU is little-endian.
  */
 static void smallfelem_to_bin32(u8 out[32], const smallfelem in)

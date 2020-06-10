@@ -169,7 +169,7 @@ c448_error_t c448_ed448_sign(
 
     {
         /*
-         * Schedule the secret key, First EDDSA_448_PRIVATE_BYTES is serialised
+         * Schedule the secret key, First EDDSA_448_PRIVATE_BYTES is serialized
          * secret scalar,next EDDSA_448_PRIVATE_BYTES bytes is the seed.
          */
         uint8_t expanded[EDDSA_448_PRIVATE_BYTES * 2];
