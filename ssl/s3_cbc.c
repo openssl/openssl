@@ -34,7 +34,7 @@
 #define MAX_HASH_BLOCK_SIZE 128
 
 /*
- * u32toLE serialises an unsigned, 32-bit number (n) as four bytes at (p) in
+ * u32toLE serializes an unsigned, 32-bit number (n) as four bytes at (p) in
  * little-endian order. The value of p is advanced by four.
  */
 #define u32toLE(n, p) \

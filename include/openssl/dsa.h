@@ -76,7 +76,7 @@ typedef struct DSA_SIG_st DSA_SIG;
 
 /*
  * TODO(3.0): consider removing the ASN.1 encoding and decoding when
- * deserialisation is completed elsewhere.
+ * deserialization is completed elsewhere.
  */
 #  define d2i_DSAparams_fp(fp, x) \
         (DSA *)ASN1_d2i_fp((char *(*)())DSA_new, \
