@@ -7,7 +7,7 @@ OSSL_PROVIDER, OSSL_PROVIDER_load, OSSL_PROVIDER_unload,
 OSSL_PROVIDER_available, OSSL_PROVIDER_do_all,
 OSSL_PROVIDER_gettable_params, OSSL_PROVIDER_get_params,
 OSSL_PROVIDER_query_operation, OSSL_PROVIDER_get0_provider_ctx,
-OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name
+OSSL_PROVIDER_add_builtin, OSSL_PROVIDER_name,
 OSSL_PROVIDER_get_capabilities - provider routines
 
 =head1 SYNOPSIS
