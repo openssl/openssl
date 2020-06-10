@@ -401,7 +401,7 @@ int ssl_load_groups(SSL_CTX *ctx)
 static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
 {
     size_t i;
-    int nid;
+    int nid = NID_undef;
 
     /* See if we can identify a nid for this name */
 #ifndef OPENSSL_NO_EC
