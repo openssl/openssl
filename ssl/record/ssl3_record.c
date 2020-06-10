@@ -904,11 +904,14 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
         }
 
         if (!sending)
-            return !ssl3_cbc_remove_padding_and_mac(s, rec,
-                                        (mac != NULL) ? &mac->mac : NULL,
-                                        (mac != NULL) ? &mac->alloced : NULL,
-                                        bs,
-                                        macsize);
+            return ssl3_cbc_remove_padding_and_mac(&rec->length,
+                                       rec->orig_len,
+                                       rec->data,
+                                       (mac != NULL) ? &mac->mac : NULL,
+                                       (mac != NULL) ? &mac->alloced : NULL,
+                                       bs,
+                                       macsize,
+                                       s->ctx->libctx);
     }
     return 1;
 }
@@ -1166,15 +1169,28 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
 
         if (!sending) {
             for (ctr = 0; ctr < n_recs; ctr++) {
+                if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
+                    if (recs[ctr].length < bs)
+                        return 0;
+                    recs[ctr].data += bs;
+                    recs[ctr].input += bs;
+                    recs[ctr].length -= bs;
+                    recs[ctr].orig_len -= bs;
+                }
                 /*
                  * If using Mac-then-encrypt, then this will succeed but with a
                  * random MAC if padding is invalid
                  */
-                if (!tls1_cbc_remove_padding_and_mac(s, &recs[ctr],
+                if (!tls1_cbc_remove_padding_and_mac(&recs[ctr].length,
+                                     recs[ctr].orig_len,
+                                     recs[ctr].data,
                                      (macs != NULL) ? &macs[ctr].mac : NULL,
                                      (macs != NULL) ? &macs[ctr].alloced : NULL,
                                      bs,
-                                     macsize))
+                                     macsize,
+                                     (EVP_CIPHER_CTX_flags(s->enc_read_ctx)
+                                     & EVP_CIPH_FLAG_AEAD_CIPHER) != 0,
+                                     s->ctx->libctx))
                     return 0;
             }
         }
