@@ -193,13 +193,11 @@ int tls1_change_cipher_state(SSL *s, int which)
     int reuse_dd = 0;
 #ifndef OPENSSL_NO_KTLS
     ktls_crypto_info_t crypto_info;
-# ifndef __FreeBSD__
     unsigned char *rec_seq;
     void *rl_sequence;
-#  ifndef OPENSSL_NO_KTLS_RX
+# ifndef OPENSSL_NO_KTLS_RX
     int count_unprocessed;
     int bit;
-#  endif
 # endif
     BIO *bio;
 #endif
@@ -463,53 +461,9 @@ int tls1_change_cipher_state(SSL *s, int which)
     if (ssl_get_max_send_fragment(s) != SSL3_RT_MAX_PLAIN_LENGTH)
         goto skip_ktls;
 
-# ifdef __FreeBSD__
-    memset(&crypto_info, 0, sizeof(crypto_info));
-    switch (s->s3.tmp.new_cipher->algorithm_enc) {
-    case SSL_AES128GCM:
-    case SSL_AES256GCM:
-        crypto_info.cipher_algorithm = CRYPTO_AES_NIST_GCM_16;
-        crypto_info.iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
-        break;
-    case SSL_AES128:
-    case SSL_AES256:
-        if (s->ext.use_etm)
-            goto skip_ktls;
-        switch (s->s3.tmp.new_cipher->algorithm_mac) {
-        case SSL_SHA1:
-            crypto_info.auth_algorithm = CRYPTO_SHA1_HMAC;
-            break;
-        case SSL_SHA256:
-            crypto_info.auth_algorithm = CRYPTO_SHA2_256_HMAC;
-            break;
-        case SSL_SHA384:
-            crypto_info.auth_algorithm = CRYPTO_SHA2_384_HMAC;
-            break;
-        default:
-            goto skip_ktls;
-        }
-        crypto_info.cipher_algorithm = CRYPTO_AES_CBC;
-        crypto_info.iv_len = EVP_CIPHER_iv_length(c);
-        crypto_info.auth_key = ms;
-        crypto_info.auth_key_len = *mac_secret_size;
-        break;
-    default:
-        goto skip_ktls;
-    }
-    crypto_info.cipher_key = key;
-    crypto_info.cipher_key_len = EVP_CIPHER_key_length(c);
-    crypto_info.iv = iv;
-    crypto_info.tls_vmajor = (s->version >> 8) & 0x000000ff;
-    crypto_info.tls_vminor = (s->version & 0x000000ff);
-# else /* !defined(__FreeBSD__) */
     /* check that cipher is supported */
-    if (!ktls_check_supported_cipher(c, dd))
+    if (!ktls_check_supported_cipher(s, c, dd))
         goto skip_ktls;
-
-    /* check version */
-    if (s->version != TLS1_2_VERSION)
-        goto skip_ktls;
-# endif
 
     if (which & SSL3_CC_WRITE)
         bio = s->wbio;
@@ -536,18 +490,17 @@ int tls1_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
-# ifndef __FreeBSD__
     if (which & SSL3_CC_WRITE)
         rl_sequence = RECORD_LAYER_get_write_sequence(&s->rlayer);
     else
         rl_sequence = RECORD_LAYER_get_read_sequence(&s->rlayer);
 
-    if (!ktls_configure_crypto(c, s->version, dd, rl_sequence, &crypto_info,
-                               &rec_seq, iv, key))
+    if (!ktls_configure_crypto(s, c, dd, rl_sequence, &crypto_info, &rec_seq,
+                               iv, key, ms, *mac_secret_size))
         goto skip_ktls;
 
     if (which & SSL3_CC_READ) {
-#  ifndef OPENSSL_NO_KTLS_RX
+# ifndef OPENSSL_NO_KTLS_RX
         count_unprocessed = count_unprocessed_records(s);
         if (count_unprocessed < 0)
             goto skip_ktls;
@@ -561,11 +514,10 @@ int tls1_change_cipher_state(SSL *s, int which)
             }
             count_unprocessed--;
         }
-#  else
+# else
         goto skip_ktls;
-#  endif
+# endif
     }
-# endif /* !__FreeBSD__ */
 
     /* ktls works with user provided buffers directly */
     if (BIO_set_ktls(bio, &crypto_info, which & SSL3_CC_WRITE)) {
