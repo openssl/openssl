@@ -11,6 +11,7 @@
 #include "provider_local.h"
 
 OSSL_provider_init_fn ossl_default_provider_init;
+OSSL_provider_init_fn ossl_base_provider_init;
 OSSL_provider_init_fn ossl_null_provider_init;
 OSSL_provider_init_fn fips_intern_provider_init;
 #ifdef STATIC_LEGACY
@@ -24,6 +25,7 @@ const struct predefined_providers_st predefined_providers[] = {
 # ifdef STATIC_LEGACY
     { "legacy", ossl_legacy_provider_init, 0 },
 # endif
+    { "base", ossl_base_provider_init, 0 },
     { "null", ossl_null_provider_init, 0 },
 #endif
     { NULL, NULL, 0 }

@@ -192,9 +192,9 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =head2 Asymmetric Key Serializer
 
-In addition to "provider=default", this set of implementations define the
-property "fips=yes", to allow them to be used together with the FIPS
-provider.
+The default provider also includes all of the serialization algorithms
+present in the base provider.  Some of these have the property "fips=yes",
+to allow them to be used together with the FIPS provider.
 
 =over 4
 
@@ -214,7 +214,8 @@ provider.
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<openssl-core_dispatch.h(7)>, L<provider(7)>
+L<openssl-core.h(7)>, L<openssl-core_dispatch.h(7)>, L<provider(7)>,
+L<OSSL_PROVIDER-base(7)>
 
 =head1 COPYRIGHT
 

@@ -385,154 +385,16 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
-/*
- * Unlike most algorithms in the default provider, the serializers are allowed
- * for use in FIPS mode because they are not FIPS relevant, and therefore have
- * the "fips=yes" property.
- */
 static const OSSL_ALGORITHM deflt_serializer[] = {
-    { "RSA", "provider=default,fips=yes,format=text,type=private",
-      rsa_priv_text_serializer_functions },
-    { "RSA", "provider=default,fips=yes,format=text,type=public",
-      rsa_pub_text_serializer_functions },
-    { "RSA", "provider=default,fips=yes,format=der,type=private",
-      rsa_priv_der_serializer_functions },
-    { "RSA", "provider=default,fips=yes,format=der,type=public",
-      rsa_pub_der_serializer_functions },
-    { "RSA", "provider=default,fips=yes,format=pem,type=private",
-      rsa_priv_pem_serializer_functions },
-    { "RSA", "provider=default,fips=yes,format=pem,type=public",
-      rsa_pub_pem_serializer_functions },
-    { "RSA-PSS", "provider=default,fips=yes,format=text,type=private",
-      rsa_priv_text_serializer_functions },
-    { "RSA-PSS", "provider=default,fips=yes,format=text,type=public",
-      rsa_pub_text_serializer_functions },
-    { "RSA-PSS", "provider=default,fips=yes,format=der,type=private",
-      rsa_priv_der_serializer_functions },
-    { "RSA-PSS", "provider=default,fips=yes,format=der,type=public",
-      rsa_pub_der_serializer_functions },
-    { "RSA-PSS", "provider=default,fips=yes,format=pem,type=private",
-      rsa_priv_pem_serializer_functions },
-    { "RSA-PSS", "provider=default,fips=yes,format=pem,type=public",
-      rsa_pub_pem_serializer_functions },
+#define SER(name, fips, format, type, func_table)                           \
+    { name,                                                                 \
+      "provider=default,fips=" fips ",format=" format ",type=" type,  \
+      (func_table) }
 
-#ifndef OPENSSL_NO_DH
-    { "DH", "provider=default,fips=yes,format=text,type=private",
-      dh_priv_text_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=text,type=public",
-      dh_pub_text_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=text,type=parameters",
-      dh_param_text_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=der,type=private",
-      dh_priv_der_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=der,type=public",
-      dh_pub_der_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=der,type=parameters",
-      dh_param_der_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=pem,type=private",
-      dh_priv_pem_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=pem,type=public",
-      dh_pub_pem_serializer_functions },
-    { "DH", "provider=default,fips=yes,format=pem,type=parameters",
-      dh_param_pem_serializer_functions },
-#endif
-
-#ifndef OPENSSL_NO_DSA
-    { "DSA", "provider=default,fips=yes,format=text,type=private",
-      dsa_priv_text_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=text,type=public",
-      dsa_pub_text_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=text,type=parameters",
-      dsa_param_text_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=der,type=private",
-      dsa_priv_der_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=der,type=public",
-      dsa_pub_der_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=der,type=parameters",
-      dsa_param_der_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=pem,type=private",
-      dsa_priv_pem_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=pem,type=public",
-      dsa_pub_pem_serializer_functions },
-    { "DSA", "provider=default,fips=yes,format=pem,type=parameters",
-      dsa_param_pem_serializer_functions },
-#endif
-
-#ifndef OPENSSL_NO_EC
-    { "X25519", "provider=default,fips=yes,format=text,type=private",
-      x25519_priv_print_serializer_functions },
-    { "X25519", "provider=default,fips=yes,format=text,type=public",
-      x25519_pub_print_serializer_functions },
-    { "X25519", "provider=default,fips=yes,format=der,type=private",
-      x25519_priv_der_serializer_functions },
-    { "X25519", "provider=default,fips=yes,format=der,type=public",
-      x25519_pub_der_serializer_functions },
-    { "X25519", "provider=default,fips=yes,format=pem,type=private",
-      x25519_priv_pem_serializer_functions },
-    { "X25519", "provider=default,fips=yes,format=pem,type=public",
-      x25519_pub_pem_serializer_functions },
-
-    { "X448", "provider=default,format=text,type=private",
-      x448_priv_print_serializer_functions },
-    { "X448", "provider=default,format=text,type=public",
-      x448_pub_print_serializer_functions },
-    { "X448", "provider=default,format=der,type=private",
-      x448_priv_der_serializer_functions },
-    { "X448", "provider=default,format=der,type=public",
-      x448_pub_der_serializer_functions },
-    { "X448", "provider=default,format=pem,type=private",
-      x448_priv_pem_serializer_functions },
-    { "X448", "provider=default,format=pem,type=public",
-      x448_pub_pem_serializer_functions },
-
-    { "ED25519", "provider=default,fips=yes,format=text,type=private",
-      ed25519_priv_print_serializer_functions },
-    { "ED25519", "provider=default,fips=yes,format=text,type=public",
-      ed25519_pub_print_serializer_functions },
-    { "ED25519", "provider=default,fips=yes,format=der,type=private",
-      ed25519_priv_der_serializer_functions },
-    { "ED25519", "provider=default,fips=yes,format=der,type=public",
-      ed25519_pub_der_serializer_functions },
-    { "ED25519", "provider=default,fips=yes,format=pem,type=private",
-      ed25519_priv_pem_serializer_functions },
-    { "ED25519", "provider=default,fips=yes,format=pem,type=public",
-      ed25519_pub_pem_serializer_functions },
-
-    { "ED448", "provider=default,format=text,type=private",
-      ed448_priv_print_serializer_functions },
-    { "ED448", "provider=default,format=text,type=public",
-      ed448_pub_print_serializer_functions },
-    { "ED448", "provider=default,format=der,type=private",
-      ed448_priv_der_serializer_functions },
-    { "ED448", "provider=default,format=der,type=public",
-      ed448_pub_der_serializer_functions },
-    { "ED448", "provider=default,format=pem,type=private",
-      ed448_priv_pem_serializer_functions },
-    { "ED448", "provider=default,format=pem,type=public",
-      ed448_pub_pem_serializer_functions },
-
-    { "EC", "provider=default,fips=yes,format=text,type=private",
-      ec_priv_text_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=text,type=public",
-      ec_pub_text_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=text,type=parameters",
-      ec_param_text_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=der,type=private",
-      ec_priv_der_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=der,type=public",
-      ec_pub_der_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=der,type=parameters",
-      ec_param_der_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=pem,type=private",
-      ec_priv_pem_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=pem,type=public",
-      ec_pub_pem_serializer_functions },
-    { "EC", "provider=default,fips=yes,format=pem,type=parameters",
-      ec_param_pem_serializer_functions },
-#endif
-
+#include "serializers.inc"
     { NULL, NULL, NULL }
 };
+#undef SER
 
 static const OSSL_ALGORITHM deflt_deserializer[] = {
     { "RSA", "provider=default,fips=yes,input=der",
