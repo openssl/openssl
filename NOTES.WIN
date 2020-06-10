@@ -35,14 +35,11 @@
    via https://platform.activestate.com/ActiveState and then download it.
 
  - Microsoft Visual C compiler.
-   Since these are proprietry and ever-changing and we cannot test them all,
-   there is unavoidable uncertainty about which versions are supported.
-   Latest version along with couple of previous are certainly supported.
+   Since these are proprietary and ever-changing we cannot test them all.
+   Older versions may not work. Use a recent version wherever possible.
 
  - Netwide Assembler (NASM), available from https://www.nasm.us
    Note that NASM is the only supported assembler.
-   Even though Microsoft provided assembler is NOT supported, contemporary
-   64-bit version is exercised through CI of the VC-WIN64A-masm target.
 
  Quick start
  -----------
@@ -150,7 +147,7 @@
 
  * It is also possible to build mingw[64] on Linux or Cygwin.
 
-   In this case configure with corresponding --cross-compile-prefix= option.
+   In this case configure with the corresponding --cross-compile-prefix= option.
    For example
 
      ./Configure mingw --cross-compile-prefix=i686-w64-mingw32- ...
@@ -187,8 +184,8 @@
 	}
 
  If you link with OpenSSL .DLLs, then you're expected to include into
- your application code small "shim" snippet, which provides glue between
- the OpenSSL BIO layer and your compiler run-time.
+ your application code a small "shim" snippet, which provides
+ the glue between the OpenSSL BIO layer and your compiler run-time.
  See also the OPENSSL_Applink manual page.
 
 
