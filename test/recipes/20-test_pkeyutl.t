@@ -74,8 +74,8 @@ sub tsignverify {
     my $pubkey = shift;
     my @extraopts = @_;
 
-    my $data_to_sign = srctop_file('test', 'README');
-    my $other_data = srctop_file('test', 'README.external');
+    my $data_to_sign = srctop_file('test', 'data.txt');
+    my $other_data = srctop_file('test', 'data2.txt');
     my $sigfile = basename($privkey, '.pem') . '.sig';
 
     my @args = ();

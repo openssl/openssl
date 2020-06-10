@@ -16,6 +16,3 @@ client certificates.
 
 The script ocspquery.sh queries the status of the certificates using the
 test responder.
-
-
-

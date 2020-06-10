@@ -142,7 +142,7 @@ OpenSSL is licensed under the Apache License 2.0, which means that
 you are free to get and use it for commercial and non-commercial
 purposes as long as you fulfill its conditions.
 
-See the [LICENSE](LICENSE) file for more details.
+See the [LICENSE.txt](LICENSE.txt) file for more details.
 
 Support
 =======

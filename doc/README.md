@@ -1,5 +1,5 @@
 
-README  This file
+README.md  This file
 
 fingerprints.txt
         PGP fingerprints of authorised release signers

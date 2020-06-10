@@ -1196,7 +1196,7 @@ OpenSSL 0.9.x
   * Enhanced EVP interface.
 
   [1] The support for external crypto devices is currently a separate
-      distribution.  See the file README.ENGINE.
+      distribution.  See the file README-Engine.md.
 
 ### Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a [1 Apr 2000]
 

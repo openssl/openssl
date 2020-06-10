@@ -42,7 +42,7 @@ Usage: @config [options]
   -h		This help.
 
 Any other text will be passed to the Configure perl script.
-See INSTALL for instructions.
+See INSTALL.md for instructions.
 
 $               EOD
 $           ENDIF
