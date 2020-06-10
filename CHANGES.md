@@ -173,7 +173,13 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
- * The main project documents (README, NEWS, CHANGES, INSTALL, SUPPORT)
+ * Project text documents not yet having a proper file name extension
+   (HACKING, LICENSE, NOTES*, README*, VERSION) have been renamed to *.md
+   as far as reasonable, else to *.txt, for better use with file managers.
+
+   *David von Oheimb*
+
+*  The main project documents (README, NEWS, CHANGES, INSTALL, SUPPORT)
    have been converted to Markdown with the goal to produce documents
    which not only look pretty when viewed online in the browser, but
    remain well readable inside a plain text editor.
@@ -3104,12 +3110,12 @@ OpenSSL 1.1.0
 
  * State machine rewrite. The state machine code has been significantly
    refactored in order to remove much duplication of code and solve issues
-   with the old code (see ssl/statem/README for further details). This change
-   does have some associated API changes. Notably the SSL_state() function
-   has been removed and replaced by SSL_get_state which now returns an
-   "OSSL_HANDSHAKE_STATE" instead of an int. SSL_set_state() has been removed
-   altogether. The previous handshake states defined in ssl.h and ssl3.h have
-   also been removed.
+   with the old code (see [ssl/statem/README.md](ssl/statem/README.md) for
+   further details). This change does have some associated API changes.
+   Notably the SSL_state() function has been removed and replaced by
+   SSL_get_state which now returns an "OSSL_HANDSHAKE_STATE" instead of an int.
+   SSL_set_state() has been removed altogether. The previous handshake states
+   defined in ssl.h and ssl3.h have also been removed.
 
    *Matt Caswell*
 
@@ -11587,7 +11593,8 @@ OpenSSL 0.9.7.]
    of specific crypto interfaces. This change also introduces integrated
    support for symmetric ciphers and digest implementations - so ENGINEs
    can now accelerate these by providing EVP_CIPHER and EVP_MD
-   implementations of their own. This is detailed in crypto/engine/README
+   implementations of their own. This is detailed in
+   [crypto/engine/README.md](crypto/engine/README.md)
    as it couldn't be adequately described here. However, there are a few
    API changes worth noting - some RSA, DSA, DH, and RAND functions that
    were changed in the original introduction of ENGINE code have now
@@ -11663,7 +11670,7 @@ OpenSSL 0.9.7.]
    makes them more flexible to be built both as statically-linked ENGINEs
    and self-contained shared-libraries loadable via the "dynamic" ENGINE.
    Also, add stub code to each that makes building them as self-contained
-   shared-libraries easier (see README.ENGINE).
+   shared-libraries easier (see [README-Engine.md](README-Engine.md)).
 
    *Geoff Thorpe*
 
@@ -11672,7 +11679,8 @@ OpenSSL 0.9.7.]
    self-contained shared-libraries. The "dynamic" ENGINE exposes control
    commands that can be used to configure what shared-library to load and
    to control aspects of the way it is handled. Also, made an update to
-   the README.ENGINE file that brings its information up-to-date and
+   the [README-Engine.md](README-Engine.md) file
+   that brings its information up-to-date and
    provides some information and instructions on the "dynamic" ENGINE
    (ie. how to use it, how to build "dynamic"-loadable ENGINEs, etc).
 

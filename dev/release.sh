@@ -681,7 +681,7 @@ B<release.sh> recognises both forms.
 =head1 VERSION AND STATE
 
 With OpenSSL 3.0, all the version and state information is in the file
-F<VERSION>, where the following variables are used and changed:
+F<VERSION.dat>, where the following variables are used and changed:
 
 =over 4
 

@@ -1,5 +1,5 @@
-Test OpenSSL
-============
+Using OpenSSL Tests
+===================
 
 After a successful build, and before installing, the libraries should be tested.
 Run:

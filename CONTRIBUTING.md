@@ -64,7 +64,7 @@ guidelines:
 
  5. When at all possible, patches should include tests. These can
     either be added to an existing test, or completely new.  Please see
-    test/README for information on the test framework.
+    test/README.md for information on the test framework.
 
  6. New features or changed functionality must include
     documentation. Please look at the "pod" files in doc/man[1357] for

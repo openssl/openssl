@@ -36,7 +36,7 @@
 # OpenSSL source directory as value.
 
 get_version () {
-    eval $(git cat-file blob HEAD:VERSION)
+    eval $(git cat-file blob HEAD:VERSION.dat)
     VERSION="$MAJOR.$MINOR.$PATCH"
     SERIES="$MAJOR.$MINOR"
     TYPE=$( echo "$PRE_RELEASE_TAG" \
@@ -102,7 +102,7 @@ set_version () {
             PRE_RELEASE_TAG="$PRE_LABEL$PRE_NUM"
             ;;
     esac
-    cat > "$SOURCEDIR/VERSION" <<EOF
+    cat > "$SOURCEDIR/VERSION.dat" <<EOF
 MAJOR=$MAJOR
 MINOR=$MINOR
 PATCH=$PATCH
