@@ -18,10 +18,10 @@ of libssl.
 
 The source files map to components as follows:
 
-dtls1_bitmap.c                                   -> DTLS1_BITMAP component
-ssl3_buffer.c                                    -> SSL3_BUFFER component
-ssl3_record.c                                    -> SSL3_RECORD component
-rec_layer_s3.c, rec_layer_d1.c                   -> RECORD_LAYER component
+    dtls1_bitmap.c                 -> DTLS1_BITMAP component
+    ssl3_buffer.c                  -> SSL3_BUFFER component
+    ssl3_record.c                  -> SSL3_RECORD component
+    rec_layer_s3.c, rec_layer_d1.c -> RECORD_LAYER component
 
 The RECORD_LAYER component is a facade pattern, i.e. it provides a simplified
 interface to the record layer for the rest of libssl. The other 3 components are
@@ -38,33 +38,32 @@ RECORD_LAYER_* macros.
 
 Conceptually it looks like this:
 
-                        libssl
-                           |
----------------------------|-----record.h--------------------------------------
-                           |
-                    _______V______________
-                   |                      |
-                   |    RECORD_LAYER      |
-                   |                      |
-                   |    rec_layer_s3.c    |
-                   |          ^           |
-                   | _________|__________ |
-                   ||                    ||
-                   || DTLS1_RECORD_LAYER ||
-                   ||                    ||
-                   || rec_layer_d1.c     ||
-                   ||____________________||
-                   |______________________|
-        record_local.h     ^   ^   ^
-         _________________|   |   |_________________
-        |                     |                     |
-   _____V_________      ______V________      _______V________
-  |               |    |               |    |                |
-  | SSL3_BUFFER   |    | SSL3_RECORD   |    | DTLS1_BITMAP   |
-  |               |--->|               |    |                |
-  | ssl3_buffer.c |    | ssl3_record.c |    | dtls1_bitmap.c |
-  |_______________|    |_______________|    |________________|
-
+                          libssl
+                             |
+    -------------------------|-----record.h------------------------------------
+                             |
+                      _______V______________
+                     |                      |
+                     |    RECORD_LAYER      |
+                     |                      |
+                     |    rec_layer_s3.c    |
+                     |          ^           |
+                     | _________|__________ |
+                     ||                    ||
+                     || DTLS1_RECORD_LAYER ||
+                     ||                    ||
+                     || rec_layer_d1.c     ||
+                     ||____________________||
+                     |______________________|
+          record_local.h     ^   ^   ^
+           _________________|   |   |_________________
+          |                     |                     |
+     _____V_________      ______V________      _______V________
+    |               |    |               |    |                |
+    | SSL3_BUFFER   |    | SSL3_RECORD   |    | DTLS1_BITMAP   |
+    |               |--->|               |    |                |
+    | ssl3_buffer.c |    | ssl3_record.c |    | dtls1_bitmap.c |
+    |_______________|    |_______________|    |________________|
 
 The two RECORD_LAYER source files build on each other, i.e.
 the main one is rec_layer_s3.c which provides the core SSL/TLS layer. The second

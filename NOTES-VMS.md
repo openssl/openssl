@@ -1,16 +1,14 @@
-
- NOTES FOR THE OPENVMS PLATFORM
- ==============================
+NOTES FOR THE OPENVMS PLATFORM
+==============================
 
  Requirement details
  -------------------
 
- In addition to the requirements and instructions listed in INSTALL,
- this are required as well:
+ In addition to the requirements and instructions listed
+ in [INSTALL.md](INSTALL.md), this are required as well:
 
   * At least ODS-5 disk organization for source and build.
     Installation can be done on any existing disk organization.
-
 
  About ANSI C compiler
  ---------------------
@@ -22,20 +20,19 @@
  version 7.1 or later.  Compiling with a different ANSI C compiler may
  require some work.
 
- Please avoid using C RTL feature logical names DECC$* when building
+ Please avoid using C RTL feature logical names `DECC$*` when building
  and testing OpenSSL.  Most of all, they can be disruptive when
  running the tests, as they affect the Perl interpreter.
-
 
  About ODS-5 directory names and Perl
  ------------------------------------
 
- It seems that the perl function canonpath() in the File::Spec module
+ It seems that the perl function canonpath() in the `File::Spec` module
  doesn't treat file specifications where the last directory name
  contains periods very well.  Unfortunately, some versions of VMS tar
  will keep the periods in the OpenSSL source directory instead of
  converting them to underscore, thereby leaving your source in
- something like [.openssl-1^.1^.0].  This will lead to issues when
+ something like `[.openssl-1^.1^.0]`.  This will lead to issues when
  configuring and building OpenSSL.
 
  We have no replacement for Perl's canonpath(), so the best workaround
@@ -43,7 +40,6 @@
  adjust for the actual source directory name you have):
 
     $ rename openssl-1^.1^.0.DIR openssl-1_1_0.DIR
-
 
  About MMS and DCL
  -----------------
@@ -54,7 +50,6 @@
  enough.  Should you run into issues, a very simple solution is to set
  yourself up a few logical names for the directory trees you're going
  to use.
-
 
  About debugging
  ---------------
@@ -68,7 +63,7 @@
  directly for debugging.  Do not try to use them from a script, such
  as running the test suite.
 
- *The following is not available on Alpha*
+ ### The following is not available on Alpha
 
  As a compromise, we're turning off the flag that makes the debugger
  start automatically.  If there is a program that you need to debug,
@@ -81,7 +76,6 @@
 
     $ set image /flag=nocall_debug [.test]evp_test.exe
 
-
  Checking the distribution
  -------------------------
 
@@ -92,16 +86,16 @@
  The easiest way to check if everything got through as it should is to
  check for one of the following files:
 
-   [.crypto]opensslconf^.h.in
+    [.crypto]opensslconf^.h.in
 
  The best way to get a correct distribution is to download the gzipped
- tar file from ftp://ftp.openssl.org/source/, use GZIP -d to uncompress
- it and VMSTAR to unpack the resulting tar file.
+ tar file from ftp://ftp.openssl.org/source/, use `GZIP -d` to uncompress
+ it and `VMSTAR` to unpack the resulting tar file.
 
  Gzip and VMSTAR are available here:
 
-   http://antinode.info/dec/index.html#Software
+   <http://antinode.info/dec/index.html#Software>
 
  Should you need it, you can find UnZip for VMS here:
 
-   http://www.info-zip.org/UnZip.html
+   <http://www.info-zip.org/UnZip.html>

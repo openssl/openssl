@@ -105,13 +105,13 @@ detailed instructions about building and installing OpenSSL. For some
 platforms, the installation instructions are amended by a platform specific
 document.
 
- * [NOTES.ANDROID](NOTES.ANDROID)
- * [NOTES.DJGPP](NOTES.DJGPP)
- * [NOTES.PERL](NOTES.PERL)
- * [NOTES.UNIX](NOTES.UNIX)
- * [NOTES.VALGRIND](NOTES.VALGRIND)
- * [NOTES.VMS](NOTES.VMS)
- * [NOTES.WIN](NOTES.WIN)
+ * [NOTES-Android.md](NOTES-Android.md)
+ * [NOTES-DJGPP.md](NOTES-DJGPP.md)
+ * [NOTES-Unix.md](NOTES-Unix.md)
+ * [NOTES-VMS.md](NOTES-VMS.md)
+ * [NOTES-Windows.txt](NOTES-Windows.txt)
+ * [NOTES-Perl.m](NOTES-Perl.md)
+ * [NOTES-Valgrind.md](NOTES-Valgrind.md)
 
 Specific notes on upgrading to OpenSSL 3.0 from previous versions, as well as
 known issues are available on the OpenSSL

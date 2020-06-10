@@ -14,7 +14,6 @@ configuration in diverse ways:
                 script.  See 'Configure helper scripts for more
                 information.
 
-
 Configurations of OpenSSL target platforms
 ==========================================
 
@@ -54,12 +53,12 @@ In each table entry, the following keys are significant:
                            usually good enough.
         cppflags        => Default C preprocessor flags [4].
         defines         => As an alternative, macro definitions may be
-                           given here instead of in `cppflags' [4].
+                           given here instead of in 'cppflags' [4].
                            If given here, they MUST be as an array of
                            the string such as "MACRO=value", or just
                            "MACRO" for definitions without value.
         includes        => As an alternative, inclusion directories
-                           may be given here instead of in `cppflags'
+                           may be given here instead of in 'cppflags'
                            [4].  If given here, the MUST be an array
                            of strings, one directory specification
                            each.
@@ -99,9 +98,9 @@ In each table entry, the following keys are significant:
         module_cppflags
         module_cflags
         module_ldflags  => Has the same function as the corresponding
-                           `shared_' attributes, but for building DSOs.
+                           'shared_' attributes, but for building DSOs.
                            When unset, they get the same values as the
-                           corresponding `shared_' attributes.
+                           corresponding 'shared_' attributes.
 
         ar              => The library archive command, the default is
                            "ar".
@@ -237,31 +236,30 @@ In each table entry, the following keys are significant:
                            RC4_INT              RC4 key schedule is made
                                                 up of 'unsigned int's;
 
-
 [1] as part of the target configuration, one can have a key called
-    'inherit_from' that indicate what other configurations to inherit
-    data from.  These are resolved recursively.
+  `inherit_from` that indicates what other configurations to inherit
+  data from.  These are resolved recursively.
 
-    Inheritance works as a set of default values that can be overridden
-    by corresponding key values in the inheriting configuration.
+  Inheritance works as a set of default values that can be overridden
+  by corresponding key values in the inheriting configuration.
 
-    Note 1: any configuration table can be used as a template.
-    Note 2: pure templates have the attribute 'template => 1' and
-            cannot be used as build targets.
+  Note 1: any configuration table can be used as a template.
+  Note 2: pure templates have the attribute `template => 1` and
+          cannot be used as build targets.
 
-    If several configurations are given in the 'inherit_from' array,
-    the values of same attribute are concatenated with space
-    separation.  With this, it's possible to have several smaller
-    templates for different configuration aspects that can be combined
-    into a complete configuration.
+  If several configurations are given in the `inherit_from` array,
+  the values of same attribute are concatenated with space
+  separation.  With this, it's possible to have several smaller
+  templates for different configuration aspects that can be combined
+  into a complete configuration.
 
-    instead of a scalar value or an array, a value can be a code block
-    of the form 'sub { /* your code here */ }'.  This code block will
-    be called with the list of inherited values for that key as
-    arguments.  In fact, the concatenation of strings is really done
-    by using 'sub { join(" ",@_) }' on the list of inherited values.
+  Instead of a scalar value or an array, a value can be a code block
+  of the form `sub { /* your code here */ }`.  This code block will
+  be called with the list of inherited values for that key as
+  arguments.  In fact, the concatenation of strings is really done
+  by using `sub { join(" ",@_) }` on the list of inherited values.
 
-    An example:
+  An example:
 
         "foo" => {
                 template => 1,
@@ -291,21 +289,21 @@ In each table entry, the following keys are significant:
         }
 
 [2] OpenSSL is built with threading capabilities unless the user
-    specifies 'no-threads'.  The value of the key 'thread_scheme' may
-    be "(unknown)", in which case the user MUST give some compilation
-    flags to Configure.
+  specifies `no-threads`.  The value of the key `thread_scheme` may
+  be `(unknown)`, in which case the user MUST give some compilation
+  flags to `Configure`.
 
 [3] OpenSSL has three types of things to link from object files or
-    static libraries:
+  static libraries:
 
-    - shared libraries; that would be libcrypto and libssl.
-    - shared objects (sometimes called dynamic libraries);  that would
-      be the modules.
-    - applications; those are apps/openssl and all the test apps.
+  - shared libraries; that would be libcrypto and libssl.
+  - shared objects (sometimes called dynamic libraries);  that would
+    be the modules.
+  - applications; those are apps/openssl and all the test apps.
 
-    Very roughly speaking, linking is done like this (words in braces
-    represent the configuration settings documented at the beginning
-    of this file):
+  Very roughly speaking, linking is done like this (words in braces
+  represent the configuration settings documented at the beginning
+  of this file):
 
     shared libraries:
         {ld} $(CFLAGS) {lflags} {shared_ldflag} -o libfoo.so \
@@ -319,38 +317,43 @@ In each table entry, the following keys are significant:
         {ld} $(CFLAGS) {lflags} -o app \
             app1.o utils.o -lssl -lcrypto {ex_libs}
 
-[4] There are variants of these attribute, prefixed with `lib_',
-    `dso_' or `bin_'.  Those variants replace the unprefixed attribute
-    when building library, DSO or program modules specifically.
+[4] There are variants of these attribute, prefixed with `lib_`,
+  `dso_` or `bin_`.  Those variants replace the unprefixed attribute
+  when building library, DSO or program modules specifically.
 
 Historically, the target configurations came in form of a string with
 values separated by colons.  This use is deprecated.  The string form
 looked like this:
 
-   "target" => "{cc}:{cflags}:{unistd}:{thread_cflag}:{sys_id}:{lflags}:{bn_ops}:{cpuid_obj}:{bn_obj}:{ec_obj}:{des_obj}:{aes_obj}:{bf_obj}:{md5_obj}:{sha1_obj}:{cast_obj}:{rc4_obj}:{rmd160_obj}:{rc5_obj}:{wp_obj}:{cmll_obj}:{modes_obj}:{padlock_obj}:{perlasm_scheme}:{dso_scheme}:{shared_target}:{shared_cflag}:{shared_ldflag}:{shared_extension}:{ranlib}:{arflags}:{multilib}"
-
+    "target" => "{cc}:{cflags}:{unistd}:{thread_cflag}:{sys_id}:{lflags}:
+                 {bn_ops}:{cpuid_obj}:{bn_obj}:{ec_obj}:{des_obj}:{aes_obj}:
+                 {bf_obj}:{md5_obj}:{sha1_obj}:{cast_obj}:{rc4_obj}:
+                 {rmd160_obj}:{rc5_obj}:{wp_obj}:{cmll_obj}:{modes_obj}:
+                 {padlock_obj}:{perlasm_scheme}:{dso_scheme}:{shared_target}:
+                 {shared_cflag}:{shared_ldflag}:{shared_extension}:{ranlib}:
+                 {arflags}:{multilib}"
 
 Build info files
 ================
 
-The build.info files that are spread over the source tree contain the
+The `build.info` files that are spread over the source tree contain the
 minimum information needed to build and distribute OpenSSL.  It uses a
 simple and yet fairly powerful language to determine what needs to be
 built, from what sources, and other relationships between files.
 
-For every build.info file, all file references are relative to the
-directory of the build.info file for source files, and the
+For every `build.info` file, all file references are relative to the
+directory of the `build.info` file for source files, and the
 corresponding build directory for built files if the build tree
 differs from the source tree.
 
 When processed, every line is processed with the perl module
-Text::Template, using the delimiters "{-" and "-}".  The hashes
-%config and %target are passed to the perl fragments, along with
+Text::Template, using the delimiters `{-` and `-}`.  The hashes
+`%config` and `%target` are passed to the perl fragments, along with
 $sourcedir and $builddir, which are the locations of the source
-directory for the current build.info file and the corresponding build
+directory for the current `build.info` file and the corresponding build
 directory, all relative to the top of the build tree.
 
-'Configure' only knows inherently about the top build.info file.  For
+`Configure` only knows inherently about the top `build.info` file.  For
 any other directory that has one, further directories to look into
 must be indicated like this:
 
@@ -393,7 +396,7 @@ This should be rarely used, and care should be taken to make sure it's
 only used when supported.  For example, native Windows build doesn't
 support building static libraries and DLLs at the same time, so using
 static libraries on Windows can only be done when configured
-'no-shared'.
+`no-shared`.
 
 In some cases, it's desirable to include some source files in the
 shared form of a library only:
@@ -435,7 +438,7 @@ be used in that case:
 
 NOTE: GENERATE lines are limited to one command only per GENERATE.
 
-Finally, you can have some simple conditional use of the build.info
+Finally, you can have some simple conditional use of the `build.info`
 information, looking like this:
 
     IF[1]
@@ -461,37 +464,37 @@ conditions based on something in the passed variables, for example:
       SOURCE[libfoo]=...
     ENDIF
 
-
 Build-file programming with the "unified" build system
 ======================================================
 
-"Build files" are called "Makefile" on Unix-like operating systems,
-"descrip.mms" for MMS on VMS, "makefile" for nmake on Windows, etc.
+"Build files" are called `Makefile` on Unix-like operating systems,
+`descrip.mms` for MMS on VMS, `makefile` for `nmake` on Windows, etc.
 
 To use the "unified" build system, the target configuration needs to
-set the three items 'build_scheme', 'build_file' and 'build_command'.
-In the rest of this section, we will assume that 'build_scheme' is set
+set the three items `build_scheme`, `build_file` and `build_command`.
+In the rest of this section, we will assume that `build_scheme` is set
 to "unified" (see the configurations documentation above for the
 details).
 
-For any name given by 'build_file', the "unified" system expects a
-template file in Configurations/ named like the build file, with
-".tmpl" appended, or in case of possible ambiguity, a combination of
-the second 'build_scheme' list item and the 'build_file' name.  For
-example, if 'build_file' is set to "Makefile", the template could be
-Configurations/Makefile.tmpl or Configurations/unix-Makefile.tmpl.
-In case both Configurations/unix-Makefile.tmpl and
-Configurations/Makefile.tmpl are present, the former takes
+For any name given by `build_file`, the "unified" system expects a
+template file in `Configurations/` named like the build file, with
+`.tmpl` appended, or in case of possible ambiguity, a combination of
+the second `build_scheme` list item and the `build_file` name.  For
+example, if `build_file` is set to `Makefile`, the template could be
+[`Configurations/Makefile.tmpl`](Makefile.tmpl) or
+[`Configurations/unix-Makefile.tmpl`](unix-Makefile.tmpl).
+In case both [`Configurations/unix-Makefile.tmpl`](Makefile.tmpl) and
+[`Configurations/Makefile.tmpl`](Makefile.tmpl) are present, the former takes
 precedence.
 
 The build-file template is processed with the perl module
-Text::Template, using "{-" and "-}" as delimiters that enclose the
+Text::Template, using `{-` and `-}` as delimiters that enclose the
 perl code fragments that generate configuration-dependent content.
 Those perl fragments have access to all the hash variables from
 configdata.pem.
 
 The build-file template is expected to define at least the following
-perl functions in a perl code fragment enclosed with "{-" and "-}".
+perl functions in a perl code fragment enclosed with `{-` and `-}`.
 They are all expected to return a string with the lines they produce.
 
     generatesrc - function that produces build file lines to generate
@@ -640,7 +643,6 @@ else, end it like this:
       "";       # Make sure no lingering values end up in the Makefile
     -}
 
-
 Configure helper scripts
 ========================
 
@@ -651,10 +653,10 @@ Checker scripts
 
 These scripts are per platform family, to check the integrity of the
 tools used for configuration and building.  The checker script used is
-either {build_platform}-{build_file}-checker.pm or
-{build_platform}-checker.pm, where {build_platform} is the second
-'build_scheme' list element from the configuration target data, and
-{build_file} is 'build_file' from the same target data.
+either `{build_platform}-{build_file}-checker.pm` or
+`{build_platform}-checker.pm`, where `{build_platform}` is the second
+`build_scheme` list element from the configuration target data, and
+`{build_file}` is `build_file` from the same target data.
 
 If the check succeeds, the script is expected to end with a non-zero
 expression.  If the check fails, the script can end with a zero, or

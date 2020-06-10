@@ -48,8 +48,8 @@ Prerequisites
 To install OpenSSL, you will need:
 
  * A "make" implementation
- * Perl 5 with core modules (please read [NOTES.PERL](NOTES.PERL))
- * The Perl module Text::Template (please read [NOTES.PERL](NOTES.PERL))
+ * Perl 5 with core modules (please read [NOTES-Perl.md](NOTES-Perl.md))
+ * The Perl module `Text::Template` (please read [NOTES-PERL.md](NOTES-Perl.md))
  * an ANSI C compiler
  * a development environment in the form of development libraries and C
    header files
@@ -58,13 +58,13 @@ To install OpenSSL, you will need:
 For additional platform specific requirements, solutions to specific
 issues and other details, please read one of these:
 
- * [NOTES.UNIX](NOTES.UNIX) - notes for Unix like systems
- * [NOTES.VMS](NOTES.VMS) - notes related to OpenVMS
- * [NOTES.WIN](NOTES.WIN) - notes related to the Windows platform
- * [NOTES.DJGPP](NOTES.DJGPP) - building for DOS with DJGPP
- * [NOTES.ANDROID](NOTES.ANDROID) - building for Android platforms (using NDK)
- * [NOTES.VALGRIND](NOTES.VALGRIND) - testing with Valgrind
- * [NOTES.PERL](NOTES.PERL) - some notes on Perl
+ * [NOTES-Unix.md](NOTES-Unix.md) - notes for Unix like systems
+ * [NOTES-VMS.md](NOTES-VMS.md) - notes related to OpenVMS
+ * [NOTES-Windows.txt](NOTES-Windows.txt) - notes related to the Windows platform
+ * [NOTES-DJGPP.md](NOTES-DJGPP.md) - building for DOS with DJGPP
+ * [NOTES-Android.md](NOTES-Android.md) - building for Android platforms (using NDK)
+ * [NOTES-Valgrind.md](NOTES-Valgrind.md) - testing with Valgrind
+ * [NOTES-Perl.m](NOTES-Perl.md) - some notes on Perl
 
 Notational conventions
 ======================
@@ -275,7 +275,7 @@ On OpenVMS:
     $ perl Configure --prefix=PROGRAM:[INSTALLS] --openssldir=SYS$MANAGER:[OPENSSL]
 
 Note: if you do add options to the configuration command, please make sure
-you've read more than just this Quick Start, such as relevant `NOTES.*` files,
+you've read more than just this Quick Start, such as relevant `NOTES-*` files,
 the options outline below, as configuration options may change the outcome
 in otherwise unexpected ways.
 
@@ -285,7 +285,7 @@ Configuration Options
 There are several options to `./Configure` to customize the build (note that
 for Windows, the defaults for `--prefix` and `--openssldir` depend on what
 configuration is used and what Windows implementation OpenSSL is built on.
-More notes on this in [NOTES.WIN](NOTES.WIN)):
+More notes on this in [NOTES-Windows.txt](NOTES-Windows.txt):
 
 API Level
 ---------
@@ -1505,7 +1505,7 @@ cases it does not succeed. You will see a message like the following:
 
     $ ./Configure
     Operating system: x86-whatever-minix
-    This system (minix) is not supported. See file INSTALL for details.
+    This system (minix) is not supported. See file INSTALL.md for details.
 
 Even if the automatic target selection by the `./Configure` script fails,
 chances are that you still might find a suitable target in the `Configurations`

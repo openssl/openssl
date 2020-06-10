@@ -1,4 +1,7 @@
-The sparse_array.c file contains an implementation of a sparse array that
+Sparse Arrays
+=============
+
+The `sparse_array.c` file contains an implementation of a sparse array that
 attempts to be both space and time efficient.
 
 The sparse array is represented using a tree structure.  Each node in the
@@ -13,13 +16,14 @@ There are a number of parameters used to define the block size:
     SA_BLOCK_MAX_LEVELS     Indicates the maximum possible height of the tree
 
 These constants are inter-related:
+
     SA_BLOCK_MAX        = 2 ^ OPENSSL_SA_BLOCK_BITS
     SA_BLOCK_MASK       = SA_BLOCK_MAX - 1
     SA_BLOCK_MAX_LEVELS = number of bits in size_t divided by
                           OPENSSL_SA_BLOCK_BITS rounded up to the next multiple
                           of OPENSSL_SA_BLOCK_BITS
 
-OPENSSL_SA_BLOCK_BITS can be defined at compile time and this overrides the
+`OPENSSL_SA_BLOCK_BITS` can be defined at compile time and this overrides the
 built in setting.
 
 As a space and performance optimisation, the height of the tree is usually
@@ -67,7 +71,6 @@ brevity):
         +----+
     Index 0
 
-
 Inserting at element 2N+1 creates a new root node and pushes down the old root
 node.  It then creates a second second level node to hold the pointer to the
 user's new data:
@@ -101,7 +104,6 @@ user's new data:
         |Data|                         |Data|
         +----+                         +----+
     Index 0                       Index 2N+1
-
 
 The nodes themselves are allocated in a sparse manner.  Only nodes which exist
 along a path from the root of the tree to an added leaf will be allocated.
@@ -144,12 +146,11 @@ result in:
                                        +----+
                                   Index 2N+1
 
-
 Accesses to elements in the sparse array take O(log n) time where n is the
-largest element.  The base of the logarithm is SA_BLOCK_MAX, so for moderately
+largest element.  The base of the logarithm is `SA_BLOCK_MAX`, so for moderately
 small indices (e.g. NIDs), single level (constant time) access is achievable.
 Space usage is O(minimum(m, n log(n)) where m is the number of elements in the
 array.
 
-Note: sparse arrays only include pointers to types.  Thus, SPARSE_ARRAY_OF(char)
-can be used to store a string.
+Note: sparse arrays only include pointers to types.
+Thus, `SPARSE_ARRAY_OF(char)` can be used to store a string.
