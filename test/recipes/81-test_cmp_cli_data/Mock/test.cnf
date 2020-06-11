@@ -16,12 +16,11 @@ policies = certificatePolicies
 
 [Mock] # the built-in OpenSSL CMP mock server
 no_check_time = 1
-server_cn = localhost
-server_ip = 127.0.0.1
+server_host = 127.0.0.1 # localhost
 server_port = 1700
 server_tls = 0
 server_cert = server.crt
-server = $server_cn:$server_port
+server = $server_host:$server_port
 server_path = pkix/
 path = $server_path
 ca_dn = /O=openssl_cmp

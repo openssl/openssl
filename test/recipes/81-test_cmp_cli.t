@@ -80,8 +80,7 @@ sub use_mock_srv_internally
 # the CMP server configuration consists of:
 my $ca_dn;      # The CA's Distinguished Name
 my $server_dn;  # The server's Distinguished Name
-my $server_cn;  # The server's domain name
-my $server_ip;  # The server's IP address
+my $server_host;# The server's host name or IP address
 my $server_port;# The server's port
 my $server_tls; # The server's TLS port, if any, or 0
 my $server_path;# The server's CMP alias
@@ -99,7 +98,7 @@ my $sleep = 0;  # The time to sleep between two requests
 sub load_config {
     my $server_name = shift;
     my $section = shift;
-    my $test_config = $ENV{CMP_CONFIG} // "test_$server_name.cnf";
+    my $test_config = $ENV{CMP_CONFIG} // "$server_name/test.cnf";
     open (CH, $test_config) or die "Cannot open $test_config: $!";
     my $active = 0;
     while (<CH>) {
@@ -110,8 +109,7 @@ sub load_config {
         } elsif ($active) {
             $ca_dn       = $1 eq "" ? '""""' : $1 if m/^\s*ca_dn\s*=\s*(.*)?\s*$/;
             $server_dn   = $1 eq "" ? '""""' : $1 if m/^\s*server_dn\s*=\s*(.*)?\s*$/;
-            $server_cn   = $1 eq "" ? '""""' : $1 if m/^\s*server_cn\s*=\s*(.*)?\s*$/;
-            $server_ip   = $1 eq "" ? '""""' : $1 if m/^\s*server_ip\s*=\s*(.*)?\s*$/;
+            $server_host = $1 eq "" ? '""""' : $1 if m/^\s*server_host\s*=\s*(\S*)?\s*(\#.*)?$/;
             $server_port = $1 eq "" ? '""""' : $1 if m/^\s*server_port\s*=\s*(.*)?\s*$/;
             $server_tls  = $1 eq "" ? '""""' : $1 if m/^\s*server_tls\s*=\s*(.*)?\s*$/;
             $server_path = $1 eq "" ? '""""' : $1 if m/^\s*server_path\s*=\s*(.*)?\s*$/;
@@ -126,8 +124,8 @@ sub load_config {
     }
     close CH;
     die "Cannot find all CMP server config values in $test_config section [$section]\n"
-        if !defined $ca_dn || !defined $server_dn
-        || !defined $server_cn || !defined $server_ip
+        if !defined $ca_dn
+        || !defined $server_dn || !defined $server_host
         || !defined $server_port || !defined $server_tls
         || !defined $server_path || !defined $server_cert
         || !defined $kur_port || !defined $pbm_port
@@ -231,7 +229,7 @@ close($faillog) if $faillog;
 sub load_tests {
     my $server_name = shift;
     my $aspect = shift;
-    my $test_config = $ENV{CMP_CONFIG} // "test_$server_name.cnf";
+    my $test_config = $ENV{CMP_CONFIG} // "$server_name/test.cnf";
     my $file = data_file("test_$aspect.csv");
     my @result;
 
@@ -242,8 +240,7 @@ sub load_tests {
         $line =~ s{\r\n}{\n}g; # adjust line endings
         $line =~ s{_CA_DN}{$ca_dn}g;
         $line =~ s{_SERVER_DN}{$server_dn}g;
-        $line =~ s{_SERVER_CN}{$server_cn}g;
-        $line =~ s{_SERVER_IP}{$server_ip}g;
+        $line =~ s{_SERVER_HOST}{$server_host}g;
         $line =~ s{_SERVER_PORT}{$server_port}g;
         $line =~ s{_SERVER_TLS}{$server_tls}g;
         $line =~ s{_SERVER_PATH}{$server_path}g;
@@ -253,7 +250,7 @@ sub load_tests {
         $line =~ s{_PBM_REF}{$pbm_ref}g;
         $line =~ s{_PBM_SECRET}{$pbm_secret}g;
         my $noproxy = $line =~ m/,\s*-no_proxy\s*,(.*?)(,|$)/ ? $1 : $no_proxy;
-        next LOOP if $no_proxy && ($noproxy =~ $server_cn || $noproxy =~ $server_ip)
+        next LOOP if $no_proxy && ($noproxy =~ $server_host)
             && $line =~ m/,\s*-proxy\s*,/;
         next LOOP if $server_tls == 0 && $line =~ m/,\s*-tls_used\s*,/;
         $line =~ s{-section,,}{-section,,-proxy,$proxy,} unless $line =~ m/,\s*-proxy\s*,/;
