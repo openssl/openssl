@@ -98,7 +98,7 @@ my $sleep = 0;  # The time to sleep between two requests
 sub load_config {
     my $server_name = shift;
     my $section = shift;
-    my $test_config = $ENV{CMP_CONFIG} // "$server_name/test.cnf";
+    my $test_config = $ENV{OPENSSL_CMP_CONFIG} // "$server_name/test.cnf";
     open (CH, $test_config) or die "Cannot open $test_config: $!";
     my $active = 0;
     while (<CH>) {
@@ -135,12 +135,12 @@ sub load_config {
 }
 
 my @server_configurations = ("Mock");
-@server_configurations = split /\s+/, $ENV{CMP_SERVER} if $ENV{CMP_SERVER};
-# set env variable, e.g., CMP_SERVER="Mock Insta" to include further CMP servers
+@server_configurations = split /\s+/, $ENV{OPENSSL_CMP_SERVER} if $ENV{OPENSSL_CMP_SERVER};
+# set env variable, e.g., OPENSSL_CMP_SERVER="Mock Insta" to include further CMP servers
 
 my @all_aspects = ("connection", "verification", "credentials", "commands", "enrollment");
-@all_aspects = split /\s+/, $ENV{CMP_ASPECTS} if $ENV{CMP_ASPECTS};
-# set env variable, e.g., CMP_ASPECTS="commands enrollment" to select specific aspects
+@all_aspects = split /\s+/, $ENV{OPENSSL_CMP_ASPECTS} if $ENV{OPENSSL_CMP_ASPECTS};
+# set env variable, e.g., OPENSSL_CMP_ASPECTS="commands enrollment" to select specific aspects
 
 my $faillog;
 if ($ENV{HARNESS_FAILLOG}) {
@@ -204,7 +204,7 @@ indir data_dir() => sub {
     foreach my $server_name (@server_configurations) {
         $server_name = chop_dblquot($server_name);
         load_config($server_name, $server_name);
-        my $launch_mock = $server_name eq "Mock" && !$ENV{CMP_CONFIG};
+        my $launch_mock = $server_name eq "Mock" && !$ENV{OPENSSL_CMP_CONFIG};
         if ($launch_mock) {
             indir "Mock" => sub {
                 stop_mock_server(); # in case a previous run did not exit properly
@@ -229,7 +229,7 @@ close($faillog) if $faillog;
 sub load_tests {
     my $server_name = shift;
     my $aspect = shift;
-    my $test_config = $ENV{CMP_CONFIG} // "$server_name/test.cnf";
+    my $test_config = $ENV{OPENSSL_CMP_CONFIG} // "$server_name/test.cnf";
     my $file = data_file("test_$aspect.csv");
     my @result;
 
