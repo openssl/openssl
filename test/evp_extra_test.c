@@ -1770,6 +1770,37 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     return ret;
 }
 
+static int test_rand_agglomeration(void)
+{
+    EVP_RAND *rand;
+    EVP_RAND_CTX *ctx;
+    OSSL_PARAM params[3], *p = params;
+    int res;
+    unsigned int step = 7;
+    static unsigned char seed[] = "It does not matter how slowly you go "
+                                  "as long as you do not stop.";
+    unsigned char out[sizeof(seed)];
+
+    if (!TEST_int_ne(sizeof(seed) % step, 0)
+            || !TEST_ptr(rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL)))
+        return 0;
+    ctx = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    if (!TEST_ptr(ctx))
+        return 0;
+
+    memset(out, 0, sizeof(out));
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                             seed, sizeof(seed));
+    *p++ = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_MAX_REQUEST, &step);
+    *p = OSSL_PARAM_construct_end();
+    res = TEST_true(EVP_RAND_set_ctx_params(ctx, params))
+          && TEST_true(EVP_RAND_generate(ctx, out, sizeof(out), 0, 1, NULL, 0))
+          && TEST_mem_eq(seed, sizeof(seed), out, sizeof(out));
+    EVP_RAND_CTX_free(ctx);
+    return res;
+}
+
 int setup_tests(void)
 {
     testctx = OPENSSL_CTX_new();
@@ -1822,6 +1853,8 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_keygen_with_empty_template, 2);
     ADD_ALL_TESTS(test_pkey_ctx_fail_without_provider, 2);
+
+    ADD_TEST(test_rand_agglomeration);
 
     return 1;
 }
