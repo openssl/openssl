@@ -387,8 +387,10 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
 
 static int discover_provider_groups(OSSL_PROVIDER *provider, void *vctx)
 {
-    struct provider_group_data_st pgd  = { vctx, provider };
+    struct provider_group_data_st pgd;
 
+    pgd.ctx = vctx;
+    pgd.provider = provider;
     return OSSL_PROVIDER_get_capabilities(provider, "TLS-GROUP",
                                           add_provider_groups, &pgd);
 }
