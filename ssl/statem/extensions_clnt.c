@@ -211,7 +211,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     }
 
 #if defined(OPENSSL_NO_EC)
-    if (max_version < TLS1_3_VERSION)
+    if (SSL_IS_DTLS(s) || max_version < TLS1_3_VERSION)
         return EXT_RETURN_NOT_SENT;
 #else
     if (!use_ecc(s, min_version, max_version) && max_version < TLS1_3_VERSION)
