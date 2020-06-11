@@ -400,7 +400,7 @@ static int pkey_mac_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
                 return 0;
 
             /*
-             * Since EVP_MAC_CTX_{get,set}_params() returned successfully,
+             * Since EVP_MAC_{get,set}_ctx_params() returned successfully,
              * we can only assume that the size was ignored, i.e. this
              * control is unsupported.
              */
