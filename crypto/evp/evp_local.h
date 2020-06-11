@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -73,34 +73,35 @@ struct evp_keymgmt_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    /* Domain parameter routines */
-    OSSL_OP_keymgmt_importdomparams_fn *importdomparams;
-    OSSL_OP_keymgmt_gendomparams_fn *gendomparams;
-    OSSL_OP_keymgmt_freedomparams_fn *freedomparams;
-    OSSL_OP_keymgmt_exportdomparams_fn *exportdomparams;
-    OSSL_OP_keymgmt_importdomparam_types_fn *importdomparam_types;
-    OSSL_OP_keymgmt_exportdomparam_types_fn *exportdomparam_types;
-    OSSL_OP_keymgmt_get_domparam_params_fn *get_domparam_params;
-    OSSL_OP_keymgmt_gettable_domparam_params_fn *gettable_domparam_params;
+    /* Constructor(s), destructor, information */
+    OSSL_OP_keymgmt_new_fn *new;
+    OSSL_OP_keymgmt_free_fn *free;
+    OSSL_OP_keymgmt_get_params_fn *get_params;
+    OSSL_OP_keymgmt_gettable_params_fn *gettable_params;
+    OSSL_OP_keymgmt_set_params_fn *set_params;
+    OSSL_OP_keymgmt_settable_params_fn *settable_params;
 
-    /* Key routines */
-    OSSL_OP_keymgmt_importkey_fn *importkey;
-    OSSL_OP_keymgmt_genkey_fn *genkey;
-    OSSL_OP_keymgmt_loadkey_fn *loadkey;
-    OSSL_OP_keymgmt_freekey_fn *freekey;
-    OSSL_OP_keymgmt_exportkey_fn *exportkey;
-    OSSL_OP_keymgmt_importkey_types_fn *importkey_types;
-    OSSL_OP_keymgmt_exportkey_types_fn *exportkey_types;
-    OSSL_OP_keymgmt_get_key_params_fn *get_key_params;
-    OSSL_OP_keymgmt_gettable_key_params_fn *gettable_key_params;
+    /* Generation, a complex constructor */
+    OSSL_OP_keymgmt_gen_init_fn *gen_init;
+    OSSL_OP_keymgmt_gen_set_template_fn *gen_set_template;
+    OSSL_OP_keymgmt_gen_set_params_fn *gen_set_params;
+    OSSL_OP_keymgmt_gen_settable_params_fn *gen_settable_params;
+    OSSL_OP_keymgmt_gen_fn *gen;
+    OSSL_OP_keymgmt_gen_cleanup_fn *gen_cleanup;
 
+    /* Key object checking */
     OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
-} /* EVP_KEYMGMT */ ;
+    OSSL_OP_keymgmt_has_fn *has;
+    OSSL_OP_keymgmt_validate_fn *validate;
+    OSSL_OP_keymgmt_match_fn *match;
 
-struct keymgmt_data_st {
-    OPENSSL_CTX *ctx;
-    const char *properties;
-};
+    /* Import and export routines */
+    OSSL_OP_keymgmt_import_fn *import;
+    OSSL_OP_keymgmt_import_types_fn *import_types;
+    OSSL_OP_keymgmt_export_fn *export;
+    OSSL_OP_keymgmt_export_types_fn *export_types;
+    OSSL_OP_keymgmt_copy_fn *copy;
+} /* EVP_KEYMGMT */ ;
 
 struct evp_keyexch_st {
     int name_id;
@@ -116,6 +117,8 @@ struct evp_keyexch_st {
     OSSL_OP_keyexch_dupctx_fn *dupctx;
     OSSL_OP_keyexch_set_ctx_params_fn *set_ctx_params;
     OSSL_OP_keyexch_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_OP_keyexch_get_ctx_params_fn *get_ctx_params;
+    OSSL_OP_keyexch_gettable_ctx_params_fn *gettable_ctx_params;
 } /* EVP_KEYEXCH */;
 
 struct evp_signature_st {
@@ -134,9 +137,11 @@ struct evp_signature_st {
     OSSL_OP_signature_digest_sign_init_fn *digest_sign_init;
     OSSL_OP_signature_digest_sign_update_fn *digest_sign_update;
     OSSL_OP_signature_digest_sign_final_fn *digest_sign_final;
+    OSSL_OP_signature_digest_sign_fn *digest_sign;
     OSSL_OP_signature_digest_verify_init_fn *digest_verify_init;
     OSSL_OP_signature_digest_verify_update_fn *digest_verify_update;
     OSSL_OP_signature_digest_verify_final_fn *digest_verify_final;
+    OSSL_OP_signature_digest_verify_fn *digest_verify;
     OSSL_OP_signature_freectx_fn *freectx;
     OSSL_OP_signature_dupctx_fn *dupctx;
     OSSL_OP_signature_get_ctx_params_fn *get_ctx_params;
@@ -274,13 +279,10 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 
 /* OSSL_PROVIDER * is only used to get the library context */
-const char *evp_first_name(OSSL_PROVIDER *prov, int name_id);
+const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id);
 int evp_is_a(OSSL_PROVIDER *prov, int number,
              const char *legacy_name, const char *name);
 void evp_names_do_all(OSSL_PROVIDER *prov, int number,
                       void (*fn)(const char *name, void *data),
                       void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
-void *evp_pkey_make_provided(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                             EVP_KEYMGMT **keymgmt, const char *propquery,
-                             int domainparams);

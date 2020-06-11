@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -254,7 +254,7 @@ static int test_cavs_kats(const struct drbg_kat *test[], int i)
     const struct drbg_kat *td = test[i];
     int rv = 0;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     /* FIPS mode doesn't support instantiating without a derivation function */
     if ((td->flags & USE_DF) == 0)
         return TEST_skip("instantiating without derivation function "

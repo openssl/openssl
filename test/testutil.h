@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -192,6 +192,12 @@ const OPTIONS *test_get_options(void) \
 char *test_get_argument(size_t n);
 /* Return the number of additional non optional command line arguments */
 size_t test_get_argument_count(void);
+
+/*
+ * Skip over common test options. Should be called before calling
+ * test_get_argument()
+ */
+int test_skip_common_options(void);
 
 /*
  * Internal helpers. Test programs shouldn't use these directly, but should

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -38,6 +38,9 @@ static void *keymgmt_from_dispatch(int name_id,
                                    OSSL_PROVIDER *prov)
 {
     EVP_KEYMGMT *keymgmt = NULL;
+    int setparamfncnt = 0, getparamfncnt = 0;
+    int setgenparamfncnt = 0;
+    int importfncnt = 0, exportfncnt = 0;
 
     if ((keymgmt = keymgmt_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
@@ -47,130 +50,133 @@ static void *keymgmt_from_dispatch(int name_id,
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
-        case OSSL_FUNC_KEYMGMT_IMPORTDOMPARAMS:
-            if (keymgmt->importdomparams != NULL)
-                break;
-            keymgmt->importdomparams =
-                OSSL_get_OP_keymgmt_importdomparams(fns);
+        case OSSL_FUNC_KEYMGMT_NEW:
+            if (keymgmt->new == NULL)
+                keymgmt->new = OSSL_get_OP_keymgmt_new(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_GENDOMPARAMS:
-            if (keymgmt->gendomparams != NULL)
-                break;
-            keymgmt->gendomparams = OSSL_get_OP_keymgmt_gendomparams(fns);
+        case OSSL_FUNC_KEYMGMT_GEN_INIT:
+            if (keymgmt->gen_init == NULL)
+                keymgmt->gen_init = OSSL_get_OP_keymgmt_gen_init(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_FREEDOMPARAMS:
-            if (keymgmt->freedomparams != NULL)
-                break;
-            keymgmt->freedomparams = OSSL_get_OP_keymgmt_freedomparams(fns);
+        case OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE:
+            if (keymgmt->gen_set_template == NULL)
+                keymgmt->gen_set_template =
+                    OSSL_get_OP_keymgmt_gen_set_template(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_EXPORTDOMPARAMS:
-            if (keymgmt->exportdomparams != NULL)
-                break;
-            keymgmt->exportdomparams =
-                OSSL_get_OP_keymgmt_exportdomparams(fns);
+        case OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS:
+            if (keymgmt->gen_set_params == NULL) {
+                setgenparamfncnt++;
+                keymgmt->gen_set_params =
+                    OSSL_get_OP_keymgmt_gen_set_params(fns);
+            }
             break;
-        case OSSL_FUNC_KEYMGMT_IMPORTDOMPARAM_TYPES:
-            if (keymgmt->importdomparam_types != NULL)
-                break;
-            keymgmt->importdomparam_types =
-                OSSL_get_OP_keymgmt_importdomparam_types(fns);
+        case OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS:
+            if (keymgmt->gen_settable_params == NULL) {
+                setgenparamfncnt++;
+                keymgmt->gen_settable_params =
+                    OSSL_get_OP_keymgmt_gen_settable_params(fns);
+            }
             break;
-        case OSSL_FUNC_KEYMGMT_EXPORTDOMPARAM_TYPES:
-            if (keymgmt->exportdomparam_types != NULL)
-                break;
-            keymgmt->exportdomparam_types =
-                OSSL_get_OP_keymgmt_exportdomparam_types(fns);
+        case OSSL_FUNC_KEYMGMT_GEN:
+            if (keymgmt->gen == NULL)
+                keymgmt->gen = OSSL_get_OP_keymgmt_gen(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_GET_DOMPARAM_PARAMS:
-            if (keymgmt->get_domparam_params == NULL)
-                keymgmt->get_domparam_params =
-                    OSSL_get_OP_keymgmt_get_domparam_params(fns);
+        case OSSL_FUNC_KEYMGMT_GEN_CLEANUP:
+            if (keymgmt->gen_cleanup == NULL)
+                keymgmt->gen_cleanup = OSSL_get_OP_keymgmt_gen_cleanup(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_GETTABLE_DOMPARAM_PARAMS:
-            if (keymgmt->gettable_domparam_params == NULL)
-                keymgmt->gettable_domparam_params =
-                    OSSL_get_OP_keymgmt_gettable_domparam_params(fns);
+        case OSSL_FUNC_KEYMGMT_FREE:
+            if (keymgmt->free == NULL)
+                keymgmt->free = OSSL_get_OP_keymgmt_free(fns);
             break;
-        case OSSL_FUNC_KEYMGMT_IMPORTKEY:
-            if (keymgmt->importkey != NULL)
-                break;
-            keymgmt->importkey = OSSL_get_OP_keymgmt_importkey(fns);
+        case OSSL_FUNC_KEYMGMT_GET_PARAMS:
+            if (keymgmt->get_params == NULL) {
+                getparamfncnt++;
+                keymgmt->get_params = OSSL_get_OP_keymgmt_get_params(fns);
+            }
             break;
-        case OSSL_FUNC_KEYMGMT_GENKEY:
-            if (keymgmt->genkey != NULL)
-                break;
-            keymgmt->genkey = OSSL_get_OP_keymgmt_genkey(fns);
+        case OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS:
+            if (keymgmt->gettable_params == NULL) {
+                getparamfncnt++;
+                keymgmt->gettable_params =
+                    OSSL_get_OP_keymgmt_gettable_params(fns);
+            }
             break;
-        case OSSL_FUNC_KEYMGMT_LOADKEY:
-            if (keymgmt->loadkey != NULL)
-                break;
-            keymgmt->loadkey = OSSL_get_OP_keymgmt_loadkey(fns);
+         case OSSL_FUNC_KEYMGMT_SET_PARAMS:
+            if (keymgmt->set_params == NULL) {
+                setparamfncnt++;
+                keymgmt->set_params = OSSL_get_OP_keymgmt_set_params(fns);
+            }
             break;
-        case OSSL_FUNC_KEYMGMT_FREEKEY:
-            if (keymgmt->freekey != NULL)
-                break;
-            keymgmt->freekey = OSSL_get_OP_keymgmt_freekey(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_EXPORTKEY:
-            if (keymgmt->exportkey != NULL)
-                break;
-            keymgmt->exportkey = OSSL_get_OP_keymgmt_exportkey(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_IMPORTKEY_TYPES:
-            if (keymgmt->importkey_types != NULL)
-                break;
-            keymgmt->importkey_types =
-                OSSL_get_OP_keymgmt_importkey_types(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_EXPORTKEY_TYPES:
-            if (keymgmt->exportkey_types != NULL)
-                break;
-            keymgmt->exportkey_types =
-                OSSL_get_OP_keymgmt_exportkey_types(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_GET_KEY_PARAMS:
-            if (keymgmt->get_key_params == NULL)
-                keymgmt->get_key_params =
-                    OSSL_get_OP_keymgmt_get_key_params(fns);
-            break;
-        case OSSL_FUNC_KEYMGMT_GETTABLE_KEY_PARAMS:
-            if (keymgmt->gettable_key_params == NULL)
-                keymgmt->gettable_key_params =
-                    OSSL_get_OP_keymgmt_gettable_key_params(fns);
+        case OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS:
+            if (keymgmt->settable_params == NULL) {
+                setparamfncnt++;
+                keymgmt->settable_params =
+                    OSSL_get_OP_keymgmt_settable_params(fns);
+            }
             break;
         case OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME:
-            if (keymgmt->query_operation_name != NULL)
-                break;
-            keymgmt->query_operation_name =
-                OSSL_get_OP_keymgmt_query_operation_name(fns);
+            if (keymgmt->query_operation_name == NULL)
+                keymgmt->query_operation_name =
+                    OSSL_get_OP_keymgmt_query_operation_name(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_HAS:
+            if (keymgmt->has == NULL)
+                keymgmt->has = OSSL_get_OP_keymgmt_has(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_VALIDATE:
+            if (keymgmt->validate == NULL)
+                keymgmt->validate = OSSL_get_OP_keymgmt_validate(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_MATCH:
+            if (keymgmt->match == NULL)
+                keymgmt->match = OSSL_get_OP_keymgmt_match(fns);
+            break;
+        case OSSL_FUNC_KEYMGMT_IMPORT:
+            if (keymgmt->import == NULL) {
+                importfncnt++;
+                keymgmt->import = OSSL_get_OP_keymgmt_import(fns);
+            }
+            break;
+        case OSSL_FUNC_KEYMGMT_IMPORT_TYPES:
+            if (keymgmt->import_types == NULL) {
+                importfncnt++;
+                keymgmt->import_types = OSSL_get_OP_keymgmt_import_types(fns);
+            }
+            break;
+        case OSSL_FUNC_KEYMGMT_EXPORT:
+            if (keymgmt->export == NULL) {
+                exportfncnt++;
+                keymgmt->export = OSSL_get_OP_keymgmt_export(fns);
+            }
+            break;
+        case OSSL_FUNC_KEYMGMT_EXPORT_TYPES:
+            if (keymgmt->export_types == NULL) {
+                exportfncnt++;
+                keymgmt->export_types = OSSL_get_OP_keymgmt_export_types(fns);
+            }
             break;
         }
     }
     /*
      * Try to check that the method is sensible.
+     * At least one constructor and the destructor are MANDATORY
+     * The functions 'has' is MANDATORY
      * It makes no sense being able to free stuff if you can't create it.
      * It makes no sense providing OSSL_PARAM descriptors for import and
      * export if you can't import or export.
      */
-    if ((keymgmt->freedomparams != NULL
-         && (keymgmt->importdomparams == NULL
-             && keymgmt->gendomparams == NULL))
-        || (keymgmt->freekey != NULL
-            && (keymgmt->importkey == NULL
-                && keymgmt->genkey == NULL
-                && keymgmt->loadkey == NULL))
-        || (keymgmt->importdomparam_types != NULL
-            && keymgmt->importdomparams == NULL)
-        || (keymgmt->exportdomparam_types != NULL
-            && keymgmt->exportdomparams == NULL)
-        || (keymgmt->gettable_domparam_params != NULL
-            && keymgmt->get_domparam_params == NULL)
-        || (keymgmt->importkey_types != NULL
-            && keymgmt->importkey == NULL)
-        || (keymgmt->exportkey_types != NULL
-            && keymgmt->exportkey == NULL)
-        || (keymgmt->gettable_key_params != NULL
-            && keymgmt->get_key_params == NULL)) {
+    if (keymgmt->free == NULL
+        || (keymgmt->new == NULL && keymgmt->gen == NULL)
+        || keymgmt->has == NULL
+        || (getparamfncnt != 0 && getparamfncnt != 2)
+        || (setparamfncnt != 0 && setparamfncnt != 2)
+        || (setgenparamfncnt != 0 && setgenparamfncnt != 2)
+        || (importfncnt != 0 && importfncnt != 2)
+        || (exportfncnt != 0 && exportfncnt != 2)
+        || (keymgmt->gen != NULL
+            && (keymgmt->gen_init == NULL
+                || keymgmt->gen_cleanup == NULL))) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
@@ -255,4 +261,179 @@ void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
 {
     if (keymgmt->prov != NULL)
         evp_names_do_all(keymgmt->prov, keymgmt->name_id, fn, data);
+}
+
+/*
+ * Internal API that interfaces with the method function pointers
+ */
+void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    /*
+     * TODO(3.0) 'new' is currently mandatory on its own, but when new
+     * constructors appear, it won't be quite as mandatory, so we have
+     * a check for future cases.
+     */
+    if (keymgmt->new == NULL)
+        return NULL;
+    return keymgmt->new(provctx);
+}
+
+void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keydata)
+{
+    /* This is mandatory, no need to check for its presence */
+    keymgmt->free(keydata);
+}
+
+void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    if (keymgmt->gen_init == NULL)
+        return NULL;
+    return keymgmt->gen_init(provctx, selection);
+}
+
+int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
+                                 void *template)
+{
+    /*
+     * It's arguable if we actually should return success in this case, as
+     * it allows the caller to set a template key, which is then ignored.
+     * However, this is how the legacy methods (EVP_PKEY_METHOD) operate,
+     * so we do this in the interest of backward compatibility.
+     * TODO(3.0) Investigate if we should change this behaviour.
+     */
+    if (keymgmt->gen_set_template == NULL)
+        return 1;
+    return keymgmt->gen_set_template(genctx, template);
+}
+
+int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
+                               const OSSL_PARAM params[])
+{
+    if (keymgmt->gen_set_params == NULL)
+        return 0;
+    return keymgmt->gen_set_params(genctx, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt)
+{
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
+    if (keymgmt->gen_settable_params == NULL)
+        return NULL;
+    return keymgmt->gen_settable_params(provctx);
+}
+
+void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
+                      OSSL_CALLBACK *cb, void *cbarg)
+{
+    if (keymgmt->gen == NULL)
+        return NULL;
+    return keymgmt->gen(genctx, cb, cbarg);
+}
+
+void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)
+{
+    if (keymgmt->gen != NULL)
+        keymgmt->gen_cleanup(genctx);
+}
+
+int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt, void *keydata,
+                           OSSL_PARAM params[])
+{
+    if (keymgmt->get_params == NULL)
+        return 1;
+    return keymgmt->get_params(keydata, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt)
+{
+    if (keymgmt->gettable_params == NULL)
+        return NULL;
+    return keymgmt->gettable_params();
+}
+
+int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt, void *keydata,
+                           const OSSL_PARAM params[])
+{
+    if (keymgmt->set_params == NULL)
+        return 1;
+    return keymgmt->set_params(keydata, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt)
+{
+    if (keymgmt->settable_params == NULL)
+        return NULL;
+    return keymgmt->settable_params();
+}
+
+int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keydata, int selection)
+{
+    /* This is mandatory, no need to check for its presence */
+    return keymgmt->has(keydata, selection);
+}
+
+int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
+                         int selection)
+{
+    /* We assume valid if the implementation doesn't have a function */
+    if (keymgmt->validate == NULL)
+        return 1;
+    return keymgmt->validate(keydata, selection);
+}
+
+int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
+                      const void *keydata1, const void *keydata2,
+                      int selection)
+{
+    /* We assume no match if the implementation doesn't have a function */
+    if (keymgmt->match == NULL)
+        return 0;
+    return keymgmt->match(keydata1, keydata2, selection);
+}
+
+int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
+                       int selection, const OSSL_PARAM params[])
+{
+    if (keymgmt->import == NULL)
+        return 0;
+    return keymgmt->import(keydata, selection, params);
+}
+
+const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
+                                           int selection)
+{
+    if (keymgmt->import_types == NULL)
+        return NULL;
+    return keymgmt->import_types(selection);
+}
+
+int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
+                       int selection, OSSL_CALLBACK *param_cb, void *cbarg)
+{
+    if (keymgmt->export == NULL)
+        return 0;
+    return keymgmt->export(keydata, selection, param_cb, cbarg);
+}
+
+const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
+                                           int selection)
+{
+    if (keymgmt->export_types == NULL)
+        return NULL;
+    return keymgmt->export_types(selection);
+}
+
+int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
+                     void *keydata_to, const void *keydata_from,
+                     int selection)
+{
+    /* We assume no copy if the implementation doesn't have a function */
+    if (keymgmt->copy == NULL)
+        return 0;
+    return keymgmt->copy(keydata_to, keydata_from, selection);
 }

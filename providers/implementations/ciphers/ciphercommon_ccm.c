@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -307,7 +307,7 @@ static int ccm_tls_cipher(PROV_CCM_CTX *ctx,
     size_t olen = 0;
 
     /* Encrypt/decrypt must be performed in place */
-    if (out != in || len < (EVP_CCM_TLS_EXPLICIT_IV_LEN + (size_t)ctx->m))
+    if (in == NULL || out != in || len < EVP_CCM_TLS_EXPLICIT_IV_LEN + ctx->m)
         goto err;
 
     /* If encrypting set explicit IV from sequence number (start of AAD) */

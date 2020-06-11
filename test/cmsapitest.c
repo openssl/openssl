@@ -1,7 +1,7 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -15,6 +15,8 @@
 #include <openssl/pem.h>
 
 #include "testutil.h"
+
+DEFINE_STACK_OF(X509)
 
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
@@ -64,6 +66,11 @@ int setup_tests(void)
 {
     char *certin = NULL, *privkeyin = NULL;
     BIO *certbio = NULL, *privkeybio = NULL;
+
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
 
     if (!TEST_ptr(certin = test_get_argument(0))
             || !TEST_ptr(privkeyin = test_get_argument(1)))

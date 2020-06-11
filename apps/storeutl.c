@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ typedef enum OPTION_choice {
     OPT_SEARCHFOR_CERTS, OPT_SEARCHFOR_KEYS, OPT_SEARCHFOR_CRLS,
     OPT_CRITERION_SUBJECT, OPT_CRITERION_ISSUER, OPT_CRITERION_SERIAL,
     OPT_CRITERION_FINGERPRINT, OPT_CRITERION_ALIAS,
-    OPT_MD
+    OPT_MD, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS storeutl_options[] = {
@@ -58,6 +58,8 @@ const OPTIONS storeutl_options[] = {
     {"out", OPT_OUT, '>', "Output file - default stdout"},
     {"text", OPT_TEXT, '-', "Print a text form of the objects"},
     {"noout", OPT_NOOUT, '-', "No PEM output, just status"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"uri", 0, 0, "URI of the store object"},
@@ -250,6 +252,10 @@ int storeutl_main(int argc, char *argv[])
         case OPT_MD:
             if (!opt_md(opt_unknown(), &digest))
                 goto opthelp;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
+            break;
         }
     }
     argc = opt_num_rest();

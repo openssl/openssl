@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -103,7 +103,7 @@ int BN_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
 {
     return bnrand(NORMAL, rnd, bits, top, bottom, ctx);
 }
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(NORMAL, rnd, bits, top, bottom, NULL);
@@ -120,7 +120,7 @@ int BN_priv_rand_ex(BIGNUM *rnd, int bits, int top, int bottom, BN_CTX *ctx)
     return bnrand(PRIVATE, rnd, bits, top, bottom, ctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_priv_rand(BIGNUM *rnd, int bits, int top, int bottom)
 {
     return bnrand(PRIVATE, rnd, bits, top, bottom, NULL);
@@ -199,7 +199,7 @@ int BN_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
     return bnrand_range(NORMAL, r, range, ctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return bnrand_range(NORMAL, r, range, NULL);
@@ -211,7 +211,7 @@ int BN_priv_rand_range_ex(BIGNUM *r, const BIGNUM *range, BN_CTX *ctx)
     return bnrand_range(PRIVATE, r, range, ctx);
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int BN_priv_rand_range(BIGNUM *r, const BIGNUM *range)
 {
     return bnrand_range(PRIVATE, r, range, NULL);

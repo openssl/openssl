@@ -1359,11 +1359,11 @@ id-tc26-mac 2		: id-tc26-hmac-gost-3411-2012-512 : HMAC GOST 34.11-2012 512 bit
 
 id-tc26-algorithms 5	: id-tc26-cipher
 id-tc26-cipher 1	:  id-tc26-cipher-gostr3412-2015-magma
-id-tc26-cipher-gostr3412-2015-magma 1	: id-tc26-cipher-gostr3412-2015-magma-ctracpkm
-id-tc26-cipher-gostr3412-2015-magma 2	: id-tc26-cipher-gostr3412-2015-magma-ctracpkm-omac
+id-tc26-cipher-gostr3412-2015-magma 1	: magma-ctr-acpkm
+id-tc26-cipher-gostr3412-2015-magma 2	: magma-ctr-acpkm-omac
 id-tc26-cipher 2	:  id-tc26-cipher-gostr3412-2015-kuznyechik
-id-tc26-cipher-gostr3412-2015-kuznyechik 1	: id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm
-id-tc26-cipher-gostr3412-2015-kuznyechik 2	: id-tc26-cipher-gostr3412-2015-kuznyechik-ctracpkm-omac
+id-tc26-cipher-gostr3412-2015-kuznyechik 1	: kuznyechik-ctr-acpkm
+id-tc26-cipher-gostr3412-2015-kuznyechik 2	: kuznyechik-ctr-acpkm-omac
 
 id-tc26-algorithms 6	: id-tc26-agreement
 id-tc26-agreement 1	: id-tc26-agreement-gost-3410-2012-256
@@ -1371,9 +1371,9 @@ id-tc26-agreement 2	: id-tc26-agreement-gost-3410-2012-512
 
 id-tc26-algorithms 7	:	id-tc26-wrap
 id-tc26-wrap 1	: id-tc26-wrap-gostr3412-2015-magma
-id-tc26-wrap-gostr3412-2015-magma 1	: id-tc26-wrap-gostr3412-2015-magma-kexp15
+id-tc26-wrap-gostr3412-2015-magma 1	: magma-kexp15
 id-tc26-wrap 2	: id-tc26-wrap-gostr3412-2015-kuznyechik
-id-tc26-wrap-gostr3412-2015-kuznyechik 1	: id-tc26-wrap-gostr3412-2015-kuznyechik-kexp15
+id-tc26-wrap-gostr3412-2015-kuznyechik 1	: kuznyechik-kexp15
 
 id-tc26 2 		: id-tc26-constants
 
@@ -1401,12 +1401,12 @@ member-body 643 100 111	: subjectSignTool	: Signing Tool of Subject
 member-body 643 100 112	: issuerSignTool	: Signing Tool of Issuer
 
 #GOST R34.13-2015 Grasshopper "Kuznechik"
-			: grasshopper-ecb
-			: grasshopper-ctr
-			: grasshopper-ofb
-			: grasshopper-cbc
-			: grasshopper-cfb
-			: grasshopper-mac
+			: kuznyechik-ecb
+			: kuznyechik-ctr
+			: kuznyechik-ofb
+			: kuznyechik-cbc
+			: kuznyechik-cfb
+			: kuznyechik-mac
 
 #GOST R34.13-2015 Magma
 			: magma-ecb
@@ -1648,6 +1648,7 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : KxPSK        : kx-psk
                             : KxSRP        : kx-srp
                             : KxGOST       : kx-gost
+                            : KxGOST18     : kx-gost18
                             : KxANY        : kx-any
 
 # NIDs for cipher authentication
@@ -1670,6 +1671,13 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : ffdhe4096
                             : ffdhe6144
                             : ffdhe8192
+# NIDs for RFC3526 DH parameters
+                            : modp_1536
+                            : modp_2048
+                            : modp_3072
+                            : modp_4096
+                            : modp_6144
+                            : modp_8192
 
 # OIDs for DSTU-4145/DSTU-7564 (http://zakon2.rada.gov.ua/laws/show/z0423-17)
 

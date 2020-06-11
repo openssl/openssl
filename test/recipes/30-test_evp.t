@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -31,9 +31,9 @@ my @configs = ( $defaultcnf );
 # Only add the FIPS config if the FIPS module has been built
 push @configs, 'fips.cnf' unless $no_fips;
 
-my @files = qw( evpciph.txt evpdigest.txt );
+my @files = qw( evpciph.txt evpdigest.txt evppkey.txt evppkey_ecc.txt);
 my @defltfiles = qw( evpencod.txt evpkdf.txt evppkey_kdf.txt evpmac.txt
-    evppbe.txt evppkey.txt evppkey_ecc.txt evpcase.txt evpccmcavs.txt );
+    evppbe.txt evpcase.txt evpccmcavs.txt );
 my @ideafiles = qw( evpciph_idea.txt );
 push @defltfiles, @ideafiles unless disabled("idea");
 
@@ -67,11 +67,11 @@ push @defltfiles, @chachafiles unless disabled("chacha");
 my @bffiles = qw( evpciph_bf.txt );
 push @defltfiles, @bffiles unless disabled("bf");
 
-my @bffiles = qw( evpmd_md2.txt );
-push @defltfiles, @bffiles unless disabled("md2");
+my @md2files = qw( evpmd_md2.txt );
+push @defltfiles, @md2files unless disabled("md2");
 
-my @bffiles = qw( evpmd_mdc2.txt );
-push @defltfiles, @bffiles unless disabled("mdc2");
+my @mdc2files = qw( evpmd_mdc2.txt );
+push @defltfiles, @mdc2files unless disabled("mdc2");
 
 plan tests =>
     ($no_fips ? 0 : 1)          # FIPS install test
@@ -80,11 +80,9 @@ plan tests =>
 
 unless ($no_fips) {
     my $infile = bldtop_file('providers', platform->dso('fips'));
-    $ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-    $ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 
     ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsinstall.conf'),
+                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
                 '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
                 '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',

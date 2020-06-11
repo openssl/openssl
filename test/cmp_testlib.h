@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -30,6 +30,8 @@ int valid_asn1_encoding(const OSSL_CMP_MSG *msg);
 EVP_PKEY *gen_rsa(void);
 int STACK_OF_X509_cmp(const STACK_OF(X509) *sk1, const STACK_OF(X509) *sk2);
 int STACK_OF_X509_push1(STACK_OF(X509) *sk, X509 *cert);
+int print_to_bio_out(const char *func, const char *file, int line,
+                     OSSL_CMP_severity level, const char *msg);
 # endif
 
 #endif /* OSSL_TEST_CMP_TESTLIB_H */

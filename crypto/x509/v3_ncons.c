@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -19,6 +19,10 @@
 #include "crypto/x509.h"
 #include "ext_dat.h"
 
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(GENERAL_NAME)
+DEFINE_STACK_OF(GENERAL_SUBTREE)
+
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                                   X509V3_CTX *ctx,
                                   STACK_OF(CONF_VALUE) *nval);
@@ -31,7 +35,7 @@ static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
 static int nc_match_single(GENERAL_NAME *sub, GENERAL_NAME *gen);
-static int nc_dn(X509_NAME *sub, X509_NAME *nm);
+static int nc_dn(const X509_NAME *sub, const X509_NAME *nm);
 static int nc_dns(ASN1_IA5STRING *sub, ASN1_IA5STRING *dns);
 static int nc_email(ASN1_IA5STRING *sub, ASN1_IA5STRING *eml);
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base);
@@ -188,26 +192,17 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
 
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip)
 {
-    int i, len;
-    unsigned char *p;
-    p = ip->data;
-    len = ip->length;
-    BIO_puts(bp, "IP:");
-    if (len == 8) {
-        BIO_printf(bp, "%d.%d.%d.%d/%d.%d.%d.%d",
-                   p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7]);
-    } else if (len == 32) {
-        for (i = 0; i < 16; i++) {
-            BIO_printf(bp, "%X", p[0] << 8 | p[1]);
-            p += 2;
-            if (i == 7)
-                BIO_puts(bp, "/");
-            else if (i != 15)
-                BIO_puts(bp, ":");
-        }
-    } else
-        BIO_printf(bp, "IP Address:<invalid>");
-    return 1;
+    /* ip->length should be 8 or 32 and len1 == len2 == 4 or len1 == len2 == 16 */
+    int len1 = ip->length >= 16 ? 16 : ip->length >= 4 ? 4 : ip->length;
+    int len2 = ip->length - len1;
+    char *ip1 = ipaddr_to_asc(ip->data, len1);
+    char *ip2 = ipaddr_to_asc(ip->data + len1, len2);
+    int ret = ip1 != NULL && ip2 != NULL
+        && BIO_printf(bp, "IP:%s/%s", ip1, ip2) > 0;
+
+    OPENSSL_free(ip1);
+    OPENSSL_free(ip2);
+    return ret;
 }
 
 #define NAME_CHECK_MAX (1 << 20)
@@ -400,7 +395,7 @@ static int cn2dnsid(ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
 int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i;
-    X509_NAME *nm = X509_get_subject_name(x);
+    const X509_NAME *nm = X509_get_subject_name(x);
     ASN1_STRING stmp;
     GENERAL_NAME gntmp;
 
@@ -543,7 +538,7 @@ static int nc_match_single(GENERAL_NAME *gen, GENERAL_NAME *base)
  * subset of the name.
  */
 
-static int nc_dn(X509_NAME *nm, X509_NAME *base)
+static int nc_dn(const X509_NAME *nm, const X509_NAME *base)
 {
     /* Ensure canonical encodings are up to date.  */
     if (nm->modified && i2d_X509_NAME(nm, NULL) < 0)

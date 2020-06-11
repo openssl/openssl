@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,7 +9,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include "bio_local.h"
 #ifndef OPENSSL_NO_SOCK
 # define SOCKET_PROTOCOL IPPROTO_TCP
@@ -22,6 +21,13 @@
 # endif
 # if defined(OPENSSL_SYS_WINDOWS)
 static int wsa_init_done = 0;
+# endif
+
+# ifndef _WIN32
+#  include <unistd.h>
+#  include <sys/select.h>
+# else
+#  include <winsock.h> /* for type fd_set */
 # endif
 
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -369,4 +375,30 @@ int BIO_sock_info(int sock,
     return 1;
 }
 
-#endif
+/* TODO simplify by BIO_socket_wait() further other uses of select() in apps/ */
+/*
+ * Wait on fd at most until max_time; succeed immediately if max_time == 0.
+ * If for_read == 0 then assume to wait for writing, else wait for reading.
+ * Returns -1 on error, 0 on timeout, and 1 on success.
+ */
+int BIO_socket_wait(int fd, int for_read, time_t max_time)
+{
+    fd_set confds;
+    struct timeval tv;
+    time_t now;
+
+    if (max_time == 0)
+        return 1;
+
+    now = time(NULL);
+    if (max_time <= now)
+        return 0;
+
+    FD_ZERO(&confds);
+    openssl_fdset(fd, &confds);
+    tv.tv_usec = 0;
+    tv.tv_sec = (long)(max_time - now); /* might overflow */
+    return select(fd + 1, for_read ? &confds : NULL,
+                  for_read ? NULL : &confds, NULL, &tv);
+}
+#endif /* !defined(OPENSSL_NO_SOCK) */

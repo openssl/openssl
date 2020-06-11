@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,8 @@
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include "internal/cryptlib.h"
+
+DEFINE_STACK_OF(X509_NAME)
 
 static int final_renegotiate(SSL *s, unsigned int context, int sent);
 static int init_server_name(SSL *s, unsigned int context);
@@ -948,7 +950,6 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
      * was successful.
      */
     if (s->server) {
-        /* TODO(OpenSSL1.2) revisit !sent case */
         if (sent && ret == SSL_TLSEXT_ERR_OK && !s->hit) {
             /* Only store the hostname in the session if we accepted it. */
             OPENSSL_free(s->session->ext.hostname);
@@ -1010,6 +1011,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
         /* TLSv1.3 doesn't have warning alerts so we suppress this */
         if (!SSL_IS_TLS13(s))
             ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
+        s->servername_done = 0;
         return 1;
 
     case SSL_TLSEXT_ERR_NOACK:
@@ -1167,13 +1169,26 @@ static int init_etm(SSL *s, unsigned int context)
 
 static int init_ems(SSL *s, unsigned int context)
 {
-    s->s3.flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
+    if (s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS) {
+        s->s3.flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
+        s->s3.flags |= TLS1_FLAGS_REQUIRED_EXTMS;
+    }
 
     return 1;
 }
 
 static int final_ems(SSL *s, unsigned int context, int sent)
 {
+    /*
+     * Check extended master secret extension is not dropped on
+     * renegotiation.
+     */
+    if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)
+        && (s->s3.flags & TLS1_FLAGS_REQUIRED_EXTMS)) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_FINAL_EMS,
+                 SSL_R_INCONSISTENT_EXTMS);
+        return 0;
+    }
     if (!s->server && s->hit) {
         /*
          * Check extended master secret extension is consistent with
@@ -1595,7 +1610,8 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         binderout = tmpbinder;
 
     bindersize = hashsize;
-    if (EVP_DigestSignInit(mctx, NULL, md, NULL, mackey) <= 0
+    if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_name(md), s->ctx->propq,
+                              mackey, s->ctx->libctx) <= 0
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
             || bindersize != hashsize) {

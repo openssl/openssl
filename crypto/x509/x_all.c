@@ -1,11 +1,17 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * Low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
@@ -14,181 +20,92 @@
 #include <openssl/evp.h>
 #include <openssl/x509.h>
 #include "crypto/x509.h"
-#include <openssl/ocsp.h>
+#include <openssl/http.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
+#include "crypto/asn1.h"
 
-#ifndef OPENSSL_NO_SM2
-
-# include "crypto/asn1.h"
-# include "crypto/evp.h"
-
-static int common_verify_sm2(void *data, EVP_PKEY *pkey,
-                             int mdnid, int pknid, int req)
+static void clean_id_ctx(EVP_MD_CTX *ctx)
 {
-    X509 *x = NULL;
-    X509_REQ *r = NULL;
+    EVP_PKEY_CTX *pctx = EVP_MD_CTX_pkey_ctx(ctx);
+
+    EVP_PKEY_CTX_free(pctx);
+    EVP_MD_CTX_free(ctx);
+}
+
+static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id,
+                               OPENSSL_CTX *libctx, const char *propq)
+{
     EVP_MD_CTX *ctx = NULL;
-    unsigned char *buf_in = NULL;
-    int ret = -1, inl = 0;
-    size_t inll = 0;
     EVP_PKEY_CTX *pctx = NULL;
-    const EVP_MD *type = EVP_get_digestbynid(mdnid);
-    ASN1_BIT_STRING *signature = NULL;
-    ASN1_OCTET_STRING *sm2_id = NULL;
-    ASN1_VALUE *tbv = NULL;
 
-    if (type == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2,
-                ASN1_R_UNKNOWN_MESSAGE_DIGEST_ALGORITHM);
-        goto err;
+    if ((ctx = EVP_MD_CTX_new()) == NULL
+        || (pctx = EVP_PKEY_CTX_new_from_pkey(libctx, r, propq)) == NULL) {
+        X509err(0, ERR_R_MALLOC_FAILURE);
+        goto error;
     }
 
-    if (pkey == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_PASSED_NULL_PARAMETER);
-        return -1;
+#ifndef OPENSSL_NO_EC
+    if (id != NULL) {
+        if (EVP_PKEY_CTX_set1_id(pctx, id->data, id->length) <= 0) {
+            X509err(0, ERR_R_MALLOC_FAILURE);
+            goto error;
+        }
     }
+#endif
 
-    if (req == 1) {
-        r = (X509_REQ *)data;
-        signature = r->signature;
-        sm2_id = r->sm2_id;
-        tbv = (ASN1_VALUE *)&r->req_info;
-    } else {
-        x = (X509 *)data;
-        signature = &x->signature;
-        sm2_id = x->sm2_id;
-        tbv = (ASN1_VALUE *)&x->cert_info;
-    }
-
-    if (signature->type == V_ASN1_BIT_STRING && signature->flags & 0x7) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ASN1_R_INVALID_BIT_STRING_BITS_LEFT);
-        return -1;
-    }
-
-    ctx = EVP_MD_CTX_new();
-    if (ctx == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    /* Check public key OID matches public key type */
-    if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ASN1_R_WRONG_PUBLIC_KEY_TYPE);
-        goto err;
-    }
-
-    if (!EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
-    pctx = EVP_PKEY_CTX_new(pkey, NULL);
-    if (pctx == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
-    /* NOTE: we tolerate no actual ID, to provide maximum flexibility */
-    if (sm2_id != NULL
-            && EVP_PKEY_CTX_set1_id(pctx, sm2_id->data, sm2_id->length) != 1) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
     EVP_MD_CTX_set_pkey_ctx(ctx, pctx);
 
-    if (!EVP_DigestVerifyInit(ctx, NULL, type, NULL, pkey)) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        ret = 0;
-        goto err;
-    }
-
-    inl = ASN1_item_i2d(tbv, &buf_in,
-                        req == 1 ?
-                        ASN1_ITEM_rptr(X509_REQ_INFO) :
-                        ASN1_ITEM_rptr(X509_CINF));
-    if (inl <= 0) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_INTERNAL_ERROR);
-        goto err;
-    }
-    if (buf_in == NULL) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-    inll = inl;
-
-    ret = EVP_DigestVerify(ctx, signature->data,
-                           (size_t)signature->length, buf_in, inl);
-    if (ret <= 0) {
-        X509err(X509_F_COMMON_VERIFY_SM2, ERR_R_EVP_LIB);
-        goto err;
-    }
-    ret = 1;
- err:
-    OPENSSL_clear_free(buf_in, inll);
-    EVP_MD_CTX_free(ctx);
+    return ctx;
+ error:
     EVP_PKEY_CTX_free(pctx);
-    return ret;
+    EVP_MD_CTX_free(ctx);
+    return NULL;
 }
 
-static int x509_verify_sm2(X509 *x, EVP_PKEY *pkey, int mdnid, int pknid)
+int X509_verify_ex(X509 *a, EVP_PKEY *r, OPENSSL_CTX *libctx, const char *propq)
 {
-    return common_verify_sm2(x, pkey, mdnid, pknid, 0);
-}
-
-static int x509_req_verify_sm2(X509_REQ *x, EVP_PKEY *pkey,
-                               int mdnid, int pknid)
-{
-    return common_verify_sm2(x, pkey, mdnid, pknid, 1);
-}
-
-#endif
-
-int X509_verify(X509 *a, EVP_PKEY *r)
-{
-#ifndef OPENSSL_NO_SM2
-    int mdnid, pknid;
-#endif
+    int rv = 0;
+    EVP_MD_CTX *ctx = NULL;
+    ASN1_OCTET_STRING *id = NULL;
 
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
 
-#ifndef OPENSSL_NO_SM2
-    /* Convert signature OID into digest and public key OIDs */
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->sig_alg.algorithm),
-                             &mdnid, &pknid)) {
-        X509err(X509_F_X509_VERIFY, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
-        return 0;
+    id = a->distinguishing_id;
+    if ((ctx = make_id_ctx(r, id, libctx, propq)) != NULL) {
+        rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
+                                  &a->signature, &a->cert_info, ctx);
+        clean_id_ctx(ctx);
     }
+    return rv;
+}
 
-    if (pknid == NID_sm2)
-        return x509_verify_sm2(a, r, mdnid, pknid);
-#endif
+int X509_verify(X509 *a, EVP_PKEY *r)
+{
+    return X509_verify_ex(a, r, NULL, NULL);
+}
 
-    return (ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
-                             &a->signature, &a->cert_info, r));
+int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
+                       const char *propq)
+{
+    int rv = 0;
+    EVP_MD_CTX *ctx = NULL;
+    ASN1_OCTET_STRING *id = NULL;
+
+    id = a->distinguishing_id;
+    if ((ctx = make_id_ctx(r, id, libctx, propq)) != NULL) {
+        rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
+                                  a->signature, &a->req_info, ctx);
+        clean_id_ctx(ctx);
+    }
+    return rv;
 }
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
-#ifndef OPENSSL_NO_SM2
-    int mdnid, pknid;
-
-    /* Convert signature OID into digest and public key OIDs */
-    if (!OBJ_find_sigid_algs(OBJ_obj2nid(a->sig_alg.algorithm),
-                             &mdnid, &pknid)) {
-        X509err(X509_F_X509_REQ_VERIFY, ASN1_R_UNKNOWN_SIGNATURE_ALGORITHM);
-        return 0;
-    }
-
-    if (pknid == NID_sm2)
-        return x509_req_verify_sm2(a, r, mdnid, pknid);
-#endif
-
-    return (ASN1_item_verify(ASN1_ITEM_rptr(X509_REQ_INFO),
-                             &a->sig_alg, a->signature, &a->req_info, r));
+    return X509_REQ_verify_ex(a, r, NULL, NULL);
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
@@ -213,11 +130,21 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
                               &x->sig_alg, &x->signature, &x->cert_info, ctx);
 }
 
-#ifndef OPENSSL_NO_OCSP
-int X509_http_nbio(OCSP_REQ_CTX *rctx, X509 **pcert)
+#if !defined(OPENSSL_NO_SOCK)
+static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
+                                   int timeout, const ASN1_ITEM *it)
 {
-    return OCSP_REQ_CTX_nbio_d2i(rctx,
-                                 (ASN1_VALUE **)pcert, ASN1_ITEM_rptr(X509));
+    return OSSL_HTTP_get_asn1(url, NULL, NULL /* no proxy used */, bio,
+                              rbio, NULL /* no callback for SSL/TLS */, NULL,
+                              NULL /* headers */, 1024 /* maxline */,
+                              0 /* max_resp_len */, timeout,
+                              NULL /* expected_content_type */, it);
+}
+
+X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
+{
+    return (X509 *)simple_get_asn1(url, bio, rbio, timeout,
+                                   ASN1_ITEM_rptr(X509));
 }
 #endif
 
@@ -249,12 +176,11 @@ int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx)
                               &x->crl, ctx);
 }
 
-#ifndef OPENSSL_NO_OCSP
-int X509_CRL_http_nbio(OCSP_REQ_CTX *rctx, X509_CRL **pcrl)
+#if !defined(OPENSSL_NO_SOCK)
+X509_CRL *X509_CRL_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 {
-    return OCSP_REQ_CTX_nbio_d2i(rctx,
-                                 (ASN1_VALUE **)pcrl,
-                                 ASN1_ITEM_rptr(X509_CRL));
+    return (X509_CRL *)simple_get_asn1(url, bio, rbio, timeout,
+                                       ASN1_ITEM_rptr(X509_CRL));
 }
 #endif
 
@@ -520,7 +446,8 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
 int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
                 unsigned int *len)
 {
-    if (type == EVP_sha1() && (data->ex_flags & EXFLAG_SET) != 0) {
+    if (type == EVP_sha1() && (data->ex_flags & EXFLAG_SET) != 0
+            && (data->ex_flags & EXFLAG_INVALID) == 0) {
         /* Asking for SHA1 and we already computed it. */
         if (len != NULL)
             *len = sizeof(data->sha1_hash);
@@ -531,10 +458,40 @@ int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
             (ASN1_ITEM_rptr(X509), type, (char *)data, md, len));
 }
 
+/* calculate cert digest using the same hash algorithm as in its signature */
+ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
+{
+    unsigned int len;
+    unsigned char hash[EVP_MAX_MD_SIZE];
+    int md_NID;
+    const EVP_MD *md = NULL;
+    ASN1_OCTET_STRING *new = NULL;
+
+    if (cert == NULL) {
+        X509err(0, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    if (!OBJ_find_sigid_algs(X509_get_signature_nid(cert), &md_NID, NULL)
+            || (md = EVP_get_digestbynid(md_NID)) == NULL) {
+        CMPerr(0, X509_R_UNSUPPORTED_ALGORITHM);
+        return NULL;
+    }
+    if (!X509_digest(cert, md, hash, &len)
+            || (new = ASN1_OCTET_STRING_new()) == NULL)
+        return NULL;
+    if (!(ASN1_OCTET_STRING_set(new, hash, len))) {
+        ASN1_OCTET_STRING_free(new);
+        return NULL;
+    }
+    return new;
+}
+
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
                     unsigned char *md, unsigned int *len)
 {
-    if (type == EVP_sha1() && (data->flags & EXFLAG_SET) != 0) {
+    if (type == EVP_sha1() && (data->flags & EXFLAG_SET) != 0
+            && (data->flags & EXFLAG_INVALID) == 0) {
         /* Asking for SHA1; always computed in CRL d2i. */
         if (len != NULL)
             *len = sizeof(data->sha1_hash);
@@ -650,6 +607,22 @@ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
     return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, fp, a);
 }
 
+EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+                               const char *propq)
+{
+    BIO *b;
+    void *ret;
+
+    if ((b = BIO_new(BIO_s_file())) == NULL) {
+        X509err(0, ERR_R_BUF_LIB);
+        return NULL;
+    }
+    BIO_set_fp(b, fp, BIO_NOCLOSE);
+    ret = d2i_PrivateKey_ex_bio(b, a, libctx, propq);
+    BIO_free(b);
+    return ret;
+}
+
 int i2d_PUBKEY_fp(FILE *fp, const EVP_PKEY *pkey)
 {
     return ASN1_i2d_fp_of(EVP_PKEY, i2d_PUBKEY, fp, pkey);
@@ -696,6 +669,25 @@ int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey)
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 {
     return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, bp, a);
+}
+
+EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+                                const char *propq)
+{
+    BUF_MEM *b = NULL;
+    const unsigned char *p;
+    void *ret = NULL;
+    int len;
+
+    len = asn1_d2i_read_bio(bp, &b);
+    if (len < 0)
+        goto err;
+
+    p = (unsigned char *)b->data;
+    ret = d2i_AutoPrivateKey_ex(a, &p, len, libctx, propq);
+ err:
+    BUF_MEM_free(b);
+    return ret;
 }
 
 int i2d_PUBKEY_bio(BIO *bp, const EVP_PKEY *pkey)

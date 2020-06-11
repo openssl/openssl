@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -94,7 +94,7 @@ int ssl3_setup_write_buffer(SSL *s, size_t numwpipes, size_t len)
             headerlen = SSL3_RT_HEADER_LENGTH;
 
 #if defined(SSL3_ALIGN_PAYLOAD) && SSL3_ALIGN_PAYLOAD!=0
-        align = (-SSL3_RT_HEADER_LENGTH) & (SSL3_ALIGN_PAYLOAD - 1);
+        align = SSL3_ALIGN_PAYLOAD - 1;
 #endif
 
         len = ssl_get_max_send_fragment(s)
@@ -164,7 +164,9 @@ int ssl3_release_write_buffer(SSL *s)
     while (pipes > 0) {
         wb = &RECORD_LAYER_get_wbuf(&s->rlayer)[pipes - 1];
 
-        if (s->wbio == NULL || !BIO_get_ktls_send(s->wbio))
+        if (SSL3_BUFFER_is_app_buffer(wb))
+            SSL3_BUFFER_set_app_buffer(wb, 0);
+        else
             OPENSSL_free(wb->buf);
         wb->buf = NULL;
         pipes--;

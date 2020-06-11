@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -249,6 +249,7 @@ static int test_big(void)
     if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
                                   "%f\n", 2 * (double)ULONG_MAX), -1))
         return 0;
+
     return 1;
 }
 
@@ -296,8 +297,18 @@ int setup_tests(void)
  * Replace testutil output routines.  We do this to eliminate possible sources
  * of BIO error
  */
+BIO *bio_out = NULL;
+BIO *bio_err = NULL;
+
+static int tap_level = 0;
+
 void test_open_streams(void)
 {
+}
+
+void test_adjust_streams_tap_level(int level)
+{
+    tap_level = level;
 }
 
 void test_close_streams(void)
@@ -311,12 +322,12 @@ void test_close_streams(void)
  */
 int test_vprintf_stdout(const char *fmt, va_list ap)
 {
-    return vfprintf(stdout, fmt, ap);
+    return fprintf(stdout, "%*s# ", tap_level, "") + vfprintf(stdout, fmt, ap);
 }
 
 int test_vprintf_stderr(const char *fmt, va_list ap)
 {
-    return vfprintf(stderr, fmt, ap);
+    return fprintf(stderr, "%*s# ", tap_level, "") + vfprintf(stderr, fmt, ap);
 }
 
 int test_flush_stdout(void)
@@ -325,6 +336,26 @@ int test_flush_stdout(void)
 }
 
 int test_flush_stderr(void)
+{
+    return fflush(stderr);
+}
+
+int test_vprintf_tapout(const char *fmt, va_list ap)
+{
+    return fprintf(stdout, "%*s", tap_level, "") + vfprintf(stdout, fmt, ap);
+}
+
+int test_vprintf_taperr(const char *fmt, va_list ap)
+{
+    return fprintf(stderr, "%*s", tap_level, "") + vfprintf(stderr, fmt, ap);
+}
+
+int test_flush_tapout(void)
+{
+    return fflush(stdout);
+}
+
+int test_flush_taperr(void)
 {
     return fflush(stderr);
 }

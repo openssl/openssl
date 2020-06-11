@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,6 +54,10 @@ IMPLEMENT_ASN1_FUNCTIONS(ASRange)
 IMPLEMENT_ASN1_FUNCTIONS(ASIdOrRange)
 IMPLEMENT_ASN1_FUNCTIONS(ASIdentifierChoice)
 IMPLEMENT_ASN1_FUNCTIONS(ASIdentifiers)
+
+DEFINE_STACK_OF(ASIdOrRange)
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(X509)
 
 /*
  * i2r method for an ASIdentifierChoice.

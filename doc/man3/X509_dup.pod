@@ -81,7 +81,11 @@ IPAddressOrRange_free,
 IPAddressOrRange_new,
 IPAddressRange_free,
 IPAddressRange_new,
+ISSUER_SIGN_TOOL_free,
+ISSUER_SIGN_TOOL_it,
+ISSUER_SIGN_TOOL_new,
 ISSUING_DIST_POINT_free,
+ISSUING_DIST_POINT_it,
 ISSUING_DIST_POINT_new,
 NAME_CONSTRAINTS_free,
 NAME_CONSTRAINTS_new,
@@ -122,13 +126,17 @@ OCSP_SIGNATURE_free,
 OCSP_SIGNATURE_new,
 OCSP_SINGLERESP_free,
 OCSP_SINGLERESP_new,
+OSSL_CMP_ITAV_dup,
 OSSL_CMP_ITAV_free,
+OSSL_CMP_MSG_dup,
 OSSL_CMP_MSG_it,
 OSSL_CMP_MSG_free,
 OSSL_CMP_PKIHEADER_free,
 OSSL_CMP_PKIHEADER_it,
 OSSL_CMP_PKIHEADER_new,
+OSSL_CMP_PKISI_dup,
 OSSL_CMP_PKISI_free,
+OSSL_CMP_PKISI_it,
 OSSL_CMP_PKISI_new,
 OSSL_CMP_PKISTATUS_it,
 OSSL_CRMF_CERTID_free,
@@ -248,6 +256,7 @@ TS_TST_INFO_new,
 USERNOTICE_free,
 USERNOTICE_new,
 X509_ALGOR_free,
+X509_ALGOR_it,
 X509_ALGOR_new,
 X509_ATTRIBUTE_dup,
 X509_ATTRIBUTE_free,
@@ -344,7 +353,7 @@ B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

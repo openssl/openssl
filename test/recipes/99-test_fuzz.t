@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,9 @@ use OpenSSL::Test::Utils;
 setup("test_fuzz");
 
 my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'client', 'conf', 'crl', 'server', 'x509');
+if (!disabled("cmp")) {
+    push @fuzzers, 'cmp';
+}
 if (!disabled("cms")) {
     push @fuzzers, 'cms';
 }

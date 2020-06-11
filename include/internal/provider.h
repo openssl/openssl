@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -64,6 +64,7 @@ const char *ossl_provider_name(const OSSL_PROVIDER *prov);
 const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_name(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_path(const OSSL_PROVIDER *prov);
+void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov);
 OPENSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov);
 
 /* Thin wrappers around calls to the provider */
@@ -73,6 +74,11 @@ int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
 const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);
+
+/* Cache of bits to see if we already queried an operation */
+int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
+int ossl_provider_test_operation_bit(OSSL_PROVIDER *provider, size_t bitnum,
+                                     int *result);
 
 /* Configuration */
 void ossl_provider_add_conf_module(void);

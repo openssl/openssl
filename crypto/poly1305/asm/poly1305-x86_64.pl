@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -2808,6 +2808,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_vpmadd52:
 .cfi_startproc
+	endbranch
 	shr	\$4,$len
 	jz	.Lno_data_vpmadd52		# too short
 
@@ -3741,6 +3742,7 @@ $code.=<<___;
 .align	32
 poly1305_emit_base2_44:
 .cfi_startproc
+	endbranch
 	mov	0($ctx),%r8	# load hash value
 	mov	8($ctx),%r9
 	mov	16($ctx),%r10
@@ -4182,4 +4184,4 @@ foreach (split('\n',$code)) {
 
 	print $_,"\n";
 }
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

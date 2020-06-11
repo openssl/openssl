@@ -3,9 +3,12 @@
 
 =head1 NAME
 
-openssl-ts - Time Stamping Authority tool (client/server)
+openssl-ts - Time Stamping Authority command
 
 =head1 SYNOPSIS
+
+B<openssl> B<ts>
+B<-help>
 
 B<openssl> B<ts>
 B<-query>
@@ -20,6 +23,7 @@ B<-query>
 [B<-out> I<request.tsq>]
 [B<-text>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 B<openssl> B<ts>
 B<-reply>
@@ -38,6 +42,7 @@ B<-reply>
 [B<-token_out>]
 [B<-text>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 B<openssl> B<ts>
 B<-verify>
@@ -46,42 +51,12 @@ B<-verify>
 [B<-queryfile> I<request.tsq>]
 [B<-in> I<response.tsr>]
 [B<-token_in>]
-[B<-CApath> I<trusted_cert_path>]
-[B<-CAfile> I<trusted_certs.pem>]
-[B<-CAstore> I<trusted_certs_uri>]
-[B<-untrusted> I<cert_file.pem>]
-[I<verify options>]
-
-I<verify options:>
-[B<-attime> I<timestamp>]
-[B<-check_ss_sig>]
-[B<-crl_check>]
-[B<-crl_check_all>]
-[B<-explicit_policy>]
-[B<-extended_crl>]
-[B<-ignore_critical>]
-[B<-inhibit_any>]
-[B<-inhibit_map>]
-[B<-issuer_checks>]
-[B<-no_alt_chains>]
-[B<-no_check_time>]
-[B<-partial_chain>]
-[B<-policy> I<arg>]
-[B<-policy_check>]
-[B<-policy_print>]
-[B<-purpose> I<purpose>]
-[B<-suiteB_128>]
-[B<-suiteB_128_only>]
-[B<-suiteB_192>]
-[B<-trusted_first>]
-[B<-use_deltas>]
-[B<-auth_level> I<num>]
-[B<-verify_depth> I<num>]
-[B<-verify_email> I<email>]
-[B<-verify_hostname> I<hostname>]
-[B<-verify_ip> I<ip>]
-[B<-verify_name> I<name>]
-[B<-x509_strict>]
+[B<-untrusted> I<file>]
+[B<-CAfile> I<file>]
+[B<-CApath> I<dir>]
+[B<-CAstore> I<uri>]
+{- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -127,6 +102,14 @@ over HTTP or TCP yet as suggested in RFC 3161. The users must send the
 requests either by ftp or e-mail.
 
 =head1 OPTIONS
+
+=over 4
+
+=item B<-help>
+
+Print out a usage message.
+
+=back
 
 =head2 Timestamp Request generation
 
@@ -305,6 +288,8 @@ instead of DER. (Optional)
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head2 Timestamp Response verification
@@ -344,12 +329,6 @@ This flag can be used together with the B<-in> option and indicates
 that the input is a DER encoded timestamp token (ContentInfo) instead
 of a timestamp response (TimeStampResp). (Optional)
 
-=item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
-
-See L<openssl(1)/Trusted Certificate Options> for more information.
-
-At least one of B<-CApath>, B<-CAfile> or B<-CAstore> must be specified.
-
 =item B<-untrusted> I<cert_file.pem>
 
 Set of additional untrusted certificates in PEM format which may be
@@ -358,17 +337,14 @@ certificate. This file must contain the TSA signing certificate and
 all intermediate CA certificates unless the response includes them.
 (Optional)
 
-=item I<verify options>
+=item B<-CAfile> I<file>, B<-CApath> I<dir>, B<-CAstore> I<uri>
 
-The options B<-attime>, B<-check_ss_sig>, B<-crl_check>,
-B<-crl_check_all>, B<-explicit_policy>, B<-extended_crl>, B<-ignore_critical>,
-B<-inhibit_any>, B<-inhibit_map>, B<-issuer_checks>, B<-no_alt_chains>,
-B<-no_check_time>, B<-partial_chain>, B<-policy>, B<-policy_check>,
-B<-policy_print>, B<-purpose>, B<-suiteB_128>, B<-suiteB_128_only>,
-B<-suiteB_192>, B<-trusted_first>, B<-use_deltas>, B<-auth_level>,
-B<-verify_depth>, B<-verify_email>, B<-verify_hostname>, B<-verify_ip>,
-B<-verify_name>, and B<-x509_strict> can be used to control timestamp
-verification.  See L<openssl-verify(1)>.
+See L<openssl(1)/Trusted Certificate Options> for details.
+At least one of B<-CApath>, B<-CAfile> or B<-CAstore> must be specified.
+
+{- $OpenSSL::safe::opt_v_item -}
+
+Any verification errors cause the command to exit.
 
 =back
 
@@ -663,7 +639,7 @@ L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

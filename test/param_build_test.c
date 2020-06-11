@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -10,13 +10,13 @@
 
 #include <string.h>
 #include <openssl/params.h>
-#include "internal/param_build.h"
+#include "openssl/param_build.h"
 #include "internal/nelem.h"
 #include "testutil.h"
 
 static int template_public_test(void)
 {
-    OSSL_PARAM_BLD bld;
+    OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
     OSSL_PARAM *params = NULL, *p;
     BIGNUM *bn = NULL, *bn_res = NULL;
     int i;
@@ -28,20 +28,20 @@ static int template_public_test(void)
     const char *cutf;
     int res = 0;
 
-    ossl_param_bld_init(&bld);
-    if (!TEST_true(ossl_param_bld_push_int(&bld, "i", -6))
-        || !TEST_true(ossl_param_bld_push_long(&bld, "l", 42))
-        || !TEST_true(ossl_param_bld_push_int32(&bld, "i32", 1532))
-        || !TEST_true(ossl_param_bld_push_int64(&bld, "i64", -9999999))
-        || !TEST_true(ossl_param_bld_push_double(&bld, "d", 1.61803398875))
+    if (!TEST_ptr(bld)
+        || !TEST_true(OSSL_PARAM_BLD_push_int(bld, "i", -6))
+        || !TEST_true(OSSL_PARAM_BLD_push_long(bld, "l", 42))
+        || !TEST_true(OSSL_PARAM_BLD_push_int32(bld, "i32", 1532))
+        || !TEST_true(OSSL_PARAM_BLD_push_int64(bld, "i64", -9999999))
+        || !TEST_true(OSSL_PARAM_BLD_push_double(bld, "d", 1.61803398875))
         || !TEST_ptr(bn = BN_new())
         || !TEST_true(BN_set_word(bn, 1729))
-        || !TEST_true(ossl_param_bld_push_BN(&bld, "bignumber", bn))
-        || !TEST_true(ossl_param_bld_push_utf8_string(&bld, "utf8_s", "foo",
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "bignumber", bn))
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld, "utf8_s", "foo",
                                                       sizeof("foo")))
-        || !TEST_true(ossl_param_bld_push_utf8_ptr(&bld, "utf8_p", "bar-boom",
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_ptr(bld, "utf8_p", "bar-boom",
                                                    0))
-        || !TEST_ptr(params = ossl_param_bld_to_param(&bld))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         /* Check int */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "i"))
         || !TEST_true(OSSL_PARAM_get_int(p, &i))
@@ -95,7 +95,8 @@ static int template_public_test(void)
         goto err;
     res = 1;
 err:
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
     OPENSSL_free(utf);
     BN_free(bn);
     BN_free(bn_res);
@@ -106,7 +107,7 @@ static int template_private_test(void)
 {
     static int data1[] = { 2, 3, 5, 7, 11, 15, 17 };
     static unsigned char data2[] = { 2, 4, 6, 8, 10 };
-    OSSL_PARAM_BLD bld;
+    OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
     OSSL_PARAM *params = NULL, *p;
     unsigned int i;
     unsigned long int l;
@@ -116,20 +117,20 @@ static int template_private_test(void)
     BIGNUM *bn = NULL, *bn_res = NULL;
     int res = 0;
 
-    ossl_param_bld_init(&bld);
-    if (!TEST_true(ossl_param_bld_push_uint(&bld, "i", 6))
-        || !TEST_true(ossl_param_bld_push_ulong(&bld, "l", 42))
-        || !TEST_true(ossl_param_bld_push_uint32(&bld, "i32", 1532))
-        || !TEST_true(ossl_param_bld_push_uint64(&bld, "i64", 9999999))
-        || !TEST_true(ossl_param_bld_push_size_t(&bld, "st", 65537))
+    if (!TEST_ptr(bld)
+        || !TEST_true(OSSL_PARAM_BLD_push_uint(bld, "i", 6))
+        || !TEST_true(OSSL_PARAM_BLD_push_ulong(bld, "l", 42))
+        || !TEST_true(OSSL_PARAM_BLD_push_uint32(bld, "i32", 1532))
+        || !TEST_true(OSSL_PARAM_BLD_push_uint64(bld, "i64", 9999999))
+        || !TEST_true(OSSL_PARAM_BLD_push_size_t(bld, "st", 65537))
         || !TEST_ptr(bn = BN_secure_new())
         || !TEST_true(BN_set_word(bn, 1729))
-        || !TEST_true(ossl_param_bld_push_BN(&bld, "bignumber", bn))
-        || !TEST_true(ossl_param_bld_push_octet_string(&bld, "oct_s", data1,
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, "bignumber", bn))
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld, "oct_s", data1,
                                                        sizeof(data1)))
-        || !TEST_true(ossl_param_bld_push_octet_ptr(&bld, "oct_p", data2,
+        || !TEST_true(OSSL_PARAM_BLD_push_octet_ptr(bld, "oct_p", data2,
                                                     sizeof(data2)))
-        || !TEST_ptr(params = ossl_param_bld_to_param(&bld))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
         /* Check unsigned int */
         || !TEST_ptr(p = OSSL_PARAM_locate(params, "i"))
         || !TEST_true(OSSL_PARAM_get_uint(p, &i))
@@ -184,126 +185,53 @@ static int template_private_test(void)
         goto err;
     res = 1;
 err:
-    ossl_param_bld_free(params);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
     BN_free(bn);
     BN_free(bn_res);
     return res;
 }
 
-static int template_static_params_test(int n)
+static int builder_limit_test(void)
 {
-    unsigned char data[1000], secure[500];
-    OSSL_PARAM_BLD bld;
-    OSSL_PARAM params[20], *p;
-    BIGNUM *bn = NULL, *bn_r = NULL;
-    BIGNUM *bn0 = NULL, *bn0_r = NULL;
-    const size_t bn_bytes = 200;
-    unsigned int i;
-    char *utf = NULL;
-    int res = 0;
+    const int n = 100;
+    char names[100][3];
+    OSSL_PARAM_BLD *bld = OSSL_PARAM_BLD_new();
+    OSSL_PARAM *params = NULL;
+    int i, res = 0;
 
-    ossl_param_bld_init(&bld);
-    if (!TEST_true(ossl_param_bld_push_uint(&bld, "i", 6))
-        || !TEST_ptr(bn = (n & 1) == 0 ? BN_new() : BN_secure_new())
-        || !TEST_true(BN_set_word(bn, 1337))
-        || !TEST_false(ossl_param_bld_push_BN_pad(&bld, "bn", bn, 0))
-        || !TEST_false(ossl_param_bld_push_BN_pad(&bld, "bn", bn, 1))
-        || !TEST_true(ossl_param_bld_push_BN_pad(&bld, "bn", bn, bn_bytes))
-        || !TEST_ptr(bn0 = BN_new())
-        || !TEST_true(ossl_param_bld_push_BN_pad(&bld, "bn0", bn0, 0))
-        || !TEST_true(ossl_param_bld_push_utf8_string(&bld, "utf8_s", "bar",
-                                                      0))
-        || !TEST_ptr(ossl_param_bld_to_param_ex(&bld, params,
-                                                OSSL_NELEM(params),
-                                                data, sizeof(data),
-                                                secure, sizeof(secure)))
-        /* Check unsigned int */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "i"))
-        || !TEST_true(OSSL_PARAM_get_uint(p, &i))
-        || !TEST_str_eq(p->key, "i")
-        || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
-        || !TEST_size_t_eq(p->data_size, sizeof(int))
-        || !TEST_uint_eq(i, 6)
-        /* Check BIGNUM */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "bn"))
-        || !TEST_true(OSSL_PARAM_get_BN(p, &bn_r))
-        || !TEST_str_eq(p->key, "bn")
-        || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
-        || !TEST_size_t_eq(p->data_size, bn_bytes)
-        || !TEST_uint_eq((unsigned int)BN_get_word(bn_r), 1337)
-        /* Check BIGNUM zero */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "bn0"))
-        || !TEST_true(OSSL_PARAM_get_BN(p, &bn0_r))
-        || !TEST_str_eq(p->key, "bn0")
-        || !TEST_uint_eq(p->data_type, OSSL_PARAM_UNSIGNED_INTEGER)
-        || !TEST_size_t_eq(p->data_size, 0)
-        || !TEST_uint_eq((unsigned int)BN_get_word(bn0_r), 0)
-        /* Check UTF8 string */
-        || !TEST_ptr(p = OSSL_PARAM_locate(params, "utf8_s"))
-        || !TEST_str_eq(p->data, "bar")
-        || !TEST_true(OSSL_PARAM_get_utf8_string(p, &utf, 0))
-        || !TEST_str_eq(utf, "bar"))
+    if (!TEST_ptr(bld))
+        goto err;
+    
+    for (i = 0; i < n; i++) {
+        names[i][0] = 'A' + (i / 26) - 1;
+        names[i][1] = 'a' + (i % 26) - 1;
+        names[i][2] = '\0';
+        if (!TEST_true(OSSL_PARAM_BLD_push_int(bld, names[i], 3 * i + 1)))
+            goto err;
+    }
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+    /* Count the elements in the params arrary, expecting n */
+    for (i = 0; params[i].key != NULL; i++);
+    if (!TEST_int_eq(i, n))
+        goto err;
+
+    /* Verify that the build, cleared the builder structure */
+    OSSL_PARAM_BLD_free_params(params);
+    params = NULL;
+
+    if (!TEST_true(OSSL_PARAM_BLD_push_int(bld, "g", 2))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+    /* Count the elements in the params arrary, expecting 1 */
+    for (i = 0; params[i].key != NULL; i++);
+    if (!TEST_int_eq(i, 1))
         goto err;
     res = 1;
 err:
-    OPENSSL_free(utf);
-    BN_free(bn);
-    BN_free(bn_r);
-    BN_free(bn0);
-    BN_free(bn0_r);
-    return res;
-}
-
-static int template_static_fail_test(int n)
-{
-    unsigned char data[10000], secure[500];
-    OSSL_PARAM_BLD bld;
-    OSSL_PARAM prms[20];
-    BIGNUM *bn = NULL;
-    int res = 0;
-
-    ossl_param_bld_init(&bld);
-    if (!TEST_true(ossl_param_bld_push_uint(&bld, "i", 6))
-        || !TEST_ptr(bn = (n & 1) == 0 ? BN_new() : BN_secure_new())
-        || !TEST_true(BN_hex2bn(&bn, "ABCDEF78901234567890ABCDEF0987987654321"))
-        || !TEST_true(ossl_param_bld_push_BN(&bld, "bn", bn))
-        || !TEST_true(ossl_param_bld_push_utf8_string(&bld, "utf8_s", "abc",
-                                                      1000))
-        /* No OSSL_PARAMS */
-        || !TEST_ptr_null(ossl_param_bld_to_param_ex(&bld, NULL, 0, data,
-                                                     sizeof(data), secure,
-                                                     sizeof(secure)))
-        /* Short OSSL_PARAMS */
-        || !TEST_ptr_null(ossl_param_bld_to_param_ex(&bld, prms, 2,
-                                                     data, sizeof(data),
-                                                     secure, sizeof(secure)))
-        /* No normal data */
-        || !TEST_ptr_null(ossl_param_bld_to_param_ex(&bld, prms,
-                                                     OSSL_NELEM(prms),
-                                                     NULL, 0, secure,
-                                                     sizeof(secure)))
-        /* Not enough normal data */
-        || !TEST_ptr_null(ossl_param_bld_to_param_ex(&bld, prms,
-                                                     OSSL_NELEM(prms),
-                                                     data, 50, secure,
-                                                     sizeof(secure))))
-            goto err;
-        if ((n & 1) == 1) {
-            /* No secure data */
-            if (!TEST_ptr_null(ossl_param_bld_to_param_ex(&bld, prms,
-                                                          OSSL_NELEM(prms),
-                                                          data, sizeof(data),
-                                                          NULL, 0))
-            /* Not enough secure data */
-            || !TEST_ptr_null(ossl_param_bld_to_param_ex(&bld, prms,
-                                                         OSSL_NELEM(prms),
-                                                         data, sizeof(data),
-                                                         secure, 4)))
-                goto err;
-        }
-    res = 1;
-err:
-    BN_free(bn);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
     return res;
 }
 
@@ -311,7 +239,6 @@ int setup_tests(void)
 {
     ADD_TEST(template_public_test);
     ADD_TEST(template_private_test);
-    ADD_ALL_TESTS(template_static_params_test, 2);
-    ADD_ALL_TESTS(template_static_fail_test, 2);
+    ADD_TEST(builder_limit_test);
     return 1;
 }

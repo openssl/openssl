@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -250,6 +250,8 @@ static int kmac_init(void *vmacctx)
         return 0;
 
     block_len = EVP_MD_block_size(ossl_prov_digest_md(&kctx->digest));
+    if (block_len < 0)
+        return 0;
 
     /* Set default custom string if it is not already set */
     if (kctx->custom_len == 0) {

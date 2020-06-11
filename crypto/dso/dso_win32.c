@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -68,6 +68,8 @@ static int win32_pathbyaddr(void *addr, char *path, int sz);
 static void *win32_globallookup(const char *name);
 
 static const char *openssl_strnchr(const char *string, int c, size_t len);
+
+DEFINE_STACK_OF(void)
 
 static DSO_METHOD dso_meth_win32 = {
     "OpenSSL 'win32' shared library method",

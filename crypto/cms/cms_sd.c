@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,12 @@
 #include "crypto/evp.h"
 #include "crypto/cms.h"
 #include "crypto/ess.h"
+
+DEFINE_STACK_OF(CMS_RevocationInfoChoice)
+DEFINE_STACK_OF(CMS_SignerInfo)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_ALGOR)
+DEFINE_STACK_OF(X509_ATTRIBUTE)
 
 /* CMS SignedData Utilities */
 
@@ -944,8 +950,10 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
     ASN1_INTEGER *key = NULL;
     if (keysize > 0) {
         key = ASN1_INTEGER_new();
-        if (key == NULL || !ASN1_INTEGER_set(key, keysize))
+        if (key == NULL || !ASN1_INTEGER_set(key, keysize)) {
+            ASN1_INTEGER_free(key);
             return 0;
+        }
     }
     alg = X509_ALGOR_new();
     if (alg == NULL) {

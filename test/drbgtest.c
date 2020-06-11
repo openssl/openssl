@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -111,7 +111,7 @@ typedef struct drbg_selftest_data_st {
     make_drbg_test_data(nid, 0, pr, p)
 
 static DRBG_SELFTEST_DATA drbg_test[] = {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* FIPS mode doesn't support CTR DRBG without a derivation function */
     make_drbg_test_data_no_df (NID_aes_128_ctr, aes_128_no_df,  0),
     make_drbg_test_data_no_df (NID_aes_192_ctr, aes_192_no_df,  0),
@@ -126,8 +126,6 @@ static DRBG_SELFTEST_DATA drbg_test[] = {
     make_drbg_test_data_hash(NID_sha384, sha384, 0),
     make_drbg_test_data_hash(NID_sha512, sha512, 0),
 };
-
-static int app_data_index;
 
 /*
  * Test context data, attached as EXDATA to the RAND_DRBG
@@ -145,7 +143,7 @@ static size_t kat_entropy(RAND_DRBG *drbg, unsigned char **pout,
                           int entropy, size_t min_len, size_t max_len,
                           int prediction_resistance)
 {
-    TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
+    TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_callback_data(drbg);
 
     t->entropycnt++;
     *pout = (unsigned char *)t->entropy;
@@ -155,7 +153,7 @@ static size_t kat_entropy(RAND_DRBG *drbg, unsigned char **pout,
 static size_t kat_nonce(RAND_DRBG *drbg, unsigned char **pout,
                         int entropy, size_t min_len, size_t max_len)
 {
-    TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
+    TEST_CTX *t = (TEST_CTX *)RAND_DRBG_get_callback_data(drbg);
 
     t->noncecnt++;
     *pout = (unsigned char *)t->nonce;
@@ -213,6 +211,7 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
         return 0;
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
                                            kat_nonce, NULL))
+        || !TEST_true(RAND_DRBG_set_callback_data(drbg, &t))
         || !TEST_true(disable_crngt(drbg))) {
         failures++;
         goto err;
@@ -222,7 +221,6 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
     t.entropylen = td->entropylen;
     t.nonce = td->nonce;
     t.noncelen = td->noncelen;
-    RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
 
     if (!TEST_true(RAND_DRBG_instantiate(drbg, td->pers, td->perslen))
             || !TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
@@ -246,9 +244,9 @@ static int single_kat(DRBG_SELFTEST_DATA *td)
      */
     if (!TEST_true(RAND_DRBG_set(drbg, td->nid, td->flags))
             || !TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
-                                                  kat_nonce, NULL)))
+                                                  kat_nonce, NULL))
+            || !TEST_true(RAND_DRBG_set_callback_data(drbg, &t)))
         failures++;
-    RAND_DRBG_set_ex_data(drbg, app_data_index, &t);
     t.entropy = td->entropy_pr;
     t.entropylen = td->entropylen_pr;
     t.nonce = td->nonce_pr;
@@ -296,7 +294,7 @@ static int init(RAND_DRBG *drbg, DRBG_SELFTEST_DATA *td, TEST_CTX *t)
             || !TEST_true(RAND_DRBG_set_callbacks(drbg, kat_entropy, NULL,
                                                   kat_nonce, NULL)))
         return 0;
-    RAND_DRBG_set_ex_data(drbg, app_data_index, t);
+    RAND_DRBG_set_callback_data(drbg, t);
     t->entropy = td->entropy;
     t->entropylen = td->entropylen;
     t->nonce = td->nonce;
@@ -551,7 +549,7 @@ static HOOK_CTX master_ctx, public_ctx, private_ctx;
 
 static HOOK_CTX *get_hook_ctx(RAND_DRBG *drbg)
 {
-    return (HOOK_CTX *)RAND_DRBG_get_ex_data(drbg, app_data_index);
+    return (HOOK_CTX *)RAND_DRBG_get_callback_data(drbg);
 }
 
 /* Intercepts and counts calls to the get_entropy() callback */
@@ -579,17 +577,22 @@ static void hook_drbg(RAND_DRBG *drbg, HOOK_CTX *ctx)
     memset(ctx, 0, sizeof(*ctx));
     ctx->drbg = drbg;
     ctx->get_entropy = drbg->get_entropy;
+
+    /*
+     * We can't use the public API here, since it prohibits modifying
+     * the callbacks or the callback data of chained DRBGs.
+     */
     drbg->get_entropy = get_entropy_hook;
-    RAND_DRBG_set_ex_data(drbg, app_data_index, ctx);
+    drbg->callback_data = ctx;
 }
 
 /* Installs the hook for the get_entropy() callback of the given drbg */
 static void unhook_drbg(RAND_DRBG *drbg)
 {
-    HOOK_CTX *ctx = get_hook_ctx(drbg);
+    HOOK_CTX *ctx = drbg->callback_data;
 
-    drbg->get_entropy = ctx->get_entropy;
-    CRYPTO_free_ex_data(CRYPTO_EX_INDEX_RAND_DRBG, drbg, &drbg->ex_data);
+    if (ctx != NULL)
+        drbg->get_entropy = ctx->get_entropy;
 }
 
 /* Resets the given hook context */
@@ -847,7 +850,7 @@ static int test_rand_drbg_reseed(void)
     /* fill 'randomness' buffer with some arbitrary data */
     memset(rand_add_buf, 'r', sizeof(rand_add_buf));
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /*
      * Test whether all three DRBGs are reseeded by RAND_add().
      * The before_reseed time has to be measured here and passed into the
@@ -873,7 +876,7 @@ static int test_rand_drbg_reseed(void)
     if (!TEST_true(test_drbg_reseed(0, master, public, private, 0, 0, 0, 0)))
         goto error;
     reset_drbg_hook_ctx();
-#else /* FIPS_MODE */
+#else /* FIPS_MODULE */
     /*
      * In FIPS mode, random data provided by the application via RAND_add()
      * is not considered a trusted entropy source. It is only treated as
@@ -1248,7 +1251,7 @@ static int test_set_defaults(void)
            && TEST_int_eq(public->flags, RAND_DRBG_FLAG_PUBLIC)
 
           /* FIPS mode doesn't support CTR DRBG without a derivation function */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
           /* Change DRBG defaults and change master and check again */
            && TEST_true(RAND_DRBG_set_defaults(NID_aes_256_ctr,
                                                RAND_DRBG_FLAG_CTR_NO_DF))
@@ -1344,7 +1347,7 @@ static int test_crngt(int n)
     crngt_case = n % crngt_num_cases;
     crngt_idx = 0;
     crngt_get_entropy = &crngt_entropy_cb;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!TEST_true(RAND_DRBG_set_callbacks(drbg, &rand_crngt_get_entropy,
                                            &rand_crngt_cleanup_entropy,
                                            &rand_drbg_get_nonce,
@@ -1382,8 +1385,6 @@ err:
 
 int setup_tests(void)
 {
-    app_data_index = RAND_DRBG_get_ex_new_index(0L, NULL, NULL, NULL, NULL);
-
     ADD_ALL_TESTS(test_kats, OSSL_NELEM(drbg_test));
     ADD_ALL_TESTS(test_error_checks, OSSL_NELEM(drbg_test));
     ADD_TEST(test_rand_drbg_reseed);

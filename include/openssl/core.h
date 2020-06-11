@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,11 @@ extern "C" {
  * These are the types that the OpenSSL core and providers have in common
  * to communicate data between them.
  */
+
+/* Opaque handles to be used with core upcall functions from providers */
+typedef struct ossl_core_handle_st OSSL_CORE_HANDLE;
+typedef struct openssl_core_ctx_st OPENSSL_CORE_CTX;
+typedef struct ossl_core_bio_st OSSL_CORE_BIO;
 
 /*
  * Dispatch table element.  function_id numbers are defined further down,
@@ -124,6 +129,9 @@ struct ossl_param_st {
  *
  * WARNING!  Using these is FRAGILE, as it assumes that the actual
  * data and its location are constant.
+ *
+ * EXTRA WARNING!  If you are not completely sure you most likely want
+ * to use the OSSL_PARAM_UTF8_STRING type.
  */
 # define OSSL_PARAM_UTF8_PTR             6
 /*-
@@ -140,6 +148,9 @@ struct ossl_param_st {
  *
  * WARNING!  Using these is FRAGILE, as it assumes that the actual
  * data and its location are constant.
+ *
+ * EXTRA WARNING!  If you are not completely sure you most likely want
+ * to use the OSSL_PARAM_OCTET_STRING type.
  */
 # define OSSL_PARAM_OCTET_PTR            7
 
@@ -165,7 +176,7 @@ typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
  * module, that module is not an OpenSSL provider module.
  */
 /*-
- * |provider|   pointer to opaque type OSSL_PROVIDER.  This can be used
+ * |handle|     pointer to opaque type OSSL_CORE_HANDLE.  This can be used
  *              together with some functions passed via |in| to query data.
  * |in|         is the array of functions that the Core passes to the provider.
  * |out|        will be the array of base functions that the provider passes
@@ -174,7 +185,7 @@ typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
  *              provider needs it.  This value is passed to other provider
  *              functions, notably other context constructors.
  */
-typedef int (OSSL_provider_init_fn)(const OSSL_PROVIDER *provider,
+typedef int (OSSL_provider_init_fn)(const OSSL_CORE_HANDLE *handle,
                                     const OSSL_DISPATCH *in,
                                     const OSSL_DISPATCH **out,
                                     void **provctx);

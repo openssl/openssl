@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2005-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -142,6 +142,7 @@ $code=<<___;
 .align	16
 RC4:
 .cfi_startproc
+	endbranch
 	or	$len,$len
 	jne	.Lentry
 	ret
@@ -457,6 +458,7 @@ $code.=<<___;
 .align	16
 RC4_set_key:
 .cfi_startproc
+	endbranch
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -531,6 +533,7 @@ RC4_set_key:
 .align	16
 RC4_options:
 .cfi_startproc
+	endbranch
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx
@@ -700,4 +703,4 @@ $code =~ s/\`([^\`]*)\`/eval $1/gem;
 
 print $code;
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

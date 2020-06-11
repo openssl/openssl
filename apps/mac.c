@@ -1,7 +1,7 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -16,12 +16,15 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 
+DEFINE_STACK_OF_STRING()
+
 #undef BUFSIZE
 #define BUFSIZE 1024*8
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT
+    OPT_MACOPT, OPT_BIN, OPT_IN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS mac_options[] = {
@@ -39,6 +42,8 @@ const OPTIONS mac_options[] = {
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"binary", OPT_BIN, '-',
         "Output in binary format (default is hexadecimal)"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"mac_name", 0, 0, "MAC algorithm"},
@@ -89,6 +94,10 @@ opthelp:
             if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto err;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -105,7 +114,7 @@ opthelp:
         goto opthelp;
     }
 
-    ctx = EVP_MAC_CTX_new(mac);
+    ctx = EVP_MAC_new_ctx(mac);
     if (ctx == NULL)
         goto err;
 
@@ -117,7 +126,7 @@ opthelp:
         if (params == NULL)
             goto err;
 
-        if (!EVP_MAC_CTX_set_params(ctx, params)) {
+        if (!EVP_MAC_set_ctx_params(ctx, params)) {
             BIO_printf(bio_err, "MAC parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
@@ -190,7 +199,7 @@ err:
     sk_OPENSSL_STRING_free(opts);
     BIO_free(in);
     BIO_free(out);
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx);
     EVP_MAC_free(mac);
     return ret;
 }

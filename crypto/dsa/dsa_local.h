@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #include <openssl/dsa.h>
 #include "internal/refcount.h"
+#include "internal/ffc.h"
 
 struct dsa_st {
     /*
@@ -17,22 +18,21 @@ struct dsa_st {
      */
     int pad;
     int32_t version;
-    BIGNUM *p;
-    BIGNUM *q;                  /* == 20 */
-    BIGNUM *g;
+    FFC_PARAMS params;
     BIGNUM *pub_key;            /* y public key */
     BIGNUM *priv_key;           /* x private key */
     int flags;
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
     CRYPTO_REF_COUNT references;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
 #endif
     const DSA_METHOD *meth;
     /* functional reference if 'meth' is ENGINE-provided */
     ENGINE *engine;
     CRYPTO_RWLOCK *lock;
+    OPENSSL_CTX *libctx;
 
     /* Provider data */
     size_t dirty_cnt; /* If any key material changes, increment this */
@@ -69,17 +69,4 @@ struct dsa_method {
     int (*dsa_keygen) (DSA *dsa);
 };
 
-int dsa_builtin_paramgen(DSA *ret, size_t bits, size_t qbits,
-                         const EVP_MD *evpmd, const unsigned char *seed_in,
-                         size_t seed_len, unsigned char *seed_out,
-                         int *counter_ret, unsigned long *h_ret,
-                         BN_GENCB *cb);
-
-int dsa_builtin_paramgen2(DSA *ret, size_t L, size_t N,
-                          const EVP_MD *evpmd, const unsigned char *seed_in,
-                          size_t seed_len, int idx, unsigned char *seed_out,
-                          int *counter_ret, unsigned long *h_ret,
-                          BN_GENCB *cb);
-
-DSA_SIG *dsa_do_sign_int(OPENSSL_CTX *libctx, const unsigned char *dgst,
-                         int dlen, DSA *dsa);
+DSA_SIG *dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa);

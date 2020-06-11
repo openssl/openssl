@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,8 +12,15 @@
  * and PRIVATEKEYBLOB).
  */
 
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
+#include "internal/pem_int.h"
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
@@ -29,10 +36,10 @@ static unsigned int read_ledword(const unsigned char **in)
 {
     const unsigned char *p = *in;
     unsigned int ret;
-    ret = *p++;
-    ret |= (*p++ << 8);
-    ret |= (*p++ << 16);
-    ret |= (*p++ << 24);
+    ret = (unsigned int)*p++;
+    ret |= (unsigned int)*p++ << 8;
+    ret |= (unsigned int)*p++ << 16;
+    ret |= (unsigned int)*p++ << 24;
     *in = p;
     return ret;
 }
@@ -83,9 +90,9 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
 static EVP_PKEY *b2i_dss(const unsigned char **in,
                          unsigned int bitlen, int ispub);
 
-static int do_blob_header(const unsigned char **in, unsigned int length,
-                          unsigned int *pmagic, unsigned int *pbitlen,
-                          int *pisdss, int *pispub)
+int ossl_do_blob_header(const unsigned char **in, unsigned int length,
+                        unsigned int *pmagic, unsigned int *pbitlen,
+                        int *pisdss, int *pispub)
 {
     const unsigned char *p = *in;
     if (length < 16)
@@ -93,13 +100,13 @@ static int do_blob_header(const unsigned char **in, unsigned int length,
     /* bType */
     if (*p == MS_PUBLICKEYBLOB) {
         if (*pispub == 0) {
-            PEMerr(PEM_F_DO_BLOB_HEADER, PEM_R_EXPECTING_PRIVATE_KEY_BLOB);
+            PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_EXPECTING_PRIVATE_KEY_BLOB);
             return 0;
         }
         *pispub = 1;
     } else if (*p == MS_PRIVATEKEYBLOB) {
         if (*pispub == 1) {
-            PEMerr(PEM_F_DO_BLOB_HEADER, PEM_R_EXPECTING_PUBLIC_KEY_BLOB);
+            PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_EXPECTING_PUBLIC_KEY_BLOB);
             return 0;
         }
         *pispub = 0;
@@ -108,7 +115,7 @@ static int do_blob_header(const unsigned char **in, unsigned int length,
     p++;
     /* Version */
     if (*p++ != 0x2) {
-        PEMerr(PEM_F_DO_BLOB_HEADER, PEM_R_BAD_VERSION_NUMBER);
+        PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_BAD_VERSION_NUMBER);
         return 0;
     }
     /* Ignore reserved, aiKeyAlg */
@@ -123,7 +130,7 @@ static int do_blob_header(const unsigned char **in, unsigned int length,
         /* fall thru */
     case MS_RSA1MAGIC:
         if (*pispub == 0) {
-            PEMerr(PEM_F_DO_BLOB_HEADER, PEM_R_EXPECTING_PRIVATE_KEY_BLOB);
+            PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_EXPECTING_PRIVATE_KEY_BLOB);
             return 0;
         }
         break;
@@ -133,13 +140,13 @@ static int do_blob_header(const unsigned char **in, unsigned int length,
         /* fall thru */
     case MS_RSA2MAGIC:
         if (*pispub == 1) {
-            PEMerr(PEM_F_DO_BLOB_HEADER, PEM_R_EXPECTING_PUBLIC_KEY_BLOB);
+            PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_EXPECTING_PUBLIC_KEY_BLOB);
             return 0;
         }
         break;
 
     default:
-        PEMerr(PEM_F_DO_BLOB_HEADER, PEM_R_BAD_MAGIC_NUMBER);
+        PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_BAD_MAGIC_NUMBER);
         return -1;
     }
     *in = p;
@@ -185,7 +192,7 @@ static EVP_PKEY *do_b2i(const unsigned char **in, unsigned int length,
     const unsigned char *p = *in;
     unsigned int bitlen, magic;
     int isdss;
-    if (do_blob_header(&p, length, &magic, &bitlen, &isdss, &ispub) <= 0) {
+    if (ossl_do_blob_header(&p, length, &magic, &bitlen, &isdss, &ispub) <= 0) {
         PEMerr(PEM_F_DO_B2I, PEM_R_KEYBLOB_HEADER_PARSE_ERROR);
         return NULL;
     }
@@ -212,7 +219,7 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
         return NULL;
     }
     p = hdr_buf;
-    if (do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) <= 0)
+    if (ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) <= 0)
         return NULL;
 
     length = blob_length(bitlen, isdss, ispub);
@@ -611,26 +618,26 @@ int i2b_PublicKey_bio(BIO *out, const EVP_PKEY *pk)
 
 # ifndef OPENSSL_NO_RC4
 
-static int do_PVK_header(const unsigned char **in, unsigned int length,
-                         int skip_magic,
-                         unsigned int *psaltlen, unsigned int *pkeylen)
+int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
+                       int skip_magic,
+                       unsigned int *psaltlen, unsigned int *pkeylen)
 {
     const unsigned char *p = *in;
     unsigned int pvk_magic, is_encrypted;
 
     if (skip_magic) {
         if (length < 20) {
-            PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
+            PEMerr(PEM_F_OSSL_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
             return 0;
         }
     } else {
         if (length < 24) {
-            PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
+            PEMerr(PEM_F_OSSL_DO_PVK_HEADER, PEM_R_PVK_TOO_SHORT);
             return 0;
         }
         pvk_magic = read_ledword(&p);
         if (pvk_magic != MS_PVKMAGIC) {
-            PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_BAD_MAGIC_NUMBER);
+            PEMerr(PEM_F_OSSL_DO_PVK_HEADER, PEM_R_BAD_MAGIC_NUMBER);
             return 0;
         }
     }
@@ -647,7 +654,7 @@ static int do_PVK_header(const unsigned char **in, unsigned int length,
         return 0;
 
     if (is_encrypted && *psaltlen == 0) {
-        PEMerr(PEM_F_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);
+        PEMerr(PEM_F_OSSL_DO_PVK_HEADER, PEM_R_INCONSISTENT_HEADER);
         return 0;
     }
 
@@ -760,7 +767,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
     }
     p = pvk_hdr;
 
-    if (!do_PVK_header(&p, 24, 0, &saltlen, &keylen))
+    if (!ossl_do_PVK_header(&p, 24, 0, &saltlen, &keylen))
         return 0;
     buflen = (int)keylen + saltlen;
     buf = OPENSSL_malloc(buflen);
@@ -876,9 +883,9 @@ int i2b_PVK_bio(BIO *out, const EVP_PKEY *pk, int enclevel,
     wrlen = BIO_write(out, tmp, outlen);
     OPENSSL_free(tmp);
     if (wrlen == outlen) {
-        PEMerr(PEM_F_I2B_PVK_BIO, PEM_R_BIO_WRITE_FAILURE);
         return outlen;
     }
+    PEMerr(PEM_F_I2B_PVK_BIO, PEM_R_BIO_WRITE_FAILURE);
     return -1;
 }
 

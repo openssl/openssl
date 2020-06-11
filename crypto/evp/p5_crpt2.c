@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -41,7 +41,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         salt = (unsigned char *)empty;
 
     kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL);
-    kctx = EVP_KDF_CTX_new(kdf);
+    kctx = EVP_KDF_new_ctx(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
@@ -52,13 +52,13 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
                                              (unsigned char *)salt, saltlen);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
+                                            (char *)mdname, 0);
     *p = OSSL_PARAM_construct_end();
-    if (EVP_KDF_CTX_set_params(kctx, params) != 1
+    if (EVP_KDF_set_ctx_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, out, keylen) != 1)
         rv = 0;
 
-    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free_ctx(kctx);
 
     OSSL_TRACE_BEGIN(PKCS5V2) {
         BIO_printf(trc_out, "Password:\n");

@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,6 +12,9 @@
 #include <openssl/x509v3.h>
 
 #include "pcy_local.h"
+
+DEFINE_STACK_OF(ASN1_OBJECT)
+DEFINE_STACK_OF(POLICYQUALINFO)
 
 /* Policy Node routines */
 

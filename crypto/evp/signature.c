@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -105,7 +105,6 @@ static void *evp_signature_from_dispatch(int name_id,
                 break;
             signature->digest_sign_init
                 = OSSL_get_OP_signature_digest_sign_init(fns);
-            digsignfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE:
             if (signature->digest_sign_update != NULL)
@@ -121,12 +120,17 @@ static void *evp_signature_from_dispatch(int name_id,
                 = OSSL_get_OP_signature_digest_sign_final(fns);
             digsignfncnt++;
             break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_SIGN:
+            if (signature->digest_sign != NULL)
+                break;
+            signature->digest_sign
+                = OSSL_get_OP_signature_digest_sign(fns);
+            break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT:
             if (signature->digest_verify_init != NULL)
                 break;
             signature->digest_verify_init
                 = OSSL_get_OP_signature_digest_verify_init(fns);
-            digverifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE:
             if (signature->digest_verify_update != NULL)
@@ -141,6 +145,12 @@ static void *evp_signature_from_dispatch(int name_id,
             signature->digest_verify_final
                 = OSSL_get_OP_signature_digest_verify_final(fns);
             digverifyfncnt++;
+            break;
+        case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY:
+            if (signature->digest_verify != NULL)
+                break;
+            signature->digest_verify
+                = OSSL_get_OP_signature_digest_verify(fns);
             break;
         case OSSL_FUNC_SIGNATURE_FREECTX:
             if (signature->freectx != NULL)
@@ -216,12 +226,20 @@ static void *evp_signature_from_dispatch(int name_id,
             && verifyfncnt == 0
             && verifyrecfncnt == 0
             && digsignfncnt == 0
-            && digverifyfncnt == 0)
+            && digverifyfncnt == 0
+            && signature->digest_sign == NULL
+            && signature->digest_verify == NULL)
         || (signfncnt != 0 && signfncnt != 2)
         || (verifyfncnt != 0 && verifyfncnt != 2)
         || (verifyrecfncnt != 0 && verifyrecfncnt != 2)
-        || (digsignfncnt != 0 && digsignfncnt != 3)
-        || (digverifyfncnt != 0 && digverifyfncnt != 3)
+        || (digsignfncnt != 0 && digsignfncnt != 2)
+        || (digsignfncnt == 2 && signature->digest_sign_init == NULL)
+        || (digverifyfncnt != 0 && digverifyfncnt != 2)
+        || (digverifyfncnt == 2 && signature->digest_verify_init == NULL)
+        || (signature->digest_sign != NULL
+            && signature->digest_sign_init == NULL)
+        || (signature->digest_verify != NULL
+            && signature->digest_verify_init == NULL)
         || (gparamfncnt != 0 && gparamfncnt != 2)
         || (sparamfncnt != 0 && sparamfncnt != 2)
         || (gmdparamfncnt != 0 && gmdparamfncnt != 2)
@@ -234,7 +252,9 @@ static void *evp_signature_from_dispatch(int name_id,
          *  (verify_init verify) or
          *  (verify_recover_init, verify_recover) or
          *  (digest_sign_init, digest_sign_update, digest_sign_final) or
-         *  (digest_verify_init, digest_verify_update, digest_verify_final).
+         *  (digest_verify_init, digest_verify_update, digest_verify_final) or
+         *  (digest_sign_init, digest_sign) or
+         *  (digest_verify_init, digest_verify).
          *
          * set_ctx_params and settable_ctx_params are optional, but if one of
          * them is present then the other one must also be present. The same
@@ -339,14 +359,17 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
      */
     ERR_set_mark();
 
-    if (ctx->keytype == NULL)
+    if (ctx->keymgmt == NULL)
         goto legacy;
 
-    /* Ensure that the key is provided.  If not, go legacy */
+    /*
+     * Ensure that the key is provided, either natively, or as a cached export.
+     *  If not, go legacy
+     */
     tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_make_provided(ctx->pkey, ctx->libctx,
-                                     &tmp_keymgmt, ctx->propquery, 0);
-    if (provkey == NULL)
+    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                          &tmp_keymgmt, ctx->propquery);
+    if (tmp_keymgmt == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
         ERR_clear_last_mark();
@@ -394,7 +417,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     /* No more legacy from here down to legacy: */
 
     ctx->op.sig.signature = signature;
-    ctx->op.sig.sigprovctx = signature->newctx(ossl_provider_ctx(signature->prov));
+    ctx->op.sig.sigprovctx =
+        signature->newctx(ossl_provider_ctx(signature->prov), ctx->propquery);
     if (ctx->op.sig.sigprovctx == NULL) {
         /* The provider key can stay in the cache */
         EVPerr(0, EVP_R_INITIALIZATION_ERROR);
@@ -480,6 +504,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     return ret;
 
  err:
+    evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
 }

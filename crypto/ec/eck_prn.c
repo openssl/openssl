@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -115,7 +115,7 @@ int ECPKParameters_print(BIO *bp, const EC_GROUP *x, int off)
         /* explicit parameters */
         int is_char_two = 0;
         point_conversion_form_t form;
-        int tmp_nid = EC_METHOD_get_field_type(EC_GROUP_method_of(x));
+        int tmp_nid = EC_GROUP_get_field_type(x);
 
         if (tmp_nid == NID_X9_62_characteristic_two_field)
             is_char_two = 1;

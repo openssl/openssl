@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -977,6 +977,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
     unsigned char padval;
     int imac_size;
     const EVP_CIPHER *enc;
+    int tlstree_enc = sending ? (s->mac_flags & SSL_MAC_FLAG_WRITE_MAC_TLSTREE)
+                              : (s->mac_flags & SSL_MAC_FLAG_READ_MAC_TLSTREE);
 
     if (n_recs == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
@@ -1015,7 +1017,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
                                  ERR_R_INTERNAL_ERROR);
                         return -1;
-                    } else if (RAND_bytes(recs[ctr].input, ivlen) <= 0) {
+                    } else if (RAND_bytes_ex(s->ctx->libctx, recs[ctr].input,
+                                             ivlen) <= 0) {
                         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
                                  ERR_R_INTERNAL_ERROR);
                         return -1;
@@ -1155,6 +1158,27 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending)
             }
         }
 
+        if (!SSL_IS_DTLS(s) && tlstree_enc) {
+            unsigned char *seq;
+            int decrement_seq = 0;
+
+            /*
+             * When sending, seq is incremented after MAC calculation.
+             * So if we are in ETM mode, we use seq 'as is' in the ctrl-function.
+             * Otherwise we have to decrease it in the implementation
+             */
+            if (sending && !SSL_WRITE_ETM(s))
+                decrement_seq = 1;
+
+            seq = sending ? RECORD_LAYER_get_write_sequence(&s->rlayer)
+                          : RECORD_LAYER_get_read_sequence(&s->rlayer);
+            if (EVP_CIPHER_CTX_ctrl(ds, EVP_CTRL_TLSTREE, decrement_seq, seq) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         ERR_R_INTERNAL_ERROR);
+              return -1;
+            }
+        }
+
         /* TODO(size_t): Convert this call */
         tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input,
                           (unsigned int)reclen[0]);
@@ -1269,7 +1293,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         header[j++] = (unsigned char)(rec->length & 0xff);
 
         /* Final param == is SSLv3 */
-        if (ssl3_cbc_digest_record(hash,
+        if (ssl3_cbc_digest_record(ssl, hash,
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length + md_size, rec->orig_len,
@@ -1318,8 +1342,10 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     int i;
     EVP_MD_CTX *hmac = NULL, *mac_ctx;
     unsigned char header[13];
-    int stream_mac = (sending ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
-                      : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM));
+    int stream_mac = sending ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_STREAM)
+                             : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_STREAM);
+    int tlstree_mac = sending ? (ssl->mac_flags & SSL_MAC_FLAG_WRITE_MAC_TLSTREE)
+                              : (ssl->mac_flags & SSL_MAC_FLAG_READ_MAC_TLSTREE);
     int t;
 
     if (sending) {
@@ -1345,6 +1371,11 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
             return 0;
         }
         mac_ctx = hmac;
+    }
+
+    if (!SSL_IS_DTLS(ssl) && tlstree_mac && EVP_MD_CTX_ctrl(mac_ctx, EVP_MD_CTRL_TLSTREE, 0, seq) <= 0) {
+        EVP_MD_CTX_free(hmac);
+        return 0;
     }
 
     if (SSL_IS_DTLS(ssl)) {
@@ -1373,7 +1404,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
          * are hashing because that gives an attacker a timing-oracle.
          */
         /* Final param == not SSLv3 */
-        if (ssl3_cbc_digest_record(mac_ctx,
+        if (ssl3_cbc_digest_record(ssl, mac_ctx,
                                    md, &md_size,
                                    header, rec->input,
                                    rec->length + md_size, rec->orig_len,
@@ -1629,6 +1660,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
     int imac_size;
     size_t mac_size;
     unsigned char md[EVP_MAX_MD_SIZE];
+    size_t max_plain_length = SSL3_RT_MAX_PLAIN_LENGTH;
 
     rr = RECORD_LAYER_get_rrec(&s->rlayer);
     sess = s->session;
@@ -1796,7 +1828,12 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
         }
     }
 
-    if (rr->length > SSL3_RT_MAX_PLAIN_LENGTH) {
+    /* use current Max Fragment Length setting if applicable */
+    if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session))
+        max_plain_length = GET_MAX_FRAGMENT_LENGTH(s->session);
+
+    /* send overflow if the plaintext is too long now it has passed MAC */
+    if (rr->length > max_plain_length) {
         SSLfatal(s, SSL_AD_RECORD_OVERFLOW, SSL_F_DTLS1_PROCESS_RECORD,
                  SSL_R_DATA_LENGTH_TOO_LONG);
         return 0;
@@ -1940,7 +1977,7 @@ int dtls1_get_record(SSL *s)
 
         /* If received packet overflows own-client Max Fragment Length setting */
         if (s->session != NULL && USE_MAX_FRAGMENT_LENGTH_EXT(s->session)
-                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session)) {
+                && rr->length > GET_MAX_FRAGMENT_LENGTH(s->session) + SSL3_RT_MAX_ENCRYPTED_OVERHEAD) {
             /* record too long, silently discard it */
             rr->length = 0;
             rr->read = 1;

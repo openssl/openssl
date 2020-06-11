@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,7 @@
 #include "internal/numbers.h"
 #include "asn1_local.h"
 
+DEFINE_STACK_OF(ASN1_VALUE)
 
 /*
  * Constructed types with a recursive definition (such as can be found in PKCS7)

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_numbers.h>
 #include "internal/refcount.h"
+#include "crypto/ecx.h"
 
 /*
  * Don't free up md_ctx->pctx in EVP_MD_CTX_reset, use the reserved flag
@@ -22,17 +23,19 @@ struct evp_pkey_ctx_st {
     int operation;
 
     /*
-     * Library context, Key type name and properties associated
-     * with this context
+     * Library context, property query, keytype and keymgmt associated with
+     * this context
      */
     OPENSSL_CTX *libctx;
-    const char *keytype;
     const char *propquery;
-
-    /* cached key manager */
+    const char *keytype;
     EVP_KEYMGMT *keymgmt;
 
     union {
+        struct {
+            void *genctx;
+        } keymgmt;
+
         struct {
             EVP_KEYEXCH *exchange;
             void *exchprovctx;
@@ -49,6 +52,14 @@ struct evp_pkey_ctx_st {
         } ciph;
     } op;
 
+    /* Application specific data, usually used by the callback */
+    void *app_data;
+    /* Keygen callback */
+    EVP_PKEY_gen_cb *pkey_gencb;
+    /* implementation specific keygen data */
+    int *keygen_info;
+    int keygen_info_count;
+
     /* Legacy fields below */
 
     /* Method associated with this operation */
@@ -61,13 +72,8 @@ struct evp_pkey_ctx_st {
     EVP_PKEY *peerkey;
     /* Algorithm specific data */
     void *data;
-    /* Application specific data */
-    void *app_data;
-    /* Keygen callback */
-    EVP_PKEY_gen_cb *pkey_gencb;
-    /* implementation specific keygen data */
-    int *keygen_info;
-    int keygen_info_count;
+    /* Indicator if digest_custom needs to be called */
+    unsigned int flag_call_digest_custom:1;
 } /* EVP_PKEY_CTX */ ;
 
 #define EVP_PKEY_FLAG_DYNAMIC   1
@@ -495,78 +501,122 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
-
-# ifndef OPENSSL_NO_EC
-
-#define X25519_KEYLEN        32
-#define X448_KEYLEN          56
-#define ED25519_KEYLEN       32
-#define ED448_KEYLEN         57
-
-#define MAX_KEYLEN  ED448_KEYLEN
-
-typedef struct {
-    unsigned char pubkey[MAX_KEYLEN];
-    unsigned char *privkey;
-} ECX_KEY;
-
-#endif
-
 /*
- * Type needs to be a bit field Sub-type needs to be for variations on the
- * method, as in, can it do arbitrary encryption....
+ * An EVP_PKEY can have the following states:
+ *
+ * untyped & empty:
+ *
+ *     type == EVP_PKEY_NONE && keymgmt == NULL
+ *
+ * typed & empty:
+ *
+ *     (type != EVP_PKEY_NONE && pkey.ptr == NULL)      ## legacy (libcrypto only)
+ *     || (keymgmt != NULL && keydata == NULL)          ## provider side
+ *
+ * fully assigned:
+ *
+ *     (type != EVP_PKEY_NONE && pkey.ptr != NULL)      ## legacy (libcrypto only)
+ *     || (keymgmt != NULL && keydata != NULL)          ## provider side
+ *
+ * The easiest way to detect a legacy key is:
+ *
+ *     keymgmt == NULL && type != EVP_PKEY_NONE
+ *
+ * The easiest way to detect a provider side key is:
+ *
+ *     keymgmt != NULL
  */
+#define evp_pkey_is_blank(pk)                                   \
+    ((pk)->type == EVP_PKEY_NONE && (pk)->keymgmt == NULL)
+#define evp_pkey_is_typed(pk)                                   \
+    ((pk)->type != EVP_PKEY_NONE || (pk)->keymgmt != NULL)
+#define evp_pkey_is_assigned(pk)                                \
+    ((pk)->pkey.ptr != NULL || (pk)->keydata != NULL)
+#define evp_pkey_is_legacy(pk)                                  \
+    ((pk)->type != EVP_PKEY_NONE && (pk)->keymgmt == NULL)
+#define evp_pkey_is_provided(pk)                                \
+    ((pk)->keymgmt != NULL)
+
 struct evp_pkey_st {
     /* == Legacy attributes == */
     int type;
     int save_type;
+
+# ifndef FIPS_MODULE
+    /*
+     * Legacy key "origin" is composed of a pointer to an EVP_PKEY_ASN1_METHOD,
+     * a pointer to a low level key and possibly a pointer to an engine.
+     */
     const EVP_PKEY_ASN1_METHOD *ameth;
     ENGINE *engine;
     ENGINE *pmeth_engine; /* If not NULL public key ENGINE to use */
     union {
         void *ptr;
-# ifndef OPENSSL_NO_RSA
+#  ifndef OPENSSL_NO_RSA
         struct rsa_st *rsa;     /* RSA */
-# endif
-# ifndef OPENSSL_NO_DSA
+#  endif
+#  ifndef OPENSSL_NO_DSA
         struct dsa_st *dsa;     /* DSA */
-# endif
-# ifndef OPENSSL_NO_DH
+#  endif
+#  ifndef OPENSSL_NO_DH
         struct dh_st *dh;       /* DH */
-# endif
-# ifndef OPENSSL_NO_EC
+#  endif
+#  ifndef OPENSSL_NO_EC
         struct ec_key_st *ec;   /* ECC */
         ECX_KEY *ecx;           /* X25519, X448, Ed25519, Ed448 */
-# endif
+#  endif
     } pkey;
+# endif
 
     /* == Common attributes == */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
     int save_parameters;
+#ifndef FIPS_MODULE
+    CRYPTO_EX_DATA ex_data;
+#endif
 
     /* == Provider attributes == */
+
     /*
-     * To support transparent export/import between providers that
-     * support the methods for it, and still not having to do the
-     * export/import every time a key or domain params are used, we
-     * maintain a cache of imported key / domain params, indexed by
-     * provider address.  pkeys[0] is *always* the "original" data.
+     * Provider keydata "origin" is composed of a pointer to an EVP_KEYMGMT
+     * and a pointer to the provider side key data.  This is never used at
+     * the same time as the legacy key data above.
+     */
+    EVP_KEYMGMT *keymgmt;
+    void *keydata;
+    /*
+     * If any libcrypto code does anything that may modify the keydata
+     * contents, this dirty counter must be incremented.
+     */
+    size_t dirty_cnt;
+
+    /*
+     * To support transparent execution of operation in backends other
+     * than the "origin" key, we support transparent export/import to
+     * those providers, and maintain a cache of the imported keydata,
+     * so we don't need to redo the export/import every time we perform
+     * the same operation in that same provider.
+     * This requires that the "origin" backend (whether it's a legacy or a
+     * provider "origin") implements exports, and that the target provider
+     * has an EVP_KEYMGMT that implements import.
+     *
+     * The cache limit is set at 10 different providers using the same
+     * "origin".  It's probably over the top, but is preferable to too
+     * few.
      */
     struct {
         EVP_KEYMGMT *keymgmt;
-        void *provdata;
-        /* 0 = provdata is a key, 1 = provdata is domain params */
-        int domainparams;
-    } pkeys[10];
+        void *keydata;
+    } operation_cache[10];
     /*
-     * If there is a legacy key assigned to this structure, we keep
-     * a copy of that key's dirty count.
+     * We keep a copy of that "origin"'s dirty count, so we know if the
+     * operation cache needs flushing.
      */
     size_t dirty_cnt_copy;
 
-    /* Cache of domain parameter / key information */
+    /* Cache of key object information */
     struct {
         int bits;
         int security_bits;
@@ -588,54 +638,84 @@ struct evp_pkey_st {
     ((ctx)->operation == EVP_PKEY_OP_ENCRYPT \
      || (ctx)->operation == EVP_PKEY_OP_DECRYPT)
 
+#define EVP_PKEY_CTX_IS_GEN_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_PARAMGEN \
+     || (ctx)->operation == EVP_PKEY_OP_KEYGEN)
+
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
+void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                                  EVP_KEYMGMT **keymgmt,
+                                  const char *propquery);
+#ifndef FIPS_MODULE
+int evp_pkey_downgrade(EVP_PKEY *pk);
+void evp_pkey_free_legacy(EVP_PKEY *x);
+#endif
 
-/* KEYMGMT helper functions */
-void *evp_keymgmt_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt,
-                                     int domainparams);
-void evp_keymgmt_clear_pkey_cache(EVP_PKEY *pk);
-void evp_keymgmt_cache_pkey(EVP_PKEY *pk, size_t index, EVP_KEYMGMT *keymgmt,
-                            void *provdata, int domainparams);
-void *evp_keymgmt_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                           const OSSL_PARAM params[], int domainparams);
+/*
+ * KEYMGMT utility functions
+ */
+void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
+size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
+                                                   EVP_KEYMGMT *keymgmt);
+void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
+int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+                                   EVP_KEYMGMT *keymgmt, void *keydata);
+void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
+void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                int selection, const OSSL_PARAM params[]);
+int evp_keymgmt_util_has(EVP_PKEY *pk, int selection);
+int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection);
+int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection);
+void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                           void *genctx, OSSL_CALLBACK *cb, void *cbarg);
+int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
+                                           void *keydata,
+                                           char *mdname, size_t mdname_sz);
 
+/*
+ * KEYMGMT provider interface functions
+ */
+void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
+void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
+int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
+                           void *keydata, OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt,
+                           void *keydata, const OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt);
 
-/* KEYMGMT provider interface functions */
-void *evp_keymgmt_importdomparams(const EVP_KEYMGMT *keymgmt,
-                                  const OSSL_PARAM params[]);
-void *evp_keymgmt_gendomparams(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
-void evp_keymgmt_freedomparams(const EVP_KEYMGMT *keymgmt,
-                               void *provdomparams);
-int evp_keymgmt_exportdomparams(const EVP_KEYMGMT *keymgmt,
-                                void *provdomparams,
-                                OSSL_CALLBACK *param_cb, void *cbarg);
+void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection);
+int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
+                                 void *template);
+int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
+                               const OSSL_PARAM params[]);
 const OSSL_PARAM *
-evp_keymgmt_importdomparam_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *
-evp_keymgmt_exportdomparam_types(const EVP_KEYMGMT *keymgmt);
-int evp_keymgmt_get_domparam_params(const EVP_KEYMGMT *keymgmt,
-                                    void *provdomparam, OSSL_PARAM params[]);
-const OSSL_PARAM *
-evp_keymgmt_gettable_domparam_params(const EVP_KEYMGMT *keymgmt);
+evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt);
+void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
+                      OSSL_CALLBACK *cb, void *cbarg);
+void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);
 
-void *evp_keymgmt_importkey(const EVP_KEYMGMT *keymgmt,
-                            const OSSL_PARAM params[]);
-void *evp_keymgmt_genkey(const EVP_KEYMGMT *keymgmt, void *domparams,
-                         const OSSL_PARAM params[]);
-void *evp_keymgmt_loadkey(const EVP_KEYMGMT *keymgmt,
-                          void *id, size_t idlen);
-void evp_keymgmt_freekey(const EVP_KEYMGMT *keymgmt, void *provkey);
-int evp_keymgmt_exportkey(const EVP_KEYMGMT *keymgmt, void *provkey,
-                          OSSL_CALLBACK *param_cb, void *cbarg);
-const OSSL_PARAM *evp_keymgmt_importkey_types(const EVP_KEYMGMT *keymgmt);
-const OSSL_PARAM *evp_keymgmt_exportkey_types(const EVP_KEYMGMT *keymgmt);
-int evp_keymgmt_get_key_params(const EVP_KEYMGMT *keymgmt,
-                               void *provkey, OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_gettable_key_params(const EVP_KEYMGMT *keymgmt);
+int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
+int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
+                         int selection);
+int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
+                      const void *keydata1, const void *keydata2,
+                      int selection);
+
+int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
+                       int selection, const OSSL_PARAM params[]);
+const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
+                                           int selection);
+int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
+                       int selection, OSSL_CALLBACK *param_cb, void *cbarg);
+const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
+                                           int selection);
+int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
+                     void *keydata_to, const void *keydata_from,
+                     int selection);
 
 /* Pulling defines out of C source files */
 
@@ -655,3 +735,22 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
 const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
 
+#ifndef FIPS_MODULE
+/*
+ * Internal helpers for stricter EVP_PKEY_CTX_{set,get}_params().
+ *
+ * Return 1 on success, 0 or negative for errors.
+ *
+ * In particular they return -2 if any of the params is not supported.
+ *
+ * They are not available in FIPS_MODULE as they depend on
+ *      - EVP_PKEY_CTX_{get,set}_params()
+ *      - EVP_PKEY_CTX_{gettable,settable}_params()
+ *
+ */
+int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+
+EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
+                             const char *propq);
+#endif /* !defined(FIPS_MODULE) */

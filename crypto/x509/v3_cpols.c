@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,11 @@
 
 #include "pcy_local.h"
 #include "ext_dat.h"
+
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(POLICYINFO)
+DEFINE_STACK_OF(POLICYQUALINFO)
+DEFINE_STACK_OF(ASN1_INTEGER)
 
 /* Certificate policies extension support: this one is a bit complex... */
 

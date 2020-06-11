@@ -62,15 +62,6 @@ generate their own DH parameters during the installation process using the
 openssl L<openssl-dhparam(1)> application. This application
 guarantees that "strong" primes are used.
 
-Files dh2048.pem, and dh4096.pem in the 'apps' directory of the current
-version of the OpenSSL distribution contain the 'SKIP' DH parameters,
-which use safe primes and were generated verifiably pseudo-randomly.
-These files can be converted into C code using the B<-C> option of the
-L<openssl-dhparam(1)> application. Generation of custom DH
-parameters during installation should still be preferred to stop an
-attacker from specializing on a commonly used group. File dh1024.pem
-contains old parameters that must not be used by applications.
-
 An application may either directly specify the DH parameters or
 can supply the DH parameters via a callback function.
 
@@ -125,7 +116,7 @@ L<openssl-ciphers(1)>, L<openssl-dhparam(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

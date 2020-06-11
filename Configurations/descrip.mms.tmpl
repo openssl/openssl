@@ -28,14 +28,6 @@
       (my $x = shift) =~ s|\]$|...]|;
       $x
   }
-  sub move {
-      my $f = catdir(@_);
-      my $b = abs2rel(rel2abs("."),rel2abs($f));
-      $sourcedir = catdir($b,$sourcedir)
-          if !file_name_is_absolute($sourcedir);
-      $builddir = catdir($b,$builddir)
-          if !file_name_is_absolute($builddir);
-      "";
   }
 
   # Because we need to make two computations of these data,
@@ -57,6 +49,10 @@
   our @install_engines =
       grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
              && $unified_info{attributes}->{modules}->{$_}->{engine} }
+      @{$unified_info{modules}};
+  our @install_modules =
+      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+             && !$unified_info{attributes}->{modules}->{$_}->{engine} }
       @{$unified_info{modules}};
   our @install_programs =
       grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
@@ -140,6 +136,7 @@ GENERATED={- # common0.tmpl provides @generated
 INSTALL_LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @install_libs) -}
 INSTALL_SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @install_shlibs) -}
 INSTALL_ENGINES={- join(", ", map { "-\n\t".$_.".EXE" } @install_engines) -}
+INSTALL_MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @install_modules) -}
 INSTALL_PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @install_programs) -}
 BIN_SCRIPTS={- join(", ", @install_bin_scripts) -}
 MISC_SCRIPTS={- join(", ", @install_misc_scripts) -}
@@ -148,8 +145,8 @@ HTMLDOCS3={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man3}}) -
 HTMLDOCS5={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man5}}) -}
 HTMLDOCS7={- join(", ", map { "-\n\t".$_ } @{$unified_info{htmldocs}->{man7}}) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                catfile("apps","openssl") -}
+APPS_OPENSSL="{- use File::Spec::Functions;
+                 catfile("apps","openssl") -}"
 
 # DESTDIR is for package builders so that they can configure for, say,
 # SYS$COMMON:[OPENSSL] and yet have everything installed in STAGING:[USER].
@@ -359,6 +356,9 @@ CPPFLAGS_Q={- (my $c = $lib_cppflags.$cppflags2.$cppflags1) =~ s|"|""|g;
 # given with /INCLUDE is a fantasy, unfortunately.
 NODEBUG=@
 .FIRST :
+        $(NODEBUG) sourcetop = F$PARSE("$(SRCDIR)","[]A.;",,"SYNTAX_ONLY,NO_CONCEAL") - ".][000000" - "[000000." - "][" - "]A.;" + ".]"
+        $(NODEBUG) DEFINE ossl_sourceroot 'sourcetop'
+        $(NODEBUG) !
         $(NODEBUG) openssl_inc1 = F$PARSE("[.include.openssl]","A.;",,,"syntax_only") - "A.;"
         $(NODEBUG) openssl_inc2 = F$PARSE("{- catdir($config{sourcedir},"[.include.openssl]") -}","A.;",,,"SYNTAX_ONLY") - "A.;"
         $(NODEBUG) internal_inc1 = F$PARSE("[.crypto.include.internal]","A.;",,,"SYNTAX_ONLY") - "A.;"
@@ -409,7 +409,7 @@ NODEBUG=@
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep
+{- dependmagic('build_sw'); -} : build_libs_nodep, build_modules_nodep, build_programs_nodep copy-utils
 {- dependmagic('build_libs'); -} : build_libs_nodep
 {- dependmagic('build_modules'); -} : build_modules_nodep
 {- dependmagic('build_programs'); -} : build_programs_nodep
@@ -437,22 +437,14 @@ build_all_generated : $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all : build_sw build_docs
 
 test : tests
-{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep
+{- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils
         @ ! {- output_off() if $disabled{tests}; "" -}
-        SET DEFAULT [.test]{- move("test") -}
-        CREATE/DIR [.test-runs]
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
-        DEFINE RESULT_D {- builddir(qw(test test-runs)) -}
-        DEFINE OPENSSL_ENGINES {- builddir("engines") -}
-        DEFINE OPENSSL_MODULES {- builddir("providers") -}
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
-        DEASSIGN OPENSSL_MODULES
-        DEASSIGN OPENSSL_ENGINES
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
-        SET DEFAULT [-]{- move("..") -}
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}
@@ -534,11 +526,11 @@ descrip.mms : FORCE
 
 # Install helper targets #############################################
 
-install_sw : install_dev install_engines install_runtime -
-             install_startup install_ivp
+install_sw : install_dev install_engines install_modules -
+             install_runtime install_startup install_ivp
 
-uninstall_sw : uninstall_dev uninstall_engines uninstall_runtime -
-               uninstall_startup uninstall_ivp
+uninstall_sw : uninstall_dev uninstall_modules uninstall_engines -
+               uninstall_runtime uninstall_startup uninstall_ivp
 
 install_docs : install_html_docs
 
@@ -579,12 +571,21 @@ install_dev : check_INSTALLTOP install_runtime_libs
 
 install_engines : check_INSTALLTOP install_runtime_libs build_modules
         @ {- output_off() unless scalar @install_engines; "" -} !
-        @ WRITE SYS$OUTPUT "*** Installing ENGINE modules"
+        @ WRITE SYS$OUTPUT "*** Installing engines"
         - CREATE/DIR ossl_installroot:[ENGINES{- $sover_dirname.$target{pointer_size} -}.'arch']
         {- join("\n        ",
                 map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[ENGINES$sover_dirname$target{pointer_size}.'arch']" }
                 @install_engines) -}
         @ {- output_on() unless scalar @install_engines; "" -} !
+
+install_modules : check_INSTALLTOP install_runtime_libs build_modules
+        @ {- output_off() unless scalar @install_modules; "" -} !
+        @ WRITE SYS$OUTPUT "*** Installing modules"
+        - CREATE/DIR ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']
+        {- join("\n        ",
+                map { "COPY/PROT=W:RE $_.EXE ossl_installroot:[MODULES$sover_dirname$target{pointer_size}.'arch']" }
+                @install_modules) -}
+        @ {- output_on() unless scalar @install_modules; "" -} !
 
 install_runtime : install_programs
 
@@ -696,6 +697,14 @@ check_INSTALLTOP :
 
 # Helper targets #####################################################
 
+copy-utils : [.util]wrap.pl
+
+[.util]wrap.pl : configdata.pm
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		CREATE/DIR/LOG [.util]
+	@ IF "$(SRCDIR)" .NES. "$(BLDDIR)" THEN -
+		COPY/LOG ossl_sourceroot:[util]wrap.pl [.util]
+
 # Developer targets ##################################################
 
 debug_logicals :
@@ -782,13 +791,10 @@ reconfigure reconf :
       if ($args{src} =~ /\.html$/) {
 	  my $title = basename($args{src}, ".html");
 	  my $pod = $args{generator}->[0];
+	  my $mkpod2html = sourcefile('util', 'mkpod2html.pl');
 	  return <<"EOF";
 $args{src}: $pod
-	pipe pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. -
-		       --podpath=man1:man3:man5:man7 "--infile=$pod" -
-		      "--title=$title" -
-	| \$(PERL) -pe "s|href=""http://man\\.he\\.net/(man\d/[^""]+)(?:\\.html)?""|href=""../\$1.html|g;" -
-	> \$\@
+	\$(PERL) $mkpod2html -i $pod -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif (platform->isdef($args{src})) {
           my $target = platform->def($args{src});

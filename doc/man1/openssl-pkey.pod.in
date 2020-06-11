@@ -7,13 +7,13 @@
 
 =head1 NAME
 
-openssl-pkey - public or private key processing tool
+openssl-pkey - public or private key processing command
 
 =head1 SYNOPSIS
 
 B<openssl> B<pkey>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>]
+[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
@@ -28,7 +28,10 @@ B<openssl> B<pkey>
 [B<-pubout>]
 [B<-check>]
 [B<-pubcheck>]
+[B<-ec_conv_form> I<arg>]
+[B<-ec_param_enc> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -45,9 +48,15 @@ converted between various forms and their components printed out.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The input and formats; the default is B<PEM>.
+The key input format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output formats; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-in> I<filename>
@@ -114,13 +123,39 @@ components.
 This option checks the correctness of either a public key or the public component
 of a key pair.
 
+=item B<-ec_conv_form> I<arg>
+
+This option only applies to elliptic curve based public and private keys.
+
+This specifies how the points on the elliptic curve are converted
+into octet strings. Possible values are: B<compressed> (the default
+value), B<uncompressed> and B<hybrid>. For more information regarding
+the point conversion forms please read the X9.62 standard.
+B<Note> Due to patent issues the B<compressed> option is disabled
+by default for binary curves and can be enabled by defining
+the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
+
+=item B<-ec_param_enc> I<arg>
+
+This option only applies to elliptic curve based public and private keys.
+
+This specifies how the elliptic curve parameters are encoded.
+Possible value are: B<named_curve>, i.e. the ec parameters are
+specified by an OID, or B<explicit> where the ec parameters are
+explicitly given (see RFC 3279 for the definition of the
+EC parameters structures). The default value is B<named_curve>.
+B<Note> the B<implicitlyCA> alternative, as specified in RFC 3279,
+is currently not implemented in OpenSSL.
+
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
 =head1 EXAMPLES
 
-To remove the pass phrase on an RSA private key:
+To remove the pass phrase on a private key:
 
  openssl pkey -in key.pem -out keyout.pem
 
@@ -144,6 +179,14 @@ To just output the public part of a private key:
 
  openssl pkey -in key.pem -pubout -out pubkey.pem
 
+To change the EC parameters encoding to B<explicit>:
+
+ openssl pkey -in key.pem -ec_param_enc explicit -out keyout.pem
+
+To change the EC point conversion form to B<compressed>:
+
+ openssl pkey -in key.pem -ec_conv_form compressed -out keyout.pem
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
@@ -156,7 +199,7 @@ L<openssl-gendsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

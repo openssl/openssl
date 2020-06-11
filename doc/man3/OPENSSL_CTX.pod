@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free - OpenSSL library context
+OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free, OPENSSL_CTX_load_config
+- OpenSSL library context
 
 =head1 SYNOPSIS
 
@@ -11,6 +12,7 @@ OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free - OpenSSL library context
  typedef struct openssl_ctx_st OPENSSL_CTX;
 
  OPENSSL_CTX *OPENSSL_CTX_new(void);
+ int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file);
  void OPENSSL_CTX_free(OPENSSL_CTX *ctx);
 
 =head1 DESCRIPTION
@@ -26,6 +28,10 @@ multi-threaded applications to properly clean up thread local resources before
 the OPENSSL_CTX is freed.
 See L<OPENSSL_thread_stop_ex(3)> for more information.
 
+OPENSSL_CTX_load_config() loads a configuration file using the given C<ctx>.
+This can be used to associate a libctx with providers that are loaded from
+a configuration.
+
 OPENSSL_CTX_free() frees the given C<ctx>.
 
 =head1 RETURN VALUES
@@ -37,12 +43,12 @@ OPENSSL_CTX_free() doesn't return any value.
 
 =head1 HISTORY
 
-OPENSSL_CTX, OPENSSL_CTX_new() and OPENSSL_CTX_free()
+OPENSSL_CTX, OPENSSL_CTX_new(), OPENSSL_CTX_load_config() and OPENSSL_CTX_free()
 were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

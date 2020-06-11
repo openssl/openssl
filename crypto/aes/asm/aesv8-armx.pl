@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2014-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2014-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -211,7 +211,12 @@ $code.=<<___;
 .Loop192:
 	vtbl.8	$key,{$in1},$mask
 	vext.8	$tmp,$zero,$in0,#12
+#ifdef __ARMEB__
+	vst1.32	{$in1},[$out],#16
+	sub	$out,$out,#8
+#else
 	vst1.32	{$in1},[$out],#8
+#endif
 	aese	$key,$zero
 	subs	$bits,$bits,#1
 
@@ -1772,8 +1777,11 @@ $code.=<<___;
 	ldr		$rounds,[$key,#240]
 
 	ldr		$ctr, [$ivp, #12]
+#ifdef __ARMEB__
+	vld1.8		{$dat0},[$ivp]
+#else
 	vld1.32		{$dat0},[$ivp]
-
+#endif
 	vld1.32		{q8-q9},[$key]		// load key schedule...
 	sub		$rounds,$rounds,#4
 	mov		$step,#16
@@ -2237,4 +2245,4 @@ if ($flavour =~ /64/) {			######## 64-bit code
     }
 }
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

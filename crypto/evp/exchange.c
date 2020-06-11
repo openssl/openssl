@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -43,7 +43,7 @@ static void *evp_keyexch_from_dispatch(int name_id,
                                        OSSL_PROVIDER *prov)
 {
     EVP_KEYEXCH *exchange = NULL;
-    int fncnt = 0, paramfncnt = 0;
+    int fncnt = 0, sparamfncnt = 0, gparamfncnt = 0;
 
     if ((exchange = evp_keyexch_new(prov)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -88,28 +88,44 @@ static void *evp_keyexch_from_dispatch(int name_id,
                 break;
             exchange->dupctx = OSSL_get_OP_keyexch_dupctx(fns);
             break;
+        case OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS:
+            if (exchange->get_ctx_params != NULL)
+                break;
+            exchange->get_ctx_params = OSSL_get_OP_keyexch_get_ctx_params(fns);
+            gparamfncnt++;
+            break;
+        case OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS:
+            if (exchange->gettable_ctx_params != NULL)
+                break;
+            exchange->gettable_ctx_params
+                = OSSL_get_OP_keyexch_gettable_ctx_params(fns);
+            gparamfncnt++;
+            break;
         case OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS:
             if (exchange->set_ctx_params != NULL)
                 break;
             exchange->set_ctx_params = OSSL_get_OP_keyexch_set_ctx_params(fns);
-            paramfncnt++;
+            sparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS:
             if (exchange->settable_ctx_params != NULL)
                 break;
             exchange->settable_ctx_params
                 = OSSL_get_OP_keyexch_settable_ctx_params(fns);
-            paramfncnt++;
+            sparamfncnt++;
             break;
         }
     }
-    if (fncnt != 4 || (paramfncnt != 0 && paramfncnt != 2)) {
+    if (fncnt != 4
+            || (gparamfncnt != 0 && gparamfncnt != 2)
+            || (sparamfncnt != 0 && sparamfncnt != 2)) {
         /*
          * In order to be a consistent set of functions we must have at least
          * a complete set of "exchange" functions: init, derive, newctx,
          * and freectx. The set_ctx_params and settable_ctx_params functions are
          * optional, but if one of them is present then the other one must also
-         * be present. The dupctx and set_peer functions are optional.
+         * be present. Same goes for get_ctx_params and gettable_ctx_params.
+         * The dupctx and set_peer functions are optional.
          */
         EVPerr(EVP_F_EVP_KEYEXCH_FROM_DISPATCH,
                EVP_R_INVALID_PROVIDER_FUNCTIONS);
@@ -181,13 +197,16 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      */
     ERR_set_mark();
 
-    if (ctx->engine != NULL || ctx->keytype == NULL)
+    if (ctx->keymgmt == NULL)
         goto legacy;
 
-    /* Ensure that the key is provided.  If not, go legacy */
+    /*
+     * Ensure that the key is provided, either natively, or as a cached export.
+     *  If not, go legacy
+     */
     tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_make_provided(ctx->pkey, ctx->libctx,
-                                     &tmp_keymgmt, ctx->propquery, 0);
+    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                          &tmp_keymgmt, ctx->propquery);
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
@@ -245,6 +264,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
     return ret ? 1 : 0;
  err:
+    evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return 0;
 
@@ -256,6 +276,9 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      */
     ERR_pop_to_mark();
 
+#ifdef FIPS_MODULE
+    return 0;
+#else
     if (ctx->pmeth == NULL || ctx->pmeth->derive == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
@@ -267,11 +290,12 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
     if (ret <= 0)
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
+#endif
 }
 
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 {
-    int ret;
+    int ret = 0;
     void *provkey = NULL;
 
     if (ctx == NULL) {
@@ -289,13 +313,24 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
         return -2;
     }
 
-    provkey = evp_keymgmt_export_to_provider(peer, ctx->keymgmt, 0);
-    /* If export failed, legacy may be able to pick it up */
+    provkey = evp_pkey_export_to_provider(peer, ctx->libctx, &ctx->keymgmt,
+                                          ctx->propquery);
+    /*
+     * If making the key provided wasn't possible, legacy may be able to pick
+     * it up
+     */
     if (provkey == NULL)
         goto legacy;
     return ctx->op.kex.exchange->set_peer(ctx->op.kex.exchprovctx, provkey);
 
  legacy:
+#ifdef FIPS_MODULE
+    return ret;
+#else
+    /*
+     * TODO(3.0) investigate the case where the operation is deemed legacy,
+     * but the given peer key is provider only.
+     */
     if (ctx->pmeth == NULL
         || !(ctx->pmeth->derive != NULL
              || ctx->pmeth->encrypt != NULL
@@ -333,13 +368,13 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 
     /*
      * For clarity.  The error is if parameters in peer are
-     * present (!missing) but don't match.  EVP_PKEY_cmp_parameters may return
+     * present (!missing) but don't match.  EVP_PKEY_parameters_eq may return
      * 1 (match), 0 (don't match) and -2 (comparison is not defined).  -1
      * (different key types) is impossible here because it is checked earlier.
      * -2 is OK for us here, as well as 1, so we can check for 0 only.
      */
     if (!EVP_PKEY_missing_parameters(peer) &&
-        !EVP_PKEY_cmp_parameters(ctx->pkey, peer)) {
+        !EVP_PKEY_parameters_eq(ctx->pkey, peer)) {
         EVPerr(EVP_F_EVP_PKEY_DERIVE_SET_PEER, EVP_R_DIFFERENT_PARAMETERS);
         return -1;
     }
@@ -356,6 +391,7 @@ int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer)
 
     EVP_PKEY_up_ref(peer);
     return 1;
+#endif
 }
 
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)

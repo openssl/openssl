@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -26,6 +26,11 @@ OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s);
 /* Property checker of query vs definition */
 int ossl_property_match_count(const OSSL_PROPERTY_LIST *query,
                               const OSSL_PROPERTY_LIST *defn);
+int ossl_property_is_enabled(OPENSSL_CTX *ctx,  const char *property_name,
+                             const OSSL_PROPERTY_LIST *prop_list);
+/* Free a parsed property list */
+void ossl_property_free(OSSL_PROPERTY_LIST *p);
+
 
 /* Implementation store functions */
 OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx);
@@ -40,6 +45,10 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
                             const char *prop_query, void **result);
 int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
                                             const char *prop_query);
+int ossl_method_store_merge_global_properties(OSSL_METHOD_STORE *store,
+                                              const char *prop_query);
+int ossl_method_store_global_property_is_enabled(OSSL_METHOD_STORE *store,
+                                                 const char *prop_name);
 
 /* property query cache functions */
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,

@@ -5,7 +5,8 @@ SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
         md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
-        err comp ocsp cms ts srp cmac ct async ess crmf cmp serializer
+        err comp http ocsp cms ts srp cmac ct async ess crmf cmp serializer \
+        ffc
 
 LIBS=../libcrypto
 
@@ -60,24 +61,26 @@ ENDIF
 
 # The Core
 $CORE_COMMON=provider_core.c provider_predefined.c \
-        core_fetch.c core_algorithm.c core_namemap.c
+        core_fetch.c core_algorithm.c core_namemap.c self_test_core.c
 
-SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c self_test_core.c
+SOURCE[../libcrypto]=$CORE_COMMON provider_conf.c
 SOURCE[../providers/libfips.a]=$CORE_COMMON
 
 # Central utilities
 $UTIL_COMMON=\
         cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
         ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
-        context.c sparse_array.c asn1_dsa.c packet.c param_build.c $CPUIDASM
+        context.c sparse_array.c asn1_dsa.c packet.c param_build.c $CPUIDASM \
+        param_build_set.c der_writer.c
 $UTIL_DEFINE=$CPUIDDEF
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
-        o_fopen.c getenv.c o_init.c o_fips.c init.c trace.c provider.c \
+        o_fopen.c getenv.c o_init.c init.c trace.c provider.c \
         $UPLINKSRC
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
+SOURCE[../providers/liblegacy.a]=$UTIL_COMMON
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
@@ -85,12 +88,12 @@ DEFINE[../libcrypto]=$UTIL_DEFINE $UPLINKDEF
 DEFINE[../providers/libfips.a]=$UTIL_DEFINE
 DEFINE[../providers/fips]=$UTIL_DEFINE
 DEFINE[../providers/libimplementations.a]=$UTIL_DEFINE
+DEFINE[../providers/liblegacy.a]=$UTIL_DEFINE
 DEFINE[../providers/libcommon.a]=$UTIL_DEFINE
 
 DEPEND[info.o]=buildinf.h
 DEPEND[cversion.o]=buildinf.h
 GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(LIB_CFLAGS) $(CPPFLAGS_Q)" "$(PLATFORM)"
-DEPEND[buildinf.h]=../configdata.pm
 
 GENERATE[uplink-x86.s]=../ms/uplink-x86.pl
 GENERATE[uplink-x86_64.s]=../ms/uplink-x86_64.pl

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -18,11 +18,13 @@
 extern "C" {
 # endif
 
+# define OSSL_PARAM_UNMODIFIED ((size_t)-1)
+
 # define OSSL_PARAM_END \
     { NULL, 0, NULL, 0, 0 }
 
 # define OSSL_PARAM_DEFN(key, type, addr, sz)    \
-    { (key), (type), (addr), (sz), 0 }
+    { (key), (type), (addr), (sz), OSSL_PARAM_UNMODIFIED }
 
 /* Basic parameter types without return sizes */
 # define OSSL_PARAM_int(key, addr) \
@@ -89,15 +91,10 @@ OSSL_PARAM OSSL_PARAM_construct_octet_ptr(const char *key, void **buf,
                                           size_t bsize);
 OSSL_PARAM OSSL_PARAM_construct_end(void);
 
-int OSSL_PARAM_construct_from_text(OSSL_PARAM *to,
-                                   const OSSL_PARAM *paramdefs,
-                                   const char *key, const char *value,
-                                   size_t value_n,
-                                   void *buf, size_t *buf_n);
 int OSSL_PARAM_allocate_from_text(OSSL_PARAM *to,
                                   const OSSL_PARAM *paramdefs,
                                   const char *key, const char *value,
-                                  size_t value_n);
+                                  size_t value_n, int *found);
 
 int OSSL_PARAM_get_int(const OSSL_PARAM *p, int *val);
 int OSSL_PARAM_get_uint(const OSSL_PARAM *p, unsigned int *val);
@@ -139,6 +136,9 @@ int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
                              size_t *used_len);
 int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                              size_t used_len);
+
+int OSSL_PARAM_modified(const OSSL_PARAM *p);
+void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p);
 
 # ifdef  __cplusplus
 }

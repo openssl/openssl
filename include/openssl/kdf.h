@@ -30,20 +30,20 @@ void EVP_KDF_free(EVP_KDF *kdf);
 EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                        const char *properties);
 
-EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
-void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx);
-EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src);
+EVP_KDF_CTX *EVP_KDF_new_ctx(EVP_KDF *kdf);
+void EVP_KDF_free_ctx(EVP_KDF_CTX *ctx);
+EVP_KDF_CTX *EVP_KDF_dup_ctx(const EVP_KDF_CTX *src);
 int EVP_KDF_number(const EVP_KDF *kdf);
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name);
 const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf);
-const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx);
+const EVP_KDF *EVP_KDF_get_ctx_kdf(EVP_KDF_CTX *ctx);
 
 void EVP_KDF_reset(EVP_KDF_CTX *ctx);
 size_t EVP_KDF_size(EVP_KDF_CTX *ctx);
 int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen);
 int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[]);
-int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
-int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
+int EVP_KDF_get_ctx_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[]);
+int EVP_KDF_set_ctx_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[]);
 const OSSL_PARAM *EVP_KDF_gettable_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_gettable_ctx_params(const EVP_KDF *kdf);
 const OSSL_PARAM *EVP_KDF_settable_ctx_params(const EVP_KDF *kdf);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -99,7 +99,7 @@
  * Typically, the DRBGs will set a minimum larger than this so optimal
  * allocation ought to take place (for full quality seed material).
  *
- * The normal value has been chosed by noticing that the rand_drbg_get_nonce
+ * The normal value has been chosen by noticing that the rand_drbg_get_nonce
  * function is usually the largest of the built in allocation (twenty four
  * bytes and then appending another sixteen bytes).  This means the buffer ends
  * with 40 bytes.  The value of forty eight is comfortably above this which
@@ -175,9 +175,11 @@ typedef struct rand_drbg_hmac_st {
  * The state of a DRBG AES-CTR.
  */
 typedef struct rand_drbg_ctr_st {
-    EVP_CIPHER_CTX *ctx;
+    EVP_CIPHER_CTX *ctx_ecb;
+    EVP_CIPHER_CTX *ctx_ctr;
     EVP_CIPHER_CTX *ctx_df;
-    EVP_CIPHER *cipher;
+    EVP_CIPHER *cipher_ecb;
+    EVP_CIPHER *cipher_ctr;
     size_t keylen;
     unsigned char K[32];
     unsigned char V[16];
@@ -308,7 +310,7 @@ struct rand_drbg_st {
     size_t seedlen;
     DRBG_STATUS state;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* Application data, mainly used in the KATs. */
     CRYPTO_EX_DATA ex_data;
 #endif
@@ -328,6 +330,8 @@ struct rand_drbg_st {
     RAND_DRBG_cleanup_entropy_fn cleanup_entropy;
     RAND_DRBG_get_nonce_fn get_nonce;
     RAND_DRBG_cleanup_nonce_fn cleanup_nonce;
+
+    void *callback_data;
 };
 
 /* The global RAND method, and the global buffer and DRBG instance. */

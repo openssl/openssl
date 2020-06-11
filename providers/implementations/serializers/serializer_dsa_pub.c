@@ -1,11 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <openssl/core_numbers.h>
 #include <openssl/err.h>
@@ -15,6 +21,7 @@
 #include <openssl/params.h>
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn dsa_pub_newctx;
@@ -42,23 +49,29 @@ static void dsa_pub_freectx(void *ctx)
 }
 
 /* Public key : DER */
-static int dsa_pub_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_pub_der_data(void *ctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx, params); /* ctx == provctx */
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_pub_der(ctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        /* ctx == provctx */
+        if ((dsa = dsa_new(ctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_pub_der(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }
 
-static int dsa_pub_der(void *ctx, void *dsa, BIO *out,
+static int dsa_pub_der(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     /*
@@ -66,8 +79,13 @@ static int dsa_pub_der(void *ctx, void *dsa, BIO *out,
      * in crypto/dsa/dsa_ameth.c
      */
     int save_parameters = 1;
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
 
-    return
+    if (out == NULL)
+        return 0;
+
+    ret =
         save_parameters
         ? ossl_prov_write_pub_der_from_obj(out, dsa, EVP_PKEY_DSA,
                                            ossl_prov_prepare_all_dsa_params,
@@ -76,53 +94,87 @@ static int dsa_pub_der(void *ctx, void *dsa, BIO *out,
                                            ossl_prov_prepare_dsa_params,
                                            ossl_prov_dsa_pub_to_der);
 
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Public key : PEM */
-static int dsa_pub_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_pub_pem_data(void *ctx, const OSSL_PARAM params[],
+                            OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx, params); /* ctx == provctx */
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_pub_pem(ctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        /* ctx == provctx */
+        if ((dsa = dsa_new(ctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_pub_pem(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }
 
-static int dsa_pub_pem(void *ctx, void *dsa, BIO *out,
+static int dsa_pub_pem(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_write_pub_pem_from_obj(out, dsa, EVP_PKEY_DSA,
-                                            ossl_prov_prepare_dsa_params,
-                                            ossl_prov_dsa_pub_to_der);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_write_pub_pem_from_obj(out, dsa, EVP_PKEY_DSA,
+                                           ossl_prov_prepare_dsa_params,
+                                           ossl_prov_dsa_pub_to_der);
+
+    BIO_free(out);
+
+    return ret;
 }
 
-static int dsa_pub_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_pub_print_data(void *ctx, const OSSL_PARAM params[],
+                              OSSL_CORE_BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dsa_importkey =
-        ossl_prov_get_dsa_importkey();
+    OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
+    OSSL_OP_keymgmt_free_fn *dsa_free = ossl_prov_get_keymgmt_dsa_free();
+    OSSL_OP_keymgmt_import_fn *dsa_import = ossl_prov_get_keymgmt_dsa_import();
     int ok = 0;
 
-    if (dsa_importkey != NULL) {
-        DSA *dsa = dsa_importkey(ctx, params); /* ctx == provctx */
+    if (dsa_import != NULL) {
+        DSA *dsa;
 
-        ok = dsa_pub_print(ctx, dsa, out, cb, cbarg);
-        DSA_free(dsa);
+        /* ctx == provctx */
+        if ((dsa = dsa_new(ctx)) != NULL
+            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_pub_print(ctx, dsa, out, cb, cbarg))
+            ok = 1;
+        dsa_free(dsa);
     }
     return ok;
 }
 
-static int dsa_pub_print(void *ctx, void *dsa, BIO *out,
+static int dsa_pub_print(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_dsa(out, dsa, 0);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_dsa(out, dsa, 0);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH dsa_pub_der_serializer_functions[] = {

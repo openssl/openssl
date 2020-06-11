@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,20 +35,17 @@ size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
                  const unsigned char **in, size_t *inlen)
 {
     size_t blockmask = ~(blocksize - 1);
+    size_t bufremain = blocksize - *buflen;
 
     assert(*buflen <= blocksize);
     assert(blocksize > 0 && (blocksize & (blocksize - 1)) == 0);
 
-    if (*buflen != blocksize && (*buflen != 0 || *inlen < blocksize)) {
-        size_t bufremain = blocksize - *buflen;
-
-        if (*inlen < bufremain)
-            bufremain = *inlen;
-        memcpy(buf + *buflen, *in, bufremain);
-        *in += bufremain;
-        *inlen -= bufremain;
-        *buflen += bufremain;
-    }
+    if (*inlen < bufremain)
+        bufremain = *inlen;
+    memcpy(buf + *buflen, *in, bufremain);
+    *in += bufremain;
+    *inlen -= bufremain;
+    *buflen += bufremain;
 
     return *inlen & blockmask;
 }

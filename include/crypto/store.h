@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,7 +20,8 @@
  * as usual with OSSLSTORE_load() and OSSLSTORE_eof().
  */
 OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
-                                          void *ui_data);
+                                          void *ui_data, OPENSSL_CTX *libctx,
+                                          const char *propq);
 int ossl_store_detach_pem_bio(OSSL_STORE_CTX *ctx);
 
 void ossl_store_cleanup_int(void);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -22,6 +22,9 @@
 #define ASN1_GEN_FLAG_FORMAT    (ASN1_GEN_FLAG|8)
 
 #define ASN1_GEN_STR(str,val)   {str, sizeof(str) - 1, val}
+
+DEFINE_STACK_OF(ASN1_TYPE)
+DEFINE_STACK_OF(CONF_VALUE)
 
 #define ASN1_FLAG_EXP_MAX       20
 /* Maximum number of nested sequences */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -7,6 +7,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <string.h>
 
@@ -17,7 +23,7 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
+EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
@@ -59,11 +65,13 @@ EC_GROUP *EC_GROUP_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
     return NULL;
 }
 
-#ifndef FIPS_MODE
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 {
-    return EC_GROUP_new_ex(NULL, meth);
+    return ec_group_new_ex(NULL, meth);
 }
+# endif
 #endif
 
 void EC_pre_comp_free(EC_GROUP *group)
@@ -249,7 +257,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
     if (a == NULL)
         return NULL;
 
-    if ((t = EC_GROUP_new_ex(a->libctx, a->meth)) == NULL)
+    if ((t = ec_group_new_ex(a->libctx, a->meth)) == NULL)
         return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;
@@ -264,6 +272,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
         return t;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EC_METHOD *EC_GROUP_method_of(const EC_GROUP *group)
 {
     return group->meth;
@@ -273,6 +282,7 @@ int EC_METHOD_get_field_type(const EC_METHOD *meth)
 {
     return meth->field_type;
 }
+#endif
 
 static int ec_precompute_mont_data(EC_GROUP *);
 
@@ -469,6 +479,11 @@ const BIGNUM *EC_GROUP_get0_field(const EC_GROUP *group)
     return group->field;
 }
 
+int EC_GROUP_get_field_type(const EC_GROUP *group)
+{
+    return group->meth->field_type;
+}
+
 void EC_GROUP_set_asn1_flag(EC_GROUP *group, int flag)
 {
     group->asn1_flag = flag;
@@ -591,18 +606,12 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
 {
     int r = 0;
     BIGNUM *a1, *a2, *a3, *b1, *b2, *b3;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *ctx_new = NULL;
-
-    if (ctx == NULL)
-        ctx_new = ctx = BN_CTX_new();
 #endif
-    if (ctx == NULL)
-        return -1;
 
     /* compare the field types */
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(a)) !=
-        EC_METHOD_get_field_type(EC_GROUP_method_of(b)))
+    if (EC_GROUP_get_field_type(a) != EC_GROUP_get_field_type(b))
         return 1;
     /* compare the curve name (if present in both) */
     if (EC_GROUP_get_curve_name(a) && EC_GROUP_get_curve_name(b) &&
@@ -610,6 +619,13 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
         return 1;
     if (a->meth->flags & EC_FLAGS_CUSTOM_CURVE)
         return 0;
+
+#ifndef FIPS_MODULE
+    if (ctx == NULL)
+        ctx_new = ctx = BN_CTX_new();
+#endif
+    if (ctx == NULL)
+        return -1;
 
     BN_CTX_start(ctx);
     a1 = BN_CTX_get(ctx);
@@ -620,7 +636,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     b3 = BN_CTX_get(ctx);
     if (b3 == NULL) {
         BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         BN_CTX_free(ctx_new);
 #endif
         return -1;
@@ -672,7 +688,7 @@ int EC_GROUP_cmp(const EC_GROUP *a, const EC_GROUP *b, BN_CTX *ctx)
     }
 end:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(ctx_new);
 #endif
     return r;
@@ -769,10 +785,12 @@ EC_POINT *EC_POINT_dup(const EC_POINT *a, const EC_GROUP *group)
     return t;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 const EC_METHOD *EC_POINT_method_of(const EC_POINT *point)
 {
     return point->meth;
 }
+#endif
 
 int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
 {
@@ -788,12 +806,13 @@ int EC_POINT_set_to_infinity(const EC_GROUP *group, EC_POINT *point)
     return group->meth->point_set_to_infinity(group, point);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
                                              EC_POINT *point, const BIGNUM *x,
                                              const BIGNUM *y, const BIGNUM *z,
                                              BN_CTX *ctx)
 {
-    if (group->meth->point_set_Jprojective_coordinates_GFp == 0) {
+    if (group->meth->field_type != NID_X9_62_prime_field) {
         ECerr(EC_F_EC_POINT_SET_JPROJECTIVE_COORDINATES_GFP,
               ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
@@ -803,8 +822,7 @@ int EC_POINT_set_Jprojective_coordinates_GFp(const EC_GROUP *group,
               EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
-    return group->meth->point_set_Jprojective_coordinates_GFp(group, point, x,
-                                                              y, z, ctx);
+    return ec_GFp_simple_set_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
 }
 
 int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
@@ -812,7 +830,7 @@ int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
                                              BIGNUM *y, BIGNUM *z,
                                              BN_CTX *ctx)
 {
-    if (group->meth->point_get_Jprojective_coordinates_GFp == 0) {
+    if (group->meth->field_type != NID_X9_62_prime_field) {
         ECerr(EC_F_EC_POINT_GET_JPROJECTIVE_COORDINATES_GFP,
               ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
@@ -822,9 +840,9 @@ int EC_POINT_get_Jprojective_coordinates_GFp(const EC_GROUP *group,
               EC_R_INCOMPATIBLE_OBJECTS);
         return 0;
     }
-    return group->meth->point_get_Jprojective_coordinates_GFp(group, point, x,
-                                                              y, z, ctx);
+    return ec_GFp_simple_get_Jprojective_coordinates_GFp(group, point, x, y, z, ctx);
 }
+#endif
 
 int EC_POINT_set_affine_coordinates(const EC_GROUP *group, EC_POINT *point,
                                     const BIGNUM *x, const BIGNUM *y,
@@ -996,6 +1014,7 @@ int EC_POINT_cmp(const EC_GROUP *group, const EC_POINT *a, const EC_POINT *b,
     return group->meth->point_cmp(group, a, b, ctx);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_POINT_make_affine(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 {
     if (group->meth->make_affine == 0) {
@@ -1026,6 +1045,7 @@ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
     }
     return group->meth->points_make_affine(group, num, points, ctx);
 }
+#endif
 
 /*
  * Functions for point multiplication. If group->meth->mul is 0, we use the
@@ -1033,15 +1053,33 @@ int EC_POINTs_make_affine(const EC_GROUP *group, size_t num,
  * methods.
  */
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                   size_t num, const EC_POINT *points[],
                   const BIGNUM *scalars[], BN_CTX *ctx)
 {
     int ret = 0;
     size_t i = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
+#endif
 
+    if (!ec_point_is_compat(r, group)) {
+        ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+        return 0;
+    }
+
+    if (scalar == NULL && num == 0)
+        return EC_POINT_set_to_infinity(group, r);
+
+    for (i = 0; i < num; i++) {
+        if (!ec_point_is_compat(points[i], group)) {
+            ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+            return 0;
+        }
+    }
+
+#ifndef FIPS_MODULE
     if (ctx == NULL)
         ctx = new_ctx = BN_CTX_secure_new();
 #endif
@@ -1050,49 +1088,60 @@ int EC_POINTs_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
         return 0;
     }
 
-    if ((scalar == NULL) && (num == 0)) {
-        return EC_POINT_set_to_infinity(group, r);
-    }
-
-    if (!ec_point_is_compat(r, group)) {
-        ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
-        return 0;
-    }
-    for (i = 0; i < num; i++) {
-        if (!ec_point_is_compat(points[i], group)) {
-            ECerr(EC_F_EC_POINTS_MUL, EC_R_INCOMPATIBLE_OBJECTS);
-            return 0;
-        }
-    }
-
     if (group->meth->mul != NULL)
         ret = group->meth->mul(group, r, scalar, num, points, scalars, ctx);
     else
         /* use default */
         ret = ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
+    BN_CTX_free(new_ctx);
+#endif
+    return ret;
+}
+#endif
+
+int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
+                 const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
+{
+    int ret = 0;
+    size_t num;
+#ifndef FIPS_MODULE
+    BN_CTX *new_ctx = NULL;
+#endif
+
+    if (!ec_point_is_compat(r, group)
+        || (point != NULL && !ec_point_is_compat(point, group))) {
+        ECerr(EC_F_EC_POINT_MUL, EC_R_INCOMPATIBLE_OBJECTS);
+        return 0;
+    }
+
+    if (g_scalar == NULL && p_scalar == NULL)
+        return EC_POINT_set_to_infinity(group, r);
+
+#ifndef FIPS_MODULE
+    if (ctx == NULL)
+        ctx = new_ctx = BN_CTX_secure_new();
+#endif
+    if (ctx == NULL) {
+        ECerr(EC_F_EC_POINT_MUL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    num = (point != NULL && p_scalar != NULL) ? 1 : 0;
+    if (group->meth->mul != NULL)
+        ret = group->meth->mul(group, r, g_scalar, num, &point, &p_scalar, ctx);
+    else
+        /* use default */
+        ret = ec_wNAF_mul(group, r, g_scalar, num, &point, &p_scalar, ctx);
+
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;
 }
 
-int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
-                 const EC_POINT *point, const BIGNUM *p_scalar, BN_CTX *ctx)
-{
-    /* just a convenient interface to EC_POINTs_mul() */
-
-    const EC_POINT *points[1];
-    const BIGNUM *scalars[1];
-
-    points[0] = point;
-    scalars[0] = p_scalar;
-
-    return EC_POINTs_mul(group, r, g_scalar,
-                         (point != NULL
-                          && p_scalar != NULL), points, scalars, ctx);
-}
-
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     if (group->meth->mul == 0)
@@ -1117,6 +1166,7 @@ int EC_GROUP_have_precompute_mult(const EC_GROUP *group)
         return 0;               /* cannot tell whether precomputation has
                                  * been performed */
 }
+#endif
 
 /*
  * ec_precompute_mont_data sets |group->mont_data| from |group->order| and
@@ -1151,7 +1201,7 @@ static int ec_precompute_mont_data(EC_GROUP *group)
     return ret;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 int EC_KEY_set_ex_data(EC_KEY *key, int idx, void *arg)
 {
     return CRYPTO_set_ex_data(&key->ex_data, idx, arg);
@@ -1175,17 +1225,19 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
 {
     BIGNUM *e = NULL;
     int ret = 0;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX *new_ctx = NULL;
+#endif
 
+    if (group->mont_data == NULL)
+        return 0;
+
+#ifndef FIPS_MODULE
     if (ctx == NULL)
         ctx = new_ctx = BN_CTX_secure_new();
 #endif
     if (ctx == NULL)
         return 0;
-
-    if (group->mont_data == NULL)
-        goto err;
 
     BN_CTX_start(ctx);
     if ((e = BN_CTX_get(ctx)) == NULL)
@@ -1210,7 +1262,7 @@ static int ec_field_inverse_mod_ord(const EC_GROUP *group, BIGNUM *r,
 
  err:
     BN_CTX_end(ctx);
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     BN_CTX_free(new_ctx);
 #endif
     return ret;

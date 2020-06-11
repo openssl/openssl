@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,11 @@ my $test_name = "test_store";
 setup($test_name);
 
 my $mingw = config('target') =~ m|^mingw|;
+
+my $use_md5 = !disabled("md5");
+my $use_des = !disabled("des"); # also affects 3des and pkcs12 app
+my $use_dsa = !disabled("dsa");
+my $use_ecc = !disabled("ec");
 
 my @noexist_files =
     ( "test/blahdiblah.pem",
@@ -40,25 +45,35 @@ my @generated_files =
      "rsa-key-pkcs1.pem", "rsa-key-pkcs1.der",
      "rsa-key-pkcs1-aes128.pem",
      "rsa-key-pkcs8.pem", "rsa-key-pkcs8.der",
-     "rsa-key-pkcs8-pbes1-sha1-3des.pem", "rsa-key-pkcs8-pbes1-sha1-3des.der",
      "rsa-key-pkcs8-pbes2-sha1.pem", "rsa-key-pkcs8-pbes2-sha1.der",
+     "rsa-key-pkcs8-pbes2-sha256.pem", "rsa-key-pkcs8-pbes2-sha256.der",
+    );
+push(@generated_files, (
+     "rsa-key-pkcs8-pbes1-sha1-3des.pem", "rsa-key-pkcs8-pbes1-sha1-3des.der",
+    )) if $use_des;
+push(@generated_files, (
      "rsa-key-sha1-3des-sha1.p12", "rsa-key-sha1-3des-sha256.p12",
      "rsa-key-aes256-cbc-sha256.p12",
      "rsa-key-md5-des-sha1.p12",
-     "rsa-key-aes256-cbc-md5-des-sha256.p12",
-     "rsa-key-pkcs8-pbes2-sha256.pem", "rsa-key-pkcs8-pbes2-sha256.der",
-     "rsa-key-pkcs8-pbes1-md5-des.pem", "rsa-key-pkcs8-pbes1-md5-des.der",
+     "rsa-key-aes256-cbc-md5-des-sha256.p12"
+     )) if $use_des;
+push(@generated_files, (
+     "rsa-key-pkcs8-pbes1-md5-des.pem", "rsa-key-pkcs8-pbes1-md5-des.der"
+     )) if $use_md5 && $use_des;
+push(@generated_files, (
      "dsa-key-pkcs1.pem", "dsa-key-pkcs1.der",
      "dsa-key-pkcs1-aes128.pem",
      "dsa-key-pkcs8.pem", "dsa-key-pkcs8.der",
      "dsa-key-pkcs8-pbes2-sha1.pem", "dsa-key-pkcs8-pbes2-sha1.der",
-     "dsa-key-aes256-cbc-sha256.p12",
+     )) if $use_dsa;
+push(@generated_files, "dsa-key-aes256-cbc-sha256.p12") if $use_dsa && $use_des;
+push(@generated_files, (
      "ec-key-pkcs1.pem", "ec-key-pkcs1.der",
      "ec-key-pkcs1-aes128.pem",
      "ec-key-pkcs8.pem", "ec-key-pkcs8.der",
      "ec-key-pkcs8-pbes2-sha1.pem", "ec-key-pkcs8-pbes2-sha1.der",
-     "ec-key-aes256-cbc-sha256.p12",
-    );
+     )) if $use_ecc;
+push(@generated_files, "ec-key-aes256-cbc-sha256.p12") if $use_ecc && $use_des;
 my %generated_file_files =
     $^O eq 'linux'
     ? ( "test/testx509.pem" => "file:testx509.pem",
@@ -84,7 +99,7 @@ plan tests => $n;
 indir "store_$$" => sub {
  SKIP:
     {
-        skip "failed initialisation", $n unless init();
+        init() or die "init failed";
 
         my $rehash = init_rehash();
 
@@ -219,28 +234,35 @@ indir "store_$$" => sub {
 }, create => 1, cleanup => 1;
 
 sub init {
+    my $cnf = srctop_file('test', 'ca-and-certs.cnf');
+    my $cakey = srctop_file('test', 'certs', 'ca-key.pem');
     return (
             # rsa-key-pkcs1.pem
-            run(app(["openssl", "genrsa",
-                     "-out", "rsa-key-pkcs1.pem", "2432"]))
-            # dsa-key-pkcs1.pem
-            && run(app(["openssl", "dsaparam", "-genkey",
-                        "-out", "dsa-key-pkcs1.pem", "1024"]))
-            # ec-key-pkcs1.pem (one might think that 'genec' would be practical)
-            && run(app(["openssl", "ecparam", "-genkey", "-name", "prime256v1",
-                        "-out", "ec-key-pkcs1.pem"]))
+            run(app(["openssl", "pkey",
+                     "-in", data_file("rsa-key-2432.pem"),
+                     "-out", "rsa-key-pkcs1.pem"]))
             # rsa-key-pkcs1-aes128.pem
             && run(app(["openssl", "rsa", "-passout", "pass:password", "-aes128",
                         "-in", "rsa-key-pkcs1.pem",
                         "-out", "rsa-key-pkcs1-aes128.pem"]))
+            # dsa-key-pkcs1.pem
+            && (!$use_dsa || run(app(["openssl", "gendsa",
+                                      "-out", "dsa-key-pkcs1.pem",
+                                      data_file("dsaparam.pem")])))
             # dsa-key-pkcs1-aes128.pem
-            && run(app(["openssl", "dsa", "-passout", "pass:password", "-aes128",
-                        "-in", "dsa-key-pkcs1.pem",
-                        "-out", "dsa-key-pkcs1-aes128.pem"]))
+            && (!$use_dsa || run(app(["openssl", "dsa",
+                                      "-passout", "pass:password", "-aes128",
+                                      "-in", "dsa-key-pkcs1.pem",
+                                      "-out", "dsa-key-pkcs1-aes128.pem"])))
+            # ec-key-pkcs1.pem (one might think that 'genec' would be practical)
+            && (!$use_ecc || run(app(["openssl", "ecparam", "-genkey",
+                                      "-name", "prime256v1",
+                                      "-out", "ec-key-pkcs1.pem"])))
             # ec-key-pkcs1-aes128.pem
-            && run(app(["openssl", "ec", "-passout", "pass:password", "-aes128",
-                        "-in", "ec-key-pkcs1.pem",
-                        "-out", "ec-key-pkcs1-aes128.pem"]))
+            && (!$use_ecc || run(app(["openssl", "ec",
+                                      "-passout", "pass:password", "-aes128",
+                                      "-in", "ec-key-pkcs1.pem",
+                                      "-out", "ec-key-pkcs1-aes128.pem"])))
             # *-key-pkcs8.pem
             && runall(sub {
                           my $dstfile = shift;
@@ -295,20 +317,20 @@ sub init {
                       }, grep(/-key-pkcs8-pbes2-sha256\.pem$/, @generated_files))
             # *-cert.pem (intermediary for the .p12 inits)
             && run(app(["openssl", "req", "-x509",
-                        "-config", data_file("ca.cnf"), "-nodes",
-                        "-out", "cacert.pem", "-keyout", "cakey.pem"]))
+                        "-config", $cnf, "-nodes",
+                        "-key", $cakey, "-out", "cacert.pem"]))
             && runall(sub {
                           my $srckey = shift;
                           (my $dstfile = $srckey) =~ s|-key-pkcs8\.|-cert.|;
                           (my $csr = $dstfile) =~ s|\.pem|.csr|;
 
                           (run(app(["openssl", "req", "-new",
-                                    "-config", data_file("user.cnf"),
+                                    "-config", $cnf, "-section", "userreq",
                                     "-key", $srckey, "-out", $csr]))
                            &&
                            run(app(["openssl", "x509", "-days", "3650",
                                     "-CA", "cacert.pem",
-                                    "-CAkey", "cakey.pem",
+                                    "-CAkey", $cakey,
                                     "-set_serial", time(), "-req",
                                     "-in", $csr, "-out", $dstfile])));
                       }, grep(/-key-pkcs8\.pem$/, @generated_files))
@@ -349,17 +371,21 @@ sub init {
                           my $macalg = $macalgs{$macalg_index};
                           if (!defined($certpbe) || !defined($keypbe)
                               || !defined($macalg)) {
-                              print STDERR "Cert PBE for $pbe_index not defined\n"
+                              print STDERR "Cert PBE for $certpbe_index not defined\n"
                                   unless defined $certpbe;
-                              print STDERR "Key PBE for $pbe_index not defined\n"
+                              print STDERR "Key PBE for $keypbe_index not defined\n"
                                   unless defined $keypbe;
                               print STDERR "MACALG for $macalg_index not defined\n"
                                   unless defined $macalg;
                               print STDERR "(destination file was $dstfile)\n";
                               return 0;
                           }
-                          run(app(["openssl", "pkcs12", "-inkey", $srckey,
+                          run(app(["openssl", "pkcs12",
+                                   "-provider", "default",
+                                   "-provider", "legacy",
+                                   "-inkey", $srckey,
                                    "-in", $srccert, "-passout", "pass:password",
+                                   "-chain", "-CAfile", "cacert.pem",
                                    "-export", "-macalg", $macalg,
                                    "-certpbe", $certpbe, "-keypbe", $keypbe,
                                    "-out", $dstfile]));

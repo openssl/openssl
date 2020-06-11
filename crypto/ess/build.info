@@ -1,3 +1,8 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]= \
-        ess_lib.c ess_asn1.c ess_err.c
+
+IF[{- !$disabled{'cms'} and !$disabled{'ts'} -}]
+  SOURCE[../../libcrypto]= ess_lib.c
+ENDIF
+
+SOURCE[../../libcrypto]= ess_asn1.c ess_err.c 
+

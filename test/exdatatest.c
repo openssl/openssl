@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,7 +37,7 @@ static void exnew(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 }
 
 static int exdup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-          void *from_d, int idx, long argl, void *argp)
+          void **from_d, int idx, long argl, void *argp)
 {
     if (!TEST_int_eq(idx, saved_idx)
         || !TEST_long_eq(argl, saved_argl)
@@ -87,7 +87,7 @@ static void exnew2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
 }
 
 static int exdup2(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-          void *from_d, int idx, long argl, void *argp)
+          void **from_d, int idx, long argl, void *argp)
 {
     MYOBJ_EX_DATA **update_ex_data = (MYOBJ_EX_DATA**)from_d;
     MYOBJ_EX_DATA *ex_data = NULL;

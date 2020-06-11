@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -190,7 +190,7 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-# ifndef FIPS_MODE
+# ifndef FIPS_MODULE
 /* TODO(3.0): No fork protection in FIPS module yet! */
 
 #  ifdef OPENSSL_SYS_UNIX
@@ -211,7 +211,7 @@ int openssl_init_fork_handlers(void)
 #  endif
     return 0;
 }
-# endif /* FIPS_MODE */
+# endif /* FIPS_MODULE */
 
 int openssl_get_fork_id(void)
 {

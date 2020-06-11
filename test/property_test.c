@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,6 +9,7 @@
  */
 
 #include <stdarg.h>
+#include <openssl/evp.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/property.h"
@@ -383,6 +384,35 @@ err:
     return res;
 }
 
+static int test_fips_mode(void)
+{
+    int ret = 0;
+    OPENSSL_CTX *ctx = NULL;
+
+    if (!TEST_ptr(ctx = OPENSSL_CTX_new()))
+        goto err;
+
+    ret = TEST_true(EVP_set_default_properties(ctx, "default=yes,fips=yes"))
+          && TEST_true(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no,default=yes"))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no"))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips!=no"))
+          && TEST_true(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no"))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_set_default_properties(ctx, "fips=no,default=yes"))
+          && TEST_true(EVP_default_properties_enable_fips(ctx, 1))
+          && TEST_true(EVP_default_properties_is_fips_enabled(ctx))
+          && TEST_true(EVP_default_properties_enable_fips(ctx, 0))
+          && TEST_false(EVP_default_properties_is_fips_enabled(ctx));
+err:
+    OPENSSL_CTX_free(ctx);
+    return ret;
+}
+
+
 int setup_tests(void)
 {
     ADD_TEST(test_property_string);
@@ -393,5 +423,6 @@ int setup_tests(void)
     ADD_TEST(test_register_deregister);
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
+    ADD_TEST(test_fips_mode);
     return 1;
 }

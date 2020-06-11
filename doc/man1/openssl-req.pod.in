@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-req - PKCS#10 certificate request and certificate generating utility
+openssl-req - PKCS#10 certificate request and certificate generating command
 
 =head1 SYNOPSIS
 
@@ -22,13 +22,15 @@ B<openssl> B<req>
 [B<-modulus>]
 [B<-new>]
 [B<-newkey> I<arg>]
+[B<-pkeyopt> I<opt>:I<value>]
 [B<-nodes>]
 [B<-key> I<filename>]
-[B<-keyform> B<DER>|B<PEM>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-keyout> I<filename>]
 [B<-keygen_engine> I<id>]
 [B<-I<digest>>]
 [B<-config> I<filename>]
+[B<-section> I<name>]
 [B<-multivalue-rdn>]
 [B<-x509>]
 [B<-days> I<n>]
@@ -43,15 +45,15 @@ B<openssl> B<req>
 [B<-subject>]
 [B<-subj> I<arg>]
 [B<-sigopt> I<nm>:I<v>]
+[B<-vfyopt> I<nm>:I<v>]
 [B<-batch>]
 [B<-verbose>]
-[B<-sm2-id> I<string>]
-[B<-sm2-hex-id> I<hex-string>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
-=for openssl ifdef engine keygen_engine sm2-id sm2-hex-id
+=for openssl ifdef engine keygen_engine
 
 =head1 DESCRIPTION
 
@@ -82,8 +84,21 @@ options (B<-new> and B<-newkey>) are not specified.
 
 =item B<-sigopt> I<nm>:I<v>
 
-Pass options to the signature algorithm during sign or verify operations.
+Pass options to the signature algorithm during sign operations.
 Names and values of these options are algorithm-specific.
+
+=item B<-vfyopt> I<nm>:I<v>
+
+Pass options to the signature algorithm during verify operations.
+Names and values of these options are algorithm-specific.
+
+=begin comment
+
+Maybe it would be preferable to only have -opts instead of -sigopt and
+-vfyopt?  They are both present here to be compatible with L<openssl-ca(1)>,
+which supports both options for good reasons.
+
+=end comment
 
 =item B<-passin> I<arg>, B<-passout> I<arg>
 
@@ -171,9 +186,10 @@ See L<openssl-genpkey(1)/KEY GENERATION OPTIONS> for more details.
 This specifies the file to read the private key from. It also
 accepts PKCS#8 format private keys for PEM format files.
 
-=item B<-keyform> B<DER>|B<PEM>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The format of the private key; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-keyout> I<filename>
@@ -203,6 +219,10 @@ GOST R 34.11-94 (B<-md_gost94>), Ed25519 and Ed448 never use any digest.
 This allows an alternative configuration file to be specified.
 Optional; for a description of the default value,
 see L<openssl(1)/COMMAND SUMMARY>.
+
+=item B<-section> I<name>
+
+Specifies the name of the section to use; the default is B<req>.
 
 =item B<-subj> I<arg>
 
@@ -306,29 +326,23 @@ Print extra details about the operations being performed.
 Specifies an engine (by its unique I<id> string) which would be used
 for key generation operations.
 
-=item B<-sm2-id>
-
-Specify the ID string to use when verifying an SM2 certificate request. The ID
-string is required by the SM2 signature algorithm for signing and verification.
-
-=item B<-sm2-hex-id>
-
-Specify a binary ID string to use when verifying an SM2 certificate request. The
-argument for this option is string of hexadecimal digits.
-
 {- $OpenSSL::safe::opt_name_item -}
 
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 CONFIGURATION FILE FORMAT
 
 The configuration options are specified in the B<req> section of
-the configuration file. As with all configuration files if no
-value is specified in the specific section (i.e. B<req>) then
+the configuration file. An alternate name be specified by using the
+B<-section> option.
+As with all configuration files, if no
+value is specified in the specific section then
 the initial unnamed or B<default> section is searched too.
 
 The options available are described in detail below.
@@ -520,11 +534,11 @@ Generate a self signed root certificate:
 Create an SM2 private key and then generate a certificate request from it:
 
  openssl ecparam -genkey -name SM2 -out sm2.key
- openssl req -new -key sm2.key -out sm2.csr -sm3 -sigopt "sm2_id:1234567812345678"
+ openssl req -new -key sm2.key -out sm2.csr -sm3 -sigopt "distid:1234567812345678"
 
 Examine and verify an SM2 certificate request:
 
- openssl req -verify -in sm2.csr -sm3 -sm2-id 1234567812345678
+ openssl req -verify -in sm2.csr -sm3 -vfyopt "distid:1234567812345678"
 
 Example of a file pointed to by the B<oid_file> option:
 
@@ -674,9 +688,16 @@ L<openssl-gendsa(1)>,
 L<config(5)>,
 L<x509v3_config(5)>
 
+=head1 HISTORY
+
+The B<-section> option was added in OpenSSL 3.0.0.
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

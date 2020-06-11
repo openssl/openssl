@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -280,6 +280,41 @@ int opt_format(const char *s, unsigned long flags, int *result)
         break;
     }
     return 1;
+}
+
+/* Return string representing the given format. */
+const char *format2str(int format)
+{
+    switch (format) {
+    default:
+        return "(undefined)";
+    case FORMAT_PEM:
+        return "PEM";
+    case FORMAT_ASN1:
+        return "DER";
+    case FORMAT_TEXT:
+        return "TEXT";
+    case FORMAT_NSS:
+        return "NSS";
+    case FORMAT_SMIME:
+        return "SMIME";
+    case FORMAT_MSBLOB:
+        return "MSBLOB";
+    case FORMAT_ENGINE:
+        return "ENGINE";
+    case FORMAT_HTTP:
+        return "HTTP";
+    case FORMAT_PKCS12:
+        return "P12";
+    case FORMAT_PVK:
+        return "PVK";
+    }
+}
+
+/* Print an error message about unsuitable/unsupported format requested. */
+void print_format_error(int format, unsigned long flags)
+{
+    (void)opt_format_error(format2str(format), flags);
 }
 
 /* Parse a cipher name, put it in *EVP_CIPHER; return 0 on failure, else 1. */

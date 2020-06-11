@@ -1,5 +1,5 @@
 /*
- * Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -12,28 +12,25 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_SRP
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include <openssl/conf.h>
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/txt_db.h>
-# include <openssl/buffer.h>
-# include <openssl/srp.h>
-# include "apps.h"
-# include "progs.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <openssl/conf.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/txt_db.h>
+#include <openssl/buffer.h>
+#include <openssl/srp.h>
+#include "apps.h"
+#include "progs.h"
 
-# define BASE_SECTION    "srp"
-# define CONFIG_FILE "openssl.cnf"
+#define BASE_SECTION    "srp"
+#define CONFIG_FILE "openssl.cnf"
 
 
-# define ENV_DATABASE            "srpvfile"
-# define ENV_DEFAULT_SRP         "default_srp"
+#define ENV_DATABASE            "srpvfile"
+#define ENV_DEFAULT_SRP         "default_srp"
 
 static int get_index(CA_DB *db, char *id, char type)
 {
@@ -193,7 +190,7 @@ typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_VERBOSE, OPT_CONFIG, OPT_NAME, OPT_SRPVFILE, OPT_ADD,
     OPT_DELETE, OPT_MODIFY, OPT_LIST, OPT_GN, OPT_USERINFO,
-    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE, OPT_R_ENUM
+    OPT_PASSIN, OPT_PASSOUT, OPT_ENGINE, OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS srp_options[] = {
@@ -204,9 +201,9 @@ const OPTIONS srp_options[] = {
     {"verbose", OPT_VERBOSE, '-', "Talk a lot while doing things"},
     {"config", OPT_CONFIG, '<', "A config file"},
     {"name", OPT_NAME, 's', "The particular srp definition to use"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
 
     OPT_SECTION("Action"),
     {"add", OPT_ADD, '-', "Add a user and srp verifier"},
@@ -222,6 +219,7 @@ const OPTIONS srp_options[] = {
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"user", 0, 0, "Username(s) to process (optional)"},
@@ -295,6 +293,10 @@ int srp_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         }
@@ -620,4 +622,3 @@ int srp_main(int argc, char **argv)
     release_engine(e);
     return ret;
 }
-#endif

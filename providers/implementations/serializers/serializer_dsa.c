@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -7,23 +7,41 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * DSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
+
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 #include "prov/bio.h"             /* ossl_prov_bio_printf() */
 #include "prov/implementations.h" /* rsa_keymgmt_functions */
 #include "prov/providercommonerr.h" /* PROV_R_BN_ERROR */
 #include "serializer_local.h"
+#include "internal/ffc.h"
+#include "crypto/dsa.h"
 
-OSSL_OP_keymgmt_importkey_fn *ossl_prov_get_dsa_importkey(void)
+OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dsa_new(void)
 {
-    return ossl_prov_get_importkey(dsa_keymgmt_functions);
+    return ossl_prov_get_keymgmt_new(dsa_keymgmt_functions);
+}
+
+OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_dsa_free(void)
+{
+    return ossl_prov_get_keymgmt_free(dsa_keymgmt_functions);
+}
+
+OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_dsa_import(void)
+{
+    return ossl_prov_get_keymgmt_import(dsa_keymgmt_functions);
 }
 
 int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
 {
     const char *type_label = NULL;
     const BIGNUM *priv_key = NULL, *pub_key = NULL;
-    const BIGNUM *p = NULL, *q = NULL, *g = NULL;
+    const BIGNUM *p = NULL;
 
 
     switch (type) {
@@ -50,15 +68,12 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
             goto null_err;
     }
 
-    p = DSA_get0_p(dsa);
-    q = DSA_get0_q(dsa);
-    g = DSA_get0_p(dsa);
 
-    if (p == NULL || q == NULL || g == NULL)
+    p = DSA_get0_p(dsa);
+    if (p == NULL)
         goto null_err;
 
-    if (ossl_prov_bio_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
-        <= 0)
+    if (BIO_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p)) <= 0)
         goto err;
     if (priv_key != NULL
         && !ossl_prov_print_labeled_bignum(out, "priv:", priv_key))
@@ -66,11 +81,7 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
     if (pub_key != NULL
         && !ossl_prov_print_labeled_bignum(out, "pub: ", pub_key))
         goto err;
-    if (!ossl_prov_print_labeled_bignum(out, "P:   ", p))
-        goto err;
-    if (!ossl_prov_print_labeled_bignum(out, "Q:   ", q))
-        goto err;
-    if (!ossl_prov_print_labeled_bignum(out, "G:   ", g))
+    if (!ffc_params_prov_print(out, dsa_get0_params(dsa)))
         goto err;
 
     return 1;
@@ -82,7 +93,7 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
 }
 
 int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
-                                ASN1_STRING **pstr, int *pstrtype)
+                                 void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();
 
@@ -105,7 +116,7 @@ int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
 }
 
 int ossl_prov_prepare_all_dsa_params(const void *dsa, int nid,
-                                     ASN1_STRING **pstr, int *pstrtype)
+                                     void **pstr, int *pstrtype)
 {
     const BIGNUM *p = DSA_get0_p(dsa);
     const BIGNUM *q = DSA_get0_q(dsa);

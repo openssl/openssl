@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -214,7 +214,7 @@ int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void));
 # define UI_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_UI, l, p, newf, dupf, freef)
 int UI_set_ex_data(UI *r, int idx, void *arg);
-void *UI_get_ex_data(UI *r, int idx);
+void *UI_get_ex_data(const UI *r, int idx);
 
 /* Use specific methods instead of the built-in one */
 void UI_set_default_method(const UI_METHOD *meth);
@@ -283,7 +283,8 @@ const UI_METHOD *UI_null(void);
  * about a string or a prompt, including test data for a verification prompt.
  */
 typedef struct ui_string_st UI_STRING;
-DEFINE_STACK_OF(UI_STRING)
+
+DEFINE_OR_DECLARE_STACK_OF(UI_STRING)
 
 /*
  * The different types of strings that are currently supported. This is only

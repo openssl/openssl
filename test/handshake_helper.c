@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,6 +25,8 @@
 #if !defined(OPENSSL_NO_SCTP) && !defined(OPENSSL_NO_SOCK)
 #include <netinet/sctp.h>
 #endif
+
+DEFINE_STACK_OF(X509_NAME)
 
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
@@ -317,8 +319,9 @@ static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {
     return 1;
 }
 
-static int broken_session_ticket_cb(SSL *s, unsigned char *key_name, unsigned char *iv,
-                                    EVP_CIPHER_CTX *ctx, HMAC_CTX *hctx, int enc)
+static int broken_session_ticket_cb(SSL *s, unsigned char *key_name,
+                                    unsigned char *iv, EVP_CIPHER_CTX *ctx,
+                                    EVP_MAC_CTX *hctx, int enc)
 {
     return 0;
 }
@@ -326,7 +329,7 @@ static int broken_session_ticket_cb(SSL *s, unsigned char *key_name, unsigned ch
 static int do_not_call_session_ticket_cb(SSL *s, unsigned char *key_name,
                                          unsigned char *iv,
                                          EVP_CIPHER_CTX *ctx,
-                                         HMAC_CTX *hctx, int enc)
+                                         EVP_MAC_CTX *hctx, int enc)
 {
     HANDSHAKE_EX_DATA *ex_data =
         (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
@@ -585,11 +588,12 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
      * session (assigned via SNI), and should never be invoked
      */
     if (server2_ctx != NULL)
-        SSL_CTX_set_tlsext_ticket_key_cb(server2_ctx,
-                                         do_not_call_session_ticket_cb);
+        SSL_CTX_set_tlsext_ticket_key_evp_cb(server2_ctx,
+                                             do_not_call_session_ticket_cb);
 
     if (extra->server.broken_session_ticket) {
-        SSL_CTX_set_tlsext_ticket_key_cb(server_ctx, broken_session_ticket_cb);
+        SSL_CTX_set_tlsext_ticket_key_evp_cb(server_ctx,
+                                             broken_session_ticket_cb);
     }
 #ifndef OPENSSL_NO_NEXTPROTONEG
     if (extra->server.npn_protocols != NULL) {
@@ -637,7 +641,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     }
     if (extra->client.alpn_protocols != NULL) {
         unsigned char *alpn_protos = NULL;
-        size_t alpn_protos_len;
+        size_t alpn_protos_len = 0;
+
         if (!TEST_true(parse_protos(extra->client.alpn_protocols,
                                     &alpn_protos, &alpn_protos_len))
                 /* Reversed return value convention... */
@@ -934,16 +939,24 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
             if (SSL_is_server(peer->ssl)) {
                 ret = SSL_renegotiate(peer->ssl);
             } else {
+                int full_reneg = 0;
+
+                if (test_ctx->extra.client.no_extms_on_reneg) {
+                    SSL_set_options(peer->ssl, SSL_OP_NO_EXTENDED_MASTER_SECRET);
+                    full_reneg = 1;
+                }
                 if (test_ctx->extra.client.reneg_ciphers != NULL) {
                     if (!SSL_set_cipher_list(peer->ssl,
                                 test_ctx->extra.client.reneg_ciphers)) {
                         peer->status = PEER_ERROR;
                         return;
                     }
-                    ret = SSL_renegotiate(peer->ssl);
-                } else {
-                    ret = SSL_renegotiate_abbreviated(peer->ssl);
+                    full_reneg = 1;
                 }
+                if (full_reneg)
+                    ret = SSL_renegotiate(peer->ssl);
+                else
+                    ret = SSL_renegotiate_abbreviated(peer->ssl);
             }
             if (!ret) {
                 peer->status = PEER_ERROR;

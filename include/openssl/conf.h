@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,7 +33,8 @@ typedef struct {
     char *value;
 } CONF_VALUE;
 
-DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_OR_DECLARE_STACK_OF(CONF_VALUE)
+
 DEFINE_LHASH_OF(CONF_VALUE);
 
 struct conf_st;
@@ -58,8 +59,8 @@ struct conf_method_st {
 typedef struct conf_imodule_st CONF_IMODULE;
 typedef struct conf_module_st CONF_MODULE;
 
-DEFINE_STACK_OF(CONF_MODULE)
-DEFINE_STACK_OF(CONF_IMODULE)
+STACK_OF(CONF_MODULE);
+STACK_OF(CONF_IMODULE);
 
 /* DSO module function typedefs */
 typedef int conf_init_func (CONF_IMODULE *md, const CONF *cnf);
@@ -111,8 +112,10 @@ struct conf_st {
     void *meth_data;
     LHASH_OF(CONF_VALUE) *data;
     unsigned int flag_dollarid:1;
+    OPENSSL_CTX *libctx;
 };
 
+CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
 CONF *NCONF_new(CONF_METHOD *meth);
 CONF_METHOD *NCONF_default(void);
 DEPRECATEDIN_3_0(CONF_METHOD *NCONF_WIN32(void))
@@ -140,6 +143,8 @@ int NCONF_dump_bio(const CONF *conf, BIO *out);
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
                       unsigned long flags);
+int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx, const char *filename,
+                                       const char *appname, unsigned long flags);
 int CONF_modules_load_file(const char *filename, const char *appname,
                            unsigned long flags);
 void CONF_modules_unload(int all);

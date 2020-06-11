@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,9 @@
 #include <openssl/x509.h>
 
 #include "testutil.h"
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_CRL)
 
 #define PARAM_TIME 1474934400 /* Sep 27th, 2016 */
 

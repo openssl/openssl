@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #include <openssl/dh.h>
 #include "internal/refcount.h"
+#include "internal/ffc.h"
 
 #define DH_MIN_MODULUS_BITS     512
 
@@ -19,25 +20,20 @@ struct dh_st {
      */
     int pad;
     int version;
-    BIGNUM *p;
-    BIGNUM *g;
-    int32_t length;             /* optional */
+    FFC_PARAMS params;
+    /* max generated private key length (can be less than len(q)) */
+    int32_t length;
     BIGNUM *pub_key;            /* g^x % p */
     BIGNUM *priv_key;           /* x */
     int flags;
     BN_MONT_CTX *method_mont_p;
-    /* Place holders if we want to do X9.42 DH */
-    BIGNUM *q;
-    BIGNUM *j;
-    unsigned char *seed;
-    int seedlen;
-    BIGNUM *counter;
     CRYPTO_REF_COUNT references;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
-#endif
-    const DH_METHOD *meth;
     ENGINE *engine;
+#endif
+    OPENSSL_CTX *libctx;
+    const DH_METHOD *meth;
     CRYPTO_RWLOCK *lock;
 
     /* Provider data */
@@ -62,6 +58,3 @@ struct dh_method {
     int (*generate_params) (DH *dh, int prime_len, int generator,
                             BN_GENCB *cb);
 };
-
-int dh_buf2key(DH *key, const unsigned char *buf, size_t len);
-size_t dh_key2buf(const DH *dh, unsigned char **pbuf);

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,8 +14,12 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-
 #define BUFFERSIZE 4096
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_ATTRIBUTE)
+DEFINE_STACK_OF(X509_ALGOR)
+DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
 
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 

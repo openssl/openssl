@@ -2,9 +2,10 @@
 
 =head1 NAME
 
-X509_sign, X509_sign_ctx, X509_verify, X509_REQ_sign, X509_REQ_sign_ctx,
-X509_REQ_verify, X509_CRL_sign, X509_CRL_sign_ctx, X509_CRL_verify -
-sign or verify certificate, certificate request or CRL signature
+X509_sign, X509_sign_ctx, X509_verify_ex, X509_verify, X509_REQ_sign,
+X509_REQ_sign_ctx, X509_REQ_verify_ex, X509_REQ_verify, X509_CRL_sign,
+X509_CRL_sign_ctx, X509_CRL_verify
+- sign or verify certificate, certificate request or CRL signature
 
 =head1 SYNOPSIS
 
@@ -12,27 +13,35 @@ sign or verify certificate, certificate request or CRL signature
 
  int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
- int X509_verify(X509 *a, EVP_PKEY *r);
+ int X509_verify_ex(X509 *x, EVP_PKEY *pkey, OPENSSL_CTX *libctx, const char *propq);
+ int X509_verify(X509 *x, EVP_PKEY *pkey;
 
  int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
- int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
+ int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *pkey, OPENSSL_CTX *libctx,
+                        const char *propq);
+ int X509_REQ_verify(X509_REQ *a, EVP_PKEY *pkey);
 
  int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
- int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
+ int X509_CRL_verify(X509_CRL *a, EVP_PKEY *pkey);
 
 =head1 DESCRIPTION
 
-X509_sign() signs certificate B<x> using private key B<pkey> and message
-digest B<md> and sets the signature in B<x>. X509_sign_ctx() also signs
-certificate B<x> but uses the parameters contained in digest context B<ctx>.
+X509_sign() signs certificate I<x> using private key I<pkey> and message
+digest I<md> and sets the signature in I<x>. X509_sign_ctx() also signs
+certificate I<x> but uses the parameters contained in digest context I<ctx>.
 
-X509_verify() verifies the signature of certificate B<x> using public key
-B<pkey>. Only the signature is checked: no other checks (such as certificate
-chain validity) are performed.
+X509_verify_ex() verifies the signature of certificate I<x> using public key
+I<pkey>. Any cryptographic algorithms required for the verification are fetched
+using the library context I<libctx> and the property query string I<propq>. Only
+the signature is checked: no other checks (such as certificate chain validity)
+are performed.
 
-X509_REQ_sign(), X509_REQ_sign_ctx(), X509_REQ_verify(),
+X509_verify() is the same as X509_verify_ex() except that the default library
+context and property query string are used.
+
+X509_REQ_sign(), X509_REQ_sign_ctx(), X509_REQ_verify_ex(), X509_REQ_verify(),
 X509_CRL_sign(), X509_CRL_sign_ctx() and X509_CRL_verify() sign and verify
 certificate requests and CRLs respectively.
 
@@ -55,10 +64,10 @@ X509_sign(), X509_sign_ctx(), X509_REQ_sign(), X509_REQ_sign_ctx(),
 X509_CRL_sign() and X509_CRL_sign_ctx() return the size of the signature
 in bytes for success and zero for failure.
 
-X509_verify(), X509_REQ_verify() and X509_CRL_verify() return 1 if the
-signature is valid and 0 if the signature check fails. If the signature
-could not be checked at all because it was invalid or some other error
-occurred then -1 is returned.
+X509_verify_ex(), X509_verify(), X509_REQ_verify_ex(), X509_REQ_verify() and
+X509_CRL_verify() return 1 if the signature is valid and 0 if the signature
+check fails. If the signature could not be checked at all because it was invalid
+or some other error occurred then -1 is returned.
 
 =head1 SEE ALSO
 
@@ -77,7 +86,8 @@ L<X509_NAME_get_index_by_NID(3)>,
 L<X509_NAME_print_ex(3)>,
 L<X509_new(3)>,
 L<X509V3_get_d2i(3)>,
-L<X509_verify_cert(3)>
+L<X509_verify_cert(3)>,
+L<OPENSSL_CTX(3)>
 
 =head1 HISTORY
 
@@ -87,9 +97,11 @@ available in all versions of OpenSSL.
 The X509_sign_ctx(), X509_REQ_sign_ctx()
 and X509_CRL_sign_ctx() functions were added OpenSSL 1.0.1.
 
+X509_verify_ex() and X509_REQ_verify_ex() were added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

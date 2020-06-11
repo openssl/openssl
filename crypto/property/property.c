@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -305,7 +305,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
     int ret = 0;
     int j, best = -1, score, optional;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
 #endif
 
@@ -362,9 +362,50 @@ fin:
     return ret;
 }
 
-int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
-                                            const char *prop_query) {
+int ossl_method_store_global_property_is_enabled(OSSL_METHOD_STORE *store,
+                                                 const char *prop_name)
+{
     int ret = 0;
+
+    if (store == NULL)
+        return 0;
+
+    ossl_property_read_lock(store);
+    ret = ossl_property_is_enabled(store->ctx, prop_name,
+                                   store->global_properties);
+    ossl_property_unlock(store);
+    return ret;
+}
+
+int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
+                                            const char *prop_query)
+{
+    int ret = 0;
+
+    if (store == NULL)
+        return 1;
+
+    ossl_property_write_lock(store);
+    ossl_method_cache_flush_all(store);
+
+    ossl_property_free(store->global_properties);
+    store->global_properties = NULL;
+
+    if (prop_query == NULL) {
+        ossl_property_unlock(store);
+        return 1;
+    }
+    store->global_properties = ossl_parse_query(store->ctx, prop_query);
+    ret = store->global_properties != NULL;
+    ossl_property_unlock(store);
+    return ret;
+}
+
+int ossl_method_store_merge_global_properties(OSSL_METHOD_STORE *store,
+                                              const char *prop_query)
+{
+    int ret = 0;
+    OSSL_PROPERTY_LIST *prop = NULL, *global;
 
     if (store == NULL)
         return 1;
@@ -374,14 +415,30 @@ int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
     if (prop_query == NULL) {
         ossl_property_free(store->global_properties);
         store->global_properties = NULL;
-        ossl_property_unlock(store);
-        return 1;
+        goto success;
     }
-    store->global_properties = ossl_parse_query(store->ctx, prop_query);
-    ret = store->global_properties != NULL;
+    prop = ossl_parse_query(store->ctx, prop_query);
+    if (prop == NULL)
+        goto end;
+
+    if (store->global_properties == NULL) {
+        store->global_properties = prop;
+        prop = NULL;
+        goto success;
+    }
+    global = ossl_property_merge(prop, store->global_properties);
+    if (global == NULL)
+        goto end;
+    ossl_property_free(store->global_properties);
+    store->global_properties = global;
+ success:
+    ret = 1;
+ end:
     ossl_property_unlock(store);
+    ossl_property_free(prop);
     return ret;
 }
+
 
 static void impl_cache_flush_alg(ossl_uintmax_t idx, ALGORITHM *alg)
 {

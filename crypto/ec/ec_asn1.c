@@ -1,11 +1,17 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <string.h>
 #include "ec_local.h"
@@ -15,14 +21,13 @@
 #include "internal/nelem.h"
 #include "crypto/asn1_dsa.h"
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 
 int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
     int i;
 
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
-        NID_X9_62_characteristic_two_field)
+    if (EC_GROUP_get_field_type(group) != NID_X9_62_characteristic_two_field)
         /* everything else is currently not supported */
         return 0;
 
@@ -47,8 +52,7 @@ int EC_GROUP_get_trinomial_basis(const EC_GROUP *group, unsigned int *k)
     if (group == NULL)
         return 0;
 
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
-        NID_X9_62_characteristic_two_field
+    if (EC_GROUP_get_field_type(group) != NID_X9_62_characteristic_two_field
         || !((group->poly[0] != 0) && (group->poly[1] != 0)
              && (group->poly[2] == 0))) {
         ECerr(EC_F_EC_GROUP_GET_TRINOMIAL_BASIS,
@@ -68,8 +72,7 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *group, unsigned int *k1,
     if (group == NULL)
         return 0;
 
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
-        NID_X9_62_characteristic_two_field
+    if (EC_GROUP_get_field_type(group) != NID_X9_62_characteristic_two_field
         || !((group->poly[0] != 0) && (group->poly[1] != 0)
              && (group->poly[2] != 0) && (group->poly[3] != 0)
              && (group->poly[4] == 0))) {
@@ -256,7 +259,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
     ASN1_OBJECT_free(field->fieldType);
     ASN1_TYPE_free(field->p.other);
 
-    nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+    nid = EC_GROUP_get_field_type(group);
     /* set OID for the field */
     if ((field->fieldType = OBJ_nid2obj(nid)) == NULL) {
         ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_OBJ_LIB);
@@ -1045,6 +1048,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         *a = ret;
     EC_PRIVATEKEY_free(priv_key);
     *in = p;
+    ret->dirty_cnt++;
     return ret;
 
  err:
@@ -1156,8 +1160,11 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
         ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_EC_LIB);
         if (a == NULL || *a != ret)
              EC_KEY_free(ret);
+        else
+            ret->dirty_cnt++;
         return NULL;
     }
+    ret->dirty_cnt++;
 
     if (a)
         *a = ret;
@@ -1177,6 +1184,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
         return 0;
     }
     ret = *a;
+    /* EC_KEY_opt2key updates dirty_cnt */
     if (!EC_KEY_oct2key(ret, *in, len, NULL)) {
         ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_EC_LIB);
         return 0;
@@ -1226,7 +1234,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 DECLARE_ASN1_FUNCTIONS(ECDSA_SIG)
 DECLARE_ASN1_ENCODE_FUNCTIONS_name(ECDSA_SIG, ECDSA_SIG)
 
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 ECDSA_SIG *ECDSA_SIG_new(void)
 {

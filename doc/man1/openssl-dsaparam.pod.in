@@ -20,6 +20,7 @@ B<openssl dsaparam>
 [B<-verbose>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 
 =head1 DESCRIPTION
@@ -90,11 +91,14 @@ This option specifies that a parameter set should be generated of size
 I<numbits>. It must be the last option. If this option is included then
 the input file (if any) is ignored.
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkeyparam(1)>,
 L<openssl-gendsa(1)>,
 L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
@@ -102,7 +106,7 @@ L<openssl-rsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,11 +16,17 @@
 #include <openssl/core_names.h>
 #include "crypto/x509.h"
 
+DEFINE_STACK_OF(X509)
+
 int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 {
     int i;
     const X509_CINF *ai, *bi;
 
+    if (b == NULL)
+        return a != NULL;
+    if (a == NULL)
+        return -1;
     ai = &a->cert_info;
     bi = &b->cert_info;
     i = ASN1_INTEGER_cmp(&ai->serialNumber, &bi->serialNumber);
@@ -135,9 +141,12 @@ unsigned long X509_subject_name_hash_old(X509 *x)
 int X509_cmp(const X509 *a, const X509 *b)
 {
     int rv;
+
     /* ensure hash is valid */
-    X509_check_purpose((X509 *)a, -1, 0);
-    X509_check_purpose((X509 *)b, -1, 0);
+    if (X509_check_purpose((X509 *)a, -1, 0) != 1)
+        return -2;
+    if (X509_check_purpose((X509 *)b, -1, 0) != 1)
+        return -2;
 
     rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
     if (rv)
@@ -158,8 +167,12 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 {
     int ret;
 
-    /* Ensure canonical encoding is present and up to date */
+    if (b == NULL)
+        return a != NULL;
+    if (a == NULL)
+        return -1;
 
+    /* Ensure canonical encoding is present and up to date */
     if (!a->canon_enc || a->modified) {
         ret = i2d_X509_NAME((X509_NAME *)a, NULL);
         if (ret < 0)
@@ -181,7 +194,7 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
 
 }
 
-unsigned long X509_NAME_hash(X509_NAME *x)
+unsigned long X509_NAME_hash(const X509_NAME *x)
 {
     unsigned long ret = 0;
     unsigned char md[SHA_DIGEST_LENGTH];
@@ -204,7 +217,7 @@ unsigned long X509_NAME_hash(X509_NAME *x)
  * this is reasonably efficient.
  */
 
-unsigned long X509_NAME_hash_old(X509_NAME *x)
+unsigned long X509_NAME_hash_old(const X509_NAME *x)
 {
     EVP_MD *md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
@@ -232,8 +245,8 @@ unsigned long X509_NAME_hash_old(X509_NAME *x)
 #endif
 
 /* Search a stack of X509 for a match */
-X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
-                                     ASN1_INTEGER *serial)
+X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
+                                     const ASN1_INTEGER *serial)
 {
     int i;
     X509 x, *x509 = NULL;
@@ -242,7 +255,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
         return NULL;
 
     x.cert_info.serialNumber = *serial;
-    x.cert_info.issuer = name;
+    x.cert_info.issuer = (X509_NAME *)name; /* won't modify it */
 
     for (i = 0; i < sk_X509_num(sk); i++) {
         x509 = sk_X509_value(sk, i);
@@ -252,7 +265,7 @@ X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, X509_NAME *name,
     return NULL;
 }
 
-X509 *X509_find_by_subject(STACK_OF(X509) *sk, X509_NAME *name)
+X509 *X509_find_by_subject(STACK_OF(X509) *sk, const X509_NAME *name)
 {
     X509 *x509;
     int i;
@@ -287,7 +300,7 @@ int X509_check_private_key(const X509 *x, const EVP_PKEY *k)
     xk = X509_get0_pubkey(x);
 
     if (xk)
-        ret = EVP_PKEY_cmp(xk, k);
+        ret = EVP_PKEY_eq(xk, k);
     else
         ret = -2;
 

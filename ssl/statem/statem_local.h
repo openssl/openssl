@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -153,6 +153,11 @@ __owur MSG_PROCESS_RETURN tls_process_next_proto(SSL *s, PACKET *pkt);
 __owur int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt);
 MSG_PROCESS_RETURN tls_process_end_of_early_data(SSL *s, PACKET *pkt);
 
+#ifndef OPENSSL_NO_GOST
+/* These functions are used in GOST18 CKE, both for client and server */
+int gost18_cke_cipher_nid(const SSL *s);
+int gost_ukm(const SSL *s, unsigned char *dgst_buf);
+#endif
 
 /* Extension processing */
 

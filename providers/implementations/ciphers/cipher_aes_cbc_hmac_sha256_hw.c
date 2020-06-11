@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,10 +16,15 @@
 
 #include "cipher_aes_cbc_hmac_sha.h"
 
-#ifndef AES_CBC_HMAC_SHA_CAPABLE
+#if !defined(AES_CBC_HMAC_SHA_CAPABLE) || !defined(AESNI_CAPABLE)
 int cipher_capable_aes_cbc_hmac_sha256(void)
 {
     return 0;
+}
+
+const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void)
+{
+    return NULL;
 }
 #else
 
@@ -814,7 +819,7 @@ static int aesni_cbc_hmac_sha256_tls1_multiblock_encrypt(
                                          param->inp, param->len,
                                          param->interleave / 4);
 }
-#endif
+# endif
 
 static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha256 = {
     {
@@ -835,4 +840,4 @@ const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void)
     return &cipher_hw_aes_hmac_sha256;
 }
 
-#endif /* AES_CBC_HMAC_SHA_CAPABLE */
+#endif /* !defined(AES_CBC_HMAC_SHA_CAPABLE) || !defined(AESNI_CAPABLE) */

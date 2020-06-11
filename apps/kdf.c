@@ -1,7 +1,7 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -17,9 +17,12 @@
 #include <openssl/kdf.h>
 #include <openssl/params.h>
 
+DEFINE_STACK_OF_STRING()
+
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT
+    OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT,
+    OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS kdf_options[] = {
@@ -35,6 +38,8 @@ const OPTIONS kdf_options[] = {
     {"out", OPT_OUT, '>', "Output to filename rather than stdout"},
     {"binary", OPT_BIN, '-',
         "Output in binary format (default is hexadecimal)"},
+
+    OPT_PROV_OPTIONS,
 
     OPT_PARAMETERS(),
     {"kdf_name", 0, 0, "Name of the KDF algorithm"},
@@ -80,6 +85,10 @@ opthelp:
             if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
             break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto err;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -95,7 +104,7 @@ opthelp:
         goto opthelp;
     }
 
-    ctx = EVP_KDF_CTX_new(kdf);
+    ctx = EVP_KDF_new_ctx(kdf);
     if (ctx == NULL)
         goto err;
 
@@ -107,7 +116,7 @@ opthelp:
         if (params == NULL)
             goto err;
 
-        if (!EVP_KDF_CTX_set_params(ctx, params)) {
+        if (!EVP_KDF_set_ctx_params(ctx, params)) {
             BIO_printf(bio_err, "KDF parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
@@ -152,7 +161,7 @@ err:
     OPENSSL_clear_free(dkm_bytes, dkm_len);
     sk_OPENSSL_STRING_free(opts);
     EVP_KDF_free(kdf);
-    EVP_KDF_CTX_free(ctx);
+    EVP_KDF_free_ctx(ctx);
     BIO_free(out);
     OPENSSL_free(hexout);
     return ret;

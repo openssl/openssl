@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,12 @@
 #include <openssl/cms.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
+
+DEFINE_STACK_OF(CMS_SignerInfo)
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_CRL)
+DEFINE_STACK_OF(CMS_RecipientEncryptedKey)
+DEFINE_STACK_OF(CMS_RecipientInfo)
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
@@ -227,7 +233,8 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
 static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
                                       X509_STORE *store,
                                       STACK_OF(X509) *certs,
-                                      STACK_OF(X509_CRL) *crls)
+                                      STACK_OF(X509_CRL) *crls,
+                                      STACK_OF(X509) **chain)
 {
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
     X509 *signer;
@@ -256,6 +263,10 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
         goto err;
     }
     r = 1;
+
+    /* also send back the trust chain when required */
+    if (chain != NULL)
+        *chain = X509_STORE_CTX_get1_chain(ctx);
  err:
     X509_STORE_CTX_free(ctx);
     return r;
@@ -269,9 +280,11 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     STACK_OF(CMS_SignerInfo) *sinfos;
     STACK_OF(X509) *cms_certs = NULL;
     STACK_OF(X509_CRL) *crls = NULL;
+    STACK_OF(X509) **si_chains = NULL;
     X509 *signer;
     int i, scount = 0, ret = 0;
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
+    int cadesVerify = (flags & CMS_CADES) != 0;
 
     if (!dcont && !check_content(cms))
         return 0;
@@ -306,27 +319,44 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
     }
 
     /* Attempt to verify all signers certs */
+    /* at this point scount == sk_CMS_SignerInfo_num(sinfos) */
 
-    if (!(flags & CMS_NO_SIGNER_CERT_VERIFY)) {
+    if ((flags & CMS_NO_SIGNER_CERT_VERIFY) == 0 || cadesVerify) {
+        if (cadesVerify) {
+            /* Certificate trust chain is required to check CAdES signature */
+            si_chains = OPENSSL_zalloc(scount * sizeof(si_chains[0]));
+            if (si_chains == NULL) {
+                CMSerr(CMS_F_CMS_VERIFY, ERR_R_MALLOC_FAILURE);
+                goto err;
+            }
+        }
         cms_certs = CMS_get1_certs(cms);
         if (!(flags & CMS_NOCRL))
             crls = CMS_get1_crls(cms);
-        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls))
+
+            if (!cms_signerinfo_verify_cert(si, store, cms_certs, crls,
+                                            si_chains ? &si_chains[i] : NULL))
                 goto err;
         }
     }
 
     /* Attempt to verify all SignerInfo signed attribute signatures */
 
-    if (!(flags & CMS_NO_ATTR_VERIFY)) {
-        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+    if ((flags & CMS_NO_ATTR_VERIFY) == 0 || cadesVerify) {
+        for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
             if (CMS_signed_get_attr_count(si) < 0)
                 continue;
             if (CMS_SignerInfo_verify(si) <= 0)
                 goto err;
+            if (cadesVerify) {
+                STACK_OF(X509) *si_chain = si_chains ? si_chains[i] : NULL;
+
+                if (ess_check_signing_certs(si, si_chain) <= 0)
+                    goto err;
+            }
         }
     }
 
@@ -414,6 +444,11 @@ int CMS_verify(CMS_ContentInfo *cms, STACK_OF(X509) *certs,
         BIO_free_all(tmpout);
 
  err2:
+    if (si_chains != NULL) {
+        for (i = 0; i < scount; ++i)
+            sk_X509_pop_free(si_chains[i], X509_free);
+        OPENSSL_free(si_chains);
+    }
     sk_X509_pop_free(cms_certs, X509_free);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);
 
@@ -576,19 +611,20 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
     return NULL;
 }
 
-static int cms_kari_set1_pkey(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
-                              EVP_PKEY *pk, X509 *cert)
+static int cms_kari_set1_pkey_and_peer(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
+                                       EVP_PKEY *pk, X509 *cert, X509 *peer)
 {
     int i;
     STACK_OF(CMS_RecipientEncryptedKey) *reks;
     CMS_RecipientEncryptedKey *rek;
+
     reks = CMS_RecipientInfo_kari_get0_reks(ri);
     for (i = 0; i < sk_CMS_RecipientEncryptedKey_num(reks); i++) {
         int rv;
         rek = sk_CMS_RecipientEncryptedKey_value(reks, i);
         if (cert != NULL && CMS_RecipientEncryptedKey_cert_cmp(rek, cert))
             continue;
-        CMS_RecipientInfo_kari_set0_pkey(ri, pk);
+        CMS_RecipientInfo_kari_set0_pkey_and_peer(ri, pk, peer);
         rv = CMS_RecipientInfo_kari_decrypt(cms, ri, rek);
         CMS_RecipientInfo_kari_set0_pkey(ri, NULL);
         if (rv > 0)
@@ -600,27 +636,36 @@ static int cms_kari_set1_pkey(CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
 
 int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
 {
+     return CMS_decrypt_set1_pkey_and_peer(cms, pk, cert, NULL);
+}
+
+int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert, X509 *peer)
+{
     STACK_OF(CMS_RecipientInfo) *ris;
     CMS_RecipientInfo *ri;
-    int i, r, ri_type;
+    int i, r, cms_pkey_ri_type;
     int debug = 0, match_ri = 0;
     ris = CMS_get0_RecipientInfos(cms);
     if (ris)
         debug = cms->d.envelopedData->encryptedContentInfo->debug;
-    ri_type = cms_pkey_get_ri_type(pk);
-    if (ri_type == CMS_RECIPINFO_NONE) {
-        CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY,
-               CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        return 0;
+
+    cms_pkey_ri_type = cms_pkey_get_ri_type(pk);
+    if (cms_pkey_ri_type == CMS_RECIPINFO_NONE) {
+         CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY_AND_PEER,
+              CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+         return 0;
     }
 
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
+        int ri_type;
+
         ri = sk_CMS_RecipientInfo_value(ris, i);
-        if (CMS_RecipientInfo_type(ri) != ri_type)
+        ri_type = CMS_RecipientInfo_type(ri);
+        if (!cms_pkey_is_ri_type_supported(pk, ri_type))
             continue;
         match_ri = 1;
         if (ri_type == CMS_RECIPINFO_AGREE) {
-            r = cms_kari_set1_pkey(cms, ri, pk, cert);
+            r = cms_kari_set1_pkey_and_peer(cms, ri, pk, cert, peer);
             if (r > 0)
                 return 1;
             if (r < 0)
@@ -646,7 +691,7 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
                 }
                 if (r > 0)
                     return 1;
-                CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY, CMS_R_DECRYPT_ERROR);
+                CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY_AND_PEER, CMS_R_DECRYPT_ERROR);
                 return 0;
             }
             /*
@@ -654,17 +699,17 @@ int CMS_decrypt_set1_pkey(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert)
              * successful decrypt. Always attempt to decrypt all recipients
              * to avoid leaking timing of a successful decrypt.
              */
-            else if (r > 0 && debug)
+            else if (r > 0 && (debug || cms_pkey_ri_type != CMS_RECIPINFO_TRANS))
                 return 1;
         }
     }
     /* If no cert, key transport and not debugging always return success */
-    if (cert == NULL && ri_type == CMS_RECIPINFO_TRANS && match_ri && !debug) {
+    if (cert == NULL && cms_pkey_ri_type == CMS_RECIPINFO_TRANS && match_ri && !debug) {
         ERR_clear_error();
         return 1;
     }
 
-    CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY, CMS_R_NO_MATCHING_RECIPIENT);
+    CMSerr(CMS_F_CMS_DECRYPT_SET1_PKEY_AND_PEER, CMS_R_NO_MATCHING_RECIPIENT);
     return 0;
 
 }

@@ -82,9 +82,9 @@ SP800-132
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_CTX_new(3)>,
-L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_CTX_set_params(3)>,
+L<EVP_KDF_new_ctx(3)>,
+L<EVP_KDF_free_ctx(3)>,
+L<EVP_KDF_set_ctx_params(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,25 +8,28 @@
  */
 
 #include <openssl/opensslconf.h>
-#if defined(OPENSSL_NO_DES)
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/crypto.h>
-# include <openssl/err.h>
-# include <openssl/pem.h>
-# include <openssl/pkcs12.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs12.h>
 
-# define NOKEYS          0x1
-# define NOCERTS         0x2
-# define INFO            0x4
-# define CLCERTS         0x8
-# define CACERTS         0x10
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(PKCS7)
+DEFINE_STACK_OF(PKCS12_SAFEBAG)
+DEFINE_STACK_OF(X509_ATTRIBUTE)
+DEFINE_STACK_OF_STRING()
+
+#define NOKEYS          0x1
+#define NOCERTS         0x2
+#define INFO            0x4
+#define CLCERTS         0x8
+#define CACERTS         0x10
 
 #define PASSWD_BUF_SIZE 2048
 
@@ -58,15 +61,15 @@ typedef enum OPTION_choice {
     OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS pkcs12_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
 
     OPT_SECTION("CA"),
     {"CApath", OPT_CAPATH, '/', "PEM-format directory of CA's"},
@@ -112,15 +115,15 @@ const OPTIONS pkcs12_options[] = {
     {"keysig", OPT_KEYSIG, '-', "Set MS key signature type"},
 
     OPT_SECTION("Encryption"),
-# ifndef OPENSSL_NO_RC2
+#ifndef OPENSSL_NO_RC2
     {"descert", OPT_DESCERT, '-',
      "Encrypt output with 3DES (default RC2-40)"},
     {"certpbe", OPT_CERTPBE, 's',
      "Certificate PBE algorithm (default RC2-40)"},
-# else
+#else
     {"descert", OPT_DESCERT, '-', "Encrypt output with 3DES (the default)"},
     {"certpbe", OPT_CERTPBE, 's', "Certificate PBE algorithm (default 3DES)"},
-# endif
+#endif
     {"iter", OPT_ITER, 'p', "Specify the iteration count for encryption key and MAC"},
     {"noiter", OPT_NOITER, '-', "Don't use encryption key iteration"},
     {"maciter", OPT_MACITER, '-', "Unused, kept for backwards compatibility"},
@@ -130,6 +133,7 @@ const OPTIONS pkcs12_options[] = {
     {"", OPT_CIPHER, '-', "Any supported cipher"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -140,11 +144,11 @@ int pkcs12_main(int argc, char **argv)
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
     int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0;
     int iter = PKCS12_DEFAULT_ITER, maciter = PKCS12_DEFAULT_ITER;
-# ifndef OPENSSL_NO_RC2
+#ifndef OPENSSL_NO_RC2
     int cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
-# else
+#else
     int cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-# endif
+#endif
     int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
     int ret = 1, macver = 1, add_lmk = 0, private = 0;
     int noprompt = 0;
@@ -306,6 +310,10 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                goto end;
             break;
         }
     }
@@ -893,12 +901,13 @@ static int alg_print(const X509_ALGOR *alg)
 
 int cert_load(BIO *in, STACK_OF(X509) *sk)
 {
-    int ret;
+    int ret = 0;
     X509 *cert;
-    ret = 0;
+
     while ((cert = PEM_read_bio_X509(in, NULL, NULL, NULL))) {
         ret = 1;
-        sk_X509_push(sk, cert);
+        if (!sk_X509_push(sk, cert))
+            return 0;
     }
     if (ret)
         ERR_clear_error();
@@ -1002,5 +1011,3 @@ static int set_pbe(int *ppbe, const char *str)
     }
     return 1;
 }
-
-#endif

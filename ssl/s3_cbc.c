@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -131,7 +131,8 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * padding too. )
  * Returns 1 on success or 0 on error
  */
-int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
+int ssl3_cbc_digest_record(SSL *s,
+                           const EVP_MD_CTX *ctx,
                            unsigned char *md_out,
                            size_t *md_out_size,
                            const unsigned char header[13],
@@ -166,7 +167,8 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
      */
     size_t md_length_size = 8;
     char length_is_big_endian = 1;
-    int ret;
+    int ret = 0;
+    const EVP_MD *md = NULL;
 
     /*
      * This is a, hopefully redundant, check that allows us to forget about
@@ -461,7 +463,11 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL)
         goto err;
-    if (EVP_DigestInit_ex(md_ctx, EVP_MD_CTX_md(ctx), NULL /* engine */ ) <= 0)
+    md = ssl_evp_md_fetch(s->ctx->libctx, EVP_MD_type(EVP_MD_CTX_md(ctx)),
+                          s->ctx->propq);
+    if (md == NULL)
+        goto err;
+    if (EVP_DigestInit_ex(md_ctx, md, NULL /* engine */ ) <= 0)
         goto err;
     if (is_sslv3) {
         /* We repurpose |hmac_pad| to contain the SSLv3 pad2 block. */
@@ -484,10 +490,10 @@ int ssl3_cbc_digest_record(const EVP_MD_CTX *ctx,
     ret = EVP_DigestFinal(md_ctx, md_out, &md_out_size_u);
     if (ret && md_out_size)
         *md_out_size = md_out_size_u;
-    EVP_MD_CTX_free(md_ctx);
 
-    return 1;
+    ret = 1;
  err:
     EVP_MD_CTX_free(md_ctx);
-    return 0;
+    ssl_evp_md_free(md);
+    return ret;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -118,6 +118,8 @@ static int sock_read(BIO *b, char *out, int outl)
         if (ret <= 0) {
             if (BIO_sock_should_retry(ret))
                 BIO_set_retry_read(b);
+            else if (ret == 0)
+                b->flags |= BIO_FLAGS_IN_EOF;
         }
     }
     return ret;
@@ -152,10 +154,11 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
 # ifndef OPENSSL_NO_KTLS
+    size_t crypto_info_len;
 #  ifdef __FreeBSD__
     struct tls_enable *crypto_info;
 #  else
-    struct tls12_crypto_info_aes_gcm_128 *crypto_info;
+    struct tls_crypto_info_all *crypto_info;
 #  endif
 # endif
 
@@ -189,10 +192,12 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_CTRL_SET_KTLS:
 #  ifdef __FreeBSD__
         crypto_info = (struct tls_enable *)ptr;
+        crypto_info_len = sizeof(*crypto_info);
 #  else
-        crypto_info = (struct tls12_crypto_info_aes_gcm_128 *)ptr;
+        crypto_info = (struct tls_crypto_info_all *)ptr;
+        crypto_info_len = crypto_info->tls_crypto_info_len;
 #  endif
-        ret = ktls_start(b->num, crypto_info, sizeof(*crypto_info), num);
+        ret = ktls_start(b->num, crypto_info, crypto_info_len, num);
         if (ret)
             BIO_set_ktls_flag(b, num);
         break;
@@ -210,6 +215,9 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = 0;
         break;
 # endif
+    case BIO_CTRL_EOF:
+        ret = (b->flags & BIO_FLAGS_IN_EOF) != 0 ? 1 : 0;
+        break;
     default:
         ret = 0;
         break;

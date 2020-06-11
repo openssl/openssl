@@ -17,12 +17,18 @@ B<openssl> B<s_time>
 [B<-new>]
 [B<-verify> I<depth>]
 [B<-time> I<seconds>]
-{- $OpenSSL::safe::opt_versiontls_synopsis -}
+[B<-ssl3>]
+[B<-tls1>]
+[B<-tls1_1>]
+[B<-tls1_2>]
+[B<-tls1_3>]
 [B<-bugs>]
 [B<-cipher> I<cipherlist>]
 [B<-ciphersuites> I<val>]
 {- $OpenSSL::safe::opt_name_synopsis -}
+[B<-cafile> I<file>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef ssl3 tls1 tls1_1 tls1_2 tls1_3
 
@@ -72,12 +78,6 @@ Currently the verify operation continues after errors so all the problems
 with a certificate chain can be seen. As a side effect the connection
 will never fail due to a server certificate verify failure.
 
-=item B<-CApath> I<directory>
-
-The directory to use for server certificate verification. This directory
-must be in "hash format", see L<openssl-verify(1)> for more information.
-These are also used when building the client certificate chain.
-
 =item B<-new>
 
 Performs the timing test using a new session ID for each connection.
@@ -123,7 +123,15 @@ can establish.
 
 {- $OpenSSL::safe::opt_trust_item -}
 
-{- $OpenSSL::safe::opt_versiontls_item -}
+{- $OpenSSL::safe::opt_provider_item -}
+
+=item B<-cafile> I<file>
+
+This is an obsolete synonym for B<-CAfile>.
+
+=item B<-ssl3>, B<-tls1>, B<-tls1_1>, B<-tls1_2>, B<-tls1_3>
+
+See L<openssl(1)/TLS Version Options>.
 
 =back
 
@@ -156,7 +164,7 @@ send an HTTP request for an appropriate page.
 
 If a certificate is specified on the command line using the B<-cert>
 option it will not be used unless the server specifically requests
-a client certificate. Therefor merely including a client certificate
+a client certificate. Therefore merely including a client certificate
 on the command line is no guarantee that the certificate works.
 
 =head1 BUGS
@@ -168,6 +176,10 @@ be able to measure the performance of all protocols with all servers.
 The B<-verify> option should really exit if the server verification
 fails.
 
+=head1 HISTORY
+
+The B<-cafile> option was deprecated in OpenSSL 3.0.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
@@ -178,7 +190,7 @@ L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2004-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

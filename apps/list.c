@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,8 @@
 #include "progs.h"
 #include "opt.h"
 #include "names.h"
+
+DEFINE_STACK_OF_CSTRING()
 
 static int verbose = 0;
 
@@ -364,10 +366,12 @@ static void list_options_for_command(const char *command)
     for ( ; o->name != NULL; o++) {
         char c = o->valtype;
 
+        if (o->name == OPT_PARAM_STR)
+            break;
+
         if (o->name == OPT_HELP_STR
                 || o->name == OPT_MORE_STR
                 || o->name == OPT_SECTION_STR
-                || o->name == OPT_PARAM_STR
                 || o->name[0] == '\0')
             continue;
         BIO_printf(bio_out, "%s %c\n", o->name, c == '\0' ? '-' : c);
@@ -615,7 +619,8 @@ typedef enum HELPLIST_CHOICE {
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
-    OPT_KDF_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS
+    OPT_KDF_ALGORITHMS, OPT_MISSING_HELP, OPT_OBJECTS,
+    OPT_PROV_ENUM
 } HELPLIST_CHOICE;
 
 const OPTIONS list_options[] = {
@@ -627,6 +632,7 @@ const OPTIONS list_options[] = {
     {"1", OPT_ONE, '-', "List in one column"},
     {"verbose", OPT_VERBOSE, '-', "Verbose listing"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
+    {"standard-commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
      "List of message digest commands"},
     {"digest-algorithms", OPT_DIGEST_ALGORITHMS, '-',
@@ -652,6 +658,8 @@ const OPTIONS list_options[] = {
      "List options for specified command"},
     {"objects", OPT_OBJECTS, '-',
      "List built in objects (OID<->name mappings)"},
+
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -737,6 +745,10 @@ opthelp:
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
+                return 1;
             break;
         }
         done = 1;

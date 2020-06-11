@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-pkcs12 - PKCS#12 file utility
+openssl-pkcs12 - PKCS#12 file command
 
 =head1 SYNOPSIS
 
@@ -24,8 +24,22 @@ B<openssl> B<pkcs12>
 [B<-cacerts>]
 [B<-nokeys>]
 [B<-info>]
-[B<-des> B<-des3> B<-idea> B<-aes128> B<-aes192> B<-aes256> B<-aria128> B<-aria192> B<-aria256> B<-camellia128> B<-camellia192> B<-camellia256> B<-nodes>]
-[B<-iter> I<count> | B<-noiter> | B<-nomaciter>]
+[B<-des>]
+[B<-des3>]
+[B<-idea>]
+[B<-aes128>]
+[B<-aes192>]
+[B<-aes256>]
+[B<-aria128>]
+[B<-aria192>]
+[B<-aria256>]
+[B<-camellia128>]
+[B<-camellia192>]
+[B<-camellia256>]
+[B<-nodes>]
+[B<-iter> I<count>]
+[B<-noiter>]
+[B<-nomaciter>]
 [B<-maciter>]
 [B<-nomac>]
 [B<-twopass>]
@@ -38,10 +52,12 @@ B<openssl> B<pkcs12>
 [B<-password> I<arg>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
+[B<-LMK>]
 [B<-CSP> I<name>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -264,6 +280,10 @@ to be needed to use MAC iterations counts but they are now used by default.
 
 Don't attempt to provide the MAC integrity.
 
+=item B<-LMK>
+
+Add the "Local Key Set" identifier to the attributes.
+
 =item B<-CSP> I<name>
 
 Write I<name> as a Microsoft CSP name.
@@ -273,6 +293,8 @@ Write I<name> as a Microsoft CSP name.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =back
 
@@ -345,7 +367,7 @@ L<ossl_store-file(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -24,6 +24,8 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 #include "evp_test.h"
+
+DEFINE_STACK_OF_STRING()
 
 #define AAD_NUM 4
 
@@ -1310,7 +1312,7 @@ static int mac_test_run_mac(EVP_TEST *t)
             || !OSSL_PARAM_allocate_from_text(&params[params_n],
                                               defined_params,
                                               tmpkey, tmpval,
-                                              strlen(tmpval))) {
+                                              strlen(tmpval), NULL)) {
             OPENSSL_free(tmpkey);
             t->err = "MAC_PARAM_ERROR";
             goto err;
@@ -1321,12 +1323,12 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     params[params_n] = OSSL_PARAM_construct_end();
 
-    if ((ctx = EVP_MAC_CTX_new(expected->mac)) == NULL) {
+    if ((ctx = EVP_MAC_new_ctx(expected->mac)) == NULL) {
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
 
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+    if (!EVP_MAC_set_ctx_params(ctx, params)) {
         t->err = "MAC_BAD_PARAMS";
         goto err;
     }
@@ -1358,7 +1360,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     while (params_n-- > params_n_allocstart) {
         OPENSSL_free(params[params_n].data);
     }
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx);
     OPENSSL_free(got);
     return 1;
 }
@@ -2093,7 +2095,7 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
         OPENSSL_free(kdata);
         return 0;
     }
-    kdata->ctx = EVP_KDF_CTX_new(kdf);
+    kdata->ctx = EVP_KDF_new_ctx(kdf);
     EVP_KDF_free(kdf);
     if (kdata->ctx == NULL) {
         OPENSSL_free(kdata);
@@ -2111,7 +2113,7 @@ static void kdf_test_cleanup(EVP_TEST *t)
     for (p = kdata->params; p->key != NULL; p++)
         OPENSSL_free(p->data);
     OPENSSL_free(kdata->output);
-    EVP_KDF_CTX_free(kdata->ctx);
+    EVP_KDF_free_ctx(kdata->ctx);
 }
 
 static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
@@ -2120,7 +2122,8 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     KDF_DATA *kdata = t->data;
     int rv;
     char *p, *name;
-    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_kdf(kctx));
+    const OSSL_PARAM *defs =
+        EVP_KDF_settable_ctx_params(EVP_KDF_get_ctx_kdf(kctx));
 
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
@@ -2129,7 +2132,7 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
         *p++ = '\0';
 
     rv = OSSL_PARAM_allocate_from_text(kdata->p, defs, name, p,
-                                       p != NULL ? strlen(p) : 0);
+                                       p != NULL ? strlen(p) : 0, NULL);
     *++kdata->p = OSSL_PARAM_construct_end();
     if (!rv) {
         t->err = "KDF_PARAM_ERROR";
@@ -2176,7 +2179,7 @@ static int kdf_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len = expected->output_len;
 
-    if (!EVP_KDF_CTX_set_params(expected->ctx, expected->params)) {
+    if (!EVP_KDF_set_ctx_params(expected->ctx, expected->params)) {
         t->err = "KDF_CTRL_ERROR";
         return 1;
     }
@@ -2402,7 +2405,7 @@ static int keypair_test_run(EVP_TEST *t)
         goto end;
     }
 
-    if ((rv = EVP_PKEY_cmp(pair->privk, pair->pubk)) != 1 ) {
+    if ((rv = EVP_PKEY_eq(pair->privk, pair->pubk)) != 1 ) {
         if ( 0 == rv ) {
             t->err = "KEYPAIR_MISMATCH";
         } else if ( -1 == rv ) {
@@ -2504,8 +2507,8 @@ static int keygen_test_run(EVP_TEST *t)
 {
     KEYGEN_TEST_DATA *keygen = t->data;
     EVP_PKEY *pkey = NULL;
+    int rv = 1;
 
-    t->err = NULL;
     if (EVP_PKEY_keygen(keygen->genctx, &pkey) <= 0) {
         t->err = "KEYGEN_GENERATE_ERROR";
         goto err;
@@ -2514,6 +2517,7 @@ static int keygen_test_run(EVP_TEST *t)
     if (keygen->keyname != NULL) {
         KEY_LIST *key;
 
+        rv = 0;
         if (find_key(NULL, keygen->keyname, private_keys)) {
             TEST_info("Duplicate key %s", keygen->keyname);
             goto err;
@@ -2526,15 +2530,15 @@ static int keygen_test_run(EVP_TEST *t)
         key->key = pkey;
         key->next = private_keys;
         private_keys = key;
+        rv = 1;
     } else {
         EVP_PKEY_free(pkey);
     }
 
-    return 1;
+    t->err = NULL;
 
 err:
-    EVP_PKEY_free(pkey);
-    return 0;
+    return rv;
 }
 
 static const EVP_TEST_METHOD keygen_test_method = {
@@ -2992,7 +2996,8 @@ static int key_unsupported(void)
     long err = ERR_peek_error();
 
     if (ERR_GET_LIB(err) == ERR_LIB_EVP
-            && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
+            && (ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM
+                || ERR_GET_REASON(err) == EVP_R_FETCH_FAILED)) {
         ERR_clear_error();
         return 1;
     }
@@ -3145,17 +3150,6 @@ top:
         if (!TEST_ptr(key = OPENSSL_malloc(sizeof(*key))))
             return 0;
         key->name = take_value(pp);
-
-        /* Hack to detect SM2 keys */
-        if(pkey != NULL && strstr(key->name, "SM2") != NULL) {
-#ifdef OPENSSL_NO_SM2
-            EVP_PKEY_free(pkey);
-            pkey = NULL;
-#else
-            EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
-#endif
-        }
-
         key->key = pkey;
         key->next = *klist;
         *klist = key;
@@ -3258,8 +3252,14 @@ OPT_TEST_DECLARE_USAGE("file...\n")
 
 int setup_tests(void)
 {
-    size_t n = test_get_argument_count();
+    size_t n;
 
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    n = test_get_argument_count();
     if (n == 0)
         return 0;
 

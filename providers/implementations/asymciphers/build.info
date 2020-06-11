@@ -1,4 +1,6 @@
-LIBS=../../../libcrypto
-SOURCE[../../../libcrypto]=rsa_enc.c
+# We make separate GOAL variables for each algorithm, to make it easy to
+# switch each to the Legacy provider when needed.
 
+$RSA_GOAL=../../libimplementations.a
 
+SOURCE[$RSA_GOAL]=rsa_enc.c

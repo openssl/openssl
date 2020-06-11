@@ -1,11 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <openssl/core_numbers.h>
 #include <openssl/pem.h>
@@ -15,6 +21,7 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn dh_param_newctx;
@@ -42,71 +49,115 @@ static void dh_param_freectx(void *ctx)
 }
 
 /* Public key : DER */
-static int dh_param_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int dh_param_der_data(void *ctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dh_importkey =
-        ossl_prov_get_dh_importkey();
+    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
-    if (dh_importkey != NULL) {
-        DH *dh = dh_importkey(ctx, params); /* ctx == provctx */
+    if (dh_import != NULL) {
+        DH *dh;
 
-        ok = dh_param_der(ctx, dh, out, cb, cbarg);
-        DH_free(dh);
+        /* ctx == provctx */
+        if ((dh = dh_new(ctx)) != NULL
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, params)
+            && dh_param_der(ctx, dh, out, cb, cbarg))
+            ok = 1;
+        dh_free(dh);
     }
     return ok;
 }
 
-static int dh_param_der(void *ctx, void *dh, BIO *out,
+static int dh_param_der(void *ctx, void *dh, OSSL_CORE_BIO *cout,
                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return i2d_DHparams_bio(out, dh);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+    ret = i2d_DHparams_bio(out, dh);
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Public key : PEM */
-static int dh_param_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
-                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int dh_param_pem_data(void *ctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
+                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dh_importkey =
-        ossl_prov_get_dh_importkey();
+    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
-    if (dh_importkey != NULL) {
-        DH *dh = dh_importkey(ctx, params); /* ctx == provctx */
+    if (dh_import != NULL) {
+        DH *dh;
 
-        ok = dh_param_pem(ctx, dh, out, cb, cbarg);
-        DH_free(dh);
+        /* ctx == provctx */
+        if ((dh = dh_new(ctx)) != NULL
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, params)
+            && dh_param_pem(ctx, dh, out, cb, cbarg))
+            ok = 1;
+        dh_free(dh);
     }
     return ok;
 }
 
-static int dh_param_pem(void *ctx, void *dh, BIO *out,
+static int dh_param_pem(void *ctx, void *dh, OSSL_CORE_BIO *cout,
                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return PEM_write_bio_DHparams(out, dh);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = PEM_write_bio_DHparams(out, dh);
+    BIO_free(out);
+
+    return ret;
 }
 
-static int dh_param_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
-                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int dh_param_print_data(void *ctx, const OSSL_PARAM params[],
+                               OSSL_CORE_BIO *out,
+                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_importkey_fn *dh_importkey =
-        ossl_prov_get_dh_importkey();
+    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
-    if (dh_importkey != NULL) {
-        DH *dh = dh_importkey(ctx, params); /* ctx == provctx */
+    if (dh_import != NULL) {
+        DH *dh;
 
-        ok = dh_param_print(ctx, dh, out, cb, cbarg);
-        DH_free(dh);
+        /* ctx == provctx */
+        if ((dh = dh_new(ctx)) != NULL
+            && dh_import(dh, OSSL_KEYMGMT_SELECT_ALL_PARAMETERS, params)
+            && dh_param_print(ctx, dh, out, cb, cbarg))
+            ok = 1;
+        dh_free(dh);
     }
     return ok;
 }
 
-static int dh_param_print(void *ctx, void *dh, BIO *out,
+static int dh_param_print(void *ctx, void *dh, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_dh(out, dh, dh_print_params);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_dh(out, dh, dh_print_params);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH dh_param_der_serializer_functions[] = {

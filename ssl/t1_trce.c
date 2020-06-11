@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2012-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -427,6 +427,7 @@ static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0xC0AD, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM"},
     {0xC0AE, "TLS_ECDHE_ECDSA_WITH_AES_128_CCM_8"},
     {0xC0AF, "TLS_ECDHE_ECDSA_WITH_AES_256_CCM_8"},
+    {0xC102, "IANA-GOST2012-GOST8912-GOST8912"},
     {0xCCA8, "TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256"},
     {0xCCA9, "TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256"},
     {0xCCAA, "TLS_DHE_RSA_WITH_CHACHA20_POLY1305_SHA256"},
@@ -441,8 +442,11 @@ static const ssl_trace_tbl ssl_ciphers_tbl[] = {
     {0x1305, "TLS_AES_128_CCM_8_SHA256"},
     {0xFEFE, "SSL_RSA_FIPS_WITH_DES_CBC_SHA"},
     {0xFEFF, "SSL_RSA_FIPS_WITH_3DES_EDE_CBC_SHA"},
-    {0xFF85, "GOST2012-GOST8912-GOST8912"},
+    {0xFF85, "LEGACY-GOST2012-GOST8912-GOST8912"},
     {0xFF87, "GOST2012-NULL-GOST12"},
+    {0xC100, "GOST2012-KUZNYECHIK-KUZNYECHIKOMAC"},
+    {0xC101, "GOST2012-MAGMA-MAGMAOMAC"},
+    {0xC102, "GOST2012-GOST8912-IANA"},
 };
 
 /* Compression methods */
@@ -521,6 +525,13 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {28, "brainpoolP512r1"},
     {29, "ecdh_x25519"},
     {30, "ecdh_x448"},
+    {34, "GC256A"},
+    {35, "GC256B"},
+    {36, "GC256C"},
+    {37, "GC256D"},
+    {38, "GC512A"},
+    {39, "GC512B"},
+    {40, "GC512C"},
     {256, "ffdhe2048"},
     {257, "ffdhe3072"},
     {258, "ffdhe4096"},
@@ -568,6 +579,8 @@ static const ssl_trace_tbl ssl_sigalg_tbl[] = {
     {TLSEXT_SIGALG_dsa_sha512, "dsa_sha512"},
     {TLSEXT_SIGALG_dsa_sha224, "dsa_sha224"},
     {TLSEXT_SIGALG_dsa_sha1, "dsa_sha1"},
+    {TLSEXT_SIGALG_gostr34102012_256_intrinsic, "gost2012_256"},
+    {TLSEXT_SIGALG_gostr34102012_512_intrinsic, "gost2012_512"},
     {TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256, "gost2012_256"},
     {TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512, "gost2012_512"},
     {TLSEXT_SIGALG_gostr34102001_gostr3411, "gost2001_gost94"},
@@ -583,7 +596,9 @@ static const ssl_trace_tbl ssl_ctype_tbl[] = {
     {20, "fortezza_dms"},
     {64, "ecdsa_sign"},
     {65, "rsa_fixed_ecdh"},
-    {66, "ecdsa_fixed_ecdh"}
+    {66, "ecdsa_fixed_ecdh"},
+    {67, "gost_sign256"},
+    {68, "gost_sign512"},
 };
 
 static const ssl_trace_tbl ssl_psk_kex_modes_tbl[] = {
@@ -655,7 +670,10 @@ static int ssl_print_random(BIO *bio, int indent,
 
     if (*pmsglen < 32)
         return 0;
-    tm = (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+    tm = ((unsigned int)p[0] << 24)
+         | ((unsigned int)p[1] << 16)
+         | ((unsigned int)p[2] << 8)
+         | (unsigned int)p[3];
     p += 4;
     BIO_indent(bio, indent, 80);
     BIO_puts(bio, "Random:\n");
@@ -860,8 +878,10 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
             break;
         if (extlen != 4)
             return 0;
-        max_early_data = (ext[0] << 24) | (ext[1] << 16) | (ext[2] << 8)
-                         | ext[3];
+        max_early_data = ((unsigned int)ext[0] << 24)
+                         | ((unsigned int)ext[1] << 16)
+                         | ((unsigned int)ext[2] << 8)
+                         | (unsigned int)ext[3];
         BIO_indent(bio, indent + 2, 80);
         BIO_printf(bio, "max_early_data=%u\n", max_early_data);
         break;
@@ -1068,6 +1088,10 @@ static int ssl_get_keyex(const char **pname, const SSL *ssl)
         *pname = "GOST";
         return SSL_kGOST;
     }
+    if (alg_k & SSL_kGOST18) {
+        *pname = "GOST18";
+        return SSL_kGOST18;
+    }
     *pname = "UNKNOWN";
     return 0;
 }
@@ -1114,7 +1138,11 @@ static int ssl_print_client_keyex(BIO *bio, int indent, const SSL *ssl,
         ssl_print_hex(bio, indent + 2, "GostKeyTransportBlob", msg, msglen);
         msglen = 0;
         break;
-
+    case SSL_kGOST18:
+        ssl_print_hex(bio, indent + 2,
+                      "GOST-wrapped PreMasterSecret", msg, msglen);
+        msglen = 0;
+        break;
     }
 
     return !msglen;
@@ -1356,7 +1384,10 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
     }
     if (msglen < 4)
         return 0;
-    tick_life = (msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8) | msg[3];
+    tick_life = ((unsigned int)msg[0] << 24)
+                | ((unsigned int)msg[1] << 16)
+                | ((unsigned int)msg[2] << 8)
+                | (unsigned int)msg[3];
     msglen -= 4;
     msg += 4;
     BIO_indent(bio, indent + 2, 80);
@@ -1367,7 +1398,10 @@ static int ssl_print_ticket(BIO *bio, int indent, const SSL *ssl,
         if (msglen < 4)
             return 0;
         ticket_age_add =
-            (msg[0] << 24) | (msg[1] << 16) | (msg[2] << 8) | msg[3];
+            ((unsigned int)msg[0] << 24)
+            | ((unsigned int)msg[1] << 16)
+            | ((unsigned int)msg[2] << 8)
+            | (unsigned int)msg[3];
         msglen -= 4;
         msg += 4;
         BIO_indent(bio, indent + 2, 80);

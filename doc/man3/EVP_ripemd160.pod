@@ -15,6 +15,7 @@ EVP_ripemd160
 
 RIPEMD-160 is a cryptographic hash function first published in 1996 belonging
 to the RIPEMD family (RACE Integrity Primitives Evaluation Message Digest).
+This implementation is only available with the legacy provider.
 
 =over 4
 
@@ -37,6 +38,7 @@ ISO/IEC 10118-3:2016 Dedicated Hash-Function 1 (RIPEMD-160).
 =head1 SEE ALSO
 
 L<evp(7)>,
+L<provider(7)>,
 L<EVP_DigestInit(3)>
 
 =head1 COPYRIGHT

@@ -64,27 +64,31 @@ functions that wrap around the utility B<OPENSSL_sk_> API.
 In the description here, B<I<TYPE>> is used
 as a placeholder for any of the OpenSSL datatypes, such as B<X509>.
 
-STACK_OF() returns the name for a stack of the specified B<I<TYPE>>.
-DEFINE_STACK_OF() creates set of functions for a stack of B<I<TYPE>>. This
-will mean that type B<I<TYPE>> is stored in each stack, the type is referenced by
+The STACK_OF() macro returns the name for a stack of the specified B<I<TYPE>>.
+This is an opaque pointer to a structure declaration.
+This can be used in every header file that references the stack.
+There are several B<DEFINE...> macros that create static inline functions
+for all of the functions described on this page.
+This should normally be used in one source file, and the stack manipulation
+is wrapped with application-specific functions.
+
+DEFINE_STACK_OF() creates set of functions for a stack of B<I<TYPE>> elements.
+The type is referenced by
 B<STACK_OF>(B<I<TYPE>>) and each function name begins with B<sk_I<TYPE>_>.
-For example:
-
- TYPE *sk_TYPE_value(STACK_OF(TYPE) *sk, int idx);
-
 DEFINE_STACK_OF_CONST() is identical to DEFINE_STACK_OF() except
-each element is constant. For example:
+each element is constant.
 
+ /* DEFINE_STACK_OF(TYPE) */
+ TYPE *sk_TYPE_value(STACK_OF(TYPE) *sk, int idx);
+ /* DEFINE_STACK_OF_CONST(TYPE) */
  const TYPE *sk_TYPE_value(STACK_OF(TYPE) *sk, int idx);
 
-DEFINE_SPECIAL_STACK_OF() defines a stack of B<I<TYPE>> but
-each function uses B<FUNCNAME> in the function name. For example:
+DEFINE_SPECIAL_STACK_OF() and DEFINE_SPECIAL_STACK_OF_CONST() are similar
+except B<FUNCNAME> is used in the function names:
 
+ /* DEFINE_SPECIAL_STACK_OF(TYPE, FUNCNAME) */
  TYPE *sk_FUNCNAME_value(STACK_OF(TYPE) *sk, int idx);
-
-DEFINE_SPECIAL_STACK_OF_CONST() is similar except that each element is
-constant:
-
+ /* DEFINE_SPECIAL_STACK_OF(TYPE, FUNCNAME) */
  const TYPE *sk_FUNCNAME_value(STACK_OF(TYPE) *sk, int idx);
 
 B<sk_I<TYPE>_num>() returns the number of elements in I<sk> or -1 if I<sk> is
@@ -266,7 +270,7 @@ B<sk_I<TYPE>_reserve>() and B<sk_I<TYPE>_new_reserve>() were added in OpenSSL
 
 =head1 COPYRIGHT
 
-Copyright 2000-2017 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

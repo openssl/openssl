@@ -47,19 +47,22 @@ SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
 LIBS={- join(" ", map { ( platform->sharedlib_import($_), platform->staticlib($_) ) } @{$unified_info{libraries}}) -}
 SHLIBS={- join(" ", map { platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
 SHLIBPDBS={- join(" ", map { platform->sharedlibpdb($_) // () } @{$unified_info{libraries}}) -}
-MODULES={- join(" ", map { platform->dso($_) } @{$unified_info{modules}}) -}
+MODULES={- our @MODULES = map { platform->dso($_) } @{$unified_info{modules}};
+           join(" ", @MODULES) -}
 MODULEPDBS={- join(" ", map { platform->dsopdb($_) } @{$unified_info{modules}}) -}
 PROGRAMS={- our @PROGRAMS = map { platform->bin($_) } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
-SCRIPTS={- join(" ", @{$unified_info{scripts}}) -}
+SCRIPTS={- our @SCRIPTS = @{$unified_info{scripts}}; join(" ", @SCRIPTS) -}
 {- output_off() if $disabled{makedepend}; "" -}
 DEPS={- join(" ", map { platform->isobj($_) ? platform->dep($_) : () }
                   grep { $unified_info{sources}->{$_}->[0] =~ /\.c$/ }
                   keys %{$unified_info{sources}}); -}
 {- output_on() if $disabled{makedepend}; "" -}
-GENERATED_MANDATORY={- join(" ", @{$unified_info{depends}->{""}} ) -}
+GENERATED_MANDATORY={- our @GENERATED_MANDATORY = @{$unified_info{depends}->{""}};
+                       join(" ", @GENERATED_MANDATORY) -}
 GENERATED={- # common0.tmpl provides @generated
-             join(" ", map { platform->convertext($_) } @generated) -}
+             our @GENERATED = map { platform->convertext($_) } @generated;
+             join(" ", @GENERATED) -}
 
 INSTALL_LIBS={-
         join(" ", map { quotify1(platform->sharedlib_import($_)
@@ -89,6 +92,18 @@ INSTALL_ENGINEPDBS={-
         join(" ", map { quotify1(platform->dsopdb($_)) }
                   grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
                          && $unified_info{attributes}->{modules}->{$_}->{engine} }
+                  @{$unified_info{modules}})
+-}
+INSTALL_MODULES={-
+        join(" ", map { platform->dso($_) }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                          && !$unified_info{attributes}->{modules}->{$_}->{engine} }
+                  @{$unified_info{modules}})
+-}
+INSTALL_MODULEPDBS={-
+        join(" ", map { quotify1(platform->dsopdb($_)) }
+                  grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                         && !$unified_info{attributes}->{modules}->{$_}->{engine} }
                   @{$unified_info{modules}})
 -}
 INSTALL_PROGRAMS={-
@@ -130,8 +145,8 @@ HTMLDOCS5_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS5;
 HTMLDOCS7_BLDDIRS={- my %dirs = map { dirname($_) => 1 } @HTMLDOCS7;
                      join(' ', sort keys %dirs) -}
 
-APPS_OPENSSL={- use File::Spec::Functions;
-                "\"".catfile("apps","openssl")."\"" -}
+APPS_OPENSSL="{- use File::Spec::Functions;
+                 catfile("apps","openssl") -}"
 
 # Do not edit these manually. Use Configure with --prefix or --openssldir
 # to change this!  Short explanation in the top comment in Configure
@@ -357,7 +372,7 @@ PROCESSOR= {- $config{processor} -}
 
 # The main targets ###################################################
 
-{- dependmagic('build_sw'); -}: build_libs_nodep build_modules_nodep build_programs_nodep
+{- dependmagic('build_sw'); -}: build_libs_nodep build_modules_nodep build_programs_nodep copy-utils
 {- dependmagic('build_libs'); -}: build_libs_nodep
 {- dependmagic('build_modules'); -}: build_modules_nodep
 {- dependmagic('build_programs'); -}: build_programs_nodep
@@ -385,15 +400,11 @@ build_all_generated: $(GENERATED_MANDATORY) $(GENERATED) build_docs
 all: build_sw build_docs
 
 test: tests
-{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep
+{- dependmagic('tests'); -}: build_programs_nodep build_modules_nodep copy-utils
 	@{- output_off() if $disabled{tests}; "" -}
-	-mkdir $(BLDDIR)\test\test-runs
 	set SRCTOP=$(SRCDIR)
 	set BLDTOP=$(BLDDIR)
-	set RESULT_D=$(BLDDIR)\test\test-runs
 	set PERL=$(PERL)
-	set OPENSSL_ENGINES=$(MAKEDIR)\engines
-	set OPENSSL_MODULES=$(MAKEDIR)\providers
 	"$(PERL)" "$(SRCDIR)\test\run_tests.pl" $(TESTS)
 	@{- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@$(ECHO) "Tests are not supported with your chosen Configure options"
@@ -421,10 +432,10 @@ clean: libclean
 	-rmdir /Q /S $(HTMLDOCS5_BLDDIRS)
 	-rmdir /Q /S $(HTMLDOCS7_BLDDIRS)
 	{- join("\n\t", map { "-del /Q /F $_" } @PROGRAMS) -}
-	-del /Q /F $(MODULES)
-	-del /Q /F $(SCRIPTS)
-	-del /Q /F $(GENERATED_MANDATORY)
-	-del /Q /F $(GENERATED)
+	{- join("\n\t", map { "-del /Q /F $_" } @MODULES) -}
+	{- join("\n\t", map { "-del /Q /F $_" } @SCRIPTS) -}
+	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED_MANDATORY) -}
+	{- join("\n\t", map { "-del /Q /F $_" } @GENERATED) -}
 	-del /Q /S /F *.d *.obj *.pdb *.ilk *.manifest
 	-del /Q /S /F engines\*.lib engines\*.exp
 	-del /Q /S /F apps\*.lib apps\*.rc apps\*.res apps\*.exp
@@ -442,9 +453,9 @@ depend:
 
 # Install helper targets #############################################
 
-install_sw: install_dev install_engines install_runtime
+install_sw: install_dev install_engines install_modules install_runtime
 
-uninstall_sw: uninstall_runtime uninstall_engines uninstall_dev
+uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_dev
 
 install_docs: install_html_docs
 
@@ -488,9 +499,11 @@ install_dev: install_runtime_libs
 
 uninstall_dev:
 
-install_engines: install_runtime_libs build_modules
+_install_modules_deps: install_runtime_libs build_modules
+
+install_engines: _install_modules_deps
 	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
-	@$(ECHO) "*** Installing ENGINE modules"
+	@$(ECHO) "*** Installing engines"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(ENGINESDIR)"
 	@if not "$(INSTALL_ENGINES)"=="" \
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINES) "$(ENGINESDIR)"
@@ -498,6 +511,17 @@ install_engines: install_runtime_libs build_modules
 	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_ENGINEPDBS) "$(ENGINESDIR)"
 
 uninstall_engines:
+
+install_modules: _install_modules_deps
+	@if "$(INSTALLTOP)"=="" ( $(ECHO) "INSTALLTOP should not be empty" & exit 1 )
+	@$(ECHO) "*** Installing modules"
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(MODULESDIR)"
+	@if not "$(INSTALL_MODULES)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_MODULES) "$(MODULESDIR)"
+	@if not "$(INSTALL_MODULES)"=="" \
+	 "$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_MODULEPDBS) "$(MODULESDIR)"
+
+uninstall_modules:
 
 install_runtime: install_programs
 
@@ -546,6 +570,14 @@ install_html_docs: build_html_docs
 
 uninstall_html_docs:
 
+# Helper targets #####################################################
+
+copy-utils: $(BLDDIR)\util\wrap.pl
+
+$(BLDDIR)\util\wrap.pl: configdata.pm
+	@if NOT EXIST "$(BLDDIR)\util" mkdir "$(BLDDIR)\util"
+	@if NOT "$(SRCDIR)"=="$(BLDDIR)" copy "$(SRCDIR)\util\$(@F)" "$(BLDDIR)\util"
+
 # Building targets ###################################################
 
 configdata.pm: "$(SRCDIR)\Configure" {- join(" ", map { '"'.$_.'"' } @{$config{build_file_templates}}, @{$config{build_infos}}, @{$config{conf_files}}) -}
@@ -589,10 +621,7 @@ reconfigure reconf:
 	  my $pod = $args{generator}->[0];
 	  return <<"EOF";
 $args{src}: "$pod"
-	pod2html "--podroot=\$(SRCDIR)/doc" --htmldir=.. \\
-		 --podpath=man1:man3:man5:man7 "--infile=$pod" "--title=$title" \\
-	| \$(PERL) -pe ^"s^|href=\\^"http://man\\.he\\.net/^(man\\d/[^^\\^"]+^)^(?:\.html^)?^"^|href=\\^"../\$\$1.html^|g;^" \\
-	> \$\@
+	\$(PERL) \$(SRCDIR)/util/mkpod2html.pl -i "$pod" -o \$\@ -t "$title" -r "\$(SRCDIR)/doc"
 EOF
       } elsif (platform->isdef($args{src})) {
           my $target = platform->def($args{src});

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -71,7 +71,7 @@ typedef struct {
                     const unsigned char iv[16]);
 } EVP_AES_XTS_CTX;
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 static const int allow_insecure_decrypt = 0;
 #else
 static const int allow_insecure_decrypt = 1;
@@ -2901,7 +2901,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     return rv;
 }
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 /*
  * See SP800-38D (GCM) Section 8 "Uniqueness requirement on IVS and keys"
  *
@@ -2923,7 +2923,7 @@ static int aes_gcm_iv_generate(EVP_AES_GCM_CTX *gctx, int offset)
         return 0;
     return 1;
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                           const unsigned char *in, size_t len)
@@ -2937,7 +2937,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     if (gctx->tls_aad_len >= 0)
         return aes_gcm_tls_cipher(ctx, out, in, len);
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     /*
      * FIPS requires generation of AES-GCM IV's inside the FIPS module.
      * The IV can still be set externally (the security policy will state that
@@ -2954,7 +2954,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 #else
     if (!gctx->iv_set)
         return -1;
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
     if (in) {
         if (out == NULL) {

@@ -1,7 +1,7 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
- * Licensed under the OpenSSL license (the "License").  You may not use
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
@@ -9,35 +9,32 @@
 
 #include <openssl/opensslconf.h>
 
-#ifndef OPENSSL_SYS_VXWORKS
-NON_EMPTY_TRANSLATION_UNIT
-#else
-# include <openssl/rand.h>
-# include "rand_local.h"
-# include "crypto/rand.h"
-# include "internal/cryptlib.h"
-# include <version.h>
-# include <taskLib.h>
+#include <openssl/rand.h>
+#include "rand_local.h"
+#include "crypto/rand.h"
+#include "internal/cryptlib.h"
+#include <version.h>
+#include <taskLib.h>
 
-# if defined(OPENSSL_RAND_SEED_NONE)
+#if defined(OPENSSL_RAND_SEED_NONE)
 /* none means none */
-#  undef OPENSSL_RAND_SEED_OS
-# endif
+# undef OPENSSL_RAND_SEED_OS
+#endif
 
-# if defined(OPENSSL_RAND_SEED_OS)
-#  if _WRS_VXWORKS_MAJOR >= 7
-#    define RAND_SEED_VXRANDLIB
-#  else
-#    error "VxWorks <7 only support RAND_SEED_NONE"
-#  endif
+#if defined(OPENSSL_RAND_SEED_OS)
+# if _WRS_VXWORKS_MAJOR >= 7
+#   define RAND_SEED_VXRANDLIB
+# else
+#   error "VxWorks <7 only support RAND_SEED_NONE"
 # endif
+#endif
 
-# if defined(RAND_SEED_VXRANDLIB)
-#  include <randomNumGen.h>
-# endif
+#if defined(RAND_SEED_VXRANDLIB)
+# include <randomNumGen.h>
+#endif
 
 /* Macro to convert two thirty two bit values into a sixty four bit one */
-# define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
+#define TWO32TO64(a, b) ((((uint64_t)(a)) << 32) + (b))
 
 static uint64_t get_time_stamp(void)
 {
@@ -122,7 +119,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
 
 size_t rand_pool_acquire_entropy(RAND_POOL *pool)
 {
-# if defined(RAND_SEED_VXRANDLIB)
+#if defined(RAND_SEED_VXRANDLIB)
     /* vxRandLib based entropy method */
     size_t bytes_needed;
 
@@ -159,13 +156,11 @@ size_t rand_pool_acquire_entropy(RAND_POOL *pool)
         }
     }
     return rand_pool_entropy_available(pool);
-# else
+#else
     /*
      * SEED_NONE means none, without randlib we dont have entropy and
      * rely on it being added externally
      */
     return rand_pool_entropy_available(pool);
-# endif /* defined(RAND_SEED_VXRANDLIB) */
+#endif /* defined(RAND_SEED_VXRANDLIB) */
 }
-
-#endif /* OPENSSL_SYS_VXWORKS */

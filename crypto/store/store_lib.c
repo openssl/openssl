@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -231,6 +231,8 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
 {
     int loader_ret;
 
+    if (ctx == NULL)
+        return 1;
     OSSL_TRACE1(STORE, "Closing %p\n", (void *)ctx->loader_ctx);
     loader_ret = ctx->loader->close(ctx->loader_ctx);
 
@@ -509,7 +511,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
 }
 
 OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
-                                                    const ASN1_INTEGER *serial)
+                                                      const ASN1_INTEGER *serial)
 {
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
@@ -589,7 +591,7 @@ X509_NAME *OSSL_STORE_SEARCH_get0_name(const OSSL_STORE_SEARCH *criterion)
 }
 
 const ASN1_INTEGER *OSSL_STORE_SEARCH_get0_serial(const OSSL_STORE_SEARCH
-                                                 *criterion)
+                                                  *criterion)
 {
     return criterion->serial;
 }
@@ -651,45 +653,33 @@ char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
     return NULL;
 }
 
-OSSL_STORE_CTX *ossl_store_attach_pem_bio(BIO *bp, const UI_METHOD *ui_method,
-                                          void *ui_data)
+OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, OPENSSL_CTX *libctx,
+                                  const char *scheme, const char *propq,
+                                  const UI_METHOD *ui_method, void *ui_data,
+                                  OSSL_STORE_post_process_info_fn post_process,
+                                  void *post_process_data)
 {
     OSSL_STORE_CTX *ctx = NULL;
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
 
-    if ((loader = ossl_store_get0_loader_int("file")) == NULL
-        || ((loader_ctx = ossl_store_file_attach_pem_bio_int(bp)) == NULL))
-        goto done;
+    if ((loader =
+         ossl_store_get0_loader_int(scheme != NULL ? scheme : "file")) == NULL
+        || (loader_ctx = loader->attach(loader, bp, libctx, propq,
+                                        ui_method, ui_data)) == NULL)
+        return NULL;
+
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO,
-                     ERR_R_MALLOC_FAILURE);
-        goto done;
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH, ERR_R_MALLOC_FAILURE);
+        return NULL;
     }
 
     ctx->loader = loader;
     ctx->loader_ctx = loader_ctx;
-    loader_ctx = NULL;
     ctx->ui_method = ui_method;
     ctx->ui_data = ui_data;
-    ctx->post_process = NULL;
-    ctx->post_process_data = NULL;
+    ctx->post_process = post_process;
+    ctx->post_process_data = post_process_data;
 
- done:
-    if (loader_ctx != NULL)
-        /*
-         * We ignore a returned error because we will return NULL anyway in
-         * this case, so if something goes wrong when closing, that'll simply
-         * just add another entry on the error stack.
-         */
-        (void)loader->close(loader_ctx);
     return ctx;
-}
-
-int ossl_store_detach_pem_bio(OSSL_STORE_CTX *ctx)
-{
-    int loader_ret = ossl_store_file_detach_pem_bio_int(ctx->loader_ctx);
-
-    OPENSSL_free(ctx);
-    return loader_ret;
 }

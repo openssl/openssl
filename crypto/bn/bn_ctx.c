@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -90,7 +90,7 @@ struct bignum_ctx {
     OPENSSL_CTX *libctx;
 };
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 /* Debugging functionality */
 static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
 {
@@ -126,7 +126,7 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
 #else
 /* TODO(3.0): Consider if we want to do this in FIPS mode */
 # define CTXDBG(str, ctx) do {} while(0)
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
 {
@@ -143,7 +143,7 @@ BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
     return ret;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 BN_CTX *BN_CTX_new(void)
 {
     return BN_CTX_new_ex(NULL);
@@ -159,7 +159,7 @@ BN_CTX *BN_CTX_secure_new_ex(OPENSSL_CTX *ctx)
     return ret;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 BN_CTX *BN_CTX_secure_new(void)
 {
     return BN_CTX_secure_new_ex(NULL);
@@ -170,7 +170,7 @@ void BN_CTX_free(BN_CTX *ctx)
 {
     if (ctx == NULL)
         return;
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     OSSL_TRACE_BEGIN(BN_CTX) {
         BN_POOL_ITEM *pool = ctx->pool.head;
         BIO_printf(trc_out,

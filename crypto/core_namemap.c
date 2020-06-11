@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -136,7 +136,7 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     NAMENUM_ENTRY *namenum_entry, namenum_tmpl;
     int number = 0;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (namemap == NULL)
         namemap = ossl_namemap_stored(NULL);
 #endif
@@ -198,7 +198,7 @@ int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
     NAMENUM_ENTRY *namenum = NULL;
     int tmp_number;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (namemap == NULL)
         namemap = ossl_namemap_stored(NULL);
 #endif
@@ -309,7 +309,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
  * ==============
  */
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 #include <openssl/evp.h>
 
 /* Creates an initial namemap with names found in the legacy method db */
@@ -366,7 +366,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx)
         openssl_ctx_get_data(libctx, OPENSSL_CTX_NAMEMAP_INDEX,
                              &stored_namemap_method);
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (namemap != NULL && ossl_namemap_empty(namemap)) {
         /* Before pilfering, we make sure the legacy database is populated */
         OPENSSL_init_crypto(OPENSSL_INIT_ADD_ALL_CIPHERS

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,6 +15,9 @@
 #include "crypto/x509.h"
 #include "crypto/asn1.h"
 #include "x509_local.h"
+
+DEFINE_STACK_OF(X509_NAME_ENTRY)
+DEFINE_STACK_OF(ASN1_VALUE)
 
 /*
  * Maximum length of X509_NAME: much larger than anything we should
@@ -542,7 +545,7 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
     return 0;
 }
 
-int X509_NAME_get0_der(X509_NAME *nm, const unsigned char **pder,
+int X509_NAME_get0_der(const X509_NAME *nm, const unsigned char **pder,
                        size_t *pderlen)
 {
     /* Make sure encoding is valid */

@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -15,7 +15,7 @@
  * OPENSSL_CTX object. In this way data will get cleaned up correctly when the
  * module gets unloaded.
  */
-#if !defined(FIPS_MODE) || defined(ALLOW_RUN_ONCE_IN_FIPS)
+#if !defined(FIPS_MODULE) || defined(ALLOW_RUN_ONCE_IN_FIPS)
 /*
  * DEFINE_RUN_ONCE: Define an initialiser function that should be run exactly
  * once. It takes no arguments and returns and int result (1 for success or
@@ -143,4 +143,4 @@
 # define RUN_ONCE_ALT(once, initalt, init)                               \
     (CRYPTO_THREAD_run_once(once, initalt##_ossl_) ? init##_ossl_ret_ : 0)
 
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */

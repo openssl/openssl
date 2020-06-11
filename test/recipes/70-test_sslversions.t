@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -49,7 +49,7 @@ my $proxy = TLSProxy::Proxy->new(
 );
 
 #We're just testing various negative and unusual scenarios here. ssltest with
-#02-protocol-version.conf should check all the various combinations of normal
+#02-protocol-version.cnf should check all the various combinations of normal
 #version neg
 
 #Test 1: An empty supported_versions extension should not succeed

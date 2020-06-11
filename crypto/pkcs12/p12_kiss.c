@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,10 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+
+DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(PKCS7)
+DEFINE_STACK_OF(PKCS12_SAFEBAG)
 
 /* Simplified PKCS#12 routines */
 

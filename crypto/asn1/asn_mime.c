@@ -1,5 +1,5 @@
 /*
- * Copyright 2008-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,6 +17,9 @@
 #include "crypto/evp.h"
 #include "internal/bio.h"
 #include "asn1_local.h"
+
+DEFINE_STACK_OF(BIO)
+DEFINE_STACK_OF(X509_ALGOR)
 
 /*
  * Generalised MIME like utilities for streaming ASN1. Although many have a
@@ -197,6 +200,14 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 
         case NID_id_GostR3411_94:
             BIO_puts(out, "gostr3411-94");
+            goto err;
+
+        case NID_id_GostR3411_2012_256:
+            BIO_puts(out, "gostr3411-2012-256");
+            goto err;
+
+        case NID_id_GostR3411_2012_512:
+            BIO_puts(out, "gostr3411-2012-512");
             goto err;
 
         default:

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,34 +9,33 @@
 
 #include "e_os.h"
 
-#if defined(OPENSSL_SYS_VMS)
-# define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
-# include <unistd.h>
-# include "internal/cryptlib.h"
-# include <openssl/rand.h>
-# include "crypto/rand.h"
-# include "rand_local.h"
-# include <descrip.h>
-# include <dvidef.h>
-# include <jpidef.h>
-# include <rmidef.h>
-# include <syidef.h>
-# include <ssdef.h>
-# include <starlet.h>
-# include <efndef.h>
-# include <gen64def.h>
-# include <iosbdef.h>
-# include <iledef.h>
-# include <lib$routines.h>
-# ifdef __DECC
-#  pragma message disable DOLLARID
-# endif
+#define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
+#include <unistd.h>
+#include "internal/cryptlib.h"
+#include <openssl/rand.h>
+#include "crypto/rand.h"
+#include "rand_local.h"
+#include <descrip.h>
+#include <dvidef.h>
+#include <jpidef.h>
+#include <rmidef.h>
+#include <syidef.h>
+#include <ssdef.h>
+#include <starlet.h>
+#include <efndef.h>
+#include <gen64def.h>
+#include <iosbdef.h>
+#include <iledef.h>
+#include <lib$routines.h>
+#ifdef __DECC
+# pragma message disable DOLLARID
+#endif
 
-# include <dlfcn.h>              /* SYS$GET_ENTROPY presence */
+#include <dlfcn.h>              /* SYS$GET_ENTROPY presence */
 
-# ifndef OPENSSL_RAND_SEED_OS
-#  error "Unsupported seeding method configured; must be os"
-# endif
+#ifndef OPENSSL_RAND_SEED_OS
+# error "Unsupported seeding method configured; must be os"
+#endif
 
 /*
  * DATA COLLECTION METHOD
@@ -48,14 +47,14 @@
  */
 
 /* We need to make sure we have the right size pointer in some cases */
-# if __INITIAL_POINTER_SIZE == 64
-#  pragma pointer_size save
-#  pragma pointer_size 32
-# endif
+#if __INITIAL_POINTER_SIZE == 64
+# pragma pointer_size save
+# pragma pointer_size 32
+#endif
 typedef uint32_t *uint32_t__ptr32;
-# if __INITIAL_POINTER_SIZE == 64
-#  pragma pointer_size restore
-# endif
+#if __INITIAL_POINTER_SIZE == 64
+# pragma pointer_size restore
+#endif
 
 struct item_st {
     short length, code;         /* length is number of bytes */
@@ -613,5 +612,3 @@ void rand_pool_cleanup(void)
 void rand_pool_keep_random_devices_open(int keep)
 {
 }
-
-#endif

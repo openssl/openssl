@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -94,10 +94,7 @@ DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
      */
     SSL_COMP_get_compression_methods();
 #endif
-    /* initialize cipher/digest methods table */
-    if (!ssl_load_ciphers())
-        return 0;
-
+    ssl_sort_cipher_list();
     OSSL_TRACE(INIT,"ossl_init_ssl_base: SSL_add_ssl_module()\n");
     /*
      * We ignore an error return here. Not much we can do - but not that bad

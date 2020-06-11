@@ -7,7 +7,7 @@
 
 =head1 NAME
 
-openssl-pkeyparam - public key algorithm parameter processing tool
+openssl-pkeyparam - public key algorithm parameter processing command
 
 =head1 SYNOPSIS
 
@@ -19,6 +19,7 @@ B<openssl> B<pkeyparam>
 [B<-noout>]
 [B<-check>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -59,6 +60,8 @@ This option checks the correctness of parameters.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 EXAMPLES
@@ -84,7 +87,7 @@ L<openssl-gendsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2006-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

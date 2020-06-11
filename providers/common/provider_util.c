@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include "prov/provider_util.h"
 
 void ossl_prov_cipher_reset(PROV_CIPHER *pc)
@@ -45,7 +46,7 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
     *engine = NULL;
     /* TODO legacy stuff, to be removed */
     /* Inside the FIPS module, we don't support legacy ciphers */
-#if !defined(FIPS_MODE) && !defined(OPENSSL_NO_ENGINE)
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_ENGINE)
     p = OSSL_PARAM_locate_const(params, "engine");
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
@@ -76,12 +77,17 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
         return 0;
 
     EVP_CIPHER_free(pc->alloc_cipher);
+    ERR_set_mark();
     pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, p->data, propquery);
     /* TODO legacy stuff, to be removed */
-#ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy ciphers */
+#ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy ciphers */
     if (pc->cipher == NULL)
         pc->cipher = EVP_get_cipherbyname(p->data);
 #endif
+    if (pc->cipher != NULL)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
     return pc->cipher != NULL;
 }
 
@@ -131,12 +137,17 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
         return 0;
 
     EVP_MD_free(pd->alloc_md);
+    ERR_set_mark();
     pd->md = pd->alloc_md = EVP_MD_fetch(ctx, p->data, propquery);
     /* TODO legacy stuff, to be removed */
-#ifndef FIPS_MODE /* Inside the FIPS module, we don't support legacy digests */
+#ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy digests */
     if (pd->md == NULL)
         pd->md = EVP_get_digestbyname(p->data);
 #endif
+    if (pd->md != NULL)
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
     return pd->md != NULL;
 }
 
@@ -178,8 +189,8 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
     if (macname != NULL) {
         EVP_MAC *mac = EVP_MAC_fetch(libctx, macname, properties);
 
-        EVP_MAC_CTX_free(*macctx);
-        *macctx = mac == NULL ? NULL : EVP_MAC_CTX_new(mac);
+        EVP_MAC_free_ctx(*macctx);
+        *macctx = mac == NULL ? NULL : EVP_MAC_new_ctx(mac);
         /* The context holds on to the MAC */
         EVP_MAC_free(mac);
         if (*macctx == NULL)
@@ -220,7 +231,7 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
         *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
                                                  (char *)properties, 0);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     if ((p = OSSL_PARAM_locate_const(params, "engine")) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
@@ -230,10 +241,10 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
 #endif
     *mp = OSSL_PARAM_construct_end();
 
-    if (EVP_MAC_CTX_set_params(*macctx, mac_params))
+    if (EVP_MAC_set_ctx_params(*macctx, mac_params))
         return 1;
 
-    EVP_MAC_CTX_free(*macctx);
+    EVP_MAC_free_ctx(*macctx);
     *macctx = NULL;
     return 0;
 }

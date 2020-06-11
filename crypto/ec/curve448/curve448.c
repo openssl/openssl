@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -15,6 +15,7 @@
 
 #include "point_448.h"
 #include "ed448.h"
+#include "crypto/ecx.h"
 #include "curve448_local.h"
 
 #define COFACTOR 4

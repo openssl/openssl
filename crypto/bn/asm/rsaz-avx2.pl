@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2012, Intel Corporation. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -1981,4 +1981,4 @@ rsaz_1024_gather5_avx2:
 ___
 }}}
 
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

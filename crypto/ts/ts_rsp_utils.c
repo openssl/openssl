@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,8 @@
 #include <openssl/ts.h>
 #include <openssl/pkcs7.h>
 #include "ts_local.h"
+
+DEFINE_STACK_OF(X509_EXTENSION)
 
 int TS_RESP_set_status_info(TS_RESP *a, TS_STATUS_INFO *status_info)
 {

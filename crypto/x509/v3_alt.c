@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,7 +11,11 @@
 #include "internal/cryptlib.h"
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+#include <openssl/bio.h>
 #include "ext_dat.h"
+
+DEFINE_STACK_OF(CONF_VALUE)
+DEFINE_STACK_OF(GENERAL_NAME)
 
 static GENERAL_NAMES *v2i_subject_alt(X509V3_EXT_METHOD *method,
                                       X509V3_CTX *ctx,
@@ -78,9 +82,8 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                                        GENERAL_NAME *gen,
                                        STACK_OF(CONF_VALUE) *ret)
 {
-    unsigned char *p;
-    char oline[256], htmp[5];
-    int i;
+    char othername[300];
+    char oline[256], *tmp;
 
     switch (gen->type) {
     case GEN_OTHERNAME:
@@ -121,7 +124,26 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
                 return NULL;
             break;
         default:
-            if (!X509V3_add_value("othername", "<unsupported>", &ret))
+            if (OBJ_obj2txt(oline, sizeof(oline), gen->d.otherName->type_id, 0) > 0) 
+                BIO_snprintf(othername, sizeof(othername), "othername: %s:",
+                             oline);
+            else
+                OPENSSL_strlcpy(othername, "othername:", sizeof(othername));
+
+            /* check if the value is something printable */
+            if (gen->d.otherName->value->type == V_ASN1_IA5STRING) {
+                if (X509V3_add_value_uchar(othername,
+                             gen->d.otherName->value->value.ia5string->data,
+                             &ret)) 
+                    return ret;
+            }
+            if (gen->d.otherName->value->type == V_ASN1_UTF8STRING) {
+                if (X509V3_add_value_uchar(othername,
+                             gen->d.otherName->value->value.utf8string->data,
+                             &ret)) 
+                    return ret;
+            }
+            if (!X509V3_add_value(othername, "<unsupported>", &ret))
                 return NULL;
             break;
         }
@@ -159,26 +181,10 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
         break;
 
     case GEN_IPADD:
-        p = gen->d.ip->data;
-        if (gen->d.ip->length == 4)
-            BIO_snprintf(oline, sizeof(oline), "%d.%d.%d.%d",
-                         p[0], p[1], p[2], p[3]);
-        else if (gen->d.ip->length == 16) {
-            oline[0] = 0;
-            for (i = 0; i < 8; i++) {
-                BIO_snprintf(htmp, sizeof(htmp), "%X", p[0] << 8 | p[1]);
-                p += 2;
-                strcat(oline, htmp);
-                if (i != 7)
-                    strcat(oline, ":");
-            }
-        } else {
-            if (!X509V3_add_value("IP Address", "<invalid>", &ret))
-                return NULL;
-            break;
-        }
-        if (!X509V3_add_value("IP Address", oline, &ret))
-            return NULL;
+        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        if (tmp == NULL || !X509V3_add_value("IP Address", tmp, &ret))
+            ret = NULL;
+        OPENSSL_free(tmp);
         break;
 
     case GEN_RID:
@@ -192,8 +198,8 @@ STACK_OF(CONF_VALUE) *i2v_GENERAL_NAME(X509V3_EXT_METHOD *method,
 
 int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
 {
-    unsigned char *p;
-    int i, nid;
+    char *tmp;
+    int nid;
 
     switch (gen->type) {
     case GEN_OTHERNAME:
@@ -264,19 +270,11 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         break;
 
     case GEN_IPADD:
-        p = gen->d.ip->data;
-        if (gen->d.ip->length == 4)
-            BIO_printf(out, "IP Address:%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
-        else if (gen->d.ip->length == 16) {
-            BIO_printf(out, "IP Address");
-            for (i = 0; i < 8; i++) {
-                BIO_printf(out, ":%X", p[0] << 8 | p[1]);
-                p += 2;
-            }
-        } else {
-            BIO_printf(out, "IP Address:<invalid>");
-            break;
-        }
+        tmp = ipaddr_to_asc(gen->d.ip->data, gen->d.ip->length);
+        if (tmp == NULL)
+            return 0;
+        BIO_printf(out, "IP Address:%s", tmp);
+        OPENSSL_free(tmp);
         break;
 
     case GEN_RID:

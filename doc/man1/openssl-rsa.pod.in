@@ -7,13 +7,13 @@
 
 =head1 NAME
 
-openssl-rsa - RSA key processing tool
+openssl-rsa - RSA key processing command
 
 =head1 SYNOPSIS
 
 B<openssl> B<rsa>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>]
+[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
@@ -40,6 +40,7 @@ B<openssl> B<rsa>
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef pvk-strong pvk-weak pvk-none engine
 
@@ -60,9 +61,15 @@ L<openssl-pkcs8(1)> command.
 Print out a usage message.
 
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The input and formats; the default is B<PEM>.
+The key input format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-inform> B<DER>|B<PEM>
@@ -133,9 +140,14 @@ Like B<-pubin> and B<-pubout> except B<RSAPublicKey> format is used instead.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 EXAMPLES
+
+Examples equivalent to these can be found in the documentation for the
+non-deprecated L<openssl-pkey(1)> command.
 
 To remove the pass phrase on an RSA private key:
 
@@ -169,6 +181,7 @@ without having to manually edit them.
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkey(1)>,
 L<openssl-pkcs8(1)>,
 L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
@@ -176,7 +189,7 @@ L<openssl-gendsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

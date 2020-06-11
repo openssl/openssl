@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,7 @@
 #  define HEADER_OCSP_H
 # endif
 
-#include <openssl/opensslconf.h>
+# include <openssl/opensslconf.h>
 
 /*
  * These definitions are outside the OPENSSL_NO_OCSP guard because although for
@@ -37,30 +37,53 @@
  *        privilegeWithdrawn      (9),
  *        aACompromise           (10) }
  */
-#  define OCSP_REVOKED_STATUS_NOSTATUS               -1
-#  define OCSP_REVOKED_STATUS_UNSPECIFIED             0
-#  define OCSP_REVOKED_STATUS_KEYCOMPROMISE           1
-#  define OCSP_REVOKED_STATUS_CACOMPROMISE            2
-#  define OCSP_REVOKED_STATUS_AFFILIATIONCHANGED      3
-#  define OCSP_REVOKED_STATUS_SUPERSEDED              4
-#  define OCSP_REVOKED_STATUS_CESSATIONOFOPERATION    5
-#  define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
-#  define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
-#  define OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN      9
-#  define OCSP_REVOKED_STATUS_AACOMPROMISE           10
+# define OCSP_REVOKED_STATUS_NOSTATUS                -1
+# define OCSP_REVOKED_STATUS_UNSPECIFIED             0
+# define OCSP_REVOKED_STATUS_KEYCOMPROMISE           1
+# define OCSP_REVOKED_STATUS_CACOMPROMISE            2
+# define OCSP_REVOKED_STATUS_AFFILIATIONCHANGED      3
+# define OCSP_REVOKED_STATUS_SUPERSEDED              4
+# define OCSP_REVOKED_STATUS_CESSATIONOFOPERATION    5
+# define OCSP_REVOKED_STATUS_CERTIFICATEHOLD         6
+# define OCSP_REVOKED_STATUS_REMOVEFROMCRL           8
+# define OCSP_REVOKED_STATUS_PRIVILEGEWITHDRAWN      9
+# define OCSP_REVOKED_STATUS_AACOMPROMISE            10
+
+/*
+ * These definitions are outside the OPENSSL_NO_OCSP guard because although for
+ * historical reasons they have OCSP_* names, they are used for the HTTP client.
+ */
+# include <openssl/asn1.h>
+/* The following functions are used only internally */
+OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *wbio, BIO *rbio,
+                               int method_GET, int maxline,
+                               unsigned long max_resp_len, int timeout,
+                               const char *expected_content_type,
+                               int expect_asn1);
+void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
+int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx,
+                      const char *server, const char *port, const char *path);
+int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
+                             const char *name, const char *value);
+int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const char *content_type,
+                     const ASN1_ITEM *it, ASN1_VALUE *req);
+int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
+ASN1_VALUE *OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it);
+BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx);
+void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len);
+/* End of functions used only internally */
 
 
 # ifndef OPENSSL_NO_OCSP
 
-#  include <openssl/types.h>
 #  include <openssl/x509.h>
 #  include <openssl/x509v3.h>
 #  include <openssl/safestack.h>
 #  include <openssl/ocsperr.h>
 
-#ifdef  __cplusplus
+#  ifdef __cplusplus
 extern "C" {
-#endif
+#  endif
 
 /* Various flags and values */
 
@@ -80,16 +103,13 @@ extern "C" {
 #  define OCSP_NOTIME                     0x800
 
 typedef struct ocsp_cert_id_st OCSP_CERTID;
-
-DEFINE_STACK_OF(OCSP_CERTID)
-
 typedef struct ocsp_one_request_st OCSP_ONEREQ;
-
-DEFINE_STACK_OF(OCSP_ONEREQ)
-
 typedef struct ocsp_req_info_st OCSP_REQINFO;
 typedef struct ocsp_signature_st OCSP_SIGNATURE;
 typedef struct ocsp_request_st OCSP_REQUEST;
+
+DEFINE_OR_DECLARE_STACK_OF(OCSP_CERTID)
+DEFINE_OR_DECLARE_STACK_OF(OCSP_ONEREQ)
 
 #  define OCSP_RESPONSE_STATUS_SUCCESSFUL           0
 #  define OCSP_RESPONSE_STATUS_MALFORMEDREQUEST     1
@@ -103,7 +123,7 @@ typedef struct ocsp_resp_bytes_st OCSP_RESPBYTES;
 #  define V_OCSP_RESPID_NAME 0
 #  define V_OCSP_RESPID_KEY  1
 
-DEFINE_STACK_OF(OCSP_RESPID)
+DEFINE_OR_DECLARE_STACK_OF(OCSP_RESPID)
 
 typedef struct ocsp_revoked_info_st OCSP_REVOKEDINFO;
 
@@ -114,7 +134,7 @@ typedef struct ocsp_revoked_info_st OCSP_REVOKEDINFO;
 typedef struct ocsp_cert_status_st OCSP_CERTSTATUS;
 typedef struct ocsp_single_response_st OCSP_SINGLERESP;
 
-DEFINE_STACK_OF(OCSP_SINGLERESP)
+DEFINE_OR_DECLARE_STACK_OF(OCSP_SINGLERESP)
 
 typedef struct ocsp_response_data_st OCSP_RESPDATA;
 
@@ -154,28 +174,18 @@ typedef struct ocsp_service_locator_st OCSP_SERVICELOC;
         ASN1_item_digest(ASN1_ITEM_rptr(ASN1_BIT_STRING),type,data,md,len)
 
 #  define OCSP_CERTSTATUS_dup(cs)\
-                (OCSP_CERTSTATUS*)ASN1_dup((int(*)())i2d_OCSP_CERTSTATUS,\
-                (char *(*)())d2i_OCSP_CERTSTATUS,(char *)(cs))
+                (OCSP_CERTSTATUS*)ASN1_dup((i2d_of_void *)i2d_OCSP_CERTSTATUS,\
+                (d2i_of_void *)d2i_OCSP_CERTSTATUS,(char *)(cs))
 
 DECLARE_ASN1_DUP_FUNCTION(OCSP_CERTID)
 
 OCSP_RESPONSE *OCSP_sendreq_bio(BIO *b, const char *path, OCSP_REQUEST *req);
 OCSP_REQ_CTX *OCSP_sendreq_new(BIO *io, const char *path, OCSP_REQUEST *req,
                                int maxline);
-int OCSP_REQ_CTX_nbio(OCSP_REQ_CTX *rctx);
 int OCSP_sendreq_nbio(OCSP_RESPONSE **presp, OCSP_REQ_CTX *rctx);
-OCSP_REQ_CTX *OCSP_REQ_CTX_new(BIO *io, int maxline);
-void OCSP_REQ_CTX_free(OCSP_REQ_CTX *rctx);
-void OCSP_set_max_response_length(OCSP_REQ_CTX *rctx, unsigned long len);
-int OCSP_REQ_CTX_i2d(OCSP_REQ_CTX *rctx, const ASN1_ITEM *it,
-                     ASN1_VALUE *val);
-int OCSP_REQ_CTX_nbio_d2i(OCSP_REQ_CTX *rctx, ASN1_VALUE **pval,
-                          const ASN1_ITEM *it);
-BIO *OCSP_REQ_CTX_get0_mem_bio(OCSP_REQ_CTX *rctx);
-int OCSP_REQ_CTX_http(OCSP_REQ_CTX *rctx, const char *op, const char *path);
-int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, OCSP_REQUEST *req);
-int OCSP_REQ_CTX_add1_header(OCSP_REQ_CTX *rctx,
-                             const char *name, const char *value);
+
+/* TODO: remove this (documented but) meanwhile obsolete function? */
+int OCSP_REQ_CTX_set1_req(OCSP_REQ_CTX *rctx, const OCSP_REQUEST *req);
 
 OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
                              const X509 *issuer);
@@ -192,7 +202,7 @@ int OCSP_basic_add1_nonce(OCSP_BASICRESP *resp, unsigned char *val, int len);
 int OCSP_check_nonce(OCSP_REQUEST *req, OCSP_BASICRESP *bs);
 int OCSP_copy_nonce(OCSP_BASICRESP *resp, OCSP_REQUEST *req);
 
-int OCSP_request_set1_name(OCSP_REQUEST *req, X509_NAME *nm);
+int OCSP_request_set1_name(OCSP_REQUEST *req, const X509_NAME *nm);
 int OCSP_request_add1_cert(OCSP_REQUEST *req, X509 *cert);
 
 int OCSP_request_sign(OCSP_REQUEST *req,
@@ -237,8 +247,7 @@ int OCSP_check_validity(ASN1_GENERALIZEDTIME *thisupd,
 int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags);
 
-int OCSP_parse_url(const char *url, char **phost, char **pport, char **ppath,
-                   int *pssl);
+#  define OCSP_parse_url OSSL_HTTP_parse_url /* for backward compatibility */
 
 int OCSP_id_issuer_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
 int OCSP_id_cmp(const OCSP_CERTID *a, const OCSP_CERTID *b);
@@ -265,7 +274,11 @@ int OCSP_basic_sign_ctx(OCSP_BASICRESP *brsp,
                         X509 *signer, EVP_MD_CTX *ctx,
                         STACK_OF(X509) *certs, unsigned long flags);
 int OCSP_RESPID_set_by_name(OCSP_RESPID *respid, X509 *cert);
+int OCSP_RESPID_set_by_key_ex(OCSP_RESPID *respid, X509 *cert,
+                              OPENSSL_CTX *libctx, const char *propq);
 int OCSP_RESPID_set_by_key(OCSP_RESPID *respid, X509 *cert);
+int OCSP_RESPID_match_ex(OCSP_RESPID *respid, X509 *cert, OPENSSL_CTX *libctx,
+                         const char *propq);
 int OCSP_RESPID_match(OCSP_RESPID *respid, X509 *cert);
 
 X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim);
@@ -274,7 +287,7 @@ X509_EXTENSION *OCSP_accept_responses_new(char **oids);
 
 X509_EXTENSION *OCSP_archive_cutoff_new(char *tim);
 
-X509_EXTENSION *OCSP_url_svcloc_new(X509_NAME *issuer, const char **urls);
+X509_EXTENSION *OCSP_url_svcloc_new(const X509_NAME *issuer, const char **urls);
 
 int OCSP_REQUEST_get_ext_count(OCSP_REQUEST *x);
 int OCSP_REQUEST_get_ext_by_NID(OCSP_REQUEST *x, int nid, int lastpos);
@@ -359,5 +372,5 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
 #  ifdef  __cplusplus
 }
 #  endif
-# endif
+# endif /* !defined(OPENSSL_NO_OCSP) */
 #endif

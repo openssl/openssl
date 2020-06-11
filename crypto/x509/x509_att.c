@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,9 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "x509_local.h"
+
+DEFINE_STACK_OF(X509_ATTRIBUTE)
+DEFINE_STACK_OF(ASN1_TYPE)
 
 int X509at_get_attr_count(const STACK_OF(X509_ATTRIBUTE) *x)
 {

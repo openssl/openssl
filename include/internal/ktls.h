@@ -7,6 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(OPENSSL_SYS_LINUX)
+# ifndef OPENSSL_NO_KTLS
+#  include <linux/version.h>
+#  if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+#   define OPENSSL_NO_KTLS
+#   ifndef PEDANTIC
+#    warning "KTLS requires Kernel Headers >= 4.13.0"
+#    warning "Skipping Compilation of KTLS"
+#   endif
+#  endif
+# endif
+#endif
+
 #ifndef OPENSSL_NO_KTLS
 # ifndef HEADER_INTERNAL_KTLS
 #  define HEADER_INTERNAL_KTLS
@@ -40,12 +53,12 @@ static ossl_inline int ktls_enable(int fd)
  * provided here.
  */
 static ossl_inline int ktls_start(int fd,
-                                  struct tls_enable *tls_en,
+                                  void *tls_en,
                                   size_t len, int is_tx)
 {
     if (is_tx)
         return setsockopt(fd, IPPROTO_TCP, TCP_TXTLS_ENABLE,
-                          tls_en, sizeof(*tls_en)) ? 0 : 1;
+                          tls_en, len) ? 0 : 1;
     else
         return 0;
 }
@@ -109,94 +122,57 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
 #  endif                         /* __FreeBSD__ */
 
 #  if defined(OPENSSL_SYS_LINUX)
-#   include <linux/version.h>
 
-#   define K_MAJ   4
-#   define K_MIN1  13
-#   define K_MIN2  0
-#   if LINUX_VERSION_CODE < KERNEL_VERSION(K_MAJ, K_MIN1, K_MIN2)
-
+#   include <linux/tls.h>
+#   if LINUX_VERSION_CODE < KERNEL_VERSION(4, 17, 0)
+#    define OPENSSL_NO_KTLS_RX
 #    ifndef PEDANTIC
-#     warning "KTLS requires Kernel Headers >= 4.13.0"
-#     warning "Skipping Compilation of KTLS"
+#     warning "KTLS requires Kernel Headers >= 4.17.0 for receiving"
+#     warning "Skipping Compilation of KTLS receive data path"
 #    endif
+#   endif
+#   define OPENSSL_KTLS_AES_GCM_128
+#   if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
+#    define OPENSSL_KTLS_AES_GCM_256
+#    define OPENSSL_KTLS_TLS13
+#    if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 2, 0)
+#     define OPENSSL_KTLS_AES_CCM_128
+#    endif
+#   endif
 
-#    define TLS_TX                  1
+#   include <sys/sendfile.h>
+#   include <netinet/tcp.h>
+#   include <linux/socket.h>
+#   include "openssl/ssl3.h"
+#   include "openssl/tls1.h"
+#   include "openssl/evp.h"
+
+#   ifndef SOL_TLS
+#    define SOL_TLS 282
+#   endif
+
+#   ifndef TCP_ULP
+#    define TCP_ULP 31
+#   endif
+
+#   ifndef TLS_RX
 #    define TLS_RX                  2
+#   endif
 
-#    define TLS_CIPHER_AES_GCM_128                          51
-#    define TLS_CIPHER_AES_GCM_128_IV_SIZE                  8
-#    define TLS_CIPHER_AES_GCM_128_KEY_SIZE                 16
-#    define TLS_CIPHER_AES_GCM_128_SALT_SIZE                4
-#    define TLS_CIPHER_AES_GCM_128_TAG_SIZE                 16
-#    define TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE             8
-
-#    define TLS_SET_RECORD_TYPE     1
-
-struct tls_crypto_info {
-    unsigned short version;
-    unsigned short cipher_type;
+struct tls_crypto_info_all {
+    union {
+#   ifdef OPENSSL_KTLS_AES_GCM_128
+        struct tls12_crypto_info_aes_gcm_128 gcm128;
+#   endif
+#   ifdef OPENSSL_KTLS_AES_GCM_256
+        struct tls12_crypto_info_aes_gcm_256 gcm256;
+#   endif
+#   ifdef OPENSSL_KTLS_AES_CCM_128
+        struct tls12_crypto_info_aes_ccm_128 ccm128;
+#   endif
+    };
+    size_t tls_crypto_info_len;
 };
-
-struct tls12_crypto_info_aes_gcm_128 {
-    struct tls_crypto_info info;
-    unsigned char iv[TLS_CIPHER_AES_GCM_128_IV_SIZE];
-    unsigned char key[TLS_CIPHER_AES_GCM_128_KEY_SIZE];
-    unsigned char salt[TLS_CIPHER_AES_GCM_128_SALT_SIZE];
-    unsigned char rec_seq[TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE];
-};
-
-/* Dummy functions here */
-static ossl_inline int ktls_enable(int fd)
-{
-    return 0;
-}
-
-static ossl_inline int ktls_start(int fd,
-                                  struct tls12_crypto_info_aes_gcm_128
-                                  *crypto_info, size_t len, int is_tx)
-{
-    return 0;
-}
-
-static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
-                                              const void *data, size_t length)
-{
-    return -1;
-}
-
-static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
-{
-    return -1;
-}
-
-static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
-{
-    return -1;
-}
-
-#   else                        /* KERNEL_VERSION */
-
-#    include <sys/sendfile.h>
-#    include <netinet/tcp.h>
-#    include <linux/tls.h>
-#    include <linux/socket.h>
-#    include "openssl/ssl3.h"
-#    include "openssl/tls1.h"
-#    include "openssl/evp.h"
-
-#    ifndef SOL_TLS
-#     define SOL_TLS 282
-#    endif
-
-#    ifndef TCP_ULP
-#     define TCP_ULP 31
-#    endif
-
-#    ifndef TLS_RX
-#     define TLS_RX                  2
-#    endif
-
 /*
  * When successful, this socket option doesn't change the behaviour of the
  * TCP socket, except changing the TCP setsockopt handler to enable the
@@ -216,12 +192,11 @@ static ossl_inline int ktls_enable(int fd)
  * If successful, then data received using this socket will be decrypted,
  * authenticated and decapsulated using the crypto_info provided here.
  */
-static ossl_inline int ktls_start(int fd,
-                                  struct tls12_crypto_info_aes_gcm_128
-                                  *crypto_info, size_t len, int is_tx)
+static ossl_inline int ktls_start(int fd, void *crypto_info,
+                                  size_t len, int is_tx)
 {
     return setsockopt(fd, SOL_TLS, is_tx ? TLS_TX : TLS_RX,
-                      crypto_info, sizeof(*crypto_info)) ? 0 : 1;
+                      crypto_info, len) ? 0 : 1;
 }
 
 /*
@@ -270,20 +245,15 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t s
     return sendfile(s, fd, &off, size);
 }
 
-#    define K_MIN1_RX  17
-#    if LINUX_VERSION_CODE < KERNEL_VERSION(K_MAJ, K_MIN1_RX, K_MIN2)
+#   ifdef OPENSSL_NO_KTLS_RX
 
-#     ifndef PEDANTIC
-#      warning "KTLS requires Kernel Headers >= 4.17.0 for receiving"
-#      warning "Skipping Compilation of KTLS receive data path"
-#     endif
 
 static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 {
     return -1;
 }
 
-#    else
+#   else /* !defined(OPENSSL_NO_KTLS_RX) */
 
 /*
  * Receive a TLS record using the crypto_info provided in ktls_start.
@@ -338,8 +308,132 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
     return ret;
 }
 
-#    endif
-#   endif
+#   endif /* OPENSSL_NO_KTLS_RX */
+
+/* Function to check supported ciphers in Linux */
+static ossl_inline int ktls_check_supported_cipher(const EVP_CIPHER *c,
+                                            const EVP_CIPHER_CTX *dd)
+{
+    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128 */
+    switch (EVP_CIPHER_nid(c))
+    {
+#  ifdef OPENSSL_KTLS_AES_CCM_128
+    case NID_aes_128_ccm:
+        if (EVP_CIPHER_CTX_tag_length(dd) != EVP_CCM_TLS_TAG_LEN)
+          return 0;
 #  endif
-# endif
+#  ifdef OPENSSL_KTLS_AES_GCM_128
+    case NID_aes_128_gcm:
+#  endif
+#  ifdef OPENSSL_KTLS_AES_GCM_256
+    case NID_aes_256_gcm:
+#  endif
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/* Function to configure kernel TLS structure */
+static ossl_inline int ktls_configure_crypto(const EVP_CIPHER *c, int tls_version,
+                                EVP_CIPHER_CTX *dd, void *rl_sequence,
+                                struct tls_crypto_info_all *crypto_info,
+                                unsigned char **rec_seq, unsigned char *iv,
+                                unsigned char *key)
+{
+    unsigned char geniv[12];
+    unsigned char *iiv = iv;
+
+    if (tls_version == TLS1_2_VERSION &&
+        EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
+        EVP_CIPHER_CTX_ctrl(dd, EVP_CTRL_GET_IV,
+                            EVP_GCM_TLS_FIXED_IV_LEN + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                            geniv);
+        iiv = geniv;
+    }
+
+    memset(crypto_info, 0, sizeof(*crypto_info));
+    switch (EVP_CIPHER_nid(c))
+    {
+#  ifdef OPENSSL_KTLS_AES_GCM_128
+    case NID_aes_128_gcm:
+        crypto_info->gcm128.info.cipher_type = TLS_CIPHER_AES_GCM_128;
+        crypto_info->gcm128.info.version = tls_version;
+        crypto_info->tls_crypto_info_len = sizeof(crypto_info->gcm128);
+        memcpy(crypto_info->gcm128.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
+                TLS_CIPHER_AES_GCM_128_IV_SIZE);
+        memcpy(crypto_info->gcm128.salt, iiv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
+        memcpy(crypto_info->gcm128.key, key, EVP_CIPHER_key_length(c));
+        memcpy(crypto_info->gcm128.rec_seq, rl_sequence,
+                TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+        if (rec_seq != NULL)
+            *rec_seq = crypto_info->gcm128.rec_seq;
+        return 1;
+#  endif
+#  ifdef OPENSSL_KTLS_AES_GCM_256
+    case NID_aes_256_gcm:
+        crypto_info->gcm256.info.cipher_type = TLS_CIPHER_AES_GCM_256;
+        crypto_info->gcm256.info.version = tls_version;
+        crypto_info->tls_crypto_info_len = sizeof(crypto_info->gcm256);
+        memcpy(crypto_info->gcm256.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
+                TLS_CIPHER_AES_GCM_256_IV_SIZE);
+        memcpy(crypto_info->gcm256.salt, iiv, TLS_CIPHER_AES_GCM_256_SALT_SIZE);
+        memcpy(crypto_info->gcm256.key, key, EVP_CIPHER_key_length(c));
+        memcpy(crypto_info->gcm256.rec_seq, rl_sequence,
+                TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
+        if (rec_seq != NULL)
+            *rec_seq = crypto_info->gcm256.rec_seq;
+        return 1;
+#  endif
+#  ifdef OPENSSL_KTLS_AES_CCM_128
+    case NID_aes_128_ccm:
+        crypto_info->ccm128.info.cipher_type = TLS_CIPHER_AES_CCM_128;
+        crypto_info->ccm128.info.version = tls_version;
+        crypto_info->tls_crypto_info_len = sizeof(crypto_info->ccm128);
+        memcpy(crypto_info->ccm128.iv, iiv + EVP_CCM_TLS_FIXED_IV_LEN,
+                TLS_CIPHER_AES_CCM_128_IV_SIZE);
+        memcpy(crypto_info->ccm128.salt, iiv, TLS_CIPHER_AES_CCM_128_SALT_SIZE);
+        memcpy(crypto_info->ccm128.key, key, EVP_CIPHER_key_length(c));
+        memcpy(crypto_info->ccm128.rec_seq, rl_sequence,
+                TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
+        if (rec_seq != NULL)
+            *rec_seq = crypto_info->ccm128.rec_seq;
+        return 1;
+#  endif
+    default:
+        return 0;
+    }
+
+}
+
+#  endif /* OPENSSL_SYS_LINUX */
+# endif /* HEADER_INTERNAL_KTLS */
+#else /* defined(OPENSSL_NO_KTLS) */
+/* Dummy functions here */
+static ossl_inline int ktls_enable(int fd)
+{
+    return 0;
+}
+
+static ossl_inline int ktls_start(int fd, void *crypto_info,
+                                  size_t len, int is_tx)
+{
+    return 0;
+}
+
+static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
+                                              const void *data, size_t length)
+{
+    return -1;
+}
+
+static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+{
+    return -1;
+}
+
+static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
+{
+    return -1;
+}
 #endif

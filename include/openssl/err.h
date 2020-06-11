@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -113,6 +113,7 @@ struct err_state_st {
 # define ERR_LIB_PROV            57
 # define ERR_LIB_CMP             58
 # define ERR_LIB_OSSL_SERIALIZER 59
+# define ERR_LIB_HTTP            60
 
 # define ERR_LIB_USER            128
 
@@ -140,6 +141,7 @@ struct err_state_st {
 #  define EVPerr(f, r) ERR_raise_data(ERR_LIB_EVP, (r), NULL)
 #  define FIPSerr(f, r) ERR_raise_data(ERR_LIB_FIPS, (r), NULL)
 #  define HMACerr(f, r) ERR_raise_data(ERR_LIB_HMAC, (r), NULL)
+#  define HTTPerr(f, r) ERR_raise_data(ERR_LIB_HTTP, (r), NULL)
 #  define KDFerr(f, r) ERR_raise_data(ERR_LIB_KDF, (r), NULL)
 #  define OBJerr(f, r) ERR_raise_data(ERR_LIB_OBJ, (r), NULL)
 #  define OCSPerr(f, r) ERR_raise_data(ERR_LIB_OCSP, (r), NULL)
@@ -331,6 +333,8 @@ void ERR_print_errors(BIO *bp);
 
 void ERR_add_error_data(int num, ...);
 void ERR_add_error_vdata(int num, va_list args);
+void ERR_add_error_txt(const char *sepr, const char *txt);
+void ERR_add_error_mem_bio(const char *sep, BIO *bio);
 
 int ERR_load_strings(int lib, ERR_STRING_DATA *str);
 int ERR_load_strings_const(const ERR_STRING_DATA *str);

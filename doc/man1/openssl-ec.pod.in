@@ -13,7 +13,7 @@ openssl-ec - EC key processing
 
 B<openssl> B<ec>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>]
+[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
@@ -32,6 +32,7 @@ B<openssl> B<ec>
 [B<-no_public>]
 [B<-check>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 
@@ -51,9 +52,15 @@ PKCS#8 private key format use the L<openssl-pkcs8(1)> command.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The input and formats; the default is B<PEM>.
+The key input format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output formats; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 Private keys are an SEC1 private key or PKCS#8 format.
@@ -138,9 +145,14 @@ This option checks the consistency of an EC private or public key.
 
 {- $OpenSSL::safe::opt_engine_item -}
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 EXAMPLES
+
+Examples equivalent to these can be found in the documentation for the
+non-deprecated L<openssl-pkey(1)> command.
 
 To encrypt a private key using triple DES:
 
@@ -169,13 +181,14 @@ To change the point conversion form to B<compressed>:
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-pkey(1)>,
 L<openssl-ecparam(1)>,
 L<openssl-dsa(1)>,
 L<openssl-rsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2003-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

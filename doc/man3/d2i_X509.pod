@@ -75,6 +75,7 @@ d2i_IPAddressChoice,
 d2i_IPAddressFamily,
 d2i_IPAddressOrRange,
 d2i_IPAddressRange,
+d2i_ISSUER_SIGN_TOOL,
 d2i_ISSUING_DIST_POINT,
 d2i_NAMING_AUTHORITY,
 d2i_NETSCAPE_CERT_SEQUENCE,
@@ -98,6 +99,7 @@ d2i_OCSP_SIGNATURE,
 d2i_OCSP_SINGLERESP,
 d2i_OSSL_CMP_MSG,
 d2i_OSSL_CMP_PKIHEADER,
+d2i_OSSL_CMP_PKISI,
 d2i_OSSL_CRMF_CERTID,
 d2i_OSSL_CRMF_CERTTEMPLATE,
 d2i_OSSL_CRMF_ENCRYPTEDVALUE,
@@ -266,6 +268,7 @@ i2d_IPAddressChoice,
 i2d_IPAddressFamily,
 i2d_IPAddressOrRange,
 i2d_IPAddressRange,
+i2d_ISSUER_SIGN_TOOL,
 i2d_ISSUING_DIST_POINT,
 i2d_NAMING_AUTHORITY,
 i2d_NETSCAPE_CERT_SEQUENCE,
@@ -289,6 +292,7 @@ i2d_OCSP_SIGNATURE,
 i2d_OCSP_SINGLERESP,
 i2d_OSSL_CMP_MSG,
 i2d_OSSL_CMP_PKIHEADER,
+i2d_OSSL_CMP_PKISI,
 i2d_OSSL_CRMF_CERTID,
 i2d_OSSL_CRMF_CERTTEMPLATE,
 i2d_OSSL_CRMF_ENCRYPTEDVALUE,
@@ -491,7 +495,7 @@ Represents an ASN1 OBJECT IDENTIFIER.
 
 Represents a PKCS#3 DH parameters structure.
 
-=item B<DHparamx>
+=item B<DHxparams>
 
 Represents an ANSI X9.42 DH parameters structure.
 
@@ -641,7 +645,7 @@ efficiency reasons.
 
 =head1 COPYRIGHT
 
-Copyright 1998-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 1998-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

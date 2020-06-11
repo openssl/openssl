@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,13 +16,24 @@
 extern "C" {
 # endif
 
+/* Set the default provider search path */
+int OSSL_PROVIDER_set_default_search_path(OPENSSL_CTX *, const char *path);
+
 /* Load and unload a provider */
 OSSL_PROVIDER *OSSL_PROVIDER_load(OPENSSL_CTX *, const char *name);
 int OSSL_PROVIDER_unload(OSSL_PROVIDER *prov);
 int OSSL_PROVIDER_available(OPENSSL_CTX *, const char *name);
+int OSSL_PROVIDER_do_all(OPENSSL_CTX *ctx,
+                         int (*cb)(OSSL_PROVIDER *provider, void *cbdata),
+                         void *cbdata);
 
 const OSSL_PARAM *OSSL_PROVIDER_gettable_params(const OSSL_PROVIDER *prov);
 int OSSL_PROVIDER_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
+
+const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
+                                                    int operation_id,
+                                                    int *no_cache);
+void *OSSL_PROVIDER_get0_provider_ctx(const OSSL_PROVIDER *prov);
 
 /* Add a built in providers */
 int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,

@@ -1,11 +1,17 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DES low level APIs are deprecated for public use, but still ok for internal
+ * use.
+ */
+#include "internal/deprecated.h"
 
 #include "prov/ciphercommon.h"
 #include "cipher_des.h"
@@ -32,6 +38,20 @@ static void *des_newctx(void *provctx, size_t kbits, size_t blkbits,
         cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags, hw,
                                provctx);
     return ctx;
+}
+
+static void *des_dupctx(void *ctx)
+{
+    PROV_DES_CTX *in = (PROV_DES_CTX *)ctx;
+    PROV_DES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+
+    if (ret == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    in->base.hw->copyctx(&ret->base, &in->base);
+
+    return ret;
 }
 
 static void des_freectx(void *vctx)
@@ -131,6 +151,7 @@ const OSSL_DISPATCH des_##lcmode##_functions[] = {                             \
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))cipher_generic_cipher },        \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void))des_##lcmode##_newctx },                                 \
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))des_dupctx },                   \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))des_freectx },                 \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void))des_##lcmode##_get_params },                             \

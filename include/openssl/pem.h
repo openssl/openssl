@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -347,6 +347,14 @@ DECLARE_PEM_rw(DHparams, DH)
 DECLARE_PEM_write(DHxparams, DH)
 # endif
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
+EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
+                                     void *u, OPENSSL_CTX *libctx,
+                                     const char *propq);
+# ifndef OPENSSL_NO_STDIO
+EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
+                                 void *u, OPENSSL_CTX *libctx,
+                                 const char *propq);
+# endif
 DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
 
 int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,

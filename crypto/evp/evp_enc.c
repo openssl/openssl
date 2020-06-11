@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -51,7 +51,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
             OPENSSL_cleanse(ctx->cipher_data, ctx->cipher->ctx_size);
     }
     OPENSSL_free(ctx->cipher_data);
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE_finish(ctx->engine);
 #endif
     memset(ctx, 0, sizeof(*ctx));
@@ -81,11 +81,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                       ENGINE *impl, const unsigned char *key,
                       const unsigned char *iv, int enc)
 {
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE *tmpimpl = NULL;
 #endif
-    const EVP_CIPHER *tmpcipher;
-
     /*
      * enc == 1 means we are encrypting.
      * enc == 0 means we are decrypting.
@@ -106,7 +104,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
     /* TODO(3.0): Legacy work around code below. Remove this */
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /*
      * Whether it's nice or not, "Inits" can be used on "Final"'d contexts so
      * this context may already have an ENGINE! Try to avoid releasing the
@@ -127,7 +125,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
      * If there are engines involved then we should use legacy handling for now.
      */
     if (ctx->engine != NULL
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
             || tmpimpl != NULL
 #endif
             || impl != NULL) {
@@ -137,164 +135,6 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         ctx->fetched_cipher = NULL;
         goto legacy;
     }
-
-    tmpcipher = (cipher == NULL) ? ctx->cipher : cipher;
-
-    if (tmpcipher->prov == NULL) {
-        switch(tmpcipher->nid) {
-        case NID_undef:
-        case NID_aes_256_ecb:
-        case NID_aes_192_ecb:
-        case NID_aes_128_ecb:
-        case NID_aes_256_cbc:
-        case NID_aes_192_cbc:
-        case NID_aes_128_cbc:
-        case NID_aes_256_ofb128:
-        case NID_aes_192_ofb128:
-        case NID_aes_128_ofb128:
-        case NID_aes_256_cfb128:
-        case NID_aes_192_cfb128:
-        case NID_aes_128_cfb128:
-        case NID_aes_256_cfb1:
-        case NID_aes_192_cfb1:
-        case NID_aes_128_cfb1:
-        case NID_aes_256_cfb8:
-        case NID_aes_192_cfb8:
-        case NID_aes_128_cfb8:
-        case NID_aes_256_ctr:
-        case NID_aes_192_ctr:
-        case NID_aes_128_ctr:
-        case NID_aes_128_xts:
-        case NID_aes_256_xts:
-        case NID_aes_256_ocb:
-        case NID_aes_192_ocb:
-        case NID_aes_128_ocb:
-        case NID_aes_256_gcm:
-        case NID_aes_192_gcm:
-        case NID_aes_128_gcm:
-        case NID_aes_256_siv:
-        case NID_aes_192_siv:
-        case NID_aes_128_siv:
-        case NID_aes_256_cbc_hmac_sha256:
-        case NID_aes_128_cbc_hmac_sha256:
-        case NID_aes_256_cbc_hmac_sha1:
-        case NID_aes_128_cbc_hmac_sha1:
-        case NID_id_aes256_wrap:
-        case NID_id_aes256_wrap_pad:
-        case NID_id_aes192_wrap:
-        case NID_id_aes192_wrap_pad:
-        case NID_id_aes128_wrap:
-        case NID_id_aes128_wrap_pad:
-        case NID_aria_256_gcm:
-        case NID_aria_192_gcm:
-        case NID_aria_128_gcm:
-        case NID_aes_256_ccm:
-        case NID_aes_192_ccm:
-        case NID_aes_128_ccm:
-        case NID_aria_256_ccm:
-        case NID_aria_192_ccm:
-        case NID_aria_128_ccm:
-        case NID_aria_256_ecb:
-        case NID_aria_192_ecb:
-        case NID_aria_128_ecb:
-        case NID_aria_256_cbc:
-        case NID_aria_192_cbc:
-        case NID_aria_128_cbc:
-        case NID_aria_256_ofb128:
-        case NID_aria_192_ofb128:
-        case NID_aria_128_ofb128:
-        case NID_aria_256_cfb128:
-        case NID_aria_192_cfb128:
-        case NID_aria_128_cfb128:
-        case NID_aria_256_cfb1:
-        case NID_aria_192_cfb1:
-        case NID_aria_128_cfb1:
-        case NID_aria_256_cfb8:
-        case NID_aria_192_cfb8:
-        case NID_aria_128_cfb8:
-        case NID_aria_256_ctr:
-        case NID_aria_192_ctr:
-        case NID_aria_128_ctr:
-        case NID_camellia_256_ecb:
-        case NID_camellia_192_ecb:
-        case NID_camellia_128_ecb:
-        case NID_camellia_256_cbc:
-        case NID_camellia_192_cbc:
-        case NID_camellia_128_cbc:
-        case NID_camellia_256_ofb128:
-        case NID_camellia_192_ofb128:
-        case NID_camellia_128_ofb128:
-        case NID_camellia_256_cfb128:
-        case NID_camellia_192_cfb128:
-        case NID_camellia_128_cfb128:
-        case NID_camellia_256_cfb1:
-        case NID_camellia_192_cfb1:
-        case NID_camellia_128_cfb1:
-        case NID_camellia_256_cfb8:
-        case NID_camellia_192_cfb8:
-        case NID_camellia_128_cfb8:
-        case NID_camellia_256_ctr:
-        case NID_camellia_192_ctr:
-        case NID_camellia_128_ctr:
-        case NID_des_ede3_cbc:
-        case NID_des_ede3_ecb:
-        case NID_des_ede3_ofb64:
-        case NID_des_ede3_cfb64:
-        case NID_des_ede3_cfb8:
-        case NID_des_ede3_cfb1:
-        case NID_des_ede_cbc:
-        case NID_des_ede_ecb:
-        case NID_des_ede_ofb64:
-        case NID_des_ede_cfb64:
-        case NID_desx_cbc:
-        case NID_des_cbc:
-        case NID_des_ecb:
-        case NID_des_cfb1:
-        case NID_des_cfb8:
-        case NID_des_cfb64:
-        case NID_des_ofb64:
-        case NID_id_smime_alg_CMS3DESwrap:
-        case NID_bf_cbc:
-        case NID_bf_ecb:
-        case NID_bf_cfb64:
-        case NID_bf_ofb64:
-        case NID_idea_cbc:
-        case NID_idea_ecb:
-        case NID_idea_cfb64:
-        case NID_idea_ofb64:
-        case NID_cast5_cbc:
-        case NID_cast5_ecb:
-        case NID_cast5_cfb64:
-        case NID_cast5_ofb64:
-        case NID_seed_cbc:
-        case NID_seed_ecb:
-        case NID_seed_cfb128:
-        case NID_seed_ofb128:
-        case NID_sm4_cbc:
-        case NID_sm4_ecb:
-        case NID_sm4_ctr:
-        case NID_sm4_cfb128:
-        case NID_sm4_ofb128:
-        case NID_rc4:
-        case NID_rc4_40:
-        case NID_rc5_cbc:
-        case NID_rc5_ecb:
-        case NID_rc5_cfb64:
-        case NID_rc5_ofb64:
-        case NID_rc2_cbc:
-        case NID_rc2_40_cbc:
-        case NID_rc2_64_cbc:
-        case NID_rc2_cfb64:
-        case NID_rc2_ofb64:
-        case NID_chacha20:
-        case NID_chacha20_poly1305:
-        case NID_rc4_hmac_md5:
-            break;
-        default:
-            goto legacy;
-        }
-    }
-
     /*
      * Ensure a context left lying around from last time is cleared
      * (legacy code)
@@ -321,7 +161,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         cipher = ctx->cipher;
 
     if (cipher->prov == NULL) {
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
         /* We only do explicit fetches inside the FIPS module */
         EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
         return 0;
@@ -404,7 +244,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             ctx->encrypt = enc;
             ctx->flags = flags;
         }
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
         if (impl != NULL) {
             if (!ENGINE_init(impl)) {
                 EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
@@ -460,7 +300,7 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
             }
         }
     }
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
  skip_to_init:
 #endif
     if (ctx->cipher == NULL)
@@ -1340,7 +1180,7 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
     if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
         return EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_RAND_KEY, 0, key);
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     return 0;
 #else
     {
@@ -1351,7 +1191,7 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
             return 0;
         return 1;
     }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 }
 
 int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
@@ -1390,7 +1230,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
     /* TODO(3.0): Remove legacy code below */
  legacy:
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     /* Make sure it's safe to copy a cipher context using an ENGINE */
     if (in->engine && !ENGINE_init(in->engine)) {
         EVPerr(EVP_F_EVP_CIPHER_CTX_COPY, ERR_R_ENGINE_LIB);
@@ -1440,7 +1280,7 @@ EVP_CIPHER *evp_cipher_new(void)
  * provider based, we know that none of its code depends on legacy
  * NIDs or any functionality that use them.
  */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 /* TODO(3.x) get rid of the need for legacy NIDs */
 static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
@@ -1478,7 +1318,7 @@ static void *evp_cipher_from_dispatch(const int name_id,
         return NULL;
     }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     cipher->nid = NID_undef;
     evp_names_do_all(prov, name_id, set_legacy_nid, &cipher->nid);

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,8 @@
 #include "apps.h"
 #include "progs.h"
 
+DEFINE_STACK_OF_STRING()
+
 #define BUFSIZE 4096
 #define DEFAULT_MAC_NAME "HMAC"
 #define DEFAULT_FIPS_SECTION "fips_check_section"
@@ -31,12 +33,13 @@ static OSSL_CALLBACK self_test_events;
 static char *self_test_corrupt_desc = NULL;
 static char *self_test_corrupt_type = NULL;
 static int self_test_log = 1;
+static int quiet = 0;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_IN, OPT_OUT, OPT_MODULE,
     OPT_PROV_NAME, OPT_SECTION_NAME, OPT_MAC_NAME, OPT_MACOPT, OPT_VERIFY,
-    OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE
+    OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE, OPT_QUIET
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -60,6 +63,7 @@ const OPTIONS fipsinstall_options[] = {
     {"noout", OPT_NO_LOG, '-', "Disable logging of self test events"},
     {"corrupt_desc", OPT_CORRUPT_DESC, 's', "Corrupt a self test by description"},
     {"corrupt_type", OPT_CORRUPT_TYPE, 's', "Corrupt a self test by type"},
+    {"quiet", OPT_QUIET, '-', "No messages, just exit status"},
     {NULL}
 };
 
@@ -287,7 +291,7 @@ int fipsinstall_main(int argc, char **argv)
         case OPT_ERR:
 opthelp:
             BIO_printf(bio_err, "%s: Use -help for summary.\n", prog);
-            goto end;
+            goto cleanup;
         case OPT_HELP:
             opt_help(fipsinstall_options);
             ret = 0;
@@ -298,6 +302,9 @@ opthelp:
         case OPT_OUT:
             out_fname = opt_arg();
             break;
+        case OPT_QUIET:
+            quiet = 1;
+            /* FALLTHROUGH */
         case OPT_NO_LOG:
             self_test_log = 0;
             break;
@@ -359,7 +366,7 @@ opthelp:
         goto end;
     }
 
-    ctx = EVP_MAC_CTX_new(mac);
+    ctx = EVP_MAC_new_ctx(mac);
     if (ctx == NULL) {
         BIO_printf(bio_err, "Unable to create MAC CTX for module check\n");
         goto end;
@@ -373,7 +380,7 @@ opthelp:
         if (params == NULL)
             goto end;
 
-        if (!EVP_MAC_CTX_set_params(ctx, params)) {
+        if (!EVP_MAC_set_ctx_params(ctx, params)) {
             BIO_printf(bio_err, "MAC parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
@@ -383,7 +390,7 @@ opthelp:
             goto end;
     }
 
-    ctx2 = EVP_MAC_CTX_dup(ctx);
+    ctx2 = EVP_MAC_dup_ctx(ctx);
     if (ctx2 == NULL) {
         BIO_printf(bio_err, "Unable to create MAC CTX for install indicator\n");
         goto end;
@@ -405,7 +412,8 @@ opthelp:
         if (!verify_config(in_fname, section_name, module_mac, module_mac_len,
                            install_mac, install_mac_len))
             goto end;
-        BIO_printf(bio_out, "VERIFY PASSED\n");
+        if (!quiet)
+            BIO_printf(bio_out, "VERIFY PASSED\n");
     } else {
 
         conf = generate_config_and_load(prov_name, section_name, module_mac,
@@ -424,23 +432,26 @@ opthelp:
                                        module_mac_len, install_mac,
                                        install_mac_len))
             goto end;
-        BIO_printf(bio_out, "INSTALL PASSED\n");
+        if (!quiet)
+            BIO_printf(bio_out, "INSTALL PASSED\n");
     }
 
     ret = 0;
 end:
     if (ret == 1) {
-        BIO_printf(bio_err, "%s FAILED\n", verify ? "VERIFY" : "INSTALL");
+        if (!quiet)
+            BIO_printf(bio_err, "%s FAILED\n", verify ? "VERIFY" : "INSTALL");
         ERR_print_errors(bio_err);
     }
 
+cleanup:
     BIO_free(fout);
     BIO_free(mem_bio);
     BIO_free(module_bio);
     sk_OPENSSL_STRING_free(opts);
     EVP_MAC_free(mac);
-    EVP_MAC_CTX_free(ctx2);
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx2);
+    EVP_MAC_free_ctx(ctx);
     OPENSSL_free(read_buffer);
     free_config_and_unload(conf);
     return ret;

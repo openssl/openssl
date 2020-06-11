@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include "crypto/cryptlib.h"
+#include <openssl/conf.h>
 #include "internal/thread_once.h"
 #include "internal/property.h"
 
@@ -38,7 +39,7 @@ struct openssl_ctx_st {
     struct openssl_ctx_onfree_list_st *onfreelist;
 };
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 static OPENSSL_CTX default_context_int;
 
 /* Always points at default_context_int if it has been initialised */
@@ -118,7 +119,7 @@ static int context_deinit(OPENSSL_CTX *ctx)
     return 1;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 void openssl_ctx_default_deinit(void)
 {
     context_deinit(default_context);
@@ -145,6 +146,13 @@ OPENSSL_CTX *OPENSSL_CTX_new(void)
     return ctx;
 }
 
+#ifndef FIPS_MODULE
+int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file)
+{
+    return CONF_modules_load_file_with_libctx(ctx, config_file, NULL, 0) > 0;
+}
+#endif
+
 void OPENSSL_CTX_free(OPENSSL_CTX *ctx)
 {
     if (ctx != NULL)
@@ -154,7 +162,7 @@ void OPENSSL_CTX_free(OPENSSL_CTX *ctx)
 
 OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx)
 {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (ctx == NULL) {
         if (!RUN_ONCE(&default_context_init, do_default_context_init))
             return 0;
@@ -162,6 +170,15 @@ OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx)
     }
 #endif
     return ctx;
+}
+
+int openssl_ctx_is_default(OPENSSL_CTX *ctx)
+{
+#ifndef FIPS_MODULE
+    if (ctx == NULL || ctx == default_context)
+        return 1;
+#endif
+    return 0;
 }
 
 static void openssl_ctx_generic_new(void *parent_ign, void *ptr_ign,

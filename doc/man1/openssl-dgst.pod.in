@@ -12,6 +12,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-help>]
 [B<-c>]
 [B<-d>]
+[B<-debug>]
 [B<-list>]
 [B<-hex>]
 [B<-binary>]
@@ -25,10 +26,13 @@ B<openssl> B<dgst>|I<digest>
 [B<-signature> I<filename>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-hmac> I<key>]
+[B<-mac> I<alg>]
+[B<-macopt> I<nm>:I<v>]
 [B<-fips-fingerprint>]
-[B<-engine> I<id>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
+[B<-engine_impl> I<id>]
 {- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<file> ...]
 
 =head1 DESCRIPTION
@@ -61,7 +65,7 @@ supported digests, use the command C<list --digest-commands>.
 Print out the digest in two digit groups separated by colons, only relevant if
 the B<-hex> option is given as well.
 
-=item B<-d>
+=item B<-d>, B<-debug>
 
 Print out BIO debugging information.
 
@@ -99,6 +103,7 @@ command instead for this.
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
 The format of the key to sign with; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
@@ -170,16 +175,18 @@ option.
 
 Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 
-=item B<-engine_impl>
-
-When used with the B<-engine> option, it specifies to also use
-engine I<id> for digest operations.
-
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
 The engine is not used for digests unless the B<-engine_impl> option is
 used or it is configured to do so, see L<config(5)/Engine Configuration Module>.
+
+=item B<-engine_impl> I<id>
+
+When used with the B<-engine> option, it specifies to also use
+engine I<id> for digest operations.
+
+{- $OpenSSL::safe::opt_provider_item -}
 
 =item I<file> ...
 
@@ -241,9 +248,12 @@ L<openssl-mac(1)>
 The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 The FIPS-related options were removed in OpenSSL 1.1.0.
 
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

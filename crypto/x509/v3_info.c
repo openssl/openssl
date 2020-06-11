@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
+
+DEFINE_STACK_OF(ACCESS_DESCRIPTION)
+DEFINE_STACK_OF(CONF_VALUE)
 
 static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(X509V3_EXT_METHOD
                                                        *method, AUTHORITY_INFO_ACCESS

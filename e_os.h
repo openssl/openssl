@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -65,7 +65,6 @@
 #   define _setmode setmode
 #   define _O_TEXT O_TEXT
 #   define _O_BINARY O_BINARY
-#   define HAS_LFN_SUPPORT(name)  (pathconf((name), _PC_NAME_MAX) > 12)
 #   undef DEVRANDOM_EGD  /*  Neither MS-DOS nor FreeDOS provide 'egd' sockets.  */
 #   undef DEVRANDOM
 #   define DEVRANDOM "/dev/urandom\x24"
@@ -300,11 +299,16 @@ struct servent *getservbyname(const char *name, const char *proto);
 #  define CRYPTO_memcmp memcmp
 # endif
 
-/* unistd.h defines _POSIX_VERSION */
-# if !defined(OPENSSL_NO_SECURE_MEMORY) && defined(OPENSSL_SYS_UNIX) \
-     && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
-          || defined(__sun) || defined(__hpux) || defined(__sgi)      \
-          || defined(__osf__) )
-#  define OPENSSL_SECURE_MEMORY  /* secure memory is implemented */
+# ifndef OPENSSL_NO_SECURE_MEMORY
+   /* unistd.h defines _POSIX_VERSION */
+#  if defined(OPENSSL_SYS_UNIX) \
+      && ( (defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L)      \
+           || defined(__sun) || defined(__hpux) || defined(__sgi)      \
+           || defined(__osf__) )
+      /* secure memory is implemented */
+#   else
+#     define OPENSSL_NO_SECURE_MEMORY
+#   endif
 # endif
+
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -116,7 +116,7 @@ static int badkeylen_test(void)
     return ret;
 }
 
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
 static int ivgen_test(void)
 {
     unsigned char iv_gen[16];
@@ -127,14 +127,14 @@ static int ivgen_test(void)
     return do_encrypt(iv_gen, ct, &ctlen, tag, &taglen)
            && do_decrypt(iv_gen, ct, ctlen, tag, taglen);
 }
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
 
 int setup_tests(void)
 {
     ADD_TEST(kat_test);
     ADD_TEST(badkeylen_test);
-#ifdef FIPS_MODE
+#ifdef FIPS_MODULE
     ADD_TEST(ivgen_test);
-#endif /* FIPS_MODE */
+#endif /* FIPS_MODULE */
     return 1;
 }

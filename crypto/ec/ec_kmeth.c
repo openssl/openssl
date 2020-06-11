@@ -1,11 +1,17 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * ECDH and ECDSA low level APIs are deprecated for public use, but still ok
+ * for internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <string.h>
 #include <openssl/ec.h>
@@ -59,7 +65,7 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     if (finish != NULL)
         finish(key);
 
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE_finish(key->engine);
     key->engine = NULL;
 #endif
@@ -90,7 +96,7 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     }
 
     ret->meth = EC_KEY_get_default_method();
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODE)
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     if (engine != NULL) {
         if (!ENGINE_init(engine)) {
             ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_ENGINE_LIB);
@@ -112,7 +118,7 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     ret->conv_form = POINT_CONVERSION_UNCOMPRESSED;
 
 /* No ex_data inside the FIPS provider */
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EC_KEY, ret, &ret->ex_data)) {
         goto err;
     }
@@ -129,7 +135,7 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     return NULL;
 }
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new_method(ENGINE *engine)
 {
     return ec_key_new_method_int(NULL, engine);

@@ -78,6 +78,7 @@ IF[{- !$disabled{"engine"} -}]
       SOURCE[dasync]=dasync.ld
       GENERATE[dasync.ld]=../util/engines.num
     ENDIF
+
     SOURCE[ossltest]=e_ossltest.c
     DEPEND[ossltest]=../libcrypto
     INCLUDE[ossltest]=../include

@@ -10,6 +10,7 @@ openssl-gendsa - generate a DSA private key from a set of parameters
 B<openssl> B<gendsa>
 [B<-help>]
 [B<-out> I<filename>]
+[B<-passout> I<arg>]
 [B<-aes128>]
 [B<-aes192>]
 [B<-aes256>]
@@ -25,6 +26,7 @@ B<openssl> B<gendsa>
 [B<-verbose>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
+{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<paramfile>]
 
 =for openssl ifdef engine
@@ -47,6 +49,11 @@ Print out a usage message.
 Output the key to the specified file. If this argument is not specified then
 standard output is used.
 
+=item B<-passout> I<arg>
+
+The passphrase used for the output file.
+See L<openssl(1)/Pass Phrase Options>.
+
 =item B<-aes128>, B<-aes192>, B<-aes256>, B<-aria128>, B<-aria192>, B<-aria256>, B<-camellia128>, B<-camellia192>, B<-camellia256>, B<-des>, B<-des3>, B<-idea>
 
 These options encrypt the private key with specified
@@ -67,6 +74,8 @@ The DSA parameter file to use. The parameters in this file determine
 the size of the private key. DSA parameters can be generated and
 examined using the L<openssl-dsaparam(1)> command.
 
+{- $OpenSSL::safe::opt_provider_item -}
+
 =back
 
 =head1 NOTES
@@ -77,6 +86,7 @@ much quicker that RSA key generation for example.
 =head1 SEE ALSO
 
 L<openssl(1)>,
+L<openssl-genpkey(1)>,
 L<openssl-dsaparam(1)>,
 L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
@@ -84,7 +94,7 @@ L<openssl-rsa(1)>
 
 =head1 COPYRIGHT
 
-Copyright 2000-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

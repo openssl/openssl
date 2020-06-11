@@ -1,5 +1,5 @@
 /*-
- * Copyright 2007-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
  *
@@ -71,7 +71,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
     /*
      * iterationCount identifies the number of times the hash is applied
      * during the key computation process.  The iterationCount MUST be a
-     * minimum of 100.      Many people suggest using values as high as 1000
+     * minimum of 100. Many people suggest using values as high as 1000
      * iterations as the minimum value.  The trade off here is between
      * protection of the password from attacks and the time spent by the
      * server processing all of the different iterations in deriving
@@ -202,8 +202,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     macparams[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                      basekey, bklen);
     if ((mac = EVP_MAC_fetch(NULL, "HMAC", NULL)) == NULL
-            || (mctx = EVP_MAC_CTX_new(mac)) == NULL
-            || !EVP_MAC_CTX_set_params(mctx, macparams)
+            || (mctx = EVP_MAC_new_ctx(mac)) == NULL
+            || !EVP_MAC_set_ctx_params(mctx, macparams)
             || !EVP_MAC_init(mctx)
             || !EVP_MAC_update(mctx, msg, msglen)
             || !EVP_MAC_final(mctx, mac_res, outlen, EVP_MAX_MD_SIZE))
@@ -214,7 +214,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
  err:
     /* cleanup */
     OPENSSL_cleanse(basekey, bklen);
-    EVP_MAC_CTX_free(mctx);
+    EVP_MAC_free_ctx(mctx);
     EVP_MAC_free(mac);
     EVP_MD_CTX_free(ctx);
 

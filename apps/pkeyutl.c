@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,8 @@
 #include <openssl/pem.h>
 #include <openssl/evp.h>
 #include <sys/stat.h>
+
+DEFINE_STACK_OF_STRING()
 
 #define KEY_NONE        0
 #define KEY_PRIVKEY     1
@@ -44,7 +46,7 @@ typedef enum OPTION_choice {
     OPT_VERIFY, OPT_VERIFYRECOVER, OPT_REV, OPT_ENCRYPT, OPT_DECRYPT,
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
-    OPT_KDFLEN, OPT_R_ENUM,
+    OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
 
@@ -69,11 +71,11 @@ const OPTIONS pkeyutl_options[] = {
     {"inkey", OPT_INKEY, 's', "Input private key file"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
+    {"peerform", OPT_PEERFORM, 'E', "Peer key format (DER/PEM/P12/ENGINE)"},
     {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -92,6 +94,7 @@ const OPTIONS pkeyutl_options[] = {
     {"kdflen", OPT_KDFLEN, 'p', "KDF algorithm output length"},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -154,15 +157,19 @@ int pkeyutl_main(int argc, char **argv)
             passinarg = opt_arg();
             break;
         case OPT_PEERFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &peerform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &peerform))
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_ENGINE:
@@ -512,7 +519,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyform, "Certificate");
+        x = load_cert(keyfile, FORMAT_UNDEF, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);
@@ -545,21 +552,6 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         if (pkey == NULL)
             goto end;
 
-#ifndef OPENSSL_NO_EC
-        /* SM2 needs a special treatment */
-        if (EVP_PKEY_id(pkey) == EVP_PKEY_EC) {
-            EC_KEY *eckey = NULL;
-            const EC_GROUP *group = NULL;
-            int nid;
-
-            if ((eckey = EVP_PKEY_get0_EC_KEY(pkey)) == NULL
-                    || (group = EC_KEY_get0_group(eckey)) == NULL
-                    || (nid = EC_GROUP_get_curve_name(group)) == 0)
-                goto end;
-            if (nid == NID_sm2)
-                EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2);
-        }
-#endif
         *pkeysize = EVP_PKEY_size(pkey);
         ctx = EVP_PKEY_CTX_new(pkey, impl);
         if (ppkey != NULL)

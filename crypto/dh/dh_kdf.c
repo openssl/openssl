@@ -1,11 +1,17 @@
 /*
- * Copyright 2013-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include "e_os.h"
 
@@ -40,22 +46,22 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
         return 0;
 
     kdf = EVP_KDF_fetch(provctx, OSSL_KDF_NAME_X942KDF, NULL);
-    if ((kctx = EVP_KDF_CTX_new(kdf)) == NULL)
+    if ((kctx = EVP_KDF_new_ctx(kdf)) == NULL)
         goto err;
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)mdname, strlen(mdname) + 1);
+                                            (char *)mdname, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                              (unsigned char *)Z, Zlen);
     if (ukm != NULL)
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_UKM,
                                                  (unsigned char *)ukm, ukmlen);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-                                            (char *)oid_sn, strlen(oid_sn) + 1);
+                                            (char *)oid_sn, 0);
     *p = OSSL_PARAM_construct_end();
-    ret = EVP_KDF_CTX_set_params(kctx, params) > 0
+    ret = EVP_KDF_set_ctx_params(kctx, params) > 0
         && EVP_KDF_derive(kctx, out, outlen) > 0;
 err:
-    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free_ctx(kctx);
     EVP_KDF_free(kdf);
     return ret;
 }

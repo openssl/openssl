@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -73,8 +73,6 @@ int X509_STORE_load_store(X509_STORE *ctx, const char *uri)
     return 1;
 }
 
-/* Deprecated */
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
                               const char *path)
 {
@@ -86,4 +84,3 @@ int X509_STORE_load_locations(X509_STORE *ctx, const char *file,
         return 0;
     return 1;
 }
-#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -9,29 +9,26 @@
  */
 
 #include <openssl/opensslconf.h>
-#ifdef OPENSSL_NO_EC
-NON_EMPTY_TRANSLATION_UNIT
-#else
 
-# include <stdio.h>
-# include <stdlib.h>
-# include <time.h>
-# include <string.h>
-# include "apps.h"
-# include "progs.h"
-# include <openssl/bio.h>
-# include <openssl/err.h>
-# include <openssl/bn.h>
-# include <openssl/ec.h>
-# include <openssl/x509.h>
-# include <openssl/pem.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <string.h>
+#include "apps.h"
+#include "progs.h"
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/x509.h>
+#include <openssl/pem.h>
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_OUTFORM, OPT_IN, OPT_OUT, OPT_TEXT, OPT_C,
     OPT_CHECK, OPT_LIST_CURVES, OPT_NO_SEED, OPT_NOOUT, OPT_NAME,
     OPT_CONV_FORM, OPT_PARAM_ENC, OPT_GENKEY, OPT_ENGINE, OPT_CHECK_NAMED,
-    OPT_R_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
 
 const OPTIONS ecparam_options[] = {
@@ -39,9 +36,9 @@ const OPTIONS ecparam_options[] = {
     {"help", OPT_HELP, '-', "Display this summary"},
     {"list_curves", OPT_LIST_CURVES, '-',
      "Prints a list of all curve 'short names'"},
-# ifndef OPENSSL_NO_ENGINE
+#ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
-# endif
+#endif
 
     {"genkey", OPT_GENKEY, '-', "Generate ec key"},
     {"in", OPT_IN, '<', "Input file  - default stdin"},
@@ -67,6 +64,7 @@ const OPTIONS ecparam_options[] = {
     {"conv_form", OPT_CONV_FORM, 's', "Specifies the point conversion form "},
 
     OPT_R_OPTIONS,
+    OPT_PROV_OPTIONS,
     {NULL}
 };
 
@@ -167,6 +165,10 @@ int ecparam_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
+                goto end;
+            break;
+        case OPT_PROV_CASES:
+            if (!opt_provider(o))
                 goto end;
             break;
         case OPT_ENGINE:
@@ -303,7 +305,6 @@ int ecparam_main(int argc, char **argv)
         size_t buf_len = 0, tmp_len = 0;
         const EC_POINT *point;
         int is_prime, len = 0;
-        const EC_METHOD *meth = EC_GROUP_method_of(group);
 
         if ((ec_p = BN_new()) == NULL
                 || (ec_a = BN_new()) == NULL
@@ -315,7 +316,7 @@ int ecparam_main(int argc, char **argv)
             goto end;
         }
 
-        is_prime = (EC_METHOD_get_field_type(meth) == NID_X9_62_prime_field);
+        is_prime = (EC_GROUP_get_field_type(group) == NID_X9_62_prime_field);
         if (!is_prime) {
             BIO_printf(bio_err, "Can only handle X9.62 prime fields\n");
             goto end;
@@ -468,5 +469,3 @@ int ecparam_main(int argc, char **argv)
     BIO_free_all(out);
     return ret;
 }
-
-#endif

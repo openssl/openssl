@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -7,6 +7,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/*
+ * ECDSA low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 
 #include <openssl/err.h>
 #include <openssl/symhacks.h>
@@ -22,7 +28,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     BIGNUM *tmp1, *tmp2, *x, *y;
     int ret = 0;
 
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
     /* clear error queue */
     ERR_clear_error();
 #endif
@@ -101,7 +107,7 @@ int ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *group,
     }
 
     if (!BN_mod_sqrt(y, tmp1, group->field, ctx)) {
-#ifndef FIPS_MODE
+#ifndef FIPS_MODULE
         unsigned long err = ERR_peek_last_error();
 
         if (ERR_GET_LIB(err) == ERR_LIB_BN

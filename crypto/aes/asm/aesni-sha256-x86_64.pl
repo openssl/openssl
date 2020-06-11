@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2013-2016 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -1801,4 +1801,4 @@ sub rex {
 $code =~ s/\`([^\`]*)\`/eval $1/gem;
 $code =~ s/\b(sha256[^\s]*)\s+(.*)/sha256op38($1,$2)/gem;
 print $code;
-close STDOUT or die "error closing STDOUT";
+close STDOUT or die "error closing STDOUT: $!";

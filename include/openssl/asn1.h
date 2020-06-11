@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -119,8 +119,9 @@ extern "C" {
 # define SMIME_OLDMIME           0x400
 # define SMIME_CRLFEOL           0x800
 # define SMIME_STREAM            0x1000
-    struct X509_algor_st;
-DEFINE_STACK_OF(X509_ALGOR)
+
+/* Stacks for types not otherwise defined in this header */
+DEFINE_OR_DECLARE_STACK_OF(X509_ALGOR)
 
 # define ASN1_STRING_FLAG_BITS_LEFT 0x08/* Set if 0x07 has bits left value */
 /*
@@ -187,15 +188,15 @@ typedef struct ASN1_ENCODING_st {
  (B_ASN1_PRINTABLESTRING|B_ASN1_T61STRING|B_ASN1_BMPSTRING|B_ASN1_UTF8STRING)
 # define PKCS9STRING_TYPE (DIRSTRING_TYPE|B_ASN1_IA5STRING)
 
-typedef struct asn1_string_table_st {
+struct asn1_string_table_st {
     int nid;
     long minsize;
     long maxsize;
     unsigned long mask;
     unsigned long flags;
-} ASN1_STRING_TABLE;
+};
 
-DEFINE_STACK_OF(ASN1_STRING_TABLE)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_STRING_TABLE)
 
 /* size limits: this stuff is taken straight from RFC2459 */
 
@@ -419,13 +420,8 @@ typedef const ASN1_ITEM *ASN1_ITEM_EXP (void);
                                 ASN1_STRFLGS_DUMP_UNKNOWN | \
                                 ASN1_STRFLGS_DUMP_DER)
 
-DEFINE_STACK_OF(ASN1_INTEGER)
 
-DEFINE_STACK_OF(ASN1_GENERALSTRING)
-
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-
-typedef struct asn1_type_st {
+struct asn1_type_st {
     int type;
     union {
         char *ptr;
@@ -454,9 +450,9 @@ typedef struct asn1_type_st {
         ASN1_STRING *sequence;
         ASN1_VALUE *asn1_value;
     } value;
-} ASN1_TYPE;
+};
 
-DEFINE_STACK_OF(ASN1_TYPE)
+DEFINE_OR_DECLARE_STACK_OF(ASN1_TYPE)
 
 typedef STACK_OF(ASN1_TYPE) ASN1_SEQUENCE_ANY;
 
@@ -510,8 +506,9 @@ int ASN1_TYPE_cmp(const ASN1_TYPE *a, const ASN1_TYPE *b);
 ASN1_TYPE *ASN1_TYPE_pack_sequence(const ASN1_ITEM *it, void *s, ASN1_TYPE **t);
 void *ASN1_TYPE_unpack_sequence(const ASN1_ITEM *it, const ASN1_TYPE *t);
 
+DEFINE_OR_DECLARE_STACK_OF(ASN1_OBJECT)
+
 DECLARE_ASN1_FUNCTIONS(ASN1_OBJECT)
-DEFINE_STACK_OF(ASN1_OBJECT)
 
 ASN1_STRING *ASN1_STRING_new(void);
 void ASN1_STRING_free(ASN1_STRING *a);
@@ -544,6 +541,8 @@ int ASN1_BIT_STRING_name_print(BIO *out, ASN1_BIT_STRING *bs,
 int ASN1_BIT_STRING_num_asc(const char *name, BIT_STRING_BITNAME *tbl);
 int ASN1_BIT_STRING_set_asc(ASN1_BIT_STRING *bs, const char *name, int value,
                             BIT_STRING_BITNAME *tbl);
+
+DEFINE_OR_DECLARE_STACK_OF(ASN1_INTEGER)
 
 DECLARE_ASN1_FUNCTIONS(ASN1_INTEGER)
 ASN1_INTEGER *d2i_ASN1_UINTEGER(ASN1_INTEGER **a, const unsigned char **pp,
@@ -578,6 +577,8 @@ int ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a,
 int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str, const unsigned char *data,
                           int len);
 
+DEFINE_OR_DECLARE_STACK_OF(ASN1_UTF8STRING)
+
 DECLARE_ASN1_FUNCTIONS(ASN1_VISIBLESTRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_UNIVERSALSTRING)
 DECLARE_ASN1_FUNCTIONS(ASN1_UTF8STRING)
@@ -586,6 +587,8 @@ DECLARE_ASN1_FUNCTIONS(ASN1_BMPSTRING)
 
 int UTF8_getc(const unsigned char *str, int len, unsigned long *val);
 int UTF8_putc(unsigned char *str, int len, unsigned long value);
+
+DEFINE_OR_DECLARE_STACK_OF(ASN1_GENERALSTRING)
 
 DECLARE_ASN1_FUNCTIONS_name(ASN1_STRING, ASN1_PRINTABLE)
 
