@@ -24,8 +24,8 @@ plan skip_all => "This test is not supported in a no-cmp build"
     if disabled("cmp");
 plan skip_all => "This test is not supported in a no-ec build"
     if disabled("ec");
-plan skip_all => "Tests involving launching a server not available on Windows"
-    if $^O eq "MSWin32";
+plan skip_all => "Tests involving server not available on Windows or VMS"
+    if $^O =~ /^(VMS|MSWin32)$/;
 
 sub chop_dblquot { # chop any leading & trailing '"' (needed for Windows)
     my $str = shift;
