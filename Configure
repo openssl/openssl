@@ -494,7 +494,6 @@ our %disabled = ( # "what"         => "comment"
                   "crypto-mdebug"       => "default",
                   "crypto-mdebug-backtrace" => "default",
                   "devcryptoeng"        => "default",
-                  "ec_nistp_64_gcc_128" => "default",
                   "egd"                 => "default",
                   "external-tests"      => "default",
                   "fuzz-libfuzzer"      => "default",
@@ -1614,6 +1613,17 @@ unless ($disabled{ktls}) {
 }
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
+
+unless ($disabled{ec_nistp_64_gcc_128}) {
+    $config{ec_nistp_64_gcc_128}="";
+    my $cc = $config{CROSS_COMPILE}.$config{CC};
+    my $cc_cflags = $config{CFLAGS}[0];
+
+    system("$cc -dM -E $cc_cflags - < /dev/null | grep __SIZEOF_INT128__ > /dev/null");
+    if ($? != 0) {
+        disable('not-supported-by-compiler', 'ec_nistp_64_gcc_128');
+   }
+}
 
 # Get the extra flags used when building shared libraries and modules.  We
 # do this late because some of them depend on %disabled.
