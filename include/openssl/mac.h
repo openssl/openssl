@@ -17,6 +17,10 @@
 # include <openssl/types.h>
 # include <openssl/core.h>
 
+# ifdef __cplusplus
+extern "C" {
+# endif
+
 EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                        const char *properties);
 int EVP_MAC_up_ref(EVP_MAC *mac);
@@ -49,4 +53,7 @@ void EVP_MAC_names_do_all(const EVP_MAC *mac,
                           void (*fn)(const char *name, void *data),
                           void *data);
 
+# ifdef __cplusplus
+}
+# endif
 #endif /* OPENSSL_EVP_MAC_H */
