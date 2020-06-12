@@ -99,7 +99,7 @@ The following hybrid algorithms are supported; they combine a quantum-safe algor
 The following digital signature algorithms from liboqs are supported (assuming they have been enabled in liboqs):
 
 - `oqs_sig_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
-- **Dilithium**: `dilithium2`, `dilithium3`, `dilithium4` (not currently on Windows)
+- **Dilithium**: `dilithium2`, `dilithium3`, `dilithium4`
 - **Picnic**: `picnicl1fs`
 - **qTesla**: `qteslapi`, `qteslapiii`
 - **falcon**: `falcon512`, `falcon1024`
@@ -120,7 +120,7 @@ As `Dilithium2` is a NIST L1 SIG algorithm, the hybrid `p256_dilithium2` is avai
 
 ## Quickstart
 
-The steps below have been confirmed to work on macOS 10.14 (clang 10.0.0), Ubuntu 18.04.1 (gcc-7), and Windows 10 (VS2017 build tools).
+The steps below have been confirmed to work on macOS 10.14 (clang 10.0.0), Ubuntu 18.04.1 (gcc-7), and Windows 10 (VS2019 build tools).
 
 ### Building
 
@@ -186,12 +186,12 @@ The above command uses `git`, but alternatively, an archive of the source code c
 The following instructions will download (using git, alternatively, [download an archive of the source](https://github.com/open-quantum-safe/liboqs/archive/master.zip) and unzip the project) and build the x64 release configuration of liboqs, then copy the required files it into a subdirectory inside the OpenSSL folder.  You may need to install dependencies before building liboqs; see the [liboqs README](https://github.com/open-quantum-safe/liboqs/blob/master/README.md).
 
 	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
-	msbuild liboqs\VisualStudio\liboqs.sln /p:Configuration=Release;Platform=x64
-	mkdir openssl\oqs
-	mkdir openssl\oqs\lib
-	mkdir openssl\oqs\include
-	xcopy liboqs\VisualStudio\x64\Release\oqs.lib openssl\oqs\lib\
-	xcopy /S liboqs\VisualStudio\include openssl\oqs\include\
+	cd liboqs
+	mkdir build
+	cd build
+	cmake -GNinja -DCMAKE_INSTALL_PREFIX=<OPENSSL_DIR>\oqs ..
+	ninja
+	ninja install
 
 #### Step 2: Build the fork
 
