@@ -471,6 +471,35 @@ static EVP_PKEY *load_example_hmac_key(void)
     return pkey;
 }
 
+static int test_EVP_set_default_properties(void)
+{
+    OPENSSL_CTX *ctx;
+    EVP_MD *md = NULL;
+    int res = 0;
+
+    if (!TEST_ptr(ctx = OPENSSL_CTX_new())
+            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
+        goto err;
+    EVP_MD_free(md);
+    md = NULL;
+
+    if (!TEST_true(EVP_set_default_properties(ctx, "provider=fizzbang"))
+            || !TEST_ptr_null(md = EVP_MD_fetch(ctx, "sha256", NULL))
+            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", "-provider")))
+        goto err;
+    EVP_MD_free(md);
+    md = NULL;
+
+    if (!TEST_true(EVP_set_default_properties(ctx, NULL))
+            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
+        goto err;
+    res = 1;
+err:
+    EVP_MD_free(md);
+    OPENSSL_CTX_free(ctx);
+    return res;
+}
+
 static int test_EVP_Enveloped(void)
 {
     int ret = 0;
@@ -1748,6 +1777,7 @@ int setup_tests(void)
     if (!TEST_ptr(testctx))
         return 0;
 
+    ADD_TEST(test_EVP_set_default_properties);
     ADD_ALL_TESTS(test_EVP_DigestSignInit, 9);
     ADD_TEST(test_EVP_DigestVerifyInit);
     ADD_TEST(test_EVP_Enveloped);

@@ -44,6 +44,8 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH),
     "data not multiple of block length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_DECODE_ERROR), "decode error"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_DEFAULT_QUERY_PARSE_ERROR),
+    "default query parse error"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_DIFFERENT_KEY_TYPES),
     "different key types"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_DIFFERENT_PARAMETERS),

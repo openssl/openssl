@@ -2522,6 +2522,7 @@ EVP_R_CTRL_NOT_IMPLEMENTED:132:ctrl not implemented
 EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED:133:ctrl operation not implemented
 EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH:138:data not multiple of block length
 EVP_R_DECODE_ERROR:114:decode error
+EVP_R_DEFAULT_QUERY_PARSE_ERROR:210:default query parse error
 EVP_R_DIFFERENT_KEY_TYPES:101:different key types
 EVP_R_DIFFERENT_PARAMETERS:153:different parameters
 EVP_R_ERROR_LOADING_SECTION:165:error loading section

@@ -60,7 +60,6 @@ struct ossl_method_store_st {
     OPENSSL_CTX *ctx;
     size_t nelem;
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
-    OSSL_PROPERTY_LIST *global_properties;
     int need_flush;
     CRYPTO_RWLOCK *lock;
 };
@@ -74,7 +73,34 @@ typedef struct {
 DEFINE_SPARSE_ARRAY_OF(ALGORITHM);
 
 static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid);
-static void ossl_method_cache_flush_all(OSSL_METHOD_STORE *c);
+
+/* Global properties are stored per library context */
+static void ossl_ctx_global_properties_free(void *vstore)
+{
+    OSSL_PROPERTY_LIST **plp = vstore;
+
+    if (plp != NULL) {
+        ossl_property_free(*plp);
+        OPENSSL_free(plp);
+    }
+}
+
+static void *ossl_ctx_global_properties_new(OPENSSL_CTX *ctx)
+{
+    return OPENSSL_zalloc(sizeof(OSSL_PROPERTY_LIST **));
+}
+
+
+static const OPENSSL_CTX_METHOD ossl_ctx_global_properties_method = {
+    ossl_ctx_global_properties_new,
+    ossl_ctx_global_properties_free,
+};
+
+OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OPENSSL_CTX *libctx)
+{
+    return openssl_ctx_get_data(libctx, OPENSSL_CTX_GLOBAL_PROPERTIES,
+                                &ossl_ctx_global_properties_method);
+}
 
 static int ossl_method_up_ref(METHOD *method)
 {
@@ -166,7 +192,6 @@ void ossl_method_store_free(OSSL_METHOD_STORE *store)
     if (store != NULL) {
         ossl_sa_ALGORITHM_doall(store->algs, &alg_cleanup);
         ossl_sa_ALGORITHM_free(store->algs);
-        ossl_property_free(store->global_properties);
         CRYPTO_THREAD_lock_free(store->lock);
         OPENSSL_free(store);
     }
@@ -296,11 +321,13 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
 }
 
 int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
-                            const char *prop_query, void **method)
+                            const char *prop_query,
+                            void **method)
 {
+    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(store->ctx);
     ALGORITHM *alg;
     IMPLEMENTATION *impl;
-    OSSL_PROPERTY_LIST *pq = NULL, *p2;
+    OSSL_PROPERTY_LIST *pq = NULL, *p2 = NULL;
     METHOD *best_method = NULL;
     int ret = 0;
     int j, best = -1, score, optional;
@@ -323,22 +350,27 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
         return 0;
     }
 
-    if (prop_query == NULL) {
+    if (prop_query != NULL) {
+        p2 = pq = ossl_parse_query(store->ctx, prop_query);
+    }
+    if (plp != NULL && *plp != NULL) {
+        if (pq == NULL) {
+            pq = *plp;
+        } else {
+            p2 = ossl_property_merge(pq, *plp);
+            if (p2 == NULL)
+                goto fin;
+            ossl_property_free(pq);
+            pq = p2;
+        }
+    }
+
+    if (pq == NULL) {
         if ((impl = sk_IMPLEMENTATION_value(alg->impls, 0)) != NULL) {
             best_method = &impl->method;
             ret = 1;
         }
         goto fin;
-    }
-    pq = ossl_parse_query(store->ctx, prop_query);
-    if (pq == NULL)
-        goto fin;
-    if (store->global_properties != NULL) {
-        p2 = ossl_property_merge(pq, store->global_properties);
-        if (p2 == NULL)
-            goto fin;
-        ossl_property_free(pq);
-        pq = p2;
     }
     optional = ossl_property_has_optional(pq);
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
@@ -358,87 +390,9 @@ fin:
     else
         ret = 0;
     ossl_property_unlock(store);
-    ossl_property_free(pq);
+    ossl_property_free(p2);
     return ret;
 }
-
-int ossl_method_store_global_property_is_enabled(OSSL_METHOD_STORE *store,
-                                                 const char *prop_name)
-{
-    int ret = 0;
-
-    if (store == NULL)
-        return 0;
-
-    ossl_property_read_lock(store);
-    ret = ossl_property_is_enabled(store->ctx, prop_name,
-                                   store->global_properties);
-    ossl_property_unlock(store);
-    return ret;
-}
-
-int ossl_method_store_set_global_properties(OSSL_METHOD_STORE *store,
-                                            const char *prop_query)
-{
-    int ret = 0;
-
-    if (store == NULL)
-        return 1;
-
-    ossl_property_write_lock(store);
-    ossl_method_cache_flush_all(store);
-
-    ossl_property_free(store->global_properties);
-    store->global_properties = NULL;
-
-    if (prop_query == NULL) {
-        ossl_property_unlock(store);
-        return 1;
-    }
-    store->global_properties = ossl_parse_query(store->ctx, prop_query);
-    ret = store->global_properties != NULL;
-    ossl_property_unlock(store);
-    return ret;
-}
-
-int ossl_method_store_merge_global_properties(OSSL_METHOD_STORE *store,
-                                              const char *prop_query)
-{
-    int ret = 0;
-    OSSL_PROPERTY_LIST *prop = NULL, *global;
-
-    if (store == NULL)
-        return 1;
-
-    ossl_property_write_lock(store);
-    ossl_method_cache_flush_all(store);
-    if (prop_query == NULL) {
-        ossl_property_free(store->global_properties);
-        store->global_properties = NULL;
-        goto success;
-    }
-    prop = ossl_parse_query(store->ctx, prop_query);
-    if (prop == NULL)
-        goto end;
-
-    if (store->global_properties == NULL) {
-        store->global_properties = prop;
-        prop = NULL;
-        goto success;
-    }
-    global = ossl_property_merge(prop, store->global_properties);
-    if (global == NULL)
-        goto end;
-    ossl_property_free(store->global_properties);
-    store->global_properties = global;
- success:
-    ret = 1;
- end:
-    ossl_property_unlock(store);
-    ossl_property_free(prop);
-    return ret;
-}
-
 
 static void impl_cache_flush_alg(ossl_uintmax_t idx, ALGORITHM *alg)
 {
@@ -456,10 +410,12 @@ static void ossl_method_cache_flush(OSSL_METHOD_STORE *store, int nid)
     }
 }
 
-static void ossl_method_cache_flush_all(OSSL_METHOD_STORE *store)
+void ossl_method_store_flush_cache(OSSL_METHOD_STORE *store)
 {
+    ossl_property_write_lock(store);
     ossl_sa_ALGORITHM_doall(store->algs, &impl_cache_flush_alg);
     store->nelem = 0;
+    ossl_property_unlock(store);
 }
 
 IMPLEMENT_LHASH_DOALL_ARG(QUERY, IMPL_CACHE_FLUSH);

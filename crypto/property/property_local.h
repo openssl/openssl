@@ -22,8 +22,6 @@ OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
 /* Property list functions */
 void ossl_property_free(OSSL_PROPERTY_LIST *p);
 int ossl_property_has_optional(const OSSL_PROPERTY_LIST *query);
-OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
-                                        const OSSL_PROPERTY_LIST *b);
 
 /* Property definition cache functions */
 OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop);
