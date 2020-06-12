@@ -1087,7 +1087,7 @@ if ( $opt_o ) {
     loadmissing('util/missingmacro111.txt', 'crypto');
     loadmissing('util/missingcrypto111.txt', 'crypto');
     loadmissing('util/missingssl111.txt', 'ssl');
-} else {
+} elsif ( !$opt_u ) {
     loadmissing('util/missingmacro.txt', 'crypto');
     loadmissing('util/missingcrypto.txt', 'crypto');
     loadmissing('util/missingssl.txt', 'ssl');
