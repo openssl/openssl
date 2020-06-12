@@ -300,7 +300,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
 {
     ALGORITHM *alg;
     IMPLEMENTATION *impl;
-    OSSL_PROPERTY_LIST *pq = NULL, *p2;
+    OSSL_PROPERTY_LIST *pq = NULL, *p2 = NULL;
     METHOD *best_method = NULL;
     int ret = 0;
     int j, best = -1, score, optional;
@@ -323,22 +323,27 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
         return 0;
     }
 
-    if (prop_query == NULL) {
+    if (prop_query != NULL) {
+        p2 = pq = ossl_parse_query(store->ctx, prop_query);
+    }
+    if (store->global_properties != NULL) {
+        if (pq == NULL) {
+            pq = store->global_properties;
+        } else {
+            p2 = ossl_property_merge(pq, store->global_properties);
+            if (p2 == NULL)
+                goto fin;
+            ossl_property_free(pq);
+            pq = p2;
+        }
+    }
+
+    if (pq == NULL) {
         if ((impl = sk_IMPLEMENTATION_value(alg->impls, 0)) != NULL) {
             best_method = &impl->method;
             ret = 1;
         }
         goto fin;
-    }
-    pq = ossl_parse_query(store->ctx, prop_query);
-    if (pq == NULL)
-        goto fin;
-    if (store->global_properties != NULL) {
-        p2 = ossl_property_merge(pq, store->global_properties);
-        if (p2 == NULL)
-            goto fin;
-        ossl_property_free(pq);
-        pq = p2;
     }
     optional = ossl_property_has_optional(pq);
     for (j = 0; j < sk_IMPLEMENTATION_num(alg->impls); j++) {
@@ -358,7 +363,7 @@ fin:
     else
         ret = 0;
     ossl_property_unlock(store);
-    ossl_property_free(pq);
+    ossl_property_free(p2);
     return ret;
 }
 
