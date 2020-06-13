@@ -515,7 +515,7 @@ BIGNUM *BN_mod_inverse(BIGNUM *in,
 {
     BN_CTX *new_ctx = NULL;
     BIGNUM *rv;
-    int noinv;
+    int noinv = 0;
 
     if (ctx == NULL) {
         ctx = new_ctx = BN_CTX_new_ex(NULL);
