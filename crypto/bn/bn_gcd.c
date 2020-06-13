@@ -10,22 +10,26 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-/* solves ax == 1 (mod n) */
-static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
+static BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
                                         const BIGNUM *a, const BIGNUM *n,
-                                        BN_CTX *ctx);
+                                        BN_CTX *ctx, int *pnoinv);
 
+/* solves ax == 1 (mod n) */
 BIGNUM *BN_mod_inverse(BIGNUM *in,
                        const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 {
     BIGNUM *rv;
-    int noinv;
+    int noinv = 0;
     rv = int_bn_mod_inverse(in, a, n, ctx, &noinv);
     if (noinv)
         BNerr(BN_F_BN_MOD_INVERSE, BN_R_NO_INVERSE);
     return rv;
 }
 
+/*
+ * This is an internal function, we assume all callers pass valid arguments:
+ * all pointers passed here are assumed non-NULL.
+ */
 BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                            const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
                            int *pnoinv)
@@ -36,17 +40,15 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 
     /* This is invalid input so we don't worry about constant time here */
     if (BN_abs_is_word(n, 1) || BN_is_zero(n)) {
-        if (pnoinv != NULL)
-            *pnoinv = 1;
+        *pnoinv = 1;
         return NULL;
     }
 
-    if (pnoinv != NULL)
-        *pnoinv = 0;
+    *pnoinv = 0;
 
     if ((BN_get_flags(a, BN_FLG_CONSTTIME) != 0)
         || (BN_get_flags(n, BN_FLG_CONSTTIME) != 0)) {
-        return BN_mod_inverse_no_branch(in, a, n, ctx);
+        return bn_mod_inverse_no_branch(in, a, n, ctx, pnoinv);
     }
 
     bn_check_top(a);
@@ -332,8 +334,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
                 goto err;
         }
     } else {
-        if (pnoinv)
-            *pnoinv = 1;
+        *pnoinv = 1;
         goto err;
     }
     ret = R;
@@ -346,12 +347,15 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
 }
 
 /*
- * BN_mod_inverse_no_branch is a special version of BN_mod_inverse. It does
+ * bn_mod_inverse_no_branch is a special version of BN_mod_inverse. It does
  * not contain branches that may leak sensitive information.
+ *
+ * This is a static function, we ensure all callers in this file pass valid
+ * arguments: all passed pointers here are non-NULL.
  */
-static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
+static BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
                                         const BIGNUM *a, const BIGNUM *n,
-                                        BN_CTX *ctx)
+                                        BN_CTX *ctx, int *pnoinv)
 {
     BIGNUM *A, *B, *X, *Y, *M, *D, *T, *R = NULL;
     BIGNUM *ret = NULL;
@@ -504,10 +508,14 @@ static BIGNUM *BN_mod_inverse_no_branch(BIGNUM *in,
                 goto err;
         }
     } else {
-        BNerr(BN_F_BN_MOD_INVERSE_NO_BRANCH, BN_R_NO_INVERSE);
+        *pnoinv = 1;
+        /* caller sets the BN_R_NO_INVERSE error */
         goto err;
     }
+
     ret = R;
+    *pnoinv = 0;
+
  err:
     if ((ret == NULL) && (in == NULL))
         BN_free(R);
