@@ -146,7 +146,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
 
     mac = EVP_MAC_fetch(libctx, MAC_NAME, NULL);
-    ctx = EVP_MAC_CTX_new(mac);
+    ctx = EVP_MAC_new_ctx(mac);
     if (mac == NULL || ctx == NULL)
         goto err;
 
@@ -156,7 +156,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
                                              sizeof(fixed_key));
     *p = OSSL_PARAM_construct_end();
 
-    if (EVP_MAC_CTX_set_params(ctx, params) <= 0
+    if (EVP_MAC_set_ctx_params(ctx, params) <= 0
         || !EVP_MAC_init(ctx))
         goto err;
 
@@ -177,7 +177,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
     ret = 1;
 err:
     OSSL_SELF_TEST_onend(ev, ret);
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx);
     EVP_MAC_free(mac);
     return ret;
 }

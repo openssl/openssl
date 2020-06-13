@@ -66,7 +66,7 @@ Both r and p are parameters of type B<uint32_t>.
 A context for scrypt can be obtained by calling:
 
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
- EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+ EVP_KDF_CTX *kctx = EVP_KDF_new_ctx(kdf);
 
 The output length of an scrypt key derivation is specified via the
 "keylen" parameter to the L<EVP_KDF_derive(3)> function.
@@ -82,7 +82,7 @@ This example derives a 64-byte long test vector using scrypt with the password
  OSSL_PARAM params[6], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
- kctx = EVP_KDF_CTX_new(kdf);
+ kctx = EVP_KDF_new_ctx(kdf);
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
@@ -93,8 +93,8 @@ This example derives a 64-byte long test vector using scrypt with the password
  *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_R, (uint32_t)8);
  *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_SCRYPT_P, (uint32_t)16);
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0) {
-     error("EVP_KDF_CTX_set_params");
+ if (EVP_KDF_set_ctx_params(kctx, params) <= 0) {
+     error("EVP_KDF_set_ctx_params");
  }
  if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0) {
      error("EVP_KDF_derive");
@@ -115,7 +115,7 @@ This example derives a 64-byte long test vector using scrypt with the password
      assert(!memcmp(out, expected, sizeof(out)));
  }
 
- EVP_KDF_CTX_free(kctx);
+ EVP_KDF_free_ctx(kctx);
 
 =head1 CONFORMING TO
 
@@ -124,9 +124,9 @@ RFC 7914
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_CTX_new(3)>,
-L<EVP_KDF_CTX_free(3)>,
-L<EVP_KDF_CTX_set_params(3)>,
+L<EVP_KDF_new_ctx(3)>,
+L<EVP_KDF_free_ctx(3)>,
+L<EVP_KDF_set_ctx_params(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>
 

@@ -14,7 +14,8 @@ EVP_whirlpool
 =head1 DESCRIPTION
 
 WHIRLPOOL is a cryptographic hash function standardized in ISO/IEC 10118-3:2004
-designed by Vincent Rijmen and Paulo S. L. M. Barreto.
+designed by Vincent Rijmen and Paulo S. L. M. Barreto. This implementation is
+only available with the legacy provider.
 
 =over 4
 
@@ -39,6 +40,7 @@ ISO/IEC 10118-3:2004.
 =head1 SEE ALSO
 
 L<evp(7)>,
+L<provider(7)>,
 L<EVP_DigestInit(3)>
 
 =head1 COPYRIGHT

@@ -787,7 +787,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
             BIO_printf(bio_err, "HMAC not found\n");
             goto end;
     }
-    ctx = EVP_MAC_CTX_new(hmac);
+    ctx = EVP_MAC_new_ctx(hmac);
     if (ctx == NULL) {
             BIO_printf(bio_err, "HMAC context allocation failed\n");
             goto end;
@@ -796,7 +796,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, cookie_secret,
                                              COOKIE_SECRET_LENGTH);
     *p = OSSL_PARAM_construct_end();
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+    if (!EVP_MAC_set_ctx_params(ctx, params)) {
             BIO_printf(bio_err, "HMAC context parameter setting failed\n");
             goto end;
     }

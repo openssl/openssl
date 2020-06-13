@@ -575,6 +575,7 @@ typedef struct loopargs_st {
     EC_KEY *ecdsa[ECDSA_NUM];
     EVP_PKEY_CTX *ecdh_ctx[EC_NUM];
     EVP_MD_CTX *eddsa_ctx[EdDSA_NUM];
+    EVP_MD_CTX *eddsa_ctx2[EdDSA_NUM];
 # ifndef OPENSSL_NO_SM2
     EVP_MD_CTX *sm2_ctx[SM2_NUM];
     EVP_MD_CTX *sm2_vfy_ctx[SM2_NUM];
@@ -1242,7 +1243,7 @@ static int EdDSA_verify_loop(void *args)
 {
     loopargs_t *tempargs = *(loopargs_t **) args;
     unsigned char *buf = tempargs->buf;
-    EVP_MD_CTX **edctx = tempargs->eddsa_ctx;
+    EVP_MD_CTX **edctx = tempargs->eddsa_ctx2;
     unsigned char *eddsasig = tempargs->buf2;
     size_t eddsasigsize = tempargs->sigsize;
     int ret, count;
@@ -1995,6 +1996,15 @@ int speed_main(int argc, char **argv)
     if (argc == 0 && !doit[D_EVP] && !doit[D_EVP_HMAC] && !doit[D_EVP_CMAC]) {
         memset(doit, 1, sizeof(doit));
         doit[D_EVP] = doit[D_EVP_HMAC] = doit[D_EVP_CMAC] = 0;
+#if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+	doit[D_MDC2] = 0;
+#endif
+#if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+	doit[D_MD4] = 0;
+#endif
+#if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+	doit[D_RMD160] = 0;
+#endif
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         memset(rsa_doit, 1, sizeof(rsa_doit));
 #endif
@@ -3380,6 +3390,11 @@ int speed_main(int argc, char **argv)
                 st = 0;
                 break;
             }
+            loopargs[i].eddsa_ctx2[testnum] = EVP_MD_CTX_new();
+            if (loopargs[i].eddsa_ctx2[testnum] == NULL) {
+                st = 0;
+                break;
+            }
 
             if ((ed_pctx = EVP_PKEY_CTX_new_id(ed_curves[testnum].nid, NULL))
                     == NULL
@@ -3397,6 +3412,13 @@ int speed_main(int argc, char **argv)
                 EVP_PKEY_free(ed_pkey);
                 break;
             }
+           if (!EVP_DigestVerifyInit(loopargs[i].eddsa_ctx2[testnum], NULL,
+                                     NULL, NULL, ed_pkey)) {
+                st = 0;
+                EVP_PKEY_free(ed_pkey);
+                break;
+            }
+
             EVP_PKEY_free(ed_pkey);
         }
         if (st == 0) {
@@ -3434,10 +3456,9 @@ int speed_main(int argc, char **argv)
                 eddsa_results[testnum][0] = (double)count / d;
                 rsa_count = count;
             }
-
             /* Perform EdDSA verification test */
             for (i = 0; i < loopargs_len; i++) {
-                st = EVP_DigestVerify(loopargs[i].eddsa_ctx[testnum],
+                st = EVP_DigestVerify(loopargs[i].eddsa_ctx2[testnum],
                                       loopargs[i].buf2, loopargs[i].sigsize,
                                       loopargs[i].buf, 20);
                 if (st != 1)
@@ -4012,8 +4033,10 @@ int speed_main(int argc, char **argv)
             EC_KEY_free(loopargs[i].ecdsa[k]);
         for (k = 0; k < EC_NUM; k++)
             EVP_PKEY_CTX_free(loopargs[i].ecdh_ctx[k]);
-        for (k = 0; k < EdDSA_NUM; k++)
+        for (k = 0; k < EdDSA_NUM; k++) {
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
+            EVP_MD_CTX_free(loopargs[i].eddsa_ctx2[k]);
+	}
 # ifndef OPENSSL_NO_SM2
         for (k = 0; k < SM2_NUM; k++) {
             EVP_PKEY_CTX *pctx = NULL;
