@@ -816,10 +816,7 @@ static int aes_gcm_enc_dec(const char *alg,
 
     TEST_note("%s : %s : expected to %s", alg, enc ? "encrypt" : "decrypt",
               pass ? "pass" : "fail");
-    /*
-     * TODO(3.0): RAND needs to be fetchable - so the IV can be set
-     * the IV should not be set outside the boundary as it is now.
-     */
+
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
         || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, alg, ""))
         || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc))
@@ -832,6 +829,10 @@ static int aes_gcm_enc_dec(const char *alg,
                                            (void *)tag)))
             goto err;
     }
+    /*
+     * TODO(3.0): The IV should not be set outside the boundary as it is now.
+     * It needs to be fed in via a dummy entropy source for this test.
+     */
     if (!TEST_true(EVP_CipherInit_ex(ctx, NULL, NULL, key, iv, enc))
         || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
         || !TEST_true(EVP_CipherUpdate(ctx, NULL, &len, aad, aad_len))

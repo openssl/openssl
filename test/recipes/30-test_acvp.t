@@ -25,8 +25,6 @@ use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 my $infile = bldtop_file('providers', platform->dso('fips'));
 
 plan tests => 2;
