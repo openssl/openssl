@@ -221,7 +221,6 @@ BN_F_BN_MOD_EXP_MONT_WORD:117:BN_mod_exp_mont_word
 BN_F_BN_MOD_EXP_RECP:125:BN_mod_exp_recp
 BN_F_BN_MOD_EXP_SIMPLE:126:BN_mod_exp_simple
 BN_F_BN_MOD_INVERSE:110:BN_mod_inverse
-BN_F_BN_MOD_INVERSE_NO_BRANCH:139:BN_mod_inverse_no_branch
 BN_F_BN_MOD_LSHIFT_QUICK:119:BN_mod_lshift_quick
 BN_F_BN_MOD_SQRT:121:BN_mod_sqrt
 BN_F_BN_MONT_CTX_NEW:149:BN_MONT_CTX_new
