@@ -397,7 +397,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         log_message(prog, LOG_ERR, "Error parsing request");
     } else if (ppath != NULL && (*ppath = OPENSSL_strdup(url)) == NULL) {
         log_message(prog, LOG_ERR,
-                    "Out of memory allocating %d bytes", strlen(url) + 1);
+                    "Out of memory allocating %zu bytes", strlen(url) + 1);
         ASN1_item_free(req, it);
         goto fatal;
     }
