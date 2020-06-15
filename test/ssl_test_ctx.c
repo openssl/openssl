@@ -609,25 +609,27 @@ __owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
 }
 
 __owur static int parse_expected_ca_names(STACK_OF(X509_NAME) **pnames,
-                                          const char *value)
+                                          const char *value, OPENSSL_CTX *libctx)
 {
     if (value == NULL)
         return 0;
     if (!strcmp(value, "empty"))
         *pnames = sk_X509_NAME_new_null();
     else
-        *pnames = SSL_load_client_CA_file(value);
+        *pnames = SSL_load_client_CA_file_with_libctx(value, libctx, NULL);
     return *pnames != NULL;
 }
 __owur static int parse_expected_server_ca_names(SSL_TEST_CTX *test_ctx,
                                                  const char *value)
 {
-    return parse_expected_ca_names(&test_ctx->expected_server_ca_names, value);
+    return parse_expected_ca_names(&test_ctx->expected_server_ca_names, value,
+                                   test_ctx->libctx);
 }
 __owur static int parse_expected_client_ca_names(SSL_TEST_CTX *test_ctx,
                                                  const char *value)
 {
-    return parse_expected_ca_names(&test_ctx->expected_client_ca_names, value);
+    return parse_expected_ca_names(&test_ctx->expected_client_ca_names, value,
+                                   test_ctx->libctx);
 }
 
 /* ExpectedCipher */
@@ -719,12 +721,13 @@ static const ssl_test_server_option ssl_test_server_options[] = {
     { "SessionTicketAppData", &parse_server_session_ticket_app_data },
 };
 
-SSL_TEST_CTX *SSL_TEST_CTX_new(void)
+SSL_TEST_CTX *SSL_TEST_CTX_new(OPENSSL_CTX *libctx)
 {
     SSL_TEST_CTX *ret;
 
     /* The return code is checked by caller */
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) != NULL) {
+        ret->libctx = libctx;
         ret->app_data_size = default_app_data_size;
         ret->max_fragment_size = default_max_fragment_size;
     }
@@ -758,6 +761,8 @@ static void ssl_test_ctx_free_extra_data(SSL_TEST_CTX *ctx)
 
 void SSL_TEST_CTX_free(SSL_TEST_CTX *ctx)
 {
+    if (ctx == NULL)
+        return;
     ssl_test_ctx_free_extra_data(ctx);
     OPENSSL_free(ctx->expected_npn_protocol);
     OPENSSL_free(ctx->expected_alpn_protocol);
@@ -834,7 +839,8 @@ static int parse_server_options(SSL_TEST_SERVER_CONF *server, const CONF *conf,
     return 1;
 }
 
-SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
+SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section,
+                                  OPENSSL_CTX *libctx)
 {
     STACK_OF(CONF_VALUE) *sk_conf = NULL;
     SSL_TEST_CTX *ctx = NULL;
@@ -842,7 +848,7 @@ SSL_TEST_CTX *SSL_TEST_CTX_create(const CONF *conf, const char *test_section)
     size_t j;
 
     if (!TEST_ptr(sk_conf = NCONF_get_section(conf, test_section))
-            || !TEST_ptr(ctx = SSL_TEST_CTX_new()))
+            || !TEST_ptr(ctx = SSL_TEST_CTX_new(libctx)))
         goto err;
 
     for (i = 0; i < sk_CONF_VALUE_num(sk_conf); i++) {

@@ -3,10 +3,10 @@
 =head1 NAME
 
 X509_LOOKUP_hash_dir, X509_LOOKUP_file, X509_LOOKUP_store,
-X509_load_cert_file,
+X509_load_cert_file_with_libctx, X509_load_cert_file,
 X509_load_crl_file,
-X509_load_cert_crl_file - Default OpenSSL certificate
-lookup methods
+X509_load_cert_crl_file_with_libctx, X509_load_cert_crl_file
+- Default OpenSSL certificate lookup methods
 
 =head1 SYNOPSIS
 
@@ -16,8 +16,14 @@ lookup methods
  X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
  X509_LOOKUP_METHOD *X509_LOOKUP_store(void);
 
+ int X509_load_cert_file_with_libctx(X509_LOOKUP *ctx, const char *file,
+                                     int type, OPENSSL_CTX *libctx,
+                                     const char *propq);
  int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
  int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
+ int X509_load_cert_crl_file_with_libctx(X509_LOOKUP *ctx, const char *file,
+                                         int type, OPENSSL_CTX *libctx,
+                                         const char *propq);
  int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 
 =head1 DESCRIPTION
@@ -145,7 +151,9 @@ L<ossl_store(7)>
 
 =head1 HISTORY
 
-B<X509_LOOKUP_store> was added in OpenSSL 3.0.
+The functions X509_load_cert_file_with_libctx(),
+X509_load_cert_crl_file_with_libctx() and X509_LOOKUP_store() were added in
+OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

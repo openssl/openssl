@@ -189,6 +189,9 @@ struct x509_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
+
+    OPENSSL_CTX *libctx;
+    const char *propq;
 } /* X509 */ ;
 
 /*
@@ -298,6 +301,7 @@ int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
 
 void x509_init_sig_info(X509 *x);
 
-
-int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
-                          const char *propq);
+int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *type,
+                                 void *data, unsigned char *md,
+                                 unsigned int *len, OPENSSL_CTX *libctx,
+                                 const char *propq);

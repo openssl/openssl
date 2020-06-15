@@ -66,6 +66,8 @@ available in all versions of OpenSSL.
 The X509_sign_ctx(), X509_REQ_sign_ctx()
 and X509_CRL_sign_ctx() functions were added in OpenSSL 1.0.1.
 
+The function X509_REQ_verify_with_libctx() was added in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.

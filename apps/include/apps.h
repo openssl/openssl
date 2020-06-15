@@ -299,4 +299,7 @@ void app_params_free(OSSL_PARAM *params);
 int app_provider_load(OPENSSL_CTX *libctx, const char *provider_name);
 void app_providers_cleanup(void);
 
+OPENSSL_CTX *app_get0_libctx(void);
+const char *app_get0_propq(void);
+
 #endif

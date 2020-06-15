@@ -61,7 +61,7 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
     unsigned char cert_sha1[SHA_DIGEST_LENGTH];
 
     /* Call for side-effect of computing hash and caching extensions */
-    if (!X509v3_cache_extensions(cert, NULL, NULL))
+    if (!X509v3_cache_extensions(cert))
         return NULL;
 
     if ((cid = ESS_CERT_ID_new()) == NULL)
@@ -304,7 +304,7 @@ int ess_find_cert(const STACK_OF(ESS_CERT_ID) *cert_ids, X509 *cert)
         return -1;
 
     /* Recompute SHA1 hash of certificate if necessary (side effect). */
-    if (!X509v3_cache_extensions(cert, NULL, NULL))
+    if (!X509v3_cache_extensions(cert))
         return -1;
 
     /* TODO(3.0): fetch sha1 algorithm from providers */

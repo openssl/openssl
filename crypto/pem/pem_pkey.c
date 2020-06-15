@@ -50,7 +50,8 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     }
 #endif
 
-    while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
+    while (!OSSL_STORE_eof(ctx)
+           && (info = OSSL_STORE_load_with_libctx(ctx, libctx, propq)) != NULL) {
         if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PKEY) {
             ret = OSSL_STORE_INFO_get1_PKEY(info);
             break;

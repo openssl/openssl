@@ -510,7 +510,8 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
-    if (!X509_STORE_set_default_paths(ctx)) {
+    if (!X509_STORE_set_default_paths_with_libctx(ctx, app_get0_libctx(),
+                                                  app_get0_propq())) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -607,7 +608,7 @@ int x509_main(int argc, char **argv)
                        "We need a private key to sign with, use -signkey or -CAkey or -CA <file> with private key\n");
             goto end;
         }
-        if ((x = X509_new()) == NULL)
+        if ((x = X509_new_with_libctx(app_get0_libctx(), app_get0_propq())) == NULL)
             goto end;
 
         if (sno == NULL) {

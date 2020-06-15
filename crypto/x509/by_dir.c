@@ -42,12 +42,14 @@ typedef struct lookup_dir_st {
 } BY_DIR;
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-                    char **ret);
+                    char **retp, OPENSSL_CTX *libctx, const char *propq);
+
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type);
 static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
-                               const X509_NAME *name, X509_OBJECT *ret);
+                               const X509_NAME *name, X509_OBJECT *ret,
+                               OPENSSL_CTX *libctx, const char *propq);
 static X509_LOOKUP_METHOD x509_dir_lookup = {
     "Load certs from files in a directory",
     new_dir,                    /* new_item */
@@ -67,7 +69,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 }
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-                    char **retp)
+                    char **retp, OPENSSL_CTX *libctx, const char *propq)
 {
     int ret = 0;
     BY_DIR *ld = (BY_DIR *)ctx->method_data;
@@ -211,7 +213,8 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
 }
 
 static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
-                               const X509_NAME *name, X509_OBJECT *ret)
+                               const X509_NAME *name, X509_OBJECT *ret,
+                               OPENSSL_CTX *libctx, const char *propq)
 {
     BY_DIR *ctx;
     union {
@@ -316,7 +319,8 @@ static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
 #endif
             /* found one. */
             if (type == X509_LU_X509) {
-                if ((X509_load_cert_file(xl, b->data, ent->dir_type)) == 0)
+                if ((X509_load_cert_file_with_libctx(xl, b->data, ent->dir_type,
+                                                     libctx, propq)) == 0)
                     break;
             } else if (type == X509_LU_CRL) {
                 if ((X509_load_crl_file(xl, b->data, ent->dir_type)) == 0)

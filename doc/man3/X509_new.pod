@@ -3,13 +3,15 @@
 =head1 NAME
 
 X509_chain_up_ref,
-X509_new, X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
+X509_new, X509_new_with_libctx,
+X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
 
 =head1 SYNOPSIS
 
  #include <openssl/x509.h>
 
  X509 *X509_new(void);
+ X509 *X509_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
  void X509_free(X509 *a);
  int X509_up_ref(X509 *a);
  STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *x);
@@ -19,8 +21,15 @@ X509_new, X509_free, X509_up_ref - X509 certificate ASN1 allocation functions
 The X509 ASN1 allocation routines, allocate and free an
 X509 structure, which represents an X509 certificate.
 
-X509_new() allocates and initializes a X509 structure with reference count
-B<1>.
+X509_new_with_libctx() allocates and initializes a X509 structure with a
+library context of I<libctx>, property query of <propq> and a reference
+count of B<1>. Many X509 functions such as X509_check_purpose(), and
+X509_verify() use this library context to select which providers supply the
+fetched algorithms (SHA1 is used internally).
+
+X509_new() is similar to X509_new_with_libctx() but sets the library context
+and property query to NULL. This results in the default (NULL) library context
+being used for any X509 operations requiring algorithm fetches.
 
 X509_free() decrements the reference count of B<X509> structure B<a> and
 frees it up if the reference count is zero. If B<a> is NULL nothing is done.
@@ -70,6 +79,10 @@ L<X509_NAME_print_ex(3)>,
 L<X509_sign(3)>,
 L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>
+
+=head1 HISTORY
+
+The function X509_new_with_libctx() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

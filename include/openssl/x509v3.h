@@ -571,7 +571,7 @@ GENERAL_NAME *v2i_GENERAL_NAME_ex(GENERAL_NAME *out,
                                   X509V3_CTX *ctx, CONF_VALUE *cnf,
                                   int is_nc);
 
-int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq);
+int X509v3_cache_extensions(X509 *x);
 
 void X509V3_conf_free(CONF_VALUE *val);
 

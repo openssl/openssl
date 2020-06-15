@@ -84,6 +84,11 @@ int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args);
  */
 OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx);
 
+OSSL_STORE_INFO *OSSL_STORE_load_with_libctx(OSSL_STORE_CTX *ctx,
+                                             OPENSSL_CTX *libctx,
+                                             const char *propq);
+
+
 /*
  * Check if end of data (end of file) is reached
  * Returns 1 on end, 0 otherwise.
@@ -249,8 +254,6 @@ int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
 typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)(const OSSL_STORE_LOADER
                                                        *loader,
                                                        BIO *bio,
-                                                       OPENSSL_CTX *libctx,
-                                                       const char *propq,
                                                        const UI_METHOD
                                                        *ui_method,
                                                        void *ui_data);
@@ -272,6 +275,10 @@ typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,
                                                void *ui_data);
 int OSSL_STORE_LOADER_set_load(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_load_fn load_function);
+typedef OSSL_STORE_INFO *(*OSSL_STORE_load_with_libctx_fn)(
+    OSSL_STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method, void *ui_data,
+    OPENSSL_CTX *libctx, const char *propq);
+
 typedef int (*OSSL_STORE_eof_fn)(OSSL_STORE_LOADER_CTX *ctx);
 int OSSL_STORE_LOADER_set_eof(OSSL_STORE_LOADER *loader,
                               OSSL_STORE_eof_fn eof_function);

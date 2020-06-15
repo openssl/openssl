@@ -3,8 +3,9 @@
 =head1 NAME
 
 OSSL_STORE_CTX, OSSL_STORE_post_process_info_fn, OSSL_STORE_open,
-OSSL_STORE_ctrl, OSSL_STORE_load, OSSL_STORE_eof, OSSL_STORE_error,
-OSSL_STORE_close - Types and functions to read objects from a URI
+OSSL_STORE_ctrl, OSSL_STORE_load_with_libctx, OSSL_STORE_load, OSSL_STORE_eof,
+OSSL_STORE_error, OSSL_STORE_close
+- Types and functions to read objects from a URI
 
 =head1 SYNOPSIS
 
@@ -20,6 +21,9 @@ OSSL_STORE_close - Types and functions to read objects from a URI
                                  OSSL_STORE_post_process_info_fn post_process,
                                  void *post_process_data);
  int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
+ OSSL_STORE_INFO *OSSL_STORE_load_with_libctx(OSSL_STORE_CTX *ctx,
+                                              OPENSSL_CTX *libctx,
+                                              const char *propq)
  OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx);
  int OSSL_STORE_eof(OSSL_STORE_CTX *ctx);
  int OSSL_STORE_error(OSSL_STORE_CTX *ctx);
@@ -41,8 +45,9 @@ described in L<OSSL_STORE_INFO(3)>.
 =head2 Types
 
 B<OSSL_STORE_CTX> is a context variable that holds all the internal
-information for OSSL_STORE_open(), OSSL_STORE_load(), OSSL_STORE_eof() and
-OSSL_STORE_close() to work together.
+information for OSSL_STORE_open(), OSSL_STORE_load(),
+OSSL_STORE_load_with_libctx(), OSSL_STORE_eof() and OSSL_STORE_close() to work
+together.
 
 =head2 Functions
 
@@ -81,8 +86,12 @@ Any other value is an error.
 
 =back
 
-OSSL_STORE_load() takes a B<OSSL_STORE_CTX>, tries to load the next available
-object and return it wrapped with  B<OSSL_STORE_INFO>.
+OSSL_STORE_load_with_libctx() takes a B<OSSL_STORE_CTX> with a library context
+I<libctx> and property query <propq>, and tries to load the next
+available object and return it wrapped with  B<OSSL_STORE_INFO>.
+
+OSSL_STORE_load() is similar to OSSL_STORE_load_with_libctx() but uses NULL for
+the library context I<libctx> and property query <propq>.
 
 OSSL_STORE_eof() takes a B<OSSL_STORE_CTX> and checks if we've reached the end
 of data.
@@ -127,8 +136,8 @@ See L<passphrase-encoding(7)> for further information.
 OSSL_STORE_open() returns a pointer to a B<OSSL_STORE_CTX> on success, or
 NULL on failure.
 
-OSSL_STORE_load() returns a pointer to a B<OSSL_STORE_INFO> on success, or
-NULL on error or when end of data is reached.
+OSSL_STORE_load_with_libctx() and OSSL_STORE_load() return a pointer to a
+B<OSSL_STORE_INFO> on success, or NULL on error or when end of data is reached.
 Use OSSL_STORE_error() and OSSL_STORE_eof() to determine the meaning of a
 returned NULL.
 
@@ -146,6 +155,8 @@ L<ossl_store(7)>, L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_register_loader(3)>,
 L<passphrase-encoding(7)>
 
 =head1 HISTORY
+
+OSSL_STORE_load_with_libctx() was added in OpenSSL 3.0.
 
 OSSL_STORE_CTX(), OSSL_STORE_post_process_info_fn(), OSSL_STORE_open(),
 OSSL_STORE_ctrl(), OSSL_STORE_load(), OSSL_STORE_eof() and OSSL_STORE_close()

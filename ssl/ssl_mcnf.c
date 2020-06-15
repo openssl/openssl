@@ -28,6 +28,8 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     unsigned int flags;
     const SSL_METHOD *meth;
     const SSL_CONF_CMD *cmds;
+    OPENSSL_CTX *prev_libctx = NULL;
+    OPENSSL_CTX *libctx = NULL;
 
     if (s == NULL && ctx == NULL) {
         SSLerr(SSL_F_SSL_DO_CONFIG, ERR_R_PASSED_NULL_PARAMETER);
@@ -53,15 +55,18 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     if (s != NULL) {
         meth = s->method;
         SSL_CONF_CTX_set_ssl(cctx, s);
+        libctx = s->ctx->libctx;
     } else {
         meth = ctx->method;
         SSL_CONF_CTX_set_ssl_ctx(cctx, ctx);
+        libctx = ctx->libctx;
     }
     if (meth->ssl_accept != ssl_undefined_function)
         flags |= SSL_CONF_FLAG_SERVER;
     if (meth->ssl_connect != ssl_undefined_function)
         flags |= SSL_CONF_FLAG_CLIENT;
     SSL_CONF_CTX_set_flags(cctx, flags);
+    prev_libctx = OPENSSL_CTX_set0_default(libctx);
     for (i = 0; i < cmd_count; i++) {
         char *cmdstr, *arg;
 
@@ -79,6 +84,7 @@ static int ssl_do_config(SSL *s, SSL_CTX *ctx, const char *name, int system)
     }
     rv = SSL_CONF_CTX_finish(cctx);
  err:
+    OPENSSL_CTX_set0_default(prev_libctx);
     SSL_CONF_CTX_free(cctx);
     return rv <= 0 ? 0 : 1;
 }

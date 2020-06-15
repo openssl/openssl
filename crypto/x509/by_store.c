@@ -17,7 +17,7 @@ DEFINE_STACK_OF_STRING()
 /* Generic object loader, given expected type and criterion */
 static int cache_objects(X509_LOOKUP *lctx, const char *uri,
                          const OSSL_STORE_SEARCH *criterion,
-                         int depth)
+                         int depth, OPENSSL_CTX *libctx, const char *propq)
 {
     int ok = 0;
     OSSL_STORE_CTX *ctx = NULL;
@@ -48,7 +48,7 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
         OSSL_STORE_find(ctx, criterion);
 
     for (;;) {
-        OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
+        OSSL_STORE_INFO *info = OSSL_STORE_load_with_libctx(ctx, libctx, propq);
         int infotype;
 
         /* NULL means error or "end of file".  Either way, we break. */
@@ -65,7 +65,7 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
              */
             if (depth > 0)
                 ok = cache_objects(lctx, OSSL_STORE_INFO_get0_NAME(info),
-                                   criterion, depth - 1);
+                                   criterion, depth - 1, libctx, propq);
         } else {
             /*
              * We know that X509_STORE_add_{cert|crl} increments the object's
@@ -108,7 +108,8 @@ static void by_store_free(X509_LOOKUP *ctx)
 
 static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
                          const char *argp, long argl,
-                         char **retp)
+                         char **retp,
+                         OPENSSL_CTX *libctx, const char *propq)
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
@@ -129,14 +130,15 @@ static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
         }
     case X509_L_LOAD_STORE:
         /* This is a shortcut for quick loading of specific containers */
-        return cache_objects(ctx, argp, NULL, 0);
+        return cache_objects(ctx, argp, NULL, 0, libctx, propq);
     }
 
     return 0;
 }
 
 static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                    const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret)
+                    const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret,
+                    OPENSSL_CTX *libctx, const char *propq)
 {
     STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);
     int i;
@@ -144,7 +146,7 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 
     for (i = 0; i < sk_OPENSSL_STRING_num(uris); i++) {
         ok = cache_objects(ctx, sk_OPENSSL_STRING_value(uris, i), criterion,
-                           1 /* depth */);
+                           1 /* depth */, libctx, propq);
 
         if (ok)
             break;
@@ -153,11 +155,12 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 }
 
 static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                            const X509_NAME *name, X509_OBJECT *ret)
+                            const X509_NAME *name, X509_OBJECT *ret,
+                            OPENSSL_CTX *libctx, const char *propq)
 {
     OSSL_STORE_SEARCH *criterion =
         OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
-    int ok = by_store(ctx, type, criterion, ret);
+    int ok = by_store(ctx, type, criterion, ret, libctx, propq);
     STACK_OF(X509_OBJECT) *store_objects =
         X509_STORE_get0_objects(X509_LOOKUP_get_store(ctx));
     X509_OBJECT *tmp = NULL;

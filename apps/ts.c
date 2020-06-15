@@ -957,6 +957,8 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
 {
     X509_STORE *cert_ctx = NULL;
     X509_LOOKUP *lookup = NULL;
+    OPENSSL_CTX *libctx = app_get0_libctx();
+    const char *propq = app_get0_propq();
 
     cert_ctx = X509_STORE_new();
     X509_STORE_set_verify_cb(cert_ctx, verify_cb);
@@ -978,7 +980,9 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
+        if (!X509_LOOKUP_load_file_with_libctx(lookup, CAfile,
+                                               X509_FILETYPE_PEM,
+                                               libctx, propq)) {
             BIO_printf(bio_err, "Error loading file %s\n", CAfile);
             goto err;
         }
@@ -990,7 +994,7 @@ static X509_STORE *create_cert_store(const char *CApath, const char *CAfile,
             BIO_printf(bio_err, "memory allocation failure\n");
             goto err;
         }
-        if (!X509_LOOKUP_load_store(lookup, CAstore)) {
+        if (!X509_LOOKUP_load_store_with_libctx(lookup, CAstore, libctx, propq)) {
             BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
             goto err;
         }

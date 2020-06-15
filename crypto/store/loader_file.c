@@ -693,8 +693,12 @@ static OSSL_STORE_INFO *try_decode_X509Certificate(const char *pem_name,
         *matchcount = 1;
     }
 
-    if ((cert = d2i_X509_AUX(NULL, &blob, len)) != NULL
-        || (ignore_trusted && (cert = d2i_X509(NULL, &blob, len)) != NULL)) {
+    cert = X509_new_with_libctx(libctx, propq);
+    if (cert == NULL)
+        return NULL;
+
+    if ((d2i_X509_AUX(&cert, &blob, len)) != NULL
+        || (ignore_trusted && (d2i_X509(&cert, &blob, len)) != NULL)) {
         *matchcount = 1;
         store_info = OSSL_STORE_INFO_new_CERT(cert);
     }
@@ -813,9 +817,6 @@ struct ossl_store_loader_ctx_st {
 
     /* Expected object type.  May be unspecified */
     int expected_type;
-
-    OPENSSL_CTX *libctx;
-    char *propq;
 };
 
 static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX *ctx)
@@ -831,7 +832,6 @@ static void OSSL_STORE_LOADER_CTX_free(OSSL_STORE_LOADER_CTX *ctx)
             ctx->_.file.last_handler = NULL;
         }
     }
-    OPENSSL_free(ctx->propq);
     OPENSSL_free(ctx);
 }
 
@@ -977,21 +977,18 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
 }
 
 static OSSL_STORE_LOADER_CTX *file_attach(const OSSL_STORE_LOADER *loader,
-                                          BIO *bp, OPENSSL_CTX *libctx,
-                                          const char *propq,
+                                          BIO *bp,
                                           const UI_METHOD *ui_method,
                                           void *ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL
-        || (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)) {
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_FILE_ATTACH, ERR_R_MALLOC_FAILURE);
         OSSL_STORE_LOADER_CTX_free(ctx);
         return NULL;
     }
 
-    ctx->libctx = libctx;
     ctx->flags |= FILE_FLAG_ATTACHED;
     ctx->_.file.file = bp;
     if (!file_find_type(ctx)) {
@@ -1078,7 +1075,9 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
                                              const char *pem_header,
                                              unsigned char *data, size_t len,
                                              const UI_METHOD *ui_method,
-                                             void *ui_data, int *matchcount)
+                                             void *ui_data, int *matchcount,
+                                             OPENSSL_CTX *libctx,
+                                             const char *propq)
 {
     OSSL_STORE_INFO *result = NULL;
     BUF_MEM *new_mem = NULL;
@@ -1108,7 +1107,7 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
                 handler->try_decode(pem_name, pem_header, data, len,
                                     &tmp_handler_ctx, &try_matchcount,
                                     ui_method, ui_data, ctx->uri,
-                                    ctx->libctx, ctx->propq);
+                                    libctx, propq);
 
             if (try_matchcount > 0) {
 
@@ -1165,7 +1164,9 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
 
 static OSSL_STORE_INFO *file_load_try_repeat(OSSL_STORE_LOADER_CTX *ctx,
                                              const UI_METHOD *ui_method,
-                                             void *ui_data)
+                                             void *ui_data,
+                                             OPENSSL_CTX *libctx,
+                                             const char *propq)
 {
     OSSL_STORE_INFO *result = NULL;
     int try_matchcount = 0;
@@ -1176,7 +1177,7 @@ static OSSL_STORE_INFO *file_load_try_repeat(OSSL_STORE_LOADER_CTX *ctx,
                                                  &ctx->_.file.last_handler_ctx,
                                                  &try_matchcount,
                                                  ui_method, ui_data, ctx->uri,
-                                                 ctx->libctx, ctx->propq);
+                                                 libctx, propq);
 
         if (result == NULL) {
             ctx->_.file.last_handler->destroy_ctx(&ctx->_.file.last_handler_ctx);
@@ -1421,8 +1422,11 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
 
 static int file_eof(OSSL_STORE_LOADER_CTX *ctx);
 static int file_error(OSSL_STORE_LOADER_CTX *ctx);
-static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
-                                  const UI_METHOD *ui_method, void *ui_data)
+static OSSL_STORE_INFO *file_load_with_libctx(OSSL_STORE_LOADER_CTX *ctx,
+                                              const UI_METHOD *ui_method,
+                                              void *ui_data,
+                                              OPENSSL_CTX *libctx,
+                                              const char *propq)
 {
     OSSL_STORE_INFO *result = NULL;
 
@@ -1437,7 +1441,7 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
                 if (!ctx->_.dir.end_reached) {
                     char errbuf[256];
                     assert(ctx->_.dir.last_errno != 0);
-                    OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD, ERR_R_SYS_LIB);
+                    OSSL_STOREerr(0, ERR_R_SYS_LIB);
                     errno = ctx->_.dir.last_errno;
                     ctx->errcnt++;
                     if (openssl_strerror_r(errno, errbuf, sizeof(errbuf)))
@@ -1465,7 +1469,7 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
             if (newname != NULL
                 && (result = OSSL_STORE_INFO_new_NAME(newname)) == NULL) {
                 OPENSSL_free(newname);
-                OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD, ERR_R_OSSL_STORE_LIB);
+                OSSL_STOREerr(0, ERR_R_OSSL_STORE_LIB);
                 return NULL;
             }
         } while (result == NULL && !file_eof(ctx));
@@ -1473,7 +1477,7 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
         int matchcount = -1;
 
      again:
-        result = file_load_try_repeat(ctx, ui_method, ui_data);
+        result = file_load_try_repeat(ctx, ui_method, ui_data, libctx, propq);
         if (result != NULL)
             return result;
 
@@ -1509,7 +1513,8 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
             }
 
             result = file_load_try_decode(ctx, pem_name, pem_header, data, len,
-                                          ui_method, ui_data, &matchcount);
+                                          ui_method, ui_data, &matchcount,
+                                          libctx, propq);
 
             if (result != NULL)
                 goto endloop;
@@ -1524,16 +1529,14 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
             }
 
             if (matchcount > 1) {
-                OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD,
-                              OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE);
+                OSSL_STOREerr(0, OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE);
             } else if (matchcount == 1) {
                 /*
                  * If there are other errors on the stack, they already show
                  * what the problem is.
                  */
                 if (ERR_peek_error() == 0) {
-                    OSSL_STOREerr(OSSL_STORE_F_FILE_LOAD,
-                                  OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE);
+                    OSSL_STOREerr(0, OSSL_STORE_R_UNSUPPORTED_CONTENT_TYPE);
                     if (pem_name != NULL)
                         ERR_add_error_data(3, "PEM type is '", pem_name, "'");
                 }
@@ -1562,6 +1565,12 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
     }
 
     return result;
+}
+
+static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
+                                  const UI_METHOD *ui_method, void *ui_data)
+{
+    return file_load_with_libctx(ctx, ui_method, ui_data, NULL, NULL);
 }
 
 static int file_error(OSSL_STORE_LOADER_CTX *ctx)
@@ -1617,7 +1626,8 @@ static OSSL_STORE_LOADER file_loader =
         file_load,
         file_eof,
         file_error,
-        file_close
+        file_close,
+        file_load_with_libctx,
     };
 
 static void store_file_loader_deinit(void)

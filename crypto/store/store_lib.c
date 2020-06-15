@@ -169,7 +169,9 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
     return ctx->loader->find(ctx->loader_ctx, search);
 }
 
-OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
+OSSL_STORE_INFO *OSSL_STORE_load_with_libctx(OSSL_STORE_CTX *ctx,
+                                             OPENSSL_CTX *libctx,
+                                             const char *propq)
 {
     OSSL_STORE_INFO *v = NULL;
 
@@ -179,7 +181,11 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
         return NULL;
 
     OSSL_TRACE(STORE, "Loading next object\n");
-    v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
+    if (ctx->loader->load_with_libctx != NULL)
+        v = ctx->loader->load_with_libctx(ctx->loader_ctx, ctx->ui_method,
+                                          ctx->ui_data, libctx, propq);
+    else
+        v = ctx->loader->load(ctx->loader_ctx, ctx->ui_method, ctx->ui_data);
 
     if (ctx->post_process != NULL && v != NULL) {
         v = ctx->post_process(v, ctx->post_process_data);
@@ -215,6 +221,11 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
                     OSSL_STORE_INFO_type_string(OSSL_STORE_INFO_get_type(v)));
 
     return v;
+}
+
+OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
+{
+    return OSSL_STORE_load_with_libctx(ctx, NULL, NULL);
 }
 
 int OSSL_STORE_error(OSSL_STORE_CTX *ctx)
@@ -665,8 +676,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, OPENSSL_CTX *libctx,
 
     if ((loader =
          ossl_store_get0_loader_int(scheme != NULL ? scheme : "file")) == NULL
-        || (loader_ctx = loader->attach(loader, bp, libctx, propq,
-                                        ui_method, ui_data)) == NULL)
+        || (loader_ctx = loader->attach(loader, bp, ui_method, ui_data)) == NULL)
         return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {

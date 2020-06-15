@@ -19,12 +19,12 @@
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/x509.h>
-#include "crypto/x509.h"
 #include <openssl/http.h>
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
+#include "crypto/x509.h"
 
 static void clean_id_ctx(EVP_MD_CTX *ctx)
 {
@@ -64,7 +64,7 @@ static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id,
     return NULL;
 }
 
-int X509_verify_ex(X509 *a, EVP_PKEY *r, OPENSSL_CTX *libctx, const char *propq)
+int X509_verify(X509 *a, EVP_PKEY *r)
 {
     int rv = 0;
     EVP_MD_CTX *ctx = NULL;
@@ -74,7 +74,7 @@ int X509_verify_ex(X509 *a, EVP_PKEY *r, OPENSSL_CTX *libctx, const char *propq)
         return 0;
 
     id = a->distinguishing_id;
-    if ((ctx = make_id_ctx(r, id, libctx, propq)) != NULL) {
+    if ((ctx = make_id_ctx(r, id, a->libctx, a->propq)) != NULL) {
         rv = ASN1_item_verify_ctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
                                   &a->signature, &a->cert_info, ctx);
         clean_id_ctx(ctx);
@@ -82,13 +82,8 @@ int X509_verify_ex(X509 *a, EVP_PKEY *r, OPENSSL_CTX *libctx, const char *propq)
     return rv;
 }
 
-int X509_verify(X509 *a, EVP_PKEY *r)
-{
-    return X509_verify_ex(a, r, NULL, NULL);
-}
-
-int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
-                       const char *propq)
+int X509_REQ_verify_with_libctx(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
+                                const char *propq)
 {
     int rv = 0;
     EVP_MD_CTX *ctx = NULL;
@@ -105,7 +100,7 @@ int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
-    return X509_REQ_verify_ex(a, r, NULL, NULL);
+    return X509_REQ_verify_with_libctx(a, r, NULL, NULL);
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
@@ -443,19 +438,19 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
     return EVP_Digest(key->data, key->length, md, len, type, NULL);
 }
 
-int X509_digest(const X509 *data, const EVP_MD *type, unsigned char *md,
+int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
                 unsigned int *len)
 {
-    if (type == EVP_sha1() && (data->ex_flags & EXFLAG_SET) != 0
-            && (data->ex_flags & EXFLAG_INVALID) == 0) {
+    if (EVP_MD_is_a(md, SN_sha1) && (cert->ex_flags & EXFLAG_SET) != 0
+            && (cert->ex_flags & EXFLAG_INVALID) == 0) {
         /* Asking for SHA1 and we already computed it. */
         if (len != NULL)
-            *len = sizeof(data->sha1_hash);
-        memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
+            *len = sizeof(cert->sha1_hash);
+        memcpy(data, cert->sha1_hash, sizeof(cert->sha1_hash));
         return 1;
     }
-    return (ASN1_item_digest
-            (ASN1_ITEM_rptr(X509), type, (char *)data, md, len));
+    return (asn1_item_digest_with_libctx(ASN1_ITEM_rptr(X509), md, (char *)cert,
+                                         data, len, cert->libctx, cert->propq));
 }
 
 /* calculate cert digest using the same hash algorithm as in its signature */

@@ -657,9 +657,10 @@ static int load_certs_crls(const char *file, int format,
     if (bio == NULL)
         return 0;
 
-    xis = PEM_X509_INFO_read_bio(bio, NULL,
+    xis = PEM_X509_INFO_read_bio_with_libctx(bio, NULL,
                                  (pem_password_cb *)password_callback,
-                                 &cb_data);
+                                 &cb_data,
+                                 app_get0_libctx(), app_get0_propq());
 
     BIO_free(bio);
 
@@ -765,6 +766,8 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
 {
     PW_CB_DATA uidata;
     OSSL_STORE_CTX *ctx = NULL;
+    OPENSSL_CTX *libctx = app_get0_libctx();
+    const char *propq = app_get0_propq();
     int ret = 0;
     /* TODO make use of the engine reference 'eng' when loading pkeys */
 
@@ -804,7 +807,7 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
     }
 
     for (;;) {
-        OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
+        OSSL_STORE_INFO *info = OSSL_STORE_load_with_libctx(ctx, libctx, propq);
         int type = info == NULL ? 0 : OSSL_STORE_INFO_get_type(info);
         const char *infostr =
             info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);
@@ -1099,6 +1102,8 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
 {
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
+    OPENSSL_CTX *libctx = app_get0_libctx();
+    const char *propq = app_get0_propq();
 
     if (store == NULL)
         goto end;
@@ -1108,12 +1113,16 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         if (lookup == NULL)
             goto end;
         if (CAfile != NULL) {
-            if (!X509_LOOKUP_load_file(lookup, CAfile, X509_FILETYPE_PEM)) {
+            if (!X509_LOOKUP_load_file_with_libctx(lookup, CAfile,
+                                                   X509_FILETYPE_PEM,
+                                                   libctx, propq)) {
                 BIO_printf(bio_err, "Error loading file %s\n", CAfile);
                 goto end;
             }
         } else {
-            X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
+            X509_LOOKUP_load_file_with_libctx(lookup, NULL,
+                                              X509_FILETYPE_DEFAULT,
+                                              libctx, propq);
         }
     }
 
@@ -1135,7 +1144,7 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_store());
         if (lookup == NULL)
             goto end;
-        if (!X509_LOOKUP_add_store(lookup, CAstore)) {
+        if (!X509_LOOKUP_add_store_with_libctx(lookup, CAstore, libctx, propq)) {
             if (CAstore != NULL)
                 BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
             goto end;
@@ -2766,4 +2775,16 @@ void app_params_free(OSSL_PARAM *params)
             OPENSSL_free(params[i].data);
         OPENSSL_free(params);
     }
+}
+
+/* TODO(3.0): make this a config option */
+OPENSSL_CTX *app_get0_libctx(void)
+{
+    return NULL;
+}
+
+/* TODO(3.0): make this a config option */
+const char *app_get0_propq(void)
+{
+    return NULL;
 }

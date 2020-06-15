@@ -3676,12 +3676,18 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
         }
 
         certstart = certbytes;
-        x = d2i_X509(NULL, (const unsigned char **)&certbytes, l);
+        x = X509_new_with_libctx(s->ctx->libctx, s->ctx->propq);
         if (x == NULL) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR,
+                     SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        if (d2i_X509(&x, (const unsigned char **)&certbytes, l) == NULL) {
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_ASN1_LIB);
             goto err;
         }
+
         if (certbytes != (certstart + l)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,

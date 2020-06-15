@@ -425,6 +425,16 @@ The write routines return 1 for success or 0 for failure.
 Although the PEM routines take several arguments in almost all applications
 most of them are set to 0 or NULL.
 
+To read a certificate with a library context in PEM format from a BIO:
+
+ X509 *x = X509_new_with_libctx(libctx, NULL);
+
+ if (x == NULL)
+     /* Error */
+
+ if (PEM_read_bio_X509(bp, &x, 0, NULL) == NULL)
+     /* Error */
+
 Read a certificate in PEM format from a BIO:
 
  X509 *x;
