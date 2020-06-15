@@ -807,7 +807,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
      */
     if (L != 1024 || N != 160) {
         *res = FFC_CHECK_BAD_LN_PAIR;
-        return FFC_PARAM_RET_STATUS_FAILED;
+        goto err;
     }
 #endif
     if (qsize != SHA_DIGEST_LENGTH
@@ -815,7 +815,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
         && qsize != SHA256_DIGEST_LENGTH) {
         /* invalid q size */
         *res = FFC_CHECK_INVALID_Q_VALUE;
-        return FFC_PARAM_RET_STATUS_FAILED;
+        goto err;
     }
 
     if (L < 512)
