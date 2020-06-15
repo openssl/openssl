@@ -76,7 +76,8 @@ int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth)
     return 1;
 }
 
-EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
+EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, const char *propq,
+                              ENGINE *engine)
 {
     EC_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -86,13 +87,19 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
     }
 
     ret->libctx = libctx;
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
 
     ret->references = 1;
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
         ECerr(EC_F_EC_KEY_NEW_METHOD_INT, ERR_R_MALLOC_FAILURE);
-        OPENSSL_free(ret);
-        return NULL;
+        goto err;
     }
 
     ret->meth = EC_KEY_get_default_method();
@@ -138,7 +145,7 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, ENGINE *engine)
 #ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new_method(ENGINE *engine)
 {
-    return ec_key_new_method_int(NULL, engine);
+    return ec_key_new_method_int(NULL, NULL, engine);
 }
 #endif
 

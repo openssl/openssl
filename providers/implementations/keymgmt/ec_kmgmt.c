@@ -244,7 +244,7 @@ int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
 static
 void *ec_newdata(void *provctx)
 {
-    return EC_KEY_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx));
+    return EC_KEY_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx), NULL);
 }
 
 static
@@ -667,7 +667,7 @@ static int ec_gen_set_group(void *genctx, int nid)
     struct ec_gen_ctx *gctx = genctx;
     EC_GROUP *group;
 
-    group = EC_GROUP_new_by_curve_name_ex(gctx->libctx, nid);
+    group = EC_GROUP_new_by_curve_name_with_libctx(gctx->libctx, NULL, nid);
     if (group == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
         return 0;
@@ -760,7 +760,7 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     int ret = 1;                 /* Start optimistically */
 
     if (gctx == NULL
-        || (ec = EC_KEY_new_ex(gctx->libctx)) == NULL)
+        || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
         return NULL;
 
     /* We must always assign a group, no matter what */

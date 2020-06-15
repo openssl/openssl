@@ -23,7 +23,8 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
+EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const char *propq,
+                          const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
@@ -43,6 +44,13 @@ EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
     }
 
     ret->libctx = libctx;
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            ECerr(EC_F_EC_GROUP_NEW_EX, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
     ret->meth = meth;
     if ((ret->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0) {
         ret->order = BN_new();
@@ -61,6 +69,7 @@ EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
  err:
     BN_free(ret->order);
     BN_free(ret->cofactor);
+    OPENSSL_free(ret->propq);
     OPENSSL_free(ret);
     return NULL;
 }
@@ -69,7 +78,7 @@ EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
 # ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 {
-    return ec_group_new_ex(NULL, meth);
+    return ec_group_new_ex(NULL, NULL, meth);
 }
 # endif
 #endif
@@ -121,6 +130,7 @@ void EC_GROUP_free(EC_GROUP *group)
     BN_free(group->order);
     BN_free(group->cofactor);
     OPENSSL_free(group->seed);
+    OPENSSL_free(group->propq);
     OPENSSL_free(group);
 }
 
@@ -257,7 +267,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
     if (a == NULL)
         return NULL;
 
-    if ((t = ec_group_new_ex(a->libctx, a->meth)) == NULL)
+    if ((t = ec_group_new_ex(a->libctx, a->propq, a->meth)) == NULL)
         return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;
