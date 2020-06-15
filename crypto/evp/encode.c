@@ -422,7 +422,7 @@ static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     else
         table = data_ascii2bin;
 
-    /* trim white space from the start of the line. */
+    /* trim whitespace from the start of the line. */
     while ((n > 0) && (conv_ascii2bin(*f, table) == B64_WS)) {
         f++;
         n--;

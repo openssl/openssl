@@ -167,7 +167,7 @@ void win32_utf8argv(int *argc, char **argv[])
         int in_quote = 0;
 
         if (*p == L' ' || *p == L'\t') {
-            p++; /* skip over white spaces */
+            p++; /* skip over whitespace */
             continue;
         }
 

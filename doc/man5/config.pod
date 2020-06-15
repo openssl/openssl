@@ -119,7 +119,7 @@ leading text that is preceded with a period. For example:
  2.OU = Second OU
 
 The B<value> consists of the string following the B<=> character until end
-of line with any leading and trailing white space removed.
+of line with any leading and trailing whitespace removed.
 
 The value string undergoes variable expansion. The text C<$var> or C<${var}>
 inserts the value of the named variable from the current section.
