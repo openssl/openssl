@@ -53,6 +53,7 @@ int ERR_load_EC_strings(void);
 #   define EC_F_ECKEY_PARAM2TYPE                            0
 #   define EC_F_ECKEY_PARAM_DECODE                          0
 #   define EC_F_ECKEY_PRIV_DECODE                           0
+#   define EC_F_ECKEY_PRIV_DECODE_WITH_LIBCTX               0
 #   define EC_F_ECKEY_PRIV_ENCODE                           0
 #   define EC_F_ECKEY_PUB_DECODE                            0
 #   define EC_F_ECKEY_PUB_ENCODE                            0
