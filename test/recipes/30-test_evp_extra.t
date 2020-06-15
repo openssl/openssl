@@ -14,6 +14,7 @@ use OpenSSL::Test qw/:DEFAULT bldtop_dir/;
 
 setup("test_evp_extra");
 
-plan tests => 1;
+plan tests => 2;
 
 ok(run(test(["evp_extra_test"])), "running evp_extra_test");
+ok(run(test(["evp_extra_test2"])), "running evp_extra_test2");
