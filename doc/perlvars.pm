@@ -93,12 +93,9 @@ $OpenSSL::safe::opt_r_item = ""
 # Provider options
 $OpenSSL::safe::opt_provider_synopsis = ""
 . "[B<-provider> I<name>]\n"
-. "[B<-provider_config> I<file>]\n"
 . "[B<-provider_path> I<path>]";
 $OpenSSL::safe::opt_provider_item = ""
 . "=item B<-provider> I<name>\n"
-. "\n"
-. "=item B<-provider_config> I<file>\n"
 . "\n"
 . "=item B<-provider_path> I<path>\n"
 . "\n"
@@ -112,6 +109,13 @@ $OpenSSL::safe::opt_provider_libctx_item = ""
 . "\n"
 . "See L<openssl(1)/Provider Options>.";
 
+# Configuration option
+$OpenSSL::safe::opt_config_synopsis = ""
+. "[B<-config> I<configfile>]\n";
+$OpenSSL::safe::opt_config_item = ""
+. "=item B<-config> I<configfile>\n"
+. "\n"
+. "See L<openssl(1)/Configuration Option>.";
 
 # Engine option
 $OpenSSL::safe::opt_engine_synopsis = "";

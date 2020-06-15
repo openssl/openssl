@@ -48,7 +48,7 @@ typedef enum OPTION_choice {
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
     OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
-    OPT_LIBCTX,
+    OPT_LIBCTX, OPT_CONFIG,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
 
@@ -65,6 +65,7 @@ const OPTIONS pkeyutl_options[] = {
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt input data with public key"},
     {"decrypt", OPT_DECRYPT, '-', "Decrypt input data with private key"},
     {"derive", OPT_DERIVE, '-', "Derive shared secret"},
+    OPT_CONFIG_OPTION,
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input file - default stdin"},
@@ -103,6 +104,7 @@ const OPTIONS pkeyutl_options[] = {
 
 int pkeyutl_main(int argc, char **argv)
 {
+    CONF *conf = NULL;
     BIO *in = NULL, *out = NULL;
     ENGINE *e = NULL;
     EVP_PKEY_CTX *ctx = NULL;
@@ -174,8 +176,13 @@ int pkeyutl_main(int argc, char **argv)
                 goto end;
             break;
         case OPT_LIBCTX:
-            libctx = opt_provider_libctx();
+            libctx = app_create_libctx();
             if (libctx == NULL)
+                goto end;
+            break;
+        case OPT_CONFIG:
+            conf = app_load_config_modules(opt_arg());
+            if (conf == NULL)
                 goto end;
             break;
         case OPT_PROV_CASES:
@@ -495,6 +502,7 @@ int pkeyutl_main(int argc, char **argv)
     OPENSSL_free(sig);
     sk_OPENSSL_STRING_free(pkeyopts);
     sk_OPENSSL_STRING_free(pkeyopts_passin);
+    NCONF_free(conf);
     return ret;
 }
 

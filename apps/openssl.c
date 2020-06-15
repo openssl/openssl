@@ -74,6 +74,8 @@ static int apps_startup(void)
 
 static void apps_shutdown(void)
 {
+    app_providers_cleanup();
+    OPENSSL_CTX_free(app_get0_libctx());
     destroy_ui_method();
 }
 
@@ -273,7 +275,6 @@ int main(int argc, char *argv[])
         : do_cmd(prog, 1, help_argv);
 
  end:
-    app_providers_cleanup();
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);
