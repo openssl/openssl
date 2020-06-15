@@ -97,17 +97,24 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     return 0;
 }
 
-static EC_KEY *eckey_type2param(int ptype, const void *pval)
+static EC_KEY *eckey_type2param(int ptype, const void *pval,
+                                OPENSSL_CTX *libctx, const char *propq)
 {
     EC_KEY *eckey = NULL;
     EC_GROUP *group = NULL;
+
+    if ((eckey = EC_KEY_new_with_libctx(libctx, propq)) == NULL) {
+        ECerr(EC_F_ECKEY_TYPE2PARAM, ERR_R_MALLOC_FAILURE);
+        goto ecerr;
+    }
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
         const unsigned char *pm = pstr->data;
         int pmlen = pstr->length;
 
-        if ((eckey = d2i_ECParameters(NULL, &pm, pmlen)) == NULL) {
+
+        if (d2i_ECParameters(&eckey, &pm, pmlen) == NULL) {
             ECerr(EC_F_ECKEY_TYPE2PARAM, EC_R_DECODE_ERROR);
             goto ecerr;
         }
@@ -117,11 +124,9 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval)
         /*
          * type == V_ASN1_OBJECT => the parameters are given by an asn1 OID
          */
-        if ((eckey = EC_KEY_new()) == NULL) {
-            ECerr(EC_F_ECKEY_TYPE2PARAM, ERR_R_MALLOC_FAILURE);
-            goto ecerr;
-        }
-        group = EC_GROUP_new_by_curve_name(OBJ_obj2nid(poid));
+
+        group = EC_GROUP_new_by_curve_name_with_libctx(libctx, propq,
+                                                       OBJ_obj2nid(poid));
         if (group == NULL)
             goto ecerr;
         EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
@@ -153,7 +158,7 @@ static int eckey_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
         return 0;
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
-    eckey = eckey_type2param(ptype, pval);
+    eckey = eckey_type2param(ptype, pval, NULL, NULL);
 
     if (!eckey) {
         ECerr(EC_F_ECKEY_PUB_DECODE, ERR_R_EC_LIB);
@@ -190,7 +195,10 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
-static int eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
+static int eckey_priv_decode_with_libctx(EVP_PKEY *pkey,
+                                         const PKCS8_PRIV_KEY_INFO *p8,
+                                         OPENSSL_CTX *libctx,
+                                         const char *propq)
 {
     const unsigned char *p = NULL;
     const void *pval;
@@ -202,14 +210,14 @@ static int eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
         return 0;
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
-    eckey = eckey_type2param(ptype, pval);
+    eckey = eckey_type2param(ptype, pval, libctx, propq);
 
     if (eckey == NULL)
         goto ecliberr;
 
     /* We have parameters now set private key */
     if (!d2i_ECPrivateKey(&eckey, &p, pklen)) {
-        ECerr(EC_F_ECKEY_PRIV_DECODE, EC_R_DECODE_ERROR);
+        ECerr(0, EC_R_DECODE_ERROR);
         goto ecerr;
     }
 
@@ -217,7 +225,7 @@ static int eckey_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
     return 1;
 
  ecliberr:
-    ECerr(EC_F_ECKEY_PRIV_DECODE, ERR_R_EC_LIB);
+    ECerr(0, ERR_R_EC_LIB);
  ecerr:
     EC_KEY_free(eckey);
     return 0;
@@ -791,7 +799,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     eckey_pub_cmp,
     eckey_pub_print,
 
-    eckey_priv_decode,
+    NULL,
     eckey_priv_encode,
     eckey_priv_print,
 
@@ -825,7 +833,8 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
 
     ec_pkey_dirty_cnt,
     ec_pkey_export_to,
-    ec_pkey_import_from
+    ec_pkey_import_from,
+    eckey_priv_decode_with_libctx
 };
 
 #if !defined(OPENSSL_NO_SM2)
@@ -879,7 +888,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         if (!EC_KEY_set_group(ecpeer, grp))
             goto err;
     } else {
-        ecpeer = eckey_type2param(atype, aval);
+        ecpeer = eckey_type2param(atype, aval, pctx->libctx, pctx->propquery);
         if (!ecpeer)
             goto err;
     }

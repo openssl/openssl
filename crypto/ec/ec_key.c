@@ -349,14 +349,19 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
     int ret;
+    BN_CTX *ctx = BN_CTX_new_ex(eckey->libctx);
+
+    if (ctx == NULL)
+        return 0;
 
     /*
      * See SP800-56AR3 5.6.1.2.2: Step (8)
      * pub_key = priv_key * G (where G is a point on the curve)
      */
     ret = EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
-                       NULL, NULL);
+                       NULL, ctx);
 
+    BN_CTX_free(ctx);
     if (ret == 1)
         eckey->dirty_cnt++;
 
