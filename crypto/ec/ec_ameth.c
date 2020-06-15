@@ -762,7 +762,7 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    EC_KEY *ec = EC_KEY_new_ex(pctx->libctx);
+    EC_KEY *ec = EC_KEY_new_with_libctx(pctx->libctx, pctx->propquery);
 
     if (ec == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);

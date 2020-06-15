@@ -194,7 +194,7 @@ static int dummy_evp_call(OPENSSL_CTX *libctx)
 
 #ifndef OPENSSL_NO_EC
     /* Do some dummy EC calls */
-    key = EC_KEY_new_by_curve_name_ex(libctx, NID_X9_62_prime256v1);
+    key = EC_KEY_new_by_curve_name_with_libctx(libctx, NULL, NID_X9_62_prime256v1);
     if (key == NULL)
         goto err;
 
