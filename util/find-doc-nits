@@ -901,7 +901,7 @@ sub collectnames {
     }
     foreach my $name ( @{$podinfo{names}} ) {
         next if $name eq "";
-        err($id, "'$name' contains white space")
+        err($id, "'$name' contains whitespace")
             if $name =~ /\s/;
         my $name_sec = "$name($section)";
         if ( !defined $name_map{$name_sec} ) {
