@@ -73,9 +73,6 @@ L<SSL_set_info_callback(3)>
 
 =item any configured Cipher List
 
-=item any BIOs configured on I<s> will have new BIO's created and the BIO state
-duplicated via BIO_dup_state().
-
 =item initial accept (server) or connect (client) state
 
 =item the max cert list value set via L<SSL_set_max_cert_list(3)>
