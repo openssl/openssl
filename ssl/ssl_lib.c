@@ -4023,21 +4023,6 @@ SSL *SSL_dup(SSL *s)
     if (!CRYPTO_dup_ex_data(CRYPTO_EX_INDEX_SSL, &ret->ex_data, &s->ex_data))
         goto err;
 
-    /* setup rbio, and wbio */
-    if (s->rbio != NULL) {
-        if (!BIO_dup_state(s->rbio, (char *)&ret->rbio))
-            goto err;
-    }
-    if (s->wbio != NULL) {
-        if (s->wbio != s->rbio) {
-            if (!BIO_dup_state(s->wbio, (char *)&ret->wbio))
-                goto err;
-        } else {
-            BIO_up_ref(ret->rbio);
-            ret->wbio = ret->rbio;
-        }
-    }
-
     ret->server = s->server;
     if (s->handshake_func) {
         if (s->server)
