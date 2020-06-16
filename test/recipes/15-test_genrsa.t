@@ -11,12 +11,22 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_genrsa");
+BEGIN {
+    setup("test_genrsa");
+}
 
-plan tests => 12;
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
+
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+plan tests =>
+    ($no_fips ? 0 : 2)          # FIPS install test + fips related test
+    + 12;
 
 # We want to know that an absurdly small number of bits isn't support
 if (disabled("deprecated-3.0")) {
@@ -104,4 +114,28 @@ ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
        "genrsa -f4 $good");
     ok(run(app([ 'openssl', 'rsa', '-check', '-in', 'genrsatest.pem', '-noout' ])),
        "rsa -check");
+}
+
+unless ($no_fips) {
+    my $provconf = srctop_file("test", "fips.cnf");
+    my $provpath = bldtop_dir("providers");
+    my @prov = ( "-provider_path", $provpath,
+                 "-provider", "base",
+                 "-config", $provconf);
+    my $infile = bldtop_file('providers', platform->dso('fips'));
+
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
+                '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-section_name', 'fips_sect'])),
+       "fipsinstall");
+
+    $ENV{OPENSSL_TEST_LIBCTX} = "1";
+    ok(run(app(['openssl', 'genpkey',
+                @prov,
+               '-algorithm', 'RSA',
+               '-pkeyopt', 'bits:2080',
+               '-out', 'genrsatest2080.pem'])),
+       "Generating RSA key with > 2048 bits and < 3072 bits");
 }

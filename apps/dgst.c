@@ -293,7 +293,7 @@ int dgst_main(int argc, char **argv)
     if (mac_name != NULL) {
         EVP_PKEY_CTX *mac_ctx = NULL;
         int r = 0;
-        if (!init_gen_str(&mac_ctx, mac_name, impl, 0))
+        if (!init_gen_str(&mac_ctx, mac_name, impl, 0, NULL, NULL))
             goto mac_end;
         if (macopts != NULL) {
             char *macopt;
