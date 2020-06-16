@@ -69,6 +69,7 @@ providers/common/include/prov/der_digests.h
 /test/rsa_complex
 /test/confdump
 /test/bio_prefix_text
+/test/evp_extra_test2
 
 # Certain files that get created by tests on the fly
 /test-runs
