@@ -169,7 +169,7 @@ opthelp:
     if (out == NULL)
         goto end;
 
-    if (!init_gen_str(&ctx, "RSA", eng, 0))
+    if (!init_gen_str(&ctx, "RSA", eng, 0, NULL, NULL))
         goto end;
 
     EVP_PKEY_CTX_set_cb(ctx, genrsa_cb);
