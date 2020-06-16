@@ -34,7 +34,6 @@ static const unsigned char private_constant[XOR_KEY_SIZE] = {
     0x2b, 0x1c, 0x5a, 0xfd, 0xb5, 0xcd, 0xd0, 0xf8
 };
 
-
 typedef struct xorkey_st {
     unsigned char privkey[XOR_KEY_SIZE];
     unsigned char pubkey[XOR_KEY_SIZE];
