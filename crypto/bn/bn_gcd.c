@@ -18,11 +18,22 @@ static BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
 BIGNUM *BN_mod_inverse(BIGNUM *in,
                        const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx)
 {
+    BN_CTX *new_ctx = NULL;
     BIGNUM *rv;
     int noinv = 0;
+
+    if (ctx == NULL) {
+        ctx = new_ctx = BN_CTX_new();
+        if (ctx == NULL) {
+            BNerr(BN_F_BN_MOD_INVERSE, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+    }
+
     rv = int_bn_mod_inverse(in, a, n, ctx, &noinv);
     if (noinv)
         BNerr(BN_F_BN_MOD_INVERSE, BN_R_NO_INVERSE);
+    BN_CTX_free(new_ctx);
     return rv;
 }
 
