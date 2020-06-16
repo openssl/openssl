@@ -361,33 +361,63 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
     return ret;
 }
 
-int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
+static int evp_set_default_properties(OPENSSL_CTX *libctx,
+                                      OSSL_PROPERTY_LIST *def_prop)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx);
 
-    if (store != NULL)
-        return ossl_method_store_set_global_properties(store, propq);
+    if (plp != NULL) {
+        ossl_property_free(*plp);
+        *plp = def_prop;
+        if (store != NULL)
+            ossl_method_store_flush_cache(store);
+        return 1;
+    }
     EVPerr(0, ERR_R_INTERNAL_ERROR);
     return 0;
+}
+
+int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
+{
+    OSSL_PROPERTY_LIST *pl = NULL;
+
+    if (propq != NULL && (pl = ossl_parse_query(libctx, propq)) == NULL) {
+        EVPerr(0, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
+        return 0;
+    }
+    return evp_set_default_properties(libctx, pl);
 }
 
 
 static int evp_default_properties_merge(OPENSSL_CTX *libctx, const char *propq)
 {
-    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx);
+    OSSL_PROPERTY_LIST *pl1, *pl2;
 
-    if (store != NULL)
-        return ossl_method_store_merge_global_properties(store, propq);
-    EVPerr(0, ERR_R_INTERNAL_ERROR);
-    return 0;
+    if (propq == NULL)
+        return 1;
+    if (plp == NULL || *plp == NULL)
+        return EVP_set_default_properties(libctx, propq);
+    if ((pl1 = ossl_parse_query(libctx, propq)) == NULL) {
+        EVPerr(0, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
+        return 0;
+    }
+    pl2 = ossl_property_merge(pl1, *plp);
+    ossl_property_free(pl1);
+    if (pl2 == NULL) {
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    return evp_set_default_properties(libctx, pl2);
 }
 
 static int evp_default_property_is_enabled(OPENSSL_CTX *libctx,
                                            const char *prop_name)
 {
-    OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
+    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx);
 
-    return ossl_method_store_global_property_is_enabled(store, prop_name);
+    return plp != NULL && ossl_property_is_enabled(libctx, prop_name, *plp);
 }
 
 int EVP_default_properties_is_fips_enabled(OPENSSL_CTX *libctx)

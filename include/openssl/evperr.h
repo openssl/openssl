@@ -72,8 +72,6 @@ int ERR_load_EVP_strings(void);
 #  define EVP_F_EVP_KEYEXCH_FROM_DISPATCH                  0
 #  define EVP_F_EVP_MAC_CTRL                               0
 #  define EVP_F_EVP_MAC_CTRL_STR                           0
-#  define EVP_F_EVP_MAC_CTX_DUP                            0
-#  define EVP_F_EVP_MAC_CTX_NEW                            0
 #  define EVP_F_EVP_MAC_INIT                               0
 #  define EVP_F_EVP_MD_BLOCK_SIZE                          0
 #  define EVP_F_EVP_MD_CTX_COPY_EX                         0
@@ -178,6 +176,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED             133
 # define EVP_R_DATA_NOT_MULTIPLE_OF_BLOCK_LENGTH          138
 # define EVP_R_DECODE_ERROR                               114
+# define EVP_R_DEFAULT_QUERY_PARSE_ERROR                  210
 # define EVP_R_DIFFERENT_KEY_TYPES                        101
 # define EVP_R_DIFFERENT_PARAMETERS                       153
 # define EVP_R_ERROR_LOADING_SECTION                      165
