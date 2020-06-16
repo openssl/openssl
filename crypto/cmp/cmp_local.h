@@ -796,6 +796,7 @@ int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int index);
 /* from cmp_hdr.c */
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
 int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER *hdr);
 ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
@@ -908,8 +909,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 typedef int (*ossl_cmp_allow_unprotected_cb_t)(const OSSL_CMP_CTX *ctx,
                                                const OSSL_CMP_MSG *msg,
                                                int invalid_protection, int arg);
-int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
-                                ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
+int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
+                              ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
 int ossl_cmp_verify_popo(const OSSL_CMP_MSG *msg, int accept_RAVerified);
 
 /* from cmp_client.c */

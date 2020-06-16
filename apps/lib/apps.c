@@ -1631,7 +1631,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         goto err;
     }
 
-    while (*cp) {
+    while (*cp != '\0') {
         char *bp = work;
         char *typestr = bp;
         unsigned char *valstr;
@@ -1640,12 +1640,12 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         nextismulti = 0;
 
         /* Collect the type */
-        while (*cp && *cp != '=')
+        while (*cp != '\0' && *cp != '=')
             *bp++ = *cp++;
         if (*cp == '\0') {
             BIO_printf(bio_err,
-                    "%s: Hit end of string before finding the '='\n",
-                    opt_getprog());
+                       "%s: Hit end of string before finding the '='\n",
+                       opt_getprog());
             goto err;
         }
         *bp++ = '\0';
@@ -1653,7 +1653,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
 
         /* Collect the value. */
         valstr = (unsigned char *)bp;
-        for (; *cp && *cp != '/'; *bp++ = *cp++) {
+        for (; *cp != '\0' && *cp != '/'; *bp++ = *cp++) {
             if (canmulti && *cp == '+') {
                 nextismulti = 1;
                 break;
@@ -1668,7 +1668,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         *bp++ = '\0';
 
         /* If not at EOS (must be + or /), move forward. */
-        if (*cp)
+        if (*cp != '\0')
             ++cp;
 
         /* Parse */
@@ -1687,6 +1687,7 @@ X509_NAME *parse_name(const char *cp, long chtype, int canmulti)
         if (!X509_NAME_add_entry_by_NID(n, nid, chtype,
                                         valstr, strlen((char *)valstr),
                                         -1, ismulti ? -1 : 0)) {
+            ERR_print_errors(bio_err);
             BIO_printf(bio_err, "%s: Error adding name attribute \"/%s=%s\"\n",
                        opt_getprog(), typestr ,valstr);
             goto err;

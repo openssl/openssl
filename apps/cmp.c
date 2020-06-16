@@ -347,16 +347,16 @@ const OPTIONS cmp_options[] = {
 
     OPT_SECTION("Server authentication"),
     {"trusted", OPT_TRUSTED, 's',
-     "Trusted certs used for CMP server authentication when verifying responses"},
+     "Certificates to trust as chain roots when verifying signed CMP responses"},
     {OPT_MORE_STR, 0, 0, "unless -srvcert is given"},
     {"untrusted", OPT_UNTRUSTED, 's',
-     "Intermediate certs for chain construction verifying CMP/TLS/enrolled certs"},
+     "Intermediate CA certs for chain construction for CMP/TLS/enrolled certs"},
     {"srvcert", OPT_SRVCERT, 's',
-     "Specific CMP server cert to use and trust directly when verifying responses"},
+     "Server cert to pin and trust directly when verifying signed CMP responses"},
     {"recipient", OPT_RECIPIENT, 's',
-     "Distinguished Name (DN) of the recipient to use unless -srvcert is given"},
+     "Distinguished Name (DN) to use as msg recipient; see man page for defaults"},
     {"expect_sender", OPT_EXPECT_SENDER, 's',
-     "DN of expected response sender. Defaults to DN of -srvcert, if provided"},
+     "DN of expected sender of responses. Defaults to subject of -srvcert, if any"},
     {"ignore_keyusage", OPT_IGNORE_KEYUSAGE, '-',
      "Ignore CMP signer cert key usage, else 'digitalSignature' must be allowed"},
     {"unprotected_errors", OPT_UNPROTECTED_ERRORS, '-',
@@ -1637,8 +1637,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
 
         /*
          * Any further certs and any untrusted certs are used for constructing
-         * the client cert chain to be provided along with the TLS client cert
-         * to the TLS server.
+         * the chain to be provided with the TLS client cert to the TLS server.
          */
         if (!SSL_CTX_set0_chain(ssl_ctx, certs)) {
             CMP_err("could not set TLS client cert chain");
@@ -2097,9 +2096,12 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
         goto oom;
     if (opt_proxy != NULL && !OSSL_CMP_CTX_set1_proxy(ctx, opt_proxy))
         goto oom;
+    if (opt_no_proxy != NULL && !OSSL_CMP_CTX_set1_no_proxy(ctx, opt_no_proxy))
+        goto oom;
     (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s%s%s/%s",
                        opt_tls_used ? "s" : "", opt_server,
                        server_port == 0 ? "" : ":", server_port_s,
+                       opt_path == NULL ? "" :
                        opt_path[0] == '/' ? opt_path + 1 : opt_path);
 
     if (opt_proxy != NULL)
@@ -2221,7 +2223,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
     if (!set_name(opt_recipient, OSSL_CMP_CTX_set1_recipient, ctx, "recipient")
             || !set_name(opt_expect_sender, OSSL_CMP_CTX_set1_expected_sender,
                          ctx, "expected sender"))
-        goto oom;
+        goto err;
 
     if (opt_geninfo != NULL && !handle_opt_geninfo(ctx))
         goto err;
@@ -2977,12 +2979,13 @@ int cmp_main(int argc, char **argv)
         if ((acbio = http_server_init_bio(prog, opt_port)) == NULL)
             goto err;
         while (opt_max_msgs <= 0 || msgs < opt_max_msgs) {
+            char *path = NULL;
             OSSL_CMP_MSG *req = NULL;
             OSSL_CMP_MSG *resp = NULL;
 
             ret = http_server_get_asn1_req(ASN1_ITEM_rptr(OSSL_CMP_MSG),
-                                           (ASN1_VALUE **)&req, &cbio, acbio,
-                                           prog, 0, 0);
+                                           (ASN1_VALUE **)&req, &path,
+                                           &cbio, acbio, prog, 0, 0);
             if (ret == 0)
                 continue;
             if (ret++ == -1)
@@ -2991,17 +2994,32 @@ int cmp_main(int argc, char **argv)
             ret = 0;
             msgs++;
             if (req != NULL) {
+                if (strcmp(path, "") != 0 && strcmp(path, "pkix/") != 0) {
+                    (void)http_server_send_status(cbio, 404, "Not Found");
+                    CMP_err1("Expecting empty path or 'pkix/' but got '%s'",
+                             path);
+                    OPENSSL_free(path);
+                    OSSL_CMP_MSG_free(req);
+                    goto cont;
+                }
+                OPENSSL_free(path);
                 resp = OSSL_CMP_CTX_server_perform(cmp_ctx, req);
                 OSSL_CMP_MSG_free(req);
-                if (resp == NULL)
+                if (resp == NULL) {
+                    (void)http_server_send_status(cbio,
+                                                  500, "Internal Server Error");
                     break; /* treated as fatal error */
+                }
                 ret = http_server_send_asn1_resp(cbio, "application/pkixcmp",
                                                  ASN1_ITEM_rptr(OSSL_CMP_MSG),
                                                  (const ASN1_VALUE *)resp);
                 OSSL_CMP_MSG_free(resp);
                 if (!ret)
                     break; /* treated as fatal error */
+            } else {
+                (void)http_server_send_status(cbio, 400, "Bad Request");
             }
+        cont:
             BIO_free_all(cbio);
             cbio = NULL;
         }

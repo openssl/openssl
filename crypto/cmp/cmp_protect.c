@@ -26,8 +26,8 @@ DEFINE_STACK_OF(X509)
  * Calculate protection for given PKImessage utilizing the given credentials
  * and the algorithm parameters set inside the message header's protectionAlg.
  *
- * Either secret or pkey must be set, the other must be NULL. Attempts doing
- * PBMAC in case 'secret' is set and signature if 'pkey' is set - but will only
+ * secret or pkey must be set. Attempts doing PBMAC in case 'secret' is set
+ * and else signature if 'pkey' is set - but will only
  * do the protection already marked in msg->header->protectionAlg.
  *
  * returns ptr to ASN1_BIT_STRING containing protection on success, else NULL
@@ -73,7 +73,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
     }
     X509_ALGOR_get0(&algorOID, &pptype, &ppval, msg->header->protectionAlg);
 
-    if (secret != NULL && pkey == NULL) {
+    if (secret != NULL) {
         if (ppval == NULL) {
             CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
             goto end;
@@ -94,7 +94,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
                                secret->data, secret->length,
                                &protection, &sig_len))
             goto end;
-    } else if (secret == NULL && pkey != NULL) {
+    } else if (pkey != NULL) {
         /* TODO combine this with large parts of CRMF_poposigningkey_init() */
         /* EVP_DigestSignInit() checks that pkey type is correct for the alg */
 
@@ -259,10 +259,8 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             goto err;
         }
 
-        if (msg->header->protectionAlg == NULL)
-            if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
-                goto err;
-
+        if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
+            goto err;
         if (!OBJ_find_sigid_by_algs(&algNID, ctx->digest,
                                     EVP_PKEY_id(ctx->pkey))) {
             CMPerr(0, CMP_R_UNSUPPORTED_KEY_TYPE);

@@ -209,6 +209,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
 {
     switch (*s) {
     default:
+        opt_printf_stderr("%s: Bad format \"%s\"\n", prog, s);
         return 0;
     case 'D':
     case 'd':
@@ -275,6 +276,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
                 return opt_format_error(s, flags);
             *result = FORMAT_PKCS12;
         } else {
+            opt_printf_stderr("%s: Bad format \"%s\"\n", prog, s);
             return 0;
         }
         break;
@@ -740,40 +742,29 @@ int opt_next(void)
             break;
         case 'p':
         case 'n':
-            if (!opt_int(arg, &ival)
-                    || (o->valtype == 'p' && ival <= 0)) {
+            if (!opt_int(arg, &ival))
+                return -1;
+            if (o->valtype == 'p' && ival <= 0) {
                 opt_printf_stderr("%s: Non-positive number \"%s\" for -%s\n",
                                   prog, arg, o->name);
                 return -1;
             }
             break;
         case 'M':
-            if (!opt_imax(arg, &imval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_imax(arg, &imval))
                 return -1;
-            }
             break;
         case 'U':
-            if (!opt_umax(arg, &umval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_umax(arg, &umval))
                 return -1;
-            }
             break;
         case 'l':
-            if (!opt_long(arg, &lval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_long(arg, &lval))
                 return -1;
-            }
             break;
         case 'u':
-            if (!opt_ulong(arg, &ulval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_ulong(arg, &ulval))
                 return -1;
-            }
             break;
         case 'c':
         case 'E':
