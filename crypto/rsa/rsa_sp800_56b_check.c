@@ -37,7 +37,14 @@ int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
     r = BN_CTX_get(ctx);
     p1 = BN_CTX_get(ctx);
     q1 = BN_CTX_get(ctx);
-    ret = (q1 != NULL)
+    if (q1 != NULL) {
+        BN_set_flags(p1, BN_FLG_CONSTTIME);
+        BN_set_flags(q1, BN_FLG_CONSTTIME);
+        ret = 1;
+    } else {
+        ret = 0;
+    }
+    ret = ret
           /* p1 = p -1 */
           && (BN_copy(p1, rsa->p) != NULL)
           && BN_sub_word(p1, 1)
@@ -138,7 +145,14 @@ int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx)
     BN_CTX_start(ctx);
     p1 = BN_CTX_get(ctx);
     gcd = BN_CTX_get(ctx);
-    ret = (gcd != NULL)
+    if (gcd != NULL) {
+        BN_set_flags(p1, BN_FLG_CONSTTIME);
+        BN_set_flags(gcd, BN_FLG_CONSTTIME);
+        ret = 1;
+    } else {
+        ret = 0;
+    }
+    ret = ret
           /* (Step 5d) GCD(p-1, e) = 1 */
           && (BN_copy(p1, p) != NULL)
           && BN_sub_word(p1, 1)
@@ -172,7 +186,16 @@ int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
     lcm = BN_CTX_get(ctx);
     p1q1 = BN_CTX_get(ctx);
     gcd = BN_CTX_get(ctx);
-    ret = (gcd != NULL
+    if (gcd != NULL) {
+        BN_set_flags(p1, BN_FLG_CONSTTIME);
+        BN_set_flags(q1, BN_FLG_CONSTTIME);
+        BN_set_flags(lcm, BN_FLG_CONSTTIME);
+        BN_set_flags(gcd, BN_FLG_CONSTTIME);
+        ret = 1;
+    } else {
+        ret = 0;
+    }
+    ret = (ret
           /* LCM(p - 1, q - 1) */
           && (rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) == 1)
           /* (Step 6a) d < LCM(p - 1, q - 1) */
@@ -241,6 +264,12 @@ int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
                 BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
                 BIGNUM *p1q1)
 {
+    BN_set_flags(lcm, BN_FLG_CONSTTIME);
+    BN_set_flags(gcd, BN_FLG_CONSTTIME);
+    BN_set_flags(p1, BN_FLG_CONSTTIME);
+    BN_set_flags(q1, BN_FLG_CONSTTIME);
+    BN_set_flags(p1q1, BN_FLG_CONSTTIME);
+
     return BN_sub(p1, p, BN_value_one())    /* p-1 */
            && BN_sub(q1, q, BN_value_one()) /* q-1 */
            && BN_mul(p1q1, p1, q1, ctx)     /* (p-1)(q-1) */
