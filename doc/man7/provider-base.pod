@@ -138,7 +138,7 @@ F<libcrypto>):
  provider_get_params            OSSL_FUNC_PROVIDER_GET_PARAMS
  provider_query_operation       OSSL_FUNC_PROVIDER_QUERY_OPERATION
  provider_get_reason_strings    OSSL_FUNC_PROVIDER_GET_REASON_STRINGS
- provider_get_capabilties       OSSL_FUNC_PROVIDER_GET_CAPABILITIES
+ provider_get_capabilities      OSSL_FUNC_PROVIDER_GET_CAPABILITIES
 
 =head2 Core functions
 
@@ -232,7 +232,7 @@ provider_get_reason_strings() should return a constant B<OSSL_ITEM>
 array that provides reason strings for reason codes the provider may
 use when reporting errors using core_put_error().
 
-The provider_get_capabilties() function should call the callback I<cb> passing
+The provider_get_capabilities() function should call the callback I<cb> passing
 it a set of B<OSSL_PARAM>s and the caller supplied argument I<arg>. The
 B<OSSL_PARAM>s should provide details about the capability with the name given
 in the I<capability> argument relevant for the provider context I<provctx>. If a
@@ -360,7 +360,7 @@ provider can add to the list of groups that libssl already supports with
 additional ones.
 
 Each TLS group that a provider supports should be described via the callback
-passed in through the provider_get_capabilties function. Each group should have
+passed in through the provider_get_capabilities function. Each group should have
 the following details supplied (all are mandatory):
 
 =over 4
