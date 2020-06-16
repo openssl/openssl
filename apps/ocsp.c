@@ -117,7 +117,7 @@ const OPTIONS ocsp_options[] = {
      "Do not load the default certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load certificates from the default certificates directory"},
-    {"no-CAstore", OPT_NOCAPATH, '-',
+    {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load certificates from the default certificates store"},
 
     OPT_SECTION("Responder"),
