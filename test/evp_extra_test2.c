@@ -19,8 +19,8 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
-OPENSSL_CTX *libctx = NULL;
-OSSL_PROVIDER *nullprov = NULL;
+static OPENSSL_CTX *libctx = NULL;
+static OSSL_PROVIDER *nullprov = NULL;
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
