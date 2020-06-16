@@ -113,7 +113,7 @@ If a name is repeated in the same section, then all but the last
 value are ignored. In certain circumstances, such as with
 Certificate DNs, the same field may occur multiple times.
 In order to support this, commands like L<openssl-req(1)> ignore any
-leading text that is preceeded with a period. For example:
+leading text that is preceded with a period. For example:
 
  1.OU = First OU
  2.OU = Second OU
@@ -198,7 +198,7 @@ containing name/value pairs of OID's.
 The name is the short name; the value is an optional long name followed
 by a comma, and the numeric value.
 While some OpenSSL commands have their own section for specifying OID's,
-this section makes them avilable to all commands and applications.
+this section makes them available to all commands and applications.
 
  [oids]
  shortName = a very long OID name, 1.2.3.4

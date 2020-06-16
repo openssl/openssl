@@ -584,7 +584,7 @@ of response messages.
 =item B<-cacertsout> I<filename>
 
 The file where to save any CA certificates received in the caPubs field of
-Initializiation Response (IP) messages.
+Initialization Response (IP) messages.
 
 =back
 
