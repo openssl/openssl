@@ -217,7 +217,7 @@ static int eckey_priv_decode_with_libctx(EVP_PKEY *pkey,
 
     /* We have parameters now set private key */
     if (!d2i_ECPrivateKey(&eckey, &p, pklen)) {
-        ECerr(EC_F_ECKEY_PRIV_DECODE_WITH_LIBCTX, EC_R_DECODE_ERROR);
+        ECerr(0, EC_R_DECODE_ERROR);
         goto ecerr;
     }
 
@@ -225,7 +225,7 @@ static int eckey_priv_decode_with_libctx(EVP_PKEY *pkey,
     return 1;
 
  ecliberr:
-    ECerr(EC_F_ECKEY_PRIV_DECODE_WITH_LIBCTX, ERR_R_EC_LIB);
+    ECerr(0, ERR_R_EC_LIB);
  ecerr:
     EC_KEY_free(eckey);
     return 0;

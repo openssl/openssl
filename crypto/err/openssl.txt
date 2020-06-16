@@ -566,7 +566,6 @@ EC_F_ECD_ITEM_VERIFY:270:ecd_item_verify
 EC_F_ECKEY_PARAM2TYPE:223:eckey_param2type
 EC_F_ECKEY_PARAM_DECODE:212:eckey_param_decode
 EC_F_ECKEY_PRIV_DECODE:213:eckey_priv_decode
-EC_F_ECKEY_PRIV_DECODE_WITH_LIBCTX:315:
 EC_F_ECKEY_PRIV_ENCODE:214:eckey_priv_encode
 EC_F_ECKEY_PUB_DECODE:215:eckey_pub_decode
 EC_F_ECKEY_PUB_ENCODE:216:eckey_pub_encode
