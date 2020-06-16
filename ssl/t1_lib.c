@@ -24,6 +24,7 @@
 #include <openssl/provider.h>
 #include "internal/nelem.h"
 #include "internal/evp.h"
+#include "internal/tlsgroups.h"
 #include "ssl_local.h"
 #include <openssl/ct.h>
 
@@ -147,36 +148,36 @@ static struct {
     int nid;
     uint16_t group_id;
 } nid_to_group[] = {
-    {NID_sect163k1, 0x0001},
-    {NID_sect163r1, 0x0002},
-    {NID_sect163r2, 0x0003},
-    {NID_sect193r1, 0x0004},
-    {NID_sect193r2, 0x0005},
-    {NID_sect233k1, 0x0006},
-    {NID_sect233r1, 0x0007},
-    {NID_sect239k1, 0x0008},
-    {NID_sect283k1, 0x0009},
-    {NID_sect283r1, 0x000A},
-    {NID_sect409k1, 0x000B},
-    {NID_sect409r1, 0x000C},
-    {NID_sect571k1, 0x000D},
-    {NID_sect571r1, 0x000E},
-    {NID_secp160k1, 0x000F},
-    {NID_secp160r1, 0x0010},
-    {NID_secp160r2, 0x0011},
-    {NID_secp192k1, 0x0012},
-    {NID_X9_62_prime192v1, 0x0013},
-    {NID_secp224k1, 0x0014},
-    {NID_secp224r1, 0x0015},
-    {NID_secp256k1, 0x0016},
-    {NID_X9_62_prime256v1, 0x0017},
-    {NID_secp384r1, 0x0018},
-    {NID_secp521r1, 0x0019},
-    {NID_brainpoolP256r1, 0x001A},
-    {NID_brainpoolP384r1, 0x001B},
-    {NID_brainpoolP512r1, 0x001C},
-    {EVP_PKEY_X25519, 0x001D},
-    {EVP_PKEY_X448, 0x001E},
+    {NID_sect163k1, OSSL_TLS_GROUP_ID_sect163k1},
+    {NID_sect163r1, OSSL_TLS_GROUP_ID_sect163r1},
+    {NID_sect163r2, OSSL_TLS_GROUP_ID_sect163r2},
+    {NID_sect193r1, OSSL_TLS_GROUP_ID_sect193r1},
+    {NID_sect193r2, OSSL_TLS_GROUP_ID_sect193r2},
+    {NID_sect233k1, OSSL_TLS_GROUP_ID_sect233k1},
+    {NID_sect233r1, OSSL_TLS_GROUP_ID_sect233r1},
+    {NID_sect239k1, OSSL_TLS_GROUP_ID_sect239k1},
+    {NID_sect283k1, OSSL_TLS_GROUP_ID_sect283k1},
+    {NID_sect283r1, OSSL_TLS_GROUP_ID_sect283r1},
+    {NID_sect409k1, OSSL_TLS_GROUP_ID_sect409k1},
+    {NID_sect409r1, OSSL_TLS_GROUP_ID_sect409r1},
+    {NID_sect571k1, OSSL_TLS_GROUP_ID_sect571k1},
+    {NID_sect571r1, OSSL_TLS_GROUP_ID_sect571r1},
+    {NID_secp160k1, OSSL_TLS_GROUP_ID_secp160k1},
+    {NID_secp160r1, OSSL_TLS_GROUP_ID_secp160r1},
+    {NID_secp160r2, OSSL_TLS_GROUP_ID_secp160r2},
+    {NID_secp192k1, OSSL_TLS_GROUP_ID_secp192k1},
+    {NID_X9_62_prime192v1, OSSL_TLS_GROUP_ID_secp192r1},
+    {NID_secp224k1, OSSL_TLS_GROUP_ID_secp224k1},
+    {NID_secp224r1, OSSL_TLS_GROUP_ID_secp224r1},
+    {NID_secp256k1, OSSL_TLS_GROUP_ID_secp256k1},
+    {NID_X9_62_prime256v1, OSSL_TLS_GROUP_ID_secp256r1},
+    {NID_secp384r1, OSSL_TLS_GROUP_ID_secp384r1},
+    {NID_secp521r1, OSSL_TLS_GROUP_ID_secp521r1},
+    {NID_brainpoolP256r1, OSSL_TLS_GROUP_ID_brainpoolP256r1},
+    {NID_brainpoolP384r1, OSSL_TLS_GROUP_ID_brainpoolP384r1},
+    {NID_brainpoolP512r1, OSSL_TLS_GROUP_ID_brainpoolP512r1},
+    {EVP_PKEY_X25519, OSSL_TLS_GROUP_ID_x25519},
+    {EVP_PKEY_X448, OSSL_TLS_GROUP_ID_x448},
     {NID_id_tc26_gost_3410_2012_256_paramSetA, 0x0022},
     {NID_id_tc26_gost_3410_2012_256_paramSetB, 0x0023},
     {NID_id_tc26_gost_3410_2012_256_paramSetC, 0x0024},
@@ -184,11 +185,11 @@ static struct {
     {NID_id_tc26_gost_3410_2012_512_paramSetA, 0x0026},
     {NID_id_tc26_gost_3410_2012_512_paramSetB, 0x0027},
     {NID_id_tc26_gost_3410_2012_512_paramSetC, 0x0028},
-    {NID_ffdhe2048, 0x0100},
-    {NID_ffdhe3072, 0x0101},
-    {NID_ffdhe4096, 0x0102},
-    {NID_ffdhe6144, 0x0103},
-    {NID_ffdhe8192, 0x0104}
+    {NID_ffdhe2048, OSSL_TLS_GROUP_ID_ffdhe2048},
+    {NID_ffdhe3072, OSSL_TLS_GROUP_ID_ffdhe3072},
+    {NID_ffdhe4096, OSSL_TLS_GROUP_ID_ffdhe4096},
+    {NID_ffdhe6144, OSSL_TLS_GROUP_ID_ffdhe6144},
+    {NID_ffdhe8192, OSSL_TLS_GROUP_ID_ffdhe8192}
 };
 #endif
 
