@@ -108,6 +108,8 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
     Xqo = (Xqout != NULL) ? Xqout : BN_CTX_get(ctx);
     if (tmp == NULL || Xpo == NULL || Xqo == NULL)
         goto err;
+    BN_set_flags(Xpo, BN_FLG_CONSTTIME);
+    BN_set_flags(Xqo, BN_FLG_CONSTTIME);
 
     if (rsa->p == NULL)
         rsa->p = BN_secure_new();
@@ -115,6 +117,8 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
         rsa->q = BN_secure_new();
     if (rsa->p == NULL || rsa->q == NULL)
         goto err;
+    BN_set_flags(rsa->p, BN_FLG_CONSTTIME);
+    BN_set_flags(rsa->q, BN_FLG_CONSTTIME);
 
     /* (Step 4) Generate p, Xp */
     if (!bn_rsa_fips186_4_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
@@ -217,6 +221,12 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (gcd == NULL)
         goto err;
 
+    BN_set_flags(p1, BN_FLG_CONSTTIME);
+    BN_set_flags(q1, BN_FLG_CONSTTIME);
+    BN_set_flags(lcm, BN_FLG_CONSTTIME);
+    BN_set_flags(p1q1, BN_FLG_CONSTTIME);
+    BN_set_flags(gcd, BN_FLG_CONSTTIME);
+
     /* LCM((p-1, q-1)) */
     if (rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) != 1)
         goto err;
@@ -230,7 +240,10 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     BN_clear_free(rsa->d);
     /* (Step 3) d = (e^-1) mod (LCM(p-1, q-1)) */
     rsa->d = BN_secure_new();
-    if (rsa->d == NULL || BN_mod_inverse(rsa->d, e, lcm, ctx) == NULL)
+    if (rsa->d == NULL)
+        goto err;
+    BN_set_flags(rsa->d, BN_FLG_CONSTTIME);
+    if (BN_mod_inverse(rsa->d, e, lcm, ctx) == NULL)
         goto err;
 
     /* (Step 3) return an error if d is too small */
@@ -247,21 +260,29 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
 
     /* (Step 5a) dP = d mod (p-1) */
     if (rsa->dmp1 == NULL)
-        rsa->dmp1 = BN_new();
-    if (rsa->dmp1 == NULL || !BN_mod(rsa->dmp1, rsa->d, p1, ctx))
+        rsa->dmp1 = BN_secure_new();
+    if (rsa->dmp1 == NULL)
+	    goto err;
+    BN_set_flags(rsa->dmp1, BN_FLG_CONSTTIME);
+    if (!BN_mod(rsa->dmp1, rsa->d, p1, ctx))
         goto err;
 
     /* (Step 5b) dQ = d mod (q-1) */
     if (rsa->dmq1 == NULL)
         rsa->dmq1 = BN_secure_new();
-    if (rsa->dmq1 == NULL || !BN_mod(rsa->dmq1, rsa->d, q1, ctx))
+    if (rsa->dmq1 == NULL)
+	    goto err;
+    BN_set_flags(rsa->dmq1, BN_FLG_CONSTTIME);
+    if (!BN_mod(rsa->dmq1, rsa->d, q1, ctx))
         goto err;
 
     /* (Step 5c) qInv = (inverse of q) mod p */
     BN_free(rsa->iqmp);
     rsa->iqmp = BN_secure_new();
-    if (rsa->iqmp == NULL
-            || BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
+    if (rsa->iqmp == NULL)
+	    goto err;
+    BN_set_flags(rsa->iqmp, BN_FLG_CONSTTIME);
+    if (BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
         goto err;
 
     rsa->dirty_cnt++;
@@ -379,6 +400,7 @@ int rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
     k = BN_CTX_get(ctx);
     if (k == NULL)
         goto err;
+    BN_set_flags(k, BN_FLG_CONSTTIME);
 
     ret = (BN_set_word(k, 2)
           && BN_mod_exp(tmp, k, rsa->e, rsa->n, ctx)
