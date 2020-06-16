@@ -29,7 +29,7 @@ used internally by the FIPS module during its initialization.
 
 The following options are supported. They should all appear in a section
 whose name is identified by the B<fips> option in the B<providers>
-section, as desribed in L<config(5)/Provider Configuration Module>.
+section, as described in L<config(5)/Provider Configuration Module>.
 
 =over 4
 
