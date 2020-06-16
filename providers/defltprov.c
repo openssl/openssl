@@ -551,7 +551,6 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
 }
 
 
-
 static void deflt_teardown(void *provctx)
 {
     BIO_meth_free(PROV_CTX_get0_core_bio_method(provctx));

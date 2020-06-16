@@ -26,7 +26,7 @@ typedef struct tls_group_constants_st {
     int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
 } TLS_GROUP_CONSTANTS;
 
-static const TLS_GROUP_CONSTANTS group_list[] = {
+static const TLS_GROUP_CONSTANTS group_list[35] = {
     { /* sect163k1 */ 0x0001, 80, TLS1_VERSION, 0, DTLS1_VERSION, 0 },
     { /* sect163r1 */ 0x0002, 80, TLS1_VERSION, 0, DTLS1_VERSION, 0 },
     { /* sect163r2 */ 0x0003, 80, TLS1_VERSION, 0, DTLS1_VERSION, 0 },
@@ -57,11 +57,11 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
     { /* brainpoolP512r1 */ 0x001C, 256, TLS1_VERSION, TLS1_2_VERSION, DTLS1_VERSION, DTLS1_2_VERSION },
     { /* x25519 */ 0x001D, 128, TLS1_VERSION, 0, DTLS1_VERSION, 0 },
     { /* x448 */ 0x001E, 224, TLS1_VERSION, 0, DTLS1_VERSION, 0 },
-    /* Security bit values for FFDHE groups are as per RFC 7919 */
-    { /* ffdhe2048 */ 0x0100, 103, TLS1_3_VERSION, 0, -1, -1 },
-    { /* ffdhe3072 */ 0x0101, 125, TLS1_3_VERSION, 0, -1, -1 },
-    { /* ffdhe4096 */ 0x0102, 150, TLS1_3_VERSION, 0, -1, -1 },
-    { /* ffdhe6144 */ 0x0103, 175, TLS1_3_VERSION, 0, -1, -1 },
+    /* Security bit values as given by BN_security_bits() */
+    { /* ffdhe2048 */ 0x0100, 112, TLS1_3_VERSION, 0, -1, -1 },
+    { /* ffdhe3072 */ 0x0101, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { /* ffdhe4096 */ 0x0102, 128, TLS1_3_VERSION, 0, -1, -1 },
+    { /* ffdhe6144 */ 0x0103, 128, TLS1_3_VERSION, 0, -1, -1 },
     { /* ffdhe8192 */ 0x0104, 192, TLS1_3_VERSION, 0, -1, -1 },
 };
 
@@ -94,27 +94,39 @@ static const TLS_GROUP_CONSTANTS group_list[] = {
 static const OSSL_PARAM param_group_list[][10] = {
 #ifndef OPENSSL_NO_EC
     TLS_GROUP_ENTRY("sect163k1", "sect163k1", "EC", 0),
+# ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("sect163r1", "sect163r1", "EC", 1),
+# endif
     TLS_GROUP_ENTRY("sect163r2", "sect163r2", "EC", 2),
+# ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("sect193r1", "sect193r1", "EC", 3),
     TLS_GROUP_ENTRY("sect193r2", "sect193r2", "EC", 4),
+# endif
     TLS_GROUP_ENTRY("sect233k1", "sect233k1", "EC", 5),
     TLS_GROUP_ENTRY("sect233r1", "sect233r1", "EC", 6),
+# ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("sect239k1", "sect239k1", "EC", 7),
+# endif
     TLS_GROUP_ENTRY("sect283k1", "sect283k1", "EC", 8),
     TLS_GROUP_ENTRY("sect283r1", "sect283r1", "EC", 9),
     TLS_GROUP_ENTRY("sect409k1", "sect409k1", "EC", 10),
     TLS_GROUP_ENTRY("sect409r1", "sect409r1", "EC", 11),
     TLS_GROUP_ENTRY("sect571k1", "sect571k1", "EC", 12),
     TLS_GROUP_ENTRY("sect571r1", "sect571r1", "EC", 13),
+# ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("secp160k1", "secp160k1", "EC", 14),
     TLS_GROUP_ENTRY("secp160r1", "secp160r1", "EC", 15),
     TLS_GROUP_ENTRY("secp160r2", "secp160r2", "EC", 16),
     TLS_GROUP_ENTRY("secp192k1", "secp192k1", "EC", 17),
+# endif
     TLS_GROUP_ENTRY("secp192r1", "prime192v1", "EC", 18),
+# ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("secp224k1", "secp224k1", "EC", 19),
+# endif
     TLS_GROUP_ENTRY("secp224r1", "secp224r1", "EC", 20),
+# ifndef FIPS_MODULE
     TLS_GROUP_ENTRY("secp256k1", "secp256k1", "EC", 21),
+# endif
     TLS_GROUP_ENTRY("secp256r1", "prime256v1", "EC", 22),
     TLS_GROUP_ENTRY("secp384r1", "secp384r1", "EC", 23),
     TLS_GROUP_ENTRY("secp521r1", "secp521r1", "EC", 24),
