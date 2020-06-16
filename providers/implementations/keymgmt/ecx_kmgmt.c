@@ -464,7 +464,7 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
         }
         if (p->data_type != OSSL_PARAM_UTF8_STRING
                 || groupname == NULL
-                || strcmp(p->data, groupname) != 0) {
+                || strcasecmp(p->data, groupname) != 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
