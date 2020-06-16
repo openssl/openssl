@@ -60,7 +60,7 @@ const OPTIONS verify_options[] = {
      "Do not load the default trusted certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load trusted certificates from the default directory"},
-    {"no-CAstore", OPT_NOCAPATH, '-',
+    {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load trusted certificates from the default certificates store"},
     {"untrusted", OPT_UNTRUSTED, '<', "A file of untrusted certificates"},
     {"CRLfile", OPT_CRLFILE, '<',
