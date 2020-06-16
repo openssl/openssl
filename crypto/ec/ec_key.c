@@ -121,7 +121,8 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     if (src->group != NULL) {
         /* clear the old group */
         EC_GROUP_free(dest->group);
-        dest->group = ec_group_new_ex(src->libctx, src->propq, src->group->meth);
+        dest->group = ec_group_new_with_libctx(src->libctx, src->propq,
+                                               src->group->meth);
         if (dest->group == NULL)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))
@@ -639,7 +640,7 @@ OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *key)
     return key->libctx;
 }
 
-const char *ec_key_get_propq(const EC_KEY *key)
+const char *ec_key_get0_propq(const EC_KEY *key)
 {
     return key->propq;
 }

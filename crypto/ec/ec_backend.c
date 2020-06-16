@@ -191,7 +191,7 @@ int ec_key_domparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
             goto err;
 
         if ((ecg = EC_GROUP_new_by_curve_name_with_libctx(ec_key_get_libctx(ec),
-                                                          ec_key_get_propq(ec),
+                                                          ec_key_get0_propq(ec),
                                                           curve_nid)) == NULL)
             goto err;
     }

@@ -23,8 +23,8 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const char *propq,
-                          const EC_METHOD *meth)
+EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+                                   const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
@@ -78,7 +78,7 @@ EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const char *propq,
 # ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 {
-    return ec_group_new_ex(NULL, NULL, meth);
+    return ec_group_new_with_libctx(NULL, NULL, meth);
 }
 # endif
 #endif
@@ -267,7 +267,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
     if (a == NULL)
         return NULL;
 
-    if ((t = ec_group_new_ex(a->libctx, a->propq, a->meth)) == NULL)
+    if ((t = ec_group_new_with_libctx(a->libctx, a->propq, a->meth)) == NULL)
         return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;
