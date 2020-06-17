@@ -269,7 +269,6 @@ static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
                                       serializer_passphrase_out_cb, ctx);
 }
 
-
 /*
  * OSSL_SERIALIZER_CTX_new_by_EVP_PKEY() returns a ctx with no serializer if
  * it couldn't find a suitable serializer.  This allows a caller to detect if
@@ -353,9 +352,14 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
             if (ossl_property_match_count(check, current_props) > 0)
                 selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
             ossl_property_free(current_props);
+            ossl_property_free(check);
+        } else {
+            if (sel_data.error)
+                ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_MALLOC_FAILURE);
+            else
+                ERR_raise(ERR_LIB_OSSL_SERIALIZER,
+                          OSSL_SERIALIZER_R_SERIALIZER_NOT_FOUND);
         }
-
-        ossl_property_free(check);
     }
 
     ctx = OSSL_SERIALIZER_CTX_new(ser); /* refcnt(ser)++ */
