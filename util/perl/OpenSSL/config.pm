@@ -66,108 +66,114 @@ my @cc_version =
 my $options = '';
 
 # Pattern matches against "${SYSTEM}:${RELEASE}:${VERSION}:${MACHINE}"
-my $simple_guess_patterns = [
-    [ 'A\/UX:',               'm68k-apple-aux3' ],
-    [ 'AIX:[3-9]:4:',         '${MACHINE}-ibm-aix' ],
-    [ 'AIX:.*:[5-9]:',        '${MACHINE}-ibm-aix' ],
-    [ 'AIX:',                 '${MACHINE}-ibm-aix3' ],
-    [ 'HI-UX:',               '${MACHINE}-hi-hiux' ],
-    [ 'IRIX:6.',              'mips3-sgi-irix' ],
-    [ 'IRIX64:',              'mips4-sgi-irix64' ],
-    [ 'Linux:[2-9]',          '${MACHINE}-whatever-linux2' ],
-    [ 'Linux:1',              '${MACHINE}-whatever-linux1' ],
-    [ 'GNU',                  'hurd-x86' ],
-    [ 'LynxOS:',              '${MACHINE}-lynx-lynxos' ],
+# The patterns are assumed to be wrapped like this: /^(${pattern})$/
+my $guess_patterns = [
+    [ 'A\/UX:.*',                   'm68k-apple-aux3' ],
+    [ 'AIX:[3-9]:4:.*',             '${MACHINE}-ibm-aix' ],
+    [ 'AIX:.*?:[5-9]:.*',           '${MACHINE}-ibm-aix' ],
+    [ 'AIX:.*',                     '${MACHINE}-ibm-aix3' ],
+    [ 'HI-UX:.*',                   '${MACHINE}-hi-hiux' ],
+    [ 'HP-UX:.*',
+      sub {
+          my $HPUXVER = $RELEASE;
+          $HPUXVER = s/[^.]*.[0B]*//;
+          # HPUX 10 and 11 targets are unified
+          return "${MACHINE}-hp-hpux1x" if $HPUXVER =~ m@1[0-9]@;
+          return "${MACHINE}-hp-hpux";
+      }
+    ],
+    [ 'IRIX:6\..*',                 'mips3-sgi-irix' ],
+    [ 'IRIX64:.*',                  'mips4-sgi-irix64' ],
+    [ 'Linux:[2-9]\..*',            '${MACHINE}-whatever-linux2' ],
+    [ 'Linux:1\..*',                '${MACHINE}-whatever-linux1' ],
+    [ 'GNU.*',                      'hurd-x86' ],
+    [ 'LynxOS:.*',                  '${MACHINE}-lynx-lynxos' ],
     # BSD/OS always says 386
-    [ 'BSD\/OS:4.*',          'i486-whatever-bsdi4' ],
-    [ 'BSD\/386:.*|BSD\/OS:', '${MACHINE}-whatever-bsdi' ],
-    [ 'DragonFly:',           '${MACHINE}-whatever-dragonfly' ],
-    [ 'FreeBSD:',             '${MACHINE}-whatever-freebsd' ],
-    [ 'Haiku:',               '${MACHINE}-whatever-haiku' ],
-    [ 'NetBSD:',              '${MACHINE}-whatever-netbsd' ],
-    [ 'OpenBSD:',             '${MACHINE}-whatever-openbsd' ],
-    [ 'OpenUNIX:',            '${MACHINE}-unknown-OpenUNIX${VERSION}' ],
-    [ 'Paragon.*:',           'i860-intel-osf1' ],
-    [ 'Rhapsody:',            'ppc-apple-rhapsody' ],
-    [ 'SunOS:5.',             '${MACHINE}-whatever-solaris2' ],
-    [ 'SunOS:',               '${MACHINE}-sun-sunos4' ],
-    [ 'UNIX_System_V:4.*:',   '${MACHINE}-whatever-sysv4' ],
-    [ 'VOS:.*:.*:i786',       'i386-stratus-vos' ],
-    [ 'VOS:.*:.*:',           'hppa1.1-stratus-vos' ],
-    [ '.*:4.*:R4.*:m88k',     '${MACHINE}-whatever-sysv4' ],
-    [ 'DYNIX\/ptx:4.*:',      '${MACHINE}-whatever-sysv4' ],
-    [ ':4.0:3.0:3[34]',       'i486-ncr-sysv4' ],
-    [ 'ULTRIX:',              '${MACHINE}-unknown-ultrix' ],
-    [ 'POSIX-BC',             'BS2000-siemens-sysv4' ],
-    [ 'machten:',             '${MACHINE}-tenon-${SYSTEM}' ],
-    [ 'library:',             '${MACHINE}-ncr-sysv4' ],
-    [ 'ConvexOS:.*:11.0:',    '${MACHINE}-v11-${SYSTEM}' ],
-    [ 'MINGW64.*:.*x86_64',   '${MACHINE}-whatever-mingw64' ],
-    [ 'MINGW',                '${MACHINE}-whatever-mingw' ],
-    [ 'CYGWIN',               '${MACHINE}-pc-cygwin' ],
-    [ 'vxworks',              '${MACHINE}-whatever-vxworks' ],
-    [ 'Darwin:.*Power',       'ppc-apple-darwin' ],
-    [ 'Darwin:.*x86_64',      'x86_64-apple-darwin' ],
-    [ 'Darwin:',              'i686-apple-darwin' ],
+    [ 'BSD\/OS:4\..*',              'i486-whatever-bsdi4' ],
+    # Order is important, this has to appear before 'BSD\/386:'
+    [ 'BSD/386:.*?:.*?:.*486.*|BSD/OS:.*?:.*?:.*?:.*486.*',
+      sub {
+          my $BSDVAR = `/sbin/sysctl -n hw.model`;
+          return "i586-whatever-bsdi" if $BSDVAR =~ m@Pentium@;
+          return "i386-whatever-bsdi";
+      }
+    ],
+    [ 'BSD\/386:.*|BSD\/OS:.*',     '${MACHINE}-whatever-bsdi' ],
+    # Order is important, this has to appear before 'FreeBSD:'
+    [ 'FreeBSD:.*?:.*?:.*386.*',
+      sub {
+          my $VERS = $RELEASE;
+          $VERS =~ s/[-(].*//;
+          my $MACH = `sysctl -n hw.model`;
+          $MACH = "i386" if $MACH =~ m@386@;
+          $MACH = "i486" if $MACH =~ m@486@;
+          $MACH = "i686" if $MACH =~ m@Pentium II@;
+          $MACH = "i586" if $MACH =~ m@Pentium@;
+          $MACH = "$MACHINE" if $MACH !~ /i.86/;
+          my $ARCH = 'whatever';
+          $ARCH = "pc" if $MACH =~ m@i[0-9]86@;
+          return "${MACH}-${ARCH}-freebsd${VERS}";
+      }
+    ],
+    [ 'DragonFly:.*',               '${MACHINE}-whatever-dragonfly' ],
+    [ 'FreeBSD:.*',                 '${MACHINE}-whatever-freebsd' ],
+    [ 'Haiku:.*',                   '${MACHINE}-whatever-haiku' ],
+    # Order is important, this has to appear before 'NetBSD:.*'
+    [ 'NetBSD:.*?:.*?:.*386.*',
+      sub {
+          my $hw = `/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model`;
+          $hw =~  s@.*(.)86-class.*@i${1}86@;
+          return "${hw}-whatever-netbsd";
+      }
+    ],
+    [ 'NetBSD:.*',                  '${MACHINE}-whatever-netbsd' ],
+    [ 'OpenBSD:.*',                 '${MACHINE}-whatever-openbsd' ],
+    [ 'OpenUNIX:.*',                '${MACHINE}-unknown-OpenUNIX${VERSION}' ],
+    [ 'OSF1:.*?:.*?:.*alpha.*',
+      sub {
+          my $OSFMAJOR = $RELEASE;
+          $OSFMAJOR =~ 's/^V([0-9]*)\..*$/\1/';
+          return "${MACHINE}-dec-tru64" if $OSFMAJOR =~ m@[45]@;
+          return "${MACHINE}-dec-osf";
+      }
+    ],
+    [ 'Paragon.*?:.*',              'i860-intel-osf1' ],
+    [ 'Rhapsody:.*',                'ppc-apple-rhapsody' ],
+    [ 'Darwin:.*?:.*?:Power.*',     'ppc-apple-darwin' ],
+    [ 'Darwin:.*?:.*?:x86_64',      'x86_64-apple-darwin' ],
+    [ 'Darwin:.*',                  'i686-apple-darwin' ],
+    [ 'SunOS:5\..*',                '${MACHINE}-whatever-solaris2' ],
+    [ 'SunOS:.*',                   '${MACHINE}-sun-sunos4' ],
+    [ 'UNIX_System_V:4\..*?:.*',    '${MACHINE}-whatever-sysv4' ],
+    [ 'VOS:.*?:.*?:i786',           'i386-stratus-vos' ],
+    [ 'VOS:.*?:.*?:.*',             'hppa1.1-stratus-vos' ],
+    [ '.*?:4.*?:R4.*?:m88k',        '${MACHINE}-whatever-sysv4' ],
+    [ 'DYNIX\/ptx:4.*?:.*',         '${MACHINE}-whatever-sysv4' ],
+    [ '.*?:4\.0:3\.0:3[34]..(,.*)?', 'i486-ncr-sysv4' ],
+    [ 'ULTRIX:.*',                  '${MACHINE}-unknown-ultrix' ],
+    [ 'POSIX-BC.*',                 'BS2000-siemens-sysv4' ],
+    [ 'machten:.*',                 '${MACHINE}-tenon-${SYSTEM}' ],
+    [ 'library:.*',                 '${MACHINE}-ncr-sysv4' ],
+    [ 'ConvexOS:.*?:11\.0:.*',      '${MACHINE}-v11-${SYSTEM}' ],
+    [ 'MINGW64.*?:.*?:.*?:x86_64',  '${MACHINE}-whatever-mingw64' ],
+    [ 'MINGW.*',                    '${MACHINE}-whatever-mingw' ],
+    [ 'CYGWIN.*',                   '${MACHINE}-pc-cygwin' ],
+    [ 'vxworks.*',                  '${MACHINE}-whatever-vxworks' ],
 
     # Windows values found by looking at Perl 5's win32/win32.c
-    [ 'Windows NT:.*:amd64',  'VC-WIN64A' ],
-    [ 'Windows NT:.*:ia64',   'VC-WIN64I' ],
-    [ 'Windows NT:.*:x86',    'VC-WIN32' ],
+    [ 'Windows NT:.*:amd64',        'VC-WIN64A' ],
+    [ 'Windows NT:.*:ia64',         'VC-WIN64I' ],
+    [ 'Windows NT:.*:x86',          'VC-WIN32' ],
 
     # VMS values found by observation on existing machinery.  Unfortunately,
     # the machine part is a bit...  overdone.  It seems, though, that 'Alpha'
     # exists in that part, making it distinguishable from Itanium.  It will
     # be interesting to see what we'll get in the upcoming x86_64 port...
-    [ 'OpenVMS:.*:.*:.*:.*Alpha*', 'vms-alpha' ],
-    [ 'OpenVMS:',             'vms-ia64' ],
+    [ 'OpenVMS:.*?:.*?:.*?:.*Alpha.*', 'vms-alpha' ],
+    [ 'OpenVMS:.*',                 'vms-ia64' ],
 
+    [ sub { -d '/usr/apollo' },     'whatever-apollo-whatever' ],
 ];
-
-# More complex cases that require run-time code.
-my $complex_sys_list = [
-    [ 'HP-UX:', sub {
-        my $HPUXVER = $RELEASE;
-        $HPUXVER = s/[^.]*.[0B]*//;
-        # HPUX 10 and 11 targets are unified
-        return "${MACHINE}-hp-hpux1x" if $HPUXVER =~ m@1[0-9]@;
-        return "${MACHINE}-hp-hpux";
-    } ],
-
-    [ 'BSD/386:.*:.*:.*486.*|BSD/OS:.*:.*:.*:.*486', sub {
-        my $BSDVAR = `/sbin/sysctl -n hw.model`;
-        return "i586-whatever-bsdi" if $BSDVAR =~ m@Pentium@;
-        return "i386-whatever-bsdi";
-    } ],
-
-    [ 'FreeBSD:.*:.*:.*386', sub {
-        my $VERS = $RELEASE;
-        $VERS =~ s/[-(].*//;
-        my $MACH = `sysctl -n hw.model`;
-        $MACH = "i386" if $MACH =~ m@386@;
-        $MACH = "i486" if $MACH =~ m@486@;
-        $MACH = "i686" if $MACH =~ m@Pentium II@;
-        $MACH = "i586" if $MACH =~ m@Pentium@;
-        $MACH = "$MACHINE" if $MACH !~ /i.86/;
-        my $ARCH = 'whatever';
-        $ARCH = "pc" if $MACH =~ m@i[0-9]86@;
-        return "${MACH}-${ARCH}-freebsd${VERS}";
-    } ],
-
-    [ 'NetBSD:.*:.*:.*386', sub {
-        my $hw = `/usr/sbin/sysctl -n hw.model || /sbin/sysctl -n hw.model`;
-        $hw =~  s@.*(.)86-class.*@i${1}86@;
-        return "${hw}-whatever-netbsd";
-    } ],
-
-    [ 'OSF1:.*:.*:.*alpha', sub {
-        my $OSFMAJOR = $RELEASE;
-        $OSFMAJOR =~ 's/^V([0-9]*)\..*$/\1/';
-        return "${MACHINE}-dec-tru64" if $OSFMAJOR =~ m@[45]@;
-        return "${MACHINE}-dec-osf";
-    } ],
-];
-
 
 # Run a command, return true if exit zero else false.
 # Multiple args are glued together into a pipeline.
@@ -247,11 +253,11 @@ sub guess_system {
     # Now pattern-match
 
     # Simple cases
-    foreach my $tuple ( @$simple_guess_patterns,
-                        @$complex_sys_list ) {
+    foreach my $tuple ( @$guess_patterns ) {
         my $pat = @$tuple[0];
-        # Trailing $ omitted on purpose.
-        next if $sys !~ /^$pat/;
+        my $check = ref $pat eq 'CODE' ? $pat->($sys) : $sys =~ /^(${pat})$/;
+        next unless $check;
+
         my $result = @$tuple[1];
         $result = $result->() if ref $result eq 'CODE';
         return eval "\"$result\"";
