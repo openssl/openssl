@@ -1312,7 +1312,7 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
     if (s->ctx->app_gen_cookie_cb == NULL ||
         s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
                                   &cookie_leni) == 0 ||
-        cookie_leni > 255) {
+        cookie_leni > DTLS1_COOKIE_LENGTH) {
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST,
                  SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return 0;
