@@ -36,7 +36,7 @@ IF[{- !$disabled{tests} -}]
           destest mdc2test \
           enginetest exptest \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
-          evp_fetch_prov_test acvp_test \
+          evp_fetch_prov_test acvp_test evp_libctx_test \
           v3nametest v3ext \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test v3nametest v3ext \
@@ -140,6 +140,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_extra_test2]=evp_extra_test2.c
   INCLUDE[evp_extra_test2]=../include ../apps/include
   DEPEND[evp_extra_test2]=../libcrypto libtestutil.a
+
+  SOURCE[evp_libctx_test]=evp_libctx_test.c
+  INCLUDE[evp_libctx_test]=../include ../apps/include
+  DEPEND[evp_libctx_test]=../libcrypto.a libtestutil.a
 
   SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c
   INCLUDE[evp_fetch_prov_test]=../include ../apps/include

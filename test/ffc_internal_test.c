@@ -399,13 +399,6 @@ static int ffc_params_fips186_2_gen_validate_test(void)
                                                  FFC_PARAM_TYPE_DH,
                                                  &res, NULL)))
         goto err;
-    /* FIPS 186-4 L,N pair test will fail for DH */
-    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
-                                                  FFC_PARAM_TYPE_DH,
-                                                  &res, NULL)))
-        goto err;
-    if (!TEST_int_eq(res, FFC_CHECK_BAD_LN_PAIR))
-        goto err;
 
     /*
      * The fips186-2 generation should produce a different q compared to
