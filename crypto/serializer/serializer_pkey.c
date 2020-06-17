@@ -18,7 +18,7 @@
 #include "crypto/evp.h"
 #include "serializer_local.h"
 
-DEFINE_STACK_OF_STRING()
+DEFINE_STACK_OF_CSTRING()
 
 int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
                                    const char *cipher_name,
@@ -95,14 +95,9 @@ int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
  */
 
 struct selected_serializer_st {
-    STACK_OF(OPENSSL_STRING) *names;
+    STACK_OF(OPENSSL_CSTRING) *names;
     int error;
 };
-
-static void serializer_string_free(OPENSSL_STRING a)
-{
-    OPENSSL_free(a);
-}
 
 static void cache_serializers(const char *name, void *data)
 {
@@ -110,7 +105,7 @@ static void cache_serializers(const char *name, void *data)
     char *n = OPENSSL_strdup(name);
 
     if (n != NULL) {
-        if (sk_OPENSSL_STRING_push(d->names, n) > 0)
+        if (sk_OPENSSL_CSTRING_push(d->names, n) > 0)
             return;
         OPENSSL_free(n);
     }
@@ -303,12 +298,11 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         const OSSL_PROVIDER *desired_prov = EVP_KEYMGMT_provider(keymgmt);
         OPENSSL_CTX *libctx = ossl_provider_library_context(desired_prov);
         struct selected_serializer_st sel_data;
-        OSSL_PROPERTY_LIST *check =
-            ossl_parse_query(libctx, "type=parameters");
+        OSSL_PROPERTY_LIST *check = ossl_parse_query(libctx, "type=parameters");
         OSSL_PROPERTY_LIST *current_props = NULL;
-        int i;
         OSSL_SERIALIZER *first = NULL;
-        char *name;
+        const char *name;
+        int i;
 
         /*
          * Select the serializer in two steps.  First, get the names of all of
@@ -318,13 +312,13 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
          * order inversions with the store lock.
          */
         sel_data.error = 0;
-        sel_data.names = sk_OPENSSL_STRING_new_null();
+        sel_data.names = sk_OPENSSL_CSTRING_new_null();
         if (sel_data.names == NULL)
             return NULL;
         EVP_KEYMGMT_names_do_all(keymgmt, cache_serializers, &sel_data);
         /*
          * Ignore memory allocation errors that are indicated in sel_data.error
-         * in case a suitable did get found.
+         * in case a suitable provider does get found regardless.
          */
 
         /*
@@ -338,8 +332,8 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
          * handle an OSSL_PARAM array in |first| and use that if nothing
          * better turns up.
          */
-        for (i = 0; i < sk_OPENSSL_STRING_num(sel_data.names); i++) {
-            name = sk_OPENSSL_STRING_value(sel_data.names, i);
+        for (i = 0; i < sk_OPENSSL_CSTRING_num(sel_data.names); i++) {
+            name = sk_OPENSSL_CSTRING_value(sel_data.names, i);
             ser = OSSL_SERIALIZER_fetch(libctx, name, propquery);
             if (ser != NULL) {
                 if (OSSL_SERIALIZER_provider(ser) == desired_prov
@@ -354,7 +348,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                 ser = NULL;
             }
         }
-        sk_OPENSSL_STRING_pop_free(sel_data.names, &serializer_string_free);
+        sk_OPENSSL_CSTRING_free(sel_data.names);
         if (ser == NULL)
             ser = first;
 
