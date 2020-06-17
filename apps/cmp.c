@@ -1880,9 +1880,12 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *e)
         }
     }
 
-    if (opt_days > 0)
-        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_VALIDITY_DAYS,
-                                      opt_days);
+    if (opt_days > 0
+            && !OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_VALIDITY_DAYS,
+                                        opt_days)) {
+        CMP_err("could to set requested cert validity period");
+        goto err;
+    }
 
     if (opt_policies != NULL && opt_policy_oids != NULL) {
         CMP_err("cannot have policies both via -policies and via -policy_oids");

@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OSSL_CRMF_MSG_set_validity,
+OSSL_CRMF_MSG_set0_validity,
 OSSL_CRMF_MSG_set_certReqId,
 OSSL_CRMF_CERTTEMPLATE_fill,
 OSSL_CRMF_MSG_set0_extensions,
@@ -15,7 +15,8 @@ OSSL_CRMF_MSGS_verify_popo
 
  #include <openssl/crmf.h>
 
- int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to);
+ int OSSL_CRMF_MSG_set0_validity(OSSL_CRMF_MSG *crm,
+                                 ASN1_TIME *notBefore, ASN1_TIME *notAfter);
 
  int OSSL_CRMF_MSG_set_certReqId(OSSL_CRMF_MSG *crm, int rid);
 
@@ -37,29 +38,32 @@ OSSL_CRMF_MSGS_verify_popo
 
 =head1 DESCRIPTION
 
-OSSL_CRMF_MSG_set_validity() sets B<from> as notBefore and B<to> as notAfter
-as the validity in the certTemplate of B<crm>.
+OSSL_CRMF_MSG_set0_validity() sets the I<notBefore> and I<notAfter> fields
+as validity constraints in the certTemplate of I<crm>.
+Any of the I<notBefore> and I<notAfter> parameters may be NULL,
+which means no constraint for the respective field.
+On success ownership of I<notBefore> and I<notAfter> is transferred to I<crm>.
 
-OSSL_CRMF_MSG_set_certReqId() sets B<rid> as the certReqId of B<crm>.
+OSSL_CRMF_MSG_set_certReqId() sets I<rid> as the certReqId of I<crm>.
 
-OSSL_CRMF_CERTTEMPLATE_fill() sets those fields of the certTemplate B<tmpl>
-for which non-NULL values are provided: B<pubkey>, B<subject>, B<issuer>,
-and/or B<serial>.
-On success the reference counter of the B<pubkey> (if given) is incremented,
-while the B<subject>, B<issuer>, and B<serial> structures (if given) are copied.
+OSSL_CRMF_CERTTEMPLATE_fill() sets those fields of the certTemplate I<tmpl>
+for which non-NULL values are provided: I<pubkey>, I<subject>, I<issuer>,
+and/or I<serial>.
+On success the reference counter of the I<pubkey> (if given) is incremented,
+while the I<subject>, I<issuer>, and I<serial> structures (if given) are copied.
 
-OSSL_CRMF_MSG_set0_extensions() sets B<exts> as the extensions in the
-certTemplate of B<crm>. Frees any pre-existing ones and consumes B<exts>.
+OSSL_CRMF_MSG_set0_extensions() sets I<exts> as the extensions in the
+certTemplate of I<crm>. Frees any pre-existing ones and consumes I<exts>.
 
-OSSL_CRMF_MSG_push0_extension() pushes the X509 extension B<ext> to the
-extensions in the certTemplate of B<crm>.  Consumes B<ext>.
+OSSL_CRMF_MSG_push0_extension() pushes the X509 extension I<ext> to the
+extensions in the certTemplate of I<crm>.  Consumes I<ext>.
 
 OSSL_CRMF_MSG_create_popo() creates and sets the Proof-of-Possession (POPO)
-according to the method B<ppmtd> in B<crm>.
+according to the method I<ppmtd> in I<crm>.
 In case the method is OSSL_CRMF_POPO_SIGNATURE the POPO is calculated
-using the private B<pkey> and the digest algorithm NID B<dgst>.
+using the private I<pkey> and the digest algorithm NID I<dgst>.
 
-B<ppmtd> can be one of the following:
+I<ppmtd> can be one of the following:
 
 =over 8
 
@@ -82,7 +86,7 @@ challenge-response exchange (challengeResp) not yet supported.
 =back
 
 OSSL_CRMF_MSGS_verify_popo verifies the Proof-of-Possession of the request with
-the given B<rid> in the list of B<reqs>. Optionally accepts RAVerified.
+the given I<rid> in the list of I<reqs>. Optionally accepts RAVerified.
 
 =head1 RETURN VALUES
 

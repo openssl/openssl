@@ -244,35 +244,23 @@ OSSL_CRMF_CERTTEMPLATE *OSSL_CRMF_MSG_get0_tmpl(const OSSL_CRMF_MSG *crm)
 }
 
 
-int OSSL_CRMF_MSG_set_validity(OSSL_CRMF_MSG *crm, time_t from, time_t to)
+int OSSL_CRMF_MSG_set0_validity(OSSL_CRMF_MSG *crm,
+                                ASN1_TIME *notBefore, ASN1_TIME *notAfter)
 {
-    OSSL_CRMF_OPTIONALVALIDITY *vld = NULL;
-    ASN1_TIME *from_asn = NULL;
-    ASN1_TIME *to_asn = NULL;
+    OSSL_CRMF_OPTIONALVALIDITY *vld;
     OSSL_CRMF_CERTTEMPLATE *tmpl = OSSL_CRMF_MSG_get0_tmpl(crm);
 
     if (tmpl == NULL) { /* also crm == NULL implies this */
-        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET_VALIDITY, CRMF_R_NULL_ARGUMENT);
+        CRMFerr(CRMF_F_OSSL_CRMF_MSG_SET0_VALIDITY, CRMF_R_NULL_ARGUMENT);
         return 0;
     }
 
-    if (from != 0 && ((from_asn = ASN1_TIME_set(NULL, from)) == NULL))
-        goto err;
-    if (to != 0 && ((to_asn = ASN1_TIME_set(NULL, to)) == NULL))
-        goto err;
     if ((vld = OSSL_CRMF_OPTIONALVALIDITY_new()) == NULL)
-        goto err;
-
-    vld->notBefore = from_asn;
-    vld->notAfter = to_asn;
-
+        return 0;
+    vld->notBefore = notBefore;
+    vld->notAfter = notAfter;
     tmpl->validity = vld;
-
     return 1;
- err:
-    ASN1_TIME_free(from_asn);
-    ASN1_TIME_free(to_asn);
-    return 0;
 }
 
 
