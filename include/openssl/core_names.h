@@ -222,7 +222,6 @@ extern "C" {
 #define OSSL_PKEY_PARAM_DH_PRIV_LEN         "priv_len"
 
 /* Elliptic Curve Domain Parameters */
-#define OSSL_PKEY_PARAM_EC_NAME      "curve-name"
 #define OSSL_PKEY_PARAM_EC_PUB_X     "qx"
 #define OSSL_PKEY_PARAM_EC_PUB_Y     "qy"
 
