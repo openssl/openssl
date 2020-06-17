@@ -10,6 +10,7 @@
 #include "../ssl_local.h"
 #include <openssl/trace.h>
 #include <openssl/rand.h>
+#include <openssl/core_names.h>
 #include "record_local.h"
 #include "internal/cryptlib.h"
 
@@ -1140,63 +1141,121 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             }
         }
 
-        /* TODO(size_t): Convert this call */
-        tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input,
-                          (unsigned int)reclen[0]);
-        if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
-             & EVP_CIPH_FLAG_CUSTOM_CIPHER)
-            ? (tmpr < 0)
-            : (tmpr == 0)) {
-            /* AEAD can fail to verify MAC */
-            return 0;
-        }
+        if (EVP_CIPHER_provider(enc) != NULL) {
+            int outlen;
 
-        if (sending == 0) {
-            if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE) {
-                for (ctr = 0; ctr < n_recs; ctr++) {
-                    recs[ctr].data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-                    recs[ctr].input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
-                    recs[ctr].length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
-                }
-            } else if (EVP_CIPHER_mode(enc) == EVP_CIPH_CCM_MODE) {
-                for (ctr = 0; ctr < n_recs; ctr++) {
-                    recs[ctr].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
-                    recs[ctr].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
-                    recs[ctr].length -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
-                }
+            /* Provided cipher - we do not support pipelining on this path */
+            if (n_recs > 1)  {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                         ERR_R_INTERNAL_ERROR);
+                return 0;
             }
-        }
 
-        if (!sending) {
-            for (ctr = 0; ctr < n_recs; ctr++) {
-                if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
-                    if (recs[ctr].length < bs)
+            if (!EVP_CipherUpdate(ds, recs[0].data, &outlen, recs[0].input,
+                                  (unsigned int)reclen[0]))
+                return 0;
+            recs[0].length = outlen;
+
+            /*
+             * The length returned from EVP_CipherUpdate above is the actual
+             * payload length. We need to adjust the data/input ptr to skip over
+             * any explicit IV
+             */
+            if (!sending) {
+                if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE) {
+                        recs[0].data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+                        recs[0].input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+                } else if (EVP_CIPHER_mode(enc) == EVP_CIPH_CCM_MODE) {
+                        recs[0].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+                        recs[0].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+                } else if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
+                    recs[0].data += bs;
+                    recs[0].input += bs;
+                    recs[0].orig_len -= bs;
+                }
+
+                /* Now get a pointer to the MAC (if applicable) */
+                if (macs != NULL) {
+                    OSSL_PARAM params[2], *p = params;
+
+                    /* Get the MAC */
+                    macs[0].alloced = 0;
+
+                    *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
+                                                          (void **)&macs[0].mac,
+                                                          macsize);
+                    *p = OSSL_PARAM_construct_end();
+
+                    if (!EVP_CIPHER_CTX_get_params(ds, params)) {
+                        /* Shouldn't normally happen */
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_ENC,
+                                 ERR_R_INTERNAL_ERROR);
                         return 0;
-                    recs[ctr].data += bs;
-                    recs[ctr].input += bs;
-                    recs[ctr].length -= bs;
-                    recs[ctr].orig_len -= bs;
+                    }
                 }
-                /*
-                 * If using Mac-then-encrypt, then this will succeed but with a
-                 * random MAC if padding is invalid
-                 */
-                if (!tls1_cbc_remove_padding_and_mac(&recs[ctr].length,
-                                     recs[ctr].orig_len,
-                                     recs[ctr].data,
-                                     (macs != NULL) ? &macs[ctr].mac : NULL,
-                                     (macs != NULL) ? &macs[ctr].alloced : NULL,
-                                     bs,
-                                     macsize,
-                                     (EVP_CIPHER_CTX_flags(s->enc_read_ctx)
-                                     & EVP_CIPH_FLAG_AEAD_CIPHER) != 0,
-                                     s->ctx->libctx))
-                    return 0;
             }
-        }
-        if (pad && !sending) {
-            for (ctr = 0; ctr < n_recs; ctr++) {
-                recs[ctr].length -= pad;
+        } else {
+            /* Legacy cipher */
+
+            /* TODO(size_t): Convert this call */
+            tmpr = EVP_Cipher(ds, recs[0].data, recs[0].input,
+                              (unsigned int)reclen[0]);
+            if ((EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ds))
+                 & EVP_CIPH_FLAG_CUSTOM_CIPHER)
+                ? (tmpr < 0)
+                : (tmpr == 0)) {
+                /* AEAD can fail to verify MAC */
+                return 0;
+            }
+
+            if (!sending) {
+                /* Adjust the record to remove the explicit IV/MAC/Tag */
+                if (EVP_CIPHER_mode(enc) == EVP_CIPH_GCM_MODE) {
+                    for (ctr = 0; ctr < n_recs; ctr++) {
+                        recs[ctr].data += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+                        recs[ctr].input += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+                        recs[ctr].length -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
+                    }
+                } else if (EVP_CIPHER_mode(enc) == EVP_CIPH_CCM_MODE) {
+                    for (ctr = 0; ctr < n_recs; ctr++) {
+                        recs[ctr].data += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+                        recs[ctr].input += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+                        recs[ctr].length -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
+                    }
+                }
+
+                for (ctr = 0; ctr < n_recs; ctr++) {
+                    if (bs != 1 && SSL_USE_EXPLICIT_IV(s)) {
+                        if (recs[ctr].length < bs)
+                            return 0;
+                        recs[ctr].data += bs;
+                        recs[ctr].input += bs;
+                        recs[ctr].length -= bs;
+                        recs[ctr].orig_len -= bs;
+                    }
+
+                    /*
+                     * If using Mac-then-encrypt, then this will succeed but
+                     * with a random MAC if padding is invalid
+                     */
+                    if (!tls1_cbc_remove_padding_and_mac(&recs[ctr].length,
+                                         recs[ctr].orig_len,
+                                         recs[ctr].data,
+                                         (macs != NULL) ? &macs[ctr].mac : NULL,
+                                         (macs != NULL) ? &macs[ctr].alloced
+                                                        : NULL,
+                                         bs,
+                                         macsize,
+                                         (EVP_CIPHER_CTX_flags(s->enc_read_ctx)
+                                         & EVP_CIPH_FLAG_AEAD_CIPHER) != 0,
+                                         s->ctx->libctx))
+                        return 0;
+                }
+                if (pad) {
+                    for (ctr = 0; ctr < n_recs; ctr++) {
+                        recs[ctr].length -= pad;
+                    }
+                }
             }
         }
     }
