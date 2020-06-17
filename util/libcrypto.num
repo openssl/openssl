@@ -4546,7 +4546,7 @@ OSSL_CRMF_MSG_set1_regCtrl_oldCertID    ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_CERTID_gen                    ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_set1_regInfo_utf8Pairs    ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_set1_regInfo_certReq      ?	3_0_0	EXIST::FUNCTION:CRMF
-OSSL_CRMF_MSG_set_validity              ?	3_0_0	EXIST::FUNCTION:CRMF
+OSSL_CRMF_MSG_set0_validity             ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_set_certReqId             ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_get_certReqId             ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_set0_extensions           ?	3_0_0	EXIST::FUNCTION:CRMF

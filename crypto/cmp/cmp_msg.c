@@ -253,12 +253,17 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
                                             NULL /* serial */))
         goto err;
     if (ctx->days != 0) {
-        time_t notBefore, notAfter;
+        time_t now = time(NULL);
+        ASN1_TIME *notBefore = ASN1_TIME_adj(NULL, now, 0, 0);
+        ASN1_TIME *notAfter = ASN1_TIME_adj(NULL, now, ctx->days, 0);
 
-        notBefore = time(NULL);
-        notAfter = notBefore + 60 * 60 * 24 * ctx->days;
-        if (!OSSL_CRMF_MSG_set_validity(crm, notBefore, notAfter))
+        if (notBefore == NULL
+                || notAfter == NULL
+                || !OSSL_CRMF_MSG_set0_validity(crm, notBefore, notAfter)) {
+            ASN1_TIME_free(notBefore);
+            ASN1_TIME_free(notAfter);
             goto err;
+        }
     }
 
     /* extensions */
