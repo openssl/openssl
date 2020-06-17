@@ -162,7 +162,11 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
-    /* TODO(3.0): Support PSS in FIPS_MODULE */
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    rsa_acvp_test_free(r->acvp_test);
+#endif
+
 #ifndef FIPS_MODULE
     RSA_PSS_PARAMS_free(r->pss);
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
@@ -183,6 +187,11 @@ int RSA_up_ref(RSA *r)
     REF_PRINT_COUNT("RSA", r);
     REF_ASSERT_ISNT(i < 2);
     return i > 1 ? 1 : 0;
+}
+
+OPENSSL_CTX *rsa_get0_libctx(RSA *r)
+{
+    return r->libctx;
 }
 
 #ifndef FIPS_MODULE
@@ -637,7 +646,17 @@ const BIGNUM *RSA_get0_iqmp(const RSA *r)
 
 const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 {
+#ifdef FIPS_MODULE
+    return NULL;
+#else
     return r->pss;
+#endif
+}
+
+/* Internal */
+RSA_PSS_PARAMS_30 *rsa_get0_pss_params_30(RSA *r)
+{
+    return &r->pss_params;
 }
 
 void RSA_clear_flags(RSA *r, int flags)
@@ -992,47 +1011,16 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
     return 1;
 }
 
-int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
-{
-    const char *name;
-
-    if (ctx == NULL
-            || (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-                && !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx))) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    /* If key type not RSA return error */
-    if (ctx->pmeth != NULL
-            && ctx->pmeth->pkey_id != EVP_PKEY_RSA
-            && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
-        return -1;
-
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if ((EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-                && ctx->op.ciph.ciphprovctx == NULL)
-            || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
-                && ctx->op.sig.sigprovctx == NULL))
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA,
-                                 EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
-                                 EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)md);
-
-    name = (md == NULL) ? "" : EVP_MD_name(md);
-
-    return EVP_PKEY_CTX_set_rsa_mgf1_md_name(ctx, name, NULL);
-}
-
-int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
-                                      const char *mdprops)
+static int int_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx,
+                               /* For EVP_PKEY_CTX_ctrl() */
+                               int keytype, int optype, int cmd,
+                               const EVP_MD *md,
+                               /* For EVP_PKEY_CTX_set_params() */
+                               const char *mdname, const char *mdprops)
 {
     OSSL_PARAM rsa_params[3], *p = rsa_params;
 
-    if (ctx == NULL
-            || mdname == NULL
-            || (!EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-                && !EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx))) {
+    if (ctx == NULL || (ctx->operation & optype) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
@@ -1040,9 +1028,25 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
 
     /* If key type not RSA return error */
     if (ctx->pmeth != NULL
-            && ctx->pmeth->pkey_id != EVP_PKEY_RSA
-            && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        && (keytype == -1
+            ? (ctx->pmeth->pkey_id != EVP_PKEY_RSA
+               && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+            : ctx->pmeth->pkey_id != keytype))
         return -1;
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (cmd != -1) {
+        if ((EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
+             && ctx->op.ciph.ciphprovctx == NULL)
+            || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+                && ctx->op.sig.sigprovctx == NULL)
+            || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+                && ctx->op.keymgmt.genctx == NULL))
+            return EVP_PKEY_CTX_ctrl(ctx, keytype, optype, cmd, 0, (void *)md);
+
+        mdname = (md == NULL) ? "" : EVP_MD_name(md);
+    }
+
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_MGF1_DIGEST,
                                             /*
@@ -1062,6 +1066,36 @@ int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, rsa_params);
+}
+
+int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
+{
+    return int_set_rsa_mgf1_md(ctx, -1,
+                               EVP_PKEY_OP_TYPE_CRYPT | EVP_PKEY_OP_TYPE_SIG,
+                               EVP_PKEY_CTRL_RSA_MGF1_MD, md, NULL, NULL);
+}
+
+int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
+                                      const char *mdprops)
+{
+    return int_set_rsa_mgf1_md(ctx, -1,
+                               EVP_PKEY_OP_TYPE_CRYPT | EVP_PKEY_OP_TYPE_SIG,
+                               -1, NULL, mdname, mdprops);
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
+{
+    return int_set_rsa_mgf1_md(ctx, EVP_PKEY_RSA_PSS,
+                               EVP_PKEY_OP_KEYGEN, EVP_PKEY_CTRL_RSA_MGF1_MD,
+                               md, NULL, NULL);
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name(EVP_PKEY_CTX *ctx,
+                                                 const char *mdname)
+{
+    return int_set_rsa_mgf1_md(ctx, EVP_PKEY_RSA_PSS,
+                               EVP_PKEY_OP_TYPE_CRYPT | EVP_PKEY_OP_TYPE_SIG,
+                               -1, NULL, mdname, NULL);
 }
 
 int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
@@ -1202,11 +1236,12 @@ int EVP_PKEY_CTX_get0_rsa_oaep_label(EVP_PKEY_CTX *ctx, unsigned char **label)
     return (int)labellen;
 }
 
-int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int saltlen)
+static int int_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int saltlen,
+                                   int keytype, int optype)
 {
     OSSL_PARAM pad_params[2], *p = pad_params;
 
-    if (ctx == NULL) {
+    if (ctx == NULL || (ctx->operation & optype) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
@@ -1214,14 +1249,19 @@ int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int saltlen)
 
     /* If key type not RSA or RSA-PSS return error */
     if (ctx->pmeth != NULL
-            && ctx->pmeth->pkey_id != EVP_PKEY_RSA
-            && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+        && (keytype == -1
+            ? (ctx->pmeth->pkey_id != EVP_PKEY_RSA
+               && ctx->pmeth->pkey_id != EVP_PKEY_RSA_PSS)
+            : ctx->pmeth->pkey_id != keytype))
         return -1;
 
     /* TODO(3.0): Remove this eventually when no more legacy */
-    if (!EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
-        || ctx->op.sig.sigprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, -1, -1, EVP_PKEY_CTRL_RSA_PSS_SALTLEN,
+    if ((EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+         && ctx->op.sig.sigprovctx == NULL)
+        || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+            && ctx->op.keymgmt.genctx == NULL))
+        return EVP_PKEY_CTX_ctrl(ctx, keytype, optype,
+                                 EVP_PKEY_CTRL_RSA_PSS_SALTLEN,
                                  saltlen, NULL);
 
     *p++ =
@@ -1229,6 +1269,17 @@ int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int saltlen)
     *p++ = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, pad_params);
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int saltlen)
+{
+    return int_set_rsa_pss_saltlen(ctx, saltlen, -1, EVP_PKEY_OP_TYPE_SIG);
+}
+
+int EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(EVP_PKEY_CTX *ctx, int saltlen)
+{
+    return int_set_rsa_pss_saltlen(ctx, saltlen, EVP_PKEY_RSA_PSS,
+                                   EVP_PKEY_OP_KEYGEN);
 }
 
 int EVP_PKEY_CTX_get_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int *saltlen)

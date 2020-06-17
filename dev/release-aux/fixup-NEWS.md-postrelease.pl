@@ -18,11 +18,11 @@ if (/^### Major changes between OpenSSL (\S+) and OpenSSL (\S+) \[under developm
     # If this is a pre-release, we do nothing
     if ($RELEASE !~ /^\d+\.\d+\.\d+-(?:alpha|beta)/) {
         $_ = <<_____
-### Major changes between OpenSSL $v2 and OpenSSL $RELEASE_TEXT [under development] ###
+### Major changes between OpenSSL $v2 and OpenSSL $RELEASE_TEXT [under development]
 
  * 
 
-### Major changes between OpenSSL $v1 and OpenSSL $v2 [$PREV_RELEASE_DATE] ###
+### Major changes between OpenSSL $v1 and OpenSSL $v2 [$PREV_RELEASE_DATE]
 _____
     }
 }

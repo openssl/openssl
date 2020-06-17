@@ -77,7 +77,7 @@ $UTIL_DEFINE=$CPUIDDEF
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
-        o_fopen.c getenv.c o_init.c o_fips.c init.c trace.c provider.c \
+        o_fopen.c getenv.c o_init.c init.c trace.c provider.c \
         $UPLINKSRC
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
 SOURCE[../providers/liblegacy.a]=$UTIL_COMMON
@@ -94,7 +94,6 @@ DEFINE[../providers/libcommon.a]=$UTIL_DEFINE
 DEPEND[info.o]=buildinf.h
 DEPEND[cversion.o]=buildinf.h
 GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(LIB_CFLAGS) $(CPPFLAGS_Q)" "$(PLATFORM)"
-DEPEND[buildinf.h]=../configdata.pm
 
 GENERATE[uplink-x86.s]=../ms/uplink-x86.pl
 GENERATE[uplink-x86_64.s]=../ms/uplink-x86_64.pl

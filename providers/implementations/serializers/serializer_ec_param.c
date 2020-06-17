@@ -15,6 +15,7 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn ec_param_newctx;
@@ -39,8 +40,9 @@ static void ec_param_freectx(void *vctx)
 }
 
 /* Public key : DER */
-static int ec_param_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
-                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int ec_param_der_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
+                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *ec_new;
     OSSL_OP_keymgmt_free_fn *ec_free;
@@ -62,15 +64,25 @@ static int ec_param_der_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ec_param_der(void *vctx, void *eckey, BIO *out,
+static int ec_param_der(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return i2d_ECPKParameters_bio(out, EC_KEY_get0_group(eckey));
+    BIO *out = bio_new_from_core_bio(vctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = i2d_ECPKParameters_bio(out, EC_KEY_get0_group(eckey));
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Public key : PEM */
-static int ec_param_pem_data(void *vctx, const OSSL_PARAM params[], BIO *out,
-                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int ec_param_pem_data(void *vctx, const OSSL_PARAM params[],
+                             OSSL_CORE_BIO *out,
+                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *ec_new;
     OSSL_OP_keymgmt_free_fn *ec_free;
@@ -92,14 +104,24 @@ static int ec_param_pem_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ec_param_pem(void *vctx, void *eckey, BIO *out,
+static int ec_param_pem(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return PEM_write_bio_ECPKParameters(out, EC_KEY_get0_group(eckey));
+    BIO *out = bio_new_from_core_bio(vctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = PEM_write_bio_ECPKParameters(out, EC_KEY_get0_group(eckey));
+    BIO_free(out);
+
+    return ret;
 }
 
-static int ec_param_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
-                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+static int ec_param_print_data(void *vctx, const OSSL_PARAM params[],
+                               OSSL_CORE_BIO *out,
+                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *ec_new;
     OSSL_OP_keymgmt_free_fn *ec_free;
@@ -121,10 +143,19 @@ static int ec_param_print_data(void *vctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int ec_param_print(void *vctx, void *eckey, BIO *out,
+static int ec_param_print(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_eckey(out, eckey, ec_print_params);
+    BIO *out = bio_new_from_core_bio(vctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_eckey(out, eckey, ec_print_params);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH ec_param_der_serializer_functions[] = {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -102,6 +102,24 @@ int OSSL_STORE_error(OSSL_STORE_CTX *ctx);
  */
 int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
 
+/*
+ * Attach to a BIO.  This works like OSSL_STORE_open() except it takes a
+ * BIO instead of a uri, along with a scheme to use when reading.
+ * The given UI method will be used any time the loader needs extra input,
+ * for example when a password or pin is needed, and will be passed the
+ * same user data every time it's needed in this context.
+ *
+ * Returns a context reference which represents the channel to communicate
+ * through.
+ *
+ * Note that this function is considered unsafe, all depending on what the
+ * BIO actually reads.
+ */
+OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, OPENSSL_CTX *libctx,
+                                  const char *scheme, const char *propq,
+                                  const UI_METHOD *ui_method, void *ui_data,
+                                  OSSL_STORE_post_process_info_fn post_process,
+                                  void *post_process_data);
 
 /*-
  *  Extracting OpenSSL types from and creating new OSSL_STORE_INFOs
@@ -228,6 +246,16 @@ typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_fn)(const OSSL_STORE_LOADER
                                                      void *ui_data);
 int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_open_fn open_function);
+typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)(const OSSL_STORE_LOADER
+                                                       *loader,
+                                                       BIO *bio,
+                                                       OPENSSL_CTX *libctx,
+                                                       const char *propq,
+                                                       const UI_METHOD
+                                                       *ui_method,
+                                                       void *ui_data);
+int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
+                                 OSSL_STORE_attach_fn attach_function);
 typedef int (*OSSL_STORE_ctrl_fn)(OSSL_STORE_LOADER_CTX *ctx, int cmd,
                                   va_list args);
 int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *loader,

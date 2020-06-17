@@ -44,7 +44,7 @@ EVP_set_default_properties() and  EVP_default_properties_enable_fips() return 1
 on success, or 0 on failure. An error is placed on the the error stack if a
 failure occurs.
 
-EVP_default_properties_is_fips_enabled() returns 1 if the 'fips=true' default
+EVP_default_properties_is_fips_enabled() returns 1 if the 'fips=yes' default
 property is set for the given I<libctx>, otherwise it returns 0.
 
 =head1 SEE ALSO

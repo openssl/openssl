@@ -61,6 +61,7 @@ extern "C" {
 # ifndef OPENSSL_NO_SCTP
 #  define BIO_TYPE_DGRAM_SCTP    (24|BIO_TYPE_SOURCE_SINK|BIO_TYPE_DESCRIPTOR)
 # endif
+# define BIO_TYPE_CORE_TO_PROV   (25|BIO_TYPE_FILTER)
 
 #define BIO_TYPE_START           128
 
@@ -663,8 +664,8 @@ int BIO_sock_should_retry(int i);
 int BIO_sock_non_fatal_error(int error);
 int BIO_socket_wait(int fd, int for_read, time_t max_time);
 # endif
-int BIO_wait(BIO *bio, time_t max_time, unsigned int milliseconds);
-int BIO_connect_retry(BIO *bio, int timeout);
+int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds);
+int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds);
 
 int BIO_fd_should_retry(int i);
 int BIO_fd_non_fatal_error(int error);

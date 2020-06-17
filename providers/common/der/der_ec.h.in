@@ -16,6 +16,8 @@
                                        filter => \&oids_to_c::filter_to_H });
 -}
 
+/* Subject Public Key Info */
 int DER_w_algorithmIdentifier_EC(WPACKET *pkt, int cont, EC_KEY *ec);
-int DER_w_algorithmIdentifier_ECDSA_with(WPACKET *pkt, int cont,
-                                         EC_KEY *ec, int mdnid);
+/* Signature */
+int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
+                                            EC_KEY *ec, int mdnid);

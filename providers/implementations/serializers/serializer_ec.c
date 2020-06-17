@@ -31,15 +31,13 @@ static int ossl_prov_print_ec_param(BIO *out, const EC_GROUP *group)
     if (curve_nid == NID_undef)
         return 0;
 
-    if (ossl_prov_bio_printf(out, "%s: %s\n", "ASN1 OID",
-                             OBJ_nid2sn(curve_nid)) <= 0)
+    if (BIO_printf(out, "%s: %s\n", "ASN1 OID", OBJ_nid2sn(curve_nid)) <= 0)
         return 0;
 
     /* TODO(3.0): Only named curves are currently supported */
     curve_name = EC_curve_nid2nist(curve_nid);
     return (curve_name == NULL
-            || ossl_prov_bio_printf(out, "%s: %s\n", "NIST CURVE",
-                                    curve_name) > 0);
+            || BIO_printf(out, "%s: %s\n", "NIST CURVE", curve_name) > 0);
 }
 
 int ossl_prov_print_eckey(BIO *out, EC_KEY *eckey, enum ec_print_type type)
@@ -86,8 +84,8 @@ int ossl_prov_print_eckey(BIO *out, EC_KEY *eckey, enum ec_print_type type)
             goto err;
     }
 
-    if (ossl_prov_bio_printf(out, "%s: (%d bit)\n", type_label,
-                             EC_GROUP_order_bits(group)) <= 0)
+    if (BIO_printf(out, "%s: (%d bit)\n", type_label,
+                   EC_GROUP_order_bits(group)) <= 0)
         goto err;
     if (priv != NULL
         && !ossl_prov_print_labeled_buf(out, "priv:", priv, priv_len))

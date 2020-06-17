@@ -24,6 +24,7 @@ Usage: release.sh [ options ... ]
                 where '{major}' and '{minor}' are the major and minor
                 version numbers.
 
+--reviewer=<id> The reviewer of the commits.
 --local-user=<keyid>
                 For the purpose of signing tags and tar files, use this
                 key (default: use the default e-mail address’ key).
@@ -65,6 +66,7 @@ do_manual=false
 
 tagkey=' -s'
 gpgkey=
+reviewers=
 
 upload_address=upload@dev.openssl.org
 
@@ -73,6 +75,7 @@ TEMP=$(getopt -l 'alpha,next-beta,beta,final' \
               -l 'no-upload,no-update' \
               -l 'verbose,debug' \
               -l 'local-user:' \
+              -l 'reviewer:' \
               -l 'force' \
               -l 'help,manual' \
               -n release.sh -- - "$@")
@@ -120,6 +123,11 @@ while true; do
         shift
         tagley=" -u $1"
         gpgkey=" -u $1"
+        shift
+        ;;
+    --reviewer )
+        reviewers="$reviewers $1=$2"
+        shift
         shift
         ;;
     --force )
@@ -311,6 +319,9 @@ if [ -n "$(git status --porcelain)" ]; then
     $VERBOSE "== Committing updates"
     git add -u
     git commit $git_quiet -m 'make update'
+    if [ -n "$reviewers" ]; then
+        addrev --nopr $reviewers
+    fi
 fi
 
 # Write the version information we updated
@@ -339,6 +350,9 @@ done
 $VERBOSE "== Comitting updates and tagging"
 git add -u
 git commit $git_quiet -m "Prepare for release of $release_text"
+if [ -n "$reviewers" ]; then
+    addrev --nopr $reviewers
+fi
 echo "Tagging release with tag $tag.  You may need to enter a pass phrase"
 git tag$tagkey "$tag" -m "OpenSSL $release release tag"
 
@@ -436,6 +450,9 @@ done
 $VERBOSE "== Comitting updates"
 git add -u
 git commit $git_quiet -m "Prepare for $release_text"
+if [ -n "$reviewers" ]; then
+    addrev --nopr $reviewers
+fi
 
 if $do_branch; then
     $VERBOSE "== Going back to the main branch $current_branch"
@@ -460,6 +477,9 @@ if $do_branch; then
     $VERBOSE "== Comitting updates"
     git add -u
     git commit $git_quiet -m "Prepare for $release_text"
+    if [ -n "$reviewers" ]; then
+        addrev --nopr $reviewers
+    fi
 fi
 
 # Done ###############################################################
@@ -543,6 +563,7 @@ B<--beta> |
 B<--final> |
 B<--branch> |
 B<--local-user>=I<keyid> |
+B<--reviewer>=I<id> |
 B<--no-upload> |
 B<--no-update> |
 B<--verbose> |
@@ -618,6 +639,14 @@ Display extra debug output.  Implies B<--no-upload>
 Use I<keyid> as the local user for C<git tag> and for signing with C<gpg>.
 
 If not given, then the default e-mail address' key is used.
+
+=item B<--reviewer>=I<id>
+
+Add I<id> to the set of reviewers for the commits performed by this script.
+Multiple reviewers are allowed.
+
+If no reviewer is given, you will have to run C<addrev> manually, which
+means retagging a release commit manually as well.
 
 =item B<--force>
 

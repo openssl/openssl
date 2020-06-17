@@ -222,7 +222,7 @@ static int OSSL_HTTP_REQ_CTX_content(OSSL_HTTP_REQ_CTX *rctx,
         && BIO_write(rctx->mem, req, req_len) == (int)req_len;
 }
 
-BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, ASN1_VALUE *val)
+BIO *HTTP_asn1_item2bio(const ASN1_ITEM *it, const ASN1_VALUE *val)
 {
     BIO *res;
 
@@ -814,7 +814,7 @@ static int update_timeout(int timeout, time_t start_time)
  *   BIO *(*OSSL_HTTP_bio_cb_t) (BIO *bio, void *arg, int conn, int detail);
  * The callback may modify the HTTP BIO provided in the bio argument,
  * whereby it may make use of any custom defined argument 'arg'.
- * During connection establishment, just after BIO_connect_retry(),
+ * During connection establishment, just after BIO_do_connect_retry(),
  * the callback function is invoked with the 'conn' argument being 1
  * 'detail' indicating whether a HTTPS (i.e., TLS) connection is requested.
  * On disconnect 'conn' is 0 and 'detail' indicates that no error occurred.
@@ -873,7 +873,7 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
     /* remaining parameters are checked indirectly by the functions called */
 
     (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
-    if (rbio == NULL && BIO_connect_retry(cbio, timeout) <= 0)
+    if (rbio == NULL && BIO_do_connect_retry(cbio, timeout, -1) <= 0)
         goto end;
     /* now timeout is guaranteed to be >= 0 */
 
@@ -1069,7 +1069,7 @@ ASN1_VALUE *OSSL_HTTP_post_asn1(const char *server, const char *port,
                                 OSSL_HTTP_bio_cb_t bio_update_fn, void *arg,
                                 const STACK_OF(CONF_VALUE) *headers,
                                 const char *content_type,
-                                ASN1_VALUE *req, const ASN1_ITEM *req_it,
+                                const ASN1_VALUE *req, const ASN1_ITEM *req_it,
                                 int maxline, unsigned long max_resp_len,
                                 int timeout, const char *expected_ct,
                                 const ASN1_ITEM *rsp_it)

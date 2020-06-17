@@ -516,25 +516,23 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
 
 char *CONF_get1_default_config_file(void)
 {
+    const char *t;
     char *file, *sep = "";
-    int len;
+    size_t size;
 
     if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
         return OPENSSL_strdup(file);
 
-    len = strlen(X509_get_default_cert_area());
+    t = X509_get_default_cert_area();
 #ifndef OPENSSL_SYS_VMS
-    len++;
     sep = "/";
 #endif
-    len += strlen(OPENSSL_CONF);
-
-    file = OPENSSL_malloc(len + 1);
+    size = strlen(t) + strlen(sep) + strlen(OPENSSL_CONF) + 1;
+    file = OPENSSL_malloc(size);
 
     if (file == NULL)
         return NULL;
-    BIO_snprintf(file, len + 1, "%s%s%s", X509_get_default_cert_area(),
-                 sep, OPENSSL_CONF);
+    BIO_snprintf(file, size, "%s%s%s", t, sep, OPENSSL_CONF);
 
     return file;
 }

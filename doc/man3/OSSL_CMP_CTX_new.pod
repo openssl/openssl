@@ -28,7 +28,7 @@ OSSL_CMP_CTX_set0_trustedStore,
 OSSL_CMP_CTX_get0_trustedStore,
 OSSL_CMP_CTX_set1_untrusted_certs,
 OSSL_CMP_CTX_get0_untrusted_certs,
-OSSL_CMP_CTX_set1_clCert,
+OSSL_CMP_CTX_set1_cert,
 OSSL_CMP_CTX_set1_pkey,
 OSSL_CMP_CTX_set1_referenceValue,
 OSSL_CMP_CTX_set1_secretValue,
@@ -73,7 +73,7 @@ OSSL_CMP_CTX_set1_senderNonce
  /* logging and error reporting: */
  int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb);
  #define OSSL_CMP_CTX_set_log_verbosity(ctx, level)
- void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx);
+ void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx);
 
  /* message transfer: */
  int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path);
@@ -102,7 +102,7 @@ OSSL_CMP_CTX_set1_senderNonce
  STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted_certs(const OSSL_CMP_CTX *ctx);
 
  /* client authentication: */
- int OSSL_CMP_CTX_set1_clCert(OSSL_CMP_CTX *ctx, X509 *cert);
+ int OSSL_CMP_CTX_set1_cert(OSSL_CMP_CTX *ctx, X509 *cert);
  int OSSL_CMP_CTX_set1_pkey(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey);
  int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
                                       const unsigned char *ref, int len);
@@ -226,18 +226,18 @@ The following options can be set:
 
 =item B<OSSL_CMP_OPT_DIGEST_ALGNID>
 
-        The digest algorithm NID to be used in RFC 4210's MSG_SIG_ALG,
-        if applicable used for message protection and Proof-of-Possession.
+        The NID of the digest algorithm to be used in RFC 4210's MSG_SIG_ALG
+        for signature-based message protection and Proof-of-Possession (POPO).
         Default is SHA256.
 
-    OSSL_CMP_OPT_OWF_ALGNID
-        The digest algorithm NID to be used as one-way function (OWF)
-        in RFC 4210's MSG_MAC_ALG, if applicable used for message protection.
+=item B<OSSL_CMP_OPT_OWF_ALGNID>
+        The NID of the digest algorithm to be used as one-way function (OWF)
+        in RFC 4210's MSG_MAC_ALG for PBM-based message protection.
         Default is SHA256.
 
-    OSSL_CMP_OPT_MAC_ALGNID
-        The MAC algorithm NID to be used in RFC 4210's MSG_MAC_ALG,
-        if applicable used for message protection.
+=item B<OSSL_CMP_OPT_MAC_ALGNID>
+        The NID of the MAC algorithm to be used in RFC 4210's MSG_MAC_ALG
+        for PBM-based message protection.
         Default is HMAC-SHA1 as per RFC 4210.
 
 =item B<OSSL_CMP_OPT_REVOCATION_REASON>
@@ -306,7 +306,7 @@ B<ERR_print_errors(3)> to print to STDERR (unless OPENSSL_NO_STDIO is defined).
 
 OSSL_CMP_CTX_set1_serverPath() sets the HTTP path of the CMP server on the host,
 also known as "CMP alias".
-The default is "/".
+The default is I</>.
 
 OSSL_CMP_CTX_set1_server() sets the given server B<address>
 (which may be a hostname or IP address or NULL) in the given B<ctx>.
@@ -323,7 +323,7 @@ Otherwise defaults to the value of B<https_proxy> if set, else B<HTTPS_PROXY>.
 An empty proxy string specifies not to use a proxy.
 Else the format is I<[http[s]://]address[:port][/path]>,
 where any path given is ignored.
-The default port number is 80, or 443 in case "https:" is given.
+The default port number is 80, or 443 in case I<https:> is given.
 
 OSSL_CMP_CTX_set1_no_proxy() sets the list of server hostnames not to use
 an HTTP proxy for. The names may be separated by commas and/or whitespace.
@@ -337,7 +337,7 @@ function, which has the prototype
 The callback may modify the BIO B<bio> provided by OSSL_CMP_MSG_http_perform(),
 whereby it may make use of a custom defined argument B<ctx>
 stored in the OSSL_CMP_CTX by means of OSSL_CMP_CTX_set_http_cb_arg().
-During connection establishment, just after calling BIO_connect_retry(),
+During connection establishment, just after calling BIO_do_connect_retry(),
 the function is invoked with the B<connect> argument being 1 and the B<detail>
 argument being 1 if HTTPS is requested, i.e., SSL/TLS should be enabled. On
 disconnect B<connect> is 0 and B<detail> is 1 in case no error occurred, else 0.
@@ -380,49 +380,57 @@ OSSL_CMP_CTX_get_transfer_cb_arg() gets the argument, respectively the pointer
 to a structure containing arguments, previously set by
 OSSL_CMP_CTX_set_transfer_cb_arg() or NULL if unset.
 
-OSSL_CMP_CTX_set1_srvCert() pins the given server certificate B<srvCert>
-directly trusts it (even if it is expired) for verifying response messages.
+OSSL_CMP_CTX_set1_srvCert() sets the expected server cert B<srvCert> and trusts
+it directly (even if it is expired) when verifying signed response messages.
+May be used alternatively to OSSL_CMP_CTX_set0_trustedStore()
+to pin the accepted server.
+Any previously set value is freed.
 The B<cert> argument may be NULL to clear the entry.
+If set, the subject of the certificate is also used
+as default value for the recipient of CMP requests
+and as default value for the expected sender of CMP responses.
 
-OSSL_CMP_CTX_set1_expected_sender() sets the Distinguished Name (DN) expected to
-be given in the sender response for messages protected with MSG_SIG_ALG. This
-may be used to enforce that during validation of received messages the given DN
-matches the sender field of the PKIMessage header, which in turn is used to
-identify the server certificate.
-This can be used to ensure that only a particular entity is accepted to act as
-CMP server, and attackers are not able to use arbitrary certificates of a
-trusted PKI hierarchy to fraudulently pose as server.
-This defaults to the subject of the B<srvCert>, if any.
+OSSL_CMP_CTX_set1_expected_sender() sets the Distinguished Name (DN)
+expected in the sender field of CMP response messages.
+Defaults to the subject of the pinned server certificate B<-srvcert>, if any.
+This can be used to make sure that only a particular entity is accepted as
+CMP message signer, and attackers are not able to use arbitrary certificates
+of a trusted PKI hierarchy to fraudulently pose as CMP server.
+Note that this gives slightly more freedom than OSSL_CMP_CTX_set1_srvCert(),
+which pins the server to the holder of a particular certificate, while the
+expected sender name will continue to match after updates of the server cert.
 
-OSSL_CMP_CTX_set0_trustedStore() sets the X509_STORE type certificate store
-containing trusted (root) CA certificates. The certificate store may also hold
-CRLs and a certificate verification callback function used for CMP server
-authentication. Any already existing store entry is freed. When given a NULL
-parameter the entry is cleared.
+OSSL_CMP_CTX_set0_trustedStore() sets the certificate store of type X509_STORE
+containing trusted (root) CA certificates.
+The store may also hold CRLs and
+a certificate verification callback function used for CMP server authentication.
+Any store entry already set before is freed.
+When given a NULL parameter the entry is cleared.
 
-OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the certificate store
-containing trusted root CA certificates, which may be empty if unset.
+OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the currently set
+certificate store containing trusted cert etc., or an empty store if unset.
 
-OSSL_CMP_CTX_set1_untrusted_certs() takes over a list of certificates containing
-non-trusted intermediate certs used for path construction in authentication
-of the CMP server and potentially others (TLS server, newly enrolled cert).
+OSSL_CMP_CTX_set1_untrusted_certs() sets up a list of non-trusted certificates
+of intermediate CAs that may be useful for path construction for the CMP client
+certificate, for the TLS client certificate (if any), when verifying
+the CMP server certificate, and when verifying newly enrolled certificates.
 The reference counts of those certificates handled successfully are increased.
 
 OSSL_CMP_CTX_get0_untrusted_certs(OSSL_CMP_CTX *ctx) returns a pointer to the
-list of untrusted certs, which my be empty if unset.
+list of untrusted certs, which may be empty if unset.
 
-OSSL_CMP_CTX_set1_clCert() sets the client certificate in the given B<ctx>.
-The public key of this B<clCert> must correspond to
+OSSL_CMP_CTX_set1_cert() sets the certificate used for CMP message protection.
+The public key of this B<cert> must correspond to
 the private key set via B<OSSL_CMP_CTX_set1_pkey()>.
 When using signature-based protection of CMP request messages
 this "protection certificate" will be included first in the extraCerts field.
-The subject of this B<clCert> will be used as the "sender" field
-of outgoing CMP messages, with the fallback being
-the B<subjectName> set via B<OSSL_CMP_CTX_set1_subjectName()>.
+The subject of this B<cert> will be used as the sender field of outgoing
+messages, while the subject of any cert set via B<OSSL_CMP_CTX_set1_oldCert()>
+and any value set via B<OSSL_CMP_CTX_set1_subjectName()> are used as fallback.
 The B<cert> argument may be NULL to clear the entry.
 
-OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to
-the client certificate B<clCert> set via B<OSSL_CMP_CTX_set1_clCert()>.
+OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to the
+protection certificate B<cert> set via B<OSSL_CMP_CTX_set1_cert()>.
 This key is used create signature-based protection (protectionAlg = MSG_SIG_ALG)
 of outgoing messages
 unless a PBM secret has been set via  B<OSSL_CMP_CTX_set1_secretValue()>.
@@ -437,22 +445,25 @@ PBM-based protection takes precedence over signature-based protection.
 
 OSSL_CMP_CTX_set1_referenceValue() sets the given referenceValue B<ref> with
 length B<len> in the given B<ctx> or clears it if the B<ref> argument is NULL.
-According to RFC 4210 section 5.1.1, if no value for the "sender" field in
-CMP message headers can be determined (i.e., no B<clCert> and no B<subjectName>
-is given) then the "sender" field will contain the NULL-DN
+According to RFC 4210 section 5.1.1, if no value for the sender field in
+CMP message headers can be determined (i.e., no protection certificate B<cert>
+and no B<subjectName> is given) then the sender field will contain the NULL-DN
 and the senderKID field of the CMP message header must be set.
 When signature-based protection is used the senderKID will be set to
-the subjectKeyIdentifier of the <clCert> as far as present.
+the subjectKeyIdentifier of the protection B<cert> as far as present.
 If not present or when PBM-based protection is used
 the B<ref> value is taken as the fallback value for the senderKID.
 
 OSSL_CMP_CTX_set1_recipient() sets the recipient name that will be used in the
-PKIHeader of a request message, i.e. the X509 name of the (CA) server.
-Setting is overruled by subject of B<srvCert> if set.
-If neither B<srvCert> nor recipient are set, the recipient of the PKI message is
-determined in the following order: issuer, issuer of old cert (oldCert),
-issuer of client cert (B<clCert>), else NULL-DN.
-When a response is received, its sender must match the recipient of the request.
+PKIHeader of CMP request messages, i.e. the X509 name of the (CA) server.
+
+The recipient field in the header of a CMP message is mandatory.
+If not given explicitly the recipient is determined in the following order:
+the subject of the CMP server certificate set using OSSL_CMP_CTX_set1_srvCert(),
+the value set using OSSL_CMP_CTX_set1_issuer(),
+the issuer of the certificate set using OSSL_CMP_CTX_set1_oldCert(),
+the issuer of the protection certificate (B<cert>),
+as far as any of those is present, else the NULL-DN as last resort.
 
 OSSL_CMP_CTX_push0_geninfo_ITAV() adds B<itav> to the stack in the B<ctx> to be
 added to the GeneralInfo field of the CMP PKIMessage header of a request
@@ -480,8 +491,8 @@ the CertTemplate structure when requesting a new cert. For Key Update Requests
 (KUR), it defaults to the subject DN of the B<reference certificate>,
 see B<OSSL_CMP_CTX_set1_oldCert()>. This default is used for Initialization
 Requests (IR) and Certification Requests (CR) only if no SANs are set.
-The B<subjectName> is also used as the "sender" field for outgoing CMP messages
-if no B<clCert> has been set (e.g., in case requests are protected using PBM).
+The B<subjectName> is also used as fallback for the sender field
+of outgoing CMP messages if no B<cert> and no B<oldcert> are available.
 
 OSSL_CMP_CTX_push1_subjectAltName() adds the given X509 name to the list of
 alternate names on the certificate template request. This cannot be used if
@@ -507,10 +518,11 @@ to the X509_EXTENSIONS of the requested certificate template.
 
 OSSL_CMP_CTX_set1_oldCert() sets the old certificate to be updated in
 Key Update Requests (KUR) or to be revoked in Revocation Requests (RR).
-It must be given for RR, else it defaults to B<clCert>.
+It must be given for RR, else it defaults to the protection B<cert>.
 The B<reference certificate> determined in this way, if any, is also used for
 deriving default subject DN and Subject Alternative Names for IR, CR, and KUR.
-Its issuer, if any, is used as default recipient in the CMP message header.
+Its subject is used as sender in CMP message headers if no protection cert is given.
+Its issuer is used as default recipient in CMP message headers.
 
 OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to be used in P10CR.
 
@@ -608,52 +620,56 @@ All other functions return 1 on success, 0 on error.
 
 =head1 EXAMPLES
 
-The following code does an Initialization Request:
+The following code omits error handling.
 
-        cmp_ctx = OSSL_CMP_CTX_new();
-        OSSL_CMP_CTX_set1_server(cmp_ctx, address);
-        OSSL_CMP_CTX_set1_referenceValue(cmp_ctx, ref, ref_len);
-        OSSL_CMP_CTX_set1_secretValue(cmp_ctx, sec, sec_len);
-        OSSL_CMP_CTX_set0_newPkey(cmp_ctx, new_pkey, 1);
-        OSSL_CMP_CTX_set1_caCert(cmp_ctx, ca_cert);
-
-        initialClCert = OSSL_CMP_exec_IR_ses(cmp_ctx);
-
-The following code does an Initialization Request using an
-external identity certificate (RFC 4210, Appendix E.7):
-
-        cmp_ctx = OSSL_CMP_CTX_new();
-        OSSL_CMP_CTX_set1_server(cmp_ctx, sname);
-        OSSL_CMP_CTX_set1_clCert(cmp_ctx, cl_cert);
-        OSSL_CMP_CTX_set1_pkey(cmp_ctx, pkey);
-        OSSL_CMP_CTX_set0_newPkey(cmp_ctx, new_pkey, 1);
-        OSSL_CMP_CTX_set1_caCert(cmp_ctx, ca_cert);
-
-        initialClCert = OSSL_CMP_exec_IR_ses(cmp_ctx);
-
-Here externalCert is an X509 certificate granted to the EE by another CA
-which is trusted by the current CA the code will connect to.
-
-
-The following code does a Key Update Request:
-
-        cmp_ctx = OSSL_CMP_CTX_new();
-        OSSL_CMP_CTX_set1_server(cmp_ctx, url);
-        OSSL_CMP_CTX_set1_pkey(cmp_ctx, pkey);
-        OSSL_CMP_CTX_set0_newPkey(cmp_ctx, new_pkey, 1);
-        OSSL_CMP_CTX_set1_clCert(cmp_ctx, cl_cert);
-        OSSL_CMP_CTX_set1_caCert(cmp_ctx, ca_cert);
-
-        updatedClCert = OSSL_CMP_exec_KUR_ses(cmp_ctx);
-
-The following code (which omits error handling) sends a General Message
-including, as an example, the id-it-signKeyPairTypes OID and prints info on
-the General Response contents.
+Set up a CMP client context for sending requests and verifying responses:
 
     cmp_ctx = OSSL_CMP_CTX_new();
-    OSSL_CMP_CTX_set1_server(cmp_ctx, sname);
+    OSSL_CMP_CTX_set1_server(cmp_ctx, name_or_address);
+    OSSL_CMP_CTX_set1_serverPort(cmp_ctx, port_string);
+    OSSL_CMP_CTX_set1_serverPath(cmp_ctx, path_or_alias);
+    OSSL_CMP_CTX_set0_trustedStore(cmp_ctx, ts);
+
+Set up client credentials for password-based protection (PBM):
+
     OSSL_CMP_CTX_set1_referenceValue(cmp_ctx, ref, ref_len);
     OSSL_CMP_CTX_set1_secretValue(cmp_ctx, sec, sec_len);
+
+Set up the details for certificate requests:
+
+    OSSL_CMP_CTX_set1_subjectName(cmp_ctx, name);
+    OSSL_CMP_CTX_set0_newPkey(cmp_ctx, 1, initialKey);
+
+Perform an Initialization Request transaction:
+
+    initialCert = OSSL_CMP_exec_IR_ses(cmp_ctx);
+
+Reset the transaction state of the CMP context and the credentials:
+
+    OSSL_CMP_CTX_reinit(cmp_ctx);
+    OSSL_CMP_CTX_set1_referenceValue(cmp_ctx, NULL, 0);
+    OSSL_CMP_CTX_set1_secretValue(cmp_ctx, NULL, 0);
+
+Perform a Certification Request transaction, making use of the new credentials:
+
+    OSSL_CMP_CTX_set1_cert(cmp_ctx, initialCert);
+    OSSL_CMP_CTX_set1_pkey(cmp_ctx, initialKey);
+    OSSL_CMP_CTX_set0_newPkey(cmp_ctx, 1, curentKey);
+    currentCert = OSSL_CMP_exec_CR_ses(cmp_ctx);
+
+Perform a Key Update Request, signed using the cert (and key) to be updated:
+
+    OSSL_CMP_CTX_reinit(cmp_ctx);
+    OSSL_CMP_CTX_set1_cert(cmp_ctx, currentCert);
+    OSSL_CMP_CTX_set1_pkey(cmp_ctx, currentKey);
+    OSSL_CMP_CTX_set0_newPkey(cmp_ctx, 1, updatedKey);
+    currentCert = OSSL_CMP_exec_KUR_ses(cmp_ctx);
+    currentKey = updatedKey;
+
+Perform a General Message transaction including, as an example,
+the id-it-signKeyPairTypes OID and prints info on the General Response contents:
+
+    OSSL_CMP_CTX_reinit(cmp_ctx);
 
     ASN1_OBJECT *type = OBJ_txt2obj("1.3.6.1.5.5.7.4.2", 1);
     OSSL_CMP_ITAV *itav = OSSL_CMP_ITAV_new(type, NULL);

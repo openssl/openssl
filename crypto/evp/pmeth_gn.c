@@ -93,8 +93,10 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 #endif
 
  end:
-    if (ret <= 0 && ctx != NULL)
+    if (ret <= 0 && ctx != NULL) {
+        evp_pkey_ctx_free_old_ops(ctx);
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    }
     return ret;
 
  not_supported:
@@ -142,6 +144,8 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     int ret = 0;
     OSSL_CALLBACK cb;
     EVP_PKEY *allocated_pkey = NULL;
+    /* Legacy compatible keygen callback info, only used with provider impls */
+    int gentmp[2];
 
     if (ppkey == NULL)
         return -1;
@@ -162,6 +166,18 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
     if (ctx->op.keymgmt.genctx == NULL)
         goto legacy;
+
+    /*
+     * Asssigning gentmp to ctx->keygen_info is something our legacy
+     * implementations do.  Because the provider implementations aren't
+     * allowed to reach into our EVP_PKEY_CTX, we need to provide similar
+     * space for backward compatibility.  It's ok that we attach a local
+     * variable, as it should only be useful in the calls down from here.
+     * This is cleared as soon as it isn't useful any more, i.e. directly
+     * after the evp_keymgmt_util_gen() call.
+     */
+    ctx->keygen_info = gentmp;
+    ctx->keygen_info_count = 2;
 
     ret = 1;
     if (ctx->pkey != NULL) {
@@ -189,6 +205,8 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
                                  ossl_callback_to_pkey_gencb, ctx)
             != NULL);
 
+    ctx->keygen_info = NULL;
+
 #ifndef FIPS_MODULE
     /* In case |*ppkey| was originally a legacy key */
     if (ret)
@@ -210,8 +228,9 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     {
         char curve_name[OSSL_MAX_NAME_SIZE] = "";
 
-        if (EVP_PKEY_CTX_get_ec_paramgen_curve_name(ctx, curve_name,
-                                                    sizeof(curve_name)) < 1
+        if (!EVP_PKEY_get_utf8_string_param(*ppkey, OSSL_PKEY_PARAM_EC_NAME,
+                                            curve_name, sizeof(curve_name),
+                                            NULL)
             || strcmp(curve_name, "SM2") != 0)
             goto end;
     }

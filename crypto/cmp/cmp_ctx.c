@@ -164,7 +164,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     X509_STORE_free(ctx->trusted);
     sk_X509_pop_free(ctx->untrusted_certs, X509_free);
 
-    X509_free(ctx->clCert);
+    X509_free(ctx->cert);
     EVP_PKEY_free(ctx->pkey);
     ASN1_OCTET_STRING_free(ctx->referenceValue);
     if (ctx->secretValue != NULL)
@@ -393,7 +393,7 @@ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb)
 }
 
 /* Print OpenSSL and CMP errors via the log cb of the ctx or ERR_print_errors */
-void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx)
+void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_print_errors_cb(ctx == NULL ? NULL : ctx->log_cb);
 }
@@ -676,12 +676,12 @@ int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
  * Set our own client certificate, used for example in KUR and when
  * doing the IR with existing certificate.
  */
-DEFINE_OSSL_CMP_CTX_set1_up_ref(clCert, X509)
+DEFINE_OSSL_CMP_CTX_set1_up_ref(cert, X509)
 
 /*
  * Set the old certificate that we are updating in KUR
  * or the certificate to be revoked in RR, respectively.
- * Also used as reference cert (defaulting to clCert) for deriving subject DN
+ * Also used as reference cert (defaulting to cert) for deriving subject DN
  * and SANs. Its issuer is used as default recipient in the CMP message header.
  */
 DEFINE_OSSL_CMP_CTX_set1_up_ref(oldCert, X509)

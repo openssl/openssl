@@ -98,27 +98,6 @@ static int restore_errno(void)
     return ret;
 }
 
-static void do_ssl_shutdown(SSL *ssl)
-{
-    int ret;
-
-    do {
-        /* We only do unidirectional shutdown */
-        ret = SSL_shutdown(ssl);
-        if (ret < 0) {
-            switch (SSL_get_error(ssl, ret)) {
-            case SSL_ERROR_WANT_READ:
-            case SSL_ERROR_WANT_WRITE:
-            case SSL_ERROR_WANT_ASYNC:
-            case SSL_ERROR_WANT_ASYNC_JOB:
-                /* We just do busy waiting. Nothing clever */
-                continue;
-            }
-            ret = 0;
-        }
-    } while (ret < 0);
-}
-
 /* Default PSK identity and key */
 static char *psk_identity = "Client_identity";
 
@@ -597,7 +576,7 @@ typedef enum OPTION_choice {
     OPT_READ_BUF, OPT_KEYLOG_FILE, OPT_EARLY_DATA, OPT_REQCAFILE,
     OPT_V_ENUM,
     OPT_X_ENUM,
-    OPT_S_ENUM,
+    OPT_S_ENUM, OPT_IGNORE_UNEXPECTED_EOF,
     OPT_FALLBACKSCSV, OPT_NOCMDS, OPT_PROXY, OPT_PROXY_USER, OPT_PROXY_PASS,
     OPT_DANE_TLSA_DOMAIN,
 #ifndef OPENSSL_NO_CT
@@ -657,12 +636,12 @@ const OPTIONS s_client_options[] = {
     OPT_SECTION("Identity"),
     {"cert", OPT_CERT, '<', "Client certificate file to use"},
     {"certform", OPT_CERTFORM, 'F',
-     "Client certificate file format (PEM or DER) PEM default"},
+     "Client certificate file format (PEM/DER/P12); has no effect"},
     {"cert_chain", OPT_CERT_CHAIN, '<',
      "Client certificate chain file (in PEM format)"},
     {"build_chain", OPT_BUILD_CHAIN, '-', "Build client certificate chain"},
     {"key", OPT_KEY, 's', "Private key file to use; default is: -cert file"},
-    {"keyform", OPT_KEYFORM, 'E', "Key format (PEM, DER or engine) PEM default"},
+    {"keyform", OPT_KEYFORM, 'E', "Key format (ENGINE, other values ignored)"},
     {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
     {"verify", OPT_VERIFY, 'p', "Turn on peer certificate verification"},
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
@@ -739,6 +718,8 @@ const OPTIONS s_client_options[] = {
      "Do not send the server name (SNI) extension in the ClientHello"},
     {"tlsextdebug", OPT_TLSEXTDEBUG, '-',
      "Hex dump of all TLS extensions received"},
+    {"ignore_unexpected_eof", OPT_IGNORE_UNEXPECTED_EOF, '-',
+     "Do not treat lack of close_notify from a peer as an error"},
 #ifndef OPENSSL_NO_OCSP
     {"status", OPT_STATUS, '-', "Request certificate status from server"},
 #endif
@@ -940,6 +921,7 @@ int s_client_main(int argc, char **argv)
     char *connectstr = NULL, *bindstr = NULL;
     char *cert_file = NULL, *key_file = NULL, *chain_file = NULL;
     char *chCApath = NULL, *chCAfile = NULL, *chCAstore = NULL, *host = NULL;
+    char *thost = NULL, *tport = NULL;
     char *port = OPENSSL_strdup(PORT);
     char *bindhost = NULL, *bindport = NULL;
     char *passarg = NULL, *pass = NULL;
@@ -1022,6 +1004,7 @@ int s_client_main(int argc, char **argv)
 #ifndef OPENSSL_NO_SCTP
     int sctp_label_bug = 0;
 #endif
+    int ignore_unexpected_eof = 0;
 
     FD_ZERO(&readfds);
     FD_ZERO(&writefds);
@@ -1165,7 +1148,7 @@ int s_client_main(int argc, char **argv)
             sess_in = opt_arg();
             break;
         case OPT_CERTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &cert_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &cert_format))
                 goto opthelp;
             break;
         case OPT_CRLFORM:
@@ -1200,6 +1183,9 @@ int s_client_main(int argc, char **argv)
         case OPT_X_CASES:
             if (!args_excert(o, &exc))
                 goto end;
+            break;
+        case OPT_IGNORE_UNEXPECTED_EOF:
+            ignore_unexpected_eof = 1;
             break;
         case OPT_PREXIT:
             prexit = 1;
@@ -1399,7 +1385,7 @@ int s_client_main(int argc, char **argv)
             fallback_scsv = 1;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &key_format))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &key_format))
                 goto opthelp;
             break;
         case OPT_PASS:
@@ -1614,29 +1600,12 @@ int s_client_main(int argc, char **argv)
         goto opthelp;
     }
 #endif
-    if (proxystr != NULL) {
+
+    if (connectstr != NULL) {
         int res;
         char *tmp_host = host, *tmp_port = port;
-        if (connectstr == NULL) {
-            BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
-            goto opthelp;
-        }
-        res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
-        if (tmp_host != host)
-            OPENSSL_free(tmp_host);
-        if (tmp_port != port)
-            OPENSSL_free(tmp_port);
-        if (!res) {
-            BIO_printf(bio_err,
-                       "%s: -proxy argument malformed or ambiguous\n", prog);
-            goto end;
-        }
-    } else {
-        int res = 1;
-        char *tmp_host = host, *tmp_port = port;
-        if (connectstr != NULL)
-            res = BIO_parse_hostserv(connectstr, &host, &port,
-                                     BIO_PARSE_PRIO_HOST);
+
+        res = BIO_parse_hostserv(connectstr, &host, &port, BIO_PARSE_PRIO_HOST);
         if (tmp_host != host)
             OPENSSL_free(tmp_host);
         if (tmp_port != port)
@@ -1645,6 +1614,35 @@ int s_client_main(int argc, char **argv)
             BIO_printf(bio_err,
                        "%s: -connect argument or target parameter malformed or ambiguous\n",
                        prog);
+            goto end;
+        }
+    }
+
+    if (proxystr != NULL) {
+        int res;
+        char *tmp_host = host, *tmp_port = port;
+
+        if (host == NULL || port == NULL) {
+            BIO_printf(bio_err, "%s: -proxy requires use of -connect or target parameter\n", prog);
+            goto opthelp;
+        }
+
+        /* Retain the original target host:port for use in the HTTP proxy connect string */
+        thost = OPENSSL_strdup(host);
+        tport = OPENSSL_strdup(port);
+        if (thost == NULL || tport == NULL) {
+            BIO_printf(bio_err, "%s: out of memory\n", prog);
+            goto end;
+        }
+
+        res = BIO_parse_hostserv(proxystr, &host, &port, BIO_PARSE_PRIO_HOST);
+        if (tmp_host != host)
+            OPENSSL_free(tmp_host);
+        if (tmp_port != port)
+            OPENSSL_free(tmp_port);
+        if (!res) {
+            BIO_printf(bio_err,
+                       "%s: -proxy argument malformed or ambiguous\n", prog);
             goto end;
         }
     }
@@ -1796,6 +1794,9 @@ int s_client_main(int argc, char **argv)
     if (max_version != 0
         && SSL_CTX_set_max_proto_version(ctx, max_version) == 0)
         goto end;
+
+    if (ignore_unexpected_eof)
+        SSL_CTX_set_options(ctx, SSL_OP_IGNORE_UNEXPECTED_EOF);
 
     if (vpmtouched && !SSL_CTX_set1_param(ctx, vpm)) {
         BIO_printf(bio_err, "Error setting verify params\n");
@@ -2401,7 +2402,8 @@ int s_client_main(int argc, char **argv)
         }
         break;
     case PROTO_CONNECT:
-        if (!OSSL_HTTP_proxy_connect(sbio, host, port, proxyuser, proxypass,
+        /* Here we must use the connect string target host & port */
+        if (!OSSL_HTTP_proxy_connect(sbio, thost, tport, proxyuser, proxypass,
                                      0 /* no timeout */, bio_err, prog))
             goto shut;
         break;
@@ -3162,6 +3164,8 @@ int s_client_main(int argc, char **argv)
     OPENSSL_free(bindstr);
     OPENSSL_free(host);
     OPENSSL_free(port);
+    OPENSSL_free(thost);
+    OPENSSL_free(tport);
     X509_VERIFY_PARAM_free(vpm);
     ssl_excert_free(exc);
     sk_OPENSSL_STRING_free(ssl_args);
@@ -3170,8 +3174,7 @@ int s_client_main(int argc, char **argv)
     OPENSSL_clear_free(cbuf, BUFSIZZ);
     OPENSSL_clear_free(sbuf, BUFSIZZ);
     OPENSSL_clear_free(mbuf, BUFSIZZ);
-    if (proxypass != NULL)
-        OPENSSL_clear_free(proxypass, strlen(proxypass));
+    clear_free(proxypass);
     release_engine(e);
     BIO_free(bio_c_out);
     bio_c_out = NULL;
@@ -3185,6 +3188,7 @@ static void print_stuff(BIO *bio, SSL *s, int full)
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
+    EVP_PKEY *public_key;
     int i, istls13 = (SSL_version(s) == TLS1_3_VERSION);
     long verify_result;
 #ifndef OPENSSL_NO_COMP
@@ -3209,6 +3213,19 @@ static void print_stuff(BIO *bio, SSL *s, int full)
                 BIO_puts(bio, "\n");
                 BIO_printf(bio, "   i:");
                 X509_NAME_print_ex(bio, X509_get_issuer_name(sk_X509_value(sk, i)), 0, get_nameopt());
+                BIO_puts(bio, "\n");
+                public_key = X509_get_pubkey(sk_X509_value(sk, i));
+                if (public_key != NULL) {
+                    BIO_printf(bio, "   a:PKEY: %s, %d (bit); sigalg: %s\n",
+                               OBJ_nid2sn(EVP_PKEY_base_id(public_key)),
+                               EVP_PKEY_bits(public_key),
+                               OBJ_nid2sn(X509_get_signature_nid(sk_X509_value(sk, i))));
+                    EVP_PKEY_free(public_key);
+                }
+                BIO_printf(bio, "   v:NotBefore: ");
+                ASN1_TIME_print(bio, X509_get0_notBefore(sk_X509_value(sk, i)));
+                BIO_printf(bio, "; NotAfter: ");
+                ASN1_TIME_print(bio, X509_get0_notAfter(sk_X509_value(sk, i)));
                 BIO_puts(bio, "\n");
                 if (c_showcerts)
                     PEM_write_bio_X509(bio, sk_X509_value(sk, i));

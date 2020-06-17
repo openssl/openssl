@@ -32,11 +32,11 @@ B<openssl> B<ca>
 [B<-md> I<arg>]
 [B<-policy> I<arg>]
 [B<-keyfile> I<arg>]
-[B<-keyform> B<DER>|B<PEM>]
+[B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-key> I<arg>]
 [B<-passin> I<arg>]
 [B<-cert> I<file>]
-[B<-certform> B<DER>|<PEM>]
+[B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-selfsign>]
 [B<-in> I<file>]
 [B<-inform> B<DER>|<PEM>]
@@ -142,18 +142,19 @@ F<.pem> appended.
 
 The CA certificate file.
 
-=item B<-certform> B<DER>|B<PEM>
+=item B<-certform> B<DER>|B<PEM>|B<P12>
 
 The format of the data in certificate input files.
-The default is PEM.
+This option has no effect and is retained for backward compatibility only.
 
 =item B<-keyfile> I<filename>
 
 The private key to sign requests with.
 
-=item B<-keyform> B<DER>|B<PEM>
+=item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The format of the private key file; the default is B<PEM>.
+The format of the private key input file; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-sigopt> I<nm>:I<v>
@@ -787,6 +788,11 @@ define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
 The B<-section> option was added in OpenSSL 3.0.0.
+
+The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
+
+All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
+and have no effect.
 
 =head1 SEE ALSO
 

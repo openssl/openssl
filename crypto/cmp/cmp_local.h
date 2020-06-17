@@ -68,8 +68,8 @@ struct ossl_cmp_ctx_st {
 
     /* client authentication */
     int unprotectedSend; /* send unprotected PKI messages */
-    X509 *clCert; /* client cert used to identify and sign for MSG_SIG_ALG */
-    EVP_PKEY *pkey; /* the key pair corresponding to clCert */
+    X509 *cert; /* protection cert used to identify and sign for MSG_SIG_ALG */
+    EVP_PKEY *pkey; /* the key pair corresponding to cert */
     ASN1_OCTET_STRING *referenceValue; /* optional user name for MSG_MAC_ALG */
     ASN1_OCTET_STRING *secretValue; /* password/shared secret for MSG_MAC_ALG */
     /* PBMParameters for MSG_MAC_ALG */
@@ -283,7 +283,6 @@ struct ossl_cmp_pkisi_st {
     OSSL_CMP_PKIFREETEXT *statusString;
     OSSL_CMP_PKIFAILUREINFO *failInfo;
 } /* OSSL_CMP_PKISI */;
-DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_CERTID)
 
 /*-
  *  RevReqContent ::= SEQUENCE OF RevDetails
@@ -790,13 +789,14 @@ int ossl_cmp_ctx_set1_recipNonce(OSSL_CMP_CTX *ctx,
 /* from cmp_status.c */
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si);
 const char *ossl_cmp_PKIStatus_to_string(int status);
-OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusString(const OSSL_CMP_PKISI *si);
+OSSL_CMP_PKIFREETEXT *ossl_cmp_pkisi_get0_statusString(const OSSL_CMP_PKISI *s);
 int ossl_cmp_pkisi_get_pkifailureinfo(const OSSL_CMP_PKISI *si);
 int ossl_cmp_pkisi_check_pkifailureinfo(const OSSL_CMP_PKISI *si, int index);
 
 /* from cmp_hdr.c */
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno);
 int ossl_cmp_hdr_get_pvno(const OSSL_CMP_PKIHEADER *hdr);
+int ossl_cmp_hdr_get_protection_nid(const OSSL_CMP_PKIHEADER *hdr);
 ASN1_OCTET_STRING *ossl_cmp_hdr_get0_senderNonce(const OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_general_name_is_NULL_DN(GENERAL_NAME *name);
 int ossl_cmp_hdr_set1_sender(OSSL_CMP_PKIHEADER *hdr, const X509_NAME *nm);
@@ -814,6 +814,7 @@ int ossl_cmp_hdr_set_implicitConfirm(OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_has_implicitConfirm(const OSSL_CMP_PKIHEADER *hdr);
 # define OSSL_CMP_TRANSACTIONID_LENGTH 16
 # define OSSL_CMP_SENDERNONCE_LENGTH 16
+int ossl_cmp_hdr_set_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 
 /* from cmp_msg.c */
@@ -885,13 +886,13 @@ OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid,
                                    int64_t poll_after);
 OSSL_CMP_PKISI *
 ossl_cmp_revrepcontent_get_pkisi(OSSL_CMP_REVREPCONTENT *rrep, int rsid);
-OSSL_CRMF_CERTID *ossl_cmp_revrepcontent_get_CertId(OSSL_CMP_REVREPCONTENT *rrep,
+OSSL_CRMF_CERTID *ossl_cmp_revrepcontent_get_CertId(OSSL_CMP_REVREPCONTENT *rc,
                                                     int rsid);
 OSSL_CMP_POLLREP *
 ossl_cmp_pollrepcontent_get0_pollrep(const OSSL_CMP_POLLREPCONTENT *prc,
                                      int rid);
 OSSL_CMP_CERTRESPONSE *
-ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crepmsg,
+ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
                                           int rid);
 X509 *ossl_cmp_certresponse_get1_certificate(EVP_PKEY *privkey,
                                              const OSSL_CMP_CERTRESPONSE *crep);
@@ -908,14 +909,14 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 typedef int (*ossl_cmp_allow_unprotected_cb_t)(const OSSL_CMP_CTX *ctx,
                                                const OSSL_CMP_MSG *msg,
                                                int invalid_protection, int arg);
-int ossl_cmp_msg_check_received(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
-                                ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
+int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
+                              ossl_cmp_allow_unprotected_cb_t cb, int cb_arg);
 int ossl_cmp_verify_popo(const OSSL_CMP_MSG *msg, int accept_RAVerified);
 
 /* from cmp_client.c */
 int ossl_cmp_exchange_certConf(OSSL_CMP_CTX *ctx, int fail_info,
                                const char *txt);
 int ossl_cmp_exchange_error(OSSL_CMP_CTX *ctx, int status, int fail_info,
-                            const char *txt, int errorCode, const char *details);
+                            const char *txt, int errorCode, const char *detail);
 
 #endif /* !defined(OSSL_CRYPTO_CMP_LOCAL_H) */

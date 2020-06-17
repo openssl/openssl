@@ -360,6 +360,8 @@ static int test_WPACKET_init_der(void)
     unsigned char testdata[] = { 0x00, 0x01, 0x02, 0x03 };
     unsigned char testdata2[259]  = { 0x82, 0x01, 0x00 };
     size_t written[2];
+    size_t size1, size2;
+    int flags = WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH;
     int i;
 
     /* Test initialising for writing DER */
@@ -370,6 +372,13 @@ static int test_WPACKET_init_der(void)
             || !TEST_true(WPACKET_memcpy(&pkt, testdata, sizeof(testdata)))
             || !TEST_true(WPACKET_close(&pkt))
             || !TEST_true(WPACKET_put_bytes_u8(&pkt, 0xfc))
+            /* this sub-packet is empty, and should render zero bytes */
+            || (!TEST_true(WPACKET_start_sub_packet(&pkt))
+                || !TEST_true(WPACKET_set_flags(&pkt, flags))
+                || !TEST_true(WPACKET_get_total_written(&pkt, &size1))
+                || !TEST_true(WPACKET_close(&pkt))
+                || !TEST_true(WPACKET_get_total_written(&pkt, &size2))
+                || !TEST_size_t_eq(size1, size2))
             || !TEST_true(WPACKET_finish(&pkt))
             || !TEST_true(WPACKET_get_total_written(&pkt, &written[0]))
             || !TEST_mem_eq(WPACKET_get_curr(&pkt), written[0], simpleder,

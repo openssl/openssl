@@ -519,8 +519,8 @@ DECLARE_ASN1_FUNCTIONS(X509_VAL)
 DECLARE_ASN1_FUNCTIONS(X509_PUBKEY)
 
 int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey);
-EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key);
-EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key);
+EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key);
+EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key);
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain);
 long X509_get_pathlen(X509 *x);
 DECLARE_ASN1_ENCODE_FUNCTIONS_only(EVP_PKEY, PUBKEY)
@@ -1052,7 +1052,8 @@ int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
                            unsigned char *penc, int penclen);
 int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                            const unsigned char **pk, int *ppklen,
-                           X509_ALGOR **pa, X509_PUBKEY *pub);
+                           X509_ALGOR **pa, const X509_PUBKEY *pub);
+int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b);
 
 int X509_check_trust(X509 *x, int id, int flags);
 int X509_TRUST_get_count(void);

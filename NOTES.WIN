@@ -1,58 +1,74 @@
 
- NOTES FOR THE WINDOWS PLATFORMS
- ===============================
+ NOTES FOR WINDOWS PLATFORMS
+ ===========================
 
- Windows targets can be classified as "native", ones that use Windows API
- directly, and "hosted" which rely on POSIX-compatible layer. "Native"
- targets are VC-* (where "VC" stems from abbreviating Microsoft Visual C
- compiler) and mingw[64]. "Hosted" platforms are Cygwin and MSYS[2]. Even
- though the latter is not directly supported by OpenSSL Team, it's #1
- popular choice for building MinGW targets. In the nutshell MinGW builds
- are always cross-compiled. On Linux and Cygwin they look exactly as such
- and require --cross-compile-prefix option. While on MSYS[2] it's solved
- rather by placing gcc that produces "MinGW binary" code 1st on $PATH.
- This is customarily source of confusion. "Hosted" applications "live" in
- emulated file system name space with POSIX-y root, mount points, /dev
- and even /proc. Confusion is intensified by the fact that MSYS2 shell
- (or rather emulated execve(2) call) examines the binary it's about to
- start, and if it's found *not* to be linked with MSYS2 POSIX-y thing,
- command line arguments that look like file names get translated from
- emulated name space to "native". For example '/c/some/where' becomes
- 'c:\some\where', '/dev/null' - 'nul'. This creates an illusion that
- there is no difference between MSYS2 shell and "MinGW binary", but
- there is. Just keep in mind that "MinGW binary" "experiences" Windows
- system in exactly same way as one produced by VC, and in its essence
- is indistinguishable from the latter. (Which by the way is why
- it's referred to in quotes here, as "MinGW binary", it's just as
- "native" as it can get.)
+ There are various options to build and run OpenSSL on the Windows platforms.
 
- Visual C++ builds, a.k.a. VC-*
- ==============================
+ "Native" OpenSSL uses the Windows APIs directly at run time.
+ To build a native OpenSSL you can either use:
+
+     Microsoft Visual C++ (MSVC) C compiler on the command line
+ or
+     MinGW cross compiler
+     run on the GNU-like development environment MSYS2
+     or run on Linux or Cygwin
+
+ "Hosted" OpenSSL relies on an external POSIX compatibility layer
+ for building (using GNU/Unix shell, compiler, and tools) and at run time.
+ For this option you can use Cygwin.
+
+
+ Visual C++ native builds, a.k.a. VC-*
+ =====================================
 
  Requirement details
  -------------------
 
- In addition to the requirements and instructions listed in INSTALL,
+ In addition to the requirements and instructions listed in INSTALL.md,
  these are required as well:
 
- - Perl. We recommend ActiveState Perl, available from
-   https://www.activestate.com/ActivePerl. Another viable alternative
-   appears to be Strawberry Perl, http://strawberryperl.com.
-   You also need the perl module Text::Template, available on CPAN.
-   Please read NOTES.PERL for more information.
+ - Perl.
+   We recommend Strawberry Perl, available from http://strawberryperl.com/
+   Please read NOTES.PERL for more information, including the use of CPAN.
+   An alternative is ActiveState Perl, https://www.activestate.com/ActivePerl
+   for which you may need to explicitly build the Perl module Win32/Console.pm
+   via https://platform.activestate.com/ActiveState and then download it.
 
- - Microsoft Visual C compiler. Since we can't test them all, there is
-   unavoidable uncertainty about which versions are supported. Latest
-   version along with couple of previous are certainly supported. On
-   the other hand oldest one is known not to work. Everything between
-   falls into best-effort category.
+ - Microsoft Visual C compiler.
+   Since these are proprietary and ever-changing we cannot test them all.
+   Older versions may not work. Use a recent version wherever possible.
 
- - Netwide Assembler, a.k.a. NASM, available from https://www.nasm.us,
-   is required. Note that NASM is the only supported assembler. Even
-   though Microsoft provided assembler is NOT supported, contemporary
-   64-bit version is exercised through continuous integration of
-   VC-WIN64A-masm target.
+ - Netwide Assembler (NASM), available from https://www.nasm.us
+   Note that NASM is the only supported assembler.
 
+ Quick start
+ -----------
+
+ 1. Install Perl
+
+ 2. Install NASM
+
+ 3. Make sure both Perl and NASM are on your %PATH%
+
+ 4. Use Visual Studio Developer Command Prompt with administrative privileges,
+    choosing one of its variants depending on the intended architecture.
+    Or run "cmd" and execute "vcvarsall.bat" with one of the options x86,
+    x86_amd64, x86_arm, x86_arm64, amd64, amd64_x86, amd64_arm, or amd64_arm64.
+    This sets up the environment variables needed for nmake.exe, cl.exe, etc.
+    See also https://docs.microsoft.com/cpp/build/building-on-the-command-line
+
+ 5. From the root of the OpenSSL source directory enter
+    perl Configure VC-WIN32    if you want 32-bit OpenSSL or
+    perl Configure VC-WIN64A   if you want 64-bit OpenSSL
+
+ 6. nmake
+
+ 7. nmake test
+
+ 8. nmake install
+
+ For the full installation instructions, or if anything goes wrong at any stage,
+ check the INSTALL.md file.
 
  Installation directories
  ------------------------
@@ -83,7 +99,6 @@
  is, of course, to choose a different set of directories by using
  --prefix and --openssldir when configuring.
 
-
  Special notes for Universal Windows Platform builds, a.k.a. VC-*-UWP
  --------------------------------------------------------------------
 
@@ -91,33 +106,56 @@
 
  - You should define the platform type to "uwp" and the target arch via
    "vcvarsall.bat" before you compile. For example, if you want to build
-   "arm64" builds, you should type "vcvarsall.bat x86_arm64 uwp".
+   "arm64" builds, you should run "vcvarsall.bat x86_arm64 uwp".
 
- mingw and mingw64
- =================
 
- * MSYS2 shell and development environment installation:
+ Native OpenSSL built using MinGW
+ ================================
 
-   Download MSYS2 from https://msys2.github.io/ and follow installation
-   instructions. Once up and running install even make, perl, (git if
-   needed,) mingw-w64-i686-gcc and/or mingw-w64-x86_64-gcc. You should
-   have corresponding MinGW items on your start menu, use *them*, not
-   generic MSYS2. As implied in opening note, difference between them
-   is which compiler is found 1st on $PATH. At this point ./config
-   should recognize correct target, roll as if it was Unix...
+ MinGW offers an alternative way to build native OpenSSL, by cross compilation.
 
- * It is also possible to build mingw[64] on Linux or Cygwin by
-   configuring with corresponding --cross-compile-prefix= option. For
-   example
+ * Usually the build is done on Windows in a GNU-like environment called MSYS2.
+
+   MSYS2 provides GNU tools, a Unix-like command prompt,
+   and a UNIX compatibility layer for applications.
+   However in this context it is only used for building OpenSSL.
+   The resulting OpenSSL does not rely on MSYS2 to run and is fully native.
+
+   Requirement details
+
+   - MSYS2 shell, from https://www.msys2.org/
+
+   - Perl, at least version 5.10.0, which usually comes pre-installed with MSYS2
+
+   - make, installed using "pacman -S make" into the MSYS2 environment
+
+   - MinGW[64] compiler: mingw-w64-i686-gcc and/or mingw-w64-x86_64-gcc.
+     These compilers must be on your MSYS2 $PATH.
+     A common error is to not have these on your $PATH.
+     The MSYS2 version of gcc will not work correctly here.
+
+   In the MSYS2 shell do the configuration depending on the target architecture:
+
+     ./Configure mingw ...
+   or
+     ./Configure mingw64 ...
+   or
+     ./config ...
+   for the default architecture.
+
+   Apart from that, follow the Unix / Linux instructions in INSTALL.md.
+
+ * It is also possible to build mingw[64] on Linux or Cygwin.
+
+   In this case configure with the corresponding --cross-compile-prefix= option.
+   For example
 
      ./Configure mingw --cross-compile-prefix=i686-w64-mingw32- ...
-
    or
-
      ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- ...
 
-   This naturally implies that you've installed corresponding add-on
-   packages.
+   This requires that you've installed the necessary add-on packages for
+   mingw[64] cross compilation.
 
  Linking your application
  ========================
@@ -146,28 +184,29 @@
 	}
 
  If you link with OpenSSL .DLLs, then you're expected to include into
- your application code small "shim" snippet, which provides glue between
- OpenSSL BIO layer and your compiler run-time. See the OPENSSL_Applink
- manual page for further details.
+ your application code a small "shim" snippet, which provides
+ the glue between the OpenSSL BIO layer and your compiler run-time.
+ See also the OPENSSL_Applink manual page.
 
- Cygwin, "hosted" environment
- ============================
 
- Cygwin implements a Posix/Unix runtime system (cygwin1.dll) on top of the
- Windows subsystem and provides a bash shell and GNU tools environment.
- Consequently, a make of OpenSSL with Cygwin is virtually identical to the
+ Hosted OpenSSL built using Cygwin
+ =================================
+
+ Cygwin implements a POSIX/Unix runtime system (cygwin1.dll) on top of the
+ Windows subsystem and provides a Bash shell and GNU tools environment.
+ Consequently, a build of OpenSSL with Cygwin is virtually identical to the
  Unix procedure.
 
  To build OpenSSL using Cygwin, you need to:
 
- * Install Cygwin (see https://cygwin.com/)
+ * Install Cygwin, see https://cygwin.com/
 
- * Install Cygwin Perl and ensure it is in the path. Recall that
-   as least 5.10.0 is required.
+ * Install Cygwin Perl, at least version 5.10.0
+   and ensure it is in the $PATH
 
- * Run the Cygwin bash shell
+ * Run the Cygwin Bash shell
 
- Apart from that, follow the Unix instructions in INSTALL.
+ Apart from that, follow the Unix / Linux instructions in INSTALL.md.
 
  NOTE: "make test" and normal file operations may fail in directories
  mounted as text (i.e. mount -t c:\somewhere /home) due to Cygwin

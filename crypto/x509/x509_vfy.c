@@ -139,10 +139,9 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
         xtmp = sk_X509_value(certs, i);
         if (!X509_cmp(xtmp, x))
             break;
+        xtmp = NULL;
     }
-    if (i < sk_X509_num(certs))
-        X509_up_ref(xtmp);
-    else
+    if (xtmp != NULL && !X509_up_ref(xtmp))
         xtmp = NULL;
     sk_X509_pop_free(certs, X509_free);
     return xtmp;
@@ -275,17 +274,24 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
         return -1;
     }
 
+    if (!X509_up_ref(ctx->cert)) {
+        X509err(X509_F_X509_VERIFY_CERT, ERR_R_INTERNAL_ERROR);
+        ctx->error = X509_V_ERR_UNSPECIFIED;
+        return -1;
+    }
+
     /*
      * first we make sure the chain we are going to build is present and that
      * the first entry is in place
      */
-    if (((ctx->chain = sk_X509_new_null()) == NULL) ||
-        (!sk_X509_push(ctx->chain, ctx->cert))) {
+    if ((ctx->chain = sk_X509_new_null()) == NULL
+            || !sk_X509_push(ctx->chain, ctx->cert)) {
+        X509_free(ctx->cert);
         X509err(X509_F_X509_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
         ctx->error = X509_V_ERR_OUT_OF_MEM;
         return -1;
     }
-    X509_up_ref(ctx->cert);
+
     ctx->num_untrusted = 1;
 
     /* If the peer's public key is too weak, we can stop early. */
@@ -370,11 +376,15 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
     *issuer = find_issuer(ctx, ctx->other_ctx, x);
-    if (*issuer) {
-        X509_up_ref(*issuer);
-        return 1;
-    } else
-        return 0;
+
+    if (*issuer == NULL || !X509_up_ref(*issuer))
+        goto err;
+
+    return 1;
+
+ err:
+    *issuer = NULL;
+    return 0;
 }
 
 static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
@@ -387,15 +397,21 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
     for (i = 0; i < sk_X509_num(ctx->other_ctx); i++) {
         x = sk_X509_value(ctx->other_ctx, i);
         if (X509_NAME_cmp(nm, X509_get_subject_name(x)) == 0) {
+            if (!X509_up_ref(x)) {
+                sk_X509_pop_free(sk, X509_free);
+                X509err(X509_F_LOOKUP_CERTS_SK, ERR_R_INTERNAL_ERROR);
+                ctx->error = X509_V_ERR_UNSPECIFIED;
+                return NULL;
+            }
             if (sk == NULL)
                 sk = sk_X509_new_null();
-            if (sk == NULL || sk_X509_push(sk, x) == 0) {
+            if (sk == NULL || !sk_X509_push(sk, x)) {
+                X509_free(x);
                 sk_X509_pop_free(sk, X509_free);
                 X509err(X509_F_LOOKUP_CERTS_SK, ERR_R_MALLOC_FAILURE);
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
                 return NULL;
             }
-            X509_up_ref(x);
         }
     }
     return sk;
@@ -3244,7 +3260,16 @@ static int build_chain(X509_STORE_CTX *ctx)
             /* Drop this issuer from future consideration */
             (void) sk_X509_delete_ptr(sktmp, xtmp);
 
+            if (!X509_up_ref(xtmp)) {
+                X509err(X509_F_BUILD_CHAIN, ERR_R_INTERNAL_ERROR);
+                trust = X509_TRUST_REJECTED;
+                ctx->error = X509_V_ERR_UNSPECIFIED;
+                search = 0;
+                continue;
+            }
+
             if (!sk_X509_push(ctx->chain, xtmp)) {
+                X509_free(xtmp);
                 X509err(X509_F_BUILD_CHAIN, ERR_R_MALLOC_FAILURE);
                 trust = X509_TRUST_REJECTED;
                 ctx->error = X509_V_ERR_OUT_OF_MEM;
@@ -3252,7 +3277,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                 continue;
             }
 
-            X509_up_ref(x = xtmp);
+            x = xtmp;
             ++ctx->num_untrusted;
             ss = cert_self_signed(ctx, xtmp);
             if (ss < 0) {

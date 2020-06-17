@@ -35,9 +35,11 @@
  MinGW and Cygwin. The key recommendation is to use "matching" Perl,
  one that matches build environment. For example, if you will build
  on Cygwin be sure to use the Cygwin package manager to install Perl.
- For MSYS builds use the MSYS provided Perl. For VC-* builds we
- recommend ActiveState Perl, available from
- http://www.activestate.com/ActivePerl.
+ For MSYS builds use the MSYS provided Perl.
+ For VC-* builds we recommend Strawberry Perl, from http://strawberryperl.com.
+ An alternative is ActiveState Perl, from http://www.activestate.com/ActivePerl
+ for which you may need to explicitly select the Perl module Win32/Console.pm
+ available via https://platform.activestate.com/ActiveState.
 
  Notes on Perl on VMS
  --------------------

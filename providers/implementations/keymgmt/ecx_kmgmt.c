@@ -46,7 +46,16 @@ static OSSL_OP_keymgmt_gettable_params_fn x25519_gettable_params;
 static OSSL_OP_keymgmt_gettable_params_fn x448_gettable_params;
 static OSSL_OP_keymgmt_gettable_params_fn ed25519_gettable_params;
 static OSSL_OP_keymgmt_gettable_params_fn ed448_gettable_params;
+static OSSL_OP_keymgmt_set_params_fn x25519_set_params;
+static OSSL_OP_keymgmt_set_params_fn x448_set_params;
+static OSSL_OP_keymgmt_set_params_fn ed25519_set_params;
+static OSSL_OP_keymgmt_set_params_fn ed448_set_params;
+static OSSL_OP_keymgmt_settable_params_fn x25519_settable_params;
+static OSSL_OP_keymgmt_settable_params_fn x448_settable_params;
+static OSSL_OP_keymgmt_settable_params_fn ed25519_settable_params;
+static OSSL_OP_keymgmt_settable_params_fn ed448_settable_params;
 static OSSL_OP_keymgmt_has_fn ecx_has;
+static OSSL_OP_keymgmt_match_fn ecx_match;
 static OSSL_OP_keymgmt_import_fn ecx_import;
 static OSSL_OP_keymgmt_import_types_fn ecx_imexport_types;
 static OSSL_OP_keymgmt_export_fn ecx_export;
@@ -68,22 +77,22 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
 
 static void *x25519_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_X25519, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X25519, 0);
 }
 
 static void *x448_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_X448, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X448, 0);
 }
 
 static void *ed25519_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_ED25519, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED25519, 0);
 }
 
 static void *ed448_new_key(void *provctx)
 {
-    return ecx_key_new(ECX_KEY_TYPE_ED448, 0);
+    return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED448, 0);
 }
 
 static int ecx_has(void *keydata, int selection)
@@ -92,14 +101,47 @@ static int ecx_has(void *keydata, int selection)
     int ok = 0;
 
     if (key != NULL) {
-        if ((selection & ECX_POSSIBLE_SELECTIONS) != 0)
-            ok = 1;
+        /*
+         * ECX keys always have all the parameters they need (i.e. none).
+         * Therefore we always return with 1, if asked about parameters.
+         */
+        ok = 1;
 
         if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
             ok = ok && key->haspubkey;
 
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
             ok = ok && key->privkey != NULL;
+    }
+    return ok;
+}
+
+static int ecx_match(const void *keydata1, const void *keydata2, int selection)
+{
+    const ECX_KEY *key1 = keydata1;
+    const ECX_KEY *key2 = keydata2;
+    int ok = 1;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && key1->type == key2->type;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        if ((key1->privkey == NULL && key2->privkey != NULL)
+                || (key1->privkey != NULL && key2->privkey == NULL)
+                || key1->type != key2->type)
+            ok = 0;
+        else
+            ok = ok && (key1->privkey == NULL /* implies key2->privkey == NULL */
+                        || CRYPTO_memcmp(key1->privkey, key2->privkey,
+                                         key1->keylen) == 0);
+    }
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        if (key1->haspubkey != key2->haspubkey
+                || key1->type != key2->type)
+            ok = 0;
+        else
+            ok = ok && (key1->haspubkey == 0 /* implies key2->haspubkey == 0 */
+                        || CRYPTO_memcmp(key1->pubkey, key2->pubkey,
+                                         key1->keylen) == 0);
     }
     return ok;
 }
@@ -113,12 +155,11 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
     if (key == NULL)
         return 0;
 
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
 
     include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && ecx_key_fromdata(key, params, include_private);
+    ok = ok && ecx_key_fromdata(key, params, include_private);
 
     return ok;
 }
@@ -157,10 +198,6 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     tmpl = OSSL_PARAM_BLD_new();
     if (tmpl == NULL)
         return 0;
-
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0
-         && !key_to_params(key, tmpl, NULL))
-        goto err;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0
          && !key_to_params(key, tmpl, NULL))
@@ -207,6 +244,13 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, size))
         return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL
+            && (ecx->type == ECX_KEY_TYPE_X25519
+                || ecx->type == ECX_KEY_TYPE_X448)) {
+        if (!OSSL_PARAM_set_octet_string(p, ecx->pubkey, ecx->keylen))
+            return 0;
+    }
+
     return key_to_params(ecx, NULL, params);
 }
 
@@ -247,16 +291,17 @@ static int ed448_get_params(void *key, OSSL_PARAM params[])
         && ed_get_params(key, params);
 }
 
-static const OSSL_PARAM ecx_params[] = {
+static const OSSL_PARAM ecx_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_MANDATORY_DIGEST, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
     ECX_KEY_TYPES(),
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM ed_params[] = {
+static const OSSL_PARAM ed_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
@@ -266,22 +311,92 @@ static const OSSL_PARAM ed_params[] = {
 
 static const OSSL_PARAM *x25519_gettable_params(void)
 {
-    return ecx_params;
+    return ecx_gettable_params;
 }
 
 static const OSSL_PARAM *x448_gettable_params(void)
 {
-    return ecx_params;
+    return ecx_gettable_params;
 }
 
 static const OSSL_PARAM *ed25519_gettable_params(void)
 {
-    return ed_params;
+    return ed_gettable_params;
 }
 
 static const OSSL_PARAM *ed448_gettable_params(void)
 {
-    return ed_params;
+    return ed_gettable_params;
+}
+
+static int ecx_set_params(void *key, const OSSL_PARAM params[])
+{
+    ECX_KEY *ecxkey = key;
+    const OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
+    if (p != NULL) {
+        void *buf = ecxkey->pubkey;
+
+        if (p->data_size != ecxkey->keylen
+                || !OSSL_PARAM_get_octet_string(p, &buf, sizeof(ecxkey->pubkey),
+                                                NULL))
+            return 0;
+        OPENSSL_clear_free(ecxkey->privkey, ecxkey->keylen);
+        ecxkey->privkey = NULL;
+        ecxkey->haspubkey = 1;
+    }
+
+    return 1;
+}
+
+static int x25519_set_params(void *key, const OSSL_PARAM params[])
+{
+    return ecx_set_params(key, params);
+}
+
+static int x448_set_params(void *key, const OSSL_PARAM params[])
+{
+    return ecx_set_params(key, params);
+}
+
+static int ed25519_set_params(void *key, const OSSL_PARAM params[])
+{
+    return 1;
+}
+
+static int ed448_set_params(void *key, const OSSL_PARAM params[])
+{
+    return 1;
+}
+
+static const OSSL_PARAM ecx_settable_params[] = {
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM ed_settable_params[] = {
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *x25519_settable_params(void)
+{
+    return ecx_settable_params;
+}
+
+static const OSSL_PARAM *x448_settable_params(void)
+{
+    return ecx_settable_params;
+}
+
+static const OSSL_PARAM *ed25519_settable_params(void)
+{
+    return ed_settable_params;
+}
+
+static const OSSL_PARAM *ed448_settable_params(void)
+{
+    return ed_settable_params;
 }
 
 static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
@@ -326,7 +441,7 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
 
     if (gctx == NULL)
         return NULL;
-    if ((key = ecx_key_new(gctx->type, 0)) == NULL) {
+    if ((key = ecx_key_new(gctx->libctx, gctx->type, 0)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -424,7 +539,10 @@ static void ecx_gen_cleanup(void *genctx)
         { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ecx_key_free }, \
         { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))alg##_get_params }, \
         { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))alg##_gettable_params }, \
+        { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*) (void))alg##_set_params }, \
+        { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))alg##_settable_params }, \
         { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ecx_has }, \
+        { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ecx_match }, \
         { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))ecx_import }, \
         { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ecx_imexport_types }, \
         { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ecx_export }, \
@@ -450,7 +568,7 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X25519, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_X25519, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -490,7 +608,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_X448, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_X448, 1);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -533,7 +651,7 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
     };
     unsigned char x_dst[32], buff[SHA512_DIGEST_LENGTH];
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED25519, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_ED25519, 1);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
     EVP_MD *sha = NULL;
@@ -595,7 +713,7 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx)
         0x24, 0xbc, 0xb6, 0x6e, 0x71, 0x46, 0x3f, 0x69, 0x00
     };
     unsigned char x_dst[57], buff[114];
-    ECX_KEY *key = ecx_key_new(ECX_KEY_TYPE_ED448, 1);
+    ECX_KEY *key = ecx_key_new(gctx->libctx, ECX_KEY_TYPE_ED448, 1);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
     EVP_MD *shake = NULL;

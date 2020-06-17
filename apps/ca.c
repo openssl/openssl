@@ -215,12 +215,12 @@ const OPTIONS ca_options[] = {
     OPT_SECTION("Signing"),
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
     {"keyfile", OPT_KEYFILE, 's', "Private key"},
-    {"keyform", OPT_KEYFORM, 'f', "Private key file format (PEM or ENGINE)"},
+    {"keyform", OPT_KEYFORM, 'f', "Private key file format (ENGINE, other values ignored)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"key", OPT_KEY, 's', "Key to decode the private key if it is encrypted"},
     {"cert", OPT_CERT, '<', "The CA cert"},
     {"certform", OPT_CERTFORM, 'F',
-     "certificate input format (DER or PEM); default PEM"},
+     "certificate input format (DER/PEM/P12); has no effect"},
     {"selfsign", OPT_SELFSIGN, '-',
      "Sign a cert with the key associated with it"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
@@ -385,7 +385,7 @@ opthelp:
             certfile = opt_arg();
             break;
         case OPT_CERTFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &certformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &certformat))
                 goto opthelp;
             break;
         case OPT_SELFSIGN:
@@ -573,8 +573,7 @@ end_of_options:
         }
     }
     pkey = load_key(keyfile, keyformat, 0, key, e, "CA private key");
-    if (key != NULL)
-        OPENSSL_cleanse(key, strlen(key));
+    cleanse(key);
     if (pkey == NULL)
         /* load_key() has already printed an appropriate message */
         goto end;

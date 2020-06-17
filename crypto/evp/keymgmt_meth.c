@@ -39,7 +39,7 @@ static void *keymgmt_from_dispatch(int name_id,
 {
     EVP_KEYMGMT *keymgmt = NULL;
     int setparamfncnt = 0, getparamfncnt = 0;
-    int setgenparamfncnt = 0, getgenparamfncnt = 0;
+    int setgenparamfncnt = 0;
     int importfncnt = 0, exportfncnt = 0;
 
     if ((keymgmt = keymgmt_new()) == NULL) {
@@ -75,20 +75,6 @@ static void *keymgmt_from_dispatch(int name_id,
                 setgenparamfncnt++;
                 keymgmt->gen_settable_params =
                     OSSL_get_OP_keymgmt_gen_settable_params(fns);
-            }
-            break;
-        case OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS:
-            if (keymgmt->gen_get_params == NULL) {
-                getgenparamfncnt++;
-                keymgmt->gen_get_params =
-                    OSSL_get_OP_keymgmt_gen_get_params(fns);
-            }
-            break;
-        case OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS:
-            if (keymgmt->gen_gettable_params == NULL) {
-                getgenparamfncnt++;
-                keymgmt->gen_gettable_params =
-                    OSSL_get_OP_keymgmt_gen_gettable_params(fns);
             }
             break;
         case OSSL_FUNC_KEYMGMT_GEN:
@@ -186,7 +172,6 @@ static void *keymgmt_from_dispatch(int name_id,
         || (getparamfncnt != 0 && getparamfncnt != 2)
         || (setparamfncnt != 0 && setparamfncnt != 2)
         || (setgenparamfncnt != 0 && setgenparamfncnt != 2)
-        || (getgenparamfncnt != 0 && getgenparamfncnt != 2)
         || (importfncnt != 0 && importfncnt != 2)
         || (exportfncnt != 0 && exportfncnt != 2)
         || (keymgmt->gen != NULL
@@ -340,23 +325,6 @@ const OSSL_PARAM *evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt)
     if (keymgmt->gen_settable_params == NULL)
         return NULL;
     return keymgmt->gen_settable_params(provctx);
-}
-
-int evp_keymgmt_gen_get_params(const EVP_KEYMGMT *keymgmt, void *genctx,
-                               OSSL_PARAM params[])
-{
-    if (keymgmt->gen_get_params == NULL)
-        return 0;
-    return keymgmt->gen_get_params(genctx, params);
-}
-
-const OSSL_PARAM *evp_keymgmt_gen_gettable_params(const EVP_KEYMGMT *keymgmt)
-{
-    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
-
-    if (keymgmt->gen_gettable_params == NULL)
-        return NULL;
-    return keymgmt->gen_gettable_params(provctx);
 }
 
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,

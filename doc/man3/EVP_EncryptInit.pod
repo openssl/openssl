@@ -770,7 +770,7 @@ with a 128-bit key:
 
      /* Don't set key or IV right away; we want to check lengths */
      ctx = EVP_CIPHER_CTX_new();
-     EVP_CipherInit_ex(&ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
+     EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, NULL, NULL,
                        do_encrypt);
      OPENSSL_assert(EVP_CIPHER_CTX_key_length(ctx) == 16);
      OPENSSL_assert(EVP_CIPHER_CTX_iv_length(ctx) == 16);

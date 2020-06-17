@@ -417,7 +417,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     /* No more legacy from here down to legacy: */
 
     ctx->op.sig.signature = signature;
-    ctx->op.sig.sigprovctx = signature->newctx(ossl_provider_ctx(signature->prov));
+    ctx->op.sig.sigprovctx =
+        signature->newctx(ossl_provider_ctx(signature->prov), ctx->propquery);
     if (ctx->op.sig.sigprovctx == NULL) {
         /* The provider key can stay in the cache */
         EVPerr(0, EVP_R_INITIALIZATION_ERROR);
@@ -503,6 +504,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     return ret;
 
  err:
+    evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
 }

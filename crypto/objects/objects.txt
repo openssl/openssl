@@ -1648,6 +1648,7 @@ id-pkinit 5                     : pkInitKDC             : Signing KDC Response
                             : KxPSK        : kx-psk
                             : KxSRP        : kx-srp
                             : KxGOST       : kx-gost
+                            : KxGOST18     : kx-gost18
                             : KxANY        : kx-any
 
 # NIDs for cipher authentication

@@ -49,7 +49,7 @@ const OPTIONS ec_options[] = {
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input file"},
-    {"inform", OPT_INFORM, 'f', "Input format - DER or PEM"},
+    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12/ENGINE)"},
     {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"check", OPT_CHECK, '-', "check key consistency"},

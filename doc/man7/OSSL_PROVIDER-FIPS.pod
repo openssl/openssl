@@ -18,9 +18,9 @@ defined:
 
 =over 4
 
-"provider=default"
+=item "provider=default"
 
-"fips=yes"
+=item "fips=yes"
 
 =back
 
@@ -101,6 +101,16 @@ The OpenSSL FIPS provider supports these operations and algorithms:
 =over 4
 
 =item DH, see L<EVP_KEYEXCH-DH(7)>
+
+=item ECDH, see L<EVP_KEYEXCH-ECDH(7)>
+
+=item X25519, see L<EVP_KEYEXCH-X25519(7)>
+
+This has the property "provider=fips,fips=no"
+
+=item X448, see L<EVP_KEYEXCH-X448(7)>
+
+This has the property "provider=fips,fips=no"
 
 =back
 

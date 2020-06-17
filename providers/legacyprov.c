@@ -13,7 +13,16 @@
 #include <openssl/core_numbers.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "prov/provider_ctx.h"
 #include "prov/implementations.h"
+
+/*
+ * Forward declarations to ensure that interface functions are correctly
+ * defined.
+ */
+static OSSL_provider_gettable_params_fn legacy_gettable_params;
+static OSSL_provider_get_params_fn legacy_get_params;
+static OSSL_provider_query_operation_fn legacy_query;
 
 #define ALG(NAMES, FUNC) { NAMES, "provider=legacy", FUNC }
 
@@ -27,19 +36,19 @@ static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;
 
 /* Parameters we provide to the core */
-static const OSSL_ITEM legacy_param_types[] = {
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_NAME },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_VERSION },
-    { OSSL_PARAM_UTF8_PTR, OSSL_PROV_PARAM_BUILDINFO },
-    { 0, NULL }
+static const OSSL_PARAM legacy_param_types[] = {
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_END
 };
 
-static const OSSL_ITEM *legacy_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *legacy_gettable_params(void *provctx)
 {
     return legacy_param_types;
 }
 
-static int legacy_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int legacy_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -79,8 +88,8 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
 #ifndef OPENSSL_NO_CAST
     ALG("CAST5-ECB", cast5128ecb_functions),
     ALG("CAST5-CBC:CAST-CBC:CAST", cast5128cbc_functions),
-    ALG("CAST5-OFB", cast564ofb64_functions),
-    ALG("CAST5-CFB", cast564cfb64_functions),
+    ALG("CAST5-OFB", cast5128ofb64_functions),
+    ALG("CAST5-CFB", cast5128cfb64_functions),
 #endif /* OPENSSL_NO_CAST */
 #ifndef OPENSSL_NO_BF
     ALG("BF-ECB", blowfish128ecb_functions),
@@ -133,8 +142,7 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *legacy_query(OSSL_PROVIDER *prov,
-                                          int operation_id,
+static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
                                           int *no_cache)
 {
     *no_cache = 0;
@@ -147,20 +155,28 @@ static const OSSL_ALGORITHM *legacy_query(OSSL_PROVIDER *prov,
     return NULL;
 }
 
+static void legacy_teardown(void *provctx)
+{
+    OPENSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
+    PROV_CTX_free(provctx);
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH legacy_dispatch_table[] = {
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))legacy_teardown },
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))legacy_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))legacy_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))legacy_query },
     { 0, NULL }
 };
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    OPENSSL_CTX *libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -182,13 +198,17 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     if (c_get_libctx == NULL)
         return 0;
 
+    if ((*provctx = PROV_CTX_new()) == NULL
+        || (libctx = OPENSSL_CTX_new()) == NULL) {
+        OPENSSL_CTX_free(libctx);
+        legacy_teardown(*provctx);
+        *provctx = NULL;
+        return 0;
+    }
+    PROV_CTX_set0_library_context(*provctx, libctx);
+    PROV_CTX_set0_handle(*provctx, handle);
+
     *out = legacy_dispatch_table;
 
-    /*
-     * We want to make sure that all calls from this provider that requires
-     * a library context use the same context as the one used to call our
-     * functions.  We do that by passing it along as the provider context.
-     */
-    *provctx = c_get_libctx(provider);
     return 1;
 }

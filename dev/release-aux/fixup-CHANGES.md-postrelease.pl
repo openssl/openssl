@@ -18,11 +18,11 @@ if (/^### Changes between (\S+) and (\S+) \[xx XXX xxxx\]/
     # If this is a pre-release, we do nothing
     if ($RELEASE !~ /^\d+\.\d+\.\d+-(?:alpha|beta)/) {
         $_ = <<_____
-### Changes between $v2 and $RELEASE_TEXT [xx XXX xxxx] ###
+### Changes between $v2 and $RELEASE_TEXT [xx XXX xxxx]
 
  * 
 
-### Changes between $v1 and $v2 [$PREV_RELEASE_DATE] ###
+### Changes between $v1 and $v2 [$PREV_RELEASE_DATE]
 _____
     }
 }

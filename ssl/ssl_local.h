@@ -180,6 +180,8 @@
 # define SSL_kRSAPSK             0x00000040U
 # define SSL_kECDHEPSK           0x00000080U
 # define SSL_kDHEPSK             0x00000100U
+/* GOST KDF key exchange, draft-smyshlyaev-tls12-gost-suites */
+# define SSL_kGOST18             0x00000200U
 
 /* all PSK */
 
@@ -234,6 +236,8 @@
 # define SSL_CHACHA20POLY1305    0x00080000U
 # define SSL_ARIA128GCM          0x00100000U
 # define SSL_ARIA256GCM          0x00200000U
+# define SSL_MAGMA               0x00400000U
+# define SSL_KUZNYECHIK          0x00800000U
 
 # define SSL_AESGCM              (SSL_AES128GCM | SSL_AES256GCM)
 # define SSL_AESCCM              (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
@@ -242,6 +246,9 @@
 # define SSL_CHACHA20            (SSL_CHACHA20POLY1305)
 # define SSL_ARIAGCM             (SSL_ARIA128GCM | SSL_ARIA256GCM)
 # define SSL_ARIA                (SSL_ARIAGCM)
+# define SSL_CBC                 (SSL_DES | SSL_3DES | SSL_RC2 | SSL_IDEA \
+                                  | SSL_AES128 | SSL_AES256 | SSL_CAMELLIA128 \
+                                  | SSL_CAMELLIA256 | SSL_SEED)
 
 /* Bits for algorithm_mac (symmetric authentication) */
 
@@ -256,6 +263,8 @@
 # define SSL_GOST12_256          0x00000080U
 # define SSL_GOST89MAC12         0x00000100U
 # define SSL_GOST12_512          0x00000200U
+# define SSL_MAGMAOMAC           0x00000400U
+# define SSL_KUZNYECHIKOMAC      0x00000800U
 
 /*
  * When adding new digest in the ssl_ciph.c and increment SSL_MD_NUM_IDX make
@@ -274,7 +283,9 @@
 # define SSL_MD_MD5_SHA1_IDX 9
 # define SSL_MD_SHA224_IDX 10
 # define SSL_MD_SHA512_IDX 11
-# define SSL_MAX_DIGEST 12
+# define SSL_MD_MAGMAOMAC_IDX 12
+# define SSL_MD_KUZNYECHIKOMAC_IDX 13
+# define SSL_MAX_DIGEST 14
 
 #define SSL_MD_NUM_IDX  SSL_MAX_DIGEST
 
@@ -305,6 +316,11 @@
  * goes into algorithm2)
  */
 # define TLS1_STREAM_MAC 0x10000
+/*
+ * TLSTREE cipher/mac key derivation from draft-smyshlyaev-tls12-gost-suites
+ * (currently this also  goes into algorithm2)
+ */
+# define TLS1_TLSTREE 0x20000
 
 # define SSL_STRONG_MASK         0x0000001FU
 # define SSL_DEFAULT_MASK        0X00000020U
@@ -413,7 +429,9 @@
 # define SSL_ENC_CHACHA_IDX      19
 # define SSL_ENC_ARIA128GCM_IDX  20
 # define SSL_ENC_ARIA256GCM_IDX  21
-# define SSL_ENC_NUM_IDX         22
+# define SSL_ENC_MAGMA_IDX       22
+# define SSL_ENC_KUZNYECHIK_IDX  23
+# define SSL_ENC_NUM_IDX         24
 
 /*-
  * SSL_kRSA <- RSA_ENC
@@ -1139,6 +1157,9 @@ struct ssl_ctx_st {
     const EVP_CIPHER *ssl_cipher_methods[SSL_ENC_NUM_IDX];
     const EVP_MD *ssl_digest_methods[SSL_MD_NUM_IDX];
     size_t ssl_mac_secret_size[SSL_MD_NUM_IDX];
+
+    /* Cache of all sigalgs we know and whether they are available or not */
+    struct sigalg_lookup_st *sigalg_lookup_cache;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1539,8 +1560,8 @@ struct ssl_st {
 
         /* RFC4507 session ticket expected to be received or sent */
         int ticket_expected;
-	/* TLS 1.3 tickets requested by the application. */
-	int extra_tickets_expected;
+        /* TLS 1.3 tickets requested by the application. */
+        int extra_tickets_expected;
 # ifndef OPENSSL_NO_EC
         size_t ecpointformats_len;
         /* our list */
@@ -1758,6 +1779,8 @@ typedef struct sigalg_lookup_st {
     int sigandhash;
     /* Required public key curve (ECDSA only) */
     int curve;
+    /* Whether this signature algorithm is actually available for use */
+    int enabled;
 } SIGALG_LOOKUP;
 
 typedef struct tls_group_info_st {
@@ -2414,6 +2437,7 @@ __owur STACK_OF(SSL_CIPHER) *ssl_get_ciphers_by_id(SSL *s);
 __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
+__owur int ssl_setup_sig_algs(SSL_CTX *ctx);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
                                  size_t len, DOWNGRADE dgrd);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,

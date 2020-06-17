@@ -78,13 +78,13 @@ const OPTIONS x509_options[] = {
 #endif
 
     {"inform", OPT_INFORM, 'f',
-     "Input format - default PEM (one of DER or PEM)"},
+     "CSR input format (DER or PEM) - default PEM"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
     {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
     {"outform", OPT_OUTFORM, 'f',
-     "Output format - default PEM (one of DER or PEM)"},
+     "Output format (DER or PEM) - default PEM"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
     {"req", OPT_REQ, '-', "Input is a certificate request, sign and output"},
     {"vfyopt", OPT_VFYOPT, 's', "Verification parameter in n:v form"},
 
@@ -152,8 +152,8 @@ const OPTIONS x509_options[] = {
     {"extfile", OPT_EXTFILE, '<', "File with X509V3 extensions to add"},
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {"CAform", OPT_CAFORM, 'F', "CA format - default PEM"},
-    {"CAkeyform", OPT_CAKEYFORM, 'E', "CA key format - default PEM"},
+    {"CAform", OPT_CAFORM, 'F', "CA cert format (PEM/DER/P12); has no effect"},
+    {"CAkeyform", OPT_CAKEYFORM, 'E', "CA key format (ENGINE, other values ignored)"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"CAcreateserial", OPT_CACREATESERIAL, '-',
      "Create serial number file if it does not exist"},
@@ -228,7 +228,7 @@ int x509_main(int argc, char **argv)
             ret = 0;
             goto end;
         case OPT_INFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_ANY, &informat))
+            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &informat))
                 goto opthelp;
             break;
         case OPT_IN:
@@ -239,15 +239,15 @@ int x509_main(int argc, char **argv)
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyformat))
                 goto opthelp;
             break;
         case OPT_CAFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &CAformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &CAformat))
                 goto opthelp;
             break;
         case OPT_CAKEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &CAkeyformat))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &CAkeyformat))
                 goto opthelp;
             break;
         case OPT_OUT:
@@ -631,7 +631,7 @@ int x509_main(int argc, char **argv)
         if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
             goto end;
     } else {
-        x = load_cert(infile, informat, "Certificate");
+        x = load_cert(infile, FORMAT_UNDEF, "Certificate");
         if (x == NULL)
             goto end;
         if (fkey != NULL && !X509_set_pubkey(x, fkey))

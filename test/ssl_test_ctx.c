@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -638,6 +638,7 @@ IMPLEMENT_SSL_TEST_STRING_OPTION(SSL_TEST_CTX, test, expected_cipher)
 
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, enable_pha)
 IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_SERVER_CONF, server, force_pha)
+IMPLEMENT_SSL_TEST_BOOL_OPTION(SSL_TEST_CLIENT_CONF, client, no_extms_on_reneg)
 
 /* Known test options and their corresponding parse methods. */
 
@@ -697,6 +698,7 @@ static const ssl_test_client_option ssl_test_client_options[] = {
     { "SRPPassword", &parse_client_srp_password },
     { "MaxFragmentLenExt", &parse_max_fragment_len_mode },
     { "EnablePHA", &parse_client_enable_pha },
+    { "RenegotiateNoExtms", &parse_client_no_extms_on_reneg },
 };
 
 /* Nested server options. */

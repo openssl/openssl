@@ -33,7 +33,10 @@ static int genrsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_3, OPT_F4, OPT_ENGINE,
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    OPT_3,
+#endif
+    OPT_F4, OPT_ENGINE,
     OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE,
     OPT_R_ENUM, OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -48,9 +51,11 @@ const OPTIONS genrsa_options[] = {
 #endif
 
     OPT_SECTION("Input"),
-    {"3", OPT_3, '-', "Use 3 for the E value"},
-    {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
-    {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    {"3", OPT_3, '-', "(deprecated) Use 3 for the E value"},
+#endif
+    {"F4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
+    {"f4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output the key to specified file"},
@@ -100,9 +105,11 @@ opthelp:
             ret = 0;
             opt_help(genrsa_options);
             goto end;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         case OPT_3:
             f4 = RSA_3;
             break;
+#endif
         case OPT_F4:
             f4 = RSA_F4;
             break;

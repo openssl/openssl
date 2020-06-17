@@ -15,9 +15,9 @@ ossl_cmp_msg_add_extraCerts
 
 =head1 DESCRIPTION
 
-ossl_cmp_msg_protect() protects the given message B<msg> using an algorithm
+ossl_cmp_msg_protect() (re-)protects the given message B<msg> using an algorithm
 depending on the available context information given in the B<ctx>.
-If there is a secretValue it selects PBMAC. Else if there is a clCert
+If there is a secretValue it selects PBMAC, else if there is a protection cert
 it selects Signature and uses B<ossl_cmp_msg_add_extraCerts()>.
 It also sets the protectionAlg field in the message header accordingly.
 

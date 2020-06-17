@@ -44,13 +44,12 @@ static OSSL_OP_asym_cipher_set_ctx_params_fn rsa_set_ctx_params;
 static OSSL_OP_asym_cipher_settable_ctx_params_fn rsa_settable_ctx_params;
 
 static OSSL_ITEM padding_item[] = {
-    { RSA_PKCS1_PADDING,        "pkcs1"  },
-    { RSA_SSLV23_PADDING,       "sslv23" },
-    { RSA_NO_PADDING,           "none"   },
-    { RSA_PKCS1_OAEP_PADDING,   "oaep"   }, /* Correct spelling first */
+    { RSA_PKCS1_PADDING,        OSSL_PKEY_RSA_PAD_MODE_PKCSV15 },
+    { RSA_SSLV23_PADDING,       OSSL_PKEY_RSA_PAD_MODE_SSLV23 },
+    { RSA_NO_PADDING,           OSSL_PKEY_RSA_PAD_MODE_NONE },
+    { RSA_PKCS1_OAEP_PADDING,   OSSL_PKEY_RSA_PAD_MODE_OAEP }, /* Correct spelling first */
     { RSA_PKCS1_OAEP_PADDING,   "oeap"   },
-    { RSA_X931_PADDING,         "x931"   },
-    { RSA_PKCS1_PSS_PADDING,    "pss"    },
+    { RSA_X931_PADDING,         OSSL_PKEY_RSA_PAD_MODE_X931 },
     { 0,                        NULL     }
 };
 
@@ -95,7 +94,16 @@ static int rsa_init(void *vprsactx, void *vrsa)
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
-    prsactx->pad_mode = RSA_PKCS1_PADDING;
+
+    switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
+    case RSA_FLAG_TYPE_RSA:
+        prsactx->pad_mode = RSA_PKCS1_PADDING;
+        break;
+    default:
+        ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        return 0;
+    }
+
     return 1;
 }
 
@@ -130,11 +138,13 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             PROVerr(0, ERR_R_INTERNAL_ERROR);
             return 0;
         }
-        ret = RSA_padding_add_PKCS1_OAEP_mgf1(tbuf, rsasize, in, inlen,
-                                              prsactx->oaep_label,
-                                              prsactx->oaep_labellen,
-                                              prsactx->oaep_md,
-                                              prsactx->mgf1_md);
+        ret =
+            rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(prsactx->libctx, tbuf,
+                                                        rsasize, in, inlen,
+                                                        prsactx->oaep_label,
+                                                        prsactx->oaep_labellen,
+                                                        prsactx->oaep_md,
+                                                        prsactx->mgf1_md);
 
         if (!ret) {
             OPENSSL_free(tbuf);
@@ -249,6 +259,7 @@ static void rsa_freectx(void *vprsactx)
 
     EVP_MD_free(prsactx->oaep_md);
     EVP_MD_free(prsactx->mgf1_md);
+    OPENSSL_free(prsactx->oaep_label);
 
     OPENSSL_free(prsactx);
 }

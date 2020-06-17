@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_STOREERR_H
-# define OPENSSL_STOREERR_H
+#ifndef OPENSSL_OSSL_STOREERR_H
+# define OPENSSL_OSSL_STOREERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>
@@ -25,6 +25,7 @@ int ERR_load_OSSL_STORE_strings(void);
  * OSSL_STORE function codes.
  */
 # ifndef OPENSSL_NO_DEPRECATED_3_0
+#  define OSSL_STORE_F_FILE_ATTACH                         0
 #  define OSSL_STORE_F_FILE_CTRL                           0
 #  define OSSL_STORE_F_FILE_FIND                           0
 #  define OSSL_STORE_F_FILE_GET_PASS                       0
@@ -32,9 +33,8 @@ int ERR_load_OSSL_STORE_strings(void);
 #  define OSSL_STORE_F_FILE_LOAD_TRY_DECODE                0
 #  define OSSL_STORE_F_FILE_NAME_TO_URI                    0
 #  define OSSL_STORE_F_FILE_OPEN                           0
-#  define OSSL_STORE_F_OSSL_STORE_ATTACH_PEM_BIO           0
+#  define OSSL_STORE_F_OSSL_STORE_ATTACH                   0
 #  define OSSL_STORE_F_OSSL_STORE_EXPECT                   0
-#  define OSSL_STORE_F_OSSL_STORE_FILE_ATTACH_PEM_BIO_INT  0
 #  define OSSL_STORE_F_OSSL_STORE_FIND                     0
 #  define OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT          0
 #  define OSSL_STORE_F_OSSL_STORE_INFO_GET1_CERT           0

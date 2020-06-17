@@ -26,10 +26,7 @@ use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
-$ENV{CTLOG_FILE} = srctop_file("test", "ct", "log_list.cnf");
 
 my @conf_srcs =  glob(srctop_file("test", "ssl-tests", "*.cnf.in"));
 map { s/;.*// } @conf_srcs if $^O eq "VMS";

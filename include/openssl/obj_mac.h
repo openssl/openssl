@@ -5102,6 +5102,10 @@
 #define LN_kx_gost              "kx-gost"
 #define NID_kx_gost             1045
 
+#define SN_kx_gost18            "KxGOST18"
+#define LN_kx_gost18            "kx-gost18"
+#define NID_kx_gost18           1218
+
 #define SN_kx_any               "KxANY"
 #define LN_kx_any               "kx-any"
 #define NID_kx_any              1063

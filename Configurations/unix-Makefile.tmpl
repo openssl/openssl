@@ -519,7 +519,7 @@ clean: libclean
 	-$(RM) `find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -print`
 	-$(RM) `find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -print`
 	$(RM) core
-	$(RM) tags TAGS doc-nits cmd-nits
+	$(RM) tags TAGS doc-nits cmd-nits md-nits
 	$(RM) -r test/test-runs
 	$(RM) openssl.pc libcrypto.pc libssl.pc
 	-$(RM) `find . -type l \! -name '.*' -print`
@@ -982,12 +982,21 @@ update: generate errors ordinals
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 
-.PHONY: doc-nits cmd-nits
+.PHONY: doc-nits cmd-nits md-nits
 doc-nits: build_generated
 	$(PERL) $(SRCDIR)/util/find-doc-nits -n -l -e
 
 cmd-nits: build_generated apps/openssl
 	$(PERL) $(SRCDIR)/util/find-doc-nits -c
+
+# This uses "mdl", the markdownlint application, which is written in ruby.
+# The source is at https://github.com/markdownlint/markdownlint
+# If you have ruby installed, "gem install mdl" should work.
+# Another option is at https://snapcraft.io/install/mdl/debian
+# Finally, there's a Node.js version, which we haven't tried, that
+# can be found at https://github.com/DavidAnson/markdownlint
+md-nits:
+	mdl -s util/markdownlint.rb .
 
 # Test coverage is a good idea for the future
 #coverage: $(PROGRAMS) $(TESTPROGRAMS)

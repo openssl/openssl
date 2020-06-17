@@ -48,9 +48,9 @@ static const OSSL_PARAM *p_gettable_params(void *_)
     return p_param_types;
 }
 
-static int p_get_params(void *vprov, OSSL_PARAM params[])
+static int p_get_params(void *vhand, OSSL_PARAM params[])
 {
-    const OSSL_PROVIDER *prov = vprov;
+    const OSSL_CORE_HANDLE *hand = vhand;
     OSSL_PARAM *p = params;
     int ok = 1;
 
@@ -77,7 +77,7 @@ static int p_get_params(void *vprov, OSSL_PARAM params[])
 
             opensslv = provname = greeting = NULL;
 
-            if (c_get_params(prov, counter_request)) {
+            if (c_get_params(hand, counter_request)) {
                 if (greeting) {
                     strcpy(buf, greeting);
                 } else {
@@ -119,7 +119,7 @@ static const OSSL_DISPATCH p_test_table[] = {
     { 0, NULL }
 };
 
-int OSSL_provider_init(const OSSL_PROVIDER *provider,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
@@ -139,7 +139,7 @@ int OSSL_provider_init(const OSSL_PROVIDER *provider,
     }
 
     /* Because we use this in get_params, we need to pass it back */
-    *provctx = (void *)provider;
+    *provctx = (void *)handle;
 
     *out = p_test_table;
     return 1;

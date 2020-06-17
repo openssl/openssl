@@ -1323,12 +1323,12 @@ static int mac_test_run_mac(EVP_TEST *t)
     }
     params[params_n] = OSSL_PARAM_construct_end();
 
-    if ((ctx = EVP_MAC_CTX_new(expected->mac)) == NULL) {
+    if ((ctx = EVP_MAC_new_ctx(expected->mac)) == NULL) {
         t->err = "MAC_CREATE_ERROR";
         goto err;
     }
 
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+    if (!EVP_MAC_set_ctx_params(ctx, params)) {
         t->err = "MAC_BAD_PARAMS";
         goto err;
     }
@@ -1360,7 +1360,7 @@ static int mac_test_run_mac(EVP_TEST *t)
     while (params_n-- > params_n_allocstart) {
         OPENSSL_free(params[params_n].data);
     }
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx);
     OPENSSL_free(got);
     return 1;
 }
@@ -2095,7 +2095,7 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
         OPENSSL_free(kdata);
         return 0;
     }
-    kdata->ctx = EVP_KDF_CTX_new(kdf);
+    kdata->ctx = EVP_KDF_new_ctx(kdf);
     EVP_KDF_free(kdf);
     if (kdata->ctx == NULL) {
         OPENSSL_free(kdata);
@@ -2113,7 +2113,7 @@ static void kdf_test_cleanup(EVP_TEST *t)
     for (p = kdata->params; p->key != NULL; p++)
         OPENSSL_free(p->data);
     OPENSSL_free(kdata->output);
-    EVP_KDF_CTX_free(kdata->ctx);
+    EVP_KDF_free_ctx(kdata->ctx);
 }
 
 static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
@@ -2122,7 +2122,8 @@ static int kdf_test_ctrl(EVP_TEST *t, EVP_KDF_CTX *kctx,
     KDF_DATA *kdata = t->data;
     int rv;
     char *p, *name;
-    const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(EVP_KDF_CTX_kdf(kctx));
+    const OSSL_PARAM *defs =
+        EVP_KDF_settable_ctx_params(EVP_KDF_get_ctx_kdf(kctx));
 
     if (!TEST_ptr(name = OPENSSL_strdup(value)))
         return 0;
@@ -2178,7 +2179,7 @@ static int kdf_test_run(EVP_TEST *t)
     unsigned char *got = NULL;
     size_t got_len = expected->output_len;
 
-    if (!EVP_KDF_CTX_set_params(expected->ctx, expected->params)) {
+    if (!EVP_KDF_set_ctx_params(expected->ctx, expected->params)) {
         t->err = "KDF_CTRL_ERROR";
         return 1;
     }
@@ -2404,7 +2405,7 @@ static int keypair_test_run(EVP_TEST *t)
         goto end;
     }
 
-    if ((rv = EVP_PKEY_cmp(pair->privk, pair->pubk)) != 1 ) {
+    if ((rv = EVP_PKEY_eq(pair->privk, pair->pubk)) != 1 ) {
         if ( 0 == rv ) {
             t->err = "KEYPAIR_MISMATCH";
         } else if ( -1 == rv ) {
@@ -2995,7 +2996,8 @@ static int key_unsupported(void)
     long err = ERR_peek_error();
 
     if (ERR_GET_LIB(err) == ERR_LIB_EVP
-            && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM) {
+            && (ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_ALGORITHM
+                || ERR_GET_REASON(err) == EVP_R_FETCH_FAILED)) {
         ERR_clear_error();
         return 1;
     }

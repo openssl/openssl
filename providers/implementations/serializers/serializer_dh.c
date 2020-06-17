@@ -70,7 +70,7 @@ int ossl_prov_print_dh(BIO *out, DH *dh, enum dh_print_type type)
     if (p == NULL)
         goto null_err;
 
-    if (ossl_prov_bio_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
+    if (BIO_printf(out, "%s: (%d bit)\n", type_label, BN_num_bits(p))
         <= 0)
         goto err;
     if (priv_key != NULL

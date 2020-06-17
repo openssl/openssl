@@ -109,6 +109,7 @@ int ERR_load_CMS_strings(void);
 #   define CMS_F_CMS_SIGN                                   0
 #   define CMS_F_CMS_SIGNED_DATA_INIT                       0
 #   define CMS_F_CMS_SIGNERINFO_CONTENT_SIGN                0
+#   define CMS_F_CMS_SIGNERINFO_GET_CHAIN                   0
 #   define CMS_F_CMS_SIGNERINFO_SIGN                        0
 #   define CMS_F_CMS_SIGNERINFO_VERIFY                      0
 #   define CMS_F_CMS_SIGNERINFO_VERIFY_CERT                 0
@@ -118,6 +119,7 @@ int ERR_load_CMS_strings(void);
 #   define CMS_F_CMS_STREAM                                 0
 #   define CMS_F_CMS_UNCOMPRESS                             0
 #   define CMS_F_CMS_VERIFY                                 0
+#   define CMS_F_ESS_CHECK_SIGNING_CERTS                    0
 #   define CMS_F_KEK_UNWRAP_KEY                             0
 # endif
 
@@ -147,6 +149,8 @@ int ERR_load_CMS_strings(void);
 #  define CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE      114
 #  define CMS_R_ERROR_SETTING_KEY                          115
 #  define CMS_R_ERROR_SETTING_RECIPIENTINFO                116
+#  define CMS_R_ESS_NO_SIGNING_CERTID_ATTRIBUTE            182
+#  define CMS_R_ESS_SIGNING_CERTID_MISMATCH_ERROR          183
 #  define CMS_R_INVALID_ENCRYPTED_KEY_LENGTH               117
 #  define CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER           176
 #  define CMS_R_INVALID_KEY_LENGTH                         118

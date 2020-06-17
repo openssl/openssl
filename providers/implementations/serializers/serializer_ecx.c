@@ -86,7 +86,7 @@ int ossl_prov_print_ecx(BIO *out, ECX_KEY *ecxkey, enum ecx_print_type type)
         return 0;
     }
 
-    if (ossl_prov_bio_printf(out, "%s:\n", type_label) <= 0)
+    if (BIO_printf(out, "%s:\n", type_label) <= 0)
         return 0;
     if (type == ecx_print_priv
             && !ossl_prov_print_labeled_buf(out, "priv:", ecxkey->privkey,

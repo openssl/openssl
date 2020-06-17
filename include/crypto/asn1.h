@@ -19,7 +19,7 @@ struct evp_pkey_asn1_method_st {
     unsigned long pkey_flags;
     char *pem_str;
     char *info;
-    int (*pub_decode) (EVP_PKEY *pk, X509_PUBKEY *pub);
+    int (*pub_decode) (EVP_PKEY *pk, const X509_PUBKEY *pub);
     int (*pub_encode) (X509_PUBKEY *pub, const EVP_PKEY *pk);
     int (*pub_cmp) (const EVP_PKEY *a, const EVP_PKEY *b);
     int (*pub_print) (BIO *out, const EVP_PKEY *pkey, int indent,

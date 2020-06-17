@@ -45,7 +45,7 @@ const OPTIONS rsa_options[] = {
 
     OPT_SECTION("Input"),
     {"in", OPT_IN, 's', "Input file"},
-    {"inform", OPT_INFORM, 'f', "Input format, one of DER PEM"},
+    {"inform", OPT_INFORM, 'f', "Input format (DER/PEM/P12/ENGINE"},
     {"pubin", OPT_PUBIN, '-', "Expect a public key in input file"},
     {"RSAPublicKey_in", OPT_RSAPUBKEY_IN, '-', "Input is an RSAPublicKey"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
@@ -65,9 +65,9 @@ const OPTIONS rsa_options[] = {
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
+#endif
 
     OPT_PROV_OPTIONS,
-#endif
     {NULL}
 };
 

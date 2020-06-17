@@ -18,16 +18,20 @@
 #include <openssl/aes.h>
 #include "aes_local.h"
 
-#define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
-typedef struct {
-    unsigned long data[N_WORDS];
-} aes_block_t;
-
 /* XXX: probably some better way to do this */
 #if defined(__i386__) || defined(__x86_64__)
 # define UNALIGNED_MEMOPS_ARE_FAST 1
 #else
 # define UNALIGNED_MEMOPS_ARE_FAST 0
+#endif
+
+#define N_WORDS (AES_BLOCK_SIZE / sizeof(unsigned long))
+typedef struct {
+    unsigned long data[N_WORDS];
+#if defined(__GNUC__) && UNALIGNED_MEMOPS_ARE_FAST
+} aes_block_t __attribute((__aligned__(1)));
+#else
+} aes_block_t;
 #endif
 
 #if UNALIGNED_MEMOPS_ARE_FAST

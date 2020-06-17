@@ -61,6 +61,7 @@ typedef enum {
            : EVP_PKEY_ED448)))
 
 struct ecx_key_st {
+    OPENSSL_CTX *libctx;
     unsigned int haspubkey:1;
     unsigned char pubkey[MAX_KEYLEN];
     unsigned char *privkey;
@@ -73,7 +74,7 @@ struct ecx_key_st {
 typedef struct ecx_key_st ECX_KEY;
 
 size_t ecx_key_length(ECX_KEY_TYPE type);
-ECX_KEY *ecx_key_new(ECX_KEY_TYPE type, int haspubkey);
+ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey);
 unsigned char *ecx_key_allocate_privkey(ECX_KEY *key);
 void ecx_key_free(ECX_KEY *key);
 int ecx_key_up_ref(ECX_KEY *key);
@@ -109,6 +110,7 @@ void X448_public_from_private(uint8_t out_public_value[56],
                               const uint8_t private_key[56]);
 
 /* Backend support */
+int ecx_public_from_private(ECX_KEY *key);
 int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
                      int include_private);
 

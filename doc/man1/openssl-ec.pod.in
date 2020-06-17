@@ -13,7 +13,7 @@ openssl-ec - EC key processing
 
 B<openssl> B<ec>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>]
+[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
@@ -38,9 +38,6 @@ B<openssl> B<ec>
 
 =head1 DESCRIPTION
 
-This command has been deprecated.
-The L<openssl-pkey(1)> command should be used instead.
-
 The L<openssl-ec(1)> command processes EC keys. They can be converted between
 various forms and their components printed out. B<Note> OpenSSL uses the
 private key format specified in 'SEC 1: Elliptic Curve Cryptography'
@@ -55,9 +52,15 @@ PKCS#8 private key format use the L<openssl-pkcs8(1)> command.
 
 Print out a usage message.
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The input and formats; the default is B<PEM>.
+The key input format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output formats; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 Private keys are an SEC1 private key or PKCS#8 format.
@@ -182,10 +185,6 @@ L<openssl-pkey(1)>,
 L<openssl-ecparam(1)>,
 L<openssl-dsa(1)>,
 L<openssl-rsa(1)>
-
-=head1 HISTORY
-
-This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

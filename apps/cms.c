@@ -196,7 +196,7 @@ const OPTIONS cms_options[] = {
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"inkey", OPT_INKEY, 's',
      "Input private key (if not signer or recipient)"},
-    {"keyform", OPT_KEYFORM, 'f', "Input private key format (PEM or ENGINE)"},
+    {"keyform", OPT_KEYFORM, 'f', "Input private key format (ENGINE, other values ignored)"},
     {"keyopt", OPT_KEYOPT, 's', "Set public key parameters as n:v pairs"},
 
     OPT_SECTION("Mail header"),
@@ -576,7 +576,7 @@ int cms_main(int argc, char **argv)
             if (operation == SMIME_ENCRYPT) {
                 if (encerts == NULL && (encerts = sk_X509_new_null()) == NULL)
                     goto end;
-                cert = load_cert(opt_arg(), FORMAT_PEM,
+                cert = load_cert(opt_arg(), FORMAT_UNDEF,
                                  "recipient certificate file");
                 if (cert == NULL)
                     goto end;
@@ -670,10 +670,16 @@ int cms_main(int argc, char **argv)
         goto opthelp;
     }
 
-    if (flags & CMS_CADES) {
-        if (flags & CMS_NOATTR) {
+    if ((flags & CMS_CADES) != 0) {
+        if ((flags & CMS_NOATTR) != 0) {
             BIO_puts(bio_err, "Incompatible options: "
                      "CAdES required signed attributes\n");
+            goto opthelp;
+        }
+        if (operation == SMIME_VERIFY
+                && (flags & (CMS_NO_SIGNER_CERT_VERIFY | CMS_NO_ATTR_VERIFY)) != 0) {
+            BIO_puts(bio_err, "Incompatible options: CAdES validation require"
+                     " certs and signed attributes validations\n");
             goto opthelp;
         }
     }
@@ -756,7 +762,7 @@ int cms_main(int argc, char **argv)
             if ((encerts = sk_X509_new_null()) == NULL)
                 goto end;
         while (*argv) {
-            if ((cert = load_cert(*argv, FORMAT_PEM,
+            if ((cert = load_cert(*argv, FORMAT_UNDEF,
                                   "recipient certificate file")) == NULL)
                 goto end;
             sk_X509_push(encerts, cert);
@@ -774,7 +780,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (recipfile != NULL && (operation == SMIME_DECRYPT)) {
-        if ((recip = load_cert(recipfile, FORMAT_PEM,
+        if ((recip = load_cert(recipfile, FORMAT_UNDEF,
                                "recipient certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -782,7 +788,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (originatorfile != NULL) {
-        if ((originator = load_cert(originatorfile, FORMAT_PEM,
+        if ((originator = load_cert(originatorfile, FORMAT_UNDEF,
                                     "originator certificate file")) == NULL) {
              ERR_print_errors(bio_err);
              goto end;
@@ -790,7 +796,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (operation == SMIME_SIGN_RECEIPT) {
-        if ((signer = load_cert(signerfile, FORMAT_PEM,
+        if ((signer = load_cert(signerfile, FORMAT_UNDEF,
                                 "receipt signer certificate file")) == NULL) {
             ERR_print_errors(bio_err);
             goto end;
@@ -1019,7 +1025,8 @@ int cms_main(int argc, char **argv)
             signerfile = sk_OPENSSL_STRING_value(sksigners, i);
             keyfile = sk_OPENSSL_STRING_value(skkeys, i);
 
-            signer = load_cert(signerfile, FORMAT_PEM, "signer certificate");
+            signer = load_cert(signerfile, FORMAT_UNDEF,
+                               "signer certificate");
             if (signer == NULL) {
                 ret = 2;
                 goto end;
@@ -1114,7 +1121,8 @@ int cms_main(int argc, char **argv)
             goto end;
     } else if (operation == SMIME_VERIFY) {
         if (CMS_verify(cms, other, store, indata, out, flags) > 0) {
-            BIO_printf(bio_err, "Verification successful\n");
+            BIO_printf(bio_err, "%s Verification successful\n",
+                       (flags & CMS_CADES) ? "CAdES" : "CMS");
         } else {
             BIO_printf(bio_err, "Verification failure\n");
             if (verify_retcode)

@@ -366,7 +366,7 @@ opthelp:
         goto end;
     }
 
-    ctx = EVP_MAC_CTX_new(mac);
+    ctx = EVP_MAC_new_ctx(mac);
     if (ctx == NULL) {
         BIO_printf(bio_err, "Unable to create MAC CTX for module check\n");
         goto end;
@@ -380,7 +380,7 @@ opthelp:
         if (params == NULL)
             goto end;
 
-        if (!EVP_MAC_CTX_set_params(ctx, params)) {
+        if (!EVP_MAC_set_ctx_params(ctx, params)) {
             BIO_printf(bio_err, "MAC parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
@@ -390,7 +390,7 @@ opthelp:
             goto end;
     }
 
-    ctx2 = EVP_MAC_CTX_dup(ctx);
+    ctx2 = EVP_MAC_dup_ctx(ctx);
     if (ctx2 == NULL) {
         BIO_printf(bio_err, "Unable to create MAC CTX for install indicator\n");
         goto end;
@@ -450,8 +450,8 @@ cleanup:
     BIO_free(module_bio);
     sk_OPENSSL_STRING_free(opts);
     EVP_MAC_free(mac);
-    EVP_MAC_CTX_free(ctx2);
-    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free_ctx(ctx2);
+    EVP_MAC_free_ctx(ctx);
     OPENSSL_free(read_buffer);
     free_config_and_unload(conf);
     return ret;

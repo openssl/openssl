@@ -57,7 +57,7 @@ Depending on whether mac is CMAC or HMAC, either digest or cipher is required
 A context for KBKDF can be obtained by calling:
 
  EVP_KDF *kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
- EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
+ EVP_KDF_CTX *kctx = EVP_KDF_new_ctx(kdf);
 
 The output length of an KBKDF is specified via the C<keylen>
 parameter to the L<EVP_KDF_derive(3)> function.
@@ -76,7 +76,7 @@ Label "label", and Context "context".
  OSSL_PARAM params[6], *p = params;
 
  kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
- kctx = EVP_KDF_CTX_new(kdf);
+ kctx = EVP_KDF_new_ctx(kdf);
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
@@ -90,12 +90,12 @@ Label "label", and Context "context".
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "context", strlen("context"));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
-     error("EVP_KDF_CTX_set_params");
+ if (EVP_KDF_set_ctx_params(kctx, params) <= 0)
+     error("EVP_KDF_set_ctx_params");
  else if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
      error("EVP_KDF_derive");
 
- EVP_KDF_CTX_free(kctx);
+ EVP_KDF_free_ctx(kctx);
 
 This example derives 10 bytes using FEEDBACK-CMAC-AES256, with KI "secret",
 Label "label", and IV "sixteen bytes iv".
@@ -107,7 +107,7 @@ Label "label", and IV "sixteen bytes iv".
  unsigned char *iv = "sixteen bytes iv";
 
  kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
- kctx = EVP_KDF_CTX_new(kdf);
+ kctx = EVP_KDF_new_ctx(kdf);
  EVP_KDF_free(kdf);
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CIPHER, "AES256", 0);
@@ -122,12 +122,12 @@ Label "label", and IV "sixteen bytes iv".
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
                                           iv, strlen(iv));
  *p = OSSL_PARAM_construct_end();
- if (EVP_KDF_CTX_set_params(kctx, params) <= 0)
-     error("EVP_KDF_CTX_set_params");
+ if (EVP_KDF_set_ctx_params(kctx, params) <= 0)
+     error("EVP_KDF_set_ctx_params");
  else if (EVP_KDF_derive(kctx, out, sizeof(out)) <= 0)
      error("EVP_KDF_derive");
 
- EVP_KDF_CTX_free(kctx);
+ EVP_KDF_free_ctx(kctx);
 
 =head1 CONFORMING TO
 
@@ -136,7 +136,7 @@ NIST SP800-108, IETF RFC 6803, IETF RFC 8009.
 =head1 SEE ALSO
 
 L<EVP_KDF(3)>,
-L<EVP_KDF_CTX_free(3)>,
+L<EVP_KDF_free_ctx(3)>,
 L<EVP_KDF_size(3)>,
 L<EVP_KDF_derive(3)>,
 L<EVP_KDF(3)/PARAMETERS>

@@ -518,9 +518,25 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
  *     (type != EVP_PKEY_NONE && pkey.ptr != NULL)      ## legacy (libcrypto only)
  *     || (keymgmt != NULL && keydata != NULL)          ## provider side
  *
- * The easiest way to detect a legacy key is:           type != EVP_PKEY_NONE
- * The easiest way to detect a provider side key is:    keymgmt != NULL
+ * The easiest way to detect a legacy key is:
+ *
+ *     keymgmt == NULL && type != EVP_PKEY_NONE
+ *
+ * The easiest way to detect a provider side key is:
+ *
+ *     keymgmt != NULL
  */
+#define evp_pkey_is_blank(pk)                                   \
+    ((pk)->type == EVP_PKEY_NONE && (pk)->keymgmt == NULL)
+#define evp_pkey_is_typed(pk)                                   \
+    ((pk)->type != EVP_PKEY_NONE || (pk)->keymgmt != NULL)
+#define evp_pkey_is_assigned(pk)                                \
+    ((pk)->pkey.ptr != NULL || (pk)->keydata != NULL)
+#define evp_pkey_is_legacy(pk)                                  \
+    ((pk)->type != EVP_PKEY_NONE && (pk)->keymgmt == NULL)
+#define evp_pkey_is_provided(pk)                                \
+    ((pk)->keymgmt != NULL)
+
 struct evp_pkey_st {
     /* == Legacy attributes == */
     int type;
@@ -678,10 +694,6 @@ int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
                                const OSSL_PARAM params[]);
 const OSSL_PARAM *
 evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt);
-int evp_keymgmt_gen_get_params(const EVP_KEYMGMT *keymgmt, void *genctx,
-                               OSSL_PARAM params[]);
-const OSSL_PARAM *
-evp_keymgmt_gen_gettable_params(const EVP_KEYMGMT *keymgmt);
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg);
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);

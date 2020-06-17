@@ -52,7 +52,7 @@ static void int_dh_free(EVP_PKEY *pkey)
     DH_free(pkey->pkey.dh);
 }
 
-static int dh_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
+static int dh_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;
@@ -438,7 +438,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
         return dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2);
+        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2, 0, 1);
     default:
         return -2;
     }

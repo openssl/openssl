@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -417,8 +417,13 @@ void OSSL_SERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
 
     data.user_fn = (void (*)(void *, void *))fn;
     data.user_arg = arg;
-    ossl_algorithm_do_all(libctx, OSSL_OP_SERIALIZER, NULL,
-                          serializer_do_one, &data);
+
+    /*
+     * No pre- or post-condition for this call, as this only creates methods
+     * temporarly and then promptly destroys them.
+     */
+    ossl_algorithm_do_all(libctx, OSSL_OP_SERIALIZER, NULL, NULL,
+                          serializer_do_one, NULL, &data);
 }
 
 void OSSL_SERIALIZER_names_do_all(const OSSL_SERIALIZER *ser,

@@ -40,7 +40,7 @@ extern "C" {
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* The types RSA and RSA_METHOD are defined in ossl_typ.h */
 
-#   define OPENSSL_RSA_FIPS_MIN_MODULUS_BITS 1024
+#   define OPENSSL_RSA_FIPS_MIN_MODULUS_BITS 2048
 
 #   ifndef OPENSSL_RSA_SMALL_MODULUS_BITS
 #    define OPENSSL_RSA_SMALL_MODULUS_BITS 3072
@@ -107,6 +107,24 @@ extern "C" {
 #   define RSA_FLAG_NO_EXP_CONSTTIME RSA_FLAG_NO_CONSTTIME
 #  endif
 
+/*-
+ * New with 3.0: use part of the flags to denote exact type of RSA key,
+ * some of which are limited to specific signature and encryption schemes.
+ * These different types share the same RSA structure, but indicate the
+ * use of certain fields in that structure.
+ * Currently known are:
+ * RSA          - this is the "normal" unlimited RSA structure (typenum 0)
+ * RSASSA-PSS   - indicates that the PSS parameters are used.
+ * RSAES-OAEP   - no specific field used for the moment, but OAEP padding
+ *                is expected.  (currently unused)
+ *
+ * 4 bits allow for 16 types
+ */
+#  define RSA_FLAG_TYPE_MASK            0xF000
+#  define RSA_FLAG_TYPE_RSA             0x0000
+#  define RSA_FLAG_TYPE_RSASSAPSS       0x1000
+#  define RSA_FLAG_TYPE_RSAESOAEP       0x2000
+
 int EVP_PKEY_CTX_set_rsa_padding(EVP_PKEY_CTX *ctx, int pad_mode);
 int EVP_PKEY_CTX_get_rsa_padding(EVP_PKEY_CTX *ctx, int *pad_mode);
 
@@ -116,6 +134,7 @@ int EVP_PKEY_CTX_get_rsa_pss_saltlen(EVP_PKEY_CTX *ctx, int *saltlen);
 int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int bits);
 int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp);
 int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes);
+int EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(EVP_PKEY_CTX *ctx, int saltlen);
 
 /* Salt length matches digest */
 #  define RSA_PSS_SALTLEN_DIGEST -1
@@ -126,20 +145,15 @@ int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes);
 /* Old compatible max salt length for sign only */
 #  define RSA_PSS_SALTLEN_MAX_SIGN    -2
 
-#  define EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen(ctx, len) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
-                          EVP_PKEY_CTRL_RSA_PSS_SALTLEN, len, NULL)
-
 int EVP_PKEY_CTX_set_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 int EVP_PKEY_CTX_set_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, const char *mdname,
                                       const char *mdprops);
 int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
 int EVP_PKEY_CTX_get_rsa_mgf1_md_name(EVP_PKEY_CTX *ctx, char *name,
                                       size_t namelen);
-
-#  define  EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(ctx, md) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA_PSS, EVP_PKEY_OP_KEYGEN, \
-                          EVP_PKEY_CTRL_RSA_MGF1_MD, 0, (void *)(md))
+int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+int EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name(EVP_PKEY_CTX *ctx,
+                                                 const char *mdname);
 
 int EVP_PKEY_CTX_set_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 int EVP_PKEY_CTX_set_rsa_oaep_md_name(EVP_PKEY_CTX *ctx, const char *mdname,

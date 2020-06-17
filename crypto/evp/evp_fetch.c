@@ -444,7 +444,13 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
     data.free_method = free_method;
     data.user_fn = user_fn;
     data.user_arg = user_arg;
-    ossl_algorithm_do_all(libctx, operation_id, NULL, do_one, &data);
+
+    /*
+     * No pre- or post-condition for this call, as this only creates methods
+     * temporarly and then promptly destroys them.
+     */
+    ossl_algorithm_do_all(libctx, operation_id, NULL, NULL, do_one, NULL,
+                          &data);
 }
 
 const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id)

@@ -148,8 +148,8 @@ extern const OSSL_DISPATCH idea128cfb64_functions[];
 #ifndef OPENSSL_NO_CAST
 extern const OSSL_DISPATCH cast5128ecb_functions[];
 extern const OSSL_DISPATCH cast5128cbc_functions[];
-extern const OSSL_DISPATCH cast564ofb64_functions[];
-extern const OSSL_DISPATCH cast564cfb64_functions[];
+extern const OSSL_DISPATCH cast5128ofb64_functions[];
+extern const OSSL_DISPATCH cast5128cfb64_functions[];
 #endif /* OPENSSL_NO_CAST */
 #ifndef OPENSSL_NO_SEED
 extern const OSSL_DISPATCH seed128ecb_functions[];
@@ -257,6 +257,7 @@ extern const OSSL_DISPATCH kdf_krb5kdf_functions[];
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
 extern const OSSL_DISPATCH dsa_keymgmt_functions[];
 extern const OSSL_DISPATCH rsa_keymgmt_functions[];
+extern const OSSL_DISPATCH rsapss_keymgmt_functions[];
 extern const OSSL_DISPATCH x25519_keymgmt_functions[];
 extern const OSSL_DISPATCH x448_keymgmt_functions[];
 extern const OSSL_DISPATCH ed25519_keymgmt_functions[];

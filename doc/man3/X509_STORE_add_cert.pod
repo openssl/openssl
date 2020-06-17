@@ -32,8 +32,6 @@ X509_STORE_load_locations
  int X509_STORE_load_path(X509_STORE *ctx, const char *dir);
  int X509_STORE_load_store(X509_STORE *ctx, const char *uri);
 
-Deprecated:
-
  int X509_STORE_load_locations(X509_STORE *ctx,
                                const char *file, const char *dir);
 

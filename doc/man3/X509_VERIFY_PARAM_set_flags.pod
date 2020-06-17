@@ -10,11 +10,13 @@ X509_VERIFY_PARAM_get_depth, X509_VERIFY_PARAM_set_auth_level,
 X509_VERIFY_PARAM_get_auth_level, X509_VERIFY_PARAM_set_time,
 X509_VERIFY_PARAM_get_time,
 X509_VERIFY_PARAM_add0_policy, X509_VERIFY_PARAM_set1_policies,
+X509_VERIFY_PARAM_get0_host,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
 X509_VERIFY_PARAM_set_hostflags,
 X509_VERIFY_PARAM_get_hostflags,
 X509_VERIFY_PARAM_get0_peername,
-X509_VERIFY_PARAM_set1_email, X509_VERIFY_PARAM_set1_ip,
+X509_VERIFY_PARAM_get0_email, X509_VERIFY_PARAM_set1_email,
+X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_get1_ip_asc,
 X509_VERIFY_PARAM_set1_ip_asc
 - X509 verification parameters
 
@@ -50,6 +52,7 @@ X509_VERIFY_PARAM_set1_ip_asc
                                        int auth_level);
  int X509_VERIFY_PARAM_get_auth_level(const X509_VERIFY_PARAM *param);
 
+ char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int n);
  int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
                                  const char *name, size_t namelen);
  int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
@@ -58,8 +61,10 @@ X509_VERIFY_PARAM_set1_ip_asc
                                       unsigned int flags);
  unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
  char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *param);
+ char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
                                   const char *email, size_t emaillen);
+ char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_ip(X509_VERIFY_PARAM *param,
                                const unsigned char *ip, size_t iplen);
  int X509_VERIFY_PARAM_set1_ip_asc(X509_VERIFY_PARAM *param, const char *ipasc);
@@ -128,6 +133,11 @@ Security level 1 requires at least 80-bit-equivalent security and is broadly
 interoperable, though it will, for example, reject MD5 signatures or RSA keys
 shorter than 1024 bits.
 
+X509_VERIFY_PARAM_get0_host() returns the B<n>th expected DNS hostname that has
+been set using X509_VERIFY_PARAM_set1_host() or X509_VERIFY_PARAM_add1_host().
+To obtain all names start with B<n> = 0 and increment B<n> as long as no NULL
+pointer is returned.
+
 X509_VERIFY_PARAM_set1_host() sets the expected DNS hostname to
 B<name> clearing any previously specified hostname.  If
 B<name> is NULL, or empty the list of hostnames is cleared, and
@@ -177,11 +187,16 @@ string is allocated by the library and is no longer valid once the
 associated B<param> argument is freed.  Applications must not free
 the return value.
 
+X509_VERIFY_PARAM_get0_email() returns the expected RFC822 email address.
+
 X509_VERIFY_PARAM_set1_email() sets the expected RFC822 email address to
 B<email>.  If B<email> is NUL-terminated, B<emaillen> may be zero, otherwise
 B<emaillen> must be set to the length of B<email>.  When an email address
 is specified, certificate verification automatically invokes
 L<X509_check_email(3)>.
+
+X509_VERIFY_PARAM_get1_ip_asc() returns the expected IP address as a string.
+The caller is responsible for freeing it.
 
 X509_VERIFY_PARAM_set1_ip() sets the expected IP address to B<ip>.
 The B<ip> argument is in binary format, in network byte-order and
@@ -204,6 +219,10 @@ X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
 X509_VERIFY_PARAM_set1_email(), X509_VERIFY_PARAM_set1_ip() and
 X509_VERIFY_PARAM_set1_ip_asc() return 1 for success and 0 for
 failure.
+
+X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(), and
+X509_VERIFY_PARAM_get1_ip_asc(), return the string pointers pecified above
+or NULL if the respective value has not been set or on error.
 
 X509_VERIFY_PARAM_get_flags() returns the current verification flags.
 
@@ -373,6 +392,9 @@ The flag B<X509_V_FLAG_CB_ISSUER_CHECK> was deprecated in OpenSSL 1.1.0
 and has no effect.
 
 The X509_VERIFY_PARAM_get_hostflags() function was added in OpenSSL 1.1.0i.
+
+The X509_VERIFY_PARAM_get0_host(), X509_VERIFY_PARAM_get0_email(),
+and X509_VERIFY_PARAM_get1_ip_asc() functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

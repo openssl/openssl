@@ -44,37 +44,37 @@ int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
     return 1;
 }
 
-int ffc_params_FIPS186_4_validate(const FFC_PARAMS *params, int type,
-                                  const EVP_MD *evpmd, int validate_flags,
-                                  int *res, BN_GENCB *cb)
+int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+                                  int type, int *res, BN_GENCB *cb)
 {
     size_t L, N;
 
     if (params == NULL || params->p == NULL || params->q == NULL)
-        return FFC_PARAMS_RET_STATUS_FAILED;
+        return FFC_PARAM_RET_STATUS_FAILED;
 
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ffc_params_FIPS186_4_gen_verify(NULL, (FFC_PARAMS *)params, type, L, N,
-                                           evpmd, validate_flags, res, cb);
+    return ffc_params_FIPS186_4_gen_verify(libctx, (FFC_PARAMS *)params,
+                                           FFC_PARAM_MODE_VERIFY, type,
+                                           L, N, res, cb);
 }
 
 /* This may be used in FIPS mode to validate deprecated FIPS-186-2 Params */
-int ffc_params_FIPS186_2_validate(const FFC_PARAMS *params, int type,
-                                  const EVP_MD *evpmd, int validate_flags,
-                                  int *res, BN_GENCB *cb)
+int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+                                  int type, int *res, BN_GENCB *cb)
 {
     size_t L, N;
 
     if (params->p == NULL || params->q == NULL) {
         *res = FFC_CHECK_INVALID_PQ;
-        return FFC_PARAMS_RET_STATUS_FAILED;
+        return FFC_PARAM_RET_STATUS_FAILED;
     }
 
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ffc_params_FIPS186_2_gen_verify(NULL, (FFC_PARAMS *)params, type, L, N,
-                                           evpmd, validate_flags, res, cb);
+    return ffc_params_FIPS186_2_gen_verify(libctx, (FFC_PARAMS *)params,
+                                           FFC_PARAM_MODE_VERIFY, type,
+                                           L, N, res, cb);
 }

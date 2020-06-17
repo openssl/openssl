@@ -9,7 +9,7 @@
 
 #include <openssl/provider.h>
 
-const OSSL_PROVIDER *FIPS_get_provider(OPENSSL_CTX *ctx);
+const OSSL_CORE_HANDLE *FIPS_get_core_handle(OPENSSL_CTX *ctx);
 
 const char *ossl_prov_util_nid_to_name(int nid);
 

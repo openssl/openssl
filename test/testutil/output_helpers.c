@@ -32,3 +32,27 @@ int test_printf_stderr(const char *fmt, ...)
 
     return ret;
 }
+
+int test_printf_tapout(const char *fmt, ...)
+{
+    va_list ap;
+    int ret;
+
+    va_start(ap, fmt);
+    ret = test_vprintf_tapout(fmt, ap);
+    va_end(ap);
+
+    return ret;
+}
+
+int test_printf_taperr(const char *fmt, ...)
+{
+    va_list ap;
+    int ret;
+
+    va_start(ap, fmt);
+    ret = test_vprintf_taperr(fmt, ap);
+    va_end(ap);
+
+    return ret;
+}

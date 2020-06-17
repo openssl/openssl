@@ -170,6 +170,7 @@ int ERR_load_EC_strings(void);
 #   define EC_F_EC_POINT_IS_AT_INFINITY                     0
 #   define EC_F_EC_POINT_IS_ON_CURVE                        0
 #   define EC_F_EC_POINT_MAKE_AFFINE                        0
+#   define EC_F_EC_POINT_MUL                                0
 #   define EC_F_EC_POINT_NEW                                0
 #   define EC_F_EC_POINT_OCT2POINT                          0
 #   define EC_F_EC_POINT_POINT2BUF                          0

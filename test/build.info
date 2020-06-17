@@ -20,7 +20,7 @@ IF[{- !$disabled{tests} -}]
   LIBS{noinst,has_main}=libtestutil.a
   SOURCE[libtestutil.a]=testutil/basic_output.c testutil/output_helpers.c \
           testutil/driver.c testutil/tests.c testutil/cb.c testutil/stanza.c \
-          testutil/format_output.c testutil/tap_bio.c \
+          testutil/format_output.c \
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c \
           testutil/apps_mem.c testutil/random.c $LIBAPPSSRC
@@ -36,6 +36,7 @@ IF[{- !$disabled{tests} -}]
           destest mdc2test \
           enginetest exptest \
           evp_pkey_provided_test evp_test evp_extra_test evp_fetch_prov_test \
+          acvp_test \
           v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
@@ -44,7 +45,7 @@ IF[{- !$disabled{tests} -}]
           dtlsv1listentest ct_test threadstest afalgtest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test param_build_test \
-          bioprinttest sslapitest sslprovidertest dtlstest sslcorrupttest \
+          bioprinttest sslapitest dtlstest sslcorrupttest \
           bio_enc_test pkey_meth_test pkey_meth_kdf_test evp_kdf_test uitest \
           cipherbytes_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
@@ -54,7 +55,7 @@ IF[{- !$disabled{tests} -}]
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
-          keymgmt_internal_test
+          keymgmt_internal_test hexstr_test
 
   SOURCE[confdump]=confdump.c
   INCLUDE[confdump]=../include ../apps/include
@@ -144,6 +145,12 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
   DEPEND[evp_pkey_provided_test]=../libcrypto.a libtestutil.a
+
+  IF[{- !$disabled{acvp-tests} -}]
+    SOURCE[acvp_test]=acvp_test.c
+    INCLUDE[acvp_test]=../include ../apps/include
+    DEPEND[acvp_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
@@ -290,13 +297,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[param_build_test]=../include ../apps/include
   DEPEND[param_build_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[sslapitest]=sslapitest.c ssltestlib.c
+  SOURCE[sslapitest]=sslapitest.c ssltestlib.c filterprov.c
   INCLUDE[sslapitest]=../include ../apps/include ..
   DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
-
-  SOURCE[sslprovidertest]=sslprovidertest.c ssltestlib.c
-  INCLUDE[sslprovidertest]=../include ../apps/include ..
-  DEPEND[sslprovidertest]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[ocspapitest]=ocspapitest.c
   INCLUDE[ocspapitest]=../include ../apps/include
@@ -518,6 +521,9 @@ IF[{- !$disabled{tests} -}]
     IF[{- !$disabled{ec} -}]
       PROGRAMS{noinst}=ec_internal_test curve448_internal_test
     ENDIF
+    IF[{- !$disabled{cmac} -}]
+      PROGRAMS{noinst}=cmactest
+    ENDIF
 
     SOURCE[poly1305_internal_test]=poly1305_internal_test.c
     INCLUDE[poly1305_internal_test]=.. ../include ../apps/include
@@ -590,6 +596,12 @@ IF[{- !$disabled{tests} -}]
     SOURCE[hmactest]=hmactest.c
     INCLUDE[hmactest]=../include ../apps/include
     DEPEND[hmactest]=../libcrypto.a libtestutil.a
+
+    IF[{- !$disabled{cmac} -}]
+      SOURCE[cmactest]=cmactest.c
+      INCLUDE[cmactest]=../include ../apps/include
+      DEPEND[cmactest]=../libcrypto.a libtestutil.a
+    ENDIF
 
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../apps/include
@@ -679,6 +691,7 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{shared} -}]
     PROGRAMS{noinst}=tls13secretstest
     SOURCE[tls13secretstest]=tls13secretstest.c
+    DEFINE[tls13secretstest]=OPENSSL_NO_KTLS
     SOURCE[tls13secretstest]= ../ssl/tls13_enc.c ../crypto/packet.c
     INCLUDE[tls13secretstest]=.. ../include ../apps/include
     DEPEND[tls13secretstest]=../libcrypto ../libssl libtestutil.a
@@ -735,10 +748,20 @@ IF[{- !$disabled{tests} -}]
   DEPEND[]=provider_internal_test.cnf
   GENERATE[provider_internal_test.cnf]=provider_internal_test.cnf.in
 
+  PROGRAMS{noinst}=provider_fallback_test
+  SOURCE[provider_fallback_test]=provider_fallback_test.c
+  INCLUDE[provider_fallback_test]=../include ../apps/include
+  DEPEND[provider_fallback_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=params_test
   SOURCE[params_test]=params_test.c
   INCLUDE[params_test]=.. ../include ../apps/include
   DEPEND[params_test]=../libcrypto.a libtestutil.a
+
+  PROGRAMS{noinst}=hexstr_test
+  SOURCE[hexstr_test]=hexstr_test.c
+  INCLUDE[hexstr_test]=.. ../include ../apps/include
+  DEPEND[hexstr_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=namemap_internal_test
   SOURCE[namemap_internal_test]=namemap_internal_test.c

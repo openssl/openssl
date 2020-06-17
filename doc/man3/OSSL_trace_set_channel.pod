@@ -178,9 +178,9 @@ point during evaluation.
 
 Traces BIGNUM context operations.
 
-=item C<OSSL_TRACE_CATEGORY_PROVIDER_CONF>
+=item C<OSSL_TRACE_CATEGORY_CONF>
 
-Traces the OSSL_PROVIDER configuration.
+Traces details about the provider and engine configuration.
 
 =back
 

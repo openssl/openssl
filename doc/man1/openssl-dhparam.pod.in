@@ -30,9 +30,6 @@ B<openssl dhparam>
 
 =head1 DESCRIPTION
 
-This command has been deprecated.
-The L<openssl-pkeyparam(1)> command should be used instead.
-
 This command is used to manipulate DH parameter files.
 
 =head1 OPTIONS
@@ -61,6 +58,8 @@ if this option is not present. The output filename should B<not> be the same
 as the input filename.
 
 =item B<-dsaparam>
+
+This option is deprecated.
 
 If this option is used, DSA rather than DH parameters are read or created;
 they are converted to DH format.  Otherwise, "strong" primes (such
@@ -136,7 +135,7 @@ L<openssl-dsaparam(1)>
 
 =head1 HISTORY
 
-This command was deprecated in OpenSSL 3.0.
+The B<-dsaparam> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

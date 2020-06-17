@@ -12,8 +12,10 @@
 
 # include "e_os.h" /* struct timeval for DTLS */
 # include "internal/nelem.h"
+# include "internal/sockets.h" /* for openssl_fdset() */
 # include <assert.h>
 
+# include <stdarg.h>
 # include <sys/types.h>
 # ifndef OPENSSL_NO_POSIX_IO
 #  include <sys/stat.h>
@@ -35,19 +37,12 @@
 # include "fmt.h"
 # include "platform.h"
 
-/* also in include/internal/sockets.h */
-# if defined(OPENSSL_SYS_WIN32) || defined(OPENSSL_SYS_WINCE)
-#  define openssl_fdset(a,b) FD_SET((unsigned int)a, b)
-# else
-#  define openssl_fdset(a,b) FD_SET(a, b)
-# endif
-
 /*
  * quick macro when you need to pass an unsigned char instead of a char.
  * this is true for some implementations of the is*() functions, for
  * example.
  */
-#define _UC(c) ((unsigned char)(c))
+# define _UC(c) ((unsigned char)(c))
 
 void app_RAND_load_conf(CONF *c, const char *section);
 void app_RAND_write(void);
@@ -102,19 +97,28 @@ int set_cert_ex(unsigned long *flags, const char *arg);
 int set_name_ex(unsigned long *flags, const char *arg);
 int set_ext_copy(int *copy_type, const char *arg);
 int copy_extensions(X509 *x, X509_REQ *req, int copy_type);
+char *get_passwd(const char *pass, const char *desc);
 int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2);
 int add_oid_section(CONF *conf);
 X509_REQ *load_csr(const char *file, int format, const char *desc);
-X509 *load_cert(const char *file, int format, const char *desc);
-X509_CRL *load_crl(const char *infile, int format, const char *desc);
-EVP_PKEY *load_key(const char *file, int format, int maybe_stdin,
+X509 *load_cert_pass(const char *uri, int maybe_stdin,
+                     const char *pass, const char *desc);
+/* the format parameter is meanwhile not needed anymore and thus ignored */
+X509 *load_cert(const char *uri, int format, const char *desc);
+X509_CRL *load_crl(const char *uri, int format, const char *desc);
+void cleanse(char *str);
+void clear_free(char *str);
+EVP_PKEY *load_key(const char *uri, int format, int maybe_stdin,
                    const char *pass, ENGINE *e, const char *desc);
-EVP_PKEY *load_pubkey(const char *file, int format, int maybe_stdin,
+EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
                       const char *pass, ENGINE *e, const char *desc);
 int load_certs(const char *file, STACK_OF(X509) **certs, int format,
                const char *pass, const char *desc);
 int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *desc);
+int load_key_cert_crl(const char *uri, int maybe_stdin,
+                      const char *pass, const char *desc,
+                      EVP_PKEY **ppkey, X509 **pcert, X509_CRL **pcrl);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
                          const char *CApath, int noCApath,
                          const char *CAstore, int noCAstore);
@@ -123,7 +127,7 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx,
                                     const char *CApath, int noCApath,
                                     const char *CAstore, int noCAstore);
 
-#ifndef OPENSSL_NO_CT
+# ifndef OPENSSL_NO_CT
 
 /*
  * Sets the file to load the Certificate Transparency log list from.
@@ -132,9 +136,10 @@ __owur int ctx_set_verify_locations(SSL_CTX *ctx,
  */
 __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 
-#endif
+# endif
 
-ENGINE *setup_engine(const char *engine, int debug);
+ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
+# define setup_engine(e, debug) setup_engine_methods(e, (unsigned int)-1, debug)
 void release_engine(ENGINE *e);
 
 # ifndef OPENSSL_NO_OCSP
@@ -175,6 +180,7 @@ typedef struct ca_db_st {
 # endif
 } CA_DB;
 
+void app_bail_out(char *fmt, ...);
 void* app_malloc(int sz, const char *what);
 BIGNUM *load_serial(const char *serialfile, int create, ASN1_INTEGER **retai);
 int save_serial(const char *serialfile, const char *suffix, const BIGNUM *serial,

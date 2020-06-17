@@ -27,7 +27,7 @@
 #include "internal/ffc.h"
 #include "dsa_local.h"
 
-static int dsa_pub_decode(EVP_PKEY *pkey, X509_PUBKEY *pubkey)
+static int dsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 {
     const unsigned char *p, *pm;
     int pklen, pmlen;

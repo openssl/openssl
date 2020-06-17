@@ -131,12 +131,12 @@ written to I<*secretlen>.
 
 OP_keyexch_set_ctx_params() sets key exchange parameters associated with the
 given provider side key exchange context I<ctx> to I<params>,
-see L</Key Exchange Parameters>.
+see L</Common Key Exchange parameters>.
 Any parameter settings are additional to any that were previously set.
 
 OP_keyexch_get_ctx_params() gets key exchange parameters associated with the
 given provider side key exchange context I<ctx> into I<params>,
-see L</Key Exchange Parameters>.
+see L</Common Key Exchange parameters>.
 
 OP_keyexch_settable_ctx_params() yields a constant B<OSSL_PARAM> array that
 describes the settable parameters, i.e. parameters that can be used with
@@ -152,15 +152,13 @@ See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 Notice that not all settable parameters are also gettable, and vice versa.
 
-=head2 Key Exchange Parameters
+=head2 Common Key Exchange parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OP_keyexch_set_ctx_params() and OP_keyexch_get_ctx_params() functions.
 
-Parameters currently recognised by built-in key exchange algorithms are as
-follows.
-Not all parameters are relevant to, or are understood by all key exchange
-algorithms:
+Common parameters currently recognised by built-in key exchange algorithms are
+as follows.
 
 =over 4
 
@@ -168,62 +166,12 @@ algorithms:
 
 Sets the padding mode for the associated key exchange ctx.
 Setting a value of 1 will turn padding on.
-Setting a vlue of 0 will turn padding off.
+Setting a value of 0 will turn padding off.
 If padding is off then the derived shared secret may be smaller than the largest
 possible secret size.
 If padding is on then the derived shared secret will have its first bytes filled
 with 0s where necessary to make the shared secret the same size as the largest
 possible secret size.
-
-=item "ecdh-cofactor-mode" (B<OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE>) <integer>
-
-Sets/gets the ECDH mode of operation for the associated key exchange ctx.
-
-In the context of an Elliptic Curve Diffie-Hellman key exchange, this parameter
-can be used to select between the plain Diffie-Hellman (DH) or Cofactor
-Diffie-Hellman (CDH) variants of the key exchange algorithm.
-
-When setting, the value should be 1, 0 or -1, respectively forcing cofactor mode
-on, off, or resetting it to the default for the private key associated with the
-given key exchange ctx.
-
-When getting, the value should be either 1 or 0, respectively signaling if the
-cofactor mode is on or off.
-
-See also L<provider-keymgmt(7)> for the related
-B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH> parameter that can be set on a
-per-key basis.
-
-=item "kdf-type" (B<OSSL_EXCHANGE_PARAM_KDF_TYPE>) <utf8_string>
-
-Sets/gets the Key Derivation Function type to apply within the associated key
-exchange ctx.
-
-=item "kdf-digest" (B<OSSL_EXCHANGE_PARAM_KDF_DIGEST>) <utf8_string>
-
-Sets/gets the Digest algorithm to be used as part of the Key Derivation Function
-associated with the given key exchange ctx.
-
-=item "kdf-digest-props" (B<OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS>) <utf8_string>
-
-Sets properties to be used upon look up of the implementation for the selected
-Digest algorithm for the Key Derivation Function associated with the given key
-exchange ctx.
-
-=item "kdf-outlen" (B<OSSL_EXCHANGE_PARAM_KDF_OUTLEN>) <size_t>
-
-Sets/gets the desired size for the output of the chosen Key Derivation Function
-associated with the given key exchange ctx.
-
-=item "kdf-ukm" (B<OSSL_EXCHANGE_PARAM_KDF_UKM>) <octet_string>
-
-Sets/gets User Key Material to be used as part of the selected Key Derivation
-Function associated with the given key exchange ctx.
-
-=item "kdf-ukm-len" (B<OSSL_EXCHANGE_PARAM_KDF_UKM_LEN>) <size_t>
-
-Sets/gets the size of the User Key Material to be used as part of the selected
-Key Derivation Function associated with the given key exchange ctx.
 
 =back
 

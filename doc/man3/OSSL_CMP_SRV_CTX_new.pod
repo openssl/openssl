@@ -85,32 +85,33 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
 =head1 DESCRIPTION
 
 OSSL_CMP_SRV_process_request() implements the generic aspects of a CMP server.
-It does the typical generic checks on the given request message, calls
+Its arguments are the B<OSSL_CMP_SRV_CTX> I<srv_ctx> and the CMP request message
+I<req>. It does the typical generic checks on I<req>, calls
 the respective callback function (if present) for more specific processing,
 and then assembles a result message, which may be a CMP error message.
 
 OSSL_CMP_CTX_server_perform() is an interface to
 B<OSSL_CMP_SRV_process_request()> that can be used by a CMP client
 in the same way as B<OSSL_CMP_MSG_http_perform()>.
-The B<OSSL_CMP_SRV_CTX> must be set as B<transfer_cb_arg> of B<client_ctx>.
+The B<OSSL_CMP_SRV_CTX> must be set as I<transfer_cb_arg> of I<client_ctx>.
 
 OSSL_CMP_SRV_CTX_new() creates and initializes an OSSL_CMP_SRV_CTX structure
 and returns a pointer to it on success, NULL on error.
 
-OSSL_CMP_SRV_CTX_free() deletes the given B<srv_ctx>.
+OSSL_CMP_SRV_CTX_free() deletes the given I<srv_ctx>.
 
-OSSL_CMP_SRV_CTX_init() sets in the given B<srv_ctx> a custom server context
+OSSL_CMP_SRV_CTX_init() sets in the given I<srv_ctx> a custom server context
 pointer as well as callback functions performing the specific processing of CMP
 certificate requests, revocation requests, certificate confirmation requests,
 general messages, error messages, and poll requests.
-All arguments except B<srv_ctx> may be NULL.
+All arguments except I<srv_ctx> may be NULL.
 If a callback for some message type is not given this means that the respective
 type of CMP message is not supported by the server.
 
-OSSL_CMP_SRV_CTX_get0_cmp_ctx() returns the B<OSSL_CMP_CTX> from the B<srv_ctx>.
+OSSL_CMP_SRV_CTX_get0_cmp_ctx() returns the B<OSSL_CMP_CTX> from the I<srv_ctx>.
 
 OSSL_CMP_SRV_CTX_get0_custom_ctx() returns the custom server context from
-B<srv_ctx> that has been set using B<OSSL_CMP_SRV_CTX_init>.
+I<srv_ctx> that has been set using B<OSSL_CMP_SRV_CTX_init()>.
 
 OSSL_CMP_SRV_CTX_set_send_unprotected_errors() enables sending error messages
 and other forms of negative responses unprotected.
@@ -142,7 +143,7 @@ OSSL_CMP_SRV_CTX_get0_cmp_ctx() returns a B<OSSL_CMP_CTX> structure on success,
 NULL on error.
 
 OSSL_CMP_SRV_CTX_get0_custom_ctx() returns the custom server context
-that has been set using B<OSSL_CMP_SRV_CTX_init>.
+that has been set using B<OSSL_CMP_SRV_CTX_init()>.
 
 All other functions return 1 on success, 0 on error.
 

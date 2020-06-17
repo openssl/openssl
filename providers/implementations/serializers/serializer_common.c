@@ -178,7 +178,7 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
     }
 
     if (BN_is_zero(bn))
-        return ossl_prov_bio_printf(out, "%s%s0\n", label, post_label_spc);
+        return BIO_printf(out, "%s%s0\n", label, post_label_spc);
 
     if (BN_num_bytes(bn) <= BN_BYTES) {
         BN_ULONG *words = bn_get_words(bn);
@@ -186,10 +186,8 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
         if (BN_is_negative(bn))
             neg = "-";
 
-        return ossl_prov_bio_printf(out,
-                                    "%s%s%s" BN_FMTu " (%s0x" BN_FMTx ")\n",
-                                    label, post_label_spc, neg, words[0],
-                                    neg, words[0]);
+        return BIO_printf(out, "%s%s%s" BN_FMTu " (%s0x" BN_FMTx ")\n",
+                          label, post_label_spc, neg, words[0], neg, words[0]);
     }
 
     hex_str = BN_bn2hex(bn);
@@ -198,18 +196,18 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
         ++p;
         neg = " (Negative)";
     }
-    if (ossl_prov_bio_printf(out, "%s%s\n", label, neg) <= 0)
+    if (BIO_printf(out, "%s%s\n", label, neg) <= 0)
         goto err;
 
     /* Keep track of how many bytes we have printed out so far */
     bytes = 0;
 
-    if (ossl_prov_bio_printf(out, "%s", spaces) <= 0)
+    if (BIO_printf(out, "%s", spaces) <= 0)
         goto err;
 
     /* Add a leading 00 if the top bit is set */
     if (*p >= '8') {
-        if (ossl_prov_bio_printf(out, "%02x", 0) <= 0)
+        if (BIO_printf(out, "%02x", 0) <= 0)
             goto err;
         ++bytes;
         use_sep = 1;
@@ -217,18 +215,18 @@ int ossl_prov_print_labeled_bignum(BIO *out, const char *label,
     while (*p != '\0') {
         /* Do a newline after every 15 hex bytes + add the space indent */
         if ((bytes % 15) == 0 && bytes > 0) {
-            if (ossl_prov_bio_printf(out, ":\n%s", spaces) <= 0)
+            if (BIO_printf(out, ":\n%s", spaces) <= 0)
                 goto err;
             use_sep = 0; /* The first byte on the next line doesnt have a : */
         }
-        if (ossl_prov_bio_printf(out, "%s%c%c", use_sep ? ":" : "",
-                                 ossl_tolower(p[0]), ossl_tolower(p[1])) <= 0)
+        if (BIO_printf(out, "%s%c%c", use_sep ? ":" : "",
+                       ossl_tolower(p[0]), ossl_tolower(p[1])) <= 0)
             goto err;
         ++bytes;
         p += 2;
         use_sep = 1;
     }
-    if (ossl_prov_bio_printf(out, "\n") <= 0)
+    if (BIO_printf(out, "\n") <= 0)
         goto err;
     ret = 1;
 err:
@@ -244,22 +242,22 @@ int ossl_prov_print_labeled_buf(BIO *out, const char *label,
 {
     size_t i;
 
-    if (ossl_prov_bio_printf(out, "%s\n", label) <= 0)
+    if (BIO_printf(out, "%s\n", label) <= 0)
         return 0;
 
     for (i = 0; i < buflen; i++) {
         if ((i % LABELED_BUF_PRINT_WIDTH) == 0) {
-            if (i > 0 && ossl_prov_bio_printf(out, "\n") <= 0)
+            if (i > 0 && BIO_printf(out, "\n") <= 0)
                 return 0;
-            if (ossl_prov_bio_printf(out, "    ") <= 0)
+            if (BIO_printf(out, "    ") <= 0)
                 return 0;
         }
 
-        if (ossl_prov_bio_printf(out, "%02x%s", buf[i],
+        if (BIO_printf(out, "%02x%s", buf[i],
                                  (i == buflen - 1) ? "" : ":") <= 0)
             return 0;
     }
-    if (ossl_prov_bio_printf(out, "\n") <= 0)
+    if (BIO_printf(out, "\n") <= 0)
         return 0;
 
     return 1;

@@ -27,8 +27,7 @@ int EC_GROUP_get_basis_type(const EC_GROUP *group)
 {
     int i;
 
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
-        NID_X9_62_characteristic_two_field)
+    if (EC_GROUP_get_field_type(group) != NID_X9_62_characteristic_two_field)
         /* everything else is currently not supported */
         return 0;
 
@@ -53,8 +52,7 @@ int EC_GROUP_get_trinomial_basis(const EC_GROUP *group, unsigned int *k)
     if (group == NULL)
         return 0;
 
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
-        NID_X9_62_characteristic_two_field
+    if (EC_GROUP_get_field_type(group) != NID_X9_62_characteristic_two_field
         || !((group->poly[0] != 0) && (group->poly[1] != 0)
              && (group->poly[2] == 0))) {
         ECerr(EC_F_EC_GROUP_GET_TRINOMIAL_BASIS,
@@ -74,8 +72,7 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *group, unsigned int *k1,
     if (group == NULL)
         return 0;
 
-    if (EC_METHOD_get_field_type(EC_GROUP_method_of(group)) !=
-        NID_X9_62_characteristic_two_field
+    if (EC_GROUP_get_field_type(group) != NID_X9_62_characteristic_two_field
         || !((group->poly[0] != 0) && (group->poly[1] != 0)
              && (group->poly[2] != 0) && (group->poly[3] != 0)
              && (group->poly[4] == 0))) {
@@ -262,7 +259,7 @@ static int ec_asn1_group2fieldid(const EC_GROUP *group, X9_62_FIELDID *field)
     ASN1_OBJECT_free(field->fieldType);
     ASN1_TYPE_free(field->p.other);
 
-    nid = EC_METHOD_get_field_type(EC_GROUP_method_of(group));
+    nid = EC_GROUP_get_field_type(group);
     /* set OID for the field */
     if ((field->fieldType = OBJ_nid2obj(nid)) == NULL) {
         ECerr(EC_F_EC_ASN1_GROUP2FIELDID, ERR_R_OBJ_LIB);

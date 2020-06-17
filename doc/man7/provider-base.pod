@@ -16,15 +16,15 @@ provider-base
   */
 
  /* Functions offered by libcrypto to the providers */
- const OSSL_ITEM *core_gettable_params(const OSSL_PROVIDER *prov);
- int core_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
- int core_thread_start(const OSSL_PROVIDER *prov,
+ const OSSL_ITEM *core_gettable_params(const OSSL_CORE_HANDLE *handle);
+ int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[]);
+ int core_thread_start(const OSSL_CORE_HANDLE *handle,
                        OSSL_thread_stop_handler_fn handfn);
- OPENSSL_CTX *core_get_library_context(const OSSL_PROVIDER *prov);
- void core_new_error(const OSSL_PROVIDER *prov);
- void core_set_error_debug(const OSSL_PROVIDER *prov,
+ OPENSSL_CORE_CTX *core_get_library_context(const OSSL_CORE_HANDLE *handle);
+ void core_new_error(const OSSL_CORE_HANDLE *handle);
+ void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
                            const char *file, int line, const char *func);
- void core_vset_error(const OSSL_PROVIDER *prov,
+ void core_vset_error(const OSSL_CORE_HANDLE *handle,
                       uint32_t reason, const char *fmt, va_list args);
 
  /*
@@ -52,7 +52,19 @@ provider-base
                                const char *file, int line);
  int CRYPTO_secure_allocated(const void *ptr);
  void OPENSSL_cleanse(void *ptr, size_t len);
- unsigned char *OPENSSL_hexstr2buf(const char *str, long *len);
+
+ OSSL_CORE_BIO * BIO_new_file(const char *filename, const char *mode)
+ OSSL_CORE_BIO * BIO_new_membuf(const void *buf, int len)
+ int BIO_read_ex(OSSL_CORE_BIO *bio, void *data, size_t data_len,
+                 size_t *bytes_read))
+ int BIO_write_ex(OSSL_CORE_BIO *bio, const void *data, size_t data_len,
+                  size_t *written)
+ int BIO_free(OSSL_CORE_BIO *bio))
+ int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args)
+ int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args)
+
+ void self_test_cb(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg)
+
 
  /* Functions offered by the provider to libcrypto */
  void provider_teardown(void *provctx);
@@ -76,8 +88,8 @@ function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_get_{name}>.
 For example, the "function" core_gettable_params() has these:
 
- typedef OSSL_ITEM *
-     (OSSL_core_gettable_params_fn)(const OSSL_PROVIDER *prov);
+ typedef OSSL_PARAM *
+     (OSSL_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
  static ossl_inline OSSL_NAME_core_gettable_params_fn
      OSSL_get_core_gettable_params(const OSSL_DISPATCH *opf);
 
@@ -114,7 +126,6 @@ provider):
  BIO_free                       OSSL_FUNC_BIO_FREE
  BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
  OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
- OPENSSL_hexstr2buf             OSSL_FUNC_OPENSSL_HEXSTR2BUF
  OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
@@ -131,20 +142,20 @@ F<libcrypto>):
 core_gettable_params() returns a constant array of descriptor
 B<OSSL_PARAM>, for parameters that core_get_params() can handle.
 
-core_get_params() retrieves I<prov> parameters from the core.
+core_get_params() retrieves parameters from the core for the given I<handle>.
 See L</Core parameters> below for a description of currently known
 parameters.
 
 =for comment core_thread_start() TBA
 
-core_get_library_context() retrieves the library context in which the
-B<OSSL_PROVIDER> object I<prov> is stored.
+core_get_library_context() retrieves the library context in which the library
+object for the current provider is stored, accessible through the I<handle>.
 This may sometimes be useful if the provider wishes to store a
 reference to its context in the same library context.
 
 core_new_error(), core_set_error_debug() and core_set_error() are
 building blocks for reporting an error back to the core, with
-reference to the provider object I<prov>.
+reference to the I<handle>.
 
 =over 4
 
@@ -188,7 +199,10 @@ BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_free(),
 BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
 correspond exactly to the public functions with the same name.
 As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are
-direct pointers to those public functions.
+direct pointers to those public functions. Note that the BIO functions take an
+B<OSSL_CORE_BIO> type rather than the standard B<BIO> type. This is to ensure
+that a provider does not mix BIOs from the core with BIOs used on the provider
+side (the two are not compatible).
 OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
 passed into a provider. This may be ignored by a provider.
 
@@ -220,22 +234,52 @@ useless without at least provider_query_operation(), and
 provider_gettable_params() is fairly useless if not accompanied by
 provider_get_params().
 
-=head2 Core parameters
+=head2 Provider parameters
 
-core_get_params() understands the following known parameters:
+provider_get_params() can return the following provider parameters to the core:
 
 =over 4
 
-=item "openssl-version"
+=item "name" (B<OSSL_PROV_PARAM_NAME>) <UTF8_ptr>
 
-This is a B<OSSL_PARAM_UTF8_PTR> type of parameter, pointing at the
-OpenSSL libraries' full version string, i.e. the string expanded from
-the macro B<OPENSSL_VERSION_STR>.
+This points to a string that should give a unique name for the provider.
 
-=item "provider-name"
+=item "version" (B<OSSL_PROV_PARAM_VERSION>) <UTF8_ptr>
 
-This is a B<OSSL_PARAM_UTF8_PTR> type of parameter, pointing at the
-OpenSSL libraries' idea of what the calling provider is called.
+This points to a string that is a version number associated with this provider.
+OpenSSL in-built providers use OPENSSL_VERSION_STR, but this may be different
+for any third party provider. This string is for informational purposes only.
+
+=item "buildinfo" (B<OSSL_PROV_PARAM_BUILDINFO>) <UTF8_ptr>
+
+This points to a string that is a build information associated with this provider.
+OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
+different for any third party provider.
+
+=back 
+
+provider_gettable_params() should return the above parameters.
+
+
+=head2 Core parameters
+
+core_get_params() can retrieve the following core parameters for each provider:
+
+=over 4
+
+=item "openssl-version" (B<OSSL_PROV_PARAM_CORE_VERSION>) <UTF8_ptr>
+
+This points to the OpenSSL libraries' full version string, i.e. the string
+expanded from the macro B<OPENSSL_VERSION_STR>.
+
+=item "provider-name" (B<OSSL_PROV_PARAM_CORE_PROV_NAME>) <UTF8_ptr>
+
+This points to the OpenSSL libraries' idea of what the calling provider is named.
+
+=item "module-filename" (B<OSSL_PROV_PARAM_CORE_MODULE_FILENAME>) <UTF8_ptr>
+
+This points to a string containing the full filename of the providers
+module file.
 
 =back
 
@@ -327,7 +371,7 @@ operation C<BAR>.
 
  /* Provider context */
  struct prov_ctx_st {
-     OSSL_PROVIDER *prov;
+     OSSL_CORE_HANDLE *handle;
  }
 
  /* operation context for the algorithm FOO */
@@ -343,7 +387,7 @@ operation C<BAR>.
      if (fooctx != NULL)
          fooctx->provctx = provctx;
      else
-         c_put_error(provctx->prov, E_MALLOC, __FILE__, __LINE__);
+         c_put_error(provctx->handle, E_MALLOC, __FILE__, __LINE__);
      return fooctx;
  }
 
@@ -419,7 +463,7 @@ operation C<BAR>.
      { 0, NULL }
  };
 
- int OSSL_provider_init(const OSSL_PROVIDER *provider,
+ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                         const OSSL_DISPATCH *in,
                         const OSSL_DISPATCH **out,
                         void **provctx)
@@ -440,9 +484,10 @@ operation C<BAR>.
           * ALEA IACTA EST, if the core retrieves the reason table
           * regardless, that string will be displayed, otherwise not.
           */
-         c_put_error(provider, E_MALLOC, __FILE__, __LINE__);
+         c_put_error(handle, E_MALLOC, __FILE__, __LINE__);
          return 0;
      }
+     pctx->handle = handle;
      return 1;
  }
 

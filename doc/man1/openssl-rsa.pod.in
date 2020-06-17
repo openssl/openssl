@@ -13,7 +13,7 @@ openssl-rsa - RSA key processing command
 
 B<openssl> B<rsa>
 [B<-help>]
-[B<-inform> B<DER>|B<PEM>]
+[B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
 [B<-outform> B<DER>|B<PEM>]
 [B<-in> I<filename>]
 [B<-passin> I<arg>]
@@ -46,9 +46,6 @@ B<openssl> B<rsa>
 
 =head1 DESCRIPTION
 
-This command has been deprecated.
-The L<openssl-pkey(1)> command should be used instead.
-
 This command processes RSA keys. They can be converted between
 various forms and their components printed out. B<Note> this command uses the
 traditional SSLeay compatible format for private key encryption: newer
@@ -64,9 +61,15 @@ L<openssl-pkcs8(1)> command.
 Print out a usage message.
 
 
-=item B<-inform> B<DER>|B<PEM>, B<-outform> B<DER>|B<PEM>
+=item B<-inform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
-The input and formats; the default is B<PEM>.
+The key input format; the default is B<PEM>.
+The only value with effect is B<ENGINE>; all others have become obsolete.
+See L<openssl(1)/Format Options> for details.
+
+=item B<-outform> B<DER>|B<PEM>
+
+The key output format; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 =item B<-inform> B<DER>|B<PEM>
@@ -183,10 +186,6 @@ L<openssl-pkcs8(1)>,
 L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-gendsa(1)>
-
-=head1 HISTORY
-
-This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

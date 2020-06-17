@@ -489,7 +489,8 @@ int ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
         /* point is its own inverse */
         return 1;
 
-    if (!EC_POINT_make_affine(group, point, ctx))
+    if (group->meth->make_affine == NULL
+        || !group->meth->make_affine(group, point, ctx))
         return 0;
     return BN_GF2m_add(point->Y, point->X, point->Y);
 }

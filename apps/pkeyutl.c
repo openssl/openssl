@@ -71,11 +71,11 @@ const OPTIONS pkeyutl_options[] = {
     {"inkey", OPT_INKEY, 's', "Input private key file"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"peerkey", OPT_PEERKEY, 's', "Peer key file used in key derivation"},
-    {"peerform", OPT_PEERFORM, 'E', "Peer key format - default PEM"},
+    {"peerform", OPT_PEERFORM, 'E', "Peer key format (DER/PEM/P12/ENGINE)"},
     {"certin", OPT_CERTIN, '-', "Input is a cert with a public key"},
     {"rev", OPT_REV, '-', "Reverse the order of the input buffer"},
     {"sigfile", OPT_SIGFILE, '<', "Signature file (verify operation only)"},
-    {"keyform", OPT_KEYFORM, 'E', "Private key format - default PEM"},
+    {"keyform", OPT_KEYFORM, 'E', "Private key format (ENGINE, other values ignored)"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -157,11 +157,11 @@ int pkeyutl_main(int argc, char **argv)
             passinarg = opt_arg();
             break;
         case OPT_PEERFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &peerform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &peerform))
                 goto opthelp;
             break;
         case OPT_KEYFORM:
-            if (!opt_format(opt_arg(), OPT_FMT_PDE, &keyform))
+            if (!opt_format(opt_arg(), OPT_FMT_ANY, &keyform))
                 goto opthelp;
             break;
         case OPT_R_CASES:
@@ -519,7 +519,7 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
         break;
 
     case KEY_CERT:
-        x = load_cert(keyfile, keyform, "Certificate");
+        x = load_cert(keyfile, FORMAT_UNDEF, "Certificate");
         if (x) {
             pkey = X509_get_pubkey(x);
             X509_free(x);

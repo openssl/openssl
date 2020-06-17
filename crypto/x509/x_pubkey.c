@@ -30,7 +30,7 @@ struct X509_pubkey_st {
     EVP_PKEY *pkey;
 };
 
-static int x509_pubkey_decode(EVP_PKEY **pk, X509_PUBKEY *key);
+static int x509_pubkey_decode(EVP_PKEY **pk, const X509_PUBKEY *key);
 
 /* Minor tweak to operation: free up EVP_PKEY */
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
@@ -151,7 +151,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
  */
 
 
-static int x509_pubkey_decode(EVP_PKEY **ppkey, X509_PUBKEY *key)
+static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 {
     EVP_PKEY *pkey = EVP_PKEY_new();
 
@@ -188,7 +188,7 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, X509_PUBKEY *key)
     return 0;
 }
 
-EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
+EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key)
 {
     EVP_PKEY *ret = NULL;
 
@@ -216,11 +216,14 @@ EVP_PKEY *X509_PUBKEY_get0(X509_PUBKEY *key)
     return NULL;
 }
 
-EVP_PKEY *X509_PUBKEY_get(X509_PUBKEY *key)
+EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
 {
     EVP_PKEY *ret = X509_PUBKEY_get0(key);
-    if (ret != NULL)
-        EVP_PKEY_up_ref(ret);
+
+    if (ret != NULL && !EVP_PKEY_up_ref(ret)) {
+        X509err(X509_F_X509_PUBKEY_GET, ERR_R_INTERNAL_ERROR);
+        ret = NULL;
+    }
     return ret;
 }
 
@@ -450,7 +453,7 @@ int X509_PUBKEY_set0_param(X509_PUBKEY *pub, ASN1_OBJECT *aobj,
 
 int X509_PUBKEY_get0_param(ASN1_OBJECT **ppkalg,
                            const unsigned char **pk, int *ppklen,
-                           X509_ALGOR **pa, X509_PUBKEY *pub)
+                           X509_ALGOR **pa, const X509_PUBKEY *pub)
 {
     if (ppkalg)
         *ppkalg = pub->algor->algorithm;
@@ -468,4 +471,25 @@ ASN1_BIT_STRING *X509_get0_pubkey_bitstr(const X509 *x)
     if (x == NULL)
         return NULL;
     return x->cert_info.key->public_key;
+}
+
+/* Returns 1 for equal, 0, for non-equal, < 0 on error */
+int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b)
+{
+    X509_ALGOR *algA, *algB;
+    EVP_PKEY *pA, *pB;
+
+    if (a == b)
+        return 1;
+    if (a == NULL || b == NULL)
+        return 0;
+    if (!X509_PUBKEY_get0_param(NULL, NULL, NULL, &algA, a) || algA == NULL
+        || !X509_PUBKEY_get0_param(NULL, NULL, NULL, &algB, b) || algB == NULL)
+        return -2;
+    if (X509_ALGOR_cmp(algA, algB) != 0)
+        return 0;
+    if ((pA = X509_PUBKEY_get0(a)) == NULL
+        || (pB = X509_PUBKEY_get0(b)) == NULL)
+        return -2;
+    return EVP_PKEY_eq(pA, pB);
 }

@@ -21,6 +21,7 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
+#include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
 static OSSL_OP_serializer_newctx_fn dsa_param_newctx;
@@ -48,7 +49,8 @@ static void dsa_param_freectx(void *ctx)
 }
 
 /* Public key : DER */
-static int dsa_param_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_param_der_data(void *ctx, const OSSL_PARAM params[],
+                              OSSL_CORE_BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
@@ -69,14 +71,24 @@ static int dsa_param_der_data(void *ctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dsa_param_der(void *ctx, void *dsa, BIO *out,
+static int dsa_param_der(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return i2d_DSAparams_bio(out, dsa);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = i2d_DSAparams_bio(out, dsa);
+    BIO_free(out);
+
+    return ret;
 }
 
 /* Public key : PEM */
-static int dsa_param_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_param_pem_data(void *ctx, const OSSL_PARAM params[],
+                              OSSL_CORE_BIO *out,
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
@@ -97,13 +109,23 @@ static int dsa_param_pem_data(void *ctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dsa_param_pem(void *ctx, void *dsa, BIO *out,
+static int dsa_param_pem(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return PEM_write_bio_DSAparams(out, dsa);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = PEM_write_bio_DSAparams(out, dsa);
+    BIO_free(out);
+
+    return ret;
 }
 
-static int dsa_param_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
+static int dsa_param_print_data(void *ctx, const OSSL_PARAM params[],
+                                OSSL_CORE_BIO *out,
                                 OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     OSSL_OP_keymgmt_new_fn *dsa_new = ossl_prov_get_keymgmt_dsa_new();
@@ -124,10 +146,19 @@ static int dsa_param_print_data(void *ctx, const OSSL_PARAM params[], BIO *out,
     return ok;
 }
 
-static int dsa_param_print(void *ctx, void *dsa, BIO *out,
+static int dsa_param_print(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    return ossl_prov_print_dsa(out, dsa, dsa_print_params);
+    BIO *out = bio_new_from_core_bio(ctx, cout);
+    int ret;
+
+    if (out == NULL)
+        return 0;
+
+    ret = ossl_prov_print_dsa(out, dsa, dsa_print_params);
+    BIO_free(out);
+
+    return ret;
 }
 
 const OSSL_DISPATCH dsa_param_der_serializer_functions[] = {

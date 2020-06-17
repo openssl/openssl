@@ -4,12 +4,14 @@
 
 OSSL_STORE_LOADER, OSSL_STORE_LOADER_CTX, OSSL_STORE_LOADER_new,
 OSSL_STORE_LOADER_get0_engine, OSSL_STORE_LOADER_get0_scheme,
-OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_ctrl,
-OSSL_STORE_LOADER_set_expect, OSSL_STORE_LOADER_set_find,
-OSSL_STORE_LOADER_set_load, OSSL_STORE_LOADER_set_eof,
-OSSL_STORE_LOADER_set_error, OSSL_STORE_LOADER_set_close,
+OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_attach,
+OSSL_STORE_LOADER_set_ctrl, OSSL_STORE_LOADER_set_expect,
+OSSL_STORE_LOADER_set_find, OSSL_STORE_LOADER_set_load,
+OSSL_STORE_LOADER_set_eof, OSSL_STORE_LOADER_set_error,
+OSSL_STORE_LOADER_set_close,
 OSSL_STORE_LOADER_free, OSSL_STORE_register_loader,
-OSSL_STORE_unregister_loader, OSSL_STORE_open_fn, OSSL_STORE_ctrl_fn,
+OSSL_STORE_unregister_loader,
+OSSL_STORE_open_fn, OSSL_STORE_attach_fn, OSSL_STORE_ctrl_fn,
 OSSL_STORE_expect_fn, OSSL_STORE_find_fn,
 OSSL_STORE_load_fn, OSSL_STORE_eof_fn, OSSL_STORE_error_fn,
 OSSL_STORE_close_fn - Types and functions to manipulate, register and
@@ -35,6 +37,16 @@ unregister STORE loaders for different URI schemes
                                                       void *ui_data);
  int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *store_loader,
                                 OSSL_STORE_open_fn store_open_function);
+ typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)(const OSSL_STORE_LOADER
+                                                        *loader,
+                                                        BIO *bio,
+                                                        OPENSSL_CTX *libctx,
+                                                        const char *propq,
+                                                        const UI_METHOD
+                                                        *ui_method,
+                                                        void *ui_data);
+ int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
+                                  OSSL_STORE_attach_fn attach_function);
  typedef int (*OSSL_STORE_ctrl_fn)(OSSL_STORE_LOADER_CTX *ctx, int cmd,
                                    va_list args);
  int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *store_loader,
@@ -98,6 +110,10 @@ Furthermore, this function is expected to initialize what needs to be
 initialized, to create a private data store (B<OSSL_STORE_LOADER_CTX>, see
 above), and to return it.
 If something goes wrong, this function is expected to return NULL.
+
+=item B<OSSL_STORE_open_fn>
+
+This function takes a B<BIO>, otherwise works like B<OSSL_STORE_open_fn>.
 
 =item B<OSSL_STORE_ctrl_fn>
 
@@ -189,6 +205,9 @@ OSSL_STORE_LOADER_get0_scheme() returns the scheme of the B<store_loader>.
 OSSL_STORE_LOADER_set_open() sets the opener function for the
 B<store_loader>.
 
+OSSL_STORE_LOADER_set_attach() sets the attacher function for the
+B<store_loader>.
+
 OSSL_STORE_LOADER_set_ctrl() sets the control function for the
 B<store_loader>.
 
@@ -254,7 +273,7 @@ were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -33,7 +33,7 @@ B<openssl> B<genrsa>
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [B<numbits>]
 
-=for openssl ifdef engine
+=for openssl ifdef engine 3
 
 =head1 DESCRIPTION
 
@@ -70,6 +70,7 @@ for if it is not supplied via the B<-passout> argument.
 =item B<-F4>, B<-f4>, B<-3>
 
 The public exponent to use, either 65537 or 3. The default is 65537.
+The B<-3> option has been deprecated.
 
 =item B<-primes> I<num>
 

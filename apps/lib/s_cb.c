@@ -787,7 +787,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
             BIO_printf(bio_err, "HMAC not found\n");
             goto end;
     }
-    ctx = EVP_MAC_CTX_new(hmac);
+    ctx = EVP_MAC_new_ctx(hmac);
     if (ctx == NULL) {
             BIO_printf(bio_err, "HMAC context allocation failed\n");
             goto end;
@@ -796,7 +796,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, cookie_secret,
                                              COOKIE_SECRET_LENGTH);
     *p = OSSL_PARAM_construct_end();
-    if (!EVP_MAC_CTX_set_params(ctx, params)) {
+    if (!EVP_MAC_set_ctx_params(ctx, params)) {
             BIO_printf(bio_err, "HMAC context parameter setting failed\n");
             goto end;
     }
@@ -1094,11 +1094,11 @@ int args_excert(int opt, SSL_EXCERT **pexc)
         exc->build_chain = 1;
         break;
     case OPT_X_CERTFORM:
-        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->certform))
+        if (!opt_format(opt_arg(), OPT_FMT_ANY, &exc->certform))
             return 0;
         break;
     case OPT_X_KEYFORM:
-        if (!opt_format(opt_arg(), OPT_FMT_PEMDER, &exc->keyform))
+        if (!opt_format(opt_arg(), OPT_FMT_ANY, &exc->keyform))
             return 0;
         break;
     }

@@ -26,8 +26,8 @@ DEFINE_STACK_OF(X509)
  * Calculate protection for given PKImessage utilizing the given credentials
  * and the algorithm parameters set inside the message header's protectionAlg.
  *
- * Either secret or pkey must be set, the other must be NULL. Attempts doing
- * PBMAC in case 'secret' is set and signature if 'pkey' is set - but will only
+ * secret or pkey must be set. Attempts doing PBMAC in case 'secret' is set
+ * and else signature if 'pkey' is set - but will only
  * do the protection already marked in msg->header->protectionAlg.
  *
  * returns ptr to ASN1_BIT_STRING containing protection on success, else NULL
@@ -73,7 +73,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
     }
     X509_ALGOR_get0(&algorOID, &pptype, &ppval, msg->header->protectionAlg);
 
-    if (secret != NULL && pkey == NULL) {
+    if (secret != NULL) {
         if (ppval == NULL) {
             CMPerr(0, CMP_R_ERROR_CALCULATING_PROTECTION);
             goto end;
@@ -94,7 +94,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,
                                secret->data, secret->length,
                                &protection, &sig_len))
             goto end;
-    } else if (secret == NULL && pkey != NULL) {
+    } else if (pkey != NULL) {
         /* TODO combine this with large parts of CRMF_poposigningkey_init() */
         /* EVP_DigestSignInit() checks that pkey type is correct for the alg */
 
@@ -145,21 +145,18 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             && (msg->extraCerts = sk_X509_new_null()) == NULL)
         return 0;
 
-    if (ctx->clCert != NULL) {
-        /* Make sure that our own cert gets sent, in the first position */
-        if (!X509_up_ref(ctx->clCert))
+    if (ctx->cert != NULL && ctx->pkey != NULL) {
+        /* make sure that our own cert is included in the first position */
+        if (!ossl_cmp_sk_X509_add1_cert(msg->extraCerts, ctx->cert, 1, 1))
             return 0;
-        if (!sk_X509_push(msg->extraCerts, ctx->clCert)) {
-            X509_free(ctx->clCert);
-            return 0;
-        }
-        /* if we have untrusted store, try to add intermediate certs */
+        /* if we have untrusted certs, try to add intermediate certs */
         if (ctx->untrusted_certs != NULL) {
             STACK_OF(X509) *chain =
-                ossl_cmp_build_cert_chain(ctx->untrusted_certs, ctx->clCert);
+                ossl_cmp_build_cert_chain(ctx->untrusted_certs, ctx->cert);
             int res = ossl_cmp_sk_X509_add1_certs(msg->extraCerts, chain,
                                                   1 /* no self-issued */,
                                                   1 /* no duplicates */, 0);
+
             sk_X509_pop_free(chain, X509_free);
             if (res == 0)
                 return 0;
@@ -227,6 +224,15 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     if (!ossl_assert(ctx != NULL && msg != NULL))
         return 0;
 
+    /*
+     * For the case of re-protection remove pre-existing protection.
+     * TODO: Consider also removing any pre-existing extraCerts.
+     */
+    X509_ALGOR_free(msg->header->protectionAlg);
+    msg->header->protectionAlg = NULL;
+    ASN1_BIT_STRING_free(msg->protection);
+    msg->protection = NULL;
+
     if (ctx->unprotectedSend)
         return 1;
 
@@ -238,84 +244,68 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
                 && !ossl_cmp_hdr_set1_senderKID(msg->header,
                                                 ctx->referenceValue))
             goto err;
-
-        /*
-         * add any additional certificates from ctx->extraCertsOut
-         * while not needed to validate the signing cert, the option to do
-         * this might be handy for certain use cases
-         */
-        if (!ossl_cmp_msg_add_extraCerts(ctx, msg))
-            goto err;
-
-        if ((msg->protection =
-             ossl_cmp_calc_protection(msg, ctx->secretValue, NULL)) == NULL)
-            goto err;
-    } else {
+    } else if (ctx->cert != NULL && ctx->pkey != NULL) {
         /*
          * use MSG_SIG_ALG according to 5.1.3.3 if client Certificate and
          * private key is given
          */
-        if (ctx->clCert != NULL && ctx->pkey != NULL) {
-            const ASN1_OCTET_STRING *subjKeyIDStr = NULL;
-            int algNID = 0;
-            ASN1_OBJECT *alg = NULL;
+        const ASN1_OCTET_STRING *subjKeyIDStr = NULL;
+        int algNID = 0;
+        ASN1_OBJECT *alg = NULL;
 
-            /* make sure that key and certificate match */
-            if (!X509_check_private_key(ctx->clCert, ctx->pkey)) {
-                CMPerr(0, CMP_R_CERT_AND_KEY_DO_NOT_MATCH);
-                goto err;
-            }
-
-            if (msg->header->protectionAlg == NULL)
-                if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
-                    goto err;
-
-            if (!OBJ_find_sigid_by_algs(&algNID, ctx->digest,
-                                        EVP_PKEY_id(ctx->pkey))) {
-                CMPerr(0, CMP_R_UNSUPPORTED_KEY_TYPE);
-                goto err;
-            }
-            if ((alg = OBJ_nid2obj(algNID)) == NULL)
-                goto err;
-            if (!X509_ALGOR_set0(msg->header->protectionAlg,
-                                 alg, V_ASN1_UNDEF, NULL)) {
-                ASN1_OBJECT_free(alg);
-                goto err;
-            }
-
-            /*
-             * set senderKID to keyIdentifier of the used certificate according
-             * to section 5.1.1
-             */
-            subjKeyIDStr = X509_get0_subject_key_id(ctx->clCert);
-            if (subjKeyIDStr == NULL)
-                subjKeyIDStr = ctx->referenceValue; /* fallback */
-            if (subjKeyIDStr != NULL
-                    && !ossl_cmp_hdr_set1_senderKID(msg->header, subjKeyIDStr))
-                goto err;
-
-            /*
-             * Add ctx->clCert followed, if possible, by its chain built
-             * from ctx->untrusted_certs, and then ctx->extraCertsOut
-             */
-            if (!ossl_cmp_msg_add_extraCerts(ctx, msg))
-                goto err;
-
-            if ((msg->protection =
-                 ossl_cmp_calc_protection(msg, NULL, ctx->pkey)) == NULL)
-                goto err;
-        } else {
-            CMPerr(0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+        /* make sure that key and certificate match */
+        if (!X509_check_private_key(ctx->cert, ctx->pkey)) {
+            CMPerr(0, CMP_R_CERT_AND_KEY_DO_NOT_MATCH);
             goto err;
         }
+
+        if ((msg->header->protectionAlg = X509_ALGOR_new()) == NULL)
+            goto err;
+        if (!OBJ_find_sigid_by_algs(&algNID, ctx->digest,
+                                    EVP_PKEY_id(ctx->pkey))) {
+            CMPerr(0, CMP_R_UNSUPPORTED_KEY_TYPE);
+            goto err;
+        }
+        if ((alg = OBJ_nid2obj(algNID)) == NULL)
+            goto err;
+        if (!X509_ALGOR_set0(msg->header->protectionAlg, alg,
+                             V_ASN1_UNDEF, NULL)) {
+            ASN1_OBJECT_free(alg);
+            goto err;
+        }
+
+        /*
+         * set senderKID to keyIdentifier of the used certificate according
+         * to section 5.1.1
+         */
+        subjKeyIDStr = X509_get0_subject_key_id(ctx->cert);
+        if (subjKeyIDStr == NULL)
+            subjKeyIDStr = ctx->referenceValue; /* fallback */
+        if (subjKeyIDStr != NULL
+                && !ossl_cmp_hdr_set1_senderKID(msg->header, subjKeyIDStr))
+            goto err;
+    } else {
+        CMPerr(0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);
+        goto err;
     }
+    if ((msg->protection =
+         ossl_cmp_calc_protection(msg, ctx->secretValue, ctx->pkey)) == NULL)
+        goto err;
+
+    /*
+     * If present, add ctx->cert followed by its chain as far as possible.
+     * Finally add any additional certificates from ctx->extraCertsOut;
+     * even if not needed to validate the protection
+     * the option to do this might be handy for certain use cases.
+     */
+    if (!ossl_cmp_msg_add_extraCerts(ctx, msg))
+        goto err;
 
     /*
      * As required by RFC 4210 section 5.1.1., if the sender name is not known
      * to the client it set to NULL-DN. In this case for identification at least
      * the senderKID must be set, where we took the referenceValue as fallback.
      */
-
     if (ossl_cmp_general_name_is_NULL_DN(msg->header->sender)
             && msg->header->senderKID == NULL)
         CMPerr(0, CMP_R_MISSING_SENDER_IDENTIFICATION);

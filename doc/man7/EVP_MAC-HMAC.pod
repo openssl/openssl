@@ -24,7 +24,7 @@ used with EVP_MAC_fetch():
 The general description of these parameters can be found in
 L<EVP_MAC(3)/PARAMETERS>.
 
-The following parameter can be set with EVP_MAC_CTX_set_params():
+The following parameter can be set with EVP_MAC_set_ctx_params():
 
 =over 4
 
@@ -41,7 +41,7 @@ The following parameter can be set with EVP_MAC_CTX_set_params():
 The "flags" parameter is passed directly to HMAC_CTX_set_flags().
 
 The following parameter can be retrieved with
-EVP_MAC_CTX_get_params():
+EVP_MAC_get_ctx_params():
 
 =over 4
 
@@ -54,7 +54,7 @@ The length of the "size" parameter is equal to that of an B<unsigned int>.
 
 =head1 SEE ALSO
 
-L<EVP_MAC_CTX_get_params(3)>, L<EVP_MAC_CTX_set_params(3)>,
+L<EVP_MAC_get_ctx_params(3)>, L<EVP_MAC_set_ctx_params(3)>,
 L<EVP_MAC(3)/PARAMETERS>, L<OSSL_PARAM(3)>, L<HMAC(3)>
 
 =head1 COPYRIGHT

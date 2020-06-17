@@ -15,10 +15,19 @@
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "prov/bio.h"
+#include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "internal/nelem.h"
+
+/*
+ * Forward declarations to ensure that interface functions are correctly
+ * defined.
+ */
+static OSSL_provider_gettable_params_fn deflt_gettable_params;
+static OSSL_provider_get_params_fn deflt_get_params;
+static OSSL_provider_query_operation_fn deflt_query;
 
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, "provider=default", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
@@ -35,12 +44,12 @@ static const OSSL_PARAM deflt_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *deflt_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_PARAM *deflt_gettable_params(void *provctx)
 {
     return deflt_param_types;
 }
 
-static int deflt_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int deflt_get_params(void *provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -354,6 +363,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { "DSA:dsaEncryption", "provider=default", dsa_keymgmt_functions },
 #endif
     { "RSA:rsaEncryption", "provider=default", rsa_keymgmt_functions },
+    { "RSA-PSS:RSASSA-PSS", "provider=default", rsapss_keymgmt_functions },
 #ifndef OPENSSL_NO_EC
     { "EC:id-ecPublicKey", "provider=default", ec_keymgmt_functions },
     { "X25519", "provider=default", x25519_keymgmt_functions },
@@ -381,6 +391,18 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
     { "RSA", "provider=default,fips=yes,format=pem,type=private",
       rsa_priv_pem_serializer_functions },
     { "RSA", "provider=default,fips=yes,format=pem,type=public",
+      rsa_pub_pem_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=text,type=private",
+      rsa_priv_text_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=text,type=public",
+      rsa_pub_text_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=der,type=private",
+      rsa_priv_der_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=der,type=public",
+      rsa_pub_der_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=pem,type=private",
+      rsa_priv_pem_serializer_functions },
+    { "RSA-PSS", "provider=default,fips=yes,format=pem,type=public",
       rsa_pub_pem_serializer_functions },
 
 #ifndef OPENSSL_NO_DH
@@ -500,8 +522,7 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
-                                         int operation_id,
+static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
     *no_cache = 0;
@@ -529,8 +550,15 @@ static const OSSL_ALGORITHM *deflt_query(OSSL_PROVIDER *prov,
     return NULL;
 }
 
+static void deflt_teardown(void *provctx)
+{
+    BIO_meth_free(PROV_CTX_get0_core_bio_method(provctx));
+    PROV_CTX_free(provctx);
+}
+
 /* Functions we provide to the core */
 static const OSSL_DISPATCH deflt_dispatch_table[] = {
+    { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))deflt_teardown },
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))deflt_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))deflt_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))deflt_query },
@@ -539,12 +567,13 @@ static const OSSL_DISPATCH deflt_dispatch_table[] = {
 
 OSSL_provider_init_fn ossl_default_provider_init;
 
-int ossl_default_provider_init(const OSSL_PROVIDER *provider,
+int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
                                const OSSL_DISPATCH *in,
                                const OSSL_DISPATCH **out,
                                void **provctx)
 {
     OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    BIO_METHOD *corebiometh;
 
     if (!ossl_prov_bio_from_dispatch(in))
         return 0;
@@ -568,13 +597,25 @@ int ossl_default_provider_init(const OSSL_PROVIDER *provider,
     if (c_get_libctx == NULL)
         return 0;
 
-    *out = deflt_dispatch_table;
-
     /*
      * We want to make sure that all calls from this provider that requires
      * a library context use the same context as the one used to call our
-     * functions.  We do that by passing it along as the provider context.
+     * functions.  We do that by passing it along in the provider context.
+     *
+     * This only works for built-in providers.  Most providers should
+     * create their own library context.
      */
-    *provctx = c_get_libctx(provider);
+    if ((*provctx = PROV_CTX_new()) == NULL
+            || (corebiometh = bio_prov_init_bio_method()) == NULL) {
+        PROV_CTX_free(*provctx);
+        *provctx = NULL;
+        return 0;
+    }
+    PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
+    PROV_CTX_set0_handle(*provctx, handle);
+    PROV_CTX_set0_core_bio_method(*provctx, corebiometh);
+
+    *out = deflt_dispatch_table;
+
     return 1;
 }

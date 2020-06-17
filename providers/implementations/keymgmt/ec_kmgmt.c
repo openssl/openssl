@@ -31,8 +31,6 @@ static OSSL_OP_keymgmt_gen_init_fn ec_gen_init;
 static OSSL_OP_keymgmt_gen_set_template_fn ec_gen_set_template;
 static OSSL_OP_keymgmt_gen_set_params_fn ec_gen_set_params;
 static OSSL_OP_keymgmt_gen_settable_params_fn ec_gen_settable_params;
-static OSSL_OP_keymgmt_gen_get_params_fn ec_gen_get_params;
-static OSSL_OP_keymgmt_gen_gettable_params_fn ec_gen_gettable_params;
 static OSSL_OP_keymgmt_gen_fn ec_gen;
 static OSSL_OP_keymgmt_gen_cleanup_fn ec_gen_cleanup;
 static OSSL_OP_keymgmt_free_fn ec_freedata;
@@ -112,6 +110,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
                   OSSL_PARAM params[], int include_private,
                   unsigned char **pub_key)
 {
+    BIGNUM *x = NULL, *y = NULL;
     const BIGNUM *priv_key = NULL;
     const EC_POINT *pub_point = NULL;
     const EC_GROUP *ecg = NULL;
@@ -127,6 +126,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
     pub_point = EC_KEY_get0_public_key(eckey);
 
     if (pub_point != NULL) {
+        OSSL_PARAM *p = NULL, *px = NULL, *py = NULL;
         /*
          * EC_POINT_point2buf() can generate random numbers in some
          * implementations so we need to ensure we use the correct libctx.
@@ -135,14 +135,41 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
         if (bnctx == NULL)
             goto err;
 
-        /* convert pub_point to a octet string according to the SECG standard */
-        if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
-                                              POINT_CONVERSION_COMPRESSED,
-                                              pub_key, bnctx)) == 0
-            || !ossl_param_build_set_octet_string(tmpl, params,
-                                                  OSSL_PKEY_PARAM_PUB_KEY,
-                                                  *pub_key, pub_key_len))
-            goto err;
+
+        /* If we are doing a get then check first before decoding the point */
+        if (tmpl == NULL) {
+            p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY);
+            px = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_PUB_X);
+            py = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_PUB_Y);
+        }
+
+        if (p != NULL || tmpl != NULL) {
+            /* convert pub_point to a octet string according to the SECG standard */
+            if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
+                                                  POINT_CONVERSION_COMPRESSED,
+                                                  pub_key, bnctx)) == 0
+                || !ossl_param_build_set_octet_string(tmpl, p,
+                                                      OSSL_PKEY_PARAM_PUB_KEY,
+                                                      *pub_key, pub_key_len))
+                goto err;
+        }
+        if (px != NULL || py != NULL) {
+            if (px != NULL)
+                x = BN_CTX_get(bnctx);
+            if (py != NULL)
+                y = BN_CTX_get(bnctx);
+
+            if (!EC_POINT_get_affine_coordinates(ecg, pub_point, x, y, bnctx))
+                goto err;
+            if (px != NULL
+                && !ossl_param_build_set_bn(tmpl, px,
+                                            OSSL_PKEY_PARAM_EC_PUB_X, x))
+                goto err;
+            if (py != NULL
+                && !ossl_param_build_set_bn(tmpl, py,
+                                            OSSL_PKEY_PARAM_EC_PUB_Y, y))
+                goto err;
+        }
     }
 
     if (priv_key != NULL && include_private) {
@@ -506,6 +533,20 @@ int ec_get_params(void *key, OSSL_PARAM params[])
         if (!OSSL_PARAM_set_int(p, ecdh_cofactor_mode))
             return 0;
     }
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
+        BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
+
+        if (ctx == NULL)
+            return 0;
+        p->return_size = EC_POINT_point2oct(EC_KEY_get0_group(key),
+                                            EC_KEY_get0_public_key(key),
+                                            POINT_CONVERSION_UNCOMPRESSED,
+                                            p->data, p->return_size, ctx);
+        BN_CTX_free(ctx);
+        if (p->return_size == 0)
+            return 0;
+    }
+
     ret = domparams_to_params(eck, NULL, params)
           && key_to_params(eck, NULL, params, 1, &pub_key)
           && otherparams_to_params(eck, NULL, params);
@@ -517,8 +558,11 @@ static const OSSL_PARAM ec_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
     EC_IMEXPORTABLE_DOM_PARAMETERS,
     EC_IMEXPORTABLE_PUBLIC_KEY,
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_PUB_X, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_PUB_Y, NULL, 0),
     EC_IMEXPORTABLE_PRIVATE_KEY,
     EC_IMEXPORTABLE_OTHER_PARAMETERS,
     OSSL_PARAM_END
@@ -532,6 +576,7 @@ const OSSL_PARAM *ec_gettable_params(void)
 
 static const OSSL_PARAM ec_known_settable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -547,11 +592,21 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
     EC_KEY *eck = key;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
-    if (p != NULL && !ec_set_param_ecdh_cofactor_mode(eck, p))
-        return 0;
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
+    if (p != NULL) {
+        BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
+        int ret = 1;
 
-    return 1;
+        if (ctx == NULL
+                || p->data_type != OSSL_PARAM_OCTET_STRING
+                || !EC_KEY_oct2key(key, p->data, p->data_size, ctx))
+            ret = 0;
+        BN_CTX_free(ctx);
+        if (!ret)
+            return 0;
+    }
+
+    return ec_key_otherparams_fromdata(eck, params);
 }
 
 static
@@ -585,9 +640,9 @@ int ec_validate(void *keydata, int selection)
 
 struct ec_gen_ctx {
     OPENSSL_CTX *libctx;
-
     EC_GROUP *gen_group;
     int selection;
+    int ecdh_mode;
 };
 
 static void *ec_gen_init(void *provctx, int selection)
@@ -602,6 +657,7 @@ static void *ec_gen_init(void *provctx, int selection)
         gctx->libctx = libctx;
         gctx->gen_group = NULL;
         gctx->selection = selection;
+        gctx->ecdh_mode = 0;
     }
     return gctx;
 }
@@ -638,6 +694,11 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
     struct ec_gen_ctx *gctx = genctx;
     const OSSL_PARAM *p;
 
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH))
+        != NULL) {
+        if (!OSSL_PARAM_get_int(p, &gctx->ecdh_mode))
+            return 0;
+    }
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME))
         != NULL) {
         const char *curve_name = NULL;
@@ -672,44 +733,12 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *ec_gen_settable_params(void *provctx)
 {
     static OSSL_PARAM settable[] = {
-        { OSSL_PKEY_PARAM_EC_NAME, OSSL_PARAM_UTF8_STRING, NULL, 0, 0 },
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_NAME, NULL, 0),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
         OSSL_PARAM_END
     };
 
     return settable;
-}
-
-static int ec_gen_get_params(void *genctx, OSSL_PARAM params[])
-{
-    struct ec_gen_ctx *gctx = genctx;
-    OSSL_PARAM *p;
-
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_NAME)) != NULL) {
-        int nid = EC_GROUP_get_curve_name(gctx->gen_group);
-        int ret = 0;
-        const char *curve_name = ec_curve_nid2name(nid);
-
-        switch (p->data_type) {
-        case OSSL_PARAM_UTF8_STRING:
-            ret = OSSL_PARAM_set_utf8_string(p, curve_name);
-            break;
-        case OSSL_PARAM_UTF8_PTR:
-            ret = OSSL_PARAM_set_utf8_ptr(p, curve_name);
-            break;
-        }
-        return ret;
-    }
-    return 1;
-}
-
-static const OSSL_PARAM *ec_gen_gettable_params(void *provctx)
-{
-    static OSSL_PARAM gettable[] = {
-        { OSSL_PKEY_PARAM_EC_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
-        OSSL_PARAM_END
-    };
-
-    return gettable;
 }
 
 static int ec_gen_assign_group(EC_KEY *ec, EC_GROUP *group)
@@ -740,6 +769,9 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ret = ret && EC_KEY_generate_key(ec);
 
+    if (gctx->ecdh_mode != -1)
+        ret = ret && ec_set_ecdh_cofactor_mode(ec, gctx->ecdh_mode);
+
     if (ret)
         return ec;
 
@@ -767,9 +799,6 @@ const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },
     { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
       (void (*)(void))ec_gen_settable_params },
-    { OSSL_FUNC_KEYMGMT_GEN_GET_PARAMS, (void (*)(void))ec_gen_get_params },
-    { OSSL_FUNC_KEYMGMT_GEN_GETTABLE_PARAMS,
-      (void (*)(void))ec_gen_gettable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ec_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },

@@ -24,9 +24,6 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 my @types = ( "digest", "cipher" );
 
-$ENV{OPENSSL_MODULES} = bldtop_dir("providers");
-$ENV{OPENSSL_CONF_INCLUDE} = bldtop_dir("providers");
-
 my @setups = ();
 my @testdata = (
     { config    => srctop_file("test", "default.cnf"),

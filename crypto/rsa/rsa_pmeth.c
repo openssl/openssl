@@ -382,6 +382,8 @@ static int check_padding_md(const EVP_MD *md, int padding)
         case NID_sha256:
         case NID_sha384:
         case NID_sha512:
+        case NID_sha512_224:
+        case NID_sha512_256:
         case NID_md5:
         case NID_md5_sha1:
         case NID_md2:

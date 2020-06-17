@@ -17,7 +17,7 @@ defined:
 
 =over 4
 
-"provider=default"
+=item "provider=default"
 
 =back
 
@@ -135,6 +135,8 @@ The OpenSSL default provider supports these operations and algorithms:
 =item SCRYPT, see L<EVP_KDF-SCRYPT(7)>
 
 =item KRB5KDF, see L<EVP_KDF-KRB5KDF(7)>
+
+=item X963KDF, see L<EVP_KDF-X963(7)>
 
 =back
 
