@@ -59,7 +59,6 @@ struct dh_gen_ctx {
     int group_nid;
     size_t pbits;
     size_t qbits;
-    EVP_MD *md;
     unsigned char *seed; /* optional FIPS186-4 param for testing */
     size_t seedlen;
     int gindex; /* optional  FIPS186-4 generator index (ignored if -1) */
@@ -69,6 +68,8 @@ struct dh_gen_ctx {
     int hindex;
     int priv_len;
 
+    const char *mdname;
+    const char *mdprops;
     OSSL_CALLBACK *cb;
     void *cbarg;
 };
@@ -411,7 +412,7 @@ static void *dh_gen_init(void *provctx, int selection)
         gctx->libctx = libctx;
         gctx->pbits = 2048;
         gctx->qbits = 224;
-        gctx->md = NULL;
+        gctx->mdname = NULL;
         gctx->gen_type = DH_PARAMGEN_TYPE_FIPS_186_4;
         gctx->gindex = -1;
         gctx->hindex = 0;
@@ -498,20 +499,15 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
         return 0;
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST);
     if (p != NULL) {
-        const OSSL_PARAM *p1;
-        char mdprops[OSSL_MAX_PROPQUERY_SIZE] = { '\0' };
-        char *str = mdprops;
-
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        p1 = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST_PROPS);
-        if (p1 != NULL
-            && !OSSL_PARAM_get_utf8_string(p1, &str, sizeof(mdprops)))
+        gctx->mdname = p->data;
+    }
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST_PROPS);
+    if (p != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        EVP_MD_free(gctx->md);
-        gctx->md = EVP_MD_fetch(gctx->libctx, p->data, mdprops);
-        if (gctx->md == NULL)
-            return 0;
+        gctx->mdprops = p->data;
     }
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_PRIV_LEN);
     if (p != NULL && !OSSL_PARAM_get_int(p, &gctx->priv_len))
@@ -592,6 +588,10 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         } else if (gctx->hindex != 0) {
             ffc_params_set_h(ffc, gctx->hindex);
         }
+        if (gctx->mdname != NULL) {
+            if (!ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
+                goto end;
+        }
         gctx->cb = osslcb;
         gctx->cbarg = cbarg;
         gencb = BN_GENCB_new();
@@ -609,7 +609,7 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
                                                 gctx->generator, gencb);
             else
                 ret = dh_generate_ffc_parameters(dh, gctx->gen_type, gctx->pbits,
-                                                 gctx->qbits, gctx->md, gencb);
+                                                 gctx->qbits, gencb);
             if (ret <= 0)
                 goto end;
         }
@@ -641,7 +641,6 @@ static void dh_gen_cleanup(void *genctx)
         return;
 
     OPENSSL_clear_free(gctx->seed, gctx->seedlen);
-    EVP_MD_free(gctx->md);
     OPENSSL_free(gctx);
 }
 

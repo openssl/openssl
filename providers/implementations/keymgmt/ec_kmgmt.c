@@ -110,6 +110,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
                   OSSL_PARAM params[], int include_private,
                   unsigned char **pub_key)
 {
+    BIGNUM *x = NULL, *y = NULL;
     const BIGNUM *priv_key = NULL;
     const EC_POINT *pub_point = NULL;
     const EC_GROUP *ecg = NULL;
@@ -125,6 +126,7 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
     pub_point = EC_KEY_get0_public_key(eckey);
 
     if (pub_point != NULL) {
+        OSSL_PARAM *p = NULL, *px = NULL, *py = NULL;
         /*
          * EC_POINT_point2buf() can generate random numbers in some
          * implementations so we need to ensure we use the correct libctx.
@@ -133,14 +135,41 @@ int key_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl,
         if (bnctx == NULL)
             goto err;
 
-        /* convert pub_point to a octet string according to the SECG standard */
-        if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
-                                              POINT_CONVERSION_COMPRESSED,
-                                              pub_key, bnctx)) == 0
-            || !ossl_param_build_set_octet_string(tmpl, params,
-                                                  OSSL_PKEY_PARAM_PUB_KEY,
-                                                  *pub_key, pub_key_len))
-            goto err;
+
+        /* If we are doing a get then check first before decoding the point */
+        if (tmpl == NULL) {
+            p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_PUB_KEY);
+            px = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_PUB_X);
+            py = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_EC_PUB_Y);
+        }
+
+        if (p != NULL || tmpl != NULL) {
+            /* convert pub_point to a octet string according to the SECG standard */
+            if ((pub_key_len = EC_POINT_point2buf(ecg, pub_point,
+                                                  POINT_CONVERSION_COMPRESSED,
+                                                  pub_key, bnctx)) == 0
+                || !ossl_param_build_set_octet_string(tmpl, p,
+                                                      OSSL_PKEY_PARAM_PUB_KEY,
+                                                      *pub_key, pub_key_len))
+                goto err;
+        }
+        if (px != NULL || py != NULL) {
+            if (px != NULL)
+                x = BN_CTX_get(bnctx);
+            if (py != NULL)
+                y = BN_CTX_get(bnctx);
+
+            if (!EC_POINT_get_affine_coordinates(ecg, pub_point, x, y, bnctx))
+                goto err;
+            if (px != NULL
+                && !ossl_param_build_set_bn(tmpl, px,
+                                            OSSL_PKEY_PARAM_EC_PUB_X, x))
+                goto err;
+            if (py != NULL
+                && !ossl_param_build_set_bn(tmpl, py,
+                                            OSSL_PKEY_PARAM_EC_PUB_Y, y))
+                goto err;
+        }
     }
 
     if (priv_key != NULL && include_private) {
@@ -532,6 +561,8 @@ static const OSSL_PARAM ec_known_gettable_params[] = {
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
     EC_IMEXPORTABLE_DOM_PARAMETERS,
     EC_IMEXPORTABLE_PUBLIC_KEY,
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_PUB_X, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_PUB_Y, NULL, 0),
     EC_IMEXPORTABLE_PRIVATE_KEY,
     EC_IMEXPORTABLE_OTHER_PARAMETERS,
     OSSL_PARAM_END

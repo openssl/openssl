@@ -61,7 +61,6 @@ int ERR_load_BN_strings(void);
 #  define BN_F_BN_MOD_EXP_RECP                             0
 #  define BN_F_BN_MOD_EXP_SIMPLE                           0
 #  define BN_F_BN_MOD_INVERSE                              0
-#  define BN_F_BN_MOD_INVERSE_NO_BRANCH                    0
 #  define BN_F_BN_MOD_LSHIFT_QUICK                         0
 #  define BN_F_BN_MOD_SQRT                                 0
 #  define BN_F_BN_MONT_CTX_NEW                             0

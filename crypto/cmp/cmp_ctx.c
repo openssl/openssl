@@ -393,7 +393,7 @@ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb)
 }
 
 /* Print OpenSSL and CMP errors via the log cb of the ctx or ERR_print_errors */
-void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx)
+void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx)
 {
     OSSL_CMP_print_errors_cb(ctx == NULL ? NULL : ctx->log_cb);
 }

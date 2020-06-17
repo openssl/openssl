@@ -255,17 +255,19 @@ static int urldecode(char *p)
 }
 
 int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
-                             BIO **pcbio, BIO *acbio,
+                             char **ppath, BIO **pcbio, BIO *acbio,
                              const char *prog, int accept_get, int timeout)
 {
     BIO *cbio = NULL, *getbio = NULL, *b64 = NULL;
     int len;
     char reqbuf[2048], inbuf[2048];
-    char *url, *end;
+    char *meth, *url, *end;
     ASN1_VALUE *req;
     int ret = 1;
 
     *preq = NULL;
+    if (ppath != NULL)
+        *ppath = NULL;
     *pcbio = NULL;
 
     /* Connection loss before accept() is routine, ignore silently */
@@ -275,6 +277,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
     cbio = BIO_pop(acbio);
     *pcbio = cbio;
     if (cbio == NULL) {
+        /* Cannot call http_server_send_status(cbio, ...) */
         ret = -1;
         goto out;
     }
@@ -288,16 +291,26 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
     /* Read the request line. */
     len = BIO_gets(cbio, reqbuf, sizeof(reqbuf));
-    if (len <= 0)
+    if (len <= 0) {
+        log_message(prog, LOG_INFO,
+                    "Request line read error or empty request");
+        (void)http_server_send_status(cbio, 400, "Bad Request");
         goto out;
+    }
 
-    if (accept_get && strncmp(reqbuf, "GET ", 4) == 0) {
-        /* Expecting GET {sp} /URL {sp} HTTP/1.x */
-        for (url = reqbuf + 4; *url == ' '; ++url)
-            continue;
+    meth = reqbuf;
+    url = meth + 3;
+    if ((accept_get && strncmp(meth, "GET ", 4) == 0)
+            || (url++, strncmp(meth, "POST ", 5) == 0)) {
+        /* Expecting (GET|POST) {sp} /URL {sp} HTTP/1.x */
+        *(url++) = '\0';
+        while (*url == ' ')
+            url++;
         if (*url != '/') {
             log_message(prog, LOG_INFO,
-                        "Invalid GET -- URL does not begin with '/': %s", url);
+                        "Invalid %s -- URL does not begin with '/': %s",
+                        meth, url);
+            (void)http_server_send_status(cbio, 400, "Bad Request");
             goto out;
         }
         url++;
@@ -308,7 +321,9 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
                 break;
         if (strncmp(end, " HTTP/1.", 7) != 0) {
             log_message(prog, LOG_INFO,
-                        "Invalid GET -- bad HTTP/version string: %s", end + 1);
+                        "Invalid %s -- bad HTTP/version string: %s",
+                        meth, end + 1);
+            (void)http_server_send_status(cbio, 400, "Bad Request");
             goto out;
         }
         *end = '\0';
@@ -318,32 +333,44 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
          * 'url' was incremented above to point to the first byte *after*
          * the leading slash, so in case 'GET / ' it is now an empty string.
          */
-        if (url[0] == '\0')
+        if (strlen(meth) == 3 && url[0] == '\0') {
+            (void)http_server_send_status(cbio, 200, "OK");
             goto out;
+        }
 
         len = urldecode(url);
-        if (len <= 0) {
+        if (len < 0) {
             log_message(prog, LOG_INFO,
-                        "Invalid GET request -- bad URL encoding: %s", url);
+                        "Invalid %s request -- bad URL encoding: %s",
+                        meth, url);
+            (void)http_server_send_status(cbio, 400, "Bad Request");
             goto out;
         }
-        if ((getbio = BIO_new_mem_buf(url, len)) == NULL
-            || (b64 = BIO_new(BIO_f_base64())) == NULL) {
-            log_message(prog, LOG_ERR,
-                        "Could not allocate base64 bio with size = %d", len);
-            BIO_free_all(cbio);
-            *pcbio = NULL;
-            ret = -1;
-            goto out;
+        if (strlen(meth) == 3) { /* GET */
+            if ((getbio = BIO_new_mem_buf(url, len)) == NULL
+                || (b64 = BIO_new(BIO_f_base64())) == NULL) {
+                log_message(prog, LOG_ERR,
+                            "Could not allocate base64 bio with size = %d",
+                            len);
+                goto fatal;
+            }
+            BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
+            getbio = BIO_push(b64, getbio);
         }
-        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-        getbio = BIO_push(b64, getbio);
-    } else if (strncmp(reqbuf, "POST ", 5) != 0) {
+    } else {
         log_message(prog, LOG_INFO,
                     "HTTP request does not start with GET/POST: %s", reqbuf);
         /* TODO provide better diagnosis in case client tries TLS */
+        (void)http_server_send_status(cbio, 400, "Bad Request");
         goto out;
     }
+
+    /* chop any further/duplicate leading or trailing '/' */
+    while (*url == '/')
+        url++;
+    while (end >= url + 2 && end[-2] == '/' && end[-1] == '/')
+        end--;
+    *end = '\0';
 
     /* Read and skip past the headers. */
     for (;;) {
@@ -351,6 +378,7 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
         if (len <= 0) {
             log_message(prog, LOG_ERR,
                         "Error skipping remaining HTTP headers");
+            (void)http_server_send_status(cbio, 400, "Bad Request");
             goto out;
         }
         if ((inbuf[0] == '\r') || (inbuf[0] == '\n'))
@@ -365,8 +393,14 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
 
     /* Try to read and parse request */
     req = ASN1_item_d2i_bio(it, getbio != NULL ? getbio : cbio, NULL);
-    if (req == NULL)
+    if (req == NULL) {
         log_message(prog, LOG_ERR, "Error parsing request");
+    } else if (ppath != NULL && (*ppath = OPENSSL_strdup(url)) == NULL) {
+        log_message(prog, LOG_ERR,
+                    "Out of memory allocating %zu bytes", strlen(url) + 1);
+        ASN1_item_free(req, it);
+        goto fatal;
+    }
 
     *preq = req;
 
@@ -378,6 +412,17 @@ int http_server_get_asn1_req(const ASN1_ITEM *it, ASN1_VALUE **preq,
     acfd = (int)INVALID_SOCKET;
 # endif
     return ret;
+
+ fatal:
+    (void)http_server_send_status(cbio, 500, "Internal Server Error");
+    if (ppath != NULL) {
+        OPENSSL_free(*ppath);
+        *ppath = NULL;
+    }
+    BIO_free_all(cbio);
+    *pcbio = NULL;
+    ret = -1;
+    goto out;
 }
 
 /* assumes that cbio does not do an encoding that changes the output length */
@@ -388,6 +433,14 @@ int http_server_send_asn1_resp(BIO *cbio, const char *content_type,
                          "Content-Length: %d\r\n\r\n", content_type,
                          ASN1_item_i2d(resp, NULL, it)) > 0
             && ASN1_item_i2d_bio(it, cbio, resp) > 0;
+
+    (void)BIO_flush(cbio);
+    return ret;
+}
+
+int http_server_send_status(BIO *cbio, int status, const char *reason)
+{
+    int ret = BIO_printf(cbio, "HTTP/1.0 %d %s\r\n\r\n", status, reason) > 0;
 
     (void)BIO_flush(cbio);
     return ret;

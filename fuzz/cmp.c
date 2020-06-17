@@ -94,7 +94,7 @@ static void cmp_client_process_response(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
                                   OSSL_CMP_ITAV_free);
         break;
     default:
-        (void)ossl_cmp_msg_check_received(ctx, msg, allow_unprotected, 0);
+        (void)ossl_cmp_msg_check_update(ctx, msg, allow_unprotected, 0);
         break;
     }
  err:

@@ -11,6 +11,8 @@
 #include <openssl/core_names.h>
 #include "internal/ffc.h"
 #include "internal/param_build_set.h"
+#include "internal/nelem.h"
+#include "e_os.h" /* strcasecmp */
 
 #ifndef FIPS_MODULE
 # include <openssl/asn1.h> /* ffc_params_print */
@@ -21,6 +23,7 @@ void ffc_params_init(FFC_PARAMS *params)
     memset(params, 0, sizeof(*params));
     params->pcounter = -1;
     params->gindex = FFC_UNVERIFIABLE_GINDEX;
+    params->flags = FFC_PARAM_FLAG_VALIDATE_ALL;
 }
 
 void ffc_params_cleanup(FFC_PARAMS *params)
@@ -109,6 +112,18 @@ void ffc_params_set_h(FFC_PARAMS *params, int index)
     params->h = index;
 }
 
+void ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags)
+{
+    params->flags = flags;
+}
+
+int ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props)
+{
+    params->mdname = alg;
+    params->mdprops = props;
+    return 1;
+}
+
 int ffc_params_set_validate_params(FFC_PARAMS *params,
                                    const unsigned char *seed, size_t seedlen,
                                    int counter)
@@ -182,6 +197,36 @@ int ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q)
            && (ignore_q || BN_cmp(a->q, b->q) == 0); /* Note: q may be NULL */
 }
 
+static const OSSL_ITEM flag_map[] = {
+    { FFC_PARAM_FLAG_VALIDATE_PQ, OSSL_FFC_PARAM_VALIDATE_PQ },
+    { FFC_PARAM_FLAG_VALIDATE_G, OSSL_FFC_PARAM_VALIDATE_G },
+    { FFC_PARAM_FLAG_VALIDATE_ALL, OSSL_FFC_PARAM_VALIDATE_PQG },
+    { 0, "" }
+};
+
+int ffc_params_flags_from_name(const char *name)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(flag_map); ++i) {
+        if (strcasecmp(flag_map[i].ptr, name) == 0)
+            return flag_map[i].id;
+    }
+    return NID_undef;
+}
+
+const char *ffc_params_flags_to_name(int flags)
+{
+    size_t i;
+
+    flags &= FFC_PARAM_FLAG_VALIDATE_ALL;
+    for (i = 0; i < OSSL_NELEM(flag_map); ++i) {
+        if ((int)flag_map[i].id == flags)
+            return flag_map[i].ptr;
+    }
+    return "";
+}
+
 int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
                       OSSL_PARAM params[])
 {
@@ -228,6 +273,20 @@ int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *bld,
         return 0;
 #endif
     }
+    if (!ossl_param_build_set_utf8_string(bld, params,
+                                          OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE,
+                                          ffc_params_flags_to_name(ffc->flags)))
+        return 0;
+    if (ffc->mdname != NULL
+        && !ossl_param_build_set_utf8_string(bld, params,
+                                             OSSL_PKEY_PARAM_FFC_DIGEST,
+                                             ffc->mdname))
+       return 0;
+    if (ffc->mdprops != NULL
+        && !ossl_param_build_set_utf8_string(bld, params,
+                                             OSSL_PKEY_PARAM_FFC_DIGEST_PROPS,
+                                             ffc->mdprops))
+        return 0;
     return 1;
 }
 

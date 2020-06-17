@@ -201,22 +201,30 @@ extern "C" {
 #define OSSL_PKEY_PARAM_PRIV_KEY            "priv"
 
 /* Diffie-Hellman/DSA Parameters */
-#define OSSL_PKEY_PARAM_FFC_P        "p"
-#define OSSL_PKEY_PARAM_FFC_G        "g"
-#define OSSL_PKEY_PARAM_FFC_Q        "q"
-#define OSSL_PKEY_PARAM_FFC_GINDEX   "gindex"
-#define OSSL_PKEY_PARAM_FFC_PCOUNTER "pcounter"
-#define OSSL_PKEY_PARAM_FFC_SEED     "seed"
-#define OSSL_PKEY_PARAM_FFC_COFACTOR "j"
-#define OSSL_PKEY_PARAM_FFC_H        "hindex"
+#define OSSL_PKEY_PARAM_FFC_P               "p"
+#define OSSL_PKEY_PARAM_FFC_G               "g"
+#define OSSL_PKEY_PARAM_FFC_Q               "q"
+#define OSSL_PKEY_PARAM_FFC_GINDEX          "gindex"
+#define OSSL_PKEY_PARAM_FFC_PCOUNTER        "pcounter"
+#define OSSL_PKEY_PARAM_FFC_SEED            "seed"
+#define OSSL_PKEY_PARAM_FFC_COFACTOR        "j"
+#define OSSL_PKEY_PARAM_FFC_H               "hindex"
+#define OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE   "valid-type"
+
+/* Diffie-Hellman/DSA Parameters parameter validation types */
+#define OSSL_FFC_PARAM_VALIDATE_PQ          "validate-pq"
+#define OSSL_FFC_PARAM_VALIDATE_G           "validate-g"
+#define OSSL_FFC_PARAM_VALIDATE_PQG         "validate-pqg"
 
 /* Diffie-Hellman params */
-#define OSSL_PKEY_PARAM_DH_GROUP     "group"
-#define OSSL_PKEY_PARAM_DH_GENERATOR "safeprime-generator"
-#define OSSL_PKEY_PARAM_DH_PRIV_LEN   "priv_len"
+#define OSSL_PKEY_PARAM_DH_GROUP            "group"
+#define OSSL_PKEY_PARAM_DH_GENERATOR        "safeprime-generator"
+#define OSSL_PKEY_PARAM_DH_PRIV_LEN         "priv_len"
 
 /* Elliptic Curve Domain Parameters */
 #define OSSL_PKEY_PARAM_EC_NAME      "curve-name"
+#define OSSL_PKEY_PARAM_EC_PUB_X     "qx"
+#define OSSL_PKEY_PARAM_EC_PUB_Y     "qy"
 
 /* Elliptic Curve Key Parameters */
 #define OSSL_PKEY_PARAM_USE_COFACTOR_FLAG "use-cofactor-flag"
@@ -334,7 +342,6 @@ extern "C" {
 #define OSSL_SIGNATURE_PARAM_MGF1_PROPERTIES    \
     OSSL_PKEY_PARAM_MGF1_PROPERTIES
 #define OSSL_SIGNATURE_PARAM_DIGEST_SIZE        OSSL_PKEY_PARAM_DIGEST_SIZE
-#define OSSL_SIGNATURE_PARAM_KAT                "kat"
 
 /* Asym cipher parameters */
 #define OSSL_ASYM_CIPHER_PARAM_PAD_MODE                 OSSL_PKEY_PARAM_PAD_MODE
@@ -363,6 +370,19 @@ extern "C" {
 /* Keygen callback parameters, from provider to libcrypto */
 #define OSSL_GEN_PARAM_POTENTIAL            "potential" /* integer */
 #define OSSL_GEN_PARAM_ITERATION            "iteration" /* integer */
+
+/* ACVP Test parameters : These should not be used normally */
+#define OSSL_PKEY_PARAM_RSA_TEST_XP1 "xp1"
+#define OSSL_PKEY_PARAM_RSA_TEST_XP2 "xp2"
+#define OSSL_PKEY_PARAM_RSA_TEST_XP  "xp"
+#define OSSL_PKEY_PARAM_RSA_TEST_XQ1 "xq1"
+#define OSSL_PKEY_PARAM_RSA_TEST_XQ2 "xq2"
+#define OSSL_PKEY_PARAM_RSA_TEST_XQ  "xq"
+#define OSSL_PKEY_PARAM_RSA_TEST_P1  "p1"
+#define OSSL_PKEY_PARAM_RSA_TEST_P2  "p2"
+#define OSSL_PKEY_PARAM_RSA_TEST_Q1  "q1"
+#define OSSL_PKEY_PARAM_RSA_TEST_Q2  "q2"
+#define OSSL_SIGNATURE_PARAM_KAT "kat"
 
 # ifdef __cplusplus
 }

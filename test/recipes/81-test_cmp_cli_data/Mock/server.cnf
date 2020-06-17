@@ -1,0 +1,16 @@
+[cmp] # mock server configuration
+
+port = 1700
+srv_secret = pass:test
+srv_cert = server.crt
+srv_key = server.key
+
+#accept_unprotected
+no_check_time = 1
+srv_trusted = signer_root.crt
+
+rsp_cert = signer_only.crt
+rsp_capubs = signer_root.crt
+rsp_extracerts = signer_issuing.crt
+
+

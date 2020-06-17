@@ -13,3 +13,7 @@ IF[{- !$disabled{'deprecated-0.9.8'} -}]
 ENDIF
 
 SOURCE[../../providers/libfips.a]=$COMMON
+
+IF[{- !$disabled{'acvp-tests'} -}]
+  SOURCE[../../providers/libfips.a]=rsa_acvp_test_params.c
+ENDIF

@@ -65,9 +65,9 @@ const OPTIONS rsa_options[] = {
     {"pvk-strong", OPT_PVK_STRONG, '-', "Enable 'Strong' PVK encoding level (default)"},
     {"pvk-weak", OPT_PVK_WEAK, '-', "Enable 'Weak' PVK encoding level"},
     {"pvk-none", OPT_PVK_NONE, '-', "Don't enforce PVK encoding"},
+#endif
 
     OPT_PROV_OPTIONS,
-#endif
     {NULL}
 };
 

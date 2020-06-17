@@ -4926,7 +4926,7 @@ RAND_DRBG_set_callback_data             ?	3_0_0	EXIST::FUNCTION:
 RAND_DRBG_get_callback_data             ?	3_0_0	EXIST::FUNCTION:
 BIO_socket_wait                         ?	3_0_0	EXIST::FUNCTION:SOCK
 BIO_wait                                ?	3_0_0	EXIST::FUNCTION:
-BIO_connect_retry                       ?	3_0_0	EXIST::FUNCTION:
+BIO_do_connect_retry                    ?	3_0_0	EXIST::FUNCTION:
 ERR_load_HTTP_strings                   ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_get                           ?	3_0_0	EXIST::FUNCTION:
 OSSL_HTTP_get_asn1                      ?	3_0_0	EXIST::FUNCTION:

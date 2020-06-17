@@ -234,7 +234,7 @@ int ocsp_main(int argc, char **argv)
     int noCAfile = 0, noCApath = 0, noCAstore = 0;
     int accept_count = -1, add_nonce = 1, noverify = 0, use_ssl = -1;
     int vpmtouched = 0, badsig = 0, i, ignore_err = 0, nmin = 0, ndays = -1;
-    int req_text = 0, resp_text = 0, ret = 1;
+    int req_text = 0, resp_text = 0, res, ret = 1;
     int req_timeout = -1;
     long nsec = MAX_VALIDITY_PERIOD, maxage = -1;
     unsigned long sign_flags = 0, verify_flags = 0, rflags = 0;
@@ -629,13 +629,17 @@ redo_accept:
 #endif
 
         req = NULL;
-        if (!do_responder(&req, &cbio, acbio, req_timeout))
+        res = do_responder(&req, &cbio, acbio, req_timeout);
+        if (res == 0)
             goto redo_accept;
 
         if (req == NULL) {
-            resp = OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST,
-                                        NULL);
-            send_ocsp_response(cbio, resp);
+            if (res == 1) {
+                resp =
+                    OCSP_response_create(OCSP_RESPONSE_STATUS_MALFORMEDREQUEST,
+                                         NULL);
+                send_ocsp_response(cbio, resp);
+            }
             goto done_resp;
         }
     }
@@ -1151,7 +1155,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
 {
 #ifndef OPENSSL_NO_SOCK
     return http_server_get_asn1_req(ASN1_ITEM_rptr(OCSP_RESPONSE),
-                                    (ASN1_VALUE **)preq, pcbio, acbio,
+                                    (ASN1_VALUE **)preq, NULL, pcbio, acbio,
                                     prog, 1 /* accept_get */, timeout);
 #else
     BIO_printf(bio_err,
