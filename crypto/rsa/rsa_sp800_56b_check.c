@@ -190,6 +190,7 @@ int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
         BN_set_flags(p1, BN_FLG_CONSTTIME);
         BN_set_flags(q1, BN_FLG_CONSTTIME);
         BN_set_flags(lcm, BN_FLG_CONSTTIME);
+        BN_set_flags(p1q1, BN_FLG_CONSTTIME);
         BN_set_flags(gcd, BN_FLG_CONSTTIME);
         ret = 1;
     } else {
@@ -259,17 +260,16 @@ int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
     return (BN_num_bits(diff) > bitlen);
 }
 
-/* return LCM(p-1, q-1) */
+/*
+ * return LCM(p-1, q-1)
+ *
+ * Caller should ensure that lcm, gcd, p1, q1, p1q1 are flagged with
+ * BN_FLG_CONSTTIME.
+ */
 int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
                 BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
                 BIGNUM *p1q1)
 {
-    BN_set_flags(lcm, BN_FLG_CONSTTIME);
-    BN_set_flags(gcd, BN_FLG_CONSTTIME);
-    BN_set_flags(p1, BN_FLG_CONSTTIME);
-    BN_set_flags(q1, BN_FLG_CONSTTIME);
-    BN_set_flags(p1q1, BN_FLG_CONSTTIME);
-
     return BN_sub(p1, p, BN_value_one())    /* p-1 */
            && BN_sub(q1, q, BN_value_one()) /* q-1 */
            && BN_mul(p1q1, p1, q1, ctx)     /* (p-1)(q-1) */

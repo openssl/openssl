@@ -199,6 +199,12 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (gcd == NULL)
         goto err;
 
+    BN_set_flags(p1, BN_FLG_CONSTTIME);
+    BN_set_flags(q1, BN_FLG_CONSTTIME);
+    BN_set_flags(lcm, BN_FLG_CONSTTIME);
+    BN_set_flags(p1q1, BN_FLG_CONSTTIME);
+    BN_set_flags(gcd, BN_FLG_CONSTTIME);
+
     /* LCM((p-1, q-1)) */
     if (rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) != 1)
         goto err;
