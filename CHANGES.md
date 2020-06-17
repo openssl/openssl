@@ -23,6 +23,13 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * 'Configure' has been changed to figure out the configuration target if
+   none is given on the command line.  Consequently, the 'config' script is
+   now only a mere wrapper.  All documentation is changed to only mention
+   'Configure'.
+
+   *Rich Salz and Richard Levitte*
+
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
 
@@ -110,13 +117,6 @@ OpenSSL 3.0
    L<EC_POINT_get_affine_coordinates(3)> functions.
 
    *Billy Bob Brumley*
-
- * 'Configure' has been changed to figure out the configuration target if
-   none is given on the command line.  Consequently, the 'config' script is
-   now only a mere wrapper.  All documentation is changed to only mention
-   'Configure'.
-   
-   *Richard Levitte*
 
  * Added OSSL_PARAM_BLD to the public interface.  This allows OSSL_PARAM
    arrays to be more easily constructed via a series of utility functions.
