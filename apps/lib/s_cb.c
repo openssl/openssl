@@ -745,6 +745,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     EVP_MAC *hmac = NULL;
     EVP_MAC_CTX *ctx = NULL;
     OSSL_PARAM params[3], *p = params;
+    size_t mac_len;
 
     /* Initialize a random secret */
     if (!cookie_initialized) {
@@ -808,10 +809,11 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
             BIO_printf(bio_err, "HMAC context update failed\n");
             goto end;
     }
-    if (!EVP_MAC_final(ctx, cookie, NULL, (size_t)cookie_len)) {
+    if (!EVP_MAC_final(ctx, cookie, &mac_len, DTLS1_COOKIE_LENGTH)) {
             BIO_printf(bio_err, "HMAC context final failed\n");
             goto end;
     }
+    *cookie_len = (int)mac_len;
     res = 1;
 end:
     OPENSSL_free(buffer);
