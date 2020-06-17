@@ -12,10 +12,13 @@
 #include <openssl/params.h>
 #include <openssl/serializer.h>
 #include <openssl/core_names.h>
+#include <openssl/safestack.h>
 #include "internal/provider.h"
 #include "internal/property.h"
 #include "crypto/evp.h"
 #include "serializer_local.h"
+
+DEFINE_STACK_OF_CSTRING()
 
 int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
                                    const char *cipher_name,
@@ -92,46 +95,16 @@ int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
  */
 
 struct selected_serializer_st {
-    OPENSSL_CTX *libctx;
-    const OSSL_PROVIDER *desired_provider;
-    const char *propquery;
-
-    /*
-     * Serializers offer two functions, one that handles object data in
-     * the form of a OSSL_PARAM array, and one that directly handles a
-     * provider side object.  The latter requires that the serializer
-     * is offered by the same provider that holds that object, but is
-     * more desirable because it usually provides faster serialization.
-     *
-     * When looking up possible serializers, we save the first that can
-     * handle an OSSL_PARAM array in |first|, and the first that can
-     * handle a provider side object in |desired|.
-     */
-    OSSL_SERIALIZER *first;
-    OSSL_SERIALIZER *desired;
+    STACK_OF(OPENSSL_CSTRING) *names;
+    int error;
 };
 
-static void select_serializer(const char *name, void *data)
+static void cache_serializers(const char *name, void *data)
 {
     struct selected_serializer_st *d = data;
-    OSSL_SERIALIZER *s = NULL;
 
-    /* No need to look further if we already have the more desirable option */
-    if (d->desired != NULL)
-        return;
-
-    if ((s = OSSL_SERIALIZER_fetch(d->libctx, name, d->propquery)) != NULL) {
-        if (OSSL_SERIALIZER_provider(s) == d->desired_provider
-                && s->serialize_object != NULL) {
-            OSSL_SERIALIZER_free(d->first);
-            d->first = NULL;
-            d->desired = s;
-        } else if (d->first == NULL && s->serialize_data != NULL) {
-            d->first = s;
-        } else {
-            OSSL_SERIALIZER_free(s);
-        }
-    }
+    if (sk_OPENSSL_CSTRING_push(d->names, name) <= 0)
+        d->error = 1;
 }
 
 /*
@@ -319,25 +292,59 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         const OSSL_PROVIDER *desired_prov = EVP_KEYMGMT_provider(keymgmt);
         OPENSSL_CTX *libctx = ossl_provider_library_context(desired_prov);
         struct selected_serializer_st sel_data;
-        OSSL_PROPERTY_LIST *check =
-            ossl_parse_query(libctx, "type=parameters");
+        OSSL_PROPERTY_LIST *check = ossl_parse_query(libctx, "type=parameters");
         OSSL_PROPERTY_LIST *current_props = NULL;
+        OSSL_SERIALIZER *first = NULL;
+        const char *name;
+        int i;
 
-        memset(&sel_data, 0, sizeof(sel_data));
-        sel_data.libctx = libctx;
-        sel_data.desired_provider = desired_prov;
-        sel_data.propquery = propquery;
-        EVP_KEYMGMT_names_do_all(keymgmt, select_serializer, &sel_data);
+        /*
+         * Select the serializer in two steps.  First, get the names of all of
+         * the serializers.  Then determine which is the best one to use.
+         * This has to be broken because it isn't possible to fetch the
+         * serialisers inside EVP_KEYMGMT_names_do_all() due to locking
+         * order inversions with the store lock.
+         */
+        sel_data.error = 0;
+        sel_data.names = sk_OPENSSL_CSTRING_new_null();
+        if (sel_data.names == NULL)
+            return NULL;
+        EVP_KEYMGMT_names_do_all(keymgmt, cache_serializers, &sel_data);
+        /*
+         * Ignore memory allocation errors that are indicated in sel_data.error
+         * in case a suitable provider does get found regardless.
+         */
 
-        if (sel_data.desired != NULL) {
-            ser = sel_data.desired;
-            sel_data.desired = NULL;
-        } else if (sel_data.first != NULL) {
-            ser = sel_data.first;
-            sel_data.first = NULL;
+        /*
+         * Serializers offer two functions, one that handles object data in
+         * the form of a OSSL_PARAM array, and one that directly handles a
+         * provider side object.  The latter requires that the serializer
+         * is offered by the same provider that holds that object, but is
+         * more desirable because it usually provides faster serialization.
+         *
+         * When looking up possible serializers, we save the first that can
+         * handle an OSSL_PARAM array in |first| and use that if nothing
+         * better turns up.
+         */
+        for (i = 0; i < sk_OPENSSL_CSTRING_num(sel_data.names); i++) {
+            name = sk_OPENSSL_CSTRING_value(sel_data.names, i);
+            ser = OSSL_SERIALIZER_fetch(libctx, name, propquery);
+            if (ser != NULL) {
+                if (OSSL_SERIALIZER_provider(ser) == desired_prov
+                        && ser->serialize_object != NULL) {
+                    OSSL_SERIALIZER_free(first);
+                    break;
+                }
+                if (first == NULL && ser->serialize_data != NULL)
+                    first = ser;
+                else
+                    OSSL_SERIALIZER_free(ser);
+                ser = NULL;
+            }
         }
-        OSSL_SERIALIZER_free(sel_data.first);
-        OSSL_SERIALIZER_free(sel_data.desired);
+        sk_OPENSSL_CSTRING_free(sel_data.names);
+        if (ser == NULL)
+            ser = first;
 
         if (ser != NULL) {
             current_props =
@@ -345,9 +352,14 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
             if (ossl_property_match_count(check, current_props) > 0)
                 selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
             ossl_property_free(current_props);
+            ossl_property_free(check);
+        } else {
+            if (sel_data.error)
+                ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_MALLOC_FAILURE);
+            else
+                ERR_raise(ERR_LIB_OSSL_SERIALIZER,
+                          OSSL_SERIALIZER_R_SERIALIZER_NOT_FOUND);
         }
-
-        ossl_property_free(check);
     }
 
     ctx = OSSL_SERIALIZER_CTX_new(ser); /* refcnt(ser)++ */
