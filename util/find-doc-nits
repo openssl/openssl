@@ -865,21 +865,14 @@ sub checkmacros {
 sub printem ($) {
     my $type = shift;
     my $count = 0;
-    my %seen;
 
-    foreach my $func ( grep { $_ eq $type } sort keys %state ) {
-        $func .= '(3)';         # We know they're all in section 3
-
-        # Skip functions known to be missing
-        next if $opt_v && defined $name_map{$func} && $name_map{$func} eq '';
-
-        # Skip known names
-        next if defined $name_map{$func} || defined $seen{$func};
+    foreach my $func ( grep { $state{$_} eq $type } sort keys %state ) {
+        next if defined $name_map{$func}
+            || defined $missing{$func};
 
         err("$type:", "function $func undocumented")
             if $opt_d || $opt_e;
         $count++;
-        $seen{$func} = 1;
     }
     err("# $count lib$type names are not documented")
         if $count > 0;
@@ -906,7 +899,7 @@ sub collectnames {
         my $name_sec = "$name($section)";
         if ( !defined $name_map{$name_sec} ) {
             $name_map{$name_sec} = $filename;
-            $state{$name_sec} =
+            $state{$name_sec} //=
                 ( $filename =~ /\/internal\// ? 'internal' : 'public' )
                 if $is_generic;
         } elsif ( $filename eq $name_map{$name_sec} ) {
