@@ -421,7 +421,8 @@ WARNING! To build 64-bit package, do this:
 EOF
             maybe_abort();
             return { target => "irix-mips3" };
-        } ],
+        }
+      ],
       [ 'ppc-apple-rhapsody',     { target => "rhapsody-ppc" } ],
       [ 'ppc-apple-darwin.*',
         sub {
@@ -437,7 +438,8 @@ EOF
             return { target => "darwin64-ppc" }
                 if $ISA64 == 1 && $KERNEL_BITS eq '64';
             return { target => "darwin-ppc" };
-        } ],
+        }
+      ],
       [ 'i.86-apple-darwin.*',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
@@ -452,7 +454,8 @@ EOF
             return { target => "darwin64-x86_64" }
                 if $ISA64 == 1 && $KERNEL_BITS eq '64';
             return { target => "darwin-i386" };
-        } ],
+        }
+      ],
       [ 'x86_64-apple-darwin.*',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
@@ -464,17 +467,21 @@ WARNING! To build 32-bit package, do this:
 EOF
             maybe_abort();
             return { target => "darwin64-x86_64" };
-        } ],
-      [ 'armv6+7-.*-iphoneos',
+        }
+      ],
+      [ 'armv6\+7-.*-iphoneos',
         { target => "iphoneos-cross",
-          cflags => [ '-arch armv6', '-arch armv7' ],
-          cxxflags => [ '-arch armv6', '-arch armv7' ] } ],
+          cflags => [ qw(-arch armv6 -arch armv7) ],
+          cxxflags => [ qw(-arch armv6 -arch armv7) ] }
+      ],
+      [ 'arm64-.*-iphoneos|.*-.*-ios64',
+        { target => "ios64-cross" }
+      ],
       [ '.*-.*-iphoneos',
         sub { return { target => "iphoneos-cross",
                        cflags => [ "-arch ${MACHINE}" ],
-                       cxxflags => [ "-arch ${MACHINE}" ] }; } ],
-      [ '(?:arm64-.*-iphoneos|.*-.*-ios64).*',
-        { target => "ios64-cross" } ],
+                       cxxflags => [ "-arch ${MACHINE}" ] }; }
+      ],
       [ 'alpha-.*-linux2.*',
         sub {
             my $ISA = `awk '/cpu model/{print \$4;exit(0);}' /proc/cpuinfo`;
@@ -494,7 +501,8 @@ EOF
             }
             return { target => "linux-alpha",
                      %config };
-        } ],
+        }
+      ],
       [ 'ppc64-.*-linux2',
         sub {
             my $KERNEL_BITS = $ENV{KERNEL_BITS};
@@ -516,7 +524,8 @@ EOF
             }
             return { target => "linux-ppc",
                      %config };
-        } ],
+        }
+      ],
       [ 'ppc64le-.*-linux2',      { target => "linux-ppc64le" } ],
       [ 'ppc-.*-linux2',          { target => "linux-ppc" } ],
       [ 'mips64.*-*-linux2',
@@ -527,13 +536,14 @@ WARNING! To build 64-bit package, do this:
 EOF
             maybe_abort();
             return { target => "linux-mips64" };
-        } ],
+        }
+      ],
       [ 'mips.*-.*-linux2',       { target => "linux-mips32" } ],
-      [ 'ppc60x-.*-vxworks*',     { target => "vxworks-ppc60x" } ],
-      [ 'ppcgen-.*-vxworks*',     { target => "vxworks-ppcgen" } ],
-      [ 'pentium-.*-vxworks*',    { target => "vxworks-pentium" } ],
-      [ 'simlinux-.*-vxworks*',   { target => "vxworks-simlinux" } ],
-      [ 'mips-.*-vxworks*',       { target => "vxworks-mips" } ],
+      [ 'ppc60x-.*-vxworks.*',    { target => "vxworks-ppc60x" } ],
+      [ 'ppcgen-.*-vxworks.*',    { target => "vxworks-ppcgen" } ],
+      [ 'pentium-.*-vxworks.*',   { target => "vxworks-pentium" } ],
+      [ 'simlinux-.*-vxworks.*',  { target => "vxworks-simlinux" } ],
+      [ 'mips-.*-vxworks.*',      { target => "vxworks-mips" } ],
       [ 'e2k-.*-linux.*',         { target => "linux-generic64",
                                     defines => [ 'L_ENDIAN' ] } ],
       [ 'ia64-.*-linux.',         { target => "linux-ia64" } ],
@@ -546,7 +556,8 @@ WARNING! If you *know* that your GNU C supports 64-bit/V9 ABI and you
 EOF
             maybe_abort();
             return { target => "linux-sparcv9" };
-        } ],
+        }
+      ],
       [ 'sparc-.*-linux2',
         sub {
             my $KARCH = `awk '/^type/{print \$3;exit(0);}' /proc/cpuinfo`;
@@ -555,7 +566,8 @@ EOF
             return { target => "linux-sparcv8" } if $KARCH =~ 'sun4[md]';
             return { target => "linux-generic32",
                      defines => [ 'L_ENDIAN' ] };
-        } ],
+        }
+      ],
       [ 'parisc.*-.*-linux2',
         sub {
             # 64-bit builds under parisc64 linux are not supported and
@@ -584,7 +596,8 @@ EOF
                   cflags => [ "-mschedule=$CPUSCHEDULE", "-march=$CPUARCH" ],
                   cxxflags => [ "-mschedule=$CPUSCHEDULE", "-march=$CPUARCH" ]
                 };
-        } ],
+        }
+      ],
       [ 'armv[1-3].*-.*-linux2',  { target => "linux-generic32" } ],
       [ 'armv[7-9].*-.*-linux2',  { target => "linux-armv4",
                                     defines => [ 'B_ENDIAN' ],
@@ -613,14 +626,16 @@ EOF
                     maybe_abort();
                 }
             return { target => "linux64-s390x" };
-        } ],
+        }
+      ],
       [ 'x86_64-.*-linux.',
         sub {
             return { target => "linux-x32" }
                 if okrun("$CC -dM -E -x c /dev/null 2>&1",
                          'grep -q ILP32 >/dev/null');
             return { target => "linux-x86_64" };
-        } ],
+        }
+      ],
       [ '.*86-.*-linux2',
         sub {
             # On machines where the compiler understands -m32, prefer a
@@ -628,7 +643,8 @@ EOF
             return { target => "linux-x86" }
                 if okrun("$CC -m32 -E -x c /dev/null >/dev/null 2>&1");
             return { target => "linux-elf" };
-        } ],
+        }
+      ],
       [ '.*86-.*-linux1',         { target => "linux-aout" } ],
       [ '.*-.*-linux.',           { target => "linux-generic32" } ],
       [ 'sun4[uv].*-.*-solaris2',
@@ -665,7 +681,8 @@ EOF
             return { target => "solaris64-sparcv9" }
                 if $ISA64 ne "" && $KERNEL_BITS eq '64';
             return { target => "solaris-sparcv9" };
-        } ],
+        }
+      ],
       [ 'sun4m-.*-solaris2',      { target => "solaris-sparcv8" } ],
       [ 'sun4d-.*-solaris2',      { target => "solaris-sparcv8" } ],
       [ 'sun4.*-.*-solaris2',     { target => "solaris-sparcv7" } ],
@@ -682,7 +699,8 @@ EOF
             push @tmp_disable, 'sse2' if int($REL) < 10;
             return { target => "solaris-x86",
                      disable => [ @tmp_disable ] };
-        } ],
+        }
+      ],
       # We don't have any sunos target in Configurations/*.conf, so why here?
       [ '.*-.*-sunos4',           { target => "sunos" } ],
       [ '.*86.*-.*-bsdi4',        { target => "BSD-x86-elf",
@@ -711,7 +729,8 @@ EOF
             return { target => "BSD-x86-elf" } if $what =~ /ELF/;
             return { target => "BSD-x86",
                      disable => [ 'sse2' ] };
-        } ],
+        }
+      ],
       [ '.*-.*-.*bsd.*',          { target => "BSD-generic32" } ],
       [ 'x86_64-.*-haiku',        { target => "haiku-x86_64" } ],
       [ '.*-.*-haiku',            { target => "haiku-x86" } ],
@@ -723,7 +742,8 @@ EOF
                      disable => [ 'sse2' ] } if $CCVENDOR eq "gnu";
             return { target => "unixware-7",
                      defines => [ '__i386__' ] };
-        } ],
+        }
+      ],
       [ '.*-.*-[Uu]nix[Ww]are20.*', { target => "unixware-2.0",
                                       disable => [ 'sse2', 'sha512' ] } ],
       [ '.*-.*-[Uu]nix[Ww]are21.*', { target => "unixware-2.1",
@@ -783,7 +803,8 @@ EOF
             # Motorola(?) CPU
             return { target => "hpux",
                      %common_return };
-        } ],
+        }
+      ],
       [ '.*-hpux',                { target => "hpux-parisc" } ],
       [ '.*-aix',
         sub {
@@ -815,7 +836,8 @@ EOF
                 $config{disable} = [ 'asm' ];
             }
             return %config;
-        } ],
+        }
+      ],
     ];
 
 # Map GUESSOS into OpenSSL terminology.
