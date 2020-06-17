@@ -451,6 +451,12 @@ static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
             BN_clear_free(rsa->dmp1);
             BN_clear_free(rsa->dmq1);
             BN_clear_free(rsa->iqmp);
+            rsa->d = NULL;
+            rsa->p = NULL;
+            rsa->q = NULL;
+            rsa->dmp1 = NULL;
+            rsa->dmq1 = NULL;
+            rsa->iqmp = NULL;
         }
     }
     return ok;
