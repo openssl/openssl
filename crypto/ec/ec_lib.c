@@ -29,17 +29,17 @@ EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
     EC_GROUP *ret;
 
     if (meth == NULL) {
-        ECerr(EC_F_EC_GROUP_NEW_EX, EC_R_SLOT_FULL);
+        ECerr(0, EC_R_SLOT_FULL);
         return NULL;
     }
     if (meth->group_init == 0) {
-        ECerr(EC_F_EC_GROUP_NEW_EX, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ECerr(0, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return NULL;
     }
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ECerr(EC_F_EC_GROUP_NEW_EX, ERR_R_MALLOC_FAILURE);
+        ECerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -47,7 +47,7 @@ EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
     if (propq != NULL) {
         ret->propq = OPENSSL_strdup(propq);
         if (ret->propq == NULL) {
-            ECerr(EC_F_EC_GROUP_NEW_EX, ERR_R_MALLOC_FAILURE);
+            ECerr(0, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
