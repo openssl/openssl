@@ -12,10 +12,13 @@
 #include <openssl/params.h>
 #include <openssl/serializer.h>
 #include <openssl/core_names.h>
+#include <openssl/safestack.h>
 #include "internal/provider.h"
 #include "internal/property.h"
 #include "crypto/evp.h"
 #include "serializer_local.h"
+
+DEFINE_STACK_OF_STRING()
 
 int OSSL_SERIALIZER_CTX_set_cipher(OSSL_SERIALIZER_CTX *ctx,
                                    const char *cipher_name,
@@ -92,46 +95,26 @@ int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
  */
 
 struct selected_serializer_st {
-    OPENSSL_CTX *libctx;
-    const OSSL_PROVIDER *desired_provider;
-    const char *propquery;
-
-    /*
-     * Serializers offer two functions, one that handles object data in
-     * the form of a OSSL_PARAM array, and one that directly handles a
-     * provider side object.  The latter requires that the serializer
-     * is offered by the same provider that holds that object, but is
-     * more desirable because it usually provides faster serialization.
-     *
-     * When looking up possible serializers, we save the first that can
-     * handle an OSSL_PARAM array in |first|, and the first that can
-     * handle a provider side object in |desired|.
-     */
-    OSSL_SERIALIZER *first;
-    OSSL_SERIALIZER *desired;
+    STACK_OF(OPENSSL_STRING) *names;
+    int error;
 };
 
-static void select_serializer(const char *name, void *data)
+static void serializer_string_free(OPENSSL_STRING a)
+{
+    OPENSSL_free(a);
+}
+
+static void cache_serializers(const char *name, void *data)
 {
     struct selected_serializer_st *d = data;
-    OSSL_SERIALIZER *s = NULL;
+    char *n = OPENSSL_strdup(name);
 
-    /* No need to look further if we already have the more desirable option */
-    if (d->desired != NULL)
-        return;
-
-    if ((s = OSSL_SERIALIZER_fetch(d->libctx, name, d->propquery)) != NULL) {
-        if (OSSL_SERIALIZER_provider(s) == d->desired_provider
-                && s->serialize_object != NULL) {
-            OSSL_SERIALIZER_free(d->first);
-            d->first = NULL;
-            d->desired = s;
-        } else if (d->first == NULL && s->serialize_data != NULL) {
-            d->first = s;
-        } else {
-            OSSL_SERIALIZER_free(s);
-        }
+    if (n != NULL) {
+        if (sk_OPENSSL_STRING_push(d->names, n) > 0)
+            return;
+        OPENSSL_free(n);
     }
+    d->error = 1;
 }
 
 /*
@@ -296,6 +279,7 @@ static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
                                       serializer_passphrase_out_cb, ctx);
 }
 
+
 /*
  * OSSL_SERIALIZER_CTX_new_by_EVP_PKEY() returns a ctx with no serializer if
  * it couldn't find a suitable serializer.  This allows a caller to detect if
@@ -322,22 +306,57 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         OSSL_PROPERTY_LIST *check =
             ossl_parse_query(libctx, "type=parameters");
         OSSL_PROPERTY_LIST *current_props = NULL;
+        int i;
+        OSSL_SERIALIZER *first = NULL;
+        char *name;
 
-        memset(&sel_data, 0, sizeof(sel_data));
-        sel_data.libctx = libctx;
-        sel_data.desired_provider = desired_prov;
-        sel_data.propquery = propquery;
-        EVP_KEYMGMT_names_do_all(keymgmt, select_serializer, &sel_data);
+        /*
+         * Select the serializer in two steps.  First, get the names of all of
+         * the serializers.  Then determine which is the best one to use.
+         * This has to be broken because it isn't possible to fetch the
+         * serialisers inside EVP_KEYMGMT_names_do_all() due to locking
+         * order inversions with the store lock.
+         */
+        sel_data.error = 0;
+        sel_data.names = sk_OPENSSL_STRING_new_null();
+        if (sel_data.names == NULL)
+            return NULL;
+        EVP_KEYMGMT_names_do_all(keymgmt, cache_serializers, &sel_data);
+        /*
+         * Ignore memory allocation errors that are indicated in sel_data.error
+         * in case a suitable did get found.
+         */
 
-        if (sel_data.desired != NULL) {
-            ser = sel_data.desired;
-            sel_data.desired = NULL;
-        } else if (sel_data.first != NULL) {
-            ser = sel_data.first;
-            sel_data.first = NULL;
+        /*
+         * Serializers offer two functions, one that handles object data in
+         * the form of a OSSL_PARAM array, and one that directly handles a
+         * provider side object.  The latter requires that the serializer
+         * is offered by the same provider that holds that object, but is
+         * more desirable because it usually provides faster serialization.
+         *
+         * When looking up possible serializers, we save the first that can
+         * handle an OSSL_PARAM array in |first| and use that if nothing
+         * better turns up.
+         */
+        for (i = 0; i < sk_OPENSSL_STRING_num(sel_data.names); i++) {
+            name = sk_OPENSSL_STRING_value(sel_data.names, i);
+            ser = OSSL_SERIALIZER_fetch(libctx, name, propquery);
+            if (ser != NULL) {
+                if (OSSL_SERIALIZER_provider(ser) == desired_prov
+                        && ser->serialize_object != NULL) {
+                    OSSL_SERIALIZER_free(first);
+                    break;
+                }
+                if (first == NULL && ser->serialize_data != NULL)
+                    first = ser;
+                else
+                    OSSL_SERIALIZER_free(ser);
+                ser = NULL;
+            }
         }
-        OSSL_SERIALIZER_free(sel_data.first);
-        OSSL_SERIALIZER_free(sel_data.desired);
+        sk_OPENSSL_STRING_pop_free(sel_data.names, &serializer_string_free);
+        if (ser == NULL)
+            ser = first;
 
         if (ser != NULL) {
             current_props =
