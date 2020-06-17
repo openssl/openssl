@@ -25,7 +25,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);
 
 # Default config depends on if the legacy module is built or not
-my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
+my $defaultcnf = $no_legacy ? 'default-provider.cnf' : 'default-and-legacy.cnf';
 
 my @configs = ( $defaultcnf );
 # Only add the FIPS config if the FIPS module has been built

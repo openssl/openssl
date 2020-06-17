@@ -26,7 +26,7 @@ my @types = ( "digest", "cipher" );
 
 my @setups = ();
 my @testdata = (
-    { config    => srctop_file("test", "default.cnf"),
+    { config    => srctop_file("test", "default-provider.cnf"),
       providers => [ 'default' ],
       tests  => [ { providers => [] },
                   { },

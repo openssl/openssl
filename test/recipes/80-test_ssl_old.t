@@ -42,7 +42,7 @@ my @reqcmd = ("openssl", "req");
 my @x509cmd = ("openssl", "x509", $digest);
 my @verifycmd = ("openssl", "verify");
 my @genpkeycmd = ("openssl", "genpkey");
-my $dummycnf = srctop_file("apps", "openssl.cnf");
+my $dummycnf = srctop_file("test", "default.cnf");
 
 my $cnf = srctop_file("test", "ca-and-certs.cnf");
 my $CAkey = "keyCA.ss";
@@ -105,7 +105,7 @@ subtest 'test_ss' => sub {
 };
 
 note('test_ssl -- key U');
-testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default.cnf"));
+testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default-provider.cnf"));
 unless ($no_fips) {
     testssl("keyU.ss", $Ucert, $CAcert, "fips", srctop_file("test","fips.cnf"));
 }
