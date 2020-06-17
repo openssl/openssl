@@ -8,11 +8,18 @@
  */
 
 /*
+
  * These tests are setup to load null into the default library context.
  * Any tests are expected to use the created 'libctx' to find algorithms.
  * The framework runs the tests twice using the 'default' provider or
  * 'fips' provider as inputs.
  */
+
+/*
+ * DSA/DH low level APIs are deprecated for public use, but still ok for
+ * internal use.
+ */
+#include "internal/deprecated.h"
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/dsa.h>
