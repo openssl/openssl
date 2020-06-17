@@ -360,6 +360,7 @@ my @dtls = qw(dtls1 dtls1_2);
 # For developers: keep it sorted alphabetically
 
 my @disablables = (
+    "acvp_tests",
     "afalgeng",
     "aria",
     "asan",

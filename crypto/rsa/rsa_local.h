@@ -10,7 +10,7 @@
 #ifndef OSSL_CRYPTO_RSA_LOCAL_H
 #define OSSL_CRYPTO_RSA_LOCAL_H
 
-#include <openssl/rsa.h>
+#include "crypto/rsa.h"
 #include "internal/refcount.h"
 #include "crypto/rsa.h"
 
@@ -28,6 +28,24 @@ typedef struct rsa_prime_info_st {
 
 DECLARE_ASN1_ITEM(RSA_PRIME_INFO)
 DEFINE_STACK_OF(RSA_PRIME_INFO)
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+struct rsa_acvp_test_st {
+    /* optional inputs */
+    BIGNUM *Xp1;
+    BIGNUM *Xp2;
+    BIGNUM *Xq1;
+    BIGNUM *Xq2;
+    BIGNUM *Xp;
+    BIGNUM *Xq;
+
+    /* optional outputs */
+    BIGNUM *p1;
+    BIGNUM *p2;
+    BIGNUM *q1;
+    BIGNUM *q2;
+};
+#endif
 
 struct rsa_st {
     /*
@@ -58,12 +76,14 @@ struct rsa_st {
      */
     /* This is used uniquely by OpenSSL provider implementations. */
     RSA_PSS_PARAMS_30 pss_params;
-#ifndef FIPS_MODULE
-    /* This is used uniquely by rsa_ameth.c and rsa_pmeth.c. */
-    RSA_PSS_PARAMS *pss;
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    RSA_ACVP_TEST *acvp_test;
 #endif
 
 #ifndef FIPS_MODULE
+    /* This is used uniquely by rsa_ameth.c and rsa_pmeth.c. */
+    RSA_PSS_PARAMS *pss;
     /* for multi-prime RSA, defined in RFC 8017 */
     STACK_OF(RSA_PRIME_INFO) *prime_infos;
     /* Be careful using this if the RSA structure is shared */
@@ -172,13 +192,9 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
 
 int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
                                         const BIGNUM *e, BN_CTX *ctx);
-int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
-                                  BIGNUM *Xpout, const BIGNUM *Xp,
-                                  const BIGNUM *Xp1, const BIGNUM *Xp2,
-                                  BIGNUM *q1, BIGNUM *q2, BIGNUM *Xqout,
-                                  const BIGNUM *Xq, const BIGNUM *Xq1,
-                                  const BIGNUM *Xq2, int nbits,
-                                  const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb);
+int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
+                                  int nbits, const BIGNUM *e, BN_CTX *ctx,
+                                  BN_GENCB *cb);
 
 int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
                                        int tlen, const unsigned char *from,

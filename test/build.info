@@ -36,6 +36,7 @@ IF[{- !$disabled{tests} -}]
           destest mdc2test \
           enginetest exptest \
           evp_pkey_provided_test evp_test evp_extra_test evp_fetch_prov_test \
+          acvp_test \
           v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
@@ -144,6 +145,12 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_pkey_provided_test]=evp_pkey_provided_test.c
   INCLUDE[evp_pkey_provided_test]=../include ../apps/include
   DEPEND[evp_pkey_provided_test]=../libcrypto.a libtestutil.a
+
+  IF[{- !$disabled{acvp-tests} -}]
+    SOURCE[acvp_test]=acvp_test.c
+    INCLUDE[acvp_test]=../include ../apps/include
+    DEPEND[acvp_test]=../libcrypto.a libtestutil.a
+  ENDIF
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest

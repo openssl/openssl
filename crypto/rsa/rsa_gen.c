@@ -66,8 +66,8 @@ int RSA_generate_multi_prime_key(RSA *rsa, int bits, int primes,
         else
             return 0;
     }
-#endif /* FIPS_MODULE */
-    return rsa_keygen(NULL, rsa, bits, primes, e_value, cb, 0);
+#endif /* FIPS_MODUKE */
+    return rsa_keygen(rsa->libctx, rsa, bits, primes, e_value, cb, 0);
 }
 
 #ifndef FIPS_MODULE

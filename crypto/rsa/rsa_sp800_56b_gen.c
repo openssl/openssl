@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#include <openssl/core.h>
 #include "crypto/bn.h"
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
@@ -25,20 +26,23 @@
  *
  * Params:
  *     rsa  Object used to store primes p & q.
- *     p1, p2 The returned auxiliary primes for p. If NULL they are not returned.
- *     Xpout An optionally returned random number used during generation of p.
- *     Xp An optional passed in value (that is random number used during
- *        generation of p).
- *     Xp1, Xp2 Optionally passed in randomly generated numbers from which
- *              auxiliary primes p1 & p2 are calculated. If NULL these values
- *              are generated internally.
- *     q1, q2 The returned auxiliary primes for q. If NULL they are not returned.
- *     Xqout An optionally returned random number used during generation of q.
- *     Xq An optional passed in value (that is random number used during
- *        generation of q).
- *     Xq1, Xq2 Optionally passed in randomly generated numbers from which
- *              auxiliary primes q1 & q2 are calculated. If NULL these values
- *              are generated internally.
+ *     test Object used for CAVS testing only.that contains..
+ *       p1, p2 The returned auxiliary primes for p.
+ *              If NULL they are not returned.
+ *       Xpout An optionally returned random number used during generation of p.
+ *       Xp An optional passed in value (that is random number used during
+ *          generation of p).
+ *       Xp1, Xp2 Optionally passed in randomly generated numbers from which
+ *                auxiliary primes p1 & p2 are calculated. If NULL these values
+ *                are generated internally.
+ *       q1, q2 The returned auxiliary primes for q.
+ *              If NULL they are not returned.
+ *       Xqout An optionally returned random number used during generation of q.
+ *       Xq An optional passed in value (that is random number used during
+ *          generation of q).
+ *       Xq1, Xq2 Optionally passed in randomly generated numbers from which
+ *                auxiliary primes q1 & q2 are calculated. If NULL these values
+ *                are generated internally.
  *     nbits The key size in bits (The size of the modulus n).
  *     e The public exponent.
  *     ctx A BN_CTX object.
@@ -49,16 +53,34 @@
  *     Xp, Xp1, Xp2, Xq, Xq1, Xq2 are optionally passed in.
  *     (Required for CAVS testing).
  */
-int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
-                                  BIGNUM *Xpout, const BIGNUM *Xp,
-                                  const BIGNUM *Xp1, const BIGNUM *Xp2,
-                                  BIGNUM *q1, BIGNUM *q2, BIGNUM *Xqout,
-                                  const BIGNUM *Xq, const BIGNUM *Xq1,
-                                  const BIGNUM *Xq2, int nbits,
+int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
                                   const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb)
 {
     int ret = 0, ok;
+    /* Temp allocated BIGNUMS */
     BIGNUM *Xpo = NULL, *Xqo = NULL, *tmp = NULL;
+    /* Intermediate BIGNUMS that can be returned for testing */
+    BIGNUM *p1 = NULL, *p2 = NULL;
+    BIGNUM *q1 = NULL, *q2 = NULL;
+    /* Intermediate BIGNUMS that can be input for testing */
+    BIGNUM *Xpout = NULL, *Xqout = NULL;
+    BIGNUM *Xp = NULL, *Xp1 = NULL, *Xp2 = NULL;
+    BIGNUM *Xq = NULL, *Xq1 = NULL, *Xq2 = NULL;
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    if (test != NULL) {
+        Xp1 = test->Xp1;
+        Xp2 = test->Xp2;
+        Xq1 = test->Xq1;
+        Xq2 = test->Xq2;
+        Xp = test->Xp;
+        Xq = test->Xq;
+        p1 = test->p1;
+        p2 = test->p2;
+        q1 = test->q1;
+        q2 = test->q2;
+    }
+#endif
 
     /* (Step 1) Check key length
      * NOTE: SP800-131A Rev1 Disallows key lengths of < 2048 bits for RSA
@@ -294,6 +316,11 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     int ok;
     BN_CTX *ctx = NULL;
     BIGNUM *e = NULL;
+    RSA_ACVP_TEST *info = NULL;
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    info = rsa->acvp_test;
+#endif
 
     /* (Steps 1a-1b) : Currently ignores the strength check */
     if (!rsa_sp800_56b_validate_strength(nbits, -1))
@@ -311,13 +338,12 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     } else {
         e = (BIGNUM *)efixed;
     }
-    /* (Step 1c) fixed exponent is checked later . */
+    /* (Step 1c) fixed exponent is checked later .*/
 
     for (;;) {
         /* (Step 2) Generate prime factors */
-        if (!rsa_fips186_4_gen_prob_primes(rsa, NULL, NULL, NULL, NULL, NULL,
-                                           NULL, NULL, NULL, NULL, NULL, NULL,
-                                           NULL, nbits, e, ctx, cb))
+        if (!rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e, ctx,
+                                           cb))
             goto err;
         /* (Steps 3-5) Compute params d, n, dP, dQ, qInv */
         ok = rsa_sp800_56b_derive_params_from_pq(rsa, nbits, e, ctx);

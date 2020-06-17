@@ -16,8 +16,8 @@
 
 DSA *dsa_new_with_ctx(OPENSSL_CTX *libctx);
 
-int dsa_generate_ffc_parameters(DSA *dsa, int type,
-                                int pbits, int qbits, EVP_MD *md, BN_GENCB *cb);
+int dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
+                                BN_GENCB *cb);
 
 int dsa_sign_int(int type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa);

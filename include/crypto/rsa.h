@@ -10,8 +10,8 @@
 #ifndef OSSL_INTERNAL_RSA_H
 # define OSSL_INTERNAL_RSA_H
 
-#include <openssl/core.h>
-#include <openssl/rsa.h>
+# include <openssl/core.h>
+# include <openssl/rsa.h>
 
 typedef struct rsa_pss_params_30_st {
     int hash_algorithm_nid;
@@ -92,5 +92,17 @@ const unsigned char *rsa_algorithmidentifier_encoding(int md_nid, size_t *len);
 extern const char *rsa_mp_factor_names[];
 extern const char *rsa_mp_exp_names[];
 extern const char *rsa_mp_coeff_names[];
+
+# if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+int rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[]);
+void rsa_acvp_test_gen_params_free(OSSL_PARAM *dst);
+
+int rsa_acvp_test_set_params(RSA *r, const OSSL_PARAM params[]);
+int rsa_acvp_test_get_params(RSA *r, OSSL_PARAM params[]);
+typedef struct rsa_acvp_test_st RSA_ACVP_TEST;
+void rsa_acvp_test_free(RSA_ACVP_TEST *t);
+# else
+# define RSA_ACVP_TEST void
+# endif
 
 #endif

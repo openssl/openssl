@@ -16,6 +16,7 @@
 # include <openssl/dh.h> /* Uses Error codes from DH */
 # include <openssl/params.h>
 # include <openssl/param_build.h>
+# include "internal/sizes.h"
 
 /* Default value for gindex when canonical generation of g is not used */
 # define FFC_UNVERIFIABLE_GINDEX -1
@@ -24,17 +25,24 @@
 # define FFC_PARAM_TYPE_DSA  0
 # define FFC_PARAM_TYPE_DH   1
 
+/*
+ * The mode used by functions that share code for both generation and
+ * verification. See ffc_params_FIPS186_4_gen_verify().
+ */
+#define FFC_PARAM_MODE_VERIFY   0
+#define FFC_PARAM_MODE_GENERATE 1
+
 /* Return codes for generation and validation of FFC parameters */
-#define FFC_PARAMS_RET_STATUS_FAILED         0
-#define FFC_PARAMS_RET_STATUS_SUCCESS        1
+#define FFC_PARAM_RET_STATUS_FAILED         0
+#define FFC_PARAM_RET_STATUS_SUCCESS        1
 /* Returned if validating and g is only partially verifiable */
-#define FFC_PARAMS_RET_STATUS_UNVERIFIABLE_G 2
+#define FFC_PARAM_RET_STATUS_UNVERIFIABLE_G 2
 
 /* Validation flags */
-# define FFC_PARAMS_GENERATE     0x00
-# define FFC_PARAMS_VALIDATE_PQ  0x01
-# define FFC_PARAMS_VALIDATE_G   0x02
-# define FFC_PARAMS_VALIDATE_ALL (FFC_PARAMS_VALIDATE_PQ | FFC_PARAMS_VALIDATE_G)
+# define FFC_PARAM_FLAG_VALIDATE_PQ  0x01
+# define FFC_PARAM_FLAG_VALIDATE_G   0x02
+# define FFC_PARAM_FLAG_VALIDATE_ALL                                           \
+    (FFC_PARAM_FLAG_VALIDATE_PQ | FFC_PARAM_FLAG_VALIDATE_G)
 
 /*
  * NB: These values must align with the equivalently named macros in
@@ -94,6 +102,14 @@ typedef struct ffc_params_st {
      */
     int gindex;
     int h; /* loop counter for unverifiable g */
+
+    unsigned int flags; /* See FFC_PARAM_FLAG_VALIDATE_ALL */
+    /*
+     * The digest to use for generation or validation. If this value is NULL,
+     * then the digest is chosen using the value of N.
+     */
+    const char *mdname;
+    const char *mdprops;
 } FFC_PARAMS;
 
 void ffc_params_init(FFC_PARAMS *params);
@@ -107,6 +123,8 @@ int ffc_params_set_seed(FFC_PARAMS *params,
 void ffc_params_set_gindex(FFC_PARAMS *params, int index);
 void ffc_params_set_pcounter(FFC_PARAMS *params, int index);
 void ffc_params_set_h(FFC_PARAMS *params, int index);
+void ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags);
+int ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
 
 int ffc_params_set_validate_params(FFC_PARAMS *params,
                                    const unsigned char *seed, size_t seedlen,
@@ -125,27 +143,22 @@ int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent);
 
 int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
                                   int type, size_t L, size_t N,
-                                  const EVP_MD *evpmd, int *res, BN_GENCB *cb);
+                                  int *res, BN_GENCB *cb);
 int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
                                   int type, size_t L, size_t N,
-                                  const EVP_MD *evpmd, int *res, BN_GENCB *cb);
+                                  int *res, BN_GENCB *cb);
 
 int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int type, size_t L, size_t N,
-                                    const EVP_MD *evpmd, int validate_flags,
+                                    int mode, int type, size_t L, size_t N,
                                     int *res, BN_GENCB *cb);
 int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int type, size_t L, size_t N,
-                                    const EVP_MD *evpmd, int validate_flags,
+                                    int mode, int type, size_t L, size_t N,
                                     int *res, BN_GENCB *cb);
 
-int ffc_params_FIPS186_4_validate(const FFC_PARAMS *params, int type,
-                                  const EVP_MD *evpmd, int validate_flags,
-                                  int *res, BN_GENCB *cb);
-int ffc_params_FIPS186_2_validate(const FFC_PARAMS *params, int type,
-                                  const EVP_MD *evpmd, int validate_flags,
-                                  int *res, BN_GENCB *cb);
-
+int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+                                  int type, int *res, BN_GENCB *cb);
+int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+                                  int type, int *res, BN_GENCB *cb);
 
 int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
                              int N, int s, BIGNUM *priv);
@@ -168,5 +181,7 @@ int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
 int ffc_named_group_to_uid(const char *name);
 const char *ffc_named_group_from_uid(int nid);
 int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
+const char *ffc_params_flags_to_name(int flags);
+int ffc_params_flags_from_name(const char *name);
 
 #endif /* OSSL_INTERNAL_FFC_H */

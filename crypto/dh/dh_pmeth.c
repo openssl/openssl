@@ -286,7 +286,6 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
     int res;
     int prime_len = dctx->prime_len;
     int subprime_len = dctx->subprime_len;
-    const EVP_MD *md = dctx->md;
 
     if (dctx->paramgen_type > DH_PARAMGEN_TYPE_FIPS_186_4)
         return NULL;
@@ -300,26 +299,22 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
         else
             subprime_len = 160;
     }
-    if (md == NULL) {
-        if (prime_len >= 2048)
-            md = EVP_sha256();
-        else
-            md = EVP_sha1();
-    }
+
+    if (dctx->md != NULL)
+        ffc_set_digest(&ret->params, EVP_MD_name(dctx->md), NULL);
+
 # ifndef FIPS_MODULE
     if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ffc_params_FIPS186_2_generate(libctx, &ret->params,
                                            FFC_PARAM_TYPE_DH,
-                                           prime_len, subprime_len, md, &res,
-                                           pcb);
+                                           prime_len, subprime_len, &res, pcb);
     else
 # endif
     /* For FIPS we always use the DH_PARAMGEN_TYPE_FIPS_186_4 generator */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ffc_params_FIPS186_4_generate(libctx, &ret->params,
                                            FFC_PARAM_TYPE_DH,
-                                           prime_len, subprime_len, md, &res,
-                                           pcb);
+                                           prime_len, subprime_len, &res, pcb);
     if (rv <= 0) {
         DH_free(ret);
         return NULL;

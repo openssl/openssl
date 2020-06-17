@@ -594,13 +594,15 @@ static int rsa_verify_recover(void *vprsactx,
             }
 
             *routlen = ret;
-            if (routsize < (size_t)ret) {
-                ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
-                               "buffer size is %d, should be %d",
-                               routsize, ret);
-                return 0;
+            if (rout != prsactx->tbuf) {
+                if (routsize < (size_t)ret) {
+                    ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                                   "buffer size is %d, should be %d",
+                                   routsize, ret);
+                    return 0;
+                }
+                memcpy(rout, prsactx->tbuf, ret);
             }
-            memcpy(rout, prsactx->tbuf, ret);
             break;
 
         case RSA_PKCS1_PADDING:
@@ -655,7 +657,10 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
             }
             return 1;
         case RSA_X931_PADDING:
-            if (rsa_verify_recover(prsactx, NULL, &rslen, 0, sig, siglen) <= 0)
+            if (!setup_tbuf(prsactx))
+                return 0;
+            if (rsa_verify_recover(prsactx, prsactx->tbuf, &rslen, 0,
+                                   sig, siglen) <= 0)
                 return 0;
             break;
         case RSA_PKCS1_PSS_PADDING:
