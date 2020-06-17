@@ -38,6 +38,7 @@ int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
     p1 = BN_CTX_get(ctx);
     q1 = BN_CTX_get(ctx);
     if (q1 != NULL) {
+        BN_set_flags(r, BN_FLG_CONSTTIME);
         BN_set_flags(p1, BN_FLG_CONSTTIME);
         BN_set_flags(q1, BN_FLG_CONSTTIME);
         ret = 1;
@@ -69,6 +70,7 @@ int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx)
           /* (f) 1 = (qInv . q) mod p */
           && BN_mod_mul(r, rsa->iqmp, rsa->q, rsa->p, ctx)
           && BN_is_one(r);
+    BN_clear(r);
     BN_clear(p1);
     BN_clear(q1);
     BN_CTX_end(ctx);
@@ -187,6 +189,7 @@ int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
     p1q1 = BN_CTX_get(ctx);
     gcd = BN_CTX_get(ctx);
     if (gcd != NULL) {
+        BN_set_flags(r, BN_FLG_CONSTTIME);
         BN_set_flags(p1, BN_FLG_CONSTTIME);
         BN_set_flags(q1, BN_FLG_CONSTTIME);
         BN_set_flags(lcm, BN_FLG_CONSTTIME);
@@ -205,6 +208,7 @@ int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx)
           && BN_mod_mul(r, rsa->e, rsa->d, lcm, ctx)
           && BN_is_one(r));
 
+    BN_clear(r);
     BN_clear(p1);
     BN_clear(q1);
     BN_clear(lcm);
