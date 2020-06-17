@@ -196,7 +196,7 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r)
 {
     OPENSSL_ppccap_P & PPC_CRYPTO207
-        ? SHA3_absorb_vsx(A, out, len, r)
+        ? SHA3_squeeze_vsx(A, out, len, r)
         : SHA3_squeeze_default(A, out, len, r);
 }
 
