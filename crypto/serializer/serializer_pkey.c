@@ -102,14 +102,9 @@ struct selected_serializer_st {
 static void cache_serializers(const char *name, void *data)
 {
     struct selected_serializer_st *d = data;
-    char *n = OPENSSL_strdup(name);
 
-    if (n != NULL) {
-        if (sk_OPENSSL_CSTRING_push(d->names, n) > 0)
-            return;
-        OPENSSL_free(n);
-    }
-    d->error = 1;
+    if (sk_OPENSSL_CSTRING_push(d->names, name) <= 0)
+        d->error = 1;
 }
 
 /*
