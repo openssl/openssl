@@ -41,7 +41,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
         salt = (unsigned char *)empty;
 
     kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL);
-    kctx = EVP_KDF_new_ctx(kdf);
+    kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
@@ -54,11 +54,11 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                             (char *)mdname, 0);
     *p = OSSL_PARAM_construct_end();
-    if (EVP_KDF_set_ctx_params(kctx, params) != 1
+    if (EVP_KDF_CTX_set_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, out, keylen) != 1)
         rv = 0;
 
-    EVP_KDF_free_ctx(kctx);
+    EVP_KDF_CTX_free(kctx);
 
     OSSL_TRACE_BEGIN(PKCS5V2) {
         BIO_printf(trc_out, "Password:\n");

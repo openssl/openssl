@@ -199,7 +199,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     if (kdf == NULL)
         goto err;
 
-    ctx = EVP_KDF_new_ctx(kdf);
+    ctx = EVP_KDF_CTX_new(kdf);
     if (ctx == NULL)
         goto err;
 
@@ -211,7 +211,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     params = OSSL_PARAM_BLD_to_param(bld);
     if (params == NULL)
         goto err;
-    if (!EVP_KDF_set_ctx_params(ctx, params))
+    if (!EVP_KDF_CTX_set_params(ctx, params))
         goto err;
 
     if (t->expected_len > sizeof(out))
@@ -227,7 +227,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     ret = 1;
 err:
     EVP_KDF_free(kdf);
-    EVP_KDF_free_ctx(ctx);
+    EVP_KDF_CTX_free(ctx);
     BN_CTX_free(bnctx);
     OSSL_PARAM_BLD_free_params(params);
     OSSL_PARAM_BLD_free(bld);

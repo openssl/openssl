@@ -50,7 +50,7 @@ static int pkey_kdf_init(EVP_PKEY_CTX *ctx)
         return 0;
 
     kdf = EVP_KDF_fetch(NULL, kdf_name, NULL);
-    kctx = EVP_KDF_new_ctx(kdf);
+    kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL) {
         OPENSSL_free(pkctx);
@@ -66,7 +66,7 @@ static void pkey_kdf_cleanup(EVP_PKEY_CTX *ctx)
 {
     EVP_PKEY_KDF_CTX *pkctx = ctx->data;
 
-    EVP_KDF_free_ctx(pkctx->kctx);
+    EVP_KDF_CTX_free(pkctx->kctx);
     pkey_kdf_free_collected(pkctx);
     OPENSSL_free(pkctx);
 }
@@ -202,7 +202,7 @@ static int pkey_kdf_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         break;
     }
 
-    return EVP_KDF_set_ctx_params(kctx, params);
+    return EVP_KDF_CTX_set_params(kctx, params);
 }
 
 static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
@@ -210,7 +210,7 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
 {
     EVP_PKEY_KDF_CTX *pkctx = ctx->data;
     EVP_KDF_CTX *kctx = pkctx->kctx;
-    const EVP_KDF *kdf = EVP_KDF_get_ctx_kdf(kctx);
+    const EVP_KDF *kdf = EVP_KDF_CTX_kdf(kctx);
     BUF_MEM **collector = NULL;
     const OSSL_PARAM *defs = EVP_KDF_settable_ctx_params(kdf);
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
@@ -239,7 +239,7 @@ static int pkey_kdf_ctrl_str(EVP_PKEY_CTX *ctx, const char *type,
     if (collector != NULL)
         ok = collect(collector, params[0].data, params[0].data_size);
     else
-        ok = EVP_KDF_set_ctx_params(kctx, params);
+        ok = EVP_KDF_CTX_set_params(kctx, params);
     OPENSSL_free(params[0].data);
     return ok;
 }
@@ -274,7 +274,7 @@ static int pkey_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                                               pkctx->collected_seed->data,
                                               pkctx->collected_seed->length);
 
-        r = EVP_KDF_set_ctx_params(kctx, params);
+        r = EVP_KDF_CTX_set_params(kctx, params);
         pkey_kdf_free_collected(pkctx);
         if (!r)
             return 0;
@@ -287,7 +287,7 @@ static int pkey_kdf_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
                                               pkctx->collected_info->data,
                                               pkctx->collected_info->length);
 
-        r = EVP_KDF_set_ctx_params(kctx, params);
+        r = EVP_KDF_CTX_set_params(kctx, params);
         pkey_kdf_free_collected(pkctx);
         if (!r)
             return 0;

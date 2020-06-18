@@ -23,7 +23,7 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-EVP_KDF_CTX *EVP_KDF_new_ctx(EVP_KDF *kdf)
+EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
 {
     EVP_KDF_CTX *ctx = NULL;
 
@@ -34,7 +34,7 @@ EVP_KDF_CTX *EVP_KDF_new_ctx(EVP_KDF *kdf)
     if (ctx == NULL
         || (ctx->data = kdf->newctx(ossl_provider_ctx(kdf->prov))) == NULL
         || !EVP_KDF_up_ref(kdf)) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        EVPerr(EVP_F_EVP_KDF_CTX_NEW, ERR_R_MALLOC_FAILURE);
         if (ctx != NULL)
             kdf->freectx(ctx->data);
         OPENSSL_free(ctx);
@@ -45,7 +45,7 @@ EVP_KDF_CTX *EVP_KDF_new_ctx(EVP_KDF *kdf)
     return ctx;
 }
 
-void EVP_KDF_free_ctx(EVP_KDF_CTX *ctx)
+void EVP_KDF_CTX_free(EVP_KDF_CTX *ctx)
 {
     if (ctx != NULL) {
         ctx->meth->freectx(ctx->data);
@@ -55,7 +55,7 @@ void EVP_KDF_free_ctx(EVP_KDF_CTX *ctx)
     }
 }
 
-EVP_KDF_CTX *EVP_KDF_dup_ctx(const EVP_KDF_CTX *src)
+EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
 {
     EVP_KDF_CTX *dst;
 
@@ -64,20 +64,20 @@ EVP_KDF_CTX *EVP_KDF_dup_ctx(const EVP_KDF_CTX *src)
 
     dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        EVPerr(EVP_F_EVP_KDF_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     memcpy(dst, src, sizeof(*dst));
     if (!EVP_KDF_up_ref(dst->meth)) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        EVPerr(EVP_F_EVP_KDF_CTX_DUP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(dst);
         return NULL;
     }
 
     dst->data = src->meth->dupctx(src->data);
     if (dst->data == NULL) {
-        EVP_KDF_free_ctx(dst);
+        EVP_KDF_CTX_free(dst);
         return NULL;
     }
     return dst;
@@ -98,7 +98,7 @@ const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf)
     return kdf->prov;
 }
 
-const EVP_KDF *EVP_KDF_get_ctx_kdf(EVP_KDF_CTX *ctx)
+const EVP_KDF *EVP_KDF_CTX_kdf(EVP_KDF_CTX *ctx)
 {
     return ctx->meth;
 }
@@ -151,14 +151,14 @@ int EVP_KDF_get_params(EVP_KDF *kdf, OSSL_PARAM params[])
     return 1;
 }
 
-int EVP_KDF_get_ctx_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[])
+int EVP_KDF_CTX_get_params(EVP_KDF_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->meth->get_ctx_params != NULL)
         return ctx->meth->get_ctx_params(ctx->data, params);
     return 1;
 }
 
-int EVP_KDF_set_ctx_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
+int EVP_KDF_CTX_set_params(EVP_KDF_CTX *ctx, const OSSL_PARAM params[])
 {
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->data, params);
