@@ -412,11 +412,11 @@ Returned by the verify callback to indicate OCSP verification failed.
 Returned by the verify callback to indicate that the certificate is not
 recognized by the OCSP responder.
 
-=item B<X509_V_ERR_NO_ISSUER_PUBLIC_KEY, issuer certificate doesn't have a public key>
+=item B<X509_V_ERR_NO_ISSUER_PUBLIC_KEY: issuer certificate doesn't have a public key>
 
 The issuer certificate does not have a public key.
 
-=item B<X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH, Subject signature algorithm and issuer public key algorithm mismatch>
+=item B<X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH: Subject signature algorithm and issuer public key algorithm mismatch>
 
 The issuer's public key is not of the type required by the signature in
 the subject's certificate.
