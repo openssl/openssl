@@ -20,10 +20,12 @@ use Data::Dumper; # for debugging purposes only
 
 setup("test_cmp_cli");
 
-plan skip_all => "This test is not supported in a no-cmp build"
+plan skip_all => "These tests are not supported in a no-cmp build"
     if disabled("cmp");
-plan skip_all => "This test is not supported in a no-ec build"
+plan skip_all => "These tests are not supported in a no-ec build"
     if disabled("ec");
+plan skip_all => "These tests are not supported in a fuzz build"
+    if !disabled("fuzz-libfuzzer") || !disabled("fuzz-afl");
 plan skip_all => "Tests involving server not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32)$/;
 
