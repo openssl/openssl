@@ -663,7 +663,7 @@ external test suites are currently supported:
  - Python PYCA/Cryptography test suite
  - krb5 test suite
 
-See the file [test/README.external]/(test/README.external) for further details.
+See the file [test/README.external](test/README.external) for further details.
 
 ### no-filenames
 
