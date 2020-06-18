@@ -61,6 +61,7 @@ OPTIONS={- $config{options} -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
+FIPSKEY={- $config{FIPSKEY} -}
 
 VERSION={- "$config{full_version}" -}
 MAJOR={- $config{major} -}
@@ -475,6 +476,7 @@ test: tests
 	( SRCTOP=$(SRCDIR) \
 	  BLDTOP=$(BLDDIR) \
 	  PERL="$(PERL)" \
+	  FIPSKEY="$(FIPSKEY)" \
 	  EXE_EXT={- platform->binext() -} \
 	  $(PERL) $(SRCDIR)/test/run_tests.pl $(TESTS) )
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}

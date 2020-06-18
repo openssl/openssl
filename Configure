@@ -238,6 +238,7 @@ my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
 
 $config{sourcedir} = abs2rel($srcdir);
 $config{builddir} = abs2rel($blddir);
+$config{FIPSKEY} = '00';
 
 # Collect reconfiguration information if needed
 my @argvcopy=@ARGV;
@@ -913,6 +914,16 @@ while (@argvcopy)
                                 if ! grep { $x eq $_ } @known_seed_sources;
                             push @seed_sources, $x;
                             }
+                        }
+                elsif (/^--fips-key=(.*)$/)
+                        {
+                        $user{FIPSKEY}=lc($1);
+                        die "Non-hex character in FIPS key\n"
+                           if $user{FIPSKEY} =~ /[^a-f0-9]/;
+                        die "FIPS key must have even number of characters\n"
+                           if length $1 & 1;
+                        die "FIPS key too long (32 bytes max)\n"
+                           if length $1 > 32;
                         }
                 elsif (/^--cross-compile-prefix=(.*)$/)
                         {

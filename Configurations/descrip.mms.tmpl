@@ -441,6 +441,7 @@ test : tests
         @ ! {- output_off() if $disabled{tests}; "" -}
         DEFINE SRCTOP {- sourcedir() -}
         DEFINE BLDTOP {- builddir() -}
+        DEFINE FIPSKEY {- $config{FIPSKEY} -}
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
         DEASSIGN BLDTOP
