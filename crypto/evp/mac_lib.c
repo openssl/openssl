@@ -19,14 +19,14 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
-EVP_MAC_CTX *EVP_MAC_new_ctx(EVP_MAC *mac)
+EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
 {
     EVP_MAC_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_MAC_CTX));
 
     if (ctx == NULL
         || (ctx->data = mac->newctx(ossl_provider_ctx(mac->prov))) == NULL
         || !EVP_MAC_up_ref(mac)) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        EVPerr(EVP_F_EVP_MAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         if (ctx != NULL)
             mac->freectx(ctx->data);
         OPENSSL_free(ctx);
@@ -37,7 +37,7 @@ EVP_MAC_CTX *EVP_MAC_new_ctx(EVP_MAC *mac)
     return ctx;
 }
 
-void EVP_MAC_free_ctx(EVP_MAC_CTX *ctx)
+void EVP_MAC_CTX_free(EVP_MAC_CTX *ctx)
 {
     if (ctx != NULL) {
         ctx->meth->freectx(ctx->data);
@@ -48,7 +48,7 @@ void EVP_MAC_free_ctx(EVP_MAC_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-EVP_MAC_CTX *EVP_MAC_dup_ctx(const EVP_MAC_CTX *src)
+EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
 {
     EVP_MAC_CTX *dst;
 
@@ -57,27 +57,27 @@ EVP_MAC_CTX *EVP_MAC_dup_ctx(const EVP_MAC_CTX *src)
 
     dst = OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     *dst = *src;
     if (!EVP_MAC_up_ref(dst->meth)) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(dst);
         return NULL;
     }
 
     dst->data = src->meth->dupctx(src->data);
     if (dst->data == NULL) {
-        EVP_MAC_free_ctx(dst);
+        EVP_MAC_CTX_free(dst);
         return NULL;
     }
 
     return dst;
 }
 
-EVP_MAC *EVP_MAC_get_ctx_mac(EVP_MAC_CTX *ctx)
+EVP_MAC *EVP_MAC_CTX_mac(EVP_MAC_CTX *ctx)
 {
     return ctx->meth;
 }
@@ -144,14 +144,14 @@ int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[])
     return 1;
 }
 
-int EVP_MAC_get_ctx_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
+int EVP_MAC_CTX_get_params(EVP_MAC_CTX *ctx, OSSL_PARAM params[])
 {
     if (ctx->meth->get_ctx_params != NULL)
         return ctx->meth->get_ctx_params(ctx->data, params);
     return 1;
 }
 
-int EVP_MAC_set_ctx_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
+int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 {
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->data, params);

@@ -168,7 +168,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
                                                   (void *)custom, custom_len);
     params[1] = OSSL_PARAM_construct_end();
 
-    if (!EVP_MAC_set_ctx_params(ctx, params))
+    if (!EVP_MAC_CTX_set_params(ctx, params))
         return 0;
 
     /* By default only do one iteration if kmac_out_len is not specified */
@@ -186,7 +186,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
     params[0] = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_SIZE,
                                             &kmac_out_len);
 
-    if (EVP_MAC_set_ctx_params(ctx, params) <= 0)
+    if (EVP_MAC_CTX_set_params(ctx, params) <= 0)
         return 0;
 
     /*
@@ -233,7 +233,7 @@ static int SSKDF_mac_kdm(EVP_MAC_CTX *ctx_init,
                                              (void *)salt, salt_len);
     *p = OSSL_PARAM_construct_end();
 
-    if (!EVP_MAC_set_ctx_params(ctx_init, params))
+    if (!EVP_MAC_CTX_set_params(ctx_init, params))
         goto end;
 
     if (!kmac_init(ctx_init, kmac_custom, kmac_custom_len, kmac_out_len,
@@ -256,7 +256,7 @@ static int SSKDF_mac_kdm(EVP_MAC_CTX *ctx_init,
         c[2] = (unsigned char)((counter >> 8) & 0xff);
         c[3] = (unsigned char)(counter & 0xff);
 
-        ctx = EVP_MAC_dup_ctx(ctx_init);
+        ctx = EVP_MAC_CTX_dup(ctx_init);
         if (!(ctx != NULL
                 && EVP_MAC_update(ctx, c, sizeof(c))
                 && EVP_MAC_update(ctx, z, z_len)
@@ -275,7 +275,7 @@ static int SSKDF_mac_kdm(EVP_MAC_CTX *ctx_init,
             memcpy(out, mac, len);
             break;
         }
-        EVP_MAC_free_ctx(ctx);
+        EVP_MAC_CTX_free(ctx);
         ctx = NULL;
     }
     ret = 1;
@@ -285,7 +285,7 @@ end:
     else
         OPENSSL_cleanse(mac_buf, sizeof(mac_buf));
 
-    EVP_MAC_free_ctx(ctx);
+    EVP_MAC_CTX_free(ctx);
     return ret;
 }
 
@@ -304,7 +304,7 @@ static void sskdf_reset(void *vctx)
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
     void *provctx = ctx->provctx;
 
-    EVP_MAC_free_ctx(ctx->macctx);
+    EVP_MAC_CTX_free(ctx->macctx);
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
     OPENSSL_clear_free(ctx->info, ctx->info_len);
@@ -362,7 +362,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
         const unsigned char *custom = NULL;
         size_t custom_len = 0;
         int default_salt_len;
-        EVP_MAC *mac = EVP_MAC_get_ctx_mac(ctx->macctx);
+        EVP_MAC *mac = EVP_MAC_CTX_mac(ctx->macctx);
 
         /*
          * TODO(3.0) investigate the necessity to have all these controls.

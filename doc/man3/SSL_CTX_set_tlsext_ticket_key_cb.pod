@@ -49,7 +49,7 @@ ticket information or it starts a full TLS handshake to create a new session
 ticket.
 
 Before the callback function is started I<ctx> and I<hctx> have been
-initialised with L<EVP_CIPHER_CTX_reset(3)> and L<EVP_MAC_new_ctx(3)>
+initialised with L<EVP_CIPHER_CTX_reset(3)> and L<EVP_MAC_CTX_new(3)>
 respectively.
 
 For new sessions tickets, when the client doesn't present a session ticket, or
@@ -66,7 +66,7 @@ maximum IV length is B<EVP_MAX_IV_LENGTH> bytes defined in B<evp.h>.
 The initialization vector I<iv> should be a random value. The cipher context
 I<ctx> should use the initialisation vector I<iv>. The cipher context can be
 set using L<EVP_EncryptInit_ex(3)>. The hmac context and digest can be set using
-L<EVP_MAC_set_ctx_params(3)> with the B<OSSL_MAC_PARAM_KEY> and
+L<EVP_MAC_CTX_set_params(3)> with the B<OSSL_MAC_PARAM_KEY> and
 B<OSSL_MAC_PARAM_DIGEST> parameters respectively.
 
 When the client presents a session ticket, the callback function with be called
@@ -76,7 +76,7 @@ the session ticket. The OpenSSL library expects that the I<name> will be used
 to retrieve a cryptographic parameters and that the cryptographic context
 I<ctx> will be set with the retrieved parameters and the initialization vector
 I<iv>. using a function like L<EVP_DecryptInit_ex(3)>. The key material and
-digest for I<hctx> need to be set using L<EVP_MAC_set_ctx_params(3)> with the
+digest for I<hctx> need to be set using L<EVP_MAC_CTX_set_params(3)> with the
 B<OSSL_MAC_PARAM_KEY> and B<OSSL_MAC_PARAM_DIGEST> parameters respectively.
 
 If the I<name> is still valid but a renewal of the ticket is required the
@@ -120,8 +120,8 @@ The SSL_CTX_set_tlsext_ticket_key_cb() function is identical to
 SSL_CTX_set_tlsext_ticket_key_evp_cb() except that it takes a deprecated
 HMAC_CTX pointer instead of an EVP_MAC_CTX one.
 Before this callback function is started I<hctx> will have been
-initialised with L<EVP_MAC_new_ctx(3)> and the digest set with
-L<EVP_MAC_set_ctx_params(3)>.
+initialised with L<EVP_MAC_CTX_new(3)> and the digest set with
+L<EVP_MAC_CTX_set_params(3)>.
 The I<hctx> key material can be set using L<HMAC_Init_ex(3)>.
 
 =head1 NOTES
@@ -186,7 +186,7 @@ Reference Implementation:
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_set_ctx_params(hctx, params);
+         EVP_MAC_CTX_set_params(hctx, params);
 
          return 1;
 
@@ -202,7 +202,7 @@ Reference Implementation:
          params[1] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                       "sha256", 0);
          params[2] = OSSL_PARAM_construct_end();
-         EVP_MAC_set_ctx_params(hctx, params);
+         EVP_MAC_CTX_set_params(hctx, params);
 
          EVP_DecryptInit_ex(&ctx, EVP_aes_256_cbc(), NULL, key->aes_key, iv);
 

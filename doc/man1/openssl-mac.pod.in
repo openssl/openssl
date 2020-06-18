@@ -49,7 +49,7 @@ Output the MAC in binary form. Uses hexadecimal text format if not specified.
 Passes options to the MAC algorithm.
 A comprehensive list of controls can be found in the EVP_MAC implementation
 documentation.
-Common parameter names used by EVP_MAC_get_ctx_params() are:
+Common parameter names used by EVP_MAC_CTX_get_params() are:
 
 =over 4
 

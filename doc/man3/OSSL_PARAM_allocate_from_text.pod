@@ -175,7 +175,7 @@ Can be written like this instead:
           goto err;
   }
   params[params_n] = OSSL_PARAM_construct_end();
-  if (!EVP_MAC_set_ctx_params(ctx, params))
+  if (!EVP_MAC_CTX_set_params(ctx, params))
       goto err;
   while (params_n-- > 0)
       OPENSSL_free(params[params_n].data);

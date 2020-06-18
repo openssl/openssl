@@ -24,7 +24,7 @@ used with EVP_MAC_fetch():
 The general description of these parameters can be found in
 L<EVP_MAC(3)/PARAMETERS>.
 
-The following parameter can be set with EVP_MAC_set_ctx_params():
+The following parameter can be set with EVP_MAC_CTX_set_params():
 
 =over 4
 
@@ -37,7 +37,7 @@ The following parameter can be set with EVP_MAC_set_ctx_params():
 =back
 
 The following parameters can be retrieved with
-EVP_MAC_get_ctx_params():
+EVP_MAC_CTX_get_params():
 
 =over 4
 
@@ -50,7 +50,7 @@ The length of the "size" parameter is equal to that of an B<unsigned int>.
 
 =head1 SEE ALSO
 
-L<EVP_MAC_get_ctx_params(3)>, L<EVP_MAC_set_ctx_params(3)>,
+L<EVP_MAC_CTX_get_params(3)>, L<EVP_MAC_CTX_set_params(3)>,
 L<EVP_MAC(3)/PARAMETERS>, L<OSSL_PARAM(3)>
 
 =head1 COPYRIGHT

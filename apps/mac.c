@@ -114,7 +114,7 @@ opthelp:
         goto opthelp;
     }
 
-    ctx = EVP_MAC_new_ctx(mac);
+    ctx = EVP_MAC_CTX_new(mac);
     if (ctx == NULL)
         goto err;
 
@@ -126,7 +126,7 @@ opthelp:
         if (params == NULL)
             goto err;
 
-        if (!EVP_MAC_set_ctx_params(ctx, params)) {
+        if (!EVP_MAC_CTX_set_params(ctx, params)) {
             BIO_printf(bio_err, "MAC parameter error\n");
             ERR_print_errors(bio_err);
             ok = 0;
@@ -199,7 +199,7 @@ err:
     sk_OPENSSL_STRING_free(opts);
     BIO_free(in);
     BIO_free(out);
-    EVP_MAC_free_ctx(ctx);
+    EVP_MAC_CTX_free(ctx);
     EVP_MAC_free(mac);
     return ret;
 }
