@@ -46,7 +46,7 @@ Output the derived key in binary form. Uses hexadecimal text format if not speci
 Passes options to the KDF algorithm.
 A comprehensive list of parameters can be found in the EVP_KDF_CTX
 implementation documentation.
-Common parameter names used by EVP_KDF_set_ctx_params() are:
+Common parameter names used by EVP_KDF_CTX_set_params() are:
 
 =over 4
 

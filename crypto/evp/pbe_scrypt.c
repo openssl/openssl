@@ -63,7 +63,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
         maxmem = SCRYPT_MAX_MEM;
 
     kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_SCRYPT, NULL);
-    kctx = EVP_KDF_new_ctx(kdf);
+    kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
         return 0;
@@ -78,11 +78,11 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_P, &p);
     *z++ = OSSL_PARAM_construct_uint64(OSSL_KDF_PARAM_SCRYPT_MAXMEM, &maxmem);
     *z = OSSL_PARAM_construct_end();
-    if (EVP_KDF_set_ctx_params(kctx, params) != 1
+    if (EVP_KDF_CTX_set_params(kctx, params) != 1
             || EVP_KDF_derive(kctx, key, keylen) != 1)
         rv = 0;
 
-    EVP_KDF_free_ctx(kctx);
+    EVP_KDF_CTX_free(kctx);
     return rv;
 }
 
