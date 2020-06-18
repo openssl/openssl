@@ -375,11 +375,11 @@ This error is only possible in L<openssl-s_client(1)>.
 
 EE certificate key too weak.
 
-=item B<X509_ERR_CA_KEY_TOO_SMALL: CA certificate key too weak>
+=item B<X509_V_ERR_CA_KEY_TOO_SMALL: CA certificate key too weak>
 
 CA certificate key too weak.
 
-=item B<X509_ERR_CA_MD_TOO_WEAK: CA signature digest algorithm too weak>
+=item B<X509_V_ERR_CA_MD_TOO_WEAK: CA signature digest algorithm too weak>
 
 CA signature digest algorithm too weak.
 
@@ -412,11 +412,11 @@ Returned by the verify callback to indicate OCSP verification failed.
 Returned by the verify callback to indicate that the certificate is not
 recognized by the OCSP responder.
 
-=item B<509_V_ERROR_NO_ISSUER_PUBLI_KEY, issuer certificate doesn't have a public key>
+=item B<X509_V_ERR_NO_ISSUER_PUBLIC_KEY, issuer certificate doesn't have a public key>
 
 The issuer certificate does not have a public key.
 
-=item B<X509_V_ERROR_SIGNATURE_ALGORITHM_MISMATCH, Subject signature algorithm and issuer public key algorithm mismatch>
+=item B<X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH, Subject signature algorithm and issuer public key algorithm mismatch>
 
 The issuer's public key is not of the type required by the signature in
 the subject's certificate.
