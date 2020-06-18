@@ -1064,7 +1064,7 @@ with "reconf".  Note: The original configuration saves away values for ALL
 environment variables that were used, and if they weren't defined, they are
 still saved away with information that they weren't originally defined.
 This information takes precedence over environment variables that are
-defined when reconfiguring. 
+defined when reconfiguring.
 
 Displaying configuration data
 -----------------------------
