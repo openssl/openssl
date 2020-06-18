@@ -158,6 +158,7 @@ static int test_validate_msg_mac_alg_protection(void)
     return result;
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_mac_alg_protection_bad(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
@@ -176,6 +177,7 @@ static int test_validate_msg_mac_alg_protection_bad(void)
     EXECUTE_TEST(execute_validate_msg_test, tear_down);
     return result;
 }
+#endif
 
 static int add_trusted(OSSL_CMP_CTX *ctx, X509 *cert)
 {
@@ -214,10 +216,12 @@ static int test_validate_msg_signature_trusted_ok(void)
     return test_validate_msg_signature_partial_chain(0);
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_signature_trusted_expired(void)
 {
     return test_validate_msg_signature_partial_chain(1);
 }
+#endif
 
 static int test_validate_msg_signature_srvcert_wrong(void)
 {
@@ -246,10 +250,12 @@ static int test_validate_msg_signature_srvcert(int bad_sig)
     return result;
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_signature_bad(void)
 {
     return test_validate_msg_signature_srvcert(1);
 }
+#endif
 
 static int test_validate_msg_signature_sender_cert_srvcert(void)
 {
@@ -298,6 +304,7 @@ static int test_validate_msg_signature_sender_cert_extracert(void)
 }
 
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_signature_sender_cert_absent(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
@@ -309,7 +316,7 @@ static int test_validate_msg_signature_sender_cert_absent(void)
     EXECUTE_TEST(execute_validate_msg_test, tear_down);
     return result;
 }
-
+#endif
 
 static int test_validate_with_sender(const X509_NAME *name, int expected)
 {
@@ -335,6 +342,7 @@ static int test_validate_msg_signature_unexpected_sender(void)
     return test_validate_with_sender(X509_get_subject_name(root), 0);
 }
 
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_unprotected_request(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
@@ -346,6 +354,7 @@ static int test_validate_msg_unprotected_request(void)
     EXECUTE_TEST(execute_validate_msg_test, tear_down);
     return result;
 }
+#endif
 
 static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int expired)
 {
@@ -607,19 +616,29 @@ int setup_tests(void)
     ADD_TEST(test_verify_popo_bad);
 #endif
     ADD_TEST(test_validate_msg_signature_trusted_ok);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_trusted_expired);
+#endif
     ADD_TEST(test_validate_msg_signature_srvcert_wrong);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_bad);
+#endif
     ADD_TEST(test_validate_msg_signature_sender_cert_srvcert);
     ADD_TEST(test_validate_msg_signature_sender_cert_untrusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_trusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_extracert);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_sender_cert_absent);
+#endif
     ADD_TEST(test_validate_msg_signature_expected_sender);
     ADD_TEST(test_validate_msg_signature_unexpected_sender);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_unprotected_request);
+#endif
     ADD_TEST(test_validate_msg_mac_alg_protection);
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_mac_alg_protection_bad);
+#endif
 
     /* Cert path validation tests */
     ADD_TEST(test_validate_cert_path_ok);
