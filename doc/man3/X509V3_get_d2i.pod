@@ -196,7 +196,7 @@ The following extensions are used by certificate transparency, RFC6962
 =head1 RETURN VALUES
 
 X509V3_EXT_d2i() and *X509V3_get_d2i() return a pointer to an extension
-specific structure of B<NULL> if an error occurs.
+specific structure or B<NULL> if an error occurs.
 
 X509V3_EXT_i2d() returns a pointer to an B<X509_EXTENSION> structure
 or B<NULL> if an error occurs.
