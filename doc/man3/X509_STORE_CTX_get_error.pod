@@ -228,6 +228,7 @@ The root CA is marked to reject the specified purpose.
 
 The current candidate issuer certificate was rejected because its subject name
 did not match the issuer name of the current certificate.
+Not used as of OpenSSL 1.1.0.
 
 =item B<X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch>
 
