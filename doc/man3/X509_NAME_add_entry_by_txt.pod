@@ -81,7 +81,7 @@ X509_NAME_add_entry_by_NID() and X509_NAME_add_entry() return 1 for
 success of 0 if an error occurred.
 
 X509_NAME_delete_entry() returns either the deleted B<X509_NAME_ENTRY>
-structure of B<NULL> if an error occurred.
+structure or B<NULL> if an error occurred.
 
 =head1 EXAMPLES
 

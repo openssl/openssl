@@ -97,7 +97,7 @@ documentation for more information.
 =head1 RETURN VALUES
 
 EVP_PKEY_CTX_new(), EVP_PKEY_CTX_new_id(), EVP_PKEY_CTX_dup() returns either
-the newly allocated B<EVP_PKEY_CTX> structure of B<NULL> if an error occurred.
+the newly allocated B<EVP_PKEY_CTX> structure or B<NULL> if an error occurred.
 
 EVP_PKEY_CTX_free() does not return a value.
 

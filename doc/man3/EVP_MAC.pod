@@ -317,12 +317,12 @@ EVP_MAC_do_all_provided() returns nothing at all.
 
       if (cipher != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("cipher", cipher, 0, NULL);
+              OSSL_PARAM_construct_utf8_string("cipher", cipher, 0;
       if (digest != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("digest", digest, 0, NULL);
+              OSSL_PARAM_construct_utf8_string("digest", digest, 0);
       params[params_n++] =
-          OSSL_PARAM_construct_octet_string("key", key, strlen(key), NULL);
+          OSSL_PARAM_construct_octet_string("key", key, strlen(key));
       params[params_n] = OSSL_PARAM_construct_end();
 
       if (mac == NULL
