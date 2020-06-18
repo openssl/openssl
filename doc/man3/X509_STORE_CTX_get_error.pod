@@ -135,7 +135,7 @@ The signature of the certificate is invalid.
 
 =item B<X509_V_ERR_CRL_SIGNATURE_FAILURE: CRL signature failure>
 
-The signature of the certificate is invalid.
+The signature of the CRL is invalid.
 
 =item B<X509_V_ERR_CERT_NOT_YET_VALID: certificate is not yet valid>
 
