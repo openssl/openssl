@@ -16,8 +16,8 @@ use warnings;
 use Getopt::Std;
 use File::Basename;
 use IPC::Cmd;
-use List::Util;
 use POSIX;
+use Carp;
 
 # These control our behavior.
 my $DRYRUN;
@@ -267,6 +267,21 @@ sub guess_system {
     return "${MACHINE}-whatever-${SYSTEM}";
 }
 
+# We would use List::Util::pair() for this...  unfortunately, that function
+# only appeared in perl v5.19.3, and we claim to support perl v5.10 and on.
+# Therefore, we implement a quick cheap variant of our own.
+sub _pairs (@) {
+    croak "Odd number of arguments" if @_ & 1;
+
+    my @pairlist = ();
+
+    while (@_) {
+        my $x = [ shift, shift ];
+        push @pairlist, $x;
+    }
+    return @pairlist;
+}
+
 # Figure out CC, GCCVAR, etc.
 sub determine_compiler_settings {
     # Make a copy and don't touch it.  That helps determine if we're
@@ -287,7 +302,7 @@ sub determine_compiler_settings {
     }
 
     # Find the compiler vendor and version number for certain compilers
-    foreach my $pair (List::Util::pairs @cc_version) {
+    foreach my $pair (_pairs @cc_version) {
         # Try to get the version number.
         # Failure gets us undef or an empty string
         my ( $k, $v ) = @$pair;
