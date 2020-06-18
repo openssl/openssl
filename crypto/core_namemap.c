@@ -11,6 +11,7 @@
 #include "internal/namemap.h"
 #include <openssl/lhash.h>
 #include "crypto/lhash.h"      /* openssl_lh_strcasehash */
+#include "internal/tsan_assist.h"
 
 /*-
  * The namenum entry
@@ -34,7 +35,12 @@ struct ossl_namemap_st {
 
     CRYPTO_RWLOCK *lock;
     LHASH_OF(NAMENUM_ENTRY) *namenum;  /* Name->number mapping */
-    int max_number;                    /* Current max number */
+
+#ifdef tsan_ld_acq
+    TSAN_QUALIFIER int max_number;     /* Current max number TSAN version */
+#else
+    int max_number;                    /* Current max number plain version */
+#endif
 };
 
 /* LHASH callbacks */
@@ -91,14 +97,21 @@ static const OPENSSL_CTX_METHOD stored_namemap_method = {
 
 int ossl_namemap_empty(OSSL_NAMEMAP *namemap)
 {
-    int rv = 0;
+#ifdef tsan_ld_acq
+    /* Have TSAN support */
+    return namemap == NULL || tsan_load(&namemap->max_number) == 0;
+#else
+    /* No TSAN support */
+    int rv;
+
+    if (namemap == NULL)
+        return 1;
 
     CRYPTO_THREAD_read_lock(namemap->lock);
-    if (namemap->max_number == 0)
-        rv = 1;
+    rv = namemap->max_number == 0;
     CRYPTO_THREAD_unlock(namemap->lock);
-
     return rv;
+#endif
 }
 
 typedef struct doall_names_data_st {
@@ -216,7 +229,7 @@ int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
         goto err;
 
     namenum->number = tmp_number =
-        number != 0 ? number : ++namemap->max_number;
+        number != 0 ? number : 1 + tsan_counter(&namemap->max_number);
     (void)lh_NAMENUM_ENTRY_insert(namemap->namenum, namenum);
 
     if (lh_NAMENUM_ENTRY_error(namemap->namenum))
