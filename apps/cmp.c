@@ -809,7 +809,7 @@ static int load_certs_preliminary(const char *file, STACK_OF(X509) **certs,
     int ret = 0;
 
     if (format == FORMAT_PKCS12) {
-        FILE *fp = fopen(file, "r");
+        FILE *fp = fopen(file, "rb");
         BIO *bio = NULL;
 
         if (fp != NULL) {
