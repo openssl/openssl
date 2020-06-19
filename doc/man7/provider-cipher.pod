@@ -240,7 +240,14 @@ The length of the "ivlen" parameter should not exceed that of a B<size_t>.
 
 =item "iv" (B<OSSL_CIPHER_PARAM_IV>) <octet string OR octet ptr>
 
-Gets the IV for the associated cipher ctx.
+Gets the IV used to initialize the associated cipher ctx.
+
+=item "iv-state" (B<OSSL_CIPHER_PARAM_IV_STATE>) <octet string OR octet ptr>
+
+Gets the current pseudo-IV state for the associated cipher ctx, e.g.,
+the previous ciphertext block for CBC mode or the iteratively encrypted IV
+value for OFB mode.  Note that octet pointer access is deprecated and is
+provided only for backwards compatibility with historical libcrypto APIs.
 
 =item "num" (B<OSSL_CIPHER_PARAM_NUM>) <unsigned integer>
 

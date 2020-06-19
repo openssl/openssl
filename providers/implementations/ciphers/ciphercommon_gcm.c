@@ -167,6 +167,21 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
         }
     }
 
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    if (p != NULL) {
+        if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
+            return 0;
+        if (ctx->ivlen > p->data_size) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+    }
+
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->tls_aad_pad_sz)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
