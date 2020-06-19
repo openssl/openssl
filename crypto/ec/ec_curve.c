@@ -2840,7 +2840,7 @@ static const ec_list_element curve_list[] = {
 # if defined(S390X_EC_ASM)
      EC_GFp_s390x_nistp384_method,
 # else
-     0,
+     ec_GFp_secp384r1_method,
 # endif
      "NIST/SECG curve over a 384 bit prime field"},
 
@@ -2933,7 +2933,7 @@ static const ec_list_element curve_list[] = {
 # if defined(S390X_EC_ASM)
      EC_GFp_s390x_nistp384_method,
 # else
-     0,
+     ec_GFp_secp384r1_method,
 # endif
      "NIST/SECG curve over a 384 bit prime field"},
     {"secp521r1", NID_secp521r1, &_EC_NIST_PRIME_521.h,

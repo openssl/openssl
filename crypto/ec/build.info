@@ -56,6 +56,11 @@ IF[{- !$disabled{'ec_nistp_64_gcc_128'} -}]
   $COMMON=$COMMON ecp_nistp224.c ecp_nistp256.c ecp_nistp521.c ecp_nistputil.c
 ENDIF
 
+# If s390x and optimized asm, take that; otherwise add in ...
+IF[{- $ECASM !~ /^S390X/ -}]
+  $COMMON=$COMMON ecp_secp384r1.c
+ENDIF
+
 SOURCE[../../libcrypto]=$COMMON ec_ameth.c ec_pmeth.c ecx_meth.c ecx_key.c \
                         ec_err.c ecdh_kdf.c eck_prn.c ec_ctrl.c
 SOURCE[../../providers/libfips.a]=$COMMON

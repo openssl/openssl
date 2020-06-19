@@ -23,6 +23,13 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Add constant time P-384. The portable code comes from
+   [ECCKiila](https://gitlab.com/nisec/ecckiila) that uses
+   [Fiat](https://github.com/mit-plv/fiat-crypto) for the underlying field
+   arithmetic.
+
+   *Luis Rivera-Zamarripa, Jesús-Javier Chi-Domínguez, Billy Bob Brumley*
+
  * The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
    ignore TLS protocol version bounds when configuring DTLS-based contexts, and
    conversely, silently ignore DTLS protocol version bounds when configuring
