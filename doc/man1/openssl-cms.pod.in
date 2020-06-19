@@ -44,6 +44,7 @@ B<openssl> B<cms>
 [B<-text>]
 [B<-noout>]
 [B<-print>]
+[B<-nameopt> I<option>]
 [B<-md> I<digest>]
 [B<-I<cipher>>]
 [B<-wrap> I<cipher>]
@@ -287,6 +288,12 @@ structure is being checked.
 
 For the B<-cmsout> operation print out all fields of the CMS structure. This
 is mainly useful for testing purposes.
+
+=item B<-nameopt> I<option>
+
+For the B<-cmsout> operation when B<-print> option is in use, specifies
+printing options for string fields. For most cases B<utf8> is reasonable value.
+See L<openssl(1)/Name Format Options> for details.
 
 =item B<-md> I<digest>
 
@@ -771,6 +778,8 @@ The -no_alt_chains option was added in OpenSSL 1.0.2b.
 
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
+
+The B<-nameopt> option was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
