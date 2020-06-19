@@ -82,7 +82,7 @@ typedef enum OPTION_choice {
     OPT_NOINDEF, OPT_CRLFEOL, OPT_NOOUT, OPT_RR_PRINT,
     OPT_RR_ALL, OPT_RR_FIRST, OPT_RCTFORM, OPT_CERTFILE, OPT_CAFILE,
     OPT_CAPATH, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE,
-    OPT_CONTENT, OPT_PRINT,
+    OPT_CONTENT, OPT_PRINT, OPT_NAMEOPT,
     OPT_SECRETKEY, OPT_SECRETKEYID, OPT_PWRI_PASSWORD, OPT_ECONTENT_TYPE,
     OPT_PASSIN, OPT_TO, OPT_FROM, OPT_SUBJECT, OPT_SIGNER, OPT_RECIP,
     OPT_CERTSOUT, OPT_MD, OPT_INKEY, OPT_KEYFORM, OPT_KEYOPT, OPT_RR_FROM,
@@ -184,6 +184,8 @@ const OPTIONS cms_options[] = {
      "Supply or override content for detached signature"},
     {"print", OPT_PRINT, '-',
      "For the -cmsout operation print out all fields of the CMS structure"},
+    {"nameopt", OPT_NAMEOPT, 's',
+     "For the -print option specifies various strings printing options"},
     {"certsout", OPT_CERTSOUT, '>', "Certificate output file"},
 
     OPT_SECTION("Keying"),
@@ -465,6 +467,10 @@ int cms_main(int argc, char **argv)
             break;
         case OPT_PRINT:
             noout = print = 1;
+            break;
+        case OPT_NAMEOPT:
+            if (!set_nameopt(opt_arg()))
+                goto opthelp;
             break;
         case OPT_SECRETKEY:
             if (secret_key != NULL) {
@@ -1152,8 +1158,19 @@ int cms_main(int argc, char **argv)
         }
     } else {
         if (noout) {
-            if (print)
-                CMS_ContentInfo_print_ctx(out, cms, 0, NULL);
+            if (print) {
+                ASN1_PCTX *pctx = NULL;
+                if (get_nameopt() != XN_FLAG_ONELINE) {
+                    pctx = ASN1_PCTX_new();
+                    if (pctx != NULL) { /* Print anyway if malloc failed */
+                        ASN1_PCTX_set_flags(pctx, ASN1_PCTX_FLAGS_SHOW_ABSENT);
+                        ASN1_PCTX_set_str_flags(pctx, get_nameopt());
+                        ASN1_PCTX_set_nm_flags(pctx, get_nameopt());
+                    }
+                }
+                CMS_ContentInfo_print_ctx(out, cms, 0, pctx);
+                ASN1_PCTX_free(pctx);
+            }
         } else if (outformat == FORMAT_SMIME) {
             if (to)
                 BIO_printf(out, "To: %s%s", to, mime_eol);
