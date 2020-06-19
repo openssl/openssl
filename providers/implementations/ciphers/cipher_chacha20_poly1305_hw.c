@@ -252,6 +252,8 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
                        len - POLY1305_BLOCK_SIZE);
             return 0;
         }
+        /* Strip the tag */
+        len -= POLY1305_BLOCK_SIZE;
     }
 
     *out_padlen = len;
