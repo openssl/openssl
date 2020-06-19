@@ -27,7 +27,8 @@ OSSL_PARAM_set_int64, OSSL_PARAM_set_long, OSSL_PARAM_set_size_t,
 OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32, OSSL_PARAM_set_uint64,
 OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN, OSSL_PARAM_set_utf8_string,
 OSSL_PARAM_set_octet_string, OSSL_PARAM_set_utf8_ptr,
-OSSL_PARAM_set_octet_ptr, OSSL_PARAM_UNMODIFIED
+OSSL_PARAM_set_octet_ptr,
+OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
