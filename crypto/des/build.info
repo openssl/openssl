@@ -1,7 +1,6 @@
 $DESASM=des_enc.c fcrypt_b.c
 IF[{- !$disabled{asm} -}]
   $DESASM_x86=des-586.s crypt586.s
-  $DESASM_ia64=ghash-ia64.s
   $DESASM_sparcv9=des_enc-sparc.S fcrypt_b.c dest4-sparcv9.S
   $DESASM_sparcv8=des_enc-sparc.S fcrypt_b.c
 
