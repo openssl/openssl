@@ -275,7 +275,6 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
     if (!hw->aead_cipher(ctx, out, outl, in, inl))
         return 0;
 
-    *outl = inl;
     return 1;
 }
 
