@@ -397,7 +397,7 @@ i2d_X509_VAL,
 
 =for openssl generic
 
- TYPE *d2i_TYPE(TYPE **a, unsigned char **ppin, long length);
+ TYPE *d2i_TYPE(TYPE **a, const unsigned char **ppin, long length);
  TYPE *d2i_TYPE_bio(BIO *bp, TYPE **a);
  TYPE *d2i_TYPE_fp(FILE *fp, TYPE **a);
 
@@ -564,7 +564,8 @@ Allocate and encode the DER encoding of an X509 structure:
 Attempt to decode a buffer:
 
  X509 *x;
- unsigned char *buf, *p;
+ unsigned char *buf;
+ const unsigned char *p;
  int len;
 
  /* Set up buf and len to point to the input buffer. */
@@ -576,7 +577,8 @@ Attempt to decode a buffer:
 Alternative technique:
 
  X509 *x;
- unsigned char *buf, *p;
+ unsigned char *buf;
+ const unsigned char *p;
  int len;
 
  /* Set up buf and len to point to the input buffer. */
