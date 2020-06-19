@@ -446,6 +446,7 @@ my @disablables = (
     "sse2",
     "ssl",
     "ssl-trace",
+    "static-crt",
     "static-engine",
     "stdio",
     "tests",
