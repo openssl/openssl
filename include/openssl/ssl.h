@@ -650,7 +650,11 @@ __owur int SRP_Calc_A_param(SSL *s);
 # endif
 
 /* 100k max cert list */
-# define SSL_MAX_CERT_LIST_DEFAULT 1024*100
+/* OQS note: To support schemes like MQDSS-31-64 and Rainbow,
+ * we have changed this from 102400 to the maximum permissible
+ * value of 2^24 - 1 = 16777215
+ */
+# define SSL_MAX_CERT_LIST_DEFAULT 16777215
 
 # define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT      (1024*20)
 

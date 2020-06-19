@@ -1,0 +1,11 @@
+{%- for sig in config['sigs'] %}
+    {%- for variant in sig['variants'] %}
+        else if(lu->sigalg == TLSEXT_SIGALG_{{ variant['name'] }})
+            secbits = {{ variant['security'] }};
+        {%- for classical_alg in variant['mix_with'] %}
+        else if(lu->sigalg == TLSEXT_SIGALG_{{ classical_alg['name'] }}_{{ variant['name'] }})
+            secbits = {{ variant['security'] }};
+        {%- endfor %}
+    {%- endfor %}
+{%- endfor %}
+

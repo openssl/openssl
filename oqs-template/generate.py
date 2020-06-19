@@ -42,6 +42,8 @@ def populate(filename, config, delimiter, overwrite=False):
 def load_config():
     config = file_get_contents(os.path.join('oqs-template', 'generate.yml'), encoding='utf-8')
     config = yaml.safe_load(config)
+    for sig in config['sigs']:
+        sig['variants'] = [variant for variant in sig['variants'] if variant['enable']]
     return config
 
 config = load_config()

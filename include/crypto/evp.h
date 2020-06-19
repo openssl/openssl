@@ -142,7 +142,15 @@ extern const EVP_PKEY_METHOD qteslapi_pkey_meth;
 extern const EVP_PKEY_METHOD p256_qteslapi_pkey_meth;
 extern const EVP_PKEY_METHOD rsa3072_qteslapi_pkey_meth;
 extern const EVP_PKEY_METHOD qteslapiii_pkey_meth;
-extern const EVP_PKEY_METHOD p384_qteslapiii_pkey_meth;///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_METHS_END
+extern const EVP_PKEY_METHOD p384_qteslapiii_pkey_meth;
+extern const EVP_PKEY_METHOD rainbowIaclassic_pkey_meth;
+extern const EVP_PKEY_METHOD p256_rainbowIaclassic_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_rainbowIaclassic_pkey_meth;
+extern const EVP_PKEY_METHOD rainbowVcclassic_pkey_meth;
+extern const EVP_PKEY_METHOD p521_rainbowVcclassic_pkey_meth;
+extern const EVP_PKEY_METHOD sphincsharaka128frobust_pkey_meth;
+extern const EVP_PKEY_METHOD p256_sphincsharaka128frobust_pkey_meth;
+extern const EVP_PKEY_METHOD rsa3072_sphincsharaka128frobust_pkey_meth;///// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_METHS_END
 
 struct evp_md_st {
     int type;

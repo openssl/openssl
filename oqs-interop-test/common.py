@@ -5,7 +5,7 @@ import psutil
 import shutil
 import time
 
-SERVER_START_ATTEMPTS = 100
+SERVER_START_ATTEMPTS = 60
 
 def run_subprocess(command, working_dir='.', expected_returncode=0, input=None):
     """
@@ -80,6 +80,7 @@ def start_server(server_prog, server_type, client_prog, client_type, test_artifa
                                        '-quiet',
                                        '-accept', '0']
 
+    print(". > " + " ".join(server_command))
     server = subprocess.Popen(server_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
     server_info = psutil.Process(server.pid)
 
@@ -91,7 +92,7 @@ def start_server(server_prog, server_type, client_prog, client_type, test_artifa
             break
         else:
             server_start_attempt += 1
-            time.sleep(3)
+            time.sleep(2)
     server_port = str(server_info.connections()[0].laddr.port)
 
     if client_type == "bssl":
@@ -108,7 +109,7 @@ def start_server(server_prog, server_type, client_prog, client_type, test_artifa
             break
         else:
             server_start_attempt += 1
-            time.sleep(3)
+            time.sleep(2)
 
     if server_start_attempt > SERVER_START_ATTEMPTS:
         raise Exception('Cannot start server')

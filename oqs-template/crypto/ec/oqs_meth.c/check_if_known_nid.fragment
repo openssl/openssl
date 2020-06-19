@@ -2,11 +2,12 @@
     {%- set last_sig = loop.last %}
     {%- for variant in sig['variants'] %}
         {%- set last_variant = loop.last %}
-        nid != NID_{{ variant['name'] }} {%- if not (last_sig and last_variant and (not variant['mix_with'])) %} && {%- endif -%}
+        nid != NID_{{ variant['name'] }} &&
         {%- for classical_alg in variant['mix_with'] %}
         {%- set last_hybrid = loop.last %}
-        nid != NID_{{ classical_alg['name'] }}_{{ variant['name'] }} {%- if not (last_sig and last_variant and last_hybrid) %} && {%- endif -%}
+        nid != NID_{{ classical_alg['name'] }}_{{ variant['name'] }} &&
         {%- endfor %}
     {%- endfor %}
 {%- endfor %}
+        1 /* This is just to faciliate templating. */
 

@@ -2,11 +2,11 @@
 {%- for sig in config['sigs'] %}
     {%- for variant in sig['variants'] %}
 /* {{ variant['pretty_name'] }} auth */
-#define SSL_a{{ variant['name']|upper }} {{ "{0:#0{1}x}".format(mask.val,10) }}
+#define SSL_a{{ variant['name']|upper }} {{ "{0:#0{1}x}".format(mask.val,10) }}U
         {%- set mask.val = mask.val * 2 -%}
         {%- for classical_alg in variant['mix_with'] %}
 /* {{ classical_alg['pretty_name'] }} - {{ variant['pretty_name'] }} auth */
-#define SSL_a{{ classical_alg['name']|upper }}_{{ variant['name']|upper }} {{ "{0:#0{1}x}".format(mask.val,10) }}
+#define SSL_a{{ classical_alg['name']|upper }}_{{ variant['name']|upper }} {{ "{0:#0{1}x}".format(mask.val,10) }}U
         {%- set mask.val = mask.val * 2 -%}
         {%- endfor %}
     {%- endfor %}

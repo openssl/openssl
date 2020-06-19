@@ -306,6 +306,22 @@ static const char *get_sigtype(int nid)
         return "qTESLA-p-III";
     case NID_p384_qteslapiii:
         return "ECDSA p384 - qTESLA-p-III";
+    case NID_rainbowIaclassic:
+        return "Rainbow-Ia-Classic";
+    case NID_p256_rainbowIaclassic:
+        return "ECDSA p256 - Rainbow-Ia-Classic";
+    case NID_rsa3072_rainbowIaclassic:
+        return "RSA3072 - Rainbow-Ia-Classic";
+    case NID_rainbowVcclassic:
+        return "Rainbow-Vc-Classic";
+    case NID_p521_rainbowVcclassic:
+        return "ECDSA p521 - Rainbow-Vc-Classic";
+    case NID_sphincsharaka128frobust:
+        return "SPHINCS+-Haraka-128f-robust";
+    case NID_p256_sphincsharaka128frobust:
+        return "ECDSA p256 - SPHINCS+-Haraka-128f-robust";
+    case NID_rsa3072_sphincsharaka128frobust:
+        return "RSA3072 - SPHINCS+-Haraka-128f-robust";
 ///// OQS_TEMPLATE_FRAGMENT_SIG_NAME_STR_END
     default:
         return NULL;

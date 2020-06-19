@@ -99,6 +99,14 @@ static const EVP_PKEY_METHOD *standard_methods[] = {
     &rsa3072_qteslapi_pkey_meth,
     &qteslapiii_pkey_meth,
     &p384_qteslapiii_pkey_meth,
+    &rainbowIaclassic_pkey_meth,
+    &p256_rainbowIaclassic_pkey_meth,
+    &rsa3072_rainbowIaclassic_pkey_meth,
+    &rainbowVcclassic_pkey_meth,
+    &p521_rainbowVcclassic_pkey_meth,
+    &sphincsharaka128frobust_pkey_meth,
+    &p256_sphincsharaka128frobust_pkey_meth,
+    &rsa3072_sphincsharaka128frobust_pkey_meth,
 ///// OQS_TEMPLATE_FRAGMENT_LIST_PKEY_METHS_END
 };
 

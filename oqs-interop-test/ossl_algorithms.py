@@ -10,10 +10,18 @@ key_exchanges = [
 signatures = [
 ##### OQS_TEMPLATE_FRAGMENT_PQ_SIG_ALGS_START
     'oqs_sig_default',
-    'dilithium2','dilithium3','dilithium4',
-    'falcon512','falcon1024',
+    'dilithium2',
+    'dilithium3',
+    'dilithium4',
+    'falcon512',
+    'falcon1024',
     'mqdss3148',
-    'picnicl1fs','picnic2l1fs',
-    'qteslapi','qteslapiii',
+    'picnicl1fs',
+    'picnic2l1fs',
+    'qteslapi',
+    'qteslapiii',
+    'rainbowIaclassic',
+    'rainbowVcclassic',
+    'sphincsharaka128frobust',
 ##### OQS_TEMPLATE_FRAGMENT_PQ_SIG_ALGS_END
 ]

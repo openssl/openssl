@@ -116,7 +116,15 @@ extern const EVP_PKEY_ASN1_METHOD qteslapi_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD p256_qteslapi_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa3072_qteslapi_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD qteslapiii_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD p384_qteslapiii_asn1_meth;///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_END
+extern const EVP_PKEY_ASN1_METHOD p384_qteslapiii_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rainbowIaclassic_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_rainbowIaclassic_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_rainbowIaclassic_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rainbowVcclassic_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p521_rainbowVcclassic_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD sphincsharaka128frobust_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD p256_sphincsharaka128frobust_asn1_meth;
+extern const EVP_PKEY_ASN1_METHOD rsa3072_sphincsharaka128frobust_asn1_meth;///// OQS_TEMPLATE_FRAGMENT_DEFINE_ASN1_METHS_END
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the
