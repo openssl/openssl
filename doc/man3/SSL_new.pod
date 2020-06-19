@@ -82,7 +82,7 @@ L<SSL_set_info_callback(3)>
 =item application specific data set via L<SSL_set_ex_data(3)>
 
 =item any CA list or client CA list set via L<SSL_set0_CA_list(3)>,
-L<SSL_set0_client_CA_list(3)> or similar functions
+SSL_set0_client_CA_list() or similar functions
 
 =item any security level settings or callbacks
 
