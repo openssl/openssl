@@ -204,13 +204,13 @@ static const OSSL_PARAM *aes_siv_settable_ctx_params(void)
 }
 
 #define IMPLEMENT_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits)       \
-static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;         \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;       \
 static int alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,         \
                                      flags, 2*kbits, blkbits, ivbits);         \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn alg##kbits##lc##_newctx;                       \
+static OSSL_FUNC_cipher_newctx_fn alg##kbits##lc##_newctx;                     \
 static void * alg##kbits##lc##_newctx(void *provctx)                           \
 {                                                                              \
     return alg##_##lc##_newctx(provctx, 2*kbits, EVP_CIPH_##UCMODE##_MODE,     \

@@ -107,103 +107,103 @@ static void *evp_rand_from_dispatch(int name_id,
         case OSSL_FUNC_RAND_NEWCTX:
             if (rand->newctx != NULL)
                 break;
-            rand->newctx = OSSL_get_OP_rand_newctx(fns);
+            rand->newctx = OSSL_FUNC_rand_newctx(fns);
             fnctxcnt++;
             break;
         case OSSL_FUNC_RAND_FREECTX:
             if (rand->freectx != NULL)
                 break;
-            rand->freectx = OSSL_get_OP_rand_freectx(fns);
+            rand->freectx = OSSL_FUNC_rand_freectx(fns);
             fnctxcnt++;
             break;
         case OSSL_FUNC_RAND_INSTANTIATE:
             if (rand->instantiate != NULL)
                 break;
-            rand->instantiate = OSSL_get_OP_rand_instantiate(fns);
+            rand->instantiate = OSSL_FUNC_rand_instantiate(fns);
             fnrandcnt++;
             break;
         case OSSL_FUNC_RAND_UNINSTANTIATE:
              if (rand->uninstantiate != NULL)
                 break;
-            rand->uninstantiate = OSSL_get_OP_rand_uninstantiate(fns);
+            rand->uninstantiate = OSSL_FUNC_rand_uninstantiate(fns);
             fnrandcnt++;
             break;
         case OSSL_FUNC_RAND_GENERATE:
             if (rand->generate != NULL)
                 break;
-            rand->generate = OSSL_get_OP_rand_generate(fns);
+            rand->generate = OSSL_FUNC_rand_generate(fns);
             fnrandcnt++;
             break;
         case OSSL_FUNC_RAND_RESEED:
             if (rand->reseed != NULL)
                 break;
-            rand->reseed = OSSL_get_OP_rand_reseed(fns);
+            rand->reseed = OSSL_FUNC_rand_reseed(fns);
             break;
         case OSSL_FUNC_RAND_NONCE:
             if (rand->nonce != NULL)
                 break;
-            rand->nonce = OSSL_get_OP_rand_nonce(fns);
+            rand->nonce = OSSL_FUNC_rand_nonce(fns);
             break;
         case OSSL_FUNC_RAND_SET_CALLBACKS:
             if (rand->set_callbacks != NULL)
                 break;
-            rand->set_callbacks = OSSL_get_OP_rand_set_callbacks(fns);
+            rand->set_callbacks = OSSL_FUNC_rand_set_callbacks(fns);
             break;
         case OSSL_FUNC_RAND_ENABLE_LOCKING:
             if (rand->enable_locking != NULL)
                 break;
-            rand->enable_locking = OSSL_get_OP_rand_enable_locking(fns);
+            rand->enable_locking = OSSL_FUNC_rand_enable_locking(fns);
             fnlockcnt++;
             break;
         case OSSL_FUNC_RAND_LOCK:
             if (rand->lock != NULL)
                 break;
-            rand->lock = OSSL_get_OP_rand_lock(fns);
+            rand->lock = OSSL_FUNC_rand_lock(fns);
             fnlockcnt++;
             break;
         case OSSL_FUNC_RAND_UNLOCK:
             if (rand->unlock != NULL)
                 break;
-            rand->unlock = OSSL_get_OP_rand_unlock(fns);
+            rand->unlock = OSSL_FUNC_rand_unlock(fns);
             fnlockcnt++;
             break;
         case OSSL_FUNC_RAND_GETTABLE_PARAMS:
             if (rand->gettable_params != NULL)
                 break;
             rand->gettable_params =
-                OSSL_get_OP_rand_gettable_params(fns);
+                OSSL_FUNC_rand_gettable_params(fns);
             break;
         case OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS:
             if (rand->gettable_ctx_params != NULL)
                 break;
             rand->gettable_ctx_params =
-                OSSL_get_OP_rand_gettable_ctx_params(fns);
+                OSSL_FUNC_rand_gettable_ctx_params(fns);
             break;
         case OSSL_FUNC_RAND_SETTABLE_CTX_PARAMS:
             if (rand->settable_ctx_params != NULL)
                 break;
             rand->settable_ctx_params =
-                OSSL_get_OP_rand_settable_ctx_params(fns);
+                OSSL_FUNC_rand_settable_ctx_params(fns);
             break;
         case OSSL_FUNC_RAND_GET_PARAMS:
             if (rand->get_params != NULL)
                 break;
-            rand->get_params = OSSL_get_OP_rand_get_params(fns);
+            rand->get_params = OSSL_FUNC_rand_get_params(fns);
             break;
         case OSSL_FUNC_RAND_GET_CTX_PARAMS:
             if (rand->get_ctx_params != NULL)
                 break;
-            rand->get_ctx_params = OSSL_get_OP_rand_get_ctx_params(fns);
+            rand->get_ctx_params = OSSL_FUNC_rand_get_ctx_params(fns);
             break;
         case OSSL_FUNC_RAND_SET_CTX_PARAMS:
             if (rand->set_ctx_params != NULL)
                 break;
-            rand->set_ctx_params = OSSL_get_OP_rand_set_ctx_params(fns);
+            rand->set_ctx_params = OSSL_FUNC_rand_set_ctx_params(fns);
             break;
         case OSSL_FUNC_RAND_VERIFY_ZEROIZATION:
             if (rand->verify_zeroization != NULL)
                 break;
-            rand->verify_zeroization = OSSL_get_OP_rand_verify_zeroization(fns);
+            rand->verify_zeroization = OSSL_FUNC_rand_verify_zeroization(fns);
 #ifdef FIPS_MODULE
             fnzeroizecnt++;
 #endif

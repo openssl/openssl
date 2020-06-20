@@ -130,7 +130,7 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
  * the result matches the expected value.
  * Return 1 if verified, or 0 if it fails.
  */
-static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
+static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex_cb,
                             unsigned char *expected, size_t expected_len,
                             OPENSSL_CTX *libctx, OSSL_SELF_TEST *ev,
                             const char *event_type)

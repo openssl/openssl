@@ -47,10 +47,10 @@ static struct filter_prov_globals_st *get_globals(void)
     return &ourglobals;
 }
 
-static OSSL_provider_gettable_params_fn filter_gettable_params;
-static OSSL_provider_get_params_fn filter_get_params;
-static OSSL_provider_query_operation_fn filter_query;
-static OSSL_provider_teardown_fn filter_teardown;
+static OSSL_FUNC_provider_gettable_params_fn filter_gettable_params;
+static OSSL_FUNC_provider_get_params_fn filter_get_params;
+static OSSL_FUNC_provider_query_operation_fn filter_query;
+static OSSL_FUNC_provider_teardown_fn filter_teardown;
 
 static const OSSL_PARAM *filter_gettable_params(void *provctx)
 {

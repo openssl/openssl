@@ -12,7 +12,7 @@
 #include "cipher_aria_ccm.h"
 #include "prov/implementations.h"
 
-static OSSL_OP_cipher_freectx_fn aria_ccm_freectx;
+static OSSL_FUNC_cipher_freectx_fn aria_ccm_freectx;
 
 static void *aria_ccm_newctx(void *provctx, size_t keybits)
 {

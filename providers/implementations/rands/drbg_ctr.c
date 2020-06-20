@@ -21,17 +21,17 @@
 #include "prov/providercommonerr.h"
 #include "drbg_local.h"
 
-static OSSL_OP_rand_newctx_fn drbg_ctr_new_wrapper;
-static OSSL_OP_rand_freectx_fn drbg_ctr_free;
-static OSSL_OP_rand_instantiate_fn drbg_ctr_instantiate_wrapper;
-static OSSL_OP_rand_uninstantiate_fn drbg_ctr_uninstantiate_wrapper;
-static OSSL_OP_rand_generate_fn drbg_ctr_generate_wrapper;
-static OSSL_OP_rand_reseed_fn drbg_ctr_reseed_wrapper;
-static OSSL_OP_rand_settable_ctx_params_fn drbg_ctr_settable_ctx_params;
-static OSSL_OP_rand_set_ctx_params_fn drbg_ctr_set_ctx_params;
-static OSSL_OP_rand_gettable_ctx_params_fn drbg_ctr_gettable_ctx_params;
-static OSSL_OP_rand_get_ctx_params_fn drbg_ctr_get_ctx_params;
-static OSSL_OP_rand_verify_zeroization_fn drbg_ctr_verify_zeroization;
+static OSSL_FUNC_rand_newctx_fn drbg_ctr_new_wrapper;
+static OSSL_FUNC_rand_freectx_fn drbg_ctr_free;
+static OSSL_FUNC_rand_instantiate_fn drbg_ctr_instantiate_wrapper;
+static OSSL_FUNC_rand_uninstantiate_fn drbg_ctr_uninstantiate_wrapper;
+static OSSL_FUNC_rand_generate_fn drbg_ctr_generate_wrapper;
+static OSSL_FUNC_rand_reseed_fn drbg_ctr_reseed_wrapper;
+static OSSL_FUNC_rand_settable_ctx_params_fn drbg_ctr_settable_ctx_params;
+static OSSL_FUNC_rand_set_ctx_params_fn drbg_ctr_set_ctx_params;
+static OSSL_FUNC_rand_gettable_ctx_params_fn drbg_ctr_gettable_ctx_params;
+static OSSL_FUNC_rand_get_ctx_params_fn drbg_ctr_get_ctx_params;
+static OSSL_FUNC_rand_verify_zeroization_fn drbg_ctr_verify_zeroization;
 
 /*
  * The state of a DRBG AES-CTR.

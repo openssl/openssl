@@ -20,13 +20,13 @@
 # include "s390x_arch.h"
 #endif
 
-static OSSL_OP_keyexch_newctx_fn x25519_newctx;
-static OSSL_OP_keyexch_newctx_fn x448_newctx;
-static OSSL_OP_keyexch_init_fn ecx_init;
-static OSSL_OP_keyexch_set_peer_fn ecx_set_peer;
-static OSSL_OP_keyexch_derive_fn ecx_derive;
-static OSSL_OP_keyexch_freectx_fn ecx_freectx;
-static OSSL_OP_keyexch_dupctx_fn ecx_dupctx;
+static OSSL_FUNC_keyexch_newctx_fn x25519_newctx;
+static OSSL_FUNC_keyexch_newctx_fn x448_newctx;
+static OSSL_FUNC_keyexch_init_fn ecx_init;
+static OSSL_FUNC_keyexch_set_peer_fn ecx_set_peer;
+static OSSL_FUNC_keyexch_derive_fn ecx_derive;
+static OSSL_FUNC_keyexch_freectx_fn ecx_freectx;
+static OSSL_FUNC_keyexch_dupctx_fn ecx_dupctx;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.

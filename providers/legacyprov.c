@@ -20,9 +20,9 @@
  * Forward declarations to ensure that interface functions are correctly
  * defined.
  */
-static OSSL_provider_gettable_params_fn legacy_gettable_params;
-static OSSL_provider_get_params_fn legacy_get_params;
-static OSSL_provider_query_operation_fn legacy_query;
+static OSSL_FUNC_provider_gettable_params_fn legacy_gettable_params;
+static OSSL_FUNC_provider_get_params_fn legacy_get_params;
+static OSSL_FUNC_provider_query_operation_fn legacy_query;
 
 #define ALG(NAMES, FUNC) { NAMES, "provider=legacy", FUNC }
 
@@ -32,8 +32,8 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
 
 /* Functions provided by the core */
-static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
-static OSSL_core_get_params_fn *c_get_params = NULL;
+static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
+static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 
 /* Parameters we provide to the core */
 static const OSSL_PARAM legacy_param_types[] = {
@@ -175,19 +175,19 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
-    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
     OPENSSL_CTX *libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_get_core_gettable_params(in);
+            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_get_core_get_params(in);
+            c_get_params = OSSL_FUNC_core_get_params(in);
             break;
         case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_get_core_get_library_context(in);
+            c_get_libctx = OSSL_FUNC_core_get_library_context(in);
             break;
         /* Just ignore anything we don't understand */
         default:

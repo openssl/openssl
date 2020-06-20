@@ -889,17 +889,17 @@ PROV_DRBG *prov_rand_drbg_new
     /* Extract parent's functions */
     drbg->parent = parent;
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_ENABLE_LOCKING)) != NULL)
-        drbg->parent_enable_locking = OSSL_get_OP_rand_enable_locking(pfunc);
+        drbg->parent_enable_locking = OSSL_FUNC_rand_enable_locking(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_LOCK)) != NULL)
-        drbg->parent_lock = OSSL_get_OP_rand_lock(pfunc);
+        drbg->parent_lock = OSSL_FUNC_rand_lock(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_UNLOCK)) != NULL)
-        drbg->parent_unlock = OSSL_get_OP_rand_unlock(pfunc);
+        drbg->parent_unlock = OSSL_FUNC_rand_unlock(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GET_CTX_PARAMS)) != NULL)
-        drbg->parent_get_ctx_params = OSSL_get_OP_rand_get_ctx_params(pfunc);
+        drbg->parent_get_ctx_params = OSSL_FUNC_rand_get_ctx_params(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_GENERATE)) != NULL)
-        drbg->parent_generate = OSSL_get_OP_rand_generate(pfunc);
+        drbg->parent_generate = OSSL_FUNC_rand_generate(pfunc);
     if ((pfunc = find_call(p_dispatch, OSSL_FUNC_RAND_NONCE)) != NULL)
-        drbg->parent_nonce = OSSL_get_OP_rand_nonce(pfunc);
+        drbg->parent_nonce = OSSL_FUNC_rand_nonce(pfunc);
 
     /* Set some default maximums up */
     drbg->max_entropylen = DRBG_MAX_LENGTH;

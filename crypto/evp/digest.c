@@ -781,68 +781,68 @@ static void *evp_md_from_dispatch(int name_id,
         switch (fns->function_id) {
         case OSSL_FUNC_DIGEST_NEWCTX:
             if (md->newctx == NULL) {
-                md->newctx = OSSL_get_OP_digest_newctx(fns);
+                md->newctx = OSSL_FUNC_digest_newctx(fns);
                 fncnt++;
             }
             break;
         case OSSL_FUNC_DIGEST_INIT:
             if (md->dinit == NULL) {
-                md->dinit = OSSL_get_OP_digest_init(fns);
+                md->dinit = OSSL_FUNC_digest_init(fns);
                 fncnt++;
             }
             break;
         case OSSL_FUNC_DIGEST_UPDATE:
             if (md->dupdate == NULL) {
-                md->dupdate = OSSL_get_OP_digest_update(fns);
+                md->dupdate = OSSL_FUNC_digest_update(fns);
                 fncnt++;
             }
             break;
         case OSSL_FUNC_DIGEST_FINAL:
             if (md->dfinal == NULL) {
-                md->dfinal = OSSL_get_OP_digest_final(fns);
+                md->dfinal = OSSL_FUNC_digest_final(fns);
                 fncnt++;
             }
             break;
         case OSSL_FUNC_DIGEST_DIGEST:
             if (md->digest == NULL)
-                md->digest = OSSL_get_OP_digest_digest(fns);
+                md->digest = OSSL_FUNC_digest_digest(fns);
             /* We don't increment fnct for this as it is stand alone */
             break;
         case OSSL_FUNC_DIGEST_FREECTX:
             if (md->freectx == NULL) {
-                md->freectx = OSSL_get_OP_digest_freectx(fns);
+                md->freectx = OSSL_FUNC_digest_freectx(fns);
                 fncnt++;
             }
             break;
         case OSSL_FUNC_DIGEST_DUPCTX:
             if (md->dupctx == NULL)
-                md->dupctx = OSSL_get_OP_digest_dupctx(fns);
+                md->dupctx = OSSL_FUNC_digest_dupctx(fns);
             break;
         case OSSL_FUNC_DIGEST_GET_PARAMS:
             if (md->get_params == NULL)
-                md->get_params = OSSL_get_OP_digest_get_params(fns);
+                md->get_params = OSSL_FUNC_digest_get_params(fns);
             break;
         case OSSL_FUNC_DIGEST_SET_CTX_PARAMS:
             if (md->set_ctx_params == NULL)
-                md->set_ctx_params = OSSL_get_OP_digest_set_ctx_params(fns);
+                md->set_ctx_params = OSSL_FUNC_digest_set_ctx_params(fns);
             break;
         case OSSL_FUNC_DIGEST_GET_CTX_PARAMS:
             if (md->get_ctx_params == NULL)
-                md->get_ctx_params = OSSL_get_OP_digest_get_ctx_params(fns);
+                md->get_ctx_params = OSSL_FUNC_digest_get_ctx_params(fns);
             break;
         case OSSL_FUNC_DIGEST_GETTABLE_PARAMS:
             if (md->gettable_params == NULL)
-                md->gettable_params = OSSL_get_OP_digest_gettable_params(fns);
+                md->gettable_params = OSSL_FUNC_digest_gettable_params(fns);
             break;
         case OSSL_FUNC_DIGEST_SETTABLE_CTX_PARAMS:
             if (md->settable_ctx_params == NULL)
                 md->settable_ctx_params =
-                    OSSL_get_OP_digest_settable_ctx_params(fns);
+                    OSSL_FUNC_digest_settable_ctx_params(fns);
             break;
         case OSSL_FUNC_DIGEST_GETTABLE_CTX_PARAMS:
             if (md->gettable_ctx_params == NULL)
                 md->gettable_ctx_params =
-                    OSSL_get_OP_digest_gettable_ctx_params(fns);
+                    OSSL_FUNC_digest_gettable_ctx_params(fns);
             break;
         }
     }

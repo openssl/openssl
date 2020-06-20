@@ -70,15 +70,15 @@ typedef struct {
 /* KMAC uses a Customisation string of 'KDF' */
 static const unsigned char kmac_custom_str[] = { 0x4B, 0x44, 0x46 };
 
-static OSSL_OP_kdf_newctx_fn sskdf_new;
-static OSSL_OP_kdf_freectx_fn sskdf_free;
-static OSSL_OP_kdf_reset_fn sskdf_reset;
-static OSSL_OP_kdf_derive_fn sskdf_derive;
-static OSSL_OP_kdf_derive_fn x963kdf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn sskdf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn sskdf_set_ctx_params;
-static OSSL_OP_kdf_gettable_ctx_params_fn sskdf_gettable_ctx_params;
-static OSSL_OP_kdf_get_ctx_params_fn sskdf_get_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn sskdf_new;
+static OSSL_FUNC_kdf_freectx_fn sskdf_free;
+static OSSL_FUNC_kdf_reset_fn sskdf_reset;
+static OSSL_FUNC_kdf_derive_fn sskdf_derive;
+static OSSL_FUNC_kdf_derive_fn x963kdf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn sskdf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn sskdf_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn sskdf_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn sskdf_get_ctx_params;
 
 /*
  * Refer to https://csrc.nist.gov/publications/detail/sp/800-56c/rev-1/final

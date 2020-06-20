@@ -18,18 +18,18 @@
 #include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
-static OSSL_OP_serializer_newctx_fn x25519_pub_newctx;
-static OSSL_OP_serializer_newctx_fn x448_pub_newctx;
-static OSSL_OP_serializer_newctx_fn ed25519_pub_newctx;
-static OSSL_OP_serializer_newctx_fn ed448_pub_newctx;
-static OSSL_OP_serializer_freectx_fn ecx_pub_freectx;
-static OSSL_OP_serializer_serialize_data_fn ecx_pub_der_data;
-static OSSL_OP_serializer_serialize_object_fn ecx_pub_der;
-static OSSL_OP_serializer_serialize_data_fn ecx_pub_pem_data;
-static OSSL_OP_serializer_serialize_object_fn ecx_pub_pem;
+static OSSL_FUNC_serializer_newctx_fn x25519_pub_newctx;
+static OSSL_FUNC_serializer_newctx_fn x448_pub_newctx;
+static OSSL_FUNC_serializer_newctx_fn ed25519_pub_newctx;
+static OSSL_FUNC_serializer_newctx_fn ed448_pub_newctx;
+static OSSL_FUNC_serializer_freectx_fn ecx_pub_freectx;
+static OSSL_FUNC_serializer_serialize_data_fn ecx_pub_der_data;
+static OSSL_FUNC_serializer_serialize_object_fn ecx_pub_der;
+static OSSL_FUNC_serializer_serialize_data_fn ecx_pub_pem_data;
+static OSSL_FUNC_serializer_serialize_object_fn ecx_pub_pem;
 
-static OSSL_OP_serializer_serialize_data_fn ecx_pub_print_data;
-static OSSL_OP_serializer_serialize_object_fn ecx_pub_print;
+static OSSL_FUNC_serializer_serialize_data_fn ecx_pub_print_data;
+static OSSL_FUNC_serializer_serialize_object_fn ecx_pub_print;
 
 /*
  * Context used for public key serialization.
@@ -82,9 +82,9 @@ static int ecx_pub_der_data(void *vctx, const OSSL_PARAM params[],
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *ecx_new;
-    OSSL_OP_keymgmt_free_fn *ecx_free;
-    OSSL_OP_keymgmt_import_fn *ecx_import;
+    OSSL_FUNC_keymgmt_new_fn *ecx_new;
+    OSSL_FUNC_keymgmt_free_fn *ecx_free;
+    OSSL_FUNC_keymgmt_import_fn *ecx_import;
     int ok = 0;
 
     ecx_get_new_free_import(ctx->type, &ecx_new, &ecx_free, &ecx_import);
@@ -126,9 +126,9 @@ static int ecx_pub_pem_data(void *vctx, const OSSL_PARAM params[],
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *ecx_new;
-    OSSL_OP_keymgmt_free_fn *ecx_free;
-    OSSL_OP_keymgmt_import_fn *ecx_import;
+    OSSL_FUNC_keymgmt_new_fn *ecx_new;
+    OSSL_FUNC_keymgmt_free_fn *ecx_free;
+    OSSL_FUNC_keymgmt_import_fn *ecx_import;
     int ok = 0;
 
     ecx_get_new_free_import(ctx->type, &ecx_new, &ecx_free, &ecx_import);
@@ -169,9 +169,9 @@ static int ecx_pub_print_data(void *vctx, const OSSL_PARAM params[],
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct ecx_pub_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *ecx_new;
-    OSSL_OP_keymgmt_free_fn *ecx_free;
-    OSSL_OP_keymgmt_import_fn *ecx_import;
+    OSSL_FUNC_keymgmt_new_fn *ecx_new;
+    OSSL_FUNC_keymgmt_free_fn *ecx_free;
+    OSSL_FUNC_keymgmt_import_fn *ecx_import;
     int ok = 0;
 
     ecx_get_new_free_import(ctx->type, &ecx_new, &ecx_free, &ecx_import);

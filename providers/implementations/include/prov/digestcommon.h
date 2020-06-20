@@ -19,7 +19,7 @@ extern "C" {
 # endif
 
 #define PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)             \
-static OSSL_OP_digest_get_params_fn name##_get_params;                         \
+static OSSL_FUNC_digest_get_params_fn name##_get_params;                         \
 static int name##_get_params(OSSL_PARAM params[])                              \
 {                                                                              \
     return digest_default_get_params(params, blksize, dgstsize, flags);        \
@@ -32,9 +32,9 @@ static int name##_get_params(OSSL_PARAM params[])                              \
 
 # define PROV_DISPATCH_FUNC_DIGEST_CONSTRUCT_START(                            \
     name, CTX, blksize, dgstsize, flags, init, upd, fin)                       \
-static OSSL_OP_digest_newctx_fn name##_newctx;                                 \
-static OSSL_OP_digest_freectx_fn name##_freectx;                               \
-static OSSL_OP_digest_dupctx_fn name##_dupctx;                                 \
+static OSSL_FUNC_digest_newctx_fn name##_newctx;                                 \
+static OSSL_FUNC_digest_freectx_fn name##_freectx;                               \
+static OSSL_FUNC_digest_dupctx_fn name##_dupctx;                                 \
 static void *name##_newctx(void *prov_ctx)                                     \
 {                                                                              \
     CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                                   \
@@ -53,7 +53,7 @@ static void *name##_dupctx(void *ctx)                                          \
         *ret = *in;                                                            \
     return ret;                                                                \
 }                                                                              \
-static OSSL_OP_digest_final_fn name##_internal_final;                          \
+static OSSL_FUNC_digest_final_fn name##_internal_final;                          \
 static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
                                  size_t outsz)                                 \
 {                                                                              \

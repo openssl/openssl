@@ -17,15 +17,15 @@
 #include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
-static OSSL_OP_serializer_newctx_fn ec_pub_newctx;
-static OSSL_OP_serializer_freectx_fn ec_pub_freectx;
-static OSSL_OP_serializer_serialize_data_fn ec_pub_der_data;
-static OSSL_OP_serializer_serialize_object_fn ec_pub_der;
-static OSSL_OP_serializer_serialize_data_fn ec_pub_pem_data;
-static OSSL_OP_serializer_serialize_object_fn ec_pub_pem;
+static OSSL_FUNC_serializer_newctx_fn ec_pub_newctx;
+static OSSL_FUNC_serializer_freectx_fn ec_pub_freectx;
+static OSSL_FUNC_serializer_serialize_data_fn ec_pub_der_data;
+static OSSL_FUNC_serializer_serialize_object_fn ec_pub_der;
+static OSSL_FUNC_serializer_serialize_data_fn ec_pub_pem_data;
+static OSSL_FUNC_serializer_serialize_object_fn ec_pub_pem;
 
-static OSSL_OP_serializer_serialize_data_fn ec_pub_print_data;
-static OSSL_OP_serializer_serialize_object_fn ec_pub_print;
+static OSSL_FUNC_serializer_serialize_data_fn ec_pub_print_data;
+static OSSL_FUNC_serializer_serialize_object_fn ec_pub_print;
 
 /* Public key : context */
 
@@ -46,9 +46,9 @@ static int ec_pub_der_data(void *vctx, const OSSL_PARAM params[],
                            OSSL_CORE_BIO *out,
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_new_fn *ec_new;
-    OSSL_OP_keymgmt_free_fn *ec_free;
-    OSSL_OP_keymgmt_import_fn *ec_import;
+    OSSL_FUNC_keymgmt_new_fn *ec_new;
+    OSSL_FUNC_keymgmt_free_fn *ec_free;
+    OSSL_FUNC_keymgmt_import_fn *ec_import;
     int ok = 0;
 
     ec_get_new_free_import(&ec_new, &ec_free, &ec_import);
@@ -88,9 +88,9 @@ static int ec_pub_pem_data(void *vctx, const OSSL_PARAM params[],
                            OSSL_CORE_BIO *out,
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_new_fn *ec_new;
-    OSSL_OP_keymgmt_free_fn *ec_free;
-    OSSL_OP_keymgmt_import_fn *ec_import;
+    OSSL_FUNC_keymgmt_new_fn *ec_new;
+    OSSL_FUNC_keymgmt_free_fn *ec_free;
+    OSSL_FUNC_keymgmt_import_fn *ec_import;
     int ok = 0;
 
     ec_get_new_free_import(&ec_new, &ec_free, &ec_import);
@@ -129,9 +129,9 @@ static int ec_pub_print_data(void *vctx, const OSSL_PARAM params[],
                              OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_new_fn *ec_new;
-    OSSL_OP_keymgmt_free_fn *ec_free;
-    OSSL_OP_keymgmt_import_fn *ec_import;
+    OSSL_FUNC_keymgmt_new_fn *ec_new;
+    OSSL_FUNC_keymgmt_free_fn *ec_free;
+    OSSL_FUNC_keymgmt_import_fn *ec_import;
     int ok = 0;
 
     ec_get_new_free_import(&ec_new, &ec_free, &ec_import);

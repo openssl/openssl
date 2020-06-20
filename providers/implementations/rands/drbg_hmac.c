@@ -20,17 +20,17 @@
 #include "prov/provider_ctx.h"
 #include "drbg_local.h"
 
-static OSSL_OP_rand_newctx_fn drbg_hmac_new_wrapper;
-static OSSL_OP_rand_freectx_fn drbg_hmac_free;
-static OSSL_OP_rand_instantiate_fn drbg_hmac_instantiate_wrapper;
-static OSSL_OP_rand_uninstantiate_fn drbg_hmac_uninstantiate_wrapper;
-static OSSL_OP_rand_generate_fn drbg_hmac_generate_wrapper;
-static OSSL_OP_rand_reseed_fn drbg_hmac_reseed_wrapper;
-static OSSL_OP_rand_settable_ctx_params_fn drbg_hmac_settable_ctx_params;
-static OSSL_OP_rand_set_ctx_params_fn drbg_hmac_set_ctx_params;
-static OSSL_OP_rand_gettable_ctx_params_fn drbg_hmac_gettable_ctx_params;
-static OSSL_OP_rand_get_ctx_params_fn drbg_hmac_get_ctx_params;
-static OSSL_OP_rand_verify_zeroization_fn drbg_hmac_verify_zeroization;
+static OSSL_FUNC_rand_newctx_fn drbg_hmac_new_wrapper;
+static OSSL_FUNC_rand_freectx_fn drbg_hmac_free;
+static OSSL_FUNC_rand_instantiate_fn drbg_hmac_instantiate_wrapper;
+static OSSL_FUNC_rand_uninstantiate_fn drbg_hmac_uninstantiate_wrapper;
+static OSSL_FUNC_rand_generate_fn drbg_hmac_generate_wrapper;
+static OSSL_FUNC_rand_reseed_fn drbg_hmac_reseed_wrapper;
+static OSSL_FUNC_rand_settable_ctx_params_fn drbg_hmac_settable_ctx_params;
+static OSSL_FUNC_rand_set_ctx_params_fn drbg_hmac_set_ctx_params;
+static OSSL_FUNC_rand_gettable_ctx_params_fn drbg_hmac_gettable_ctx_params;
+static OSSL_FUNC_rand_get_ctx_params_fn drbg_hmac_get_ctx_params;
+static OSSL_FUNC_rand_verify_zeroization_fn drbg_hmac_verify_zeroization;
 
 typedef struct rand_drbg_hmac_st {
     EVP_MAC_CTX *ctx;            /* H(x) = HMAC_hash OR H(x) = KMAC */

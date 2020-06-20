@@ -31,17 +31,17 @@
 
 #include <stdlib.h>
 
-static OSSL_OP_asym_cipher_newctx_fn rsa_newctx;
-static OSSL_OP_asym_cipher_encrypt_init_fn rsa_init;
-static OSSL_OP_asym_cipher_encrypt_fn rsa_encrypt;
-static OSSL_OP_asym_cipher_decrypt_init_fn rsa_init;
-static OSSL_OP_asym_cipher_decrypt_fn rsa_decrypt;
-static OSSL_OP_asym_cipher_freectx_fn rsa_freectx;
-static OSSL_OP_asym_cipher_dupctx_fn rsa_dupctx;
-static OSSL_OP_asym_cipher_get_ctx_params_fn rsa_get_ctx_params;
-static OSSL_OP_asym_cipher_gettable_ctx_params_fn rsa_gettable_ctx_params;
-static OSSL_OP_asym_cipher_set_ctx_params_fn rsa_set_ctx_params;
-static OSSL_OP_asym_cipher_settable_ctx_params_fn rsa_settable_ctx_params;
+static OSSL_FUNC_asym_cipher_newctx_fn rsa_newctx;
+static OSSL_FUNC_asym_cipher_encrypt_init_fn rsa_init;
+static OSSL_FUNC_asym_cipher_encrypt_fn rsa_encrypt;
+static OSSL_FUNC_asym_cipher_decrypt_init_fn rsa_init;
+static OSSL_FUNC_asym_cipher_decrypt_fn rsa_decrypt;
+static OSSL_FUNC_asym_cipher_freectx_fn rsa_freectx;
+static OSSL_FUNC_asym_cipher_dupctx_fn rsa_dupctx;
+static OSSL_FUNC_asym_cipher_get_ctx_params_fn rsa_get_ctx_params;
+static OSSL_FUNC_asym_cipher_gettable_ctx_params_fn rsa_gettable_ctx_params;
+static OSSL_FUNC_asym_cipher_set_ctx_params_fn rsa_set_ctx_params;
+static OSSL_FUNC_asym_cipher_settable_ctx_params_fn rsa_settable_ctx_params;
 
 static OSSL_ITEM padding_item[] = {
     { RSA_PKCS1_PADDING,        OSSL_PKEY_RSA_PAD_MODE_PKCSV15 },

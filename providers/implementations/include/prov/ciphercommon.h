@@ -71,22 +71,22 @@ struct prov_cipher_hw_st {
     void (*copyctx)(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src);
 };
 
-OSSL_OP_cipher_encrypt_init_fn cipher_generic_einit;
-OSSL_OP_cipher_decrypt_init_fn cipher_generic_dinit;
-OSSL_OP_cipher_update_fn cipher_generic_block_update;
-OSSL_OP_cipher_final_fn cipher_generic_block_final;
-OSSL_OP_cipher_update_fn cipher_generic_stream_update;
-OSSL_OP_cipher_final_fn cipher_generic_stream_final;
-OSSL_OP_cipher_cipher_fn cipher_generic_cipher;
-OSSL_OP_cipher_get_ctx_params_fn cipher_generic_get_ctx_params;
-OSSL_OP_cipher_set_ctx_params_fn cipher_generic_set_ctx_params;
-OSSL_OP_cipher_gettable_params_fn     cipher_generic_gettable_params;
-OSSL_OP_cipher_gettable_ctx_params_fn cipher_generic_gettable_ctx_params;
-OSSL_OP_cipher_settable_ctx_params_fn cipher_generic_settable_ctx_params;
-OSSL_OP_cipher_set_ctx_params_fn cipher_var_keylen_set_ctx_params;
-OSSL_OP_cipher_settable_ctx_params_fn cipher_var_keylen_settable_ctx_params;
-OSSL_OP_cipher_gettable_ctx_params_fn cipher_aead_gettable_ctx_params;
-OSSL_OP_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
+OSSL_FUNC_cipher_encrypt_init_fn cipher_generic_einit;
+OSSL_FUNC_cipher_decrypt_init_fn cipher_generic_dinit;
+OSSL_FUNC_cipher_update_fn cipher_generic_block_update;
+OSSL_FUNC_cipher_final_fn cipher_generic_block_final;
+OSSL_FUNC_cipher_update_fn cipher_generic_stream_update;
+OSSL_FUNC_cipher_final_fn cipher_generic_stream_final;
+OSSL_FUNC_cipher_cipher_fn cipher_generic_cipher;
+OSSL_FUNC_cipher_get_ctx_params_fn cipher_generic_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn cipher_generic_set_ctx_params;
+OSSL_FUNC_cipher_gettable_params_fn     cipher_generic_gettable_params;
+OSSL_FUNC_cipher_gettable_ctx_params_fn cipher_generic_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn cipher_generic_settable_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn cipher_var_keylen_set_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn cipher_var_keylen_settable_ctx_params;
+OSSL_FUNC_cipher_gettable_ctx_params_fn cipher_aead_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
 int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                               unsigned long flags,
                               size_t kbits, size_t blkbits, size_t ivbits);
@@ -151,13 +151,13 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
 
 #define IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags,      \
                                        kbits, blkbits, ivbits, typ)            \
-static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
 static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;             \
+static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;             \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
      PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \

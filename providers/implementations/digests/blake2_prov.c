@@ -12,8 +12,8 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
-OSSL_OP_digest_init_fn blake2s256_init;
-OSSL_OP_digest_init_fn blake2b512_init;
+OSSL_FUNC_digest_init_fn blake2s256_init;
+OSSL_FUNC_digest_init_fn blake2b512_init;
 
 int blake2s256_init(void *ctx)
 {

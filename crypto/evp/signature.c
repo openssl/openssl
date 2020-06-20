@@ -59,164 +59,164 @@ static void *evp_signature_from_dispatch(int name_id,
         case OSSL_FUNC_SIGNATURE_NEWCTX:
             if (signature->newctx != NULL)
                 break;
-            signature->newctx = OSSL_get_OP_signature_newctx(fns);
+            signature->newctx = OSSL_FUNC_signature_newctx(fns);
             ctxfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SIGN_INIT:
             if (signature->sign_init != NULL)
                 break;
-            signature->sign_init = OSSL_get_OP_signature_sign_init(fns);
+            signature->sign_init = OSSL_FUNC_signature_sign_init(fns);
             signfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SIGN:
             if (signature->sign != NULL)
                 break;
-            signature->sign = OSSL_get_OP_signature_sign(fns);
+            signature->sign = OSSL_FUNC_signature_sign(fns);
             signfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_INIT:
             if (signature->verify_init != NULL)
                 break;
-            signature->verify_init = OSSL_get_OP_signature_verify_init(fns);
+            signature->verify_init = OSSL_FUNC_signature_verify_init(fns);
             verifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY:
             if (signature->verify != NULL)
                 break;
-            signature->verify = OSSL_get_OP_signature_verify(fns);
+            signature->verify = OSSL_FUNC_signature_verify(fns);
             verifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_RECOVER_INIT:
             if (signature->verify_recover_init != NULL)
                 break;
             signature->verify_recover_init
-                = OSSL_get_OP_signature_verify_recover_init(fns);
+                = OSSL_FUNC_signature_verify_recover_init(fns);
             verifyrecfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_VERIFY_RECOVER:
             if (signature->verify_recover != NULL)
                 break;
             signature->verify_recover
-                = OSSL_get_OP_signature_verify_recover(fns);
+                = OSSL_FUNC_signature_verify_recover(fns);
             verifyrecfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT:
             if (signature->digest_sign_init != NULL)
                 break;
             signature->digest_sign_init
-                = OSSL_get_OP_signature_digest_sign_init(fns);
+                = OSSL_FUNC_signature_digest_sign_init(fns);
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE:
             if (signature->digest_sign_update != NULL)
                 break;
             signature->digest_sign_update
-                = OSSL_get_OP_signature_digest_sign_update(fns);
+                = OSSL_FUNC_signature_digest_sign_update(fns);
             digsignfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL:
             if (signature->digest_sign_final != NULL)
                 break;
             signature->digest_sign_final
-                = OSSL_get_OP_signature_digest_sign_final(fns);
+                = OSSL_FUNC_signature_digest_sign_final(fns);
             digsignfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_SIGN:
             if (signature->digest_sign != NULL)
                 break;
             signature->digest_sign
-                = OSSL_get_OP_signature_digest_sign(fns);
+                = OSSL_FUNC_signature_digest_sign(fns);
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT:
             if (signature->digest_verify_init != NULL)
                 break;
             signature->digest_verify_init
-                = OSSL_get_OP_signature_digest_verify_init(fns);
+                = OSSL_FUNC_signature_digest_verify_init(fns);
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE:
             if (signature->digest_verify_update != NULL)
                 break;
             signature->digest_verify_update
-                = OSSL_get_OP_signature_digest_verify_update(fns);
+                = OSSL_FUNC_signature_digest_verify_update(fns);
             digverifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL:
             if (signature->digest_verify_final != NULL)
                 break;
             signature->digest_verify_final
-                = OSSL_get_OP_signature_digest_verify_final(fns);
+                = OSSL_FUNC_signature_digest_verify_final(fns);
             digverifyfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DIGEST_VERIFY:
             if (signature->digest_verify != NULL)
                 break;
             signature->digest_verify
-                = OSSL_get_OP_signature_digest_verify(fns);
+                = OSSL_FUNC_signature_digest_verify(fns);
             break;
         case OSSL_FUNC_SIGNATURE_FREECTX:
             if (signature->freectx != NULL)
                 break;
-            signature->freectx = OSSL_get_OP_signature_freectx(fns);
+            signature->freectx = OSSL_FUNC_signature_freectx(fns);
             ctxfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_DUPCTX:
             if (signature->dupctx != NULL)
                 break;
-            signature->dupctx = OSSL_get_OP_signature_dupctx(fns);
+            signature->dupctx = OSSL_FUNC_signature_dupctx(fns);
             break;
         case OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS:
             if (signature->get_ctx_params != NULL)
                 break;
             signature->get_ctx_params
-                = OSSL_get_OP_signature_get_ctx_params(fns);
+                = OSSL_FUNC_signature_get_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS:
             if (signature->gettable_ctx_params != NULL)
                 break;
             signature->gettable_ctx_params
-                = OSSL_get_OP_signature_gettable_ctx_params(fns);
+                = OSSL_FUNC_signature_gettable_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS:
             if (signature->set_ctx_params != NULL)
                 break;
             signature->set_ctx_params
-                = OSSL_get_OP_signature_set_ctx_params(fns);
+                = OSSL_FUNC_signature_set_ctx_params(fns);
             sparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS:
             if (signature->settable_ctx_params != NULL)
                 break;
             signature->settable_ctx_params
-                = OSSL_get_OP_signature_settable_ctx_params(fns);
+                = OSSL_FUNC_signature_settable_ctx_params(fns);
             sparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_GET_CTX_MD_PARAMS:
             if (signature->get_ctx_md_params != NULL)
                 break;
             signature->get_ctx_md_params
-                = OSSL_get_OP_signature_get_ctx_md_params(fns);
+                = OSSL_FUNC_signature_get_ctx_md_params(fns);
             gmdparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_GETTABLE_CTX_MD_PARAMS:
             if (signature->gettable_ctx_md_params != NULL)
                 break;
             signature->gettable_ctx_md_params
-                = OSSL_get_OP_signature_gettable_ctx_md_params(fns);
+                = OSSL_FUNC_signature_gettable_ctx_md_params(fns);
             gmdparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SET_CTX_MD_PARAMS:
             if (signature->set_ctx_md_params != NULL)
                 break;
             signature->set_ctx_md_params
-                = OSSL_get_OP_signature_set_ctx_md_params(fns);
+                = OSSL_FUNC_signature_set_ctx_md_params(fns);
             smdparamfncnt++;
             break;
         case OSSL_FUNC_SIGNATURE_SETTABLE_CTX_MD_PARAMS:
             if (signature->settable_ctx_md_params != NULL)
                 break;
             signature->settable_ctx_md_params
-                = OSSL_get_OP_signature_settable_ctx_md_params(fns);
+                = OSSL_FUNC_signature_settable_ctx_md_params(fns);
             smdparamfncnt++;
             break;
         }

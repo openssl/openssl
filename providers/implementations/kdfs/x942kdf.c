@@ -32,14 +32,14 @@
 
 # define X942KDF_MAX_INLEN (1 << 30)
 
-static OSSL_OP_kdf_newctx_fn x942kdf_new;
-static OSSL_OP_kdf_freectx_fn x942kdf_free;
-static OSSL_OP_kdf_reset_fn x942kdf_reset;
-static OSSL_OP_kdf_derive_fn x942kdf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn x942kdf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn x942kdf_set_ctx_params;
-static OSSL_OP_kdf_gettable_ctx_params_fn x942kdf_gettable_ctx_params;
-static OSSL_OP_kdf_get_ctx_params_fn x942kdf_get_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn x942kdf_new;
+static OSSL_FUNC_kdf_freectx_fn x942kdf_free;
+static OSSL_FUNC_kdf_reset_fn x942kdf_reset;
+static OSSL_FUNC_kdf_derive_fn x942kdf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn x942kdf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn x942kdf_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn x942kdf_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn x942kdf_get_ctx_params;
 
 typedef struct {
     void *provctx;

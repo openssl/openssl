@@ -28,19 +28,19 @@
 #include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
-static OSSL_OP_serializer_newctx_fn rsa_priv_newctx;
-static OSSL_OP_serializer_freectx_fn rsa_priv_freectx;
-static OSSL_OP_serializer_set_ctx_params_fn rsa_priv_set_ctx_params;
-static OSSL_OP_serializer_settable_ctx_params_fn rsa_priv_settable_ctx_params;
-static OSSL_OP_serializer_serialize_data_fn rsa_priv_der_data;
-static OSSL_OP_serializer_serialize_object_fn rsa_priv_der;
-static OSSL_OP_serializer_serialize_data_fn rsa_pem_priv_data;
-static OSSL_OP_serializer_serialize_object_fn rsa_pem_priv;
+static OSSL_FUNC_serializer_newctx_fn rsa_priv_newctx;
+static OSSL_FUNC_serializer_freectx_fn rsa_priv_freectx;
+static OSSL_FUNC_serializer_set_ctx_params_fn rsa_priv_set_ctx_params;
+static OSSL_FUNC_serializer_settable_ctx_params_fn rsa_priv_settable_ctx_params;
+static OSSL_FUNC_serializer_serialize_data_fn rsa_priv_der_data;
+static OSSL_FUNC_serializer_serialize_object_fn rsa_priv_der;
+static OSSL_FUNC_serializer_serialize_data_fn rsa_pem_priv_data;
+static OSSL_FUNC_serializer_serialize_object_fn rsa_pem_priv;
 
-static OSSL_OP_serializer_newctx_fn rsa_print_newctx;
-static OSSL_OP_serializer_freectx_fn rsa_print_freectx;
-static OSSL_OP_serializer_serialize_data_fn rsa_priv_print_data;
-static OSSL_OP_serializer_serialize_object_fn rsa_priv_print;
+static OSSL_FUNC_serializer_newctx_fn rsa_print_newctx;
+static OSSL_FUNC_serializer_freectx_fn rsa_print_freectx;
+static OSSL_FUNC_serializer_serialize_data_fn rsa_priv_print_data;
+static OSSL_FUNC_serializer_serialize_object_fn rsa_priv_print;
 
  /*
  * Context used for private key serialization.
@@ -125,9 +125,9 @@ static int rsa_priv_der_data(void *vctx, const OSSL_PARAM params[],
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
-    OSSL_OP_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
-    OSSL_OP_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
+    OSSL_FUNC_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
+    OSSL_FUNC_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
+    OSSL_FUNC_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
     int ok = 0;
 
     if (rsa_import != NULL) {
@@ -171,9 +171,9 @@ static int rsa_pem_priv_data(void *vctx, const OSSL_PARAM params[],
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
-    OSSL_OP_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
-    OSSL_OP_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
+    OSSL_FUNC_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
+    OSSL_FUNC_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
+    OSSL_FUNC_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
     int ok = 0;
 
     if (rsa_import != NULL) {
@@ -228,9 +228,9 @@ static int rsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
                                OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct rsa_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
-    OSSL_OP_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
-    OSSL_OP_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
+    OSSL_FUNC_keymgmt_new_fn *rsa_new = ossl_prov_get_keymgmt_rsa_new();
+    OSSL_FUNC_keymgmt_free_fn *rsa_free = ossl_prov_get_keymgmt_rsa_free();
+    OSSL_FUNC_keymgmt_import_fn *rsa_import = ossl_prov_get_keymgmt_rsa_import();
     int ok = 0;
 
     if (rsa_import != NULL) {

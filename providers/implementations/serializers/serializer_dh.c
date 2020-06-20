@@ -21,17 +21,17 @@
 #include "crypto/dh.h"
 #include "serializer_local.h"
 
-OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dh_new(void)
+OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_dh_new(void)
 {
     return ossl_prov_get_keymgmt_new(dh_keymgmt_functions);
 }
 
-OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_dh_free(void)
+OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_dh_free(void)
 {
     return ossl_prov_get_keymgmt_free(dh_keymgmt_functions);
 }
 
-OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_dh_import(void)
+OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_dh_import(void)
 {
     return ossl_prov_get_keymgmt_import(dh_keymgmt_functions);
 }

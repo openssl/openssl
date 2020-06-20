@@ -14,9 +14,9 @@
 #include "serializer_local.h"
 
 void ecx_get_new_free_import(ECX_KEY_TYPE type,
-                             OSSL_OP_keymgmt_new_fn **ecx_new,
-                             OSSL_OP_keymgmt_free_fn **ecx_free,
-                             OSSL_OP_keymgmt_import_fn **ecx_import)
+                             OSSL_FUNC_keymgmt_new_fn **ecx_new,
+                             OSSL_FUNC_keymgmt_free_fn **ecx_free,
+                             OSSL_FUNC_keymgmt_import_fn **ecx_import)
 {
     if (type == ECX_KEY_TYPE_X25519) {
         *ecx_new = ossl_prov_get_keymgmt_new(x25519_keymgmt_functions);

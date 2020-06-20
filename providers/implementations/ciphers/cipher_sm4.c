@@ -12,8 +12,8 @@
 #include "cipher_sm4.h"
 #include "prov/implementations.h"
 
-static OSSL_OP_cipher_freectx_fn sm4_freectx;
-static OSSL_OP_cipher_dupctx_fn sm4_dupctx;
+static OSSL_FUNC_cipher_freectx_fn sm4_freectx;
+static OSSL_FUNC_cipher_dupctx_fn sm4_dupctx;
 
 static void sm4_freectx(void *vctx)
 {

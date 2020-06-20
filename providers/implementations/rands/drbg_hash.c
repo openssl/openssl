@@ -14,7 +14,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "internal/thread_once.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
@@ -23,17 +23,17 @@
 #include "prov/providercommonerr.h"
 #include "drbg_local.h"
 
-static OSSL_OP_rand_newctx_fn drbg_hash_new_wrapper;
-static OSSL_OP_rand_freectx_fn drbg_hash_free;
-static OSSL_OP_rand_instantiate_fn drbg_hash_instantiate_wrapper;
-static OSSL_OP_rand_uninstantiate_fn drbg_hash_uninstantiate_wrapper;
-static OSSL_OP_rand_generate_fn drbg_hash_generate_wrapper;
-static OSSL_OP_rand_reseed_fn drbg_hash_reseed_wrapper;
-static OSSL_OP_rand_settable_ctx_params_fn drbg_hash_settable_ctx_params;
-static OSSL_OP_rand_set_ctx_params_fn drbg_hash_set_ctx_params;
-static OSSL_OP_rand_gettable_ctx_params_fn drbg_hash_gettable_ctx_params;
-static OSSL_OP_rand_get_ctx_params_fn drbg_hash_get_ctx_params;
-static OSSL_OP_rand_verify_zeroization_fn drbg_hash_verify_zeroization;
+static OSSL_FUNC_rand_newctx_fn drbg_hash_new_wrapper;
+static OSSL_FUNC_rand_freectx_fn drbg_hash_free;
+static OSSL_FUNC_rand_instantiate_fn drbg_hash_instantiate_wrapper;
+static OSSL_FUNC_rand_uninstantiate_fn drbg_hash_uninstantiate_wrapper;
+static OSSL_FUNC_rand_generate_fn drbg_hash_generate_wrapper;
+static OSSL_FUNC_rand_reseed_fn drbg_hash_reseed_wrapper;
+static OSSL_FUNC_rand_settable_ctx_params_fn drbg_hash_settable_ctx_params;
+static OSSL_FUNC_rand_set_ctx_params_fn drbg_hash_set_ctx_params;
+static OSSL_FUNC_rand_gettable_ctx_params_fn drbg_hash_gettable_ctx_params;
+static OSSL_FUNC_rand_get_ctx_params_fn drbg_hash_get_ctx_params;
+static OSSL_FUNC_rand_verify_zeroization_fn drbg_hash_verify_zeroization;
 
 /* 888 bits from SP800-90Ar1 10.1 table 2 */
 #define HASH_PRNG_MAX_SEEDLEN    (888/8)

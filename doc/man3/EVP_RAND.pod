@@ -275,7 +275,7 @@ associated RAND ctx.
 =item "max_request" (B<OSSL_DRBG_PARAM_RESEED_REQUESTS>) <unsigned integer>
 
 Specifies the maximum number of bytes that can be generated in a single
-call to OP_rand_generate.
+call to OSSL_FUNC_rand_generate.
 
 =item "min_entropylen" (B<OSSL_DRBG_PARAM_MIN_ENTROPYLEN>) <unsigned integer>
 

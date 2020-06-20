@@ -32,23 +32,23 @@ struct pkcs8_encrypt_ctx_st {
     void *cbarg;
 };
 
-OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns);
-OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns);
-OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns);
+OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_new(const OSSL_DISPATCH *fns);
+OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_free(const OSSL_DISPATCH *fns);
+OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *fns);
 
-OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_rsa_new(void);
-OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_rsa_free(void);
-OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_rsa_import(void);
-OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dh_new(void);
-OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_dh_free(void);
-OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_dh_import(void);
-OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dsa_new(void);
-OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_dsa_free(void);
-OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_dsa_import(void);
+OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_rsa_new(void);
+OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_rsa_free(void);
+OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_rsa_import(void);
+OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_dh_new(void);
+OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_dh_free(void);
+OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_dh_import(void);
+OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_dsa_new(void);
+OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_dsa_free(void);
+OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_dsa_import(void);
 
-void ec_get_new_free_import(OSSL_OP_keymgmt_new_fn **ec_new,
-                            OSSL_OP_keymgmt_free_fn **ec_free,
-                            OSSL_OP_keymgmt_import_fn **ec_import);
+void ec_get_new_free_import(OSSL_FUNC_keymgmt_new_fn **ec_new,
+                            OSSL_FUNC_keymgmt_free_fn **ec_free,
+                            OSSL_FUNC_keymgmt_import_fn **ec_import);
 
 int ossl_prov_prepare_ec_params(const void *eckey, int nid,
                                 void **pstr, int *pstrtype);
@@ -63,9 +63,9 @@ int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder);
 
 #ifndef OPENSSL_NO_EC
 void ecx_get_new_free_import(ECX_KEY_TYPE type,
-                             OSSL_OP_keymgmt_new_fn **ecx_new,
-                             OSSL_OP_keymgmt_free_fn **ecx_free,
-                             OSSL_OP_keymgmt_import_fn **ecx_import);
+                             OSSL_FUNC_keymgmt_new_fn **ecx_new,
+                             OSSL_FUNC_keymgmt_free_fn **ecx_free,
+                             OSSL_FUNC_keymgmt_import_fn **ecx_import);
 int ossl_prov_ecx_pub_to_der(const void *ecxkey, unsigned char **pder);
 int ossl_prov_ecx_priv_to_der(const void *ecxkey, unsigned char **pder);
 #endif

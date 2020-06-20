@@ -23,16 +23,16 @@
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_mac_newctx_fn poly1305_new;
-static OSSL_OP_mac_dupctx_fn poly1305_dup;
-static OSSL_OP_mac_freectx_fn poly1305_free;
-static OSSL_OP_mac_gettable_params_fn poly1305_gettable_params;
-static OSSL_OP_mac_get_params_fn poly1305_get_params;
-static OSSL_OP_mac_settable_ctx_params_fn poly1305_settable_ctx_params;
-static OSSL_OP_mac_set_ctx_params_fn poly1305_set_ctx_params;
-static OSSL_OP_mac_init_fn poly1305_init;
-static OSSL_OP_mac_update_fn poly1305_update;
-static OSSL_OP_mac_final_fn poly1305_final;
+static OSSL_FUNC_mac_newctx_fn poly1305_new;
+static OSSL_FUNC_mac_dupctx_fn poly1305_dup;
+static OSSL_FUNC_mac_freectx_fn poly1305_free;
+static OSSL_FUNC_mac_gettable_params_fn poly1305_gettable_params;
+static OSSL_FUNC_mac_get_params_fn poly1305_get_params;
+static OSSL_FUNC_mac_settable_ctx_params_fn poly1305_settable_ctx_params;
+static OSSL_FUNC_mac_set_ctx_params_fn poly1305_set_ctx_params;
+static OSSL_FUNC_mac_init_fn poly1305_init;
+static OSSL_FUNC_mac_update_fn poly1305_update;
+static OSSL_FUNC_mac_final_fn poly1305_final;
 
 struct poly1305_data_st {
     void *provctx;

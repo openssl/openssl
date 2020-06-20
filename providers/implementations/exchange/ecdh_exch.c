@@ -25,16 +25,16 @@
 #include "prov/implementations.h"
 #include "crypto/ec.h" /* ecdh_KDF_X9_63() */
 
-static OSSL_OP_keyexch_newctx_fn ecdh_newctx;
-static OSSL_OP_keyexch_init_fn ecdh_init;
-static OSSL_OP_keyexch_set_peer_fn ecdh_set_peer;
-static OSSL_OP_keyexch_derive_fn ecdh_derive;
-static OSSL_OP_keyexch_freectx_fn ecdh_freectx;
-static OSSL_OP_keyexch_dupctx_fn ecdh_dupctx;
-static OSSL_OP_keyexch_set_ctx_params_fn ecdh_set_ctx_params;
-static OSSL_OP_keyexch_settable_ctx_params_fn ecdh_settable_ctx_params;
-static OSSL_OP_keyexch_get_ctx_params_fn ecdh_get_ctx_params;
-static OSSL_OP_keyexch_gettable_ctx_params_fn ecdh_gettable_ctx_params;
+static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
+static OSSL_FUNC_keyexch_init_fn ecdh_init;
+static OSSL_FUNC_keyexch_set_peer_fn ecdh_set_peer;
+static OSSL_FUNC_keyexch_derive_fn ecdh_derive;
+static OSSL_FUNC_keyexch_freectx_fn ecdh_freectx;
+static OSSL_FUNC_keyexch_dupctx_fn ecdh_dupctx;
+static OSSL_FUNC_keyexch_set_ctx_params_fn ecdh_set_ctx_params;
+static OSSL_FUNC_keyexch_settable_ctx_params_fn ecdh_settable_ctx_params;
+static OSSL_FUNC_keyexch_get_ctx_params_fn ecdh_get_ctx_params;
+static OSSL_FUNC_keyexch_gettable_ctx_params_fn ecdh_gettable_ctx_params;
 
 enum kdf_type {
     PROV_ECDH_KDF_NONE = 0,

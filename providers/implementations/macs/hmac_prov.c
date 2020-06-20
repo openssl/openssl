@@ -29,16 +29,16 @@
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_mac_newctx_fn hmac_new;
-static OSSL_OP_mac_dupctx_fn hmac_dup;
-static OSSL_OP_mac_freectx_fn hmac_free;
-static OSSL_OP_mac_gettable_ctx_params_fn hmac_gettable_ctx_params;
-static OSSL_OP_mac_get_ctx_params_fn hmac_get_ctx_params;
-static OSSL_OP_mac_settable_ctx_params_fn hmac_settable_ctx_params;
-static OSSL_OP_mac_set_ctx_params_fn hmac_set_ctx_params;
-static OSSL_OP_mac_init_fn hmac_init;
-static OSSL_OP_mac_update_fn hmac_update;
-static OSSL_OP_mac_final_fn hmac_final;
+static OSSL_FUNC_mac_newctx_fn hmac_new;
+static OSSL_FUNC_mac_dupctx_fn hmac_dup;
+static OSSL_FUNC_mac_freectx_fn hmac_free;
+static OSSL_FUNC_mac_gettable_ctx_params_fn hmac_gettable_ctx_params;
+static OSSL_FUNC_mac_get_ctx_params_fn hmac_get_ctx_params;
+static OSSL_FUNC_mac_settable_ctx_params_fn hmac_settable_ctx_params;
+static OSSL_FUNC_mac_set_ctx_params_fn hmac_set_ctx_params;
+static OSSL_FUNC_mac_init_fn hmac_init;
+static OSSL_FUNC_mac_update_fn hmac_update;
+static OSSL_FUNC_mac_final_fn hmac_final;
 
 /* local HMAC context structure */
 

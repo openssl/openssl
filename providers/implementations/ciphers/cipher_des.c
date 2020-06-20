@@ -22,11 +22,11 @@
 /* TODO(3.0) Figure out what flags need to be here */
 #define DES_FLAGS (EVP_CIPH_RAND_KEY)
 
-static OSSL_OP_cipher_freectx_fn des_freectx;
-static OSSL_OP_cipher_encrypt_init_fn des_einit;
-static OSSL_OP_cipher_decrypt_init_fn des_dinit;
-static OSSL_OP_cipher_get_ctx_params_fn des_get_ctx_params;
-static OSSL_OP_cipher_gettable_ctx_params_fn des_gettable_ctx_params;
+static OSSL_FUNC_cipher_freectx_fn des_freectx;
+static OSSL_FUNC_cipher_encrypt_init_fn des_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn des_dinit;
+static OSSL_FUNC_cipher_get_ctx_params_fn des_get_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn des_gettable_ctx_params;
 
 static void *des_newctx(void *provctx, size_t kbits, size_t blkbits,
                         size_t ivbits, unsigned int mode, uint64_t flags,
@@ -129,14 +129,14 @@ static int des_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 #define IMPLEMENT_des_cipher(type, lcmode, UCMODE, flags,                      \
                              kbits, blkbits, ivbits, block)                    \
-static OSSL_OP_cipher_newctx_fn type##_##lcmode##_newctx;                      \
+static OSSL_FUNC_cipher_newctx_fn type##_##lcmode##_newctx;                    \
 static void *des_##lcmode##_newctx(void *provctx)                              \
 {                                                                              \
     return des_newctx(provctx, kbits, blkbits, ivbits,                         \
                       EVP_CIPH_##UCMODE##_MODE, flags,                         \
                       PROV_CIPHER_HW_des_##lcmode());                          \
 }                                                                              \
-static OSSL_OP_cipher_get_params_fn des_##lcmode##_get_params;                 \
+static OSSL_FUNC_cipher_get_params_fn des_##lcmode##_get_params;               \
 static int des_##lcmode##_get_params(OSSL_PARAM params[])                      \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \

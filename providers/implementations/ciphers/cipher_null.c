@@ -14,7 +14,7 @@
 #include "prov/ciphercommon.h"
 #include "prov/providercommonerr.h"
 
-static OSSL_OP_cipher_newctx_fn null_newctx;
+static OSSL_FUNC_cipher_newctx_fn null_newctx;
 static void *null_newctx(void *provctx)
 {
     static int dummy = 0;
@@ -22,19 +22,19 @@ static void *null_newctx(void *provctx)
     return &dummy;
 }
 
-static OSSL_OP_cipher_freectx_fn null_freectx;
+static OSSL_FUNC_cipher_freectx_fn null_freectx;
 static void null_freectx(void *vctx)
 {
 }
 
-static OSSL_OP_cipher_encrypt_init_fn null_init;
+static OSSL_FUNC_cipher_encrypt_init_fn null_init;
 static int null_init(void *vctx, const unsigned char *key, size_t keylen,
                      const unsigned char *iv, size_t ivlen)
 {
     return 1;
 }
 
-static OSSL_OP_cipher_cipher_fn null_cipher;
+static OSSL_FUNC_cipher_cipher_fn null_cipher;
 static int null_cipher(void *vctx, unsigned char *out, size_t *outl,
                        size_t outsize, const unsigned char *in, size_t inl)
 {
@@ -46,7 +46,7 @@ static int null_cipher(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static OSSL_OP_cipher_final_fn null_final;
+static OSSL_FUNC_cipher_final_fn null_final;
 static int null_final(void *vctx, unsigned char *out, size_t *outl,
                       size_t outsize)
 {
@@ -54,7 +54,7 @@ static int null_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static OSSL_OP_cipher_get_params_fn null_get_params;
+static OSSL_FUNC_cipher_get_params_fn null_get_params;
 static int null_get_params(OSSL_PARAM params[])
 {
     return cipher_generic_get_params(params, 0, 0, 0, 8, 0);
@@ -66,13 +66,13 @@ static const OSSL_PARAM null_known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static OSSL_OP_cipher_gettable_ctx_params_fn null_gettable_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn null_gettable_ctx_params;
 static const OSSL_PARAM *null_gettable_ctx_params(void)
 {
     return null_known_gettable_ctx_params;
 }
 
-static OSSL_OP_cipher_get_ctx_params_fn null_get_ctx_params;
+static OSSL_FUNC_cipher_get_ctx_params_fn null_get_ctx_params;
 static int null_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;

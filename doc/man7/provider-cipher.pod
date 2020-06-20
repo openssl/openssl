@@ -18,37 +18,37 @@ provider-cipher - The cipher library E<lt>-E<gt> provider functions
   */
 
  /* Context management */
- void *OP_cipher_newctx(void *provctx);
- void OP_cipher_freectx(void *cctx);
- void *OP_cipher_dupctx(void *cctx);
+ void *OSSL_FUNC_cipher_newctx(void *provctx);
+ void OSSL_FUNC_cipher_freectx(void *cctx);
+ void *OSSL_FUNC_cipher_dupctx(void *cctx);
 
  /* Encryption/decryption */
- int OP_cipher_encrypt_init(void *cctx, const unsigned char *key,
-                            size_t keylen, const unsigned char *iv,
-                            size_t ivlen);
- int OP_cipher_decrypt_init(void *cctx, const unsigned char *key,
-                            size_t keylen, const unsigned char *iv,
-                            size_t ivlen);
- int OP_cipher_update(void *cctx, unsigned char *out, size_t *outl,
-                      size_t outsize, const unsigned char *in, size_t inl);
- int OP_cipher_final(void *cctx, unsigned char *out, size_t *outl,
-                     size_t outsize);
- int OP_cipher_cipher(void *cctx, unsigned char *out, size_t *outl,
-                      size_t outsize, const unsigned char *in, size_t inl);
+ int OSSL_FUNC_cipher_encrypt_init(void *cctx, const unsigned char *key,
+                                   size_t keylen, const unsigned char *iv,
+                                   size_t ivlen);
+ int OSSL_FUNC_cipher_decrypt_init(void *cctx, const unsigned char *key,
+                                   size_t keylen, const unsigned char *iv,
+                                   size_t ivlen);
+ int OSSL_FUNC_cipher_update(void *cctx, unsigned char *out, size_t *outl,
+                             size_t outsize, const unsigned char *in, size_t inl);
+ int OSSL_FUNC_cipher_final(void *cctx, unsigned char *out, size_t *outl,
+                            size_t outsize);
+ int OSSL_FUNC_cipher_cipher(void *cctx, unsigned char *out, size_t *outl,
+                             size_t outsize, const unsigned char *in, size_t inl);
 
  /* Cipher parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_params(void);
+ const OSSL_PARAM *OSSL_FUNC_cipher_gettable_params(void);
 
  /* Cipher operation parameter descriptors */
- const OSSL_PARAM *OP_cipher_gettable_ctx_params(void);
- const OSSL_PARAM *OP_cipher_settable_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_cipher_gettable_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_cipher_settable_ctx_params(void);
 
  /* Cipher parameters */
- int OP_cipher_get_params(OSSL_PARAM params[]);
+ int OSSL_FUNC_cipher_get_params(OSSL_PARAM params[]);
 
  /* Cipher operation parameters */
- int OP_cipher_get_ctx_params(void *cctx, OSSL_PARAM params[]);
- int OP_cipher_set_ctx_params(void *cctx, const OSSL_PARAM params[]);
+ int OSSL_FUNC_cipher_get_ctx_params(void *cctx, OSSL_PARAM params[]);
+ int OSSL_FUNC_cipher_set_ctx_params(void *cctx, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -69,77 +69,77 @@ provider_query_operation() function
 All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from an B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
-For example, the "function" OP_cipher_newctx() has these:
+B<OSSL_FUNC_{name}>.
+For example, the "function" OSSL_FUNC_cipher_newctx() has these:
 
- typedef void *(OSSL_OP_cipher_newctx_fn)(void *provctx);
- static ossl_inline OSSL_OP_cipher_newctx_fn
-     OSSL_get_OP_cipher_newctx(const OSSL_DISPATCH *opf);
+ typedef void *(OSSL_OSSL_FUNC_cipher_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_OSSL_FUNC_cipher_newctx_fn
+     OSSL_FUNC_cipher_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
 
- OP_cipher_newctx               OSSL_FUNC_CIPHER_NEWCTX
- OP_cipher_freectx              OSSL_FUNC_CIPHER_FREECTX
- OP_cipher_dupctx               OSSL_FUNC_CIPHER_DUPCTX
+ OSSL_FUNC_cipher_newctx               OSSL_FUNC_CIPHER_NEWCTX
+ OSSL_FUNC_cipher_freectx              OSSL_FUNC_CIPHER_FREECTX
+ OSSL_FUNC_cipher_dupctx               OSSL_FUNC_CIPHER_DUPCTX
 
- OP_cipher_encrypt_init         OSSL_FUNC_CIPHER_ENCRYPT_INIT
- OP_cipher_decrypt_init         OSSL_FUNC_CIPHER_DECRYPT_INIT
- OP_cipher_update               OSSL_FUNC_CIPHER_UPDATE
- OP_cipher_final                OSSL_FUNC_CIPHER_FINAL
- OP_cipher_cipher               OSSL_FUNC_CIPHER_CIPHER
+ OSSL_FUNC_cipher_encrypt_init         OSSL_FUNC_CIPHER_ENCRYPT_INIT
+ OSSL_FUNC_cipher_decrypt_init         OSSL_FUNC_CIPHER_DECRYPT_INIT
+ OSSL_FUNC_cipher_update               OSSL_FUNC_CIPHER_UPDATE
+ OSSL_FUNC_cipher_final                OSSL_FUNC_CIPHER_FINAL
+ OSSL_FUNC_cipher_cipher               OSSL_FUNC_CIPHER_CIPHER
 
- OP_cipher_get_params           OSSL_FUNC_CIPHER_GET_PARAMS
- OP_cipher_get_ctx_params       OSSL_FUNC_CIPHER_GET_CTX_PARAMS
- OP_cipher_set_ctx_params       OSSL_FUNC_CIPHER_SET_CTX_PARAMS
+ OSSL_FUNC_cipher_get_params           OSSL_FUNC_CIPHER_GET_PARAMS
+ OSSL_FUNC_cipher_get_ctx_params       OSSL_FUNC_CIPHER_GET_CTX_PARAMS
+ OSSL_FUNC_cipher_set_ctx_params       OSSL_FUNC_CIPHER_SET_CTX_PARAMS
 
- OP_cipher_gettable_params      OSSL_FUNC_CIPHER_GETTABLE_PARAMS
- OP_cipher_gettable_ctx_params  OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS
- OP_cipher_settable_ctx_params  OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS
+ OSSL_FUNC_cipher_gettable_params      OSSL_FUNC_CIPHER_GETTABLE_PARAMS
+ OSSL_FUNC_cipher_gettable_ctx_params  OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS
+ OSSL_FUNC_cipher_settable_ctx_params  OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS
 
 A cipher algorithm implementation may not implement all of these functions.
 In order to be a consistent set of functions there must at least be a complete
 set of "encrypt" functions, or a complete set of "decrypt" functions, or a
 single "cipher" function.
-In all cases both the OP_cipher_newctx and OP_cipher_freectx functions must be
+In all cases both the OSSL_FUNC_cipher_newctx and OSSL_FUNC_cipher_freectx functions must be
 present.
 All other functions are optional.
 
 =head2 Context Management Functions
 
-OP_cipher_newctx() should create and return a pointer to a provider side
+OSSL_FUNC_cipher_newctx() should create and return a pointer to a provider side
 structure for holding context information during a cipher operation.
 A pointer to this context will be passed back in a number of the other cipher
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(7)>).
 
-OP_cipher_freectx() is passed a pointer to the provider side cipher context in
+OSSL_FUNC_cipher_freectx() is passed a pointer to the provider side cipher context in
 the I<cctx> parameter.
 This function should free any resources associated with that context.
 
-OP_cipher_dupctx() should duplicate the provider side cipher context in the
+OSSL_FUNC_cipher_dupctx() should duplicate the provider side cipher context in the
 I<cctx> parameter and return the duplicate copy.
 
 =head2 Encryption/Decryption Functions
 
-OP_cipher_encrypt_init() initialises a cipher operation for encryption given a
+OSSL_FUNC_cipher_encrypt_init() initialises a cipher operation for encryption given a
 newly created provider side cipher context in the I<cctx> parameter.
 The key to be used is given in I<key> which is I<keylen> bytes long.
 The IV to be used is given in I<iv> which is I<ivlen> bytes long.
 
-OP_cipher_decrypt_init() is the same as OP_cipher_encrypt_init() except that it
+OSSL_FUNC_cipher_decrypt_init() is the same as OSSL_FUNC_cipher_encrypt_init() except that it
 initialises the context for a decryption operation.
 
-OP_cipher_update() is called to supply data to be encrypted/decrypted as part of
+OSSL_FUNC_cipher_update() is called to supply data to be encrypted/decrypted as part of
 a previously initialised cipher operation.
 The I<cctx> parameter contains a pointer to a previously initialised provider
 side context.
-OP_cipher_update() should encrypt/decrypt I<inl> bytes of data at the location
+OSSL_FUNC_cipher_update() should encrypt/decrypt I<inl> bytes of data at the location
 pointed to by I<in>.
 The encrypted data should be stored in I<out> and the amount of data written to
 I<*outl> which should not exceed I<outsize> bytes.
-OP_cipher_update() may be called multiple times for a single cipher operation.
+OSSL_FUNC_cipher_update() may be called multiple times for a single cipher operation.
 It is the responsibility of the cipher implementation to handle input lengths
 that are not multiples of the block length.
 In such cases a cipher implementation will typically cache partial blocks of
@@ -148,8 +148,8 @@ I<out> may be the same location as I<in> but it should not partially overlap.
 The same expectations apply to I<outsize> as documented for
 L<EVP_EncryptUpdate(3)> and L<EVP_DecryptUpdate(3)>.
 
-OP_cipher_final() completes an encryption or decryption started through previous
-OP_cipher_encrypt_init() or OP_cipher_decrypt_init(), and OP_cipher_update()
+OSSL_FUNC_cipher_final() completes an encryption or decryption started through previous
+OSSL_FUNC_cipher_encrypt_init() or OSSL_FUNC_cipher_decrypt_init(), and OSSL_FUNC_cipher_update()
 calls.
 The I<cctx> parameter contains a pointer to the provider side context.
 Any final encryption/decryption output should be written to I<out> and the
@@ -157,9 +157,9 @@ amount of data written to I<*outl> which should not exceed I<outsize> bytes.
 The same expectations apply to I<outsize> as documented for
 L<EVP_EncryptFinal(3)> and L<EVP_DecryptFinal(3)>.
 
-OP_cipher_cipher() performs encryption/decryption using the provider side cipher
+OSSL_FUNC_cipher_cipher() performs encryption/decryption using the provider side cipher
 context in the I<cctx> parameter that should have been previously initialised via
-a call to OP_cipher_encrypt_init() or OP_cipher_decrypt_init().
+a call to OSSL_FUNC_cipher_encrypt_init() or OSSL_FUNC_cipher_decrypt_init().
 This should call the raw underlying cipher function without any padding.
 This will be invoked in the provider as a result of the application calling
 L<EVP_Cipher(3)>.
@@ -176,20 +176,20 @@ I<outsize> bytes.
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
-OP_cipher_get_params() gets details of the algorithm implementation
+OSSL_FUNC_cipher_get_params() gets details of the algorithm implementation
 and stores them in I<params>.
 
-OP_cipher_set_ctx_params() sets cipher operation parameters for the
+OSSL_FUNC_cipher_set_ctx_params() sets cipher operation parameters for the
 provider side cipher context I<cctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-OP_cipher_get_ctx_params() gets cipher operation details details from
+OSSL_FUNC_cipher_get_ctx_params() gets cipher operation details details from
 the given provider side cipher context I<cctx> and stores them in I<params>.
 
-OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params(), and
-OP_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
-as descriptors of the parameters that OP_cipher_get_params(),
-OP_cipher_get_ctx_params(), and OP_cipher_set_ctx_params() can handle,
+OSSL_FUNC_cipher_gettable_params(), OSSL_FUNC_cipher_gettable_ctx_params(), and
+OSSL_FUNC_cipher_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
+as descriptors of the parameters that OSSL_FUNC_cipher_get_params(),
+OSSL_FUNC_cipher_get_ctx_params(), and OSSL_FUNC_cipher_set_ctx_params() can handle,
 respectively.
 
 Parameters currently recognised by built-in ciphers are as follows. Not all
@@ -286,7 +286,7 @@ output buffers are always the same memory location.
 AEAD IVs in TLSv1.2 consist of an implicit "fixed" part and an explicit part
 that varies with every record.
 Setting a TLS fixed IV changes a cipher to encrypt/decrypt TLS records.
-TLS records are encrypted/decrypted using a single OP_cipher_cipher call per
+TLS records are encrypted/decrypted using a single OSSL_FUNC_cipher_cipher call per
 record.
 For a record decryption the first bytes of the input buffer will be the explicit
 part of the IV and the final bytes of the input buffer will be the AEAD tag.
@@ -307,7 +307,7 @@ write that to the output buffer, and finally add the tag onto the end of the
 output buffer.
 
 Whether encrypting or decrypting the value written to I<*outl> in the
-OP_cipher_cipher call should be the length of the payload excluding the explicit
+OSSL_FUNC_cipher_cipher call should be the length of the payload excluding the explicit
 IV length and the tag length.
 
 =item "ivlen" (B<OSSL_CIPHER_PARAM_AEAD_IVLEN>) <unsigned integer>
@@ -414,16 +414,16 @@ Gets the result of running the "tls1multi_aad" operation.
 
 =head1 RETURN VALUES
 
-OP_cipher_newctx() and OP_cipher_dupctx() should return the newly created
+OSSL_FUNC_cipher_newctx() and OSSL_FUNC_cipher_dupctx() should return the newly created
 provider side cipher context, or NULL on failure.
 
-OP_cipher_encrypt_init(), OP_cipher_decrypt_init(), OP_cipher_update(),
-OP_cipher_final(), OP_cipher_cipher(), OP_cipher_get_params(),
-OP_cipher_get_ctx_params() and OP_cipher_set_ctx_params() should return 1 for
+OSSL_FUNC_cipher_encrypt_init(), OSSL_FUNC_cipher_decrypt_init(), OSSL_FUNC_cipher_update(),
+OSSL_FUNC_cipher_final(), OSSL_FUNC_cipher_cipher(), OSSL_FUNC_cipher_get_params(),
+OSSL_FUNC_cipher_get_ctx_params() and OSSL_FUNC_cipher_set_ctx_params() should return 1 for
 success or 0 on error.
 
-OP_cipher_gettable_params(), OP_cipher_gettable_ctx_params() and
-OP_cipher_settable_ctx_params() should return a constant B<OSSL_PARAM>
+OSSL_FUNC_cipher_gettable_params(), OSSL_FUNC_cipher_gettable_ctx_params() and
+OSSL_FUNC_cipher_settable_ctx_params() should return a constant B<OSSL_PARAM>
 array, or NULL if none is offered.
 
 =head1 SEE ALSO

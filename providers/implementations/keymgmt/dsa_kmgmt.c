@@ -26,23 +26,23 @@
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
-static OSSL_OP_keymgmt_new_fn dsa_newdata;
-static OSSL_OP_keymgmt_free_fn dsa_freedata;
-static OSSL_OP_keymgmt_gen_init_fn dsa_gen_init;
-static OSSL_OP_keymgmt_gen_set_template_fn dsa_gen_set_template;
-static OSSL_OP_keymgmt_gen_set_params_fn dsa_gen_set_params;
-static OSSL_OP_keymgmt_gen_settable_params_fn dsa_gen_settable_params;
-static OSSL_OP_keymgmt_gen_fn dsa_gen;
-static OSSL_OP_keymgmt_gen_cleanup_fn dsa_gen_cleanup;
-static OSSL_OP_keymgmt_get_params_fn dsa_get_params;
-static OSSL_OP_keymgmt_gettable_params_fn dsa_gettable_params;
-static OSSL_OP_keymgmt_has_fn dsa_has;
-static OSSL_OP_keymgmt_match_fn dsa_match;
-static OSSL_OP_keymgmt_validate_fn dsa_validate;
-static OSSL_OP_keymgmt_import_fn dsa_import;
-static OSSL_OP_keymgmt_import_types_fn dsa_import_types;
-static OSSL_OP_keymgmt_export_fn dsa_export;
-static OSSL_OP_keymgmt_export_types_fn dsa_export_types;
+static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
+static OSSL_FUNC_keymgmt_free_fn dsa_freedata;
+static OSSL_FUNC_keymgmt_gen_init_fn dsa_gen_init;
+static OSSL_FUNC_keymgmt_gen_set_template_fn dsa_gen_set_template;
+static OSSL_FUNC_keymgmt_gen_set_params_fn dsa_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn dsa_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_fn dsa_gen;
+static OSSL_FUNC_keymgmt_gen_cleanup_fn dsa_gen_cleanup;
+static OSSL_FUNC_keymgmt_get_params_fn dsa_get_params;
+static OSSL_FUNC_keymgmt_gettable_params_fn dsa_gettable_params;
+static OSSL_FUNC_keymgmt_has_fn dsa_has;
+static OSSL_FUNC_keymgmt_match_fn dsa_match;
+static OSSL_FUNC_keymgmt_validate_fn dsa_validate;
+static OSSL_FUNC_keymgmt_import_fn dsa_import;
+static OSSL_FUNC_keymgmt_import_types_fn dsa_import_types;
+static OSSL_FUNC_keymgmt_export_fn dsa_export;
+static OSSL_FUNC_keymgmt_export_types_fn dsa_export_types;
 
 #define DSA_DEFAULT_MD "SHA256"
 #define DSA_POSSIBLE_SELECTIONS                                                \

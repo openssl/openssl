@@ -69,12 +69,12 @@ typedef struct {
 } KBKDF;
 
 /* Definitions needed for typechecking. */
-static OSSL_OP_kdf_newctx_fn kbkdf_new;
-static OSSL_OP_kdf_freectx_fn kbkdf_free;
-static OSSL_OP_kdf_reset_fn kbkdf_reset;
-static OSSL_OP_kdf_derive_fn kbkdf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn kbkdf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn kbkdf_set_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn kbkdf_new;
+static OSSL_FUNC_kdf_freectx_fn kbkdf_free;
+static OSSL_FUNC_kdf_reset_fn kbkdf_reset;
+static OSSL_FUNC_kdf_derive_fn kbkdf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kbkdf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kbkdf_set_ctx_params;
 
 /* Not all platforms have htobe32(). */
 static uint32_t be32(uint32_t host)

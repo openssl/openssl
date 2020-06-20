@@ -23,13 +23,13 @@
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_digest_init_fn keccak_init;
-static OSSL_OP_digest_update_fn keccak_update;
-static OSSL_OP_digest_final_fn keccak_final;
-static OSSL_OP_digest_freectx_fn keccak_freectx;
-static OSSL_OP_digest_dupctx_fn keccak_dupctx;
-static OSSL_OP_digest_set_ctx_params_fn shake_set_ctx_params;
-static OSSL_OP_digest_settable_ctx_params_fn shake_settable_ctx_params;
+static OSSL_FUNC_digest_init_fn keccak_init;
+static OSSL_FUNC_digest_update_fn keccak_update;
+static OSSL_FUNC_digest_final_fn keccak_final;
+static OSSL_FUNC_digest_freectx_fn keccak_freectx;
+static OSSL_FUNC_digest_dupctx_fn keccak_dupctx;
+static OSSL_FUNC_digest_set_ctx_params_fn shake_set_ctx_params;
+static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
 
@@ -182,7 +182,7 @@ static PROV_SHA3_METHOD shake_s390x_md =
 #endif /* S390_SHA3 */
 
 #define SHA3_newctx(typ, uname, name, bitlen, pad)                             \
-static OSSL_OP_digest_newctx_fn name##_newctx;                                 \
+static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
     KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
@@ -195,7 +195,7 @@ static void *name##_newctx(void *provctx)                                      \
 }
 
 #define KMAC_newctx(uname, bitlen, pad)                                        \
-static OSSL_OP_digest_newctx_fn uname##_newctx;                                \
+static OSSL_FUNC_digest_newctx_fn uname##_newctx;                              \
 static void *uname##_newctx(void *provctx)                                     \
 {                                                                              \
     KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \

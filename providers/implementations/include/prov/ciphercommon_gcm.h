@@ -102,13 +102,13 @@ struct prov_gcm_hw_st {
   OSSL_GCM_oneshot_fn oneshot;
 };
 
-OSSL_OP_cipher_encrypt_init_fn gcm_einit;
-OSSL_OP_cipher_decrypt_init_fn gcm_dinit;
-OSSL_OP_cipher_get_ctx_params_fn gcm_get_ctx_params;
-OSSL_OP_cipher_set_ctx_params_fn gcm_set_ctx_params;
-OSSL_OP_cipher_cipher_fn gcm_cipher;
-OSSL_OP_cipher_update_fn gcm_stream_update;
-OSSL_OP_cipher_final_fn gcm_stream_final;
+OSSL_FUNC_cipher_encrypt_init_fn gcm_einit;
+OSSL_FUNC_cipher_decrypt_init_fn gcm_dinit;
+OSSL_FUNC_cipher_get_ctx_params_fn gcm_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn gcm_set_ctx_params;
+OSSL_FUNC_cipher_cipher_fn gcm_cipher;
+OSSL_FUNC_cipher_update_fn gcm_stream_update;
+OSSL_FUNC_cipher_final_fn gcm_stream_final;
 void gcm_initctx(void *provctx, PROV_GCM_CTX *ctx, size_t keybits,
                  const PROV_GCM_HW *hw, size_t ivlen_min);
 

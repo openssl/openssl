@@ -26,26 +26,26 @@
 #include "prov/provider_ctx.h"
 #include "internal/param_build_set.h"
 
-static OSSL_OP_keymgmt_new_fn ec_newdata;
-static OSSL_OP_keymgmt_gen_init_fn ec_gen_init;
-static OSSL_OP_keymgmt_gen_set_template_fn ec_gen_set_template;
-static OSSL_OP_keymgmt_gen_set_params_fn ec_gen_set_params;
-static OSSL_OP_keymgmt_gen_settable_params_fn ec_gen_settable_params;
-static OSSL_OP_keymgmt_gen_fn ec_gen;
-static OSSL_OP_keymgmt_gen_cleanup_fn ec_gen_cleanup;
-static OSSL_OP_keymgmt_free_fn ec_freedata;
-static OSSL_OP_keymgmt_get_params_fn ec_get_params;
-static OSSL_OP_keymgmt_gettable_params_fn ec_gettable_params;
-static OSSL_OP_keymgmt_set_params_fn ec_set_params;
-static OSSL_OP_keymgmt_settable_params_fn ec_settable_params;
-static OSSL_OP_keymgmt_has_fn ec_has;
-static OSSL_OP_keymgmt_match_fn ec_match;
-static OSSL_OP_keymgmt_validate_fn ec_validate;
-static OSSL_OP_keymgmt_import_fn ec_import;
-static OSSL_OP_keymgmt_import_types_fn ec_import_types;
-static OSSL_OP_keymgmt_export_fn ec_export;
-static OSSL_OP_keymgmt_export_types_fn ec_export_types;
-static OSSL_OP_keymgmt_query_operation_name_fn ec_query_operation_name;
+static OSSL_FUNC_keymgmt_new_fn ec_newdata;
+static OSSL_FUNC_keymgmt_gen_init_fn ec_gen_init;
+static OSSL_FUNC_keymgmt_gen_set_template_fn ec_gen_set_template;
+static OSSL_FUNC_keymgmt_gen_set_params_fn ec_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn ec_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_fn ec_gen;
+static OSSL_FUNC_keymgmt_gen_cleanup_fn ec_gen_cleanup;
+static OSSL_FUNC_keymgmt_free_fn ec_freedata;
+static OSSL_FUNC_keymgmt_get_params_fn ec_get_params;
+static OSSL_FUNC_keymgmt_gettable_params_fn ec_gettable_params;
+static OSSL_FUNC_keymgmt_set_params_fn ec_set_params;
+static OSSL_FUNC_keymgmt_settable_params_fn ec_settable_params;
+static OSSL_FUNC_keymgmt_has_fn ec_has;
+static OSSL_FUNC_keymgmt_match_fn ec_match;
+static OSSL_FUNC_keymgmt_validate_fn ec_validate;
+static OSSL_FUNC_keymgmt_import_fn ec_import;
+static OSSL_FUNC_keymgmt_import_types_fn ec_import_types;
+static OSSL_FUNC_keymgmt_export_fn ec_export;
+static OSSL_FUNC_keymgmt_export_types_fn ec_export_types;
+static OSSL_FUNC_keymgmt_query_operation_name_fn ec_query_operation_name;
 
 #define EC_DEFAULT_MD "SHA256"
 #define EC_POSSIBLE_SELECTIONS                                                 \

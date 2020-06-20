@@ -21,8 +21,8 @@
 
 #define CAST5_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
 
-static OSSL_OP_cipher_freectx_fn cast5_freectx;
-static OSSL_OP_cipher_dupctx_fn cast5_dupctx;
+static OSSL_FUNC_cipher_freectx_fn cast5_freectx;
+static OSSL_FUNC_cipher_dupctx_fn cast5_dupctx;
 
 static void cast5_freectx(void *vctx)
 {

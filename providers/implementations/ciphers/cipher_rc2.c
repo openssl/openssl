@@ -23,10 +23,10 @@
 #define RC2_64_MAGIC    0x78
 #define RC2_128_MAGIC   0x3a
 
-static OSSL_OP_cipher_freectx_fn rc2_freectx;
-static OSSL_OP_cipher_dupctx_fn rc2_dupctx;
-static OSSL_OP_cipher_gettable_ctx_params_fn rc2_gettable_ctx_params;
-static OSSL_OP_cipher_settable_ctx_params_fn rc2_settable_ctx_params;
+static OSSL_FUNC_cipher_freectx_fn rc2_freectx;
+static OSSL_FUNC_cipher_dupctx_fn rc2_dupctx;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn rc2_gettable_ctx_params;
+static OSSL_FUNC_cipher_settable_ctx_params_fn rc2_settable_ctx_params;
 
 static void rc2_freectx(void *vctx)
 {
@@ -188,13 +188,13 @@ CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(rc2)
 
 #define IMPLEMENT_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits, blkbits,    \
                          ivbits, typ)                                          \
-static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;   \
 static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;             \
+static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
      PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
