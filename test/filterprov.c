@@ -14,7 +14,7 @@
 
 #include <string.h>
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/provider.h>
 #include <openssl/crypto.h>
 

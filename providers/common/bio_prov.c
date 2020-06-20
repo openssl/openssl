@@ -8,7 +8,7 @@
  */
 
 #include <assert.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "internal/cryptlib.h"
 #include "prov/bio.h"
 

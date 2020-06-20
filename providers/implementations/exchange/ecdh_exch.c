@@ -16,7 +16,7 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/ec.h>
 #include <openssl/params.h>

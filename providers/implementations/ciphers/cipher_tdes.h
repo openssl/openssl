@@ -8,7 +8,7 @@
  */
 
 #include <openssl/des.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "crypto/des_platform.h"
 
 #define DES_BLOCK_SIZE 8

@@ -30,7 +30,7 @@ Arrays of this type must be terminated with a tuple having function
 identity zero and function pointer NULL.
 
 The available function identities and corresponding function
-signatures are defined in L<openssl-core_numbers.h(7)>.
+signatures are defined in L<openssl-core_dispatch.h(7)>.
 
 Any function identity not recognised by the recipient of this type
 will be ignored.
@@ -111,7 +111,7 @@ callback.
 
 =head1 SEE ALSO
 
-L<openssl-core_numbers.h(7)>
+L<openssl-core_dispatch.h(7)>
 
 =head1 HISTORY
 

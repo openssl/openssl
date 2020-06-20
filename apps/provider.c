@@ -18,7 +18,7 @@
 #include <openssl/safestack.h>
 #include <openssl/provider.h>
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 
 DEFINE_STACK_OF_CSTRING()
 

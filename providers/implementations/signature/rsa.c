@@ -15,7 +15,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/rsa.h>

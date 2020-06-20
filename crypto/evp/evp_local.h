@@ -9,7 +9,7 @@
 
 /* EVP_MD_CTX related stuff */
 
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "internal/refcount.h"
 
 #define EVP_CTRL_RET_UNSUPPORTED -1

@@ -14,7 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <string.h> /* strcmp */
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>

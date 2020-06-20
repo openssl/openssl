@@ -8,7 +8,7 @@
  */
 
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/serializer.h>
 #include <openssl/ui.h>
 #include "internal/core.h"

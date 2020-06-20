@@ -330,7 +330,7 @@ L<OSSL_SELF_TEST_set_callback(3)>,
 L<OSSL_SELF_TEST_new(3)>,
 L<OSSL_PARAM(3)>,
 L<openssl-core.h(7)>,
-L<openssl-core_numbers.h(7)>,
+L<openssl-core_dispatch.h(7)>,
 L<provider(7)>
 
 =head1 HISTORY

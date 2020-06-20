@@ -78,7 +78,7 @@ This is a short example of the fictitious EVP API and operation called
 B<EVP_FOO>.
 
 To begin with, let's assume something like this in
-F<include/openssl/core_numbers.h>:
+F<include/openssl/core_dispatch.h>:
 
     #define OSSL_OP_FOO                         100
 

@@ -27,7 +27,7 @@
 #endif
 
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 
 static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
 static OSSL_core_get_params_fn *c_get_params = NULL;

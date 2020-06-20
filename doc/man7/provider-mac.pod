@@ -8,7 +8,7 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
 
 =for openssl multiple includes
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
  #include <openssl/core_names.h>
 
  /*
@@ -63,7 +63,7 @@ For example, the "function" OP_mac_newctx() has these:
      OSSL_get_OP_mac_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OP_mac_newctx               OSSL_FUNC_MAC_NEWCTX
  OP_mac_freectx              OSSL_FUNC_MAC_FREECTX

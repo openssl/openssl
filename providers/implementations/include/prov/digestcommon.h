@@ -10,7 +10,7 @@
 #ifndef OSSL_PROVIDERS_DIGESTCOMMON_H
 # define OSSL_PROVIDERS_DIGESTCOMMON_H
 
-# include <openssl/core_numbers.h>
+# include <openssl/core_dispatch.h>
 # include <openssl/core_names.h>
 # include <openssl/params.h>
 

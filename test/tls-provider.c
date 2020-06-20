@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/core_names.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/rand.h>
 #include <openssl/params.h>
 /* For TLS1_3_VERSION */

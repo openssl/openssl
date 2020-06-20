@@ -14,7 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/crypto.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 #include <openssl/evp.h>

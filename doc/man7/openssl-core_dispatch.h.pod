@@ -2,16 +2,16 @@
 
 =head1 NAME
 
-openssl/core_numbers.h
+openssl/core_dispatch.h
 - OpenSSL provider dispatch numbers and function types
 
 =head1 SYNOPSIS
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
 
 =head1 DESCRIPTION
 
-The F<< <openssl/core_numbers.h> >> header defines all the operation
+The F<< <openssl/core_dispatch.h> >> header defines all the operation
 numbers, dispatch numbers and provider interface function types
 currently available.
 
