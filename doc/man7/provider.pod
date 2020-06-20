@@ -37,7 +37,7 @@ a set of B<OSSL_ALGORITHM>s (see L<openssl-core.h(7)>).
 It may be a dynamically loadable module, or may be built-in, in
 OpenSSL libraries or in the application.
 If it's a dynamically loadable module, the initialization function
-must be named C<OSSL_provider_init> and must be exported.
+must be named C<OSSL_FUNC_provider_init> and must be exported.
 If it's built-in, the initialization function may have any name.
 
 The initialization function must have the following signature:

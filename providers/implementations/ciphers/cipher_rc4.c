@@ -21,8 +21,8 @@
 /* TODO (3.0) Figure out what flags are required */
 #define RC4_FLAGS EVP_CIPH_FLAG_DEFAULT_ASN1
 
-static OSSL_OP_cipher_freectx_fn rc4_freectx;
-static OSSL_OP_cipher_dupctx_fn rc4_dupctx;
+static OSSL_FUNC_cipher_freectx_fn rc4_freectx;
+static OSSL_FUNC_cipher_dupctx_fn rc4_dupctx;
 
 static void rc4_freectx(void *vctx)
 {
@@ -46,13 +46,13 @@ static void *rc4_dupctx(void *ctx)
 }
 
 #define IMPLEMENT_cipher(alg, UCALG, flags, kbits, blkbits, ivbits, typ)       \
-static OSSL_OP_cipher_get_params_fn alg##_##kbits##_get_params;                \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_get_params;              \
 static int alg##_##kbits##_get_params(OSSL_PARAM params[])                     \
 {                                                                              \
     return cipher_generic_get_params(params, 0, flags,                         \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn alg##_##kbits##_newctx;                        \
+static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_newctx;                      \
 static void * alg##_##kbits##_newctx(void *provctx)                            \
 {                                                                              \
      PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \

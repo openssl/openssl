@@ -10,11 +10,11 @@
 #include <openssl/core.h>
 #include "provider_local.h"
 
-OSSL_provider_init_fn ossl_default_provider_init;
-OSSL_provider_init_fn ossl_null_provider_init;
-OSSL_provider_init_fn fips_intern_provider_init;
+OSSL_FUNC_provider_init_fn ossl_default_provider_init;
+OSSL_FUNC_provider_init_fn ossl_null_provider_init;
+OSSL_FUNC_provider_init_fn fips_intern_provider_init;
 #ifdef STATIC_LEGACY
-OSSL_provider_init_fn ossl_legacy_provider_init;
+OSSL_FUNC_provider_init_fn ossl_legacy_provider_init;
 #endif
 const struct predefined_providers_st predefined_providers[] = {
 #ifdef FIPS_MODULE

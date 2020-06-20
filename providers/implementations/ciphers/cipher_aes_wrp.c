@@ -29,11 +29,11 @@ typedef size_t (*aeswrap_fn)(void *key, const unsigned char *iv,
                              unsigned char *out, const unsigned char *in,
                              size_t inlen, block128_f block);
 
-static OSSL_OP_cipher_encrypt_init_fn aes_wrap_einit;
-static OSSL_OP_cipher_decrypt_init_fn aes_wrap_dinit;
-static OSSL_OP_cipher_update_fn aes_wrap_cipher;
-static OSSL_OP_cipher_final_fn aes_wrap_final;
-static OSSL_OP_cipher_freectx_fn aes_wrap_freectx;
+static OSSL_FUNC_cipher_encrypt_init_fn aes_wrap_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn aes_wrap_dinit;
+static OSSL_FUNC_cipher_update_fn aes_wrap_cipher;
+static OSSL_FUNC_cipher_final_fn aes_wrap_final;
+static OSSL_FUNC_cipher_freectx_fn aes_wrap_freectx;
 
 typedef struct prov_aes_wrap_ctx_st {
     PROV_CIPHER_CTX base;
@@ -209,13 +209,13 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 }
 
 #define IMPLEMENT_cipher(mode, fname, UCMODE, flags, kbits, blkbits, ivbits)   \
-    static OSSL_OP_cipher_get_params_fn aes_##kbits##_##fname##_get_params;    \
+    static OSSL_FUNC_cipher_get_params_fn aes_##kbits##_##fname##_get_params;  \
     static int aes_##kbits##_##fname##_get_params(OSSL_PARAM params[])         \
     {                                                                          \
         return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,     \
                                          flags, kbits, blkbits, ivbits);       \
     }                                                                          \
-    static OSSL_OP_cipher_newctx_fn aes_##kbits##fname##_newctx;               \
+    static OSSL_FUNC_cipher_newctx_fn aes_##kbits##fname##_newctx;             \
     static void *aes_##kbits##fname##_newctx(void *provctx)                    \
     {                                                                          \
         return aes_##mode##_newctx(kbits, blkbits, ivbits,                     \

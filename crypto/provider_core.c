@@ -24,7 +24,7 @@
 #endif
 
 static OSSL_PROVIDER *provider_new(const char *name,
-                                   OSSL_provider_init_fn *init_function);
+                                   OSSL_FUNC_provider_init_fn *init_function);
 
 /*-
  * Provider Object structure
@@ -51,7 +51,7 @@ struct ossl_provider_st {
     char *name;
     char *path;
     DSO *module;
-    OSSL_provider_init_fn *init_function;
+    OSSL_FUNC_provider_init_fn *init_function;
     STACK_OF(INFOPAIR) *parameters;
     OPENSSL_CTX *libctx; /* The library context this instance is in */
     struct provider_store_st *store; /* The store this instance belongs to */
@@ -67,11 +67,11 @@ struct ossl_provider_st {
 #endif
 
     /* Provider side functions */
-    OSSL_provider_teardown_fn *teardown;
-    OSSL_provider_gettable_params_fn *gettable_params;
-    OSSL_provider_get_params_fn *get_params;
-    OSSL_provider_get_capabilities_fn *get_capabilities;
-    OSSL_provider_query_operation_fn *query_operation;
+    OSSL_FUNC_provider_teardown_fn *teardown;
+    OSSL_FUNC_provider_gettable_params_fn *gettable_params;
+    OSSL_FUNC_provider_get_params_fn *get_params;
+    OSSL_FUNC_provider_get_capabilities_fn *get_capabilities;
+    OSSL_FUNC_provider_query_operation_fn *query_operation;
 
     /*
      * Cache of bit to indicate of query_operation() has been called on
@@ -230,7 +230,7 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
  */
 
 static OSSL_PROVIDER *provider_new(const char *name,
-                                   OSSL_provider_init_fn *init_function)
+                                   OSSL_FUNC_provider_init_fn *init_function)
 {
     OSSL_PROVIDER *prov = NULL;
 
@@ -259,7 +259,7 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 }
 
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
-                                 OSSL_provider_init_fn *init_function,
+                                 OSSL_FUNC_provider_init_fn *init_function,
                                  int noconfig)
 {
     struct provider_store_st *store = NULL;
@@ -451,7 +451,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
     void *tmp_provctx = NULL;    /* safety measure */
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODULE
-    OSSL_provider_get_reason_strings_fn *p_get_reason_strings = NULL;
+    OSSL_FUNC_provider_get_reason_strings_fn *p_get_reason_strings = NULL;
 # endif
 #endif
 
@@ -511,8 +511,8 @@ static int provider_activate(OSSL_PROVIDER *prov)
         }
 
         if (prov->module != NULL)
-            prov->init_function = (OSSL_provider_init_fn *)
-                DSO_bind_func(prov->module, "OSSL_provider_init");
+            prov->init_function = (OSSL_FUNC_provider_init_fn *)
+                DSO_bind_func(prov->module, "OSSL_FUNC_provider_init");
 #endif
     }
 
@@ -534,29 +534,29 @@ static int provider_activate(OSSL_PROVIDER *prov)
         switch (provider_dispatch->function_id) {
         case OSSL_FUNC_PROVIDER_TEARDOWN:
             prov->teardown =
-                OSSL_get_provider_teardown(provider_dispatch);
+                OSSL_FUNC_provider_teardown(provider_dispatch);
             break;
         case OSSL_FUNC_PROVIDER_GETTABLE_PARAMS:
             prov->gettable_params =
-                OSSL_get_provider_gettable_params(provider_dispatch);
+                OSSL_FUNC_provider_gettable_params(provider_dispatch);
             break;
         case OSSL_FUNC_PROVIDER_GET_PARAMS:
             prov->get_params =
-                OSSL_get_provider_get_params(provider_dispatch);
+                OSSL_FUNC_provider_get_params(provider_dispatch);
             break;
         case OSSL_FUNC_PROVIDER_GET_CAPABILITIES:
             prov->get_capabilities =
-                OSSL_get_provider_get_capabilities(provider_dispatch);
+                OSSL_FUNC_provider_get_capabilities(provider_dispatch);
             break;
         case OSSL_FUNC_PROVIDER_QUERY_OPERATION:
             prov->query_operation =
-                OSSL_get_provider_query_operation(provider_dispatch);
+                OSSL_FUNC_provider_query_operation(provider_dispatch);
             break;
 #ifndef OPENSSL_NO_ERR
 # ifndef FIPS_MODULE
         case OSSL_FUNC_PROVIDER_GET_REASON_STRINGS:
             p_get_reason_strings =
-                OSSL_get_provider_get_reason_strings(provider_dispatch);
+                OSSL_FUNC_provider_get_reason_strings(provider_dispatch);
             break;
 # endif
 #endif
@@ -906,17 +906,17 @@ static const OSSL_PARAM param_types[] = {
  * This ensures that the compiler will complain if they aren't defined
  * with the correct signature.
  */
-static OSSL_core_gettable_params_fn core_gettable_params;
-static OSSL_core_get_params_fn core_get_params;
-static OSSL_core_thread_start_fn core_thread_start;
-static OSSL_core_get_library_context_fn core_get_libctx;
+static OSSL_FUNC_core_gettable_params_fn core_gettable_params;
+static OSSL_FUNC_core_get_params_fn core_get_params;
+static OSSL_FUNC_core_thread_start_fn core_thread_start;
+static OSSL_FUNC_core_get_library_context_fn core_get_libctx;
 #ifndef FIPS_MODULE
-static OSSL_core_new_error_fn core_new_error;
-static OSSL_core_set_error_debug_fn core_set_error_debug;
-static OSSL_core_vset_error_fn core_vset_error;
-static OSSL_core_set_error_mark_fn core_set_error_mark;
-static OSSL_core_clear_last_error_mark_fn core_clear_last_error_mark;
-static OSSL_core_pop_error_to_mark_fn core_pop_error_to_mark;
+static OSSL_FUNC_core_new_error_fn core_new_error;
+static OSSL_FUNC_core_set_error_debug_fn core_set_error_debug;
+static OSSL_FUNC_core_vset_error_fn core_vset_error;
+static OSSL_FUNC_core_set_error_mark_fn core_set_error_mark;
+static OSSL_FUNC_core_clear_last_error_mark_fn core_clear_last_error_mark;
+static OSSL_FUNC_core_pop_error_to_mark_fn core_pop_error_to_mark;
 #endif
 
 static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_HANDLE *handle)

@@ -22,14 +22,14 @@
 #include "prov/provider_ctx.h"
 #include "crypto/dh.h"
 
-static OSSL_OP_keyexch_newctx_fn dh_newctx;
-static OSSL_OP_keyexch_init_fn dh_init;
-static OSSL_OP_keyexch_set_peer_fn dh_set_peer;
-static OSSL_OP_keyexch_derive_fn dh_derive;
-static OSSL_OP_keyexch_freectx_fn dh_freectx;
-static OSSL_OP_keyexch_dupctx_fn dh_dupctx;
-static OSSL_OP_keyexch_set_ctx_params_fn dh_set_ctx_params;
-static OSSL_OP_keyexch_settable_ctx_params_fn dh_settable_ctx_params;
+static OSSL_FUNC_keyexch_newctx_fn dh_newctx;
+static OSSL_FUNC_keyexch_init_fn dh_init;
+static OSSL_FUNC_keyexch_set_peer_fn dh_set_peer;
+static OSSL_FUNC_keyexch_derive_fn dh_derive;
+static OSSL_FUNC_keyexch_freectx_fn dh_freectx;
+static OSSL_FUNC_keyexch_dupctx_fn dh_dupctx;
+static OSSL_FUNC_keyexch_set_ctx_params_fn dh_set_ctx_params;
+static OSSL_FUNC_keyexch_settable_ctx_params_fn dh_settable_ctx_params;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.

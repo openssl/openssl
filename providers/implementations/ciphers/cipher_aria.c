@@ -12,8 +12,8 @@
 #include "cipher_aria.h"
 #include "prov/implementations.h"
 
-static OSSL_OP_cipher_freectx_fn aria_freectx;
-static OSSL_OP_cipher_dupctx_fn aria_dupctx;
+static OSSL_FUNC_cipher_freectx_fn aria_freectx;
+static OSSL_FUNC_cipher_dupctx_fn aria_dupctx;
 
 static void aria_freectx(void *vctx)
 {

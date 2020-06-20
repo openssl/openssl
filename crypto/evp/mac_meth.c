@@ -64,70 +64,70 @@ static void *evp_mac_from_dispatch(int name_id,
         case OSSL_FUNC_MAC_NEWCTX:
             if (mac->newctx != NULL)
                 break;
-            mac->newctx = OSSL_get_OP_mac_newctx(fns);
+            mac->newctx = OSSL_FUNC_mac_newctx(fns);
             fnctxcnt++;
             break;
         case OSSL_FUNC_MAC_DUPCTX:
             if (mac->dupctx != NULL)
                 break;
-            mac->dupctx = OSSL_get_OP_mac_dupctx(fns);
+            mac->dupctx = OSSL_FUNC_mac_dupctx(fns);
             break;
         case OSSL_FUNC_MAC_FREECTX:
             if (mac->freectx != NULL)
                 break;
-            mac->freectx = OSSL_get_OP_mac_freectx(fns);
+            mac->freectx = OSSL_FUNC_mac_freectx(fns);
             fnctxcnt++;
             break;
         case OSSL_FUNC_MAC_INIT:
             if (mac->init != NULL)
                 break;
-            mac->init = OSSL_get_OP_mac_init(fns);
+            mac->init = OSSL_FUNC_mac_init(fns);
             fnmaccnt++;
             break;
         case OSSL_FUNC_MAC_UPDATE:
             if (mac->update != NULL)
                 break;
-            mac->update = OSSL_get_OP_mac_update(fns);
+            mac->update = OSSL_FUNC_mac_update(fns);
             fnmaccnt++;
             break;
         case OSSL_FUNC_MAC_FINAL:
             if (mac->final != NULL)
                 break;
-            mac->final = OSSL_get_OP_mac_final(fns);
+            mac->final = OSSL_FUNC_mac_final(fns);
             fnmaccnt++;
             break;
         case OSSL_FUNC_MAC_GETTABLE_PARAMS:
             if (mac->gettable_params != NULL)
                 break;
             mac->gettable_params =
-                OSSL_get_OP_mac_gettable_params(fns);
+                OSSL_FUNC_mac_gettable_params(fns);
             break;
         case OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS:
             if (mac->gettable_ctx_params != NULL)
                 break;
             mac->gettable_ctx_params =
-                OSSL_get_OP_mac_gettable_ctx_params(fns);
+                OSSL_FUNC_mac_gettable_ctx_params(fns);
             break;
         case OSSL_FUNC_MAC_SETTABLE_CTX_PARAMS:
             if (mac->settable_ctx_params != NULL)
                 break;
             mac->settable_ctx_params =
-                OSSL_get_OP_mac_settable_ctx_params(fns);
+                OSSL_FUNC_mac_settable_ctx_params(fns);
             break;
         case OSSL_FUNC_MAC_GET_PARAMS:
             if (mac->get_params != NULL)
                 break;
-            mac->get_params = OSSL_get_OP_mac_get_params(fns);
+            mac->get_params = OSSL_FUNC_mac_get_params(fns);
             break;
         case OSSL_FUNC_MAC_GET_CTX_PARAMS:
             if (mac->get_ctx_params != NULL)
                 break;
-            mac->get_ctx_params = OSSL_get_OP_mac_get_ctx_params(fns);
+            mac->get_ctx_params = OSSL_FUNC_mac_get_ctx_params(fns);
             break;
         case OSSL_FUNC_MAC_SET_CTX_PARAMS:
             if (mac->set_ctx_params != NULL)
                 break;
-            mac->set_ctx_params = OSSL_get_OP_mac_set_ctx_params(fns);
+            mac->set_ctx_params = OSSL_FUNC_mac_set_ctx_params(fns);
             break;
         }
     }

@@ -23,12 +23,12 @@
 
 #ifndef OPENSSL_NO_SCRYPT
 
-static OSSL_OP_kdf_newctx_fn kdf_scrypt_new;
-static OSSL_OP_kdf_freectx_fn kdf_scrypt_free;
-static OSSL_OP_kdf_reset_fn kdf_scrypt_reset;
-static OSSL_OP_kdf_derive_fn kdf_scrypt_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn kdf_scrypt_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn kdf_scrypt_set_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn kdf_scrypt_new;
+static OSSL_FUNC_kdf_freectx_fn kdf_scrypt_free;
+static OSSL_FUNC_kdf_reset_fn kdf_scrypt_reset;
+static OSSL_FUNC_kdf_derive_fn kdf_scrypt_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_scrypt_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kdf_scrypt_set_ctx_params;
 
 static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,

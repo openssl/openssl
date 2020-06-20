@@ -41,7 +41,7 @@ void *OSSL_PROVIDER_get0_provider_ctx(const OSSL_PROVIDER *prov);
 
 /* Add a built in providers */
 int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *, const char *name,
-                              OSSL_provider_init_fn *init_fn);
+                              OSSL_FUNC_provider_init_fn *init_fn);
 
 /* Information */
 const char *OSSL_PROVIDER_name(const OSSL_PROVIDER *prov);

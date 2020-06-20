@@ -73,7 +73,7 @@ OSSL_PROVIDER_load() loads and initializes a provider.
 This may simply initialize a provider that was previously added with
 OSSL_PROVIDER_add_builtin() and run its given initialization function,
 or load a provider module with the given name and run its provider
-entry point, C<OSSL_provider_init>.
+entry point, C<OSSL_FUNC_provider_init>.
 
 OSSL_PROVIDER_unload() unloads the given provider.
 For a provider added with OSSL_PROVIDER_add_builtin(), this simply

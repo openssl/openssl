@@ -87,13 +87,13 @@ for a description of the initialization function.
 All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
+B<OSSL_FUNC_{name}>.
 For example, the "function" core_gettable_params() has these:
 
  typedef OSSL_PARAM *
-     (OSSL_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
+     (OSSL_FUNC_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
  static ossl_inline OSSL_NAME_core_gettable_params_fn
-     OSSL_get_core_gettable_params(const OSSL_DISPATCH *opf);
+     OSSL_FUNC_core_gettable_params(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
@@ -433,19 +433,19 @@ operation C<BAR>.
   * To ensure we get the function signature right, forward declare
   * them using function types provided by openssl/core_dispatch.h
   */
- OSSL_OP_bar_newctx_fn foo_newctx;
- OSSL_OP_bar_freectx_fn foo_freectx;
- OSSL_OP_bar_init_fn foo_init;
- OSSL_OP_bar_update_fn foo_update;
- OSSL_OP_bar_final_fn foo_final;
+ OSSL_FUNC_bar_newctx_fn foo_newctx;
+ OSSL_FUNC_bar_freectx_fn foo_freectx;
+ OSSL_FUNC_bar_init_fn foo_init;
+ OSSL_FUNC_bar_update_fn foo_update;
+ OSSL_FUNC_bar_final_fn foo_final;
 
- OSSL_provider_query_operation_fn p_query;
- OSSL_provider_get_reason_strings_fn p_reasons;
- OSSL_provider_teardown_fn p_teardown;
+ OSSL_FUNC_provider_query_operation_fn p_query;
+ OSSL_FUNC_provider_get_reason_strings_fn p_reasons;
+ OSSL_FUNC_provider_teardown_fn p_teardown;
 
- OSSL_provider_init_fn OSSL_provider_init;
+ OSSL_FUNC_provider_init_fn OSSL_FUNC_provider_init;
 
- OSSL_core_put_error *c_put_error = NULL;
+ OSSL_FUNC_core_put_error *c_put_error = NULL;
 
  /* Provider context */
  struct prov_ctx_st {
@@ -541,7 +541,7 @@ operation C<BAR>.
      { 0, NULL }
  };
 
- int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
+ int OSSL_FUNC_provider_init(const OSSL_CORE_HANDLE *handle,
                         const OSSL_DISPATCH *in,
                         const OSSL_DISPATCH **out,
                         void **provctx)
@@ -551,7 +551,7 @@ operation C<BAR>.
      for (; in->function_id != 0; in++)
          switch (in->function_id) {
          case OSSL_FUNC_CORE_PUT_ERROR:
-             c_put_error = OSSL_get_core_put_error(in);
+             c_put_error = OSSL_FUNC_core_put_error(in);
              break;
          }
 
@@ -574,30 +574,30 @@ This relies on a few things existing in F<openssl/core_dispatch.h>:
  #define OSSL_OP_BAR            4711
 
  #define OSSL_FUNC_BAR_NEWCTX      1
- typedef void *(OSSL_OP_bar_newctx_fn)(void *provctx);
- static ossl_inline OSSL_get_bar_newctx(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_newctx_fn *)opf->function; }
+ typedef void *(OSSL_FUNC_bar_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_FUNC_bar_newctx(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_newctx_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_FREECTX     2
- typedef void (OSSL_OP_bar_freectx_fn)(void *ctx);
- static ossl_inline OSSL_get_bar_newctx(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_freectx_fn *)opf->function; }
+ typedef void (OSSL_FUNC_bar_freectx_fn)(void *ctx);
+ static ossl_inline OSSL_FUNC_bar_newctx(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_freectx_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_INIT        3
- typedef void *(OSSL_OP_bar_init_fn)(void *ctx);
- static ossl_inline OSSL_get_bar_init(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_init_fn *)opf->function; }
+ typedef void *(OSSL_FUNC_bar_init_fn)(void *ctx);
+ static ossl_inline OSSL_FUNC_bar_init(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_init_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_UPDATE      4
- typedef void *(OSSL_OP_bar_update_fn)(void *ctx,
+ typedef void *(OSSL_FUNC_bar_update_fn)(void *ctx,
                                        unsigned char *in, size_t inl);
- static ossl_inline OSSL_get_bar_update(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_update_fn *)opf->function; }
+ static ossl_inline OSSL_FUNC_bar_update(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_update_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_FINAL       5
- typedef void *(OSSL_OP_bar_final_fn)(void *ctx);
- static ossl_inline OSSL_get_bar_final(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_final_fn *)opf->function; }
+ typedef void *(OSSL_FUNC_bar_final_fn)(void *ctx);
+ static ossl_inline OSSL_FUNC_bar_final(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_final_fn *)opf->function; }
 
 =head1 SEE ALSO
 

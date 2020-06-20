@@ -22,8 +22,8 @@
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 
-static OSSL_OP_digest_set_ctx_params_fn mdc2_set_ctx_params;
-static OSSL_OP_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
+static OSSL_FUNC_digest_set_ctx_params_fn mdc2_set_ctx_params;
+static OSSL_FUNC_digest_settable_ctx_params_fn mdc2_settable_ctx_params;
 
 static const OSSL_PARAM known_mdc2_settable_ctx_params[] = {
     OSSL_PARAM_uint(OSSL_DIGEST_PARAM_PAD_TYPE, NULL),

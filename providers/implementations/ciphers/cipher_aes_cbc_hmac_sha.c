@@ -33,12 +33,12 @@ const OSSL_DISPATCH nm##kbits##sub##_functions[] = {                           \
                                  | EVP_CIPH_FLAG_AEAD_CIPHER                   \
                                  | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
 
-static OSSL_OP_cipher_freectx_fn aes_cbc_hmac_sha1_freectx;
-static OSSL_OP_cipher_freectx_fn aes_cbc_hmac_sha256_freectx;
-static OSSL_OP_cipher_get_ctx_params_fn aes_get_ctx_params;
-static OSSL_OP_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn aes_set_ctx_params;
-static OSSL_OP_cipher_settable_ctx_params_fn aes_settable_ctx_params;
+static OSSL_FUNC_cipher_freectx_fn aes_cbc_hmac_sha1_freectx;
+static OSSL_FUNC_cipher_freectx_fn aes_cbc_hmac_sha256_freectx;
+static OSSL_FUNC_cipher_get_ctx_params_fn aes_get_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn aes_set_ctx_params;
+static OSSL_FUNC_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 # define aes_gettable_params cipher_generic_gettable_params
 # define aes_einit cipher_generic_einit
 # define aes_dinit cipher_generic_dinit
@@ -308,13 +308,13 @@ static void aes_cbc_hmac_sha256_freectx(void *vctx)
         OPENSSL_clear_free(ctx, sizeof(*ctx));
 }
 
-# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)               \
-static OSSL_OP_cipher_newctx_fn nm##_##kbits##_##sub##_newctx;                 \
+# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
+static OSSL_FUNC_cipher_newctx_fn nm##_##kbits##_##sub##_newctx;               \
 static void *nm##_##kbits##_##sub##_newctx(void *provctx)                      \
 {                                                                              \
     return nm##_##sub##_newctx(provctx, kbits, blkbits, ivbits, flags);        \
 }                                                                              \
-static OSSL_OP_cipher_get_params_fn nm##_##kbits##_##sub##_get_params;         \
+static OSSL_FUNC_cipher_get_params_fn nm##_##kbits##_##sub##_get_params;       \
 static int nm##_##kbits##_##sub##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_CBC_MODE,                \

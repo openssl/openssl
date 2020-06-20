@@ -22,14 +22,14 @@
 #include "prov/provider_ctx.h"
 #include "crypto/ecx.h"
 
-static OSSL_OP_signature_newctx_fn eddsa_newctx;
-static OSSL_OP_signature_digest_sign_init_fn eddsa_digest_signverify_init;
-static OSSL_OP_signature_digest_sign_fn ed25519_digest_sign;
-static OSSL_OP_signature_digest_sign_fn ed448_digest_sign;
-static OSSL_OP_signature_digest_verify_fn ed25519_digest_verify;
-static OSSL_OP_signature_digest_verify_fn ed448_digest_verify;
-static OSSL_OP_signature_freectx_fn eddsa_freectx;
-static OSSL_OP_signature_dupctx_fn eddsa_dupctx;
+static OSSL_FUNC_signature_newctx_fn eddsa_newctx;
+static OSSL_FUNC_signature_digest_sign_init_fn eddsa_digest_signverify_init;
+static OSSL_FUNC_signature_digest_sign_fn ed25519_digest_sign;
+static OSSL_FUNC_signature_digest_sign_fn ed448_digest_sign;
+static OSSL_FUNC_signature_digest_verify_fn ed25519_digest_verify;
+static OSSL_FUNC_signature_digest_verify_fn ed448_digest_verify;
+static OSSL_FUNC_signature_freectx_fn eddsa_freectx;
+static OSSL_FUNC_signature_dupctx_fn eddsa_dupctx;
 
 typedef struct {
     OPENSSL_CTX *libctx;

@@ -25,26 +25,26 @@
 #include "crypto/rsa.h"
 #include "internal/param_build_set.h"
 
-static OSSL_OP_keymgmt_new_fn rsa_newdata;
-static OSSL_OP_keymgmt_new_fn rsapss_newdata;
-static OSSL_OP_keymgmt_gen_init_fn rsa_gen_init;
-static OSSL_OP_keymgmt_gen_init_fn rsapss_gen_init;
-static OSSL_OP_keymgmt_gen_set_params_fn rsa_gen_set_params;
-static OSSL_OP_keymgmt_gen_settable_params_fn rsa_gen_settable_params;
-static OSSL_OP_keymgmt_gen_settable_params_fn rsapss_gen_settable_params;
-static OSSL_OP_keymgmt_gen_fn rsa_gen;
-static OSSL_OP_keymgmt_gen_cleanup_fn rsa_gen_cleanup;
-static OSSL_OP_keymgmt_free_fn rsa_freedata;
-static OSSL_OP_keymgmt_get_params_fn rsa_get_params;
-static OSSL_OP_keymgmt_gettable_params_fn rsa_gettable_params;
-static OSSL_OP_keymgmt_has_fn rsa_has;
-static OSSL_OP_keymgmt_match_fn rsa_match;
-static OSSL_OP_keymgmt_validate_fn rsa_validate;
-static OSSL_OP_keymgmt_import_fn rsa_import;
-static OSSL_OP_keymgmt_import_types_fn rsa_import_types;
-static OSSL_OP_keymgmt_export_fn rsa_export;
-static OSSL_OP_keymgmt_export_types_fn rsa_export_types;
-static OSSL_OP_keymgmt_query_operation_name_fn rsapss_query_operation_name;
+static OSSL_FUNC_keymgmt_new_fn rsa_newdata;
+static OSSL_FUNC_keymgmt_new_fn rsapss_newdata;
+static OSSL_FUNC_keymgmt_gen_init_fn rsa_gen_init;
+static OSSL_FUNC_keymgmt_gen_init_fn rsapss_gen_init;
+static OSSL_FUNC_keymgmt_gen_set_params_fn rsa_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn rsa_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn rsapss_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_fn rsa_gen;
+static OSSL_FUNC_keymgmt_gen_cleanup_fn rsa_gen_cleanup;
+static OSSL_FUNC_keymgmt_free_fn rsa_freedata;
+static OSSL_FUNC_keymgmt_get_params_fn rsa_get_params;
+static OSSL_FUNC_keymgmt_gettable_params_fn rsa_gettable_params;
+static OSSL_FUNC_keymgmt_has_fn rsa_has;
+static OSSL_FUNC_keymgmt_match_fn rsa_match;
+static OSSL_FUNC_keymgmt_validate_fn rsa_validate;
+static OSSL_FUNC_keymgmt_import_fn rsa_import;
+static OSSL_FUNC_keymgmt_import_types_fn rsa_import_types;
+static OSSL_FUNC_keymgmt_export_fn rsa_export;
+static OSSL_FUNC_keymgmt_export_types_fn rsa_export_types;
+static OSSL_FUNC_keymgmt_query_operation_name_fn rsapss_query_operation_name;
 
 #define RSA_DEFAULT_MD "SHA256"
 #define RSA_PSS_DEFAULT_MD OSSL_DIGEST_NAME_SHA1

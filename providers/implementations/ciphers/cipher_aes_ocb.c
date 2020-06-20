@@ -30,15 +30,15 @@ PROV_CIPHER_FUNC(int, ocb_cipher, (PROV_AES_OCB_CTX *ctx,
                                    const unsigned char *in, unsigned char *out,
                                    size_t nextblock));
 /* forward declarations */
-static OSSL_OP_cipher_encrypt_init_fn aes_ocb_einit;
-static OSSL_OP_cipher_decrypt_init_fn aes_ocb_dinit;
-static OSSL_OP_cipher_update_fn aes_ocb_block_update;
-static OSSL_OP_cipher_final_fn aes_ocb_block_final;
-static OSSL_OP_cipher_cipher_fn aes_ocb_cipher;
-static OSSL_OP_cipher_freectx_fn aes_ocb_freectx;
-static OSSL_OP_cipher_dupctx_fn aes_ocb_dupctx;
-static OSSL_OP_cipher_get_ctx_params_fn aes_ocb_get_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn aes_ocb_set_ctx_params;
+static OSSL_FUNC_cipher_encrypt_init_fn aes_ocb_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn aes_ocb_dinit;
+static OSSL_FUNC_cipher_update_fn aes_ocb_block_update;
+static OSSL_FUNC_cipher_final_fn aes_ocb_block_final;
+static OSSL_FUNC_cipher_cipher_fn aes_ocb_cipher;
+static OSSL_FUNC_cipher_freectx_fn aes_ocb_freectx;
+static OSSL_FUNC_cipher_dupctx_fn aes_ocb_dupctx;
+static OSSL_FUNC_cipher_get_ctx_params_fn aes_ocb_get_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn aes_ocb_set_ctx_params;
 
 /*
  * The following methods could be moved into PROV_AES_OCB_HW if
@@ -470,13 +470,13 @@ static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
 }
 
 #define IMPLEMENT_cipher(mode, UCMODE, flags, kbits, blkbits, ivbits)          \
-static OSSL_OP_cipher_get_params_fn aes_##kbits##_##mode##_get_params;         \
+static OSSL_FUNC_cipher_get_params_fn aes_##kbits##_##mode##_get_params;       \
 static int aes_##kbits##_##mode##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,         \
                                      flags, kbits, blkbits, ivbits);           \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn aes_##kbits##_##mode##_newctx;                 \
+static OSSL_FUNC_cipher_newctx_fn aes_##kbits##_##mode##_newctx;               \
 static void *aes_##kbits##_##mode##_newctx(void *provctx)                      \
 {                                                                              \
     return aes_##mode##_newctx(provctx, kbits, blkbits, ivbits,                \

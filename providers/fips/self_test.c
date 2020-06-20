@@ -61,7 +61,7 @@ void cleanup(void);
  * If we're run on a platform where we don't know how to define the DEP then
  * the self-tests will never get triggered (FIPS_state never moves to
  * FIPS_STATE_SELFTEST). This will be detected as an error when SELF_TEST_post()
- * is called from OSSL_provider_init(), and so the fips module will be unusable
+ * is called from OSSL_FUNC_provider_init(), and so the fips module will be unusable
  * on those platforms.
  */
 #if defined(_WIN32) || defined(__CYGWIN__)
@@ -130,7 +130,7 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
  * the result matches the expected value.
  * Return 1 if verified, or 0 if it fails.
  */
-static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
+static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex_cb,
                             unsigned char *expected, size_t expected_len,
                             OPENSSL_CTX *libctx, OSSL_SELF_TEST *ev,
                             const char *event_type)

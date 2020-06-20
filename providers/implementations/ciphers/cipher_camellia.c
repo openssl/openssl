@@ -18,8 +18,8 @@
 #include "cipher_camellia.h"
 #include "prov/implementations.h"
 
-static OSSL_OP_cipher_freectx_fn camellia_freectx;
-static OSSL_OP_cipher_dupctx_fn camellia_dupctx;
+static OSSL_FUNC_cipher_freectx_fn camellia_freectx;
+static OSSL_FUNC_cipher_dupctx_fn camellia_dupctx;
 
 static void camellia_freectx(void *vctx)
 {

@@ -70,63 +70,63 @@ static void *evp_kdf_from_dispatch(int name_id,
         case OSSL_FUNC_KDF_NEWCTX:
             if (kdf->newctx != NULL)
                 break;
-            kdf->newctx = OSSL_get_OP_kdf_newctx(fns);
+            kdf->newctx = OSSL_FUNC_kdf_newctx(fns);
             fnctxcnt++;
             break;
         case OSSL_FUNC_KDF_DUPCTX:
             if (kdf->dupctx != NULL)
                 break;
-            kdf->dupctx = OSSL_get_OP_kdf_dupctx(fns);
+            kdf->dupctx = OSSL_FUNC_kdf_dupctx(fns);
             break;
         case OSSL_FUNC_KDF_FREECTX:
             if (kdf->freectx != NULL)
                 break;
-            kdf->freectx = OSSL_get_OP_kdf_freectx(fns);
+            kdf->freectx = OSSL_FUNC_kdf_freectx(fns);
             fnctxcnt++;
             break;
         case OSSL_FUNC_KDF_RESET:
             if (kdf->reset != NULL)
                 break;
-            kdf->reset = OSSL_get_OP_kdf_reset(fns);
+            kdf->reset = OSSL_FUNC_kdf_reset(fns);
             break;
         case OSSL_FUNC_KDF_DERIVE:
             if (kdf->derive != NULL)
                 break;
-            kdf->derive = OSSL_get_OP_kdf_derive(fns);
+            kdf->derive = OSSL_FUNC_kdf_derive(fns);
             fnkdfcnt++;
             break;
         case OSSL_FUNC_KDF_GETTABLE_PARAMS:
             if (kdf->gettable_params != NULL)
                 break;
             kdf->gettable_params =
-                OSSL_get_OP_kdf_gettable_params(fns);
+                OSSL_FUNC_kdf_gettable_params(fns);
             break;
         case OSSL_FUNC_KDF_GETTABLE_CTX_PARAMS:
             if (kdf->gettable_ctx_params != NULL)
                 break;
             kdf->gettable_ctx_params =
-                OSSL_get_OP_kdf_gettable_ctx_params(fns);
+                OSSL_FUNC_kdf_gettable_ctx_params(fns);
             break;
         case OSSL_FUNC_KDF_SETTABLE_CTX_PARAMS:
             if (kdf->settable_ctx_params != NULL)
                 break;
             kdf->settable_ctx_params =
-                OSSL_get_OP_kdf_settable_ctx_params(fns);
+                OSSL_FUNC_kdf_settable_ctx_params(fns);
             break;
         case OSSL_FUNC_KDF_GET_PARAMS:
             if (kdf->get_params != NULL)
                 break;
-            kdf->get_params = OSSL_get_OP_kdf_get_params(fns);
+            kdf->get_params = OSSL_FUNC_kdf_get_params(fns);
             break;
         case OSSL_FUNC_KDF_GET_CTX_PARAMS:
             if (kdf->get_ctx_params != NULL)
                 break;
-            kdf->get_ctx_params = OSSL_get_OP_kdf_get_ctx_params(fns);
+            kdf->get_ctx_params = OSSL_FUNC_kdf_get_ctx_params(fns);
             break;
         case OSSL_FUNC_KDF_SET_CTX_PARAMS:
             if (kdf->set_ctx_params != NULL)
                 break;
-            kdf->set_ctx_params = OSSL_get_OP_kdf_set_ctx_params(fns);
+            kdf->set_ctx_params = OSSL_FUNC_kdf_set_ctx_params(fns);
             break;
         }
     }

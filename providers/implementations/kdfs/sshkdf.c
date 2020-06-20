@@ -22,14 +22,14 @@
 # include "prov/provider_util.h"
 
 /* See RFC 4253, Section 7.2 */
-static OSSL_OP_kdf_newctx_fn kdf_sshkdf_new;
-static OSSL_OP_kdf_freectx_fn kdf_sshkdf_free;
-static OSSL_OP_kdf_reset_fn kdf_sshkdf_reset;
-static OSSL_OP_kdf_derive_fn kdf_sshkdf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn kdf_sshkdf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn kdf_sshkdf_set_ctx_params;
-static OSSL_OP_kdf_gettable_ctx_params_fn kdf_sshkdf_gettable_ctx_params;
-static OSSL_OP_kdf_get_ctx_params_fn kdf_sshkdf_get_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn kdf_sshkdf_new;
+static OSSL_FUNC_kdf_freectx_fn kdf_sshkdf_free;
+static OSSL_FUNC_kdf_reset_fn kdf_sshkdf_reset;
+static OSSL_FUNC_kdf_derive_fn kdf_sshkdf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_sshkdf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kdf_sshkdf_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_sshkdf_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn kdf_sshkdf_get_ctx_params;
 
 static int SSHKDF(const EVP_MD *evp_md,
                   const unsigned char *key, size_t key_len,

@@ -78,13 +78,13 @@ struct prov_ccm_hw_st {
     OSSL_CCM_gettag_fn gettag;
 };
 
-OSSL_OP_cipher_encrypt_init_fn ccm_einit;
-OSSL_OP_cipher_decrypt_init_fn ccm_dinit;
-OSSL_OP_cipher_get_ctx_params_fn ccm_get_ctx_params;
-OSSL_OP_cipher_set_ctx_params_fn ccm_set_ctx_params;
-OSSL_OP_cipher_update_fn ccm_stream_update;
-OSSL_OP_cipher_final_fn ccm_stream_final;
-OSSL_OP_cipher_cipher_fn ccm_cipher;
+OSSL_FUNC_cipher_encrypt_init_fn ccm_einit;
+OSSL_FUNC_cipher_decrypt_init_fn ccm_dinit;
+OSSL_FUNC_cipher_get_ctx_params_fn ccm_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn ccm_set_ctx_params;
+OSSL_FUNC_cipher_update_fn ccm_stream_update;
+OSSL_FUNC_cipher_final_fn ccm_stream_final;
+OSSL_FUNC_cipher_cipher_fn ccm_cipher;
 void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw);
 
 int ccm_generic_setiv(PROV_CCM_CTX *ctx, const unsigned char *nonce,

@@ -24,8 +24,8 @@
 #define TDES_WRAP_FLAGS (EVP_CIPH_WRAP_MODE | EVP_CIPH_CUSTOM_IV)
 
 
-static OSSL_OP_cipher_update_fn tdes_wrap_update;
-static OSSL_OP_cipher_cipher_fn tdes_wrap_cipher;
+static OSSL_FUNC_cipher_update_fn tdes_wrap_update;
+static OSSL_FUNC_cipher_cipher_fn tdes_wrap_cipher;
 
 static const unsigned char wrap_iv[8] =
 {
@@ -167,13 +167,13 @@ static int tdes_wrap_update(void *vctx, unsigned char *out, size_t *outl,
 
 
 # define IMPLEMENT_WRAP_CIPHER(flags, kbits, blkbits, ivbits)                  \
-static OSSL_OP_cipher_newctx_fn tdes_wrap_newctx;                              \
+static OSSL_FUNC_cipher_newctx_fn tdes_wrap_newctx;                            \
 static void *tdes_wrap_newctx(void *provctx)                                   \
 {                                                                              \
     return tdes_newctx(provctx, EVP_CIPH_WRAP_MODE, kbits, blkbits, ivbits,    \
                        flags, PROV_CIPHER_HW_tdes_wrap_cbc());                 \
 }                                                                              \
-static OSSL_OP_cipher_get_params_fn tdes_wrap_get_params;                      \
+static OSSL_FUNC_cipher_get_params_fn tdes_wrap_get_params;                    \
 static int tdes_wrap_get_params(OSSL_PARAM params[])                           \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_WRAP_MODE, flags,        \

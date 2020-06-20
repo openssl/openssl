@@ -57,61 +57,61 @@ static void *evp_keyexch_from_dispatch(int name_id,
         case OSSL_FUNC_KEYEXCH_NEWCTX:
             if (exchange->newctx != NULL)
                 break;
-            exchange->newctx = OSSL_get_OP_keyexch_newctx(fns);
+            exchange->newctx = OSSL_FUNC_keyexch_newctx(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_INIT:
             if (exchange->init != NULL)
                 break;
-            exchange->init = OSSL_get_OP_keyexch_init(fns);
+            exchange->init = OSSL_FUNC_keyexch_init(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SET_PEER:
             if (exchange->set_peer != NULL)
                 break;
-            exchange->set_peer = OSSL_get_OP_keyexch_set_peer(fns);
+            exchange->set_peer = OSSL_FUNC_keyexch_set_peer(fns);
             break;
         case OSSL_FUNC_KEYEXCH_DERIVE:
             if (exchange->derive != NULL)
                 break;
-            exchange->derive = OSSL_get_OP_keyexch_derive(fns);
+            exchange->derive = OSSL_FUNC_keyexch_derive(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_FREECTX:
             if (exchange->freectx != NULL)
                 break;
-            exchange->freectx = OSSL_get_OP_keyexch_freectx(fns);
+            exchange->freectx = OSSL_FUNC_keyexch_freectx(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_DUPCTX:
             if (exchange->dupctx != NULL)
                 break;
-            exchange->dupctx = OSSL_get_OP_keyexch_dupctx(fns);
+            exchange->dupctx = OSSL_FUNC_keyexch_dupctx(fns);
             break;
         case OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS:
             if (exchange->get_ctx_params != NULL)
                 break;
-            exchange->get_ctx_params = OSSL_get_OP_keyexch_get_ctx_params(fns);
+            exchange->get_ctx_params = OSSL_FUNC_keyexch_get_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS:
             if (exchange->gettable_ctx_params != NULL)
                 break;
             exchange->gettable_ctx_params
-                = OSSL_get_OP_keyexch_gettable_ctx_params(fns);
+                = OSSL_FUNC_keyexch_gettable_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS:
             if (exchange->set_ctx_params != NULL)
                 break;
-            exchange->set_ctx_params = OSSL_get_OP_keyexch_set_ctx_params(fns);
+            exchange->set_ctx_params = OSSL_FUNC_keyexch_set_ctx_params(fns);
             sparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS:
             if (exchange->settable_ctx_params != NULL)
                 break;
             exchange->settable_ctx_params
-                = OSSL_get_OP_keyexch_settable_ctx_params(fns);
+                = OSSL_FUNC_keyexch_settable_ctx_params(fns);
             sparamfncnt++;
             break;
         }

@@ -11,7 +11,7 @@
 #include <openssl/provider.h>
 #include "testutil.h"
 
-extern OSSL_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
+extern OSSL_FUNC_provider_init_fn PROVIDER_INIT_FUNCTION_NAME;
 
 static char buf[256];
 static OSSL_PARAM greeting_request[] = {

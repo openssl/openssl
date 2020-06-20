@@ -285,70 +285,70 @@ static void *evp_asym_cipher_from_dispatch(int name_id,
         case OSSL_FUNC_ASYM_CIPHER_NEWCTX:
             if (cipher->newctx != NULL)
                 break;
-            cipher->newctx = OSSL_get_OP_asym_cipher_newctx(fns);
+            cipher->newctx = OSSL_FUNC_asym_cipher_newctx(fns);
             ctxfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT:
             if (cipher->encrypt_init != NULL)
                 break;
-            cipher->encrypt_init = OSSL_get_OP_asym_cipher_encrypt_init(fns);
+            cipher->encrypt_init = OSSL_FUNC_asym_cipher_encrypt_init(fns);
             encfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_ENCRYPT:
             if (cipher->encrypt != NULL)
                 break;
-            cipher->encrypt = OSSL_get_OP_asym_cipher_encrypt(fns);
+            cipher->encrypt = OSSL_FUNC_asym_cipher_encrypt(fns);
             encfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT:
             if (cipher->decrypt_init != NULL)
                 break;
-            cipher->decrypt_init = OSSL_get_OP_asym_cipher_decrypt_init(fns);
+            cipher->decrypt_init = OSSL_FUNC_asym_cipher_decrypt_init(fns);
             decfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_DECRYPT:
             if (cipher->decrypt != NULL)
                 break;
-            cipher->decrypt = OSSL_get_OP_asym_cipher_decrypt(fns);
+            cipher->decrypt = OSSL_FUNC_asym_cipher_decrypt(fns);
             decfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_FREECTX:
             if (cipher->freectx != NULL)
                 break;
-            cipher->freectx = OSSL_get_OP_asym_cipher_freectx(fns);
+            cipher->freectx = OSSL_FUNC_asym_cipher_freectx(fns);
             ctxfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_DUPCTX:
             if (cipher->dupctx != NULL)
                 break;
-            cipher->dupctx = OSSL_get_OP_asym_cipher_dupctx(fns);
+            cipher->dupctx = OSSL_FUNC_asym_cipher_dupctx(fns);
             break;
         case OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS:
             if (cipher->get_ctx_params != NULL)
                 break;
             cipher->get_ctx_params
-                = OSSL_get_OP_asym_cipher_get_ctx_params(fns);
+                = OSSL_FUNC_asym_cipher_get_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS:
             if (cipher->gettable_ctx_params != NULL)
                 break;
             cipher->gettable_ctx_params
-                = OSSL_get_OP_asym_cipher_gettable_ctx_params(fns);
+                = OSSL_FUNC_asym_cipher_gettable_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS:
             if (cipher->set_ctx_params != NULL)
                 break;
             cipher->set_ctx_params
-                = OSSL_get_OP_asym_cipher_set_ctx_params(fns);
+                = OSSL_FUNC_asym_cipher_set_ctx_params(fns);
             sparamfncnt++;
             break;
         case OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS:
             if (cipher->settable_ctx_params != NULL)
                 break;
             cipher->settable_ctx_params
-                = OSSL_get_OP_asym_cipher_settable_ctx_params(fns);
+                = OSSL_FUNC_asym_cipher_settable_ctx_params(fns);
             sparamfncnt++;
             break;
         }

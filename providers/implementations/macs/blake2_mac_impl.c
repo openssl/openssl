@@ -21,16 +21,16 @@
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_mac_newctx_fn blake2_mac_new;
-static OSSL_OP_mac_dupctx_fn blake2_mac_dup;
-static OSSL_OP_mac_freectx_fn blake2_mac_free;
-static OSSL_OP_mac_gettable_ctx_params_fn blake2_gettable_ctx_params;
-static OSSL_OP_mac_get_ctx_params_fn blake2_get_ctx_params;
-static OSSL_OP_mac_settable_ctx_params_fn blake2_mac_settable_ctx_params;
-static OSSL_OP_mac_set_ctx_params_fn blake2_mac_set_ctx_params;
-static OSSL_OP_mac_init_fn blake2_mac_init;
-static OSSL_OP_mac_update_fn blake2_mac_update;
-static OSSL_OP_mac_final_fn blake2_mac_final;
+static OSSL_FUNC_mac_newctx_fn blake2_mac_new;
+static OSSL_FUNC_mac_dupctx_fn blake2_mac_dup;
+static OSSL_FUNC_mac_freectx_fn blake2_mac_free;
+static OSSL_FUNC_mac_gettable_ctx_params_fn blake2_gettable_ctx_params;
+static OSSL_FUNC_mac_get_ctx_params_fn blake2_get_ctx_params;
+static OSSL_FUNC_mac_settable_ctx_params_fn blake2_mac_settable_ctx_params;
+static OSSL_FUNC_mac_set_ctx_params_fn blake2_mac_set_ctx_params;
+static OSSL_FUNC_mac_init_fn blake2_mac_init;
+static OSSL_FUNC_mac_update_fn blake2_mac_update;
+static OSSL_FUNC_mac_final_fn blake2_mac_final;
 
 struct blake2_mac_data_st {
     BLAKE2_CTX ctx;

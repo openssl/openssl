@@ -13,9 +13,9 @@
 #include "prov/implementations.h" /* ec_keymgmt_functions */
 #include "serializer_local.h"
 
-void ec_get_new_free_import(OSSL_OP_keymgmt_new_fn **ec_new,
-                            OSSL_OP_keymgmt_free_fn **ec_free,
-                            OSSL_OP_keymgmt_import_fn **ec_import)
+void ec_get_new_free_import(OSSL_FUNC_keymgmt_new_fn **ec_new,
+                            OSSL_FUNC_keymgmt_free_fn **ec_free,
+                            OSSL_FUNC_keymgmt_import_fn **ec_import)
 {
     *ec_new = ossl_prov_get_keymgmt_new(ec_keymgmt_functions);
     *ec_free = ossl_prov_get_keymgmt_free(ec_keymgmt_functions);

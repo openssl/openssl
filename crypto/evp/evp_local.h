@@ -112,33 +112,33 @@ struct evp_keymgmt_st {
     CRYPTO_RWLOCK *lock;
 
     /* Constructor(s), destructor, information */
-    OSSL_OP_keymgmt_new_fn *new;
-    OSSL_OP_keymgmt_free_fn *free;
-    OSSL_OP_keymgmt_get_params_fn *get_params;
-    OSSL_OP_keymgmt_gettable_params_fn *gettable_params;
-    OSSL_OP_keymgmt_set_params_fn *set_params;
-    OSSL_OP_keymgmt_settable_params_fn *settable_params;
+    OSSL_FUNC_keymgmt_new_fn *new;
+    OSSL_FUNC_keymgmt_free_fn *free;
+    OSSL_FUNC_keymgmt_get_params_fn *get_params;
+    OSSL_FUNC_keymgmt_gettable_params_fn *gettable_params;
+    OSSL_FUNC_keymgmt_set_params_fn *set_params;
+    OSSL_FUNC_keymgmt_settable_params_fn *settable_params;
 
     /* Generation, a complex constructor */
-    OSSL_OP_keymgmt_gen_init_fn *gen_init;
-    OSSL_OP_keymgmt_gen_set_template_fn *gen_set_template;
-    OSSL_OP_keymgmt_gen_set_params_fn *gen_set_params;
-    OSSL_OP_keymgmt_gen_settable_params_fn *gen_settable_params;
-    OSSL_OP_keymgmt_gen_fn *gen;
-    OSSL_OP_keymgmt_gen_cleanup_fn *gen_cleanup;
+    OSSL_FUNC_keymgmt_gen_init_fn *gen_init;
+    OSSL_FUNC_keymgmt_gen_set_template_fn *gen_set_template;
+    OSSL_FUNC_keymgmt_gen_set_params_fn *gen_set_params;
+    OSSL_FUNC_keymgmt_gen_settable_params_fn *gen_settable_params;
+    OSSL_FUNC_keymgmt_gen_fn *gen;
+    OSSL_FUNC_keymgmt_gen_cleanup_fn *gen_cleanup;
 
     /* Key object checking */
-    OSSL_OP_keymgmt_query_operation_name_fn *query_operation_name;
-    OSSL_OP_keymgmt_has_fn *has;
-    OSSL_OP_keymgmt_validate_fn *validate;
-    OSSL_OP_keymgmt_match_fn *match;
+    OSSL_FUNC_keymgmt_query_operation_name_fn *query_operation_name;
+    OSSL_FUNC_keymgmt_has_fn *has;
+    OSSL_FUNC_keymgmt_validate_fn *validate;
+    OSSL_FUNC_keymgmt_match_fn *match;
 
     /* Import and export routines */
-    OSSL_OP_keymgmt_import_fn *import;
-    OSSL_OP_keymgmt_import_types_fn *import_types;
-    OSSL_OP_keymgmt_export_fn *export;
-    OSSL_OP_keymgmt_export_types_fn *export_types;
-    OSSL_OP_keymgmt_copy_fn *copy;
+    OSSL_FUNC_keymgmt_import_fn *import;
+    OSSL_FUNC_keymgmt_import_types_fn *import_types;
+    OSSL_FUNC_keymgmt_export_fn *export;
+    OSSL_FUNC_keymgmt_export_types_fn *export_types;
+    OSSL_FUNC_keymgmt_copy_fn *copy;
 } /* EVP_KEYMGMT */ ;
 
 struct evp_keyexch_st {
@@ -147,16 +147,16 @@ struct evp_keyexch_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_keyexch_newctx_fn *newctx;
-    OSSL_OP_keyexch_init_fn *init;
-    OSSL_OP_keyexch_set_peer_fn *set_peer;
-    OSSL_OP_keyexch_derive_fn *derive;
-    OSSL_OP_keyexch_freectx_fn *freectx;
-    OSSL_OP_keyexch_dupctx_fn *dupctx;
-    OSSL_OP_keyexch_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_keyexch_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_keyexch_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_keyexch_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_keyexch_newctx_fn *newctx;
+    OSSL_FUNC_keyexch_init_fn *init;
+    OSSL_FUNC_keyexch_set_peer_fn *set_peer;
+    OSSL_FUNC_keyexch_derive_fn *derive;
+    OSSL_FUNC_keyexch_freectx_fn *freectx;
+    OSSL_FUNC_keyexch_dupctx_fn *dupctx;
+    OSSL_FUNC_keyexch_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_keyexch_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_keyexch_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_keyexch_gettable_ctx_params_fn *gettable_ctx_params;
 } /* EVP_KEYEXCH */;
 
 struct evp_signature_st {
@@ -165,31 +165,31 @@ struct evp_signature_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_signature_newctx_fn *newctx;
-    OSSL_OP_signature_sign_init_fn *sign_init;
-    OSSL_OP_signature_sign_fn *sign;
-    OSSL_OP_signature_verify_init_fn *verify_init;
-    OSSL_OP_signature_verify_fn *verify;
-    OSSL_OP_signature_verify_recover_init_fn *verify_recover_init;
-    OSSL_OP_signature_verify_recover_fn *verify_recover;
-    OSSL_OP_signature_digest_sign_init_fn *digest_sign_init;
-    OSSL_OP_signature_digest_sign_update_fn *digest_sign_update;
-    OSSL_OP_signature_digest_sign_final_fn *digest_sign_final;
-    OSSL_OP_signature_digest_sign_fn *digest_sign;
-    OSSL_OP_signature_digest_verify_init_fn *digest_verify_init;
-    OSSL_OP_signature_digest_verify_update_fn *digest_verify_update;
-    OSSL_OP_signature_digest_verify_final_fn *digest_verify_final;
-    OSSL_OP_signature_digest_verify_fn *digest_verify;
-    OSSL_OP_signature_freectx_fn *freectx;
-    OSSL_OP_signature_dupctx_fn *dupctx;
-    OSSL_OP_signature_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_signature_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_signature_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_signature_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_signature_get_ctx_md_params_fn *get_ctx_md_params;
-    OSSL_OP_signature_gettable_ctx_md_params_fn *gettable_ctx_md_params;
-    OSSL_OP_signature_set_ctx_md_params_fn *set_ctx_md_params;
-    OSSL_OP_signature_settable_ctx_md_params_fn *settable_ctx_md_params;
+    OSSL_FUNC_signature_newctx_fn *newctx;
+    OSSL_FUNC_signature_sign_init_fn *sign_init;
+    OSSL_FUNC_signature_sign_fn *sign;
+    OSSL_FUNC_signature_verify_init_fn *verify_init;
+    OSSL_FUNC_signature_verify_fn *verify;
+    OSSL_FUNC_signature_verify_recover_init_fn *verify_recover_init;
+    OSSL_FUNC_signature_verify_recover_fn *verify_recover;
+    OSSL_FUNC_signature_digest_sign_init_fn *digest_sign_init;
+    OSSL_FUNC_signature_digest_sign_update_fn *digest_sign_update;
+    OSSL_FUNC_signature_digest_sign_final_fn *digest_sign_final;
+    OSSL_FUNC_signature_digest_sign_fn *digest_sign;
+    OSSL_FUNC_signature_digest_verify_init_fn *digest_verify_init;
+    OSSL_FUNC_signature_digest_verify_update_fn *digest_verify_update;
+    OSSL_FUNC_signature_digest_verify_final_fn *digest_verify_final;
+    OSSL_FUNC_signature_digest_verify_fn *digest_verify;
+    OSSL_FUNC_signature_freectx_fn *freectx;
+    OSSL_FUNC_signature_dupctx_fn *dupctx;
+    OSSL_FUNC_signature_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_signature_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_signature_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_signature_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_signature_get_ctx_md_params_fn *get_ctx_md_params;
+    OSSL_FUNC_signature_gettable_ctx_md_params_fn *gettable_ctx_md_params;
+    OSSL_FUNC_signature_set_ctx_md_params_fn *set_ctx_md_params;
+    OSSL_FUNC_signature_settable_ctx_md_params_fn *settable_ctx_md_params;
 } /* EVP_SIGNATURE */;
 
 struct evp_asym_cipher_st {
@@ -198,17 +198,17 @@ struct evp_asym_cipher_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_asym_cipher_newctx_fn *newctx;
-    OSSL_OP_asym_cipher_encrypt_init_fn *encrypt_init;
-    OSSL_OP_asym_cipher_encrypt_fn *encrypt;
-    OSSL_OP_asym_cipher_decrypt_init_fn *decrypt_init;
-    OSSL_OP_asym_cipher_decrypt_fn *decrypt;
-    OSSL_OP_asym_cipher_freectx_fn *freectx;
-    OSSL_OP_asym_cipher_dupctx_fn *dupctx;
-    OSSL_OP_asym_cipher_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_asym_cipher_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_asym_cipher_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_asym_cipher_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_asym_cipher_newctx_fn *newctx;
+    OSSL_FUNC_asym_cipher_encrypt_init_fn *encrypt_init;
+    OSSL_FUNC_asym_cipher_encrypt_fn *encrypt;
+    OSSL_FUNC_asym_cipher_decrypt_init_fn *decrypt_init;
+    OSSL_FUNC_asym_cipher_decrypt_fn *decrypt;
+    OSSL_FUNC_asym_cipher_freectx_fn *freectx;
+    OSSL_FUNC_asym_cipher_dupctx_fn *dupctx;
+    OSSL_FUNC_asym_cipher_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_asym_cipher_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_asym_cipher_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_asym_cipher_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_ASYM_CIPHER */;
 
 int PKCS5_v2_PBKDF2_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,

@@ -19,13 +19,13 @@
 /* TODO(3.0) Figure out what flags are required */
 #define CHACHA20_FLAGS (EVP_CIPH_CUSTOM_IV | EVP_CIPH_ALWAYS_CALL_INIT)
 
-static OSSL_OP_cipher_newctx_fn chacha20_newctx;
-static OSSL_OP_cipher_freectx_fn chacha20_freectx;
-static OSSL_OP_cipher_get_params_fn chacha20_get_params;
-static OSSL_OP_cipher_get_ctx_params_fn chacha20_get_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn chacha20_set_ctx_params;
-static OSSL_OP_cipher_gettable_ctx_params_fn chacha20_gettable_ctx_params;
-static OSSL_OP_cipher_settable_ctx_params_fn chacha20_settable_ctx_params;
+static OSSL_FUNC_cipher_newctx_fn chacha20_newctx;
+static OSSL_FUNC_cipher_freectx_fn chacha20_freectx;
+static OSSL_FUNC_cipher_get_params_fn chacha20_get_params;
+static OSSL_FUNC_cipher_get_ctx_params_fn chacha20_get_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn chacha20_set_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn chacha20_gettable_ctx_params;
+static OSSL_FUNC_cipher_settable_ctx_params_fn chacha20_settable_ctx_params;
 #define chacha20_cipher cipher_generic_cipher
 #define chacha20_update cipher_generic_stream_update
 #define chacha20_final cipher_generic_stream_final

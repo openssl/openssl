@@ -86,12 +86,12 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
  * together. Don't use this!
  */
 
-static OSSL_OP_keyexch_newctx_fn xor_newctx;
-static OSSL_OP_keyexch_init_fn xor_init;
-static OSSL_OP_keyexch_set_peer_fn xor_set_peer;
-static OSSL_OP_keyexch_derive_fn xor_derive;
-static OSSL_OP_keyexch_freectx_fn xor_freectx;
-static OSSL_OP_keyexch_dupctx_fn xor_dupctx;
+static OSSL_FUNC_keyexch_newctx_fn xor_newctx;
+static OSSL_FUNC_keyexch_init_fn xor_init;
+static OSSL_FUNC_keyexch_set_peer_fn xor_set_peer;
+static OSSL_FUNC_keyexch_derive_fn xor_derive;
+static OSSL_FUNC_keyexch_freectx_fn xor_freectx;
+static OSSL_FUNC_keyexch_dupctx_fn xor_dupctx;
 
 typedef struct {
     XORKEY *key;
@@ -186,19 +186,19 @@ static const OSSL_ALGORITHM tls_prov_keyexch[] = {
 
 /* Key Management for the dummy XOR key exchange algorithm */
 
-static OSSL_OP_keymgmt_new_fn xor_newdata;
-static OSSL_OP_keymgmt_free_fn xor_freedata;
-static OSSL_OP_keymgmt_has_fn xor_has;
-static OSSL_OP_keymgmt_copy_fn xor_copy;
-static OSSL_OP_keymgmt_gen_init_fn xor_gen_init;
-static OSSL_OP_keymgmt_gen_set_params_fn xor_gen_set_params;
-static OSSL_OP_keymgmt_gen_settable_params_fn xor_gen_settable_params;
-static OSSL_OP_keymgmt_gen_fn xor_gen;
-static OSSL_OP_keymgmt_gen_cleanup_fn xor_gen_cleanup;
-static OSSL_OP_keymgmt_get_params_fn xor_get_params;
-static OSSL_OP_keymgmt_gettable_params_fn xor_gettable_params;
-static OSSL_OP_keymgmt_set_params_fn xor_set_params;
-static OSSL_OP_keymgmt_settable_params_fn xor_settable_params;
+static OSSL_FUNC_keymgmt_new_fn xor_newdata;
+static OSSL_FUNC_keymgmt_free_fn xor_freedata;
+static OSSL_FUNC_keymgmt_has_fn xor_has;
+static OSSL_FUNC_keymgmt_copy_fn xor_copy;
+static OSSL_FUNC_keymgmt_gen_init_fn xor_gen_init;
+static OSSL_FUNC_keymgmt_gen_set_params_fn xor_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn xor_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_fn xor_gen;
+static OSSL_FUNC_keymgmt_gen_cleanup_fn xor_gen_cleanup;
+static OSSL_FUNC_keymgmt_get_params_fn xor_get_params;
+static OSSL_FUNC_keymgmt_gettable_params_fn xor_gettable_params;
+static OSSL_FUNC_keymgmt_set_params_fn xor_set_params;
+static OSSL_FUNC_keymgmt_settable_params_fn xor_settable_params;
 
 static void *xor_newdata(void *provctx)
 {

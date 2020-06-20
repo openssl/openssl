@@ -17,4 +17,4 @@ const char *ossl_prov_util_nid_to_name(int nid);
 int cipher_capable_aes_cbc_hmac_sha1(void);
 int cipher_capable_aes_cbc_hmac_sha256(void);
 
-OSSL_provider_get_capabilities_fn provider_get_capabilities;
+OSSL_FUNC_provider_get_capabilities_fn provider_get_capabilities;

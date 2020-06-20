@@ -61,12 +61,12 @@
 #include "prov/provider_util.h"
 #include "e_os.h"
 
-static OSSL_OP_kdf_newctx_fn kdf_tls1_prf_new;
-static OSSL_OP_kdf_freectx_fn kdf_tls1_prf_free;
-static OSSL_OP_kdf_reset_fn kdf_tls1_prf_reset;
-static OSSL_OP_kdf_derive_fn kdf_tls1_prf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn kdf_tls1_prf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn kdf_tls1_prf_set_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn kdf_tls1_prf_new;
+static OSSL_FUNC_kdf_freectx_fn kdf_tls1_prf_free;
+static OSSL_FUNC_kdf_reset_fn kdf_tls1_prf_reset;
+static OSSL_FUNC_kdf_derive_fn kdf_tls1_prf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_tls1_prf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kdf_tls1_prf_set_ctx_params;
 
 static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
                         const unsigned char *sec, size_t slen,

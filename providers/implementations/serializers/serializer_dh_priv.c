@@ -25,19 +25,19 @@
 #include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
-static OSSL_OP_serializer_newctx_fn dh_priv_newctx;
-static OSSL_OP_serializer_freectx_fn dh_priv_freectx;
-static OSSL_OP_serializer_set_ctx_params_fn dh_priv_set_ctx_params;
-static OSSL_OP_serializer_settable_ctx_params_fn dh_priv_settable_ctx_params;
-static OSSL_OP_serializer_serialize_data_fn dh_priv_der_data;
-static OSSL_OP_serializer_serialize_object_fn dh_priv_der;
-static OSSL_OP_serializer_serialize_data_fn dh_pem_priv_data;
-static OSSL_OP_serializer_serialize_object_fn dh_pem_priv;
+static OSSL_FUNC_serializer_newctx_fn dh_priv_newctx;
+static OSSL_FUNC_serializer_freectx_fn dh_priv_freectx;
+static OSSL_FUNC_serializer_set_ctx_params_fn dh_priv_set_ctx_params;
+static OSSL_FUNC_serializer_settable_ctx_params_fn dh_priv_settable_ctx_params;
+static OSSL_FUNC_serializer_serialize_data_fn dh_priv_der_data;
+static OSSL_FUNC_serializer_serialize_object_fn dh_priv_der;
+static OSSL_FUNC_serializer_serialize_data_fn dh_pem_priv_data;
+static OSSL_FUNC_serializer_serialize_object_fn dh_pem_priv;
 
-static OSSL_OP_serializer_newctx_fn dh_print_newctx;
-static OSSL_OP_serializer_freectx_fn dh_print_freectx;
-static OSSL_OP_serializer_serialize_data_fn dh_priv_print_data;
-static OSSL_OP_serializer_serialize_object_fn dh_priv_print;
+static OSSL_FUNC_serializer_newctx_fn dh_print_newctx;
+static OSSL_FUNC_serializer_freectx_fn dh_print_freectx;
+static OSSL_FUNC_serializer_serialize_data_fn dh_priv_print_data;
+static OSSL_FUNC_serializer_serialize_object_fn dh_priv_print;
 
  /*
  * Context used for private key serialization.
@@ -123,9 +123,9 @@ static int dh_priv_der_data(void *vctx, const OSSL_PARAM params[],
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
-    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
-    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
+    OSSL_FUNC_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_FUNC_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_FUNC_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
     if (dh_import != NULL) {
@@ -168,9 +168,9 @@ static int dh_pem_priv_data(void *vctx, const OSSL_PARAM params[],
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
-    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
-    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
+    OSSL_FUNC_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_FUNC_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_FUNC_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
     if (dh_import != NULL) {
@@ -224,9 +224,9 @@ static int dh_priv_print_data(void *vctx, const OSSL_PARAM params[],
                               OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
     struct dh_priv_ctx_st *ctx = vctx;
-    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
-    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
-    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
+    OSSL_FUNC_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_FUNC_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_FUNC_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
     if (dh_import != NULL) {

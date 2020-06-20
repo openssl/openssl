@@ -26,25 +26,25 @@
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
-static OSSL_OP_keymgmt_new_fn dh_newdata;
-static OSSL_OP_keymgmt_free_fn dh_freedata;
-static OSSL_OP_keymgmt_gen_init_fn dh_gen_init;
-static OSSL_OP_keymgmt_gen_set_template_fn dh_gen_set_template;
-static OSSL_OP_keymgmt_gen_set_params_fn dh_gen_set_params;
-static OSSL_OP_keymgmt_gen_settable_params_fn dh_gen_settable_params;
-static OSSL_OP_keymgmt_gen_fn dh_gen;
-static OSSL_OP_keymgmt_gen_cleanup_fn dh_gen_cleanup;
-static OSSL_OP_keymgmt_get_params_fn dh_get_params;
-static OSSL_OP_keymgmt_gettable_params_fn dh_gettable_params;
-static OSSL_OP_keymgmt_set_params_fn dh_set_params;
-static OSSL_OP_keymgmt_settable_params_fn dh_settable_params;
-static OSSL_OP_keymgmt_has_fn dh_has;
-static OSSL_OP_keymgmt_match_fn dh_match;
-static OSSL_OP_keymgmt_validate_fn dh_validate;
-static OSSL_OP_keymgmt_import_fn dh_import;
-static OSSL_OP_keymgmt_import_types_fn dh_import_types;
-static OSSL_OP_keymgmt_export_fn dh_export;
-static OSSL_OP_keymgmt_export_types_fn dh_export_types;
+static OSSL_FUNC_keymgmt_new_fn dh_newdata;
+static OSSL_FUNC_keymgmt_free_fn dh_freedata;
+static OSSL_FUNC_keymgmt_gen_init_fn dh_gen_init;
+static OSSL_FUNC_keymgmt_gen_set_template_fn dh_gen_set_template;
+static OSSL_FUNC_keymgmt_gen_set_params_fn dh_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn dh_gen_settable_params;
+static OSSL_FUNC_keymgmt_gen_fn dh_gen;
+static OSSL_FUNC_keymgmt_gen_cleanup_fn dh_gen_cleanup;
+static OSSL_FUNC_keymgmt_get_params_fn dh_get_params;
+static OSSL_FUNC_keymgmt_gettable_params_fn dh_gettable_params;
+static OSSL_FUNC_keymgmt_set_params_fn dh_set_params;
+static OSSL_FUNC_keymgmt_settable_params_fn dh_settable_params;
+static OSSL_FUNC_keymgmt_has_fn dh_has;
+static OSSL_FUNC_keymgmt_match_fn dh_match;
+static OSSL_FUNC_keymgmt_validate_fn dh_validate;
+static OSSL_FUNC_keymgmt_import_fn dh_import;
+static OSSL_FUNC_keymgmt_import_types_fn dh_import_types;
+static OSSL_FUNC_keymgmt_export_fn dh_export;
+static OSSL_FUNC_keymgmt_export_types_fn dh_export_types;
 
 #define DH_POSSIBLE_SELECTIONS                                                 \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)

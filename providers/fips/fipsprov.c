@@ -38,15 +38,15 @@
  * Forward declarations to ensure that interface functions are correctly
  * defined.
  */
-static OSSL_provider_teardown_fn fips_teardown;
-static OSSL_provider_gettable_params_fn fips_gettable_params;
-static OSSL_provider_get_params_fn fips_get_params;
-static OSSL_provider_query_operation_fn fips_query;
+static OSSL_FUNC_provider_teardown_fn fips_teardown;
+static OSSL_FUNC_provider_gettable_params_fn fips_gettable_params;
+static OSSL_FUNC_provider_get_params_fn fips_get_params;
+static OSSL_FUNC_provider_query_operation_fn fips_query;
 
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, "provider=fips,fips=yes", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
-extern OSSL_core_thread_start_fn *c_thread_start;
+extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
 
 /*
  * TODO(3.0): Should these be stored in the provider side provctx? Could they
@@ -58,27 +58,27 @@ extern OSSL_core_thread_start_fn *c_thread_start;
 static SELF_TEST_POST_PARAMS selftest_params;
 
 /* Functions provided by the core */
-static OSSL_core_gettable_params_fn *c_gettable_params;
-static OSSL_core_get_params_fn *c_get_params;
-OSSL_core_thread_start_fn *c_thread_start;
-static OSSL_core_new_error_fn *c_new_error;
-static OSSL_core_set_error_debug_fn *c_set_error_debug;
-static OSSL_core_vset_error_fn *c_vset_error;
-static OSSL_core_set_error_mark_fn *c_set_error_mark;
-static OSSL_core_clear_last_error_mark_fn *c_clear_last_error_mark;
-static OSSL_core_pop_error_to_mark_fn *c_pop_error_to_mark;
-static OSSL_CRYPTO_malloc_fn *c_CRYPTO_malloc;
-static OSSL_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
-static OSSL_CRYPTO_free_fn *c_CRYPTO_free;
-static OSSL_CRYPTO_clear_free_fn *c_CRYPTO_clear_free;
-static OSSL_CRYPTO_realloc_fn *c_CRYPTO_realloc;
-static OSSL_CRYPTO_clear_realloc_fn *c_CRYPTO_clear_realloc;
-static OSSL_CRYPTO_secure_malloc_fn *c_CRYPTO_secure_malloc;
-static OSSL_CRYPTO_secure_zalloc_fn *c_CRYPTO_secure_zalloc;
-static OSSL_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
-static OSSL_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
-static OSSL_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
-static OSSL_BIO_vsnprintf_fn *c_BIO_vsnprintf;
+static OSSL_FUNC_core_gettable_params_fn *c_gettable_params;
+static OSSL_FUNC_core_get_params_fn *c_get_params;
+OSSL_FUNC_core_thread_start_fn *c_thread_start;
+static OSSL_FUNC_core_new_error_fn *c_new_error;
+static OSSL_FUNC_core_set_error_debug_fn *c_set_error_debug;
+static OSSL_FUNC_core_vset_error_fn *c_vset_error;
+static OSSL_FUNC_core_set_error_mark_fn *c_set_error_mark;
+static OSSL_FUNC_core_clear_last_error_mark_fn *c_clear_last_error_mark;
+static OSSL_FUNC_core_pop_error_to_mark_fn *c_pop_error_to_mark;
+static OSSL_FUNC_CRYPTO_malloc_fn *c_CRYPTO_malloc;
+static OSSL_FUNC_CRYPTO_zalloc_fn *c_CRYPTO_zalloc;
+static OSSL_FUNC_CRYPTO_free_fn *c_CRYPTO_free;
+static OSSL_FUNC_CRYPTO_clear_free_fn *c_CRYPTO_clear_free;
+static OSSL_FUNC_CRYPTO_realloc_fn *c_CRYPTO_realloc;
+static OSSL_FUNC_CRYPTO_clear_realloc_fn *c_CRYPTO_clear_realloc;
+static OSSL_FUNC_CRYPTO_secure_malloc_fn *c_CRYPTO_secure_malloc;
+static OSSL_FUNC_CRYPTO_secure_zalloc_fn *c_CRYPTO_secure_zalloc;
+static OSSL_FUNC_CRYPTO_secure_free_fn *c_CRYPTO_secure_free;
+static OSSL_FUNC_CRYPTO_secure_clear_free_fn *c_CRYPTO_secure_clear_free;
+static OSSL_FUNC_CRYPTO_secure_allocated_fn *c_CRYPTO_secure_allocated;
+static OSSL_FUNC_BIO_vsnprintf_fn *c_BIO_vsnprintf;
 
 typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;
@@ -588,98 +588,98 @@ static const OSSL_DISPATCH intern_dispatch_table[] = {
 };
 
 
-int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
+int OSSL_FUNC_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
     FIPS_GLOBAL *fgbl;
     OPENSSL_CTX *libctx = NULL;
-    OSSL_self_test_cb_fn *stcbfn = NULL;
-    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    OSSL_FUNC_self_test_cb_fn *stcbfn = NULL;
+    OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_get_core_get_library_context(in);
+            c_get_libctx = OSSL_FUNC_core_get_library_context(in);
             break;
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_get_core_gettable_params(in);
+            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_get_core_get_params(in);
+            c_get_params = OSSL_FUNC_core_get_params(in);
             break;
         case OSSL_FUNC_CORE_THREAD_START:
-            c_thread_start = OSSL_get_core_thread_start(in);
+            c_thread_start = OSSL_FUNC_core_thread_start(in);
             break;
         case OSSL_FUNC_CORE_NEW_ERROR:
-            c_new_error = OSSL_get_core_new_error(in);
+            c_new_error = OSSL_FUNC_core_new_error(in);
             break;
         case OSSL_FUNC_CORE_SET_ERROR_DEBUG:
-            c_set_error_debug = OSSL_get_core_set_error_debug(in);
+            c_set_error_debug = OSSL_FUNC_core_set_error_debug(in);
             break;
         case OSSL_FUNC_CORE_VSET_ERROR:
-            c_vset_error = OSSL_get_core_vset_error(in);
+            c_vset_error = OSSL_FUNC_core_vset_error(in);
             break;
         case OSSL_FUNC_CORE_SET_ERROR_MARK:
-            c_set_error_mark = OSSL_get_core_set_error_mark(in);
+            c_set_error_mark = OSSL_FUNC_core_set_error_mark(in);
             break;
         case OSSL_FUNC_CORE_CLEAR_LAST_ERROR_MARK:
-            c_clear_last_error_mark = OSSL_get_core_clear_last_error_mark(in);
+            c_clear_last_error_mark = OSSL_FUNC_core_clear_last_error_mark(in);
             break;
         case OSSL_FUNC_CORE_POP_ERROR_TO_MARK:
-            c_pop_error_to_mark = OSSL_get_core_pop_error_to_mark(in);
+            c_pop_error_to_mark = OSSL_FUNC_core_pop_error_to_mark(in);
             break;
         case OSSL_FUNC_CRYPTO_MALLOC:
-            c_CRYPTO_malloc = OSSL_get_CRYPTO_malloc(in);
+            c_CRYPTO_malloc = OSSL_FUNC_CRYPTO_malloc(in);
             break;
         case OSSL_FUNC_CRYPTO_ZALLOC:
-            c_CRYPTO_zalloc = OSSL_get_CRYPTO_zalloc(in);
+            c_CRYPTO_zalloc = OSSL_FUNC_CRYPTO_zalloc(in);
             break;
         case OSSL_FUNC_CRYPTO_FREE:
-            c_CRYPTO_free = OSSL_get_CRYPTO_free(in);
+            c_CRYPTO_free = OSSL_FUNC_CRYPTO_free(in);
             break;
         case OSSL_FUNC_CRYPTO_CLEAR_FREE:
-            c_CRYPTO_clear_free = OSSL_get_CRYPTO_clear_free(in);
+            c_CRYPTO_clear_free = OSSL_FUNC_CRYPTO_clear_free(in);
             break;
         case OSSL_FUNC_CRYPTO_REALLOC:
-            c_CRYPTO_realloc = OSSL_get_CRYPTO_realloc(in);
+            c_CRYPTO_realloc = OSSL_FUNC_CRYPTO_realloc(in);
             break;
         case OSSL_FUNC_CRYPTO_CLEAR_REALLOC:
-            c_CRYPTO_clear_realloc = OSSL_get_CRYPTO_clear_realloc(in);
+            c_CRYPTO_clear_realloc = OSSL_FUNC_CRYPTO_clear_realloc(in);
             break;
         case OSSL_FUNC_CRYPTO_SECURE_MALLOC:
-            c_CRYPTO_secure_malloc = OSSL_get_CRYPTO_secure_malloc(in);
+            c_CRYPTO_secure_malloc = OSSL_FUNC_CRYPTO_secure_malloc(in);
             break;
         case OSSL_FUNC_CRYPTO_SECURE_ZALLOC:
-            c_CRYPTO_secure_zalloc = OSSL_get_CRYPTO_secure_zalloc(in);
+            c_CRYPTO_secure_zalloc = OSSL_FUNC_CRYPTO_secure_zalloc(in);
             break;
         case OSSL_FUNC_CRYPTO_SECURE_FREE:
-            c_CRYPTO_secure_free = OSSL_get_CRYPTO_secure_free(in);
+            c_CRYPTO_secure_free = OSSL_FUNC_CRYPTO_secure_free(in);
             break;
         case OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE:
-            c_CRYPTO_secure_clear_free = OSSL_get_CRYPTO_secure_clear_free(in);
+            c_CRYPTO_secure_clear_free = OSSL_FUNC_CRYPTO_secure_clear_free(in);
             break;
         case OSSL_FUNC_CRYPTO_SECURE_ALLOCATED:
-            c_CRYPTO_secure_allocated = OSSL_get_CRYPTO_secure_allocated(in);
+            c_CRYPTO_secure_allocated = OSSL_FUNC_CRYPTO_secure_allocated(in);
             break;
         case OSSL_FUNC_BIO_NEW_FILE:
-            selftest_params.bio_new_file_cb = OSSL_get_BIO_new_file(in);
+            selftest_params.bio_new_file_cb = OSSL_FUNC_BIO_new_file(in);
             break;
         case OSSL_FUNC_BIO_NEW_MEMBUF:
-            selftest_params.bio_new_buffer_cb = OSSL_get_BIO_new_membuf(in);
+            selftest_params.bio_new_buffer_cb = OSSL_FUNC_BIO_new_membuf(in);
             break;
         case OSSL_FUNC_BIO_READ_EX:
-            selftest_params.bio_read_ex_cb = OSSL_get_BIO_read_ex(in);
+            selftest_params.bio_read_ex_cb = OSSL_FUNC_BIO_read_ex(in);
             break;
         case OSSL_FUNC_BIO_FREE:
-            selftest_params.bio_free_cb = OSSL_get_BIO_free(in);
+            selftest_params.bio_free_cb = OSSL_FUNC_BIO_free(in);
             break;
         case OSSL_FUNC_BIO_VSNPRINTF:
-            c_BIO_vsnprintf = OSSL_get_BIO_vsnprintf(in);
+            c_BIO_vsnprintf = OSSL_FUNC_BIO_vsnprintf(in);
             break;
         case OSSL_FUNC_SELF_TEST_CB: {
-            stcbfn = OSSL_get_self_test_cb(in);
+            stcbfn = OSSL_FUNC_self_test_cb(in);
             break;
         }
         default:
@@ -747,18 +747,18 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
  * the provider context of this inner instance with the same library context
  * that was used in the EVP call that initiated this recursive call.
  */
-OSSL_provider_init_fn fips_intern_provider_init;
+OSSL_FUNC_provider_init_fn fips_intern_provider_init;
 int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
                               const OSSL_DISPATCH *in,
                               const OSSL_DISPATCH **out,
                               void **provctx)
 {
-    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_get_core_get_library_context(in);
+            c_get_libctx = OSSL_FUNC_core_get_library_context(in);
             break;
         default:
             break;

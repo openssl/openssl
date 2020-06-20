@@ -24,15 +24,15 @@
 #include "prov/provider_ctx.h"
 #include "serializer_local.h"
 
-static OSSL_OP_serializer_newctx_fn dh_pub_newctx;
-static OSSL_OP_serializer_freectx_fn dh_pub_freectx;
-static OSSL_OP_serializer_serialize_data_fn dh_pub_der_data;
-static OSSL_OP_serializer_serialize_object_fn dh_pub_der;
-static OSSL_OP_serializer_serialize_data_fn dh_pub_pem_data;
-static OSSL_OP_serializer_serialize_object_fn dh_pub_pem;
+static OSSL_FUNC_serializer_newctx_fn dh_pub_newctx;
+static OSSL_FUNC_serializer_freectx_fn dh_pub_freectx;
+static OSSL_FUNC_serializer_serialize_data_fn dh_pub_der_data;
+static OSSL_FUNC_serializer_serialize_object_fn dh_pub_der;
+static OSSL_FUNC_serializer_serialize_data_fn dh_pub_pem_data;
+static OSSL_FUNC_serializer_serialize_object_fn dh_pub_pem;
 
-static OSSL_OP_serializer_serialize_data_fn dh_pub_print_data;
-static OSSL_OP_serializer_serialize_object_fn dh_pub_print;
+static OSSL_FUNC_serializer_serialize_data_fn dh_pub_print_data;
+static OSSL_FUNC_serializer_serialize_object_fn dh_pub_print;
 
 /* Public key : context */
 
@@ -53,9 +53,9 @@ static int dh_pub_der_data(void *ctx, const OSSL_PARAM params[],
                             OSSL_CORE_BIO *out,
                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
-    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
-    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
+    OSSL_FUNC_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_FUNC_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_FUNC_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
     if (dh_import != NULL) {
@@ -93,9 +93,9 @@ static int dh_pub_pem_data(void *ctx, const OSSL_PARAM params[],
                            OSSL_CORE_BIO *out,
                            OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
-    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
-    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
+    OSSL_FUNC_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_FUNC_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_FUNC_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
     if (dh_import != NULL) {
@@ -132,9 +132,9 @@ static int dh_pub_print_data(void *ctx, const OSSL_PARAM params[],
                              OSSL_CORE_BIO *out,
                              OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
 {
-    OSSL_OP_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
-    OSSL_OP_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
-    OSSL_OP_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
+    OSSL_FUNC_keymgmt_new_fn *dh_new = ossl_prov_get_keymgmt_dh_new();
+    OSSL_FUNC_keymgmt_free_fn *dh_free = ossl_prov_get_keymgmt_dh_free();
+    OSSL_FUNC_keymgmt_import_fn *dh_import = ossl_prov_get_keymgmt_dh_import();
     int ok = 0;
 
     if (dh_import != NULL) {

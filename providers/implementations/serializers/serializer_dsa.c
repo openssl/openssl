@@ -22,17 +22,17 @@
 #include "internal/ffc.h"
 #include "crypto/dsa.h"
 
-OSSL_OP_keymgmt_new_fn *ossl_prov_get_keymgmt_dsa_new(void)
+OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_dsa_new(void)
 {
     return ossl_prov_get_keymgmt_new(dsa_keymgmt_functions);
 }
 
-OSSL_OP_keymgmt_free_fn *ossl_prov_get_keymgmt_dsa_free(void)
+OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_dsa_free(void)
 {
     return ossl_prov_get_keymgmt_free(dsa_keymgmt_functions);
 }
 
-OSSL_OP_keymgmt_import_fn *ossl_prov_get_keymgmt_dsa_import(void)
+OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_dsa_import(void)
 {
     return ossl_prov_get_keymgmt_import(dsa_keymgmt_functions);
 }
