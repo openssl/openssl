@@ -75,7 +75,7 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
-static BIO *check_bio(BIO *bp, const char *what, int flags);
+static BIO *check_bio(BIO *bp, const char *what, char mode, int format);
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
@@ -382,7 +382,7 @@ static CONF *app_load_config_quiet(const char *filename)
         return NULL;
 
     /* If we fail now, it's likely malloc or similar internal error. */
-    in = check_bio(BIO_new_fp(fp, mode), filename, mode);
+    in = check_bio(BIO_new_fp(fp, mode), filename, 'r', B_FORMAT_TEXT);
     conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
@@ -2368,6 +2368,19 @@ int raw_write_stdout(const void *buf, int siz)
 }
 #endif
 
+static const char *modeverb(char mode)
+{
+    switch (mode) {
+    case 'a':
+        return "appending";
+    case 'r':
+        return "reading";
+    case 'w':
+        return "writing";
+    }
+    return "(doing something)";
+}
+
 /*
  * Centralized handling of input and output files with format specification
  * The format is meant to show what the input and output is supposed to be,
@@ -2379,11 +2392,11 @@ int raw_write_stdout(const void *buf, int siz)
  * don't free up other resources on the error path because they know it will
  * be handled when the process exits.
  */
-static BIO *check_bio(BIO *bp, const char *what, int mode)
+static BIO *check_bio(BIO *bp, const char *what, char mode, int format)
 {
     if (bp == NULL)
-        app_bail_out("%s: Could not open %s in mode 0x%x\n",
-                     opt_getprog(), what, mode);
+        app_bail_out("%s: Could not open %s for %s (format 0x%x)\n",
+                     opt_getprog(), what, modeverb(mode), format);
     return bp;
 }
 
@@ -2391,44 +2404,45 @@ BIO *dup_bio_in(int format)
 {
     int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
 
-    return check_bio(BIO_new_fp(stdin, mode), "stdin", mode);
+    return check_bio(BIO_new_fp(stdin, mode), "stdin", 'r', mode);
 }
 
 BIO *dup_bio_out(int format)
 {
     int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
-    BIO *b = check_bio(BIO_new_fp(stdout, mode), "stdout", mode);
+    BIO *b = check_bio(BIO_new_fp(stdout, mode), "stdout", 'w', format);
     void *prefix = NULL;
 
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
         b = BIO_push(check_bio(BIO_new(BIO_f_linebuffer()),
-                               "linebuffer stdout", mode),
+                               "linebuffer stdout", 'w', format),
                      b);
 #endif
 
     if (FMT_istext(format)
             && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
-        b = BIO_push(check_bio(BIO_new(BIO_f_prefix()), "prefix stdout", mode),
+        b = BIO_push(check_bio(BIO_new(BIO_f_prefix()),
+                               "prefix stdout", 'w', format),
                      b);
         BIO_set_prefix(b, prefix);
     }
 
-    return check_bio(b, "stdout", mode);
+    return check_bio(b, "stdout", 'w', format);
 }
 
 BIO *dup_bio_err(int format)
 {
     int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
-    BIO *b = check_bio(BIO_new_fp(stderr, mode), "stderr", mode);
+    BIO *b = check_bio(BIO_new_fp(stderr, mode), "stderr", 'w', format);
 
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
         b = BIO_push(check_bio(BIO_new(BIO_f_linebuffer()),
-                               "linebuffer stderr", mode),
+                               "linebuffer stderr", 'w', format),
                      b);
 #endif
-    return check_bio(b, "stderr", mode);
+    return check_bio(b, "stderr", 'w', format);
 }
 
 void unbuffer(FILE *fp)
@@ -2532,8 +2546,8 @@ BIO *bio_open_default(const char *filename, char mode, int format)
 
     b = BIO_new_file(filename, modestr(mode, format));
     if (mode == 'r')
-        return check_bio(b, "stdin", format);
-    return check_bio(b, "stdout", format);
+        return check_bio(b, "stdin", mode, format);
+    return check_bio(b, "stdout", mode, format);
 }
 
 void wait_for_async(SSL *s)
