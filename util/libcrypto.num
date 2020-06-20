@@ -2004,7 +2004,7 @@ PEM_read_bio_RSA_PUBKEY                 2050	3_0_0	EXIST::FUNCTION:RSA
 OCSP_SINGLERESP_new                     2051	3_0_0	EXIST::FUNCTION:OCSP
 ASN1_SCTX_free                          2052	3_0_0	EXIST::FUNCTION:
 i2d_ECPrivateKey_fp                     2053	3_0_0	EXIST::FUNCTION:EC,STDIO
-EVP_CIPHER_CTX_original_iv              2054	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_original_iv              2054	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 PKCS7_SIGNED_free                       2055	3_0_0	EXIST::FUNCTION:
 X509_TRUST_get0_name                    2056	3_0_0	EXIST::FUNCTION:
 ENGINE_get_load_pubkey_function         2057	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
@@ -2046,7 +2046,7 @@ CMS_SignerInfo_cert_cmp                 2092	3_0_0	EXIST::FUNCTION:CMS
 PEM_read                                2093	3_0_0	EXIST::FUNCTION:STDIO
 X509_STORE_set_depth                    2094	3_0_0	EXIST::FUNCTION:
 EC_KEY_METHOD_get_sign                  2095	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
-EVP_CIPHER_CTX_iv                       2096	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_iv                       2096	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 i2d_ESS_SIGNING_CERT                    2097	3_0_0	EXIST::FUNCTION:
 TS_RESP_set_tst_info                    2098	3_0_0	EXIST::FUNCTION:TS
 EVP_PKEY_CTX_set_data                   2099	3_0_0	EXIST::FUNCTION:
@@ -2840,7 +2840,7 @@ EVP_PKEY_encrypt_init                   2901	3_0_0	EXIST::FUNCTION:
 i2d_RSAPrivateKey_fp                    2902	3_0_0	EXIST::FUNCTION:RSA,STDIO
 X509_REQ_print                          2903	3_0_0	EXIST::FUNCTION:
 RSA_size                                2904	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
-EVP_CIPHER_CTX_iv_noconst               2905	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_iv_noconst               2905	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 DH_set_default_method                   2906	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 X509_ALGOR_new                          2907	3_0_0	EXIST::FUNCTION:
 EVP_aes_192_ofb                         2908	3_0_0	EXIST::FUNCTION:
@@ -5250,3 +5250,5 @@ EVP_PKEY_CTX_set_dh_kdf_outlen          ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_get_dh_kdf_outlen          ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_set0_dh_kdf_ukm            ?	3_0_0	EXIST::FUNCTION:DH
 EVP_PKEY_CTX_get0_dh_kdf_ukm            ?	3_0_0	EXIST::FUNCTION:DH
+EVP_CIPHER_CTX_get_iv_state             ?	3_0_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_get_iv                   ?	3_0_0	EXIST::FUNCTION:
