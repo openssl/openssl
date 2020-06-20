@@ -545,9 +545,11 @@ int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx);
-const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx);
-const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx);
-unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx);
+DEPRECATEDIN_3_0(const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx))
+DEPRECATEDIN_3_0(const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx))
+DEPRECATEDIN_3_0(unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx))
+int EVP_CIPHER_CTX_get_iv_state(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
+int EVP_CIPHER_CTX_get_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
 unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
