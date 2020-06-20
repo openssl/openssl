@@ -157,13 +157,18 @@ $eres = eval {
                     my $tests_planned = $is_plan && $self->tests_planned;
                     my $is_test = $self->is_test;
                     my $is_ok = $is_test && $self->is_ok;
-                    # workaround in case parser not coping with indentation:
+
+                    # workaround for parser not coping with sub-test indentation
                     if ($self->is_unknown) {
+                        my $level = $#plans;
+                        my $indent = $level < 0 ? "" : " " x ($level * 4);
+
                         ($is_plan, $tests_planned) = (1, $1)
-                            if ($self->as_string =~ m/^\s+1\.\.(\d+)/);
+                            if ($self->as_string =~ m/^$indent    1\.\.(\d+)/);
                         ($is_test, $is_ok) = (1, !$1)
-                            if ($self->as_string =~ m/^\s+(not )?ok /);
+                            if ($self->as_string =~ m/^$indent(not )?ok /);
                     }
+
                     if ($is_plan) {
                         push @plans, $tests_planned;
                         $output_buffer = ""; # ignore comments etc. until plan
