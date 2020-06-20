@@ -214,7 +214,7 @@ provider.
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<openssl-core_numbers.h(7)>, L<provider(7)>
+L<openssl-core.h(7)>, L<openssl-core_dispatch.h(7)>, L<provider(7)>
 
 =head1 COPYRIGHT
 

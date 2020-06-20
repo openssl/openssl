@@ -8,7 +8,7 @@
  */
 
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/bn.h>
 #include <openssl/asn1.h>        /* i2d_of_void */
 #include <openssl/x509.h>        /* X509_SIG */

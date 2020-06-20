@@ -8,7 +8,7 @@ provider-asym_cipher - The asym_cipher library E<lt>-E<gt> provider functions
 
 =for openssl multiple includes
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
  #include <openssl/core_names.h>
 
  /*
@@ -68,7 +68,7 @@ For example, the "function" OP_asym_cipher_newctx() has these:
      OSSL_get_OP_asym_cipher_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OP_asym_cipher_newctx               OSSL_FUNC_ASYM_CIPHER_NEWCTX
  OP_asym_cipher_freectx              OSSL_FUNC_ASYM_CIPHER_FREECTX

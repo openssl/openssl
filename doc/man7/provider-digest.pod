@@ -8,7 +8,7 @@ provider-digest - The digest library E<lt>-E<gt> provider functions
 
 =for openssl multiple includes
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
  #include <openssl/core_names.h>
 
  /*
@@ -69,7 +69,7 @@ For example, the "function" OP_digest_newctx() has these:
      OSSL_get_OP_digest_newctx(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OP_digest_newctx               OSSL_FUNC_DIGEST_NEWCTX
  OP_digest_freectx              OSSL_FUNC_DIGEST_FREECTX

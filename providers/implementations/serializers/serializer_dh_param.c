@@ -13,7 +13,7 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/pem.h>
 #include <openssl/dh.h>
 #include <openssl/types.h>

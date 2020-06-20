@@ -8,7 +8,7 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
 #include "internal/provider.h"

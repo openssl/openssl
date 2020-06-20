@@ -8,7 +8,7 @@
  */
 
 #include <openssl/provider.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 
 const OSSL_CORE_HANDLE *FIPS_get_core_handle(OPENSSL_CTX *ctx);
 

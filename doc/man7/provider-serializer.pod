@@ -12,7 +12,7 @@ Future development will also include deserializing functions.
 
 =end comment
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
 
  /*
   * None of these are actual functions, but are displayed like this for
@@ -76,7 +76,7 @@ For example, the "function" OP_serializer_serialize_data() has these:
      OSSL_get_OP_serializer_serialize_data(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OP_serializer_newctx              OSSL_FUNC_SERIALIZER_NEWCTX
  OP_serializer_freectx             OSSL_FUNC_SERIALIZER_FREECTX

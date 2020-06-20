@@ -6,7 +6,7 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
 
 =head1 SYNOPSIS
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
 
  /*
   * None of these are actual functions, but are displayed like this for
@@ -82,7 +82,7 @@ For example, the "function" OP_keymgmt_new() has these:
      OSSL_get_OP_keymgmt_new(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
  OP_keymgmt_new                  OSSL_FUNC_KEYMGMT_NEW
  OP_keymgmt_free                 OSSL_FUNC_KEYMGMT_FREE

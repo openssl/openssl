@@ -77,7 +77,7 @@ following =head2 titles are appropriate to use:
 
 L<OSSL_PARAM(3)>,
 L<openssl-core.h(7)>,
-L<openssl-core_numbers.h(7)>,
+L<openssl-core_dispatch.h(7)>,
 L<provider(7)>
 
 =head1 COPYRIGHT

@@ -9,7 +9,7 @@
 
 #include <string.h>
 #include <openssl/crypto.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "prov/implementations.h"
 #include "prov/ciphercommon.h"
 #include "prov/providercommonerr.h"

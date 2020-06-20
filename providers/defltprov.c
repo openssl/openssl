@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <openssl/opensslconf.h>
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "prov/bio.h"

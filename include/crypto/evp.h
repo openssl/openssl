@@ -8,7 +8,7 @@
  */
 
 #include <openssl/evp.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "internal/refcount.h"
 #include "crypto/ecx.h"
 
