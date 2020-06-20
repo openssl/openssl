@@ -2410,25 +2410,25 @@ BIO *dup_bio_in(int format)
 BIO *dup_bio_out(int format)
 {
     int bflags = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
-    BIO *b = check_bio(BIO_new_fp(stdout, bflags), "stdout", 'w', format);
+    BIO *b = check_bio(BIO_new_fp(stdout, bflags), "stdout", 'w', bflags);
     void *prefix = NULL;
 
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
         b = BIO_push(check_bio(BIO_new(BIO_f_linebuffer()),
-                               "linebuffer stdout", 'w', format),
+                               "linebuffer stdout", 'w', bflags),
                      b);
 #endif
 
     if (FMT_istext(format)
             && (prefix = getenv("HARNESS_OSSL_PREFIX")) != NULL) {
         b = BIO_push(check_bio(BIO_new(BIO_f_prefix()),
-                               "prefix stdout", 'w', format),
+                               "prefix stdout", 'w', bflags),
                      b);
         BIO_set_prefix(b, prefix);
     }
 
-    return check_bio(b, "stdout", 'w', format);
+    return check_bio(b, "stdout", 'w', bflags);
 }
 
 BIO *dup_bio_err(int format)
