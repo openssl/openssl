@@ -376,13 +376,13 @@ static CONF *app_load_config_quiet(const char *filename)
     FILE *fp;
     BIO *in;
     CONF *conf;
-    int mode = BIO_FP_TEXT;
+    int bflags = BIO_FP_TEXT;
 
     if (filename == NULL || (fp = fopen(filename, "r")) == NULL)
         return NULL;
 
     /* If we fail now, it's likely malloc or similar internal error. */
-    in = check_bio(BIO_new_fp(fp, mode), filename, 'r', B_FORMAT_TEXT);
+    in = check_bio(BIO_new_fp(fp, bflags), filename, 'r', B_FORMAT_TEXT);
     conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
@@ -2392,25 +2392,25 @@ static const char *modeverb(char mode)
  * don't free up other resources on the error path because they know it will
  * be handled when the process exits.
  */
-static BIO *check_bio(BIO *bp, const char *what, char mode, int format)
+static BIO *check_bio(BIO *bp, const char *what, char mode, int bflags)
 {
     if (bp == NULL)
-        app_bail_out("%s: Could not open %s for %s (format 0x%x)\n",
-                     opt_getprog(), what, modeverb(mode), format);
+        app_bail_out("%s: Could not open %s for %s (BIO flags 0x%x)\n",
+                     opt_getprog(), what, modeverb(mode), bflags);
     return bp;
 }
 
 BIO *dup_bio_in(int format)
 {
-    int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
+    int bflags = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
 
-    return check_bio(BIO_new_fp(stdin, mode), "stdin", 'r', mode);
+    return check_bio(BIO_new_fp(stdin, bflags), "stdin", 'r', bflags);
 }
 
 BIO *dup_bio_out(int format)
 {
-    int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
-    BIO *b = check_bio(BIO_new_fp(stdout, mode), "stdout", 'w', format);
+    int bflags = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
+    BIO *b = check_bio(BIO_new_fp(stdout, bflags), "stdout", 'w', format);
     void *prefix = NULL;
 
 #ifdef OPENSSL_SYS_VMS
@@ -2433,8 +2433,8 @@ BIO *dup_bio_out(int format)
 
 BIO *dup_bio_err(int format)
 {
-    int mode = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
-    BIO *b = check_bio(BIO_new_fp(stderr, mode), "stderr", 'w', format);
+    int bflags = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
+    BIO *b = check_bio(BIO_new_fp(stderr, bflags), "stderr", 'w', format);
 
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
