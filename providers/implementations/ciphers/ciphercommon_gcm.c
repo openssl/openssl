@@ -154,7 +154,7 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
-        if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
+        if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;
         if (ctx->ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
@@ -169,7 +169,7 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
     if (p != NULL) {
-        if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
+        if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;
         if (ctx->ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
