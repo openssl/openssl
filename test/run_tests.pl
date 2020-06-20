@@ -134,7 +134,6 @@ $eres = eval {
         my $class = shift;
         my %opts = %{ shift() };
         my $failure_verbosity = $openssl_args{failure_verbosity};
-        print "\n" if $failure_verbosity == 1 || $failure_verbosity == 2;
         my @plans = (); # initial level, no plan yet
         my $output_buffer = "";
 
@@ -171,11 +170,12 @@ $eres = eval {
                     } elsif ($is_test) { # result of a test
                         pop @plans if @plans && --($plans[-1]) <= 0;
                         print $output_buffer if !$is_ok;
-                        print $self->as_string."\n"
+                        print "\n".$self->as_string
                             if !$is_ok || $failure_verbosity == 2;
                         $output_buffer = "";
-                    } else { # typically comment or unknown
-                        $output_buffer .= $self->as_string."\n";
+                    } elsif ($self->as_string ne "") {
+                        # typically is_comment or is_unknown
+                        $output_buffer .= "\n".$self->as_string;
                     }
                 }
             }
