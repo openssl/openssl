@@ -4,6 +4,7 @@
 
 EVP_PKEY_CTX_set_rsa_pss_keygen_md,
 EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md,
+EVP_PKEY_CTX_set_rsa_pss_keygen_mgf1_md_name,
 EVP_PKEY_CTX_set_rsa_pss_keygen_saltlen
 - EVP_PKEY RSA-PSS algorithm support functions
 
