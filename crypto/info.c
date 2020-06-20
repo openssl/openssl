@@ -17,8 +17,12 @@
 
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 # include "arm_arch.h"
-# elif defined(__s390__) || defined(__s390x__)
+# define CPU_INFO_STR_LEN 128
+#elif defined(__s390__) || defined(__s390x__)
 # include "s390x_arch.h"
+# define CPU_INFO_STR_LEN 2048
+#else
+# define CPU_INFO_STR_LEN 128
 #endif
 
 /* extern declaration to avoid warning */
@@ -26,7 +30,7 @@ extern char ossl_cpu_info_str[];
 
 static char *seed_sources = NULL;
 
-char ossl_cpu_info_str[2048] = "";
+char ossl_cpu_info_str[CPU_INFO_STR_LEN] = "";
 #define CPUINFO_PREFIX "CPUINFO: "
 
 static CRYPTO_ONCE init_info = CRYPTO_ONCE_STATIC_INIT;
