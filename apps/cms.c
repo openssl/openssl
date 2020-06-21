@@ -1168,7 +1168,7 @@ int cms_main(int argc, char **argv)
                         ASN1_PCTX_set_nm_flags(pctx, get_nameopt());
                     }
                 }
-                 CMS_ContentInfo_print_ctx(out, cms, 0, pctx);
+                CMS_ContentInfo_print_ctx(out, cms, 0, pctx);
                 ASN1_PCTX_free(pctx);
             }
         } else if (outformat == FORMAT_SMIME) {
