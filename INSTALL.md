@@ -1560,7 +1560,7 @@ Configuration Problems
 The `./config` script tries hard to guess your operating system, but in some
 cases it does not succeed. You will see a message like the following:
 
-    $ ./config
+    ./config
     Operating system: x86-whatever-minix
     This system (minix) is not supported. See file INSTALL for details.
 
@@ -1618,7 +1618,7 @@ Note: To make the output readable, pleace add a 'code fence' (three backquotes
 ` ``` ` on a separate line) before and after your output:
 
      ```
-     $ ./Configure [your arguments...]
+     ./Configure [your arguments...]
 
      [output...]
 
@@ -1638,9 +1638,9 @@ If the build succeeded previously, but fails after a source or configuration
 change, it might be helpful to clean the build tree before attempting another
 build.  Use this command:
 
-    $ make clean                                     # Unix
-    $ mms clean                                      ! (or mmk) OpenVMS
-    $ nmake clean                                    # Windows
+    make clean                                     # Unix
+    mms clean                                      ! (or mmk) OpenVMS
+    nmake clean                                    # Windows
 
 Assembler error messages can sometimes be sidestepped by using the
 "no-asm" configuration option.
@@ -1658,37 +1658,45 @@ Test Failures
 -------------
 
 If some tests fail, look at the output.  There may be reasons for the failure
-that isn't a problem in OpenSSL itself (like a malfunction with Perl).
+that isn't a problem in OpenSSL itself (like an OS malfunction or a Perl issue).
 You may want increased verbosity, that can be accomplished like this:
 
-Verbosity on failure only (make macro VERBOSE_FAILURE or VF):
+Full verbosity (`make` macro `VERBOSE` or `V`):
 
-    $ make VF=1 test                                 # Unix
-    $ mms /macro=(VF=1) test                         ! OpenVMS
-    $ nmake VF=1 test                                # Windows
+    make V=1 test                                  # Unix
+    mms /macro=(V=1) test                          ! OpenVMS
+    nmake V=1 test                                 # Windows
 
-Full verbosity (make macro VERBOSE or V):
+Verbosity on test failure (`VERBOSE_FAILURE` or `VF´, Unix example shown):
 
-    $ make V=1 test                                  # Unix
-    $ mms /macro=(V=1) test                          ! OpenVMS
-    $ nmake V=1 test                                 # Windows
+    make test VF=1
+
+Verbosity on failed (sub-)tests only (`VERBOSE_FAILURES_ONLY` or `VFO`):
+
+    make test VFO=1
+
+Verbosity on failed (sub-)tests, in addition progress on succeeded (sub-)tests
+(`VERBOSE_FAILURES_PROGRESS` or `VFP`):
+
+    make test VFP=1
 
 If you want to run just one or a few specific tests, you can use
 the make variable TESTS to specify them, like this:
 
-    $ make TESTS='test_rsa test_dsa' test            # Unix
-    $ mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
-    $ nmake TESTS='test_rsa test_dsa' test           # Windows
+    make TESTS='test_rsa test_dsa' test            # Unix
+    mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
+    nmake TESTS='test_rsa test_dsa' test           # Windows
 
-And of course, you can combine (Unix example shown):
+And of course, you can combine (Unix examples shown):
 
-    $ make VF=1 TESTS='test_rsa test_dsa' test
+    make test TESTS='test_rsa test_dsa' VF=1
+    make test TESTS="test_cmp_*" VFO=1
 
 You can find the list of available tests like this:
 
-    $ make list-tests                                # Unix
-    $ mms list-tests                                 ! OpenVMS
-    $ nmake list-tests                               # Windows
+    make list-tests                                # Unix
+    mms list-tests                                 ! OpenVMS
+    nmake list-tests                               # Windows
 
 Have a look at the manual for the perl module Test::Harness to
 see what other HARNESS_* variables there are.
