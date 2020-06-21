@@ -75,7 +75,8 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
-static BIO *check_bio(BIO *bp, const char *what, char mode, int format);
+static BIO *check_bio(BIO *bp, const char *what, char mode, int bflags);
+static BIO *check_bio_fmt(BIO *bp, const char *what, char mode, int format);
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
@@ -382,7 +383,7 @@ static CONF *app_load_config_quiet(const char *filename)
         return NULL;
 
     /* If we fail now, it's likely malloc or similar internal error. */
-    in = check_bio(BIO_new_fp(fp, bflags), filename, 'r', B_FORMAT_TEXT);
+    in = check_bio(BIO_new_fp(fp, bflags), filename, 'r', bflags);
     conf = app_load_config_bio(in, filename);
     BIO_free(in);
     return conf;
@@ -2400,6 +2401,14 @@ static BIO *check_bio(BIO *bp, const char *what, char mode, int bflags)
     return bp;
 }
 
+static BIO *check_bio_fmt(BIO *bp, const char *what, char mode, int fmt)
+{
+    if (bp == NULL)
+        app_bail_out("%s: Could not open %s for %s format 0x%x\n",
+                     opt_getprog(), what, modeverb(mode), fmt);
+    return bp;
+}
+
 BIO *dup_bio_in(int format)
 {
     int bflags = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
@@ -2434,15 +2443,15 @@ BIO *dup_bio_out(int format)
 BIO *dup_bio_err(int format)
 {
     int bflags = BIO_NOCLOSE | (FMT_istext(format) ? BIO_FP_TEXT : 0);
-    BIO *b = check_bio(BIO_new_fp(stderr, bflags), "stderr", 'w', format);
+    BIO *b = check_bio(BIO_new_fp(stderr, bflags), "stderr", 'w', bflags);
 
 #ifdef OPENSSL_SYS_VMS
     if (FMT_istext(format))
         b = BIO_push(check_bio(BIO_new(BIO_f_linebuffer()),
-                               "linebuffer stderr", 'w', format),
+                               "linebuffer stderr", 'w', bflags),
                      b);
 #endif
-    return check_bio(b, "stderr", 'w', format);
+    return check_bio(b, "stderr", 'w', bflags);
 }
 
 void unbuffer(FILE *fp)
@@ -2546,8 +2555,8 @@ BIO *bio_open_default(const char *filename, char mode, int format)
 
     b = BIO_new_file(filename, modestr(mode, format));
     if (mode == 'r')
-        return check_bio(b, "stdin", mode, format);
-    return check_bio(b, "stdout", mode, format);
+        return check_bio_fmt(b, "stdin", mode, format);
+    return check_bio_fmt(b, "stdout", mode, format);
 }
 
 void wait_for_async(SSL *s)
