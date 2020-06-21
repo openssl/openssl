@@ -38,7 +38,7 @@ it to create an EVP method with the help of the functions
 I<new_method>, I<up_ref_method>, and I<free_method>.
 
 evp_generic_fetch_by_number() does the same thing as evp_generic_fetch(), 
-but takes a I<name_id> instead of a number.
+but takes a numeric I<name_id> instead of a name.
 I<name_id> must always be nonzero; as a matter of fact, it being zero
 is considered a programming error.
 This is meant to be used when one method needs to fetch an associated
