@@ -20,6 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Added `OPENSSL_CTX`, a libcrypto library context.
   * Interactive mode is removed from the 'openssl' program.
   * The X25519, X448, Ed25519, Ed448 and SHAKE256 algorithms are included in
     the FIPS provider.  None have the "fips=yes" property set and, as such,

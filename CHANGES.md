@@ -23,6 +23,24 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Added a library context that applications as well as other
+   libraries can use to form a separate context within which libcrypto
+   operations are performed.
+
+   There are two ways this can be used:
+
+   - Directly, by passing a library context to functions that take
+     such an argument, such as `EVP_CIPHER_fetch` and similar algorithm
+     fetching functions.
+   - Indirectly, by creating a new library context and then assigning
+     it as the new default, with `OPENSSL_CTX_set0_default`.
+
+   All public OpenSSL functions that take an `OPENSSL_CTX` pointer,
+   apart from the functions directly related to `OPENSSL_CTX`, accept
+   NULL to indicate that the default library context should be used.
+
+   *Richard Levitte*
+
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
 
