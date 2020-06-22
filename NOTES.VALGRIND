@@ -18,21 +18,21 @@ Requirements
 2. Valgrind installed on the platform
    See: http://valgrind.org/downloads/current.html
 3. OpensSSL compiled
-   See: INSTALL
+   See: [INSTALL.md](INSTALL.md)
 
 Running Tests
 -------------
 
 Test behavior can be modified by adjusting environment variables.
 
-EXE_SHELL
+`EXE_SHELL`
 
 This variable is used to specify the shell used to execute OpenSSL test
 programs. The default wrapper (util/wrap.pl) initializes the environment
 to allow programs to find shared libraries. The variable can be modified
 to specify a different executable environment.
 
-   EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q"
+    EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q"
 
 This will start up Valgrind with the default checker (memcheck).
 The --error-exitcode=1 option specifies that Valgrind should exit with an
@@ -41,7 +41,7 @@ The --leak-check=full option specifies extensive memory checking.
 The -q option prints only error messages.
 Additional Valgrind options may be added to the EXE_SHELL variable.
 
-OPENSSL_ia32cap
+`OPENSSL_ia32cap`
 
 This variable controls the processor-specific code on Intel processors.
 By default, OpenSSL will attempt to figure out the capabilities of a
@@ -51,20 +51,20 @@ used to control what capabilities OpenSSL uses.
 As of valgrind-3.15.0 on Linux/x86_64, instructions up to AVX2 are
 supported. Setting the following disables instructions beyond AVX2:
 
-   OPENSSL_ia32cap=":0"
+    OPENSSL_ia32cap=":0"
 
 This variable may need to be set to something different based on the
 processor and Valgrind version you are running tests on. More information
-may be found in docs/man3/OPENSSL_ia32cap.pod.
+may be found in [docs/man3/OPENSSL_ia32cap.pod](docs/man3/OPENSSL_ia32cap.pod).
 
-Additional variables (i.e. VERBOSE and TESTS) are described in the
-INSTALL file in the root of the OpenSSL source tree.
+Additional variables (such as `VERBOSE` and `TESTS`) are described in the
+file [test/README.md]/(test/README.md).
 
 Example command line:
 
-   make test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
+    make test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
 
-If an error occurs, you can then run the specific test via the TESTS
+If an error occurs, you can then run the specific test via the `TESTS`
 variable with the VERBOSE option to gather additional information.
 
-   make test VERBOSE=1 TESTS=test_test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
+    make test VERBOSE=1 TESTS=test_test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
