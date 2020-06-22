@@ -488,9 +488,8 @@ $code.=<<___;
 	$ST	$ta3,-2*$BNSZ($a0)
 
 	.set	noreorder
-	$ST	$ta2,-$BNSZ($a0)
 	bgtz	$ta0,.L_bn_sqr_words_loop
-	 nop
+	$ST	$ta2,-$BNSZ($a0)
 
 	beqz	$a2,.L_bn_sqr_words_return
 	nop
@@ -819,9 +818,8 @@ bn_div_3_words:
 
 	$LD	$a0,($a3)
 	move	$ta2,$a1
-	$LD	$a1,-$BNSZ($a3)
 	bne	$a0,$a2,bn_div_3_words_internal
-	 nop
+	$LD	$a1,-$BNSZ($a3)
 	li	$v0,-1
 	jr	$ra
 	move	$a0,$v0
