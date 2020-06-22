@@ -29,7 +29,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
     struct algorithm_data_st *data = cbdata;
     int no_store = 0;    /* Assume caching is ok */
     int first_operation = 1;
-    int last_operation = OSSL_OP_HIGHEST;
+    int last_operation = OSSL_OP__HIGHEST;
     int cur_operation;
     int ok = 0;
 

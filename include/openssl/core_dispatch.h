@@ -186,7 +186,7 @@ OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
 /* New section for non-EVP operations */
 # define OSSL_OP_SERIALIZER                         20
 /* Highest known operation number */
-# define OSSL_OP_HIGHEST                            20
+# define OSSL_OP__HIGHEST                           20
 
 /* Digests */
 
