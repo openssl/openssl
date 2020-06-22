@@ -61,7 +61,6 @@ struct evp_test_method_st {
     int (*run_test) (EVP_TEST * t);
 };
 
-
 /*
  * Linked list of named keys.
  */
@@ -319,7 +318,6 @@ static int parse_bin(const char *value, unsigned char **buf, size_t *buflen)
     return 1;
 }
 
-
 /**
 ***  MESSAGE DIGEST TESTS
 **/
@@ -337,21 +335,159 @@ typedef struct digest_data_st {
     int pad_type;
 } DIGEST_DATA;
 
+
+/* Done as macros to avoid compiler warnings about unused functions  */
+#define STR_STARTS_WITH(str, pre) strncmp(pre, str, strlen(pre)) == 0
+#define STR_ENDS_WITH(str, pre)                                                \
+strlen(str) < strlen(pre) ? 0 : (strcasecmp(pre, str + strlen(str) - strlen(pre)) == 0)
+
+static int is_digest_disabled(const char *name)
+{
+#ifdef OPENSSL_NO_BLAKE2
+    if (STR_STARTS_WITH(name, "BLAKE"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_MD2
+    if (strcasecmp(name, "MD2") == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_MDC2
+    if (strcasecmp(name, "MDC2") == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_MD4
+    if (strcasecmp(name, "MD4") == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_MD5
+    if (strcasecmp(name, "MD5") == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_RMD160
+    if (strcasecmp(name, "RIPEMD160") == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_SM3
+    if (strcasecmp(name, "SM3") == 0)
+        return 1;
+#endif
+#ifdef OPENSSL_NO_WHIRLPOOL
+    if (strcasecmp(name, "WHIRLPOOL") == 0)
+        return 1;
+#endif
+    return 0;
+}
+
+static int is_mac_disabled(const char *name)
+{
+#ifdef OPENSSL_NO_CMAC
+    if (STR_STARTS_WITH(name, "CMAC"))
+        return 1;
+#endif
+
+#ifdef OPENSSL_NO_POLY1305
+    if (STR_STARTS_WITH(name, "Poly1305"))
+        return 1;
+#endif
+#ifndef OPENSSL_NO_SIPHASH
+    if (STR_STARTS_WITH(name, "SipHash"))
+        return 1;
+#endif
+    return 0;
+}
+
+static int is_kdf_disabled(const char *name)
+{
+#ifdef OPENSSL_NO_SCRYPT
+    if (STR_ENDS_WITH(name, "SCRYPT"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_CMS
+    if (strcasecmp(name, "X942KDF") == 0)
+        return 1;
+#endif /* OPENSSL_NO_CMS */
+    return 0;
+}
+
+static int is_cipher_disabled(const char *name)
+{
+#ifdef OPENSSL_NO_ARIA
+    if (STR_STARTS_WITH(name, "ARIA"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_BF
+    if (STR_STARTS_WITH(name, "BF"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_CAMELLIA
+    if (STR_STARTS_WITH(name, "CAMELLIA"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_CAST
+    if (STR_STARTS_WITH(name, "CAST"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_CHACHA
+    if (STR_STARTS_WITH(name, "CHACHA"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_POLY1305
+    if (STR_ENDS_WITH(name, "Poly1305"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_DES
+    if (STR_STARTS_WITH(name, "DES"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_OCB
+    if (STR_ENDS_WITH(name, "OCB"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_IDEA
+    if (STR_STARTS_WITH(name, "IDEA"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_RC2
+    if (STR_STARTS_WITH(name, "RC2"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_RC4
+    if (STR_ENDS_WITH(name, "RC4"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_RC5
+    if (STR_STARTS_WITH(name, "RC5"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_SEED
+    if (STR_STARTS_WITH(name, "SEED"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_SIV
+    if (STR_ENDS_WITH(name, "SIV"))
+        return 1;
+#endif
+#ifdef OPENSSL_NO_SM4
+    if (STR_STARTS_WITH(name, "SM4"))
+        return 1;
+#endif
+    return 0;
+}
+
 static int digest_test_init(EVP_TEST *t, const char *alg)
 {
     DIGEST_DATA *mdat;
     const EVP_MD *digest;
     EVP_MD *fetched_digest;
 
-    if ((digest = fetched_digest = EVP_MD_fetch(NULL, alg, NULL)) == NULL
-        && (digest = EVP_get_digestbyname(alg)) == NULL) {
-        /* If alg has an OID assume disabled algorithm */
-        if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
-            t->skip = 1;
-            return 1;
-        }
-        return 0;
+    if (is_digest_disabled(alg)) {
+        t->skip = 1;
+        return 1;
     }
+
+    if ((digest = fetched_digest = EVP_MD_fetch(NULL, alg, NULL)) == NULL
+        && (digest = EVP_get_digestbyname(alg)) == NULL)
+        return 0;
     if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
         return 0;
     t->data = mdat;
@@ -489,7 +625,6 @@ static const EVP_TEST_METHOD digest_test_method = {
     digest_test_run
 };
 
-
 /**
 ***  CIPHER TESTS
 **/
@@ -526,15 +661,15 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
     CIPHER_DATA *cdat;
     int m;
 
-    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(NULL, alg, NULL)) == NULL
-        && (cipher = EVP_get_cipherbyname(alg)) == NULL) {
-        /* If alg has an OID assume disabled algorithm */
-        if (OBJ_sn2nid(alg) != NID_undef || OBJ_ln2nid(alg) != NID_undef) {
-            t->skip = 1;
-            return 1;
-        }
-        return 0;
+    if (is_cipher_disabled(alg)) {
+        t->skip = 1;
+        return 1;
     }
+
+    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(NULL, alg, NULL)) == NULL
+        && (cipher = EVP_get_cipherbyname(alg)) == NULL)
+        return 0;
+
     cdat = OPENSSL_zalloc(sizeof(*cdat));
     cdat->cipher = cipher;
     cdat->fetched_cipher = fetched_cipher;
@@ -1019,6 +1154,10 @@ static int mac_test_init(EVP_TEST *t, const char *alg)
     int type = NID_undef;
     MAC_DATA *mdat;
 
+    if (is_mac_disabled(alg)) {
+        t->skip = 1;
+        return 1;
+    }
     if ((mac = EVP_MAC_fetch(NULL, alg, NULL)) == NULL) {
         /*
          * Since we didn't find an EVP_MAC, we check for known EVP_PKEY methods
@@ -1451,7 +1590,7 @@ static int pkey_test_init(EVP_TEST *t, const char *name,
         return 0;
     }
     kdata->keyop = keyop;
-    if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new(pkey, NULL))) {
+    if (!TEST_ptr(kdata->ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL))) {
         EVP_PKEY_free(pkey);
         OPENSSL_free(kdata);
         return 0;
@@ -1812,13 +1951,12 @@ static int pbe_test_init(EVP_TEST *t, const char *alg)
     PBE_DATA *pdat;
     PBE_TYPE pbe_type = PBE_TYPE_INVALID;
 
-    if (strcmp(alg, "scrypt") == 0) {
-#ifndef OPENSSL_NO_SCRYPT
-        pbe_type = PBE_TYPE_SCRYPT;
-#else
+    if (is_kdf_disabled(alg)) {
         t->skip = 1;
         return 1;
-#endif
+    }
+    if (strcmp(alg, "scrypt") == 0) {
+        pbe_type = PBE_TYPE_SCRYPT;
     } else if (strcmp(alg, "pbkdf2") == 0) {
         pbe_type = PBE_TYPE_PBKDF2;
     } else if (strcmp(alg, "pkcs12") == 0) {
@@ -2373,20 +2511,10 @@ static int kdf_test_init(EVP_TEST *t, const char *name)
     KDF_DATA *kdata;
     EVP_KDF *kdf;
 
-#ifdef OPENSSL_NO_SCRYPT
-    /* TODO(3.0) Replace with "scrypt" once aliases are supported */
-    if (strcmp(name, "id-scrypt") == 0) {
+    if (is_kdf_disabled(name)) {
         t->skip = 1;
         return 1;
     }
-#endif /* OPENSSL_NO_SCRYPT */
-
-#ifdef OPENSSL_NO_CMS
-    if (strcmp(name, "X942KDF") == 0) {
-        t->skip = 1;
-        return 1;
-    }
-#endif /* OPENSSL_NO_CMS */
 
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
@@ -2759,7 +2887,7 @@ static int keygen_test_init(EVP_TEST *t, const char *alg)
             return 0;
     }
 
-    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_id(nid, NULL))) {
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL))) {
         /* assume algorithm disabled */
         t->skip = 1;
         return 1;
@@ -3380,6 +3508,7 @@ top:
     /* Are we adding a key? */
     klist = NULL;
     pkey = NULL;
+start:
     if (strcmp(pp->key, "PrivateKey") == 0) {
         pkey = PEM_read_bio_PrivateKey(t->s.key, NULL, 0, NULL);
         if (pkey == NULL && !key_unsupported()) {
@@ -3442,6 +3571,16 @@ top:
             return 0;
         }
         OPENSSL_free(keybin);
+    } else if (strcmp(pp->key, "Availablein") == 0) {
+        if (!prov_available(pp->value)) {
+            TEST_info("skipping, '%s' provider not available: %s:%d",
+                      pp->value, t->s.test_file, t->s.start);
+                t->skip = 1;
+                return 0;
+        }
+        pp++;
+        t->s.numpairs--;
+        goto start;
     }
 
     /* If we have a key add to list */
@@ -3477,12 +3616,9 @@ top:
 
     for (pp++, i = 1; i < t->s.numpairs; pp++, i++) {
         if (strcmp(pp->key, "Availablein") == 0) {
-            if (!prov_available(pp->value)) {
-                TEST_info("skipping, providers not available: %s:%d",
-                          t->s.test_file, t->s.start);
-                t->skip = 1;
-                return 0;
-            }
+            TEST_info("Line %d: 'Availablein' should be the first option",
+                      t->s.curr);
+            return 0;
         } else if (strcmp(pp->key, "Result") == 0) {
             if (t->expected_err != NULL) {
                 TEST_info("Line %d: multiple result lines", t->s.curr);

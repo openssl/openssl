@@ -1,5 +1,5 @@
 #
-# Copyright 2001-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -14,6 +14,7 @@
 
 Title = TLS1 PRF tests (from NIST test vectors)
 
+Availablein = default
 PKEYKDF=TLS1-PRF
 Ctrl.md = md:MD5-SHA1
 Ctrl.Secret = hexsecret:bded7fa5c1699c010be23dd06ada3a48349f21e5f86263d512c0c5cc379f0e780ec55d9844b2f1db02a96453513568d0
@@ -22,6 +23,7 @@ Ctrl.client_random = hexseed:e5acaf549cd25c22d964c0d930fa4b5261d2507fad84c33715b
 Ctrl.server_random = hexseed:135e4d557fdf3aa6406d82975d5c606a9734c9334b42136e96990fbd5358cdb2
 Output = 2f6962dfbc744c4b2138bb6b3d33054c5ecc14f24851d9896395a44ab3964efc2090c5bf51a0891209f46c1e1e998f62
 
+Availablein = default
 PKEYKDF=TLS1-PRF
 Ctrl.md = md:MD5-SHA1
 Ctrl.Secret = hexsecret:2f6962dfbc744c4b2138bb6b3d33054c5ecc14f24851d9896395a44ab3964efc2090c5bf51a0891209f46c1e1e998f62
@@ -56,6 +58,7 @@ Ctrl.client_random = hexseed:62e1fd91f23f558a605f28478c58cf72637b89784d959df7e94
 Output = d06139889fffac1e3a71865f504aa5d0d2a2e89506c6f2279b670c3e1b74f531016a2530c51a3a0f7e1d6590d0f0566b2f387f8d11fd4f731cdd572d2eae927f6f2f81410b25e6960be68985add6c38445ad9f8c64bf8068bf9a6679485d966f1ad6f68b43495b10a683755ea2b858d70ccac7ec8b053c6bd41ca299d4e51928
 
 # Missing digest.
+Availablein = default
 PKEYKDF=TLS1-PRF
 Ctrl.Secret = hexsecret:01
 Ctrl.Seed = hexseed:02
@@ -63,6 +66,7 @@ Output = 03
 Result = KDF_DERIVE_ERROR
 
 # Missing secret.
+Availablein = default
 PKEYKDF=TLS1-PRF
 Ctrl.md = md:MD5-SHA1
 Ctrl.Seed = hexseed:02
@@ -254,6 +258,7 @@ Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081
 
 Title = id-scrypt tests (from draft-josefsson-id-scrypt-kdf-03 and others)
 
+Availablein = default
 PKEYKDF = scrypt
 Ctrl.pass = pass:
 Ctrl.salt = salt:
@@ -262,6 +267,7 @@ Ctrl.r = r:1
 Ctrl.p = p:1
 Output = 77d6576238657b203b19ca42c18a0497f16b4844e3074ae8dfdffa3fede21442fcd0069ded0948f8326a753a0fc81f17e8d3e0fb2e0d3628cf35e20c38d18906
 
+Availablein = default
 PKEYKDF = scrypt
 Ctrl.pass = pass:password
 Ctrl.salt = salt:NaCl
@@ -270,6 +276,7 @@ Ctrl.r = r:8
 Ctrl.p = p:16
 Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
 
+Availablein = default
 PKEYKDF = scrypt
 Ctrl.hexpass = hexpass:70617373776f7264
 Ctrl.salt = salt:NaCl
@@ -278,6 +285,7 @@ Ctrl.r = r:8
 Ctrl.p = p:16
 Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
 
+Availablein = default
 PKEYKDF = scrypt
 Ctrl.pass = pass:password
 Ctrl.hexsalt = hexsalt:4e61436c
@@ -286,6 +294,7 @@ Ctrl.r = r:8
 Ctrl.p = p:16
 Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
 
+Availablein = default
 PKEYKDF = scrypt
 Ctrl.pass = pass:pleaseletmein
 Ctrl.salt = salt:SodiumChloride
@@ -295,6 +304,7 @@ Ctrl.p = p:1
 Output = 7023bdcb3afd7348461c06cd81fd38ebfda8fbba904f8e3ea9b543f6545da1f2d5432955613f0fcf62d49705242a9af9e61e85dc0d651e40dfcf017b45575887
 
 # Out of memory
+Availablein = default
 PKEYKDF = scrypt
 Ctrl.pass = pass:pleaseletmein
 Ctrl.salt = salt:SodiumChloride

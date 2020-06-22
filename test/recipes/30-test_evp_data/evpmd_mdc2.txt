@@ -9,19 +9,19 @@
 
 Title = MDC2 test vectors
 
-Digest = MDC2
 Availablein = default
+Digest = MDC2
 Input = "Now is the time for all "
 Output = 42e50cd224baceba760bdd2bd409281a
 
-Digest = MDC2
 Availablein = default
+Digest = MDC2
 Padding = 1
 Input = "Now is the time for all "
 Output = 42e50cd224baceba760bdd2bd409281a
 
-Digest = MDC2
 Availablein = default
+Digest = MDC2
 Padding = 2
 Input = "Now is the time for all "
 Output = 2e4679b5add9ca7535d87afeab33bee2

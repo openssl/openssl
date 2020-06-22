@@ -14,7 +14,8 @@
 
 Title = TLS1 PRF tests (from NIST test vectors)
 
-KDF=TLS1-PRF
+Availablein = default
+KDF = TLS1-PRF
 Ctrl.digest = digest:MD5-SHA1
 Ctrl.Secret = hexsecret:bded7fa5c1699c010be23dd06ada3a48349f21e5f86263d512c0c5cc379f0e780ec55d9844b2f1db02a96453513568d0
 Ctrl.label = seed:master secret
@@ -22,7 +23,8 @@ Ctrl.client_random = hexseed:e5acaf549cd25c22d964c0d930fa4b5261d2507fad84c33715b
 Ctrl.server_random = hexseed:135e4d557fdf3aa6406d82975d5c606a9734c9334b42136e96990fbd5358cdb2
 Output = 2f6962dfbc744c4b2138bb6b3d33054c5ecc14f24851d9896395a44ab3964efc2090c5bf51a0891209f46c1e1e998f62
 
-KDF=TLS1-PRF
+Availablein = default
+KDF = TLS1-PRF
 Ctrl.digest = digest:MD5-SHA1
 Ctrl.Secret = hexsecret:2f6962dfbc744c4b2138bb6b3d33054c5ecc14f24851d9896395a44ab3964efc2090c5bf51a0891209f46c1e1e998f62
 Ctrl.label = seed:key expansion
@@ -30,7 +32,7 @@ Ctrl.server_random = hexseed:67267e650eb32444119d222a368c191af3082888dc35afe8368
 Ctrl.client_random = hexseed:d58a7b1cd4fedaa232159df652ce188f9d997e061b9bf48e83b62990440931f6
 Output = 3088825988e77fce68d19f756e18e43eb7fe672433504feaf99b3c503d9091b164f166db301d70c9fc0870b4a94563907bee1a61fb786cb717576890bcc51cb9ead97e01d0a2fea99c953377b195205ff07b369589178796edc963fd80fdbe518a2fc1c35c18ae8d
 
-KDF=TLS1-PRF
+KDF = TLS1-PRF
 Ctrl.digest = digest:SHA256
 Ctrl.Secret = hexsecret:f8938ecc9edebc5030c0c6a441e213cd24e6f770a50dda07876f8d55da062bcadb386b411fd4fe4313a604fce6c17fbc
 Ctrl.label = seed:master secret
@@ -38,7 +40,7 @@ Ctrl.client_random = hexseed:36c129d01a3200894b9179faac589d9835d58775f9b5ea3587c
 Ctrl.server_random = hexseed:f6c9575ed7ddd73e1f7d16eca115415812a43c2b747daaaae043abfb50053fce
 Output = 202c88c00f84a17a20027079604787461176455539e705be730890602c289a5001e34eeb3a043e5d52a65e66125188bf
 
-KDF=TLS1-PRF
+KDF = TLS1-PRF
 Ctrl.digest = digest:SHA256
 Ctrl.Secret = hexsecret:202c88c00f84a17a20027079604787461176455539e705be730890602c289a5001e34eeb3a043e5d52a65e66125188bf
 Ctrl.label = seed:key expansion
@@ -47,7 +49,7 @@ Ctrl.client_random = hexseed:62e1fd91f23f558a605f28478c58cf72637b89784d959df7e94
 Output = d06139889fffac1e3a71865f504aa5d0d2a2e89506c6f2279b670c3e1b74f531016a2530c51a3a0f7e1d6590d0f0566b2f387f8d11fd4f731cdd572d2eae927f6f2f81410b25e6960be68985add6c38445ad9f8c64bf8068bf9a6679485d966f1ad6f68b43495b10a683755ea2b858d70ccac7ec8b053c6bd41ca299d4e51928
 
 # As above but use long name for KDF
-KDF=tls1-prf
+KDF = tls1-prf
 Ctrl.digest = digest:SHA256
 Ctrl.Secret = hexsecret:202c88c00f84a17a20027079604787461176455539e705be730890602c289a5001e34eeb3a043e5d52a65e66125188bf
 Ctrl.label = seed:key expansion
@@ -56,14 +58,15 @@ Ctrl.client_random = hexseed:62e1fd91f23f558a605f28478c58cf72637b89784d959df7e94
 Output = d06139889fffac1e3a71865f504aa5d0d2a2e89506c6f2279b670c3e1b74f531016a2530c51a3a0f7e1d6590d0f0566b2f387f8d11fd4f731cdd572d2eae927f6f2f81410b25e6960be68985add6c38445ad9f8c64bf8068bf9a6679485d966f1ad6f68b43495b10a683755ea2b858d70ccac7ec8b053c6bd41ca299d4e51928
 
 # Missing digest.
-KDF=TLS1-PRF
+KDF = TLS1-PRF
 Ctrl.Secret = hexsecret:01
 Ctrl.Seed = hexseed:02
 Output = 03
 Result = KDF_DERIVE_ERROR
 
 # Missing secret.
-KDF=TLS1-PRF
+Availablein = default
+KDF = TLS1-PRF
 Ctrl.digest = digest:MD5-SHA1
 Ctrl.Seed = hexseed:02
 Output = 03
@@ -254,6 +257,7 @@ Output = 2c91117204d745f3500d636a62f64f0ab3bae548aa53d423b0d1f27ebba6f5e5673a081
 
 Title = id-scrypt tests (from draft-josefsson-id-scrypt-kdf-03 and others)
 
+Availablein = default
 KDF = id-scrypt
 Ctrl.pass = pass:
 Ctrl.salt = salt:
@@ -262,6 +266,7 @@ Ctrl.r = r:1
 Ctrl.p = p:1
 Output = 77d6576238657b203b19ca42c18a0497f16b4844e3074ae8dfdffa3fede21442fcd0069ded0948f8326a753a0fc81f17e8d3e0fb2e0d3628cf35e20c38d18906
 
+Availablein = default
 KDF = id-scrypt
 Ctrl.pass = pass:password
 Ctrl.salt = salt:NaCl
@@ -270,6 +275,7 @@ Ctrl.r = r:8
 Ctrl.p = p:16
 Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
 
+Availablein = default
 KDF = id-scrypt
 Ctrl.hexpass = hexpass:70617373776f7264
 Ctrl.salt = salt:NaCl
@@ -278,6 +284,7 @@ Ctrl.r = r:8
 Ctrl.p = p:16
 Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
 
+Availablein = default
 KDF = id-scrypt
 Ctrl.pass = pass:password
 Ctrl.hexsalt = hexsalt:4e61436c
@@ -286,6 +293,7 @@ Ctrl.r = r:8
 Ctrl.p = p:16
 Output = fdbabe1c9d3472007856e7190d01e9fe7c6ad7cbc8237830e77376634b3731622eaf30d92e22a3886ff109279d9830dac727afb94a83ee6d8360cbdfa2cc0640
 
+Availablein = default
 KDF = id-scrypt
 Ctrl.pass = pass:pleaseletmein
 Ctrl.salt = salt:SodiumChloride
@@ -295,6 +303,7 @@ Ctrl.p = p:1
 Output = 7023bdcb3afd7348461c06cd81fd38ebfda8fbba904f8e3ea9b543f6545da1f2d5432955613f0fcf62d49705242a9af9e61e85dc0d651e40dfcf017b45575887
 
 # Out of memory
+Availablein = default
 KDF = id-scrypt
 Ctrl.pass = pass:pleaseletmein
 Ctrl.salt = salt:SodiumChloride
@@ -6511,6 +6520,7 @@ Output = 829a28b81f9e95b5f306604067499c07d5944ca034ed130d513951f7143e4e162bad8ad
 
 Title = X9.42 KDF tests (from RFC2631 test vectors)
 
+Availablein = default
 KDF = X942KDF
 Ctrl.digest = digest:SHA1
 Ctrl.hexsecret = hexsecret:000102030405060708090a0b0c0d0e0f10111213
@@ -6535,54 +6545,63 @@ Output = 8890585C4E281A5C1167CAA530BED59B3230D893CBA8F922BD1B56A0
 Title = KRB5KDF tests (from RFC 3961 test vectors and krb5 sources)
 
 #RFC3961
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:dce06b1f64c857a11c3db57c51899b2cc1791008ce973b92
 Ctrl.hexconstant = hexconstant:0000000155
 Output = 925179d04591a79b5d3192c4a7e9c289b049c71f6ee604cd
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:5e13d31c70ef765746578531cb51c15bf11ca82c97cee9f2
 Ctrl.hexconstant = hexconstant:00000001aa
 Output = 9e58e5a146d9942a101c469845d67a20e3c4259ed913f207
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:98e6fd8a04a4b6859b75a176540b9752bad3ecd610a252bc
 Ctrl.hexconstant = hexconstant:0000000155
 Output = 13fef80d763e94ec6d13fd2ca1d085070249dad39808eabf
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:622aec25a2fe2cad7094680b7c64940280084c1a7cec92b5
 Ctrl.hexconstant = hexconstant:00000001aa
 Output = f8dfbf04b097e6d9dc0702686bcb3489d91fd9a4516b703e
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:d3f8298ccb166438dcb9b93ee5a7629286a491f838f802fb
 Ctrl.hexconstant = hexconstant:6b65726265726f73
 Output = 2370da575d2a3da864cebfdc5204d56df779a7df43d9da43
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:c1081649ada74362e6a1459d01dfd30d67c2234c940704da
 Ctrl.hexconstant = hexconstant:0000000155
 Output = 348057ec98fdc48016161c2a4c7a943e92ae492c989175f7
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:5d154af238f46713155719d55e2f1f790dd661f279a7917c
 Ctrl.hexconstant = hexconstant:00000001aa
 Output = a8808ac267dada3dcbe9a7c84626fbc761c294b01315e5c1
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:798562e049852f57dc8c343ba17f2ca1d97394efc8adc443
 Ctrl.hexconstant = hexconstant:0000000155
 Output = c813f88a3be3b334f75425ce9175fbe3c8493b89c8703b49
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:26dce334b545292f2feab9a8701a89a4b99eb9942cecd016
@@ -6590,54 +6609,63 @@ Ctrl.hexconstant = hexconstant:00000001aa
 Output = f48ffd6e83f83e7354e694fd252cf83bfe58f7d5ba37ec5d
 
 #Krb5 sources
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:850BB51358548CD05E86768C313E3BFEF7511937DCF72C3E
 Ctrl.hexconstant = hexconstant:0000000299
 Output = F78C496D16E6C2DAE0E0B6C24057A84C0426AEEF26FD6DCE
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:850BB51358548CD05E86768C313E3BFEF7511937DCF72C3E
 Ctrl.hexconstant = hexconstant:00000002AA
 Output = 5B5723D0B634CB684C3EBA5264E9A70D52E683231AD3C4CE
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:850BB51358548CD05E86768C313E3BFEF7511937DCF72C3E
 Ctrl.hexconstant = hexconstant:0000000255
 Output = A77C94980E9B7345A81525C423A737CE67F4CD91B6B3DA45
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:AES-128-CBC
 Ctrl.hexkey = hexkey:42263C6E89F4FC28B8DF68EE09799F15
 Ctrl.hexconstant = hexconstant:0000000299
 Output = 34280A382BC92769B2DA2F9EF066854B
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:AES-128-CBC
 Ctrl.hexkey = hexkey:42263C6E89F4FC28B8DF68EE09799F15
 Ctrl.hexconstant = hexconstant:00000002AA
 Output = 5B14FC4E250E14DDF9DCCF1AF6674F53
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:AES-128-CBC
 Ctrl.hexkey = hexkey:42263C6E89F4FC28B8DF68EE09799F15
 Ctrl.hexconstant = hexconstant:0000000255
 Output = 4ED31063621684F09AE8D89991AF3E8F
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:AES-256-CBC
 Ctrl.hexkey = hexkey:FE697B52BC0D3CE14432BA036A92E65BBB52280990A2FA27883998D72AF30161
 Ctrl.hexconstant = hexconstant:0000000299
 Output = BFAB388BDCB238E9F9C98D6A878304F04D30C82556375AC507A7A852790F4674
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:AES-256-CBC
 Ctrl.hexkey = hexkey:FE697B52BC0D3CE14432BA036A92E65BBB52280990A2FA27883998D72AF30161
 Ctrl.hexconstant = hexconstant:00000002AA
 Output = C7CFD9CD75FE793A586A542D87E0D1396F1134A104BB1A9190B8C90ADA3DDF37
 
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:AES-256-CBC
 Ctrl.hexkey = hexkey:FE697B52BC0D3CE14432BA036A92E65BBB52280990A2FA27883998D72AF30161
@@ -6645,9 +6673,9 @@ Ctrl.hexconstant = hexconstant:0000000255
 Output = 97151B4C76945063E2EB0529DC067D97D7BBA90776D8126D91F34F3101AEA8BA
 
 #Same as the first but with no "fixup"
+Availablein = default
 KDF = KRB5KDF
 Ctrl.cipher = cipher:DES-EDE3-CBC
 Ctrl.hexkey = hexkey:dce06b1f64c857a11c3db57c51899b2cc1791008ce973b92
 Ctrl.hexconstant = hexconstant:0000000155
 Output = 935079d14490a75c3093c4a6e8c3b049c71e6ee705
-
