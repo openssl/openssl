@@ -3,172 +3,202 @@
 =head1 NAME
 
 provider-base
-- The basic OpenSSL library E<lt>-E<gt> provider functions
+- The basic OpenSSL library E<lt>-E<gt> provider dispatch interface
 
 =head1 SYNOPSIS
 
  #include <openssl/core_dispatch.h>
 
  /*
-  * None of these are actual functions, but are displayed like this for
-  * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * The following function prototypes don't represent actual C functions
+  * but rather the signatures of so-called 'dispatched' functions.
+  * To indicate the difference, curly {braces} have been added around
+  * the function names.
+  *
+  * See the L<Dispatched Functions> section for an explanation how to
+  * interpret those prototypes.
   */
 
  /* Functions offered by libcrypto to the providers */
- const OSSL_ITEM *core_gettable_params(const OSSL_CORE_HANDLE *handle);
- int core_get_params(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params[]);
- int core_thread_start(const OSSL_CORE_HANDLE *handle,
-                       OSSL_thread_stop_handler_fn handfn);
- OPENSSL_CORE_CTX *core_get_library_context(const OSSL_CORE_HANDLE *handle);
- void core_new_error(const OSSL_CORE_HANDLE *handle);
- void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
-                           const char *file, int line, const char *func);
- void core_vset_error(const OSSL_CORE_HANDLE *handle,
+ const OSSL_ITEM * {core_gettable_params}(const OSSL_CORE_HANDLE *handle);
+ int {core_get_params}(const OSSL_CORE_HANDLE *handle, OSSL_PARAM params{});
+ int {core_thread_start}(const OSSL_CORE_HANDLE *handle,
+                         OSSL_thread_stop_handler_fn handfn);
+ OPENSSL_CORE_CTX *{core_get_library_context}(const OSSL_CORE_HANDLE *handle);
+ void {core_new_error}(const OSSL_CORE_HANDLE *handle);
+ void {core_set_error_debug}(const OSSL_CORE_HANDLE *handle,
+                            const char *file, int line, const char *func);
+ void {core_vset_error}(const OSSL_CORE_HANDLE *handle,
                       uint32_t reason, const char *fmt, va_list args);
 
  /*
   * Some OpenSSL functionality is directly offered to providers via
   * dispatch
   */
- void *CRYPTO_malloc(size_t num, const char *file, int line);
- void *CRYPTO_zalloc(size_t num, const char *file, int line);
- void *CRYPTO_memdup(const void *str, size_t siz,
-                     const char *file, int line);
- char *CRYPTO_strdup(const char *str, const char *file, int line);
- char *CRYPTO_strndup(const char *str, size_t s,
-                      const char *file, int line);
- void CRYPTO_free(void *ptr, const char *file, int line);
- void CRYPTO_clear_free(void *ptr, size_t num,
+ void *{CRYPTO_malloc}(size_t num, const char *file, int line);
+ void *{CRYPTO_zalloc}(size_t num, const char *file, int line);
+ void *{CRYPTO_memdup}(const void *str, size_t siz,
+                       const char *file, int line);
+ char *{CRYPTO_strdup}(const char *str, const char *file, int line);
+ char *{CRYPTO_strndup}(const char *str, size_t s,
                         const char *file, int line);
- void *CRYPTO_realloc(void *addr, size_t num,
-                      const char *file, int line);
- void *CRYPTO_clear_realloc(void *addr, size_t old_num, size_t num,
-                            const char *file, int line);
- void *CRYPTO_secure_malloc(size_t num, const char *file, int line);
- void *CRYPTO_secure_zalloc(size_t num, const char *file, int line);
- void CRYPTO_secure_free(void *ptr, const char *file, int line);
- void CRYPTO_secure_clear_free(void *ptr, size_t num,
-                               const char *file, int line);
- int CRYPTO_secure_allocated(const void *ptr);
- void OPENSSL_cleanse(void *ptr, size_t len);
+ void {CRYPTO_free}(void *ptr, const char *file, int line);
+ void {CRYPTO_clear_free}(void *ptr, size_t num,
+                          const char *file, int line);
+ void *{CRYPTO_realloc}(void *addr, size_t num,
+                        const char *file, int line);
+ void *{CRYPTO_clear_realloc}(void *addr, size_t old_num, size_t num,
+                              const char *file, int line);
+ void *{CRYPTO_secure_malloc}(size_t num, const char *file, int line);
+ void *{CRYPTO_secure_zalloc}(size_t num, const char *file, int line);
+ void {CRYPTO_secure_free}(void *ptr, const char *file, int line);
+ void {CRYPTO_secure_clear_free}(void *ptr, size_t num,
+                                 const char *file, int line);
+ int {CRYPTO_secure_allocated}(const void *ptr);
+ void {OPENSSL_cleanse}(void *ptr, size_t len);
 
- OSSL_CORE_BIO * BIO_new_file(const char *filename, const char *mode)
- OSSL_CORE_BIO * BIO_new_membuf(const void *buf, int len)
- int BIO_read_ex(OSSL_CORE_BIO *bio, void *data, size_t data_len,
-                 size_t *bytes_read))
- int BIO_write_ex(OSSL_CORE_BIO *bio, const void *data, size_t data_len,
-                  size_t *written)
- int BIO_free(OSSL_CORE_BIO *bio))
- int BIO_vprintf(OSSL_CORE_BIO *bio, const char *format, va_list args)
- int BIO_vsnprintf(char *buf, size_t n, const char *fmt, va_list args)
+ OSSL_CORE_BIO * {BIO_new_file}(const char *filename, const char *mode)
+ OSSL_CORE_BIO * {BIO_new_membuf}(const void *buf, int len)
+ int {BIO_read_ex}(OSSL_CORE_BIO *bio, void *data, size_t data_len,
+                  size_t *bytes_read))
+ int {BIO_write_ex}(OSSL_CORE_BIO *bio, const void *data, size_t data_len,
+                   size_t *written)
+ int {BIO_free}(OSSL_CORE_BIO *bio))
+ int {BIO_vprintf}(OSSL_CORE_BIO *bio, const char *format, va_list args)
+ int {BIO_vsnprintf}(char *buf, size_t n, const char *fmt, va_list args)
 
- void self_test_cb(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg)
+ void {self_test_cb}(OPENSSL_CORE_CTX *ctx, OSSL_CALLBACK **cb, void **cbarg)
 
 
  /* Functions offered by the provider to libcrypto */
- void provider_teardown(void *provctx);
- const OSSL_ITEM *provider_gettable_params(void *provctx);
- int provider_get_params(void *provctx, OSSL_PARAM params[]);
- const OSSL_ALGORITHM *provider_query_operation(void *provctx,
-                                                int operation_id,
-                                                const int *no_store);
- const OSSL_ITEM *provider_get_reason_strings(void *provctx);
- int provider_get_capabilities(void *provctx, const char *capability,
-                               OSSL_CALLBACK *cb, void *arg);
+ void {provider_teardown}(void *provctx);
+ const OSSL_ITEM *{provider_gettable_params}(void *provctx);
+ int {provider_get_params}(void *provctx, OSSL_PARAM params{});
+ const OSSL_ALGORITHM *{provider_query_operation}(void *provctx,
+                                                  int operation_id,
+                                                  const int *no_store);
+ const OSSL_ITEM *{provider_get_reason_strings}(void *provctx);
+ int {provider_get_capabilities}(void *provctx, const char *capability,
+                                 OSSL_CALLBACK *cb, void *arg);
 
 =head1 DESCRIPTION
 
-All "functions" mentioned here are passed as function pointers between
+All functions listed here are so called I<dispatched functions>, which
+are passed as function pointers between
 F<libcrypto> and the provider in B<OSSL_DISPATCH> arrays, in the call
 of the provider initialization function.  See L<provider(7)/Provider>
 for a description of the initialization function.
 
-All these "functions" have a corresponding function type definition
-named B<OSSL_{name}_fn>, and a helper function to retrieve the
-function pointer from a B<OSSL_DISPATCH> element named
-B<OSSL_FUNC_{name}>.
-For example, the "function" core_gettable_params() has these:
+=head2 Dispatched Functions
+
+We indicate a dispatched function by placing the {function_name} in
+curly brackets.
+A dispatched function {function_name} represents a function pointer
+which is associated with a numeric ID B<OSSL_FUNC_FUNCTION_NAME>
+and a function signature, given in form of a function type definition
+B<OSSL_FUNC_function_name_fn>. There is a helper function named
+B<OSSL_FUNC_function_name> to retrieve the function pointer from the
+B<OSSL_DISPATCH> element.
+
+For example, the dispatched function {core_gettable_params} has the
+following signature
+
+ const OSSL_ITEM * {core_gettable_params}(const OSSL_CORE_HANDLE *handle);
+
+Roughly speaking, this is simply the signature of the function stored
+in the dispatch table, if you forget about the curly braces.
+
+In more detail, it means that a numeric ID,
+
+ OSSL_FUNC_CORE_GETTABLE_PARAMS
+
+a function type definition,
 
  typedef OSSL_PARAM *
      (OSSL_FUNC_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
+
+and helper function to retrieve the function pointer
+
  static ossl_inline OSSL_NAME_core_gettable_params_fn
      OSSL_FUNC_core_gettable_params(const OSSL_DISPATCH *opf);
 
-B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
+are associated with the dispatched function {core_gettable_params}.
+
+
+The numeric IDs serve as an index into the B<OSSL_DISPATCH> and are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
 
 For I<in> (the B<OSSL_DISPATCH> array passed from F<libcrypto> to the
 provider):
 
- core_gettable_params           OSSL_FUNC_CORE_GETTABLE_PARAMS
- core_get_params                OSSL_FUNC_CORE_GET_PARAMS
- core_thread_start              OSSL_FUNC_CORE_THREAD_START
- core_get_library_context       OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT
- core_new_error                 OSSL_FUNC_CORE_NEW_ERROR
- core_set_error_debug           OSSL_FUNC_CORE_SET_ERROR_DEBUG
- core_set_error                 OSSL_FUNC_CORE_SET_ERROR
- CRYPTO_malloc                  OSSL_FUNC_CRYPTO_MALLOC
- CRYPTO_zalloc                  OSSL_FUNC_CRYPTO_ZALLOC
- CRYPTO_memdup                  OSSL_FUNC_CRYPTO_MEMDUP
- CRYPTO_strdup                  OSSL_FUNC_CRYPTO_STRDUP
- CRYPTO_strndup                 OSSL_FUNC_CRYPTO_STRNDUP
- CRYPTO_free                    OSSL_FUNC_CRYPTO_FREE
- CRYPTO_clear_free              OSSL_FUNC_CRYPTO_CLEAR_FREE
- CRYPTO_realloc                 OSSL_FUNC_CRYPTO_REALLOC
- CRYPTO_clear_realloc           OSSL_FUNC_CRYPTO_CLEAR_REALLOC
- CRYPTO_secure_malloc           OSSL_FUNC_CRYPTO_SECURE_MALLOC
- CRYPTO_secure_zalloc           OSSL_FUNC_CRYPTO_SECURE_ZALLOC
- CRYPTO_secure_free             OSSL_FUNC_CRYPTO_SECURE_FREE
- CRYPTO_secure_clear_free       OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE
- CRYPTO_secure_allocated        OSSL_FUNC_CRYPTO_SECURE_ALLOCATED
- BIO_new_file                   OSSL_FUNC_BIO_NEW_FILE
- BIO_new_mem_buf                OSSL_FUNC_BIO_NEW_MEMBUF
- BIO_read_ex                    OSSL_FUNC_BIO_READ_EX
- BIO_free                       OSSL_FUNC_BIO_FREE
- BIO_vprintf                    OSSL_FUNC_BIO_VPRINTF
- OPENSSL_cleanse                OSSL_FUNC_OPENSSL_CLEANSE
- OSSL_SELF_TEST_set_callback    OSSL_FUNC_SELF_TEST_CB
+ {core_gettable_params}           OSSL_FUNC_CORE_GETTABLE_PARAMS
+ {core_get_params}                OSSL_FUNC_CORE_GET_PARAMS
+ {core_thread_start}              OSSL_FUNC_CORE_THREAD_START
+ {core_get_library_context}       OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT
+ {core_new_error}                 OSSL_FUNC_CORE_NEW_ERROR
+ {core_set_error_debug}           OSSL_FUNC_CORE_SET_ERROR_DEBUG
+ {core_set_error}                 OSSL_FUNC_CORE_SET_ERROR
+ {CRYPTO_malloc}                  OSSL_FUNC_CRYPTO_MALLOC
+ {CRYPTO_zalloc}                  OSSL_FUNC_CRYPTO_ZALLOC
+ {CRYPTO_memdup}                  OSSL_FUNC_CRYPTO_MEMDUP
+ {CRYPTO_strdup}                  OSSL_FUNC_CRYPTO_STRDUP
+ {CRYPTO_strndup}                 OSSL_FUNC_CRYPTO_STRNDUP
+ {CRYPTO_free}                    OSSL_FUNC_CRYPTO_FREE
+ {CRYPTO_clear_free}              OSSL_FUNC_CRYPTO_CLEAR_FREE
+ {CRYPTO_realloc}                 OSSL_FUNC_CRYPTO_REALLOC
+ {CRYPTO_clear_realloc}           OSSL_FUNC_CRYPTO_CLEAR_REALLOC
+ {CRYPTO_secure_malloc}           OSSL_FUNC_CRYPTO_SECURE_MALLOC
+ {CRYPTO_secure_zalloc}           OSSL_FUNC_CRYPTO_SECURE_ZALLOC
+ {CRYPTO_secure_free}             OSSL_FUNC_CRYPTO_SECURE_FREE
+ {CRYPTO_secure_clear_free}       OSSL_FUNC_CRYPTO_SECURE_CLEAR_FREE
+ {CRYPTO_secure_allocated}        OSSL_FUNC_CRYPTO_SECURE_ALLOCATED
+ {BIO_new_file}                   OSSL_FUNC_BIO_NEW_FILE
+ {BIO_new_mem_buf}                OSSL_FUNC_BIO_NEW_MEMBUF
+ {BIO_read_ex}                    OSSL_FUNC_BIO_READ_EX
+ {BIO_free}                       OSSL_FUNC_BIO_FREE
+ {BIO_vprintf}                    OSSL_FUNC_BIO_VPRINTF
+ {OPENSSL_cleanse}                OSSL_FUNC_OPENSSL_CLEANSE
+ {OSSL_SELF_TEST_set_callback}    OSSL_FUNC_SELF_TEST_CB
 
 For I<*out> (the B<OSSL_DISPATCH> array passed from the provider to
 F<libcrypto>):
 
- provider_teardown              OSSL_FUNC_PROVIDER_TEARDOWN
- provider_gettable_params       OSSL_FUNC_PROVIDER_GETTABLE_PARAMS
- provider_get_params            OSSL_FUNC_PROVIDER_GET_PARAMS
- provider_query_operation       OSSL_FUNC_PROVIDER_QUERY_OPERATION
- provider_get_reason_strings    OSSL_FUNC_PROVIDER_GET_REASON_STRINGS
- provider_get_capabilities      OSSL_FUNC_PROVIDER_GET_CAPABILITIES
+ {provider_teardown}              OSSL_FUNC_PROVIDER_TEARDOWN
+ {provider_gettable_params}       OSSL_FUNC_PROVIDER_GETTABLE_PARAMS
+ {provider_get_params}            OSSL_FUNC_PROVIDER_GET_PARAMS
+ {provider_query_operation}       OSSL_FUNC_PROVIDER_QUERY_OPERATION
+ {provider_get_reason_strings}    OSSL_FUNC_PROVIDER_GET_REASON_STRINGS
+ {provider_get_capabilities}      OSSL_FUNC_PROVIDER_GET_CAPABILITIES
 
-=head2 Core functions
+=head2 Core Functions
 
-core_gettable_params() returns a constant array of descriptor
-B<OSSL_PARAM>, for parameters that core_get_params() can handle.
+{core_gettable_params}() returns a constant array of descriptors
+B<OSSL_PARAM>, for parameters that {core_get_params}() can handle.
 
-core_get_params() retrieves parameters from the core for the given I<handle>.
+{core_get_params}() retrieves parameters from the core for the given I<handle>.
 See L</Core parameters> below for a description of currently known
 parameters.
 
-=for comment core_thread_start() TBA
+=for comment {core_thread_start}() TBA
 
-core_get_library_context() retrieves the library context in which the library
+{core_get_library_context}() retrieves the library context in which the library
 object for the current provider is stored, accessible through the I<handle>.
 This may sometimes be useful if the provider wishes to store a
 reference to its context in the same library context.
 
-core_new_error(), core_set_error_debug() and core_set_error() are
+{core_new_error}(), {core_set_error_debug}() and {core_set_error}() are
 building blocks for reporting an error back to the core, with
 reference to the I<handle>.
 
 =over 4
 
-=item core_new_error()
+=item {core_new_error}()
 
 allocates a new thread specific error record.
 
 This corresponds to the OpenSSL function L<ERR_new(3)>.
 
-=item core_set_error_debug()
+=item {core_set_error_debug}()
 
 sets debugging information in the current thread specific error
 record.
@@ -177,12 +207,12 @@ line I<line> and the function name I<func> where the error occurred.
 
 This corresponds to the OpenSSL function L<ERR_set_debug(3)>.
 
-=item core_set_error()
+=item {core_set_error}()
 
 sets the I<reason> for the error, along with any addition data.
 The I<reason> is a number defined by the provider and used to index
 the reason strings table that's returned by
-provider_get_reason_strings().
+{provider_get_reason_strings}().
 The additional data is given as a format string I<fmt> and a set of
 arguments I<args>, which are treated in the same manner as with
 BIO_vsnprintf().
@@ -193,13 +223,13 @@ This corresponds to the OpenSSL function L<ERR_vset_error(3)>.
 
 =back
 
-CRYPTO_malloc(), CRYPTO_zalloc(), CRYPTO_memdup(), CRYPTO_strdup(),
-CRYPTO_strndup(), CRYPTO_free(), CRYPTO_clear_free(),
-CRYPTO_realloc(), CRYPTO_clear_realloc(), CRYPTO_secure_malloc(),
-CRYPTO_secure_zalloc(), CRYPTO_secure_free(),
-CRYPTO_secure_clear_free(), CRYPTO_secure_allocated(),
-BIO_new_file(), BIO_new_mem_buf(), BIO_read_ex(), BIO_free(),
-BIO_vprintf(), OPENSSL_cleanse(), and OPENSSL_hexstr2buf()
+{CRYPTO_malloc}(), {CRYPTO_zalloc}(), {CRYPTO_memdup}(), {CRYPTO_strdup}(),
+{CRYPTO_strndup}(), {CRYPTO_free}(), {CRYPTO_clear_free}(),
+{CRYPTO_realloc}(), {CRYPTO_clear_realloc}(), {CRYPTO_secure_malloc}(),
+{CRYPTO_secure_zalloc}(), {CRYPTO_secure_free}(),
+{CRYPTO_secure_clear_free}(), {CRYPTO_secure_allocated}(),
+{BIO_new_file}(), {BIO_new_mem_buf}(), {BIO_read_ex}(), {BIO_free}(),
+{BIO_vprintf}(), {OPENSSL_cleanse}(), and {OPENSSL_hexstr2buf}()
 correspond exactly to the public functions with the same name.
 As a matter of fact, the pointers in the B<OSSL_DISPATCH> array are
 direct pointers to those public functions. Note that the BIO functions take an
@@ -209,30 +239,30 @@ side (the two are not compatible).
 OSSL_SELF_TEST_set_callback() is used to set an optional callback that can be
 passed into a provider. This may be ignored by a provider.
 
-=head2 Provider functions
+=head2 Provider Functions
 
-provider_teardown() is called when a provider is shut down and removed
+{provider_teardown}() is called when a provider is shut down and removed
 from the core's provider store.
 It must free the passed I<provctx>.
 
-provider_gettable_params() should return a constant array of
-descriptor B<OSSL_PARAM>, for parameters that provider_get_params()
+{provider_gettable_params}() should return a constant array of
+descriptor B<OSSL_PARAM>, for parameters that {provider_get_params}()
 can handle.
 
-provider_get_params() should process the B<OSSL_PARAM> array
+{provider_get_params}() should process the B<OSSL_PARAM> array
 I<params>, setting the values of the parameters it understands.
 
-provider_query_operation() should return a constant B<OSSL_ALGORITHM>
+{provider_query_operation}() should return a constant B<OSSL_ALGORITHM>
 that corresponds to the given I<operation_id>.
 It should indicate if the core may store a reference to this array by
 setting I<*no_store> to 0 (core may store a reference) or 1 (core may
 not store a reference).
 
-provider_get_reason_strings() should return a constant B<OSSL_ITEM>
+{provider_get_reason_strings}() should return a constant B<OSSL_ITEM>
 array that provides reason strings for reason codes the provider may
-use when reporting errors using core_put_error().
+use when reporting errors using {core_put_error}().
 
-The provider_get_capabilities() function should call the callback I<cb> passing
+The {provider_get_capabilities}() function should call the callback I<cb> passing
 it a set of B<OSSL_PARAM>s and the caller supplied argument I<arg>. The
 B<OSSL_PARAM>s should provide details about the capability with the name given
 in the I<capability> argument relevant for the provider context I<provctx>. If a
@@ -242,13 +272,13 @@ describing the services that a provider can offer. For further details see the
 L</CAPABILITIES> section below. It should return 1 on success or 0 on error.
 
 None of these functions are mandatory, but a provider is fairly
-useless without at least provider_query_operation(), and
-provider_gettable_params() is fairly useless if not accompanied by
-provider_get_params().
+useless without at least {provider_query_operation}(), and
+{provider_gettable_params}() is fairly useless if not accompanied by
+{provider_get_params}().
 
-=head2 Provider parameters
+=head2 Provider Parameters
 
-provider_get_params() can return the following provider parameters to the core:
+{provider_get_params}() can return the following provider parameters to the core:
 
 =over 4
 
@@ -275,7 +305,7 @@ provider_gettable_params() should return the above parameters.
 
 =head2 Core parameters
 
-core_get_params() can retrieve the following core parameters for each provider:
+{core_get_params}() can retrieve the following core parameters for each provider:
 
 =over 4
 

@@ -2,43 +2,47 @@
 
 =head1 NAME
 
-provider-asym_cipher - The asym_cipher library E<lt>-E<gt> provider functions
+provider-asym_cipher - The ASYM_CIPHER provider dispatch interface
 
 =head1 SYNOPSIS
 
 =for openssl multiple includes
 
- #include <openssl/core_dispatch.h>
  #include <openssl/core_names.h>
+ #include <openssl/core_dispatch.h>
 
  /*
-  * None of these are actual functions, but are displayed like this for
-  * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * The following function prototypes don't represent actual C functions
+  * but rather the signatures of so-called 'dispatched' functions.
+  * To indicate the difference, curly {braces} have been added around
+  * the function names.
+  *
+  * See L<provider-base(7)/Dispatched Functions> for an explanation
+  * how to interpret those prototypes.
   */
 
  /* Context management */
- void *OSSL_FUNC_asym_cipher_newctx(void *provctx);
- void OSSL_FUNC_asym_cipher_freectx(void *ctx);
- void *OSSL_FUNC_asym_cipher_dupctx(void *ctx);
+ void *{asym_cipher_newctx}(void *provctx);
+ void {asym_cipher_freectx}(void *ctx);
+ void *{asym_cipher_dupctx}(void *ctx);
 
  /* Encryption */
- int OSSL_FUNC_asym_cipher_encrypt_init(void *ctx, void *provkey);
- int OSSL_FUNC_asym_cipher_encrypt(void *ctx, unsigned char *out, size_t *outlen,
+ int {asym_cipher_encrypt_init}(void *ctx, void *provkey);
+ int {asym_cipher_encrypt}(void *ctx, unsigned char *out, size_t *outlen,
                                    size_t outsize, const unsigned char *in,
                                    size_t inlen);
 
  /* Decryption */
- int OSSL_FUNC_asym_cipher_decrypt_init(void *ctx, void *provkey);
- int OSSL_FUNC_asym_cipher_decrypt(void *ctx, unsigned char *out, size_t *outlen,
+ int {asym_cipher_decrypt_init}(void *ctx, void *provkey);
+ int {asym_cipher_decrypt}(void *ctx, unsigned char *out, size_t *outlen,
                                    size_t outsize, const unsigned char *in,
                                    size_t inlen);
 
  /* Asymmetric Cipher parameters */
- int OSSL_FUNC_asym_cipher_get_ctx_params(void *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_asym_cipher_gettable_ctx_params(void);
- int OSSL_FUNC_asym_cipher_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_asym_cipher_settable_ctx_params(void);
+ int {asym_cipher_get_ctx_params}(void *ctx, OSSL_PARAM params[]);
+ const OSSL_PARAM *{asym_cipher_gettable_ctx_params}(void);
+ int {asym_cipher_set_ctx_params}(void *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *{asym_cipher_settable_ctx_params}(void);
 
 =head1 DESCRIPTION
 
@@ -61,41 +65,41 @@ All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from an B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
-For example, the "function" OSSL_FUNC_asym_cipher_newctx() has these:
+For example, the "function" {asym_cipher_newctx}() has these:
 
- typedef void *(OSSL_FUNC_asym_cipher_newctx_fn)(void *provctx);
- static ossl_inline OSSL_FUNC_asym_cipher_newctx_fn
-     OSSL_FUNC_asym_cipher_newctx(const OSSL_DISPATCH *opf);
+ typedef void *({asym_cipher_newctx_fn})(void *provctx);
+ static ossl_inline {asym_cipher_newctx_fn}
+     {asym_cipher_newctx}(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
 
- OSSL_FUNC_asym_cipher_newctx               OSSL_FUNC_ASYM_CIPHER_NEWCTX
- OSSL_FUNC_asym_cipher_freectx              OSSL_FUNC_ASYM_CIPHER_FREECTX
- OSSL_FUNC_asym_cipher_dupctx               OSSL_FUNC_ASYM_CIPHER_DUPCTX
+ {asym_cipher_newctx}               OSSL_FUNC_ASYM_CIPHER_NEWCTX
+ {asym_cipher_freectx}              OSSL_FUNC_ASYM_CIPHER_FREECTX
+ {asym_cipher_dupctx}               OSSL_FUNC_ASYM_CIPHER_DUPCTX
 
- OSSL_FUNC_asym_cipher_encrypt_init         OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT
- OSSL_FUNC_asym_cipher_encrypt              OSSL_FUNC_ASYM_CIPHER_ENCRYPT
+ {asym_cipher_encrypt_init}         OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT
+ {asym_cipher_encrypt}              OSSL_FUNC_ASYM_CIPHER_ENCRYPT
 
- OSSL_FUNC_asym_cipher_decrypt_init         OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT
- OSSL_FUNC_asym_cipher_decrypt              OSSL_FUNC_ASYM_CIPHER_DECRYPT
+ {asym_cipher_decrypt_init}         OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT
+ {asym_cipher_decrypt}              OSSL_FUNC_ASYM_CIPHER_DECRYPT
 
- OSSL_FUNC_asym_cipher_get_ctx_params       OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS
- OSSL_FUNC_asym_cipher_gettable_ctx_params  OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS
- OSSL_FUNC_asym_cipher_set_ctx_params       OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS
- OSSL_FUNC_asym_cipher_settable_ctx_params  OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS
+ {asym_cipher_get_ctx_params}       OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS
+ {asym_cipher_gettable_ctx_params}  OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS
+ {asym_cipher_set_ctx_params}       OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS
+ {asym_cipher_settable_ctx_params}  OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS
 
 An asymmetric cipher algorithm implementation may not implement all of these
 functions.
 In order to be a consistent set of functions a provider must implement
-OSSL_FUNC_asym_cipher_newctx and OSSL_FUNC_asym_cipher_freectx.
-It must also implement both of OSSL_FUNC_asym_cipher_encrypt_init and
-OSSL_FUNC_asym_cipher_encrypt, or both of OSSL_FUNC_asym_cipher_decrypt_init and
-OSSL_FUNC_asym_cipher_decrypt.
-OSSL_FUNC_asym_cipher_get_ctx_params is optional but if it is present then so must
-OSSL_FUNC_asym_cipher_gettable_ctx_params.
-Similarly, OSSL_FUNC_asym_cipher_set_ctx_params is optional but if it is present then
-so must OSSL_FUNC_asym_cipher_settable_ctx_params.
+{asym_cipher_newctx} and {asym_cipher_freectx}.
+It must also implement both of {asym_cipher_encrypt_init} and
+{asym_cipher_encrypt}, or both of {asym_cipher_decrypt_init} and
+{asym_cipher_decrypt}.
+{asym_cipher_get_ctx_params} is optional but if it is present then so must
+{asym_cipher_gettable_ctx_params}.
+Similarly, {asym_cipher_set_ctx_params} is optional but if it is present then
+so must {asym_cipher_settable_ctx_params}.
 
 An asymmetric cipher algorithm must also implement some mechanism for generating,
 loading or importing keys via the key management (OSSL_OP_KEYMGMT) operation.
@@ -103,30 +107,30 @@ See L<provider-keymgmt(7)> for further details.
 
 =head2 Context Management Functions
 
-OSSL_FUNC_asym_cipher_newctx() should create and return a pointer to a provider side
+{asym_cipher_newctx}() should create and return a pointer to a provider side
 structure for holding context information during an asymmetric cipher operation.
 A pointer to this context will be passed back in a number of the other
 asymmetric cipher operation function calls.
 The parameter I<provctx> is the provider context generated during provider
 initialisation (see L<provider(7)>).
 
-OSSL_FUNC_asym_cipher_freectx() is passed a pointer to the provider side asymmetric
+{asym_cipher_freectx}() is passed a pointer to the provider side asymmetric
 cipher context in the I<ctx> parameter.
 This function should free any resources associated with that context.
 
-OSSL_FUNC_asym_cipher_dupctx() should duplicate the provider side asymmetric cipher
+{asym_cipher_dupctx}() should duplicate the provider side asymmetric cipher
 context in the I<ctx> parameter and return the duplicate copy.
 
 =head2 Encryption Functions
 
-OSSL_FUNC_asym_cipher_encrypt_init() initialises a context for an asymmetric encryption
+{asym_cipher_encrypt_init}() initialises a context for an asymmetric encryption
 given a provider side asymmetric cipher context in the I<ctx> parameter, and a
 pointer to a provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
-OSSL_FUNC_asym_cipher_encrypt() performs the actual encryption itself.
+{asym_cipher_encrypt}() performs the actual encryption itself.
 A previously initialised asymmetric cipher context is passed in the I<ctx>
 parameter.
 The data to be encrypted is pointed to by the I<in> parameter which is I<inlen>
@@ -140,14 +144,14 @@ written to I<*outlen>.
 
 =head2 Decryption Functions
 
-OSSL_FUNC_asym_cipher_decrypt_init() initialises a context for an asymmetric decryption
+{asym_cipher_decrypt_init}() initialises a context for an asymmetric decryption
 given a provider side asymmetric cipher context in the I<ctx> parameter, and a
 pointer to a provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
-OSSL_FUNC_asym_cipher_decrypt() performs the actual decryption itself.
+{asym_cipher_decrypt}() performs the actual decryption itself.
 A previously initialised asymmetric cipher context is passed in the I<ctx>
 parameter.
 The data to be decrypted is pointed to by the I<in> parameter which is I<inlen>
@@ -162,13 +166,13 @@ written to I<*outlen>.
 =head2 Asymmetric Cipher Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
-the OSSL_FUNC_asym_cipher_get_ctx_params() and OSSL_FUNC_asym_cipher_set_ctx_params()
+the {asym_cipher_get_ctx_params}() and {asym_cipher_set_ctx_params}()
 functions.
 
-OSSL_FUNC_asym_cipher_get_ctx_params() gets asymmetric cipher parameters associated
+{asym_cipher_get_ctx_params}() gets asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> and stores them in
 I<params>.
-OSSL_FUNC_asym_cipher_set_ctx_params() sets the asymmetric cipher parameters associated
+{asym_cipher_set_ctx_params}() sets the asymmetric cipher parameters associated
 with the given provider side asymmetric cipher context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
@@ -226,15 +230,15 @@ B<RSA_PKCS1_WITH_TLS_PADDING> on the page L<EVP_PKEY_CTX_set_rsa_padding(3)>.
 
 =back
 
-OSSL_FUNC_asym_cipher_gettable_ctx_params() and OSSL_FUNC_asym_cipher_settable_ctx_params()
+{asym_cipher_gettable_ctx_params}() and {asym_cipher_settable_ctx_params}()
 get a constant B<OSSL_PARAM> array that describes the gettable and settable
-parameters, i.e. parameters that can be used with OSSL_FUNC_asym_cipherget_ctx_params()
-and OSSL_FUNC_asym_cipher_set_ctx_params() respectively.
+parameters, i.e. parameters that can be used with {asym_cipherget_ctx_params}()
+and {asym_cipher_set_ctx_params}() respectively.
 See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as parameter descriptor.
 
 =head1 RETURN VALUES
 
-OSSL_FUNC_asym_cipher_newctx() and OSSL_FUNC_asym_cipher_dupctx() should return the newly
+{asym_cipher_newctx}() and {asym_cipher_dupctx}() should return the newly
 created provider side asymmetric cipher context, or NULL on failure.
 
 All other functions should return 1 for success or 0 on error.

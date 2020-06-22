@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-provider-serializer - The SERIALIZER library E<lt>-E<gt> provider functions
+provider-serializer - The SERIALIZER provider dispatch interface
 
 =head1 SYNOPSIS
 
@@ -12,28 +12,35 @@ Future development will also include deserializing functions.
 
 =end comment
 
+=for openssl multiple includes
+
+ #include <openssl/core_names.h>
  #include <openssl/core_dispatch.h>
 
  /*
-  * None of these are actual functions, but are displayed like this for
-  * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * The following function prototypes don't represent actual C functions
+  * but rather the signatures of so-called 'dispatched' functions.
+  * To indicate the difference, curly {braces} have been added around
+  * the function names.
+  *
+  * See L<provider-base(7)/Dispatched Functions> for an explanation
+  * how to interpret those prototypes.
   */
 
  /* Functions to construct / destruct / manipulate the serializer context */
- void *OSSL_FUNC_serializer_newctx(void *provctx);
- void OSSL_FUNC_serializer_freectx(void *ctx);
- int OSSL_FUNC_serializer_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_serializer_settable_ctx_params(void)
+ void *{serializer_newctx}(void *provctx);
+ void {serializer_freectx}(void *ctx);
+ int {serializer_set_ctx_params}(void *ctx, const OSSL_PARAM params[]);
+ const OSSL_PARAM *{serializer_settable_ctx_params}(void)
 
  /* Functions to serialize object data */
- int OSSL_FUNC_serializer_serialize_data(void *ctx, const OSSL_PARAM *data,
-                                         OSSL_CORE_BIO *out,
-                                         OSSL_PASSPHRASE_CALLBACK *cb,
-                                         void *cbarg);
- int OSSL_FUNC_serializer_serialize_object(void *ctx, void *obj, OSSL_CORE_BIO *out,
-                                           OSSL_PASSPHRASE_CALLBACK *cb,
-                                           void *cbarg);
+ int {serializer_serialize_data}(void *ctx, const OSSL_PARAM *data,
+                                 OSSL_CORE_BIO *out,
+                                 OSSL_PASSPHRASE_CALLBACK *cb,
+                                 void *cbarg);
+ int {serializer_serialize_object}(void *ctx, void *obj, OSSL_CORE_BIO *out,
+                                   OSSL_PASSPHRASE_CALLBACK *cb,
+                                   void *cbarg);
 
 =head1 DESCRIPTION
 
@@ -45,7 +52,7 @@ L<BIO_s_membuf(3)>.
 
 The serializer doesn't need to know more about the B<OSSL_CORE_BIO> pointer than
 being able to pass it to the appropriate BIO upcalls (see
-L<provider-base(7)/Core functions>).
+L<provider-base(7)/Core Functions>).
 
 The serialization using the L<OSSL_PARAM(3)> array form allows a
 serializer to be used for data that's been exported from another
@@ -66,25 +73,25 @@ All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
 B<OSSL_FUNC_{name}>.
-For example, the "function" OSSL_FUNC_serializer_serialize_data() has these:
+For example, the "function" {serializer_serialize_data}() has these:
 
  typedef int
-     (OSSL_FUNC_serializer_serialize_data_fn)(void *provctx,
+     ({serializer_serialize_data_fn})(void *provctx,
                                             const OSSL_PARAM params[],
                                             OSSL_CORE_BIO *out);
- static ossl_inline OSSL_FUNC_serializer_serialize_data_fn
-     OSSL_FUNC_serializer_serialize_data(const OSSL_DISPATCH *opf);
+ static ossl_inline {serializer_serialize_data_fn}
+     {serializer_serialize_data}(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
 macros in L<openssl-core_dispatch.h(7)>, as follows:
 
- OSSL_FUNC_serializer_newctx              OSSL_FUNC_SERIALIZER_NEWCTX
- OSSL_FUNC_serializer_freectx             OSSL_FUNC_SERIALIZER_FREECTX
- OSSL_FUNC_serializer_set_ctx_params      OSSL_FUNC_SERIALIZER_SET_CTX_PARAMS
- OSSL_FUNC_serializer_settable_ctx_params OSSL_FUNC_SERIALIZER_SETTABLE_CTX_PARAMS
+ {serializer_newctx}              OSSL_FUNC_SERIALIZER_NEWCTX
+ {serializer_freectx}             OSSL_FUNC_SERIALIZER_FREECTX
+ {serializer_set_ctx_params}      OSSL_FUNC_SERIALIZER_SET_CTX_PARAMS
+ {serializer_settable_ctx_params} OSSL_FUNC_SERIALIZER_SETTABLE_CTX_PARAMS
 
- OSSL_FUNC_serializer_serialize_data      OSSL_FUNC_SERIALIZER_SERIALIZE_DATA
- OSSL_FUNC_serializer_serialize_object    OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT
+ {serializer_serialize_data}      OSSL_FUNC_SERIALIZER_SERIALIZE_DATA
+ {serializer_serialize_object}    OSSL_FUNC_SERIALIZER_SERIALIZE_OBJECT
 
 =head2 Names and properties
 
@@ -156,33 +163,33 @@ know anything about.
 
 =head2 Context functions
 
-OSSL_FUNC_serializer_newctx() returns a context to be used with the rest of
+{serializer_newctx}() returns a context to be used with the rest of
 the functions.
 
-OSSL_FUNC_serializer_freectx() frees the given I<ctx>, if it was created by
-OSSL_FUNC_serializer_newctx().
+{serializer_freectx}() frees the given I<ctx>, if it was created by
+{serializer_newctx}().
 
-OSSL_FUNC_serializer_set_ctx_params() sets context data according to
+{serializer_set_ctx_params}() sets context data according to
 parameters from I<params> that it recognises.  Unrecognised parameters
 should be ignored.
 
-OSSL_FUNC_serializer_settable_ctx_params() returns a constant B<OSSL_PARAM>
-array describing the parameters that OSSL_FUNC_serializer_set_ctx_params()
+{serializer_settable_ctx_params}() returns a constant B<OSSL_PARAM>
+array describing the parameters that {serializer_set_ctx_params}()
 can handle.
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used
-by OSSL_FUNC_serializer_set_ctx_params() and OSSL_FUNC_serializer_settable_ctx_params().
+by {serializer_set_ctx_params}() and {serializer_settable_ctx_params}().
 
 =head2 Serializing functions
 
 =for comment There will be a "Deserializing functions" title as well
 
-OSSL_FUNC_serializer_serialize_data() should take an array of B<OSSL_PARAM>,
+{serializer_serialize_data}() should take an array of B<OSSL_PARAM>,
 I<data>, and if it contains the data necessary for the object type
 that the implementation handles, it should output the object in
 serialized form to the B<OSSL_CORE_BIO>.
 
-OSSL_FUNC_serializer_serialize_object() should take a pointer to an object
+{serializer_serialize_object}() should take a pointer to an object
 that it knows intimately, and output that object in serialized form to
 the B<OSSL_CORE_BIO>.  The caller I<must> ensure that this function is called
 with a pointer that the provider of this function is familiar with.
@@ -208,7 +215,7 @@ other objects that need protection.
 
 If this name is invalid for the serialization implementation, the
 implementation should refuse to perform the serialization, i.e.
-OSSL_FUNC_serializer_serialize_data() and OSSL_FUNC_serializer_serialize_object()
+{serializer_serialize_data}() and {serializer_serialize_object}()
 should return an error.
 
 =item "properties" (B<OSSL_SERIALIZER_PARAM_PROPERTIES>) <UTF8 string>
@@ -244,16 +251,16 @@ of object it's being prompted for.
 
 =head1 RETURN VALUES
 
-OSSL_FUNC_serializer_newctx() returns a pointer to a context, or NULL on
+{serializer_newctx}() returns a pointer to a context, or NULL on
 failure.
 
-OSSL_FUNC_serializer_set_ctx_params() returns 1, unless a recognised
+{serializer_set_ctx_params}() returns 1, unless a recognised
 parameters was invalid or caused an error, for which 0 is returned.
 
-OSSL_FUNC_serializer_settable_ctx_params() returns a pointer to an array of
+{serializer_settable_ctx_params}() returns a pointer to an array of
 constant B<OSSL_PARAM> elements.
 
-OSSL_FUNC_serializer_serialize_data() and OSSL_FUNC_serializer_serialize_object()
+{serializer_serialize_data}() and {serializer_serialize_object}()
 return 1 on success, or 0 on failure.
 
 =head1 SEE ALSO
