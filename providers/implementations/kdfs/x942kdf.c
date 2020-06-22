@@ -255,11 +255,13 @@ static void *x942kdf_new(void *provctx)
 static void x942kdf_reset(void *vctx)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
+    void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->secret, ctx->secret_len);
     OPENSSL_clear_free(ctx->ukm, ctx->ukm_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 static void x942kdf_free(void *vctx)

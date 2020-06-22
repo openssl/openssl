@@ -115,12 +115,14 @@ static void kdf_tls1_prf_free(void *vctx)
 static void kdf_tls1_prf_reset(void *vctx)
 {
     TLS1_PRF *ctx = (TLS1_PRF *)vctx;
+    void *provctx = ctx->provctx;
 
     EVP_MAC_free_ctx(ctx->P_hash);
     EVP_MAC_free_ctx(ctx->P_sha1);
     OPENSSL_clear_free(ctx->sec, ctx->seclen);
     OPENSSL_cleanse(ctx->seed, ctx->seedlen);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
