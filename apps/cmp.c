@@ -2042,12 +2042,11 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
         return 0;
     }
 
-    aint = ASN1_INTEGER_new();
-    if (aint == NULL || !ASN1_INTEGER_set(aint, value))
+    if ((aint = ASN1_INTEGER_new()) == NULL)
         goto oom;
 
     val = ASN1_TYPE_new();
-    if (val == NULL) {
+    if (!ASN1_INTEGER_set(aint, value) || val == NULL) {
         ASN1_INTEGER_free(aint);
         goto oom;
     }
@@ -2065,6 +2064,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
     return 1;
 
  oom:
+    ASN1_OBJECT_free(type);
     CMP_err("out of memory");
     return 0;
 }
