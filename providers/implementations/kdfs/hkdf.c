@@ -90,12 +90,14 @@ static void kdf_hkdf_free(void *vctx)
 static void kdf_hkdf_reset(void *vctx)
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
+    void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_free(ctx->salt);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_cleanse(ctx->info, ctx->info_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 static size_t kdf_hkdf_size(KDF_HKDF *ctx)
