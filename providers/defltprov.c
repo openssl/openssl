@@ -577,7 +577,7 @@ static const OSSL_DISPATCH deflt_dispatch_table[] = {
     { 0, NULL }
 };
 
-OSSL_FUNC_provider_init_fn ossl_default_provider_init;
+OSSL_provider_init_fn ossl_default_provider_init;
 
 int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
                                const OSSL_DISPATCH *in,

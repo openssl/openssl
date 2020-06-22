@@ -588,7 +588,7 @@ static const OSSL_DISPATCH intern_dispatch_table[] = {
 };
 
 
-int OSSL_FUNC_provider_init(const OSSL_CORE_HANDLE *handle,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)
@@ -747,7 +747,7 @@ int OSSL_FUNC_provider_init(const OSSL_CORE_HANDLE *handle,
  * the provider context of this inner instance with the same library context
  * that was used in the EVP call that initiated this recursive call.
  */
-OSSL_FUNC_provider_init_fn fips_intern_provider_init;
+OSSL_provider_init_fn fips_intern_provider_init;
 int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
                               const OSSL_DISPATCH *in,
                               const OSSL_DISPATCH **out,

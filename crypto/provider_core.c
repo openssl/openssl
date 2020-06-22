@@ -24,7 +24,7 @@
 #endif
 
 static OSSL_PROVIDER *provider_new(const char *name,
-                                   OSSL_FUNC_provider_init_fn *init_function);
+                                   OSSL_provider_init_fn *init_function);
 
 /*-
  * Provider Object structure
@@ -51,7 +51,7 @@ struct ossl_provider_st {
     char *name;
     char *path;
     DSO *module;
-    OSSL_FUNC_provider_init_fn *init_function;
+    OSSL_provider_init_fn *init_function;
     STACK_OF(INFOPAIR) *parameters;
     OPENSSL_CTX *libctx; /* The library context this instance is in */
     struct provider_store_st *store; /* The store this instance belongs to */
@@ -230,7 +230,7 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
  */
 
 static OSSL_PROVIDER *provider_new(const char *name,
-                                   OSSL_FUNC_provider_init_fn *init_function)
+                                   OSSL_provider_init_fn *init_function)
 {
     OSSL_PROVIDER *prov = NULL;
 
@@ -259,7 +259,7 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov)
 }
 
 OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
-                                 OSSL_FUNC_provider_init_fn *init_function,
+                                 OSSL_provider_init_fn *init_function,
                                  int noconfig)
 {
     struct provider_store_st *store = NULL;
@@ -511,8 +511,8 @@ static int provider_activate(OSSL_PROVIDER *prov)
         }
 
         if (prov->module != NULL)
-            prov->init_function = (OSSL_FUNC_provider_init_fn *)
-                DSO_bind_func(prov->module, "OSSL_FUNC_provider_init");
+            prov->init_function = (OSSL_provider_init_fn *)
+                DSO_bind_func(prov->module, "OSSL_provider_init");
 #endif
     }
 

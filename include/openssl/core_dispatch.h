@@ -51,7 +51,7 @@ extern "C" {
 
 /*
  * Core function identities, for the two OSSL_DISPATCH tables being passed
- * in the OSSL_FUNC_provider_init call.
+ * in the OSSL_provider_init call.
  *
  * 0 serves as a marker for the end of the OSSL_DISPATCH array, and must
  * therefore NEVER be used as a function identity.

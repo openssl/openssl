@@ -18,7 +18,7 @@
 #include <openssl/provider.h>
 #include <openssl/crypto.h>
 
-OSSL_FUNC_provider_init_fn filter_provider_init;
+OSSL_provider_init_fn filter_provider_init;
 
 int filter_provider_set_filter(int operation, const char *name);
 

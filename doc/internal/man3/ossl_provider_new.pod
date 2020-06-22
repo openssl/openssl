@@ -115,7 +115,7 @@ The reference count of a newly created provider object will always
 be 2; one for being added to the store, and one for the returned
 reference.
 If I<init_function> is NULL, the provider is assumed to be a
-dynamically loadable module, with the symbol B<OSSL_FUNC_provider_init> as
+dynamically loadable module, with the symbol B<OSSL_provider_init> as
 its initialisation function.
 If I<init_function> isn't NULL, the provider is assumed to be built
 in, with I<init_function> being the pointer to its initialisation
@@ -170,7 +170,7 @@ function will get called.
 
 If no initialization function was given with ossl_provider_new(), a
 loadable module with the I<name> that was given to ossl_provider_new()
-will be located and loaded, then the symbol B<OSSL_FUNC_provider_init> will
+will be located and loaded, then the symbol B<OSSL_provider_init> will
 be located in that module, and called.
 
 =back

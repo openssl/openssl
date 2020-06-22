@@ -1,1 +1,1 @@
-OSSL_FUNC_provider_init                     1	*	EXIST::FUNCTION:
+OSSL_provider_init                     1	*	EXIST::FUNCTION:

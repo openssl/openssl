@@ -27,8 +27,8 @@ static OSSL_FUNC_provider_query_operation_fn legacy_query;
 #define ALG(NAMES, FUNC) { NAMES, "provider=legacy", FUNC }
 
 #ifdef STATIC_LEGACY
-OSSL_FUNC_provider_init_fn ossl_legacy_provider_init;
-# define OSSL_FUNC_provider_init ossl_legacy_provider_init
+OSSL_provider_init_fn ossl_legacy_provider_init;
+# define OSSL_provider_init ossl_legacy_provider_init
 #endif
 
 /* Functions provided by the core */
@@ -170,7 +170,7 @@ static const OSSL_DISPATCH legacy_dispatch_table[] = {
     { 0, NULL }
 };
 
-int OSSL_FUNC_provider_init(const OSSL_CORE_HANDLE *handle,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)

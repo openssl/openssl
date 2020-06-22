@@ -11,7 +11,7 @@
 
 struct predefined_providers_st {
     const char *name;
-    OSSL_FUNC_provider_init_fn *init;
+    OSSL_provider_init_fn *init;
     unsigned int is_fallback:1;
 };
 

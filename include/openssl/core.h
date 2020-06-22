@@ -161,7 +161,7 @@ struct ossl_param_st {
  * Providers may register for notifications about threads stopping by
  * registering a callback to hear about such events. Providers register the
  * callback using the OSSL_FUNC_CORE_THREAD_START function in the |in| dispatch
- * table passed to OSSL_FUNC_provider_init(). The arg passed back to a provider will
+ * table passed to OSSL_provider_init(). The arg passed back to a provider will
  * be the provider side context object.
  */
 typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
@@ -185,7 +185,7 @@ typedef void (*OSSL_thread_stop_handler_fn)(void *arg);
  *              provider needs it.  This value is passed to other provider
  *              functions, notably other context constructors.
  */
-typedef int (OSSL_FUNC_provider_init_fn)(const OSSL_CORE_HANDLE *handle,
+typedef int (OSSL_provider_init_fn)(const OSSL_CORE_HANDLE *handle,
                                     const OSSL_DISPATCH *in,
                                     const OSSL_DISPATCH **out,
                                     void **provctx);
@@ -193,7 +193,7 @@ typedef int (OSSL_FUNC_provider_init_fn)(const OSSL_CORE_HANDLE *handle,
 #  pragma names save
 #  pragma names uppercase,truncated
 # endif
-extern OSSL_FUNC_provider_init_fn OSSL_FUNC_provider_init;
+extern OSSL_provider_init_fn OSSL_provider_init;
 # ifdef __VMS
 #  pragma names restore
 # endif

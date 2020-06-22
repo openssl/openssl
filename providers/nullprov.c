@@ -15,7 +15,7 @@
 #include <openssl/params.h>
 #include "prov/implementations.h"
 
-OSSL_FUNC_provider_init_fn ossl_null_provider_init;
+OSSL_provider_init_fn ossl_null_provider_init;
 
 /* Parameters we provide to the core */
 static const OSSL_ITEM null_param_types[] = {

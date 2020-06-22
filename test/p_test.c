@@ -23,7 +23,7 @@
  * object form.
  */
 #ifdef PROVIDER_INIT_FUNCTION_NAME
-# define OSSL_FUNC_provider_init PROVIDER_INIT_FUNCTION_NAME
+# define OSSL_provider_init PROVIDER_INIT_FUNCTION_NAME
 #endif
 
 #include <openssl/core.h>
@@ -119,7 +119,7 @@ static const OSSL_DISPATCH p_test_table[] = {
     { 0, NULL }
 };
 
-int OSSL_FUNC_provider_init(const OSSL_CORE_HANDLE *handle,
+int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH *in,
                        const OSSL_DISPATCH **out,
                        void **provctx)

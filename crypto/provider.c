@@ -78,7 +78,7 @@ int OSSL_PROVIDER_get_capabilities(const OSSL_PROVIDER *prov,
 }
 
 int OSSL_PROVIDER_add_builtin(OPENSSL_CTX *libctx, const char *name,
-                              OSSL_FUNC_provider_init_fn *init_fn)
+                              OSSL_provider_init_fn *init_fn)
 {
     OSSL_PROVIDER *prov = NULL;
 

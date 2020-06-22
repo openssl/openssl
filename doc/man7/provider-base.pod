@@ -443,7 +443,7 @@ operation C<BAR>.
  OSSL_FUNC_provider_get_reason_strings_fn p_reasons;
  OSSL_FUNC_provider_teardown_fn p_teardown;
 
- OSSL_FUNC_provider_init_fn OSSL_FUNC_provider_init;
+ OSSL_provider_init_fn OSSL_provider_init;
 
  OSSL_FUNC_core_put_error *c_put_error = NULL;
 
@@ -541,7 +541,7 @@ operation C<BAR>.
      { 0, NULL }
  };
 
- int OSSL_FUNC_provider_init(const OSSL_CORE_HANDLE *handle,
+ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                         const OSSL_DISPATCH *in,
                         const OSSL_DISPATCH **out,
                         void **provctx)
