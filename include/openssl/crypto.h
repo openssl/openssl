@@ -494,6 +494,7 @@ int CRYPTO_THREAD_compare_id(CRYPTO_THREAD_ID a, CRYPTO_THREAD_ID b);
 OPENSSL_CTX *OPENSSL_CTX_new(void);
 int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file);
 void OPENSSL_CTX_free(OPENSSL_CTX *);
+OPENSSL_CTX *OPENSSL_CTX_set0_default(OPENSSL_CTX *libctx);
 
 # ifdef  __cplusplus
 }

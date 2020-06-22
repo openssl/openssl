@@ -5134,3 +5134,4 @@ OSSL_PROVIDER_get_capabilities          ?	3_0_0	EXIST::FUNCTION:
 EC_GROUP_new_by_curve_name_with_libctx  ?	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_with_libctx                  ?	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_by_curve_name_with_libctx    ?	3_0_0	EXIST::FUNCTION:EC
+OPENSSL_CTX_set0_default                ?	3_0_0	EXIST::FUNCTION:
