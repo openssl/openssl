@@ -95,8 +95,10 @@ static void kdf_pbkdf2_free(void *vctx)
 static void kdf_pbkdf2_reset(void *vctx)
 {
     KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
+    void *provctx = ctx->provctx;
 
     kdf_pbkdf2_cleanup(ctx);
+    ctx->provctx = provctx;
     kdf_pbkdf2_init(ctx);
 }
 

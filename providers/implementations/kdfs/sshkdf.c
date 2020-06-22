@@ -72,12 +72,14 @@ static void kdf_sshkdf_free(void *vctx)
 static void kdf_sshkdf_reset(void *vctx)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
+    void *provctx = ctx->provctx;
 
     ossl_prov_digest_reset(&ctx->digest);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->xcghash, ctx->xcghash_len);
     OPENSSL_clear_free(ctx->session_id, ctx->session_id_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 static int sshkdf_set_membuf(unsigned char **dst, size_t *dst_len,

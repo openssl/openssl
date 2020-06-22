@@ -122,6 +122,7 @@ static void kbkdf_free(void *vctx)
 static void kbkdf_reset(void *vctx)
 {
     KBKDF *ctx = (KBKDF *)vctx;
+    void *provctx = ctx->provctx;
 
     EVP_MAC_free_ctx(ctx->ctx_init);
     OPENSSL_clear_free(ctx->context, ctx->context_len);
@@ -129,6 +130,7 @@ static void kbkdf_reset(void *vctx)
     OPENSSL_clear_free(ctx->ki, ctx->ki_len);
     OPENSSL_clear_free(ctx->iv, ctx->iv_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 /* SP800-108 section 5.1 or section 5.2 depending on mode. */

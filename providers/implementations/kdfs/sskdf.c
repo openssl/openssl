@@ -302,6 +302,7 @@ static void *sskdf_new(void *provctx)
 static void sskdf_reset(void *vctx)
 {
     KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
+    void *provctx = ctx->provctx;
 
     EVP_MAC_free_ctx(ctx->macctx);
     ossl_prov_digest_reset(&ctx->digest);
@@ -309,6 +310,7 @@ static void sskdf_reset(void *vctx)
     OPENSSL_clear_free(ctx->info, ctx->info_len);
     OPENSSL_clear_free(ctx->salt, ctx->salt_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 static void sskdf_free(void *vctx)

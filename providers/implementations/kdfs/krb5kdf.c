@@ -78,11 +78,13 @@ static void krb5kdf_free(void *vctx)
 static void krb5kdf_reset(void *vctx)
 {
     KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
+    void *provctx = ctx->provctx;
 
     ossl_prov_cipher_reset(&ctx->cipher);
     OPENSSL_clear_free(ctx->key, ctx->key_len);
     OPENSSL_clear_free(ctx->constant, ctx->constant_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 static int krb5kdf_set_membuf(unsigned char **dst, size_t *dst_len,
