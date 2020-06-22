@@ -46,7 +46,7 @@ Prerequisites
 
 To install OpenSSL, you will need:
 
- * A make implementation
+ * A "make" implementation
  * Perl 5 with core modules (please read [NOTES.PERL](NOTES.PERL))
  * The Perl module Text::Template (please read [NOTES.PERL](NOTES.PERL))
  * an ANSI C compiler
@@ -820,7 +820,7 @@ This only has an impact when not built "shared".
 
 ### no-stdio
 
-Don't use anything from the C header file "stdio.h" that makes use of the "FILE"
+Don't use anything from the C header file `stdio.h` that makes use of the `FILE`
 type.  Only libcrypto and libssl can be built in this way.  Using this option will
 suppress building the command line applications.  Additionally, since the OpenSSL
 tests also use the command line applications, the tests will also be skipped.
@@ -984,7 +984,7 @@ on all platforms and are confined to the configuration scripts only.
 These assignments override the corresponding value in the inherited environment,
 if there is one.
 
-The following variables are used as "make variables" and can be used as an
+The following variables are used as "`make` variables" and can be used as an
 alternative to giving preprocessor, compiler and linker options directly as
 configuration.  The following variables are supported:
 
@@ -1135,14 +1135,15 @@ run:
 If your system isn't listed, you will have to create a configuration
 file named Configurations/{{ something }}.conf and add the correct
 configuration for your system.  See the available configs as examples
-and read Configurations/README and Configurations/README.design for
-more information.
+and read [Configurations/README](Configurations/README)
+and [Configurations/README.design](Configurations/README.design)
+for more information.
 
 The generic configurations "cc" or "gcc" should usually work on 32 bit
 Unix-like systems.
 
-Configure creates a build file ("Makefile" on Unix, "makefile" on Windows
-and "descrip.mms" on OpenVMS) from a suitable template in Configurations,
+Configure creates a build file (`Makefile` on Unix, `makefile` on Windows
+and `descrip.mms` on OpenVMS) from a suitable template in Configurations,
 and defines various macros in include/openssl/configuration.h (generated
 from include/openssl/configuration.h.in).
 
@@ -1205,8 +1206,7 @@ be tested.  Run:
 **Warning:** you MUST run the tests from an unprivileged account (or disable
 your privileges temporarily if your platform allows it).
 
-If some tests fail, take a look at the [Test Failures](#test-failures)
-subsection of the [Troubleshooting](#troubleshooting) section.
+See the file [test/README.md](test/README.md) for further details.
 
 Install OpenSSL
 ---------------
@@ -1289,8 +1289,8 @@ Package builders who want to configure the library for standard locations,
 but have the package installed somewhere else so that it can easily be
 packaged, can use
 
-  $ make DESTDIR=/tmp/package-root install         # Unix
-  $ mms/macro="DESTDIR=TMP:[PACKAGE-ROOT]" install ! OpenVMS
+    $ make DESTDIR=/tmp/package-root install         # Unix
+    $ mms/macro="DESTDIR=TMP:[PACKAGE-ROOT]" install ! OpenVMS
 
 The specified destination directory will be prepended to all installation
 target paths.
@@ -1465,64 +1465,11 @@ described here.  Examine the Makefiles themselves for the full list.
 Running Selected Tests
 ----------------------
 
-The make variable TESTS supports a versatile set of space separated tokens
-with which you can specify a set of tests to be performed.  With a "current
-set of tests" in mind, initially being empty, here are the possible tokens:
+You can specify a set of tests to be performed
+using the `make` variable `TESTS`.
 
-     alltests      The current set of tests becomes the whole set of available
-                   tests (as listed when you do 'make list-tests' or similar).
-
-     xxx           Adds the test 'xxx' to the current set of tests.
-
-    -xxx           Removes 'xxx' from the current set of tests.  If this is the
-                   first token in the list, the current set of tests is first
-                   assigned the whole set of available tests, effectively making
-                   this token equivalent to TESTS="alltests -xxx".
-
-     nn            Adds the test group 'nn' (which is a number) to the current
-                   set of tests.
-
-    -nn            Removes the test group 'nn' from the current set of tests.
-                   If this is the first token in the list, the current set of
-                   tests is first assigned the whole set of available tests,
-                   effectively making this token equivalent to
-                   TESTS="alltests -xxx".
-
-Also, all tokens except for "alltests" may have wildcards, such as *.
-(on Unix and Windows, BSD style wildcards are supported, while on VMS,
-it's VMS style wildcards)
-
-### Examples
-
-Run all tests except for the fuzz tests:
-
-    $ make TESTS=-test_fuzz test
-
-or, if you want to be explicit:
-
-    $ make TESTS='alltests -test_fuzz' test
-
-Run all tests that have a name starting with "test_ssl" but not those
-starting with "test_ssl_":
-
-    $ make TESTS='test_ssl* -test_ssl_*' test
-
-Run only test group 10:
-
-    $ make TESTS='10'
-
-Run all tests except the slow group (group 99):
-
-    $ make TESTS='-99'
-
-Run all tests in test groups 80 to 99 except for tests in group 90:
-
-    $ make TESTS='[89]? -90'
-
-To stochastically verify that the algorithm that produces uniformly distributed
-random numbers is operating correctly (with a false positive rate of 0.01%):
-
-    $ ./util/wrap.sh test/bntest -stochastic
+See the section [Running Selected Tests of
+test/README.md](test/README.md#running-selected-tests).
 
 Troubleshooting
 ===============
@@ -1634,57 +1581,20 @@ Test Failures
 
 If some tests fail, look at the output.  There may be reasons for the failure
 that isn't a problem in OpenSSL itself (like an OS malfunction or a Perl issue).
-You may want increased verbosity, that can be accomplished like this:
 
-Full verbosity (`make` macro `VERBOSE` or `V`):
+You may want increased verbosity, that can be accomplished as described in
+section [Test Failures of test/README.md](test/README.md#test-failures).
 
-    $ make V=1 test                                  # Unix
-    $ mms /macro=(V=1) test                          ! OpenVMS
-    $ nmake V=1 test                                 # Windows
-
-Verbosity on test failure (`VERBOSE_FAILURE` or `VF´, Unix example shown):
-
-    $ make test VF=1
-
-Verbosity on failed (sub-)tests only (`VERBOSE_FAILURES_ONLY` or `VFO`):
-
-    $ make test VFO=1
-
-Verbosity on failed (sub-)tests, in addition progress on succeeded (sub-)tests
-(`VERBOSE_FAILURES_PROGRESS` or `VFP`):
-
-    $ make test VFP=1
-
-If you want to run just one or a few specific tests, you can use
-the make variable TESTS to specify them, like this:
-
-    $ make TESTS='test_rsa test_dsa' test            # Unix
-    $ mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
-    $ nmake TESTS='test_rsa test_dsa' test           # Windows
-
-And of course, you can combine (Unix examples shown):
-
-    $ make test TESTS='test_rsa test_dsa' VF=1
-    $ make test TESTS="test_cmp_*" VFO=1
-
-You can find the list of available tests like this:
-
-    $ make list-tests                                # Unix
-    $ mms list-tests                                 ! OpenVMS
-    $ nmake list-tests                               # Windows
-
-Have a look at the manual for the perl module Test::Harness to
-see what other HARNESS_* variables there are.
+You may want to selectively specify which test(s) to perform. This can be done
+sing the `make` variable `TESTS` as described in section [Running Selected Tests
+of test/README.md](test/README.md#running-selected-tests).
 
 If you find a problem with OpenSSL itself, try removing any
-compiler optimization flags from the CFLAGS line in Makefile and
-run "make clean; make" or corresponding.
+compiler optimization flags from the `CFLAGS` line in the Makefile and
+run `make clean; make` or corresponding.
 
 To report a bug please open an issue on GitHub, at
 <https://github.com/openssl/openssl/issues>.
-
-For more details on how the make variables TESTS can be used,
-see section [Running Selected Tests](#running-selected-tests) below.
 
 Notes
 =====
