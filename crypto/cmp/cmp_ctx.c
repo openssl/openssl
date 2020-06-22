@@ -916,14 +916,14 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         break;
     }
     if (val < min_val) {
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        CMPerr(0, CMP_R_VALUE_TOO_SMALL);
         return 0;
     }
 
     switch (opt) {
     case OSSL_CMP_OPT_LOG_VERBOSITY:
         if (val > OSSL_CMP_LOG_DEBUG) {
-            CMPerr(0, CMP_R_INVALID_ARGS);
+            CMPerr(0, CMP_R_VALUE_TOO_LARGE);
             return 0;
         }
         ctx->log_verbosity = val;
@@ -957,7 +957,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         break;
     case OSSL_CMP_OPT_POPO_METHOD:
         if (val > OSSL_CRMF_POPO_KEYAGREE) {
-            CMPerr(0, CMP_R_INVALID_ARGS);
+            CMPerr(0, CMP_R_VALUE_TOO_LARGE);
             return 0;
         }
         ctx->popoMethod = val;
@@ -982,13 +982,13 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         break;
     case OSSL_CMP_OPT_REVOCATION_REASON:
         if (val > OCSP_REVOKED_STATUS_AACOMPROMISE) {
-            CMPerr(0, CMP_R_INVALID_ARGS);
+            CMPerr(0, CMP_R_VALUE_TOO_LARGE);
             return 0;
         }
         ctx->revocationReason = val;
         break;
     default:
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        CMPerr(0, CMP_R_INVALID_OPTION);
         return 0;
     }
 
@@ -1044,7 +1044,7 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_REVOCATION_REASON:
         return ctx->revocationReason;
     default:
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        CMPerr(0, CMP_R_INVALID_OPTION);
         return -1;
     }
 }

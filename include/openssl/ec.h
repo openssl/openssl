@@ -383,15 +383,18 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
  * Creates a EC_GROUP object with a curve specified by a NID
  *  \param  libctx The associated library context or NULL for the default
  *                 context
+ *  \param  propq  A property query string
  *  \param  nid    NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
  */
-EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid);
+EC_GROUP *EC_GROUP_new_by_curve_name_with_libctx(OPENSSL_CTX *libctx,
+                                                 const char *propq, int nid);
 
 /**
  * Creates a EC_GROUP object with a curve specified by a NID. Same as
- * EC_GROUP_new_by_curve_name_ex but the libctx is always NULL.
+ * EC_GROUP_new_by_curve_name_with_libctx but the libctx and propq are always
+ * NULL.
  *  \param  nid    NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
@@ -864,11 +867,11 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
  *               which case the default library context is used.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx);
+EC_KEY *EC_KEY_new_with_libctx(OPENSSL_CTX *ctx, const char *propq);
 
 /**
- *  Creates a new EC_KEY object. Same as calling EC_KEY_new_ex with a NULL
- *  library context
+ *  Creates a new EC_KEY object. Same as calling EC_KEY_new_with_libctx with a
+ *  NULL library context
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new(void);
@@ -882,17 +885,19 @@ void EC_KEY_clear_flags(EC_KEY *key, int flags);
 /**
  *  Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object.
- *  \param  ctx  The library context for to use for this EC_KEY. May be NULL in
- *               which case the default library context is used.
- *  \param  nid  NID of the named curve.
+ *  \param  ctx   The library context for to use for this EC_KEY. May be NULL in
+ *                which case the default library context is used.
+ *  \param  propq Any property query string
+ *  \param  nid   NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid);
+EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx, const char *propq,
+                                             int nid);
 
 /**
  *  Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object. Same as calling EC_KEY_new_by_curve_name_ex with a NULL
- *  library context.
+ *  library context and property query string.
  *  \param  nid  NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
@@ -1450,10 +1455,6 @@ DEPRECATEDIN_3_0(void EC_KEY_METHOD_get_verify
 #   endif
 #  endif
 
-int EVP_PKEY_CTX_set_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            const char *name);
-int EVP_PKEY_CTX_get_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            char *name, size_t namelen);
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
 
 #  define EVP_PKEY_CTX_set_ec_param_enc(ctx, flag) \

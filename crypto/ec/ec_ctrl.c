@@ -421,48 +421,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
     return (int)ukmlen;
 }
 
-int EVP_PKEY_CTX_set_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            const char *name)
-{
-    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    OSSL_PARAM *p = params;
-
-    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    if (name == NULL)
-        return -1;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME,
-                                            (char *)name, 0);
-    return EVP_PKEY_CTX_set_params(ctx, params);
-}
-
-int EVP_PKEY_CTX_get_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            char *name, size_t namelen)
-{
-    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
-    OSSL_PARAM *p = params;
-
-    if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
-        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
-        return -2;
-    }
-
-    if (name == NULL)
-        return -1;
-
-    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME,
-                                            name, namelen);
-    if (!EVP_PKEY_CTX_get_params(ctx, params))
-        return -1;
-    return 1;
-}
-
 #ifndef FIPS_MODULE
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid)
 {
@@ -483,6 +441,6 @@ int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid)
                                  EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID,
                                  nid, NULL);
 
-    return EVP_PKEY_CTX_set_ec_paramgen_curve_name(ctx, OBJ_nid2sn(nid));
+    return EVP_PKEY_CTX_set_group_name(ctx, OBJ_nid2sn(nid));
 }
 #endif

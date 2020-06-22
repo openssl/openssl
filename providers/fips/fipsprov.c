@@ -194,7 +194,7 @@ static int dummy_evp_call(OPENSSL_CTX *libctx)
 
 #ifndef OPENSSL_NO_EC
     /* Do some dummy EC calls */
-    key = EC_KEY_new_by_curve_name_ex(libctx, NID_X9_62_prime256v1);
+    key = EC_KEY_new_by_curve_name_with_libctx(libctx, NULL, NID_X9_62_prime256v1);
     if (key == NULL)
         goto err;
 
@@ -566,6 +566,7 @@ static const OSSL_DISPATCH fips_dispatch_table[] = {
     { OSSL_FUNC_PROVIDER_GETTABLE_PARAMS, (void (*)(void))fips_gettable_params },
     { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))fips_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))fips_query },
+    { OSSL_FUNC_PROVIDER_GET_CAPABILITIES, (void (*)(void))provider_get_capabilities },
     { 0, NULL }
 };
 

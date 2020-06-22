@@ -16,9 +16,9 @@ The following Import/Export types are available for the built-in EC algorithm:
 
 =over 4
 
-=item "curve-name" (B<OSSL_PKEY_PARAM_EC_NAME>) <utf8 string>
+=item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <utf8 string>
 
-The EC curve name.
+The curve name.
 
 =item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
 
@@ -63,7 +63,7 @@ calling:
 
     EVP_PKEY_keygen_init(gctx);
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                  "P-256", 0);
     params[1] = OSSL_PARAM_construct_end();
     EVP_PKEY_CTX_set_params(gctx, params);
@@ -90,7 +90,7 @@ An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
 
     EVP_PKEY_keygen_init(gctx);
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_NAME,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                  "K-571", 0);
     /*
      * This curve has a cofactor that is not 1 - so setting CDH mode changes

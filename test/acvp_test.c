@@ -120,8 +120,7 @@ static int ecdsa_keygen_test(int id)
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
-        || !TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_name(ctx,
-                                                              tst->curve_name))
+        || !TEST_true(EVP_PKEY_CTX_set_group_name(ctx, tst->curve_name))
         || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv,
                                         &priv_len))
@@ -156,7 +155,7 @@ static int ecdsa_create_pkey(EVP_PKEY **pkey, const char *curve_name,
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || (curve_name != NULL
             && !TEST_true(OSSL_PARAM_BLD_push_utf8_string(
-                              bld, OSSL_PKEY_PARAM_EC_NAME, curve_name, 0) > 0))
+                              bld, OSSL_PKEY_PARAM_GROUP_NAME, curve_name, 0) > 0))
         || !TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
                                                        OSSL_PKEY_PARAM_PUB_KEY,
                                                        pub, pub_len) > 0)
@@ -252,8 +251,7 @@ static int ecdsa_siggen_test(int id)
 
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
-        || !TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_name(ctx,
-                                                              tst->curve_name))
+        || !TEST_true(EVP_PKEY_CTX_set_group_name(ctx, tst->curve_name))
         || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0))
         goto err;
 
@@ -903,7 +901,7 @@ static int dh_create_pkey(EVP_PKEY **pkey, const char *group_name,
     if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
         || (group_name != NULL
             && !TEST_int_gt(OSSL_PARAM_BLD_push_utf8_string(
-                              bld, OSSL_PKEY_PARAM_DH_GROUP,
+                              bld, OSSL_PKEY_PARAM_GROUP_NAME,
                               group_name, 0), 0)))
         goto err;
 
@@ -947,7 +945,7 @@ static int dh_safe_prime_keygen_test(int id)
     OSSL_PARAM params[2];
     const struct dh_safe_prime_keygen_st *tst = &dh_safe_prime_keygen_data[id];
 
-    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_DH_GROUP,
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
                                                  (char *)tst->group_name, 0);
     params[1] = OSSL_PARAM_construct_end();
 

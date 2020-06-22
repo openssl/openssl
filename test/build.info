@@ -35,9 +35,11 @@ IF[{- !$disabled{tests} -}]
           ectest ecstresstest gmdifftest pbelutest \
           destest mdc2test \
           enginetest exptest \
-          evp_pkey_provided_test evp_test evp_extra_test evp_fetch_prov_test \
-          acvp_test \
+          evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
+          evp_fetch_prov_test acvp_test \
           v3nametest v3ext \
+          evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
+          evp_fetch_prov_test v3nametest v3ext \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
           constant_time_test verify_extra_test clienthellotest \
@@ -134,6 +136,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_extra_test]=evp_extra_test.c
   INCLUDE[evp_extra_test]=../include ../apps/include
   DEPEND[evp_extra_test]=../libcrypto libtestutil.a
+
+  SOURCE[evp_extra_test2]=evp_extra_test2.c
+  INCLUDE[evp_extra_test2]=../include ../apps/include
+  DEPEND[evp_extra_test2]=../libcrypto libtestutil.a
 
   SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c
   INCLUDE[evp_fetch_prov_test]=../include ../apps/include
@@ -297,7 +303,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[param_build_test]=../include ../apps/include
   DEPEND[param_build_test]=../libcrypto.a libtestutil.a
 
-  SOURCE[sslapitest]=sslapitest.c ssltestlib.c filterprov.c
+  SOURCE[sslapitest]=sslapitest.c ssltestlib.c filterprov.c tls-provider.c
   INCLUDE[sslapitest]=../include ../apps/include ..
   DEPEND[sslapitest]=../libcrypto ../libssl libtestutil.a
 

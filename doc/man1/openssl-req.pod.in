@@ -375,8 +375,8 @@ overridden by the B<-keyout> option.
 
 This specifies a file containing additional B<OBJECT IDENTIFIERS>.
 Each line of the file should consist of the numerical form of the
-object identifier followed by white space then the short name followed
-by white space and finally the long name.
+object identifier followed by whitespace then the short name followed
+by whitespace and finally the long name.
 
 =item B<oid_section>
 

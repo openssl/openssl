@@ -173,7 +173,7 @@ int ec_key_domparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
     if (ec == NULL)
         return 0;
 
-    param_ec_name = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME);
+    param_ec_name = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (param_ec_name == NULL) {
         /* explicit parameters */
 
@@ -190,8 +190,9 @@ int ec_key_domparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
                 || (curve_nid = ec_curve_name2nid(curve_name)) == NID_undef)
             goto err;
 
-        if ((ecg = EC_GROUP_new_by_curve_name_ex(ec_key_get_libctx(ec),
-                                                 curve_nid)) == NULL)
+        if ((ecg = EC_GROUP_new_by_curve_name_with_libctx(ec_key_get_libctx(ec),
+                                                          ec_key_get0_propq(ec),
+                                                          curve_nid)) == NULL)
             goto err;
     }
 

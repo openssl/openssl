@@ -29,21 +29,22 @@ static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
 #ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new(void)
 {
-    return ec_key_new_method_int(NULL, NULL);
+    return ec_key_new_method_int(NULL, NULL, NULL);
 }
 #endif
 
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx)
+EC_KEY *EC_KEY_new_with_libctx(OPENSSL_CTX *ctx, const char *propq)
 {
-    return ec_key_new_method_int(ctx, NULL);
+    return ec_key_new_method_int(ctx, propq, NULL);
 }
 
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid)
+EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx,
+                                             const char *propq, int nid)
 {
-    EC_KEY *ret = EC_KEY_new_ex(ctx);
+    EC_KEY *ret = EC_KEY_new_with_libctx(ctx, propq);
     if (ret == NULL)
         return NULL;
-    ret->group = EC_GROUP_new_by_curve_name_ex(ctx, nid);
+    ret->group = EC_GROUP_new_by_curve_name_with_libctx(ctx, propq, nid);
     if (ret->group == NULL) {
         EC_KEY_free(ret);
         return NULL;
@@ -59,7 +60,7 @@ EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid)
 #ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new_by_curve_name(int nid)
 {
-    return EC_KEY_new_by_curve_name_ex(NULL, nid);
+    return EC_KEY_new_by_curve_name_with_libctx(NULL, NULL, nid);
 }
 #endif
 
@@ -93,6 +94,7 @@ void EC_KEY_free(EC_KEY *r)
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
     BN_clear_free(r->priv_key);
+    OPENSSL_free(r->propq);
 
     OPENSSL_clear_free((void *)r, sizeof(EC_KEY));
 }
@@ -119,7 +121,8 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     if (src->group != NULL) {
         /* clear the old group */
         EC_GROUP_free(dest->group);
-        dest->group = ec_group_new_ex(src->libctx, src->group->meth);
+        dest->group = ec_group_new_with_libctx(src->libctx, src->propq,
+                                               src->group->meth);
         if (dest->group == NULL)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))
@@ -180,7 +183,8 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
 EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 {
-    EC_KEY *ret = ec_key_new_method_int(ec_key->libctx, ec_key->engine);
+    EC_KEY *ret = ec_key_new_method_int(ec_key->libctx, ec_key->propq,
+                                        ec_key->engine);
 
     if (ret == NULL)
         return NULL;
@@ -345,14 +349,19 @@ int ec_key_simple_generate_key(EC_KEY *eckey)
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
     int ret;
+    BN_CTX *ctx = BN_CTX_new_ex(eckey->libctx);
+
+    if (ctx == NULL)
+        return 0;
 
     /*
      * See SP800-56AR3 5.6.1.2.2: Step (8)
      * pub_key = priv_key * G (where G is a point on the curve)
      */
     ret = EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
-                       NULL, NULL);
+                       NULL, ctx);
 
+    BN_CTX_free(ctx);
     if (ret == 1)
         eckey->dirty_cnt++;
 
@@ -629,6 +638,11 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
 OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *key)
 {
     return key->libctx;
+}
+
+const char *ec_key_get0_propq(const EC_KEY *key)
+{
+    return key->propq;
 }
 
 const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)

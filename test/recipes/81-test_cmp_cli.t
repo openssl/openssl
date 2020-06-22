@@ -20,10 +20,12 @@ use Data::Dumper; # for debugging purposes only
 
 setup("test_cmp_cli");
 
-plan skip_all => "This test is not supported in a no-cmp build"
+plan skip_all => "These tests are not supported in a no-cmp build"
     if disabled("cmp");
-plan skip_all => "This test is not supported in a no-ec build"
+plan skip_all => "These tests are not supported in a no-ec build"
     if disabled("ec");
+plan skip_all => "These tests are not supported in a fuzz build"
+    if !disabled("fuzz-libfuzzer") || !disabled("fuzz-afl");
 plan skip_all => "Tests involving server not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32)$/;
 
@@ -249,12 +251,22 @@ sub load_tests {
         $line =~ s{_PBM_PORT}{$pbm_port}g;
         $line =~ s{_PBM_REF}{$pbm_ref}g;
         $line =~ s{_PBM_SECRET}{$pbm_secret}g;
-        my $noproxy = $line =~ m/,\s*-no_proxy\s*,(.*?)(,|$)/ ? $1 : $no_proxy;
-        next LOOP if $no_proxy && ($noproxy =~ $server_host)
-            && $line =~ m/,\s*-proxy\s*,/;
+
         next LOOP if $server_tls == 0 && $line =~ m/,\s*-tls_used\s*,/;
-        $line =~ s{-section,,}{-section,,-proxy,$proxy,} unless $line =~ m/,\s*-proxy\s*,/;
+        my $noproxy = $no_proxy;
+        if ($line =~ m/,\s*-no_proxy\s*,(.*?)(,|$)/) {
+            $noproxy = $1;
+        } elsif ($server_host eq "127.0.0.1") {
+            # do connections to localhost (e.g., Mock server) without proxy
+            $line =~ s{-section,,}{-section,,-no_proxy,127.0.0.1,} ;
+        }
+        if ($line =~ m/,\s*-proxy\s*,/) {
+            next LOOP if $no_proxy && ($noproxy =~ $server_host);
+        } else {
+            $line =~ s{-section,,}{-section,,-proxy,$proxy,};
+        }
         $line =~ s{-section,,}{-config,../$test_config,-section,$server_name $aspect,};
+
         my @fields = grep /\S/, split ",", $line;
         s/^<EMPTY>$// for (@fields); # used for proxy=""
         s/^\s+// for (@fields); # remove leading whitespace from elements

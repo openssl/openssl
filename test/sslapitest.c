@@ -42,6 +42,11 @@
 OSSL_provider_init_fn filter_provider_init;
 int filter_provider_set_filter(int operation, const char *name);
 
+/* Defined in tls-provider.c */
+int tls_provider_init(const OSSL_CORE_HANDLE *handle,
+                      const OSSL_DISPATCH *in,
+                      const OSSL_DISPATCH **out,
+                      void **provctx);
 DEFINE_STACK_OF(OCSP_RESPID)
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(X509_NAME)
@@ -8039,6 +8044,8 @@ static int test_sigalgs_available(int idx)
 
     cctx = SSL_CTX_new_with_libctx(clientctx, NULL, TLS_client_method());
     sctx = SSL_CTX_new_with_libctx(serverctx, NULL, TLS_server_method());
+    if (!TEST_ptr(cctx) || !TEST_ptr(sctx))
+        goto end;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
                                        TLS_client_method(),
@@ -8104,6 +8111,45 @@ static int test_sigalgs_available(int idx)
 }
 #endif /* OPENSSL_NO_EC */
 
+#ifndef OPENSSL_NO_TLS1_3
+static int test_pluggable_group(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+
+    if (!TEST_ptr(tlsprov))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(),
+                                       TLS1_3_VERSION,
+                                       TLS1_3_VERSION,
+                                       &sctx, &cctx, cert, privkey))
+            || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                             NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup"))
+            || !TEST_true(SSL_set1_groups_list(clientssl, "xorgroup")))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(tlsprov);
+
+    return testresult;
+}
+#endif
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config\n")
 
@@ -8152,6 +8198,15 @@ int setup_tests(void)
 
     if (strcmp(modulename, "fips") == 0)
         is_fips = 1;
+
+    /*
+     * We add, but don't load the test "tls-provider". We'll load it when we
+     * need it.
+     */
+    if (!TEST_true(OSSL_PROVIDER_add_builtin(libctx, "tls-provider",
+                                             tls_provider_init)))
+        return 0;
+
 
     if (getenv("OPENSSL_TEST_GETCOUNTS") != NULL) {
 #ifdef OPENSSL_NO_CRYPTO_MDEBUG
@@ -8294,6 +8349,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_servername, 10);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_sigalgs_available, 6);
+#endif
+#ifndef OPENSSL_NO_TLS1_3
+    ADD_TEST(test_pluggable_group);
 #endif
     return 1;
 

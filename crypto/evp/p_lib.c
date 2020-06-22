@@ -1000,7 +1000,7 @@ static int get_ec_curve_name_cb(const OSSL_PARAM params[], void *arg)
 {
     const OSSL_PARAM *p = NULL;
 
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME)) != NULL)
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME)) != NULL)
         return OSSL_PARAM_get_utf8_string(p, arg, 0);
 
     /* If there is no curve name, this is not an EC key */

@@ -23,26 +23,34 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
+EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+                                   const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
     if (meth == NULL) {
-        ECerr(EC_F_EC_GROUP_NEW_EX, EC_R_SLOT_FULL);
+        ECerr(0, EC_R_SLOT_FULL);
         return NULL;
     }
     if (meth->group_init == 0) {
-        ECerr(EC_F_EC_GROUP_NEW_EX, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ECerr(0, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return NULL;
     }
 
     ret = OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
-        ECerr(EC_F_EC_GROUP_NEW_EX, ERR_R_MALLOC_FAILURE);
+        ECerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     ret->libctx = libctx;
+    if (propq != NULL) {
+        ret->propq = OPENSSL_strdup(propq);
+        if (ret->propq == NULL) {
+            ECerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+    }
     ret->meth = meth;
     if ((ret->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0) {
         ret->order = BN_new();
@@ -61,6 +69,7 @@ EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
  err:
     BN_free(ret->order);
     BN_free(ret->cofactor);
+    OPENSSL_free(ret->propq);
     OPENSSL_free(ret);
     return NULL;
 }
@@ -69,7 +78,7 @@ EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const EC_METHOD *meth)
 # ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 {
-    return ec_group_new_ex(NULL, meth);
+    return ec_group_new_with_libctx(NULL, NULL, meth);
 }
 # endif
 #endif
@@ -121,6 +130,7 @@ void EC_GROUP_free(EC_GROUP *group)
     BN_free(group->order);
     BN_free(group->cofactor);
     OPENSSL_free(group->seed);
+    OPENSSL_free(group->propq);
     OPENSSL_free(group);
 }
 
@@ -257,7 +267,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
     if (a == NULL)
         return NULL;
 
-    if ((t = ec_group_new_ex(a->libctx, a->meth)) == NULL)
+    if ((t = ec_group_new_with_libctx(a->libctx, a->propq, a->meth)) == NULL)
         return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;

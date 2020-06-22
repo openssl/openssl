@@ -89,7 +89,7 @@ int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
         if ((curve_name = ec_curve_nid2name(curve_nid)) == NULL)
             return 0;
         if (!ossl_param_build_set_utf8_string(tmpl, params,
-                                              OSSL_PKEY_PARAM_EC_NAME,
+                                              OSSL_PKEY_PARAM_GROUP_NAME,
                                               curve_name))
 
             return 0;
@@ -244,7 +244,7 @@ int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
 static
 void *ec_newdata(void *provctx)
 {
-    return EC_KEY_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx));
+    return EC_KEY_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx), NULL);
 }
 
 static
@@ -412,7 +412,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 /* IMEXPORT = IMPORT + EXPORT */
 
 # define EC_IMEXPORTABLE_DOM_PARAMETERS                          \
-    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_NAME, NULL, 0)
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0)
 # define EC_IMEXPORTABLE_PUBLIC_KEY                              \
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0)
 # define EC_IMEXPORTABLE_PRIVATE_KEY                             \
@@ -667,7 +667,7 @@ static int ec_gen_set_group(void *genctx, int nid)
     struct ec_gen_ctx *gctx = genctx;
     EC_GROUP *group;
 
-    group = EC_GROUP_new_by_curve_name_ex(gctx->libctx, nid);
+    group = EC_GROUP_new_by_curve_name_with_libctx(gctx->libctx, NULL, nid);
     if (group == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
         return 0;
@@ -699,7 +699,7 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_int(p, &gctx->ecdh_mode))
             return 0;
     }
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_NAME))
+    if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME))
         != NULL) {
         const char *curve_name = NULL;
         int ret = 0;
@@ -733,7 +733,7 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *ec_gen_settable_params(void *provctx)
 {
     static OSSL_PARAM settable[] = {
-        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_NAME, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
         OSSL_PARAM_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH, NULL),
         OSSL_PARAM_END
     };
@@ -760,7 +760,7 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     int ret = 1;                 /* Start optimistically */
 
     if (gctx == NULL
-        || (ec = EC_KEY_new_ex(gctx->libctx)) == NULL)
+        || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
         return NULL;
 
     /* We must always assign a group, no matter what */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -145,7 +145,7 @@ static __inline int CRYPTO_DOWN_REF(volatile int *val, int *ret, void *lock)
 
 /*
  * All the refcounting implementations above define HAVE_ATOMICS, so if it's
- * still undefined here (such as when OPENSSL_DEV_NO_ATMOICS is defined), it
+ * still undefined here (such as when OPENSSL_DEV_NO_ATOMICS is defined), it
  * means we need to implement a fallback.  This fallback uses locks.
  */
 # ifndef HAVE_ATOMICS

@@ -156,11 +156,12 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p != NULL) {
         if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
             return 0;
-        if (ctx->ivlen != p->data_size) {
+        if (ctx->ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)) {
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }

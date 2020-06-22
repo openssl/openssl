@@ -117,7 +117,7 @@ EXT_RETURN tls_construct_ctos_srp(SSL *s, WPACKET *pkt, unsigned int context,
 #endif
 
 #ifndef OPENSSL_NO_EC
-static int use_ecc(SSL *s, int max_version)
+static int use_ecc(SSL *s, int min_version, int max_version)
 {
     int i, end, ret = 0;
     unsigned long alg_k, alg_a;
@@ -152,7 +152,7 @@ static int use_ecc(SSL *s, int max_version)
     for (j = 0; j < num_groups; j++) {
         uint16_t ctmp = pgroups[j];
 
-        if (tls_valid_group(s, ctmp, max_version)
+        if (tls_valid_group(s, ctmp, min_version, max_version)
                 && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED))
             return 1;
     }
@@ -174,7 +174,7 @@ EXT_RETURN tls_construct_ctos_ec_pt_formats(SSL *s, WPACKET *pkt,
                  SSL_F_TLS_CONSTRUCT_CTOS_EC_PT_FORMATS, reason);
         return EXT_RETURN_FAIL;
     }
-    if (!use_ecc(s, max_version))
+    if (!use_ecc(s, min_version, max_version))
         return EXT_RETURN_NOT_SENT;
 
     /* Add TLS extension ECPointFormats to the ClientHello message */
@@ -211,10 +211,10 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     }
 
 #if defined(OPENSSL_NO_EC)
-    if (max_version < TLS1_3_VERSION)
+    if (SSL_IS_DTLS(s) || max_version < TLS1_3_VERSION)
         return EXT_RETURN_NOT_SENT;
 #else
-    if (!use_ecc(s, max_version) && max_version < TLS1_3_VERSION)
+    if (!use_ecc(s, min_version, max_version) && max_version < TLS1_3_VERSION)
         return EXT_RETURN_NOT_SENT;
 #endif
 
@@ -237,7 +237,7 @@ EXT_RETURN tls_construct_ctos_supported_groups(SSL *s, WPACKET *pkt,
     for (i = 0; i < num_groups; i++) {
         uint16_t ctmp = pgroups[i];
 
-        if (tls_valid_group(s, ctmp, max_version)
+        if (tls_valid_group(s, ctmp, min_version, max_version)
                 && tls_group_allowed(s, ctmp, SSL_SECOP_CURVE_SUPPORTED)) {
             if (!WPACKET_put_bytes_u16(pkt, ctmp)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -1907,7 +1907,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     skey = EVP_PKEY_new();
     if (skey == NULL || EVP_PKEY_copy_parameters(skey, ckey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
-                 ERR_R_MALLOC_FAILURE);
+                 SSL_R_COPY_PARAMETERS_FAILED);
         return 0;
     }
 

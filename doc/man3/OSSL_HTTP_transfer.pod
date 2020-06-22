@@ -186,7 +186,7 @@ optionally using proxy client credentials B<proxyuser> and B<proxypass>,
 to connect with TLS protection ultimately to B<server> and B<port>.
 If the B<port> argument is NULL or the empty string it defaults to "443".
 The B<timeout> parameter is used as described above.
-Since this function is typically called by appplications such as
+Since this function is typically called by applications such as
 L<openssl-s_client(1)> it uses the B<bio_err> and B<prog> parameters (unless
 NULL) to print additional diagnostic information in a user-oriented way.
 

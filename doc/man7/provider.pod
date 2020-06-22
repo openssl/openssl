@@ -146,6 +146,14 @@ The number for this operation is B<OSSL_OP_KEYEXCH>.
 The functions the provider can offer are described in
 L<provider-keyexch(7)>
 
+=item Asymmetric Ciphers
+
+In the OpenSSL libraries, the corresponding method object is
+B<EVP_ASYM_CIPHER>.
+The number for this operation is B<OSSL_OP_ASYM_CIPHER>.
+The functions the provider can offer are described in
+L<provider-asym_cipher(7)>
+
 =item Serialization
 
 In the OpenSSL libraries, the corresponding method object is

@@ -71,6 +71,10 @@ OPENSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov);
 void ossl_provider_teardown(const OSSL_PROVIDER *prov);
 const OSSL_PARAM *ossl_provider_gettable_params(const OSSL_PROVIDER *prov);
 int ossl_provider_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[]);
+int ossl_provider_get_capabilities(const OSSL_PROVIDER *prov,
+                                   const char *capability,
+                                   OSSL_CALLBACK *cb,
+                                   void *arg);
 const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);

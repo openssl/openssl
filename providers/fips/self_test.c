@@ -92,7 +92,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
-#elif defined(__sun)
+#elif defined(__sun) || defined(_AIX)
 
 DEP_DECLARE() /* must be declared before pragma */
 # define DEP_INIT_ATTRIBUTE

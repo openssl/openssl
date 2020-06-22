@@ -372,8 +372,8 @@ section can be overridden with the B<-section> command line switch. (Optional)
 
 This specifies a file containing additional B<OBJECT IDENTIFIERS>.
 Each line of the file should consist of the numerical form of the
-object identifier followed by white space then the short name followed
-by white space and finally the long name. (Optional)
+object identifier followed by whitespace then the short name followed
+by whitespace and finally the long name. (Optional)
 
 =item B<oid_section>
 

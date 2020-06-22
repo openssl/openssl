@@ -195,6 +195,7 @@ extern "C" {
 #define OSSL_PKEY_PARAM_MGF1_DIGEST         "mgf1-digest"
 #define OSSL_PKEY_PARAM_MGF1_PROPERTIES     "mgf1-properties"
 #define OSSL_PKEY_PARAM_TLS_ENCODED_PT      "tls-encoded-pt"
+#define OSSL_PKEY_PARAM_GROUP_NAME          "group"
 
 /* Diffie-Hellman/DSA public/private key */
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
@@ -217,12 +218,10 @@ extern "C" {
 #define OSSL_FFC_PARAM_VALIDATE_PQG         "validate-pqg"
 
 /* Diffie-Hellman params */
-#define OSSL_PKEY_PARAM_DH_GROUP            "group"
 #define OSSL_PKEY_PARAM_DH_GENERATOR        "safeprime-generator"
 #define OSSL_PKEY_PARAM_DH_PRIV_LEN         "priv_len"
 
 /* Elliptic Curve Domain Parameters */
-#define OSSL_PKEY_PARAM_EC_NAME      "curve-name"
 #define OSSL_PKEY_PARAM_EC_PUB_X     "qx"
 #define OSSL_PKEY_PARAM_EC_PUB_Y     "qy"
 
@@ -383,6 +382,19 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_TEST_Q1  "q1"
 #define OSSL_PKEY_PARAM_RSA_TEST_Q2  "q2"
 #define OSSL_SIGNATURE_PARAM_KAT "kat"
+
+/* Capabilities */
+
+/* TLS-GROUP Capbility */
+#define OSSL_CAPABILITY_TLS_GROUP_NAME              "tls-group-name"
+#define OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL     "tls-group-name-internal"
+#define OSSL_CAPABILITY_TLS_GROUP_ID                "tls-group-id"
+#define OSSL_CAPABILITY_TLS_GROUP_ALG               "tls-group-alg"
+#define OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS     "tls-group-sec-bits"
+#define OSSL_CAPABILITY_TLS_GROUP_MIN_TLS           "tls-min-tls"
+#define OSSL_CAPABILITY_TLS_GROUP_MAX_TLS           "tls-max-tls"
+#define OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS          "tls-min-dtls"
+#define OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS          "tls-max-dtls"
 
 # ifdef __cplusplus
 }

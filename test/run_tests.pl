@@ -134,7 +134,6 @@ $eres = eval {
         my $class = shift;
         my %opts = %{ shift() };
         my $failure_verbosity = $openssl_args{failure_verbosity};
-        print "\n" if $failure_verbosity == 1 || $failure_verbosity == 2;
         my @plans = (); # initial level, no plan yet
         my $output_buffer = "";
 
@@ -158,24 +157,30 @@ $eres = eval {
                     my $tests_planned = $is_plan && $self->tests_planned;
                     my $is_test = $self->is_test;
                     my $is_ok = $is_test && $self->is_ok;
-                    # workaround in case parser not coping with indentation:
+
+                    # workaround for parser not coping with sub-test indentation
                     if ($self->is_unknown) {
+                        my $level = $#plans;
+                        my $indent = $level < 0 ? "" : " " x ($level * 4);
+
                         ($is_plan, $tests_planned) = (1, $1)
-                            if ($self->as_string =~ m/^\s+1\.\.(\d+)/);
+                            if ($self->as_string =~ m/^$indent    1\.\.(\d+)/);
                         ($is_test, $is_ok) = (1, !$1)
-                            if ($self->as_string =~ m/^\s+(not )?ok /);
+                            if ($self->as_string =~ m/^$indent(not )?ok /);
                     }
+
                     if ($is_plan) {
                         push @plans, $tests_planned;
                         $output_buffer = ""; # ignore comments etc. until plan
                     } elsif ($is_test) { # result of a test
                         pop @plans if @plans && --($plans[-1]) <= 0;
                         print $output_buffer if !$is_ok;
-                        print $self->as_string."\n"
+                        print "\n".$self->as_string
                             if !$is_ok || $failure_verbosity == 2;
                         $output_buffer = "";
-                    } else { # typically comment or unknown
-                        $output_buffer .= $self->as_string."\n";
+                    } elsif ($self->as_string ne "") {
+                        # typically is_comment or is_unknown
+                        $output_buffer .= "\n".$self->as_string;
                     }
                 }
             }

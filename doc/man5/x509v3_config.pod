@@ -37,7 +37,7 @@ String extensions simply have a string which contains either the value itself
 or how it is obtained.
 
 Multi-valued extensions have a short form and a long form. The short form
-is a commma-separated list of names and values:
+is a comma-separated list of names and values:
 
  basicConstraints = critical, CA:true, pathlen:1
 
@@ -68,7 +68,7 @@ will produce an error but the equivalent form:
 
 is valid.
 
-OpenSSL does not support multiple occurences of the same field within a
+OpenSSL does not support multiple occurrences of the same field within a
 section. In this example:
 
  [extensions]

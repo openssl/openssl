@@ -212,6 +212,9 @@ int dsaparam_main(int argc, char **argv)
         print_bignum_var(bio_out, p, "dsap", bits_p, data);
         print_bignum_var(bio_out, q, "dsaq", bits_p, data);
         print_bignum_var(bio_out, g, "dsag", bits_p, data);
+        BN_free(p);
+        BN_free(q);
+        BN_free(g);
         BIO_printf(bio_out, "    DSA *dsa = DSA_new();\n"
                             "    BIGNUM *p, *q, *g;\n"
                             "\n");

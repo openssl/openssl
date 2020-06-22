@@ -3180,6 +3180,7 @@ int ec_curve_name2nid(const char *name)
 }
 
 static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
+                                        const char *propq,
                                         const ec_list_element curve)
 {
     EC_GROUP *group = NULL;
@@ -3195,8 +3196,8 @@ static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
 
     /* If no curve data curve method must handle everything */
     if (curve.data == NULL)
-        return ec_group_new_ex(libctx,
-                               curve.meth != NULL ? curve.meth() : NULL);
+        return ec_group_new_with_libctx(libctx, propq,
+                                        curve.meth != NULL ? curve.meth() : NULL);
 
     if ((ctx = BN_CTX_new_ex(libctx)) == NULL) {
         ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_MALLOC_FAILURE);
@@ -3218,7 +3219,7 @@ static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
 
     if (curve.meth != 0) {
         meth = curve.meth();
-        if (((group = ec_group_new_ex(libctx, meth)) == NULL) ||
+        if (((group = ec_group_new_with_libctx(libctx, propq, meth)) == NULL) ||
             (!(group->meth->group_set_curve(group, p, a, b, ctx)))) {
             ECerr(EC_F_EC_GROUP_NEW_FROM_DATA, ERR_R_EC_LIB);
             goto err;
@@ -3288,14 +3289,15 @@ static EC_GROUP *ec_group_new_from_data(OPENSSL_CTX *libctx,
     return group;
 }
 
-EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid)
+EC_GROUP *EC_GROUP_new_by_curve_name_with_libctx(OPENSSL_CTX *libctx,
+                                                 const char *propq, int nid)
 {
     EC_GROUP *ret = NULL;
     const ec_list_element *curve;
 
     if ((curve = ec_curve_nid2curve(nid)) == NULL
-        || (ret = ec_group_new_from_data(libctx, *curve)) == NULL) {
-        ECerr(EC_F_EC_GROUP_NEW_BY_CURVE_NAME_EX, EC_R_UNKNOWN_GROUP);
+        || (ret = ec_group_new_from_data(libctx, propq, *curve)) == NULL) {
+        ECerr(0, EC_R_UNKNOWN_GROUP);
         return NULL;
     }
 
@@ -3305,7 +3307,7 @@ EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid)
 #ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new_by_curve_name(int nid)
 {
-    return EC_GROUP_new_by_curve_name_ex(NULL, nid);
+    return EC_GROUP_new_by_curve_name_with_libctx(NULL, NULL, nid);
 }
 #endif
 

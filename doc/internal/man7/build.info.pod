@@ -282,7 +282,7 @@ verbatim.
 =item B<${>I<NAME>B</>I<str>B</>I<subst>B<}>
 
 Substitution reference; the variable reference is replaced with its
-value, modified by replacing all occurences of I<str> with I<subst>.
+value, modified by replacing all occurrences of I<str> with I<subst>.
 
 =back
 

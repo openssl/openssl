@@ -763,7 +763,7 @@ static char *strip_ends(char *name)
 static char *strip_start(char *name)
 {
     char *p, c;
-    /* Look for first non white space or quote */
+    /* Look for first non whitespace or quote */
     for (p = name; (c = *p); p++) {
         if (c == '"') {
             /* Next char is start of string if non null */
@@ -784,7 +784,7 @@ static char *strip_end(char *name)
     char *p, c;
     if (!name)
         return NULL;
-    /* Look for first non white space or quote */
+    /* Look for first non whitespace or quote */
     for (p = name + strlen(name) - 1; p >= name; p--) {
         c = *p;
         if (c == '"') {

@@ -807,6 +807,28 @@ int ssl_hmac_final(SSL_HMAC *ctx, unsigned char *md, size_t *len,
                    size_t max_size);
 size_t ssl_hmac_size(const SSL_HMAC *ctx);
 
+typedef struct tls_group_info_st {
+    char *tlsname;           /* Curve Name as in TLS specs */
+    char *realname;          /* Curve Name according to provider */
+    char *algorithm;         /* Algorithm name to fetch */
+    unsigned int secbits;    /* Bits of security (from SP800-57) */
+    uint16_t group_id;       /* Group ID */
+    int mintls;              /* Minimum TLS version, -1 unsupported */
+    int maxtls;              /* Maximum TLS version (or 0 for undefined) */
+    int mindtls;             /* Minimum DTLS version, -1 unsupported */
+    int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
+} TLS_GROUP_INFO;
+
+/* flags values */
+# define TLS_GROUP_TYPE             0x0000000FU /* Mask for group type */
+# define TLS_GROUP_CURVE_PRIME      0x00000001U
+# define TLS_GROUP_CURVE_CHAR2      0x00000002U
+# define TLS_GROUP_CURVE_CUSTOM     0x00000004U
+# define TLS_GROUP_FFDHE            0x00000008U
+# define TLS_GROUP_ONLY_FOR_TLS1_3  0x00000010U
+
+# define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
+
 struct ssl_ctx_st {
     OPENSSL_CTX *libctx;
 
@@ -1160,6 +1182,10 @@ struct ssl_ctx_st {
 
     /* Cache of all sigalgs we know and whether they are available or not */
     struct sigalg_lookup_st *sigalg_lookup_cache;
+
+    TLS_GROUP_INFO *group_list;
+    size_t group_list_len;
+    size_t group_list_max_len;
 };
 
 typedef struct cert_pkey_st CERT_PKEY;
@@ -1782,24 +1808,6 @@ typedef struct sigalg_lookup_st {
     /* Whether this signature algorithm is actually available for use */
     int enabled;
 } SIGALG_LOOKUP;
-
-typedef struct tls_group_info_st {
-    int nid;                    /* Curve NID */
-    const char *keytype;
-    int secbits;                /* Bits of security (from SP800-57) */
-    uint32_t flags;             /* For group type and applicable TLS versions */
-    uint16_t group_id;          /* Group ID */
-} TLS_GROUP_INFO;
-
-/* flags values */
-# define TLS_GROUP_TYPE             0x0000000FU /* Mask for group type */
-# define TLS_GROUP_CURVE_PRIME      0x00000001U
-# define TLS_GROUP_CURVE_CHAR2      0x00000002U
-# define TLS_GROUP_CURVE_CUSTOM     0x00000004U
-# define TLS_GROUP_FFDHE            0x00000008U
-# define TLS_GROUP_ONLY_FOR_TLS1_3  0x00000010U
-
-# define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE|TLS_GROUP_ONLY_FOR_TLS1_3)
 
 /*
  * Structure containing table entry of certificate info corresponding to
@@ -2438,6 +2446,7 @@ __owur int ssl_x509err2alert(int type);
 void ssl_sort_cipher_list(void);
 int ssl_load_ciphers(SSL_CTX *ctx);
 __owur int ssl_setup_sig_algs(SSL_CTX *ctx);
+int ssl_load_groups(SSL_CTX *ctx);
 __owur int ssl_fill_hello_random(SSL *s, int server, unsigned char *field,
                                  size_t len, DOWNGRADE dgrd);
 __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
@@ -2626,16 +2635,17 @@ __owur int ssl_check_srvr_ecc_cert_and_alg(X509 *x, SSL *s);
 
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
-__owur const TLS_GROUP_INFO *tls1_group_id_lookup(uint16_t curve_id);
-__owur int tls1_group_id2nid(uint16_t group_id);
+__owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
+__owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur int tls1_check_group_id(SSL *s, uint16_t group_id, int check_own_curves);
 __owur uint16_t tls1_shared_group(SSL *s, int nmatch);
 __owur int tls1_set_groups(uint16_t **pext, size_t *pextlen,
                            int *curves, size_t ncurves);
-__owur int tls1_set_groups_list(uint16_t **pext, size_t *pextlen,
+__owur int tls1_set_groups_list(SSL_CTX *ctx, uint16_t **pext, size_t *pextlen,
                                 const char *str);
 __owur EVP_PKEY *ssl_generate_pkey_group(SSL *s, uint16_t id);
-__owur int tls_valid_group(SSL *s, uint16_t group_id, int version);
+__owur int tls_valid_group(SSL *s, uint16_t group_id, int minversion,
+                           int maxversion);
 __owur EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id);
 #  ifndef OPENSSL_NO_EC
 void tls1_get_formatlist(SSL *s, const unsigned char **pformats,
