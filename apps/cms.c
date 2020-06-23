@@ -1162,7 +1162,7 @@ int cms_main(int argc, char **argv)
                 ASN1_PCTX *pctx = NULL;
                 if (get_nameopt() != XN_FLAG_ONELINE) {
                     pctx = ASN1_PCTX_new();
-                    if (pctx) { /* Print anyway if malloc failed */
+                    if (pctx != NULL) { /* Print anyway if malloc failed */
                         ASN1_PCTX_set_flags(pctx, ASN1_PCTX_FLAGS_SHOW_ABSENT);
                         ASN1_PCTX_set_str_flags(pctx, get_nameopt());
                         ASN1_PCTX_set_nm_flags(pctx, get_nameopt());
