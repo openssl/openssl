@@ -214,6 +214,15 @@ int openssl_ctx_is_default(OPENSSL_CTX *ctx)
     return 0;
 }
 
+int openssl_ctx_is_global_default(OPENSSL_CTX *ctx)
+{
+#ifndef FIPS_MODULE
+    if (openssl_ctx_get_concrete(ctx) == &default_context_int)
+        return 1;
+#endif
+    return 0;
+}
+
 static void openssl_ctx_generic_new(void *parent_ign, void *ptr_ign,
                                     CRYPTO_EX_DATA *ad, int index,
                                     long argl_ign, void *argp)
