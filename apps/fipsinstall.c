@@ -357,6 +357,7 @@ opthelp:
     /* Use the default FIPS HMAC digest and key if not specified. */
     if (!gotdigest && !sk_OPENSSL_STRING_push(opts, "digest:SHA256"))
         goto end;
+    /* Use the default FIPS HMAC key if not specified. */
     if (!gotkey && !sk_OPENSSL_STRING_push(opts, "hexkey:" FIPS_KEY_STRING))
         goto end;
 
