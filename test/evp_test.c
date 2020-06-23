@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#include "../e_os.h" /* strcasecmp */
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
@@ -337,7 +338,7 @@ typedef struct digest_data_st {
 
 
 /* Done as macros to avoid compiler warnings about unused functions  */
-#define STR_STARTS_WITH(str, pre) strncmp(pre, str, strlen(pre)) == 0
+#define STR_STARTS_WITH(str, pre) strncasecmp(pre, str, strlen(pre)) == 0
 #define STR_ENDS_WITH(str, pre)                                                \
 strlen(str) < strlen(pre) ? 0 : (strcasecmp(pre, str + strlen(str) - strlen(pre)) == 0)
 
