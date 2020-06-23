@@ -1057,6 +1057,12 @@ OpenSSL 3.0
 
    *Boris Pismenny*
 
+ * The SSL option SSL_OP_CLEANSE_PLAINTEXT is introduced. If that
+   option is set, openssl cleanses plaintext bytes after delivering
+   them to the application.
+
+   *Martin Elshuber*
+
 OpenSSL 1.1.1
 -------------
 

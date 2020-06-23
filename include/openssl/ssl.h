@@ -321,7 +321,8 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 /* Disable Extended master secret */
 # define SSL_OP_NO_EXTENDED_MASTER_SECRET                0x00000001U
 
-/* Reserved value (until OpenSSL 3.0.0)                  0x00000002U */
+/* Cleanse plaintext copies of data delivered to the application */
+# define SSL_OP_CLEANSE_PLAINTEXT                        0x00000002U
 
 /* Allow initial connection to servers that don't support RI */
 # define SSL_OP_LEGACY_SERVER_CONNECT                    0x00000004U

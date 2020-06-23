@@ -1582,6 +1582,88 @@ static int test_large_message_tls_read_ahead(void)
                                       TLS1_VERSION, 0, 1);
 }
 
+static int execute_cleanse_plaintext(int version)
+{
+    size_t i;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    BIO *certbio = NULL;
+    X509 *chaincert = NULL;
+    size_t err = 0;
+
+    static unsigned char cbuf[16000];
+    static unsigned char sbuf[16000];
+
+    if (!TEST_ptr(certbio = BIO_new_file(cert, "r")))
+        goto end;
+    chaincert = PEM_read_bio_X509(certbio, NULL, NULL, NULL);
+    BIO_free(certbio);
+
+    certbio = NULL;
+    if (!TEST_ptr(chaincert))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+                                       TLS_server_method(), TLS_client_method(),
+                                       version, version,
+                                       &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_options(clientssl, SSL_OP_CLEANSE_PLAINTEXT)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                        SSL_ERROR_NONE)))
+        goto end;
+
+    for (i = 0; i < sizeof(cbuf); i++) {
+        cbuf[i] = i & 0xff;
+    }
+
+    if (!TEST_true(SSL_write(clientssl, cbuf, sizeof(cbuf)) == sizeof(cbuf)))
+        goto end;
+
+    while ((err = SSL_read(serverssl, &sbuf, sizeof(sbuf))) != sizeof(sbuf)) {
+        if (SSL_get_error(serverssl, err) != SSL_ERROR_WANT_READ) {
+            goto end;
+        }
+    }
+
+    if (memcmp(cbuf, sbuf, sizeof(cbuf)))
+        goto end;
+
+    testresult = 1;
+ end:
+    X509_free(chaincert);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static int test_cleanse_plaintext(void)
+{
+#if !defined(OPENSSL_NO_TLS1_2)
+    if (!TEST_true(execute_cleanse_plaintext(TLS1_2_VERSION)))
+        return 0;
+#endif
+
+#if !defined(OPENSSL_NO_TLS1_3)
+    if (!TEST_true(execute_cleanse_plaintext(TLS1_3_VERSION)))
+        return 0;
+#endif
+
+    return 1;
+}
+
 #ifndef OPENSSL_NO_DTLS
 static int test_large_message_dtls(void)
 {
@@ -8317,6 +8399,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
+    ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif

@@ -265,6 +265,14 @@ functionality is not required. Those applications can turn this feature off by
 setting this option. This is a server-side opton only. It is ignored by
 clients.
 
+=item SSL_OP_CLEANSE_PLAINTEXT
+
+By default TLS connections keep a copy of received plaintext data in a
+static buffer until it is overwritten by followup data. When enabling
+SSL_OP_CLEANSE_PLAINTEXT this plaintext is cleansed by calling
+OPENSSL_cleanse(3) after passing data to the application. Data is also
+cleansed when releasing the connection (eg. L<SSL_free(3)>).
+
 =back
 
 The following options no longer have any effect but their identifiers are

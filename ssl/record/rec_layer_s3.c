@@ -1477,6 +1477,9 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 n = len - totalbytes;
 
             memcpy(buf, &(rr->data[rr->off]), n);
+            if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+                OPENSSL_cleanse( &(rr->data[rr->off]), n);
+
             buf += n;
             if (peek) {
                 /* Mark any zero length record as consumed CVE-2016-6305 */
