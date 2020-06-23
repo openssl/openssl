@@ -358,6 +358,15 @@ int cipher_generic_stream_update(void *vctx, unsigned char *out, size_t *outl,
     }
 
     *outl = inl;
+    /* Remove any TLS padding */
+    if (!ctx->enc && ctx->removetlspad > 0) {
+        /* The actual padding length */
+        *outl -= out[inl - 1] + 1;
+
+        /* MAC and explicit IV */
+        *outl -= ctx->removetlspad;
+    }
+
     return 1;
 }
 int cipher_generic_stream_final(void *vctx, unsigned char *out, size_t *outl,
