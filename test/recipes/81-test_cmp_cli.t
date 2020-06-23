@@ -55,7 +55,6 @@ my @cmp_basic_tests = (
 my $rsp_cert = "signer_only.crt";
 my $outfile = "test.cert.pem";
 my $secret = "pass:test";
-my $localport = 1700;
 
 # this uses the mock server directly in the cmp app, without TCP
 sub use_mock_srv_internally
@@ -206,11 +205,11 @@ indir data_dir() => sub {
     foreach my $server_name (@server_configurations) {
         $server_name = chop_dblquot($server_name);
         load_config($server_name, $server_name);
-        my $launch_mock = $server_name eq "Mock" && !$ENV{OPENSSL_CMP_CONFIG};
-        if ($launch_mock) {
+        my $pid;
+        if ($server_name eq "Mock") {
             indir "Mock" => sub {
-                stop_mock_server(); # in case a previous run did not exit properly
-                start_mock_server("") || die "Cannot start CMP mock server";
+                $pid = start_mock_server("");
+                die "Cannot start CMP mock server" unless $pid;
             }
         }
         foreach my $aspect (@all_aspects) {
@@ -222,7 +221,7 @@ indir data_dir() => sub {
                 test_cmp_cli_aspect($server_name, $aspect, $tests);
             };
         };
-        stop_mock_server() if $launch_mock;
+        stop_mock_server($pid) if $pid;
     };
 };
 
@@ -285,19 +284,21 @@ sub load_tests {
 }
 
 sub mock_server_pid {
-    return `lsof -iTCP:$localport -sTCP:LISTEN | tail -n 1 | awk '{ print \$2 }'`;
+    return `lsof -iTCP:$server_port -sTCP:LISTEN | tail -n 1 | awk '{ print \$2 }'`;
 }
 
 sub start_mock_server {
-    return 0 if mock_server_pid(); # already running
     my $args = $_[0]; # optional further CLI arguments
     my $dir = bldtop_dir("");
-    return system("LD_LIBRARY_PATH=$dir DYLD_LIBRARY_PATH=$dir " .
-                  bldtop_dir($app) . " -config server.cnf " .
-                  "$args &") == 0; # start in background, check for success
+    my $cmd = "LD_LIBRARY_PATH=$dir DYLD_LIBRARY_PATH=$dir " .
+        bldtop_dir($app) . " -config server.cnf $args";
+    my $pid = mock_server_pid();
+    return $pid if $pid; # already running
+    return system("$cmd &") == 0 # start in background, check for success
+        ? (sleep 1, mock_server_pid()) : 0;
 }
 
 sub stop_mock_server {
-    my $pid = mock_server_pid();
+    my $pid = $_[0];
     system("kill $pid") if $pid;
 }
