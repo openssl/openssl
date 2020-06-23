@@ -305,6 +305,7 @@ static void aes_ocb_freectx(void *vctx)
 
     if (ctx != NULL) {
         aes_generic_ocb_cleanup(ctx);
+        cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         OPENSSL_clear_free(ctx,  sizeof(*ctx));
     }
 }

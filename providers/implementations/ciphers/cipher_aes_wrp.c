@@ -64,6 +64,7 @@ static void aes_wrap_freectx(void *vctx)
 {
     PROV_AES_WRAP_CTX *wctx = (PROV_AES_WRAP_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(wctx,  sizeof(*wctx));
 }
 

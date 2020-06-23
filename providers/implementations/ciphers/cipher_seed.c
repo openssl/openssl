@@ -25,6 +25,7 @@ static void seed_freectx(void *vctx)
 {
     PROV_SEED_CTX *ctx = (PROV_SEED_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 

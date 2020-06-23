@@ -48,6 +48,7 @@ void tdes_freectx(void *vctx)
 {
     PROV_TDES_CTX *ctx = (PROV_TDES_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
