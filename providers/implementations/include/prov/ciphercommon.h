@@ -87,6 +87,7 @@ struct prov_cipher_hw_st {
     void (*copyctx)(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src);
 };
 
+void cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx);
 OSSL_FUNC_cipher_encrypt_init_fn cipher_generic_einit;
 OSSL_FUNC_cipher_decrypt_init_fn cipher_generic_dinit;
 OSSL_FUNC_cipher_update_fn cipher_generic_block_update;
@@ -103,6 +104,7 @@ OSSL_FUNC_cipher_set_ctx_params_fn cipher_var_keylen_set_ctx_params;
 OSSL_FUNC_cipher_settable_ctx_params_fn cipher_var_keylen_settable_ctx_params;
 OSSL_FUNC_cipher_gettable_ctx_params_fn cipher_aead_gettable_ctx_params;
 OSSL_FUNC_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
+
 int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                               unsigned long flags,
                               size_t kbits, size_t blkbits, size_t ivbits);

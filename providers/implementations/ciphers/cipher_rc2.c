@@ -32,6 +32,7 @@ static void rc2_freectx(void *vctx)
 {
     PROV_RC2_CTX *ctx = (PROV_RC2_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 

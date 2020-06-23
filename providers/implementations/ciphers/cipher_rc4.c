@@ -28,6 +28,7 @@ static void rc4_freectx(void *vctx)
 {
     PROV_RC4_CTX *ctx = (PROV_RC4_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 

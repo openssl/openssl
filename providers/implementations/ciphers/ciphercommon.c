@@ -133,6 +133,15 @@ const OSSL_PARAM *cipher_aead_settable_ctx_params(void)
     return cipher_aead_known_settable_ctx_params;
 }
 
+void cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx)
+{
+    if (ctx != NULL && ctx->alloced) {
+        OPENSSL_free(ctx->tlsmac);
+        ctx->alloced = 0;
+        ctx->tlsmac = NULL;
+    }
+}
+
 static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                                         const unsigned char *key, size_t keylen,
                                         const unsigned char *iv, size_t ivlen,
@@ -203,8 +212,13 @@ int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
             return 0;
         }
 
+        if (ctx->alloced) {
+            OPENSSL_free(ctx->tlsmac);
+            ctx->alloced = 0;
+            ctx->tlsmac = NULL;
+        }
+
         /* This only fails if padding is publicly invalid */
-        /* TODO(3.0): FIX ME FIX ME - Figure out aead */
         *outl = inl;
         if (!ctx->enc
                 && !tlsunpadblock(ctx->libctx, ctx->tlsversion, out, outl,

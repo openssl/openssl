@@ -55,6 +55,7 @@ static void chacha20_freectx(void *vctx)
     PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)vctx;
 
     if (ctx != NULL) {
+        cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
     }
 }
