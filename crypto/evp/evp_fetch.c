@@ -286,6 +286,17 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     return method;
 }
 
+#ifndef FIPS_MODULE
+static const char *libctx_descriptor(OPENSSL_CTX *libctx)
+{
+    if (openssl_ctx_is_global_default(libctx))
+        return "Global default library context";
+    if (openssl_ctx_is_default(libctx))
+        return "Thread-local default library context";
+    return "Non-default library context";
+}
+#endif
+
 void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
                         void *(*new_method)(int name_id,
@@ -306,9 +317,7 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
 #else
         ERR_raise_data(ERR_LIB_EVP, code,
                        "%s, Algorithm (%s), Properties (%s)",
-                       (openssl_ctx_is_default(libctx)
-                        ? "Default library context"
-                        : "Non-default library context"),
+                       libctx_descriptor(libctx),
                        name = NULL ? "<null>" : name,
                        properties == NULL ? "<null>" : properties);
 #endif
@@ -350,9 +359,7 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
 
             ERR_raise_data(ERR_LIB_EVP, code,
                            "%s, Algorithm (%s), Properties (%s)",
-                           (openssl_ctx_is_default(libctx)
-                            ? "Default library context"
-                            : "Non-default library context"),
+                           libctx_descriptor(libctx),
                            name = NULL ? "<null>" : name,
                            properties == NULL ? "<null>" : properties);
         }

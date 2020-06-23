@@ -168,6 +168,7 @@ typedef struct openssl_ctx_method {
 
 OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx);
 int openssl_ctx_is_default(OPENSSL_CTX *ctx);
+int openssl_ctx_is_global_default(OPENSSL_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
 void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */,
