@@ -51,20 +51,20 @@ used to control what capabilities OpenSSL uses.
 As of valgrind-3.15.0 on Linux/x86_64, instructions up to AVX2 are
 supported. Setting the following disables instructions beyond AVX2:
 
-    OPENSSL_ia32cap=":0"
+`OPENSSL_ia32cap=":0"`
 
 This variable may need to be set to something different based on the
 processor and Valgrind version you are running tests on. More information
 may be found in [docs/man3/OPENSSL_ia32cap.pod](docs/man3/OPENSSL_ia32cap.pod).
 
 Additional variables (such as `VERBOSE` and `TESTS`) are described in the
-file [test/README.md]/(test/README.md).
+file [test/README.md](test/README.md).
 
 Example command line:
 
-    make test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
+    $ make test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
 
 If an error occurs, you can then run the specific test via the `TESTS`
 variable with the VERBOSE option to gather additional information.
 
-    make test VERBOSE=1 TESTS=test_test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
+    $ make test VERBOSE=1 TESTS=test_test EXE_SHELL="`/bin/pwd`/util/wrap.pl valgrind --error-exitcode=1 --leak-check=full -q" OPENSSL_ia32cap=":0"
