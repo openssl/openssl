@@ -8,7 +8,8 @@ RAND_DRBG_set,
 RAND_DRBG_set_defaults,
 RAND_DRBG_instantiate,
 RAND_DRBG_uninstantiate,
-RAND_DRBG_free
+RAND_DRBG_free,
+RAND_DRBG_verify_zeroization
 - initialize and cleanup a RAND_DRBG instance
 
 =head1 SYNOPSIS
@@ -32,6 +33,7 @@ RAND_DRBG_free
  int RAND_DRBG_uninstantiate(RAND_DRBG *drbg);
 
  void RAND_DRBG_free(RAND_DRBG *drbg);
+ int RAND_DRBG_verify_zeroization(RAND_DRBG *drbg);
 
 Deprecated since OpenSSL 3.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -100,7 +102,6 @@ the default entropy source for reseeding the B<drbg>. It is said that the
 B<drbg> is I<chained> to its B<parent>.
 For more information, see the NOTES section.
 
-
 RAND_DRBG_instantiate()
 seeds the B<drbg> instance using random input from trusted entropy sources.
 Optionally, a personalization string B<pers> of length B<perslen> can be
@@ -110,6 +111,9 @@ To omit the personalization string, set B<pers>=NULL and B<perslen>=0;
 RAND_DRBG_uninstantiate()
 clears the internal state of the B<drbg> and puts it back in the
 uninstantiated state.
+
+RAND_DRBG_verify_zeroization() confirms if the internal DRBG state is
+currently zeroed.
 
 =head1 RETURN VALUES
 
@@ -121,6 +125,9 @@ RAND_DRBG_set(),
 RAND_DRBG_instantiate(), and
 RAND_DRBG_uninstantiate()
 return 1 on success, and 0 on failure.
+
+RAND_DRBG_verify_zeroization() returns 1 if the DRBG state is current zeroed,
+and 0 if not.
 
 RAND_DRBG_free() does not return a value.
 
