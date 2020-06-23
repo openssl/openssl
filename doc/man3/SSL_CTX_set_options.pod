@@ -265,6 +265,20 @@ functionality is not required. Those applications can turn this feature off by
 setting this option. This is a server-side opton only. It is ignored by
 clients.
 
+=item SSL_OP_CLEANSE_PLAINTEXT
+
+By default TLS connections keep a copy of received plaintext
+application data in a static buffer until it is overwritten by the
+next portion of data. When enabling SSL_OP_CLEANSE_PLAINTEXT
+deciphered application data is cleansed by calling OPENSSL_cleanse(3)
+after passing data to the application. Data is also cleansed when
+releasing the connection (eg. L<SSL_free(3)>).
+
+Since OpenSSL only cleanses internal buffers, the application is still
+responsible for cleansing all other buffers. Most notably, this
+applies to buffers passed to functions like L<SSL_read(3)>,
+L<SSL_peek(3)> but also like L<SSL_write(3)>.
+
 =back
 
 The following options no longer have any effect but their identifiers are

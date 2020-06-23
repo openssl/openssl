@@ -1484,6 +1484,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 if (SSL3_RECORD_get_length(rr) == 0)
                     SSL3_RECORD_set_read(rr);
             } else {
+                if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+                    OPENSSL_cleanse(&(rr->data[rr->off]), n);
                 SSL3_RECORD_sub_length(rr, n);
                 SSL3_RECORD_add_off(rr, n);
                 if (SSL3_RECORD_get_length(rr) == 0) {

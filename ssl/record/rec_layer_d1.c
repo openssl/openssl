@@ -74,6 +74,8 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     while ((item = pqueue_pop(d->processed_rcds.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
+        if (rl->s->options & SSL_OP_CLEANSE_PLAINTEXT)
+            OPENSSL_cleanse(rdata->rbuf.buf, rdata->rbuf.len);
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
@@ -81,6 +83,8 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     while ((item = pqueue_pop(d->buffered_app_data.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
+        if (rl->s->options & SSL_OP_CLEANSE_PLAINTEXT)
+            OPENSSL_cleanse(rdata->rbuf.buf, rdata->rbuf.len);
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
@@ -514,6 +518,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
         } else {
+            if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+                OPENSSL_cleanse(&(SSL3_RECORD_get_data(rr)[SSL3_RECORD_get_off(rr)]), n);
             SSL3_RECORD_sub_length(rr, n);
             SSL3_RECORD_add_off(rr, n);
             if (SSL3_RECORD_get_length(rr) == 0) {

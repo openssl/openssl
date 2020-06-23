@@ -1595,6 +1595,119 @@ static int test_large_message_dtls(void)
 }
 #endif
 
+static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
+                                     const SSL_METHOD *cmeth,
+                                     int min_version, int max_version)
+{
+    size_t i;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL3_RECORD *rr;
+    void *zbuf;
+
+    static unsigned char cbuf[16000];
+    static unsigned char sbuf[16000];
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+                                       smeth, cmeth,
+                                       min_version, max_version,
+                                       &sctx, &cctx, cert,
+                                       privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+                                      NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(SSL_set_options(serverssl, SSL_OP_CLEANSE_PLAINTEXT)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE)))
+        goto end;
+
+    for (i = 0; i < sizeof(cbuf); i++) {
+        cbuf[i] = i & 0xff;
+    }
+
+    if (!TEST_int_eq(SSL_write(clientssl, cbuf, sizeof(cbuf)), sizeof(cbuf)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_peek(serverssl, &sbuf, sizeof(sbuf)), sizeof(sbuf)))
+        goto end;
+
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))
+        goto end;
+
+    /*
+     * Since we called SSL_peek(), we know the data in the record
+     * layer is a plaintext record. We can gather the pointer to check
+     * for zeroization after SSL_read().
+     */
+    rr = serverssl->rlayer.rrec;
+    zbuf = &rr->data[rr->off];
+    if (!TEST_int_eq(rr->length, sizeof(cbuf)))
+        goto end;
+
+    /*
+     * After SSL_peek() the plaintext must still be stored in the
+     * record.
+     */
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), zbuf, sizeof(cbuf)))
+        goto end;
+
+    memset(sbuf, 0, sizeof(sbuf));
+    if (!TEST_int_eq(SSL_read(serverssl, &sbuf, sizeof(sbuf)), sizeof(sbuf)))
+        goto end;
+
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(cbuf)))
+        goto end;
+
+    /* Check if rbuf is cleansed */
+    memset(cbuf, 0, sizeof(cbuf));
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), zbuf, sizeof(cbuf)))
+        goto end;
+
+    testresult = 1;
+ end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+static int test_cleanse_plaintext(void)
+{
+#if !defined(OPENSSL_NO_TLS1_2)
+    if (!TEST_true(execute_cleanse_plaintext(TLS_server_method(),
+                                             TLS_client_method(),
+                                             TLS1_2_VERSION,
+                                             TLS1_2_VERSION)))
+        return 0;
+
+#endif
+
+#if !defined(OPENSSL_NO_TLS1_3)
+    if (!TEST_true(execute_cleanse_plaintext(TLS_server_method(),
+                                             TLS_client_method(),
+                                             TLS1_3_VERSION,
+                                             TLS1_3_VERSION)))
+        return 0;
+#endif
+
+#if !defined(OPENSSL_NO_DTLS)
+    if (!TEST_true(execute_cleanse_plaintext(DTLS_server_method(),
+                                             DTLS_client_method(),
+                                             DTLS1_VERSION,
+                                             0)))
+        return 0;
+#endif
+    return 1;
+}
+
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_server_cb(SSL *s, void *arg)
 {
@@ -8324,6 +8437,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif
+    ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_tlsext_status_type);
 #endif
