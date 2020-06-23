@@ -238,7 +238,9 @@ my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
 
 $config{sourcedir} = abs2rel($srcdir);
 $config{builddir} = abs2rel($blddir);
-$config{FIPSKEY} = '00';
+# echo -n 'holy hand grenade of antioch' | openssl sha256
+$config{FIPSKEY} =
+    'f4556650ac31d35461610bac4ed81b1a181b2d8a43ea2854cbae22ca74560813';
 
 # Collect reconfiguration information if needed
 my @argvcopy=@ARGV;
@@ -922,8 +924,8 @@ while (@argvcopy)
                            if $user{FIPSKEY} =~ /[^a-f0-9]/;
                         die "FIPS key must have even number of characters\n"
                            if length $1 & 1;
-                        die "FIPS key too long (32 bytes max)\n"
-                           if length $1 > 32;
+                        die "FIPS key too long (64 bytes max)\n"
+                           if length $1 > 64;
                         }
                 elsif (/^--cross-compile-prefix=(.*)$/)
                         {

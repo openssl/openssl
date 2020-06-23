@@ -469,12 +469,13 @@ Setting the FIPS HMAC key
 
     --fips-key=value
 
-As part of its self-test validation, the FIPS module must verify itself by
-performing a SHA-256 HMAC computation on itself. The default key is 32 bytes
-of zero, and is sufficient for meeting the FIPS requirements.
+As part of its self-test validation, the FIPS module must verify itself
+by performing a SHA-256 HMAC computation on itself. The default key is
+the SHA256 value of "the holy handgrenade of antioch" and is sufficient
+for meeting the FIPS requirements.
 
 To change the key to a different value, use this flag. The value should
-be a hex string no more than 32 characters.
+be a hex string no more than 64 characters.
 
 Enable and Disable Features
 ---------------------------
