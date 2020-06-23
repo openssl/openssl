@@ -58,6 +58,11 @@ struct prov_cipher_ctx_st {
                               * points into the user buffer.
                               */
     size_t tlsmacsize;       /* Size of the TLS MAC */
+    size_t removetlspad;     /*
+                              * Length of the fixed size data to remove when
+                              * removing TLS padding (equals mac size plus
+                              * IV size if applicable)
+                              */
 
     /*
      * num contains the number of bytes of |iv| which are valid for modes that
