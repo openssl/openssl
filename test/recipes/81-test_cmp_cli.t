@@ -162,8 +162,8 @@ sub test_cmp_cli {
         my $actual_exit = shift;
         my $OK = $actual_exit == $expected_exit;
         if ($faillog && !$OK) {
-            sub quote_spc_empty(_) { $_ eq "" ? '""' : $_ =~ m/ / ? '"'.$_.'"' : $_ };
-            my $invocation = ("$path_app ").join(' ', map quote_spc_empty @$params);
+            my $quote_spc_empty = sub { $_ eq "" ? '""' : $_ =~ m/ / ? '"'.$_.'"' : $_ };
+            my $invocation = "$path_app ".join(' ', map $quote_spc_empty->($_), @$params);
             print $faillog "$server_name $aspect \"$title\" ($i/$n)".
                 " expected=$expected_exit actual=$actual_exit\n";
             print $faillog "$invocation\n\n";
