@@ -504,7 +504,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     if (params->mdname != NULL) {
         md = EVP_MD_fetch(libctx, params->mdname, params->mdprops);
     } else {
-        if (N <= 0)
+        if (N == 0)
             N = (L >= 2048 ? SHA256_DIGEST_LENGTH : SHA_DIGEST_LENGTH) * 8;
         md = EVP_MD_fetch(libctx, default_mdname(N), NULL);
     }
@@ -514,7 +514,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     if (mdsize <= 0)
         goto err;
 
-    if (N <= 0)
+    if (N == 0)
         N = mdsize * 8;
     qsize = N >> 3;
 
@@ -790,13 +790,13 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     if (params->mdname != NULL) {
         md = EVP_MD_fetch(libctx, params->mdname, params->mdprops);
     } else {
-        if (N <= 0)
+        if (N == 0)
             N = (L >= 2048 ? SHA256_DIGEST_LENGTH : SHA_DIGEST_LENGTH) * 8;
         md = EVP_MD_fetch(libctx, default_mdname(N), NULL);
     }
     if (md == NULL)
         goto err;
-    if (N <= 0)
+    if (N == 0)
         N = EVP_MD_size(md) * 8;
     qsize = N >> 3;
 

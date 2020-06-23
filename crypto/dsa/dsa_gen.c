@@ -63,7 +63,7 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
             return 0;
     } else {
         if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_4,
-                                         bits, -1, cb))
+                                         bits, 0, cb))
             return 0;
     }
 
