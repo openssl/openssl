@@ -1603,9 +1603,9 @@ that isn't a problem in OpenSSL itself (like an OS malfunction or a Perl issue).
 You may want increased verbosity, that can be accomplished as described in
 section [Test Failures of test/README.md](test/README.md#test-failures).
 
-You may want to selectively specify which test(s) to perform. This can be done
-sing the `make` variable `TESTS` as described in section [Running Selected Tests
-of test/README.md](test/README.md#running-selected-tests).
+You may also want to selectively specify which test(s) to perform. This can be
+done using the `make` variable `TESTS` as described in section [Running
+Selected Tests of test/README.md](test/README.md#running-selected-tests).
 
 If you find a problem with OpenSSL itself, try removing any
 compiler optimization flags from the `CFLAGS` line in the Makefile and
