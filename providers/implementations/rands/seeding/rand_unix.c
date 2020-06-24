@@ -684,13 +684,13 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_RDTSC)
-    entropy_available = rand_acquire_entropy_from_tsc(pool);
+    entropy_available = prov_acquire_entropy_from_tsc(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif
 
 #   if defined(OPENSSL_RAND_SEED_RDCPU)
-    entropy_available = rand_acquire_entropy_from_cpu(pool);
+    entropy_available = prov_acquire_entropy_from_cpu(pool);
     if (entropy_available > 0)
         return entropy_available;
 #   endif

@@ -10,6 +10,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
 #include "prov/rand_pool.h"
+#include "prov/seeding.h"
 
 #ifdef OPENSSL_RAND_SEED_RDTSC
 /*
