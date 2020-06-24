@@ -1026,7 +1026,7 @@ configuration.  The following variables are supported:
 These cannot be mixed with compiling/linking flags given on the command line.
 In other words, something like this isn't permitted.
 
-    ./config -DFOO CPPFLAGS=-DBAR -DCOOKIE
+    $ ./config -DFOO CPPFLAGS=-DBAR -DCOOKIE
 
 Backward compatibility note:
 
@@ -1038,11 +1038,11 @@ for the following:
 
 For example, the following command will not see -DBAR:
 
-    CPPFLAGS=-DBAR ./config -DCOOKIE
+    $ CPPFLAGS=-DBAR ./config -DCOOKIE
 
 However, the following will see both set variables:
 
-    CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- ./config -DCOOKIE
+    $ CC=gcc CROSS_COMPILE=x86_64-w64-mingw32- ./config -DCOOKIE
 
 If CC is set, it is advisable to also set CXX to ensure both the C and C++
 compiler are in the same "family".  This becomes relevant with
@@ -1344,7 +1344,7 @@ With the default OpenSSL installation comes a FIPS provider module, which
 needs some post-installation attention, without which it will not be usable.
 This involves using the following command:
 
-    openssl fipsinstall
+    $ openssl fipsinstall
 
 See the openssl-fipsinstall(1) manual for details and examples.
 
@@ -1560,7 +1560,7 @@ Configuration Problems
 The `./config` script tries hard to guess your operating system, but in some
 cases it does not succeed. You will see a message like the following:
 
-    ./config
+    $ ./config
     Operating system: x86-whatever-minix
     This system (minix) is not supported. See file INSTALL for details.
 
@@ -1638,9 +1638,9 @@ If the build succeeded previously, but fails after a source or configuration
 change, it might be helpful to clean the build tree before attempting another
 build.  Use this command:
 
-    make clean                                     # Unix
-    mms clean                                      ! (or mmk) OpenVMS
-    nmake clean                                    # Windows
+    $ make clean                                     # Unix
+    $ mms clean                                      ! (or mmk) OpenVMS
+    $ nmake clean                                    # Windows
 
 Assembler error messages can sometimes be sidestepped by using the
 "no-asm" configuration option.
@@ -1663,40 +1663,40 @@ You may want increased verbosity, that can be accomplished like this:
 
 Full verbosity (`make` macro `VERBOSE` or `V`):
 
-    make V=1 test                                  # Unix
-    mms /macro=(V=1) test                          ! OpenVMS
-    nmake V=1 test                                 # Windows
+    $ make V=1 test                                  # Unix
+    $ mms /macro=(V=1) test                          ! OpenVMS
+    $ nmake V=1 test                                 # Windows
 
 Verbosity on test failure (`VERBOSE_FAILURE` or `VF´, Unix example shown):
 
-    make test VF=1
+    $ make test VF=1
 
 Verbosity on failed (sub-)tests only (`VERBOSE_FAILURES_ONLY` or `VFO`):
 
-    make test VFO=1
+    $ make test VFO=1
 
 Verbosity on failed (sub-)tests, in addition progress on succeeded (sub-)tests
 (`VERBOSE_FAILURES_PROGRESS` or `VFP`):
 
-    make test VFP=1
+    $ make test VFP=1
 
 If you want to run just one or a few specific tests, you can use
 the make variable TESTS to specify them, like this:
 
-    make TESTS='test_rsa test_dsa' test            # Unix
-    mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
-    nmake TESTS='test_rsa test_dsa' test           # Windows
+    $ make TESTS='test_rsa test_dsa' test            # Unix
+    $ mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
+    $ nmake TESTS='test_rsa test_dsa' test           # Windows
 
 And of course, you can combine (Unix examples shown):
 
-    make test TESTS='test_rsa test_dsa' VF=1
-    make test TESTS="test_cmp_*" VFO=1
+    $ make test TESTS='test_rsa test_dsa' VF=1
+    $ make test TESTS="test_cmp_*" VFO=1
 
 You can find the list of available tests like this:
 
-    make list-tests                                # Unix
-    mms list-tests                                 ! OpenVMS
-    nmake list-tests                               # Windows
+    $ make list-tests                                # Unix
+    $ mms list-tests                                 ! OpenVMS
+    $ nmake list-tests                               # Windows
 
 Have a look at the manual for the perl module Test::Harness to
 see what other HARNESS_* variables there are.
