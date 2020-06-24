@@ -27,21 +27,17 @@ Full verbosity, showing full output of all successful and failed test cases
     $ mms /macro=(V=1) test                          ! OpenVMS
     $ nmake V=1 test                                 # Windows
 
-Verbosity on test failure (`VERBOSE_FAILURE` or `VF`, Unix example shown):
+Verbosity on failed (sub-)tests only (`VERBOSE_FAILURE` or `VF`):
 
     $ make test VF=1
 
-Verbosity on failed (sub-)tests only (`VERBOSE_FAILURES_ONLY` or `VFO`):
-
-    $ make test VFO=1
-
 Verbosity on failed (sub-)tests, in addition progress on succeeded (sub-)tests
-(`VERBOSE_FAILURES_PROGRESS` or `VFP`):
+(`VERBOSE_FAILURE_PROGRESS` or `VFP`):
 
     $ make test VFP=1
 
 If you want to run just one or a few specific tests, you can use
-the `make` variable `TESTS` to specify them, like this:
+the make variable TESTS to specify them, like this:
 
     $ make TESTS='test_rsa test_dsa' test            # Unix
     $ mms/macro="TESTS=test_rsa test_dsa" test       ! OpenVMS
@@ -50,7 +46,7 @@ the `make` variable `TESTS` to specify them, like this:
 And of course, you can combine (Unix examples shown):
 
     $ make test TESTS='test_rsa test_dsa' VF=1
-    $ make test TESTS="test_cmp_*" VFO=1
+    $ make test TESTS="test_cmp_*" VFP=1
 
 You can find the list of available tests like this:
 
