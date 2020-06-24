@@ -361,43 +361,43 @@ OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
 # define OSSL_FUNC_RAND_SET_CALLBACKS                17
 # define OSSL_FUNC_RAND_VERIFY_ZEROIZATION           18
 
-OSSL_CORE_MAKE_FUNC(void *, OP_rand_newctx,
+OSSL_CORE_MAKE_FUNC(void *,rand_newctx,
                     (void *provctx, void *parent,
                     const OSSL_DISPATCH *parent_calls))
-OSSL_CORE_MAKE_FUNC(void, OP_rand_freectx, (void *vctx))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_instantiate,
+OSSL_CORE_MAKE_FUNC(void,rand_freectx, (void *vctx))
+OSSL_CORE_MAKE_FUNC(int,rand_instantiate,
                     (void *vdrbg, unsigned int strength,
                      int prediction_resistance,
                      const unsigned char *pstr, size_t pstr_len))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_uninstantiate, (void *vdrbg))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_generate,
+OSSL_CORE_MAKE_FUNC(int,rand_uninstantiate, (void *vdrbg))
+OSSL_CORE_MAKE_FUNC(int,rand_generate,
                     (void *vctx, unsigned char *out, size_t outlen,
                      unsigned int strength, int prediction_resistance,
                      const unsigned char *addin, size_t addin_len))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_reseed,
+OSSL_CORE_MAKE_FUNC(int,rand_reseed,
                     (void *vctx, int prediction_resistance,
                      const unsigned char *ent, size_t ent_len,
                      const unsigned char *addin, size_t addin_len))
-OSSL_CORE_MAKE_FUNC(size_t, OP_rand_nonce,
+OSSL_CORE_MAKE_FUNC(size_t,rand_nonce,
                     (void *vctx, unsigned char *out, unsigned int strength,
                      size_t min_noncelen, size_t max_noncelen))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_enable_locking, (void *vctx))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_lock, (void *vctx))
-OSSL_CORE_MAKE_FUNC(void, OP_rand_unlock, (void *vctx))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_gettable_params, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_gettable_ctx_params, (void))
-OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, OP_rand_settable_ctx_params, (void))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_get_params, (OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_get_ctx_params,
+OSSL_CORE_MAKE_FUNC(int,rand_enable_locking, (void *vctx))
+OSSL_CORE_MAKE_FUNC(int,rand_lock, (void *vctx))
+OSSL_CORE_MAKE_FUNC(void,rand_unlock, (void *vctx))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_gettable_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_gettable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *,rand_settable_ctx_params, (void))
+OSSL_CORE_MAKE_FUNC(int,rand_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int,rand_get_ctx_params,
                     (void *vctx, OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_set_ctx_params,
+OSSL_CORE_MAKE_FUNC(int,rand_set_ctx_params,
                     (void *vctx, const OSSL_PARAM params[]))
-OSSL_CORE_MAKE_FUNC(void, OP_rand_set_callbacks,
+OSSL_CORE_MAKE_FUNC(void,rand_set_callbacks,
                     (void *vctx, OSSL_INOUT_CALLBACK *get_entropy,
                      OSSL_CALLBACK *cleanup_entropy,
                      OSSL_INOUT_CALLBACK *get_nonce,
                      OSSL_CALLBACK *cleanup_nonce, void *arg))
-OSSL_CORE_MAKE_FUNC(int, OP_rand_verify_zeroization,
+OSSL_CORE_MAKE_FUNC(int,rand_verify_zeroization,
                     (void *vctx))
 
 /*-

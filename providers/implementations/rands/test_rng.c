@@ -8,7 +8,7 @@
  */
 
 #include <string.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/e_os2.h>
 #include <openssl/params.h>
 #include "prov/providercommon.h"
@@ -17,18 +17,18 @@
 #include "prov/implementations.h"
 #include "drbg_local.h"
 
-static OSSL_OP_rand_newctx_fn test_rng_new_wrapper;
-static OSSL_OP_rand_freectx_fn test_rng_free;
-static OSSL_OP_rand_instantiate_fn test_rng_instantiate_wrapper;
-static OSSL_OP_rand_uninstantiate_fn test_rng_uninstantiate_wrapper;
-static OSSL_OP_rand_generate_fn test_rng_generate_wrapper;
-static OSSL_OP_rand_reseed_fn test_rng_reseed_wrapper;
-static OSSL_OP_rand_nonce_fn test_rng_nonce;
-static OSSL_OP_rand_settable_ctx_params_fn test_rng_settable_ctx_params;
-static OSSL_OP_rand_set_ctx_params_fn test_rng_set_ctx_params;
-static OSSL_OP_rand_gettable_ctx_params_fn test_rng_gettable_ctx_params;
-static OSSL_OP_rand_get_ctx_params_fn test_rng_get_ctx_params;
-static OSSL_OP_rand_verify_zeroization_fn test_rng_verify_zeroization;
+static OSSL_FUNC_rand_newctx_fn test_rng_new_wrapper;
+static OSSL_FUNC_rand_freectx_fn test_rng_free;
+static OSSL_FUNC_rand_instantiate_fn test_rng_instantiate_wrapper;
+static OSSL_FUNC_rand_uninstantiate_fn test_rng_uninstantiate_wrapper;
+static OSSL_FUNC_rand_generate_fn test_rng_generate_wrapper;
+static OSSL_FUNC_rand_reseed_fn test_rng_reseed_wrapper;
+static OSSL_FUNC_rand_nonce_fn test_rng_nonce;
+static OSSL_FUNC_rand_settable_ctx_params_fn test_rng_settable_ctx_params;
+static OSSL_FUNC_rand_set_ctx_params_fn test_rng_set_ctx_params;
+static OSSL_FUNC_rand_gettable_ctx_params_fn test_rng_gettable_ctx_params;
+static OSSL_FUNC_rand_get_ctx_params_fn test_rng_get_ctx_params;
+static OSSL_FUNC_rand_verify_zeroization_fn test_rng_verify_zeroization;
 
 typedef struct {
     unsigned char *entropy, *nonce;

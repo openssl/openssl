@@ -11,7 +11,7 @@
 # define OSSL_CRYPTO_PROV_LOCAL_H
 
 # include <openssl/evp.h>
-# include <openssl/core_numbers.h>
+# include <openssl/core_dispatch.h>
 # include <openssl/core_names.h>
 # include <openssl/params.h>
 # include "internal/tsan_assist.h"
@@ -86,12 +86,12 @@ struct prov_drbg_st {
 
     /* Parent PROV_RAND and its dispatch table functions */
     void *parent;
-    OSSL_OP_rand_enable_locking_fn *parent_enable_locking;
-    OSSL_OP_rand_lock_fn *parent_lock;
-    OSSL_OP_rand_unlock_fn *parent_unlock;
-    OSSL_OP_rand_get_ctx_params_fn *parent_get_ctx_params;
-    OSSL_OP_rand_generate_fn *parent_generate;
-    OSSL_OP_rand_nonce_fn *parent_nonce;
+    OSSL_FUNC_rand_enable_locking_fn *parent_enable_locking;
+    OSSL_FUNC_rand_lock_fn *parent_lock;
+    OSSL_FUNC_rand_unlock_fn *parent_unlock;
+    OSSL_FUNC_rand_get_ctx_params_fn *parent_get_ctx_params;
+    OSSL_FUNC_rand_generate_fn *parent_generate;
+    OSSL_FUNC_rand_nonce_fn *parent_nonce;
 
     const OSSL_DISPATCH *parent_dispatch;
 
@@ -239,9 +239,9 @@ int drbg_set_callbacks(void *vctx, OSSL_INOUT_CALLBACK *get_entropy_fn,
     }
 
 /* locking api */
-OSSL_OP_rand_enable_locking_fn drbg_enable_locking;
-OSSL_OP_rand_lock_fn drbg_lock;
-OSSL_OP_rand_unlock_fn drbg_unlock;
+OSSL_FUNC_rand_enable_locking_fn drbg_enable_locking;
+OSSL_FUNC_rand_lock_fn drbg_lock;
+OSSL_FUNC_rand_unlock_fn drbg_unlock;
 
 /* Common parameters for all of our DRBGs */
 int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[]);
