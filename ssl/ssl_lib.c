@@ -5867,6 +5867,11 @@ void SSL_set_allow_early_data_cb(SSL *s,
     s->allow_early_data_cb_data = arg;
 }
 
+int SSL_send_alert(SSL * s, int level, int desc)
+{
+    return ssl3_send_alert(s, level, desc);
+}
+
 const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
                                        int nid,
                                        const char *properties)

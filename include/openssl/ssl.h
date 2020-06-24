@@ -2473,6 +2473,7 @@ void SSL_CTX_set_allow_early_data_cb(SSL_CTX *ctx,
 void SSL_set_allow_early_data_cb(SSL *s,
                                  SSL_allow_early_data_cb_fn cb,
                                  void *arg);
+int SSL_send_alert(SSL * s, int level, int desc);
 
 /* store the default cipher strings inside the library */
 const char *OSSL_default_cipher_list(void);
