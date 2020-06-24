@@ -1582,6 +1582,19 @@ static int test_large_message_tls_read_ahead(void)
                                       TLS1_VERSION, 0, 1);
 }
 
+#ifndef OPENSSL_NO_DTLS
+static int test_large_message_dtls(void)
+{
+    /*
+     * read_ahead is not relevant to DTLS because DTLS always acts as if
+     * read_ahead is set.
+     */
+    return execute_test_large_message(DTLS_server_method(),
+                                      DTLS_client_method(),
+                                      DTLS1_VERSION, 0, 0);
+}
+#endif
+
 static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
                                      const SSL_METHOD *cmeth,
                                      int min_version, int max_version)
@@ -1694,19 +1707,6 @@ static int test_cleanse_plaintext(void)
 #endif
     return 1;
 }
-
-#ifndef OPENSSL_NO_DTLS
-static int test_large_message_dtls(void)
-{
-    /*
-     * read_ahead is not relevant to DTLS because DTLS always acts as if
-     * read_ahead is set.
-     */
-    return execute_test_large_message(DTLS_server_method(),
-                                      DTLS_client_method(),
-                                      DTLS1_VERSION, 0, 0);
-}
-#endif
 
 #ifndef OPENSSL_NO_OCSP
 static int ocsp_server_cb(SSL *s, void *arg)
@@ -8430,10 +8430,10 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
-    ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_DTLS
     ADD_TEST(test_large_message_dtls);
 #endif
+    ADD_TEST(test_cleanse_plaintext);
 #ifndef OPENSSL_NO_OCSP
     ADD_TEST(test_tlsext_status_type);
 #endif
