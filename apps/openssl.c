@@ -205,7 +205,7 @@ static void setup_trace(const char *str)
 }
 #endif /* OPENSSL_NO_TRACE */
 
-static char *help_argv[] = { "help" };
+static char *help_argv[] = { "help", NULL };
 
 int main(int argc, char *argv[])
 {
@@ -311,12 +311,6 @@ int help_main(int argc, char **argv)
     HELP_CHOICE o;
     DISPLAY_COLUMNS dc;
     char *new_argv[3];
-
-    if (argc == 0) {
-        new_argv[0] = "help";
-        new_argv[1] = NULL;
-        return do_cmd(prog_init(), 1, new_argv);
-    }
 
     prog = opt_init(argc, argv, help_options);
     while ((o = opt_next()) != OPT_hEOF) {
