@@ -268,10 +268,16 @@ clients.
 =item SSL_OP_CLEANSE_PLAINTEXT
 
 By default TLS connections keep a copy of received plaintext data in a
-static buffer until it is overwritten by followup data. When enabling
-SSL_OP_CLEANSE_PLAINTEXT this plaintext is cleansed by calling
-OPENSSL_cleanse(3) after passing data to the application. Data is also
-cleansed when releasing the connection (eg. L<SSL_free(3)>).
+static buffer until it is overwritten by the next portion of
+data. When enabling SSL_OP_CLEANSE_PLAINTEXT this plaintext is
+cleansed by calling OPENSSL_cleanse(3) after passing data to the
+application. Data is also cleansed when releasing the connection
+(eg. L<SSL_free(3)>).
+
+Since OpenSSL only cleanses internal buffers, the application is
+still responsible for cleansing all other buffers. Most notable this
+applies to buffers passed to functions like L<SSL_read(3)>,
+SSL_peek(3) but also like L<SSL_write(3)>.
 
 =back
 

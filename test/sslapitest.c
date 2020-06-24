@@ -1582,31 +1582,23 @@ static int test_large_message_tls_read_ahead(void)
                                       TLS1_VERSION, 0, 1);
 }
 
-static int execute_cleanse_plaintext(int version)
+static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
+                                     const SSL_METHOD *cmeth,
+                                     int min_version, int max_version)
 {
     size_t i;
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
-    BIO *certbio = NULL;
-    X509 *chaincert = NULL;
-    size_t err = 0;
+    SSL3_RECORD *rr;
+    void *zbuf;
 
     static unsigned char cbuf[16000];
     static unsigned char sbuf[16000];
 
-    if (!TEST_ptr(certbio = BIO_new_file(cert, "r")))
-        goto end;
-    chaincert = PEM_read_bio_X509(certbio, NULL, NULL, NULL);
-    BIO_free(certbio);
-
-    certbio = NULL;
-    if (!TEST_ptr(chaincert))
-        goto end;
-
     if (!TEST_true(create_ssl_ctx_pair(libctx,
-                                       TLS_server_method(), TLS_client_method(),
-                                       version, version,
+                                       smeth, cmeth,
+                                       min_version, max_version,
                                        &sctx, &cctx, cert,
                                        privkey)))
         goto end;
@@ -1615,32 +1607,57 @@ static int execute_cleanse_plaintext(int version)
                                       NULL, NULL)))
         goto end;
 
-    if (!TEST_true(SSL_set_options(clientssl, SSL_OP_CLEANSE_PLAINTEXT)))
+    if (!TEST_true(SSL_set_options(serverssl, SSL_OP_CLEANSE_PLAINTEXT)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                        SSL_ERROR_NONE)))
+                                         SSL_ERROR_NONE)))
         goto end;
 
     for (i = 0; i < sizeof(cbuf); i++) {
         cbuf[i] = i & 0xff;
     }
 
-    if (!TEST_true(SSL_write(clientssl, cbuf, sizeof(cbuf)) == sizeof(cbuf)))
+    if (!TEST_int_eq(SSL_write(clientssl, cbuf, sizeof(cbuf)), sizeof(cbuf)))
         goto end;
 
-    while ((err = SSL_read(serverssl, &sbuf, sizeof(sbuf))) != sizeof(sbuf)) {
-        if (SSL_get_error(serverssl, err) != SSL_ERROR_WANT_READ) {
-            goto end;
-        }
-    }
+    if (!TEST_int_eq(SSL_peek(serverssl, &sbuf, sizeof(sbuf)), sizeof(sbuf)))
+        goto end;
 
     if (memcmp(cbuf, sbuf, sizeof(cbuf)))
         goto end;
 
+    /*
+     * Since we called SSL_peek(), we know the data is stored as
+     * plaintext record. We can gather the pointer to check for
+     * zerozation after SSL_read().
+     */
+    rr = serverssl->rlayer.rrec;
+    zbuf = &rr->data[rr->off];
+    if (!TEST_int_eq(rr->length, sizeof(cbuf)))
+        goto end;
+
+    /*
+     * After SSL_peek() the plaintext must still be stored in the
+     * record.
+     */
+    if (memcmp(cbuf, zbuf, sizeof(cbuf)))
+        goto end;
+
+    memset(sbuf, 0, sizeof(sbuf));
+    if (!TEST_int_eq(SSL_read(serverssl, &sbuf, sizeof(sbuf)), sizeof(sbuf)))
+        goto end;
+
+    if (memcmp(cbuf, sbuf, sizeof(cbuf)))
+        goto end;
+
+    /* Check if rbuf is cleansed */
+    memset(cbuf, 0, sizeof(cbuf));
+    if (memcmp(cbuf, zbuf, sizeof(cbuf)))
+        goto end;
+
     testresult = 1;
  end:
-    X509_free(chaincert);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
@@ -1652,15 +1669,29 @@ static int execute_cleanse_plaintext(int version)
 static int test_cleanse_plaintext(void)
 {
 #if !defined(OPENSSL_NO_TLS1_2)
-    if (!TEST_true(execute_cleanse_plaintext(TLS1_2_VERSION)))
+    if (!TEST_true(execute_cleanse_plaintext(TLS_server_method(),
+                                             TLS_client_method(),
+                                             TLS1_2_VERSION,
+                                             TLS1_2_VERSION)))
         return 0;
+
 #endif
 
 #if !defined(OPENSSL_NO_TLS1_3)
-    if (!TEST_true(execute_cleanse_plaintext(TLS1_3_VERSION)))
+    if (!TEST_true(execute_cleanse_plaintext(TLS_server_method(),
+                                             TLS_client_method(),
+                                             TLS1_3_VERSION,
+                                             TLS1_3_VERSION)))
         return 0;
 #endif
 
+#if !defined(OPENSSL_NO_DTLS)
+    if (!TEST_true(execute_cleanse_plaintext(DTLS_server_method(),
+                                             DTLS_client_method(),
+                                             DTLS1_VERSION,
+                                             0)))
+        return 0;
+#endif
     return 1;
 }
 

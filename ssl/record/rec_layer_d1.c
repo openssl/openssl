@@ -120,14 +120,18 @@ void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
 static int dtls1_copy_record(SSL *s, pitem *item)
 {
     DTLS1_RECORD_DATA *rdata;
+    SSL3_BUFFER *rbuf;
 
     rdata = (DTLS1_RECORD_DATA *)item->data;
+    rbuf = &s->rlayer.rbuf;
 
-    SSL3_BUFFER_release(&s->rlayer.rbuf);
+    if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+        OPENSSL_cleanse(rbuf->buf, rbuf->len);
+    SSL3_BUFFER_release(rbuf);
 
     s->rlayer.packet = rdata->packet;
     s->rlayer.packet_length = rdata->packet_length;
-    memcpy(&s->rlayer.rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
+    memcpy(rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
     memcpy(&s->rlayer.rrec, &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
@@ -514,6 +518,8 @@ int dtls1_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
             if (SSL3_RECORD_get_length(rr) == 0)
                 SSL3_RECORD_set_read(rr);
         } else {
+            if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+                OPENSSL_cleanse(&(SSL3_RECORD_get_data(rr)[SSL3_RECORD_get_off(rr)]), n);
             SSL3_RECORD_sub_length(rr, n);
             SSL3_RECORD_add_off(rr, n);
             if (SSL3_RECORD_get_length(rr) == 0) {
