@@ -1109,7 +1109,7 @@ static void opt_print(const OPTIONS *o, int doingparams, int width)
 {
     const char* help;
     char start[80 + 1];
-    char *p;
+    int linelen, printlen;
 
     /* Avoid OOB if width is beyond the buffer size of start */
     if (width >= (int)sizeof(start))
@@ -1140,30 +1140,26 @@ static void opt_print(const OPTIONS *o, int doingparams, int width)
     }
 
     /* Build up the "-flag [param]" part. */
-    p = start;
+    linelen = 0;
 
-    *p++ = ' ';
+    printlen = opt_printf_stderr(" %s", !doingparams ? "-" : "");
+    linelen += (printlen > 0) ? printlen : MAX_OPT_HELP_WIDTH;
 
-    if (!doingparams)
-        *p++ = '-';
-
-    if (o->name[0])
-        p += strlen(strcpy(p, o->name));
-    else
-        *p++ = '*';
+    printlen = opt_printf_stderr("%s" , o->name[0] ? o->name : "*");
+    linelen += (printlen > 0) ? printlen : MAX_OPT_HELP_WIDTH;
 
     if (o->valtype != '-') {
-        *p++ = ' ';
-        p += strlen(strcpy(p, valtype2param(o)));
+        printlen = opt_printf_stderr(" %s" , valtype2param(o));
+        linelen += (printlen > 0) ? printlen : MAX_OPT_HELP_WIDTH;
     }
 
-    *p = ' ';
-
-    if ((int)(p - start) >= MAX_OPT_HELP_WIDTH) {
-        *p = '\0';
-        opt_printf_stderr("%s\n", start);
+    if (linelen >= MAX_OPT_HELP_WIDTH || linelen > width) {
+        opt_printf_stderr("%s", "\n");
         memset(start, ' ', sizeof(start));
+        linelen = 0;
     }
+
+    width -= linelen;
 
     start[width] = '\0';
     opt_printf_stderr("%s  %s\n", start, help);
