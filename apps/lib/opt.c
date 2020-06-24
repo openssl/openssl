@@ -1111,53 +1111,62 @@ static void opt_print(const OPTIONS *o, int doingparams, int width)
     char start[80 + 1];
     char *p;
 
-        help = o->helpstr ? o->helpstr : "(No additional info)";
-        if (o->name == OPT_HELP_STR) {
-            opt_printf_stderr(help, prog);
-            return;
-        }
-        if (o->name == OPT_SECTION_STR) {
-            opt_printf_stderr("\n");
-            opt_printf_stderr(help, prog);
-            return;
-        }
-        if (o->name == OPT_PARAM_STR) {
-            opt_printf_stderr("\nParameters:\n");
-            return;
-        }
+    /* Avoid OOB if width is beyond the buffer size of start */
+    if (width >= (int)sizeof(start))
+        width = (int)sizeof(start) - 1;
 
-        /* Pad out prefix */
-        memset(start, ' ', sizeof(start) - 1);
-        start[sizeof(start) - 1] = '\0';
+    help = o->helpstr ? o->helpstr : "(No additional info)";
+    if (o->name == OPT_HELP_STR) {
+        opt_printf_stderr(help, prog);
+        return;
+    } else if (o->name == OPT_SECTION_STR) {
+        opt_printf_stderr("\n");
+        opt_printf_stderr(help, prog);
+        return;
+    } else if (o->name == OPT_PARAM_STR) {
+        opt_printf_stderr("\nParameters:\n");
+        return;
+    }
 
-        if (o->name == OPT_MORE_STR) {
-            /* Continuation of previous line; pad and print. */
-            start[width] = '\0';
-            opt_printf_stderr("%s  %s\n", start, help);
-            return;
-        }
+    /* Pad out prefix */
+    memset(start, ' ', sizeof(start) - 1);
+    start[sizeof(start) - 1] = '\0';
 
-        /* Build up the "-flag [param]" part. */
-        p = start;
-        *p++ = ' ';
-        if (!doingparams)
-            *p++ = '-';
-        if (o->name[0])
-            p += strlen(strcpy(p, o->name));
-        else
-            *p++ = '*';
-        if (o->valtype != '-') {
-            *p++ = ' ';
-            p += strlen(strcpy(p, valtype2param(o)));
-        }
-        *p = ' ';
-        if ((int)(p - start) >= MAX_OPT_HELP_WIDTH) {
-            *p = '\0';
-            opt_printf_stderr("%s\n", start);
-            memset(start, ' ', sizeof(start));
-        }
+    if (o->name == OPT_MORE_STR) {
+        /* Continuation of previous line; pad and print. */
         start[width] = '\0';
         opt_printf_stderr("%s  %s\n", start, help);
+        return;
+    }
+
+    /* Build up the "-flag [param]" part. */
+    p = start;
+
+    *p++ = ' ';
+
+    if (!doingparams)
+        *p++ = '-';
+
+    if (o->name[0])
+        p += strlen(strcpy(p, o->name));
+    else
+        *p++ = '*';
+
+    if (o->valtype != '-') {
+        *p++ = ' ';
+        p += strlen(strcpy(p, valtype2param(o)));
+    }
+
+    *p = ' ';
+
+    if ((int)(p - start) >= MAX_OPT_HELP_WIDTH) {
+        *p = '\0';
+        opt_printf_stderr("%s\n", start);
+        memset(start, ' ', sizeof(start));
+    }
+
+    start[width] = '\0';
+    opt_printf_stderr("%s  %s\n", start, help);
 }
 
 void opt_help(const OPTIONS *list)
@@ -1165,7 +1174,6 @@ void opt_help(const OPTIONS *list)
     const OPTIONS *o;
     int i, sawparams = 0, width = 5;
     int standard_prolog;
-    char start[80 + 1];
 
     /* Starts with its own help message? */
     standard_prolog = list[0].name != OPT_HELP_STR;
@@ -1174,13 +1182,17 @@ void opt_help(const OPTIONS *list)
     for (o = list; o->name; o++) {
         if (o->name == OPT_MORE_STR)
             continue;
+
         i = 2 + (int)strlen(o->name);
         if (o->valtype != '-')
             i += 1 + strlen(valtype2param(o));
-        if (i < MAX_OPT_HELP_WIDTH && i > width)
+
+        if (i > width)
             width = i;
-        OPENSSL_assert(i < (int)sizeof(start));
     }
+
+    if (width > MAX_OPT_HELP_WIDTH)
+        width = MAX_OPT_HELP_WIDTH;
 
     if (standard_prolog) {
         opt_printf_stderr("Usage: %s [options]\n", prog);
