@@ -181,6 +181,7 @@ $eres = eval {
                         print $output_buffer if !$is_ok;
                         print "\n".$self->as_string
                             if !$is_ok || $failure_verbosity == 2;
+                        print "\n# ------------------------------------------------------------------------------" if !$is_ok;
                         $output_buffer = "";
                     } elsif ($self->as_string ne "") {
                         # typically is_comment or is_unknown
