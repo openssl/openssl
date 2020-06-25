@@ -37,7 +37,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
             {
                 const char *password =
                     ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-                if (password && password[0] != '\0') {
+                if (password != NULL) {
                     UI_set_result(ui, uis, password);
                     return 1;
                 }
@@ -54,6 +54,8 @@ static int ui_read(UI *ui, UI_STRING *uis)
     reader = UI_method_get_reader(ui_fallback_method);
     if (reader)
         return reader(ui, uis);
+    /* Default to the empty password if we've got nothing better */
+    UI_set_result(ui, uis, "");
     return 1;
 }
 
