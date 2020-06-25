@@ -522,9 +522,10 @@ static void list_pkey_meth(void)
     }
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 static void list_engines(void)
 {
-#ifndef OPENSSL_NO_ENGINE
+# ifndef OPENSSL_NO_ENGINE
     ENGINE *e;
 
     BIO_puts(bio_out, "Engines:\n");
@@ -533,10 +534,11 @@ static void list_engines(void)
         BIO_printf(bio_out, "%s\n", ENGINE_get_id(e));
         e = ENGINE_get_next(e);
     }
-#else
+# else
     BIO_puts(bio_out, "Engine support is disabled.\n");
-#endif
+# endif
 }
+#endif
 
 static void list_disabled(void)
 {
@@ -592,7 +594,7 @@ static void list_disabled(void)
 #ifdef OPENSSL_NO_EC2M
     BIO_puts(bio_out, "EC2M\n");
 #endif
-#ifdef OPENSSL_NO_ENGINE
+#if defined(OPENSSL_NO_ENGINE) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     BIO_puts(bio_out, "ENGINE\n");
 #endif
 #ifdef OPENSSL_NO_GOST
@@ -689,8 +691,11 @@ typedef enum HELPLIST_CHOICE {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ONE, OPT_VERBOSE,
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
-    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_ENGINES, OPT_DISABLED,
+    OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED,
     OPT_KDF_ALGORITHMS, OPT_RANDOM_GENERATORS, OPT_MISSING_HELP, OPT_OBJECTS,
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    OPT_ENGINES, 
+#endif
     OPT_PROV_ENUM
 } HELPLIST_CHOICE;
 
@@ -721,8 +726,10 @@ const OPTIONS list_options[] = {
      "List of public key algorithms"},
     {"public-key-methods", OPT_PK_METHOD, '-',
      "List of public key methods"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"engines", OPT_ENGINES, '-',
      "List of loaded engines"},
+#endif
     {"disabled", OPT_DISABLED, '-',
      "List of disabled features"},
     {"missing-help", OPT_MISSING_HELP, '-',
@@ -752,7 +759,9 @@ int list_main(int argc, char **argv)
         unsigned int cipher_algorithms:1;
         unsigned int pk_algorithms:1;
         unsigned int pk_method:1;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         unsigned int engines:1;
+#endif
         unsigned int disabled:1;
         unsigned int missing_help:1;
         unsigned int objects:1;
@@ -805,9 +814,11 @@ opthelp:
         case OPT_PK_METHOD:
             todo.pk_method = 1;
             break;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         case OPT_ENGINES:
             todo.engines = 1;
             break;
+#endif
         case OPT_DISABLED:
             todo.disabled = 1;
             break;
@@ -855,8 +866,10 @@ opthelp:
         list_pkey();
     if (todo.pk_method)
         list_pkey_meth();
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (todo.engines)
         list_engines();
+#endif
     if (todo.disabled)
         list_disabled();
     if (todo.missing_help)
