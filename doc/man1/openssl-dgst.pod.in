@@ -30,7 +30,9 @@ B<openssl> B<dgst>|I<digest>
 [B<-macopt> I<nm>:I<v>]
 [B<-fips-fingerprint>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-engine_impl> I<id>]
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-engine_impl> I<id>]{-
+  output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<file> ...]
@@ -178,6 +180,7 @@ Compute HMAC using a specific key for certain OpenSSL-FIPS operations.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_engine_item -}
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 The engine is not used for digests unless the B<-engine_impl> option is
 used or it is configured to do so, see L<config(5)/Engine Configuration Module>.
 
@@ -186,6 +189,7 @@ used or it is configured to do so, see L<config(5)/Engine Configuration Module>.
 When used with the B<-engine> option, it specifies to also use
 engine I<id> for digest operations.
 
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_provider_item -}
 
 =item I<file> ...
@@ -250,6 +254,8 @@ The FIPS-related options were removed in OpenSSL 1.1.0.
 
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
+
+The B<-engine> and B<-engine_impl> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

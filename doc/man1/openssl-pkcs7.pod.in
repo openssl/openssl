@@ -97,6 +97,10 @@ Output all certificates in a file:
 L<openssl(1)>,
 L<openssl-crl2pkcs7(1)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.

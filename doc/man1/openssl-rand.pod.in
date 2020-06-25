@@ -65,6 +65,10 @@ L<RAND_bytes(3)>,
 L<RAND(7)>,
 L<RAND_DRBG(7)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.

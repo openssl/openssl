@@ -123,6 +123,8 @@ L<openssl(1)>
 
 This command was added in OpenSSL 1.1.1.
 
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.

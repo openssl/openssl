@@ -71,7 +71,7 @@ B<openssl> B<cmp>
 [B<-keyform> I<PEM|DER|P12|ENGINE>]
 [B<-certsform> I<PEM|DER|P12>]
 [B<-otherpass> I<arg>]
-[B<-engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
 [B<-tls_used>]
@@ -698,6 +698,7 @@ If not given here, the password will be prompted for if needed.
 
 For more information about the format of B<arg> see the
 B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 
 =item B<-engine> I<id>
 
@@ -714,6 +715,7 @@ the engine.
 as supported, e.g., by libp11:
 C<-key engine:pkcs11:object=my-private-key;type=private;pin-value=1234>
 
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_provider_item -}
 
 =back

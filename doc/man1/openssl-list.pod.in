@@ -21,10 +21,9 @@ B<openssl list>
 [B<-cipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
-
-{- output_off() if $disabled{"deprecated-3.0"}; ""
--}[B<-engines>]{-
-  output_on() if $disabled{"deprecated-3.0"}; "" -}
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
+[B<-engines>]
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 [B<-disabled>]
 [B<-objects>]
 [B<-options> I<command>]
@@ -95,15 +94,15 @@ a block of multiple lines, all but the first are indented.
 =item B<-public-key-methods>
 
 Display a list of public key method OIDs.
-{- if (!$disabled{"deprecated-3.0"}) {
-    "\n"
-  . "=item B<-engines>\n"
-  . "\n"
-  . "This option is deprecated.\n"
-  . "\n"
-  . "Display a list of loaded engines.\n"
-  }
--}
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
+
+=item B<-engines>
+
+This option is deprecated.
+
+Display a list of loaded engines.
+
+{- output_on() if $disabled{"deprecated-3.0"}; "" -}
 =item B<-disabled>
 
 Display a list of disabled features, those that were compiled out

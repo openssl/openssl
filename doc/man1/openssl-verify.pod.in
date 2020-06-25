@@ -153,6 +153,8 @@ L<ossl_store-file(7)>
 
 The B<-show_chain> option was added in OpenSSL 1.1.0.
 
+The B<-engine option> was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.

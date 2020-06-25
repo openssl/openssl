@@ -365,6 +365,10 @@ L<openssl(1)>,
 L<openssl-pkcs8(1)>,
 L<ossl_store-file(7)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.

@@ -835,6 +835,8 @@ have become obsolete in OpenSSL 3.0.0 and have no effect.
 
 The B<-CAform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.

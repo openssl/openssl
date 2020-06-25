@@ -186,6 +186,10 @@ L<openssl-ecparam(1)>,
 L<openssl-dsa(1)>,
 L<openssl-rsa(1)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.

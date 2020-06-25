@@ -81,6 +81,10 @@ see L<openssl(1)/Pass Phrase Options>.
 
 =back
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2017-2020 The OpenSSL Project Authors. All Rights Reserved.
