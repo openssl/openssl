@@ -22,6 +22,8 @@ B<openssl engine>
 
 =head1 DESCRIPTION
 
+This command has been deprecated.  Providers should be used instead of engines.
+
 This command is used to query the status and capabilities
 of the specified I<engine>s.
 Engines may be specified before and after all other command-line flags.
@@ -113,6 +115,10 @@ The path to the engines directory.
 
 L<openssl(1)>,
 L<config(5)>
+
+=head1 HISTORY
+
+This command was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
