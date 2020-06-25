@@ -240,6 +240,13 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
+ * Added `util/check-format.pl`, a tool for checking adherence to the
+   OpenSSL coding style <https://www.openssl.org/policies/codingstyle.html>.
+   The checks performed are incomplete and yield some false positives.
+   Still the tool should be useful for detecting most typical glitches.
+
+   *David von Oheimb*
+
  * BIO_do_connect and BIO_do_handshake have been extended:
    If domain name resolution yields multiple IP addresses all of them are tried
    after connect() failures.

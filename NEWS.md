@@ -41,6 +41,7 @@ OpenSSL 3.0
     All widely used CMP features are supported for both clients and servers.
   * Added a proper HTTP(S) client to libcrypto supporting GET and POST,
     redirection, plain and ASN.1-encoded contents, proxies, and timeouts.
+  * Added util/check-format.pl for checking adherence to the coding guidelines.
   * Added OSSL_SERIALIZER, a generic serializer API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
