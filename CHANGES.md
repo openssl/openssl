@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 alpha 4 [25 Jun 2020]
+### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
