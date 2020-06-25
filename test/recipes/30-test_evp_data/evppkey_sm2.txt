@@ -9,9 +9,7 @@
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
 #       PrivPubKeyPair Sign Verify VerifyRecover
-# and continue until a blank line.  Lines starting with a pound sign,
-# like this prolog, are ignored.
-# The keyword Availablein must appear before the test name if needed.
+# and continue until a blank line. Lines starting with a pound sign are ignored.
 
 
 # Public key algorithm tests
@@ -27,19 +25,16 @@ MIGHAgEAMBMGByqGSM49AgEGCCqBHM9VAYItBG0wawIBAQQg0JFWczAXva2An9m7
 Wt3Te/d/8Mr57Tf886i09VwDhSMmH8pmNq/mp6+ioUgqYG9cs6GLLioe
 -----END PRIVATE KEY-----
 
-Availablein = default
 Verify = SM2_key1
 Ctrl = digest:SM3
 Input = D7AD397F6FFA5D4F7F11E7217F241607DC30618C236D2C09C1B9EA8FDADEE2E8
 Output = 3046022100AB1DB64DE7C40EDBDE6651C9B8EBDB804673DB836E5D5C7FE15DCF9ED2725037022100EBA714451FF69B0BB930B379E192E7CD5FA6E3C41C7FBD8303B799AB54A54621
 
-Availablein = default
 Verify = SM2_key1
 Ctrl = digest:SM3
 Input = B1139602C6ECC9E15E2F3F9C635A1AFE737058BC15387479C1EA0D0B3D90E9E5
 Output = 3045022100E6E0414EBD3A656C35602AF14AB20287DBF30D57AF75C49A188ED4B42391F22402202F54F277C606F4605E1CE9514947FFDDF94C67A539804A4ED17F852288BDBE2E
 
-Availablein = default
 Verify = SM2_key1
 Ctrl = digest:SHA512
 Input = 40AA1B203C9D8EE150B21C3C7CDA8261492E5420C5F2B9F7380700E094C303B48E62F319C1DA0E32EB40D113C5F1749CC61AEB499167890AB82F2CC9BB706971
@@ -54,7 +49,6 @@ Output = "The floofy bunnies hop at midnight"
 # is capable of creating a signature without failing, but it does not say
 # anything about the generated signature being valid, nor does it test the
 # correct implementation of the cryptosystem.
-Availablein = default
 Sign = SM2_key1
 Ctrl = digest:SM3
 Input = D7AD397F6FFA5D4F7F11E7217F241607DC30618C236D2C09C1B9EA8FDADEE2E8

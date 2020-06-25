@@ -49,7 +49,7 @@ static int pkey_kdf_init(EVP_PKEY_CTX *ctx)
     if (pkctx == NULL)
         return 0;
 
-    kdf = EVP_KDF_fetch(NULL, kdf_name, NULL);
+    kdf = EVP_KDF_fetch(ctx->libctx, kdf_name, ctx->propquery);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL) {

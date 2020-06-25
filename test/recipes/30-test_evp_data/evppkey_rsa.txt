@@ -9,10 +9,8 @@
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
 #       PrivPubKeyPair Sign Verify VerifyRecover
-# and continue until a blank line.  Lines starting with a pound sign,
-# like this prolog, are ignored.
-
-# Public key algorithm tests
+# and continue until a blank line. Lines starting with a pound sign are ignored.
+# The keyword Availablein must appear before the test name if needed.
 
 # Private keys used for PKEY operations.
 
@@ -529,9 +527,11 @@ Ctrl = rsa_pss_saltlen:0
 Result = PKEY_CTRL_ERROR
 
 # Attempt to change padding mode
+# Note this used to return PKEY_CTRL_INVALID
+# but it is limited because setparams only returns 0 or 1.
 Verify = RSA-PSS-DEFAULT
 Ctrl = rsa_padding_mode:pkcs1
-Result = PKEY_CTRL_INVALID
+Result = PKEY_CTRL_ERROR
 
 # Attempt to change digest
 Verify = RSA-PSS-DEFAULT

@@ -9,10 +9,7 @@
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
 #       PrivPubKeyPair Sign Verify VerifyRecover
-# and continue until a blank line.  Lines starting with a pound sign,
-# like this prolog, are ignored.
-# The keyword Availablein must appear before the test name if needed.
-
+# and continue until a blank line. Lines starting with a pound sign are ignored.
 
 Title=brainpoolP160r1 curve tests
 
@@ -616,13 +613,11 @@ PrivPubKeyPair = BOB_brainpoolP160r1:BOB_brainpoolP160r1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP160r1
 PeerKey=BOB_brainpoolP160r1_PUB
 SharedSecret=e4fe5ae99a60d17b597f5705a719cea6709c63b9
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP160r1
 PeerKey=ALICE_brainpoolP160r1_PUB
 SharedSecret=e4fe5ae99a60d17b597f5705a719cea6709c63b9
@@ -662,13 +657,11 @@ PrivPubKeyPair = BOB_brainpoolP160t1:BOB_brainpoolP160t1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP160t1
 PeerKey=BOB_brainpoolP160t1_PUB
 SharedSecret=199a218458b71a4e13f05a599fc17bc76f30ea2f
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP160t1
 PeerKey=ALICE_brainpoolP160t1_PUB
 SharedSecret=199a218458b71a4e13f05a599fc17bc76f30ea2f
@@ -708,13 +701,11 @@ PrivPubKeyPair = BOB_brainpoolP192r1:BOB_brainpoolP192r1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP192r1
 PeerKey=BOB_brainpoolP192r1_PUB
 SharedSecret=7ce122b49afdfd1adde6cdfaa13dc7180d6d4e70322c8773
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP192r1
 PeerKey=ALICE_brainpoolP192r1_PUB
 SharedSecret=7ce122b49afdfd1adde6cdfaa13dc7180d6d4e70322c8773
@@ -754,13 +745,11 @@ PrivPubKeyPair = BOB_brainpoolP192t1:BOB_brainpoolP192t1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP192t1
 PeerKey=BOB_brainpoolP192t1_PUB
 SharedSecret=1a5444c2600d9d21d6a450d158fd25272ade262ab519790b
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP192t1
 PeerKey=ALICE_brainpoolP192t1_PUB
 SharedSecret=1a5444c2600d9d21d6a450d158fd25272ade262ab519790b
@@ -800,13 +789,11 @@ PrivPubKeyPair = BOB_brainpoolP224r1:BOB_brainpoolP224r1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP224r1
 PeerKey=BOB_brainpoolP224r1_PUB
 SharedSecret=419e446a66968fcc372126cff4d637505c848c3a9b82503f2d441215
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP224r1
 PeerKey=ALICE_brainpoolP224r1_PUB
 SharedSecret=419e446a66968fcc372126cff4d637505c848c3a9b82503f2d441215
@@ -846,13 +833,11 @@ PrivPubKeyPair = BOB_brainpoolP224t1:BOB_brainpoolP224t1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP224t1
 PeerKey=BOB_brainpoolP224t1_PUB
 SharedSecret=8f83465fb6353912a51c2809ea30b19b73b3e391c0422650e0f20b58
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP224t1
 PeerKey=ALICE_brainpoolP224t1_PUB
 SharedSecret=8f83465fb6353912a51c2809ea30b19b73b3e391c0422650e0f20b58
@@ -892,13 +877,11 @@ PrivPubKeyPair = BOB_brainpoolP256r1:BOB_brainpoolP256r1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP256r1
 PeerKey=BOB_brainpoolP256r1_PUB
 SharedSecret=78ed4b7bb4ed808813f8c27132fe04f5d805365549b754994d83b002416b6ba0
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP256r1
 PeerKey=ALICE_brainpoolP256r1_PUB
 SharedSecret=78ed4b7bb4ed808813f8c27132fe04f5d805365549b754994d83b002416b6ba0
@@ -938,13 +921,11 @@ PrivPubKeyPair = BOB_brainpoolP256t1:BOB_brainpoolP256t1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP256t1
 PeerKey=BOB_brainpoolP256t1_PUB
 SharedSecret=287a8f19e6f06476b222805eb11907c536fa6ea02b8877ea6d5323f9fabccdd8
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP256t1
 PeerKey=ALICE_brainpoolP256t1_PUB
 SharedSecret=287a8f19e6f06476b222805eb11907c536fa6ea02b8877ea6d5323f9fabccdd8
@@ -988,13 +969,11 @@ PrivPubKeyPair = BOB_brainpoolP320r1:BOB_brainpoolP320r1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP320r1
 PeerKey=BOB_brainpoolP320r1_PUB
 SharedSecret=13a56c63c2dafe3e053534d5bf32c7eb4a0733bf356510725d378c5cbcf6974240719e3e53b352bb
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP320r1
 PeerKey=ALICE_brainpoolP320r1_PUB
 SharedSecret=13a56c63c2dafe3e053534d5bf32c7eb4a0733bf356510725d378c5cbcf6974240719e3e53b352bb
@@ -1038,13 +1017,11 @@ PrivPubKeyPair = BOB_brainpoolP320t1:BOB_brainpoolP320t1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP320t1
 PeerKey=BOB_brainpoolP320t1_PUB
 SharedSecret=170d1f5fc4248700be75499eac813fac642df1311ab005e10796cc2ef43b82f8d788eb232d580243
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP320t1
 PeerKey=ALICE_brainpoolP320t1_PUB
 SharedSecret=170d1f5fc4248700be75499eac813fac642df1311ab005e10796cc2ef43b82f8d788eb232d580243
@@ -1088,13 +1065,11 @@ PrivPubKeyPair = BOB_brainpoolP384r1:BOB_brainpoolP384r1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP384r1
 PeerKey=BOB_brainpoolP384r1_PUB
 SharedSecret=0b3ad57e83759760d94904d9ea266b538120c6db2b5046217aa1ecd924828b949d335c8ce8a5b36bac7556bf6058c40a
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP384r1
 PeerKey=ALICE_brainpoolP384r1_PUB
 SharedSecret=0b3ad57e83759760d94904d9ea266b538120c6db2b5046217aa1ecd924828b949d335c8ce8a5b36bac7556bf6058c40a
@@ -1138,13 +1113,11 @@ PrivPubKeyPair = BOB_brainpoolP384t1:BOB_brainpoolP384t1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP384t1
 PeerKey=BOB_brainpoolP384t1_PUB
 SharedSecret=0fde85a61157cdd898196f291802ebd57bb2e39d98c4e6ad9bb3e2e0375e1df9bf7dadb8df7db1fea32818ef2c88babc
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP384t1
 PeerKey=ALICE_brainpoolP384t1_PUB
 SharedSecret=0fde85a61157cdd898196f291802ebd57bb2e39d98c4e6ad9bb3e2e0375e1df9bf7dadb8df7db1fea32818ef2c88babc
@@ -1192,13 +1165,11 @@ PrivPubKeyPair = BOB_brainpoolP512r1:BOB_brainpoolP512r1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP512r1
 PeerKey=BOB_brainpoolP512r1_PUB
 SharedSecret=80751feb09215a9da32f9f8c97133f53f0286a89969bd00d7f365da7f7736f45e634a35012d71b22f09bd89760ab0d2b0d426133cd9a379da9739d0f5f2e0360
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP512r1
 PeerKey=ALICE_brainpoolP512r1_PUB
 SharedSecret=80751feb09215a9da32f9f8c97133f53f0286a89969bd00d7f365da7f7736f45e634a35012d71b22f09bd89760ab0d2b0d426133cd9a379da9739d0f5f2e0360
@@ -1246,13 +1217,11 @@ PrivPubKeyPair = BOB_brainpoolP512t1:BOB_brainpoolP512t1_PUB
 
 
 # ECDH Alice with Bob peer
-Availablein = default
 Derive=ALICE_brainpoolP512t1
 PeerKey=BOB_brainpoolP512t1_PUB
 SharedSecret=0afecb44d108c9bf2bc159fcc613a1429e3906d5d201d579adc2167058e972ef85fc13d837f3566a2ff3a881e47bfe36b722baf4a9f865097fe11e171189a944
 
 # ECDH Bob with Alice peer
-Availablein = default
 Derive=BOB_brainpoolP512t1
 PeerKey=ALICE_brainpoolP512t1_PUB
 SharedSecret=0afecb44d108c9bf2bc159fcc613a1429e3906d5d201d579adc2167058e972ef85fc13d837f3566a2ff3a881e47bfe36b722baf4a9f865097fe11e171189a944
@@ -1292,12 +1261,10 @@ MFowFAYHKoZIzj0CAQYJKyQDAwIIAQEHA0IABI0taIxs+T4RYK0EzEQpEX3CxBgl
 
 PrivPubKeyPair = BRAINPOOLP256R1_RFC7027-Peer:BRAINPOOLP256R1_RFC7027-Peer-PUBLIC
 
-Availablein = default
 Derive=BRAINPOOLP256R1_RFC7027
 PeerKey=BRAINPOOLP256R1_RFC7027-Peer-PUBLIC
 SharedSecret=89AFC39D41D3B327814B80940B042590F96556EC91E6AE7939BCE31F3A18BF2B
 
-Availablein = default
 Derive=BRAINPOOLP256R1_RFC7027-Peer
 PeerKey=BRAINPOOLP256R1_RFC7027-PUBLIC
 SharedSecret=89AFC39D41D3B327814B80940B042590F96556EC91E6AE7939BCE31F3A18BF2B
@@ -1337,12 +1304,10 @@ bB4VGiEDikLpGFMptbJ1kD0ZL41OHzL+nMeMSA==
 
 PrivPubKeyPair = BRAINPOOLP384R1_RFC7027-Peer:BRAINPOOLP384R1_RFC7027-Peer-PUBLIC
 
-Availablein = default
 Derive=BRAINPOOLP384R1_RFC7027
 PeerKey=BRAINPOOLP384R1_RFC7027-Peer-PUBLIC
 SharedSecret=0BD9D3A7EA0B3D519D09D8E48D0785FB744A6B355E6304BC51C229FBBCE239BBADF6403715C35D4FB2A5444F575D4F42
 
-Availablein = default
 Derive=BRAINPOOLP384R1_RFC7027-Peer
 PeerKey=BRAINPOOLP384R1_RFC7027-PUBLIC
 SharedSecret=0BD9D3A7EA0B3D519D09D8E48D0785FB744A6B355E6304BC51C229FBBCE239BBADF6403715C35D4FB2A5444F575D4F42
@@ -1386,12 +1351,10 @@ O8414n7xlFErcYdihfo=
 
 PrivPubKeyPair = BRAINPOOLP512R1_RFC7027-Peer:BRAINPOOLP512R1_RFC7027-Peer-PUBLIC
 
-Availablein = default
 Derive=BRAINPOOLP512R1_RFC7027
 PeerKey=BRAINPOOLP512R1_RFC7027-Peer-PUBLIC
 SharedSecret=A7927098655F1F9976FA50A9D566865DC530331846381C87256BAF3226244B76D36403C024D7BBF0AA0803EAFF405D3D24F11A9B5C0BEF679FE1454B21C4CD1F
 
-Availablein = default
 Derive=BRAINPOOLP512R1_RFC7027-Peer
 PeerKey=BRAINPOOLP512R1_RFC7027-PUBLIC
 SharedSecret=A7927098655F1F9976FA50A9D566865DC530331846381C87256BAF3226244B76D36403C024D7BBF0AA0803EAFF405D3D24F11A9B5C0BEF679FE1454B21C4CD1F

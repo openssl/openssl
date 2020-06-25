@@ -111,9 +111,9 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
 #endif /* OPENSSL_NO_SEED */
 #ifndef OPENSSL_NO_RC2
     ALG("RC2-ECB", rc2128ecb_functions),
-    ALG("RC2-CBC", rc2128cbc_functions),
-    ALG("RC2-40-CBC", rc240cbc_functions),
-    ALG("RC2-64-CBC", rc264cbc_functions),
+    ALG("RC2-CBC:RC2:RC2-128", rc2128cbc_functions),
+    ALG("RC2-40-CBC:RC2-40", rc240cbc_functions),
+    ALG("RC2-64-CBC:RC2-64", rc264cbc_functions),
     ALG("RC2-CFB", rc2128cfb128_functions),
     ALG("RC2-OFB", rc2128ofb128_functions),
 #endif /* OPENSSL_NO_RC2 */
@@ -126,7 +126,7 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
 #endif /* OPENSSL_NO_RC4 */
 #ifndef OPENSSL_NO_RC5
     ALG("RC5-ECB", rc5128ecb_functions),
-    ALG("RC5-CBC", rc5128cbc_functions),
+    ALG("RC5-CBC:RC5", rc5128cbc_functions),
     ALG("RC5-OFB", rc5128ofb64_functions),
     ALG("RC5-CFB", rc5128cfb64_functions),
 #endif /* OPENSSL_NO_RC5 */

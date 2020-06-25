@@ -32,23 +32,66 @@ my @configs = ( $defaultcnf );
 push @configs, 'fips.cnf' unless $no_fips;
 
 # A list of tests that run with both the default and fips provider.
-my @files = qw( evpciph.txt evpdigest.txt evpccmcavs.txt evppkey.txt
-                evppkey_rsa.txt evppkey_dsa.txt evppkey_ecdsa.txt
-                evppkey_ecc.txt evppkey_ecdh.txt evppkey_ffdhe.txt
-                evppkey_kas.txt evppkey_ecx.txt evppkey_brainpool.txt
-                evpcase.txt evpmac.txt evppbe.txt evprand.txt );
+my @files = qw(
+                evpciph_aes_ccm_cavs.txt
+                evpciph_aes_common.txt
+                evpciph_aes_cts.txt
+                evpciph_des3_common.txt
+                evpkdf_hkdf.txt
+                evpkdf_pbkdf2.txt
+                evpkdf_ss.txt
+                evpkdf_ssh.txt
+                evpkdf_tls12_prf.txt
+                evpkdf_x963.txt
+                evpmac_common.txt
+                evpmd_sha.txt
+                evppbe_pkcs12.txt
+                evppkey_dsa.txt 
+                evppkey_ecc.txt
+                evppkey_ecdh.txt
+                evppkey_ecdsa.txt
+                evppkey_ecx.txt
+                evppkey_ffdhe.txt
+                evppkey_kas.txt
+                evppkey_mismatch.txt
+                evppkey_rsa.txt
+                evprand.txt
+              );
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
-my @defltfiles = qw( evpencod.txt evppkey_kdf.txt
-                     evpciph_bf.txt evpciph_chacha.txt evpciph_seed.txt
-                     evpaessiv.txt evpciph_cast5.txt evpciph_idea.txt
-                     evpciph_sm4.txt evpciph_des.txt evpciph_rc2.txt
-                     evpciph_rc4.txt evpciph_rc5.txt evpmd_md2.txt
-                     evpmd_mdc2.txt);
-
-my @sm2files = qw( evppkey_sm2.txt );
-push @defltfiles, @sm2files unless disabled("sm2");
+my @defltfiles = qw(
+                     evpciph_aes_ocb.txt
+                     evpciph_aes_siv.txt
+                     evpciph_aria.txt 
+                     evpciph_bf.txt
+                     evpciph_camellia.txt
+                     evpciph_cast5.txt
+                     evpciph_chacha.txt
+                     evpciph_des.txt
+                     evpciph_idea.txt
+                     evpciph_rc2.txt
+                     evpciph_rc4.txt
+                     evpciph_rc5.txt
+                     evpciph_seed.txt
+                     evpciph_sm4.txt
+                     evpencod.txt
+                     evpkdf_krb5.txt
+                     evpkdf_scrypt.txt
+                     evpkdf_tls11_prf.txt
+                     evpkdf_x942.txt
+                     evpmac_blake.txt
+                     evpmac_poly1305.txt
+                     evpmac_siphash.txt
+                     evpmd_blake.txt
+                     evpmd_md.txt
+                     evpmd_mdc2.txt
+                     evpmd_ripemd.txt
+                     evpmd_sm3.txt
+                     evpmd_whirlpool.txt
+                     evppkey_brainpool.txt
+                     evppkey_sm2.txt
+                    );
 
 plan tests =>
     ($no_fips ? 0 : 1)          # FIPS install test
@@ -65,17 +108,20 @@ unless ($no_fips) {
 }
 
 foreach (@configs) {
-    $ENV{OPENSSL_CONF} = srctop_file("test", $_);
+    my $conf = srctop_file("test", $_);
 
     foreach my $f ( @files ) {
-        ok(run(test(["evp_test", data_file("$f")])),
-           "running evp_test $f (using OPENSSL_CONF=$ENV{OPENSSL_CONF})");
+        ok(run(test(["evp_test",
+                     "-config", $conf,
+                     data_file("$f")])),
+           "running evp_test -config $conf $f");
     }
 }
 
-$ENV{OPENSSL_CONF} = srctop_file("test", $defaultcnf);
-
+my $conf = srctop_file("test", $defaultcnf);
 foreach my $f ( @defltfiles ) {
-    ok(run(test(["evp_test", data_file("$f")])),
-       "running evp_test $f (using OPENSSL_CONF=$ENV{OPENSSL_CONF})");
+    ok(run(test(["evp_test",
+                 "-config", $conf,
+                 data_file("$f")])),
+       "running evp_test -config $conf $f");
 }

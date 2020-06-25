@@ -9,10 +9,10 @@
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
 #       PrivPubKeyPair Sign Verify VerifyRecover
-# and continue until a blank line.  Lines starting with a pound sign,
-# like this prolog, are ignored.
+# and continue until a blank line. Lines starting with a pound sign are ignored.
 
 Title = RFC5297 AES-SIV
+
 Cipher = aes-128-siv
 Key = fffefdfcfbfaf9f8f7f6f5f4f3f2f1f0f0f1f2f3f4f5f6f7f8f9fafbfcfdfeff
 AAD = 101112131415161718191a1b1c1d1e1f2021222324252627

@@ -34,10 +34,12 @@
 # define SCRYPT_MAX_MEM  (1024 * 1024 * 32)
 #endif
 
-int EVP_PBE_scrypt(const char *pass, size_t passlen,
-                   const unsigned char *salt, size_t saltlen,
-                   uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
-                   unsigned char *key, size_t keylen)
+int EVP_PBE_scrypt_with_libctx(const char *pass, size_t passlen,
+                               const unsigned char *salt, size_t saltlen,
+                               uint64_t N, uint64_t r,
+                               uint64_t p, uint64_t maxmem,
+                               unsigned char *key, size_t keylen,
+                               OPENSSL_CTX *libctx, const char *propq)
 {
     const char *empty = "";
     int rv = 1;
@@ -46,7 +48,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     OSSL_PARAM params[7], *z = params;
 
     if (r > UINT32_MAX || p > UINT32_MAX) {
-        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PARAMETER_TOO_LARGE);
+        EVPerr(0, EVP_R_PARAMETER_TOO_LARGE);
         return 0;
     }
 
@@ -62,7 +64,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
-    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_SCRYPT, NULL);
+    kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_SCRYPT, propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
@@ -84,6 +86,14 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
 
     EVP_KDF_CTX_free(kctx);
     return rv;
+}
+int EVP_PBE_scrypt(const char *pass, size_t passlen,
+                   const unsigned char *salt, size_t saltlen,
+                   uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
+                   unsigned char *key, size_t keylen)
+{
+    return EVP_PBE_scrypt_with_libctx(pass, passlen, salt, saltlen, N, r, p,
+                                      maxmem, key, keylen, NULL, NULL);
 }
 
 #endif

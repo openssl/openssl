@@ -9,8 +9,7 @@
 # Tests start with one of these keywords
 #       Cipher Decrypt Derive Digest Encoding KDF MAC PBE
 #       PrivPubKeyPair Sign Verify VerifyRecover
-# and continue until a blank line.  Lines starting with a pound sign,
-# like this prolog, are ignored.
+# and continue until a blank line. Lines starting with a pound sign are ignored.
 
 Title = Base64 tests
 
@@ -190,5 +189,4 @@ Output = "T3BlblNTTE9wZW5TU0wK\n-abcd"
 Encoding = valid
 Input = "OpenSSLOpenSSL\n"
 Output = "T3BlblNTTE9wZW5TU0wK-abcd"
-
 

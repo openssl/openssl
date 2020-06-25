@@ -489,7 +489,8 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
                         stmp, stmplen,
                         pecdhctx->kdf_ukm,
                         pecdhctx->kdf_ukmlen,
-                        pecdhctx->kdf_md))
+                        pecdhctx->kdf_md,
+                        pecdhctx->libctx, NULL))
         goto err;
     *psecretlen = pecdhctx->kdf_outlen;
     ret = 1;
