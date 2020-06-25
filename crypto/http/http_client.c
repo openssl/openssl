@@ -712,10 +712,15 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
     }
 
     host_end = strchr(host, '/');
-    if (host_end != NULL && (size_t)(host_end - host) < sizeof(host_name)) {
-        /* chop trailing string starting with '/' */
-        strncpy(host_name, host, host_end - host + 1);
-        host = host_name;
+    if (host_end != NULL) {
+        size_t host_len = host_end - host;
+
+        if (host_len < sizeof(host_name)) {
+            /* chop trailing string starting with '/' */
+            strncpy(host_name, host, host_len);
+            host_name[host_len] = '\0';
+            host = host_name;
+        }
     }
 
     cbio = BIO_new_connect(host /* optionally includes ":port" */);
