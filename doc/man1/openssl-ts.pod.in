@@ -626,6 +626,8 @@ seeding mechanism. The new seeding mechanism makes it unnecessary to
 define a RANDFILE for saving and restoring randomness. This option is
 retained mainly for compatibility reasons.
 
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,

@@ -794,6 +794,8 @@ The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
 
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 SEE ALSO
 
 L<openssl(1)>,

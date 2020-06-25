@@ -135,7 +135,7 @@ L<openssl-dsaparam(1)>
 
 =head1 HISTORY
 
-The B<-dsaparam> option was deprecated in OpenSSL 3.0.
+The B<-dsaparam> and B<-engine> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

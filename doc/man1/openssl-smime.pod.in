@@ -483,6 +483,8 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
 
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
