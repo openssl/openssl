@@ -46,6 +46,10 @@ ENGINE_unregister_digests
 
  #include <openssl/engine.h>
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
  ENGINE *ENGINE_get_first(void);
  ENGINE *ENGINE_get_last(void);
  ENGINE *ENGINE_get_next(ENGINE *e);
@@ -161,6 +165,9 @@ L<openssl_user_macros(7)>:
  void ENGINE_cleanup(void)
 
 =head1 DESCRIPTION
+
+All of the functions described on this page are deprecated.
+Applications should instead use the provider APIs.
 
 These functions create, manipulate, and use cryptographic modules in the
 form of B<ENGINE> objects. These objects act as containers for
@@ -650,6 +657,8 @@ L<OPENSSL_init_crypto(3)>, L<RSA_new_method(3)>, L<DSA_new(3)>, L<DH_new(3)>,
 L<RAND_bytes(3)>, L<config(5)>
 
 =head1 HISTORY
+
+All of these functions were deprecated in OpenSSL 3.0.
 
 ENGINE_cleanup() was deprecated in OpenSSL 1.1.0 by the automatic cleanup
 done by OPENSSL_cleanup()
