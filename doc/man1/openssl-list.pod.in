@@ -21,7 +21,10 @@ B<openssl list>
 [B<-cipher-algorithms>]
 [B<-public-key-algorithms>]
 [B<-public-key-methods>]
-[B<-engines>]
+
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-engines>]{-
+  output_on() if $disabled{"deprecated-3.0"}; "" -}
 [B<-disabled>]
 [B<-objects>]
 [B<-options> I<command>]
@@ -92,11 +95,15 @@ a block of multiple lines, all but the first are indented.
 =item B<-public-key-methods>
 
 Display a list of public key method OIDs.
-
-=item B<-engines>
-
-Display a list of loaded engines.
-
+{- if (!$disabled{"deprecated-3.0"}) {
+    "\n"
+  . "=item B<-engines>\n"
+  . "\n"
+  . "This option is deprecated.\n"
+  . "\n"
+  . "Display a list of loaded engines.\n"
+  }
+-}
 =item B<-disabled>
 
 Display a list of disabled features, those that were compiled out
@@ -145,6 +152,10 @@ or like this if it's labeled with multiple names:
 In both cases, C<bar> is the name of the provider.
 
 =back
+
+=head1 HISTORY
+
+The B<-engines> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
