@@ -20,7 +20,7 @@ static int ui_open(UI *ui)
 {
     int (*opener)(UI *ui) = UI_method_get_opener(ui_fallback_method);
 
-    if (opener)
+    if (opener != NULL)
         return opener(ui);
     return 1;
 }
@@ -37,7 +37,8 @@ static int ui_read(UI *ui, UI_STRING *uis)
             {
                 const char *password =
                     ((PW_CB_DATA *)UI_get0_user_data(ui))->password;
-                if (password && password[0] != '\0') {
+
+                if (password != NULL) {
                     UI_set_result(ui, uis, password);
                     return 1;
                 }
@@ -52,8 +53,10 @@ static int ui_read(UI *ui, UI_STRING *uis)
     }
 
     reader = UI_method_get_reader(ui_fallback_method);
-    if (reader)
+    if (reader != NULL)
         return reader(ui, uis);
+    /* Default to the empty password if we've got nothing better */
+    UI_set_result(ui, uis, "");
     return 1;
 }
 
@@ -82,7 +85,7 @@ static int ui_write(UI *ui, UI_STRING *uis)
     }
 
     writer = UI_method_get_writer(ui_fallback_method);
-    if (writer)
+    if (writer != NULL)
         return writer(ui, uis);
     return 1;
 }
@@ -91,7 +94,7 @@ static int ui_close(UI *ui)
 {
     int (*closer)(UI *ui) = UI_method_get_closer(ui_fallback_method);
 
-    if (closer)
+    if (closer != NULL)
         return closer(ui);
     return 1;
 }
@@ -112,7 +115,7 @@ int setup_ui_method(void)
 
 void destroy_ui_method(void)
 {
-    if (ui_method) {
+    if (ui_method != NULL) {
         UI_destroy_method(ui_method);
         ui_method = NULL;
     }
