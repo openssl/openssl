@@ -8235,8 +8235,10 @@ static int test_pluggable_group(void)
     SSL *clientssl = NULL, *serverssl = NULL;
     int testresult = 0;
     OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+    /* Check that we are not impacted by a provider without any groups */
+    OSSL_PROVIDER *legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
 
-    if (!TEST_ptr(tlsprov))
+    if (!TEST_ptr(tlsprov) || !TEST_ptr(legacyprov))
         goto end;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -8263,6 +8265,7 @@ static int test_pluggable_group(void)
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     OSSL_PROVIDER_unload(tlsprov);
+    OSSL_PROVIDER_unload(legacyprov);
 
     return testresult;
 }
