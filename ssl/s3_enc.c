@@ -241,6 +241,12 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
+    if (EVP_CIPHER_provider(c) != NULL
+            && !tls_provider_set_tls_params(s, dd, c, m)) {
+        /* SSLfatal already called */
+        goto err;
+    }
+
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     return 1;
  err:

@@ -136,6 +136,45 @@ static int count_unprocessed_records(SSL *s)
 # endif
 #endif
 
+
+int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
+                                const EVP_CIPHER *ciph,
+                                const EVP_MD *md)
+{
+    /*
+     * Provided cipher, the TLS padding/MAC removal is performed provider
+     * side so we need to tell the ctx about our TLS version and mac size
+     */
+    OSSL_PARAM params[3], *pprm = params;
+    size_t macsize = 0;
+    int imacsize = -1;
+
+    if ((EVP_CIPHER_flags(ciph) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0
+               /*
+                * We look at s->ext.use_etm instead of SSL_READ_ETM() or
+                * SSL_WRITE_ETM() because this test applies to both reading
+                * and writing.
+                */
+            && !s->ext.use_etm)
+        imacsize = EVP_MD_size(md);
+    if (imacsize >= 0)
+        macsize = (size_t)imacsize;
+
+    *pprm++ = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_TLS_VERSION,
+                                       &s->version);
+    *pprm++ = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_TLS_MAC_SIZE,
+                                          &macsize);
+    *pprm = OSSL_PARAM_construct_end();
+
+    if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls1_change_cipher_state(SSL *s, int which)
 {
     unsigned char *p, *mac_secret;
@@ -396,38 +435,12 @@ int tls1_change_cipher_state(SSL *s, int which)
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (EVP_CIPHER_provider(c) != NULL) {
-        /*
-         * Provided cipher, the TLS padding/MAC removal is performed provider
-         * side so we need to tell the ctx about our TLS version and mac size
-         */
-        OSSL_PARAM params[3], *pprm = params;
-        size_t macsize = 0;
-        int imacsize = -1;
-
-        if ((EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0
-                   /*
-                    * We look at s->ext.use_etm instead of SSL_READ_ETM() or
-                    * SSL_WRITE_ETM() because this test applies to both reading
-                    * and writing.
-                    */
-                && !s->ext.use_etm)
-            imacsize = EVP_MD_size(m);
-        if (imacsize >= 0)
-            macsize = (size_t)imacsize;
-
-        *pprm++ = OSSL_PARAM_construct_int(OSSL_CIPHER_PARAM_TLS_VERSION,
-                                           &s->version);
-        *pprm++ = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_TLS_MAC_SIZE,
-                                              &macsize);
-        *pprm = OSSL_PARAM_construct_end();
-
-        if (!EVP_CIPHER_CTX_set_params(dd, params)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
-                     ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
+    if (EVP_CIPHER_provider(c) != NULL
+            && !tls_provider_set_tls_params(s, dd, c, m)) {
+        /* SSLfatal already called */
+        goto err;
     }
+
 #ifndef OPENSSL_NO_KTLS
     if (s->compress)
         goto skip_ktls;

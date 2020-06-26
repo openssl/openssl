@@ -897,22 +897,51 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
             /* otherwise, rec->length >= bs */
         }
 
-        /* TODO(size_t): Convert this call */
-        if (EVP_Cipher(ds, rec->data, rec->input, (unsigned int)l) < 1) {
-            /* Shouldn't happen */
-            SSLfatal(s, SSL_AD_BAD_RECORD_MAC, 0, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
+        if (EVP_CIPHER_provider(enc) != NULL) {
+            int outlen;
 
-        if (!sending)
-            return ssl3_cbc_remove_padding_and_mac(&rec->length,
-                                       rec->orig_len,
-                                       rec->data,
-                                       (mac != NULL) ? &mac->mac : NULL,
-                                       (mac != NULL) ? &mac->alloced : NULL,
-                                       bs,
-                                       macsize,
-                                       s->ctx->libctx);
+            if (!EVP_CipherUpdate(ds, rec->data, &outlen, rec->input,
+                                  (unsigned int)l))
+                return 0;
+            rec->length = outlen;
+
+            if (!sending && mac != NULL) {
+                /* Now get a pointer to the MAC */
+                OSSL_PARAM params[2], *p = params;
+
+                /* Get the MAC */
+                mac->alloced = 0;
+
+                *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_CIPHER_PARAM_TLS_MAC,
+                                                      (void **)&mac->mac,
+                                                      macsize);
+                *p = OSSL_PARAM_construct_end();
+
+                if (!EVP_CIPHER_CTX_get_params(ds, params)) {
+                    /* Shouldn't normally happen */
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, 0,
+                             ERR_R_INTERNAL_ERROR);
+                    return 0;
+                }
+            }
+        } else {
+            /* TODO(size_t): Convert this call */
+            if (EVP_Cipher(ds, rec->data, rec->input, (unsigned int)l) < 1) {
+                /* Shouldn't happen */
+                SSLfatal(s, SSL_AD_BAD_RECORD_MAC, 0, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+
+            if (!sending)
+                return ssl3_cbc_remove_padding_and_mac(&rec->length,
+                                           rec->orig_len,
+                                           rec->data,
+                                           (mac != NULL) ? &mac->mac : NULL,
+                                           (mac != NULL) ? &mac->alloced : NULL,
+                                           bs,
+                                           macsize,
+                                           s->ctx->libctx);
+        }
     }
     return 1;
 }
