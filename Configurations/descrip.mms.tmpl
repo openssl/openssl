@@ -454,7 +454,7 @@ test : tests
 
 list-tests :
         @ ! {- output_off() if $disabled{tests}; "" -}
-        @ DEFINE SRCTOP {- sourcedir() -}
+        @ DEFINE SRCTOP "$(SRCDIR)"
         @ $(PERL) {- sourcefile("test", "run_tests.pl") -} list
         @ DEASSIGN SRCTOP
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
