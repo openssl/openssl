@@ -8,8 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OPENSSL_OBJECTSERR_H
-# define OPENSSL_OBJECTSERR_H
+#ifndef OPENSSL_OBJERR_H
+# define OPENSSL_OBJERR_H
 # pragma once
 
 # include <openssl/opensslconf.h>
@@ -41,5 +41,6 @@ int ERR_load_OBJ_strings(void);
  */
 # define OBJ_R_OID_EXISTS                                 102
 # define OBJ_R_UNKNOWN_NID                                101
+# define OBJ_R_UNKNOWN_OBJECT_NAME                        103
 
 #endif
