@@ -334,7 +334,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MAX_TLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->maxtls)) {
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        goto err;
     }
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS);
