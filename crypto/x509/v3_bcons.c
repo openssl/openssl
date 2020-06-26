@@ -14,6 +14,7 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
+#include "x509_local.h"
 
 DEFINE_STACK_OF(CONF_VALUE)
 
@@ -73,9 +74,10 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
         } else if (strcmp(val->name, "pathlen") == 0) {
             if (!X509V3_get_value_int(val, &bcons->pathlen))
                 goto err;
+            /* TODO add sanity check on int value - at least, must be >= 0 */
         } else {
             X509V3err(X509V3_F_V2I_BASIC_CONSTRAINTS, X509V3_R_INVALID_NAME);
-            X509V3_conf_err(val);
+            X509V3_conf_add_error_name_value(val);
             goto err;
         }
     }

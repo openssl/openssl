@@ -19,6 +19,7 @@
 #include "crypto/x509.h"
 #include <openssl/bn.h>
 #include "ext_dat.h"
+#include "x509_local.h"
 
 DEFINE_STACK_OF(CONF_VALUE)
 DEFINE_STACK_OF(GENERAL_NAME)
@@ -271,7 +272,7 @@ int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
  err:
     X509V3err(X509V3_F_X509V3_GET_VALUE_BOOL,
               X509V3_R_INVALID_BOOLEAN_STRING);
-    X509V3_conf_err(value);
+    X509V3_conf_add_error_name_value(value);
     return 0;
 }
 
@@ -280,7 +281,7 @@ int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
     ASN1_INTEGER *itmp;
 
     if ((itmp = s2i_ASN1_INTEGER(NULL, value->value)) == NULL) {
-        X509V3_conf_err(value);
+        X509V3_conf_add_error_name_value(value);
         return 0;
     }
     *aint = itmp;
