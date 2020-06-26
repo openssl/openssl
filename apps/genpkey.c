@@ -189,9 +189,12 @@ int genpkey_main(int argc, char **argv)
         goto end;
     }
 
+    ret = 0;
+
     if (rv <= 0) {
         BIO_puts(bio_err, "Error writing key\n");
         ERR_print_errors(bio_err);
+        ret = 1;
     }
 
     if (text) {
@@ -203,10 +206,9 @@ int genpkey_main(int argc, char **argv)
         if (rv <= 0) {
             BIO_puts(bio_err, "Error printing key\n");
             ERR_print_errors(bio_err);
+            ret = 1;
         }
     }
-
-    ret = 0;
 
  end:
     EVP_PKEY_free(pkey);
