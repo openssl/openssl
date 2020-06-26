@@ -1637,7 +1637,7 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
     if (!TEST_int_eq(SSL_peek(serverssl, &sbuf, sizeof(sbuf)), sizeof(sbuf)))
         goto end;
 
-    if (memcmp(cbuf, sbuf, sizeof(cbuf)))
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))
         goto end;
 
     /*
@@ -1654,19 +1654,19 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
      * After SSL_peek() the plaintext must still be stored in the
      * record.
      */
-    if (memcmp(cbuf, zbuf, sizeof(cbuf)))
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), zbuf, sizeof(cbuf)))
         goto end;
 
     memset(sbuf, 0, sizeof(sbuf));
     if (!TEST_int_eq(SSL_read(serverssl, &sbuf, sizeof(sbuf)), sizeof(sbuf)))
         goto end;
 
-    if (memcmp(cbuf, sbuf, sizeof(cbuf)))
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(cbuf)))
         goto end;
 
     /* Check if rbuf is cleansed */
     memset(cbuf, 0, sizeof(cbuf));
-    if (memcmp(cbuf, zbuf, sizeof(cbuf)))
+    if (!TEST_mem_eq(cbuf, sizeof(cbuf), zbuf, sizeof(cbuf)))
         goto end;
 
     testresult = 1;
