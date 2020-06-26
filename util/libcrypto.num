@@ -4732,13 +4732,10 @@ EVP_PKEY_CTX_get_params                 ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_gettable_params            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_settable_params            ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_CTX_tag_length               ?	3_0_0	EXIST::FUNCTION:
-ERR_get_error_func                      ?	3_0_0	EXIST::FUNCTION:
 ERR_get_error_data                      ?	3_0_0	EXIST::FUNCTION:
 ERR_get_error_all                       ?	3_0_0	EXIST::FUNCTION:
-ERR_peek_error_func                     ?	3_0_0	EXIST::FUNCTION:
 ERR_peek_error_data                     ?	3_0_0	EXIST::FUNCTION:
 ERR_peek_error_all                      ?	3_0_0	EXIST::FUNCTION:
-ERR_peek_last_error_func                ?	3_0_0	EXIST::FUNCTION:
 ERR_peek_last_error_data                ?	3_0_0	EXIST::FUNCTION:
 ERR_peek_last_error_all                 ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_is_a                         ?	3_0_0	EXIST::FUNCTION:

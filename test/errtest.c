@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <ctype.h>
 #include <openssl/opensslconf.h>
 #include <openssl/err.h>
 #include <openssl/macros.h>
@@ -21,39 +22,34 @@
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-# define IS_HEX(ch) ((ch >= '0' && ch <='9') || (ch >= 'A' && ch <='F'))
 
 static int test_print_error_format(void)
 {
-    static const char expected_format[] =
-        ":error::system library:%s:Operation not permitted:"
+    static const char expected[] =
+        ":error::system library::Operation not permitted:"
 # ifndef OPENSSL_NO_FILENAMES
         "errtest.c:30:";
 # else
         ":0:";
 # endif
-    char expected[256];
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
 
-    BIO_snprintf(expected, sizeof(expected), expected_format, OPENSSL_FUNC);
-
+    /* Put an error, and print the stack into the buffer. */
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         return 0;
-
-    ERR_PUT_error(ERR_LIB_SYS, 0, 1, "errtest.c", 30);
+    ERR_PUT_error(ERR_LIB_SYS, 0, EPERM, "errtest.c", 30);
     ERR_print_errors(bio);
-
     if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
         goto err;
+
     /* Skip over the variable thread id at the start of the string */
-    for (p = out; *p != ':' && *p != 0; ++p) {
-        if (!TEST_true(IS_HEX(*p)))
+    for (p = out; *p != '\0' && *p != ':'; ++p) {
+        if (!TEST_true(isxdigit(*p)))
             goto err;
     }
-    if (!TEST_true(*p != 0)
-        || !TEST_strn_eq(expected, p, strlen(expected)))
+    if (!TEST_strn_eq(expected, p, strlen(expected)))
         goto err;
 
     ret = 1;
@@ -125,7 +121,10 @@ int setup_tests(void)
     ADD_TEST(vdata_appends);
     ADD_TEST(raised_error);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-    ADD_TEST(test_print_error_format);
+    if (EPERM < ERR_MAX_REASON) {
+        /* Skip test if errno would be too big to fit. */
+        ADD_TEST(test_print_error_format);
+    }
 #endif
     return 1;
 }

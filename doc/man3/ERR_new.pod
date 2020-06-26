@@ -25,9 +25,8 @@ ERR_new() allocates a new slot in the thread's error queue.
 
 ERR_set_debug() sets the debug information related to the current
 error in the thread's error queue.
-The values that can be given are the filename I<file>, line in the
-file I<line> and the name of the function I<func> where the error
-occurred.
+The values that can be given are the filename I<file> and line in the
+file I<line>; the I<func> parameter is ignored.
 The names must be constant, this function will only save away the
 pointers, not copy the strings.
 
@@ -43,7 +42,7 @@ argument instead of a variable number of arguments.
 
 =head1 RETURN VALUES
 
-ERR_new, ERR_set_debug, ERR_set_error and ERR_vset_error
+ERR_new(), ERR_set_debug(), ERR_set_error() and ERR_vset_error()
 do not return any values.
 
 =head1 NOTES

@@ -46,6 +46,10 @@ library number.
 
 L<ERR_load_strings(3)>
 
+=head1 HISTORY
+
+Starting with OpenSSL 3.0, the B<func> argument is ignored.
+
 =head1 COPYRIGHT
 
 Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.

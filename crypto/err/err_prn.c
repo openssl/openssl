@@ -51,7 +51,7 @@ static void put_error(int lib, const char *func, int reason,
                       const char *file, int line)
 {
     ERR_new();
-    ERR_set_debug(file, line, func);
+    ERR_set_debug(file, line, NULL);
     ERR_set_error(lib, reason, NULL /* no data here, so fmt is NULL */);
 }
 

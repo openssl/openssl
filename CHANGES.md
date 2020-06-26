@@ -641,8 +641,7 @@ OpenSSL 3.0
  * Added ERR functionality to give callers access to the stored function
    names that have replaced the older function code based functions.
 
-   New functions are ERR_get_error_func(), ERR_peek_error_func(),
-   ERR_peek_last_error_func(), ERR_get_error_data(), ERR_peek_error_data(),
+   New functions are ERR_get_error_data(), ERR_peek_error_data(),
    ERR_peek_last_error_data(), ERR_get_error_all(), ERR_peek_error_all()
    and ERR_peek_last_error_all().
 
@@ -651,6 +650,11 @@ OpenSSL 3.0
    ERR_func_error_string().
 
    *Richard Levitte*
+
+ * ERR state no longer includes the function name, and is documented
+   as such.
+
+   *Rich Salz*
 
  * Extended testing to be verbose for failing tests only.  The make variables
    VERBOSE_FAILURE or VF can be used to enable this:

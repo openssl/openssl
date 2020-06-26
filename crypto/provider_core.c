@@ -1001,7 +1001,7 @@ static void core_new_error(const OSSL_CORE_HANDLE *handle)
 static void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
                                  const char *file, int line, const char *func)
 {
-    ERR_set_debug(file, line, func);
+    ERR_set_debug(file, line, NULL);
 }
 
 static void core_vset_error(const OSSL_CORE_HANDLE *handle,

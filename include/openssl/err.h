@@ -163,12 +163,25 @@ struct err_state_st {
 #  define X509err(f, r) ERR_raise_data(ERR_LIB_X509, (r), NULL)
 # endif
 
+/*
+ * Error codes are packed into a single 32-bit number, and have three parts,
+ * library (L), function (F, not used as of 3.0), and reason (R). It is
+ * split as follows:
+ *      LL FFF RRR
+ * The top two bits of LL are zero and fatal-error-flag.
+ * This is part of the ABI, and therefore an implied part of the API.
+ * Since the function is not used, a future release might re-partition the code.
+ */
+# define ERR_MAX_LIB             0x3F
+# define ERR_MAX_FUNC            0
+# define ERR_MAX_REASON          0xFFF
+# define ERR_R_FATAL             0x40
+
 # define ERR_PACK(l,f,r) ( \
         (((unsigned int)(l) & 0x0FF) << 24L) | \
-        (((unsigned int)(f) & 0xFFF) << 12L) | \
         (((unsigned int)(r) & 0xFFF)       ) )
 # define ERR_GET_LIB(l)          (int)(((l) >> 24L) & 0x0FFL)
-# define ERR_GET_FUNC(l)         (int)(((l) >> 12L) & 0xFFFL)
+# define ERR_GET_FUNC(l)         0
 # define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
 # define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
 
@@ -225,7 +238,6 @@ struct err_state_st {
 # define ERR_R_MISSING_ASN1_EOS                  63
 
 /* fatal error */
-# define ERR_R_FATAL                             64
 # define ERR_R_MALLOC_FAILURE                    (1|ERR_R_FATAL)
 # define ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED       (2|ERR_R_FATAL)
 # define ERR_R_PASSED_NULL_PARAMETER             (3|ERR_R_FATAL)
@@ -284,7 +296,6 @@ unsigned long ERR_get_error(void);
  * additional data.
  */
 unsigned long ERR_get_error_line(const char **file, int *line);
-unsigned long ERR_get_error_func(const char **func);
 unsigned long ERR_get_error_data(const char **data, int *flags);
 unsigned long ERR_get_error_all(const char **file, int *line,
                                 const char **func,
@@ -295,7 +306,6 @@ DEPRECATEDIN_3_0(unsigned long ERR_get_error_line_data(const char **file,
                                                      int *flags))
 unsigned long ERR_peek_error(void);
 unsigned long ERR_peek_error_line(const char **file, int *line);
-unsigned long ERR_peek_error_func(const char **func);
 unsigned long ERR_peek_error_data(const char **data, int *flags);
 unsigned long ERR_peek_error_all(const char **file, int *line,
                                  const char **func,
@@ -306,7 +316,6 @@ DEPRECATEDIN_3_0(unsigned long ERR_peek_error_line_data(const char **file,
                                                       int *flags))
 unsigned long ERR_peek_last_error(void);
 unsigned long ERR_peek_last_error_line(const char **file, int *line);
-unsigned long ERR_peek_last_error_func(const char **func);
 unsigned long ERR_peek_last_error_data(const char **data, int *flags);
 unsigned long ERR_peek_last_error_all(const char **file, int *line,
                                       const char **func,

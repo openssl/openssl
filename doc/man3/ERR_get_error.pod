@@ -4,7 +4,6 @@
 
 ERR_get_error, ERR_peek_error, ERR_peek_last_error,
 ERR_get_error_line, ERR_peek_error_line, ERR_peek_last_error_line,
-ERR_get_error_func, ERR_peek_error_func, ERR_peek_last_error_func,
 ERR_get_error_data, ERR_peek_error_data, ERR_peek_last_error_data,
 ERR_get_error_all, ERR_peek_error_all, ERR_peek_last_error_all,
 ERR_get_error_line_data, ERR_peek_error_line_data, ERR_peek_last_error_line_data
@@ -21,10 +20,6 @@ ERR_get_error_line_data, ERR_peek_error_line_data, ERR_peek_last_error_line_data
  unsigned long ERR_get_error_line(const char **file, int *line);
  unsigned long ERR_peek_error_line(const char **file, int *line);
  unsigned long ERR_peek_last_error_line(const char **file, int *line);
-
- unsigned long ERR_get_error_func(const char **func);
- unsigned long ERR_peek_error_func(const char **func);
- unsigned long ERR_peek_last_error_func(const char **func);
 
  unsigned long ERR_get_error_data(const char **data, int *flags);
  unsigned long ERR_peek_error_data(const char **data, int *flags);
@@ -76,13 +71,6 @@ An unset line number is indicated as B<0>.
 A pointer returned this way by these functions and the ones below
 is valid until the respective entry is removed from the error queue.
 
-ERR_get_error_func(), ERR_peek_error_func() and
-ERR_peek_last_error_func() are the same as ERR_get_error(),
-ERR_peek_error() and ERR_peek_last_error(), but on success they
-additionally store the name of the function where the error occurred
-in *B<func>, unless it is B<NULL>.
-An unset function name is indicated as B<"">.
-
 ERR_get_error_data(), ERR_peek_error_data() and
 ERR_peek_last_error_data() are the same as ERR_get_error(),
 ERR_peek_error() and ERR_peek_last_error(), but on success they
@@ -115,7 +103,6 @@ L<ERR_GET_LIB(3)>
 
 =head1 HISTORY
 
-ERR_get_error_func(), ERR_peek_error_func(), ERR_peek_last_error_func(),
 ERR_get_error_data(), ERR_peek_error_data(), ERR_peek_last_error_data(),
 ERR_get_error_all(), ERR_peek_error_all() and ERR_peek_last_error_all()
 were added in OpenSSL 3.0.

@@ -35,7 +35,7 @@ void ERR_set_debug(const char *file, int line, const char *func)
     if (es == NULL)
         return;
 
-    err_set_debug(es, es->top, file, line, func);
+    err_set_debug(es, es->top, file, line);
 }
 
 void ERR_set_error(int lib, int reason, const char *fmt, ...)

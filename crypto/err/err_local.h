@@ -42,12 +42,10 @@ static ossl_inline void err_set_error(ERR_STATE *es, size_t i,
 }
 
 static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
-                                      const char *file, int line,
-                                      const char *fn)
+                                      const char *file, int line)
 {
     es->err_file[i] = file;
     es->err_line[i] = line;
-    es->err_func[i] = fn;
 }
 
 static ossl_inline void err_set_data(ERR_STATE *es, size_t i,

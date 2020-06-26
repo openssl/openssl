@@ -142,8 +142,7 @@ typedef enum ERR_GET_ACTION_e {
 
 static unsigned long get_error_values(ERR_GET_ACTION g,
                                       const char **file, int *line,
-                                      const char **func, const char **data,
-                                      int *flags);
+                                      const char **data, int *flags);
 
 static unsigned long err_string_data_hash(const ERR_STRING_DATA *a)
 {
@@ -174,11 +173,10 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
-/* 2019-05-21: Russian and Ukrainian locales on Linux require more than 6,5 kB */
+/* Russian and Ukrainian locales on Linux require more than 6,5 kB */
 # define SPACE_SYS_STR_REASONS 8 * 1024
 # define NUM_SYS_STR_REASONS 127
 
-static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 /*
  * SYS_str_reasons is filled with copies of strerror() results at
  * initialization. 'errno' values up to 127 should cover all usual errors,
@@ -191,11 +189,12 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 
 static void build_SYS_str_reasons(void)
 {
+    static int init = 1;
     /* OPENSSL_malloc cannot be used here, use static storage instead */
     static char strerror_pool[SPACE_SYS_STR_REASONS];
+    static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
     char *cur = strerror_pool;
     size_t cnt = 0;
-    static int init = 1;
     int i;
     int saveerrno = get_last_sys_error();
 
@@ -302,7 +301,7 @@ static void err_patch(int lib, ERR_STRING_DATA *str)
 }
 
 /*
- * Hash in |str| error strings. Assumes the URN_ONCE was done.
+ * Hash in |str| error strings. Assumes the RUN_ONCE was done.
  */
 static int err_load_strings(const ERR_STRING_DATA *str)
 {
@@ -387,112 +386,102 @@ void ERR_clear_error(void)
 
 unsigned long ERR_get_error(void)
 {
-    return get_error_values(EV_POP, NULL, NULL, NULL, NULL, NULL);
+    return get_error_values(EV_POP, NULL, NULL, NULL, NULL);
 }
 
 unsigned long ERR_get_error_line(const char **file, int *line)
 {
-    return get_error_values(EV_POP, file, line, NULL, NULL, NULL);
-}
-
-unsigned long ERR_get_error_func(const char **func)
-{
-    return get_error_values(EV_POP, NULL, NULL, func, NULL, NULL);
+    return get_error_values(EV_POP, file, line, NULL, NULL);
 }
 
 unsigned long ERR_get_error_data(const char **data, int *flags)
 {
-    return get_error_values(EV_POP, NULL, NULL, NULL, data, flags);
+    return get_error_values(EV_POP, NULL, NULL, data, flags);
 }
 
 unsigned long ERR_get_error_all(const char **file, int *line,
                                 const char **func,
                                 const char **data, int *flags)
 {
-    return get_error_values(EV_POP, file, line, func, data, flags);
+    if (func != NULL)
+        *func = "";
+    return get_error_values(EV_POP, file, line, data, flags);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 unsigned long ERR_get_error_line_data(const char **file, int *line,
                                       const char **data, int *flags)
 {
-    return get_error_values(EV_POP, file, line, NULL, data, flags);
+    return get_error_values(EV_POP, file, line, data, flags);
 }
 #endif
 
 unsigned long ERR_peek_error(void)
 {
-    return get_error_values(EV_PEEK, NULL, NULL, NULL, NULL, NULL);
+    return get_error_values(EV_PEEK, NULL, NULL, NULL, NULL);
 }
 
 unsigned long ERR_peek_error_line(const char **file, int *line)
 {
-    return get_error_values(EV_PEEK, file, line, NULL, NULL, NULL);
-}
-
-unsigned long ERR_peek_error_func(const char **func)
-{
-    return get_error_values(EV_PEEK, NULL, NULL, func, NULL, NULL);
+    return get_error_values(EV_PEEK, file, line, NULL, NULL);
 }
 
 unsigned long ERR_peek_error_data(const char **data, int *flags)
 {
-    return get_error_values(EV_PEEK, NULL, NULL, NULL, data, flags);
+    return get_error_values(EV_PEEK, NULL, NULL, data, flags);
 }
 
 unsigned long ERR_peek_error_all(const char **file, int *line,
                                  const char **func,
                                  const char **data, int *flags)
 {
-    return get_error_values(EV_PEEK, file, line, func, data, flags);
+    if (func != NULL)
+        *func = "";
+    return get_error_values(EV_PEEK, file, line, data, flags);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 unsigned long ERR_peek_error_line_data(const char **file, int *line,
                                        const char **data, int *flags)
 {
-    return get_error_values(EV_PEEK, file, line, NULL, data, flags);
+    return get_error_values(EV_PEEK, file, line, data, flags);
 }
 #endif
 
 unsigned long ERR_peek_last_error(void)
 {
-    return get_error_values(EV_PEEK_LAST, NULL, NULL, NULL, NULL, NULL);
+    return get_error_values(EV_PEEK_LAST, NULL, NULL, NULL, NULL);
 }
 
 unsigned long ERR_peek_last_error_line(const char **file, int *line)
 {
-    return get_error_values(EV_PEEK_LAST, file, line, NULL, NULL, NULL);
-}
-
-unsigned long ERR_peek_last_error_func(const char **func)
-{
-    return get_error_values(EV_PEEK_LAST, NULL, NULL, func, NULL, NULL);
+    return get_error_values(EV_PEEK_LAST, file, line, NULL, NULL);
 }
 
 unsigned long ERR_peek_last_error_data(const char **data, int *flags)
 {
-    return get_error_values(EV_PEEK_LAST, NULL, NULL, NULL, data, flags);
+    return get_error_values(EV_PEEK_LAST, NULL, NULL, data, flags);
 }
 
 unsigned long ERR_peek_last_error_all(const char **file, int *line,
                                       const char **func,
                                       const char **data, int *flags)
 {
-    return get_error_values(EV_PEEK_LAST, file, line, func, data, flags);
+    if (func != NULL)
+        *func = "";
+    return get_error_values(EV_PEEK_LAST, file, line, data, flags);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 unsigned long ERR_peek_last_error_line_data(const char **file, int *line,
                                             const char **data, int *flags)
 {
-    return get_error_values(EV_PEEK_LAST, file, line, NULL, data, flags);
+    return get_error_values(EV_PEEK_LAST, file, line, data, flags);
 }
 #endif
 
 static unsigned long get_error_values(ERR_GET_ACTION g,
                                       const char **file, int *line,
-                                      const char **func,
                                       const char **data, int *flags)
 {
     int i = 0;
@@ -545,11 +534,6 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
     }
     if (line != NULL)
         *line = es->err_line[i];
-    if (func != NULL) {
-        *func = es->err_func[i];
-        if (*func == NULL)
-            *func = "";
-    }
     if (flags != NULL)
         *flags = es->err_data_flags[i];
     if (data == NULL) {
