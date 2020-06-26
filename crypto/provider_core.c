@@ -831,7 +831,7 @@ int ossl_provider_get_capabilities(const OSSL_PROVIDER *prov,
                                    void *arg)
 {
     return prov->get_capabilities == NULL
-        ? 0 : prov->get_capabilities(prov->provctx, capability, cb, arg);
+        ? 1 : prov->get_capabilities(prov->provctx, capability, cb, arg);
 }
 
 
