@@ -43,6 +43,7 @@ struct async_job_st {
     int ret;
     int status;
     ASYNC_WAIT_CTX *waitctx;
+    OPENSSL_CTX *libctx;
 };
 
 struct fd_lookup_st {

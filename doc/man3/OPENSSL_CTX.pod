@@ -43,6 +43,14 @@ I<ctx> in the current thread.  The previous default library context is
 returned.  Care should be taken by the caller to restore the previous
 default library context with a subsequent call of this function.
 
+Care should be taken when changing the default library context and starting
+async jobs (see L<ASYNC_start_job(3)>), as the default library context when
+the job is started will be used throughout the lifetime of an async job, no
+matter how the calling thread makes further default library context changes
+in the mean time.  This means that the calling thread must not free the
+library context that was the default at the start of the async job before
+that job has finished.
+
 =head1 RETURN VALUES
 
 OPENSSL_CTX_new() and OPENSSL_CTX_set0_default() return a library context
