@@ -2804,6 +2804,9 @@ const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
 int ssl_evp_md_up_ref(const EVP_MD *md);
 void ssl_evp_md_free(const EVP_MD *md);
 
+int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
+                                const EVP_CIPHER *ciph,
+                                const EVP_MD *md);
 
 # else /* OPENSSL_UNIT_TEST */
 
