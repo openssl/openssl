@@ -2109,7 +2109,6 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
     if (opt_proxy != NULL)
         (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", opt_proxy);
-    CMP_info2("will contact %s%s", server_buf, proxy_buf);
 
     if (!transform_opts())
         goto err;
@@ -2230,6 +2229,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 
     if (opt_geninfo != NULL && !handle_opt_geninfo(ctx))
         goto err;
+
+    /* not printing earlier, to minimize confusion in case setup fails before */
+    CMP_info2("will contact %s%s", server_buf, proxy_buf);
 
     ret = 1;
 
