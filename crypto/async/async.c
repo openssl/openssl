@@ -252,7 +252,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
 
         ctx->currjob->func = func;
         ctx->currjob->waitctx = wctx;
-        libctx = get_default_context();
+        libctx = openssl_ctx_get_concrete(NULL);
         if (!async_fibre_swapcontext(&ctx->dispatcher,
                 &ctx->currjob->fibrectx, 1)) {
             ASYNCerr(ASYNC_F_ASYNC_START_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
