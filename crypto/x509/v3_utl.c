@@ -323,7 +323,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 ntmp = strip_spaces(q);
                 if (!ntmp) {
                     X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                              X509V3_R_INVALID_NULL_NAME);
+                              X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 q = p + 1;
@@ -333,7 +333,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 q = p + 1;
                 if (!ntmp) {
                     X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                              X509V3_R_INVALID_NULL_NAME);
+                              X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 X509V3_add_value(ntmp, NULL, &values);
@@ -369,7 +369,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
     } else {
         ntmp = strip_spaces(q);
         if (!ntmp) {
-            X509V3err(X509V3_F_X509V3_PARSE_LIST, X509V3_R_INVALID_NULL_NAME);
+            X509V3err(X509V3_F_X509V3_PARSE_LIST, X509V3_R_INVALID_EMPTY_NAME);
             goto err;
         }
         X509V3_add_value(ntmp, NULL, &values);
