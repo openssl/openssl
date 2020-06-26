@@ -74,6 +74,8 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     while ((item = pqueue_pop(d->processed_rcds.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
+        if (rl->s->options & SSL_OP_CLEANSE_PLAINTEXT)
+            OPENSSL_cleanse(rdata->rbuf.buf, rdata->rbuf.len);
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
@@ -81,6 +83,8 @@ void DTLS_RECORD_LAYER_clear(RECORD_LAYER *rl)
 
     while ((item = pqueue_pop(d->buffered_app_data.q)) != NULL) {
         rdata = (DTLS1_RECORD_DATA *)item->data;
+        if (rl->s->options & SSL_OP_CLEANSE_PLAINTEXT)
+            OPENSSL_cleanse(rdata->rbuf.buf, rdata->rbuf.len);
         OPENSSL_free(rdata->rbuf.buf);
         OPENSSL_free(item->data);
         pitem_free(item);
@@ -120,18 +124,14 @@ void DTLS_RECORD_LAYER_set_write_sequence(RECORD_LAYER *rl, unsigned char *seq)
 static int dtls1_copy_record(SSL *s, pitem *item)
 {
     DTLS1_RECORD_DATA *rdata;
-    SSL3_BUFFER *rbuf;
 
     rdata = (DTLS1_RECORD_DATA *)item->data;
-    rbuf = &s->rlayer.rbuf;
 
-    if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
-        OPENSSL_cleanse(rbuf->buf, rbuf->len);
-    SSL3_BUFFER_release(rbuf);
+    SSL3_BUFFER_release(&s->rlayer.rbuf);
 
     s->rlayer.packet = rdata->packet;
     s->rlayer.packet_length = rdata->packet_length;
-    memcpy(rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
+    memcpy(&s->rlayer.rbuf, &(rdata->rbuf), sizeof(SSL3_BUFFER));
     memcpy(&s->rlayer.rrec, &(rdata->rrec), sizeof(SSL3_RECORD));
 
     /* Set proper sequence number for mac calculation */
