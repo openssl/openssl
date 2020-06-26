@@ -267,7 +267,7 @@ end:
 
 int fipsinstall_main(int argc, char **argv)
 {
-    int ret = 1, verify = 0, gotkey = 0;
+    int ret = 1, verify = 0, gotkey = 0, gotdigest = 0;
     BIO *module_bio = NULL, *mem_bio = NULL, *fout = NULL;
     char *in_fname = NULL, *out_fname = NULL, *prog, *section_name = NULL;
     char *prov_name = NULL, *module_fname = NULL;
@@ -334,6 +334,8 @@ opthelp:
                 goto opthelp;
             if (strncmp(opt_arg(), "hexkey:", 7) == 0)
                 gotkey = 1;
+            else if (strncmp(opt_arg(), "digest:", 7) == 0)
+                gotdigest = 1;
             break;
         case OPT_VERIFY:
             verify = 1;
@@ -352,7 +354,9 @@ opthelp:
             || self_test_corrupt_type != NULL)
         OSSL_SELF_TEST_set_callback(NULL, self_test_events, NULL);
 
-    /* Use the default FIPS HMAC key if not specified. */
+    /* Use the default FIPS HMAC digest and key if not specified. */
+    if (!gotdigest && !sk_OPENSSL_STRING_push(opts, "digest:SHA256"))
+        goto end;
     if (!gotkey && !sk_OPENSSL_STRING_push(opts, "hexkey:" FIPS_KEY_STRING))
         goto end;
 

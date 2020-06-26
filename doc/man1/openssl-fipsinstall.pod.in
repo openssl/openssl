@@ -94,7 +94,7 @@ C<openssl list -mac-algorithms>.  The default is B<HMAC>.
 Passes options to the MAC algorithm.
 A comprehensive list of controls can be found in the EVP_MAC implementation
 documentation.
-Common control strings used for fipsinstall are:
+Common control strings used for this command are:
 
 =over 4
 
@@ -104,12 +104,16 @@ Specifies the MAC key as an alphanumeric string (use if the key contains
 printable characters only).
 The string length must conform to any restrictions of the MAC algorithm.
 A key must be specified for every MAC algorithm.
+If no key is provided, the default that was specified when OpenSSL was
+configured is used.
 
 =item B<hexkey>:I<string>
 
 Specifies the MAC key in hexadecimal form (two hex digits per byte).
 The key length must conform to any restrictions of the MAC algorithm.
 A key must be specified for every MAC algorithm.
+If no key is provided, the default that was specified when OpenSSL was
+configured is used.
 
 =item B<digest>:I<string>
 
@@ -118,6 +122,7 @@ characters only).
 The string length must conform to any restrictions of the MAC algorithm.
 To see the list of supported digests, use the command
 C<openssl list -digest-commands>.
+The default digest is SHA-256.
 
 =back
 
