@@ -76,7 +76,7 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                 goto err;
         } else {
             X509V3err(X509V3_F_V2I_POLICY_CONSTRAINTS, X509V3_R_INVALID_NAME);
-            X509V3_conf_err(val);
+            ERR_add_error_data(1, val->name);
             goto err;
         }
     }

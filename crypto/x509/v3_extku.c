@@ -97,7 +97,7 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
             sk_ASN1_OBJECT_pop_free(extku, ASN1_OBJECT_free);
             X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
-            X509V3_conf_err(val);
+            ERR_add_error_data(1, extval);
             return NULL;
         }
         sk_ASN1_OBJECT_push(extku, objtmp);  /* no failure as it was reserved */
