@@ -39,6 +39,10 @@ OpenSSL 3.0
    apart from the functions directly related to `OPENSSL_CTX`, accept
    NULL to indicate that the default library context should be used.
 
+   Library code that changes the default library context using
+   `OPENSSL_CTX_set0_default` should take care to restore it with a
+   second call before returning to the caller.
+
    *Richard Levitte*
 
  * Handshake now fails if Extended Master Secret extension is dropped
