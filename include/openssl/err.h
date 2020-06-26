@@ -168,13 +168,14 @@ struct err_state_st {
  * library (L), function (F, not used as of 3.0), and reason (R). It is
  * split as follows:
  *      LL FFF RRR
- * The top two bits of LL are zero and fatal-error-flag.
- * This is part of the ABI, and therefore an implied part of the API.
- * Since the function is not used, a future release might re-partition the code.
+ * This is an implied part of the API. Since the function sub-part is not
+ * used, a future release might re-partition the code.  The first two bigs
+ * of the first nibble of RRR are reserved for ERR_R_FATAL and another
+ * flag that is currently zero.
  */
-# define ERR_MAX_LIB             0x3F
+# define ERR_MAX_LIB             0xFF
 # define ERR_MAX_FUNC            0
-# define ERR_MAX_REASON          0xFFF
+# define ERR_MAX_REASON          0x3FF
 # define ERR_R_FATAL             0x40
 
 # define ERR_PACK(l,f,r) ( \
