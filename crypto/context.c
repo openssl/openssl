@@ -138,7 +138,7 @@ static OPENSSL_CTX *get_thread_default_context(void)
     return CRYPTO_THREAD_get_local(&default_context_thread_local);
 }
 
-static OPENSSL_CTX *get_default_context(void)
+OPENSSL_CTX *get_default_context(void)
 {
     OPENSSL_CTX *current_defctx = get_thread_default_context();
 
