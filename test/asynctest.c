@@ -390,7 +390,8 @@ static int test_ASYNC_start_job_with_libctx(void)
     }
 
     if (ASYNC_start_job(&job, waitctx, &funcret, change_deflt_libctx, NULL, 0)
-               != ASYNC_FINISH) {
+               != ASYNC_FINISH
+                || funcret != 1) {
         fprintf(stderr,
                 "test_ASYNC_start_job_with_libctx() - finishing job failed\n");
         goto err;
