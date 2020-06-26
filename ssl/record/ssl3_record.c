@@ -869,13 +869,19 @@ int ssl3_enc(SSL *s, SSL3_RECORD *inrecs, size_t n_recs, int sending,
         memmove(rec->data, rec->input, rec->length);
         rec->input = rec->data;
     } else {
+        int provided = (EVP_CIPHER_provider(enc) != NULL);
+
         l = rec->length;
         /* TODO(size_t): Convert this call */
         bs = EVP_CIPHER_CTX_block_size(ds);
 
         /* COMPRESS */
 
-        if ((bs != 1) && sending) {
+        if ((bs != 1) && sending && !provided) {
+            /*
+             * We only do this for legacy ciphers. Provided ciphers add the
+             * padding on the provider side.
+             */
             i = bs - (l % bs);
 
             /* we need to add 'i-1' padding bytes */
@@ -1038,6 +1044,8 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             recs[ctr].input = recs[ctr].data;
         }
     } else {
+        int provided = (EVP_CIPHER_provider(enc) != NULL);
+
         bs = EVP_CIPHER_block_size(EVP_CIPHER_CTX_cipher(ds));
 
         if (n_recs > 1) {
@@ -1097,7 +1105,11 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
                     recs[ctr].length += pad;
                 }
 
-            } else if ((bs != 1) && sending) {
+            } else if ((bs != 1) && sending && !provided) {
+                /*
+                 * We only do this for legacy ciphers. Provided ciphers add the
+                 * padding on the provider side.
+                 */
                 padnum = bs - (reclen[ctr] % bs);
 
                 /* Add weird padding of up to 256 bytes */
@@ -1170,7 +1182,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
             }
         }
 
-        if (EVP_CIPHER_provider(enc) != NULL) {
+        if (provided) {
             int outlen;
 
             /* Provided cipher - we do not support pipelining on this path */

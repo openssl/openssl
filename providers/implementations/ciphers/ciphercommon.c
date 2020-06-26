@@ -11,6 +11,8 @@
  * Generic dispatch table functions for ciphers.
  */
 
+/* For SSL3_VERSION */
+#include <openssl/ssl.h>
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommonerr.h"
@@ -181,6 +183,8 @@ int cipher_generic_dinit(void *vctx, const unsigned char *key, size_t keylen,
                                         iv, ivlen, 0);
 }
 
+#define MAX_PADDING 256
+
 int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
                                 size_t outsize, const unsigned char *in,
                                 size_t inl)
@@ -197,14 +201,49 @@ int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
          */
 
         /* Sanity check inputs */
-        if (in == 0
-                || (inl % blksz) != 0
+        if (in == NULL
                 || in != out
                 || outsize < inl
                 || !ctx->pad) {
             ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
             return 0;
         }
+
+        if (ctx->enc) {
+            unsigned char padval;
+            size_t padnum, loop;
+
+            /* Add padding */
+
+            padnum = blksz - (inl % blksz);
+
+            if (outsize < inl + padnum) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+                return 0;
+            }
+
+            if (padnum > MAX_PADDING) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+                return 0;
+            }
+            padval = (unsigned char)(padnum - 1);
+            if (ctx->tlsversion == SSL3_VERSION) {
+                if (padnum > 1)
+                    memset(out + inl, 0, padnum - 1);
+                *(out + inl + padnum - 1) = padval;
+            } else {
+                /* we need to add 'padnum' padding bytes of value padval */
+                for (loop = inl; loop < inl + padnum; loop++)
+                    out[loop] = padval;
+            }
+            inl += padnum;
+        }
+
+        if ((inl % blksz) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+            return 0;
+        }
+
 
         /* Shouldn't normally fail */
         if (!ctx->hw->cipher(ctx, out, in, inl)) {
