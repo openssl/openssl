@@ -107,9 +107,12 @@ int ERR_load_X509_strings(void);
 # define X509_R_CERT_ALREADY_IN_HASH_TABLE                101
 # define X509_R_CRL_ALREADY_DELTA                         127
 # define X509_R_CRL_VERIFY_FAILURE                        131
+# define X509_R_ERROR_GETTING_MD_BY_NID                   141
+# define X509_R_ERROR_USING_SIGINF_SET                    142
 # define X509_R_IDP_MISMATCH                              128
 # define X509_R_INVALID_ATTRIBUTES                        138
 # define X509_R_INVALID_DIRECTORY                         113
+# define X509_R_INVALID_DISTPOINT                         143
 # define X509_R_INVALID_FIELD_NAME                        119
 # define X509_R_INVALID_TRUST                             123
 # define X509_R_ISSUER_MISMATCH                           129
@@ -133,6 +136,7 @@ int ERR_load_X509_strings(void);
 # define X509_R_UNKNOWN_KEY_TYPE                          117
 # define X509_R_UNKNOWN_NID                               109
 # define X509_R_UNKNOWN_PURPOSE_ID                        121
+# define X509_R_UNKNOWN_SIGID_ALGS                        144
 # define X509_R_UNKNOWN_TRUST_ID                          120
 # define X509_R_UNSUPPORTED_ALGORITHM                     111
 # define X509_R_WRONG_LOOKUP_TYPE                         112
