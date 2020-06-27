@@ -370,7 +370,11 @@ static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
 #define ns_reject(x, usage) \
         (((x)->ex_flags & EXFLAG_NSCERT) && !((x)->ex_nscert & (usage)))
 
-/* this caches also further information, e.g., if the cert is self-issued */
+/*
+ * Cache info on various X.509v3 extensions and further derived information,
+ * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
+ * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
+ */
 int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
 {
     BASIC_CONSTRAINTS *bs;
@@ -389,24 +393,28 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
 #endif
 
     CRYPTO_THREAD_write_lock(x->lock);
-    if (x->ex_flags & EXFLAG_SET) {
+    if (x->ex_flags & EXFLAG_SET) { /* cert has already been processed */
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
 
+    /* Cache the SHA1 digest of the cert */
     sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
-    if (sha1 == NULL || !X509_digest(x, sha1, x->sha1_hash, NULL))
+    if (sha1 != NULL) {
+        if (!X509_digest(x, sha1, x->sha1_hash, NULL))
             x->ex_flags |= EXFLAG_INVALID;
-    EVP_MD_free(sha1);
+        EVP_MD_free(sha1);
+    }
 
     /* V1 should mean no extensions ... */
-    if (!X509_get_version(x))
+    if (X509_get_version(x) == 0)
         x->ex_flags |= EXFLAG_V1;
+
     /* Handle basic constraints */
-    if ((bs = X509_get_ext_d2i(x, NID_basic_constraints, &i, NULL))) {
+    if ((bs = X509_get_ext_d2i(x, NID_basic_constraints, &i, NULL)) != NULL) {
         if (bs->ca)
             x->ex_flags |= EXFLAG_CA;
-        if (bs->pathlen) {
+        if (bs->pathlen != NULL) {
             if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
                 x->ex_flags |= EXFLAG_INVALID;
                 x->ex_pathlen = 0;
@@ -417,15 +425,17 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
                     x->ex_pathlen = 0;
                 }
             }
-        } else
+        } else {
             x->ex_pathlen = -1;
+        }
         BASIC_CONSTRAINTS_free(bs);
         x->ex_flags |= EXFLAG_BCONS;
     } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
+
     /* Handle proxy certificates */
-    if ((pci = X509_get_ext_d2i(x, NID_proxyCertInfo, &i, NULL))) {
+    if ((pci = X509_get_ext_d2i(x, NID_proxyCertInfo, &i, NULL)) != NULL) {
         if (x->ex_flags & EXFLAG_CA
             || X509_get_ext_by_NID(x, NID_subject_alt_name, -1) >= 0
             || X509_get_ext_by_NID(x, NID_issuer_alt_name, -1) >= 0) {
@@ -440,59 +450,54 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
     } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
-    /* Handle key usage */
-    if ((usage = X509_get_ext_d2i(x, NID_key_usage, &i, NULL))) {
+
+    /* Handle (basic and extended) key usage */
+    if ((usage = X509_get_ext_d2i(x, NID_key_usage, &i, NULL)) != NULL) {
+        x->ex_kusage = 0;
         if (usage->length > 0) {
             x->ex_kusage = usage->data[0];
             if (usage->length > 1)
                 x->ex_kusage |= usage->data[1] << 8;
-        } else
-            x->ex_kusage = 0;
+        }
         x->ex_flags |= EXFLAG_KUSAGE;
         ASN1_BIT_STRING_free(usage);
     } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
     x->ex_xkusage = 0;
-    if ((extusage = X509_get_ext_d2i(x, NID_ext_key_usage, &i, NULL))) {
+    if ((extusage = X509_get_ext_d2i(x, NID_ext_key_usage, &i, NULL)) != NULL) {
         x->ex_flags |= EXFLAG_XKUSAGE;
         for (i = 0; i < sk_ASN1_OBJECT_num(extusage); i++) {
             switch (OBJ_obj2nid(sk_ASN1_OBJECT_value(extusage, i))) {
             case NID_server_auth:
                 x->ex_xkusage |= XKU_SSL_SERVER;
                 break;
-
             case NID_client_auth:
                 x->ex_xkusage |= XKU_SSL_CLIENT;
                 break;
-
             case NID_email_protect:
                 x->ex_xkusage |= XKU_SMIME;
                 break;
-
             case NID_code_sign:
                 x->ex_xkusage |= XKU_CODE_SIGN;
                 break;
-
             case NID_ms_sgc:
             case NID_ns_sgc:
                 x->ex_xkusage |= XKU_SGC;
                 break;
-
             case NID_OCSP_sign:
                 x->ex_xkusage |= XKU_OCSP_SIGN;
                 break;
-
             case NID_time_stamp:
                 x->ex_xkusage |= XKU_TIMESTAMP;
                 break;
-
             case NID_dvcs:
                 x->ex_xkusage |= XKU_DVCS;
                 break;
-
             case NID_anyExtendedKeyUsage:
                 x->ex_xkusage |= XKU_ANYEKU;
+                break;
+            default:
                 break;
             }
         }
@@ -501,7 +506,8 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
         x->ex_flags |= EXFLAG_INVALID;
     }
 
-    if ((ns = X509_get_ext_d2i(x, NID_netscape_cert_type, &i, NULL))) {
+    /* Handle legacy Netscape extension */
+    if ((ns = X509_get_ext_d2i(x, NID_netscape_cert_type, &i, NULL)) != NULL) {
         if (ns->length > 0)
             x->ex_nscert = ns->data[0];
         else
@@ -511,20 +517,25 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
     } else if (i != -1) {
         x->ex_flags |= EXFLAG_INVALID;
     }
+
+    /* Handle subject key identifier and issuer/authority key identifier */
     x->skid = X509_get_ext_d2i(x, NID_subject_key_identifier, &i, NULL);
     if (x->skid == NULL && i != -1)
         x->ex_flags |= EXFLAG_INVALID;
     x->akid = X509_get_ext_d2i(x, NID_authority_key_identifier, &i, NULL);
     if (x->akid == NULL && i != -1)
         x->ex_flags |= EXFLAG_INVALID;
-    /* Does subject name match issuer ? */
-    if (!X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x))) {
+
+    /* Check if subject name matches issuer */
+    if (X509_NAME_cmp(X509_get_subject_name(x), X509_get_issuer_name(x)) == 0) {
         x->ex_flags |= EXFLAG_SI; /* cert is self-issued */
         if (X509_check_akid(x, x->akid) == X509_V_OK /* SKID matches AKID */
                 /* .. and the signature alg matches the PUBKEY alg: */
                 && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
             x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
     }
+
+    /* Handle subject alternative names and various other extensions */
     x->altname = X509_get_ext_d2i(x, NID_subject_alt_name, &i, NULL);
     if (x->altname == NULL && i != -1)
         x->ex_flags |= EXFLAG_INVALID;
@@ -554,8 +565,10 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
             break;
         }
     }
+
     x509_init_sig_info(x);
-    x->ex_flags |= EXFLAG_SET;
+
+    x->ex_flags |= EXFLAG_SET; /* indicate that cert has been processed */
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&x->ex_cached, 1);
     /*
