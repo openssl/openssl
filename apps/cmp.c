@@ -1881,7 +1881,7 @@ static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_days > 0
             && !OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_VALIDITY_DAYS,
                                         opt_days)) {
-        CMP_err("could to set requested cert validity period");
+        CMP_err("could not set requested cert validity period");
         goto err;
     }
 
