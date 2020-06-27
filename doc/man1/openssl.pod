@@ -906,6 +906,7 @@ a verification time, the check is not suppressed.
 =item B<-x509_strict>
 
 This disables non-compliant workarounds for broken certificates.
+Thus errors are thrown on certificates not compliant with RFC 5280.
 
 =item B<-ignore_critical>
 

@@ -69,8 +69,8 @@ const char *X509_verify_cert_error_string(long n)
         return "certificate chain too long";
     case X509_V_ERR_CERT_REVOKED:
         return "certificate revoked";
-    case X509_V_ERR_INVALID_CA:
-        return "invalid CA certificate";
+    case X509_V_ERR_NO_ISSUER_PUBLIC_KEY:
+        return "issuer certificate doesn't have a public key";
     case X509_V_ERR_PATH_LENGTH_EXCEEDED:
         return "path length constraint exceeded";
     case X509_V_ERR_INVALID_PURPOSE:
@@ -174,12 +174,30 @@ const char *X509_verify_cert_error_string(long n)
         return "OCSP verification failed";
     case X509_V_ERR_OCSP_CERT_UNKNOWN:
         return "OCSP unknown cert";
-    case X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH:
-        return "subject signature algorithm and issuer public key algorithm mismatch";
-    case X509_V_ERR_NO_ISSUER_PUBLIC_KEY:
-        return "issuer certificate doesn't have a public key";
     case X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM:
         return "Cannot find certificate signature algorithm";
+    case X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH:
+        return "subject signature algorithm and issuer public key algorithm mismatch";
+    case X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY:
+        return "cert info siganature and signature algorithm mismatch";
+    case X509_V_ERR_INVALID_CA:
+        return "invalid CA certificate";
+    case X509_V_ERR_PATHLEN_INVALID_FOR_NON_CA:
+        return "Path length invalid for non-CA cert";
+    case X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN:
+        return "Path length given without key usage keyCertSign";
+    case X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA:
+        return "Key usage keyCertSign invalid for non-CA cert";
+    case X509_V_ERR_ISSUER_NAME_EMPTY:
+        return "Issuer name empty";
+    case X509_V_ERR_SUBJECT_NAME_EMPTY:
+        return "Subject name empty";
+    case X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER:
+        return "Missing Authority Key Identifier";
+    case X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER:
+        return "Missing Subject Key Identifier";
+    case X509_V_ERR_EMPTY_SUBJECT_ALT_NAME:
+        return "Empty Subject Alternative Name extension";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

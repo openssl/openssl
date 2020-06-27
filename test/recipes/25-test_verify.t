@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 144;
+plan tests => 145;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -372,12 +372,15 @@ ok(verify("root-cert-rsa2", "sslserver", ["root-cert-rsa2"], [], "-check_ss_sig"
        "accept trusted self-signed EE cert excluding key usage keyCertSign");
 
 SKIP: {
-    skip "Ed25519 is not supported by this OpenSSL build", 5
+    skip "Ed25519 is not supported by this OpenSSL build", 6
 	      if disabled("ec");
 
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
        "accept X25519 EE cert issued by trusted Ed25519 self-signed CA cert");
+
+    ok(!verify("ee-ed25519", "sslserver", ["root-ed25519"], [], "-x509_strict"),
+       "reject X25519 EE cert in strict mode since AKID is missing");
 
     ok(!verify("root-ed25519", "sslserver", ["ee-ed25519"], []),
        "fail Ed25519 CA and EE certs swapped");
