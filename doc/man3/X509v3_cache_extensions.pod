@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509v3_cache_extensions
-- process any extensions in an X509 object
+- cache info on various X.509v3 extensions and further derived certificate data
 
 =head1 SYNOPSIS
 
@@ -14,7 +14,8 @@ X509v3_cache_extensions
 =head1 DESCRIPTION
 
 This function processes any X509v3 extensions that might be present in an X509
-object and caches the result of that processing. Many OpenSSL functions that use
+object and caches the result of that processing as well as further derived info,
+for instance if the certificate is self-issued. Many OpenSSL functions that use
 an X509 object will cause extensions to be processed and cached implicitly. If
 this is done implicitly then the default library context and property query
 string will be used. In some cases it may be desirable to use some other library
