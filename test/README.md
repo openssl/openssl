@@ -27,12 +27,13 @@ Full verbosity, showing full output of all successful and failed test cases
     $ mms /macro=(V=1) test                          ! OpenVMS
     $ nmake V=1 test                                 # Windows
 
-Verbosity on failed (sub-)tests only (`VERBOSE_FAILURE` or `VF`):
+Verbosity on failed (sub-)tests only
+(`VERBOSE_FAILURE` or `VF` or `REPORT_FAILURES`):
 
     $ make test VF=1
 
 Verbosity on failed (sub-)tests, in addition progress on succeeded (sub-)tests
-(`VERBOSE_FAILURE_PROGRESS` or `VFP`):
+(`VERBOSE_FAILURE_PROGRESS` or `VFP` or `REPORT_FAILURES_PROGRESS`):
 
     $ make test VFP=1
 
