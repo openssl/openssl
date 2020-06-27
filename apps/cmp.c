@@ -1123,12 +1123,10 @@ static int set_name(const char *str,
                     OSSL_CMP_CTX *ctx, const char *desc)
 {
     if (str != NULL) {
-        X509_NAME *n = parse_name(str, MBSTRING_ASC, 0);
+        X509_NAME *n = parse_name(str, MBSTRING_ASC, 0, desc);
 
-        if (n == NULL) {
-            CMP_err2("cannot parse %s DN '%s'", desc, str);
+        if (n == NULL)
             return 0;
-        }
         if (!(*set_fn) (ctx, n)) {
             X509_NAME_free(n);
             CMP_err("out of memory");
