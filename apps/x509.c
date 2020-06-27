@@ -536,7 +536,8 @@ int x509_main(int argc, char **argv)
                    "The -new option requires a subject to be set using -subj\n");
         goto end;
     }
-    if (subj != NULL && (fsubj = parse_name(subj, chtype, multirdn)) == NULL)
+    if (subj != NULL
+            && (fsubj = parse_name(subj, chtype, multirdn, "subject")) == NULL)
         goto end;
 
     if (CAkeyfile == NULL && CA_flag && CAformat == FORMAT_PEM) {

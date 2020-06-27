@@ -1463,7 +1463,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         row[i] = NULL;
 
     if (subj) {
-        X509_NAME *n = parse_name(subj, chtype, multirdn);
+        X509_NAME *n = parse_name(subj, chtype, multirdn, "subject");
 
         if (!n) {
             ERR_print_errors(bio_err);

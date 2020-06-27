@@ -1078,7 +1078,7 @@ static int build_subject(X509_REQ *req, const char *subject, unsigned long chtyp
 {
     X509_NAME *n;
 
-    if ((n = parse_name(subject, chtype, multirdn)) == NULL)
+    if ((n = parse_name(subject, chtype, multirdn, "subject")) == NULL)
         return 0;
 
     if (!X509_REQ_set_subject_name(req, n)) {
