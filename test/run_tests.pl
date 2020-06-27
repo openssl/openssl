@@ -10,13 +10,15 @@ use strict;
 use warnings;
 
 # Recognise VERBOSE aka V which is common on other projects.
-# Additionally, recognise VERBOSE_FAILURE aka VF.
-# and recognise VERBOSE_FAILURE_PROGRESS aka VFP.
+# Additionally, recognise VERBOSE_FAILURE aka VF aka REPORT_FAILURES
+# and recognise VERBOSE_FAILURE_PROGRESS aka VFP aka REPORT_FAILURES_PROGRESS.
 BEGIN {
     $ENV{HARNESS_VERBOSE} = "yes" if $ENV{VERBOSE} || $ENV{V};
-    $ENV{HARNESS_VERBOSE_FAILURE} = "yes" if $ENV{VERBOSE_FAILURE} || $ENV{VF};
+    $ENV{HARNESS_VERBOSE_FAILURE} = "yes"
+        if $ENV{VERBOSE_FAILURE} || $ENV{VF} || $ENV{REPORT_FAILURES};
     $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS} = "yes"
-        if $ENV{VERBOSE_FAILURE_PROGRESS} || $ENV{VFP};
+        if ($ENV{VERBOSE_FAILURE_PROGRESS} || $ENV{VFP}
+            || $ENV{REPORT_FAILURES_PROGRESS});
 }
 
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
