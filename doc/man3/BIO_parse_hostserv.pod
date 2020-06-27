@@ -25,7 +25,7 @@ they are used.  B<hostserv_prio> helps determine if B<hostserv> shall
 be interpreted primarily as a hostname or a service name in ambiguous
 cases.
 
-The syntax the BIO_parse_hostserv() recognises is:
+The syntax the BIO_parse_hostserv() recognizes is:
 
  host + ':' + service
  host + ':' + '*'

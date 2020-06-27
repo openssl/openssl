@@ -13,7 +13,7 @@ openssl/core.h - OpenSSL Core types
 The F<< <openssl/core.h> >> header defines a number of public types that
 are used to communicate between the OpenSSL libraries and
 implementation providers.
-These types are designed to minimise the need for intimate knowledge
+These types are designed to minimize the need for intimate knowledge
 of internal structures between the OpenSSL libraries and the providers.
 
 The types are:
@@ -32,7 +32,7 @@ identity zero and function pointer NULL.
 The available function identities and corresponding function
 signatures are defined in L<openssl-core_dispatch.h(7)>.
 
-Any function identity not recognised by the recipient of this type
+Any function identity not recognized by the recipient of this type
 will be ignored.
 This ensures that providers built with one OpenSSL version in mind
 will work together with any other OpenSSL version that supports this

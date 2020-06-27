@@ -57,7 +57,7 @@ the signature's checked.
 If all signature's verify correctly then the function is successful.
 
 Any of the following flags (ored together) can be passed in the B<flags> parameter
-to change the default verify behaviour. Only the flag B<PKCS7_NOINTERN> is
+to change the default verify behavior. Only the flag B<PKCS7_NOINTERN> is
 meaningful to PKCS7_get0_signers().
 
 If B<PKCS7_NOINTERN> is set the certificates in the message itself are not
@@ -84,14 +84,14 @@ in the B<certs> parameter. In this case if the signer is not one of the
 certificates supplied in B<certs> then the verify will fail because the
 signer cannot be found.
 
-Care should be taken when modifying the default verify behaviour, for example
+Care should be taken when modifying the default verify behavior, for example
 setting C<PKCS7_NOVERIFY|PKCS7_NOSIGS> will totally disable all verification
 and any signed message will be considered valid. This combination is however
 useful if one merely wishes to write the content to B<out> and its validity
 is not considered important.
 
 Chain verification should arguably be performed  using the signing time rather
-than the current time. However since the signing time is supplied by the
+than the current time. However, since the signing time is supplied by the
 signer it cannot be trusted without additional evidence (such as a trusted
 timestamp).
 

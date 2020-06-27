@@ -48,7 +48,7 @@ A context for KRB5KDF can be obtained by calling:
 
 The output length of the KRB5KDF derivation is specified via the I<keylen>
 parameter to the L<EVP_KDF_derive(3)> function, and MUST match the key
-length for the chosen cipher or an error is returned. Moreover the
+length for the chosen cipher or an error is returned. Moreover, the
 constant's length must not exceed the block size of the cipher.
 Since the KRB5KDF output length depends on the chosen cipher, calling
 L<EVP_KDF_size(3)> to obtain the requisite length returns the correct length

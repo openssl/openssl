@@ -86,7 +86,7 @@ The certificate returned (if any) is checked. If the verification process
 fails, the TLS/SSL handshake is
 immediately terminated with an alert message containing the reason for
 the verification failure.
-The behaviour can be controlled by the additional
+The behavior can be controlled by the additional
 SSL_VERIFY_FAIL_IF_NO_PEER_CERT, SSL_VERIFY_CLIENT_ONCE and
 SSL_VERIFY_POST_HANDSHAKE flags.
 
@@ -152,7 +152,7 @@ The default depth limit is 100,
 allowing for the peer certificate, at most 100 intermediate CA certificates and
 a final trust anchor certificate.
 
-The B<verify_callback> function is used to control the behaviour when the
+The B<verify_callback> function is used to control the behavior when the
 SSL_VERIFY_PEER flag is set. It must be supplied by the application and
 receives two arguments: B<preverify_ok> indicates, whether the verification of
 the certificate in question was passed (preverify_ok=1) or not
@@ -204,7 +204,7 @@ message is sent to the client.
 
 In client mode, it is not checked whether the SSL_VERIFY_PEER flag
 is set, but whether any flags other than SSL_VERIFY_NONE are set. This can
-lead to unexpected behaviour if SSL_VERIFY_PEER and other flags are not used as
+lead to unexpected behavior if SSL_VERIFY_PEER and other flags are not used as
 required.
 
 =head1 RETURN VALUES

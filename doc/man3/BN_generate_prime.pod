@@ -167,10 +167,10 @@ for backwards compatibility purposes.
 A B<BN_GENCB> structure should be created through a call to BN_GENCB_new(),
 and freed through a call to BN_GENCB_free().
 
-For "new" style callbacks a BN_GENCB structure should be initialised with a
+For "new" style callbacks a BN_GENCB structure should be initialized with a
 call to BN_GENCB_set(), where B<gencb> is a B<BN_GENCB *>, B<callback> is of
 type B<int (*callback)(int, int, BN_GENCB *)> and B<cb_arg> is a B<void *>.
-"Old" style callbacks are the same except they are initialised with a call
+"Old" style callbacks are the same except they are initialized with a call
 to BN_GENCB_set_old() and B<callback> is of type
 B<void (*callback)(int, int, void *)>.
 

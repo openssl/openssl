@@ -164,7 +164,7 @@ default values, e.g., proof-of-possession method is set to POPOSigningKey.
 OSSL_CMP_CTX_free() deallocates an OSSL_CMP_CTX structure.
 
 OSSL_CMP_CTX_reinit() prepares the given B<ctx> for a further transaction by
-clearing the internal CMP transaction (aka session) status, PKIStatusInfo,
+clearing the internal CMP transaction (a.k.a. session) status, PKIStatusInfo,
 and any previous results (newCert, caPubs, and extraCertsIn)
 from the last executed transaction.
 All other field values (i.e., CMP options) are retained for potential re-use.

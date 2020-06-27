@@ -46,12 +46,12 @@ up a different configuration for the selected servername in this case.
 In this case the servername requested by the client is not accepted and the
 handshake will be aborted. The value of the alert to be used should be stored in
 the location pointed to by the B<al> parameter to the callback. By default this
-value is initialised to SSL_AD_UNRECOGNIZED_NAME.
+value is initialized to SSL_AD_UNRECOGNIZED_NAME.
 
 =item SSL_TLSEXT_ERR_ALERT_WARNING
 
 If this value is returned then the servername is not accepted by the server.
-However the handshake will continue and send a warning alert instead. The value
+However, the handshake will continue and send a warning alert instead. The value
 of the alert should be stored in the location pointed to by the B<al> parameter
 as for SSL_TLSEXT_ERR_ALERT_FATAL above. Note that TLSv1.3 does not support
 warning alerts, so if TLSv1.3 has been negotiated then this return value is
@@ -67,7 +67,7 @@ No alerts are sent and the server will not acknowledge the requested servername.
 SSL_CTX_set_tlsext_servername_arg() sets a context-specific argument to be
 passed into the callback (via the B<arg> parameter) for this B<SSL_CTX>.
 
-The behaviour of SSL_get_servername() depends on a number of different factors.
+The behavior of SSL_get_servername() depends on a number of different factors.
 In particular note that in TLSv1.3 the servername is negotiated in every
 handshake. In TLSv1.2 the servername is only negotiated on initial handshakes
 and not on resumption handshakes.

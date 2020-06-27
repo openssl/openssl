@@ -100,7 +100,7 @@ structure for holding context information during a digest operation.
 A pointer to this context will be passed back in a number of the other digest
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialization (see L<provider(7)>).
 
 OSSL_FUNC_digest_freectx() is passed a pointer to the provider side digest context in
 the I<dctx> parameter.
@@ -111,12 +111,12 @@ I<dctx> parameter and return the duplicate copy.
 
 =head2 Digest Generation Functions
 
-OSSL_FUNC_digest_init() initialises a digest operation given a newly created
+OSSL_FUNC_digest_init() initializes a digest operation given a newly created
 provider side digest context in the I<dctx> parameter.
 
 OSSL_FUNC_digest_update() is called to supply data to be digested as part of a
-previously initialised digest operation.
-The I<dctx> parameter contains a pointer to a previously initialised provider
+previously initialized digest operation.
+The I<dctx> parameter contains a pointer to a previously initialized provider
 side context.
 OSSL_FUNC_digest_update() should digest I<inl> bytes of data at the location pointed to
 by I<in>.
@@ -131,7 +131,7 @@ The digest should not exceed I<outsz> bytes.
 
 OSSL_FUNC_digest_digest() is a "oneshot" digest function.
 No provider side digest context is used.
-Instead the provider context that was created during provider initialisation is
+Instead the provider context that was created during provider initialization is
 passed in the I<provctx> parameter (see L<provider(7)>).
 I<inl> bytes at I<in> should be digested and the result should be stored at
 I<out>. The length of the digest should be stored in I<*outl> which should not
@@ -158,7 +158,7 @@ as descriptors of the parameters that OSSL_FUNC_digest_get_params(),
 OSSL_FUNC_digest_get_ctx_params(), and OSSL_FUNC_digest_set_ctx_params() can handle,
 respectively.
 
-Parameters currently recognised by built-in digests with this function
+Parameters currently recognized by built-in digests with this function
 are as follows. Not all parameters are relevant to, or are understood
 by all digests:
 
@@ -176,7 +176,7 @@ The length of the "size" parameter should not exceed that of a B<size_t>.
 
 =item "flags" (B<OSSL_DIGEST_PARAM_FLAGS>) <unsigned integer>
 
-Diverse flags that describe exceptional behaviour for the digest:
+Diverse flags that describe exceptional behavior for the digest:
 
 =over 4
 

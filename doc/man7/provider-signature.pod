@@ -177,7 +177,7 @@ structure for holding context information during a signature operation.
 A pointer to this context will be passed back in a number of the other signature
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialization (see L<provider(7)>).
 
 OSSL_FUNC_signature_freectx() is passed a pointer to the provider side signature
 context in the I<ctx> parameter.
@@ -188,7 +188,7 @@ the I<ctx> parameter and return the duplicate copy.
 
 =head2 Signing Functions
 
-OSSL_FUNC_signature_sign_init() initialises a context for signing given a provider side
+OSSL_FUNC_signature_sign_init() initializes a context for signing given a provider side
 signature context in the I<ctx> parameter, and a pointer to a provider key object
 in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
@@ -196,7 +196,7 @@ the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OSSL_FUNC_signature_sign() performs the actual signing itself.
-A previously initialised signature context is passed in the I<ctx>
+A previously initialized signature context is passed in the I<ctx>
 parameter.
 The data to be signed is pointed to be the I<tbs> parameter which is I<tbslen>
 bytes long.
@@ -208,7 +208,7 @@ I<*siglen>.
 
 =head2 Verify Functions
 
-OSSL_FUNC_signature_verify_init() initialises a context for verifying a signature given
+OSSL_FUNC_signature_verify_init() initializes a context for verifying a signature given
 a provider side signature context in the I<ctx> parameter, and a pointer to a
 provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
@@ -216,7 +216,7 @@ the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OSSL_FUNC_signature_verify() performs the actual verification itself.
-A previously initialised signature context is passed in the I<ctx> parameter.
+A previously initialized signature context is passed in the I<ctx> parameter.
 The data that the signature covers is pointed to be the I<tbs> parameter which
 is I<tbslen> bytes long.
 The signature is pointed to by the I<sig> parameter which is I<siglen> bytes
@@ -224,7 +224,7 @@ long.
 
 =head2 Verify Recover Functions
 
-OSSL_FUNC_signature_verify_recover_init() initialises a context for recovering the
+OSSL_FUNC_signature_verify_recover_init() initializes a context for recovering the
 signed data given a provider side signature context in the I<ctx> parameter, and
 a pointer to a provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
@@ -232,7 +232,7 @@ the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OSSL_FUNC_signature_verify_recover() performs the actual verify recover itself.
-A previously initialised signature context is passed in the I<ctx> parameter.
+A previously initialized signature context is passed in the I<ctx> parameter.
 The signature is pointed to by the I<sig> parameter which is I<siglen> bytes
 long.
 Unless I<rout> is NULL, the recovered data should be written to the location
@@ -243,7 +243,7 @@ the I<routlen> parameter.
 
 =head2 Digest Sign Functions
 
-OSSL_FUNC_signature_digeset_sign_init() initialises a context for signing given a
+OSSL_FUNC_signature_digeset_sign_init() initializes a context for signing given a
 provider side signature context in the I<ctx> parameter, and a pointer to a
 provider key object in the I<provkey> parameter. The key object should have been
 previously generated, loaded or imported into the provider using the
@@ -253,14 +253,14 @@ also be properties to be used in fetching the digest in the I<props> parameter,
 although this may be ignored by providers.
 
 OSSL_FUNC_signature_digest_sign_update() provides data to be signed in the I<data>
-parameter which should be of length I<datalen>. A previously initialised
+parameter which should be of length I<datalen>. A previously initialized
 signature context is passed in the I<ctx> parameter. This function may be called
 multiple times to cumulatively add data to be signed.
 
 OSSL_FUNC_signature_digest_sign_final() finalises a signature operation previously
 started through OSSL_FUNC_signature_digest_sign_init() and
 OSSL_FUNC_signature_digest_sign_update() calls. Once finalised no more data will be
-added through OSSL_FUNC_signature_digest_sign_update(). A previously initialised
+added through OSSL_FUNC_signature_digest_sign_update(). A previously initialized
 signature context is passed in the I<ctx> parameter. Unless I<sig> is NULL, the
 signature should be written to the location pointed to by the I<sig> parameter
 and it should not exceed I<sigsize> bytes in length. The length of the signature
@@ -269,7 +269,7 @@ the signature should be written to I<*siglen>.
 
 OSSL_FUNC_signature_digest_sign() implements a "one shot" digest sign operation
 previously started through OSSL_FUNC_signature_digeset_sign_init(). A previously
-initialised signature context is passed in the I<ctx> parameter. The data to be
+initialized signature context is passed in the I<ctx> parameter. The data to be
 signed is in I<tbs> which should be I<tbslen> bytes long. Unless I<sig> is NULL,
 the signature should be written to the location pointed to by the I<sig>
 parameter and it should not exceed I<sigsize> bytes in length. The length of the
@@ -278,7 +278,7 @@ length of the signature should be written to I<*siglen>.
 
 =head2 Digest Verify Functions
 
-OSSL_FUNC_signature_digeset_verify_init() initialises a context for verifying given a
+OSSL_FUNC_signature_digeset_verify_init() initializes a context for verifying given a
 provider side verification context in the I<ctx> parameter, and a pointer to a
 provider key object in the I<provkey> parameter. The key object should have been
 previously generated, loaded or imported into the provider using the
@@ -288,20 +288,20 @@ also be properties to be used in fetching the digest in the I<props> parameter,
 although this may be ignored by providers.
 
 OSSL_FUNC_signature_digest_verify_update() provides data to be verified in the I<data>
-parameter which should be of length I<datalen>. A previously initialised
+parameter which should be of length I<datalen>. A previously initialized
 verification context is passed in the I<ctx> parameter. This function may be
 called multiple times to cumulatively add data to be verified.
 
 OSSL_FUNC_signature_digest_verify_final() finalises a verification operation previously
 started through OSSL_FUNC_signature_digest_verify_init() and
 OSSL_FUNC_signature_digest_verify_update() calls. Once finalised no more data will be
-added through OSSL_FUNC_signature_digest_verify_update(). A previously initialised
+added through OSSL_FUNC_signature_digest_verify_update(). A previously initialized
 verification context is passed in the I<ctx> parameter. The signature to be
 verified is in I<sig> which is I<siglen> bytes long.
 
 OSSL_FUNC_signature_digest_verify() implements a "one shot" digest verify operation
 previously started through OSSL_FUNC_signature_digeset_verify_init(). A previously
-initialised verification context is passed in the I<ctx> parameter. The data to be
+initialized verification context is passed in the I<ctx> parameter. The data to be
 verified is in I<tbs> which should be I<tbslen> bytes long. The signature to be
 verified is in I<sig> which is I<siglen> bytes long.
 
@@ -316,7 +316,7 @@ OSSL_FUNC_signature_set_ctx_params() sets the signature parameters associated wi
 given provider side signature context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-Common parameters currently recognised by built-in signature algorithms are as
+Common parameters currently recognized by built-in signature algorithms are as
 follows.
 
 =over 4
@@ -375,7 +375,7 @@ OSSL_FUNC_signature_set_ms_ctx_params() sets the digest parameters associated wi
 given provider side digest signature context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-Parameters currently recognised by built-in signature algorithms are the same
+Parameters currently recognized by built-in signature algorithms are the same
 as those for built-in digest algorithms. See
 L<provider-digest(7)/Digest Parameters> for further information.
 

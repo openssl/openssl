@@ -44,12 +44,12 @@ Note, this is implemented via a macro.
 
 =head1 NOTES
 
-The behaviour of the SSL library can be changed by setting several options.
+The behavior of the SSL library can be changed by setting several options.
 The options are coded as bit-masks and can be combined by a bitwise B<or>
 operation (|).
 
 SSL_CTX_set_options() and SSL_set_options() affect the (external)
-protocol behaviour of the SSL library. The (internal) behaviour of
+protocol behavior of the SSL library. The (internal) behavior of
 the API can be changed by using the similar
 L<SSL_CTX_set_mode(3)> and SSL_set_mode() functions.
 
@@ -167,9 +167,9 @@ the session. In this way the server can operate statelessly - no session
 information needs to be cached locally.
 
 The TLSv1.3 protocol only supports tickets and does not directly support session
-ids. However OpenSSL allows two modes of ticket operation in TLSv1.3: stateful
+ids. However, OpenSSL allows two modes of ticket operation in TLSv1.3: stateful
 and stateless. Stateless tickets work the same way as in TLSv1.2 and below.
-Stateful tickets mimic the session id behaviour available in TLSv1.2 and below.
+Stateful tickets mimic the session id behavior available in TLSv1.2 and below.
 The session information is cached on the server and the session id is wrapped up
 in a ticket and sent back to the client. When the client wishes to resume, it
 presents a ticket in the same way as for stateless tickets. The server can then

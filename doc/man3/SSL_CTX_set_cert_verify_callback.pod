@@ -25,7 +25,7 @@ function is called. If the application does not explicitly specify a
 verification callback function, the built-in verification function is used.
 If a verification callback I<callback> is specified via
 SSL_CTX_set_cert_verify_callback(), the supplied callback function is called
-instead. By setting I<callback> to NULL, the default behaviour is restored.
+instead. By setting I<callback> to NULL, the default behavior is restored.
 
 When the verification must be performed, I<callback> will be called with
 the arguments callback(X509_STORE_CTX *x509_store_ctx, void *arg). The
@@ -55,7 +55,7 @@ family of functions.
 
 Providing a complete verification procedure including certificate purpose
 settings etc is a complex task. The built-in procedure is quite powerful
-and in most cases it should be sufficient to modify its behaviour using
+and in most cases it should be sufficient to modify its behavior using
 the B<verify_callback> function.
 
 =head1 BUGS

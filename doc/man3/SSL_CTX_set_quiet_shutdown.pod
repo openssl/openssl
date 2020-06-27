@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_quiet_shutdown, SSL_CTX_get_quiet_shutdown, SSL_set_quiet_shutdown, SSL_get_quiet_shutdown - manipulate shutdown behaviour
+SSL_CTX_set_quiet_shutdown, SSL_CTX_get_quiet_shutdown, SSL_set_quiet_shutdown, SSL_get_quiet_shutdown - manipulate shutdown behavior
 
 =head1 SYNOPSIS
 
@@ -42,9 +42,9 @@ will set the internal flags to SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN.
 L<SSL_set_shutdown(3)> called with
 SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN.)
 The session is thus considered to be shutdown, but no close_notify alert
-is sent to the peer. This behaviour violates the TLS standard.
+is sent to the peer. This behavior violates the TLS standard.
 
-The default is normal shutdown behaviour as described by the TLS standard.
+The default is normal shutdown behavior as described by the TLS standard.
 
 =head1 RETURN VALUES
 

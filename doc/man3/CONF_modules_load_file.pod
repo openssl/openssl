@@ -24,7 +24,7 @@ library context B<libctx> file B<filename> and application name B<appname>.
 If B<filename> is NULL the standard OpenSSL configuration file is used.
 If B<appname> is NULL the standard OpenSSL application name B<openssl_conf> is
 used.
-The behaviour can be customized using B<flags>.
+The behavior can be customized using B<flags>.
 
 CONF_modules_load_file() is the same as CONF_modules_load_file_with_libctx() but
 has a NULL library context.
@@ -120,17 +120,17 @@ Load and parse configuration file manually, custom error handling:
  fp = fopen("/somepath/app.cnf", "r");
  if (fp == NULL) {
      fprintf(stderr, "Error opening configuration file\n");
-     /* Other missing configuration file behaviour */
+     /* Other missing configuration file behavior */
  } else {
      cnf = NCONF_new_with_libctx(libctx, NULL);
      if (NCONF_load_fp(cnf, fp, &eline) == 0) {
          fprintf(stderr, "Error on line %ld of configuration file\n", eline);
          ERR_print_errors_fp(stderr);
-         /* Other malformed configuration file behaviour */
+         /* Other malformed configuration file behavior */
      } else if (CONF_modules_load(cnf, "appname", 0) <= 0) {
          fprintf(stderr, "Error configuring application\n");
          ERR_print_errors_fp(stderr);
-         /* Other configuration error behaviour */
+         /* Other configuration error behavior */
      }
      fclose(fp);
      NCONF_free(cnf);

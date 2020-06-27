@@ -123,7 +123,7 @@ Filter BIOs if they do not internally handle a particular BIO_ctrl()
 operation usually pass the operation to the next BIO in the chain.
 This often means there is no need to locate the required BIO for
 a particular operation, it can be called on a chain and it will
-be automatically passed to the relevant BIO. However this can cause
+be automatically passed to the relevant BIO. However, this can cause
 unexpected results: for example no current filter BIOs implement
 BIO_seek(), but this may still succeed if the chain ends in a FILE
 or file descriptor BIO.

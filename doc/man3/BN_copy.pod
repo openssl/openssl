@@ -34,7 +34,7 @@ restrictions apply to the use of B<dest>:
 =item *
 
 B<dest> should be a newly allocated BIGNUM obtained via a call to BN_new(). It
-should not have been used for other purposes or initialised in any way.
+should not have been used for other purposes or initialized in any way.
 
 =item *
 

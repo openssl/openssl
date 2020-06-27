@@ -94,7 +94,7 @@ An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
                                                  "K-571", 0);
     /*
      * This curve has a cofactor that is not 1 - so setting CDH mode changes
-     * the behaviour. For many curves the cofactor is 1 - so setting this has
+     * the behavior. For many curves the cofactor is 1 - so setting this has
      * no effect.
      */
     params[1] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_USE_COFACTOR_ECDH,

@@ -23,10 +23,10 @@ to the given C<num>.
 =head1 RETURN VALUES
 
 OSSL_trace_get_category_num() returns the category number if the given
-C<name> is a recognised category name, otherwise -1.
+C<name> is a recognized category name, otherwise -1.
 
 OSSL_trace_get_category_name() returns the category name if the given
-C<num> is a recognised category number, otherwise NULL.
+C<num> is a recognized category number, otherwise NULL.
 
 =head1 HISTORY
 

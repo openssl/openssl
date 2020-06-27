@@ -76,7 +76,7 @@ It's also possible to specify the proxy extension in a separate section:
 
 The policy value has a specific syntax, I<syntag>:I<string>, where the
 I<syntag> determines what will be done with the string.  The following
-I<syntag>s are recognised:
+I<syntag>s are recognized:
 
 =over 4
 

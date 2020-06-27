@@ -209,19 +209,19 @@ offers these parameters).
 
 Both when setting and requesting parameters, the functions that are
 called will have to decide what is and what is not an error.
-The recommended behaviour is:
+The recommended behavior is:
 
 =over 4
 
 =item *
 
-Keys that a I<setter> or I<responder> doesn't recognise should simply
+Keys that a I<setter> or I<responder> doesn't recognize should simply
 be ignored.
 That in itself isn't an error.
 
 =item *
 
-If the keys that a called I<setter> recognises form a consistent
+If the keys that a called I<setter> recognizes form a consistent
 enough set of data, that call should succeed.
 
 =item *

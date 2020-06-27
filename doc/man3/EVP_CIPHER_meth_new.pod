@@ -78,7 +78,7 @@ EVP_CIPHER_meth_set_iv_length() sets the length of the IV.
 This is only needed when the implemented cipher mode requires it.
 
 EVP_CIPHER_meth_set_flags() sets the flags to describe optional
-behaviours in the particular B<cipher>.
+behaviors in the particular B<cipher>.
 With the exception of cipher modes, of which only one may be present,
 several flags can be or'd together.
 The available flags are:

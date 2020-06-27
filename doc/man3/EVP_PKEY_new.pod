@@ -83,13 +83,13 @@ EVP_PKEY_new_raw_private_key_with_libctx() you may also use B<EVP_PKEY_HMAC>.
 
 EVP_PKEY_new_raw_public_key_with_libctx() works in the same way as
 EVP_PKEY_new_raw_private_key_with_libctx() except that B<key> points to the raw
-public key data. The B<EVP_PKEY> structure will be initialised without any
+public key data. The B<EVP_PKEY> structure will be initialized without any
 private key information. Algorithm types that support raw public keys are
 "X25519", "ED25519", "X448" or "ED448".
 
 EVP_PKEY_new_raw_public_key() works in the same way as
 EVP_PKEY_new_raw_private_key() except that B<key> points to the raw public key
-data. The B<EVP_PKEY> structure will be initialised without any private key
+data. The B<EVP_PKEY> structure will be initialized without any private key
 information. Algorithm types that support raw public keys are
 B<EVP_PKEY_X25519>, B<EVP_PKEY_ED25519>, B<EVP_PKEY_X448> or B<EVP_PKEY_ED448>.
 

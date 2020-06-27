@@ -53,7 +53,7 @@ separately (see L</Cache Functions> below).
 
 =head2 Store Functions
 
-ossl_method_store_init() initialises the method store subsystem in the scope of
+ossl_method_store_init() initializes the method store subsystem in the scope of
 the library context I<ctx>.
 
 ossl_method_store_cleanup() cleans up and shuts down the implementation method

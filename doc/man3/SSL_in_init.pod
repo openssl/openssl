@@ -48,7 +48,7 @@ SSL_in_connect_init() and SSL_in_accept_init() are implemented as macros.
 SSL_get_state() returns a value indicating the current state of the handshake
 state machine. OSSL_HANDSHAKE_STATE is an enumerated type where each value
 indicates a discrete state machine state. Note that future versions of OpenSSL
-may define more states so applications should expect to receive unrecognised
+may define more states so applications should expect to receive unrecognized
 state values. The naming format is made up of a number of elements as follows:
 
 B<protocol>_ST_B<role>_B<message>

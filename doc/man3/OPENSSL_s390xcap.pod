@@ -179,7 +179,7 @@ Disables the vector facility:
 
  OPENSSL_s390xcap="stfle:~0:~0:~0x4000000000000000"
 
-Disables the KM-XTS-AES and and the KIMD-SHAKE function codes:
+Disables the KM-XTS-AES and the KIMD-SHAKE function codes:
 
  OPENSSL_s390xcap="km:~0x2800:~0;kimd:~0xc000000:~0"
 

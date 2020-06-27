@@ -49,7 +49,7 @@ OSSL_PARAM_BLD_push_octet_string, OSSL_PARAM_BLD_push_octet_ptr
 A collection of utility functions that simplify the creation of OSSL_PARAM
 arrays.  The B<I<TYPE>> names are as per L<OSSL_PARAM_int(3)>.
 
-OSSL_PARAM_BLD_new() allocates and initialises a new OSSL_PARAM_BLD structure
+OSSL_PARAM_BLD_new() allocates and initializes a new OSSL_PARAM_BLD structure
 so that values can be added.
 Any existing values are cleared.
 

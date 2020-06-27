@@ -46,7 +46,7 @@ the content: this will typically output garbage and may (but is not guaranteed
 to) ultimately return a padding error only. If CMS_decrypt() just returned an
 error when all recipient encrypted keys failed to decrypt an attacker could
 use this in a timing attack. If the special flag B<CMS_DEBUG_DECRYPT> is set
-then the above behaviour is modified and an error B<is> returned if no
+then the above behavior is modified and an error B<is> returned if no
 recipient encrypted key can be decrypted B<without> generating a random
 content encryption key. Applications should use this flag with
 B<extreme caution> especially in automated gateways as it can leave them

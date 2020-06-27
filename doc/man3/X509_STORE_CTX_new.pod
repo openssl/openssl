@@ -12,7 +12,7 @@ X509_STORE_CTX_get_num_untrusted,
 X509_STORE_CTX_set_default,
 X509_STORE_CTX_set_verify,
 X509_STORE_CTX_verify_fn
-- X509_STORE_CTX initialisation
+- X509_STORE_CTX initialization
 
 =head1 SYNOPSIS
 
@@ -48,10 +48,10 @@ X509_STORE_CTX_verify_fn
 
 =head1 DESCRIPTION
 
-These functions initialise an B<X509_STORE_CTX> structure for subsequent use
+These functions initialize an B<X509_STORE_CTX> structure for subsequent use
 by X509_verify_cert().
 
-X509_STORE_CTX_new_with_libctx() returns a newly initialised B<X509_STORE_CTX>
+X509_STORE_CTX_new_with_libctx() returns a newly initialized B<X509_STORE_CTX>
 structure associated with the specified library context I<libctx> and property
 query string I<propq>. Any cryptographic algorithms fetched while performing
 processing with the X509_STORE_CTX will use that library context and property
@@ -61,7 +61,7 @@ X509_STORE_CTX_new() is the same as X509_STORE_CTX_new_with_libctx() except that
 the default library context and a NULL property query string are used.
 
 X509_STORE_CTX_cleanup() internally cleans up an B<X509_STORE_CTX> structure.
-The context can then be reused with an new call to X509_STORE_CTX_init().
+The context can then be reused with a new call to X509_STORE_CTX_init().
 
 X509_STORE_CTX_free() completely frees up I<ctx>. After this call I<ctx>
 is no longer valid.
@@ -89,7 +89,7 @@ X509_STORE_CTX_set0_verified_chain() sets the validated chain used
 by I<ctx> to be I<chain>.
 Ownership of the chain is transferred to I<ctx> and should not be
 free'd by the caller.
-X509_STORE_CTX_get0_chain() returns a the internal pointer used by the
+X509_STORE_CTX_get0_chain() returns the internal pointer used by the
 I<ctx> that contains the validated chain.
 
 X509_STORE_CTX_set0_crls() sets a set of CRLs to use to aid certificate
@@ -142,7 +142,7 @@ should be made or reference counts increased instead.
 
 =head1 RETURN VALUES
 
-X509_STORE_CTX_new() returns an newly allocates context or B<NULL> is an
+X509_STORE_CTX_new() returns a newly allocates context or B<NULL> is an
 error occurred.
 
 X509_STORE_CTX_init() returns 1 for success or 0 if an error occurred.

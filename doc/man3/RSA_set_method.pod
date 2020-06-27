@@ -58,7 +58,7 @@ RSA_set_method() selects B<meth> to perform all operations using the key
 B<rsa>. This will replace the RSA_METHOD used by the RSA key and if the
 previous method was supplied by an ENGINE, the handle to that ENGINE will
 be released during the change. It is possible to have RSA keys that only
-work with certain RSA_METHOD implementations (eg. from an ENGINE module
+work with certain RSA_METHOD implementations (e.g. from an ENGINE module
 that supports embedded hardware-protected keys), and in such cases
 attempting to change the RSA_METHOD for the key can have unexpected
 results.
@@ -162,7 +162,7 @@ it returns a pointer to the newly allocated structure.
 
 =head1 BUGS
 
-The behaviour of RSA_flags() is a mis-feature that is left as-is for now
+The behavior of RSA_flags() is a mis-feature that is left as-is for now
 to avoid creating compatibility problems. RSA functionality, such as the
 encryption functions, are controlled by the B<flags> value in the RSA key
 itself, not by the B<flags> value in the RSA_METHOD attached to the RSA key

@@ -92,7 +92,7 @@ structure for holding context information during a key exchange operation.
 A pointer to this context will be passed back in a number of the other key
 exchange operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialization (see L<provider(7)>).
 
 OSSL_FUNC_keyexch_freectx() is passed a pointer to the provider side key exchange
 context in the I<ctx> parameter.
@@ -103,7 +103,7 @@ the I<ctx> parameter and return the duplicate copy.
 
 =head2 Shared Secret Derivation Functions
 
-OSSL_FUNC_keyexch_init() initialises a key exchange operation given a provider side key
+OSSL_FUNC_keyexch_init() initializes a key exchange operation given a provider side key
 exchange context in the I<ctx> parameter, and a pointer to a provider key object
 in the I<provkey> parameter. The key object should have been previously
 generated, loaded or imported into the provider using the key management
@@ -111,7 +111,7 @@ generated, loaded or imported into the provider using the key management
 
 OSSL_FUNC_keyexch_set_peer() is called to supply the peer's public key (in the
 I<provkey> parameter) to be used when deriving the shared secret.
-It is also passed a previously initialised key exchange context in the I<ctx>
+It is also passed a previously initialized key exchange context in the I<ctx>
 parameter.
 The key object should have been previously generated, loaded or imported into
 the provider using the key management (OSSL_OP_KEYMGMT) operation (see
@@ -119,7 +119,7 @@ provider-keymgmt(7)>.
 
 OSSL_FUNC_keyexch_derive() performs the actual key exchange itself by deriving a shared
 secret.
-A previously initialised key exchange context is passed in the I<ctx>
+A previously initialized key exchange context is passed in the I<ctx>
 parameter.
 The derived secret should be written to the location I<secret> which should not
 exceed I<outlen> bytes.
@@ -157,7 +157,7 @@ Notice that not all settable parameters are also gettable, and vice versa.
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 the OSSL_FUNC_keyexch_set_ctx_params() and OSSL_FUNC_keyexch_get_ctx_params() functions.
 
-Common parameters currently recognised by built-in key exchange algorithms are
+Common parameters currently recognized by built-in key exchange algorithms are
 as follows.
 
 =over 4

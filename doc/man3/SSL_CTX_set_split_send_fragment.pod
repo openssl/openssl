@@ -41,7 +41,7 @@ capability is known as "pipelining" within OpenSSL.
 
 In order to benefit from the pipelining capability. You need to have an engine
 that provides ciphers that support this. The OpenSSL "dasync" engine provides
-AES128-SHA based ciphers that have this capability. However these are for
+AES128-SHA based ciphers that have this capability. However, these are for
 development and test purposes only.
 
 SSL_CTX_set_max_send_fragment() and SSL_set_max_send_fragment() set the
@@ -95,7 +95,7 @@ read as much data into the read buffer as the network can provide and will fit
 into the buffer. Without this set data is read into the read buffer one record
 at a time. The more data that can be read, the more opportunity there is for
 parallelising the processing at the cost of increased memory overhead per
-connection. Setting B<read_ahead> can impact the behaviour of the SSL_pending()
+connection. Setting B<read_ahead> can impact the behavior of the SSL_pending()
 function (see L<SSL_pending(3)>).
 
 The SSL_CTX_set_default_read_buffer_len() and SSL_set_default_read_buffer_len()

@@ -21,13 +21,13 @@ to be of the type of key given by the different arguments.  If
 I<pkey> is NULL, these functions will still return the same return
 values as if it wasn't.
 
-EVP_PKEY_set_type() initialises I<pkey> to contain an internal legacy
+EVP_PKEY_set_type() initializes I<pkey> to contain an internal legacy
 key.  When doing this, it finds a L<EVP_PKEY_ASN1_METHOD(3)>
 corresponding to I<type>, and associates I<pkey> with the findings.
 It is an error if no L<EVP_PKEY_ASN1_METHOD(3)> could be found for
 I<type>.
 
-EVP_PKEY_set_type_str() initialises I<pkey> to contain an internal legacy
+EVP_PKEY_set_type_str() initializes I<pkey> to contain an internal legacy
 key. When doing this, it finds a L<EVP_PKEY_ASN1_METHOD(3)>
 corresponding to I<str> that has then length I<len>, and associates
 I<pkey> with the findings.
@@ -41,9 +41,9 @@ found, and is equal to or closely related to I<type> in the case of
 EVP_PKEY_set_type(), or related to I<str> in the case of
 EVP_PKEY_set_type_str().
 
-EVP_PKEY_set_type_by_keymgmt() initialises I<pkey> to contain an
+EVP_PKEY_set_type_by_keymgmt() initializes I<pkey> to contain an
 internal provider side key.  When doing this, it associates I<pkey>
-with I<keymgmt>.  For keys initialised like this, the numeric type
+with I<keymgmt>.  For keys initialized like this, the numeric type
 retrieved with L<EVP_PKEY_id(3)> will always be B<EVP_PKEY_NONE>.
 
 =head1 RETURN VALUES

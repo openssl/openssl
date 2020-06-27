@@ -320,7 +320,7 @@ the implementation of this function.
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure.
 
-Common information parameters currently recognised by all built-in
+Common information parameters currently recognized by all built-in
 keymgmt algorithms are as follows:
 
 =over 4

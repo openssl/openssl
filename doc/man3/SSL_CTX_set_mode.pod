@@ -44,7 +44,7 @@ SSL_write(). When not set (the default), SSL_write_ex() or SSL_write() will only
 report success once the complete chunk was written. Once SSL_write_ex() or
 SSL_write() returns successful, B<r> bytes have been written and the next call
 to SSL_write_ex() or SSL_write() must only send the n-r bytes left, imitating
-the behaviour of write().
+the behavior of write().
 
 =item SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER
 
@@ -126,7 +126,7 @@ Linux 4.20.
 Older versions of OpenSSL had a bug in the computation of the label length
 used for computing the endpoint-pair shared secret. The bug was that the
 terminating zero was included in the length of the label. Setting this option
-enables this behaviour to allow interoperability with such broken
+enables this behavior to allow interoperability with such broken
 implementations. Please note that setting this option breaks interoperability
 with correct implementations. This option only applies to DTLS over SCTP.
 

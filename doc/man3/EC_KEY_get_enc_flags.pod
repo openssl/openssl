@@ -28,7 +28,7 @@ d2i_ECPrivateKey().
 The functions EC_KEY_get_enc_flags() and EC_KEY_set_enc_flags() get and set the
 value of the encoding flags for the B<key>. There are two encoding flags
 currently defined - EC_PKEY_NO_PARAMETERS and EC_PKEY_NO_PUBKEY.  These flags
-define the behaviour of how the  B<key> is converted into ASN1 in a call to
+define the behavior of how the  B<key> is converted into ASN1 in a call to
 i2d_ECPrivateKey(). If EC_PKEY_NO_PARAMETERS is set then the public parameters for
 the curve are not encoded along with the private key. If EC_PKEY_NO_PUBKEY is
 set then the public key is not encoded along with the private key.

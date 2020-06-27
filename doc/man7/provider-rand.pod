@@ -75,7 +75,7 @@ structure for holding context information during a rand operation.
 A pointer to this context will be passed back in a number of the other rand
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialization (see L<provider(7)>).
 The parameter I<parent> specifies another rand instance to be used for
 seeding purposes.  If NULL and the specific instance supports it, the
 operating system will be used for seeding.
@@ -163,7 +163,7 @@ as descriptors of the parameters that OSSL_FUNC_rand_get_params(),
 OSSL_FUNC_rand_get_ctx_params(), and OSSL_FUNC_rand_set_ctx_params() can handle,
 respectively.
 
-Parameters currently recognised by built-in rands are as follows. Not all
+Parameters currently recognized by built-in rands are as follows. Not all
 parameters are relevant to, or are understood by all rands:
 
 =over 4
@@ -179,7 +179,7 @@ Returns the bit strength of the random number generator.
 =back
 
 For rands that are also deterministic random bit generators (DRBGs), these
-additional parameters are recognised. Not all
+additional parameters are recognized. Not all
 parameters are relevant to, or are understood by all DRBG rands:
 
 =over 4
@@ -217,7 +217,7 @@ instantiate the DRBG.
 
 =item "max_adinlen" (B<OSSL_DRBG_PARAM_MAX_ADINLEN>) <unsigned integer>
 
-Specify the minimum and maximum number of bytes of personalisation string
+Specify the minimum and maximum number of bytes of personalization string
 that can be used with the DRBG.
 
 =item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>

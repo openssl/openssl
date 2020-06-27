@@ -29,7 +29,7 @@ EVP_DecodeBlock - EVP base 64 encode/decode routines
 
 =head1 DESCRIPTION
 
-The EVP encode routines provide a high level interface to base 64 encoding and
+The EVP encode routines provide a high-level interface to base 64 encoding and
 decoding. Base 64 encoding converts binary data into a printable form that uses
 the characters A-Z, a-z, 0-9, "+" and "/" to represent the data. For every 3
 bytes of binary data provided 4 bytes of base 64 encoded data will be produced
@@ -51,7 +51,7 @@ bytes of input. If the data length is not divisible by 3 then a full 4 bytes is
 still output for the final 1 or 2 bytes of input. Similarly a newline character
 will also be output.
 
-EVP_EncodeInit() initialises B<ctx> for the start of a new encoding operation.
+EVP_EncodeInit() initializes B<ctx> for the start of a new encoding operation.
 
 EVP_EncodeUpdate() encode B<inl> bytes of data found in the buffer pointed to by
 B<in>. The output is stored in the buffer B<out> and the number of bytes output
@@ -91,7 +91,7 @@ example if 16 bytes of input data is provided then 24 bytes of encoded data is
 created plus 1 byte for a NUL terminator (i.e. 25 bytes in total). The length of
 the data generated I<without> the NUL terminator is returned from the function.
 
-EVP_DecodeInit() initialises B<ctx> for the start of a new decoding operation.
+EVP_DecodeInit() initializes B<ctx> for the start of a new decoding operation.
 
 EVP_DecodeUpdate() decodes B<inl> characters of data found in the buffer pointed
 to by B<in>. The output is stored in the buffer B<out> and the number of bytes

@@ -33,7 +33,7 @@ SSL_enable_ct() and SSL_CTX_enable_ct() enable the processing of signed
 certificate timestamps (SCTs) either for a given SSL connection or for all
 connections that share the given SSL context, respectively.
 This is accomplished by setting a built-in CT validation callback.
-The behaviour of the callback is determined by the B<validation_mode> argument,
+The behavior of the callback is determined by the B<validation_mode> argument,
 which can be either of B<SSL_CT_VALIDATION_PERMISSIVE> or
 B<SSL_CT_VALIDATION_STRICT> as described below.
 

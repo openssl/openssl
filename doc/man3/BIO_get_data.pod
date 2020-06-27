@@ -25,10 +25,10 @@ the BIO. This data can subsequently be retrieved via a call to BIO_get_data().
 This can be used by custom BIOs for storing implementation specific information.
 
 The BIO_set_init() function sets the value of the BIO's "init" flag to indicate
-whether initialisation has been completed for this BIO or not. A nonzero value
-indicates that initialisation is complete, whilst zero indicates that it is not.
-Often initialisation will complete during initial construction of the BIO. For
-some BIOs however, initialisation may not complete until after additional steps
+whether initialization has been completed for this BIO or not. A nonzero value
+indicates that initialization is complete, whilst zero indicates that it is not.
+Often initialization will complete during initial construction of the BIO. For
+some BIOs however, initialization may not complete until after additional steps
 have occurred (for example through calling custom ctrls). The BIO_get_init()
 function returns the value of the "init" flag.
 

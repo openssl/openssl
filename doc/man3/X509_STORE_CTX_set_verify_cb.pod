@@ -50,11 +50,11 @@ The verification callback can be used to customise the operation of certificate
 verification, either by overriding error conditions or logging errors for
 debugging purposes.
 
-However a verification callback is B<not> essential and the default operation
+However, a verification callback is B<not> essential and the default operation
 is often sufficient.
 
 The B<ok> parameter to the callback indicates the value the callback should
-return to retain the default behaviour. If it is zero then an error condition
+return to retain the default behavior. If it is zero then an error condition
 is indicated. If it is 1 then no error occurred. If the flag
 B<X509_V_FLAG_NOTIFY_POLICY> is set then B<ok> is set to 2 to indicate the
 policy checking is complete.

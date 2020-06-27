@@ -49,7 +49,7 @@ ticket information or it starts a full TLS handshake to create a new session
 ticket.
 
 Before the callback function is started I<ctx> and I<hctx> have been
-initialised with L<EVP_CIPHER_CTX_reset(3)> and L<EVP_MAC_new_ctx(3)>
+initialized with L<EVP_CIPHER_CTX_reset(3)> and L<EVP_MAC_new_ctx(3)>
 respectively.
 
 For new sessions tickets, when the client doesn't present a session ticket, or
@@ -64,7 +64,7 @@ The I<iv> length is the length of the IV of the corresponding cipher. The
 maximum IV length is B<EVP_MAX_IV_LENGTH> bytes defined in B<evp.h>.
 
 The initialization vector I<iv> should be a random value. The cipher context
-I<ctx> should use the initialisation vector I<iv>. The cipher context can be
+I<ctx> should use the initialization vector I<iv>. The cipher context can be
 set using L<EVP_EncryptInit_ex(3)>. The hmac context and digest can be set using
 L<EVP_MAC_set_ctx_params(3)> with the B<OSSL_MAC_PARAM_KEY> and
 B<OSSL_MAC_PARAM_DIGEST> parameters respectively.
@@ -120,7 +120,7 @@ The SSL_CTX_set_tlsext_ticket_key_cb() function is identical to
 SSL_CTX_set_tlsext_ticket_key_evp_cb() except that it takes a deprecated
 HMAC_CTX pointer instead of an EVP_MAC_CTX one.
 Before this callback function is started I<hctx> will have been
-initialised with L<EVP_MAC_new_ctx(3)> and the digest set with
+initialized with L<EVP_MAC_new_ctx(3)> and the digest set with
 L<EVP_MAC_set_ctx_params(3)>.
 The I<hctx> key material can be set using L<HMAC_Init_ex(3)>.
 
@@ -169,7 +169,7 @@ Reference Implementation:
              /* current key doesn't exist or isn't valid */
              key = createkey(); /*
                                  * Something that you need to implement.
-                                 * createkey needs to initialise a name,
+                                 * createkey needs to initialize a name,
                                  * an aes_key, a hmac_key and optionally
                                  * an expire time.
                                  */

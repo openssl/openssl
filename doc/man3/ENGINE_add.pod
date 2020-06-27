@@ -181,7 +181,7 @@ implementation includes the following abstractions;
 =head2 Reference counting and handles
 
 Due to the modular nature of the ENGINE API, pointers to ENGINEs need to be
-treated as handles - ie. not only as pointers, but also as references to
+treated as handles - i.e. not only as pointers, but also as references to
 the underlying ENGINE object. Ie. one should obtain a new reference when
 making copies of an ENGINE pointer if the copies will be used (and
 released) independently.
@@ -193,7 +193,7 @@ to use the pointer value at all, as this kind of reference is a guarantee
 that the structure can not be deallocated until the reference is released.
 
 However, a structural reference provides no guarantee that the ENGINE is
-initialised and able to use any of its cryptographic
+initialized and able to use any of its cryptographic
 implementations. Indeed it's quite possible that most ENGINEs will not
 initialise at all in typical environments, as ENGINEs are typically used to
 support specialised hardware. To use an ENGINE's functionality, you need a
@@ -202,8 +202,8 @@ specialised form of structural reference, because each functional reference
 implicitly contains a structural reference as well - however to avoid
 difficult-to-find programming bugs, it is recommended to treat the two
 kinds of reference independently. If you have a functional reference to an
-ENGINE, you have a guarantee that the ENGINE has been initialised and
-is ready to perform cryptographic operations, and will remain initialised
+ENGINE, you have a guarantee that the ENGINE has been initialized and
+is ready to perform cryptographic operations, and will remain initialized
 until after you have released your reference.
 
 I<Structural references>
@@ -252,7 +252,7 @@ operational ENGINE for a given cryptographic purpose.
 
 To obtain a functional reference from an existing structural reference,
 call the ENGINE_init() function. This returns zero if the ENGINE was not
-already operational and couldn't be successfully initialised (eg. lack of
+already operational and couldn't be successfully initialized (e.g. lack of
 system drivers, no special hardware attached, etc), otherwise it will
 return nonzero to indicate that the ENGINE is now operational and will
 have allocated a new B<functional> reference to the ENGINE. All functional
@@ -260,7 +260,7 @@ references are released by calling ENGINE_finish() (which removes the
 implicit structural reference as well).
 
 The second way to get a functional reference is by asking OpenSSL for a
-default implementation for a given task, eg. by ENGINE_get_default_RSA(),
+default implementation for a given task, e.g. by ENGINE_get_default_RSA(),
 ENGINE_get_default_cipher_engine(), etc. These are discussed in the next
 section, though they are not usually required by application programmers as
 they are used automatically when creating and using the relevant
@@ -278,10 +278,10 @@ In the case of other abstractions like RSA, DSA, etc, there is only one
 "algorithm" so all implementations implicitly register using the same 'nid'
 index.
 
-When a default ENGINE is requested for a given abstraction/algorithm/mode, (eg.
+When a default ENGINE is requested for a given abstraction/algorithm/mode, (e.g.
 when calling RSA_new_method(NULL)), a "get_default" call will be made to the
 ENGINE subsystem to process the corresponding state table and return a
-functional reference to an initialised ENGINE whose implementation should be
+functional reference to an initialized ENGINE whose implementation should be
 used. If no ENGINE should (or can) be used, it will return NULL and the caller
 will operate with a NULL ENGINE handle - this usually equates to using the
 conventional software implementation. In the latter case, OpenSSL will from
@@ -290,14 +290,14 @@ then on behave the way it used to before the ENGINE API existed.
 Each state table has a flag to note whether it has processed this
 "get_default" query since the table was last modified, because to process
 this question it must iterate across all the registered ENGINEs in the
-table trying to initialise each of them in turn, in case one of them is
+table trying to initialize each of them in turn, in case one of them is
 operational. If it returns a functional reference to an ENGINE, it will
 also cache another reference to speed up processing future queries (without
 needing to iterate across the table). Likewise, it will cache a NULL
 response if no ENGINE was available so that future queries won't repeat the
-same iteration unless the state table changes. This behaviour can also be
+same iteration unless the state table changes. This behavior can also be
 changed; if the ENGINE_TABLE_FLAG_NOINIT flag is set (using
-ENGINE_set_table_flags()), no attempted initialisations will take place,
+ENGINE_set_table_flags()), no attempted initializations will take place,
 instead the only way for the state table to return a non-NULL ENGINE to the
 "get_default" query will be if one is expressly set in the table. Eg.
 ENGINE_set_default_RSA() does the same job as ENGINE_register_RSA() except
@@ -323,12 +323,12 @@ functions.
 
 The fact that ENGINEs are made visible to OpenSSL (and thus are linked into
 the program and loaded into memory at run-time) does not mean they are
-"registered" or called into use by OpenSSL automatically - that behaviour
+"registered" or called into use by OpenSSL automatically - that behavior
 is something for the application to control. Some applications
 will want to allow the user to specify exactly which ENGINE they want used
 if any is to be used at all. Others may prefer to load all support and have
 OpenSSL automatically use at run-time any ENGINE that is able to
-successfully initialise - ie. to assume that this corresponds to
+successfully initialize - i.e. to assume that this corresponds to
 acceleration hardware attached to the machine or some such thing. There are
 probably numerous other ways in which applications may prefer to handle
 things, so we will simply illustrate the consequences as they apply to a
@@ -357,13 +357,13 @@ illustrates how to approach this;
      /* the engine isn't available */
      return;
  if (!ENGINE_init(e)) {
-     /* the engine couldn't initialise, release 'e' */
+     /* the engine couldn't initialize, release 'e' */
      ENGINE_free(e);
      return;
  }
  if (!ENGINE_set_default_RSA(e))
      /*
-      * This should only happen when 'e' can't initialise, but the previous
+      * This should only happen when 'e' can't initialize, but the previous
       * statement suggests it did.
       */
      abort();
@@ -378,7 +378,7 @@ I<Automatically using built-in ENGINE implementations>
 
 Here we'll assume we want to load and register all ENGINE implementations
 bundled with OpenSSL, such that for any cryptographic algorithm required by
-OpenSSL - if there is an ENGINE that implements it and can be initialised,
+OpenSSL - if there is an ENGINE that implements it and can be initialized,
 it should be used. The following code illustrates how this can work;
 
  /* Load all bundled ENGINEs into memory and make them visible */
@@ -413,13 +413,13 @@ Before illustrating how control commands work, it is worth mentioning what
 they are typically used for. Broadly speaking there are two uses for
 control commands; the first is to provide the necessary details to the
 implementation (which may know nothing at all specific to the host system)
-so that it can be initialised for use. This could include the path to any
+so that it can be initialized for use. This could include the path to any
 driver or config files it needs to load, required network addresses,
-smart-card identifiers, passwords to initialise protected devices,
+smart-card identifiers, passwords to initialize protected devices,
 logging information, etc etc. This class of commands typically needs to be
-passed to an ENGINE B<before> attempting to initialise it, ie. before
+passed to an ENGINE B<before> attempting to initialize it, i.e. before
 calling ENGINE_init(). The other class of commands consist of settings or
-operations that tweak certain behaviour or cause certain operations to take
+operations that tweak certain behavior or cause certain operations to take
 place, and these commands may work either before or after ENGINE_init(), or
 in some cases both. ENGINE implementations should provide indications of
 this in the descriptions attached to built-in control commands and/or in
@@ -429,10 +429,10 @@ I<Issuing control commands to an ENGINE>
 
 Let's illustrate by example; a function for which the caller supplies the
 name of the ENGINE it wishes to use, a table of string-pairs for use before
-initialisation, and another table for use after initialisation. Note that
+initialization, and another table for use after initialization. Note that
 the string-pairs used for control commands consist of a command "name"
 followed by the command "parameter" - the parameter could be NULL in some
-cases but the name can not. This function should initialise the ENGINE
+cases but the name can not. This function should initialize the ENGINE
 (issuing the "pre" commands beforehand and the "post" commands afterwards)
 and set it as the default for everything except RAND and then return a
 boolean success or failure.
@@ -453,7 +453,7 @@ boolean success or failure.
          pre_cmds += 2;
      }
      if (!ENGINE_init(e)) {
-         fprintf(stderr, "Failed initialisation\n");
+         fprintf(stderr, "Failed initialization\n");
          ENGINE_free(e);
          return 0;
      }
@@ -490,7 +490,7 @@ It is possible to discover at run-time the names, numerical-ids, descriptions
 and input parameters of the control commands supported by an ENGINE using a
 structural reference. Note that some control commands are defined by OpenSSL
 itself and it will intercept and handle these control commands on behalf of the
-ENGINE, ie. the ENGINE's ctrl() handler is not used for the control command.
+ENGINE, i.e. the ENGINE's ctrl() handler is not used for the control command.
 openssl/engine.h defines an index, ENGINE_CMD_BASE, that all control commands
 implemented by ENGINEs should be numbered from. Any command value lower than
 this symbol is considered a "generic" command is handled directly by the
@@ -556,7 +556,7 @@ by applications, administrations, users, etc. These can support arbitrary
 operations via ENGINE_ctrl(), including passing to and/or from the control
 commands data of any arbitrary type. These commands are supported in the
 discovery mechanisms simply to allow applications to determine if an ENGINE
-supports certain specific commands it might want to use (eg. application "foo"
+supports certain specific commands it might want to use (e.g. application "foo"
 might query various ENGINEs to see if they implement "FOO_GET_VENDOR_LOGO_GIF" -
 and ENGINE could therefore decide whether or not to support this "foo"-specific
 extension).
@@ -592,7 +592,7 @@ All ENGINE_set_default_TYPE() functions return 1 on success or 0 on error.
 ENGINE_set_default() returns 1 on success or 0 on error.
 
 ENGINE_get_table_flags() returns an unsigned integer value representing the
-global table flags which are used to control the registration behaviour of
+global table flags which are used to control the registration behavior of
 B<ENGINE> implementations.
 
 All ENGINE_register_TYPE() functions return 1 on success or 0 on error.
@@ -636,7 +636,7 @@ ENGINE_get_digest() returns a valid B<EVP_MD> structure on success or NULL if an
 error occurred.
 
 ENGINE_get_flags() returns an integer representing the ENGINE flags which are
-used to control various behaviours of an ENGINE.
+used to control various behaviors of an ENGINE.
 
 ENGINE_get_cmd_defns() returns an B<ENGINE_CMD_DEFN> structure or NULL if it's
 not set.

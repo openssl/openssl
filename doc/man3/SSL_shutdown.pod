@@ -50,7 +50,7 @@ SSL_shutdown() only closes the write direction.
 It is not possible to call SSL_write() after calling SSL_shutdown().
 The read direction is closed by the peer.
 
-The behaviour of SSL_shutdown() additionally depends on the underlying BIO.
+The behavior of SSL_shutdown() additionally depends on the underlying BIO.
 If the underlying BIO is B<blocking>, SSL_shutdown() will only return once the
 handshake step has been finished or an error occurred.
 
@@ -75,7 +75,7 @@ state but not actually send the close_notify alert messages,
 see L<SSL_CTX_set_quiet_shutdown(3)>.
 When "quiet shutdown" is enabled, SSL_shutdown() will always succeed
 and return 1.
-Note that this is not standard compliant behaviour.
+Note that this is not standard compliant behavior.
 It should only be done when the peer has a way to make sure all
 data has been received and doesn't wait for the close_notify alert
 message, otherwise an unexpected EOF will be reported.

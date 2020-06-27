@@ -40,7 +40,7 @@ X509_EXTENSION_create_by_NID() creates an extension of type B<nid>,
 criticality B<crit> using data B<data>. The created extension is returned and
 written to B<*ex> reusing or allocating a new extension if necessary so B<*ex>
 should either be B<NULL> or a valid B<X509_EXTENSION> structure it must
-B<not> be an uninitialised pointer.
+B<not> be an uninitialized pointer.
 
 X509_EXTENSION_create_by_OBJ() is identical to X509_EXTENSION_create_by_NID()
 except it creates and extension using B<obj> instead of a NID.

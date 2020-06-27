@@ -18,7 +18,7 @@ VERSION - OpenSSL version information
 
 This file is a set of keyed information looking like simple variable
 assignments.  When given an empty value, they are seen as unassigned.
-The keys that are recognised are:
+The keys that are recognized are:
 
 =over 4
 

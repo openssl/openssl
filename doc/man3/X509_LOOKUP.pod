@@ -121,7 +121,7 @@ possible to handle cases where the criteria have more than one hit.
 
 =head2 Control Commands
 
-The B<X509_LOOKUP_METHOD>s built into OpenSSL recognise the following
+The B<X509_LOOKUP_METHOD>s built into OpenSSL recognize the following
 X509_LOOKUP_ctrl() I<cmd>s:
 
 =over 4

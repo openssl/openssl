@@ -293,7 +293,7 @@ supports directory name, DNS name, email and URI types.
 
 =item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX: unsupported or invalid name constraint syntax>
 
-The format of the name constraint is not recognised: for example an email
+The format of the name constraint is not recognized: for example an email
 address format of a form not mentioned in RFC3280. This could be caused by
 a garbage extension or some new feature not currently supported.
 
@@ -432,7 +432,7 @@ X509_STORE_CTX_get_current_cert() was never B<NULL>. Applications should
 check the return value before printing out any debugging information relating
 to the current certificate.
 
-If an unrecognised error code is passed to X509_verify_cert_error_string() the
+If an unrecognized error code is passed to X509_verify_cert_error_string() the
 numerical value of the unknown code is returned in a static buffer. This is not
 thread safe but will never happen unless an invalid code is passed.
 

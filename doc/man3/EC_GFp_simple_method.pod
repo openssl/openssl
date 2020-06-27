@@ -38,11 +38,11 @@ For F2^m curves there is only one implementation choice, i.e. EC_GF2_simple_meth
 For Fp curves the lowest common denominator implementation is the EC_GFp_simple_method implementation. All
 other implementations are based on this one. EC_GFp_mont_method builds on EC_GFp_simple_method but adds the
 use of montgomery multiplication (see L<BN_mod_mul_montgomery(3)>). EC_GFp_nist_method
-offers an implementation optimised for use with NIST recommended curves (NIST curves are available through
+offers an implementation optimized for use with NIST recommended curves (NIST curves are available through
 EC_GROUP_new_by_curve_name as described in L<EC_GROUP_new(3)>).
 
 The functions EC_GFp_nistp224_method, EC_GFp_nistp256_method and EC_GFp_nistp521_method offer 64 bit
-optimised implementations for the NIST P224, P256 and P521 curves respectively. Note, however, that these
+optimized implementations for the NIST P224, P256 and P521 curves respectively. Note, however, that these
 implementations are not available on all platforms.
 
 EC_METHOD_get_field_type() was deprecated in OpenSSL 3.0.

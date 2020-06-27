@@ -71,7 +71,7 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
 
 =head1 DESCRIPTION
 
-The EVP RAND routines are a high level interface to random number generators
+The EVP RAND routines are a high-level interface to random number generators
 both deterministic and not.
 If you just want to generate random bytes then you don't need to use
 these functions: just call RAND_bytes() or RAND_priv_bytes().
@@ -112,7 +112,7 @@ If not NULL, I<parent> specifies the seed source for this implementation.
 Not all random number generators need to have a seed source specified.
 If a parent is required, a NULL I<parent> will utilise the operating
 system entropy sources.
-It is recommended to minimise the number of random number generators that
+It is recommended to minimize the number of random number generators that
 rely on the operating system for their randomness because this is often scarce.
 
 EVP_RAND_CTX_free() frees up the context I<ctx>.  If I<ctx> is NULL, nothing
@@ -124,7 +124,7 @@ I<ctx>.
 =head2 Random Number Generator Functions
 
 EVP_RAND_instantiate() instantiates the RAND I<ctx> with a minimum security
-strength of <strength> and personalisation string I<pstr> of length <pstr_len>.
+strength of <strength> and personalization string I<pstr> of length <pstr_len>.
 If I<prediction_resistance> is specified, fresh entropy from a live source
 will be sought.  This call operates as per NIST SP 800-90A and SP 800-90C.
 
@@ -204,7 +204,7 @@ States defined by the OpenSSL DRBGs are:
 
 =item *
 
-EVP_RAND_STATE_UNINITIALISED: this DRBG is currently uninitalised.
+EVP_RAND_STATE_UNINITIALISED: this DRBG is currently uninitialized.
 The instantiate call will change this to the ready state.
 
 =item *
@@ -257,7 +257,7 @@ Returns the bit strength of the random number generator.
 =back
 
 For rands that are also deterministic random bit generators (DRBGs), these
-additional parameters are recognised. Not all
+additional parameters are recognized. Not all
 parameters are relevant to, or are understood by all DRBG rands:
 
 =over 4
@@ -295,7 +295,7 @@ seed the DRBG.
 
 =item "max_adinlen" (B<OSSL_DRBG_PARAM_MAX_ADINLEN>) <unsigned integer>
 
-Specify the minimum and maximum number of bytes of personalisation string
+Specify the minimum and maximum number of bytes of personalization string
 that can be used with the DRBG.
 
 =item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
@@ -343,7 +343,7 @@ EVP_RAND_CTX_free() does not return a value.
 
 EVP_RAND_nonce() returns the length of the nonce.
 
-EVP_RAND_strength() returns the strenght of the random number generator in bits.
+EVP_RAND_strength() returns the strength of the random number generator in bits.
 
 EVP_RAND_gettable_params(), EVP_RAND_gettable_ctx_params() and
 EVP_RAND_settable_ctx_params() return an array of OSSL_PARAMs.

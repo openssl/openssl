@@ -68,7 +68,7 @@ a severity level, and
 a message string describing the nature of the event, terminated by '\n'.
 
 Even when an activity is successful some warnings may be useful and some degree
-of auditing may be required. Therefore the logging facility supports a severity
+of auditing may be required. Therefore, the logging facility supports a severity
 level and the callback function has a B<level> parameter indicating such a
 level, such that error, warning, info, debug, etc. can be treated differently.
 The callback is activated only when the severity level is sufficient according
@@ -76,7 +76,7 @@ to the current level of verbosity, which by default is OSSL_CMP_LOG_INFO.
 
 The callback function may itself do non-trivial tasks like writing to
 a log file or remote stream, which in turn may fail.
-Therefore the function should return 1 on success and 0 on failure.
+Therefore, the function should return 1 on success and 0 on failure.
 
 OSSL_CMP_log_open() initializes the CMP-specific logging facility to output
 everything to STDOUT. It fails if the integrated tracing is disabled or STDIO

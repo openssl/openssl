@@ -467,8 +467,8 @@ inclusion directories.  Likewise, any B<DEPEND> statement for the same
 I<item> will be given to the I<generator> as an extra file or module
 to load, where this is applicable.
 
-The build file generators must be able to recognise the I<generator>.
-Currently, they at least recognise files ending in C<.pl>, and will
+The build file generators must be able to recognize the I<generator>.
+Currently, they at least recognize files ending in C<.pl>, and will
 execute them to generate the I<item>, and files ending in C<.in>,
 which will be used as input for L<OpenSSL::Template> to generate
 I<item> (in other words, we use the exact same style of
@@ -610,7 +610,7 @@ B<SCRIPTS>.
 For OpenSSL::Template documentation,
 C<perldoc -o man util/perl/OpenSSL/Template.pm>
 
-L<Text::Temlate|https://metacpan.org/pod/Text::Template>
+L<Text::Template|https://metacpan.org/pod/Text::Template>
 
 =head1 COPYRIGHT
 

@@ -37,8 +37,8 @@ It is intended to simplify the process of certificate creation and management
 by the use of some simple options.
 
 The script is intended as a simple front end for the L<openssl(1)> program for
-use by a beginner. Its behaviour isn't always what is wanted. For more control
-over the behaviour of the certificate commands call the L<openssl(1)> command
+use by a beginner. Its behavior isn't always what is wanted. For more control
+over the behavior of the certificate commands call the L<openssl(1)> command
 directly.
 
 Most of the filenames mentioned below can be modified by editing the
@@ -89,7 +89,7 @@ Uses L<openssl-req(1)> and L<openssl-ca(1)>.
 
 If the F<demoCA> directory already exists then the B<-newca> command will not
 overwrite it and will do nothing. This can happen if a previous call using
-the B<-newca> option terminated abnormally. To get the correct behaviour
+the B<-newca> option terminated abnormally. To get the correct behavior
 delete the directory if it already exists.
 
 =item B<-pkcs12>

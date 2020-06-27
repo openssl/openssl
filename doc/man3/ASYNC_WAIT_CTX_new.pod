@@ -67,7 +67,7 @@ associated with that job in I<*fd>. The number of file descriptors returned will
 be stored in I<*numfds>. It is the caller's responsibility to ensure that
 sufficient memory has been allocated in I<*fd> to receive all the file
 descriptors. Calling ASYNC_WAIT_CTX_get_all_fds() with a NULL I<fd> value will
-return no file descriptors but will still populate I<*numfds>. Therefore
+return no file descriptors but will still populate I<*numfds>. Therefore,
 application code is typically expected to call this function twice: once to get
 the number of fds, and then again when sufficient memory has been allocated. If
 only one asynchronous engine is being used then normally this call will only
@@ -195,7 +195,7 @@ ASYNC_WAIT_CTX_get_status() returns the engine status.
 On Windows platforms the openssl/async.h header is dependent on some
 of the types customarily made available by including windows.h. The
 application developer is likely to require control over when the latter
-is included, commonly as one of the first included headers. Therefore
+is included, commonly as one of the first included headers. Therefore,
 it is defined as an application developer's responsibility to include
 windows.h prior to async.h.
 

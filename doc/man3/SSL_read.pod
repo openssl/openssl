@@ -34,7 +34,7 @@ SSL_read(), SSL_peek_ex() or SSL_peek().
 If necessary, a read function will negotiate a TLS/SSL session, if not already
 explicitly performed by L<SSL_connect(3)> or L<SSL_accept(3)>. If the
 peer requests a re-negotiation, it will be performed transparently during
-the read function operation. The behaviour of the read functions depends on the
+the read function operation. The behavior of the read functions depends on the
 underlying BIO.
 
 For the transparent negotiation to succeed, the B<ssl> must have been
@@ -45,7 +45,7 @@ invocation of a read function.
 The read functions work based on the SSL/TLS records. The data are received in
 records (with a maximum record size of 16kB). Only when a record has been
 completely received, can it be processed (decryption and check of integrity).
-Therefore data that was not retrieved at the last read call can still be
+Therefore, data that was not retrieved at the last read call can still be
 buffered inside the SSL layer and will be retrieved on the next read
 call. If B<num> is higher than the number of bytes buffered then the read
 functions will return with the bytes buffered. If no more bytes are in the
@@ -63,7 +63,7 @@ B<SSL_ERROR_WANT_READ>.
 In this case there might still be unprocessed data available in the B<BIO>.
 If read ahead was set using L<SSL_CTX_set_read_ahead(3)>, there might also still
 be unprocessed data available in the B<SSL>.
-This behaviour can be controlled using the L<SSL_CTX_set_mode(3)> call.
+This behavior can be controlled using the L<SSL_CTX_set_mode(3)> call.
 
 If the underlying BIO is B<blocking>, a read function will only return once the
 read operation has been finished or an error occurred, except when a

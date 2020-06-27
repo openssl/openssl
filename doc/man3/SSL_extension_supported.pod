@@ -262,7 +262,7 @@ is received in a ServerHello/EncryptedExtensions message which was not sent in
 the ClientHello a fatal B<unsupported_extension> alert is sent and the
 handshake is aborted. The ServerHello/EncryptedExtensions B<add_cb> callback is
 only called if the corresponding extension was received in the ClientHello. This
-is compliant with the TLS specifications. This behaviour ensures that each
+is compliant with the TLS specifications. This behavior ensures that each
 callback is called at most once and that an application can never send
 unsolicited extensions.
 

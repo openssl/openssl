@@ -215,7 +215,7 @@ RSA structure. The public key is encoded using a PKCS#1 RSAPublicKey
 structure.
 
 The B<RSA_PUBKEY> functions also process an RSA public key using
-an RSA structure. However the public key is encoded using a
+an RSA structure. However, the public key is encoded using a
 SubjectPublicKeyInfo structure and an error occurs if the public
 key is not RSA.
 
@@ -343,7 +343,7 @@ this:
  PEM_read_bio_X509(bp, &x, 0, NULL);
 
 this is a bug because an attempt will be made to reuse the data at I<x>
-which is an uninitialised pointer.
+which is an uninitialized pointer.
 
 These functions make no assumption regarding the pass phrase received from the
 password callback.
@@ -402,7 +402,7 @@ The pseudo code to derive the key would look similar to:
 =head1 BUGS
 
 The PEM read routines in some versions of OpenSSL will not correctly reuse
-an existing structure. Therefore the following:
+an existing structure. Therefore, the following:
 
  PEM_read_bio_X509(bp, &x, 0, NULL);
 

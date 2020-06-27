@@ -163,7 +163,7 @@ OSSL_FUNC_serializer_freectx() frees the given I<ctx>, if it was created by
 OSSL_FUNC_serializer_newctx().
 
 OSSL_FUNC_serializer_set_ctx_params() sets context data according to
-parameters from I<params> that it recognises.  Unrecognised parameters
+parameters from I<params> that it recognizes.  Unrecognized parameters
 should be ignored.
 
 OSSL_FUNC_serializer_settable_ctx_params() returns a constant B<OSSL_PARAM>
@@ -195,7 +195,7 @@ which should be used when a pass phrase prompt is needed.
 
 =head2 Serializer parameters
 
-Parameters currently recognised by built-in serializers are as
+Parameters currently recognized by built-in serializers are as
 follows:
 
 =over 4
@@ -230,7 +230,7 @@ built-in serializers will not attempt to use the passphrase callback.
 
 =back
 
-Parameters currently recognised by the built-in pass phrase callback:
+Parameters currently recognized by the built-in pass phrase callback:
 
 =over 4
 
@@ -247,7 +247,7 @@ of object it's being prompted for.
 OSSL_FUNC_serializer_newctx() returns a pointer to a context, or NULL on
 failure.
 
-OSSL_FUNC_serializer_set_ctx_params() returns 1, unless a recognised
+OSSL_FUNC_serializer_set_ctx_params() returns 1, unless a recognized
 parameters was invalid or caused an error, for which 0 is returned.
 
 OSSL_FUNC_serializer_settable_ctx_params() returns a pointer to an array of

@@ -24,7 +24,7 @@ L<EVP_PKEY_free(3)>.
 SSL_get_server_tmp_key() is a backwards compatibility alias for
 SSL_get_peer_tmp_key().
 Under that name it worked just on the client side of the connection, its
-behaviour on the server end is release-dependent.
+behavior on the server end is release-dependent.
 
 SSL_get_tmp_key() returns the equivalent information for the local
 end of the connection.

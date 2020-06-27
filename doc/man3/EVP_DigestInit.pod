@@ -101,7 +101,7 @@ EVP_MD_do_all_provided
 
 =head1 DESCRIPTION
 
-The EVP digest routines are a high level interface to message digests,
+The EVP digest routines are a high-level interface to message digests,
 and should be used instead of the digest-specific functions.
 
 The B<EVP_MD> type is a structure for digest method implementation.
@@ -312,7 +312,7 @@ EVP_MD_meth_set_app_datasize().
 
 Returns the B<EVP_MD> structure corresponding to the passed B<EVP_MD_CTX>. This
 will be the same B<EVP_MD> object originally passed to EVP_DigestInit_ex() (or
-other similar function) when the EVP_MD_CTX was first initialised. Note that
+other similar function) when the EVP_MD_CTX was first initialized. Note that
 where explicit fetch is in use (see L<EVP_MD_fetch(3)>) the value returned from
 this function will not have its reference count incremented and therefore it
 should not be used after the EVP_MD_CTX is freed.
@@ -454,13 +454,13 @@ EVP_MD_CTX_FLAG_NON_FIPS_ALLOW, EVP_MD_CTX_FLAGS_PAD_*
 
 =item EVP_MD_CTX_FLAG_NO_INIT
 
-This flag instructs EVP_DigestInit() and similar not to initialise the
+This flag instructs EVP_DigestInit() and similar not to initialize the
 implementation specific data.
 
 =item EVP_MD_CTX_FLAG_FINALISE
 
 Some functions such as EVP_DigestSign only finalise copies of internal
-contexts so additional data can be included after the finalisation call.
+contexts so additional data can be included after the finalization call.
 This is inefficient if this functionality is not required, and can be
 disabled with this flag.
 
@@ -536,7 +536,7 @@ This function has no return value.
 =head1 NOTES
 
 The B<EVP> interface to message digests should almost always be used in
-preference to the low level interfaces. This is because the code then becomes
+preference to the low-level interfaces. This is because the code then becomes
 transparent to the digest used and much more flexible.
 
 New applications should use the SHA-2 (such as L<EVP_sha256(3)>) or the SHA-3

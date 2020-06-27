@@ -68,7 +68,7 @@ The fields B<XN_FLAG_FN_SN>, B<XN_FLAG_FN_LN>, B<XN_FLAG_FN_OID>,
 B<XN_FLAG_FN_NONE> determine how a field name is displayed. It will
 use the short name (e.g. CN) the long name (e.g. commonName) always
 use OID numerical form (normally OIDs are only used if the field name is not
-recognised) and no field name respectively.
+recognized) and no field name respectively.
 
 If B<XN_FLAG_SPC_EQ> is set then spaces will be placed around the '=' character
 separating field names and values.

@@ -58,7 +58,7 @@ This corresponds to the profile of the same name defined in RFC7714.
 
 =back
 
-Supplying an unrecognised protection profile name will result in an error.
+Supplying an unrecognized protection profile name will result in an error.
 
 An OpenSSL server wishing to support the "use_srtp" extension should also call
 SSL_CTX_set_tlsext_use_srtp() or SSL_set_tlsext_use_srtp() to indicate the

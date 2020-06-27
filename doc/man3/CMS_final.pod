@@ -23,7 +23,7 @@ NULL.
 
 This function will normally be called when the B<CMS_PARTIAL> flag is used. It
 should only be used when streaming is not performed because the streaming
-I/O functions perform finalisation operations internally.
+I/O functions perform finalization operations internally.
 
 =head1 RETURN VALUES
 

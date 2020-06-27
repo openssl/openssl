@@ -29,7 +29,7 @@ This value can also be retrieved with L<EVP_MD_size(3)>.
 
 =item "flags" (B<OSSL_DIGEST_PARAM_FLAGS>) <unsigned integer>
 
-Diverse flags that describe exceptional behaviour for the digest.
+Diverse flags that describe exceptional behavior for the digest.
 These flags are described in L<EVP_MD_meth_set_flags(3)/DESCRIPTION>.
 
 The length of the "flags" parameter should equal that of an

@@ -187,12 +187,12 @@ OSSL_PARAM_construct_octet_string() is a function that constructs an OCTET
 string OSSL_PARAM structure.
 A parameter with name B<key>, storage B<buf> and size B<bsize> is created.
 
-OSSL_PARAM_construct_utf8_ptr() is a function that constructes a UTF string
+OSSL_PARAM_construct_utf8_ptr() is a function that constructs a UTF string
 pointer OSSL_PARAM structure.
 A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
 is created.
 
-OSSL_PARAM_construct_octet_ptr() is a function that constructes an OCTET string
+OSSL_PARAM_construct_octet_ptr() is a function that constructs an OCTET string
 pointer OSSL_PARAM structure.
 A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
 is created.

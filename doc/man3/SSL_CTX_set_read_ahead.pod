@@ -38,7 +38,7 @@ SSL_CTX_get_default_read_ahead() is identical to SSL_CTX_get_read_ahead().
 
 These functions have no impact when used with DTLS. The return values for
 SSL_CTX_get_read_head() and SSL_get_read_ahead() are undefined for DTLS. Setting
-B<read_ahead> can impact the behaviour of the SSL_pending() function
+B<read_ahead> can impact the behavior of the SSL_pending() function
 (see L<SSL_pending(3)>).
 
 Since SSL_read() can return B<SSL_ERROR_WANT_READ> for non-application data

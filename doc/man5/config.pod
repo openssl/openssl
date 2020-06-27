@@ -345,7 +345,7 @@ For example:
 This loads and adds an ENGINE from the given path. It is equivalent to
 sending the ctrls B<SO_PATH> with the path argument followed by B<LIST_ADD>
 with value B<2> and B<LOAD> to the dynamic ENGINE.  If this is not the
-required behaviour then alternative ctrls can be sent directly to the
+required behavior then alternative ctrls can be sent directly to the
 dynamic ENGINE using ctrl commands.
 
 =item B<init>

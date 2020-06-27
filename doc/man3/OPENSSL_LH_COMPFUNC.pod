@@ -203,7 +203,7 @@ all such parameters as constant.
 
 As an example, a hash table may be maintained by code that, for
 reasons of encapsulation, has only "const" access to the data being
-indexed in the hash table (ie. it is returned as "const" from
+indexed in the hash table (i.e. it is returned as "const" from
 elsewhere in their code) - in this case the LHASH prototypes are
 appropriate as-is.  Conversely, if the caller is responsible for the
 life-time of the data in question, then they may well wish to make

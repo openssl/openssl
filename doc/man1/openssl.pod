@@ -1108,7 +1108,7 @@ a string and leading or trailing spaces.
 =item B<esc_2254>
 
 Escape the "special" characters in a field as required by RFC 2254 in a field.
-That is, the B<NUL> character and and of C<()*>.
+That is, the B<NUL> character and of C<()*>.
 
 =item B<esc_ctrl>
 
@@ -1170,7 +1170,7 @@ DER encoding of the structure to be unambiguously determined.
 
 =item B<dump_unknown>
 
-Dump any field whose OID is not recognised by OpenSSL.
+Dump any field whose OID is not recognized by OpenSSL.
 
 =item B<sep_comma_plus>, B<sep_comma_plus_space>, B<sep_semi_plus_space>,
 B<sep_multiline>

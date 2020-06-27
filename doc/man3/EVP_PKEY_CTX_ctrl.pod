@@ -362,7 +362,7 @@ unsigned integers. Normally only the first of these will be set and represents
 the TLS protocol version that was first requested by the client (e.g. 0x0303 for
 TLSv1.2, 0x0302 for TLSv1.1 etc). Historically some buggy clients would use the
 negotiated protocol version instead of the protocol version first requested. If
-this behaviour should be tolerated then
+this behavior should be tolerated then
 OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION should be set to the actual
 negotiated protocol version. Otherwise it should be left unset.
 

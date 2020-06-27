@@ -44,11 +44,11 @@ index doesn't have to worry about that, just use the data available.
 Deallocation of an index happens automatically when the library
 context is freed.
 
-openssl_ctx_run_once is used to run some initialisation routine I<run_once_fn>
-exactly once per library context I<ctx> object. Each initialisation routine
+openssl_ctx_run_once is used to run some initialization routine I<run_once_fn>
+exactly once per library context I<ctx> object. Each initialization routine
 should be allocate a unique run once index in cryptlib.h.
 
-Any resources allocated via a run once initialisation routine can be cleaned up
+Any resources allocated via a run once initialization routine can be cleaned up
 using openssl_ctx_onfree. This associates an "on free" routine I<onfreefn> with
 the library context I<ctx>. When I<ctx> is freed all associated "on free"
 routines are called.
@@ -111,7 +111,7 @@ To get and use the data stored in the library context, simply do this:
  static openssl_ctx_run_once_fn do_foo_init;
  static int do_foo_init(OPENSSL_CTX *ctx)
  {
-     /* Allocate and initialise some foo resources and associated with ctx */
+     /* Allocate and initialize some foo resources and associated with ctx */
      return openssl_ctx_onfree(ctx, &foo_cleanup)
  }
 

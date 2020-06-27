@@ -121,7 +121,7 @@ name, thus making for the naming pattern
 B<OSSL_SERIALIZER_CTX_new_by_I<TYPE>>() when new types are handled.
 
 B<PUBKEY>, B<PrivateKey> and B<Parameters> in the macro names match
-the B<I<TYPE>> part of of B<PEM_write_bio_I<TYPE>> functions as well
+the B<I<TYPE>> part of B<PEM_write_bio_I<TYPE>> functions as well
 as B<i2d_I<TYPE>_bio> functions.
 
 =head1 SEE ALSO

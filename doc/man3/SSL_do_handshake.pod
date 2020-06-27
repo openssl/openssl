@@ -20,7 +20,7 @@ L<SSL_set_accept_state(3)>.
 
 =head1 NOTES
 
-The behaviour of SSL_do_handshake() depends on the underlying BIO.
+The behavior of SSL_do_handshake() depends on the underlying BIO.
 
 If the underlying BIO is B<blocking>, SSL_do_handshake() will only return
 once the handshake has been finished or an error occurred.

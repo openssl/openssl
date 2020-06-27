@@ -64,7 +64,7 @@ when the server is known to support it. Additionally these functions can be used
 to send data from the server to the client when the client has not yet completed
 the authentication stage of the handshake.
 
-Early data has weaker security properties than other data sent over an SSL/TLS
+Early data has weaker security properties thanother data sent over an SSL/TLS
 connection. In particular the data does not have forward secrecy. There are also
 additional considerations around replay attacks (see L</REPLAY PROTECTION>
 below). For these reasons extreme care should be exercised when using early
@@ -221,7 +221,7 @@ max_early_data for the session and the recv_max_early_data setting for the
 server. If a client sends more data than this then the connection will abort.
 
 The configured value for max_early_data on a server may change over time as
-required. However clients may have tickets containing the previously configured
+required. However, clients may have tickets containing the previously configured
 max_early_data value. The recv_max_early_data should always be equal to or
 higher than any recently configured max_early_data value in order to avoid
 aborted connections. The recv_max_early_data should never be set to less than
@@ -245,7 +245,7 @@ L</REPLAY PROTECTION> below.
 
 The whole purpose of early data is to enable a client to start sending data to
 the server before a full round trip of network traffic has occurred. Application
-developers should ensure they consider optimisation of the underlying TCP socket
+developers should ensure they consider optimization of the underlying TCP socket
 to obtain a performant solution. For example Nagle's algorithm is commonly used
 by operating systems in an attempt to avoid lots of small TCP packets. In many
 scenarios this is beneficial for performance, but it does not work well with the
@@ -313,11 +313,11 @@ OpenSSL will lock the internal cache while a session is removed but that lock is
 not held when the remove session callback (see L<SSL_CTX_sess_set_remove_cb(3)>)
 is called. This could result in a small amount of time where the session has
 been removed from the internal cache but is still available in the external
-cache. Applications should be designed with this in mind in order to minimise
+cache. Applications should be designed with this in mind in order to minimize
 the possibility of replay attacks.
 
 The OpenSSL replay protection does not apply to external Pre Shared Keys (PSKs)
-(e.g. see SSL_CTX_set_psk_find_session_callback(3)). Therefore extreme caution
+(e.g. see SSL_CTX_set_psk_find_session_callback(3)). Therefore, extreme caution
 should be applied when combining external PSKs with early data.
 
 Some applications may mitigate the replay risks in other ways. For those

@@ -18,7 +18,7 @@ X509_set_serialNumber
 =head1 DESCRIPTION
 
 X509_get_serialNumber() returns the serial number of certificate B<x> as an
-B<ASN1_INTEGER> structure which can be examined or initialised. The value
+B<ASN1_INTEGER> structure which can be examined or initialized. The value
 returned is an internal pointer which B<MUST NOT> be freed up after the call.
 
 X509_get0_serialNumber() is the same as X509_get_serialNumber() except it

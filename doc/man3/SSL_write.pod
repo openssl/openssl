@@ -34,7 +34,7 @@ SSL_write_ex(), or SSL_write().
 If necessary, a write function will negotiate a TLS/SSL session, if not already
 explicitly performed by L<SSL_connect(3)> or L<SSL_accept(3)>. If the peer
 requests a re-negotiation, it will be performed transparently during
-the write function operation. The behaviour of the write functions depends on the
+the write function operation. The behavior of the write functions depends on the
 underlying BIO.
 
 For the transparent negotiation to succeed, the B<ssl> must have been
@@ -58,7 +58,7 @@ for the required condition. When using a buffering BIO, like a BIO pair, data
 must be written into or retrieved out of the BIO before being able to continue.
 
 The write functions will only return with success when the complete contents of
-B<buf> of length B<num> has been written. This default behaviour can be changed
+B<buf> of length B<num> has been written. This default behavior can be changed
 with the SSL_MODE_ENABLE_PARTIAL_WRITE option of L<SSL_CTX_set_mode(3)>. When
 this flag is set the write functions will also return with success when a
 partial write has been successfully completed. In this case the write function

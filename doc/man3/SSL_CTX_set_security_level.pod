@@ -48,7 +48,7 @@ retrieve the current security level.
 SSL_CTX_set_security_callback(), SSL_set_security_callback(),
 SSL_CTX_get_security_callback() and SSL_get_security_callback() get or set
 the security callback associated with B<ctx> or B<s>. If not set a default
-security callback is used. The meaning of the parameters and the behaviour
+security callback is used. The meaning of the parameters and the behavior
 of the default callbacks is described below.
 
 SSL_CTX_set0_security_ex_data(), SSL_set0_security_ex_data(),

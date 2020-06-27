@@ -5,8 +5,8 @@
 OPENSSL_INIT_new, OPENSSL_INIT_set_config_filename,
 OPENSSL_INIT_set_config_appname, OPENSSL_INIT_set_config_file_flags,
 OPENSSL_INIT_free, OPENSSL_init_crypto, OPENSSL_cleanup, OPENSSL_atexit,
-OPENSSL_thread_stop_ex, OPENSSL_thread_stop - OpenSSL initialisation
-and deinitialisation functions
+OPENSSL_thread_stop_ex, OPENSSL_thread_stop - OpenSSL initialization
+and deinitialization functions
 
 =head1 SYNOPSIS
 
@@ -36,22 +36,22 @@ application is multi-threaded), and these resources must be freed prior to the
 thread closing.
 
 As of version 1.1.0 OpenSSL will automatically allocate all resources that it
-needs so no explicit initialisation is required. Similarly it will also
+needs so no explicit initialization is required. Similarly it will also
 automatically deinitialise as required.
 
-However, there may be situations when explicit initialisation is desirable or
-needed, for example when some non-default initialisation is required. The
+However, there may be situations when explicit initialization is desirable or
+needed, for example when some non-default initialization is required. The
 function OPENSSL_init_crypto() can be used for this purpose for
 libcrypto (see also L<OPENSSL_init_ssl(3)> for the libssl
 equivalent).
 
 Numerous internal OpenSSL functions call OPENSSL_init_crypto().
-Therefore, in order to perform non-default initialisation,
+Therefore, in order to perform non-default initialization,
 OPENSSL_init_crypto() MUST be called by application code prior to
 any other OpenSSL function calls.
 
 The B<opts> parameter specifies which aspects of libcrypto should be
-initialised. Valid options are:
+initialized. Valid options are:
 
 =over 4
 
@@ -104,7 +104,7 @@ With this option an OpenSSL configuration file will be automatically loaded and
 used by calling OPENSSL_config(). This is a default option.
 Note that in OpenSSL 1.1.1 this was the default for libssl but not for
 libcrypto (see L<OPENSSL_init_ssl(3)> for further details about libssl
-initialisation).
+initialization).
 In OpenSSL 1.1.0 this was a non-default option for both libssl and libcrypto.
 See the description of OPENSSL_INIT_new(), below.
 
@@ -116,47 +116,47 @@ option.
 
 =item OPENSSL_INIT_ASYNC
 
-With this option the library with automatically initialise the libcrypto async
+With this option the library with automatically initialize the libcrypto async
 sub-library (see L<ASYNC_start_job(3)>). This is a default option.
 
 =item OPENSSL_INIT_ENGINE_RDRAND
 
-With this option the library will automatically load and initialise the
+With this option the library will automatically load and initialize the
 RDRAND engine (if available). This not a default option.
 
 =item OPENSSL_INIT_ENGINE_DYNAMIC
 
-With this option the library will automatically load and initialise the
+With this option the library will automatically load and initialize the
 dynamic engine. This not a default option.
 
 =item OPENSSL_INIT_ENGINE_OPENSSL
 
-With this option the library will automatically load and initialise the
+With this option the library will automatically load and initialize the
 openssl engine. This not a default option.
 
 =item OPENSSL_INIT_ENGINE_CRYPTODEV
 
-With this option the library will automatically load and initialise the
+With this option the library will automatically load and initialize the
 cryptodev engine (if available). This not a default option.
 
 =item OPENSSL_INIT_ENGINE_CAPI
 
-With this option the library will automatically load and initialise the
+With this option the library will automatically load and initialize the
 CAPI engine (if available). This not a default option.
 
 =item OPENSSL_INIT_ENGINE_PADLOCK
 
-With this option the library will automatically load and initialise the
+With this option the library will automatically load and initialize the
 padlock engine (if available). This not a default option.
 
 =item OPENSSL_INIT_ENGINE_AFALG
 
-With this option the library will automatically load and initialise the
+With this option the library will automatically load and initialize the
 AFALG engine. This not a default option.
 
 =item OPENSSL_INIT_ENGINE_ALL_BUILTIN
 
-With this option the library will automatically load and initialise all the
+With this option the library will automatically load and initialize all the
 built in engines listed above with the exception of the openssl and afalg
 engines. This not a default option.
 
@@ -168,7 +168,7 @@ See OPENSSL_fork_prepare(3) for details.
 =item OPENSSL_INIT_NO_ATEXIT
 
 By default OpenSSL will attempt to clean itself up when the process exits via an
-"atexit" handler. Using this option suppresses that behaviour. This means that
+"atexit" handler. Using this option suppresses that behavior. This means that
 the application will have to clean up OpenSSL explicitly using
 OPENSSL_cleanup().
 
@@ -188,20 +188,20 @@ atexit() function. In the event that the application will close in a manner
 that will not call the registered atexit() handlers then the application should
 call OPENSSL_cleanup() directly. Developers of libraries using OpenSSL
 are discouraged from calling this function and should instead, typically, rely
-on auto-deinitialisation. This is to avoid error conditions where both an
+on auto-deinitialization. This is to avoid error conditions where both an
 application and a library it depends on both use OpenSSL, and the library
 deinitialises it before the application has finished using it.
 
-Once OPENSSL_cleanup() has been called the library cannot be reinitialised.
+Once OPENSSL_cleanup() has been called the library cannot be reinitialized.
 Attempts to call OPENSSL_init_crypto() will fail and an ERR_R_INIT_FAIL error
-will be added to the error stack. Note that because initialisation has failed
+will be added to the error stack. Note that because initialization has failed
 OpenSSL error strings will not be available, only an error code. This code can
 be put through the openssl errstr command line application to produce a human
 readable error (see L<openssl-errstr(1)>).
 
 The OPENSSL_atexit() function enables the registration of a
 function to be called during OPENSSL_cleanup(). Stop handlers are
-called after deinitialisation of resources local to a thread, but before other
+called after deinitialization of resources local to a thread, but before other
 process wide resources are freed. In the event that multiple stop handlers are
 registered, no guarantees are made about the order of execution.
 

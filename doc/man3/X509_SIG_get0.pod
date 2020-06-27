@@ -18,7 +18,7 @@ X509_SIG_get0, X509_SIG_getm - DigestInfo functions
 X509_SIG_get0() returns pointers to the algorithm identifier and digest
 value in B<sig>. X509_SIG_getm() is identical to X509_SIG_get0()
 except the pointers returned are not constant and can be modified:
-for example to initialise them.
+for example to initialize them.
 
 =head1 RETURN VALUES
 

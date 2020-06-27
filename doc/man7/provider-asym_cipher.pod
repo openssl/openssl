@@ -108,7 +108,7 @@ structure for holding context information during an asymmetric cipher operation.
 A pointer to this context will be passed back in a number of the other
 asymmetric cipher operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialization (see L<provider(7)>).
 
 OSSL_FUNC_asym_cipher_freectx() is passed a pointer to the provider side asymmetric
 cipher context in the I<ctx> parameter.
@@ -119,7 +119,7 @@ context in the I<ctx> parameter and return the duplicate copy.
 
 =head2 Encryption Functions
 
-OSSL_FUNC_asym_cipher_encrypt_init() initialises a context for an asymmetric encryption
+OSSL_FUNC_asym_cipher_encrypt_init() initializes a context for an asymmetric encryption
 given a provider side asymmetric cipher context in the I<ctx> parameter, and a
 pointer to a provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
@@ -127,7 +127,7 @@ the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OSSL_FUNC_asym_cipher_encrypt() performs the actual encryption itself.
-A previously initialised asymmetric cipher context is passed in the I<ctx>
+A previously initialized asymmetric cipher context is passed in the I<ctx>
 parameter.
 The data to be encrypted is pointed to by the I<in> parameter which is I<inlen>
 bytes long.
@@ -140,7 +140,7 @@ written to I<*outlen>.
 
 =head2 Decryption Functions
 
-OSSL_FUNC_asym_cipher_decrypt_init() initialises a context for an asymmetric decryption
+OSSL_FUNC_asym_cipher_decrypt_init() initializes a context for an asymmetric decryption
 given a provider side asymmetric cipher context in the I<ctx> parameter, and a
 pointer to a provider key object in the I<provkey> parameter.
 The key object should have been previously generated, loaded or imported into
@@ -148,7 +148,7 @@ the provider using the key management (OSSL_OP_KEYMGMT) operation (see
 provider-keymgmt(7)>.
 
 OSSL_FUNC_asym_cipher_decrypt() performs the actual decryption itself.
-A previously initialised asymmetric cipher context is passed in the I<ctx>
+A previously initialized asymmetric cipher context is passed in the I<ctx>
 parameter.
 The data to be decrypted is pointed to by the I<in> parameter which is I<inlen>
 bytes long.
@@ -172,7 +172,7 @@ OSSL_FUNC_asym_cipher_set_ctx_params() sets the asymmetric cipher parameters ass
 with the given provider side asymmetric cipher context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-Parameters currently recognised by built-in asymmetric cipher algorithms are as
+Parameters currently recognized by built-in asymmetric cipher algorithms are as
 follows.
 Not all parameters are relevant to, or are understood by all asymmetric cipher
 algorithms:

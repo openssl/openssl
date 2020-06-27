@@ -170,7 +170,7 @@ reseeds itself automatically, if one of the following conditions holds:
 
 - the number of generate requests since the last reseeding exceeds a
 certain threshold, the so called I<reseed_interval>.
-This behaviour can be disabled by setting the I<reseed_interval> to 0.
+This behavior can be disabled by setting the I<reseed_interval> to 0.
 
 - the time elapsed since the last reseeding exceeds a certain time
 interval, the so called I<reseed_time_interval>.

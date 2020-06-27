@@ -52,7 +52,7 @@ and the signature's checked.
 If all signature's verify correctly then the function is successful.
 
 Any of the following flags (ored together) can be passed in the B<flags>
-parameter to change the default verify behaviour.
+parameter to change the default verify behavior.
 
 If B<CMS_NOINTERN> is set the certificates in the message itself are not
 searched when locating the signing certificate(s). This means that all the
@@ -91,14 +91,14 @@ lookup certificates in a database or perform customised verification. This
 can be achieved by setting and verifying the signers certificates manually
 using the signed data utility functions.
 
-Care should be taken when modifying the default verify behaviour, for example
+Care should be taken when modifying the default verify behavior, for example
 setting B<CMS_NO_CONTENT_VERIFY> will totally disable all content verification
 and any modified content will be considered valid. This combination is however
 useful if one merely wishes to write the content to B<out> and its validity
 is not considered important.
 
 Chain verification should arguably be performed using the signing time rather
-than the current time. However since the signing time is supplied by the
+than the current time. However, since the signing time is supplied by the
 signer it cannot be trusted without additional evidence (such as a trusted
 timestamp).
 

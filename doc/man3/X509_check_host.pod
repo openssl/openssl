@@ -37,7 +37,7 @@ Per section 6.4.2 of RFC 6125, B<name> values representing international
 domain names must be given in A-label form.  The B<namelen> argument
 must be the number of characters in the name string or zero in which
 case the length is calculated with strlen(B<name>).  When B<name> starts
-with a dot (e.g ".example.com"), it will be matched by a certificate
+with a dot (e.g. ".example.com"), it will be matched by a certificate
 valid for any sub-domain of B<name>, (see also
 B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS> below).
 

@@ -94,7 +94,7 @@ structure for holding context information during a mac operation.
 A pointer to this context will be passed back in a number of the other mac
 operation function calls.
 The parameter I<provctx> is the provider context generated during provider
-initialisation (see L<provider(7)>).
+initialization (see L<provider(7)>).
 
 OSSL_FUNC_mac_freectx() is passed a pointer to the provider side mac context in
 the I<mctx> parameter.
@@ -107,12 +107,12 @@ I<mctx> parameter and return the duplicate copy.
 
 =head2 Encryption/Decryption Functions
 
-OSSL_FUNC_mac_init() initialises a mac operation given a newly created provider
+OSSL_FUNC_mac_init() initializes a mac operation given a newly created provider
 side mac context in the I<mctx> parameter.
 
 OSSL_FUNC_mac_update() is called to supply data for MAC computation of a previously
-initialised mac operation.
-The I<mctx> parameter contains a pointer to a previously initialised provider
+initialized mac operation.
+The I<mctx> parameter contains a pointer to a previously initialized provider
 side context.
 OSSL_FUNC_mac_update() may be called multiple times for a single mac operation.
 
@@ -146,7 +146,7 @@ as descriptors of the parameters that OSSL_FUNC_mac_get_params(),
 OSSL_FUNC_mac_get_ctx_params(), and OSSL_FUNC_mac_set_ctx_params() can handle,
 respectively.
 
-Parameters currently recognised by built-in macs are as follows. Not all
+Parameters currently recognized by built-in macs are as follows. Not all
 parameters are relevant to, or are understood by all macs:
 
 =over 4

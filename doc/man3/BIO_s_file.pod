@@ -74,7 +74,7 @@ When wrapping stdout, stdin or stderr the underlying stream should not
 normally be closed so the BIO_NOCLOSE flag should be set.
 
 Because the file BIO calls the underlying stdio functions any quirks
-in stdio behaviour will be mirrored by the corresponding BIO.
+in stdio behavior will be mirrored by the corresponding BIO.
 
 On Windows BIO_new_files reserves for the filename argument to be
 UTF-8 encoded. In other words if you have to make it work in multi-

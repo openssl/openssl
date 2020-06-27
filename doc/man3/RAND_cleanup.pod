@@ -18,7 +18,7 @@ L<openssl_user_macros(7)>:
 
 Prior to OpenSSL 1.1.0, RAND_cleanup() released all resources used by
 the PRNG.  As of version 1.1.0, it does nothing and should not be called,
-since no explicit initialisation or de-initialisation is necessary. See
+since no explicit initialization or de-initialization is necessary. See
 L<OPENSSL_init_crypto(3)>.
 
 =head1 RETURN VALUES
