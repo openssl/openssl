@@ -292,8 +292,6 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
         const OSSL_PROVIDER *desired_prov = EVP_KEYMGMT_provider(keymgmt);
         OPENSSL_CTX *libctx = ossl_provider_library_context(desired_prov);
         struct selected_serializer_st sel_data;
-        OSSL_PROPERTY_LIST *check = ossl_parse_query(libctx, "type=parameters");
-        OSSL_PROPERTY_LIST *current_props = NULL;
         OSSL_SERIALIZER *first = NULL;
         const char *name;
         int i;
@@ -347,6 +345,9 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
             ser = first;
 
         if (ser != NULL) {
+            OSSL_PROPERTY_LIST *check = NULL, *current_props = NULL;
+
+            check = ossl_parse_query(libctx, "type=parameters");
             current_props =
                 ossl_parse_property(libctx, OSSL_SERIALIZER_properties(ser));
             if (ossl_property_match_count(check, current_props) > 0)
