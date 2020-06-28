@@ -324,7 +324,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
                             const char *prop_query,
                             void **method)
 {
-    OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(store->ctx);
+    OSSL_PROPERTY_LIST **plp;
     ALGORITHM *alg;
     IMPLEMENTATION *impl;
     OSSL_PROPERTY_LIST *pq = NULL, *p2 = NULL;
@@ -350,9 +350,9 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
         return 0;
     }
 
-    if (prop_query != NULL) {
+    if (prop_query != NULL)
         p2 = pq = ossl_parse_query(store->ctx, prop_query);
-    }
+    plp = ossl_ctx_global_properties(store->ctx);
     if (plp != NULL && *plp != NULL) {
         if (pq == NULL) {
             pq = *plp;
