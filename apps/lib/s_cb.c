@@ -570,7 +570,9 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
 {
     BIO *bio = arg;
     const char *str_write_p = write_p ? ">>>" : "<<<";
-    const char *str_version = lookup(version, ssl_versions, "???");
+    char tmpbuf[128];
+    BIO_snprintf(tmpbuf, sizeof(tmpbuf)-1, "Not TLS data or unknown version (version=%d, content_type=%d).", version, content_type);
+    const char *str_version = lookup(version, ssl_versions, tmpbuf);
     const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char* bp = buf;
 
@@ -581,10 +583,12 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         version == TLS1_3_VERSION ||
         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
         switch (content_type) {
-        case 20:
+        case SSL3_RT_CHANGE_CIPHER_SPEC:
+            /* type 20 */
             str_content_type = ", ChangeCipherSpec";
             break;
-        case 21:
+        case SSL3_RT_ALERT:
+            /* type 21 */
             str_content_type = ", Alert";
             str_details1 = ", ???";
             if (len == 2) {
@@ -599,14 +603,20 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
                 str_details2 = lookup((int)bp[1], alert_types, " ???");
             }
             break;
-        case 22:
+        case SSL3_RT_HANDSHAKE:
+            /* type 22 */
             str_content_type = ", Handshake";
             str_details1 = "???";
             if (len > 0)
                 str_details1 = lookup((int)bp[0], handshakes, "???");
             break;
-        case 23:
+        case SSL3_RT_APPLICATION_DATA:
+            /* type 23 */
             str_content_type = ", ApplicationData";
+            break;
+        case SSL3_RT_HEADER:
+            /* type 256 */
+            str_content_type = ", RecordHeader";
             break;
         }
     }
