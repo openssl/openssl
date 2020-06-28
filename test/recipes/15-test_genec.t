@@ -102,9 +102,13 @@ my @binary_curves = qw(
     wap-wsg-idm-ecid-wtls5
     wap-wsg-idm-ecid-wtls10
     wap-wsg-idm-ecid-wtls11
-    Oakley-EC2N-3
-    Oakley-EC2N-4
 );
+
+my @explicit_only_curves = ();
+push(@explicit_only_curves, qw(
+        Oakley-EC2N-3
+        Oakley-EC2N-4
+    )) if !disabled("ec2m");
 
 my @other_curves = ();
 push(@other_curves, 'SM2')
@@ -143,13 +147,27 @@ my @output_formats = ('PEM', 'DER');
 
 plan tests => scalar(@curve_list) * scalar(@params_encodings)
     * (1 + scalar(@output_formats)) # Try listed @output_formats and text output
+    * 2                             # Test generating parameters and keys
     + 1                             # Checking that with no curve it fails
     + 1                             # Checking that with unknown curve it fails
+    + 1                             # Subtest for explicit only curves
     ;
+
+ok(!run(app([ 'openssl', 'genpkey',
+              '-algorithm', 'EC'])),
+   "genpkey EC with no params should fail");
+
+ok(!run(app([ 'openssl', 'genpkey',
+              '-algorithm', 'EC',
+              '-pkeyopt', 'ec_paramgen_curve:bogus_foobar_curve'])),
+   "genpkey EC with unknown curve name should fail");
 
 foreach my $curvename (@curve_list) {
     foreach my $paramenc (@params_encodings) {
-        ok(run(app([ 'openssl', 'genpkey',
+
+        # --- Test generating parameters ---
+
+        ok(run(app([ 'openssl', 'genpkey', '-genparam',
                      '-algorithm', 'EC',
                      '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
                      '-pkeyopt', 'ec_param_enc:'.$paramenc,
@@ -166,14 +184,123 @@ foreach my $curvename (@curve_list) {
                          '-out', $outfile])),
                "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
        }
+
+        # --- Test generating actual keys ---
+
+        ok(run(app([ 'openssl', 'genpkey',
+                     '-algorithm', 'EC',
+                     '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                     '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                     '-text'])),
+           "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (text)");
+
+        foreach my $outform (@output_formats) {
+            my $outfile = "ecgen.${curvename}.${paramenc}." . lc $outform;
+            ok(run(app([ 'openssl', 'genpkey',
+                         '-algorithm', 'EC',
+                         '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                         '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                         '-outform', $outform,
+                         '-out', $outfile])),
+               "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
+       }
     }
 }
 
-ok(!run(app([ 'openssl', 'genpkey',
-              '-algorithm', 'EC'])),
-   "genpkey EC with no params should fail");
+subtest "test curves that only support explicit parameters encoding" => sub {
+    @curve_list = @explicit_only_curves;
 
-ok(!run(app([ 'openssl', 'genpkey',
-              '-algorithm', 'EC',
-              '-pkeyopt', 'ec_paramgen_curve:bogus_foobar_curve'])),
-   "genpkey EC with unknown curve name should fail");
+    plan skip_all => "This test is unsupported under current configuration"
+        if scalar(@curve_list) <= 0;
+
+    plan tests => scalar(@curve_list) * scalar(@params_encodings)
+        * (1 + scalar(@output_formats)) # Try listed @output_formats and text output
+        * 2                             # Test generating parameters and keys
+        ;
+
+    foreach my $curvename (@curve_list) {
+        my $paramenc = "explicit";
+
+        # --- Test generating parameters ---
+
+        ok(run(app([ 'openssl', 'genpkey', '-genparam',
+                     '-algorithm', 'EC',
+                     '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                     '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                     '-text'])),
+           "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (text)");
+
+        foreach my $outform (@output_formats) {
+            my $outfile = "ecgen.${curvename}.${paramenc}." . lc $outform;
+            ok(run(app([ 'openssl', 'genpkey', '-genparam',
+                         '-algorithm', 'EC',
+                         '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                         '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                         '-outform', $outform,
+                         '-out', $outfile])),
+               "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
+       }
+
+        # --- Test generating actual keys ---
+
+        ok(run(app([ 'openssl', 'genpkey',
+                     '-algorithm', 'EC',
+                     '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                     '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                     '-text'])),
+           "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (text)");
+
+        foreach my $outform (@output_formats) {
+            my $outfile = "ecgen.${curvename}.${paramenc}." . lc $outform;
+            ok(run(app([ 'openssl', 'genpkey',
+                         '-algorithm', 'EC',
+                         '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                         '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                         '-outform', $outform,
+                         '-out', $outfile])),
+               "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
+       }
+
+        my $paramenc = "named_curve";
+
+        # --- Test generating parameters ---
+
+        ok(!run(app([ 'openssl', 'genpkey', '-genparam',
+                      '-algorithm', 'EC',
+                      '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                      '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                      '-text'])),
+           "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (text)");
+
+        foreach my $outform (@output_formats) {
+            my $outfile = "ecgen.${curvename}.${paramenc}." . lc $outform;
+            ok(!run(app([ 'openssl', 'genpkey', '-genparam',
+                          '-algorithm', 'EC',
+                          '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                          '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                          '-outform', $outform,
+                          '-out', $outfile])),
+               "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
+       }
+
+        # --- Test generating actual keys ---
+
+        ok(!run(app([ 'openssl', 'genpkey',
+                      '-algorithm', 'EC',
+                      '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                      '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                      '-text'])),
+           "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (text)");
+
+        foreach my $outform (@output_formats) {
+            my $outfile = "ecgen.${curvename}.${paramenc}." . lc $outform;
+            ok(!run(app([ 'openssl', 'genpkey',
+                          '-algorithm', 'EC',
+                          '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                          '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                          '-outform', $outform,
+                          '-out', $outfile])),
+               "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
+       }
+    }
+};
