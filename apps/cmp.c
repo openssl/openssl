@@ -3186,8 +3186,7 @@ int cmp_main(int argc, char **argv)
     X509_STORE_free(OSSL_CMP_CTX_get_certConf_cb_arg(cmp_ctx));
     OSSL_CMP_CTX_free(cmp_ctx);
     X509_VERIFY_PARAM_free(vpm);
-    if (engine != NULL) /* workaround for Coverity false positive */
-        release_engine(engine);
+    release_engine(engine);
 
     NCONF_free(conf); /* must not do as long as opt_... variables are used */
     OSSL_CMP_log_close();
