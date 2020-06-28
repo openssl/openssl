@@ -264,6 +264,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_LADDER_POST_FAILURE                         136
 #  define EC_R_LADDER_PRE_FAILURE                          153
 #  define EC_R_LADDER_STEP_FAILURE                         162
+#  define EC_R_MISSING_OID                                 167
 #  define EC_R_MISSING_PARAMETERS                          124
 #  define EC_R_MISSING_PRIVATE_KEY                         125
 #  define EC_R_NEED_NEW_SETUP_VALUES                       157
