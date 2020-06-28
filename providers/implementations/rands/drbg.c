@@ -503,7 +503,7 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
                                                drbg->min_noncelen,
                                                drbg->max_noncelen)) {
                 PROVerr(0, PROV_R_ERROR_RETRIEVING_NONCE);
-                OPENSSL_free(nonce);
+                goto end;
             }
 #ifndef PROV_RAND_GET_RANDOM_NONCE
         } else if (drbg->parent != NULL) {
