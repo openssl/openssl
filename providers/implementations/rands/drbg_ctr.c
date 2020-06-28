@@ -530,9 +530,13 @@ static int drbg_ctr_init_lengths(PROV_DRBG *drbg)
 static int drbg_ctr_init(PROV_DRBG *drbg)
 {
     PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
-    const size_t keylen = EVP_CIPHER_key_length(ctr->cipher_ctr);
+    size_t keylen;
 
-    ctr->keylen = keylen;
+    if (ctr->cipher_ctr == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CIPHER);
+        return 0;
+    }
+    ctr->keylen = keylen = EVP_CIPHER_key_length(ctr->cipher_ctr);
     if (ctr->ctx_ecb == NULL)
         ctr->ctx_ecb = EVP_CIPHER_CTX_new();
     if (ctr->ctx_ctr == NULL)
@@ -542,39 +546,37 @@ static int drbg_ctr_init(PROV_DRBG *drbg)
         goto err;
     }
 
-    if (ctr->cipher_ctr != NULL) {
-        if (!EVP_CipherInit_ex(ctr->ctx_ecb,
-                               ctr->cipher_ecb, NULL, NULL, NULL, 1)
-            || !EVP_CipherInit_ex(ctr->ctx_ctr,
-                                  ctr->cipher_ctr, NULL, NULL, NULL, 1)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_INITIALISE_CIPHERS);
+    if (!EVP_CipherInit_ex(ctr->ctx_ecb,
+                           ctr->cipher_ecb, NULL, NULL, NULL, 1)
+        || !EVP_CipherInit_ex(ctr->ctx_ctr,
+                              ctr->cipher_ctr, NULL, NULL, NULL, 1)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_INITIALISE_CIPHERS);
+        goto err;
+    }
+
+    drbg->strength = keylen * 8;
+    drbg->seedlen = keylen + 16;
+
+    if (ctr->use_df) {
+        /* df initialisation */
+        static const unsigned char df_key[32] = {
+            0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+            0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+            0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
+        };
+
+        if (ctr->ctx_df == NULL)
+            ctr->ctx_df = EVP_CIPHER_CTX_new();
+        if (ctr->ctx_df == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-
-        drbg->strength = keylen * 8;
-        drbg->seedlen = keylen + 16;
-
-        if (ctr->use_df) {
-            /* df initialisation */
-            static const unsigned char df_key[32] = {
-                0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-                0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-                0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-                0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
-            };
-
-            if (ctr->ctx_df == NULL)
-                ctr->ctx_df = EVP_CIPHER_CTX_new();
-            if (ctr->ctx_df == NULL) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-                goto err;
-            }
-            /* Set key schedule for df_key */
-            if (!EVP_CipherInit_ex(ctr->ctx_df,
-                                   ctr->cipher_ecb, NULL, df_key, NULL, 1)) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_DERIVATION_FUNCTION_INIT_FAILED);
-                goto err;
-            }
+        /* Set key schedule for df_key */
+        if (!EVP_CipherInit_ex(ctr->ctx_df,
+                               ctr->cipher_ecb, NULL, df_key, NULL, 1)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_DERIVATION_FUNCTION_INIT_FAILED);
+            goto err;
         }
     }
     return drbg_ctr_init_lengths(drbg);
