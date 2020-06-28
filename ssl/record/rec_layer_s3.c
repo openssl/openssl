@@ -1107,14 +1107,14 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         if (s->msg_callback) {
             recordstart = WPACKET_get_curr(thispkt) - len
                           - SSL3_RT_HEADER_LENGTH;
-            s->msg_callback(1, 0, SSL3_RT_HEADER, recordstart,
+            s->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
                             SSL3_RT_HEADER_LENGTH, s,
                             s->msg_callback_arg);
 
             if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
                 unsigned char ctype = type;
 
-                s->msg_callback(1, s->version, SSL3_RT_INNER_CONTENT_TYPE,
+                s->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
                                 &ctype, 1, s, s->msg_callback_arg);
             }
         }

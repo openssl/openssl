@@ -287,20 +287,24 @@ int ssl3_get_record(SSL *s)
                 }
             } else {
                 /* SSLv3+ style record */
-                if (s->msg_callback)
-                    s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, s,
-                                    s->msg_callback_arg);
 
                 /* Pull apart the header into the SSL3_RECORD */
                 if (!PACKET_get_1(&pkt, &type)
                         || !PACKET_get_net_2(&pkt, &version)
                         || !PACKET_get_net_2_len(&pkt, &thisrr->length)) {
+                    if (s->msg_callback)
+                        s->msg_callback(0, 0, SSL3_RT_HEADER, p, 5, s,
+                                        s->msg_callback_arg);
                     SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_SSL3_GET_RECORD,
                              ERR_R_INTERNAL_ERROR);
                     return -1;
                 }
                 thisrr->type = type;
                 thisrr->rec_version = version;
+
+                if (s->msg_callback)
+                    s->msg_callback(0, version, SSL3_RT_HEADER, p, 5, s,
+                                    s->msg_callback_arg);
 
                 /*
                  * Lets check version. In TLSv1.3 we only check this field
