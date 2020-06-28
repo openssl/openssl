@@ -2439,6 +2439,7 @@ EC_R_KEYS_NOT_SET:140:keys not set
 EC_R_LADDER_POST_FAILURE:136:ladder post failure
 EC_R_LADDER_PRE_FAILURE:153:ladder pre failure
 EC_R_LADDER_STEP_FAILURE:162:ladder step failure
+EC_R_MISSING_OID:167:missing OID
 EC_R_MISSING_PARAMETERS:124:missing parameters
 EC_R_MISSING_PRIVATE_KEY:125:missing private key
 EC_R_NEED_NEW_SETUP_VALUES:157:need new setup values
@@ -2886,6 +2887,7 @@ PROV_R_MISSING_CONSTANT:156:missing constant
 PROV_R_MISSING_KEY:128:missing key
 PROV_R_MISSING_MAC:150:missing mac
 PROV_R_MISSING_MESSAGE_DIGEST:129:missing message digest
+PROV_R_MISSING_OID:209:missing OID
 PROV_R_MISSING_PASS:130:missing pass
 PROV_R_MISSING_SALT:131:missing salt
 PROV_R_MISSING_SECRET:132:missing secret

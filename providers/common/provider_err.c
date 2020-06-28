@@ -112,6 +112,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_MAC), "missing mac"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_MESSAGE_DIGEST),
     "missing message digest"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_OID), "missing OID"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_PASS), "missing pass"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_SALT), "missing salt"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_MISSING_SECRET), "missing secret"},

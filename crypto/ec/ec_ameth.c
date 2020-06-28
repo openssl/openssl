@@ -43,7 +43,14 @@ static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
         && (nid = EC_GROUP_get_curve_name(group)))
         /* we have a 'named curve' => just set the OID */
     {
-        *ppval = OBJ_nid2obj(nid);
+        ASN1_OBJECT *asn1obj = OBJ_nid2obj(nid);
+
+        if (asn1obj == NULL || OBJ_length(asn1obj) == 0) {
+            ASN1_OBJECT_free(asn1obj);
+            ECerr(EC_F_ECKEY_PARAM2TYPE, EC_R_MISSING_OID);
+            return 0;
+        }
+        *ppval = asn1obj;
         *pptype = V_ASN1_OBJECT;
     } else {                    /* explicit parameters */
 

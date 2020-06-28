@@ -70,6 +70,7 @@ static const ERR_STRING_DATA EC_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_LADDER_POST_FAILURE), "ladder post failure"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_LADDER_PRE_FAILURE), "ladder pre failure"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_LADDER_STEP_FAILURE), "ladder step failure"},
+    {ERR_PACK(ERR_LIB_EC, 0, EC_R_MISSING_OID), "missing OID"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_MISSING_PARAMETERS), "missing parameters"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_MISSING_PRIVATE_KEY), "missing private key"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_NEED_NEW_SETUP_VALUES),
