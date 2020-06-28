@@ -143,13 +143,17 @@ my @output_formats = ('PEM', 'DER');
 
 plan tests => scalar(@curve_list) * scalar(@params_encodings)
     * (1 + scalar(@output_formats)) # Try listed @output_formats and text output
+    * 2                             # Test generating parameters and keys
     + 1                             # Checking that with no curve it fails
     + 1                             # Checking that with unknown curve it fails
     ;
 
 foreach my $curvename (@curve_list) {
     foreach my $paramenc (@params_encodings) {
-        ok(run(app([ 'openssl', 'genpkey',
+
+        # --- Test generating parameters ---
+
+        ok(run(app([ 'openssl', 'genpkey', '-genparam',
                      '-algorithm', 'EC',
                      '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
                      '-pkeyopt', 'ec_param_enc:'.$paramenc,
@@ -165,6 +169,26 @@ foreach my $curvename (@curve_list) {
                          '-outform', $outform,
                          '-out', $outfile])),
                "genpkey EC params ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
+       }
+
+        # --- Test generating actual keys ---
+
+        ok(run(app([ 'openssl', 'genpkey',
+                     '-algorithm', 'EC',
+                     '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                     '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                     '-text'])),
+           "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (text)");
+
+        foreach my $outform (@output_formats) {
+            my $outfile = "ecgen.${curvename}.${paramenc}." . lc $outform;
+            ok(run(app([ 'openssl', 'genpkey',
+                         '-algorithm', 'EC',
+                         '-pkeyopt', 'ec_paramgen_curve:'.$curvename,
+                         '-pkeyopt', 'ec_param_enc:'.$paramenc,
+                         '-outform', $outform,
+                         '-out', $outfile])),
+               "genpkey EC key on ${curvename} with ec_param_enc:'${paramenc}' (${outform})");
        }
     }
 }
