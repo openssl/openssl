@@ -163,14 +163,32 @@ struct err_state_st {
 #  define X509err(f, r) ERR_raise_data(ERR_LIB_X509, (r), NULL)
 # endif
 
-# define ERR_PACK(l,f,r) ( \
-        (((unsigned int)(l) & 0x0FF) << 24L) | \
-        (((unsigned int)(f) & 0xFFF) << 12L) | \
-        (((unsigned int)(r) & 0xFFF)       ) )
-# define ERR_GET_LIB(l)          (int)(((l) >> 24L) & 0x0FFL)
-# define ERR_GET_FUNC(l)         (int)(((l) >> 12L) & 0xFFFL)
-# define ERR_GET_REASON(l)       (int)( (l)         & 0xFFFL)
-# define ERR_FATAL_ERROR(l)      (int)( (l)         & ERR_R_FATAL)
+/*
+ * The error code currently packs as follows (viewed as hex nibbles):
+ *
+ * LL F RRRRR
+ *
+ * Where LL is the library code, F is the reason flags, and RRRRR is the
+ * reason code.
+ */
+# define ERR_LIB_OFFSET     24L
+# define ERR_LIB_MASK       0xFF
+# define ERR_RFLAGS_OFFSET  20L
+# define ERR_RFLAGS_MASK    0xF
+# define ERR_REASON_MASK    0XFFFFF
+
+# define ERR_RFLAG_FATAL    (0x1 << ERR_RFLAGS_OFFSET)
+
+/* ERR_PACK takes reason flags and reason code combined in |r| */
+# define ERR_PACK(l,f,r)                                                \
+    ( (((unsigned int)(l) & ERR_LIB_MASK) << ERR_LIB_OFFSET) |          \
+      (((unsigned int)(r) & ((ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET)     \
+                             | ERR_REASON_MASK))) )
+# define ERR_GET_LIB(l)     (int)(((l) >> ERR_LIB_OFFSET) & ERR_LIB_MASK)
+# define ERR_GET_FUNC(l)    0
+# define ERR_GET_RFLAGS(l)  (int)((l) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET))
+# define ERR_GET_REASON(l)  (int)((l) & ERR_REASON_MASK)
+# define ERR_FATAL_ERROR(l) (int)((l) & ERR_RFLAG_FATAL)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SYS_F_FOPEN             0
@@ -200,7 +218,7 @@ struct err_state_st {
 #  define SYS_F_SENDFILE          0
 # endif
 
-/* reasons */
+/* "we came from here" global reason codes, range 1..63 */
 # define ERR_R_SYS_LIB   ERR_LIB_SYS/* 2 */
 # define ERR_R_BN_LIB    ERR_LIB_BN/* 3 */
 # define ERR_R_RSA_LIB   ERR_LIB_RSA/* 4 */
@@ -221,21 +239,26 @@ struct err_state_st {
 # define ERR_R_ECDSA_LIB ERR_LIB_ECDSA/* 42 */
 # define ERR_R_OSSL_STORE_LIB ERR_LIB_OSSL_STORE/* 44 */
 
-# define ERR_R_NESTED_ASN1_ERROR                 58
-# define ERR_R_MISSING_ASN1_EOS                  63
-
-/* fatal error */
-# define ERR_R_FATAL                             64
-# define ERR_R_MALLOC_FAILURE                    (1|ERR_R_FATAL)
-# define ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED       (2|ERR_R_FATAL)
-# define ERR_R_PASSED_NULL_PARAMETER             (3|ERR_R_FATAL)
-# define ERR_R_INTERNAL_ERROR                    (4|ERR_R_FATAL)
-# define ERR_R_DISABLED                          (5|ERR_R_FATAL)
-# define ERR_R_INIT_FAIL                         (6|ERR_R_FATAL)
-# define ERR_R_PASSED_INVALID_ARGUMENT           (7)
-# define ERR_R_OPERATION_FAIL                    (8|ERR_R_FATAL)
-# define ERR_R_INVALID_PROVIDER_FUNCTIONS        (9|ERR_R_FATAL)
-# define ERR_R_INTERRUPTED_OR_CANCELLED          (10)
+/*
+ * global reason codes, range 64..99 (sub-system specific codes start at 100)
+ *
+ * ERR_R_FATAL had dual purposes in pre-3.0 OpenSSL, as a standalone reason
+ * code as well as a fatal flag.  This is still possible to do, as 2**6 (64)
+ * is present in the whole range of global reason codes.
+ */
+# define ERR_R_FATAL                             (64|ERR_RFLAG_FATAL)
+# define ERR_R_MALLOC_FAILURE                    (65|ERR_RFLAG_FATAL)
+# define ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED       (66|ERR_RFLAG_FATAL)
+# define ERR_R_PASSED_NULL_PARAMETER             (67|ERR_RFLAG_FATAL)
+# define ERR_R_INTERNAL_ERROR                    (68|ERR_RFLAG_FATAL)
+# define ERR_R_DISABLED                          (69|ERR_RFLAG_FATAL)
+# define ERR_R_INIT_FAIL                         (70|ERR_RFLAG_FATAL)
+# define ERR_R_PASSED_INVALID_ARGUMENT           (71)
+# define ERR_R_OPERATION_FAIL                    (72|ERR_RFLAG_FATAL)
+# define ERR_R_INVALID_PROVIDER_FUNCTIONS        (73|ERR_RFLAG_FATAL)
+# define ERR_R_INTERRUPTED_OR_CANCELLED          (74)
+# define ERR_R_NESTED_ASN1_ERROR                 (76)
+# define ERR_R_MISSING_ASN1_EOS                  (77)
 
 /*
  * 99 is the maximum possible ERR_R_... code, higher values are reserved for
