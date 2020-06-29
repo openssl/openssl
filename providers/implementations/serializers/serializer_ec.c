@@ -11,6 +11,7 @@
 #include "crypto/ec.h"
 #include "prov/bio.h"             /* ossl_prov_bio_printf() */
 #include "prov/implementations.h" /* ec_keymgmt_functions */
+#include "prov/providercommonerr.h" /* PROV_R_MISSING_OID */
 #include "serializer_local.h"
 
 void ec_get_new_free_import(OSSL_FUNC_keymgmt_new_fn **ec_new,
@@ -119,7 +120,7 @@ int ossl_prov_prepare_ec_params(const void *eckey, int nid,
 
     if (OBJ_length(params) == 0) {
         /* Some curves might not have an associated OID */
-        ERR_raise(ERR_LIB_PROV, EC_R_MISSING_OID);
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_OID);
         ASN1_OBJECT_free(params);
         return 0;
     }
