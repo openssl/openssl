@@ -25,6 +25,8 @@ use lib bldtop_dir('.');
 use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $infile = bldtop_file('providers', platform->dso('fips'));
+
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
@@ -85,9 +87,7 @@ plan tests =>
 unless ($no_fips) {
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips',
-                '-section_name', 'fips_sect'])),
+                '-module', $infile])),
        "fipsinstall");
 }
 

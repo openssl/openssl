@@ -85,9 +85,7 @@ unless ($no_fips) {
 
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile,
-                '-provider_name', 'fips',
-                '-section_name', 'fips_sect'])),
+                '-module', $infile])),
        "fipsinstall");
 }
 
