@@ -27,18 +27,19 @@ plan skip_all => "Test only supported in a fips build" if disabled("fips");
 plan tests => 12;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
+my $fipskey = $ENV{FIPSKEY} // '00';
 
 # fail if no module name
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module',
              '-provider_name', 'fips',
-             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+             '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
              '-section_name', 'fips_install'])),
    "fipsinstall fail");
 
 # fail to verify if the configuration file is missing
 ok(!run(app(['openssl', 'fipsinstall', '-in', 'dummy.tmp', '-module', $infile,
              '-provider_name', 'fips', '-mac_name', 'HMAC',
-             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+             '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
              '-section_name', 'fips_install', '-verify'])),
    "fipsinstall verify fail");
 
@@ -46,56 +47,56 @@ ok(!run(app(['openssl', 'fipsinstall', '-in', 'dummy.tmp', '-module', $infile,
 # output a fips.cnf file containing mac data
 ok(run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_install'])),
    "fipsinstall");
 
 # verify the fips.cnf file
 ok(run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_install', '-verify'])),
    "fipsinstall verify");
 
 # fail to verify the fips.cnf file if a different key is used
 ok(!run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
              '-provider_name', 'fips', '-mac_name', 'HMAC',
-             '-macopt', 'digest:SHA256', '-macopt', 'hexkey:01',
+             '-macopt', 'digest:SHA256', '-macopt', "hexkey:01",
              '-section_name', 'fips_install', '-verify'])),
    "fipsinstall verify fail bad key");
 
 # fail to verify the fips.cnf file if a different mac digest is used
 ok(!run(app(['openssl', 'fipsinstall', '-in', 'fips.cnf', '-module', $infile,
              '-provider_name', 'fips', '-mac_name', 'HMAC',
-             '-macopt', 'digest:SHA512', '-macopt', 'hexkey:00',
+             '-macopt', 'digest:SHA512', '-macopt', "hexkey:$fipskey",
              '-section_name', 'fips_install', '-verify'])),
    "fipsinstall verify fail incorrect digest");
 
 # corrupt the module hmac
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_install', '-corrupt_desc', 'HMAC'])),
    "fipsinstall fails when the module integrity is corrupted");
 
 # corrupt the first digest
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_install', '-corrupt_desc', 'SHA1'])),
    "fipsinstall fails when the digest result is corrupted");
 
 # corrupt another digest
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_install', '-corrupt_desc', 'SHA3'])),
    "fipsinstall fails when the digest result is corrupted");
 
 # corrupt DRBG
 ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
             '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
             '-section_name', 'fips_install', '-corrupt_desc', 'CTR'])),
    "fipsinstall fails when the DRBG CTR result is corrupted");
 
@@ -106,7 +107,7 @@ SKIP: {
 
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
                 '-section_name', 'fips_install',
                 '-corrupt_desc', 'DH',
                 '-corrupt_type', 'KAT_KA'])),
@@ -119,7 +120,7 @@ SKIP: {
         if disabled("dsa");
     ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.conf', '-module', $infile,
                 '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
+                '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
                 '-section_name', 'fips_install',
                 '-corrupt_desc', 'DSA',
                 '-corrupt_type', 'KAT_Signature'])),

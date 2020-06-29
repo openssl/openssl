@@ -21,6 +21,7 @@ Table of Contents
    - [Compiler Warnings](#compiler-warnings)
    - [ZLib Flags](#zlib-flags)
    - [Seeding the Random Generator](#seeding-the-random-generator)
+   - [Setting the FIPS HMAC key](#setting-the-FIPS-HMAC-key)
    - [Enable and Disable Features](#enable-and-disable-features)
    - [Displaying configuration data](#displaying-configuration-data)
  - [Installation Steps in Detail](#installation-steps-in-detail)
@@ -464,6 +465,19 @@ For more information, see the section [Notes on random number generation][rng]
 at the end of this document.
 
 [rng]: #notes-on-random-number-generation
+
+Setting the FIPS HMAC key
+-------------------------
+
+    --fips-key=value
+
+As part of its self-test validation, the FIPS module must verify itself
+by performing a SHA-256 HMAC computation on itself. The default key is
+the SHA256 value of "the holy handgrenade of antioch" and is sufficient
+for meeting the FIPS requirements.
+
+To change the key to a different value, use this flag. The value should
+be a hex string no more than 64 characters.
 
 Enable and Disable Features
 ---------------------------

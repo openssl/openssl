@@ -15,6 +15,7 @@
 #include <openssl/fips_names.h>
 #include <openssl/core_names.h>
 #include <openssl/self_test.h>
+#include <openssl/fipskey.h>
 #include "apps.h"
 #include "progs.h"
 
@@ -266,7 +267,7 @@ end:
 
 int fipsinstall_main(int argc, char **argv)
 {
-    int ret = 1, verify = 0;
+    int ret = 1, verify = 0, gotkey = 0, gotdigest = 0;
     BIO *module_bio = NULL, *mem_bio = NULL, *fout = NULL;
     char *in_fname = NULL, *out_fname = NULL, *prog, *section_name = NULL;
     char *prov_name = NULL, *module_fname = NULL;
@@ -283,6 +284,8 @@ int fipsinstall_main(int argc, char **argv)
     CONF *conf = NULL;
 
     section_name = DEFAULT_FIPS_SECTION;
+    if ((opts = sk_OPENSSL_STRING_new_null()) == NULL)
+        goto end;
 
     prog = opt_init(argc, argv, fipsinstall_options);
     while ((o = opt_next()) != OPT_EOF) {
@@ -327,10 +330,12 @@ opthelp:
             mac_name = opt_arg();
             break;
         case OPT_MACOPT:
-            if (opts == NULL)
-                opts = sk_OPENSSL_STRING_new_null();
-            if (opts == NULL || !sk_OPENSSL_STRING_push(opts, opt_arg()))
+            if (!sk_OPENSSL_STRING_push(opts, opt_arg()))
                 goto opthelp;
+            if (strncmp(opt_arg(), "hexkey:", 7) == 0)
+                gotkey = 1;
+            else if (strncmp(opt_arg(), "digest:", 7) == 0)
+                gotdigest = 1;
             break;
         case OPT_VERIFY:
             verify = 1;
@@ -341,7 +346,6 @@ opthelp:
     if (module_fname == NULL
         || (verify && in_fname == NULL)
         || (!verify && (out_fname == NULL || prov_name == NULL))
-        || opts == NULL
         || argc != 0)
         goto opthelp;
 
@@ -349,6 +353,12 @@ opthelp:
             || self_test_corrupt_desc != NULL
             || self_test_corrupt_type != NULL)
         OSSL_SELF_TEST_set_callback(NULL, self_test_events, NULL);
+
+    /* Use the default FIPS HMAC digest and key if not specified. */
+    if (!gotdigest && !sk_OPENSSL_STRING_push(opts, "digest:SHA256"))
+        goto end;
+    if (!gotkey && !sk_OPENSSL_STRING_push(opts, "hexkey:" FIPS_KEY_STRING))
+        goto end;
 
     module_bio = bio_open_default(module_fname, 'r', FORMAT_BINARY);
     if (module_bio == NULL) {

@@ -24,6 +24,7 @@
 /include/crypto/*_conf.h
 /include/openssl/configuration.h
 /include/openssl/opensslv.h
+/include/openssl/fipskey.h
 
 # Auto generated doc files
 doc/man1/openssl-*.pod
