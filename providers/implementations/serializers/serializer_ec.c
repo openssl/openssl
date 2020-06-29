@@ -117,6 +117,13 @@ int ossl_prov_prepare_ec_params(const void *eckey, int nid,
         return 0;
     }
 
+    if (OBJ_length(params) == 0) {
+        /* Some curves might not have an associated OID */
+        ERR_raise(ERR_LIB_PROV, EC_R_MISSING_OID);
+        ASN1_OBJECT_free(params);
+        return 0;
+    }
+
     *pstr = params;
     *pstrtype = V_ASN1_OBJECT;
     return 1;
