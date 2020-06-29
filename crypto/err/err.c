@@ -457,8 +457,8 @@ static void build_SYS_str_reasons(void)
         return;
     }
 
-    for (i = 1; i <= NUM_SYS_STR_REASONS; i++) {
-        ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
+    for (i = 0; i < NUM_SYS_STR_REASONS; i++) {
+        ERR_STRING_DATA *str = &SYS_str_reasons[i];
         int known_code = known_codes[i];
 
         str->error = err_pack(ERR_LIB_SYS, known_code);
