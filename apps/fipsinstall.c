@@ -22,7 +22,6 @@
 DEFINE_STACK_OF_STRING()
 
 #define BUFSIZE 4096
-#define DEFAULT_FIPS_SECTION "fips_check_section"
 
 /* Configuration file values */
 #define VERSION_KEY  "version"
@@ -357,7 +356,6 @@ opthelp:
     /* Use the default FIPS HMAC digest and key if not specified. */
     if (!gotdigest && !sk_OPENSSL_STRING_push(opts, "digest:SHA256"))
         goto end;
-    /* Use the default FIPS HMAC key if not specified. */
     if (!gotkey && !sk_OPENSSL_STRING_push(opts, "hexkey:" FIPS_KEY_STRING))
         goto end;
 
