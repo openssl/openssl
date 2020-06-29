@@ -118,7 +118,7 @@
 
    MSYS2 provides GNU tools, a Unix-like command prompt,
    and a UNIX compatibility layer for applications.
-   However in this context it is only used for building OpenSSL.
+   However, in this context it is only used for building OpenSSL.
    The resulting OpenSSL does not rely on MSYS2 to run and is fully native.
 
    Requirement details
