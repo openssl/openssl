@@ -113,6 +113,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_MISSING_KEY                               128
 # define PROV_R_MISSING_MAC                               150
 # define PROV_R_MISSING_MESSAGE_DIGEST                    129
+# define PROV_R_MISSING_OID                               209
 # define PROV_R_MISSING_PASS                              130
 # define PROV_R_MISSING_SALT                              131
 # define PROV_R_MISSING_SECRET                            132
