@@ -26,7 +26,7 @@
 static int test_print_error_format(void)
 {
     static const char expected_format[] =
-        ":error::system library:%s:Operation not permitted:"
+        ":error::system library:%s:%s:"
 # ifndef OPENSSL_NO_FILENAMES
         "errtest.c:30:";
 # else
@@ -36,13 +36,15 @@ static int test_print_error_format(void)
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
+    int code = EPERM;
 
-    BIO_snprintf(expected, sizeof(expected), expected_format, OPENSSL_FUNC);
+    BIO_snprintf(expected, sizeof(expected), expected_format,
+                 OPENSSL_FUNC, strerror(code));
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
         return 0;
 
-    ERR_PUT_error(ERR_LIB_SYS, 0, 1, "errtest.c", 30);
+    ERR_PUT_error(ERR_LIB_SYS, 0, code, "errtest.c", 30);
     ERR_print_errors(bio);
 
     if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
