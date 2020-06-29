@@ -209,10 +209,7 @@ static ossl_inline int ERR_GET_RFLAGS(int l)
 }
 static ossl_inline int ERR_GET_REASON(int l)
 {
-    int mask = ERR_REASON_MASK;
-    if (ERR_GET_LIB(l) == ERR_LIB_SYS)
-        mask |= ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET;
-    return l & mask;
+    return l & (ERR_REASON_MASK | (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET));
 }
 # define ERR_FATAL_ERROR(l) (int)((l) & ERR_RFLAG_FATAL)
 
