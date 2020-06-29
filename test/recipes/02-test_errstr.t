@@ -13,14 +13,6 @@ use OpenSSL::Test::Utils;
 use Errno qw(:POSIX);
 use POSIX qw(strerror);
 
-# We actually have space for up to 4095 error messages,
-# numerically speaking...  but we're currently only using
-# numbers 1 through 127.
-# This constant should correspond to the same constant
-# defined in crypto/err/err.c, or at least must not be
-# assigned a greater number.
-use constant NUM_SYS_STR_REASONS => 127;
-
 setup('test_errstr');
 
 # In a cross compiled situation, there are chances that our
@@ -40,72 +32,52 @@ plan skip_all => 'This is unsupported on MSYS/MinGW or MSWin32'
 plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
     if disabled('autoerrinit') || disabled('err');
 
-# These are POSIX error names, which Errno implements as functions
-# (this is documented)
-my @posix_errors = @{$Errno::EXPORT_TAGS{POSIX}};
+# There's no simple perl flag or variable to recognise GNU/hurd, but we know
+# that there's always a '/hurd' directory.
+my $ishurd = -d '/hurd';
 
-if ($^O eq 'MSWin32') {
-    # On Windows, these errors have been observed to not always be loaded by
-    # apps/openssl, while they are in perl, which causes a difference that we
-    # consider a false alarm.  So we skip checking these errors.
-    # Because we can't know exactly what symbols exist in a perticular perl
-    # version, we resort to discovering them directly in the Errno package
-    # symbol table.
-    my @error_skiplist = qw(
-        ENETDOWN
-        ENETUNREACH
-        ENETRESET
-        ECONNABORTED
-        EISCONN
-        ENOTCONN
-        ESHUTDOWN
-        ETOOMANYREFS
-        ETIMEDOUT
-        EHOSTDOWN
-        EHOSTUNREACH
-        EALREADY
-        EINPROGRESS
-        ESTALE
-        EUCLEAN
-        ENOTNAM
-        ENAVAIL
-        ENOMEDIUM
-        ENOKEY
-    );
-    @posix_errors =
-        grep {
-            my $x = $_;
-            ! grep {
-                exists $Errno::{$_} && $x == $Errno::{$_}
-            } @error_skiplist
-        } @posix_errors;
-}
+# $Errno::EXPORT_TAGS{POSIX} is an array of functions that return POSIX error
+# codes, which is the common way to implement constants in Perl.  We map them
+# to OpenSSL codes as required by the local system.  (special case: GNU/hurd)
+my %posix_openssl_error_map =
+    map {
+        my $known_code = "Errno::$_"->();
+        if ($ishurd) {
+            $_ => ((($known_code >> 8) & 0x00FF0000)
+                   | ($known_code & 0x0000FFFF))
+        } else {
+            $_ => $known_code
+        }
+    }
+    @{$Errno::EXPORT_TAGS{POSIX}};
 
-plan tests => scalar @posix_errors
+plan tests => scalar (keys %posix_openssl_error_map)
     +1                          # Checking that error 128 gives 'reason(128)'
     +1                          # Checking that error 0 gives the library name
     ;
 
-foreach my $errname (@posix_errors) {
-    my $errnum = "Errno::$errname"->();
+foreach my $errname (sort keys %posix_openssl_error_map) {
+    my $posix_errnum = "Errno::$errname"->();
+    my $openssl_errnum = $posix_openssl_error_map{$errname};
 
  SKIP: {
-        skip "Error $errname ($errnum) isn't within our range", 1
-            if $errnum > NUM_SYS_STR_REASONS;
-
         my $perr = eval {
             # Set $! to the error number...
-            local $! = $errnum;
+            local $! = $posix_errnum;
             # ... and $! will give you the error string back
             $!
         };
 
         # We know that the system reasons are in OpenSSL error library 2
-        my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
+        my @oerr = run(app([ qw(openssl errstr),
+                             sprintf("2%06x", $openssl_errnum) ]),
                        capture => 1);
         $oerr[0] =~ s|\R$||;
         @oerr = split_error($oerr[0]);
-        ok($oerr[3] eq $perr, "($errnum) '$oerr[3]' == '$perr'");
+
+        skip "libcrypto hasn't registered any error string for $errname", 1
+            if $oerr[3] =~ m|^reason\(\d+\)$|;
+        ok($oerr[3] eq $perr, "($openssl_errnum) '$oerr[3]' == '$perr'");
     }
 }
 

@@ -170,6 +170,14 @@ struct err_state_st {
  *
  * Where LL is the library code, F is the reason flags, and RRRRR is the
  * reason code.
+ *
+ * System errors (ERR_LIB_SYS) are structured a bit differently:
+ *
+ * LL RRRRRR
+ *
+ * In other words, they don't have reason flags.  This is to allow space
+ * for all kinds of system errors that we know of.  The processing of
+ * system errors is kept internal.
  */
 # define ERR_LIB_OFFSET     24L
 # define ERR_LIB_MASK       0xFF
@@ -184,10 +192,28 @@ struct err_state_st {
     ( (((unsigned int)(l) & ERR_LIB_MASK) << ERR_LIB_OFFSET) |          \
       (((unsigned int)(r) & ((ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET)     \
                              | ERR_REASON_MASK))) )
-# define ERR_GET_LIB(l)     (int)(((l) >> ERR_LIB_OFFSET) & ERR_LIB_MASK)
-# define ERR_GET_FUNC(l)    0
-# define ERR_GET_RFLAGS(l)  (int)((l) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET))
-# define ERR_GET_REASON(l)  (int)((l) & ERR_REASON_MASK)
+
+static ossl_inline int ERR_GET_LIB(int l)
+{
+    return (l >> ERR_LIB_OFFSET) & ERR_LIB_MASK;
+}
+static ossl_inline int ERR_GET_FUNC(int l)
+{
+    return 0;
+}
+static ossl_inline int ERR_GET_RFLAGS(int l)
+{
+    if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+        return 0;
+    return (l) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET);
+}
+static ossl_inline int ERR_GET_REASON(int l)
+{
+    int mask = ERR_REASON_MASK;
+    if (ERR_GET_LIB(l) == ERR_LIB_SYS)
+        mask |= ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET;
+    return l & mask;
+}
 # define ERR_FATAL_ERROR(l) (int)((l) & ERR_RFLAG_FATAL)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0

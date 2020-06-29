@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include "internal/nelem.h"
 #include "crypto/cryptlib.h"
 #include "internal/err.h"
 #include "crypto/err.h"
@@ -176,18 +177,269 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 #ifndef OPENSSL_NO_ERR
 /* 2019-05-21: Russian and Ukrainian locales on Linux require more than 6,5 kB */
 # define SPACE_SYS_STR_REASONS 8 * 1024
-# define NUM_SYS_STR_REASONS 127
 
-static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 /*
  * SYS_str_reasons is filled with copies of strerror() results at
- * initialization. 'errno' values up to 127 should cover all usual errors,
- * others will be displayed numerically by ERR_error_string. It is crucial
- * that we have something for each reason code that occurs in
- * ERR_str_reasons, or bogus reason strings will be returned for SYSerr(),
- * which always gets an errno value and never one of those 'standard' reason
- * codes.
+ * initialization.  We use an internal array of known errors to get
+ * the strings we want, as error codes may vary wildly between systems
+ * (we must take extra care with Hurd error codes, as they use the
+ * upper bits of an int).
  */
+
+/*
+ * The list of POSIX codes was copied from
+ * https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/errno.h.html
+ */
+static const int known_codes[] = {
+#ifdef E2BIG
+    E2BIG,
+#endif
+#ifdef EACCES
+    EACCES,
+#endif
+#ifdef EADDRINUSE
+    EADDRINUSE,
+#endif
+#ifdef EADDRNOTAVAIL
+    EADDRNOTAVAIL,
+#endif
+#ifdef EAFNOSUPPORT
+    EAFNOSUPPORT,
+#endif
+#ifdef EAGAIN
+    EAGAIN,
+#endif
+#ifdef EALREADY
+    EALREADY,
+#endif
+#ifdef EBADF
+    EBADF,
+#endif
+#ifdef EBADMSG
+    EBADMSG,
+#endif
+#ifdef EBUSY
+    EBUSY,
+#endif
+#ifdef ECANCELED
+    ECANCELED,
+#endif
+#ifdef ECHILD
+    ECHILD,
+#endif
+#ifdef ECONNABORTED
+    ECONNABORTED,
+#endif
+#ifdef ECONNREFUSED
+    ECONNREFUSED,
+#endif
+#ifdef ECONNRESET
+    ECONNRESET,
+#endif
+#ifdef EDEADLK
+    EDEADLK,
+#endif
+#ifdef EDESTADDRREQ
+    EDESTADDRREQ,
+#endif
+#ifdef EDOM
+    EDOM,
+#endif
+#ifdef EDQUOT
+    EDQUOT,
+#endif
+#ifdef EEXIST
+    EEXIST,
+#endif
+#ifdef EFAULT
+    EFAULT,
+#endif
+#ifdef EFBIG
+    EFBIG,
+#endif
+#ifdef EHOSTUNREACH
+    EHOSTUNREACH,
+#endif
+#ifdef EIDRM
+    EIDRM,
+#endif
+#ifdef EILSEQ
+    EILSEQ,
+#endif
+#ifdef EINPROGRESS
+    EINPROGRESS,
+#endif
+#ifdef EINTR
+    EINTR,
+#endif
+#ifdef EINVAL
+    EINVAL,
+#endif
+#ifdef EIO
+    EIO,
+#endif
+#ifdef EISCONN
+    EISCONN,
+#endif
+#ifdef EISDIR
+    EISDIR,
+#endif
+#ifdef ELOOP
+    ELOOP,
+#endif
+#ifdef EMFILE
+    EMFILE,
+#endif
+#ifdef EMLINK
+    EMLINK,
+#endif
+#ifdef EMSGSIZE
+    EMSGSIZE,
+#endif
+#ifdef EMULTIHOP
+    EMULTIHOP,
+#endif
+#ifdef ENAMETOOLONG
+    ENAMETOOLONG,
+#endif
+#ifdef ENETDOWN
+    ENETDOWN,
+#endif
+#ifdef ENETRESET
+    ENETRESET,
+#endif
+#ifdef ENETUNREACH
+    ENETUNREACH,
+#endif
+#ifdef ENFILE
+    ENFILE,
+#endif
+#ifdef ENOBUFS
+    ENOBUFS,
+#endif
+#ifdef ENODATA
+    ENODATA,
+#endif
+#ifdef ENODEV
+    ENODEV,
+#endif
+#ifdef ENOENT
+    ENOENT,
+#endif
+#ifdef ENOEXEC
+    ENOEXEC,
+#endif
+#ifdef ENOLCK
+    ENOLCK,
+#endif
+#ifdef ENOLINK
+    ENOLINK,
+#endif
+#ifdef ENOMEM
+    ENOMEM,
+#endif
+#ifdef ENOMSG
+    ENOMSG,
+#endif
+#ifdef ENOPROTOOPT
+    ENOPROTOOPT,
+#endif
+#ifdef ENOSPC
+    ENOSPC,
+#endif
+#ifdef ENOSR
+    ENOSR,
+#endif
+#ifdef ENOSTR
+    ENOSTR,
+#endif
+#ifdef ENOSYS
+    ENOSYS,
+#endif
+#ifdef ENOTCONN
+    ENOTCONN,
+#endif
+#ifdef ENOTDIR
+    ENOTDIR,
+#endif
+#ifdef ENOTEMPTY
+    ENOTEMPTY,
+#endif
+#ifdef ENOTRECOVERABLE
+    ENOTRECOVERABLE,
+#endif
+#ifdef ENOTSOCK
+    ENOTSOCK,
+#endif
+#ifdef ENOTSUP
+    ENOTSUP,
+#endif
+#ifdef ENOTTY
+    ENOTTY,
+#endif
+#ifdef ENXIO
+    ENXIO,
+#endif
+#ifdef EOPNOTSUPP
+    EOPNOTSUPP,
+#endif
+#ifdef EOVERFLOW
+    EOVERFLOW,
+#endif
+#ifdef EOWNERDEAD
+    EOWNERDEAD,
+#endif
+#ifdef EPERM
+    EPERM,
+#endif
+#ifdef EPIPE
+    EPIPE,
+#endif
+#ifdef EPROTO
+    EPROTO,
+#endif
+#ifdef EPROTONOSUPPORT
+    EPROTONOSUPPORT,
+#endif
+#ifdef EPROTOTYPE
+    EPROTOTYPE,
+#endif
+#ifdef ERANGE
+    ERANGE,
+#endif
+#ifdef EROFS
+    EROFS,
+#endif
+#ifdef ESPIPE
+    ESPIPE,
+#endif
+#ifdef ESRCH
+    ESRCH,
+#endif
+#ifdef ESTALE
+    ESTALE,
+#endif
+#ifdef ETIME
+    ETIME,
+#endif
+#ifdef ETIMEDOUT
+    ETIMEDOUT,
+#endif
+#ifdef ETXTBSY
+    ETXTBSY,
+#endif
+#ifdef EWOULDBLOCK
+    EWOULDBLOCK,
+#endif
+#ifdef EXDEV
+    EXDEV,
+#endif
+    0
+};
+
+# define NUM_SYS_STR_REASONS OSSL_NELEM(known_codes) - 1
+
+static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 
 static void build_SYS_str_reasons(void)
 {
@@ -196,7 +448,7 @@ static void build_SYS_str_reasons(void)
     char *cur = strerror_pool;
     size_t cnt = 0;
     static int init = 1;
-    int i;
+    size_t i;
     int saveerrno = get_last_sys_error();
 
     CRYPTO_THREAD_write_lock(err_string_lock);
@@ -207,14 +459,16 @@ static void build_SYS_str_reasons(void)
 
     for (i = 1; i <= NUM_SYS_STR_REASONS; i++) {
         ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
+        int known_code = known_codes[i];
 
-        str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
+        str->error = err_pack(ERR_LIB_SYS, known_code);
         /*
          * If we have used up all the space in strerror_pool,
          * there's no point in calling openssl_strerror_r()
          */
         if (str->string == NULL && cnt < sizeof(strerror_pool)) {
-            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
+            if (openssl_strerror_r(known_code, cur,
+                                   sizeof(strerror_pool) - cnt)) {
                 size_t l = strlen(cur);
 
                 str->string = cur;
@@ -295,7 +549,7 @@ void err_cleanup(void)
  */
 static void err_patch(int lib, ERR_STRING_DATA *str)
 {
-    unsigned long plib = ERR_PACK(lib, 0, 0);
+    unsigned long plib = err_pack(lib, 0);
 
     for (; str->error != 0; str++)
         str->error |= plib;
@@ -352,7 +606,7 @@ int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
 
     CRYPTO_THREAD_write_lock(err_string_lock);
     /*
-     * We don't need to ERR_PACK the lib, since that was done (to
+     * We don't need to err_pack() the lib, since that was done (to
      * the table) when it was loaded.
      */
     for (; str->error; str++)
@@ -621,7 +875,7 @@ const char *ERR_lib_error_string(unsigned long e)
     }
 
     l = ERR_GET_LIB(e);
-    d.error = ERR_PACK(l, 0, 0);
+    d.error = err_pack(l, 0);
     p = int_err_get_item(&d);
     return ((p == NULL) ? NULL : p->string);
 }
@@ -644,10 +898,10 @@ const char *ERR_reason_error_string(unsigned long e)
 
     l = ERR_GET_LIB(e);
     r = ERR_GET_REASON(e);
-    d.error = ERR_PACK(l, 0, r);
+    d.error = err_pack(l, r);
     p = int_err_get_item(&d);
-    if (p == NULL) {
-        d.error = ERR_PACK(0, 0, r);
+    if (l != ERR_LIB_SYS && p == NULL) {
+        d.error = err_pack(0, r);
         p = int_err_get_item(&d);
     }
     return ((p == NULL) ? NULL : p->string);

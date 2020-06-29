@@ -10,6 +10,23 @@
 #include <openssl/err.h>
 #include <openssl/e_os2.h>
 
+static ossl_inline int err_pack(int lib, int reason)
+{
+    /* ERR_LIB_SYS must always be passed an errno value */
+    if (lib == ERR_LIB_SYS) {
+#ifdef __gnu_hurd__
+        /*
+         * GNU hurd appears to use an error code structure where the top 4
+         * bits and the bottom 16 bits are significant, the middle bits are
+         * not.  With that in mind, we can compress the Hurd codes to fit
+         * 24 bits.
+         */
+        reason = ((reason >> 8UL) & 0x00FF0000L) | (reason & 0x0000FFFFL);
+#endif
+    }
+    return ERR_PACK(lib, 0, reason);
+}
+
 static ossl_inline void err_get_slot(ERR_STATE *es)
 {
     es->top = (es->top + 1) % ERR_NUM_ERRORS;
@@ -38,7 +55,7 @@ static ossl_inline void err_clear_data(ERR_STATE *es, size_t i, int deall)
 static ossl_inline void err_set_error(ERR_STATE *es, size_t i,
                                       int lib, int reason)
 {
-    es->err_buffer[i] = ERR_PACK(lib, 0, reason);
+    es->err_buffer[i] = err_pack(lib, reason);
 }
 
 static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
