@@ -51,7 +51,7 @@ interface method creation and destruction
 
 =head1 DESCRIPTION
 
-A method contains a few functions that implement the low level of the
+A method contains a few functions that implement the low-level of the
 User Interface.
 These functions are:
 

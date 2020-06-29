@@ -154,7 +154,7 @@ Minimizing the corpus
 ---------------------
 
 When you have gathered corpus data from more than one fuzzer run
-or for any other reason want to to minimize the data
+or for any other reason want to minimize the data
 in some corpus subdirectory `fuzz/corpora/DIR` this can be done as follows:
 
     mkdir fuzz/corpora/NEWDIR

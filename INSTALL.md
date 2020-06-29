@@ -167,7 +167,7 @@ Use the following commands to build OpenSSL:
 ### Windows
 
 If you are using Visual Studio, open a Developer Command Prompt and
-and issue the following commands to build OpenSSL.
+issue the following commands to build OpenSSL.
 
     $ perl Configure
     $ nmake
@@ -192,7 +192,7 @@ paragraphs carefully before you install OpenSSL.
 For security reasons the default system location is by default not writable
 for unprivileged users.  So for the final installation step administrative
 privileges are required.  The default system location and the procedure to
-obtain administrative privileges depends on the operating sytem.
+obtain administrative privileges depends on the operating system.
 It is recommended to compile and test OpenSSL with normal user privileges
 and use administrative privileges only for the final installation step.
 
@@ -482,8 +482,8 @@ be a hex string no more than 64 characters.
 Enable and Disable Features
 ---------------------------
 
-Feature options always come in pairs, an option to enable feature `xxxx`, and
-and option to disable it:
+Feature options always come in pairs, an option to enable feature
+`xxxx`, and an option to disable it:
 
     [ enable-xxxx | no-xxxx ]
 
@@ -852,7 +852,7 @@ Don't build with support for multi-threaded applications.
 ### threads
 
 Build with support for multi-threaded applications.  Most platforms will enable
-this by default.  However if on a platform where this is not the case then this
+this by default.  However, if on a platform where this is not the case then this
 will usually require additional system-dependent options!
 
 See [Notes on multi-threading](#notes-on-multi-threading) below.
@@ -1457,7 +1457,7 @@ described here.  Examine the Makefiles themselves for the full list.
                    Only install the OpenSSL man pages (Unix only).
 
     install_html_docs
-                   Only install the OpenSSL html documentation.
+                   Only install the OpenSSL HTML documentation.
 
     list-tests
                    Prints a list of all the self test names.
@@ -1683,7 +1683,7 @@ to deliver random bytes and a "PRNG not seeded error" will occur.
 
 The seeding method can be configured using the `--with-rand-seed` option,
 which can be used to specify a comma separated list of seed methods.
-However in most cases OpenSSL will choose a suitable default method,
+However, in most cases OpenSSL will choose a suitable default method,
 so it is not necessary to explicitly provide this option.  Note also
 that not all methods are available on all platforms.
 

@@ -48,7 +48,7 @@ EVP_KDF_gettable_params - EVP KDF routines
 
 =head1 DESCRIPTION
 
-The EVP KDF routines are a high level interface to Key Derivation Function
+The EVP KDF routines are a high-level interface to Key Derivation Function
 algorithms and should be used instead of algorithm-specific functions.
 
 After creating a B<EVP_KDF_CTX> for the required algorithm using

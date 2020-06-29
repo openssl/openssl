@@ -253,7 +253,7 @@ DNs match the order of the request. This is not needed for Xenroll.
 =item B<-noemailDN>
 
 The DN of a certificate can contain the EMAIL field if present in the
-request DN, however it is good policy just having the e-mail set into
+request DN, however, it is good policy just having the e-mail set into
 the altName extension of the certificate. When this option is set the
 EMAIL field is removed from the certificate' subject and set only in
 the, eventually present, extensions. The B<email_in_dn> keyword can be

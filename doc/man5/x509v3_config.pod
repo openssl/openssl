@@ -167,7 +167,7 @@ Examples:
 This is a string extension with one of two legal values. If it is the word
 B<hash>, then OpenSSL will follow the process in RFC 5280 to calculate the
 hash value.
-Otherwise, the value should be a hex string to output directly, however this
+Otherwise, the value should be a hex string to output directly, however, this
 is strongly discouraged.
 
 Example:

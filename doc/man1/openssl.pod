@@ -1125,7 +1125,7 @@ a string and leading or trailing spaces.
 =item B<esc_2254>
 
 Escape the "special" characters in a field as required by RFC 2254 in a field.
-That is, the B<NUL> character and and of C<()*>.
+That is, the B<NUL> character and of C<()*>.
 
 =item B<esc_ctrl>
 

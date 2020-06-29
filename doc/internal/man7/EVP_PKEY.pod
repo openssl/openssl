@@ -19,12 +19,11 @@ private/public key key pairs, but has had other uses as well.
 
 =for comment "uses" could as well be "abuses"...
 
-It can contain the legacy form of keys -- i.e. pointers to the low
-level key types, such as B<RSA>, B<DSA> and B<EC> --, but also the
+It can contain the legacy form of keys -- i.e. pointers to the low-level key types, such as B<RSA>, B<DSA> and B<EC> --, but also the
 provided form of keys -- i.e. pointers to provider side key data.
 Those two forms are mutually exclusive; an B<EVP_PKEY> instance can't
 contain both a key in legacy form and in provided form.  Regardless of
-form, this key is commonly refered to as the "origin".
+form, this key is commonly referred to as the "origin".
 
 An B<EVP_PKEY> also contains a cache of provider side copies of the
 key, each adapted for the provider that is going to use that copy to

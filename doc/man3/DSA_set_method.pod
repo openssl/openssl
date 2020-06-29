@@ -46,7 +46,7 @@ DSA_set_method() selects B<meth> to perform all operations using the key
 B<rsa>. This will replace the DSA_METHOD used by the DSA key and if the
 previous method was supplied by an ENGINE, the handle to that ENGINE will
 be released during the change. It is possible to have DSA keys that only
-work with certain DSA_METHOD implementations (eg. from an ENGINE module
+work with certain DSA_METHOD implementations (e.g. from an ENGINE module
 that supports embedded hardware-protected keys), and in such cases
 attempting to change the DSA_METHOD for the key can have unexpected
 results. See L<DSA_meth_new(3)> for information on constructing custom DSA_METHOD

@@ -551,6 +551,7 @@ sub functionname_check {
 
 # This is from http://man7.org/linux/man-pages/man7/man-pages.7.html
 my %preferred_words = (
+    'a.k.a.'        => 'aka',
     'bitmask'       => 'bit mask',
     'builtin'       => 'built-in',
    #'epoch'         => 'Epoch', # handled specially, below

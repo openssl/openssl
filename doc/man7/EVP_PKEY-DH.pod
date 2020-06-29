@@ -105,7 +105,7 @@ For "group" this can be any one of 2048, 3072, 4096, 6144 or 8192.
 =item "priv_len" (B<OSSL_PKEY_PARAM_DH_PRIV_LEN>) <integer>
 
 An optional value to set the maximum length of the generated private key.
-The default valure used if this is not set is the maximum value of
+The default value used if this is not set is the maximum value of
 BN_num_bits(I<q>)). The minimum value that this can be set to is 2 * s.
 Where s is the security strength of the key which has values of
 112, 128, 152, 176 and 200 for key sizes of 2048, 3072, 4096, 6144 and 8192.

@@ -610,7 +610,7 @@ B<SCRIPTS>.
 For OpenSSL::Template documentation,
 C<perldoc -o man util/perl/OpenSSL/Template.pm>
 
-L<Text::Temlate|https://metacpan.org/pod/Text::Template>
+L<Text::Template|https://metacpan.org/pod/Text::Template>
 
 =head1 COPYRIGHT
 

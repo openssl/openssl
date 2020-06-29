@@ -102,7 +102,7 @@ and RORX;
 =item bit #64+19 denoting availability of ADCX and ADOX instructions;
 
 =item bit #64+21 denoting availability of VPMADD52[LH]UQ instructions,
-a.k.a. AVX512IFMA extension;
+aka AVX512IFMA extension;
 
 =item bit #64+29 denoting availability of SHA extension;
 

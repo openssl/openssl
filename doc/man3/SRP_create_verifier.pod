@@ -75,7 +75,7 @@ non-NULL value on success:
 not be freed.
 
 SRP_check_known_gN_param() returns the text representation of the group id
-(ie. the prime bit size) or NULL if the arguments are not valid SRP group parameters.
+(i.e. the prime bit size) or NULL if the arguments are not valid SRP group parameters.
 This value should not be freed.
 
 SRP_get_default_gN() returns NULL if I<id> is not a valid group size,

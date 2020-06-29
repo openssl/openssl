@@ -107,7 +107,7 @@ The return value can be any of these values:
 
 The handshake should be aborted, either because of an error or because of some
 policy. Note that in TLSv1.3 a client may send more than one ticket in a single
-handshake. Therefore just because one ticket is unacceptable it does not mean
+handshake. Therefore, just because one ticket is unacceptable it does not mean
 that all of them are. For this reason this option should be used with caution.
 
 =item SSL_TICKET_RETURN_IGNORE

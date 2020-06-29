@@ -98,7 +98,7 @@ useful if one merely wishes to write the content to B<out> and its validity
 is not considered important.
 
 Chain verification should arguably be performed using the signing time rather
-than the current time. However since the signing time is supplied by the
+than the current time. However, since the signing time is supplied by the
 signer it cannot be trusted without additional evidence (such as a trusted
 timestamp).
 

@@ -68,7 +68,7 @@ recipient needs to know what it was initialized with, or it won't be able
 to decrypt.  Some programs and protocols simplify this, like SSH, where
 B<ivec> is simply initialized to zero.
 BF_cbc_encrypt() operates on data that is a multiple of 8 bytes long, while
-BF_cfb64_encrypt() and BF_ofb64_encrypt() are used to encrypt an variable
+BF_cfb64_encrypt() and BF_ofb64_encrypt() are used to encrypt a variable
 number of bytes (the amount does not have to be an exact multiple of 8).  The
 purpose of the latter two is to simulate stream ciphers, and therefore, they
 need the parameter B<num>, which is a pointer to an integer where the current

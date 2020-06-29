@@ -165,7 +165,7 @@ EVP_CIPHER_do_all_provided
 
 =head1 DESCRIPTION
 
-The EVP cipher routines are a high level interface to certain
+The EVP cipher routines are a high-level interface to certain
 symmetric ciphers.
 
 The B<EVP_CIPHER> type is a structure for cipher method implementation.
@@ -558,7 +558,7 @@ Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Sets the CCM nonce (IV) length. This call can only be made before specifying an
+Sets the CCM nonce (IV) length. This call can only be made before specifying a 
 nonce value. The nonce length is given by B<15 - L> so it is 7 by default for
 AES.
 
@@ -642,10 +642,10 @@ This call is only valid when decrypting data.
 =head1 NOTES
 
 Where possible the B<EVP> interface to symmetric ciphers should be used in
-preference to the low level interfaces. This is because the code then becomes
+preference to the low-level interfaces. This is because the code then becomes
 transparent to the cipher used and much more flexible. Additionally, the
 B<EVP> interface will ensure the use of platform specific cryptographic
-acceleration such as AES-NI (the low level interfaces do not provide the
+acceleration such as AES-NI (the low-level interfaces do not provide the
 guarantee).
 
 PKCS padding works by adding B<n> padding bytes of value B<n> to make the total

@@ -69,7 +69,7 @@ elements.  After this call I<sa> is no longer valid.
 B<ossl_sa_I<TYPE>_doall>() calls the function I<leaf> for each element in I<sa>
 in ascending index order. The index position, within the sparse array,
 of each item is passed as the first argument to the leaf function and a
-pointer to the associated value is is passed as the second argument.
+pointer to the associated value is passed as the second argument.
 
 B<ossl_sa_I<TYPE>_doall_arg>() calls the function I<leaf> for each element in
 I<sa> in ascending index order. The index position, within the sparse

@@ -50,7 +50,7 @@ The verification callback can be used to customise the operation of certificate
 verification, either by overriding error conditions or logging errors for
 debugging purposes.
 
-However a verification callback is B<not> essential and the default operation
+However, a verification callback is B<not> essential and the default operation
 is often sufficient.
 
 The B<ok> parameter to the callback indicates the value the callback should

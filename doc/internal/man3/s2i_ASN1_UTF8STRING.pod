@@ -18,7 +18,7 @@ s2i_ASN1_UTF8STRING
 =head1 DESCRIPTION
 
 These functions convert OpenSSL objects to and from their ASN.1/string
-representation. This function is used for B<X509v3> extentions.
+representation. This function is used for B<X509v3> extensions.
 
 =head1 NOTES
 

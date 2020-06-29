@@ -1104,7 +1104,7 @@ This prints information about all received ITAV B<infoType>s to stdout.
 For CMP client invocations, in particular for certificate enrollment,
 usually many parameters need to be set, which is tedious and error-prone to do
 on the command line.
-Therefore the client offers the possibility to read
+Therefore, the client offers the possibility to read
 options from sections of the OpenSSL config file, usually called B<openssl.cnf>.
 The values found there can still be extended and even overridden by any
 subsequently loaded sections and on the command line.

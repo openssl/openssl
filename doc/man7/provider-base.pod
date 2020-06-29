@@ -237,7 +237,7 @@ it a set of B<OSSL_PARAM>s and the caller supplied argument I<arg>. The
 B<OSSL_PARAM>s should provide details about the capability with the name given
 in the I<capability> argument relevant for the provider context I<provctx>. If a
 provider supports multiple capabilities with the given name then it may call the
-callback multipe times (one for each capability). Capabilities can be useful for
+callback multiple times (one for each capability). Capabilities can be useful for
 describing the services that a provider can offer. For further details see the
 L</CAPABILITIES> section below. It should return 1 on success or 0 on error.
 
@@ -346,7 +346,7 @@ L<OSSL_PARAM_int(3)>.
 
 =head1 CAPABILITIES
 
-Capabilties describe some of the services that a provider can offer.
+Capabilities describe some of the services that a provider can offer.
 Applications can query the capabilities to discover those services.
 
 =head3 "TLS-GROUP" Capability

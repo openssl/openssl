@@ -58,7 +58,7 @@ RSA_set_method() selects B<meth> to perform all operations using the key
 B<rsa>. This will replace the RSA_METHOD used by the RSA key and if the
 previous method was supplied by an ENGINE, the handle to that ENGINE will
 be released during the change. It is possible to have RSA keys that only
-work with certain RSA_METHOD implementations (eg. from an ENGINE module
+work with certain RSA_METHOD implementations (e.g. from an ENGINE module
 that supports embedded hardware-protected keys), and in such cases
 attempting to change the RSA_METHOD for the key can have unexpected
 results.

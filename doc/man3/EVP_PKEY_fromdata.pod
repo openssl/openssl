@@ -22,7 +22,7 @@ The functions described here are used to create new keys from user
 provided key data, such as I<n>, I<e> and I<d> for a minimal RSA
 keypair.
 
-These functions use an B<EVP_PKEY_CTX> context, which should primarly
+These functions use an B<EVP_PKEY_CTX> context, which should primarily
 be created with L<EVP_PKEY_CTX_new_from_name(3)> or
 L<EVP_PKEY_CTX_new_id(3)>.
 
