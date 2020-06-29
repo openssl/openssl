@@ -31,9 +31,7 @@ plan tests => 2;
 
 ok(run(app(['openssl', 'fipsinstall',
            '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-           '-module', $infile,
-           '-provider_name', 'fips',
-           '-section_name', 'fips_sect'])),
+           '-module', $infile])),
    "fipsinstall");
 
 ok(run(test(["acvp_test", "-config", srctop_file("test","fips.cnf")])),

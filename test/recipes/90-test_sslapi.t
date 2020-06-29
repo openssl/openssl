@@ -39,9 +39,7 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
 unless ($no_fips) {
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips',
-                '-section_name', 'fips_sect'])),
+                '-module', bldtop_file('providers', platform->dso('fips'))])),
        "fipsinstall");
 
     ok(run(test(["sslapitest", srctop_dir("test", "certs"),

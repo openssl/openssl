@@ -74,12 +74,12 @@ Verify that the input configuration file contains the correct information.
 =item B<-provider_name> I<providername>
 
 Name of the provider inside the configuration file.
-This must be specified.
+The default value is C<fips>.
 
 =item B<-section_name> I<sectionname>
 
 Name of the section inside the configuration file.
-This must be specified.
+The default value is C<fips_sect>.
 
 =item B<-mac_name> I<name>
 
