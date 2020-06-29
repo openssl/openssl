@@ -38,7 +38,10 @@ static ossl_inline void err_clear_data(ERR_STATE *es, size_t i, int deall)
 static ossl_inline void err_set_error(ERR_STATE *es, size_t i,
                                       int lib, int reason)
 {
-    es->err_buffer[i] = ERR_PACK(lib, 0, reason);
+    es->err_buffer[i] =
+        lib == ERR_LIB_SYS
+        ? (unsigned int)(ERR_SYSTEM_FLAG |  reason)
+        : ERR_PACK(lib, 0, reason);
 }
 
 static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,

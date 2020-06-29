@@ -23,16 +23,36 @@ void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
 {
     CRYPTO_THREAD_ID tid = CRYPTO_THREAD_get_current_id();
     unsigned long l;
-    char buf[ERR_PRINT_BUF_SIZE], *hex;
-    const char *lib, *reason;
     const char *file, *data, *func;
     int line, flags;
 
     while ((l = ERR_get_error_all(&file, &line, &func, &data, &flags)) != 0) {
+        char buf[ERR_PRINT_BUF_SIZE], *hex;
+        const char *lib, *reason = NULL;
+        char rsbuf[256];
+        unsigned long r = ERR_GET_REASON(l);
+
         lib = ERR_lib_error_string(l);
-        reason = ERR_reason_error_string(l);
+
+        /*
+         * ERR_reason_error_string() can't safely return system error strings,
+         * since it would call openssl_strerror_r(), which needs a buffer for
+         * thread safety.  So for system errors, we call openssl_strerror_r()
+         * directly instead.
+         */
+        if (ERR_SYSTEM_ERROR(l)) {
+            if (openssl_strerror_r(r, rsbuf, sizeof(rsbuf)))
+                reason = rsbuf;
+        } else {
+            reason = ERR_reason_error_string(l);
+        }
+
         if (func == NULL)
             func = "unknown function";
+        if (reason == NULL) {
+            BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
+            reason = rsbuf;
+        }
         if ((flags & ERR_TXT_STRING) == 0)
             data = "";
         hex = openssl_buf2hexstr_sep((const unsigned char *)&tid, sizeof(tid),
