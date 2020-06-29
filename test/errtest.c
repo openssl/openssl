@@ -108,7 +108,7 @@ static int raised_error(void)
     file = __FILE__;
     line = __LINE__ + 2; /* The error is generated on the ERR_raise_data line */
 #endif
-    ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR,
+    ERR_raise_data(ERR_LIB_NONE, ERR_R_INTERNAL_ERROR,
                    "calling exit()");
     if (!TEST_ulong_ne(e = ERR_get_error_all(&f, &l, NULL, &data, NULL), 0)
             || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)
