@@ -94,7 +94,7 @@ information they should return isn't available.
 
 The BIO_lookup_ex() implementation uses the platform provided getaddrinfo()
 function. On Linux it is known that specifying 0 for the protocol will not
-return any SCTP based addresses when calling getaddrinfo(). Therefore if an SCTP
+return any SCTP based addresses when calling getaddrinfo(). Therefore, if an SCTP
 address is required then the B<protocol> parameter to BIO_lookup_ex() should be
 explicitly set to IPPROTO_SCTP. The same may be true on other platforms.
 

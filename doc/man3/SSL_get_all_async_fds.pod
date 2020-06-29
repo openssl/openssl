@@ -32,7 +32,7 @@ appearing as "read ready" on the file descriptor (no actual data should be read
 from the file descriptor). This function should only be called if the B<SSL>
 object is currently waiting for asynchronous work to complete (i.e.
 B<SSL_ERROR_WANT_ASYNC> has been received - see L<SSL_get_error(3)>). Typically
-the list will only contain one file descriptor. However if multiple asynchronous
+the list will only contain one file descriptor. However, if multiple asynchronous
 capable engines are in use then more than one is possible. The number of file
 descriptors returned is stored in I<*numfds> and the file descriptors themselves
 are in I<*fds>. The I<fds> parameter may be NULL in which case no file
@@ -63,7 +63,7 @@ SSL_get_all_async_fds() and SSL_get_changed_async_fds() return 1 on success or
 On Windows platforms the openssl/async.h header is dependent on some
 of the types customarily made available by including windows.h. The
 application developer is likely to require control over when the latter
-is included, commonly as one of the first included headers. Therefore
+is included, commonly as one of the first included headers. Therefore,
 it is defined as an application developer's responsibility to include
 windows.h prior to async.h.
 

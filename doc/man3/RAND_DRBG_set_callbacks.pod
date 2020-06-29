@@ -64,7 +64,7 @@ callbacks using RAND_DRBG_get_callback_data().
 The ownership of the context data remains with the caller, i.e., it is the
 caller's responsibility to keep it available as long as it is needed by the
 callbacks and free it after use.
-For more information about the the callback data see the NOTES section.
+For more information about the callback data see the NOTES section.
 
 Setting the callbacks or the callback data is allowed only if the DRBG has
 not been initialized yet.
@@ -91,7 +91,7 @@ does not satisfy the conditions requested by [NIST SP 800-90C], then
 it must also indicate an error by returning a buffer length of 0.
 See NOTES section for more details.
 
-The B<cleanup_entropy>() callback is called from the B<drbg> to to clear and
+The B<cleanup_entropy>() callback is called from the B<drbg> to clear and
 free the buffer allocated previously by get_entropy().
 The values B<out> and B<outlen> are the random buffer's address and length,
 as returned by the get_entropy() callback.

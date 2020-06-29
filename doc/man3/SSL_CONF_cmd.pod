@@ -141,7 +141,7 @@ for the B<key_share> sent by a client in a TLSv1.3 B<ClientHello>.
 The B<groups> argument is a colon separated list of groups. The group can
 be either the B<NIST> name (e.g. B<P-256>), some other commonly used name
 where applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g B<prime256v1>). Group names are case sensitive. The list should be
+(e.g. B<prime256v1>). Group names are case sensitive. The list should be
 in order of preference with the most preferred group first.
 
 Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,
@@ -160,7 +160,7 @@ by servers.
 The B<groups> argument is a curve name or the special value B<auto> which
 picks an appropriate curve based on client and server preferences. The
 curve can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
-(e.g B<prime256v1>). Curve names are case sensitive.
+(e.g. B<prime256v1>). Curve names are case sensitive.
 
 =item B<-cipher> I<ciphers>
 
@@ -372,7 +372,7 @@ B<ClientHello>.
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
 applicable (e.g. B<X25519>, B<ffdhe2048>) or an OpenSSL OID name
-(e.g B<prime256v1>). Group names are case sensitive. The list should be in
+(e.g. B<prime256v1>). Group names are case sensitive. The list should be in
 order of preference with the most preferred group first.
 
 Currently supported groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>,

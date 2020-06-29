@@ -71,7 +71,7 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
 
 =head1 DESCRIPTION
 
-The EVP RAND routines are a high level interface to random number generators
+The EVP RAND routines are a high-level interface to random number generators
 both deterministic and not.
 If you just want to generate random bytes then you don't need to use
 these functions: just call RAND_bytes() or RAND_priv_bytes().
@@ -204,7 +204,7 @@ States defined by the OpenSSL DRBGs are:
 
 =item *
 
-EVP_RAND_STATE_UNINITIALISED: this DRBG is currently uninitalised.
+EVP_RAND_STATE_UNINITIALISED: this DRBG is currently uninitialised.
 The instantiate call will change this to the ready state.
 
 =item *
@@ -343,7 +343,7 @@ EVP_RAND_CTX_free() does not return a value.
 
 EVP_RAND_nonce() returns the length of the nonce.
 
-EVP_RAND_strength() returns the strenght of the random number generator in bits.
+EVP_RAND_strength() returns the strength of the random number generator in bits.
 
 EVP_RAND_gettable_params(), EVP_RAND_gettable_ctx_params() and
 EVP_RAND_settable_ctx_params() return an array of OSSL_PARAMs.

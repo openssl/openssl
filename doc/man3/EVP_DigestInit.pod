@@ -101,7 +101,7 @@ EVP_MD_do_all_provided
 
 =head1 DESCRIPTION
 
-The EVP digest routines are a high level interface to message digests,
+The EVP digest routines are a high-level interface to message digests,
 and should be used instead of the digest-specific functions.
 
 The B<EVP_MD> type is a structure for digest method implementation.
@@ -536,7 +536,7 @@ This function has no return value.
 =head1 NOTES
 
 The B<EVP> interface to message digests should almost always be used in
-preference to the low level interfaces. This is because the code then becomes
+preference to the low-level interfaces. This is because the code then becomes
 transparent to the digest used and much more flexible.
 
 New applications should use the SHA-2 (such as L<EVP_sha256(3)>) or the SHA-3

@@ -7,7 +7,7 @@ DERlib - internal OpenSSL DER library
 =head1 DESCRIPTION
 
 OpenSSL contains an internal small DER reading and writing library,
-as an alternative to the publically known i2d and d2i functions.  It's
+as an alternative to the publicly known i2d and d2i functions.  It's
 solely constituted of functions that work as building blocks to create
 more similar functions to encode and decode larger structures.
 
@@ -47,7 +47,7 @@ which is defined like this in ASN.1 terms:
             r       INTEGER,
             s       INTEGER  }
 
-With the DER library, this is the correspoding code, given two OpenSSL
+With the DER library, this is the corresponding code, given two OpenSSL
 B<BIGNUM>s I<r> and I<s>:
 
     int ok = DER_w_begin_sequence(pkt, -1)

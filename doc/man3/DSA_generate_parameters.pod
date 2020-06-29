@@ -60,7 +60,7 @@ When a candidate for q has passed a test by trial division,
 B<BN_GENCB_call(cb, 1, -1)> is called.
 While a candidate for q is tested by Miller-Rabin primality tests,
 B<BN_GENCB_call(cb, 1, i)> is called in the outer loop
-(once for each witness that confirms that the candidate may be prime);
+(once for each withess that confirms that the candidate may be prime);
 i is the loop counter (starting at 0).
 
 =item *
@@ -79,7 +79,7 @@ When a candidate for p has passed the test by trial division,
 B<BN_GENCB_call(cb, 1, -1)> is called.
 While it is tested by the Miller-Rabin primality test,
 B<BN_GENCB_call(cb, 1, i)> is called in the outer loop
-(once for each witness that confirms that the candidate may be prime).
+(once for each withess that confirms that the candidate may be prime).
 i is the loop counter (starting at 0).
 
 =item *

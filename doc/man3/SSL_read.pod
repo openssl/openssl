@@ -45,7 +45,7 @@ invocation of a read function.
 The read functions work based on the SSL/TLS records. The data are received in
 records (with a maximum record size of 16kB). Only when a record has been
 completely received, can it be processed (decryption and check of integrity).
-Therefore data that was not retrieved at the last read call can still be
+Therefore, data that was not retrieved at the last read call can still be
 buffered inside the SSL layer and will be retrieved on the next read
 call. If B<num> is higher than the number of bytes buffered then the read
 functions will return with the bytes buffered. If no more bytes are in the

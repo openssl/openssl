@@ -241,7 +241,7 @@ a strong block cipher, such as AES, in CBC mode.
 
 All the block ciphers normally use PKCS#5 padding, also known as standard
 block padding. This allows a rudimentary integrity or password check to
-be performed. However since the chance of random data passing the test
+be performed. However, since the chance of random data passing the test
 is better than 1 in 256 it isn't a very good test.
 
 If padding is disabled then the input data must be a multiple of the cipher

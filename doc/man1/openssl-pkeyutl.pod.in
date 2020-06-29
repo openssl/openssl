@@ -43,7 +43,7 @@ B<openssl> B<pkeyutl>
 
 =head1 DESCRIPTION
 
-This command can be used to perform low level public key
+This command can be used to perform low-level public key
 operations using any supported algorithm.
 
 =head1 OPTIONS

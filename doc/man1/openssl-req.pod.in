@@ -663,7 +663,7 @@ for more information.
 
 =head1 BUGS
 
-OpenSSL's handling of T61Strings (aka TeletexStrings) is broken: it effectively
+OpenSSL's handling of T61Strings (a.k.a. TeletexStrings) is broken: it effectively
 treats them as ISO-8859-1 (Latin 1), Netscape and MSIE have similar behaviour.
 This can cause problems if you need characters that aren't available in
 PrintableStrings and you don't want to or can't use BMPStrings.

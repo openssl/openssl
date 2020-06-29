@@ -35,7 +35,7 @@ SSL_set1_curves, SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve
 
 For all of the functions below that set the supported groups there must be at
 least one group in the list. A number of these functions identify groups via a
-unique integer NID value. However support for some groups may be added by
+unique integer NID value. However, support for some groups may be added by
 external providers. In this case there will be no NID assigned for the group.
 When setting such groups applications should use the "list" form of these
 functions (i.e. SSL_CTX_set1_groups_list() and SSL_set1_groups_list).

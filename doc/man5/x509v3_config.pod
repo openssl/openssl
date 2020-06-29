@@ -167,7 +167,7 @@ Examples:
 This is a string extension with one of two legal values. If it is the word
 B<hash>, then OpenSSL will follow the process in RFC 5280 to calculate the
 hash value.
-Otherwise, the value should be a hex string to output directly, however this
+Otherwise, the value should be a hex string to output directly, however, this
 is strongly discouraged.
 
 Example:
@@ -463,7 +463,7 @@ Example:
 
  noCheck = ignored
 
-=head2 TLS Feature (aka Must Staple)
+=head2 TLS Feature (a.k.a. Must Staple)
 
 This is a multi-valued extension consisting of a list of TLS extension
 identifiers. Each identifier may be a number (0..65535) or a supported name.

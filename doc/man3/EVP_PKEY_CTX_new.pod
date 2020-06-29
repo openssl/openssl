@@ -57,7 +57,7 @@ If I<ctx> is NULL, nothing is done.
 =head2 On B<EVP_PKEY_CTX>
 
 The B<EVP_PKEY_CTX> structure is an opaque public key algorithm context used
-by the OpenSSL high level public key API. Contexts B<MUST NOT> be shared between
+by the OpenSSL high-level public key API. Contexts B<MUST NOT> be shared between
 threads: that is it is not permissible to use the same context simultaneously
 in two threads.
 

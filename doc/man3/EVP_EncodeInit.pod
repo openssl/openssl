@@ -29,7 +29,7 @@ EVP_DecodeBlock - EVP base 64 encode/decode routines
 
 =head1 DESCRIPTION
 
-The EVP encode routines provide a high level interface to base 64 encoding and
+The EVP encode routines provide a high-level interface to base 64 encoding and
 decoding. Base 64 encoding converts binary data into a printable form that uses
 the characters A-Z, a-z, 0-9, "+" and "/" to represent the data. For every 3
 bytes of binary data provided 4 bytes of base 64 encoded data will be produced
