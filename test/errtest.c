@@ -26,7 +26,7 @@
 static int test_print_error_format(void)
 {
     static const char expected_format[] =
-        ":error::system library:%s:Operation not permitted:"
+        ":error::system library:%s:%s:"
 # ifndef OPENSSL_NO_FILENAMES
         "errtest.c:30:";
 # else
@@ -36,25 +36,37 @@ static int test_print_error_format(void)
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
+    int code = EPERM;
+    int code2;
 
-    BIO_snprintf(expected, sizeof(expected), expected_format, OPENSSL_FUNC);
+    ERR_PUT_error(ERR_LIB_SYS, 0, code, "errtest.c", 30);
+    code2 = ERR_GET_REASON(ERR_peek_error());
 
-    if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
-        return 0;
+    if (code2 != code) {
+        TEST_skip("libcrypto didn't register EPERM (%d) correctly (%d).  "
+                  "This is a known limitation",
+                  code, code2);
+        ERR_clear_error();
+    } else {
+        BIO_snprintf(expected, sizeof(expected), expected_format,
+                     OPENSSL_FUNC, strerror(code));
 
-    ERR_PUT_error(ERR_LIB_SYS, 0, 1, "errtest.c", 30);
-    ERR_print_errors(bio);
+        if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
+            return 0;
 
-    if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
-        goto err;
-    /* Skip over the variable thread id at the start of the string */
-    for (p = out; *p != ':' && *p != 0; ++p) {
-        if (!TEST_true(IS_HEX(*p)))
+        ERR_print_errors(bio);
+
+        if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
+            goto err;
+        /* Skip over the variable thread id at the start of the string */
+        for (p = out; *p != ':' && *p != 0; ++p) {
+            if (!TEST_true(IS_HEX(*p)))
+                goto err;
+        }
+        if (!TEST_true(*p != 0)
+            || !TEST_strn_eq(expected, p, strlen(expected)))
             goto err;
     }
-    if (!TEST_true(*p != 0)
-        || !TEST_strn_eq(expected, p, strlen(expected)))
-        goto err;
 
     ret = 1;
 err:
@@ -106,7 +118,7 @@ static int raised_error(void)
     file = __FILE__;
     line = __LINE__ + 2; /* The error is generated on the ERR_raise_data line */
 #endif
-    ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR,
+    ERR_raise_data(ERR_LIB_NONE, ERR_R_INTERNAL_ERROR,
                    "calling exit()");
     if (!TEST_ulong_ne(e = ERR_get_error_all(&f, &l, NULL, &data, NULL), 0)
             || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)
