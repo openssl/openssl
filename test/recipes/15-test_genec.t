@@ -252,6 +252,9 @@ foreach my $curvename (@curve_list) {
 }
 
 subtest "test curves that only support explicit parameters encoding" => sub {
+    plan skip_all => "This test is unsupported under current configuration"
+            if scalar(@explicit_only_curves) <= 0;
+
     plan tests => scalar(@explicit_only_curves) * scalar(keys %params_encodings)
         * (1 + scalar(@output_formats)) # Try listed @output_formats and text output
         * 2                             # Test generating parameters and keys
