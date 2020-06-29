@@ -174,20 +174,28 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
 }
 
 #ifndef OPENSSL_NO_ERR
-/* 2019-05-21: Russian and Ukrainian locales on Linux require more than 6,5 kB */
-# define SPACE_SYS_STR_REASONS 8 * 1024
-# define NUM_SYS_STR_REASONS 127
-
-static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 /*
- * SYS_str_reasons is filled with copies of strerror() results at
- * initialization. 'errno' values up to 127 should cover all usual errors,
- * others will be displayed numerically by ERR_error_string. It is crucial
- * that we have something for each reason code that occurs in
+ * SYS_str_reasons is filled with pointers to copies of strerror() results
+ * at initialization. Although POSIX permits 'errno' to have any positive
+ * number that fits in an 'int', most systems use a range starting at 1,
+ * and the highest number we have observed is well below 255, which is
+ * our current upper limit.  Other codes will be displayed numerically
+ * by ERR_error_string.
+ * It is crucial that we have something for each reason code that occurs in
  * ERR_str_reasons, or bogus reason strings will be returned for SYSerr(),
  * which always gets an errno value and never one of those 'standard' reason
  * codes.
  */
+# define NUM_SYS_STR_REASONS 255
+static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
+
+/*
+ * Russian and Ukrainian locales on Linux required more than 6,5 kB for the
+ * errno range 1..127 (observed 2019-05-21).
+ * We defined the string space to be 8 KiB at the time.  Now that we double
+ * the range, we double the string space.
+ */
+# define SPACE_SYS_STR_REASONS 16 * 1024
 
 static void build_SYS_str_reasons(void)
 {
