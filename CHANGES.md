@@ -1060,8 +1060,8 @@ OpenSSL 3.0
  * The SSL option SSL_OP_CLEANSE_PLAINTEXT is introduced. If that
    option is set, openssl cleanses (zeroize) plaintext bytes from
    internal buffers after delivering them to the application. Note,
-   the application is still responsible to cleanse other copies (e.g.:
-   data received by SSL_read(3)).
+   the application is still responsible for cleansing other copies
+   (e.g.: data received by SSL_read(3)).
 
    *Martin Elshuber*
 
