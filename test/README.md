@@ -114,15 +114,15 @@ starting with "test_ssl_":
 
 Run only test group 10:
 
-    $ make TESTS='10'
+    $ make TESTS='10' test
 
 Run all tests except the slow group (group 99):
 
-    $ make TESTS='-99'
+    $ make TESTS='-99' test
 
 Run all tests in test groups 80 to 99 except for tests in group 90:
 
-    $ make TESTS='[89]? -90'
+    $ make TESTS='[89]? -90' test
 
 To stochastically verify that the algorithm that produces uniformly distributed
 random numbers is operating correctly (with a false positive rate of 0.01%):
