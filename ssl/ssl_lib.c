@@ -1217,6 +1217,8 @@ void SSL_free(SSL *s)
     OPENSSL_free(s->ext.ocsp.resp);
     OPENSSL_free(s->ext.alpn);
     OPENSSL_free(s->ext.tls13_cookie);
+    if (s->clienthello != NULL)
+        OPENSSL_free(s->clienthello->pre_proc_exts);
     OPENSSL_free(s->clienthello);
     OPENSSL_free(s->pha_context);
     EVP_MD_CTX_free(s->pha_dgst);
