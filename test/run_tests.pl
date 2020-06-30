@@ -30,6 +30,7 @@ my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
+my $jobs = $ENV{HARNESS_JOBS};
 
 $ENV{OPENSSL_CONF} = rel2abs(catdir($srctop, "apps", "openssl.cnf"));
 $ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "providers"));
@@ -43,6 +44,8 @@ my %tapargs =
       switches          => '-w',
       merge             => 1,
     );
+
+$tapargs{jobs} = $jobs if defined $jobs;
 
 # Additional OpenSSL special TAP arguments.  Because we can't pass them via
 # TAP::Harness->new(), they will be accessed directly, see the

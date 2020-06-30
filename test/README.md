@@ -128,3 +128,22 @@ To stochastically verify that the algorithm that produces uniformly distributed
 random numbers is operating correctly (with a false positive rate of 0.01%):
 
     $ ./util/wrap.sh test/bntest -stochastic
+
+Running Tests in Parallel
+-------------------------
+
+By default the test harness will execute the selected tests sequentially.
+Depending on the platform characteristics, running more than one test job in
+parallel may speed up test execution.
+This can be requested by setting the `HARNESS_JOBS` environment variable to a
+positive integer value. This specifies the maximum number of test jobs to run in
+parallel.
+
+Depending on the Perl version different strategies could be adopted to select
+which test recipes can be run in parallel.  In recent versions of Perl, unless
+specified otherwise, any task can be run in parallel. Consult the documentation
+for `TAP::Harness` to know more.
+
+To run up to four tests in parallel at any given time:
+
+    $ make HARNESS_JOBS=4 test
