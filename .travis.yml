@@ -173,6 +173,7 @@ before_script:
           fi;
       fi
     - ./configdata.pm --dump
+    - export HARNESS_JOBS=${HARNESS_JOBS:-4}
     - cd $top
 
 script:
