@@ -37,6 +37,36 @@
 # include <sys/param.h>
 #endif
 
+/*
+ * Provide a compile time error if the FIPS module is being built and none
+ * of the supported entropy sources are available.
+ */
+#if defined(FIPS_MODULE)
+# if !defined(OPENSSL_RAND_SEED_GETRANDOM) \
+     && !defined(OPENSSL_RAND_SEED_DEVRANDOM) \
+     && !defined(OPENSSL_RAND_SEED_RDCPU) \
+     && !defined(OPENSSL_RAND_SEED_OS)
+#  error FIPS mode without supported randomness source
+# endif
+/* Remove the sources that are not permitted in FIPS */
+# ifdef OPENSSL_RAND_SEED_LIBRANDOM
+#  undef OPENSSL_RAND_SEED_LIBRANDOM
+#  warning FIPS mode does not support the _librandom_ randomness source
+# endif
+# ifdef OPENSSL_RAND_SEED_RDTSC
+#  undef OPENSSL_RAND_SEED_RDTSC
+#  warning FIPS mode does not support the _RDTSC_ randomness source
+# endif
+# ifdef OPENSSL_RAND_SEED_EGD
+#  undef OPENSSL_RAND_SEED_EGD
+#  warning FIPS mode does not support the _EGD_ randomness source
+# endif
+# ifdef OPENSSL_RAND_SEED_NONE
+#  undef OPENSSL_RAND_SEED_NONE
+#  warning FIPS mode does not support the _none_ randomness source
+# endif
+#endif
+
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
      || defined(__DJGPP__)
 # include <sys/types.h>
@@ -609,7 +639,9 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
 #  if defined(OPENSSL_RAND_SEED_NONE)
     return rand_pool_entropy_available(pool);
 #  else
-    size_t entropy_available;
+    size_t entropy_available = 0;
+
+    (void)entropy_available;    /* avoid compiler warning */
 
 #   if defined(OPENSSL_RAND_SEED_GETRANDOM)
     {
