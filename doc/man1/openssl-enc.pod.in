@@ -316,7 +316,7 @@ standard data format and performs the needed key/iv/nonce management.
  desx               DESX algorithm.
 
  gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
- gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine)
+ gost89-cnt         GOST 28147-89 in CNT mode (provided by ccgost engine)
 
  idea-cbc           IDEA algorithm in CBC mode
  idea               same as idea-cbc
