@@ -571,9 +571,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     BIO *bio = arg;
     const char *str_write_p = write_p ? ">>>" : "<<<";
     char tmpbuf[128];
-    BIO_snprintf(tmpbuf, sizeof(tmpbuf)-1, "Not TLS data or unknown version (version=%d, content_type=%d).", version, content_type);
-    const char *str_version = lookup(version, ssl_versions, tmpbuf);
-    const char *str_content_type = "", *str_details1 = "", *str_details2 = "";
+    const char *str_version, *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char* bp = buf;
 
     if (version == SSL3_VERSION ||
@@ -582,6 +580,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         version == TLS1_2_VERSION ||
         version == TLS1_3_VERSION ||
         version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
+        str_version = lookup(version, ssl_versions, "???");
         switch (content_type) {
         case SSL3_RT_CHANGE_CIPHER_SPEC:
             /* type 20 */
@@ -618,7 +617,17 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             /* type 256 */
             str_content_type = ", RecordHeader";
             break;
+        case SSL3_RT_INNER_CONTENT_TYPE:
+            /* type 257 */
+            str_content_type = ", InnerContent";
+            break;
+        default:
+            BIO_snprintf(tmpbuf, sizeof(tmpbuf)-1, ", Unknown (content_type=%d)", content_type);
+            str_content_type = tmpbuf;
         }
+    } else {
+        BIO_snprintf(tmpbuf, sizeof(tmpbuf)-1, "Not TLS data or unknown version (version=%d, content_type=%d)", version, content_type);
+        str_version = tmpbuf;
     }
 
     BIO_printf(bio, "%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
