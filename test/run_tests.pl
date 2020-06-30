@@ -20,6 +20,11 @@ BEGIN {
         if $ENV{VERBOSE_FAILURES_PROGRESS} || $ENV{VFP};
 }
 
+# Support running jobs in parallel
+BEGIN {
+    $ENV{HARNESS_JOBS} = "4" if (!defined $ENV{HARNESS_JOBS});
+}
+
 use File::Spec::Functions qw/catdir catfile curdir abs2rel rel2abs/;
 use File::Basename;
 use FindBin;
@@ -42,6 +47,7 @@ my %tapargs =
       lib               => [ $libdir ],
       switches          => '-w',
       merge             => 1,
+      jobs              => $ENV{HARNESS_JOBS},
     );
 
 # Additional OpenSSL special TAP arguments.  Because we can't pass them via
