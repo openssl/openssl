@@ -40,79 +40,52 @@ plan skip_all => 'This is unsupported on MSYS/MinGW or MSWin32'
 plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
     if disabled('autoerrinit') || disabled('err');
 
-# These are POSIX error names, which Errno implements as functions
-# (this is documented)
-my @posix_errors = @{$Errno::EXPORT_TAGS{POSIX}};
+# We use Errno::EXPORT_OK as a list of known errno values on the current
+# system.  libcrypto's ERR should either use the same string as perl, or if
+# it was outside the range that ERR looks at, ERR gives the reason string
+# "reason(nnn)", where nnn is the errno number.
 
-if ($^O eq 'MSWin32') {
-    # On Windows, these errors have been observed to not always be loaded by
-    # apps/openssl, while they are in perl, which causes a difference that we
-    # consider a false alarm.  So we skip checking these errors.
-    # Because we can't know exactly what symbols exist in a perticular perl
-    # version, we resort to discovering them directly in the Errno package
-    # symbol table.
-    my @error_skiplist = qw(
-        ENETDOWN
-        ENETUNREACH
-        ENETRESET
-        ECONNABORTED
-        EISCONN
-        ENOTCONN
-        ESHUTDOWN
-        ETOOMANYREFS
-        ETIMEDOUT
-        EHOSTDOWN
-        EHOSTUNREACH
-        EALREADY
-        EINPROGRESS
-        ESTALE
-        EUCLEAN
-        ENOTNAM
-        ENAVAIL
-        ENOMEDIUM
-        ENOKEY
-    );
-    @posix_errors =
-        grep {
-            my $x = $_;
-            ! grep {
-                exists $Errno::{$_} && $x == $Errno::{$_}
-            } @error_skiplist
-        } @posix_errors;
-}
-
-plan tests => scalar @posix_errors
+plan tests => scalar @Errno::EXPORT_OK
     +1                          # Checking that error 128 gives 'reason(128)'
     +1                          # Checking that error 0 gives the library name
     ;
 
-foreach my $errname (@posix_errors) {
+foreach my $errname (@Errno::EXPORT_OK) {
+    # The error names are perl constants, which are implemented as functions
+    # returning the numeric value of that name.
     my $errnum = "Errno::$errname"->();
 
- SKIP: {
-        skip "Error $errname ($errnum) isn't within our range", 1
-            if $errnum > NUM_SYS_STR_REASONS;
+  SKIP: {
+      # ERR only handles errnos that fit in 24 bits.  Numbers beyond that are
+      # trunkated and give false results.
+      skip "$errnum is larger than a 24 bit value, not supported", 1
+          if ($errnum & ~0xFFFFFF) != 0;
 
-        my $perr = eval {
-            # Set $! to the error number...
-            local $! = $errnum;
-            # ... and $! will give you the error string back
-            $!
-        };
+      my $perr = eval {
+          # Set $! to the error number...
+          local $! = $errnum;
+          # ... and $! will give you the error string back
+          $!
+      };
 
-        # We know that the system reasons are in OpenSSL error library 2
-        my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
-                       capture => 1);
-        $oerr[0] =~ s|\R$||;
-        @oerr = split_error($oerr[0]);
-        ok($oerr[3] eq $perr, "($errnum) '$oerr[3]' == '$perr'");
+      # We know that the system reasons are in OpenSSL error library 2
+      my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
+                     capture => 1);
+      $oerr[0] =~ s|\R$||;
+      @oerr = split_error($oerr[0]);
+      # Optional, if libcrypto didn't capture the text
+      my $rerr = "reason($errnum)";
+      ok($oerr[3] eq $perr || $oerr[3] eq $rerr,
+         $oerr[3] eq $perr
+         ? "($errnum) '$oerr[3]' == '$perr'"
+         : "'$oerr[3]' == '$rerr'");
     }
 }
 
-my @after = run(app([ qw(openssl errstr 2000080) ]), capture => 1);
+my @after = run(app([ qw(openssl errstr 2000100) ]), capture => 1);
 $after[0] =~ s|\R$||;
 @after = split_error($after[0]);
-ok($after[3] eq "reason(128)", "(128) '$after[3]' == 'reason(128)'");
+ok($after[3] eq "reason(256)", "(256) '$after[3]' == 'reason(256)'");
 
 my @zero = run(app([ qw(openssl errstr 2000000) ]), capture => 1);
 $zero[0] =~ s|\R$||;
