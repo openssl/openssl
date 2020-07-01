@@ -453,7 +453,7 @@ the encoding of the structure I<a> to BIO I<bp> and it
 returns 1 for success and 0 for failure.
 
 B<i2d_I<TYPE>_fp>() is similar to B<i2d_I<TYPE>>() except it writes
-the encoding of the structure I<a> to BIO I<bp> and it
+the encoding of the structure I<a> to FILE pointer I<fp> and it
 returns 1 for success and 0 for failure.
 
 These routines do not encrypt private keys and therefore offer no
