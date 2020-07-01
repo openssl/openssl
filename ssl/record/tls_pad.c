@@ -13,7 +13,7 @@
 #include "internal/cryptlib.h"
 
 /*
- * This file has no dependencies on the reset of libssl because it is shared
+ * This file has no dependencies on the rest of libssl because it is shared
  * with the providers. It contains functions for low level CBC TLS padding
  * removal. Responsibility for this lies with the cipher implementations in the
  * providers. However there are legacy code paths in libssl which also need to
@@ -50,10 +50,16 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
 
 /*-
  * ssl3_cbc_remove_padding removes padding from the decrypted, SSLv3, CBC
- * record in |rec| by updating |rec->length| in constant time. It also extracts
- * the MAC from the underlying record.
+ * record in |recdata| by updating |reclen| in constant time. It also extracts
+ * the MAC from the underlying record and places a pointer to it in |mac|. The
+ * MAC data can either be newly allocated memory, or a pointer inside the
+ * |recdata| buffer. If allocated then |*alloced| is set to 1, otherwise it is
+ * set to 0.
  *
+ * origreclen: the original record length before any changes were made
  * block_size: the block size of the cipher used to encrypt the record.
+ * mac_size: the size of the MAC to be extracted
+ * aead: 1 if an AEAD cipher is in use, or 0 otherwise
  * returns:
  *   0: if the record is publicly invalid.
  *   1: if the record is publicly valid. If the padding removal fails then the
@@ -88,17 +94,21 @@ int ssl3_cbc_remove_padding_and_mac(size_t *reclen,
 }
 
 /*-
- * tls1_cbc_remove_padding removes the CBC padding from the decrypted, TLS, CBC
- * record in |rec| in constant time. It also removes any explicit IV from the
- * start of the record without leaking any timing about whether there was enough
- * space after the padding was removed, as well as extracting the embedded MAC
- * (also in constant time). For Mac-then-encrypt, if the padding is invalid then
- * a success result will occur and a randomised MAC will be returned.
+ * tls1_cbc_remove_padding_and_mac removes padding from the decrypted, TLS, CBC
+ * record in |recdata| by updating |reclen| in constant time. It also extracts
+ * the MAC from the underlying record and places a pointer to it in |mac|. The
+ * MAC data can either be newly allocated memory, or a pointer inside the
+ * |recdata| buffer. If allocated then |*alloced| is set to 1, otherwise it is
+ * set to 0.
  *
+ * origreclen: the original record length before any changes were made
  * block_size: the block size of the cipher used to encrypt the record.
+ * mac_size: the size of the MAC to be extracted
+ * aead: 1 if an AEAD cipher is in use, or 0 otherwise
  * returns:
- *    0: if the record is publicly invalid, or an internal error
- *    1: Success or Mac-then-encrypt decryption failed (MAC will be randomised)
+ *   0: if the record is publicly invalid.
+ *   1: if the record is publicly valid. If the padding removal fails then the
+ *      MAC returned is random.
  */
 int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     size_t origreclen,
@@ -170,13 +180,13 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
 }
 
 /*-
- * ssl3_cbc_copy_mac copies |md_size| bytes from the end of |rec| to |out| in
- * constant time (independent of the concrete value of rec->length, which may
- * vary within a 256-byte window).
+ * ssl3_cbc_copy_mac copies |md_size| bytes from the end of the record in
+ * |recdata| to |*mac| in constant time (independent of the concrete value of
+ * the record length |reclen|, which may vary within a 256-byte window).
  *
  * On entry:
- *   rec->orig_len >= md_size
- *   md_size <= EVP_MAX_MD_SIZE
+ *   origreclen >= mac_size
+ *   mac_size <= EVP_MAX_MD_SIZE
  *
  * If CBC_MAC_ROTATE_IN_PLACE is defined then the rotation is performed with
  * variable accesses in a 64-byte-aligned buffer. Assuming that this fits into
