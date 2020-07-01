@@ -134,10 +134,10 @@ Running Tests in Parallel
 
 By default the test harness will execute the selected tests sequentially.
 Depending on the platform characteristics, running more than one test job in
-parallel may speed up test execution. When desirable it is possible to run test
-jobs in parallel via the `HARNESS_JOBS` environment variable: its value should
-be set to the number (a positive integer equal or greater than 1) of maximum
-test jobs to run in parallel.
+parallel may speed up test execution.
+This can be requested by setting the `HARNESS_JOBS` environment variable to a
+positive integer value. This specifies the maximum number of test jobs to run in
+parallel.
 
 Depending on the Perl version different strategies could be adopted to select
 which test recipes can be run in parallel.  In recent versions of Perl, unless
