@@ -1978,10 +1978,10 @@ if ($builder eq "unified") {
                 my $ac = 1;
                 my $ak = $a;
                 my $av = 1;
-                if ($a =~ m|^(!)?(.*?)\s* = \s*(.*?)$|) {
+                if ($a =~ m|^(!)?(.*?)\s* = \s*(.*?)$|x) {
                     $ac = ! $1;
-                    $ak = $1;
-                    $av = $2;
+                    $ak = $2;
+                    $av = $3;
                 }
                 foreach my $g (@goals) {
                     if ($ac) {
