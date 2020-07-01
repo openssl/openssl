@@ -160,18 +160,6 @@ my $guess_patterns = [
     [ 'CYGWIN.*',                   '${MACHINE}-pc-cygwin' ],
     [ 'vxworks.*',                  '${MACHINE}-whatever-vxworks' ],
 
-    # Windows values found by looking at Perl 5's win32/win32.c
-    [ 'Windows NT:.*:amd64',        'VC-WIN64A' ],
-    [ 'Windows NT:.*:ia64',         'VC-WIN64I' ],
-    [ 'Windows NT:.*:x86',          'VC-WIN32' ],
-
-    # VMS values found by observation on existing machinery.  Unfortunately,
-    # the machine part is a bit...  overdone.  It seems, though, that 'Alpha'
-    # exists in that part, making it distinguishable from Itanium.  It will
-    # be interesting to see what we'll get in the upcoming x86_64 port...
-    [ 'OpenVMS:.*?:.*?:.*?:.*Alpha.*', 'vms-alpha' ],
-    [ 'OpenVMS:.*',                 'vms-ia64' ],
-
     [ sub { -d '/usr/apollo' },     'whatever-apollo-whatever' ],
 ];
 
@@ -859,6 +847,20 @@ EOF
             return %config;
         }
       ],
+
+      # Windows values found by looking at Perl 5's win32/win32.c
+      [ 'amd64-.*?-Windows NT',   { target => 'VC-WIN64A' } ],
+      [ 'ia64-.*?-Windows NT',    { target => 'VC-WIN64I' } ],
+      [ 'x86-.*?-Windows NT',     { target => 'VC-WIN32'  } ],
+
+      # VMS values found by observation on existing machinery.
+      # Unfortunately, the machine part is a bit...  overdone.  It seems,
+      # though, that 'Alpha' exists in that part for Alphas, making it
+      # distinguishable from Itanium.  It will be interesting to see what
+      # we'll get in the upcoming x86_64 port...
+      [ '.*Alpha.*?-.*?-OpenVMS', { target => 'vms-alpha' } ],
+      [ '.*?-.*?-OpenVMS',        { target => 'vms-ia64'  } ],
+
     ];
 
 # Map GUESSOS into OpenSSL terminology.
