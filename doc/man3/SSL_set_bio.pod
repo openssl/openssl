@@ -69,8 +69,8 @@ references are consumed for the B<rbio>.
 =item *
 
 If the B<rbio> and B<wbio> parameters are different and the B<wbio> is the
-same as the previously set value, and the old B<rbio> and B<wbio> values
-were the same as each other, then one reference is consumed for the B<rbio>
+same as the previously set value and the old B<rbio> and B<wbio> values
+were the same as each other then one reference is consumed for the B<rbio>
 and no references are consumed for the B<wbio>.
 
 =item *

@@ -445,11 +445,11 @@ If this option is used, then verification errors close the connection.
 
 =item B<-status>
 
-Enables certificate status request support (a.k.a. OCSP stapling).
+Enables certificate status request support (aka OCSP stapling).
 
 =item B<-status_verbose>
 
-Enables certificate status request support (a.k.a. OCSP stapling) and gives
+Enables certificate status request support (aka OCSP stapling) and gives
 a verbose printout of the OCSP response.
 
 =item B<-status_timeout> I<int>

@@ -463,7 +463,7 @@ Example:
 
  noCheck = ignored
 
-=head2 TLS Feature (a.k.a. Must Staple)
+=head2 TLS Feature (aka Must Staple)
 
 This is a multi-valued extension consisting of a list of TLS extension
 identifiers. Each identifier may be a number (0..65535) or a supported name.

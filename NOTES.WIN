@@ -18,7 +18,7 @@
  For this option you can use Cygwin.
 
 
- Visual C++ native builds, a.k.a. VC-*
+ Visual C++ native builds, aka VC-*
  =====================================
 
  Requirement details
@@ -99,7 +99,7 @@
  is, of course, to choose a different set of directories by using
  --prefix and --openssldir when configuring.
 
- Special notes for Universal Windows Platform builds, a.k.a. VC-*-UWP
+ Special notes for Universal Windows Platform builds, aka VC-*-UWP
  --------------------------------------------------------------------
 
  - UWP targets only support building the static and dynamic libraries.

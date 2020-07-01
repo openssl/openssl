@@ -447,7 +447,7 @@ Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 
 =item B<-path> I<remote_path>
 
-HTTP path at the CMP server (a.k.a. CMP alias) to use for POST requests.
+HTTP path at the CMP server (aka CMP alias) to use for POST requests.
 Defaults to I</>.
 
 =item B<-msg_timeout> I<seconds>
