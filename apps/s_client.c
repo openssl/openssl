@@ -2769,7 +2769,7 @@ int s_client_main(int argc, char **argv)
 
         FD_ZERO(&readfds);
         FD_ZERO(&writefds);
-	fdin = fileno_stdin();
+        fdin = fileno_stdin();
         if (fdin < 0) {
             BIO_printf(bio_err,"bad fileno for stdin\n");
             goto shut;
