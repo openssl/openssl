@@ -447,6 +447,7 @@ on most unix-ish operating systems.
 ### egd
 
 Check for an entropy generating daemon.
+This source is ignored by the FIPS provider.
 
 ### rdcpu
 
@@ -455,11 +456,13 @@ Use the `RDSEED` or `RDRAND` command if provided by the CPU.
 ### librandom
 
 Use librandom (not implemented yet).
+This source is ignored by the FIPS provider.
 
 ### none
 
 Disable automatic seeding.  This is the default on some operating systems where
 no suitable entropy source exists, or no support for it is implemented yet.
+This option is ignored by the FIPS provider.
 
 For more information, see the section [Notes on random number generation][rng]
 at the end of this document.
@@ -1689,7 +1692,8 @@ The seeding method can be configured using the `--with-rand-seed` option,
 which can be used to specify a comma separated list of seed methods.
 However, in most cases OpenSSL will choose a suitable default method,
 so it is not necessary to explicitly provide this option.  Note also
-that not all methods are available on all platforms.
+that not all methods are available on all platforms.  The FIPS provider will
+silently ignore seed sources that were not validated.
 
 I) On operating systems which provide a suitable randomness source (in
 form  of a system call or system device), OpenSSL will use the optimal
