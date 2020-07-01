@@ -474,6 +474,7 @@ configuration files using that syntax will have to be modified.
 =head1 SEE ALSO
 
 L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>,
+L<openssl-fipsinstall(1)>,
 L<ASN1_generate_nconf(3)>,
 L<EVP_set_default_properties(3)>,
 L<CONF_modules_load_file(3)>,
