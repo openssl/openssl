@@ -572,7 +572,7 @@ int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen)
     return res;
 }
 
-static int evp_rand_state_locked(EVP_RAND_CTX *ctx)
+int EVP_RAND_state(EVP_RAND_CTX *ctx)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     int state;
@@ -580,17 +580,6 @@ static int evp_rand_state_locked(EVP_RAND_CTX *ctx)
     params[0] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_STATE, &state);
     if (!EVP_RAND_get_ctx_params(ctx, params))
         state = EVP_RAND_STATE_ERROR;
-    return state;
-}
-
-int EVP_RAND_state(EVP_RAND_CTX *ctx)
-{
-    int state;
-
-    if (!evp_rand_lock(ctx))
-        return 0;
-    state = evp_rand_state_locked(ctx);
-    evp_rand_unlock(ctx);
     return state;
 }
 
