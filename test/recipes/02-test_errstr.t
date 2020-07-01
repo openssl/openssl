@@ -11,15 +11,9 @@ no strict 'refs';               # To be able to use strings as function refs
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 use Errno qw(:POSIX);
-use POSIX qw(strerror);
+use POSIX qw(:limits_h strerror);
 
-# We actually have space for up to 4095 error messages,
-# numerically speaking...  but we're currently only using
-# numbers 1 through 127.
-# This constant should correspond to the same constant
-# defined in crypto/err/err.c, or at least must not be
-# assigned a greater number.
-use constant NUM_SYS_STR_REASONS => 127;
+use Data::Dumper;
 
 setup('test_errstr');
 
@@ -40,84 +34,40 @@ plan skip_all => 'This is unsupported on MSYS/MinGW or MSWin32'
 plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
     if disabled('autoerrinit') || disabled('err');
 
-# These are POSIX error names, which Errno implements as functions
-# (this is documented)
-my @posix_errors = @{$Errno::EXPORT_TAGS{POSIX}};
+# OpenSSL constants found in <openssl/err.h>
+use constant ERR_SYSTEM_FLAG => INT_MAX + 1;
+use constant ERR_LIB_OFFSET => 23; # Offset of the "library" errcode section
 
-if ($^O eq 'MSWin32') {
-    # On Windows, these errors have been observed to not always be loaded by
-    # apps/openssl, while they are in perl, which causes a difference that we
-    # consider a false alarm.  So we skip checking these errors.
-    # Because we can't know exactly what symbols exist in a perticular perl
-    # version, we resort to discovering them directly in the Errno package
-    # symbol table.
-    my @error_skiplist = qw(
-        ENETDOWN
-        ENETUNREACH
-        ENETRESET
-        ECONNABORTED
-        EISCONN
-        ENOTCONN
-        ESHUTDOWN
-        ETOOMANYREFS
-        ETIMEDOUT
-        EHOSTDOWN
-        EHOSTUNREACH
-        EALREADY
-        EINPROGRESS
-        ESTALE
-        EUCLEAN
-        ENOTNAM
-        ENAVAIL
-        ENOMEDIUM
-        ENOKEY
-    );
-    @posix_errors =
-        grep {
-            my $x = $_;
-            ! grep {
-                exists $Errno::{$_} && $x == $Errno::{$_}
-            } @error_skiplist
-        } @posix_errors;
-}
+# OpenSSL "library" numbers
+use constant ERR_LIB_NONE => 1;
 
-plan tests => scalar @posix_errors
+# We use Errno::EXPORT_OK as a list of known errno values on the current
+# system.  libcrypto's ERR should either use the same string as perl, or if
+# it was outside the range that ERR looks at, ERR gives the reason string
+# "reason(nnn)", where nnn is the errno number.
+
+plan tests => scalar @Errno::EXPORT_OK
     +1                          # Checking that error 128 gives 'reason(128)'
     +1                          # Checking that error 0 gives the library name
     ;
 
-foreach my $errname (@posix_errors) {
-    my $errnum = "Errno::$errname"->();
+# Test::More:ok() has a sub prototype, which means we need to use the '&ok'
+# syntax to force it to accept a list as a series of arguments.
 
- SKIP: {
-        skip "Error $errname ($errnum) isn't within our range", 1
-            if $errnum > NUM_SYS_STR_REASONS;
-
-        my $perr = eval {
-            # Set $! to the error number...
-            local $! = $errnum;
-            # ... and $! will give you the error string back
-            $!
-        };
-
-        # We know that the system reasons are in OpenSSL error library 2
-        my @oerr = run(app([ qw(openssl errstr), sprintf("2%06x", $errnum) ]),
-                       capture => 1);
-        $oerr[0] =~ s|\R$||;
-        @oerr = split_error($oerr[0]);
-        ok($oerr[3] eq $perr, "($errnum) '$oerr[3]' == '$perr'");
-    }
+foreach my $errname (@Errno::EXPORT_OK) {
+    # The error names are perl constants, which are implemented as functions
+    # returning the numeric value of that name.
+    &ok(match_syserr_reason("Errno::$errname"->()))
 }
 
-my @after = run(app([ qw(openssl errstr 2000080) ]), capture => 1);
-$after[0] =~ s|\R$||;
-@after = split_error($after[0]);
-ok($after[3] eq "reason(128)", "(128) '$after[3]' == 'reason(128)'");
+# OpenSSL library 1 is the "unknown" library
+&ok(match_opensslerr_reason(ERR_LIB_NONE << ERR_LIB_OFFSET | 256,
+                            "reason(256)"));
+# Reason code 0 of any library gives the library name as reason
+&ok(match_opensslerr_reason(ERR_LIB_NONE << ERR_LIB_OFFSET |   0,
+                            "unknown library"));
 
-my @zero = run(app([ qw(openssl errstr 2000000) ]), capture => 1);
-$zero[0] =~ s|\R$||;
-@zero = split_error($zero[0]);
-ok($zero[3] eq "system library", "(0) '$zero[3]' == 'system library'");
+exit 0;
 
 # For an error string "error:xxxxxxxx:lib:func:reason", this returns
 # the following array:
@@ -131,4 +81,55 @@ sub split_error {
     shift @erritems;
 
     return @erritems;
+}
+
+# Compares the first argument as string to each of the arguments 3 and on,
+# and returns an array of two elements:
+# 0:  True if the first argument matched any of the others, otherwise false
+# 1:  A string describing the test
+# The returned array can be used as the arguments to Test::More::ok()
+sub match_any {
+    my $first = shift;
+    my $desc = shift;
+    my @strings = @_;
+
+    if (scalar @strings > 1) {
+        $desc = "match '$first' ($desc) with one of ( '"
+            . join("', '", @strings) . "' )";
+    } else {
+        $desc = "match '$first' ($desc) with '$strings[0]'";
+    }
+
+    return ( scalar( grep { $first eq $_ } @strings ) > 0,
+             $desc );
+}
+
+sub match_opensslerr_reason {
+    my $errcode = shift;
+    my @strings = @_;
+
+    my $errcode_hex = sprintf "%x", $errcode;
+    my $reason =
+        ( run(app([ qw(openssl errstr), $errcode_hex ]), capture => 1) )[0];
+    $reason =~ s|\R$||;
+    $reason = ( split_error($reason) )[3];
+
+    return match_any($reason, $errcode, @strings);
+}
+
+sub match_syserr_reason {
+    my $errcode = shift;
+
+    my @strings = ();
+    # The POSIX reason string
+    push @strings, eval {
+          # Set $! to the error number...
+          local $! = $errcode;
+          # ... and $! will give you the error string back
+          $!
+    };
+    # The OpenSSL fallback string
+    push @strings, "reason($errcode)";
+
+    return match_opensslerr_reason(ERR_SYSTEM_FLAG | $errcode, @strings);
 }
