@@ -119,7 +119,7 @@ int tls1_cbc_remove_padding_and_mac(size_t *reclen,
                                     int aead,
                                     OPENSSL_CTX *libctx)
 {
-    size_t good;
+    size_t good = -1;
     size_t padding_length, to_check, i;
     size_t overhead = ((block_size == 1) ? 0 : 1) /* padding length byte */
                       + mac_size;
