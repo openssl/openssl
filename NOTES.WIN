@@ -59,7 +59,8 @@
 
  5. From the root of the OpenSSL source directory enter
     perl Configure VC-WIN32    if you want 32-bit OpenSSL or
-    perl Configure VC-WIN64A   if you want 64-bit OpenSSL
+    perl Configure VC-WIN64A   if you want 64-bit OpenSSL or
+    perl Configure             to let Configure figure out the platform
 
  6. nmake
 
