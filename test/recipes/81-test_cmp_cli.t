@@ -14,18 +14,23 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text/;
-use OpenSSL::Test qw/:DEFAULT with data_file data_dir bldtop_dir/;
+use OpenSSL::Test qw/:DEFAULT with data_file data_dir srctop_dir bldtop_dir/;
 use OpenSSL::Test::Utils;
 use Data::Dumper; # for debugging purposes only
 
-setup("test_cmp_cli");
+BEGIN {
+    setup("test_cmp_cli");
+}
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
 plan skip_all => "These tests are not supported in a no-cmp build"
     if disabled("cmp");
 plan skip_all => "These tests are not supported in a no-ec build"
     if disabled("ec");
 plan skip_all => "These tests are not supported in a fuzz build"
-    if !disabled("fuzz-libfuzzer") || !disabled("fuzz-afl");
+    if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION/;
 plan skip_all => "Tests involving server not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32)$/;
 
