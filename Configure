@@ -238,6 +238,14 @@ sub resolve_config;
 # Unified build supports separate build dir
 my $srcdir = catdir(absolutedir(dirname($0))); # catdir ensures local syntax
 my $blddir = catdir(absolutedir("."));         # catdir ensures local syntax
+
+# File::Spec::Unix doesn't detect case insensitivity, so we make sure to
+# check if the source and build directory are really the same, and make
+# them so.  This avoids all kinds of confusion later on.
+$srcdir = $blddir
+    if (File::Spec->isa('File::Spec::Unix')
+        && samedir($srcdir, $blddir));
+
 my $dofile = abs2rel(catfile($srcdir, "util/dofile.pl"));
 
 my $local_config_envname = 'OPENSSL_LOCAL_CONFIG_DIR';
@@ -3247,6 +3255,30 @@ sub absolutedir {
     use Cwd qw/realpath/;
 
     return realpath($dir);
+}
+
+# Check if all paths are one and the same, using stat.  They must both exist
+# We need this for the cases when File::Spec doesn't detect case insensitivity
+# (File::Spec::Unix assumes case sensitivity)
+sub samedir {
+    my @stat;
+
+    foreach (@_) {
+        die "$_ doesn't exist" unless -e $_;
+
+        my @stat2 = stat($_);
+        unless (@stat) {
+            @stat = @stat2;
+            next;
+        }
+
+        # Compare device number
+        return 0 unless ($stat[0] == $stat2[0]);
+        # Compare "inode".  The perl manual recommends comparing as
+        # string rather than as number.
+        return 0 unless ($stat[1] eq $stat2[1]);
+    }
+    return 1;                   # All the same
 }
 
 sub quotify {
