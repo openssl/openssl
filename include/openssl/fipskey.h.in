@@ -27,4 +27,8 @@ extern "C" {
  */
 #define FIPS_KEY_STRING "{- $config{FIPSKEY} -}"
 
+# ifdef  __cplusplus
+}
+# endif
+
 #endif
