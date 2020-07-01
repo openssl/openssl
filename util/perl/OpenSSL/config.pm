@@ -609,7 +609,6 @@ EOF
       ],
       [ 'armv[1-3].*-.*-linux2',  { target => "linux-generic32" } ],
       [ 'armv[7-9].*-.*-linux2',  { target => "linux-armv4",
-                                    defines => [ 'B_ENDIAN' ],
                                     cflags => [ '-march=armv7-a' ],
                                     cxxflags => [ '-march=armv7-a' ] } ],
       [ 'arm.*-.*-linux2',        { target => "linux-armv4" } ],
