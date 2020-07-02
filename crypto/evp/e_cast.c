@@ -21,6 +21,7 @@
 # include <openssl/objects.h>
 # include "crypto/evp.h"
 # include <openssl/cast.h>
+# include "evp_local.h"
 
 static int cast_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                          const unsigned char *iv, int enc);
