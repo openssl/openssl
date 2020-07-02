@@ -107,6 +107,7 @@ my %OS_data = (
     solaris     => { writer     => \&writer_linux,
                      sort       => sorter_linux(),
                      platforms  => { UNIX                       => 1 } },
+    "solaris-gcc" => 'solaris', # alias
     linux       => 'solaris',   # alias
     "bsd-gcc"   => 'solaris',   # alias
     aix         => { writer     => \&writer_aix,
