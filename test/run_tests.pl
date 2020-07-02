@@ -70,44 +70,54 @@ open $openssl_args{'tap_copy'}, ">$outfilename"
 my @alltests = find_matching_tests("*");
 my %tests = ();
 
+sub reorder {
+    my $key = pop;
+
+    # for parallel test runs, do slow tests first
+    if (defined $jobs && $jobs > 1 && $key =~ m/test_ssl_new|test_fuzz/) {
+        $key =~ s/(\d+)-/00-/;
+    }
+    return $key;
+}
+
 my $initial_arg = 1;
 foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
     if ($arg eq 'list') {
-	foreach (@alltests) {
-	    (my $x = basename($_)) =~ s|^[0-9][0-9]-(.*)\.t$|$1|;
-	    print $x,"\n";
-	}
-	exit 0;
+        foreach (@alltests) {
+            (my $x = basename($_)) =~ s|^[0-9][0-9]-(.*)\.t$|$1|;
+            print $x,"\n";
+        }
+        exit 0;
     }
     if ($arg eq 'alltests') {
-	warn "'alltests' encountered, ignoring everything before that...\n"
-	    unless $initial_arg;
-	%tests = map { $_ => basename($_) } @alltests;
+        warn "'alltests' encountered, ignoring everything before that...\n"
+            unless $initial_arg;
+        %tests = map { $_ => 1 } @alltests;
     } elsif ($arg =~ m/^(-?)(.*)/) {
-	my $sign = $1;
-	my $test = $2;
-	my @matches = find_matching_tests($test);
+        my $sign = $1;
+        my $test = $2;
+        my @matches = find_matching_tests($test);
 
-	# If '-foo' is the first arg, it's short for 'alltests -foo'
-	if ($sign eq '-' && $initial_arg) {
-	    %tests = map { $_ => basename($_) } @alltests;
-	}
+        # If '-foo' is the first arg, it's short for 'alltests -foo'
+        if ($sign eq '-' && $initial_arg) {
+            %tests = map { $_ => 1 } @alltests;
+        }
 
-	if (scalar @matches == 0) {
-	    warn "Test $test found no match, skipping ",
-		($sign eq '-' ? "removal" : "addition"),
-		"...\n";
-	} else {
-	    foreach $test (@matches) {
-		if ($sign eq '-') {
-		    delete $tests{$test};
-		} else {
-		    $tests{$test} = basename($test);
-		}
-	    }
-	}
+        if (scalar @matches == 0) {
+            warn "Test $test found no match, skipping ",
+                ($sign eq '-' ? "removal" : "addition"),
+                "...\n";
+        } else {
+            foreach $test (@matches) {
+                if ($sign eq '-') {
+                    delete $tests{$test};
+                } else {
+                    $tests{$test} = 1;
+                }
+            }
+        }
     } else {
-	warn "I don't know what '$arg' is about, ignoring...\n";
+        warn "I don't know what '$arg' is about, ignoring...\n";
     }
 
     $initial_arg = 0;
@@ -280,8 +290,8 @@ unless (defined $eres) {
 
 my $harness = $package->new(\%tapargs);
 my $ret =
-    $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), $tests{$_} ] }
-                       sort keys %tests);
+    $harness->runtests(map { [ abs2rel($_, rel2abs(curdir())), basename($_) ] }
+                       sort { reorder($a) cmp reorder($b) } keys %tests);
 
 # $ret->has_errors may be any number, not just 0 or 1.  On VMS, numbers
 # from 2 and on are used as is as VMS statuses, which has severity encoded
