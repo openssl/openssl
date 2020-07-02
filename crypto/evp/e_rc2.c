@@ -22,6 +22,7 @@
 # include <openssl/objects.h>
 # include "crypto/evp.h"
 # include <openssl/rc2.h>
+# include "evp_local.h"
 
 static int rc2_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                         const unsigned char *iv, int enc);

@@ -20,6 +20,7 @@
 # include "crypto/evp.h"
 # include <openssl/objects.h>
 # include <openssl/blowfish.h>
+# include "evp_local.h"
 
 static int bf_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                        const unsigned char *iv, int enc);
