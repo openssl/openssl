@@ -22,6 +22,7 @@
 # include <openssl/objects.h>
 # include "crypto/evp.h"
 # include <openssl/des.h>
+# include "evp_local.h"
 
 static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                              const unsigned char *iv, int enc);
@@ -72,7 +73,7 @@ static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     while (inl >= EVP_MAXCHUNK) {
         DES_xcbc_encrypt(in, out, (long)EVP_MAXCHUNK, &data(ctx)->ks,
-                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
+                         (DES_cblock *)ctx->iv,
                          &data(ctx)->inw, &data(ctx)->outw,
                          EVP_CIPHER_CTX_encrypting(ctx));
         inl -= EVP_MAXCHUNK;
@@ -81,7 +82,7 @@ static int desx_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     if (inl)
         DES_xcbc_encrypt(in, out, (long)inl, &data(ctx)->ks,
-                         (DES_cblock *)EVP_CIPHER_CTX_iv_noconst(ctx),
+                         (DES_cblock *)ctx->iv,
                          &data(ctx)->inw, &data(ctx)->outw,
                          EVP_CIPHER_CTX_encrypting(ctx));
     return 1;
