@@ -187,7 +187,6 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
  * codes.
  */
 # define NUM_SYS_STR_REASONS 255
-static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
 
 /*
  * Russian and Ukrainian locales on Linux required more than 6,5 kB for the
@@ -195,11 +194,12 @@ static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
  * We defined the string space to be 8 KiB at the time.  Now that we double
  * the range, we double the string space.
  */
-# define SPACE_SYS_STR_REASONS 16 * 1024
+# define SPACE_SYS_STR_REASONS (16 * 1024)
 
 static void build_SYS_str_reasons(void)
 {
     /* OPENSSL_malloc cannot be used here, use static storage instead */
+    static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
     static char strerror_pool[SPACE_SYS_STR_REASONS];
     char *cur = strerror_pool;
     size_t cnt = 0;
