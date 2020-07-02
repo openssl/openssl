@@ -203,10 +203,9 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     int i = 0;
     unsigned int j;
-    unsigned char *oiv = NULL;
+    unsigned char oiv[EVP_MAX_IV_LENGTH];
 
-    if (type != NULL) {
-        oiv = (unsigned char *)EVP_CIPHER_CTX_original_iv(c);
+    if (type != NULL && EVP_CIPHER_CTX_get_iv(c, oiv, sizeof(oiv))) {
         j = EVP_CIPHER_CTX_iv_length(c);
         OPENSSL_assert(j <= sizeof(c->iv));
         i = ASN1_TYPE_set_octetstring(type, oiv, j);
