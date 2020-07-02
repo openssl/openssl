@@ -411,7 +411,10 @@ int cipher_generic_stream_update(void *vctx, unsigned char *out, size_t *outl,
     }
 
     *outl = inl;
-    /* Remove any TLS padding */
+    /*
+     * Remove any TLS padding. Only used by cipher_aes_cbc_hmac_sha1_hw.c and
+     * cipher_aes_cbc_hmac_sha256_hw.c
+     */
     if (!ctx->enc && ctx->removetlspad > 0) {
         /* The actual padding length */
         *outl -= out[inl - 1] + 1;
