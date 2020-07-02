@@ -359,10 +359,6 @@ int EVP_RAND_get_ctx_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[])
 static int evp_rand_set_ctx_params_locked(EVP_RAND_CTX *ctx,
                                           const OSSL_PARAM params[])
 {
-    /* Clear out the cache state because the values can change on a set */
-    ctx->strength = 0;
-    ctx->max_request = 0;
-
     if (ctx->meth->set_ctx_params != NULL)
         return ctx->meth->set_ctx_params(ctx->data, params);
     return 1;
@@ -457,22 +453,18 @@ static int evp_rand_generate_locked(EVP_RAND_CTX *ctx, unsigned char *out,
                                     const unsigned char *addin,
                                     size_t addin_len)
 {
-    size_t chunk;
-    OSSL_PARAM params[2];
+    size_t chunk, max_request = 0;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
-    if (ctx->max_request == 0) {
-        params[0] = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MAX_REQUEST,
-                                                &chunk);
-        params[1] = OSSL_PARAM_construct_end();
-        if (!evp_rand_get_ctx_params_locked(ctx, params)
-                || chunk == 0) {
-            EVPerr(0, EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE);
-            return 0;
-        }
-        ctx->max_request = chunk;
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MAX_REQUEST,
+                                            &max_request);
+    if (!evp_rand_get_ctx_params_locked(ctx, params)
+            || max_request == 0) {
+        EVPerr(0, EVP_R_UNABLE_TO_GET_MAXIMUM_REQUEST_SIZE);
+        return 0;
     }
     for (; outlen > 0; outlen -= chunk, out += chunk) {
-        chunk = outlen > ctx->max_request ? ctx->max_request : outlen;
+        chunk = outlen > max_request ? max_request : outlen;
         if (!ctx->meth->generate(ctx->data, out, chunk, strength,
                                  prediction_resistance, addin, addin_len)) {
             EVPerr(0, EVP_R_GENERATE_ERROR);
@@ -528,14 +520,12 @@ int EVP_RAND_reseed(EVP_RAND_CTX *ctx, int prediction_resistance,
 static unsigned int evp_rand_strength_locked(EVP_RAND_CTX *ctx)
 {
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    unsigned int strength = 0;
 
-    if (ctx->strength == 0) {
-        params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH,
-                                              &ctx->strength);
-        if (!evp_rand_get_ctx_params_locked(ctx, params))
-            return 0;
-    }
-    return ctx->strength;
+    params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    if (!evp_rand_get_ctx_params_locked(ctx, params))
+        return 0;
+    return strength;
 }
 
 unsigned int EVP_RAND_strength(EVP_RAND_CTX *ctx)
