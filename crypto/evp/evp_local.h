@@ -69,11 +69,6 @@ struct evp_kdf_ctx_st {
 struct evp_rand_ctx_st {
     EVP_RAND *meth;             /* Method structure */
     void *data;                 /* Algorithm-specific data */
-    size_t max_request;         /*
-                                 * Cached: maximum number of bytes generated 
-                                 * in a single call to the generate function
-                                 */
-    unsigned int strength;      /* Cached: bit strength of generator */
 } /* EVP_RAND_CTX */ ;
 
 struct evp_rand_st {
