@@ -183,6 +183,7 @@ int cipher_generic_dinit(void *vctx, const unsigned char *key, size_t keylen,
                                         iv, ivlen, 0);
 }
 
+/* Max padding including padding length byte */
 #define MAX_PADDING 256
 
 int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
