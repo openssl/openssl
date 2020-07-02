@@ -156,11 +156,6 @@ Contributing
 If you are interested and willing to contribute to the OpenSSL project,
 please take a look at the [CONTRIBUTING](CONTRIBUTING.md) file.
 
-Since 2016, development takes place in public on the GitHub open source
-platform. The OpenSSL Project Pages at [openssl.github.io][] are a
-valuable source of information if you want to get familiar with our
-development process on GitHub.
-
 Legalities
 ==========
 
@@ -194,10 +189,6 @@ All rights reserved.
 [github.com/openssl/openssl]:
     <https://github.com/openssl/openssl>
     "OpenSSL GitHub Mirror"
-
-[openssl.github.io]:
-    <https://mspncp.github.io>
-    "OpenSSL Project Pages"
 
 [wiki.openssl.org]:
     <https://wiki.openssl.org>
