@@ -1287,7 +1287,7 @@ int tls1_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
                                                         : NULL,
                                          bs,
                                          macsize,
-                                         (EVP_CIPHER_CTX_flags(s->enc_read_ctx)
+                                         (EVP_CIPHER_flags(enc)
                                          & EVP_CIPH_FLAG_AEAD_CIPHER) != 0,
                                          s->ctx->libctx))
                         return 0;
