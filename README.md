@@ -207,13 +207,6 @@ All rights reserved.
      <https://tools.ietf.org/html/rfc8446>
 
 <!-- Logos and Badges -->
-<!--
-  Note: The security token for the appveyor badge (the random number in
-  the URL below) was obtained for the mspncp/openssl project.
-  It needs to be replaced by the correct token by some core member
-  (@levitte, @mattcaswell?). It can be obtained for project members at
-  https://ci.appveyor.com/project/openssl/openssl/settings/badges.
--->
 
 [openssl logo]:
     doc/images/openssl.svg
@@ -228,7 +221,7 @@ All rights reserved.
     "Travis Jobs"
 
 [appveyor badge]:
-    <https://ci.appveyor.com/api/projects/status/ikn2l4u1xsume63u/branch/master?svg=true>
+    <https://ci.appveyor.com/api/projects/status/8e10o7xfrg73v98f/branch/master?svg=true>
     "AppVeyor Build Status"
 
 [appveyor jobs]:
