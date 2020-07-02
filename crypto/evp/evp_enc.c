@@ -971,12 +971,6 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
     case EVP_CTRL_SET_PIPELINE_OUTPUT_BUFS: /* Used by DASYNC */
     default:
         goto end;
-    case EVP_CTRL_GET_IV:
-        set_params = 0;
-        params[0] =
-            OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_IV_STATE, ptr,
-                                              sz);
-        break;
     case EVP_CTRL_AEAD_SET_IVLEN:
         if (arg < 0)
             return 0;
