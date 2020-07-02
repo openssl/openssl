@@ -39,6 +39,7 @@ extern "C" {
 #  endif
 # endif
 
+# include <limits.h>
 # include <errno.h>
 
 # define ERR_TXT_MALLOCED        0x01
@@ -163,43 +164,82 @@ struct err_state_st {
 #  define X509err(f, r) ERR_raise_data(ERR_LIB_X509, (r), NULL)
 # endif
 
-/*
- * The error code currently packs as follows (viewed as hex nibbles):
+/*-
+ * The error code packs differently depending on if it records a system
+ * error or an OpenSSL error.
  *
- * LL rRRRRR
+ * A system error packs like this (we follow POSIX and only allow positive
+ * numbers that fit in an |int|):
  *
- * Where LL is the library code, r is the reason flags, and rRRRRR is the
- * reason code.
- * Do note that the reason flags is part of the reason code, and could as
- * well be seen as a section of all possible reason codes.  We do this for
+ * +-+-------------------------------------------------------------+
+ * |1|                     system error number                     |
+ * +-+-------------------------------------------------------------+
+ *
+ * An OpenSSL error packs like this:
+ *
+ * <---------------------------- 32 bits -------------------------->
+ *    <--- 8 bits ---><------------------ 23 bits ----------------->
+ * +-+---------------+---------------------------------------------+
+ * |0|    library    |                    reason                   |
+ * +-+---------------+---------------------------------------------+
+ *
+ * A few of the reason bits are reserved as flags with special meaning:
+ *
+ *                    <4 bits><-------------- 19 bits ------------->
+ *                   +-------+-------------------------------------+
+ *                   | rflags|                reason               |
+ *                   +-------+-------------------------------------+
+ *
+ * We have the reason flags being part of the overall reason code for
  * backward compatibility reasons, i.e. how ERR_R_FATAL was implemented.
- *
- * System errors (ERR_LIB_SYS) are structured the same way, except they
- * don't have any reason flag.
- *
- * LL RRRRRR
  */
-# define ERR_LIB_OFFSET     24L
-# define ERR_LIB_MASK       0xFF
-# define ERR_RFLAGS_OFFSET  20L
-# define ERR_RFLAGS_MASK    0xF
-# define ERR_REASON_MASK    0XFFFFFF
+
+/* Macros to help decode recorded system errors */
+# define ERR_SYSTEM_FLAG        (1UL << (sizeof(unsigned int) * CHAR_BIT - 1))
+# define ERR_SYSTEM_MASK        (ERR_SYSTEM_FLAG - 1)
+
+/* Macros to help decode recorded OpenSSL errors */
+# define ERR_LIB_OFFSET         23L
+# define ERR_LIB_MASK           0xFF
+# define ERR_RFLAGS_OFFSET      19L
+# define ERR_RFLAGS_MASK        0xF
+# define ERR_REASON_MASK        0X7FFFFF
 
 /*
  * Reason flags are defined pre-shifted to easily combine with the reason
  * number.
  */
-# define ERR_RFLAG_FATAL    (0x1 << ERR_RFLAGS_OFFSET)
+# define ERR_RFLAG_FATAL        (0x1 << ERR_RFLAGS_OFFSET)
 
+# define ERR_SYSTEM_ERROR(l)    (((l) & ERR_SYSTEM_FLAG) != 0)
+
+# define ERR_GET_LIB(l)                                         \
+    (int)(ERR_SYSTEM_ERROR(l)                                   \
+          ? ERR_LIB_SYS                                         \
+          : ((l) >> ERR_LIB_OFFSET) & ERR_LIB_MASK)
+# define ERR_GET_FUNC(l)        0
+# define ERR_GET_RFLAGS(l)                                      \
+    (int)(ERR_SYSTEM_ERROR(l)                                   \
+          ? 0                                                   \
+          : (l) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET))
+# define ERR_GET_REASON(l)                                      \
+    (int)(ERR_SYSTEM_ERROR(l)                                   \
+          ? (l) & ERR_SYSTEM_MASK                               \
+          : (l) & ERR_REASON_MASK)
+
+# define ERR_FATAL_ERROR(l)                                     \
+    (int)(ERR_SYSTEM_ERROR(l)                                   \
+          ? (l) & 0                                             \
+          : (l) & ERR_RFLAG_FATAL)
+
+/*
+ * ERR_PACK is a helper macro to properly pack OpenSSL error codes and may
+ * only be used for that purpose.  System errors are packed internally.
+ */
 /* ERR_PACK takes reason flags and reason code combined in |r| */
 # define ERR_PACK(l,f,r)                                                \
     ( (((unsigned int)(l) & ERR_LIB_MASK) << ERR_LIB_OFFSET) |          \
       (((unsigned int)(r) & ERR_REASON_MASK)) )
-# define ERR_GET_LIB(l)     (int)(((l) >> ERR_LIB_OFFSET) & ERR_LIB_MASK)
-# define ERR_GET_FUNC(l)    0
-# define ERR_GET_RFLAGS(l)  (int)((l) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET))
-# define ERR_GET_REASON(l)  (int)((l) & ERR_REASON_MASK)
-# define ERR_FATAL_ERROR(l) (int)((l) & ERR_RFLAG_FATAL)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SYS_F_FOPEN             0

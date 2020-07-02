@@ -173,92 +173,6 @@ static ERR_STRING_DATA *int_err_get_item(const ERR_STRING_DATA *d)
     return p;
 }
 
-#ifndef OPENSSL_NO_ERR
-/*
- * SYS_str_reasons is filled with pointers to copies of strerror() results
- * at initialization. Although POSIX permits 'errno' to have any positive
- * number that fits in an 'int', most systems use a range starting at 1,
- * and the highest number we have observed is well below 255, which is
- * our current upper limit.  Other codes will be displayed numerically
- * by ERR_error_string.
- * It is crucial that we have something for each reason code that occurs in
- * ERR_str_reasons, or bogus reason strings will be returned for SYSerr(),
- * which always gets an errno value and never one of those 'standard' reason
- * codes.
- */
-# define NUM_SYS_STR_REASONS 255
-
-/*
- * Russian and Ukrainian locales on Linux required more than 6,5 kB for the
- * errno range 1..127 (observed 2019-05-21).
- * We defined the string space to be 8 KiB at the time.  Now that we double
- * the range, we double the string space.
- */
-# define SPACE_SYS_STR_REASONS (16 * 1024)
-
-static void build_SYS_str_reasons(void)
-{
-    /* OPENSSL_malloc cannot be used here, use static storage instead */
-    static ERR_STRING_DATA SYS_str_reasons[NUM_SYS_STR_REASONS + 1];
-    static char strerror_pool[SPACE_SYS_STR_REASONS];
-    char *cur = strerror_pool;
-    size_t cnt = 0;
-    static int init = 1;
-    int i;
-    int saveerrno = get_last_sys_error();
-
-    CRYPTO_THREAD_write_lock(err_string_lock);
-    if (!init) {
-        CRYPTO_THREAD_unlock(err_string_lock);
-        return;
-    }
-
-    for (i = 1; i <= NUM_SYS_STR_REASONS; i++) {
-        ERR_STRING_DATA *str = &SYS_str_reasons[i - 1];
-
-        str->error = ERR_PACK(ERR_LIB_SYS, 0, i);
-        /*
-         * If we have used up all the space in strerror_pool,
-         * there's no point in calling openssl_strerror_r()
-         */
-        if (str->string == NULL && cnt < sizeof(strerror_pool)) {
-            if (openssl_strerror_r(i, cur, sizeof(strerror_pool) - cnt)) {
-                size_t l = strlen(cur);
-
-                str->string = cur;
-                cnt += l;
-                cur += l;
-
-                /*
-                 * VMS has an unusual quirk of adding spaces at the end of
-                 * some (most? all?) messages. Lets trim them off.
-                 */
-                while (cur > strerror_pool && ossl_isspace(cur[-1])) {
-                    cur--;
-                    cnt--;
-                }
-                *cur++ = '\0';
-                cnt++;
-            }
-        }
-        if (str->string == NULL)
-            str->string = "unknown";
-    }
-
-    /*
-     * Now we still have SYS_str_reasons[NUM_SYS_STR_REASONS] = {0, NULL}, as
-     * required by ERR_load_strings.
-     */
-
-    init = 0;
-
-    CRYPTO_THREAD_unlock(err_string_lock);
-    /* openssl_strerror_r could change errno, but we want to preserve it */
-    set_sys_error(saveerrno);
-    err_load_strings(SYS_str_reasons);
-}
-#endif
-
 static void ERR_STATE_free(ERR_STATE *s)
 {
     int i;
@@ -330,7 +244,6 @@ int ERR_load_ERR_strings(void)
 
     err_load_strings(ERR_str_libraries);
     err_load_strings(ERR_str_reasons);
-    build_SYS_str_reasons();
 #endif
     return 1;
 }
@@ -577,8 +490,8 @@ static unsigned long get_error_values(ERR_GET_ACTION g,
 
 void ERR_error_string_n(unsigned long e, char *buf, size_t len)
 {
-    char lsbuf[64], rsbuf[64];
-    const char *ls, *rs;
+    char lsbuf[64], rsbuf[256];
+    const char *ls, *rs = NULL;
     unsigned long f = 0, l, r;
 
     if (len == 0)
@@ -591,8 +504,13 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         ls = lsbuf;
     }
 
-    rs = ERR_reason_error_string(e);
     r = ERR_GET_REASON(e);
+    if (ERR_SYSTEM_ERROR(e)) {
+        if (openssl_strerror_r(r, rsbuf, sizeof(rsbuf)))
+            rs = rsbuf;
+    } else {
+        rs = ERR_reason_error_string(e);
+    }
     if (rs == NULL) {
         BIO_snprintf(rsbuf, sizeof(rsbuf), "reason(%lu)", r);
         rs = rsbuf;
@@ -649,6 +567,9 @@ const char *ERR_reason_error_string(unsigned long e)
     if (!RUN_ONCE(&err_string_init, do_err_strings_init)) {
         return NULL;
     }
+
+    if (ERR_SYSTEM_ERROR(e))
+        return NULL;
 
     l = ERR_GET_LIB(e);
     r = ERR_GET_REASON(e);
