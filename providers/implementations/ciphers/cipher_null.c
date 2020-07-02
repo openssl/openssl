@@ -56,6 +56,10 @@ static int null_cipher(void *vctx, unsigned char *out, size_t *outl,
     PROV_CIPHER_NULL_CTX *ctx = (PROV_CIPHER_NULL_CTX *)vctx;
 
     if (!ctx->enc && ctx->tlsmacsize > 0) {
+        /*
+         * TLS NULL cipher as per:
+         * https://tools.ietf.org/html/rfc5246#section-6.2.3.1
+         */
         if (inl < ctx->tlsmacsize)
             return 0;
         ctx->tlsmac = in + inl - ctx->tlsmacsize;
