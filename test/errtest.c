@@ -36,20 +36,23 @@ static int test_print_error_format(void)
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
-    int code = EPERM;
-    int code2;
+    int syserr = EPERM;
+    int reasoncode;
 
-    ERR_PUT_error(ERR_LIB_SYS, 0, code, "errtest.c", 30);
-    code2 = ERR_GET_REASON(ERR_peek_error());
+    ERR_PUT_error(ERR_LIB_SYS, 0, syserr, "errtest.c", 30);
+    reasoncode = ERR_GET_REASON(ERR_peek_error());
 
-    if (code2 != code) {
+    if (reasoncode != syserr) {
         TEST_skip("libcrypto didn't register EPERM (%d) correctly (%d).  "
                   "This is a known limitation",
-                  code, code2);
+                  syserr, reasoncode);
         ERR_clear_error();
     } else {
+        char buf[256];
+
+        OPENSSL_strlcpy(buf, strerror(syserr), sizeof(buf));
         BIO_snprintf(expected, sizeof(expected), expected_format,
-                     OPENSSL_FUNC, strerror(code));
+                     OPENSSL_FUNC, buf);
 
         if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
             return 0;
