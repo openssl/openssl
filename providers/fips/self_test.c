@@ -12,7 +12,9 @@
 #include <openssl/params.h>
 #include <openssl/crypto.h>
 #include <openssl/fipskey.h>
+#include <openssl/err.h>
 #include "e_os.h"
+#include "prov/providercommonerr.h"
 /*
  * We're cheating here. Normally we don't allow RUN_ONCE usage inside the FIPS
  * module because all such initialisation should be associated with an
@@ -206,6 +208,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         if (!on_demand_test)
             return 1;
     } else if (loclstate != FIPS_STATE_SELFTEST) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
     }
 
@@ -218,11 +221,14 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         FIPS_state = FIPS_STATE_SELFTEST;
     } else if (FIPS_state != FIPS_STATE_SELFTEST) {
         CRYPTO_THREAD_unlock(self_test_lock);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
     }
     if (st == NULL
-            || st->module_checksum_data == NULL)
+            || st->module_checksum_data == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
         goto end;
+    }
 
     ev = OSSL_SELF_TEST_new(st->cb, st->cb_arg);
     if (ev == NULL)
@@ -230,16 +236,20 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 
     module_checksum = OPENSSL_hexstr2buf(st->module_checksum_data,
                                          &checksum_len);
-    if (module_checksum == NULL)
+    if (module_checksum == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
         goto end;
+    }
     bio_module = (*st->bio_new_file_cb)(st->module_filename, "rb");
 
     /* Always check the integrity of the fips module */
     if (bio_module == NULL
             || !verify_integrity(bio_module, st->bio_read_ex_cb,
                                  module_checksum, checksum_len, st->libctx,
-                                 ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY))
+                                 ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MODULE_INTEGRITY_FAILURE);
         goto end;
+    }
 
     /* This will be NULL during installation - so the self test KATS will run */
     if (st->indicator_data != NULL) {
@@ -247,12 +257,16 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
          * If the kats have already passed indicator is set - then check the
          * integrity of the indicator.
          */
-        if (st->indicator_checksum_data == NULL)
+        if (st->indicator_checksum_data == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
             goto end;
+        }
         indicator_checksum = OPENSSL_hexstr2buf(st->indicator_checksum_data,
                                                 &checksum_len);
-        if (indicator_checksum == NULL)
+        if (indicator_checksum == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
             goto end;
+        }
 
         bio_indicator =
             (*st->bio_new_buffer_cb)(st->indicator_data,
@@ -261,16 +275,20 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
                 || !verify_integrity(bio_indicator, st->bio_read_ex_cb,
                                      indicator_checksum, checksum_len,
                                      st->libctx, ev,
-                                     OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY))
+                                     OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INDICATOR_INTEGRITY_FAILURE);
             goto end;
-        else
+        } else {
             kats_already_passed = 1;
+        }
     }
 
     /* Only runs the KAT's during installation OR on_demand() */
     if (on_demand_test || kats_already_passed == 0) {
-        if (!SELF_TEST_kats(ev, st->libctx))
+        if (!SELF_TEST_kats(ev, st->libctx)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
             goto end;
+        }
     }
     ok = 1;
 end:

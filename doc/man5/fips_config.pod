@@ -59,7 +59,7 @@ It is written-to at the same time as B<install-status> is updated.
 
 For example:
 
- [fips_install]
+ [fips_sect]
  install-version = 1
  module-mac = 41:D0:FA:C2:5D:41:75:CD:7D:C3:90:55:6F:A4:DC
  install-mac = FE:10:13:5A:D3:B4:C7:82:1B:1E:17:4C:AC:84:0C

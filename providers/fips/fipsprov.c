@@ -31,6 +31,7 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "prov/providercommonerr.h"
 #include "prov/provider_util.h"
 #include "self_test.h"
 
@@ -700,8 +701,10 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         selftest_params.cb_arg = NULL;
     }
 
-    if (!c_get_params(handle, core_params))
+    if (!c_get_params(handle, core_params)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
+    }
 
     /*  Create a context. */
     if ((*provctx = PROV_CTX_new()) == NULL
@@ -724,8 +727,10 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     fgbl->handle = handle;
 
     selftest_params.libctx = libctx;
-    if (!SELF_TEST_post(&selftest_params, 0))
+    if (!SELF_TEST_post(&selftest_params, 0)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_POST_FAILURE);
         goto err;
+    }
 
     /*
      * TODO(3.0): Remove me. This is just a dummy call to demonstrate making
@@ -735,7 +740,6 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         goto err;
 
     *out = fips_dispatch_table;
-
     return 1;
  err:
     fips_teardown(*provctx);
