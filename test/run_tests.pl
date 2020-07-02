@@ -27,6 +27,7 @@ my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
+my $jobs = $ENV{HARNESS_JOBS};
 
 $ENV{OPENSSL_CONF} = catdir($srctop, "apps", "openssl.cnf");
 
@@ -36,6 +37,8 @@ my %tapargs =
       switches  => '-w',
       merge     => 1
     );
+
+$tapargs{jobs} = $jobs if defined $jobs;
 
 my @alltests = find_matching_tests("*");
 my %tests = ();
