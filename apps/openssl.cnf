@@ -27,6 +27,7 @@ providers = provider_sect
 
 # List of providers to load
 [provider_sect]
+oid_section = new_oids
 default = default_sect
 # The fips section name should match the section name inside the
 # included fipsmodule.cnf.
@@ -34,7 +35,6 @@ default = default_sect
 
 [default_sect]
 # activate = 1
-oid_section = new_oids
 
 # Extra OBJECT IDENTIFIER info:
 # oid_file       = $ENV::HOME/.oid
