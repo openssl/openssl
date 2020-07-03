@@ -58,13 +58,12 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
 
         map = ossl_provider_query_operation(provider, cur_operation,
                                             &no_store);
-        if (map == NULL)
-            continue;
+        if (map != NULL) {
+            while (map->algorithm_names != NULL) {
+                const OSSL_ALGORITHM *thismap = map++;
 
-        while (map->algorithm_names != NULL) {
-            const OSSL_ALGORITHM *thismap = map++;
-
-            data->fn(provider, thismap, no_store, data->data);
+                data->fn(provider, thismap, no_store, data->data);
+            }
         }
 
         /* Do we fulfill post-conditions? */
