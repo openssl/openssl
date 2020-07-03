@@ -1641,9 +1641,9 @@ static int execute_cleanse_plaintext(const SSL_METHOD *smeth,
         goto end;
 
     /*
-     * Since we called SSL_peek(), we know the data is stored as
-     * plaintext record. We can gather the pointer to check for
-     * zerozation after SSL_read().
+     * Since we called SSL_peek(), we know the data in the record
+     * layer is a plaintext record. We can gather the pointer to check
+     * for zeroization after SSL_read().
      */
     rr = serverssl->rlayer.rrec;
     zbuf = &rr->data[rr->off];
