@@ -25,51 +25,65 @@
 
 static int test_print_error_format(void)
 {
-    static const char expected_format[] =
-        ":error::system library:%s:%s:"
+    /* Variables used to construct an error line */
+    const char *func = OPENSSL_FUNC;
 # ifndef OPENSSL_NO_FILENAMES
-        "errtest.c:30:";
+    const char *file = OPENSSL_FILE;
+    const int line = OPENSSL_LINE;
 # else
-        ":0:";
+    const char *file = "";
+    const int line = 0;
 # endif
-    char expected[256];
+    /* The format for OpenSSL error lines */
+    const char *expected_format = ":error::system library:%s:%s:%s:%d";
+    /*-
+     *                                                    ^^ ^^ ^^ ^^
+     * function name -------------------------------------++ || || ||
+     * reason string (system error string) ------------------++ || ||
+     * file name -----------------------------------------------++ ||
+     * line number ------------------------------------------------++
+     */
+    char expected[512];
+
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
-    int syserr = EPERM;
+    const int syserr = EPERM;
     int reasoncode;
 
-    ERR_PUT_error(ERR_LIB_SYS, 0, syserr, "errtest.c", 30);
+    /*
+     * We set a mark here so we can clear the system error that we generate
+     * with ERR_PUT_error().  That is, after all, just a simulation to verify
+     * ERR_print_errors() output, not a real error.
+     */
+    ERR_set_mark();
+
+    ERR_PUT_error(ERR_LIB_SYS, 0, syserr, file, line);
     reasoncode = ERR_GET_REASON(ERR_peek_error());
 
-    if (reasoncode != syserr) {
-        TEST_skip("libcrypto didn't register EPERM (%d) correctly (%d).  "
-                  "This is a known limitation",
-                  syserr, reasoncode);
-        ERR_clear_error();
-    } else {
-        char buf[256];
+    if (!TEST_int_eq(reasoncode, syserr)) {
+        ERR_pop_to_mark();
+        goto err;
+    }
 
-        OPENSSL_strlcpy(buf, strerror(syserr), sizeof(buf));
-        BIO_snprintf(expected, sizeof(expected), expected_format,
-                     OPENSSL_FUNC, buf);
+    BIO_snprintf(expected, sizeof(expected), expected_format,
+                 func, strerror(syserr), file, line);
 
-        if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
-            return 0;
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
+        goto err;
 
-        ERR_print_errors(bio);
+    ERR_print_errors(bio);
 
-        if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
-            goto err;
-        /* Skip over the variable thread id at the start of the string */
-        for (p = out; *p != ':' && *p != 0; ++p) {
-            if (!TEST_true(IS_HEX(*p)))
-                goto err;
-        }
-        if (!TEST_true(*p != 0)
-            || !TEST_strn_eq(expected, p, strlen(expected)))
+    if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
+        goto err;
+    /* Skip over the variable thread id at the start of the string */
+    for (p = out; *p != ':' && *p != 0; ++p) {
+        if (!TEST_true(IS_HEX(*p)))
             goto err;
     }
+    if (!TEST_true(*p != 0)
+        || !TEST_strn_eq(expected, p, strlen(expected)))
+        goto err;
 
     ret = 1;
 err:
