@@ -98,8 +98,11 @@ current system time. B<timestamp> is the number of seconds since
 
 =item B<-check_ss_sig>
 
-Verify the signature on the self-signed root CA. This is disabled by default
-because it doesn't add any security.
+Verify the signature of
+the last certificate in a chain if the certificate is supposedly self-signed.
+This is prohibited and will result in an error if it is a non-conforming CA
+certificate with key usage restrictions not including the keyCertSign bit.
+This verification is disabled by default because it doesn't add any security.
 
 =item B<-CRLfile file>
 
