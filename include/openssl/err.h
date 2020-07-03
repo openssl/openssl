@@ -195,51 +195,52 @@ struct err_state_st {
  */
 
 /* Macros to help decode recorded system errors */
-# define ERR_SYSTEM_FLAG        (1UL << (sizeof(unsigned int) * CHAR_BIT - 1))
-# define ERR_SYSTEM_MASK        (ERR_SYSTEM_FLAG - 1)
+# define ERR_SYSTEM_FLAG                ((unsigned int)INT_MAX + 1)
+# define ERR_SYSTEM_MASK                ((unsigned int)INT_MAX)
 
 /* Macros to help decode recorded OpenSSL errors */
-# define ERR_LIB_OFFSET         23L
-# define ERR_LIB_MASK           0xFF
-# define ERR_RFLAGS_OFFSET      19L
-# define ERR_RFLAGS_MASK        0xF
-# define ERR_REASON_MASK        0X7FFFFF
+# define ERR_LIB_OFFSET                 23L
+# define ERR_LIB_MASK                   0xFF
+# define ERR_RFLAGS_OFFSET              19L
+# define ERR_RFLAGS_MASK                0xF
+# define ERR_REASON_MASK                0X7FFFFF
 
 /*
  * Reason flags are defined pre-shifted to easily combine with the reason
  * number.
  */
-# define ERR_RFLAG_FATAL        (0x1 << ERR_RFLAGS_OFFSET)
+# define ERR_RFLAG_FATAL                (0x1 << ERR_RFLAGS_OFFSET)
 
-# define ERR_SYSTEM_ERROR(l)    (((l) & ERR_SYSTEM_FLAG) != 0)
+# define ERR_SYSTEM_ERROR(errcode)      (((errcode) & ERR_SYSTEM_FLAG) != 0)
 
-# define ERR_GET_LIB(l)                                         \
-    (int)(ERR_SYSTEM_ERROR(l)                                   \
+# define ERR_GET_LIB(errcode)                                   \
+    (int)(ERR_SYSTEM_ERROR(errcode)                             \
           ? ERR_LIB_SYS                                         \
-          : ((l) >> ERR_LIB_OFFSET) & ERR_LIB_MASK)
-# define ERR_GET_FUNC(l)        0
-# define ERR_GET_RFLAGS(l)                                      \
-    (int)(ERR_SYSTEM_ERROR(l)                                   \
+          : ((errcode) >> ERR_LIB_OFFSET) & ERR_LIB_MASK)
+# define ERR_GET_FUNC(errcode)        0
+# define ERR_GET_RFLAGS(errcode)                                \
+    (int)(ERR_SYSTEM_ERROR(errcode)                             \
           ? 0                                                   \
-          : (l) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET))
-# define ERR_GET_REASON(l)                                      \
-    (int)(ERR_SYSTEM_ERROR(l)                                   \
-          ? (l) & ERR_SYSTEM_MASK                               \
-          : (l) & ERR_REASON_MASK)
+          : (errcode) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET))
+# define ERR_GET_REASON(errcode)                                \
+    (int)(ERR_SYSTEM_ERROR(errcode)                             \
+          ? (errcode) & ERR_SYSTEM_MASK                         \
+          : (errcode) & ERR_REASON_MASK)
 
-# define ERR_FATAL_ERROR(l)                                     \
-    (int)(ERR_SYSTEM_ERROR(l)                                   \
-          ? (l) & 0                                             \
-          : (l) & ERR_RFLAG_FATAL)
+# define ERR_FATAL_ERROR(errcode)                               \
+    (int)(ERR_SYSTEM_ERROR(errcode)                             \
+          ? (errcode) & 0                                       \
+          : (errcode) & ERR_RFLAG_FATAL)
 
 /*
  * ERR_PACK is a helper macro to properly pack OpenSSL error codes and may
  * only be used for that purpose.  System errors are packed internally.
+ * ERR_PACK takes reason flags and reason code combined in |reason|.
+ * ERR_PACK ignores |func|, that parameter is just legacy from pre-3.0 OpenSSL.
  */
-/* ERR_PACK takes reason flags and reason code combined in |r| */
-# define ERR_PACK(l,f,r)                                                \
-    ( (((unsigned int)(l) & ERR_LIB_MASK) << ERR_LIB_OFFSET) |          \
-      (((unsigned int)(r) & ERR_REASON_MASK)) )
+# define ERR_PACK(lib,func,reason)                                      \
+    ( (((unsigned long)(lib)    & ERR_LIB_MASK   ) << ERR_LIB_OFFSET) | \
+      (((unsigned long)(reason) & ERR_REASON_MASK)) )
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define SYS_F_FOPEN             0
