@@ -213,24 +213,36 @@ struct err_state_st {
 
 # define ERR_SYSTEM_ERROR(errcode)      (((errcode) & ERR_SYSTEM_FLAG) != 0)
 
-# define ERR_GET_LIB(errcode)                                   \
-    (int)(ERR_SYSTEM_ERROR(errcode)                             \
-          ? ERR_LIB_SYS                                         \
-          : ((errcode) >> ERR_LIB_OFFSET) & ERR_LIB_MASK)
-# define ERR_GET_FUNC(errcode)        0
-# define ERR_GET_RFLAGS(errcode)                                \
-    (int)(ERR_SYSTEM_ERROR(errcode)                             \
-          ? 0                                                   \
-          : (errcode) & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET))
-# define ERR_GET_REASON(errcode)                                \
-    (int)(ERR_SYSTEM_ERROR(errcode)                             \
-          ? (errcode) & ERR_SYSTEM_MASK                         \
-          : (errcode) & ERR_REASON_MASK)
+static ossl_inline int ERR_GET_LIB(unsigned long errcode)
+{
+    if (ERR_SYSTEM_ERROR(errcode))
+        return ERR_LIB_SYS;
+    return (errcode >> ERR_LIB_OFFSET) & ERR_LIB_MASK;
+}
 
-# define ERR_FATAL_ERROR(errcode)                               \
-    (int)(ERR_SYSTEM_ERROR(errcode)                             \
-          ? (errcode) & 0                                       \
-          : (errcode) & ERR_RFLAG_FATAL)
+static ossl_inline int ERR_GET_FUNC(unsigned long errcode)
+{
+    return 0;
+}
+
+static ossl_inline int ERR_GET_RFLAGS(unsigned long errcode)
+{
+    if (ERR_SYSTEM_ERROR(errcode))
+        return 0;
+    return errcode & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET);
+}
+
+static ossl_inline int ERR_GET_REASON(unsigned long errcode)
+{
+    if (ERR_SYSTEM_ERROR(errcode))
+        return errcode & ERR_SYSTEM_MASK;
+    return errcode & ERR_REASON_MASK;
+}
+
+static ossl_inline int ERR_FATAL_ERROR(unsigned long errcode)
+{
+    return (ERR_GET_RFLAGS(errcode) & ERR_RFLAG_FATAL) != 0;
+}
 
 /*
  * ERR_PACK is a helper macro to properly pack OpenSSL error codes and may
