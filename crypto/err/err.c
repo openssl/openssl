@@ -504,6 +504,12 @@ void ERR_error_string_n(unsigned long e, char *buf, size_t len)
         ls = lsbuf;
     }
 
+    /*
+     * ERR_reason_error_string() can't safely return system error strings,
+     * since it would call openssl_strerror_r(), which needs a buffer for
+     * thread safety.  So for system errors, we call openssl_strerror_r()
+     * directly instead.
+     */
     r = ERR_GET_REASON(e);
     if (ERR_SYSTEM_ERROR(e)) {
         if (openssl_strerror_r(r, rsbuf, sizeof(rsbuf)))
@@ -568,6 +574,11 @@ const char *ERR_reason_error_string(unsigned long e)
         return NULL;
     }
 
+    /*
+     * ERR_reason_error_string() can't safely return system error strings,
+     * since openssl_strerror_r() needs a buffer for thread safety, and we
+     * haven't got one that would serve any sensible purpose.
+     */
     if (ERR_SYSTEM_ERROR(e))
         return NULL;
 

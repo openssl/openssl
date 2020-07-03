@@ -33,12 +33,20 @@ void ERR_print_errors_cb(int (*cb) (const char *str, size_t len, void *u),
         unsigned long r = ERR_GET_REASON(l);
 
         lib = ERR_lib_error_string(l);
+
+        /*
+         * ERR_reason_error_string() can't safely return system error strings,
+         * since it would call openssl_strerror_r(), which needs a buffer for
+         * thread safety.  So for system errors, we call openssl_strerror_r()
+         * directly instead.
+         */
         if (ERR_SYSTEM_ERROR(l)) {
             if (openssl_strerror_r(r, rsbuf, sizeof(rsbuf)))
                 reason = rsbuf;
         } else {
             reason = ERR_reason_error_string(l);
         }
+
         if (func == NULL)
             func = "unknown function";
         if (reason == NULL) {
