@@ -1156,9 +1156,8 @@ ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug)
 void release_engine(ENGINE *e)
 {
 #ifndef OPENSSL_NO_ENGINE
-    if (e != NULL)
-        /* Free our "structural" reference. */
-        ENGINE_free(e);
+    /* Free our "structural" reference. */
+    ENGINE_free(e);
 #endif
 }
 
