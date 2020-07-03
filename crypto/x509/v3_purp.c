@@ -533,6 +533,7 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
                 /* .. and the signature alg matches the PUBKEY alg: */
                 && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
             x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
+        /* This is very related to x509_likely_issued(x, x) == X509_V_OK */
     }
 
     /* Handle subject alternative names and various other extensions */
@@ -865,6 +866,7 @@ int x509_likely_issued(X509 *issuer, X509 *subject,
                       X509_get_issuer_name(subject)) != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
+    /* set issuer->skid and subject->akid */
     if (!X509v3_cache_extensions(issuer, libctx, propq)
             || !X509v3_cache_extensions(subject, libctx, propq))
         return X509_V_ERR_UNSPECIFIED;
