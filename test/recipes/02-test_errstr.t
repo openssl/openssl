@@ -34,6 +34,13 @@ plan skip_all => 'This is unsupported on MSYS/MinGW or MSWin32'
 plan skip_all => 'OpenSSL is configured "no-autoerrinit" or "no-err"'
     if disabled('autoerrinit') || disabled('err');
 
+# OpenSSL constants found in <openssl/err.h>
+use constant ERR_SYSTEM_FLAG => INT_MAX + 1;
+use constant ERR_LIB_OFFSET => 23; # Offset of the "library" errcode section
+
+# OpenSSL "library" numbers
+use constant ERR_LIB_NONE => 1;
+
 # We use Errno::EXPORT_OK as a list of known errno values on the current
 # system.  libcrypto's ERR should either use the same string as perl, or if
 # it was outside the range that ERR looks at, ERR gives the reason string
@@ -54,9 +61,11 @@ foreach my $errname (@Errno::EXPORT_OK) {
 }
 
 # OpenSSL library 1 is the "unknown" library
-&ok(match_opensslerr_reason(0x1 << 23 | 0x100, "reason(256)"));
+&ok(match_opensslerr_reason(ERR_LIB_NONE << ERR_LIB_OFFSET | 256,
+                            "reason(256)"));
 # Reason code 0 of any library gives the library name as reason
-&ok(match_opensslerr_reason(0x1 << 23 |  0x00, "unknown library"));
+&ok(match_opensslerr_reason(ERR_LIB_NONE << ERR_LIB_OFFSET |   0,
+                            "unknown library"));
 
 exit 0;
 
@@ -96,35 +105,31 @@ sub match_any {
 }
 
 sub match_opensslerr_reason {
-    my $errnum = shift;
+    my $errcode = shift;
     my @strings = @_;
 
-    my $errnum_hex = sprintf "%x", $errnum;
+    my $errcode_hex = sprintf "%x", $errcode;
     my $reason =
-        ( run(app([ qw(openssl errstr), $errnum_hex ]), capture => 1) )[0];
+        ( run(app([ qw(openssl errstr), $errcode_hex ]), capture => 1) )[0];
     $reason =~ s|\R$||;
     $reason = ( split_error($reason) )[3];
 
-    return match_any($reason, $errnum, @strings);
+    return match_any($reason, $errcode, @strings);
 }
 
 sub match_syserr_reason {
-    my $errnum = shift;
+    my $errcode = shift;
 
     my @strings = ();
     # The POSIX reason string
     push @strings, eval {
           # Set $! to the error number...
-          local $! = $errnum;
+          local $! = $errcode;
           # ... and $! will give you the error string back
           $!
     };
     # The OpenSSL fallback string
-    push @strings, "reason($errnum)";
+    push @strings, "reason($errcode)";
 
-    # We know that the system reasons are recorded by OpenSSL as an 'int'
-    # with an added set high bit, which always is POSIX::INT_MAX + 1.
-    my $syserr_flag = INT_MAX + 1;
-
-    return match_opensslerr_reason($syserr_flag | $errnum, $errnum, @strings);
+    return match_opensslerr_reason(ERR_SYSTEM_FLAG | $errcode, @strings);
 }
