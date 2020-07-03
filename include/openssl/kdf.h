@@ -115,17 +115,13 @@ void EVP_KDF_names_do_all(const EVP_KDF *kdf,
 # define EVP_PKEY_HKDEF_MODE_EXPAND_ONLY        \
             EVP_KDF_HKDF_MODE_EXPAND_ONLY
 
-# define EVP_PKEY_CTX_set_tls1_prf_md(pctx, md) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_TLS_MD, 0, (void *)(md))
+int EVP_PKEY_CTX_set_tls1_prf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
-# define EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, sec, seclen) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_TLS_SECRET, seclen, (void *)(sec))
+int EVP_PKEY_CTX_set1_tls1_prf_secret(EVP_PKEY_CTX *pctx,
+                                      const unsigned char *sec, int seclen);
 
-# define EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, seed, seedlen) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_TLS_SEED, seedlen, (void *)(seed))
+int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *pctx,
+                                    const unsigned char *seed, int seedlen);
 
 # define EVP_PKEY_CTX_set_hkdf_md(pctx, md) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
