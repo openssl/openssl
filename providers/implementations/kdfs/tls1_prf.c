@@ -183,9 +183,6 @@ static int kdf_tls1_prf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     }
     /* The seed fields concatenate, so process them all */
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_SEED)) != NULL) {
-        OPENSSL_cleanse(ctx->seed, ctx->seedlen);
-        ctx->seedlen = 0;
-
         for (; p != NULL; p = OSSL_PARAM_locate_const(p + 1,
                                                       OSSL_KDF_PARAM_SEED)) {
             const void *q = ctx->seed + ctx->seedlen;

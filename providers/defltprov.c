@@ -337,6 +337,7 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
     { "X25519", "provider=default", x25519_keyexch_functions },
     { "X448", "provider=default", x448_keyexch_functions },
 #endif
+    { "TLS1-PRF", "provider=default", kdf_keyexch_functions },
     { NULL, NULL, NULL }
 };
 
@@ -382,6 +383,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { "ED25519", "provider=default", ed25519_keymgmt_functions },
     { "ED448", "provider=default", ed448_keymgmt_functions },
 #endif
+    { "TLS1-PRF", "provider=default", kdf_keymgmt_functions },
     { NULL, NULL, NULL }
 };
 

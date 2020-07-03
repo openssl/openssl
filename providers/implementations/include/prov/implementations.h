@@ -275,12 +275,14 @@ extern const OSSL_DISPATCH x448_keymgmt_functions[];
 extern const OSSL_DISPATCH ed25519_keymgmt_functions[];
 extern const OSSL_DISPATCH ed448_keymgmt_functions[];
 extern const OSSL_DISPATCH ec_keymgmt_functions[];
+extern const OSSL_DISPATCH kdf_keymgmt_functions[];
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];
 extern const OSSL_DISPATCH x25519_keyexch_functions[];
 extern const OSSL_DISPATCH x448_keyexch_functions[];
 extern const OSSL_DISPATCH ecdh_keyexch_functions[];
+extern const OSSL_DISPATCH kdf_keyexch_functions[];
 
 /* Signature */
 extern const OSSL_DISPATCH dsa_signature_functions[];

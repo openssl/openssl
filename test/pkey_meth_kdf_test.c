@@ -35,11 +35,13 @@ static int test_kdf_tls1_prf(void)
         TEST_error("EVP_PKEY_CTX_set_tls1_prf_md");
         goto err;
     }
-    if (EVP_PKEY_CTX_set1_tls1_prf_secret(pctx, "secret", 6) <= 0) {
+    if (EVP_PKEY_CTX_set1_tls1_prf_secret(pctx,
+                                          (unsigned char *)"secret", 6) <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_tls1_prf_secret");
         goto err;
     }
-    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx, "seed", 4) <= 0) {
+    if (EVP_PKEY_CTX_add1_tls1_prf_seed(pctx,
+                                        (unsigned char *)"seed", 4) <= 0) {
         TEST_error("EVP_PKEY_CTX_add1_tls1_prf_seed");
         goto err;
     }
