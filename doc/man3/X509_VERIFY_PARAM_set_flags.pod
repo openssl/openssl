@@ -283,13 +283,15 @@ they are enabled.
 If B<X509_V_FLAG_USE_DELTAS> is set delta CRLs (if present) are used to
 determine certificate status. If not set deltas are ignored.
 
-B<X509_V_FLAG_CHECK_SS_SIGNATURE> requires verifying the signature of the last
-certificate in a chain even when it is a self-signed (root CA) certificate.
-In this case the check is disabled by default because it does not
+B<X509_V_FLAG_CHECK_SS_SIGNATURE> requests checking the signature of
+the last certificate in a chain if the certificate is supposedly self-signed.
+This is prohibited and will result in an error if it is a non-conforming CA
+certificate with key usage restrictions not including the I<keyCertSign> bit.
+By default this check is disabled because it doesn't
 add any additional security but in some cases applications might want to
-check the signature anyway. A side effect of not checking the root CA
-signature is that disabled or unsupported message digests on the root CA
-are not treated as fatal errors.
+check the signature anyway. A side effect of not checking the self-signature
+of such a certificate is that disabled or unsupported message digests used for
+the signature are not treated as fatal errors.
 
 When B<X509_V_FLAG_TRUSTED_FIRST> is set, which is always the case since
 OpenSSL 1.1.0, construction of the certificate chain
