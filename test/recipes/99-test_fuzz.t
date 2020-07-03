@@ -9,35 +9,30 @@
 use strict;
 use warnings;
 
-use OpenSSL::Glob;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_fuzz");
 
-my @fuzzers = ('asn1', 'asn1parse', 'bignum', 'bndiv', 'client', 'conf', 'crl', 'server', 'x509');
-if (!disabled("cmp")) {
-    push @fuzzers, 'cmp';
-}
-if (!disabled("cms")) {
-    push @fuzzers, 'cms';
-}
-if (!disabled("ct")) {
-    push @fuzzers, 'ct';
-}
-plan tests => scalar @fuzzers;
+my @fuzzers = ();
+@fuzzers = split /\s+/, $ENV{FUZZ_TESTS} if $ENV{FUZZ_TESTS};
 
-foreach my $f (@fuzzers) {
-    subtest "Fuzzing $f" => sub {
-        my @dirs = glob(srctop_file('fuzz', 'corpora', $f));
-        push @dirs, glob(srctop_file('fuzz', 'corpora', "$f-*"));
-
-        plan skip_all => "No corpora for $f-test" unless @dirs;
-
-        plan tests => scalar @dirs;
-
-        foreach (@dirs) {
-            ok(run(fuzz(["$f-test", $_])));
-        }
-    }
+if (!@fuzzers) {
+    @fuzzers = (
+        # those commented here as very slow could be moved to separate runs
+        'asn1', # very slow
+        'asn1parse', 'bignum', 'bndiv', 'conf','crl',
+        'client', # very slow
+        'server', # very slow
+        'x509'
+        );
+    push @fuzzers, 'cmp' if !disabled("cmp");
+    push @fuzzers, 'cms' if !disabled("cms");
+    push @fuzzers, 'ct' if !disabled("ct");
 }
+
+plan tests => scalar @fuzzers + 1; # one more due to below require_ok(...)
+
+require_ok(srctop_file('test','recipes','fuzz.pl'));
+
+&fuzz_tests(@fuzzers);

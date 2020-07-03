@@ -121,6 +121,10 @@ Run all tests in test groups 80 to 99 except for tests in group 90:
 
     $ make TESTS='[89]? -90' test
 
+To run specific fuzz tests you can use for instance:
+
+    $ make test TESTS=test_fuzz FUZZ_TESTS="cmp cms"
+
 To stochastically verify that the algorithm that produces uniformly distributed
 random numbers is operating correctly (with a false positive rate of 0.01%):
 
