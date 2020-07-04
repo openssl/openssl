@@ -78,7 +78,7 @@ in stdio behaviour will be mirrored by the corresponding BIO.
 
 On Windows BIO_new_files reserves for the filename argument to be
 UTF-8 encoded. In other words if you have to make it work in multi-
-lingual environment, encode file names in UTF-8.
+lingual environment, encode filenames in UTF-8.
 
 =head1 RETURN VALUES
 

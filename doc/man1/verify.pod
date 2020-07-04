@@ -336,7 +336,7 @@ in PEM format.
 =head1 VERIFY OPERATION
 
 The B<verify> program uses the same functions as the internal SSL and S/MIME
-verification, therefore this description applies to these verify operations
+verification, therefore, this description applies to these verify operations
 too.
 
 There is one crucial difference between the verify operations performed

@@ -79,7 +79,7 @@ B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g. B<prime256v1>). Group
 names are case sensitive. The list should be in order of preference with the
 most preferred group first.
 
@@ -95,7 +95,7 @@ servers
 The B<value> argument is a curve name or the special value B<auto> which
 picks an appropriate curve based on client and server preferences. The curve
 can be either the B<NIST> name (e.g. B<P-256>) or an OpenSSL OID name
-(e.g B<prime256v1>). Curve names are case sensitive.
+(e.g. B<prime256v1>). Curve names are case sensitive.
 
 =item B<-cipher>
 
@@ -359,7 +359,7 @@ B<ClientHello>.
 
 The B<value> argument is a colon separated list of groups. The group can be
 either the B<NIST> name (e.g. B<P-256>), some other commonly used name where
-applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g B<prime256v1>). Group
+applicable (e.g. B<X25519>) or an OpenSSL OID name (e.g. B<prime256v1>). Group
 names are case sensitive. The list should be in order of preference with the
 most preferred group first.
 
@@ -548,7 +548,7 @@ The value is a string without any specific structure.
 
 =item B<SSL_CONF_TYPE_FILE>
 
-The value is a file name.
+The value is a filename.
 
 =item B<SSL_CONF_TYPE_DIR>
 

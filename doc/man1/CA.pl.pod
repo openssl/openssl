@@ -164,7 +164,7 @@ Create the CA directories and files:
 
  CA.pl -newca
 
-enter cacert.pem when prompted for the CA file name.
+enter cacert.pem when prompted for the CA filename.
 
 Create a DSA certificate request and private key (a different set of parameters
 can optionally be created first):

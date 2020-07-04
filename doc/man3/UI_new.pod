@@ -152,7 +152,7 @@ UI_construct_prompt() is a helper function that can be used to create
 a prompt from two pieces of information: an description and a name.
 The default constructor (if there is none provided by the method used)
 creates a string "Enter I<description> for I<name>:".  With the
-description "pass phrase" and the file name "foo.key", that becomes
+description "pass phrase" and the filename "foo.key", that becomes
 "Enter pass phrase for foo.key:".  Other methods may create whatever
 string and may include encodings that will be processed by the other
 method functions.

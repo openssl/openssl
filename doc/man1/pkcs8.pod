@@ -285,7 +285,7 @@ one million iterations of the password:
 Test vectors from this PKCS#5 v2.0 implementation were posted to the
 pkcs-tng mailing list using triple DES, DES and RC2 with high iteration
 counts, several people confirmed that they could decrypt the private
-keys produced and Therefore it can be assumed that the PKCS#5 v2.0
+keys produced and therefore, it can be assumed that the PKCS#5 v2.0
 implementation is reasonably accurate at least as far as these
 algorithms are concerned.
 

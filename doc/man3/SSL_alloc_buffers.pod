@@ -22,7 +22,7 @@ control when buffers are freed and allocated.
 
 After freeing the buffers, the buffers are automatically reallocated upon a
 new read or write. The SSL_alloc_buffers() does not need to be called, but
-can be used to make sure the buffers are pre-allocated. This can be used to
+can be used to make sure the buffers are preallocated. This can be used to
 avoid allocation during data processing or with CRYPTO_set_mem_functions()
 to control where and how buffers are allocated.
 
