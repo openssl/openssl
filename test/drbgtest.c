@@ -491,11 +491,6 @@ static int error_check(DRBG_SELFTEST_DATA *td)
                                              td->adin, td->adinlen)))
         goto err;
 
-    /* Request too much data for one request */
-    if (!TEST_false(RAND_DRBG_generate(drbg, buff, max_request(drbg) + 1, 0,
-                                       td->adin, td->adinlen)))
-        goto err;
-
     /* Try too large additional input */
     if (!TEST_false(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                        td->adin, max_adinlen(drbg) + 1)))
