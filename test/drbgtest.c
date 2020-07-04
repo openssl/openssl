@@ -176,7 +176,6 @@ DRBG_SIZE_T(min_noncelen)
 DRBG_SIZE_T(max_noncelen)
 DRBG_SIZE_T(max_perslen)
 DRBG_SIZE_T(max_adinlen)
-DRBG_SIZE_T(max_request)
 
 #define DRBG_UINT(name)                                 \
     static unsigned int name(RAND_DRBG *drbg)           \
@@ -489,11 +488,6 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!instantiate(drbg, td, &t)
             || !TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                              td->adin, td->adinlen)))
-        goto err;
-
-    /* Request too much data for one request */
-    if (!TEST_false(RAND_DRBG_generate(drbg, buff, max_request(drbg) + 1, 0,
-                                       td->adin, td->adinlen)))
         goto err;
 
     /* Try too large additional input */
