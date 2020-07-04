@@ -33,7 +33,7 @@ Then an ID should be set by calling:
  EVP_PKEY_CTX_set1_id(pctx, id, id_len);
 
 When calling the EVP_DigestSignInit() or EVP_DigestVerifyInit() functions, a
-pre-allocated B<EVP_PKEY_CTX> should be assigned to the B<EVP_MD_CTX>. This is
+preallocated B<EVP_PKEY_CTX> should be assigned to the B<EVP_MD_CTX>. This is
 done by calling:
 
  EVP_MD_CTX_set_pkey_ctx(mctx, pctx);

@@ -38,7 +38,7 @@ B<openssl> B<pkeyutl>
 
 =head1 DESCRIPTION
 
-The B<pkeyutl> command can be used to perform low level public key operations
+The B<pkeyutl> command can be used to perform low-level public key operations
 using any supported algorithm.
 
 =head1 OPTIONS

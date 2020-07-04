@@ -31,7 +31,7 @@ BIO_callback_fn_ex, BIO_callback_fn
 =head1 DESCRIPTION
 
 BIO_set_callback_ex() and BIO_get_callback_ex() set and retrieve the BIO
-callback. The callback is called during most high level BIO operations. It can
+callback. The callback is called during most high-level BIO operations. It can
 be used for debugging purposes to trace operations on a BIO or to modify its
 operation.
 

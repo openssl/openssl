@@ -432,7 +432,7 @@ the value.
 The escaping isn't quite right: if you want to use sequences like B<\n>
 you can't use any quote escaping on the same line.
 
-Files are loaded in a single pass. This means that an variable expansion
+Files are loaded in a single pass. This means that a variable expansion
 will only work if the variables referenced are defined earlier in the
 file.
 

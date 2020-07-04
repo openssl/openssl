@@ -51,7 +51,7 @@ value is initialised to SSL_AD_UNRECOGNIZED_NAME.
 =item SSL_TLSEXT_ERR_ALERT_WARNING
 
 If this value is returned then the servername is not accepted by the server.
-However the handshake will continue and send a warning alert instead. The value
+However, the handshake will continue and send a warning alert instead. The value
 of the alert should be stored in the location pointed to by the B<al> parameter
 as for SSL_TLSEXT_ERR_ALERT_FATAL above. Note that TLSv1.3 does not support
 warning alerts, so if TLSv1.3 has been negotiated then this return value is

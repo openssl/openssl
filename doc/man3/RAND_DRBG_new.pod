@@ -56,7 +56,7 @@ its type and to instantiate it.
 
 The optional B<flags> argument specifies a set of bit flags which can be
 joined using the | operator. Currently, the only flag is
-RAND_DRBG_FLAG_CTR_NO_DF, which disables the use of a the derivation function
+RAND_DRBG_FLAG_CTR_NO_DF, which disables the use of the derivation function
 ctr_df. For an explanation, see [NIST SP 800-90A Rev. 1].
 
 If a B<parent> instance is specified then this will be used instead of
