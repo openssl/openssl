@@ -238,7 +238,7 @@ int RAND_status(void)
     if (meth != NULL && meth != RAND_OpenSSL())
         return meth->status != NULL ? meth->status() : 0;
 
-    if ((drbg = RAND_DRBG_get0_master()) == NULL || drbg->rand == NULL)
+    if ((drbg = RAND_DRBG_get0_primary()) == NULL || drbg->rand == NULL)
         return EVP_RAND_STATE_UNINITIALISED;
     return EVP_RAND_state(drbg->rand) == EVP_RAND_STATE_READY;
 }

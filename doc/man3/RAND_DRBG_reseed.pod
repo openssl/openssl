@@ -23,10 +23,10 @@ RAND_DRBG_set_reseed_defaults
                                         time_t interval);
 
  int RAND_DRBG_set_reseed_defaults(
-                                   unsigned int master_reseed_interval,
-                                   unsigned int slave_reseed_interval,
-                                   time_t master_reseed_time_interval,
-                                   time_t slave_reseed_time_interval
+                                   unsigned int primary_reseed_interval,
+                                   unsigned int secondary_reseed_interval,
+                                   time_t primary_reseed_time_interval,
+                                   time_t secondary_reseed_time_interval
                                    );
 
 
@@ -60,12 +60,13 @@ elapsed time since its last reseeding exceeds the given reseed time interval.
 If B<interval> == 0, then this feature is disabled.
 
 RAND_DRBG_set_reseed_defaults() sets the default values for the reseed interval
-(B<master_reseed_interval> and B<slave_reseed_interval>)
+(B<primary_reseed_interval> and B<secondary_reseed_interval>)
 and the reseed time interval
-(B<master_reseed_time_interval> and B<slave_reseed_tme_interval>)
+(B<primary_reseed_time_interval> and B<secondary_reseed_tme_interval>)
 of DRBG instances.
-The default values are set independently for master DRBG instances (which don't
-have a parent) and slave DRBG instances (which are chained to a parent DRBG).
+The default values are set independently for primary DRBG instances (which don't
+have a parent) and secondary DRBG instances (which are chained to a parent
+DRBG).
 
 =head1 RETURN VALUES
 
@@ -73,7 +74,6 @@ RAND_DRBG_reseed(),
 RAND_DRBG_set_reseed_interval(), and
 RAND_DRBG_set_reseed_time_interval(),
 return 1 on success, 0 on failure.
-
 
 =head1 NOTES
 
@@ -89,9 +89,9 @@ by providing application defined callbacks using RAND_DRBG_set_callbacks().
 
 The reseeding default values are applied only during creation of a DRBG instance.
 To ensure that they are applied to the global and thread-local DRBG instances
-(<master>, resp. <public> and <private>), it is necessary to call
-RAND_DRBG_set_reseed_defaults() before creating any thread and before calling any
- cryptographic routines that obtain random data directly or indirectly.
+(<primary>, resp. <public> and <private>), it is necessary to call
+RAND_DRBG_set_reseed_defaults() before creating any thread and before calling
+any cryptographic routines that obtain random data directly or indirectly.
 
 =head1 SEE ALSO
 

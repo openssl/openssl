@@ -84,7 +84,7 @@ see [NIST SP 800-90A Rev. 1].
 
 Enables use of HMAC instead of the HASH DRBG.
 
-=item RAND_DRBG_FLAG_MASTER
+=item RAND_DRBG_FLAG_PRIMARY
 
 =item RAND_DRBG_FLAG_PUBLIC
 
