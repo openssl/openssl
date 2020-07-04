@@ -46,6 +46,9 @@
 
   *) The Oracle Developer Studio compiler will start reporting deprecated APIs
 
+  *) Add support for Apple Silicon M1 Macs with the darwin64-arm64-cc target.
+     [Stuart Carnie]
+
  Changes between 1.1.1f and 1.1.1g [21 Apr 2020]
 
   *) Fixed segmentation fault in SSL_check_chain()
