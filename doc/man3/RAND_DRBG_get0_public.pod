@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-OPENSSL_CTX_get0_master_drbg,
+OPENSSL_CTX_get0_primary_drbg,
 OPENSSL_CTX_get0_public_drbg,
 OPENSSL_CTX_get0_private_drbg,
 RAND_DRBG_get0_master,
@@ -14,7 +14,7 @@ RAND_DRBG_get0_private
 
  #include <openssl/rand_drbg.h>
 
- RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx);
+ RAND_DRBG *OPENSSL_CTX_get0_primary_drbg(OPENSSL_CTX *ctx);
  RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
  RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
  RAND_DRBG *RAND_DRBG_get0_master(void);
@@ -36,7 +36,7 @@ These functions here provide access to the shared DRBG instances.
 
 =head1 RETURN VALUES
 
-OPENSSL_CTX_get0_master_drbg() returns a pointer to the I<master> DRBG instance
+OPENSSL_CTX_get0_primary_drbg() returns a pointer to the I<master> DRBG instance
 for the given OPENSSL_CTX B<ctx>.
 
 OPENSSL_CTX_get0_public_drbg() returns a pointer to the I<public> DRBG instance
@@ -48,7 +48,7 @@ for the given OPENSSL_CTX B<ctx>.
 In all the above cases the B<ctx> parameter can
 be NULL in which case the default OPENSSL_CTX is used. RAND_DRBG_get0_master(),
 RAND_DRBG_get0_public() and RAND_DRBG_get0_private() are the same as
-OPENSSL_CTX_get0_master_drbg(), OPENSSL_CTX_get0_public_drbg() and
+OPENSSL_CTX_get0_primary_drbg(), OPENSSL_CTX_get0_public_drbg() and
 OPENSSL_CTX_get0_private_drbg() respectively except that the default OPENSSL_CTX
 is always used.
 
@@ -80,7 +80,7 @@ L<RAND_DRBG(7)>
 
 =head1 HISTORY
 
-The OPENSSL_CTX_get0_master_drbg(), OPENSSL_CTX_get0_public_drbg() and
+The OPENSSL_CTX_get0_primary_drbg(), OPENSSL_CTX_get0_public_drbg() and
 OPENSSL_CTX_get0_private_drbg() functions were added in OpenSSL 3.0.
 
 All other RAND_DRBG functions were added in OpenSSL 1.1.1.

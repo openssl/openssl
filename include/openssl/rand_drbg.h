@@ -35,8 +35,8 @@
  */
 # define RAND_DRBG_FLAG_HMAC                 0x2
 
-/* Used by RAND_DRBG_set_defaults() to set the master DRBG type and flags. */
-# define RAND_DRBG_FLAG_MASTER               0x4
+/* Used by RAND_DRBG_set_defaults() to set the primary DRBG type and flags. */
+# define RAND_DRBG_FLAG_PRIMARY              0x4
 /* Used by RAND_DRBG_set_defaults() to set the public DRBG type and flags. */
 # define RAND_DRBG_FLAG_PUBLIC               0x8
 /* Used by RAND_DRBG_set_defaults() to set the private DRBG type and flags. */
@@ -104,18 +104,25 @@ int RAND_DRBG_set_reseed_interval(RAND_DRBG *drbg, unsigned int interval);
 int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval);
 
 int RAND_DRBG_set_reseed_defaults(
-                                  unsigned int master_reseed_interval,
-                                  unsigned int slave_reseed_interval,
-                                  time_t master_reseed_time_interval,
-                                  time_t slave_reseed_time_interval
+                                  unsigned int primary_reseed_interval,
+                                  unsigned int secondary_reseed_interval,
+                                  time_t primary_reseed_time_interval,
+                                  time_t secondary_reseed_time_interval
                                   );
 
-RAND_DRBG *OPENSSL_CTX_get0_master_drbg(OPENSSL_CTX *ctx);
+RAND_DRBG *OPENSSL_CTX_get0_primary_drbg(OPENSSL_CTX *ctx);
 RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
 RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
 RAND_DRBG *RAND_DRBG_get0_master(void);
 RAND_DRBG *RAND_DRBG_get0_public(void);
 RAND_DRBG *RAND_DRBG_get0_private(void);
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+/* Retain legacy deprecated names */
+#  define RAND_DRBG_FLAG_MASTER        RAND_DRBG_FLAG_PRIMARY
+#  define OPENSSL_CTX_get0_master_drbg OPENSSL_CTX_get0_primary_drbg
+#  define RAND_DRBG_get0_master        RAND_DRBG_get0_master
+# endif
 
 /*
  * EXDATA

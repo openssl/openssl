@@ -4642,7 +4642,7 @@ ERR_load_CMP_strings                    ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_MD_CTX_set_params                   ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get_params                   ?	3_0_0	EXIST::FUNCTION:
 RAND_DRBG_new_ex                        ?	3_0_0	EXIST::FUNCTION:
-OPENSSL_CTX_get0_master_drbg            ?	3_0_0	EXIST::FUNCTION:
+OPENSSL_CTX_get0_primary_drbg           ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_get0_public_drbg            ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_get0_private_drbg           ?	3_0_0	EXIST::FUNCTION:
 BN_CTX_new_ex                           ?	3_0_0	EXIST::FUNCTION:
