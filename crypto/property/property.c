@@ -358,9 +358,9 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
             pq = *plp;
         } else {
             p2 = ossl_property_merge(pq, *plp);
+            ossl_property_free(pq);
             if (p2 == NULL)
                 goto fin;
-            ossl_property_free(pq);
             pq = p2;
         }
     }
