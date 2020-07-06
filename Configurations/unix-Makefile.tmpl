@@ -863,28 +863,28 @@ install_man_docs: build_man_docs
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX); \
-		chmod 755 $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX); \
+		chmod 644 $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX); \
 	done
 	@set -e; for x in dummy $(MANDOCS3); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX); \
-		chmod 755 $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX); \
+		chmod 644 $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX); \
 	done
 	@set -e; for x in dummy $(MANDOCS5); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX); \
-		chmod 755 $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX); \
+		chmod 644 $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX); \
 	done
 	@set -e; for x in dummy $(MANDOCS7); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
 		cp $$x $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX); \
-		chmod 755 $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX); \
+		chmod 644 $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX); \
 	done
 
 uninstall_man_docs:
@@ -926,28 +926,28 @@ install_html_docs: build_html_docs
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man1/$$fn"; \
 		cp $$x $(DESTDIR)$(HTMLDIR)/man1/$$fn; \
-		chmod 755 $(DESTDIR)$(HTMLDIR)/man1/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man1/$$fn; \
 	done
 	@set -e; for x in dummy $(HTMLDOCS3); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man3/$$fn"; \
 		cp $$x $(DESTDIR)$(HTMLDIR)/man3/$$fn; \
-		chmod 755 $(DESTDIR)$(HTMLDIR)/man3/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man3/$$fn; \
 	done
 	@set -e; for x in dummy $(HTMLDOCS5); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man5/$$fn"; \
 		cp $$x $(DESTDIR)$(HTMLDIR)/man5/$$fn; \
-		chmod 755 $(DESTDIR)$(HTMLDIR)/man5/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man5/$$fn; \
 	done
 	@set -e; for x in dummy $(HTMLDOCS7); do \
 		if [ "$$x" = "dummy" ]; then continue; fi; \
 		fn=`basename $$x`; \
 		$(ECHO) "install $$x -> $(DESTDIR)$(HTMLDIR)/man7/$$fn"; \
 		cp $$x $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
-		chmod 755 $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
+		chmod 644 $(DESTDIR)$(HTMLDIR)/man7/$$fn; \
 	done
 
 uninstall_html_docs:
