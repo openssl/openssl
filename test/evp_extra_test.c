@@ -802,7 +802,7 @@ static int test_privatekey_to_pkcs8(void)
     EVP_PKEY *pkey = NULL;
     BIO *membio = NULL;
     char *membuf = NULL;
-    size_t membuf_len = 0;
+    long membuf_len = 0;
     int ok = 0;
 
     if (!TEST_ptr(membio = BIO_new(BIO_s_mem()))
@@ -810,9 +810,9 @@ static int test_privatekey_to_pkcs8(void)
         || !TEST_int_gt(i2d_PKCS8PrivateKey_bio(membio, pkey, NULL,
                                                 NULL, 0, NULL, NULL),
                         0)
-        || !TEST_ptr((membuf_len = (size_t)BIO_get_mem_data(membio, &membuf),
-                      membuf))
-        || !TEST_mem_eq(membuf, membuf_len,
+        || !TEST_int_gt(membuf_len = BIO_get_mem_data(membio, &membuf), 0)
+        || !TEST_ptr(membuf)
+        || !TEST_mem_eq(membuf, (size_t)membuf_len,
                         kExampleRSAKeyPKCS8, sizeof(kExampleRSAKeyPKCS8))
         /*
          * We try to write PEM as well, just to see that it doesn't err, but
