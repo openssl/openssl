@@ -28,6 +28,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
     X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
     unsigned char iv[EVP_MAX_IV_LENGTH], *piv = NULL;
     unsigned char *tkey = NULL;
+    int len;
     size_t tkeylen = 0;
 
     int ok = 0;
@@ -81,7 +82,11 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec)
                CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
         goto err;
     }
-    tkeylen = EVP_CIPHER_CTX_key_length(ctx);
+    len = EVP_CIPHER_CTX_key_length(ctx);
+    if (len <= 0)
+        goto err;
+    tkeylen = (size_t)len;
+
     /* Generate random session key */
     if (!enc || !ec->key) {
         tkey = OPENSSL_malloc(tkeylen);
