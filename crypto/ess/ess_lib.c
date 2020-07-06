@@ -339,7 +339,9 @@ int ess_find_cert_v2(const STACK_OF(ESS_CERT_ID_V2) *cert_ids, const X509 *cert)
         const ESS_CERT_ID_V2 *cid = sk_ESS_CERT_ID_V2_value(cert_ids, i);
         const EVP_MD *md;
 
-        if (cid != NULL && cid->hash_alg != NULL)
+        if (cid == NULL)
+            return -1;
+        if (cid->hash_alg != NULL)
             md = EVP_get_digestbyobj(cid->hash_alg->algorithm);
         else
             md = EVP_sha256();
