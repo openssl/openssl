@@ -296,8 +296,7 @@ __owur static int ctr_update(PROV_DRBG *drbg,
         ctr_XOR(ctr, in2, in2len);
     }
 
-    if (!EVP_CipherInit_ex(ctr->ctx_ecb, NULL, NULL, ctr->K, NULL, -1)
-        || !EVP_CipherInit_ex(ctr->ctx_ctr, NULL, NULL, ctr->K, NULL, -1))
+    if (!EVP_CipherInit_ex(ctr->ctx_ecb, NULL, NULL, ctr->K, NULL, -1))
         return 0;
     return 1;
 }
@@ -404,6 +403,10 @@ static int drbg_ctr_generate(PROV_DRBG *drbg,
     }
 
     memset(out, 0, outlen);
+
+    if (!EVP_CipherInit_ex(ctr->ctx_ctr, ctr->cipher_ctr,
+                           NULL, ctr->K, NULL, -1))
+        return 0;
 
     do {
         if (!EVP_CipherInit_ex(ctr->ctx_ctr,
