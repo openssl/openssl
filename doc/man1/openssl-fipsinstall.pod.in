@@ -146,9 +146,9 @@ values that can be used.
 
 =item B<-config> I<parent_config>
 
-Test that a FIPS provider can be loaded from configuration data.
+Test that a FIPS provider can be loaded from the specified configuration file.
 A previous call to this application needs to generate the extra configuration
-data that is included by the base <parent_config> configuration file,
+data that is included by the base C<parent_config> configuration file.
 See L<config(5)> for further information on how to set up a provider section.
 All other options are ignored if '-config' is used.
 
