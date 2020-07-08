@@ -575,6 +575,7 @@ static void reset_drbg_hook_ctx(void)
  *
  * |expect_success|: expected outcome (as reported by RAND_status())
  * |master|, |public|, |private|: pointers to the three shared DRBGs
+ * |public_output|, |private_output|: generated random output
  * |expect_xxx_reseed| =
  *       1:  it is expected that the specified DRBG is reseeded
  *       0:  it is expected that the specified DRBG is not reseeded
@@ -586,15 +587,23 @@ static int test_drbg_reseed(int expect_success,
                             RAND_DRBG *master,
                             RAND_DRBG *public,
                             RAND_DRBG *private,
+                            unsigned int *public_output,
+                            unsigned int *private_output,
                             int expect_master_reseed,
                             int expect_public_reseed,
                             int expect_private_reseed,
                             time_t reseed_time
                            )
 {
-    unsigned char buf[32];
     time_t before_reseed, after_reseed;
     int expected_state = (expect_success ? DRBG_READY : DRBG_ERROR);
+    unsigned int dummy;
+
+    if (public_output == NULL)
+        public_output = &dummy;
+
+    if (private_output == NULL)
+        private_output = &dummy;
 
     /*
      * step 1: check preconditions
@@ -618,10 +627,13 @@ static int test_drbg_reseed(int expect_success,
     if (reseed_time == 0)
         reseed_time = time(NULL);
 
-    /* Generate random output from the public and private DRBG */
+    /* Generate random output from the private and public DRBG */
     before_reseed = expect_master_reseed == 1 ? reseed_time : 0;
-    if (!TEST_int_eq(RAND_bytes(buf, sizeof(buf)), expect_success)
-        || !TEST_int_eq(RAND_priv_bytes(buf, sizeof(buf)), expect_success))
+    if (!TEST_int_eq(RAND_priv_bytes((unsigned char*)private_output,
+                                     sizeof(unsigned int)), expect_success)
+        || !TEST_int_eq(
+                        RAND_bytes((unsigned char*)public_output,
+                                   sizeof(unsigned int)), expect_success))
         return 0;
     after_reseed = time(NULL);
 
@@ -678,36 +690,207 @@ static int test_drbg_reseed(int expect_success,
 
 
 #if defined(OPENSSL_SYS_UNIX)
-/*
- * Test whether master, public and private DRBG are reseeded after
- * forking the process.
- */
-static int test_drbg_reseed_after_fork(RAND_DRBG *master,
-                                       RAND_DRBG *public,
-                                       RAND_DRBG *private)
-{
-    pid_t pid;
-    int status=0;
+/* number of children to fork */
+#define DRBG_FORK_COUNT 5
+/* two results per child, two for the parent */
+#define DRBG_FORK_RESULT_COUNT (2*DRBG_FORK_COUNT + 2)
 
-    pid = fork();
-    if (!TEST_int_ge(pid, 0))
+typedef struct drbg_fork_result_st {
+    unsigned int output;    /* random data of integer size */
+    int pindex;             /* process index (0 = parent, 1,2,3... = children) */
+    pid_t pid;              /* process id */
+    int private;            /* true if the private drbg was used */
+    char name[10];          /* 'parent' resp. 'child 1', 'child 2', ... */
+} drbg_fork_result;
+
+/*
+ * Sort the drbg_fork_result entries in lexicographical order
+ *
+ * This simplifies finding duplicate random output and makes
+ * the printout in case of an error more readable.
+ */
+static int compare_drbg_fork_result(const void * left, const void * right)
+{
+    const drbg_fork_result * l = left;
+    const drbg_fork_result * r = right;
+
+    if (l->output != r->output)
+        return (int)l->output - (int)r->output;
+
+    if (l->pindex != r->pindex)
+        return l->pindex - r->pindex;
+
+    return l->private - r->private;
+}
+
+/*
+ * Test whether master, public and private DRBG are reseeded
+ * in the child after forking the process. Collect the output
+ * of the public and private DRBG and send it back to master.
+ */
+static int test_drbg_reseed_in_child(RAND_DRBG *master,
+                                     RAND_DRBG *public,
+                                     RAND_DRBG *private,
+                                     drbg_fork_result result[2])
+{
+    int rv = 0, status;
+    int fd[2];
+    pid_t pid;
+    unsigned int output[2];
+
+    if (!TEST_int_ge(pipe(fd), 0))
         return 0;
 
-    if (pid > 0) {
-        /* I'm the parent; wait for the child and check its exit code */
-        return TEST_int_eq(waitpid(pid, &status, 0), pid) && TEST_int_eq(status, 0);
+    if (!TEST_int_ge(pid = fork(), 0)) {
+        close(fd[0]);
+        close(fd[1]);
+        return 0;
+    } else if (pid > 0) {
+
+        /* I'm the parent; close the write end */
+        close(fd[1]);
+
+        /* wait for children to terminate and collect their output */
+        if (TEST_int_eq(waitpid(pid, &status, 0), pid)
+            && TEST_int_eq(status, 0)
+            && TEST_true(read(fd[0], output, sizeof(output))
+                          == sizeof(output))) {
+
+            /* output of public drbg */
+            result[0].pid = pid;
+            result[0].private = 0;
+            result[0].output = output[0];
+
+            /* output of private drbg */
+            result[1].pid = pid;
+            result[1].private = 1;
+            result[1].output = output[1];
+
+            rv = 1;
+        }
+
+        /* close the read end */
+        close(fd[0]);
+
+        return rv;
+
+    } else {
+
+        /* I'm the child; close the read end */
+        close(fd[0]);
+
+        /* check whether all three DRBGs reseed and send output to parent */
+        if (TEST_true(test_drbg_reseed(1, master, public, private,
+                                        &output[0], &output[1],
+                                       1, 1, 1, 0))
+            && TEST_true(write(fd[1], output, sizeof(output))
+                         == sizeof(output))) {
+
+            rv = 1;
+        }
+
+        /* close the write end */
+        close(fd[1]);
+
+        /* remove hooks  */
+        unhook_drbg(master);
+        unhook_drbg(public);
+        unhook_drbg(private);
+
+        /* convert boolean to exit code */
+        exit(rv == 0);
+    }
+}
+
+static int test_rand_drbg_reseed_on_fork(RAND_DRBG *master,
+                                         RAND_DRBG *public,
+                                         RAND_DRBG *private)
+
+{
+    int i;
+    pid_t pid = getpid();
+
+    int duplicate = 0;
+
+    unsigned int output[2];
+
+    drbg_fork_result result[DRBG_FORK_RESULT_COUNT];
+    drbg_fork_result sorted[DRBG_FORK_RESULT_COUNT];
+    drbg_fork_result *presult = &result[2];
+
+    memset(&result,  0, sizeof(result));
+
+    for (i = 1 ; i <= DRBG_FORK_COUNT ; ++i) {
+
+        presult[0].pindex = presult[1].pindex = i;
+
+        sprintf(presult[0].name, "child %d", i);
+        strcpy(presult[1].name, presult[0].name);
+
+        /* collect the random output of the children */
+        if (!TEST_true(test_drbg_reseed_in_child(master,
+                                                 public,
+                                                 private,
+                                                 presult)))
+            return 0;
+
+        presult += 2;
     }
 
-    /* I'm the child; check whether all three DRBGs reseed. */
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1, 0)))
-        status = 1;
+    /* collect the random output of the parent */
 
-    /* Remove hooks  */
-    unhook_drbg(master);
-    unhook_drbg(public);
-    unhook_drbg(private);
-    exit(status);
+    if (!TEST_true(test_drbg_reseed(1,
+                                    master, public, private,
+                                    &output[0], &output[1],
+                                    0, 0, 0, 0)))
+        return 0;
+
+    strcpy(result[0].name, "parent");
+    strcpy(result[1].name, "parent");
+
+    /* output of public drbg */
+    result[0].pid = pid;
+    result[0].private = 0;
+    result[0].output = output[0];
+
+    /* output of private drbg */
+    result[1].pid = pid;
+    result[1].private = 1;
+    result[1].output = output[1];
+
+
+    /* sort the entries... */
+    memcpy(sorted, result, sizeof(sorted));
+    qsort(sorted, DRBG_FORK_RESULT_COUNT, sizeof(drbg_fork_result),
+          compare_drbg_fork_result);
+
+    /* ...and search for duplicates */
+    for (i=1 ; i < DRBG_FORK_RESULT_COUNT ; ++i) {
+        if (sorted[i].output == sorted[i-1].output) {
+            duplicate = 1;
+            break;
+        }
+    }
+
+    if (duplicate) {
+        TEST_note("ERROR: duplicate random output:");
+
+        for (i=0 ; i < DRBG_FORK_RESULT_COUNT ; ++i) {
+            TEST_note("    output: %0*x, pid: %d (%s, %s)",
+                      (int)(2*sizeof(unsigned int)),
+                      sorted[i].output,
+                      sorted[i].pid,
+                      sorted[i].name,
+                      sorted[i].private ? "private" : "public"
+                      );
+        }
+
+        return 0;
+    }
+
+    return 1;
 }
+
 #endif
 
 /*
@@ -719,7 +902,7 @@ static int test_rand_drbg_reseed(void)
 {
     RAND_DRBG *master, *public, *private;
     unsigned char rand_add_buf[256];
-    int rv=0;
+    int rv = 0;
     time_t before_reseed;
 
     /* Check whether RAND_OpenSSL() is the default method */
@@ -755,7 +938,10 @@ static int test_rand_drbg_reseed(void)
     /*
      * Test initial seeding of shared DRBGs
      */
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1, 0)))
+    if (!TEST_true(test_drbg_reseed(1,
+                                    master, public, private,
+                                    NULL, NULL,
+                                    1, 1, 1, 0)))
         goto error;
     reset_drbg_hook_ctx();
 
@@ -763,7 +949,10 @@ static int test_rand_drbg_reseed(void)
     /*
      * Test initial state of shared DRBGs
      */
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 0, 0)))
+    if (!TEST_true(test_drbg_reseed(1,
+                                    master, public, private,
+                                    NULL, NULL,
+                                    0, 0, 0, 0)))
         goto error;
     reset_drbg_hook_ctx();
 
@@ -772,7 +961,10 @@ static int test_rand_drbg_reseed(void)
      * reseed counters differ from the master's reseed counter.
      */
     master->reseed_prop_counter++;
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 1, 0)))
+    if (!TEST_true(test_drbg_reseed(1,
+                                    master, public, private,
+                                    NULL, NULL,
+                                    0, 1, 1, 0)))
         goto error;
     reset_drbg_hook_ctx();
 
@@ -782,7 +974,10 @@ static int test_rand_drbg_reseed(void)
      */
     master->reseed_prop_counter++;
     private->reseed_prop_counter++;
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 0, 0)))
+    if (!TEST_true(test_drbg_reseed(1,
+                                    master, public, private,
+                                    NULL, NULL,
+                                    0, 1, 0, 0)))
         goto error;
     reset_drbg_hook_ctx();
 
@@ -792,12 +987,15 @@ static int test_rand_drbg_reseed(void)
      */
     master->reseed_prop_counter++;
     public->reseed_prop_counter++;
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 1, 0)))
+    if (!TEST_true(test_drbg_reseed(1,
+                                    master, public, private,
+                                    NULL, NULL,
+                                    0, 0, 1, 0)))
         goto error;
     reset_drbg_hook_ctx();
 
 #if defined(OPENSSL_SYS_UNIX)
-    if (!TEST_true(test_drbg_reseed_after_fork(master, public, private)))
+    if (!TEST_true(test_rand_drbg_reseed_on_fork(master, public, private)))
         goto error;
 #endif
 
@@ -814,7 +1012,10 @@ static int test_rand_drbg_reseed(void)
      */
     before_reseed = time(NULL);
     RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
-    if (!TEST_true(test_drbg_reseed(1, master, public, private, 1, 1, 1,
+    if (!TEST_true(test_drbg_reseed(1,
+                                    master, public, private,
+                                    NULL, NULL,
+                                    1, 1, 1,
                                     before_reseed)))
         goto error;
     reset_drbg_hook_ctx();
@@ -826,7 +1027,10 @@ static int test_rand_drbg_reseed(void)
     master_ctx.fail = 1;
     master->reseed_prop_counter++;
     RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
-    if (!TEST_true(test_drbg_reseed(0, master, public, private, 0, 0, 0, 0)))
+    if (!TEST_true(test_drbg_reseed(0,
+                                    master, public, private,
+                                    NULL, NULL,
+                                    0, 0, 0, 0)))
         goto error;
     reset_drbg_hook_ctx();
 
