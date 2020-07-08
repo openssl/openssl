@@ -89,6 +89,10 @@ static void *keymgmt_from_dispatch(int name_id,
             if (keymgmt->free == NULL)
                 keymgmt->free = OSSL_FUNC_keymgmt_free(fns);
             break;
+        case OSSL_FUNC_KEYMGMT_LOAD:
+            if (keymgmt->load == NULL)
+                keymgmt->load = OSSL_FUNC_keymgmt_load(fns);
+            break;
         case OSSL_FUNC_KEYMGMT_GET_PARAMS:
             if (keymgmt->get_params == NULL) {
                 getparamfncnt++;
@@ -171,7 +175,9 @@ static void *keymgmt_from_dispatch(int name_id,
      * export if you can't import or export.
      */
     if (keymgmt->free == NULL
-        || (keymgmt->new == NULL && keymgmt->gen == NULL)
+        || (keymgmt->new == NULL
+            && keymgmt->gen == NULL
+            && keymgmt->load == NULL)
         || keymgmt->has == NULL
         || (getparamfncnt != 0 && getparamfncnt != 2)
         || (setparamfncnt != 0 && setparamfncnt != 2)
@@ -343,6 +349,14 @@ void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx)
 {
     if (keymgmt->gen != NULL)
         keymgmt->gen_cleanup(genctx);
+}
+
+void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
+                       const void *objref, size_t objref_sz)
+{
+    if (keymgmt->load != NULL)
+        return keymgmt->load(objref, objref_sz);
+    return NULL;
 }
 
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt, void *keydata,

@@ -122,6 +122,8 @@ struct evp_keymgmt_st {
     OSSL_FUNC_keymgmt_gen_fn *gen;
     OSSL_FUNC_keymgmt_gen_cleanup_fn *gen_cleanup;
 
+    OSSL_FUNC_keymgmt_load_fn *load;
+
     /* Key object checking */
     OSSL_FUNC_keymgmt_query_operation_name_fn *query_operation_name;
     OSSL_FUNC_keymgmt_has_fn *has;

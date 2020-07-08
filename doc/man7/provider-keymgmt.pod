@@ -18,12 +18,16 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
  void *OSSL_FUNC_keymgmt_new(void *provctx);
  void OSSL_FUNC_keymgmt_free(void *keydata);
 
+ /* Generation, a more complex constructor */
  void *OSSL_FUNC_keymgmt_gen_init(void *provctx, int selection);
  int OSSL_FUNC_keymgmt_gen_set_template(void *genctx, void *template);
  int OSSL_FUNC_keymgmt_gen_set_params(void *genctx, const OSSL_PARAM params[]);
  const OSSL_PARAM *OSSL_FUNC_keymgmt_gen_settable_params(void *provctx);
  void *OSSL_FUNC_keymgmt_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg);
  void OSSL_FUNC_keymgmt_gen_cleanup(void *genctx);
+
+ /* Key loading by object reference, also a constructor */
+ void *OSSL_FUNC_keymgmt_load(const void *reference, size_t *reference_sz);
 
  /* Key object information */
  int OSSL_FUNC_keymgmt_get_params(void *keydata, OSSL_PARAM params[]);
@@ -93,6 +97,8 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_keymgmt_gen_settable_params  OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS
  OSSL_FUNC_keymgmt_gen                  OSSL_FUNC_KEYMGMT_GEN
  OSSL_FUNC_keymgmt_gen_cleanup          OSSL_FUNC_KEYMGMT_GEN_CLEANUP
+
+ OSSL_FUNC_keymgmt_load                 OSSL_FUNC_KEYMGMT_LOAD
 
  OSSL_FUNC_keymgmt_get_params           OSSL_FUNC_KEYMGMT_GET_PARAMS
  OSSL_FUNC_keymgmt_gettable_params      OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS
@@ -209,8 +215,8 @@ OSSL_FUNC_keymgmt_free() should free the passed I<keydata>.
 
 OSSL_FUNC_keymgmt_gen_init(), OSSL_FUNC_keymgmt_gen_set_template(),
 OSSL_FUNC_keymgmt_gen_set_params(), OSSL_FUNC_keymgmt_gen_settable_params(),
-OSSL_FUNC_keymgmt_gen() and OSSL_FUNC_keymgmt_gen_cleanup() work together as a more
-elaborate context based key object constructor.
+OSSL_FUNC_keymgmt_gen() and OSSL_FUNC_keymgmt_gen_cleanup() work together as a
+more elaborate context based key object constructor.
 
 OSSL_FUNC_keymgmt_gen_init() should create the key object generation context
 and initialize it with I<selections>, which will determine what kind
@@ -238,10 +244,15 @@ progresses.
 OSSL_FUNC_keymgmt_gen_cleanup() should clean up and free the key object
 generation context I<genctx>
 
-At least one of OSSL_FUNC_keymgmt_new() and OSSL_FUNC_keymgmt_gen() are mandatory,
-as well as OSSL_FUNC_keymgmt_free().  Additionally, if OSSL_FUNC_keymgmt_gen() is
-present, OSSL_FUNC_keymgmt_gen_init() and OSSL_FUNC_keymgmt_gen_cleanup() must be
-present as well.
+OSSL_FUNC_keymgmt_load() creates a provider side key object based on a
+I<reference> object with a size of I<reference_sz> bytes, that only the
+provider knows how to interpret, but that may come from other operations.
+Outside the provider, this reference is simply an array of bytes.
+
+At least one of OSSL_FUNC_keymgmt_new(), OSSL_FUNC_keymgmt_gen() and
+OSSL_FUNC_keymgmt_load() are mandatory, as well as OSSL_FUNC_keymgmt_free().
+Additionally, if OSSL_FUNC_keymgmt_gen() is present, OSSL_FUNC_keymgmt_gen_init()
+and OSSL_FUNC_keymgmt_gen_cleanup() must be present as well.
 
 =head2 Key Object Information Functions
 
