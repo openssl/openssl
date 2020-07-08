@@ -1803,15 +1803,13 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
      * of the key data, typically the private bits.  In this case, we restore
      * the provider side internal "origin" and leave it at that.
      */
-    if (!ossl_assert(EVP_PKEY_set_type_by_keymgmt(pk, keymgmt))) {
+    if (!ossl_assert(evp_keymgmt_util_assign_pkey(pk, keymgmt, keydata))) {
         /* This should not be impossible */
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    /* EVP_PKEY_set_type_by_keymgmt() increased the refcount... */
+    /* evp_keymgmt_util_assign_pkey() increased the refcount... */
     EVP_KEYMGMT_free(keymgmt);
-    pk->keydata = keydata;
-    evp_keymgmt_util_cache_keyinfo(pk);
     return 0;     /* No downgrade, but at least the key is restored */
 }
 #endif  /* FIPS_MODULE */
