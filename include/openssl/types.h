@@ -214,6 +214,8 @@ typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
 typedef struct ossl_serializer_st OSSL_SERIALIZER;
 typedef struct ossl_serializer_ctx_st OSSL_SERIALIZER_CTX;
+typedef struct ossl_deserializer_st OSSL_DESERIALIZER;
+typedef struct ossl_deserializer_ctx_st OSSL_DESERIALIZER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
 

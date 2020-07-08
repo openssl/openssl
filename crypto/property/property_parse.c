@@ -598,6 +598,7 @@ int ossl_property_parse_init(OPENSSL_CTX *ctx)
         "fips",         /* FIPS validated or FIPS supporting algorithm */
         "format",       /* output format for serializers */
         "type",         /* output type for serializers */
+        "input",        /* input type for deserializers */
     };
     size_t i;
 

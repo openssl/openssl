@@ -1,0 +1,253 @@
+=pod
+
+=head1 NAME
+
+OSSL_DESERIALIZER_from_bio,
+OSSL_DESERIALIZER_from_fp,
+OSSL_DESERIALIZER_CTX_set_input_type,
+OSSL_DESERIALIZER_CTX_add_deserializer,
+OSSL_DESERIALIZER_CTX_add_extra,
+OSSL_DESERIALIZER_CTX_num_deserializers,
+OSSL_DESERIALIZER_INSTANCE,
+OSSL_DESERIALIZER_FINALIZER,
+OSSL_DESERIALIZER_CLEANER,
+OSSL_DESERIALIZER_CTX_set_finalizer,
+OSSL_DESERIALIZER_export,
+OSSL_DESERIALIZER_INSTANCE_deserializer,
+OSSL_DESERIALIZER_INSTANCE_deserializer_ctx
+- Routines to perform a deserialization
+
+=head1 SYNOPSIS
+
+ #include <openssl/deserializer.h>
+
+ int OSSL_DESERIALIZER_from_bio(OSSL_DESERIALIZER_CTX *ctx, BIO *in);
+ int OSSL_DESERIALIZER_from_fp(OSSL_DESERIALIZER_CTX *ctx, FILE *fp);
+
+ int OSSL_DESERIALIZER_CTX_set_input_type(OSSL_DESERIALIZER_CTX *ctx,
+                                          const char *input_type);
+ int OSSL_DESERIALIZER_CTX_add_deserializer(OSSL_DESERIALIZER_CTX *ctx,
+                                            OSSL_DESERIALIZER *deser);
+ int OSSL_DESERIALIZER_CTX_add_extra(OSSL_DESERIALIZER_CTX *ctx);
+ int OSSL_DESERIALIZER_CTX_num_deserializers(OSSL_DESERIALIZER_CTX *ctx);
+
+ typedef struct ossl_deserializer_instance_st OSSL_DESERIALIZER_INSTANCE;
+ typedef int (OSSL_DESERIALIZER_FINALIZER)
+     (OSSL_DESERIALIZER_INSTANCE *deser_inst,
+      const OSSL_PARAM *params, void *finalize_arg);
+ typedef void (OSSL_DESERIALIZER_CLEANER)(void *finalize_arg);
+
+ int OSSL_DESERIALIZER_CTX_set_finalizer(OSSL_DESERIALIZER_CTX *ctx,
+                                         OSSL_DESRIALIZER_FINALIZER *finalizer,
+                                         OSSL_DESERIALIZER_CLEANER *cleaner,
+                                         void *finalize_arg);
+
+ int OSSL_DESERIALIZER_export(OSSL_DESERIALIZER_INSTANCE *deser_inst,
+                              void *reference, size_t reference_sz,
+                              OSSL_CALLBACK *export_cb, void *export_cbarg);
+
+ OSSL_DESERIALIZER *OSSL_DESERIALIZER_INSTANCE_deserializer
+     (OSSL_DESERIALIZER_INSTANCE *deser_inst);
+ void *OSSL_DESERIALIZER_INSTANCE_deserializer_ctx
+     (OSSL_DESERIALIZER_INSTANCE *deser_inst);
+
+Feature availability macros:
+
+=over 4
+
+=item OSSL_DESERIALIZER_from_fp() is only available when B<OPENSSL_NO_STDIO>
+is undefined.
+
+=back
+
+=head1 DESCRIPTION
+
+The B<OSSL_DESERIALIZER_CTX> holds data about multiple deserializers, as
+needed to figure out what the input data is and to attempt to unpack it into
+one of several possible related results.  This also includes chaining
+deserializers, so the output from one can become the input for another.
+This allows having generic format deserializers such as PEM to DER, as well
+as more specialized deserializers like DER to RSA.
+
+The chains may be limited by specifying an input type, which is considered a
+starting point.
+This is both considered by OSSL_DESERIALIZER_CTX_add_extra(), which will
+stop adding on more deserializer implementations when it has already added
+those that take the specified input type, and OSSL_DESERIALIZER_from_bio(),
+which will only start the deserializing process with the deserializer
+implementations that take that input type.  For example, if the input type
+is set to C<DER>, a PEM to DER deserializer will be ignored.
+
+The input type can also be NULL, which means that the caller doesn't know
+what type of input they have.  In this case, OSSL_DESERIALIZER_from_bio()
+will simply try with one deserializer implementation after the other, and
+thereby discover what kind of input the caller gave it.
+
+For every deserialization done, even intermediary, a I<finalizer>
+provided by the caller is used to attempt to "finalize" the current
+deserialization output, which is always a provider side object of some
+sort, by "wrapping" it into some appropriate type or structure that
+the caller knows how to handle.  Exactly what this "wrapping" consists
+of is entirely at the discretion of the I<finalizer>.
+
+B<OSSL_DESERIALIZER_INSTANCE> is an opaque structure that contains
+data about the deserializer that was just used, and that may be
+useful for the I<finalizer>.  There are some functions to extract data
+from this type, described further down.
+
+=head2 Functions
+
+OSSL_DESERIALIZER_from_bio() runs the deserialization process for the
+context I<ctx>, with the input coming from the B<BIO> I<in>.  The
+application is required to set up the B<BIO> properly, for example to
+have it in text or binary mode if that's appropriate.
+
+=for comment Know your deserializer!
+
+OSSL_DESERIALIZER_from_fp() does the same thing as OSSL_DESERIALIZER_from_bio(),
+except that the input is coming from the B<FILE> I<fp>.
+
+OSSL_DESERIALIZER_CTX_add_deserializer() populates the B<OSSL_DESERIALIZER_CTX>
+I<ctx> with a deserializer, to be used to attempt to deserialize some
+serialized input.
+
+OSSL_DESERIALIZER_CTX_add_extra() finds deserializers that generate
+input for already added deserializers, and adds them as well.  This is
+used to build deserializer chains.
+
+OSSL_DESERIALIZER_CTX_set_input_type() sets the starting input type.  This
+limits the deserializer chains to be considered, as explained in the general
+description above.
+
+OSSL_DESERIALIZER_CTX_num_deserializers() gets the number of
+deserializers currently added to the context I<ctx>.
+
+OSSL_DESERIALIZER_CTX_set_finalizer() sets the I<finalizer> function
+together with the caller argument for the finalizer, I<finalize_arg>,
+as well as I<cleaner>, the function to clean up I<finalize_arg> when
+the deserialization has concluded.
+
+OSSL_DESERIALIZER_export() is a fallback function for I<finalizers>
+that can't use the data they get directly for diverse reasons.  It
+takes the same deserialize instance I<deser_inst> that the
+I<finalizer> got and an object I<reference>, unpacks the object that
+refers to, and exports it by creating an L<OSSL_PARAM(3)> array that
+it then passes to I<export_cb>, along with I<export_arg>.
+
+OSSL_DESERIALIZER_INSTANCE_deserializer() can be used to get the
+deserializer method from a deserializer instance I<deser_inst>.
+
+OSSL_DESERIALIZER_INSTANCE_deserializer-ctx() can be used to get the
+deserializer method's provider context from a deserializer instance
+I<deser_inst>.
+
+=head2 Finalizer
+
+The I<finalizer> gets the following arguments:
+
+=over 4
+
+=item I<deser_inst>
+
+The B<OSSL_DESERIALIZER_INSTANCE> for the deserializer from which
+I<finalizer> gets its data.
+
+=item I<params>
+
+The data produced by the deserializer, further described below.
+
+=item I<finalize_arg>
+
+The pointer that was set with OSSL_DESERIALIZE_CTX_set_finalizer() as
+I<finalize_arg>.
+
+=back
+
+The I<finalizer> is expected to return 1 when the data it receives can
+be "finalized", otherwise 0.
+
+The globally known parameters that I<finalize> can get in I<params>
+are:
+
+=over 4
+
+=item "data-type" (B<OSSL_DESERIALIZER_PARAM_DATA_TYPE>) <UTF8 string>
+
+This is a detected content type that some deserializers may provide.
+For example, PEM input sometimes has a type specified in its header,
+and some deserializers may add that information as this parameter.
+This is an optional parameter, but may be useful for extra checks in
+the I<finalizer>.
+
+=item "data" (B<OSSL_DESERIALIZER_PARAM_DATA>) <octet string>
+
+The deserialized data itself, as an octet string.  This is produced by
+deserializers when it's possible to pass an object in this form.  Most
+often, this is simply meant to be passed to the next deserializer in a
+chain, but could be considered final data as well, at the discretion
+of the I<finalizer>.
+
+=item "reference" (B<OSSL_DESERIALIZER_PARAM_DATA>) <octet string>
+
+The deserialized data itself, as a reference to an object.  The
+reference itself is an octet string, and can be passed to other
+operations and functions within the same provider as the one that
+provides I<deser>.
+
+=back
+
+At least one of "data" or "reference" must be present, and it's
+possible that both can be.  A I<finalizer> should choose to use the
+"reference" parameter if possible, otherwise the "data" parameter.
+
+If it's not possible to use the "reference" parameter, but that's
+still what a I<finalizer> wants to do, it is possible to use
+OSSL_DESERIALIZER_export() as a fallback.
+
+=head1 RETURN VALUES
+
+OSSL_DESERIALIZER_from_bio() and OSSL_DESERIALIZER_from_fp() return 1 on
+success, or 0 on failure.
+
+OSSL_DESERIALIZER_CTX_add_deserializer(),
+OSSL_DESERIALIZER_CTX_add_extra(), and
+OSSL_DESERIALIZER_CTX_set_finalizer() return 1 on success, or 0 on
+failure.
+
+OSSL_DESERIALIZER_CTX_num_deserializers() returns the current
+number of deserializers.  It returns 0 if I<ctx> is NULL.
+
+OSSL_DESERIALIZER_export() returns 1 on success, or 0 on failure.
+
+OSSL_DESERIALIZER_INSTANCE_deserializer() returns an
+B<OSSL_DESERIALIZER> pointer on success, or NULL on failure.
+
+OSSL_DESERIALIZER_INSTANCE_deserializer_ctx() returns a provider
+context pointer on success, or NULL on failure.>
+
+=begin comment TODO(3.0) Add examples!
+
+=head1 EXAMPLES
+
+Text, because pod2xxx doesn't like empty sections
+
+=end comment
+
+=head1 SEE ALSO
+
+L<provider(7)>, L<OSSL_DESERIALIZER_CTX(3)>
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

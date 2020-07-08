@@ -397,12 +397,17 @@ extern "C" {
 #define OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION   "tls-negotiated-version"
 
 /*
- * Serializer parameters
+ * Serializer / deserializer parameters
  */
 /* The passphrase may be passed as a utf8 string or an octet string */
 #define OSSL_SERIALIZER_PARAM_CIPHER            OSSL_ALG_PARAM_CIPHER
 #define OSSL_SERIALIZER_PARAM_PROPERTIES        OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_SERIALIZER_PARAM_PASS              "passphrase"
+
+#define OSSL_DESERIALIZER_PARAM_INPUT_TYPE      "input-type"
+#define OSSL_DESERIALIZER_PARAM_DATA_TYPE       "data-type"
+#define OSSL_DESERIALIZER_PARAM_DATA            "data"
+#define OSSL_DESERIALIZER_PARAM_REFERENCE       "reference"
 
 /* Passphrase callback parameters */
 #define OSSL_PASSPHRASE_PARAM_INFO              "info"

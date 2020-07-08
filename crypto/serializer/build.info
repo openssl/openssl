@@ -1,2 +1,5 @@
-SOURCE[../../libcrypto]=serializer_meth.c serializer_lib.c serializer_pkey.c \
-        serializer_err.c
+SOURCE[../../libcrypto]=serializer_meth.c serializer_lib.c serializer_pkey.c
+SOURCE[../../libcrypto]=deserializer_meth.c deserializer_lib.c
+
+SOURCE[../../libcrypto]=serializer_err.c
+SOURCE[../../libcrypto]=deserializer_err.c
