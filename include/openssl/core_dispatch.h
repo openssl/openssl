@@ -185,8 +185,9 @@ OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
 # define OSSL_OP_ASYM_CIPHER                        13
 /* New section for non-EVP operations */
 # define OSSL_OP_SERIALIZER                         20
+# define OSSL_OP_DESERIALIZER                       21
 /* Highest known operation number */
-# define OSSL_OP__HIGHEST                           20
+# define OSSL_OP__HIGHEST                           21
 
 /* Digests */
 
@@ -694,7 +695,7 @@ OSSL_CORE_MAKE_FUNC(int, asym_cipher_set_ctx_params,
 OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, asym_cipher_settable_ctx_params,
                     (void))
 
-/* Serializers */
+/* Serializers and deserializers */
 # define OSSL_FUNC_SERIALIZER_NEWCTX                1
 # define OSSL_FUNC_SERIALIZER_FREECTX               2
 # define OSSL_FUNC_SERIALIZER_SET_CTX_PARAMS        3
@@ -714,6 +715,31 @@ OSSL_CORE_MAKE_FUNC(int, serializer_serialize_data,
 OSSL_CORE_MAKE_FUNC(int, serializer_serialize_object,
                     (void *ctx, void *obj, OSSL_CORE_BIO *out,
                      OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg))
+
+# define OSSL_FUNC_DESERIALIZER_NEWCTX              1
+# define OSSL_FUNC_DESERIALIZER_FREECTX             2
+# define OSSL_FUNC_DESERIALIZER_GET_PARAMS          3
+# define OSSL_FUNC_DESERIALIZER_GETTABLE_PARAMS     4
+# define OSSL_FUNC_DESERIALIZER_SET_CTX_PARAMS      5
+# define OSSL_FUNC_DESERIALIZER_SETTABLE_CTX_PARAMS 6
+# define OSSL_FUNC_DESERIALIZER_DESERIALIZE        10
+# define OSSL_FUNC_DESERIALIZER_EXPORT_OBJECT      11
+OSSL_CORE_MAKE_FUNC(void *, deserializer_newctx, (void *provctx))
+OSSL_CORE_MAKE_FUNC(void, deserializer_freectx, (void *ctx))
+OSSL_CORE_MAKE_FUNC(int, deserializer_get_params, (OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, deserializer_gettable_params, (void))
+OSSL_CORE_MAKE_FUNC(int, deserializer_set_ctx_params,
+                    (void *ctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, deserializer_settable_ctx_params,
+                    (void))
+
+OSSL_CORE_MAKE_FUNC(int, deserializer_deserialize,
+                    (void *ctx, OSSL_CORE_BIO *in,
+                     OSSL_CALLBACK *metadata_cb, void *metadata_cbarg,
+                     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg))
+OSSL_CORE_MAKE_FUNC(int, deserializer_export_object,
+                    (void *ctx, const void *objref, size_t objref_sz,
+                     OSSL_CALLBACK *export_cb, void *export_cbarg))
 
 # ifdef __cplusplus
 }

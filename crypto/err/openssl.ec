@@ -41,6 +41,7 @@ L ESS           include/openssl/ess.h           crypto/ess/ess_err.c
 L PROP          include/internal/property.h     crypto/property/property_err.c
 L PROV          providers/common/include/prov/providercommon.h providers/common/provider_err.c
 L OSSL_SERIALIZER include/openssl/serializer.h  crypto/serializer/serializer_err.c
+L OSSL_DESERIALIZER include/openssl/deserializer.h  crypto/serializer/deserializer_err.c
 L HTTP          include/openssl/http.h          crypto/http/http_err.c
 
 # additional header files to be scanned for function names

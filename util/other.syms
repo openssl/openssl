@@ -41,6 +41,12 @@ GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
+OSSL_DESERIALIZER                       datatype
+OSSL_DESERIALIZER_CTX                   datatype
+OSSL_DESERIALIZER_FINALIZER             datatype
+OSSL_DESERIALIZER_CLEANER               datatype
+OSSL_DESERIALIZER_INSTANCE              datatype
+OSSL_DESERIALIZER_CTX                   datatype
 OSSL_HTTP_bio_cb_t                      datatype
 OSSL_PARAM                              datatype
 OSSL_PROVIDER                           datatype
