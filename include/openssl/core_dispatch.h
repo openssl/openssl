@@ -477,6 +477,11 @@ OSSL_CORE_MAKE_FUNC(void *, keymgmt_gen,
                     (void *genctx, OSSL_CALLBACK *cb, void *cbarg))
 OSSL_CORE_MAKE_FUNC(void, keymgmt_gen_cleanup, (void *genctx))
 
+/* Key loading by object reference */
+# define OSSL_FUNC_KEYMGMT_LOAD                        8
+OSSL_CORE_MAKE_FUNC(void *, keymgmt_load,
+                    (const void *reference, size_t reference_sz))
+
 /* Basic key object destruction */
 # define OSSL_FUNC_KEYMGMT_FREE                       10
 OSSL_CORE_MAKE_FUNC(void, keymgmt_free, (void *keydata))
