@@ -171,7 +171,7 @@ OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
 
 OCSP_CERTID *OCSP_resp_cert_to_id(OCSP_BASICRESP *br,
                                   const X509 *subject,
-                                  const X509 *issuer);
+                                  const X509 *issuer, int idx);
 
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
                               const X509_NAME *issuerName,
