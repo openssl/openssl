@@ -142,7 +142,7 @@ Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choos
 
 The following instructions will download and build liboqs, then install it into a subdirectory inside the OpenSSL folder.
 
-	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
+	git clone --branch 0.3.0 --single-branch --depth 1 https://github.com/open-quantum-safe/liboqs.git
 	cd liboqs
 	mkdir build && cd build
 	cmake -GNinja -DCMAKE_INSTALL_PREFIX=<OPENSSL_DIR>/oqs ..

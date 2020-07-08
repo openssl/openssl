@@ -19,7 +19,7 @@ localCheckout: &localCheckout
     - checkout # change this from "checkout" to "*localCheckout" when running CircleCI locally
     - run:
         name: Clone liboqs
-        command: ./oqs-scripts/clone_liboqs.sh # unconditional checkout to test for changes there
+        command: env LIBOQS_BRANCH=0.3.0 ./oqs-scripts/clone_liboqs.sh # unconditional checkout to test for changes there
     - run:
         name: Build liboqs
         command: .circleci/git_no_checkin_in_last_day.sh || ./oqs-scripts/build_liboqs.sh
