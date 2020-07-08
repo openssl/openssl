@@ -105,6 +105,15 @@ int OSSL_DESERIALIZER_from_bio(OSSL_DESERIALIZER_CTX *ctx, BIO *in);
 int OSSL_DESERIALIZER_from_fp(OSSL_DESERIALIZER_CTX *ctx, FILE *in);
 #endif
 
+/*
+ * Create the OSSL_DESERIALIZER_CTX with an associated type.  This will perform
+ * an implicit OSSL_DESERIALIZER_fetch(), suitable for the object of that type.
+ */
+OSSL_DESERIALIZER_CTX *
+OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey, const char *input_type,
+                                      OPENSSL_CTX *libctx,
+                                      const char *propquery);
+
 # ifdef __cplusplus
 }
 # endif
