@@ -28,16 +28,9 @@ static int match_type(const EVP_KEYMGMT *keymgmt1, const EVP_KEYMGMT *keymgmt2)
     return EVP_KEYMGMT_is_a(keymgmt1, name2);
 }
 
-struct import_data_st {
-    EVP_KEYMGMT *keymgmt;
-    void *keydata;
-
-    int selection;
-};
-
-static int try_import(const OSSL_PARAM params[], void *arg)
+int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg)
 {
-    struct import_data_st *data = arg;
+    struct evp_keymgmt_util_try_import_data_st *data = arg;
 
     /* Just in time creation of keydata */
     if (data->keydata == NULL
@@ -57,9 +50,36 @@ static int try_import(const OSSL_PARAM params[], void *arg)
                               params);
 }
 
+int evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
+                                 void *keydata)
+{
+    if (pkey == NULL || keymgmt == NULL || keydata == NULL
+        || !EVP_PKEY_set_type_by_keymgmt(pkey, keymgmt)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    pkey->keydata = keydata;
+    evp_keymgmt_util_cache_keyinfo(pkey);
+    return 1;
+}
+
+EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata)
+{
+    EVP_PKEY *pkey = NULL;
+
+    if (keymgmt == NULL
+        || keydata == NULL
+        || (pkey = EVP_PKEY_new()) == NULL
+        || !evp_keymgmt_util_assign_pkey(pkey, keymgmt, keydata)) {
+        EVP_PKEY_free(pkey);
+        return NULL;
+    }
+    return pkey;
+}
+
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
-    struct import_data_st import_data;
+    struct evp_keymgmt_util_try_import_data_st import_data;
     size_t i = 0;
 
     /* Export to where? */
@@ -111,16 +131,16 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      */
 
     /* Setup for the export callback */
-    import_data.keydata = NULL;  /* try_import will create it */
+    import_data.keydata = NULL;  /* evp_keymgmt_util_try_import will create it */
     import_data.keymgmt = keymgmt;
     import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
 
     /*
-     * The export function calls the callback (try_import), which does the
-     * import for us.  If successful, we're done.
+     * The export function calls the callback (evp_keymgmt_util_try_import),
+     * which does the import for us.  If successful, we're done.
      */
     if (!evp_keymgmt_export(pk->keymgmt, pk->keydata, OSSL_KEYMGMT_SELECT_ALL,
-                            &try_import, &import_data)) {
+                            &evp_keymgmt_util_try_import, &import_data)) {
         /* If there was an error, bail out */
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
@@ -210,15 +230,10 @@ void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 
     if ((keydata = evp_keymgmt_newdata(keymgmt)) == NULL
         || !evp_keymgmt_import(keymgmt, keydata, selection, params)
-        || !EVP_PKEY_set_type_by_keymgmt(target, keymgmt)) {
+        || !evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
         evp_keymgmt_freedata(keymgmt, keydata);
         keydata = NULL;
     }
-    if (keydata != NULL) {
-        target->keydata = keydata;
-        evp_keymgmt_util_cache_keyinfo(target);
-    }
-
     return keydata;
 }
 
@@ -371,21 +386,21 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
                               selection))
             return 0;
     } else if (match_type(to_keymgmt, from->keymgmt)) {
-        struct import_data_st import_data;
+        struct evp_keymgmt_util_try_import_data_st import_data;
 
         import_data.keymgmt = to_keymgmt;
         import_data.keydata = to_keydata;
         import_data.selection = selection;
 
         if (!evp_keymgmt_export(from->keymgmt, from->keydata, selection,
-                                &try_import, &import_data)) {
+                                &evp_keymgmt_util_try_import, &import_data)) {
             evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
         }
 
         /*
-         * In case to_keydata was previously unallocated, try_import()
-         * may have created it for us.
+         * In case to_keydata was previously unallocated,
+         * evp_keymgmt_util_try_import() may have created it for us.
          */
         if (to_keydata == NULL)
             to_keydata = alloc_keydata = import_data.keydata;
@@ -394,6 +409,15 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
         return 0;
     }
 
+    /*
+     * We only need to set the |to| type when its |keymgmt| isn't set.
+     * We can then just set its |keydata| to what we have, which might
+     * be exactly what it had when entering this function.
+     * This is a bit different from using evp_keymgmt_util_assign_pkey(),
+     * which isn't as careful with |to|'s original |keymgmt|, since it's
+     * meant to forcibly reassign an EVP_PKEY no matter what, which is
+     * why we don't use that one here.
+     */
     if (to->keymgmt == NULL
         && !EVP_PKEY_set_type_by_keymgmt(to, to_keymgmt)) {
         evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
@@ -411,13 +435,9 @@ void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
     void *keydata = NULL;
 
     if ((keydata = evp_keymgmt_gen(keymgmt, genctx, cb, cbarg)) == NULL
-        || !EVP_PKEY_set_type_by_keymgmt(target, keymgmt)) {
+        || !evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
         evp_keymgmt_freedata(keymgmt, keydata);
         keydata = NULL;
-    }
-    if (keydata != NULL) {
-        target->keydata = keydata;
-        evp_keymgmt_util_cache_keyinfo(target);
     }
 
     return keydata;

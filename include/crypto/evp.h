@@ -657,6 +657,21 @@ void evp_pkey_free_legacy(EVP_PKEY *x);
 /*
  * KEYMGMT utility functions
  */
+
+/*
+ * Key import structure and helper function, to be used as an export callback
+ */
+struct evp_keymgmt_util_try_import_data_st {
+    EVP_KEYMGMT *keymgmt;
+    void *keydata;
+
+    int selection;
+};
+int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg);
+int evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
+                                 void *keydata);
+EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata);
+
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
 size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
                                                    EVP_KEYMGMT *keymgmt);
