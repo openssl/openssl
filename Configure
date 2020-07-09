@@ -190,7 +190,7 @@ my $apitable = {
     # The numbering used changes from 3.0 and on because we updated
     # (solidified) our version numbering scheme at that point.
 
-    # From 3.0 and on, we internalise the given version number in dedcimal
+    # From 3.0 and on, we internalise the given version number in decimal
     # as MAJOR * 10000 + MINOR * 100 + 0
     "3.0.0" => 30000,
     "3.0"   => 30000,
