@@ -162,3 +162,6 @@ int ossl_prov_write_pub_pem_from_obj(BIO *out, const void *obj, int obj_nid,
 
 int ossl_prov_read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                        unsigned char **data, long *len);
+int ossl_prov_read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
+                       char **pem_name, char **pem_header,
+                       unsigned char **data, long *len);
