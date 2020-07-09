@@ -777,6 +777,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[hexstr_test]=.. ../include ../apps/include
   DEPEND[hexstr_test]=../libcrypto.a libtestutil.a
 
+  PROGRAMS{noinst}=serdes_test
+  SOURCE[serdes_test]=serdes_test.c
+  INCLUDE[serdes_test]=.. ../include ../apps/include
+  DEPEND[serdes_test]=../libcrypto.a libtestutil.a
+
   PROGRAMS{noinst}=namemap_internal_test
   SOURCE[namemap_internal_test]=namemap_internal_test.c
   INCLUDE[namemap_internal_test]=.. ../include ../apps/include
