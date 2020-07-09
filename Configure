@@ -1830,8 +1830,7 @@ if ($builder eq "unified") {
     # Store the name of the template file we will build the build file from
     # in %config.  This may be useful for the build file itself.
     my @build_file_template_names =
-        ( $builder_platform."-".$target{build_file}.".tmpl",
-          $target{build_file}.".tmpl" );
+        ( $builder_platform."-".$target{build_file}.".tmpl" );
     my @build_file_templates = ();
 
     # First, look in the user provided directory, if given
