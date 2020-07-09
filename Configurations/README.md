@@ -481,11 +481,9 @@ template file in `Configurations/` named like the build file, with
 `.tmpl` appended, or in case of possible ambiguity, a combination of
 the second `build_scheme` list item and the `build_file` name.  For
 example, if `build_file` is set to `Makefile`, the template could be
-[`Configurations/Makefile.tmpl`](Makefile.tmpl) or
-[`Configurations/unix-Makefile.tmpl`](unix-Makefile.tmpl).
-In case both [`Configurations/unix-Makefile.tmpl`](Makefile.tmpl) and
-[`Configurations/Makefile.tmpl`](Makefile.tmpl) are present, the former takes
-precedence.
+`Configurations/Makefile.tmpl` or `Configurations/unix-Makefile.tmpl`.
+In case both `Configurations/unix-Makefile.tmpl` and
+`Configurations/Makefile.tmpl` are present, the former takes precedence.
 
 The build-file template is processed with the perl module
 Text::Template, using `{-` and `-}` as delimiters that enclose the
