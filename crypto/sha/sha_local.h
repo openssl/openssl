@@ -12,6 +12,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/sha.h>
+#include "internal/endian.h"
 
 #define DATA_ORDER_IS_BIG_ENDIAN
 
@@ -151,14 +152,9 @@ static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
     E = c->h4;
 
     for (;;) {
-        const union {
-            long one;
-            char little;
-        } is_endian = {
-            1
-        };
+        DECLARE_IS_ENDIAN;
 
-        if (!is_endian.little && sizeof(SHA_LONG) == 4
+        if (!IS_LITTLE_ENDIAN && sizeof(SHA_LONG) == 4
             && ((size_t)p % 4) == 0) {
             const SHA_LONG *W = (const SHA_LONG *)data;
 
