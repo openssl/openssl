@@ -21,6 +21,7 @@
 #include <openssl/crypto.h>
 #include <openssl/sha.h>
 #include <openssl/opensslv.h>
+#include "internal/endian.h"
 
 int SHA224_Init(SHA256_CTX *c)
 {
@@ -256,12 +257,7 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
     SHA_LONG X[16];
     int i;
     const unsigned char *data = in;
-    const union {
-        long one;
-        char little;
-    } is_endian = {
-        1
-    };
+    DECLARE_IS_ENDIAN;
 
     while (num--) {
 
@@ -274,7 +270,7 @@ static void sha256_block_data_order(SHA256_CTX *ctx, const void *in,
         g = ctx->h[6];
         h = ctx->h[7];
 
-        if (!is_endian.little && sizeof(SHA_LONG) == 4
+        if (!IS_LITTLE_ENDIAN && sizeof(SHA_LONG) == 4
             && ((size_t)in % 4) == 0) {
             const SHA_LONG *W = (const SHA_LONG *)data;
 

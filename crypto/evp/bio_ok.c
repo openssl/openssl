@@ -76,6 +76,7 @@
 #include "internal/bio.h"
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include "internal/endian.h"
 #include "crypto/evp.h"
 
 static int ok_write(BIO *h, const char *buf, int num);
@@ -418,14 +419,9 @@ static long ok_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 
 static void longswap(void *_ptr, size_t len)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = {
-        1
-    };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         size_t i;
         unsigned char *p = _ptr, c;
 

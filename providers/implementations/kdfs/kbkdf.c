@@ -37,6 +37,7 @@
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
 #include "internal/numbers.h"
+#include "internal/endian.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
@@ -80,12 +81,9 @@ static OSSL_FUNC_kdf_set_ctx_params_fn kbkdf_set_ctx_params;
 static uint32_t be32(uint32_t host)
 {
     uint32_t big = 0;
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (!is_endian.little)
+    if (!IS_LITTLE_ENDIAN)
         return host;
 
     big |= (host & 0xff000000) >> 24;

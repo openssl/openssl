@@ -13,6 +13,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+#include "internal/endian.h"
 #include "crypto/modes.h"
 #include "crypto/siv.h"
 
@@ -40,24 +41,18 @@ __owur static ossl_inline uint64_t byteswap8(uint64_t x)
 
 __owur static ossl_inline uint64_t siv128_getword(SIV_BLOCK const *b, size_t i)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little)
+    if (IS_LITTLE_ENDIAN)
         return byteswap8(b->word[i]);
     return b->word[i];
 }
 
 static ossl_inline void siv128_putword(SIV_BLOCK *b, size_t i, uint64_t x)
 {
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (is_endian.little)
+    if (IS_LITTLE_ENDIAN)
         b->word[i] = byteswap8(x);
     else
         b->word[i] = x;
