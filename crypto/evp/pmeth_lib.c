@@ -680,7 +680,7 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
     }
     if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
             && ctx->keymgmt != NULL)
-        return evp_keymgmt_gen_settable_params(ctx->keymgmt);
+        return EVP_KEYMGMT_gen_settable_params(ctx->keymgmt);
 
     return NULL;
 }

@@ -16,7 +16,6 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-
 static void *keymgmt_new(void)
 {
     EVP_KEYMGMT *keymgmt = NULL;
@@ -328,7 +327,7 @@ int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
     return keymgmt->gen_set_params(genctx, params);
 }
 
-const OSSL_PARAM *evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt)
+const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt)
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
@@ -367,7 +366,7 @@ int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt, void *keydata,
     return keymgmt->get_params(keydata, params);
 }
 
-const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt)
+const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt)
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 
@@ -384,7 +383,7 @@ int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt, void *keydata,
     return keymgmt->set_params(keydata, params);
 }
 
-const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt)
+const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt)
 {
     void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
 

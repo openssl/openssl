@@ -4,7 +4,8 @@
 
 EVP_SIGNATURE_fetch, EVP_SIGNATURE_free, EVP_SIGNATURE_up_ref,
 EVP_SIGNATURE_number, EVP_SIGNATURE_is_a, EVP_SIGNATURE_provider,
-EVP_SIGNATURE_do_all_provided, EVP_SIGNATURE_names_do_all
+EVP_SIGNATURE_do_all_provided, EVP_SIGNATURE_names_do_all,
+EVP_SIGNATURE_gettable_ctx_params, EVP_SIGNATURE_settable_ctx_params
 - Functions to manage EVP_SIGNATURE algorithm objects
 
 =head1 SYNOPSIS
@@ -25,6 +26,8 @@ EVP_SIGNATURE_do_all_provided, EVP_SIGNATURE_names_do_all
  void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
                                  void (*fn)(const char *name, void *data),
                                  void *data);
+ const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig);
+ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig);
 
 =head1 DESCRIPTION
 
@@ -61,12 +64,20 @@ I<signature>.
 EVP_SIGNATURE_names_do_all() traverses all names for I<signature>, and calls
 I<fn> with each name and I<data>.
 
+EVP_SIGNATURE_gettable_ctx_params() and EVP_SIGNATURE_settable_ctx_params()
+return a constant B<OSSL_PARAM> array that describes the names and types of key
+parameters that can be retrieved or set by a signature algorithm using
+L<EVP_PKEY_CTX_get_params(3)> and L<EVP_PKEY_CTX_set_params(3)>.
+
 =head1 RETURN VALUES
 
 EVP_SIGNATURE_fetch() returns a pointer to an B<EVP_SIGNATURE> for success
 or B<NULL> for failure.
 
 EVP_SIGNATURE_up_ref() returns 1 for success or 0 otherwise.
+
+EVP_SIGNATURE_gettable_ctx_params() and EVP_SIGNATURE_settable_ctx_params()
+return a constant B<OSSL_PARAM> array or NULL on error.
 
 =head1 SEE ALSO
 
@@ -78,7 +89,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

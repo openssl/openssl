@@ -694,18 +694,13 @@ void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
 void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
                            void *keydata, OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt);
 int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt,
                            void *keydata, const OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt);
-
 void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection);
 int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
                                  void *template);
 int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
                                const OSSL_PARAM params[]);
-const OSSL_PARAM *
-evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt);
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg);
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);

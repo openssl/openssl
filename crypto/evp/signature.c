@@ -337,6 +337,28 @@ void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
         evp_names_do_all(signature->prov, signature->name_id, fn, data);
 }
 
+const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig)
+{
+    void *provctx;
+
+    if (sig == NULL || sig->gettable_ctx_params == NULL)
+        return NULL;
+
+    provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
+    return sig->gettable_ctx_params(provctx);
+}
+
+const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig)
+{
+    void *provctx;
+
+    if (sig == NULL || sig->settable_ctx_params == NULL)
+        return NULL;
+
+    provctx = ossl_provider_ctx(EVP_SIGNATURE_provider(sig));
+    return sig->settable_ctx_params(provctx);
+}
+
 static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;

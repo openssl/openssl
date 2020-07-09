@@ -3,7 +3,7 @@
 =head1 NAME
 
 evp_keymgmt_newdata, evp_keymgmt_freedata,
-evp_keymgmt_get_params, evp_keymgmt_gettable_params,
+evp_keymgmt_get_params,
 evp_keymgmt_has, evp_keymgmt_validate,
 evp_keymgmt_import, evp_keymgmt_import_types,
 evp_keymgmt_export, evp_keymgmt_export_types
@@ -17,7 +17,6 @@ evp_keymgmt_export, evp_keymgmt_export_types
  void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
  int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
                             void *keydata, OSSL_PARAM params[]);
- const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt);
 
  int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
  int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
@@ -50,9 +49,6 @@ evp_keymgmt_newdata() was chosen for consistency)
 
 evp_keymgmt_get_params() calls the method's get_params() function.
 
-evp_keymgmt_gettable_params() calls the method's gettable_params()
-function.
-
 evp_keymgmt_has() calls the method's has() function.
 
 evp_keymgmt_validate() calls the method's validate() function.
@@ -70,9 +66,9 @@ evp_keymgmt_export_types() calls the method's export_types() function.
 evp_keymgmt_newdata() returns a pointer to a provider side key object,
 or NULL on error.
 
-evp_keymgmt_gettable_params(), evp_keymgmt_import_types(), and
-evp_keymgmt_export_types() return parameter descriptor for importing
-and exporting key data, or NULL if there are no such descriptors.
+evp_keymgmt_import_types(), and evp_keymgmt_export_types() return a parameter
+descriptor for importing and exporting key data, or NULL if there are no such
+descriptors.
 
 All other functions return 1 on success and 0 on error.
 
