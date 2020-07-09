@@ -538,6 +538,9 @@ static const OSSL_ALGORITHM deflt_deserializer[] = {
     { "RSA", "provider=default,fips=yes,input=der",
       der_to_rsa_deserializer_functions },
 
+    { "DER", "provider=default,fips=yes,input=pem",
+      pem_to_der_deserializer_functions },
+
     { NULL, NULL, NULL }
 };
 

@@ -360,3 +360,4 @@ extern const OSSL_DISPATCH ec_pub_pem_serializer_functions[];
 extern const OSSL_DISPATCH ec_param_pem_serializer_functions[];
 
 extern const OSSL_DISPATCH der_to_rsa_deserializer_functions[];
+extern const OSSL_DISPATCH pem_to_der_deserializer_functions[];
