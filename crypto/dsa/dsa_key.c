@@ -74,6 +74,11 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
         priv_key = dsa->priv_key;
     }
 
+    /* Do a partial check for invalid p, q, g */
+    if (!ffc_params_simple_validate(dsa->libctx, &dsa->params,
+                                    FFC_PARAM_TYPE_DSA))
+        goto err;
+
     /*
      * For FFC FIPS 186-4 keygen
      * security strength s = 112,
@@ -110,6 +115,8 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
         if (!ok) {
             BN_free(dsa->pub_key);
             BN_clear_free(dsa->priv_key);
+            dsa->pub_key = NULL;
+            dsa->priv_key = NULL;
             BN_CTX_free(ctx);
             return ok;
         }

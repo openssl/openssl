@@ -155,6 +155,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
                                     int mode, int type, size_t L, size_t N,
                                     int *res, BN_GENCB *cb);
 
+int ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params, int type);
 int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
                                   int type, int *res, BN_GENCB *cb);
 int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,

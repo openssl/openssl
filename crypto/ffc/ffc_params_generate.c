@@ -39,6 +39,11 @@
  */
 static int ffc_validate_LN(size_t L, size_t N, int type)
 {
+#ifndef FIPS_MODULE
+    if (L == 1024 && N == 160)
+        return 80;
+#endif
+
     if (type == FFC_PARAM_TYPE_DH) {
         /* Valid DH L,N parameters from SP800-56Ar3 5.5.1 Table 1 */
         if (L == 2048 && (N == 224 || N == 256))
@@ -498,6 +503,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     EVP_MD *md = NULL;
     int verify = (mode == FFC_PARAM_MODE_VERIFY);
     unsigned int flags = verify ? params->flags : 0;
+    const char *def_name;
 
     *res = 0;
 
@@ -506,7 +512,10 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     } else {
         if (N == 0)
             N = (L >= 2048 ? SHA256_DIGEST_LENGTH : SHA_DIGEST_LENGTH) * 8;
-        md = EVP_MD_fetch(libctx, default_mdname(N), NULL);
+        def_name = default_mdname(N);
+        if (def_name == NULL)
+            goto err;
+        md = EVP_MD_fetch(libctx, def_name, NULL);
     }
     if (md == NULL)
         goto err;

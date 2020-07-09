@@ -287,6 +287,10 @@ static int generate_key(DH *dh)
             } else
 #endif
             {
+                /* Do a partial check for invalid p, q, g */
+                if (!ffc_params_simple_validate(dh->libctx, &dh->params,
+                                                FFC_PARAM_TYPE_DH))
+                    goto err;
                 /*
                  * For FFC FIPS 186-4 keygen
                  * security strength s = 112,
