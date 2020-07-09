@@ -16,6 +16,8 @@ static OSSL_FUNC_BIO_new_file_fn *c_bio_new_file = NULL;
 static OSSL_FUNC_BIO_new_membuf_fn *c_bio_new_membuf = NULL;
 static OSSL_FUNC_BIO_read_ex_fn *c_bio_read_ex = NULL;
 static OSSL_FUNC_BIO_write_ex_fn *c_bio_write_ex = NULL;
+static OSSL_FUNC_BIO_gets_fn *c_bio_gets = NULL;
+static OSSL_FUNC_BIO_puts_fn *c_bio_puts = NULL;
 static OSSL_FUNC_BIO_free_fn *c_bio_free = NULL;
 static OSSL_FUNC_BIO_vprintf_fn *c_bio_vprintf = NULL;
 
@@ -38,6 +40,14 @@ int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns)
         case OSSL_FUNC_BIO_WRITE_EX:
             if (c_bio_write_ex == NULL)
                 c_bio_write_ex = OSSL_FUNC_BIO_write_ex(fns);
+            break;
+        case OSSL_FUNC_BIO_GETS:
+            if (c_bio_gets == NULL)
+                c_bio_gets = OSSL_FUNC_BIO_gets(fns);
+            break;
+        case OSSL_FUNC_BIO_PUTS:
+            if (c_bio_puts == NULL)
+                c_bio_puts = OSSL_FUNC_BIO_puts(fns);
             break;
         case OSSL_FUNC_BIO_FREE:
             if (c_bio_free == NULL)
@@ -81,6 +91,20 @@ int ossl_prov_bio_write_ex(OSSL_CORE_BIO *bio, const void *data, size_t data_len
     if (c_bio_write_ex == NULL)
         return 0;
     return c_bio_write_ex(bio, data, data_len, written);
+}
+
+int ossl_prov_bio_gets(OSSL_CORE_BIO *bio, char *buf, int size)
+{
+    if (c_bio_gets == NULL)
+        return -1;
+    return c_bio_gets(bio, buf, size);
+}
+
+int ossl_prov_bio_puts(OSSL_CORE_BIO *bio, const char *str)
+{
+    if (c_bio_puts == NULL)
+        return -1;
+    return c_bio_puts(bio, str);
 }
 
 int ossl_prov_bio_free(OSSL_CORE_BIO *bio)
@@ -134,16 +158,12 @@ static long bio_core_ctrl(BIO *bio, int cmd, long num, void *ptr)
 
 static int bio_core_gets(BIO *bio, char *buf, int size)
 {
-    /* We don't support this */
-    assert(0);
-    return -1;
+    return ossl_prov_bio_gets(BIO_get_data(bio), buf, size);
 }
 
 static int bio_core_puts(BIO *bio, const char *str)
 {
-    /* We don't support this */
-    assert(0);
-    return -1;
+    return ossl_prov_bio_puts(BIO_get_data(bio), str);
 }
 
 static int bio_core_new(BIO *bio)
