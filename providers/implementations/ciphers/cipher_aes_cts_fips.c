@@ -124,9 +124,8 @@ static void do_xor(const unsigned char *in1, const unsigned char *in2,
 {
     size_t i;
 
-    for (i = 0; i < len; ++i) {
+    for (i = 0; i < len; ++i)
         out[i] = in1[i] ^ in2[i];
-    }
 }
 
 static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
