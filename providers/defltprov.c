@@ -530,6 +530,14 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
     { "EC", "provider=default,fips=yes,format=pem,type=parameters",
       ec_param_pem_serializer_functions },
 #endif
+
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM deflt_deserializer[] = {
+    { "RSA", "provider=default,fips=yes,input=der",
+      der_to_rsa_deserializer_functions },
+
     { NULL, NULL, NULL }
 };
 
@@ -559,6 +567,8 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
         return deflt_asym_cipher;
     case OSSL_OP_SERIALIZER:
         return deflt_serializer;
+    case OSSL_OP_DESERIALIZER:
+        return deflt_deserializer;
     }
     return NULL;
 }
