@@ -37,6 +37,11 @@ OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_rsa_import(void)
     return ossl_prov_get_keymgmt_import(rsa_keymgmt_functions);
 }
 
+OSSL_FUNC_keymgmt_export_fn *ossl_prov_get_keymgmt_rsa_export(void)
+{
+    return ossl_prov_get_keymgmt_export(rsa_keymgmt_functions);
+}
+
 int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
 {
     const char *modulus_label;

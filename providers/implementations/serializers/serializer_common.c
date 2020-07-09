@@ -144,6 +144,16 @@ OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *f
     return NULL;
 }
 
+OSSL_FUNC_keymgmt_export_fn *ossl_prov_get_keymgmt_export(const OSSL_DISPATCH *fns)
+{
+    /* Pilfer the keymgmt dispatch table */
+    for (; fns->function_id != 0; fns++)
+        if (fns->function_id == OSSL_FUNC_KEYMGMT_EXPORT)
+            return OSSL_FUNC_keymgmt_export(fns);
+
+    return NULL;
+}
+
 # ifdef SIXTY_FOUR_BIT_LONG
 #  define BN_FMTu "%lu"
 #  define BN_FMTx "%lx"

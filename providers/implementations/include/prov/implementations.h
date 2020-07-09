@@ -358,3 +358,5 @@ extern const OSSL_DISPATCH ec_param_der_serializer_functions[];
 extern const OSSL_DISPATCH ec_priv_pem_serializer_functions[];
 extern const OSSL_DISPATCH ec_pub_pem_serializer_functions[];
 extern const OSSL_DISPATCH ec_param_pem_serializer_functions[];
+
+extern const OSSL_DISPATCH der_to_rsa_deserializer_functions[];
