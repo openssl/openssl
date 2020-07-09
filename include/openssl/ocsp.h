@@ -17,6 +17,7 @@
 # endif
 
 # include <openssl/opensslconf.h>
+# include <openssl/http.h> /* for OSSL_HTTP_parse_url */
 
 /*
  * These definitions are outside the OPENSSL_NO_OCSP guard because although for
