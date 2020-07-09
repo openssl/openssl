@@ -110,8 +110,8 @@ TODO Write a set of cookbook documents and link to them.
      EVP_PKEY *pkey = NULL;
 
      if (ctx == NULL
-         || !EVP_PKEY_key_fromdata_init(ctx)
-         || !EVP_PKEY_fromdata(ctx, &pkey, params))
+         || EVP_PKEY_key_fromdata_init(ctx) <= 0
+         || EVP_PKEY_fromdata(ctx, &pkey, params) <= 0)
          exit(1);
 
      /* Do what you want with |pkey| */
@@ -173,8 +173,8 @@ TODO Write a set of cookbook documents and link to them.
      ctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
      if (ctx == NULL
          || params != NULL
-         || !EVP_PKEY_key_fromdata_init(ctx)
-         || !EVP_PKEY_fromdata(ctx, &pkey, params)) {
+         || EVP_PKEY_key_fromdata_init(ctx) <= 0
+         || EVP_PKEY_fromdata(ctx, &pkey, params) <= 0) {
          exitcode = 1;
      } else {
          /* Do what you want with |pkey| */
