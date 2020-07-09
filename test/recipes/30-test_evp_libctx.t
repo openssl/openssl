@@ -38,7 +38,6 @@ unless ($no_fips) {
                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
                '-module', $infile,
                '-provider_name', 'fips', '-mac_name', 'HMAC',
-               '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
                '-section_name', 'fips_sect'])),
        "fipsinstall");
 }
