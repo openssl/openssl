@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
+#include "internal/endian.h"
 #include "bn_local.h"
 #include <openssl/opensslconf.h>
 #include "internal/constant_time.h"
@@ -583,20 +584,20 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
 
 BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
 {
-#ifdef B_ENDIAN
+    DECLARE_IS_ENDIAN;
+
+    if (IS_LITTLE_ENDIAN)
+        return BN_lebin2bn(s, len, ret);
     return BN_bin2bn(s, len, ret);
-#else
-    return BN_lebin2bn(s, len, ret);
-#endif
 }
 
 int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
 {
-#ifdef B_ENDIAN
+    DECLARE_IS_ENDIAN;
+
+    if (IS_LITTLE_ENDIAN)
+        return BN_bn2lebinpad(a, to, tolen);
     return BN_bn2binpad(a, to, tolen);
-#else
-    return BN_bn2lebinpad(a, to, tolen);
-#endif
 }
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
