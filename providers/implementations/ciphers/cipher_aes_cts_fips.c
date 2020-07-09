@@ -36,13 +36,14 @@
  *      Where C(n-1)* is a partial block.
  *  (3) CS3 The Kerberos5 variant.
  *      Produces C1||C2||Cn||(C(n-1))* regardless of the length.
- *      If the length is a multiple of the blocksize it looks similiar to CBC mode
+ *      If the length is a multiple of the blocksize it looks similar to CBC mode
  *      with the last 2 blocks swapped.
  *      Otherwise it is the same as CS2.
  */
 
 #include "e_os.h" /* strcasecmp */
 #include <openssl/core_names.h>
+#include <openssl/aes.h>
 #include "prov/ciphercommon.h"
 #include "internal/nelem.h"
 #include "cipher_aes_cts.h"
@@ -54,13 +55,8 @@
 
 typedef union {
     size_t align;
-    unsigned char c[16];
+    unsigned char c[AES_BLOCK_SIZE];
 } aligned_16bytes;
-
-typedef union {
-    size_t align;
-    unsigned char c[32];
-} aligned_32bytes;
 
 typedef struct cts_mode_name2id_st {
     unsigned int id;
@@ -104,7 +100,7 @@ static size_t cts128_cs1_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     aligned_16bytes tmp_in;
     size_t residue;
 
-    residue = len % 16;
+    residue = len % AES_BLOCK_SIZE;
     len -= residue;
     if (!ctx->hw->cipher(ctx, out, in, len))
         return 0;
@@ -117,45 +113,77 @@ static size_t cts128_cs1_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 
     memset(tmp_in.c, 0, sizeof(tmp_in));
     memcpy(tmp_in.c, in, residue);
-    if (!ctx->hw->cipher(ctx, out - 16 + residue, tmp_in.c, 16))
+    if (!ctx->hw->cipher(ctx, out - AES_BLOCK_SIZE + residue, tmp_in.c,
+                         AES_BLOCK_SIZE))
         return 0;
     return len + residue;
+}
+
+static void do_xor(const unsigned char *in1, const unsigned char *in2,
+                   size_t len, unsigned char *out)
+{
+    size_t i;
+
+    for (i = 0; i < len; ++i) {
+        out[i] = in1[i] ^ in2[i];
+    }
 }
 
 static size_t cts128_cs1_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    aligned_32bytes tmp_out;
+    aligned_16bytes mid_iv, ct_mid, pt_last;
     size_t residue;
 
-    residue = len % 16;
+    residue = len % AES_BLOCK_SIZE;
     if (residue == 0) {
         /* If there are no partial blocks then it is the same as CBC mode */
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
         return len;
     }
-    len -= 16 + residue;
-    if (len) {
+    /* Process blocks at the start - but leave the last 2 blocks */
+    len -= AES_BLOCK_SIZE + residue;
+    if (len > 0) {
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
         in += len;
         out += len;
     }
+    /* Save the iv that will be used by the second last block */
+    memcpy(mid_iv.c, ctx->iv, AES_BLOCK_SIZE);
 
-    memset(tmp_out.c, 0, sizeof(tmp_out));
-    memcpy(ctx->buf, ctx->iv, 16);   /* save the iv */
-    memset(ctx->iv, 0, 16);          /* use an iv of zero */
-    if (!ctx->hw->cipher(ctx, tmp_out.c, in + residue, 16))
+    /* Decrypt the last block first using an iv of zero */
+    memset(ctx->iv, 0, AES_BLOCK_SIZE);
+    if (!ctx->hw->cipher(ctx, pt_last.c, in + residue, AES_BLOCK_SIZE))
         return 0;
-    memcpy(tmp_out.c + 16, ctx->iv, 16);
-    memcpy(tmp_out.c, in, residue); /* Copy the partial bytes */
 
-    memcpy(ctx->iv, ctx->buf, 16);   /* restore the iv */
-    if (!ctx->hw->cipher(ctx, tmp_out.c, tmp_out.c, 32))
+    /*
+     * Rebuild the ciphertext of the second last block as a combination of
+     * the decrypted last block + replace the start with the ciphertext bytes
+     * of the partial second last block.
+     */
+    memcpy(ct_mid.c, in, residue);
+    memcpy(ct_mid.c + residue, pt_last.c + residue, AES_BLOCK_SIZE - residue);
+    /*
+     * Restore the last partial ciphertext block.
+     * Now that we have the cipher text of the second last block, apply
+     * that to the partial plaintext end block. We have already decrypted the
+     * block using an IV of zero. For decryption the IV is just XORed after
+     * doing an AES block - so just XOR in the cipher text.
+     */
+    do_xor(ct_mid.c, pt_last.c, residue, out + AES_BLOCK_SIZE);
+
+    /* Restore the iv needed by the second last block */
+    memcpy(ctx->iv, mid_iv.c, AES_BLOCK_SIZE);
+    /*
+     * Decrypt the second last plaintext block now that we have rebuilt the
+     * ciphertext.
+     */
+    if (!ctx->hw->cipher(ctx, out, ct_mid.c, AES_BLOCK_SIZE))
         return 0;
-    memcpy(out, tmp_out.c, 16 + residue);
-    return 16 + len + residue;
+
+    return len + AES_BLOCK_SIZE + residue;
 }
 
 #ifndef FIPS_MODULE
@@ -165,12 +193,12 @@ static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
     aligned_16bytes tmp_in;
     size_t residue;
 
-    if (len <= 16)  /* CS3 requires 2 blocks */
+    if (len <= AES_BLOCK_SIZE)  /* CS3 requires 2 blocks */
         return 0;
 
-    residue = len % 16;
+    residue = len % AES_BLOCK_SIZE;
     if (residue == 0)
-        residue = 16;
+        residue = AES_BLOCK_SIZE;
     len -= residue;
 
     if (!ctx->hw->cipher(ctx, out, in, len))
@@ -181,53 +209,82 @@ static size_t cts128_cs3_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 
     memset(tmp_in.c, 0, sizeof(tmp_in));
     memcpy(tmp_in.c, in, residue);
-    memcpy(out, out - 16, residue);
-    if (!ctx->hw->cipher(ctx, out - 16, tmp_in.c, 16))
+    memcpy(out, out - AES_BLOCK_SIZE, residue);
+    if (!ctx->hw->cipher(ctx, out - AES_BLOCK_SIZE, tmp_in.c, AES_BLOCK_SIZE))
         return 0;
     return len + residue;
 }
 
+/*
+ * Note:
+ *  The cipher text (in) is of the form C(0), C(1), ., C(n), C(n-1)* where
+ *  C(n) is a full block and C(n-1)* can be a partial block
+ *  (but could be a full block).
+ *  This means that the output plaintext (out) needs to swap the plaintext of
+ *  the last two decoded ciphertext blocks.
+ */
 static size_t cts128_cs3_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    aligned_32bytes tmp_out;
+    aligned_16bytes mid_iv, ct_mid, pt_last;
     size_t residue;
 
-    if (len <= 16) /* CS3 requires 2 blocks */
+    if (len <= AES_BLOCK_SIZE) /* CS3 requires 2 blocks */
         return 0;
 
-    residue = len % 16;
+    /* Process blocks at the start - but leave the last 2 blocks */
+    residue = len % AES_BLOCK_SIZE;
     if (residue == 0)
-        residue = 16;
-    len -= 16 + residue;
+        residue = AES_BLOCK_SIZE;
+    len -= AES_BLOCK_SIZE + residue;
 
-    if (len) {
+    if (len > 0) {
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
         in += len;
         out += len;
     }
+    /* Save the iv that will be used by the second last block */
+    memcpy(mid_iv.c, ctx->iv, AES_BLOCK_SIZE);
 
-    memset(tmp_out.c, 0, sizeof(tmp_out));
-    memcpy(ctx->buf, ctx->iv, 16);   /* save the iv */
-    memset(ctx->iv, 0, 16);          /* use an iv of zero */
-    if (!ctx->hw->cipher(ctx, tmp_out.c, in, 16))
-        return 0;
-    memcpy(tmp_out.c + 16, ctx->iv, 16);
-    memcpy(tmp_out.c, in + 16, residue);
-
-    memcpy(ctx->iv, ctx->buf, 16);   /* restore the iv */
-    if (!ctx->hw->cipher(ctx, tmp_out.c, tmp_out.c, 32))
+    /* Decrypt the Cn block first using an iv of zero */
+    memset(ctx->iv, 0, AES_BLOCK_SIZE);
+    if (!ctx->hw->cipher(ctx, pt_last.c, in, AES_BLOCK_SIZE))
         return 0;
 
-    memcpy(out, tmp_out.c, 16 + residue);
-    return 16 + len + residue;
+    /*
+     * Rebuild the ciphertext of C(n-1) as a combination of
+     * the decrypted C(n) block + replace the start with the ciphertext bytes
+     * of the partial last block.
+     */
+    memcpy(ct_mid.c, in + AES_BLOCK_SIZE, residue);
+    if (residue != AES_BLOCK_SIZE)
+        memcpy(ct_mid.c + residue, pt_last.c + residue, AES_BLOCK_SIZE - residue);
+    /*
+     * Restore the last partial ciphertext block.
+     * Now that we have the cipher text of the second last block, apply
+     * that to the partial plaintext end block. We have already decrypted the
+     * block using an IV of zero. For decryption the IV is just XORed after
+     * doing an AES block - so just XOR in the ciphertext.
+     */
+    do_xor(ct_mid.c, pt_last.c, residue, out + AES_BLOCK_SIZE);
+
+    /* Restore the iv needed by the second last block */
+    memcpy(ctx->iv, mid_iv.c, AES_BLOCK_SIZE);
+    /*
+     * Decrypt the second last plaintext block now that we have rebuilt the
+     * ciphertext.
+     */
+    if (!ctx->hw->cipher(ctx, out, ct_mid.c, AES_BLOCK_SIZE))
+        return 0;
+
+    return len + AES_BLOCK_SIZE + residue;
 }
 
 static size_t cts128_cs2_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    if (len % 16 == 0) {
+    if (len % AES_BLOCK_SIZE == 0) {
         /* If there are no partial blocks then it is the same as CBC mode */
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
@@ -240,7 +297,7 @@ static size_t cts128_cs2_encrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 static size_t cts128_cs2_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
                                  unsigned char *out, size_t len)
 {
-    if (len % 16 == 0) {
+    if (len % AES_BLOCK_SIZE == 0) {
         /* If there are no partial blocks then it is the same as CBC mode */
         if (!ctx->hw->cipher(ctx, out, in, len))
             return 0;
@@ -258,7 +315,7 @@ int aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t sz = 0;
 
-    if (inl < 16) /* There must be at least one block for CTS mode */
+    if (inl < AES_BLOCK_SIZE) /* There must be at least one block for CTS mode */
         return 0;
     if (outsize < inl)
         return 0;
@@ -269,9 +326,9 @@ int aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
 
     /*
      * Return an error if the update is called multiple times, only one shot
-     * is supported. We use the bufsz to mark the update.
+     * is supported.
      */
-    if (ctx->bufsz > 0)
+    if (ctx->updated == 1)
         return 0;
 
     if (ctx->enc) {
@@ -299,7 +356,7 @@ int aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
     }
     if (sz == 0)
         return 0;
-    ctx->bufsz = sz; /* store the size to stop multiple updates being allowed */
+    ctx->updated = 1; /* Stop multiple updates being allowed */
     *outl = sz;
     return 1;
 }
@@ -310,4 +367,3 @@ int aes_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
     *outl = 0;
     return 1;
 }
-

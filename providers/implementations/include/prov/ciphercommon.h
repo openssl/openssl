@@ -51,6 +51,8 @@ struct prov_cipher_ctx_st {
     unsigned int pad : 1;    /* Whether padding should be used or not */
     unsigned int enc : 1;    /* Set to 1 for encrypt, or 0 otherwise */
     unsigned int iv_set : 1; /* Set when the iv is copied to the iv/oiv buffers */
+    unsigned int updated : 1; /* Set to 1 during update for one shot ciphers */
+
 
     unsigned int tlsversion; /* If TLS padding is in use the TLS version number */
     unsigned char *tlsmac;   /* tls MAC extracted from the last record */
