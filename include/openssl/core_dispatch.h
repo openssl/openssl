@@ -135,6 +135,9 @@ OSSL_CORE_MAKE_FUNC(void,
 #define OSSL_FUNC_BIO_FREE                    44
 #define OSSL_FUNC_BIO_VPRINTF                 45
 #define OSSL_FUNC_BIO_VSNPRINTF               46
+#define OSSL_FUNC_BIO_PUTS                    47
+#define OSSL_FUNC_BIO_GETS                    48
+
 
 OSSL_CORE_MAKE_FUNC(OSSL_CORE_BIO *, BIO_new_file, (const char *filename,
                                                     const char *mode))
@@ -143,6 +146,8 @@ OSSL_CORE_MAKE_FUNC(int, BIO_read_ex, (OSSL_CORE_BIO *bio, void *data,
                                        size_t data_len, size_t *bytes_read))
 OSSL_CORE_MAKE_FUNC(int, BIO_write_ex, (OSSL_CORE_BIO *bio, const void *data,
                                         size_t data_len, size_t *written))
+OSSL_CORE_MAKE_FUNC(int, BIO_gets, (OSSL_CORE_BIO *bio, char *buf, int size))
+OSSL_CORE_MAKE_FUNC(int, BIO_puts, (OSSL_CORE_BIO *bio, const char *str))
 OSSL_CORE_MAKE_FUNC(int, BIO_free, (OSSL_CORE_BIO *bio))
 OSSL_CORE_MAKE_FUNC(int, BIO_vprintf, (OSSL_CORE_BIO *bio, const char *format,
                                        va_list args))
