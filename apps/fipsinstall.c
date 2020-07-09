@@ -62,7 +62,7 @@ const OPTIONS fipsinstall_options[] = {
     {"noout", OPT_NO_LOG, '-', "Disable logging of self test events"},
     {"corrupt_desc", OPT_CORRUPT_DESC, 's', "Corrupt a self test by description"},
     {"corrupt_type", OPT_CORRUPT_TYPE, 's', "Corrupt a self test by type"},
-    { "config", OPT_CONFIG, '<', "The parent config to verify"},
+    {"config", OPT_CONFIG, '<', "The parent config to verify"},
     {"quiet", OPT_QUIET, '-', "No messages, just exit status"},
     {NULL}
 };
