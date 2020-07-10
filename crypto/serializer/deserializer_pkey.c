@@ -9,10 +9,81 @@
 
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/ui.h>
 #include <openssl/deserializer.h>
+#include <openssl/core_names.h>
 #include <openssl/safestack.h>
 #include "crypto/evp.h"
 #include "serializer_local.h"
+
+int OSSL_DESERIALIZER_CTX_set_cipher(OSSL_DESERIALIZER_CTX *ctx,
+                                     const char *cipher_name,
+                                     const char *propquery)
+{
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] =
+        OSSL_PARAM_construct_utf8_string(OSSL_DESERIALIZER_PARAM_CIPHER,
+                                         (void *)cipher_name, 0);
+    params[1] =
+        OSSL_PARAM_construct_utf8_string(OSSL_DESERIALIZER_PARAM_PROPERTIES,
+                                         (void *)propquery, 0);
+
+    return OSSL_DESERIALIZER_CTX_set_params(ctx, params);
+}
+
+int OSSL_DESERIALIZER_CTX_set_passphrase(OSSL_DESERIALIZER_CTX *ctx,
+                                         const unsigned char *kstr,
+                                         size_t klen)
+{
+    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_DESERIALIZER_PARAM_PASS,
+                                                  (void *)kstr, klen);
+
+    return OSSL_DESERIALIZER_CTX_set_params(ctx, params);
+}
+
+static void deserializer_ctx_reset_passphrase_ui(OSSL_DESERIALIZER_CTX *ctx)
+{
+    UI_destroy_method(ctx->allocated_ui_method);
+    ctx->allocated_ui_method = NULL;
+    ctx->ui_method = NULL;
+    ctx->ui_data = NULL;
+}
+
+int OSSL_DESERIALIZER_CTX_set_passphrase_ui(OSSL_DESERIALIZER_CTX *ctx,
+                                            const UI_METHOD *ui_method,
+                                            void *ui_data)
+{
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DESERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    deserializer_ctx_reset_passphrase_ui(ctx);
+    ctx->ui_method = ui_method;
+    ctx->ui_data = ui_data;
+    return 1;
+}
+
+int OSSL_DESERIALIZER_CTX_set_passphrase_cb(OSSL_DESERIALIZER_CTX *ctx,
+                                            pem_password_cb *cb, void *cbarg)
+{
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DESERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    deserializer_ctx_reset_passphrase_ui(ctx);
+    if (cb == NULL)
+        return 1;
+    ctx->ui_method =
+        ctx->allocated_ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0);
+    ctx->ui_data = cbarg;
+
+    return ctx->ui_method != NULL;
+}
 
 /*
  * Support for OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY:
