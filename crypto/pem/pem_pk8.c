@@ -109,8 +109,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                     && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, ukstr, klen))
                     ret = 0;
                 else if (cb != NULL
-                         && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, 1,
-                                                                   cb, u))
+                         && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, cb, u))
                     ret = 0;
             }
         }

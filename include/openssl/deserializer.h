@@ -61,7 +61,7 @@ int OSSL_DESERIALIZER_CTX_set_cipher(OSSL_DESERIALIZER_CTX *ctx,
 int OSSL_DESERIALIZER_CTX_set_passphrase(OSSL_DESERIALIZER_CTX *ctx,
                                          const unsigned char *kstr,
                                          size_t klen);
-int OSSL_DESERIALIZER_CTX_set_passphrase_cb(OSSL_DESERIALIZER_CTX *ctx, int enc,
+int OSSL_DESERIALIZER_CTX_set_passphrase_cb(OSSL_DESERIALIZER_CTX *ctx,
                                             pem_password_cb *cb, void *cbarg);
 int OSSL_DESERIALIZER_CTX_set_passphrase_ui(OSSL_DESERIALIZER_CTX *ctx,
                                             const UI_METHOD *ui_method,

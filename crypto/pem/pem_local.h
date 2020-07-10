@@ -45,7 +45,7 @@
                 && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, kstr, klen)) \
                 ret = 0;                                                \
             else if (cb != NULL                                         \
-                     && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, 1,  \
+                     && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx,     \
                                                                cb, u))  \
                 ret = 0;                                                \
         }                                                               \

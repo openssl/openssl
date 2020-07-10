@@ -71,7 +71,7 @@ int OSSL_SERIALIZER_CTX_set_passphrase_ui(OSSL_SERIALIZER_CTX *ctx,
     return 1;
 }
 
-int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
+int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx,
                                           pem_password_cb *cb, void *cbarg)
 {
     if (!ossl_assert(ctx != NULL)) {
@@ -83,7 +83,7 @@ int OSSL_SERIALIZER_CTX_set_passphrase_cb(OSSL_SERIALIZER_CTX *ctx, int enc,
     if (cb == NULL)
         return 1;
     ctx->ui_method =
-        ctx->allocated_ui_method = UI_UTIL_wrap_read_pem_callback(cb, enc);
+        ctx->allocated_ui_method = UI_UTIL_wrap_read_pem_callback(cb, 1);
     ctx->ui_data = cbarg;
 
     return ctx->ui_method != NULL;
