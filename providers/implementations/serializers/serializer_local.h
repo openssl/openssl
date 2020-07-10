@@ -165,3 +165,8 @@ int ossl_prov_read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
 int ossl_prov_read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                        char **pem_name, char **pem_header,
                        unsigned char **data, long *len);
+
+int ossl_prov_der_from_p8(unsigned char **new_der, long *new_der_len,
+                          unsigned char *input_der, long input_der_len,
+                          struct pkcs8_encrypt_ctx_st *ctx);
+
