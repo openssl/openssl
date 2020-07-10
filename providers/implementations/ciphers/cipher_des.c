@@ -67,6 +67,7 @@ static int des_init(void *vctx, const unsigned char *key, size_t keylen,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
+    ctx->num = 0;
     ctx->enc = enc;
 
     if (iv != NULL) {
