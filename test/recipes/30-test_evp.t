@@ -45,6 +45,7 @@ my @files = qw(
                 evpkdf_x963.txt
                 evpmac_common.txt
                 evpmd_sha.txt
+                evppbe_pbkdf2.txt
                 evppbe_pkcs12.txt
                 evppkey_dsa.txt 
                 evppkey_ecc.txt
@@ -53,6 +54,7 @@ my @files = qw(
                 evppkey_ecx.txt
                 evppkey_ffdhe.txt
                 evppkey_kas.txt
+                evppkey_kdf_hkdf.txt
                 evppkey_mismatch.txt
                 evppkey_rsa.txt
                 evprand.txt
@@ -89,7 +91,10 @@ my @defltfiles = qw(
                      evpmd_ripemd.txt
                      evpmd_sm3.txt
                      evpmd_whirlpool.txt
+                     evppbe_scrypt.txt
                      evppkey_brainpool.txt
+                     evppkey_kdf_scrypt.txt
+                     evppkey_kdf_tls1_prf.txt
                      evppkey_sm2.txt
                     );
 

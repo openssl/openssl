@@ -20,6 +20,7 @@
 #include "crypto/evp.h"
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
+#include "crypto/ec.h"
 
 /* EC pkey context structure */
 
@@ -124,9 +125,12 @@ static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,
                             unsigned char *out, size_t *outlen,
                             const unsigned char *in, size_t inlen)
 {
+    int ret;
     EC_KEY *ec = ctx->pkey->pkey.ec;
     SM2_PKEY_CTX *dctx = ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
+    OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
+    EVP_MD *fetched_md = NULL;
 
     if (out == NULL) {
         if (!sm2_ciphertext_size(ec, md, inlen, outlen))
@@ -135,16 +139,24 @@ static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,
             return 1;
     }
 
-    return sm2_encrypt(ec, md, in, inlen, out, outlen);
+    fetched_md = EVP_MD_fetch(libctx, EVP_MD_name(md), 0);
+    if (fetched_md == NULL)
+        return 0;
+    ret = sm2_encrypt(ec, fetched_md, in, inlen, out, outlen);
+    EVP_MD_free(fetched_md);
+    return ret;
 }
 
 static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
                             unsigned char *out, size_t *outlen,
                             const unsigned char *in, size_t inlen)
 {
+    int ret;
     EC_KEY *ec = ctx->pkey->pkey.ec;
     SM2_PKEY_CTX *dctx = ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
+    OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
+    EVP_MD *fetched_md = NULL;
 
     if (out == NULL) {
         if (!sm2_plaintext_size(ec, md, inlen, outlen))
@@ -153,7 +165,12 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
             return 1;
     }
 
-    return sm2_decrypt(ec, md, in, inlen, out, outlen);
+    fetched_md = EVP_MD_fetch(libctx, EVP_MD_name(md), 0);
+    if (fetched_md == NULL)
+        return 0;
+    ret = sm2_decrypt(ec, fetched_md, in, inlen, out, outlen);
+    EVP_MD_free(fetched_md);
+    return ret;
 }
 
 static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)

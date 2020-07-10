@@ -297,7 +297,6 @@ int sm2_decrypt(const EC_KEY *key,
     const uint8_t *C3 = NULL;
     int msg_len = 0;
     EVP_MD_CTX *hash = NULL;
-    EVP_MD *fetched_digest = NULL;
     OPENSSL_CTX *libctx = ec_key_get_libctx(key);
     const char *propq = ec_key_get0_propq(key);
 
@@ -378,12 +377,7 @@ int sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(digest), propq);
-    if (fetched_digest == NULL) {
-        SM2err(SM2_F_SM2_DECRYPT, ERR_R_INTERNAL_ERROR);
-        goto done;
-    }
-    if (!EVP_DigestInit(hash, fetched_digest)
+    if (!EVP_DigestInit(hash, digest)
             || !EVP_DigestUpdate(hash, x2y2, field_size)
             || !EVP_DigestUpdate(hash, ptext_buf, msg_len)
             || !EVP_DigestUpdate(hash, x2y2 + field_size, field_size)
@@ -404,7 +398,6 @@ int sm2_decrypt(const EC_KEY *key,
     if (rc == 0)
         memset(ptext_buf, 0, *ptext_len);
 
-    EVP_MD_free(fetched_digest);
     OPENSSL_free(msg_mask);
     OPENSSL_free(x2y2);
     OPENSSL_free(computed_C3);

@@ -411,12 +411,6 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e)
     return int_ctx_new(NULL, NULL, e, NULL, NULL, id);
 }
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_id_with_libctx(int id, OPENSSL_CTX *libctx,
-                                              const char *propq)
-{
-    return int_ctx_new(libctx, NULL, NULL, NULL, propq, id);
-}
-
 EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
 {
     EVP_PKEY_CTX *rctx;

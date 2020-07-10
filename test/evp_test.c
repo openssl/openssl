@@ -1837,29 +1837,28 @@ static int pbe_test_run(EVP_TEST *t)
     PBE_DATA *expected = t->data;
     unsigned char *key;
     EVP_MD *fetched_digest = NULL;
+    OPENSSL_CTX *save_libctx;
+
+    save_libctx = OPENSSL_CTX_set0_default(libctx);
 
     if (!TEST_ptr(key = OPENSSL_malloc(expected->key_len))) {
         t->err = "INTERNAL_ERROR";
         goto err;
     }
     if (expected->pbe_type == PBE_TYPE_PBKDF2) {
-        if (PKCS5_PBKDF2_HMAC_with_libctx((char *)expected->pass,
-                                          expected->pass_len,
-                                          expected->salt, expected->salt_len,
-                                          expected->iter, expected->md,
-                                          expected->key_len, key,
-                                          libctx, NULL) == 0) {
+        if (PKCS5_PBKDF2_HMAC((char *)expected->pass, expected->pass_len,
+                              expected->salt, expected->salt_len,
+                              expected->iter, expected->md,
+                              expected->key_len, key) == 0) {
             t->err = "PBKDF2_ERROR";
             goto err;
         }
 #ifndef OPENSSL_NO_SCRYPT
     } else if (expected->pbe_type == PBE_TYPE_SCRYPT) {
-        if (EVP_PBE_scrypt_with_libctx((const char *)expected->pass,
-                                       expected->pass_len,
-                                       expected->salt, expected->salt_len,
-                                       expected->N, expected->r, expected->p,
-                                       expected->maxmem, key, expected->key_len,
-                                       libctx, NULL) == 0) {
+        if (EVP_PBE_scrypt((const char *)expected->pass, expected->pass_len,
+                            expected->salt, expected->salt_len,
+                            expected->N, expected->r, expected->p,
+                            expected->maxmem, key, expected->key_len) == 0) {
             t->err = "SCRYPT_ERROR";
             goto err;
         }
@@ -1886,6 +1885,7 @@ static int pbe_test_run(EVP_TEST *t)
 err:
     EVP_MD_free(fetched_digest);
     OPENSSL_free(key);
+    OPENSSL_CTX_set0_default(save_libctx);
     return 1;
 }
 
@@ -2091,7 +2091,7 @@ static int rand_test_init(EVP_TEST *t, const char *name)
     if (!TEST_ptr(rdata = OPENSSL_zalloc(sizeof(*rdata))))
         return 0;
 
-    rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
+    rand = EVP_RAND_fetch(libctx, "TEST-RAND", NULL);
     if (rand == NULL)
         goto err;
     rdata->parent = EVP_RAND_CTX_new(rand, NULL);
@@ -2103,7 +2103,7 @@ static int rand_test_init(EVP_TEST *t, const char *name)
     if (!EVP_RAND_set_ctx_params(rdata->parent, params))
         goto err;
 
-    rand = EVP_RAND_fetch(NULL, name, NULL);
+    rand = EVP_RAND_fetch(libctx, name, NULL);
     if (rand == NULL)
         goto err;
     rdata->ctx = EVP_RAND_CTX_new(rand, rdata->parent);
@@ -2494,6 +2494,7 @@ typedef struct pkey_kdf_data_st {
  */
 static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
 {
+    OPENSSL_CTX *save_libctx = NULL;
     PKEY_KDF_DATA *kdata = NULL;
     int kdf_nid = OBJ_sn2nid(name);
 
@@ -2508,14 +2509,23 @@ static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
 
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
-    kdata->ctx = EVP_PKEY_CTX_new_id_with_libctx(kdf_nid, libctx, NULL);
+    /*
+     * TODO(3.0): This should be using EVP_PKEY_CTX_new_from_name(),
+     * but it does not currently since the PKEY_KDF is using legacy paths.
+     * Internally it still uses fetches with the legacy path,
+     * So for now we hack in the library context.
+     */
+    save_libctx = OPENSSL_CTX_set0_default(libctx);
+    kdata->ctx = EVP_PKEY_CTX_new_id(kdf_nid, NULL);
     if (kdata->ctx == NULL
         || EVP_PKEY_derive_init(kdata->ctx) <= 0)
         goto err;
 
+    OPENSSL_CTX_set0_default(save_libctx);
     t->data = kdata;
     return 1;
 err:
+    OPENSSL_CTX_set0_default(save_libctx);
     EVP_PKEY_CTX_free(kdata->ctx);
     OPENSSL_free(kdata);
     return 0;
