@@ -110,4 +110,20 @@ struct ossl_deserializer_ctx_st {
      * intermediary storage.
      */
     UI_METHOD *allocated_ui_method;
+    /*
+     * Because the same input may pass through more than one deserializer,
+     * we cache any passphrase passed to us.  The desrializing processor
+     * must clear this at the end of a run.
+     */
+    unsigned char *cached_passphrase;
+    size_t cached_passphrase_len;
 };
+
+/* Passphrase callbacks, found in serdes_pass.c */
+
+/*
+ * Serializers typically want to get an outgoing passphrase, while
+ * deserializers typically want to get en incoming passphrase.
+ */
+OSSL_PASSPHRASE_CALLBACK ossl_serializer_passphrase_out_cb;
+OSSL_PASSPHRASE_CALLBACK ossl_deserializer_passphrase_in_cb;

@@ -29,12 +29,19 @@ static int deser_process(const OSSL_PARAM params[], void *arg);
 int OSSL_DESERIALIZER_from_bio(OSSL_DESERIALIZER_CTX *ctx, BIO *in)
 {
     struct deser_process_data_st data;
+    int ok = 0;
 
     memset(&data, 0, sizeof(data));
     data.ctx = ctx;
     data.bio = in;
 
-    return deser_process(NULL, &data);
+    ok = deser_process(NULL, &data);
+
+    /* Clear any cached passphrase */
+    OPENSSL_clear_free(ctx->cached_passphrase, ctx->cached_passphrase_len);
+    ctx->cached_passphrase = NULL;
+    ctx->cached_passphrase_len = 0;
+    return ok;
 }
 
 #ifndef OPENSSL_NO_STDIO

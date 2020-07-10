@@ -108,110 +108,6 @@ static void cache_serializers(const char *name, void *data)
 }
 
 /*
- * Support for OSSL_SERIALIZER_CTX_new_by_TYPE and OSSL_SERIALIZER_to_bio:
- * Passphrase callbacks
- */
-
-/*
- * First, we define the generic passphrase function that supports both
- * outgoing (with passphrase verify) and incoming (without passphrase verify)
- * passphrase reading.
- */
-static int serializer_passphrase(char *pass, size_t pass_size,
-                                 size_t *pass_len, int verify,
-                                 const OSSL_PARAM params[], void *arg)
-{
-    OSSL_SERIALIZER_CTX *ctx = arg;
-    const OSSL_PARAM *p;
-    const char *prompt_info = NULL;
-    char *prompt = NULL, *vpass = NULL;
-    int prompt_idx = -1, verify_idx = -1;
-    UI *ui = NULL;
-    int ret = 0;
-
-    if (!ossl_assert(ctx != NULL && pass != NULL
-                    && pass_size != 0 && pass_len != NULL)) {
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    if ((p = OSSL_PARAM_locate_const(params,
-                                     OSSL_PASSPHRASE_PARAM_INFO)) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        prompt_info = p->data;
-    }
-
-    if ((ui = UI_new()) == NULL) {
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_MALLOC_FAILURE);
-        return 0;
-    }
-
-    UI_set_method(ui, ctx->ui_method);
-    UI_add_user_data(ui, ctx->ui_data);
-
-    /* Get an application constructed prompt */
-    prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);
-   if (prompt == NULL) {
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_MALLOC_FAILURE);
-        goto end;
-    }
-
-    prompt_idx = UI_add_input_string(ui, prompt,
-                                     UI_INPUT_FLAG_DEFAULT_PWD,
-                                     pass, 0, pass_size - 1) - 1;
-    if (prompt_idx < 0) {
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_UI_LIB);
-        goto end;
-    }
-
-    if (verify) {
-        /* Get a buffer for verification prompt */
-        vpass = OPENSSL_zalloc(pass_size);
-        if (vpass == NULL) {
-            ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_MALLOC_FAILURE);
-            goto end;
-        }
-        verify_idx = UI_add_verify_string(ui, prompt,
-                                          UI_INPUT_FLAG_DEFAULT_PWD,
-                                          vpass, 0, pass_size - 1,
-                                          pass) - 1;
-        if (verify_idx < 0) {
-            ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_UI_LIB);
-            goto end;
-        }
-    }
-
-    switch (UI_process(ui)) {
-    case -2:
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_INTERRUPTED_OR_CANCELLED);
-        break;
-    case -1:
-        ERR_raise(ERR_LIB_OSSL_SERIALIZER, ERR_R_UI_LIB);
-        break;
-    default:
-        *pass_len = (size_t)UI_get_result_length(ui, prompt_idx);
-        ret = 1;
-        break;
-    }
-
- end:
-    OPENSSL_free(vpass);
-    OPENSSL_free(prompt);
-    UI_free(ui);
-    return ret;
-}
-
-/* Ensure correct function definition for outgoing passphrase reader */
-static OSSL_PASSPHRASE_CALLBACK serializer_passphrase_out_cb;
-static int serializer_passphrase_out_cb(char *pass, size_t pass_size,
-                                        size_t *pass_len,
-                                        const OSSL_PARAM params[], void *arg)
-{
-    return serializer_passphrase(pass, pass_size, pass_len, 1, params, arg);
-}
-
-/*
  * Support for OSSL_SERIALIZER_to_bio:
  * writing callback for the OSSL_PARAM (the implementation doesn't have
  * intimate knowledge of the provider side object)
@@ -229,7 +125,7 @@ static int serializer_write_cb(const OSSL_PARAM params[], void *arg)
     BIO *out = write_data->out;
 
     return ctx->ser->serialize_data(ctx->serctx, params, (OSSL_CORE_BIO *)out,
-                                    serializer_passphrase_out_cb, ctx);
+                                    ossl_serializer_passphrase_out_cb, ctx);
 }
 
 /*
@@ -266,7 +162,7 @@ static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
 
     return ctx->ser->serialize_object(ctx->serctx, keydata,
                                       (OSSL_CORE_BIO *)out,
-                                      serializer_passphrase_out_cb, ctx);
+                                      ossl_serializer_passphrase_out_cb, ctx);
 }
 
 /*
