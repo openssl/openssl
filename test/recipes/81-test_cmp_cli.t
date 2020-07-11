@@ -24,15 +24,20 @@ BEGIN {
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
 use platform;
+plan skip_all => "These tests are not supported in a fuzz build"
+    if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION/;
 
 plan skip_all => "These tests are not supported in a no-cmp build"
     if disabled("cmp");
 plan skip_all => "These tests are not supported in a no-ec build"
     if disabled("ec");
-plan skip_all => "These tests are not supported in a fuzz build"
-    if config('options') =~ /-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION/;
-plan skip_all => "Tests involving server not available on Windows or VMS"
+
+plan skip_all => "Tests involving CMP server not available on Windows or VMS"
     if $^O =~ /^(VMS|MSWin32)$/;
+plan skip_all => "Tests involving CMP server require 'kill' command"
+    unless `which kill`;
+plan skip_all => "Tests involving CMP server require 'lsof' command"
+    unless `which lsof`; # this typically excludes Solaris
 
 sub chop_dblquot { # chop any leading & trailing '"' (needed for Windows)
     my $str = shift;
