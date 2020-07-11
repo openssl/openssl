@@ -6,6 +6,7 @@ OSSL_CMP_MSG_get0_header,
 OSSL_CMP_MSG_update_transactionID,
 OSSL_CMP_CTX_setup_CRM,
 OSSL_CMP_MSG_read,
+OSSL_CMP_MSG_write,
 d2i_OSSL_CMP_MSG_bio,
 i2d_OSSL_CMP_MSG_bio
 - function(s) manipulating CMP messages
@@ -18,6 +19,7 @@ i2d_OSSL_CMP_MSG_bio
   int OSSL_CMP_MSG_update_transactionID(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
   OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid);
   OSSL_CMP_MSG *OSSL_CMP_MSG_read(const char *file);
+  int OSSL_CMP_MSG_write(const char *file, const OSSL_CMP_MSG *msg);
   OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg);
   int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg);
 
@@ -38,6 +40,8 @@ if I<for_KUR> is set or the I<ctx> does not include a subjectAltName.
 The I<rid> defines the request identifier to use, which typically is 0.
 
 OSSL_CMP_MSG_read() loads a DER-encoded OSSL_CMP_MSG from B<file>.
+
+OSSL_CMP_MSG_write() stores the given OSSL_CMP_MSG to B<file> in DER encoding.
 
 d2i_OSSL_CMP_MSG_bio() parses an ASN.1-encoded OSSL_CMP_MSG from the BIO I<bio>.
 It assigns a pointer to the new structure to I<*msg> if I<msg> is not NULL.
@@ -62,8 +66,10 @@ d2i_OSSL_CMP_MSG_bio() returns the parsed message or NULL on error.
 OSSL_CMP_MSG_read() and d2i_OSSL_CMP_MSG_bio()
 return the parsed CMP message or NULL on error.
 
-i2d_OSSL_CMP_MSG_bio() and OSSL_CMP_MSG_update_transactionID()
-return 1 on success, 0 on error.
+OSSL_CMP_MSG_write() and i2d_OSSL_CMP_MSG_bio() return
+the number of bytes successfully encoded or a negative value if an error occurs.
+
+OSSL_CMP_MSG_update_transactionID() returns 1 on success, 0 on error.
 
 =head1 HISTORY
 
