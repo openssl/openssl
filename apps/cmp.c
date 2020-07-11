@@ -965,7 +965,6 @@ static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
 static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
 {
     char *file;
-    BIO *bio;
     OSSL_CMP_MSG *ret;
 
     if (filenames == NULL) {
@@ -979,15 +978,10 @@ static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
 
     file = *filenames;
     *filenames = next_item(file);
-    bio = BIO_new_file(file, "rb");
-    if (bio == NULL) {
-        CMP_err1("Cannot open file '%s' for reading", file);
-        return NULL;
-    }
-    ret = d2i_OSSL_CMP_MSG_bio(bio, NULL);
+
+    ret = OSSL_CMP_MSG_read(file);
     if (ret == NULL)
         CMP_err1("Cannot read PKIMessage from file '%s'", file);
-    BIO_free(bio);
     return ret;
 }
 

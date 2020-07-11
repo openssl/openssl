@@ -896,7 +896,6 @@ ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
                                           int rid);
 X509 *ossl_cmp_certresponse_get1_certificate(EVP_PKEY *privkey,
                                              const OSSL_CMP_CERTRESPONSE *crep);
-OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file);
 
 /* from cmp_protect.c */
 ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_MSG *msg,

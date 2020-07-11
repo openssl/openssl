@@ -46,7 +46,7 @@ OSSL_CMP_MSG *load_pkimsg(const char *file)
 {
     OSSL_CMP_MSG *msg;
 
-    (void)TEST_ptr((msg = ossl_cmp_msg_load(file)));
+    (void)TEST_ptr((msg = OSSL_CMP_MSG_read(file)));
     return msg;
 }
 
