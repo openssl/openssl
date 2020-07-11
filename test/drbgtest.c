@@ -176,7 +176,6 @@ DRBG_SIZE_T(min_noncelen)
 DRBG_SIZE_T(max_noncelen)
 DRBG_SIZE_T(max_perslen)
 DRBG_SIZE_T(max_adinlen)
-DRBG_SIZE_T(max_request)
 
 #define DRBG_UINT(name)                                 \
     static unsigned int name(RAND_DRBG *drbg)           \
