@@ -506,10 +506,11 @@ and as default value for the expected sender of incoming CMP messages.
 =item B<-recipient> I<name>
 
 Distinguished Name (DN) to use in the recipient field of CMP request messages,
-i.e., the CMP server (usually a CA or RA entity).
+i.e., the CMP server (usually the addressed CA).
 
 The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
 characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
+The empty name (NULL-DN) can be given explicitly as a single slash: 'I</>'.
 
 The recipient field in the header of a CMP message is mandatory.
 If not given explicitly the recipient is determined in the following order:
