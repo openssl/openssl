@@ -106,7 +106,6 @@ static void gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
     u128 Z = { 0, 0 };
     const u8 *xi = (const u8 *)Xi + 15;
     size_t rem, n = *xi;
-    DECLARE_IS_ENDIAN;
     static const size_t rem_8bit[256] = {
         PACK(0x0000), PACK(0x01C2), PACK(0x0384), PACK(0x0246),
         PACK(0x0708), PACK(0x06CA), PACK(0x048C), PACK(0x054E),
@@ -173,6 +172,7 @@ static void gcm_gmult_8bit(u64 Xi[2], const u128 Htable[256])
         PACK(0xBBF0), PACK(0xBA32), PACK(0xB874), PACK(0xB9B6),
         PACK(0xBCF8), PACK(0xBD3A), PACK(0xBF7C), PACK(0xBEBE)
     };
+    DECLARE_IS_ENDIAN;
 
     while (1) {
         Z.hi ^= Htable[n].hi;
@@ -816,11 +816,11 @@ void CRYPTO_gcm128_init(GCM128_CONTEXT *ctx, void *key, block128_f block)
 void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv,
                          size_t len)
 {
-    DECLARE_IS_ENDIAN;
     unsigned int ctr;
 #ifdef GCM_FUNCREF_4BIT
     void (*gcm_gmult_p) (u64 Xi[2], const u128 Htable[16]) = ctx->gmult;
 #endif
+    DECLARE_IS_ENDIAN;
 
     ctx->len.u[0] = 0;          /* AAD length */
     ctx->len.u[1] = 0;          /* message length */
@@ -968,7 +968,6 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                           const unsigned char *in, unsigned char *out,
                           size_t len)
 {
-    DECLARE_IS_ENDIAN;
     unsigned int n, ctr, mres;
     size_t i;
     u64 mlen = ctx->len.u[1];
@@ -981,6 +980,7 @@ int CRYPTO_gcm128_encrypt(GCM128_CONTEXT *ctx,
                          const u8 *inp, size_t len) = ctx->ghash;
 # endif
 #endif
+    DECLARE_IS_ENDIAN;
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -1200,7 +1200,6 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
                           const unsigned char *in, unsigned char *out,
                           size_t len)
 {
-    DECLARE_IS_ENDIAN;
     unsigned int n, ctr, mres;
     size_t i;
     u64 mlen = ctx->len.u[1];
@@ -1213,6 +1212,7 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
                          const u8 *inp, size_t len) = ctx->ghash;
 # endif
 #endif
+    DECLARE_IS_ENDIAN;
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -1443,7 +1443,6 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 #if defined(OPENSSL_SMALL_FOOTPRINT)
     return CRYPTO_gcm128_encrypt(ctx, in, out, len);
 #else
-    DECLARE_IS_ENDIAN;
     unsigned int n, ctr, mres;
     size_t i;
     u64 mlen = ctx->len.u[1];
@@ -1455,6 +1454,7 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
                          const u8 *inp, size_t len) = ctx->ghash;
 #  endif
 # endif
+    DECLARE_IS_ENDIAN;
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -1465,7 +1465,7 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
 
     if (ctx->ares) {
         /* First call to encrypt finalizes GHASH(AAD) */
-#if defined(GHASH)
+# if defined(GHASH)
         if (len == 0) {
             GCM_MUL(ctx);
             ctx->ares = 0;
@@ -1475,9 +1475,9 @@ int CRYPTO_gcm128_encrypt_ctr32(GCM128_CONTEXT *ctx,
         ctx->Xi.u[0] = 0;
         ctx->Xi.u[1] = 0;
         mres = sizeof(ctx->Xi);
-#else
+# else
         GCM_MUL(ctx);
-#endif
+# endif
         ctx->ares = 0;
     }
 
@@ -1604,7 +1604,6 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 #if defined(OPENSSL_SMALL_FOOTPRINT)
     return CRYPTO_gcm128_decrypt(ctx, in, out, len);
 #else
-    DECLARE_IS_ENDIAN;
     unsigned int n, ctr, mres;
     size_t i;
     u64 mlen = ctx->len.u[1];
@@ -1616,6 +1615,7 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
                          const u8 *inp, size_t len) = ctx->ghash;
 #  endif
 # endif
+    DECLARE_IS_ENDIAN;
 
     mlen += len;
     if (mlen > ((U64(1) << 36) - 32) || (sizeof(len) == 8 && mlen < len))
@@ -1768,7 +1768,6 @@ int CRYPTO_gcm128_decrypt_ctr32(GCM128_CONTEXT *ctx,
 int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
                          size_t len)
 {
-    DECLARE_IS_ENDIAN;
     u64 alen = ctx->len.u[0] << 3;
     u64 clen = ctx->len.u[1] << 3;
 #ifdef GCM_FUNCREF_4BIT
@@ -1778,11 +1777,13 @@ int CRYPTO_gcm128_finish(GCM128_CONTEXT *ctx, const unsigned char *tag,
                          const u8 *inp, size_t len) = ctx->ghash;
 # endif
 #endif
-
 #if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
     u128 bitlen;
     unsigned int mres = ctx->mres;
+#endif
+    DECLARE_IS_ENDIAN;
 
+#if defined(GHASH) && !defined(OPENSSL_SMALL_FOOTPRINT)
     if (mres) {
         unsigned blocks = (mres + 15) & -16;
 

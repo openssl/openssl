@@ -25,13 +25,13 @@ int CRYPTO_xts128_encrypt(const XTS128_CONTEXT *ctx,
                           const unsigned char *inp, unsigned char *out,
                           size_t len, int enc)
 {
-    DECLARE_IS_ENDIAN;
     union {
         u64 u[2];
         u32 d[4];
         u8 c[16];
     } tweak, scratch;
     unsigned int i;
+    DECLARE_IS_ENDIAN;
 
     if (len < 16)
         return -1;
