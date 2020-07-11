@@ -6,7 +6,6 @@ ossl_cmp_bodytype_to_string,
 ossl_cmp_msg_get_bodytype,
 ossl_cmp_msg_set_bodytype,
 ossl_cmp_msg_create,
-ossl_cmp_msg_load,
 ossl_cmp_msg_gen_ITAV_push0,
 ossl_cmp_msg_gen_ITAVs_push1
 - functions manipulating CMP messages
@@ -19,7 +18,6 @@ ossl_cmp_msg_gen_ITAVs_push1
   int ossl_cmp_msg_get_bodytype(const OSSL_CMP_MSG *msg);
   int ossl_cmp_msg_set_bodytype( OSSL_CMP_MSG *msg, int type);
   OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype);
-  OSSL_CMP_MSG *ossl_cmp_msg_load(const char *file);
   int ossl_cmp_msg_gen_ITAV_push0(OSSL_CMP_MSG *msg, OSSL_CMP_ITAV *itav);
   int ossl_cmp_msg_gen_ITAVs_push1(OSSL_CMP_MSG *msg,
                                     STACK_OF(OSSL_CMP_ITAV) *itavs);
@@ -38,9 +36,6 @@ Returns 1 on success, 0 on error.
 
 ossl_cmp_msg_create() creates and initializes a OSSL_CMP_MSG structure,
 using B<ctx> for the header and B<bodytype> for the body.
-Returns pointer to created OSSL_CMP_MSG on success, NULL on error.
-
-OSSL_CMP_MSG *ossl_cmp_msg_load() loads a OSSL_CMP_MSG from a B<file>.
 Returns pointer to created OSSL_CMP_MSG on success, NULL on error.
 
 ossl_cmp_msg_gen_ITAV_push0() pushes the B<itav> to the body of the
