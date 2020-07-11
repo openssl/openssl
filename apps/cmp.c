@@ -934,7 +934,6 @@ static X509_STORE *sk_X509_to_store(X509_STORE *store /* may be NULL */,
 static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
 {
     char *file;
-    BIO *bio;
 
     if (msg == NULL || filenames == NULL) {
         CMP_err("NULL arg to write_PKIMESSAGE");
@@ -947,17 +946,10 @@ static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
 
     file = *filenames;
     *filenames = next_item(file);
-    bio = BIO_new_file(file, "wb");
-    if (bio == NULL) {
-        CMP_err1("Cannot open file '%s' for writing", file);
-        return 0;
-    }
-    if (i2d_OSSL_CMP_MSG_bio(bio, msg) < 0) {
+    if (OSSL_CMP_MSG_write(file, msg) < 0) {
         CMP_err1("Cannot write PKIMessage to file '%s'", file);
-        BIO_free(bio);
         return 0;
     }
-    BIO_free(bio);
     return 1;
 }
 
