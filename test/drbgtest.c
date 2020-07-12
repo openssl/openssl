@@ -771,7 +771,7 @@ static int test_rand_drbg_reseed(void)
         return 0;
 
     /* All three DRBGs should be non-null */
-    if (!TEST_ptr(primary = RAND_DRBG_get0_primary())
+    if (!TEST_ptr(primary = RAND_DRBG_get0_master())
         || !TEST_ptr(public = RAND_DRBG_get0_public())
         || !TEST_ptr(private = RAND_DRBG_get0_private()))
         return 0;
@@ -1000,7 +1000,10 @@ static int test_rand_drbg_prediction_resistance(void)
         || !TEST_true(RAND_DRBG_instantiate(z, NULL, 0)))
         goto err;
 
-    /* During a normal reseed, only the leaf DRBG should be reseeded */
+    /*
+     * During a normal reseed, only the last DRBG in the chain should
+     * be reseeded.
+     */
     inc_reseed_counter(y);
     xreseed = reseed_counter(x);
     yreseed = reseed_counter(y);
@@ -1022,7 +1025,8 @@ static int test_rand_drbg_prediction_resistance(void)
         || !TEST_int_gt(reseed_counter(z), zreseed))
         goto err;
 
-    /* During a normal generate, only the leaf DRBG should be reseed */
+    /*
+     * During a normal generate, only the last DRBG should be reseed */
     inc_reseed_counter(y);
     xreseed = reseed_counter(x);
     yreseed = reseed_counter(y);
@@ -1045,7 +1049,7 @@ static int test_rand_drbg_prediction_resistance(void)
         || !TEST_mem_ne(buf1, sizeof(buf1), buf2, sizeof(buf2)))
         goto err;
 
-    /* Verify that a normal reseed still only reseeds the leaf DRBG */
+    /* Verify that a normal reseed still only reseeds the last DRBG */
     inc_reseed_counter(y);
     xreseed = reseed_counter(x);
     yreseed = reseed_counter(y);
@@ -1109,7 +1113,7 @@ static int test_set_defaults(void)
     RAND_DRBG *primary = NULL, *public = NULL, *private = NULL;
 
    /* Check the default type and flags for primary, public and private */
-    return TEST_ptr(primary = RAND_DRBG_get0_primary())
+    return TEST_ptr(primary = RAND_DRBG_get0_master())
            && TEST_ptr(public = RAND_DRBG_get0_public())
            && TEST_ptr(private = RAND_DRBG_get0_private())
            && TEST_int_eq(primary->type, RAND_DRBG_TYPE)

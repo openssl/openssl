@@ -5,7 +5,7 @@
 OPENSSL_CTX_get0_primary_drbg,
 OPENSSL_CTX_get0_public_drbg,
 OPENSSL_CTX_get0_private_drbg,
-RAND_DRBG_get0_primary,
+RAND_DRBG_get0_master,
 RAND_DRBG_get0_public,
 RAND_DRBG_get0_private
 - get access to the global RAND_DRBG instances
@@ -17,7 +17,7 @@ RAND_DRBG_get0_private
  RAND_DRBG *OPENSSL_CTX_get0_primary_drbg(OPENSSL_CTX *ctx);
  RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
  RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
- RAND_DRBG *RAND_DRBG_get0_primary(void);
+ RAND_DRBG *RAND_DRBG_get0_master(void);
  RAND_DRBG *RAND_DRBG_get0_public(void);
  RAND_DRBG *RAND_DRBG_get0_private(void);
 
@@ -46,7 +46,7 @@ OPENSSL_CTX_get0_private_drbg() returns a pointer to the I<private> DRBG instanc
 for the given OPENSSL_CTX B<ctx>.
 
 In all the above cases the B<ctx> parameter can
-be NULL in which case the default OPENSSL_CTX is used. RAND_DRBG_get0_primary(),
+be NULL in which case the default OPENSSL_CTX is used. RAND_DRBG_get0_master(),
 RAND_DRBG_get0_public() and RAND_DRBG_get0_private() are the same as
 OPENSSL_CTX_get0_primary_drbg(), OPENSSL_CTX_get0_public_drbg() and
 OPENSSL_CTX_get0_private_drbg() respectively except that the default OPENSSL_CTX
@@ -83,7 +83,7 @@ L<RAND_DRBG(7)>
 The OPENSSL_CTX_get0_primary_drbg(), OPENSSL_CTX_get0_public_drbg() and
 OPENSSL_CTX_get0_private_drbg() functions were added in OpenSSL 3.0.
 
-The RAND_DRBG_get0_master() function was renamed to RAND_DRBG_get0_primary()
+The RAND_DRBG_get0_master() function was renamed to RAND_DRBG_get0_master()
 in OpenSSL 3.0.
 
 All other RAND_DRBG functions were added in OpenSSL 1.1.1.

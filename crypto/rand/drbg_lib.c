@@ -43,6 +43,8 @@ typedef struct drbg_global_st {
      *
      * There are three shared DRBG instances: <primary>, <public>, and
      * <private>.  The <public> and <private> DRBGs are secondary ones.
+     * These are used for non-secret (e.g. nonces) and secret
+     * (e.g. private keys) data respectively.
      */
     CRYPTO_RWLOCK *lock;
 
@@ -735,7 +737,7 @@ int RAND_DRBG_set_reseed_time_interval(RAND_DRBG *drbg, time_t interval)
  * Set the default values for reseed (time) intervals of new DRBG instances
  *
  * The default values can be set independently for primary DRBG instances
- * (without a parent) and normal DRBG instances (with parent).
+ * (without a parent) and secondary DRBG instances (with parent).
  *
  * Returns 1 on success, 0 on failure.
  */
@@ -849,7 +851,7 @@ static int drbg_bytes(unsigned char *out, int count)
 /* Implements the default OpenSSL RAND_add() method */
 static int drbg_add(const void *buf, int num, double randomness)
 {
-    RAND_DRBG *drbg = RAND_DRBG_get0_primary();
+    RAND_DRBG *drbg = RAND_DRBG_get0_master();
 
     if (drbg == NULL || num <= 0)
         return 0;
@@ -867,7 +869,7 @@ static int drbg_seed(const void *buf, int num)
 static int drbg_status(void)
 {
     int ret;
-    RAND_DRBG *drbg = RAND_DRBG_get0_primary();
+    RAND_DRBG *drbg = RAND_DRBG_get0_master();
 
     if (drbg == NULL)
         return 0;
@@ -903,7 +905,7 @@ RAND_DRBG *OPENSSL_CTX_get0_primary_drbg(OPENSSL_CTX *ctx)
     return dgbl->primary_drbg;
 }
 
-RAND_DRBG *RAND_DRBG_get0_primary(void)
+RAND_DRBG *RAND_DRBG_get0_master(void)
 {
     return OPENSSL_CTX_get0_primary_drbg(NULL);
 }

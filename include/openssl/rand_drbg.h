@@ -113,7 +113,7 @@ int RAND_DRBG_set_reseed_defaults(
 RAND_DRBG *OPENSSL_CTX_get0_primary_drbg(OPENSSL_CTX *ctx);
 RAND_DRBG *OPENSSL_CTX_get0_public_drbg(OPENSSL_CTX *ctx);
 RAND_DRBG *OPENSSL_CTX_get0_private_drbg(OPENSSL_CTX *ctx);
-RAND_DRBG *RAND_DRBG_get0_primary(void);
+RAND_DRBG *RAND_DRBG_get0_master(void);
 RAND_DRBG *RAND_DRBG_get0_public(void);
 RAND_DRBG *RAND_DRBG_get0_private(void);
 
@@ -121,7 +121,7 @@ RAND_DRBG *RAND_DRBG_get0_private(void);
 /* Retain legacy deprecated names */
 #  define RAND_DRBG_FLAG_MASTER        RAND_DRBG_FLAG_PRIMARY
 #  define OPENSSL_CTX_get0_master_drbg OPENSSL_CTX_get0_primary_drbg
-#  define RAND_DRBG_get0_master        RAND_DRBG_get0_primary
+#  define RAND_DRBG_get0_master        RAND_DRBG_get0_master
 # endif
 
 /*

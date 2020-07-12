@@ -103,7 +103,7 @@ instance of each per thread. So they can safely be accessed without
 locking via the RAND_DRBG interface.
 
 Pointers to these DRBG instances can be obtained using
-RAND_DRBG_get0_primary(),
+RAND_DRBG_get0_master(),
 RAND_DRBG_get0_public(), and
 RAND_DRBG_get0_private(), respectively.
 Note that it is not allowed to store a pointer to one of the thread-local
@@ -289,7 +289,7 @@ I<security strength> of the DRBG, which is set to 256 by default.
 L<RAND_DRBG_bytes(3)>,
 L<RAND_DRBG_generate(3)>,
 L<RAND_DRBG_reseed(3)>,
-L<RAND_DRBG_get0_primary(3)>,
+L<RAND_DRBG_get0_master(3)>,
 L<RAND_DRBG_get0_public(3)>,
 L<RAND_DRBG_get0_private(3)>,
 L<RAND_DRBG_set_reseed_interval(3)>,
