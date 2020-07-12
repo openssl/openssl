@@ -236,6 +236,8 @@ can be used (see L</NOTES> section for more information). If a cipher name
 is used with PKCS#5 v2.0. For interoperability reasons it is advisable to only
 use PKCS#12 algorithms.
 
+Special value C<NONE> disables encryption of the private key and certificate.
+
 =item B<-keyex>|B<-keysig>
 
 Specifies that the private key is to be used for key exchange or just signing.
