@@ -345,6 +345,9 @@ int main(int argc, char *argv[])
     (void)BIO_flush(out);
 
     BN_CTX_free(ctx);
+    ERR_remove_thread_state(NULL);
+    CRYPTO_cleanup_all_ex_data();
+    CRYPTO_mem_leaks(out);
     BIO_free(out);
 
     EXIT(0);

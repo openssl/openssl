@@ -794,6 +794,7 @@ void CRYPTO_mem_leaks_fp(FILE *fp)
     if (!b)
         return;
     BIO_set_fp(b, fp, BIO_NOCLOSE);
+    CRYPTO_cleanup_all_ex_data();
     CRYPTO_mem_leaks(b);
     BIO_free(b);
 }

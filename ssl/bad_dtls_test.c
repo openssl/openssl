@@ -922,5 +922,7 @@ int main(int argc, char *argv[])
     CRYPTO_mem_leaks(err);
     BIO_free(err);
 
+    SSL_COMP_free_compression_methods();
+
     return testresult?0:1;
 }

@@ -342,5 +342,6 @@ int main(void)
         }
         ++pfn;
     }
+    CRYPTO_cleanup_all_ex_data();
     return errors > 0 ? 1 : 0;
 }

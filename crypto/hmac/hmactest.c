@@ -317,6 +317,7 @@ test6:
     }
 end:
     HMAC_CTX_cleanup(&ctx);
+    HMAC_CTX_cleanup(&ctx2);
     EXIT(err);
     return (0);
 }
