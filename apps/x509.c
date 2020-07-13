@@ -693,7 +693,7 @@ int x509_main(int argc, char **argv)
                            X509_get_subject_name(x), get_nameopt());
             } else if (serial == i) {
                 BIO_printf(out, "serial=");
-                i2a_ASN1_INTEGER(out, X509_get_serialNumber(x));
+                i2a_ASN1_INTEGER(out, X509_get0_serialNumber(x));
                 BIO_printf(out, "\n");
             } else if (next_serial == i) {
                 ASN1_INTEGER *ser = X509_get_serialNumber(x);

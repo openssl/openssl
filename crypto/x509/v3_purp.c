@@ -899,7 +899,7 @@ int X509_check_issued(X509 *issuer, X509 *subject)
     return x509_check_issued_int(issuer, subject, NULL, NULL);
 }
 
-int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
+int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
 {
     if (akid == NULL)
         return X509_V_OK;
@@ -910,7 +910,7 @@ int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid)
         return X509_V_ERR_AKID_SKID_MISMATCH;
     /* Check serial number */
     if (akid->serial &&
-        ASN1_INTEGER_cmp(X509_get_serialNumber(issuer), akid->serial))
+        ASN1_INTEGER_cmp(X509_get0_serialNumber(issuer), akid->serial))
         return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
     /* Check issuer name */
     if (akid->issuer) {

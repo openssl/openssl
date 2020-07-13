@@ -370,7 +370,7 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 {
     if (crl->meth->crl_lookup)
         return crl->meth->crl_lookup(crl, ret,
-                                     X509_get_serialNumber(x),
+                                     X509_get0_serialNumber(x),
                                      X509_get_issuer_name(x));
     return 0;
 }
