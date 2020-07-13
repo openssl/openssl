@@ -3059,7 +3059,7 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
     DH *dh_clnt = NULL;
     EVP_PKEY *ckey = NULL, *skey = NULL;
     unsigned char *keybytes = NULL;
-    int np;
+    int prime_len;
 
     skey = s->s3.peer_tmp;
     if (skey == NULL) {
@@ -3089,19 +3089,19 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
     }
 
     /* send off the data */
-    np = BN_num_bytes(DH_get0_p(dh_clnt));
+    prime_len = BN_num_bytes(DH_get0_p(dh_clnt));
     /*
-     * for interoperability with some versions of the Microsoft TLS
+     * For interoperability with some versions of the Microsoft TLS
      * stack, we need to zero pad the DHE pub key to the same length
-     * as the prime, so use the length of the prime here
+     * as the prime, so use the length of the prime here.
      */
-    if (!WPACKET_sub_allocate_bytes_u16(pkt, np, &keybytes)) {
+    if (!WPACKET_sub_allocate_bytes_u16(pkt, prime_len, &keybytes)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_DHE,
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    BN_bn2binpad(DH_get0_pub_key(dh_clnt), keybytes, np);
+    BN_bn2binpad(DH_get0_pub_key(dh_clnt), keybytes, prime_len);
     EVP_PKEY_free(ckey);
 
     return 1;
