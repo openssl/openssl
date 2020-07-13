@@ -8,6 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 /*
  * RC4 and SHA-1 low level APIs are deprecated for public use, but still ok
  * for internal use.

@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include "e_os.h"               /* for strncasecmp */
 #include "internal/cryptlib.h"
 #include <stdio.h>
