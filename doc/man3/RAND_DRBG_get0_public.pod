@@ -83,9 +83,6 @@ L<RAND_DRBG(7)>
 The OPENSSL_CTX_get0_primary_drbg(), OPENSSL_CTX_get0_public_drbg() and
 OPENSSL_CTX_get0_private_drbg() functions were added in OpenSSL 3.0.
 
-The RAND_DRBG_get0_master() function was renamed to RAND_DRBG_get0_master()
-in OpenSSL 3.0.
-
 All other RAND_DRBG functions were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
