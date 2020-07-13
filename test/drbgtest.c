@@ -190,6 +190,13 @@ static PROV_DRBG *prov_rand(RAND_DRBG *drbg)
     return (PROV_DRBG *)drbg->rand->data;
 }
 
+static void set_generate_counter(RAND_DRBG *drbg, unsigned int n)
+{
+    PROV_DRBG *p = prov_rand(drbg);
+
+    p->reseed_gen_counter = n;
+}
+
 static void set_reseed_counter(RAND_DRBG *drbg, unsigned int n)
 {
     PROV_DRBG *p = prov_rand(drbg);
@@ -509,7 +516,7 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     if (!instantiate(drbg, td, &t))
         goto err;
     reseed_counter_tmp = reseed_counter(drbg);
-    set_reseed_counter(drbg, reseed_requests(drbg));
+    set_generate_counter(drbg, reseed_requests(drbg));
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
