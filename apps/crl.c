@@ -288,6 +288,7 @@ int crl_main(int argc, char **argv)
                 crlnum = X509_CRL_get_ext_d2i(x, NID_crl_number, NULL, NULL);
                 BIO_printf(bio_out, "crlNumber=");
                 if (crlnum) {
+                    BIO_puts(bio_out, "0x");
                     i2a_ASN1_INTEGER(bio_out, crlnum);
                     ASN1_INTEGER_free(crlnum);
                 } else
