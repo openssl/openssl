@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
 /*
  * On VMS, you need to define this to get the declaration of fileno().  The
