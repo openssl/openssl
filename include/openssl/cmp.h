@@ -417,15 +417,22 @@ int OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(OSSL_CMP_SRV_CTX *srv_ctx,
                                                 int val);
 
 /* from cmp_client.c */
-X509 *OSSL_CMP_exec_IR_ses(OSSL_CMP_CTX *ctx);
-X509 *OSSL_CMP_exec_CR_ses(OSSL_CMP_CTX *ctx);
-X509 *OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx);
-X509 *OSSL_CMP_exec_KUR_ses(OSSL_CMP_CTX *ctx);
-#  define OSSL_CMP_IR    OSSL_CMP_PKIBODY_IR
-#  define OSSL_CMP_CR    OSSL_CMP_PKIBODY_CR
-#  define OSSL_CMP_P10CR OSSL_CMP_PKIBODY_P10CR
-#  define OSSL_CMP_KUR   OSSL_CMP_PKIBODY_KUR
-int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type, int *checkAfter);
+X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
+                            const OSSL_CRMF_MSG *crm);
+#  define OSSL_CMP_IR    0
+#  define OSSL_CMP_CR    2
+#  define OSSL_CMP_P10CR 4
+#  define OSSL_CMP_KUR   7
+#  define OSSL_CMP_exec_IR_ses(ctx) \
+    OSSL_CMP_exec_certreq(ctx, OSSL_CMP_IR, NULL)
+#  define OSSL_CMP_exec_CR_ses(ctx) \
+    OSSL_CMP_exec_certreq(ctx, OSSL_CMP_CR, NULL)
+#  define OSSL_CMP_exec_P10CR_ses(ctx) \
+    OSSL_CMP_exec_certreq(ctx, OSSL_CMP_P10CR, NULL)
+#  define OSSL_CMP_exec_KUR_ses(ctx) \
+    OSSL_CMP_exec_certreq(ctx, OSSL_CMP_KUR, NULL)
+int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
+                         const OSSL_CRMF_MSG *crm, int *checkAfter);
 int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
                          const char **text);
 X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);

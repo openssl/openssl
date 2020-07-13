@@ -84,7 +84,7 @@ static void cmp_client_process_response(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         break;
     case OSSL_CMP_PKIBODY_POLLREP:
         ctx->status = OSSL_CMP_PKISTATUS_waiting;
-        (void)OSSL_CMP_try_certreq(ctx, OSSL_CMP_PKIBODY_CR, NULL);
+        (void)OSSL_CMP_try_certreq(ctx, OSSL_CMP_PKIBODY_CR, NULL, NULL);
         break;
     case OSSL_CMP_PKIBODY_RP:
         (void)OSSL_CMP_exec_RR_ses(ctx);

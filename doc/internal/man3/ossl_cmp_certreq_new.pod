@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-ossl_cmp_certReq_new,
-ossl_cmp_certRep_new,
+ossl_cmp_certreq_new,
+ossl_cmp_certrep_new,
 ossl_cmp_rr_new,
 ossl_cmp_rp_new,
 ossl_cmp_certConf_new,
@@ -47,9 +47,9 @@ ossl_cmp_error_new
 # define OSSL_CMP_PKIBODY_POLLREQ  25
 # define OSSL_CMP_PKIBODY_POLLREP  26
 
- OSSL_ossl_cmp_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int bodytype,
-                                         int err_code);
- OSSL_CMP_MSG *ossl_cmp_certRep_new(OSSL_CMP_CTX *ctx, int bodytype,
+ OSSL_ossl_cmp_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int bodytype,
+                                         const OSSL_CRMF_MSG *crm);
+ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                                     int certReqId, OSSL_CMP_PKISI *si,
                                     X509 *cert, STACK_OF(X509) *chain,
                                     STACK_OF(X509) *caPubs,
@@ -75,10 +75,10 @@ This is the API for creating various CMP PKIMESSAGES. The
 functions allocate a new message, fill it with the relevant data derived from
 the given OSSL_CMP_CTX, and create the applicable protection.
 
-ossl_cmp_certReq_new() creates a PKIMessage for requesting a certificate,
+ossl_cmp_certreq_new() creates a PKIMessage for requesting a certificate,
 which can be either of IR/CR/KUR/P10CR, depending on the given B<bodytype>.
-The OpenSSL error reason code defined in err.h to use on error is given as
-B<err_code>.
+The CRMF message to use may be given via the B<crm> argument;
+else (if B<crm> is NULL) it is created from the information in the B<ctx>.
 
 Available CMP certificate request PKIMessage B<bodytype>s are:
 

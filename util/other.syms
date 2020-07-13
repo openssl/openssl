@@ -368,6 +368,10 @@ OpenSSL_add_all_algorithms              define deprecated 1.1.0
 OpenSSL_add_all_ciphers                 define deprecated 1.1.0
 OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
+OSSL_CMP_exec_IR_ses                    define
+OSSL_CMP_exec_CR_ses                    define
+OSSL_CMP_exec_P10CR_ses                 define
+OSSL_CMP_exec_KUR_ses                   define
 OSSL_CMP_CTX_set_log_verbosity          define
 OSSL_CMP_CR                             define
 OSSL_CMP_IR                             define

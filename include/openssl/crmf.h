@@ -43,6 +43,7 @@ typedef struct ossl_crmf_encryptedvalue_st OSSL_CRMF_ENCRYPTEDVALUE;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_ENCRYPTEDVALUE)
 typedef struct ossl_crmf_msg_st OSSL_CRMF_MSG;
 DECLARE_ASN1_FUNCTIONS(OSSL_CRMF_MSG)
+DECLARE_ASN1_DUP_FUNCTION(OSSL_CRMF_MSG)
 DEFINE_OR_DECLARE_STACK_OF(OSSL_CRMF_MSG)
 typedef struct ossl_crmf_attributetypeandvalue_st OSSL_CRMF_ATTRIBUTETYPEANDVALUE;
 typedef struct ossl_crmf_pbmparameter_st OSSL_CRMF_PBMPARAMETER;
