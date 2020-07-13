@@ -339,7 +339,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
               goto err;
       }
 
-      if (!EVP_MAC_final(ctx, buf, &final_l))
+      if (!EVP_MAC_final(ctx, buf, &final_l, sizeof(buf)))
           goto err;
 
       printf("Result: ");
