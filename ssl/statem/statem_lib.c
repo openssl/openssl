@@ -1611,7 +1611,7 @@ int ssl_version_supported(const SSL *s, int version, const SSL_METHOD **meth)
          ++vent) {
         const SSL_METHOD *(*ret_meth) (void);
         ret_meth = s->server ? vent->smeth : vent->cmeth;
-        if ( ret_meth != NULL
+        if (ret_meth != NULL
                 && version_cmp(s, version, vent->version) == 0
                 && ssl_method_error(s, ret_meth()) == 0
                 && (!s->server
