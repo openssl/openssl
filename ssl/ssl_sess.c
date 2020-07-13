@@ -8,6 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
