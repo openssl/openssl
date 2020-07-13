@@ -1609,14 +1609,16 @@ int ssl_version_supported(const SSL *s, int version, const SSL_METHOD **meth)
     for (vent = table;
          vent->version != 0 && version_cmp(s, version, vent->version) <= 0;
          ++vent) {
-        if (vent->cmeth != NULL
+        const SSL_METHOD *(*ret_meth) (void);
+        ret_meth = s->server ? vent->smeth : vent->cmeth;
+        if ( ret_meth != NULL
                 && version_cmp(s, version, vent->version) == 0
-                && ssl_method_error(s, vent->cmeth()) == 0
+                && ssl_method_error(s, ret_meth()) == 0
                 && (!s->server
                     || version != TLS1_3_VERSION
                     || is_tls13_capable(s))) {
             if (meth != NULL)
-                *meth = vent->cmeth();
+                *meth = ret_meth();
             return 1;
         }
     }
