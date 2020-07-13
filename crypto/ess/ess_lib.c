@@ -89,7 +89,7 @@ static ESS_CERT_ID *ESS_CERT_ID_new_init(X509 *cert, int issuer_needed)
     name = NULL;            /* Ownership is lost. */
     ASN1_INTEGER_free(cid->issuer_serial->serial);
     if ((cid->issuer_serial->serial =
-          ASN1_INTEGER_dup(X509_get_serialNumber(cert))) == NULL)
+          ASN1_INTEGER_dup(X509_get0_serialNumber(cert))) == NULL)
         goto err;
 
     return cid;
@@ -183,7 +183,7 @@ static ESS_CERT_ID_V2 *ESS_CERT_ID_V2_new_init(const EVP_MD *hash_alg,
         goto err;
     name = NULL;            /* Ownership is lost. */
     ASN1_INTEGER_free(cid->issuer_serial->serial);
-    cid->issuer_serial->serial = ASN1_INTEGER_dup(X509_get_serialNumber(cert));
+    cid->issuer_serial->serial = ASN1_INTEGER_dup(X509_get0_serialNumber(cert));
     if (cid->issuer_serial->serial == NULL)
         goto err;
 

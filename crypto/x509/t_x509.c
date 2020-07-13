@@ -55,7 +55,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     int ret = 0, i;
     char *m = NULL, mlch = ' ';
     int nmindent = 0;
-    ASN1_INTEGER *bs;
     EVP_PKEY *pkey = NULL;
     const char *neg;
 
@@ -84,11 +83,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         }
     }
     if (!(cflag & X509_FLAG_NO_SERIAL)) {
+        const ASN1_INTEGER *bs = X509_get0_serialNumber(x);
 
         if (BIO_write(bp, "        Serial Number:", 22) <= 0)
             goto err;
 
-        bs = X509_get_serialNumber(x);
         if (bs->length <= (int)sizeof(long)) {
                 ERR_set_mark();
                 l = ASN1_INTEGER_get(bs);

@@ -553,7 +553,7 @@ int cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
     ret = X509_NAME_cmp(ias->issuer, X509_get_issuer_name(cert));
     if (ret)
         return ret;
-    return ASN1_INTEGER_cmp(ias->serialNumber, X509_get_serialNumber(cert));
+    return ASN1_INTEGER_cmp(ias->serialNumber, X509_get0_serialNumber(cert));
 }
 
 int cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert)
@@ -573,7 +573,7 @@ int cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
         goto err;
     if (!X509_NAME_set(&ias->issuer, X509_get_issuer_name(cert)))
         goto err;
-    if (!ASN1_STRING_copy(ias->serialNumber, X509_get_serialNumber(cert)))
+    if (!ASN1_STRING_copy(ias->serialNumber, X509_get0_serialNumber(cert)))
         goto err;
     M_ASN1_free_of(*pias, CMS_IssuerAndSerialNumber);
     *pias = ias;

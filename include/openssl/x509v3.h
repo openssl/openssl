@@ -667,7 +667,7 @@ int X509_check_purpose(X509 *x, int id, int ca);
 int X509_supported_extension(X509_EXTENSION *ex);
 int X509_PURPOSE_set(int *p, int purpose);
 int X509_check_issued(X509 *issuer, X509 *subject);
-int X509_check_akid(X509 *issuer, AUTHORITY_KEYID *akid);
+int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid);
 void X509_set_proxy_flag(X509 *x);
 void X509_set_proxy_pathlen(X509 *x, long l);
 long X509_get_proxy_pathlen(X509 *x);

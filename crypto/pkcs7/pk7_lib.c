@@ -324,7 +324,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
      */
     ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
     if (!(p7i->issuer_and_serial->serial =
-          ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
+          ASN1_INTEGER_dup(X509_get0_serialNumber(x509))))
         goto err;
 
     /* lets keep the pkey around for a while */
@@ -477,7 +477,7 @@ int PKCS7_RECIP_INFO_set(PKCS7_RECIP_INFO *p7i, X509 *x509)
 
     ASN1_INTEGER_free(p7i->issuer_and_serial->serial);
     if (!(p7i->issuer_and_serial->serial =
-          ASN1_INTEGER_dup(X509_get_serialNumber(x509))))
+          ASN1_INTEGER_dup(X509_get0_serialNumber(x509))))
         return 0;
 
     pkey = X509_get0_pubkey(x509);

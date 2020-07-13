@@ -1049,7 +1049,7 @@ end_of_options:
         for (i = 0; i < sk_X509_num(cert_sk); i++) {
             BIO *Cout = NULL;
             X509 *xi = sk_X509_value(cert_sk, i);
-            ASN1_INTEGER *serialNumber = X509_get_serialNumber(xi);
+            const ASN1_INTEGER *serialNumber = X509_get0_serialNumber(xi);
             const unsigned char *psn = ASN1_STRING_get0_data(serialNumber);
             const int snl = ASN1_STRING_length(serialNumber);
             const int filen_len = 2 * (snl > 0 ? snl : 1) + sizeof(".pem");
@@ -2113,7 +2113,7 @@ static int do_revoke(X509 *x509, CA_DB *db, REVINFO_TYPE rev_type,
     for (i = 0; i < DB_NUMBER; i++)
         row[i] = NULL;
     row[DB_name] = X509_NAME_oneline(X509_get_subject_name(x509), NULL, 0);
-    bn = ASN1_INTEGER_to_BN(X509_get_serialNumber(x509), NULL);
+    bn = ASN1_INTEGER_to_BN(X509_get0_serialNumber(x509), NULL);
     if (!bn)
         goto end;
     if (BN_is_zero(bn))

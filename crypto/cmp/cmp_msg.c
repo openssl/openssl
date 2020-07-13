@@ -298,7 +298,7 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
     if (bodytype == OSSL_CMP_PKIBODY_KUR) {
         OSSL_CRMF_CERTID *cid =
             OSSL_CRMF_CERTID_gen(X509_get_issuer_name(refcert),
-                                 X509_get_serialNumber(refcert));
+                                 X509_get0_serialNumber(refcert));
         int ret;
 
         if (cid == NULL)
@@ -469,7 +469,7 @@ OSSL_CMP_MSG *ossl_cmp_rr_new(OSSL_CMP_CTX *ctx)
                                      NULL /* pubkey would be redundant */,
                                      NULL /* subject would be redundant */,
                                      X509_get_issuer_name(ctx->oldCert),
-                                     X509_get_serialNumber(ctx->oldCert)))
+                                     X509_get0_serialNumber(ctx->oldCert)))
         goto err;
 
     /* revocation reason code is optional */
