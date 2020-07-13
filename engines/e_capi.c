@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #ifdef _WIN32
 # ifndef _WIN32_WINNT
 #  define _WIN32_WINNT 0x0400
