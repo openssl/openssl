@@ -322,7 +322,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
       EVP_MAC_CTX *ctx = NULL;
 
       unsigned char buf[4096];
-      ssize_t read_l;
+      size_t read_l;
       size_t final_l;
 
       size_t i;
@@ -332,12 +332,12 @@ EVP_MAC_do_all_provided() returns nothing at all.
 
       if (cipher != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("cipher", cipher, 0;
+              OSSL_PARAM_construct_utf8_string("cipher", (char*)cipher, 0);
       if (digest != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("digest", digest, 0);
+              OSSL_PARAM_construct_utf8_string("digest", (char*)digest, 0);
       params[params_n++] =
-          OSSL_PARAM_construct_octet_string("key", key, strlen(key));
+          OSSL_PARAM_construct_octet_string("key", (void*)key, strlen(key));
       params[params_n] = OSSL_PARAM_construct_end();
 
       if (mac == NULL
@@ -354,7 +354,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
               goto err;
       }
 
-      if (!EVP_MAC_final(ctx, buf, &final_l))
+      if (!EVP_MAC_final(ctx, buf, &final_l, sizeof(buf)))
           goto err;
 
       printf("Result: ");
