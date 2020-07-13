@@ -128,7 +128,7 @@ OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype)
 
     case OSSL_CMP_PKIBODY_P10CR:
         if (ctx->p10CSR == NULL) {
-            CMPerr(0, CMP_R_ERROR_CREATING_P10CR);
+            CMPerr(0, CMP_R_MISSING_P10CSR);
             goto err;
         }
         if ((msg->body->value.p10cr = X509_REQ_dup(ctx->p10CSR)) == NULL)
@@ -321,10 +321,11 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
     return crm;
 }
 
-OSSL_CMP_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int type, int err_code)
+OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
+                                   const OSSL_CRMF_MSG *crm)
 {
     OSSL_CMP_MSG *msg;
-    OSSL_CRMF_MSG *crm = NULL;
+    OSSL_CRMF_MSG *local_crm = NULL;
 
     if (!ossl_assert(ctx != NULL))
         return NULL;
@@ -353,13 +354,20 @@ OSSL_CMP_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int type, int err_code)
             CMPerr(0, CMP_R_MISSING_PRIVATE_KEY);
             goto err;
         }
-        if ((crm = crm_new(ctx, type, OSSL_CMP_CERTREQID)) == NULL
-            || !OSSL_CRMF_MSG_create_popo(crm, privkey, ctx->digest,
-                                          ctx->popoMethod)
-            /* value.ir is same for cr and kur */
-            || !sk_OSSL_CRMF_MSG_push(msg->body->value.ir, crm))
+        if (crm == NULL) {
+            if ((local_crm = crm_new(ctx, type, OSSL_CMP_CERTREQID)) == NULL
+                || !OSSL_CRMF_MSG_create_popo(local_crm, privkey, ctx->digest,
+                                              ctx->popoMethod))
+                goto err;
+        } else {
+            if ((local_crm = OSSL_CRMF_MSG_dup(crm)) == NULL)
+                goto err;
+        }
+
+        /* value.ir is same for cr and kur */
+        if (!sk_OSSL_CRMF_MSG_push(msg->body->value.ir, local_crm))
             goto err;
-        crm = NULL;
+        local_crm = NULL;
         /* TODO: here optional 2nd certreqmsg could be pushed to the stack */
     }
 
@@ -369,14 +377,13 @@ OSSL_CMP_MSG *ossl_cmp_certReq_new(OSSL_CMP_CTX *ctx, int type, int err_code)
     return msg;
 
  err:
-    if (err_code != 0)
-        CMPerr(0, err_code);
-    OSSL_CRMF_MSG_free(crm);
+    CMPerr(0, CMP_R_ERROR_CREATING_CERTREQ);
+    OSSL_CRMF_MSG_free(local_crm);
     OSSL_CMP_MSG_free(msg);
     return NULL;
 }
 
-OSSL_CMP_MSG *ossl_cmp_certRep_new(OSSL_CMP_CTX *ctx, int bodytype,
+OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
                                    int certReqId, OSSL_CMP_PKISI *si,
                                    X509 *cert, STACK_OF(X509) *chain,
                                    STACK_OF(X509) *caPubs, int encrypted,

@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+OSSL_CMP_exec_certreq,
 OSSL_CMP_exec_IR_ses,
 OSSL_CMP_exec_CR_ses,
 OSSL_CMP_exec_P10CR_ses,
@@ -20,6 +21,8 @@ OSSL_CMP_certConf_cb
 
  #include <openssl/cmp.h>
 
+ X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
+                             const OSSL_CRMF_MSG *crm);
  X509 *OSSL_CMP_exec_IR_ses(OSSL_CMP_CTX *ctx);
  X509 *OSSL_CMP_exec_CR_ses(OSSL_CMP_CTX *ctx);
  X509 *OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx);
@@ -28,7 +31,8 @@ OSSL_CMP_certConf_cb
  #define OSSL_CMP_CR
  #define OSSL_CMP_P10CR
  #define OSSL_CMP_KUR
- int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type, int *checkAfter);
+ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
+                          const OSSL_CRMF_MSG *crm, int *checkAfter);
  int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
                           const char **text);
  X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
@@ -43,8 +47,6 @@ All functions take a populated OSSL_CMP_CTX structure as their first argument.
 Usually the server name, port, and path ("CMP alias") need to be set, as well as
 credentials the client can use for authenticating itself to the client.
 In order to authenticate the server the client typically needs a trust store.
-For performing certificate enrollment requests the certificate template needs
-to be sufficiently filled in, giving at least the subject name and key.
 The functions return their respective main results directly, while there are
 also accessor functions for retrieving various results and status information
 from the B<ctx>. See L<OSSL_CMP_CTX_new(3)> etc. for details.
@@ -61,21 +63,30 @@ OSSL_CMP_exec_P10CR_ses() conveys a legacy PKCS#10 CSR requesting a certificate.
 
 OSSL_CMP_exec_KUR_ses() obtains an updated certificate.
 
-All these four types of certificate enrollment may be blocked by sleeping until the
-CAs or an intermedate PKI component can fully process and answer the request.
+These four types of certificate enrollment are implemented as macros
+calling OSSL_CMP_exec_certreq().
 
-OSSL_CMP_try_certreq() is an alternative to these four functions that is
-more uniform regarding the type of the certificate request to use and
+OSSL_CMP_exec_certreq() performs a certificate request of the type specified
+by the B<req_type> parameter, which may be IR, CR, P10CR, or KUR.
+For IR, CR, and KUR, the certificate template to be used in the request
+may be supplied via the B<crm> parameter pointing to a CRMF structure.
+Typically B<crm> is NULL, then the template ingredients are taken from B<ctx>
+and need to be filled in using L<OSSL_CMP_CTX_set1_subjectName(3)>,
+L<OSSL_CMP_CTX_set0_newPkey(3)>, L<OSSL_CMP_CTX_set1_oldCert(3)>, etc.
+For P10CR, L<OSSL_CMP_CTX_set1_p10CSR(3)> needs to be used instead.
+The enrollment session may be blocked by sleeping until the addressed
+CA (or an intermedate PKI component) can fully process and answer the request.
+
+OSSL_CMP_try_certreq() is an alternative to the above functions that is
 more flexible regarding what to do after receiving a checkAfter value.
 When called for the first time (with no certificate request in progress for
 the given B<ctx>) it starts a new transaction by sending a certificate request
-of the given type,
-which may be IR, CR, P10CR, or KUR as specified by the B<req_type> parameter.
+constructed as stated above using the B<req_type> and optional B<crm> parameter.
 Otherwise (when according to B<ctx> a 'waiting' status has been received before)
 it continues polling for the pending request
 unless the B<req_type> argument is < 0, which aborts the request.
 If the requested certificate is available the function returns 1 and the
-caller can use B<OSSL_CMP_CTX_get0_newCert()> to retrieve the new certificate.
+caller can use L<OSSL_CMP_CTX_get0_newCert(3)> to retrieve the new certificate.
 If no error occurred but no certificate is available yet then
 OSSL_CMP_try_certreq() remembers in the CMP context that it should be retried
 and returns -1 after assigning the received checkAfter value
@@ -121,17 +132,17 @@ So far the CMP client implementation is limited to one request per CMP message
 
 =head1 RETURN VALUES
 
-OSSL_CMP_exec_IR_ses(), OSSL_CMP_exec_CR_ses(),
+OSSL_CMP_exec_certreq(), OSSL_CMP_exec_IR_ses(), OSSL_CMP_exec_CR_ses(),
 OSSL_CMP_exec_P10CR_ses(), and OSSL_CMP_exec_KUR_ses() return a
 pointer to the newly obtained X509 certificate on success, B<NULL> on error.
 This pointer will be freed implicitly by OSSL_CMP_CTX_free() or
 CSSL_CMP_CTX_reinit().
 
 OSSL_CMP_try_certreq() returns 1 if the requested certificate is available
-via B<OSSL_CMP_CTX_get0_newCert()>
+via L<OSSL_CMP_CTX_get0_newCert(3)>
 or on successfully aborting a pending certificate request, 0 on error, and -1
 in case a 'waiting' status has been received and checkAfter value is available.
-In the latter case B<OSSL_CMP_CTX_get0_newCert()> yields NULL
+In the latter case L<OSSL_CMP_CTX_get0_newCert(3)> yields NULL
 and the output parameter B<checkAfter> has been used to
 assign the received value unless B<checkAfter> is NULL.
 
@@ -154,7 +165,11 @@ functions.
 
 =head1 SEE ALSO
 
-L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_MSG_http_perform(3)>
+L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_CTX_free(3)>,
+L<OSSL_CMP_CTX_set1_subjectName(3)>, L<OSSL_CMP_CTX_set0_newPkey(3)>,
+L<OSSL_CMP_CTX_set1_p10CSR(3)>, L<OSSL_CMP_CTX_set1_oldCert(3)>,
+L<OSSL_CMP_CTX_get0_newCert(3)>, L<OSSL_CMP_CTX_push0_genm_ITAV(3)>,
+L<OSSL_CMP_MSG_http_perform(3)>
 
 =head1 HISTORY
 

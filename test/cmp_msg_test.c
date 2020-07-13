@@ -84,9 +84,9 @@ static X509 *cert = NULL;
  */
 static int execute_certreq_create_test(CMP_MSG_TEST_FIXTURE *fixture)
 {
-    EXECUTE_MSG_CREATION_TEST(ossl_cmp_certReq_new(fixture->cmp_ctx,
+    EXECUTE_MSG_CREATION_TEST(ossl_cmp_certreq_new(fixture->cmp_ctx,
                                                    fixture->bodytype,
-                                                   fixture->err_code));
+                                                   NULL));
 }
 
 static int execute_errormsg_create_test(CMP_MSG_TEST_FIXTURE *fixture)
@@ -218,7 +218,7 @@ static int test_cmp_create_p10cr(void)
     X509_REQ *p10cr = NULL;
 
     fixture->bodytype = OSSL_CMP_PKIBODY_P10CR;
-    fixture->err_code = CMP_R_ERROR_CREATING_P10CR;
+    fixture->err_code = CMP_R_ERROR_CREATING_CERTREQ;
     fixture->expected = 1;
     if (!TEST_ptr(p10cr = load_csr(pkcs10_f))
             || !TEST_true(set1_newPkey(ctx, newkey))
@@ -235,7 +235,7 @@ static int test_cmp_create_p10cr_null(void)
 {
     SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
     fixture->bodytype = OSSL_CMP_PKIBODY_P10CR;
-    fixture->err_code = CMP_R_ERROR_CREATING_P10CR;
+    fixture->err_code = CMP_R_ERROR_CREATING_CERTREQ;
     fixture->expected = 0;
     if (!TEST_true(set1_newPkey(fixture->cmp_ctx, newkey))) {
         tear_down(fixture);

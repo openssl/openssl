@@ -51,13 +51,10 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_ERROR_CALCULATING_PROTECTION               115
 #  define CMP_R_ERROR_CREATING_CERTCONF                    116
 #  define CMP_R_ERROR_CREATING_CERTREP                     117
-#  define CMP_R_ERROR_CREATING_CR                          163
+#  define CMP_R_ERROR_CREATING_CERTREQ                     163
 #  define CMP_R_ERROR_CREATING_ERROR                       118
 #  define CMP_R_ERROR_CREATING_GENM                        119
 #  define CMP_R_ERROR_CREATING_GENP                        120
-#  define CMP_R_ERROR_CREATING_IR                          164
-#  define CMP_R_ERROR_CREATING_KUR                         165
-#  define CMP_R_ERROR_CREATING_P10CR                       121
 #  define CMP_R_ERROR_CREATING_PKICONF                     122
 #  define CMP_R_ERROR_CREATING_POLLREP                     123
 #  define CMP_R_ERROR_CREATING_POLLREQ                     124
@@ -77,6 +74,7 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_INVALID_OPTION                             174
 #  define CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION  130
 #  define CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE         142
+#  define CMP_R_MISSING_P10CSR                             121
 #  define CMP_R_MISSING_PRIVATE_KEY                        131
 #  define CMP_R_MISSING_PROTECTION                         143
 #  define CMP_R_MISSING_REFERENCE_CERT                     168

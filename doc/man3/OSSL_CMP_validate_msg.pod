@@ -61,7 +61,7 @@ return 1 on success, 0 on error or validation failed.
 
 =head1 SEE ALSO
 
-L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_exec_IR_ses(3)>
+L<OSSL_CMP_CTX_new(3)>, L<OSSL_CMP_exec_certreq(3)>
 
 =head1 HISTORY
 

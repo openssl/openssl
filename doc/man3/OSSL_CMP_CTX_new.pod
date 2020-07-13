@@ -682,8 +682,9 @@ the id-it-signKeyPairTypes OID and prints info on the General Response contents:
 
 =head1 SEE ALSO
 
-L<OSSL_CMP_exec_IR_ses(3)>, L<OSSL_CMP_exec_KUR_ses(3)>,
-L<OSSL_CMP_exec_GENM_ses(3)>
+L<OSSL_CMP_exec_IR_ses(3)>, L<OSSL_CMP_exec_CR_ses(3)>,
+L<OSSL_CMP_exec_KUR_ses(3)>, L<OSSL_CMP_exec_GENM_ses(3)>,
+L<OSSL_CMP_exec_certreq(3)>
 
 =head1 HISTORY
 

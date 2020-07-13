@@ -28,8 +28,8 @@ typedef struct test_fixture {
     const char *test_case_name;
     OSSL_CMP_CTX *cmp_ctx;
     OSSL_CMP_SRV_CTX *srv_ctx;
+    int req_type;
     int expected;
-    X509 *(*exec_cert_ses_cb) (OSSL_CMP_CTX *);
     STACK_OF(X509) *caPubs;
 } CMP_SES_TEST_FIXTURE;
 
@@ -81,7 +81,7 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
             || !OSSL_CMP_CTX_set1_srvCert(ctx, server_cert)
             || !OSSL_CMP_CTX_set1_referenceValue(ctx, ref, sizeof(ref)))
         goto err;
-    fixture->exec_cert_ses_cb = NULL;
+    fixture->req_type = -1;
     return fixture;
 
  err:
@@ -107,13 +107,13 @@ static int execute_exec_GENM_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 
 static int execute_exec_certrequest_ses_test(CMP_SES_TEST_FIXTURE *fixture)
 {
-    X509 *res;
+    X509 *res = OSSL_CMP_exec_certreq(fixture->cmp_ctx,
+                                      fixture->req_type, NULL);
 
     if (fixture->expected == 0)
-        return TEST_ptr_null(fixture->exec_cert_ses_cb(fixture->cmp_ctx));
+        return TEST_ptr_null(res);
 
-    if (!TEST_ptr(res = fixture->exec_cert_ses_cb(fixture->cmp_ctx))
-            || !TEST_int_eq(X509_cmp(res, client_cert), 0))
+    if (!TEST_ptr(res) || !TEST_int_eq(X509_cmp(res, client_cert), 0))
         return 0;
     /* TODO: check that cerfConf has been exchanged unless implicitConfirm */
     if (fixture->caPubs != NULL) {
@@ -150,7 +150,7 @@ static int test_exec_RR_ses_receive_error(void)
 static int test_exec_IR_ses(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->exec_cert_ses_cb = OSSL_CMP_exec_IR_ses;
+    fixture->req_type = OSSL_CMP_IR;
     fixture->expected = 1;
     fixture->caPubs = sk_X509_new_null();
     sk_X509_push(fixture->caPubs, server_cert);
@@ -164,7 +164,7 @@ static const int checkAfter = 1;
 static int test_exec_IR_ses_poll(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->exec_cert_ses_cb = OSSL_CMP_exec_IR_ses;
+    fixture->req_type = OSSL_CMP_IR;
     fixture->expected = 1;
     ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, 2);
     ossl_cmp_mock_srv_set_checkAfterTime(fixture->srv_ctx, checkAfter);
@@ -179,7 +179,7 @@ static int test_exec_IR_ses_poll_timeout(void)
     const int tout = pollCount * checkAfter;
 
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->exec_cert_ses_cb = OSSL_CMP_exec_IR_ses;
+    fixture->req_type = OSSL_CMP_IR;
     fixture->expected = 0;
     ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, pollCount + 1);
     ossl_cmp_mock_srv_set_checkAfterTime(fixture->srv_ctx, checkAfter);
@@ -192,7 +192,7 @@ static int test_exec_IR_ses_poll_timeout(void)
 static int test_exec_CR_ses(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->exec_cert_ses_cb = OSSL_CMP_exec_CR_ses;
+    fixture->req_type = OSSL_CMP_CR;
     fixture->expected = 1;
     EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
     return result;
@@ -201,7 +201,7 @@ static int test_exec_CR_ses(void)
 static int test_exec_CR_ses_implicit_confirm(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->exec_cert_ses_cb = OSSL_CMP_exec_CR_ses;
+    fixture->req_type = OSSL_CMP_CR;
     fixture->expected = 1;
     OSSL_CMP_CTX_set_option(fixture->cmp_ctx,
                             OSSL_CMP_OPT_IMPLICIT_CONFIRM, 1);
@@ -213,7 +213,7 @@ static int test_exec_CR_ses_implicit_confirm(void)
 static int test_exec_KUR_ses(void)
 {
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->exec_cert_ses_cb = OSSL_CMP_exec_KUR_ses;
+    fixture->req_type = OSSL_CMP_KUR;
     fixture->expected = 1;
     EXECUTE_TEST(execute_exec_certrequest_ses_test, tear_down);
     return result;
@@ -224,7 +224,7 @@ static int test_exec_P10CR_ses(void)
     X509_REQ *req = NULL;
 
     SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
-    fixture->exec_cert_ses_cb = OSSL_CMP_exec_P10CR_ses;
+    fixture->req_type = OSSL_CMP_P10CR;
     fixture->expected = 1;
     if (!TEST_ptr(req = load_csr(pkcs10_f))
             || !TEST_true(OSSL_CMP_CTX_set1_p10CSR(fixture->cmp_ctx, req))) {
@@ -245,13 +245,14 @@ static int execute_try_certreq_poll_test(CMP_SES_TEST_FIXTURE *fixture)
 
     ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, 3);
     ossl_cmp_mock_srv_set_checkAfterTime(fixture->srv_ctx, CHECK_AFTER);
-    return TEST_int_eq(-1, OSSL_CMP_try_certreq(ctx, TYPE, &check_after))
+    return TEST_int_eq(-1, OSSL_CMP_try_certreq(ctx, TYPE, NULL, &check_after))
         && check_after == CHECK_AFTER
         && TEST_ptr_eq(OSSL_CMP_CTX_get0_newCert(ctx), NULL)
-        && TEST_int_eq(-1, OSSL_CMP_try_certreq(ctx, TYPE, &check_after))
+        && TEST_int_eq(-1, OSSL_CMP_try_certreq(ctx, TYPE, NULL, &check_after))
         && check_after == CHECK_AFTER
         && TEST_ptr_eq(OSSL_CMP_CTX_get0_newCert(ctx), NULL)
-        && TEST_int_eq(fixture->expected, OSSL_CMP_try_certreq(ctx, TYPE, NULL))
+        && TEST_int_eq(fixture->expected,
+                       OSSL_CMP_try_certreq(ctx, TYPE, NULL, NULL))
         && TEST_int_eq(0,
                        X509_cmp(OSSL_CMP_CTX_get0_newCert(ctx), client_cert));
 }
@@ -273,10 +274,11 @@ static int execute_try_certreq_poll_abort_test(CMP_SES_TEST_FIXTURE *fixture)
 
     ossl_cmp_mock_srv_set_pollCount(fixture->srv_ctx, 3);
     ossl_cmp_mock_srv_set_checkAfterTime(fixture->srv_ctx, CHECK_AFTER);
-    return TEST_int_eq(-1, OSSL_CMP_try_certreq(ctx, TYPE, &check_after))
+    return TEST_int_eq(-1, OSSL_CMP_try_certreq(ctx, TYPE, NULL, &check_after))
         && check_after == CHECK_AFTER
         && TEST_ptr_eq(OSSL_CMP_CTX_get0_newCert(ctx), NULL)
-        && TEST_int_eq(fixture->expected, OSSL_CMP_try_certreq(ctx, -1, NULL))
+        && TEST_int_eq(fixture->expected,
+                       OSSL_CMP_try_certreq(ctx, -1, NULL, NULL))
         && TEST_ptr_eq(OSSL_CMP_CTX_get0_newCert(fixture->cmp_ctx), NULL);
 }
 

@@ -2098,13 +2098,10 @@ CMP_R_ENCOUNTERED_WAITING:162:encountered waiting
 CMP_R_ERROR_CALCULATING_PROTECTION:115:error calculating protection
 CMP_R_ERROR_CREATING_CERTCONF:116:error creating certconf
 CMP_R_ERROR_CREATING_CERTREP:117:error creating certrep
-CMP_R_ERROR_CREATING_CR:163:error creating cr
+CMP_R_ERROR_CREATING_CERTREQ:163:error creating certreq
 CMP_R_ERROR_CREATING_ERROR:118:error creating error
 CMP_R_ERROR_CREATING_GENM:119:error creating genm
 CMP_R_ERROR_CREATING_GENP:120:error creating genp
-CMP_R_ERROR_CREATING_IR:164:error creating ir
-CMP_R_ERROR_CREATING_KUR:165:error creating kur
-CMP_R_ERROR_CREATING_P10CR:121:error creating p10cr
 CMP_R_ERROR_CREATING_PKICONF:122:error creating pkiconf
 CMP_R_ERROR_CREATING_POLLREP:123:error creating pollrep
 CMP_R_ERROR_CREATING_POLLREQ:124:error creating pollreq
@@ -2125,6 +2122,7 @@ CMP_R_INVALID_OPTION:174:invalid option
 CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION:130:\
 	missing key input for creating protection
 CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE:142:missing key usage digitalsignature
+CMP_R_MISSING_P10CSR:121:missing p10csr
 CMP_R_MISSING_PRIVATE_KEY:131:missing private key
 CMP_R_MISSING_PROTECTION:143:missing protection
 CMP_R_MISSING_REFERENCE_CERT:168:missing reference cert

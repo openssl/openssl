@@ -4498,6 +4498,7 @@ OSSL_CRMF_ENCRYPTEDVALUE_new            ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_ENCRYPTEDVALUE_it             ?	3_0_0	EXIST::FUNCTION:CRMF
 d2i_OSSL_CRMF_MSG                       ?	3_0_0	EXIST::FUNCTION:CRMF
 i2d_OSSL_CRMF_MSG                       ?	3_0_0	EXIST::FUNCTION:CRMF
+OSSL_CRMF_MSG_dup                       ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_free                      ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_new                       ?	3_0_0	EXIST::FUNCTION:CRMF
 OSSL_CRMF_MSG_it                        ?	3_0_0	EXIST::FUNCTION:CRMF
@@ -4985,10 +4986,7 @@ OSSL_CMP_SRV_CTX_set_send_unprotected_errors ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_accept_unprotected ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_accept_raverified  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_SRV_CTX_set_grant_implicit_confirm ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_exec_IR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_exec_CR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_exec_P10CR_ses                 ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_exec_KUR_ses                   ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_exec_certreq                   ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_try_certreq                    ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_certConf_cb                    ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_exec_RR_ses                    ?	3_0_0	EXIST::FUNCTION:CMP
