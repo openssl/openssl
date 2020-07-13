@@ -1761,10 +1761,11 @@ static int internal_verify(X509_STORE_CTX *ctx)
          * xi is the supposed issuer cert containing the public key to use
          * Initially xs == xi if the last cert in the chain is self-issued.
          *
-         * Skip signature check for self-issued certificates unless explicitly
+         * Skip signature check for self-signed certificates unless explicitly
          * asked for because it does not add any security and just wastes time.
          */
-        if (xs != xi || (ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)) {
+        if (xs != xi || ((ctx->param->flags & X509_V_FLAG_CHECK_SS_SIGNATURE)
+                         && (xi->ex_flags & EXFLAG_SS) != 0)) {
             EVP_PKEY *pkey;
             /*
              * If the issuer's public key is not available or its key usage
@@ -1772,34 +1773,32 @@ static int internal_verify(X509_STORE_CTX *ctx)
              * cert and its depth (rather than n, the depth of the subject).
              */
             int issuer_depth = n + (xs == xi ? 0 : 1);
-            int ret = x509_signing_allowed(xi, xs);
-
             /*
+             * According to https://tools.ietf.org/html/rfc5280#section-6.1.4
+             * step (n) we must check any given key usage extension in a CA cert
+             * when preparing the verification of a certificate issued by it.
              * According to https://tools.ietf.org/html/rfc5280#section-4.2.1.3
-             * we must not verify the signature if key usage prohibits signing.
-             * In case this is for a self-issued cert that is last in the chain
-             * (i.e., xs == xi) we simply skip the signature verification even
-             * when X509_V_FLAG_CHECK_SS_SIGNATURE is set in ctx->param->flags.
+             * we must not verify a certifiate signature if the key usage of the
+             * CA certificate that issued the certificate prohibits signing.
+             * In case the 'issuing' certificate is the last in the chain and is
+             * not a CA certificate but a 'self-issued' end-entity cert (i.e.,
+             * xs == xi && !(xi->ex_flags & EXFLAG_CA)) RFC 5280 does not apply
+             * (see https://tools.ietf.org/html/rfc6818#section-2) and thus
+             * we are free to ignore any key usage restrictions on such certs.
              */
+            int ret = xs == xi && (xi->ex_flags & EXFLAG_CA) == 0
+                ? X509_V_OK : x509_signing_allowed(xi, xs);
 
-            if (ret != X509_V_OK
-                    && !verify_cb_cert(ctx, xi, issuer_depth, ret)) {
-                if (xs != xi)
-                    /*
-                     * Fail according to step (n) in
-                     * https://tools.ietf.org/html/rfc5280#section-6.1.4
-                     */
-                    return 0;
-            } else {
+            if (ret != X509_V_OK && !verify_cb_cert(ctx, xi, issuer_depth, ret))
+                return 0;
+            if ((pkey = X509_get0_pubkey(xi)) == NULL) {
                 ret = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
-                if ((pkey = X509_get0_pubkey(xi)) == NULL) {
-                    if (!verify_cb_cert(ctx, xi, issuer_depth, ret))
-                        return 0;
-                } else if (X509_verify(xs, pkey) <= 0) {
-                    ret = X509_V_ERR_CERT_SIGNATURE_FAILURE;
-                    if (!verify_cb_cert(ctx, xs, n, ret))
-                        return 0;
-                }
+                if (!verify_cb_cert(ctx, xi, issuer_depth, ret))
+                    return 0;
+            } else if (X509_verify(xs, pkey) <= 0) {
+                ret = X509_V_ERR_CERT_SIGNATURE_FAILURE;
+                if (!verify_cb_cert(ctx, xs, n, ret))
+                    return 0;
             }
         }
 

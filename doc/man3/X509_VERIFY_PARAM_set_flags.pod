@@ -264,9 +264,10 @@ they are enabled.
 If B<X509_V_FLAG_USE_DELTAS> is set delta CRLs (if present) are used to
 determine certificate status. If not set deltas are ignored.
 
-B<X509_V_FLAG_CHECK_SS_SIGNATURE> requests checking the self-signature of
-a self-issued root CA or end entity certificate at the end of certificate
-chains (unless key usage restrictions in the certificate prohibit this).
+B<X509_V_FLAG_CHECK_SS_SIGNATURE> requests checking the signature of
+the last certificate in a chain if the certificate is supposedly self-signed.
+This is prohibited and will result in an error if it is a non-conforming CA
+certificate with key usage restrictions not including the keyCertSign bit.
 By default this check is disabled because it doesn't
 add any additional security but in some cases applications might want to
 check the signature anyway. A side effect of not checking the self-signature
