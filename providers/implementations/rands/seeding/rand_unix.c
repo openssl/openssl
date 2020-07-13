@@ -38,7 +38,7 @@
 #endif
 
 /*
- * Provide a compile time error if the FIPS module is being build and none
+ * Provide a compile time error if the FIPS module is being built and none
  * of the supported entropy sources are available.
  */
 #if defined(FIPS_MODULE)
@@ -49,10 +49,22 @@
 #  error FIPS mode without supported randomness source
 # endif
 /* Remove the sources that are not permitted in FIPS */
-# undef OPENSSL_RAND_SEED_LIBRANDOM
-# undef OPENSSL_RAND_SEED_RDTSC
-# undef OPENSSL_RAND_SEED_EGD
-# undef OPENSSL_RAND_SEED_NONE
+# ifdef OPENSSL_RAND_SEED_LIBRANDOM
+#  undef OPENSSL_RAND_SEED_LIBRANDOM
+#  warning FIPS mode does not support the _librandom_ randomness source
+# endif
+# ifdef OPENSSL_RAND_SEED_RDTSC
+#  undef OPENSSL_RAND_SEED_RDTSC
+#  warning FIPS mode does not support the _RDTSC_ randomness source
+# endif
+# ifdef OPENSSL_RAND_SEED_EGD
+#  undef OPENSSL_RAND_SEED_EGD
+#  warning FIPS mode does not support the _EGD_ randomness source
+# endif
+# ifdef OPENSSL_RAND_SEED_NONE
+#  undef OPENSSL_RAND_SEED_NONE
+#  warning FIPS mode does not support the _none_ randomness source
+# endif
 #endif
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
@@ -715,7 +727,7 @@ size_t prov_pool_acquire_entropy(RAND_POOL *pool)
         return entropy_available;
 #   endif
 
-#   if defined(OPENSSL_RAND_SEED_EGD) && !defined(FIPS_MODULE)
+#   if defined(OPENSSL_RAND_SEED_EGD)
     {
         static const char *paths[] = { DEVRANDOM_EGD, NULL };
         size_t bytes_needed;
