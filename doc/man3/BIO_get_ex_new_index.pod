@@ -85,6 +85,11 @@ TYPE_get_ex_data() returns the application data or NULL if an error occurred.
 
 L<CRYPTO_get_ex_new_index(3)>.
 
+=head1 HISTORY
+
+The ENGINE_get_ex_new_index(), ENGINE_set_ex_data() and ENGINE_get_ex_data()
+functions were deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
