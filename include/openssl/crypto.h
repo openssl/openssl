@@ -434,7 +434,6 @@ int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
     | OPENSSL_INIT_ENGINE_CRYPTODEV | OPENSSL_INIT_ENGINE_CAPI | \
     OPENSSL_INIT_ENGINE_PADLOCK)
 
-
 /* Library initialisation functions */
 void OPENSSL_cleanup(void);
 int OPENSSL_init_crypto(uint64_t opts, const OPENSSL_INIT_SETTINGS *settings);
