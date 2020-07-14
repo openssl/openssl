@@ -4061,7 +4061,7 @@ static int aes_siv_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 
     /* klen is the length of the underlying cipher, not the input key,
        which should be twice as long */
-    return CRYPTO_siv128_init(sctx, key, klen, cbc, ctr);
+    return CRYPTO_siv128_init(sctx, key, klen, cbc, ctr, NULL, NULL);
 }
 
 #define aesni_siv_cipher aes_siv_cipher
