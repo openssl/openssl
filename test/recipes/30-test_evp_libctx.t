@@ -27,7 +27,7 @@ my $infile = bldtop_file('providers', platform->dso('fips'));
 my @test_args = ( );
 
 plan tests =>
-    ($no_fips ? 0 : 1)          # FIPS install test
+    ($no_fips ? 0 : 2)          # FIPS install test
     + 1;
 
 unless ($no_fips) {
@@ -40,6 +40,9 @@ unless ($no_fips) {
                '-provider_name', 'fips', '-mac_name', 'HMAC',
                '-section_name', 'fips_sect'])),
        "fipsinstall");
+    ok(run(test(["evp_libctx_test", @test_args])), "running fips evp_libctx_test");
 }
 
-ok(run(test(["evp_libctx_test", @test_args])), "running evp_libctx_test");
+ok(run(test(["evp_libctx_test",
+             "-config", srctop_file("test","default-and-legacy.cnf"),])),
+   "running default-and-legacy evp_libctx_test");
