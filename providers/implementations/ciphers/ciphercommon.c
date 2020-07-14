@@ -149,8 +149,8 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                                         const unsigned char *iv, size_t ivlen,
                                         int enc)
 {
-    ctx->enc = enc ? 1 : 0;
     ctx->num = 0;
+    ctx->enc = enc ? 1 : 0;
 
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
         if (!cipher_generic_initiv(ctx, iv, ivlen))
