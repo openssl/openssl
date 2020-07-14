@@ -8,9 +8,7 @@
  */
 
 /* We need to use some engine deprecated APIs */
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-# define OPENSSL_SUPPRESS_DEPRECATED
-#endif
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "e_os.h"               /* for strncasecmp */
 #include "internal/cryptlib.h"
