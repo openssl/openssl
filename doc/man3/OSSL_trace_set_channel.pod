@@ -136,10 +136,6 @@ Traces the TLS/SSL protocol.
 
 Traces the ciphers used by the TLS/SSL protocol.
 
-=item C<OSSL_TRACE_CATEGORY_ENGINE_CONF>
-
-Traces the ENGINE configuration.
-
 =item C<OSSL_TRACE_CATEGORY_ENGINE_TABLE>
 
 Traces the ENGINE algorithm table selection.
