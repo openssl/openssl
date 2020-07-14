@@ -44,6 +44,10 @@ None of the functions return a value.
 
 L<config(5)>, L<OPENSSL_config(3)>
 
+=head1 HISTORY
+
+ENGINE_add_conf_module() was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2004-2018 The OpenSSL Project Authors. All Rights Reserved.
