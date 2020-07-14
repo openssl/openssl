@@ -34,7 +34,7 @@ DEFINE_STACK_OF_CSTRING()
 static OPENSSL_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
-STACK_OF(OPENSSL_CSTRING) *cipher_names = NULL;
+static STACK_OF(OPENSSL_CSTRING) *cipher_names = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
