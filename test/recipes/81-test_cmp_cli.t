@@ -219,7 +219,7 @@ indir data_dir() => sub {
         if ($server_name eq "Mock") {
             indir "Mock" => sub {
                 $pid = start_mock_server("");
-                die "Cannot start CMP mock server" unless $pid;
+                die "Cannot start or find the started CMP mock server" unless $pid;
             }
         }
         foreach my $aspect (@all_aspects) {
@@ -294,7 +294,7 @@ sub load_tests {
 }
 
 sub mock_server_pid {
-    return `lsof -iTCP:$server_port -sTCP:LISTEN | tail -n 1 | awk '{ print \$2 }'`;
+    return `lsof -iTCP:$server_port` =~ m/\n\S+\s+(\d+)\s+[^\n]+LISTEN/s ? $1 : 0;
 }
 
 sub start_mock_server {
