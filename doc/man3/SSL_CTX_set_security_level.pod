@@ -114,12 +114,6 @@ I<Documentation to be provided.>
 
 =head1 NOTES
 
-B<WARNING> at this time setting the security level higher than 1 for
-general internet use is likely to cause B<considerable> interoperability
-issues and is not recommended. This is because the B<SHA1> algorithm
-is very widely used in certificates and will be rejected at levels
-higher than 1 because it only offers 80 bits of security.
-
 The default security level can be configured when OpenSSL is compiled by
 setting B<-DOPENSSL_TLS_SECURITY_LEVEL=level>. If not set then 1 is used.
 
