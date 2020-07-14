@@ -163,8 +163,11 @@ dup_func() should return 0 for failure and 1 for success.
 =head1 HISTORY
 
 CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
+
 The signature of the dup_func() callback was changed in OpenSSL 3.0 to use the
 type B<void **> for B<from_d>.  Previously this parameter was of type B<void *>.
+
+Support for ENGINE "exdata" was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
