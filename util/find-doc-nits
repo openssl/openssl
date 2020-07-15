@@ -313,6 +313,8 @@ sub name_synopsis {
     my $syn = $1;
     # Remove all non-code lines
     $syn =~ s/^(?:\s*?|\S.*?)$//msg;
+    # Remove all comments
+    $syn =~ s/\/\*.*?\*\///msg;
     while ( $syn ) {
         # "env" lines end at a newline.
         # Preprocessor lines start with a # and end at a newline.
