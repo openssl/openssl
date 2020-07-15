@@ -311,8 +311,20 @@ sub name_synopsis {
     # Find all functions in SYNOPSIS
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
     my $syn = $1;
-    foreach my $line ( split /\n+/, $syn ) {
-        next unless $line =~ /^\s/;
+    # Remove all non-code lines
+    $syn =~ s/^(?:\s*?|\S.*?)$//msg;
+    while ( $syn ) {
+        # "env" lines end at a newline.
+        # Preprocessor lines start with a # and end at a newline.
+        # Other lines end with a semicolon, and may cover more than
+        # one physical line.
+        if ( $syn !~ /^ \s*(env .*?|#.*?|.*?;)\s*$/ms ) {
+            err($id, "Can't parse rest of synopsis:\n$syn\n(declarations not ending with a semicolon (;)?)");
+            last;
+        }
+        my $line = $1;
+        $syn = $';
+
         my $sym;
         my $is_prototype = 1;
         $line =~ s/STACK_OF\([^)]+\)/int/g;
