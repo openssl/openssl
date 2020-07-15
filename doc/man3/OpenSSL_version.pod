@@ -17,8 +17,11 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
  #define OPENSSL_VERSION_MAJOR  x
  #define OPENSSL_VERSION_MINOR  y
  #define OPENSSL_VERSION_PATCH  z
+
+ /* The definitions here are typical release values */
  #define OPENSSL_VERSION_PRE_RELEASE ""
  #define OPENSSL_VERSION_BUILD_METADATA ""
+
  #define OPENSSL_VERSION_TEXT "OpenSSL x.y.z xx XXX xxxx"
 
  #include <openssl/crypto.h>
@@ -28,13 +31,17 @@ OPENSSL_VERSION_NUMBER, OpenSSL_version_num, OPENSSL_info
  unsigned int OPENSSL_version_patch(void);
  const char *OPENSSL_version_pre_release(void);
  const char *OPENSSL_version_build_metadata(void);
+
  const char *OpenSSL_version(int t);
+
  const char *OPENSSL_info(int t);
 
 Deprecated:
 
+ /* from openssl/opensslv.h */
  #define OPENSSL_VERSION_NUMBER 0xnnnnnnnnnL
 
+ /* from openssl/crypto.h */
  unsigned long OpenSSL_version_num();
 
 =head1 DESCRIPTION
