@@ -62,7 +62,6 @@ static void *siv_dupctx(void *vctx)
     if (!in->hw->dupctx(in, ret)) {
         OPENSSL_free(ret);
         ret = NULL;
-        return 0;
     }
     return ret;
 }
