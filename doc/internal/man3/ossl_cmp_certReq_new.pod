@@ -61,13 +61,13 @@ ossl_cmp_error_new
                                      const char *text);
  OSSL_CMP_MSG *ossl_cmp_pkiconf_new(OSSL_CMP_CTX *ctx);
  OSSL_CMP_MSG *ossl_cmp_pollReq_new(OSSL_CMP_CTX *ctx, int crid);
- OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid, int poll_after)
+ OSSL_CMP_MSG *ossl_cmp_pollRep_new(OSSL_CMP_CTX *ctx, int crid, int poll_after);
  OSSL_CMP_MSG *ossl_cmp_genm_new(OSSL_CMP_CTX *ctx);
  OSSL_CMP_MSG *ossl_cmp_genp_new(OSSL_CMP_CTX *ctx);
  OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, OSSL_CMP_PKISI *si,
                                   int errorCode,
                                   OSSL_CMP_PKIFREETEXT *errorDetails,
-                                  int unprotected)
+                                  int unprotected);
 
 =head1 DESCRIPTION
 

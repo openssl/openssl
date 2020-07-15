@@ -17,7 +17,7 @@ L<openssl_user_macros(7)>:
  void OpenSSL_add_all_ciphers(void);
  void OpenSSL_add_all_digests(void);
 
- void EVP_cleanup(void)
+ void EVP_cleanup(void);
 
 =head1 DESCRIPTION
 

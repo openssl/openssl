@@ -9,7 +9,7 @@ EVP_desx_cbc
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_desx_cbc(void)
+ const EVP_CIPHER *EVP_desx_cbc(void);
 
 =head1 DESCRIPTION
 

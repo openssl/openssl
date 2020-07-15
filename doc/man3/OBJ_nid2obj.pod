@@ -39,7 +39,7 @@ Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
- void OBJ_cleanup(void)
+ void OBJ_cleanup(void);
 
 =head1 DESCRIPTION
 

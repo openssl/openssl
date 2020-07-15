@@ -13,11 +13,11 @@ EVP_rc5_32_12_16_ofb
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_rc5_32_12_16_cbc(void)
- const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void)
- const EVP_CIPHER *EVP_rc5_32_12_16_cfb64(void)
- const EVP_CIPHER *EVP_rc5_32_12_16_ecb(void)
- const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void)
+ const EVP_CIPHER *EVP_rc5_32_12_16_cbc(void);
+ const EVP_CIPHER *EVP_rc5_32_12_16_cfb(void);
+ const EVP_CIPHER *EVP_rc5_32_12_16_cfb64(void);
+ const EVP_CIPHER *EVP_rc5_32_12_16_ecb(void);
+ const EVP_CIPHER *EVP_rc5_32_12_16_ofb(void);
 
 =head1 DESCRIPTION
 
@@ -79,4 +79,3 @@ in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.
 
 =cut
-

@@ -13,11 +13,11 @@ EVP_seed_ofb
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_seed_cbc(void)
- const EVP_CIPHER *EVP_seed_cfb(void)
- const EVP_CIPHER *EVP_seed_cfb128(void)
- const EVP_CIPHER *EVP_seed_ecb(void)
- const EVP_CIPHER *EVP_seed_ofb(void)
+ const EVP_CIPHER *EVP_seed_cbc(void);
+ const EVP_CIPHER *EVP_seed_cfb(void);
+ const EVP_CIPHER *EVP_seed_cfb128(void);
+ const EVP_CIPHER *EVP_seed_ecb(void);
+ const EVP_CIPHER *EVP_seed_ofb(void);
 
 =head1 DESCRIPTION
 
@@ -59,4 +59,3 @@ in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.
 
 =cut
-

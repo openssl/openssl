@@ -9,10 +9,10 @@ get and set verification parameters
 
  #include <openssl/ssl.h>
 
- X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx)
- X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl)
- int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm)
- int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm)
+ X509_VERIFY_PARAM *SSL_CTX_get0_param(SSL_CTX *ctx);
+ X509_VERIFY_PARAM *SSL_get0_param(SSL *ssl);
+ int SSL_CTX_set1_param(SSL_CTX *ctx, X509_VERIFY_PARAM *vpm);
+ int SSL_set1_param(SSL *ssl, X509_VERIFY_PARAM *vpm);
 
 =head1 DESCRIPTION
 

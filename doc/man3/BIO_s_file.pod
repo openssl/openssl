@@ -17,10 +17,10 @@ BIO_rw_filename - FILE bio
  BIO_set_fp(BIO *b, FILE *fp, int flags);
  BIO_get_fp(BIO *b, FILE **fpp);
 
- int BIO_read_filename(BIO *b, char *name)
- int BIO_write_filename(BIO *b, char *name)
- int BIO_append_filename(BIO *b, char *name)
- int BIO_rw_filename(BIO *b, char *name)
+ int BIO_read_filename(BIO *b, char *name);
+ int BIO_write_filename(BIO *b, char *name);
+ int BIO_append_filename(BIO *b, char *name);
+ int BIO_rw_filename(BIO *b, char *name);
 
 =head1 DESCRIPTION
 

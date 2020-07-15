@@ -15,13 +15,13 @@ EVP_rc2_64_cbc
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_rc2_cbc(void)
- const EVP_CIPHER *EVP_rc2_cfb(void)
- const EVP_CIPHER *EVP_rc2_cfb64(void)
- const EVP_CIPHER *EVP_rc2_ecb(void)
- const EVP_CIPHER *EVP_rc2_ofb(void)
- const EVP_CIPHER *EVP_rc2_40_cbc(void)
- const EVP_CIPHER *EVP_rc2_64_cbc(void)
+ const EVP_CIPHER *EVP_rc2_cbc(void);
+ const EVP_CIPHER *EVP_rc2_cfb(void);
+ const EVP_CIPHER *EVP_rc2_cfb64(void);
+ const EVP_CIPHER *EVP_rc2_ecb(void);
+ const EVP_CIPHER *EVP_rc2_ofb(void);
+ const EVP_CIPHER *EVP_rc2_40_cbc(void);
+ const EVP_CIPHER *EVP_rc2_64_cbc(void);
 
 =head1 DESCRIPTION
 
