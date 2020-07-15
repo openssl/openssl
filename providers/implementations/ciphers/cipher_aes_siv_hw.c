@@ -25,6 +25,9 @@ static int aes_siv_initkey(void *vctx, const unsigned char *key, size_t keylen)
     OPENSSL_CTX *libctx = ctx->libctx;
     const char *propq = NULL;
 
+    EVP_CIPHER_free(ctx->cbc);
+    EVP_CIPHER_free(ctx->ctr);
+
     switch (klen) {
     case 16:
         ctx->cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", propq);
