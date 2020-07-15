@@ -1214,9 +1214,9 @@ rsa3072_mqdss3148		1213
 picnicl1fs		1214
 p256_picnicl1fs		1215
 rsa3072_picnicl1fs		1216
-picnic2l1fs		1217
-p256_picnic2l1fs		1218
-rsa3072_picnic2l1fs		1219
+picnic3l1		1217
+p256_picnic3l1		1218
+rsa3072_picnic3l1		1219
 qteslapi		1220
 p256_qteslapi		1221
 rsa3072_qteslapi		1222

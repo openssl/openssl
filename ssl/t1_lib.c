@@ -935,9 +935,9 @@ static const uint16_t tls12_sigalgs[] = {
     TLSEXT_SIGALG_picnicl1fs,
     TLSEXT_SIGALG_p256_picnicl1fs,
     TLSEXT_SIGALG_rsa3072_picnicl1fs,
-    TLSEXT_SIGALG_picnic2l1fs,
-    TLSEXT_SIGALG_p256_picnic2l1fs,
-    TLSEXT_SIGALG_rsa3072_picnic2l1fs,
+    TLSEXT_SIGALG_picnic3l1,
+    TLSEXT_SIGALG_p256_picnic3l1,
+    TLSEXT_SIGALG_rsa3072_picnic3l1,
     TLSEXT_SIGALG_qteslapi,
     TLSEXT_SIGALG_p256_qteslapi,
     TLSEXT_SIGALG_rsa3072_qteslapi,
@@ -1147,14 +1147,14 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
     {"rsa3072_picnicl1fs", TLSEXT_SIGALG_rsa3072_picnicl1fs,
      NID_undef, -1, EVP_PKEY_RSA3072_PICNICL1FS, SSL_PKEY_RSA3072_PICNICL1FS,
      NID_undef, NID_undef},
-    {"picnic2l1fs", TLSEXT_SIGALG_picnic2l1fs,
-     NID_undef, -1, EVP_PKEY_PICNIC2L1FS, SSL_PKEY_PICNIC2L1FS,
+    {"picnic3l1", TLSEXT_SIGALG_picnic3l1,
+     NID_undef, -1, EVP_PKEY_PICNIC3L1, SSL_PKEY_PICNIC3L1,
      NID_undef, NID_undef},
-    {"p256_picnic2l1fs", TLSEXT_SIGALG_p256_picnic2l1fs,
-     NID_undef, -1, EVP_PKEY_P256_PICNIC2L1FS, SSL_PKEY_P256_PICNIC2L1FS,
+    {"p256_picnic3l1", TLSEXT_SIGALG_p256_picnic3l1,
+     NID_undef, -1, EVP_PKEY_P256_PICNIC3L1, SSL_PKEY_P256_PICNIC3L1,
      NID_undef, NID_undef},
-    {"rsa3072_picnic2l1fs", TLSEXT_SIGALG_rsa3072_picnic2l1fs,
-     NID_undef, -1, EVP_PKEY_RSA3072_PICNIC2L1FS, SSL_PKEY_RSA3072_PICNIC2L1FS,
+    {"rsa3072_picnic3l1", TLSEXT_SIGALG_rsa3072_picnic3l1,
+     NID_undef, -1, EVP_PKEY_RSA3072_PICNIC3L1, SSL_PKEY_RSA3072_PICNIC3L1,
      NID_undef, NID_undef},
     {"qteslapi", TLSEXT_SIGALG_qteslapi,
      NID_undef, -1, EVP_PKEY_QTESLAPI, SSL_PKEY_QTESLAPI,
@@ -1482,11 +1482,11 @@ static int sigalg_security_bits(const SIGALG_LOOKUP *lu)
             secbits = 128;
         else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_picnicl1fs)
             secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_picnic2l1fs)
+        else if(lu->sigalg == TLSEXT_SIGALG_picnic3l1)
             secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_p256_picnic2l1fs)
+        else if(lu->sigalg == TLSEXT_SIGALG_p256_picnic3l1)
             secbits = 128;
-        else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_picnic2l1fs)
+        else if(lu->sigalg == TLSEXT_SIGALG_rsa3072_picnic3l1)
             secbits = 128;
         else if(lu->sigalg == TLSEXT_SIGALG_qteslapi)
             secbits = 128;
@@ -2954,9 +2954,9 @@ void tls1_set_cert_validity(SSL *s)
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNICL1FS);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_PICNICL1FS);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_PICNICL1FS);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNIC2L1FS);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_PICNIC2L1FS);
-    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_PICNIC2L1FS);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_PICNIC3L1);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_PICNIC3L1);
+    tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_PICNIC3L1);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_QTESLAPI);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_P256_QTESLAPI);
     tls1_check_chain(s, NULL, NULL, NULL, SSL_PKEY_RSA3072_QTESLAPI);

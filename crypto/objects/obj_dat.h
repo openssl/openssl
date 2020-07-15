@@ -1098,9 +1098,9 @@ static const unsigned char so[8044] = {
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7874] OBJ_picnicl1fs */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x02,  /* [ 7885] OBJ_p256_picnicl1fs */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x03,  /* [ 7896] OBJ_rsa3072_picnicl1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x0B,  /* [ 7907] OBJ_picnic2l1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x0C,  /* [ 7918] OBJ_p256_picnic2l1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x0D,  /* [ 7929] OBJ_rsa3072_picnic2l1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x15,  /* [ 7907] OBJ_picnic3l1 */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x16,  /* [ 7918] OBJ_p256_picnic3l1 */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x17,  /* [ 7929] OBJ_rsa3072_picnic3l1 */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x0A,  /* [ 7940] OBJ_qteslapi */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x0B,  /* [ 7951] OBJ_p256_qteslapi */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x02,0x0C,  /* [ 7962] OBJ_rsa3072_qteslapi */
@@ -2335,9 +2335,9 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"picnicl1fs", "picnicl1fs", NID_picnicl1fs, 11, &so[7874]},
     {"p256_picnicl1fs", "p256_picnicl1fs", NID_p256_picnicl1fs, 11, &so[7885]},
     {"rsa3072_picnicl1fs", "rsa3072_picnicl1fs", NID_rsa3072_picnicl1fs, 11, &so[7896]},
-    {"picnic2l1fs", "picnic2l1fs", NID_picnic2l1fs, 11, &so[7907]},
-    {"p256_picnic2l1fs", "p256_picnic2l1fs", NID_p256_picnic2l1fs, 11, &so[7918]},
-    {"rsa3072_picnic2l1fs", "rsa3072_picnic2l1fs", NID_rsa3072_picnic2l1fs, 11, &so[7929]},
+    {"picnic3l1", "picnic3l1", NID_picnic3l1, 11, &so[7907]},
+    {"p256_picnic3l1", "p256_picnic3l1", NID_p256_picnic3l1, 11, &so[7918]},
+    {"rsa3072_picnic3l1", "rsa3072_picnic3l1", NID_rsa3072_picnic3l1, 11, &so[7929]},
     {"qteslapi", "qteslapi", NID_qteslapi, 11, &so[7940]},
     {"p256_qteslapi", "p256_qteslapi", NID_p256_qteslapi, 11, &so[7951]},
     {"rsa3072_qteslapi", "rsa3072_qteslapi", NID_rsa3072_qteslapi, 11, &so[7962]},
@@ -3360,7 +3360,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1266,    /* "p256_ntru_hps2048509" */
     1234,    /* "p256_oqs_kem_default" */
     1196,    /* "p256_oqs_sig_default" */
-    1218,    /* "p256_picnic2l1fs" */
+    1218,    /* "p256_picnic3l1" */
     1215,    /* "p256_picnicl1fs" */
     1221,    /* "p256_qteslapi" */
     1226,    /* "p256_rainbowIaclassic" */
@@ -3406,7 +3406,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      487,    /* "personalTitle" */
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
-    1217,    /* "picnic2l1fs" */
+    1217,    /* "picnic3l1" */
     1214,    /* "picnicl1fs" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
@@ -3473,7 +3473,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1208,    /* "rsa3072_falcon512" */
     1213,    /* "rsa3072_mqdss3148" */
     1197,    /* "rsa3072_oqs_sig_default" */
-    1219,    /* "rsa3072_picnic2l1fs" */
+    1219,    /* "rsa3072_picnic3l1" */
     1216,    /* "rsa3072_picnicl1fs" */
     1222,    /* "rsa3072_qteslapi" */
     1227,    /* "rsa3072_rainbowIaclassic" */
@@ -4641,7 +4641,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1266,    /* "p256_ntru_hps2048509" */
     1234,    /* "p256_oqs_kem_default" */
     1196,    /* "p256_oqs_sig_default" */
-    1218,    /* "p256_picnic2l1fs" */
+    1218,    /* "p256_picnic3l1" */
     1215,    /* "p256_picnicl1fs" */
     1221,    /* "p256_qteslapi" */
     1226,    /* "p256_rainbowIaclassic" */
@@ -4702,7 +4702,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      487,    /* "personalTitle" */
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
-    1217,    /* "picnic2l1fs" */
+    1217,    /* "picnic3l1" */
     1214,    /* "picnicl1fs" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
@@ -4778,7 +4778,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1208,    /* "rsa3072_falcon512" */
     1213,    /* "rsa3072_mqdss3148" */
     1197,    /* "rsa3072_oqs_sig_default" */
-    1219,    /* "rsa3072_picnic2l1fs" */
+    1219,    /* "rsa3072_picnic3l1" */
     1216,    /* "rsa3072_picnicl1fs" */
     1222,    /* "rsa3072_qteslapi" */
     1227,    /* "rsa3072_rainbowIaclassic" */
@@ -6139,9 +6139,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1214,    /* OBJ_picnicl1fs                   1 3 6 1 4 1 311 89 2 1 1 */
     1215,    /* OBJ_p256_picnicl1fs              1 3 6 1 4 1 311 89 2 1 2 */
     1216,    /* OBJ_rsa3072_picnicl1fs           1 3 6 1 4 1 311 89 2 1 3 */
-    1217,    /* OBJ_picnic2l1fs                  1 3 6 1 4 1 311 89 2 1 11 */
-    1218,    /* OBJ_p256_picnic2l1fs             1 3 6 1 4 1 311 89 2 1 12 */
-    1219,    /* OBJ_rsa3072_picnic2l1fs          1 3 6 1 4 1 311 89 2 1 13 */
+    1217,    /* OBJ_picnic3l1                    1 3 6 1 4 1 311 89 2 1 21 */
+    1218,    /* OBJ_p256_picnic3l1               1 3 6 1 4 1 311 89 2 1 22 */
+    1219,    /* OBJ_rsa3072_picnic3l1            1 3 6 1 4 1 311 89 2 1 23 */
     1220,    /* OBJ_qteslapi                     1 3 6 1 4 1 311 89 2 2 10 */
     1221,    /* OBJ_p256_qteslapi                1 3 6 1 4 1 311 89 2 2 11 */
     1222,    /* OBJ_rsa3072_qteslapi             1 3 6 1 4 1 311 89 2 2 12 */

@@ -101,7 +101,7 @@ The following digital signature algorithms from liboqs are supported by the fork
 - **CRYSTALS-DILITHIUM**: `dilithium2*`, `dilithium3*`, `dilithium4*`
 - **Falcon**: `falcon512*`, `falcon1024*`
 - **MQDSS**: `mqdss3148*`, `mqdss3164`
-- **Picnic**: `picnicl1fs*`, `picnicl1ur`, `picnic2l1fs*`, `picnic2l3fs`, `picnic2l5fs`
+- **Picnic**: `picnicl1fs*`, `picnicl1ur`, `picnic3l1*`, `picnic3l3`, `picnic3l5`
 - **qTESLA**: `qteslapi*`, `qteslapiii*`
 - **Rainbow**: `rainbowIaclassic*`, `rainbowIacyclic`, `rainbowIacycliccompressed`, `rainbowIIIcclassic`, `rainbowIIIccyclic`, `rainbowIIIccycliccompressed`, `rainbowVcclassic*`, `rainbowVccylic`, `rainbowVccycliccompressed`
 - **SPHINCS-Haraka**: `sphincsharaka128frobust*`, `sphincsharaka128fsimple`, `sphincsharaka128srobust`, `sphincsharaka128ssimple`, `sphincsharaka192frobust`, `sphincsharaka192fsimple`, `sphincsharaka192srobust`, `sphincsharaka192ssimple`, `sphincsharaka256frobust`, `sphincsharaka256fsimple`, `sphincsharaka256srobust`, `sphincsharaka256ssimple`
@@ -142,7 +142,7 @@ Then, get source code of this fork (`<OPENSSL_DIR>` is a directory of your choos
 
 The following instructions will download and build liboqs, then install it into a subdirectory inside the OpenSSL folder.
 
-	git clone --branch 0.3.0 --single-branch --depth 1 https://github.com/open-quantum-safe/liboqs.git
+	git clone --branch master https://github.com/open-quantum-safe/liboqs.git
 	cd liboqs
 	mkdir build && cd build
 	cmake -GNinja -DCMAKE_INSTALL_PREFIX=<OPENSSL_DIR>/oqs ..

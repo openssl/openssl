@@ -17,7 +17,7 @@ signatures = [
     'falcon1024',
     'mqdss3148',
     'picnicl1fs',
-    'picnic2l1fs',
+    'picnic3l1',
     'qteslapi',
     'qteslapiii',
     'rainbowIaclassic',

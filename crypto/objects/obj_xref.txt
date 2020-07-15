@@ -46,9 +46,9 @@ rsa3072_mqdss3148	sha512	rsa3072_mqdss3148
 picnicl1fs	sha512	picnicl1fs
 p256_picnicl1fs	sha512	p256_picnicl1fs
 rsa3072_picnicl1fs	sha512	rsa3072_picnicl1fs
-picnic2l1fs	sha512	picnic2l1fs
-p256_picnic2l1fs	sha512	p256_picnic2l1fs
-rsa3072_picnic2l1fs	sha512	rsa3072_picnic2l1fs
+picnic3l1	sha512	picnic3l1
+p256_picnic3l1	sha512	p256_picnic3l1
+rsa3072_picnic3l1	sha512	rsa3072_picnic3l1
 qteslapi	sha512	qteslapi
 p256_qteslapi	sha512	p256_qteslapi
 rsa3072_qteslapi	sha512	rsa3072_qteslapi
