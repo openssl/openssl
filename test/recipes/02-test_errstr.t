@@ -49,7 +49,7 @@ use constant ERR_LIB_NONE => 1;
 plan tests => scalar @Errno::EXPORT_OK
     +1                          # Checking that error 128 gives 'reason(128)'
     +1                          # Checking that error 0 gives the library name
-    ;
+    +1;                         # Check trailing whitespace is removed.
 
 # Test::More:ok() has a sub prototype, which means we need to use the '&ok'
 # syntax to force it to accept a list as a series of arguments.
@@ -66,6 +66,7 @@ foreach my $errname (@Errno::EXPORT_OK) {
 # Reason code 0 of any library gives the library name as reason
 &ok(match_opensslerr_reason(ERR_LIB_NONE << ERR_LIB_OFFSET |   0,
                             "unknown library"));
+&ok(match_any("Trailing whitespace  \n\t", "?", ( "Trailing whitespace" )));
 
 exit 0;
 
@@ -92,6 +93,9 @@ sub match_any {
     my $first = shift;
     my $desc = shift;
     my @strings = @_;
+
+    # ignore trailing whitespace
+    $first =~ s/\s+$//;
 
     if (scalar @strings > 1) {
         $desc = "match '$first' ($desc) with one of ( '"
