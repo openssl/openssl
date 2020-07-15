@@ -332,16 +332,26 @@ sub name_synopsis {
         $line =~ s/STACK_OF\([^)]+\)/int/g;
         $line =~ s/SPARSE_ARRAY_OF\([^)]+\)/int/g;
         $line =~ s/__declspec\([^)]+\)//;
-        if ( $line =~ /typedef.*\(\*\S+\)\s+\(/ ) {
-            # a callback function with whitespace before the argument list:
-            # typedef ... (*NAME) (...
-            err($id, "Function typedef has space before arg list: $line");
-        }
+
+        ## We don't prohibit that space, to allow typedefs looking like
+        ## this:
+        ##
+        ## typedef int (fantastically_long_name_breaks_80char_limit)
+        ##     (fantastically_long_name_breaks_80char_limit *something);
+        ##
+        #if ( $line =~ /typedef.*\(\*?\S+\)\s+\(/ ) {
+        #    # a callback function with whitespace before the argument list:
+        #    # typedef ... (*NAME) (...
+        #    # typedef ... (NAME) (...
+        #    err($id, "Function typedef has space before arg list: $line");
+        #}
+
         if ( $line =~ /env (\S*)=/ ) {
             # environment variable env NAME=...
             $sym = $1;
-        } elsif ( $line =~ /typedef.*\(\*(\S+)\)\s*\(/ ) {
+        } elsif ( $line =~ /typedef.*\(\*?(\S+)\)\s*\(/ ) {
             # a callback function pointer: typedef ... (*NAME)(...
+            # a callback function signature: typedef ... (NAME)(...
             $sym = $1;
         } elsif ( $line =~ /typedef.* (\S+)\(/ ) {
             # a callback function signature: typedef ... NAME(...
@@ -353,7 +363,7 @@ sub name_synopsis {
         } elsif ( $line =~ /enum (\S*) \{/ ) {
             # an enumeration: enum ... {
             $sym = $1;
-        } elsif ( $line =~ /#(?:define|undef) ([A-Za-z0-9_]+)/ ) {
+        } elsif ( $line =~ /#\s*(?:define|undef) ([A-Za-z0-9_]+)/ ) {
             $is_prototype = 0;
             $sym = $1;
         } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
@@ -368,7 +378,7 @@ sub name_synopsis {
 
         # Do some sanity checks on the prototype.
         err($id, "Prototype missing spaces around commas: $line")
-            if $is_prototype && $line =~ /[a-z0-9],[^ ]/;
+            if $is_prototype && $line =~ /[a-z0-9],[^\s]/;
     }
 
     foreach my $n ( keys %names ) {
