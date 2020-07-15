@@ -11,7 +11,7 @@ SSL_SESSION_set1_id
  #include <openssl/ssl.h>
 
  const unsigned char *SSL_SESSION_get_id(const SSL_SESSION *s,
-                                         unsigned int *len)
+                                         unsigned int *len);
  int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
                          unsigned int sid_len);
 

@@ -19,7 +19,7 @@ Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
 L<openssl_user_macros(7)>:
 
- void SSL_COMP_free_compression_methods(void)
+ void SSL_COMP_free_compression_methods(void);
 
 =head1 DESCRIPTION
 

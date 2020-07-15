@@ -42,7 +42,7 @@ i2d_PrivateKey_fp
  EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a);
  EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
                                 const char *propq);
- EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
+ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a);
 
  int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey);
  int i2d_PrivateKey_fp(FILE *fp, const EVP_PKEY *pkey);

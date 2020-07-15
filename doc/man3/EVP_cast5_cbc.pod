@@ -13,11 +13,11 @@ EVP_cast5_ofb
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_cast5_cbc(void)
- const EVP_CIPHER *EVP_cast5_cfb(void)
- const EVP_CIPHER *EVP_cast5_cfb64(void)
- const EVP_CIPHER *EVP_cast5_ecb(void)
- const EVP_CIPHER *EVP_cast5_ofb(void)
+ const EVP_CIPHER *EVP_cast5_cbc(void);
+ const EVP_CIPHER *EVP_cast5_cfb(void);
+ const EVP_CIPHER *EVP_cast5_cfb64(void);
+ const EVP_CIPHER *EVP_cast5_ecb(void);
+ const EVP_CIPHER *EVP_cast5_ofb(void);
 
 =head1 DESCRIPTION
 
@@ -59,4 +59,3 @@ in the file LICENSE in the source distribution or at
 L<https://www.openssl.org/source/license.html>.
 
 =cut
-

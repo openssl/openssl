@@ -48,7 +48,7 @@ OPENSSL_MALLOC_FD
  char *CRYPTO_strndup(const char *p, size_t num, const char *file, int line);
  void *CRYPTO_clear_realloc(void *p, size_t old_len, size_t num,
                             const char *file, int line);
- void CRYPTO_clear_free(void *str, size_t num, const char *, int)
+ void CRYPTO_clear_free(void *str, size_t num, const char *, int);
 
  typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
  typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
@@ -73,9 +73,9 @@ Deprecated:
  int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
                          void *u);
 
- int CRYPTO_set_mem_debug(int onoff)
+ int CRYPTO_set_mem_debug(int onoff);
  int CRYPTO_mem_ctrl(int mode);
- int OPENSSL_mem_debug_push(const char *info)
+ int OPENSSL_mem_debug_push(const char *info);
  int OPENSSL_mem_debug_pop(void);
  int CRYPTO_mem_debug_push(const char *info, const char *file, int line);
  int CRYPTO_mem_debug_pop(void);

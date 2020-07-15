@@ -26,8 +26,8 @@ objects
 
  #include <openssl/ec.h>
 
- EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params)
- EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params)
+ EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params);
+ EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params);
  void EC_GROUP_free(EC_GROUP *group);
 
  EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
@@ -51,8 +51,10 @@ objects
  int EC_GROUP_get_curve_GF2m(const EC_GROUP *group, BIGNUM *p,
                              BIGNUM *a, BIGNUM *b, BN_CTX *ctx);
 
- ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group, ECPARAMETERS *params)
- ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group, ECPKPARAMETERS *params)
+ ECPARAMETERS *EC_GROUP_get_ecparameters(const EC_GROUP *group,
+                                         ECPARAMETERS *params);
+ ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
+                                             ECPKPARAMETERS *params);
 
  size_t EC_get_builtin_curves(EC_builtin_curve *r, size_t nitems);
 

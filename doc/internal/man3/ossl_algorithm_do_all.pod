@@ -11,7 +11,7 @@ ossl_algorithm_do_all - generic algorithm implementation iterator
                             void (*fn)(OSSL_PROVIDER *provider,
                                        const OSSL_ALGORITHM *algo,
                                        int no_store, void *data),
-                            void *data)
+                            void *data);
 
 =head1 DESCRIPTION
 

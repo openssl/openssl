@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-PKCS12_SAFEBAG_get0_attrs, PKCS12_get_attr_gen - Retrieve attributes from a PKCS#12 safeBag
+PKCS12_SAFEBAG_get0_attrs, PKCS12_get_attr_gen
+- Retrieve attributes from a PKCS#12 safeBag
 
 =head1 SYNOPSIS
 
@@ -11,7 +12,7 @@ PKCS12_SAFEBAG_get0_attrs, PKCS12_get_attr_gen - Retrieve attributes from a PKCS
  const STACK_OF(X509_ATTRIBUTE) *PKCS12_SAFEBAG_get0_attrs(const PKCS12_SAFEBAG *bag);
 
  ASN1_TYPE *PKCS12_get_attr_gen(const STACK_OF(X509_ATTRIBUTE) *attrs,
-                                int attr_nid)
+                                int attr_nid);
 
 =head1 DESCRIPTION
 

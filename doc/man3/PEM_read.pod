@@ -11,9 +11,9 @@ PEM_read, PEM_read_bio, PEM_do_header, PEM_get_EVP_CIPHER_INFO
  #include <openssl/pem.h>
 
  int PEM_write(FILE *fp, const char *name, const char *header,
-               const unsigned char *data, long len)
+               const unsigned char *data, long len);
  int PEM_write_bio(BIO *bp, const char *name, const char *header,
-                   const unsigned char *data, long len)
+                   const unsigned char *data, long len);
 
  int PEM_read(FILE *fp, char **name, char **header,
               unsigned char **data, long *len);

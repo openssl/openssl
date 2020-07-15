@@ -25,7 +25,7 @@ CRYPTO_free_ex_data, CRYPTO_new_ex_data
  typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                            void **from_d, int idx, long argl, void *argp);
 
- int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
+ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 
  int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
                           int idx);

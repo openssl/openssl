@@ -23,24 +23,24 @@ BN_get_rfc3526_prime_8192
 =head1 SYNOPSIS
 
  #include <openssl/dh.h>
- DH *DH_get_1024_160(void)
- DH *DH_get_2048_224(void)
- DH *DH_get_2048_256(void)
+ DH *DH_get_1024_160(void);
+ DH *DH_get_2048_224(void);
+ DH *DH_get_2048_256(void);
 
- const BIGNUM *BN_get0_nist_prime_192(void)
- const BIGNUM *BN_get0_nist_prime_224(void)
- const BIGNUM *BN_get0_nist_prime_256(void)
- const BIGNUM *BN_get0_nist_prime_384(void)
- const BIGNUM *BN_get0_nist_prime_521(void)
+ const BIGNUM *BN_get0_nist_prime_192(void);
+ const BIGNUM *BN_get0_nist_prime_224(void);
+ const BIGNUM *BN_get0_nist_prime_256(void);
+ const BIGNUM *BN_get0_nist_prime_384(void);
+ const BIGNUM *BN_get0_nist_prime_521(void);
 
- BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn)
- BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn)
- BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn)
- BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn)
- BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn)
- BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn)
- BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn)
- BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn)
+ BIGNUM *BN_get_rfc2409_prime_768(BIGNUM *bn);
+ BIGNUM *BN_get_rfc2409_prime_1024(BIGNUM *bn);
+ BIGNUM *BN_get_rfc3526_prime_1536(BIGNUM *bn);
+ BIGNUM *BN_get_rfc3526_prime_2048(BIGNUM *bn);
+ BIGNUM *BN_get_rfc3526_prime_3072(BIGNUM *bn);
+ BIGNUM *BN_get_rfc3526_prime_4096(BIGNUM *bn);
+ BIGNUM *BN_get_rfc3526_prime_6144(BIGNUM *bn);
+ BIGNUM *BN_get_rfc3526_prime_8192(BIGNUM *bn);
 
 =head1 DESCRIPTION
 

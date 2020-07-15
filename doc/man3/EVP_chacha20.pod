@@ -10,8 +10,8 @@ EVP_chacha20_poly1305
 
  #include <openssl/evp.h>
 
- const EVP_CIPHER *EVP_chacha20(void)
- const EVP_CIPHER *EVP_chacha20_poly1305(void)
+ const EVP_CIPHER *EVP_chacha20(void);
+ const EVP_CIPHER *EVP_chacha20_poly1305(void);
 
 =head1 DESCRIPTION
 

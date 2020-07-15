@@ -15,11 +15,11 @@ SSL_add_store_cert_subjects_to_stack
  STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 
  int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-                                         const char *file)
+                                         const char *file);
  int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-                                        const char *dir)
+                                        const char *dir);
  int SSL_add_store_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
-                                          const char *store)
+                                          const char *store);
 
 =head1 DESCRIPTION
 

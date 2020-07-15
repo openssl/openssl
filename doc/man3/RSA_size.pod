@@ -16,7 +16,7 @@ L<openssl_user_macros(7)>:
 
  int RSA_size(const RSA *rsa);
 
- int RSA_security_bits(const RSA *rsa)
+ int RSA_security_bits(const RSA *rsa);
 
 =head1 DESCRIPTION
 
