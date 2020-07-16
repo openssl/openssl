@@ -241,12 +241,12 @@
 #define SSL_aP256_MQDSS3148 0x02000000U
 /* RSA3072 - MQDSS-31-48 auth */
 #define SSL_aRSA3072_MQDSS3148 0x04000000U
-/* Picnic L1 FS auth */
-#define SSL_aPICNICL1FS 0x08000000U
-/* ECDSA p256 - Picnic L1 FS auth */
-#define SSL_aP256_PICNICL1FS 0x10000000U
-/* RSA3072 - Picnic L1 FS auth */
-#define SSL_aRSA3072_PICNICL1FS 0x20000000U
+/* Picnic L1 full auth */
+#define SSL_aPICNICL1FULL 0x08000000U
+/* ECDSA p256 - Picnic L1 full auth */
+#define SSL_aP256_PICNICL1FULL 0x10000000U
+/* RSA3072 - Picnic L1 full auth */
+#define SSL_aRSA3072_PICNICL1FULL 0x20000000U
 /* Picnic3 L1 auth */
 #define SSL_aPICNIC3L1 0x40000000U
 /* ECDSA p256 - Picnic3 L1 auth */
@@ -482,9 +482,9 @@
 #define SSL_PKEY_MQDSS3148 25
 #define SSL_PKEY_P256_MQDSS3148 26
 #define SSL_PKEY_RSA3072_MQDSS3148 27
-#define SSL_PKEY_PICNICL1FS 28
-#define SSL_PKEY_P256_PICNICL1FS 29
-#define SSL_PKEY_RSA3072_PICNICL1FS 30
+#define SSL_PKEY_PICNICL1FULL 28
+#define SSL_PKEY_P256_PICNICL1FULL 29
+#define SSL_PKEY_RSA3072_PICNICL1FULL 30
 #define SSL_PKEY_PICNIC3L1 31
 #define SSL_PKEY_P256_PICNIC3L1 32
 #define SSL_PKEY_RSA3072_PICNIC3L1 33
@@ -2498,9 +2498,9 @@ typedef enum downgrade_en {
 #define TLSEXT_SIGALG_mqdss3148 0xfe10
 #define TLSEXT_SIGALG_p256_mqdss3148 0xfe11
 #define TLSEXT_SIGALG_rsa3072_mqdss3148 0xfe12
-#define TLSEXT_SIGALG_picnicl1fs 0xfe15
-#define TLSEXT_SIGALG_p256_picnicl1fs 0xfe16
-#define TLSEXT_SIGALG_rsa3072_picnicl1fs 0xfe17
+#define TLSEXT_SIGALG_picnicl1full 0xfe96
+#define TLSEXT_SIGALG_p256_picnicl1full 0xfe97
+#define TLSEXT_SIGALG_rsa3072_picnicl1full 0xfe98
 #define TLSEXT_SIGALG_picnic3l1 0xfe1b
 #define TLSEXT_SIGALG_p256_picnic3l1 0xfe1c
 #define TLSEXT_SIGALG_rsa3072_picnic3l1 0xfe1d

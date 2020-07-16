@@ -284,12 +284,12 @@ static const char *get_sigtype(int nid)
         return "ECDSA p256 - MQDSS-31-48";
     case NID_rsa3072_mqdss3148:
         return "RSA3072 - MQDSS-31-48";
-    case NID_picnicl1fs:
-        return "Picnic L1 FS";
-    case NID_p256_picnicl1fs:
-        return "ECDSA p256 - Picnic L1 FS";
-    case NID_rsa3072_picnicl1fs:
-        return "RSA3072 - Picnic L1 FS";
+    case NID_picnicl1full:
+        return "Picnic L1 full";
+    case NID_p256_picnicl1full:
+        return "ECDSA p256 - Picnic L1 full";
+    case NID_rsa3072_picnicl1full:
+        return "RSA3072 - Picnic L1 full";
     case NID_picnic3l1:
         return "Picnic3 L1";
     case NID_p256_picnic3l1:

@@ -1211,9 +1211,9 @@ p521_falcon1024		1210
 mqdss3148		1211
 p256_mqdss3148		1212
 rsa3072_mqdss3148		1213
-picnicl1fs		1214
-p256_picnicl1fs		1215
-rsa3072_picnicl1fs		1216
+picnicl1full		1214
+p256_picnicl1full		1215
+rsa3072_picnicl1full		1216
 picnic3l1		1217
 p256_picnic3l1		1218
 rsa3072_picnic3l1		1219

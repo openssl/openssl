@@ -412,7 +412,7 @@ sigs:
         security: 128
         oid: "1.3.6.1.4.1.311.89.2.1.1"
         code_point: "0xfe15"
-        enable: true
+        enable: false
         mix_with: [{"name": "p256",
                     "pretty_name": "ECDSA p256",
                     "oid": "1.3.6.1.4.1.311.89.2.1.2",
@@ -437,6 +437,22 @@ sigs:
                     "pretty_name": "RSA3072",
                     "oid": "1.3.6.1.4.1.311.89.2.1.6",
                     "code_point": "0xfe1a"}]
+      -
+        name: "picnicl1full"
+        pretty_name: "Picnic L1 full"
+        oqs_meth: "OQS_SIG_alg_picnic_L1_full"
+        security: 128
+        oid: "1.3.6.1.4.1.311.89.2.1.7"
+        code_point: "0xfe96"
+        enable: true
+        mix_with: [{"name": "p256",
+                    "pretty_name": "ECDSA p256",
+                    "oid": "1.3.6.1.4.1.311.89.2.1.8",
+                    "code_point": "0xfe97"},
+                   {"name": "rsa3072",
+                    "pretty_name": "RSA3072",
+                    "oid": "1.3.6.1.4.1.311.89.2.1.9",
+                    "code_point": "0xfe98"}]
       -
         name: "picnic3l1"
         pretty_name: "Picnic3 L1"
