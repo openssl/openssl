@@ -9,7 +9,7 @@
 HERE=`dirname $0`
 
 # Get all version data as shell variables
-. $HERE/../VERSION
+. $HERE/../VERSION.dat
 
 if [ -n "$PRE_RELEASE_TAG" ]; then PRE_RELEASE_TAG=-$PRE_RELEASE_TAG; fi
 version=$MAJOR.$MINOR.$PATCH$PRE_RELEASE_TAG$BUILD_METADATA
