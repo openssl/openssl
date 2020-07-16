@@ -221,7 +221,7 @@ static ossl_inline int ERR_GET_LIB(unsigned long errcode)
     return (errcode >> ERR_LIB_OFFSET) & ERR_LIB_MASK;
 }
 
-static ossl_inline int ERR_GET_FUNC(unsigned long errcode)
+static ossl_inline int ERR_GET_FUNC(unsigned long errcode ossl_unused)
 {
     return 0;
 }
