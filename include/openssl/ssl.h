@@ -1710,7 +1710,7 @@ __owur X509 *SSL_get0_peer_certificate(const SSL *s);
 __owur X509 *SSL_get1_peer_certificate(const SSL *s);
 /* Deprecated in 3.0.0 */
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
-#   define SSL_get_peer_certificate SSL_get1_peer_certifiate
+#   define SSL_get_peer_certificate SSL_get1_peer_certificate
 #  endif
 # endif
 
