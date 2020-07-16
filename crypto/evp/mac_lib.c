@@ -120,15 +120,14 @@ int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 int EVP_MAC_final(EVP_MAC_CTX *ctx,
                   unsigned char *out, size_t *outl, size_t outsize)
 {
-    int l = EVP_MAC_size(ctx);
+    size_t l = EVP_MAC_size(ctx);
+    int res = 1;
 
-    if (l < 0)
-        return 0;
+    if (out != NULL)
+        res = ctx->meth->final(ctx->data, out, &l, outsize);
     if (outl != NULL)
         *outl = l;
-    if (out == NULL)
-        return 1;
-    return ctx->meth->final(ctx->data, out, outl, outsize);
+    return res;
 }
 
 /*
