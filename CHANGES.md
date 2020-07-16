@@ -23,6 +23,21 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated the `ENGINE` API.  Engines should be replaced with providers
+   going forward.
+
+   *Paul Dale*
+
+ * Reworked the recorded ERR codes to make better space for system errors.
+   To distinguish them, the macro `ERR_SYSTEM_ERROR()` indicates if the
+   given code is a system error (true) or an OpenSSL error (false).
+
+   *Richard Levitte*
+
+ * Reworked the test perl framework to better allow parallel testing.
+
+   *Nicola Tuveri and David von Oheimb*
+
  * Added ciphertext stealing algorithms AES-128-CBC-CTS, AES-192-CBC-CTS and
    AES-256-CBC-CTS to the providers. CS1, CS2 and CS3 variants are supported.
 
