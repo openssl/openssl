@@ -64,7 +64,7 @@ static int do_hmac(PROV_DRBG_HMAC *hmac, unsigned char inbyte,
 
     *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, hmac->K,
                                                 hmac->blocklen);
-    if (!EVP_MAC_set_ctx_params(ctx, params)
+    if (!EVP_MAC_CTX_set_params(ctx, params)
             || !EVP_MAC_init(ctx)
             /* K = HMAC(K, V || inbyte || [in1] || [in2] || [in3]) */
             || !EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
@@ -78,7 +78,7 @@ static int do_hmac(PROV_DRBG_HMAC *hmac, unsigned char inbyte,
    /* V = HMAC(K, V) */
     *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, hmac->K,
                                                 hmac->blocklen);
-    return EVP_MAC_set_ctx_params(ctx, params)
+    return EVP_MAC_CTX_set_params(ctx, params)
            && EVP_MAC_init(ctx)
            && EVP_MAC_update(ctx, hmac->V, hmac->blocklen)
            && EVP_MAC_final(ctx, hmac->V, NULL, sizeof(hmac->V));
@@ -220,7 +220,7 @@ static int drbg_hmac_generate(PROV_DRBG *drbg,
     for (;;) {
         *params = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                     hmac->K, hmac->blocklen);
-        if (!EVP_MAC_set_ctx_params(ctx, params)
+        if (!EVP_MAC_CTX_set_params(ctx, params)
             || !EVP_MAC_init(ctx)
             || !EVP_MAC_update(ctx, temp, hmac->blocklen))
             return 0;
@@ -315,7 +315,7 @@ static void drbg_hmac_free(void *vdrbg)
     PROV_DRBG_HMAC *hmac;
 
     if (drbg != NULL && (hmac = (PROV_DRBG_HMAC *)drbg->data) != NULL) {
-        EVP_MAC_free_ctx(hmac->ctx);
+        EVP_MAC_CTX_free(hmac->ctx);
         ossl_prov_digest_reset(&hmac->digest);
         OPENSSL_secure_clear_free(hmac, sizeof(*hmac));
     }
