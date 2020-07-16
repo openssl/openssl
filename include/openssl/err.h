@@ -222,6 +222,7 @@ static ossl_inline int ERR_GET_LIB(unsigned long errcode)
 
 static ossl_inline int ERR_GET_FUNC(unsigned long errcode)
 {
+    (void)errcode;
     return 0;
 }
 
