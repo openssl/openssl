@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 5 [16 Jul 2020]
 
  * Deprecated the `ENGINE` API.  Engines should be replaced with providers
    going forward.
