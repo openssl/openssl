@@ -5612,20 +5612,20 @@
 #define NID_rsa3072_mqdss3148           1213
 #define OBJ_rsa3072_mqdss3148           1L,3L,9999L,4L,3L
 
-#define SN_picnicl1fs           "picnicl1fs"
-#define LN_picnicl1fs           "picnicl1fs"
-#define NID_picnicl1fs          1214
-#define OBJ_picnicl1fs          1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,1L
+#define SN_picnicl1full         "picnicl1full"
+#define LN_picnicl1full         "picnicl1full"
+#define NID_picnicl1full                1214
+#define OBJ_picnicl1full                1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,7L
 
-#define SN_p256_picnicl1fs              "p256_picnicl1fs"
-#define LN_p256_picnicl1fs              "p256_picnicl1fs"
-#define NID_p256_picnicl1fs             1215
-#define OBJ_p256_picnicl1fs             1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,2L
+#define SN_p256_picnicl1full            "p256_picnicl1full"
+#define LN_p256_picnicl1full            "p256_picnicl1full"
+#define NID_p256_picnicl1full           1215
+#define OBJ_p256_picnicl1full           1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,8L
 
-#define SN_rsa3072_picnicl1fs           "rsa3072_picnicl1fs"
-#define LN_rsa3072_picnicl1fs           "rsa3072_picnicl1fs"
-#define NID_rsa3072_picnicl1fs          1216
-#define OBJ_rsa3072_picnicl1fs          1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,3L
+#define SN_rsa3072_picnicl1full         "rsa3072_picnicl1full"
+#define LN_rsa3072_picnicl1full         "rsa3072_picnicl1full"
+#define NID_rsa3072_picnicl1full                1216
+#define OBJ_rsa3072_picnicl1full                1L,3L,6L,1L,4L,1L,311L,89L,2L,1L,9L
 
 #define SN_picnic3l1            "picnic3l1"
 #define LN_picnic3l1            "picnic3l1"

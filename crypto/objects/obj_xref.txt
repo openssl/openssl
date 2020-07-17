@@ -43,9 +43,9 @@ p521_falcon1024	sha512	p521_falcon1024
 mqdss3148	sha512	mqdss3148
 p256_mqdss3148	sha512	p256_mqdss3148
 rsa3072_mqdss3148	sha512	rsa3072_mqdss3148
-picnicl1fs	sha512	picnicl1fs
-p256_picnicl1fs	sha512	p256_picnicl1fs
-rsa3072_picnicl1fs	sha512	rsa3072_picnicl1fs
+picnicl1full	sha512	picnicl1full
+p256_picnicl1full	sha512	p256_picnicl1full
+rsa3072_picnicl1full	sha512	rsa3072_picnicl1full
 picnic3l1	sha512	picnic3l1
 p256_picnic3l1	sha512	p256_picnic3l1
 rsa3072_picnic3l1	sha512	rsa3072_picnic3l1

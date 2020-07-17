@@ -1095,9 +1095,9 @@ static const unsigned char so[8044] = {
     0x2B,0xCE,0x0F,0x04,0x01,                      /* [ 7859] OBJ_mqdss3148 */
     0x2B,0xCE,0x0F,0x04,0x02,                      /* [ 7864] OBJ_p256_mqdss3148 */
     0x2B,0xCE,0x0F,0x04,0x03,                      /* [ 7869] OBJ_rsa3072_mqdss3148 */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x01,  /* [ 7874] OBJ_picnicl1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x02,  /* [ 7885] OBJ_p256_picnicl1fs */
-    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x03,  /* [ 7896] OBJ_rsa3072_picnicl1fs */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x07,  /* [ 7874] OBJ_picnicl1full */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x08,  /* [ 7885] OBJ_p256_picnicl1full */
+    0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x09,  /* [ 7896] OBJ_rsa3072_picnicl1full */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x15,  /* [ 7907] OBJ_picnic3l1 */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x16,  /* [ 7918] OBJ_p256_picnic3l1 */
     0x2B,0x06,0x01,0x04,0x01,0x82,0x37,0x59,0x02,0x01,0x17,  /* [ 7929] OBJ_rsa3072_picnic3l1 */
@@ -2332,9 +2332,9 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"mqdss3148", "mqdss3148", NID_mqdss3148, 5, &so[7859]},
     {"p256_mqdss3148", "p256_mqdss3148", NID_p256_mqdss3148, 5, &so[7864]},
     {"rsa3072_mqdss3148", "rsa3072_mqdss3148", NID_rsa3072_mqdss3148, 5, &so[7869]},
-    {"picnicl1fs", "picnicl1fs", NID_picnicl1fs, 11, &so[7874]},
-    {"p256_picnicl1fs", "p256_picnicl1fs", NID_p256_picnicl1fs, 11, &so[7885]},
-    {"rsa3072_picnicl1fs", "rsa3072_picnicl1fs", NID_rsa3072_picnicl1fs, 11, &so[7896]},
+    {"picnicl1full", "picnicl1full", NID_picnicl1full, 11, &so[7874]},
+    {"p256_picnicl1full", "p256_picnicl1full", NID_p256_picnicl1full, 11, &so[7885]},
+    {"rsa3072_picnicl1full", "rsa3072_picnicl1full", NID_rsa3072_picnicl1full, 11, &so[7896]},
     {"picnic3l1", "picnic3l1", NID_picnic3l1, 11, &so[7907]},
     {"p256_picnic3l1", "p256_picnic3l1", NID_p256_picnic3l1, 11, &so[7918]},
     {"rsa3072_picnic3l1", "rsa3072_picnic3l1", NID_rsa3072_picnic3l1, 11, &so[7929]},
@@ -3361,7 +3361,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1234,    /* "p256_oqs_kem_default" */
     1196,    /* "p256_oqs_sig_default" */
     1218,    /* "p256_picnic3l1" */
-    1215,    /* "p256_picnicl1fs" */
+    1215,    /* "p256_picnicl1full" */
     1221,    /* "p256_qteslapi" */
     1226,    /* "p256_rainbowIaclassic" */
     1280,    /* "p256_sidhp434" */
@@ -3407,7 +3407,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
     1217,    /* "picnic3l1" */
-    1214,    /* "picnicl1fs" */
+    1214,    /* "picnicl1full" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
      438,    /* "pilotAttributeType" */
@@ -3474,7 +3474,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1213,    /* "rsa3072_mqdss3148" */
     1197,    /* "rsa3072_oqs_sig_default" */
     1219,    /* "rsa3072_picnic3l1" */
-    1216,    /* "rsa3072_picnicl1fs" */
+    1216,    /* "rsa3072_picnicl1full" */
     1222,    /* "rsa3072_qteslapi" */
     1227,    /* "rsa3072_rainbowIaclassic" */
     1232,    /* "rsa3072_sphincsharaka128frobust" */
@@ -4642,7 +4642,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1234,    /* "p256_oqs_kem_default" */
     1196,    /* "p256_oqs_sig_default" */
     1218,    /* "p256_picnic3l1" */
-    1215,    /* "p256_picnicl1fs" */
+    1215,    /* "p256_picnicl1full" */
     1221,    /* "p256_qteslapi" */
     1226,    /* "p256_rainbowIaclassic" */
     1280,    /* "p256_sidhp434" */
@@ -4703,7 +4703,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      464,    /* "photo" */
      863,    /* "physicalDeliveryOfficeName" */
     1217,    /* "picnic3l1" */
-    1214,    /* "picnicl1fs" */
+    1214,    /* "picnicl1full" */
      437,    /* "pilot" */
      439,    /* "pilotAttributeSyntax" */
      438,    /* "pilotAttributeType" */
@@ -4779,7 +4779,7 @@ static const unsigned int ln_objs[NUM_LN] = {
     1213,    /* "rsa3072_mqdss3148" */
     1197,    /* "rsa3072_oqs_sig_default" */
     1219,    /* "rsa3072_picnic3l1" */
-    1216,    /* "rsa3072_picnicl1fs" */
+    1216,    /* "rsa3072_picnicl1full" */
     1222,    /* "rsa3072_qteslapi" */
     1227,    /* "rsa3072_rainbowIaclassic" */
     1232,    /* "rsa3072_sphincsharaka128frobust" */
@@ -6136,9 +6136,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      955,    /* OBJ_jurisdictionLocalityName     1 3 6 1 4 1 311 60 2 1 1 */
      956,    /* OBJ_jurisdictionStateOrProvinceName 1 3 6 1 4 1 311 60 2 1 2 */
      957,    /* OBJ_jurisdictionCountryName      1 3 6 1 4 1 311 60 2 1 3 */
-    1214,    /* OBJ_picnicl1fs                   1 3 6 1 4 1 311 89 2 1 1 */
-    1215,    /* OBJ_p256_picnicl1fs              1 3 6 1 4 1 311 89 2 1 2 */
-    1216,    /* OBJ_rsa3072_picnicl1fs           1 3 6 1 4 1 311 89 2 1 3 */
+    1214,    /* OBJ_picnicl1full                 1 3 6 1 4 1 311 89 2 1 7 */
+    1215,    /* OBJ_p256_picnicl1full            1 3 6 1 4 1 311 89 2 1 8 */
+    1216,    /* OBJ_rsa3072_picnicl1full         1 3 6 1 4 1 311 89 2 1 9 */
     1217,    /* OBJ_picnic3l1                    1 3 6 1 4 1 311 89 2 1 21 */
     1218,    /* OBJ_p256_picnic3l1               1 3 6 1 4 1 311 89 2 1 22 */
     1219,    /* OBJ_rsa3072_picnic3l1            1 3 6 1 4 1 311 89 2 1 23 */
