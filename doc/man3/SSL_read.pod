@@ -72,7 +72,7 @@ not set.
 Note that if B<SSL_MODE_AUTO_RETRY> is set and only non-application data is
 available the call will hang.
 
-If the underlying BIO is B<non-blocking>, a read function will also return when
+If the underlying BIO is B<nonblocking>, a read function will also return when
 the underlying BIO could not satisfy the needs of the function to continue the
 operation.
 In this case a call to L<SSL_get_error(3)> with the
@@ -83,7 +83,7 @@ a read function can also cause write operations.
 The calling process then must repeat the call after taking appropriate action
 to satisfy the needs of the read function.
 The action depends on the underlying BIO.
-When using a non-blocking socket, nothing is to be done, but select() can be
+When using a nonblocking socket, nothing is to be done, but select() can be
 used to check for the required condition.
 When using a buffering BIO, like a BIO pair, data must be written into or
 retrieved out of the BIO before being able to continue.

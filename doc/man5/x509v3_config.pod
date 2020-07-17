@@ -105,7 +105,7 @@ They do not define the semantics of the extension.
 This is a multi-valued extension which indicates whether a certificate is
 a CA certificate. The first value is B<CA> followed by B<TRUE> or
 B<FALSE>. If B<CA> is B<TRUE> then an optional B<pathlen> name followed by a
-non-negative value can be included.
+nonnegative value can be included.
 
 For example:
 

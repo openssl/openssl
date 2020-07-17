@@ -34,7 +34,7 @@ Via B<nap_milliseconds> the caller determines the polling granularity.
 BIO_do_connect_retry() connects via the given B<bio>.
 It retries BIO_do_connect() as far as needed to reach a definite outcome,
 i.e., connection succeeded, timeout has been reached, or an error occurred.
-For non-blocking and potentially even non-socket BIOs it polls
+For nonblocking and potentially even non-socket BIOs it polls
 every B<nap_milliseconds> and sleeps in between using BIO_wait().
 If B<nap_milliseconds> is < 0 then a default value of 100 ms is used.
 If the B<timeout> parameter is > 0 this indicates the maximum number of seconds

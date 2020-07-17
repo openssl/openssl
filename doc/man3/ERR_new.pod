@@ -49,7 +49,7 @@ do not return any values.
 =head1 NOTES
 
 The library number is unique to each unit that records errors.
-OpenSSL has a number of pre-allocated ones for its own uses, but
+OpenSSL has a number of preallocated ones for its own uses, but
 others may allocate their own library number dynamically with
 L<ERR_get_next_error_library(3)>.
 

@@ -90,8 +90,8 @@ value that it had sent to the TSA.
 
 =back
 
-There is one DER encoded protocol data unit defined for transporting a time
-stamp request to the TSA and one for sending the timestamp response
+There is one DER encoded protocol data unit defined for transporting a
+timestamp request to the TSA and one for sending the timestamp response
 back to the client. This command has three main functions:
 creating a timestamp request based on a data file,
 creating a timestamp response based on a request, verifying if a
@@ -294,8 +294,8 @@ instead of DER. (Optional)
 
 =head2 Timestamp Response verification
 
-The B<-verify> command is for verifying if a timestamp response or time
-stamp token is valid and matches a particular timestamp request or
+The B<-verify> command is for verifying if a timestamp response or
+timestamp token is valid and matches a particular timestamp request or
 data file. The B<-verify> command does not use the configuration file.
 
 =over 4

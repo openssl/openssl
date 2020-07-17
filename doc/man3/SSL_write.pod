@@ -45,7 +45,7 @@ before the first call to a write function.
 If the underlying BIO is B<blocking>, the write functions will only return, once
 the write operation has been finished or an error occurred.
 
-If the underlying BIO is B<non-blocking> the write functions will also return
+If the underlying BIO is B<nonblocking> the write functions will also return
 when the underlying BIO could not satisfy the needs of the function to continue
 the operation. In this case a call to L<SSL_get_error(3)> with the
 return value of the write function will yield B<SSL_ERROR_WANT_READ>
@@ -53,7 +53,7 @@ or B<SSL_ERROR_WANT_WRITE>. As at any time a re-negotiation is possible, a
 call to a write function can also cause read operations! The calling process
 then must repeat the call after taking appropriate action to satisfy the needs
 of the write function. The action depends on the underlying BIO. When using a
-non-blocking socket, nothing is to be done, but select() can be used to check
+nonblocking socket, nothing is to be done, but select() can be used to check
 for the required condition. When using a buffering BIO, like a BIO pair, data
 must be written into or retrieved out of the BIO before being able to continue.
 

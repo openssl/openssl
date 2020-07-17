@@ -35,9 +35,9 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
 
 =head1 DESCRIPTION
 
-All libcrypto sub-systems that want to create their own methods based
+All libcrypto subsystems that want to create their own methods based
 on provider dispatch tables need to do so in exactly the same way.
-ossl_method_construct() does this while leaving it to the sub-systems
+ossl_method_construct() does this while leaving it to the subsystems
 to define more precisely how the methods are created, stored, etc.
 
 It's important to keep in mind that a method is identified by three things:
@@ -56,18 +56,18 @@ It's important to keep in mind that a method is identified by three things:
 
 ossl_method_construct() creates a method by asking all available
 providers for a dispatch table given an I<operation_id>, and then
-calling the appropriate functions given by the sub-system specific
+calling the appropriate functions given by the subsystem specific
 method creator through I<mcm> and the data in I<mcm_data> (which is
 passed by ossl_method_construct()).
 
-This function assumes that the sub-system method creator implements
+This function assumes that the subsystem method creator implements
 reference counting and acts accordingly (i.e. it will call the
-sub-system destruct() method to decrement the reference count when
+subsystem destruct() method to decrement the reference count when
 appropriate).
 
 =head2 Structures
 
-A central part of constructing a sub-system specific method is to give
+A central part of constructing a subsystem specific method is to give
 ossl_method_construct a set of functions, all in the
 B<OSSL_METHOD_CONSTRUCT_METHOD> structure, which holds the following
 function pointers:
@@ -90,7 +90,7 @@ Remove a temporary store.
 Look up an already existing method from a store by name.
 
 The store may be given with I<store>.
-NULL is a valid value and means that a sub-system default store
+NULL is a valid value and means that a subsystem default store
 must be used.
 This default store should be stored in the library context I<libctx>.
 
@@ -107,7 +107,7 @@ Places the I<method> created by the construct() function (see below)
 in a store.
 
 The store may be given with I<store>.
-NULL is a valid value and means that a sub-system default store
+NULL is a valid value and means that a subsystem default store
 must be used.
 This default store should be stored in the library context I<libctx>.
 
@@ -120,11 +120,11 @@ This function is expected to increment the I<method>'s reference count.
 
 =item construct()
 
-Constructs a sub-system method for the given I<name> and the given
+Constructs a subsystem method for the given I<name> and the given
 dispatch table I<fns>.
 
 The associated provider object I<prov> is passed as well, to make
-it possible for the sub-system constructor to keep a reference, which
+it possible for the subsystem constructor to keep a reference, which
 is recommended.
 If such a reference is kept, the I<provider object> reference counter
 must be incremented, using ossl_provider_up_ref().

@@ -102,7 +102,7 @@ If domain name resolution yields multiple IP addresses all of them are tried
 after connect() failures.
 The function returns 1 if the connection was established successfully.
 A zero or negative value is returned if the connection could not be established.
-The call BIO_should_retry() should be used for non-blocking connect BIOs
+The call BIO_should_retry() should be used for nonblocking connect BIOs
 to determine if the call should be retried.
 If a connection has already been established this call has no effect.
 

@@ -167,7 +167,7 @@ without having to go through the SSL-interface.
   ...
 
 As the BIO pair will only buffer the data and never directly access the
-connection, it behaves non-blocking and will return as soon as the write
+connection, it behaves nonblocking and will return as soon as the write
 buffer is full or the read buffer is drained. Then the application has to
 flush the write buffer and/or fill the read buffer.
 

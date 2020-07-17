@@ -114,7 +114,7 @@ provided by the callback.
 =head1 NOTES
 
 The protocol-lists must be in wire-format, which is defined as a vector of
-non-empty, 8-bit length-prefixed, byte strings. The length-prefix byte is not
+nonempty, 8-bit length-prefixed, byte strings. The length-prefix byte is not
 included in the length. Each string is limited to 255 bytes. A byte-string
 length of 0 is invalid. A truncated byte-string is invalid. The length of the
 vector is not in the vector itself, but in a separate variable.

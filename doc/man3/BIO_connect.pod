@@ -55,7 +55,7 @@ Enables regular sending of keep-alive messages.
 
 =item BIO_SOCK_NONBLOCK
 
-Sets the socket to non-blocking mode.
+Sets the socket to nonblocking mode.
 
 =item BIO_SOCK_NODELAY
 

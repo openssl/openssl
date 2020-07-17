@@ -50,8 +50,8 @@ the behaviour of write().
 
 Make it possible to retry SSL_write_ex() or SSL_write() with changed buffer
 location (the buffer contents must stay the same). This is not the default to
-avoid the misconception that non-blocking SSL_write() behaves like
-non-blocking write().
+avoid the misconception that nonblocking SSL_write() behaves like
+nonblocking write().
 
 =item SSL_MODE_AUTO_RETRY
 
@@ -64,9 +64,9 @@ If such a non-application data record was processed, the flag
 B<SSL_MODE_AUTO_RETRY> causes it to try to process the next record instead of
 returning.
 
-In a non-blocking environment applications must be prepared to handle
+In a nonblocking environment applications must be prepared to handle
 incomplete read/write operations.
-Setting B<SSL_MODE_AUTO_RETRY> for a non-blocking B<BIO> will process
+Setting B<SSL_MODE_AUTO_RETRY> for a nonblocking B<BIO> will process
 non-application data records until either no more data is available or
 an application data record has been processed.
 

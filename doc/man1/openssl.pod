@@ -612,7 +612,7 @@ Note that the parsing is simple and might fail to parse some legal data.
 =back
 
 The options to specify the format are as follows. Refer to the individual
-manpage to see which options are accepted.
+man page to see which options are accepted.
 
 =over 4
 

@@ -55,7 +55,7 @@ NUL is not included in the length returned by BIO_gets().
 =head1 NOTES
 
 A 0 or -1 return is not necessarily an indication of an error. In
-particular when the source/sink is non-blocking or of a certain type
+particular when the source/sink is nonblocking or of a certain type
 it may merely be an indication that no data is currently available and that
 the application should retry the operation later.
 

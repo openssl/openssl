@@ -98,7 +98,7 @@ will be set up ready to continue the handshake.  the B<peer> value will also be
 filled in.
 
 A return value of 0 indicates a non-fatal error. This could (for
-example) be because of non-blocking IO, or some invalid message having been
+example) be because of nonblocking IO, or some invalid message having been
 received from a peer. Errors may be placed on the OpenSSL error queue with
 further information if appropriate. Typically user code is expected to retry the
 call to DTLSv1_listen() in the event of a non-fatal error.
