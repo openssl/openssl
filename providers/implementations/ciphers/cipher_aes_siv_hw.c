@@ -27,6 +27,8 @@ static int aes_siv_initkey(void *vctx, const unsigned char *key, size_t keylen)
 
     EVP_CIPHER_free(ctx->cbc);
     EVP_CIPHER_free(ctx->ctr);
+    ctx->cbc = NULL;
+    ctx->ctr = NULL;
 
     switch (klen) {
     case 16:
@@ -42,7 +44,7 @@ static int aes_siv_initkey(void *vctx, const unsigned char *key, size_t keylen)
         ctx->ctr = EVP_CIPHER_fetch(libctx, "AES-256-CTR", propq);
         break;
     default:
-        return 0;
+        break;
     }
     if (ctx->cbc == NULL || ctx->ctr == NULL)
         return 0;
