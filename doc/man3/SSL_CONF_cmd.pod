@@ -180,7 +180,7 @@ See L<openssl-ciphers(1)> for more information.
 
 Sets the minimum and maximum supported protocol.
 Currently supported protocol values are B<SSLv3>, B<TLSv1>, B<TLSv1.1>,
-B<TLSv1.2>, B<TLSv1.3> for TLS and B<DTLSv1>, B<DTLSv1.2> for DTLS, and B<None>
+B<TLSv1.2>, B<TLSv1.3> for TLS; B<DTLSv1>, B<DTLSv1.2> for DTLS, and B<None>
 for no limit.
 If either the lower or upper bound is not specified then only the other bound
 applies, if specified.
@@ -398,7 +398,7 @@ The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
 apply only to DTLS-based contexts.
 The command can be repeated with one instance setting a TLS bound, and the
 other setting a DTLS bound.
-The value B<None> applies to both types of contexts and disables the limit.
+The value B<None> applies to both types of contexts and disables the limits.
 
 =item B<MaxProtocol>
 
@@ -410,7 +410,7 @@ The SSL and TLS bounds apply only to TLS-based contexts, while the DTLS bounds
 apply only to DTLS-based contexts.
 The command can be repeated with one instance setting a TLS bound, and the
 other setting a DTLS bound.
-The value B<None> applies to both types of contexts and disables the limit.
+The value B<None> applies to both types of contexts and disables the limits.
 
 =item B<Protocol>
 

@@ -24,7 +24,7 @@ OpenSSL 3.0
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
  * The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
-   ignore TLS protocol version bounds when configurign DTLS-based contexts, and
+   ignore TLS protocol version bounds when configuring DTLS-based contexts, and
    conversely, silently ignore DTLS protocol version bounds when configuring
    TLS-based contexts.  The commands can be repeated to set bounds of both
    types.  The same applies with the corresponding "min_protocol" and
