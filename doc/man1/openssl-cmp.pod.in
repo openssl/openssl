@@ -859,7 +859,7 @@ Act as CMP HTTP server mock-up listening on the given port.
 =item B<-max_msgs> I<number>
 
 Maximum number of CMP (request) messages the CMP HTTP server mock-up
-should handle, which must be non-negative.
+should handle, which must be nonnegative.
 The default value is 0, which means that no limit is imposed.
 In any case the server terminates on internal errors, but not when it
 detects a CMP-level error that it can successfully answer with an error message.

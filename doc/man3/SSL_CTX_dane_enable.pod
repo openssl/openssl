@@ -122,7 +122,7 @@ SSL_get0_dane_tlsa() can be used to retrieve the fields of the TLSA record that
 matched the peer certificate chain.
 The return value indicates the match depth or failure to match just as with
 SSL_get0_dane_authority().
-When the return value is non-negative, the storage pointed to by the B<usage>,
+When the return value is nonnegative, the storage pointed to by the B<usage>,
 B<selector>, B<mtype> and B<data> parameters is updated to the corresponding
 TLSA record fields.
 The B<data> field is in binary wire form, and is therefore not NUL-terminated,
@@ -173,7 +173,7 @@ certificate or a public key that fails to parse.
 
 The functions SSL_get0_dane_authority() and SSL_get0_dane_tlsa() return a
 negative value when DANE authentication failed or was not enabled, a
-non-negative value indicates the chain depth at which the TLSA record matched a
+nonnegative value indicates the chain depth at which the TLSA record matched a
 chain certificate, or the depth of the top-most certificate, when the TLSA
 record is a full public key that is its signer.
 

@@ -33,7 +33,7 @@ return values are similar to that of L<SSL_get_error(3)>.
 Unlike L<SSL_get_error(3)>, which also evaluates the
 error queue, the results are obtained by examining an internal state flag
 only. The information must therefore only be used for normal operation under
-non-blocking I/O. Error conditions are not handled and must be treated
+nonblocking I/O. Error conditions are not handled and must be treated
 using L<SSL_get_error(3)>.
 
 The result returned by SSL_want() should always be consistent with

@@ -64,7 +64,7 @@ per state in some situations.
 
 Callback has been called to indicate exit of a handshake function. This will
 happen after the end of a handshake, but may happen at other times too such as
-on error or when IO might otherwise block and non-blocking is being used.
+on error or when IO might otherwise block and nonblocking is being used.
 
 =item SSL_CB_READ
 

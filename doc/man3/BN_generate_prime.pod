@@ -148,7 +148,7 @@ BN_is_prime_fasttest() and BN_is_prime() behave just like
 BN_is_prime_fasttest_ex() and BN_is_prime_ex() respectively, but with the old
 style call back.
 
-B<ctx> is a pre-allocated B<BN_CTX> (to save the overhead of allocating and
+B<ctx> is a preallocated B<BN_CTX> (to save the overhead of allocating and
 freeing the structure in a loop), or B<NULL>.
 
 If the trial division is done, and no divisors are found and B<cb>

@@ -87,7 +87,7 @@ a parameter.
 =item 7.
 
 The callback function should then run. Note: it is a requirement that the
-callback function is small and non-blocking as it will be run in the context of
+callback function is small and nonblocking as it will be run in the context of
 a polling mechanism or an interrupt.
 
 =item 8.

@@ -75,7 +75,7 @@ generation callback.
 The function EVP_PKEY_CTX_get_keygen_info() returns parameters associated
 with the generation operation. If I<idx> is -1 the total number of
 parameters available is returned. Any non negative value returns the value of
-that parameter. EVP_PKEY_CTX_gen_keygen_info() with a non-negative value for
+that parameter. EVP_PKEY_CTX_gen_keygen_info() with a nonnegative value for
 I<idx> should only be called within the generation callback.
 
 If the callback returns 0 then the key generation operation is aborted and an

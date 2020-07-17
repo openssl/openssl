@@ -272,7 +272,7 @@ application data in a static buffer until it is overwritten by the
 next portion of data. When enabling SSL_OP_CLEANSE_PLAINTEXT
 deciphered application data is cleansed by calling OPENSSL_cleanse(3)
 after passing data to the application. Data is also cleansed when
-releasing the connection (eg. L<SSL_free(3)>).
+releasing the connection (e.g. L<SSL_free(3)>).
 
 Since OpenSSL only cleanses internal buffers, the application is still
 responsible for cleansing all other buffers. Most notably, this

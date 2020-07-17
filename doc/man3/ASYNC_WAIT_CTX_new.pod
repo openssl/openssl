@@ -130,7 +130,7 @@ descriptor is not appropriate.
 ASYNC_WAIT_CTX_set_callback() sets the callback and the callback argument. The
 callback will be called to notify user code when an engine completes a
 cryptography operation. It is a requirement that the callback function is small
-and non-blocking as it will be run in the context of a polling mechanism or an
+and nonblocking as it will be run in the context of a polling mechanism or an
 interrupt.
 
 ASYNC_WAIT_CTX_get_callback() returns the callback set in the B<ASYNC_WAIT_CTX>

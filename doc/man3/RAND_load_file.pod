@@ -17,7 +17,7 @@ RAND_load_file, RAND_write_file, RAND_file_name - PRNG seed file
 =head1 DESCRIPTION
 
 RAND_load_file() reads a number of bytes from file B<filename> and
-adds them to the PRNG. If B<max_bytes> is non-negative,
+adds them to the PRNG. If B<max_bytes> is nonnegative,
 up to B<max_bytes> are read;
 if B<max_bytes> is -1, the complete file is read.
 Do not load the same file multiple times unless its contents have

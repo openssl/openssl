@@ -59,7 +59,7 @@ OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of B<crm>.
 =head1 RETURN VALUES
 
 OSSL_CRMF_MSG_get_certReqId() returns the certificate request ID as a
-non-negative integer or -1 on error.
+nonnegative integer or -1 on error.
 
 All other functions return a pointer with the intended result or NULL on error.
 

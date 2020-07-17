@@ -478,11 +478,11 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 =item B<-nbio_test>
 
-Tests non-blocking I/O
+Tests nonblocking I/O
 
 =item B<-nbio>
 
-Turns on non-blocking I/O
+Turns on nonblocking I/O
 
 =item B<-crlf>
 
