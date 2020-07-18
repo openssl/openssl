@@ -2924,15 +2924,13 @@ int cmp_main(int argc, char **argv)
     ret = 0;
 
     if (opt_batch) {
-#ifndef OPENSSL_NO_ENGINE
         UI_METHOD *ui_fallback_method;
-# ifndef OPENSSL_NO_UI_CONSOLE
+#ifndef OPENSSL_NO_UI_CONSOLE
         ui_fallback_method = UI_OpenSSL();
-# else
+#else
         ui_fallback_method = (UI_METHOD *)UI_null();
-# endif
-        UI_method_set_reader(ui_fallback_method, NULL);
 #endif
+        UI_method_set_reader(ui_fallback_method, NULL);
     }
 
     if (opt_engine != NULL)
