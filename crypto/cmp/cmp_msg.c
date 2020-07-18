@@ -197,13 +197,12 @@ OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype)
          || OSSL_CMP_CTX_reqExtensions_have_SAN(ctx) == 1)
 
 static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, X509 *refcert,
-                                       int bodytype)
+                                       int for_KUR)
 {
     if (ctx->subjectName != NULL)
         return ctx->subjectName;
 
-    if (refcert != NULL
-            && (bodytype == OSSL_CMP_PKIBODY_KUR || !HAS_SAN(ctx)))
+    if (refcert != NULL && (for_KUR || !HAS_SAN(ctx)))
         /*
          * For KUR, copy subjectName from reference certificate.
          * For IR or CR, do the same only if there is no subjectAltName.
@@ -212,18 +211,14 @@ static const X509_NAME *determine_subj(OSSL_CMP_CTX *ctx, X509 *refcert,
     return NULL;
 }
 
-/*
- * Create CRMF certificate request message for IR/CR/KUR
- * returns a pointer to the OSSL_CRMF_MSG on success, NULL on error
- */
-static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
+OSSL_CRMF_MSG *OSSL_CMP_CTX_setup_CRM(OSSL_CMP_CTX *ctx, int for_KUR, int rid)
 {
     OSSL_CRMF_MSG *crm = NULL;
     X509 *refcert = ctx->oldCert != NULL ? ctx->oldCert : ctx->cert;
     /* refcert defaults to current client cert */
     EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx, 0);
     STACK_OF(GENERAL_NAME) *default_sans = NULL;
-    const X509_NAME *subject = determine_subj(ctx, refcert, bodytype);
+    const X509_NAME *subject = determine_subj(ctx, refcert, for_KUR);
     int crit = ctx->setSubjectAltNameCritical || subject == NULL;
     /* RFC5280: subjectAltName MUST be critical if subject is null */
     X509_EXTENSIONS *exts = NULL;
@@ -236,7 +231,7 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
         return NULL;
 #endif
     }
-    if (bodytype == OSSL_CMP_PKIBODY_KUR && refcert == NULL) {
+    if (for_KUR && refcert == NULL) {
         CMPerr(0, CMP_R_MISSING_REFERENCE_CERT);
         return NULL;
     }
@@ -295,7 +290,7 @@ static OSSL_CRMF_MSG *crm_new(OSSL_CMP_CTX *ctx, int bodytype, int rid)
     /* end fill certTemplate, now set any controls */
 
     /* for KUR, set OldCertId according to D.6 */
-    if (bodytype == OSSL_CMP_PKIBODY_KUR) {
+    if (for_KUR) {
         OSSL_CRMF_CERTID *cid =
             OSSL_CRMF_CERTID_gen(X509_get_issuer_name(refcert),
                                  X509_get0_serialNumber(refcert));
@@ -355,7 +350,10 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
             goto err;
         }
         if (crm == NULL) {
-            if ((local_crm = crm_new(ctx, type, OSSL_CMP_CERTREQID)) == NULL
+            local_crm = OSSL_CMP_CTX_setup_CRM(ctx,
+                                               type == OSSL_CMP_PKIBODY_KUR,
+                                               OSSL_CMP_CERTREQID);
+            if (local_crm == NULL
                 || !OSSL_CRMF_MSG_create_popo(local_crm, privkey, ctx->digest,
                                               ctx->popoMethod))
                 goto err;
