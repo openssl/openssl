@@ -36,9 +36,7 @@ unless ($no_fips) {
 
     ok(run(app(['openssl', 'fipsinstall',
                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-               '-module', $infile,
-               '-provider_name', 'fips', '-mac_name', 'HMAC',
-               '-section_name', 'fips_sect'])),
+               '-module', $infile])),
        "fipsinstall");
     ok(run(test(["evp_libctx_test", @test_args])), "running fips evp_libctx_test");
 }
