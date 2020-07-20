@@ -78,8 +78,10 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_GENERATE_ERROR                            191
 # define PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE       165
 # define PROV_R_INAVLID_UKM_LENGTH                        146
+# define PROV_R_INDICATOR_INTEGRITY_FAILURE               210
 # define PROV_R_INSUFFICIENT_DRBG_STRENGTH                181
 # define PROV_R_INVALID_AAD                               108
+# define PROV_R_INVALID_CONFIG_DATA                       211
 # define PROV_R_INVALID_CONSTANT_LENGTH                   157
 # define PROV_R_INVALID_CURVE                             176
 # define PROV_R_INVALID_CUSTOM_LENGTH                     111
@@ -102,6 +104,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_SALT_LENGTH                       112
 # define PROV_R_INVALID_SEED_LENGTH                       154
 # define PROV_R_INVALID_SIGNATURE_SIZE                    179
+# define PROV_R_INVALID_STATE                             212
 # define PROV_R_INVALID_TAG                               110
 # define PROV_R_INVALID_TAGLEN                            118
 # define PROV_R_INVALID_X931_DIGEST                       170
@@ -109,6 +112,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_KEY_SIZE_TOO_SMALL                        171
 # define PROV_R_MISSING_CEK_ALG                           144
 # define PROV_R_MISSING_CIPHER                            155
+# define PROV_R_MISSING_CONFIG_DATA                       213
 # define PROV_R_MISSING_CONSTANT                          156
 # define PROV_R_MISSING_KEY                               128
 # define PROV_R_MISSING_MAC                               150
@@ -121,6 +125,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_MISSING_SESSION_ID                        133
 # define PROV_R_MISSING_TYPE                              134
 # define PROV_R_MISSING_XCGHASH                           135
+# define PROV_R_MODULE_INTEGRITY_FAILURE                  214
 # define PROV_R_NOT_INSTANTIATED                          193
 # define PROV_R_NOT_SUPPORTED                             136
 # define PROV_R_NOT_XOF_OR_INVALID_LENGTH                 113
@@ -136,6 +141,8 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_REQUEST_TOO_LARGE_FOR_DRBG                196
 # define PROV_R_REQUIRE_CTR_MODE_CIPHER                   206
 # define PROV_R_RESEED_ERROR                              197
+# define PROV_R_SELF_TEST_KAT_FAILURE                     215
+# define PROV_R_SELF_TEST_POST_FAILURE                    216
 # define PROV_R_TAG_NOTSET                                119
 # define PROV_R_TAG_NOT_NEEDED                            120
 # define PROV_R_UNABLE_TO_FIND_CIPHERS                    207
