@@ -199,6 +199,7 @@ int ossl_prov_prepare_rsa_params(const void *rsa, int nid,
     case RSA_FLAG_TYPE_RSASSAPSS:
         if (rsa_pss_params_30_is_unrestricted(pss)) {
             *pstrtype = V_ASN1_UNDEF;
+            return 1;
         } else {
             ASN1_STRING *astr = NULL;
             WPACKET pkt;

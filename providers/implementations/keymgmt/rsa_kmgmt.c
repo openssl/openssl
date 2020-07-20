@@ -632,6 +632,7 @@ const OSSL_DISPATCH rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))rsa_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))rsa_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))rsa_has },
+    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))rsa_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))rsa_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))rsa_import },
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))rsa_import_types },
