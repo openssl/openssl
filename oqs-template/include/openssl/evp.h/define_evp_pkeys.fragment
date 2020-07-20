@@ -11,4 +11,6 @@
 {%- endfor %}
 #define OQS_OPENSSL_SIG_algs_length {{ count.val }}
 #define OQS_OPENSSL_KEM_algs_length {{ config['kems']|length }}
+#define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_oqs_sig_default) && (a < NID_oqs_kem_default))
+#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= NID_oqs_kem_default))
 //
