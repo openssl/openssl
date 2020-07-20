@@ -29,6 +29,8 @@
 
 static EVP_PKEY *key_RSA = NULL;
 static EVP_PKEY *legacy_key_RSA = NULL;
+static EVP_PKEY *key_RSA_PSS = NULL;
+static EVP_PKEY *legacy_key_RSA_PSS = NULL;
 
 static EVP_PKEY *make_RSA(const char *rsa_type, int make_legacy)
 {
@@ -60,10 +62,10 @@ typedef int (serializer)(void **serialized, long *serialized_len,
 typedef int (deserializer)(void **object,
                            void *serialized, long serialized_len,
                            const char *pass, const char *pcipher);
-typedef int (checker)(int type, const void *data, size_t data_len);
+typedef int (checker)(const char *type, const void *data, size_t data_len);
 typedef void (dumper)(const char *label, const void *data, size_t data_len);
 
-static int test_serialize_deserialize(EVP_PKEY *pkey,
+static int test_serialize_deserialize(const char *type, EVP_PKEY *pkey,
                                       const char *pass, const char *pcipher,
                                       serializer *serialize_cb,
                                       deserializer *deserialize_cb,
@@ -79,7 +81,7 @@ static int test_serialize_deserialize(EVP_PKEY *pkey,
 
     if (!serialize_cb(&serialized, &serialized_len, pkey,
                       pass, pcipher, ser_propq)
-        || !check_cb(EVP_PKEY_base_id(pkey), serialized, serialized_len)
+        || !check_cb(type, serialized, serialized_len)
         || !deserialize_cb((void **)&pkey2, serialized, serialized_len,
                            pass, pcipher)
         || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 1))
@@ -232,7 +234,7 @@ static void dump_pem(const char *label, const void *data, size_t data_len)
     test_output_string(label, data, data_len - 1);
 }
 
-static int check_unprotected_PKCS8_DER(int type,
+static int check_unprotected_PKCS8_DER(const char *type,
                                        const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
@@ -243,7 +245,7 @@ static int check_unprotected_PKCS8_DER(int type,
     if (TEST_ptr(p8inf)) {
         EVP_PKEY *pkey = EVP_PKCS82PKEY(p8inf);
 
-        ok = (TEST_ptr(pkey) && TEST_true(EVP_PKEY_is_a(pkey, "RSA")));
+        ok = (TEST_ptr(pkey) && TEST_true(EVP_PKEY_is_a(pkey, type)));
         EVP_PKEY_free(pkey);
     }
     PKCS8_PRIV_KEY_INFO_free(p8inf);
@@ -252,7 +254,7 @@ static int check_unprotected_PKCS8_DER(int type,
 
 static int test_unprotected_RSA_via_DER(void)
 {
-    return test_serialize_deserialize(key_RSA, NULL, NULL,
+    return test_serialize_deserialize("RSA", key_RSA, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_unprotected_PKCS8_DER, dump_der,
@@ -260,7 +262,17 @@ static int test_unprotected_RSA_via_DER(void)
                                       0);
 }
 
-static int check_unprotected_PKCS8_PEM(int type,
+static int test_unprotected_RSA_PSS_via_DER(void)
+{
+    return test_serialize_deserialize("RSA-PSS", key_RSA_PSS, NULL, NULL,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_unprotected_PKCS8_DER, dump_der,
+                                      OSSL_SERIALIZER_PrivateKey_TO_DER_PQ,
+                                      0);
+}
+
+static int check_unprotected_PKCS8_PEM(const char *type,
                                        const void *data, size_t data_len)
 {
     static const char pem_header[] = "-----BEGIN " PEM_STRING_PKCS8INF "-----";
@@ -270,7 +282,7 @@ static int check_unprotected_PKCS8_PEM(int type,
 
 static int test_unprotected_RSA_via_PEM(void)
 {
-    return test_serialize_deserialize(key_RSA, NULL, NULL,
+    return test_serialize_deserialize("RSA", key_RSA, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_unprotected_PKCS8_PEM, dump_pem,
@@ -278,17 +290,39 @@ static int test_unprotected_RSA_via_PEM(void)
                                       0);
 }
 
-static int check_unprotected_legacy_PEM(int type,
+static int test_unprotected_RSA_PSS_via_PEM(void)
+{
+    return test_serialize_deserialize("RSA-PSS", key_RSA_PSS, NULL, NULL,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_unprotected_PKCS8_PEM, dump_pem,
+                                      OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ,
+                                      0);
+}
+
+static int check_unprotected_legacy_PEM(const char *type,
                                         const void *data, size_t data_len)
 {
-    static const char pem_header[] = "-----BEGIN " PEM_STRING_RSA "-----";
+    static char pem_header[80];
 
-    return TEST_strn_eq(data, pem_header, sizeof(pem_header) - 1);
+    return
+        TEST_int_gt(BIO_snprintf(pem_header, sizeof(pem_header),
+                                 "-----BEGIN %s PRIVATE KEY-----", type), 0)
+        && TEST_strn_eq(data, pem_header, strlen(pem_header));
 }
 
 static int test_unprotected_RSA_via_legacy_PEM(void)
 {
-    return test_serialize_deserialize(legacy_key_RSA, NULL, NULL,
+    return test_serialize_deserialize("RSA", legacy_key_RSA, NULL, NULL,
+                                      serialize_EVP_PKEY_legacy_PEM,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_unprotected_legacy_PEM, dump_pem,
+                                      NULL, 1);
+}
+
+static int test_unprotected_RSA_PSS_via_legacy_PEM(void)
+{
+    return test_serialize_deserialize("RSA-PSS", legacy_key_RSA_PSS, NULL, NULL,
                                       serialize_EVP_PKEY_legacy_PEM,
                                       deserialize_EVP_PKEY_prov,
                                       check_unprotected_legacy_PEM, dump_pem,
@@ -298,7 +332,7 @@ static int test_unprotected_RSA_via_legacy_PEM(void)
 static const char *pass_cipher = "AES-256-CBC";
 static const char *pass = "the holy handgrenade of antioch";
 
-static int check_protected_PKCS8_DER(int type,
+static int check_protected_PKCS8_DER(const char *type,
                                      const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
@@ -311,7 +345,7 @@ static int check_protected_PKCS8_DER(int type,
 
 static int test_protected_RSA_via_DER(void)
 {
-    return test_serialize_deserialize(key_RSA, pass, pass_cipher,
+    return test_serialize_deserialize("RSA", key_RSA, pass, pass_cipher,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_protected_PKCS8_DER, dump_der,
@@ -319,7 +353,17 @@ static int test_protected_RSA_via_DER(void)
                                       0);
 }
 
-static int check_protected_PKCS8_PEM(int type,
+static int test_protected_RSA_PSS_via_DER(void)
+{
+    return test_serialize_deserialize("RSA", key_RSA, pass, pass_cipher,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_protected_PKCS8_DER, dump_der,
+                                      OSSL_SERIALIZER_PrivateKey_TO_DER_PQ,
+                                      0);
+}
+
+static int check_protected_PKCS8_PEM(const char *type,
                                      const void *data, size_t data_len)
 {
     static const char pem_header[] = "-----BEGIN " PEM_STRING_PKCS8 "-----";
@@ -329,7 +373,7 @@ static int check_protected_PKCS8_PEM(int type,
 
 static int test_protected_RSA_via_PEM(void)
 {
-    return test_serialize_deserialize(key_RSA, pass, pass_cipher,
+    return test_serialize_deserialize("RSA", key_RSA, pass, pass_cipher,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_protected_PKCS8_PEM, dump_pem,
@@ -337,19 +381,41 @@ static int test_protected_RSA_via_PEM(void)
                                       0);
 }
 
-static int check_protected_legacy_PEM(int type,
+static int test_protected_RSA_PSS_via_PEM(void)
+{
+    return test_serialize_deserialize("RSA-PSS", key_RSA_PSS, pass, pass_cipher,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_protected_PKCS8_PEM, dump_pem,
+                                      OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ,
+                                      0);
+}
+
+static int check_protected_legacy_PEM(const char *type,
                                       const void *data, size_t data_len)
 {
-    static const char pem_header[] = "-----BEGIN " PEM_STRING_RSA "-----";
+    static char pem_header[80];
 
     return
-        TEST_strn_eq(data, pem_header, sizeof(pem_header) - 1)
+        TEST_int_gt(BIO_snprintf(pem_header, sizeof(pem_header),
+                                 "-----BEGIN %s PRIVATE KEY-----", type), 0)
+        && TEST_strn_eq(data, pem_header, strlen(pem_header))
         && TEST_ptr(strstr(data, "\nDEK-Info: "));
 }
 
 static int test_protected_RSA_via_legacy_PEM(void)
 {
-    return test_serialize_deserialize(legacy_key_RSA, pass, pass_cipher,
+    return test_serialize_deserialize("RSA", legacy_key_RSA, pass, pass_cipher,
+                                      serialize_EVP_PKEY_legacy_PEM,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_protected_legacy_PEM, dump_pem,
+                                      NULL, 1);
+}
+
+static int test_protected_RSA_PSS_via_legacy_PEM(void)
+{
+    return test_serialize_deserialize("RSA-PSS", legacy_key_RSA_PSS,
+                                      pass, pass_cipher,
                                       serialize_EVP_PKEY_legacy_PEM,
                                       deserialize_EVP_PKEY_prov,
                                       check_protected_legacy_PEM, dump_pem,
@@ -360,9 +426,13 @@ int setup_tests(void)
 {
     TEST_info("Generating keys...");
     if (!TEST_ptr(key_RSA = make_RSA("RSA", 0))
-        || !TEST_ptr(legacy_key_RSA = make_RSA("RSA", 1))) {
+        || !TEST_ptr(legacy_key_RSA = make_RSA("RSA", 1))
+        || !TEST_ptr(key_RSA_PSS = make_RSA("RSA-PSS", 0))
+        || !TEST_ptr(legacy_key_RSA_PSS = make_RSA("RSA-PSS", 1))) {
         EVP_PKEY_free(key_RSA);
         EVP_PKEY_free(legacy_key_RSA);
+        EVP_PKEY_free(key_RSA_PSS);
+        EVP_PKEY_free(legacy_key_RSA_PSS);
         return 0;
     }
     TEST_info("Generating key... done");
@@ -373,6 +443,12 @@ int setup_tests(void)
     ADD_TEST(test_protected_RSA_via_DER);
     ADD_TEST(test_protected_RSA_via_PEM);
     ADD_TEST(test_protected_RSA_via_legacy_PEM);
+    ADD_TEST(test_unprotected_RSA_PSS_via_DER);
+    ADD_TEST(test_unprotected_RSA_PSS_via_PEM);
+    ADD_TEST(test_unprotected_RSA_PSS_via_legacy_PEM);
+    ADD_TEST(test_protected_RSA_PSS_via_DER);
+    ADD_TEST(test_protected_RSA_PSS_via_PEM);
+    ADD_TEST(test_protected_RSA_PSS_via_legacy_PEM);
 
     return 1;
 }
