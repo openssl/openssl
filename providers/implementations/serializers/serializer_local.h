@@ -38,9 +38,11 @@ OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_import(const OSSL_DISPATCH *f
 OSSL_FUNC_keymgmt_export_fn *ossl_prov_get_keymgmt_export(const OSSL_DISPATCH *fns);
 
 OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_rsa_new(void);
+OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_rsapss_new(void);
 OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_rsa_free(void);
 OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_rsa_import(void);
 OSSL_FUNC_keymgmt_export_fn *ossl_prov_get_keymgmt_rsa_export(void);
+OSSL_FUNC_keymgmt_export_fn *ossl_prov_get_keymgmt_rsapss_export(void);
 OSSL_FUNC_keymgmt_new_fn *ossl_prov_get_keymgmt_dh_new(void);
 OSSL_FUNC_keymgmt_free_fn *ossl_prov_get_keymgmt_dh_free(void);
 OSSL_FUNC_keymgmt_import_fn *ossl_prov_get_keymgmt_dh_import(void);

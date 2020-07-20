@@ -16,10 +16,12 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/params.h>
 #include <openssl/x509.h>
 #include "prov/bio.h"
 #include "prov/implementations.h"
+#include "prov/providercommonerr.h"
 #include "serializer_local.h"
 
 static OSSL_FUNC_deserializer_newctx_fn der2rsa_newctx;
@@ -37,10 +39,12 @@ static OSSL_FUNC_deserializer_export_object_fn der2rsa_export_object;
 struct der2rsa_ctx_st {
     PROV_CTX *provctx;
 
+    int type;
+
     struct pkcs8_encrypt_ctx_st sc;
 };
 
-static void *der2rsa_newctx(void *provctx)
+static struct der2rsa_ctx_st *der2rsa_newctx_int(void *provctx)
 {
     struct der2rsa_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
@@ -49,6 +53,24 @@ static void *der2rsa_newctx(void *provctx)
         /* -1 is the "whatever" indicator, i.e. the PKCS8 library default PBE */
         ctx->sc.pbe_nid = -1;
     }
+    return ctx;
+}
+
+static void *der2rsa_newctx(void *provctx)
+{
+    struct der2rsa_ctx_st *ctx = der2rsa_newctx_int(provctx);
+
+    if (ctx != NULL)
+        ctx->type = EVP_PKEY_RSA;
+    return ctx;
+}
+
+static void *der2rsapss_newctx(void *provctx)
+{
+    struct der2rsa_ctx_st *ctx = der2rsa_newctx_int(provctx);
+
+    if (ctx != NULL)
+        ctx->type = EVP_PKEY_RSA_PSS;
     return ctx;
 }
 
@@ -166,7 +188,7 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
     }
 
     derp = der;
-    if ((pkey = d2i_PrivateKey_ex(EVP_PKEY_RSA, NULL, &derp, der_len,
+    if ((pkey = d2i_PrivateKey_ex(ctx->type, NULL, &derp, der_len,
                                   libctx, NULL)) != NULL) {
         /* Tear out the RSA pointer from the pkey */
         rsa = EVP_PKEY_get1_RSA(pkey);
@@ -177,10 +199,27 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
 
     if (rsa != NULL) {
         OSSL_PARAM params[3];
+        char *object_type = NULL;
+
+        switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
+        case RSA_FLAG_TYPE_RSA:
+            object_type = "RSA";
+            break;
+        case RSA_FLAG_TYPE_RSASSAPSS:
+            object_type = "RSA-PSS";
+            break;
+        default:
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_RSA_KEY,
+                           "Expected the RSA type to be %d or %d, but got %d",
+                           RSA_FLAG_TYPE_RSA, RSA_FLAG_TYPE_RSASSAPSS,
+                           RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK));
+            goto end;
+        }
+
 
         params[0] =
             OSSL_PARAM_construct_utf8_string(OSSL_DESERIALIZER_PARAM_DATA_TYPE,
-                                             "RSA", 0);
+                                             object_type, 0);
         /* The address of the key becomes the octet string */
         params[1] =
             OSSL_PARAM_construct_octet_string(OSSL_DESERIALIZER_PARAM_REFERENCE,
@@ -189,17 +228,18 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
 
         ok = data_cb(params, data_cbarg);
     }
+ end:
     RSA_free(rsa);
 
     return ok;
 }
 
-static int der2rsa_export_object(void *vctx,
-                                 const void *reference, size_t reference_sz,
-                                 OSSL_CALLBACK *export_cb, void *export_cbarg)
+static int der2rsa_export_object_int(void *vctx,
+                                     const void *reference, size_t reference_sz,
+                                     OSSL_FUNC_keymgmt_export_fn *rsa_export,
+                                     OSSL_CALLBACK *export_cb,
+                                     void *export_cbarg)
 {
-    OSSL_FUNC_keymgmt_export_fn *rsa_export =
-        ossl_prov_get_keymgmt_rsa_export();
     void *keydata;
 
     if (reference_sz == sizeof(keydata) && rsa_export != NULL) {
@@ -210,6 +250,26 @@ static int der2rsa_export_object(void *vctx,
                           export_cb, export_cbarg);
     }
     return 0;
+}
+
+static int der2rsa_export_object(void *vctx,
+                                 const void *reference, size_t reference_sz,
+                                 OSSL_CALLBACK *export_cb,
+                                 void *export_cbarg)
+{
+    return der2rsa_export_object_int(vctx, reference, reference_sz,
+                                     ossl_prov_get_keymgmt_rsa_export(),
+                                     export_cb, export_cbarg);
+}
+
+static int der2rsapss_export_object(void *vctx,
+                                    const void *reference, size_t reference_sz,
+                                    OSSL_CALLBACK *export_cb,
+                                    void *export_cbarg)
+{
+    return der2rsa_export_object_int(vctx, reference, reference_sz,
+                                     ossl_prov_get_keymgmt_rsapss_export(),
+                                     export_cb, export_cbarg);
 }
 
 const OSSL_DISPATCH der_to_rsa_deserializer_functions[] = {
@@ -227,5 +287,23 @@ const OSSL_DISPATCH der_to_rsa_deserializer_functions[] = {
       (void (*)(void))der2rsa_deserialize },
     { OSSL_FUNC_DESERIALIZER_EXPORT_OBJECT,
       (void (*)(void))der2rsa_export_object },
+    { 0, NULL }
+};
+
+const OSSL_DISPATCH der_to_rsapss_deserializer_functions[] = {
+    { OSSL_FUNC_DESERIALIZER_NEWCTX, (void (*)(void))der2rsapss_newctx },
+    { OSSL_FUNC_DESERIALIZER_FREECTX, (void (*)(void))der2rsa_freectx },
+    { OSSL_FUNC_DESERIALIZER_GETTABLE_PARAMS,
+      (void (*)(void))der2rsa_gettable_params },
+    { OSSL_FUNC_DESERIALIZER_GET_PARAMS,
+      (void (*)(void))der2rsa_get_params },
+    { OSSL_FUNC_DESERIALIZER_SETTABLE_CTX_PARAMS,
+      (void (*)(void))der2rsa_settable_ctx_params },
+    { OSSL_FUNC_DESERIALIZER_SET_CTX_PARAMS,
+      (void (*)(void))der2rsa_set_ctx_params },
+    { OSSL_FUNC_DESERIALIZER_DESERIALIZE,
+      (void (*)(void))der2rsa_deserialize },
+    { OSSL_FUNC_DESERIALIZER_EXPORT_OBJECT,
+      (void (*)(void))der2rsapss_export_object },
     { 0, NULL }
 };

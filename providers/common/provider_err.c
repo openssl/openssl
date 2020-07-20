@@ -96,6 +96,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     "invalid padding mode"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_PSS_SALTLEN),
     "invalid pss saltlen"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_RSA_KEY), "invalid rsa key"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_SALT_LENGTH),
     "invalid salt length"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_SEED_LENGTH),
