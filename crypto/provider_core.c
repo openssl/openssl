@@ -40,10 +40,12 @@ DEFINE_STACK_OF(INFOPAIR)
 struct provider_store_st;        /* Forward declaration */
 
 struct ossl_provider_st {
-    /* Flag bits */
-    unsigned int flag_initialized:1;
+    /* Initialized flag bits */
+    unsigned int flag_autoactivate:1; /* Can be autoactivated */
     unsigned int flag_fallback:1; /* Can be used as fallback */
-    unsigned int flag_activated_as_fallback:1;
+    /* Execution flag bits */
+    unsigned int flag_initialized:1; /* Is initialized */
+    unsigned int flag_autoactivated:1; /* Is autoactivated */
 
     /* OpenSSL library side data */
     CRYPTO_REF_COUNT refcnt;
@@ -103,21 +105,21 @@ struct provider_store_st {
     STACK_OF(OSSL_PROVIDER) *providers;
     CRYPTO_RWLOCK *lock;
     char *default_path;
+    unsigned int use_autoactivation:1;
     unsigned int use_fallbacks:1;
 };
 
 /*
  * provider_deactivate_free() is a wrapper around ossl_provider_free()
- * that also makes sure that activated fallback providers are deactivated.
+ * that also makes sure that autoactivated providers are deactivated.
  * This is simply done by freeing them an extra time, to compensate for the
- * refcount that provider_activate_fallbacks() gives them.
+ * refcount that provider_autoactivate() gives them.
  * Since this is only called when the provider store is being emptied, we
  * don't need to care about any lock.
  */
 static void provider_deactivate_free(OSSL_PROVIDER *prov)
 {
-    int extra_free = (prov->flag_initialized
-                      && prov->flag_activated_as_fallback);
+    int extra_free = (prov->flag_initialized && prov->flag_autoactivated);
 
     if (extra_free)
         ossl_provider_free(prov);
@@ -147,6 +149,7 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
         provider_store_free(store);
         return NULL;
     }
+    store->use_autoactivation = 1;
     store->use_fallbacks = 1;
 
     for (p = predefined_providers; p->name != NULL; p++) {
@@ -172,6 +175,8 @@ static void *provider_store_new(OPENSSL_CTX *ctx)
 #endif
         if(p->is_fallback)
             ossl_provider_set_fallback(prov);
+        if(p->is_autoactivate)
+            ossl_provider_set_autoactivate(prov);
     }
 
     return store;
@@ -326,8 +331,8 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
          * When the refcount drops below two, the store is the only
          * possible reference, or it has already been taken away from
          * the store (this may happen if a provider was activated
-         * because it's a fallback, but isn't currently used)
-         * When that happens, the provider is inactivated.
+         * because it's an autoactivated provider, but isn't currently
+         * used).  When that happens, the provider is inactivated.
          */
         if (ref < 2 && prov->flag_initialized) {
 #ifndef FIPS_MODULE
@@ -663,13 +668,15 @@ static int provider_forall_loaded(struct provider_store_st *store,
 }
 
 /*
- * This function only does something once when store->use_fallbacks == 1,
- * and then sets store->use_fallbacks = 0, so the second call and so on is
+ * This function only does something once when store->use_autoactivation == 1,
+ * and then sets store->use_autoactivation = 0, so the second call and so on is
  * effectively a no-op.
+ * Furthermore, if the provider is a fallback (prov->flag_fallback == 1),
+ * a check to see that store->use_fallbacks == 1 is made.
  */
-static void provider_activate_fallbacks(struct provider_store_st *store)
+static void provider_autoactivate(struct provider_store_st *store)
 {
-    if (store->use_fallbacks) {
+    if (store->use_autoactivation) {
         int num_provs = sk_OSSL_PROVIDER_num(store->providers);
         int activated_fallback_count = 0;
         int i;
@@ -678,30 +685,38 @@ static void provider_activate_fallbacks(struct provider_store_st *store)
             OSSL_PROVIDER *prov = sk_OSSL_PROVIDER_value(store->providers, i);
 
             /*
-             * Activated fallback providers get an extra refcount, to
-             * simulate a regular load.
+             * Autoactivated providers get an extra refcount, to simulate a
+             * regular load.
              * Note that we don't care if the activation succeeds or not,
              * other than to maintain a correct refcount.  If the activation
-             * doesn't succeed, then any future attempt to use the fallback
-             * provider will fail anyway.
+             * doesn't succeed, then any future attempt to use the
+             * autoactivated provider will fail anyway.
              */
-            if (prov->flag_fallback) {
-                if (ossl_provider_up_ref(prov)) {
-                    if (!provider_activate(prov)) {
-                        ossl_provider_free(prov);
-                    } else {
-                        prov->flag_activated_as_fallback = 1;
-                        activated_fallback_count++;
+            if (prov->flag_autoactivate) {
+                /*
+                 * Autoactivate if it isn't a fallback, or if it is, if the
+                 * store allows it.
+                 */
+                if (!prov->flag_fallback || store->use_fallbacks) {
+                    if (ossl_provider_up_ref(prov)) {
+                        if (!provider_activate(prov)) {
+                            ossl_provider_free(prov);
+                        } else {
+                            prov->flag_autoactivated = 1;
+                            if (prov->flag_fallback)
+                                activated_fallback_count++;
+                        }
                     }
                 }
             }
         }
 
         /*
-         * We assume that all fallbacks have been added to the store before
-         * any fallback is activated.
+         * We assume that all autoactivated providers have been added to
+         * the store before any of them is activated.
          * TODO: We may have to reconsider this, IF we find ourselves adding
-         * fallbacks after any previous fallback has been activated.
+         * providers for autoactivation after any previous autoactivated
+         * provider has been activated.
          */
         if (activated_fallback_count > 0)
             store->use_fallbacks = 0;
@@ -727,7 +742,7 @@ int ossl_provider_forall_loaded(OPENSSL_CTX *ctx,
     if (store != NULL) {
         CRYPTO_THREAD_read_lock(store->lock);
 
-        provider_activate_fallbacks(store);
+        provider_autoactivate(store);
 
         /*
          * Now, we sweep through all providers
@@ -744,7 +759,7 @@ int ossl_provider_available(OSSL_PROVIDER *prov)
 {
     if (prov != NULL) {
         CRYPTO_THREAD_read_lock(prov->store->lock);
-        provider_activate_fallbacks(prov->store);
+        provider_autoactivate(prov->store);
         CRYPTO_THREAD_unlock(prov->store->lock);
 
         return prov->flag_initialized;
@@ -759,6 +774,15 @@ int ossl_provider_set_fallback(OSSL_PROVIDER *prov)
         return 0;
 
     prov->flag_fallback = 1;
+    return 1;
+}
+
+int ossl_provider_set_autoactivate(OSSL_PROVIDER *prov)
+{
+    if (prov == NULL)
+        return 0;
+
+    prov->flag_autoactivate = 1;
     return 1;
 }
 

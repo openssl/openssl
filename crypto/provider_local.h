@@ -12,6 +12,10 @@
 struct predefined_providers_st {
     const char *name;
     OSSL_provider_init_fn *init;
+
+    /* Auto-activated */
+    unsigned int is_autoactivate:1;
+    /* Only auto-activated if no loaders has been explictly loaded yet */
     unsigned int is_fallback:1;
 };
 
