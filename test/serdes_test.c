@@ -71,10 +71,10 @@ static int test_serialize_deserialize(EVP_PKEY *pkey,
                                       const char *ser_propq, int make_legacy)
 {
     void *serialized = NULL;
-    long serialized_len;
+    long serialized_len = 0;
     EVP_PKEY *pkey2 = NULL;
     void *serialized2 = NULL;
-    long serialized2_len;
+    long serialized2_len = 0;
     int ok = 0;
 
     if (!serialize_cb(&serialized, &serialized_len, pkey,
