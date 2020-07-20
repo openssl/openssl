@@ -32,7 +32,7 @@ OSSL_DESERIALIZER_INSTANCE_deserializer_ctx
  int OSSL_DESERIALIZER_CTX_num_deserializers(OSSL_DESERIALIZER_CTX *ctx);
 
  typedef struct ossl_deserializer_instance_st OSSL_DESERIALIZER_INSTANCE;
- typedef int (OSSL_DESRIALIZER_FINALIZER)
+ typedef int (OSSL_DESERIALIZER_FINALIZER)
      (OSSL_DESERIALIZER_INSTANCE *deser_inst,
       const OSSL_PARAM *params, void *finalize_arg);
  typedef void (OSSL_DESERIALIZER_CLEANER)(void *finalize_arg);
