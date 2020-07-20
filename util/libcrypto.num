@@ -5209,3 +5209,8 @@ PKCS12_add_secret                       ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_tls1_prf_md            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set1_tls1_prf_secret       ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_add1_tls1_prf_seed         ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_hkdf_md                ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set1_hkdf_salt             ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set1_hkdf_key              ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_add1_hkdf_info             ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_hkdf_mode                  ?	3_0_0	EXIST::FUNCTION:

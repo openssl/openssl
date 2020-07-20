@@ -123,25 +123,18 @@ int EVP_PKEY_CTX_set1_tls1_prf_secret(EVP_PKEY_CTX *pctx,
 int EVP_PKEY_CTX_add1_tls1_prf_seed(EVP_PKEY_CTX *pctx,
                                     const unsigned char *seed, int seedlen);
 
-# define EVP_PKEY_CTX_set_hkdf_md(pctx, md) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_MD, 0, (void *)(md))
+int EVP_PKEY_CTX_set_hkdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
-# define EVP_PKEY_CTX_set1_hkdf_salt(pctx, salt, saltlen) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_SALT, saltlen, (void *)(salt))
+int EVP_PKEY_CTX_set1_hkdf_salt(EVP_PKEY_CTX *ctx,
+                                const unsigned char *salt, int saltlen);
 
-# define EVP_PKEY_CTX_set1_hkdf_key(pctx, key, keylen) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_KEY, keylen, (void *)(key))
+int EVP_PKEY_CTX_set1_hkdf_key(EVP_PKEY_CTX *ctx,
+                                      const unsigned char *key, int keylen);
 
-# define EVP_PKEY_CTX_add1_hkdf_info(pctx, info, infolen) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_INFO, infolen, (void *)(info))
+int EVP_PKEY_CTX_add1_hkdf_info(EVP_PKEY_CTX *ctx,
+                                      const unsigned char *info, int infolen);
 
-# define EVP_PKEY_CTX_hkdf_mode(pctx, mode) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                              EVP_PKEY_CTRL_HKDF_MODE, mode, NULL)
+int EVP_PKEY_CTX_hkdf_mode(EVP_PKEY_CTX *ctx, int mode);
 
 # define EVP_PKEY_CTX_set1_pbe_pass(pctx, pass, passlen) \
             EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
