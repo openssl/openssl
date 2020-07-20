@@ -181,7 +181,7 @@ int OSSL_DESERIALIZER_CTX_add_extra(OSSL_DESERIALIZER_CTX *ctx,
     size_t w_prev_start, w_prev_end; /* "previous" deserializers */
     size_t w_new_start, w_new_end;   /* "new" deserializers */
     size_t count; /* Used to calculate how many were added in each iteration */
-    size_t depth; /* Counts the number of iterations */
+    size_t depth = 0; /* Counts the number of iterations */
 
     if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DESERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
