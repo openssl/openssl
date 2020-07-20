@@ -219,23 +219,22 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
     void *keydata1 = NULL, *keydata2 = NULL, *tmp_keydata = NULL;
 
     /* If none of them are provided, this function shouldn't have been called */
-    if (!ossl_assert(a->keymgmt != NULL || b->keymgmt != NULL))
+    if (!ossl_assert(evp_pkey_is_provided(a) || evp_pkey_is_provided(b)))
         return -2;
 
     /* For purely provided keys, we just call the keymgmt utility */
-    if (a->keymgmt != NULL && b->keymgmt != NULL)
+    if (evp_pkey_is_provided(a) && evp_pkey_is_provided(b))
         return evp_keymgmt_util_match((EVP_PKEY *)a, (EVP_PKEY *)b, selection);
 
     /*
      * At this point, one of them is provided, the other not.  This allows
      * us to compare types using legacy NIDs.
      */
-    if ((a->type != EVP_PKEY_NONE
-         && (b->keymgmt == NULL
-             || !EVP_KEYMGMT_is_a(b->keymgmt, OBJ_nid2sn(a->type))))
-        || (b->type != EVP_PKEY_NONE
-            && (a->keymgmt == NULL
-                || !EVP_KEYMGMT_is_a(a->keymgmt, OBJ_nid2sn(b->type)))))
+    if (evp_pkey_is_legacy(a)
+        && !EVP_KEYMGMT_is_a(b->keymgmt, OBJ_nid2sn(a->type)))
+        return -1;               /* not the same key type */
+    if (evp_pkey_is_legacy(b)
+        && !EVP_KEYMGMT_is_a(a->keymgmt, OBJ_nid2sn(b->type)))
         return -1;               /* not the same key type */
 
     /*
