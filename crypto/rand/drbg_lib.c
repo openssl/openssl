@@ -296,6 +296,11 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
     EVP_RAND_CTX *pctx;
     int use_df;
 
+    RAND_DRBG_get_entropy_fn get_entropy = drbg->get_entropy;
+    RAND_DRBG_cleanup_entropy_fn cleanup_entropy = drbg->cleanup_entropy;
+    RAND_DRBG_get_nonce_fn get_nonce = drbg->get_nonce;
+    RAND_DRBG_cleanup_nonce_fn cleanup_nonce = drbg->cleanup_nonce;
+
     if (type == 0 && flags == 0) {
         type = rand_drbg_type[RAND_DRBG_TYPE_PRIMARY];
         flags = rand_drbg_flags[RAND_DRBG_TYPE_PRIMARY];
@@ -344,6 +349,14 @@ int RAND_DRBG_set(RAND_DRBG *drbg, int type, unsigned int flags)
         RANDerr(0, RAND_R_ERROR_INITIALISING_DRBG);
         goto err;
     }
+
+    if (!RAND_DRBG_set_callbacks(drbg,
+                                 get_entropy, cleanup_entropy,
+                                 get_nonce, cleanup_nonce)) {
+        RANDerr(0, RAND_R_ERROR_INITIALISING_DRBG);
+        goto err;
+    }
+
     return 1;
 err:
     EVP_RAND_CTX_free(drbg->rand);
