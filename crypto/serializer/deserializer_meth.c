@@ -449,6 +449,21 @@ void OSSL_DESERIALIZER_names_do_all(const OSSL_DESERIALIZER *deser,
 }
 
 const OSSL_PARAM *
+OSSL_DESERIALIZER_gettable_params(OSSL_DESERIALIZER *deser)
+{
+    if (deser != NULL && deser->gettable_params != NULL)
+        return deser->gettable_params();
+    return NULL;
+}
+
+int OSSL_DESERIALIZER_get_params(OSSL_DESERIALIZER *deser, OSSL_PARAM params[])
+{
+    if (deser != NULL && deser->get_params != NULL)
+        return deser->get_params(params);
+    return 0;
+}
+
+const OSSL_PARAM *
 OSSL_DESERIALIZER_settable_ctx_params(OSSL_DESERIALIZER *deser)
 {
     if (deser != NULL && deser->settable_ctx_params != NULL)

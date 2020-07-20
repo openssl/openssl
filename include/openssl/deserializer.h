@@ -46,8 +46,7 @@ void OSSL_DESERIALIZER_names_do_all(const OSSL_DESERIALIZER *ser,
                                     void (*fn)(const char *name, void *data),
                                     void *data);
 const OSSL_PARAM *OSSL_DESERIALIZER_gettable_params(OSSL_DESERIALIZER *deser);
-int OSSL_DESERIALIZER_get_params(OSSL_DESERIALIZER_CTX *ctx,
-                                 const OSSL_PARAM params[]);
+int OSSL_DESERIALIZER_get_params(OSSL_DESERIALIZER *deser, OSSL_PARAM params[]);
 
 const OSSL_PARAM *OSSL_DESERIALIZER_settable_ctx_params(OSSL_DESERIALIZER *ser);
 OSSL_DESERIALIZER_CTX *OSSL_DESERIALIZER_CTX_new(void);
