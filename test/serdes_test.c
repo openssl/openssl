@@ -63,9 +63,6 @@ static int test_serialize_deserialize(EVP_PKEY *pkey,
         || !TEST_int_eq(EVP_PKEY_cmp(pkey, pkey2), 1))
         goto end;
 
-    if (!check_cb(EVP_PKEY_base_id(pkey), serialized, serialized_len))
-        goto end;
-
     /*
      * Double check the serialization.
      */
