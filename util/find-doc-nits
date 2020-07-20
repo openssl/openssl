@@ -311,6 +311,7 @@ sub name_synopsis {
     # Find all functions in SYNOPSIS
     return unless $contents =~ /=head1 SYNOPSIS(.*)=head1 DESCRIPTION/ms;
     my $syn = $1;
+    my $ignore_until = undef;   # If defined, this is a regexp
     # Remove all non-code lines
     $syn =~ s/^(?:\s*?|\S.*?)$//msg;
     # Remove all comments
@@ -326,6 +327,19 @@ sub name_synopsis {
         }
         my $line = $1;
         $syn = $';
+
+        print STDERR "DEBUG[name_synopsis] \$line = '$line'\n" if $debug;
+
+        # Special code to skip over documented structures
+        if ( defined $ignore_until) {
+            next if $line !~ /$ignore_until/;
+            $ignore_until = undef;
+            next;
+        }
+        if ( $line =~ /^\s*(?:typedef\s+)?struct(?:\s+\S+)\s*\{/ ) {
+            $ignore_until = qr/\}.*?;/;
+            next;
+        }
 
         my $sym;
         my $is_prototype = 1;
@@ -353,7 +367,7 @@ sub name_synopsis {
             # a callback function pointer: typedef ... (*NAME)(...
             # a callback function signature: typedef ... (NAME)(...
             $sym = $1;
-        } elsif ( $line =~ /typedef.* (\S+)\(/ ) {
+        } elsif ( $line =~ /typedef.* (\S+)\s*\(/ ) {
             # a callback function signature: typedef ... NAME(...
             $sym = $1;
         } elsif ( $line =~ /typedef.* (\S+);/ ) {
@@ -366,12 +380,19 @@ sub name_synopsis {
         } elsif ( $line =~ /#\s*(?:define|undef) ([A-Za-z0-9_]+)/ ) {
             $is_prototype = 0;
             $sym = $1;
-        } elsif ( $line =~ /([A-Za-z0-9_]+)\(/ ) {
+        } elsif ( $line =~ /^[^\(]*?\(\*([A-Za-z0-9_]+)\s*\(/ ) {
+            # a function returning a function pointer: TYPE (*NAME(args))(args)
+            $sym = $1;
+        } elsif ( $line =~ /^[^\(]*?([A-Za-z0-9_]+)\s*\(/ ) {
+            # a simple function declaration
             $sym = $1;
         }
         else {
             next;
         }
+
+        print STDERR "DEBUG[name_synopsis] \$sym = '$sym'\n" if $debug;
+
         err($id, "$sym missing from NAME section")
             unless defined $names{$sym};
         $names{$sym} = 2;
