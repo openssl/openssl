@@ -84,15 +84,18 @@ static int test_kdf_hkdf(void)
         TEST_error("EVP_PKEY_CTX_set_hkdf_md");
         goto err;
     }
-    if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, "salt", 4) <= 0) {
+    if (EVP_PKEY_CTX_set1_hkdf_salt(pctx, (const unsigned char *)"salt", 4)
+            <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_hkdf_salt");
         goto err;
     }
-    if (EVP_PKEY_CTX_set1_hkdf_key(pctx, "secret", 6) <= 0) {
+    if (EVP_PKEY_CTX_set1_hkdf_key(pctx, (const unsigned char *)"secret", 6)
+            <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_hkdf_key");
         goto err;
     }
-    if (EVP_PKEY_CTX_add1_hkdf_info(pctx, "label", 5) <= 0) {
+    if (EVP_PKEY_CTX_add1_hkdf_info(pctx, (const unsigned char *)"label", 5)
+            <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_hkdf_info");
         goto err;
     }
