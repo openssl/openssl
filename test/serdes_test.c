@@ -94,6 +94,14 @@ static int test_serialize_deserialize(EVP_PKEY *pkey,
         goto end;
 
     /*
+     * TODO(3.0) Remov this when PEM_write_bio_PrivateKey_traditional()
+     * handles provider side keys.
+     */
+    if (make_legacy
+        && !TEST_ptr(EVP_PKEY_get0(pkey2)))
+        goto end;
+
+    /*
      * Double check the serialization, but only for unprotected keys,
      * as protected keys have a random component, which makes the output
      * differ.
