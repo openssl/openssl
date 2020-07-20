@@ -935,6 +935,8 @@ int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 
         if (strcasecmp(name, "RSA") == 0)
             type = EVP_PKEY_RSA;
+        else if (strcasecmp(name, "RSA-PSS") == 0)
+            type = EVP_PKEY_RSA_PSS;
 #ifndef OPENSSL_NO_EC
         else if (strcasecmp(name, "EC") == 0)
             type = EVP_PKEY_EC;
