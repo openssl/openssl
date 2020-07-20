@@ -403,7 +403,7 @@ static int TicketKeyCallback(SSL *ssl, uint8_t *key_name, uint8_t *iv,
 
   if (!EVP_CipherInit_ex(ctx, EVP_aes_128_cbc(), NULL, kZeros, iv, encrypt)
       || !EVP_MAC_init(hmac_ctx)
-      || !EVP_MAC_set_ctx_params(hmac_ctx, params)) {
+      || !EVP_MAC_CTX_set_params(hmac_ctx, params)) {
     return -1;
   }
 
