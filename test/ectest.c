@@ -20,6 +20,8 @@
 #include <string.h>
 #include "internal/nelem.h"
 #include "testutil.h"
+#include "openssl/core_names.h"
+#include "openssl/param_build.h"
 
 #ifndef OPENSSL_NO_EC
 # include <openssl/ec.h>
@@ -2426,22 +2428,28 @@ static int custom_generator_test(int id)
 static int custom_params_test(int id)
 {
     int ret = 0, nid, bsize;
+    const char *curve_name = NULL;
     EC_GROUP *group = NULL, *altgroup = NULL;
     EC_POINT *G2 = NULL, *Q1 = NULL, *Q2 = NULL;
+    const EC_POINT *P = NULL;
     BN_CTX *ctx = NULL;
     BIGNUM *k = NULL;
     unsigned char *buf1 = NULL, *buf2 = NULL;
-    const BIGNUM *z = NULL, *cof = NULL;
+    const BIGNUM *z = NULL, *cof = NULL, *priv1 = NULL;
     BIGNUM *p = NULL, *a = NULL, *b = NULL;
     int is_prime = 0;
     EC_KEY *eckey1 = NULL, *eckey2 = NULL;
     EVP_PKEY *pkey1 = NULL, *pkey2 = NULL;
     EVP_PKEY_CTX *pctx1 = NULL, *pctx2 = NULL;
-    size_t sslen;
+    size_t sslen, t;
+    unsigned char *pub1 = NULL , *pub2 = NULL;
+    OSSL_PARAM_BLD *param_bld = NULL;
+    OSSL_PARAM *params1 = NULL, *params2 = NULL;
 
     /* Do some setup */
     nid = curves[id].nid;
-    TEST_note("Curve %s", OBJ_nid2sn(nid));
+    curve_name = OBJ_nid2sn(nid);
+    TEST_note("Curve %s", curve_name);
 
     if (nid == NID_sm2)
         return TEST_skip("custom params not supported with SM2");
@@ -2554,6 +2562,37 @@ static int custom_params_test(int id)
             || !TEST_true(EC_KEY_generate_key(eckey2)))
         goto err;
 
+    /* retrieve priv1 for later */
+    if (!TEST_ptr(priv1 = EC_KEY_get0_private_key(eckey1)))
+        goto err;
+
+    /*
+     * retrieve bytes for pub1 for later
+     *
+     * We compute the pub key in the original group as we will later use it to
+     * define a provider key in the built-in group.
+     */
+    if (!TEST_true(EC_POINT_mul(group, Q1, priv1, NULL, NULL, ctx))
+            || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               NULL, 0, ctx), bsize)
+            || !TEST_ptr(pub1 = OPENSSL_malloc(bsize))
+            || !TEST_int_eq(EC_POINT_point2oct(group, Q1,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               pub1, bsize, ctx), bsize))
+        goto err;
+
+    /* retrieve bytes for pub2 for later */
+    if (!TEST_ptr(P = EC_KEY_get0_public_key(eckey2))
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, P,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               NULL, 0, ctx), bsize)
+            || !TEST_ptr(pub2 = OPENSSL_malloc(bsize))
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, P,
+                                               POINT_CONVERSION_UNCOMPRESSED,
+                                               pub2, bsize, ctx), bsize))
+        goto err;
+
     /* create two `EVP_PKEY`s from the `EC_KEY`s */
     if(!TEST_ptr(pkey1 = EVP_PKEY_new())
             || !TEST_int_eq(EVP_PKEY_assign_EC_KEY(pkey1, eckey1), 1))
@@ -2566,7 +2605,7 @@ static int custom_params_test(int id)
     else
         eckey2 = NULL; /* ownership passed to pkey2 */
 
-    /* Compute ECDH in both directions */
+    /* Compute keyexchange in both directions */
     if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
             || !TEST_int_eq(EVP_PKEY_derive_init(pctx1), 1)
             || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx1, pkey2), 1)
@@ -2577,27 +2616,81 @@ static int custom_params_test(int id)
     if (!TEST_ptr(pctx2 = EVP_PKEY_CTX_new(pkey2, NULL))
             || !TEST_int_eq(EVP_PKEY_derive_init(pctx2), 1)
             || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx2, pkey1), 1)
-            || !TEST_int_eq(EVP_PKEY_derive(pctx2, NULL, &sslen), 1)
-            || !TEST_int_gt(bsize, sslen)
-            || !TEST_int_eq(EVP_PKEY_derive(pctx2, buf2, &sslen), 1))
+            || !TEST_int_eq(EVP_PKEY_derive(pctx2, NULL, &t), 1)
+            || !TEST_int_gt(bsize, t)
+            || !TEST_int_le(sslen, t)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx2, buf2, &t), 1)
+            || !TEST_int_eq(t, sslen))
         goto err;
 
     /* Both sides should expect the same shared secret */
     if (!TEST_int_eq(CRYPTO_memcmp(buf1, buf2, sslen), 0))
         goto err;
 
+    /* Build parameters for provider-native keys */
+    if (!TEST_ptr(param_bld = OSSL_PARAM_BLD_new())
+            || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(param_bld,
+                                                          OSSL_PKEY_PARAM_GROUP_NAME,
+                                                          curve_name, 0))
+            || !TEST_true(OSSL_PARAM_BLD_push_octet_string(param_bld,
+                                                           OSSL_PKEY_PARAM_PUB_KEY,
+                                                           pub1, bsize))
+            || !TEST_true(OSSL_PARAM_BLD_push_BN(param_bld,
+                                                 OSSL_PKEY_PARAM_PRIV_KEY,
+                                                 priv1))
+            || !TEST_ptr(params1 = OSSL_PARAM_BLD_to_param(param_bld)))
+        goto err;
+
+    OSSL_PARAM_BLD_free(param_bld);
+    if (!TEST_ptr(param_bld = OSSL_PARAM_BLD_new())
+            || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(param_bld,
+                                                          OSSL_PKEY_PARAM_GROUP_NAME,
+                                                          curve_name, 0))
+            || !TEST_true(OSSL_PARAM_BLD_push_octet_string(param_bld,
+                                                           OSSL_PKEY_PARAM_PUB_KEY,
+                                                           pub2, bsize))
+            || !TEST_ptr(params2 = OSSL_PARAM_BLD_to_param(param_bld)))
+        goto err;
+
+    /* create two new provider-native `EVP_PKEY`s */
+    EVP_PKEY_CTX_free(pctx2);
+    if (!TEST_ptr(pctx2 = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
+            || !TEST_true(EVP_PKEY_key_fromdata_init(pctx2))
+            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey1, params1))
+            || !TEST_true(EVP_PKEY_fromdata(pctx2, &pkey2, params2)))
+        goto err;
+
+    /* compute keyexchange once more using the provider keys */
+    EVP_PKEY_CTX_free(pctx1);
+    if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
+            || !TEST_int_eq(EVP_PKEY_derive_init(pctx1), 1)
+            || !TEST_int_eq(EVP_PKEY_derive_set_peer(pctx1, pkey2), 1)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx1, NULL, &t), 1)
+            || !TEST_int_gt(bsize, t)
+            || !TEST_int_le(sslen, t)
+            || !TEST_int_eq(EVP_PKEY_derive(pctx1, buf1, &t), 1)
+            || !TEST_int_eq(t, sslen)
+            /* compare with previous result */
+            || !TEST_int_eq(CRYPTO_memcmp(buf1, buf2, sslen), 0))
+        goto err;
+
     ret = 1;
 
  err:
     BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
+    OSSL_PARAM_BLD_free(param_bld);
+    OSSL_PARAM_BLD_free_params(params1);
+    OSSL_PARAM_BLD_free_params(params2);
     EC_POINT_free(Q1);
     EC_POINT_free(Q2);
     EC_POINT_free(G2);
     EC_GROUP_free(group);
     EC_GROUP_free(altgroup);
-    BN_CTX_free(ctx);
     OPENSSL_free(buf1);
     OPENSSL_free(buf2);
+    OPENSSL_free(pub1);
+    OPENSSL_free(pub2);
     EC_KEY_free(eckey1);
     EC_KEY_free(eckey2);
     EVP_PKEY_free(pkey1);
