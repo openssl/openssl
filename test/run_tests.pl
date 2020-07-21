@@ -148,7 +148,8 @@ my $eres;
 
 $eres = eval {
     package TAP::Parser::OpenSSL;
-    use parent 'TAP::Parser';
+    use parent -norequire, 'TAP::Parser';
+    require TAP::Parser;
 
     sub new {
         my $class = shift;
@@ -231,7 +232,8 @@ $eres = eval {
     }
 
     package TAP::Harness::OpenSSL;
-    use parent 'TAP::Harness';
+    use parent -norequire, 'TAP::Harness';
+    require TAP::Harness;
 
     package main;
 
