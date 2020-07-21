@@ -97,12 +97,12 @@ from this type, described further down.
 
 =head2 Functions
 
-OSSL_DESERIALIZER_from_bio() runs the serialization process for the
+OSSL_DESERIALIZER_from_bio() runs the deserialization process for the
 context I<ctx>, with the input coming from the B<BIO> I<in>.  The
 application is required to set up the B<BIO> properly, for example to
 have it in text or binary mode if that's appropriate.
 
-=for comment Know your serializer!
+=for comment Know your deserializer!
 
 OSSL_DESERIALIZER_from_fp() does the same thing as OSSL_DESERIALIZER_from_bio(),
 except that the input is coming from the B<FILE> I<fp>.
@@ -111,16 +111,16 @@ OSSL_DESERIALIZER_CTX_add_deserializer() populates the B<OSSL_DESERIALIZER_CTX>
 I<ctx> with a deserializer, to be used to attempt to deserialize some
 serialized input.
 
-OSSL_DESERIALIZER_CTX_add_extra() finds serializers that generate
-input for already added serializers, and adds them as well.  This is
-used to build serializer chains.
+OSSL_DESERIALIZER_CTX_add_extra() finds deserializers that generate
+input for already added deserializers, and adds them as well.  This is
+used to build deserializer chains.
 
 OSSL_DESERIALIZER_CTX_set_input_type() sets the starting input type.  This
 limits the deserializer chains to be considered, as explained in the general
 description above.
 
 OSSL_DESERIALIZER_CTX_num_deserializers() gets the number of
-serializers currently added to the context I<ctx>.
+deserializers currently added to the context I<ctx>.
 
 OSSL_DESERIALIZER_CTX_set_finalizer() sets the I<finalizer> function
 together with the caller argument for the finalizer, I<finalize_arg>,
@@ -215,7 +215,7 @@ OSSL_DESERIALIZER_CTX_set_finalizer() return 1 on success, or 0 on
 failure.
 
 OSSL_DESERIALIZER_CTX_num_deserializers() returns the current
-number of serializers.  It returns 0 if I<ctx> is NULL.
+number of deserializers.  It returns 0 if I<ctx> is NULL.
 
 OSSL_DESERIALIZER_export() returns 1 on success, or 0 on failure.
 
