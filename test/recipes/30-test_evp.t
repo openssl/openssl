@@ -35,7 +35,7 @@ push @configs, 'fips.cnf' unless $no_fips;
 my @files = qw(
                 evpciph_aes_ccm_cavs.txt
                 evpciph_aes_common.txt
-                evpciph_aes_cts.txt
+                evpciph_aes_cts1.txt
                 evpciph_des3_common.txt
                 evpkdf_hkdf.txt
                 evpkdf_pbkdf2.txt
@@ -63,6 +63,7 @@ my @files = qw(
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
 my @defltfiles = qw(
+                     evpciph_aes_cts23.txt
                      evpciph_aes_ocb.txt
                      evpciph_aes_siv.txt
                      evpciph_aria.txt 
