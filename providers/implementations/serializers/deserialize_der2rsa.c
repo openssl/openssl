@@ -153,10 +153,13 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
     if (!ossl_prov_read_der(ctx->provctx, cin, &der, &der_len))
         return 0;
 
-    if (ctx->sc.cipher_intent) {
-        if (!ossl_prov_der_from_p8(&new_der, &new_der_len, der, der_len,
-                                   &ctx->sc))
-            goto conclude;
+    /*
+     * Opportunistic attempt to decrypt.  If it doesn't work, we try to
+     * decode our input unencrypted.
+     */
+    if (ctx->sc.cipher_intent
+        && ossl_prov_der_from_p8(&new_der, &new_der_len, der, der_len,
+                                 &ctx->sc)) {
         OPENSSL_free(der);
         der = new_der;
         der_len = new_der_len;
@@ -170,7 +173,6 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
         EVP_PKEY_free(pkey);
     }
 
- conclude:
     OPENSSL_free(der);
 
     if (rsa != NULL) {
