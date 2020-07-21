@@ -2363,10 +2363,8 @@ static int custom_generator_test(int id)
         goto err;
 
     /* expected byte length of encoded points */
-    bsize = (EC_GROUP_get_field_type(group) == NID_X9_62_prime_field) ?
-             BN_num_bytes(EC_GROUP_get0_field(group)) :
-             (EC_GROUP_get_degree(group) + 7) / 8;
-    bsize = 2 * bsize + 1;
+    bsize = (EC_GROUP_get_degree(group) + 7) / 8;
+    bsize = 1 + 2 * bsize; /* UNCOMPRESSED_POINT format */
 
     if (!TEST_ptr(k = BN_CTX_get(ctx))
         /* fetch a testing scalar k != 0,1 */
