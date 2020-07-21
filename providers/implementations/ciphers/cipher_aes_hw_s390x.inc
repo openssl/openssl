@@ -99,6 +99,7 @@ static int s390x_aes_ofb128_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
         }
     }
 
+    memcpy(dat->iv, adat->plat.s390x.param.kmo_kmf.cv, dat->ivlen);
     adat->plat.s390x.res = n;
     return 1;
 }
@@ -161,6 +162,7 @@ static int s390x_aes_cfb128_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
         }
     }
 
+    memcpy(dat->iv, adat->plat.s390x.param.kmo_kmf.cv, dat->ivlen);
     adat->plat.s390x.res = n;
     return 1;
 }
@@ -187,6 +189,7 @@ static int s390x_aes_cfb8_cipher_hw(PROV_CIPHER_CTX *dat, unsigned char *out,
 
     s390x_kmf(in, len, out, adat->plat.s390x.fc,
               &adat->plat.s390x.param.kmo_kmf);
+    memcpy(dat->iv, adat->plat.s390x.param.kmo_kmf.cv, dat->ivlen);
     return 1;
 }
 
