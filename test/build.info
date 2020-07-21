@@ -27,11 +27,7 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[libtestutil.a]=../include ../apps/include ..
   DEPEND[libtestutil.a]=../libcrypto
 
-  IF[{- !$disabled{'deprecated-3.0'} -}]
-    $DEPRECATED_TESTS=enginetest
-  ENDIF
-
-  PROGRAMS{noinst}=$DEPRECATED_TESTS\
+  PROGRAMS{noinst}= \
           confdump \
           versions \
           aborttest test_test \
@@ -62,6 +58,10 @@ IF[{- !$disabled{tests} -}]
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test
+
+  IF[{- !$disabled{'deprecated-3.0'} -}]
+    PROGRAMS{noinst}=enginetest
+  ENDIF
 
   SOURCE[confdump]=confdump.c
   INCLUDE[confdump]=../include ../apps/include
