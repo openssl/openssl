@@ -82,7 +82,7 @@ static int test_serialize_deserialize(EVP_PKEY *pkey,
         || !check_cb(EVP_PKEY_base_id(pkey), serialized, serialized_len)
         || !deserialize_cb((void **)&pkey2, serialized, serialized_len,
                            pass, pcipher)
-        || !TEST_int_eq(EVP_PKEY_cmp(pkey, pkey2), 1))
+        || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 1))
         goto end;
 
     /*
