@@ -1,10 +1,10 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
-$DEPRECATED_SUBDIRS=
+
+SUBDIRS=crypto ssl apps test util tools fuzz providers doc
 IF[{- !$disabled{'deprecated-3.0'} -}]
-  $DEPRECATED_SUBDIRS=engines
+  SUBDIRS=engines
 ENDIF
-SUBDIRS=crypto ssl apps test util tools fuzz providers doc $DEPRECATED_SUBDIRS
 
 LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. include
