@@ -20,11 +20,11 @@ B<openssl list>
 [B<-cipher-commands>]
 [B<-cipher-algorithms>]
 [B<-public-key-algorithms>]
-[B<-public-key-methods>]
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
+{- output_off() if $disabled{"deprecated-3.0"}; ""
+-}[B<-public-key-methods>]
 [B<-engines>]
-{- output_on() if $disabled{"deprecated-3.0"}; "" -}
-[B<-disabled>]
+{- output_on() if $disabled{"deprecated-3.0"}; ""
+-}[B<-disabled>]
 [B<-objects>]
 [B<-options> I<command>]
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -90,11 +90,13 @@ information on what parameters each implementation supports.
 
 Display a list of public key algorithms, with each algorithm as
 a block of multiple lines, all but the first are indented.
+{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 
 =item B<-public-key-methods>
 
+This option is deprecated.
+
 Display a list of public key method OIDs.
-{- output_off() if $disabled{"deprecated-3.0"}; "" -}
 
 =item B<-engines>
 
@@ -154,7 +156,8 @@ In both cases, C<bar> is the name of the provider.
 
 =head1 HISTORY
 
-The B<-engines> option was deprecated in OpenSSL 3.0.
+The B<-engines> and B<-public-key-methods> options were deprecated in
+OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
