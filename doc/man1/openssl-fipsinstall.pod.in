@@ -21,6 +21,7 @@ B<openssl fipsinstall>
 [B<-quiet>]
 [B<-corrupt_desc> I<selftest_description>]
 [B<-corrupt_type> I<selftest_type>]
+[B<-config> I<parent_config>]
 
 =head1 DESCRIPTION
 
@@ -143,6 +144,14 @@ Either option or both may be used to select the tests to corrupt.
 Refer to the entries for B<st-desc> and B<st-type> in L<OSSL_PROVIDER-FIPS(7)> for
 values that can be used.
 
+=item B<-config> I<parent_config>
+
+Test that a FIPS provider can be loaded from the specified configuration file.
+A previous call to this application needs to generate the extra configuration
+data that is included by the base C<parent_config> configuration file.
+See L<config(5)> for further information on how to set up a provider section.
+All other options are ignored if '-config' is used.
+
 =back
 
 =head1 EXAMPLES
@@ -167,8 +176,16 @@ Corrupt any self tests which have the description C<SHA1>:
          -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 \
          -corrupt_desc 'SHA1'
 
+Validate that the fips module can be loaded from a base configuration file:
+
+ export OPENSSL_CONF_INCLUDE=<path of configuration files>
+ export OPENSSL_MODULES=<provider_path>
+ openssl fipsinstall -config' 'default.cnf'
+
+
 =head1 SEE ALSO
 
+L<config(5)>,
 L<fips_config(5)>,
 L<OSSL_PROVIDER-FIPS(7)>,
 L<EVP_MAC(3)>
