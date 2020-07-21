@@ -33,7 +33,7 @@
 # FIPS:
 #     -o fips.so {object files...} libimplementations.a libcommon.a libfips.a
 # Non-FIPS:
-#     -o fips.so {object files...} libimplementations.a libcommon.a libnonfips.a
+#     -o module.so {object files...} libimplementations.a libcommon.a libnonfips.a
 #
 # It is crucial that code that checks for the FIPS_MODULE macro end up in
 # libfips.a and libnonfips.a, never in libcommon.a.
