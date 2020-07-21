@@ -22,7 +22,7 @@
 #include <openssl/params.h>
 #include <openssl/pem.h>
 #include "prov/bio.h"
-#include "prov/bio.h"
+#include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "serializer_local.h"
 
