@@ -138,7 +138,7 @@ static int x509_self_signed(X509 *cert, int verify_signature)
 /* wrapper for internal use */
 static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x, int verify_signature)
 {
-    return x509_self_signed_ex(x, verify_signature);
+    return x509_self_signed(x, verify_signature);
 }
 
 int X509_self_signed(X509 *cert, int verify_signature)
