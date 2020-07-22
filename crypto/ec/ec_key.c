@@ -828,6 +828,16 @@ size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
     return EC_POINT_point2buf(key->group, key->pub_key, form, pbuf, ctx);
 }
 
+size_t EC_KEY_key2oct(const EC_KEY *key, unsigned char *buf,
+                      size_t len, BN_CTX *ctx)
+{
+    if (key == NULL || key->group == NULL || key->pub_key == NULL ||
+            key->conv_form == NULL)
+        return 0;
+    return EC_POINT_point2oct(key->group, key->pub_key, key->conv_form,
+                              buf, len, ctx);
+}
+
 int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
                    BN_CTX *ctx)
 {

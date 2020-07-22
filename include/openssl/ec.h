@@ -1035,6 +1035,17 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
 size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
                       unsigned char **pbuf, BN_CTX *ctx);
 
+/** Encodes an EC_KEY public key to an octet string
+ *  \param  key    key to encode
+ *  \param  buf    memory buffer for the result. If NULL the function returns
+ *                 required buffer size.
+ *  \param  len    length of the memory buffer
+ *  \return the length of the encoded octet string or 0 if an error occurred
+ */
+
+size_t EC_KEY_key2oct(const EC_KEY *key, unsigned char *buf,
+                      size_t len, BN_CTX *ctx)
+
 /** Decodes a EC_KEY public key from a octet string
  *  \param  key    key to decode
  *  \param  buf    memory buffer with the encoded ec point
