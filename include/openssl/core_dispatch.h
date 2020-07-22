@@ -191,10 +191,11 @@ OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
 # define OSSL_OP_SIGNATURE                          12
 # define OSSL_OP_ASYM_CIPHER                        13
 /* New section for non-EVP operations */
-# define OSSL_OP_ENCODER                         20
-# define OSSL_OP_DECODER                       21
+# define OSSL_OP_ENCODER                            20
+# define OSSL_OP_DECODER                            21
+# define OSSL_OP_STORE                              22
 /* Highest known operation number */
-# define OSSL_OP__HIGHEST                           21
+# define OSSL_OP__HIGHEST                           22
 
 /* Digests */
 
@@ -758,6 +759,42 @@ OSSL_CORE_MAKE_FUNC(int, decoder_decode,
                      OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg))
 OSSL_CORE_MAKE_FUNC(int, decoder_export_object,
                     (void *ctx, const void *objref, size_t objref_sz,
+                     OSSL_CALLBACK *export_cb, void *export_cbarg))
+
+/*-
+ * Store
+ *
+ * Objects are scanned by using the 'open', 'load', 'eof' and 'close'
+ * functions, which implement an OSSL_STORE loader.
+ *
+ * store_load() works in a way that's very similar to the decoders, in
+ * that they pass an abstract object through a callback, either as a DER
+ * octet string or as an object reference, which libcrypto will have to
+ * deal with.
+ */
+
+#define OSSL_FUNC_STORE_OPEN                        1
+#define OSSL_FUNC_STORE_ATTACH                      2
+#define OSSL_FUNC_STORE_SETTABLE_CTX_PARAMS         3
+#define OSSL_FUNC_STORE_SET_CTX_PARAMS              4
+#define OSSL_FUNC_STORE_LOAD                        5
+#define OSSL_FUNC_STORE_EOF                         6
+#define OSSL_FUNC_STORE_CLOSE                       7
+#define OSSL_FUNC_STORE_EXPORT_OBJECT               8
+OSSL_CORE_MAKE_FUNC(void *, store_open, (void *provctx, const char *uri))
+OSSL_CORE_MAKE_FUNC(void *, store_attach, (void *provctx, OSSL_CORE_BIO *in))
+OSSL_CORE_MAKE_FUNC(const OSSL_PARAM *, store_settable_ctx_params,
+                    (void *provctx))
+OSSL_CORE_MAKE_FUNC(int, store_set_ctx_params,
+                    (void *loaderctx, const OSSL_PARAM params[]))
+OSSL_CORE_MAKE_FUNC(int, store_load,
+                    (void *loaderctx,
+                     OSSL_CALLBACK *object_cb, void *object_cbarg,
+                     OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg))
+OSSL_CORE_MAKE_FUNC(int, store_eof, (void *loaderctx))
+OSSL_CORE_MAKE_FUNC(int, store_close, (void *loaderctx))
+OSSL_CORE_MAKE_FUNC(int, store_export_object,
+                    (void *loaderctx, const void *objref, size_t objref_sz,
                      OSSL_CALLBACK *export_cb, void *export_cbarg))
 
 # ifdef __cplusplus

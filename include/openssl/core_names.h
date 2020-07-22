@@ -484,6 +484,34 @@ extern "C" {
 #define OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS          "tls-min-dtls"
 #define OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS          "tls-max-dtls"
 
+/*-
+ * storemgmt parameters
+ */
+
+/*
+ * Used by storemgmt_ctx_set_params():
+ *
+ * - OSSL_STORE_PARAM_EXPECT is an INTEGER, and the value is any of the
+ *   OSSL_STORE_INFO numbers.  This is used to set the expected type of
+ *   object loaded.
+ *
+ * - OSSL_STORE_PARAM_SUBJECT, OSSL_STORE_PARAM_ISSUER,
+ *   OSSL_STORE_PARAM_SERIAL, OSSL_STORE_PARAM_FINGERPRINT,
+ *   OSSL_STORE_PARAM_DIGEST, OSSL_STORE_PARAM_ALIAS
+ *   are used as search criteria.
+ *   (OSSL_STORE_PARAM_DIGEST is used with OSSL_STORE_PARAM_FINGERPRINT)
+ */
+#define OSSL_STORE_PARAM_EXPECT     "expect"       /* INTEGER */
+#define OSSL_STORE_PARAM_SUBJECT    "subject" /* DER blob => OCTET_STRING */
+#define OSSL_STORE_PARAM_ISSUER     "name" /* DER blob => OCTET_STRING */
+#define OSSL_STORE_PARAM_SERIAL     "serial"       /* INTEGER */
+#define OSSL_STORE_PARAM_DIGEST     "digest"       /* UTF8_STRING */
+#define OSSL_STORE_PARAM_FINGERPRINT "fingerprint" /* OCTET_STRING */
+#define OSSL_STORE_PARAM_ALIAS      "alias"        /* UTF8_STRING */
+
+/* You may want to pass properties for the provider implementation to use */
+#define OSSL_STORE_PARAM_PROPERTIES "properties"   /* utf8_string */
+
 # ifdef __cplusplus
 }
 # endif
