@@ -2,15 +2,24 @@
 
 =head1 NAME
 
-OSSL_STORE_LOADER, OSSL_STORE_LOADER_CTX, OSSL_STORE_LOADER_new,
+OSSL_STORE_LOADER,
+OSSL_STORE_LOADER_fetch,
+OSSL_STORE_LOADER_up_ref,
+OSSL_STORE_LOADER_free,
+OSSL_STORE_LOADER_provider,
+OSSL_STORE_LOADER_properties,
+OSSL_STORE_LOADER_is_a,
+OSSL_STORE_LOADER_number,
+OSSL_STORE_LOADER_do_all_provided,
+OSSL_STORE_LOADER_names_do_all,
+OSSL_STORE_LOADER_CTX, OSSL_STORE_LOADER_new,
 OSSL_STORE_LOADER_get0_engine, OSSL_STORE_LOADER_get0_scheme,
 OSSL_STORE_LOADER_set_open, OSSL_STORE_LOADER_set_open_with_libctx,
 OSSL_STORE_LOADER_set_attach, OSSL_STORE_LOADER_set_ctrl,
 OSSL_STORE_LOADER_set_expect, OSSL_STORE_LOADER_set_find,
 OSSL_STORE_LOADER_set_load, OSSL_STORE_LOADER_set_eof,
 OSSL_STORE_LOADER_set_error, OSSL_STORE_LOADER_set_close,
-OSSL_STORE_LOADER_free, OSSL_STORE_register_loader,
-OSSL_STORE_unregister_loader,
+OSSL_STORE_register_loader, OSSL_STORE_unregister_loader,
 OSSL_STORE_open_fn, OSSL_STORE_open_with_libctx_fn,
 OSSL_STORE_attach_fn, OSSL_STORE_ctrl_fn,
 OSSL_STORE_expect_fn, OSSL_STORE_find_fn,
@@ -23,6 +32,28 @@ unregister STORE loaders for different URI schemes
  #include <openssl/store.h>
 
  typedef struct ossl_store_loader_st OSSL_STORE_LOADER;
+
+ OSSL_STORE_LOADER *OSSL_STORE_LOADER_fetch(const char *scheme,
+                                            OPENSSL_CTX *libctx,
+                                            const char *properties);
+ int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader);
+ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader);
+ const OSSL_PROVIDER *OSSL_STORE_LOADER_provider(const OSSL_STORE_LOADER *
+                                                 loader);
+ const char *OSSL_STORE_LOADER_properties(const OSSL_STORE_LOADER *loader);
+ int OSSL_STORE_LOADER_number(const OSSL_STORE_LOADER *loader);
+ int OSSL_STORE_LOADER_is_a(const OSSL_STORE_LOADER *loader,
+                            const char *scheme);
+ void OSSL_STORE_LOADER_do_all_provided(OPENSSL_CTX *libctx,
+                                        void (*fn)(OSSL_STORE_LOADER *loader,
+                                                   void *arg),
+                                        void *arg);
+ void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
+                                     void (*fn)(const char *name, void *data),
+                                     void *data);
+
+Legacy functions, still present to support B<OSSL_STORE_LOADER>s provided
+by B<ENGINE>:
 
  OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme);
  const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER
@@ -80,19 +111,49 @@ unregister STORE loaders for different URI schemes
 
 =head1 DESCRIPTION
 
-These functions help applications and engines to create loaders for
-schemes they support.
-
-=head2 Types
-
-B<OSSL_STORE_LOADER> is the type to hold a loader.
-It contains a scheme and the functions needed to implement
+B<OSSL_STORE_LOADER> is a method for OSSL_STORE loaders, which implement
 OSSL_STORE_open(), OSSL_STORE_open_with_libctx(), OSSL_STORE_load(),
-OSSL_STORE_eof(), OSSL_STORE_error() and OSSL_STORE_close() for this
-scheme.
+OSSL_STORE_eof(), OSSL_STORE_error() and OSSL_STORE_close() for specific
+storage schemes.
+
+OSSL_STORE_LOADER_fetch() looks for an implementation for a storage
+I<scheme> within the providers that has been loaded into the B<OPENSSL_CTX>
+given by I<ctx>, and with the properties given by I<properties>.
+
+OSSL_STORE_LOADER_up_ref() increments the reference count for the given
+I<loader>.
+
+OSSL_STORE_LOADER_free() decrements the reference count for the given
+I<loader>, and when the count reaches zero, frees it.
+
+OSSL_STORE_LOADER_provider() returns the provider of the given
+I<loader>.
+
+OSSL_STORE_LOADER_properties() returns the property definition associated
+with the given I<loader>.
+
+OSSL_STORE_LOADER_is_a() checks if I<loader> is an implementation
+of an algorithm that's identifiable with I<scheme>.
+
+OSSL_STORE_LOADER_number() returns the internal dynamic number assigned
+to the given I<loader>.
+
+OSSL_STORE_LOADER_do_all_provided() traverses all serializer
+implementations by all activated providers in the library context
+I<libctx>, and for each of the implementations, calls I<fn> with the
+implementation method and I<data> as arguments.
+
+OSSL_STORE_LOADER_names_do_all() traverses all names for the given
+I<loader>, and calls I<fn> with each name and I<data>.
+
+=head2 Legacy Types and Functions
+
+These functions help applications and engines to create loaders for
+schemes they support.  These are all discouraged in favour of provider
+implementations, see L<provider-storemgmt(7)>.
 
 B<OSSL_STORE_LOADER_CTX> is a type template, to be defined by each loader
-using B<struct ossl_store_loader_ctx_st { ... }>.
+using C<struct ossl_store_loader_ctx_st { ... }>.
 
 B<OSSL_STORE_open_fn>, B<OSSL_STORE_open_with_libctx_fn>,
 B<OSSL_STORE_ctrl_fn>, B<OSSL_STORE_expect_fn>, B<OSSL_STORE_find_fn>,
@@ -127,13 +188,13 @@ B<OSSL_STORE_open_with_libctx_fn>.
 =item B<OSSL_STORE_ctrl_fn>
 
 This function takes a B<OSSL_STORE_LOADER_CTX> pointer, a command number
-B<cmd> and a B<va_list> B<args> and is used to manipulate loader
+I<cmd> and a B<va_list> I<args> and is used to manipulate loader
 specific parameters.
 
 =begin comment
 
 Globally known command numbers are documented in L<OSSL_STORE_ctrl(3)>,
-along with what B<args> are expected with each of them.
+along with what I<args> are expected with each of them.
 
 =end comment
 
@@ -146,9 +207,9 @@ This function is expected to return 1 on success, 0 on error.
 =item B<OSSL_STORE_expect_fn>
 
 This function takes a B<OSSL_STORE_LOADER_CTX> pointer and a B<OSSL_STORE_INFO>
-identity B<expected>, and is used to tell the loader what object type is
+identity I<expected>, and is used to tell the loader what object type is
 expected.
-B<expected> may be zero to signify that no specific object type is expected.
+I<expected> may be zero to signify that no specific object type is expected.
 
 This function is expected to return 1 on success, 0 on error.
 
@@ -158,10 +219,10 @@ This function takes a B<OSSL_STORE_LOADER_CTX> pointer and a
 B<OSSL_STORE_SEARCH> search criterion, and is used to tell the loader what
 to search for.
 
-When called with the loader context being B<NULL>, this function is expected
+When called with the loader context being NULL, this function is expected
 to return 1 if the loader supports the criterion, otherwise 0.
 
-When called with the loader context being something other than B<NULL>, this
+When called with the loader context being something other than NULL, this
 function is expected to return 1 on success, 0 on error.
 
 =item B<OSSL_STORE_load_fn>
@@ -200,56 +261,68 @@ It returns 1 on success and 0 on error.
 
 =back
 
-=head2 Functions
-
 OSSL_STORE_LOADER_new() creates a new B<OSSL_STORE_LOADER>.
-It takes an B<ENGINE> B<e> and a string B<scheme>.
-B<scheme> must I<always> be set.
-Both B<e> and B<scheme> are used as is and must therefore be alive as
+It takes an B<ENGINE> I<e> and a string I<scheme>.
+I<scheme> must I<always> be set.
+Both I<e> and I<scheme> are used as is and must therefore be alive as
 long as the created loader is.
 
-OSSL_STORE_LOADER_get0_engine() returns the engine of the B<store_loader>.
-OSSL_STORE_LOADER_get0_scheme() returns the scheme of the B<store_loader>.
+OSSL_STORE_LOADER_get0_engine() returns the engine of the I<store_loader>.
+OSSL_STORE_LOADER_get0_scheme() returns the scheme of the I<store_loader>.
 
 OSSL_STORE_LOADER_set_open() sets the opener function for the
-B<store_loader>.
+I<store_loader>.
 
 OSSL_STORE_LOADER_set_open_with_libctx() sets the opener with library context
 function for the I<store_loader>.
 
 OSSL_STORE_LOADER_set_attach() sets the attacher function for the
-B<store_loader>.
+I<store_loader>.
 
 OSSL_STORE_LOADER_set_ctrl() sets the control function for the
-B<store_loader>.
+I<store_loader>.
 
 OSSL_STORE_LOADER_set_expect() sets the expect function for the
-B<store_loader>.
+I<store_loader>.
 
 OSSL_STORE_LOADER_set_load() sets the loader function for the
-B<store_loader>.
+I<store_loader>.
 
 OSSL_STORE_LOADER_set_eof() sets the end of file checker function for the
-B<store_loader>.
+I<store_loader>.
 
 OSSL_STORE_LOADER_set_close() sets the closing function for the
-B<store_loader>.
+I<store_loader>.
 
-OSSL_STORE_LOADER_free() frees the given B<store_loader>.
+OSSL_STORE_LOADER_free() frees the given I<store_loader>.
 
-OSSL_STORE_register_loader() register the given B<store_loader> and
+OSSL_STORE_register_loader() register the given I<store_loader> and
 thereby makes it available for use with OSSL_STORE_open(),
 OSSL_STORE_open_with_libctx(), OSSL_STORE_load(), OSSL_STORE_eof()
 and OSSL_STORE_close().
 
 OSSL_STORE_unregister_loader() unregister the store loader for the given
-B<scheme>.
-
-=head1 NOTES
-
-The B<file:> scheme has built in support.
+I<scheme>.
 
 =head1 RETURN VALUES
+
+OSSL_STORE_LOADER_fetch() returns a pointer to an OSSL_STORE_LOADER object,
+or NULL on error.
+
+OSSL_STORE_LOADER_up_ref() returns 1 on success, or 0 on error.
+
+OSSL_STORE_LOADER_free() doesn't return any value.
+
+OSSL_STORE_LOADER_provider() returns a pointer to a provider object, or
+NULL on error.
+
+OSSL_STORE_LOADER_properties() returns a pointer to a property
+definition string, or NULL on error.
+
+OSSL_STORE_LOADER_is_a() returns 1 if I<loader> was identifiable,
+otherwise 0.
+
+OSSL_STORE_LOADER_number() returns an integer.
 
 The functions with the types B<OSSL_STORE_open_fn>,
 B<OSSL_STORE_open_with_libctx_fn>, B<OSSL_STORE_ctrl_fn>,
@@ -259,7 +332,7 @@ OSSL_STORE_open_with_libctx(), OSSL_STORE_ctrl(), OSSL_STORE_expect(),
 OSSL_STORE_load(), OSSL_STORE_eof() and OSSL_STORE_close(), respectively.
 
 OSSL_STORE_LOADER_new() returns a pointer to a B<OSSL_STORE_LOADER> on success,
-or B<NULL> on failure.
+or NULL on failure.
 
 OSSL_STORE_LOADER_set_open(), OSSL_STORE_LOADER_set_open_with_libctx(),
 OSSL_STORE_LOADER_set_ctrl(), OSSL_STORE_LOADER_set_load(),
@@ -269,13 +342,20 @@ on success, or 0 on failure.
 OSSL_STORE_register_loader() returns 1 on success, or 0 on failure.
 
 OSSL_STORE_unregister_loader() returns the unregistered loader on success,
-or B<NULL> on failure.
+or NULL on failure.
 
 =head1 SEE ALSO
 
-L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OPENSSL_CTX(3)>
+L<ossl_store(7)>, L<OSSL_STORE_open(3)>, L<OPENSSL_CTX(3)>,
+L<provider-storemgmt(7)>
 
 =head1 HISTORY
+
+OSSL_STORE_LOADER_fetch(), OSSL_STORE_LOADER_up_ref(),
+OSSL_STORE_LOADER_free(), OSSL_STORE_LOADER_provider(),
+OSSL_STORE_LOADER_properties(), OSSL_STORE_LOADER_is_a(),
+OSSL_STORE_LOADER_number(), OSSL_STORE_LOADER_do_all_provided() and
+OSSL_STORE_LOADER_names_do_all() were added in OpenSSL 3.0.
 
 OSSL_STORE_open_with_libctx_fn() was added in OpenSSL 3.0.
 

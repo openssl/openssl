@@ -135,11 +135,6 @@ int OSSL_STORE_LOADER_set_close(OSSL_STORE_LOADER *loader,
     return 1;
 }
 
-void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
-{
-    OPENSSL_free(loader);
-}
-
 /*
  *  Functions for registering OSSL_STORE_LOADERs
  */
@@ -157,6 +152,14 @@ static int store_loader_cmp(const OSSL_STORE_LOADER *a,
 }
 
 static LHASH_OF(OSSL_STORE_LOADER) *loader_register = NULL;
+static int ossl_store_register_init(void)
+{
+    if (loader_register == NULL) {
+        loader_register = lh_OSSL_STORE_LOADER_new(store_loader_hash,
+                                                   store_loader_cmp);
+    }
+    return loader_register != NULL;
+}
 
 int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
 {
@@ -197,12 +200,7 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
     }
     CRYPTO_THREAD_write_lock(registry_lock);
 
-    if (loader_register == NULL) {
-        loader_register = lh_OSSL_STORE_LOADER_new(store_loader_hash,
-                                                   store_loader_cmp);
-    }
-
-    if (loader_register != NULL
+    if (ossl_store_register_init()
         && (lh_OSSL_STORE_LOADER_insert(loader_register, loader) != NULL
             || lh_OSSL_STORE_LOADER_error(loader_register) == 0))
         ok = 1;
@@ -240,9 +238,11 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
     }
     CRYPTO_THREAD_write_lock(registry_lock);
 
-    loader = lh_OSSL_STORE_LOADER_retrieve(loader_register, &template);
-
-    if (loader == NULL) {
+    if (!ossl_store_register_init()) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT,
+                      ERR_R_INTERNAL_ERROR);
+    } else if ((loader = lh_OSSL_STORE_LOADER_retrieve(loader_register,
+                                                       &template)) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT,
                       OSSL_STORE_R_UNREGISTERED_SCHEME);
         ERR_add_error_data(2, "scheme=", scheme);
@@ -271,9 +271,11 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme)
     }
     CRYPTO_THREAD_write_lock(registry_lock);
 
-    loader = lh_OSSL_STORE_LOADER_delete(loader_register, &template);
-
-    if (loader == NULL) {
+    if (!ossl_store_register_init()) {
+        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT,
+                      ERR_R_INTERNAL_ERROR);
+    } else if ((loader = lh_OSSL_STORE_LOADER_delete(loader_register,
+                                                     &template)) == NULL) {
         OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT,
                       OSSL_STORE_R_UNREGISTERED_SCHEME);
         ERR_add_error_data(2, "scheme=", scheme);
@@ -292,7 +294,6 @@ OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme)
 
 void ossl_store_destroy_loaders_int(void)
 {
-    assert(lh_OSSL_STORE_LOADER_num_items(loader_register) == 0);
     lh_OSSL_STORE_LOADER_free(loader_register);
     loader_register = NULL;
     CRYPTO_THREAD_lock_free(registry_lock);
@@ -308,6 +309,7 @@ int OSSL_STORE_do_all_loaders(void (*do_function) (const OSSL_STORE_LOADER
                                                    *loader, void *do_arg),
                               void *do_arg)
 {
-    lh_OSSL_STORE_LOADER_doall_void(loader_register, do_function, do_arg);
+    if (ossl_store_register_init())
+        lh_OSSL_STORE_LOADER_doall_void(loader_register, do_function, do_arg);
     return 1;
 }
