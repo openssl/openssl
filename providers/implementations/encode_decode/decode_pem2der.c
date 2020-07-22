@@ -130,10 +130,10 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin,
         OSSL_PARAM params[3];
 
         params[0] =
-            OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_DATA_TYPE,
+            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
                                              pem_name, 0);
         params[1] =
-            OSSL_PARAM_construct_octet_string(OSSL_DECODER_PARAM_DATA,
+            OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
                                               der, der_len);
         params[2] = OSSL_PARAM_construct_end();
 

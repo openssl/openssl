@@ -41,7 +41,7 @@ OSSL_DECODER_INSTANCE_decoder_ctx
  void *OSSL_DECODER_INSTANCE_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
 
  typedef int (OSSL_DECODER_CONSTRUCT)(OSSL_DECODER_INSTANCE *decoder_inst,
-                                      const OSSL_PARAM *params,
+                                      const OSSL_PARAM *object,
                                       void *construct_data);
  typedef void (OSSL_DECODER_CLEANUP)(void *construct_data);
 
@@ -168,9 +168,11 @@ A B<OSSL_DECODER_CONSTRUCT> gets the following arguments:
 The B<OSSL_DECODER_INSTANCE> for the decoder from which
 the constructor gets its data.
 
-=item I<params>
+=item I<object>
 
-The data produced by the decoder, further described below.
+A provider-native object abstraction produced by the decoder.  Further
+information on the provider-native object abstraction can be found in
+L<provider-object(7)>.
 
 =item I<construct_data>
 
@@ -180,45 +182,6 @@ The pointer that was set with OSSL_DECODE_CTX_set_construct_data().
 
 The constructor is expected to return 1 when the data it receives can
 be constructed, otherwise 0.
-
-The globally known parameters that the constructor can get in I<params>
-are:
-
-=over 4
-
-=item "data-type" (B<OSSL_DECODER_PARAM_DATA_TYPE>) <UTF8 string>
-
-This is a detected content type that some decoders may provide.
-For example, PEM input sometimes has a type specified in its header,
-and some decoders may add that information as this parameter.
-This is an optional parameter, but may be useful for extra checks in
-the constructor.
-
-=item "data" (B<OSSL_DECODER_PARAM_DATA>) <octet string>
-
-The decoded data itself, as an octet string.  This is produced by
-decoders when it's possible to pass an object in this form.  Most
-often, this is simply meant to be passed to the next decoder in a
-chain, but could be considered final data as well, at the discretion
-of the constructor.
-
-=item "reference" (B<OSSL_DECODER_PARAM_DATA>) <octet string>
-
-The decoded data itself, as a reference to an object.  The
-reference itself is an octet string, and can be passed to other
-operations and functions within the same provider as the one that
-provides I<decoder>.
-
-=back
-
-At least one of "data" or "reference" must be present, and it's
-possible that both can be.  A constructor should choose to use the
-"reference" parameter if possible, otherwise it should use the "data"
-parameter.
-
-If it's not possible to use the "reference" parameter, but that's
-still what a constructor wants to do, it is possible to use
-OSSL_DECODER_export() as a fallback.
 
 =head1 RETURN VALUES
 

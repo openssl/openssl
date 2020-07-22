@@ -407,7 +407,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * If this data isn't present, decoding has failed.
          */
 
-        p = OSSL_PARAM_locate_const(params, OSSL_DECODER_PARAM_DATA);
+        p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA);
         if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
             goto end;
         new_data.bio = BIO_new_mem_buf(p->data, (int)p->data_size);

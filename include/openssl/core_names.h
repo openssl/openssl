@@ -30,6 +30,59 @@ extern "C" {
 #define OSSL_PROV_PARAM_SELF_TEST_TYPE   "st-type"  /* utf8_string */
 #define OSSL_PROV_PARAM_SELF_TEST_DESC   "st-desc"  /* utf8_string */
 
+/*-
+ * Provider objects
+ *
+ * These are used when a provider wants to pass object data or an object
+ * reference back to libcrypto.  This is only useful for provider functions
+ * that take a callback to which an OSSL_PARAM array with these parameters
+ * can be passed.
+ *
+ * The object type (OSSL_OBJECT_PARAM_TYPE) is an integer that indicates
+ * the libcrypto API that can handle the data.  The known numbers are
+ * available in <openssl/object.h>.
+ * This parameter may not be present, making the object type unknown; context
+ * determines if this can be handled or not (central deserializer code will
+ * try to interpret it).
+ *
+ * The object data type (OSSL_OBJECT_PARAM_DATA_TYPE) is a string that
+ * further describes the object.  The exact interpretation of that string
+ * depends on the object type:
+ * - For OSSL_OBJECT_PKEY objects, libcrypto interprets the object data type
+ *   as a EVP_KEYMGMT algorithm name.
+ * - For objects with an unknown object type (OSSL_OBJECT_PARAM_TYPE missing
+ *   or having the value OSSL_OBJECT_UNKNOWN), libcrypto interprets the
+ *   object data type as the input type for a deserializer.
+ *
+ * The object data reference (OSSL_OBJECT_PARAM_REFERENCE) is a reference
+ * to a provider side object.  Only providers that are related and therefore
+ * can be assumed to use the same internal structures may share this sort of
+ * reference.  libcrypto is careful to check this.  Only the provider knows
+ * how to interpret the reference.
+ * When an object data reference is passed, the object type and the object
+ * data type (OSSL_OBJECT_PARAM_TYPE and OSSL_OBJECT_PARAM_DATA_TYPE) MUST
+ * be passed as well.
+ *
+ * The object data (OSSL_OBJECT_PARAM_DATA) is the object itself in encoded
+ * form.  The exact encoding depends on context (in deserializer chains, it
+ * may be whatever the next deserializer understands), but if central code
+ * in libcrypto should unpack it, it MUST be DER encoded for all object
+ * types except for OSSL_OBJECT_NAME, where it's assumed to a plain UTF8
+ * string.
+ *
+ * The object description string (OSSL_OBJECT_PARAM_DESC) is an additional
+ * text that describes the object further.
+ *
+ * The object data or data reference MUST ALWAYS be present.  Both may be
+ * present at once, in which case the central libcrypto code will use the
+ * most optimal variant.
+ */
+#define OSSL_OBJECT_PARAM_TYPE       "type"      /* INTEGER */
+#define OSSL_OBJECT_PARAM_DATA_TYPE  "data-type" /* UTF8_STRING */
+#define OSSL_OBJECT_PARAM_REFERENCE  "reference" /* OCTET_STRING */
+#define OSSL_OBJECT_PARAM_DATA       "data" /* OCTET_STRING or UTF8_STRING */
+#define OSSL_OBJECT_PARAM_DESC       "desc"      /* UTF8_STRING */
+
 /*
  * Algorithm parameters
  * If "engine" or "properties" are specified, they should always be paired
@@ -433,9 +486,6 @@ extern "C" {
 #define OSSL_DECODER_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_DECODER_PARAM_PASS         "passphrase"
 #define OSSL_DECODER_PARAM_INPUT_TYPE   "input-type"
-#define OSSL_DECODER_PARAM_DATA_TYPE    "data-type"
-#define OSSL_DECODER_PARAM_DATA         "data"
-#define OSSL_DECODER_PARAM_REFERENCE    "reference"
 
 /* Passphrase callback parameters */
 #define OSSL_PASSPHRASE_PARAM_INFO      "info"

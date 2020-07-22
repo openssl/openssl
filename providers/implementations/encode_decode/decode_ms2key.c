@@ -15,6 +15,7 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/core_object.h>
 #include <openssl/crypto.h>
 #include <openssl/params.h>
 #include <openssl/x509.h>
@@ -131,16 +132,19 @@ static int ms2key_post(struct ms2key_ctx_st *ctx, EVP_PKEY *pkey,
     }
 
     if (key != NULL) {
-        OSSL_PARAM params[3];
+        OSSL_PARAM params[4];
+        int object_type = OSSL_OBJECT_PKEY;
 
         params[0] =
-            OSSL_PARAM_construct_utf8_string(OSSL_DECODER_PARAM_DATA_TYPE,
+            OSSL_PARAM_construct_int(OSSL_OBJECT_PARAM_TYPE, &object_type);
+        params[1] =
+            OSSL_PARAM_construct_utf8_string(OSSL_OBJECT_PARAM_DATA_TYPE,
                                              (char *)ctx->desc->name, 0);
         /* The address of the key becomes the octet string */
-        params[1] =
-            OSSL_PARAM_construct_octet_string(OSSL_DECODER_PARAM_REFERENCE,
+        params[2] =
+            OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_REFERENCE,
                                               &key, sizeof(key));
-        params[2] = OSSL_PARAM_construct_end();
+        params[3] = OSSL_PARAM_construct_end();
 
         ok = data_cb(params, data_cbarg);
     }
