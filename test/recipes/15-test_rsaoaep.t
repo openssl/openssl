@@ -44,10 +44,7 @@ unless ($no_fips) {
 
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile,
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                '-section_name', 'fips_sect'])),
+                '-module', $infile])),
        "fipsinstall");
     $ENV{OPENSSL_TEST_LIBCTX} = "1";
 }
