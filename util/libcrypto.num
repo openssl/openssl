@@ -5138,7 +5138,6 @@ EC_KEY_new_by_curve_name_with_libctx    ?	3_0_0	EXIST::FUNCTION:EC
 OPENSSL_CTX_set0_default                ?	3_0_0	EXIST::FUNCTION:
 PEM_X509_INFO_read_bio_with_libctx      ?	3_0_0	EXIST::FUNCTION:
 PEM_X509_INFO_read_with_libctx          ?	3_0_0	EXIST::FUNCTION:STDIO
-OSSL_STORE_load_with_libctx             ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_verify_with_libctx             ?	3_0_0	EXIST::FUNCTION:
 X509_new_with_libctx                    ?	3_0_0	EXIST::FUNCTION:
 X509_LOOKUP_ctrl_with_libctx            ?	3_0_0	EXIST::FUNCTION:
@@ -5149,3 +5148,4 @@ X509_STORE_load_file_with_libctx        ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_store_with_libctx       ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_load_locations_with_libctx   ?	3_0_0	EXIST::FUNCTION:
 X509_STORE_set_default_paths_with_libctx ?	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_open_with_libctx             ?	3_0_0	EXIST::FUNCTION:
