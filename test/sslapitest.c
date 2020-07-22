@@ -800,11 +800,8 @@ static int execute_test_large_message(const SSL_METHOD *smeth,
     if (!TEST_ptr(certbio = BIO_new_file(cert, "r")))
         goto end;
 
-    chaincert = X509_new_with_libctx(libctx, NULL);
-    if (chaincert == NULL) {
-        SSLerr(0, ERR_R_MALLOC_FAILURE);
+    if (!TEST_ptr(chaincert = X509_new_with_libctx(libctx, NULL)))
         goto end;
-    }
 
     if (PEM_read_bio_X509(certbio, &chaincert, NULL, NULL) == NULL)
         goto end;

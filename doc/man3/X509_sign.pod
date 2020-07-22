@@ -54,8 +54,8 @@ L<ERR_get_error(3)>,
 L<X509_NAME_add_entry_by_txt(3)>,
 L<X509_new(3)>,
 L<X509_verify_cert(3)>,
-L<X509_verify_ex(3)>, L<X509_verify(3)>,
-L<X509_REQ_verify_ex(3)>, L<X509_REQ_verify(3)>,
+L<X509_verify(3)>,
+L<X509_REQ_verify_with_libctx(3)>, L<X509_REQ_verify(3)>,
 L<X509_CRL_verify(3)>
 
 =head1 HISTORY
@@ -65,8 +65,6 @@ available in all versions of OpenSSL.
 
 The X509_sign_ctx(), X509_REQ_sign_ctx()
 and X509_CRL_sign_ctx() functions were added in OpenSSL 1.0.1.
-
-The function X509_REQ_verify_with_libctx() was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

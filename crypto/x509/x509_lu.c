@@ -98,11 +98,17 @@ int X509_LOOKUP_by_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                        const X509_NAME *name, X509_OBJECT *ret,
                                        OPENSSL_CTX *libctx, const char *propq)
 {
-    if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
+    if (ctx->method == NULL
+        || (ctx->method->get_by_subject == NULL
+            && ctx->method->get_by_subject_with_libctx == NULL))
         return 0;
     if (ctx->skip)
         return 0;
-    return ctx->method->get_by_subject(ctx, type, name, ret, libctx, propq);
+    if (ctx->method->get_by_subject_with_libctx == NULL)
+        return ctx->method->get_by_subject(ctx, type, name, ret);
+    else
+        return ctx->method->get_by_subject_with_libctx(ctx, type, name, ret,
+                                                       libctx, propq);
 }
 
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,

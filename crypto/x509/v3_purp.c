@@ -84,7 +84,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
     int idx;
     const X509_PURPOSE *pt;
 
-    if (!X509v3_cache_extensions(x))
+    if (!x509v3_cache_extensions(x))
         return -1;
 
     /* Return if side-effect only call */
@@ -375,7 +375,7 @@ static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  */
-int X509v3_cache_extensions(X509 *x)
+int x509v3_cache_extensions(X509 *x)
 {
     BASIC_CONSTRAINTS *bs;
     PROXY_CERT_INFO_EXTENSION *pci;
@@ -630,7 +630,7 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 int X509_check_ca(X509 *x)
 {
     /* Note 0 normally means "not a CA" - but in this case means error. */
-    if (!X509v3_cache_extensions(x))
+    if (!x509v3_cache_extensions(x))
         return 0;
 
     return check_ca(x);
@@ -859,8 +859,8 @@ int x509_likely_issued(X509 *issuer, X509 *subject)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
     /* set issuer->skid and subject->akid */
-    if (!X509v3_cache_extensions(issuer)
-            || !X509v3_cache_extensions(subject))
+    if (!x509v3_cache_extensions(issuer)
+            || !x509v3_cache_extensions(subject))
         return X509_V_ERR_UNSPECIFIED;
 
     ret = X509_check_akid(issuer, subject->akid);

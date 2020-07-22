@@ -94,7 +94,7 @@ int X509_load_cert_file_with_libctx(X509_LOOKUP *ctx, const char *file, int type
         goto err;
     }
 
-    if (type != X509_FILETYPE_PEM && (type != X509_FILETYPE_ASN1)) {
+    if (type != X509_FILETYPE_PEM && type != X509_FILETYPE_ASN1) {
         X509err(0, X509_R_BAD_X509_FILETYPE);
         goto err;
     }

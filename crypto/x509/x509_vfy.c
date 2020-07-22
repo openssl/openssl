@@ -118,8 +118,7 @@ static int null_callback(int ok, X509_STORE_CTX *e)
  * to match issuer and subject names (i.e., the cert being self-issued) and any
  * present authority key identifier to match the subject key identifier, etc.
  */
-static int x509_self_signed_ex(X509 *cert, int verify_signature,
-                               OPENSSL_CTX *libctx, const char *propq)
+static int x509_self_signed(X509 *cert, int verify_signature)
 {
     EVP_PKEY *pkey;
 
@@ -127,7 +126,7 @@ static int x509_self_signed_ex(X509 *cert, int verify_signature,
         X509err(0, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
-    if (!X509v3_cache_extensions(cert))
+    if (!x509v3_cache_extensions(cert))
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;
@@ -139,12 +138,12 @@ static int x509_self_signed_ex(X509 *cert, int verify_signature,
 /* wrapper for internal use */
 static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x, int verify_signature)
 {
-    return x509_self_signed_ex(x, verify_signature, ctx->libctx, ctx->propq);
+    return x509_self_signed_ex(x, verify_signature);
 }
 
 int X509_self_signed(X509 *cert, int verify_signature)
 {
-    return x509_self_signed_ex(cert, verify_signature, NULL, NULL);
+    return x509_self_signed(cert, verify_signature);
 }
 
 /* Given a certificate try and find an exact match in the store */

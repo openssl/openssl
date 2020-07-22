@@ -154,9 +154,9 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ok;
 }
 
-static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                            const X509_NAME *name, X509_OBJECT *ret,
-                            OPENSSL_CTX *libctx, const char *propq)
+static int by_store_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                                        const X509_NAME *name, X509_OBJECT *ret,
+                                        OPENSSL_CTX *libctx, const char *propq)
 {
     OSSL_STORE_SEARCH *criterion =
         OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
@@ -208,6 +208,12 @@ static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ok;
 }
 
+static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                            const X509_NAME *name, X509_OBJECT *ret)
+{
+    return by_store_subject_with_libctx(ctx, type, name, ret, NULL, NULL);
+}
+
 /*
  * We lack the implementations for get_by_issuer_serial, get_by_fingerprint
  * and get_by_alias.  There's simply not enough support in the X509_LOOKUP
@@ -225,6 +231,7 @@ static X509_LOOKUP_METHOD x509_store_lookup = {
     NULL,                        /* get_by_issuer_serial */
     NULL,                        /* get_by_fingerprint */
     NULL,                        /* get_by_alias */
+    by_store_subject_with_libctx,
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_store(void)

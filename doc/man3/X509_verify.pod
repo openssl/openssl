@@ -36,8 +36,8 @@ verify the signatures of certificate requests and CRLs, respectively.
 
 =head1 RETURN VALUES
 
-X509_verify_with_libctx(), X509_verify(),
-X509_REQ_verify_ex(), X509_REQ_verify() and X509_CRL_verify()
+X509_verify(),
+X509_REQ_verify_with_libctx(), X509_REQ_verify() and X509_CRL_verify()
 return 1 if the signature is valid and 0 if the signature check fails.
 If the signature could not be checked at all because it was ill-formed
 or some other error occurred then -1 is returned.
