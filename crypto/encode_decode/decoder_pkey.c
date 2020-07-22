@@ -8,6 +8,7 @@
  */
 
 #include <openssl/core_names.h>
+#include <openssl/core_object.h>
 #include <openssl/evp.h>
 #include <openssl/ui.h>
 #include <openssl/decoder.h>
@@ -128,7 +129,7 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
     size_t object_ref_sz = 0;
     const OSSL_PARAM *p;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_DECODER_PARAM_DATA_TYPE);
+    p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_DATA_TYPE);
     if (p != NULL) {
         char *object_type = NULL;
 
@@ -143,7 +144,7 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
      * reference for the moment.  This enforces that the key data itself
      * remains with the provider.
      */
-    p = OSSL_PARAM_locate_const(params, OSSL_DECODER_PARAM_REFERENCE);
+    p = OSSL_PARAM_locate_const(params, OSSL_OBJECT_PARAM_REFERENCE);
     if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
         return 0;
     object_ref = p->data;
