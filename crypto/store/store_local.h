@@ -7,7 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core_dispatch.h>
 #include "internal/thread_once.h"
+#include "internal/refcount.h"
 #include <openssl/dsa.h>
 #include <openssl/engine.h>
 #include <openssl/evp.h>
@@ -100,6 +102,7 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme);
 
 /* loader stuff */
 struct ossl_store_loader_st {
+    /* Legacy stuff */
     const char *scheme;
     ENGINE *engine;
     OSSL_STORE_open_fn open;
@@ -112,6 +115,23 @@ struct ossl_store_loader_st {
     OSSL_STORE_error_fn error;
     OSSL_STORE_close_fn close;
     OSSL_STORE_open_with_libctx_fn open_with_libctx;
+
+    /* Provider stuff */
+    OSSL_PROVIDER *prov;
+    int scheme_id;
+    const char *propdef;
+
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *lock;
+
+    OSSL_FUNC_store_open_fn *p_open;
+    OSSL_FUNC_store_attach_fn *p_attach;
+    OSSL_FUNC_store_settable_ctx_params_fn *p_settable_ctx_params;
+    OSSL_FUNC_store_set_ctx_params_fn *p_set_ctx_params;
+    OSSL_FUNC_store_load_fn *p_load;
+    OSSL_FUNC_store_eof_fn *p_eof;
+    OSSL_FUNC_store_close_fn *p_close;
+    OSSL_FUNC_store_export_object_fn *p_export_object;
 };
 DEFINE_LHASH_OF(OSSL_STORE_LOADER);
 
@@ -125,3 +145,22 @@ void ossl_store_destroy_loaders_int(void);
 
 int ossl_store_init_once(void);
 int ossl_store_file_loader_init(void);
+
+/*-
+ *  'file' scheme stuff
+ *  -------------------
+ */
+
+OSSL_STORE_LOADER_CTX *ossl_store_file_attach_pem_bio_int(BIO *bp);
+int ossl_store_file_detach_pem_bio_int(OSSL_STORE_LOADER_CTX *ctx);
+
+/*-
+ * Provider stuff
+ * -------------------
+ */
+OSSL_STORE_LOADER *ossl_store_loader_fetch(OPENSSL_CTX *libctx,
+                                           const char *scheme,
+                                           const char *properties);
+OSSL_STORE_LOADER *ossl_store_loader_fetch_by_number(OPENSSL_CTX *libctx,
+                                                     int scheme_id,
+                                                     const char *properties);
