@@ -1045,7 +1045,7 @@ size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
  */
 
 size_t EC_KEY_key2oct(const EC_KEY *key, unsigned char *buf,
-                      size_t len, BN_CTX *ctx)
+                      size_t len, BN_CTX *ctx);
 
 /** Decodes a EC_KEY public key from a octet string
  *  \param  key    key to decode
