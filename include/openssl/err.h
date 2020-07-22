@@ -295,6 +295,7 @@ static ossl_inline int ERR_FATAL_ERROR(unsigned long errcode)
 # define ERR_R_DSA_LIB   ERR_LIB_DSA/* 10 */
 # define ERR_R_X509_LIB  ERR_LIB_X509/* 11 */
 # define ERR_R_ASN1_LIB  ERR_LIB_ASN1/* 13 */
+# define ERR_R_CRYPTO_LIB ERR_LIB_CRYPTO/* 15 */
 # define ERR_R_EC_LIB    ERR_LIB_EC/* 16 */
 # define ERR_R_BIO_LIB   ERR_LIB_BIO/* 32 */
 # define ERR_R_PKCS7_LIB ERR_LIB_PKCS7/* 33 */
