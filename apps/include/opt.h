@@ -273,9 +273,6 @@
         OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, \
         OPT_PROV__LAST
 
-# define OPT_LIBCTX_OPTIONS \
-        { "use_libctx", OPT_LIBCTX, '-', "Create a library context to load providers into (use before provider options)" }
-
 # define OPT_CONFIG_OPTION \
         { "config", OPT_CONFIG, '<', "Load a configuration file (this may load modules)" }
 

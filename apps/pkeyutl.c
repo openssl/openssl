@@ -48,7 +48,7 @@ typedef enum OPTION_choice {
     OPT_DERIVE, OPT_SIGFILE, OPT_INKEY, OPT_PEERKEY, OPT_PASSIN,
     OPT_PEERFORM, OPT_KEYFORM, OPT_PKEYOPT, OPT_PKEYOPT_PASSIN, OPT_KDF,
     OPT_KDFLEN, OPT_R_ENUM, OPT_PROV_ENUM,
-    OPT_LIBCTX, OPT_CONFIG,
+    OPT_CONFIG,
     OPT_RAWIN, OPT_DIGEST
 } OPTION_CHOICE;
 
@@ -98,7 +98,6 @@ const OPTIONS pkeyutl_options[] = {
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    OPT_LIBCTX_OPTIONS,
     {NULL}
 };
 
@@ -127,7 +126,7 @@ int pkeyutl_main(int argc, char **argv)
     int rawin = 0;
     const EVP_MD *md = NULL;
     int filesize = -1;
-    OPENSSL_CTX *libctx = NULL;
+    OPENSSL_CTX *libctx = app_get0_libctx();
     const char *propq = NULL;
 
     prog = opt_init(argc, argv, pkeyutl_options);
@@ -173,11 +172,6 @@ int pkeyutl_main(int argc, char **argv)
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))
-                goto end;
-            break;
-        case OPT_LIBCTX:
-            libctx = app_create_libctx();
-            if (libctx == NULL)
                 goto end;
             break;
         case OPT_CONFIG:
@@ -567,19 +561,19 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
                 goto end;
             }
         }
-        if (libctx != NULL)
-            ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
-        else
+        if (impl != NULL)
             ctx = EVP_PKEY_CTX_new_id(kdfnid, impl);
+        else
+            ctx = EVP_PKEY_CTX_new_from_name(libctx, kdfalg, propq);
     } else {
         if (pkey == NULL)
             goto end;
 
         *pkeysize = EVP_PKEY_size(pkey);
-        if (libctx != NULL)
-            ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
-        else
+        if (impl != NULL)
             ctx = EVP_PKEY_CTX_new(pkey, impl);
+        else
+            ctx = EVP_PKEY_CTX_new_from_pkey(libctx, pkey, propq);
         if (ppkey != NULL)
             *ppkey = pkey;
         EVP_PKEY_free(pkey);

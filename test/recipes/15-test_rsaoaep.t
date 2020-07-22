@@ -39,7 +39,7 @@ my $dec3_file = "dec3.txt";
 my $key_file = srctop_file("test", "testrsa.pem");
 
 unless ($no_fips) {
-    @prov = ( "-use_libctx", "-provider_path", $provpath, "-config", $provconf );
+    @prov = ( "-provider_path", $provpath, "-config", $provconf );
     my $infile = bldtop_file('providers', platform->dso('fips'));
 
     ok(run(app(['openssl', 'fipsinstall',
@@ -49,6 +49,7 @@ unless ($no_fips) {
                 '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
                 '-section_name', 'fips_sect'])),
        "fipsinstall");
+    $ENV{OPENSSL_TEST_LIBCTX} = "1";
 }
 
 ok(run(app(['openssl', 'pkeyutl',

@@ -101,14 +101,6 @@ $OpenSSL::safe::opt_provider_item = ""
 . "\n"
 . "See L<openssl(1)/Provider Options>.";
 
-# Additional Provider option
-$OpenSSL::safe::opt_provider_libctx_synopsis = ""
-. "[B<-use_libctx>]";
-$OpenSSL::safe::opt_provider_libctx_item = ""
-. "=item B<-use_libctx> I<name>\n"
-. "\n"
-. "See L<openssl(1)/Provider Options>.";
-
 # Configuration option
 $OpenSSL::safe::opt_config_synopsis = ""
 . "[B<-config> I<configfile>]\n";
