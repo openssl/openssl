@@ -91,20 +91,6 @@ OSSL_DESERIALIZER_get_params() attempts to get parameters specified
 with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
 implementation doesn't recognise should be ignored.
 
-=head1 NOTES
-
-OSSL_DESERIALIZER_fetch() may be called implicitly by other fetching
-functions, using the same library context and properties.
-Any other API that uses keys will typically do this.
-
-=begin comment TODO(3.0) Add examples!
-
-=head1 EXAMPLES
-
-Text, because pod2xxx doesn't like empty sections
-
-=end comment
-
 =head1 RETURN VALUES
 
 OSSL_DESERIALIZER_fetch() returns a pointer to an OSSL_DESERIALIZER object,
@@ -124,6 +110,20 @@ OSSL_DESERIALIZER_is_a() returns 1 if I<deserializer> was identifiable,
 otherwise 0.
 
 OSSL_DESERIALIZER_number() returns an integer.
+
+=head1 NOTES
+
+OSSL_DESERIALIZER_fetch() may be called implicitly by other fetching
+functions, using the same library context and properties.
+Any other API that uses keys will typically do this.
+
+=begin comment TODO(3.0) Add examples!
+
+=head1 EXAMPLES
+
+Text, because pod2xxx doesn't like empty sections
+
+=end comment
 
 =head1 SEE ALSO
 
