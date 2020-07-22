@@ -48,22 +48,22 @@ The search of deserializer implementations can be limited with
 I<input_type>, which specifies a starting input type.  This is further
 explained in L<OSSL_DESERIALIZER_CTX_set_input_type(3)>.
 
-If no suitable serializer was found, OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY()
+If no suitable deserializer was found, OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY()
 still creates a B<OSSL_DESERIALIZER_CTX>, but with no associated
 deserializer (L<OSSL_DESERIALIZER_CTX_num_deserializers(3)> returns
 zero).  This helps the caller distinguish between an error when
-creating the B<OSSL_DESERIALIZER_CTX>, and the lack the serializer
+creating the B<OSSL_DESERIALIZER_CTX>, and the lack the deserializer
 support and act accordingly.
 
 OSSL_DESERIALIZER_CTX_set_cipher() tells the implementation what cipher
 should be used to decrypt serialized keys.  The cipher is given by
 name I<cipher_name>.  The interpretation of that I<cipher_name> is
-implementation dependent.  The implementation may implement the digest
-directly itself or by other implementations, or it may choose to fetch
-it.  If the implementation supports fetching the cipher, then it may
-use I<propquery> as properties to be queried for when fetching.
-I<cipher_name> may also be NULL, which will result in failure if the
-serialized input is an encrypted key.
+implementation dependent.  The implementation may implement the cipher
+directly itself, or it may choose to fetch it.  If the implementation
+supports fetching the cipher, then it may use I<propquery> as
+properties to be queried for when fetching.  I<cipher_name> may also
+be NULL, which will result in failure if the serialized input is an
+encrypted key.
 
 OSSL_DESERIALIZER_CTX_set_passphrase() gives the implementation a
 pass phrase to use when decrypting the serialized private key.

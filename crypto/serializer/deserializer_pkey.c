@@ -112,7 +112,7 @@ static int deser_finalize_EVP_PKEY(OSSL_DESERIALIZER_INSTANCE *deser_inst,
      * contents entirely opaque to us, but may be passed to any provider
      * function that expects this (such as OSSL_FUNC_keymgmt_load().
      *
-     * This pointers are considered volatile, i.e. whatever they point at
+     * This pointers is considered volatile, i.e. whatever they point at
      * may be freed as soon as this function returns.
      */
     void *object_ref = NULL;
@@ -131,7 +131,7 @@ static int deser_finalize_EVP_PKEY(OSSL_DESERIALIZER_INSTANCE *deser_inst,
 
     /*
      * For stuff that should end up in an EVP_PKEY, we only accept an object
-     * reference for the moment.  This enforces that they key data itself
+     * reference for the moment.  This enforces that the key data itself
      * remains with the provider.
      */
     p = OSSL_PARAM_locate_const(params, OSSL_DESERIALIZER_PARAM_REFERENCE);
