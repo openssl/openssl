@@ -144,7 +144,7 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
     long der_len = 0;
     unsigned char *new_der = NULL;
     long new_der_len;
-    EVP_PKEY *pkey = NULL;       /* Oh, the irony */
+    EVP_PKEY *pkey = NULL;
     int ok = 0;
 
     ctx->sc.cb = pw_cb;
