@@ -162,7 +162,7 @@ int OSSL_DESERIALIZER_CTX_add_extra(OSSL_DESERIALIZER_CTX *ctx,
      * deserializers on top of the same stack.
      * Then it does the same again, but looping over the newly fetched
      * deserializers, until there are no more serializers to be fetched, or
-     * when we have done this 10 times (*).
+     * when we have done this 10 times.
      *
      * we do this with sliding windows on the stack by keeping track of indexes
      * and of the end.
@@ -247,8 +247,8 @@ int OSSL_DESERIALIZER_CTX_add_extra(OSSL_DESERIALIZER_CTX *ctx,
                 continue;
 
             /*
-             * Apart from keeping end_j up to date, We don't care about errors
-             * here.  If it doesn't collect, then it doesn't...
+             * Apart from keeping w_new_end up to date, We don't care about
+             * errors here.  If it doesn't collect, then it doesn't...
              */
             if (OSSL_DESERIALIZER_CTX_add_deserializer(ctx, deser)) /* ref++ */
                 w_new_end++;
@@ -407,7 +407,7 @@ static int deser_process(const OSSL_PARAM params[], void *arg)
          * If we have a previous deserializer, we check that the input type
          * of the next to be used matches the type of this previous one.
          * deser_inst->input_type is a cache of the parameter "input-type"
-         * value for those deserializer.
+         * value for that deserializer.
          */
         if (deser != NULL
             && !OSSL_DESERIALIZER_is_a(deser, new_deser_inst->input_type))

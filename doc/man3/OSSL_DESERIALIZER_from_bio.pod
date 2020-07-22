@@ -225,6 +225,14 @@ B<OSSL_DESERIALIZER> pointer on success, or NULL on failure.
 OSSL_DESERIALIZER_INSTANCE_deserializer_ctx() returns a provider
 context pointer on success, or NULL on failure.>
 
+=begin comment TODO(3.0) Add examples!
+
+=head1 EXAMPLES
+
+Text, because pod2xxx doesn't like empty sections
+
+=end comment
+
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_DESERIALIZER_CTX(3)>
