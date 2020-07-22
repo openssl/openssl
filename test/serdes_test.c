@@ -86,7 +86,7 @@ static int test_serialize_deserialize(EVP_PKEY *pkey,
         goto end;
 
     /*
-     * TODO(3.0) Remov this when PEM_write_bio_PrivateKey_traditional()
+     * TODO(3.0) Remove this when PEM_write_bio_PrivateKey_traditional()
      * handles provider side keys.
      */
     if (make_legacy
