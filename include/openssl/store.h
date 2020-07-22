@@ -52,15 +52,16 @@ typedef OSSL_STORE_INFO *(*OSSL_STORE_post_process_info_fn)(OSSL_STORE_INFO *,
  * Returns a context reference which represents the channel to communicate
  * through.
  */
-OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
-                                void *ui_data,
-                                OSSL_STORE_post_process_info_fn post_process,
-                                void *post_process_data);
-
-OSSL_STORE_CTX *OSSL_STORE_open_with_libctx
-    (const char *uri, OPENSSL_CTX *libctx, const char *propq,
-     const UI_METHOD *ui_method, void *ui_data,
-     OSSL_STORE_post_process_info_fn post_process, void *post_process_data);
+OSSL_STORE_CTX *
+OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method, void *ui_data,
+                OSSL_STORE_post_process_info_fn post_process,
+                void *post_process_data);
+OSSL_STORE_CTX *
+OSSL_STORE_open_with_libctx(const char *uri,
+                            OPENSSL_CTX *libctx, const char *propq,
+                            const UI_METHOD *ui_method, void *ui_data,
+                            OSSL_STORE_post_process_info_fn post_process,
+                            void *post_process_data);
 
 /*
  * Control / fine tune the OSSL_STORE channel.  |cmd| determines what is to be
