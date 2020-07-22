@@ -23,13 +23,18 @@
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/dsa.h>
+#include <openssl/safestack.h>
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "crypto/bn_dh.h"        /* _bignum_ffdhe2048_p */
+#include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
+#include "../e_os.h"        /* strcasecmp */
+
+DEFINE_STACK_OF_CSTRING()
 
 static OPENSSL_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
+static STACK_OF(OPENSSL_CSTRING) *cipher_names = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -193,8 +198,82 @@ static int test_dh_safeprime_param_keygen(int tstid)
     };
     return do_dh_param_keygen(tstid, bn);
 }
-
 #endif /* OPENSSL_NO_DH */
+
+static int test_cipher_reinit(int test_id)
+{
+    int ret = 0, out1_len = 0, out2_len = 0, diff, ccm;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char out1[256];
+    unsigned char out2[256];
+    unsigned char in[16] = {
+        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+        0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10
+    };
+    unsigned char key[64] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x02, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x03, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    };
+    unsigned char iv[16] = {
+        0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
+        0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+    };
+    const char *name = sk_OPENSSL_CSTRING_value(cipher_names, test_id);
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    TEST_note("Fetching %s\n", name);
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
+        goto err;
+
+    /* ccm fails on the second update - this matches OpenSSL 1_1_1 behaviour */
+    ccm = (EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE);
+
+    /* DES3-WRAP uses random every update - so it will give a different value */
+    diff = EVP_CIPHER_is_a(cipher, "DES3-WRAP");
+
+    if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, sizeof(in)))
+        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+        || !TEST_int_eq(EVP_EncryptUpdate(ctx, out2, &out2_len, in, sizeof(in)),
+                        ccm ? 0 : 1))
+        goto err;
+
+    if (ccm == 0) {
+        if (diff) {
+            if (!TEST_mem_ne(out1, out1_len, out2, out2_len))
+                goto err;
+        } else {
+            if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+                goto err;
+        }
+    }
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+static int name_cmp(const char * const *a, const char * const *b)
+{
+    return strcasecmp(*a, *b);
+}
+
+static void collect_cipher_names(EVP_CIPHER *cipher, void *cipher_names_list)
+{
+    STACK_OF(OPENSSL_CSTRING) *names = cipher_names_list;
+
+    sk_OPENSSL_CSTRING_push(names, EVP_CIPHER_name(cipher));
+}
 
 int setup_tests(void)
 {
@@ -242,11 +321,18 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_dh_safeprime_param_keygen, 3 * 3 * 3);
 #endif
+
+    if (!TEST_ptr(cipher_names = sk_OPENSSL_CSTRING_new(name_cmp)))
+        return 0;
+    EVP_CIPHER_do_all_provided(libctx, collect_cipher_names, cipher_names);
+
+    ADD_ALL_TESTS(test_cipher_reinit, sk_OPENSSL_CSTRING_num(cipher_names));
     return 1;
 }
 
 void cleanup_tests(void)
 {
+    sk_OPENSSL_CSTRING_free(cipher_names);
     OSSL_PROVIDER_unload(libprov);
     OPENSSL_CTX_free(libctx);
     OSSL_PROVIDER_unload(nullprov);

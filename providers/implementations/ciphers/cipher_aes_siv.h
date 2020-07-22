@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -18,6 +18,7 @@ typedef struct prov_cipher_hw_aes_siv_st {
     void (*setspeed)(void *ctx, int speed);
     int (*settag)(void *ctx, const unsigned char *tag, size_t tagl);
     void (*cleanup)(void *ctx);
+    int (*dupctx)(void *src, void *dst);
 } PROV_CIPHER_HW_AES_SIV;
 
 typedef struct prov_siv_ctx_st {
@@ -30,6 +31,7 @@ typedef struct prov_siv_ctx_st {
     EVP_CIPHER *ctr;        /* These are fetched - so we need to free them */
     EVP_CIPHER *cbc;
     const PROV_CIPHER_HW_AES_SIV *hw;
+    OPENSSL_CTX *libctx;
 } PROV_AES_SIV_CTX;
 
 const PROV_CIPHER_HW_AES_SIV *PROV_CIPHER_HW_aes_siv(size_t keybits);
