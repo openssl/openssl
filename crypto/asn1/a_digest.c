@@ -23,7 +23,6 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
 int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,

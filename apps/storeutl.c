@@ -85,7 +85,7 @@ int storeutl_main(int argc, char *argv[])
     OSSL_STORE_SEARCH *search = NULL;
     const EVP_MD *digest = NULL;
     OPENSSL_CTX *libctx = app_get0_libctx();
-    const char *propq = NULL;
+    const char *propq = app_get0_propq();
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
