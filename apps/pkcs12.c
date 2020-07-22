@@ -18,6 +18,7 @@
 #include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include <openssl/provider.h>
 
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(PKCS7)
@@ -61,12 +62,13 @@ typedef enum OPTION_choice {
     OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_LEGACY_ALG
 } OPTION_CHOICE;
 
 const OPTIONS pkcs12_options[] = {
     OPT_SECTION("General"),
     {"help", OPT_HELP, '-', "Display this summary"},
+    {"legacy", OPT_LEGACY_ALG, '-', "use legacy algorithms"},
 #ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine, possibly a hardware device"},
 #endif
@@ -117,9 +119,9 @@ const OPTIONS pkcs12_options[] = {
     OPT_SECTION("Encryption"),
 #ifndef OPENSSL_NO_RC2
     {"descert", OPT_DESCERT, '-',
-     "Encrypt output with 3DES (default RC2-40)"},
+     "Encrypt output with 3DES (default PBES2 with PBKDF2 and AES-256 CBC)"},
     {"certpbe", OPT_CERTPBE, 's',
-     "Certificate PBE algorithm (default RC2-40)"},
+     "Certificate PBE algorithm (default PBES2 with PBKDF2 and AES-256 CBC)"},
 #else
     {"descert", OPT_DESCERT, '-', "Encrypt output with 3DES (the default)"},
     {"certpbe", OPT_CERTPBE, 's', "Certificate PBE algorithm (default 3DES)"},
@@ -143,14 +145,10 @@ int pkcs12_main(int argc, char **argv)
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
-    int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0;
+    int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0, use_legacy = 0;
     int iter = PKCS12_DEFAULT_ITER, maciter = PKCS12_DEFAULT_ITER;
-#ifndef OPENSSL_NO_RC2
-    int cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
-#else
-    int cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
-#endif
-    int key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+    int cert_pbe = NID_aes_256_cbc;
+    int key_pbe = NID_aes_256_cbc;
     int ret = 1, macver = 1, add_lmk = 0, private = 0;
     int noprompt = 0;
     char *passinarg = NULL, *passoutarg = NULL, *passarg = NULL;
@@ -162,7 +160,7 @@ int pkcs12_main(int argc, char **argv)
     BIO *in = NULL, *out = NULL;
     PKCS12 *p12 = NULL;
     STACK_OF(OPENSSL_STRING) *canames = NULL;
-    const EVP_CIPHER *enc = EVP_des_ede3_cbc();
+    const EVP_CIPHER *enc = EVP_aes_256_cbc();
     OPTION_CHOICE o;
 
     prog = opt_init(argc, argv, pkcs12_options);
@@ -313,6 +311,9 @@ int pkcs12_main(int argc, char **argv)
         case OPT_ENGINE:
             e = setup_engine(opt_arg(), 0);
             break;
+        case OPT_LEGACY_ALG:
+            use_legacy = 1;
+            break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
                 goto end;
@@ -320,6 +321,29 @@ int pkcs12_main(int argc, char **argv)
         }
     }
     argc = opt_num_rest();
+
+    if (use_legacy) {
+        /* load the legacy provider if not loaded already*/
+        if (!OSSL_PROVIDER_available(app_get0_libctx(), "legacy")) {
+            if (!app_provider_load(app_get0_libctx(), "legacy"))
+                goto end;
+            /* load the default provider explicitly */
+            if (!app_provider_load(app_get0_libctx(), "default"))
+                goto end;
+        }
+        if (cert_pbe != NID_pbe_WithSHA1And3_Key_TripleDES_CBC) {
+            /* Restore default algorithms */
+#ifndef OPENSSL_NO_RC2
+            cert_pbe = NID_pbe_WithSHA1And40BitRC2_CBC;
+#else
+            cert_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+#endif
+        }
+
+        key_pbe = NID_pbe_WithSHA1And3_Key_TripleDES_CBC;
+        enc = EVP_des_ede3_cbc();
+    }
+
     if (argc != 0)
         goto opthelp;
 
