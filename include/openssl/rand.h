@@ -20,10 +20,21 @@
 # include <openssl/types.h>
 # include <openssl/e_os2.h>
 # include <openssl/randerr.h>
+# include <openssl/evp.h>
 
 #ifdef  __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Default security strength (in the sense of [NIST SP 800-90Ar1])
+ *
+ * NIST SP 800-90Ar1 supports the strength of the DRBG being smaller than that
+ * of the cipher by collecting less entropy. The current DRBG implementation
+ * does not take RAND_DRBG_STRENGTH into account and sets the strength of the
+ * DRBG to that of the cipher.
+ */
+# define RAND_DRBG_STRENGTH             256
 
 struct rand_meth_st {
     int (*seed) (const void *buf, int num);
@@ -55,6 +66,10 @@ int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
 int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
 
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
+
+EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx);
+EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx);
+EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx);
 
 void RAND_seed(const void *buf, int num);
 void RAND_keep_random_devices_open(int keep);

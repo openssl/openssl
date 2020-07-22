@@ -18,7 +18,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509v3.h>
 #include <openssl/rand.h>
-#include <openssl/rand_drbg.h>
 #include <openssl/ocsp.h>
 #include <openssl/dh.h>
 #include <openssl/engine.h>

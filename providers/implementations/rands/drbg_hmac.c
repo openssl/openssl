@@ -408,7 +408,6 @@ const OSSL_DISPATCH drbg_hmac_functions[] = {
     { OSSL_FUNC_RAND_GETTABLE_CTX_PARAMS,
       (void(*)(void))drbg_hmac_gettable_ctx_params },
     { OSSL_FUNC_RAND_GET_CTX_PARAMS, (void(*)(void))drbg_hmac_get_ctx_params },
-    { OSSL_FUNC_RAND_SET_CALLBACKS, (void(*)(void))drbg_set_callbacks },
     { OSSL_FUNC_RAND_VERIFY_ZEROIZATION,
       (void(*)(void))drbg_hmac_verify_zeroization },
     { 0, NULL }

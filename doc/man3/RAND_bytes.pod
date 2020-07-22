@@ -31,7 +31,7 @@ be used for generating values that should remain private. If using the
 default RAND_METHOD, this function uses a separate "private" PRNG
 instance so that a compromise of the "public" PRNG instance will not
 affect the secrecy of these private values, as described in L<RAND(7)>
-and L<RAND_DRBG(7)>.
+and L<EVP_RAND(7)>.
 
 RAND_bytes_ex() and RAND_priv_bytes_ex() are the same as RAND_bytes() and
 RAND_priv_bytes() except that they both take an additional I<ctx> parameter.
@@ -75,7 +75,7 @@ L<RAND_bytes(3)>,
 L<RAND_priv_bytes(3)>,
 L<ERR_get_error(3)>,
 L<RAND(7)>,
-L<RAND_DRBG(7)>
+L<EVP_RAND(7)>
 
 =head1 HISTORY
 

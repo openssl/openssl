@@ -23,6 +23,22 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Remove the RAND_DRBG API
+
+   The RAND_DRBG API did not fit well into the new provider concept as
+   implemented by EVP_RAND and EVP_RAND_CTX. The main reason is that the
+   RAND_DRBG API is a mixture of 'front end' and 'back end' API calls
+   and some of its API calls are rather low-level. This holds in particular
+   for the callback mechanism (RAND_DRBG_set_callbacks()).
+
+   Adding a compatibility layer to continue supporting the RAND_DRBG API as
+   a legacy API for a regular deprecation period turned out to come at the
+   price of complicating the new provider API unnecessarily. Since the
+   RAND_DRBG API exists only since version 1.1.1, it was decided by the OMC
+   to drop it entirely.
+
+   *Paul Dale and Matthias St. Pierre*
+
  * Allow SSL_set1_host() and SSL_add1_host() to take IP literal addresses
    as well as actual hostnames.
 

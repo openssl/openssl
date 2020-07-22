@@ -15,7 +15,9 @@
 #include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
 #include "crypto/rand.h"
+#include "crypto/cryptlib.h"
 #include <openssl/engine.h>
+#include <openssl/core_names.h>
 #include "internal/thread_once.h"
 #include "rand_local.h"
 #include "e_os.h"
@@ -105,16 +107,17 @@ int RAND_poll(void)
 {
     const RAND_METHOD *meth = RAND_get_rand_method();
     int ret = meth == RAND_OpenSSL();
-    RAND_POOL *pool;
 
     if (meth == NULL)
         return 0;
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (!ret) {
         /* fill random pool and seed the current legacy RNG */
-        pool = rand_pool_new(RAND_DRBG_STRENGTH, 1,
-                             (RAND_DRBG_STRENGTH + 7) / 8,
-                             RAND_POOL_MAX_LENGTH);
+        RAND_POOL *pool = rand_pool_new(RAND_DRBG_STRENGTH, 1,
+                                        (RAND_DRBG_STRENGTH + 7) / 8,
+                                        RAND_POOL_MAX_LENGTH);
+
         if (pool == NULL)
             return 0;
 
@@ -131,6 +134,7 @@ int RAND_poll(void)
      err:
         rand_pool_free(pool);
     }
+#endif
     return ret;
 }
 
@@ -235,15 +239,15 @@ int RAND_pseudo_bytes(unsigned char *buf, int num)
 
 int RAND_status(void)
 {
-    RAND_DRBG *drbg;
+    EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL())
         return meth->status != NULL ? meth->status() : 0;
 
-    if ((drbg = RAND_DRBG_get0_master()) == NULL || drbg->rand == NULL)
+    if ((rand = RAND_get0_primary(NULL)) == NULL)
         return EVP_RAND_STATE_UNINITIALISED;
-    return EVP_RAND_state(drbg->rand) == EVP_RAND_STATE_READY;
+    return EVP_RAND_state(rand) == EVP_RAND_STATE_READY;
 }
 #else  /* !FIPS_MODULE */
 
@@ -260,7 +264,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
  */
 int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 {
-    RAND_DRBG *drbg;
+    EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -270,9 +274,9 @@ int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_private_drbg(ctx);
-    if (drbg != NULL)
-        return RAND_DRBG_bytes(drbg, buf, num);
+    rand = RAND_get0_private(ctx);
+    if (rand != NULL)
+        return EVP_RAND_generate(rand, buf, num, 0, 0, NULL, 0);
 
     return 0;
 }
@@ -284,7 +288,7 @@ int RAND_priv_bytes(unsigned char *buf, int num)
 
 int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 {
-    RAND_DRBG *drbg;
+    EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
 
     if (meth != NULL && meth != RAND_OpenSSL()) {
@@ -294,9 +298,9 @@ int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
         return -1;
     }
 
-    drbg = OPENSSL_CTX_get0_public_drbg(ctx);
-    if (drbg != NULL)
-        return RAND_DRBG_bytes(drbg, buf, num);
+    rand = RAND_get0_public(ctx);
+    if (rand != NULL)
+        return EVP_RAND_generate(rand, buf, num, 0, 0, NULL, 0);
 
     return 0;
 }
@@ -304,4 +308,255 @@ int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 int RAND_bytes(unsigned char *buf, int num)
 {
     return RAND_bytes_ex(NULL, buf, num);
+}
+
+typedef struct rand_global_st {
+    /*
+     * The three shared DRBG instances
+     *
+     * There are three shared DRBG instances: <primary>, <public>, and
+     * <private>.  The <public> and <private> DRBGs are secondary ones.
+     * These are used for non-secret (e.g. nonces) and secret
+     * (e.g. private keys) data respectively.
+     */
+    CRYPTO_RWLOCK *lock;
+
+    /*
+     * The <primary> DRBG
+     *
+     * Not used directly by the application, only for reseeding the two other
+     * DRBGs. It reseeds itself by pulling either randomness from os entropy
+     * sources or by consuming randomness which was added by RAND_add().
+     *
+     * The <primary> DRBG is a global instance which is accessed concurrently by
+     * all threads. The necessary locking is managed automatically by its child
+     * DRBG instances during reseeding.
+     */
+    EVP_RAND_CTX *primary;
+
+    /*
+     * The <public> DRBG
+     *
+     * Used by default for generating random bytes using RAND_bytes().
+     *
+     * The <public> secondary DRBG is thread-local, i.e., there is one instance
+     * per thread.
+     */
+    CRYPTO_THREAD_LOCAL public;
+
+    /*
+     * The <private> DRBG
+     *
+     * Used by default for generating private keys using RAND_priv_bytes()
+     *
+     * The <private> secondary DRBG is thread-local, i.e., there is one
+     * instance per thread.
+     */
+    CRYPTO_THREAD_LOCAL private;
+} RAND_GLOBAL;
+
+/*
+ * Initialize the OPENSSL_CTX global DRBGs on first use.
+ * Returns the allocated global data on success or NULL on failure.
+ */
+static void *rand_ossl_ctx_new(OPENSSL_CTX *libctx)
+{
+    RAND_GLOBAL *dgbl = OPENSSL_zalloc(sizeof(*dgbl));
+
+    if (dgbl == NULL)
+        return NULL;
+
+#ifndef FIPS_MODULE
+    /*
+     * We need to ensure that base libcrypto thread handling has been
+     * initialised.
+     */
+     OPENSSL_init_crypto(0, NULL);
+#endif
+
+    dgbl->lock = CRYPTO_THREAD_lock_new();
+    if (dgbl->lock == NULL)
+        goto err1;
+
+    if (!CRYPTO_THREAD_init_local(&dgbl->private, NULL))
+        goto err1;
+
+    if (!CRYPTO_THREAD_init_local(&dgbl->public, NULL))
+        goto err2;
+
+    return dgbl;
+
+ err2:
+    CRYPTO_THREAD_cleanup_local(&dgbl->private);
+ err1:
+    CRYPTO_THREAD_lock_free(dgbl->lock);
+    OPENSSL_free(dgbl);
+    return NULL;
+}
+
+static void rand_ossl_ctx_free(void *vdgbl)
+{
+    RAND_GLOBAL *dgbl = vdgbl;
+
+    if (dgbl == NULL)
+        return;
+
+    CRYPTO_THREAD_lock_free(dgbl->lock);
+    EVP_RAND_CTX_free(dgbl->primary);
+    CRYPTO_THREAD_cleanup_local(&dgbl->private);
+    CRYPTO_THREAD_cleanup_local(&dgbl->public);
+
+    OPENSSL_free(dgbl);
+}
+
+static const OPENSSL_CTX_METHOD rand_drbg_ossl_ctx_method = {
+    rand_ossl_ctx_new,
+    rand_ossl_ctx_free,
+};
+
+static RAND_GLOBAL *rand_get_global(OPENSSL_CTX *libctx)
+{
+    return openssl_ctx_get_data(libctx, OPENSSL_CTX_DRBG_INDEX,
+                                &rand_drbg_ossl_ctx_method);
+}
+
+static void rand_delete_thread_state(void *arg)
+{
+    OPENSSL_CTX *ctx = arg;
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *rand;
+
+    if (dgbl == NULL)
+        return;
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->public);
+    CRYPTO_THREAD_set_local(&dgbl->public, NULL);
+    EVP_RAND_CTX_free(rand);
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->private);
+    CRYPTO_THREAD_set_local(&dgbl->private, NULL);
+    EVP_RAND_CTX_free(rand);
+}
+
+static EVP_RAND_CTX *rand_new_drbg(OPENSSL_CTX *libctx, EVP_RAND_CTX *parent,
+                                   unsigned int reseed_interval,
+                                   time_t reseed_time_interval)
+{
+    EVP_RAND *rand = EVP_RAND_fetch(libctx, "CTR-DRBG", NULL);
+    EVP_RAND_CTX *ctx;
+    OSSL_PARAM params[4], *p = params;
+    
+    if (rand == NULL) {
+        RANDerr(0, RAND_R_UNABLE_TO_FETCH_DRBG);
+        return NULL;
+    }
+    ctx = EVP_RAND_CTX_new(rand, parent);
+    EVP_RAND_free(rand);
+    if (ctx == NULL) {
+        RANDerr(0, RAND_R_UNABLE_TO_CREATE_DRBG);
+        return NULL;
+    }
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+                                            "AES-256-CTR", 0);
+    *p++ = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS,
+                                     &reseed_interval);
+    *p++ = OSSL_PARAM_construct_time_t(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL,
+                                       &reseed_time_interval);
+    *p = OSSL_PARAM_construct_end();
+    if (!EVP_RAND_set_ctx_params(ctx, params)) {
+        RANDerr(0, RAND_R_ERROR_INITIALISING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        ctx = NULL;
+    }
+    return ctx;
+}
+
+/*
+ * Get the primary random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ *
+ */
+EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return NULL;
+
+    if (dgbl->primary == NULL) {
+        if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+            return NULL;
+        if (dgbl->primary == NULL)
+            dgbl->primary = rand_new_drbg(ctx, NULL, PRIMARY_RESEED_INTERVAL,
+                                          PRIMARY_RESEED_TIME_INTERVAL);
+        CRYPTO_THREAD_unlock(dgbl->lock);
+    }
+    return dgbl->primary;
+}
+
+/*
+ * Get the public random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ */
+EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *rand, *primary;
+
+    if (dgbl == NULL)
+        return NULL;
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->public);
+    if (rand == NULL) {
+        primary = RAND_get0_primary(ctx);
+        if (primary == NULL)
+            return NULL;
+
+        ctx = openssl_ctx_get_concrete(ctx);
+        /*
+         * If the private is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->private) == NULL
+                && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
+            return NULL;
+        rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
+                             SECONDARY_RESEED_TIME_INTERVAL);
+        CRYPTO_THREAD_set_local(&dgbl->public, rand);
+    }
+    return rand;
+}
+
+/*
+ * Get the private random generator.
+ * Returns pointer to its EVP_RAND_CTX on success, NULL on failure.
+ */
+EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+    EVP_RAND_CTX *rand, *primary;
+
+    if (dgbl == NULL)
+        return NULL;
+
+    rand = CRYPTO_THREAD_get_local(&dgbl->private);
+    if (rand == NULL) {
+        primary = RAND_get0_primary(ctx);
+        if (primary == NULL)
+            return NULL;
+
+        ctx = openssl_ctx_get_concrete(ctx);
+        /*
+         * If the public is also NULL then this is the first time we've
+         * used this thread.
+         */
+        if (CRYPTO_THREAD_get_local(&dgbl->public) == NULL
+                && !ossl_init_thread_start(NULL, ctx, rand_delete_thread_state))
+            return NULL;
+        rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
+                             SECONDARY_RESEED_TIME_INTERVAL);
+        CRYPTO_THREAD_set_local(&dgbl->private, rand);
+    }
+    return rand;
 }

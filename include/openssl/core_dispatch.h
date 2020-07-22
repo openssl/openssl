@@ -374,8 +374,7 @@ OSSL_CORE_MAKE_FUNC(int, kdf_set_ctx_params,
 # define OSSL_FUNC_RAND_GET_PARAMS                   14
 # define OSSL_FUNC_RAND_GET_CTX_PARAMS               15
 # define OSSL_FUNC_RAND_SET_CTX_PARAMS               16
-# define OSSL_FUNC_RAND_SET_CALLBACKS                17
-# define OSSL_FUNC_RAND_VERIFY_ZEROIZATION           18
+# define OSSL_FUNC_RAND_VERIFY_ZEROIZATION           17
 
 OSSL_CORE_MAKE_FUNC(void *,rand_newctx,
                     (void *provctx, void *parent,

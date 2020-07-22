@@ -98,6 +98,8 @@ int ERR_load_RAND_strings(void);
 # define RAND_R_SELFTEST_FAILURE                          119
 # define RAND_R_TOO_LITTLE_NONCE_REQUESTED                135
 # define RAND_R_TOO_MUCH_NONCE_REQUESTED                  136
+# define RAND_R_UNABLE_TO_CREATE_DRBG                     143
+# define RAND_R_UNABLE_TO_FETCH_DRBG                      144
 # define RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER  141
 # define RAND_R_UNABLE_TO_GET_PARENT_STRENGTH             138
 # define RAND_R_UNABLE_TO_GET_RESEED_PROP_CTR             142

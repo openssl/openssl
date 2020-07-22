@@ -38,10 +38,6 @@ functions
  /* Random number generator functions: additional */
  size_t OSSL_FUNC_rand_nonce(void *ctx, unsigned char *out, size_t outlen,
                              int strength, size_t min_noncelen, size_t max_noncelen);
- void OSSL_FUNC_rand_set_callbacks(void *ctx, OSSL_CALLBACK *get_entropy,
-                                   OSSL_CALLBACK *cleanup_entropy,
-                                   OSSL_CALLBACK *get_nonce,
-                                   OSSL_CALLBACK *cleanup_nonce, void *arg);
  int OSSL_FUNC_rand_verify_zeroization(void *ctx);
 
  /* Context Locking */
@@ -113,14 +109,6 @@ bytes can optionally be provided.
 OSSL_FUNC_rand_nonce() is used to generate a nonce of the given I<strength> with a
 length from I<min_noncelen> to I<max_noncelen>. If the output buffer I<out> is
 NULL, the length of the nonce should be returned.
-
-OSSL_FUNC_rand_set_callbacks() is used to supply custom entropy and nonce callbacks.
-Instead of gathering seed material from its usual sources, the DRBG I<ctx>
-should call these functions.
-The I<get_entropy> and I<cleanup_entropy> callbacks obtain and release bytes
-of entropy.
-The I<get_nonce> and I<cleanup_nonce> functions obtain and release nonce bytes.
-In all cases, the additional argument I<arg> is passed to the callbacks.
 
 OSSL_FUNC_rand_verify_zeroization() is used to determine if the internal state of the
 DRBG is zero.  This capability is mandated by NIST as part of the self
@@ -258,7 +246,7 @@ All of the remaining functions should return 1 for success or 0 on error.
 
 L<provider(7)>,
 L<RAND(7)>,
-L<RAND_DRBG(7)>
+L<EVP_RAND(7)>
 
 =head1 HISTORY
 

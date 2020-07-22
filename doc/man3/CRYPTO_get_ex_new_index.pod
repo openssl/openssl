@@ -50,7 +50,6 @@ The specific structures are:
     EC_KEY
     ENGINE
     EVP_PKEY
-    RAND_DRBG
     RSA
     SSL
     SSL_CTX

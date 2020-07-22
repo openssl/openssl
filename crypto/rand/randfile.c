@@ -16,7 +16,6 @@
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
-#include <openssl/rand_drbg.h>
 #include <openssl/buffer.h>
 
 #ifdef OPENSSL_SYS_VMS

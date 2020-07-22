@@ -1160,11 +1160,7 @@ int EVP_RAND_reseed(EVP_RAND_CTX *ctx, int prediction_resistance,
                     const unsigned char *addin, size_t addin_len);
 __owur int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen);
 __owur int EVP_RAND_enable_locking(EVP_RAND_CTX *ctx);
-int EVP_RAND_set_callbacks(EVP_RAND_CTX *ctx,
-                           OSSL_INOUT_CALLBACK *get_entropy,
-                           OSSL_CALLBACK *cleanup_entropy,
-                           OSSL_INOUT_CALLBACK *get_nonce,
-                           OSSL_CALLBACK *cleanup_nonce, void *arg);
+
 int EVP_RAND_verify_zeroization(EVP_RAND_CTX *ctx);
 unsigned int EVP_RAND_strength(EVP_RAND_CTX *ctx);
 int EVP_RAND_state(EVP_RAND_CTX *ctx);

@@ -12,7 +12,7 @@
 #include <openssl/params.h>
 #include <openssl/obj_mac.h> /* NIDs used by ossl_prov_util_nid_to_name() */
 #include <openssl/fips_names.h>
-#include <openssl/rand_drbg.h> /* OPENSSL_CTX_get0_public_drbg() */
+#include <openssl/rand.h> /* RAND_get0_public() */
 #include "internal/cryptlib.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -642,7 +642,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     }
 
     /* TODO(3.0): Tests will hang if this is removed */
-    (void)OPENSSL_CTX_get0_public_drbg(libctx);
+    (void)RAND_get0_public(libctx);
 
     *out = fips_dispatch_table;
     return 1;
