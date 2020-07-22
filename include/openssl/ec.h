@@ -1040,6 +1040,7 @@ size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
  *  \param  buf    memory buffer for the result. If NULL the function returns
  *                 required buffer size.
  *  \param  len    length of the memory buffer
+ *  \param  ctx    BN_CTX object (optional)
  *  \return the length of the encoded octet string or 0 if an error occurred
  */
 
