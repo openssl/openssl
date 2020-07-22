@@ -7653,6 +7653,7 @@ static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
     *pkey = privpkey;
 
     BIO_free(in);
+    BIO_free(priv_in);
     return 1;
 err:
     X509_free(xcert);

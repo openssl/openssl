@@ -23,7 +23,8 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
     OSSL_STORE_CTX *ctx = NULL;
     X509_STORE *xstore = X509_LOOKUP_get_store(lctx);
 
-    if ((ctx = OSSL_STORE_open(uri, NULL, NULL, NULL, NULL)) == NULL)
+    if ((ctx = OSSL_STORE_open_with_libctx(uri, NULL, NULL, NULL, NULL,
+                                           libctx, propq)) == NULL)
         return 0;
 
     /*
@@ -48,7 +49,7 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
         OSSL_STORE_find(ctx, criterion);
 
     for (;;) {
-        OSSL_STORE_INFO *info = OSSL_STORE_load_with_libctx(ctx, libctx, propq);
+        OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int infotype;
 
         /* NULL means error or "end of file".  Either way, we break. */
@@ -106,10 +107,10 @@ static void by_store_free(X509_LOOKUP *ctx)
     sk_OPENSSL_STRING_pop_free(uris, free_uri);
 }
 
-static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
-                         const char *argp, long argl,
-                         char **retp,
-                         OPENSSL_CTX *libctx, const char *propq)
+static int by_store_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
+                                     const char *argp, long argl,
+                                     char **retp,
+                                     OPENSSL_CTX *libctx, const char *propq)
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
@@ -134,6 +135,12 @@ static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
     }
 
     return 0;
+}
+
+static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
+                         const char *argp, long argl, char **retp)
+{
+    return by_store_ctrl_with_libctx(ctx, cmd, argp, argl, retp, NULL, NULL);
 }
 
 static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
@@ -232,6 +239,7 @@ static X509_LOOKUP_METHOD x509_store_lookup = {
     NULL,                        /* get_by_fingerprint */
     NULL,                        /* get_by_alias */
     by_store_subject_with_libctx,
+    by_store_ctrl_with_libctx
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_store(void)

@@ -75,7 +75,7 @@ struct x509_lookup_method_st {
     int (*init) (X509_LOOKUP *ctx);
     int (*shutdown) (X509_LOOKUP *ctx);
     int (*ctrl) (X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
-                 char **ret, OPENSSL_CTX *libctx, const char *propq);
+                 char **ret);
     int (*get_by_subject) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                            const X509_NAME *name, X509_OBJECT *ret);
     int (*get_by_issuer_serial) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
@@ -90,6 +90,9 @@ struct x509_lookup_method_st {
     int (*get_by_subject_with_libctx) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                        const X509_NAME *name, X509_OBJECT *ret,
                                        OPENSSL_CTX *libctx, const char *propq);
+    int (*ctrl_with_libctx) (X509_LOOKUP *ctx, int cmd,
+                             const char *argc, long argl, char **ret,
+                             OPENSSL_CTX *libctx, const char *propq);
 };
 
 /* This is the functions plus an instance of the local variables. */

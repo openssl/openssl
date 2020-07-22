@@ -82,10 +82,12 @@ int X509_LOOKUP_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd, const char *argc,
 {
     if (ctx->method == NULL)
         return -1;
+    if (ctx->method->ctrl_with_libctx != NULL)
+        return ctx->method->ctrl_with_libctx(ctx, cmd, argc, argl, ret,
+                                             libctx, propq);
     if (ctx->method->ctrl != NULL)
-        return ctx->method->ctrl(ctx, cmd, argc, argl, ret, libctx, propq);
-    else
-        return 1;
+        return ctx->method->ctrl(ctx, cmd, argc, argl, ret);
+    return 1;
 }
 
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
@@ -98,17 +100,16 @@ int X509_LOOKUP_by_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                        const X509_NAME *name, X509_OBJECT *ret,
                                        OPENSSL_CTX *libctx, const char *propq)
 {
-    if (ctx->method == NULL
+    if (ctx->skip
+        || ctx->method == NULL
         || (ctx->method->get_by_subject == NULL
             && ctx->method->get_by_subject_with_libctx == NULL))
         return 0;
-    if (ctx->skip)
-        return 0;
-    if (ctx->method->get_by_subject_with_libctx == NULL)
-        return ctx->method->get_by_subject(ctx, type, name, ret);
-    else
+    if (ctx->method->get_by_subject_with_libctx != NULL)
         return ctx->method->get_by_subject_with_libctx(ctx, type, name, ret,
                                                        libctx, propq);
+    else
+        return ctx->method->get_by_subject(ctx, type, name, ret);
 }
 
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,

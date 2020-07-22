@@ -400,7 +400,7 @@ static int ssl_set_cert(CERT *c, X509 *x)
 
 int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
 {
-    int j;
+    int j = SSL_R_BAD_VALUE;
     BIO *in;
     int ret = 0;
     X509 *x = NULL, *cert = NULL;

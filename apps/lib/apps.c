@@ -658,9 +658,10 @@ static int load_certs_crls(const char *file, int format,
         return 0;
 
     xis = PEM_X509_INFO_read_bio_with_libctx(bio, NULL,
-                                 (pem_password_cb *)password_callback,
-                                 &cb_data,
-                                 app_get0_libctx(), app_get0_propq());
+                                             (pem_password_cb *)password_callback,
+                                             &cb_data,
+                                             app_get0_libctx(),
+                                             app_get0_propq());
 
     BIO_free(bio);
 
@@ -794,11 +795,13 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
         unbuffer(stdin);
         bio = BIO_new_fp(stdin, 0);
         if (bio != NULL)
-            ctx = OSSL_STORE_attach(bio, NULL, "file", NULL,
-                                    get_ui_method(), &uidata, NULL, NULL);
+            ctx = OSSL_STORE_attach(bio, "file",
+                                    get_ui_method(), &uidata, NULL, NULL,
+                                    libctx, propq);
         uri = "<stdin>";
     } else {
-        ctx = OSSL_STORE_open(uri, get_ui_method(), &uidata, NULL, NULL);
+        ctx = OSSL_STORE_open_with_libctx(uri, get_ui_method(), &uidata, NULL,
+                                          NULL, libctx, propq);
     }
     if (ctx == NULL) {
         BIO_printf(bio_err, "Could not open file or uri %s for loading %s\n",
@@ -807,7 +810,7 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
     }
 
     for (;;) {
-        OSSL_STORE_INFO *info = OSSL_STORE_load_with_libctx(ctx, libctx, propq);
+        OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int type = info == NULL ? 0 : OSSL_STORE_INFO_get_type(info);
         const char *infostr =
             info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);

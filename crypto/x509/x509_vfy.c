@@ -118,7 +118,7 @@ static int null_callback(int ok, X509_STORE_CTX *e)
  * to match issuer and subject names (i.e., the cert being self-issued) and any
  * present authority key identifier to match the subject key identifier, etc.
  */
-static int x509_self_signed(X509 *cert, int verify_signature)
+int X509_self_signed(X509 *cert, int verify_signature)
 {
     EVP_PKEY *pkey;
 
@@ -133,17 +133,6 @@ static int x509_self_signed(X509 *cert, int verify_signature)
     if (!verify_signature)
         return 1;
     return X509_verify(cert, pkey);
-}
-
-/* wrapper for internal use */
-static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x, int verify_signature)
-{
-    return x509_self_signed(x, verify_signature);
-}
-
-int X509_self_signed(X509 *cert, int verify_signature)
-{
-    return x509_self_signed(cert, verify_signature);
 }
 
 /* Given a certificate try and find an exact match in the store */
@@ -3012,7 +3001,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         return 0;
     }
 
-    self_signed = cert_self_signed(ctx, cert, 0);
+    self_signed = X509_self_signed(cert, 0);
     if (self_signed < 0) {
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -3190,7 +3179,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    self_signed = cert_self_signed(ctx, x, 0);
+                    self_signed = X509_self_signed(x, 0);
                     if (self_signed < 0) {
                         ctx->error = X509_V_ERR_UNSPECIFIED;
                         return 0;
@@ -3316,7 +3305,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             x = xtmp;
             ++ctx->num_untrusted;
-            self_signed = cert_self_signed(ctx, xtmp, 0);
+            self_signed = X509_self_signed(xtmp, 0);
             if (self_signed < 0) {
                 sk_X509_free(sktmp);
                 ctx->error = X509_V_ERR_UNSPECIFIED;

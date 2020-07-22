@@ -415,12 +415,21 @@ X509_LOOKUP_METHOD *X509_LOOKUP_file(void);
 X509_LOOKUP_METHOD *X509_LOOKUP_store(void);
 
 typedef int (*X509_LOOKUP_ctrl_fn)(X509_LOOKUP *ctx, int cmd, const char *argc,
-                                   long argl, char **ret,
-                                   OPENSSL_CTX *libctx, const char *propq);
+                                   long argl, char **ret);
+typedef int (*X509_LOOKUP_ctrl_with_libctx_fn)(
+    X509_LOOKUP *ctx, int cmd, const char *argc, long argl, char **ret,
+    OPENSSL_CTX *libctx, const char *propq);
+
 typedef int (*X509_LOOKUP_get_by_subject_fn)(X509_LOOKUP *ctx,
                                              X509_LOOKUP_TYPE type,
                                              const X509_NAME *name,
                                              X509_OBJECT *ret);
+typedef int (*X509_LOOKUP_get_by_subject_with_libctx_fn)(X509_LOOKUP *ctx,
+                                                         X509_LOOKUP_TYPE type,
+                                                         const X509_NAME *name,
+                                                         X509_OBJECT *ret,
+                                                         OPENSSL_CTX *libctx,
+                                                         const char *propq);
 typedef int (*X509_LOOKUP_get_by_issuer_serial_fn)(X509_LOOKUP *ctx,
                                                    X509_LOOKUP_TYPE type,
                                                    const X509_NAME *name,
@@ -436,12 +445,6 @@ typedef int (*X509_LOOKUP_get_by_alias_fn)(X509_LOOKUP *ctx,
                                            const char *str,
                                            int len,
                                            X509_OBJECT *ret);
-typedef int (*X509_LOOKUP_get_by_subject_with_libctx_fn)(X509_LOOKUP *ctx,
-                                                         X509_LOOKUP_TYPE type,
-                                                         const X509_NAME *name,
-                                                         X509_OBJECT *ret,
-                                                         OPENSSL_CTX *libctx,
-                                                         const char *propq);
 
 X509_LOOKUP_METHOD *X509_LOOKUP_meth_new(const char *name);
 void X509_LOOKUP_meth_free(X509_LOOKUP_METHOD *method);

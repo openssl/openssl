@@ -360,7 +360,8 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
     OSSL_STORE_CTX *store_ctx = NULL;
     int ret = 1, items = 0;
 
-    if ((store_ctx = OSSL_STORE_open(uri, uimeth, uidata, NULL, NULL))
+    if ((store_ctx = OSSL_STORE_open_with_libctx(uri, uimeth, uidata, NULL, NULL,
+                                                 libctx, propq))
         == NULL) {
         BIO_printf(bio_err, "Couldn't open file or uri %s\n", uri);
         ERR_print_errors(bio_err);
@@ -392,8 +393,7 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
     ret = 0;
 
     for (;;) {
-        OSSL_STORE_INFO *info = OSSL_STORE_load_with_libctx(store_ctx, libctx,
-                                                            propq);
+        OSSL_STORE_INFO *info = OSSL_STORE_load(store_ctx);
         int type = info == NULL ? 0 : OSSL_STORE_INFO_get_type(info);
         const char *infostr =
             info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);

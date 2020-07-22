@@ -20,8 +20,11 @@
 DEFINE_STACK_OF(X509_INFO)
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
-                        long argl, char **ret,
-                        OPENSSL_CTX *libctx, const char *propq);
+                        long argl, char **ret);
+static int by_file_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
+                                    const char *argc, long argl, char **ret,
+                                    OPENSSL_CTX *libctx, const char *propq);
+
 
 static X509_LOOKUP_METHOD x509_file_lookup = {
     "Load file into cache",
@@ -34,6 +37,8 @@ static X509_LOOKUP_METHOD x509_file_lookup = {
     NULL,                       /* get_by_issuer_serial */
     NULL,                       /* get_by_fingerprint */
     NULL,                       /* get_by_alias */
+    NULL,                       /* get_by_subject_with_libctx */
+    by_file_ctrl_with_libctx,   /* ctrl_with_libctx */
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_file(void)
@@ -41,9 +46,9 @@ X509_LOOKUP_METHOD *X509_LOOKUP_file(void)
     return &x509_file_lookup;
 }
 
-static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
-                        long argl, char **ret,
-                        OPENSSL_CTX *libctx, const char *propq)
+static int by_file_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
+                                    const char *argp, long argl, char **ret,
+                                    OPENSSL_CTX *libctx, const char *propq)
 {
     int ok = 0;
     const char *file;
@@ -63,7 +68,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
                          X509_FILETYPE_PEM, libctx, propq) != 0);
 
             if (!ok) {
-                X509err(X509_F_BY_FILE_CTRL, X509_R_LOADING_DEFAULTS);
+                X509err(0, X509_R_LOADING_DEFAULTS);
             }
         } else {
             if (argl == X509_FILETYPE_PEM)
@@ -77,6 +82,12 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp,
         break;
     }
     return ok;
+}
+
+static int by_file_ctrl(X509_LOOKUP *ctx, int cmd,
+                        const char *argp, long argl, char **ret)
+{
+    return by_file_ctrl_with_libctx(ctx, cmd, argp, argl, ret, NULL, NULL);
 }
 
 int X509_load_cert_file_with_libctx(X509_LOOKUP *ctx, const char *file, int type,

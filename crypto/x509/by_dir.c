@@ -42,7 +42,7 @@ typedef struct lookup_dir_st {
 } BY_DIR;
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-                    char **retp, OPENSSL_CTX *libctx, const char *propq);
+                    char **retp);
 
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
@@ -57,16 +57,17 @@ static int get_cert_by_subject_with_libctx(X509_LOOKUP *xl,
                                            const char *propq);
 static X509_LOOKUP_METHOD x509_dir_lookup = {
     "Load certs from files in a directory",
-    new_dir,                    /* new_item */
-    free_dir,                   /* free */
-    NULL,                       /* init */
-    NULL,                       /* shutdown */
-    dir_ctrl,                   /* ctrl */
-    get_cert_by_subject,        /* get_by_subject */
-    NULL,                       /* get_by_issuer_serial */
-    NULL,                       /* get_by_fingerprint */
-    NULL,                       /* get_by_alias */
-    get_cert_by_subject_with_libctx
+    new_dir,                         /* new_item */
+    free_dir,                        /* free */
+    NULL,                            /* init */
+    NULL,                            /* shutdown */
+    dir_ctrl,                        /* ctrl */
+    get_cert_by_subject,             /* get_by_subject */
+    NULL,                            /* get_by_issuer_serial */
+    NULL,                            /* get_by_fingerprint */
+    NULL,                            /* get_by_alias */
+    get_cert_by_subject_with_libctx, /* get_by_subject_with_libctx */
+    NULL,                            /* ctrl_with_libctx */
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
@@ -75,7 +76,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 }
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-                    char **retp, OPENSSL_CTX *libctx, const char *propq)
+                    char **retp)
 {
     int ret = 0;
     BY_DIR *ld = (BY_DIR *)ctx->method_data;
