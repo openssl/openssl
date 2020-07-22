@@ -2,18 +2,17 @@
 
 =head1 NAME
 
-EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_with_libctx,
-EC_KEY_new, EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
+EC_KEY_get_method, EC_KEY_set_method, EC_KEY_new_with_libctx, EC_KEY_new,
+EC_KEY_get_flags, EC_KEY_set_flags, EC_KEY_clear_flags,
 EC_KEY_new_by_curve_name_with_libctx, EC_KEY_new_by_curve_name, EC_KEY_free,
-EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref, EC_KEY_get0_engine,
-EC_KEY_get0_group, EC_KEY_set_group, EC_KEY_get0_private_key,
-EC_KEY_set_private_key, EC_KEY_get0_public_key, EC_KEY_set_public_key,
-EC_KEY_get_conv_form,
+EC_KEY_copy, EC_KEY_dup, EC_KEY_up_ref, EC_KEY_get0_engine, EC_KEY_get0_group,
+EC_KEY_set_group, EC_KEY_get0_private_key, EC_KEY_set_private_key,
+EC_KEY_get0_public_key, EC_KEY_set_public_key, EC_KEY_get_conv_form,
 EC_KEY_set_conv_form, EC_KEY_set_asn1_flag, EC_KEY_precompute_mult,
-EC_KEY_generate_key, EC_KEY_check_key, EC_KEY_set_public_key_affine_coordinates,
-EC_KEY_oct2key, EC_KEY_key2buf, EC_KEY_oct2priv, EC_KEY_priv2oct,
-EC_KEY_priv2buf - Functions for creating, destroying and manipulating
-EC_KEY objects
+EC_KEY_generate_key, EC_KEY_check_key,
+EC_KEY_set_public_key_affine_coordinates, EC_KEY_oct2key, EC_KEY_key2oct,
+EC_KEY_key2buf, EC_KEY_oct2priv, EC_KEY_priv2oct, EC_KEY_priv2buf - Functions
+for creating, destroying and manipulating EC_KEY objects
 
 =head1 SYNOPSIS
 
@@ -48,6 +47,7 @@ EC_KEY objects
  int EC_KEY_set_method(EC_KEY *key, const EC_KEY_METHOD *meth);
 
  int EC_KEY_oct2key(EC_KEY *eckey, const unsigned char *buf, size_t len, BN_CTX *ctx);
+ size_t EC_KEY_key2oct(const EC_KEY *eckey, unsigned char *buf, size_t len, BN_CTX *ctx);
  size_t EC_KEY_key2buf(const EC_KEY *eckey, point_conversion_form_t form,
                        unsigned char **pbuf, BN_CTX *ctx);
 
@@ -148,9 +148,9 @@ for faster point multiplication. See also L<EC_POINT_add(3)>.
 Modern versions should instead switch to named curves which OpenSSL has
 hardcoded lookup tables for.
 
-EC_KEY_oct2key() and EC_KEY_key2buf() are identical to the functions
-EC_POINT_oct2point() and EC_POINT_point2buf() except they use the public key
-EC_POINT in I<eckey>.
+EC_KEY_oct2key(), EC_KEY_key2oct() and EC_KEY_key2buf() are identical to the
+functions EC_POINT_oct2point(), EC_POINT_point2oct() and EC_POINT_point2buf()
+except they use the public key EC_POINT in I<eckey>.
 
 EC_KEY_oct2priv() and EC_KEY_priv2oct() convert between the private key
 component of I<eckey> and octet form. The octet form consists of the content
@@ -193,8 +193,8 @@ EC_KEY_get0_private_key() returns the private key associated with the EC_KEY.
 
 EC_KEY_get_conv_form() return the point_conversion_form for the EC_KEY.
 
-EC_KEY_key2buf(), EC_KEY_priv2oct() and EC_KEY_priv2buf() return the length
-of the buffer or 0 on error.
+EC_KEY_key2oct(), EC_KEY_key2buf(), EC_KEY_priv2oct() and EC_KEY_priv2buf()
+return the length of the buffer or 0 on error.
 
 =head1 SEE ALSO
 
