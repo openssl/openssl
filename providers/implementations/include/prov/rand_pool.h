@@ -11,7 +11,7 @@
 # define OSSL_PROVIDER_RAND_POOL_H
 
 # include <stdio.h>
-# include <openssl/rand_drbg.h>
+# include <openssl/rand.h>
 
 /*
  * Maximum allocation size for RANDOM_POOL buffers

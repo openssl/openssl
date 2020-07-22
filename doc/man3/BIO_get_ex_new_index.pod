@@ -10,7 +10,6 @@ ECDH_get_ex_new_index, ECDH_set_ex_data, ECDH_get_ex_data,
 EC_KEY_get_ex_new_index, EC_KEY_set_ex_data, EC_KEY_get_ex_data,
 ENGINE_get_ex_new_index, ENGINE_set_ex_data, ENGINE_get_ex_data,
 EVP_PKEY_get_ex_new_index, EVP_PKEY_set_ex_data, EVP_PKEY_get_ex_data,
-RAND_DRBG_set_ex_data, RAND_DRBG_get_ex_data, RAND_DRBG_get_ex_new_index,
 RSA_get_ex_new_index, RSA_set_ex_data, RSA_get_ex_data,
 RSA_set_app_data, RSA_get_app_data,
 SSL_get_ex_new_index, SSL_set_ex_data, SSL_get_ex_data,
@@ -70,8 +69,6 @@ TYPE_set_app_data() is a macro that invokes TYPE_set_ex_data() with
 B<idx> set to zero.
 TYPE_get_app_data() is a macro that invokes TYPE_get_ex_data() with
 B<idx> set to zero.
-Note that these functions are not defined for the B<RAND_DRBG> type because
-there are no backward compatibility concerns.
 
 =head1 RETURN VALUES
 

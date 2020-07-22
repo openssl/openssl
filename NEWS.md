@@ -20,6 +20,7 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Remove the `RAND_DRBG` API.
   * Deprecated the `ENGINE` API.
   * Added `OPENSSL_CTX`, a libcrypto library context.
   * Interactive mode is removed from the 'openssl' program.

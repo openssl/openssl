@@ -219,15 +219,6 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
                        unsigned int strength, int prediction_resistance,
                        const unsigned char *adin, size_t adinlen);
 
-/*
- * Entropy call back for the FIPS 140-2 section 4.9.2 Conditional Tests.
- * These need to be exposed for the unit tests.
- */
-int drbg_set_callbacks(void *vctx, OSSL_INOUT_CALLBACK *get_entropy_fn,
-                       OSSL_CALLBACK *cleanup_entropy_fn,
-                       OSSL_INOUT_CALLBACK *get_nonce_fn,
-                       OSSL_CALLBACK *cleanup_nonce_fn, void *arg);
-
 /* Verify that an array of numeric values is all zero */
 #define PROV_DRBG_VERYIFY_ZEROIZATION(v)    \
     {                                       \

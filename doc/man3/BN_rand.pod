@@ -82,7 +82,7 @@ L<RAND_add(3)>,
 L<RAND_bytes(3)>,
 L<RAND_priv_bytes(3)>,
 L<RAND(7)>,
-L<RAND_DRBG(7)>
+L<EVP_RAND(7)>
 
 =head1 HISTORY
 

@@ -2989,6 +2989,8 @@ RAND_R_RESEED_ERROR:118:reseed error
 RAND_R_SELFTEST_FAILURE:119:selftest failure
 RAND_R_TOO_LITTLE_NONCE_REQUESTED:135:too little nonce requested
 RAND_R_TOO_MUCH_NONCE_REQUESTED:136:too much nonce requested
+RAND_R_UNABLE_TO_CREATE_DRBG:143:unable to create drbg
+RAND_R_UNABLE_TO_FETCH_DRBG:144:unable to fetch drbg
 RAND_R_UNABLE_TO_GET_PARENT_RESEED_PROP_COUNTER:141:\
 	unable to get parent reseed prop counter
 RAND_R_UNABLE_TO_GET_PARENT_STRENGTH:138:unable to get parent strength
@@ -3467,13 +3469,13 @@ X509V3_R_INCORRECT_POLICY_SYNTAX_TAG:152:incorrect policy syntax tag
 X509V3_R_INVALID_ASNUMBER:162:invalid asnumber
 X509V3_R_INVALID_ASRANGE:163:invalid asrange
 X509V3_R_INVALID_BOOLEAN_STRING:104:invalid boolean string
+X509V3_R_INVALID_EMPTY_NAME:108:invalid empty name
 X509V3_R_INVALID_EXTENSION_STRING:105:invalid extension string
 X509V3_R_INVALID_INHERITANCE:165:invalid inheritance
 X509V3_R_INVALID_IPADDRESS:166:invalid ipaddress
 X509V3_R_INVALID_MULTIPLE_RDNS:161:invalid multiple rdns
 X509V3_R_INVALID_NAME:106:invalid name
 X509V3_R_INVALID_NULL_ARGUMENT:107:invalid null argument
-X509V3_R_INVALID_EMPTY_NAME:108:invalid empty name
 X509V3_R_INVALID_NULL_VALUE:109:invalid null value
 X509V3_R_INVALID_NUMBER:140:invalid number
 X509V3_R_INVALID_NUMBERS:141:invalid numbers

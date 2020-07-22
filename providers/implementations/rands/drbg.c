@@ -228,19 +228,7 @@ err:
 static void prov_drbg_cleanup_entropy(PROV_DRBG *drbg,
                                       unsigned char *out, size_t outlen)
 {
-    OSSL_PARAM params[3], *p = params;
-
-    if (drbg->get_entropy_fn != NULL) {
-        if (drbg->cleanup_entropy_fn != NULL) {
-            *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_SIZE,
-                                               &outlen);
-            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
-                                                  (void **)&out, 0);
-            *p = OSSL_PARAM_construct_end();
-
-            drbg->cleanup_entropy_fn(params, drbg->callback_arg);
-        }
-    } else if (drbg->seed_pool == NULL) {
+    if (drbg->seed_pool == NULL) {
         OPENSSL_secure_clear_free(out, outlen);
     }
 }
@@ -249,28 +237,6 @@ static size_t get_entropy(PROV_DRBG *drbg, unsigned char **pout, int entropy,
                           size_t min_len, size_t max_len,
                           int prediction_resistance)
 {
-    if (drbg->get_entropy_fn != NULL) {
-        OSSL_PARAM params[6], *p = params;
-        OSSL_PARAM out[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
-        *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_ENTROPY_REQUIRED,
-                                        &entropy);
-        *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_PREDICTION_RESISTANCE,
-                                        &prediction_resistance);
-        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MIN_LENGTH,
-                                           &min_len);
-        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MAX_LENGTH,
-                                           &max_len);
-        *p = OSSL_PARAM_construct_end();
-        *out = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
-                                              (void **)pout, 0);
-
-        if (drbg->get_entropy_fn(params, out, drbg->callback_arg))
-            return out->return_size;
-        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_ENTROPY);
-        return 0;
-    }
-
 #ifdef FIPS_MODULE
     if (drbg->parent == NULL)
         return prov_crngt_get_entropy(drbg, pout, entropy, min_len, max_len,
@@ -349,8 +315,6 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
     PROV_DRBG_NONCE_GLOBAL *dngbl
         = openssl_ctx_get_data(libctx, OPENSSL_CTX_DRBG_NONCE_INDEX,
                                &drbg_nonce_ossl_ctx_method);
-    OSSL_PARAM params[5], *p = params;
-    OSSL_PARAM out[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
     struct {
         void *instance;
         int count;
@@ -359,22 +323,6 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
     if (dngbl == NULL)
         return 0;
 
-    if (drbg->get_nonce_fn != NULL) {
-        *p++ = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_ENTROPY_REQUIRED,
-                                        &entropy);
-        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MIN_LENGTH,
-                                           &min_len);
-        *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_MAX_LENGTH,
-                                           &max_len);
-        *p = OSSL_PARAM_construct_end();
-        *out = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
-                                              (void **)pout, 0);
-
-        if (drbg->get_nonce_fn(params, out, drbg->callback_arg))
-            return out->return_size;
-        ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_GET_NONCE);
-        return 0;
-    }
     if (drbg->parent != NULL) {
         if (drbg->parent_nonce != NULL) {
             n = drbg->parent_nonce(drbg->parent, NULL, 0, drbg->min_noncelen,
@@ -420,21 +368,7 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
 static void prov_drbg_clear_nonce(PROV_DRBG *drbg, unsigned char *nonce,
                                   size_t noncelen)
 {
-    OSSL_PARAM params[3], *p = params;
-
-    if (drbg->get_nonce_fn != NULL) {
-        if (drbg->cleanup_nonce_fn != NULL) {
-            *p++ = OSSL_PARAM_construct_size_t(OSSL_DRBG_PARAM_SIZE,
-                                               &noncelen);
-            *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_DRBG_PARAM_RANDOM_DATA,
-                                                  (void **)&nonce, 0);
-            *p = OSSL_PARAM_construct_end();
-
-            drbg->cleanup_nonce_fn(params, drbg->callback_arg);
-        }
-    } else {
-        OPENSSL_clear_free(nonce, noncelen);
-    }
+    OPENSSL_clear_free(nonce, noncelen);
 }
 #else
 # define prov_drbg_clear_nonce(drbg, nonce, len) \
@@ -1013,24 +947,5 @@ int drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL);
     if (p != NULL && !OSSL_PARAM_get_time_t(p, &drbg->reseed_time_interval))
         return 0;
-    return 1;
-}
-
-int drbg_set_callbacks(void *vctx, OSSL_INOUT_CALLBACK *get_entropy_fn,
-                       OSSL_CALLBACK *cleanup_entropy_fn,
-                       OSSL_INOUT_CALLBACK *get_nonce_fn,
-                       OSSL_CALLBACK *cleanup_nonce_fn, void *arg)
-{
-    PROV_DRBG *drbg = vctx;
-
-    if (drbg->state != EVP_RAND_STATE_UNINITIALISED
-            || drbg->parent != NULL)
-        return 0;
-
-    drbg->get_entropy_fn = get_entropy_fn;
-    drbg->cleanup_entropy_fn = cleanup_entropy_fn;
-    drbg->get_nonce_fn = get_nonce_fn;
-    drbg->cleanup_nonce_fn = cleanup_nonce_fn;
-    drbg->callback_arg = arg;
     return 1;
 }

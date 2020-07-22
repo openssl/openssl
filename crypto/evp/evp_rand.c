@@ -25,6 +25,32 @@
 #include "internal/provider.h"
 #include "evp_local.h"
 
+struct evp_rand_st {
+    OSSL_PROVIDER *prov;
+    int name_id;
+    CRYPTO_REF_COUNT refcnt;
+    CRYPTO_RWLOCK *refcnt_lock;
+
+    const OSSL_DISPATCH *dispatch;
+    OSSL_FUNC_rand_newctx_fn *newctx;
+    OSSL_FUNC_rand_freectx_fn *freectx;
+    OSSL_FUNC_rand_instantiate_fn *instantiate;
+    OSSL_FUNC_rand_uninstantiate_fn *uninstantiate;
+    OSSL_FUNC_rand_generate_fn *generate;
+    OSSL_FUNC_rand_reseed_fn *reseed;
+    OSSL_FUNC_rand_nonce_fn *nonce;
+    OSSL_FUNC_rand_enable_locking_fn *enable_locking;
+    OSSL_FUNC_rand_lock_fn *lock;
+    OSSL_FUNC_rand_unlock_fn *unlock;
+    OSSL_FUNC_rand_gettable_params_fn *gettable_params;
+    OSSL_FUNC_rand_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_rand_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_rand_get_params_fn *get_params;
+    OSSL_FUNC_rand_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_rand_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_rand_verify_zeroization_fn *verify_zeroization;
+} /* EVP_RAND */ ;
+
 static int evp_rand_up_ref(void *vrand)
 {
     EVP_RAND *rand = (EVP_RAND *)vrand;
@@ -143,11 +169,6 @@ static void *evp_rand_from_dispatch(int name_id,
             if (rand->nonce != NULL)
                 break;
             rand->nonce = OSSL_FUNC_rand_nonce(fns);
-            break;
-        case OSSL_FUNC_RAND_SET_CALLBACKS:
-            if (rand->set_callbacks != NULL)
-                break;
-            rand->set_callbacks = OSSL_FUNC_rand_set_callbacks(fns);
             break;
         case OSSL_FUNC_RAND_ENABLE_LOCKING:
             if (rand->enable_locking != NULL)
@@ -577,38 +598,6 @@ int EVP_RAND_state(EVP_RAND_CTX *ctx)
     if (!EVP_RAND_get_ctx_params(ctx, params))
         state = EVP_RAND_STATE_ERROR;
     return state;
-}
-
-static int evp_rand_set_callbacks_locked(EVP_RAND_CTX *ctx,
-                                         OSSL_INOUT_CALLBACK *get_entropy,
-                                         OSSL_CALLBACK *cleanup_entropy,
-                                         OSSL_INOUT_CALLBACK *get_nonce,
-                                         OSSL_CALLBACK *cleanup_nonce,
-                                         void *arg)
-{
-    if (ctx->meth->set_callbacks == NULL) {
-        EVPerr(0, EVP_R_UNABLE_TO_SET_CALLBACKS);
-        return 0;
-    }
-    ctx->meth->set_callbacks(ctx->data, get_entropy, cleanup_entropy,
-                             get_nonce, cleanup_nonce, arg);
-    return 1;
-}
-
-int EVP_RAND_set_callbacks(EVP_RAND_CTX *ctx,
-                           OSSL_INOUT_CALLBACK *get_entropy,
-                           OSSL_CALLBACK *cleanup_entropy,
-                           OSSL_INOUT_CALLBACK *get_nonce,
-                           OSSL_CALLBACK *cleanup_nonce, void *arg)
-{
-    int res;
-
-    if (!evp_rand_lock(ctx))
-        return 0;
-    res = evp_rand_set_callbacks_locked(ctx, get_entropy, cleanup_entropy,
-                                        get_nonce, cleanup_nonce, arg);
-    evp_rand_unlock(ctx);
-    return res;
 }
 
 static int evp_rand_verify_zeroization_locked(EVP_RAND_CTX *ctx)
