@@ -410,9 +410,14 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
     }
 
     /*
-     * We can't use evp_keymgmt_util_assign_pkey() here, because of
-     * semantic differences.
-     * */
+     * We only need to set the |to| type when its |keymgmt| isn't set.
+     * We can then just set its |keydata| to what we have, which might
+     * be exactly what it had when entering this function.
+     * This is a bit different from using evp_keymgmt_util_assign_pkey(),
+     * which isn't as careful with |to|'s original |keymgmt|, since it's
+     * meant to forcedly reassign an EVP_PKEY no matter what, which is
+     * why we don't use that one here.
+     */
     if (to->keymgmt == NULL
         && !EVP_PKEY_set_type_by_keymgmt(to, to_keymgmt)) {
         evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
