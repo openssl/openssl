@@ -806,8 +806,8 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
                                     libctx, propq);
         uri = "<stdin>";
     } else {
-        ctx = OSSL_STORE_open_with_libctx(uri, get_ui_method(), &uidata, NULL,
-                                          NULL, libctx, propq);
+        ctx = OSSL_STORE_open_with_libctx(uri, libctx, propq, get_ui_method(),
+                                          &uidata, NULL, NULL);
     }
     if (ctx == NULL) {
         BIO_printf(bio_err, "Could not open file or uri %s for loading %s\n",

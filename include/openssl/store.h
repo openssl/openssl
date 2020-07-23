@@ -57,10 +57,10 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
                                 OSSL_STORE_post_process_info_fn post_process,
                                 void *post_process_data);
 
-OSSL_STORE_CTX *OSSL_STORE_open_with_libctx(
-    const char *uri, const UI_METHOD *ui_method, void *ui_data,
-    OSSL_STORE_post_process_info_fn post_process, void *post_process_data,
-    OPENSSL_CTX *libctx, const char *propq);
+OSSL_STORE_CTX *OSSL_STORE_open_with_libctx
+    (const char *uri, OPENSSL_CTX *libctx, const char *propq,
+     const UI_METHOD *ui_method, void *ui_data,
+     OSSL_STORE_post_process_info_fn post_process, void *post_process_data);
 
 /*
  * Control / fine tune the OSSL_STORE channel.  |cmd| determines what is to be
@@ -245,25 +245,20 @@ const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader);
 const char *OSSL_STORE_LOADER_get0_scheme(const OSSL_STORE_LOADER *loader);
 /* struct ossl_store_loader_ctx_st is defined differently by each loader */
 typedef struct ossl_store_loader_ctx_st OSSL_STORE_LOADER_CTX;
-typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_fn)(const OSSL_STORE_LOADER
-                                                     *loader,
-                                                     const char *uri,
-                                                     const UI_METHOD *ui_method,
-                                                     void *ui_data);
-typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_with_libctx_fn)(
-    const OSSL_STORE_LOADER *loader, const char *uri, const UI_METHOD *ui_method,
-    void *ui_data, OPENSSL_CTX *libctx, const char *propq);
+typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_fn)
+    (const OSSL_STORE_LOADER *loader, const char *uri,
+     const UI_METHOD *ui_method, void *ui_data);
+typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_with_libctx_fn)
+    (const OSSL_STORE_LOADER *loader,
+     const char *uri, OPENSSL_CTX *libctx, const char *propq,
+     const UI_METHOD *ui_method, void *ui_data);
 
 int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_open_fn open_function);
-typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)(const OSSL_STORE_LOADER
-                                                       *loader,
-                                                       BIO *bio,
-                                                       const UI_METHOD
-                                                       *ui_method,
-                                                       void *ui_data,
-                                                       OPENSSL_CTX *libctx,
-                                                       const char *propq);
+typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)
+    (const OSSL_STORE_LOADER *loader, BIO *bio,
+     const UI_METHOD *ui_method, void *ui_data,
+     OPENSSL_CTX *libctx, const char *propq);
 int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
                                  OSSL_STORE_attach_fn attach_function);
 typedef int (*OSSL_STORE_ctrl_fn)(OSSL_STORE_LOADER_CTX *ctx, int cmd,
@@ -282,9 +277,9 @@ typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,
                                                void *ui_data);
 int OSSL_STORE_LOADER_set_load(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_load_fn load_function);
-typedef OSSL_STORE_INFO *(*OSSL_STORE_load_with_libctx_fn)(
-    OSSL_STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method, void *ui_data,
-    OPENSSL_CTX *libctx, const char *propq);
+typedef OSSL_STORE_INFO *(*OSSL_STORE_load_with_libctx_fn)
+    (OSSL_STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method, void *ui_data,
+     OPENSSL_CTX *libctx, const char *propq);
 
 typedef int (*OSSL_STORE_eof_fn)(OSSL_STORE_LOADER_CTX *ctx);
 int OSSL_STORE_LOADER_set_eof(OSSL_STORE_LOADER *loader,

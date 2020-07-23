@@ -855,10 +855,10 @@ static int file_find_type(OSSL_STORE_LOADER_CTX *ctx)
     return 1;
 }
 
-static OSSL_STORE_LOADER_CTX *file_open_with_libctx(
-    const OSSL_STORE_LOADER *loader, const char *uri,
-    const UI_METHOD *ui_method, void *ui_data,
-    OPENSSL_CTX *libctx, const char *propq)
+static OSSL_STORE_LOADER_CTX *file_open_with_libctx
+    (const OSSL_STORE_LOADER *loader, const char *uri,
+     OPENSSL_CTX *libctx, const char *propq,
+     const UI_METHOD *ui_method, void *ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
     struct stat st;
@@ -990,7 +990,7 @@ static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
                                         const UI_METHOD *ui_method,
                                         void *ui_data)
 {
-    return file_open_with_libctx(loader, uri, ui_method, ui_data, NULL, NULL);
+    return file_open_with_libctx(loader, uri, NULL, NULL, ui_method, ui_data);
 }
 
 static OSSL_STORE_LOADER_CTX *file_attach(const OSSL_STORE_LOADER *loader,
