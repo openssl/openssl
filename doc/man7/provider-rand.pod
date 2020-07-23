@@ -2,62 +2,65 @@
 
 =head1 NAME
 
-provider-rand - The random number generation library E<lt>-E<gt> provider
-functions
+provider-rand - The RAND provider dispatch interface
 
 =head1 SYNOPSIS
 
 =for openssl multiple includes
 
- #include <openssl/core_dispatch.h>
  #include <openssl/core_names.h>
+ #include <openssl/core_dispatch.h>
 
  /*
-  * None of these are actual functions, but are displayed like this for
-  * the function signatures for functions that are offered as function
-  * pointers in OSSL_DISPATCH arrays.
+  * The following function prototypes don't represent actual C functions
+  * but rather the signatures of so-called 'dispatched' functions.
+  * To indicate the difference, curly {braces} have been added around
+  * the function names.
+  *
+  * See L<provider-base(7)/Dispatched Functions> for an explanation
+  * how to interpret those prototypes.
   */
 
  /* Context management */
- void *OSSL_FUNC_rand_newctx(void *provctx, void *parent,
+ void *{rand_newctx}(void *provctx, void *parent,
                              const OSSL_DISPATCH *parent_calls);
- void OSSL_FUNC_rand_freectx(void *ctx);
+ void {rand_freectx}(void *ctx);
 
  /* Random number generator functions: NIST */
- int OSSL_FUNC_rand_instantiate(void *ctx, unsigned int strength,
-                                int prediction_resistance,
-                                const unsigned char *pstr, size_t pstr_len);
- int OSSL_FUNC_rand_uninstantiate(void *ctx);
- int OSSL_FUNC_rand_generate(void *ctx, unsigned char *out, size_t outlen,
-                             unsigned int strength, int prediction_resistance,
-                             const unsigned char *addin, size_t addin_len);
- int OSSL_FUNC_rand_reseed(void *ctx, int prediction_resistance,
-                           const unsigned char *ent, size_t ent_len,
-                           const unsigned char *addin, size_t addin_len);
+ int {rand_instantiate}(void *ctx, unsigned int strength,
+                        int prediction_resistance,
+                        const unsigned char *pstr, size_t pstr_len);
+ int {rand_uninstantiate}(void *ctx);
+ int {rand_generate}(void *ctx, unsigned char *out, size_t outlen,
+                     unsigned int strength, int prediction_resistance,
+                     const unsigned char *addin, size_t addin_len);
+ int {rand_reseed}(void *ctx, int prediction_resistance,
+                   const unsigned char *ent, size_t ent_len,
+                   const unsigned char *addin, size_t addin_len);
 
  /* Random number generator functions: additional */
- size_t OSSL_FUNC_rand_nonce(void *ctx, unsigned char *out, size_t outlen,
+ size_t {rand_nonce}(void *ctx, unsigned char *out, size_t outlen,
                              int strength, size_t min_noncelen, size_t max_noncelen);
- void OSSL_FUNC_rand_set_callbacks(void *ctx, OSSL_CALLBACK *get_entropy,
-                                   OSSL_CALLBACK *cleanup_entropy,
-                                   OSSL_CALLBACK *get_nonce,
-                                   OSSL_CALLBACK *cleanup_nonce, void *arg);
- int OSSL_FUNC_rand_verify_zeroization(void *ctx);
+ void {rand_set_callbacks}(void *ctx, OSSL_CALLBACK *get_entropy,
+                           OSSL_CALLBACK *cleanup_entropy,
+                           OSSL_CALLBACK *get_nonce,
+                           OSSL_CALLBACK *cleanup_nonce, void *arg);
+ int {rand_verify_zeroization}(void *ctx);
 
  /* Context Locking */
- int OSSL_FUNC_rand_enable_locking(void *ctx);
- int OSSL_FUNC_rand_lock(void *ctx);
- void OSSL_FUNC_rand_unlock(void *ctx);
+ int {rand_enable_locking}(void *ctx);
+ int {rand_lock}(void *ctx);
+ void {rand_unlock}(void *ctx);
 
  /* RAND parameter descriptors */
- const OSSL_PARAM *OSSL_FUNC_rand_gettable_params(void);
- const OSSL_PARAM *OSSL_FUNC_rand_gettable_ctx_params(void);
- const OSSL_PARAM *OSSL_FUNC_rand_settable_ctx_params(void);
+ const OSSL_PARAM *{rand_gettable_params}(void);
+ const OSSL_PARAM *{rand_gettable_ctx_params}(void);
+ const OSSL_PARAM *{rand_settable_ctx_params}(void);
 
  /* RAND parameters */
- int OSSL_FUNC_rand_get_params(OSSL_PARAM params[]);
- int OSSL_FUNC_rand_get_ctx_params(void *ctx, OSSL_PARAM params[]);
- int OSSL_FUNC_rand_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
+ int {rand_get_params}(OSSL_PARAM params[]);
+ int {rand_get_ctx_params}(void *ctx, OSSL_PARAM params[]);
+ int {rand_set_ctx_params}(void *ctx, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
 
@@ -70,7 +73,7 @@ them available to applications via the API function L<EVP_RAND(3)>.
 
 =head2 Context Management Functions
 
-OSSL_FUNC_rand_newctx() should create and return a pointer to a provider side
+{rand_newctx}() should create and return a pointer to a provider side
 structure for holding context information during a rand operation.
 A pointer to this context will be passed back in a number of the other rand
 operation function calls.
@@ -82,7 +85,7 @@ operating system will be used for seeding.
 The parameter I<parent_calls> points to the dispatch table for I<parent>.
 Thus, the parent need not be from the same provider as the new instance.
 
-OSSL_FUNC_rand_freectx() is passed a pointer to the provider side rand context in
+{rand_freectx}() is passed a pointer to the provider side rand context in
 the I<mctx> parameter.
 If it receives NULL as I<ctx> value, it should not do anything other than
 return.
@@ -92,16 +95,16 @@ This function should free any resources associated with that context.
 
 These functions correspond to those defined in NIST SP 800-90A and SP 800-90C.
 
-OSSL_FUNC_rand_instantiate() is used to instantiate the DRBG I<ctx> at a requested
+{rand_instantiate}() is used to instantiate the DRBG I<ctx> at a requested
 security I<strength>.  In addition, I<prediction_resistance> can be requested.
 Additional input I<addin> of length I<addin_len> bytes can optionally
 be provided.
 
-OSSL_FUNC_rand_uninstantiate() is used to uninstantiate the DRBG I<ctx>.  After being
+{rand_uninstantiate}() is used to uninstantiate the DRBG I<ctx>.  After being
 uninstantiated, a DRBG is unable to produce output until it is instantiated
 anew.
 
-OSSL_FUNC_rand_generate() is used to generate random bytes from the DRBG I<ctx>.
+{rand_generate}() is used to generate random bytes from the DRBG I<ctx>.
 It will generate I<outlen> bytes placing them into the buffer pointed to by
 I<out>.  The generated bytes will meet the specified security I<strength> and,
 if I<prediction_resistance> is true, the bytes will be produced after reseeding
@@ -110,11 +113,11 @@ bytes can optionally be provided.
 
 =head2 Random Number Generator Functions: Additional
 
-OSSL_FUNC_rand_nonce() is used to generate a nonce of the given I<strength> with a
+{rand_nonce}() is used to generate a nonce of the given I<strength> with a
 length from I<min_noncelen> to I<max_noncelen>. If the output buffer I<out> is
 NULL, the length of the nonce should be returned.
 
-OSSL_FUNC_rand_set_callbacks() is used to supply custom entropy and nonce callbacks.
+{rand_set_callbacks}() is used to supply custom entropy and nonce callbacks.
 Instead of gathering seed material from its usual sources, the DRBG I<ctx>
 should call these functions.
 The I<get_entropy> and I<cleanup_entropy> callbacks obtain and release bytes
@@ -122,7 +125,7 @@ of entropy.
 The I<get_nonce> and I<cleanup_nonce> functions obtain and release nonce bytes.
 In all cases, the additional argument I<arg> is passed to the callbacks.
 
-OSSL_FUNC_rand_verify_zeroization() is used to determine if the internal state of the
+{rand_verify_zeroization}() is used to determine if the internal state of the
 DRBG is zero.  This capability is mandated by NIST as part of the self
 tests, it is unlikely to be useful in other circumstances.
 
@@ -132,35 +135,35 @@ When DRBGs are used by multiple threads, there must be locking employed to
 ensure their proper operation.  Because locking introduces an overhead, it
 is disabled by default.
 
-OSSL_FUNC_rand_enable_locking() allows locking to be turned on for a DRBG and all of
+{rand_enable_locking}() allows locking to be turned on for a DRBG and all of
 its parent DRBGs.  From this call onwards, the DRBG can be used in a thread
 safe manner.
 
-OSSL_FUNC_rand_lock() is used to lock a DRBG.  Once locked, exclusive access
+{rand_lock}() is used to lock a DRBG.  Once locked, exclusive access
 is guaranteed.
 
-OSSL_FUNC_rand_unlock() is used to unlock a DRBG.
+{rand_unlock}() is used to unlock a DRBG.
 
 =head2 Rand Parameters
 
 See L<OSSL_PARAM(3)> for further details on the parameters structure used by
 these functions.
 
-OSSL_FUNC_rand_get_params() gets details of parameter values associated with the
+{rand_get_params}() gets details of parameter values associated with the
 provider algorithm and stores them in I<params>.
 
-OSSL_FUNC_rand_set_ctx_params() sets rand parameters associated with the given
+{rand_set_ctx_params}() sets rand parameters associated with the given
 provider side rand context I<ctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 
-OSSL_FUNC_rand_get_ctx_params() gets details of currently set parameter values
+{rand_get_ctx_params}() gets details of currently set parameter values
 associated with the given provider side rand context I<ctx> and stores them
 in I<params>.
 
-OSSL_FUNC_rand_gettable_params(), OSSL_FUNC_rand_gettable_ctx_params(), and
-OSSL_FUNC_rand_settable_ctx_params() all return constant B<OSSL_PARAM> arrays
-as descriptors of the parameters that OSSL_FUNC_rand_get_params(),
-OSSL_FUNC_rand_get_ctx_params(), and OSSL_FUNC_rand_set_ctx_params() can handle,
+{rand_gettable_params}(), {rand_gettable_ctx_params}(), and
+{rand_settable_ctx_params}() all return constant B<OSSL_PARAM> arrays
+as descriptors of the parameters that {rand_get_params}(),
+{rand_get_ctx_params}(), and {rand_set_ctx_params}() can handle,
 respectively.
 
 Parameters currently recognised by built-in rands are as follows. Not all
@@ -197,7 +200,7 @@ associated RAND ctx.
 =item "max_request" (B<OSSL_DRBG_PARAM_RESEED_REQUESTS>) <unsigned integer>
 
 Specifies the maximum number of bytes that can be generated in a single
-call to OSSL_FUNC_rand_generate.
+call to {rand_generate}.
 
 =item "min_entropylen" (B<OSSL_DRBG_PARAM_MIN_ENTROPYLEN>) <unsigned integer>
 
@@ -243,14 +246,14 @@ considered valid.
 
 =head1 RETURN VALUES
 
-OSSL_FUNC_rand_newctx() should return the newly created
+{rand_newctx}() should return the newly created
 provider side rand context, or NULL on failure.
 
-OSSL_FUNC_rand_gettable_params(), OSSL_FUNC_rand_gettable_ctx_params() and
-OSSL_FUNC_rand_settable_ctx_params() should return a constant B<OSSL_PARAM>
+{rand_gettable_params}(), {rand_gettable_ctx_params}() and
+{rand_settable_ctx_params}() should return a constant B<OSSL_PARAM>
 array, or NULL if none is offered.
 
-OSSL_FUNC_rand_nonce() returns the size of the generated nonce, or 0 on error.
+{rand_nonce}() returns the size of the generated nonce, or 0 on error.
 
 All of the remaining functions should return 1 for success or 0 on error.
 
