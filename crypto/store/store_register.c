@@ -39,13 +39,12 @@ OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme)
      * later on.
      */
     if (scheme == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_LOADER_NEW,
-                      OSSL_STORE_R_INVALID_SCHEME);
+        ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_INVALID_SCHEME);
         return NULL;
     }
 
     if ((res = OPENSSL_zalloc(sizeof(*res))) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_LOADER_NEW, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -179,23 +178,20 @@ int ossl_store_register_loader_int(OSSL_STORE_LOADER *loader)
                    || strchr("+-.", *scheme) != NULL))
             scheme++;
     if (*scheme != '\0') {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
-                      OSSL_STORE_R_INVALID_SCHEME);
-        ERR_add_error_data(2, "scheme=", loader->scheme);
+        ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_INVALID_SCHEME,
+                       "scheme=%s", loader->scheme);
         return 0;
     }
 
     /* Check that functions we absolutely require are present */
     if (loader->open == NULL || loader->load == NULL || loader->eof == NULL
         || loader->error == NULL || loader->close == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
-                      OSSL_STORE_R_LOADER_INCOMPLETE);
+        ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_LOADER_INCOMPLETE);
         return 0;
     }
 
     if (!RUN_ONCE(&registry_init, do_registry_init)) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_REGISTER_LOADER_INT,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     CRYPTO_THREAD_write_lock(registry_lock);
@@ -232,21 +228,17 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
         return NULL;
 
     if (!RUN_ONCE(&registry_init, do_registry_init)) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     CRYPTO_THREAD_write_lock(registry_lock);
 
-    if (!ossl_store_register_init()) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT,
-                      ERR_R_INTERNAL_ERROR);
-    } else if ((loader = lh_OSSL_STORE_LOADER_retrieve(loader_register,
-                                                       &template)) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_GET0_LOADER_INT,
-                      OSSL_STORE_R_UNREGISTERED_SCHEME);
-        ERR_add_error_data(2, "scheme=", scheme);
-    }
+    if (!ossl_store_register_init())
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
+    else if ((loader = lh_OSSL_STORE_LOADER_retrieve(loader_register,
+                                                     &template)) == NULL)
+        ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_UNREGISTERED_SCHEME,
+                       "scheme=%s", scheme);
 
     CRYPTO_THREAD_unlock(registry_lock);
 
@@ -265,21 +257,17 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme)
     template.close = NULL;
 
     if (!RUN_ONCE(&registry_init, do_registry_init)) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     CRYPTO_THREAD_write_lock(registry_lock);
 
-    if (!ossl_store_register_init()) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT,
-                      ERR_R_INTERNAL_ERROR);
-    } else if ((loader = lh_OSSL_STORE_LOADER_delete(loader_register,
-                                                     &template)) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_UNREGISTER_LOADER_INT,
-                      OSSL_STORE_R_UNREGISTERED_SCHEME);
-        ERR_add_error_data(2, "scheme=", scheme);
-    }
+    if (!ossl_store_register_init())
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
+    else if ((loader = lh_OSSL_STORE_LOADER_delete(loader_register,
+                                                   &template)) == NULL)
+        ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_UNREGISTERED_SCHEME,
+                       "scheme=%s", scheme);
 
     CRYPTO_THREAD_unlock(registry_lock);
 

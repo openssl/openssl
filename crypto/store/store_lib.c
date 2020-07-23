@@ -126,7 +126,7 @@ OSSL_STORE_open_with_libctx(const char *uri,
 
     if ((propq != NULL && (propq_copy = OPENSSL_strdup(propq)) == NULL)
         || (ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        OSSL_STOREerr(0, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
@@ -235,8 +235,7 @@ int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
     int ret = 1;
 
     if (ctx->loading) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_EXPECT,
-                      OSSL_STORE_R_LOADING_STARTED);
+        ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_LOADING_STARTED);
         return 0;
     }
 
@@ -263,8 +262,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
     int ret = 1;
 
     if (ctx->loading) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_FIND,
-                      OSSL_STORE_R_LOADING_STARTED);
+        ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_LOADING_STARTED);
         return 0;
     }
 
@@ -278,13 +276,12 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
         BIGNUM *number = NULL;
 
         if (ctx->fetched_loader->p_set_ctx_params == NULL) {
-            OSSL_STOREerr(ERR_LIB_OSSL_STORE,
-                          OSSL_STORE_R_UNSUPPORTED_OPERATION);
+            ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_UNSUPPORTED_OPERATION);
             return 0;
         }
 
         if ((bld = OSSL_PARAM_BLD_new()) == NULL) {
-            OSSL_STOREerr(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
             return 0;
         }
 
@@ -338,8 +335,7 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
     } else {
         /* legacy loader section */
         if (ctx->loader->find == NULL) {
-            OSSL_STOREerr(ERR_LIB_OSSL_STORE,
-                          OSSL_STORE_R_UNSUPPORTED_OPERATION);
+            ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_UNSUPPORTED_OPERATION);
             return 0;
         }
         ret = ctx->loader->find(ctx->loader_ctx, search);
@@ -495,8 +491,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name)
     OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_NAME, NULL);
 
     if (info == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_NAME,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -509,8 +504,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name)
 int OSSL_STORE_INFO_set0_NAME_description(OSSL_STORE_INFO *info, char *desc)
 {
     if (info->type != OSSL_STORE_INFO_NAME) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_SET0_NAME_DESCRIPTION,
-                      ERR_R_PASSED_INVALID_ARGUMENT);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
@@ -523,8 +517,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PARAMS(EVP_PKEY *params)
     OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PARAMS, params);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_PARAMS,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
     return info;
 }
 
@@ -542,8 +535,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PKEY(EVP_PKEY *pkey)
     OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PKEY, pkey);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_PKEY,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
     return info;
 }
 
@@ -552,8 +544,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509)
     OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_CERT, x509);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_CERT,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
     return info;
 }
 
@@ -562,8 +553,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl)
     OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_CRL, crl);
 
     if (info == NULL)
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_CRL,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
     return info;
 }
 
@@ -588,12 +578,10 @@ char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info)
         char *ret = OPENSSL_strdup(info->_.name.name);
 
         if (ret == NULL)
-            OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME,
-                          ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return ret;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME,
-                  OSSL_STORE_R_NOT_A_NAME);
+    ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_NAME);
     return NULL;
 }
 
@@ -611,12 +599,10 @@ char *OSSL_STORE_INFO_get1_NAME_description(const OSSL_STORE_INFO *info)
                                    ? info->_.name.desc : "");
 
         if (ret == NULL)
-            OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME_DESCRIPTION,
-                     ERR_R_MALLOC_FAILURE);
+            ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return ret;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_NAME_DESCRIPTION,
-                  OSSL_STORE_R_NOT_A_NAME);
+    ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_NAME);
     return NULL;
 }
 
@@ -633,8 +619,7 @@ EVP_PKEY *OSSL_STORE_INFO_get1_PARAMS(const OSSL_STORE_INFO *info)
         EVP_PKEY_up_ref(info->_.params);
         return info->_.params;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_PARAMS,
-                  OSSL_STORE_R_NOT_PARAMETERS);
+    ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_PARAMETERS);
     return NULL;
 }
 
@@ -668,8 +653,7 @@ EVP_PKEY *OSSL_STORE_INFO_get1_PKEY(const OSSL_STORE_INFO *info)
         EVP_PKEY_up_ref(info->_.pkey);
         return info->_.pkey;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_PKEY,
-                  OSSL_STORE_R_NOT_A_PRIVATE_KEY);
+    ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_PRIVATE_KEY);
     return NULL;
 }
 
@@ -686,8 +670,7 @@ X509 *OSSL_STORE_INFO_get1_CERT(const OSSL_STORE_INFO *info)
         X509_up_ref(info->_.x509);
         return info->_.x509;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_CERT,
-                  OSSL_STORE_R_NOT_A_CERTIFICATE);
+    ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_CERTIFICATE);
     return NULL;
 }
 
@@ -704,8 +687,7 @@ X509_CRL *OSSL_STORE_INFO_get1_CRL(const OSSL_STORE_INFO *info)
         X509_CRL_up_ref(info->_.crl);
         return info->_.crl;
     }
-    OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_GET1_CRL,
-                  OSSL_STORE_R_NOT_A_CRL);
+    ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_NOT_A_CRL);
     return NULL;
 }
 
@@ -801,8 +783,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_name(X509_NAME *name)
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_NAME,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -817,8 +798,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_issuer_serial(X509_NAME *name,
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ISSUER_SERIAL,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -835,20 +815,16 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (digest != NULL && len != (size_t)EVP_MD_size(digest)) {
-        char buf1[20], buf2[20];
-
-        BIO_snprintf(buf1, sizeof(buf1), "%d", EVP_MD_size(digest));
-        BIO_snprintf(buf2, sizeof(buf2), "%zu", len);
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT,
-                      OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST);
-        ERR_add_error_data(5, EVP_MD_name(digest), " size is ", buf1,
-                           ", fingerprint size is ", buf2);
+        ERR_raise_data(ERR_LIB_OSSL_STORE,
+                       OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST,
+                       "%s size is %d, fingerprint size is %zu",
+                       EVP_MD_name(digest), EVP_MD_size(digest), len);
+        return NULL;
     }
 
     search->search_type = OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT;
@@ -863,8 +839,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_alias(const char *alias)
     OSSL_STORE_SEARCH *search = OPENSSL_zalloc(sizeof(*search));
 
     if (search == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_SEARCH_BY_ALIAS,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -921,8 +896,7 @@ OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
     OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_EMBEDDED, NULL);
 
     if (info == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_EMBEDDED,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
@@ -931,8 +905,7 @@ OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
         new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
 
     if (new_pem_name != NULL && info->_.embedded.pem_name == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_INFO_NEW_EMBEDDED,
-                      ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         OSSL_STORE_INFO_free(info);
         info = NULL;
     }
@@ -1004,7 +977,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_OSSL_STORE_ATTACH, ERR_R_MALLOC_FAILURE);
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
