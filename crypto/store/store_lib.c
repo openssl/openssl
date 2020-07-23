@@ -474,7 +474,7 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx)
  * In all cases, ownership of the object is transferred to the OSSL_STORE_INFO
  * and will therefore be freed when the OSSL_STORE_INFO is freed.
  */
-static OSSL_STORE_INFO *store_info_new(int type, void *data)
+OSSL_STORE_INFO *OSSL_STORE_INFO_new(int type, void *data)
 {
     OSSL_STORE_INFO *info = OPENSSL_zalloc(sizeof(*info));
 
@@ -488,7 +488,7 @@ static OSSL_STORE_INFO *store_info_new(int type, void *data)
 
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_NAME, NULL);
+    OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_NAME, NULL);
 
     if (info == NULL) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
@@ -514,7 +514,7 @@ int OSSL_STORE_INFO_set0_NAME_description(OSSL_STORE_INFO *info, char *desc)
 }
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_PARAMS(EVP_PKEY *params)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PARAMS, params);
+    OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_PARAMS, params);
 
     if (info == NULL)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
@@ -523,7 +523,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PARAMS(EVP_PKEY *params)
 
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_PUBKEY(EVP_PKEY *pkey)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PUBKEY, pkey);
+    OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_PUBKEY, pkey);
 
     if (info == NULL)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
@@ -532,7 +532,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PUBKEY(EVP_PKEY *pkey)
 
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_PKEY(EVP_PKEY *pkey)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_PKEY, pkey);
+    OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_PKEY, pkey);
 
     if (info == NULL)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
@@ -541,7 +541,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_PKEY(EVP_PKEY *pkey)
 
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_CERT, x509);
+    OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_CERT, x509);
 
     if (info == NULL)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
@@ -550,7 +550,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CERT(X509 *x509)
 
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl)
 {
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_CRL, crl);
+    OSSL_STORE_INFO *info = OSSL_STORE_INFO_new(OSSL_STORE_INFO_CRL, crl);
 
     if (info == NULL)
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
@@ -563,6 +563,13 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl)
 int OSSL_STORE_INFO_get_type(const OSSL_STORE_INFO *info)
 {
     return info->type;
+}
+
+void *OSSL_STORE_INFO_get0_data(int type, const OSSL_STORE_INFO *info)
+{
+    if (info->type == type)
+        return info->_.data;
+    return NULL;
 }
 
 const char *OSSL_STORE_INFO_get0_NAME(const OSSL_STORE_INFO *info)
@@ -698,10 +705,6 @@ void OSSL_STORE_INFO_free(OSSL_STORE_INFO *info)
 {
     if (info != NULL) {
         switch (info->type) {
-        case OSSL_STORE_INFO_EMBEDDED:
-            BUF_MEM_free(info->_.embedded.blob);
-            OPENSSL_free(info->_.embedded.pem_name);
-            break;
         case OSSL_STORE_INFO_NAME:
             OPENSSL_free(info->_.name.name);
             OPENSSL_free(info->_.name.desc);
@@ -887,44 +890,6 @@ const char *OSSL_STORE_SEARCH_get0_string(const OSSL_STORE_SEARCH *criterion)
 const EVP_MD *OSSL_STORE_SEARCH_get0_digest(const OSSL_STORE_SEARCH *criterion)
 {
     return criterion->digest;
-}
-
-/* Internal functions */
-OSSL_STORE_INFO *ossl_store_info_new_EMBEDDED(const char *new_pem_name,
-                                              BUF_MEM *embedded)
-{
-    OSSL_STORE_INFO *info = store_info_new(OSSL_STORE_INFO_EMBEDDED, NULL);
-
-    if (info == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
-
-    info->_.embedded.blob = embedded;
-    info->_.embedded.pem_name =
-        new_pem_name == NULL ? NULL : OPENSSL_strdup(new_pem_name);
-
-    if (new_pem_name != NULL && info->_.embedded.pem_name == NULL) {
-        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
-        OSSL_STORE_INFO_free(info);
-        info = NULL;
-    }
-
-    return info;
-}
-
-BUF_MEM *ossl_store_info_get0_EMBEDDED_buffer(OSSL_STORE_INFO *info)
-{
-    if (info->type == OSSL_STORE_INFO_EMBEDDED)
-        return info->_.embedded.blob;
-    return NULL;
-}
-
-char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
-{
-    if (info->type == OSSL_STORE_INFO_EMBEDDED)
-        return info->_.embedded.pem_name;
-    return NULL;
 }
 
 OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,

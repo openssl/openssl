@@ -23,7 +23,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
-#include "crypto/asn1.h"
+#include "internal/asn1.h"
 #include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 

@@ -151,6 +151,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, const char *scheme,
  * In all cases, ownership of the object is transferred to the OSSL_STORE_INFO
  * and will therefore be freed when the OSSL_STORE_INFO is freed.
  */
+OSSL_STORE_INFO *OSSL_STORE_INFO_new(int type, void *data);
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_NAME(char *name);
 int OSSL_STORE_INFO_set0_NAME_description(OSSL_STORE_INFO *info, char *desc);
 OSSL_STORE_INFO *OSSL_STORE_INFO_new_PARAMS(EVP_PKEY *params);
@@ -163,6 +164,7 @@ OSSL_STORE_INFO *OSSL_STORE_INFO_new_CRL(X509_CRL *crl);
  * Functions to try to extract data from a OSSL_STORE_INFO.
  */
 int OSSL_STORE_INFO_get_type(const OSSL_STORE_INFO *info);
+void *OSSL_STORE_INFO_get0_data(int type, const OSSL_STORE_INFO *info);
 const char *OSSL_STORE_INFO_get0_NAME(const OSSL_STORE_INFO *info);
 char *OSSL_STORE_INFO_get1_NAME(const OSSL_STORE_INFO *info);
 const char *OSSL_STORE_INFO_get0_NAME_description(const OSSL_STORE_INFO *info);

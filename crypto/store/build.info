@@ -1,4 +1,4 @@
 LIBS=../../libcrypto
 SOURCE[../../libcrypto]=\
         store_err.c store_lib.c store_result.c store_strings.c store_meth.c \
-        store_init.c store_register.c loader_file.c
+        store_init.c store_register.c
