@@ -52,8 +52,9 @@ unregister STORE loaders for different URI schemes
                                      void (*fn)(const char *name, void *data),
                                      void *data);
 
-Legacy functions, still present to support B<OSSL_STORE_LOADER>s provided
-by B<ENGINE>:
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
 
  OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme);
  const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER
@@ -146,11 +147,11 @@ I<data> as arguments.
 OSSL_STORE_LOADER_names_do_all() traverses all names for the given
 I<loader>, and calls I<fn> with each name and I<data>.
 
-=head2 Legacy Types and Functions
+=head2 Legacy Types and Functions (deprecated)
 
 These functions help applications and engines to create loaders for
-schemes they support.  These are all discouraged in favour of provider
-implementations, see L<provider-storemgmt(7)>.
+schemes they support.  These are all deprecated and discouraged in favour of
+provider implementations, see L<provider-storemgmt(7)>.
 
 B<OSSL_STORE_LOADER_CTX> is a type template, to be defined by each loader
 using C<struct ossl_store_loader_ctx_st { ... }>.
@@ -366,7 +367,7 @@ OSSL_STORE_LOADER_set_eof(), OSSL_STORE_LOADER_set_close(),
 OSSL_STORE_LOADER_free(), OSSL_STORE_register_loader(),
 OSSL_STORE_unregister_loader(), OSSL_STORE_open_fn(), OSSL_STORE_ctrl_fn(),
 OSSL_STORE_load_fn(), OSSL_STORE_eof_fn() and OSSL_STORE_close_fn()
-were added in OpenSSL 1.1.1.
+were added in OpenSSL 1.1.1, and became deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

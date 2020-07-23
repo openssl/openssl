@@ -27,18 +27,23 @@ OSSL_STORE_error, OSSL_STORE_close
                              const UI_METHOD *ui_method, void *ui_data,
                              OSSL_STORE_post_process_info_fn post_process,
                              void *post_process_data);
- int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
+
  OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx);
  int OSSL_STORE_eof(OSSL_STORE_CTX *ctx);
  int OSSL_STORE_error(OSSL_STORE_CTX *ctx);
  int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
 
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
+
 =head1 DESCRIPTION
 
 These functions help the application to fetch supported objects (see
 L<OSSL_STORE_INFO(3)/SUPPORTED OBJECTS> for information on which those are)
-from a given URI (see L</SUPPORTED SCHEMES> for more information on
-the supported URI schemes).
+from a given URI.
 The general method to do so is to "open" the URI using OSSL_STORE_open(),
 read each available and supported object using OSSL_STORE_load() as long as
 OSSL_STORE_eof() hasn't been reached, and finish it off with OSSL_STORE_close().
@@ -110,12 +115,6 @@ by OSSL_STORE_open() and frees all other information that was stored in the
 B<OSSL_STORE_CTX>, as well as the B<OSSL_STORE_CTX> itself.
 If I<ctx> is NULL it does nothing.
 
-=head1 SUPPORTED SCHEMES
-
-The basic supported scheme is B<file:>.
-Any other scheme can be added dynamically, using
-OSSL_STORE_register_loader().
-
 =head1 NOTES
 
 A string without a scheme prefix (that is, a non-URI string) is
@@ -170,6 +169,8 @@ Handling of NULL I<ctx> argument for OSSL_STORE_close()
 was introduced in OpenSSL 1.1.1h.
 
 OSSL_STORE_open_with_libctx() was added in OpenSSL 3.0.
+
+OSSL_STORE_ctrl() and OSSL_STORE_vctrl() were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
