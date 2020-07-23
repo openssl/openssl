@@ -342,6 +342,12 @@ OPENSSL_CTX *app_get0_libctx(void)
     return app_libctx;
 }
 
+/* TODO(3.0): Make this an environment variable if required */
+const char *app_get0_propq(void)
+{
+    return NULL;
+}
+
 OPENSSL_CTX *app_create_libctx(void)
 {
     /*
@@ -2778,16 +2784,4 @@ void app_params_free(OSSL_PARAM *params)
             OPENSSL_free(params[i].data);
         OPENSSL_free(params);
     }
-}
-
-/* TODO(3.0): make this a config option */
-OPENSSL_CTX *app_get0_libctx(void)
-{
-    return NULL;
-}
-
-/* TODO(3.0): make this a config option */
-const char *app_get0_propq(void)
-{
-    return NULL;
 }
