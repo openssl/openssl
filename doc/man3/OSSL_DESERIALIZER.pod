@@ -53,7 +53,7 @@ OSSL_DESERIALIZER_fetch() looks for an algorithm within the provider that
 has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
 name given by I<name> and the properties given by I<properties>.
 The I<name> determines what type of object the fetched deserializer
-method is expected to be able to serialize, and the properties are
+method is expected to be able to deserialize, and the properties are
 used to determine the expected output type.
 For known properties and the values they may have, please have a look
 in L<provider-serializer(7)/Names and properties>.
