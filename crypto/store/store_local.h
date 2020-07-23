@@ -80,6 +80,7 @@ OSSL_STORE_LOADER *ossl_store_unregister_loader_int(const char *scheme);
 
 /* loader stuff */
 struct ossl_store_loader_st {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     /* Legacy stuff */
     const char *scheme;
     ENGINE *engine;
@@ -93,6 +94,7 @@ struct ossl_store_loader_st {
     OSSL_STORE_error_fn error;
     OSSL_STORE_close_fn close;
     OSSL_STORE_open_with_libctx_fn open_with_libctx;
+#endif
 
     /* Provider stuff */
     OSSL_PROVIDER *prov;
@@ -115,6 +117,11 @@ DEFINE_LHASH_OF(OSSL_STORE_LOADER);
 
 const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme);
 void ossl_store_destroy_loaders_int(void);
+
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+/* struct ossl_store_loader_ctx_st is defined differently by each loader */
+typedef struct ossl_store_loader_ctx_st OSSL_STORE_LOADER_CTX;
+#endif
 
 /*-
  *  OSSL_STORE_CTX stuff

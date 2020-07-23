@@ -69,8 +69,12 @@ OSSL_STORE_open_with_libctx(const char *uri,
  * determine which loader is used), except for common commands (see below).
  * Each command takes different arguments.
  */
-int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ... /* args */);
-int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args);
+DEPRECATEDIN_3_0(int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd,
+                                     ... /* args */))
+DEPRECATEDIN_3_0(int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd,
+                                      va_list args))
+
+# ifndef OPENSSL_NO_DEPRECATED_3_0
 
 /*
  * Common ctrl commands that different loaders may choose to support.
@@ -79,6 +83,8 @@ int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args);
 # define OSSL_STORE_C_USE_SECMEM      1
 /* Where custom commands start */
 # define OSSL_STORE_C_CUSTOM_START    100
+
+# endif
 
 /*
  * Read one data item (a key, a cert, a CRL) that is supported by the OSSL_STORE
@@ -271,6 +277,8 @@ void OSSL_STORE_LOADER_names_do_all(const OSSL_STORE_LOADER *loader,
  *  scheme.
  */
 
+# ifndef OPENSSL_NO_DEPRECATED_3_0
+
 /* struct ossl_store_loader_ctx_st is defined differently by each loader */
 typedef struct ossl_store_loader_ctx_st OSSL_STORE_LOADER_CTX;
 typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_fn)
@@ -297,42 +305,58 @@ typedef int (*OSSL_STORE_eof_fn)(OSSL_STORE_LOADER_CTX *ctx);
 typedef int (*OSSL_STORE_error_fn)(OSSL_STORE_LOADER_CTX *ctx);
 typedef int (*OSSL_STORE_close_fn)(OSSL_STORE_LOADER_CTX *ctx);
 
-OSSL_STORE_LOADER *OSSL_STORE_LOADER_new(ENGINE *e, const char *scheme);
-int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
-                               OSSL_STORE_open_fn open_function);
-int OSSL_STORE_LOADER_set_open_with_libctx
-    (OSSL_STORE_LOADER *loader,
-     OSSL_STORE_open_with_libctx_fn open_with_libctx_function);
-int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
-                                 OSSL_STORE_attach_fn attach_function);
-int OSSL_STORE_LOADER_set_ctrl(OSSL_STORE_LOADER *loader,
-                               OSSL_STORE_ctrl_fn ctrl_function);
-int OSSL_STORE_LOADER_set_expect(OSSL_STORE_LOADER *loader,
-                                 OSSL_STORE_expect_fn expect_function);
-int OSSL_STORE_LOADER_set_find(OSSL_STORE_LOADER *loader,
-                               OSSL_STORE_find_fn find_function);
-int OSSL_STORE_LOADER_set_load(OSSL_STORE_LOADER *loader,
-                               OSSL_STORE_load_fn load_function);
-int OSSL_STORE_LOADER_set_eof(OSSL_STORE_LOADER *loader,
-                              OSSL_STORE_eof_fn eof_function);
-int OSSL_STORE_LOADER_set_error(OSSL_STORE_LOADER *loader,
-                                OSSL_STORE_error_fn error_function);
-int OSSL_STORE_LOADER_set_close(OSSL_STORE_LOADER *loader,
-                                OSSL_STORE_close_fn close_function);
+# endif
 
-const ENGINE *OSSL_STORE_LOADER_get0_engine(const OSSL_STORE_LOADER *loader);
-const char * OSSL_STORE_LOADER_get0_scheme(const OSSL_STORE_LOADER *loader);
+DEPRECATEDIN_3_0(OSSL_STORE_LOADER *OSSL_STORE_LOADER_new
+                 (ENGINE *e, const char *scheme))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_open
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_open_fn open_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_open_with_libctx
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_open_with_libctx_fn open_with_libctx_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_attach
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_attach_fn attach_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_ctrl
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_ctrl_fn ctrl_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_expect
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_expect_fn expect_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_find
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_find_fn find_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_load
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_load_fn load_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_eof
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_eof_fn eof_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_error
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_error_fn error_function))
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_close
+                 (OSSL_STORE_LOADER *loader,
+                  OSSL_STORE_close_fn close_function))
 
-int OSSL_STORE_register_loader(OSSL_STORE_LOADER *loader);
-OSSL_STORE_LOADER *OSSL_STORE_unregister_loader(const char *scheme);
+DEPRECATEDIN_3_0(const ENGINE *OSSL_STORE_LOADER_get0_engine
+                 (const OSSL_STORE_LOADER *loader))
+DEPRECATEDIN_3_0(const char * OSSL_STORE_LOADER_get0_scheme
+                 (const OSSL_STORE_LOADER *loader))
+
+DEPRECATEDIN_3_0(int OSSL_STORE_register_loader(OSSL_STORE_LOADER *loader))
+DEPRECATEDIN_3_0(OSSL_STORE_LOADER *OSSL_STORE_unregister_loader
+                 (const char *scheme))
 
 /*-
  *  Functions to list STORE loaders
  *  -------------------------------
  */
-int OSSL_STORE_do_all_loaders(void (*do_function) (const OSSL_STORE_LOADER
-                                                   *loader, void *do_arg),
-                              void *do_arg);
+DEPRECATEDIN_3_0(int OSSL_STORE_do_all_loaders
+                 (void (*do_function)(const OSSL_STORE_LOADER *loader,
+                                      void *do_arg),
+                  void *do_arg))
 
 # ifdef  __cplusplus
 }

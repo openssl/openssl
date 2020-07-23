@@ -11,6 +11,9 @@
 #include <string.h>
 #include <assert.h>
 
+/* We need to use some STORE deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "e_os.h"
 
 #include <openssl/crypto.h>
@@ -80,6 +83,7 @@ OSSL_STORE_open_with_libctx(const char *uri,
      */
     for (i = 0; loader_ctx == NULL && i < schemes_n; i++) {
         OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
             if (loader->open_with_libctx != NULL)
                 loader_ctx = loader->open_with_libctx(loader, uri, libctx, propq,
@@ -87,6 +91,7 @@ OSSL_STORE_open_with_libctx(const char *uri,
             else
                 loader_ctx = loader->open(loader, uri, ui_method, ui_data);
         }
+#endif
         if (loader == NULL
             && (fetched_loader =
                 OSSL_STORE_LOADER_fetch(schemes[i], libctx, propq)) != NULL) {
@@ -186,6 +191,7 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri,
                                        post_process, post_process_data);
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 int OSSL_STORE_ctrl(OSSL_STORE_CTX *ctx, int cmd, ...)
 {
     va_list args;
@@ -229,6 +235,7 @@ int OSSL_STORE_vctrl(OSSL_STORE_CTX *ctx, int cmd, va_list args)
      */
     return 1;
 }
+#endif
 
 int OSSL_STORE_expect(OSSL_STORE_CTX *ctx, int expected_type)
 {
@@ -333,12 +340,14 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
         OPENSSL_free(name_der);
         BN_free(number);
     } else {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         /* legacy loader section */
         if (ctx->loader->find == NULL) {
             ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_UNSUPPORTED_OPERATION);
             return 0;
         }
         ret = ctx->loader->find(ctx->loader_ctx, search);
+#endif
     }
 
     return ret;
@@ -382,10 +391,12 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
             }
             v = load_data.v;
         }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         if (ctx->fetched_loader == NULL)
             v = ctx->loader->load(ctx->loader_ctx,
                                   ctx->pwdata._.ui_method.ui_method,
                                   ctx->pwdata._.ui_method.ui_method_data);
+#endif
     }
 
     if (ctx->post_process != NULL && v != NULL) {
@@ -424,8 +435,10 @@ int OSSL_STORE_error(OSSL_STORE_CTX *ctx)
 
     if (ctx->fetched_loader != NULL)
         ret = ctx->error_flag;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL)
         ret = ctx->loader->error(ctx->loader_ctx);
+#endif
     return ret;
 }
 
@@ -435,8 +448,10 @@ int OSSL_STORE_eof(OSSL_STORE_CTX *ctx)
 
     if (ctx->fetched_loader != NULL)
         ret = ctx->loader->p_eof(ctx->loader_ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL)
         ret = ctx->loader->eof(ctx->loader_ctx);
+#endif
     return ret;
 }
 
@@ -450,8 +465,10 @@ static int ossl_store_close_it(OSSL_STORE_CTX *ctx)
 
     if (ctx->fetched_loader != NULL)
         ret = ctx->loader->p_close(ctx->loader_ctx);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL)
         ret = ctx->loader->close(ctx->loader_ctx);
+#endif
 
     sk_OSSL_STORE_INFO_pop_free(ctx->cached_info, OSSL_STORE_INFO_free);
     OSSL_STORE_LOADER_free(ctx->fetched_loader);
@@ -769,6 +786,7 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
             break;
         }
     }
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (ctx->fetched_loader == NULL) {
         OSSL_STORE_SEARCH tmp_search;
 
@@ -777,6 +795,7 @@ int OSSL_STORE_supports_search(OSSL_STORE_CTX *ctx, int search_type)
         tmp_search.search_type = search_type;
         ret = ctx->loader->find(NULL, &tmp_search);
     }
+#endif
     return ret;
 }
 
@@ -907,9 +926,11 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         scheme = "file";
 
     OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if ((loader = ossl_store_get0_loader_int(scheme)) != NULL)
         loader_ctx = loader->attach(loader, bp, libctx, propq,
                                     ui_method, ui_data);
+#endif
     if (loader == NULL
         && (fetched_loader =
             OSSL_STORE_LOADER_fetch(scheme, libctx, propq)) != NULL) {
