@@ -65,6 +65,7 @@ CONF *app_load_config_bio(BIO *in, const char *filename);
 CONF *app_load_config(const char *filename);
 CONF *app_load_config_quiet(const char *filename);
 int app_load_modules(const CONF *config);
+CONF *app_load_config_modules(const char *configfile);
 void unbuffer(FILE *fp);
 void wait_for_async(SSL *s);
 # if defined(OPENSSL_SYS_MSDOS)
@@ -290,9 +291,12 @@ typedef struct verify_options_st {
 
 extern VERIFY_CB_ARGS verify_args;
 
+OPENSSL_CTX *app_create_libctx(void);
+OPENSSL_CTX *app_get0_libctx(void);
 OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
                                      const OSSL_PARAM *paramdefs);
 void app_params_free(OSSL_PARAM *params);
+int app_provider_load(OPENSSL_CTX *libctx, const char *provider_name);
 void app_providers_cleanup(void);
 
 #endif

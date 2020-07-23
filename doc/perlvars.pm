@@ -101,6 +101,14 @@ $OpenSSL::safe::opt_provider_item = ""
 . "\n"
 . "See L<openssl(1)/Provider Options>.";
 
+# Configuration option
+$OpenSSL::safe::opt_config_synopsis = ""
+. "[B<-config> I<configfile>]\n";
+$OpenSSL::safe::opt_config_item = ""
+. "=item B<-config> I<configfile>\n"
+. "\n"
+. "See L<openssl(1)/Configuration Option>.";
+
 # Engine option
 $OpenSSL::safe::opt_engine_synopsis = "";
 $OpenSSL::safe::opt_engine_item = "";

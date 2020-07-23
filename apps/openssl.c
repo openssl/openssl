@@ -58,6 +58,7 @@ static void warn_deprecated(const FUNCTION *fp)
 
 static int apps_startup(void)
 {
+    const char *use_libctx = NULL;
 #ifdef SIGPIPE
     signal(SIGPIPE, SIG_IGN);
 #endif
@@ -69,11 +70,26 @@ static int apps_startup(void)
 
     setup_ui_method();
 
+    /*
+     * NOTE: This is an undocumented feature required for testing only.
+     * There are no guarantees that it will exist in future builds.
+     */
+    use_libctx = getenv("OPENSSL_TEST_LIBCTX");
+    if (use_libctx != NULL) {
+        /* Set this to "1" to create a global libctx */
+        if (strcmp(use_libctx, "1") == 0) {
+            if (app_create_libctx() == NULL)
+                return 0;
+        }
+    }
+
     return 1;
 }
 
 static void apps_shutdown(void)
 {
+    app_providers_cleanup();
+    OPENSSL_CTX_free(app_get0_libctx());
     destroy_ui_method();
 }
 
@@ -273,7 +289,6 @@ int main(int argc, char *argv[])
         : do_cmd(prog, 1, help_argv);
 
  end:
-    app_providers_cleanup();
     OPENSSL_free(default_config_file);
     lh_FUNCTION_free(prog);
     OPENSSL_free(arg.argv);

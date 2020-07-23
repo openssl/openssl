@@ -38,6 +38,7 @@ B<openssl> B<pkeyutl>
 [B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 
 =for openssl ifdef engine engine_impl
 
@@ -192,6 +193,8 @@ engine I<id> for crypto operations.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 =back
 

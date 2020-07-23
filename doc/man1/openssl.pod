@@ -52,15 +52,6 @@ I<options> and I<parameters>.
 Detailed documentation and use cases for most standard subcommands are available
 (e.g., L<openssl-x509(1)>).
 
-Many commands use an external configuration file for some or all of their
-arguments and have a B<-config> option to specify that file.
-The default name of the file is F<openssl.cnf> in the default certificate
-storage area, which can be determined from the L<openssl-version(1)>
-command.
-The environment variable B<OPENSSL_CONF> can be used to specify
-a different location of the file.
-See L<openssl-env(7)>.
-
 The list options B<-standard-commands>, B<-digest-commands>,
 and B<-cipher-commands> output a list (one entry per line) of the names
 of all standard commands, message digest commands, or cipher commands,
@@ -85,6 +76,17 @@ same name, this provides an easy way for shell scripts to test for the
 availability of ciphers in the B<openssl> program.  (B<no->I<XXX> is
 not able to detect pseudo-commands such as B<quit>,
 B<list>, or B<no->I<XXX> itself.)
+
+=head2 Configuration Option
+
+Many commands use an external configuration file for some or all of their
+arguments and have a B<-config> option to specify that file.
+The default name of the file is F<openssl.cnf> in the default certificate
+storage area, which can be determined from the L<openssl-version(1)>
+command. This can be used to load modules.
+The environment variable B<OPENSSL_CONF> can be used to specify
+a different location of the file.
+See L<openssl-env(7)>.
 
 =head2 Standard Commands
 

@@ -78,6 +78,8 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
+static OPENSSL_CTX *app_libctx = NULL;
+
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
 static int set_multi_opts(unsigned long *flags, const char *arg,
@@ -335,13 +337,37 @@ static char *app_get_pass(const char *arg, int keepbio)
     return OPENSSL_strdup(tpass);
 }
 
+OPENSSL_CTX *app_get0_libctx(void)
+{
+    return app_libctx;
+}
+
+OPENSSL_CTX *app_create_libctx(void)
+{
+    /*
+     * Load the NULL provider into the default library context and create a
+     * library context which will then be used for any OPT_PROV options.
+     */
+    if (app_libctx == NULL) {
+
+        if (!app_provider_load(NULL, "null")) {
+            BIO_puts(bio_err, "Failed to create null provider\n");
+            return NULL;
+        }
+        app_libctx = OPENSSL_CTX_new();
+    }
+    if (app_libctx == NULL)
+        BIO_puts(bio_err, "Failed to create library context\n");
+    return app_libctx;
+}
+
 CONF *app_load_config_bio(BIO *in, const char *filename)
 {
     long errorline = -1;
     CONF *conf;
     int i;
 
-    conf = NCONF_new(NULL);
+    conf = NCONF_new_with_libctx(app_libctx, NULL);
     i = NCONF_load_bio(conf, in, &errorline);
     if (i > 0)
         return conf;
@@ -357,6 +383,7 @@ CONF *app_load_config_bio(BIO *in, const char *filename)
     else
         BIO_printf(bio_err, "config input");
 
+    CONF_modules_load(conf, NULL, 0);
     NCONF_free(conf);
     return NULL;
 }
@@ -432,6 +459,23 @@ int add_oid_section(CONF *conf)
         }
     }
     return 1;
+}
+
+CONF *app_load_config_modules(const char *configfile)
+{
+    CONF *conf = NULL;
+
+    if (configfile != NULL) {
+        BIO_printf(bio_err, "Using configuration from %s\n", configfile);
+
+        if ((conf = app_load_config(configfile)) == NULL)
+            return NULL;
+        if (configfile != default_config_file && !app_load_modules(conf)) {
+            NCONF_free(conf);
+            conf = NULL;
+        }
+    }
+    return conf;
 }
 
 X509 *load_cert_pass(const char *uri, int maybe_stdin,
