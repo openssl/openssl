@@ -415,7 +415,7 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
      * be exactly what it had when entering this function.
      * This is a bit different from using evp_keymgmt_util_assign_pkey(),
      * which isn't as careful with |to|'s original |keymgmt|, since it's
-     * meant to forcedly reassign an EVP_PKEY no matter what, which is
+     * meant to forcibly reassign an EVP_PKEY no matter what, which is
      * why we don't use that one here.
      */
     if (to->keymgmt == NULL
