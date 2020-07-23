@@ -18,7 +18,6 @@ EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
                         long length)
 {
     EVP_PKEY *ret = NULL;
-    const unsigned char *p = *pp;
 
     if ((a == NULL) || (*a == NULL)) {
         if ((ret = EVP_PKEY_new()) == NULL)
@@ -34,7 +33,7 @@ EVP_PKEY *d2i_KeyParams(int type, EVP_PKEY **a, const unsigned char **pp,
         goto err;
     }
 
-    if (!ret->ameth->param_decode(ret, &p, length))
+    if (!ret->ameth->param_decode(ret, pp, length))
         goto err;
 
     if (a != NULL)
