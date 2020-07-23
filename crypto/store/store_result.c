@@ -302,7 +302,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
             derp = der;
             p8info = d2i_PKCS8_PRIV_KEY_INFO(NULL, &derp, der_len);
             if (p8info != NULL) {
-                pk = evp_pkcs82pkey_int(p8info, libctx, propq);
+                pk = EVP_PKCS82PKEY_with_libctx(p8info, libctx, propq);
                 PKCS8_PRIV_KEY_INFO_free(p8info);
             }
 

@@ -15,7 +15,7 @@
 #include <openssl/pkcs12.h>
 #include "internal/pem.h"        /* For internal PVK and "blob" functions */
 #include "internal/cryptlib.h"
-#include "crypto/asn1.h"
+#include "internal/asn1.h"
 #include "internal/passphrase.h"
 #include "prov/bio.h"               /* ossl_prov_bio_printf() */
 #include "prov/providercommonerr.h" /* PROV_R_READ_KEY */

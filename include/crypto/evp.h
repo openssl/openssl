@@ -763,8 +763,6 @@ int pkcs5_pbkdf2_hmac_with_libctx(const char *pass, int passlen,
 int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 
-EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
-                             const char *propq);
 EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
                                        const ASN1_OCTET_STRING *id,
                                        OPENSSL_CTX *libctx, const char *propq);
