@@ -83,8 +83,8 @@ EVP_ENCODE_CTX_num() will return the number of as yet unprocessed bytes still to
 be encoded or decoded that are pending in the B<ctx> object.
 
 EVP_EncodeBlock() encodes a full block of input data in B<f> and of length
-B<dlen> and stores it in B<t>. For every 3 bytes of input provided 4 bytes of
-output data will be produced. If B<dlen> is not divisible by 3 then the block is
+B<n> and stores it in B<t>. For every 3 bytes of input provided 4 bytes of
+output data will be produced. If B<n> is not divisible by 3 then the block is
 encoded as a final block of data and the output is padded such that it is always
 divisible by 4. Additionally a NUL terminator character will be added. For
 example if 16 bytes of input data is provided then 24 bytes of encoded data is
