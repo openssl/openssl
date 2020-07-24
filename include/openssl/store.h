@@ -276,9 +276,6 @@ typedef OSSL_STORE_INFO *(*OSSL_STORE_load_fn)(OSSL_STORE_LOADER_CTX *ctx,
                                                void *ui_data);
 int OSSL_STORE_LOADER_set_load(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_load_fn load_function);
-typedef OSSL_STORE_INFO *(*OSSL_STORE_load_with_libctx_fn)
-    (OSSL_STORE_LOADER_CTX *ctx, const UI_METHOD *ui_method, void *ui_data,
-     OPENSSL_CTX *libctx, const char *propq);
 
 typedef int (*OSSL_STORE_eof_fn)(OSSL_STORE_LOADER_CTX *ctx);
 int OSSL_STORE_LOADER_set_eof(OSSL_STORE_LOADER *loader,
