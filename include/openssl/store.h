@@ -120,12 +120,11 @@ int OSSL_STORE_close(OSSL_STORE_CTX *ctx);
  * Note that this function is considered unsafe, all depending on what the
  * BIO actually reads.
  */
-OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio,
-                                  const char *scheme,
+OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bio, const char *scheme,
+                                  OPENSSL_CTX *libctx, const char *propq,
                                   const UI_METHOD *ui_method, void *ui_data,
                                   OSSL_STORE_post_process_info_fn post_process,
-                                  void *post_process_data,
-                                  OPENSSL_CTX *libctx, const char *propq);
+                                  void *post_process_data);
 
 /*-
  *  Extracting OpenSSL types from and creating new OSSL_STORE_INFOs
@@ -257,8 +256,8 @@ int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_open_fn open_function);
 typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)
     (const OSSL_STORE_LOADER *loader, BIO *bio,
-     const UI_METHOD *ui_method, void *ui_data,
-     OPENSSL_CTX *libctx, const char *propq);
+     OPENSSL_CTX *libctx, const char *propq,
+     const UI_METHOD *ui_method, void *ui_data);
 int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
                                  OSSL_STORE_attach_fn attach_function);
 typedef int (*OSSL_STORE_ctrl_fn)(OSSL_STORE_LOADER_CTX *ctx, int cmd,

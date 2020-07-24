@@ -985,32 +985,29 @@ static OSSL_STORE_LOADER_CTX *file_open_with_libctx
     return NULL;
 }
 
-static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
-                                        const char *uri,
-                                        const UI_METHOD *ui_method,
-                                        void *ui_data)
+static OSSL_STORE_LOADER_CTX *file_open
+    (const OSSL_STORE_LOADER *loader, const char *uri,
+     const UI_METHOD *ui_method, void *ui_data)
 {
     return file_open_with_libctx(loader, uri, NULL, NULL, ui_method, ui_data);
 }
 
-static OSSL_STORE_LOADER_CTX *file_attach(const OSSL_STORE_LOADER *loader,
-                                          BIO *bp,
-                                          const UI_METHOD *ui_method,
-                                          void *ui_data,
-                                          OPENSSL_CTX *libctx,
-                                          const char *propq)
+static OSSL_STORE_LOADER_CTX *file_attach
+    (const OSSL_STORE_LOADER *loader, BIO *bp,
+     OPENSSL_CTX *libctx, const char *propq,
+     const UI_METHOD *ui_method, void *ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
-        OSSL_STOREerr(OSSL_STORE_F_FILE_ATTACH, ERR_R_MALLOC_FAILURE);
+        OSSL_STOREerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (propq != NULL) {
         ctx->propq = OPENSSL_strdup(propq);
         if (ctx->propq == NULL) {
-            OSSL_STOREerr(OSSL_STORE_F_FILE_ATTACH, ERR_R_MALLOC_FAILURE);
+            OSSL_STOREerr(0, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     }
@@ -1045,8 +1042,7 @@ static int file_ctrl(OSSL_STORE_LOADER_CTX *ctx, int cmd, va_list args)
                 ctx->flags |= FILE_FLAG_SECMEM;
                 break;
             default:
-                OSSL_STOREerr(OSSL_STORE_F_FILE_CTRL,
-                              ERR_R_PASSED_INVALID_ARGUMENT);
+                OSSL_STOREerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
                 ret = 0;
                 break;
             }

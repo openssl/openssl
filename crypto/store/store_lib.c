@@ -32,10 +32,10 @@ struct ossl_store_ctx_st {
     int loading;
 };
 
-OSSL_STORE_CTX *OSSL_STORE_open_with_libctx
-    (const char *uri, OPENSSL_CTX *libctx, const char *propq,
-     const UI_METHOD *ui_method, void *ui_data,
-     OSSL_STORE_post_process_info_fn post_process, void *post_process_data)
+OSSL_STORE_CTX *OSSL_STORE_open_with_libctx(
+    const char *uri, OPENSSL_CTX *libctx, const char *propq,
+    const UI_METHOD *ui_method, void *ui_data,
+    OSSL_STORE_post_process_info_fn post_process, void *post_process_data)
 {
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER_CTX *loader_ctx = NULL;
@@ -121,8 +121,8 @@ OSSL_STORE_CTX *OSSL_STORE_open_with_libctx
     return NULL;
 }
 
-OSSL_STORE_CTX *OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method,
-                                void *ui_data,
+OSSL_STORE_CTX *OSSL_STORE_open(const char *uri,
+                                const UI_METHOD *ui_method, void *ui_data,
                                 OSSL_STORE_post_process_info_fn post_process,
                                 void *post_process_data)
 {
@@ -663,12 +663,11 @@ char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
     return NULL;
 }
 
-OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp,
-                                  const char *scheme,
+OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
+                                  OPENSSL_CTX *libctx, const char *propq,
                                   const UI_METHOD *ui_method, void *ui_data,
                                   OSSL_STORE_post_process_info_fn post_process,
-                                  void *post_process_data,
-                                  OPENSSL_CTX *libctx, const char *propq)
+                                  void *post_process_data)
 {
     OSSL_STORE_CTX *ctx = NULL;
     const OSSL_STORE_LOADER *loader = NULL;
@@ -676,8 +675,8 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp,
 
     if ((loader =
          ossl_store_get0_loader_int(scheme != NULL ? scheme : "file")) == NULL
-        || (loader_ctx = loader->attach(loader, bp, ui_method, ui_data,
-                                        libctx, propq)) == NULL)
+        || (loader_ctx = loader->attach(loader, bp, libctx, propq,
+                                        ui_method, ui_data)) == NULL)
         return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {

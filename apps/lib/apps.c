@@ -801,9 +801,8 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
         unbuffer(stdin);
         bio = BIO_new_fp(stdin, 0);
         if (bio != NULL)
-            ctx = OSSL_STORE_attach(bio, "file",
-                                    get_ui_method(), &uidata, NULL, NULL,
-                                    libctx, propq);
+            ctx = OSSL_STORE_attach(bio, "file", libctx, propq,
+                                    get_ui_method(), &uidata, NULL, NULL);
         uri = "<stdin>";
     } else {
         ctx = OSSL_STORE_open_with_libctx(uri, libctx, propq, get_ui_method(),
