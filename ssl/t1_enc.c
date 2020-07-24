@@ -192,10 +192,8 @@ int tls1_change_cipher_state(SSL *s, int which)
     size_t n, i, j, k, cl;
     int reuse_dd = 0;
 #ifndef OPENSSL_NO_KTLS
-# ifdef __FreeBSD__
-    struct tls_enable crypto_info;
-# else
-    struct tls_crypto_info_all crypto_info;
+    ktls_crypto_info_t crypto_info;
+# ifndef __FreeBSD__
     unsigned char *rec_seq;
     void *rl_sequence;
 #  ifndef OPENSSL_NO_KTLS_RX
