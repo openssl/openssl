@@ -37,6 +37,8 @@
  */
 #   define TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE             8
 
+typedef struct tls_enable ktls_crypto_info_t;
+
 /*
  * FreeBSD does not require any additional steps to enable KTLS before
  * setting keys.
@@ -173,6 +175,9 @@ struct tls_crypto_info_all {
     };
     size_t tls_crypto_info_len;
 };
+
+typedef struct tls_crypto_info_all ktls_crypto_info_t;
+
 /*
  * When successful, this socket option doesn't change the behaviour of the
  * TCP socket, except changing the TCP setsockopt handler to enable the

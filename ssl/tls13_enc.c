@@ -517,7 +517,7 @@ int tls13_change_cipher_state(SSL *s, int which)
     const EVP_CIPHER *cipher = NULL;
 #if !defined(OPENSSL_NO_KTLS) && defined(OPENSSL_KTLS_TLS13)
 # ifndef __FreeBSD__
-    struct tls_crypto_info_all crypto_info;
+    ktls_crypto_info_t crypto_info;
     BIO *bio;
 # endif
 #endif
