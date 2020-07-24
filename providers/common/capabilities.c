@@ -165,7 +165,10 @@ static int tls_group_capability(OSSL_CALLBACK *cb, void *arg)
 {
     size_t i;
 
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH) && !defined(FIPS_MODULE)
+#if !defined(OPENSSL_NO_EC) \
+    && !defined(OPENSSL_NO_EC2M) \
+    && !defined(OPENSSL_NO_DH) \
+    && !defined(FIPS_MODULE)
     assert(OSSL_NELEM(param_group_list) == OSSL_NELEM(group_list));
 #endif
     for (i = 0; i < OSSL_NELEM(param_group_list); i++)
