@@ -118,8 +118,7 @@ static int null_callback(int ok, X509_STORE_CTX *e)
  * to match issuer and subject names (i.e., the cert being self-issued) and any
  * present authority key identifier to match the subject key identifier, etc.
  */
-static int x509_self_signed_ex(X509 *cert, int verify_signature,
-                               OPENSSL_CTX *libctx, const char *propq)
+int X509_self_signed(X509 *cert, int verify_signature)
 {
     EVP_PKEY *pkey;
 
@@ -127,24 +126,13 @@ static int x509_self_signed_ex(X509 *cert, int verify_signature,
         X509err(0, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
-    if (!X509v3_cache_extensions(cert, libctx, propq))
+    if (!x509v3_cache_extensions(cert))
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;
     if (!verify_signature)
         return 1;
-    return X509_verify_ex(cert, pkey, libctx, propq);
-}
-
-/* wrapper for internal use */
-static int cert_self_signed(X509_STORE_CTX *ctx, X509 *x, int verify_signature)
-{
-    return x509_self_signed_ex(x, verify_signature, ctx->libctx, ctx->propq);
-}
-
-int X509_self_signed(X509 *cert, int verify_signature)
-{
-    return x509_self_signed_ex(cert, verify_signature, NULL, NULL);
+    return X509_verify(cert, pkey);
 }
 
 /* Given a certificate try and find an exact match in the store */
@@ -367,7 +355,7 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
  */
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
-    if (x509_likely_issued(issuer, x, ctx->libctx, ctx->propq) != X509_V_OK)
+    if (x509_likely_issued(issuer, x) != X509_V_OK)
         return 0;
     if ((x->ex_flags & EXFLAG_SI) == 0 || sk_X509_num(ctx->chain) != 1) {
         int i;
@@ -1825,7 +1813,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 ret = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
                 if (!verify_cb_cert(ctx, xi, issuer_depth, ret))
                     return 0;
-            } else if (X509_verify_ex(xs, pkey, ctx->libctx, ctx->propq) <= 0) {
+            } else if (X509_verify(xs, pkey) <= 0) {
                 ret = X509_V_ERR_CERT_SIGNATURE_FAILURE;
                 if (!verify_cb_cert(ctx, xs, n, ret))
                     return 0;
@@ -2871,7 +2859,7 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
         if (t->usage != DANETLS_USAGE_DANE_TA ||
             t->selector != DANETLS_SELECTOR_SPKI ||
             t->mtype != DANETLS_MATCHING_FULL ||
-            X509_verify_ex(cert, t->spki, ctx->libctx, ctx->propq) <= 0)
+            X509_verify(cert, t->spki) <= 0)
             continue;
 
         /* Clear any PKIX-?? matches that failed to extend to a full chain */
@@ -3013,7 +3001,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         return 0;
     }
 
-    self_signed = cert_self_signed(ctx, cert, 0);
+    self_signed = X509_self_signed(cert, 0);
     if (self_signed < 0) {
         ctx->error = X509_V_ERR_UNSPECIFIED;
         return 0;
@@ -3191,7 +3179,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                         search = 0;
                         continue;
                     }
-                    self_signed = cert_self_signed(ctx, x, 0);
+                    self_signed = X509_self_signed(x, 0);
                     if (self_signed < 0) {
                         ctx->error = X509_V_ERR_UNSPECIFIED;
                         return 0;
@@ -3317,7 +3305,7 @@ static int build_chain(X509_STORE_CTX *ctx)
 
             x = xtmp;
             ++ctx->num_untrusted;
-            self_signed = cert_self_signed(ctx, xtmp, 0);
+            self_signed = X509_self_signed(xtmp, 0);
             if (self_signed < 0) {
                 sk_X509_free(sktmp);
                 ctx->error = X509_V_ERR_UNSPECIFIED;

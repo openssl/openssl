@@ -220,6 +220,7 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
     template.load = NULL;
     template.eof = NULL;
     template.close = NULL;
+    template.open_with_libctx = NULL;
 
     if (!ossl_store_init_once())
         return NULL;

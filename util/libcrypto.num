@@ -5030,7 +5030,7 @@ SRP_Calc_B_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_u_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_x_ex                           ?	3_0_0	EXIST::FUNCTION:SRP
 SRP_Calc_client_key_ex                  ?	3_0_0	EXIST::FUNCTION:SRP
-X509v3_cache_extensions                 ?	3_0_0	EXIST::FUNCTION:
+X509v3_cache_extensions                 ?	3_0_0	NOEXIST::FUNCTION:
 EVP_PKEY_gettable_params                ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_int_param                  ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_get_size_t_param               ?	3_0_0	EXIST::FUNCTION:
@@ -5075,8 +5075,8 @@ EVP_PKEY_CTX_set_dhx_rfc5114            ?	3_0_0	EXIST::FUNCTION:DH
 X509_VERIFY_PARAM_get0_host             ?	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get0_email            ?	3_0_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_get1_ip_asc           ?	3_0_0	EXIST::FUNCTION:
-X509_verify_ex                          ?	3_0_0	EXIST::FUNCTION:
-X509_REQ_verify_ex                      ?	3_0_0	EXIST::FUNCTION:
+X509_verify_ex                          ?	3_0_0	NOEXIST::FUNCTION:
+X509_REQ_verify_ex                      ?	3_0_0	NOEXIST::FUNCTION:
 X509_ALGOR_copy                         ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set0_signature                 ?	3_0_0	EXIST::FUNCTION:
 X509_REQ_set1_signature_algo            ?	3_0_0	EXIST::FUNCTION:
@@ -5136,3 +5136,16 @@ EC_GROUP_new_by_curve_name_with_libctx  ?	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_with_libctx                  ?	3_0_0	EXIST::FUNCTION:EC
 EC_KEY_new_by_curve_name_with_libctx    ?	3_0_0	EXIST::FUNCTION:EC
 OPENSSL_CTX_set0_default                ?	3_0_0	EXIST::FUNCTION:
+PEM_X509_INFO_read_bio_with_libctx      ?	3_0_0	EXIST::FUNCTION:
+PEM_X509_INFO_read_with_libctx          ?	3_0_0	EXIST::FUNCTION:STDIO
+X509_REQ_verify_with_libctx             ?	3_0_0	EXIST::FUNCTION:
+X509_new_with_libctx                    ?	3_0_0	EXIST::FUNCTION:
+X509_LOOKUP_ctrl_with_libctx            ?	3_0_0	EXIST::FUNCTION:
+X509_load_cert_file_with_libctx         ?	3_0_0	EXIST::FUNCTION:
+X509_load_cert_crl_file_with_libctx     ?	3_0_0	EXIST::FUNCTION:
+X509_LOOKUP_by_subject_with_libctx      ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_load_file_with_libctx        ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_load_store_with_libctx       ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_load_locations_with_libctx   ?	3_0_0	EXIST::FUNCTION:
+X509_STORE_set_default_paths_with_libctx ?	3_0_0	EXIST::FUNCTION:
+OSSL_STORE_open_with_libctx             ?	3_0_0	EXIST::FUNCTION:

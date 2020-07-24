@@ -257,17 +257,11 @@ int ssl_cert_set0_chain(SSL *s, SSL_CTX *ctx, STACK_OF(X509) *chain)
 {
     int i, r;
     CERT_PKEY *cpk = s != NULL ? s->cert->key : ctx->cert->key;
-    SSL_CTX *realctx = s != NULL ? s->ctx : ctx;
 
     if (!cpk)
         return 0;
     for (i = 0; i < sk_X509_num(chain); i++) {
         X509 *x = sk_X509_value(chain, i);
-
-        if (!X509v3_cache_extensions(x, realctx->libctx, realctx->propq)) {
-            SSLerr(0, ERR_LIB_X509);
-            return 0;
-        }
 
         r = ssl_security_cert(s, ctx, x, 0, 0);
         if (r != 1) {
@@ -614,29 +608,39 @@ static unsigned long xname_hash(const X509_NAME *a)
     return X509_NAME_hash((X509_NAME *)a);
 }
 
-STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
+STACK_OF(X509_NAME) *SSL_load_client_CA_file_with_libctx(const char *file,
+                                                         OPENSSL_CTX *libctx,
+                                                         const char *propq)
 {
     BIO *in = BIO_new(BIO_s_file());
     X509 *x = NULL;
     X509_NAME *xn = NULL;
     STACK_OF(X509_NAME) *ret = NULL;
     LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
+    OPENSSL_CTX *prev_libctx = NULL;
 
     if ((name_hash == NULL) || (in == NULL)) {
-        SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
+        SSLerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
+    x = X509_new_with_libctx(libctx, propq);
+    if (x == NULL) {
+        SSLerr(0, ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
     if (!BIO_read_filename(in, file))
         goto err;
 
+    /* Internally lh_X509_NAME_retrieve() needs the libctx to retrieve SHA1 */
+    prev_libctx = OPENSSL_CTX_set0_default(libctx);
     for (;;) {
         if (PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
             break;
         if (ret == NULL) {
             ret = sk_X509_NAME_new_null();
             if (ret == NULL) {
-                SSLerr(SSL_F_SSL_LOAD_CLIENT_CA_FILE, ERR_R_MALLOC_FAILURE);
+                SSLerr(0, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
         }
@@ -663,12 +667,19 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
     sk_X509_NAME_pop_free(ret, X509_NAME_free);
     ret = NULL;
  done:
+    /* restore the old libctx */
+    OPENSSL_CTX_set0_default(prev_libctx);
     BIO_free(in);
     X509_free(x);
     lh_X509_NAME_free(name_hash);
     if (ret != NULL)
         ERR_clear_error();
     return ret;
+}
+
+STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file)
+{
+    return SSL_load_client_CA_file_with_libctx(file, NULL, NULL);
 }
 
 int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
@@ -841,6 +852,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
     X509_STORE_CTX *xs_ctx = NULL;
     STACK_OF(X509) *chain = NULL, *untrusted = NULL;
     X509 *x;
+    SSL_CTX *real_ctx = (s == NULL) ? ctx : s->ctx;
     int i, rv = 0;
 
     if (!cpk->x509) {
@@ -872,10 +884,7 @@ int ssl_build_cert_chain(SSL *s, SSL_CTX *ctx, int flags)
             untrusted = cpk->chain;
     }
 
-    if (s == NULL)
-        xs_ctx = X509_STORE_CTX_new_with_libctx(ctx->libctx, ctx->propq);
-    else
-        xs_ctx = X509_STORE_CTX_new_with_libctx(s->ctx->libctx, s->ctx->propq);
+    xs_ctx = X509_STORE_CTX_new_with_libctx(real_ctx->libctx, ctx->propq);
     if (xs_ctx == NULL) {
         SSLerr(SSL_F_SSL_BUILD_CERT_CHAIN, ERR_R_MALLOC_FAILURE);
         goto err;

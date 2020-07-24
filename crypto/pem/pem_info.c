@@ -26,25 +26,35 @@
 DEFINE_STACK_OF(X509_INFO)
 
 #ifndef OPENSSL_NO_STDIO
-STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
-                                        pem_password_cb *cb, void *u)
+STACK_OF(X509_INFO)
+*PEM_X509_INFO_read_with_libctx(FILE *fp, STACK_OF(X509_INFO) *sk,
+                                pem_password_cb *cb, void *u,
+                                OPENSSL_CTX *libctx, const char *propq)
 {
     BIO *b;
     STACK_OF(X509_INFO) *ret;
 
     if ((b = BIO_new(BIO_s_file())) == NULL) {
-        PEMerr(PEM_F_PEM_X509_INFO_READ, ERR_R_BUF_LIB);
+        PEMerr(0, ERR_R_BUF_LIB);
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = PEM_X509_INFO_read_bio(b, sk, cb, u);
+    ret = PEM_X509_INFO_read_bio_with_libctx(b, sk, cb, u, libctx, propq);
     BIO_free(b);
     return ret;
 }
+
+STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
+                                        pem_password_cb *cb, void *u)
+{
+    return PEM_X509_INFO_read_with_libctx(fp, sk, cb, u, NULL, NULL);
+}
 #endif
 
-STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
-                                            pem_password_cb *cb, void *u)
+STACK_OF(X509_INFO)
+*PEM_X509_INFO_read_bio_with_libctx(BIO *bp, STACK_OF(X509_INFO) *sk,
+                                    pem_password_cb *cb, void *u,
+                                    OPENSSL_CTX *libctx, const char *propq)
 {
     X509_INFO *xi = NULL;
     char *name = NULL, *header = NULL;
@@ -59,7 +69,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
 
     if (sk == NULL) {
         if ((ret = sk_X509_INFO_new_null()) == NULL) {
-            PEMerr(PEM_F_PEM_X509_INFO_READ_BIO, ERR_R_MALLOC_FAILURE);
+            PEMerr(0, ERR_R_MALLOC_FAILURE);
             goto err;
         }
     } else
@@ -90,6 +100,9 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
                     goto err;
                 goto start;
             }
+            xi->x509 = X509_new_with_libctx(libctx, propq);
+            if (xi->x509 == NULL)
+                goto err;
             pp = &(xi->x509);
         } else if ((strcmp(name, PEM_STRING_X509_TRUSTED) == 0)) {
             d2i = (D2I_OF(void)) d2i_X509_AUX;
@@ -100,6 +113,9 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
                     goto err;
                 goto start;
             }
+            xi->x509 = X509_new_with_libctx(libctx, propq);
+            if (xi->x509 == NULL)
+                goto err;
             pp = &(xi->x509);
         } else if (strcmp(name, PEM_STRING_X509_CRL) == 0) {
             d2i = (D2I_OF(void)) d2i_X509_CRL;
@@ -197,11 +213,11 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
                 p = data;
                 if (ptype) {
                     if (!d2i_PrivateKey(ptype, pp, &p, len)) {
-                        PEMerr(PEM_F_PEM_X509_INFO_READ_BIO, ERR_R_ASN1_LIB);
+                        PEMerr(0, ERR_R_ASN1_LIB);
                         goto err;
                     }
                 } else if (d2i(pp, &p, len) == NULL) {
-                    PEMerr(PEM_F_PEM_X509_INFO_READ_BIO, ERR_R_ASN1_LIB);
+                    PEMerr(0, ERR_R_ASN1_LIB);
                     goto err;
                 }
             } else {            /* encrypted RSA data */
@@ -249,6 +265,12 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
     OPENSSL_free(header);
     OPENSSL_free(data);
     return ret;
+}
+
+STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
+                                            pem_password_cb *cb, void *u)
+{
+    return PEM_X509_INFO_read_bio_with_libctx(bp, sk, cb, u, NULL, NULL);
 }
 
 /* A TJH addition */

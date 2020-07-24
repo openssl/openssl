@@ -404,7 +404,7 @@ static int test_handshake(int idx)
 
     BIO_snprintf(test_app, sizeof(test_app), "test-%d", idx);
 
-    test_ctx = SSL_TEST_CTX_create(conf, test_app);
+    test_ctx = SSL_TEST_CTX_create(conf, test_app, libctx);
     if (!TEST_ptr(test_ctx))
         goto err;
 

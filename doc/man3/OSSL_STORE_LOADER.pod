@@ -32,19 +32,14 @@ unregister STORE loaders for different URI schemes
  /* struct ossl_store_loader_ctx_st is defined differently by each loader */
  typedef struct ossl_store_loader_ctx_st OSSL_STORE_LOADER_CTX;
 
- typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_fn)(const char *uri,
-                                                      const UI_METHOD *ui_method,
-                                                      void *ui_data);
+ typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_fn)(
+     const char *uri, const UI_METHOD *ui_method, void *ui_data);
  int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *store_loader,
                                 OSSL_STORE_open_fn store_open_function);
- typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)(const OSSL_STORE_LOADER
-                                                        *loader,
-                                                        BIO *bio,
-                                                        OPENSSL_CTX *libctx,
-                                                        const char *propq,
-                                                        const UI_METHOD
-                                                        *ui_method,
-                                                        void *ui_data);
+ typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)
+     (const OSSL_STORE_LOADER *loader, BIO *bio,
+      OPENSSL_CTX *libctx, const char *propq,
+      const UI_METHOD *ui_method, void *ui_data);
  int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
                                   OSSL_STORE_attach_fn attach_function);
  typedef int (*OSSL_STORE_ctrl_fn)(OSSL_STORE_LOADER_CTX *ctx, int cmd,

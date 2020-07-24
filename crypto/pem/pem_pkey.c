@@ -39,7 +39,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
 
-    if ((ctx = OSSL_STORE_attach(bp, libctx, "file", propq, ui_method, u,
+    if ((ctx = OSSL_STORE_attach(bp, "file", libctx, propq, ui_method, u,
                                  NULL, NULL)) == NULL)
         goto err;
 #ifndef OPENSSL_NO_SECURE_HEAP
@@ -50,7 +50,8 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
     }
 #endif
 
-    while (!OSSL_STORE_eof(ctx) && (info = OSSL_STORE_load(ctx)) != NULL) {
+    while (!OSSL_STORE_eof(ctx)
+           && (info = OSSL_STORE_load(ctx)) != NULL) {
         if (OSSL_STORE_INFO_get_type(info) == OSSL_STORE_INFO_PKEY) {
             ret = OSSL_STORE_INFO_get1_PKEY(info);
             break;
@@ -106,7 +107,7 @@ EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
     OSSL_STORE_CTX *ctx = NULL;
     OSSL_STORE_INFO *info = NULL;
 
-    if ((ctx = OSSL_STORE_attach(bp, NULL, "file", NULL, UI_null(), NULL,
+    if ((ctx = OSSL_STORE_attach(bp, "file", NULL, NULL, UI_null(), NULL,
                                  NULL, NULL)) == NULL)
         goto err;
 
@@ -201,7 +202,7 @@ DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u)
     if ((ui_method = UI_UTIL_wrap_read_pem_callback(cb, 0)) == NULL)
         return NULL;
 
-    if ((ctx = OSSL_STORE_attach(bp, NULL, "file", NULL, ui_method, u,
+    if ((ctx = OSSL_STORE_attach(bp, "file", NULL, NULL, ui_method, u,
                                  NULL, NULL)) == NULL)
         goto err;
 

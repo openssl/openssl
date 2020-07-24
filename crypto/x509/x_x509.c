@@ -113,8 +113,37 @@ ASN1_SEQUENCE_ref(X509, x509_cb) = {
         ASN1_EMBED(X509, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509, X509)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(X509, X509, X509)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
+
+X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
+{
+    X509 *cert = NULL;
+
+    cert = (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, (X509_it()));
+    /* Only cache the extensions if the cert object was passed in */
+    if (cert != NULL && a != NULL) {
+        if (!x509v3_cache_extensions(cert))
+            cert = NULL;
+    }
+    return cert;
+}
+int i2d_X509(const X509 *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (X509_it()));
+}
+
+X509 *X509_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
+{
+    X509 *cert = NULL;
+
+    cert = (X509 *)ASN1_item_new((X509_it()));
+    if (cert != NULL) {
+        cert->libctx = libctx;
+        cert->propq = propq;
+    }
+    return cert;
+}
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
 {

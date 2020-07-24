@@ -4254,7 +4254,8 @@ SSL_CTX *SSL_set_SSL_CTX(SSL *ssl, SSL_CTX *ctx)
 
 int SSL_CTX_set_default_verify_paths(SSL_CTX *ctx)
 {
-    return X509_STORE_set_default_paths(ctx->cert_store);
+    return X509_STORE_set_default_paths_with_libctx(ctx->cert_store,
+                                                    ctx->libctx, ctx->propq);
 }
 
 int SSL_CTX_set_default_verify_dir(SSL_CTX *ctx)
@@ -4286,7 +4287,8 @@ int SSL_CTX_set_default_verify_file(SSL_CTX *ctx)
     /* We ignore errors, in case the directory doesn't exist */
     ERR_set_mark();
 
-    X509_LOOKUP_load_file(lookup, NULL, X509_FILETYPE_DEFAULT);
+    X509_LOOKUP_load_file_with_libctx(lookup, NULL, X509_FILETYPE_DEFAULT,
+                                      ctx->libctx, ctx->propq);
 
     ERR_pop_to_mark();
 
@@ -4304,7 +4306,7 @@ int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
     /* We ignore errors, in case the directory doesn't exist */
     ERR_set_mark();
 
-    X509_LOOKUP_add_store(lookup, NULL);
+    X509_LOOKUP_add_store_with_libctx(lookup, NULL, ctx->libctx, ctx->propq);
 
     ERR_pop_to_mark();
 
@@ -4313,7 +4315,8 @@ int SSL_CTX_set_default_verify_store(SSL_CTX *ctx)
 
 int SSL_CTX_load_verify_file(SSL_CTX *ctx, const char *CAfile)
 {
-    return X509_STORE_load_file(ctx->cert_store, CAfile);
+    return X509_STORE_load_file_with_libctx(ctx->cert_store, CAfile,
+                                            ctx->libctx, ctx->propq);
 }
 
 int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath)
@@ -4323,7 +4326,8 @@ int SSL_CTX_load_verify_dir(SSL_CTX *ctx, const char *CApath)
 
 int SSL_CTX_load_verify_store(SSL_CTX *ctx, const char *CAstore)
 {
-    return X509_STORE_load_store(ctx->cert_store, CAstore);
+    return X509_STORE_load_store_with_libctx(ctx->cert_store, CAstore,
+                                             ctx->libctx, ctx->propq);
 }
 
 int SSL_CTX_load_verify_locations(SSL_CTX *ctx, const char *CAfile,

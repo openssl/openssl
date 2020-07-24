@@ -88,7 +88,6 @@ typedef STACK_OF(X509_CRL)
                                       const X509_NAME *nm);
 typedef int (*X509_STORE_CTX_cleanup_fn)(X509_STORE_CTX *ctx);
 
-
 void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 # define X509_STORE_CTX_set_app_data(ctx,data) \
@@ -112,6 +111,19 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 # define X509_LOOKUP_load_store(x,name) \
                 X509_LOOKUP_ctrl((x),X509_L_LOAD_STORE,(name),0,NULL)
+
+# define X509_LOOKUP_load_file_with_libctx(x, name, type, libctx, propq)       \
+X509_LOOKUP_ctrl_with_libctx((x), X509_L_FILE_LOAD, (name), (long)(type), NULL,\
+                             (libctx), (propq))
+
+# define X509_LOOKUP_load_store_with_libctx(x, name, libctx, propq)            \
+X509_LOOKUP_ctrl_with_libctx((x), X509_L_LOAD_STORE, (name), 0, NULL,          \
+                             (libctx), (propq))
+
+# define X509_LOOKUP_add_store_with_libctx(x, name, libctx, propq)             \
+X509_LOOKUP_ctrl_with_libctx((x), X509_L_ADD_STORE, (name), 0, NULL,           \
+                             (libctx), (propq))
+
 
 # define         X509_V_OK                                       0
 # define         X509_V_ERR_UNSPECIFIED                          1
@@ -404,10 +416,20 @@ X509_LOOKUP_METHOD *X509_LOOKUP_store(void);
 
 typedef int (*X509_LOOKUP_ctrl_fn)(X509_LOOKUP *ctx, int cmd, const char *argc,
                                    long argl, char **ret);
+typedef int (*X509_LOOKUP_ctrl_with_libctx_fn)(
+    X509_LOOKUP *ctx, int cmd, const char *argc, long argl, char **ret,
+    OPENSSL_CTX *libctx, const char *propq);
+
 typedef int (*X509_LOOKUP_get_by_subject_fn)(X509_LOOKUP *ctx,
                                              X509_LOOKUP_TYPE type,
                                              const X509_NAME *name,
                                              X509_OBJECT *ret);
+typedef int (*X509_LOOKUP_get_by_subject_with_libctx_fn)(X509_LOOKUP *ctx,
+                                                         X509_LOOKUP_TYPE type,
+                                                         const X509_NAME *name,
+                                                         X509_OBJECT *ret,
+                                                         OPENSSL_CTX *libctx,
+                                                         const char *propq);
 typedef int (*X509_LOOKUP_get_by_issuer_serial_fn)(X509_LOOKUP *ctx,
                                                    X509_LOOKUP_TYPE type,
                                                    const X509_NAME *name,
@@ -484,16 +506,27 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *vs,
 
 int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
                      long argl, char **ret);
+int X509_LOOKUP_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd, const char *argc,
+                                 long argl, char **ret,
+                                 OPENSSL_CTX *libctx, const char *propq);
 
 int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
+int X509_load_cert_file_with_libctx(X509_LOOKUP *ctx, const char *file, int type,
+                                    OPENSSL_CTX *libctx, const char *propq);
 int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
+int X509_load_cert_crl_file_with_libctx(X509_LOOKUP *ctx, const char *file,
+                                        int type, OPENSSL_CTX *libctx,
+                                        const char *propq);
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method);
 void X509_LOOKUP_free(X509_LOOKUP *ctx);
 int X509_LOOKUP_init(X509_LOOKUP *ctx);
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                            const X509_NAME *name, X509_OBJECT *ret);
+int X509_LOOKUP_by_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                                       const X509_NAME *name, X509_OBJECT *ret,
+                                       OPENSSL_CTX *libctx, const char *propq);
 int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                                  const X509_NAME *name,
                                  const ASN1_INTEGER *serial,
@@ -515,6 +548,17 @@ int X509_STORE_load_locations(X509_STORE *ctx,
                                                const char *file,
                                                const char *dir);
 int X509_STORE_set_default_paths(X509_STORE *ctx);
+
+int X509_STORE_load_file_with_libctx(X509_STORE *ctx, const char *file,
+                                     OPENSSL_CTX *libctx, const char *propq);
+int X509_STORE_load_store_with_libctx(X509_STORE *ctx, const char *store,
+                                      OPENSSL_CTX *libctx, const char *propq);
+int X509_STORE_load_locations_with_libctx(X509_STORE *ctx,
+                                          const char *file, const char *dir,
+                                          OPENSSL_CTX *libctx, const char *propq);
+int X509_STORE_set_default_paths_with_libctx(X509_STORE *ctx,
+                                             OPENSSL_CTX *libctx,
+                                             const char *propq);
 
 #define X509_STORE_CTX_get_ex_new_index(l, p, newf, dupf, freef) \
     CRYPTO_get_ex_new_index(CRYPTO_EX_INDEX_X509_STORE_CTX, l, p, newf, dupf, freef)

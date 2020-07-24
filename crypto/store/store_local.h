@@ -110,6 +110,7 @@ struct ossl_store_loader_st {
     OSSL_STORE_eof_fn eof;
     OSSL_STORE_error_fn error;
     OSSL_STORE_close_fn close;
+    OSSL_STORE_open_with_libctx_fn open_with_libctx;
 };
 DEFINE_LHASH_OF(OSSL_STORE_LOADER);
 

@@ -470,13 +470,23 @@ static int do_store(SSL_CONF_CTX *cctx,
 {
     CERT *cert;
     X509_STORE **st;
+    SSL_CTX *ctx;
+    OPENSSL_CTX *libctx = NULL;
+    const char *propq = NULL;
 
-    if (cctx->ctx)
+    if (cctx->ctx != NULL) {
         cert = cctx->ctx->cert;
-    else if (cctx->ssl)
+        ctx = cctx->ctx;
+    } else if (cctx->ssl != NULL) {
         cert = cctx->ssl->cert;
-    else
+        ctx = cctx->ssl->ctx;
+    } else {
         return 1;
+    }
+    if (ctx != NULL) {
+        libctx = ctx->libctx;
+        propq = ctx->propq;
+    }
     st = verify_store ? &cert->verify_store : &cert->chain_store;
     if (*st == NULL) {
         *st = X509_STORE_new();
@@ -484,11 +494,13 @@ static int do_store(SSL_CONF_CTX *cctx,
             return 0;
     }
 
-    if (CAfile != NULL && !X509_STORE_load_file(*st, CAfile))
+    if (CAfile != NULL && !X509_STORE_load_file_with_libctx(*st, CAfile,
+                                                            libctx, propq))
         return 0;
     if (CApath != NULL && !X509_STORE_load_path(*st, CApath))
         return 0;
-    if (CAstore != NULL && !X509_STORE_load_store(*st, CAstore))
+    if (CAstore != NULL && !X509_STORE_load_store_with_libctx(*st, CAstore,
+                                                              libctx, propq))
         return 0;
     return 1;
 }

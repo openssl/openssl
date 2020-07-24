@@ -114,7 +114,7 @@ static SSL_TEST_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->expected_ctx = SSL_TEST_CTX_new())) {
+    if (!TEST_ptr(fixture->expected_ctx = SSL_TEST_CTX_new(NULL))) {
         OPENSSL_free(fixture);
         return NULL;
     }
@@ -126,7 +126,8 @@ static int execute_test(SSL_TEST_CTX_TEST_FIXTURE *fixture)
     int success = 0;
     SSL_TEST_CTX *ctx;
 
-    if (!TEST_ptr(ctx = SSL_TEST_CTX_create(conf, fixture->test_section))
+    if (!TEST_ptr(ctx = SSL_TEST_CTX_create(conf, fixture->test_section,
+                                            fixture->expected_ctx->libctx))
             || !testctx_eq(ctx, fixture->expected_ctx))
         goto err;
 
@@ -232,7 +233,7 @@ static int test_bad_configuration(int idx)
     SSL_TEST_CTX *ctx;
 
     if (!TEST_ptr_null(ctx = SSL_TEST_CTX_create(conf,
-                                                 bad_configurations[idx]))) {
+                                                 bad_configurations[idx], NULL))) {
         SSL_TEST_CTX_free(ctx);
         return 0;
     }

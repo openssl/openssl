@@ -4001,10 +4001,6 @@ long ssl3_ctx_ctrl(SSL_CTX *ctx, int cmd, long larg, void *parg)
                 return 0;
             }
         }
-        if (!X509v3_cache_extensions((X509 *)parg, ctx->libctx, ctx->propq)) {
-            SSLerr(0, ERR_LIB_X509);
-            return 0;
-        }
         if (!sk_X509_push(ctx->extra_certs, (X509 *)parg)) {
             SSLerr(SSL_F_SSL3_CTX_CTRL, ERR_R_MALLOC_FAILURE);
             return 0;

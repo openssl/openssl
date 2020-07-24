@@ -84,7 +84,7 @@ int X509_check_purpose(X509 *x, int id, int ca)
     int idx;
     const X509_PURPOSE *pt;
 
-    if (!X509v3_cache_extensions(x, NULL, NULL))
+    if (!x509v3_cache_extensions(x))
         return -1;
 
     /* Return if side-effect only call */
@@ -375,7 +375,7 @@ static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  */
-int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
+int x509v3_cache_extensions(X509 *x)
 {
     BASIC_CONSTRAINTS *bs;
     PROXY_CERT_INFO_EXTENSION *pci;
@@ -384,7 +384,6 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
     EXTENDED_KEY_USAGE *extusage;
     X509_EXTENSION *ex;
     int i;
-    EVP_MD *sha1;
 
 #ifdef tsan_ld_acq
     /* fast lock-free check, see end of the function for details. */
@@ -398,13 +397,8 @@ int X509v3_cache_extensions(X509 *x, OPENSSL_CTX *libctx, const char *propq)
         return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
 
-    /* Cache the SHA1 digest of the cert */
-    sha1 = EVP_MD_fetch(libctx, "SHA1", propq);
-    if (sha1 != NULL) {
-        if (!X509_digest(x, sha1, x->sha1_hash, NULL))
+    if (!X509_digest(x, EVP_sha1(), x->sha1_hash, NULL))
             x->ex_flags |= EXFLAG_INVALID;
-        EVP_MD_free(sha1);
-    }
 
     /* V1 should mean no extensions ... */
     if (X509_get_version(x) == 0)
@@ -636,7 +630,7 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 int X509_check_ca(X509 *x)
 {
     /* Note 0 normally means "not a CA" - but in this case means error. */
-    if (!X509v3_cache_extensions(x, NULL, NULL))
+    if (!x509v3_cache_extensions(x))
         return 0;
 
     return check_ca(x);
@@ -846,19 +840,17 @@ static int no_check(const X509_PURPOSE *xp, const X509 *x, int ca)
  * Returns 0 for OK, or positive for reason for mismatch
  * where reason codes match those for X509_verify_cert().
  */
-int x509_check_issued_int(X509 *issuer, X509 *subject,
-                          OPENSSL_CTX *libctx, const char *propq)
+int X509_check_issued(X509 *issuer, X509 *subject)
 {
     int ret;
 
-    if ((ret = x509_likely_issued(issuer, subject, libctx, propq)) != X509_V_OK)
+    if ((ret = x509_likely_issued(issuer, subject)) != X509_V_OK)
         return ret;
     return x509_signing_allowed(issuer, subject);
 }
 
 /* do the checks 1., 2., and 3. as described above for X509_check_issued() */
-int x509_likely_issued(X509 *issuer, X509 *subject,
-                       OPENSSL_CTX *libctx, const char *propq)
+int x509_likely_issued(X509 *issuer, X509 *subject)
 {
     int ret;
 
@@ -867,8 +859,8 @@ int x509_likely_issued(X509 *issuer, X509 *subject,
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
     /* set issuer->skid and subject->akid */
-    if (!X509v3_cache_extensions(issuer, libctx, propq)
-            || !X509v3_cache_extensions(subject, libctx, propq))
+    if (!x509v3_cache_extensions(issuer)
+            || !x509v3_cache_extensions(subject))
         return X509_V_ERR_UNSPECIFIED;
 
     ret = X509_check_akid(issuer, subject->akid);
@@ -894,11 +886,6 @@ int x509_signing_allowed(const X509 *issuer, const X509 *subject)
     } else if (ku_reject(issuer, KU_KEY_CERT_SIGN))
         return X509_V_ERR_KEYUSAGE_NO_CERTSIGN;
     return X509_V_OK;
-}
-
-int X509_check_issued(X509 *issuer, X509 *subject)
-{
-    return x509_check_issued_int(issuer, subject, NULL, NULL);
 }
 
 int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)

@@ -516,3 +516,4 @@ SSL_CTX_new_with_libctx                 ?	3_0_0	EXIST::FUNCTION:
 SSL_new_session_ticket                  ?	3_0_0	EXIST::FUNCTION:
 SSL_get0_peer_certificate               ?	3_0_0	EXIST::FUNCTION:
 SSL_get1_peer_certificate               ?	3_0_0	EXIST::FUNCTION:
+SSL_load_client_CA_file_with_libctx     ?	3_0_0	EXIST::FUNCTION:

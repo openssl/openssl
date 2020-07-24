@@ -6,9 +6,10 @@ X509_STORE,
 X509_STORE_add_cert, X509_STORE_add_crl, X509_STORE_set_depth,
 X509_STORE_set_flags, X509_STORE_set_purpose, X509_STORE_set_trust,
 X509_STORE_add_lookup,
-X509_STORE_load_file, X509_STORE_load_path, X509_STORE_load_store,
-X509_STORE_set_default_paths,
-X509_STORE_load_locations
+X509_STORE_load_file_with_libctx, X509_STORE_load_file, X509_STORE_load_path,
+X509_STORE_load_store_with_libctx, X509_STORE_load_store,
+X509_STORE_set_default_paths_with_libctx, X509_STORE_set_default_paths,
+X509_STORE_load_locations_with_libctx, X509_STORE_load_locations
 - X509_STORE manipulation
 
 =head1 SYNOPSIS
@@ -27,11 +28,21 @@ X509_STORE_load_locations
  X509_LOOKUP *X509_STORE_add_lookup(X509_STORE *store,
                                     X509_LOOKUP_METHOD *meth);
 
+ int X509_STORE_set_default_paths_with_libctx(X509_STORE *ctx,
+                                              OPENSSL_CTX *libctx,
+                                              const char *propq);
  int X509_STORE_set_default_paths(X509_STORE *ctx);
+ int X509_STORE_load_file_with_libctx(X509_STORE *ctx, const char *file,
+                                     OPENSSL_CTX *libctx, const char *propq);
  int X509_STORE_load_file(X509_STORE *ctx, const char *file);
  int X509_STORE_load_path(X509_STORE *ctx, const char *dir);
+ int X509_STORE_load_store_with_libctx(X509_STORE *ctx, const char *uri,
+                                       OPENSSL_CTX *libctx, const char *propq);
  int X509_STORE_load_store(X509_STORE *ctx, const char *uri);
-
+ int X509_STORE_load_locations_with_libctx(X509_STORE *ctx,
+                                           const char *file, const char *dir,
+                                           OPENSSL_CTX *libctx,
+                                           const char *propq);
  int X509_STORE_load_locations(X509_STORE *ctx,
                                const char *file, const char *dir);
 
@@ -82,35 +93,54 @@ L<X509_LOOKUP_METHOD(3)> I<meth> and adds it to the B<X509_STORE>
 I<store>.  This also associates the B<X509_STORE> with the lookup, so
 B<X509_LOOKUP> functions can look up objects in that store.
 
-X509_STORE_load_file() loads trusted certificate(s) into an
-B<X509_STORE> from a given file.
+X509_STORE_load_file_with_libctx() loads trusted certificate(s) into an
+B<X509_STORE> from a given file. The library context I<libctx> and property
+query <propq> are used when fetching algorithms from providers.
+
+X509_STORE_load_file() is similar to X509_STORE_load_file_with_libctx() but
+uses NULL for the library context I<libctx> and property query <propq>.
 
 X509_STORE_load_path() loads trusted certificate(s) into an
 B<X509_STORE> from a given directory path.
 The certificates in the directory must be in hashed form, as
 documented in L<X509_LOOKUP_hash_dir(3)>.
 
-X509_STORE_load_store() loads trusted certificate(s) into an
-B<X509_STORE> from a store at a given URI.
+X509_STORE_load_store_with_libctx() loads trusted certificate(s) into an
+B<X509_STORE> from a store at a given URI. The library context I<libctx> and
+property query <propq> are used when fetching algorithms from providers.
 
-X509_STORE_load_locations() combines X509_STORE_load_file() and
-X509_STORE_load_dir() for a given file and/or directory path.
+X509_STORE_load_store() is similar to X509_STORE_load_store_with_libctx() but
+uses NULL for the library context I<libctx> and property query <propq>.
+
+X509_STORE_load_locations_with_libctx() combines
+X509_STORE_load_file_with_libctx() and X509_STORE_load_dir() for a given file
+and/or directory path.
 It is permitted to specify just a file, just a directory, or both
 paths.
 
-X509_STORE_set_default_paths() is somewhat misnamed, in that it does not
-set what default paths should be used for loading certificates.  Instead,
+X509_STORE_load_locations() is similar to X509_STORE_load_locations_with_libctx()
+but uses NULL for the library context I<libctx> and property query <propq>.
+
+X509_STORE_set_default_paths_with_libctx() is somewhat misnamed, in that it does
+not set what default paths should be used for loading certificates.  Instead,
 it loads certificates into the B<X509_STORE> from the hardcoded default
-paths.
+paths. The library context I<libctx> and property query <propq> are used when
+fetching algorithms from providers.
+
+X509_STORE_set_default_paths() is similar to
+X509_STORE_set_default_paths_with_libctx() but uses NULL for the library
+context I<libctx> and property query <propq>.
 
 =head1 RETURN VALUES
 
 X509_STORE_add_cert(), X509_STORE_add_crl(), X509_STORE_set_depth(),
-X509_STORE_set_flags(), X509_STORE_set_purpose(),
-X509_STORE_set_trust(), X509_STORE_load_file(),
-X509_STORE_load_path(), X509_STORE_load_store(),
-X509_STORE_load_locations(), and X509_STORE_set_default_paths() return
-1 on success or 0 on failure.
+X509_STORE_set_flags(), X509_STORE_set_purpose(), X509_STORE_set_trust(),
+X509_STORE_load_file_with_libctx(), X509_STORE_load_file(),
+X509_STORE_load_path(),
+X509_STORE_load_store_with_libctx(), X509_STORE_load_store(),
+X509_STORE_load_locations_with_libctx(), X509_STORE_load_locations(),
+X509_STORE_set_default_paths_with_libctx() and X509_STORE_set_default_paths()
+return 1 on success or 0 on failure.
 
 X509_STORE_add_lookup() returns the found or created
 L<X509_LOOKUP(3)>, or NULL on error.
@@ -121,6 +151,12 @@ L<X509_LOOKUP_hash_dir(3)>.
 L<X509_VERIFY_PARAM_set_depth(3)>.
 L<X509_STORE_new(3)>,
 L<X509_STORE_get0_param(3)>
+
+=head1 HISTORY
+
+The functions X509_STORE_set_default_paths_with_libctx(),
+X509_STORE_load_file_with_libctx(), X509_STORE_load_store_with_libctx() and
+X509_STORE_load_locations_with_libctx() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
