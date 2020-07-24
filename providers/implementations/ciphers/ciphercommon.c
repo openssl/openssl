@@ -150,6 +150,7 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                                         int enc)
 {
     ctx->num = 0;
+    ctx->bufsz = 0;
     ctx->updated = 0;
     ctx->enc = enc ? 1 : 0;
 
