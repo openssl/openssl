@@ -11,4 +11,17 @@
 {%- endfor %}
 #define OQS_OPENSSL_SIG_algs_length {{ count.val }}
 #define OQS_OPENSSL_KEM_algs_length {{ config['kems']|length }}
+{%- set last_kem_hybrid_level = (config['kems']|last)['bit_security'] -%}
+{%- if last_kem_hybrid_level == 128 -%}
+   {%- set hybrid_curve = "p256_" -%}
+{%- elif last_kem_hybrid_level == 192 -%}
+   {%- set hybrid_curve = "p384_" -%}
+{%- elif last_kem_hybrid_level == 256 -%}
+   {%- set hybrid_curve = "p521_" -%}
+{%- else -%}
+   {%- set hybrid_curve = "" -%}
+{%- endif %}
+#define IS_OQS_OPENSSL_KEM_NID(a) ((a >= NID_oqs_kem_default) && (a <= NID_{{ hybrid_curve }}{{ (config['kems'] | last)['name_group'] }}))
+{%- set last_sig_variant = (config['sigs']|last)['variants']|last %}
+#define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_oqs_sig_default) && (a <= NID_{{ (last_sig_variant['mix_with']|last)['name'] }}_{{ last_sig_variant['name'] }}))
 //
