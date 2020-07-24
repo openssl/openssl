@@ -264,20 +264,23 @@ err:
 }
 
 /*
- * This test only uses a partial block (8 bytes) of input for each
+ * This test only uses a partial block (half the block size) of input for each
  * EVP_EncryptUpdate() in order to test that the second init/update is not using
  * a leftover buffer from the first init/update.
- * Note: some ciphers don't need a full 16 byte block to produce output.
+ * Note: some ciphers don't need a full block to produce output.
  */
 static int test_cipher_reinit_partialupdate(int test_id)
 {
-    int ret = 0, out1_len = 0, out2_len = 0;
+    int ret = 0, out1_len = 0, out2_len = 0, in_len;
     EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char out1[256];
     unsigned char out2[256];
-    static const unsigned char in[8] = {
-        0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08
+    static const unsigned char in[32] = {
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0xba, 0xbe, 0xba, 0xbe, 0x00, 0x00, 0xba, 0xbe,
+        0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     };
     static const unsigned char key[64] = {
         0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -302,6 +305,8 @@ static int test_cipher_reinit_partialupdate(int test_id)
     if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
         goto err;
 
+    in_len = EVP_CIPHER_block_size(cipher) / 2;
+
     /* skip any ciphers that don't allow partial updates */
     if (((EVP_CIPHER_flags(cipher)
           & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) != 0)
@@ -313,9 +318,9 @@ static int test_cipher_reinit_partialupdate(int test_id)
     }
 
     if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
-        || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, sizeof(in)))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, in_len))
         || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
-        || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, sizeof(in))))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, in_len)))
         goto err;
 
     /* DES3-WRAP uses random every update - so it will give a different value */
