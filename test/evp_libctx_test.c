@@ -23,6 +23,7 @@
 #include <openssl/evp.h>
 #include <openssl/provider.h>
 #include <openssl/dsa.h>
+#include <openssl/dh.h>
 #include <openssl/safestack.h>
 #include "testutil.h"
 #include "internal/nelem.h"
@@ -57,7 +58,7 @@ const OPTIONS *test_get_options(void)
     return test_options;
 }
 
-#if !defined(OPENSSL_NO_DSA) || !defined(OPENSSL_NO_DH)
+#ifndef OPENSSL_NO_DH
 static const char *getname(int id)
 {
     const char *name[] = {"p", "q", "g" };
@@ -68,7 +69,11 @@ static const char *getname(int id)
 }
 #endif
 
-#ifndef OPENSSL_NO_DSA
+/*
+ * We're using some DH specific values in this test, so we skip compilation if
+ * we're in a no-dh build.
+ */
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)
 
 static int test_dsa_param_keygen(int tstid)
 {
@@ -315,7 +320,7 @@ int setup_tests(void)
     if (!TEST_ptr(libprov))
         return 0;
 
-#ifndef OPENSSL_NO_DSA
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)
     ADD_ALL_TESTS(test_dsa_param_keygen, 3 * 3 * 3);
 #endif
 #ifndef OPENSSL_NO_DH
