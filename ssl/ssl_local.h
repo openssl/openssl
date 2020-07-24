@@ -519,14 +519,6 @@
 #define CERT_PRIVATE_KEY        2
 */
 
-
-/* Returns true if the nid is for an OQS KEM */
-#define NID_OQS_START NID_oqs_kem_default
-#define NID_OQS_END NID_bike1l3fo
-#define NID_HYBRID_START NID_p256_oqs_kem_default
-#define NID_HYBRID_END NID_p256_bike1l3fo
-#define IS_OQS_KEM_NID(nid) (nid >= NID_OQS_START && nid <= NID_OQS_END)
-
 /* Returns the curve ID for an OQS KEM NID */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_START
 #define OQS_KEM_CURVEID(nid) \
