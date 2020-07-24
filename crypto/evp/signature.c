@@ -18,7 +18,7 @@
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 {
-    EVP_SIGNATURE *signature = OPENSSL_zalloc(sizeof(EVP_SIGNATURE));
+    EVP_SIGNATURE *signature = (EVP_SIGNATURE *)OPENSSL_zalloc(sizeof(EVP_SIGNATURE));
 
     if (signature == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -301,10 +301,10 @@ OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)
 EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                    const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
-                             evp_signature_from_dispatch,
-                             (int (*)(void *))EVP_SIGNATURE_up_ref,
-                             (void (*)(void *))EVP_SIGNATURE_free);
+    return (EVP_SIGNATURE *)evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
+                                              evp_signature_from_dispatch,
+                                              (int (*)(void *))EVP_SIGNATURE_up_ref,
+                                              (void (*)(void *))EVP_SIGNATURE_free);
 }
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)

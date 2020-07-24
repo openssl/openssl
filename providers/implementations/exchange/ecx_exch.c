@@ -48,7 +48,7 @@ static void *ecx_newctx(void *provctx, size_t keylen)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
+    ctx = (PROV_ECX_CTX *)OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -72,7 +72,7 @@ static void *x448_newctx(void *provctx)
 static int ecx_init(void *vecxctx, void *vkey)
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
-    ECX_KEY *key = vkey;
+    ECX_KEY *key = (ECX_KEY *)vkey;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -94,7 +94,7 @@ static int ecx_init(void *vecxctx, void *vkey)
 static int ecx_set_peer(void *vecxctx, void *vkey)
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
-    ECX_KEY *key = vkey;
+    ECX_KEY *key = (ECX_KEY *)vkey;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -196,7 +196,7 @@ static void *ecx_dupctx(void *vecxctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
+    dstctx = (PROV_ECX_CTX *)OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

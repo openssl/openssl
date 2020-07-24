@@ -70,7 +70,7 @@ static int b64_new(BIO *bi)
 {
     BIO_B64_CTX *ctx;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = (BIO_B64_CTX *)OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
         EVPerr(EVP_F_B64_NEW, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -95,7 +95,7 @@ static int b64_free(BIO *a)
     if (a == NULL)
         return 0;
 
-    ctx = BIO_get_data(a);
+    ctx = (BIO_B64_CTX *)BIO_get_data(a);
     if (ctx == NULL)
         return 0;
 
@@ -210,13 +210,13 @@ static int b64_read(BIO *b, char *out, int outl)
 
                 k = EVP_DecodeUpdate(ctx->base64,
                                      (unsigned char *)ctx->buf,
-                                     &num, p, q - p);
+                                     &num, p, (int)(q - p));
                 if ((k <= 0) && (num == 0) && (ctx->start))
                     EVP_DecodeInit(ctx->base64);
                 else {
                     if (p != (unsigned char *)
                         &(ctx->tmp[0])) {
-                        i -= (p - (unsigned char *)
+                        i -= (int)(p - (unsigned char *)
                               &(ctx->tmp[0]));
                         for (x = 0; x < i; x++)
                             ctx->tmp[x] = p[x];
@@ -241,7 +241,7 @@ static int b64_read(BIO *b, char *out, int outl)
                         ctx->tmp_len = 0;
                     }
                 } else if (p != q) { /* finished on a '\n' */
-                    n = q - p;
+                    n = (int)(q - p);
                     for (ii = 0; ii < n; ii++)
                         ctx->tmp[ii] = p[ii];
                     ctx->tmp_len = n;
@@ -544,5 +544,5 @@ static long b64_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
 
 static int b64_puts(BIO *b, const char *str)
 {
-    return b64_write(b, str, strlen(str));
+    return b64_write(b, str, (int)strlen(str));
 }

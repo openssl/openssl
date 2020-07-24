@@ -30,8 +30,8 @@
     ret = 1;                                                            \
     if (kstr == NULL && cb == NULL) {                                   \
         if (u != NULL) {                                                \
-            kstr = u;                                                   \
-            klen = strlen(u);                                           \
+            kstr = (const unsigned char *)u;                            \
+            klen = (int)strlen((const char *)u);                        \
         } else {                                                        \
             cb = PEM_def_callback;                                      \
         }                                                               \

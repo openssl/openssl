@@ -220,13 +220,13 @@ void *ec_newdata(void *provctx)
 static
 void ec_freedata(void *keydata)
 {
-    EC_KEY_free(keydata);
+    EC_KEY_free((EC_KEY *)keydata);
 }
 
 static
 int ec_has(void *keydata, int selection)
 {
-    EC_KEY *ec = keydata;
+    EC_KEY *ec = (EC_KEY *)keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && ec != NULL) {
@@ -250,8 +250,8 @@ int ec_has(void *keydata, int selection)
 
 static int ec_match(const void *keydata1, const void *keydata2, int selection)
 {
-    const EC_KEY *ec1 = keydata1;
-    const EC_KEY *ec2 = keydata2;
+    const EC_KEY *ec1 = (const EC_KEY *)keydata1;
+    const EC_KEY *ec2 = (const EC_KEY *)keydata2;
     const EC_GROUP *group_a = EC_KEY_get0_group(ec1);
     const EC_GROUP *group_b = EC_KEY_get0_group(ec2);
     BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(ec1));
@@ -282,7 +282,7 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
 static
 int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    EC_KEY *ec = keydata;
+    EC_KEY *ec = (EC_KEY *)keydata;
     int ok = 1;
 
     if (!ossl_prov_is_running() || ec == NULL)
@@ -325,7 +325,7 @@ static
 int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
               void *cbarg)
 {
-    EC_KEY *ec = keydata;
+    EC_KEY *ec = (EC_KEY *)keydata;
     OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *params = NULL;
     unsigned char *pub_key = NULL, *genbuf = NULL;
@@ -659,7 +659,7 @@ const OSSL_PARAM *ec_settable_params(void *provctx)
 static
 int ec_set_params(void *key, const OSSL_PARAM params[])
 {
-    EC_KEY *eck = key;
+    EC_KEY *eck = (EC_KEY *)key;
     const OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
@@ -682,7 +682,7 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
 static
 int ec_validate(void *keydata, int selection)
 {
-    EC_KEY *eck = keydata;
+    EC_KEY *eck = (EC_KEY *)keydata;
     int ok = 0;
     BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(eck));
 
@@ -739,7 +739,7 @@ static void *ec_gen_init(void *provctx, int selection)
 
 static int ec_gen_set_group(void *genctx, const EC_GROUP *src)
 {
-    struct ec_gen_ctx *gctx = genctx;
+    struct ec_gen_ctx *gctx = (struct ec_gen_ctx *)genctx;
     EC_GROUP *group;
 
     group = EC_GROUP_dup(src);
@@ -754,7 +754,7 @@ static int ec_gen_set_group(void *genctx, const EC_GROUP *src)
 
 static int ec_gen_set_template(void *genctx, void *templ)
 {
-    struct ec_gen_ctx *gctx = genctx;
+    struct ec_gen_ctx *gctx = (struct ec_gen_ctx *)genctx;
     EC_KEY *ec = templ;
     const EC_GROUP *ec_group;
 
@@ -936,7 +936,7 @@ static int ec_gen_assign_group(EC_KEY *ec, EC_GROUP *group)
  */
 static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    struct ec_gen_ctx *gctx = genctx;
+    struct ec_gen_ctx *gctx = (struct ec_gen_ctx *)genctx;
     EC_KEY *ec = NULL;
     int ret = 0;
 
@@ -977,7 +977,7 @@ err:
 
 static void ec_gen_cleanup(void *genctx)
 {
-    struct ec_gen_ctx *gctx = genctx;
+    struct ec_gen_ctx *gctx = (struct ec_gen_ctx *)genctx;
 
     if (gctx == NULL)
         return;

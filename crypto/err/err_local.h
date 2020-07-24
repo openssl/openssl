@@ -56,7 +56,7 @@ static ossl_inline void err_set_debug(ERR_STATE *es, size_t i,
 static ossl_inline void err_set_data(ERR_STATE *es, size_t i,
                                      void *data, size_t datasz, int flags)
 {
-    es->err_data[i] = data;
+    es->err_data[i] = (char *)data;
     es->err_data_size[i] = datasz;
     es->err_data_flags[i] = flags;
 }

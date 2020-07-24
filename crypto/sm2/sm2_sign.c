@@ -98,7 +98,7 @@ int sm2_compute_z_digest(uint8_t *out,
     }
 
     p_bytes = BN_num_bytes(p);
-    buf = OPENSSL_zalloc(p_bytes);
+    buf = (uint8_t *)OPENSSL_zalloc(p_bytes);
     if (buf == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -155,7 +155,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    z = OPENSSL_zalloc(md_size);
+    z = (uint8_t *)OPENSSL_zalloc(md_size);
     if (hash == NULL || z == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_MALLOC_FAILURE);
         goto done;

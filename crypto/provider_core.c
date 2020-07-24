@@ -128,7 +128,7 @@ static void provider_deactivate_free(OSSL_PROVIDER *prov)
 
 static void provider_store_free(void *vstore)
 {
-    struct provider_store_st *store = vstore;
+    struct provider_store_st *store = (struct provider_store_st *)vstore;
 
     if (store == NULL)
         return;
@@ -140,7 +140,7 @@ static void provider_store_free(void *vstore)
 
 static void *provider_store_new(OPENSSL_CTX *ctx)
 {
-    struct provider_store_st *store = OPENSSL_zalloc(sizeof(*store));
+    struct provider_store_st *store = (struct provider_store_st *)OPENSSL_zalloc(sizeof(*store));
     const struct predefined_providers_st *p = NULL;
 
     if (store == NULL
@@ -188,8 +188,8 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
 {
     struct provider_store_st *store = NULL;
 
-    store = openssl_ctx_get_data(libctx, OPENSSL_CTX_PROVIDER_STORE_INDEX,
-                                 &provider_store_method);
+    store = (struct provider_store_st *)openssl_ctx_get_data(libctx, OPENSSL_CTX_PROVIDER_STORE_INDEX,
+                                                             &provider_store_method);
     if (store == NULL)
         CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
     return store;
@@ -247,7 +247,7 @@ static OSSL_PROVIDER *provider_new(const char *name,
 {
     OSSL_PROVIDER *prov = NULL;
 
-    if ((prov = OPENSSL_zalloc(sizeof(*prov))) == NULL
+    if ((prov = (OSSL_PROVIDER *)OPENSSL_zalloc(sizeof(*prov))) == NULL
 #ifndef HAVE_ATOMICS
         || (prov->refcnt_lock = CRYPTO_THREAD_lock_new()) == NULL
 #endif
@@ -399,7 +399,7 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
 {
     INFOPAIR *pair = NULL;
 
-    if ((pair = OPENSSL_zalloc(sizeof(*pair))) != NULL
+    if ((pair = (INFOPAIR *)OPENSSL_zalloc(sizeof(*pair))) != NULL
         && (prov->parameters != NULL
             || (prov->parameters = sk_INFOPAIR_new_null()) != NULL)
         && (pair->name = OPENSSL_strdup(name)) != NULL
@@ -602,7 +602,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
         cnt++;                   /* One for the terminating item */
 
         /* Allocate one extra item for the "library" name */
-        prov->error_strings =
+        prov->error_strings = (ERR_STRING_DATA *)
             OPENSSL_zalloc(sizeof(ERR_STRING_DATA) * (cnt + 1));
         if (prov->error_strings == NULL)
             return 0;
@@ -618,7 +618,7 @@ static int provider_activate(OSSL_PROVIDER *prov)
          */
         for (cnt2 = 1; cnt2 <= cnt; cnt2++) {
             prov->error_strings[cnt2].error = (int)reasonstrings[cnt2-1].id;
-            prov->error_strings[cnt2].string = reasonstrings[cnt2-1].ptr;
+            prov->error_strings[cnt2].string = (const char *)reasonstrings[cnt2-1].ptr;
         }
 
         ERR_load_strings(prov->error_lib, prov->error_strings);

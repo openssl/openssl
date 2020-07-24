@@ -32,7 +32,7 @@ static void *aria_dupctx(void *ctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = (PROV_ARIA_CTX *)OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

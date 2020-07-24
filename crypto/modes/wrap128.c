@@ -227,7 +227,7 @@ size_t CRYPTO_128_wrap_pad(void *key, const unsigned char *icv,
     } else {
         memmove(out, in, inlen);
         memset(out + inlen, 0, padding_len); /* Section 4.1 step 1 */
-        ret = CRYPTO_128_wrap(key, aiv, out, out, padded_len, block);
+        ret = (int)CRYPTO_128_wrap(key, aiv, out, out, padded_len, block);
     }
 
     return ret;

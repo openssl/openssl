@@ -33,7 +33,7 @@ static void *aes_siv_newctx(void *provctx, size_t keybits, unsigned int mode,
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = (PROV_AES_SIV_CTX *)OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         ctx->taglen = SIV_LEN;
         ctx->mode = mode;
@@ -63,7 +63,7 @@ static void *siv_dupctx(void *vctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = (PROV_AES_SIV_CTX *)OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

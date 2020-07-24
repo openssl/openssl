@@ -353,7 +353,7 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
         EVPerr(EVP_F_EVP_DIGESTUPDATE, EVP_R_UPDATE_ERROR);
         return 0;
     }
-    return ctx->digest->dupdate(ctx->provctx, data, count);
+    return ctx->digest->dupdate(ctx->provctx, (const unsigned char *)data, count);
 
     /* TODO(3.0): Remove legacy code below */
  legacy:
@@ -409,7 +409,7 @@ int EVP_DigestFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *isize)
     OPENSSL_assert(mdsize <= EVP_MAX_MD_SIZE);
     ret = ctx->digest->final(ctx, md);
     if (isize != NULL)
-        *isize = mdsize;
+        *isize = (int)mdsize;
     if (ctx->digest->cleanup) {
         ctx->digest->cleanup(ctx);
         EVP_MD_CTX_set_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
@@ -527,7 +527,7 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
 #endif
 
     if (out->digest == in->digest) {
-        tmp_buf = out->md_data;
+        tmp_buf = (unsigned char *)out->md_data;
         EVP_MD_CTX_set_flags(out, EVP_MD_CTX_FLAG_REUSE);
     } else
         tmp_buf = NULL;
@@ -734,7 +734,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     case EVP_MD_CTRL_MICALG:
         set_params = 0;
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DIGEST_PARAM_MICALG,
-                                                     p2, p1 ? p1 : 9999);
+                                                     (char *)p2, p1 ? p1 : 9999);
         break;
     case EVP_CTRL_SSL3_MASTER_SECRET:
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
@@ -767,7 +767,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 
 EVP_MD *evp_md_new(void)
 {
-    EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
+    EVP_MD *md = (EVP_MD *)OPENSSL_zalloc(sizeof(*md));
 
     if (md != NULL) {
         md->lock = CRYPTO_THREAD_lock_new();
@@ -790,7 +790,7 @@ EVP_MD *evp_md_new(void)
 static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
     int nid;
-    int *legacy_nid = vlegacy_nid;
+    int *legacy_nid = (int *)vlegacy_nid;
     /*
      * We use lowest level function to get the associated method, because
      * higher level functions such as EVP_get_digestbyname() have changed
@@ -803,7 +803,7 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 
     if (legacy_method == NULL)
         return;
-    nid = EVP_MD_nid(legacy_method);
+    nid = EVP_MD_nid((const EVP_MD *)legacy_method);
     if (*legacy_nid != NID_undef && *legacy_nid != nid) {
         *legacy_nid = -1;
         return;
@@ -928,18 +928,18 @@ static void *evp_md_from_dispatch(int name_id,
 
 static int evp_md_up_ref(void *md)
 {
-    return EVP_MD_up_ref(md);
+    return EVP_MD_up_ref((EVP_MD *)md);
 }
 
 static void evp_md_free(void *md)
 {
-    EVP_MD_free(md);
+    EVP_MD_free((EVP_MD *)md);
 }
 
 EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
-    EVP_MD *md =
+    EVP_MD *md = (EVP_MD *)
         evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
                           evp_md_from_dispatch, evp_md_up_ref, evp_md_free);
 

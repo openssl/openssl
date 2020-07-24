@@ -400,7 +400,7 @@ c448_error_t x448_int(uint8_t out[X_PUBLIC_BYTES],
         if (t / 8 == 0)
             sb &= -(uint8_t)COFACTOR;
         else if (t == X_PRIVATE_BITS - 1)
-            sb = -1;
+            sb = (uint8_t)(-1);
 
         k_t = (sb >> (t % 8)) & 1;
         k_t = 0 - k_t;             /* set to all 0s or all 1s */

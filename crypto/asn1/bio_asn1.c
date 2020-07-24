@@ -100,7 +100,7 @@ const BIO_METHOD *BIO_f_asn1(void)
 
 static int asn1_bio_new(BIO *b)
 {
-    BIO_ASN1_BUF_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    BIO_ASN1_BUF_CTX *ctx = (BIO_ASN1_BUF_CTX *)OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         return 0;
@@ -116,7 +116,7 @@ static int asn1_bio_new(BIO *b)
 
 static int asn1_bio_init(BIO_ASN1_BUF_CTX *ctx, int size)
 {
-    if ((ctx->buf = OPENSSL_malloc(size)) == NULL) {
+    if ((ctx->buf = (unsigned char *)OPENSSL_malloc(size)) == NULL) {
         ASN1err(ASN1_F_ASN1_BIO_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -134,7 +134,7 @@ static int asn1_bio_free(BIO *b)
     if (b == NULL)
         return 0;
 
-    ctx = BIO_get_data(b);
+    ctx = (BIO_ASN1_BUF_CTX *)BIO_get_data(b);
     if (ctx == NULL)
         return 0;
 
@@ -153,7 +153,7 @@ static int asn1_bio_write(BIO *b, const char *in, int inl)
     unsigned char *p;
     BIO *next;
 
-    ctx = BIO_get_data(b);
+    ctx = (BIO_ASN1_BUF_CTX *)BIO_get_data(b);
     next = BIO_next(b);
     if (in == NULL || inl < 0 || ctx == NULL || next == NULL)
         return 0;
@@ -297,7 +297,7 @@ static int asn1_bio_read(BIO *b, char *in, int inl)
 
 static int asn1_bio_puts(BIO *b, const char *str)
 {
-    return asn1_bio_write(b, str, strlen(str));
+    return asn1_bio_write(b, str, (int)strlen(str));
 }
 
 static int asn1_bio_gets(BIO *b, char *str, int size)
@@ -323,32 +323,32 @@ static long asn1_bio_ctrl(BIO *b, int cmd, long arg1, void *arg2)
     long ret = 1;
     BIO *next;
 
-    ctx = BIO_get_data(b);
+    ctx = (BIO_ASN1_BUF_CTX *)BIO_get_data(b);
     if (ctx == NULL)
         return 0;
     next = BIO_next(b);
     switch (cmd) {
 
     case BIO_C_SET_PREFIX:
-        ex_func = arg2;
+        ex_func = (BIO_ASN1_EX_FUNCS *)arg2;
         ctx->prefix = ex_func->ex_func;
         ctx->prefix_free = ex_func->ex_free_func;
         break;
 
     case BIO_C_GET_PREFIX:
-        ex_func = arg2;
+        ex_func = (BIO_ASN1_EX_FUNCS *)arg2;
         ex_func->ex_func = ctx->prefix;
         ex_func->ex_free_func = ctx->prefix_free;
         break;
 
     case BIO_C_SET_SUFFIX:
-        ex_func = arg2;
+        ex_func = (BIO_ASN1_EX_FUNCS *)arg2;
         ctx->suffix = ex_func->ex_func;
         ctx->suffix_free = ex_func->ex_free_func;
         break;
 
     case BIO_C_GET_SUFFIX:
-        ex_func = arg2;
+        ex_func = (BIO_ASN1_EX_FUNCS *)arg2;
         ex_func->ex_func = ctx->suffix;
         ex_func->ex_free_func = ctx->suffix_free;
         break;

@@ -69,7 +69,7 @@ static void property_table_free(PROP_TABLE **pt)
 
 static void property_string_data_free(void *vpropdata)
 {
-    PROPERTY_STRING_DATA *propdata = vpropdata;
+    PROPERTY_STRING_DATA *propdata = (PROPERTY_STRING_DATA *)vpropdata;
 
     if (propdata == NULL)
         return;
@@ -82,7 +82,7 @@ static void property_string_data_free(void *vpropdata)
 }
 
 static void *property_string_data_new(OPENSSL_CTX *ctx) {
-    PROPERTY_STRING_DATA *propdata = OPENSSL_zalloc(sizeof(*propdata));
+    PROPERTY_STRING_DATA *propdata = (PROPERTY_STRING_DATA *)OPENSSL_zalloc(sizeof(*propdata));
 
     if (propdata == NULL)
         return NULL;
@@ -113,7 +113,7 @@ static PROPERTY_STRING *new_property_string(const char *s,
                                             OSSL_PROPERTY_IDX *pidx)
 {
     const size_t l = strlen(s);
-    PROPERTY_STRING *ps = OPENSSL_malloc(sizeof(*ps) + l);
+    PROPERTY_STRING *ps = (PROPERTY_STRING *)OPENSSL_malloc(sizeof(*ps) + l);
 
     if (ps != NULL) {
         memcpy(ps->body, s, l + 1);
@@ -151,8 +151,8 @@ OSSL_PROPERTY_IDX ossl_property_name(OPENSSL_CTX *ctx, const char *s,
                                      int create)
 {
     PROPERTY_STRING_DATA *propdata
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX,
-                               &property_string_data_method);
+        = (PROPERTY_STRING_DATA *)openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX,
+                                                       &property_string_data_method);
 
     if (propdata == NULL)
         return 0;
@@ -165,8 +165,8 @@ OSSL_PROPERTY_IDX ossl_property_value(OPENSSL_CTX *ctx, const char *s,
                                       int create)
 {
     PROPERTY_STRING_DATA *propdata
-        = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX,
-                               &property_string_data_method);
+        = (PROPERTY_STRING_DATA *)openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_STRING_INDEX,
+                                                       &property_string_data_method);
 
     if (propdata == NULL)
         return 0;

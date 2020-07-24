@@ -22,7 +22,7 @@ static void *aria_ccm_newctx(void *provctx, size_t keybits)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = (PROV_ARIA_CCM_CTX *)OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ccm_initctx(&ctx->base, keybits, PROV_ARIA_HW_ccm(keybits));
     return ctx;

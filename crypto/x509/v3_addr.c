@@ -200,7 +200,7 @@ static int i2r_IPAddressOrRanges(BIO *out,
 static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
                             void *ext, BIO *out, int indent)
 {
-    const IPAddrBlocks *addr = ext;
+    const IPAddrBlocks *addr = (const IPAddrBlocks *)ext;
     int i;
     for (i = 0; i < sk_IPAddressFamily_num(addr); i++) {
         IPAddressFamily *f = sk_IPAddressFamily_value(addr, i);
@@ -974,8 +974,8 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             continue;
         }
 
-        i1 = strspn(s, addr_chars);
-        i2 = i1 + strspn(s + i1, " \t");
+        i1 = (int)strspn(s, addr_chars);
+        i2 = (int)(i1 + strspn(s + i1, " \t"));
         delim = s[i2++];
         s[i1] = '\0';
 
@@ -1000,8 +1000,8 @@ static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
             }
             break;
         case '-':
-            i1 = i2 + strspn(s + i2, " \t");
-            i2 = i1 + strspn(s + i1, addr_chars);
+            i1 = (int)(i2 + strspn(s + i2, " \t"));
+            i2 = (int)(i1 + strspn(s + i1, addr_chars));
             if (i1 == i2 || s[i2] != '\0') {
                 X509V3err(X509V3_F_V2I_IPADDRBLOCKS,
                           X509V3_R_EXTENSION_VALUE_ERROR);

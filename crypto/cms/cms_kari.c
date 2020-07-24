@@ -229,12 +229,12 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     if (!EVP_CipherInit_ex(kari->ctx, NULL, NULL, kek, NULL, enc))
         goto err;
     /* obtain output length of ciphered key */
-    if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, inlen))
+    if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, (int)inlen))
         goto err;
-    out = OPENSSL_malloc(outlen);
+    out = (unsigned char *)OPENSSL_malloc(outlen);
     if (out == NULL)
         goto err;
-    if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, inlen))
+    if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, (int)inlen))
         goto err;
     *pout = out;
     *poutlen = (size_t)outlen;
@@ -451,7 +451,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
     if ((EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_GET_WRAP_CIPHER) != 0) {
         /* TODO: make this not get a method we can call directly */
         ret = EVP_CIPHER_meth_get_ctrl(cipher)(NULL, EVP_CTRL_GET_WRAP_CIPHER,
-                                               0, &kekcipher);
+                                               0, (EVP_CIPHER *)&kekcipher);
         if (ret <= 0)
              return 0;
 
@@ -559,7 +559,7 @@ int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
         if (!cms_kek_cipher(&enckey, &enckeylen, ec->key, ec->keylen,
                             kari, 1))
             return 0;
-        ASN1_STRING_set0(rek->encryptedKey, enckey, enckeylen);
+        ASN1_STRING_set0(rek->encryptedKey, enckey, (int)enckeylen);
     }
 
     return 1;

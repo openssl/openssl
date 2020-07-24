@@ -331,7 +331,7 @@ int dh_buf2key(DH *dh, const unsigned char *buf, size_t len)
     const BIGNUM *p;
     size_t p_size;
 
-    if ((pubkey = BN_bin2bn(buf, len, NULL)) == NULL)
+    if ((pubkey = BN_bin2bn(buf, (int)len, NULL)) == NULL)
         goto err;
     DH_get0_pqg(dh, &p, NULL, NULL);
     if (p == NULL || (p_size = BN_num_bytes(p)) == 0) {
@@ -375,7 +375,7 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc
             if (size >= (size_t)p_size)
                 pbuf = *pbuf_out;
         } else {
-            pbuf = OPENSSL_malloc(p_size);
+            pbuf = (unsigned char *)OPENSSL_malloc(p_size);
         }
 
         if (pbuf == NULL) {

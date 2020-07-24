@@ -111,7 +111,7 @@ static int ecx_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 0;
     }
 
-    penc = OPENSSL_memdup(ecxkey->pubkey, KEYLEN(pkey));
+    penc = (unsigned char *)OPENSSL_memdup(ecxkey->pubkey, KEYLEN(pkey));
     if (penc == NULL) {
         ECerr(EC_F_ECX_PUB_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -299,14 +299,14 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     switch (op) {
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, arg2, arg1,
+        return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, (const unsigned char *)arg2, arg1,
                           KEY_OP_PUBLIC, NULL, NULL);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
         if (pkey->pkey.ecx != NULL) {
-            unsigned char **ppt = arg2;
+            unsigned char **ppt = (unsigned char **)arg2;
 
-            *ppt = OPENSSL_memdup(pkey->pkey.ecx->pubkey, KEYLEN(pkey));
+            *ppt = (unsigned char *)OPENSSL_memdup(pkey->pkey.ecx->pubkey, KEYLEN(pkey));
             if (*ppt != NULL)
                 return KEYLEN(pkey);
         }
@@ -336,13 +336,13 @@ static int ecx_set_priv_key(EVP_PKEY *pkey, const unsigned char *priv,
                             size_t len)
 {
     /* TODO(3.0): We should pass a libctx here */
-    return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, priv, len,
+    return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, priv, (int)len,
                        KEY_OP_PRIVATE, NULL, NULL);
 }
 
 static int ecx_set_pub_key(EVP_PKEY *pkey, const unsigned char *pub, size_t len)
 {
-    return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, pub, len,
+    return ecx_key_op(pkey, pkey->ameth->pkey_id, NULL, pub, (int)len,
                       KEY_OP_PUBLIC, NULL, NULL);
 }
 
@@ -437,7 +437,7 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 static int ecx_generic_import_from(const OSSL_PARAM params[], void *vpctx,
                                    int keytype)
 {
-    EVP_PKEY_CTX *pctx = vpctx;
+    EVP_PKEY_CTX *pctx = (EVP_PKEY_CTX *)vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     ECX_KEY *ecx = ecx_key_new(pctx->libctx, KEYNID2TYPE(keytype), 0);
 

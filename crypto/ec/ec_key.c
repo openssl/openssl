@@ -882,7 +882,7 @@ size_t ec_key_simple_priv2oct(const EC_KEY *eckey,
 
     /* Octetstring may need leading zeros if BN is to short */
 
-    if (BN_bn2binpad(eckey->priv_key, buf, buf_len) == -1) {
+    if (BN_bn2binpad(eckey->priv_key, buf, (int)buf_len) == -1) {
         ECerr(EC_F_EC_KEY_SIMPLE_PRIV2OCT, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
@@ -914,7 +914,7 @@ int ec_key_simple_oct2priv(EC_KEY *eckey, const unsigned char *buf, size_t len)
         ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    eckey->priv_key = BN_bin2bn(buf, len, eckey->priv_key);
+    eckey->priv_key = BN_bin2bn(buf, (int)len, eckey->priv_key);
     if (eckey->priv_key == NULL) {
         ECerr(EC_F_EC_KEY_SIMPLE_OCT2PRIV, ERR_R_BN_LIB);
         return 0;
@@ -931,7 +931,7 @@ size_t EC_KEY_priv2buf(const EC_KEY *eckey, unsigned char **pbuf)
     len = EC_KEY_priv2oct(eckey, NULL, 0);
     if (len == 0)
         return 0;
-    if ((buf = OPENSSL_malloc(len)) == NULL) {
+    if ((buf = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
         ECerr(EC_F_EC_KEY_PRIV2BUF, ERR_R_MALLOC_FAILURE);
         return 0;
     }

@@ -35,7 +35,7 @@ int BIO_get_new_index(void)
 
 BIO_METHOD *BIO_meth_new(int type, const char *name)
 {
-    BIO_METHOD *biom = OPENSSL_zalloc(sizeof(BIO_METHOD));
+    BIO_METHOD *biom = (BIO_METHOD *)OPENSSL_zalloc(sizeof(BIO_METHOD));
 
     if (biom == NULL
             || (biom->name = OPENSSL_strdup(name)) == NULL) {

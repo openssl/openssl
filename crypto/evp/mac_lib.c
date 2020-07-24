@@ -21,7 +21,7 @@
 
 EVP_MAC_CTX *EVP_MAC_CTX_new(EVP_MAC *mac)
 {
-    EVP_MAC_CTX *ctx = OPENSSL_zalloc(sizeof(EVP_MAC_CTX));
+    EVP_MAC_CTX *ctx = (EVP_MAC_CTX *)OPENSSL_zalloc(sizeof(EVP_MAC_CTX));
 
     if (ctx == NULL
         || (ctx->data = mac->newctx(ossl_provider_ctx(mac->prov))) == NULL
@@ -55,7 +55,7 @@ EVP_MAC_CTX *EVP_MAC_CTX_dup(const EVP_MAC_CTX *src)
     if (src->data == NULL)
         return NULL;
 
-    dst = OPENSSL_malloc(sizeof(*dst));
+    dst = (EVP_MAC_CTX *)OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
         EVPerr(EVP_F_EVP_MAC_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;

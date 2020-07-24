@@ -245,7 +245,7 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 
 static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 {
-    EVP_ASYM_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_ASYM_CIPHER));
+    EVP_ASYM_CIPHER *cipher = (EVP_ASYM_CIPHER *)OPENSSL_zalloc(sizeof(EVP_ASYM_CIPHER));
 
     if (cipher == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -408,10 +408,10 @@ OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher)
 EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                        const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
-                             evp_asym_cipher_from_dispatch,
-                             (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
-                             (void (*)(void *))EVP_ASYM_CIPHER_free);
+    return (EVP_ASYM_CIPHER *)evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,
+                                                evp_asym_cipher_from_dispatch,
+                                                (int (*)(void *))EVP_ASYM_CIPHER_up_ref,
+                                                (void (*)(void *))EVP_ASYM_CIPHER_free);
 }
 
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name)

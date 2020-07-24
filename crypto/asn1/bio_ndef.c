@@ -54,14 +54,14 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
 {
     NDEF_SUPPORT *ndef_aux = NULL;
     BIO *asn_bio = NULL;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux = (const ASN1_AUX *)it->funcs;
     ASN1_STREAM_ARG sarg;
 
     if (!aux || !aux->asn1_cb) {
         ASN1err(ASN1_F_BIO_NEW_NDEF, ASN1_R_STREAMING_NOT_SUPPORTED);
         return NULL;
     }
-    ndef_aux = OPENSSL_zalloc(sizeof(*ndef_aux));
+    ndef_aux = (NDEF_SUPPORT *)OPENSSL_zalloc(sizeof(*ndef_aux));
     asn_bio = BIO_new(BIO_f_asn1());
     if (ndef_aux == NULL || asn_bio == NULL)
         goto err;
@@ -114,7 +114,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     ndef_aux = *(NDEF_SUPPORT **)parg;
 
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
-    if ((p = OPENSSL_malloc(derlen)) == NULL) {
+    if ((p = (unsigned char *)OPENSSL_malloc(derlen)) == NULL) {
         ASN1err(ASN1_F_NDEF_PREFIX, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -126,7 +126,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     if (*ndef_aux->boundary == NULL)
         return 0;
 
-    *plen = *ndef_aux->boundary - *pbuf;
+    *plen = (int)(*ndef_aux->boundary - *pbuf);
 
     return 1;
 }
@@ -173,7 +173,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     ndef_aux = *(NDEF_SUPPORT **)parg;
 
-    aux = ndef_aux->it->funcs;
+    aux = (const ASN1_AUX *)ndef_aux->it->funcs;
 
     /* Finalize structures */
     sarg.ndef_bio = ndef_aux->ndef_bio;
@@ -186,7 +186,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     derlen = ASN1_item_ndef_i2d(ndef_aux->val, NULL, ndef_aux->it);
     if (derlen < 0)
         return 0;
-    if ((p = OPENSSL_malloc(derlen)) == NULL) {
+    if ((p = (unsigned char *)OPENSSL_malloc(derlen)) == NULL) {
         ASN1err(ASN1_F_NDEF_SUFFIX, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -198,7 +198,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     if (*ndef_aux->boundary == NULL)
         return 0;
     *pbuf = *ndef_aux->boundary;
-    *plen = derlen - (*ndef_aux->boundary - ndef_aux->derbuf);
+    *plen = (int)(derlen - (*ndef_aux->boundary - ndef_aux->derbuf));
 
     return 1;
 }

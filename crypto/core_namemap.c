@@ -76,7 +76,7 @@ static void *stored_namemap_new(OPENSSL_CTX *libctx)
 
 static void stored_namemap_free(void *vnamemap)
 {
-    OSSL_NAMEMAP *namemap = vnamemap;
+    OSSL_NAMEMAP *namemap = (OSSL_NAMEMAP *)vnamemap;
 
     if (namemap != NULL) {
         /* Pretend it isn't stored, or ossl_namemap_free() will do nothing */
@@ -192,7 +192,7 @@ struct num2name_data_st {
 
 static void do_num2name(const char *name, void *vdata)
 {
-    struct num2name_data_st *data = vdata;
+    struct num2name_data_st *data = (struct num2name_data_st *)vdata;
 
     if (data->idx > 0)
         data->idx--;
@@ -221,7 +221,7 @@ static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
     if ((tmp_number = namemap_name2num_n(namemap, name, name_len)) != 0)
         return tmp_number;
 
-    if ((namenum = OPENSSL_zalloc(sizeof(*namenum))) == NULL
+    if ((namenum = (NAMENUM_ENTRY *)OPENSSL_zalloc(sizeof(*namenum))) == NULL
         || (namenum->name = OPENSSL_strndup(name, name_len)) == NULL)
         goto err;
 
@@ -346,7 +346,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
 static void get_legacy_evp_names(const char *main_name, const char *alias,
                                  void *arg)
 {
-    int main_id = ossl_namemap_add_name(arg, 0, main_name);
+    int main_id = ossl_namemap_add_name((OSSL_NAMEMAP *)arg, 0, main_name);
 
     /*
      * We could check that the returned value is the same as main_id,
@@ -359,20 +359,20 @@ static void get_legacy_evp_names(const char *main_name, const char *alias,
      * simply a no-op.
      */
     if (alias != NULL) {
-        (void)ossl_namemap_add_name(arg, main_id, alias);
+        (void)ossl_namemap_add_name((OSSL_NAMEMAP *)arg, main_id, alias);
     }
 }
 
 static void get_legacy_cipher_names(const OBJ_NAME *on, void *arg)
 {
-    const EVP_CIPHER *cipher = (void *)OBJ_NAME_get(on->name, on->type);
+    const EVP_CIPHER *cipher = (const EVP_CIPHER *)(void *)OBJ_NAME_get(on->name, on->type);
 
     get_legacy_evp_names(EVP_CIPHER_name(cipher), on->name, arg);
 }
 
 static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 {
-    const EVP_MD *md = (void *)OBJ_NAME_get(on->name, on->type);
+    const EVP_MD *md = (const EVP_MD *)(void *)OBJ_NAME_get(on->name, on->type);
     /* We don't want the pkey_type names, so we need some extra care */
     int snid, lnid;
 
@@ -392,7 +392,7 @@ static void get_legacy_md_names(const OBJ_NAME *on, void *arg)
 
 OSSL_NAMEMAP *ossl_namemap_stored(OPENSSL_CTX *libctx)
 {
-    OSSL_NAMEMAP *namemap =
+    OSSL_NAMEMAP *namemap = (OSSL_NAMEMAP *)
         openssl_ctx_get_data(libctx, OPENSSL_CTX_NAMEMAP_INDEX,
                              &stored_namemap_method);
 
@@ -416,7 +416,7 @@ OSSL_NAMEMAP *ossl_namemap_new(void)
 {
     OSSL_NAMEMAP *namemap;
 
-    if ((namemap = OPENSSL_zalloc(sizeof(*namemap))) != NULL
+    if ((namemap = (OSSL_NAMEMAP *)OPENSSL_zalloc(sizeof(*namemap))) != NULL
         && (namemap->lock = CRYPTO_THREAD_lock_new()) != NULL
         && (namemap->namenum =
             lh_NAMENUM_ENTRY_new(namenum_hash, namenum_cmp)) != NULL)

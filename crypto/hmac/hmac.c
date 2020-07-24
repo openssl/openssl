@@ -142,7 +142,7 @@ size_t HMAC_size(const HMAC_CTX *ctx)
 
 HMAC_CTX *HMAC_CTX_new(void)
 {
-    HMAC_CTX *ctx = OPENSSL_zalloc(sizeof(HMAC_CTX));
+    HMAC_CTX *ctx = (HMAC_CTX *)OPENSSL_zalloc(sizeof(HMAC_CTX));
 
     if (ctx != NULL) {
         if (!HMAC_CTX_reset(ctx)) {

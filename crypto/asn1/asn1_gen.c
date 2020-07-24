@@ -159,7 +159,7 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
         if (r & 0x80)
             goto err;
         /* Update copy length */
-        cpy_len -= cpy_start - orig_der;
+        cpy_len -= (int)(cpy_start - orig_der);
         /*
          * For IMPLICIT tagging the length should match the original length
          * and constructed flag should be consistent.
@@ -192,7 +192,7 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
 
     /* Allocate buffer for new encoding */
 
-    new_der = OPENSSL_malloc(len);
+    new_der = (unsigned char *)OPENSSL_malloc(len);
     if (new_der == NULL)
         goto err;
 
@@ -239,7 +239,7 @@ static ASN1_TYPE *generate_v3(const char *str, X509V3_CTX *cnf, int depth,
 
 static int asn1_cb(const char *elem, int len, void *bitstr)
 {
-    tag_exp_arg *arg = bitstr;
+    tag_exp_arg *arg = (tag_exp_arg *)bitstr;
     int i;
     int utype;
     int vlen = 0;
@@ -254,8 +254,8 @@ static int asn1_cb(const char *elem, int len, void *bitstr)
         /* Look for the ':' in name value pairs */
         if (*p == ':') {
             vstart = p + 1;
-            vlen = len - (vstart - elem);
-            len = p - elem;
+            vlen = (int)(len - (vstart - elem));
+            len = (int)(p - elem);
             break;
         }
     }
@@ -363,7 +363,7 @@ static int parse_tagging(const char *vstart, int vlen, int *ptag, int *pclass)
     *ptag = tag_num;
     /* If we have non numeric characters, parse them */
     if (eptr)
-        vlen -= eptr - vstart;
+        vlen -= (int)(eptr - vstart);
     else
         vlen = 0;
     if (vlen) {
@@ -564,7 +564,7 @@ static int asn1_str2tag(const char *tagstr, int len)
     };
 
     if (len == -1)
-        len = strlen(tagstr);
+        len = (int)strlen(tagstr);
 
     tntmp = tnst;
     for (i = 0; i < OSSL_NELEM(tnst); i++, tntmp++) {
@@ -755,7 +755,7 @@ static int bitstr_cb(const char *elem, int len, void *bitstr)
         ASN1err(ASN1_F_BITSTR_CB, ASN1_R_INVALID_NUMBER);
         return 0;
     }
-    if (!ASN1_BIT_STRING_set_bit(bitstr, bitnum, 1)) {
+    if (!ASN1_BIT_STRING_set_bit((ASN1_BIT_STRING *)bitstr, bitnum, 1)) {
         ASN1err(ASN1_F_BITSTR_CB, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -764,7 +764,7 @@ static int bitstr_cb(const char *elem, int len, void *bitstr)
 
 static int mask_cb(const char *elem, int len, void *arg)
 {
-    unsigned long *pmask = arg, tmpmask;
+    unsigned long *pmask = (unsigned long *)arg, tmpmask;
     int tag;
     if (elem == NULL)
         return 0;

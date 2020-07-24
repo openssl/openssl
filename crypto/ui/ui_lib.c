@@ -22,7 +22,7 @@ UI *UI_new(void)
 
 UI *UI_new_method(const UI_METHOD *method)
 {
-    UI *ret = OPENSSL_zalloc(sizeof(*ret));
+    UI *ret = (UI *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         UIerr(UI_F_UI_NEW_METHOD, ERR_R_MALLOC_FAILURE);
@@ -106,7 +106,7 @@ static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
     } else if ((type == UIT_PROMPT || type == UIT_VERIFY
                 || type == UIT_BOOLEAN) && result_buf == NULL) {
         UIerr(UI_F_GENERAL_ALLOCATE_PROMPT, UI_R_NO_RESULT_BUFFER);
-    } else if ((ret = OPENSSL_malloc(sizeof(*ret))) != NULL) {
+    } else if ((ret = (UI_STRING *)OPENSSL_malloc(sizeof(*ret))) != NULL) {
         ret->out_string = prompt;
         ret->flags = prompt_freeable ? OUT_STRING_FREEABLE : 0;
         ret->input_flags = input_flags;
@@ -369,12 +369,12 @@ char *UI_construct_prompt(UI *ui, const char *phrase_desc,
 
         if (phrase_desc == NULL)
             return NULL;
-        len = sizeof(prompt1) - 1 + strlen(phrase_desc);
+        len = (int)(sizeof(prompt1) - 1 + strlen(phrase_desc));
         if (object_name != NULL)
-            len += sizeof(prompt2) - 1 + strlen(object_name);
-        len += sizeof(prompt3) - 1;
+            len += (int)(sizeof(prompt2) - 1 + strlen(object_name));
+        len += (int)(sizeof(prompt3) - 1);
 
-        if ((prompt = OPENSSL_malloc(len + 1)) == NULL) {
+        if ((prompt = (char *)OPENSSL_malloc(len + 1)) == NULL) {
             UIerr(UI_F_UI_CONSTRUCT_PROMPT, ERR_R_MALLOC_FAILURE);
             return NULL;
         }
@@ -598,7 +598,7 @@ UI_METHOD *UI_create_method(const char *name)
 {
     UI_METHOD *ui_method = NULL;
 
-    if ((ui_method = OPENSSL_zalloc(sizeof(*ui_method))) == NULL
+    if ((ui_method = (UI_METHOD *)OPENSSL_zalloc(sizeof(*ui_method))) == NULL
         || (ui_method->name = OPENSSL_strdup(name)) == NULL
         || !CRYPTO_new_ex_data(CRYPTO_EX_INDEX_UI_METHOD, ui_method,
                                &ui_method->ex_data)) {
@@ -815,7 +815,7 @@ int UI_get_result_string_length(UI_STRING *uis)
     switch (uis->type) {
     case UIT_PROMPT:
     case UIT_VERIFY:
-        return uis->result_len;
+        return (int)uis->result_len;
     case UIT_NONE:
     case UIT_BOOLEAN:
     case UIT_INFO:
@@ -872,7 +872,7 @@ int UI_get_result_maxsize(UI_STRING *uis)
 
 int UI_set_result(UI *ui, UI_STRING *uis, const char *result)
 {
-    return UI_set_result_ex(ui, uis, result, strlen(result));
+    return UI_set_result_ex(ui, uis, result, (int)strlen(result));
 }
 
 int UI_set_result_ex(UI *ui, UI_STRING *uis, const char *result, int len)

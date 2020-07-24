@@ -113,7 +113,7 @@ static OCB_BLOCK *ocb_lookup_l(OCB128_CONTEXT *ctx, size_t idx)
         tmp_ptr = OPENSSL_realloc(ctx->l, ctx->max_l_index * sizeof(OCB_BLOCK));
         if (tmp_ptr == NULL) /* prevent ctx->l from being clobbered */
             return NULL;
-        ctx->l = tmp_ptr;
+        ctx->l = (OCB_BLOCK *)tmp_ptr;
     }
     while (l_index < idx) {
         ocb_double(ctx->l + l_index, ctx->l + l_index + 1);
@@ -134,7 +134,7 @@ OCB128_CONTEXT *CRYPTO_ocb128_new(void *keyenc, void *keydec,
     OCB128_CONTEXT *octx;
     int ret;
 
-    if ((octx = OPENSSL_malloc(sizeof(*octx))) != NULL) {
+    if ((octx = (OCB128_CONTEXT *)OPENSSL_malloc(sizeof(*octx))) != NULL) {
         ret = CRYPTO_ocb128_init(octx, keyenc, keydec, encrypt, decrypt,
                                  stream);
         if (ret)
@@ -155,7 +155,7 @@ int CRYPTO_ocb128_init(OCB128_CONTEXT *ctx, void *keyenc, void *keydec,
     memset(ctx, 0, sizeof(*ctx));
     ctx->l_index = 0;
     ctx->max_l_index = 5;
-    if ((ctx->l = OPENSSL_malloc(ctx->max_l_index * 16)) == NULL) {
+    if ((ctx->l = (OCB_BLOCK *)OPENSSL_malloc(ctx->max_l_index * 16)) == NULL) {
         CRYPTOerr(CRYPTO_F_CRYPTO_OCB128_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -202,7 +202,7 @@ int CRYPTO_ocb128_copy_ctx(OCB128_CONTEXT *dest, OCB128_CONTEXT *src,
     if (keydec)
         dest->keydec = keydec;
     if (src->l) {
-        if ((dest->l = OPENSSL_malloc(src->max_l_index * 16)) == NULL) {
+        if ((dest->l = (OCB_BLOCK *)OPENSSL_malloc(src->max_l_index * 16)) == NULL) {
             CRYPTOerr(CRYPTO_F_CRYPTO_OCB128_COPY_CTX, ERR_R_MALLOC_FAILURE);
             return 0;
         }

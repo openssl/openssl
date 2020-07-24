@@ -52,7 +52,7 @@ static CRYPTO_ONCE tevent_register_runonce = CRYPTO_ONCE_STATIC_INIT;
 
 DEFINE_RUN_ONCE_STATIC(create_global_tevent_register)
 {
-    glob_tevent_reg = OPENSSL_zalloc(sizeof(*glob_tevent_reg));
+    glob_tevent_reg = (GLOBAL_TEVENT_REGISTER *)OPENSSL_zalloc(sizeof(*glob_tevent_reg));
     if (glob_tevent_reg == NULL)
         return 0;
 
@@ -88,12 +88,12 @@ static void init_thread_stop(void *arg, THREAD_EVENT_HANDLER **hands);
 static THREAD_EVENT_HANDLER **
 init_get_thread_local(CRYPTO_THREAD_LOCAL *local, int alloc, int keep)
 {
-    THREAD_EVENT_HANDLER **hands = CRYPTO_THREAD_get_local(local);
+    THREAD_EVENT_HANDLER **hands = (THREAD_EVENT_HANDLER **)CRYPTO_THREAD_get_local(local);
 
     if (alloc) {
         if (hands == NULL) {
 
-            if ((hands = OPENSSL_zalloc(sizeof(*hands))) == NULL)
+            if ((hands = (THREAD_EVENT_HANDLER **)OPENSSL_zalloc(sizeof(*hands))) == NULL)
                 return NULL;
 
             if (!CRYPTO_THREAD_set_local(local, hands)) {
@@ -188,7 +188,7 @@ static void init_thread_remove_handlers(THREAD_EVENT_HANDLER **handsin)
 static void init_thread_destructor(void *hands)
 {
     init_thread_stop(NULL, (THREAD_EVENT_HANDLER **)hands);
-    init_thread_remove_handlers(hands);
+    init_thread_remove_handlers((THREAD_EVENT_HANDLER **)hands);
     OPENSSL_free(hands);
 }
 
@@ -365,7 +365,7 @@ int ossl_init_thread_start(const void *index, void *arg,
     }
 #endif
 
-    hand = OPENSSL_malloc(sizeof(*hand));
+    hand = (THREAD_EVENT_HANDLER *)OPENSSL_malloc(sizeof(*hand));
     if (hand == NULL)
         return 0;
 

@@ -426,7 +426,7 @@ __owur static ossl_inline int PACKET_memdup(const PACKET *pkt,
     if (length == 0)
         return 1;
 
-    *data = OPENSSL_memdup(pkt->curr, length);
+    *data = (unsigned char *)OPENSSL_memdup(pkt->curr, length);
     if (*data == NULL)
         return 0;
 

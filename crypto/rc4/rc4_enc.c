@@ -41,7 +41,7 @@ void RC4(RC4_KEY *key, size_t len, const unsigned char *indata,
                 y=(tx+y)&0xff; \
                 d[x]=ty=d[y]; \
                 d[y]=tx; \
-                (out) = d[(tx+ty)&0xff]^ (in);
+                (out) = (unsigned char)(d[(tx+ty)&0xff]^ (in));
 
     i = len >> 3;
     if (i) {

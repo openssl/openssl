@@ -33,7 +33,7 @@ ASN1_ADB(PKCS7) = {
 static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
-    ASN1_STREAM_ARG *sarg = exarg;
+    ASN1_STREAM_ARG *sarg = (ASN1_STREAM_ARG *)exarg;
     PKCS7 **pp7 = (PKCS7 **)pval;
 
     switch (operation) {

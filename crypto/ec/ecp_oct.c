@@ -223,9 +223,9 @@ size_t ec_GFp_simple_point2oct(const EC_GROUP *group, const EC_POINT *point,
 
         if ((form == POINT_CONVERSION_COMPRESSED
              || form == POINT_CONVERSION_HYBRID) && BN_is_odd(y))
-            buf[0] = form + 1;
+            buf[0] = (unsigned char)(form + 1);
         else
-            buf[0] = form;
+            buf[0] = (unsigned char)form;
 
         i = 1;
 
@@ -292,9 +292,9 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
         ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_BUFFER_TOO_SMALL);
         return 0;
     }
-    form = buf[0];
+    form = (point_conversion_form_t)buf[0];
     y_bit = form & 1;
-    form = form & ~1U;
+    form = (point_conversion_form_t)(form & ~1U);
     if ((form != 0) && (form != POINT_CONVERSION_COMPRESSED)
         && (form != POINT_CONVERSION_UNCOMPRESSED)
         && (form != POINT_CONVERSION_HYBRID)) {
@@ -337,7 +337,7 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
     if (y == NULL)
         goto err;
 
-    if (!BN_bin2bn(buf + 1, field_len, x))
+    if (!BN_bin2bn(buf + 1, (int)field_len, x))
         goto err;
     if (BN_ucmp(x, group->field) >= 0) {
         ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);
@@ -348,7 +348,7 @@ int ec_GFp_simple_oct2point(const EC_GROUP *group, EC_POINT *point,
         if (!EC_POINT_set_compressed_coordinates(group, point, x, y_bit, ctx))
             goto err;
     } else {
-        if (!BN_bin2bn(buf + 1 + field_len, field_len, y))
+        if (!BN_bin2bn(buf + 1 + field_len, (int)field_len, y))
             goto err;
         if (BN_ucmp(y, group->field) >= 0) {
             ECerr(EC_F_EC_GFP_SIMPLE_OCT2POINT, EC_R_INVALID_ENCODING);

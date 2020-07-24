@@ -110,7 +110,7 @@ static CONF *def_create(CONF_METHOD *meth)
 {
     CONF *ret;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = (CONF *)OPENSSL_malloc(sizeof(*ret));
     if (ret != NULL)
         if (meth->init(ret) == 0) {
             OPENSSL_free(ret);
@@ -241,7 +241,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
  read_retry:
         BIO_gets(in, p, CONFBUFSIZE - 1);
         p[CONFBUFSIZE - 1] = '\0';
-        ii = i = strlen(p);
+        ii = i = (int)strlen(p);
         if (i == 0 && !again) {
             /* the currently processed BIO is at EOF */
             BIO *parent;
@@ -417,7 +417,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 if (include_dir != NULL) {
                     size_t newlen = strlen(include_dir) + strlen(include) + 2;
 
-                    include_path = OPENSSL_malloc(newlen);
+                    include_path = (char *)OPENSSL_malloc(newlen);
                     OPENSSL_strlcpy(include_path, include_dir, newlen);
                     OPENSSL_strlcat(include_path, "/", newlen);
                     OPENSSL_strlcat(include_path, include, newlen);
@@ -466,7 +466,7 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
             start = eat_ws(conf, p);
             trim_ws(conf, start);
 
-            if ((v = OPENSSL_malloc(sizeof(*v))) == NULL) {
+            if ((v = (CONF_VALUE *)OPENSSL_malloc(sizeof(*v))) == NULL) {
                 CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
                 goto err;
             }
@@ -586,7 +586,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
     if ((buf = BUF_MEM_new()) == NULL)
         return 0;
 
-    len = strlen(from) + 1;
+    len = (int)(strlen(from) + 1);
     if (!BUF_MEM_grow(buf, len))
         goto err;
 
@@ -691,8 +691,8 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
              */
             p = _CONF_get_string(conf, cp, np);
             if (rrp != NULL)
-                *rrp = rr;
-            *rp = r;
+                *rrp = (char)rr;
+            *rp = (char)r;
             if (p == NULL) {
                 CONFerr(CONF_F_STR_COPY, CONF_R_VARIABLE_HAS_NO_VALUE);
                 goto err;
@@ -713,7 +713,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
              * Since we change the pointer 'from', we also have to change the
              * perceived length of the string it points at.  /RL
              */
-            len -= e - from;
+            len -= (int)(e - from);
             from = e;
 
             /*
@@ -721,7 +721,7 @@ static int str_copy(CONF *conf, char *section, char **pto, char *from)
              * variable reference, we have to put back the character that was
              * replaced with a '\0'.  /RL
              */
-            *rp = r;
+            *rp = (char)r;
         } else
             buf->data[to++] = *(from++);
     }
@@ -795,7 +795,7 @@ static BIO *get_next_file(const char *path, OPENSSL_DIR_CTX **dirctx)
             BIO *bio;
 
             newlen = pathlen + namelen + 2;
-            newpath = OPENSSL_zalloc(newlen);
+            newpath = (char *)OPENSSL_zalloc(newlen);
             if (newpath == NULL) {
                 CONFerr(CONF_F_GET_NEXT_FILE, ERR_R_MALLOC_FAILURE);
                 break;

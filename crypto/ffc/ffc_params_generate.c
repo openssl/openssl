@@ -612,7 +612,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
         goto err;
     }
 
-    seed_tmp = OPENSSL_malloc(seedlen);
+    seed_tmp = (unsigned char *)OPENSSL_malloc(seedlen);
     if (seed_tmp == NULL)
         goto err;
 
@@ -623,13 +623,13 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
             goto err;
         }
         /* if the seed is not supplied then alloc a seed buffer */
-        seed = OPENSSL_malloc(seedlen);
+        seed = (unsigned char *)OPENSSL_malloc(seedlen);
         if (seed == NULL)
             goto err;
     }
 
     /* A.1.1.2 Step (11): max loop count = 4L - 1 */
-    counter = 4 * L - 1;
+    counter = (int)(4 * L - 1);
     /* Validation requires the counter to be supplied */
     if (verify) {
         /* A.1.1.3 Step (4) : if (counter > (4L -1)) return INVALID */
@@ -645,10 +645,10 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
      * A.1.1.3 Step (10)
      * n = floor(L / hash_outlen) - 1
      */
-    n = (L - 1 ) / (mdsize << 3);
+    n = (int)((L - 1 ) / (mdsize << 3));
 
     /* Calculate 2^(L-1): Used in step A.1.1.2 Step (11.3) */
-    if (!BN_lshift(test, BN_value_one(), L - 1))
+    if (!BN_lshift(test, BN_value_one(), (int)(L - 1)))
         goto err;
 
     for (;;) {
@@ -666,7 +666,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
             goto err;
 
         memcpy(seed_tmp, seed, seedlen);
-        r = generate_p(ctx, md, counter, n, seed_tmp, seedlen, q, p, L,
+        r = generate_p(ctx, md, counter, n, seed_tmp, seedlen, q, p, (int)L,
                        cb, &pcounter, res);
         if (r > 0)
             break; /* found p */
@@ -858,7 +858,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
     if (test == NULL)
         goto err;
 
-    if (!BN_lshift(test, BN_value_one(), L - 1))
+    if (!BN_lshift(test, BN_value_one(), (int)(L - 1)))
         goto err;
 
     if (!verify) {
@@ -904,8 +904,8 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
             goto err;
 
         /* step 6 */
-        n = (L - 1) / 160;
-        counter = 4 * L - 1; /* Was 4096 */
+        n = (int)((L - 1) / 160);
+        counter = (int)(4 * L - 1); /* Was 4096 */
         /* Validation requires the counter to be supplied */
         if (verify) {
             if (params->pcounter > counter) {
@@ -915,7 +915,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
             counter = params->pcounter;
         }
 
-        rv = generate_p(ctx, md, counter, n, buf, qsize, q, p, L, cb,
+        rv = generate_p(ctx, md, counter, n, buf, qsize, q, p, (int)L, cb,
                         &pcounter, res);
         if (rv > 0)
             break; /* found it */

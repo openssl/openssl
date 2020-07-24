@@ -210,7 +210,7 @@ BN_ULONG bn_div_words(BN_ULONG h, BN_ULONG l, BN_ULONG d)
     int i, count = 2;
 
     if (d == 0)
-        return BN_MASK2;
+        return (BN_ULONG)BN_MASK2;
 
     i = BN_num_bits_word(d);
     assert((i == BN_BITS2) || (h <= (BN_ULONG)1 << i));

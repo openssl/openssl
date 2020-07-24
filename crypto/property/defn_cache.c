@@ -48,7 +48,7 @@ static void property_defn_free(PROPERTY_DEFN_ELEM *elem)
 
 static void property_defns_free(void *vproperty_defns)
 {
-    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns = vproperty_defns;
+    LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns = (LHASH_OF(PROPERTY_DEFN_ELEM) *)vproperty_defns;
 
     if (property_defns != NULL) {
         lh_PROPERTY_DEFN_ELEM_doall(property_defns,
@@ -71,8 +71,8 @@ OSSL_PROPERTY_LIST *ossl_prop_defn_get(OPENSSL_CTX *ctx, const char *prop)
     PROPERTY_DEFN_ELEM elem, *r;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
-                                          &property_defns_method);
+    property_defns = (LHASH_OF(PROPERTY_DEFN_ELEM) *)openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
+                                                                          &property_defns_method);
     if (property_defns == NULL)
         return NULL;
 
@@ -88,8 +88,8 @@ int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
     size_t len;
     LHASH_OF(PROPERTY_DEFN_ELEM) *property_defns;
 
-    property_defns = openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
-                                          &property_defns_method);
+    property_defns = (LHASH_OF(PROPERTY_DEFN_ELEM) *)openssl_ctx_get_data(ctx, OPENSSL_CTX_PROPERTY_DEFN_INDEX,
+                                                                          &property_defns_method);
     if (property_defns == NULL)
         return 0;
 
@@ -102,7 +102,7 @@ int ossl_prop_defn_set(OPENSSL_CTX *ctx, const char *prop,
         return 1;
     }
     len = strlen(prop);
-    p = OPENSSL_malloc(sizeof(*p) + len);
+    p = (PROPERTY_DEFN_ELEM *)OPENSSL_malloc(sizeof(*p) + len);
     if (p != NULL) {
         p->prop = p->body;
         p->defn = pl;

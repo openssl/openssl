@@ -194,27 +194,27 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
         /* Invalid size */
         return 0;
     }
-    if ((tmp = OPENSSL_malloc(inlen)) == NULL) {
+    if ((tmp = (unsigned char *)OPENSSL_malloc(inlen)) == NULL) {
         CMSerr(CMS_F_KEK_UNWRAP_KEY, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     /* setup IV by decrypting last two blocks */
     if (!EVP_DecryptUpdate(ctx, tmp + inlen - 2 * blocklen, &outl,
-                           in + inlen - 2 * blocklen, blocklen * 2)
+                           in + inlen - 2 * blocklen, (int)(blocklen * 2))
         /*
          * Do a decrypt of last decrypted block to set IV to correct value
          * output it to start of buffer so we don't corrupt decrypted block
          * this works because buffer is at least two block lengths long.
          */
         || !EVP_DecryptUpdate(ctx, tmp, &outl,
-                              tmp + inlen - blocklen, blocklen)
+                              tmp + inlen - blocklen, (int)blocklen)
         /* Can now decrypt first n - 1 blocks */
-        || !EVP_DecryptUpdate(ctx, tmp, &outl, in, inlen - blocklen)
+        || !EVP_DecryptUpdate(ctx, tmp, &outl, in, (int)(inlen - blocklen))
 
         /* Reset IV to original value */
         || !EVP_DecryptInit_ex(ctx, NULL, NULL, NULL, NULL)
         /* Decrypt again */
-        || !EVP_DecryptUpdate(ctx, tmp, &outl, tmp, inlen))
+        || !EVP_DecryptUpdate(ctx, tmp, &outl, tmp, (int)inlen))
         goto err;
     /* Check check bytes */
     if (((tmp[1] ^ tmp[4]) & (tmp[2] ^ tmp[5]) & (tmp[3] ^ tmp[6])) != 0xff) {
@@ -268,8 +268,8 @@ static int kek_wrap_key(unsigned char *out, size_t *outlen,
                              olen - 4 - inlen) <= 0)
             return 0;
         /* Encrypt twice */
-        if (!EVP_EncryptUpdate(ctx, out, &dummy, out, olen)
-            || !EVP_EncryptUpdate(ctx, out, &dummy, out, olen))
+        if (!EVP_EncryptUpdate(ctx, out, &dummy, out, (int)olen)
+            || !EVP_EncryptUpdate(ctx, out, &dummy, out, (int)olen))
             return 0;
     }
 
@@ -310,8 +310,8 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         return 0;
     }
 
-    kekalg = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
-                                       algtmp->parameter);
+    kekalg = (X509_ALGOR *)ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
+                                                     algtmp->parameter);
 
     if (kekalg == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT,
@@ -347,7 +347,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     /* Finish password based key derivation to setup key in "ctx" */
 
     if (EVP_PBE_CipherInit(algtmp->algorithm,
-                           (char *)pwri->pass, pwri->passlen,
+                           (char *)pwri->pass, (int)pwri->passlen,
                            algtmp->parameter, kekctx, en_de) < 0) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_EVP_LIB);
         goto err;
@@ -360,7 +360,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         if (!kek_wrap_key(NULL, &keylen, ec->key, ec->keylen, kekctx, cms_ctx))
             goto err;
 
-        key = OPENSSL_malloc(keylen);
+        key = (unsigned char *)OPENSSL_malloc(keylen);
 
         if (key == NULL)
             goto err;
@@ -368,9 +368,9 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
         if (!kek_wrap_key(key, &keylen, ec->key, ec->keylen, kekctx, cms_ctx))
             goto err;
         pwri->encryptedKey->data = key;
-        pwri->encryptedKey->length = keylen;
+        pwri->encryptedKey->length = (int)keylen;
     } else {
-        key = OPENSSL_malloc(pwri->encryptedKey->length);
+        key = (unsigned char *)OPENSSL_malloc(pwri->encryptedKey->length);
 
         if (key == NULL) {
             CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, ERR_R_MALLOC_FAILURE);

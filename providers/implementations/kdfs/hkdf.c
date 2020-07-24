@@ -74,7 +74,7 @@ static void *kdf_hkdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    if ((ctx = (KDF_HKDF *)OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     else
         ctx->provctx = provctx;
@@ -163,7 +163,7 @@ static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 static int kdf_hkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
-    KDF_HKDF *ctx = vctx;
+    KDF_HKDF *ctx = (KDF_HKDF *)vctx;
     OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     int n;
 
@@ -444,7 +444,7 @@ static int HKDF_Expand(const EVP_MD *evp_md,
 
     for (i = 1; i <= n; i++) {
         size_t copy_len;
-        const unsigned char ctr = i;
+        const unsigned char ctr = (const unsigned char)i;
 
         /* calc: T(i) = HMAC-Hash(PRK, T(i - 1) | info | i) */
         if (i > 1) {

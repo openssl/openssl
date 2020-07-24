@@ -77,9 +77,9 @@ int ASN1_sign(i2d_of_void *i2d, X509_ALGOR *algor1, X509_ALGOR *algor2,
         goto err;
     }
     inll = (size_t)inl;
-    buf_in = OPENSSL_malloc(inll);
+    buf_in = (unsigned char *)OPENSSL_malloc(inll);
     outll = outl = EVP_PKEY_size(pkey);
-    buf_out = OPENSSL_malloc(outll);
+    buf_out = (unsigned char *)OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
         ASN1err(ASN1_F_ASN1_SIGN, ERR_R_MALLOC_FAILURE);
@@ -195,7 +195,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         if (algor1 != NULL) {
             const unsigned char *pp = aid;
 
-            if (d2i_X509_ALGOR(&algor1, &pp, aid_len) == NULL) {
+            if (d2i_X509_ALGOR(&algor1, &pp, (int)aid_len) == NULL) {
                 ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -204,7 +204,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         if (algor2 != NULL) {
             const unsigned char *pp = aid;
 
-            if (d2i_X509_ALGOR(&algor2, &pp, aid_len) == NULL) {
+            if (d2i_X509_ALGOR(&algor2, &pp, (int)aid_len) == NULL) {
                 ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
@@ -273,7 +273,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         goto err;
     }
     outl = outll;
-    buf_out = OPENSSL_malloc(outll);
+    buf_out = (unsigned char *)OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
         ASN1err(ASN1_F_ASN1_ITEM_SIGN_CTX, ERR_R_MALLOC_FAILURE);
@@ -288,7 +288,7 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
     OPENSSL_free(signature->data);
     signature->data = buf_out;
     buf_out = NULL;
-    signature->length = outl;
+    signature->length = (int)outl;
     /*
      * In the interests of compatibility, I'll make sure that the bit string
      * has a 'not-used bits' value of 0
@@ -298,5 +298,5 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
  err:
     OPENSSL_clear_free((char *)buf_in, inl);
     OPENSSL_clear_free((char *)buf_out, outll);
-    return outl;
+    return (int)outl;
 }

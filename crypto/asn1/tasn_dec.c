@@ -139,7 +139,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
 {
     const ASN1_TEMPLATE *tt, *errtt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux = (const ASN1_AUX *)it->funcs;
     ASN1_aux_cb *asn1_cb;
     const unsigned char *p = NULL, *q;
     unsigned char oclass;
@@ -212,7 +212,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
 
     case ASN1_ITYPE_EXTERN:
         /* Use new style d2i */
-        ef = it->funcs;
+        ef = (const ASN1_EXTERN_FUNCS *)it->funcs;
         return ef->asn1_ex_d2i(pval, in, len, it, tag, aclass, opt, ctx);
 
     case ASN1_ITYPE_CHOICE:
@@ -293,7 +293,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         } else if (ret == -1)
             return -1;
         if (aux && (aux->flags & ASN1_AFLG_BROKEN)) {
-            len = tmplen - (p - *in);
+            len = (long)(tmplen - (p - *in));
             seq_nolen = 1;
         }
         /* If indefinite we don't do a length check */
@@ -342,7 +342,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                     ASN1err(ASN1_F_ASN1_ITEM_EMBED_D2I, ASN1_R_UNEXPECTED_EOC);
                     goto err;
                 }
-                len -= p - q;
+                len -= (long)(p - q);
                 seq_eoc = 0;
                 q = p;
                 break;
@@ -374,7 +374,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
                 continue;
             }
             /* Update length */
-            len -= p - q;
+            len -= (long)(p - q);
         }
 
         /* Check for EOC if expecting one */
@@ -409,7 +409,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             }
         }
         /* Save encoding */
-        if (!asn1_enc_save(pval, *in, p - *in, it))
+        if (!asn1_enc_save(pval, *in, (int)(p - *in), it))
             goto auxerr;
         if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
             goto auxerr;
@@ -479,7 +479,7 @@ static int asn1_template_ex_d2i(ASN1_VALUE **val,
             return 0;
         }
         /* We read the field in OK so update length */
-        len -= p - q;
+        len -= (long)(p - q);
         if (exp_eoc) {
             /* If NDEF we must have an EOC here */
             if (!asn1_check_eoc(&p, len)) {
@@ -585,7 +585,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
                             ASN1_R_UNEXPECTED_EOC);
                     goto err;
                 }
-                len -= p - q;
+                len -= (long)(p - q);
                 sk_eoc = 0;
                 break;
             }
@@ -599,7 +599,7 @@ static int asn1_template_noexp_d2i(ASN1_VALUE **val,
                 ASN1_item_free(skfield, ASN1_ITEM_ptr(tt->item));
                 goto err;
             }
-            len -= p - q;
+            len -= (int)(p - q);
             if (!sk_ASN1_VALUE_push((STACK_OF(ASN1_VALUE) *)*val, skfield)) {
                 ASN1err(ASN1_F_ASN1_TEMPLATE_NOEXP_D2I, ERR_R_MALLOC_FAILURE);
                 ASN1_item_free(skfield, ASN1_ITEM_ptr(tt->item));
@@ -720,9 +720,9 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
         if (inf) {
             if (!asn1_find_end(&p, plen, inf))
                 goto err;
-            len = p - cont;
+            len = (long)(p - cont);
         } else {
-            len = p - cont + plen;
+            len = (long)(p - cont + plen);
             p += plen;
         }
     } else if (cst) {
@@ -744,7 +744,7 @@ static int asn1_d2i_ex_primitive(ASN1_VALUE **pval,
         if (!asn1_collect(&buf, &p, plen, inf, -1, V_ASN1_UNIVERSAL, 0)) {
             goto err;
         }
-        len = buf.length;
+        len = (long)buf.length;
         /* Append a final null to string */
         if (!BUF_MEM_grow_clean(&buf, len + 1)) {
             ASN1err(ASN1_F_ASN1_D2I_EX_PRIMITIVE, ERR_R_MALLOC_FAILURE);
@@ -782,7 +782,7 @@ static int asn1_ex_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     int ret = 0;
     const ASN1_PRIMITIVE_FUNCS *pf;
     ASN1_INTEGER **tint;
-    pf = it->funcs;
+    pf = (const ASN1_PRIMITIVE_FUNCS *)it->funcs;
 
     if (pf && pf->prim_c2i)
         return pf->prim_c2i(pval, cont, len, utype, free_cont, it);
@@ -957,7 +957,7 @@ static int asn1_find_end(const unsigned char **in, long len, char inf)
         } else {
             p += plen;
         }
-        len -= p - q;
+        len -= (long)(p - q);
     }
     if (expected_eoc) {
         ASN1err(ASN1_F_ASN1_FIND_END, ASN1_R_MISSING_EOC);
@@ -1030,7 +1030,7 @@ static int asn1_collect(BUF_MEM *buf, const unsigned char **in, long len,
                 return 0;
         } else if (plen && !collect_data(buf, &p, plen))
             return 0;
-        len -= p - q;
+        len -= (long)(p - q);
     }
     if (inf) {
         ASN1err(ASN1_F_ASN1_COLLECT, ASN1_R_MISSING_EOC);
@@ -1044,7 +1044,7 @@ static int collect_data(BUF_MEM *buf, const unsigned char **p, long plen)
 {
     int len;
     if (buf) {
-        len = buf->length;
+        len = (int)buf->length;
         if (!BUF_MEM_grow_clean(buf, len + plen)) {
             ASN1err(ASN1_F_COLLECT_DATA, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -1103,7 +1103,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
             ctx->plen = plen;
             ctx->pclass = pclass;
             ctx->ptag = ptag;
-            ctx->hdrlen = p - q;
+            ctx->hdrlen = (int)(p - q);
             ctx->valid = 1;
             /*
              * If definite length, and no error, length + header can't exceed
@@ -1141,7 +1141,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
     }
 
     if (i & 1)
-        plen = len - (p - q);
+        plen = (long)(len - (p - q));
 
     if (inf)
         *inf = i & 1;
@@ -1153,7 +1153,7 @@ static int asn1_check_tlen(long *olen, int *otag, unsigned char *oclass,
         *olen = plen;
 
     if (oclass)
-        *oclass = pclass;
+        *oclass = (unsigned char)pclass;
 
     if (otag)
         *otag = ptag;

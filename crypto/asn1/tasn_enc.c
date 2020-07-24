@@ -62,7 +62,7 @@ static int asn1_item_flags_i2d(const ASN1_VALUE *val, unsigned char **out,
         len = ASN1_item_ex_i2d(&val, NULL, it, -1, flags);
         if (len <= 0)
             return len;
-        if ((buf = OPENSSL_malloc(len)) == NULL) {
+        if ((buf = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
             ASN1err(ASN1_F_ASN1_ITEM_FLAGS_I2D, ERR_R_MALLOC_FAILURE);
             return -1;
         }
@@ -86,7 +86,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     const ASN1_TEMPLATE *tt = NULL;
     int i, seqcontlen, seqlen, ndef = 1;
     const ASN1_EXTERN_FUNCS *ef;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux = (const ASN1_AUX *)it->funcs;
     ASN1_aux_const_cb *asn1_cb = NULL;
 
     if ((it->itype != ASN1_ITYPE_PRIMITIVE) && *pval == NULL)
@@ -126,7 +126,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
 
     case ASN1_ITYPE_EXTERN:
         /* If new style i2d it does all the work */
-        ef = it->funcs;
+        ef = (const ASN1_EXTERN_FUNCS *)it->funcs;
         return ef->asn1_ex_i2d(pval, out, it, tag, aclass);
 
     case ASN1_ITYPE_NDEF_SEQUENCE:
@@ -359,7 +359,7 @@ typedef struct {
 
 static int der_cmp(const void *a, const void *b)
 {
-    const DER_ENC *d1 = a, *d2 = b;
+    const DER_ENC *d1 = (const DER_ENC *)a, *d2 = (const DER_ENC *)b;
     int cmplen, i;
     cmplen = (d1->length < d2->length) ? d1->length : d2->length;
     i = memcmp(d1->data, d2->data, cmplen);
@@ -384,11 +384,11 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
         if (sk_const_ASN1_VALUE_num(sk) < 2)
             do_sort = 0;
         else {
-            derlst = OPENSSL_malloc(sk_const_ASN1_VALUE_num(sk)
-                                    * sizeof(*derlst));
+            derlst = (DER_ENC *)OPENSSL_malloc(sk_const_ASN1_VALUE_num(sk)
+                                               * sizeof(*derlst));
             if (derlst == NULL)
                 return 0;
-            tmpdat = OPENSSL_malloc(skcontlen);
+            tmpdat = (unsigned char *)OPENSSL_malloc(skcontlen);
             if (tmpdat == NULL) {
                 OPENSSL_free(derlst);
                 return 0;
@@ -503,7 +503,7 @@ static int asn1_ex_i2c(const ASN1_VALUE **pval, unsigned char *cout, int *putype
     unsigned char c;
     int len;
     const ASN1_PRIMITIVE_FUNCS *pf;
-    pf = it->funcs;
+    pf = (const ASN1_PRIMITIVE_FUNCS *)it->funcs;
     if (pf && pf->prim_i2c)
         return pf->prim_i2c(pval, cout, putype, it);
 

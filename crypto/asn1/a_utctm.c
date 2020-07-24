@@ -36,7 +36,7 @@ int ASN1_UTCTIME_set_string(ASN1_UTCTIME *s, const char *str)
     ASN1_UTCTIME t;
 
     t.type = V_ASN1_UTCTIME;
-    t.length = strlen(str);
+    t.length = (int)strlen(str);
     t.data = (unsigned char *)str;
     t.flags = 0;
 

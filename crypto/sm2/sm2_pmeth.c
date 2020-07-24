@@ -38,7 +38,7 @@ static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
 {
     SM2_PKEY_CTX *smctx;
 
-    if ((smctx = OPENSSL_zalloc(sizeof(*smctx))) == NULL) {
+    if ((smctx = (SM2_PKEY_CTX *)OPENSSL_zalloc(sizeof(*smctx))) == NULL) {
         SM2err(SM2_F_PKEY_SM2_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -49,7 +49,7 @@ static int pkey_sm2_init(EVP_PKEY_CTX *ctx)
 
 static void pkey_sm2_cleanup(EVP_PKEY_CTX *ctx)
 {
-    SM2_PKEY_CTX *smctx = ctx->data;
+    SM2_PKEY_CTX *smctx = (SM2_PKEY_CTX *)ctx->data;
 
     if (smctx != NULL) {
         OPENSSL_free(smctx->id);
@@ -64,10 +64,10 @@ static int pkey_sm2_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 
     if (!pkey_sm2_init(dst))
         return 0;
-    sctx = src->data;
-    dctx = dst->data;
+    sctx = (SM2_PKEY_CTX *)src->data;
+    dctx = (SM2_PKEY_CTX *)dst->data;
     if (sctx->id != NULL) {
-        dctx->id = OPENSSL_malloc(sctx->id_len);
+        dctx->id = (uint8_t *)OPENSSL_malloc(sctx->id_len);
         if (dctx->id == NULL) {
             SM2err(SM2_F_PKEY_SM2_COPY, ERR_R_MALLOC_FAILURE);
             pkey_sm2_cleanup(dst);
@@ -104,7 +104,7 @@ static int pkey_sm2_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
         return 0;
     }
 
-    ret = sm2_sign(tbs, tbslen, sig, &sltmp, ec);
+    ret = sm2_sign(tbs, (int)tbslen, sig, &sltmp, ec);
 
     if (ret <= 0)
         return ret;
@@ -118,7 +118,7 @@ static int pkey_sm2_verify(EVP_PKEY_CTX *ctx,
 {
     EC_KEY *ec = ctx->pkey->pkey.ec;
 
-    return sm2_verify(tbs, tbslen, sig, siglen, ec);
+    return sm2_verify(tbs, (int)tbslen, sig, (int)siglen, ec);
 }
 
 static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,
@@ -127,7 +127,7 @@ static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,
 {
     int ret;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    SM2_PKEY_CTX *dctx = ctx->data;
+    SM2_PKEY_CTX *dctx = (SM2_PKEY_CTX *)ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
     OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
     EVP_MD *fetched_md = NULL;
@@ -153,7 +153,7 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
 {
     int ret;
     EC_KEY *ec = ctx->pkey->pkey.ec;
-    SM2_PKEY_CTX *dctx = ctx->data;
+    SM2_PKEY_CTX *dctx = (SM2_PKEY_CTX *)ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
     OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
     EVP_MD *fetched_md = NULL;
@@ -175,7 +175,7 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
 
 static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    SM2_PKEY_CTX *smctx = ctx->data;
+    SM2_PKEY_CTX *smctx = (SM2_PKEY_CTX *)ctx->data;
     uint8_t *tmp_id;
 
     switch (type) {
@@ -194,7 +194,7 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_MD:
-        smctx->md = p2;
+        smctx->md = (const EVP_MD *)p2;
         return 1;
 
     case EVP_PKEY_CTRL_GET_MD:
@@ -203,7 +203,7 @@ static int pkey_sm2_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_SET1_ID:
         if (p1 > 0) {
-            tmp_id = OPENSSL_malloc(p1);
+            tmp_id = (uint8_t *)OPENSSL_malloc(p1);
             if (tmp_id == NULL) {
                 SM2err(SM2_F_PKEY_SM2_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
@@ -285,7 +285,7 @@ static int pkey_sm2_ctrl_str(EVP_PKEY_CTX *ctx,
 static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 {
     uint8_t z[EVP_MAX_MD_SIZE];
-    SM2_PKEY_CTX *smctx = ctx->data;
+    SM2_PKEY_CTX *smctx = (SM2_PKEY_CTX *)ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
     const EVP_MD *md = EVP_MD_CTX_md(mctx);
     int mdlen = EVP_MD_size(md);

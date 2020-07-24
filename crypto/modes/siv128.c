@@ -147,7 +147,7 @@ SIV128_CONTEXT *CRYPTO_siv128_new(const unsigned char *key, int klen,
     SIV128_CONTEXT *ctx;
     int ret;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) != NULL) {
+    if ((ctx = (SIV128_CONTEXT *)OPENSSL_malloc(sizeof(*ctx))) != NULL) {
         ret = CRYPTO_siv128_init(ctx, key, klen, cbc, ctr, libctx, propq);
         if (ret)
             return ctx;
@@ -291,7 +291,7 @@ int CRYPTO_siv128_encrypt(SIV128_CONTEXT *ctx,
     if (!siv128_do_encrypt(ctx->cipher_ctx, out, in, len, &q))
         return 0;
     ctx->final_ret = 0;
-    return len;
+    return (int)len;
 }
 
 /*
@@ -327,7 +327,7 @@ int CRYPTO_siv128_decrypt(SIV128_CONTEXT *ctx,
         return 0;
     }
     ctx->final_ret = 0;
-    return len;
+    return (int)len;
 }
 
 /*

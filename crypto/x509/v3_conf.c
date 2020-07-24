@@ -130,7 +130,7 @@ static X509_EXTENSION *do_ext_nconf(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 
     ext = do_ext_i2d(method, ext_nid, crit, ext_struc);
     if (method->it)
-        ASN1_item_free(ext_struc, ASN1_ITEM_ptr(method->it));
+        ASN1_item_free((ASN1_VALUE *)ext_struc, ASN1_ITEM_ptr(method->it));
     else
         method->ext_free(ext_struc);
     return ext;
@@ -149,14 +149,14 @@ static X509_EXTENSION *do_ext_i2d(const X509V3_EXT_METHOD *method,
     if (method->it) {
         ext_der = NULL;
         ext_len =
-            ASN1_item_i2d(ext_struc, &ext_der, ASN1_ITEM_ptr(method->it));
+            ASN1_item_i2d((const ASN1_VALUE *)ext_struc, &ext_der, ASN1_ITEM_ptr(method->it));
         if (ext_len < 0)
             goto merr;
     } else {
         unsigned char *p;
 
         ext_len = method->i2d(ext_struc, NULL);
-        if ((ext_der = OPENSSL_malloc(ext_len)) == NULL)
+        if ((ext_der = (unsigned char *)OPENSSL_malloc(ext_len)) == NULL)
             goto merr;
         p = ext_der;
         method->i2d(ext_struc, &p);
@@ -425,12 +425,12 @@ void X509V3_section_free(X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *section)
 
 static char *nconf_get_string(void *db, const char *section, const char *value)
 {
-    return NCONF_get_string(db, section, value);
+    return NCONF_get_string((const CONF *)db, section, value);
 }
 
 static STACK_OF(CONF_VALUE) *nconf_get_section(void *db, const char *section)
 {
-    return NCONF_get_section(db, section);
+    return NCONF_get_section((const CONF *)db, section);
 }
 
 static X509V3_CONF_METHOD nconf_method = {
@@ -477,12 +477,12 @@ X509_EXTENSION *X509V3_EXT_conf_nid(LHASH_OF(CONF_VALUE) *conf,
 
 static char *conf_lhash_get_string(void *db, const char *section, const char *value)
 {
-    return CONF_get_string(db, section, value);
+    return CONF_get_string((LHASH_OF(CONF_VALUE) *)db, section, value);
 }
 
 static STACK_OF(CONF_VALUE) *conf_lhash_get_section(void *db, const char *section)
 {
-    return CONF_get_section(db, section);
+    return CONF_get_section((LHASH_OF(CONF_VALUE) *)db, section);
 }
 
 static X509V3_CONF_METHOD conf_lhash_method = {

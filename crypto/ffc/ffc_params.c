@@ -86,7 +86,7 @@ int ffc_params_set_seed(FFC_PARAMS *params,
     }
 
     if (seed != NULL && seedlen > 0) {
-        params->seed = OPENSSL_memdup(seed, seedlen);
+        params->seed = (unsigned char *)OPENSSL_memdup(seed, seedlen);
         if (params->seed == NULL)
             return 0;
         params->seedlen = seedlen;
@@ -185,7 +185,7 @@ int ffc_params_copy(FFC_PARAMS *dst, const FFC_PARAMS *src)
     OPENSSL_free(dst->seed);
     dst->seedlen = src->seedlen;
     if (src->seed != NULL) {
-        dst->seed = OPENSSL_memdup(src->seed, src->seedlen);
+        dst->seed = (unsigned char *)OPENSSL_memdup(src->seed, src->seedlen);
         if  (dst->seed == NULL)
             return 0;
     } else {

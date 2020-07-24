@@ -116,7 +116,7 @@ int EVP_PKEY_keygen_init(EVP_PKEY_CTX *ctx)
 
 static int ossl_callback_to_pkey_gencb(const OSSL_PARAM params[], void *arg)
 {
-    EVP_PKEY_CTX *ctx = arg;
+    EVP_PKEY_CTX *ctx = (EVP_PKEY_CTX *)arg;
     const OSSL_PARAM *param = NULL;
     int p = -1, n = -1;
 
@@ -323,7 +323,7 @@ EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx)
 
 static int trans_cb(int a, int b, BN_GENCB *gcb)
 {
-    EVP_PKEY_CTX *ctx = BN_GENCB_get_arg(gcb);
+    EVP_PKEY_CTX *ctx = (EVP_PKEY_CTX *)BN_GENCB_get_arg(gcb);
     ctx->keygen_info[0] = a;
     ctx->keygen_info[1] = b;
     return ctx->pkey_gencb(ctx);

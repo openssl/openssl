@@ -106,7 +106,7 @@ int a2i_ASN1_INTEGER(BIO *bp, ASN1_INTEGER *bs, char *buf, int size)
         }
         i /= 2;
         if (num + i > slen) {
-            sp = OPENSSL_clear_realloc(s, slen, num + i * 2);
+            sp = (unsigned char *)OPENSSL_clear_realloc(s, slen, num + i * 2);
             if (sp == NULL) {
                 ASN1err(ASN1_F_A2I_ASN1_INTEGER, ERR_R_MALLOC_FAILURE);
                 OPENSSL_free(s);

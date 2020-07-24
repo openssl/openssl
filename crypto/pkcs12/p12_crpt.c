@@ -38,7 +38,7 @@ int PKCS12_PBE_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 
     /* Extract useful info from parameter */
 
-    pbe = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), param);
+    pbe = (PBEPARAM *)ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(PBEPARAM), param);
     if (pbe == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PBE_KEYIVGEN, PKCS12_R_DECODE_ERROR);
         return 0;

@@ -52,7 +52,7 @@ int ASN1_verify(i2d_of_void *i2d, X509_ALGOR *a, ASN1_BIT_STRING *signature,
         ASN1err(ASN1_F_ASN1_VERIFY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    buf_in = OPENSSL_malloc((unsigned int)inl);
+    buf_in = (unsigned char *)OPENSSL_malloc((unsigned int)inl);
     if (buf_in == NULL) {
         ASN1err(ASN1_F_ASN1_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;

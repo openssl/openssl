@@ -337,7 +337,7 @@ static int asn1_output_data(BIO *out, BIO *data, ASN1_VALUE *val, int flags,
                             const ASN1_ITEM *it)
 {
     BIO *tmpbio;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux = (const ASN1_AUX *)it->funcs;
     ASN1_STREAM_ARG sarg;
     int rv = 1;
 
@@ -524,7 +524,7 @@ int SMIME_crlf_copy(BIO *in, BIO *out, int flags)
         if (flags & SMIME_TEXT)
             BIO_printf(out, "Content-Type: text/plain\r\n\r\n");
         while ((len = BIO_gets(in, linebuf, MAX_SMLEN)) > 0) {
-            eol = strip_eol(linebuf, &len, flags);
+            eol = (char)strip_eol(linebuf, &len, flags);
             if (len) {
                 /* Not EOF: write out all CRLF */
                 if (flags & SMIME_ASCIICRLF) {
@@ -594,7 +594,7 @@ static int multi_split(BIO *bio, const char *bound, STACK_OF(BIO) **ret)
     STACK_OF(BIO) *parts;
     char state, part, first;
 
-    blen = strlen(bound);
+    blen = (int)strlen(bound);
     part = 0;
     state = 0;
     first = 1;
@@ -603,7 +603,7 @@ static int multi_split(BIO *bio, const char *bound, STACK_OF(BIO) **ret)
     if (*ret == NULL)
         return 0;
     while ((len = BIO_gets(bio, linebuf, MAX_SMLEN)) > 0) {
-        state = mime_bound_check(linebuf, len, bound, blen);
+        state = (char)mime_bound_check(linebuf, len, bound, blen);
         if (state == 1) {
             first = 1;
             part++;
@@ -824,15 +824,15 @@ static MIME_HEADER *mime_hdr_new(const char *name, const char *value)
         if ((tmpname = OPENSSL_strdup(name)) == NULL)
             return NULL;
         for (p = tmpname; *p; p++)
-            *p = ossl_tolower(*p);
+            *p = (char)ossl_tolower(*p);
     }
     if (value) {
         if ((tmpval = OPENSSL_strdup(value)) == NULL)
             goto err;
         for (p = tmpval; *p; p++)
-            *p = ossl_tolower(*p);
+            *p = (char)ossl_tolower(*p);
     }
-    mhdr = OPENSSL_malloc(sizeof(*mhdr));
+    mhdr = (MIME_HEADER *)OPENSSL_malloc(sizeof(*mhdr));
     if (mhdr == NULL)
         goto err;
     mhdr->name = tmpname;
@@ -858,7 +858,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, const char *name, const char *va
         if (!tmpname)
             goto err;
         for (p = tmpname; *p; p++)
-            *p = ossl_tolower(*p);
+            *p = (char)ossl_tolower(*p);
     }
     if (value) {
         tmpval = OPENSSL_strdup(value);
@@ -866,7 +866,7 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, const char *name, const char *va
             goto err;
     }
     /* Parameter values are case sensitive so leave as is */
-    mparam = OPENSSL_malloc(sizeof(*mparam));
+    mparam = (MIME_PARAM *)OPENSSL_malloc(sizeof(*mparam));
     if (mparam == NULL)
         goto err;
     mparam->param_name = tmpname;
@@ -951,9 +951,9 @@ static void mime_param_free(MIME_PARAM *param)
 static int mime_bound_check(char *line, int linelen, const char *bound, int blen)
 {
     if (linelen == -1)
-        linelen = strlen(line);
+        linelen = (int)strlen(line);
     if (blen == -1)
-        blen = strlen(bound);
+        blen = (int)strlen(bound);
     /* Quickly eliminate if line length too short */
     if (blen + 2 > linelen)
         return 0;

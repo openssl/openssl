@@ -48,7 +48,7 @@ static int pkey_ec_init(EVP_PKEY_CTX *ctx)
 {
     EC_PKEY_CTX *dctx;
 
-    if ((dctx = OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
+    if ((dctx = (EC_PKEY_CTX *)OPENSSL_zalloc(sizeof(*dctx))) == NULL) {
         ECerr(EC_F_PKEY_EC_INIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -64,8 +64,8 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     EC_PKEY_CTX *dctx, *sctx;
     if (!pkey_ec_init(dst))
         return 0;
-    sctx = src->data;
-    dctx = dst->data;
+    sctx = (EC_PKEY_CTX *)src->data;
+    dctx = (EC_PKEY_CTX *)dst->data;
     if (sctx->gen_group) {
         dctx->gen_group = EC_GROUP_dup(sctx->gen_group);
         if (!dctx->gen_group)
@@ -82,7 +82,7 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
     dctx->kdf_md = sctx->kdf_md;
     dctx->kdf_outlen = sctx->kdf_outlen;
     if (sctx->kdf_ukm) {
-        dctx->kdf_ukm = OPENSSL_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
+        dctx->kdf_ukm = (unsigned char *)OPENSSL_memdup(sctx->kdf_ukm, sctx->kdf_ukmlen);
         if (!dctx->kdf_ukm)
             return 0;
     } else
@@ -93,7 +93,7 @@ static int pkey_ec_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 
 static void pkey_ec_cleanup(EVP_PKEY_CTX *ctx)
 {
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     if (dctx != NULL) {
         EC_GROUP_free(dctx->gen_group);
         EC_KEY_free(dctx->co_key);
@@ -108,7 +108,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 {
     int ret, type;
     unsigned int sltmp;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
     const int sig_sz = ECDSA_size(ec);
 
@@ -128,7 +128,7 @@ static int pkey_ec_sign(EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
 
     type = (dctx->md != NULL) ? EVP_MD_type(dctx->md) : NID_sha1;
 
-    ret = ECDSA_sign(type, tbs, tbslen, sig, &sltmp, ec);
+    ret = ECDSA_sign(type, tbs, (int)tbslen, sig, &sltmp, ec);
 
     if (ret <= 0)
         return ret;
@@ -141,7 +141,7 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
                           const unsigned char *tbs, size_t tbslen)
 {
     int ret, type;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     EC_KEY *ec = ctx->pkey->pkey.ec;
 
     if (dctx->md)
@@ -149,7 +149,7 @@ static int pkey_ec_verify(EVP_PKEY_CTX *ctx,
     else
         type = NID_sha1;
 
-    ret = ECDSA_verify(type, tbs, tbslen, sig, siglen, ec);
+    ret = ECDSA_verify(type, tbs, (int)tbslen, sig, (int)siglen, ec);
 
     return ret;
 }
@@ -161,7 +161,7 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
     size_t outlen;
     const EC_POINT *pubkey = NULL;
     EC_KEY *eckey;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     if (!ctx->pkey || !ctx->peerkey) {
         ECerr(EC_F_PKEY_EC_DERIVE, EC_R_KEYS_NOT_SET);
         return 0;
@@ -194,7 +194,7 @@ static int pkey_ec_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)
 static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
                               unsigned char *key, size_t *keylen)
 {
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     unsigned char *ktmp = NULL;
     size_t ktmplen;
     int rv = 0;
@@ -208,7 +208,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
         return 0;
     if (!pkey_ec_derive(ctx, NULL, &ktmplen))
         return 0;
-    if ((ktmp = OPENSSL_malloc(ktmplen)) == NULL) {
+    if ((ktmp = (unsigned char *)OPENSSL_malloc(ktmplen)) == NULL) {
         ECerr(EC_F_PKEY_EC_KDF_DERIVE, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -229,7 +229,7 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
 
 static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     EC_GROUP *group;
     switch (type) {
     case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
@@ -261,7 +261,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             }
         } else if (p1 < -1 || p1 > 1)
             return -2;
-        dctx->cofactor_mode = p1;
+        dctx->cofactor_mode = (signed char)p1;
         if (p1 != -1) {
             EC_KEY *ec_key = ctx->pkey->pkey.ec;
             if (!ec_key->group)
@@ -290,11 +290,11 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             return dctx->kdf_type;
         if (p1 != EVP_PKEY_ECDH_KDF_NONE && p1 != EVP_PKEY_ECDH_KDF_X9_63)
             return -2;
-        dctx->kdf_type = p1;
+        dctx->kdf_type = (char)p1;
         return 1;
 
     case EVP_PKEY_CTRL_EC_KDF_MD:
-        dctx->kdf_md = p2;
+        dctx->kdf_md = (const EVP_MD *)p2;
         return 1;
 
     case EVP_PKEY_CTRL_GET_EC_KDF_MD:
@@ -308,12 +308,12 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
         return 1;
 
     case EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN:
-        *(int *)p2 = dctx->kdf_outlen;
+        *(int *)p2 = (int)dctx->kdf_outlen;
         return 1;
 
     case EVP_PKEY_CTRL_EC_KDF_UKM:
         OPENSSL_free(dctx->kdf_ukm);
-        dctx->kdf_ukm = p2;
+        dctx->kdf_ukm = (unsigned char *)p2;
         if (p2)
             dctx->kdf_ukmlen = p1;
         else
@@ -322,7 +322,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 
     case EVP_PKEY_CTRL_GET_EC_KDF_UKM:
         *(unsigned char **)p2 = dctx->kdf_ukm;
-        return dctx->kdf_ukmlen;
+        return (int)dctx->kdf_ukmlen;
 
     case EVP_PKEY_CTRL_MD:
         if (EVP_MD_type((const EVP_MD *)p2) != NID_sha1 &&
@@ -339,7 +339,7 @@ static int pkey_ec_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             ECerr(EC_F_PKEY_EC_CTRL, EC_R_INVALID_DIGEST_TYPE);
             return 0;
         }
-        dctx->md = p2;
+        dctx->md = (const EVP_MD *)p2;
         return 1;
 
     case EVP_PKEY_CTRL_GET_MD:
@@ -402,7 +402,7 @@ static int pkey_ec_ctrl_str(EVP_PKEY_CTX *ctx,
 static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     EC_KEY *ec = NULL;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     int ret;
 
     if (dctx->gen_group == NULL) {
@@ -421,7 +421,7 @@ static int pkey_ec_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 static int pkey_ec_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     EC_KEY *ec = NULL;
-    EC_PKEY_CTX *dctx = ctx->data;
+    EC_PKEY_CTX *dctx = (EC_PKEY_CTX *)ctx->data;
     int ret;
 
     if (ctx->pkey == NULL && dctx->gen_group == NULL) {

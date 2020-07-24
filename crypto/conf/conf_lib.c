@@ -360,7 +360,7 @@ int NCONF_dump_bio(const CONF *conf, BIO *out)
  */
 OPENSSL_INIT_SETTINGS *OPENSSL_INIT_new(void)
 {
-    OPENSSL_INIT_SETTINGS *ret = malloc(sizeof(*ret));
+    OPENSSL_INIT_SETTINGS *ret = (OPENSSL_INIT_SETTINGS *)malloc(sizeof(*ret));
 
     if (ret == NULL)
         return NULL;

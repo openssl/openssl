@@ -485,7 +485,7 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
-    ek = OPENSSL_malloc(eklen);
+    ek = (unsigned char *)OPENSSL_malloc(eklen);
 
     if (ek == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
@@ -495,7 +495,7 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encrypt(pctx, ek, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
-    ASN1_STRING_set0(ktri->encryptedKey, ek, eklen);
+    ASN1_STRING_set0(ktri->encryptedKey, ek, (int)eklen);
     ek = NULL;
 
     ret = 1;
@@ -720,7 +720,7 @@ CMS_RecipientInfo *CMS_add0_recipient_key(CMS_ContentInfo *cms, int nid,
     kekri->key = key;
     kekri->keylen = keylen;
 
-    ASN1_STRING_set0(kekri->kekid->keyIdentifier, id, idlen);
+    ASN1_STRING_set0(kekri->kekid->keyIdentifier, id, (int)idlen);
 
     kekri->kekid->date = date;
 
@@ -844,7 +844,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
     }
 
     /* 8 byte prefix for AES wrap ciphers */
-    wkey = OPENSSL_malloc(ec->keylen + 8);
+    wkey = (unsigned char *)OPENSSL_malloc(ec->keylen + 8);
     if (wkey == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -858,7 +858,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
 
     EVP_CIPHER_CTX_set_flags(ctx, EVP_CIPHER_CTX_FLAG_WRAP_ALLOW);
     if (!EVP_EncryptInit_ex(ctx, cipher, NULL, kekri->key, NULL)
-            || !EVP_EncryptUpdate(ctx, wkey, &wkeylen, ec->key, ec->keylen)
+            || !EVP_EncryptUpdate(ctx, wkey, &wkeylen, ec->key, (int)ec->keylen)
             || !EVP_EncryptFinal_ex(ctx, wkey + wkeylen, &outlen)) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_ENCRYPT, CMS_R_WRAP_ERROR);
         goto err;
@@ -929,7 +929,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
         goto err;
     }
 
-    ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
+    ukey = (unsigned char *)OPENSSL_malloc(kekri->encryptedKey->length - 8);
     if (ukey == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KEKRI_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;

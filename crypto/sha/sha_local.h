@@ -136,7 +136,7 @@ int HASH_INIT(SHA_CTX *c)
 # if !defined(SHA1_ASM)
 static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
 {
-    const unsigned char *data = p;
+    const unsigned char *data = (const unsigned char *)p;
     register unsigned MD32_REG_T A, B, C, D, E, T, l;
 #  ifndef MD32_XARRAY
     unsigned MD32_REG_T XX0, XX1, XX2, XX3, XX4, XX5, XX6, XX7,

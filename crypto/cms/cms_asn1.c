@@ -293,7 +293,7 @@ ASN1_ADB(CMS_ContentInfo) = {
 static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
-    ASN1_STREAM_ARG *sarg = exarg;
+    ASN1_STREAM_ARG *sarg = (ASN1_STREAM_ARG *)exarg;
     CMS_ContentInfo *cms = NULL;
     if (pval)
         cms = (CMS_ContentInfo *)*pval;

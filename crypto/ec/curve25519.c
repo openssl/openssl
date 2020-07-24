@@ -2069,7 +2069,7 @@ static uint8_t equal(signed char b, signed char c)
     uint32_t y = x;      /* 0: yes; 1..255: no */
     y -= 1;              /* 4294967295: yes; 0..254: no */
     y >>= 31;            /* 1: yes; 0: no */
-    return y;
+    return (uint8_t)y;
 }
 
 static void cmov(ge_precomp *t, const ge_precomp *u, uint8_t b)
@@ -4200,7 +4200,7 @@ static uint8_t negative(signed char b)
     uint32_t x = b;
 
     x >>= 31; /* 1: yes; 0: no */
-    return x;
+    return (uint8_t)x;
 }
 
 static void table_select(ge_precomp *t, int pos, signed char b)

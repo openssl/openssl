@@ -62,7 +62,7 @@ struct sparse_array_st {
 
 OPENSSL_SA *OPENSSL_SA_new(void)
 {
-    OPENSSL_SA *res = OPENSSL_zalloc(sizeof(*res));
+    OPENSSL_SA *res = (OPENSSL_SA *)OPENSSL_zalloc(sizeof(*res));
 
     return res;
 }
@@ -79,7 +79,7 @@ static void sa_doall(const OPENSSL_SA *sa, void (*node)(void **),
     nodes[0] = sa->nodes;
     while (l >= 0) {
         const int n = i[l];
-        void ** const p = nodes[l];
+        void ** const p = (void ** const)nodes[l];
 
         if (n >= SA_BLOCK_MAX) {
             if (p != NULL && node != NULL)
@@ -177,7 +177,7 @@ void *OPENSSL_SA_get(const OPENSSL_SA *sa, ossl_uintmax_t n)
 
 static ossl_inline void **alloc_node(void)
 {
-    return OPENSSL_zalloc(SA_BLOCK_MAX * sizeof(void *));
+    return (void **)OPENSSL_zalloc(SA_BLOCK_MAX * sizeof(void *));
 }
 
 int OPENSSL_SA_set(OPENSSL_SA *sa, ossl_uintmax_t posn, void *val)
@@ -208,7 +208,7 @@ int OPENSSL_SA_set(OPENSSL_SA *sa, ossl_uintmax_t posn, void *val)
         i = (posn >> (OPENSSL_SA_BLOCK_BITS * level)) & SA_BLOCK_MASK;
         if (p[i] == NULL && (p[i] = alloc_node()) == NULL)
             return 0;
-        p = p[i];
+        p = (void **)p[i];
     }
     p += posn & SA_BLOCK_MASK;
     if (val == NULL && *p != NULL)

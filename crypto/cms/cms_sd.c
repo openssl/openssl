@@ -155,10 +155,10 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
         if (OBJ_cmp(si->digestAlgorithm->algorithm,
                     sitmp->digestAlgorithm->algorithm))
             continue;
-        messageDigest = CMS_signed_get0_data_by_OBJ(sitmp,
-                                                    OBJ_nid2obj
-                                                    (NID_pkcs9_messageDigest),
-                                                    -3, V_ASN1_OCTET_STRING);
+        messageDigest = (ASN1_OCTET_STRING *)CMS_signed_get0_data_by_OBJ(sitmp,
+                                                                         OBJ_nid2obj
+                                                                         (NID_pkcs9_messageDigest),
+                                                                         -3, V_ASN1_OCTET_STRING);
         if (!messageDigest) {
             CMSerr(CMS_F_CMS_COPY_MESSAGEDIGEST,
                    CMS_R_ERROR_READING_MESSAGEDIGEST_ATTRIBUTE);
@@ -657,7 +657,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
         if (!EVP_DigestFinal_ex(mctx, md, &mdlen))
             goto err;
         siglen = EVP_PKEY_size(si->pkey);
-        sig = OPENSSL_malloc(siglen);
+        sig = (unsigned char *)OPENSSL_malloc(siglen);
         if (sig == NULL) {
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -666,7 +666,7 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
             OPENSSL_free(sig);
             goto err;
         }
-        ASN1_STRING_set0(si->signature, sig, siglen);
+        ASN1_STRING_set0(si->signature, sig, (int)siglen);
     } else {
         unsigned char *sig;
         unsigned int siglen;
@@ -769,7 +769,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     if (EVP_DigestSignFinal(mctx, NULL, &siglen) <= 0)
         goto err;
     OPENSSL_free(abuf);
-    abuf = OPENSSL_malloc(siglen);
+    abuf = (unsigned char *)OPENSSL_malloc(siglen);
     if (abuf == NULL)
         goto err;
     if (EVP_DigestSignFinal(mctx, abuf, &siglen) <= 0)
@@ -795,7 +795,7 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
     EVP_MD_CTX_reset(mctx);
 
-    ASN1_STRING_set0(si->signature, abuf, siglen);
+    ASN1_STRING_set0(si->signature, abuf, (int)siglen);
 
     return 1;
 

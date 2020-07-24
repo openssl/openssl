@@ -143,7 +143,7 @@ int i2d_X509_fp(FILE *fp, const X509 *x509)
 
 X509 *d2i_X509_bio(BIO *bp, X509 **x509)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509), bp, x509);
+    return (X509 *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509), bp, x509);
 }
 
 int i2d_X509_bio(BIO *bp, const X509 *x509)
@@ -165,7 +165,7 @@ int i2d_X509_CRL_fp(FILE *fp, const X509_CRL *crl)
 
 X509_CRL *d2i_X509_CRL_bio(BIO *bp, X509_CRL **crl)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_CRL), bp, crl);
+    return (X509_CRL *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_CRL), bp, crl);
 }
 
 int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl)
@@ -219,7 +219,7 @@ int i2d_X509_REQ_fp(FILE *fp, const X509_REQ *req)
 
 X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
+    return (X509_REQ *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_REQ), bp, req);
 }
 
 int i2d_X509_REQ_bio(BIO *bp, const X509_REQ *req)
@@ -265,7 +265,7 @@ int i2d_RSA_PUBKEY_fp(FILE *fp, const RSA *rsa)
 
 RSA *d2i_RSAPrivateKey_bio(BIO *bp, RSA **rsa)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(RSAPrivateKey), bp, rsa);
+    return (RSA *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(RSAPrivateKey), bp, rsa);
 }
 
 int i2d_RSAPrivateKey_bio(BIO *bp, const RSA *rsa)
@@ -275,7 +275,7 @@ int i2d_RSAPrivateKey_bio(BIO *bp, const RSA *rsa)
 
 RSA *d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(RSAPublicKey), bp, rsa);
+    return (RSA *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(RSAPublicKey), bp, rsa);
 }
 
 RSA *d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa)
@@ -414,7 +414,7 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
     unsigned char hash[EVP_MAX_MD_SIZE];
     int md_NID;
     const EVP_MD *md = NULL;
-    ASN1_OCTET_STRING *new = NULL;
+    ASN1_OCTET_STRING *ret = NULL;
 
     if (cert == NULL) {
         X509err(0, ERR_R_PASSED_NULL_PARAMETER);
@@ -427,13 +427,13 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert)
         return NULL;
     }
     if (!X509_digest(cert, md, hash, &len)
-            || (new = ASN1_OCTET_STRING_new()) == NULL)
+            || (ret = ASN1_OCTET_STRING_new()) == NULL)
         return NULL;
-    if (!(ASN1_OCTET_STRING_set(new, hash, len))) {
-        ASN1_OCTET_STRING_free(new);
+    if (!(ASN1_OCTET_STRING_set(ret, hash, len))) {
+        ASN1_OCTET_STRING_free(ret);
         return NULL;
     }
-    return new;
+    return ret;
 }
 
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,

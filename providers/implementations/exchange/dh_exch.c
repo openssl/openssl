@@ -83,7 +83,7 @@ static void *dh_newctx(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    pdhctx = OPENSSL_zalloc(sizeof(PROV_DH_CTX));
+    pdhctx = (PROV_DH_CTX *)OPENSSL_zalloc(sizeof(PROV_DH_CTX));
     if (pdhctx == NULL)
         return NULL;
     pdhctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
@@ -98,7 +98,7 @@ static int dh_init(void *vpdhctx, void *vdh)
     if (!ossl_prov_is_running()
             || pdhctx == NULL
             || vdh == NULL
-            || !DH_up_ref(vdh))
+            || !DH_up_ref((DH *)vdh))
         return 0;
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
@@ -113,10 +113,10 @@ static int dh_set_peer(void *vpdhctx, void *vdh)
     if (!ossl_prov_is_running()
             || pdhctx == NULL
             || vdh == NULL
-            || !DH_up_ref(vdh))
+            || !DH_up_ref((DH *)vdh))
         return 0;
     DH_free(pdhctx->dhpeer);
-    pdhctx->dhpeer = vdh;
+    pdhctx->dhpeer = (DH *)vdh;
     return 1;
 }
 
@@ -236,7 +236,7 @@ static void *dh_dupctx(void *vpdhctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
+    dstctx = (PROV_DH_CTX *)OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
         return NULL;
 

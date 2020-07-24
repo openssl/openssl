@@ -70,7 +70,7 @@ DH *dh_new_with_libctx(OPENSSL_CTX *libctx)
 
 static DH *dh_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 {
-    DH *ret = OPENSSL_zalloc(sizeof(*ret));
+    DH *ret = (DH *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         DHerr(0, ERR_R_MALLOC_FAILURE);

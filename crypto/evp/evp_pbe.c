@@ -106,7 +106,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
     if (pass == NULL)
         passlen = 0;
     else if (passlen == -1)
-        passlen = strlen(pass);
+        passlen = (int)strlen(pass);
 
     if (cipher_nid == -1)
         cipher = NULL;
@@ -170,7 +170,7 @@ int EVP_PBE_alg_add_type(int pbe_type, int pbe_nid, int cipher_nid,
             goto err;
     }
 
-    if ((pbe_tmp = OPENSSL_malloc(sizeof(*pbe_tmp))) == NULL)
+    if ((pbe_tmp = (EVP_PBE_CTL *)OPENSSL_malloc(sizeof(*pbe_tmp))) == NULL)
         goto err;
 
     pbe_tmp->pbe_type = pbe_type;

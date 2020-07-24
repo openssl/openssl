@@ -156,7 +156,7 @@ static void dynamic_data_ctx_free_func(void *parent, void *ptr,
  */
 static int dynamic_set_data_ctx(ENGINE *e, dynamic_data_ctx **ctx)
 {
-    dynamic_data_ctx *c = OPENSSL_zalloc(sizeof(*c));
+    dynamic_data_ctx *c = (dynamic_data_ctx *)OPENSSL_zalloc(sizeof(*c));
     int ret = 1;
 
     if (c == NULL) {
@@ -311,7 +311,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             p = NULL;
         OPENSSL_free(ctx->DYNAMIC_LIBNAME);
         if (p)
-            ctx->DYNAMIC_LIBNAME = OPENSSL_strdup(p);
+            ctx->DYNAMIC_LIBNAME = OPENSSL_strdup((const char *)p);
         else
             ctx->DYNAMIC_LIBNAME = NULL;
         return (ctx->DYNAMIC_LIBNAME ? 1 : 0);
@@ -324,7 +324,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             p = NULL;
         OPENSSL_free(ctx->engine_id);
         if (p)
-            ctx->engine_id = OPENSSL_strdup(p);
+            ctx->engine_id = OPENSSL_strdup((const char *)p);
         else
             ctx->engine_id = NULL;
         return (ctx->engine_id ? 1 : 0);
@@ -351,7 +351,7 @@ static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
             return 0;
         }
         {
-            char *tmp_str = OPENSSL_strdup(p);
+            char *tmp_str = OPENSSL_strdup((const char *)p);
             if (tmp_str == NULL) {
                 ENGINEerr(ENGINE_F_DYNAMIC_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;

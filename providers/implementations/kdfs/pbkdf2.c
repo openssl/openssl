@@ -70,7 +70,7 @@ static void *kdf_pbkdf2_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = (KDF_PBKDF2 *)OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -127,7 +127,7 @@ static int pbkdf2_set_membuf(unsigned char **buffer, size_t *buflen,
 {
     OPENSSL_clear_free(*buffer, *buflen);
     if (p->data_size == 0) {
-        if ((*buffer = OPENSSL_malloc(1)) == NULL) {
+        if ((*buffer = (unsigned char *)OPENSSL_malloc(1)) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -167,7 +167,7 @@ static int kdf_pbkdf2_derive(void *vctx, unsigned char *key,
 static int kdf_pbkdf2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
-    KDF_PBKDF2 *ctx = vctx;
+    KDF_PBKDF2 *ctx = (KDF_PBKDF2 *)vctx;
     OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     int pkcs5;
     uint64_t iter, min_iter;
@@ -308,7 +308,7 @@ static int pbkdf2_derive(const char *pass, size_t passlen,
     if (hctx_tpl == NULL)
         return 0;
     p = key;
-    tkeylen = keylen;
+    tkeylen = (int)keylen;
     if (!HMAC_Init_ex(hctx_tpl, pass, passlen, digest, NULL))
         goto err;
     hctx = HMAC_CTX_new();

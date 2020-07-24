@@ -49,7 +49,7 @@ static void *chacha20_newctx(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = (PROV_CHACHA20_CTX *)OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         chacha20_initctx(ctx);
     return ctx;

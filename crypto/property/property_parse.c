@@ -97,7 +97,7 @@ static int parse_name(OPENSSL_CTX *ctx, const char *t[], int create,
         }
         do {
             if (i < sizeof(name) - 1)
-                name[i++] = ossl_tolower(*s);
+                name[i++] = (char)ossl_tolower(*s);
             else
                 err = 1;
         } while (*++s == '_' || ossl_isalnum(*s));
@@ -230,7 +230,7 @@ static int parse_unquoted(OPENSSL_CTX *ctx, const char *t[],
         return 0;
     while (ossl_isprint(*s) && !ossl_isspace(*s) && *s != ',') {
         if (i < sizeof(v) - 1)
-            v[i++] = ossl_tolower(*s);
+            v[i++] = (char)ossl_tolower(*s);
         else
             err = 1;
         s++;
@@ -311,8 +311,8 @@ static OSSL_PROPERTY_LIST *stack_to_property_list(STACK_OF(PROPERTY_DEFINITION)
     OSSL_PROPERTY_LIST *r;
     int i;
 
-    r = OPENSSL_malloc(sizeof(*r)
-                       + (n <= 0 ? 0 : n - 1) * sizeof(r->properties[0]));
+    r = (OSSL_PROPERTY_LIST *)OPENSSL_malloc(sizeof(*r)
+                                             + (n <= 0 ? 0 : n - 1) * sizeof(r->properties[0]));
     if (r != NULL) {
         sk_PROPERTY_DEFINITION_sort(sk);
 
@@ -342,7 +342,7 @@ OSSL_PROPERTY_LIST *ossl_parse_property(OPENSSL_CTX *ctx, const char *defn)
     while (!done) {
         const char *start = s;
 
-        prop = OPENSSL_malloc(sizeof(*prop));
+        prop = (PROPERTY_DEFINITION *)OPENSSL_malloc(sizeof(*prop));
         if (prop == NULL)
             goto err;
         memset(&prop->v, 0, sizeof(prop->v));
@@ -398,7 +398,7 @@ OSSL_PROPERTY_LIST *ossl_parse_query(OPENSSL_CTX *ctx, const char *s)
     s = skip_space(s);
     done = *s == '\0';
     while (!done) {
-        prop = OPENSSL_malloc(sizeof(*prop));
+        prop = (PROPERTY_DEFINITION *)OPENSSL_malloc(sizeof(*prop));
         if (prop == NULL)
             goto err;
         memset(&prop->v, 0, sizeof(prop->v));
@@ -563,8 +563,8 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
     int i, j, n;
     const int t = a->n + b->n;
 
-    r = OPENSSL_malloc(sizeof(*r)
-                       + (t == 0 ? 0 : t - 1) * sizeof(r->properties[0]));
+    r = (OSSL_PROPERTY_LIST *)OPENSSL_malloc(sizeof(*r)
+                                             + (t == 0 ? 0 : t - 1) * sizeof(r->properties[0]));
     if (r == NULL)
         return NULL;
 
@@ -586,7 +586,7 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
     }
     r->n = n;
     if (n != t)
-        r = OPENSSL_realloc(r, sizeof(*r) + (n - 1) * sizeof(r->properties[0]));
+        r = (OSSL_PROPERTY_LIST *)OPENSSL_realloc(r, sizeof(*r) + (n - 1) * sizeof(r->properties[0]));
     return r;
 }
 

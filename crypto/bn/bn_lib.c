@@ -244,7 +244,7 @@ BIGNUM *BN_new(void)
 {
     BIGNUM *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = (BIGNUM *)OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -276,9 +276,9 @@ static BN_ULONG *bn_expand_internal(const BIGNUM *b, int words)
         return NULL;
     }
     if (BN_get_flags(b, BN_FLG_SECURE))
-        a = OPENSSL_secure_zalloc(words * sizeof(*a));
+        a = (BN_ULONG *)OPENSSL_secure_zalloc(words * sizeof(*a));
     else
-        a = OPENSSL_zalloc(words * sizeof(*a));
+        a = (BN_ULONG *)OPENSSL_zalloc(words * sizeof(*a));
     if (a == NULL) {
         BNerr(BN_F_BN_EXPAND_INTERNAL, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -410,7 +410,7 @@ void BN_clear(BIGNUM *a)
 BN_ULONG BN_get_word(const BIGNUM *a)
 {
     if (a->top > 1)
-        return BN_MASK2;
+        return (BN_ULONG)BN_MASK2;
     else if (a->top == 1)
         return a->d[0];
     /* a->top == 0 */
@@ -965,7 +965,7 @@ BN_GENCB *BN_GENCB_new(void)
 {
     BN_GENCB *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = (BN_GENCB *)OPENSSL_malloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_GENCB_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

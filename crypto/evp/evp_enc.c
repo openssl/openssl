@@ -62,7 +62,7 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *ctx)
 
 EVP_CIPHER_CTX *EVP_CIPHER_CTX_new(void)
 {
-    return OPENSSL_zalloc(sizeof(EVP_CIPHER_CTX));
+    return (EVP_CIPHER_CTX *)OPENSSL_zalloc(sizeof(EVP_CIPHER_CTX));
 }
 
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
@@ -564,7 +564,7 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
             EVPerr(EVP_F_EVP_ENCRYPTUPDATE, EVP_R_UPDATE_ERROR);
             return 0;
         }
-        *outl = soutl;
+        *outl = (int)soutl;
     }
 
     return ret;
@@ -617,7 +617,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
             EVPerr(EVP_F_EVP_ENCRYPTFINAL_EX, EVP_R_FINAL_ERROR);
             return 0;
         }
-        *outl = soutl;
+        *outl = (int)soutl;
     }
 
     return ret;
@@ -653,7 +653,7 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
 
     n = b - bl;
     for (i = bl; i < b; i++)
-        ctx->buf[i] = n;
+        ctx->buf[i] = (unsigned char)n;
     ret = ctx->cipher->do_cipher(ctx, out, ctx->buf, b);
 
     if (ret)
@@ -698,7 +698,7 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
             EVPerr(EVP_F_EVP_DECRYPTUPDATE, EVP_R_UPDATE_ERROR);
             return 0;
         }
-        *outl = soutl;
+        *outl = (int)soutl;
     }
 
     return ret;
@@ -813,7 +813,7 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
             EVPerr(EVP_F_EVP_DECRYPTFINAL_EX, EVP_R_FINAL_ERROR);
             return 0;
         }
-        *outl = soutl;
+        *outl = (int)soutl;
     }
 
     return ret;
@@ -1024,7 +1024,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
             goto end;
-        return sz;
+        return (int)sz;
 #ifndef OPENSSL_NO_RC2
     case EVP_CTRL_GET_RC2_KEY_BITS:
         set_params = 0; /* Fall thru */
@@ -1046,7 +1046,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
             return 0;
-        return sz;
+        return (int)sz;
     case EVP_CTRL_TLS1_1_MULTIBLOCK_AAD: {
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *p =
             (EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *)ptr;
@@ -1070,7 +1070,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
             return 0;
-        return sz;
+        return (int)sz;
     }
     case EVP_CTRL_TLS1_1_MULTIBLOCK_ENCRYPT: {
         EVP_CTRL_TLS1_1_MULTIBLOCK_PARAM *p =
@@ -1093,7 +1093,7 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ret = evp_do_ciph_ctx_getparams(ctx->cipher, ctx->provctx, params);
         if (ret <= 0)
             return 0;
-        return sz;
+        return (int)sz;
     }
 #endif /* OPENSSL_NO_MULTIBLOCK */
     case EVP_CTRL_AEAD_SET_MAC_KEY:
@@ -1275,7 +1275,7 @@ int EVP_CIPHER_CTX_copy(EVP_CIPHER_CTX *out, const EVP_CIPHER_CTX *in)
 
 EVP_CIPHER *evp_cipher_new(void)
 {
-    EVP_CIPHER *cipher = OPENSSL_zalloc(sizeof(EVP_CIPHER));
+    EVP_CIPHER *cipher = (EVP_CIPHER *)OPENSSL_zalloc(sizeof(EVP_CIPHER));
 
     if (cipher != NULL) {
         cipher->lock = CRYPTO_THREAD_lock_new();
@@ -1298,7 +1298,7 @@ EVP_CIPHER *evp_cipher_new(void)
 static void set_legacy_nid(const char *name, void *vlegacy_nid)
 {
     int nid;
-    int *legacy_nid = vlegacy_nid;
+    int *legacy_nid = (int *)vlegacy_nid;
     /*
      * We use lowest level function to get the associated method, because
      * higher level functions such as EVP_get_cipherbyname() have changed
@@ -1310,7 +1310,7 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
         return;
     if (legacy_method == NULL)
         return;
-    nid = EVP_CIPHER_nid(legacy_method);
+    nid = EVP_CIPHER_nid((const EVP_CIPHER *)legacy_method);
     if (*legacy_nid != NID_undef && *legacy_nid != nid) {
         *legacy_nid = -1;
         return;
@@ -1448,18 +1448,18 @@ static void *evp_cipher_from_dispatch(const int name_id,
 
 static int evp_cipher_up_ref(void *cipher)
 {
-    return EVP_CIPHER_up_ref(cipher);
+    return EVP_CIPHER_up_ref((EVP_CIPHER *)cipher);
 }
 
 static void evp_cipher_free(void *cipher)
 {
-    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_free((EVP_CIPHER *)cipher);
 }
 
 EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                              const char *properties)
 {
-    EVP_CIPHER *cipher =
+    EVP_CIPHER *cipher = (EVP_CIPHER *)
         evp_generic_fetch(ctx, OSSL_OP_CIPHER, algorithm, properties,
                           evp_cipher_from_dispatch, evp_cipher_up_ref,
                           evp_cipher_free);

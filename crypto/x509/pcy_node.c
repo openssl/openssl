@@ -63,7 +63,7 @@ X509_POLICY_NODE *level_add_node(X509_POLICY_LEVEL *level,
 {
     X509_POLICY_NODE *node;
 
-    node = OPENSSL_zalloc(sizeof(*node));
+    node = (X509_POLICY_NODE *)OPENSSL_zalloc(sizeof(*node));
     if (node == NULL) {
         X509V3err(X509V3_F_LEVEL_ADD_NODE, ERR_R_MALLOC_FAILURE);
         return NULL;

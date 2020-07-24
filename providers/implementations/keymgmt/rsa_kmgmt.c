@@ -105,12 +105,12 @@ static void *rsapss_newdata(void *provctx)
 
 static void rsa_freedata(void *keydata)
 {
-    RSA_free(keydata);
+    RSA_free((RSA *)keydata);
 }
 
 static int rsa_has(void *keydata, int selection)
 {
-    RSA *rsa = keydata;
+    RSA *rsa = (RSA *)keydata;
     int ok = 0;
 
     if (rsa != NULL && ossl_prov_is_running()) {
@@ -132,8 +132,8 @@ static int rsa_has(void *keydata, int selection)
 
 static int rsa_match(const void *keydata1, const void *keydata2, int selection)
 {
-    const RSA *rsa1 = keydata1;
-    const RSA *rsa2 = keydata2;
+    const RSA *rsa1 = (const RSA *)keydata1;
+    const RSA *rsa2 = (const RSA *)keydata2;
     int ok = 1;
 
     if (!ossl_prov_is_running())
@@ -150,7 +150,7 @@ static int rsa_match(const void *keydata1, const void *keydata2, int selection)
 
 static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    RSA *rsa = keydata;
+    RSA *rsa = (RSA *)keydata;
     int rsa_type;
     int ok = 1;
 
@@ -176,7 +176,7 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 static int rsa_export(void *keydata, int selection,
                       OSSL_CALLBACK *param_callback, void *cbarg)
 {
-    RSA *rsa = keydata;
+    RSA *rsa = (RSA *)keydata;
     const RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30(rsa);
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
@@ -296,7 +296,7 @@ static const OSSL_PARAM *rsa_export_types(int selection)
 
 static int rsa_get_params(void *key, OSSL_PARAM params[])
 {
-    RSA *rsa = key;
+    RSA *rsa = (RSA *)key;
     const RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30(rsa);
     int rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
     OSSL_PARAM *p;
@@ -359,7 +359,7 @@ static const OSSL_PARAM *rsa_gettable_params(void *provctx)
 
 static int rsa_validate(void *keydata, int selection)
 {
-    RSA *rsa = keydata;
+    RSA *rsa = (RSA *)keydata;
     int ok = 0;
 
     if (!ossl_prov_is_running())
@@ -405,7 +405,7 @@ struct rsa_gen_ctx {
 
 static int rsa_gencb(int p, int n, BN_GENCB *cb)
 {
-    struct rsa_gen_ctx *gctx = BN_GENCB_get_arg(cb);
+    struct rsa_gen_ctx *gctx = (struct rsa_gen_ctx *)BN_GENCB_get_arg(cb);
     OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END, OSSL_PARAM_END };
 
     params[0] = OSSL_PARAM_construct_int(OSSL_GEN_PARAM_POTENTIAL, &p);
@@ -424,7 +424,7 @@ static void *gen_init(void *provctx, int selection, int rsa_type)
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return NULL;
 
-    if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
+    if ((gctx = (struct rsa_gen_ctx *)OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
         gctx->libctx = libctx;
         if ((gctx->pub_exp = BN_new()) == NULL
             || !BN_set_word(gctx->pub_exp, RSA_F4)) {
@@ -457,7 +457,7 @@ static void *rsapss_gen_init(void *provctx, int selection)
  */
 static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
-    struct rsa_gen_ctx *gctx = genctx;
+    struct rsa_gen_ctx *gctx = (struct rsa_gen_ctx *)genctx;
     const OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_RSA_BITS)) != NULL
@@ -520,7 +520,7 @@ static const OSSL_PARAM *rsapss_gen_settable_params(void *provctx)
 
 static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    struct rsa_gen_ctx *gctx = genctx;
+    struct rsa_gen_ctx *gctx = (struct rsa_gen_ctx *)genctx;
     RSA *rsa = NULL, *rsa_tmp = NULL;
     BN_GENCB *gencb = NULL;
 
@@ -582,7 +582,7 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 static void rsa_gen_cleanup(void *genctx)
 {
-    struct rsa_gen_ctx *gctx = genctx;
+    struct rsa_gen_ctx *gctx = (struct rsa_gen_ctx *)genctx;
 
     if (gctx == NULL)
         return;

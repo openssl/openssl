@@ -63,7 +63,7 @@ static void *krb5kdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    if ((ctx = (KRB5KDF_CTX *)OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     ctx->provctx = provctx;
     return ctx;
@@ -131,7 +131,7 @@ static int krb5kdf_derive(void *vctx, unsigned char *key,
 static int krb5kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
-    KRB5KDF_CTX *ctx = vctx;
+    KRB5KDF_CTX *ctx = (KRB5KDF_CTX *)vctx;
     OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
     if (!ossl_prov_cipher_load_from_params(&ctx->cipher, params, provctx))
@@ -267,7 +267,7 @@ static void n_fold(unsigned char *block, unsigned int blocksize,
 
     /* Least Common Multiple of lengths: LCM(a,b)*/
     gcd = blocksize;
-    remainder = constant_len;
+    remainder = (unsigned int)constant_len;
     /* Calculate Great Common Divisor first GCD(a,b) */
     while (remainder != 0) {
         tmp = gcd % remainder;
@@ -275,7 +275,7 @@ static void n_fold(unsigned char *block, unsigned int blocksize,
         remainder = tmp;
     }
     /* resulting a is the GCD, LCM(a,b) = |a*b|/GCD(a,b) */
-    lcm = blocksize * constant_len / gcd;
+    lcm = (unsigned int)(blocksize * constant_len / gcd);
 
     /* now spread out the bits */
     memset(block, 0, blocksize);
@@ -289,7 +289,7 @@ static void n_fold(unsigned char *block, unsigned int blocksize,
         b = l % blocksize;
         /* Our virtual s buffer is R = L/K long (K = constant_len) */
         /* So we rotate backwards from R-1 to 0 (none) rotations */
-        rotbits = 13 * (l / constant_len);
+        rotbits = (unsigned int)(13 * (l / constant_len));
         /* find the byte on s where rotbits falls onto */
         rbyte = l - (rotbits / 8);
         /* calculate how much shift on that byte */

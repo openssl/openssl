@@ -76,7 +76,7 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7data(PKCS7 *p7)
                   PKCS12_R_CONTENT_TYPE_NOT_DATA);
         return NULL;
     }
-    return ASN1_item_unpack(p7->d.data, ASN1_ITEM_rptr(PKCS12_SAFEBAGS));
+    return (STACK_OF(PKCS12_SAFEBAG) *)ASN1_item_unpack(p7->d.data, ASN1_ITEM_rptr(PKCS12_SAFEBAGS));
 }
 
 /* Turn a stack of SAFEBAGS into a PKCS#7 encrypted data ContentInfo */
@@ -132,10 +132,10 @@ STACK_OF(PKCS12_SAFEBAG) *PKCS12_unpack_p7encdata(PKCS7 *p7, const char *pass,
 {
     if (!PKCS7_type_is_encrypted(p7))
         return NULL;
-    return PKCS12_item_decrypt_d2i(p7->d.encrypted->enc_data->algorithm,
-                                   ASN1_ITEM_rptr(PKCS12_SAFEBAGS),
-                                   pass, passlen,
-                                   p7->d.encrypted->enc_data->enc_data, 1);
+    return (STACK_OF(PKCS12_SAFEBAG) *)PKCS12_item_decrypt_d2i(p7->d.encrypted->enc_data->algorithm,
+                                                               ASN1_ITEM_rptr(PKCS12_SAFEBAGS),
+                                                               pass, passlen,
+                                                               p7->d.encrypted->enc_data->enc_data, 1);
 }
 
 PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey(const PKCS12_SAFEBAG *bag,
@@ -159,6 +159,6 @@ STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12)
                   PKCS12_R_CONTENT_TYPE_NOT_DATA);
         return NULL;
     }
-    return ASN1_item_unpack(p12->authsafes->d.data,
-                            ASN1_ITEM_rptr(PKCS12_AUTHSAFES));
+    return (STACK_OF(PKCS7) *)ASN1_item_unpack(p12->authsafes->d.data,
+                                               ASN1_ITEM_rptr(PKCS12_AUTHSAFES));
 }

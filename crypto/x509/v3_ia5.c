@@ -31,7 +31,7 @@ char *i2s_ASN1_IA5STRING(X509V3_EXT_METHOD *method, ASN1_IA5STRING *ia5)
 
     if (ia5 == NULL || ia5->length == 0)
         return NULL;
-    if ((tmp = OPENSSL_malloc(ia5->length + 1)) == NULL) {
+    if ((tmp = (char *)OPENSSL_malloc(ia5->length + 1)) == NULL) {
         X509V3err(X509V3_F_I2S_ASN1_IA5STRING, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -51,7 +51,7 @@ ASN1_IA5STRING *s2i_ASN1_IA5STRING(X509V3_EXT_METHOD *method,
     }
     if ((ia5 = ASN1_IA5STRING_new()) == NULL)
         goto err;
-    if (!ASN1_STRING_set((ASN1_STRING *)ia5, str, strlen(str))) {
+    if (!ASN1_STRING_set((ASN1_STRING *)ia5, str, (int)strlen(str))) {
         ASN1_IA5STRING_free(ia5);
         return NULL;
     }

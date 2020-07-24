@@ -77,7 +77,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
     }
     cnt = sk_CONF_VALUE_num(cmd_lists);
     ssl_module_free(md);
-    ssl_names = OPENSSL_zalloc(sizeof(*ssl_names) * cnt);
+    ssl_names = (struct ssl_conf_name_st *)OPENSSL_zalloc(sizeof(*ssl_names) * cnt);
     if (ssl_names == NULL)
         goto err;
     ssl_names_count = cnt;
@@ -100,7 +100,7 @@ static int ssl_module_init(CONF_IMODULE *md, const CONF *cnf)
         if (ssl_name->name == NULL)
             goto err;
         cnt = sk_CONF_VALUE_num(cmds);
-        ssl_name->cmds = OPENSSL_zalloc(cnt * sizeof(struct ssl_conf_cmd_st));
+        ssl_name->cmds = (SSL_CONF_CMD *)OPENSSL_zalloc(cnt * sizeof(struct ssl_conf_cmd_st));
         if (ssl_name->cmds == NULL)
             goto err;
         ssl_name->cmd_count = cnt;

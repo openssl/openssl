@@ -38,7 +38,7 @@ int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
 
     /* We assume that the user passes a default password as userdata */
     if (userdata) {
-        i = strlen(userdata);
+        i = (int)strlen((const char *)userdata);
         i = (i > num) ? num : i;
         memcpy(buf, userdata, i);
         return i;
@@ -63,7 +63,7 @@ int PEM_def_callback(char *buf, int num, int rwflag, void *userdata)
         memset(buf, 0, (unsigned int)num);
         return -1;
     }
-    return strlen(buf);
+    return (int)strlen(buf);
 }
 
 void PEM_proc_type(char *buf, int type)
@@ -87,7 +87,7 @@ void PEM_dek_info(char *buf, const char *type, int len, const char *str)
 {
     long i;
     char *p = buf + strlen(buf);
-    int j = PEM_BUFSIZE - (size_t)(p - buf), n;
+    int j = (int)(PEM_BUFSIZE - (size_t)(p - buf)), n;
 
     n = BIO_snprintf(p, j, "DEK-Info: %s,", type);
     if (n > 0) {
@@ -344,7 +344,7 @@ int PEM_ASN1_write_bio(i2d_of_void *i2d, const char *name, BIO *bp,
     }
     /* dsize + 8 bytes are needed */
     /* actually it needs the cipher block size extra... */
-    data = OPENSSL_malloc((unsigned int)dsize + 20);
+    data = (unsigned char *)OPENSSL_malloc((unsigned int)dsize + 20);
     if (data == NULL) {
         PEMerr(PEM_F_PEM_ASN1_WRITE_BIO, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -619,20 +619,20 @@ int PEM_write_bio(BIO *bp, const char *name, const char *header,
     }
 
     EVP_EncodeInit(ctx);
-    nlen = strlen(name);
+    nlen = (int)strlen(name);
 
     if ((BIO_write(bp, "-----BEGIN ", 11) != 11) ||
         (BIO_write(bp, name, nlen) != nlen) ||
         (BIO_write(bp, "-----\n", 6) != 6))
         goto err;
 
-    i = strlen(header);
+    i = (int)strlen(header);
     if (i > 0) {
         if ((BIO_write(bp, header, i) != i) || (BIO_write(bp, "\n", 1) != 1))
             goto err;
     }
 
-    buf = OPENSSL_malloc(PEM_BUFSIZE * 8);
+    buf = (unsigned char *)OPENSSL_malloc(PEM_BUFSIZE * 8);
     if (buf == NULL) {
         reason = ERR_R_MALLOC_FAILURE;
         goto err;
@@ -749,7 +749,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
      * Need to hold trailing NUL (accounted for by BIO_gets() and the newline
      * that will be added by sanitize_line() (the extra '1').
      */
-    linebuf = pem_malloc(LINESIZE + 1, flags);
+    linebuf = (char *)pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
         PEMerr(PEM_F_GET_NAME, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -773,7 +773,7 @@ static int get_name(BIO *bp, char **name, unsigned int flags)
              || strncmp(linebuf + len - TAILLEN, tailstr, TAILLEN) != 0);
     linebuf[len - TAILLEN] = '\0';
     len = len - BEGINLEN - TAILLEN + 1;
-    *name = pem_malloc(len, flags);
+    *name = (char *)pem_malloc(len, flags);
     if (*name == NULL) {
         PEMerr(PEM_F_GET_NAME, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -817,7 +817,7 @@ static int get_header_and_data(BIO *bp, BIO **header, BIO **data, char *name,
 
     /* Need to hold trailing NUL (accounted for by BIO_gets() and the newline
      * that will be added by sanitize_line() (the extra '1'). */
-    linebuf = pem_malloc(LINESIZE + 1, flags);
+    linebuf = (char *)pem_malloc(LINESIZE + 1, flags);
     if (linebuf == NULL) {
         PEMerr(PEM_F_GET_HEADER_AND_DATA, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -953,7 +953,7 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
 
     EVP_DecodeInit(ctx);
     BIO_get_mem_ptr(dataB, &buf_mem);
-    len = buf_mem->length;
+    len = (int)buf_mem->length;
     if (EVP_DecodeUpdate(ctx, (unsigned char*)buf_mem->data, &len,
                          (unsigned char*)buf_mem->data, len) < 0
             || EVP_DecodeFinal(ctx, (unsigned char*)&(buf_mem->data[len]),
@@ -968,8 +968,8 @@ int PEM_read_bio_ex(BIO *bp, char **name_out, char **header,
     if (len == 0)
         goto end;
     headerlen = BIO_get_mem_data(headerB, NULL);
-    *header = pem_malloc(headerlen + 1, flags);
-    *data = pem_malloc(len, flags);
+    *header = (char *)pem_malloc(headerlen + 1, flags);
+    *data = (unsigned char *)pem_malloc(len, flags);
     if (*header == NULL || *data == NULL) {
         pem_free(*header, flags, 0);
         pem_free(*data, flags, 0);
@@ -1005,8 +1005,8 @@ int PEM_read_bio(BIO *bp, char **name, char **header, unsigned char **data,
 
 int pem_check_suffix(const char *pem_str, const char *suffix)
 {
-    int pem_len = strlen(pem_str);
-    int suffix_len = strlen(suffix);
+    int pem_len = (int)strlen(pem_str);
+    int suffix_len = (int)strlen(suffix);
     const char *p;
     if (suffix_len + 1 >= pem_len)
         return 0;
@@ -1016,5 +1016,5 @@ int pem_check_suffix(const char *pem_str, const char *suffix)
     p--;
     if (*p != ' ')
         return 0;
-    return p - pem_str;
+    return (int)(p - pem_str);
 }

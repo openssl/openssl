@@ -33,7 +33,7 @@ BN_BLINDING *BN_BLINDING_new(const BIGNUM *A, const BIGNUM *Ai, BIGNUM *mod)
 
     bn_check_top(mod);
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = (BN_BLINDING *)OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_BLINDING_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -188,7 +188,7 @@ int BN_BLINDING_invert_ex(BIGNUM *n, const BIGNUM *r, BN_BLINDING *b,
             }
             mask = (BN_ULONG)0 - ((rtop - ntop) >> (8 * sizeof(ntop) - 1));
             /* always true, if (rtop >= ntop) n->top = r->top; */
-            n->top = (int)(rtop & ~mask) | (ntop & mask);
+            n->top = (int)((int)(rtop & ~mask) | (ntop & mask));
             n->flags |= (BN_FLG_FIXED_TOP & ~mask);
         }
         ret = BN_mod_mul_montgomery(n, n, r, b->m_ctx, ctx);

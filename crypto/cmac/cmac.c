@@ -53,7 +53,7 @@ CMAC_CTX *CMAC_CTX_new(void)
 {
     CMAC_CTX *ctx;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL) {
+    if ((ctx = (CMAC_CTX *)OPENSSL_malloc(sizeof(*ctx))) == NULL) {
         CRYPTOerr(CRYPTO_F_CMAC_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -139,9 +139,9 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
         ctx->nlast_block = -1;
         if (!EVP_CIPHER_CTX_cipher(ctx->cctx))
             return 0;
-        if (!EVP_CIPHER_CTX_set_key_length(ctx->cctx, keylen))
+        if (!EVP_CIPHER_CTX_set_key_length(ctx->cctx, (int)keylen))
             return 0;
-        if (!EVP_EncryptInit_ex(ctx->cctx, NULL, NULL, key, zero_iv))
+        if (!EVP_EncryptInit_ex(ctx->cctx, NULL, NULL, (const unsigned char *)key, zero_iv))
             return 0;
         if ((bl = EVP_CIPHER_CTX_block_size(ctx->cctx)) < 0)
             return 0;
@@ -162,7 +162,7 @@ int CMAC_Init(CMAC_CTX *ctx, const void *key, size_t keylen,
 
 int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
 {
-    const unsigned char *data = in;
+    const unsigned char *data = (const unsigned char *)in;
     int bl;
 
     if (ctx->nlast_block == -1)
@@ -180,7 +180,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
             nleft = dlen;
         memcpy(ctx->last_block + ctx->nlast_block, data, nleft);
         dlen -= nleft;
-        ctx->nlast_block += nleft;
+        ctx->nlast_block += (int)nleft;
         /* If no more to process return */
         if (dlen == 0)
             return 1;
@@ -198,7 +198,7 @@ int CMAC_Update(CMAC_CTX *ctx, const void *in, size_t dlen)
     }
     /* Copy any data left to last block buffer */
     memcpy(ctx->last_block, data, dlen);
-    ctx->nlast_block = dlen;
+    ctx->nlast_block = (int)dlen;
     return 1;
 
 }

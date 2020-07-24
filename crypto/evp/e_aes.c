@@ -2554,7 +2554,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
         if ((arg > EVP_MAX_IV_LENGTH) && (arg > gctx->ivlen)) {
             if (gctx->iv != c->iv)
                 OPENSSL_free(gctx->iv);
-            if ((gctx->iv = OPENSSL_malloc(arg)) == NULL) {
+            if ((gctx->iv = (unsigned char *)OPENSSL_malloc(arg)) == NULL) {
                 EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -2638,7 +2638,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
                     return 0;
                 len -= EVP_GCM_TLS_TAG_LEN;
             }
-            c->buf[arg - 2] = len >> 8;
+            c->buf[arg - 2] = (unsigned char)(len >> 8);
             c->buf[arg - 1] = len & 0xff;
         }
         /* Extra padding: tag appended to record */
@@ -2646,7 +2646,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     case EVP_CTRL_COPY:
         {
-            EVP_CIPHER_CTX *out = ptr;
+            EVP_CIPHER_CTX *out = (EVP_CIPHER_CTX *)ptr;
             EVP_AES_GCM_CTX *gctx_out = EVP_C_DATA(EVP_AES_GCM_CTX,out);
             if (gctx->gcm.key) {
                 if (gctx->gcm.key != &gctx->ks)
@@ -2656,7 +2656,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (gctx->iv == c->iv)
                 gctx_out->iv = out->iv;
             else {
-                if ((gctx_out->iv = OPENSSL_malloc(gctx->ivlen)) == NULL) {
+                if ((gctx_out->iv = (unsigned char *)OPENSSL_malloc(gctx->ivlen)) == NULL) {
                     EVPerr(EVP_F_AES_GCM_CTRL, ERR_R_MALLOC_FAILURE);
                     return 0;
                 }
@@ -2827,7 +2827,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
         out += len;
         /* Finally write tag */
         CRYPTO_gcm128_tag(&gctx->gcm, out, EVP_GCM_TLS_TAG_LEN);
-        rv = len + EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
+        rv = (int)(len + EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN);
     } else {
         /* Decrypt */
         if (gctx->ctr) {
@@ -2872,7 +2872,7 @@ static int aes_gcm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             OPENSSL_cleanse(out, len);
             goto err;
         }
-        rv = len;
+        rv = (int)len;
     }
 
  err:
@@ -3029,7 +3029,7 @@ static int aes_gcm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     return -1;
             }
         }
-        return len;
+        return (int)len;
     } else {
         if (!ctx->encrypt) {
             if (gctx->taglen < 0)
@@ -3065,7 +3065,7 @@ static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX, c);
 
     if (type == EVP_CTRL_COPY) {
-        EVP_CIPHER_CTX *out = ptr;
+        EVP_CIPHER_CTX *out = (EVP_CIPHER_CTX *)ptr;
         EVP_AES_XTS_CTX *xctx_out = EVP_C_DATA(EVP_AES_XTS_CTX,out);
 
         if (xctx->xts.key1) {
@@ -3277,7 +3277,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
             if (!EVP_CIPHER_CTX_encrypting(c)) {
                 if (len < cctx->M)
                     return 0;
-                len -= cctx->M;
+                len -= (uint16_t)cctx->M;
             }
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 2] = len >> 8;
             EVP_CIPHER_CTX_buf_noconst(c)[arg - 1] = len & 0xff;
@@ -3317,7 +3317,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
     case EVP_CTRL_AEAD_GET_TAG:
         if (!EVP_CIPHER_CTX_encrypting(c) || !cctx->tag_set)
             return 0;
-        if (!CRYPTO_ccm128_tag(&cctx->ccm, ptr, (size_t)arg))
+        if (!CRYPTO_ccm128_tag(&cctx->ccm, (unsigned char *)ptr, (size_t)arg))
             return 0;
         cctx->tag_set = 0;
         cctx->iv_set = 0;
@@ -3326,7 +3326,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     case EVP_CTRL_COPY:
         {
-            EVP_CIPHER_CTX *out = ptr;
+            EVP_CIPHER_CTX *out = (EVP_CIPHER_CTX *)ptr;
             EVP_AES_CCM_CTX *cctx_out = EVP_C_DATA(EVP_AES_CCM_CTX,out);
             if (cctx->ccm.key) {
                 if (cctx->ccm.key != &cctx->ks)
@@ -3419,7 +3419,7 @@ static int aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             return -1;
         if (!CRYPTO_ccm128_tag(ccm, out + len, cctx->M))
             return -1;
-        return len + EVP_CCM_TLS_EXPLICIT_IV_LEN + cctx->M;
+        return (int)(len + EVP_CCM_TLS_EXPLICIT_IV_LEN + cctx->M);
     } else {
         if (cctx->str ? !CRYPTO_ccm128_decrypt_ccm64(ccm, in, out, len,
                                                      cctx->str) :
@@ -3427,7 +3427,7 @@ static int aes_ccm_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             unsigned char tag[16];
             if (CRYPTO_ccm128_tag(ccm, tag, cctx->M)) {
                 if (!CRYPTO_memcmp(tag, in + len, cctx->M))
-                    return len;
+                    return (int)len;
             }
         }
         OPENSSL_cleanse(out, len);
@@ -3460,13 +3460,13 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                                     15 - cctx->L, len))
                 return -1;
             cctx->len_set = 1;
-            return len;
+            return (int)len;
         }
         /* If have AAD need message length */
         if (!cctx->len_set && len)
             return -1;
         CRYPTO_ccm128_aad(ccm, in, len);
-        return len;
+        return (int)len;
     }
 
     /* The tag must be set before actually decrypting data */
@@ -3485,7 +3485,7 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             CRYPTO_ccm128_encrypt(ccm, in, out, len))
             return -1;
         cctx->tag_set = 1;
-        return len;
+        return (int)len;
     } else {
         int rv = -1;
         if (cctx->str ? !CRYPTO_ccm128_decrypt_ccm64(ccm, in, out, len,
@@ -3495,7 +3495,7 @@ static int aes_ccm_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (CRYPTO_ccm128_tag(ccm, tag, cctx->M)) {
                 if (!CRYPTO_memcmp(tag, EVP_CIPHER_CTX_buf_noconst(ctx),
                                    cctx->M))
-                    rv = len;
+                    rv = (int)len;
             }
         }
         if (rv == -1)
@@ -3567,7 +3567,7 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* If not padding input must be multiple of 8 */
     if (!pad && inlen & 0x7)
         return -1;
-    if (is_partially_overlapping(out, in, inlen)) {
+    if (is_partially_overlapping(out, in, (int)inlen)) {
         EVPerr(EVP_F_AES_WRAP_CIPHER, EVP_R_PARTIALLY_OVERLAPPING);
         return 0;
     }
@@ -3577,14 +3577,14 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             if (pad)
                 inlen = (inlen + 7) / 8 * 8;
             /* 8 byte prefix */
-            return inlen + 8;
+            return (int)(inlen + 8);
         } else {
             /*
              * If not padding output will be exactly 8 bytes smaller than
              * input. If padding it will be at least 8 bytes smaller but we
              * don't know how much.
              */
-            return inlen - 8;
+            return (int)(inlen - 8);
         }
     }
     if (pad) {
@@ -3871,7 +3871,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             buf = octx->data_buf;
             buf_len = &(octx->data_buf_len);
 
-            if (is_partially_overlapping(out + *buf_len, in, len)) {
+            if (is_partially_overlapping(out + *buf_len, in, (int)len)) {
                 EVPerr(EVP_F_AES_OCB_CIPHER, EVP_R_PARTIALLY_OVERLAPPING);
                 return 0;
             }
@@ -3887,7 +3887,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             remaining = AES_BLOCK_SIZE - (*buf_len);
             if (remaining > len) {
                 memcpy(buf + (*buf_len), in, len);
-                *(buf_len) += len;
+                *(buf_len) += (int)len;
                 return 0;
             }
             memcpy(buf + (*buf_len), in, remaining);
@@ -3934,14 +3934,14 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                     (&octx->ocb, in, out, len - trailing_len))
                     return -1;
             }
-            written_len += len - trailing_len;
+            written_len += (int)(len - trailing_len);
             in += len - trailing_len;
         }
 
         /* Handle any trailing partial block */
         if (trailing_len > 0) {
             memcpy(buf, in, trailing_len);
-            *buf_len = trailing_len;
+            *buf_len = (int)trailing_len;
         }
 
         return written_len;
@@ -4086,13 +4086,13 @@ static int aes_siv_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     case EVP_CTRL_AEAD_SET_TAG:
         if (!EVP_CIPHER_CTX_encrypting(c))
-            return CRYPTO_siv128_set_tag(sctx, ptr, arg);
+            return CRYPTO_siv128_set_tag(sctx, (const unsigned char *)ptr, arg);
         return 1;
 
     case EVP_CTRL_AEAD_GET_TAG:
         if (!EVP_CIPHER_CTX_encrypting(c))
             return 0;
-        return CRYPTO_siv128_get_tag(sctx, ptr, arg);
+        return CRYPTO_siv128_get_tag(sctx, (unsigned char *)ptr, arg);
 
     case EVP_CTRL_COPY:
         sctx_out = EVP_C_DATA(SIV128_CONTEXT, (EVP_CIPHER_CTX*)ptr);

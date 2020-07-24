@@ -83,7 +83,7 @@ static int do_create(const char *value, const char *name)
             p--;
         }
         p++;
-        if ((lntmp = OPENSSL_malloc((p - ln) + 1)) == NULL) {
+        if ((lntmp = (char *)OPENSSL_malloc((p - ln) + 1)) == NULL) {
             ASN1err(ASN1_F_DO_CREATE, ERR_R_MALLOC_FAILURE);
             return 0;
         }

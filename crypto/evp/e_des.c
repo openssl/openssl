@@ -64,7 +64,7 @@ static int des_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 {
     BLOCK_CIPHER_ecb_loop()
         DES_ecb_encrypt((DES_cblock *)(in + i), (DES_cblock *)(out + i),
-                        EVP_CIPHER_CTX_get_cipher_data(ctx),
+                        (DES_key_schedule *)EVP_CIPHER_CTX_get_cipher_data(ctx),
                         EVP_CIPHER_CTX_encrypting(ctx));
     return 1;
 }
@@ -226,7 +226,7 @@ static int des_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
         }
     }
 # endif
-    DES_set_key_unchecked(deskey, EVP_CIPHER_CTX_get_cipher_data(ctx));
+    DES_set_key_unchecked(deskey, (DES_key_schedule *)EVP_CIPHER_CTX_get_cipher_data(ctx));
     return 1;
 }
 
@@ -235,7 +235,7 @@ static int des_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     switch (type) {
     case EVP_CTRL_RAND_KEY:
-        if (RAND_priv_bytes(ptr, 8) <= 0)
+        if (RAND_priv_bytes((unsigned char *)ptr, 8) <= 0)
             return 0;
         DES_set_odd_parity((DES_cblock *)ptr);
         return 1;

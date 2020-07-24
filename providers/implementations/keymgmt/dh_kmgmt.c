@@ -159,12 +159,12 @@ static void *dhx_newdata(void *provctx)
 
 static void dh_freedata(void *keydata)
 {
-    DH_free(keydata);
+    DH_free((DH *)keydata);
 }
 
 static int dh_has(void *keydata, int selection)
 {
-    DH *dh = keydata;
+    DH *dh = (DH *)keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && dh != NULL) {
@@ -183,8 +183,8 @@ static int dh_has(void *keydata, int selection)
 
 static int dh_match(const void *keydata1, const void *keydata2, int selection)
 {
-    const DH *dh1 = keydata1;
-    const DH *dh2 = keydata2;
+    const DH *dh1 = (const DH *)keydata1;
+    const DH *dh2 = (const DH *)keydata2;
     int ok = 1;
 
     if (!ossl_prov_is_running())
@@ -205,7 +205,7 @@ static int dh_match(const void *keydata1, const void *keydata2, int selection)
 
 static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    DH *dh = keydata;
+    DH *dh = (DH *)keydata;
     int ok = 1;
 
     if (!ossl_prov_is_running() || dh == NULL)
@@ -226,7 +226,7 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
 static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
                      void *cbarg)
 {
-    DH *dh = keydata;
+    DH *dh = (DH *)keydata;
     OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *params = NULL;
     int ok = 1;
@@ -316,7 +316,7 @@ static const OSSL_PARAM *dh_export_types(int selection)
 
 static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
 {
-    DH *dh = key;
+    DH *dh = (DH *)key;
     OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
@@ -369,7 +369,7 @@ static const OSSL_PARAM *dh_settable_params(void *provctx)
 
 static int dh_set_params(void *key, const OSSL_PARAM params[])
 {
-    DH *dh = key;
+    DH *dh = (DH *)key;
     const OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
@@ -404,7 +404,7 @@ static int dh_validate_private(DH *dh)
 
 static int dh_validate(void *keydata, int selection)
 {
-    DH *dh = keydata;
+    DH *dh = (DH *)keydata;
     int ok = 0;
 
     if (!ossl_prov_is_running())
@@ -469,7 +469,7 @@ static void *dhx_gen_init(void *provctx, int selection)
 static int dh_gen_set_template(void *genctx, void *templ)
 {
     struct dh_gen_ctx *gctx = genctx;
-    DH *dh = templ;
+    DH *dh = (DH *)templ;
 
     if (!ossl_prov_is_running() || gctx == NULL || dh == NULL)
         return 0;
@@ -494,7 +494,7 @@ static int dh_set_gen_seed(struct dh_gen_ctx *gctx, unsigned char *seed,
 
 static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
-    struct dh_gen_ctx *gctx = genctx;
+    struct dh_gen_ctx *gctx = (struct dh_gen_ctx *)genctx;
     const OSSL_PARAM *p;
 
     if (gctx == NULL)
@@ -593,7 +593,7 @@ static int dh_gencb(int p, int n, BN_GENCB *cb)
 static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     int ret = 0;
-    struct dh_gen_ctx *gctx = genctx;
+    struct dh_gen_ctx *gctx = (struct dh_gen_ctx *)genctx;
     DH *dh = NULL;
     BN_GENCB *gencb = NULL;
     FFC_PARAMS *ffc;
@@ -684,7 +684,7 @@ end:
 
 static void dh_gen_cleanup(void *genctx)
 {
-    struct dh_gen_ctx *gctx = genctx;
+    struct dh_gen_ctx *gctx = (struct dh_gen_ctx *)genctx;
 
     if (gctx == NULL)
         return;

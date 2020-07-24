@@ -70,7 +70,7 @@ int ASN1_bn_print(BIO *bp, const char *number, const BIGNUM *num,
     }
 
     buflen = BN_num_bytes(num) + 1;
-    buf = tmp = OPENSSL_malloc(buflen);
+    buf = tmp = (unsigned char *)OPENSSL_malloc(buflen);
     if (buf == NULL)
         goto err;
     buf[0] = 0;

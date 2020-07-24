@@ -715,11 +715,11 @@ int BN_mod_exp_mont_consttime(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
                                        numPowers ? (2 * top) : numPowers));
 #ifdef alloca
     if (powerbufLen < 3072)
-        powerbufFree =
+        powerbufFree = (unsigned char *)
             alloca(powerbufLen + MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH);
     else
 #endif
-        if ((powerbufFree =
+        if ((powerbufFree = (unsigned char *)
              OPENSSL_malloc(powerbufLen + MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH))
             == NULL)
         goto err;

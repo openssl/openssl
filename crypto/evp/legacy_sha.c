@@ -26,24 +26,24 @@
  * These only remain to support engines that can get these methods.
  * Hardware support for SHA3 has been removed from these legacy cases.
  */
-#define IMPLEMENT_LEGACY_EVP_MD_METH_SHA3(nm, fn, tag)                         \
-static int nm##_init(EVP_MD_CTX *ctx)                                          \
-{                                                                              \
-    return fn##_init(EVP_MD_CTX_md_data(ctx), tag, ctx->digest->md_size * 8);  \
-}                                                                              \
-static int nm##_update(EVP_MD_CTX *ctx, const void *data, size_t count)        \
-{                                                                              \
-    return fn##_update(EVP_MD_CTX_md_data(ctx), data, count);                  \
-}                                                                              \
-static int nm##_final(EVP_MD_CTX *ctx, unsigned char *md)                      \
-{                                                                              \
-    return fn##_final(md, EVP_MD_CTX_md_data(ctx));                            \
+#define IMPLEMENT_LEGACY_EVP_MD_METH_SHA3(nm, fn, tag)                                          \
+static int nm##_init(EVP_MD_CTX *ctx)                                                           \
+{                                                                                               \
+    return fn##_init((KECCAK1600_CTX *)EVP_MD_CTX_md_data(ctx), tag, ctx->digest->md_size * 8); \
+}                                                                                               \
+static int nm##_update(EVP_MD_CTX *ctx, const void *data, size_t count)                         \
+{                                                                                               \
+    return fn##_update((KECCAK1600_CTX *)EVP_MD_CTX_md_data(ctx), data, count);                 \
+}                                                                                               \
+static int nm##_final(EVP_MD_CTX *ctx, unsigned char *md)                                       \
+{                                                                                               \
+    return fn##_final(md, (KECCAK1600_CTX *)EVP_MD_CTX_md_data(ctx));                           \
 }
-#define IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(nm, fn, tag)                        \
-static int nm##_init(EVP_MD_CTX *ctx)                                          \
-{                                                                              \
-    return fn##_init(EVP_MD_CTX_md_data(ctx), tag, ctx->digest->md_size * 8);  \
-}                                                                              \
+#define IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(nm, fn, tag)                                         \
+static int nm##_init(EVP_MD_CTX *ctx)                                                           \
+{                                                                                               \
+    return fn##_init((KECCAK1600_CTX *)EVP_MD_CTX_md_data(ctx), tag, ctx->digest->md_size * 8); \
+}                                                                                               \
 
 #define sha512_224_Init    sha512_224_init
 #define sha512_256_Init    sha512_256_init
@@ -65,12 +65,12 @@ IMPLEMENT_LEGACY_EVP_MD_METH_SHAKE(shake, sha3, '\x1f')
 
 static int sha1_int_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
 {
-    return sha1_ctrl(ctx != NULL ? EVP_MD_CTX_md_data(ctx) : NULL, cmd, p1, p2);
+    return sha1_ctrl(ctx != NULL ? (SHA_CTX *)EVP_MD_CTX_md_data(ctx) : NULL, cmd, p1, p2);
 }
 
 static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
 {
-    KECCAK1600_CTX *ctx = evp_ctx->md_data;
+    KECCAK1600_CTX *ctx = (KECCAK1600_CTX *)evp_ctx->md_data;
 
     switch (cmd) {
     case EVP_MD_CTRL_XOF_LEN:

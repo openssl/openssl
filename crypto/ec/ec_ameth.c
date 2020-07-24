@@ -87,7 +87,7 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
     penclen = i2o_ECPublicKey(ec_key, NULL);
     if (penclen <= 0)
         goto err;
-    penc = OPENSSL_malloc(penclen);
+    penc = (unsigned char *)OPENSSL_malloc(penclen);
     if (penc == NULL)
         goto err;
     p = penc;
@@ -99,9 +99,9 @@ static int eckey_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         return 1;
  err:
     if (ptype == V_ASN1_OBJECT)
-        ASN1_OBJECT_free(pval);
+        ASN1_OBJECT_free((ASN1_OBJECT *)pval);
     else
-        ASN1_STRING_free(pval);
+        ASN1_STRING_free((ASN1_STRING *)pval);
     OPENSSL_free(penc);
     return 0;
 }
@@ -118,7 +118,7 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval,
     }
 
     if (ptype == V_ASN1_SEQUENCE) {
-        const ASN1_STRING *pstr = pval;
+        const ASN1_STRING *pstr = (const ASN1_STRING *)pval;
         const unsigned char *pm = pstr->data;
         int pmlen = pstr->length;
 
@@ -128,7 +128,7 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval,
             goto ecerr;
         }
     } else if (ptype == V_ASN1_OBJECT) {
-        const ASN1_OBJECT *poid = pval;
+        const ASN1_OBJECT *poid = (const ASN1_OBJECT *)pval;
 
         /*
          * type == V_ASN1_OBJECT => the parameters are given by an asn1 OID
@@ -271,7 +271,7 @@ static int eckey_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_EC_LIB);
         return 0;
     }
-    ep = OPENSSL_malloc(eplen);
+    ep = (unsigned char *)OPENSSL_malloc(eplen);
     if (ep == NULL) {
         ECerr(EC_F_ECKEY_PRIV_ENCODE, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -511,7 +511,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         if (arg1 == 0) {
             int snid, hnid;
             X509_ALGOR *alg1, *alg2;
-            CMS_SignerInfo_get0_algs(arg2, NULL, NULL, &alg1, &alg2);
+            CMS_SignerInfo_get0_algs((CMS_SignerInfo *)arg2, NULL, NULL, &alg1, &alg2);
             if (alg1 == NULL || alg1->algorithm == NULL)
                 return -1;
             hnid = OBJ_obj2nid(alg1->algorithm);
@@ -525,9 +525,9 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     case ASN1_PKEY_CTRL_CMS_ENVELOPE:
         if (arg1 == 1)
-            return ecdh_cms_decrypt(arg2);
+            return ecdh_cms_decrypt((CMS_RecipientInfo *)arg2);
         else if (arg1 == 0)
-            return ecdh_cms_encrypt(arg2);
+            return ecdh_cms_encrypt((CMS_RecipientInfo *)arg2);
         return -2;
 
     case ASN1_PKEY_CTRL_CMS_RI_TYPE:
@@ -545,11 +545,11 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         return 1;
 
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(pkey), arg2, arg1, NULL);
+        return EC_KEY_oct2key(EVP_PKEY_get0_EC_KEY(pkey), (const unsigned char *)arg2, arg1, NULL);
 
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey),
-                              POINT_CONVERSION_UNCOMPRESSED, arg2, NULL);
+        return (int)EC_KEY_key2buf(EVP_PKEY_get0_EC_KEY(pkey),
+                                   POINT_CONVERSION_UNCOMPRESSED, (unsigned char **)arg2, NULL);
 
     default:
         return -2;
@@ -751,7 +751,7 @@ int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
 static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    EVP_PKEY_CTX *pctx = vpctx;
+    EVP_PKEY_CTX *pctx = (EVP_PKEY_CTX *)vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     EC_KEY *ec = EC_KEY_new_with_libctx(pctx->libctx, pctx->propquery);
 
@@ -1057,7 +1057,7 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         penclen = i2o_ECPublicKey(eckey, NULL);
         if (penclen <= 0)
             goto err;
-        penc = OPENSSL_malloc(penclen);
+        penc = (unsigned char *)OPENSSL_malloc(penclen);
         if (penc == NULL)
             goto err;
         p = penc;

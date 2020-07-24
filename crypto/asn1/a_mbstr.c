@@ -52,7 +52,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     char strbuf[32];
     int (*cpyfunc) (unsigned long, void *) = NULL;
     if (len == -1)
-        len = strlen((const char *)in);
+        len = (int)strlen((const char *)in);
     if (!mask)
         mask = DIRSTRING_TYPE;
 
@@ -186,7 +186,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
         cpyfunc = cpy_utf8;
         break;
     }
-    if ((p = OPENSSL_malloc(outlen + 1)) == NULL) {
+    if ((p = (unsigned char *)OPENSSL_malloc(outlen + 1)) == NULL) {
         if (free_out)
             ASN1_STRING_free(dest);
         ASN1err(ASN1_F_ASN1_MBSTRING_NCOPY, ERR_R_MALLOC_FAILURE);
@@ -247,7 +247,7 @@ static int traverse_string(const unsigned char *p, int len, int inform,
 static int in_utf8(unsigned long value, void *arg)
 {
     int *nchar;
-    nchar = arg;
+    nchar = (int *)arg;
     (*nchar)++;
     return 1;
 }
@@ -257,7 +257,7 @@ static int in_utf8(unsigned long value, void *arg)
 static int out_utf8(unsigned long value, void *arg)
 {
     int *outlen;
-    outlen = arg;
+    outlen = (int *)arg;
     *outlen += UTF8_putc(NULL, -1, value);
     return 1;
 }
@@ -294,7 +294,7 @@ static int type_str(unsigned long value, void *arg)
 static int cpy_asc(unsigned long value, void *arg)
 {
     unsigned char **p, *q;
-    p = arg;
+    p = (unsigned char **)arg;
     q = *p;
     *q = (unsigned char)value;
     (*p)++;
@@ -306,7 +306,7 @@ static int cpy_asc(unsigned long value, void *arg)
 static int cpy_bmp(unsigned long value, void *arg)
 {
     unsigned char **p, *q;
-    p = arg;
+    p = (unsigned char **)arg;
     q = *p;
     *q++ = (unsigned char)((value >> 8) & 0xff);
     *q = (unsigned char)(value & 0xff);
@@ -319,7 +319,7 @@ static int cpy_bmp(unsigned long value, void *arg)
 static int cpy_univ(unsigned long value, void *arg)
 {
     unsigned char **p, *q;
-    p = arg;
+    p = (unsigned char **)arg;
     q = *p;
     *q++ = (unsigned char)((value >> 24) & 0xff);
     *q++ = (unsigned char)((value >> 16) & 0xff);
@@ -335,7 +335,7 @@ static int cpy_utf8(unsigned long value, void *arg)
 {
     unsigned char **p;
     int ret;
-    p = arg;
+    p = (unsigned char **)arg;
     /* We already know there is enough room so pass 0xff as the length */
     ret = UTF8_putc(*p, 0xff, value);
     *p += ret;

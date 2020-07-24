@@ -83,7 +83,7 @@ static int dh_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
         goto err;
     }
 
-    pstr = pval;
+    pstr = (const ASN1_STRING *)pval;
     pm = pstr->data;
     pmlen = pstr->length;
 
@@ -187,7 +187,7 @@ static int dh_priv_decode(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8)
     if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
         goto decerr;
 
-    pstr = pval;
+    pstr = (const ASN1_STRING *)pval;
     pm = pstr->data;
     pmlen = pstr->length;
     if ((dh = d2i_dhp(pkey, &pm, pmlen)) == NULL)
@@ -445,9 +445,9 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
     case ASN1_PKEY_CTRL_SET1_TLS_ENCPT:
-        return dh_buf2key(EVP_PKEY_get0_DH(pkey), arg2, arg1);
+        return dh_buf2key(EVP_PKEY_get0_DH(pkey), (unsigned char *)arg2, arg1);
     case ASN1_PKEY_CTRL_GET1_TLS_ENCPT:
-        return dh_key2buf(EVP_PKEY_get0_DH(pkey), arg2, 0, 1);
+        return (int)dh_key2buf(EVP_PKEY_get0_DH(pkey), (unsigned char **)arg2, 0, 1);
     default:
         return -2;
     }
@@ -460,9 +460,9 @@ static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
 
     case ASN1_PKEY_CTRL_CMS_ENVELOPE:
         if (arg1 == 1)
-            return dh_cms_decrypt(arg2);
+            return dh_cms_decrypt((CMS_RecipientInfo *)arg2);
         else if (arg1 == 0)
-            return dh_cms_encrypt(arg2);
+            return dh_cms_encrypt((CMS_RecipientInfo *)arg2);
         return -2;
 
     case ASN1_PKEY_CTRL_CMS_RI_TYPE:
@@ -560,7 +560,7 @@ err:
 static int dh_pkey_import_from_type(const OSSL_PARAM params[], void *vpctx,
                                     int type)
 {
-    EVP_PKEY_CTX *pctx = vpctx;
+    EVP_PKEY_CTX *pctx = (EVP_PKEY_CTX *)vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     DH *dh = dh_new_with_libctx(pctx->libctx);
 
@@ -799,12 +799,12 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
+        dukm = (unsigned char *)OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
 
-    if (EVP_PKEY_CTX_set0_dh_kdf_ukm(pctx, dukm, dukmlen) <= 0)
+    if (EVP_PKEY_CTX_set0_dh_kdf_ukm(pctx, dukm, (int)dukmlen) <= 0)
         goto err;
     dukm = NULL;
 
@@ -947,12 +947,12 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
 
     if (ukm) {
         dukmlen = ASN1_STRING_length(ukm);
-        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
+        dukm = (unsigned char *)OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (!dukm)
             goto err;
     }
 
-    if (EVP_PKEY_CTX_set0_dh_kdf_ukm(pctx, dukm, dukmlen) <= 0)
+    if (EVP_PKEY_CTX_set0_dh_kdf_ukm(pctx, dukm, (int)dukmlen) <= 0)
         goto err;
     dukm = NULL;
 

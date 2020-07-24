@@ -85,7 +85,7 @@ void *ecdh_newctx(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    pectx = OPENSSL_zalloc(sizeof(*pectx));
+    pectx = (PROV_ECDH_CTX *)OPENSSL_zalloc(sizeof(*pectx));
     if (pectx == NULL)
         return NULL;
 
@@ -104,10 +104,10 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
     if (!ossl_prov_is_running()
             || pecdhctx == NULL
             || vecdh == NULL
-            || !EC_KEY_up_ref(vecdh))
+            || !EC_KEY_up_ref((EC_KEY *)vecdh))
         return 0;
     EC_KEY_free(pecdhctx->k);
-    pecdhctx->k = vecdh;
+    pecdhctx->k = (EC_KEY *)vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
     return 1;
@@ -121,10 +121,10 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
     if (!ossl_prov_is_running()
             || pecdhctx == NULL
             || vecdh == NULL
-            || !EC_KEY_up_ref(vecdh))
+            || !EC_KEY_up_ref((EC_KEY *)vecdh))
         return 0;
     EC_KEY_free(pecdhctx->peerk);
-    pecdhctx->peerk = vecdh;
+    pecdhctx->peerk = (EC_KEY *)vecdh;
     return 1;
 }
 
@@ -151,7 +151,7 @@ void *ecdh_dupctx(void *vpecdhctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
+    dstctx = (PROV_ECDH_CTX *)OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
         return NULL;
 
@@ -490,7 +490,7 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
         return 0;
     if (!ecdh_plain_derive(vpecdhctx, NULL, &stmplen, 0))
         return 0;
-    if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {
+    if ((stmp = (unsigned char *)OPENSSL_secure_malloc(stmplen)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return 0;
     }

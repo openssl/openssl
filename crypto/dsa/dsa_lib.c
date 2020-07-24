@@ -134,7 +134,7 @@ const DSA_METHOD *DSA_get_method(DSA *d)
 
 static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 {
-    DSA *ret = OPENSSL_zalloc(sizeof(*ret));
+    DSA *ret = (DSA *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         DSAerr(0, ERR_R_MALLOC_FAILURE);

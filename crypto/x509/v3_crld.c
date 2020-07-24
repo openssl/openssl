@@ -437,7 +437,7 @@ static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
 static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
                    int indent)
 {
-    ISSUING_DIST_POINT *idp = pidp;
+    ISSUING_DIST_POINT *idp = (ISSUING_DIST_POINT *)pidp;
     if (idp->distpoint)
         print_distpoint(out, idp->distpoint, indent);
     if (idp->onlyuser > 0)
@@ -461,7 +461,7 @@ static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
 static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
                      int indent)
 {
-    STACK_OF(DIST_POINT) *crld = pcrldp;
+    STACK_OF(DIST_POINT) *crld = (STACK_OF(DIST_POINT) *)pcrldp;
     DIST_POINT *point;
     int i;
     for (i = 0; i < sk_DIST_POINT_num(crld); i++) {

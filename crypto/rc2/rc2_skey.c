@@ -77,7 +77,7 @@ void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
     j = 0;
     for (i = len; i < 128; i++, j++) {
         d = key_table[(k[j] + d) & 0xff];
-        k[i] = d;
+        k[i] = (unsigned char)d;
     }
 
     /* hmm.... key reduction to 'bits' bits */
@@ -87,10 +87,10 @@ void RC2_set_key(RC2_KEY *key, int len, const unsigned char *data, int bits)
     c = (0xff >> (-bits & 0x07));
 
     d = key_table[k[i] & c];
-    k[i] = d;
+    k[i] = (unsigned char)d;
     while (i--) {
         d = key_table[k[i + j] ^ d];
-        k[i] = d;
+        k[i] = (unsigned char)d;
     }
 
     /* copy from bytes into RC2_INT's */

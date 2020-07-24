@@ -56,7 +56,7 @@ static void *cmac_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((macctx = OPENSSL_zalloc(sizeof(*macctx))) == NULL
+    if ((macctx = (struct cmac_data_st *)OPENSSL_zalloc(sizeof(*macctx))) == NULL
         || (macctx->ctx = CMAC_CTX_new()) == NULL) {
         OPENSSL_free(macctx);
         macctx = NULL;
@@ -69,7 +69,7 @@ static void *cmac_new(void *provctx)
 
 static void cmac_free(void *vmacctx)
 {
-    struct cmac_data_st *macctx = vmacctx;
+    struct cmac_data_st *macctx = (struct cmac_data_st *)vmacctx;
 
     if (macctx != NULL) {
         CMAC_CTX_free(macctx->ctx);
@@ -80,13 +80,13 @@ static void cmac_free(void *vmacctx)
 
 static void *cmac_dup(void *vsrc)
 {
-    struct cmac_data_st *src = vsrc;
+    struct cmac_data_st *src = (struct cmac_data_st *)vsrc;
     struct cmac_data_st *dst;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    dst = cmac_new(src->provctx);
+    dst = (struct cmac_data_st *)cmac_new(src->provctx);
     if (!CMAC_CTX_copy(dst->ctx, src->ctx)
         || !ossl_prov_cipher_copy(&dst->cipher, &src->cipher)) {
         cmac_free(dst);
@@ -97,14 +97,14 @@ static void *cmac_dup(void *vsrc)
 
 static size_t cmac_size(void *vmacctx)
 {
-    struct cmac_data_st *macctx = vmacctx;
+    struct cmac_data_st *macctx = (struct cmac_data_st *)vmacctx;
 
     return EVP_CIPHER_CTX_block_size(CMAC_CTX_get0_cipher_ctx(macctx->ctx));
 }
 
 static int cmac_init(void *vmacctx)
 {
-    struct cmac_data_st *macctx = vmacctx;
+    struct cmac_data_st *macctx = (struct cmac_data_st *)vmacctx;
     int rv;
 
     if (!ossl_prov_is_running())
@@ -121,7 +121,7 @@ static int cmac_init(void *vmacctx)
 static int cmac_update(void *vmacctx, const unsigned char *data,
                        size_t datalen)
 {
-    struct cmac_data_st *macctx = vmacctx;
+    struct cmac_data_st *macctx = (struct cmac_data_st *)vmacctx;
 
     return CMAC_Update(macctx->ctx, data, datalen);
 }
@@ -129,7 +129,7 @@ static int cmac_update(void *vmacctx, const unsigned char *data,
 static int cmac_final(void *vmacctx, unsigned char *out, size_t *outl,
                       size_t outsize)
 {
-    struct cmac_data_st *macctx = vmacctx;
+    struct cmac_data_st *macctx = (struct cmac_data_st *)vmacctx;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -172,7 +172,7 @@ static const OSSL_PARAM *cmac_settable_ctx_params(ossl_unused void *provctx)
  */
 static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
 {
-    struct cmac_data_st *macctx = vmacctx;
+    struct cmac_data_st *macctx = (struct cmac_data_st *)vmacctx;
     OPENSSL_CTX *ctx = PROV_LIBRARY_CONTEXT_OF(macctx->provctx);
     const OSSL_PARAM *p;
 

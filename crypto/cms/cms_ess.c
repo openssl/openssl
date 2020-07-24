@@ -32,11 +32,11 @@ int CMS_get1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest **prr)
 
     if (prr != NULL)
         *prr = NULL;
-    str = CMS_signed_get0_data_by_OBJ(si, obj, -3, V_ASN1_SEQUENCE);
+    str = (ASN1_STRING *)CMS_signed_get0_data_by_OBJ(si, obj, -3, V_ASN1_SEQUENCE);
     if (str == NULL)
         return 0;
 
-    rr = ASN1_item_unpack(str, ASN1_ITEM_rptr(CMS_ReceiptRequest));
+    rr = (CMS_ReceiptRequest *)ASN1_item_unpack(str, ASN1_ITEM_rptr(CMS_ReceiptRequest));
     if (rr == NULL)
         return -1;
     if (prr != NULL)
@@ -285,7 +285,7 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
         goto err;
     }
 
-    rct = ASN1_item_unpack(*pcont, ASN1_ITEM_rptr(CMS_Receipt));
+    rct = (CMS_Receipt *)ASN1_item_unpack(*pcont, ASN1_ITEM_rptr(CMS_Receipt));
 
     if (!rct) {
         CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_RECEIPT_DECODE_ERROR);
@@ -309,10 +309,10 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 
     /* Get msgSigDigest value and compare */
 
-    msig = CMS_signed_get0_data_by_OBJ(si,
-                                       OBJ_nid2obj
-                                       (NID_id_smime_aa_msgSigDigest), -3,
-                                       V_ASN1_OCTET_STRING);
+    msig = (ASN1_OCTET_STRING *)CMS_signed_get0_data_by_OBJ(si,
+                                                            OBJ_nid2obj
+                                                            (NID_id_smime_aa_msgSigDigest), -3,
+                                                            V_ASN1_OCTET_STRING);
 
     if (!msig) {
         CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_MSGSIGDIGEST);
@@ -337,9 +337,9 @@ int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
 
     /* Compare content types */
 
-    octype = CMS_signed_get0_data_by_OBJ(osi,
-                                         OBJ_nid2obj(NID_pkcs9_contentType),
-                                         -3, V_ASN1_OBJECT);
+    octype = (ASN1_OBJECT *)CMS_signed_get0_data_by_OBJ(osi,
+                                                        OBJ_nid2obj(NID_pkcs9_contentType),
+                                                        -3, V_ASN1_OBJECT);
     if (!octype) {
         CMSerr(CMS_F_CMS_RECEIPT_VERIFY, CMS_R_NO_CONTENT_TYPE);
         goto err;
@@ -397,9 +397,9 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
 
     /* Get original content type */
 
-    ctype = CMS_signed_get0_data_by_OBJ(si,
-                                        OBJ_nid2obj(NID_pkcs9_contentType),
-                                        -3, V_ASN1_OBJECT);
+    ctype = (ASN1_OBJECT *)CMS_signed_get0_data_by_OBJ(si,
+                                                       OBJ_nid2obj(NID_pkcs9_contentType),
+                                                       -3, V_ASN1_OBJECT);
     if (!ctype) {
         CMSerr(CMS_F_CMS_ENCODE_RECEIPT, CMS_R_NO_CONTENT_TYPE);
         goto err;
@@ -429,7 +429,7 @@ int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
 
     /* Add SigningCertificateV2 signed attribute to the signer info. */
     len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
-    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
+    if (len <= 0 || (pp = (unsigned char *)OPENSSL_malloc(len)) == NULL)
         goto err;
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
@@ -461,7 +461,7 @@ int cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
 
     /* Add SigningCertificate signed attribute to the signer info. */
     len = i2d_ESS_SIGNING_CERT(sc, NULL);
-    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
+    if (len <= 0 || (pp = (unsigned char *)OPENSSL_malloc(len)) == NULL)
         goto err;
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);

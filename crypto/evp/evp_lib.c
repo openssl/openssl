@@ -136,7 +136,7 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
         /* ... but, we should get a return size too! */
         if (OSSL_PARAM_modified(params)
             && params[0].return_size != 0
-            && (der = OPENSSL_malloc(params[0].return_size)) != NULL) {
+            && (der = (unsigned char *)OPENSSL_malloc(params[0].return_size)) != NULL) {
             params[0].data = der;
             params[0].data_size = params[0].return_size;
             OSSL_PARAM_set_all_unmodified(params);
@@ -144,7 +144,7 @@ int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
             if (EVP_CIPHER_CTX_get_params(c, params)
                 && OSSL_PARAM_modified(params)
                 && d2i_ASN1_TYPE(&type, (const unsigned char **)&derp,
-                                 params[0].return_size) != NULL) {
+                                 (int)params[0].return_size) != NULL) {
                 ret = 1;
             }
             OPENSSL_free(der);
@@ -352,9 +352,9 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
         /* Provided implementations may have a custom cipher_cipher */
         if (cipher->prov != NULL && cipher->ccipher != NULL)
             flags |= EVP_CIPH_FLAG_CUSTOM_CIPHER;
-        cipher->block_size = blksz;
-        cipher->iv_len = ivlen;
-        cipher->key_len = keylen;
+        cipher->block_size = (int)blksz;
+        cipher->iv_len = (int)ivlen;
+        cipher->key_len = (int)keylen;
         cipher->flags = flags | mode;
     }
     return ok;

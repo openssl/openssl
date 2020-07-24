@@ -167,7 +167,7 @@ typedef struct {
 
 static void look_str_cb(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg)
 {
-    ENGINE_FIND_STR *lk = arg;
+    ENGINE_FIND_STR *lk = (ENGINE_FIND_STR *)arg;
     int i;
     if (lk->ameth)
         return;

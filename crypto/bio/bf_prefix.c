@@ -51,7 +51,7 @@ typedef struct prefix_ctx_st {
 
 static int prefix_create(BIO *b)
 {
-    PREFIX_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PREFIX_CTX *ctx = (PREFIX_CTX *)OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
         return 0;
@@ -66,7 +66,7 @@ static int prefix_create(BIO *b)
 
 static int prefix_destroy(BIO *b)
 {
-    PREFIX_CTX *ctx = BIO_get_data(b);
+    PREFIX_CTX *ctx = (PREFIX_CTX *)BIO_get_data(b);
 
     OPENSSL_free(ctx->prefix);
     OPENSSL_free(ctx);
@@ -81,7 +81,7 @@ static int prefix_read(BIO *b, char *in, size_t size, size_t *numread)
 static int prefix_write(BIO *b, const char *out, size_t outl,
                         size_t *numwritten)
 {
-    PREFIX_CTX *ctx = BIO_get_data(b);
+    PREFIX_CTX *ctx = (PREFIX_CTX *)BIO_get_data(b);
 
     if (ctx == NULL)
         return 0;
@@ -151,7 +151,7 @@ static int prefix_write(BIO *b, const char *out, size_t outl,
 static long prefix_ctrl(BIO *b, int cmd, long num, void *ptr)
 {
     long ret = 0;
-    PREFIX_CTX *ctx = BIO_get_data(b);
+    PREFIX_CTX *ctx = (PREFIX_CTX *)BIO_get_data(b);
 
     if (ctx == NULL)
         return -1;

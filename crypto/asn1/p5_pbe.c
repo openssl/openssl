@@ -45,7 +45,7 @@ int PKCS5_pbe_set0_algor(X509_ALGOR *algor, int alg, int iter,
     if (!saltlen)
         saltlen = PKCS5_SALT_LEN;
 
-    sstr = OPENSSL_malloc(saltlen);
+    sstr = (unsigned char *)OPENSSL_malloc(saltlen);
     if (sstr == NULL) {
         ASN1err(ASN1_F_PKCS5_PBE_SET0_ALGOR, ERR_R_MALLOC_FAILURE);
         goto err;

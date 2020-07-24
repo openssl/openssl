@@ -132,7 +132,7 @@ BN_CTX *BN_CTX_new_ex(OPENSSL_CTX *ctx)
 {
     BN_CTX *ret;
 
-    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+    if ((ret = (BN_CTX *)OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_CTX_NEW_EX, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -281,7 +281,7 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
             st->size ? (st->size * 3 / 2) : BN_CTX_START_FRAMES;
         unsigned int *newitems;
 
-        if ((newitems = OPENSSL_malloc(sizeof(*newitems) * newsize)) == NULL) {
+        if ((newitems = (unsigned int *)OPENSSL_malloc(sizeof(*newitems) * newsize)) == NULL) {
             BNerr(BN_F_BN_STACK_PUSH, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -335,7 +335,7 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
     if (p->used == p->size) {
         BN_POOL_ITEM *item;
 
-        if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
+        if ((item = (BN_POOL_ITEM *)OPENSSL_malloc(sizeof(*item))) == NULL) {
             BNerr(BN_F_BN_POOL_GET, ERR_R_MALLOC_FAILURE);
             return NULL;
         }

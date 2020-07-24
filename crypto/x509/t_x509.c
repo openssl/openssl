@@ -236,7 +236,7 @@ int X509_ocspid_print(BIO *bp, X509 *x)
         goto err;
     subj = X509_get_subject_name(x);
     derlen = i2d_X509_NAME(subj, NULL);
-    if ((der = dertmp = OPENSSL_malloc(derlen)) == NULL)
+    if ((der = dertmp = (unsigned char *)OPENSSL_malloc(derlen)) == NULL)
         goto err;
     i2d_X509_NAME(subj, &dertmp);
 
@@ -394,18 +394,18 @@ int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
     if (cert == NULL)
         return BIO_printf(bio, "    (no certificate)\n") > 0;
     if (BIO_printf(bio, "    certificate\n") <= 0
-            || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_SUBJECT))
+            || !X509_print_ex(bio, cert, flags, (unsigned long)~X509_FLAG_NO_SUBJECT))
         return 0;
     if (X509_check_issued((X509 *)cert, cert) == X509_V_OK) {
         if (BIO_printf(bio, "        self-issued\n") <= 0)
             return 0;
     } else {
         if (BIO_printf(bio, " ") <= 0
-            || !X509_print_ex(bio, cert, flags, ~X509_FLAG_NO_ISSUER))
+            || !X509_print_ex(bio, cert, flags, (unsigned long)~X509_FLAG_NO_ISSUER))
             return 0;
     }
     if (!X509_print_ex(bio, cert, flags,
-                       ~(X509_FLAG_NO_SERIAL | X509_FLAG_NO_VALIDITY)))
+                        (unsigned long)~(X509_FLAG_NO_SERIAL | X509_FLAG_NO_VALIDITY)))
         return 0;
     if (X509_cmp_current_time(X509_get0_notBefore(cert)) > 0)
         if (BIO_printf(bio, "        not yet valid\n") <= 0)

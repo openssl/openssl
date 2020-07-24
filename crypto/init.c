@@ -654,7 +654,7 @@ int OPENSSL_atexit(void (*handler)(void))
     }
 #endif
 
-    if ((newhand = OPENSSL_malloc(sizeof(*newhand))) == NULL) {
+    if ((newhand = (OPENSSL_INIT_STOP *)OPENSSL_malloc(sizeof(*newhand))) == NULL) {
         CRYPTOerr(CRYPTO_F_OPENSSL_ATEXIT, ERR_R_MALLOC_FAILURE);
         return 0;
     }

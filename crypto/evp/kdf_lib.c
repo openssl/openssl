@@ -30,7 +30,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf)
     if (kdf == NULL)
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
+    ctx = (EVP_KDF_CTX *)OPENSSL_zalloc(sizeof(EVP_KDF_CTX));
     if (ctx == NULL
         || (ctx->data = kdf->newctx(ossl_provider_ctx(kdf->prov))) == NULL
         || !EVP_KDF_up_ref(kdf)) {
@@ -62,7 +62,7 @@ EVP_KDF_CTX *EVP_KDF_CTX_dup(const EVP_KDF_CTX *src)
     if (src == NULL || src->data == NULL || src->meth->dupctx == NULL)
         return NULL;
 
-    dst = OPENSSL_malloc(sizeof(*dst));
+    dst = (EVP_KDF_CTX *)OPENSSL_malloc(sizeof(*dst));
     if (dst == NULL) {
         EVPerr(EVP_F_EVP_KDF_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;

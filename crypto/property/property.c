@@ -176,7 +176,7 @@ OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx)
 {
     OSSL_METHOD_STORE *res;
 
-    res = OPENSSL_zalloc(sizeof(*res));
+    res = (OSSL_METHOD_STORE *)OPENSSL_zalloc(sizeof(*res));
     if (res != NULL) {
         res->ctx = ctx;
         if ((res->algs = ossl_sa_ALGORITHM_new()) == NULL) {
@@ -228,7 +228,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
         properties = "";
 
     /* Create new entry */
-    impl = OPENSSL_malloc(sizeof(*impl));
+    impl = (IMPLEMENTATION *)OPENSSL_malloc(sizeof(*impl));
     if (impl == NULL)
         return 0;
     impl->method.method = method;
@@ -257,7 +257,7 @@ int ossl_method_store_add(OSSL_METHOD_STORE *store, const OSSL_PROVIDER *prov,
 
     alg = ossl_method_store_retrieve(store, nid);
     if (alg == NULL) {
-        if ((alg = OPENSSL_zalloc(sizeof(*alg))) == NULL
+        if ((alg = (ALGORITHM *)OPENSSL_zalloc(sizeof(*alg))) == NULL
                 || (alg->impls = sk_IMPLEMENTATION_new_null()) == NULL
                 || (alg->cache = lh_QUERY_new(&query_hash, &query_cmp)) == NULL)
             goto err;
@@ -555,7 +555,7 @@ int ossl_method_store_cache_set(OSSL_METHOD_STORE *store, int nid,
         }
         goto end;
     }
-    p = OPENSSL_malloc(sizeof(*p) + (len = strlen(prop_query)));
+    p = (QUERY *)OPENSSL_malloc(sizeof(*p) + (len = strlen(prop_query)));
     if (p != NULL) {
         p->query = p->body;
         p->method.method = method;

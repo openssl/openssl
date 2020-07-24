@@ -18,7 +18,7 @@
 
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 {
-    EVP_KEYEXCH *exchange = OPENSSL_zalloc(sizeof(EVP_KEYEXCH));
+    EVP_KEYEXCH *exchange = (EVP_KEYEXCH *)OPENSSL_zalloc(sizeof(EVP_KEYEXCH));
 
     if (exchange == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
@@ -169,10 +169,10 @@ OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
 EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
-                             evp_keyexch_from_dispatch,
-                             (int (*)(void *))EVP_KEYEXCH_up_ref,
-                             (void (*)(void *))EVP_KEYEXCH_free);
+    return (EVP_KEYEXCH *)evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
+                                            evp_keyexch_from_dispatch,
+                                            (int (*)(void *))EVP_KEYEXCH_up_ref,
+                                            (void (*)(void *))EVP_KEYEXCH_free);
 }
 
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)

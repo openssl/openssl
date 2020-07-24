@@ -110,7 +110,7 @@ static void *ed448_new_key(void *provctx)
 
 static int ecx_has(void *keydata, int selection)
 {
-    ECX_KEY *key = keydata;
+    ECX_KEY *key = (ECX_KEY *)keydata;
     int ok = 0;
 
     if (ossl_prov_is_running() && key != NULL) {
@@ -131,8 +131,8 @@ static int ecx_has(void *keydata, int selection)
 
 static int ecx_match(const void *keydata1, const void *keydata2, int selection)
 {
-    const ECX_KEY *key1 = keydata1;
-    const ECX_KEY *key2 = keydata2;
+    const ECX_KEY *key1 = (const ECX_KEY *)keydata1;
+    const ECX_KEY *key2 = (const ECX_KEY *)keydata2;
     int ok = 1;
 
     if (!ossl_prov_is_running())
@@ -164,7 +164,7 @@ static int ecx_match(const void *keydata1, const void *keydata2, int selection)
 
 static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    ECX_KEY *key = keydata;
+    ECX_KEY *key = (ECX_KEY *)keydata;
     int ok = 1;
     int include_private = 0;
 
@@ -203,7 +203,7 @@ static int key_to_params(ECX_KEY *key, OSSL_PARAM_BLD *tmpl,
 static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
                       void *cbarg)
 {
-    ECX_KEY *key = keydata;
+    ECX_KEY *key = (ECX_KEY *)keydata;
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
     int ret = 0;
@@ -248,7 +248,7 @@ static const OSSL_PARAM *ecx_imexport_types(int selection)
 static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
                           int size)
 {
-    ECX_KEY *ecx = key;
+    ECX_KEY *ecx = (ECX_KEY *)key;
     OSSL_PARAM *p;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
@@ -347,7 +347,7 @@ static const OSSL_PARAM *ed448_gettable_params(void *provctx)
 
 static int ecx_set_params(void *key, const OSSL_PARAM params[])
 {
-    ECX_KEY *ecxkey = key;
+    ECX_KEY *ecxkey = (ECX_KEY *)key;
     const OSSL_PARAM *p;
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT);
@@ -453,7 +453,7 @@ static void *ed448_gen_init(void *provctx, int selection)
 
 static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
-    struct ecx_gen_ctx *gctx = genctx;
+    struct ecx_gen_ctx *gctx = (struct ecx_gen_ctx *)genctx;
     const OSSL_PARAM *p;
 
     if (gctx == NULL)
@@ -551,7 +551,7 @@ err:
 
 static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    struct ecx_gen_ctx *gctx = genctx;
+    struct ecx_gen_ctx *gctx = (struct ecx_gen_ctx *)genctx;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -565,7 +565,7 @@ static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    struct ecx_gen_ctx *gctx = genctx;
+    struct ecx_gen_ctx *gctx = (struct ecx_gen_ctx *)genctx;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -579,7 +579,7 @@ static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    struct ecx_gen_ctx *gctx = genctx;
+    struct ecx_gen_ctx *gctx = (struct ecx_gen_ctx *)genctx;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -596,7 +596,7 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
-    struct ecx_gen_ctx *gctx = genctx;
+    struct ecx_gen_ctx *gctx = (struct ecx_gen_ctx *)genctx;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -612,7 +612,7 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
 static void ecx_gen_cleanup(void *genctx)
 {
-    struct ecx_gen_ctx *gctx = genctx;
+    struct ecx_gen_ctx *gctx = (struct ecx_gen_ctx *)genctx;
 
     OPENSSL_free(gctx);
 }

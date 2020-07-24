@@ -714,7 +714,7 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 
 #ifndef OPENSSL_NO_EC
     if (EVP_PKEY_type(type) == EVP_PKEY_EC) {
-        const EC_GROUP *group = EC_KEY_get0_group(key);
+        const EC_GROUP *group = EC_KEY_get0_group((const EC_KEY *)key);
 
         if (group != NULL && EC_GROUP_get_curve_name(group) == NID_sm2)
             alias = EVP_PKEY_SM2;
@@ -747,7 +747,7 @@ const unsigned char *EVP_PKEY_get0_hmac(const EVP_PKEY *pkey, size_t *len)
         EVPerr(EVP_F_EVP_PKEY_GET0_HMAC, EVP_R_EXPECTING_AN_HMAC_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0(pkey);
+    os = (ASN1_OCTET_STRING *)EVP_PKEY_get0(pkey);
     *len = os->length;
     return os->data;
 }
@@ -760,7 +760,7 @@ const unsigned char *EVP_PKEY_get0_poly1305(const EVP_PKEY *pkey, size_t *len)
         EVPerr(EVP_F_EVP_PKEY_GET0_POLY1305, EVP_R_EXPECTING_A_POLY1305_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0(pkey);
+    os = (ASN1_OCTET_STRING *)EVP_PKEY_get0(pkey);
     *len = os->length;
     return os->data;
 }
@@ -775,7 +775,7 @@ const unsigned char *EVP_PKEY_get0_siphash(const EVP_PKEY *pkey, size_t *len)
         EVPerr(EVP_F_EVP_PKEY_GET0_SIPHASH, EVP_R_EXPECTING_A_SIPHASH_KEY);
         return NULL;
     }
-    os = EVP_PKEY_get0(pkey);
+    os = (ASN1_OCTET_STRING *)EVP_PKEY_get0(pkey);
     *len = os->length;
     return os->data;
 }
@@ -1320,7 +1320,7 @@ int EVP_PKEY_set1_tls_encodedpoint(EVP_PKEY *pkey,
 
     if (ptlen > INT_MAX)
         return 0;
-    if (evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SET1_TLS_ENCPT, ptlen,
+    if (evp_pkey_asn1_ctrl(pkey, ASN1_PKEY_CTRL_SET1_TLS_ENCPT, (int)ptlen,
                            (void *)pt) <= 0)
         return 0;
     return 1;
@@ -1381,7 +1381,7 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
 
 EVP_PKEY *EVP_PKEY_new(void)
 {
-    EVP_PKEY *ret = OPENSSL_zalloc(sizeof(*ret));
+    EVP_PKEY *ret = (EVP_PKEY *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
@@ -1533,7 +1533,7 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
 #ifndef FIPS_MODULE
 static void find_ameth(const char *name, void *data)
 {
-    const char **str = data;
+    const char **str = (const char **)data;
 
     /*
      * The error messages from pkey_set_type() are uninteresting here,
@@ -1541,7 +1541,7 @@ static void find_ameth(const char *name, void *data)
      */
     ERR_set_mark();
 
-    if (pkey_set_type(NULL, NULL, EVP_PKEY_NONE, name, strlen(name),
+    if (pkey_set_type(NULL, NULL, EVP_PKEY_NONE, name, (int)strlen(name),
                       NULL)) {
         if (str[0] == NULL)
             str[0] = name;
@@ -1986,7 +1986,7 @@ int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)
          * If it failed because the buffer was too small then allocate the
          * required buffer size and retry.
          */
-        buf = OPENSSL_zalloc(buf_sz);
+        buf = (unsigned char *)OPENSSL_zalloc(buf_sz);
         if (buf == NULL)
             return 0;
         params[0].data = buf;

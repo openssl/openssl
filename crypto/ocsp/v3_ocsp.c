@@ -110,7 +110,7 @@ const X509V3_EXT_METHOD v3_ocsp_serviceloc = {
 static int i2r_ocsp_crlid(const X509V3_EXT_METHOD *method, void *in, BIO *bp,
                           int ind)
 {
-    OCSP_CRLID *a = in;
+    OCSP_CRLID *a = (OCSP_CRLID *)in;
     if (a->crlUrl) {
         if (BIO_printf(bp, "%*scrlUrl: ", ind, "") <= 0)
             goto err;
@@ -145,7 +145,7 @@ static int i2r_ocsp_acutoff(const X509V3_EXT_METHOD *method, void *cutoff,
 {
     if (BIO_printf(bp, "%*s", ind, "") <= 0)
         return 0;
-    if (!ASN1_GENERALIZEDTIME_print(bp, cutoff))
+    if (!ASN1_GENERALIZEDTIME_print(bp, (const ASN1_GENERALIZEDTIME *)cutoff))
         return 0;
     return 1;
 }
@@ -155,7 +155,7 @@ static int i2r_object(const X509V3_EXT_METHOD *method, void *oid, BIO *bp,
 {
     if (BIO_printf(bp, "%*s", ind, "") <= 0)
         return 0;
-    if (i2a_ASN1_OBJECT(bp, oid) <= 0)
+    if (i2a_ASN1_OBJECT(bp, (const ASN1_OBJECT *)oid) <= 0)
         return 0;
     return 1;
 }
@@ -172,7 +172,7 @@ static void *ocsp_nonce_new(void)
 
 static int i2d_ocsp_nonce(const void *a, unsigned char **pp)
 {
-    const ASN1_OCTET_STRING *os = a;
+    const ASN1_OCTET_STRING *os = (const ASN1_OCTET_STRING *)a;
     if (pp) {
         memcpy(*pp, os->data, os->length);
         *pp += os->length;
@@ -183,7 +183,7 @@ static int i2d_ocsp_nonce(const void *a, unsigned char **pp)
 static void *d2i_ocsp_nonce(void *a, const unsigned char **pp, long length)
 {
     ASN1_OCTET_STRING *os, **pos;
-    pos = a;
+    pos = (ASN1_OCTET_STRING **)a;
     if (pos == NULL || *pos == NULL) {
         os = ASN1_OCTET_STRING_new();
         if (os == NULL)
@@ -209,7 +209,7 @@ static void *d2i_ocsp_nonce(void *a, const unsigned char **pp, long length)
 
 static void ocsp_nonce_free(void *a)
 {
-    ASN1_OCTET_STRING_free(a);
+    ASN1_OCTET_STRING_free((ASN1_OCTET_STRING *)a);
 }
 
 static int i2r_ocsp_nonce(const X509V3_EXT_METHOD *method, void *nonce,
@@ -217,7 +217,7 @@ static int i2r_ocsp_nonce(const X509V3_EXT_METHOD *method, void *nonce,
 {
     if (BIO_printf(out, "%*s", indent, "") <= 0)
         return 0;
-    if (i2a_ASN1_STRING(out, nonce, V_ASN1_OCTET_STRING) <= 0)
+    if (i2a_ASN1_STRING(out, (const ASN1_STRING *)nonce, V_ASN1_OCTET_STRING) <= 0)
         return 0;
     return 1;
 }
@@ -240,7 +240,7 @@ static int i2r_ocsp_serviceloc(const X509V3_EXT_METHOD *method, void *in,
                                BIO *bp, int ind)
 {
     int i;
-    OCSP_SERVICELOC *a = in;
+    OCSP_SERVICELOC *a = (OCSP_SERVICELOC *)in;
     ACCESS_DESCRIPTION *ad;
 
     if (BIO_printf(bp, "%*sIssuer: ", ind, "") <= 0)

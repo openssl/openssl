@@ -126,7 +126,7 @@ int RAND_poll(void)
 
         if (meth->add == NULL
             || meth->add(rand_pool_buffer(pool),
-                         rand_pool_length(pool),
+                         (int)rand_pool_length(pool),
                          (rand_pool_entropy(pool) / 8.0)) == 0)
             goto err;
 

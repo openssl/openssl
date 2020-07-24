@@ -280,7 +280,7 @@ static void *x942kdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return 0;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    if ((ctx = (KDF_X942 *)OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     ctx->provctx = provctx;
     return ctx;
@@ -382,7 +382,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
-    KDF_X942 *ctx = vctx;
+    KDF_X942 *ctx = (KDF_X942 *)vctx;
     OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     size_t id;
 

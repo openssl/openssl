@@ -103,7 +103,7 @@ int OBJ_add_sigid(int signid, int dig_id, int pkey_id)
         sigx_app = sk_nid_triple_new(sigx_cmp);
     if (sigx_app == NULL)
         return 0;
-    if ((ntr = OPENSSL_malloc(sizeof(*ntr))) == NULL) {
+    if ((ntr = (nid_triple *)OPENSSL_malloc(sizeof(*ntr))) == NULL) {
         OBJerr(OBJ_F_OBJ_ADD_SIGID, ERR_R_MALLOC_FAILURE);
         return 0;
     }

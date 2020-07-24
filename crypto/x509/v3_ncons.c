@@ -157,7 +157,7 @@ static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
 static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
                                 BIO *bp, int ind)
 {
-    NAME_CONSTRAINTS *ncons = a;
+    NAME_CONSTRAINTS *ncons = (NAME_CONSTRAINTS *)a;
     do_i2r_name_constraints(method, ncons->permittedSubtrees,
                             bp, ind, "Permitted");
     if (ncons->permittedSubtrees && ncons->excludedSubtrees)
@@ -422,7 +422,7 @@ int NAME_CONSTRAINTS_check_CN(X509 *x, NAME_CONSTRAINTS *nc)
         if (idlen == 0)
             continue;
 
-        stmp.length = idlen;
+        stmp.length = (int)idlen;
         stmp.data = idval;
         r = nc_match(&gntmp, nc);
         OPENSSL_free(idval);
@@ -699,9 +699,9 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
         p = strchr(hostptr, '/');
 
     if (p == NULL)
-        hostlen = strlen(hostptr);
+        hostlen = (int)strlen(hostptr);
     else
-        hostlen = p - hostptr;
+        hostlen = (int)(p - hostptr);
 
     if (hostlen == 0)
         return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;

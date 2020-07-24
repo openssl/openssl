@@ -38,7 +38,7 @@ static void *des_newctx(void *provctx, size_t kbits, size_t blkbits,
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = (PROV_DES_CTX *)OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags, hw,
                                provctx);
@@ -53,7 +53,7 @@ static void *des_dupctx(void *ctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = (PROV_DES_CTX *)OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -113,7 +113,7 @@ static int des_dinit(void *vctx, const unsigned char *key, size_t keylen,
 static int des_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
 {
 
-    DES_cblock *deskey = ptr;
+    DES_cblock *deskey = (DES_cblock *)ptr;
     size_t kl = ctx->keylen;
 
     if (kl == 0 || RAND_priv_bytes_ex(ctx->libctx, ptr, kl) <= 0)

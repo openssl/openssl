@@ -185,7 +185,7 @@ X509 *d2i_X509_AUX(X509 **a, const unsigned char **pp, long length)
     if (ret == NULL)
         return NULL;
     /* update length */
-    length -= q - *pp;
+    length -= (long)(q - *pp);
     if (length > 0 && !d2i_X509_CERT_AUX(&ret->aux, &q, length))
         goto err;
     *pp = q;
@@ -253,7 +253,7 @@ int i2d_X509_AUX(const X509 *a, unsigned char **pp)
         return length;
 
     /* Allocate requisite combined storage */
-    *pp = tmp = OPENSSL_malloc(length);
+    *pp = tmp = (unsigned char *)OPENSSL_malloc(length);
     if (tmp == NULL) {
         X509err(X509_F_I2D_X509_AUX, ERR_R_MALLOC_FAILURE);
         return -1;

@@ -73,7 +73,7 @@ RSA *rsa_new_with_ctx(OPENSSL_CTX *libctx)
 
 static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
 {
-    RSA *ret = OPENSSL_zalloc(sizeof(*ret));
+    RSA *ret = (RSA *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         RSAerr(0, ERR_R_MALLOC_FAILURE);
@@ -746,7 +746,7 @@ int rsa_set0_all_params(RSA *r, const STACK_OF(BIGNUM) *primes,
                 goto err;
 
             /* Using rsa_multip_info_new() is wasteful, so allocate directly */
-            if ((pinfo = OPENSSL_zalloc(sizeof(*pinfo))) == NULL) {
+            if ((pinfo = (RSA_PRIME_INFO *)OPENSSL_zalloc(sizeof(*pinfo))) == NULL) {
                 ERR_raise(ERR_LIB_RSA, ERR_R_MALLOC_FAILURE);
                 goto err;
             }

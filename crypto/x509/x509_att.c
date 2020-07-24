@@ -251,7 +251,7 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
     if (!attr)
         return 0;
     if (attrtype & MBSTRING_FLAG) {
-        stmp = ASN1_STRING_set_by_NID(NULL, data, len, attrtype,
+        stmp = ASN1_STRING_set_by_NID(NULL, (const unsigned char *)data, len, attrtype,
                                       OBJ_obj2nid(attr->object));
         if (!stmp) {
             X509err(X509_F_X509_ATTRIBUTE_SET1_DATA, ERR_R_ASN1_LIB);

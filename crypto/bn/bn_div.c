@@ -349,7 +349,7 @@ int bn_div_fixed_top(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num,
         n0 = wnumtop[0];
         n1 = wnumtop[-1];
         if (n0 == d0)
-            q = BN_MASK2;
+            q = (BN_ULONG)BN_MASK2;
         else {                  /* n0 < d0 */
             BN_ULONG n2 = (wnumtop == wnum) ? 0 : wnumtop[-2];
 #  ifdef BN_LLONG

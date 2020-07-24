@@ -22,7 +22,7 @@ char *BN_bn2hex(const BIGNUM *a)
 
     if (BN_is_zero(a))
         return OPENSSL_strdup("0");
-    buf = OPENSSL_malloc(a->top * BN_BYTES * 2 + 2);
+    buf = (char *)OPENSSL_malloc(a->top * BN_BYTES * 2 + 2);
     if (buf == NULL) {
         BNerr(BN_F_BN_BN2HEX, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -68,8 +68,8 @@ char *BN_bn2dec(const BIGNUM *a)
     num = (i / 10 + i / 1000 + 1) + 1;
     tbytes = num + 3;   /* negative and terminator and one spare? */
     bn_data_num = num / BN_DEC_NUM + 1;
-    bn_data = OPENSSL_malloc(bn_data_num * sizeof(BN_ULONG));
-    buf = OPENSSL_malloc(tbytes);
+    bn_data = (BN_ULONG *)OPENSSL_malloc(bn_data_num * sizeof(BN_ULONG));
+    buf = (char *)OPENSSL_malloc(tbytes);
     if (buf == NULL || bn_data == NULL) {
         BNerr(BN_F_BN_BN2DEC, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -169,7 +169,7 @@ int BN_hex2bn(BIGNUM **bn, const char *a)
         l = 0;
         for (;;) {
             c = a[j - m];
-            k = OPENSSL_hexchar2int(c);
+            k = OPENSSL_hexchar2int((unsigned char)c);
             if (k < 0)
                 k = 0;          /* paranoia */
             l = (l << 4) | k;

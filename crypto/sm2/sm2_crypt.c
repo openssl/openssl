@@ -104,11 +104,11 @@ int sm2_ciphertext_size(const EC_KEY *key, const EVP_MD *digest, size_t msg_len,
         return 0;
 
     /* Integer and string are simple type; set constructed = 0, means primitive and definite length encoding. */
-    sz = 2 * ASN1_object_size(0, field_size + 1, V_ASN1_INTEGER)
+    sz = 2 * ASN1_object_size(0, (int)(field_size + 1), V_ASN1_INTEGER)
          + ASN1_object_size(0, md_size, V_ASN1_OCTET_STRING)
-         + ASN1_object_size(0, msg_len, V_ASN1_OCTET_STRING);
+         + ASN1_object_size(0, (int)msg_len, V_ASN1_OCTET_STRING);
     /* Sequence is structured type; set constructed = 1, means constructed and definite length encoding. */
-    *ct_size = ASN1_object_size(1, sz, V_ASN1_SEQUENCE);
+    *ct_size = ASN1_object_size(1, (int)sz, V_ASN1_SEQUENCE);
 
     return 1;
 }
@@ -177,8 +177,8 @@ int sm2_encrypt(const EC_KEY *key,
         goto done;
     }
 
-    x2y2 = OPENSSL_zalloc(2 * field_size);
-    C3 = OPENSSL_zalloc(C3_size);
+    x2y2 = (uint8_t *)OPENSSL_zalloc(2 * field_size);
+    C3 = (uint8_t *)OPENSSL_zalloc(C3_size);
 
     if (x2y2 == NULL || C3 == NULL) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
@@ -200,13 +200,13 @@ int sm2_encrypt(const EC_KEY *key,
         goto done;
     }
 
-    if (BN_bn2binpad(x2, x2y2, field_size) < 0
-            || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0) {
+    if (BN_bn2binpad(x2, x2y2, (int)field_size) < 0
+            || BN_bn2binpad(y2, x2y2 + field_size, (int)field_size) < 0) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
     }
 
-    msg_mask = OPENSSL_zalloc(msg_len);
+    msg_mask = (uint8_t *)OPENSSL_zalloc(msg_len);
     if (msg_mask == NULL) {
        SM2err(SM2_F_SM2_ENCRYPT, ERR_R_MALLOC_FAILURE);
        goto done;
@@ -246,7 +246,7 @@ int sm2_encrypt(const EC_KEY *key,
        goto done;
     }
     if (!ASN1_OCTET_STRING_set(ctext_struct.C3, C3, C3_size)
-            || !ASN1_OCTET_STRING_set(ctext_struct.C2, msg_mask, msg_len)) {
+            || !ASN1_OCTET_STRING_set(ctext_struct.C2, msg_mask, (int)msg_len)) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
     }
@@ -305,7 +305,7 @@ int sm2_decrypt(const EC_KEY *key,
 
     memset(ptext_buf, 0xFF, *ptext_len);
 
-    sm2_ctext = d2i_SM2_Ciphertext(NULL, &ciphertext, ciphertext_len);
+    sm2_ctext = d2i_SM2_Ciphertext(NULL, &ciphertext, (long)ciphertext_len);
 
     if (sm2_ctext == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, SM2_R_ASN1_ERROR);
@@ -336,9 +336,9 @@ int sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    msg_mask = OPENSSL_zalloc(msg_len);
-    x2y2 = OPENSSL_zalloc(2 * field_size);
-    computed_C3 = OPENSSL_zalloc(hash_size);
+    msg_mask = (uint8_t *)OPENSSL_zalloc(msg_len);
+    x2y2 = (uint8_t *)OPENSSL_zalloc(2 * field_size);
+    computed_C3 = (uint8_t *)OPENSSL_zalloc(hash_size);
 
     if (msg_mask == NULL || x2y2 == NULL || computed_C3 == NULL) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_MALLOC_FAILURE);
@@ -360,8 +360,8 @@ int sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    if (BN_bn2binpad(x2, x2y2, field_size) < 0
-            || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0
+    if (BN_bn2binpad(x2, x2y2, (int)field_size) < 0
+            || BN_bn2binpad(y2, x2y2 + field_size, (int)field_size) < 0
             || !ecdh_KDF_X9_63(msg_mask, msg_len, x2y2, 2 * field_size, NULL, 0,
                                digest, libctx, propq)) {
         SM2err(SM2_F_SM2_DECRYPT, ERR_R_INTERNAL_ERROR);

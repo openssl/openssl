@@ -352,7 +352,7 @@ static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 /* Alternative lookup method: look from a STACK stored in other_ctx */
 static int get_issuer_sk(X509 **issuer, X509_STORE_CTX *ctx, X509 *x)
 {
-    *issuer = find_issuer(ctx, ctx->other_ctx, x);
+    *issuer = find_issuer(ctx, (STACK_OF(X509) *)ctx->other_ctx, x);
 
     if (*issuer == NULL || !X509_up_ref(*issuer))
         goto err;
@@ -371,8 +371,8 @@ static STACK_OF(X509) *lookup_certs_sk(X509_STORE_CTX *ctx,
     X509 *x;
     int i;
 
-    for (i = 0; i < sk_X509_num(ctx->other_ctx); i++) {
-        x = sk_X509_value(ctx->other_ctx, i);
+    for (i = 0; i < sk_X509_num((const STACK_OF(X509) *)ctx->other_ctx); i++) {
+        x = sk_X509_value((const STACK_OF(X509) *)ctx->other_ctx, i);
         if (X509_NAME_cmp(nm, X509_get_subject_name(x)) == 0) {
             if (!X509_add_cert_new(&sk, x, X509_ADD_FLAG_UP_REF)) {
                 sk_X509_pop_free(sk, X509_free);
@@ -636,7 +636,7 @@ static int has_san_id(X509 *x, int gtype)
 {
     int i;
     int ret = 0;
-    GENERAL_NAMES *gs = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+    GENERAL_NAMES *gs = (GENERAL_NAMES *)X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
 
     if (gs == NULL)
         return 0;
@@ -2310,7 +2310,7 @@ int X509_STORE_CTX_purpose_inherit(X509_STORE_CTX *ctx, int def_purpose,
 X509_STORE_CTX *X509_STORE_CTX_new_with_libctx(OPENSSL_CTX *libctx,
                                                const char *propq)
 {
-    X509_STORE_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    X509_STORE_CTX *ctx = (X509_STORE_CTX *)OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL) {
         X509err(0, ERR_R_MALLOC_FAILURE);
@@ -2792,7 +2792,7 @@ static int dane_match(X509_STORE_CTX *ctx, X509 *cert, int depth)
 
             /* Update per-selector state */
             OPENSSL_free(i2dbuf);
-            i2dbuf = dane_i2d(cert, selector, &i2dlen);
+            i2dbuf = dane_i2d(cert, (uint8_t)selector, &i2dlen);
             if (i2dbuf == NULL)
                 return -1;
 

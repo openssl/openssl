@@ -119,7 +119,7 @@ static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
     if (keyid) {
         i = X509_get_ext_by_NID(cert, NID_subject_key_identifier, -1);
         if ((i >= 0) && (ext = X509_get_ext(cert, i)))
-            ikeyid = X509V3_EXT_d2i(ext);
+            ikeyid = (ASN1_OCTET_STRING *)X509V3_EXT_d2i(ext);
         if (keyid == 2 && !ikeyid) {
             X509V3err(X509V3_F_V2I_AUTHORITY_KEYID,
                       X509V3_R_UNABLE_TO_GET_ISSUER_KEYID);

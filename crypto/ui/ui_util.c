@@ -105,7 +105,7 @@ static int ui_read(UI *ui, UI_STRING *uis)
     case UIT_PROMPT:
         {
             char result[PEM_BUFSIZE + 1];
-            const struct pem_password_cb_data *data =
+            const struct pem_password_cb_data *data = (const struct pem_password_cb_data *)
                 UI_method_get_ex_data(UI_get_method(ui), ui_method_data_index);
             int maxsize = UI_get_result_maxsize(uis);
             int len = data->cb(result,
@@ -143,7 +143,7 @@ UI_METHOD *UI_UTIL_wrap_read_pem_callback(pem_password_cb *cb, int rwflag)
     struct pem_password_cb_data *data = NULL;
     UI_METHOD *ui_method = NULL;
 
-    if ((data = OPENSSL_zalloc(sizeof(*data))) == NULL
+    if ((data = (struct pem_password_cb_data *)OPENSSL_zalloc(sizeof(*data))) == NULL
         || (ui_method = UI_create_method("PEM password callback wrapper")) == NULL
         || UI_method_set_opener(ui_method, ui_open) < 0
         || UI_method_set_reader(ui_method, ui_read) < 0

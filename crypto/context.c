@@ -158,7 +158,7 @@ static int set_default_context(OPENSSL_CTX *defctx)
 
 OPENSSL_CTX *OPENSSL_CTX_new(void)
 {
-    OPENSSL_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    OPENSSL_CTX *ctx = (OPENSSL_CTX *)OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL && !context_init(ctx)) {
         OPENSSL_CTX_free(ctx);
@@ -227,7 +227,7 @@ static void openssl_ctx_generic_new(void *parent_ign, void *ptr_ign,
                                     CRYPTO_EX_DATA *ad, int index,
                                     long argl_ign, void *argp)
 {
-    const OPENSSL_CTX_METHOD *meth = argp;
+    const OPENSSL_CTX_METHOD *meth = (const OPENSSL_CTX_METHOD *)argp;
     void *ptr = meth->new_func(crypto_ex_data_get_openssl_ctx(ad));
 
     if (ptr != NULL)
@@ -237,7 +237,7 @@ static void openssl_ctx_generic_free(void *parent_ign, void *ptr,
                                      CRYPTO_EX_DATA *ad, int index,
                                      long argl_ign, void *argp)
 {
-    const OPENSSL_CTX_METHOD *meth = argp;
+    const OPENSSL_CTX_METHOD *meth = (const OPENSSL_CTX_METHOD *)argp;
 
     meth->free_func(ptr);
 }
@@ -357,7 +357,7 @@ int openssl_ctx_run_once(OPENSSL_CTX *ctx, unsigned int idx,
 int openssl_ctx_onfree(OPENSSL_CTX *ctx, openssl_ctx_onfree_fn onfreefn)
 {
     struct openssl_ctx_onfree_list_st *newonfree
-        = OPENSSL_malloc(sizeof(*newonfree));
+        = (struct openssl_ctx_onfree_list_st *)OPENSSL_malloc(sizeof(*newonfree));
 
     if (newonfree == NULL)
         return 0;

@@ -32,7 +32,7 @@ BUF_MEM *BUF_MEM_new(void)
 {
     BUF_MEM *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = (BUF_MEM *)OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -59,7 +59,7 @@ static char *sec_alloc_realloc(BUF_MEM *str, size_t len)
 {
     char *ret;
 
-    ret = OPENSSL_secure_malloc(len);
+    ret = (char *)OPENSSL_secure_malloc(len);
     if (str->data != NULL) {
         if (ret != NULL) {
             memcpy(ret, str->data, str->length);
@@ -94,7 +94,7 @@ size_t BUF_MEM_grow(BUF_MEM *str, size_t len)
     if ((str->flags & BUF_MEM_FLAG_SECURE))
         ret = sec_alloc_realloc(str, n);
     else
-        ret = OPENSSL_realloc(str->data, n);
+        ret = (char *)OPENSSL_realloc(str->data, n);
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_GROW, ERR_R_MALLOC_FAILURE);
         len = 0;
@@ -132,7 +132,7 @@ size_t BUF_MEM_grow_clean(BUF_MEM *str, size_t len)
     if ((str->flags & BUF_MEM_FLAG_SECURE))
         ret = sec_alloc_realloc(str, n);
     else
-        ret = OPENSSL_clear_realloc(str->data, str->max, n);
+        ret = (char *)OPENSSL_clear_realloc(str->data, str->max, n);
     if (ret == NULL) {
         BUFerr(BUF_F_BUF_MEM_GROW_CLEAN, ERR_R_MALLOC_FAILURE);
         len = 0;

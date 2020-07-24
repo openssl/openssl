@@ -120,7 +120,7 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 {
     EVP_PKEY_METHOD *pmeth;
 
-    pmeth = OPENSSL_zalloc(sizeof(*pmeth));
+    pmeth = (EVP_PKEY_METHOD *)OPENSSL_zalloc(sizeof(*pmeth));
     if (pmeth == NULL) {
         EVPerr(EVP_F_EVP_PKEY_METH_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -329,7 +329,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     if (pmeth == NULL && keymgmt == NULL) {
         EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
     } else {
-        ret = OPENSSL_zalloc(sizeof(*ret));
+        ret = (EVP_PKEY_CTX *)OPENSSL_zalloc(sizeof(*ret));
         if (ret == NULL)
             EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
     }
@@ -489,7 +489,7 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
         return 0;
     }
 # endif
-    rctx = OPENSSL_zalloc(sizeof(*rctx));
+    rctx = (EVP_PKEY_CTX *)OPENSSL_zalloc(sizeof(*rctx));
     if (rctx == NULL) {
         EVPerr(EVP_F_EVP_PKEY_CTX_DUP, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -633,7 +633,7 @@ const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx)
     idx -= OSSL_NELEM(standard_methods);
     if (idx >= (size_t)sk_EVP_PKEY_METHOD_num(app_pkey_methods))
         return NULL;
-    return sk_EVP_PKEY_METHOD_value(app_pkey_methods, idx);
+    return sk_EVP_PKEY_METHOD_value(app_pkey_methods, (int)idx);
 }
 #endif
 
@@ -1269,28 +1269,28 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                 return EVP_PKEY_CTX_set_ecdh_kdf_type(ctx, p1);
             }
         case EVP_PKEY_CTRL_GET_EC_KDF_MD:
-            return EVP_PKEY_CTX_get_ecdh_kdf_md(ctx, p2);
+            return EVP_PKEY_CTX_get_ecdh_kdf_md(ctx, (const EVP_MD **)p2);
         case EVP_PKEY_CTRL_EC_KDF_MD:
-            return EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, p2);
+            return EVP_PKEY_CTX_set_ecdh_kdf_md(ctx, (EVP_MD *)p2);
         case EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN:
-            return EVP_PKEY_CTX_get_ecdh_kdf_outlen(ctx, p2);
+            return EVP_PKEY_CTX_get_ecdh_kdf_outlen(ctx, (int *)p2);
         case EVP_PKEY_CTRL_EC_KDF_OUTLEN:
             return EVP_PKEY_CTX_set_ecdh_kdf_outlen(ctx, p1);
         case EVP_PKEY_CTRL_GET_EC_KDF_UKM:
-            return EVP_PKEY_CTX_get0_ecdh_kdf_ukm(ctx, p2);
+            return EVP_PKEY_CTX_get0_ecdh_kdf_ukm(ctx, (unsigned char **)p2);
         case EVP_PKEY_CTRL_EC_KDF_UKM:
-            return EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, p2, p1);
+            return EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, (unsigned char *)p2, p1);
         }
     }
 # endif
     if (keytype == EVP_PKEY_RSA) {
         switch (cmd) {
         case EVP_PKEY_CTRL_RSA_OAEP_MD:
-            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, (const EVP_MD *)p2);
         case EVP_PKEY_CTRL_GET_RSA_OAEP_MD:
-            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
+            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, (const EVP_MD **)p2);
         case EVP_PKEY_CTRL_RSA_MGF1_MD:
-            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, p2);
+            return EVP_PKEY_CTX_set_rsa_oaep_md(ctx, (const EVP_MD *)p2);
         case EVP_PKEY_CTRL_RSA_OAEP_LABEL:
             return EVP_PKEY_CTX_set0_rsa_oaep_label(ctx, p2, p1);
         case EVP_PKEY_CTRL_GET_RSA_OAEP_LABEL:
@@ -1298,7 +1298,7 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         case EVP_PKEY_CTRL_RSA_KEYGEN_BITS:
             return EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, p1);
         case EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP:
-            return EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, p2);
+            return EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, (BIGNUM *)p2);
         case EVP_PKEY_CTRL_RSA_KEYGEN_PRIMES:
             return EVP_PKEY_CTX_set_rsa_keygen_primes(ctx, p1);
         }
@@ -1370,19 +1370,19 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         }
         switch (cmd) {
         case EVP_PKEY_CTRL_MD:
-            return EVP_PKEY_CTX_set_signature_md(ctx, p2);
+            return EVP_PKEY_CTX_set_signature_md(ctx, (const EVP_MD *)p2);
         case EVP_PKEY_CTRL_GET_MD:
-            return EVP_PKEY_CTX_get_signature_md(ctx, p2);
+            return EVP_PKEY_CTX_get_signature_md(ctx, (const EVP_MD **)p2);
         case EVP_PKEY_CTRL_RSA_PADDING:
             return EVP_PKEY_CTX_set_rsa_padding(ctx, p1);
         case EVP_PKEY_CTRL_GET_RSA_PADDING:
-            return EVP_PKEY_CTX_get_rsa_padding(ctx, p2);
+            return EVP_PKEY_CTX_get_rsa_padding(ctx, (int *)p2);
         case EVP_PKEY_CTRL_GET_RSA_MGF1_MD:
-            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, p2);
+            return EVP_PKEY_CTX_get_rsa_oaep_md(ctx, (const EVP_MD **)p2);
         case EVP_PKEY_CTRL_RSA_PSS_SALTLEN:
             return EVP_PKEY_CTX_set_rsa_pss_saltlen(ctx, p1);
         case EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN:
-            return EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, p2);
+            return EVP_PKEY_CTX_get_rsa_pss_saltlen(ctx, (int *)p2);
         case EVP_PKEY_CTRL_PKCS7_ENCRYPT:
         case EVP_PKEY_CTRL_PKCS7_DECRYPT:
 # ifndef OPENSSL_NO_CMS
@@ -1739,7 +1739,7 @@ int EVP_PKEY_CTX_str2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *str)
     len = strlen(str);
     if (len > INT_MAX)
         return -1;
-    return ctx->pmeth->ctrl(ctx, cmd, len, (void *)str);
+    return ctx->pmeth->ctrl(ctx, cmd, (int)len, (void *)str);
 }
 
 int EVP_PKEY_CTX_hex2ctrl(EVP_PKEY_CTX *ctx, int cmd, const char *hex)

@@ -210,11 +210,11 @@ STACK_OF(X509_INFO)
                     goto err;
                 p = data;
                 if (ptype) {
-                    if (!d2i_PrivateKey(ptype, pp, &p, len)) {
+                    if (!d2i_PrivateKey(ptype, (EVP_PKEY **)pp, &p, len)) {
                         PEMerr(0, ERR_R_ASN1_LIB);
                         goto err;
                     }
-                } else if (d2i(pp, &p, len) == NULL) {
+                } else if (d2i((void **)pp, &p, len) == NULL) {
                     PEMerr(0, ERR_R_ASN1_LIB);
                     goto err;
                 }

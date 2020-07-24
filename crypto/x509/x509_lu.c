@@ -17,7 +17,7 @@
 
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
-    X509_LOOKUP *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_LOOKUP *ret = (X509_LOOKUP *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         X509err(X509_F_X509_LOOKUP_NEW, ERR_R_MALLOC_FAILURE);
@@ -181,7 +181,7 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
 
 X509_STORE *X509_STORE_new(void)
 {
-    X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_STORE *ret = (X509_STORE *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         X509err(0, ERR_R_MALLOC_FAILURE);
@@ -440,7 +440,7 @@ X509_LOOKUP_TYPE X509_OBJECT_get_type(const X509_OBJECT *a)
 
 X509_OBJECT *X509_OBJECT_new(void)
 {
-    X509_OBJECT *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_OBJECT *ret = (X509_OBJECT *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
         X509err(X509_F_X509_OBJECT_NEW, ERR_R_MALLOC_FAILURE);

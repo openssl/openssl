@@ -653,7 +653,7 @@ int OSSL_PARAM_get_BN(const OSSL_PARAM *p, BIGNUM **val)
         || p->data_type != OSSL_PARAM_UNSIGNED_INTEGER)
         return 0;
 
-    b = BN_native2bn(p->data, (int)p->data_size, *val);
+    b = BN_native2bn((const unsigned char *)p->data, (int)p->data_size, *val);
     if (b != NULL) {
         *val = b;
         return 1;
@@ -681,7 +681,7 @@ int OSSL_PARAM_set_BN(OSSL_PARAM *p, const BIGNUM *val)
         return 1;
     if (p->data_size >= bytes) {
         p->return_size = p->data_size;
-        return BN_bn2nativepad(val, p->data, p->data_size) >= 0;
+        return BN_bn2nativepad(val, (unsigned char *)p->data, (int)p->data_size) >= 0;
     }
     return 0;
 }
@@ -822,7 +822,7 @@ static int get_string_internal(const OSSL_PARAM *p, void **val, size_t max_len,
         return 1;
 
     if (*val == NULL) {
-        char *const q = OPENSSL_malloc(sz > 0 ? sz : 1);
+        char *const q = (char *const)OPENSSL_malloc(sz > 0 ? sz : 1);
 
         if (q == NULL)
             return 0;

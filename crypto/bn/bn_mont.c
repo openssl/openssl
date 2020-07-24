@@ -229,7 +229,7 @@ BN_MONT_CTX *BN_MONT_CTX_new(void)
 {
     BN_MONT_CTX *ret;
 
-    if ((ret = OPENSSL_malloc(sizeof(*ret))) == NULL) {
+    if ((ret = (BN_MONT_CTX *)OPENSSL_malloc(sizeof(*ret))) == NULL) {
         BNerr(BN_F_BN_MONT_CTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -357,7 +357,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
                 goto err;
         } else {                /* if N mod word size == 1 */
 
-            if (!BN_set_word(Ri, BN_MASK2))
+            if (!BN_set_word(Ri, (BN_ULONG)BN_MASK2))
                 goto err;       /* Ri-- (mod word size) */
         }
         if (!BN_div(Ri, NULL, Ri, &tmod, ctx))

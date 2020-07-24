@@ -43,7 +43,7 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        *propquery = p->data;
+        *propquery = (const char *)p->data;
     }
 
     *engine = NULL;
@@ -55,7 +55,7 @@ static int load_common(const OSSL_PARAM params[], const char **propquery,
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         ENGINE_finish(*engine);
-        *engine = ENGINE_by_id(p->data);
+        *engine = ENGINE_by_id((const char *)p->data);
         if (*engine == NULL)
             return 0;
     }
@@ -81,11 +81,11 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
 
     EVP_CIPHER_free(pc->alloc_cipher);
     ERR_set_mark();
-    pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, p->data, propquery);
+    pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, (const char *)p->data, propquery);
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy ciphers */
     if (pc->cipher == NULL)
-        pc->cipher = EVP_get_cipherbyname(p->data);
+        pc->cipher = EVP_get_cipherbyname((const char *)p->data);
 #endif
     if (pc->cipher != NULL)
         ERR_pop_to_mark();
@@ -141,11 +141,11 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
 
     EVP_MD_free(pd->alloc_md);
     ERR_set_mark();
-    pd->md = pd->alloc_md = EVP_MD_fetch(ctx, p->data, propquery);
+    pd->md = pd->alloc_md = EVP_MD_fetch(ctx, (const char *)p->data, propquery);
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy digests */
     if (pd->md == NULL)
-        pd->md = EVP_get_digestbyname(p->data);
+        pd->md = EVP_get_digestbyname((const char *)p->data);
 #endif
     if (pd->md != NULL)
         ERR_pop_to_mark();
@@ -244,13 +244,13 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
         && (p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_MAC)) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        macname = p->data;
+        macname = (const char *)p->data;
     }
     if ((p = OSSL_PARAM_locate_const(params,
                                      OSSL_ALG_PARAM_PROPERTIES)) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        properties = p->data;
+        properties = (const char *)p->data;
     }
 
     /* If we got a new mac name, we make a new EVP_MAC_CTX */

@@ -35,7 +35,7 @@ static void *self_test_set_callback_new(OPENSSL_CTX *ctx)
 {
     SELF_TEST_CB *stcb;
 
-    stcb = OPENSSL_zalloc(sizeof(*stcb));
+    stcb = (SELF_TEST_CB *)OPENSSL_zalloc(sizeof(*stcb));
     return stcb;
 }
 
@@ -51,8 +51,8 @@ static const OPENSSL_CTX_METHOD self_test_set_callback_method = {
 
 static SELF_TEST_CB *get_self_test_callback(OPENSSL_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_SELF_TEST_CB_INDEX,
-                                &self_test_set_callback_method);
+    return (SELF_TEST_CB *)openssl_ctx_get_data(libctx, OPENSSL_CTX_SELF_TEST_CB_INDEX,
+                                                &self_test_set_callback_method);
 }
 
 #ifndef FIPS_MODULE
@@ -99,7 +99,7 @@ static void self_test_setparams(OSSL_SELF_TEST *st)
 
 OSSL_SELF_TEST *OSSL_SELF_TEST_new(OSSL_CALLBACK *cb, void *cbarg)
 {
-    OSSL_SELF_TEST *ret = OPENSSL_zalloc(sizeof(*ret));
+    OSSL_SELF_TEST *ret = (OSSL_SELF_TEST *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         return NULL;

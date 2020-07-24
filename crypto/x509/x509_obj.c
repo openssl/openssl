@@ -68,7 +68,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
             i2t_ASN1_OBJECT(tmp_buf, sizeof(tmp_buf), ne->object);
             s = tmp_buf;
         }
-        l1 = strlen(s);
+        l1 = (int)strlen(s);
 
         type = ne->value->type;
         num = ne->value->length;
@@ -152,7 +152,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
             } else {
                 if (n == '/' || n == '+')
                     *(p++) = '\\';
-                *(p++) = n;
+                *(p++) = (char)n;
             }
 #else
             n = os_toascii[q[j]];

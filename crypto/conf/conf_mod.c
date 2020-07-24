@@ -296,7 +296,7 @@ static CONF_MODULE *module_add(DSO *dso, const char *name,
         supported_modules = sk_CONF_MODULE_new_null();
     if (supported_modules == NULL)
         return NULL;
-    if ((tmod = OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
+    if ((tmod = (CONF_MODULE *)OPENSSL_zalloc(sizeof(*tmod))) == NULL) {
         CONFerr(CONF_F_MODULE_ADD, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -333,9 +333,9 @@ static CONF_MODULE *module_find(const char *name)
     p = strrchr(name, '.');
 
     if (p)
-        nchar = p - name;
+        nchar = (int)(p - name);
     else
-        nchar = strlen(name);
+        nchar = (int)strlen(name);
 
     for (i = 0; i < sk_CONF_MODULE_num(supported_modules); i++) {
         tmod = sk_CONF_MODULE_value(supported_modules, i);
@@ -356,7 +356,7 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
     CONF_IMODULE *imod = NULL;
 
     /* Otherwise add initialized module to list */
-    imod = OPENSSL_malloc(sizeof(*imod));
+    imod = (CONF_IMODULE *)OPENSSL_malloc(sizeof(*imod));
     if (imod == NULL)
         goto err;
 
@@ -553,7 +553,7 @@ char *CONF_get1_default_config_file(void)
     sep = "/";
 #endif
     size = strlen(t) + strlen(sep) + strlen(OPENSSL_CONF) + 1;
-    file = OPENSSL_malloc(size);
+    file = (char *)OPENSSL_malloc(size);
 
     if (file == NULL)
         return NULL;
@@ -599,7 +599,7 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
                 while (isspace((unsigned char)*tmpend))
                     tmpend--;
             }
-            ret = list_cb(lstart, tmpend - lstart + 1, arg);
+            ret = list_cb(lstart, (int)(tmpend - lstart + 1), arg);
         }
         if (ret <= 0)
             return ret;

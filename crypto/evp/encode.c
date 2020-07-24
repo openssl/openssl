@@ -126,7 +126,7 @@ static unsigned char conv_ascii2bin(unsigned char a, const unsigned char *table)
 
 EVP_ENCODE_CTX *EVP_ENCODE_CTX_new(void)
 {
-    return OPENSSL_zalloc(sizeof(EVP_ENCODE_CTX));
+    return (EVP_ENCODE_CTX *)OPENSSL_zalloc(sizeof(EVP_ENCODE_CTX));
 }
 
 void EVP_ENCODE_CTX_free(EVP_ENCODE_CTX *ctx)
@@ -209,7 +209,7 @@ int EVP_EncodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     if (inl != 0)
         memcpy(&(ctx->enc_data[0]), in, inl);
     ctx->num = inl;
-    *outl = total;
+    *outl = (int)total;
 
     return 1;
 }
@@ -329,7 +329,7 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
 
     for (i = 0; i < inl; i++) {
         tmp = *(in++);
-        v = conv_ascii2bin(tmp, table);
+        v = (unsigned char)conv_ascii2bin((unsigned char)tmp, table);
         if (v == B64_ERROR) {
             rv = -1;
             goto end;
@@ -365,7 +365,7 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
                 goto end;
             }
             OPENSSL_assert(n < (int)sizeof(ctx->enc_data));
-            d[n++] = tmp;
+            d[n++] = (unsigned char)tmp;
         }
 
         if (n == 64) {

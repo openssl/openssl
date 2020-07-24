@@ -172,17 +172,17 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
 
 #define IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags,      \
                                        kbits, blkbits, ivbits, typ)            \
-static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;   \
 static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;             \
+static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
-     PROV_##UCALG##_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx))\
-                                                     : NULL;                   \
+     PROV_##UCALG##_CTX *ctx = (PROV_##UCALG##_CTX *)(ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx))\
+                                                     : NULL);                   \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
                                 EVP_CIPH_##UCMODE##_MODE, flags,               \

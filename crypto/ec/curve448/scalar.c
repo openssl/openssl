@@ -214,7 +214,7 @@ void curve448_scalar_encode(unsigned char ser[C448_SCALAR_BYTES],
 
     for (i = 0; i < C448_SCALAR_LIMBS; i++) {
         for (j = 0; j < sizeof(c448_word_t); j++, k++)
-            ser[k] = s->limb[i] >> (8 * j);
+            ser[k] = (unsigned char)(s->limb[i] >> (8 * j));
     }
 }
 

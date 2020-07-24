@@ -92,27 +92,27 @@ int ec_GFp_mont_group_init(EC_GROUP *group)
 
 void ec_GFp_mont_group_finish(EC_GROUP *group)
 {
-    BN_MONT_CTX_free(group->field_data1);
+    BN_MONT_CTX_free((BN_MONT_CTX *)group->field_data1);
     group->field_data1 = NULL;
-    BN_free(group->field_data2);
+    BN_free((BIGNUM *)group->field_data2);
     group->field_data2 = NULL;
     ec_GFp_simple_group_finish(group);
 }
 
 void ec_GFp_mont_group_clear_finish(EC_GROUP *group)
 {
-    BN_MONT_CTX_free(group->field_data1);
+    BN_MONT_CTX_free((BN_MONT_CTX *)group->field_data1);
     group->field_data1 = NULL;
-    BN_clear_free(group->field_data2);
+    BN_clear_free((BIGNUM *)group->field_data2);
     group->field_data2 = NULL;
     ec_GFp_simple_group_clear_finish(group);
 }
 
 int ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 {
-    BN_MONT_CTX_free(dest->field_data1);
+    BN_MONT_CTX_free((BN_MONT_CTX *)dest->field_data1);
     dest->field_data1 = NULL;
-    BN_clear_free(dest->field_data2);
+    BN_clear_free((BIGNUM *)dest->field_data2);
     dest->field_data2 = NULL;
 
     if (!ec_GFp_simple_group_copy(dest, src))
@@ -122,11 +122,11 @@ int ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
         dest->field_data1 = BN_MONT_CTX_new();
         if (dest->field_data1 == NULL)
             return 0;
-        if (!BN_MONT_CTX_copy(dest->field_data1, src->field_data1))
+        if (!BN_MONT_CTX_copy((BN_MONT_CTX *)dest->field_data1, (BN_MONT_CTX *)src->field_data1))
             goto err;
     }
     if (src->field_data2 != NULL) {
-        dest->field_data2 = BN_dup(src->field_data2);
+        dest->field_data2 = BN_dup((const BIGNUM *)src->field_data2);
         if (dest->field_data2 == NULL)
             goto err;
     }
@@ -134,7 +134,7 @@ int ec_GFp_mont_group_copy(EC_GROUP *dest, const EC_GROUP *src)
     return 1;
 
  err:
-    BN_MONT_CTX_free(dest->field_data1);
+    BN_MONT_CTX_free((BN_MONT_CTX *)dest->field_data1);
     dest->field_data1 = NULL;
     return 0;
 }
@@ -147,9 +147,9 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     BIGNUM *one = NULL;
     int ret = 0;
 
-    BN_MONT_CTX_free(group->field_data1);
+    BN_MONT_CTX_free((BN_MONT_CTX *)group->field_data1);
     group->field_data1 = NULL;
-    BN_free(group->field_data2);
+    BN_free((BIGNUM *)group->field_data2);
     group->field_data2 = NULL;
 
     if (ctx == NULL) {
@@ -179,9 +179,9 @@ int ec_GFp_mont_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     ret = ec_GFp_simple_group_set_curve(group, p, a, b, ctx);
 
     if (!ret) {
-        BN_MONT_CTX_free(group->field_data1);
+        BN_MONT_CTX_free((BN_MONT_CTX *)group->field_data1);
         group->field_data1 = NULL;
-        BN_free(group->field_data2);
+        BN_free((BIGNUM *)group->field_data2);
         group->field_data2 = NULL;
     }
 
@@ -200,7 +200,7 @@ int ec_GFp_mont_field_mul(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
         return 0;
     }
 
-    return BN_mod_mul_montgomery(r, a, b, group->field_data1, ctx);
+    return BN_mod_mul_montgomery(r, a, b, (BN_MONT_CTX *)group->field_data1, ctx);
 }
 
 int ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
@@ -211,7 +211,7 @@ int ec_GFp_mont_field_sqr(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
         return 0;
     }
 
-    return BN_mod_mul_montgomery(r, a, a, group->field_data1, ctx);
+    return BN_mod_mul_montgomery(r, a, a, (BN_MONT_CTX *)group->field_data1, ctx);
 }
 
 /*-
@@ -246,7 +246,7 @@ int ec_GFp_mont_field_inv(const EC_GROUP *group, BIGNUM *r, const BIGNUM *a,
      * Exponent e is public.
      * No need for scatter-gather or BN_FLG_CONSTTIME.
      */
-    if (!BN_mod_exp_mont(r, a, e, group->field, ctx, group->field_data1))
+    if (!BN_mod_exp_mont(r, a, e, group->field, ctx, (BN_MONT_CTX *)group->field_data1))
         goto err;
 
     /* throw an error on zero */
@@ -282,7 +282,7 @@ int ec_GFp_mont_field_decode(const EC_GROUP *group, BIGNUM *r,
         return 0;
     }
 
-    return BN_from_montgomery(r, a, group->field_data1, ctx);
+    return BN_from_montgomery(r, a, (BN_MONT_CTX *)group->field_data1, ctx);
 }
 
 int ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r,
@@ -293,7 +293,7 @@ int ec_GFp_mont_field_set_to_one(const EC_GROUP *group, BIGNUM *r,
         return 0;
     }
 
-    if (!BN_copy(r, group->field_data2))
+    if (!BN_copy(r, (const BIGNUM *)group->field_data2))
         return 0;
     return 1;
 }

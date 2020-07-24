@@ -151,7 +151,8 @@ int CRYPTO_ccm128_encrypt(CCM128_CONTEXT *ctx,
     if (!(flags0 & 0x40))
         (*block) (ctx->nonce.c, ctx->cmac.c, key), ctx->blocks++;
 
-    ctx->nonce.c[0] = L = flags0 & 7;
+    ctx->nonce.c[0] = flags0 & 7;
+    L = flags0 & 7;
     for (n = 0, i = 15 - L; i < 15; ++i) {
         n |= ctx->nonce.c[i];
         ctx->nonce.c[i] = 0;
@@ -235,7 +236,8 @@ int CRYPTO_ccm128_decrypt(CCM128_CONTEXT *ctx,
     if (!(flags0 & 0x40))
         (*block) (ctx->nonce.c, ctx->cmac.c, key);
 
-    ctx->nonce.c[0] = L = flags0 & 7;
+    ctx->nonce.c[0] = flags0 & 7;
+    L = flags0 & 7;
     for (n = 0, i = 15 - L; i < 15; ++i) {
         n |= ctx->nonce.c[i];
         ctx->nonce.c[i] = 0;
@@ -324,7 +326,8 @@ int CRYPTO_ccm128_encrypt_ccm64(CCM128_CONTEXT *ctx,
     if (!(flags0 & 0x40))
         (*block) (ctx->nonce.c, ctx->cmac.c, key), ctx->blocks++;
 
-    ctx->nonce.c[0] = L = flags0 & 7;
+    ctx->nonce.c[0] = flags0 & 7;
+    L = flags0 & 7;
     for (n = 0, i = 15 - L; i < 15; ++i) {
         n |= ctx->nonce.c[i];
         ctx->nonce.c[i] = 0;
@@ -388,7 +391,8 @@ int CRYPTO_ccm128_decrypt_ccm64(CCM128_CONTEXT *ctx,
     if (!(flags0 & 0x40))
         (*block) (ctx->nonce.c, ctx->cmac.c, key);
 
-    ctx->nonce.c[0] = L = flags0 & 7;
+    ctx->nonce.c[0] = flags0 & 7;
+    L = flags0 & 7;
     for (n = 0, i = 15 - L; i < 15; ++i) {
         n |= ctx->nonce.c[i];
         ctx->nonce.c[i] = 0;

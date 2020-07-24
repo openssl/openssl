@@ -36,7 +36,7 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
         ASN1err(ASN1_F_ASN1_DIGEST, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    if ((str = OPENSSL_malloc(inl)) == NULL) {
+    if ((str = (unsigned char *)OPENSSL_malloc(inl)) == NULL) {
         ASN1err(ASN1_F_ASN1_DIGEST, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -79,7 +79,7 @@ int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *md,
      if (fetched_md == NULL)
          goto err;
 
-    ret = EVP_Digest(str, i, data, len, fetched_md, NULL);
+    ret = EVP_Digest(str, (size_t)i, data, len, fetched_md, NULL);
 err:
     OPENSSL_free(str);
     if (fetched_md != md)

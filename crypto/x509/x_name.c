@@ -89,7 +89,7 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 
 static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
 {
-    X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
+    X509_NAME *ret = (X509_NAME *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         goto memerr;
@@ -222,7 +222,7 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
         if (ret < 0)
             return ret;
     }
-    ret = a->bytes->length;
+    ret = (int)a->bytes->length;
     if (out != NULL) {
         memcpy(*out, a->bytes->data, ret);
         *out += ret;
@@ -358,7 +358,7 @@ static int x509_name_canon(X509_NAME *a)
         goto err;
     a->canon_enclen = len;
 
-    p = OPENSSL_malloc(a->canon_enclen);
+    p = (unsigned char *)OPENSSL_malloc(a->canon_enclen);
     if (p == NULL) {
         X509err(X509_F_X509_NAME_CANON, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -451,13 +451,13 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
             }
             while (ossl_isspace(*from));
         } else {
-            *to++ = ossl_tolower(*from);
+            *to++ = (unsigned char)ossl_tolower(*from);
             from++;
             i++;
         }
     }
 
-    out->length = to - out->data;
+    out->length = (int)(to - out->data);
 
     return 1;
 
@@ -518,7 +518,7 @@ int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase)
                                 (ossl_isupper(s[2]) && (s[3] == '='))
               ))) || (*s == '\0'))
         {
-            i = s - c;
+            i = (int)(s - c);
             if (BIO_write(bp, c, i) != i)
                 goto err;
             c = s + 1;          /* skip following slash */

@@ -39,7 +39,7 @@ static int send_bio_chars(void *arg, const void *buf, int len)
 {
     if (!arg)
         return 1;
-    if (BIO_write(arg, buf, len) != len)
+    if (BIO_write((BIO *)arg, buf, len) != len)
         return 0;
     return 1;
 }
@@ -280,7 +280,7 @@ static int do_dump(unsigned long lflags, char_io *io_ch, void *arg,
     t.type = str->type;
     t.value.ptr = (char *)str;
     der_len = i2d_ASN1_TYPE(&t, NULL);
-    if ((der_buf = OPENSSL_malloc(der_len)) == NULL) {
+    if ((der_buf = (unsigned char *)OPENSSL_malloc(der_len)) == NULL) {
         ASN1err(ASN1_F_DO_DUMP, ERR_R_MALLOC_FAILURE);
         return -1;
     }
@@ -344,7 +344,7 @@ static int do_print_ex(char_io *io_ch, void *arg, unsigned long lflags,
     if (lflags & ASN1_STRFLGS_SHOW_TYPE) {
         const char *tagname;
         tagname = ASN1_tag2str(type);
-        outlen += strlen(tagname);
+        outlen += (int)strlen(tagname);
         if (!io_ch(arg, tagname, outlen) || !io_ch(arg, ":", 1))
             return -1;
         outlen++;
@@ -525,7 +525,7 @@ static int do_name_ex(char_io *io_ch, void *arg, const X509_NAME *n,
                     objbuf = "";
                 }
             }
-            objlen = strlen(objbuf);
+            objlen = (int)strlen(objbuf);
             if (!io_ch(arg, objbuf, objlen))
                 return -1;
             if ((objlen < fld_len) && (flags & XN_FLAG_FN_ALIGN)) {

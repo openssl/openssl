@@ -14,7 +14,7 @@ const void *ossl_bsearch(const void *key, const void *base, int num,
                          int size, int (*cmp) (const void *, const void *),
                          int flags)
 {
-    const char *base_ = base;
+    const char *base_ = (const char *)base;
     int l, h, i = 0, c = 0;
     const char *p = NULL;
 

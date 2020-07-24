@@ -38,7 +38,7 @@ static OSSL_FUNC_digest_freectx_fn name##_freectx;                              
 static OSSL_FUNC_digest_dupctx_fn name##_dupctx;                                 \
 static void *name##_newctx(void *prov_ctx)                                     \
 {                                                                              \
-    CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) : NULL;    \
+    CTX *ctx = (CTX *)(ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) : NULL);    \
     return ctx;                                                                \
 }                                                                              \
 static void name##_freectx(void *vctx)                                         \

@@ -82,7 +82,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
          * we have.
          */
         if (buf_size < ERR_MAX_DATA_SIZE
-            && (rbuf = OPENSSL_realloc(buf, ERR_MAX_DATA_SIZE)) != NULL) {
+            && (rbuf = (char *)OPENSSL_realloc(buf, ERR_MAX_DATA_SIZE)) != NULL) {
             buf = rbuf;
             buf_size = ERR_MAX_DATA_SIZE;
         }
@@ -100,7 +100,7 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
          * (According to documentation, realloc leaves the old buffer untouched
          * if it fails)
          */
-        if ((rbuf = OPENSSL_realloc(buf, printed_len + 1)) != NULL) {
+        if ((rbuf = (char *)OPENSSL_realloc(buf, printed_len + 1)) != NULL) {
             buf = rbuf;
             buf_size = printed_len + 1;
         }

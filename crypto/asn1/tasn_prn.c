@@ -36,7 +36,7 @@ ASN1_PCTX *ASN1_PCTX_new(void)
 {
     ASN1_PCTX *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = (ASN1_PCTX *)OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_PCTX_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -139,7 +139,7 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
     const ASN1_TEMPLATE *tt;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_VALUE **tmpfld;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux = (const ASN1_AUX *)it->funcs;
     ASN1_aux_const_cb *asn1_cb = NULL;
     ASN1_PRINT_ARG parg;
     int i;
@@ -180,7 +180,7 @@ static int asn1_item_print_ctx(BIO *out, const ASN1_VALUE **fld, int indent,
         if (!nohdr && !asn1_print_fsname(out, indent, fname, sname, pctx))
             return 0;
         /* Use new style print routine if possible */
-        ef = it->funcs;
+        ef = (const ASN1_EXTERN_FUNCS *)it->funcs;
         if (ef && ef->asn1_ex_print) {
             i = ef->asn1_ex_print(out, fld, indent, "", pctx);
             if (!i)
@@ -440,7 +440,7 @@ static int asn1_primitive_print(BIO *out, const ASN1_VALUE **fld,
     int ret = 1, needlf = 1;
     const char *pname;
     const ASN1_PRIMITIVE_FUNCS *pf;
-    pf = it->funcs;
+    pf = (const ASN1_PRIMITIVE_FUNCS *)it->funcs;
     if (!asn1_print_fsname(out, indent, fname, sname, pctx))
         return 0;
     if (pf && pf->prim_print)

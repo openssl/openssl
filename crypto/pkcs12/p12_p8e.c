@@ -55,7 +55,7 @@ X509_SIG *PKCS8_set0_pbe(const char *pass, int passlen,
         return NULL;
     }
 
-    p8 = OPENSSL_zalloc(sizeof(*p8));
+    p8 = (X509_SIG *)OPENSSL_zalloc(sizeof(*p8));
 
     if (p8 == NULL) {
         PKCS12err(PKCS12_F_PKCS8_SET0_PBE, ERR_R_MALLOC_FAILURE);

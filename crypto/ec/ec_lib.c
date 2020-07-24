@@ -40,7 +40,7 @@ EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
         return NULL;
     }
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = (EC_GROUP *)OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -246,7 +246,7 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
 
     if (src->seed) {
         OPENSSL_free(dest->seed);
-        if ((dest->seed = OPENSSL_malloc(src->seed_len)) == NULL) {
+        if ((dest->seed = (unsigned char *)OPENSSL_malloc(src->seed_len)) == NULL) {
             ECerr(EC_F_EC_GROUP_COPY, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -528,7 +528,7 @@ size_t EC_GROUP_set_seed(EC_GROUP *group, const unsigned char *p, size_t len)
     if (!len || !p)
         return 1;
 
-    if ((group->seed = OPENSSL_malloc(len)) == NULL) {
+    if ((group->seed = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
         ECerr(EC_F_EC_GROUP_SET_SEED, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -722,7 +722,7 @@ EC_POINT *EC_POINT_new(const EC_GROUP *group)
         return NULL;
     }
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = (EC_POINT *)OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ECerr(EC_F_EC_POINT_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;

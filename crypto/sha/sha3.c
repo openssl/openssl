@@ -44,7 +44,7 @@ int keccak_kmac_init(KECCAK1600_CTX *ctx, unsigned char pad, size_t bitlen)
 
 int sha3_update(KECCAK1600_CTX *ctx, const void *_inp, size_t len)
 {
-    const unsigned char *inp = _inp;
+    const unsigned char *inp = (const unsigned char *)_inp;
     size_t bsz = ctx->block_size;
     size_t num, rem;
 

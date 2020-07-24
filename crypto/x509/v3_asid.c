@@ -110,7 +110,7 @@ static int i2r_ASIdentifierChoice(BIO *out,
 static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
                              void *ext, BIO *out, int indent)
 {
-    ASIdentifiers *asid = ext;
+    ASIdentifiers *asid = (ASIdentifiers *)ext;
     return (i2r_ASIdentifierChoice(out, asid->asnum, indent,
                                    "Autonomous System Numbers") &&
             i2r_ASIdentifierChoice(out, asid->rdi, indent,
@@ -446,7 +446,7 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
             ASRange *r;
             switch (a->type) {
             case ASIdOrRange_id:
-                if ((r = OPENSSL_malloc(sizeof(*r))) == NULL) {
+                if ((r = (ASRange *)OPENSSL_malloc(sizeof(*r))) == NULL) {
                     X509V3err(X509V3_F_ASIDENTIFIERCHOICE_CANONIZE,
                               ERR_R_MALLOC_FAILURE);
                     goto done;
@@ -561,12 +561,12 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
         /*
          * Number, range, or mistake, pick it apart and figure out which.
          */
-        i1 = strspn(val->value, "0123456789");
+        i1 = (int)strspn(val->value, "0123456789");
         if (val->value[i1] == '\0') {
             is_range = 0;
         } else {
             is_range = 1;
-            i2 = i1 + strspn(val->value + i1, " \t");
+            i2 = (int)(i1 + strspn(val->value + i1, " \t"));
             if (val->value[i2] != '-') {
                 X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
                           X509V3_R_INVALID_ASNUMBER);
@@ -574,8 +574,8 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
                 goto err;
             }
             i2++;
-            i2 = i2 + strspn(val->value + i2, " \t");
-            i3 = i2 + strspn(val->value + i2, "0123456789");
+            i2 = (int)(i2 + strspn(val->value + i2, " \t"));
+            i3 = (int)(i2 + strspn(val->value + i2, "0123456789"));
             if (val->value[i3] != '\0') {
                 X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
                           X509V3_R_INVALID_ASRANGE);

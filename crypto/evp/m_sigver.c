@@ -346,7 +346,7 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
     }
 
     return pctx->op.sig.signature->digest_sign_update(pctx->op.sig.sigprovctx,
-                                                      data, dsize);
+                                                      (const unsigned char *)data, dsize);
 
  legacy:
     if (pctx != NULL) {
@@ -376,7 +376,7 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
     }
 
     return pctx->op.sig.signature->digest_verify_update(pctx->op.sig.sigprovctx,
-                                                        data, dsize);
+                                                        (const unsigned char *)data, dsize);
 
  legacy:
     if (pctx != NULL) {
@@ -540,7 +540,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         vctx = 0;
     if (ctx->flags & EVP_MD_CTX_FLAG_FINALISE) {
         if (vctx)
-            r = pctx->pmeth->verifyctx(pctx, sig, siglen, ctx);
+            r = pctx->pmeth->verifyctx(pctx, sig, (int)siglen, ctx);
         else
             r = EVP_DigestFinal_ex(ctx, md, &mdlen);
     } else {
@@ -553,7 +553,7 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
         }
         if (vctx)
             r = tmp_ctx->pctx->pmeth->verifyctx(tmp_ctx->pctx,
-                                                sig, siglen, tmp_ctx);
+                                                sig, (int)siglen, tmp_ctx);
         else
             r = EVP_DigestFinal_ex(tmp_ctx, md, &mdlen);
         EVP_MD_CTX_free(tmp_ctx);

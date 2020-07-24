@@ -56,7 +56,7 @@ static void *aes_wrap_newctx(size_t kbits, size_t blkbits,
     if (!ossl_prov_is_running())
         return NULL;
 
-    wctx = OPENSSL_zalloc(sizeof(*wctx));
+    wctx = (PROV_AES_WRAP_CTX *)OPENSSL_zalloc(sizeof(*wctx));
     ctx = (PROV_CIPHER_CTX *)wctx;
     if (ctx != NULL) {
         cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags,
@@ -150,14 +150,14 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
             if (pad)
                 inlen = (inlen + 7) / 8 * 8;
             /* 8 byte prefix */
-            return inlen + 8;
+            return (int)(inlen + 8);
         } else {
             /*
              * If not padding output will be exactly 8 bytes smaller than
              * input. If padding it will be at least 8 bytes smaller but we
              * don't know how much.
              */
-            return inlen - 8;
+            return (int)(inlen - 8);
         }
     }
 

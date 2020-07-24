@@ -192,7 +192,7 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
         return -1;
     }
 
-    em = OPENSSL_malloc(num);
+    em = (unsigned char *)OPENSSL_malloc(num);
     if (em == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_TYPE_2, ERR_R_MALLOC_FAILURE);
         return -1;
@@ -257,11 +257,11 @@ int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,
     for (msg_index = 1; msg_index < num - RSA_PKCS1_PADDING_SIZE; msg_index <<= 1) {
         mask = ~constant_time_eq(msg_index & (num - RSA_PKCS1_PADDING_SIZE - mlen), 0);
         for (i = RSA_PKCS1_PADDING_SIZE; i < num - msg_index; i++)
-            em[i] = constant_time_select_8(mask, em[i + msg_index], em[i]);
+            em[i] = constant_time_select_8((unsigned char)mask, em[i + msg_index], em[i]);
     }
     for (i = 0; i < tlen; i++) {
         mask = good & constant_time_lt(i, mlen);
-        to[i] = constant_time_select_8(mask, em[i + RSA_PKCS1_PADDING_SIZE], to[i]);
+        to[i] = constant_time_select_8((unsigned char)mask, em[i + RSA_PKCS1_PADDING_SIZE], to[i]);
     }
 
     OPENSSL_clear_free(em, num);
@@ -382,7 +382,7 @@ int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *libctx, unsigned char *to,
      */
     for (i = 0; i < SSL_MAX_MASTER_KEY_LENGTH; i++) {
         to[i] =
-            constant_time_select_8(good,
+            constant_time_select_8((unsigned char)good,
                                    from[flen - SSL_MAX_MASTER_KEY_LENGTH + i],
                                    rand_premaster_secret[i]);
     }

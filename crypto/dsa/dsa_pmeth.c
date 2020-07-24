@@ -37,7 +37,7 @@ typedef struct {
 
 static int pkey_dsa_init(EVP_PKEY_CTX *ctx)
 {
-    DSA_PKEY_CTX *dctx = OPENSSL_malloc(sizeof(*dctx));
+    DSA_PKEY_CTX *dctx = (DSA_PKEY_CTX *)OPENSSL_malloc(sizeof(*dctx));
 
     if (dctx == NULL)
         return 0;
@@ -59,8 +59,8 @@ static int pkey_dsa_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 
     if (!pkey_dsa_init(dst))
         return 0;
-    sctx = src->data;
-    dctx = dst->data;
+    sctx = (DSA_PKEY_CTX *)src->data;
+    dctx = (DSA_PKEY_CTX *)dst->data;
     dctx->nbits = sctx->nbits;
     dctx->qbits = sctx->qbits;
     dctx->pmd = sctx->pmd;
@@ -70,7 +70,7 @@ static int pkey_dsa_copy(EVP_PKEY_CTX *dst, const EVP_PKEY_CTX *src)
 
 static void pkey_dsa_cleanup(EVP_PKEY_CTX *ctx)
 {
-    DSA_PKEY_CTX *dctx = ctx->data;
+    DSA_PKEY_CTX *dctx = (DSA_PKEY_CTX *)ctx->data;
     OPENSSL_free(dctx);
 }
 
@@ -80,13 +80,13 @@ static int pkey_dsa_sign(EVP_PKEY_CTX *ctx, unsigned char *sig,
 {
     int ret;
     unsigned int sltmp;
-    DSA_PKEY_CTX *dctx = ctx->data;
+    DSA_PKEY_CTX *dctx = (DSA_PKEY_CTX *)ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
 
     if (dctx->md != NULL && tbslen != (size_t)EVP_MD_size(dctx->md))
         return 0;
 
-    ret = DSA_sign(0, tbs, tbslen, sig, &sltmp, dsa);
+    ret = DSA_sign(0, tbs, (int)tbslen, sig, &sltmp, dsa);
 
     if (ret <= 0)
         return ret;
@@ -99,20 +99,20 @@ static int pkey_dsa_verify(EVP_PKEY_CTX *ctx,
                            const unsigned char *tbs, size_t tbslen)
 {
     int ret;
-    DSA_PKEY_CTX *dctx = ctx->data;
+    DSA_PKEY_CTX *dctx = (DSA_PKEY_CTX *)ctx->data;
     DSA *dsa = ctx->pkey->pkey.dsa;
 
     if (dctx->md != NULL && tbslen != (size_t)EVP_MD_size(dctx->md))
         return 0;
 
-    ret = DSA_verify(0, tbs, tbslen, sig, siglen, dsa);
+    ret = DSA_verify(0, tbs, (int)tbslen, sig, (int)siglen, dsa);
 
     return ret;
 }
 
 static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
 {
-    DSA_PKEY_CTX *dctx = ctx->data;
+    DSA_PKEY_CTX *dctx = (DSA_PKEY_CTX *)ctx->data;
 
     switch (type) {
     case EVP_PKEY_CTRL_DSA_PARAMGEN_BITS:
@@ -134,7 +134,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
             return 0;
         }
-        dctx->pmd = p2;
+        dctx->pmd = (const EVP_MD *)p2;
         return 1;
 
     case EVP_PKEY_CTRL_MD:
@@ -152,7 +152,7 @@ static int pkey_dsa_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
             DSAerr(DSA_F_PKEY_DSA_CTRL, DSA_R_INVALID_DIGEST_TYPE);
             return 0;
         }
-        dctx->md = p2;
+        dctx->md = (const EVP_MD *)p2;
         return 1;
 
     case EVP_PKEY_CTRL_GET_MD:
@@ -201,7 +201,7 @@ static int pkey_dsa_ctrl_str(EVP_PKEY_CTX *ctx,
 static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
     DSA *dsa = NULL;
-    DSA_PKEY_CTX *dctx = ctx->data;
+    DSA_PKEY_CTX *dctx = (DSA_PKEY_CTX *)ctx->data;
     BN_GENCB *pcb;
     int ret, res;
 

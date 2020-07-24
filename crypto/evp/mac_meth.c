@@ -8,7 +8,7 @@
 
 static int evp_mac_up_ref(void *vmac)
 {
-    EVP_MAC *mac = vmac;
+    EVP_MAC *mac = (EVP_MAC *)vmac;
     int ref = 0;
 
     CRYPTO_UP_REF(&mac->refcnt, &ref, mac->lock);
@@ -17,7 +17,7 @@ static int evp_mac_up_ref(void *vmac)
 
 static void evp_mac_free(void *vmac)
 {
-    EVP_MAC *mac = vmac;
+    EVP_MAC *mac = (EVP_MAC *)vmac;
     int ref = 0;
 
     if (mac == NULL)
@@ -35,7 +35,7 @@ static void *evp_mac_new(void)
 {
     EVP_MAC *mac = NULL;
 
-    if ((mac = OPENSSL_zalloc(sizeof(*mac))) == NULL
+    if ((mac = (EVP_MAC *)OPENSSL_zalloc(sizeof(*mac))) == NULL
         || (mac->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         evp_mac_free(mac);
         return NULL;
@@ -53,7 +53,7 @@ static void *evp_mac_from_dispatch(int name_id,
     EVP_MAC *mac = NULL;
     int fnmaccnt = 0, fnctxcnt = 0;
 
-    if ((mac = evp_mac_new()) == NULL) {
+    if ((mac = (EVP_MAC *)evp_mac_new()) == NULL) {
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -152,9 +152,9 @@ static void *evp_mac_from_dispatch(int name_id,
 EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
-                             evp_mac_from_dispatch, evp_mac_up_ref,
-                             evp_mac_free);
+    return (EVP_MAC *)evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
+                                        evp_mac_from_dispatch, evp_mac_up_ref,
+                                        evp_mac_free);
 }
 
 int EVP_MAC_up_ref(EVP_MAC *mac)

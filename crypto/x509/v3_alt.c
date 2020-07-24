@@ -335,7 +335,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
     if (i < 0)
         return 1;
     if ((ext = X509_get_ext(ctx->issuer_cert, i)) == NULL
-        || (ialt = X509V3_EXT_d2i(ext)) == NULL) {
+        || (ialt = (GENERAL_NAMES *)X509V3_EXT_d2i(ext)) == NULL) {
         X509V3err(X509V3_F_COPY_ISSUER, X509V3_R_ISSUER_DECODE_ERROR);
         goto err;
     }
@@ -565,7 +565,7 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     if (is_string) {
         if ((gen->d.ia5 = ASN1_IA5STRING_new()) == NULL ||
             !ASN1_STRING_set(gen->d.ia5, (unsigned char *)value,
-                             strlen(value))) {
+                             (int)strlen(value))) {
             X509V3err(X509V3_F_A2I_GENERAL_NAME, ERR_R_MALLOC_FAILURE);
             goto err;
         }
@@ -637,7 +637,7 @@ static int do_othername(GENERAL_NAME *gen, const char *value, X509V3_CTX *ctx)
     ASN1_TYPE_free(gen->d.otherName->value);
     if ((gen->d.otherName->value = ASN1_generate_v3(p + 1, ctx)) == NULL)
         return 0;
-    objlen = p - value;
+    objlen = (int)(p - value);
     objtmp = OPENSSL_strndup(value, objlen);
     if (objtmp == NULL)
         return 0;

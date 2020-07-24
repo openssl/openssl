@@ -182,16 +182,16 @@ int OBJ_add_object(const ASN1_OBJECT *obj)
             return 0;
     if ((o = OBJ_dup(obj)) == NULL)
         goto err;
-    if ((ao[ADDED_NID] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+    if ((ao[ADDED_NID] = (ADDED_OBJ *)OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
         goto err2;
     if ((o->length != 0) && (obj->data != NULL))
-        if ((ao[ADDED_DATA] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+        if ((ao[ADDED_DATA] = (ADDED_OBJ *)OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->sn != NULL)
-        if ((ao[ADDED_SNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+        if ((ao[ADDED_SNAME] = (ADDED_OBJ *)OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
     if (o->ln != NULL)
-        if ((ao[ADDED_LNAME] = OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
+        if ((ao[ADDED_LNAME] = (ADDED_OBJ *)OPENSSL_malloc(sizeof(*ao[0]))) == NULL)
             goto err2;
 
     for (i = ADDED_DATA; i <= ADDED_NID; i++) {
@@ -392,7 +392,7 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
     if (j < 0)
         return NULL;
 
-    if ((buf = OPENSSL_malloc(j)) == NULL) {
+    if ((buf = (unsigned char *)OPENSSL_malloc(j)) == NULL) {
         OBJerr(OBJ_F_OBJ_TXT2OBJ, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -432,7 +432,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
         if (s) {
             if (buf)
                 OPENSSL_strlcpy(buf, s, buf_len);
-            n = strlen(s);
+            n = (int)strlen(s);
             return n;
         }
     }
@@ -486,7 +486,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
                 l -= (long)(i * 40);
             }
             if (buf && (buf_len > 1)) {
-                *buf++ = i + '0';
+                *buf++ = (char)(i + '0');
                 *buf = '\0';
                 buf_len--;
             }
@@ -498,7 +498,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             bndec = BN_bn2dec(bl);
             if (!bndec)
                 goto err;
-            i = strlen(bndec);
+            i = (int)strlen(bndec);
             if (buf) {
                 if (buf_len > 1) {
                     *buf++ = '.';
@@ -519,7 +519,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             OPENSSL_free(bndec);
         } else {
             BIO_snprintf(tbuf, sizeof(tbuf), ".%lu", l);
-            i = strlen(tbuf);
+            i = (int)strlen(tbuf);
             if (buf && (buf_len > 0)) {
                 OPENSSL_strlcpy(buf, tbuf, buf_len);
                 if (i > buf_len) {
@@ -612,7 +612,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
                             int (*cmp) (const void *, const void *),
                             int flags)
 {
-    const char *p = ossl_bsearch(key, base, num, size, cmp, flags);
+    const char *p = (const char *)ossl_bsearch(key, base, num, size, cmp, flags);
 
 #ifdef CHARSET_EBCDIC
     /*

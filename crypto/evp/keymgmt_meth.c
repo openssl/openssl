@@ -20,7 +20,7 @@ static void *keymgmt_new(void)
 {
     EVP_KEYMGMT *keymgmt = NULL;
 
-    if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL
+    if ((keymgmt = (EVP_KEYMGMT *)OPENSSL_zalloc(sizeof(*keymgmt))) == NULL
         || (keymgmt->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
         EVPerr(0, ERR_R_MALLOC_FAILURE);
@@ -41,7 +41,7 @@ static void *keymgmt_from_dispatch(int name_id,
     int setgenparamfncnt = 0;
     int importfncnt = 0, exportfncnt = 0;
 
-    if ((keymgmt = keymgmt_new()) == NULL) {
+    if ((keymgmt = (EVP_KEYMGMT *)keymgmt_new()) == NULL) {
         EVP_KEYMGMT_free(keymgmt);
         return NULL;
     }
@@ -200,20 +200,20 @@ static void *keymgmt_from_dispatch(int name_id,
 EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
                                          const char *properties)
 {
-    return evp_generic_fetch_by_number(ctx,
-                                       OSSL_OP_KEYMGMT, name_id, properties,
-                                       keymgmt_from_dispatch,
-                                       (int (*)(void *))EVP_KEYMGMT_up_ref,
-                                       (void (*)(void *))EVP_KEYMGMT_free);
+    return (EVP_KEYMGMT *)evp_generic_fetch_by_number(ctx,
+                                                      OSSL_OP_KEYMGMT, name_id, properties,
+                                                      keymgmt_from_dispatch,
+                                                      (int (*)(void *))EVP_KEYMGMT_up_ref,
+                                                      (void (*)(void *))EVP_KEYMGMT_free);
 }
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
-                             keymgmt_from_dispatch,
-                             (int (*)(void *))EVP_KEYMGMT_up_ref,
-                             (void (*)(void *))EVP_KEYMGMT_free);
+    return (EVP_KEYMGMT *)evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,
+                                            keymgmt_from_dispatch,
+                                            (int (*)(void *))EVP_KEYMGMT_up_ref,
+                                            (void (*)(void *))EVP_KEYMGMT_free);
 }
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)

@@ -76,7 +76,7 @@ int WHIRLPOOL_Update(WHIRLPOOL_CTX *c, const void *_inp, size_t bytes)
      * to care about excessive calls to WHIRLPOOL_BitUpdate...
      */
     size_t chunk = ((size_t)1) << (sizeof(size_t) * 8 - 4);
-    const unsigned char *inp = _inp;
+    const unsigned char *inp = (const unsigned char *)_inp;
 
     while (bytes >= chunk) {
         WHIRLPOOL_BitUpdate(c, inp, chunk * 8);
@@ -94,7 +94,7 @@ void WHIRLPOOL_BitUpdate(WHIRLPOOL_CTX *c, const void *_inp, size_t bits)
     size_t n;
     unsigned int bitoff = c->bitoff,
         bitrem = bitoff % 8, inpgap = (8 - (unsigned int)bits % 8) & 7;
-    const unsigned char *inp = _inp;
+    const unsigned char *inp = (const unsigned char *)_inp;
 
     /*
      * This 256-bit increment procedure relies on the size_t being natural

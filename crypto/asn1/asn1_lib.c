@@ -164,9 +164,9 @@ void ASN1_put_object(unsigned char **pp, int constructed, int length, int tag,
     i = (constructed) ? V_ASN1_CONSTRUCTED : 0;
     i |= (xclass & V_ASN1_PRIVATE);
     if (tag < 31) {
-        *(p++) = i | (tag & V_ASN1_PRIMITIVE_TAG);
+        *(p++) = (unsigned char)(i | (tag & V_ASN1_PRIMITIVE_TAG));
     } else {
-        *(p++) = i | V_ASN1_PRIMITIVE_TAG;
+        *(p++) = (unsigned char)(i | V_ASN1_PRIMITIVE_TAG);
         for (i = 0, ttag = tag; ttag > 0; i++)
             ttag >>= 7;
         ttag = i;
@@ -206,7 +206,7 @@ static void asn1_put_length(unsigned char **pp, int length)
         len = length;
         for (i = 0; len > 0; i++)
             len >>= 8;
-        *(p++) = i | 0x80;
+        *(p++) = (unsigned char)(i | 0x80);
         len = i;
         while (i-- > 0) {
             p[i] = length & 0xff;
@@ -278,7 +278,7 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
 int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 {
     unsigned char *c;
-    const char *data = _data;
+    const char *data = (const char *)_data;
     size_t len;
 
     if (len_in < 0) {
@@ -299,7 +299,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
     }
     if ((size_t)str->length <= len || str->data == NULL) {
         c = str->data;
-        str->data = OPENSSL_realloc(c, len + 1);
+        str->data = (unsigned char *)OPENSSL_realloc(c, len + 1);
         if (str->data == NULL) {
             ASN1err(ASN1_F_ASN1_STRING_SET, ERR_R_MALLOC_FAILURE);
             str->data = c;
@@ -318,7 +318,7 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
     OPENSSL_free(str->data);
-    str->data = data;
+    str->data = (unsigned char *)data;
     str->length = len;
 }
 
@@ -331,7 +331,7 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
 {
     ASN1_STRING *ret;
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
+    ret = (ASN1_STRING *)OPENSSL_zalloc(sizeof(*ret));
     if (ret == NULL) {
         ASN1err(ASN1_F_ASN1_STRING_TYPE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -430,7 +430,7 @@ char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text, const char *sep,
         if (length > max_len)
             return NULL;
     }
-    if ((result = OPENSSL_malloc(length + 1)) == NULL)
+    if ((result = (char *)OPENSSL_malloc(length + 1)) == NULL)
         return NULL;
 
     for (i = 0, p = result; i < sk_ASN1_UTF8STRING_num(text); ++i) {

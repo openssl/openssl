@@ -121,7 +121,7 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
                 }
             */
 
-            BN_bn2nativepad(tmpbn, buf, buf_n);
+            BN_bn2nativepad(tmpbn, (unsigned char *)buf, (int)buf_n);
 
             /*
              * 2s complement negate, part two.
@@ -134,18 +134,18 @@ static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
                 unsigned char *cp;
                 size_t i = buf_n;
 
-                for (cp = buf; i-- > 0; cp++)
+                for (cp = (unsigned char *)buf; i-- > 0; cp++)
                     *cp ^= 0xFF;
             }
             break;
         case OSSL_PARAM_UTF8_STRING:
-            strncpy(buf, value, buf_n);
+            strncpy((char *)buf, value, buf_n);
             break;
         case OSSL_PARAM_OCTET_STRING:
             if (ishex) {
                 size_t l = 0;
 
-                if (!OPENSSL_hexstr2buf_ex(buf, buf_n, &l, value))
+                if (!OPENSSL_hexstr2buf_ex((unsigned char *)buf, buf_n, &l, value))
                     return 0;
             } else {
                 memcpy(buf, value, buf_n);

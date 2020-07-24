@@ -47,7 +47,7 @@ int X509V3_add_value(const char *name, const char *value,
         goto err;
     if (value && (tvalue = OPENSSL_strdup(value)) == NULL)
         goto err;
-    if ((vtmp = OPENSSL_malloc(sizeof(*vtmp))) == NULL)
+    if ((vtmp = (CONF_VALUE *)OPENSSL_malloc(sizeof(*vtmp))) == NULL)
         goto err;
     if (sk_allocated && (*extlist = sk_CONF_VALUE_new_null()) == NULL)
         goto err;
@@ -121,7 +121,7 @@ static char *bignum_to_string(const BIGNUM *bn)
         return NULL;
 
     len = strlen(tmp) + 3;
-    ret = OPENSSL_malloc(len);
+    ret = (char *)OPENSSL_malloc(len);
     if (ret == NULL) {
         X509V3err(X509V3_F_BIGNUM_TO_STRING, ERR_R_MALLOC_FAILURE);
         OPENSSL_free(tmp);
@@ -428,7 +428,7 @@ STACK_OF(OPENSSL_STRING) *X509_get1_email(X509 *x)
     GENERAL_NAMES *gens;
     STACK_OF(OPENSSL_STRING) *ret;
 
-    gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+    gens = (GENERAL_NAMES *)X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
     ret = get_email(X509_get_subject_name(x), gens);
     sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
     return ret;
@@ -440,7 +440,7 @@ STACK_OF(OPENSSL_STRING) *X509_get1_ocsp(X509 *x)
     STACK_OF(OPENSSL_STRING) *ret = NULL;
     int i;
 
-    info = X509_get_ext_d2i(x, NID_info_access, NULL, NULL);
+    info = (AUTHORITY_INFO_ACCESS *)X509_get_ext_d2i(x, NID_info_access, NULL, NULL);
     if (!info)
         return NULL;
     for (i = 0; i < sk_ACCESS_DESCRIPTION_num(info); i++) {
@@ -464,7 +464,7 @@ STACK_OF(OPENSSL_STRING) *X509_REQ_get1_email(X509_REQ *x)
     STACK_OF(OPENSSL_STRING) *ret;
 
     exts = X509_REQ_get_extensions(x);
-    gens = X509V3_get_d2i(exts, NID_subject_alt_name, NULL, NULL);
+    gens = (GENERAL_NAMES *)X509V3_get_d2i(exts, NID_subject_alt_name, NULL, NULL);
     ret = get_email(X509_REQ_get_subject_name(x), gens);
     sk_GENERAL_NAME_pop_free(gens, GENERAL_NAME_free);
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
@@ -865,7 +865,7 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
     if (chklen == 0)
         chklen = strlen(chk);
 
-    gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
+    gens = (GENERAL_NAMES *)X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
     if (gens) {
         for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
             GENERAL_NAME *gen;
@@ -1110,10 +1110,10 @@ static int ipv4_from_asc(unsigned char *v4, const char *in)
     if ((a0 < 0) || (a0 > 255) || (a1 < 0) || (a1 > 255)
         || (a2 < 0) || (a2 > 255) || (a3 < 0) || (a3 > 255))
         return 0;
-    v4[0] = a0;
-    v4[1] = a1;
-    v4[2] = a2;
-    v4[3] = a3;
+    v4[0] = (unsigned char)a0;
+    v4[1] = (unsigned char)a1;
+    v4[2] = (unsigned char)a2;
+    v4[3] = (unsigned char)a3;
     return 1;
 }
 
@@ -1194,7 +1194,7 @@ static int ipv6_from_asc(unsigned char *v6, const char *in)
 
 static int ipv6_cb(const char *elem, int len, void *usr)
 {
-    IPV6_STAT *s = usr;
+    IPV6_STAT *s = (IPV6_STAT *)usr;
 
     /* Error if 16 bytes written */
     if (s->total == 16)
@@ -1248,8 +1248,8 @@ static int ipv6_hex(unsigned char *out, const char *in, int inlen)
             return 0;
         num |= (char)x;
     }
-    out[0] = num >> 8;
-    out[1] = num & 0xff;
+    out[0] = (unsigned char)(num >> 8);
+    out[1] = (unsigned char)(num & 0xff);
     return 1;
 }
 

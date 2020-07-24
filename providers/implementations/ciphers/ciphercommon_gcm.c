@@ -357,7 +357,7 @@ int gcm_cipher(void *vctx,
  */
 static int gcm_iv_generate(PROV_GCM_CTX *ctx, int offset)
 {
-    int sz = ctx->ivlen - offset;
+    int sz = (int)(ctx->ivlen - offset);
 
     /* Must be at least 96 bits */
     if (sz <= 0 || ctx->ivlen < GCM_IV_DEFAULT_SIZE)
@@ -478,7 +478,7 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
     if (len > 0)
         memcpy(ctx->iv, iv, len);
     if (ctx->enc
-        && RAND_bytes_ex(ctx->libctx, ctx->iv + len, ctx->ivlen - len) <= 0)
+        && RAND_bytes_ex(ctx->libctx, ctx->iv + len, (int)(ctx->ivlen - len)) <= 0)
             return 0;
     ctx->iv_gen = 1;
     ctx->iv_state = IV_STATE_BUFFERED;

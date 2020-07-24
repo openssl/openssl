@@ -226,7 +226,7 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
         PEMerr(0, PEM_R_HEADER_TOO_LONG);
         return NULL;
     }
-    buf = OPENSSL_malloc(length);
+    buf = (unsigned char *)OPENSSL_malloc(length);
     if (buf == NULL) {
         PEMerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -461,7 +461,7 @@ static int do_i2b(unsigned char **out, const EVP_PKEY *pk, int ispub)
     if (*out)
         p = *out;
     else {
-        if ((p = OPENSSL_malloc(outlen)) == NULL) {
+        if ((p = (unsigned char *)OPENSSL_malloc(outlen)) == NULL) {
             PEMerr(PEM_F_DO_I2B, ERR_R_MALLOC_FAILURE);
             return -1;
         }
@@ -708,7 +708,7 @@ static EVP_PKEY *do_PVK_body(const unsigned char **in,
             PEMerr(PEM_F_DO_PVK_BODY, PEM_R_BAD_PASSWORD_READ);
             goto err;
         }
-        enctmp = OPENSSL_malloc(keylen + 8);
+        enctmp = (unsigned char *)OPENSSL_malloc(keylen + 8);
         if (enctmp == NULL) {
             PEMerr(PEM_F_DO_PVK_BODY, ERR_R_MALLOC_FAILURE);
             goto err;
@@ -777,7 +777,7 @@ EVP_PKEY *b2i_PVK_bio(BIO *in, pem_password_cb *cb, void *u)
     if (!ossl_do_PVK_header(&p, 24, 0, &saltlen, &keylen))
         return 0;
     buflen = (int)keylen + saltlen;
-    buf = OPENSSL_malloc(buflen);
+    buf = (unsigned char *)OPENSSL_malloc(buflen);
     if (buf == NULL) {
         PEMerr(PEM_F_B2I_PVK_BIO, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -811,7 +811,7 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
     if (*out != NULL) {
         p = *out;
     } else {
-        start = p = OPENSSL_malloc(outlen);
+        start = p = (unsigned char *)OPENSSL_malloc(outlen);
         if (p == NULL) {
             PEMerr(PEM_F_I2B_PVK, ERR_R_MALLOC_FAILURE);
             return -1;

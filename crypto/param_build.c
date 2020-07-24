@@ -65,7 +65,7 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
                                       int size, size_t alloc, int type,
                                       int secure)
 {
-    OSSL_PARAM_BLD_DEF *pd = OPENSSL_zalloc(sizeof(*pd));
+    OSSL_PARAM_BLD_DEF *pd = (OSSL_PARAM_BLD_DEF *)OPENSSL_zalloc(sizeof(*pd));
 
     if (pd == NULL) {
         CRYPTOerr(CRYPTO_F_PARAM_PUSH, ERR_R_MALLOC_FAILURE);
@@ -89,7 +89,7 @@ static OSSL_PARAM_BLD_DEF *param_push(OSSL_PARAM_BLD *bld, const char *key,
 static int param_push_num(OSSL_PARAM_BLD *bld, const char *key,
                           void *num, size_t size, int type)
 {
-    OSSL_PARAM_BLD_DEF *pd = param_push(bld, key, size, size, type, 0);
+    OSSL_PARAM_BLD_DEF *pd = param_push(bld, key, (int)size, size, type, 0);
 
     if (pd == NULL)
         return 0;
@@ -103,7 +103,7 @@ static int param_push_num(OSSL_PARAM_BLD *bld, const char *key,
 
 OSSL_PARAM_BLD *OSSL_PARAM_BLD_new(void)
 {
-    OSSL_PARAM_BLD *r = OPENSSL_zalloc(sizeof(OSSL_PARAM_BLD));
+    OSSL_PARAM_BLD *r = (OSSL_PARAM_BLD *)OPENSSL_zalloc(sizeof(OSSL_PARAM_BLD));
 
     if (r != NULL) {
         r->params = sk_OSSL_PARAM_BLD_DEF_new_null();
@@ -229,7 +229,7 @@ int OSSL_PARAM_BLD_push_BN_pad(OSSL_PARAM_BLD *bld, const char *key,
         if (BN_get_flags(bn, BN_FLG_SECURE) == BN_FLG_SECURE)
             secure = 1;
     }
-    pd = param_push(bld, key, sz, sz, OSSL_PARAM_UNSIGNED_INTEGER, secure);
+    pd = param_push(bld, key, (int)sz, sz, OSSL_PARAM_UNSIGNED_INTEGER, secure);
     if (pd == NULL)
         return 0;
     pd->bn = bn;
@@ -248,7 +248,7 @@ int OSSL_PARAM_BLD_push_utf8_string(OSSL_PARAM_BLD *bld, const char *key,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
-    pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_UTF8_STRING, 0);
+    pd = param_push(bld, key, (int)bsize, bsize, OSSL_PARAM_UTF8_STRING, 0);
     if (pd == NULL)
         return 0;
     pd->string = buf;
@@ -267,7 +267,7 @@ int OSSL_PARAM_BLD_push_utf8_ptr(OSSL_PARAM_BLD *bld, const char *key,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
-    pd = param_push(bld, key, bsize, sizeof(buf), OSSL_PARAM_UTF8_PTR, 0);
+    pd = param_push(bld, key, (int)bsize, sizeof(buf), OSSL_PARAM_UTF8_PTR, 0);
     if (pd == NULL)
         return 0;
     pd->string = buf;
@@ -284,7 +284,7 @@ int OSSL_PARAM_BLD_push_octet_string(OSSL_PARAM_BLD *bld, const char *key,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
-    pd = param_push(bld, key, bsize, bsize, OSSL_PARAM_OCTET_STRING, 0);
+    pd = param_push(bld, key, (int)bsize, bsize, OSSL_PARAM_OCTET_STRING, 0);
     if (pd == NULL)
         return 0;
     pd->string = buf;
@@ -301,7 +301,7 @@ int OSSL_PARAM_BLD_push_octet_ptr(OSSL_PARAM_BLD *bld, const char *key,
                   CRYPTO_R_STRING_TOO_LONG);
         return 0;
     }
-    pd = param_push(bld, key, bsize, sizeof(buf), OSSL_PARAM_OCTET_PTR, 0);
+    pd = param_push(bld, key, (int)bsize, sizeof(buf), OSSL_PARAM_OCTET_PTR, 0);
     if (pd == NULL)
         return 0;
     pd->string = buf;
@@ -333,7 +333,7 @@ static OSSL_PARAM *param_bld_convert(OSSL_PARAM_BLD *bld, OSSL_PARAM *param,
         param[i].data = p;
         if (pd->bn != NULL) {
             /* BIGNUM */
-            BN_bn2nativepad(pd->bn, (unsigned char *)p, pd->size);
+            BN_bn2nativepad(pd->bn, (unsigned char *)p, (int)pd->size);
         } else if (pd->type == OSSL_PARAM_OCTET_PTR
                    || pd->type == OSSL_PARAM_UTF8_PTR) {
             /* PTR */
@@ -366,14 +366,14 @@ OSSL_PARAM *OSSL_PARAM_BLD_to_param(OSSL_PARAM_BLD *bld)
     const size_t ss = ALIGN_SIZE * bld->secure_blocks;
 
     if (ss > 0) {
-        s = OPENSSL_secure_malloc(ss);
+        s = (OSSL_PARAM_BLD_BLOCK *)OPENSSL_secure_malloc(ss);
         if (s == NULL) {
             CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM,
                       CRYPTO_R_SECURE_MALLOC_FAILURE);
             return NULL;
         }
     }
-    params = OPENSSL_malloc(total);
+    params = (OSSL_PARAM *)OPENSSL_malloc(total);
     if (params == NULL) {
         CRYPTOerr(CRYPTO_F_OSSL_PARAM_BLD_TO_PARAM, ERR_R_MALLOC_FAILURE);
         OPENSSL_secure_free(s);

@@ -949,7 +949,7 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 
                 for (i = 0; padding_item[i].id != 0; i++) {
                     if (prsactx->pad_mode == (int)padding_item[i].id) {
-                        word = padding_item[i].ptr;
+                        word = (const char *)padding_item[i].ptr;
                         break;
                     }
                 }

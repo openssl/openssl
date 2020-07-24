@@ -59,7 +59,7 @@ int EVP_add_digest(const EVP_MD *md)
 
 static void cipher_from_name(const char *name, void *data)
 {
-    const EVP_CIPHER **cipher = data;
+    const EVP_CIPHER **cipher = (const EVP_CIPHER **)data;
 
     if (*cipher != NULL)
         return;
@@ -97,14 +97,14 @@ const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name)
     if (id == 0)
         return NULL;
 
-    ossl_namemap_doall_names(namemap, id, cipher_from_name, &cp);
+    ossl_namemap_doall_names(namemap, id, cipher_from_name, (EVP_CIPHER *)&cp);
 
     return cp;
 }
 
 static void digest_from_name(const char *name, void *data)
 {
-    const EVP_MD **md = data;
+    const EVP_MD **md = (const EVP_MD **)data;
 
     if (*md != NULL)
         return;
@@ -142,7 +142,7 @@ const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name)
     if (id == 0)
         return NULL;
 
-    ossl_namemap_doall_names(namemap, id, digest_from_name, &dp);
+    ossl_namemap_doall_names(namemap, id, digest_from_name, (EVP_MD *)&dp);
 
     return dp;
 }
@@ -173,7 +173,7 @@ struct doall_cipher {
 
 static void do_all_cipher_fn(const OBJ_NAME *nm, void *arg)
 {
-    struct doall_cipher *dc = arg;
+    struct doall_cipher *dc = (struct doall_cipher *)arg;
     if (nm->alias)
         dc->fn(NULL, nm->name, nm->data, dc->arg);
     else
@@ -216,7 +216,7 @@ struct doall_md {
 
 static void do_all_md_fn(const OBJ_NAME *nm, void *arg)
 {
-    struct doall_md *dc = arg;
+    struct doall_md *dc = (struct doall_md *)arg;
     if (nm->alias)
         dc->fn(NULL, nm->name, nm->data, dc->arg);
     else

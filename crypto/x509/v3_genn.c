@@ -115,29 +115,29 @@ void GENERAL_NAME_set0_value(GENERAL_NAME *a, int type, void *value)
     switch (type) {
     case GEN_X400:
     case GEN_EDIPARTY:
-        a->d.other = value;
+        a->d.other = (ASN1_TYPE *)value;
         break;
 
     case GEN_OTHERNAME:
-        a->d.otherName = value;
+        a->d.otherName = (OTHERNAME *)value;
         break;
 
     case GEN_EMAIL:
     case GEN_DNS:
     case GEN_URI:
-        a->d.ia5 = value;
+        a->d.ia5 = (ASN1_IA5STRING *)value;
         break;
 
     case GEN_DIRNAME:
-        a->d.dirn = value;
+        a->d.dirn = (X509_NAME *)value;
         break;
 
     case GEN_IPADD:
-        a->d.ip = value;
+        a->d.ip = (ASN1_OCTET_STRING *)value;
         break;
 
     case GEN_RID:
-        a->d.rid = value;
+        a->d.rid = (ASN1_OBJECT *)value;
         break;
     }
     a->type = type;

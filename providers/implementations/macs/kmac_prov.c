@@ -139,7 +139,7 @@ static int kmac_bytepad_encode_key(unsigned char *out, int *out_len,
 
 static void kmac_free(void *vmacctx)
 {
-    struct kmac_data_st *kctx = vmacctx;
+    struct kmac_data_st *kctx = (struct kmac_data_st *)vmacctx;
 
     if (kctx != NULL) {
         EVP_MD_CTX_free(kctx->ctx);
@@ -162,7 +162,7 @@ static struct kmac_data_st *kmac_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((kctx = OPENSSL_zalloc(sizeof(*kctx))) == NULL
+    if ((kctx = (struct kmac_data_st *)OPENSSL_zalloc(sizeof(*kctx))) == NULL
             || (kctx->ctx = EVP_MD_CTX_new()) == NULL) {
         kmac_free(kctx);
         return NULL;
@@ -209,13 +209,13 @@ static void *kmac256_new(void *provctx)
 
 static void *kmac_dup(void *vsrc)
 {
-    struct kmac_data_st *src = vsrc;
+    struct kmac_data_st *src = (struct kmac_data_st *)vsrc;
     struct kmac_data_st *dst;
 
     if (!ossl_prov_is_running())
         return NULL;
 
-    dst = kmac_new(src->provctx);
+    dst = (struct kmac_data_st *)kmac_new(src->provctx);
     if (dst == NULL)
         return NULL;
 
@@ -242,7 +242,7 @@ static void *kmac_dup(void *vsrc)
  */
 static int kmac_init(void *vmacctx)
 {
-    struct kmac_data_st *kctx = vmacctx;
+    struct kmac_data_st *kctx = (struct kmac_data_st *)vmacctx;
     EVP_MD_CTX *ctx = kctx->ctx;
     unsigned char out[KMAC_MAX_BLOCKSIZE];
     int out_len, block_len;
@@ -280,7 +280,7 @@ static int kmac_init(void *vmacctx)
 
 static size_t kmac_size(void *vmacctx)
 {
-    struct kmac_data_st *kctx = vmacctx;
+    struct kmac_data_st *kctx = (struct kmac_data_st *)vmacctx;
 
     return kctx->out_len;
 }
@@ -288,7 +288,7 @@ static size_t kmac_size(void *vmacctx)
 static int kmac_update(void *vmacctx, const unsigned char *data,
                        size_t datalen)
 {
-    struct kmac_data_st *kctx = vmacctx;
+    struct kmac_data_st *kctx = (struct kmac_data_st *)vmacctx;
 
     return EVP_DigestUpdate(kctx->ctx, data, datalen);
 }
@@ -296,7 +296,7 @@ static int kmac_update(void *vmacctx, const unsigned char *data,
 static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
                       size_t outsize)
 {
-    struct kmac_data_st *kctx = vmacctx;
+    struct kmac_data_st *kctx = (struct kmac_data_st *)vmacctx;
     EVP_MD_CTX *ctx = kctx->ctx;
     int lbits, len;
     unsigned char encoded_outlen[KMAC_MAX_ENCODED_HEADER_LEN];
@@ -306,7 +306,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
         return 0;
 
     /* KMAC XOF mode sets the encoded length to 0 */
-    lbits = (kctx->xof_mode ? 0 : (kctx->out_len * 8));
+    lbits = (int)(kctx->xof_mode ? 0 : (kctx->out_len * 8));
 
     ok = right_encode(encoded_outlen, &len, lbits)
         && EVP_DigestUpdate(ctx, encoded_outlen, len)
@@ -357,7 +357,7 @@ static const OSSL_PARAM *kmac_settable_ctx_params(ossl_unused void *provctx)
  */
 static int kmac_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
 {
-    struct kmac_data_st *kctx = vmacctx;
+    struct kmac_data_st *kctx = (struct kmac_data_st *)vmacctx;
     const OSSL_PARAM *p;
     const EVP_MD *digest = ossl_prov_digest_md(&kctx->digest);
 
@@ -459,7 +459,7 @@ static int encode_string(unsigned char *out, int *out_len,
         if (len > 0xFF)
             return 0;
 
-        out[0] = len;
+        out[0] = (unsigned char)len;
         for (i = len; i > 0; --i) {
             out[i] = (bits & 0xFF);
             bits >>= 8;
@@ -488,7 +488,7 @@ static int bytepad(unsigned char *out, int *out_len,
 
     /* Left encoded w */
     *p++ = 1;
-    *p++ = w;
+    *p++ = (unsigned char)w;
     /* || in1 */
     memcpy(p, in1, in1_len);
     p += in1_len;
@@ -498,7 +498,7 @@ static int bytepad(unsigned char *out, int *out_len,
         p += in2_len;
     }
     /* Figure out the pad size (divisible by w) */
-    len = p - out;
+    len = (int)(p - out);
     while (len > sz) {
         sz += w;
     }

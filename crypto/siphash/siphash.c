@@ -100,12 +100,12 @@ int SipHash_set_hash_size(SIPHASH *ctx, size_t hash_size)
      */
 
     /* Start by adjusting the stored size, to make things easier */
-    ctx->hash_size = siphash_adjust_hash_size(ctx->hash_size);
+    ctx->hash_size = (int)siphash_adjust_hash_size(ctx->hash_size);
 
     /* Now, adjust ctx->v1 if the old and the new size differ */
     if ((size_t)ctx->hash_size != hash_size) {
         ctx->v1 ^= 0xee;
-        ctx->hash_size = hash_size;
+        ctx->hash_size = (int)hash_size;
     }
     return 1;
 }
@@ -117,7 +117,7 @@ int SipHash_Init(SIPHASH *ctx, const unsigned char *k, int crounds, int drounds)
     uint64_t k1 = U8TO64_LE(k + 8);
 
     /* If the hash size wasn't set, i.e. is zero */
-    ctx->hash_size = siphash_adjust_hash_size(ctx->hash_size);
+    ctx->hash_size = (int)siphash_adjust_hash_size(ctx->hash_size);
 
     if (drounds == 0)
         drounds = SIPHASH_D_ROUNDS;
@@ -161,7 +161,7 @@ void SipHash_Update(SIPHASH *ctx, const unsigned char *in, size_t inlen)
         /* not enough to fill leavings */
         if (inlen < available) {
             memcpy(&ctx->leavings[ctx->len], in, inlen);
-            ctx->len += inlen;
+            ctx->len += (unsigned int)inlen;
             return;
         }
 

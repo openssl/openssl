@@ -109,7 +109,7 @@ int rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(OPENSSL_CTX *libctx,
         goto err;
 
     dbmask_len = emlen - mdlen;
-    dbmask = OPENSSL_malloc(dbmask_len);
+    dbmask = (unsigned char *)OPENSSL_malloc(dbmask_len);
     if (dbmask == NULL) {
         RSAerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -202,13 +202,13 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     }
 
     dblen = num - mdlen - 1;
-    db = OPENSSL_malloc(dblen);
+    db = (unsigned char *)OPENSSL_malloc(dblen);
     if (db == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1, ERR_R_MALLOC_FAILURE);
         goto cleanup;
     }
 
-    em = OPENSSL_malloc(num);
+    em = (unsigned char *)OPENSSL_malloc(num);
     if (em == NULL) {
         RSAerr(RSA_F_RSA_PADDING_CHECK_PKCS1_OAEP_MGF1,
                ERR_R_MALLOC_FAILURE);
@@ -296,11 +296,11 @@ int RSA_padding_check_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
     for (msg_index = 1; msg_index < dblen - mdlen - 1; msg_index <<= 1) {
         mask = ~constant_time_eq(msg_index & (dblen - mdlen - 1 - mlen), 0);
         for (i = mdlen + 1; i < dblen - msg_index; i++)
-            db[i] = constant_time_select_8(mask, db[i + msg_index], db[i]);
+            db[i] = constant_time_select_8((unsigned char)mask, db[i + msg_index], db[i]);
     }
     for (i = 0; i < tlen; i++) {
         mask = good & constant_time_lt(i, mlen);
-        to[i] = constant_time_select_8(mask, db[i + mdlen + 1], to[i]);
+        to[i] = constant_time_select_8((unsigned char)mask, db[i + mdlen + 1], to[i]);
     }
 
 #ifndef FIPS_MODULE

@@ -31,7 +31,7 @@ ENGINE *ENGINE_new(void)
     ENGINE *ret;
 
     if (!RUN_ONCE(&engine_lock_init, do_engine_lock_init)
-        || (ret = OPENSSL_zalloc(sizeof(*ret))) == NULL) {
+        || (ret = (ENGINE *)OPENSSL_zalloc(sizeof(*ret))) == NULL) {
         ENGINEerr(ENGINE_F_ENGINE_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -125,7 +125,7 @@ static ENGINE_CLEANUP_ITEM *int_cleanup_item(ENGINE_CLEANUP_CB *cb)
 {
     ENGINE_CLEANUP_ITEM *item;
 
-    if ((item = OPENSSL_malloc(sizeof(*item))) == NULL) {
+    if ((item = (ENGINE_CLEANUP_ITEM *)OPENSSL_malloc(sizeof(*item))) == NULL) {
         ENGINEerr(ENGINE_F_INT_CLEANUP_ITEM, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

@@ -45,7 +45,7 @@ static void *rc2_dupctx(void *ctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = (PROV_RC2_CTX *)OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -100,7 +100,7 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
         long num;
         int i;
         ASN1_TYPE *type;
-        unsigned char *d = p->data;
+        unsigned char *d = (unsigned char *)p->data;
         unsigned char **dd = d == NULL ? NULL : &d;
 
         if (p->data_type != OSSL_PARAM_OCTET_STRING) {
@@ -155,7 +155,7 @@ static int rc2_set_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p != NULL) {
         ASN1_TYPE *type = NULL;
         long num = 0;
-        const unsigned char *d = p->data;
+        const unsigned char *d = (const unsigned char *)p->data;
         int ret = 1;
         unsigned char iv[16];
 
@@ -206,7 +206,7 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      PROV_##UCALG##_CTX *ctx;                                                  \
      if (!ossl_prov_is_running())                                               \
         return NULL;                                                           \
-     ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
+     ctx = (PROV_##UCALG##_CTX *)OPENSSL_zalloc(sizeof(*ctx));                 \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
                                 EVP_CIPH_##UCMODE##_MODE, flags,               \

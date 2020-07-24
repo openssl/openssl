@@ -28,7 +28,7 @@ int BIO_dump_cb(int (*cb) (const void *data, size_t len, void *u),
 int BIO_dump_indent_cb(int (*cb) (const void *data, size_t len, void *u),
                        void *u, const void *v, int len, int indent)
 {
-    const unsigned char *s = v;
+    const unsigned char *s = (const unsigned char *)v;
     int ret = 0;
     char buf[288 + 1];
     int i, j, rows, n;
@@ -110,7 +110,7 @@ int BIO_dump_indent_fp(FILE *fp, const void *s, int len, int indent)
 
 static int write_bio(const void *data, size_t len, void *bp)
 {
-    return BIO_write((BIO *)bp, (const char *)data, len);
+    return BIO_write((BIO *)bp, (const char *)data, (int)len);
 }
 
 int BIO_dump(BIO *bp, const void *s, int len)
@@ -126,7 +126,7 @@ int BIO_dump_indent(BIO *bp, const void *s, int len, int indent)
 int BIO_hex_string(BIO *out, int indent, int width, const void *data,
                    int datalen)
 {
-    const unsigned char *d = data;
+    const unsigned char *d = (const unsigned char *)data;
     int i, j = 0;
 
     if (datalen < 1)

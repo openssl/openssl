@@ -43,7 +43,7 @@ static void *evp_kdf_new(void)
 {
     EVP_KDF *kdf = NULL;
 
-    if ((kdf = OPENSSL_zalloc(sizeof(*kdf))) == NULL
+    if ((kdf = (EVP_KDF *)OPENSSL_zalloc(sizeof(*kdf))) == NULL
         || (kdf->lock = CRYPTO_THREAD_lock_new()) == NULL) {
         OPENSSL_free(kdf);
         return NULL;
@@ -59,7 +59,7 @@ static void *evp_kdf_from_dispatch(int name_id,
     EVP_KDF *kdf = NULL;
     int fnkdfcnt = 0, fnctxcnt = 0;
 
-    if ((kdf = evp_kdf_new()) == NULL) {
+    if ((kdf = (EVP_KDF *)evp_kdf_new()) == NULL) {
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -150,9 +150,9 @@ static void *evp_kdf_from_dispatch(int name_id,
 EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
-                             evp_kdf_from_dispatch, evp_kdf_up_ref,
-                             evp_kdf_free);
+    return (EVP_KDF *)evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
+                                        evp_kdf_from_dispatch, evp_kdf_up_ref,
+                                        evp_kdf_free);
 }
 
 int EVP_KDF_up_ref(EVP_KDF *kdf)

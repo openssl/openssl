@@ -60,7 +60,7 @@ static void *kdf_scrypt_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    ctx = (KDF_SCRYPT *)OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -114,7 +114,7 @@ static int scrypt_set_membuf(unsigned char **buffer, size_t *buflen,
 {
     OPENSSL_clear_free(*buffer, *buflen);
     if (p->data_size == 0) {
-        if ((*buffer = OPENSSL_malloc(1)) == NULL) {
+        if ((*buffer = (unsigned char *)OPENSSL_malloc(1)) == NULL) {
             ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -158,7 +158,7 @@ static int is_power_of_two(uint64_t value)
 static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
-    KDF_SCRYPT *ctx = vctx;
+    KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
     uint64_t u64_value;
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_PASSWORD)) != NULL)
@@ -447,7 +447,7 @@ static int scrypt_alg(const char *pass, size_t passlen,
     if (key == NULL)
         return 1;
 
-    B = OPENSSL_malloc((size_t)(Blen + Vlen));
+    B = (unsigned char *)OPENSSL_malloc((size_t)(Blen + Vlen));
     if (B == NULL) {
         EVPerr(EVP_F_SCRYPT_ALG, ERR_R_MALLOC_FAILURE);
         return 0;

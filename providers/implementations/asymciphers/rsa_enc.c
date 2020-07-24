@@ -82,7 +82,7 @@ static void *rsa_newctx(void *provctx)
 
     if (!ossl_prov_is_running())
         return NULL;
-    prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
+    prsactx = (PROV_RSA_CTX *)OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
     if (prsactx == NULL)
         return NULL;
     prsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
@@ -97,10 +97,10 @@ static int rsa_init(void *vprsactx, void *vrsa)
     if (!ossl_prov_is_running()
             || prsactx == NULL
             || vrsa == NULL
-            || !RSA_up_ref(vrsa))
+            || !RSA_up_ref((RSA *)vrsa))
         return 0;
     RSA_free(prsactx->rsa);
-    prsactx->rsa = vrsa;
+    prsactx->rsa = (RSA *)vrsa;
 
     switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
@@ -138,7 +138,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         int rsasize = RSA_size(prsactx->rsa);
         unsigned char *tbuf;
 
-        if ((tbuf = OPENSSL_malloc(rsasize)) == NULL) {
+        if ((tbuf = (unsigned char *)OPENSSL_malloc(rsasize)) == NULL) {
             PROVerr(0, ERR_R_MALLOC_FAILURE);
             return 0;
         }
@@ -150,9 +150,9 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         }
         ret =
             rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(prsactx->libctx, tbuf,
-                                                        rsasize, in, inlen,
+                                                        rsasize, in, (int)inlen,
                                                         prsactx->oaep_label,
-                                                        prsactx->oaep_labellen,
+                                                        (int)prsactx->oaep_labellen,
                                                         prsactx->oaep_md,
                                                         prsactx->mgf1_md);
 
@@ -164,7 +164,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                                  RSA_NO_PADDING);
         OPENSSL_free(tbuf);
     } else {
-        ret = RSA_public_encrypt(inlen, in, out, prsactx->rsa,
+        ret = RSA_public_encrypt((int)inlen, in, out, prsactx->rsa,
                                  prsactx->pad_mode);
     }
     /* A ret value of 0 is not an error */
@@ -213,11 +213,11 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             || prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         unsigned char *tbuf;
 
-        if ((tbuf = OPENSSL_malloc(len)) == NULL) {
+        if ((tbuf = (unsigned char *)OPENSSL_malloc(len)) == NULL) {
             PROVerr(0, ERR_R_MALLOC_FAILURE);
             return 0;
         }
-        ret = RSA_private_decrypt(inlen, in, tbuf, prsactx->rsa,
+        ret = RSA_private_decrypt((int)inlen, in, tbuf, prsactx->rsa,
                                   RSA_NO_PADDING);
         /*
          * With no padding then, on success ret should be len, otherwise an
@@ -236,10 +236,10 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                     return 0;
                 }
             }
-            ret = RSA_padding_check_PKCS1_OAEP_mgf1(out, outsize, tbuf,
-                                                    len, len,
+            ret = RSA_padding_check_PKCS1_OAEP_mgf1(out, (int)outsize, tbuf,
+                                                    (int)len, (int)len,
                                                     prsactx->oaep_label,
-                                                    prsactx->oaep_labellen,
+                                                    (int)prsactx->oaep_labellen,
                                                     prsactx->oaep_md,
                                                     prsactx->mgf1_md);
         } else {
@@ -256,7 +256,7 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         }
         OPENSSL_free(tbuf);
     } else {
-        ret = RSA_private_decrypt(inlen, in, out, prsactx->rsa,
+        ret = RSA_private_decrypt((int)inlen, in, out, prsactx->rsa,
                                   prsactx->pad_mode);
     }
     *outlen = constant_time_select_s(constant_time_msb_s(ret), *outlen, ret);
@@ -285,7 +285,7 @@ static void *rsa_dupctx(void *vprsactx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    dstctx = OPENSSL_zalloc(sizeof(*srcctx));
+    dstctx = (PROV_RSA_CTX *)OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
         return NULL;
 
@@ -333,7 +333,7 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
 
                 for (i = 0; padding_item[i].id != 0; i++) {
                     if (prsactx->pad_mode == (int)padding_item[i].id) {
-                        word = padding_item[i].ptr;
+                        word = (const char *)padding_item[i].ptr;
                         break;
                     }
                 }
@@ -451,7 +451,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                     return 0;
 
                 for (i = 0; padding_item[i].id != 0; i++) {
-                    if (strcmp(p->data, padding_item[i].ptr) == 0) {
+                    if (strcmp((const char *)p->data, (const char *)padding_item[i].ptr) == 0) {
                         pad_mode = padding_item[i].id;
                         break;
                     }

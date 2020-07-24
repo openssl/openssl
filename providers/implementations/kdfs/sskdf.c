@@ -195,7 +195,7 @@ static int kmac_init(EVP_MAC_CTX *ctx, const unsigned char *custom,
      * alloc a buffer for this case.
      */
     if (kmac_out_len > EVP_MAX_MD_SIZE) {
-        *out = OPENSSL_zalloc(kmac_out_len);
+        *out = (unsigned char *)OPENSSL_zalloc(kmac_out_len);
         if (*out == NULL)
             return 0;
     }
@@ -297,7 +297,7 @@ static void *sskdf_new(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
+    if ((ctx = (KDF_SSKDF *)OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     ctx->provctx = provctx;
     return ctx;
@@ -400,7 +400,7 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
         }
         /* If no salt is set then use a default_salt of zeros */
         if (ctx->salt == NULL || ctx->salt_len <= 0) {
-            ctx->salt = OPENSSL_zalloc(default_salt_len);
+            ctx->salt = (unsigned char *)OPENSSL_zalloc(default_salt_len);
             if (ctx->salt == NULL) {
                 ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
                 return 0;
@@ -456,7 +456,7 @@ static int x963kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 static int sskdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
-    KDF_SSKDF *ctx = vctx;
+    KDF_SSKDF *ctx = (KDF_SSKDF *)vctx;
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     size_t sz;
 

@@ -490,7 +490,7 @@ static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg)
                            OSSL_SELF_TEST_DESC_PCT_RSA_PKCS1);
 
     ciphertxt_len = RSA_size(rsa);
-    ciphertxt = OPENSSL_zalloc(ciphertxt_len);
+    ciphertxt = (unsigned char *)OPENSSL_zalloc(ciphertxt_len);
     if (ciphertxt == NULL)
         goto err;
 

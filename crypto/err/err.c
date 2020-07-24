@@ -597,7 +597,7 @@ const char *ERR_reason_error_string(unsigned long e)
 /* TODO(3.0): arg ignored for now */
 static void err_delete_thread_state(void *arg)
 {
-    ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
+    ERR_STATE *state = (ERR_STATE *)CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)
         return;
 
@@ -634,7 +634,7 @@ ERR_STATE *err_get_state_int(void)
     if (!RUN_ONCE(&err_init, err_do_init))
         return NULL;
 
-    state = CRYPTO_THREAD_get_local(&err_thread_local);
+    state = (ERR_STATE *)CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == (ERR_STATE*)-1)
         return NULL;
 
@@ -642,7 +642,7 @@ ERR_STATE *err_get_state_int(void)
         if (!CRYPTO_THREAD_set_local(&err_thread_local, (ERR_STATE*)-1))
             return NULL;
 
-        if ((state = OPENSSL_zalloc(sizeof(*state))) == NULL) {
+        if ((state = (ERR_STATE *)OPENSSL_zalloc(sizeof(*state))) == NULL) {
             CRYPTO_THREAD_set_local(&err_thread_local, NULL);
             return NULL;
         }
@@ -788,7 +788,7 @@ void ERR_add_error_vdata(int num, va_list args)
      */
     if ((es->err_data_flags[i] & flags) == flags) {
         str = es->err_data[i];
-        size = es->err_data_size[i];
+        size = (int)es->err_data_size[i];
 
         /*
          * To protect the string we just grabbed from tampering by other
@@ -799,7 +799,7 @@ void ERR_add_error_vdata(int num, va_list args)
          */
         es->err_data[i] = NULL;
         es->err_data_flags[i] = 0;
-    } else if ((str = OPENSSL_malloc(size = 81)) == NULL) {
+    } else if ((str = (char *)OPENSSL_malloc(size = 81)) == NULL) {
         return;
     } else {
         str[0] = '\0';
@@ -815,7 +815,7 @@ void ERR_add_error_vdata(int num, va_list args)
             char *p;
 
             size = len + 20;
-            p = OPENSSL_realloc(str, size);
+            p = (char *)OPENSSL_realloc(str, size);
             if (p == NULL) {
                 OPENSSL_free(str);
                 return;

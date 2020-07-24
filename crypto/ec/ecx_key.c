@@ -12,7 +12,7 @@
 
 ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey)
 {
-    ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
+    ECX_KEY *ret = (ECX_KEY *)OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         return NULL;
@@ -78,7 +78,7 @@ int ecx_key_up_ref(ECX_KEY *key)
 
 unsigned char *ecx_key_allocate_privkey(ECX_KEY *key)
 {
-    key->privkey = OPENSSL_secure_zalloc(key->keylen);
+    key->privkey = (unsigned char *)OPENSSL_secure_zalloc(key->keylen);
 
     return key->privkey;
 }

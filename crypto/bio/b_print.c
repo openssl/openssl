@@ -98,7 +98,8 @@ _dopr(char **sbuffer,
     size_t currlen;
 
     state = DP_S_DEFAULT;
-    flags = currlen = cflags = min = 0;
+    flags = cflags = min = 0;
+    currlen = 0;
     max = -1;
     ch = *format++;
 
@@ -303,7 +304,7 @@ _dopr(char **sbuffer,
                     if (buffer)
                         max = INT_MAX;
                     else
-                        max = *maxlen;
+                        max = (int)*maxlen;
                 }
                 if (!fmtstr(sbuffer, buffer, &currlen, maxlen, strvalue,
                             flags, min, max))
@@ -319,7 +320,7 @@ _dopr(char **sbuffer,
                 {
                     int *num;
                     num = va_arg(args, int *);
-                    *num = currlen;
+                    *num = (int)currlen;
                 }
                 break;
             case '%':
@@ -375,7 +376,7 @@ fmtstr(char **sbuffer,
 
     strln = OPENSSL_strnlen(value, max < 0 ? SIZE_MAX : (size_t)max);
 
-    padlen = min - strln;
+    padlen = (int)(min - strln);
     if (min < 0 || padlen < 0)
         padlen = 0;
     if (max >= 0) {
@@ -458,7 +459,7 @@ fmtint(char **sbuffer,
 
     zpadlen = max - place;
     spadlen =
-        min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - strlen(prefix);
+        (int)(min - OSSL_MAX(max, place) - (signvalue ? 1 : 0) - strlen(prefix));
     if (zpadlen < 0)
         zpadlen = 0;
     if (spadlen < 0)
@@ -823,7 +824,7 @@ doapr_outch(char **sbuffer,
 
         *maxlen += BUFFER_INC;
         if (*buffer == NULL) {
-            if ((*buffer = OPENSSL_malloc(*maxlen)) == NULL) {
+            if ((*buffer = (char *)OPENSSL_malloc(*maxlen)) == NULL) {
                 BIOerr(BIO_F_DOAPR_OUTCH, ERR_R_MALLOC_FAILURE);
                 return 0;
             }
@@ -835,7 +836,7 @@ doapr_outch(char **sbuffer,
             *sbuffer = NULL;
         } else {
             char *tmpbuf;
-            tmpbuf = OPENSSL_realloc(*buffer, *maxlen);
+            tmpbuf = (char *)OPENSSL_realloc(*buffer, *maxlen);
             if (tmpbuf == NULL)
                 return 0;
             *buffer = tmpbuf;

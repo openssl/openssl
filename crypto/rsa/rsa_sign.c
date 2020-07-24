@@ -257,7 +257,7 @@ static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
         return 0;
     }
     dig_info_len = di_prefix_len + m_len;
-    dig_info = OPENSSL_malloc(dig_info_len);
+    dig_info = (unsigned char *)OPENSSL_malloc(dig_info_len);
     if (dig_info == NULL) {
         RSAerr(RSA_F_ENCODE_PKCS1, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -342,7 +342,7 @@ int int_rsa_verify(int type, const unsigned char *m, unsigned int m_len,
     }
 
     /* Recover the encoded digest. */
-    decrypt_buf = OPENSSL_malloc(siglen);
+    decrypt_buf = (unsigned char *)OPENSSL_malloc(siglen);
     if (decrypt_buf == NULL) {
         RSAerr(RSA_F_INT_RSA_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;

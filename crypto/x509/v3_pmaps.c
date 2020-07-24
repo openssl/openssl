@@ -47,7 +47,7 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD
                                                  *method, void *a, STACK_OF(CONF_VALUE)
                                                  *ext_list)
 {
-    POLICY_MAPPINGS *pmaps = a;
+    POLICY_MAPPINGS *pmaps = (POLICY_MAPPINGS *)a;
     POLICY_MAPPING *pmap;
     int i;
     char obj_tmp1[80];

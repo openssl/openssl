@@ -111,7 +111,7 @@ static int aes_xts_dinit(void *vctx, const unsigned char *key, size_t keylen,
 static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
                             size_t kbits, size_t blkbits, size_t ivbits)
 {
-    PROV_AES_XTS_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_XTS_CTX *ctx = (PROV_AES_XTS_CTX *)OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx != NULL) {
         cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode, flags,
@@ -144,7 +144,7 @@ static void *aes_xts_dupctx(void *vctx)
         if (in->xts.key2 != &in->ks2)
             return NULL;
     }
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = (PROV_AES_XTS_CTX *)OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

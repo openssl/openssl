@@ -42,7 +42,7 @@ static int des_ede3_unwrap(PROV_CIPHER_CTX *ctx, unsigned char *out,
     if (inl < 24)
         return -1;
     if (out == NULL)
-        return inl - 16;
+        return (int)(inl - 16);
 
     memcpy(ctx->iv, wrap_iv, 8);
     /* Decrypt first block which will end up as icv */
@@ -70,7 +70,7 @@ static int des_ede3_unwrap(PROV_CIPHER_CTX *ctx, unsigned char *out,
     SHA1(out, inl - 16, sha1tmp);
 
     if (!CRYPTO_memcmp(sha1tmp, icv, 8))
-        rv = inl - 16;
+        rv = (int)(inl - 16);
     OPENSSL_cleanse(icv, 8);
     OPENSSL_cleanse(sha1tmp, SHA_DIGEST_LENGTH);
     OPENSSL_cleanse(iv, 8);
@@ -90,7 +90,7 @@ static int des_ede3_wrap(PROV_CIPHER_CTX *ctx, unsigned char *out,
     size_t len = inl + ivlen + icvlen;
 
     if (out == NULL)
-        return len;
+        return (int)len;
 
     /* Copy input to output buffer + 8 so we have space for IV */
     memmove(out + ivlen, in, inl);
@@ -107,7 +107,7 @@ static int des_ede3_wrap(PROV_CIPHER_CTX *ctx, unsigned char *out,
     BUF_reverse(out, NULL, len);
     memcpy(ctx->iv, wrap_iv, ivlen);
     ctx->hw->cipher(ctx, out, out, len);
-    return len;
+    return (int)len;
 }
 
 static int tdes_wrap_cipher_internal(PROV_CIPHER_CTX *ctx, unsigned char *out,

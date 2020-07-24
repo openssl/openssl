@@ -144,7 +144,7 @@ int BN_generate_prime_ex2(BIGNUM *ret, int bits, int safe,
         return 0;
     }
 
-    mods = OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
+    mods = (prime_t *)OPENSSL_zalloc(sizeof(*mods) * NUMPRIMES);
     if (mods == NULL)
         goto err;
 

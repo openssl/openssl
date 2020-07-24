@@ -227,7 +227,7 @@ int crypto_new_ex_data_ex(OPENSSL_CTX *ctx, int class_index, void *obj,
         if (mx < (int)OSSL_NELEM(stack))
             storage = stack;
         else
-            storage = OPENSSL_malloc(sizeof(*storage) * mx);
+            storage = (EX_CALLBACK **)OPENSSL_malloc(sizeof(*storage) * mx);
         if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
@@ -291,7 +291,7 @@ int CRYPTO_dup_ex_data(int class_index, CRYPTO_EX_DATA *to,
         if (mx < (int)OSSL_NELEM(stack))
             storage = stack;
         else
-            storage = OPENSSL_malloc(sizeof(*storage) * mx);
+            storage = (EX_CALLBACK **)OPENSSL_malloc(sizeof(*storage) * mx);
         if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);
@@ -356,7 +356,7 @@ void CRYPTO_free_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
         if (mx < (int)OSSL_NELEM(stack))
             storage = stack;
         else
-            storage = OPENSSL_malloc(sizeof(*storage) * mx);
+            storage = (EX_CALLBACK **)OPENSSL_malloc(sizeof(*storage) * mx);
         if (storage != NULL)
             for (i = 0; i < mx; i++)
                 storage[i] = sk_EX_CALLBACK_value(ip->meth, i);

@@ -65,7 +65,7 @@ static int md_free(BIO *a)
 {
     if (a == NULL)
         return 0;
-    EVP_MD_CTX_free(BIO_get_data(a));
+    EVP_MD_CTX_free((EVP_MD_CTX *)BIO_get_data(a));
     BIO_set_data(a, NULL);
     BIO_set_init(a, 0);
 
@@ -81,7 +81,7 @@ static int md_read(BIO *b, char *out, int outl)
     if (out == NULL)
         return 0;
 
-    ctx = BIO_get_data(b);
+    ctx = (EVP_MD_CTX *)BIO_get_data(b);
     next = BIO_next(b);
 
     if ((ctx == NULL) || (next == NULL))
@@ -109,7 +109,7 @@ static int md_write(BIO *b, const char *in, int inl)
     if ((in == NULL) || (inl <= 0))
         return 0;
 
-    ctx = BIO_get_data(b);
+    ctx = (EVP_MD_CTX *)BIO_get_data(b);
     next = BIO_next(b);
     if ((ctx != NULL) && (next != NULL))
         ret = BIO_write(next, in, inl);
@@ -139,7 +139,7 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
     BIO *dbio, *next;
 
 
-    ctx = BIO_get_data(b);
+    ctx = (EVP_MD_CTX *)BIO_get_data(b);
     next = BIO_next(b);
 
     switch (cmd) {
@@ -153,13 +153,13 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_C_GET_MD:
         if (BIO_get_init(b)) {
-            ppmd = ptr;
+            ppmd = (const EVP_MD **)ptr;
             *ppmd = EVP_MD_CTX_md(ctx);
         } else
             ret = 0;
         break;
     case BIO_C_GET_MD_CTX:
-        pctx = ptr;
+        pctx = (EVP_MD_CTX **)ptr;
         *pctx = ctx;
         BIO_set_init(b, 1);
         break;
@@ -176,14 +176,14 @@ static long md_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 
     case BIO_C_SET_MD:
-        md = ptr;
+        md = (EVP_MD *)ptr;
         ret = EVP_DigestInit_ex(ctx, md, NULL);
         if (ret > 0)
             BIO_set_init(b, 1);
         break;
     case BIO_CTRL_DUP:
-        dbio = ptr;
-        dctx = BIO_get_data(dbio);
+        dbio = (BIO *)ptr;
+        dctx = (EVP_MD_CTX *)BIO_get_data(dbio);
         if (!EVP_MD_CTX_copy_ex(dctx, ctx))
             return 0;
         BIO_set_init(b, 1);
@@ -212,7 +212,7 @@ static int md_gets(BIO *bp, char *buf, int size)
     EVP_MD_CTX *ctx;
     unsigned int ret;
 
-    ctx = BIO_get_data(bp);
+    ctx = (EVP_MD_CTX *)BIO_get_data(bp);
 
     if (size < EVP_MD_CTX_size(ctx))
         return 0;

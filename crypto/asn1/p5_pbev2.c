@@ -163,7 +163,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
     if (saltlen == 0)
         saltlen = PKCS5_SALT_LEN;
-    if ((osalt->data = OPENSSL_malloc(saltlen)) == NULL)
+    if ((osalt->data = (unsigned char *)OPENSSL_malloc(saltlen)) == NULL)
         goto merr;
 
     osalt->length = saltlen;

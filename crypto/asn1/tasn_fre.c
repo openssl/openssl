@@ -29,7 +29,7 @@ void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 {
     const ASN1_TEMPLATE *tt = NULL, *seqtt;
     const ASN1_EXTERN_FUNCS *ef;
-    const ASN1_AUX *aux = it->funcs;
+    const ASN1_AUX *aux = (const ASN1_AUX *)it->funcs;
     ASN1_aux_cb *asn1_cb;
     int i;
 
@@ -78,7 +78,7 @@ void asn1_item_embed_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         break;
 
     case ASN1_ITYPE_EXTERN:
-        ef = it->funcs;
+        ef = (const ASN1_EXTERN_FUNCS *)it->funcs;
         if (ef && ef->asn1_ex_free)
             ef->asn1_ex_free(pval, it);
         break;
@@ -149,7 +149,7 @@ void asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
 
     /* Special case: if 'it' is a primitive with a free_func, use that. */
     if (it) {
-        const ASN1_PRIMITIVE_FUNCS *pf = it->funcs;
+        const ASN1_PRIMITIVE_FUNCS *pf = (const ASN1_PRIMITIVE_FUNCS *)it->funcs;
 
         if (embed) {
             if (pf && pf->prim_clear) {

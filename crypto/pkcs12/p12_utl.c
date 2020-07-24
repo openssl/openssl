@@ -20,9 +20,9 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
     unsigned char *unitmp;
 
     if (asclen == -1)
-        asclen = strlen(asc);
+        asclen = (int)strlen(asc);
     ulen = asclen * 2 + 2;
-    if ((unitmp = OPENSSL_malloc(ulen)) == NULL) {
+    if ((unitmp = (unsigned char *)OPENSSL_malloc(ulen)) == NULL) {
         PKCS12err(PKCS12_F_OPENSSL_ASC2UNI, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -52,7 +52,7 @@ char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
     if (!unilen || uni[unilen - 1])
         asclen++;
     uni++;
-    if ((asctmp = OPENSSL_malloc(asclen)) == NULL) {
+    if ((asctmp = (char *)OPENSSL_malloc(asclen)) == NULL) {
         PKCS12err(PKCS12_F_OPENSSL_UNI2ASC, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -79,7 +79,7 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
     unsigned long utf32chr = 0;
 
     if (asclen == -1)
-        asclen = strlen(asc);
+        asclen = (int)strlen(asc);
 
     for (ulen = 0, i = 0; i < asclen; i += j) {
         j = UTF8_getc((const unsigned char *)asc+i, asclen-i, &utf32chr);
@@ -114,7 +114,7 @@ unsigned char *OPENSSL_utf82uni(const char *asc, int asclen,
 
     ulen += 2;  /* for trailing UTF16 zero */
 
-    if ((ret = OPENSSL_malloc(ulen)) == NULL) {
+    if ((ret = (unsigned char *)OPENSSL_malloc(ulen)) == NULL) {
         PKCS12err(PKCS12_F_OPENSSL_UTF82UNI, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -199,7 +199,7 @@ char *OPENSSL_uni2utf8(const unsigned char *uni, int unilen)
     if (!unilen || (uni[unilen-2]||uni[unilen - 1]))
         asclen++;
 
-    if ((asctmp = OPENSSL_malloc(asclen)) == NULL) {
+    if ((asctmp = (char *)OPENSSL_malloc(asclen)) == NULL) {
         PKCS12err(PKCS12_F_OPENSSL_UNI2UTF8, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -233,7 +233,7 @@ int i2d_PKCS12_fp(FILE *fp, const PKCS12 *p12)
 
 PKCS12 *d2i_PKCS12_bio(BIO *bp, PKCS12 **p12)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS12), bp, p12);
+    return (PKCS12 *)ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS12), bp, p12);
 }
 
 #ifndef OPENSSL_NO_STDIO

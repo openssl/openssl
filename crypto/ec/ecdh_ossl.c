@@ -118,7 +118,7 @@ int ecdh_simple_compute_key(unsigned char **pout, size_t *poutlen,
         ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if ((buf = OPENSSL_malloc(buflen)) == NULL) {
+    if ((buf = (unsigned char *)OPENSSL_malloc(buflen)) == NULL) {
         ECerr(EC_F_ECDH_SIMPLE_COMPUTE_KEY, ERR_R_MALLOC_FAILURE);
         goto err;
     }

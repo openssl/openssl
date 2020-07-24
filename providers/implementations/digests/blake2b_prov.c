@@ -254,7 +254,7 @@ static void blake2b_compress(BLAKE2B_CTX *S,
 /* Absorb the input data into the hash state.  Always returns 1. */
 int blake2b_update(BLAKE2B_CTX *c, const void *data, size_t datalen)
 {
-    const uint8_t *in = data;
+    const uint8_t *in = (const uint8_t *)data;
     size_t fill;
 
     /*
@@ -304,7 +304,7 @@ int blake2b_final(unsigned char *md, BLAKE2B_CTX *c)
 {
     uint8_t outbuffer[BLAKE2B_OUTBYTES] = {0};
     uint8_t *target = outbuffer;
-    int iter = (c->outlen + 7) / 8;
+    int iter = (int)((c->outlen + 7) / 8);
     int i;
 
     /* Avoid writing to the temporary buffer if possible */

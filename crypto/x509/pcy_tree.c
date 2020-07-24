@@ -158,7 +158,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         return ret;
 
     /* If we get this far initialize the tree */
-    if ((tree = OPENSSL_zalloc(sizeof(*tree))) == NULL) {
+    if ((tree = (X509_POLICY_TREE *)OPENSSL_zalloc(sizeof(*tree))) == NULL) {
         X509V3err(X509V3_F_TREE_INIT, ERR_R_MALLOC_FAILURE);
         return X509_PCY_TREE_INTERNAL;
     }
@@ -170,7 +170,7 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      * policies of anyPolicy.  (RFC 5280 has the TA at depth 0 and the leaf at
      * depth n, we have the leaf at depth 0 and the TA at depth n).
      */
-    if ((tree->levels = OPENSSL_zalloc(sizeof(*tree->levels)*(n+1))) == NULL) {
+    if ((tree->levels = (X509_POLICY_LEVEL *)OPENSSL_zalloc(sizeof(*tree->levels)*(n+1))) == NULL) {
         OPENSSL_free(tree);
         X509V3err(X509V3_F_TREE_INIT, ERR_R_MALLOC_FAILURE);
         return X509_PCY_TREE_INTERNAL;

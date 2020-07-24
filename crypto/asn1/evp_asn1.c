@@ -112,7 +112,7 @@ int ASN1_TYPE_get_int_octetstring(const ASN1_TYPE *a, long *num,
         goto err;
     }
 
-    atmp = ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(asn1_int_oct), a);
+    atmp = (asn1_int_oct *)ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(asn1_int_oct), a);
 
     if (atmp == NULL)
         goto err;

@@ -33,7 +33,7 @@ RSA_PRIME_INFO *rsa_multip_info_new(void)
     RSA_PRIME_INFO *pinfo;
 
     /* create a RSA_PRIME_INFO structure */
-    if ((pinfo = OPENSSL_zalloc(sizeof(RSA_PRIME_INFO))) == NULL) {
+    if ((pinfo = (RSA_PRIME_INFO *)OPENSSL_zalloc(sizeof(RSA_PRIME_INFO))) == NULL) {
         RSAerr(RSA_F_RSA_MULTIP_INFO_NEW, ERR_R_MALLOC_FAILURE);
         return NULL;
     }

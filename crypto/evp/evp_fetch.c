@@ -25,7 +25,7 @@
 
 static void evp_method_store_free(void *vstore)
 {
-    ossl_method_store_free(vstore);
+    ossl_method_store_free((OSSL_METHOD_STORE *)vstore);
 }
 
 static void *evp_method_store_new(OPENSSL_CTX *ctx)
@@ -67,13 +67,13 @@ static void *alloc_tmp_evp_method_store(OPENSSL_CTX *ctx)
  static void dealloc_tmp_evp_method_store(void *store)
 {
     if (store != NULL)
-        ossl_method_store_free(store);
+        ossl_method_store_free((OSSL_METHOD_STORE *)store);
 }
 
 static OSSL_METHOD_STORE *get_evp_method_store(OPENSSL_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_EVP_METHOD_STORE_INDEX,
-                                &evp_method_store_method);
+    return (OSSL_METHOD_STORE *)openssl_ctx_get_data(libctx, OPENSSL_CTX_EVP_METHOD_STORE_INDEX,
+                                                     &evp_method_store_method);
 }
 
 /*
@@ -98,7 +98,7 @@ static uint32_t evp_method_id(int name_id, unsigned int operation_id)
 static void *get_evp_method_from_store(OPENSSL_CTX *libctx, void *store,
                                        void *data)
 {
-    struct evp_method_data_st *methdata = data;
+    struct evp_method_data_st *methdata = (struct evp_method_data_st *)data;
     void *method = NULL;
     int name_id;
     uint32_t meth_id;
@@ -127,7 +127,7 @@ static void *get_evp_method_from_store(OPENSSL_CTX *libctx, void *store,
         && (store = get_evp_method_store(libctx)) == NULL)
         return NULL;
 
-    if (!ossl_method_store_fetch(store, meth_id, methdata->propquery,
+    if (!ossl_method_store_fetch((OSSL_METHOD_STORE *)store, meth_id, methdata->propquery,
                                  &method))
         return NULL;
     return method;
@@ -138,7 +138,7 @@ static int put_evp_method_in_store(OPENSSL_CTX *libctx, void *store,
                                    int operation_id, const char *names,
                                    const char *propdef, void *data)
 {
-    struct evp_method_data_st *methdata = data;
+    struct evp_method_data_st *methdata = (struct evp_method_data_st *)data;
     OSSL_NAMEMAP *namemap;
     int name_id;
     uint32_t meth_id;
@@ -165,7 +165,7 @@ static int put_evp_method_in_store(OPENSSL_CTX *libctx, void *store,
         && (store = get_evp_method_store(libctx)) == NULL)
         return 0;
 
-    return ossl_method_store_add(store, prov, meth_id, propdef, method,
+    return ossl_method_store_add((OSSL_METHOD_STORE *)store, prov, meth_id, propdef, method,
                                  methdata->refcnt_up_method,
                                  methdata->destruct_method);
 }
@@ -184,7 +184,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
      * know that ossl_namemap_add_name() will return its corresponding
      * number.
      */
-    struct evp_method_data_st *methdata = data;
+    struct evp_method_data_st *methdata = (struct evp_method_data_st *)data;
     OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
@@ -210,7 +210,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
 
 static void destruct_evp_method(void *method, void *data)
 {
-    struct evp_method_data_st *methdata = data;
+    struct evp_method_data_st *methdata = (struct evp_method_data_st *)data;
 
     methdata->destruct_method(method);
 }
@@ -483,7 +483,7 @@ struct do_all_data_st {
 static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
                    int no_store, void *vdata)
 {
-    struct do_all_data_st *data = vdata;
+    struct do_all_data_st *data = (struct do_all_data_st *)vdata;
     OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     int name_id = ossl_namemap_add_names(namemap, 0, algo->algorithm_names,

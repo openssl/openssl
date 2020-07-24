@@ -43,13 +43,13 @@ int encode_der_length(WPACKET *pkt, size_t cont_len)
 
     if (cont_len > 0xff) {
         if (!WPACKET_put_bytes_u8(pkt, 0x82)
-                || !WPACKET_put_bytes_u16(pkt, cont_len))
+                || !WPACKET_put_bytes_u16(pkt, (int)cont_len))
             return 0;
     } else {
         if (cont_len > 0x7f
                 && !WPACKET_put_bytes_u8(pkt, 0x81))
             return 0;
-        if (!WPACKET_put_bytes_u8(pkt, cont_len))
+        if (!WPACKET_put_bytes_u8(pkt, (int)cont_len))
             return 0;
     }
 

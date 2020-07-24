@@ -41,7 +41,7 @@ static void *rc4_dupctx(void *ctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    ret = OPENSSL_malloc(sizeof(*ret));
+    ret = (PROV_RC4_CTX *)OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -64,7 +64,7 @@ static void * alg##_##kbits##_newctx(void *provctx)                            \
      PROV_##UCALG##_CTX *ctx;                                                  \
      if (!ossl_prov_is_running())                                               \
         return NULL;                                                           \
-     ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
+     ctx = (PROV_##UCALG##_CTX *)OPENSSL_zalloc(sizeof(*ctx));                 \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits, 0, flags,         \
                                 PROV_CIPHER_HW_##alg(kbits), NULL);            \
