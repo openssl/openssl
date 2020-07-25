@@ -24,6 +24,7 @@
 #include <openssl/dsa.h>
 #include <openssl/x509v3.h>
 #include "crypto/asn1.h"
+#include "crypto/pkcs7.h"
 #include "crypto/x509.h"
 
 static void clean_id_ctx(EVP_MD_CTX *ctx)
@@ -232,7 +233,12 @@ int i2d_X509_CRL_bio(BIO *bp, const X509_CRL *crl)
 #ifndef OPENSSL_NO_STDIO
 PKCS7 *d2i_PKCS7_fp(FILE *fp, PKCS7 **p7)
 {
-    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
+    PKCS7 *ret;
+
+    ret = ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS7), fp, p7);
+    if (ret != NULL && p7 != NULL)
+        pkcs7_resolve_libctx(ret);
+    return ret;
 }
 
 int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7)
@@ -243,7 +249,12 @@ int i2d_PKCS7_fp(FILE *fp, const PKCS7 *p7)
 
 PKCS7 *d2i_PKCS7_bio(BIO *bp, PKCS7 **p7)
 {
-    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
+    PKCS7 *ret;
+
+    ret = ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS7), bp, p7);
+    if (ret != NULL && p7 != NULL)
+        pkcs7_resolve_libctx(ret);
+    return ret;
 }
 
 int i2d_PKCS7_bio(BIO *bp, const PKCS7 *p7)

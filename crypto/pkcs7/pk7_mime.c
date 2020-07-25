@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
+#include "pk7_local.h"
 
 /* PKCS#7 wrappers round generalised stream and MIME routines */
 
@@ -30,6 +31,8 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 {
     STACK_OF(X509_ALGOR) *mdalgs;
     int ctype_nid = OBJ_obj2nid(p7->type);
+    const PKCS7_CTX *ctx = pkcs7_get0_ctx(p7);
+
     if (ctype_nid == NID_pkcs7_signed)
         mdalgs = p7->d.sign->md_algs;
     else
@@ -37,12 +40,25 @@ int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags)
 
     flags ^= SMIME_OLDMIME;
 
-    return SMIME_write_ASN1(bio, (ASN1_VALUE *)p7, data, flags,
-                            ctype_nid, NID_undef, mdalgs,
-                            ASN1_ITEM_rptr(PKCS7));
+    return SMIME_write_ASN1_with_libctx(bio, (ASN1_VALUE *)p7, data, flags,
+                                        ctype_nid, NID_undef, mdalgs,
+                                        ASN1_ITEM_rptr(PKCS7),
+                                        pkcs7_ctx_get0_libctx(ctx),
+                                        pkcs7_ctx_get0_propq(ctx));
+}
+
+PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7)
+{
+    PKCS7 *ret;
+
+    ret = (PKCS7 *)SMIME_read_ASN1_ex(bio, bcont, ASN1_ITEM_rptr(PKCS7),
+                                      (ASN1_VALUE **)p7);
+    if (ret != NULL && p7 != NULL)
+        pkcs7_resolve_libctx(ret);
+    return ret;
 }
 
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont)
 {
-    return (PKCS7 *)SMIME_read_ASN1(bio, bcont, ASN1_ITEM_rptr(PKCS7));
+    return SMIME_read_PKCS7_ex(bio, bcont, NULL);
 }
