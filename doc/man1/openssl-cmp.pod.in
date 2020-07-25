@@ -991,8 +991,10 @@ to issue the following shell commands.
 
   cd /path/to/openssl
   export OPENSSL_CONF=openssl.cnf
+=begin comment
   wget 'http://pki.certificate.fi:8080/install-ca-cert.html/ca-certificate.crt\
         ?ca-id=632&download-certificate=1' -O insta.ca.crt
+=end comment
   openssl genrsa -out insta.priv.pem
   openssl cmp -section insta
 
@@ -1048,7 +1050,11 @@ or
 
 Many more options can be used in the configuration file
 and/or on the command line.
+For instance, the B<-reqexts> CLI option may refer to a section in the
+configuration file defining X.509 extensions to use in certificate requests,
+such as B<v3_req> in F<openssl/apps/openssl.cnf>:
 
+  openssl cmp -section insta,cr -reqexts v3_req
 
 =head2 Certificate enrollment
 
