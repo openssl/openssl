@@ -29,6 +29,7 @@ CERTIFICATEPOLICIES_free,
 CERTIFICATEPOLICIES_new,
 CMS_ContentInfo_free,
 CMS_ContentInfo_new,
+CMS_ContentInfo_new_with_libctx,
 CMS_ContentInfo_print_ctx,
 CMS_ReceiptRequest_free,
 CMS_ReceiptRequest_new,
@@ -201,6 +202,7 @@ PKCS7_SIGN_ENVELOPE_free,
 PKCS7_SIGN_ENVELOPE_new,
 PKCS7_dup,
 PKCS7_free,
+PKCS7_new_with_libctx,
 PKCS7_new,
 PKCS7_print_ctx,
 PKCS8_PRIV_KEY_INFO_free,
@@ -335,6 +337,10 @@ to generate the function bodies.
 B<I<TYPE>_new>() allocates an empty object of the indicated type.
 The object returned must be released by calling B<I<TYPE>_free>().
 
+B<I<TYPE>_new_with_libctx>() is similiar to B<I<TYPE>_new>() but also passes the
+library context I<libctx> and the property query I<propq> to use when retrieving
+algorithms from providers.
+
 B<I<TYPE>_dup>() copies an existing object, leaving it untouched.
 
 B<I<TYPE>_free>() releases the object and all pointers and sub-objects
@@ -348,10 +354,15 @@ user-defined, then pass in any I<pctx> down to any nested calls.
 
 =head1 RETURN VALUES
 
-B<I<TYPE>_new>() and B<I<TYPE>_dup>() return a pointer to the object or NULL on
-failure.
+B<I<TYPE>_new>(), B<I<TYPE>_new_ex>() and B<I<TYPE>_dup>() return a pointer to
+the object or NULL on failure.
 
 B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
+
+=head1 HISTORY
+
+The functions PKCS7_new_with_libctx() and CMS_ContentInfo_new_with_libctx() were
+added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

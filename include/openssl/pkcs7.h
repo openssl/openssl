@@ -36,6 +36,11 @@ Digest_Encryption_ID    rsaEncryption
 Key_Encryption_ID       rsaEncryption
 */
 
+typedef struct PKCS7_CTX_st {
+    OPENSSL_CTX *libctx;
+    char *propq;
+} PKCS7_CTX;
+
 typedef struct pkcs7_issuer_and_serial_st {
     X509_NAME *issuer;
     ASN1_INTEGER *serial;
@@ -51,6 +56,7 @@ typedef struct pkcs7_signer_info_st {
     STACK_OF(X509_ATTRIBUTE) *unauth_attr; /* [ 1 ] */
     /* The private key to sign with */
     EVP_PKEY *pkey;
+    const PKCS7_CTX *ctx;
 } PKCS7_SIGNER_INFO;
 DEFINE_OR_DECLARE_STACK_OF(PKCS7_SIGNER_INFO)
 
@@ -60,6 +66,7 @@ typedef struct pkcs7_recip_info_st {
     X509_ALGOR *key_enc_algor;
     ASN1_OCTET_STRING *enc_key;
     X509 *cert;                 /* get the pub-key from this */
+    const PKCS7_CTX *ctx;
 } PKCS7_RECIP_INFO;
 DEFINE_OR_DECLARE_STACK_OF(PKCS7_RECIP_INFO)
 
@@ -82,6 +89,7 @@ typedef struct pkcs7_enc_content_st {
     X509_ALGOR *algorithm;
     ASN1_OCTET_STRING *enc_data; /* [ 0 ] */
     const EVP_CIPHER *cipher;
+    const PKCS7_CTX *ctx;
 } PKCS7_ENC_CONTENT;
 
 typedef struct pkcs7_enveloped_st {
@@ -147,6 +155,7 @@ typedef struct pkcs7_st {
         /* Anything else */
         ASN1_TYPE *other;
     } d;
+    PKCS7_CTX ctx;
 } PKCS7;
 DEFINE_OR_DECLARE_STACK_OF(PKCS7)
 
@@ -231,6 +240,7 @@ DECLARE_ASN1_FUNCTIONS(PKCS7_SIGN_ENVELOPE)
 DECLARE_ASN1_FUNCTIONS(PKCS7_DIGEST)
 DECLARE_ASN1_FUNCTIONS(PKCS7_ENCRYPT)
 DECLARE_ASN1_FUNCTIONS(PKCS7)
+PKCS7 *PKCS7_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
 
 DECLARE_ASN1_ITEM(PKCS7_ATTR_SIGN)
 DECLARE_ASN1_ITEM(PKCS7_ATTR_VERIFY)
@@ -289,6 +299,9 @@ int PKCS7_set_attributes(PKCS7_SIGNER_INFO *p7si,
 
 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
                   BIO *data, int flags);
+PKCS7 *PKCS7_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
+                              STACK_OF(X509) *certs, BIO *data, int flags,
+                              OPENSSL_CTX *libctx, const char *propq);
 
 PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7,
                                          X509 *signcert, EVP_PKEY *pkey,
@@ -301,6 +314,9 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
                                    int flags);
 PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
                      int flags);
+PKCS7 *PKCS7_encrypt_with_libctx(STACK_OF(X509) *certs, BIO *in,
+                                 const EVP_CIPHER *cipher, int flags,
+                                 OPENSSL_CTX *libctx, const char *propq);
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data,
                   int flags);
 
@@ -315,6 +331,7 @@ int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
                              const unsigned char *md, int mdlen);
 
 int SMIME_write_PKCS7(BIO *bio, PKCS7 *p7, BIO *data, int flags);
+PKCS7 *SMIME_read_PKCS7_ex(BIO *bio, BIO **bcont, PKCS7 **p7);
 PKCS7 *SMIME_read_PKCS7(BIO *bio, BIO **bcont);
 
 BIO *BIO_new_PKCS7(BIO *out, PKCS7 *p7);

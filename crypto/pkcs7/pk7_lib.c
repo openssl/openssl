@@ -13,6 +13,8 @@
 #include <openssl/x509.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/x509.h"
+#include "pk7_local.h"
 
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(X509_CRL)
@@ -236,6 +238,7 @@ int PKCS7_add_signer(PKCS7 *p7, PKCS7_SIGNER_INFO *psi)
         }
     }
 
+    psi->ctx = pkcs7_get0_ctx(p7);
     if (!sk_PKCS7_SIGNER_INFO_push(signer_sk, psi))
         return 0;
     return 1;
@@ -380,6 +383,70 @@ PKCS7_SIGNER_INFO *PKCS7_add_signature(PKCS7 *p7, X509 *x509, EVP_PKEY *pkey,
     return NULL;
 }
 
+static STACK_OF(X509) *pkcs7_get_signer_certs(const PKCS7 *p7)
+{
+    if (PKCS7_type_is_signed(p7))
+        return p7->d.sign->cert;
+    if (PKCS7_type_is_signedAndEnveloped(p7))
+        return p7->d.signed_and_enveloped->cert;
+    return NULL;
+}
+
+static STACK_OF(PKCS7_RECIP_INFO) *pkcs7_get_recipient_info(const PKCS7 *p7)
+{
+    if (PKCS7_type_is_signedAndEnveloped(p7))
+        return p7->d.signed_and_enveloped->recipientinfo;
+    if (PKCS7_type_is_enveloped(p7))
+        return p7->d.enveloped->recipientinfo;
+    return NULL;
+}
+
+/*
+ * Set up the library context into any loaded structure that needs it.
+ * i.e loaded X509 objects.
+ */
+void pkcs7_resolve_libctx(PKCS7 *p7)
+{
+    int i;
+    const PKCS7_CTX *ctx = pkcs7_get0_ctx(p7);
+    STACK_OF(PKCS7_RECIP_INFO) *rinfos = pkcs7_get_recipient_info(p7);
+    STACK_OF(PKCS7_SIGNER_INFO) *sinfos = PKCS7_get_signer_info(p7);
+    STACK_OF(X509) *certs = pkcs7_get_signer_certs(p7);
+
+    if (ctx == NULL)
+        return;
+
+    for (i = 0; i < sk_X509_num(certs); i++)
+        x509_set0_libctx(sk_X509_value(certs, i), ctx->libctx, ctx->propq);
+
+    for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rinfos); i++) {
+        PKCS7_RECIP_INFO *ri = sk_PKCS7_RECIP_INFO_value(rinfos, i);
+
+        x509_set0_libctx(ri->cert, ctx->libctx, ctx->propq);
+    }
+
+    for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
+        PKCS7_SIGNER_INFO *si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
+
+        if (si != NULL)
+            si->ctx = ctx;
+    }
+}
+
+const PKCS7_CTX *pkcs7_get0_ctx(const PKCS7 *p7)
+{
+    return p7 != NULL ? &p7->ctx : NULL;
+}
+
+OPENSSL_CTX *pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx)
+{
+    return ctx != NULL ? ctx->libctx : NULL;
+}
+const char *pkcs7_ctx_get0_propq(const PKCS7_CTX *ctx)
+{
+    return ctx != NULL ? ctx->propq : NULL;
+}
+
 int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
 {
     if (PKCS7_type_is_digest(p7)) {
@@ -435,6 +502,7 @@ PKCS7_RECIP_INFO *PKCS7_add_recipient(PKCS7 *p7, X509 *x509)
         goto err;
     if (!PKCS7_add_recipient_info(p7, ri))
         goto err;
+    ri->ctx = pkcs7_get0_ctx(p7);
     return ri;
  err:
     PKCS7_RECIP_INFO_free(ri);
@@ -547,6 +615,7 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
     }
 
     ec->cipher = cipher;
+    ec->ctx = pkcs7_get0_ctx(p7);
     return 1;
 }
 
