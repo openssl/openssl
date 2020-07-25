@@ -83,6 +83,7 @@ B<openssl> B<cms>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 [I<recipient-cert> ...]
 
 =for openssl ifdef des-wrap engine
@@ -500,6 +501,8 @@ Any verification errors cause the command to exit.
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 =item I<recipient-cert> ...
 
