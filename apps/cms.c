@@ -32,9 +32,9 @@ DEFINE_STACK_OF_STRING()
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(CMS_ContentInfo *cms);
-static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
-                                                *rr_to, int rr_allorfirst, STACK_OF(OPENSSL_STRING)
-                                                *rr_from);
+static CMS_ReceiptRequest *make_receipt_request(
+    STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
+    STACK_OF(OPENSSL_STRING) *rr_from, OPENSSL_CTX *libctx, const char *propq);
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
                               STACK_OF(OPENSSL_STRING) *param);
 
@@ -89,7 +89,7 @@ typedef enum OPTION_choice {
     OPT_RR_TO, OPT_AES128_WRAP, OPT_AES192_WRAP, OPT_AES256_WRAP,
     OPT_3DES_WRAP, OPT_WRAP, OPT_ENGINE,
     OPT_R_ENUM,
-    OPT_PROV_ENUM,
+    OPT_PROV_ENUM, OPT_CONFIG,
     OPT_V_ENUM,
     OPT_CIPHER,
     OPT_ORIGINATOR
@@ -124,6 +124,7 @@ const OPTIONS cms_options[] = {
 # ifndef OPENSSL_NO_ENGINE
     {"engine", OPT_ENGINE, 's', "Use engine e, possibly a hardware device"},
 # endif
+    OPT_CONFIG_OPTION,
 
     OPT_SECTION("Action"),
     {"encrypt", OPT_ENCRYPT, '-', "Encrypt message"},
@@ -236,8 +237,44 @@ const OPTIONS cms_options[] = {
     {NULL}
 };
 
+static CMS_ContentInfo *load_content_info(int informat, BIO *in, BIO **indata,
+                                          const char *name,
+                                          OPENSSL_CTX *libctx, const char *propq)
+{
+    CMS_ContentInfo *ret, *ci;
+
+    ret = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    if (ret == NULL) {
+        BIO_printf(bio_err, "Error allocating CMS_contentinfo\n");
+        return NULL;
+    }
+    switch (informat) {
+    case FORMAT_SMIME:
+        ci = SMIME_read_CMS_ex(in, indata, &ret);
+        break;
+    case FORMAT_PEM:
+        ci = PEM_read_bio_CMS(in, &ret, NULL, NULL);
+        break;
+    case FORMAT_ASN1:
+        ci = d2i_CMS_bio(in, &ret);
+        break;
+    default:
+        BIO_printf(bio_err, "Bad input format for %s\n", name);
+        goto err;
+    }
+    if (ci == NULL) {
+        BIO_printf(bio_err, "Error reading %s Content Info\n", name);
+        goto err;
+    }
+    return ret;
+err:
+    CMS_ContentInfo_free(ret);
+    return NULL;
+}
+
 int cms_main(int argc, char **argv)
 {
+    CONF *conf = NULL;
     ASN1_OBJECT *econtent_type = NULL;
     BIO *in = NULL, *out = NULL, *indata = NULL, *rctin = NULL;
     CMS_ContentInfo *cms = NULL, *rcms = NULL;
@@ -270,6 +307,8 @@ int cms_main(int argc, char **argv)
     long ltmp;
     const char *mime_eol = "\n";
     OPTION_CHOICE o;
+    OPENSSL_CTX *libctx = app_get0_libctx();
+    const char *propq = app_get0_propq();
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
         return 1;
@@ -417,14 +456,14 @@ int cms_main(int argc, char **argv)
             rr_allorfirst = 1;
             break;
         case OPT_RCTFORM:
-            if (rctformat == FORMAT_SMIME)
-                rcms = SMIME_read_CMS(rctin, NULL);
-            else if (rctformat == FORMAT_PEM)
-                rcms = PEM_read_bio_CMS(rctin, NULL, NULL, NULL);
-            else if (rctformat == FORMAT_ASN1)
+            if (rctformat == FORMAT_ASN1) {
                 if (!opt_format(opt_arg(),
                                 OPT_FMT_PEMDER | OPT_FMT_SMIME, &rctformat))
                     goto opthelp;
+            } else {
+                rcms = load_content_info(rctformat, rctin, NULL, "recipient",
+                                         libctx, propq);
+            }
             break;
         case OPT_CERTFILE:
             certfile = opt_arg();
@@ -639,6 +678,11 @@ int cms_main(int argc, char **argv)
             if (!opt_provider(o))
                 goto end;
             break;
+        case OPT_CONFIG:
+            conf = app_load_config_modules(opt_arg());
+            if (conf == NULL)
+                goto end;
+            break;
         case OPT_3DES_WRAP:
 # ifndef OPENSSL_NO_DES
             wrap_cipher = EVP_des_ede3_wrap();
@@ -830,21 +874,9 @@ int cms_main(int argc, char **argv)
         goto end;
 
     if (operation & SMIME_IP) {
-        if (informat == FORMAT_SMIME) {
-            cms = SMIME_read_CMS(in, &indata);
-        } else if (informat == FORMAT_PEM) {
-            cms = PEM_read_bio_CMS(in, NULL, NULL, NULL);
-        } else if (informat == FORMAT_ASN1) {
-            cms = d2i_CMS_bio(in, NULL);
-        } else {
-            BIO_printf(bio_err, "Bad input format for CMS file\n");
+        cms = load_content_info(informat, in, &indata, "SMIME", libctx, propq);
+        if (cms == NULL)
             goto end;
-        }
-
-        if (cms == NULL) {
-            BIO_printf(bio_err, "Error reading S/MIME message\n");
-            goto end;
-        }
         if (contfile != NULL) {
             BIO_free(indata);
             if ((indata = BIO_new_file(contfile, "rb")) == NULL) {
@@ -872,21 +904,10 @@ int cms_main(int argc, char **argv)
             goto end;
         }
 
-        if (rctformat == FORMAT_SMIME) {
-            rcms = SMIME_read_CMS(rctin, NULL);
-        } else if (rctformat == FORMAT_PEM) {
-            rcms = PEM_read_bio_CMS(rctin, NULL, NULL, NULL);
-        } else if (rctformat == FORMAT_ASN1) {
-            rcms = d2i_CMS_bio(rctin, NULL);
-        } else {
-            BIO_printf(bio_err, "Bad input format for receipt\n");
+        rcms = load_content_info(rctformat, rctin, NULL, "recipient", libctx,
+                                 propq);
+        if (rcms == NULL)
             goto end;
-        }
-
-        if (rcms == NULL) {
-            BIO_printf(bio_err, "Error reading receipt\n");
-            goto end;
-        }
     }
 
     out = bio_open_default(outfile, 'w', outformat);
@@ -905,15 +926,15 @@ int cms_main(int argc, char **argv)
     ret = 3;
 
     if (operation == SMIME_DATA_CREATE) {
-        cms = CMS_data_create(in, flags);
+        cms = CMS_data_create_with_libctx(in, flags, libctx, propq);
     } else if (operation == SMIME_DIGEST_CREATE) {
-        cms = CMS_digest_create(in, sign_md, flags);
+        cms = CMS_digest_create_with_libctx(in, sign_md, flags, libctx, propq);
     } else if (operation == SMIME_COMPRESS) {
         cms = CMS_compress(in, -1, flags);
     } else if (operation == SMIME_ENCRYPT) {
         int i;
         flags |= CMS_PARTIAL;
-        cms = CMS_encrypt(NULL, in, cipher, flags);
+        cms = CMS_encrypt_with_libctx(NULL, in, cipher, flags, libctx, propq);
         if (cms == NULL)
             goto end;
         for (i = 0; i < sk_X509_num(encerts); i++) {
@@ -978,8 +999,9 @@ int cms_main(int argc, char **argv)
                 goto end;
         }
     } else if (operation == SMIME_ENCRYPTED_ENCRYPT) {
-        cms = CMS_EncryptedData_encrypt(in, cipher,
-                                        secret_key, secret_keylen, flags);
+        cms = CMS_EncryptedData_encrypt_with_libctx(in, cipher, secret_key,
+                                                    secret_keylen, flags,
+                                                    libctx, propq);
 
     } else if (operation == SMIME_SIGN_RECEIPT) {
         CMS_ContentInfo *srcms = NULL;
@@ -1007,14 +1029,15 @@ int cms_main(int argc, char **argv)
                     flags |= CMS_STREAM;
             }
             flags |= CMS_PARTIAL;
-            cms = CMS_sign(NULL, NULL, other, in, flags);
+            cms = CMS_sign_with_libctx(NULL, NULL, other, in, flags, libctx, propq);
             if (cms == NULL)
                 goto end;
             if (econtent_type != NULL)
                 CMS_set1_eContentType(cms, econtent_type);
 
             if (rr_to != NULL) {
-                rr = make_receipt_request(rr_to, rr_allorfirst, rr_from);
+                rr = make_receipt_request(rr_to, rr_allorfirst, rr_from, libctx,
+                                          propq);
                 if (rr == NULL) {
                     BIO_puts(bio_err,
                              "Signed Receipt Request Creation Error\n");
@@ -1231,6 +1254,7 @@ int cms_main(int argc, char **argv)
     BIO_free(indata);
     BIO_free_all(out);
     OPENSSL_free(passin);
+    NCONF_free(conf);
     return ret;
 }
 
@@ -1367,9 +1391,10 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
     return NULL;
 }
 
-static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
-                                                *rr_to, int rr_allorfirst, STACK_OF(OPENSSL_STRING)
-                                                *rr_from)
+static CMS_ReceiptRequest *make_receipt_request(
+   STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
+   STACK_OF(OPENSSL_STRING) *rr_from,
+   OPENSSL_CTX *libctx, const char *propq)
 {
     STACK_OF(GENERAL_NAMES) *rct_to = NULL, *rct_from = NULL;
     CMS_ReceiptRequest *rr;
@@ -1383,8 +1408,8 @@ static CMS_ReceiptRequest *make_receipt_request(STACK_OF(OPENSSL_STRING)
     } else {
         rct_from = NULL;
     }
-    rr = CMS_ReceiptRequest_create0(NULL, -1, rr_allorfirst, rct_from,
-                                    rct_to);
+    rr = CMS_ReceiptRequest_create0_with_libctx(NULL, -1, rr_allorfirst,
+                                                rct_from, rct_to, libctx, propq);
     return rr;
  err:
     sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);

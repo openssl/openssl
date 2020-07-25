@@ -17,11 +17,13 @@
 
 /* CMS DigestedData Utilities */
 
-CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
+CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
+                                         OPENSSL_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *cms;
     CMS_DigestedData *dd;
-    cms = CMS_ContentInfo_new();
+
+    cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
     if (cms == NULL)
         return NULL;
 
@@ -47,9 +49,9 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md)
 
 BIO *cms_DigestedData_init_bio(const CMS_ContentInfo *cms)
 {
-    CMS_DigestedData *dd;
-    dd = cms->d.digestedData;
-    return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm);
+    CMS_DigestedData *dd = cms->d.digestedData;
+
+    return cms_DigestAlgorithm_init_bio(dd->digestAlgorithm, cms_get0_cmsctx(cms));
 }
 
 int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify)

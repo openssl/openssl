@@ -14,24 +14,118 @@
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
+#include <openssl/cms.h>
+#include "crypto/x509.h"
 #include "cms_local.h"
+
+static STACK_OF(CMS_CertificateChoices)
+**cms_get0_certificate_choices(CMS_ContentInfo *cms);
 
 DEFINE_STACK_OF(CMS_RevocationInfoChoice)
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(X509_CRL)
 
-IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
+
+CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
+                                     const unsigned char **in, long len)
+{
+    CMS_ContentInfo *ci;
+
+    ci = (CMS_ContentInfo *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+                                          (CMS_ContentInfo_it()));
+    if (ci != NULL && a != NULL)
+        cms_resolve_libctx(ci);
+    return ci;
+}
+
+int i2d_CMS_ContentInfo(const CMS_ContentInfo *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (CMS_ContentInfo_it()));
+}
+
+CMS_ContentInfo *CMS_ContentInfo_new_with_libctx(OPENSSL_CTX *libctx,
+                                                 const char *propq)
+{
+    CMS_ContentInfo *ci;
+
+    ci = (CMS_ContentInfo *)ASN1_item_new(ASN1_ITEM_rptr(CMS_ContentInfo));
+    if (ci != NULL) {
+        ci->ctx.libctx = libctx;
+        ci->ctx.propq = NULL;
+        if (propq != NULL) {
+            ci->ctx.propq = OPENSSL_strdup(propq);
+            if (ci->ctx.propq == NULL) {
+                CMS_ContentInfo_free(ci);
+                ci = NULL;
+                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            }
+        }
+    }
+    return ci;
+}
+
+CMS_ContentInfo *CMS_ContentInfo_new(void)
+{
+    return CMS_ContentInfo_new_with_libctx(NULL, NULL);
+}
+
+void CMS_ContentInfo_free(CMS_ContentInfo *cms)
+{
+    if (cms != NULL) {
+        OPENSSL_free(cms->ctx.propq);
+        ASN1_item_free((ASN1_VALUE *)cms, ASN1_ITEM_rptr(CMS_ContentInfo));
+    }
+}
+
+const CMS_CTX *cms_get0_cmsctx(const CMS_ContentInfo *cms)
+{
+    return cms != NULL ? &cms->ctx : NULL;
+}
+
+OPENSSL_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx)
+{
+    return ctx->libctx;
+}
+
+const char *cms_ctx_get0_propq(const CMS_CTX *ctx)
+{
+    return ctx->propq;
+}
+
+void cms_resolve_libctx(CMS_ContentInfo *ci)
+{
+    int i;
+    CMS_CertificateChoices *cch;
+    STACK_OF(CMS_CertificateChoices) **pcerts;
+    const CMS_CTX *ctx;
+
+    if (ci == NULL)
+        return;
+
+    ctx = cms_get0_cmsctx(ci);
+    cms_SignerInfos_set_cmsctx(ci);
+    cms_RecipientInfos_set_cmsctx(ci);
+
+    pcerts = cms_get0_certificate_choices(ci);
+    if (pcerts != NULL) {
+        for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
+            cch = sk_CMS_CertificateChoices_value(*pcerts, i);
+            if (cch->type == CMS_CERTCHOICE_CERT)
+                x509_set0_libctx(cch->d.certificate, ctx->libctx, ctx->propq);
+        }
+    }
+}
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)
 {
     return cms->contentType;
 }
 
-CMS_ContentInfo *cms_Data_create(void)
+CMS_ContentInfo *cms_Data_create(OPENSSL_CTX *libctx, const char *propq)
 {
-    CMS_ContentInfo *cms;
-    cms = CMS_ContentInfo_new();
+    CMS_ContentInfo *cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+
     if (cms != NULL) {
         cms->contentType = OBJ_nid2obj(NID_pkcs7_data);
         /* Never detached */
@@ -295,14 +389,18 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
 
 /* Create a digest BIO from an X509_ALGOR structure */
 
-BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)
+BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
+                                  const CMS_CTX *ctx)
 {
     BIO *mdbio = NULL;
     const ASN1_OBJECT *digestoid;
-    const EVP_MD *digest;
+    EVP_MD *digest = NULL;
+    const char *alg;
+
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
-    digest = EVP_get_digestbyobj(digestoid);
-    if (!digest) {
+    alg = OBJ_nid2sn(OBJ_obj2nid(digestoid));
+    digest = EVP_MD_fetch(ctx->libctx, alg, ctx->propq);
+    if (digest == NULL) {
         CMSerr(CMS_F_CMS_DIGESTALGORITHM_INIT_BIO,
                CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         goto err;
@@ -312,8 +410,10 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)
         CMSerr(CMS_F_CMS_DIGESTALGORITHM_INIT_BIO, CMS_R_MD_BIO_INIT_ERROR);
         goto err;
     }
+    EVP_MD_free(digest);
     return mdbio;
  err:
+    EVP_MD_free(digest);
     BIO_free(mdbio);
     return NULL;
 }

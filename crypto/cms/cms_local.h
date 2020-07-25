@@ -43,6 +43,12 @@ typedef struct CMS_KEKRecipientInfo_st CMS_KEKRecipientInfo;
 typedef struct CMS_PasswordRecipientInfo_st CMS_PasswordRecipientInfo;
 typedef struct CMS_OtherRecipientInfo_st CMS_OtherRecipientInfo;
 typedef struct CMS_ReceiptsFrom_st CMS_ReceiptsFrom;
+typedef struct CMS_CTX_st CMS_CTX;
+
+struct CMS_CTX_st {
+    OPENSSL_CTX *libctx;
+    char *propq;
+};
 
 struct CMS_ContentInfo_st {
     ASN1_OBJECT *contentType;
@@ -58,6 +64,7 @@ struct CMS_ContentInfo_st {
         /* Other types ... */
         void *otherData;
     } d;
+    CMS_CTX ctx;
 };
 
 DEFINE_STACK_OF(CMS_CertificateChoices)
@@ -92,6 +99,7 @@ struct CMS_SignerInfo_st {
     /* Digest and public key context for alternative parameters */
     EVP_MD_CTX *mctx;
     EVP_PKEY_CTX *pctx;
+    const CMS_CTX *cms_ctx;
 };
 
 struct CMS_SignerIdentifier_st {
@@ -152,6 +160,7 @@ struct CMS_KeyTransRecipientInfo_st {
     EVP_PKEY *pkey;
     /* Public key context for this operation */
     EVP_PKEY_CTX *pctx;
+    const CMS_CTX *cms_ctx;
 };
 
 struct CMS_KeyAgreeRecipientInfo_st {
@@ -164,6 +173,7 @@ struct CMS_KeyAgreeRecipientInfo_st {
     EVP_PKEY_CTX *pctx;
     /* Cipher context for CEK wrapping */
     EVP_CIPHER_CTX *ctx;
+    const CMS_CTX *cms_ctx;
 };
 
 struct CMS_OriginatorIdentifierOrKey_st {
@@ -209,6 +219,7 @@ struct CMS_KEKRecipientInfo_st {
     /* Extra info: symmetric key to use */
     unsigned char *key;
     size_t keylen;
+    const CMS_CTX *cms_ctx;
 };
 
 struct CMS_KEKIdentifier_st {
@@ -225,6 +236,7 @@ struct CMS_PasswordRecipientInfo_st {
     /* Extra info: password to use */
     unsigned char *pass;
     size_t passlen;
+    const CMS_CTX *cms_ctx;
 };
 
 struct CMS_OtherRecipientInfo_st {
@@ -363,27 +375,34 @@ DECLARE_ASN1_ALLOC_FUNCTIONS(CMS_IssuerAndSerialNumber)
 # define CMS_OIK_PUBKEY                  2
 
 BIO *cms_content_bio(CMS_ContentInfo *cms);
+const CMS_CTX *cms_get0_cmsctx(const CMS_ContentInfo *cms);
+OPENSSL_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx);
+const char *cms_ctx_get0_propq(const CMS_CTX *ctx);
+void cms_resolve_libctx(CMS_ContentInfo *ci);
 
-CMS_ContentInfo *cms_Data_create(void);
+CMS_ContentInfo *cms_Data_create(OPENSSL_CTX *ctx, const char *propq);
 
-CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md);
+CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
+                                         OPENSSL_CTX *libctx, const char *propq);
 BIO *cms_DigestedData_init_bio(const CMS_ContentInfo *cms);
 int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify);
 
 BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms);
 int cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain);
 int cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert,
-                              int type);
+                              int type, const CMS_CTX *ctx);
 int cms_SignerIdentifier_get0_signer_id(CMS_SignerIdentifier *sid,
                                         ASN1_OCTET_STRING **keyid,
                                         X509_NAME **issuer,
                                         ASN1_INTEGER **sno);
 int cms_SignerIdentifier_cert_cmp(CMS_SignerIdentifier *sid, X509 *cert);
 
-CMS_ContentInfo *cms_CompressedData_create(int comp_nid);
+CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OPENSSL_CTX *libctx,
+                                           const char *propq);
 BIO *cms_CompressedData_init_bio(const CMS_ContentInfo *cms);
 
-BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm);
+BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
+                                  const CMS_CTX *ctx);
 int cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
                                  X509_ALGOR *mdalg);
 
@@ -392,11 +411,13 @@ int cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert);
 int cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert);
 int cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert);
 
-BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec);
+BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
+                                   const CMS_CTX *ctx);
 BIO *cms_EncryptedData_init_bio(const CMS_ContentInfo *cms);
 int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
                               const EVP_CIPHER *cipher,
-                              const unsigned char *key, size_t keylen);
+                              const unsigned char *key, size_t keylen,
+                              const CMS_CTX *ctx);
 
 int cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms);
 int cms_msgSigDigest_add1(CMS_SignerInfo *dest, CMS_SignerInfo *src);
@@ -405,21 +426,29 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si);
 BIO *cms_EnvelopedData_init_bio(CMS_ContentInfo *cms);
 int cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain);
 CMS_EnvelopedData *cms_get0_enveloped(CMS_ContentInfo *cms);
+
+/* RecipientInfo routines */
 int cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd);
 int cms_pkey_get_ri_type(EVP_PKEY *pk);
 int cms_pkey_is_ri_type_supported(EVP_PKEY *pk, int ri_type);
+
+void cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms);
+
 /* KARI routines */
 int cms_RecipientInfo_kari_init(CMS_RecipientInfo *ri, X509 *recip,
                                 EVP_PKEY *recipPubKey, X509 *originator,
-                                EVP_PKEY *originatorPrivKey, unsigned int flags);
+                                EVP_PKEY *originatorPrivKey, unsigned int flags,
+                                const CMS_CTX *ctx);
 int cms_RecipientInfo_kari_encrypt(const CMS_ContentInfo *cms,
                                    CMS_RecipientInfo *ri);
 
 /* PWRI routines */
-int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms, CMS_RecipientInfo *ri,
-                                 int en_de);
+int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
+                                 CMS_RecipientInfo *ri, int en_de);
 /* SignerInfo routines */
 int CMS_si_check_attributes(const CMS_SignerInfo *si);
+void cms_SignerInfos_set_cmsctx(CMS_ContentInfo *cms);
+
 
 /* ESS routines */
 int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain);
