@@ -55,8 +55,10 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
 
     if (serial == NULL)
         goto err;
-    if (!ASN1_INTEGER_set(serial, 1))
+    if (!ASN1_INTEGER_set(serial, 1)) {
+        ASN1_INTEGER_free(serial);
         goto err;
+    }
     return serial;
 
  err:

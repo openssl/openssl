@@ -275,6 +275,7 @@ static int copy_issuer(X509V3_CTX *ctx, GENERAL_NAMES *gens)
     num = sk_GENERAL_NAME_num(ialt);
     if (!sk_GENERAL_NAME_reserve(gens, num)) {
         X509V3err(X509V3_F_COPY_ISSUER, ERR_R_MALLOC_FAILURE);
+        sk_GENERAL_NAME_free(ialt);
         goto err;
     }
 

@@ -833,6 +833,9 @@ static int mime_hdr_addparam(MIME_HEADER *mhdr, const char *name, const char *va
 {
     char *tmpname = NULL, *tmpval = NULL, *p;
     MIME_PARAM *mparam = NULL;
+    if (mhdr == NULL) {
+        goto err;
+    }
 
     if (name) {
         tmpname = OPENSSL_strdup(name);

@@ -58,7 +58,9 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
             if (!EVP_DigestFinal(mctx, mtmp, NULL))
                 goto err;
             memcpy(out, mtmp, outlen);
-            OPENSSL_cleanse(mtmp, mdlen);
+            if (mdlen > 0) {
+                OPENSSL_cleanse(mtmp, mdlen);
+            }
             break;
         }
     }
