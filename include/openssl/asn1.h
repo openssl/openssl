@@ -845,7 +845,14 @@ int PEM_write_bio_ASN1_stream(BIO *out, ASN1_VALUE *val, BIO *in, int flags,
 int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                      int ctype_nid, int econt_nid,
                      STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it);
+int SMIME_write_ASN1_with_libctx(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
+                                 int ctype_nid, int econt_nid,
+                                 STACK_OF(X509_ALGOR) *mdalgs,
+                                 const ASN1_ITEM *it,
+                                 OPENSSL_CTX *libctx, const char *propq);
 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
+ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, BIO **bcont, const ASN1_ITEM *it,
+                               ASN1_VALUE **x);
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
 int SMIME_text(BIO *in, BIO *out);
 
