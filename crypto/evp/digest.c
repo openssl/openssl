@@ -295,8 +295,9 @@ int EVP_DigestUpdate(EVP_MD_CTX *ctx, const void *data, size_t count)
          * Prior to OpenSSL 3.0 EVP_DigestSignUpdate() and
          * EVP_DigestVerifyUpdate() were just macros for EVP_DigestUpdate().
          * Some code calls EVP_DigestUpdate() directly even when initialised
-         * with EVP_DigestSignInit_ex() or EVP_DigestVerifyInit_ex(), so we
-         * detect that and redirect to the correct EVP_Digest*Update() function
+         * with EVP_DigestSignInit_with_libctx() or
+         * EVP_DigestVerifyInit_with_libctx(), so we detect that and redirect to
+         * the correct EVP_Digest*Update() function
          */
         if (ctx->pctx->operation == EVP_PKEY_OP_SIGNCTX)
             return EVP_DigestSignUpdate(ctx, data, count);

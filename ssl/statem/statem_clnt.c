@@ -2377,9 +2377,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (EVP_DigestVerifyInit_ex(md_ctx, &pctx,
-                                    md == NULL ? NULL : EVP_MD_name(md),
-                                    s->ctx->propq, pkey, s->ctx->libctx) <= 0) {
+        if (EVP_DigestVerifyInit_with_libctx(md_ctx, &pctx,
+                                             md == NULL ? NULL : EVP_MD_name(md),
+                                             s->ctx->libctx, s->ctx->propq,
+                                             pkey) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
                      ERR_R_EVP_LIB);
             goto err;

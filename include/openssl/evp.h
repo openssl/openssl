@@ -637,6 +637,7 @@ __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
 
 __owur EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                             const char *properties);
+
 int EVP_MD_up_ref(EVP_MD *md);
 void EVP_MD_free(EVP_MD *md);
 
@@ -697,6 +698,9 @@ __owur int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
 
 __owur int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
                          EVP_PKEY *pkey);
+__owur int EVP_SignFinal_with_libctx(EVP_MD_CTX *ctx, unsigned char *md,
+                                     unsigned int *s, EVP_PKEY *pkey,
+                                     OPENSSL_CTX *libctx, const char *propq);
 
 __owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
                           size_t *siglen, const unsigned char *tbs,
@@ -704,14 +708,19 @@ __owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
 
 __owur int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                            unsigned int siglen, EVP_PKEY *pkey);
+__owur int EVP_VerifyFinal_with_libctx(EVP_MD_CTX *ctx,
+                                       const unsigned char *sigbuf,
+                                       unsigned int siglen, EVP_PKEY *pkey,
+                                       OPENSSL_CTX *libctx, const char *propq);
 
 __owur int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
                             size_t siglen, const unsigned char *tbs,
                             size_t tbslen);
 
-int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                          const char *mdname, const char *props, EVP_PKEY *pkey,
-                          OPENSSL_CTX *libctx);
+int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                                   const char *mdname,
+                                   OPENSSL_CTX *libctx, const char *props,
+                                   EVP_PKEY *pkey);
 /*__owur*/ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                   const EVP_MD *type, ENGINE *e,
                                   EVP_PKEY *pkey);
@@ -719,9 +728,10 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize);
 __owur int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                                size_t *siglen);
 
-int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                            const char *mdname, const char *props,
-                            EVP_PKEY *pkey, OPENSSL_CTX *libctx);
+int EVP_DigestVerifyInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                                     const char *mdname,
+                                     OPENSSL_CTX *libctx, const char *props,
+                                     EVP_PKEY *pkey);
 __owur int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                 const EVP_MD *type, ENGINE *e,
                                 EVP_PKEY *pkey);
