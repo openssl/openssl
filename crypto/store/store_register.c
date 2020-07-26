@@ -71,6 +71,14 @@ int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
     return 1;
 }
 
+int OSSL_STORE_LOADER_set_open_with_libctx
+    (OSSL_STORE_LOADER *loader,
+     OSSL_STORE_open_with_libctx_fn open_with_libctx_function)
+{
+    loader->open_with_libctx = open_with_libctx_function;
+    return 1;
+}
+
 int OSSL_STORE_LOADER_set_attach(OSSL_STORE_LOADER *loader,
                                  OSSL_STORE_attach_fn attach_function)
 {
