@@ -1180,6 +1180,20 @@ const OSSL_PARAM *EVP_CIPHER_gettable_ctx_params(const EVP_CIPHER *cipher)
     return NULL;
 }
 
+#ifndef FIPS_MODULE
+static OPENSSL_CTX *EVP_CIPHER_CTX_get_libctx(EVP_CIPHER_CTX *ctx)
+{
+    const EVP_CIPHER *cipher = ctx->cipher;
+    const OSSL_PROVIDER *prov;
+
+    if (cipher == NULL)
+        return NULL;
+
+    prov = EVP_CIPHER_provider(cipher);
+    return ossl_provider_library_context(prov);
+}
+#endif
+
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 {
     if (ctx->cipher->flags & EVP_CIPH_RAND_KEY)
@@ -1190,9 +1204,10 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
 #else
     {
         int kl;
+        OPENSSL_CTX *libctx = EVP_CIPHER_CTX_get_libctx(ctx);
 
         kl = EVP_CIPHER_CTX_key_length(ctx);
-        if (kl <= 0 || RAND_priv_bytes(key, kl) <= 0)
+        if (kl <= 0 || RAND_priv_bytes_ex(libctx, key, kl) <= 0)
             return 0;
         return 1;
     }
