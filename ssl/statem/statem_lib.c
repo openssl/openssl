@@ -277,9 +277,10 @@ int tls_construct_cert_verify(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (EVP_DigestSignInit_ex(mctx, &pctx,
-                              md == NULL ? NULL : EVP_MD_name(md),
-                              s->ctx->propq, pkey, s->ctx->libctx) <= 0) {
+    if (EVP_DigestSignInit_with_libctx(mctx, &pctx,
+                                       md == NULL ? NULL : EVP_MD_name(md),
+                                       s->ctx->libctx, s->ctx->propq,
+                                       pkey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CERT_VERIFY,
                  ERR_R_EVP_LIB);
         goto err;
@@ -472,9 +473,10 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL *s, PACKET *pkt)
     OSSL_TRACE1(TLS, "Using client verify alg %s\n",
                 md == NULL ? "n/a" : EVP_MD_name(md));
 
-    if (EVP_DigestVerifyInit_ex(mctx, &pctx,
-                                md == NULL ? NULL : EVP_MD_name(md),
-                                s->ctx->propq, pkey, s->ctx->libctx) <= 0) {
+    if (EVP_DigestVerifyInit_with_libctx(mctx, &pctx,
+                                         md == NULL ? NULL : EVP_MD_name(md),
+                                         s->ctx->libctx, s->ctx->propq,
+                                         pkey) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CERT_VERIFY,
                  ERR_R_EVP_LIB);
         goto err;
