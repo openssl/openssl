@@ -44,7 +44,7 @@ struct der2rsa_ctx_st {
     struct pkcs8_encrypt_ctx_st sc;
 };
 
-static void *der2rsa_newctx_int(void *provctx)
+static struct der2rsa_ctx_st *der2rsa_newctx_int(void *provctx)
 {
     struct der2rsa_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
