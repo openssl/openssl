@@ -35,6 +35,7 @@ static int eckey_param2type(int *pptype, void **ppval, const EC_KEY *ec_key)
 {
     const EC_GROUP *group;
     int nid;
+
     if (ec_key == NULL || (group = EC_KEY_get0_group(ec_key)) == NULL) {
         ECerr(EC_F_ECKEY_PARAM2TYPE, EC_R_MISSING_PARAMETERS);
         return 0;
@@ -192,6 +193,7 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     const EC_GROUP *group = EC_KEY_get0_group(b->pkey.ec);
     const EC_POINT *pa = EC_KEY_get0_public_key(a->pkey.ec),
         *pb = EC_KEY_get0_public_key(b->pkey.ec);
+
     if (group == NULL || pa == NULL || pb == NULL)
         return -2;
     r = EC_POINT_cmp(group, pa, pb, NULL);
@@ -299,6 +301,7 @@ static int ec_bits(const EVP_PKEY *pkey)
 static int ec_security_bits(const EVP_PKEY *pkey)
 {
     int ecbits = ec_bits(pkey);
+
     if (ecbits >= 512)
         return 256;
     if (ecbits >= 384)
@@ -343,6 +346,7 @@ static int ec_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
     const EC_GROUP *group_a = EC_KEY_get0_group(a->pkey.ec),
         *group_b = EC_KEY_get0_group(b->pkey.ec);
+
     if (group_a == NULL || group_b == NULL)
         return -2;
     if (EC_GROUP_cmp(group_a, group_b, NULL))
@@ -486,6 +490,7 @@ static int ec_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
         if (arg1 == 0) {
             int snid, hnid;
             X509_ALGOR *alg1, *alg2;
+
             PKCS7_SIGNER_INFO_get0_algs(arg2, NULL, &alg1, &alg2);
             if (alg1 == NULL || alg1->algorithm == NULL)
                 return -1;
@@ -626,7 +631,8 @@ int ecparams_to_params(const EC_KEY *eckey, OSSL_PARAM_BLD *tmpl)
         if ((curve_name = OBJ_nid2sn(curve_nid)) == NULL)
             return 0;
 
-        if (!OSSL_PARAM_BLD_push_utf8_string(tmpl, OSSL_PKEY_PARAM_GROUP_NAME, curve_name, 0))
+        if (!OSSL_PARAM_BLD_push_utf8_string(tmpl, OSSL_PKEY_PARAM_GROUP_NAME,
+                                             curve_name, 0))
             return 0;
     }
 
@@ -878,6 +884,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     EC_KEY *ecpeer = NULL;
     const unsigned char *p;
     int plen;
+
     X509_ALGOR_get0(&aoid, &atype, &aval, alg);
     if (OBJ_obj2nid(aoid) != NID_X9_62_id_ecPublicKey)
         goto err;
@@ -961,8 +968,9 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     const unsigned char *p;
     unsigned char *der = NULL;
     int plen, keylen;
-    const EVP_CIPHER *kekcipher;
+    EVP_CIPHER *kekcipher = NULL;
     EVP_CIPHER_CTX *kekctx;
+    const char *name;
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         return 0;
@@ -978,13 +986,14 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     p = alg->parameter->value.sequence->data;
     plen = alg->parameter->value.sequence->length;
     kekalg = d2i_X509_ALGOR(NULL, &p, plen);
-    if (!kekalg)
+    if (kekalg == NULL)
         goto err;
     kekctx = CMS_RecipientInfo_kari_get0_ctx(ri);
-    if (!kekctx)
+    if (kekctx == NULL)
         goto err;
-    kekcipher = EVP_get_cipherbyobj(kekalg->algorithm);
-    if (!kekcipher || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
+    name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
+    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, NULL);
+    if (kekcipher == NULL || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
         goto err;
@@ -1006,6 +1015,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     rv = 1;
  err:
+    EVP_CIPHER_free(kekcipher);
     X509_ALGOR_free(kekalg);
     OPENSSL_free(der);
     return rv;
@@ -1014,13 +1024,15 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 static int ecdh_cms_decrypt(CMS_RecipientInfo *ri)
 {
     EVP_PKEY_CTX *pctx;
+
     pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
-    if (!pctx)
+    if (pctx == NULL)
         return 0;
     /* See if we need to set peer key */
     if (!EVP_PKEY_CTX_get0_peerkey(pctx)) {
         X509_ALGOR *alg;
         ASN1_BIT_STRING *pubkey;
+
         if (!CMS_RecipientInfo_kari_get0_orig_id(ri, &alg, &pubkey,
                                                  NULL, NULL, NULL))
             return 0;
@@ -1055,8 +1067,9 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
     int rv = 0;
     int ecdh_nid, kdf_type, kdf_nid, wrap_nid;
     const EVP_MD *kdf_md;
+
     pctx = CMS_RecipientInfo_get0_pkey_ctx(ri);
-    if (!pctx)
+    if (pctx == NULL)
         return 0;
     /* Get ephemeral key */
     pkey = EVP_PKEY_CTX_get0_pkey(pctx);
