@@ -258,6 +258,9 @@ typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_with_libctx_fn)
 
 int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
                                OSSL_STORE_open_fn open_function);
+int OSSL_STORE_LOADER_set_open_with_libctx
+    (OSSL_STORE_LOADER *loader,
+     OSSL_STORE_open_with_libctx_fn open_with_libctx_function);
 typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_attach_fn)
     (const OSSL_STORE_LOADER *loader, BIO *bio,
      OPENSSL_CTX *libctx, const char *propq,
