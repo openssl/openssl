@@ -237,6 +237,20 @@ static int test_builtin(int n, int as)
         return 1;
     }
 
+    /*
+     * skip SM2 curve if 'as' is equal to EVP_PKEY_EC or, skip all curves
+     * except SM2 curve if 'as' is equal to EVP_PKEY_SM2
+     */
+    if (nid == NID_sm2 && as == EVP_PKEY_EC) {
+        TEST_info("skipped: EC key type unsupported for curve %s",
+                  OBJ_nid2sn(nid));
+        return 1;
+    } else if (nid != NID_sm2 && as == EVP_PKEY_SM2) {
+        TEST_info("skipped: SM2 key type unsupported for curve %s",
+                  OBJ_nid2sn(nid));
+        return 1;
+    }
+
     TEST_info("testing ECDSA for curve %s as %s key type", OBJ_nid2sn(nid),
               as == EVP_PKEY_EC ? "EC" : "SM2");
 

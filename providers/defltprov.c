@@ -413,6 +413,8 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #endif
 #ifndef OPENSSL_NO_CMAC
     { "CMAC", "provider=default", cmac_legacy_keymgmt_functions },
+#ifndef OPENSSL_NO_SM2
+    { "SM2", "provider=default", sm2_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
