@@ -20,10 +20,6 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_EC)
-# define TMP_SM2_HACK
-#endif
-
 /* TODO(3.0) remove when provider SM2 key generation is implemented */
 #ifdef TMP_SM2_HACK
 # include <openssl/ec.h>

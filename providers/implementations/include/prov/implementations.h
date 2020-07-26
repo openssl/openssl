@@ -280,6 +280,9 @@ extern const OSSL_DISPATCH ec_keymgmt_functions[];
 extern const OSSL_DISPATCH kdf_keymgmt_functions[];
 extern const OSSL_DISPATCH mac_legacy_keymgmt_functions[];
 extern const OSSL_DISPATCH cmac_legacy_keymgmt_functions[];
+#ifndef OPENSSL_NO_SM2
+extern const OSSL_DISPATCH sm2_keymgmt_functions[];
+#endif
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];

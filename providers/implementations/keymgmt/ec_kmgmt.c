@@ -27,6 +27,7 @@
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "internal/param_build_set.h"
+#include "crypto/sm2.h"
 
 static OSSL_FUNC_keymgmt_new_fn ec_newdata;
 static OSSL_FUNC_keymgmt_gen_init_fn ec_gen_init;
@@ -49,10 +50,19 @@ static OSSL_FUNC_keymgmt_import_types_fn ec_import_types;
 static OSSL_FUNC_keymgmt_export_fn ec_export;
 static OSSL_FUNC_keymgmt_export_types_fn ec_export_types;
 static OSSL_FUNC_keymgmt_query_operation_name_fn ec_query_operation_name;
+#ifndef OPENSSL_NO_SM2
+static OSSL_FUNC_keymgmt_gen_fn sm2_gen;
+static OSSL_FUNC_keymgmt_get_params_fn sm2_get_params;
+static OSSL_FUNC_keymgmt_gettable_params_fn sm2_gettable_params;
+static OSSL_FUNC_keymgmt_settable_params_fn sm2_settable_params;
+static OSSL_FUNC_keymgmt_import_fn sm2_import;
+static OSSL_FUNC_keymgmt_query_operation_name_fn sm2_query_operation_name;
+#endif
 
 #define EC_DEFAULT_MD "SHA256"
 #define EC_POSSIBLE_SELECTIONS                                                 \
     (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_ALL_PARAMETERS)
+#define SM2_DEFAULT_MD "SM3"
 
 static
 const char *ec_query_operation_name(int operation_id)
@@ -64,6 +74,53 @@ const char *ec_query_operation_name(int operation_id)
         return "ECDSA";
     }
     return NULL;
+}
+
+#ifndef OPENSSL_NO_SM2
+static
+const char *sm2_query_operation_name(int operation_id)
+{
+    switch (operation_id) {
+    case OSSL_OP_SIGNATURE:
+        return "SM2";
+    }
+    return NULL;
+}
+#endif
+
+static ossl_inline
+int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
+                        OSSL_PARAM params[])
+{
+    const EC_GROUP *ecg;
+    int curve_nid;
+
+    if (ec == NULL)
+        return 0;
+
+    ecg = EC_KEY_get0_group(ec);
+    if (ecg == NULL)
+        return 0;
+
+    curve_nid = EC_GROUP_get_curve_name(ecg);
+
+    if (curve_nid == NID_undef) {
+        /* TODO(3.0): should we support explicit parameters curves? */
+        return 0;
+    } else {
+        /* named curve */
+        const char *curve_name = NULL;
+
+        if ((curve_name = ec_curve_nid2name(curve_nid)) == NULL)
+            return 0;
+        if (!ossl_param_build_set_utf8_string(tmpl, params,
+                                              OSSL_PKEY_PARAM_GROUP_NAME,
+                                              curve_name))
+
+            return 0;
+    }
+
+    return 1;
 }
 
 /*
@@ -283,6 +340,7 @@ static
 int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     EC_KEY *ec = keydata;
+    const EC_GROUP *ecg = NULL;
     int ok = 1;
 
     if (!ossl_prov_is_running() || ec == NULL)
@@ -309,6 +367,7 @@ int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && ec_group_fromdata(ec, params);
+
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int include_private =
             selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
@@ -320,6 +379,61 @@ int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 
     return ok;
 }
+
+#ifndef OPENSSL_NO_SM2
+static
+int sm2_import(void *keydata, int selection, const OSSL_PARAM params[])
+{
+    EC_KEY *ec = keydata;
+    const EC_GROUP *ecg = NULL;
+    int ok = 1;
+
+    if (ec == NULL)
+        return 0;
+
+    /*
+     * In this implementation, we can export/import only keydata in the
+     * following combinations:
+     *   - domain parameters only
+     *   - public key with associated domain parameters (+optional other params)
+     *   - private key with associated public key and domain parameters
+     *         (+optional other params)
+     *
+     * This means:
+     *   - domain parameters must always be requested
+     *   - private key must be requested alongside public key
+     *   - other parameters must be requested only alongside a key
+     */
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0)
+        return 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0
+            && (selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) == 0)
+        return 0;
+    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0
+            && (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+        return 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        ok = ok && ec_key_domparams_fromdata(ec, params);
+
+    /* import the keys or domparams only on SM2 Curve */
+    if ((ecg = EC_KEY_get0_group(ec)) == NULL
+            || EC_GROUP_get_curve_name(ecg) != NID_sm2) {
+        return 0;
+    }
+
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        int include_private =
+            selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
+
+        ok = ok && ec_key_fromdata(ec, params, include_private);
+    }
+    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
+        ok = ok && ec_key_otherparams_fromdata(ec, params);
+
+    return ok;
+}
+#endif
 
 static
 int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
@@ -679,6 +793,87 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
     return ec_key_otherparams_fromdata(eck, params);
 }
 
+#ifndef OPENSSL_NO_SM2
+static
+int sm2_get_params(void *key, OSSL_PARAM params[])
+{
+    int ret;
+    EC_KEY *eck = key;
+    const EC_GROUP *ecg = NULL;
+    OSSL_PARAM *p;
+    unsigned char *pub_key = NULL;
+
+    ecg = EC_KEY_get0_group(eck);
+    if (ecg == NULL)
+        return 0;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
+        && !OSSL_PARAM_set_int(p, ECDSA_size(eck)))
+        return 0;
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
+        && !OSSL_PARAM_set_int(p, EC_GROUP_order_bits(ecg)))
+        return 0;
+
+    /* XXX:
+     * I dropped the support of OSSL_PKEY_PARAM_SECURITY_BITS since
+     * I didn't find definition of SM2 security bits so far. This could
+     * be supported if the definition is clear in the future.
+     */
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
+        && !OSSL_PARAM_set_utf8_string(p, SM2_DEFAULT_MD))
+        return 0;
+
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
+        BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
+
+        if (ctx == NULL)
+            return 0;
+        p->return_size = EC_POINT_point2oct(EC_KEY_get0_group(key),
+                                            EC_KEY_get0_public_key(key),
+                                            POINT_CONVERSION_UNCOMPRESSED,
+                                            p->data, p->return_size, ctx);
+        BN_CTX_free(ctx);
+        if (p->return_size == 0)
+            return 0;
+    }
+
+    ret = domparams_to_params(eck, NULL, params)
+          && key_to_params(eck, NULL, params, 1, &pub_key);
+    OPENSSL_free(pub_key);
+    return ret;
+}
+
+static const OSSL_PARAM sm2_known_gettable_params[] = {
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    EC_IMEXPORTABLE_DOM_PARAMETERS,
+    EC_IMEXPORTABLE_PUBLIC_KEY,
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_PUB_X, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_PUB_Y, NULL, 0),
+    EC_IMEXPORTABLE_PRIVATE_KEY,
+    OSSL_PARAM_END
+};
+
+static
+const OSSL_PARAM *sm2_gettable_params(void)
+{
+    return sm2_known_gettable_params;
+}
+
+static const OSSL_PARAM sm2_known_settable_params[] = {
+    OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static
+const OSSL_PARAM *sm2_settable_params(void)
+{
+    return sm2_known_settable_params;
+}
+#endif
+
 static
 int ec_validate(void *keydata, int selection)
 {
@@ -975,6 +1170,39 @@ err:
     return NULL;
 }
 
+#ifndef OPENSSL_NO_SM2
+/*
+ * The callback arguments (osslcb & cbarg) are not used by EC_KEY generation
+ */
+static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+{
+    struct ec_gen_ctx *gctx = genctx;
+    EC_KEY *ec = NULL;
+    int ret = 1;
+
+    if (gctx == NULL
+        || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
+        return NULL;
+
+    /* We must always assign a group, no matter what */
+    ret = ec_gen_assign_group(ec, gctx->gen_group);
+    /* Whether you want it or not, you get a keypair, not just one half */
+    if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
+        /*
+         * For SM2, we need a new flag to indicate the 'generate' function
+         * to use a new range
+         */
+        EC_KEY_set_flags(ec, EC_FLAG_SM2_RANGE);
+        ret = ret && EC_KEY_generate_key(ec);
+    }
+
+    if (ret)
+        return ec;
+
+    return NULL;
+}
+#endif
+
 static void ec_gen_cleanup(void *genctx)
 {
     struct ec_gen_ctx *gctx = genctx;
@@ -1037,3 +1265,32 @@ const OSSL_DISPATCH ec_keymgmt_functions[] = {
       (void (*)(void))ec_query_operation_name },
     { 0, NULL }
 };
+
+#ifndef OPENSSL_NO_SM2
+const OSSL_DISPATCH sm2_keymgmt_functions[] = {
+    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE,
+      (void (*)(void))ec_gen_set_template },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))ec_gen_set_params },
+    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
+      (void (*)(void))ec_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))sm2_gen },
+    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
+    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))sm2_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))sm2_gettable_params },
+    { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*) (void))ec_set_params },
+    { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))sm2_settable_params },
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ec_has },
+    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },
+    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))ec_validate },
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))sm2_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ec_export_types },
+    { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
+      (void (*)(void))sm2_query_operation_name },
+    { 0, NULL }
+};
+#endif
