@@ -20,9 +20,9 @@
 # endif
 #endif
 
-#ifndef OPENSSL_NO_KTLS
-# ifndef HEADER_INTERNAL_KTLS
-#  define HEADER_INTERNAL_KTLS
+#ifndef HEADER_INTERNAL_KTLS
+# define HEADER_INTERNAL_KTLS
+# ifndef OPENSSL_NO_KTLS
 
 #  if defined(__FreeBSD__)
 #   include <sys/types.h>
@@ -30,7 +30,6 @@
 #   include <sys/ktls.h>
 #   include <netinet/in.h>
 #   include <netinet/tcp.h>
-#   include <crypto/cryptodev.h>
 #   include "openssl/ssl3.h"
 
 #   ifndef TCP_RXTLS_ENABLE
@@ -206,109 +205,6 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off,
     return sbytes;
 }
 
-#   ifdef OSSL_SSL_LOCAL_H
-/*-
- * Check if a given cipher is supported by the KTLS interface.
- * The kernel might still fail the setsockopt() if no suitable
- * provider is found, but this checks if the socket option
- * supports the cipher suite used at all.
- */
-static ossl_inline int ktls_check_supported_cipher(const SSL *s,
-                                                   const EVP_CIPHER *c,
-                                                   const EVP_CIPHER_CTX *dd)
-{
-
-    switch (s->version) {
-    case TLS1_VERSION:
-    case TLS1_1_VERSION:
-    case TLS1_2_VERSION:
-    case TLS1_3_VERSION:
-        break;
-    default:
-        return 0;
-    }
-
-    switch (s->s3.tmp.new_cipher->algorithm_enc) {
-    case SSL_AES128GCM:
-    case SSL_AES256GCM:
-        return 1;
-    case SSL_AES128:
-    case SSL_AES256:
-        if (s->ext.use_etm)
-            return 0;
-        switch (s->s3.tmp.new_cipher->algorithm_mac) {
-        case SSL_SHA1:
-        case SSL_SHA256:
-        case SSL_SHA384:
-            return 1;
-        default:
-            return 0;
-        }
-    default:
-        return 0;
-    }
-}
-
-/* Function to configure kernel TLS structure */
-static ossl_inline int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c,
-                                             EVP_CIPHER_CTX *dd,
-                                             void *rl_sequence,
-                                             ktls_crypto_info_t *crypto_info,
-                                             unsigned char **rec_seq,
-                                             unsigned char *iv,
-                                             unsigned char *key,
-                                             unsigned char *mac_key,
-                                             size_t mac_secret_size)
-{
-    memset(crypto_info, 0, sizeof(*crypto_info));
-    switch (s->s3.tmp.new_cipher->algorithm_enc) {
-    case SSL_AES128GCM:
-    case SSL_AES256GCM:
-        crypto_info->cipher_algorithm = CRYPTO_AES_NIST_GCM_16;
-        if (s->version == TLS1_3_VERSION)
-            crypto_info->iv_len = EVP_CIPHER_CTX_iv_length(dd);
-        else
-            crypto_info->iv_len = EVP_GCM_TLS_FIXED_IV_LEN;
-        break;
-    case SSL_AES128:
-    case SSL_AES256:
-        switch (s->s3.tmp.new_cipher->algorithm_mac) {
-        case SSL_SHA1:
-            crypto_info->auth_algorithm = CRYPTO_SHA1_HMAC;
-            break;
-        case SSL_SHA256:
-            crypto_info->auth_algorithm = CRYPTO_SHA2_256_HMAC;
-            break;
-        case SSL_SHA384:
-            crypto_info->auth_algorithm = CRYPTO_SHA2_384_HMAC;
-            break;
-        default:
-            return 0;
-        }
-        crypto_info->cipher_algorithm = CRYPTO_AES_CBC;
-        crypto_info->iv_len = EVP_CIPHER_iv_length(c);
-        crypto_info->auth_key = mac_key;
-        crypto_info->auth_key_len = mac_secret_size;
-        break;
-    default:
-        return 0;
-    }
-    crypto_info->cipher_key = key;
-    crypto_info->cipher_key_len = EVP_CIPHER_key_length(c);
-    crypto_info->iv = iv;
-    crypto_info->tls_vmajor = (s->version >> 8) & 0x000000ff;
-    crypto_info->tls_vminor = (s->version & 0x000000ff);
-#    ifdef TCP_RXTLS_ENABLE
-    memcpy(crypto_info->rec_seq, rl_sequence, sizeof(crypto_info->rec_seq));
-    if (rec_seq != NULL)
-        *rec_seq = crypto_info->rec_seq;
-#    else
-    if (rec_seq != NULL)
-        *rec_seq = NULL;
-#    endif
-    return 1;
-};
-#   endif                        /* OSSL_SSL_LOCAL_H */
 #  endif                         /* __FreeBSD__ */
 
 #  if defined(OPENSSL_SYS_LINUX)
@@ -503,121 +399,8 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 
 #   endif /* OPENSSL_NO_KTLS_RX */
 
-#   ifdef OSSL_SSL_LOCAL_H
-/* Function to check supported ciphers in Linux */
-static ossl_inline int ktls_check_supported_cipher(const SSL *s,
-                                                   const EVP_CIPHER *c,
-                                                   const EVP_CIPHER_CTX *dd)
-{
-    switch (s->version) {
-    case TLS1_2_VERSION:
-    case TLS1_3_VERSION:
-        break;
-    default:
-        return 0;
-    }
-
-    /* check that cipher is AES_GCM_128, AES_GCM_256, AES_CCM_128 */
-    switch (EVP_CIPHER_nid(c))
-    {
-#  ifdef OPENSSL_KTLS_AES_CCM_128
-    case NID_aes_128_ccm:
-        if (EVP_CIPHER_CTX_tag_length(dd) != EVP_CCM_TLS_TAG_LEN)
-          return 0;
-#  endif
-#  ifdef OPENSSL_KTLS_AES_GCM_128
-    case NID_aes_128_gcm:
-#  endif
-#  ifdef OPENSSL_KTLS_AES_GCM_256
-    case NID_aes_256_gcm:
-#  endif
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-/* Function to configure kernel TLS structure */
-static ossl_inline int ktls_configure_crypto(const SSL *s, const EVP_CIPHER *c,
-                                             EVP_CIPHER_CTX *dd,
-                                             void *rl_sequence,
-                                             ktls_crypto_info_t *crypto_info,
-                                             unsigned char **rec_seq,
-                                             unsigned char *iv,
-                                             unsigned char *key,
-                                             unsigned char *mac_key,
-                                             size_t mac_secret_size)
-{
-    unsigned char geniv[12];
-    unsigned char *iiv = iv;
-
-    if (s->version == TLS1_2_VERSION &&
-        EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE) {
-        if (!EVP_CIPHER_CTX_get_iv_state(dd, geniv,
-                                         EVP_GCM_TLS_FIXED_IV_LEN
-                                         + EVP_GCM_TLS_EXPLICIT_IV_LEN))
-            return 0;
-        iiv = geniv;
-    }
-
-    memset(crypto_info, 0, sizeof(*crypto_info));
-    switch (EVP_CIPHER_nid(c))
-    {
-#  ifdef OPENSSL_KTLS_AES_GCM_128
-    case NID_aes_128_gcm:
-        crypto_info->gcm128.info.cipher_type = TLS_CIPHER_AES_GCM_128;
-        crypto_info->gcm128.info.version = s->version;
-        crypto_info->tls_crypto_info_len = sizeof(crypto_info->gcm128);
-        memcpy(crypto_info->gcm128.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
-                TLS_CIPHER_AES_GCM_128_IV_SIZE);
-        memcpy(crypto_info->gcm128.salt, iiv, TLS_CIPHER_AES_GCM_128_SALT_SIZE);
-        memcpy(crypto_info->gcm128.key, key, EVP_CIPHER_key_length(c));
-        memcpy(crypto_info->gcm128.rec_seq, rl_sequence,
-                TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-        if (rec_seq != NULL)
-            *rec_seq = crypto_info->gcm128.rec_seq;
-        return 1;
-#  endif
-#  ifdef OPENSSL_KTLS_AES_GCM_256
-    case NID_aes_256_gcm:
-        crypto_info->gcm256.info.cipher_type = TLS_CIPHER_AES_GCM_256;
-        crypto_info->gcm256.info.version = s->version;
-        crypto_info->tls_crypto_info_len = sizeof(crypto_info->gcm256);
-        memcpy(crypto_info->gcm256.iv, iiv + EVP_GCM_TLS_FIXED_IV_LEN,
-                TLS_CIPHER_AES_GCM_256_IV_SIZE);
-        memcpy(crypto_info->gcm256.salt, iiv, TLS_CIPHER_AES_GCM_256_SALT_SIZE);
-        memcpy(crypto_info->gcm256.key, key, EVP_CIPHER_key_length(c));
-        memcpy(crypto_info->gcm256.rec_seq, rl_sequence,
-                TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-        if (rec_seq != NULL)
-            *rec_seq = crypto_info->gcm256.rec_seq;
-        return 1;
-#  endif
-#  ifdef OPENSSL_KTLS_AES_CCM_128
-    case NID_aes_128_ccm:
-        crypto_info->ccm128.info.cipher_type = TLS_CIPHER_AES_CCM_128;
-        crypto_info->ccm128.info.version = s->version;
-        crypto_info->tls_crypto_info_len = sizeof(crypto_info->ccm128);
-        memcpy(crypto_info->ccm128.iv, iiv + EVP_CCM_TLS_FIXED_IV_LEN,
-                TLS_CIPHER_AES_CCM_128_IV_SIZE);
-        memcpy(crypto_info->ccm128.salt, iiv, TLS_CIPHER_AES_CCM_128_SALT_SIZE);
-        memcpy(crypto_info->ccm128.key, key, EVP_CIPHER_key_length(c));
-        memcpy(crypto_info->ccm128.rec_seq, rl_sequence,
-                TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-        if (rec_seq != NULL)
-            *rec_seq = crypto_info->ccm128.rec_seq;
-        return 1;
-#  endif
-    default:
-        return 0;
-    }
-
-}
-#   endif /* OSSL_SSL_LOCAL_H */
-
 #  endif /* OPENSSL_SYS_LINUX */
-# endif /* HEADER_INTERNAL_KTLS */
-#else /* defined(OPENSSL_NO_KTLS) */
+# else /* OPENSSL_NO_KTLS */
 /* Dummy functions here */
 static ossl_inline int ktls_enable(int fd)
 {
@@ -645,4 +428,5 @@ static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t s
 {
     return -1;
 }
-#endif
+# endif /* OPENSSL_NO_KTLS */
+#endif /* HEADER_INTERNAL_KTLS */
