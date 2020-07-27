@@ -299,7 +299,7 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
         const EC_POINT *pa = EC_KEY_get0_public_key(ec1);
         const EC_POINT *pb = EC_KEY_get0_public_key(ec2);
 
-        ok = ok && EC_POINT_cmp(group_b, pa, pb, NULL);
+        ok = ok && EC_POINT_cmp(group_b, pa, pb, NULL) == 0;
     }
     return ok;
 }
