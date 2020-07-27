@@ -5225,3 +5225,4 @@ PKCS7_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:
 PKCS7_sign_with_libctx                  ?	3_0_0	EXIST::FUNCTION:
 PKCS7_encrypt_with_libctx               ?	3_0_0	EXIST::FUNCTION:
 SMIME_read_PKCS7_ex                     ?	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_self_test                 ?	3_0_0	EXIST::FUNCTION:
