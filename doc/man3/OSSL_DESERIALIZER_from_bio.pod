@@ -9,9 +9,14 @@ OSSL_DESERIALIZER_CTX_add_deserializer,
 OSSL_DESERIALIZER_CTX_add_extra,
 OSSL_DESERIALIZER_CTX_num_deserializers,
 OSSL_DESERIALIZER_INSTANCE,
-OSSL_DESERIALIZER_FINALIZER,
-OSSL_DESERIALIZER_CLEANER,
-OSSL_DESERIALIZER_CTX_set_finalizer,
+OSSL_DESERIALIZER_CONSTRUCT,
+OSSL_DESERIALIZER_CLEANUP,
+OSSL_DESERIALIZER_CTX_set_construct,
+OSSL_DESERIALIZER_CTX_set_construct_data,
+OSSL_DESERIALIZER_CTX_set_cleanup,
+OSSL_DESERIALIZER_CTX_get_construct,
+OSSL_DESERIALIZER_CTX_get_construct_data,
+OSSL_DESERIALIZER_CTX_get_cleanup,
 OSSL_DESERIALIZER_export,
 OSSL_DESERIALIZER_INSTANCE_deserializer,
 OSSL_DESERIALIZER_INSTANCE_deserializer_ctx
@@ -32,24 +37,31 @@ OSSL_DESERIALIZER_INSTANCE_deserializer_ctx
  int OSSL_DESERIALIZER_CTX_num_deserializers(OSSL_DESERIALIZER_CTX *ctx);
 
  typedef struct ossl_deserializer_instance_st OSSL_DESERIALIZER_INSTANCE;
- typedef int (OSSL_DESERIALIZER_FINALIZER)
-     (OSSL_DESERIALIZER_INSTANCE *deser_inst,
-      const OSSL_PARAM *params, void *finalize_arg);
- typedef void (OSSL_DESERIALIZER_CLEANER)(void *finalize_arg);
-
- int OSSL_DESERIALIZER_CTX_set_finalizer(OSSL_DESERIALIZER_CTX *ctx,
-                                         OSSL_DESRIALIZER_FINALIZER *finalizer,
-                                         OSSL_DESERIALIZER_CLEANER *cleaner,
-                                         void *finalize_arg);
-
- int OSSL_DESERIALIZER_export(OSSL_DESERIALIZER_INSTANCE *deser_inst,
-                              void *reference, size_t reference_sz,
-                              OSSL_CALLBACK *export_cb, void *export_cbarg);
-
  OSSL_DESERIALIZER *OSSL_DESERIALIZER_INSTANCE_deserializer
      (OSSL_DESERIALIZER_INSTANCE *deser_inst);
  void *OSSL_DESERIALIZER_INSTANCE_deserializer_ctx
      (OSSL_DESERIALIZER_INSTANCE *deser_inst);
+
+ typedef int (OSSL_DESERIALIZER_CONSTRUCT)
+     (OSSL_DESERIALIZER_INSTANCE *deser_inst,
+      const OSSL_PARAM *params, void *construct_data);
+ typedef void (OSSL_DESERIALIZER_CLEANUP)(void *construct_data);
+
+ int OSSL_DESERIALIZER_CTX_set_construct
+     (OSSL_DESERIALIZER_CTX *ctx, OSSL_DESERIALIZER_CONSTRUCT *construct);
+ int OSSL_DESERIALIZER_CTX_set_construct_data
+     (OSSL_DESERIALIZER_CTX *ctx, void *construct_data);
+ int OSSL_DESERIALIZER_CTX_set_cleanup(OSSL_DESERIALIZER_CTX *ctx,
+                                       OSSL_DESERIALIZER_CLEANUP *cleanup);
+ OSSL_DESERIALIZER_CONSTRUCT *
+ OSSL_DESERIALIZER_CTX_get_construct(OSSL_DESERIALIZER_CTX *ctx);
+ void *OSSL_DESERIALIZER_CTX_get_construct_data(OSSL_DESERIALIZER_CTX *ctx);
+ OSSL_DESERIALIZER_CLEANUP *
+ OSSL_DESERIALIZER_CTX_get_cleanup(OSSL_DESERIALIZER_CTX *ctx);
+
+ int OSSL_DESERIALIZER_export(OSSL_DESERIALIZER_INSTANCE *deser_inst,
+                              void *reference, size_t reference_sz,
+                              OSSL_CALLBACK *export_cb, void *export_cbarg);
 
 Feature availability macros:
 
@@ -83,26 +95,23 @@ what type of input they have.  In this case, OSSL_DESERIALIZER_from_bio()
 will simply try with one deserializer implementation after the other, and
 thereby discover what kind of input the caller gave it.
 
-For every deserialization done, even intermediary, a I<finalizer>
-provided by the caller is used to attempt to "finalize" the current
-deserialization output, which is always a provider side object of some
-sort, by "wrapping" it into some appropriate type or structure that
-the caller knows how to handle.  Exactly what this "wrapping" consists
-of is entirely at the discretion of the I<finalizer>.
+For every deserialization done, even an intermediary one, a constructor
+provided by the caller is called to attempt to construct an appropriate type
+/ structure that the caller knows how to handle from the current
+deserialization result.
+The constructor is set with OSSL_DESERIALIZER_CTX_set_construct().
 
 B<OSSL_DESERIALIZER_INSTANCE> is an opaque structure that contains
 data about the deserializer that was just used, and that may be
-useful for the I<finalizer>.  There are some functions to extract data
+useful for the constructor.  There are some functions to extract data
 from this type, described further down.
 
 =head2 Functions
 
 OSSL_DESERIALIZER_from_bio() runs the deserialization process for the
-context I<ctx>, with the input coming from the B<BIO> I<in>.  The
-application is required to set up the B<BIO> properly, for example to
-have it in text or binary mode if that's appropriate.
-
-=for comment Know your deserializer!
+context I<ctx>, with the input coming from the B<BIO> I<in>.  Should
+it make a difference, it's recommended to have the BIO set in binary
+mode rather than text mode.
 
 OSSL_DESERIALIZER_from_fp() does the same thing as OSSL_DESERIALIZER_from_bio(),
 except that the input is coming from the B<FILE> I<fp>.
@@ -122,17 +131,28 @@ description above.
 OSSL_DESERIALIZER_CTX_num_deserializers() gets the number of
 deserializers currently added to the context I<ctx>.
 
-OSSL_DESERIALIZER_CTX_set_finalizer() sets the I<finalizer> function
-together with the caller argument for the finalizer, I<finalize_arg>,
-as well as I<cleaner>, the function to clean up I<finalize_arg> when
-the deserialization has concluded.
+OSSL_DESERIALIZER_CTX_set_construct() sets the constructor I<construct>.
 
-OSSL_DESERIALIZER_export() is a fallback function for I<finalizers>
-that can't use the data they get directly for diverse reasons.  It
-takes the same deserialize instance I<deser_inst> that the
-I<finalizer> got and an object I<reference>, unpacks the object that
-refers to, and exports it by creating an L<OSSL_PARAM(3)> array that
-it then passes to I<export_cb>, along with I<export_arg>.
+OSSL_DESERIALIZER_CTX_set_construct_data() sets the constructor data that is
+passed to the constructor every time it's called.
+
+OSSL_DESERIALIZER_CTX_set_cleanup() sets the constructor data I<cleanup>
+function.  This is called by L<OSSL_DESERIALIZER_CTX_free(3)>.
+
+OSSL_DESERIALIZER_CTX_get_construct(),
+OSSL_DESERIALIZER_CTX_get_construct_data() and
+OSSL_DESERIALIZER_CTX_get_cleanup()
+return the values that have been set by
+OSSL_DESERIALIZER_CTX_set_construct(),
+OSSL_DESERIALIZER_CTX_set_construct_data() and
+OSSL_DESERIALIZER_CTX_set_cleanup() respectively.
+
+OSSL_DESERIALIZER_export() is a fallback function for constructors that
+cannot use the data they get directly for diverse reasons.  It takes the same
+deserialize instance I<deser_inst> that the constructor got and an object
+I<reference>, unpacks the object which it refers to, and exports it by creating
+an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>, along with
+I<export_arg>.
 
 OSSL_DESERIALIZER_INSTANCE_deserializer() can be used to get the
 deserializer method from a deserializer instance I<deser_inst>.
@@ -141,32 +161,31 @@ OSSL_DESERIALIZER_INSTANCE_deserializer-ctx() can be used to get the
 deserializer method's provider context from a deserializer instance
 I<deser_inst>.
 
-=head2 Finalizer
+=head2 Constructor
 
-The I<finalizer> gets the following arguments:
+A B<OSSL_DESERIALIZER_CONSTRUCT> gets the following arguments:
 
 =over 4
 
 =item I<deser_inst>
 
 The B<OSSL_DESERIALIZER_INSTANCE> for the deserializer from which
-I<finalizer> gets its data.
+the constructor gets its data.
 
 =item I<params>
 
 The data produced by the deserializer, further described below.
 
-=item I<finalize_arg>
+=item I<construct_data>
 
-The pointer that was set with OSSL_DESERIALIZE_CTX_set_finalizer() as
-I<finalize_arg>.
+The pointer that was set with OSSL_DESERIALIZE_CTX_set_construct_data().
 
 =back
 
-The I<finalizer> is expected to return 1 when the data it receives can
-be "finalized", otherwise 0.
+The constructor is expected to return 1 when the data it receives can
+be constructed, otherwise 0.
 
-The globally known parameters that I<finalize> can get in I<params>
+The globally known parameters that the constructor can get in I<params>
 are:
 
 =over 4
@@ -177,7 +196,7 @@ This is a detected content type that some deserializers may provide.
 For example, PEM input sometimes has a type specified in its header,
 and some deserializers may add that information as this parameter.
 This is an optional parameter, but may be useful for extra checks in
-the I<finalizer>.
+the constructor.
 
 =item "data" (B<OSSL_DESERIALIZER_PARAM_DATA>) <octet string>
 
@@ -185,7 +204,7 @@ The deserialized data itself, as an octet string.  This is produced by
 deserializers when it's possible to pass an object in this form.  Most
 often, this is simply meant to be passed to the next deserializer in a
 chain, but could be considered final data as well, at the discretion
-of the I<finalizer>.
+of the constructor.
 
 =item "reference" (B<OSSL_DESERIALIZER_PARAM_DATA>) <octet string>
 
@@ -197,11 +216,12 @@ provides I<deser>.
 =back
 
 At least one of "data" or "reference" must be present, and it's
-possible that both can be.  A I<finalizer> should choose to use the
-"reference" parameter if possible, otherwise the "data" parameter.
+possible that both can be.  A constructor should choose to use the
+"reference" parameter if possible, otherwise it should use the "data"
+parameter.
 
 If it's not possible to use the "reference" parameter, but that's
-still what a I<finalizer> wants to do, it is possible to use
+still what a constructor wants to do, it is possible to use
 OSSL_DESERIALIZER_export() as a fallback.
 
 =head1 RETURN VALUES
@@ -210,9 +230,16 @@ OSSL_DESERIALIZER_from_bio() and OSSL_DESERIALIZER_from_fp() return 1 on
 success, or 0 on failure.
 
 OSSL_DESERIALIZER_CTX_add_deserializer(),
-OSSL_DESERIALIZER_CTX_add_extra(), and
-OSSL_DESERIALIZER_CTX_set_finalizer() return 1 on success, or 0 on
+OSSL_DESERIALIZER_CTX_add_extra(),
+OSSL_DESERIALIZER_CTX_set_construct(),
+OSSL_DESERIALIZER_CTX_set_construct_data() and
+OSSL_DESERIALIZER_CTX_set_cleanup() return 1 on success, or 0 on
 failure.
+
+OSSL_DESERIALIZER_CTX_get_construct(),
+OSSL_DESERIALIZER_CTX_get_construct_data() and
+OSSL_DESERIALIZER_CTX_get_cleanup() return the current pointers to the
+cosntructor, the constructor data and the cleanup functions, respectively.
 
 OSSL_DESERIALIZER_CTX_num_deserializers() returns the current
 number of deserializers.  It returns 0 if I<ctx> is NULL.
