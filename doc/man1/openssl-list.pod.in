@@ -20,6 +20,7 @@ B<openssl list>
 [B<-cipher-commands>]
 [B<-cipher-algorithms>]
 [B<-serializers>]
+[B<-deserializers>]
 [B<-public-key-algorithms>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-public-key-methods>]
@@ -86,6 +87,15 @@ displayed.
 =item B<-serializers>
 
 Display a list of serializers.
+See L</Display of algorithm names> for a description of how names are
+displayed.
+
+In verbose mode, the algorithms provided by a provider will get additional
+information on what parameters each implementation supports.
+
+=item B<-deserializers>
+
+Display a list of deserializers.
 See L</Display of algorithm names> for a description of how names are
 displayed.
 

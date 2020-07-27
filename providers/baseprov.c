@@ -75,11 +75,28 @@ static const OSSL_ALGORITHM base_serializer[] = {
 };
 #undef SER
 
+static const OSSL_ALGORITHM base_deserializer[] = {
+#define DESER(name, fips, input, func_table)                                \
+    { name,                                                                 \
+      "provider=base,fips=" fips ",input=" input,                           \
+      (func_table) }
+
+#include "deserializers.inc"
+    { NULL, NULL, NULL }
+};
+#undef DESER
+
 static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
     *no_cache = 0;
-    return operation_id == OSSL_OP_SERIALIZER ? base_serializer : NULL;
+    switch (operation_id) {
+    case OSSL_OP_SERIALIZER:
+        return base_serializer;
+    case OSSL_OP_DESERIALIZER:
+        return base_deserializer;
+    }
+    return NULL;
 }
 
 static void base_teardown(void *provctx)
