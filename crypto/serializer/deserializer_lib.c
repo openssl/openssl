@@ -456,13 +456,19 @@ static int deser_process(const OSSL_PARAM params[], void *arg)
             && !OSSL_DESERIALIZER_is_a(deser, new_deser_inst->input_type))
             continue;
 
-        if (loc == 0) {
-            if (BIO_reset(bio) <= 0)
-                goto end;
-        } else {
-            if (BIO_seek(bio, loc) <= 0)
-                goto end;
-        }
+        /*
+         * Checking the return value of BIO_reset() or BIO_seek() is unsafe.
+         * Furthermore, BIO_reset() is unsafe to use if the source BIO happens
+         * to be a BIO_s_mem(), because the earlier BIO_tell() gives us zero
+         * no matter where we are in the underlying buffer we're reading from.
+         *
+         * So, we simply do a BIO_seek(), and use BIO_tell() that we're back
+         * at the same position.  This is a best effort attempt, but BIO_seek()
+         * and BIO_tell() should come as a pair...
+         */
+        (void)BIO_seek(bio, loc);
+        if (BIO_tell(bio) != loc)
+            goto end;
 
         /* Recurse */
         new_data.current_deser_inst_index = i;
