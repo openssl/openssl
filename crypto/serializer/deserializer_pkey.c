@@ -107,11 +107,11 @@ struct deser_EVP_PKEY_data_st {
     STACK_OF(EVP_KEYMGMT) *keymgmts; /* The EVP_KEYMGMTs we handle */
 };
 
-static int deser_finalize_EVP_PKEY(OSSL_DESERIALIZER_INSTANCE *deser_inst,
-                                   const OSSL_PARAM *params,
-                                   void *finalize_arg)
+static int deser_construct_EVP_PKEY(OSSL_DESERIALIZER_INSTANCE *deser_inst,
+                                    const OSSL_PARAM *params,
+                                    void *construct_data)
 {
-    struct deser_EVP_PKEY_data_st *data = finalize_arg;
+    struct deser_EVP_PKEY_data_st *data = construct_data;
     OSSL_DESERIALIZER *deser =
         OSSL_DESERIALIZER_INSTANCE_deserializer(deser_inst);
     void *deserctx = OSSL_DESERIALIZER_INSTANCE_deserializer_ctx(deser_inst);
@@ -225,13 +225,15 @@ static int deser_finalize_EVP_PKEY(OSSL_DESERIALIZER_INSTANCE *deser_inst,
     return (*data->object != NULL);
 }
 
-static void deser_clean_EVP_PKEY(void *finalize_arg)
+static void deser_clean_EVP_PKEY_construct_arg(void *construct_data)
 {
-    struct deser_EVP_PKEY_data_st *data = finalize_arg;
+    struct deser_EVP_PKEY_data_st *data = construct_data;
 
-    sk_EVP_KEYMGMT_pop_free(data->keymgmts, EVP_KEYMGMT_free);
-    OPENSSL_free(data->object_type);
-    OPENSSL_free(data);
+    if (data != NULL) {
+        sk_EVP_KEYMGMT_pop_free(data->keymgmts, EVP_KEYMGMT_free);
+        OPENSSL_free(data->object_type);
+        OPENSSL_free(data);
+    }
 }
 
 DEFINE_STACK_OF_CSTRING()
@@ -353,17 +355,15 @@ OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
     /* Finally, collect extra deserializers based on what we already have */
     (void)OSSL_DESERIALIZER_CTX_add_extra(ctx, libctx, propquery);
 
-    if (!OSSL_DESERIALIZER_CTX_set_finalizer(ctx, deser_finalize_EVP_PKEY,
-                                             deser_clean_EVP_PKEY,
-                                             data->process_data))
+    if (!OSSL_DESERIALIZER_CTX_set_construct(ctx, deser_construct_EVP_PKEY)
+        || !OSSL_DESERIALIZER_CTX_set_construct_data(ctx, data->process_data)
+        || !OSSL_DESERIALIZER_CTX_set_cleanup
+                (ctx, deser_clean_EVP_PKEY_construct_arg))
         goto err;
 
     data->process_data = NULL;
  err:
-    if (data->process_data != NULL)
-        sk_EVP_KEYMGMT_pop_free(data->process_data->keymgmts,
-                                EVP_KEYMGMT_free);
-    OPENSSL_free(data->process_data);
+    deser_clean_EVP_PKEY_construct_arg(data->process_data);
     sk_OPENSSL_CSTRING_free(data->names);
     OPENSSL_free(data);
     return ctx;

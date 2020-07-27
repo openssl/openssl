@@ -96,11 +96,11 @@ struct ossl_deserializer_ctx_st {
     STACK_OF(OSSL_DESERIALIZER_INSTANCE) *deser_insts;
 
     /*
-     * The finalizer of a deserialization, and its caller argument.
+     * The constructors of a deserialization, and its caller argument.
      */
-    OSSL_DESERIALIZER_FINALIZER *finalizer;
-    OSSL_DESERIALIZER_CLEANER *cleaner;
-    void *finalize_arg;
+    OSSL_DESERIALIZER_CONSTRUCT *construct;
+    OSSL_DESERIALIZER_CLEANUP *cleanup;
+    void *construct_data;
 
     /* For any function that needs a passphrase reader */
     OSSL_PASSPHRASE_CALLBACK *passphrase_cb;

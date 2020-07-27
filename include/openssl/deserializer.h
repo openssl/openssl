@@ -79,24 +79,31 @@ int OSSL_DESERIALIZER_CTX_add_extra(OSSL_DESERIALIZER_CTX *ctx,
 int OSSL_DESERIALIZER_CTX_num_deserializers(OSSL_DESERIALIZER_CTX *ctx);
 
 typedef struct ossl_deserializer_instance_st OSSL_DESERIALIZER_INSTANCE;
-typedef int (OSSL_DESERIALIZER_FINALIZER)
-    (OSSL_DESERIALIZER_INSTANCE *deser_inst,
-     const OSSL_PARAM *params, void *finalize_arg);
-typedef void (OSSL_DESERIALIZER_CLEANER)(void *finalize_arg);
-
-int OSSL_DESERIALIZER_CTX_set_finalizer(OSSL_DESERIALIZER_CTX *ctx,
-                                        OSSL_DESERIALIZER_FINALIZER *finalizer,
-                                        OSSL_DESERIALIZER_CLEANER *cleaner,
-                                        void *finalize_arg);
-
-int OSSL_DESERIALIZER_export(OSSL_DESERIALIZER_INSTANCE *deser_inst,
-                             void *reference, size_t reference_sz,
-                             OSSL_CALLBACK *export_cb, void *export_cbarg);
-
 OSSL_DESERIALIZER *OSSL_DESERIALIZER_INSTANCE_deserializer
     (OSSL_DESERIALIZER_INSTANCE *deser_inst);
 void *OSSL_DESERIALIZER_INSTANCE_deserializer_ctx
     (OSSL_DESERIALIZER_INSTANCE *deser_inst);
+
+typedef int (OSSL_DESERIALIZER_CONSTRUCT)
+    (OSSL_DESERIALIZER_INSTANCE *deser_inst,
+     const OSSL_PARAM *params, void *construct_data);
+typedef void (OSSL_DESERIALIZER_CLEANUP)(void *construct_data);
+
+int OSSL_DESERIALIZER_CTX_set_construct(OSSL_DESERIALIZER_CTX *ctx,
+                                        OSSL_DESERIALIZER_CONSTRUCT *construct);
+int OSSL_DESERIALIZER_CTX_set_construct_data(OSSL_DESERIALIZER_CTX *ctx,
+                                             void *construct_data);
+int OSSL_DESERIALIZER_CTX_set_cleanup(OSSL_DESERIALIZER_CTX *ctx,
+                                      OSSL_DESERIALIZER_CLEANUP *cleanup);
+OSSL_DESERIALIZER_CONSTRUCT *
+OSSL_DESERIALIZER_CTX_get_construct(OSSL_DESERIALIZER_CTX *ctx);
+void *OSSL_DESERIALIZER_CTX_get_construct_data(OSSL_DESERIALIZER_CTX *ctx);
+OSSL_DESERIALIZER_CLEANUP *
+OSSL_DESERIALIZER_CTX_get_cleanup(OSSL_DESERIALIZER_CTX *ctx);
+
+int OSSL_DESERIALIZER_export(OSSL_DESERIALIZER_INSTANCE *deser_inst,
+                             void *reference, size_t reference_sz,
+                             OSSL_CALLBACK *export_cb, void *export_cbarg);
 
 int OSSL_DESERIALIZER_from_bio(OSSL_DESERIALIZER_CTX *ctx, BIO *in);
 #ifndef OPENSSL_NO_STDIO

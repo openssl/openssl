@@ -275,19 +275,60 @@ int OSSL_DESERIALIZER_CTX_num_deserializers(OSSL_DESERIALIZER_CTX *ctx)
     return sk_OSSL_DESERIALIZER_INSTANCE_num(ctx->deser_insts);
 }
 
-int OSSL_DESERIALIZER_CTX_set_finalizer(OSSL_DESERIALIZER_CTX *ctx,
-                                        OSSL_DESERIALIZER_FINALIZER *finalizer,
-                                        OSSL_DESERIALIZER_CLEANER *cleaner,
-                                        void *finalize_arg)
+int OSSL_DESERIALIZER_CTX_set_construct(OSSL_DESERIALIZER_CTX *ctx,
+                                        OSSL_DESERIALIZER_CONSTRUCT *construct)
 {
     if (!ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_DESERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    ctx->finalizer = finalizer;
-    ctx->cleaner = cleaner;
-    ctx->finalize_arg = finalize_arg;
+    ctx->construct = construct;
     return 1;
+}
+
+int OSSL_DESERIALIZER_CTX_set_construct_data(OSSL_DESERIALIZER_CTX *ctx,
+                                             void *construct_data)
+{
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DESERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    ctx->construct_data = construct_data;
+    return 1;
+}
+
+int OSSL_DESERIALIZER_CTX_set_cleanup(OSSL_DESERIALIZER_CTX *ctx,
+                                      OSSL_DESERIALIZER_CLEANUP *cleanup)
+{
+    if (!ossl_assert(ctx != NULL)) {
+        ERR_raise(ERR_LIB_OSSL_DESERIALIZER, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    ctx->cleanup = cleanup;
+    return 1;
+}
+
+OSSL_DESERIALIZER_CONSTRUCT *
+OSSL_DESERIALIZER_CTX_get_construct(OSSL_DESERIALIZER_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->construct;
+}
+
+void *OSSL_DESERIALIZER_CTX_get_construct_data(OSSL_DESERIALIZER_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->construct_data;
+}
+
+OSSL_DESERIALIZER_CLEANUP *
+OSSL_DESERIALIZER_CTX_get_cleanup(OSSL_DESERIALIZER_CTX *ctx)
+{
+    if (ctx == NULL)
+        return NULL;
+    return ctx->cleanup;
 }
 
 int OSSL_DESERIALIZER_export(OSSL_DESERIALIZER_INSTANCE *deser_inst,
@@ -354,12 +395,13 @@ static int deser_process(const OSSL_PARAM params[], void *arg)
                                                 data->current_deser_inst_index);
         deser = OSSL_DESERIALIZER_INSTANCE_deserializer(deser_inst);
 
-        if (ctx->finalizer(deser_inst, params, ctx->finalize_arg)) {
+        if (ctx->construct != NULL
+            && ctx->construct(deser_inst, params, ctx->construct_data)) {
             ok = 1;
             goto end;
         }
 
-        /* The finalizer didn't return success */
+        /* The constructor didn't return success */
 
         /*
          * so we try to use the object we got and feed it to any next

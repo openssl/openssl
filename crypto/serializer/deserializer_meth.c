@@ -539,8 +539,8 @@ OSSL_DESERIALIZER_INSTANCE_free(OSSL_DESERIALIZER_INSTANCE *deser_inst)
 void OSSL_DESERIALIZER_CTX_free(OSSL_DESERIALIZER_CTX *ctx)
 {
     if (ctx != NULL) {
-        if (ctx->cleaner != NULL)
-            ctx->cleaner(ctx->finalize_arg);
+        if (ctx->cleanup != NULL)
+            ctx->cleanup(ctx->construct_data);
         sk_OSSL_DESERIALIZER_INSTANCE_pop_free(ctx->deser_insts,
                                                OSSL_DESERIALIZER_INSTANCE_free);
         OSSL_DESERIALIZER_CTX_set_passphrase_ui(ctx, NULL, NULL);
