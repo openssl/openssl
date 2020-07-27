@@ -443,7 +443,8 @@ static int deser_process(const OSSL_PARAM params[], void *arg)
          * that's the case, we do this extra check.
          */
         if (deser == NULL && ctx->start_input_type != NULL
-            && strcasecmp(ctx->start_input_type, deser_inst->input_type) != 0)
+            && strcasecmp(ctx->start_input_type,
+                          new_deser_inst->input_type) != 0)
             continue;
 
         /*
