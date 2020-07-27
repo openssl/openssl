@@ -12,6 +12,7 @@
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
+#include <openssl/params.h>
 #include <openssl/serializer.h>
 #include <openssl/deserializer.h>
 
@@ -27,22 +28,42 @@
  * serializing/deserializing with "traditional" keys.
  */
 
-static EVP_PKEY *key_RSA = NULL;
-static EVP_PKEY *legacy_key_RSA = NULL;
-static EVP_PKEY *key_RSA_PSS = NULL;
-static EVP_PKEY *legacy_key_RSA_PSS = NULL;
-
-static EVP_PKEY *make_RSA(const char *rsa_type, int make_legacy)
+static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 {
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, rsa_type, NULL);
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, type, NULL);
 
     /*
      * No real need to check the errors other than for the cascade
-     * effect.  |pkey| will imply remain NULL if something goes wrong.
+     * effect.  |pkey| will simply remain NULL if something goes wrong.
+     */
+    (void)(ctx != NULL
+           && EVP_PKEY_paramgen_init(ctx) > 0
+           && (genparams == NULL
+               || EVP_PKEY_CTX_set_params(ctx, genparams) > 0)
+           && EVP_PKEY_gen(ctx, &pkey) > 0);
+    EVP_PKEY_CTX_free(ctx);
+
+    return pkey;
+}
+
+static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
+                          OSSL_PARAM *genparams, int make_legacy)
+{
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx =
+        template != NULL
+        ? EVP_PKEY_CTX_new(template, NULL)
+        : EVP_PKEY_CTX_new_from_name(NULL, type, NULL);
+
+    /*
+     * No real need to check the errors other than for the cascade
+     * effect.  |pkey| will simply remain NULL if something goes wrong.
      */
     (void)(ctx != NULL
            && EVP_PKEY_keygen_init(ctx) > 0
+           && (genparams == NULL
+               || EVP_PKEY_CTX_set_params(ctx, genparams) > 0)
            && EVP_PKEY_keygen(ctx, &pkey) > 0);
     EVP_PKEY_CTX_free(ctx);
     if (make_legacy && EVP_PKEY_get0(pkey) == NULL) {
@@ -52,6 +73,7 @@ static EVP_PKEY *make_RSA(const char *rsa_type, int make_legacy)
 
     return pkey;
 }
+
 
 /* Main test driver */
 
@@ -249,19 +271,9 @@ static int check_unprotected_PKCS8_DER(const char *type,
     return ok;
 }
 
-static int test_unprotected_RSA_via_DER(void)
+static int test_unprotected_via_DER(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", key_RSA, NULL, NULL,
-                                      serialize_EVP_PKEY_prov,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_unprotected_PKCS8_DER, dump_der,
-                                      OSSL_SERIALIZER_PrivateKey_TO_DER_PQ,
-                                      0);
-}
-
-static int test_unprotected_RSA_PSS_via_DER(void)
-{
-    return test_serialize_deserialize("RSA-PSS", key_RSA_PSS, NULL, NULL,
+    return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_unprotected_PKCS8_DER, dump_der,
@@ -277,19 +289,9 @@ static int check_unprotected_PKCS8_PEM(const char *type,
     return TEST_strn_eq(data, pem_header, sizeof(pem_header) - 1);
 }
 
-static int test_unprotected_RSA_via_PEM(void)
+static int test_unprotected_via_PEM(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", key_RSA, NULL, NULL,
-                                      serialize_EVP_PKEY_prov,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_unprotected_PKCS8_PEM, dump_pem,
-                                      OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ,
-                                      0);
-}
-
-static int test_unprotected_RSA_PSS_via_PEM(void)
-{
-    return test_serialize_deserialize("RSA-PSS", key_RSA_PSS, NULL, NULL,
+    return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_unprotected_PKCS8_PEM, dump_pem,
@@ -308,18 +310,9 @@ static int check_unprotected_legacy_PEM(const char *type,
         && TEST_strn_eq(data, pem_header, strlen(pem_header));
 }
 
-static int test_unprotected_RSA_via_legacy_PEM(void)
+static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", legacy_key_RSA, NULL, NULL,
-                                      serialize_EVP_PKEY_legacy_PEM,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_unprotected_legacy_PEM, dump_pem,
-                                      NULL, 1);
-}
-
-static int test_unprotected_RSA_PSS_via_legacy_PEM(void)
-{
-    return test_serialize_deserialize("RSA-PSS", legacy_key_RSA_PSS, NULL, NULL,
+    return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_legacy_PEM,
                                       deserialize_EVP_PKEY_prov,
                                       check_unprotected_legacy_PEM, dump_pem,
@@ -340,19 +333,9 @@ static int check_protected_PKCS8_DER(const char *type,
     return ok;
 }
 
-static int test_protected_RSA_via_DER(void)
+static int test_protected_via_DER(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", key_RSA, pass, pass_cipher,
-                                      serialize_EVP_PKEY_prov,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_protected_PKCS8_DER, dump_der,
-                                      OSSL_SERIALIZER_PrivateKey_TO_DER_PQ,
-                                      0);
-}
-
-static int test_protected_RSA_PSS_via_DER(void)
-{
-    return test_serialize_deserialize("RSA", key_RSA, pass, pass_cipher,
+    return test_serialize_deserialize(type, key, pass, pass_cipher,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_protected_PKCS8_DER, dump_der,
@@ -368,19 +351,9 @@ static int check_protected_PKCS8_PEM(const char *type,
     return TEST_strn_eq(data, pem_header, sizeof(pem_header) - 1);
 }
 
-static int test_protected_RSA_via_PEM(void)
+static int test_protected_via_PEM(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", key_RSA, pass, pass_cipher,
-                                      serialize_EVP_PKEY_prov,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_protected_PKCS8_PEM, dump_pem,
-                                      OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ,
-                                      0);
-}
-
-static int test_protected_RSA_PSS_via_PEM(void)
-{
-    return test_serialize_deserialize("RSA-PSS", key_RSA_PSS, pass, pass_cipher,
+    return test_serialize_deserialize(type, key, pass, pass_cipher,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_protected_PKCS8_PEM, dump_pem,
@@ -400,38 +373,28 @@ static int check_protected_legacy_PEM(const char *type,
         && TEST_ptr(strstr(data, "\nDEK-Info: "));
 }
 
-static int test_protected_RSA_via_legacy_PEM(void)
+static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", legacy_key_RSA, pass, pass_cipher,
+    return test_serialize_deserialize(type, key, pass, pass_cipher,
                                       serialize_EVP_PKEY_legacy_PEM,
                                       deserialize_EVP_PKEY_prov,
                                       check_protected_legacy_PEM, dump_pem,
                                       NULL, 1);
 }
 
-static int test_protected_RSA_PSS_via_legacy_PEM(void)
-{
-    return test_serialize_deserialize("RSA-PSS", legacy_key_RSA_PSS,
-                                      pass, pass_cipher,
-                                      serialize_EVP_PKEY_legacy_PEM,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_protected_legacy_PEM, dump_pem,
-                                      NULL, 1);
-}
-
-static int check_public_DER(int type, const void *data, size_t data_len)
+static int check_public_DER(const char *type, const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
     EVP_PKEY *pkey = d2i_PUBKEY(NULL, &datap, data_len);
-    int ok = (TEST_ptr(pkey) && TEST_true(EVP_PKEY_is_a(pkey, "RSA")));
+    int ok = (TEST_ptr(pkey) && TEST_true(EVP_PKEY_is_a(pkey, type)));
 
     EVP_PKEY_free(pkey);
     return ok;
 }
 
-static int test_public_RSA_via_DER(void)
+static int test_public_via_DER(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", NULL, NULL,
+    return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_public_DER, dump_der,
@@ -439,17 +402,7 @@ static int test_public_RSA_via_DER(void)
                                       0);
 }
 
-static int test_public_RSA_PSS_via_DER(void)
-{
-    return test_serialize_deserialize("RSA-PSS", NULL, NULL,
-                                      serialize_EVP_PKEY_prov,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_public_DER, dump_der,
-                                      OSSL_SERIALIZER_PUBKEY_TO_DER_PQ,
-                                      0);
-}
-
-static int check_public_PEM(int type, const void *data, size_t data_len)
+static int check_public_PEM(const char *type, const void *data, size_t data_len)
 {
     static const char pem_header[] = "-----BEGIN " PEM_STRING_PUBLIC "-----";
 
@@ -457,9 +410,9 @@ static int check_public_PEM(int type, const void *data, size_t data_len)
         TEST_strn_eq(data, pem_header, sizeof(pem_header) - 1);
 }
 
-static int test_public_RSA_via_PEM(void)
+static int test_public_via_PEM(const char *type, EVP_PKEY *key)
 {
-    return test_serialize_deserialize("RSA", NULL, NULL,
+    return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
                                       check_public_PEM, dump_pem,
@@ -467,47 +420,154 @@ static int test_public_RSA_via_PEM(void)
                                       0);
 }
 
-static int test_public_RSA_PSS_via_PEM(void)
-{
-    return test_serialize_deserialize("RSA-PSS", NULL, NULL,
-                                      serialize_EVP_PKEY_prov,
-                                      deserialize_EVP_PKEY_prov,
-                                      check_public_PEM, dump_pem,
-                                      OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ,
-                                      0);
-}
+#define KEYS(KEYTYPE)                           \
+    static EVP_PKEY *key_##KEYTYPE = NULL;      \
+    static EVP_PKEY *legacy_key_##KEYTYPE = NULL
+#define MAKE_KEYS(KEYTYPE, KEYTYPEstr, params)                          \
+    ok = ok                                                             \
+        && TEST_ptr(key_##KEYTYPE =                                     \
+                    make_key(KEYTYPEstr, NULL, params, 0))              \
+        && TEST_ptr(legacy_key_##KEYTYPE =                              \
+                    make_key(KEYTYPEstr, NULL, params, 1))
+#define FREE_KEYS(KEYTYPE)                                              \
+    EVP_PKEY_free(key_##KEYTYPE);                                       \
+    EVP_PKEY_free(legacy_key_##KEYTYPE)
+
+#define DOMAIN_KEYS(KEYTYPE)                    \
+    static EVP_PKEY *template_##KEYTYPE = NULL; \
+    static EVP_PKEY *key_##KEYTYPE = NULL;      \
+    static EVP_PKEY *legacy_key_##KEYTYPE = NULL
+#define MAKE_DOMAIN_KEYS(KEYTYPE, KEYTYPEstr, params)                   \
+    ok = ok                                                             \
+        && TEST_ptr(template_##KEYTYPE =                                \
+                    make_template(KEYTYPEstr, params))                  \
+        && TEST_ptr(key_##KEYTYPE =                                     \
+                    make_key(KEYTYPEstr, template_##KEYTYPE, NULL, 0))  \
+        && TEST_ptr(legacy_key_##KEYTYPE =                              \
+                    make_key(KEYTYPEstr, template_##KEYTYPE, NULL, 1))
+#define FREE_DOMAIN_KEYS(KEYTYPE)                                       \
+    EVP_PKEY_free(template_##KEYTYPE);                                  \
+    EVP_PKEY_free(key_##KEYTYPE);                                       \
+    EVP_PKEY_free(legacy_key_##KEYTYPE)
+
+#define IMPLEMENT_TEST_SUITE(KEYTYPE, KEYTYPEstr)                       \
+    static int test_unprotected_##KEYTYPE##_via_DER(void)               \
+    {                                                                   \
+        return test_unprotected_via_DER(KEYTYPEstr, key_##KEYTYPE);     \
+    }                                                                   \
+    static int test_unprotected_##KEYTYPE##_via_PEM(void)               \
+    {                                                                   \
+        return test_unprotected_via_PEM(KEYTYPEstr, key_##KEYTYPE);     \
+    }                                                                   \
+    static int test_unprotected_##KEYTYPE##_via_legacy_PEM(void)        \
+    {                                                                   \
+        return test_unprotected_via_legacy_PEM(KEYTYPEstr,              \
+                                               legacy_key_##KEYTYPE);   \
+    }                                                                   \
+    static int test_protected_##KEYTYPE##_via_DER(void)                 \
+    {                                                                   \
+        return test_protected_via_DER(KEYTYPEstr, key_##KEYTYPE);       \
+    }                                                                   \
+    static int test_protected_##KEYTYPE##_via_PEM(void)                 \
+    {                                                                   \
+        return test_protected_via_PEM(KEYTYPEstr, key_##KEYTYPE);       \
+    }                                                                   \
+    static int test_protected_##KEYTYPE##_via_legacy_PEM(void)          \
+    {                                                                   \
+        return test_protected_via_legacy_PEM(KEYTYPEstr,                \
+                                             legacy_key_##KEYTYPE);     \
+    }                                                                   \
+    static int test_public_##KEYTYPE##_via_DER(void)                    \
+    {                                                                   \
+        return test_public_via_DER(KEYTYPEstr, key_##KEYTYPE);          \
+    }                                                                   \
+    static int test_public_##KEYTYPE##_via_PEM(void)                    \
+    {                                                                   \
+        return test_public_via_PEM(KEYTYPEstr, key_##KEYTYPE);          \
+    }
+
+#define ADD_TEST_SUITE(KEYTYPE)                                 \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_DER);             \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_PEM);             \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_legacy_PEM);      \
+    ADD_TEST(test_protected_##KEYTYPE##_via_DER);               \
+    ADD_TEST(test_protected_##KEYTYPE##_via_PEM);               \
+    ADD_TEST(test_protected_##KEYTYPE##_via_legacy_PEM);        \
+    ADD_TEST(test_public_##KEYTYPE##_via_DER);                  \
+    ADD_TEST(test_public_##KEYTYPE##_via_PEM)
+
+DOMAIN_KEYS(DH);
+DOMAIN_KEYS(DSA);
+DOMAIN_KEYS(EC);
+KEYS(ED25519);
+KEYS(ED448);
+KEYS(RSA);
+KEYS(RSA_PSS);
+KEYS(X25519);
+KEYS(X448);
+
+IMPLEMENT_TEST_SUITE(DH, "DH")
+IMPLEMENT_TEST_SUITE(DSA, "DSA")
+IMPLEMENT_TEST_SUITE(EC, "EC")
+IMPLEMENT_TEST_SUITE(ED25519, "ED25519")
+IMPLEMENT_TEST_SUITE(ED448, "ED448")
+IMPLEMENT_TEST_SUITE(RSA, "RSA")
+IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
+IMPLEMENT_TEST_SUITE(X25519, "X25519")
+IMPLEMENT_TEST_SUITE(X448, "X448")
 
 int setup_tests(void)
 {
+    int ok = 1;
+
+    char groupname[] = "prime256v1";
+    OSSL_PARAM EC_params[] = {
+        OSSL_PARAM_utf8_string("group", groupname, sizeof(groupname) - 1),
+        OSSL_PARAM_END
+    };
+
+    unsigned int rsapss_min_saltlen = 7; /* Default magic number */
+    OSSL_PARAM RSA_PSS_params[] = {
+        OSSL_PARAM_uint("saltlen", &rsapss_min_saltlen),
+        OSSL_PARAM_END
+    };
+
     TEST_info("Generating keys...");
-    if (!TEST_ptr(key_RSA = make_RSA("RSA", 0))
-        || !TEST_ptr(legacy_key_RSA = make_RSA("RSA", 1))
-        || !TEST_ptr(key_RSA_PSS = make_RSA("RSA-PSS", 0))
-        || !TEST_ptr(legacy_key_RSA_PSS = make_RSA("RSA-PSS", 1))) {
-        EVP_PKEY_free(key_RSA);
-        EVP_PKEY_free(legacy_key_RSA);
-        EVP_PKEY_free(key_RSA_PSS);
-        EVP_PKEY_free(legacy_key_RSA_PSS);
-        return 0;
-    }
+    MAKE_DOMAIN_KEYS(DH, "DH", NULL);
+    MAKE_DOMAIN_KEYS(DSA, "DSA", NULL);
+    MAKE_DOMAIN_KEYS(EC, "EC", EC_params);
+    MAKE_KEYS(ED25519, "ED25519", NULL);
+    MAKE_KEYS(ED448, "ED448", NULL);
+    MAKE_KEYS(RSA, "RSA", NULL);
+    MAKE_KEYS(RSA_PSS, "RSA-PSS", RSA_PSS_params);
+    MAKE_KEYS(X25519, "X25519", NULL);
+    MAKE_KEYS(X448, "X448", NULL);
     TEST_info("Generating key... done");
 
-    ADD_TEST(test_unprotected_RSA_via_DER);
-    ADD_TEST(test_unprotected_RSA_via_PEM);
-    ADD_TEST(test_unprotected_RSA_via_legacy_PEM);
-    ADD_TEST(test_protected_RSA_via_DER);
-    ADD_TEST(test_protected_RSA_via_PEM);
-    ADD_TEST(test_protected_RSA_via_legacy_PEM);
-    ADD_TEST(test_public_RSA_via_DER);
-    ADD_TEST(test_public_RSA_via_PEM);
-    ADD_TEST(test_unprotected_RSA_PSS_via_DER);
-    ADD_TEST(test_unprotected_RSA_PSS_via_PEM);
-    ADD_TEST(test_unprotected_RSA_PSS_via_legacy_PEM);
-    ADD_TEST(test_protected_RSA_PSS_via_DER);
-    ADD_TEST(test_protected_RSA_PSS_via_PEM);
-    ADD_TEST(test_protected_RSA_PSS_via_legacy_PEM);
-    ADD_TEST(test_public_RSA_PSS_via_DER);
-    ADD_TEST(test_public_RSA_PSS_via_PEM);
+    if (ok) {
+        ADD_TEST_SUITE(DH);
+        ADD_TEST_SUITE(DSA);
+        ADD_TEST_SUITE(EC);
+        ADD_TEST_SUITE(ED25519);
+        ADD_TEST_SUITE(ED448);
+        ADD_TEST_SUITE(RSA);
+        ADD_TEST_SUITE(RSA_PSS);
+        ADD_TEST_SUITE(X25519);
+        ADD_TEST_SUITE(X448);
+    }
 
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    FREE_DOMAIN_KEYS(DH);
+    FREE_DOMAIN_KEYS(DSA);
+    FREE_DOMAIN_KEYS(EC);
+    FREE_KEYS(ED25519);
+    FREE_KEYS(ED448);
+    FREE_KEYS(RSA);
+    FREE_KEYS(RSA_PSS);
+    FREE_KEYS(X25519);
+    FREE_KEYS(X448);
 }

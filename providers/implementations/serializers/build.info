@@ -2,6 +2,7 @@
 # switch each to the Legacy provider when needed.
 
 $SERIALIZER_GOAL=../../libimplementations.a
+$DESERIALIZER_GOAL=../../libimplementations.a
 $RSA_GOAL=../../libimplementations.a
 $FFC_GOAL=../../libimplementations.a
 $DH_GOAL=../../libimplementations.a
@@ -11,7 +12,7 @@ $EC_GOAL=../../libimplementations.a
 
 SOURCE[$SERIALIZER_GOAL]=serializer_common.c deserialize_common.c
 
-SOURCE[$RSA_GOAL]=deserialize_der2rsa.c deserialize_pem2der.c
+SOURCE[$RSA_GOAL]=deserialize_der2key.c deserialize_pem2der.c
 SOURCE[$RSA_GOAL]=serializer_rsa.c serializer_rsa_priv.c serializer_rsa_pub.c
 DEPEND[serializer_rsa.o]=../../common/include/prov/der_rsa.h
 

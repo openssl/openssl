@@ -102,6 +102,7 @@ int ERR_load_EVP_strings(void);
 #  define EVP_F_EVP_PKEY_ENCRYPT_OLD                       0
 #  define EVP_F_EVP_PKEY_GET0_DH                           0
 #  define EVP_F_EVP_PKEY_GET0_DSA                          0
+#  define EVP_F_EVP_PKEY_GET0_ECX_KEY                      0
 #  define EVP_F_EVP_PKEY_GET0_EC_KEY                       0
 #  define EVP_F_EVP_PKEY_GET0_HMAC                         0
 #  define EVP_F_EVP_PKEY_GET0_POLY1305                     0
@@ -185,6 +186,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_EXPECTING_AN_RSA_KEY                       127
 # define EVP_R_EXPECTING_A_DH_KEY                         128
 # define EVP_R_EXPECTING_A_DSA_KEY                        129
+# define EVP_R_EXPECTING_A_ECX_KEY                        219
 # define EVP_R_EXPECTING_A_EC_KEY                         142
 # define EVP_R_EXPECTING_A_POLY1305_KEY                   164
 # define EVP_R_EXPECTING_A_SIPHASH_KEY                    175

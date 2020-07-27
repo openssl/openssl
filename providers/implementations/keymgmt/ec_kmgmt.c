@@ -33,6 +33,7 @@ static OSSL_FUNC_keymgmt_gen_set_params_fn ec_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn ec_gen_settable_params;
 static OSSL_FUNC_keymgmt_gen_fn ec_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn ec_gen_cleanup;
+static OSSL_FUNC_keymgmt_load_fn ec_load;
 static OSSL_FUNC_keymgmt_free_fn ec_freedata;
 static OSSL_FUNC_keymgmt_get_params_fn ec_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn ec_gettable_params;
@@ -791,6 +792,20 @@ static void ec_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
+void *ec_load(const void *reference, size_t reference_sz)
+{
+    EC_KEY *ec = NULL;
+
+    if (reference_sz == sizeof(ec)) {
+        /* The contents of the reference is the address to our object */
+        ec = *(EC_KEY **)reference;
+        /* We grabbed, so we detach it */
+        *(EC_KEY **)reference = NULL;
+        return ec;
+    }
+    return NULL;
+}
+
 const OSSL_DISPATCH ec_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ec_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))ec_gen_init },
@@ -801,6 +816,7 @@ const OSSL_DISPATCH ec_keymgmt_functions[] = {
       (void (*)(void))ec_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))ec_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))ec_gen_cleanup },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))ec_load },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ec_freedata },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))ec_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))ec_gettable_params },

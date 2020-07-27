@@ -34,6 +34,7 @@ static OSSL_FUNC_keymgmt_gen_set_params_fn dsa_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn dsa_gen_settable_params;
 static OSSL_FUNC_keymgmt_gen_fn dsa_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn dsa_gen_cleanup;
+static OSSL_FUNC_keymgmt_load_fn dsa_load;
 static OSSL_FUNC_keymgmt_get_params_fn dsa_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn dsa_gettable_params;
 static OSSL_FUNC_keymgmt_has_fn dsa_has;
@@ -557,6 +558,20 @@ static void dsa_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
+void *dsa_load(const void *reference, size_t reference_sz)
+{
+    DSA *dsa = NULL;
+
+    if (reference_sz == sizeof(dsa)) {
+        /* The contents of the reference is the address to our object */
+        dsa = *(DSA **)reference;
+        /* We grabbed, so we detach it */
+        *(DSA **)reference = NULL;
+        return dsa;
+    }
+    return NULL;
+}
+
 const OSSL_DISPATCH dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dsa_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dsa_gen_init },
@@ -566,6 +581,7 @@ const OSSL_DISPATCH dsa_keymgmt_functions[] = {
       (void (*)(void))dsa_gen_settable_params },
     { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))dsa_gen },
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))dsa_gen_cleanup },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))dsa_load },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dsa_freedata },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dsa_get_params },
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))dsa_gettable_params },
