@@ -37,19 +37,6 @@ static OSSL_FUNC_deserializer_deserialize_fn pem2der_deserialize;
  */
 struct pem2der_ctx_st {
     PROV_CTX *provctx;
-
-    /* Set to 1 if intending to encrypt/decrypt, otherwise 0 */
-    int cipher_intent;
-
-    EVP_CIPHER *cipher;
-
-    /* Passphrase that was passed by the caller */
-    void *cipher_pass;
-    size_t cipher_pass_length;
-
-    /* This callback is only used if |cipher_pass| is NULL */
-    OSSL_PASSPHRASE_CALLBACK *cb;
-    void *cbarg;
 };
 
 static void *pem2der_newctx(void *provctx)
@@ -65,8 +52,6 @@ static void pem2der_freectx(void *vctx)
 {
     struct pem2der_ctx_st *ctx = vctx;
 
-    EVP_CIPHER_free(ctx->cipher);
-    OPENSSL_clear_free(ctx->cipher_pass, ctx->cipher_pass_length);
     OPENSSL_free(ctx);
 }
 
@@ -91,50 +76,22 @@ static int pem2der_get_params(OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *pem2der_settable_ctx_params(void)
-{
-    static const OSSL_PARAM settables[] = {
-        OSSL_PARAM_octet_string(OSSL_DESERIALIZER_PARAM_PASS, NULL, 0),
-        OSSL_PARAM_END,
-    };
-
-    return settables;
-}
-
-static int pem2der_set_ctx_params(void *vctx, const OSSL_PARAM params[])
-{
-    struct pem2der_ctx_st *ctx = vctx;
-    const OSSL_PARAM *p;
-
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_DESERIALIZER_PARAM_PASS))
-        != NULL) {
-        OPENSSL_clear_free(ctx->cipher_pass, ctx->cipher_pass_length);
-        ctx->cipher_pass = NULL;
-        if (!OSSL_PARAM_get_octet_string(p, &ctx->cipher_pass, 0,
-                                         &ctx->cipher_pass_length))
-            return 0;
-    }
-    return 1;
-}
-
 /* pem_password_cb compatible function */
+struct pem2der_pass_data_st {
+    OSSL_PASSPHRASE_CALLBACK *cb;
+    void *cbarg;
+};
+
 static int pem2der_pass_helper(char *buf, int num, int w, void *data)
 {
-    struct pem2der_ctx_st *ctx = data;
+    struct pem2der_pass_data_st *pass_data = data;
     size_t plen;
 
-    if (ctx->cipher_pass != NULL) {
-        if (ctx->cipher_pass_length < (size_t)num - 1) {
-            strncpy(buf, ctx->cipher_pass, ctx->cipher_pass_length);
-            buf[ctx->cipher_pass_length] = '\0';
-        } else {
-            OPENSSL_strlcpy(buf, ctx->cipher_pass, num);
-        }
-    } else if (ctx->cb == NULL
-               || !ctx->cb(buf, num, &plen, NULL, ctx->cbarg)) {
+    if (pass_data == NULL
+        || pass_data->cb == NULL
+        || !pass_data->cb(buf, num, &plen, NULL, pass_data->cbarg))
         return -1;
-    }
-    return (int)ctx->cipher_pass_length;
+    return (int)plen;
 }
 
 static int pem2der_deserialize(void *vctx, OSSL_CORE_BIO *cin,
@@ -159,9 +116,13 @@ static int pem2der_deserialize(void *vctx, OSSL_CORE_BIO *cin,
      */
     if (strlen(pem_header) > 10) {
         EVP_CIPHER_INFO cipher;
+        struct pem2der_pass_data_st pass_data;
 
+        pass_data.cb = pw_cb;
+        pass_data.cbarg = pw_cbarg;
         if (!PEM_get_EVP_CIPHER_INFO(pem_header, &cipher)
-            || !PEM_do_header(&cipher, der, &der_len, pem2der_pass_helper, ctx))
+            || !PEM_do_header(&cipher, der, &der_len,
+                              pem2der_pass_helper, &pass_data))
             goto end;
     }
 
@@ -193,10 +154,6 @@ const OSSL_DISPATCH pem_to_der_deserializer_functions[] = {
       (void (*)(void))pem2der_gettable_params },
     { OSSL_FUNC_DESERIALIZER_GET_PARAMS,
       (void (*)(void))pem2der_get_params },
-    { OSSL_FUNC_DESERIALIZER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))pem2der_settable_ctx_params },
-    { OSSL_FUNC_DESERIALIZER_SET_CTX_PARAMS,
-      (void (*)(void))pem2der_set_ctx_params },
     { OSSL_FUNC_DESERIALIZER_DESERIALIZE, (void (*)(void))pem2der_deserialize },
     { 0, NULL }
 };

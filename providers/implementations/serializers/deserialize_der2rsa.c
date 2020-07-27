@@ -28,8 +28,6 @@ static OSSL_FUNC_deserializer_newctx_fn der2rsa_newctx;
 static OSSL_FUNC_deserializer_freectx_fn der2rsa_freectx;
 static OSSL_FUNC_deserializer_gettable_params_fn der2rsa_gettable_params;
 static OSSL_FUNC_deserializer_get_params_fn der2rsa_get_params;
-static OSSL_FUNC_deserializer_settable_ctx_params_fn der2rsa_settable_ctx_params;
-static OSSL_FUNC_deserializer_set_ctx_params_fn der2rsa_set_ctx_params;
 static OSSL_FUNC_deserializer_deserialize_fn der2rsa_deserialize;
 static OSSL_FUNC_deserializer_export_object_fn der2rsa_export_object;
 
@@ -40,19 +38,14 @@ struct der2rsa_ctx_st {
     PROV_CTX *provctx;
 
     int type;
-
-    struct pkcs8_encrypt_ctx_st sc;
 };
 
 static struct der2rsa_ctx_st *der2rsa_newctx_int(void *provctx)
 {
     struct der2rsa_ctx_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
-    if (ctx != NULL) {
+    if (ctx != NULL)
         ctx->provctx = provctx;
-        /* -1 is the "whatever" indicator, i.e. the PKCS8 library default PBE */
-        ctx->sc.pbe_nid = -1;
-    }
     return ctx;
 }
 
@@ -76,11 +69,7 @@ static void *der2rsapss_newctx(void *provctx)
 
 static void der2rsa_freectx(void *vctx)
 {
-    struct der2rsa_ctx_st *ctx = vctx;
-
-    EVP_CIPHER_free(ctx->sc.cipher);
-    OPENSSL_clear_free(ctx->sc.cipher_pass, ctx->sc.cipher_pass_length);
-    OPENSSL_free(ctx);
+    OPENSSL_free(vctx);
 }
 
 static const OSSL_PARAM *der2rsa_gettable_params(void)
@@ -104,56 +93,6 @@ static int der2rsa_get_params(OSSL_PARAM params[])
     return 1;
 }
 
-
-static const OSSL_PARAM *der2rsa_settable_ctx_params(void)
-{
-    static const OSSL_PARAM settables[] = {
-        OSSL_PARAM_utf8_string(OSSL_DESERIALIZER_PARAM_CIPHER, NULL, 0),
-        OSSL_PARAM_utf8_string(OSSL_DESERIALIZER_PARAM_PROPERTIES, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_DESERIALIZER_PARAM_PASS, NULL, 0),
-        OSSL_PARAM_END,
-    };
-
-    return settables;
-}
-
-static int der2rsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
-{
-    struct der2rsa_ctx_st *ctx = vctx;
-    OPENSSL_CTX *libctx = PROV_CTX_get0_library_context(ctx->provctx);
-    const OSSL_PARAM *p;
-
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_DESERIALIZER_PARAM_CIPHER))
-        != NULL) {
-        const OSSL_PARAM *propsp =
-            OSSL_PARAM_locate_const(params, OSSL_DESERIALIZER_PARAM_PROPERTIES);
-        const char *props = NULL;
-
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        if (propsp != NULL && propsp->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        props = (propsp != NULL ? propsp->data : NULL);
-
-        EVP_CIPHER_free(ctx->sc.cipher);
-        ctx->sc.cipher = NULL;
-        ctx->sc.cipher_intent = p->data != NULL;
-        if (p->data != NULL
-            && ((ctx->sc.cipher = EVP_CIPHER_fetch(libctx, p->data, props))
-                == NULL))
-            return 0;
-    }
-    if ((p = OSSL_PARAM_locate_const(params, OSSL_DESERIALIZER_PARAM_PASS))
-        != NULL) {
-        OPENSSL_clear_free(ctx->sc.cipher_pass, ctx->sc.cipher_pass_length);
-        ctx->sc.cipher_pass = NULL;
-        if (!OSSL_PARAM_get_octet_string(p, &ctx->sc.cipher_pass, 0,
-                                         &ctx->sc.cipher_pass_length))
-            return 0;
-    }
-    return 1;
-}
-
 static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
                                OSSL_CALLBACK *data_cb, void *data_cbarg,
                                OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
@@ -169,9 +108,6 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
     EVP_PKEY *pkey = NULL;
     int ok = 0;
 
-    ctx->sc.cb = pw_cb;
-    ctx->sc.cbarg = pw_cbarg;
-
     if (!ossl_prov_read_der(ctx->provctx, cin, &der, &der_len))
         return 0;
 
@@ -179,9 +115,8 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
      * Opportunistic attempt to decrypt.  If it doesn't work, we try to
      * decode our input unencrypted.
      */
-    if (ctx->sc.cipher_intent
-        && ossl_prov_der_from_p8(&new_der, &new_der_len, der, der_len,
-                                 &ctx->sc)) {
+    if (ossl_prov_der_from_p8(&new_der, &new_der_len, der, der_len,
+                              pw_cb, pw_cbarg)) {
         OPENSSL_free(der);
         der = new_der;
         der_len = new_der_len;
@@ -279,10 +214,6 @@ const OSSL_DISPATCH der_to_rsa_deserializer_functions[] = {
       (void (*)(void))der2rsa_gettable_params },
     { OSSL_FUNC_DESERIALIZER_GET_PARAMS,
       (void (*)(void))der2rsa_get_params },
-    { OSSL_FUNC_DESERIALIZER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))der2rsa_settable_ctx_params },
-    { OSSL_FUNC_DESERIALIZER_SET_CTX_PARAMS,
-      (void (*)(void))der2rsa_set_ctx_params },
     { OSSL_FUNC_DESERIALIZER_DESERIALIZE,
       (void (*)(void))der2rsa_deserialize },
     { OSSL_FUNC_DESERIALIZER_EXPORT_OBJECT,
@@ -297,10 +228,6 @@ const OSSL_DISPATCH der_to_rsapss_deserializer_functions[] = {
       (void (*)(void))der2rsa_gettable_params },
     { OSSL_FUNC_DESERIALIZER_GET_PARAMS,
       (void (*)(void))der2rsa_get_params },
-    { OSSL_FUNC_DESERIALIZER_SETTABLE_CTX_PARAMS,
-      (void (*)(void))der2rsa_settable_ctx_params },
-    { OSSL_FUNC_DESERIALIZER_SET_CTX_PARAMS,
-      (void (*)(void))der2rsa_set_ctx_params },
     { OSSL_FUNC_DESERIALIZER_DESERIALIZE,
       (void (*)(void))der2rsa_deserialize },
     { OSSL_FUNC_DESERIALIZER_EXPORT_OBJECT,

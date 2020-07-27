@@ -55,13 +55,19 @@ static EVP_PKEY *make_RSA(const char *rsa_type, int make_legacy)
 
 /* Main test driver */
 
+/*
+ * TODO(3.0) For better error output, changed the callbacks to take __FILE__
+ * and __LINE__ as first two arguments, and have them use the lower case
+ * functions, such as test_strn_eq(), rather than the uppercase macros
+ * (TEST_strn2_eq(), for example).
+ */
+
 typedef int (serializer)(void **serialized, long *serialized_len,
-                         void *object,
-                         const char *pass, const char *pcipher,
+                         void *object, const char *pass, const char *pcipher,
                          const char *ser_propq);
 typedef int (deserializer)(void **object,
                            void *serialized, long serialized_len,
-                           const char *pass, const char *pcipher);
+                           const char *pass);
 typedef int (checker)(const char *type, const void *data, size_t data_len);
 typedef void (dumper)(const char *label, const void *data, size_t data_len);
 
@@ -83,7 +89,7 @@ static int test_serialize_deserialize(const char *type, EVP_PKEY *pkey,
                       pass, pcipher, ser_propq)
         || !check_cb(type, serialized, serialized_len)
         || !deserialize_cb((void **)&pkey2, serialized, serialized_len,
-                           pass, pcipher)
+                           pass)
         || !TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 1))
         goto end;
 
@@ -157,7 +163,7 @@ static int serialize_EVP_PKEY_prov(void **serialized, long *serialized_len,
 
 static int deserialize_EVP_PKEY_prov(void **object,
                                      void *serialized, long serialized_len,
-                                     const char *pass, const char *pcipher)
+                                     const char *pass)
 {
     EVP_PKEY *pkey = NULL;
     OSSL_DESERIALIZER_CTX *dctx = NULL;
@@ -170,8 +176,6 @@ static int deserialize_EVP_PKEY_prov(void **object,
         || (pass != NULL
             && !OSSL_DESERIALIZER_CTX_set_passphrase(dctx, upass,
                                                      strlen(pass)))
-        || (pcipher != NULL
-            && !OSSL_DESERIALIZER_CTX_set_cipher(dctx, pcipher, NULL))
         || !TEST_ptr(mem_deser = BIO_new_mem_buf(serialized, serialized_len))
         || !TEST_true(OSSL_DESERIALIZER_from_bio(dctx, mem_deser)))
         goto end;

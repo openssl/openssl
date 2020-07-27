@@ -3,9 +3,8 @@
 =head1 NAME
 
 OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY,
-OSSL_DESERIALIZER_CTX_set_cipher,
 OSSL_DESERIALIZER_CTX_set_passphrase,
-OSSL_DESERIALIZER_CTX_set_passphrase_cb,
+OSSL_DESERIALIZER_CTX_set_pem_password_cb,
 OSSL_DESERIALIZER_CTX_set_passphrase_ui
 - Deserializer routines to deserialize EVP_PKEYs
 
@@ -19,14 +18,12 @@ OSSL_DESERIALIZER_CTX_set_passphrase_ui
                                        OPENSSL_CTX *libctx,
                                        const char *propquery);
 
- int OSSL_DESERIALIZER_CTX_set_cipher(OSSL_DESERIALIZER_CTX *ctx,
-                                      const char *cipher_name,
-                                      const char *propquery);
  int OSSL_DESERIALIZER_CTX_set_passphrase(OSSL_DESERIALIZER_CTX *ctx,
                                           const unsigned char *kstr,
                                           size_t klen);
- int OSSL_DESERIALIZER_CTX_set_passphrase_cb(OSSL_DESERIALIZER_CTX *ctx,
-                                             pem_password_cb *cb, void *cbarg);
+ int OSSL_DESERIALIZER_CTX_set_pem_password_cb(OSSL_DESERIALIZER_CTX *ctx,
+                                               pem_password_cb *cb,
+                                               void *cbarg);
  int OSSL_DESERIALIZER_CTX_set_passphrase_ui(OSSL_DESERIALIZER_CTX *ctx,
                                              const UI_METHOD *ui_method,
                                              void *ui_data);
@@ -55,38 +52,35 @@ zero).  This helps the caller distinguish between an error when
 creating the B<OSSL_DESERIALIZER_CTX>, and the lack the deserializer
 support and act accordingly.
 
-OSSL_DESERIALIZER_CTX_set_cipher() tells the implementation what cipher
-should be used to decrypt serialized keys.  The cipher is given by
-name I<cipher_name>.  The interpretation of that I<cipher_name> is
-implementation dependent.  The implementation may implement the cipher
-directly itself, or it may choose to fetch it.  If the implementation
-supports fetching the cipher, then it may use I<propquery> as
-properties to be queried for when fetching.  I<cipher_name> may also
-be NULL, which will result in failure if the serialized input is an
-encrypted key.
-
 OSSL_DESERIALIZER_CTX_set_passphrase() gives the implementation a
 pass phrase to use when decrypting the serialized private key.
 Alternatively, a pass phrase callback may be specified with the
 following functions.
 
-OSSL_DESERIALIZER_CTX_set_passphrase_cb() and
-OSSL_DESERIALIZER_CTX_set_passphrase_ui() sets up a callback method that
-the implementation can use to prompt for a pass phrase.
+OSSL_DESERIALIZER_CTX_set_pem_password_cb() and
+OSSL_DESERIALIZER_CTX_set_passphrase_ui() set up a callback method that
+the implementation can use to prompt for a pass phrase, giving the caller
+the choice of prefered pass phrase callback form.  These are called
+indirectly, through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
 
-=for comment Note that the callback method is called indirectly,
-through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
+The internal B<OSSL_PASSPHRASE_CALLBACK> function caches the pass phrase, to
+be re-used in all deserializations that are performed in the same
+deserialization run
+(for example, within one L<OSSL_DESERIALIZER_from_bio(3)> call).
+
+=for comment the name OSSL_DESERIALIZER_CTX_set_pem_password_cb() leaves
+open the future possibility of having a function where the caller can set a
+B<OSSL_PASSPHRASE_CALLBACK> method as another option.
 
 =head1 RETURN VALUES
 
 OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY() returns a pointer to a
 B<OSSL_DESERIALIZER_CTX>, or NULL if it couldn't be created.
 
-OSSL_DESERIALIZER_CTX_set_cipher(),
 OSSL_DESERIALIZER_CTX_set_passphrase(),
-OSSL_DESERIALIZER_CTX_set_passphrase_cb(), and
-OSSL_DESERIALIZER_CTX_set_passphrase_ui() all return 1 on success, or 0
-on failure.
+OSSL_DESERIALIZER_CTX_set_pem_password_cb() and
+OSSL_DESERIALIZER_CTX_set_passphrase_ui()
+all return 1 on success, or 0 on failure.
 
 =head1 NOTES
 

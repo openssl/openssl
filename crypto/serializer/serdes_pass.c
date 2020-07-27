@@ -48,8 +48,11 @@ static int do_passphrase(char *pass, size_t pass_size, size_t *pass_len,
         return 0;
     }
 
-    UI_set_method(ui, ui_method);
-    UI_add_user_data(ui, ui_data);
+    if (ui_method != NULL) {
+        UI_set_method(ui, ui_method);
+        if (ui_data != NULL)
+            UI_add_user_data(ui, ui_data);
+    }
 
     /* Get an application constructed prompt */
     prompt = UI_construct_prompt(ui, "pass phrase", prompt_info);

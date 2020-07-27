@@ -47,7 +47,7 @@ int ossl_prov_read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
 
 int ossl_prov_der_from_p8(unsigned char **new_der, long *new_der_len,
                           unsigned char *input_der, long input_der_len,
-                          struct pkcs8_encrypt_ctx_st *ctx)
+                          OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     const unsigned char *derp;
     X509_SIG *p8 = NULL;
@@ -57,30 +57,20 @@ int ossl_prov_der_from_p8(unsigned char **new_der, long *new_der_len,
         || !ossl_assert(new_der_len != NULL))
         return 0;
 
-    if (ctx->cipher == NULL)
-        return 0;
-
     derp = input_der;
     if ((p8 = d2i_X509_SIG(NULL, &derp, input_der_len)) != NULL) {
         char pbuf[PEM_BUFSIZE];
-        const void *pstr = ctx->cipher_pass;
-        size_t plen = ctx->cipher_pass_length;
+        size_t plen = 0;
 
-        if (pstr == NULL) {
-            pstr = pbuf;
-            if (!ctx->cb(pbuf, sizeof(pbuf), &plen, NULL, ctx->cbarg)) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
-                pstr = NULL;
-            }
-        }
-
-        if (pstr != NULL) {
+        if (!pw_cb(pbuf, sizeof(pbuf), &plen, NULL, pw_cbarg)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
+        } else {
             const X509_ALGOR *alg = NULL;
             const ASN1_OCTET_STRING *oct = NULL;
             int len = 0;
 
             X509_SIG_get0(p8, &alg, &oct);
-            if (PKCS12_pbe_crypt(alg, pstr, plen, oct->data, oct->length,
+            if (PKCS12_pbe_crypt(alg, pbuf, plen, oct->data, oct->length,
                                  new_der, &len, 0) != NULL)
                 ok = 1;
             *new_der_len = len;
