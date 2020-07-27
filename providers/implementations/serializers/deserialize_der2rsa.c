@@ -123,8 +123,13 @@ static int der2rsa_deserialize(void *vctx, OSSL_CORE_BIO *cin,
     }
 
     derp = der;
-    if ((pkey = d2i_PrivateKey_ex(ctx->type, NULL, &derp, der_len,
-                                  libctx, NULL)) != NULL) {
+    pkey = d2i_PrivateKey_ex(ctx->type, NULL, &derp, der_len, libctx, NULL);
+    if (pkey == NULL) {
+        derp = der;
+        pkey = d2i_PUBKEY(NULL, &derp, der_len);
+    }
+
+    if (pkey != NULL) {
         /* Tear out the RSA pointer from the pkey */
         rsa = EVP_PKEY_get1_RSA(pkey);
         EVP_PKEY_free(pkey);
