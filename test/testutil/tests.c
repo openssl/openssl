@@ -302,28 +302,28 @@ int test_str_ne(const char *file, int line, const char *st1, const char *st2,
 }
 
 int test_strn_eq(const char *file, int line, const char *st1, const char *st2,
-                 const char *s1, const char *s2, size_t len)
+                 const char *s1, size_t n1, const char *s2, size_t n2)
 {
     if (s1 == NULL && s2 == NULL)
       return 1;
-    if (s1 == NULL || s2 == NULL || strncmp(s1, s2, len) != 0) {
+    if (n1 != n2 || s1 == NULL || s2 == NULL || strncmp(s1, s2, n1) != 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "==",
-                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
-                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
+                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n1),
+                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n2));
         return 0;
     }
     return 1;
 }
 
 int test_strn_ne(const char *file, int line, const char *st1, const char *st2,
-                 const char *s1, const char *s2, size_t len)
+                 const char *s1, size_t n1, const char *s2, size_t n2)
 {
     if ((s1 == NULL) ^ (s2 == NULL))
       return 1;
-    if (s1 == NULL || strncmp(s1, s2, len) == 0) {
+    if (n1 != n2 || s1 == NULL || strncmp(s1, s2, n1) == 0) {
         test_fail_string_message(NULL, file, line, "string", st1, st2, "!=",
-                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, len),
-                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, len));
+                                 s1, s1 == NULL ? 0 : OPENSSL_strnlen(s1, n1),
+                                 s2, s2 == NULL ? 0 : OPENSSL_strnlen(s2, n2));
         return 0;
     }
     return 1;

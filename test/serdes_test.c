@@ -90,6 +90,8 @@ typedef int (serializer)(void **serialized, long *serialized_len,
 typedef int (deserializer)(void **object,
                            void *serialized, long serialized_len,
                            const char *pass);
+typedef int (tester)(const void *data1, size_t data1_len,
+                     const void *data2, size_t data2_len);
 typedef int (checker)(const char *type, const void *data, size_t data_len);
 typedef void (dumper)(const char *label, const void *data, size_t data_len);
 
@@ -97,6 +99,7 @@ static int test_serialize_deserialize(const char *type, EVP_PKEY *pkey,
                                       const char *pass, const char *pcipher,
                                       serializer *serialize_cb,
                                       deserializer *deserialize_cb,
+                                      tester *test_cb,
                                       checker *check_cb, dumper *dump_cb,
                                       const char *ser_propq, int make_legacy)
 {
@@ -131,14 +134,18 @@ static int test_serialize_deserialize(const char *type, EVP_PKEY *pkey,
     if ((pass == NULL && pcipher == NULL)
         && (!serialize_cb(&serialized2, &serialized2_len, pkey2,
                           pass, pcipher, ser_propq)
-            || !TEST_mem_eq(serialized, serialized_len,
-                            serialized2, serialized2_len)))
+            || !test_cb(serialized, serialized_len,
+                        serialized2, serialized2_len)))
         goto end;
 
     ok = 1;
  end:
-    if (!ok)
-        dump_cb("serialized result", serialized, serialized_len);
+    if (!ok) {
+        if (serialized != NULL && serialized_len != 0)
+            dump_cb("serialized result", serialized, serialized_len);
+        if (serialized2 != NULL && serialized2_len != 0)
+            dump_cb("re-serialized result", serialized2, serialized2_len);
+    }
 
     OPENSSL_free(serialized);
     OPENSSL_free(serialized2);
@@ -248,6 +255,18 @@ static int serialize_EVP_PKEY_legacy_PEM(void **serialized,
     return ok;
 }
 
+static int test_text(const void *data1, size_t data1_len,
+                     const void *data2, size_t data2_len)
+{
+    return TEST_strn2_eq(data1, data1_len, data2, data2_len);
+}
+
+static int test_mem(const void *data1, size_t data1_len,
+                    const void *data2, size_t data2_len)
+{
+    return TEST_mem_eq(data1, data1_len, data2, data2_len);
+}
+
 /* Test cases and their dumpers / checkers */
 
 static void dump_der(const char *label, const void *data, size_t data_len)
@@ -283,6 +302,7 @@ static int test_unprotected_via_DER(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
+                                      test_mem,
                                       check_unprotected_PKCS8_DER, dump_der,
                                       OSSL_SERIALIZER_PrivateKey_TO_DER_PQ,
                                       0);
@@ -301,6 +321,7 @@ static int test_unprotected_via_PEM(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
+                                      test_text,
                                       check_unprotected_PKCS8_PEM, dump_pem,
                                       OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ,
                                       0);
@@ -322,6 +343,7 @@ static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_legacy_PEM,
                                       deserialize_EVP_PKEY_prov,
+                                      test_text,
                                       check_unprotected_legacy_PEM, dump_pem,
                                       NULL, 1);
 }
@@ -345,6 +367,7 @@ static int test_protected_via_DER(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, pass, pass_cipher,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
+                                      test_mem,
                                       check_protected_PKCS8_DER, dump_der,
                                       OSSL_SERIALIZER_PrivateKey_TO_DER_PQ,
                                       0);
@@ -363,6 +386,7 @@ static int test_protected_via_PEM(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, pass, pass_cipher,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
+                                      test_text,
                                       check_protected_PKCS8_PEM, dump_pem,
                                       OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ,
                                       0);
@@ -385,6 +409,7 @@ static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, pass, pass_cipher,
                                       serialize_EVP_PKEY_legacy_PEM,
                                       deserialize_EVP_PKEY_prov,
+                                      test_text,
                                       check_protected_legacy_PEM, dump_pem,
                                       NULL, 1);
 }
@@ -404,6 +429,7 @@ static int test_public_via_DER(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
+                                      test_mem,
                                       check_public_DER, dump_der,
                                       OSSL_SERIALIZER_PUBKEY_TO_DER_PQ,
                                       0);
@@ -422,6 +448,7 @@ static int test_public_via_PEM(const char *type, EVP_PKEY *key)
     return test_serialize_deserialize(type, key, NULL, NULL,
                                       serialize_EVP_PKEY_prov,
                                       deserialize_EVP_PKEY_prov,
+                                      test_text,
                                       check_public_PEM, dump_pem,
                                       OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ,
                                       0);

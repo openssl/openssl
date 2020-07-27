@@ -296,9 +296,9 @@ DECLARE_COMPARISON(char *, str, ne)
  * Same as above, but for strncmp.
  */
 int test_strn_eq(const char *file, int line, const char *, const char *,
-                 const char *a, const char *b, size_t s);
+                 const char *a, size_t an, const char *b, size_t bn);
 int test_strn_ne(const char *file, int line, const char *, const char *,
-                 const char *a, const char *b, size_t s);
+                 const char *a, size_t an, const char *b, size_t bn);
 
 /*
  * Equality test for memory blocks where NULL is a legitimate value.
@@ -438,8 +438,10 @@ void test_perror(const char *s);
 
 # define TEST_str_eq(a, b)    test_str_eq(__FILE__, __LINE__, #a, #b, a, b)
 # define TEST_str_ne(a, b)    test_str_ne(__FILE__, __LINE__, #a, #b, a, b)
-# define TEST_strn_eq(a, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, b, n)
-# define TEST_strn_ne(a, b, n) test_strn_ne(__FILE__, __LINE__, #a, #b, a, b, n)
+# define TEST_strn_eq(a, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, n, b, n)
+# define TEST_strn_ne(a, b, n) test_strn_ne(__FILE__, __LINE__, #a, #b, a, n, b, n)
+# define TEST_strn2_eq(a, m, b, n) test_strn_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
+# define TEST_strn2_ne(a, m, b, n) test_strn_ne(__FILE__, __LINE__, #a, #b, a, m, b, n)
 
 # define TEST_mem_eq(a, m, b, n) test_mem_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
 # define TEST_mem_ne(a, m, b, n) test_mem_ne(__FILE__, __LINE__, #a, #b, a, m, b, n)
