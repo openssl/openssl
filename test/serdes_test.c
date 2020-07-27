@@ -426,6 +426,64 @@ static int test_protected_RSA_PSS_via_legacy_PEM(void)
                                       NULL, 1);
 }
 
+static int check_public_DER(int type, const void *data, size_t data_len)
+{
+    const unsigned char *datap = data;
+    EVP_PKEY *pkey = d2i_PUBKEY(NULL, &datap, data_len);
+    int ok = (TEST_ptr(pkey) && TEST_true(EVP_PKEY_is_a(pkey, "RSA")));
+
+    EVP_PKEY_free(pkey);
+    return ok;
+}
+
+static int test_public_RSA_via_DER(void)
+{
+    return test_serialize_deserialize("RSA", NULL, NULL,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_public_DER, dump_der,
+                                      OSSL_SERIALIZER_PUBKEY_TO_DER_PQ,
+                                      0);
+}
+
+static int test_public_RSA_PSS_via_DER(void)
+{
+    return test_serialize_deserialize("RSA-PSS", NULL, NULL,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_public_DER, dump_der,
+                                      OSSL_SERIALIZER_PUBKEY_TO_DER_PQ,
+                                      0);
+}
+
+static int check_public_PEM(int type, const void *data, size_t data_len)
+{
+    static const char pem_header[] = "-----BEGIN " PEM_STRING_PUBLIC "-----";
+
+    return
+        TEST_strn_eq(data, pem_header, sizeof(pem_header) - 1);
+}
+
+static int test_public_RSA_via_PEM(void)
+{
+    return test_serialize_deserialize("RSA", NULL, NULL,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_public_PEM, dump_pem,
+                                      OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ,
+                                      0);
+}
+
+static int test_public_RSA_PSS_via_PEM(void)
+{
+    return test_serialize_deserialize("RSA-PSS", NULL, NULL,
+                                      serialize_EVP_PKEY_prov,
+                                      deserialize_EVP_PKEY_prov,
+                                      check_public_PEM, dump_pem,
+                                      OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ,
+                                      0);
+}
+
 int setup_tests(void)
 {
     TEST_info("Generating keys...");
@@ -447,12 +505,16 @@ int setup_tests(void)
     ADD_TEST(test_protected_RSA_via_DER);
     ADD_TEST(test_protected_RSA_via_PEM);
     ADD_TEST(test_protected_RSA_via_legacy_PEM);
+    ADD_TEST(test_public_RSA_via_DER);
+    ADD_TEST(test_public_RSA_via_PEM);
     ADD_TEST(test_unprotected_RSA_PSS_via_DER);
     ADD_TEST(test_unprotected_RSA_PSS_via_PEM);
     ADD_TEST(test_unprotected_RSA_PSS_via_legacy_PEM);
     ADD_TEST(test_protected_RSA_PSS_via_DER);
     ADD_TEST(test_protected_RSA_PSS_via_PEM);
     ADD_TEST(test_protected_RSA_PSS_via_legacy_PEM);
+    ADD_TEST(test_public_RSA_PSS_via_DER);
+    ADD_TEST(test_public_RSA_PSS_via_PEM);
 
     return 1;
 }
