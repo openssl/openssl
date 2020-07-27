@@ -388,7 +388,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 static const OSSL_ALGORITHM deflt_serializer[] = {
 #define SER(name, fips, format, type, func_table)                           \
     { name,                                                                 \
-      "provider=default,fips=" fips ",format=" format ",type=" type,  \
+      "provider=default,fips=" fips ",format=" format ",type=" type,        \
       (func_table) }
 
 #include "serializers.inc"
@@ -397,16 +397,15 @@ static const OSSL_ALGORITHM deflt_serializer[] = {
 #undef SER
 
 static const OSSL_ALGORITHM deflt_deserializer[] = {
-    { "RSA", "provider=default,fips=yes,input=der",
-      der_to_rsa_deserializer_functions },
-    { "RSA-PSS", "provider=default,fips=yes,input=der",
-      der_to_rsapss_deserializer_functions },
+#define DESER(name, fips, input, func_table)                                \
+    { name,                                                                 \
+      "provider=default,fips=" fips ",input=" input,                        \
+      (func_table) }
 
-    { "DER", "provider=default,fips=yes,input=pem",
-      pem_to_der_deserializer_functions },
-
+#include "deserializers.inc"
     { NULL, NULL, NULL }
 };
+#undef DESER
 
 static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
                                          int *no_cache)
