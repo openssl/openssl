@@ -55,14 +55,12 @@ int OSSL_DESERIALIZER_CTX_set_params(OSSL_DESERIALIZER_CTX *ctx,
 void OSSL_DESERIALIZER_CTX_free(OSSL_DESERIALIZER_CTX *ctx);
 
 /* Utilities that help set specific parameters */
-int OSSL_DESERIALIZER_CTX_set_cipher(OSSL_DESERIALIZER_CTX *ctx,
-                                     const char *cipher_name,
-                                     const char *propquery);
 int OSSL_DESERIALIZER_CTX_set_passphrase(OSSL_DESERIALIZER_CTX *ctx,
                                          const unsigned char *kstr,
                                          size_t klen);
-int OSSL_DESERIALIZER_CTX_set_passphrase_cb(OSSL_DESERIALIZER_CTX *ctx,
-                                            pem_password_cb *cb, void *cbarg);
+int OSSL_DESERIALIZER_CTX_set_pem_password_cb(OSSL_DESERIALIZER_CTX *ctx,
+                                              pem_password_cb *cb,
+                                              void *cbarg);
 int OSSL_DESERIALIZER_CTX_set_passphrase_ui(OSSL_DESERIALIZER_CTX *ctx,
                                             const UI_METHOD *ui_method,
                                             void *ui_data);

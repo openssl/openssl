@@ -490,6 +490,7 @@ OSSL_DESERIALIZER_CTX *OSSL_DESERIALIZER_CTX_new(void)
         return NULL;
     }
 
+    ctx->passphrase_cb = ossl_deserializer_passphrase_in_cb;
     return ctx;
 }
 
@@ -542,7 +543,8 @@ void OSSL_DESERIALIZER_CTX_free(OSSL_DESERIALIZER_CTX *ctx)
             ctx->cleaner(ctx->finalize_arg);
         sk_OSSL_DESERIALIZER_INSTANCE_pop_free(ctx->deser_insts,
                                                OSSL_DESERIALIZER_INSTANCE_free);
-        UI_destroy_method(ctx->allocated_ui_method);
+        OSSL_DESERIALIZER_CTX_set_passphrase_ui(ctx, NULL, NULL);
+        OSSL_DESERIALIZER_CTX_set_passphrase(ctx, NULL, 0);
         OPENSSL_free(ctx);
     }
 }

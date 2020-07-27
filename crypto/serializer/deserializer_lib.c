@@ -37,10 +37,11 @@ int OSSL_DESERIALIZER_from_bio(OSSL_DESERIALIZER_CTX *ctx, BIO *in)
 
     ok = deser_process(NULL, &data);
 
-    /* Clear any cached passphrase */
-    OPENSSL_clear_free(ctx->cached_passphrase, ctx->cached_passphrase_len);
-    ctx->cached_passphrase = NULL;
-    ctx->cached_passphrase_len = 0;
+    /* Clear any internally cached passphrase */
+    if (!ctx->flag_user_passphrase) {
+        OSSL_DESERIALIZER_CTX_set_passphrase(ctx, NULL, 0);
+        ctx->flag_user_passphrase = 0;
+    }
     return ok;
 }
 
@@ -426,7 +427,7 @@ static int deser_process(const OSSL_PARAM params[], void *arg)
         ok = new_deser->deserialize(new_deser_inst->deserctx,
                                     (OSSL_CORE_BIO *)bio,
                                     deser_process, &new_data,
-                                    NULL /* ossl_deserializer_passphrase_in_cb */,
+                                    ctx->passphrase_cb,
                                     new_data.ctx);
         if (ok)
             break;

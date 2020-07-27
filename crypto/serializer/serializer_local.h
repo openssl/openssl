@@ -103,10 +103,11 @@ struct ossl_deserializer_ctx_st {
     void *finalize_arg;
 
     /* For any function that needs a passphrase reader */
+    OSSL_PASSPHRASE_CALLBACK *passphrase_cb;
     const UI_METHOD *ui_method;
     void *ui_data;
     /*
-     * if caller used OSSL_SERIALIZER_CTX_set_passphrase_cb(), we need
+     * if caller used OSSL_SERIALIZER_CTX_set_pem_password_cb(), we need
      * intermediary storage.
      */
     UI_METHOD *allocated_ui_method;
@@ -117,6 +118,16 @@ struct ossl_deserializer_ctx_st {
      */
     unsigned char *cached_passphrase;
     size_t cached_passphrase_len;
+
+    /*
+     * Flag section.  Keep these together
+     */
+
+    /*
+     * The passphrase was passed to us by the user.  In that case, it
+     * should only be freed when freeing this context.
+     */
+    unsigned int flag_user_passphrase:1;
 };
 
 /* Passphrase callbacks, found in serdes_pass.c */
