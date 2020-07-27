@@ -34,6 +34,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri);
 #endif
 
 static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg);
+static int rsa_sync_to_pss_params_30(RSA *rsa);
 
 /* Set any parameters associated with pkey */
 static int rsa_param_encode(const EVP_PKEY *pkey,
@@ -78,6 +79,8 @@ static int rsa_param_decode(RSA *rsa, const X509_ALGOR *alg)
     rsa->pss = rsa_pss_decode(alg);
     if (rsa->pss == NULL)
         return 0;
+    if (!rsa_sync_to_pss_params_30(rsa))
+        return 0;
     return 1;
 }
 
@@ -118,6 +121,20 @@ static int rsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
         RSA_free(rsa);
         return 0;
     }
+
+    RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
+    switch (pkey->ameth->pkey_id) {
+    case EVP_PKEY_RSA:
+        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
+        break;
+    case EVP_PKEY_RSA_PSS:
+        RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
+        break;
+    default:
+        /* Leave the type bits zero */
+        break;
+    }
+
     if (!EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa)) {
         RSA_free(rsa);
         return 0;
@@ -759,6 +776,27 @@ int rsa_pss_get_param(const RSA_PSS_PARAMS *pss, const EVP_MD **pmd,
         return 0;
     }
 
+    return 1;
+}
+
+static int rsa_sync_to_pss_params_30(RSA *rsa)
+{
+    if (rsa != NULL && rsa->pss != NULL) {
+        const EVP_MD *md = NULL, *mgf1md = NULL;
+        int md_nid, mgf1md_nid, saltlen;
+        RSA_PSS_PARAMS_30 pss_params;
+
+        if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &saltlen))
+            return 0;
+        md_nid = EVP_MD_type(md);
+        mgf1md_nid = EVP_MD_type(mgf1md);
+        if (!rsa_pss_params_30_set_defaults(&pss_params)
+            || !rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
+            || !rsa_pss_params_30_set_maskgenhashalg(&pss_params, mgf1md_nid)
+            || !rsa_pss_params_30_set_saltlen(&pss_params, saltlen))
+            return 0;
+        rsa->pss_params = pss_params;
+    }
     return 1;
 }
 
