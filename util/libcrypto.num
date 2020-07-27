@@ -5180,3 +5180,15 @@ ERR_load_OSSL_DESERIALIZER_strings      ?	3_0_0	EXIST::FUNCTION:
 OSSL_DESERIALIZER_gettable_params       ?	3_0_0	EXIST::FUNCTION:
 OSSL_DESERIALIZER_get_params            ?	3_0_0	EXIST::FUNCTION:
 OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY   ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_set1_X25519                    ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get0_X25519                    ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get1_X25519                    ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_set1_X448                      ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get0_X448                      ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get1_X448                      ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_set1_ED25519                   ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get0_ED25519                   ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get1_ED25519                   ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_set1_ED448                     ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get0_ED448                     ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_get1_ED448                     ?	3_0_0	EXIST::FUNCTION:EC

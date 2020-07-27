@@ -34,6 +34,7 @@
 
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/ecx.h"
 #include "internal/evp.h"
 #include "internal/provider.h"
 #include "evp_local.h"
@@ -855,6 +856,54 @@ EC_KEY *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey)
         EC_KEY_up_ref(ret);
     return ret;
 }
+
+static int EVP_PKEY_set1_ECX_KEY(EVP_PKEY *pkey, int type, ECX_KEY *key)
+{
+    int ret = EVP_PKEY_assign(pkey, type, key);
+    if (ret)
+        ecx_key_up_ref(key);
+    return ret;
+}
+
+static ECX_KEY *EVP_PKEY_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
+{
+    if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
+        return NULL;
+    }
+    if (EVP_PKEY_base_id(pkey) != type) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_ECX_KEY);
+        return NULL;
+    }
+    return pkey->pkey.ecx;
+}
+
+static ECX_KEY *EVP_PKEY_get1_ECX_KEY(EVP_PKEY *pkey, int type)
+{
+    ECX_KEY *ret = EVP_PKEY_get0_ECX_KEY(pkey, type);
+    if (ret != NULL)
+        ecx_key_up_ref(ret);
+    return ret;
+}
+
+#  define IMPLEMENT_ECX_VARIANT(NAME)                                   \
+    int EVP_PKEY_set1_##NAME(EVP_PKEY *pkey, ECX_KEY *key)              \
+    {                                                                   \
+        return EVP_PKEY_set1_ECX_KEY(pkey, EVP_PKEY_##NAME, key);       \
+    }                                                                   \
+    ECX_KEY *EVP_PKEY_get0_##NAME(const EVP_PKEY *pkey)                 \
+    {                                                                   \
+        return EVP_PKEY_get0_ECX_KEY(pkey, EVP_PKEY_##NAME);            \
+    }                                                                   \
+    ECX_KEY *EVP_PKEY_get1_##NAME(EVP_PKEY *pkey)                       \
+    {                                                                   \
+        return EVP_PKEY_get1_ECX_KEY(pkey, EVP_PKEY_##NAME);            \
+    }
+IMPLEMENT_ECX_VARIANT(X25519)
+IMPLEMENT_ECX_VARIANT(X448)
+IMPLEMENT_ECX_VARIANT(ED25519)
+IMPLEMENT_ECX_VARIANT(ED448)
+
 # endif
 
 # ifndef OPENSSL_NO_DH
@@ -940,6 +989,18 @@ int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 #ifndef OPENSSL_NO_EC
         else if (strcasecmp(name, "EC") == 0)
             type = EVP_PKEY_EC;
+        else if (strcasecmp(name, "ED25519") == 0)
+            type = EVP_PKEY_ED25519;
+        else if (strcasecmp(name, "ED448") == 0)
+            type = EVP_PKEY_ED448;
+        else if (strcasecmp(name, "X25519") == 0)
+            type = EVP_PKEY_X25519;
+        else if (strcasecmp(name, "X448") == 0)
+            type = EVP_PKEY_X448;
+#endif
+#ifndef OPENSSL_NO_DH
+        else if (strcasecmp(name, "DH") == 0)
+            type = EVP_PKEY_DH;
 #endif
 #ifndef OPENSSL_NO_DSA
         else if (strcasecmp(name, "DSA") == 0)

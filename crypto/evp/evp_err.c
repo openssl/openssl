@@ -61,6 +61,8 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_DH_KEY), "expecting a dh key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_DSA_KEY),
     "expecting a dsa key"},
+    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_ECX_KEY),
+    "expecting a ecx key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_EC_KEY), "expecting a ec key"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_EXPECTING_A_POLY1305_KEY),
     "expecting a poly1305 key"},

@@ -466,6 +466,14 @@ typedef int (EVP_PBE_KEYGEN) (EVP_CIPHER_CTX *ctx, const char *pass,
 # ifndef OPENSSL_NO_EC
 #  define EVP_PKEY_assign_EC_KEY(pkey,eckey) EVP_PKEY_assign((pkey),EVP_PKEY_EC,\
                                         (eckey))
+#  define EVP_PKEY_assign_X25519(pkey,ecxkey) EVP_PKEY_assign((pkey),EVP_PKEY_X25519,\
+                                        (ecxkey))
+#  define EVP_PKEY_assign_X448(pkey,ecxkey) EVP_PKEY_assign((pkey),EVP_PKEY_X448,\
+                                        (ecxkey))
+#  define EVP_PKEY_assign_ED25519(pkey,ecxkey) EVP_PKEY_assign((pkey),EVP_PKEY_ED25519,\
+                                        (ecxkey))
+#  define EVP_PKEY_assign_ED448(pkey,ecxkey) EVP_PKEY_assign((pkey),EVP_PKEY_ED448,\
+                                        (ecxkey))
 # endif
 # ifndef OPENSSL_NO_SIPHASH
 #  define EVP_PKEY_assign_SIPHASH(pkey,shkey) EVP_PKEY_assign((pkey),\
@@ -1222,6 +1230,19 @@ struct ec_key_st;
 int EVP_PKEY_set1_EC_KEY(EVP_PKEY *pkey, struct ec_key_st *key);
 struct ec_key_st *EVP_PKEY_get0_EC_KEY(const EVP_PKEY *pkey);
 struct ec_key_st *EVP_PKEY_get1_EC_KEY(EVP_PKEY *pkey);
+struct ecx_key_st;
+int EVP_PKEY_set1_X25519(EVP_PKEY *pkey, struct ecx_key_st *key);
+struct ecx_key_st *EVP_PKEY_get0_X25519(const EVP_PKEY *pkey);
+struct ecx_key_st *EVP_PKEY_get1_X25519(EVP_PKEY *pkey);
+int EVP_PKEY_set1_X448(EVP_PKEY *pkey, struct ecx_key_st *key);
+struct ecx_key_st *EVP_PKEY_get0_X448(const EVP_PKEY *pkey);
+struct ecx_key_st *EVP_PKEY_get1_X448(EVP_PKEY *pkey);
+int EVP_PKEY_set1_ED25519(EVP_PKEY *pkey, struct ecx_key_st *key);
+struct ecx_key_st *EVP_PKEY_get0_ED25519(const EVP_PKEY *pkey);
+struct ecx_key_st *EVP_PKEY_get1_ED25519(EVP_PKEY *pkey);
+int EVP_PKEY_set1_ED448(EVP_PKEY *pkey, struct ecx_key_st *key);
+struct ecx_key_st *EVP_PKEY_get0_ED448(const EVP_PKEY *pkey);
+struct ecx_key_st *EVP_PKEY_get1_ED448(EVP_PKEY *pkey);
 # endif
 
 EVP_PKEY *EVP_PKEY_new(void);
