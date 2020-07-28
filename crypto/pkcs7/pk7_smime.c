@@ -322,7 +322,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
         tmpout = out;
 
     /* We now have to 'read' from p7bio to calculate digests etc. */
-    if ((buf = OPENSSL_zalloc(BUFFERSIZE)) == NULL) {
+    if ((buf = OPENSSL_malloc(BUFFERSIZE)) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;
     }
