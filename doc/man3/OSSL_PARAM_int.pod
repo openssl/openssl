@@ -24,6 +24,7 @@ OSSL_PARAM_get_time_t, OSSL_PARAM_get_uint, OSSL_PARAM_get_uint32,
 OSSL_PARAM_get_uint64, OSSL_PARAM_get_ulong, OSSL_PARAM_get_BN,
 OSSL_PARAM_get_utf8_string, OSSL_PARAM_get_octet_string,
 OSSL_PARAM_get_utf8_ptr, OSSL_PARAM_get_octet_ptr,
+OSSL_PARAM_get_utf8_string_ptr, OSSL_PARAM_get_octet_string_ptr,
 OSSL_PARAM_set_double, OSSL_PARAM_set_int, OSSL_PARAM_set_int32,
 OSSL_PARAM_set_int64, OSSL_PARAM_set_long, OSSL_PARAM_set_size_t,
 OSSL_PARAM_set_time_t, OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32,
@@ -95,6 +96,10 @@ OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
                               size_t *used_len);
  int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                               size_t used_len);
+
+ int OSSL_PARAM_get_utf8_string_ptr(const OSSL_PARAM *p, const char **val);
+ int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
+                                     size_t *used_len);
 
  int OSSL_PARAM_modified(const OSSL_PARAM *param);
  void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *params);
@@ -263,6 +268,17 @@ The length of the OCTET string is stored in B<*used_len>.
 OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by B<p> to the values B<val>.
 The length of the OCTET string is provided by B<used_len>.
+
+OSSL_PARAM_get_utf8_string_ptr() retrieves the pointer to a UTF8 string from
+the parameter pointed to by B<p>, and stores that pointer in B<*val>.
+This is different from OSSL_PARAM_get_utf8_string(), which copies the
+string.
+
+OSSL_PARAM_get_octet_string_ptr() retrieves the pointer to a octet string
+from the parameter pointed to by B<p>, and stores that pointer in B<*val>,
+along with the string's length in B<*used_len>.
+This is different from OSSL_PARAM_get_octet_string(), which copies the
+string.
 
 The OSSL_PARAM_UNMODIFIED macro is used to detect if a parameter was set.  On
 creation, via either the macros or construct calls, the I<return_size> field

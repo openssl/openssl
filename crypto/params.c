@@ -969,3 +969,29 @@ OSSL_PARAM OSSL_PARAM_construct_end(void)
 
     return end;
 }
+
+static int get_string_ptr_internal(const OSSL_PARAM *p, const void **val,
+                                   size_t *used_len, unsigned int type)
+{
+    if (val == NULL || p == NULL || p->data_type != type)
+        return 0;
+    if (used_len != NULL)
+        *used_len = p->data_size;
+    *val = p->data;
+    return 1;
+}
+
+int OSSL_PARAM_get_utf8_string_ptr(const OSSL_PARAM *p, const char **val)
+{
+    return OSSL_PARAM_get_utf8_ptr(p, val)
+        || get_string_ptr_internal(p, (const void **)val, NULL,
+                                   OSSL_PARAM_UTF8_STRING);
+}
+
+int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
+                                    size_t *used_len)
+{
+    return OSSL_PARAM_get_octet_ptr(p, val, used_len)
+        || get_string_ptr_internal(p, val, used_len, OSSL_PARAM_OCTET_STRING);
+}
+
