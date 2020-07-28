@@ -5281,3 +5281,5 @@ OSSL_STORE_LOADER_number                ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_is_a                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_do_all_provided       ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_names_do_all          ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_get_utf8_string_ptr          ?	3_0_0	EXIST::FUNCTION:
+OSSL_PARAM_get_octet_string_ptr         ?	3_0_0	EXIST::FUNCTION:

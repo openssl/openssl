@@ -142,6 +142,10 @@ int OSSL_PARAM_get_octet_ptr(const OSSL_PARAM *p, const void **val,
 int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                              size_t used_len);
 
+int OSSL_PARAM_get_utf8_string_ptr(const OSSL_PARAM *p, const char **val);
+int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
+                                    size_t *used_len);
+
 int OSSL_PARAM_modified(const OSSL_PARAM *p);
 void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p);
 
