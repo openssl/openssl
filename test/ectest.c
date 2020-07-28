@@ -2430,7 +2430,7 @@ static int custom_params_test(int id)
     const char *curve_name = NULL;
     EC_GROUP *group = NULL, *altgroup = NULL;
     EC_POINT *G2 = NULL, *Q1 = NULL, *Q2 = NULL;
-    const EC_POINT *P = NULL;
+    const EC_POINT *Q = NULL;
     BN_CTX *ctx = NULL;
     BIGNUM *k = NULL;
     unsigned char *buf1 = NULL, *buf2 = NULL;
@@ -2582,12 +2582,12 @@ static int custom_params_test(int id)
         goto err;
 
     /* retrieve bytes for pub2 for later */
-    if (!TEST_ptr(P = EC_KEY_get0_public_key(eckey2))
-            || !TEST_int_eq(EC_POINT_point2oct(altgroup, P,
+    if (!TEST_ptr(Q = EC_KEY_get0_public_key(eckey2))
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, Q,
                                                POINT_CONVERSION_UNCOMPRESSED,
                                                NULL, 0, ctx), bsize)
             || !TEST_ptr(pub2 = OPENSSL_malloc(bsize))
-            || !TEST_int_eq(EC_POINT_point2oct(altgroup, P,
+            || !TEST_int_eq(EC_POINT_point2oct(altgroup, Q,
                                                POINT_CONVERSION_UNCOMPRESSED,
                                                pub2, bsize, ctx), bsize))
         goto err;
