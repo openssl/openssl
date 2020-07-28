@@ -33,6 +33,9 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
     if (mctx == NULL)
         return 0;
     mdlen = EVP_MD_size(md);
+    if (mdlen < 0)
+        return 0;
+
     for (i = 1;; i++) {
         unsigned char mtmp[EVP_MAX_MD_SIZE];
         if (!EVP_DigestInit_ex(mctx, md, NULL))
@@ -58,9 +61,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
             if (!EVP_DigestFinal(mctx, mtmp, NULL))
                 goto err;
             memcpy(out, mtmp, outlen);
-            if (mdlen > 0) {
-                OPENSSL_cleanse(mtmp, mdlen);
-            }
+            OPENSSL_cleanse(mtmp, mdlen);
             break;
         }
     }
