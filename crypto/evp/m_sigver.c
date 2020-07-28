@@ -85,13 +85,25 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     /*
      * Ensure that the key is provided, either natively, or as a cached export.
-     *  If not, go legacy
      */
     tmp_keymgmt = locpctx->keymgmt;
     provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
                                           &tmp_keymgmt, locpctx->propquery);
-    if (provkey == NULL)
-        goto legacy;
+    if (provkey == NULL) {
+        /*
+         * If we couldn't find a keymgmt at all try legacy.
+         * TODO(3.0): Once all legacy algorithms (SM2, HMAC etc) have provider
+         * based implementations this fallback shouldn't be necessary. Either
+         * we have an ENGINE based implementation (in which case we should have
+         * already fallen back in the test above here), or we don't have the
+         * provider based implementation loaded (in which case this is an
+         * application config error)
+         */
+        if (locpctx->keymgmt == NULL)
+            goto legacy;
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
         ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
