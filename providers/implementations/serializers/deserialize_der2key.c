@@ -214,8 +214,13 @@ static int der2key_export_object(void *vctx,
         { 0, NULL }                                                     \
     }
 
+#ifndef OPENSSL_NO_DH
 IMPLEMENT_NEWCTX("DH", DH, dh, EVP_PKEY_get1_DH, DH_free);
+#endif
+#ifndef OPENSSL_NO_DSA
 IMPLEMENT_NEWCTX("DSA", DSA, dsa, EVP_PKEY_get1_DSA, DSA_free);
+#endif
+#ifndef OPENSSL_NO_EC
 IMPLEMENT_NEWCTX("EC", EC, ec, EVP_PKEY_get1_EC_KEY, EC_KEY_free);
 IMPLEMENT_NEWCTX("X25519", X25519, x25519,
                  EVP_PKEY_get1_X25519, ecx_key_free);
@@ -224,5 +229,6 @@ IMPLEMENT_NEWCTX("X448", X448, x448,
 IMPLEMENT_NEWCTX("ED25519", ED25519, ed25519,
                  EVP_PKEY_get1_ED25519, ecx_key_free);
 IMPLEMENT_NEWCTX("ED448", ED448, ed448, EVP_PKEY_get1_ED448, ecx_key_free);
+#endif
 IMPLEMENT_NEWCTX("RSA", RSA, rsa, EVP_PKEY_get1_RSA, RSA_free);
 IMPLEMENT_NEWCTX("RSA-PSS", RSA_PSS, rsapss, EVP_PKEY_get1_RSA, RSA_free);

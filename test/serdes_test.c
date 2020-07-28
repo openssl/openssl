@@ -533,25 +533,33 @@ KEYS(RSA_PSS);
 KEYS(X25519);
 KEYS(X448);
 
+#ifndef OPENSSL_NO_DH
 IMPLEMENT_TEST_SUITE(DH, "DH")
+#endif
+#ifndef OPENSSL_NO_DSA
 IMPLEMENT_TEST_SUITE(DSA, "DSA")
+#endif
+#ifndef OPENSSL_NO_EC
 IMPLEMENT_TEST_SUITE(EC, "EC")
 IMPLEMENT_TEST_SUITE(ED25519, "ED25519")
 IMPLEMENT_TEST_SUITE(ED448, "ED448")
-IMPLEMENT_TEST_SUITE(RSA, "RSA")
-IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
 IMPLEMENT_TEST_SUITE(X25519, "X25519")
 IMPLEMENT_TEST_SUITE(X448, "X448")
+#endif
+IMPLEMENT_TEST_SUITE(RSA, "RSA")
+IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
 
 int setup_tests(void)
 {
     int ok = 1;
 
+#ifndef OPENSSL_NO_EC
     char groupname[] = "prime256v1";
     OSSL_PARAM EC_params[] = {
         OSSL_PARAM_utf8_string("group", groupname, sizeof(groupname) - 1),
         OSSL_PARAM_END
     };
+#endif
 
     unsigned int rsapss_min_saltlen = 7; /* Default magic number */
     OSSL_PARAM RSA_PSS_params[] = {
@@ -560,27 +568,39 @@ int setup_tests(void)
     };
 
     TEST_info("Generating keys...");
+#ifndef OPENSSL_NO_DH
     MAKE_DOMAIN_KEYS(DH, "DH", NULL);
+#endif
+#ifndef OPENSSL_NO_DSA
     MAKE_DOMAIN_KEYS(DSA, "DSA", NULL);
+#endif
+#ifndef OPENSSL_NO_EC
     MAKE_DOMAIN_KEYS(EC, "EC", EC_params);
     MAKE_KEYS(ED25519, "ED25519", NULL);
     MAKE_KEYS(ED448, "ED448", NULL);
-    MAKE_KEYS(RSA, "RSA", NULL);
-    MAKE_KEYS(RSA_PSS, "RSA-PSS", RSA_PSS_params);
     MAKE_KEYS(X25519, "X25519", NULL);
     MAKE_KEYS(X448, "X448", NULL);
+#endif
+    MAKE_KEYS(RSA, "RSA", NULL);
+    MAKE_KEYS(RSA_PSS, "RSA-PSS", RSA_PSS_params);
     TEST_info("Generating key... done");
 
     if (ok) {
+#ifndef OPENSSL_NO_DH
         ADD_TEST_SUITE(DH);
+#endif
+#ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE(DSA);
+#endif
+#ifndef OPENSSL_NO_EC
         ADD_TEST_SUITE(EC);
         ADD_TEST_SUITE(ED25519);
         ADD_TEST_SUITE(ED448);
-        ADD_TEST_SUITE(RSA);
-        ADD_TEST_SUITE(RSA_PSS);
         ADD_TEST_SUITE(X25519);
         ADD_TEST_SUITE(X448);
+#endif
+        ADD_TEST_SUITE(RSA);
+        ADD_TEST_SUITE(RSA_PSS);
     }
 
     return 1;
@@ -588,13 +608,19 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
+#ifndef OPENSSL_NO_DH
     FREE_DOMAIN_KEYS(DH);
+#endif
+#ifndef OPENSSL_NO_DSA
     FREE_DOMAIN_KEYS(DSA);
+#endif
+#ifndef OPENSSL_NO_EC
     FREE_DOMAIN_KEYS(EC);
     FREE_KEYS(ED25519);
     FREE_KEYS(ED448);
-    FREE_KEYS(RSA);
-    FREE_KEYS(RSA_PSS);
     FREE_KEYS(X25519);
     FREE_KEYS(X448);
+#endif
+    FREE_KEYS(RSA);
+    FREE_KEYS(RSA_PSS);
 }
