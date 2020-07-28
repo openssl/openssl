@@ -143,11 +143,24 @@ void ossl_namemap_doall_names(const OSSL_NAMEMAP *namemap, int number,
     CRYPTO_THREAD_unlock(namemap->lock);
 }
 
+static int namemap_name2num_n(const OSSL_NAMEMAP *namemap,
+                              const char *name, size_t name_len)
+{
+    NAMENUM_ENTRY *namenum_entry, namenum_tmpl;
+
+    if ((namenum_tmpl.name = OPENSSL_strndup(name, name_len)) == NULL)
+        return 0;
+    namenum_tmpl.number = 0;
+    namenum_entry =
+        lh_NAMENUM_ENTRY_retrieve(namemap->namenum, &namenum_tmpl);
+    OPENSSL_free(namenum_tmpl.name);
+    return namenum_entry != NULL ? namenum_entry->number : 0;
+}
+
 int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
                             const char *name, size_t name_len)
 {
-    NAMENUM_ENTRY *namenum_entry, namenum_tmpl;
-    int number = 0;
+    int number;
 
 #ifndef FIPS_MODULE
     if (namemap == NULL)
@@ -157,16 +170,9 @@ int ossl_namemap_name2num_n(const OSSL_NAMEMAP *namemap,
     if (namemap == NULL)
         return 0;
 
-    if ((namenum_tmpl.name = OPENSSL_strndup(name, name_len)) == NULL)
-        return 0;
-    namenum_tmpl.number = 0;
     CRYPTO_THREAD_read_lock(namemap->lock);
-    namenum_entry =
-        lh_NAMENUM_ENTRY_retrieve(namemap->namenum, &namenum_tmpl);
-    if (namenum_entry != NULL)
-        number = namenum_entry->number;
+    number = namemap_name2num_n(namemap, name, name_len);
     CRYPTO_THREAD_unlock(namemap->lock);
-    OPENSSL_free(namenum_tmpl.name);
 
     return number;
 }
@@ -205,10 +211,36 @@ const char *ossl_namemap_num2name(const OSSL_NAMEMAP *namemap, int number,
     return data.name;
 }
 
+static int namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
+                              const char *name, size_t name_len)
+{
+    NAMENUM_ENTRY *namenum = NULL;
+    int tmp_number;
+
+    /* If it already exists, we don't add it */
+    if ((tmp_number = namemap_name2num_n(namemap, name, name_len)) != 0)
+        return tmp_number;
+
+    if ((namenum = OPENSSL_zalloc(sizeof(*namenum))) == NULL
+        || (namenum->name = OPENSSL_strndup(name, name_len)) == NULL)
+        goto err;
+
+    namenum->number =
+        number != 0 ? number : 1 + tsan_counter(&namemap->max_number);
+    (void)lh_NAMENUM_ENTRY_insert(namemap->namenum, namenum);
+
+    if (lh_NAMENUM_ENTRY_error(namemap->namenum))
+        goto err;
+    return namenum->number;
+
+ err:
+    namenum_free(namenum);
+    return 0;
+}
+
 int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
                             const char *name, size_t name_len)
 {
-    NAMENUM_ENTRY *namenum = NULL;
     int tmp_number;
 
 #ifndef FIPS_MODULE
@@ -219,31 +251,10 @@ int ossl_namemap_add_name_n(OSSL_NAMEMAP *namemap, int number,
     if (name == NULL || name_len == 0 || namemap == NULL)
         return 0;
 
-    if ((tmp_number = ossl_namemap_name2num_n(namemap, name, name_len)) != 0)
-        return tmp_number;       /* Pretend success */
-
     CRYPTO_THREAD_write_lock(namemap->lock);
-
-    if ((namenum = OPENSSL_zalloc(sizeof(*namenum))) == NULL
-        || (namenum->name = OPENSSL_strndup(name, name_len)) == NULL)
-        goto err;
-
-    namenum->number = tmp_number =
-        number != 0 ? number : 1 + tsan_counter(&namemap->max_number);
-    (void)lh_NAMENUM_ENTRY_insert(namemap->namenum, namenum);
-
-    if (lh_NAMENUM_ENTRY_error(namemap->namenum))
-        goto err;
-
+    tmp_number = namemap_add_name_n(namemap, number, name, name_len);
     CRYPTO_THREAD_unlock(namemap->lock);
-
     return tmp_number;
-
- err:
-    namenum_free(namenum);
-
-    CRYPTO_THREAD_unlock(namemap->lock);
-    return 0;
 }
 
 int ossl_namemap_add_name(OSSL_NAMEMAP *namemap, int number, const char *name)
@@ -266,6 +277,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
         return 0;
     }
 
+    CRYPTO_THREAD_write_lock(namemap->lock);
     /*
      * Check that no name is an empty string, and that all names have at
      * most one numeric identity together.
@@ -278,11 +290,11 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
         else
             l = q - p;           /* offset to the next separator */
 
-        this_number = ossl_namemap_name2num_n(namemap, p, l);
+        this_number = namemap_name2num_n(namemap, p, l);
 
         if (*p == '\0' || *p == separator) {
             ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_BAD_ALGORITHM_NAME);
-            return 0;
+            goto err;
         }
         if (number == 0) {
             number = this_number;
@@ -290,7 +302,7 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
             ERR_raise_data(ERR_LIB_CRYPTO, CRYPTO_R_CONFLICTING_NAMES,
                            "\"%.*s\" has an existing different identity %d (from \"%s\")",
                            l, p, this_number, names);
-            return 0;
+            goto err;
         }
     }
 
@@ -303,18 +315,23 @@ int ossl_namemap_add_names(OSSL_NAMEMAP *namemap, int number,
         else
             l = q - p;           /* offset to the next separator */
 
-        this_number = ossl_namemap_add_name_n(namemap, number, p, l);
+        this_number = namemap_add_name_n(namemap, number, p, l);
         if (number == 0) {
             number = this_number;
         } else if (this_number != number) {
             ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
                            "Got number %d when expecting %d",
                            this_number, number);
-            return 0;
+            goto err;
         }
     }
 
+    CRYPTO_THREAD_unlock(namemap->lock);
     return number;
+
+ err:
+    CRYPTO_THREAD_unlock(namemap->lock);
+    return 0;
 }
 
 /*-
