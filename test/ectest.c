@@ -2403,7 +2403,7 @@ static int custom_generator_test(int id)
                                            POINT_CONVERSION_UNCOMPRESSED, b2,
                                            bsize, ctx), bsize)
         /* Q1 = kG = k/2 G2 = Q2 should hold */
-        || !TEST_int_eq(CRYPTO_memcmp(b1, b2, bsize), 0))
+        || !TEST_mem_eq(b1, bsize, b2, bsize))
         goto err;
 
     ret = 1;
@@ -2549,7 +2549,7 @@ static int custom_params_test(int id)
                                                POINT_CONVERSION_UNCOMPRESSED,
                                                buf2, bsize, ctx), bsize)
             /* Q1 = kG = k/2 G2 = Q2 should hold */
-            || !TEST_int_eq(CRYPTO_memcmp(buf1, buf2, bsize), 0))
+            || !TEST_mem_eq(buf1, bsize, buf2, bsize))
         goto err;
 
     /* create two `EC_KEY`s on altgroup */
@@ -2618,12 +2618,11 @@ static int custom_params_test(int id)
             || !TEST_int_eq(EVP_PKEY_derive(pctx2, NULL, &t), 1)
             || !TEST_int_gt(bsize, t)
             || !TEST_int_le(sslen, t)
-            || !TEST_int_eq(EVP_PKEY_derive(pctx2, buf2, &t), 1)
-            || !TEST_int_eq(t, sslen))
+            || !TEST_int_eq(EVP_PKEY_derive(pctx2, buf2, &t), 1))
         goto err;
 
     /* Both sides should expect the same shared secret */
-    if (!TEST_int_eq(CRYPTO_memcmp(buf1, buf2, sslen), 0))
+    if (!TEST_mem_eq(buf1, sslen, buf2, t))
         goto err;
 
     /* Build parameters for provider-native keys */
@@ -2668,9 +2667,8 @@ static int custom_params_test(int id)
             || !TEST_int_gt(bsize, t)
             || !TEST_int_le(sslen, t)
             || !TEST_int_eq(EVP_PKEY_derive(pctx1, buf1, &t), 1)
-            || !TEST_int_eq(t, sslen)
             /* compare with previous result */
-            || !TEST_int_eq(CRYPTO_memcmp(buf1, buf2, sslen), 0))
+            || !TEST_mem_eq(buf1, t, buf2, sslen))
         goto err;
 
     ret = 1;
