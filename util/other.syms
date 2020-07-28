@@ -43,8 +43,8 @@ OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
 OSSL_DESERIALIZER                       datatype
 OSSL_DESERIALIZER_CTX                   datatype
-OSSL_DESERIALIZER_FINALIZER             datatype
-OSSL_DESERIALIZER_CLEANER               datatype
+OSSL_DESERIALIZER_CONSTRUCT             datatype
+OSSL_DESERIALIZER_CLEANUP               datatype
 OSSL_DESERIALIZER_INSTANCE              datatype
 OSSL_DESERIALIZER_CTX                   datatype
 OSSL_HTTP_bio_cb_t                      datatype
