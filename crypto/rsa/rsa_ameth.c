@@ -758,7 +758,7 @@ static int rsa_pss_verify_param(const EVP_MD **pmd, const EVP_MD **pmgf1md,
      * PKCS#1 says we should reject any other value anyway.
      */
     if (ptrailerField != NULL && *ptrailerField != 1) {
-        RSAerr(RSA_F_RSA_PSS_GET_PARAM, RSA_R_INVALID_TRAILER);
+        ERR_raise(ERR_LIB_RSA, RSA_R_INVALID_TRAILER);
         return 0;
     }
     return 1;
