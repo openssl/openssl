@@ -2596,13 +2596,11 @@ static int custom_params_test(int id)
     if(!TEST_ptr(pkey1 = EVP_PKEY_new())
             || !TEST_int_eq(EVP_PKEY_assign_EC_KEY(pkey1, eckey1), 1))
         goto err;
-    else
-        eckey1 = NULL; /* ownership passed to pkey1 */
+    eckey1 = NULL; /* ownership passed to pkey1 */
     if(!TEST_ptr(pkey2 = EVP_PKEY_new())
             || !TEST_int_eq(EVP_PKEY_assign_EC_KEY(pkey2, eckey2), 1))
         goto err;
-    else
-        eckey2 = NULL; /* ownership passed to pkey2 */
+    eckey2 = NULL; /* ownership passed to pkey2 */
 
     /* Compute keyexchange in both directions */
     if (!TEST_ptr(pctx1 = EVP_PKEY_CTX_new(pkey1, NULL))
