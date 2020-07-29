@@ -1207,6 +1207,10 @@ static int test_ktls(int test)
     if (cis_ktls_rx || sis_ktls_rx)
         return 1;
 #endif
+#if !defined(OPENSSL_NO_TLS1_3)
+    if (tlsver == TLS1_3_VERSION && (cis_ktls_rx || sis_ktls_rx))
+        return 1;
+#endif
 
     testresult = 1;
 #ifdef OPENSSL_KTLS_AES_GCM_128
