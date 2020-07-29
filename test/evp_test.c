@@ -3324,7 +3324,7 @@ static int parse(EVP_TEST *t)
     KEY_LIST *key, **klist;
     EVP_PKEY *pkey;
     PAIR *pp;
-    int i;
+    int i, skip_availablein = 0;
 
 top:
     do {
@@ -3384,7 +3384,7 @@ start:
 
         nid = OBJ_txt2nid(strnid);
         if (nid == NID_undef) {
-            TEST_info("Uncrecognised algorithm NID");
+            TEST_info("Unrecognised algorithm NID");
             return 0;
         }
         if (!parse_bin(keydata, &keybin, &keylen)) {
@@ -3411,8 +3411,8 @@ start:
                 t->skip = 1;
                 return 0;
         }
+        skip_availablein++;
         pp++;
-        t->s.numpairs--;
         goto start;
     }
 
@@ -3430,7 +3430,7 @@ start:
         *klist = key;
 
         /* Go back and start a new stanza. */
-        if (t->s.numpairs != 1)
+        if ((t->s.numpairs - skip_availablein) != 1)
             TEST_info("Line %d: missing blank line\n", t->s.curr);
         goto top;
     }
@@ -3447,7 +3447,7 @@ start:
         return 0;
     }
 
-    for (pp++, i = 1; i < t->s.numpairs; pp++, i++) {
+    for (pp++, i = 1; i < (t->s.numpairs - skip_availablein); pp++, i++) {
         if (strcmp(pp->key, "Availablein") == 0) {
             TEST_info("Line %d: 'Availablein' should be the first option",
                       t->s.curr);
@@ -3585,7 +3585,6 @@ void cleanup_tests(void)
     OPENSSL_CTX_free(libctx);
 }
 
-/* Done as macros to avoid compiler warnings about unused functions  */
 #define STR_STARTS_WITH(str, pre) strncasecmp(pre, str, strlen(pre)) == 0
 #define STR_ENDS_WITH(str, pre)                                                \
 strlen(str) < strlen(pre) ? 0 : (strcasecmp(pre, str + strlen(str) - strlen(pre)) == 0)
