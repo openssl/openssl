@@ -1203,6 +1203,11 @@ static int test_ktls(int test)
     sis_ktls_tx = (test & 4) != 0;
     sis_ktls_rx = (test & 8) != 0;
 
+#if defined(OPENSSL_NO_KTLS_RX)
+    if (cis_ktls_rx || sis_ktls_rx)
+        return 1;
+#endif
+
     testresult = 1;
 #ifdef OPENSSL_KTLS_AES_GCM_128
     testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
