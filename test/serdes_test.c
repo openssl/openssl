@@ -554,14 +554,15 @@ int setup_tests(void)
     int ok = 1;
 
 #ifndef OPENSSL_NO_EC
-    char groupname[] = "prime256v1";
+    static const char groupname[] = "prime256v1";
     OSSL_PARAM EC_params[] = {
         OSSL_PARAM_utf8_string("group", groupname, sizeof(groupname) - 1),
         OSSL_PARAM_END
     };
 #endif
 
-    unsigned int rsapss_min_saltlen = 7; /* Default magic number */
+    /* 7 is the default magic number */
+    static const unsigned int rsapss_min_saltlen = 7;
     OSSL_PARAM RSA_PSS_params[] = {
         OSSL_PARAM_uint("saltlen", &rsapss_min_saltlen),
         OSSL_PARAM_END
