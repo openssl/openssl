@@ -30,3 +30,4 @@ SOURCE[$SSKDF_GOAL]=sskdf.c
 SOURCE[$SCRYPT_GOAL]=scrypt.c
 SOURCE[$SSHKDF_GOAL]=sshkdf.c
 SOURCE[$X942KDF_GOAL]=x942kdf.c
+DEPEND[x942kdf.o]=../../common/include/prov/der_wrap.h
