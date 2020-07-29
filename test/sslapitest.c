@@ -1177,314 +1177,11 @@ end:
     return testresult;
 }
 
-static int test_ktls_no_txrx_client_no_txrx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 0, 0, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 0, 0, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 0, 0, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_rx_client_no_txrx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 0, 0, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 0, 0, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 0, 0, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_tx_client_no_txrx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 1, 0, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 1, 0, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 1, 0, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_client_no_txrx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 1, 0, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 1, 0, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 1, 0, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_txrx_client_no_rx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 0, 1, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 0, 1, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 0, 1, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_rx_client_no_rx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 0, 1, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 0, 1, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 0, 1, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_tx_client_no_rx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 1, 1, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 1, 1, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 1, 1, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_client_no_rx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 1, 1, 0, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 1, 1, 0, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 1, 1, 0, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_txrx_client_no_tx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 0, 0, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 0, 0, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 0, 0, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_rx_client_no_tx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 0, 0, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 0, 0, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 0, 0, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_tx_client_no_tx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 1, 0, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 1, 0, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 1, 0, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_client_no_tx_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 1, 0, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 1, 0, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 1, 0, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_txrx_client_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 0, 1, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 0, 1, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 0, 1, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_rx_client_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 0, 1, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 0, 1, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 0, 1, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_no_tx_client_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(0, 1, 1, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(0, 1, 1, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(0, 1, 1, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
-static int test_ktls_client_server(int tlsver)
-{
-    int testresult = 1;
-
-#ifdef OPENSSL_KTLS_AES_GCM_128
-    testresult &= execute_test_ktls(1, 1, 1, 1, tlsver,
-         "AES128-GCM-SHA256", TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_CCM_128
-    testresult &= execute_test_ktls(1, 1, 1, 1, tlsver,
-         "AES128-CCM-SHA256", TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
-#endif
-#ifdef OPENSSL_KTLS_AES_GCM_256
-    testresult &= execute_test_ktls(1, 1, 1, 1, tlsver,
-         "AES256-GCM-SHA384", TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
-#endif
-    return testresult;
-}
-
 #if !defined(OPENSSL_NO_TLS1_2) || !defined(OPENSSL_NO_TLS1_3)
 static int test_ktls(int test)
 {
-    int tlsver;
+    int cis_ktls_tx, cis_ktls_rx, sis_ktls_tx, sis_ktls_rx;
+    int tlsver, testresult;
 
     if (test > 15) {
 #if defined(OPENSSL_NO_TLS1_3)
@@ -1501,42 +1198,28 @@ static int test_ktls(int test)
 #endif
     }
 
-    switch(test) {
-    case 0:
-       return test_ktls_no_txrx_client_no_txrx_server(tlsver);
-    case 1:
-       return test_ktls_no_rx_client_no_txrx_server(tlsver);
-    case 2:
-       return test_ktls_no_tx_client_no_txrx_server(tlsver);
-    case 3:
-       return test_ktls_client_no_txrx_server(tlsver);
-    case 4:
-       return test_ktls_no_txrx_client_no_rx_server(tlsver);
-    case 5:
-       return test_ktls_no_rx_client_no_rx_server(tlsver);
-    case 6:
-       return test_ktls_no_tx_client_no_rx_server(tlsver);
-    case 7:
-       return test_ktls_client_no_rx_server(tlsver);
-    case 8:
-       return test_ktls_no_txrx_client_no_tx_server(tlsver);
-    case 9:
-       return test_ktls_no_rx_client_no_tx_server(tlsver);
-    case 10:
-       return test_ktls_no_tx_client_no_tx_server(tlsver);
-    case 11:
-       return test_ktls_client_no_tx_server(tlsver);
-    case 12:
-       return test_ktls_no_txrx_client_server(tlsver);
-    case 13:
-       return test_ktls_no_rx_client_server(tlsver);
-    case 14:
-       return test_ktls_no_tx_client_server(tlsver);
-    case 15:
-       return test_ktls_client_server(tlsver);
-    default:
-       return 0;
-    }
+    cis_ktls_tx = (test & 1) != 0;
+    cis_ktls_rx = (test & 2) != 0;
+    sis_ktls_tx = (test & 4) != 0;
+    sis_ktls_rx = (test & 8) != 0;
+
+    testresult = 1;
+#ifdef OPENSSL_KTLS_AES_GCM_128
+    testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
+                                    sis_ktls_rx, tlsver, "AES128-GCM-SHA256",
+                                    TLS_CIPHER_AES_GCM_128_REC_SEQ_SIZE);
+#endif
+#ifdef OPENSSL_KTLS_AES_CCM_128
+    testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
+                                    sis_ktls_rx, tlsver, "AES128-CCM-SHA256",
+                                    TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
+#endif
+#ifdef OPENSSL_KTLS_AES_GCM_256
+    testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
+                                    sis_ktls_rx, tlsver, "AES256-GCM-SHA384",
+                                    TLS_CIPHER_AES_GCM_256_REC_SEQ_SIZE);
+#endif
+    return testresult;
 }
 
 static int test_ktls_sendfile_anytls(int tst)
