@@ -190,7 +190,7 @@ static int der2key_export_object(void *vctx,
 }
 
 #define IMPLEMENT_NEWCTX(KEYTYPEstr, KEYTYPE, keytype, extract, free)   \
-    const struct keytype_desc_st keytype##_desc =                       \
+    static const struct keytype_desc_st keytype##_desc =                \
         { EVP_PKEY_##KEYTYPE, KEYTYPEstr, keytype##_keymgmt_functions,  \
           (extract_key_fn *)extract,                                    \
           (free_key_fn *)free };                                        \
