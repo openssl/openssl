@@ -11,6 +11,9 @@
 #include "e_os.h"
 #include <openssl/core_names.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include "internal/packet.h"
 #include "internal/der.h"
 #include "prov/provider_ctx.h"
@@ -43,7 +46,8 @@ typedef struct {
 } KDF_X942;
 
 /*
- * A table of allowed wrapping algorithms and the associated output lengths
+ * A table of allowed wrapping algorithms, oids and the associated output
+ * lengths.
  * NOTE: RC2wrap and camellia128_wrap have been removed as there are no
  * corresponding ciphers for these operations.
  */
@@ -101,12 +105,12 @@ static int DER_w_keyinfo(WPACKET *pkt,
 static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen,
                                  const unsigned char *der_oid, size_t der_oidlen,
                                  const unsigned char *ukm, size_t ukmlen,
-                                 size_t keylen, unsigned char **pcounter)
+                                 uint32_t keylen_bits, unsigned char **pcounter)
 {
     return (buf != NULL ? WPACKET_init_der(pkt, buf, buflen) :
                           WPACKET_init_null_der(pkt))
            && DER_w_begin_sequence(pkt, -1)
-           && DER_w_octet_string_uint32(pkt, 2, keylen * 8)
+           && DER_w_octet_string_uint32(pkt, 2, keylen_bits)
            && (ukm == NULL || DER_w_octet_string(pkt, 0, ukm, ukmlen))
            && DER_w_keyinfo(pkt, der_oid, der_oidlen, pcounter)
            && DER_w_end_sequence(pkt, -1)
@@ -156,10 +160,16 @@ static int x942_encode_otherinfo(size_t keylen,
     unsigned char *pcounter = NULL, *der_buf = NULL;
     size_t der_buflen = 0;
     WPACKET pkt;
+    uint32_t keylen_bits;
+
+    /* keylenbits must fit into 4 bytes */
+    if (keylen > 0xFFFFFF)
+        goto err;
+    keylen_bits = 8 * keylen;
 
     /* Calculate the size of the buffer */
     if (!der_encode_sharedinfo(&pkt, NULL, 0, cek_oid, cek_oidlen, ukm, ukmlen,
-                               keylen, NULL)
+                               keylen_bits, NULL)
         || !WPACKET_get_total_written(&pkt, &der_buflen))
         goto err;
     WPACKET_cleanup(&pkt);
@@ -169,7 +179,7 @@ static int x942_encode_otherinfo(size_t keylen,
         goto err;
     /* Encode into the buffer */
     if (!der_encode_sharedinfo(&pkt, der_buf, der_buflen, cek_oid, cek_oidlen,
-                               ukm, ukmlen, keylen, &pcounter))
+                               ukm, ukmlen, keylen_bits, &pcounter))
         goto err;
     /*
      * Since we allocated the exact size required, the buffer should point to the

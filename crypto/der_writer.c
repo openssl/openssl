@@ -77,12 +77,11 @@ int DER_w_octet_string(WPACKET *pkt, int tag,
         && int_end_context(pkt, tag);
 }
 
-int DER_w_octet_string_uint32(WPACKET *pkt, int tag, size_t value)
+int DER_w_octet_string_uint32(WPACKET *pkt, int tag, uint32_t value)
 {
     unsigned char tmp[4] = { 0, 0, 0, 0 };
     unsigned char *pbuf = tmp + (sizeof(tmp) - 1);
 
-    value &= 0xFFFFFFFF;
     while (value > 0) {
         *pbuf-- = (value & 0xFF);
         value >>= 8;
