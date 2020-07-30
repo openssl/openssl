@@ -77,6 +77,13 @@ static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
 
 /* Main test driver */
 
+/*
+ * TODO(3.0) For better error output, changed the callbacks to take __FILE__
+ * and __LINE__ as first two arguments, and have them use the lower case
+ * functions, such as test_strn_eq(), rather than the uppercase macros
+ * (TEST_strn2_eq(), for example).
+ */
+
 typedef int (serializer)(void **serialized, long *serialized_len,
                          void *object, const char *pass, const char *pcipher,
                          const char *ser_propq);

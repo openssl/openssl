@@ -58,7 +58,7 @@ Alternatively, a pass phrase callback may be specified with the
 following functions.
 
 OSSL_DESERIALIZER_CTX_set_pem_password_cb() and
-OSSL_DESERIALIZER_CTX_set_passphrase_ui() sets up a callback method that
+OSSL_DESERIALIZER_CTX_set_passphrase_ui() set up a callback method that
 the implementation can use to prompt for a pass phrase, giving the caller
 the choice of prefered pass phrase callback form.  These are called
 indirectly, through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
@@ -69,7 +69,7 @@ deserialization run
 (for example, within one L<OSSL_DESERIALIZER_from_bio(3)> call).
 
 =for comment the name OSSL_DESERIALIZER_CTX_set_pem_password_cb() leaves
-open the future possibility of have a function where the caller can set a
+open the future possibility of having a function where the caller can set a
 B<OSSL_PASSPHRASE_CALLBACK> method as another option.
 
 =head1 RETURN VALUES
