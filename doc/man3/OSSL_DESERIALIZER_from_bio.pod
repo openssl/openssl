@@ -95,9 +95,10 @@ what type of input they have.  In this case, OSSL_DESERIALIZER_from_bio()
 will simply try with one deserializer implementation after the other, and
 thereby discover what kind of input the caller gave it.
 
-For every deserialization done, even intermediary, a constructor provided by
-the caller is called to attempt to construct an appropriate type / structure
-that the caller knows how to handle from the current deserialization result.
+For every deserialization done, even an intermediary one, a constructor
+provided by the caller is called to attempt to construct an appropriate type
+/ structure that the caller knows how to handle from the current
+deserialization result.
 The constructor is set with OSSL_DESERIALIZER_CTX_set_construct().
 
 B<OSSL_DESERIALIZER_INSTANCE> is an opaque structure that contains
@@ -133,7 +134,7 @@ deserializers currently added to the context I<ctx>.
 OSSL_DESERIALIZER_CTX_set_construct() sets the constructor I<construct>.
 
 OSSL_DESERIALIZER_CTX_set_construct_data() sets the constructor data that is
-passed the constructor every time it's called.
+passed to the constructor every time it's called.
 
 OSSL_DESERIALIZER_CTX_set_cleanup() sets the constructor data I<cleanup>
 function.  This is called by L<OSSL_DESERIALIZER_CTX_free(3)>.
@@ -144,12 +145,12 @@ OSSL_DESERIALIZER_CTX_get_cleanup()
 return the values that have been set by
 OSSL_DESERIALIZER_CTX_set_construct(),
 OSSL_DESERIALIZER_CTX_set_construct_data() and
-OSSL_DESERIALIZER_CTX_set_cleanup(), respectively.
+OSSL_DESERIALIZER_CTX_set_cleanup() respectively.
 
 OSSL_DESERIALIZER_export() is a fallback function for constructors that
 can't use the data they get directly for diverse reasons.  It takes the same
 deserialize instance I<deser_inst> that the constructor got and an object
-I<reference>, unpacks the object that refers to, and exports it by creating
+I<reference>, unpacks the object which it refers to, and exports it by creating
 an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>, along with
 I<export_arg>.
 
@@ -216,7 +217,8 @@ provides I<deser>.
 
 At least one of "data" or "reference" must be present, and it's
 possible that both can be.  A constructor should choose to use the
-"reference" parameter if possible, otherwise the "data" parameter.
+"reference" parameter if possible, otherwise it should use the "data"
+parameter.
 
 If it's not possible to use the "reference" parameter, but that's
 still what a constructor wants to do, it is possible to use
@@ -236,7 +238,7 @@ failure.
 
 OSSL_DESERIALIZER_CTX_get_construct(),
 OSSL_DESERIALIZER_CTX_get_construct_data() and
-OSSL_DESERIALIZER_CTX_get_cleanup() return the current pointer to the
+OSSL_DESERIALIZER_CTX_get_cleanup() return the current pointers to the
 cosntructor, the constructor data and the cleanup functions, respectively.
 
 OSSL_DESERIALIZER_CTX_num_deserializers() returns the current
