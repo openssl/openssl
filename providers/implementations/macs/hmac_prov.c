@@ -51,7 +51,7 @@ struct hmac_data_st {
     PROV_DIGEST digest;
     unsigned char *key;
     size_t keylen;
-    /* Length of TLS data including the MAC but excluding padding */
+    /* Length of full TLS record including the MAC and any padding */
     size_t tls_data_size;
     unsigned char tls_header[13];
     int tls_header_set;
@@ -167,8 +167,8 @@ static int hmac_update(void *vmacctx, const unsigned char *data,
             macctx->tls_header_set = 1;
             return 1;
         }
-        /* datalen is macctx->tls_data_size plus the padding length */
-        if (datalen < macctx->tls_data_size)
+        /* macctx->tls_data_size is datalen plus the padding length */
+        if (macctx->tls_data_size < datalen)
             return 0;
 
         return ssl3_cbc_digest_record(ossl_prov_digest_md(&macctx->digest),
@@ -176,8 +176,8 @@ static int hmac_update(void *vmacctx, const unsigned char *data,
                                       &macctx->tls_mac_out_size,
                                       macctx->tls_header,
                                       data,
-                                      macctx->tls_data_size,
                                       datalen,
+                                      macctx->tls_data_size,
                                       macctx->key,
                                       macctx->keylen,
                                       0);

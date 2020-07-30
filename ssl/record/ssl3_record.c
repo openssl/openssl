@@ -1465,31 +1465,25 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     header[12] = (unsigned char)(rec->length & 0xff);
 
     if (!sending && !SSL_READ_ETM(ssl) &&
-        EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
-        ssl3_cbc_record_digest_supported(mac_ctx)) {
-        /*
-         * This is a CBC-encrypted record. We must avoid leaking any
-         * timing-side channel information about how many blocks of data we
-         * are hashing because that gives an attacker a timing-oracle.
-         */
-        /* Final param == not SSLv3 */
-        if (ssl3_cbc_digest_record(EVP_MD_CTX_md(mac_ctx),
-                                   md, &md_size,
-                                   header, rec->input,
-                                   rec->length + md_size, rec->orig_len,
-                                   ssl->s3.read_mac_secret,
-                                   ssl->s3.read_mac_secret_size, 0) <= 0) {
-            EVP_MD_CTX_free(hmac);
+            EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
+            ssl3_cbc_record_digest_supported(mac_ctx)) {
+        OSSL_PARAM tls_hmac_params[2], *p = tls_hmac_params;
+
+        *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE,
+                                           &rec->orig_len);
+        *p++ = OSSL_PARAM_construct_end();
+
+        if (!EVP_PKEY_CTX_set_params(EVP_MD_CTX_pkey_ctx(mac_ctx),
+                                     tls_hmac_params))
             return 0;
-        }
-    } else {
-        /* TODO(size_t): Convert these calls */
-        if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
-            || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
-            || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
-            EVP_MD_CTX_free(hmac);
-            return 0;
-        }
+    }
+
+    /* TODO(size_t): Convert these calls */
+    if (EVP_DigestSignUpdate(mac_ctx, header, sizeof(header)) <= 0
+        || EVP_DigestSignUpdate(mac_ctx, rec->input, rec->length) <= 0
+        || EVP_DigestSignFinal(mac_ctx, md, &md_size) <= 0) {
+        EVP_MD_CTX_free(hmac);
+        return 0;
     }
 
     EVP_MD_CTX_free(hmac);
