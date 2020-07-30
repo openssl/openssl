@@ -491,7 +491,8 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
 
     if (desc == NULL)
         desc = "certificate";
-    (void)load_key_cert_crl(uri, maybe_stdin, pass, desc, NULL, &cert, NULL);
+    (void)load_key_cert_crl(uri, maybe_stdin, pass, desc,
+                            NULL, NULL, &cert, NULL);
     if (cert == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -512,7 +513,8 @@ X509_CRL *load_crl(const char *uri, int format, const char *desc)
 
     if (desc == NULL)
         desc = "CRL";
-    (void)load_key_cert_crl(uri, 0, NULL, desc, NULL, NULL, &crl);
+    (void)load_key_cert_crl(uri, 0, NULL, desc,
+                            NULL, NULL, NULL, &crl);
     if (crl == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -591,7 +593,8 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
 #endif
         }
     } else {
-        (void)load_key_cert_crl(uri, may_stdin, pass, desc, &pkey, NULL, NULL);
+        (void)load_key_cert_crl(uri, may_stdin, pass, desc,
+                                &pkey, NULL, NULL, NULL);
     }
 
     if (pkey == NULL) {
@@ -629,8 +632,8 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
 #endif
         }
     } else {
-        (void)load_key_cert_crl(uri, maybe_stdin, pass, desc, &pkey,
-                                NULL, NULL);
+        (void)load_key_cert_crl(uri, maybe_stdin, pass, desc,
+                                NULL, &pkey, NULL, NULL);
     }
     if (pkey == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
@@ -769,7 +772,8 @@ int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
  */
 int load_key_cert_crl(const char *uri, int maybe_stdin,
                       const char *pass, const char *desc,
-                      EVP_PKEY **ppkey, X509 **pcert, X509_CRL **pcrl)
+                      EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                      X509 **pcert, X509_CRL **pcrl)
 {
     PW_CB_DATA uidata;
     OSSL_STORE_CTX *ctx = NULL;
@@ -780,6 +784,8 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
 
     if (ppkey != NULL)
         *ppkey = NULL;
+    if (ppubkey != NULL)
+        *ppubkey = NULL;
     if (pcert != NULL)
         *pcert = NULL;
     if (pcrl != NULL)
@@ -829,8 +835,18 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
 
         switch (type) {
         case OSSL_STORE_INFO_PKEY:
+            /*
+             * A PKEY can serve both as PKEY and PUBKEY.
+             * We use OSSL_STORE_INFO_get1_PKEY() to get the refcounts right.
+             */
             if (ppkey != NULL && *ppkey == NULL)
                 err = ((*ppkey = OSSL_STORE_INFO_get1_PKEY(info)) == NULL);
+            if (ppubkey != NULL && *ppubkey == NULL)
+                err = ((*ppubkey = OSSL_STORE_INFO_get1_PKEY(info)) == NULL);
+            break;
+        case OSSL_STORE_INFO_PUBKEY:
+            if (ppubkey != NULL && *ppubkey == NULL)
+                err = ((*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) == NULL);
             break;
         case OSSL_STORE_INFO_CERT:
             if (pcert != NULL && *pcert == NULL)

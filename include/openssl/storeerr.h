@@ -78,8 +78,9 @@ int ERR_load_OSSL_STORE_strings(void);
 # define OSSL_STORE_R_LOADING_STARTED                     117
 # define OSSL_STORE_R_NOT_A_CERTIFICATE                   100
 # define OSSL_STORE_R_NOT_A_CRL                           101
-# define OSSL_STORE_R_NOT_A_KEY                           102
 # define OSSL_STORE_R_NOT_A_NAME                          103
+# define OSSL_STORE_R_NOT_A_PRIVATE_KEY                   102
+# define OSSL_STORE_R_NOT_A_PUBLIC_KEY                    122
 # define OSSL_STORE_R_NOT_PARAMETERS                      104
 # define OSSL_STORE_R_PASSPHRASE_CALLBACK_ERROR           114
 # define OSSL_STORE_R_PATH_MUST_BE_ABSOLUTE               108

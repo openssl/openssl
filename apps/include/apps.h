@@ -119,7 +119,8 @@ int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
               const char *pass, const char *desc);
 int load_key_cert_crl(const char *uri, int maybe_stdin,
                       const char *pass, const char *desc,
-                      EVP_PKEY **ppkey, X509 **pcert, X509_CRL **pcrl);
+                      EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                      X509 **pcert, X509_CRL **pcrl);
 X509_STORE *setup_verify(const char *CAfile, int noCAfile,
                          const char *CApath, int noCApath,
                          const char *CAstore, int noCAstore);
