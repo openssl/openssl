@@ -8,17 +8,59 @@
  */
 
 /*
+ * This file has no dependencies on the rest of libssl because it is shared
+ * with the providers. It contains functions for low level MAC calculations.
+ * Responsibility for this lies with the HMAC implementation in the
+ * providers. However there are legacy code paths in libssl which also need to
+ * do this. In time those legacy code paths can be removed and this file can be
+ * moved out of libssl.
+ */
+
+
+/*
  * MD5 and SHA-1 low level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
 
 #include "internal/constant_time.h"
-#include "ssl_local.h"
 #include "internal/cryptlib.h"
 
+#include <openssl/evp.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
+
+char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
+int ssl3_cbc_digest_record(const EVP_MD *md,
+                           unsigned char *md_out,
+                           size_t *md_out_size,
+                           const unsigned char header[13],
+                           const unsigned char *data,
+                           size_t data_plus_mac_size,
+                           size_t data_plus_mac_plus_padding_size,
+                           const unsigned char *mac_secret,
+                           size_t mac_secret_length, char is_sslv3);
+
+# define l2n(l,c)        (*((c)++)=(unsigned char)(((l)>>24)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+                         *((c)++)=(unsigned char)(((l)    )&0xff))
+
+# define l2n6(l,c)       (*((c)++)=(unsigned char)(((l)>>40)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+                         *((c)++)=(unsigned char)(((l)    )&0xff))
+
+# define l2n8(l,c)       (*((c)++)=(unsigned char)(((l)>>56)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>48)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>40)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>32)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>24)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>>16)&0xff), \
+                         *((c)++)=(unsigned char)(((l)>> 8)&0xff), \
+                         *((c)++)=(unsigned char)(((l)    )&0xff))
 
 /*
  * MAX_HASH_BIT_COUNT_BYTES is the maximum number of bytes in the hash's
@@ -131,8 +173,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  * padding too. )
  * Returns 1 on success or 0 on error
  */
-int ssl3_cbc_digest_record(SSL *s,
-                           const EVP_MD_CTX *ctx,
+int ssl3_cbc_digest_record(const EVP_MD *md,
                            unsigned char *md_out,
                            size_t *md_out_size,
                            const unsigned char header[13],
@@ -168,7 +209,6 @@ int ssl3_cbc_digest_record(SSL *s,
     size_t md_length_size = 8;
     char length_is_big_endian = 1;
     int ret = 0;
-    const EVP_MD *md = NULL;
 
     /*
      * This is a, hopefully redundant, check that allows us to forget about
@@ -177,7 +217,7 @@ int ssl3_cbc_digest_record(SSL *s,
     if (!ossl_assert(data_plus_mac_plus_padding_size < 1024 * 1024))
         return 0;
 
-    switch (EVP_MD_CTX_type(ctx)) {
+    switch (EVP_MD_type(md)) {
     case NID_md5:
         if (MD5_Init((MD5_CTX *)md_state.c) <= 0)
             return 0;
@@ -463,10 +503,7 @@ int ssl3_cbc_digest_record(SSL *s,
     md_ctx = EVP_MD_CTX_new();
     if (md_ctx == NULL)
         goto err;
-    md = ssl_evp_md_fetch(s->ctx->libctx, EVP_MD_type(EVP_MD_CTX_md(ctx)),
-                          s->ctx->propq);
-    if (md == NULL)
-        goto err;
+
     if (EVP_DigestInit_ex(md_ctx, md, NULL /* engine */ ) <= 0)
         goto err;
     if (is_sslv3) {
@@ -494,6 +531,5 @@ int ssl3_cbc_digest_record(SSL *s,
     ret = 1;
  err:
     EVP_MD_CTX_free(md_ctx);
-    ssl_evp_md_free(md);
     return ret;
 }

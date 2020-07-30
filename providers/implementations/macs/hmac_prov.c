@@ -13,6 +13,8 @@
  */
 #include "internal/deprecated.h"
 
+#include <string.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
@@ -47,7 +49,26 @@ struct hmac_data_st {
     void *provctx;
     HMAC_CTX *ctx;               /* HMAC context */
     PROV_DIGEST digest;
+    unsigned char *key;
+    size_t keylen;
+    /* Length of TLS data including the MAC but excluding padding */
+    size_t tls_data_size;
+    unsigned char tls_header[13];
+    int tls_header_set;
+    unsigned char tls_mac_out[EVP_MAX_MD_SIZE];
+    size_t tls_mac_out_size;
 };
+
+/* Defined in ssl/s3_cbc.c */
+int ssl3_cbc_digest_record(const EVP_MD *md,
+                           unsigned char *md_out,
+                           size_t *md_out_size,
+                           const unsigned char header[13],
+                           const unsigned char *data,
+                           size_t data_plus_mac_size,
+                           size_t data_plus_mac_plus_padding_size,
+                           const unsigned char *mac_secret,
+                           size_t mac_secret_length, char is_sslv3);
 
 static size_t hmac_size(void *vmacctx);
 
@@ -73,6 +94,7 @@ static void hmac_free(void *vmacctx)
     if (macctx != NULL) {
         HMAC_CTX_free(macctx->ctx);
         ossl_prov_digest_reset(&macctx->digest);
+        OPENSSL_secure_clear_free(macctx->key, macctx->keylen);
         OPENSSL_free(macctx);
     }
 }
@@ -81,14 +103,29 @@ static void *hmac_dup(void *vsrc)
 {
     struct hmac_data_st *src = vsrc;
     struct hmac_data_st *dst = hmac_new(src->provctx);
+    HMAC_CTX *ctx;
 
     if (dst == NULL)
         return NULL;
+
+    ctx = dst->ctx;
+    *dst = *src;
+    dst->ctx = ctx;
+    dst->key = NULL;
 
     if (!HMAC_CTX_copy(dst->ctx, src->ctx)
         || !ossl_prov_digest_copy(&dst->digest, &src->digest)) {
         hmac_free(dst);
         return NULL;
+    }
+    if (src->key != NULL) {
+        /* There is no "secure" OPENSSL_memdup */
+        dst->key = OPENSSL_secure_malloc(src->keylen);
+        if (dst->key == NULL) {
+            hmac_free(dst);
+            return 0;
+        }
+        memcpy(dst->key, src->key, src->keylen);
     }
     return dst;
 }
@@ -107,10 +144,10 @@ static int hmac_init(void *vmacctx)
     int rv = 1;
 
     /* HMAC_Init_ex doesn't tolerate all zero params, so we must be careful */
-    if (digest != NULL)
+    if (macctx->tls_data_size == 0 && digest != NULL)
         rv = HMAC_Init_ex(macctx->ctx, NULL, 0, digest,
                           ossl_prov_digest_engine(&macctx->digest));
-    ossl_prov_digest_reset(&macctx->digest);
+
     return rv;
 }
 
@@ -118,6 +155,32 @@ static int hmac_update(void *vmacctx, const unsigned char *data,
                        size_t datalen)
 {
     struct hmac_data_st *macctx = vmacctx;
+
+    if (macctx->tls_data_size > 0) {
+        /* We're doing a TLS HMAC */
+        if (!macctx->tls_header_set) {
+            /* We expect the first update call to contain the TLS header */
+            if (datalen != sizeof(macctx->tls_header))
+                return 0;
+            memcpy(macctx->tls_header, data, datalen);
+            macctx->tls_header_set = 1;
+            return 1;
+        }
+        /* datalen is macctx->tls_data_size plus the padding length */
+        if (datalen < macctx->tls_data_size)
+            return 0;
+
+        return ssl3_cbc_digest_record(ossl_prov_digest_md(&macctx->digest),
+                                      macctx->tls_mac_out,
+                                      &macctx->tls_mac_out_size,
+                                      macctx->tls_header,
+                                      data,
+                                      macctx->tls_data_size,
+                                      datalen,
+                                      macctx->key,
+                                      macctx->keylen,
+                                      0);
+    }
 
     return HMAC_Update(macctx->ctx, data, datalen);
 }
@@ -128,6 +191,14 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     unsigned int hlen;
     struct hmac_data_st *macctx = vmacctx;
 
+    if (macctx->tls_data_size > 0) {
+        if (macctx->tls_mac_out_size == 0)
+            return 0;
+        if (outl != NULL)
+            *outl = macctx->tls_mac_out_size;
+        memcpy(out, macctx->tls_mac_out, macctx->tls_mac_out_size);
+        return 1;
+    }
     if (!HMAC_Final(macctx->ctx, out, &hlen))
         return 0;
     *outl = hlen;
@@ -158,6 +229,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_utf8_string(OSSL_MAC_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_int(OSSL_MAC_PARAM_FLAGS, NULL),
+    OSSL_PARAM_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE, NULL),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *provctx)
@@ -190,12 +262,25 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         if (p->data_type != OSSL_PARAM_OCTET_STRING)
             return 0;
 
+        if (macctx->keylen > 0)
+            OPENSSL_secure_clear_free(macctx->key, macctx->keylen);
+        /* Keep a copy of the key if we need it for TLS HMAC */
+        macctx->key = OPENSSL_secure_malloc(p->data_size);
+        if (macctx->key == NULL)
+            return 0;
+        memcpy(macctx->key, p->data, p->data_size);
+        macctx->keylen = p->data_size;
+
         if (!HMAC_Init_ex(macctx->ctx, p->data, p->data_size,
                           ossl_prov_digest_md(&macctx->digest),
                           NULL /* ENGINE */))
             return 0;
 
-        ossl_prov_digest_reset(&macctx->digest);
+    }
+    if ((p = OSSL_PARAM_locate_const(params,
+                                     OSSL_MAC_PARAM_TLS_DATA_SIZE)) != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &macctx->tls_data_size))
+            return 0;
     }
     return 1;
 }

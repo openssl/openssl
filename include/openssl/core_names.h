@@ -153,10 +153,11 @@ extern "C" {
  * If "engine" or "properties" are specified, they should always be paired
  * with "cipher" or "digest".
  */
-#define OSSL_MAC_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
-#define OSSL_MAC_PARAM_DIGEST       OSSL_ALG_PARAM_DIGEST     /* utf8 string */
-#define OSSL_MAC_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
-#define OSSL_MAC_PARAM_SIZE         "size"       /* size_t */
+#define OSSL_MAC_PARAM_CIPHER           OSSL_ALG_PARAM_CIPHER     /* utf8 string */
+#define OSSL_MAC_PARAM_DIGEST           OSSL_ALG_PARAM_DIGEST     /* utf8 string */
+#define OSSL_MAC_PARAM_PROPERTIES       OSSL_ALG_PARAM_PROPERTIES /* utf8 string */
+#define OSSL_MAC_PARAM_SIZE             "size"                    /* size_t */
+#define OSSL_MAC_PARAM_TLS_DATA_SIZE    "tls-data-size"           /* size_t */
 
 /* Known MAC names */
 #define OSSL_MAC_NAME_BLAKE2BMAC    "BLAKE2BMAC"
