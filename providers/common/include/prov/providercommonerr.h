@@ -128,6 +128,8 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_MISSING_TYPE                              134
 # define PROV_R_MISSING_XCGHASH                           135
 # define PROV_R_MODULE_INTEGRITY_FAILURE                  214
+# define PROV_R_NOT_A_PRIVATE_KEY                         221
+# define PROV_R_NOT_A_PUBLIC_KEY                          220
 # define PROV_R_NOT_INSTANTIATED                          193
 # define PROV_R_NOT_SUPPORTED                             136
 # define PROV_R_NOT_XOF_OR_INVALID_LENGTH                 113
