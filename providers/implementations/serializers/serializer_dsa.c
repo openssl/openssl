@@ -132,10 +132,15 @@ int ossl_prov_prepare_all_dsa_params(const void *dsa, int nid,
 
 int ossl_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder)
 {
-    ASN1_INTEGER *pub_key = BN_to_ASN1_INTEGER(DSA_get0_pub_key(dsa), NULL);
+    const BIGNUM *bn = NULL;
+    ASN1_INTEGER *pub_key = NULL;
     int ret;
 
-    if (pub_key == NULL) {
+    if ((bn = DSA_get0_pub_key(dsa)) == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
+        return 0;
+    }
+    if ((pub_key = BN_to_ASN1_INTEGER(bn, NULL)) == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BN_ERROR);
         return 0;
     }
@@ -148,10 +153,15 @@ int ossl_prov_dsa_pub_to_der(const void *dsa, unsigned char **pder)
 
 int ossl_prov_dsa_priv_to_der(const void *dsa, unsigned char **pder)
 {
-    ASN1_INTEGER *priv_key = BN_to_ASN1_INTEGER(DSA_get0_priv_key(dsa), NULL);
+    const BIGNUM *bn = NULL;
+    ASN1_INTEGER *priv_key = NULL;
     int ret;
 
-    if (priv_key == NULL) {
+    if ((bn = DSA_get0_priv_key(dsa)) == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PRIVATE_KEY);
+        return 0;
+    }
+    if ((priv_key = BN_to_ASN1_INTEGER(bn, NULL)) == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BN_ERROR);
         return 0;
     }
