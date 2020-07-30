@@ -565,7 +565,7 @@ static OSSL_STORE_INFO *try_decode_PUBKEY(const char *pem_name,
 
     if ((pkey = d2i_PUBKEY(NULL, &blob, len)) != NULL) {
         *matchcount = 1;
-        store_info = OSSL_STORE_INFO_new_PKEY(pkey);
+        store_info = OSSL_STORE_INFO_new_PUBKEY(pkey);
     }
 
     return store_info;
