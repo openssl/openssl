@@ -872,7 +872,7 @@ static ECX_KEY *EVP_PKEY_get0_ECX_KEY(const EVP_PKEY *pkey, int type)
         return NULL;
     }
     if (EVP_PKEY_base_id(pkey) != type) {
-        EVPerr(EVP_F_EVP_PKEY_GET0_ECX_KEY, EVP_R_EXPECTING_A_ECX_KEY);
+        ERR_raise(ERR_LIB_EVP, EVP_R_EXPECTING_A_ECX_KEY);
         return NULL;
     }
     return pkey->pkey.ecx;
