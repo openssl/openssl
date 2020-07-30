@@ -148,7 +148,7 @@ OSSL_DESERIALIZER_CTX_set_construct_data() and
 OSSL_DESERIALIZER_CTX_set_cleanup() respectively.
 
 OSSL_DESERIALIZER_export() is a fallback function for constructors that
-can't use the data they get directly for diverse reasons.  It takes the same
+cannot use the data they get directly for diverse reasons.  It takes the same
 deserialize instance I<deser_inst> that the constructor got and an object
 I<reference>, unpacks the object which it refers to, and exports it by creating
 an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>, along with
