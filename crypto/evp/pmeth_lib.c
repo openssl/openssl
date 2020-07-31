@@ -156,7 +156,6 @@ static int is_legacy_alg(int id, const char *keytype)
      */
     case EVP_PKEY_SM2:
     case EVP_PKEY_DHX:
-    case EVP_PKEY_SCRYPT:
     case EVP_PKEY_CMAC:
     case EVP_PKEY_HMAC:
     case EVP_PKEY_SIPHASH:
@@ -957,6 +956,78 @@ int EVP_PKEY_CTX_hkdf_mode(EVP_PKEY_CTX *ctx, int mode)
     return EVP_PKEY_CTX_set_params(ctx, int_params);
 }
 
+int EVP_PKEY_CTX_set1_pbe_pass(EVP_PKEY_CTX *ctx, const char *pass,
+                               int passlen)
+{
+    return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.exchprovctx == NULL,
+                                          OSSL_KDF_PARAM_PASSWORD,
+                                          EVP_PKEY_OP_DERIVE,
+                                          EVP_PKEY_CTRL_PASS,
+                                          (const unsigned char *)pass, passlen);
+}
+
+int EVP_PKEY_CTX_set1_scrypt_salt(EVP_PKEY_CTX *ctx,
+                                  const unsigned char *salt, int saltlen)
+{
+    return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.kex.exchprovctx == NULL,
+                                          OSSL_KDF_PARAM_SALT,
+                                          EVP_PKEY_OP_DERIVE,
+                                          EVP_PKEY_CTRL_SCRYPT_SALT,
+                                          salt, saltlen);
+}
+
+
+static int evp_pkey_ctx_set_uint64(EVP_PKEY_CTX *ctx, const char *param,
+                                   int op, int ctrl, uint64_t val)
+{
+    OSSL_PARAM uint64_params[2], *p = uint64_params;
+
+    if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        /* Uses the same return values as EVP_PKEY_CTX_ctrl */
+        return -2;
+    }
+
+    /* TODO(3.0): Remove this eventually when no more legacy */
+    if (ctx->op.kex.exchprovctx == NULL)
+        return EVP_PKEY_CTX_ctrl_uint64(ctx, -1, op, ctrl, val);
+
+    *p++ = OSSL_PARAM_construct_uint64(param, &val);
+    *p++ = OSSL_PARAM_construct_end();
+
+    return EVP_PKEY_CTX_set_params(ctx, uint64_params);
+}
+
+int EVP_PKEY_CTX_set_scrypt_N(EVP_PKEY_CTX *ctx, uint64_t n)
+{
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_N,
+                                   EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_SCRYPT_N,
+                                   n);
+}
+
+int EVP_PKEY_CTX_set_scrypt_r(EVP_PKEY_CTX *ctx, uint64_t r)
+{
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_R,
+                                   EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_SCRYPT_R,
+                                   r);
+}
+
+int EVP_PKEY_CTX_set_scrypt_p(EVP_PKEY_CTX *ctx, uint64_t p)
+{
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_P,
+                                   EVP_PKEY_OP_DERIVE, EVP_PKEY_CTRL_SCRYPT_P,
+                                   p);
+}
+
+int EVP_PKEY_CTX_set_scrypt_maxmem_bytes(EVP_PKEY_CTX *ctx,
+                                         uint64_t maxmem_bytes)
+{
+    return evp_pkey_ctx_set_uint64(ctx, OSSL_KDF_PARAM_SCRYPT_MAXMEM,
+                                   EVP_PKEY_OP_DERIVE,
+                                   EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES,
+                                   maxmem_bytes);
+}
+
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                                 int cmd, int p1, void *p2)
 {
@@ -1079,6 +1150,20 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                 return EVP_PKEY_CTX_add1_hkdf_info(ctx, p2, p1);
             case EVP_PKEY_CTRL_HKDF_MODE:
                 return EVP_PKEY_CTX_hkdf_mode(ctx, p1);
+
+            /* Scrypt */
+            case EVP_PKEY_CTRL_PASS:
+                return EVP_PKEY_CTX_set1_pbe_pass(ctx, p2, p1);
+            case EVP_PKEY_CTRL_SCRYPT_SALT:
+                return EVP_PKEY_CTX_set1_scrypt_salt(ctx, p2, p1);
+            case EVP_PKEY_CTRL_SCRYPT_N:
+                return EVP_PKEY_CTX_set_scrypt_N(ctx, p1);
+            case EVP_PKEY_CTRL_SCRYPT_R:
+                return EVP_PKEY_CTX_set_scrypt_r(ctx, p1);
+            case EVP_PKEY_CTRL_SCRYPT_P:
+                return EVP_PKEY_CTX_set_scrypt_p(ctx, p1);
+            case EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES:
+                return EVP_PKEY_CTX_set_scrypt_maxmem_bytes(ctx, p1);
             }
         }
         switch (cmd) {
@@ -1247,6 +1332,8 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
     else if (strcmp(name, "ecdh_kdf_md") == 0)
         name = OSSL_EXCHANGE_PARAM_KDF_DIGEST;
 # endif
+    else if (strcmp(name, "N") == 0)
+        name = OSSL_KDF_PARAM_SCRYPT_N;
 
     {
         /*

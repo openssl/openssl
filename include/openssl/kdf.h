@@ -136,29 +136,20 @@ int EVP_PKEY_CTX_add1_hkdf_info(EVP_PKEY_CTX *ctx,
 
 int EVP_PKEY_CTX_hkdf_mode(EVP_PKEY_CTX *ctx, int mode);
 
-# define EVP_PKEY_CTX_set1_pbe_pass(pctx, pass, passlen) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                            EVP_PKEY_CTRL_PASS, passlen, (void *)(pass))
+int EVP_PKEY_CTX_set1_pbe_pass(EVP_PKEY_CTX *ctx, const char *pass,
+                               int passlen);
 
-# define EVP_PKEY_CTX_set1_scrypt_salt(pctx, salt, saltlen) \
-            EVP_PKEY_CTX_ctrl(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                            EVP_PKEY_CTRL_SCRYPT_SALT, saltlen, (void *)(salt))
+int EVP_PKEY_CTX_set1_scrypt_salt(EVP_PKEY_CTX *ctx,
+                                  const unsigned char *salt, int saltlen);
 
-# define EVP_PKEY_CTX_set_scrypt_N(pctx, n) \
-            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                            EVP_PKEY_CTRL_SCRYPT_N, n)
+int EVP_PKEY_CTX_set_scrypt_N(EVP_PKEY_CTX *ctx, uint64_t n);
 
-# define EVP_PKEY_CTX_set_scrypt_r(pctx, r) \
-            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                            EVP_PKEY_CTRL_SCRYPT_R, r)
+int EVP_PKEY_CTX_set_scrypt_r(EVP_PKEY_CTX *ctx, uint64_t r);
 
-# define EVP_PKEY_CTX_set_scrypt_p(pctx, p) \
-            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                            EVP_PKEY_CTRL_SCRYPT_P, p)
+int EVP_PKEY_CTX_set_scrypt_p(EVP_PKEY_CTX *ctx, uint64_t p);
 
-# define EVP_PKEY_CTX_set_scrypt_maxmem_bytes(pctx, maxmem_bytes) \
-            EVP_PKEY_CTX_ctrl_uint64(pctx, -1, EVP_PKEY_OP_DERIVE, \
-                            EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES, maxmem_bytes)
+int EVP_PKEY_CTX_set_scrypt_maxmem_bytes(EVP_PKEY_CTX *ctx,
+                                         uint64_t maxmem_bytes);
 
 
 # ifdef __cplusplus

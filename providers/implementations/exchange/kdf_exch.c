@@ -18,6 +18,7 @@
 
 static OSSL_FUNC_keyexch_newctx_fn kdf_tls1_prf_newctx;
 static OSSL_FUNC_keyexch_newctx_fn kdf_hkdf_newctx;
+static OSSL_FUNC_keyexch_newctx_fn kdf_scrypt_newctx;
 static OSSL_FUNC_keyexch_init_fn kdf_init;
 static OSSL_FUNC_keyexch_derive_fn kdf_derive;
 static OSSL_FUNC_keyexch_freectx_fn kdf_freectx;
@@ -25,6 +26,7 @@ static OSSL_FUNC_keyexch_dupctx_fn kdf_dupctx;
 static OSSL_FUNC_keyexch_set_ctx_params_fn kdf_set_ctx_params;
 static OSSL_FUNC_keyexch_settable_ctx_params_fn kdf_tls1_prf_settable_ctx_params;
 static OSSL_FUNC_keyexch_settable_ctx_params_fn kdf_hkdf_settable_ctx_params;
+static OSSL_FUNC_keyexch_settable_ctx_params_fn kdf_scrypt_settable_ctx_params;
 
 typedef struct {
     void *provctx;
@@ -60,7 +62,7 @@ typedef struct {
 
 KDF_NEWCTX(tls1_prf, "TLS1-PRF")
 KDF_NEWCTX(hkdf, "HKDF")
-
+KDF_NEWCTX(scrypt, "SCRYPT")
 
 static int kdf_init(void *vpkdfctx, void *vkdf)
 {
@@ -144,6 +146,7 @@ static int kdf_set_ctx_params(void *vpkdfctx, const OSSL_PARAM params[])
 
 KDF_SETTABLE_CTX_PARAMS(tls1_prf, "TLS1-PRF")
 KDF_SETTABLE_CTX_PARAMS(hkdf, "HKDF")
+KDF_SETTABLE_CTX_PARAMS(scrypt, "SCRYPT")
 
 
 #define KDF_KEYEXCH_FUNCTIONS(funcname) \
@@ -161,3 +164,4 @@ KDF_SETTABLE_CTX_PARAMS(hkdf, "HKDF")
 
 KDF_KEYEXCH_FUNCTIONS(tls1_prf)
 KDF_KEYEXCH_FUNCTIONS(hkdf)
+KDF_KEYEXCH_FUNCTIONS(scrypt)

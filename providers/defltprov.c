@@ -339,6 +339,7 @@ static const OSSL_ALGORITHM deflt_keyexch[] = {
 #endif
     { "TLS1-PRF", "provider=default", kdf_tls1_prf_keyexch_functions },
     { "HKDF", "provider=default", kdf_hkdf_keyexch_functions },
+    { "SCRYPT:id-scrypt", "provider=default", kdf_scrypt_keyexch_functions },
     { NULL, NULL, NULL }
 };
 
@@ -386,6 +387,7 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #endif
     { "TLS1-PRF", "provider=default", kdf_keymgmt_functions },
     { "HKDF", "provider=default", kdf_keymgmt_functions },
+    { "SCRYPT:id-scrypt", "provider=default", kdf_keymgmt_functions },
     { NULL, NULL, NULL }
 };
 
