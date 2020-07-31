@@ -24,7 +24,7 @@ int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
     EVP_MD_CTX *mctx = NULL;
     int rv = 0;
     unsigned int i;
-    size_t mdlen;
+    int mdlen;
     unsigned char ctr[4];
     if (sinfolen > ECDH_KDF_MAX || outlen > ECDH_KDF_MAX
         || Zlen > ECDH_KDF_MAX)
