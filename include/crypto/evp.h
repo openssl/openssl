@@ -771,3 +771,5 @@ EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
                              const char *propq);
 #endif /* !defined(FIPS_MODULE) */
 void evp_method_store_flush(OPENSSL_CTX *libctx);
+int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
+                                   int loadconfig);
