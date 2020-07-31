@@ -62,15 +62,10 @@ static pmeth_fn standard_methods[] = {
 # ifndef OPENSSL_NO_DH
     dhx_pkey_method,
 # endif
-# ifndef OPENSSL_NO_SCRYPT
-    scrypt_pkey_method,
-# endif
-    tls1_prf_pkey_method,
 # ifndef OPENSSL_NO_EC
     ecx25519_pkey_method,
     ecx448_pkey_method,
 # endif
-    hkdf_pkey_method,
 # ifndef OPENSSL_NO_POLY1305
     poly1305_pkey_method,
 # endif
@@ -239,19 +234,25 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * If an ENGINE handled this method look it up. Otherwise use internal
      * tables.
      */
-    if (e)
+    if (e) {
         pmeth = ENGINE_get_pkey_meth(e, id);
-    else
+        /*
+         * We are supposed to use an engine, so no point in looking for a
+         * provided implementation. If pmeth is NULL here we just fail.
+         */
+        if (pmeth == NULL) {
+            ENGINE_finish(e);
+            EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
+            return NULL;
+        }
+    } else
 # endif
         pmeth = EVP_PKEY_meth_find(id);
+        /*
+         * if pmeth is NULL here we can keep trying to see if we have a provided
+         * implementation below.
+         */
 
-    if (pmeth == NULL) {
-# ifndef OPENSSL_NO_ENGINE
-        ENGINE_finish(e);
-# endif
-        EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
-        return NULL;
-    }
     /* END legacy */
 #endif /* FIPS_MODULE */
  common:

@@ -144,9 +144,6 @@ const EVP_PKEY_METHOD *ed448_pkey_method(void);
 const EVP_PKEY_METHOD *hmac_pkey_method(void);
 const EVP_PKEY_METHOD *rsa_pkey_method(void);
 const EVP_PKEY_METHOD *rsa_pss_pkey_method(void);
-const EVP_PKEY_METHOD *scrypt_pkey_method(void);
-const EVP_PKEY_METHOD *tls1_prf_pkey_method(void);
-const EVP_PKEY_METHOD *hkdf_pkey_method(void);
 const EVP_PKEY_METHOD *poly1305_pkey_method(void);
 const EVP_PKEY_METHOD *siphash_pkey_method(void);
 
