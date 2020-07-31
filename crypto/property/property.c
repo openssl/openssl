@@ -96,8 +96,13 @@ static const OPENSSL_CTX_METHOD ossl_ctx_global_properties_method = {
     ossl_ctx_global_properties_free,
 };
 
-OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OPENSSL_CTX *libctx)
+OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OPENSSL_CTX *libctx,
+                                                int loadconfig)
 {
+#ifndef FIPS_MODULE
+    if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
+        return NULL;
+#endif
     return openssl_ctx_get_data(libctx, OPENSSL_CTX_GLOBAL_PROPERTIES,
                                 &ossl_ctx_global_properties_method);
 }
@@ -352,7 +357,7 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
 
     if (prop_query != NULL)
         p2 = pq = ossl_parse_query(store->ctx, prop_query);
-    plp = ossl_ctx_global_properties(store->ctx);
+    plp = ossl_ctx_global_properties(store->ctx, 1);
     if (plp != NULL && *plp != NULL) {
         if (pq == NULL) {
             pq = *plp;
