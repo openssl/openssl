@@ -5234,3 +5234,9 @@ EVP_PKEY_CTX_set1_hkdf_salt             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set1_hkdf_key              ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_add1_hkdf_info             ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_hkdf_mode                  ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set1_pbe_pass              ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set1_scrypt_salt           ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_scrypt_N               ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_scrypt_r               ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_scrypt_p               ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_scrypt_maxmem_bytes    ?	3_0_0	EXIST::FUNCTION:

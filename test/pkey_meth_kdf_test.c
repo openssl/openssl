@@ -138,7 +138,7 @@ static int test_kdf_scrypt(void)
         TEST_error("EVP_PKEY_CTX_set1_pbe_pass");
         goto err;
     }
-    if (EVP_PKEY_CTX_set1_scrypt_salt(pctx, "NaCl", 4) <= 0) {
+    if (EVP_PKEY_CTX_set1_scrypt_salt(pctx, (unsigned char *)"NaCl", 4) <= 0) {
         TEST_error("EVP_PKEY_CTX_set1_scrypt_salt");
         goto err;
     }

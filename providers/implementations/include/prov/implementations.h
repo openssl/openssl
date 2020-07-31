@@ -284,6 +284,7 @@ extern const OSSL_DISPATCH x448_keyexch_functions[];
 extern const OSSL_DISPATCH ecdh_keyexch_functions[];
 extern const OSSL_DISPATCH kdf_tls1_prf_keyexch_functions[];
 extern const OSSL_DISPATCH kdf_hkdf_keyexch_functions[];
+extern const OSSL_DISPATCH kdf_scrypt_keyexch_functions[];
 
 /* Signature */
 extern const OSSL_DISPATCH dsa_signature_functions[];
