@@ -993,6 +993,7 @@ static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
                                        tls_version, tls_version,
                                        &sctx, &cctx, cert, privkey))
             || !TEST_true(SSL_CTX_set_cipher_list(cctx, cipher))
+            || !TEST_true(SSL_CTX_set_cipher_list(sctx, cipher))
             || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
                                           &clientssl, sfd, cfd)))
         goto end;
@@ -1107,6 +1108,7 @@ static int test_ktls_sendfile(int tls_version, const char *cipher)
                                        tls_version, tls_version,
                                        &sctx, &cctx, cert, privkey))
         || !TEST_true(SSL_CTX_set_cipher_list(cctx, cipher))
+        || !TEST_true(SSL_CTX_set_cipher_list(sctx, cipher))
         || !TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
                                           &clientssl, sfd, cfd)))
         goto end;
@@ -1220,7 +1222,7 @@ static int test_ktls(int test)
 #endif
 #ifdef OPENSSL_KTLS_AES_CCM_128
     testresult &= execute_test_ktls(cis_ktls_tx, cis_ktls_rx, sis_ktls_tx,
-                                    sis_ktls_rx, tlsver, "AES128-CCM-SHA256",
+                                    sis_ktls_rx, tlsver, "AES128-CCM",
                                     TLS_CIPHER_AES_CCM_128_REC_SEQ_SIZE);
 #endif
 #ifdef OPENSSL_KTLS_AES_GCM_256
@@ -1233,7 +1235,7 @@ static int test_ktls(int test)
 
 static int test_ktls_sendfile_anytls(int tst)
 {
-    char *cipher[] = {"AES128-GCM-SHA256","AES128-CCM-SHA256","AES256-GCM-SHA384"};
+    char *cipher[] = {"AES128-GCM-SHA256","AES128-CCM","AES256-GCM-SHA384"};
     int tlsver;
 
     if (tst > 2) {
