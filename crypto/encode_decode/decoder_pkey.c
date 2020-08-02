@@ -36,6 +36,13 @@ int OSSL_DECODER_CTX_set_pem_password_cb(OSSL_DECODER_CTX *ctx,
     return ossl_pw_set_pem_password_cb(&ctx->pwdata, cb, cbarg);
 }
 
+int OSSL_DECODER_CTX_set_passphrase_cb(OSSL_DECODER_CTX *ctx,
+                                       OSSL_PASSPHRASE_CALLBACK *cb,
+                                       void *cbarg)
+{
+    return ossl_pw_set_ossl_passphrase_cb(&ctx->pwdata, cb, cbarg);
+}
+
 /*
  * Support for OSSL_DECODER_CTX_new_by_EVP_PKEY:
  * The construct data, and collecting keymgmt information for it
