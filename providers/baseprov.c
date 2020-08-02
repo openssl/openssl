@@ -86,6 +86,15 @@ static const OSSL_ALGORITHM base_decoder[] = {
 };
 #undef DECODER
 
+static const OSSL_ALGORITHM base_store[] = {
+#define STORE(name, fips, func_table)                           \
+    { name, "provider=default,fips=" fips, (func_table) },
+
+#include "stores.inc"
+    { NULL, NULL, NULL }
+#undef STORE
+};
+
 static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
@@ -95,6 +104,8 @@ static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
         return base_encoder;
     case OSSL_OP_DECODER:
         return base_decoder;
+    case OSSL_OP_STORE:
+        return base_store;
     }
     return NULL;
 }

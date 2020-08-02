@@ -385,3 +385,5 @@ extern const OSSL_DISPATCH der_to_rsapss_decoder_functions[];
 extern const OSSL_DISPATCH msblob_to_rsa_decoder_functions[];
 extern const OSSL_DISPATCH pvk_to_rsa_decoder_functions[];
 extern const OSSL_DISPATCH pem_to_der_decoder_functions[];
+
+extern const OSSL_DISPATCH file_store_functions[];

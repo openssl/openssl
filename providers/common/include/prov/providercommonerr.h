@@ -139,12 +139,14 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_OUTPUT_BUFFER_TOO_SMALL                   106
 # define PROV_R_PARENT_LOCKING_NOT_ENABLED                182
 # define PROV_R_PARENT_STRENGTH_TOO_WEAK                  194
+# define PROV_R_PATH_MUST_BE_ABSOLUTE                     219
 # define PROV_R_PERSONALISATION_STRING_TOO_LONG           195
 # define PROV_R_PSS_SALTLEN_TOO_SMALL                     172
 # define PROV_R_READ_KEY                                  159
 # define PROV_R_REQUEST_TOO_LARGE_FOR_DRBG                196
 # define PROV_R_REQUIRE_CTR_MODE_CIPHER                   206
 # define PROV_R_RESEED_ERROR                              197
+# define PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES     222
 # define PROV_R_SELF_TEST_KAT_FAILURE                     215
 # define PROV_R_SELF_TEST_POST_FAILURE                    216
 # define PROV_R_TAG_NOTSET                                119
@@ -165,6 +167,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_UNSUPPORTED_KEY_SIZE                      153
 # define PROV_R_UNSUPPORTED_MAC_TYPE                      137
 # define PROV_R_UNSUPPORTED_NUMBER_OF_ROUNDS              152
+# define PROV_R_URI_AUTHORITY_UNSUPPORTED                 223
 # define PROV_R_VALUE_ERROR                               138
 # define PROV_R_WRONG_FINAL_BLOCK_LENGTH                  107
 # define PROV_R_WRONG_OUTPUT_BUFFER_SIZE                  139

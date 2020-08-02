@@ -15,10 +15,8 @@
 #include "internal/namemap.h"
 #include "internal/property.h"
 #include "internal/provider.h"
-#include "crypto/encoder.h"
+#include "crypto/decoder.h"
 #include "encoder_local.h"
-
-static void OSSL_DECODER_INSTANCE_free(OSSL_DECODER_INSTANCE *instance);
 
 /*
  * Decoder can have multiple names, separated with colons in a name string
@@ -159,8 +157,8 @@ static int put_decoder_in_store(OPENSSL_CTX *libctx, void *store,
 }
 
 /* Create and populate a decoder method */
-static void *decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
-                                   OSSL_PROVIDER *prov)
+void *ossl_decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
+                                 OSSL_PROVIDER *prov)
 {
     OSSL_DECODER *decoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -236,7 +234,7 @@ static void *decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
 /*
  * The core fetching functionality passes the names of the implementation.
  * This function is responsible to getting an identity number for them,
- * then call decoder_from_dispatch() with that identity number.
+ * then call ossl_decoder_from_dispatch() with that identity number.
  */
 static void *construct_decoder(const OSSL_ALGORITHM *algodef,
                                OSSL_PROVIDER *prov, void *unused)
@@ -254,7 +252,7 @@ static void *construct_decoder(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = decoder_from_dispatch(id, algodef, prov);
+        method = ossl_decoder_from_dispatch(id, algodef, prov);
 
     return method;
 }
@@ -407,8 +405,7 @@ static void decoder_do_one(OSSL_PROVIDER *provider,
     void *method = NULL;
 
     if (id != 0)
-        method =
-            decoder_from_dispatch(id, algodef, provider);
+        method = ossl_decoder_from_dispatch(id, algodef, provider);
 
     if (method != NULL) {
         data->user_fn(method, data->user_arg);
