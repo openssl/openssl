@@ -517,7 +517,7 @@ void OSSL_ENCODER_CTX_free(OSSL_ENCODER_CTX *ctx)
         if (ctx->encoder != NULL && ctx->encoder->freectx != NULL)
             ctx->encoder->freectx(ctx->serctx);
         OSSL_ENCODER_free(ctx->encoder);
-        UI_destroy_method(ctx->allocated_ui_method);
+        ossl_pw_clear_passphrase_data(&ctx->pwdata);
         OPENSSL_free(ctx);
     }
 }

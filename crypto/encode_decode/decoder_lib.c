@@ -11,6 +11,7 @@
 #include <openssl/bio.h>
 #include <openssl/params.h>
 #include <openssl/provider.h>
+#include "internal/passphrase.h"
 #include "encoder_local.h"
 #include "e_os.h"
 
@@ -35,13 +36,14 @@ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in)
     data.ctx = ctx;
     data.bio = in;
 
+    /* Enable passphrase caching */
+    (void)ossl_pw_enable_passphrase_caching(&ctx->pwdata);
+
     ok = decoder_process(NULL, &data);
 
     /* Clear any internally cached passphrase */
-    if (!ctx->flag_user_passphrase) {
-        OSSL_DECODER_CTX_set_passphrase(ctx, NULL, 0);
-        ctx->flag_user_passphrase = 0;
-    }
+    (void)ossl_pw_clear_passphrase_cache(&ctx->pwdata);
+
     return ok;
 }
 
@@ -472,7 +474,8 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         new_data.current_deser_inst_index = i;
         ok = new_deser->decode(new_deser_inst->deserctx, (OSSL_CORE_BIO *)bio,
                                decoder_process, &new_data,
-                               ctx->passphrase_cb, new_data.ctx);
+                               ossl_pw_passphrase_callback_dec,
+                               &new_data.ctx->pwdata);
         if (ok)
             break;
     }

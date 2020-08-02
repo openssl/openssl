@@ -492,7 +492,6 @@ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new(void)
         return NULL;
     }
 
-    ctx->passphrase_cb = ossl_decoder_passphrase_in_cb;
     return ctx;
 }
 
@@ -545,8 +544,7 @@ void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx)
             ctx->cleanup(ctx->construct_data);
         sk_OSSL_DECODER_INSTANCE_pop_free(ctx->decoder_insts,
                                           OSSL_DECODER_INSTANCE_free);
-        OSSL_DECODER_CTX_set_passphrase_ui(ctx, NULL, NULL);
-        OSSL_DECODER_CTX_set_passphrase(ctx, NULL, 0);
+        ossl_pw_clear_passphrase_data(&ctx->pwdata);
         OPENSSL_free(ctx);
     }
 }

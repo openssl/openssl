@@ -13,6 +13,7 @@
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
 #include "internal/cryptlib.h"
+#include "internal/passphrase.h"
 #include "internal/refcount.h"
 
 struct ossl_serdes_base_st {
@@ -64,13 +65,7 @@ struct ossl_encoder_ctx_st {
     int (*do_output)(OSSL_ENCODER_CTX *ctx, BIO *out);
 
     /* For any function that needs a passphrase reader */
-    const UI_METHOD *ui_method;
-    void *ui_data;
-    /*
-     * if caller used OSSL_ENCODER_CTX_set_passphrase_cb(), we need
-     * intermediary storage.
-     */
-    UI_METHOD *allocated_ui_method;
+    struct ossl_passphrase_data_st pwdata;
 };
 
 struct ossl_decoder_instance_st {
@@ -103,38 +98,5 @@ struct ossl_decoder_ctx_st {
     void *construct_data;
 
     /* For any function that needs a passphrase reader */
-    OSSL_PASSPHRASE_CALLBACK *passphrase_cb;
-    const UI_METHOD *ui_method;
-    void *ui_data;
-    /*
-     * if caller used OSSL_ENCODER_CTX_set_pem_password_cb(), we need
-     * intermediary storage.
-     */
-    UI_METHOD *allocated_ui_method;
-    /*
-     * Because the same input may pass through more than one decoder,
-     * we cache any passphrase passed to us.  The desrializing processor
-     * must clear this at the end of a run.
-     */
-    unsigned char *cached_passphrase;
-    size_t cached_passphrase_len;
-
-    /*
-     * Flag section.  Keep these together
-     */
-
-    /*
-     * The passphrase was passed to us by the user.  In that case, it
-     * should only be freed when freeing this context.
-     */
-    unsigned int flag_user_passphrase:1;
+    struct ossl_passphrase_data_st pwdata;
 };
-
-/* Passphrase callbacks, found in serdes_pass.c */
-
-/*
- * Encoders typically want to get an outgoing passphrase, while
- * decoders typically want to get en incoming passphrase.
- */
-OSSL_PASSPHRASE_CALLBACK ossl_encoder_passphrase_out_cb;
-OSSL_PASSPHRASE_CALLBACK ossl_decoder_passphrase_in_cb;
