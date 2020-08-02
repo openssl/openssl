@@ -58,6 +58,9 @@ int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
 int OSSL_DECODER_CTX_set_pem_password_cb(OSSL_DECODER_CTX *ctx,
                                          pem_password_cb *cb,
                                          void *cbarg);
+int OSSL_DECODER_CTX_set_passphrase_cb(OSSL_DECODER_CTX *ctx,
+                                       OSSL_PASSPHRASE_CALLBACK *cb,
+                                       void *cbarg);
 int OSSL_DECODER_CTX_set_passphrase_ui(OSSL_DECODER_CTX *ctx,
                                        const UI_METHOD *ui_method,
                                        void *ui_data);
