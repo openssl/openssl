@@ -130,6 +130,11 @@ static int der2key_deserialize(void *vctx, OSSL_CORE_BIO *cin,
         pkey = d2i_PUBKEY(NULL, &derp, der_len);
     }
 
+    if (pkey == NULL) {
+        derp = der;
+        pkey = d2i_KeyParams(ctx->desc->type, NULL, &derp, der_len);
+    }
+
     if (pkey != NULL) {
         /*
          * Tear out the low-level key pointer from the pkey,
