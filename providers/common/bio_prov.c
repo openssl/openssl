@@ -18,6 +18,7 @@ static OSSL_FUNC_BIO_read_ex_fn *c_bio_read_ex = NULL;
 static OSSL_FUNC_BIO_write_ex_fn *c_bio_write_ex = NULL;
 static OSSL_FUNC_BIO_gets_fn *c_bio_gets = NULL;
 static OSSL_FUNC_BIO_puts_fn *c_bio_puts = NULL;
+static OSSL_FUNC_BIO_ctrl_fn *c_bio_ctrl = NULL;
 static OSSL_FUNC_BIO_free_fn *c_bio_free = NULL;
 static OSSL_FUNC_BIO_vprintf_fn *c_bio_vprintf = NULL;
 
@@ -48,6 +49,10 @@ int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns)
         case OSSL_FUNC_BIO_PUTS:
             if (c_bio_puts == NULL)
                 c_bio_puts = OSSL_FUNC_BIO_puts(fns);
+            break;
+        case OSSL_FUNC_BIO_CTRL:
+            if (c_bio_ctrl == NULL)
+                c_bio_ctrl = OSSL_FUNC_BIO_ctrl(fns);
             break;
         case OSSL_FUNC_BIO_FREE:
             if (c_bio_free == NULL)
@@ -107,6 +112,13 @@ int ossl_prov_bio_puts(OSSL_CORE_BIO *bio, const char *str)
     return c_bio_puts(bio, str);
 }
 
+int ossl_prov_bio_ctrl(OSSL_CORE_BIO *bio, int cmd, long num, void *ptr)
+{
+    if (c_bio_ctrl == NULL)
+        return -1;
+    return c_bio_ctrl(bio, cmd, num, ptr);
+}
+
 int ossl_prov_bio_free(OSSL_CORE_BIO *bio)
 {
     if (c_bio_free == NULL)
@@ -151,9 +163,7 @@ static int bio_core_write_ex(BIO *bio, const char *data, size_t data_len,
 
 static long bio_core_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
-    /* We don't support this */
-    assert(0);
-    return 0;
+    return ossl_prov_bio_ctrl(BIO_get_data(bio), cmd, num, ptr);
 }
 
 static int bio_core_gets(BIO *bio, char *buf, int size)

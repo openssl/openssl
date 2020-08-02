@@ -1094,6 +1094,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_WRITE_EX, (void (*)(void))BIO_write_ex },
     { OSSL_FUNC_BIO_GETS, (void (*)(void))BIO_gets },
     { OSSL_FUNC_BIO_PUTS, (void (*)(void))BIO_puts },
+    { OSSL_FUNC_BIO_CTRL, (void (*)(void))BIO_ctrl },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))BIO_free },
     { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))BIO_vprintf },
     { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
