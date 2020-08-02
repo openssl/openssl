@@ -16,6 +16,7 @@
 #include "internal/pem.h"        /* For internal PVK and "blob" functions */
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
+#include "internal/passphrase.h"
 #include "prov/bio.h"               /* ossl_prov_bio_printf() */
 #include "prov/providercommonerr.h" /* PROV_R_READ_KEY */
 #include "encoder_local.h"
@@ -58,44 +59,22 @@ EVP_PKEY *ossl_prov_read_msblob(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
     return pkey;
 }
 
-struct pwdata_st {
-    OSSL_PASSPHRASE_CALLBACK *pw_cb;
-    void *pw_cbarg;
-};
-
-pem_password_cb pw_pem_password_to_ossl_passhrase;
-int pw_pem_password_to_ossl_passhrase(char *buf, int size, int rwflag,
-                                      void *userdata)
-{
-    struct pwdata_st *data = userdata;
-    size_t pw_len = 0;
-    static char prompt_info[] = "pass phrase";
-    OSSL_PARAM params[] = {
-        OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_INFO, prompt_info,
-                               sizeof(prompt_info) - 1),
-        OSSL_PARAM_END
-    };
-    int ok = data->pw_cb(buf, (size_t)size, &pw_len, params, data->pw_cbarg);
-
-    if (ok)
-        return (int)pw_len;
-    else
-        return -1;
-}
-
 # ifndef OPENSSL_NO_RC4
 EVP_PKEY *ossl_prov_read_pvk(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                              OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
-    BIO *in = bio_new_from_core_bio(provctx, cin);
+    BIO *in = NULL;
     EVP_PKEY *pkey = NULL;
-    struct pwdata_st pwdata;
+    struct ossl_passphrase_data_st pwdata;
 
-    pwdata.pw_cb = pw_cb;
-    pwdata.pw_cbarg = pw_cbarg;
-    pkey = b2i_PVK_bio(in, pw_pem_password_to_ossl_passhrase, &pwdata);
+    memset(&pwdata, 0, sizeof(pwdata));
+    if (!ossl_pw_set_ossl_passphrase_cb(&pwdata, pw_cb, pw_cbarg))
+        return NULL;
 
+    in = bio_new_from_core_bio(provctx, cin);
+    pkey = b2i_PVK_bio(in, ossl_pw_pem_password, &pwdata);
     BIO_free(in);
+
     return pkey;
 }
 # endif

@@ -48,45 +48,17 @@ int OSSL_ENCODER_CTX_set_passphrase(OSSL_ENCODER_CTX *ctx,
     return OSSL_ENCODER_CTX_set_params(ctx, params);
 }
 
-static void encoder_ctx_reset_passphrase_ui(OSSL_ENCODER_CTX *ctx)
-{
-    UI_destroy_method(ctx->allocated_ui_method);
-    ctx->allocated_ui_method = NULL;
-    ctx->ui_method = NULL;
-    ctx->ui_data = NULL;
-}
-
 int OSSL_ENCODER_CTX_set_passphrase_ui(OSSL_ENCODER_CTX *ctx,
                                        const UI_METHOD *ui_method,
                                        void *ui_data)
 {
-    if (!ossl_assert(ctx != NULL)) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    encoder_ctx_reset_passphrase_ui(ctx);
-    ctx->ui_method = ui_method;
-    ctx->ui_data = ui_data;
-    return 1;
+    return ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data);
 }
 
 int OSSL_ENCODER_CTX_set_passphrase_cb(OSSL_ENCODER_CTX *ctx,
                                        pem_password_cb *cb, void *cbarg)
 {
-    if (!ossl_assert(ctx != NULL)) {
-        ERR_raise(ERR_LIB_OSSL_ENCODER, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
-    encoder_ctx_reset_passphrase_ui(ctx);
-    if (cb == NULL)
-        return 1;
-    ctx->ui_method =
-        ctx->allocated_ui_method = UI_UTIL_wrap_read_pem_callback(cb, 1);
-    ctx->ui_data = cbarg;
-
-    return ctx->ui_method != NULL;
+    return ossl_pw_set_pem_password_cb(&ctx->pwdata, cb, cbarg);
 }
 
 /*
@@ -125,7 +97,8 @@ static int encoder_write_cb(const OSSL_PARAM params[], void *arg)
     BIO *out = write_data->out;
 
     return ctx->encoder->encode_data(ctx->serctx, params, (OSSL_CORE_BIO *)out,
-                                     ossl_encoder_passphrase_out_cb, ctx);
+                                     ossl_pw_passphrase_callback_enc,
+                                     &ctx->pwdata);
 }
 
 /*
@@ -164,7 +137,8 @@ static int encoder_EVP_PKEY_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out)
 
     return ctx->encoder->encode_object(ctx->serctx, keydata,
                                        (OSSL_CORE_BIO *)out,
-                                       ossl_encoder_passphrase_out_cb, ctx);
+                                       ossl_pw_passphrase_callback_enc,
+                                       &ctx->pwdata);
 }
 
 /*
