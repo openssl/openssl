@@ -77,6 +77,11 @@ PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
         return NULL;
     }
 
+    /* Force a key downgrade if that's possible */
+    /* TODO(3.0) Is there a better way for provider-native keys? */
+    if (EVP_PKEY_get0(pkey) == NULL)
+        return NULL;
+
     if (pkey->ameth) {
         if (pkey->ameth->priv_encode) {
             if (!pkey->ameth->priv_encode(p8, pkey)) {
