@@ -192,12 +192,12 @@ EVP_PKEY *ossl_b2i(const unsigned char **in, unsigned int length, int *ispub)
     unsigned int bitlen, magic;
     int isdss;
     if (ossl_do_blob_header(&p, length, &magic, &bitlen, &isdss, ispub) <= 0) {
-        PEMerr(PEM_F_DO_B2I, PEM_R_KEYBLOB_HEADER_PARSE_ERROR);
+        PEMerr(0, PEM_R_KEYBLOB_HEADER_PARSE_ERROR);
         return NULL;
     }
     length -= 16;
     if (length < blob_length(bitlen, isdss, *ispub)) {
-        PEMerr(PEM_F_DO_B2I, PEM_R_KEYBLOB_TOO_SHORT);
+        PEMerr(0, PEM_R_KEYBLOB_TOO_SHORT);
         return NULL;
     }
     if (isdss)
@@ -214,7 +214,7 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
     int isdss;
     EVP_PKEY *ret = NULL;
     if (BIO_read(in, hdr_buf, 16) != 16) {
-        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_KEYBLOB_TOO_SHORT);
+        PEMerr(0, PEM_R_KEYBLOB_TOO_SHORT);
         return NULL;
     }
     p = hdr_buf;
@@ -223,17 +223,17 @@ EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
 
     length = blob_length(bitlen, isdss, *ispub);
     if (length > BLOB_MAX_LENGTH) {
-        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_HEADER_TOO_LONG);
+        PEMerr(0, PEM_R_HEADER_TOO_LONG);
         return NULL;
     }
     buf = OPENSSL_malloc(length);
     if (buf == NULL) {
-        PEMerr(PEM_F_DO_B2I_BIO, ERR_R_MALLOC_FAILURE);
+        PEMerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     p = buf;
     if (BIO_read(in, buf, length) != (int)length) {
-        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_KEYBLOB_TOO_SHORT);
+        PEMerr(0, PEM_R_KEYBLOB_TOO_SHORT);
         goto err;
     }
 
