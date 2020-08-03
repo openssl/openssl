@@ -241,6 +241,7 @@ DEFINE_STACK_OF_CSTRING()
 struct collected_data_st {
     struct deser_EVP_PKEY_data_st *process_data;
     STACK_OF(OPENSSL_CSTRING) *names;
+    OSSL_DESERIALIZER_CTX *ctx;
 
     unsigned int error_occured:1;
 };
@@ -279,6 +280,28 @@ static void collect_name(const char *name, void *arg)
     data->error_occured = 0;         /* All is good now */
 }
 
+static void collect_deserializer(OSSL_DESERIALIZER *deser, void *arg)
+{
+    struct collected_data_st *data = arg;
+    size_t i, end_i;
+
+    if (data->error_occured)
+        return;
+
+    data->error_occured = 1;         /* Assume the worst */
+
+    end_i = sk_OPENSSL_CSTRING_num(data->names);
+    for (i = 0; i < end_i; i++) {
+        const char *name = sk_OPENSSL_CSTRING_value(data->names, i);
+
+        if (!OSSL_DESERIALIZER_is_a(deser, name))
+            continue;
+        (void)OSSL_DESERIALIZER_CTX_add_deserializer(data->ctx, deser);
+    }
+
+    data->error_occured = 0;         /* All is good now */
+}
+
 OSSL_DESERIALIZER_CTX *
 OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
                                       const char *input_type,
@@ -300,6 +323,7 @@ OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
         goto err;
     }
     data->process_data->object = (void **)pkey;
+    data->ctx = ctx;
     OSSL_DESERIALIZER_CTX_set_input_type(ctx, input_type);
 
     /* First, find all keymgmts to form goals */
@@ -308,49 +332,30 @@ OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
     if (data->error_occured)
         goto err;
 
-    /*
-     * Then, use the names of those keymgmts to find the first set of
-     * derializers.
-     */
-    ERR_set_mark();
+    /* Then, we collect all the keymgmt names */
     end_i = sk_EVP_KEYMGMT_num(data->process_data->keymgmts);
     for (i = 0; i < end_i; i++) {
         EVP_KEYMGMT *keymgmt =
             sk_EVP_KEYMGMT_value(data->process_data->keymgmts, i);
-        size_t j;
-        OSSL_DESERIALIZER *deser = NULL;
 
         EVP_KEYMGMT_names_do_all(keymgmt, collect_name, data);
 
-        for (j = sk_OPENSSL_CSTRING_num(data->names);
-             j-- > 0 && deser == NULL;) {
-            const char *name = sk_OPENSSL_CSTRING_pop(data->names);
-
-            ERR_set_mark();
-            deser = OSSL_DESERIALIZER_fetch(libctx, name, propquery);
-            ERR_pop_to_mark();
-        }
-
-        /*
-         * The names in |data->names| aren't allocated for the stack,
-         * so we can simply clear it and let it be re-used.
-         */
-        sk_OPENSSL_CSTRING_zero(data->names);
-
-        /*
-         * If we found a matching serializer, try to add it to the context.
-         */
-        if (deser != NULL) {
-            (void)OSSL_DESERIALIZER_CTX_add_deserializer(ctx, deser);
-            OSSL_DESERIALIZER_free(deser);
-        }
+        if (data->error_occured)
+            goto err;
     }
-    /* If we found no deserializers to match the keymgmts, we err */
-    if (OSSL_DESERIALIZER_CTX_num_deserializers(ctx) == 0) {
-        ERR_clear_last_mark();
+
+    /*
+     * Finally, find all deserializers that have any keymgmt of the collected
+     * keymgmt names
+     */
+    OSSL_DESERIALIZER_do_all_provided(libctx, collect_deserializer, data);
+
+    if (data->error_occured)
         goto err;
-    }
-    ERR_pop_to_mark();
+
+    /* If we found no deserializers to match the keymgmts, we err */
+    if (OSSL_DESERIALIZER_CTX_num_deserializers(ctx) == 0)
+        goto err;
 
     /* Finally, collect extra deserializers based on what we already have */
     (void)OSSL_DESERIALIZER_CTX_add_extra(ctx, libctx, propquery);
