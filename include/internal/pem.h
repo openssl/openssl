@@ -7,17 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PEM_INT_H
-# define HEADER_PEM_INT_H
+#ifndef OSSL_INTERNAL_PEM_H
+# define OSSL_INTERNAL_PEM_H
 
 # include <openssl/pem.h>
 
+# ifndef OPENSSL_NO_DSA
 /* Found in crypto/pem/pvkfmt.c */
 int ossl_do_blob_header(const unsigned char **in, unsigned int length,
                         unsigned int *pmagic, unsigned int *pbitlen,
                         int *pisdss, int *pispub);
+#  ifndef OPENSSL_NO_RC4
 int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
                        int skip_magic,
                        unsigned int *psaltlen, unsigned int *pkeylen);
+#  endif
+
+EVP_PKEY *ossl_b2i(const unsigned char **in, unsigned int length, int *ispub);
+EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub);
+
+# endif
 
 #endif
