@@ -2559,7 +2559,7 @@ EVP_R_INVALID_NULL_ALGORITHM:218:invalid null algorithm
 EVP_R_INVALID_OPERATION:148:invalid operation
 EVP_R_INVALID_PROVIDER_FUNCTIONS:193:invalid provider functions
 EVP_R_INVALID_SALT_LENGTH:186:invalid salt length
-EVP_R_INVALID_SECRET_LENGTH:221:invalid secret length
+EVP_R_INVALID_SECRET_LENGTH:223:invalid secret length
 EVP_R_INVALID_SEED_LENGTH:220:invalid seed length
 EVP_R_INVALID_VALUE:222:invalid value
 EVP_R_KEYGEN_FAILURE:120:keygen failure

@@ -211,7 +211,7 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_OPERATION                          148
 # define EVP_R_INVALID_PROVIDER_FUNCTIONS                 193
 # define EVP_R_INVALID_SALT_LENGTH                        186
-# define EVP_R_INVALID_SECRET_LENGTH                      221
+# define EVP_R_INVALID_SECRET_LENGTH                      223
 # define EVP_R_INVALID_SEED_LENGTH                        220
 # define EVP_R_INVALID_VALUE                              222
 # define EVP_R_KEYGEN_FAILURE                             120
