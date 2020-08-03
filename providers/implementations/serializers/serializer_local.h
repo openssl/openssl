@@ -170,7 +170,7 @@ int ossl_prov_read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
 EVP_PKEY *ossl_prov_read_msblob(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                                 int *ispub);
 EVP_PKEY *ossl_prov_read_pvk(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
-                             OSSL_PASSPHRASE_CALLBACK pw_cb, void *pw_cbarg);
+                             OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg);
 
 int ossl_prov_der_from_p8(unsigned char **new_der, long *new_der_len,
                           unsigned char *input_der, long input_der_len,
