@@ -181,7 +181,7 @@ static int deser_construct_EVP_PKEY(OSSL_DESERIALIZER_INSTANCE *deser_inst,
                 OSSL_DESERIALIZER_provider(deser);
 
             /*
-             * If the EVP_KEYMGMT and the OSSL_DDESERIALIZER are from the
+             * If the EVP_KEYMGMT and the OSSL_DESERIALIZER are from the
              * same provider, we assume that the KEYMGMT has a key loading
              * function that can handle the provider reference we hold.
              *
@@ -195,7 +195,7 @@ static int deser_construct_EVP_PKEY(OSSL_DESERIALIZER_INSTANCE *deser_inst,
 
                 import_data.keymgmt = keymgmt;
                 import_data.keydata = NULL;
-                import_data.selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
+                import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
 
                 /*
                  * No need to check for errors here, the value of
