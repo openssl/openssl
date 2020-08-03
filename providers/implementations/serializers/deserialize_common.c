@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core_names.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
-#include <openssl/pem.h>
+#include <openssl/pem.h>         /* For public PEM and PVK functions */
 #include <openssl/pkcs12.h>
+#include "internal/pem.h"        /* For internal PVK and "blob" functions */
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
 #include "prov/bio.h"               /* ossl_prov_bio_printf() */
@@ -44,6 +46,60 @@ int ossl_prov_read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
     BIO_free(in);
     return ok;
 }
+
+#ifndef OPENSSL_NO_DSA
+EVP_PKEY *ossl_prov_read_msblob(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
+                                int *ispub)
+{
+    BIO *in = bio_new_from_core_bio(provctx, cin);
+    EVP_PKEY *pkey = ossl_b2i_bio(in, ispub);
+
+    BIO_free(in);
+    return pkey;
+}
+
+struct pwdata_st {
+    OSSL_PASSPHRASE_CALLBACK *pw_cb;
+    void *pw_cbarg;
+};
+
+pem_password_cb pw_pem_password_to_ossl_passhrase;
+int pw_pem_password_to_ossl_passhrase(char *buf, int size, int rwflag,
+                                      void *userdata)
+{
+    struct pwdata_st *data = userdata;
+    size_t pw_len = 0;
+    static char prompt_info[] = "pass phrase";
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PASSPHRASE_PARAM_INFO, prompt_info,
+                               sizeof(prompt_info) - 1),
+        OSSL_PARAM_END
+    };
+    int ok = data->pw_cb(buf, (size_t)size, &pw_len, params, data->pw_cbarg);
+
+    if (ok)
+        return (int)pw_len;
+    else
+        return -1;
+}
+
+# ifndef OPENSSL_NO_RC4
+EVP_PKEY *ossl_prov_read_pvk(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
+                             OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+{
+    BIO *in = bio_new_from_core_bio(provctx, cin);
+    EVP_PKEY *pkey = NULL;
+    struct pwdata_st pwdata;
+
+    pwdata.pw_cb = pw_cb;
+    pwdata.pw_cbarg = pw_cbarg;
+    pkey = b2i_PVK_bio(in, pw_pem_password_to_ossl_passhrase, &pwdata);
+
+    BIO_free(in);
+    return pkey;
+}
+# endif
+#endif
 
 int ossl_prov_der_from_p8(unsigned char **new_der, long *new_der_len,
                           unsigned char *input_der, long input_der_len,
