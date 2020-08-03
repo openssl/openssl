@@ -10,6 +10,14 @@ use strict;
 use warnings;
 
 use OpenSSL::Test::Simple;
-use OpenSSL::Test;
+use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
+use Cwd qw(abs_path);
 
-simple_test("test_serializer_deserializer", "serdes_test");
+setup("test_serializer_deserializer");
+
+plan tests => 1;
+
+$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("providers"));
+$ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-legacy.cnf"));
+
+ok(run(test(["serdes_test"])));

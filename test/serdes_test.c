@@ -16,6 +16,7 @@
 #include <openssl/serializer.h>
 #include <openssl/deserializer.h>
 
+#include "internal/pem.h"        /* For PVK and "blob" PEM headers */
 #include "internal/cryptlib.h"   /* ossl_assert */
 
 #include "testutil.h"
@@ -255,6 +256,102 @@ static int serialize_EVP_PKEY_legacy_PEM(void **serialized,
     return ok;
 }
 
+#ifndef OPENSSL_NO_DSA
+static int serialize_EVP_PKEY_MSBLOB(void **serialized,
+                                     long *serialized_len,
+                                     void *object,
+                                     ossl_unused const char *pass,
+                                     ossl_unused const char *pcipher,
+                                     ossl_unused const char *ser_propq)
+{
+    EVP_PKEY *pkey = object;
+    BIO *mem_ser = NULL;
+    BUF_MEM *mem_buf = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(mem_ser = BIO_new(BIO_s_mem()))
+        || !TEST_int_ge(i2b_PrivateKey_bio(mem_ser, pkey), 0)
+        || !TEST_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
+        || !TEST_ptr(*serialized = mem_buf->data)
+        || !TEST_long_gt(*serialized_len = mem_buf->length, 0))
+        goto end;
+
+    /* Detach the serialized output */
+    mem_buf->data = NULL;
+    mem_buf->length = 0;
+    ok = 1;
+ end:
+    BIO_free(mem_ser);
+    return ok;
+}
+
+static int serialize_public_EVP_PKEY_MSBLOB(void **serialized,
+                                            long *serialized_len,
+                                            void *object,
+                                            ossl_unused const char *pass,
+                                            ossl_unused const char *pcipher,
+                                            ossl_unused const char *ser_propq)
+{
+    EVP_PKEY *pkey = object;
+    BIO *mem_ser = NULL;
+    BUF_MEM *mem_buf = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(mem_ser = BIO_new(BIO_s_mem()))
+        || !TEST_int_ge(i2b_PublicKey_bio(mem_ser, pkey), 0)
+        || !TEST_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
+        || !TEST_ptr(*serialized = mem_buf->data)
+        || !TEST_long_gt(*serialized_len = mem_buf->length, 0))
+        goto end;
+
+    /* Detach the serialized output */
+    mem_buf->data = NULL;
+    mem_buf->length = 0;
+    ok = 1;
+ end:
+    BIO_free(mem_ser);
+    return ok;
+}
+
+# ifndef OPENSSL_NO_RC4
+static pem_password_cb pass_pw;
+static int pass_pw(char *buf, int size, int rwflag, void *userdata)
+{
+    OPENSSL_strlcpy(buf, userdata, size);
+    return strlen(userdata);
+}
+
+static int serialize_EVP_PKEY_PVK(void **serialized, long *serialized_len,
+                                  void *object,
+                                  const char *pass,
+                                  ossl_unused const char *pcipher,
+                                  ossl_unused const char *ser_propq)
+{
+    EVP_PKEY *pkey = object;
+    BIO *mem_ser = NULL;
+    BUF_MEM *mem_buf = NULL;
+    int enc = (pass != NULL);
+    int ok = 0;
+
+    if (!TEST_ptr(mem_ser = BIO_new(BIO_s_mem()))
+        || !TEST_int_ge(i2b_PVK_bio(mem_ser, pkey, enc,
+                                    pass_pw, (void *)pass), 0)
+        || !TEST_true(BIO_get_mem_ptr(mem_ser, &mem_buf) > 0)
+        || !TEST_ptr(*serialized = mem_buf->data)
+        || !TEST_long_gt(*serialized_len = mem_buf->length, 0))
+        goto end;
+
+    /* Detach the serialized output */
+    mem_buf->data = NULL;
+    mem_buf->length = 0;
+    ok = 1;
+ end:
+    BIO_free(mem_ser);
+    return ok;
+}
+# endif
+#endif
+
 static int test_text(const void *data1, size_t data1_len,
                      const void *data2, size_t data2_len)
 {
@@ -348,6 +445,49 @@ static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                                       NULL, 1);
 }
 
+#ifndef OPENSSL_NO_DSA
+static int check_MSBLOB(const char *type, const void *data, size_t data_len)
+{
+    const unsigned char *datap = data;
+    EVP_PKEY *pkey = b2i_PrivateKey(&datap, data_len);
+    int ok = TEST_ptr(pkey);
+
+    EVP_PKEY_free(pkey);
+    return ok;
+}
+
+static int test_unprotected_via_MSBLOB(const char *type, EVP_PKEY *key)
+{
+    return test_serialize_deserialize(type, key, NULL, NULL,
+                                      serialize_EVP_PKEY_MSBLOB,
+                                      deserialize_EVP_PKEY_prov,
+                                      test_mem,
+                                      check_MSBLOB, dump_der,
+                                      NULL, 0);
+}
+
+# ifndef OPENSSL_NO_RC4
+static int check_PVK(const char *type, const void *data, size_t data_len)
+{
+    const unsigned char *in = data;
+    unsigned int saltlen = 0, keylen = 0;
+    int ok = ossl_do_PVK_header(&in, data_len, 0, &saltlen, &keylen);
+
+    return ok;
+}
+
+static int test_unprotected_via_PVK(const char *type, EVP_PKEY *key)
+{
+    return test_serialize_deserialize(type, key, NULL, NULL,
+                                      serialize_EVP_PKEY_PVK,
+                                      deserialize_EVP_PKEY_prov,
+                                      test_mem,
+                                      check_PVK, dump_der,
+                                      NULL, 0);
+}
+# endif
+#endif
+
 static const char *pass_cipher = "AES-256-CBC";
 static const char *pass = "the holy handgrenade of antioch";
 
@@ -414,6 +554,18 @@ static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                                       NULL, 1);
 }
 
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
+static int test_protected_via_PVK(const char *type, EVP_PKEY *key)
+{
+    return test_serialize_deserialize(type, key, pass, NULL,
+                                      serialize_EVP_PKEY_PVK,
+                                      deserialize_EVP_PKEY_prov,
+                                      test_mem,
+                                      check_PVK, dump_der,
+                                      NULL, 0);
+}
+#endif
+
 static int check_public_DER(const char *type, const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
@@ -453,6 +605,29 @@ static int test_public_via_PEM(const char *type, EVP_PKEY *key)
                                       OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ,
                                       0);
 }
+
+#ifndef OPENSSL_NO_DSA
+static int check_public_MSBLOB(const char *type,
+                               const void *data, size_t data_len)
+{
+    const unsigned char *datap = data;
+    EVP_PKEY *pkey = b2i_PublicKey(&datap, data_len);
+    int ok = TEST_ptr(pkey);
+
+    EVP_PKEY_free(pkey);
+    return ok;
+}
+
+static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
+{
+    return test_serialize_deserialize(type, key, NULL, NULL,
+                                      serialize_public_EVP_PKEY_MSBLOB,
+                                      deserialize_EVP_PKEY_prov,
+                                      test_mem,
+                                      check_public_MSBLOB, dump_der,
+                                      NULL, 0);
+}
+#endif
 
 #define KEYS(KEYTYPE)                           \
     static EVP_PKEY *key_##KEYTYPE = NULL;      \
@@ -530,6 +705,38 @@ static int test_public_via_PEM(const char *type, EVP_PKEY *key)
     ADD_TEST(test_public_##KEYTYPE##_via_DER);                  \
     ADD_TEST(test_public_##KEYTYPE##_via_PEM)
 
+#ifndef OPENSSL_NO_DSA
+# define IMPLEMENT_TEST_SUITE_MSBLOB(KEYTYPE, KEYTYPEstr)               \
+    static int test_unprotected_##KEYTYPE##_via_MSBLOB(void)            \
+    {                                                                   \
+        return test_unprotected_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);  \
+    }                                                                   \
+    static int test_public_##KEYTYPE##_via_MSBLOB(void)                 \
+    {                                                                   \
+        return test_public_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);       \
+    }
+
+# define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                         \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB);          \
+    ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB)
+
+# ifndef OPENSSL_NO_RC4
+#  define IMPLEMENT_TEST_SUITE_PVK(KEYTYPE, KEYTYPEstr)                 \
+    static int test_unprotected_##KEYTYPE##_via_PVK(void)               \
+    {                                                                   \
+        return test_unprotected_via_PVK(KEYTYPEstr, key_##KEYTYPE);     \
+    }                                                                   \
+    static int test_protected_##KEYTYPE##_via_PVK(void)                 \
+    {                                                                   \
+        return test_protected_via_PVK(KEYTYPEstr, key_##KEYTYPE);       \
+    }
+
+#  define ADD_TEST_SUITE_PVK(KEYTYPE)                           \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK);             \
+    ADD_TEST(test_protected_##KEYTYPE##_via_PVK)
+# endif
+#endif
+
 #ifndef OPENSSL_NO_DH
 DOMAIN_KEYS(DH);
 IMPLEMENT_TEST_SUITE(DH, "DH")
@@ -537,6 +744,10 @@ IMPLEMENT_TEST_SUITE(DH, "DH")
 #ifndef OPENSSL_NO_DSA
 DOMAIN_KEYS(DSA);
 IMPLEMENT_TEST_SUITE(DSA, "DSA")
+IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
+# ifndef OPENSSL_NO_RC4
+IMPLEMENT_TEST_SUITE_PVK(DSA, "DSA")
+# endif
 #endif
 #ifndef OPENSSL_NO_EC
 DOMAIN_KEYS(EC);
@@ -554,10 +765,26 @@ KEYS(RSA);
 IMPLEMENT_TEST_SUITE(RSA, "RSA")
 KEYS(RSA_PSS);
 IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
+#ifndef OPENSSL_NO_DSA
+IMPLEMENT_TEST_SUITE_MSBLOB(RSA, "RSA")
+# ifndef OPENSSL_NO_RC4
+IMPLEMENT_TEST_SUITE_PVK(RSA, "RSA")
+# endif
+#endif
 
 int setup_tests(void)
 {
     int ok = 1;
+
+#ifndef OPENSSL_NO_DSA
+    static size_t qbits = 160;  /* PVK only tolerates 160 Q bits */
+    static size_t pbits = 1024; /* With 160 Q bits, we MUST use 1024 P bits */
+    OSSL_PARAM DSA_params[] = {
+        OSSL_PARAM_size_t("pbits", &pbits),
+        OSSL_PARAM_size_t("qbits", &qbits),
+        OSSL_PARAM_END
+    };
+#endif
 
 #ifndef OPENSSL_NO_EC
     static char groupname[] = "prime256v1";
@@ -579,7 +806,7 @@ int setup_tests(void)
     MAKE_DOMAIN_KEYS(DH, "DH", NULL);
 #endif
 #ifndef OPENSSL_NO_DSA
-    MAKE_DOMAIN_KEYS(DSA, "DSA", NULL);
+    MAKE_DOMAIN_KEYS(DSA, "DSA", DSA_params);
 #endif
 #ifndef OPENSSL_NO_EC
     MAKE_DOMAIN_KEYS(EC, "EC", EC_params);
@@ -598,6 +825,10 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE(DSA);
+        ADD_TEST_SUITE_MSBLOB(DSA);
+# ifndef OPENSSL_NO_RC4
+        ADD_TEST_SUITE_PVK(DSA);
+# endif
 #endif
 #ifndef OPENSSL_NO_EC
         ADD_TEST_SUITE(EC);
@@ -608,6 +839,12 @@ int setup_tests(void)
 #endif
         ADD_TEST_SUITE(RSA);
         ADD_TEST_SUITE(RSA_PSS);
+#ifndef OPENSSL_NO_DSA
+        ADD_TEST_SUITE_MSBLOB(RSA);
+# ifndef OPENSSL_NO_RC4
+        ADD_TEST_SUITE_PVK(RSA);
+# endif
+#endif
     }
 
     return 1;
