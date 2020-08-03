@@ -21,7 +21,7 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include "internal/pem_int.h"
+#include "internal/pem.h"
 #include <openssl/pkcs12.h>      /* For the PKCS8 stuff o.O */
 #include <openssl/rsa.h>         /* For d2i_RSAPrivateKey */
 #include <openssl/safestack.h>

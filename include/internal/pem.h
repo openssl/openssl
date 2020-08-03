@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef HEADER_PEM_INT_H
-# define HEADER_PEM_INT_H
+#ifndef OSSL_INTERNAL_PEM_H
+# define OSSL_INTERNAL_PEM_H
 
 # include <openssl/pem.h>
 
@@ -19,5 +19,8 @@ int ossl_do_blob_header(const unsigned char **in, unsigned int length,
 int ossl_do_PVK_header(const unsigned char **in, unsigned int length,
                        int skip_magic,
                        unsigned int *psaltlen, unsigned int *pkeylen);
+
+EVP_PKEY *ossl_b2i(const unsigned char **in, unsigned int length, int *ispub);
+EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub);
 
 #endif
