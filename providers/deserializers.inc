@@ -16,6 +16,8 @@
 #endif
 #ifndef OPENSSL_NO_DSA
     DESER("DSA", "yes", "der", der_to_dsa_deserializer_functions),
+    DESER("DSA", "yes", "mblob", msblob_to_dsa_deserializer_functions),
+    DESER("DSA", "yes", "pvk", pvk_to_dsa_deserializer_functions),
 #endif
 #ifndef OPENSSL_NO_EC
     DESER("EC", "yes", "der", der_to_ec_deserializer_functions),
@@ -26,5 +28,8 @@
 #endif
     DESER("RSA", "yes", "der", der_to_rsa_deserializer_functions),
     DESER("RSA-PSS", "yes", "der", der_to_rsapss_deserializer_functions),
+    DESER("RSA", "yes", "mblob", msblob_to_rsa_deserializer_functions),
+    DESER("RSA", "yes", "pvk", pvk_to_rsa_deserializer_functions),
 
     DESER("DER", "yes", "pem", pem_to_der_deserializer_functions),
+

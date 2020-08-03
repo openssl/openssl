@@ -361,6 +361,8 @@ extern const OSSL_DISPATCH ec_param_pem_serializer_functions[];
 
 extern const OSSL_DISPATCH der_to_dh_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_dsa_deserializer_functions[];
+extern const OSSL_DISPATCH msblob_to_dsa_deserializer_functions[];
+extern const OSSL_DISPATCH pvk_to_dsa_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_ec_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_x25519_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_x448_deserializer_functions[];
@@ -368,4 +370,6 @@ extern const OSSL_DISPATCH der_to_ed25519_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_ed448_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_rsa_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_rsapss_deserializer_functions[];
+extern const OSSL_DISPATCH msblob_to_rsa_deserializer_functions[];
+extern const OSSL_DISPATCH pvk_to_rsa_deserializer_functions[];
 extern const OSSL_DISPATCH pem_to_der_deserializer_functions[];
