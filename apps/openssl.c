@@ -68,7 +68,7 @@ static int apps_startup(void)
                           | OPENSSL_INIT_LOAD_CONFIG, NULL))
         return 0;
 
-    setup_ui_method();
+    (void)setup_ui_method();
 
     /*
      * NOTE: This is an undocumented feature required for testing only.
