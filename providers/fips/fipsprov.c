@@ -447,6 +447,7 @@ static const OSSL_ALGORITHM fips_asym_cipher[] = {
 static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
     { "DH:dhKeyAgreement", FIPS_DEFAULT_PROPERTIES, dh_keymgmt_functions },
+    { "DHX:X9.42 DH:dhpublicnumber", FIPS_DEFAULT_PROPERTIES, dhx_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_DSA
     { "DSA", FIPS_DEFAULT_PROPERTIES, dsa_keymgmt_functions },

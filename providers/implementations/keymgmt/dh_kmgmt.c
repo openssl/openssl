@@ -29,6 +29,7 @@
 static OSSL_FUNC_keymgmt_new_fn dh_newdata;
 static OSSL_FUNC_keymgmt_free_fn dh_freedata;
 static OSSL_FUNC_keymgmt_gen_init_fn dh_gen_init;
+static OSSL_FUNC_keymgmt_gen_init_fn dhx_gen_init;
 static OSSL_FUNC_keymgmt_gen_set_template_fn dh_gen_set_template;
 static OSSL_FUNC_keymgmt_gen_set_params_fn dh_gen_set_params;
 static OSSL_FUNC_keymgmt_gen_settable_params_fn dh_gen_settable_params;
@@ -73,6 +74,7 @@ struct dh_gen_ctx {
     const char *mdprops;
     OSSL_CALLBACK *cb;
     void *cbarg;
+    int dh_type;
 };
 
 typedef struct dh_name2id_st{
@@ -131,7 +133,26 @@ static int dh_key_todata(DH *dh, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 
 static void *dh_newdata(void *provctx)
 {
-    return dh_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx));
+    DH *dh = NULL;
+
+    dh = dh_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx));
+    if (dh != NULL) {
+        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+        DH_set_flags(dh, DH_FLAG_TYPE_DH);
+    }
+    return dh;
+}
+
+static void *dhx_newdata(void *provctx)
+{
+    DH *dh = NULL;
+
+    dh = dh_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx));
+    if (dh != NULL) {
+        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+        DH_set_flags(dh, DH_FLAG_TYPE_DHX);
+    }
+    return dh;
 }
 
 static void dh_freedata(void *keydata)
@@ -399,7 +420,7 @@ static int dh_validate(void *keydata, int selection)
     return ok;
 }
 
-static void *dh_gen_init(void *provctx, int selection)
+static void *dh_gen_init_base(void *provctx, int selection, int type)
 {
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct dh_gen_ctx *gctx = NULL;
@@ -419,8 +440,19 @@ static void *dh_gen_init(void *provctx, int selection)
         gctx->hindex = 0;
         gctx->pcounter = -1;
         gctx->generator = DH_GENERATOR_2;
+        gctx->dh_type = type;
     }
     return gctx;
+}
+
+static void *dh_gen_init(void *provctx, int selection)
+{
+    return dh_gen_init_base(provctx, selection, DH_FLAG_TYPE_DH);
+}
+
+static void *dhx_gen_init(void *provctx, int selection)
+{
+   return dh_gen_init_base(provctx, selection, DH_FLAG_TYPE_DHX);
 }
 
 static int dh_gen_set_template(void *genctx, void *templ)
@@ -624,6 +656,9 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         if (DH_generate_key(dh) <= 0)
             goto end;
     }
+    DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+    DH_set_flags(dh, gctx->dh_type);
+
     ret = 1;
 end:
     if (ret <= 0) {
@@ -681,5 +716,38 @@ const OSSL_DISPATCH dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dh_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dh_export },
     { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dh_export_types },
+    { 0, NULL }
+};
+
+/* For any DH key, we use the "DH" algorithms regardless of sub-type. */
+static const char *dhx_query_operation_name(int operation_id)
+{
+    return "DH";
+}
+
+const OSSL_DISPATCH dhx_keymgmt_functions[] = {
+    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dhx_newdata },
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dhx_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dh_gen_set_template },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))dh_gen_set_params },
+    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
+      (void (*)(void))dh_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))dh_gen },
+    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))dh_gen_cleanup },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))dh_load },
+    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dh_freedata },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))dh_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*) (void))dh_gettable_params },
+    { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*) (void))dh_set_params },
+    { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*) (void))dh_settable_params },
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dh_has },
+    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))dh_match },
+    { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))dh_validate },
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))dh_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))dh_import_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))dh_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))dh_export_types },
+    { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
+      (void (*)(void))dhx_query_operation_name },
     { 0, NULL }
 };
