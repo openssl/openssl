@@ -35,3 +35,9 @@ const DH_METHOD *dh_get_method(const DH *dh);
 
 int dh_buf2key(DH *key, const unsigned char *buf, size_t len);
 size_t dh_key2buf(const DH *dh, unsigned char **pbuf, size_t size, int alloc);
+
+int dh_KDF_X9_42_asn1(unsigned char *out, size_t outlen,
+                      const unsigned char *Z, size_t Zlen,
+                      const char *cek_alg,
+                      const unsigned char *ukm, size_t ukmlen, const EVP_MD *md,
+                      OPENSSL_CTX *libctx, const char *propq);

@@ -286,45 +286,16 @@ int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen);
 int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen);
 int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
 
-#  define EVP_PKEY_CTX_set_dh_kdf_type(ctx, kdf) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_TYPE, kdf, NULL)
-
-#  define EVP_PKEY_CTX_get_dh_kdf_type(ctx) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_TYPE, -2, NULL)
-
-#  define EVP_PKEY_CTX_set0_dh_kdf_oid(ctx, oid) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)(oid))
-
-#  define EVP_PKEY_CTX_get0_dh_kdf_oid(ctx, poid) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX,  EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)(poid))
-
-#  define EVP_PKEY_CTX_set_dh_kdf_md(ctx, md) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md))
-
-#  define EVP_PKEY_CTX_get_dh_kdf_md(ctx, pmd) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_MD, 0, (void *)(pmd))
-
-#  define EVP_PKEY_CTX_set_dh_kdf_outlen(ctx, len) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_OUTLEN, len, NULL)
-
-#  define EVP_PKEY_CTX_get_dh_kdf_outlen(ctx, plen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN, 0, (void *)(plen))
-
-#  define EVP_PKEY_CTX_set0_dh_kdf_ukm(ctx, p, plen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX,  EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_UKM, plen, (void *)(p))
-
-#  define EVP_PKEY_CTX_get0_dh_kdf_ukm(ctx, p) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX,  EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_UKM, 0, (void *)(p))
+int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf);
+int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_CTX_set0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT *oid);
+int EVP_PKEY_CTX_get0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT **oid);
+int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+int EVP_PKEY_CTX_get_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int len);
+int EVP_PKEY_CTX_get_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
+int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len);
+int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
 #  define EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN     (EVP_PKEY_ALG_CTRL + 1)
 #  define EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR     (EVP_PKEY_ALG_CTRL + 2)
