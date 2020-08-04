@@ -110,13 +110,18 @@ int X509_ALGOR_copy(X509_ALGOR *dest, const X509_ALGOR *src)
         if ((dest->algorithm = OBJ_dup(src->algorithm)) == NULL)
 	    return 0;
 
-    if (src->parameter)
+    if (src->parameter != NULL) {
+        dest->parameter = ASN1_TYPE_new();
+        if (dest->parameter == NULL)
+            return 0;
+
         /* Assuming this is also correct for a BOOL.
          * set does copy as a side effect.
          */
         if (ASN1_TYPE_set1(dest->parameter, 
               src->parameter->type, src->parameter->value.ptr) == 0)
 	    return 0;
+    }
 
     return 1;
 }
