@@ -103,6 +103,8 @@ static int aes_ocb_init(void *vctx, const unsigned char *key, size_t keylen,
 {
    PROV_AES_OCB_CTX *ctx = (PROV_AES_OCB_CTX *)vctx;
 
+   ctx->aad_buf_len = 0;
+   ctx->data_buf_len = 0;
    ctx->base.enc = enc;
 
    if (iv != NULL) {

@@ -268,6 +268,82 @@ err:
     return ret;
 }
 
+/*
+ * This test only uses a partial block (half the block size) of input for each
+ * EVP_EncryptUpdate() in order to test that the second init/update is not using
+ * a leftover buffer from the first init/update.
+ * Note: some ciphers don't need a full block to produce output.
+ */
+static int test_cipher_reinit_partialupdate(int test_id)
+{
+    int ret = 0, out1_len = 0, out2_len = 0, in_len;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char out1[256];
+    unsigned char out2[256];
+    static const unsigned char in[32] = {
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0xba, 0xbe, 0xba, 0xbe, 0x00, 0x00, 0xba, 0xbe,
+        0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    };
+    static const unsigned char key[64] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x01, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x02, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x03, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+    };
+    static const unsigned char iv[16] = {
+        0x0f, 0x0e, 0x0d, 0x0c, 0x0b, 0x0a, 0x09, 0x08,
+        0x07, 0x06, 0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+    };
+    const char *name = sk_OPENSSL_CSTRING_value(cipher_names, test_id);
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    TEST_note("Fetching %s\n", name);
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
+        goto err;
+
+    in_len = EVP_CIPHER_block_size(cipher) / 2;
+
+    /* skip any ciphers that don't allow partial updates */
+    if (((EVP_CIPHER_flags(cipher)
+          & (EVP_CIPH_FLAG_CTS | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)) != 0)
+        || EVP_CIPHER_mode(cipher) == EVP_CIPH_CCM_MODE
+        || EVP_CIPHER_mode(cipher) == EVP_CIPH_XTS_MODE
+        || EVP_CIPHER_mode(cipher) == EVP_CIPH_WRAP_MODE) {
+        ret = 1;
+        goto err;
+    }
+
+    if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out1, &out1_len, in, in_len))
+        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out2, &out2_len, in, in_len)))
+        goto err;
+
+    /* DES3-WRAP uses random every update - so it will give a different value */
+    if (EVP_CIPHER_is_a(cipher, "DES3-WRAP")) {
+        if (!TEST_mem_ne(out1, out1_len, out2, out2_len))
+            goto err;
+    } else {
+        if (!TEST_mem_eq(out1, out1_len, out2, out2_len))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
+
 static int name_cmp(const char * const *a, const char * const *b)
 {
     return strcasecmp(*a, *b);
@@ -332,6 +408,8 @@ int setup_tests(void)
     EVP_CIPHER_do_all_provided(libctx, collect_cipher_names, cipher_names);
 
     ADD_ALL_TESTS(test_cipher_reinit, sk_OPENSSL_CSTRING_num(cipher_names));
+    ADD_ALL_TESTS(test_cipher_reinit_partialupdate,
+                  sk_OPENSSL_CSTRING_num(cipher_names));
     return 1;
 }
 
