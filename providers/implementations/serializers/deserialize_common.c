@@ -47,6 +47,7 @@ int ossl_prov_read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
     return ok;
 }
 
+#ifndef OPENSSL_NO_DSA
 EVP_PKEY *ossl_prov_read_msblob(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                                 int *ispub)
 {
@@ -82,6 +83,7 @@ int pw_pem_password_to_ossl_passhrase(char *buf, int size, int rwflag,
         return -1;
 }
 
+# ifndef OPENSSL_NO_RC4
 EVP_PKEY *ossl_prov_read_pvk(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                              OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
@@ -96,6 +98,8 @@ EVP_PKEY *ossl_prov_read_pvk(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
     BIO_free(in);
     return pkey;
 }
+# endif
+#endif
 
 int ossl_prov_der_from_p8(unsigned char **new_der, long *new_der_len,
                           unsigned char *input_der, long input_der_len,
