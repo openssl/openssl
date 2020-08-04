@@ -256,6 +256,7 @@ static int serialize_EVP_PKEY_legacy_PEM(void **serialized,
     return ok;
 }
 
+#ifndef OPENSSL_NO_DSA
 static int serialize_EVP_PKEY_MSBLOB(void **serialized,
                                      long *serialized_len,
                                      void *object,
@@ -312,6 +313,7 @@ static int serialize_public_EVP_PKEY_MSBLOB(void **serialized,
     return ok;
 }
 
+# ifndef OPENSSL_NO_RC4
 static pem_password_cb pass_pw;
 static int pass_pw(char *buf, int size, int rwflag, void *userdata)
 {
@@ -347,6 +349,8 @@ static int serialize_EVP_PKEY_PVK(void **serialized, long *serialized_len,
     BIO_free(mem_ser);
     return ok;
 }
+# endif
+#endif
 
 static int test_text(const void *data1, size_t data1_len,
                      const void *data2, size_t data2_len)
@@ -441,6 +445,7 @@ static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                                       NULL, 1);
 }
 
+#ifndef OPENSSL_NO_DSA
 static int check_MSBLOB(const char *type, const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
@@ -461,6 +466,7 @@ static int test_unprotected_via_MSBLOB(const char *type, EVP_PKEY *key)
                                       NULL, 0);
 }
 
+# ifndef OPENSSL_NO_RC4
 static int check_PVK(const char *type, const void *data, size_t data_len)
 {
     const unsigned char *in = data;
@@ -479,6 +485,8 @@ static int test_unprotected_via_PVK(const char *type, EVP_PKEY *key)
                                       check_PVK, dump_der,
                                       NULL, 0);
 }
+# endif
+#endif
 
 static const char *pass_cipher = "AES-256-CBC";
 static const char *pass = "the holy handgrenade of antioch";
@@ -546,6 +554,7 @@ static int test_protected_via_legacy_PEM(const char *type, EVP_PKEY *key)
                                       NULL, 1);
 }
 
+#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_RC4)
 static int test_protected_via_PVK(const char *type, EVP_PKEY *key)
 {
     return test_serialize_deserialize(type, key, pass, NULL,
@@ -555,6 +564,7 @@ static int test_protected_via_PVK(const char *type, EVP_PKEY *key)
                                       check_PVK, dump_der,
                                       NULL, 0);
 }
+#endif
 
 static int check_public_DER(const char *type, const void *data, size_t data_len)
 {
@@ -596,6 +606,7 @@ static int test_public_via_PEM(const char *type, EVP_PKEY *key)
                                       0);
 }
 
+#ifndef OPENSSL_NO_DSA
 static int check_public_MSBLOB(const char *type,
                                const void *data, size_t data_len)
 {
@@ -616,6 +627,7 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
                                       check_public_MSBLOB, dump_der,
                                       NULL, 0);
 }
+#endif
 
 #define KEYS(KEYTYPE)                           \
     static EVP_PKEY *key_##KEYTYPE = NULL;      \
@@ -693,7 +705,8 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     ADD_TEST(test_public_##KEYTYPE##_via_DER);                  \
     ADD_TEST(test_public_##KEYTYPE##_via_PEM)
 
-#define IMPLEMENT_TEST_SUITE_MS(KEYTYPE, KEYTYPEstr)                    \
+#ifndef OPENSSL_NO_DSA
+# define IMPLEMENT_TEST_SUITE_MSBLOB(KEYTYPE, KEYTYPEstr)               \
     static int test_unprotected_##KEYTYPE##_via_MSBLOB(void)            \
     {                                                                   \
         return test_unprotected_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);  \
@@ -701,7 +714,14 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     static int test_public_##KEYTYPE##_via_MSBLOB(void)                 \
     {                                                                   \
         return test_public_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);       \
-    }                                                                   \
+    }
+
+# define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                         \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB);          \
+    ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB)
+
+# ifndef OPENSSL_NO_RC4
+#  define IMPLEMENT_TEST_SUITE_PVK(KEYTYPE, KEYTYPEstr)                 \
     static int test_unprotected_##KEYTYPE##_via_PVK(void)               \
     {                                                                   \
         return test_unprotected_via_PVK(KEYTYPEstr, key_##KEYTYPE);     \
@@ -711,11 +731,11 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
         return test_protected_via_PVK(KEYTYPEstr, key_##KEYTYPE);       \
     }
 
-#define ADD_TEST_SUITE_MS(KEYTYPE)                              \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB);          \
-    ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB);               \
+#  define ADD_TEST_SUITE_PVK(KEYTYPE)                           \
     ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK);             \
     ADD_TEST(test_protected_##KEYTYPE##_via_PVK)
+# endif
+#endif
 
 #ifndef OPENSSL_NO_DH
 DOMAIN_KEYS(DH);
@@ -724,7 +744,10 @@ IMPLEMENT_TEST_SUITE(DH, "DH")
 #ifndef OPENSSL_NO_DSA
 DOMAIN_KEYS(DSA);
 IMPLEMENT_TEST_SUITE(DSA, "DSA")
-IMPLEMENT_TEST_SUITE_MS(DSA, "DSA")
+IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
+# ifndef OPENSSL_NO_RC4
+IMPLEMENT_TEST_SUITE_PVK(DSA, "DSA")
+# endif
 #endif
 #ifndef OPENSSL_NO_EC
 DOMAIN_KEYS(EC);
@@ -742,7 +765,12 @@ KEYS(RSA);
 IMPLEMENT_TEST_SUITE(RSA, "RSA")
 KEYS(RSA_PSS);
 IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
-IMPLEMENT_TEST_SUITE_MS(RSA, "RSA")
+#ifndef OPENSSL_NO_DSA
+IMPLEMENT_TEST_SUITE_MSBLOB(RSA, "RSA")
+# ifndef OPENSSL_NO_RC4
+IMPLEMENT_TEST_SUITE_PVK(RSA, "RSA")
+# endif
+#endif
 
 int setup_tests(void)
 {
@@ -797,7 +825,10 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE(DSA);
-        ADD_TEST_SUITE_MS(DSA);
+        ADD_TEST_SUITE_MSBLOB(DSA);
+# ifndef OPENSSL_NO_RC4
+        ADD_TEST_SUITE_PVK(DSA);
+# endif
 #endif
 #ifndef OPENSSL_NO_EC
         ADD_TEST_SUITE(EC);
@@ -808,7 +839,12 @@ int setup_tests(void)
 #endif
         ADD_TEST_SUITE(RSA);
         ADD_TEST_SUITE(RSA_PSS);
-        ADD_TEST_SUITE_MS(RSA);
+#ifndef OPENSSL_NO_DSA
+        ADD_TEST_SUITE_MSBLOB(RSA);
+# ifndef OPENSSL_NO_RC4
+        ADD_TEST_SUITE_PVK(RSA);
+# endif
+#endif
     }
 
     return 1;
