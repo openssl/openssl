@@ -13,6 +13,7 @@
 
 #ifndef OPENSSL_NO_DH
     DESER("DH", "yes", "der", der_to_dh_deserializer_functions),
+    DESER("DHX", "yes", "der", der_to_dhx_deserializer_functions),
 #endif
 #ifndef OPENSSL_NO_DSA
     DESER("DSA", "yes", "der", der_to_dsa_deserializer_functions),

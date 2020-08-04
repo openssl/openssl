@@ -153,7 +153,8 @@ static int dh_priv_der(void *vctx, void *dh, OSSL_CORE_BIO *cout,
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    ret = ossl_prov_write_priv_der_from_obj(out, dh, EVP_PKEY_DH,
+    ret = ossl_prov_write_priv_der_from_obj(out, dh,
+                                            ossl_prov_dh_type_to_evp(dh),
                                             ossl_prov_prepare_dh_params,
                                             ossl_prov_dh_priv_to_der,
                                             &ctx->sc);
@@ -198,7 +199,8 @@ static int dh_pem_priv(void *vctx, void *dh, OSSL_CORE_BIO *cout,
     ctx->sc.cb = cb;
     ctx->sc.cbarg = cbarg;
 
-    ret = ossl_prov_write_priv_pem_from_obj(out, dh, EVP_PKEY_DH,
+    ret = ossl_prov_write_priv_pem_from_obj(out, dh,
+                                            ossl_prov_dh_type_to_evp(dh),
                                             ossl_prov_prepare_dh_params,
                                             ossl_prov_dh_priv_to_der,
                                             &ctx->sc);

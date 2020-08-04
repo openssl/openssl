@@ -64,6 +64,7 @@ int ossl_prov_prepare_dh_params(const void *dh, int nid,
                                 void **pstr, int *pstrtype);
 int ossl_prov_dh_pub_to_der(const void *dh, unsigned char **pder);
 int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder);
+int ossl_prov_dh_type_to_evp(const DH *dh);
 
 #ifndef OPENSSL_NO_EC
 void ecx_get_new_free_import(ECX_KEY_TYPE type,

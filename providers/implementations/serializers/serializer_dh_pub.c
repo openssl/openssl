@@ -80,7 +80,8 @@ static int dh_pub_der(void *ctx, void *dh, OSSL_CORE_BIO *cout,
     if (out == NULL)
         return 0;
 
-    ret = ossl_prov_write_pub_der_from_obj(out, dh, EVP_PKEY_DH,
+    ret = ossl_prov_write_pub_der_from_obj(out, dh,
+                                           ossl_prov_dh_type_to_evp(dh),
                                            ossl_prov_prepare_dh_params,
                                            ossl_prov_dh_pub_to_der);
     BIO_free(out);
@@ -120,7 +121,8 @@ static int dh_pub_pem(void *ctx, void *dh, OSSL_CORE_BIO *cout,
     if (out == NULL)
         return 0;
 
-    ret = ossl_prov_write_pub_pem_from_obj(out, dh, EVP_PKEY_DH,
+    ret = ossl_prov_write_pub_pem_from_obj(out, dh,
+                                           ossl_prov_dh_type_to_evp(dh),
                                            ossl_prov_prepare_dh_params,
                                            ossl_prov_dh_pub_to_der);
     BIO_free(out);
