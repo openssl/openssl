@@ -34,30 +34,35 @@ typedef struct {
     KDF_DATA *kdfdata;
 } PROV_KDF_CTX;
 
+static void *kdf_newctx(const char *kdfname, void *provctx)
+{
+    PROV_KDF_CTX *kdfctx = OPENSSL_zalloc(sizeof(PROV_KDF_CTX));
+    EVP_KDF *kdf = NULL;
+
+    if (kdfctx == NULL)
+        return NULL;
+
+    kdfctx->provctx = provctx;
+
+    kdf = EVP_KDF_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), kdfname, NULL);
+    if (kdf == NULL)
+        goto err;
+    kdfctx->kdfctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
+
+    if (kdfctx->kdfctx == NULL)
+        goto err;
+
+    return kdfctx;
+err:
+    OPENSSL_free(kdfctx);
+    return NULL;
+}
+
 #define KDF_NEWCTX(funcname, kdfname) \
     static void *kdf_##funcname##_newctx(void *provctx) \
     { \
-        PROV_KDF_CTX *kdfctx = OPENSSL_zalloc(sizeof(PROV_KDF_CTX)); \
-        EVP_KDF *kdf = NULL; \
-        \
-        if (kdfctx == NULL) \
-            return NULL; \
-        \
-        kdfctx->provctx = provctx; \
-        \
-        kdf = EVP_KDF_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), kdfname, NULL); \
-        if (kdf == NULL) \
-            goto err; \
-        kdfctx->kdfctx = EVP_KDF_CTX_new(kdf); \
-        EVP_KDF_free(kdf); \
-        \
-        if (kdfctx->kdfctx == NULL) \
-            goto err; \
-        \
-        return kdfctx; \
-    err: \
-        OPENSSL_free(kdfctx); \
-        return NULL; \
+        return kdf_newctx(kdfname, provctx); \
     }
 
 KDF_NEWCTX(tls1_prf, "TLS1-PRF")
@@ -125,29 +130,31 @@ static int kdf_set_ctx_params(void *vpkdfctx, const OSSL_PARAM params[])
     return EVP_KDF_CTX_set_params(pkdfctx->kdfctx, params);
 }
 
+static const OSSL_PARAM *kdf_settable_ctx_params(void *provctx,
+                                                 const char *kdfname)
+{
+    EVP_KDF *kdf = EVP_KDF_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), kdfname,
+                                 NULL);
+    const OSSL_PARAM *params;
+
+    if (kdf == NULL)
+        return NULL;
+
+    params = EVP_KDF_settable_ctx_params(kdf);
+    EVP_KDF_free(kdf);
+
+    return params;
+}
+
 #define KDF_SETTABLE_CTX_PARAMS(funcname, kdfname) \
-    static const OSSL_PARAM *kdf_##funcname##_settable_ctx_params(void) \
+    static const OSSL_PARAM *kdf_##funcname##_settable_ctx_params(void *provctx) \
     { \
-        /* \
-        * TODO(3.0): FIXME FIXME!! These settable_ctx_params functions should \
-        * should have a provctx argument so we can get hold of the libctx. \
-        */ \
-        EVP_KDF *kdf = EVP_KDF_fetch(NULL, kdfname, NULL); \
-        const OSSL_PARAM *params; \
-        \
-        if (kdf == NULL) \
-            return NULL; \
-        \
-        params = EVP_KDF_settable_ctx_params(kdf); \
-        EVP_KDF_free(kdf); \
-        \
-        return params; \
+        return kdf_settable_ctx_params(provctx, kdfname); \
     }
 
 KDF_SETTABLE_CTX_PARAMS(tls1_prf, "TLS1-PRF")
 KDF_SETTABLE_CTX_PARAMS(hkdf, "HKDF")
 KDF_SETTABLE_CTX_PARAMS(scrypt, "SCRYPT")
-
 
 #define KDF_KEYEXCH_FUNCTIONS(funcname) \
     const OSSL_DISPATCH kdf_##funcname##_keyexch_functions[] = { \
