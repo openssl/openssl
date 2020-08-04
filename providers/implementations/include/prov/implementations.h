@@ -365,6 +365,7 @@ extern const OSSL_DISPATCH ec_pub_pem_serializer_functions[];
 extern const OSSL_DISPATCH ec_param_pem_serializer_functions[];
 
 extern const OSSL_DISPATCH der_to_dh_deserializer_functions[];
+extern const OSSL_DISPATCH der_to_dhx_deserializer_functions[];
 extern const OSSL_DISPATCH der_to_dsa_deserializer_functions[];
 extern const OSSL_DISPATCH msblob_to_dsa_deserializer_functions[];
 extern const OSSL_DISPATCH pvk_to_dsa_deserializer_functions[];

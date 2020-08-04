@@ -369,41 +369,39 @@ negotiated protocol version. Otherwise it should be left unset.
 
 =head2 DSA parameters
 
-The EVP_PKEY_CTX_set_dsa_paramgen_bits() method sets the number of bits used
-for DSA parameter generation to I<nbits>. If not specified, 2048 is used.
+EVP_PKEY_CTX_set_dsa_paramgen_bits() sets the number of bits used for DSA
+parameter generation to B<nbits>. If not specified, 2048 is used.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_q_bits() method sets the number of bits in the
-subprime parameter I<q> for DSA parameter generation to I<qbits>. If not
-specified, 224 is used. If a digest function is specified below, this parameter
-is ignored and instead, the number of bits in I<q> matches the size of the
-digest.
+EVP_PKEY_CTX_set_dsa_paramgen_q_bits() sets the number of bits in the subprime
+parameter I<q> for DSA parameter generation to I<qbits>. If not specified, 224
+is used. If a digest function is specified below, this parameter is ignored and
+instead, the number of bits in I<q> matches the size of the digest.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_md() method sets the digest function used for
-DSA parameter generation to I<md>. If not specified, one of SHA-1, SHA-224, or
+EVP_PKEY_CTX_set_dsa_paramgen_md() sets the digest function used for DSA
+parameter generation to I<md>. If not specified, one of SHA-1, SHA-224, or
 SHA-256 is selected to match the bit length of I<q> above.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_md_props() method sets the digest function
-used for DSA parameter generation using I<md_name> and I<md_properties> to
-retrieve the digest from a provider.
+EVP_PKEY_CTX_set_dsa_paramgen_md_props() sets the digest function used for DSA
+parameter generation using I<md_name> and I<md_properties> to retrieve the
+digest from a provider.
 If not specified, I<md_name> will be set to one of SHA-1, SHA-224, or
 SHA-256 depending on the bit length of I<q> above. I<md_properties> is a
 property query string that has a default value of '' if not specified.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_gindex() method sets the I<gindex> used by
-the generator G. The default value is -1 which uses unverifiable g, otherwise
-a positive value uses verifiable g. This value must be saved if key validation
-of g is required, since it is not part of a persisted key.
+EVP_PKEY_CTX_set_dsa_paramgen_gindex() sets the I<gindex> used by the generator
+G. The default value is -1 which uses unverifiable g, otherwise a positive value
+uses verifiable g. This value must be saved if key validation of g is required,
+since it is not part of a persisted key.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_seed() method sets the I<seed> to use for
-generation rather than using a randomly generated value for the seed. This is
-useful for testing purposes only and can fail if the seed does not produce
-primes for both p & q on its first iteration. This value must be saved if
-key validation of p, q, and verifiable g are required, since it is not part of
-a persisted key.
+EVP_PKEY_CTX_set_dsa_paramgen_seed() sets the I<seed> to use for generation
+rather than using a randomly generated value for the seed. This is useful for
+testing purposes only and can fail if the seed does not produce primes for both
+p & q on its first iteration. This value must be saved if key validation of
+p, q, and verifiable g are required, since it is not part of a persisted key.
 
-The EVP_PKEY_CTX_set_dsa_paramgen_type() method sets the generation type to
-use FIPS186-4 generation if I<name> is "fips186_4", or FIPS186-2 generation if
-I<name> is "fips186_2". The default value is "fips186_4".
+EVP_PKEY_CTX_set_dsa_paramgen_type() sets the generation type to use FIPS186-4
+generation if I<name> is "fips186_4", or FIPS186-2 generation if I<name> is
+"fips186_2". The default value is "fips186_4".
 
 =head2 DH parameters
 
@@ -445,17 +443,16 @@ Uses a safe prime generator g (PKCS#3 format).
 
 The default is B<DH_PARAMGEN_TYPE_GENERATOR>.
 
-The EVP_PKEY_CTX_set_dh_paramgen_gindex() method sets the I<gindex> used by
-the generator G. The default value is -1 which uses unverifiable g, otherwise
-a positive value uses verifiable g. This value must be saved if key validation
-of g is required, since it is not part of a persisted key.
+EVP_PKEY_CTX_set_dh_paramgen_gindex() sets the I<gindex> used by the generator G.
+The default value is -1 which uses unverifiable g, otherwise a positive value
+uses verifiable g. This value must be saved if key validation of g is required,
+since it is not part of a persisted key.
 
-The EVP_PKEY_CTX_set_dh_paramgen_seed() method sets the I<seed> to use for
-generation rather than using a randomly generated value for the seed. This is
-useful for testing purposes only and can fail if the seed does not produce
-primes for both p & q on its first iteration. This value must be saved if
-key validation of p, q, and verifiable g are required, since it is not part of
-a persisted key.
+EVP_PKEY_CTX_set_dh_paramgen_seed() sets the I<seed> to use for generation
+rather than using a randomly generated value for the seed. This is useful for
+testing purposes only and can fail if the seed does not produce primes for both
+p & q on its first iteration. This value must be saved if key validation of p, q,
+and verifiable g are required, since it is not part of a persisted key.
 
 The EVP_PKEY_CTX_set_dh_pad() function sets the DH padding mode.
 If I<pad> is 1 the shared secret is padded with zeros up to the size of the DH
@@ -486,47 +483,47 @@ EVP_PKEY_derive() is the output of the KDF instead of the DH shared secret.
 The KDF output is typically used as a Key Encryption Key (KEK) that in turn
 encrypts a Content Encryption Key (CEK).
 
-The EVP_PKEY_CTX_set_dh_kdf_type() method sets the key derivation function type
-to I<kdf> for DH key derivation. Possible values are B<EVP_PKEY_DH_KDF_NONE>
-and B<EVP_PKEY_DH_KDF_X9_42> which uses the key derivation specified in RFC2631
+EVP_PKEY_CTX_set_dh_kdf_type() sets the key derivation function type to I<kdf>
+for DH key derivation. Possible values are B<EVP_PKEY_DH_KDF_NONE> and
+B<EVP_PKEY_DH_KDF_X9_42> which uses the key derivation specified in RFC2631
 (based on the keying algorithm described in X9.42). When using key derivation,
 the I<kdf_oid>, I<kdf_md> and I<kdf_outlen> parameters must also be specified.
 
-The EVP_PKEY_CTX_get_dh_kdf_type() method gets the key derivation function type
-for I<ctx> used for DH key derivation. Possible values are B<EVP_PKEY_DH_KDF_NONE>
-and B<EVP_PKEY_DH_KDF_X9_42>.
+EVP_PKEY_CTX_get_dh_kdf_type() gets the key derivation function type for I<ctx>
+used for DH key derivation. Possible values are B<EVP_PKEY_DH_KDF_NONE> and
+B<EVP_PKEY_DH_KDF_X9_42>.
 
-The EVP_PKEY_CTX_set0_dh_kdf_oid() method sets the key derivation function
-object identifier to I<oid> for DH key derivation. This OID should identify
-the algorithm to be used with the Content Encryption Key.
+EVP_PKEY_CTX_set0_dh_kdf_oid() sets the key derivation function object
+identifier to I<oid> for DH key derivation. This OID should identify the
+algorithm to be used with the Content Encryption Key.
 The library takes ownership of the object identifier so the caller should not
 free the original memory pointed to by I<oid>.
 
-The EVP_PKEY_CTX_get0_dh_kdf_oid() method gets the key derivation function oid
-for I<ctx> used for DH key derivation. The resulting pointer is owned by the
-library and should not be freed by the caller.
+EVP_PKEY_CTX_get0_dh_kdf_oid() gets the key derivation function oid for I<ctx>
+used for DH key derivation. The resulting pointer is owned by the library and
+should not be freed by the caller.
 
-The EVP_PKEY_CTX_set_dh_kdf_md() method sets the key derivation function
-message digest to I<md> for DH key derivation. Note that RFC2631 specifies
-that this digest should be SHA1 but OpenSSL tolerates other digests.
+EVP_PKEY_CTX_set_dh_kdf_md() sets the key derivation function message digest to
+I<md> for DH key derivation. Note that RFC2631 specifies that this digest should
+be SHA1 but OpenSSL tolerates other digests.
 
-The EVP_PKEY_CTX_get_dh_kdf_md() method gets the key derivation function
-message digest for I<ctx> used for DH key derivation.
+EVP_PKEY_CTX_get_dh_kdf_md() gets the key derivation function message digest for
+I<ctx> used for DH key derivation.
 
-The EVP_PKEY_CTX_set_dh_kdf_outlen() method sets the key derivation function
-output length to I<len> for DH key derivation.
+EVP_PKEY_CTX_set_dh_kdf_outlen() sets the key derivation function output length
+to I<len> for DH key derivation.
 
-The EVP_PKEY_CTX_get_dh_kdf_outlen() method gets the key derivation function
-output length for I<ctx> used for DH key derivation.
+EVP_PKEY_CTX_get_dh_kdf_outlen() gets the key derivation function output length
+for I<ctx> used for DH key derivation.
 
-The EVP_PKEY_CTX_set0_dh_kdf_ukm() method sets the user key material to
-I<ukm> and its length to I<len> for DH key derivation. This parameter is optional
-and corresponds to the partyAInfo field in RFC2631 terms. The specification
+EVP_PKEY_CTX_set0_dh_kdf_ukm() sets the user key material to I<ukm> and its
+length to I<len> for DH key derivation. This parameter is optional and
+corresponds to the partyAInfo field in RFC2631 terms. The specification
 requires that it is 512 bits long but this is not enforced by OpenSSL.
 The library takes ownership of the user key material so the caller should not
 free the original memory pointed to by I<ukm>.
 
-The EVP_PKEY_CTX_get0_dh_kdf_ukm() method gets the user key material for I<ctx>.
+EVP_PKEY_CTX_get0_dh_kdf_ukm() gets the user key material for I<ctx>.
 The return value is the user key material length. The resulting pointer is owned
 by the library and should not be freed by the caller.
 

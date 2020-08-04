@@ -35,6 +35,16 @@
     SER("DH", "yes", "pem", "private", dh_priv_pem_serializer_functions),
     SER("DH", "yes", "pem", "public", dh_pub_pem_serializer_functions),
     SER("DH", "yes", "pem", "parameters", dh_param_pem_serializer_functions),
+
+    SER("DHX", "yes", "text", "private", dh_priv_text_serializer_functions),
+    SER("DHX", "yes", "text", "public", dh_pub_text_serializer_functions),
+    SER("DHX", "yes", "text", "parameters", dh_param_text_serializer_functions),
+    SER("DHX", "yes", "der", "private", dh_priv_der_serializer_functions),
+    SER("DHX", "yes", "der", "public", dh_pub_der_serializer_functions),
+    SER("DHX", "yes", "der", "parameters", dh_param_der_serializer_functions),
+    SER("DHX", "yes", "pem", "private", dh_priv_pem_serializer_functions),
+    SER("DHX", "yes", "pem", "public", dh_pub_pem_serializer_functions),
+    SER("DHX", "yes", "pem", "parameters", dh_param_pem_serializer_functions),
 #endif
 
 #ifndef OPENSSL_NO_DSA

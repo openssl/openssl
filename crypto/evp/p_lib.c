@@ -1001,6 +1001,8 @@ int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 #ifndef OPENSSL_NO_DH
         else if (strcasecmp(name, "DH") == 0)
             type = EVP_PKEY_DH;
+        else if (strcasecmp(name, "X9.42 DH") == 0)
+            type = EVP_PKEY_DHX;
 #endif
 #ifndef OPENSSL_NO_DSA
         else if (strcasecmp(name, "DSA") == 0)

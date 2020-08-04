@@ -149,3 +149,8 @@ int ossl_prov_dh_priv_to_der(const void *dh, unsigned char **pder)
     return ret;
 }
 
+
+int ossl_prov_dh_type_to_evp(const DH *dh)
+{
+    return DH_test_flags(dh, DH_FLAG_TYPE_DHX) ? EVP_PKEY_DHX : EVP_PKEY_DH;
+}

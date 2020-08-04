@@ -740,6 +740,8 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
 #ifndef OPENSSL_NO_DH
 DOMAIN_KEYS(DH);
 IMPLEMENT_TEST_SUITE(DH, "DH")
+DOMAIN_KEYS(DHX);
+IMPLEMENT_TEST_SUITE(DHX, "X9.42 DH")
 #endif
 #ifndef OPENSSL_NO_DSA
 DOMAIN_KEYS(DSA);
@@ -804,6 +806,7 @@ int setup_tests(void)
     TEST_info("Generating keys...");
 #ifndef OPENSSL_NO_DH
     MAKE_DOMAIN_KEYS(DH, "DH", NULL);
+    MAKE_DOMAIN_KEYS(DHX, "X9.42 DH", NULL);
 #endif
 #ifndef OPENSSL_NO_DSA
     MAKE_DOMAIN_KEYS(DSA, "DSA", DSA_params);
@@ -822,6 +825,7 @@ int setup_tests(void)
     if (ok) {
 #ifndef OPENSSL_NO_DH
         ADD_TEST_SUITE(DH);
+        ADD_TEST_SUITE(DHX);
 #endif
 #ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE(DSA);
@@ -854,6 +858,7 @@ void cleanup_tests(void)
 {
 #ifndef OPENSSL_NO_DH
     FREE_DOMAIN_KEYS(DH);
+    FREE_DOMAIN_KEYS(DHX);
 #endif
 #ifndef OPENSSL_NO_DSA
     FREE_DOMAIN_KEYS(DSA);

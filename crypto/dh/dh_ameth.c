@@ -35,9 +35,19 @@
 static DH *d2i_dhp(const EVP_PKEY *pkey, const unsigned char **pp,
                    long length)
 {
-    if (pkey->ameth == &dhx_asn1_meth)
-        return d2i_DHxparams(NULL, pp, length);
-    return d2i_DHparams(NULL, pp, length);
+    DH *dh = NULL;
+    int is_dhx = (pkey->ameth == &dhx_asn1_meth);
+
+    if (is_dhx)
+        dh = d2i_DHxparams(NULL, pp, length);
+    else
+        dh = d2i_DHparams(NULL, pp, length);
+
+    if (dh != NULL) {
+        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+        DH_set_flags(dh, is_dhx ? DH_FLAG_TYPE_DHX : DH_FLAG_TYPE_DH);
+    }
+    return dh;
 }
 
 static int i2d_dhp(const EVP_PKEY *pkey, const DH *a, unsigned char **pp)
@@ -101,7 +111,6 @@ static int dh_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
     ASN1_INTEGER_free(public_key);
     DH_free(dh);
     return 0;
-
 }
 
 static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
@@ -548,11 +557,15 @@ err:
     return rv;
 }
 
-static int dh_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
+static int dh_pkey_import_from_type(const OSSL_PARAM params[], void *vpctx,
+                                    int type)
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     DH *dh = dh_new_with_libctx(pctx->libctx);
+
+    DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+    DH_set_flags(dh, type == EVP_PKEY_DH ? DH_FLAG_TYPE_DH : DH_FLAG_TYPE_DHX);
 
     if (dh == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
@@ -561,11 +574,21 @@ static int dh_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 
     if (!dh_ffc_params_fromdata(dh, params)
         || !dh_key_fromdata(dh, params)
-        || !EVP_PKEY_assign_DH(pkey, dh)) {
+        || !EVP_PKEY_assign(pkey, type, dh)) {
         DH_free(dh);
         return 0;
     }
     return 1;
+}
+
+static int dh_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
+{
+    return dh_pkey_import_from_type(params, vpctx, EVP_PKEY_DH);
+}
+
+static int dhx_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
+{
+    return dh_pkey_import_from_type(params, vpctx, EVP_PKEY_DHX);
 }
 
 const EVP_PKEY_ASN1_METHOD dh_asn1_meth = {
@@ -649,7 +672,11 @@ const EVP_PKEY_ASN1_METHOD dhx_asn1_meth = {
 
     0,
     dh_pkey_public_check,
-    dh_pkey_param_check
+    dh_pkey_param_check,
+    0, 0, 0, 0,
+    dh_pkey_dirty_cnt,
+    dh_pkey_export_to,
+    dhx_pkey_import_from,
 };
 
 #ifndef OPENSSL_NO_CMS

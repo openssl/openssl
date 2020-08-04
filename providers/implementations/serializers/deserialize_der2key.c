@@ -221,6 +221,7 @@ static int der2key_export_object(void *vctx,
 
 #ifndef OPENSSL_NO_DH
 IMPLEMENT_NEWCTX("DH", DH, dh, EVP_PKEY_get1_DH, DH_free);
+IMPLEMENT_NEWCTX("DHX", DHX, dhx, EVP_PKEY_get1_DH, DH_free);
 #endif
 #ifndef OPENSSL_NO_DSA
 IMPLEMENT_NEWCTX("DSA", DSA, dsa, EVP_PKEY_get1_DSA, DSA_free);

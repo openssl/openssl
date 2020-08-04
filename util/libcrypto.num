@@ -5240,3 +5240,13 @@ EVP_PKEY_CTX_set_scrypt_N               ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_scrypt_r               ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_scrypt_p               ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_scrypt_maxmem_bytes    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_dh_kdf_type            ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_get_dh_kdf_type            ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_set0_dh_kdf_oid            ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_get0_dh_kdf_oid            ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_set_dh_kdf_md              ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_get_dh_kdf_md              ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_set_dh_kdf_outlen          ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_get_dh_kdf_outlen          ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_set0_dh_kdf_ukm            ?	3_0_0	EXIST::FUNCTION:DH
+EVP_PKEY_CTX_get0_dh_kdf_ukm            ?	3_0_0	EXIST::FUNCTION:DH
