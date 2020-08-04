@@ -267,6 +267,7 @@ extern const OSSL_DISPATCH crngt_functions[];
 
 /* Key management */
 extern const OSSL_DISPATCH dh_keymgmt_functions[];
+extern const OSSL_DISPATCH dhx_keymgmt_functions[];
 extern const OSSL_DISPATCH dsa_keymgmt_functions[];
 extern const OSSL_DISPATCH rsa_keymgmt_functions[];
 extern const OSSL_DISPATCH rsapss_keymgmt_functions[];

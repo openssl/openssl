@@ -40,6 +40,10 @@ extern "C" {
 
 #  define DH_FLAG_CACHE_MONT_P     0x01
 
+#  define DH_FLAG_TYPE_MASK             0xF000
+#  define DH_FLAG_TYPE_DH               0x0000
+#  define DH_FLAG_TYPE_DHX              0x1000
+
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.

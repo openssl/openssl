@@ -374,6 +374,7 @@ static const OSSL_ALGORITHM deflt_asym_cipher[] = {
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
     { "DH:dhKeyAgreement", "provider=default", dh_keymgmt_functions },
+    { "DHX:X9.42 DH:dhpublicnumber", "provider=default", dhx_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_DSA
     { "DSA:dsaEncryption", "provider=default", dsa_keymgmt_functions },
