@@ -150,7 +150,6 @@ static int is_legacy_alg(int id, const char *keytype)
      * support
      */
     case EVP_PKEY_SM2:
-    case EVP_PKEY_DHX:
     case EVP_PKEY_CMAC:
     case EVP_PKEY_HMAC:
     case EVP_PKEY_SIPHASH:
@@ -1040,6 +1039,28 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
         return -2;
 
 # ifndef OPENSSL_NO_DH
+    if (keytype == EVP_PKEY_DHX) {
+        switch (cmd) {
+        case EVP_PKEY_CTRL_DH_KDF_TYPE:
+            return EVP_PKEY_CTX_set_dh_kdf_type(ctx, p1);
+        case EVP_PKEY_CTRL_DH_KDF_MD:
+            return EVP_PKEY_CTX_set_dh_kdf_md(ctx, p2);
+        case EVP_PKEY_CTRL_DH_KDF_OUTLEN:
+            return EVP_PKEY_CTX_set_dh_kdf_outlen(ctx, p1);
+        case EVP_PKEY_CTRL_DH_KDF_UKM:
+            return EVP_PKEY_CTX_set0_dh_kdf_ukm(ctx, p2, p1);
+        case EVP_PKEY_CTRL_DH_KDF_OID:
+            return EVP_PKEY_CTX_set0_dh_kdf_oid(ctx, p2);
+        case EVP_PKEY_CTRL_GET_DH_KDF_MD:
+            return EVP_PKEY_CTX_get_dh_kdf_md(ctx, p2);
+        case EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN:
+            return EVP_PKEY_CTX_get_dh_kdf_outlen(ctx, p2);
+        case EVP_PKEY_CTRL_GET_DH_KDF_UKM:
+            return EVP_PKEY_CTX_get0_dh_kdf_ukm(ctx, p2);
+        case EVP_PKEY_CTRL_GET_DH_KDF_OID:
+            return EVP_PKEY_CTX_get0_dh_kdf_oid(ctx, p2);
+        }
+    }
     if (keytype == EVP_PKEY_DH) {
         switch (cmd) {
             case EVP_PKEY_CTRL_DH_PAD:

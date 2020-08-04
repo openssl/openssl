@@ -13,10 +13,12 @@
  */
 #include "internal/deprecated.h"
 
+#include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
+#include <openssl/err.h>
 #include <openssl/params.h>
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -30,6 +32,23 @@ static OSSL_FUNC_keyexch_freectx_fn dh_freectx;
 static OSSL_FUNC_keyexch_dupctx_fn dh_dupctx;
 static OSSL_FUNC_keyexch_set_ctx_params_fn dh_set_ctx_params;
 static OSSL_FUNC_keyexch_settable_ctx_params_fn dh_settable_ctx_params;
+static OSSL_FUNC_keyexch_get_ctx_params_fn dh_get_ctx_params;
+static OSSL_FUNC_keyexch_gettable_ctx_params_fn dh_gettable_ctx_params;
+
+/*
+ * This type is only really used to handle some legacy related functionality.
+ * If you need to use other KDF's (such as SSKDF) just use PROV_DH_KDF_NONE
+ * here and then create and run a KDF after the key is derived.
+ * Note that X942 has 2 variants of key derivation:
+ *   (1) DH_KDF_X9_42_ASN1 - which contains an ANS1 encoded object that has
+ *   the counter embedded in it.
+ *   (2) DH_KDF_X941_CONCAT - which is the same as ECDH_X963_KDF (which can be
+ *       done by creating a "X963KDF".
+ */
+enum kdf_type {
+    PROV_DH_KDF_NONE = 0,
+    PROV_DH_KDF_X9_42_ASN1
+};
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
@@ -42,6 +61,18 @@ typedef struct {
     DH *dh;
     DH *dhpeer;
     unsigned int pad : 1;
+
+    /* DH KDF */
+    /* KDF (if any) to use for DH */
+    enum kdf_type kdf_type;
+    /* Message digest to use for key derivation */
+    EVP_MD *kdf_md;
+    /* User key material */
+    unsigned char *kdf_ukm;
+    size_t kdf_ukmlen;
+    /* KDF output length */
+    size_t kdf_outlen;
+    char *kdf_cekalg;
 } PROV_DH_CTX;
 
 static void *dh_newctx(void *provctx)
@@ -51,6 +82,7 @@ static void *dh_newctx(void *provctx)
     if (pdhctx == NULL)
         return NULL;
     pdhctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    pdhctx->kdf_type = PROV_DH_KDF_NONE;
     return pdhctx;
 }
 
@@ -62,6 +94,7 @@ static int dh_init(void *vpdhctx, void *vdh)
         return 0;
     DH_free(pdhctx->dh);
     pdhctx->dh = vdh;
+    pdhctx->kdf_type = PROV_DH_KDF_NONE;
     return 1;
 }
 
@@ -76,8 +109,9 @@ static int dh_set_peer(void *vpdhctx, void *vdh)
     return 1;
 }
 
-static int dh_derive(void *vpdhctx, unsigned char *secret, size_t *secretlen,
-                     size_t outlen)
+static int dh_plain_derive(void *vpdhctx,
+                           unsigned char *secret, size_t *secretlen,
+                           size_t outlen)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
     int ret;
@@ -108,12 +142,74 @@ static int dh_derive(void *vpdhctx, unsigned char *secret, size_t *secretlen,
     return 1;
 }
 
+static int dh_X9_42_kdf_derive(void *vpdhctx, unsigned char *secret,
+                               size_t *secretlen, size_t outlen)
+{
+    PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
+    unsigned char *stmp = NULL;
+    size_t stmplen;
+    int ret = 0;
+
+    if (secret == NULL) {
+        *secretlen = pdhctx->kdf_outlen;
+        return 1;
+    }
+
+    if (pdhctx->kdf_outlen > outlen)
+        return 0;
+    if (!dh_plain_derive(pdhctx, NULL, &stmplen, 0))
+        return 0;
+    if ((stmp = OPENSSL_secure_malloc(stmplen)) == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+    if (!dh_plain_derive(pdhctx, stmp, &stmplen, stmplen))
+        goto err;
+
+    /* Do KDF stuff */
+    if (pdhctx->kdf_type == PROV_DH_KDF_X9_42_ASN1) {
+        if (!dh_KDF_X9_42_asn1(secret, pdhctx->kdf_outlen,
+                               stmp, stmplen,
+                               pdhctx->kdf_cekalg,
+                               pdhctx->kdf_ukm,
+                               pdhctx->kdf_ukmlen,
+                               pdhctx->kdf_md,
+                               pdhctx->libctx, NULL))
+            goto err;
+    }
+    *secretlen = pdhctx->kdf_outlen;
+    ret = 1;
+err:
+    OPENSSL_secure_clear_free(stmp, stmplen);
+    return ret;
+}
+
+static int dh_derive(void *vpdhctx, unsigned char *secret,
+                     size_t *psecretlen, size_t outlen)
+{
+    PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
+
+    switch (pdhctx->kdf_type) {
+        case PROV_DH_KDF_NONE:
+            return dh_plain_derive(pdhctx, secret, psecretlen, outlen);
+        case PROV_DH_KDF_X9_42_ASN1:
+            return dh_X9_42_kdf_derive(pdhctx, secret, psecretlen, outlen);
+        default:
+            break;
+    }
+    return 0;
+}
+
+
 static void dh_freectx(void *vpdhctx)
 {
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
 
+    OPENSSL_free(pdhctx->kdf_cekalg);
     DH_free(pdhctx->dh);
     DH_free(pdhctx->dhpeer);
+    EVP_MD_free(pdhctx->kdf_md);
+    OPENSSL_clear_free(pdhctx->kdf_ukm, pdhctx->kdf_ukmlen);
 
     OPENSSL_free(pdhctx);
 }
@@ -128,18 +224,40 @@ static void *dh_dupctx(void *vpdhctx)
         return NULL;
 
     *dstctx = *srcctx;
-    if (dstctx->dh != NULL && !DH_up_ref(dstctx->dh)) {
-        OPENSSL_free(dstctx);
-        return NULL;
-    }
+    dstctx->dh = NULL;
+    dstctx->dhpeer = NULL;
+    dstctx->kdf_md = NULL;
+    dstctx->kdf_ukm = NULL;
+    dstctx->kdf_cekalg = NULL;
 
-    if (dstctx->dhpeer != NULL && !DH_up_ref(dstctx->dhpeer)) {
-        DH_free(dstctx->dh);
-        OPENSSL_free(dstctx);
-        return NULL;
+    if (dstctx->dh != NULL && !DH_up_ref(srcctx->dh))
+        goto err;
+    else
+        dstctx->dh = srcctx->dh;
+
+    if (dstctx->dhpeer != NULL && !DH_up_ref(srcctx->dhpeer))
+        goto err;
+    else
+        dstctx->dhpeer = srcctx->dhpeer;
+
+    if (srcctx->kdf_md != NULL && !EVP_MD_up_ref(srcctx->kdf_md))
+        goto err;
+    else
+        dstctx->kdf_md = srcctx->kdf_md;
+
+    /* Duplicate UKM data if present */
+    if (srcctx->kdf_ukm != NULL && srcctx->kdf_ukmlen > 0) {
+        dstctx->kdf_ukm = OPENSSL_memdup(srcctx->kdf_ukm,
+                                         srcctx->kdf_ukmlen);
+        if (dstctx->kdf_ukm == NULL)
+            goto err;
     }
+    dstctx->kdf_cekalg = OPENSSL_strdup(srcctx->kdf_cekalg);
 
     return dstctx;
+err:
+    dh_freectx(dstctx);
+    return NULL;
 }
 
 static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
@@ -147,25 +265,178 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
     PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
     const OSSL_PARAM *p;
     unsigned int pad;
+    char name[80] = { '\0' }; /* should be big enough */
+    char *str = NULL;
 
     if (pdhctx == NULL || params == NULL)
         return 0;
 
+    p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_KDF_TYPE);
+    if (p != NULL) {
+        str = name;
+        if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(name)))
+            return 0;
+
+        if (name[0] == '\0')
+            pdhctx->kdf_type = PROV_DH_KDF_NONE;
+        else if (strcmp(name, OSSL_KDF_NAME_X942KDF) == 0)
+            pdhctx->kdf_type = PROV_DH_KDF_X9_42_ASN1;
+        else
+            return 0;
+    }
+    p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_KDF_DIGEST);
+    if (p != NULL) {
+        char mdprops[80] = { '\0' }; /* should be big enough */
+
+        str = name;
+        if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(name)))
+            return 0;
+
+        str = mdprops;
+        p = OSSL_PARAM_locate_const(params,
+                                    OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS);
+
+        if (p != NULL) {
+            if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(mdprops)))
+                return 0;
+        }
+
+        EVP_MD_free(pdhctx->kdf_md);
+        pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
+
+        if (pdhctx->kdf_md == NULL)
+            return 0;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_KDF_OUTLEN);
+    if (p != NULL) {
+        size_t outlen;
+
+        if (!OSSL_PARAM_get_size_t(p, &outlen))
+            return 0;
+        pdhctx->kdf_outlen = outlen;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_KDF_UKM);
+    if (p != NULL) {
+        void *tmp_ukm = NULL;
+        size_t tmp_ukmlen;
+
+        OPENSSL_free(pdhctx->kdf_ukm);
+        pdhctx->kdf_ukm = NULL;
+        pdhctx->kdf_ukmlen = 0;
+        /* ukm is an optional field so it can be NULL */
+        if (p->data != NULL && p->data_size != 0) {
+            if (!OSSL_PARAM_get_octet_string(p, &tmp_ukm, 0, &tmp_ukmlen))
+                return 0;
+            pdhctx->kdf_ukm = tmp_ukm;
+            pdhctx->kdf_ukmlen = tmp_ukmlen;
+        }
+    }
+
     p = OSSL_PARAM_locate_const(params, OSSL_EXCHANGE_PARAM_PAD);
-    if (p == NULL || !OSSL_PARAM_get_uint(p, &pad))
-        return 0;
-    pdhctx->pad = pad ? 1 : 0;
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_uint(p, &pad))
+            return 0;
+        pdhctx->pad = pad ? 1 : 0;
+    }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_CEK_ALG);
+    if (p != NULL) {
+        str = name;
+        if (!OSSL_PARAM_get_utf8_string(p, &str, sizeof(name)))
+            return 0;
+        pdhctx->kdf_cekalg = OPENSSL_strdup(name);
+    }
     return 1;
 }
 
 static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_int(OSSL_EXCHANGE_PARAM_PAD, NULL),
+    OSSL_PARAM_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST_PROPS, NULL, 0),
+    OSSL_PARAM_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_CEK_ALG, NULL, 0),
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dh_settable_ctx_params(void *provctx)
+static const OSSL_PARAM *dh_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
+}
+
+static const OSSL_PARAM known_gettable_ctx_params[] = {
+    OSSL_PARAM_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE, NULL),
+    OSSL_PARAM_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST, NULL, 0),
+    OSSL_PARAM_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN, NULL),
+    OSSL_PARAM_DEFN(OSSL_EXCHANGE_PARAM_KDF_UKM, OSSL_PARAM_OCTET_PTR,
+                    NULL, 0),
+    OSSL_PARAM_size_t(OSSL_EXCHANGE_PARAM_KDF_UKM_LEN, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *dh_gettable_ctx_params(ossl_unused void *provctx)
+{
+    return known_gettable_ctx_params;
+}
+
+static int dh_get_ctx_params(void *vpdhctx, OSSL_PARAM params[])
+{
+    PROV_DH_CTX *pdhctx = (PROV_DH_CTX *)vpdhctx;
+    OSSL_PARAM *p;
+
+    if (pdhctx == NULL || params == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_TYPE);
+    if (p != NULL) {
+        const char *kdf_type = NULL;
+
+        switch (pdhctx->kdf_type) {
+            case PROV_DH_KDF_NONE:
+                kdf_type = "";
+                break;
+            case PROV_DH_KDF_X9_42_ASN1:
+                kdf_type = OSSL_KDF_NAME_X942KDF;
+                break;
+            default:
+                return 0;
+        }
+
+        if (!OSSL_PARAM_set_utf8_string(p, kdf_type))
+            return 0;
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_DIGEST);
+    if (p != NULL
+            && !OSSL_PARAM_set_utf8_string(p, pdhctx->kdf_md == NULL
+                                           ? ""
+                                           : EVP_MD_name(pdhctx->kdf_md))){
+        return 0;
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_OUTLEN);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, pdhctx->kdf_outlen))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_UKM);
+    if (p != NULL && !OSSL_PARAM_set_octet_ptr(p, pdhctx->kdf_ukm, 0))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_EXCHANGE_PARAM_KDF_UKM_LEN);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, pdhctx->kdf_ukmlen))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_KDF_PARAM_CEK_ALG);
+    if (p != NULL
+            && !OSSL_PARAM_set_utf8_string(p, pdhctx->kdf_cekalg == NULL
+                                           ? "" :  pdhctx->kdf_cekalg))
+        return 0;
+
+    return 1;
 }
 
 const OSSL_DISPATCH dh_keyexch_functions[] = {
@@ -178,5 +449,8 @@ const OSSL_DISPATCH dh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS, (void (*)(void))dh_set_ctx_params },
     { OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS,
       (void (*)(void))dh_settable_ctx_params },
+    { OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS, (void (*)(void))dh_get_ctx_params },
+    { OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS,
+      (void (*)(void))dh_gettable_ctx_params },
     { 0, NULL }
 };

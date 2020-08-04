@@ -486,47 +486,47 @@ EVP_PKEY_derive() is the output of the KDF instead of the DH shared secret.
 The KDF output is typically used as a Key Encryption Key (KEK) that in turn
 encrypts a Content Encryption Key (CEK).
 
-The EVP_PKEY_CTX_set_dh_kdf_type() macro sets the key derivation function type
+The EVP_PKEY_CTX_set_dh_kdf_type() method sets the key derivation function type
 to I<kdf> for DH key derivation. Possible values are B<EVP_PKEY_DH_KDF_NONE>
 and B<EVP_PKEY_DH_KDF_X9_42> which uses the key derivation specified in RFC2631
 (based on the keying algorithm described in X9.42). When using key derivation,
 the I<kdf_oid>, I<kdf_md> and I<kdf_outlen> parameters must also be specified.
 
-The EVP_PKEY_CTX_get_dh_kdf_type() macro gets the key derivation function type
+The EVP_PKEY_CTX_get_dh_kdf_type() method gets the key derivation function type
 for I<ctx> used for DH key derivation. Possible values are B<EVP_PKEY_DH_KDF_NONE>
 and B<EVP_PKEY_DH_KDF_X9_42>.
 
-The EVP_PKEY_CTX_set0_dh_kdf_oid() macro sets the key derivation function
+The EVP_PKEY_CTX_set0_dh_kdf_oid() method sets the key derivation function
 object identifier to I<oid> for DH key derivation. This OID should identify
 the algorithm to be used with the Content Encryption Key.
 The library takes ownership of the object identifier so the caller should not
 free the original memory pointed to by I<oid>.
 
-The EVP_PKEY_CTX_get0_dh_kdf_oid() macro gets the key derivation function oid
+The EVP_PKEY_CTX_get0_dh_kdf_oid() method gets the key derivation function oid
 for I<ctx> used for DH key derivation. The resulting pointer is owned by the
 library and should not be freed by the caller.
 
-The EVP_PKEY_CTX_set_dh_kdf_md() macro sets the key derivation function
+The EVP_PKEY_CTX_set_dh_kdf_md() method sets the key derivation function
 message digest to I<md> for DH key derivation. Note that RFC2631 specifies
 that this digest should be SHA1 but OpenSSL tolerates other digests.
 
-The EVP_PKEY_CTX_get_dh_kdf_md() macro gets the key derivation function
+The EVP_PKEY_CTX_get_dh_kdf_md() method gets the key derivation function
 message digest for I<ctx> used for DH key derivation.
 
-The EVP_PKEY_CTX_set_dh_kdf_outlen() macro sets the key derivation function
+The EVP_PKEY_CTX_set_dh_kdf_outlen() method sets the key derivation function
 output length to I<len> for DH key derivation.
 
-The EVP_PKEY_CTX_get_dh_kdf_outlen() macro gets the key derivation function
+The EVP_PKEY_CTX_get_dh_kdf_outlen() method gets the key derivation function
 output length for I<ctx> used for DH key derivation.
 
-The EVP_PKEY_CTX_set0_dh_kdf_ukm() macro sets the user key material to
+The EVP_PKEY_CTX_set0_dh_kdf_ukm() method sets the user key material to
 I<ukm> and its length to I<len> for DH key derivation. This parameter is optional
 and corresponds to the partyAInfo field in RFC2631 terms. The specification
 requires that it is 512 bits long but this is not enforced by OpenSSL.
 The library takes ownership of the user key material so the caller should not
 free the original memory pointed to by I<ukm>.
 
-The EVP_PKEY_CTX_get0_dh_kdf_ukm() macro gets the user key material for I<ctx>.
+The EVP_PKEY_CTX_get0_dh_kdf_ukm() method gets the user key material for I<ctx>.
 The return value is the user key material length. The resulting pointer is owned
 by the library and should not be freed by the caller.
 
@@ -641,7 +641,12 @@ EVP_PKEY_CTX_set_rsa_mgf1_md(), EVP_PKEY_CTX_set_rsa_oaep_md(),
 EVP_PKEY_CTX_get_rsa_oaep_md(), EVP_PKEY_CTX_set0_rsa_oaep_label(),
 EVP_PKEY_CTX_get0_rsa_oaep_label(), EVP_PKEY_CTX_set_rsa_pss_saltlen(),
 EVP_PKEY_CTX_get_rsa_pss_saltlen(), EVP_PKEY_CTX_set_dsa_paramgen_bits(),
-EVP_PKEY_CTX_set_dsa_paramgen_q_bits() and EVP_PKEY_CTX_set_dsa_paramgen_md()
+EVP_PKEY_CTX_set_dsa_paramgen_q_bits(), EVP_PKEY_CTX_set_dsa_paramgen_md().
+EVP_PKEY_CTX_set_dh_kdf_type(), EVP_PKEY_CTX_get_dh_kdf_type(),
+EVP_PKEY_CTX_set0_dh_kdf_oid(), EVP_PKEY_CTX_get0_dh_kdf_oid(),
+EVP_PKEY_CTX_set_dh_kdf_md(), EVP_PKEY_CTX_get_dh_kdf_md(),
+EVP_PKEY_CTX_set_dh_kdf_outlen(), EVP_PKEY_CTX_get_dh_kdf_outlen(),
+EVP_PKEY_CTX_set0_dh_kdf_ukm() and EVP_PKEY_CTX_get0_dh_kdf_ukm()
 were macros in OpenSSL 1.1.1 and below.
 From OpenSSL 3.0 they are functions.
 
