@@ -66,6 +66,29 @@ int DER_w_boolean(WPACKET *pkt, int tag, int b)
         && int_end_context(pkt, tag);
 }
 
+int DER_w_octet_string(WPACKET *pkt, int tag,
+                       const unsigned char *data, size_t data_n)
+{
+    return int_start_context(pkt, tag)
+        && WPACKET_start_sub_packet(pkt)
+        && WPACKET_memcpy(pkt, data, data_n)
+        && WPACKET_close(pkt)
+        && WPACKET_put_bytes_u8(pkt, DER_P_OCTET_STRING)
+        && int_end_context(pkt, tag);
+}
+
+int DER_w_octet_string_uint32(WPACKET *pkt, int tag, uint32_t value)
+{
+    unsigned char tmp[4] = { 0, 0, 0, 0 };
+    unsigned char *pbuf = tmp + (sizeof(tmp) - 1);
+
+    while (value > 0) {
+        *pbuf-- = (value & 0xFF);
+        value >>= 8;
+    }
+    return DER_w_octet_string(pkt, tag, tmp, sizeof(tmp));
+}
+
 static int int_der_w_integer(WPACKET *pkt, int tag,
                              int (*put_bytes)(WPACKET *pkt, const void *v,
                                               unsigned int *top_byte),

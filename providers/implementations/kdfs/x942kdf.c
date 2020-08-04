@@ -9,28 +9,20 @@
  */
 
 #include "e_os.h"
+#include <openssl/core_names.h>
+#include <openssl/core_dispatch.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#include "internal/packet.h"
+#include "internal/der.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommonerr.h"
+#include "prov/implementations.h"
+#include "prov/provider_util.h"
+#include "prov/der_wrap.h"
 
-#ifndef OPENSSL_NO_CMS
-
-# include <stdlib.h>
-# include <stdarg.h>
-# include <string.h>
-# include <openssl/hmac.h>
-# include <openssl/cms.h>
-# include <openssl/evp.h>
-# include <openssl/kdf.h>
-# include <openssl/x509.h>
-# include <openssl/obj_mac.h>
-# include <openssl/core_names.h>
-# include "internal/cryptlib.h"
-# include "internal/numbers.h"
-# include "crypto/evp.h"
-# include "prov/provider_ctx.h"
-# include "prov/providercommonerr.h"
-# include "prov/implementations.h"
-# include "prov/provider_util.h"
-
-# define X942KDF_MAX_INLEN (1 << 30)
+#define X942KDF_MAX_INLEN (1 << 30)
 
 static OSSL_FUNC_kdf_newctx_fn x942kdf_new;
 static OSSL_FUNC_kdf_freectx_fn x942kdf_free;
@@ -46,42 +38,83 @@ typedef struct {
     PROV_DIGEST digest;
     unsigned char *secret;
     size_t secret_len;
-    int cek_nid;
     unsigned char *ukm;
     size_t ukm_len;
     size_t dkm_len;
+    const unsigned char *cek_oid;
+    size_t cek_oid_len;
 } KDF_X942;
 
-/* A table of allowed wrapping algorithms and the associated output lengths */
+/*
+ * A table of allowed wrapping algorithms, oids and the associated output
+ * lengths.
+ * NOTE: RC2wrap and camellia128_wrap have been removed as there are no
+ * corresponding ciphers for these operations.
+ */
 static const struct {
-    int nid;
+    const char *name;
+    const unsigned char *oid;
+    size_t oid_len;
     size_t keklen; /* size in bytes */
 } kek_algs[] = {
-    { NID_id_smime_alg_CMS3DESwrap, 24 },
-    { NID_id_smime_alg_CMSRC2wrap, 16 },
-    { NID_id_aes128_wrap, 16 },
-    { NID_id_aes192_wrap, 24 },
-    { NID_id_aes256_wrap, 32 },
-    { NID_id_camellia128_wrap, 16 },
-    { NID_id_camellia192_wrap, 24 },
-    { NID_id_camellia256_wrap, 32 }
+    { "AES-128-WRAP", der_oid_id_aes128_wrap, DER_OID_SZ_id_aes128_wrap, 16 },
+    { "AES-192-WRAP", der_oid_id_aes192_wrap, DER_OID_SZ_id_aes192_wrap, 24 },
+    { "AES-256-WRAP", der_oid_id_aes256_wrap, DER_OID_SZ_id_aes256_wrap, 32 },
+#ifndef FIPS_MODULE
+    { "DES3-WRAP", der_oid_id_alg_CMS3DESwrap, DER_OID_SZ_id_alg_CMS3DESwrap,
+      24 },
+#endif
 };
 
-/* Skip past an ASN1 structure: for OBJECT skip content octets too */
-static int skip_asn1(unsigned char **pp, long *plen, int exptag)
+static int find_alg_id(OPENSSL_CTX *libctx, const char *algname, size_t *id)
 {
-    int i, tag, xclass;
-    long tmplen;
-    const unsigned char *q = *pp;
+    int ret = 1;
+    size_t i;
+    EVP_CIPHER *cipher;
 
-    i = ASN1_get_object(&q, &tmplen, &tag, &xclass, *plen);
-    if ((i & 0x80) != 0 || tag != exptag || xclass != V_ASN1_UNIVERSAL)
-        return 0;
-    if (tag == V_ASN1_OBJECT)
-        q += tmplen;
-    *pp = (unsigned char *)q;
-    *plen -= q - *pp;
-    return 1;
+    cipher = EVP_CIPHER_fetch(libctx, algname, NULL);
+    if (cipher != NULL) {
+        for (i = 0; i < OSSL_NELEM(kek_algs); i++) {
+            if (EVP_CIPHER_is_a(cipher, kek_algs[i].name)) {
+                *id = i;
+                goto end;
+            }
+        }
+    }
+    ret = 0;
+    ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_CEK_ALG);
+end:
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+static int DER_w_keyinfo(WPACKET *pkt,
+                         const unsigned char *der_oid, size_t der_oidlen,
+                         unsigned char **pcounter)
+{
+    return DER_w_begin_sequence(pkt, -1)
+           /* Store the initial value of 1 into the counter */
+           && DER_w_octet_string_uint32(pkt, -1, 1)
+           /* Remember where we stored the counter in the buffer */
+           && (pcounter == NULL
+               || (*pcounter = WPACKET_get_curr(pkt)) != NULL)
+           && DER_w_precompiled(pkt, -1, der_oid, der_oidlen)
+           && DER_w_end_sequence(pkt, -1);
+}
+
+static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen,
+                                 const unsigned char *der_oid, size_t der_oidlen,
+                                 const unsigned char *ukm, size_t ukmlen,
+                                 uint32_t keylen_bits, unsigned char **pcounter)
+{
+    return (buf != NULL ? WPACKET_init_der(pkt, buf, buflen) :
+                          WPACKET_init_null_der(pkt))
+           && DER_w_begin_sequence(pkt, -1)
+           && DER_w_octet_string_uint32(pkt, 2, keylen_bits)
+           && (ukm == NULL || DER_w_octet_string(pkt, 0, ukm, ukmlen))
+           && DER_w_keyinfo(pkt, der_oid, der_oidlen, pcounter)
+           && DER_w_end_sequence(pkt, -1)
+           && WPACKET_finish(pkt);
 }
 
 /*
@@ -94,15 +127,18 @@ static int skip_asn1(unsigned char **pp, long *plen, int exptag)
  *      partyAInfo [0] OCTET STRING OPTIONAL,
  *      suppPubInfo [2] OCTET STRING
  *  }
+ *  Note suppPubInfo is the key length (in bits) (stored into 4 bytes)
+ *
  *
  *  KeySpecificInfo ::= SEQUENCE {
  *      algorithm OBJECT IDENTIFIER,
  *      counter OCTET STRING SIZE (4..4)
  *  }
  *
- * |nid| is the algorithm object identifier.
  * |keylen| is the length (in bytes) of the generated KEK. It is stored into
  * suppPubInfo (in bits).
+ * |cek_oid| The oid of the key wrapping algorithm.
+ * |cek_oidlen| The length (in bytes) of the key wrapping algorithm oid,
  * |ukm| is the optional user keying material that is stored into partyAInfo. It
  * can be NULL.
  * |ukmlen| is the user keying material length (in bytes).
@@ -114,66 +150,60 @@ static int skip_asn1(unsigned char **pp, long *plen, int exptag)
  * Returns: 1 if successfully encoded, or 0 otherwise.
  * Assumptions: |der|, |der_len| & |out_ctr| are not NULL.
  */
-static int x942_encode_otherinfo(int nid, size_t keylen,
+static int x942_encode_otherinfo(size_t keylen,
+                                 const unsigned char *cek_oid, size_t cek_oidlen,
                                  const unsigned char *ukm, size_t ukmlen,
                                  unsigned char **der, size_t *der_len,
                                  unsigned char **out_ctr)
 {
-    unsigned char *p, *encoded = NULL;
-    int ret = 0, encoded_len;
-    long tlen;
-    /* "magic" value to check offset is sane */
-    static unsigned char ctr[4] = { 0x00, 0x00, 0x00, 0x01 };
-    X509_ALGOR *ksi = NULL;
-    ASN1_OBJECT *alg_oid = NULL;
-    ASN1_OCTET_STRING *ctr_oct = NULL, *ukm_oct = NULL;
+    int ret = 0;
+    unsigned char *pcounter = NULL, *der_buf = NULL;
+    size_t der_buflen = 0;
+    WPACKET pkt;
+    uint32_t keylen_bits;
 
-    /* set the KeySpecificInfo - which contains an algorithm oid and counter */
-    ksi = X509_ALGOR_new();
-    alg_oid = OBJ_dup(OBJ_nid2obj(nid));
-    ctr_oct = ASN1_OCTET_STRING_new();
-    if (ksi == NULL
-        || alg_oid == NULL
-        || ctr_oct == NULL
-        || !ASN1_OCTET_STRING_set(ctr_oct, ctr, sizeof(ctr))
-        || !X509_ALGOR_set0(ksi, alg_oid, V_ASN1_OCTET_STRING, ctr_oct))
+    /* keylenbits must fit into 4 bytes */
+    if (keylen > 0xFFFFFF)
         goto err;
-    /* NULL these as they now belong to ksi */
-    alg_oid = NULL;
-    ctr_oct = NULL;
+    keylen_bits = 8 * keylen;
 
-    /* Set the optional partyAInfo */
-    if (ukm != NULL) {
-        ukm_oct = ASN1_OCTET_STRING_new();
-        if (ukm_oct == NULL)
-            goto err;
-        ASN1_OCTET_STRING_set(ukm_oct, (unsigned char *)ukm, ukmlen);
-    }
-    /* Generate the OtherInfo DER data */
-    encoded_len = CMS_SharedInfo_encode(&encoded, ksi, ukm_oct, keylen);
-    if (encoded_len <= 0)
+    /* Calculate the size of the buffer */
+    if (!der_encode_sharedinfo(&pkt, NULL, 0, cek_oid, cek_oidlen, ukm, ukmlen,
+                               keylen_bits, NULL)
+        || !WPACKET_get_total_written(&pkt, &der_buflen))
+        goto err;
+    WPACKET_cleanup(&pkt);
+    /* Alloc the buffer */
+    der_buf = OPENSSL_zalloc(der_buflen);
+    if (der_buf == NULL)
+        goto err;
+    /* Encode into the buffer */
+    if (!der_encode_sharedinfo(&pkt, der_buf, der_buflen, cek_oid, cek_oidlen,
+                               ukm, ukmlen, keylen_bits, &pcounter))
+        goto err;
+    /*
+     * Since we allocated the exact size required, the buffer should point to the
+     * start of the alllocated buffer at this point.
+     */
+    if (WPACKET_get_curr(&pkt) != der_buf)
         goto err;
 
-    /* Parse the encoded data to find the offset of the counter data */
-    p = encoded;
-    tlen = (long)encoded_len;
-    if (skip_asn1(&p, &tlen, V_ASN1_SEQUENCE)
-        && skip_asn1(&p, &tlen, V_ASN1_SEQUENCE)
-        && skip_asn1(&p, &tlen, V_ASN1_OBJECT)
-        && skip_asn1(&p, &tlen, V_ASN1_OCTET_STRING)
-        && CRYPTO_memcmp(p, ctr, 4) == 0) {
-        *out_ctr = p;
-        *der = encoded;
-        *der_len = (size_t)encoded_len;
-        ret = 1;
-    }
+    /*
+     * The data for the DER encoded octet string of a 32 bit counter = 1
+     * should be 04 04 00 00 00 01
+     * So just check the header is correct and skip over it.
+     * This counter will be incremented in the kdf update loop.
+     */
+    if (pcounter == NULL
+        || pcounter[0] != 0x04
+        || pcounter[1] != 0x04)
+        goto err;
+    *out_ctr = (pcounter + 2);
+    *der = der_buf;
+    *der_len = der_buflen;
+    ret = 1;
 err:
-    if (ret != 1)
-        OPENSSL_free(encoded);
-    ASN1_OCTET_STRING_free(ctr_oct);
-    ASN1_OCTET_STRING_free(ukm_oct);
-    ASN1_OBJECT_free(alg_oid);
-    X509_ALGOR_free(ksi);
+    WPACKET_cleanup(&pkt);
     return ret;
 }
 
@@ -315,7 +345,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
     }
-    if (ctx->cek_nid == NID_undef) {
+    if (ctx->cek_oid == NULL || ctx->cek_oid_len == 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CEK_ALG);
         return 0;
     }
@@ -327,12 +357,9 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
         ERR_raise(ERR_LIB_PROV, PROV_R_INAVLID_UKM_LENGTH);
         return 0;
     }
-    if (keylen != ctx->dkm_len) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CEK_ALG);
-        return 0;
-    }
     /* generate the otherinfo der */
-    if (!x942_encode_otherinfo(ctx->cek_nid, ctx->dkm_len,
+    if (!x942_encode_otherinfo(ctx->dkm_len,
+                               ctx->cek_oid, ctx->cek_oid_len,
                                ctx->ukm, ctx->ukm_len,
                                &der, &der_len, &ctr)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_BAD_ENCODING);
@@ -349,7 +376,7 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     const OSSL_PARAM *p;
     KDF_X942 *ctx = vctx;
     OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
-    size_t i;
+    size_t id;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
         return 0;
@@ -366,14 +393,11 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_CEK_ALG)) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        ctx->cek_nid = OBJ_sn2nid(p->data);
-        for (i = 0; i < OSSL_NELEM(kek_algs); i++)
-            if (kek_algs[i].nid == ctx->cek_nid)
-                goto cek_found;
-        ERR_raise(ERR_LIB_PROV, PROV_R_UNSUPPORTED_CEK_ALG);
-        return 0;
-cek_found:
-        ctx->dkm_len = kek_algs[i].keklen;
+        if (find_alg_id(provctx, p->data, &id) == 0)
+            return 0;
+        ctx->cek_oid = kek_algs[id].oid;
+        ctx->cek_oid_len = kek_algs[id].oid_len;
+        ctx->dkm_len = kek_algs[id].keklen;
     }
     return 1;
 }
@@ -424,5 +448,3 @@ const OSSL_DISPATCH kdf_x942_kdf_functions[] = {
     { OSSL_FUNC_KDF_GET_CTX_PARAMS, (void(*)(void))x942kdf_get_ctx_params },
     { 0, NULL }
 };
-
-#endif /* OPENSSL_NO_CMS */
