@@ -45,7 +45,11 @@ CRYPTO_RWLOCK *CRYPTO_THREAD_lock_new(void)
     }
 
     pthread_mutexattr_init(&attr);
-    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    #if defined(__TANDEM) && defined(_SPT_MODEL_)
+      pthread_mutexattr_setkind_np(&attr,MUTEX_RECURSIVE_NP);
+    #else
+      pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    #endif
 
     if (pthread_mutex_init(lock, &attr) != 0) {
         pthread_mutexattr_destroy(&attr);

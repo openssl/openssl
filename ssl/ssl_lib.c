@@ -566,6 +566,15 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
     return 1;
 }
 
+#if defined(__TANDEM) && defined(OPENSSL_VPROC)
+/* Define VPROC function for HP NonStop build ssl library */
+# define OPENSSL_VPROC_STRING_(x)    x##_SSL
+# define OPENSSL_VPROC_STRING(x)     OPENSSL_VPROC_STRING_(x)
+# define OPENSSL_VPROC_FUNC          OPENSSL_VPROC_STRING(OPENSSL_VPROC)
+void OPENSSL_VPROC_FUNC(void) {}
+#endif
+
+
 static void clear_ciphers(SSL *s)
 {
     /* clear the current cipher */

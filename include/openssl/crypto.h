@@ -412,7 +412,13 @@ typedef LONG CRYPTO_ONCE;
 #    define CRYPTO_ONCE_STATIC_INIT 0
 #   endif
 #  else
-#   include <pthread.h>
+#   if defined(__TANDEM) && defined(_SPT_MODEL_) 
+#    define  SPT_THREAD_SIGNAL 1
+#    define  SPT_THREAD_AWARE 1
+#    include <spthread.h>
+#   else
+#    include <pthread.h>
+#   endif
 typedef pthread_once_t CRYPTO_ONCE;
 typedef pthread_key_t CRYPTO_THREAD_LOCAL;
 typedef pthread_t CRYPTO_THREAD_ID;

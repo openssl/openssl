@@ -30,7 +30,7 @@
 #  if defined(__SCO_VERSION__) || defined(_SCO_ELF) || \
      (defined(__osf__) && !defined(RTLD_NEXT))     || \
      (defined(__OpenBSD__) && !defined(RTLD_SELF)) || \
-        defined(__ANDROID__)
+        defined(__ANDROID__) || defined(__TANDEM)
 #   undef HAVE_DLINFO
 #  endif
 # endif

@@ -11,6 +11,9 @@
 
 #include <stdio.h>
 #include <string.h>
+#ifdef __TANDEM
+#include <strings.h>
+#endif
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
