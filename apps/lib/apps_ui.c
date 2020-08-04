@@ -106,11 +106,13 @@ int setup_ui_method(void)
     ui_fallback_method = UI_OpenSSL();
 #endif
     ui_method = UI_create_method("OpenSSL application user interface");
-    UI_method_set_opener(ui_method, ui_open);
-    UI_method_set_reader(ui_method, ui_read);
-    UI_method_set_writer(ui_method, ui_write);
-    UI_method_set_closer(ui_method, ui_close);
-    return 0;
+    return ui_method != NULL
+        && 0 == UI_method_set_opener(ui_method, ui_open)
+        && 0 == UI_method_set_reader(ui_method, ui_read)
+        && 0 == UI_method_set_writer(ui_method, ui_write)
+        && 0 == UI_method_set_closer(ui_method, ui_close)
+        && 0 == UI_method_set_prompt_constructor(ui_method,
+                                                 ui_prompt_construct);
 }
 
 void destroy_ui_method(void)
