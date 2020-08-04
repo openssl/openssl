@@ -749,8 +749,8 @@ int setup_tests(void)
     int ok = 1;
 
 #ifndef OPENSSL_NO_DSA
-    size_t qbits = 160;          /* PVK only tolerates 160 Q bits */
-    size_t pbits = 1024;         /* With 160 Q bits, we MUST use 1024 P bits */
+    static size_t qbits = 160;  /* PVK only tolerates 160 Q bits */
+    static size_t pbits = 1024; /* With 160 Q bits, we MUST use 1024 P bits */
     OSSL_PARAM DSA_params[] = {
         OSSL_PARAM_size_t("pbits", &pbits),
         OSSL_PARAM_size_t("qbits", &qbits),
