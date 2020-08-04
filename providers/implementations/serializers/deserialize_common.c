@@ -11,9 +11,9 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/buffer.h>
-#include <openssl/pem.h>
+#include <openssl/pem.h>         /* For public PEM and PVK functions */
 #include <openssl/pkcs12.h>
-#include "internal/pem.h"        /* For PVK and "blob" PEM headers */
+#include "internal/pem.h"        /* For internal PVK and "blob" functions */
 #include "internal/cryptlib.h"
 #include "crypto/asn1.h"
 #include "prov/bio.h"               /* ossl_prov_bio_printf() */
