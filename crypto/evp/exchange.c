@@ -202,7 +202,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
     /*
      * Ensure that the key is provided, either natively, or as a cached export.
-     * If not, go legacy
+     * If not, goto legacy
      */
     tmp_keymgmt = ctx->keymgmt;
     if (ctx->pkey == NULL) {
@@ -214,6 +214,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
         if (pkey == NULL || !EVP_PKEY_set_type_by_keymgmt(pkey, tmp_keymgmt)) {
             ERR_clear_last_mark();
+            EVP_PKEY_free(pkey);
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             goto err;
         }

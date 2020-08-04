@@ -234,7 +234,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * If an ENGINE handled this method look it up. Otherwise use internal
      * tables.
      */
-    if (e) {
+    if (e != NULL) {
         pmeth = ENGINE_get_pkey_meth(e, id);
         /*
          * We are supposed to use an engine, so no point in looking for a
@@ -758,7 +758,7 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad)
 
 int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
 {
-    OSSL_PARAM sig_md_params[3], *p = sig_md_params;
+    OSSL_PARAM sig_md_params[2], *p = sig_md_params;
     /* 80 should be big enough */
     char name[80] = "";
     const EVP_MD *tmp;
@@ -777,7 +777,7 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
                                             name,
                                             sizeof(name));
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_get_params(ctx, sig_md_params))
         return 0;
@@ -820,7 +820,7 @@ static int evp_pkey_ctx_set_md(EVP_PKEY_CTX *ctx, const EVP_MD *md,
                                              * only so should be safe
                                              */
                                             (char *)name, 0);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     return EVP_PKEY_CTX_set_params(ctx, md_params);
 }
@@ -1192,7 +1192,7 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             if (!EVP_PKEY_is_a(EVP_PKEY_CTX_get0_pkey(ctx), "RSASSA-PSS"))
                 return 1;
             ERR_raise(ERR_LIB_EVP,
-                    EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+                      EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
             return -2;
         }
     }
