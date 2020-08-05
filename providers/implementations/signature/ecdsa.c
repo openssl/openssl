@@ -399,7 +399,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *ecdsa_gettable_ctx_params(void)
+static const OSSL_PARAM *ecdsa_gettable_ctx_params(void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -451,7 +451,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *ecdsa_settable_ctx_params(void)
+static const OSSL_PARAM *ecdsa_settable_ctx_params(void *provctx)
 {
     /*
      * TODO(3.0): Should this function return a different set of settable ctx

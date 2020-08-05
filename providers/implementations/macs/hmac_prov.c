@@ -139,7 +139,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *hmac_gettable_ctx_params(void)
+static const OSSL_PARAM *hmac_gettable_ctx_params(void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -161,7 +161,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_int(OSSL_MAC_PARAM_FLAGS, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *hmac_settable_ctx_params(void)
+static const OSSL_PARAM *hmac_settable_ctx_params(void *provctx)
 {
     return known_settable_ctx_params;
 }

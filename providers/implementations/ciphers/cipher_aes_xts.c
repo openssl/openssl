@@ -211,7 +211,7 @@ static const OSSL_PARAM aes_xts_known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *aes_xts_settable_ctx_params(void)
+static const OSSL_PARAM *aes_xts_settable_ctx_params(void *provctx)
 {
     return aes_xts_known_settable_ctx_params;
 }

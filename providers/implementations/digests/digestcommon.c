@@ -40,7 +40,7 @@ static const OSSL_PARAM digest_default_known_gettable_params[] = {
     OSSL_PARAM_ulong(OSSL_DIGEST_PARAM_FLAGS, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *digest_default_gettable_params(void)
+const OSSL_PARAM *digest_default_gettable_params(void *provctx)
 {
     return digest_default_known_gettable_params;
 }

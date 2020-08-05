@@ -135,7 +135,7 @@ static const OSSL_PARAM chacha20_poly1305_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *chacha20_poly1305_gettable_ctx_params(void)
+static const OSSL_PARAM *chacha20_poly1305_gettable_ctx_params(void *provctx)
 {
     return chacha20_poly1305_known_gettable_ctx_params;
 }

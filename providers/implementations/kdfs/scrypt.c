@@ -29,6 +29,8 @@ static OSSL_FUNC_kdf_reset_fn kdf_scrypt_reset;
 static OSSL_FUNC_kdf_derive_fn kdf_scrypt_derive;
 static OSSL_FUNC_kdf_settable_ctx_params_fn kdf_scrypt_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kdf_scrypt_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn kdf_scrypt_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn kdf_scrypt_get_ctx_params;
 
 static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,
@@ -190,7 +192,7 @@ static int kdf_scrypt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(void)
+static const OSSL_PARAM *kdf_scrypt_settable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_PASSWORD, NULL, 0),
@@ -213,7 +215,7 @@ static int kdf_scrypt_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(void)
+static const OSSL_PARAM *kdf_scrypt_gettable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),

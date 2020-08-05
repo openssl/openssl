@@ -108,7 +108,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *blake2_gettable_ctx_params(void)
+static const OSSL_PARAM *blake2_gettable_ctx_params(void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -130,7 +130,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_SALT, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *blake2_mac_settable_ctx_params()
+static const OSSL_PARAM *blake2_mac_settable_ctx_params(void *provctx)
 {
     return known_settable_ctx_params;
 }
