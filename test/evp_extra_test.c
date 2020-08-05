@@ -33,6 +33,14 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 
+#ifndef OPENSSL_NO_SM2
+/*
+ * TODO(3.0) remove when provider SM2 keymgmt is implemented and
+ * EVP_PKEY_set_alias_type() works with provider-native keys.
+ */
+# define TMP_SM2_HACK
+#endif
+
 static OPENSSL_CTX *testctx = NULL;
 
 /*
@@ -880,6 +888,11 @@ static int test_EVP_SM2_verify(void)
     pkey = PEM_read_bio_PUBKEY(bio, NULL, NULL, NULL);
     if (!TEST_true(pkey != NULL))
         goto done;
+
+#ifdef TMP_SM2_HACK
+    if (!TEST_ptr(EVP_PKEY_get0(pkey)))
+        goto done;
+#endif
 
     if (!TEST_true(EVP_PKEY_set_alias_type(pkey, EVP_PKEY_SM2)))
         goto done;
