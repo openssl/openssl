@@ -444,7 +444,8 @@ void OSSL_SERIALIZER_names_do_all(const OSSL_SERIALIZER *ser,
 const OSSL_PARAM *OSSL_SERIALIZER_settable_ctx_params(OSSL_SERIALIZER *ser)
 {
     if (ser != NULL && ser->settable_ctx_params != NULL)
-        return ser->settable_ctx_params();
+        return ser->settable_ctx_params(
+                   ossl_provider_ctx(OSSL_SERIALIZER_provider(ser)));
     return NULL;
 }
 
