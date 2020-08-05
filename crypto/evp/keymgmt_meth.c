@@ -369,9 +369,11 @@ int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt, void *keydata,
 
 const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt)
 {
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
     if (keymgmt->gettable_params == NULL)
         return NULL;
-    return keymgmt->gettable_params();
+    return keymgmt->gettable_params(provctx);
 }
 
 int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt, void *keydata,
@@ -384,9 +386,11 @@ int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt, void *keydata,
 
 const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt)
 {
+    void *provctx = ossl_provider_ctx(EVP_KEYMGMT_provider(keymgmt));
+
     if (keymgmt->settable_params == NULL)
         return NULL;
-    return keymgmt->settable_params();
+    return keymgmt->settable_params(provctx);
 }
 
 int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keydata, int selection)

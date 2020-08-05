@@ -452,7 +452,8 @@ const OSSL_PARAM *
 OSSL_DESERIALIZER_gettable_params(OSSL_DESERIALIZER *deser)
 {
     if (deser != NULL && deser->gettable_params != NULL)
-        return deser->gettable_params();
+        return deser->gettable_params(
+                   ossl_provider_ctx(OSSL_DESERIALIZER_provider(deser)));
     return NULL;
 }
 
@@ -467,7 +468,8 @@ const OSSL_PARAM *
 OSSL_DESERIALIZER_settable_ctx_params(OSSL_DESERIALIZER *deser)
 {
     if (deser != NULL && deser->settable_ctx_params != NULL)
-        return deser->settable_ctx_params();
+        return deser->settable_ctx_params(
+                   ossl_provider_ctx(OSSL_DESERIALIZER_provider(deser)));
     return NULL;
 }
 

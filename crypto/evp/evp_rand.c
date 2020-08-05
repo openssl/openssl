@@ -377,19 +377,25 @@ int EVP_RAND_set_ctx_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[])
 
 const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand)
 {
-    return rand->gettable_params == NULL ? NULL : rand->gettable_params();
+    if (rand->gettable_params == NULL)
+        return NULL;
+    return rand->gettable_params(ossl_provider_ctx(EVP_RAND_provider(rand)));
 }
 
 const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
 {
-    return rand->gettable_ctx_params == NULL ? NULL
-                                             : rand->gettable_ctx_params();
+    if (rand->gettable_params == NULL)
+        return NULL;
+    return rand->gettable_ctx_params(
+               ossl_provider_ctx(EVP_RAND_provider(rand)));
 }
 
 const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand)
 {
-    return rand->settable_ctx_params == NULL ? NULL
-                                             : rand->settable_ctx_params();
+    if (rand->gettable_params == NULL)
+        return NULL;
+    return rand->settable_ctx_params(
+               ossl_provider_ctx(EVP_RAND_provider(rand)));
 }
 
 void EVP_RAND_do_all_provided(OPENSSL_CTX *libctx,

@@ -631,35 +631,55 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 #ifndef FIPS_MODULE
 const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
 {
+    void *provctx;
+
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
-            && ctx->op.kex.exchange->gettable_ctx_params != NULL)
-        return ctx->op.kex.exchange->gettable_ctx_params();
+            && ctx->op.kex.exchange->gettable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
+        return ctx->op.kex.exchange->gettable_ctx_params(provctx);
+    }
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
-            && ctx->op.sig.signature->gettable_ctx_params != NULL)
-        return ctx->op.sig.signature->gettable_ctx_params();
+            && ctx->op.sig.signature->gettable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(
+                      EVP_SIGNATURE_provider(ctx->op.sig.signature));
+        return ctx->op.sig.signature->gettable_ctx_params(provctx);
+    }
     if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
-            && ctx->op.ciph.cipher->gettable_ctx_params != NULL)
-        return ctx->op.ciph.cipher->gettable_ctx_params();
+            && ctx->op.ciph.cipher->gettable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(
+                      EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
+        return ctx->op.ciph.cipher->gettable_ctx_params(provctx);
+    }
     return NULL;
 }
 
 const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
 {
+    void *provctx;
+
     if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
             && ctx->op.kex.exchange != NULL
-            && ctx->op.kex.exchange->settable_ctx_params != NULL)
-        return ctx->op.kex.exchange->settable_ctx_params();
+            && ctx->op.kex.exchange->settable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(ctx->op.kex.exchange));
+        return ctx->op.kex.exchange->settable_ctx_params(provctx);
+    }
     if (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
             && ctx->op.sig.signature != NULL
-            && ctx->op.sig.signature->settable_ctx_params != NULL)
-        return ctx->op.sig.signature->settable_ctx_params();
+            && ctx->op.sig.signature->settable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(
+                      EVP_SIGNATURE_provider(ctx->op.sig.signature));
+        return ctx->op.sig.signature->settable_ctx_params(provctx);
+    }
     if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.cipher != NULL
-            && ctx->op.ciph.cipher->settable_ctx_params != NULL)
-        return ctx->op.ciph.cipher->settable_ctx_params();
+            && ctx->op.ciph.cipher->settable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(
+                      EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
+        return ctx->op.ciph.cipher->settable_ctx_params(provctx);
+    }
     if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
             && ctx->keymgmt != NULL)
         return evp_keymgmt_gen_settable_params(ctx->keymgmt);
