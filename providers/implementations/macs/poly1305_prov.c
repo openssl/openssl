@@ -94,6 +94,7 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
     struct poly1305_data_st *ctx = vmacctx;
 
     Poly1305_Final(&ctx->poly1305, out);
+    *outl = poly1305_size();
     return 1;
 }
 
