@@ -326,7 +326,7 @@ static const OSSL_PARAM dh_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dh_gettable_params(void)
+static const OSSL_PARAM *dh_gettable_params(void *provctx)
 {
     return dh_params;
 }
@@ -336,7 +336,7 @@ static const OSSL_PARAM dh_known_settable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dh_settable_params(void)
+static const OSSL_PARAM *dh_settable_params(void *provctx)
 {
     return dh_known_settable_params;
 }

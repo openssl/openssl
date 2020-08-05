@@ -295,7 +295,7 @@ static const OSSL_PARAM dsa_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_gettable_params(void)
+static const OSSL_PARAM *dsa_gettable_params(void *provctx)
 {
     return dsa_params;
 }

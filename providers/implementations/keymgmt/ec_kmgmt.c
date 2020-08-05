@@ -570,7 +570,7 @@ static const OSSL_PARAM ec_known_gettable_params[] = {
 };
 
 static
-const OSSL_PARAM *ec_gettable_params(void)
+const OSSL_PARAM *ec_gettable_params(void *provctx)
 {
     return ec_known_gettable_params;
 }
@@ -582,7 +582,7 @@ static const OSSL_PARAM ec_known_settable_params[] = {
 };
 
 static
-const OSSL_PARAM *ec_settable_params(void)
+const OSSL_PARAM *ec_settable_params(void *provctx)
 {
     return ec_known_settable_params;
 }

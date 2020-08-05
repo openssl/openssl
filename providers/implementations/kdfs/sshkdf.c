@@ -160,7 +160,7 @@ static int kdf_sshkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(void)
+static const OSSL_PARAM *kdf_sshkdf_settable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_utf8_string(OSSL_KDF_PARAM_PROPERTIES, NULL, 0),
@@ -183,7 +183,7 @@ static int kdf_sshkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return -2;
 }
 
-static const OSSL_PARAM *kdf_sshkdf_gettable_ctx_params(void)
+static const OSSL_PARAM *kdf_sshkdf_gettable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL),

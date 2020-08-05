@@ -76,6 +76,8 @@ static OSSL_FUNC_kdf_reset_fn kbkdf_reset;
 static OSSL_FUNC_kdf_derive_fn kbkdf_derive;
 static OSSL_FUNC_kdf_settable_ctx_params_fn kbkdf_settable_ctx_params;
 static OSSL_FUNC_kdf_set_ctx_params_fn kbkdf_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn kbkdf_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn kbkdf_get_ctx_params;
 
 /* Not all platforms have htobe32(). */
 static uint32_t be32(uint32_t host)
@@ -296,7 +298,7 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kbkdf_settable_ctx_params(void)
+static const OSSL_PARAM *kbkdf_settable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
@@ -326,7 +328,7 @@ static int kbkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return OSSL_PARAM_set_size_t(p, SIZE_MAX);
 }
 
-static const OSSL_PARAM *kbkdf_gettable_ctx_params(void)
+static const OSSL_PARAM *kbkdf_gettable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] =
         { OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL), OSSL_PARAM_END };

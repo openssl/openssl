@@ -341,7 +341,7 @@ static const OSSL_PARAM rsa_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_gettable_params(void)
+static const OSSL_PARAM *rsa_gettable_params(void *provctx)
 {
     return rsa_params;
 }

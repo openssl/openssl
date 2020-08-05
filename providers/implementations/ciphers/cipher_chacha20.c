@@ -91,7 +91,7 @@ static const OSSL_PARAM chacha20_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_gettable_ctx_params(void)
+const OSSL_PARAM *chacha20_gettable_ctx_params(void *provctx)
 {
     return chacha20_known_gettable_ctx_params;
 }
@@ -131,7 +131,7 @@ static const OSSL_PARAM chacha20_known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_settable_ctx_params(void)
+const OSSL_PARAM *chacha20_settable_ctx_params(void *provctx)
 {
     return chacha20_known_settable_ctx_params;
 }

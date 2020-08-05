@@ -30,7 +30,7 @@ static const OSSL_PARAM known_mdc2_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *mdc2_settable_ctx_params(void)
+static const OSSL_PARAM *mdc2_settable_ctx_params(void *provctx)
 {
     return known_mdc2_settable_ctx_params;
 }

@@ -314,22 +314,22 @@ static const OSSL_PARAM ed_gettable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *x25519_gettable_params(void)
+static const OSSL_PARAM *x25519_gettable_params(void *provctx)
 {
     return ecx_gettable_params;
 }
 
-static const OSSL_PARAM *x448_gettable_params(void)
+static const OSSL_PARAM *x448_gettable_params(void *provctx)
 {
     return ecx_gettable_params;
 }
 
-static const OSSL_PARAM *ed25519_gettable_params(void)
+static const OSSL_PARAM *ed25519_gettable_params(void *provctx)
 {
     return ed_gettable_params;
 }
 
-static const OSSL_PARAM *ed448_gettable_params(void)
+static const OSSL_PARAM *ed448_gettable_params(void *provctx)
 {
     return ed_gettable_params;
 }
@@ -384,22 +384,22 @@ static const OSSL_PARAM ed_settable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *x25519_settable_params(void)
+static const OSSL_PARAM *x25519_settable_params(void *provctx)
 {
     return ecx_settable_params;
 }
 
-static const OSSL_PARAM *x448_settable_params(void)
+static const OSSL_PARAM *x448_settable_params(void *provctx)
 {
     return ecx_settable_params;
 }
 
-static const OSSL_PARAM *ed25519_settable_params(void)
+static const OSSL_PARAM *ed25519_settable_params(void *provctx)
 {
     return ed_settable_params;
 }
 
-static const OSSL_PARAM *ed448_settable_params(void)
+static const OSSL_PARAM *ed448_settable_params(void *provctx)
 {
     return ed_settable_params;
 }

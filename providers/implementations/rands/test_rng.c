@@ -186,7 +186,7 @@ static int test_rng_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     return drbg_get_ctx_params(drbg, params);
 }
 
-static const OSSL_PARAM *test_rng_gettable_ctx_params(void)
+static const OSSL_PARAM *test_rng_gettable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_DRBG_GETABLE_CTX_COMMON,
@@ -264,7 +264,7 @@ static int test_rng_set_ctx_params(void *vdrbg, const OSSL_PARAM params[])
     return drbg_set_ctx_params(drbg, params);
 }
 
-static const OSSL_PARAM *test_rng_settable_ctx_params(void)
+static const OSSL_PARAM *test_rng_settable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, NULL, 0),

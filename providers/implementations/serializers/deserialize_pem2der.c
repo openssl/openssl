@@ -55,7 +55,7 @@ static void pem2der_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *pem2der_gettable_params(void)
+static const OSSL_PARAM *pem2der_gettable_params(void *provctx)
 {
     static const OSSL_PARAM gettables[] = {
         { OSSL_DESERIALIZER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },

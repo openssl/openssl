@@ -39,6 +39,8 @@ static OSSL_FUNC_cipher_freectx_fn aes_ocb_freectx;
 static OSSL_FUNC_cipher_dupctx_fn aes_ocb_dupctx;
 static OSSL_FUNC_cipher_get_ctx_params_fn aes_ocb_get_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn aes_ocb_set_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn cipher_ocb_gettable_ctx_params;
+static OSSL_FUNC_cipher_settable_ctx_params_fn cipher_ocb_settable_ctx_params;
 
 /*
  * The following methods could be moved into PROV_AES_OCB_HW if
@@ -437,7 +439,7 @@ static const OSSL_PARAM cipher_ocb_known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cipher_ocb_gettable_ctx_params(void)
+static const OSSL_PARAM *cipher_ocb_gettable_ctx_params(void *provctx)
 {
     return cipher_ocb_known_gettable_ctx_params;
 }
@@ -448,7 +450,7 @@ static const OSSL_PARAM cipher_ocb_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *cipher_ocb_settable_ctx_params(void)
+static const OSSL_PARAM *cipher_ocb_settable_ctx_params(void *provctx)
 {
     return cipher_ocb_known_settable_ctx_params;
 }
@@ -513,4 +515,3 @@ const OSSL_DISPATCH aes##kbits##mode##_functions[] = {                         \
 IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 256, 128, OCB_DEFAULT_IV_LEN * 8);
 IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 192, 128, OCB_DEFAULT_IV_LEN * 8);
 IMPLEMENT_cipher(ocb, OCB, AES_OCB_FLAGS, 128, 128, OCB_DEFAULT_IV_LEN * 8);
-
