@@ -2095,7 +2095,8 @@ static int rand_test_init(EVP_TEST *t, const char *name)
     if (!TEST_ptr(rdata = OPENSSL_zalloc(sizeof(*rdata))))
         return 0;
 
-    rand = EVP_RAND_fetch(libctx, "TEST-RAND", NULL);
+    /* TEST-RAND is available in the FIPS provider but not with "fips=yes" */
+    rand = EVP_RAND_fetch(libctx, "TEST-RAND", "-fips");
     if (rand == NULL)
         goto err;
     rdata->parent = EVP_RAND_CTX_new(rand, NULL);
