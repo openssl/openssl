@@ -286,7 +286,7 @@ static const OSSL_PARAM xor_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *xor_gettable_params(void)
+static const OSSL_PARAM *xor_gettable_params(void *provctx)
 {
     return xor_params;
 }
@@ -313,7 +313,7 @@ static const OSSL_PARAM xor_known_settable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *xor_settable_params(void)
+static const OSSL_PARAM *xor_settable_params(void *provctx)
 {
     return xor_known_settable_params;
 }
