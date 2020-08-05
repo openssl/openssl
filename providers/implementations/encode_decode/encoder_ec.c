@@ -23,22 +23,134 @@ void ec_get_new_free_import(OSSL_FUNC_keymgmt_new_fn **ec_new,
     *ec_import = ossl_prov_get_keymgmt_import(ec_keymgmt_functions);
 }
 
-static int ossl_prov_print_ec_param(BIO *out, const EC_GROUP *group)
+static int ossl_prov_print_ec_param_explicit_curve(BIO *out,
+                                                   const EC_GROUP *group,
+                                                   BN_CTX *ctx)
 {
-    const char *curve_name;
-    int curve_nid = EC_GROUP_get_curve_name(group);
+    const char *plabel = "Prime:";
+    BIGNUM *p = NULL, *a = NULL, *b = NULL;
 
-    /* TODO(3.0): Explicit parameters are currently not supported */
-    if (curve_nid == NID_undef)
+    p = BN_CTX_get(ctx);
+    a = BN_CTX_get(ctx);
+    b = BN_CTX_get(ctx);
+    if (b == NULL
+        || !EC_GROUP_get_curve(group, p, a, b, ctx))
         return 0;
 
-    if (BIO_printf(out, "%s: %s\n", "ASN1 OID", OBJ_nid2sn(curve_nid)) <= 0)
+    if (EC_GROUP_get_field_type(group) == NID_X9_62_characteristic_two_field) {
+        int basis_type = EC_GROUP_get_basis_type(group);
+
+        /* print the 'short name' of the base type OID */
+        if (basis_type == NID_undef
+            || BIO_printf(out, "Basis Type: %s\n", OBJ_nid2sn(basis_type)) <= 0)
+            return 0;
+        plabel = "Polynomial:";
+    }
+    return ossl_prov_print_labeled_bignum(out, plabel, p)
+           && ossl_prov_print_labeled_bignum(out, "A:   ", a)
+           && ossl_prov_print_labeled_bignum(out, "B:   ", b);
+}
+
+static int ossl_prov_print_ec_param_explicit_gen(BIO *out,
+                                                 const EC_GROUP *group,
+                                                 BN_CTX *ctx)
+{
+    const EC_POINT *point = NULL;
+    BIGNUM *gen = NULL;
+    const char *glabel = NULL;
+    point_conversion_form_t form;
+
+    form = EC_GROUP_get_point_conversion_form(group);
+    point = EC_GROUP_get0_generator(group);
+    gen = BN_CTX_get(ctx);
+
+    if (gen == NULL
+        || point == NULL
+        || EC_POINT_point2bn(group, point, form, gen, ctx) == NULL)
         return 0;
 
-    /* TODO(3.0): Only named curves are currently supported */
-    curve_name = EC_curve_nid2nist(curve_nid);
-    return (curve_name == NULL
-            || BIO_printf(out, "%s: %s\n", "NIST CURVE", curve_name) > 0);
+    if (gen != NULL) {
+        switch (form) {
+        case POINT_CONVERSION_COMPRESSED:
+           glabel = "Generator (compressed):";
+           break;
+        case POINT_CONVERSION_UNCOMPRESSED:
+            glabel = "Generator (uncompressed):";
+            break;
+        case POINT_CONVERSION_HYBRID:
+            glabel = "Generator (hybrid):";
+            break;
+        default:
+            return 0;
+        }
+        return ossl_prov_print_labeled_bignum(out, glabel, gen);
+    }
+    return 1;
+}
+
+/* Print explicit parameters */
+static int ossl_prov_print_ec_param_explicit(BIO *out, const EC_GROUP *group,
+                                             OPENSSL_CTX *libctx)
+{
+    int ret = 0, tmp_nid;
+    BN_CTX *ctx = NULL;
+    const BIGNUM *order = NULL, *cofactor = NULL;
+    const unsigned char *seed;
+    size_t seed_len = 0;
+
+    ctx = BN_CTX_new_ex(libctx);
+    if (ctx == NULL)
+        return 0;
+    BN_CTX_start(ctx);
+
+    tmp_nid = EC_GROUP_get_field_type(group);
+    order = EC_GROUP_get0_order(group);
+    if (order == NULL)
+        goto err;
+
+    seed = EC_GROUP_get0_seed(group);
+    if (seed != NULL)
+        seed_len = EC_GROUP_get_seed_len(group);
+    cofactor = EC_GROUP_get0_cofactor(group);
+
+    /* print the 'short name' of the field type */
+    if (BIO_printf(out, "Field Type: %s\n", OBJ_nid2sn(tmp_nid)) <= 0
+        || !ossl_prov_print_ec_param_explicit_curve(out, group, ctx)
+        || !ossl_prov_print_ec_param_explicit_gen(out, group, ctx)
+        || !ossl_prov_print_labeled_bignum(out, "Order: ", order)
+        || (cofactor != NULL
+            && !ossl_prov_print_labeled_bignum(out, "Cofactor: ", cofactor))
+        || (seed != NULL
+            && !ossl_prov_print_labeled_buf(out, "Seed:", seed, seed_len)))
+        goto err;
+    ret = 1;
+err:
+    BN_CTX_end(ctx);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+static int ossl_prov_print_ec_param(BIO *out, const EC_GROUP *group,
+                                    OPENSSL_CTX *libctx)
+{
+    if (EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE) {
+        const char *curve_name;
+        int curve_nid = EC_GROUP_get_curve_name(group);
+
+        /* Explicit parameters */
+        if (curve_nid == NID_undef)
+            return 0;
+
+        if (BIO_printf(out, "%s: %s\n", "ASN1 OID", OBJ_nid2sn(curve_nid)) <= 0)
+            return 0;
+
+        /* TODO(3.0): Only named curves are currently supported */
+        curve_name = EC_curve_nid2nist(curve_nid);
+        return (curve_name == NULL
+                || BIO_printf(out, "%s: %s\n", "NIST CURVE", curve_name) > 0);
+    } else {
+        return ossl_prov_print_ec_param_explicit(out, group, libctx);
+    }
 }
 
 int ossl_prov_print_eckey(BIO *out, EC_KEY *eckey, enum ec_print_type type)
@@ -94,7 +206,7 @@ int ossl_prov_print_eckey(BIO *out, EC_KEY *eckey, enum ec_print_type type)
     if (pub != NULL
         && !ossl_prov_print_labeled_buf(out, "pub:", pub, pub_len))
         goto err;
-    ret = ossl_prov_print_ec_param(out, group);
+    ret = ossl_prov_print_ec_param(out, group, ec_key_get_libctx(eckey));
 err:
     OPENSSL_clear_free(priv, priv_len);
     OPENSSL_free(pub);
@@ -104,30 +216,58 @@ null_err:
     goto err;
 }
 
+static int ossl_prov_prepare_ec_explicit_params(const void *eckey,
+                                                void **pstr, int *pstrtype)
+{
+    ASN1_STRING *params = ASN1_STRING_new();
+
+    if (params == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
+
+    params->length = i2d_ECParameters(eckey, &params->data);
+    if (params->length <= 0) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+        ASN1_STRING_free(params);
+        return 0;
+    }
+
+    *pstrtype = V_ASN1_SEQUENCE;
+    *pstr = params;
+    return 1;
+}
+
 int ossl_prov_prepare_ec_params(const void *eckey, int nid,
                                 void **pstr, int *pstrtype)
 {
     int curve_nid;
     const EC_GROUP *group = EC_KEY_get0_group(eckey);
-    ASN1_OBJECT *params;
+    ASN1_OBJECT *params = NULL;
 
-    if (group == NULL
-        || ((curve_nid = EC_GROUP_get_curve_name(group)) == NID_undef)
-        || ((params = OBJ_nid2obj(curve_nid)) == NULL)) {
-        /* TODO(3.0): Explicit curves are not supported */
+    if (group == NULL)
         return 0;
+    curve_nid = EC_GROUP_get_curve_name(group);
+    if (curve_nid != NID_undef) {
+        params = OBJ_nid2obj(curve_nid);
+        if (params == NULL)
+            return 0;
     }
 
-    if (OBJ_length(params) == 0) {
-        /* Some curves might not have an associated OID */
-        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_OID);
-        ASN1_OBJECT_free(params);
-        return 0;
+    if (curve_nid != NID_undef
+        && (EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE)) {
+        if (OBJ_length(params) == 0) {
+            /* Some curves might not have an associated OID */
+            ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_OID);
+            ASN1_OBJECT_free(params);
+            return 0;
+        }
+        *pstr = params;
+        *pstrtype = V_ASN1_OBJECT;
+        return 1;
+    } else {
+        return ossl_prov_prepare_ec_explicit_params(eckey, pstr, pstrtype);
     }
-
-    *pstr = params;
-    *pstrtype = V_ASN1_OBJECT;
-    return 1;
 }
 
 int ossl_prov_ec_pub_to_der(const void *eckey, unsigned char **pder)

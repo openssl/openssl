@@ -12,7 +12,15 @@ The B<EC> keytype is implemented in OpenSSL's default provider.
 
 =head2 Common EC parameters
 
-The following Import/Export types are available for the built-in EC algorithm:
+The normal way of specifying domain parameters for an EC curve is via the
+curve name "group". For curves with no curve name, explicit parameters can be
+used that specify "field-type", "p", "a", "b", "generator" and "order".
+Explicit parameters are supported for backwards compability reasons, but they
+are not compliant with multiple standards (including RFC5915) which only allow
+named curves.
+
+The following KeyGen/Gettable/Import/Export types are available for the
+built-in EC algorithm:
 
 =over 4
 
@@ -20,12 +28,56 @@ The following Import/Export types are available for the built-in EC algorithm:
 
 The curve name.
 
+=item "field-type" (B<OSSL_PKEY_PARAM_EC_FIELD_TYPE>) <utf8 string>
+
+The value should be either "prime-field" or "characteristic-two-field",
+which correspond to prime field Fp and binary field F2^m.
+
+=item "p" (B<OSSL_PKEY_PARAM_EC_P>) <unsigned integer>
+
+For a curve over Fp I<p> is the prime for the field. For a curve over F2^m I<p>
+represents the irreducible polynomial - each bit represents a term in the
+polynomial. Therefore, there will either be three or five bits set dependent on
+whether the polynomial is a trinomial or a pentanomial.
+
+=item "a" (B<OSSL_PKEY_PARAM_EC_A>) <unsigned integer>
+
+=item "b" (B<OSSL_PKEY_PARAM_EC_B>) <unsigned integer>
+
+=item "seed" (B<OSSL_PKEY_PARAM_EC_SEED>) <octet string>
+
+I<a> and I<b> represents the coefficients of the curve
+For Fp:   y^2 mod p = x^3 +ax + b mod p OR
+For F2^m: y^2 + xy = x^3 + ax^2 + b
+
+I<seed> is an optional value that is for information purposes only.
+It represents the random number seed used to generate the coefficient I<b> from a
+random number.
+
+=item "generator" (B<OSSL_PKEY_PARAM_EC_GENERATOR>) <octet string>
+
+=item "order" (B<OSSL_PKEY_PARAM_EC_ORDER>) <unsigned integer>
+
+=item "cofactor" (B<OSSL_PKEY_PARAM_EC_COFACTOR>) <unsigned integer>
+
+The I<generator> is a well defined point on the curve chosen for cryptographic
+operations. The encoding conforms with Sec. 2.3.3 of the SECG SEC 1 ("Elliptic Curve
+Cryptography") standard. See EC_POINT_oct2point().
+Integers used for point multiplications will be between 0 and
+I<order> - 1.
+I<cofactor> is an optional value.
+I<order> multiplied by the I<cofactor> gives the number of points on the curve.
+
 =item "use-cofactor-flag" (B<OSSL_PKEY_PARAM_USE_COFACTOR_ECDH>) <integer>
 
 Enable Cofactor DH (ECC CDH) if this value is 1, otherwise it uses normal EC DH
 if the value is zero. The cofactor variant multiplies the shared secret by the
 EC curve's cofactor (note for some curves the cofactor is 1).
 
+=item "encoding" (B<OSSL_PKEY_PARAM_EC_ENCODING>) <utf8 string>
+
+Set the format used for serializing the EC group parameters.
+Valid values are "explicit" or "named_curve". The default value is "named_curve".
 
 See also L<EVP_KEYEXCH-ECDH(7)> for the related
 B<OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE> parameter that can be set on a
@@ -43,6 +95,36 @@ The private key value.
 
 Used for getting and setting the encoding of the EC public key used in key
 exchange message for the TLS protocol.
+
+=back
+
+The following Gettable types are also available for the built-in EC algorithm:
+
+=over 4
+
+=item "basis-type" (B<OSSL_PKEY_PARAM_EC_CHAR2_TYPE>) <utf8 string>
+
+Supports the values "tpBasis" for a trinomial or "ppBasis" for a pentanomial.
+This field is only used for a binary field F2^m.
+
+=item "m" (B<OSSL_PKEY_PARAM_EC_CHAR2_M>) <integer>
+
+=item "tp" (B<OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS>) <integer>
+
+=item "k1" (B<OSSL_PKEY_PARAM_EC_CHAR2_PP_K1>) <integer>
+
+=item "k2" (B<OSSL_PKEY_PARAM_EC_CHAR2_PP_K2>) <integer>
+
+=item "k3" (B<OSSL_PKEY_PARAM_EC_CHAR2_PP_K3>) <integer>
+
+These fields are only used for a binary field F2^m.
+I<m> is the degree of the binary field.
+
+I<tp> is the middle bit of a trinomial so its value must be in the
+range m > tp > 0.
+
+I<k1>, I<k2> and I<k3> are used to get the middle bits of a pentanomial such
+that m > k3 > k2 > k1 > 0
 
 =back
 

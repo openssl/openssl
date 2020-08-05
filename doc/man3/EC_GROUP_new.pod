@@ -4,9 +4,10 @@
 
 EC_GROUP_get_ecparameters,
 EC_GROUP_get_ecpkparameters,
-EC_GROUP_new,
+EC_GROUP_new_from_params,
 EC_GROUP_new_from_ecparameters,
 EC_GROUP_new_from_ecpkparameters,
+EC_GROUP_new,
 EC_GROUP_free,
 EC_GROUP_clear_free,
 EC_GROUP_new_curve_GFp,
@@ -26,6 +27,8 @@ objects
 
  #include <openssl/ec.h>
 
+ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
+                                    OPENSSL_CTX *libctx, const char *propq);
  EC_GROUP *EC_GROUP_new_from_ecparameters(const ECPARAMETERS *params);
  EC_GROUP *EC_GROUP_new_from_ecpkparameters(const ECPKPARAMETERS *params);
  void EC_GROUP_free(EC_GROUP *group);
@@ -92,6 +95,14 @@ The I<ctx> parameter may be NULL in which case the default library context is
 used.
 It is then necessary to call EC_GROUP_set_curve() to set the curve parameters.
 Applications should instead use one of the other EC_GROUP_new_* constructors.
+
+EC_GROUP_new_from_params() creates a group with parameters specified by I<params>.
+The library context I<libctx> (see L<OPENSSL_CTX(3)>) and property query string
+I<propq> are used to fetch algorithms from providers.
+I<params> may be either a list of explicit params or a named group,
+The values for I<ctx> and I<propq> may be NULL.
+The I<params> that can be used are described in
+L<B<EVP_PKEY-EC>(7)|EVP_PKEY-EC(7)/Common EC parameters>.
 
 EC_GROUP_new_from_ecparameters() will create a group from the
 specified I<params> and
@@ -177,7 +188,7 @@ EC_GROUP_get_curve_GF2m() return 1 on success or 0 on error.
 L<crypto(7)>, L<EC_GROUP_copy(3)>,
 L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
 L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>,
-L<OPENSSL_CTX(3)>
+L<OPENSSL_CTX(3)>, L<EVP_PKEY-EC(7)>
 
 =head1 HISTORY
 
@@ -187,7 +198,8 @@ L<OPENSSL_CTX(3)>
 
 EC_GROUP_new() was deprecated in OpenSSL 3.0.
 
-EC_GROUP_new_by_curve_name_with_libctx() was added in OpenSSL 3.0.
+EC_GROUP_new_by_curve_name_with_libctx() and EC_GROUP_new_from_params() were
+added in OpenSSL 3.0.
 
 =item *
 

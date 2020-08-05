@@ -149,7 +149,7 @@ TODO Write a set of cookbook documents and link to them.
      0x47
  };
  const OSSL_PARAM params[] = {
-     OSSL_PARAM_utf8_string("curve-name", "prime256v1"),
+     OSSL_PARAM_utf8_string("group", "prime256v1"),
      OSSL_PARAM_BN("priv", priv, sizeof(priv)),
      OSSL_PARAM_BN("pub", pub, sizeof(pub)),
      OSSL_PARAM_END

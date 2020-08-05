@@ -1277,24 +1277,6 @@ int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
 static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
                                     const char *value)
 {
-
-    /* Special cases that we intercept */
-# ifndef OPENSSL_NO_EC
-    /*
-     * We don't support encoding settings for providers, i.e. the only
-     * possible encoding is "named_curve", so we simply fail when something
-     * else is given, and otherwise just pretend all is fine.
-     */
-    if (strcmp(name, "ec_param_enc") == 0) {
-        if (strcmp(value, "named_curve") == 0) {
-            return 1;
-        } else {
-            ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
-            return -2;
-        }
-    }
-# endif
-
     if (strcmp(name, "md") == 0)
         name = OSSL_ALG_PARAM_DIGEST;
     else if (strcmp(name, "rsa_padding_mode") == 0)
@@ -1352,6 +1334,8 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE;
     else if (strcmp(name, "ecdh_kdf_md") == 0)
         name = OSSL_EXCHANGE_PARAM_KDF_DIGEST;
+    else if (strcmp(name, "ec_param_enc") == 0)
+        name = OSSL_PKEY_PARAM_EC_ENCODING;
 # endif
     else if (strcmp(name, "N") == 0)
         name = OSSL_KDF_PARAM_SCRYPT_N;

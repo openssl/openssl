@@ -47,6 +47,7 @@ typedef enum {
     POINT_CONVERSION_HYBRID = 6
 } point_conversion_form_t;
 
+#  include <openssl/params.h>
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct ec_method_st EC_METHOD;
 #  endif
@@ -378,6 +379,19 @@ EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
 EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
                                   const BIGNUM *b, BN_CTX *ctx);
 #  endif
+
+/**
+ * Creates a EC_GROUP object with a curve specified by parameters.
+ * The parameters may be explicit or a named curve,
+ *  \param  params A list of parameters describing the group.
+ *  \param  libctx The associated library context or NULL for the default
+ *                 context
+ *  \param  propq  A property query string
+ *  \return newly created EC_GROUP object with specified parameters or NULL
+ *          if an error occurred
+ */
+EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
+                                   OPENSSL_CTX *libctx, const char *propq);
 
 /**
  * Creates a EC_GROUP object with a curve specified by a NID

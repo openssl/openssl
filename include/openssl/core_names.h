@@ -269,6 +269,22 @@ extern "C" {
 #define OSSL_PKEY_PARAM_EC_PUB_X     "qx"
 #define OSSL_PKEY_PARAM_EC_PUB_Y     "qy"
 
+/* Elliptic Curve Explicit Domain Parameters */
+#define OSSL_PKEY_PARAM_EC_FIELD_TYPE     "field-type"
+#define OSSL_PKEY_PARAM_EC_P              "p"
+#define OSSL_PKEY_PARAM_EC_A              "a"
+#define OSSL_PKEY_PARAM_EC_B              "b"
+#define OSSL_PKEY_PARAM_EC_GENERATOR      "generator"
+#define OSSL_PKEY_PARAM_EC_ORDER          "order"
+#define OSSL_PKEY_PARAM_EC_COFACTOR       "cofactor"
+#define OSSL_PKEY_PARAM_EC_SEED           "seed"
+#define OSSL_PKEY_PARAM_EC_CHAR2_M        "m"
+#define OSSL_PKEY_PARAM_EC_CHAR2_TYPE     "basis-type"
+#define OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS "tp"
+#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K1    "k1"
+#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K2    "k2"
+#define OSSL_PKEY_PARAM_EC_CHAR2_PP_K3    "k3"
+
 /* Elliptic Curve Key Parameters */
 #define OSSL_PKEY_PARAM_USE_COFACTOR_FLAG "use-cofactor-flag"
 #define OSSL_PKEY_PARAM_USE_COFACTOR_ECDH \
@@ -351,6 +367,12 @@ extern "C" {
 #define OSSL_PKEY_PARAM_FFC_QBITS        "qbits"
 #define OSSL_PKEY_PARAM_FFC_DIGEST       OSSL_PKEY_PARAM_DIGEST
 #define OSSL_PKEY_PARAM_FFC_DIGEST_PROPS OSSL_PKEY_PARAM_PROPERTIES
+
+#define OSSL_PKEY_PARAM_EC_ENCODING      "encoding" /* utf8_string */
+
+/* OSSL_PKEY_PARAM_EC_ENCODING values */
+#define OSSL_PKEY_EC_ENCODING_EXPLICIT  "explicit"
+#define OSSL_PKEY_EC_ENCODING_GROUP     "named_curve"
 
 /* Key Exchange parameters */
 #define OSSL_EXCHANGE_PARAM_PAD                   "pad" /* uint */

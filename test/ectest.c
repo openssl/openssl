@@ -2340,6 +2340,225 @@ static int ec_point_hex2point_test(int id)
     return ret;
 }
 
+static int do_test_custom_explicit_fromdata(EC_GROUP *group, BN_CTX *ctx,
+                                            unsigned char *gen, int gen_size)
+{
+    int ret = 0, i_out;
+    EVP_PKEY_CTX *pctx = NULL;
+    EVP_PKEY *pkeyparam = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    const char *field_name;
+    OSSL_PARAM *params = NULL;
+    const OSSL_PARAM *gettable;
+    BIGNUM *p, *a, *b;
+    BIGNUM *p_out = NULL, *a_out = NULL, *b_out = NULL;
+    BIGNUM *order_out = NULL, *cofactor_out = NULL;
+    char name[80];
+    unsigned char buf[1024];
+    size_t buf_len, name_len;
+#ifndef OPENSSL_NO_EC2M
+    unsigned int k1 = 0, k2 = 0, k3 = 0;
+    const char *basis_name = NULL;
+#endif
+
+    p = BN_CTX_get(ctx);
+    a = BN_CTX_get(ctx);
+    b = BN_CTX_get(ctx);
+
+    if (!TEST_ptr(b)
+        || !TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+        goto err;
+
+    if (EC_GROUP_get_field_type(group) == NID_X9_62_prime_field) {
+        field_name = SN_X9_62_prime_field;
+    } else {
+        field_name = SN_X9_62_characteristic_two_field;
+#ifndef OPENSSL_NO_EC2M
+        if (EC_GROUP_get_basis_type(group) == NID_X9_62_tpBasis) {
+            basis_name = SN_X9_62_tpBasis;
+            if (!TEST_true(EC_GROUP_get_trinomial_basis(group, &k1)))
+                goto err;
+        } else {
+            basis_name = SN_X9_62_ppBasis;
+            if (!TEST_true(EC_GROUP_get_pentanomial_basis(group, &k1, &k2, &k3)))
+                goto err;
+        }
+#endif /* OPENSSL_NO_EC2M */
+    }
+    if (!TEST_true(EC_GROUP_get_curve(group, p, a, b, ctx))
+        || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
+                          OSSL_PKEY_PARAM_EC_FIELD_TYPE, field_name, 0))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_A, a))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_B, b)))
+        goto err;
+
+    if (EC_GROUP_get0_seed(group) != NULL) {
+        if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                           OSSL_PKEY_PARAM_EC_SEED, EC_GROUP_get0_seed(group),
+                           EC_GROUP_get_seed_len(group))))
+            goto err;
+    }
+    if (EC_GROUP_get0_cofactor(group) != NULL) {
+        if (!TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_COFACTOR,
+                                              EC_GROUP_get0_cofactor(group))))
+            goto err;
+    }
+
+    if (!TEST_true(OSSL_PARAM_BLD_push_octet_string(bld,
+                       OSSL_PKEY_PARAM_EC_GENERATOR, gen, gen_size))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_EC_ORDER,
+                                             EC_GROUP_get0_order(group))))
+        goto err;
+
+    if (!TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld))
+        || !TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL))
+        || !TEST_int_gt(EVP_PKEY_param_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &pkeyparam, params), 0))
+        goto err;
+
+    /*- Check that all the set values are retrievable -*/
+
+    /* There should be no match to a group name since the generator changed */
+    if (!TEST_false(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                        OSSL_PKEY_PARAM_GROUP_NAME, name, sizeof(name),
+                        &name_len)))
+        goto err;
+
+    /* The encoding should be explicit as it has no group */
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                       OSSL_PKEY_PARAM_EC_ENCODING,
+                       name, sizeof(name), &name_len))
+        || !TEST_str_eq(name, OSSL_PKEY_EC_ENCODING_EXPLICIT))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                       OSSL_PKEY_PARAM_EC_FIELD_TYPE, name, sizeof(name),
+                       &name_len))
+        || !TEST_str_eq(name, field_name))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_octet_string_param(pkeyparam,
+                       OSSL_PKEY_PARAM_EC_GENERATOR, buf, sizeof(buf), &buf_len))
+        || !TEST_mem_eq(buf, (int)buf_len, gen, gen_size))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_P, &p_out))
+        || !TEST_BN_eq(p_out, p)
+        || !TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_A,
+                                            &a_out))
+        || !TEST_BN_eq(a_out, a)
+        || !TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_B,
+                                            &b_out))
+        || !TEST_BN_eq(b_out, b)
+        || !TEST_true(EVP_PKEY_get_bn_param(pkeyparam, OSSL_PKEY_PARAM_EC_ORDER,
+                                            &order_out))
+        || !TEST_BN_eq(order_out, EC_GROUP_get0_order(group)))
+        goto err;
+
+    if (EC_GROUP_get0_cofactor(group) != NULL) {
+        if (!TEST_true(EVP_PKEY_get_bn_param(pkeyparam,
+                           OSSL_PKEY_PARAM_EC_COFACTOR, &cofactor_out))
+            || !TEST_BN_eq(cofactor_out, EC_GROUP_get0_cofactor(group)))
+            goto err;
+    }
+    if (EC_GROUP_get0_seed(group) != NULL) {
+        if (!TEST_true(EVP_PKEY_get_octet_string_param(pkeyparam,
+                           OSSL_PKEY_PARAM_EC_SEED, buf, sizeof(buf), &buf_len))
+            || !TEST_mem_eq(buf, buf_len, EC_GROUP_get0_seed(group),
+                            EC_GROUP_get_seed_len(group)))
+            goto err;
+    }
+
+    if (EC_GROUP_get_field_type(group) == NID_X9_62_prime_field) {
+        /* No extra fields should be set for a prime field */
+        if (!TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                            OSSL_PKEY_PARAM_EC_CHAR2_M, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_PP_K1, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_PP_K2, &i_out))
+            || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_PP_K3, &i_out))
+            || !TEST_false(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_TYPE, name, sizeof(name),
+                               &name_len)))
+            goto err;
+    } else {
+#ifndef OPENSSL_NO_EC2M
+        if (!TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                           OSSL_PKEY_PARAM_EC_CHAR2_M, &i_out))
+            || !TEST_int_eq(EC_GROUP_get_degree(group), i_out)
+            || !TEST_true(EVP_PKEY_get_utf8_string_param(pkeyparam,
+                              OSSL_PKEY_PARAM_EC_CHAR2_TYPE, name, sizeof(name),
+                              &name_len))
+            || !TEST_str_eq(name, basis_name))
+            goto err;
+
+        if (EC_GROUP_get_basis_type(group) == NID_X9_62_tpBasis) {
+            if (!TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                               OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS, &i_out))
+                || !TEST_int_eq(k1, i_out)
+                || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                   OSSL_PKEY_PARAM_EC_CHAR2_PP_K1, &i_out))
+                || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                   OSSL_PKEY_PARAM_EC_CHAR2_PP_K2, &i_out))
+                || !TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                   OSSL_PKEY_PARAM_EC_CHAR2_PP_K3, &i_out)))
+                goto err;
+        } else {
+            if (!TEST_false(EVP_PKEY_get_int_param(pkeyparam,
+                                OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS, &i_out))
+                || !TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                                  OSSL_PKEY_PARAM_EC_CHAR2_PP_K1, &i_out))
+                || !TEST_int_eq(k1, i_out)
+                || !TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                                  OSSL_PKEY_PARAM_EC_CHAR2_PP_K2, &i_out))
+                || !TEST_int_eq(k2, i_out)
+                || !TEST_true(EVP_PKEY_get_int_param(pkeyparam,
+                                  OSSL_PKEY_PARAM_EC_CHAR2_PP_K3, &i_out))
+                || !TEST_int_eq(k3, i_out))
+                goto err;
+        }
+#endif /* OPENSSL_NO_EC2M */
+    }
+    if (!TEST_ptr(gettable = EVP_PKEY_gettable_params(pkeyparam))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_GROUP_NAME))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_ENCODING))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_FIELD_TYPE))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_P))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_A))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_B))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_GENERATOR))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_ORDER))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_COFACTOR))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_SEED))
+#ifndef OPENSSL_NO_EC2M
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_M))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_TYPE))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_TP_BASIS))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_PP_K1))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_PP_K2))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_CHAR2_PP_K3))
+#endif
+        )
+        goto err;
+    ret = 1;
+err:
+    BN_free(order_out);
+    BN_free(cofactor_out);
+    BN_free(a_out);
+    BN_free(b_out);
+    BN_free(p_out);
+    OSSL_PARAM_BLD_free_params(params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_PKEY_free(pkeyparam);
+    EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+
 /*
  * check the EC_METHOD respects the supplied EC_GROUP_set_generator G
  */
@@ -2406,14 +2625,17 @@ static int custom_generator_test(int id)
         || !TEST_mem_eq(b1, bsize, b2, bsize))
         goto err;
 
+    if (!do_test_custom_explicit_fromdata(group, ctx, b1, bsize))
+        goto err;
+
     ret = 1;
 
  err:
-    BN_CTX_end(ctx);
     EC_POINT_free(Q1);
     EC_POINT_free(Q2);
     EC_POINT_free(G2);
     EC_GROUP_free(group);
+    BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     OPENSSL_free(b1);
     OPENSSL_free(b2);
