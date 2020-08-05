@@ -101,6 +101,7 @@ static int blake2_mac_final(void *vmacctx,
 {
     struct blake2_mac_data_st *macctx = vmacctx;
 
+    *outl = blake2_mac_size(macctx);
     return BLAKE2_FINAL(out, &macctx->ctx);
 }
 

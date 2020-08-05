@@ -130,8 +130,7 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
 
     if (!HMAC_Final(macctx->ctx, out, &hlen))
         return 0;
-    if (outl != NULL)
-        *outl = hlen;
+    *outl = hlen;
     return 1;
 }
 

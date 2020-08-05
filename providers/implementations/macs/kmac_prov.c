@@ -298,8 +298,7 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     ok = right_encode(encoded_outlen, &len, lbits)
         && EVP_DigestUpdate(ctx, encoded_outlen, len)
         && EVP_DigestFinalXOF(ctx, out, kctx->out_len);
-    if (ok && outl != NULL)
-        *outl = kctx->out_len;
+    *outl = kctx->out_len;
     return ok;
 }
 
