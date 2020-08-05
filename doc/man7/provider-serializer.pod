@@ -24,7 +24,7 @@ Future development will also include deserializing functions.
  void *OSSL_FUNC_serializer_newctx(void *provctx);
  void OSSL_FUNC_serializer_freectx(void *ctx);
  int OSSL_FUNC_serializer_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_serializer_settable_ctx_params(void)
+ const OSSL_PARAM *OSSL_FUNC_serializer_settable_ctx_params(void *provctx)
 
  /* Functions to serialize object data */
  int OSSL_FUNC_serializer_serialize_data(void *ctx, const OSSL_PARAM *data,
