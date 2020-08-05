@@ -1218,10 +1218,11 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
 
     if (rsa->pss != NULL) {
         const EVP_MD *md = NULL, *mgf1md = NULL;
-        int md_nid, mgf1md_nid, saltlen;
+        int md_nid, mgf1md_nid, saltlen, trailerfield;
         RSA_PSS_PARAMS_30 pss_params;
 
-        if (!rsa_pss_get_param(rsa->pss, &md, &mgf1md, &saltlen))
+        if (!rsa_pss_get_param_unverified(rsa->pss, &md, &mgf1md,
+                                          &saltlen, &trailerfield))
             goto err;
         md_nid = EVP_MD_type(md);
         mgf1md_nid = EVP_MD_type(mgf1md);

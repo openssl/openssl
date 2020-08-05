@@ -19,8 +19,8 @@ typedef struct rsa_pss_params_30_st {
         int algorithm_nid;       /* Currently always NID_mgf1 */
         int hash_algorithm_nid;
     } mask_gen;
-    unsigned int salt_len;
-    unsigned int trailer_field;
+    int salt_len;
+    int trailer_field;
 } RSA_PSS_PARAMS_30;
 
 RSA_PSS_PARAMS_30 *rsa_get0_pss_params_30(RSA *r);
