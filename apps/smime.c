@@ -477,6 +477,14 @@ int smime_main(int argc, char **argv)
         key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
         if (key == NULL)
             goto end;
+
+        /*
+         * TODO: Remove this when CMS has full support for provider-native
+         * EVP_PKEYs
+         */
+        if (EVP_PKEY_get0(key) == NULL)
+            goto end;
+
     }
 
     in = bio_open_default(infile, 'r', informat);
@@ -571,6 +579,14 @@ int smime_main(int argc, char **argv)
             key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
             if (key == NULL)
                 goto end;
+
+            /*
+             * TODO: Remove this when CMS has full support for provider-native
+             * EVP_PKEYs
+             */
+            if (EVP_PKEY_get0(key) == NULL)
+                goto end;
+
             if (!PKCS7_sign_add_signer(p7, signer, key, sign_md, flags))
                 goto end;
             X509_free(signer);

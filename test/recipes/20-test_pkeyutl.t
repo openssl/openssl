@@ -24,14 +24,21 @@ SKIP: {
     skip "Skipping tests that require EC, SM2 or SM3", 2
         if disabled("ec") || disabled("sm2") || disabled("sm3");
 
+    # TODO(3.0) Remove this when we have a SM2 keymgmt and decoder
+    my @tmp_sm2_hack = qw(-engine loader_attic)
+        unless disabled('dynamic-engine') || disabled('deprecated-3.0');
+    skip "Skipping tests that require dynamic enginess (temporary meaasure)", 2
+        unless @tmp_sm2_hack;
+
     # SM2
-    ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-sign',
+    ok_nofips(run(app(([ 'openssl', 'pkeyutl', @tmp_sm2_hack, '-sign',
                       '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.key'),
                       '-out', 'sm2.sig', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'distid:someid']))),
                       "Sign a piece of data using SM2");
-    ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin',
+    ok_nofips(run(app(([ 'openssl', 'pkeyutl', @tmp_sm2_hack,
+                      '-verify', '-certin',
                       '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.pem'),
                       '-sigfile', 'sm2.sig', '-rawin',

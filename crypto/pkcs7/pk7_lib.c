@@ -319,6 +319,17 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
           ASN1_INTEGER_dup(X509_get0_serialNumber(x509))))
         goto err;
 
+    /*
+     * TODO(3.0) Adapt for provider-native keys
+     * Meanwhile, we downgrade the key.
+     * #legacy
+     */
+    if (!evp_pkey_downgrade(pkey)) {
+        PKCS7err(PKCS7_F_PKCS7_SIGNER_INFO_SET,
+                 PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+        goto err;
+    }
+
     /* lets keep the pkey around for a while */
     EVP_PKEY_up_ref(pkey);
     p7i->pkey = pkey;

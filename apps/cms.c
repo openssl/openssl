@@ -866,6 +866,13 @@ int cms_main(int argc, char **argv)
         key = load_key(keyfile, keyform, 0, passin, e, "signing key file");
         if (key == NULL)
             goto end;
+
+        /*
+         * TODO: Remove this when CMS has full support for provider-native
+         * EVP_PKEYs
+         */
+        if (EVP_PKEY_get0(key) == NULL)
+            goto end;
     }
 
     in = bio_open_default(infile, 'r', informat);
@@ -1064,6 +1071,14 @@ int cms_main(int argc, char **argv)
                 ret = 2;
                 goto end;
             }
+
+            /*
+             * TODO: Remove this when CMS has full support for provider-native
+             * EVP_PKEYs
+             */
+            if (EVP_PKEY_get0(key) == NULL)
+                goto end;
+
             for (kparam = key_first; kparam; kparam = kparam->next) {
                 if (kparam->idx == i) {
                     tflags |= CMS_KEY_PARAM;
