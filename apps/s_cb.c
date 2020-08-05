@@ -515,6 +515,12 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x022F: return "babybearephem";
   case 0x0230: return "mamabearephem";
   case 0x0231: return "papabearephem";
+  case 0x0232: return "hqc128_1_cca2";
+  case 0x0233: return "hqc192_1_cca2";
+  case 0x0234: return "hqc192_2_cca2";
+  case 0x0235: return "hqc256_1_cca2";
+  case 0x0236: return "hqc256_2_cca2";
+  case 0x0237: return "hqc256_3_cca2";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_END
   case 0x2FFF: return "p256_oqs_kem_default hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_START
@@ -557,6 +563,12 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F2F: return "p256_babybearephem hybrid";
    case 0x2F30: return "p384_mamabearephem hybrid";
    case 0x2F31: return "p521_papabearephem hybrid";
+   case 0x2F32: return "p256_hqc128_1_cca2 hybrid";
+   case 0x2F33: return "p384_hqc192_1_cca2 hybrid";
+   case 0x2F34: return "p384_hqc192_2_cca2 hybrid";
+   case 0x2F35: return "p521_hqc256_1_cca2 hybrid";
+   case 0x2F36: return "p521_hqc256_2_cca2 hybrid";
+   case 0x2F37: return "p521_hqc256_3_cca2 hybrid";
   ///// OQS_TEMPLATE_FRAGMENT_OQS_CURVE_ID_NAME_STR_HYBRID_END
   default: return "";
   }

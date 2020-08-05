@@ -1310,3 +1310,15 @@ mamabearephem		1309
 p384_mamabearephem		1310
 papabearephem		1311
 p521_papabearephem		1312
+hqc128_1_cca2		1313
+p256_hqc128_1_cca2		1314
+hqc192_1_cca2		1315
+p384_hqc192_1_cca2		1316
+hqc192_2_cca2		1317
+p384_hqc192_2_cca2		1318
+hqc256_1_cca2		1319
+p521_hqc256_1_cca2		1320
+hqc256_2_cca2		1321
+p521_hqc256_2_cca2		1322
+hqc256_3_cca2		1323
+p521_hqc256_3_cca2		1324

@@ -5517,6 +5517,54 @@
 #define LN_p521_papabearephem           "p521_papabearephem"
 #define NID_p521_papabearephem          1312
 
+#define SN_hqc128_1_cca2                "hqc128_1_cca2"
+#define LN_hqc128_1_cca2                "hqc128_1_cca2"
+#define NID_hqc128_1_cca2               1313
+
+#define SN_p256_hqc128_1_cca2           "p256_hqc128_1_cca2"
+#define LN_p256_hqc128_1_cca2           "p256_hqc128_1_cca2"
+#define NID_p256_hqc128_1_cca2          1314
+
+#define SN_hqc192_1_cca2                "hqc192_1_cca2"
+#define LN_hqc192_1_cca2                "hqc192_1_cca2"
+#define NID_hqc192_1_cca2               1315
+
+#define SN_p384_hqc192_1_cca2           "p384_hqc192_1_cca2"
+#define LN_p384_hqc192_1_cca2           "p384_hqc192_1_cca2"
+#define NID_p384_hqc192_1_cca2          1316
+
+#define SN_hqc192_2_cca2                "hqc192_2_cca2"
+#define LN_hqc192_2_cca2                "hqc192_2_cca2"
+#define NID_hqc192_2_cca2               1317
+
+#define SN_p384_hqc192_2_cca2           "p384_hqc192_2_cca2"
+#define LN_p384_hqc192_2_cca2           "p384_hqc192_2_cca2"
+#define NID_p384_hqc192_2_cca2          1318
+
+#define SN_hqc256_1_cca2                "hqc256_1_cca2"
+#define LN_hqc256_1_cca2                "hqc256_1_cca2"
+#define NID_hqc256_1_cca2               1319
+
+#define SN_p521_hqc256_1_cca2           "p521_hqc256_1_cca2"
+#define LN_p521_hqc256_1_cca2           "p521_hqc256_1_cca2"
+#define NID_p521_hqc256_1_cca2          1320
+
+#define SN_hqc256_2_cca2                "hqc256_2_cca2"
+#define LN_hqc256_2_cca2                "hqc256_2_cca2"
+#define NID_hqc256_2_cca2               1321
+
+#define SN_p521_hqc256_2_cca2           "p521_hqc256_2_cca2"
+#define LN_p521_hqc256_2_cca2           "p521_hqc256_2_cca2"
+#define NID_p521_hqc256_2_cca2          1322
+
+#define SN_hqc256_3_cca2                "hqc256_3_cca2"
+#define LN_hqc256_3_cca2                "hqc256_3_cca2"
+#define NID_hqc256_3_cca2               1323
+
+#define SN_p521_hqc256_3_cca2           "p521_hqc256_3_cca2"
+#define LN_p521_hqc256_3_cca2           "p521_hqc256_3_cca2"
+#define NID_p521_hqc256_3_cca2          1324
+
 #define SN_oqs_sig_default              "oqs_sig_default"
 #define LN_oqs_sig_default              "oqs_sig_default"
 #define NID_oqs_sig_default             1195

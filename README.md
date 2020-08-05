@@ -77,6 +77,7 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 - `oqs_kem_default` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 - **BIKE**: `bike1l1cpa`, `bike1l3cpa`, `bike1l1fo`, `bike1l3fo`
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
+- **HQC**: `hqc128_1_cca2`, `hqc192_1_cca2`, `hqc192_2_cca2`, `hqc256_1_cca2`† , `hqc256_2_cca2`†, `hqc256_3_cca2`†
 - **Kyber**: `kyber512`, `kyber768`, `kyber1024`, `kyber90s512`, `kyber90s768`, `kyber90s1024`
 - **LEDA**: `ledacryptkemlt12`, `ledacryptkemlt32`, `ledacryptkemlt52`
 - **NewHope**: `newhope512cca`, `newhope1024cca`
@@ -92,6 +93,8 @@ If ``<KEX>`` is any of the algorithms listed above, the following hybrid algorit
 - if `<KEX>` has L5 security, the fork provides the method `p521_<KEX>`, which combines `<KEX>` with ECDH using the P521 curve.
 
 For example, since `kyber768` claims L3 security, the hybrid `p384_kyber768` is available.
+
+Note that algorithms marked with a dagger (†) have large stack usage and may cause failures when run on threads or in constrained environments.
 
 #### Authentication
 

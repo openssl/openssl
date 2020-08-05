@@ -571,6 +571,12 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_babybearephem), "babybearephem"},
     {OQS_KEM_CURVEID(NID_mamabearephem), "mamabearephem"},
     {OQS_KEM_CURVEID(NID_papabearephem), "papabearephem"},
+    {OQS_KEM_CURVEID(NID_hqc128_1_cca2), "hqc128_1_cca2"},
+    {OQS_KEM_CURVEID(NID_hqc192_1_cca2), "hqc192_1_cca2"},
+    {OQS_KEM_CURVEID(NID_hqc192_2_cca2), "hqc192_2_cca2"},
+    {OQS_KEM_CURVEID(NID_hqc256_1_cca2), "hqc256_1_cca2"},
+    {OQS_KEM_CURVEID(NID_hqc256_2_cca2), "hqc256_2_cca2"},
+    {OQS_KEM_CURVEID(NID_hqc256_3_cca2), "hqc256_3_cca2"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_END
     {OQS_KEM_CURVEID(NID_p256_oqs_kem_default), "p256 - OQS KEM default hybrid"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_HYBRID_START
@@ -613,6 +619,12 @@ static const ssl_trace_tbl ssl_groups_tbl[] = {
     {OQS_KEM_CURVEID(NID_p256_babybearephem), "p256 - babybearephem hybrid"},
     {OQS_KEM_CURVEID(NID_p384_mamabearephem), "p384 - mamabearephem hybrid"},
     {OQS_KEM_CURVEID(NID_p521_papabearephem), "p521 - papabearephem hybrid"},
+    {OQS_KEM_CURVEID(NID_p256_hqc128_1_cca2), "p256 - hqc128_1_cca2 hybrid"},
+    {OQS_KEM_CURVEID(NID_p384_hqc192_1_cca2), "p384 - hqc192_1_cca2 hybrid"},
+    {OQS_KEM_CURVEID(NID_p384_hqc192_2_cca2), "p384 - hqc192_2_cca2 hybrid"},
+    {OQS_KEM_CURVEID(NID_p521_hqc256_1_cca2), "p521 - hqc256_1_cca2 hybrid"},
+    {OQS_KEM_CURVEID(NID_p521_hqc256_2_cca2), "p521 - hqc256_2_cca2 hybrid"},
+    {OQS_KEM_CURVEID(NID_p521_hqc256_3_cca2), "p521 - hqc256_3_cca2 hybrid"},
 ///// OQS_TEMPLATE_FRAGMENT_SSL_GROUPS_TBL_HYBRID_END
     {0xFF01, "arbitrary_explicit_prime_curves"},
     {0xFF02, "arbitrary_explicit_char2_curves"}

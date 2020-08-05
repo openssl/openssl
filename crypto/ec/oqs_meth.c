@@ -157,6 +157,12 @@ int oqssl_kem_nids_list[] = {
         NID_babybearephem,
         NID_mamabearephem,
         NID_papabearephem,
+        NID_hqc128_1_cca2,
+        NID_hqc192_1_cca2,
+        NID_hqc192_2_cca2,
+        NID_hqc256_1_cca2,
+        NID_hqc256_2_cca2,
+        NID_hqc256_3_cca2,
 /////// OQS_TEMPLATE_FRAGMENT_LIST_KNOWN_KEM_NIDS_END
 };
 
@@ -358,6 +364,24 @@ char* get_oqs_alg_name(int openssl_nid)
     case NID_papabearephem:
     case NID_p521_papabearephem:
       return OQS_KEM_alg_threebears_papabear_ephem;
+    case NID_hqc128_1_cca2:
+    case NID_p256_hqc128_1_cca2:
+      return OQS_KEM_alg_hqc_128_1_cca2;
+    case NID_hqc192_1_cca2:
+    case NID_p384_hqc192_1_cca2:
+      return OQS_KEM_alg_hqc_192_1_cca2;
+    case NID_hqc192_2_cca2:
+    case NID_p384_hqc192_2_cca2:
+      return OQS_KEM_alg_hqc_192_2_cca2;
+    case NID_hqc256_1_cca2:
+    case NID_p521_hqc256_1_cca2:
+      return OQS_KEM_alg_hqc_256_1_cca2;
+    case NID_hqc256_2_cca2:
+    case NID_p521_hqc256_2_cca2:
+      return OQS_KEM_alg_hqc_256_2_cca2;
+    case NID_hqc256_3_cca2:
+    case NID_p521_hqc256_3_cca2:
+      return OQS_KEM_alg_hqc_256_3_cca2;
 ///// OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_ALG_END
     default:
       return NULL;

@@ -562,8 +562,14 @@
   (nid == NID_babybearephem ? 0x022F : \
   (nid == NID_mamabearephem ? 0x0230 : \
   (nid == NID_papabearephem ? 0x0231 : \
+  (nid == NID_hqc128_1_cca2 ? 0x0232 : \
+  (nid == NID_hqc192_1_cca2 ? 0x0233 : \
+  (nid == NID_hqc192_2_cca2 ? 0x0234 : \
+  (nid == NID_hqc256_1_cca2 ? 0x0235 : \
+  (nid == NID_hqc256_2_cca2 ? 0x0236 : \
+  (nid == NID_hqc256_3_cca2 ? 0x0237 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_CURVEID_END
 
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_START
@@ -608,8 +614,14 @@
     (nid == NID_p256_babybearephem ? 0x2F2F : \
     (nid == NID_p384_mamabearephem ? 0x2F30 : \
     (nid == NID_p521_papabearephem ? 0x2F31 : \
+    (nid == NID_p256_hqc128_1_cca2 ? 0x2F32 : \
+    (nid == NID_p384_hqc192_1_cca2 ? 0x2F33 : \
+    (nid == NID_p384_hqc192_2_cca2 ? 0x2F34 : \
+    (nid == NID_p521_hqc256_1_cca2 ? 0x2F35 : \
+    (nid == NID_p521_hqc256_2_cca2 ? 0x2F36 : \
+    (nid == NID_p521_hqc256_3_cca2 ? 0x2F37 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_HYBRID_CURVEID_END
 
   /* Returns the non-hybrid OQS KEM NID for a PQ or hybrid curve ID */
@@ -655,8 +667,14 @@
   (curveID == 0x022F || curveID == 0x2F2F ? NID_babybearephem : \
   (curveID == 0x0230 || curveID == 0x2F30 ? NID_mamabearephem : \
   (curveID == 0x0231 || curveID == 0x2F31 ? NID_papabearephem : \
+  (curveID == 0x0232 || curveID == 0x2F32 ? NID_hqc128_1_cca2 : \
+  (curveID == 0x0233 || curveID == 0x2F33 ? NID_hqc192_1_cca2 : \
+  (curveID == 0x0234 || curveID == 0x2F34 ? NID_hqc192_2_cca2 : \
+  (curveID == 0x0235 || curveID == 0x2F35 ? NID_hqc256_1_cca2 : \
+  (curveID == 0x0236 || curveID == 0x2F36 ? NID_hqc256_2_cca2 : \
+  (curveID == 0x0237 || curveID == 0x2F37 ? NID_hqc256_3_cca2 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_KEM_NID_END
 
   /* Returns the hybrid OQS KEM NID for a hybrid curve ID */
@@ -702,8 +720,14 @@
     (curveID == 0x2F2F ? NID_p256_babybearephem : \
     (curveID == 0x2F30 ? NID_p384_mamabearephem : \
     (curveID == 0x2F31 ? NID_p521_papabearephem : \
+    (curveID == 0x2F32 ? NID_p256_hqc128_1_cca2 : \
+    (curveID == 0x2F33 ? NID_p384_hqc192_1_cca2 : \
+    (curveID == 0x2F34 ? NID_p384_hqc192_2_cca2 : \
+    (curveID == 0x2F35 ? NID_p521_hqc256_1_cca2 : \
+    (curveID == 0x2F36 ? NID_p521_hqc256_2_cca2 : \
+    (curveID == 0x2F37 ? NID_p521_hqc256_3_cca2 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_HYBRID_KEM_NID_END
 
 /* Returns true if the curve ID is for an OQS KEM */
@@ -757,8 +781,14 @@
   (nid == NID_babybearephem ? OQS_KEM_alg_threebears_babybear_ephem : \
   (nid == NID_mamabearephem ? OQS_KEM_alg_threebears_mamabear_ephem : \
   (nid == NID_papabearephem ? OQS_KEM_alg_threebears_papabear_ephem : \
+  (nid == NID_hqc128_1_cca2 ? OQS_KEM_alg_hqc_128_1_cca2 : \
+  (nid == NID_hqc192_1_cca2 ? OQS_KEM_alg_hqc_192_1_cca2 : \
+  (nid == NID_hqc192_2_cca2 ? OQS_KEM_alg_hqc_192_2_cca2 : \
+  (nid == NID_hqc256_1_cca2 ? OQS_KEM_alg_hqc_256_1_cca2 : \
+  (nid == NID_hqc256_2_cca2 ? OQS_KEM_alg_hqc_256_2_cca2 : \
+  (nid == NID_hqc256_3_cca2 ? OQS_KEM_alg_hqc_256_3_cca2 : \
   0 \
-  ))))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_ALG_NAME_END
 
 /* Returns the classic curve ID for a given hybrid curve */
@@ -804,8 +834,14 @@
   (cid == 0x2F2F ?23: \
   (cid == 0x2F30 ?24: \
   (cid == 0x2F31 ?25: \
+  (cid == 0x2F32 ?23: \
+  (cid == 0x2F33 ?24: \
+  (cid == 0x2F34 ?24: \
+  (cid == 0x2F35 ?25: \
+  (cid == 0x2F36 ?25: \
+  (cid == 0x2F37 ?25: \
   23 \
-  ))))))))))))))))))))))))))))))))))))))))
+  ))))))))))))))))))))))))))))))))))))))))))))))
 ///// OQS_TEMPLATE_FRAGMENT_OQS_MAP_HYBRID_END
 
 /* Returns the classical nid for an hybrid alg */

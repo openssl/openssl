@@ -221,6 +221,12 @@ static const TLS_GROUP_INFO oqs_nid_list[] = {
     {NID_babybearephem, 128, TLS_CURVE_CUSTOM}, /* babybearephem (0x022F) */
     {NID_mamabearephem, 192, TLS_CURVE_CUSTOM}, /* mamabearephem (0x0230) */
     {NID_papabearephem, 256, TLS_CURVE_CUSTOM}, /* papabearephem (0x0231) */
+    {NID_hqc128_1_cca2, 128, TLS_CURVE_CUSTOM}, /* hqc128_1_cca2 (0x0232) */
+    {NID_hqc192_1_cca2, 192, TLS_CURVE_CUSTOM}, /* hqc192_1_cca2 (0x0233) */
+    {NID_hqc192_2_cca2, 192, TLS_CURVE_CUSTOM}, /* hqc192_2_cca2 (0x0234) */
+    {NID_hqc256_1_cca2, 256, TLS_CURVE_CUSTOM}, /* hqc256_1_cca2 (0x0235) */
+    {NID_hqc256_2_cca2, 256, TLS_CURVE_CUSTOM}, /* hqc256_2_cca2 (0x0236) */
+    {NID_hqc256_3_cca2, 256, TLS_CURVE_CUSTOM}, /* hqc256_3_cca2 (0x0237) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_END
 };
     /* Hybrid OQS groups. Security level is classical. */
@@ -266,6 +272,12 @@ static const TLS_GROUP_INFO oqs_hybrid_nid_list[] = {
  {NID_p256_babybearephem, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + babybearephem hybrid (0x022F) */
  {NID_p384_mamabearephem, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + mamabearephem hybrid (0x0230) */
  {NID_p521_papabearephem, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + papabearephem hybrid (0x0231) */
+ {NID_p256_hqc128_1_cca2, 128, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc128_1_cca2 hybrid (0x0232) */
+ {NID_p384_hqc192_1_cca2, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc192_1_cca2 hybrid (0x0233) */
+ {NID_p384_hqc192_2_cca2, 192, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc192_2_cca2 hybrid (0x0234) */
+ {NID_p521_hqc256_1_cca2, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256_1_cca2 hybrid (0x0235) */
+ {NID_p521_hqc256_2_cca2, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256_2_cca2 hybrid (0x0236) */
+ {NID_p521_hqc256_3_cca2, 256, TLS_CURVE_CUSTOM}, /* p256/384/521 + hqc256_3_cca2 hybrid (0x0237) */
 ///// OQS_TEMPLATE_FRAGMENT_OQS_NID_LIST_HYBRID_END
 };
 
@@ -298,6 +310,7 @@ static const uint16_t eccurves_default[] = {
     0x2F29, /* OQS kyber90s512 hybrid */
     0x2F2C, /* OQS babybear hybrid */
     0x2F2F, /* OQS babybearephem hybrid */
+    0x2F32, /* OQS hqc128_1_cca2 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ECCURVES_DEFAULT_HYBRID_END
 };
 
@@ -393,6 +406,18 @@ static const uint16_t oqs_all_tls13_server_groups[] = {
     0x2F30, /* OQS mamabearephem hybrid */
     0x0231, /* papabearephem */
     0x2F31, /* OQS papabearephem hybrid */
+    0x0232, /* hqc128_1_cca2 */
+    0x2F32, /* OQS hqc128_1_cca2 hybrid */
+    0x0233, /* hqc192_1_cca2 */
+    0x2F33, /* OQS hqc192_1_cca2 hybrid */
+    0x0234, /* hqc192_2_cca2 */
+    0x2F34, /* OQS hqc192_2_cca2 hybrid */
+    0x0235, /* hqc256_1_cca2 */
+    0x2F35, /* OQS hqc256_1_cca2 hybrid */
+    0x0236, /* hqc256_2_cca2 */
+    0x2F36, /* OQS hqc256_2_cca2 hybrid */
+    0x0237, /* hqc256_3_cca2 */
+    0x2F37, /* OQS hqc256_3_cca2 hybrid */
 ///// OQS_TEMPLATE_FRAGMENT_ALL_OQS_CURVEIDS_END
 };
 

@@ -1757,6 +1757,18 @@ dstu4145le 2 9 : uacurve9 : DSTU curve 9
  : p384_mamabearephem : p384_mamabearephem
  : papabearephem : papabearephem
  : p521_papabearephem : p521_papabearephem
+ : hqc128_1_cca2 : hqc128_1_cca2
+ : p256_hqc128_1_cca2 : p256_hqc128_1_cca2
+ : hqc192_1_cca2 : hqc192_1_cca2
+ : p384_hqc192_1_cca2 : p384_hqc192_1_cca2
+ : hqc192_2_cca2 : hqc192_2_cca2
+ : p384_hqc192_2_cca2 : p384_hqc192_2_cca2
+ : hqc256_1_cca2 : hqc256_1_cca2
+ : p521_hqc256_1_cca2 : p521_hqc256_1_cca2
+ : hqc256_2_cca2 : hqc256_2_cca2
+ : p521_hqc256_2_cca2 : p521_hqc256_2_cca2
+ : hqc256_3_cca2 : hqc256_3_cca2
+ : p521_hqc256_3_cca2 : p521_hqc256_3_cca2
 ##### OQS_TEMPLATE_FRAGMENT_LIST_KEMS_END
 
 ##### OQS_TEMPLATE_FRAGMENT_ASSIGN_SIG_OIDS_START
