@@ -31,9 +31,9 @@ provider-keymgmt - The KEYMGMT library E<lt>-E<gt> provider functions
 
  /* Key object information */
  int OSSL_FUNC_keymgmt_get_params(void *keydata, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_gettable_params(void);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_gettable_params(void *provctx);
  int OSSL_FUNC_keymgmt_set_params(void *keydata, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_keymgmt_settable_params(void);
+ const OSSL_PARAM *OSSL_FUNC_keymgmt_settable_params(void *provctx);
 
  /* Key object content checks */
  int OSSL_FUNC_keymgmt_has(void *keydata, int selection);

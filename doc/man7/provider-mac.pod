@@ -28,9 +28,9 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
  int OSSL_FUNC_mac_final(void *mctx, unsigned char *out, size_t *outl, size_t outsize);
 
  /* MAC parameter descriptors */
- const OSSL_PARAM *OSSL_FUNC_mac_get_params(void);
- const OSSL_PARAM *OSSL_FUNC_mac_get_ctx_params(void);
- const OSSL_PARAM *OSSL_FUNC_mac_set_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_mac_get_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_mac_get_ctx_params(void *provctx);
+ const OSSL_PARAM *OSSL_FUNC_mac_set_ctx_params(void *provctx);
 
  /* MAC parameters */
  int OSSL_FUNC_mac_get_params(OSSL_PARAM params[]);

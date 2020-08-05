@@ -36,9 +36,9 @@ provider-asym_cipher - The asym_cipher library E<lt>-E<gt> provider functions
 
  /* Asymmetric Cipher parameters */
  int OSSL_FUNC_asym_cipher_get_ctx_params(void *ctx, OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_asym_cipher_gettable_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_asym_cipher_gettable_ctx_params(void *provctx);
  int OSSL_FUNC_asym_cipher_set_ctx_params(void *ctx, const OSSL_PARAM params[]);
- const OSSL_PARAM *OSSL_FUNC_asym_cipher_settable_ctx_params(void);
+ const OSSL_PARAM *OSSL_FUNC_asym_cipher_settable_ctx_params(void *provctx);
 
 =head1 DESCRIPTION
 
