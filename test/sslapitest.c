@@ -1118,7 +1118,9 @@ static int test_ktls_sendfile(int tls_version, const char *cipher)
         || !TEST_true(BIO_get_ktls_send(serverssl->wbio)))
         goto end;
 
-    RAND_bytes(buf, SENDFILE_SZ);
+    if (!TEST_true(RAND_bytes_ex(libctx, buf, SENDFILE_SZ)))
+        goto end;
+
     out = BIO_new_file(tmpfilename, "wb");
     if (!TEST_ptr(out))
         goto end;
