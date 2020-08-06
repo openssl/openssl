@@ -21,7 +21,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
+### Changes between 1.1.1 and 3.0 alpha 6 [6 Aug 2020]
 
  * Allow SSL_set1_host() and SSL_add1_host() to take IP literal addresses
    as well as actual hostnames.

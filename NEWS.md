@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
+### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 alpha 6 [in pre-release]
 
   * Deprecated the `ENGINE` API.
   * Added `OPENSSL_CTX`, a libcrypto library context.
