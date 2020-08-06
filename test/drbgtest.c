@@ -627,6 +627,13 @@ err:
 
 int setup_tests(void)
 {
+    /*
+     * TODO(3.0): figure out why and fix.
+     * Create the primary DRBG here to avoid a memory leak if it is done in
+     * the test cases.
+     */
+    if (RAND_get0_primary(NULL) == NULL)
+        return 0;
     ADD_TEST(test_rand_drbg_reseed);
     ADD_TEST(test_rand_drbg_prediction_resistance);
 #if defined(OPENSSL_THREADS)
