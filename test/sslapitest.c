@@ -5690,9 +5690,20 @@ static int test_export_key_mat(int tst)
         goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
-                                      NULL))
-            || !TEST_true(create_ssl_connection(serverssl, clientssl,
-                                                SSL_ERROR_NONE)))
+                                      NULL)))
+        goto end;
+
+    /*
+     * Premature call of SSL_export_keying_material should just fail.
+     */
+    if (!TEST_int_le(SSL_export_keying_material(clientssl, ckeymat1,
+                                                sizeof(ckeymat1), label,
+                                                SMALL_LABEL_LEN + 1, context,
+                                                sizeof(context) - 1, 1), 0))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE)))
         goto end;
 
     if (tst == 5) {
