@@ -377,9 +377,9 @@ void evp_method_store_flush(OPENSSL_CTX *libctx)
         ossl_method_store_flush_cache(store, 1);
 }
 
-static int evp_set_default_properties(OPENSSL_CTX *libctx,
-                                      OSSL_PROPERTY_LIST *def_prop,
-                                      int loadconfig)
+static int evp_set_parsed_default_properties(OPENSSL_CTX *libctx,
+                                             OSSL_PROPERTY_LIST *def_prop,
+                                             int loadconfig)
 {
     OSSL_METHOD_STORE *store = get_evp_method_store(libctx);
     OSSL_PROPERTY_LIST **plp = ossl_ctx_global_properties(libctx, loadconfig);
@@ -404,7 +404,7 @@ int evp_set_default_properties_intern(OPENSSL_CTX *libctx, const char *propq,
         EVPerr(0, EVP_R_DEFAULT_QUERY_PARSE_ERROR);
         return 0;
     }
-    return evp_set_default_properties(libctx, pl, loadconfig);
+    return evp_set_parsed_default_properties(libctx, pl, loadconfig);
 }
 
 int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
@@ -431,7 +431,7 @@ static int evp_default_properties_merge(OPENSSL_CTX *libctx, const char *propq)
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return 0;
     }
-    return evp_set_default_properties(libctx, pl2, 0);
+    return evp_set_parsed_default_properties(libctx, pl2, 0);
 }
 
 static int evp_default_property_is_enabled(OPENSSL_CTX *libctx,
