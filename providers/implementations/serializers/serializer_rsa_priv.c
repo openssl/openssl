@@ -73,7 +73,7 @@ static void rsa_priv_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *rsa_priv_settable_ctx_params(void *provctx)
+static const OSSL_PARAM *rsa_priv_settable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM settables[] = {
         OSSL_PARAM_utf8_string(OSSL_SERIALIZER_PARAM_CIPHER, NULL, 0),

@@ -279,7 +279,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_settable_ctx_params(void *provctx)
+const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -360,7 +360,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_gettable_ctx_params(void *provctx)
+const OSSL_PARAM *ecdh_gettable_ctx_params(ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }

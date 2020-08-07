@@ -166,7 +166,7 @@ static const OSSL_PARAM aes_siv_known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *aes_siv_gettable_ctx_params(void *provctx)
+static const OSSL_PARAM *aes_siv_gettable_ctx_params(ossl_unused void *provctx)
 {
     return aes_siv_known_gettable_ctx_params;
 }
@@ -216,7 +216,7 @@ static const OSSL_PARAM aes_siv_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *aes_siv_settable_ctx_params(void *provctx)
+static const OSSL_PARAM *aes_siv_settable_ctx_params(ossl_unused void *provctx)
 {
     return aes_siv_known_settable_ctx_params;
 }
