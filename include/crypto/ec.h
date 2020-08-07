@@ -47,7 +47,7 @@ __owur int ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
 int ecdh_KDF_X9_63(unsigned char *out, size_t outlen,
                    const unsigned char *Z, size_t Zlen,
                    const unsigned char *sinfo, size_t sinfolen,
-                   const EVP_MD *md);
+                   const EVP_MD *md, OPENSSL_CTX *libctx, const char *propq);
 
 int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test);
 int ec_key_public_check(const EC_KEY *eckey, BN_CTX *ctx);

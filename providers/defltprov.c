@@ -95,7 +95,7 @@ static int deflt_get_params(void *provctx, OSSL_PARAM params[])
  */
 static const OSSL_ALGORITHM deflt_digests[] = {
     /* Our primary name:NIST name[:our older names] */
-    { "SHA1:SHA-1", "provider=default", sha1_functions },
+    { "SHA1:SHA-1:SSL3-SHA1", "provider=default", sha1_functions },
     { "SHA2-224:SHA-224:SHA224", "provider=default", sha224_functions },
     { "SHA2-256:SHA-256:SHA256", "provider=default", sha256_functions },
     { "SHA2-384:SHA-384:SHA384", "provider=default", sha384_functions },
@@ -139,7 +139,7 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 #endif /* OPENSSL_NO_SM3 */
 
 #ifndef OPENSSL_NO_MD5
-    { "MD5", "provider=default", md5_functions },
+    { "MD5:SSL3-MD5", "provider=default", md5_functions },
     { "MD5-SHA1", "provider=default", md5_sha1_functions },
 #endif /* OPENSSL_NO_MD5 */
 
@@ -151,9 +151,9 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG("AES-256-ECB", aes256ecb_functions),
     ALG("AES-192-ECB", aes192ecb_functions),
     ALG("AES-128-ECB", aes128ecb_functions),
-    ALG("AES-256-CBC", aes256cbc_functions),
-    ALG("AES-192-CBC", aes192cbc_functions),
-    ALG("AES-128-CBC", aes128cbc_functions),
+    ALG("AES-256-CBC:AES256", aes256cbc_functions),
+    ALG("AES-192-CBC:AES192", aes192cbc_functions),
+    ALG("AES-128-CBC:AES128", aes128cbc_functions),
     ALG("AES-128-CBC-CTS", aes128cbc_cts_functions),
     ALG("AES-192-CBC-CTS", aes192cbc_cts_functions),
     ALG("AES-256-CBC-CTS", aes256cbc_cts_functions),

@@ -35,7 +35,8 @@ static OSSL_FUNC_kdf_get_ctx_params_fn kdf_scrypt_get_ctx_params;
 static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
-                      unsigned char *key, size_t keylen, EVP_MD *sha256);
+                      unsigned char *key, size_t keylen, EVP_MD *sha256,
+                      OPENSSL_CTX *libctx, const char *propq);
 
 typedef struct {
     void *provctx;
@@ -138,7 +139,8 @@ static int kdf_scrypt_derive(void *vctx, unsigned char *key,
 
     return scrypt_alg((char *)ctx->pass, ctx->pass_len, ctx->salt,
                       ctx->salt_len, ctx->N, ctx->r, ctx->p,
-                      ctx->maxmem_bytes, key, keylen, ctx->sha256);
+                      ctx->maxmem_bytes, key, keylen, ctx->sha256,
+                      PROV_LIBRARY_CONTEXT_OF(ctx->provctx), NULL);
 }
 
 static int is_power_of_two(uint64_t value)
@@ -361,7 +363,8 @@ static void scryptROMix(unsigned char *B, uint64_t r, uint64_t N,
 static int scrypt_alg(const char *pass, size_t passlen,
                       const unsigned char *salt, size_t saltlen,
                       uint64_t N, uint64_t r, uint64_t p, uint64_t maxmem,
-                      unsigned char *key, size_t keylen, EVP_MD *sha256)
+                      unsigned char *key, size_t keylen, EVP_MD *sha256,
+                      OPENSSL_CTX *libctx, const char *propq)
 {
     int rv = 0;
     unsigned char *B;
@@ -445,15 +448,15 @@ static int scrypt_alg(const char *pass, size_t passlen,
     X = (uint32_t *)(B + Blen);
     T = X + 32 * r;
     V = T + 32 * r;
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, salt, saltlen, 1, sha256,
-                          (int)Blen, B) == 0)
+    if (pkcs5_pbkdf2_hmac_with_libctx(pass, passlen, salt, saltlen, 1, sha256,
+                                      (int)Blen, B, libctx, propq) == 0)
         goto err;
 
     for (i = 0; i < p; i++)
         scryptROMix(B + 128 * r * i, r, N, X, T, V);
 
-    if (PKCS5_PBKDF2_HMAC(pass, passlen, B, (int)Blen, 1, sha256,
-                          keylen, key) == 0)
+    if (pkcs5_pbkdf2_hmac_with_libctx(pass, passlen, B, (int)Blen, 1, sha256,
+                                      keylen, key, libctx, propq) == 0)
         goto err;
     rv = 1;
  err:

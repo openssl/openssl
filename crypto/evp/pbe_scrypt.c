@@ -46,7 +46,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     OSSL_PARAM params[7], *z = params;
 
     if (r > UINT32_MAX || p > UINT32_MAX) {
-        EVPerr(EVP_F_EVP_PBE_SCRYPT, EVP_R_PARAMETER_TOO_LARGE);
+        EVPerr(0, EVP_R_PARAMETER_TOO_LARGE);
         return 0;
     }
 
@@ -62,6 +62,7 @@ int EVP_PBE_scrypt(const char *pass, size_t passlen,
     if (maxmem == 0)
         maxmem = SCRYPT_MAX_MEM;
 
+    /* Use OPENSSL_CTX_set0_default() if you need a library context */
     kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_SCRYPT, NULL);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
