@@ -399,6 +399,8 @@ static const OSSL_ALGORITHM fips_keyexch[] = {
     { "X25519", FIPS_DEFAULT_PROPERTIES, x25519_keyexch_functions },
     { "X448", FIPS_DEFAULT_PROPERTIES, x448_keyexch_functions },
 #endif
+    { "TLS1-PRF", FIPS_DEFAULT_PROPERTIES, kdf_tls1_prf_keyexch_functions },
+    { "HKDF", FIPS_DEFAULT_PROPERTIES, kdf_hkdf_keyexch_functions },
     { NULL, NULL, NULL }
 };
 
@@ -437,6 +439,8 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { "ED25519", FIPS_DEFAULT_PROPERTIES, ed25519_keymgmt_functions },
     { "ED448", FIPS_DEFAULT_PROPERTIES, ed448_keymgmt_functions },
 #endif
+    { "TLS1-PRF", FIPS_DEFAULT_PROPERTIES, kdf_keymgmt_functions },
+    { "HKDF", FIPS_DEFAULT_PROPERTIES, kdf_keymgmt_functions },
     { NULL, NULL, NULL }
 };
 
