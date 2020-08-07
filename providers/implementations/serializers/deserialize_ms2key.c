@@ -77,7 +77,7 @@ static void ms2key_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *ms2key_gettable_params(void)
+static const OSSL_PARAM *ms2key_gettable_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM gettables[] = {
         { OSSL_DESERIALIZER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
