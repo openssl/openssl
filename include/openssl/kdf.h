@@ -129,10 +129,10 @@ int EVP_PKEY_CTX_set1_hkdf_salt(EVP_PKEY_CTX *ctx,
                                 const unsigned char *salt, int saltlen);
 
 int EVP_PKEY_CTX_set1_hkdf_key(EVP_PKEY_CTX *ctx,
-                                      const unsigned char *key, int keylen);
+                               const unsigned char *key, int keylen);
 
 int EVP_PKEY_CTX_add1_hkdf_info(EVP_PKEY_CTX *ctx,
-                                      const unsigned char *info, int infolen);
+                                const unsigned char *info, int infolen);
 
 int EVP_PKEY_CTX_hkdf_mode(EVP_PKEY_CTX *ctx, int mode);
 
