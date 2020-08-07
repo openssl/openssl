@@ -1,3 +1,7 @@
+/* password_cb and password_cb_data are the same kinds of parameters that you would
+       pass to PEM_read_PrivateKey() and friends */
+    STACK_OF(STORE_INFO) *objects = STORE_load("file:foo/bar/stuff.pem", password_cb, password_cb_data);
+
 name: CIFuzz
 on: [pull_request]
 jobs:
@@ -21,3 +25,7 @@ jobs:
       with:
         name: artifacts
         path: ./out/artifacts
+
+STORE_open(uri)
+    loop around STORE_load() until end of data or failure
+    STORE_close()
