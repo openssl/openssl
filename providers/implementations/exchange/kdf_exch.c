@@ -130,13 +130,11 @@ static int kdf_set_ctx_params(void *vpkdfctx, const OSSL_PARAM params[])
     return EVP_KDF_CTX_set_params(pkdfctx->kdfctx, params);
 }
 
-static const OSSL_PARAM *kdf_settable_ctx_params(const char *kdfname)
+static const OSSL_PARAM *kdf_settable_ctx_params(void *provctx,
+                                                 const char *kdfname)
 {
-    /*
-     * TODO(3.0): FIXME FIXME!! These settable_ctx_params functions should
-     * have a provctx argument so we can get hold of the libctx.
-     */
-    EVP_KDF *kdf = EVP_KDF_fetch(NULL, kdfname, NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), kdfname,
+                                 NULL);
     const OSSL_PARAM *params;
 
     if (kdf == NULL)
@@ -149,9 +147,9 @@ static const OSSL_PARAM *kdf_settable_ctx_params(const char *kdfname)
 }
 
 #define KDF_SETTABLE_CTX_PARAMS(funcname, kdfname) \
-    static const OSSL_PARAM *kdf_##funcname##_settable_ctx_params(void) \
+    static const OSSL_PARAM *kdf_##funcname##_settable_ctx_params(void *provctx) \
     { \
-        return kdf_settable_ctx_params(kdfname); \
+        return kdf_settable_ctx_params(provctx, kdfname); \
     }
 
 KDF_SETTABLE_CTX_PARAMS(tls1_prf, "TLS1-PRF")
