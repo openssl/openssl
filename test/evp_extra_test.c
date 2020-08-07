@@ -1760,14 +1760,14 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     if (!TEST_ptr(nullprov))
         goto err;
 
-    pctx = EVP_PKEY_CTX_new_from_name(tmpctx, tst == 0 ? "RSA" : "HMAC", "");
+    pctx = EVP_PKEY_CTX_new_from_name(tmpctx, tst == 0 ? "RSA" : "SM2", "");
 
     /* RSA is not available via any provider so we expect this to fail */
     if (tst == 0 && !TEST_ptr_null(pctx))
         goto err;
 
     /*
-     * HMAC is always available because it is implemented via legacy codepaths
+     * SM2 is always available because it is implemented via legacy codepaths
      * and not in a provider at all. We expect this to pass.
      */
     if (tst == 1 && !TEST_ptr(pctx))
