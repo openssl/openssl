@@ -72,7 +72,7 @@ static const OSSL_PARAM rc4_hmac_md5_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(void *provctx)
+const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *provctx)
 {
     return rc4_hmac_md5_known_gettable_ctx_params;
 }
@@ -107,7 +107,7 @@ static const OSSL_PARAM rc4_hmac_md5_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(void *provctx)
+const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *provctx)
 {
     return rc4_hmac_md5_known_settable_ctx_params;
 }

@@ -382,7 +382,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_gettable_ctx_params(void *provctx)
+static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -526,7 +526,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_settable_ctx_params(void *provctx)
+static const OSSL_PARAM *rsa_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }

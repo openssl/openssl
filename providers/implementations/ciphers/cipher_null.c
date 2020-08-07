@@ -95,7 +95,7 @@ static const OSSL_PARAM null_known_gettable_ctx_params[] = {
 };
 
 static OSSL_FUNC_cipher_gettable_ctx_params_fn null_gettable_ctx_params;
-static const OSSL_PARAM *null_gettable_ctx_params(void *provctx)
+static const OSSL_PARAM *null_gettable_ctx_params(ossl_unused void *provctx)
 {
     return null_known_gettable_ctx_params;
 }
@@ -131,7 +131,7 @@ static const OSSL_PARAM null_known_settable_ctx_params[] = {
 };
 
 static OSSL_FUNC_cipher_settable_ctx_params_fn null_settable_ctx_params;
-static const OSSL_PARAM *null_settable_ctx_params(void *provctx)
+static const OSSL_PARAM *null_settable_ctx_params(ossl_unused void *provctx)
 {
     return null_known_settable_ctx_params;
 }
