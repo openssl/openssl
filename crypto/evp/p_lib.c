@@ -269,6 +269,10 @@ static int evp_pkey_cmp_any(const EVP_PKEY *a, const EVP_PKEY *b,
     if (keymgmt1 != keymgmt2)
         return -2;
 
+    /* If the keymgmt implementations are NULL, the export failed */
+    if (keymgmt1 == NULL)
+        return -2;
+
     return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
 }
 
