@@ -2494,9 +2494,7 @@ typedef struct pkey_kdf_data_st {
  */
 static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
 {
-    OPENSSL_CTX *save_libctx = NULL;
     PKEY_KDF_DATA *kdata = NULL;
-    int kdf_nid = OBJ_sn2nid(name);
 
     if (is_kdf_disabled(name)) {
         TEST_info("skipping, '%s' is disabled", name);
@@ -2504,28 +2502,17 @@ static int pkey_kdf_test_init(EVP_TEST *t, const char *name)
         return 1;
     }
 
-    if (kdf_nid == NID_undef)
-        kdf_nid = OBJ_ln2nid(name);
-
     if (!TEST_ptr(kdata = OPENSSL_zalloc(sizeof(*kdata))))
         return 0;
-    /*
-     * TODO(3.0): This should be using EVP_PKEY_CTX_new_from_name(),
-     * but it does not currently since the PKEY_KDF is using legacy paths.
-     * Internally it still uses fetches with the legacy path,
-     * So for now we hack in the library context.
-     */
-    save_libctx = OPENSSL_CTX_set0_default(libctx);
-    kdata->ctx = EVP_PKEY_CTX_new_id(kdf_nid, NULL);
+
+    kdata->ctx = EVP_PKEY_CTX_new_from_name(libctx, name, NULL);
     if (kdata->ctx == NULL
         || EVP_PKEY_derive_init(kdata->ctx) <= 0)
         goto err;
 
-    OPENSSL_CTX_set0_default(save_libctx);
     t->data = kdata;
     return 1;
 err:
-    OPENSSL_CTX_set0_default(save_libctx);
     EVP_PKEY_CTX_free(kdata->ctx);
     OPENSSL_free(kdata);
     return 0;
