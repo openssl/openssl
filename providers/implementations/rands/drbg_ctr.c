@@ -638,7 +638,7 @@ static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 static const OSSL_PARAM *drbg_ctr_gettable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_DRBG_GETABLE_CTX_COMMON,
+        OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON,
         OSSL_PARAM_END
     };
     return known_gettable_ctx_params;
@@ -714,7 +714,7 @@ static const OSSL_PARAM *drbg_ctr_settable_ctx_params(void *provctx)
          */
         OSSL_PARAM_int(OSSL_DRBG_PARAM_USE_DF, NULL),
 #endif
-        OSSL_PARAM_DRBG_SETABLE_CTX_COMMON,
+        OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON,
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
