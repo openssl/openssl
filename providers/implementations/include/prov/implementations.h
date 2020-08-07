@@ -278,6 +278,7 @@ extern const OSSL_DISPATCH ed25519_keymgmt_functions[];
 extern const OSSL_DISPATCH ed448_keymgmt_functions[];
 extern const OSSL_DISPATCH ec_keymgmt_functions[];
 extern const OSSL_DISPATCH kdf_keymgmt_functions[];
+extern const OSSL_DISPATCH mac_keymgmt_functions[];
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];
