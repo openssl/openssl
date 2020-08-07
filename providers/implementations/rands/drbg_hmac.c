@@ -332,7 +332,7 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 static const OSSL_PARAM *drbg_hmac_gettable_ctx_params(void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
-        OSSL_PARAM_DRBG_GETABLE_CTX_COMMON,
+        OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON,
         OSSL_PARAM_END
     };
     return known_gettable_ctx_params;
@@ -384,7 +384,7 @@ static const OSSL_PARAM *drbg_hmac_settable_ctx_params(void *provctx)
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_PROPERTIES, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_DIGEST, NULL, 0),
         OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_MAC, NULL, 0),
-        OSSL_PARAM_DRBG_SETABLE_CTX_COMMON,
+        OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON,
         OSSL_PARAM_END
     };
     return known_settable_ctx_params;
