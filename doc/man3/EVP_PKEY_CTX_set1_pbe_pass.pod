@@ -56,9 +56,8 @@ L<EVP_PKEY_derive(3)>
 
 =head1 HISTORY
 
-EVP_PKEY_CTX_set1_pbe_pass() was converted from a macro to a functions in
+EVP_PKEY_CTX_set1_pbe_pass() was converted from a macro to a function in
 OpenSSL 3.0.
-
 
 =head1 COPYRIGHT
 
