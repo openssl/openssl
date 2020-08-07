@@ -107,8 +107,13 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     OSSL_TRACE1(CONF, "Configuration in section %s\n", vsection);
     values = NCONF_get_section(cnf, vsection);
 
-    if (!values)
+    if (values == NULL) {
+        if (!(flags & CONF_MFLAGS_SILENT)) {
+            CONFerr(0, CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION);
+            ERR_add_error_data(2, "openssl_conf=", vsection);
+        }
         return 0;
+    }
 
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         vl = sk_CONF_VALUE_value(values, i);
