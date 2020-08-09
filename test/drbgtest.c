@@ -531,10 +531,10 @@ static EVP_RAND_CTX *new_drbg(EVP_RAND_CTX *parent)
     if (!TEST_ptr(rand = EVP_RAND_fetch(NULL, "CTR-DRBG", NULL))
             || !TEST_ptr(drbg = EVP_RAND_CTX_new(rand, parent))
             || !TEST_true(EVP_RAND_set_ctx_params(drbg, params))) {
-        EVP_RAND_CTX_rand(drbg);
-        EVP_RAND_free(rand);
+        EVP_RAND_CTX_free(drbg);
         drbg = NULL;
     }
+    EVP_RAND_free(rand);
     return drbg;
 }
 
@@ -627,13 +627,6 @@ err:
 
 int setup_tests(void)
 {
-    /*
-     * TODO(3.0): figure out why and fix.
-     * Create the primary DRBG here to avoid a memory leak if it is done in
-     * the test cases.
-     */
-    if (RAND_get0_primary(NULL) == NULL)
-        return 0;
     ADD_TEST(test_rand_drbg_reseed);
     ADD_TEST(test_rand_drbg_prediction_resistance);
 #if defined(OPENSSL_THREADS)
