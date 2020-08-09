@@ -23,6 +23,7 @@ extern "C" {
 #define OSSL_PROV_PARAM_NAME            "name"                /* utf8_string */
 #define OSSL_PROV_PARAM_VERSION         "version"             /* utf8_string */
 #define OSSL_PROV_PARAM_BUILDINFO       "buildinfo"           /* utf8_string */
+#define OSSL_PROV_PARAM_STATUS          "status"              /* uint */
 
 /* Self test callback parameters */
 #define OSSL_PROV_PARAM_SELF_TEST_PHASE  "st-phase" /* utf8_string */

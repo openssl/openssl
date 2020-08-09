@@ -162,7 +162,7 @@ void *OPENSSL_SA_get(const OPENSSL_SA *sa, ossl_uintmax_t n)
     int level;
     void **p, *r = NULL;
 
-    if (sa == NULL)
+    if (sa == NULL || sa->nelem == 0)
         return NULL;
 
     if (n <= sa->top) {

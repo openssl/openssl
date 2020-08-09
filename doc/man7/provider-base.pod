@@ -139,6 +139,7 @@ F<libcrypto>):
  provider_query_operation       OSSL_FUNC_PROVIDER_QUERY_OPERATION
  provider_get_reason_strings    OSSL_FUNC_PROVIDER_GET_REASON_STRINGS
  provider_get_capabilities      OSSL_FUNC_PROVIDER_GET_CAPABILITIES
+ provider_self_test             OSSL_FUNC_PROVIDER_SELF_TEST
 
 =head2 Core functions
 
@@ -241,6 +242,11 @@ callback multiple times (one for each capability). Capabilities can be useful fo
 describing the services that a provider can offer. For further details see the
 L</CAPABILITIES> section below. It should return 1 on success or 0 on error.
 
+The provider_self_test() function should perform known answer tests on a subset
+of the algorithms that it uses, and may also verify the integrity of the
+provider module. It should return 1 on success or 0 on error. It will return 1
+if this function is not used.
+
 None of these functions are mandatory, but a provider is fairly
 useless without at least provider_query_operation(), and
 provider_gettable_params() is fairly useless if not accompanied by
@@ -267,6 +273,11 @@ for any third party provider. This string is for informational purposes only.
 This points to a string that is a build information associated with this provider.
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
 different for any third party provider.
+
+=item "status" (B<OSSL_PROV_PARAM_STATUS>) <unsigned integer>
+
+This returns 0 if the provider has entered an error state, otherwise it returns
+1.
 
 =back 
 

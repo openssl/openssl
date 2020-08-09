@@ -57,7 +57,7 @@ IF[{- !$disabled{tests} -}]
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test gosttest \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
-          keymgmt_internal_test hexstr_test
+          keymgmt_internal_test hexstr_test provider_status_test
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=enginetest
@@ -165,6 +165,10 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[acvp_test]=../include ../apps/include
     DEPEND[acvp_test]=../libcrypto.a libtestutil.a
   ENDIF
+
+  SOURCE[provider_status_test]=provider_status_test.c
+  INCLUDE[provider_status_test]=../include ../apps/include
+  DEPEND[provider_status_test]=../libcrypto.a libtestutil.a
 
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
