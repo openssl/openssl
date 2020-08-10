@@ -618,8 +618,9 @@ X.509 certificates computed by OSSL_CMP_certConf_cb() (if this function has
 been called) on the last received certificate response message IP/CP/KUP.
 
 OSSL_CMP_CTX_get1_caPubs() returns a pointer to a duplicate of the list of
-X.509 certificates received in the caPubs field of last received certificate
-response message IP/CP/KUP.
+X.509 certificates in the caPubs field of the last received certificate
+response message (of type IP, CP, or KUP),
+or an empty stack if no caPubs have been received in the current transaction.
 
 OSSL_CMP_CTX_get1_extraCertsIn() returns a pointer to a duplicate of the list
 of X.509 certificates contained in the extraCerts field of the last received
