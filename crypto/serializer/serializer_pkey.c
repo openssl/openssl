@@ -150,7 +150,8 @@ static int serializer_EVP_PKEY_to_bio(OSSL_SERIALIZER_CTX *ctx, BIO *out)
     if (ctx->ser == NULL)
         return 0;
 
-    if (ctx->ser->serialize_object == NULL) {
+    if (ctx->ser->serialize_object == NULL
+        || OSSL_SERIALIZER_provider(ctx->ser) != EVP_KEYMGMT_provider(keymgmt)) {
         struct serializer_write_data_st write_data;
 
         write_data.ctx = ctx;
