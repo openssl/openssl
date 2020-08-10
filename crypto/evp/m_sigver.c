@@ -186,7 +186,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              * so the EVP_MD should not be used beyound the lifetime of the
              * EVP_MD_CTX.
              */
-            ctx->reqdigest = ctx->fetched_digest =
+            ctx->digest = ctx->reqdigest = ctx->fetched_digest =
                 EVP_MD_fetch(locpctx->libctx, mdname, props);
         }
     }
