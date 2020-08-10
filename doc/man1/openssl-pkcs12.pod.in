@@ -11,9 +11,9 @@ B<openssl> B<pkcs12>
 [B<-help>]
 [B<-export>]
 [B<-chain>]
+[B<-untrusted> I<filename>]
 [B<-inkey> I<file_or_id>]
 [B<-certfile> I<filename>]
-[B<-untrusted> I<filename>]
 [B<-passcerts> I<arg>]
 [B<-name> I<name>]
 [B<-caname> I<name>]
@@ -231,7 +231,8 @@ Any certificates that are actually part of the chain are added to the output.
 
 =item B<-passcerts> I<arg>
 
-The password source for certificate input such as B<-certfile>.
+The password source for certificate input such as B<-certfile>
+and B<-untrusted>.
 For more information about the format of B<arg>
 see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
