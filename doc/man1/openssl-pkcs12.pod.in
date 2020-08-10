@@ -13,6 +13,7 @@ B<openssl> B<pkcs12>
 [B<-chain>]
 [B<-inkey> I<file_or_id>]
 [B<-certfile> I<filename>]
+[B<-untrusted> I<filename>]
 [B<-passcerts> I<arg>]
 [B<-name> I<name>]
 [B<-caname> I<name>]
@@ -73,8 +74,9 @@ programs including Netscape, MSIE and MS Outlook.
 =head1 OPTIONS
 
 There are a lot of options the meaning of some depends of whether a PKCS#12 file
-is being created or parsed. By default a PKCS#12 file is parsed. A PKCS#12
-file can be created by using the B<-export> option (see below).
+is being created or parsed. By default a PKCS#12 file is parsed.
+A PKCS#12 file can be created by using the B<-export> option (see below).
+Many further options such as B<-chain> make sense only with B<-export>.
 
 =head1 PARSING OPTIONS
 
@@ -86,10 +88,10 @@ Print out a usage message.
 
 =item B<-in> I<filename>
 
-This specifies filename or URI of the PKCS#12 file to be parsed.
-With B<-export>, this refers to the the certificate and/or key input,
-which can be in PEM, DER, or PKCS#12 format.
+This specifies the input filename or URI.
 Standard input is used by default.
+Without the B<-export> option this is a PKCS#12 file to be parsed.
+With the B<-export> option this is a file with certificates and possibly a key.
 
 =item B<-out> I<filename>
 
@@ -103,8 +105,8 @@ otherwise it is equivalent to B<-passin>.
 
 =item B<-noout>
 
-This option inhibits output of the keys and certificates to the output file
-version of the PKCS#12 file.
+This option inhibits credentials output,
+and so the PKCS#12 input is just verified.
 
 =item B<-clcerts>
 
@@ -206,8 +208,8 @@ certificates are present they will also be included in the PKCS#12 file.
 
 =item B<-inkey> I<file_or_id>
 
-File to read private key from. If not present then a private key must be present
-in the input file.
+File to read private key from for PKCS12 output.
+If not present then the input file (B<-in> argument) must contain a private key.
 If no engine is used, the argument is taken as a file; if an engine is
 specified, the argument is given to the engine as a key identifier.
 
@@ -218,8 +220,15 @@ name is typically displayed in list boxes by software importing the file.
 
 =item B<-certfile> I<filename>
 
-A filename or URI to read additional certificates from.
-The file can be in PEM, DER, or PKCS#12 format.
+An input file with extra certificates to be added to the PKCS12 output
+if the B<-export> option is given.
+
+=item B<-untrusted> I<filename>
+
+An input file of untrusted certificates that may be used
+for chain building, which is relevant only when a PKCS#12 file is created
+with the B<-export> option and the B<-chain> option is given as well.
+Any certificates that are actually part of the chain are added to the output.
 
 =item B<-passcerts> I<arg>
 
@@ -243,9 +252,12 @@ see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-chain>
 
-If this option is present then an attempt is made to include the entire
-certificate chain of the user certificate. The standard CA store is used
-for this search. If the search fails it is considered a fatal error.
+If this option is present then the certificate chain of the end entity
+certificate is built and included in the PKCS#12 output file.
+The end entity certificate is the first one read from the B<-in> file
+if no key is given, else the first certificate matching the given key.
+The standard CA trust store is used for chain building,
+as well as any untrusted CA certificates given with the B<-untrusted> option.
 
 =item B<-descert>
 
@@ -404,7 +416,7 @@ L<ossl_store-file(7)>
 =head1 HISTORY
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
-The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
+The B<-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 
 =head1 COPYRIGHT
 

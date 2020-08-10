@@ -57,7 +57,7 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 4;
+plan tests => 5;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -70,6 +70,14 @@ ok(run(app(["openssl", "pkcs12", "-noout",
 
 my @path = qw(test certs);
 my $tmpfile = "tmp.p12";
+
+# Test the -chain option with -untrusted
+ok(run(app(["openssl", "pkcs12", "-export", "-chain",
+            "-CAfile",  srctop_file(@path,  "sroot-cert.pem"),
+            "-untrusted", srctop_file(@path, "ca-cert.pem"),
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-nokeys", "-passout", "pass:", "-out", $tmpfile])),
+   "test_pkcs12_chain_untrusted");
 
 # Test the -passcerts option
 ok(run(app(["openssl", "pkcs12", "-export",
