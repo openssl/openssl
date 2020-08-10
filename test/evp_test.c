@@ -3538,7 +3538,7 @@ int setup_tests(void)
 {
     size_t n;
     char *config_file = NULL;
-    int is_fips, is_fips_loaded;
+
     OPTION_CHOICE o;
 
     while ((o = opt_next()) != OPT_EOF) {
@@ -3575,18 +3575,6 @@ int setup_tests(void)
     n = test_get_argument_count();
     if (n == 0)
         return 0;
-
-    /*
-     * Check we're in FIPS mode when we're supposed to be. We do this early to
-     * confirm that EVP_default_properties_is_fips_enabled() works even before
-     * other function calls have auto-loaded the config file.
-     */
-    is_fips = EVP_default_properties_is_fips_enabled(NULL);
-    is_fips_loaded = OSSL_PROVIDER_available(NULL, "fips");
-
-    if (!TEST_int_eq(is_fips, is_fips_loaded))
-        return 0;
-    TEST_info("Running with FIPS %s", is_fips ? "enabled" : "disabled");
 
     ADD_ALL_TESTS(run_file_tests, n);
     return 1;
