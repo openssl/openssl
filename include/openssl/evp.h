@@ -1526,9 +1526,8 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 # define EVP_PKEY_OP_TYPE_FROMDATA \
         (EVP_PKEY_OP_PARAMFROMDATA | EVP_PKEY_OP_KEYFROMDATA)
 
-# define  EVP_PKEY_CTX_set_mac_key(ctx, key, len)        \
-                EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN,  \
-                                  EVP_PKEY_CTRL_SET_MAC_KEY, len, (void *)(key))
+int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
+                             int keylen);
 
 # define EVP_PKEY_CTRL_MD                1
 # define EVP_PKEY_CTRL_PEER_KEY          2

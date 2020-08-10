@@ -844,7 +844,7 @@ static int evp_pkey_ctx_set1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
 {
     OSSL_PARAM octet_string_params[2], *p = octet_string_params;
 
-    if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
+    if (ctx == NULL || (ctx->operation & op) == 0) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
         return -2;
@@ -1024,6 +1024,16 @@ int EVP_PKEY_CTX_set_scrypt_maxmem_bytes(EVP_PKEY_CTX *ctx,
                                    EVP_PKEY_OP_DERIVE,
                                    EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES,
                                    maxmem_bytes);
+}
+
+int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
+                             int keylen)
+{
+    return evp_pkey_ctx_set1_octet_string(ctx, ctx->op.keymgmt.genctx == NULL,
+                                          OSSL_PKEY_PARAM_PRIV_KEY,
+                                          EVP_PKEY_OP_KEYGEN,
+                                          EVP_PKEY_CTRL_SET_MAC_KEY,
+                                          key, keylen);
 }
 
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
