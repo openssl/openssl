@@ -395,8 +395,8 @@ static int evp_set_parsed_default_properties(OPENSSL_CTX *libctx,
     return 0;
 }
 
-int evp_set_default_properties_intern(OPENSSL_CTX *libctx, const char *propq,
-                                      int loadconfig)
+int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
+                                   int loadconfig)
 {
     OSSL_PROPERTY_LIST *pl = NULL;
 
@@ -409,7 +409,7 @@ int evp_set_default_properties_intern(OPENSSL_CTX *libctx, const char *propq,
 
 int EVP_set_default_properties(OPENSSL_CTX *libctx, const char *propq)
 {
-    return evp_set_default_properties_intern(libctx, propq, 1);
+    return evp_set_default_properties_int(libctx, propq, 1);
 }
 
 static int evp_default_properties_merge(OPENSSL_CTX *libctx, const char *propq)
