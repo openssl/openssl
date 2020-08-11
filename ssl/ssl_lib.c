@@ -981,7 +981,7 @@ int SSL_add1_host(SSL *s, const char *hostname)
             old_ip = X509_VERIFY_PARAM_get1_ip_asc(s->param);
             if (old_ip)
             {
-                free(old_ip);
+                OPENSSL_free(old_ip);
                 /* There can be only one IP address */
                 return 0;
             }
