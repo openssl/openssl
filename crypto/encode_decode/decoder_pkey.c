@@ -369,8 +369,10 @@ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
 
     data->process_data = NULL;
  err:
-    decoder_clean_EVP_PKEY_construct_arg(data->process_data);
-    sk_OPENSSL_CSTRING_free(data->names);
-    OPENSSL_free(data);
+    if (data != NULL) {
+        decoder_clean_EVP_PKEY_construct_arg(data->process_data);
+        sk_OPENSSL_CSTRING_free(data->names);
+        OPENSSL_free(data);
+    }
     return ctx;
 }
