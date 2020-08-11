@@ -586,62 +586,77 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
     return 1;
 }
 
-EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
-                                size_t len, const EVP_CIPHER *cipher)
+static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
+                                  const char *cipher_name,
+                                  const EVP_CIPHER *cipher, OPENSSL_CTX *libctx,
+                                  const char *propq, ENGINE *e)
 {
 # ifndef OPENSSL_NO_CMAC
 #  ifndef OPENSSL_NO_ENGINE
     const char *engine_id = e != NULL ? ENGINE_get_id(e) : NULL;
 #  endif
-    const char *cipher_name = EVP_CIPHER_name(cipher);
-    const OSSL_PROVIDER *prov = EVP_CIPHER_provider(cipher);
-    OPENSSL_CTX *libctx =
-        prov == NULL ? NULL : ossl_provider_library_context(prov);
-    EVP_PKEY *ret = EVP_PKEY_new();
-    EVP_MAC *cmac = EVP_MAC_fetch(libctx, OSSL_MAC_NAME_CMAC, NULL);
-    EVP_MAC_CTX *cmctx = cmac != NULL ? EVP_MAC_CTX_new(cmac) : NULL;
-    OSSL_PARAM params[4];
-    size_t paramsn = 0;
+    OSSL_PARAM params[4], *p = params;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *ctx;
 
-    if (ret == NULL
-        || cmctx == NULL
-        || !pkey_set_type(ret, e, EVP_PKEY_CMAC, NULL, -1, NULL)) {
-        /* EVPerr already called */
+    if (cipher != NULL)
+        cipher_name = EVP_CIPHER_name(cipher);
+
+    if (cipher_name == NULL) {
+        EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+        return NULL;
+    }
+
+    ctx = EVP_PKEY_CTX_new_from_name(libctx, "CMAC", propq);
+    if (ctx == NULL) {
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
+    if (!EVP_PKEY_key_fromdata_init(ctx)) {
+        EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+        goto err;
+    }
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+                                            (void *)priv, len);
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_CIPHER,
+                                            (char *)cipher_name, 0);
 #  ifndef OPENSSL_NO_ENGINE
     if (engine_id != NULL)
-        params[paramsn++] =
-            OSSL_PARAM_construct_utf8_string("engine", (char *)engine_id, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ENGINE,
+                                                (char *)engine_id, 0);
 #  endif
+    *p = OSSL_PARAM_construct_end();
 
-    params[paramsn++] =
-        OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                         (char *)cipher_name, 0);
-    params[paramsn++] =
-        OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                          (char *)priv, len);
-    params[paramsn] = OSSL_PARAM_construct_end();
-
-    if (!EVP_MAC_CTX_set_params(cmctx, params)) {
-        EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY, EVP_R_KEY_SETUP_FAILED);
+    if (!EVP_PKEY_fromdata(ctx, &pkey, params)) {
+        EVPerr(0, EVP_R_KEY_SETUP_FAILED);
         goto err;
     }
 
-    ret->pkey.ptr = cmctx;
-    return ret;
-
  err:
-    EVP_PKEY_free(ret);
-    EVP_MAC_CTX_free(cmctx);
-    EVP_MAC_free(cmac);
-    return NULL;
+    EVP_PKEY_CTX_free(ctx);
+
+    return pkey;
 # else
-    EVPerr(EVP_F_EVP_PKEY_NEW_CMAC_KEY,
-           EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+    EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return NULL;
 # endif
+}
+
+EVP_PKEY *EVP_PKEY_new_CMAC_key_with_libctx(const unsigned char *priv,
+                                            size_t len,
+                                            const char *cipher_name,
+                                            OPENSSL_CTX *libctx,
+                                            const char *propq)
+{
+    return new_cmac_key_int(priv, len, cipher_name, NULL, libctx, propq, NULL);
+}
+
+EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
+                                size_t len, const EVP_CIPHER *cipher)
+{
+    return new_cmac_key_int(priv, len, NULL, cipher, NULL, NULL, e);
 }
 
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type)

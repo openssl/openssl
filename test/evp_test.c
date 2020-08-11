@@ -1161,8 +1161,10 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "MAC_KEY_CREATE_ERROR";
             goto err;
         }
-        key = EVP_PKEY_new_CMAC_key(NULL, expected->key, expected->key_len,
-                                    cipher);
+        key = EVP_PKEY_new_CMAC_key_with_libctx(expected->key,
+                                                expected->key_len,
+                                                EVP_CIPHER_name(cipher),
+                                                libctx, NULL);
     } else {
         key = EVP_PKEY_new_raw_private_key_with_libctx(libctx,
                                                        OBJ_nid2sn(expected->type),

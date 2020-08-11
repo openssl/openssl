@@ -150,7 +150,6 @@ static int is_legacy_alg(int id, const char *keytype)
      * support
      */
     case EVP_PKEY_SM2:
-    case EVP_PKEY_CMAC:
         return 1;
     default:
         return 0;
@@ -1037,14 +1036,6 @@ int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                                 int cmd, int p1, void *p2)
 {
-    /*
-     * GOST CMS format is different for different cipher algorithms.
-     * Most of other algorithms don't have such a difference
-     * so this ctrl is just ignored.
-     */
-    if (cmd == EVP_PKEY_CTRL_CIPHER)
-        return -2;
-
 # ifndef OPENSSL_NO_DH
     if (keytype == EVP_PKEY_DHX) {
         switch (cmd) {
@@ -1193,6 +1184,29 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             case EVP_PKEY_CTRL_SCRYPT_MAXMEM_BYTES:
                 return EVP_PKEY_CTX_set_scrypt_maxmem_bytes(ctx, p1);
             }
+        } else if (optype == EVP_PKEY_OP_KEYGEN) {
+            OSSL_PARAM params[2], *p = params;
+
+            switch (cmd) {
+            case EVP_PKEY_CTRL_CIPHER:
+                {
+                    char *ciphname = (char *)EVP_CIPHER_name(p2);
+
+                    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_CIPHER,
+                                                            ciphname, 0);
+                    *p = OSSL_PARAM_construct_end();
+
+                    return EVP_PKEY_CTX_set_params(ctx, params);
+                }
+            case EVP_PKEY_CTRL_SET_MAC_KEY:
+                {
+                    *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_PRIV_KEY,
+                                                             p2, p1);
+                    *p = OSSL_PARAM_construct_end();
+
+                    return EVP_PKEY_CTX_set_params(ctx, params);
+                }
+            }
         }
         switch (cmd) {
         case EVP_PKEY_CTRL_MD:
@@ -1223,6 +1237,15 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             return -2;
         }
     }
+
+    /*
+     * GOST CMS format is different for different cipher algorithms.
+     * Most of other algorithms don't have such a difference
+     * so this ctrl is just ignored.
+     */
+    if (cmd == EVP_PKEY_CTRL_CIPHER)
+        return -2;
+
     return 0;
 }
 

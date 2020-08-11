@@ -1635,6 +1635,11 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
 int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                 size_t *len);
 
+EVP_PKEY *EVP_PKEY_new_CMAC_key_with_libctx(const unsigned char *priv,
+                                            size_t len,
+                                            const char *cipher_name,
+                                            OPENSSL_CTX *libctx,
+                                            const char *propq);
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher);
 
