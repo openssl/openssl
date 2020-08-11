@@ -376,9 +376,21 @@ int tls1_change_cipher_state(SSL *s, int which)
     memcpy(mac_secret, ms, i);
 
     if (!(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
-        /* TODO(size_t): Convert this function */
-        mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
-                                               (int)*mac_secret_size);
+        if (mac_type == EVP_PKEY_HMAC) {
+            mac_key = EVP_PKEY_new_raw_private_key_with_libctx(s->ctx->libctx,
+                                                               "HMAC",
+                                                               s->ctx->propq,
+                                                               mac_secret,
+                                                               *mac_secret_size);
+        } else {
+            /*
+             * If its not HMAC then the only other types of MAC we support are
+             * the GOST MACs, so we need to use the old style way of creating
+             * a MAC key.
+             */
+            mac_key = EVP_PKEY_new_mac_key(mac_type, NULL, mac_secret,
+                                           (int)*mac_secret_size);
+        }
         if (mac_key == NULL
             || EVP_DigestSignInit_with_libctx(mac_ctx, NULL, EVP_MD_name(m),
                                               s->ctx->libctx, s->ctx->propq,
