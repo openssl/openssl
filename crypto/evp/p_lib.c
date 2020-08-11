@@ -720,6 +720,8 @@ int EVP_PKEY_assign(EVP_PKEY *pkey, int type, void *key)
 
 void *EVP_PKEY_get0(const EVP_PKEY *pkey)
 {
+    if (pkey == NULL)
+        return NULL;
     if (!evp_pkey_downgrade((EVP_PKEY *)pkey)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INACCESSIBLE_KEY);
         return NULL;
