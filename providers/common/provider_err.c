@@ -89,6 +89,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_KEY_LENGTH),
     "invalid key length"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MAC), "invalid mac"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MD_SIZE), "invalid md size"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MGF1_MD), "invalid mgf1 md"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MODE), "invalid mode"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_MODE_INT), "invalid mode int"},

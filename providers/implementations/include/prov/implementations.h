@@ -244,6 +244,7 @@ extern const OSSL_DISPATCH poly1305_functions[];
 
 /* KDFs / PRFs */
 extern const OSSL_DISPATCH kdf_pbkdf2_functions[];
+extern const OSSL_DISPATCH kdf_pkcs12_functions[];
 #ifndef OPENSSL_NO_SCRYPT
 extern const OSSL_DISPATCH kdf_scrypt_functions[];
 #endif

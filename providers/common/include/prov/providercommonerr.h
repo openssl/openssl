@@ -96,6 +96,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_KEY_LEN                           124
 # define PROV_R_INVALID_KEY_LENGTH                        105
 # define PROV_R_INVALID_MAC                               151
+# define PROV_R_INVALID_MD_SIZE                           218
 # define PROV_R_INVALID_MGF1_MD                           167
 # define PROV_R_INVALID_MODE                              125
 # define PROV_R_INVALID_MODE_INT                          126
