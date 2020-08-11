@@ -1598,8 +1598,10 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         goto err;
     }
 
-    mackey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, finishedkey,
-                                          hashsize);
+    mackey = EVP_PKEY_new_raw_private_key_with_libctx(s->ctx->libctx, "HMAC",
+                                                      s->ctx->propq,
+                                                      finishedkey,
+                                                      hashsize);
     if (mackey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);
