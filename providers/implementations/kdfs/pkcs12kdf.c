@@ -1,5 +1,5 @@
 /*
- * Copyright 1999-2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -46,12 +46,13 @@ typedef struct {
 
 static int pkcs12kdf_derive(const unsigned char *pass, size_t passlen,
                             const unsigned char *salt, size_t saltlen,
-                            int id, unsigned int iter, const EVP_MD *md_type,
+                            int id, uint64_t iter, const EVP_MD *md_type,
                             unsigned char *out, size_t n)
 {
     unsigned char *B = NULL, *D = NULL, *I = NULL, *p = NULL, *Ai = NULL;
     size_t Slen, Plen, Ilen;
     size_t i, j, k, u, v;
+    uint64_t iter_cnt;
     int ret = 0, ui, vi;
     EVP_MD_CTX *ctx = NULL;
 
@@ -95,7 +96,7 @@ static int pkcs12kdf_derive(const unsigned char *pass, size_t passlen,
             || !EVP_DigestUpdate(ctx, I, Ilen)
             || !EVP_DigestFinal_ex(ctx, Ai, NULL))
             goto end;
-        for (j = 1; j < iter; j++) {
+        for (iter_cnt = 1; iter_cnt < iter; iter_cnt++) {
             if (!EVP_DigestInit_ex(ctx, md_type, NULL)
                 || !EVP_DigestUpdate(ctx, Ai, u)
                 || !EVP_DigestFinal_ex(ctx, Ai, NULL))
