@@ -1030,7 +1030,7 @@ to issue the following shell commands.
   cd /path/to/openssl
   export OPENSSL_CONF=openssl.cnf
 =begin comment
-  wget 'http://pki.certificate.fi:8080/install-ca-cert.html/ca-certificate.crt\
+  wget 'http://pki.certificate.fi:8081/install-ca-cert.html/ca-certificate.crt\
         ?ca-id=632&download-certificate=1' -O insta.ca.crt
 =end comment
   openssl genrsa -out insta.priv.pem
