@@ -72,11 +72,12 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
 MAC_NEWCTX(hmac, "HMAC")
 MAC_NEWCTX(siphash, "SIPHASH")
 MAC_NEWCTX(poly1305, "POLY1305")
+MAC_NEWCTX(cmac, "CMAC")
 
 static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
 {
     PROV_MAC_CTX *pmacctx = (PROV_MAC_CTX *)vpmacctx;
-    OSSL_PARAM params[4], *p = params;
+    OSSL_PARAM params[5], *p = params;
 
     if (pmacctx == NULL || vkey == NULL || !mac_key_up_ref(vkey))
         return 0;
@@ -89,6 +90,12 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
     if (mdname != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
                                                 (char *)mdname, 0);
+    if (pmacctx->key->cipher_name != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+                                                pmacctx->key->cipher_name, 0);
+    if (pmacctx->key->engine_name != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_ENGINE,
+                                                pmacctx->key->engine_name, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                              pmacctx->key->priv_key,
                                              pmacctx->key->priv_key_len);
@@ -181,3 +188,4 @@ static void *mac_dupctx(void *vpmacctx)
 MAC_SIGNATURE_FUNCTIONS(hmac)
 MAC_SIGNATURE_FUNCTIONS(siphash)
 MAC_SIGNATURE_FUNCTIONS(poly1305)
+MAC_SIGNATURE_FUNCTIONS(cmac)

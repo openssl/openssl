@@ -5284,3 +5284,5 @@ OSSL_STORE_LOADER_names_do_all          ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_utf8_string_ptr          ?	3_0_0	EXIST::FUNCTION:
 OSSL_PARAM_get_octet_string_ptr         ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_CTX_set_passphrase_cb      ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_mac_key                ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_new_CMAC_key_with_libctx       ?	3_0_0	EXIST::FUNCTION:

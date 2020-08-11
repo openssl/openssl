@@ -56,6 +56,7 @@ extern "C" {
  */
 #define OSSL_ALG_PARAM_DIGEST       "digest"    /* utf8_string */
 #define OSSL_ALG_PARAM_CIPHER       "cipher"    /* utf8_string */
+#define OSSL_ALG_PARAM_ENGINE       "engine"    /* utf8_string */
 #define OSSL_ALG_PARAM_MAC          "mac"       /* utf8_string */
 #define OSSL_ALG_PARAM_PROPERTIES   "properties"/* utf8_string */
 
@@ -247,6 +248,8 @@ extern "C" {
 #define OSSL_PKEY_PARAM_MAX_SIZE            "max-size" /* integer */
 #define OSSL_PKEY_PARAM_SECURITY_BITS       "security-bits" /* integer */
 #define OSSL_PKEY_PARAM_DIGEST              OSSL_ALG_PARAM_DIGEST
+#define OSSL_PKEY_PARAM_CIPHER              OSSL_ALG_PARAM_CIPHER /* utf8 string */
+#define OSSL_PKEY_PARAM_ENGINE              OSSL_ALG_PARAM_ENGINE /* utf8 string */
 #define OSSL_PKEY_PARAM_PROPERTIES          OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_PKEY_PARAM_DEFAULT_DIGEST      "default-digest" /* utf8 string */
 #define OSSL_PKEY_PARAM_MANDATORY_DIGEST    "mandatory-digest" /* utf8 string */
@@ -257,8 +260,6 @@ extern "C" {
 #define OSSL_PKEY_PARAM_MGF1_PROPERTIES     "mgf1-properties"
 #define OSSL_PKEY_PARAM_TLS_ENCODED_PT      "tls-encoded-pt"
 #define OSSL_PKEY_PARAM_GROUP_NAME          "group"
-
-/* Diffie-Hellman/DSA public/private key */
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
 #define OSSL_PKEY_PARAM_PRIV_KEY            "priv"
 

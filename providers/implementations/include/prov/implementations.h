@@ -279,6 +279,7 @@ extern const OSSL_DISPATCH ed448_keymgmt_functions[];
 extern const OSSL_DISPATCH ec_keymgmt_functions[];
 extern const OSSL_DISPATCH kdf_keymgmt_functions[];
 extern const OSSL_DISPATCH mac_keymgmt_functions[];
+extern const OSSL_DISPATCH cmac_keymgmt_functions[];
 
 /* Key Exchange */
 extern const OSSL_DISPATCH dh_keyexch_functions[];
@@ -298,6 +299,7 @@ extern const OSSL_DISPATCH ecdsa_signature_functions[];
 extern const OSSL_DISPATCH mac_hmac_signature_functions[];
 extern const OSSL_DISPATCH mac_siphash_signature_functions[];
 extern const OSSL_DISPATCH mac_poly1305_signature_functions[];
+extern const OSSL_DISPATCH mac_cmac_signature_functions[];
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
