@@ -79,6 +79,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_DIGEST), "invalid digest"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_DIGEST_LENGTH),
     "invalid digest length"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_DIGEST_SIZE),
+    "invalid digest size"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_ITERATION_COUNT),
     "invalid iteration count"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_INVALID_IVLEN), "invalid ivlen"},

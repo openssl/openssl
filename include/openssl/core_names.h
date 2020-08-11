@@ -178,6 +178,7 @@ extern "C" {
 #define OSSL_KDF_PARAM_SIZE         "size"      /* size_t */
 #define OSSL_KDF_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER     /* utf8 string */
 #define OSSL_KDF_PARAM_CONSTANT     "constant"  /* octet string */
+#define OSSL_KDF_PARAM_PKCS12_ID    "id"        /* int */
 
 /* Known KDF names */
 #define OSSL_KDF_NAME_HKDF          "HKDF"

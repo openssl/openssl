@@ -88,6 +88,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_INVALID_DATA                              115
 # define PROV_R_INVALID_DIGEST                            122
 # define PROV_R_INVALID_DIGEST_LENGTH                     166
+# define PROV_R_INVALID_DIGEST_SIZE                       218
 # define PROV_R_INVALID_ITERATION_COUNT                   123
 # define PROV_R_INVALID_IVLEN                             116
 # define PROV_R_INVALID_IV_LENGTH                         109
