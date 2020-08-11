@@ -671,8 +671,10 @@ const OSSL_PARAM *EVP_MD_CTX_gettable_params(EVP_MD_CTX *ctx)
 {
     EVP_PKEY_CTX *pctx;
 
-    if (ctx != NULL
-            && ctx->digest != NULL
+    if (ctx == NULL)
+        return NULL;
+
+    if (ctx->digest != NULL
             && ctx->digest->gettable_ctx_params != NULL)
         return ctx->digest->gettable_ctx_params(
                    ossl_provider_ctx(EVP_MD_provider(ctx->digest)));
