@@ -164,7 +164,7 @@ static int x942_encode_otherinfo(size_t keylen,
 
     /* keylenbits must fit into 4 bytes */
     if (keylen > 0xFFFFFF)
-        goto err;
+        return 0;
     keylen_bits = 8 * keylen;
 
     /* Calculate the size of the buffer */
