@@ -151,7 +151,6 @@ static int is_legacy_alg(int id, const char *keytype)
      */
     case EVP_PKEY_SM2:
     case EVP_PKEY_CMAC:
-    case EVP_PKEY_POLY1305:
         return 1;
     default:
         return 0;

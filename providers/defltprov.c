@@ -366,6 +366,9 @@ static const OSSL_ALGORITHM deflt_signature[] = {
 #endif
     { "HMAC", "provider=default", mac_hmac_signature_functions },
     { "SIPHASH", "provider=default", mac_siphash_signature_functions },
+#ifndef OPENSSL_NO_POLY1305
+    { "POLY1305", "provider=default", mac_poly1305_signature_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
@@ -396,6 +399,9 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { "SCRYPT:id-scrypt", "provider=default", kdf_keymgmt_functions },
     { "HMAC", "provider=default", mac_keymgmt_functions },
     { "SIPHASH", "provider=default", mac_keymgmt_functions },
+#ifndef OPENSSL_NO_POLY1305
+    { "POLY1305", "provider=default", mac_keymgmt_functions },
+#endif
     { NULL, NULL, NULL }
 };
 
