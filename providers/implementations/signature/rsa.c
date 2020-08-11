@@ -725,7 +725,8 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    prsactx->flag_allow_md = 0;
+    if (prsactx != NULL)
+        prsactx->flag_allow_md = 0;
     if (!rsa_signature_init(vprsactx, vrsa, operation)
         || !rsa_setup_md(prsactx, mdname, NULL)) /* TODO RL */
         return 0;
@@ -811,8 +812,10 @@ int rsa_digest_verify_final(void *vprsactx, const unsigned char *sig,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
+    if (prsactx == NULL)
+        return 0;
     prsactx->flag_allow_md = 1;
-    if (prsactx == NULL || prsactx->mdctx == NULL)
+    if (prsactx->mdctx == NULL)
         return 0;
 
     /*
