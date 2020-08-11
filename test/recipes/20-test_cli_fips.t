@@ -208,7 +208,10 @@ SKIP: {
                      '-out', $testtext_prefix.'.fail.priv.pem'])),
            $testtext);
 
-        tsignverify($testtext_prefix, $fips_key, $nonfips_key);
+        TODO : {
+             local $TODO = "see issue #12629";
+             tsignverify($testtext_prefix, $fips_key, $nonfips_key);
+        }
     };
 }
 
