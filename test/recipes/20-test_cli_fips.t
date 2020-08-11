@@ -181,9 +181,6 @@ SKIP: {
         my $nonfips_key = $testtext_prefix.'.nonfips.priv.pem';
         my $testtext = '';
 
-        # TODO(romen): Workaround for broken RSA serialization in FIPS mode
-        my $fips_key_pregen = data_file('rsa.2048.priv.pem');
-
         plan tests => 3 + $tsignverify_count;
 
         $ENV{OPENSSL_CONF} = $defaultconf;
@@ -196,21 +193,12 @@ SKIP: {
 
         $ENV{OPENSSL_CONF} = $fipsconf;
 
-        TODO: {
-            local $TODO = "RSA in FIPS mode shows problems with key serialization";
-
-            $testtext = $testtext_prefix.': '.
-                'Generate a key with a FIPS algorithm';
-            ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
-                        '-pkeyopt', 'rsa_keygen_bits:2048',
-                        '-out', $fips_key])),
-               $testtext);
-
-            # TODO: this currently fails:
-            # as a workaround we use $fips_key_pregen
-
-            $fips_key = $fips_key_pregen;
-        }
+        $testtext = $testtext_prefix.': '.
+            'Generate a key with a FIPS algorithm';
+        ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
+                    '-pkeyopt', 'rsa_keygen_bits:2048',
+                    '-out', $fips_key])),
+           $testtext);
 
         $testtext = $testtext_prefix.': '.
             'Generate a key with a non-FIPS algorithm'.
