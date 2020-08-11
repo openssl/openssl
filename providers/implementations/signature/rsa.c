@@ -832,12 +832,12 @@ static void rsa_freectx(void *vprsactx)
     if (prsactx == NULL)
         return;
 
-    RSA_free(prsactx->rsa);
     EVP_MD_CTX_free(prsactx->mdctx);
     EVP_MD_free(prsactx->md);
     EVP_MD_free(prsactx->mgf1_md);
     OPENSSL_free(prsactx->propq);
     free_tbuf(prsactx);
+    RSA_free(prsactx->rsa);
 
     OPENSSL_clear_free(prsactx, sizeof(*prsactx));
 }
