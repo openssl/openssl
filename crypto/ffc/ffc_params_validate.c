@@ -66,7 +66,7 @@ int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
 {
     size_t L, N;
 
-    if (params->p == NULL || params->q == NULL) {
+    if (params == NULL || params->p == NULL || params->q == NULL) {
         *res = FFC_CHECK_INVALID_PQ;
         return FFC_PARAM_RET_STATUS_FAILED;
     }
@@ -99,7 +99,12 @@ int ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params, int type
     params->flags = FFC_PARAM_FLAG_VALIDATE_G;
     params->gindex = FFC_UNVERIFIABLE_GINDEX;
 
-    ret = ffc_params_FIPS186_4_validate(libctx, params, type, &res, NULL);
+#ifndef FIPS_MODULE
+    if (save_flags & FFC_PARAM_FLAG_VALIDATE_LEGACY)
+        ret = ffc_params_FIPS186_2_validate(libctx, params, type, &res, NULL);
+    else
+#endif
+        ret = ffc_params_FIPS186_4_validate(libctx, params, type, &res, NULL);
     params->flags = save_flags;
     params->gindex = save_gindex;
     return ret != FFC_PARAM_RET_STATUS_FAILED;

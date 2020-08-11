@@ -529,6 +529,8 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
                                          gencb) <= 0)
              goto end;
     }
+    ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,
+                            gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_186_2);
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         if (ffc->p == NULL
             || ffc->q == NULL

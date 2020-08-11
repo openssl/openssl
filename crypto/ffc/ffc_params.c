@@ -117,6 +117,14 @@ void ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags)
     params->flags = flags;
 }
 
+void ffc_params_enable_flags(FFC_PARAMS *params, unsigned int flags, int enable)
+{
+    if (enable)
+        params->flags |= flags;
+    else
+        params->flags &= ~flags;
+}
+
 int ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props)
 {
     params->mdname = alg;

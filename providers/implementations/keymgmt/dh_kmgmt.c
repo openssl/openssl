@@ -653,6 +653,8 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
             goto end;
         if (gctx->priv_len > 0)
             DH_set_length(dh, (long)gctx->priv_len);
+        ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,
+                                gctx->gen_type == DH_PARAMGEN_TYPE_FIPS_186_2);
         if (DH_generate_key(dh) <= 0)
             goto end;
     }
