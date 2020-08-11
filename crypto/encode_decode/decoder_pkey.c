@@ -289,6 +289,8 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
         return;
 
     data->error_occured = 1;         /* Assume the worst */
+    if (data->names == NULL)
+        return;
 
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
