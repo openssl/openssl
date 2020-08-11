@@ -39,10 +39,11 @@
 #define FFC_PARAM_RET_STATUS_UNVERIFIABLE_G 2
 
 /* Validation flags */
-# define FFC_PARAM_FLAG_VALIDATE_PQ  0x01
-# define FFC_PARAM_FLAG_VALIDATE_G   0x02
+# define FFC_PARAM_FLAG_VALIDATE_PQ    0x01
+# define FFC_PARAM_FLAG_VALIDATE_G     0x02
 # define FFC_PARAM_FLAG_VALIDATE_ALL                                           \
     (FFC_PARAM_FLAG_VALIDATE_PQ | FFC_PARAM_FLAG_VALIDATE_G)
+#define FFC_PARAM_FLAG_VALIDATE_LEGACY 0x04
 
 /*
  * NB: These values must align with the equivalently named macros in
@@ -124,6 +125,7 @@ void ffc_params_set_gindex(FFC_PARAMS *params, int index);
 void ffc_params_set_pcounter(FFC_PARAMS *params, int index);
 void ffc_params_set_h(FFC_PARAMS *params, int index);
 void ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags);
+void ffc_params_enable_flags(FFC_PARAMS *params, unsigned int flags, int enable);
 int ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
 
 int ffc_params_set_validate_params(FFC_PARAMS *params,
