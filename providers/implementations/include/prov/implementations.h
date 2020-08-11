@@ -297,6 +297,7 @@ extern const OSSL_DISPATCH ed448_signature_functions[];
 extern const OSSL_DISPATCH ecdsa_signature_functions[];
 extern const OSSL_DISPATCH mac_hmac_signature_functions[];
 extern const OSSL_DISPATCH mac_siphash_signature_functions[];
+extern const OSSL_DISPATCH mac_poly1305_signature_functions[];
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH rsa_asym_cipher_functions[];

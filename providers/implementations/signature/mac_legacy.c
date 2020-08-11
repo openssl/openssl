@@ -71,6 +71,7 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
 
 MAC_NEWCTX(hmac, "HMAC")
 MAC_NEWCTX(siphash, "SIPHASH")
+MAC_NEWCTX(poly1305, "POLY1305")
 
 static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
 {
@@ -179,3 +180,4 @@ static void *mac_dupctx(void *vpmacctx)
 
 MAC_SIGNATURE_FUNCTIONS(hmac)
 MAC_SIGNATURE_FUNCTIONS(siphash)
+MAC_SIGNATURE_FUNCTIONS(poly1305)
