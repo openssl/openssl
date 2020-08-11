@@ -236,9 +236,6 @@ SKIP : {
         my $fips_param = $testtext_prefix.'.fips.param.pem';
         my $nonfips_param = $testtext_prefix.'.nonfips.param.pem';
 
-        # TODO(romen): Workaround for breaking CLI changes (issue 12589)
-        my $nonfips_key_pregen = data_file('dsa.512.priv.pem');
-
         plan tests => 6 + $tsignverify_count;
 
         $ENV{OPENSSL_CONF} = $defaultconf;
@@ -273,21 +270,13 @@ SKIP : {
 
         $ENV{OPENSSL_CONF} = $defaultconf;
 
-        TODO : {
-            local $TODO = "known breaking CLI change (issue 12589)";
-
-            $testtext = $testtext_prefix.': '.
-                'Generate a key with non-FIPS params with the default provider';
-            ok(run(app(['openssl', 'genpkey',
-                        '-paramfile', $nonfips_param,
-                        '-out', $nonfips_key])),
-               $testtext);
-
-            # TODO: nonfips keygen currently fails:
-            # as a workaround we use $nonfips_key_pregen
-
-            $nonfips_key = $nonfips_key_pregen;
-        }
+        $testtext = $testtext_prefix.': '.
+            'Generate a key with non-FIPS params with the default provider';
+        ok(run(app(['openssl', 'genpkey',
+                    '-paramfile', $nonfips_param,
+                    '-pkeyopt', 'type:fips186_2',
+                    '-out', $nonfips_key])),
+           $testtext);
 
         $ENV{OPENSSL_CONF} = $fipsconf;
 
@@ -295,6 +284,7 @@ SKIP : {
             'Generate a key with FIPS parameters';
         ok(run(app(['openssl', 'genpkey',
                     '-paramfile', $fips_param,
+                    '-pkeyopt', 'type:fips186_4',
                     '-out', $fips_key])),
            $testtext);
 
@@ -302,7 +292,8 @@ SKIP : {
             'Generate a key with non-FIPS parameters'.
             ' (should fail)';
         ok(!run(app(['openssl', 'genpkey',
-                    '-paramfile', $nonfips_param,
+                     '-paramfile', $nonfips_param,
+                     '-pkeyopt', 'type:fips186_2',
                      '-out', $testtext_prefix.'.fail.priv.pem'])),
            $testtext);
 
