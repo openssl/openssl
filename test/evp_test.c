@@ -1151,7 +1151,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
                   OBJ_nid2sn(expected->type), expected->alg);
 
     if (expected->type == EVP_PKEY_CMAC) {
-        if (is_cipher_disabled(expected->alg)) {
+        if (expected->alg != NULL && is_cipher_disabled(expected->alg)) {
             TEST_info("skipping, PKEY CMAC '%s' is disabled", expected->alg);
             t->skip = 1;
             t->err = NULL;
@@ -1174,7 +1174,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
         goto err;
     }
 
-    if (expected->type == EVP_PKEY_HMAC) {
+    if (expected->type == EVP_PKEY_HMAC && expected->alg != NULL) {
         if (is_digest_disabled(expected->alg)) {
             TEST_info("skipping, HMAC '%s' is disabled", expected->alg);
             t->skip = 1;
