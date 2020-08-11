@@ -775,10 +775,11 @@ static int rsa_digest_sign_final(void *vprsactx, unsigned char *sig,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    prsactx->flag_allow_md = 1;
-    if (prsactx == NULL || prsactx->mdctx == NULL)
+    if (prsactx == NULL)
         return 0;
-
+    prsactx->flag_allow_md = 1;
+    if (prsactx->mdctx == NULL)
+        return 0;
     /*
      * If sig is NULL then we're just finding out the sig size. Other fields
      * are ignored. Defer to rsa_sign.
