@@ -638,14 +638,14 @@ const OSSL_PROVIDER *EVP_MD_provider(const EVP_MD *md)
 int EVP_MD_block_size(const EVP_MD *md)
 {
     int ok;
-    size_t v = md->block_size;
+    size_t v;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (md == NULL) {
         EVPerr(EVP_F_EVP_MD_BLOCK_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
         return -1;
     }
-
+    v = md->block_size;
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, &v);
     ok = evp_do_md_getparams(md, params);
 
@@ -665,14 +665,14 @@ int EVP_MD_pkey_type(const EVP_MD *md)
 int EVP_MD_size(const EVP_MD *md)
 {
     int ok;
-    size_t v = md->md_size;
+    size_t v;
     OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
 
     if (md == NULL) {
         EVPerr(EVP_F_EVP_MD_SIZE, EVP_R_MESSAGE_DIGEST_IS_NULL);
         return -1;
     }
-
+    v = md->md_size;
     params[0] = OSSL_PARAM_construct_size_t(OSSL_DIGEST_PARAM_SIZE, &v);
     ok = evp_do_md_getparams(md, params);
 
