@@ -839,7 +839,7 @@ static void rsa_freectx(void *vprsactx)
     OPENSSL_free(prsactx->propq);
     free_tbuf(prsactx);
 
-    OPENSSL_clear_free(prsactx, sizeof(prsactx));
+    OPENSSL_clear_free(prsactx, sizeof(*prsactx));
 }
 
 static void *rsa_dupctx(void *vprsactx)
