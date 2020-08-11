@@ -24,7 +24,7 @@ DEFINE_STACK_OF(CTLOG)
  * Information about a CT log server.
  */
 struct ctlog_st {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     char *propq;
     char *name;
     uint8_t log_id[CT_V1_HASHLEN];
@@ -36,7 +36,7 @@ struct ctlog_st {
  * It takes ownership of any CTLOG instances added to it.
  */
 struct ctlog_store_st {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     char *propq;
     STACK_OF(CTLOG) *logs;
 };
@@ -102,7 +102,7 @@ err:
     return ret;
 }
 
-CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
+CTLOG_STORE *CTLOG_STORE_new_with_libctx(OSSL_CTX *libctx, const char *propq)
 {
     CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -267,7 +267,7 @@ end:
  * Copies the name.
  */
 CTLOG *CTLOG_new_with_libctx(EVP_PKEY *public_key, const char *name,
-                             OPENSSL_CTX *libctx, const char *propq)
+                             OSSL_CTX *libctx, const char *propq)
 {
     CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
 

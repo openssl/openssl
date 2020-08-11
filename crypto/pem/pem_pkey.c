@@ -28,7 +28,7 @@
 int pem_check_suffix(const char *pem_str, const char *suffix);
 
 EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
-                                     void *u, OPENSSL_CTX *libctx,
+                                     void *u, OSSL_CTX *libctx,
                                      const char *propq)
 {
     EVP_PKEY *ret = NULL;
@@ -147,7 +147,7 @@ PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 
 #ifndef OPENSSL_NO_STDIO
 EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
-                                 void *u, OPENSSL_CTX *libctx,
+                                 void *u, OSSL_CTX *libctx,
                                  const char *propq)
 {
     BIO *b;

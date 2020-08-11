@@ -29,7 +29,7 @@
 #include "internal/nelem.h"
 
 static OSSL_PROVIDER *prov_null = NULL;
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_CTX *libctx = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -1318,9 +1318,9 @@ int setup_tests(void)
         return 0;
     }
 
-    libctx = OPENSSL_CTX_new();
+    libctx = OSSL_CTX_new();
     if (libctx == NULL
-        || !OPENSSL_CTX_load_config(libctx, config_file)) {
+        || !OSSL_CTX_load_config(libctx, config_file)) {
         opt_printf_stderr("Failed to load config\n");
         return 0;
     }
@@ -1364,5 +1364,5 @@ int setup_tests(void)
 void cleanup_tests(void)
 {
     OSSL_PROVIDER_unload(prov_null);
-    OPENSSL_CTX_free(libctx);
+    OSSL_CTX_free(libctx);
 }

@@ -176,7 +176,7 @@ typedef OSSL_STORE_INFO *(*file_try_decode_fn)(const char *pem_name,
                                                int *matchcount,
                                                const UI_METHOD *ui_method,
                                                void *ui_data, const char *uri,
-                                               OPENSSL_CTX *libctx,
+                                               OSSL_CTX *libctx,
                                                const char *propq);
 /*
  * The eof function should return 1 if there's no more data to be found
@@ -213,7 +213,7 @@ static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
                                           int *matchcount,
                                           const UI_METHOD *ui_method,
                                           void *ui_data, const char *uri,
-                                          OPENSSL_CTX *libctx,
+                                          OSSL_CTX *libctx,
                                           const char *propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
@@ -350,7 +350,7 @@ static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
                                                   const UI_METHOD *ui_method,
                                                   void *ui_data,
                                                   const char *uri,
-                                                  OPENSSL_CTX *libctx,
+                                                  OSSL_CTX *libctx,
                                                   const char *propq)
 {
     X509_SIG *p8 = NULL;
@@ -429,7 +429,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                                               int *matchcount,
                                               const UI_METHOD *ui_method,
                                               void *ui_data, const char *uri,
-                                              OPENSSL_CTX *libctx,
+                                              OSSL_CTX *libctx,
                                               const char *propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
@@ -546,7 +546,7 @@ static OSSL_STORE_INFO *try_decode_PUBKEY(const char *pem_name,
                                           int *matchcount,
                                           const UI_METHOD *ui_method,
                                           void *ui_data, const char *uri,
-                                          OPENSSL_CTX *libctx,
+                                          OSSL_CTX *libctx,
                                           const char *propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
@@ -582,7 +582,7 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
                                           int *matchcount,
                                           const UI_METHOD *ui_method,
                                           void *ui_data, const char *uri,
-                                          OPENSSL_CTX *libctx,
+                                          OSSL_CTX *libctx,
                                           const char *propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
@@ -668,7 +668,7 @@ static OSSL_STORE_INFO *try_decode_X509Certificate(const char *pem_name,
                                                    const UI_METHOD *ui_method,
                                                    void *ui_data,
                                                    const char *uri,
-                                                   OPENSSL_CTX *libctx,
+                                                   OSSL_CTX *libctx,
                                                    const char *propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
@@ -724,7 +724,7 @@ static OSSL_STORE_INFO *try_decode_X509CRL(const char *pem_name,
                                            int *matchcount,
                                            const UI_METHOD *ui_method,
                                            void *ui_data, const char *uri,
-                                           OPENSSL_CTX *libctx,
+                                           OSSL_CTX *libctx,
                                            const char *propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
@@ -817,7 +817,7 @@ struct ossl_store_loader_ctx_st {
 
     /* Expected object type.  May be unspecified */
     int expected_type;
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     char *propq;
 };
 
@@ -857,7 +857,7 @@ static int file_find_type(OSSL_STORE_LOADER_CTX *ctx)
 
 static OSSL_STORE_LOADER_CTX *file_open_with_libctx
     (const OSSL_STORE_LOADER *loader, const char *uri,
-     OPENSSL_CTX *libctx, const char *propq,
+     OSSL_CTX *libctx, const char *propq,
      const UI_METHOD *ui_method, void *ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
@@ -994,7 +994,7 @@ static OSSL_STORE_LOADER_CTX *file_open
 
 static OSSL_STORE_LOADER_CTX *file_attach
     (const OSSL_STORE_LOADER *loader, BIO *bp,
-     OPENSSL_CTX *libctx, const char *propq,
+     OSSL_CTX *libctx, const char *propq,
      const UI_METHOD *ui_method, void *ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;

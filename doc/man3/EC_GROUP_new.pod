@@ -34,7 +34,7 @@ objects
                                   const BIGNUM *b, BN_CTX *ctx);
  EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
                                    const BIGNUM *b, BN_CTX *ctx);
- EC_GROUP *EC_GROUP_new_by_curve_name_with_libctx(OPENSSL_CTX *libctx,
+ EC_GROUP *EC_GROUP_new_by_curve_name_with_libctx(OSSL_CTX *libctx,
                                                   const char *propq, int nid);
  EC_GROUP *EC_GROUP_new_by_curve_name(int nid);
 
@@ -87,7 +87,7 @@ pentanomial for this parameter.
 Although deprecated since OpenSSL 3.0 and should no longer be used,
 a new curve can be constructed by calling EC_GROUP_new(), using the
 implementation provided by I<meth> (see L<EC_GFp_simple_method(3)>) and
-associated with the library context I<ctx> (see L<OPENSSL_CTX(3)>).
+associated with the library context I<ctx> (see L<OSSL_CTX(3)>).
 The I<ctx> parameter may be NULL in which case the default library context is
 used.
 It is then necessary to call EC_GROUP_set_curve() to set the curve parameters.
@@ -144,7 +144,7 @@ readable comment string describing the curve.
 In order to construct a built-in curve use the function
 EC_GROUP_new_by_curve_name_with_libctx() and provide the I<nid> of the curve to
 be constructed, the associated library context to be used in I<ctx> (see
-L<OPENSSL_CTX(3)>) and any property query string in I<propq>. The I<ctx> value
+L<OSSL_CTX(3)>) and any property query string in I<propq>. The I<ctx> value
 may be NULL in which case the default library context is used. The I<propq>
 value may also be NULL.
 
@@ -177,7 +177,7 @@ EC_GROUP_get_curve_GF2m() return 1 on success or 0 on error.
 L<crypto(7)>, L<EC_GROUP_copy(3)>,
 L<EC_POINT_new(3)>, L<EC_POINT_add(3)>, L<EC_KEY_new(3)>,
 L<EC_GFp_simple_method(3)>, L<d2i_ECPKParameters(3)>,
-L<OPENSSL_CTX(3)>
+L<OSSL_CTX(3)>
 
 =head1 HISTORY
 

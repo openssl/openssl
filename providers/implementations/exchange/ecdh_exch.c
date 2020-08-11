@@ -48,7 +48,7 @@ enum kdf_type {
  */
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
 
     EC_KEY *k;
     EC_KEY *peerk;

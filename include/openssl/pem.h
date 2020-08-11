@@ -289,7 +289,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
 STACK_OF(X509_INFO)
 *PEM_X509_INFO_read_bio_with_libctx(BIO *bp, STACK_OF(X509_INFO) *sk,
                                     pem_password_cb *cb, void *u,
-                                    OPENSSL_CTX *libctx, const char *propq);
+                                    OSSL_CTX *libctx, const char *propq);
 
 int PEM_X509_INFO_write_bio(BIO *bp, const X509_INFO *xi, EVP_CIPHER *enc,
                             const unsigned char *kstr, int klen,
@@ -311,7 +311,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 STACK_OF(X509_INFO)
 *PEM_X509_INFO_read_with_libctx(FILE *fp, STACK_OF(X509_INFO) *sk,
                                 pem_password_cb *cb, void *u,
-                                OPENSSL_CTX *libctx, const char *propq);
+                                OSSL_CTX *libctx, const char *propq);
 #endif
 
 int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type);
@@ -357,11 +357,11 @@ DECLARE_PEM_write(DHxparams, DH)
 # endif
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
 EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
-                                     void *u, OPENSSL_CTX *libctx,
+                                     void *u, OSSL_CTX *libctx,
                                      const char *propq);
 # ifndef OPENSSL_NO_STDIO
 EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
-                                 void *u, OPENSSL_CTX *libctx,
+                                 void *u, OSSL_CTX *libctx,
                                  const char *propq);
 # endif
 DECLARE_PEM_rw(PUBKEY, EVP_PKEY)

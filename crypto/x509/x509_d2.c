@@ -13,7 +13,7 @@
 #include <openssl/x509.h>
 
 int X509_STORE_set_default_paths_with_libctx(X509_STORE *ctx,
-                                             OPENSSL_CTX *libctx,
+                                             OSSL_CTX *libctx,
                                              const char *propq)
 {
     X509_LOOKUP *lookup;
@@ -45,7 +45,7 @@ int X509_STORE_set_default_paths(X509_STORE *ctx)
 }
 
 int X509_STORE_load_file_with_libctx(X509_STORE *ctx, const char *file,
-                                     OPENSSL_CTX *libctx, const char *propq)
+                                     OSSL_CTX *libctx, const char *propq)
 {
     X509_LOOKUP *lookup;
 
@@ -76,7 +76,7 @@ int X509_STORE_load_path(X509_STORE *ctx, const char *path)
 }
 
 int X509_STORE_load_store_with_libctx(X509_STORE *ctx, const char *uri,
-                                      OPENSSL_CTX *libctx, const char *propq)
+                                      OSSL_CTX *libctx, const char *propq)
 {
     X509_LOOKUP *lookup;
 
@@ -95,7 +95,7 @@ int X509_STORE_load_store(X509_STORE *ctx, const char *uri)
 
 int X509_STORE_load_locations_with_libctx(X509_STORE *ctx, const char *file,
                                           const char *path,
-                                          OPENSSL_CTX *libctx, const char *propq)
+                                          OSSL_CTX *libctx, const char *propq)
 {
     if (file == NULL && path == NULL)
         return 0;

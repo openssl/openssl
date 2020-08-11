@@ -186,7 +186,7 @@ OSSL_SERIALIZER_CTX *OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
 
     if (keymgmt != NULL) {
         const OSSL_PROVIDER *desired_prov = EVP_KEYMGMT_provider(keymgmt);
-        OPENSSL_CTX *libctx = ossl_provider_library_context(desired_prov);
+        OSSL_CTX *libctx = ossl_provider_library_context(desired_prov);
         struct selected_serializer_st sel_data;
         OSSL_SERIALIZER *first = NULL;
         const char *name;

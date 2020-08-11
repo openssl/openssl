@@ -10,7 +10,7 @@ CMS_data_create_with_libctx, CMS_data_create
  #include <openssl/cms.h>
 
  CMS_ContentInfo *CMS_data_create_with_libctx(BIO *in, unsigned int flags,
-                                              OPENSSL_CTX *libctx,
+                                              OSSL_CTX *libctx,
                                               const char *propq);
  CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags);
 

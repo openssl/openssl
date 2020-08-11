@@ -336,7 +336,7 @@ int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 
-static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
+static EVP_PKEY *new_raw_key_int(OSSL_CTX *libctx,
                                  const char *strtype,
                                  const char *propq,
                                  int nidtype,
@@ -453,7 +453,7 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
     return pkey;
 }
 
-EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OPENSSL_CTX *libctx,
+EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OSSL_CTX *libctx,
                                                    const char *keytype,
                                                    const char *propq,
                                                    const unsigned char *priv,
@@ -470,7 +470,7 @@ EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
     return new_raw_key_int(NULL, NULL, NULL, type, e, priv, len, 1);
 }
 
-EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OPENSSL_CTX *libctx,
+EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OSSL_CTX *libctx,
                                                   const char *keytype,
                                                   const char *propq,
                                                   const unsigned char *pub,
@@ -591,7 +591,7 @@ EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
 #  endif
     const char *cipher_name = EVP_CIPHER_name(cipher);
     const OSSL_PROVIDER *prov = EVP_CIPHER_provider(cipher);
-    OPENSSL_CTX *libctx =
+    OSSL_CTX *libctx =
         prov == NULL ? NULL : ossl_provider_library_context(prov);
     EVP_PKEY *ret = EVP_PKEY_new();
     EVP_MAC *cmac = EVP_MAC_fetch(libctx, OSSL_MAC_NAME_CMAC, NULL);
@@ -1036,7 +1036,7 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
         }
     } else {
         const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
-        OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+        OSSL_CTX *libctx = ossl_provider_library_context(prov);
         const char *supported_sig =
             pkey->keymgmt->query_operation_name != NULL
             ? pkey->keymgmt->query_operation_name(OSSL_OP_SIGNATURE)
@@ -1623,7 +1623,7 @@ int EVP_PKEY_size(const EVP_PKEY *pkey)
     return size;
 }
 
-void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery)
 {
@@ -1825,7 +1825,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
              * We perform the export in the same libctx as the keymgmt that we
              * are using.
              */
-            OPENSSL_CTX *libctx = ossl_provider_library_context(keymgmt->prov);
+            OSSL_CTX *libctx = ossl_provider_library_context(keymgmt->prov);
             EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_from_pkey(libctx, pk, NULL);
             if (pctx == NULL)
                 ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);

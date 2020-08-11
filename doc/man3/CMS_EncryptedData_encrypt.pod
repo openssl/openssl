@@ -11,7 +11,7 @@ CMS_EncryptedData_encrypt_with_libctx, CMS_EncryptedData_encrypt
 
  CMS_ContentInfo *CMS_EncryptedData_encrypt_with_libctx(BIO *in,
      const EVP_CIPHER *cipher, const unsigned char *key, size_t keylen,
-     unsigned int flags, OPENSSL_CTX *ctx, const char *propq);
+     unsigned int flags, OSSL_CTX *ctx, const char *propq);
 
  CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in,
      const EVP_CIPHER *cipher, const unsigned char *key, size_t keylen,

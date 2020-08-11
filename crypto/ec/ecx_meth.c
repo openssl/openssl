@@ -36,7 +36,7 @@ typedef enum {
 /* Setup EVP_PKEY using public, private or generation */
 static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
                       const unsigned char *p, int plen, ecx_key_op_t op,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OSSL_CTX *libctx, const char *propq)
 {
     ECX_KEY *key = NULL;
     unsigned char *privkey, *pubkey;
@@ -151,7 +151,7 @@ static int ecx_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 
 static int ecx_priv_decode_with_libctx(EVP_PKEY *pkey,
                                        const PKCS8_PRIV_KEY_INFO *p8,
-                                       OPENSSL_CTX *libctx, const char *propq)
+                                       OSSL_CTX *libctx, const char *propq)
 {
     const unsigned char *p;
     int plen;
@@ -397,7 +397,7 @@ static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                              EVP_KEYMGMT *to_keymgmt, OSSL_CTX *libctx,
                               const char *propq)
 {
     const ECX_KEY *key = from->pkey.ecx;
@@ -893,7 +893,7 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
         return 0;
 
     /*
-     * TODO(3.0): We send NULL for the OPENSSL_CTX for now. This will need to
+     * TODO(3.0): We send NULL for the OSSL_CTX for now. This will need to
      * change.
      */
     return ED448_verify(NULL, tbs, tbslen, sig, edkey->pubkey, NULL, 0);

@@ -69,20 +69,20 @@ static void serializer_store_free(void *vstore)
     ossl_method_store_free(vstore);
 }
 
-static void *serializer_store_new(OPENSSL_CTX *ctx)
+static void *serializer_store_new(OSSL_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }
 
 
-static const OPENSSL_CTX_METHOD serializer_store_method = {
+static const OSSL_CTX_METHOD serializer_store_method = {
     serializer_store_new,
     serializer_store_free,
 };
 
 /* Data to be passed through ossl_method_construct() */
 struct serializer_data_st {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     int id;                      /* For get_serializer_from_store() */
     const char *names;           /* For get_serializer_from_store() */
@@ -95,7 +95,7 @@ struct serializer_data_st {
  */
 
 /* Temporary serializer method store, constructor and destructor */
-static void *alloc_tmp_serializer_store(OPENSSL_CTX *ctx)
+static void *alloc_tmp_serializer_store(OSSL_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }
@@ -107,14 +107,14 @@ static void *alloc_tmp_serializer_store(OPENSSL_CTX *ctx)
 }
 
 /* Get the permanent serializer store */
-static OSSL_METHOD_STORE *get_serializer_store(OPENSSL_CTX *libctx)
+static OSSL_METHOD_STORE *get_serializer_store(OSSL_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_SERIALIZER_STORE_INDEX,
+    return ossl_ctx_get_data(libctx, OSSL_CTX_SERIALIZER_STORE_INDEX,
                                 &serializer_store_method);
 }
 
 /* Get serializer methods from a store, or put one in */
-static void *get_serializer_from_store(OPENSSL_CTX *libctx, void *store,
+static void *get_serializer_from_store(OSSL_CTX *libctx, void *store,
                                        void *data)
 {
     struct serializer_data_st *methdata = data;
@@ -136,7 +136,7 @@ static void *get_serializer_from_store(OPENSSL_CTX *libctx, void *store,
     return method;
 }
 
-static int put_serializer_in_store(OPENSSL_CTX *libctx, void *store,
+static int put_serializer_in_store(OSSL_CTX *libctx, void *store,
                                    void *method, const OSSL_PROVIDER *prov,
                                    int operation_id, const char *names,
                                    const char *propdef, void *unused)
@@ -239,7 +239,7 @@ static void *construct_serializer(const OSSL_ALGORITHM *algodef,
      * namemap entry, this is it.  Should the name already exist there, we
      * know that ossl_namemap_add() will return its corresponding number.
      */
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
@@ -268,7 +268,7 @@ static void free_serializer(void *method)
 }
 
 /* Fetching support.  Can fetch by numeric identity or by name */
-static OSSL_SERIALIZER *inner_ossl_serializer_fetch(OPENSSL_CTX *libctx,
+static OSSL_SERIALIZER *inner_ossl_serializer_fetch(OSSL_CTX *libctx,
                                                     int id, const char *name,
                                                     const char *properties)
 {
@@ -325,13 +325,13 @@ static OSSL_SERIALIZER *inner_ossl_serializer_fetch(OPENSSL_CTX *libctx,
     return method;
 }
 
-OSSL_SERIALIZER *OSSL_SERIALIZER_fetch(OPENSSL_CTX *libctx, const char *name,
+OSSL_SERIALIZER *OSSL_SERIALIZER_fetch(OSSL_CTX *libctx, const char *name,
                                        const char *properties)
 {
     return inner_ossl_serializer_fetch(libctx, 0, name, properties);
 }
 
-OSSL_SERIALIZER *ossl_serializer_fetch_by_number(OPENSSL_CTX *libctx, int id,
+OSSL_SERIALIZER *ossl_serializer_fetch_by_number(OSSL_CTX *libctx, int id,
                                                  const char *properties)
 {
     return inner_ossl_serializer_fetch(libctx, id, NULL, properties);
@@ -374,7 +374,7 @@ int OSSL_SERIALIZER_number(const OSSL_SERIALIZER *ser)
 int OSSL_SERIALIZER_is_a(const OSSL_SERIALIZER *ser, const char *name)
 {
     if (ser->base.prov != NULL) {
-        OPENSSL_CTX *libctx = ossl_provider_library_context(ser->base.prov);
+        OSSL_CTX *libctx = ossl_provider_library_context(ser->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         return ossl_namemap_name2num(namemap, name) == ser->base.id;
@@ -392,7 +392,7 @@ static void serializer_do_one(OSSL_PROVIDER *provider,
                               int no_store, void *vdata)
 {
     struct serializer_do_all_data_st *data = vdata;
-    OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
+    OSSL_CTX *libctx = ossl_provider_library_context(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
@@ -408,7 +408,7 @@ static void serializer_do_one(OSSL_PROVIDER *provider,
     }
 }
 
-void OSSL_SERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
+void OSSL_SERIALIZER_do_all_provided(OSSL_CTX *libctx,
                                      void (*fn)(OSSL_SERIALIZER *ser,
                                                 void *arg),
                                      void *arg)
@@ -434,7 +434,7 @@ void OSSL_SERIALIZER_names_do_all(const OSSL_SERIALIZER *ser,
         return;
 
     if (ser->base.prov != NULL) {
-        OPENSSL_CTX *libctx = ossl_provider_library_context(ser->base.prov);
+        OSSL_CTX *libctx = ossl_provider_library_context(ser->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         ossl_namemap_doall_names(namemap, ser->base.id, fn, data);

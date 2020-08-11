@@ -38,7 +38,7 @@ static const char *canon_mdname(const char *mdname)
 
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
-                          OPENSSL_CTX *libctx, const char *props,
+                          OSSL_CTX *libctx, const char *props,
                           ENGINE *e, EVP_PKEY *pkey, int ver)
 {
     EVP_PKEY_CTX *locpctx = NULL;
@@ -287,7 +287,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
 int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                    const char *mdname,
-                                   OPENSSL_CTX *libctx, const char *props,
+                                   OSSL_CTX *libctx, const char *props,
                                    EVP_PKEY *pkey)
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0);
@@ -301,7 +301,7 @@ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
 int EVP_DigestVerifyInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                      const char *mdname,
-                                     OPENSSL_CTX *libctx, const char *props,
+                                     OSSL_CTX *libctx, const char *props,
                                      EVP_PKEY *pkey)
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1);

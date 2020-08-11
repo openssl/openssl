@@ -38,7 +38,7 @@ static OSSL_FUNC_keyexch_settable_ctx_params_fn dh_settable_ctx_params;
  */
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     DH *dh;
     DH *dhpeer;
     unsigned int pad : 1;

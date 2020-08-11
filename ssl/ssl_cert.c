@@ -609,7 +609,7 @@ static unsigned long xname_hash(const X509_NAME *a)
 }
 
 STACK_OF(X509_NAME) *SSL_load_client_CA_file_with_libctx(const char *file,
-                                                         OPENSSL_CTX *libctx,
+                                                         OSSL_CTX *libctx,
                                                          const char *propq)
 {
     BIO *in = BIO_new(BIO_s_file());
@@ -617,7 +617,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_with_libctx(const char *file,
     X509_NAME *xn = NULL;
     STACK_OF(X509_NAME) *ret = NULL;
     LHASH_OF(X509_NAME) *name_hash = lh_X509_NAME_new(xname_hash, xname_cmp);
-    OPENSSL_CTX *prev_libctx = NULL;
+    OSSL_CTX *prev_libctx = NULL;
 
     if ((name_hash == NULL) || (in == NULL)) {
         SSLerr(0, ERR_R_MALLOC_FAILURE);
@@ -633,7 +633,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_with_libctx(const char *file,
         goto err;
 
     /* Internally lh_X509_NAME_retrieve() needs the libctx to retrieve SHA1 */
-    prev_libctx = OPENSSL_CTX_set0_default(libctx);
+    prev_libctx = OSSL_CTX_set0_default(libctx);
     for (;;) {
         if (PEM_read_bio_X509(in, &x, NULL, NULL) == NULL)
             break;
@@ -668,7 +668,7 @@ STACK_OF(X509_NAME) *SSL_load_client_CA_file_with_libctx(const char *file,
     ret = NULL;
  done:
     /* restore the old libctx */
-    OPENSSL_CTX_set0_default(prev_libctx);
+    OSSL_CTX_set0_default(prev_libctx);
     BIO_free(in);
     X509_free(x);
     lh_X509_NAME_free(name_hash);

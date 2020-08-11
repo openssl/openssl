@@ -23,7 +23,7 @@ DEFINE_STACK_OF(X509_NAME)
 
 static CONF *conf = NULL;
 static OSSL_PROVIDER *defctxnull = NULL, *thisprov = NULL;
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_CTX *libctx = NULL;
 
 /* Currently the section names are of the form test-<number>, e.g. test-15. */
 #define MAX_TESTCASE_NAME_LENGTH 100
@@ -539,12 +539,12 @@ int setup_tests(void)
         const char *configfile = test_get_argument(2);
 
         defctxnull = OSSL_PROVIDER_load(NULL, "null");
-        libctx = OPENSSL_CTX_new();
+        libctx = OSSL_CTX_new();
         if (!TEST_ptr(libctx))
             return 0;
 
         if (configfile != NULL
-                && !TEST_true(OPENSSL_CTX_load_config(libctx, configfile)))
+                && !TEST_true(OSSL_CTX_load_config(libctx, configfile)))
             return 0;
 
         thisprov = OSSL_PROVIDER_load(libctx, modulename);
@@ -561,5 +561,5 @@ void cleanup_tests(void)
     NCONF_free(conf);
     OSSL_PROVIDER_unload(defctxnull);
     OSSL_PROVIDER_unload(thisprov);
-    OPENSSL_CTX_free(libctx);
+    OSSL_CTX_free(libctx);
 }

@@ -32,7 +32,7 @@
 
 DEFINE_STACK_OF_CSTRING()
 
-static OPENSSL_CTX *libctx = NULL;
+static OSSL_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 static STACK_OF(OPENSSL_CSTRING) *cipher_names = NULL;
@@ -382,13 +382,13 @@ int setup_tests(void)
     if (!TEST_ptr(nullprov))
         return 0;
 
-    libctx = OPENSSL_CTX_new();
+    libctx = OSSL_CTX_new();
 
     if (!TEST_ptr(libctx))
         return 0;
 
     if (config_file != NULL) {
-        if (!TEST_true(OPENSSL_CTX_load_config(libctx, config_file)))
+        if (!TEST_true(OSSL_CTX_load_config(libctx, config_file)))
             return 0;
     }
 
@@ -417,6 +417,6 @@ void cleanup_tests(void)
 {
     sk_OPENSSL_CSTRING_free(cipher_names);
     OSSL_PROVIDER_unload(libprov);
-    OPENSSL_CTX_free(libctx);
+    OSSL_CTX_free(libctx);
     OSSL_PROVIDER_unload(nullprov);
 }

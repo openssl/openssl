@@ -71,20 +71,20 @@ static void deserializer_store_free(void *vstore)
     ossl_method_store_free(vstore);
 }
 
-static void *deserializer_store_new(OPENSSL_CTX *ctx)
+static void *deserializer_store_new(OSSL_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }
 
 
-static const OPENSSL_CTX_METHOD deserializer_store_method = {
+static const OSSL_CTX_METHOD deserializer_store_method = {
     deserializer_store_new,
     deserializer_store_free,
 };
 
 /* Data to be passed through ossl_method_construct() */
 struct deserializer_data_st {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     OSSL_METHOD_CONSTRUCT_METHOD *mcm;
     int id;                      /* For get_deserializer_from_store() */
     const char *names;           /* For get_deserializer_from_store() */
@@ -97,7 +97,7 @@ struct deserializer_data_st {
  */
 
 /* Temporary deserializer method store, constructor and destructor */
-static void *alloc_tmp_deserializer_store(OPENSSL_CTX *ctx)
+static void *alloc_tmp_deserializer_store(OSSL_CTX *ctx)
 {
     return ossl_method_store_new(ctx);
 }
@@ -109,14 +109,14 @@ static void *alloc_tmp_deserializer_store(OPENSSL_CTX *ctx)
 }
 
 /* Get the permanent deserializer store */
-static OSSL_METHOD_STORE *get_deserializer_store(OPENSSL_CTX *libctx)
+static OSSL_METHOD_STORE *get_deserializer_store(OSSL_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_DESERIALIZER_STORE_INDEX,
+    return ossl_ctx_get_data(libctx, OSSL_CTX_DESERIALIZER_STORE_INDEX,
                                 &deserializer_store_method);
 }
 
 /* Get deserializer methods from a store, or put one in */
-static void *get_deserializer_from_store(OPENSSL_CTX *libctx, void *store,
+static void *get_deserializer_from_store(OSSL_CTX *libctx, void *store,
                                          void *data)
 {
     struct deserializer_data_st *methdata = data;
@@ -138,7 +138,7 @@ static void *get_deserializer_from_store(OPENSSL_CTX *libctx, void *store,
     return method;
 }
 
-static int put_deserializer_in_store(OPENSSL_CTX *libctx, void *store,
+static int put_deserializer_in_store(OSSL_CTX *libctx, void *store,
                                      void *method, const OSSL_PROVIDER *prov,
                                      int operation_id, const char *names,
                                      const char *propdef, void *unused)
@@ -247,7 +247,7 @@ static void *construct_deserializer(const OSSL_ALGORITHM *algodef,
      * namemap entry, this is it.  Should the name already exist there, we
      * know that ossl_namemap_add() will return its corresponding number.
      */
-    OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+    OSSL_CTX *libctx = ossl_provider_library_context(prov);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
@@ -276,7 +276,7 @@ static void free_deserializer(void *method)
 }
 
 /* Fetching support.  Can fetch by numeric identity or by name */
-static OSSL_DESERIALIZER *inner_ossl_deserializer_fetch(OPENSSL_CTX *libctx,
+static OSSL_DESERIALIZER *inner_ossl_deserializer_fetch(OSSL_CTX *libctx,
                                                         int id,
                                                         const char *name,
                                                         const char *properties)
@@ -334,14 +334,14 @@ static OSSL_DESERIALIZER *inner_ossl_deserializer_fetch(OPENSSL_CTX *libctx,
     return method;
 }
 
-OSSL_DESERIALIZER *OSSL_DESERIALIZER_fetch(OPENSSL_CTX *libctx,
+OSSL_DESERIALIZER *OSSL_DESERIALIZER_fetch(OSSL_CTX *libctx,
                                            const char *name,
                                            const char *properties)
 {
     return inner_ossl_deserializer_fetch(libctx, 0, name, properties);
 }
 
-OSSL_DESERIALIZER *ossl_deserializer_fetch_by_number(OPENSSL_CTX *libctx,
+OSSL_DESERIALIZER *ossl_deserializer_fetch_by_number(OSSL_CTX *libctx,
                                                      int id,
                                                      const char *properties)
 {
@@ -385,7 +385,7 @@ int OSSL_DESERIALIZER_number(const OSSL_DESERIALIZER *deser)
 int OSSL_DESERIALIZER_is_a(const OSSL_DESERIALIZER *deser, const char *name)
 {
     if (deser->base.prov != NULL) {
-        OPENSSL_CTX *libctx = ossl_provider_library_context(deser->base.prov);
+        OSSL_CTX *libctx = ossl_provider_library_context(deser->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         return ossl_namemap_name2num(namemap, name) == deser->base.id;
@@ -403,7 +403,7 @@ static void deserializer_do_one(OSSL_PROVIDER *provider,
                                 int no_store, void *vdata)
 {
     struct deserializer_do_all_data_st *data = vdata;
-    OPENSSL_CTX *libctx = ossl_provider_library_context(provider);
+    OSSL_CTX *libctx = ossl_provider_library_context(provider);
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
@@ -419,7 +419,7 @@ static void deserializer_do_one(OSSL_PROVIDER *provider,
     }
 }
 
-void OSSL_DESERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
+void OSSL_DESERIALIZER_do_all_provided(OSSL_CTX *libctx,
                                        void (*fn)(OSSL_DESERIALIZER *deser,
                                                   void *arg),
                                        void *arg)
@@ -441,7 +441,7 @@ void OSSL_DESERIALIZER_names_do_all(const OSSL_DESERIALIZER *deser,
         return;
 
     if (deser->base.prov != NULL) {
-        OPENSSL_CTX *libctx = ossl_provider_library_context(deser->base.prov);
+        OSSL_CTX *libctx = ossl_provider_library_context(deser->base.prov);
         OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
 
         ossl_namemap_doall_names(namemap, deser->base.id, fn, data);

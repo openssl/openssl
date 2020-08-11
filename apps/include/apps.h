@@ -292,15 +292,15 @@ typedef struct verify_options_st {
 
 extern VERIFY_CB_ARGS verify_args;
 
-OPENSSL_CTX *app_create_libctx(void);
-OPENSSL_CTX *app_get0_libctx(void);
+OSSL_CTX *app_create_libctx(void);
+OSSL_CTX *app_get0_libctx(void);
 OSSL_PARAM *app_params_new_from_opts(STACK_OF(OPENSSL_STRING) *opts,
                                      const OSSL_PARAM *paramdefs);
 void app_params_free(OSSL_PARAM *params);
-int app_provider_load(OPENSSL_CTX *libctx, const char *provider_name);
+int app_provider_load(OSSL_CTX *libctx, const char *provider_name);
 void app_providers_cleanup(void);
 
-OPENSSL_CTX *app_get0_libctx(void);
+OSSL_CTX *app_get0_libctx(void);
 const char *app_get0_propq(void);
 
 #endif

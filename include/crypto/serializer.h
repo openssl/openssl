@@ -9,7 +9,7 @@
 
 #include <openssl/types.h>
 
-OSSL_SERIALIZER *ossl_serializer_fetch_by_number(OPENSSL_CTX *libctx, int id,
+OSSL_SERIALIZER *ossl_serializer_fetch_by_number(OSSL_CTX *libctx, int id,
                                                  const char *properties);
-OSSL_DESERIALIZER *ossl_deserializer_fetch_by_number(OPENSSL_CTX *libctx, int id,
+OSSL_DESERIALIZER *ossl_deserializer_fetch_by_number(OSSL_CTX *libctx, int id,
                                                      const char *properties);

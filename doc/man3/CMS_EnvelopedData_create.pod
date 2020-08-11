@@ -10,7 +10,7 @@ CMS_EnvelopedData_create_with_libctx, CMS_EnvelopedData_create
  #include <openssl/cms.h>
 
  CMS_ContentInfo *CMS_EnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
-                                                       OPENSSL_CTX *libctx,
+                                                       OSSL_CTX *libctx,
                                                        const char *propq);
  CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 

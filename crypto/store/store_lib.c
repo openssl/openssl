@@ -33,7 +33,7 @@ struct ossl_store_ctx_st {
 };
 
 OSSL_STORE_CTX *OSSL_STORE_open_with_libctx(
-    const char *uri, OPENSSL_CTX *libctx, const char *propq,
+    const char *uri, OSSL_CTX *libctx, const char *propq,
     const UI_METHOD *ui_method, void *ui_data,
     OSSL_STORE_post_process_info_fn post_process, void *post_process_data)
 {
@@ -664,7 +664,7 @@ char *ossl_store_info_get0_EMBEDDED_pem_name(OSSL_STORE_INFO *info)
 }
 
 OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
-                                  OPENSSL_CTX *libctx, const char *propq,
+                                  OSSL_CTX *libctx, const char *propq,
                                   const UI_METHOD *ui_method, void *ui_data,
                                   OSSL_STORE_post_process_info_fn post_process,
                                   void *post_process_data)

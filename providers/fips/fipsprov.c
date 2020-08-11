@@ -42,7 +42,7 @@ extern OSSL_FUNC_core_thread_start_fn *c_thread_start;
  * TODO(3.0): Should these be stored in the provider side provctx? Could they
  * ever be different from one init to the next? Unfortunately we can't do this
  * at the moment because c_put_error/c_add_error_vdata do not provide
- * us with the OPENSSL_CTX as a parameter.
+ * us with the OSSL_CTX as a parameter.
  */
 
 static SELF_TEST_POST_PARAMS selftest_params;
@@ -76,7 +76,7 @@ typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;
 } FIPS_GLOBAL;
 
-static void *fips_prov_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *fips_prov_ossl_ctx_new(OSSL_CTX *libctx)
 {
     FIPS_GLOBAL *fgbl = OPENSSL_zalloc(sizeof(*fgbl));
 
@@ -88,7 +88,7 @@ static void fips_prov_ossl_ctx_free(void *fgbl)
     OPENSSL_free(fgbl);
 }
 
-static const OPENSSL_CTX_METHOD fips_prov_ossl_ctx_method = {
+static const OSSL_CTX_METHOD fips_prov_ossl_ctx_method = {
     fips_prov_ossl_ctx_new,
     fips_prov_ossl_ctx_free,
 };
@@ -500,7 +500,7 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
 
 static void fips_teardown(void *provctx)
 {
-    OPENSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
+    OSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
     PROV_CTX_free(provctx);
 }
 
@@ -538,7 +538,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        void **provctx)
 {
     FIPS_GLOBAL *fgbl;
-    OPENSSL_CTX *libctx = NULL;
+    OSSL_CTX *libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
@@ -639,19 +639,19 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
 
     /*  Create a context. */
     if ((*provctx = PROV_CTX_new()) == NULL
-        || (libctx = OPENSSL_CTX_new()) == NULL) {
+        || (libctx = OSSL_CTX_new()) == NULL) {
         /*
          * We free libctx separately here and only here because it hasn't
          * been attached to *provctx.  All other error paths below rely
          * solely on fips_teardown.
          */
-        OPENSSL_CTX_free(libctx);
+        OSSL_CTX_free(libctx);
         goto err;
     }
     PROV_CTX_set0_library_context(*provctx, libctx);
     PROV_CTX_set0_handle(*provctx, handle);
 
-    if ((fgbl = openssl_ctx_get_data(libctx, OPENSSL_CTX_FIPS_PROV_INDEX,
+    if ((fgbl = ossl_ctx_get_data(libctx, OSSL_CTX_FIPS_PROV_INDEX,
                                      &fips_prov_ossl_ctx_method)) == NULL)
         goto err;
 
@@ -711,7 +711,7 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
      * able to do.
      */
     PROV_CTX_set0_library_context(*provctx,
-                                  (OPENSSL_CTX *)c_internal_get_libctx(handle));
+                                  (OSSL_CTX *)c_internal_get_libctx(handle));
     PROV_CTX_set0_handle(*provctx, handle);
 
     *out = intern_dispatch_table;
@@ -760,14 +760,14 @@ int ERR_pop_to_mark(void)
 /*
  * This must take a library context, since it's called from the depths
  * of crypto/initthread.c code, where it's (correctly) assumed that the
- * passed caller argument is an OPENSSL_CTX pointer (since the same routine
+ * passed caller argument is an OSSL_CTX pointer (since the same routine
  * is also called from other parts of libcrypto, which all pass around a
- * OPENSSL_CTX pointer)
+ * OSSL_CTX pointer)
  */
-const OSSL_CORE_HANDLE *FIPS_get_core_handle(OPENSSL_CTX *libctx)
+const OSSL_CORE_HANDLE *FIPS_get_core_handle(OSSL_CTX *libctx)
 {
-    FIPS_GLOBAL *fgbl = openssl_ctx_get_data(libctx,
-                                             OPENSSL_CTX_FIPS_PROV_INDEX,
+    FIPS_GLOBAL *fgbl = ossl_ctx_get_data(libctx,
+                                             OSSL_CTX_FIPS_PROV_INDEX,
                                              &fips_prov_ossl_ctx_method);
 
     if (fgbl == NULL)

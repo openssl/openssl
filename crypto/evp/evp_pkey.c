@@ -18,7 +18,7 @@
 
 /* Extract a private key from a PKCS8 structure */
 
-EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
+EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OSSL_CTX *libctx,
                              const char *propq)
 {
     EVP_PKEY *pkey = NULL;

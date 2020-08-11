@@ -471,7 +471,7 @@ static int do_store(SSL_CONF_CTX *cctx,
     CERT *cert;
     X509_STORE **st;
     SSL_CTX *ctx;
-    OPENSSL_CTX *libctx = NULL;
+    OSSL_CTX *libctx = NULL;
     const char *propq = NULL;
 
     if (cctx->ctx != NULL) {

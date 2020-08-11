@@ -18,7 +18,7 @@
 #include "self_test_data.inc"
 
 static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_SELF_TEST *st,
-                            OPENSSL_CTX *libctx)
+                            OSSL_CTX *libctx)
 {
     int ok = 0;
     unsigned char out[EVP_MAX_MD_SIZE];
@@ -83,7 +83,7 @@ static int cipher_init(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
 
 /* Test a single KAT for encrypt/decrypt */
 static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
-                            OPENSSL_CTX *libctx)
+                            OSSL_CTX *libctx)
 {
     int ret = 0, encrypt = 1, len, ct_len = 0, pt_len = 0;
     EVP_CIPHER_CTX *ctx = NULL;
@@ -179,7 +179,7 @@ err:
 }
 
 static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
-                         OPENSSL_CTX *libctx)
+                         OSSL_CTX *libctx)
 {
     int ret = 0;
     unsigned char out[64];
@@ -236,7 +236,7 @@ err:
 }
 
 static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
-                          OPENSSL_CTX *libctx)
+                          OSSL_CTX *libctx)
 {
     int ret = 0;
     unsigned char out[256];
@@ -345,7 +345,7 @@ err:
 
 
 static int self_test_ka(const ST_KAT_KAS *t,
-                        OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+                        OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int ret = 0;
     EVP_PKEY_CTX *kactx = NULL, *dctx = NULL;
@@ -421,7 +421,7 @@ err:
 }
 
 static int self_test_sign(const ST_KAT_SIGN *t,
-                         OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+                         OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int ret = 0;
     OSSL_PARAM *params = NULL, *params_sig = NULL;
@@ -509,7 +509,7 @@ err:
  * All tests are run regardless of if they fail or not.
  * Return 0 if any test fails.
  */
-static int self_test_digests(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+static int self_test_digests(OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int i, ret = 1;
 
@@ -520,7 +520,7 @@ static int self_test_digests(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
     return ret;
 }
 
-static int self_test_ciphers(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+static int self_test_ciphers(OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int i, ret = 1;
 
@@ -531,7 +531,7 @@ static int self_test_ciphers(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
     return ret;
 }
 
-static int self_test_kdfs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+static int self_test_kdfs(OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int i, ret = 1;
 
@@ -542,7 +542,7 @@ static int self_test_kdfs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
     return ret;
 }
 
-static int self_test_drbgs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+static int self_test_drbgs(OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int i, ret = 1;
 
@@ -553,7 +553,7 @@ static int self_test_drbgs(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
     return ret;
 }
 
-static int self_test_kas(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+static int self_test_kas(OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int i, ret = 1;
 
@@ -564,7 +564,7 @@ static int self_test_kas(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
     return ret;
 }
 
-static int self_test_signatures(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+static int self_test_signatures(OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int i, ret = 1;
 
@@ -580,7 +580,7 @@ static int self_test_signatures(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
  * Return 1 is successful, otherwise return 0.
  * This runs all the tests regardless of if any fail.
  */
-int SELF_TEST_kats(OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
+int SELF_TEST_kats(OSSL_SELF_TEST *st, OSSL_CTX *libctx)
 {
     int ret = 1;
 

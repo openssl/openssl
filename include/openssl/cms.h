@@ -45,7 +45,7 @@ DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 DECLARE_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
-CMS_ContentInfo *CMS_ContentInfo_new_with_libctx(OPENSSL_CTX *libctx,
+CMS_ContentInfo *CMS_ContentInfo_new_with_libctx(OSSL_CTX *libctx,
                                                  const char *propq);
 
 # define CMS_SIGNERINFO_ISSUER_SERIAL    0
@@ -119,7 +119,7 @@ CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey,
 CMS_ContentInfo *CMS_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
                                       STACK_OF(X509) *certs, BIO *data,
                                       unsigned int flags,
-                                      OPENSSL_CTX *ctx, const char *propq);
+                                      OSSL_CTX *ctx, const char *propq);
 
 CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
                                   X509 *signcert, EVP_PKEY *pkey,
@@ -128,7 +128,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 int CMS_data(CMS_ContentInfo *cms, BIO *out, unsigned int flags);
 CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags);
 CMS_ContentInfo *CMS_data_create_with_libctx(BIO *in, unsigned int flags,
-                                             OPENSSL_CTX *ctx,
+                                             OSSL_CTX *ctx,
                                              const char *propq);
 
 int CMS_digest_verify(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
@@ -137,7 +137,7 @@ CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
                                    unsigned int flags);
 CMS_ContentInfo *CMS_digest_create_with_libctx(BIO *in, const EVP_MD *md,
                                                unsigned int flags,
-                                               OPENSSL_CTX *ctx,
+                                               OSSL_CTX *ctx,
                                                const char *propq);
 
 int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
@@ -152,7 +152,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt_with_libctx(BIO *in,
                                                        const unsigned char *key,
                                                        size_t keylen,
                                                        unsigned int flags,
-                                                       OPENSSL_CTX *ctx,
+                                                       OSSL_CTX *ctx,
                                                        const char *propq);
 
 int CMS_EncryptedData_set1_key(CMS_ContentInfo *cms, const EVP_CIPHER *ciph,
@@ -172,7 +172,7 @@ CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *in,
 CMS_ContentInfo *CMS_encrypt_with_libctx(STACK_OF(X509) *certs,
                                          BIO *in, const EVP_CIPHER *cipher,
                                          unsigned int flags,
-                                         OPENSSL_CTX *ctx, const char *propq);
+                                         OSSL_CTX *ctx, const char *propq);
 
 int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
                 BIO *dcont, BIO *out, unsigned int flags);
@@ -191,7 +191,7 @@ int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
 EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri);
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_ContentInfo *CMS_EnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
-                                                      OPENSSL_CTX *ctx,
+                                                      OSSL_CTX *ctx,
                                                       const char *propq);
 
 CMS_RecipientInfo *CMS_add1_recipient_cert(CMS_ContentInfo *cms,
@@ -336,7 +336,7 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0_with_libctx(
     unsigned char *id, int idlen, int allorfirst,
     STACK_OF(GENERAL_NAMES) *receiptList,
     STACK_OF(GENERAL_NAMES) *receiptsTo,
-    OPENSSL_CTX *ctx, const char *propq);
+    OSSL_CTX *ctx, const char *propq);
 
 int CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr);
 void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,

@@ -23,7 +23,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
                         long argl, char **ret);
 static int by_file_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
                                     const char *argc, long argl, char **ret,
-                                    OPENSSL_CTX *libctx, const char *propq);
+                                    OSSL_CTX *libctx, const char *propq);
 
 
 static X509_LOOKUP_METHOD x509_file_lookup = {
@@ -48,7 +48,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_file(void)
 
 static int by_file_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
                                     const char *argp, long argl, char **ret,
-                                    OPENSSL_CTX *libctx, const char *propq)
+                                    OSSL_CTX *libctx, const char *propq)
 {
     int ok = 0;
     const char *file;
@@ -91,7 +91,7 @@ static int by_file_ctrl(X509_LOOKUP *ctx, int cmd,
 }
 
 int X509_load_cert_file_with_libctx(X509_LOOKUP *ctx, const char *file, int type,
-                                    OPENSSL_CTX *libctx, const char *propq)
+                                    OSSL_CTX *libctx, const char *propq)
 {
     int ret = 0;
     BIO *in = NULL;
@@ -216,7 +216,7 @@ int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 }
 
 int X509_load_cert_crl_file_with_libctx(X509_LOOKUP *ctx, const char *file,
-                                        int type, OPENSSL_CTX *libctx,
+                                        int type, OSSL_CTX *libctx,
                                         const char *propq)
 {
     STACK_OF(X509_INFO) *inf;

@@ -157,7 +157,7 @@ int smime_main(int argc, char **argv)
     int vpmtouched = 0, rv = 0;
     ENGINE *e = NULL;
     const char *mime_eol = "\n";
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)

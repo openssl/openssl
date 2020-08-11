@@ -89,7 +89,7 @@ static int apps_startup(void)
 static void apps_shutdown(void)
 {
     app_providers_cleanup();
-    OPENSSL_CTX_free(app_get0_libctx());
+    OSSL_CTX_free(app_get0_libctx());
     destroy_ui_method();
 }
 

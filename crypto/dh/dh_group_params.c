@@ -100,7 +100,7 @@ const char *ffc_named_group_from_uid(int uid)
     return NULL;
 }
 
-static DH *dh_param_init(OPENSSL_CTX *libctx, int uid, const BIGNUM *p,
+static DH *dh_param_init(OSSL_CTX *libctx, int uid, const BIGNUM *p,
                          const BIGNUM *q, const BIGNUM *g)
 {
     DH *dh = dh_new_with_libctx(libctx);
@@ -117,7 +117,7 @@ static DH *dh_param_init(OPENSSL_CTX *libctx, int uid, const BIGNUM *p,
     return dh;
 }
 
-static DH *dh_new_by_group_name(OPENSSL_CTX *libctx, const char *name)
+static DH *dh_new_by_group_name(OSSL_CTX *libctx, const char *name)
 {
     int i;
 
@@ -136,7 +136,7 @@ static DH *dh_new_by_group_name(OPENSSL_CTX *libctx, const char *name)
     return NULL;
 }
 
-DH *dh_new_by_nid_with_libctx(OPENSSL_CTX *libctx, int nid)
+DH *dh_new_by_nid_with_libctx(OSSL_CTX *libctx, int nid)
 {
     const char *name = ffc_named_group_from_uid(nid);
 

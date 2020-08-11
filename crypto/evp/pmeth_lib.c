@@ -164,7 +164,7 @@ static int is_legacy_alg(int id, const char *keytype)
 #endif
 }
 
-static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
+static EVP_PKEY_CTX *int_ctx_new(OSSL_CTX *libctx,
                                  EVP_PKEY *pkey, ENGINE *e,
                                  const char *keytype, const char *propquery,
                                  int id)
@@ -310,14 +310,14 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
 
 /*- All methods below can also be used in FIPS_MODULE */
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OPENSSL_CTX *libctx,
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_name(OSSL_CTX *libctx,
                                          const char *name,
                                          const char *propquery)
 {
     return int_ctx_new(libctx, NULL, NULL, name, propquery, -1);
 }
 
-EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx, EVP_PKEY *pkey,
+EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OSSL_CTX *libctx, EVP_PKEY *pkey,
                                          const char *propquery)
 {
     return int_ctx_new(libctx, pkey, NULL, NULL, propquery, -1);

@@ -11,7 +11,7 @@ PKCS7_encrypt_with_libctx, PKCS7_encrypt
 
  PKCS7 *PKCS7_encrypt_with_libctx(STACK_OF(X509) *certs, BIO *in,
                                   const EVP_CIPHER *cipher, int flags,
-                                  OPENSSL_CTX *libctx, const char *propq);
+                                  OSSL_CTX *libctx, const char *propq);
  PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
                       int flags);
 

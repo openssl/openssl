@@ -36,7 +36,7 @@ static void clean_id_ctx(EVP_MD_CTX *ctx)
 }
 
 static EVP_MD_CTX *make_id_ctx(EVP_PKEY *r, ASN1_OCTET_STRING *id,
-                               OPENSSL_CTX *libctx, const char *propq)
+                               OSSL_CTX *libctx, const char *propq)
 {
     EVP_MD_CTX *ctx = NULL;
     EVP_PKEY_CTX *pctx = NULL;
@@ -83,7 +83,7 @@ int X509_verify(X509 *a, EVP_PKEY *r)
     return rv;
 }
 
-int X509_REQ_verify_with_libctx(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
+int X509_REQ_verify_with_libctx(X509_REQ *a, EVP_PKEY *r, OSSL_CTX *libctx,
                                 const char *propq)
 {
     int rv = 0;
@@ -613,7 +613,7 @@ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
     return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, fp, a);
 }
 
-EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_CTX *libctx,
                                const char *propq)
 {
     BIO *b;
@@ -677,7 +677,7 @@ EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
     return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, bp, a);
 }
 
-EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OPENSSL_CTX *libctx,
+EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_CTX *libctx,
                                 const char *propq)
 {
     BUF_MEM *b = NULL;

@@ -78,7 +78,7 @@ typedef struct {
     unsigned long mask;
 } NAME_EX_TBL;
 
-static OPENSSL_CTX *app_libctx = NULL;
+static OSSL_CTX *app_libctx = NULL;
 
 static int set_table_opts(unsigned long *flags, const char *arg,
                           const NAME_EX_TBL * in_tbl);
@@ -337,7 +337,7 @@ static char *app_get_pass(const char *arg, int keepbio)
     return OPENSSL_strdup(tpass);
 }
 
-OPENSSL_CTX *app_get0_libctx(void)
+OSSL_CTX *app_get0_libctx(void)
 {
     return app_libctx;
 }
@@ -348,7 +348,7 @@ const char *app_get0_propq(void)
     return NULL;
 }
 
-OPENSSL_CTX *app_create_libctx(void)
+OSSL_CTX *app_create_libctx(void)
 {
     /*
      * Load the NULL provider into the default library context and create a
@@ -360,7 +360,7 @@ OPENSSL_CTX *app_create_libctx(void)
             BIO_puts(bio_err, "Failed to create null provider\n");
             return NULL;
         }
-        app_libctx = OPENSSL_CTX_new();
+        app_libctx = OSSL_CTX_new();
     }
     if (app_libctx == NULL)
         BIO_puts(bio_err, "Failed to create library context\n");
@@ -773,7 +773,7 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
 {
     PW_CB_DATA uidata;
     OSSL_STORE_CTX *ctx = NULL;
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
     int ret = 0;
     /* TODO make use of the engine reference 'eng' when loading pkeys */
@@ -1110,7 +1110,7 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
 {
     X509_STORE *store = X509_STORE_new();
     X509_LOOKUP *lookup;
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
 
     if (store == NULL)

@@ -10,7 +10,7 @@
 #include <openssl/err.h>
 #include "crypto/ecx.h"
 
-ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey)
+ECX_KEY *ecx_key_new(OSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey)
 {
     ECX_KEY *ret = OPENSSL_zalloc(sizeof(*ret));
 

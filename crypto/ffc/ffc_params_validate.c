@@ -44,7 +44,7 @@ int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
     return 1;
 }
 
-int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+int ffc_params_FIPS186_4_validate(OSSL_CTX *libctx, const FFC_PARAMS *params,
                                   int type, int *res, BN_GENCB *cb)
 {
     size_t L, N;
@@ -61,7 +61,7 @@ int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
 }
 
 /* This may be used in FIPS mode to validate deprecated FIPS-186-2 Params */
-int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+int ffc_params_FIPS186_2_validate(OSSL_CTX *libctx, const FFC_PARAMS *params,
                                   int type, int *res, BN_GENCB *cb)
 {
     size_t L, N;
@@ -85,7 +85,7 @@ int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
  * extra parameters such as the digest and seed, which may not be available for
  * this test.
  */
-int ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params, int type)
+int ffc_params_simple_validate(OSSL_CTX *libctx, FFC_PARAMS *params, int type)
 {
     int ret, res = 0;
     int save_gindex;

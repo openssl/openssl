@@ -21,7 +21,7 @@ void PROV_CTX_free(PROV_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-void PROV_CTX_set0_library_context(PROV_CTX *ctx, OPENSSL_CTX *libctx)
+void PROV_CTX_set0_library_context(PROV_CTX *ctx, OSSL_CTX *libctx)
 {
     if (ctx != NULL)
         ctx->libctx = libctx;
@@ -39,7 +39,7 @@ void PROV_CTX_set0_core_bio_method(PROV_CTX *ctx, BIO_METHOD *corebiometh)
         ctx->corebiometh = corebiometh;
 }
 
-OPENSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx)
+OSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx)
 {
     if (ctx == NULL)
         return NULL;

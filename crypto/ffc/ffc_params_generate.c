@@ -295,7 +295,7 @@ static int generate_q_fips186_4(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     unsigned char md[EVP_MAX_MD_SIZE];
     int mdsize = EVP_MD_size(evpmd);
     unsigned char *pmd;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_CTX *libctx = bn_get_lib_ctx(ctx);
 
     /* find q */
     for (;;) {
@@ -366,7 +366,7 @@ static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
     unsigned char buf2[EVP_MAX_MD_SIZE];
     unsigned char md[EVP_MAX_MD_SIZE];
     int i, r, ret = 0, m = *retm;
-    OPENSSL_CTX *libctx = bn_get_lib_ctx(ctx);
+    OSSL_CTX *libctx = bn_get_lib_ctx(ctx);
 
     /* find q */
     for (;;) {
@@ -485,7 +485,7 @@ static const char *default_mdname(size_t N)
  *   - FFC_PARAM_RET_STATUS_UNVERIFIABLE_G if the validation of G succeeded,
  *     but G is unverifiable.
  */
-int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+int ffc_params_FIPS186_4_gen_verify(OSSL_CTX *libctx, FFC_PARAMS *params,
                                     int mode, int type, size_t L, size_t N,
                                     int *res, BN_GENCB *cb)
 {
@@ -773,7 +773,7 @@ err:
     return ok;
 }
 
-int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+int ffc_params_FIPS186_2_gen_verify(OSSL_CTX *libctx, FFC_PARAMS *params,
                                     int mode, int type, size_t L, size_t N,
                                     int *res, BN_GENCB *cb)
 {
@@ -999,7 +999,7 @@ err:
     return ok;
 }
 
-int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+int ffc_params_FIPS186_4_generate(OSSL_CTX *libctx, FFC_PARAMS *params,
                                   int type, size_t L, size_t N,
                                   int *res, BN_GENCB *cb)
 {
@@ -1009,7 +1009,7 @@ int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
 }
 
 /* This should no longer be used in FIPS mode */
-int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+int ffc_params_FIPS186_2_generate(OSSL_CTX *libctx, FFC_PARAMS *params,
                                   int type, size_t L, size_t N,
                                   int *res, BN_GENCB *cb)
 {

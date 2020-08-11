@@ -15,7 +15,7 @@ OSSL_DESERIALIZER_CTX_set_passphrase_ui
  OSSL_DESERIALIZER_CTX *
  OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
                                        const char *input_type,
-                                       OPENSSL_CTX *libctx,
+                                       OSSL_CTX *libctx,
                                        const char *propquery);
 
  int OSSL_DESERIALIZER_CTX_set_passphrase(OSSL_DESERIALIZER_CTX *ctx,

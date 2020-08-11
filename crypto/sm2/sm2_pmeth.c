@@ -129,7 +129,7 @@ static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,
     EC_KEY *ec = ctx->pkey->pkey.ec;
     SM2_PKEY_CTX *dctx = ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
-    OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
+    OSSL_CTX *libctx = ec_key_get_libctx(ec);
     EVP_MD *fetched_md = NULL;
 
     if (out == NULL) {
@@ -155,7 +155,7 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
     EC_KEY *ec = ctx->pkey->pkey.ec;
     SM2_PKEY_CTX *dctx = ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
-    OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
+    OSSL_CTX *libctx = ec_key_get_libctx(ec);
     EVP_MD *fetched_md = NULL;
 
     if (out == NULL) {

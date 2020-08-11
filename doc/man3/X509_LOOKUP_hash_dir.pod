@@ -17,12 +17,12 @@ X509_load_cert_crl_file_with_libctx, X509_load_cert_crl_file
  X509_LOOKUP_METHOD *X509_LOOKUP_store(void);
 
  int X509_load_cert_file_with_libctx(X509_LOOKUP *ctx, const char *file,
-                                     int type, OPENSSL_CTX *libctx,
+                                     int type, OSSL_CTX *libctx,
                                      const char *propq);
  int X509_load_cert_file(X509_LOOKUP *ctx, const char *file, int type);
  int X509_load_crl_file(X509_LOOKUP *ctx, const char *file, int type);
  int X509_load_cert_crl_file_with_libctx(X509_LOOKUP *ctx, const char *file,
-                                         int type, OPENSSL_CTX *libctx,
+                                         int type, OSSL_CTX *libctx,
                                          const char *propq);
  int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type);
 

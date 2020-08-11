@@ -28,10 +28,10 @@ typedef struct self_test_post_params_st {
     OSSL_FUNC_BIO_free_fn *bio_free_cb;
     OSSL_CALLBACK *cb;
     void *cb_arg;
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
 
 } SELF_TEST_POST_PARAMS;
 
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
-int SELF_TEST_kats(OSSL_SELF_TEST *event, OPENSSL_CTX *libctx);
+int SELF_TEST_kats(OSSL_SELF_TEST *event, OSSL_CTX *libctx);
 unsigned int FIPS_is_running(void);

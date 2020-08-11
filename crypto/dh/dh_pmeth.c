@@ -278,7 +278,7 @@ static int pkey_dh_ctrl_str(EVP_PKEY_CTX *ctx,
     return -2;
 }
 
-static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
+static DH *ffc_params_generate(OSSL_CTX *libctx, DH_PKEY_CTX *dctx,
                                BN_GENCB *pcb)
 {
     DH *ret;

@@ -124,7 +124,7 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
 }
 
-int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
+int CONF_modules_load_file_with_libctx(OSSL_CTX *libctx,
                                        const char *filename,
                                        const char *appname, unsigned long flags)
 {

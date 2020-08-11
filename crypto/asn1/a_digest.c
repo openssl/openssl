@@ -55,7 +55,7 @@ int ASN1_digest(i2d_of_void *i2d, const EVP_MD *type, char *data,
 
 int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *md,
                                  void *asn, unsigned char *data,
-                                 unsigned int *len, OPENSSL_CTX *libctx,
+                                 unsigned int *len, OSSL_CTX *libctx,
                                  const char *propq)
 {
     int i, ret = 0;

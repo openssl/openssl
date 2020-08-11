@@ -640,7 +640,7 @@ int ec_validate(void *keydata, int selection)
 }
 
 struct ec_gen_ctx {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     EC_GROUP *gen_group;
     int selection;
     int ecdh_mode;
@@ -648,7 +648,7 @@ struct ec_gen_ctx {
 
 static void *ec_gen_init(void *provctx, int selection)
 {
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
+    OSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct ec_gen_ctx *gctx = NULL;
 
     if ((selection & (EC_POSSIBLE_SELECTIONS)) == 0)

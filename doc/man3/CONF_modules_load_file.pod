@@ -9,7 +9,7 @@ CONF_modules_load_file_with_libctx, CONF_modules_load_file, CONF_modules_load
 
  #include <openssl/conf.h>
 
- int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
+ int CONF_modules_load_file_with_libctx(OSSL_CTX *libctx,
                                         const char *filename,
                                         const char *appname, unsigned long flags);
  int CONF_modules_load_file(const char *filename, const char *appname,

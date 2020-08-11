@@ -66,7 +66,7 @@ static const struct {
 #endif
 };
 
-static int find_alg_id(OPENSSL_CTX *libctx, const char *algname, size_t *id)
+static int find_alg_id(OSSL_CTX *libctx, const char *algname, size_t *id)
 {
     int ret = 1;
     size_t i;
@@ -375,7 +375,7 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     KDF_X942 *ctx = vctx;
-    OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    OSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     size_t id;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))

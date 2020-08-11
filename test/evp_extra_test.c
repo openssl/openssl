@@ -32,7 +32,7 @@
 #include "internal/sizes.h"
 #include "crypto/evp.h"
 
-static OPENSSL_CTX *testctx = NULL;
+static OSSL_CTX *testctx = NULL;
 
 /*
  * kExampleRSAKeyDER is an RSA private key in ASN.1, DER format. Of course, you
@@ -476,11 +476,11 @@ static EVP_PKEY *load_example_hmac_key(void)
 
 static int test_EVP_set_default_properties(void)
 {
-    OPENSSL_CTX *ctx;
+    OSSL_CTX *ctx;
     EVP_MD *md = NULL;
     int res = 0;
 
-    if (!TEST_ptr(ctx = OPENSSL_CTX_new())
+    if (!TEST_ptr(ctx = OSSL_CTX_new())
             || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
         goto err;
     EVP_MD_free(md);
@@ -499,7 +499,7 @@ static int test_EVP_set_default_properties(void)
     res = 1;
 err:
     EVP_MD_free(md);
-    OPENSSL_CTX_free(ctx);
+    OSSL_CTX_free(ctx);
     return res;
 }
 
@@ -1748,7 +1748,7 @@ static int test_keygen_with_empty_template(int n)
  */
 static int test_pkey_ctx_fail_without_provider(int tst)
 {
-    OPENSSL_CTX *tmpctx = OPENSSL_CTX_new();
+    OSSL_CTX *tmpctx = OSSL_CTX_new();
     OSSL_PROVIDER *nullprov = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     int ret = 0;
@@ -1778,7 +1778,7 @@ static int test_pkey_ctx_fail_without_provider(int tst)
  err:
     EVP_PKEY_CTX_free(pctx);
     OSSL_PROVIDER_unload(nullprov);
-    OPENSSL_CTX_free(tmpctx);
+    OSSL_CTX_free(tmpctx);
     return ret;
 }
 
@@ -1815,7 +1815,7 @@ static int test_rand_agglomeration(void)
 
 int setup_tests(void)
 {
-    testctx = OPENSSL_CTX_new();
+    testctx = OSSL_CTX_new();
 
     if (!TEST_ptr(testctx))
         return 0;
@@ -1875,5 +1875,5 @@ int setup_tests(void)
 
 void cleanup_tests(void)
 {
-    OPENSSL_CTX_free(testctx);
+    OSSL_CTX_free(testctx);
 }

@@ -32,7 +32,7 @@ static OSSL_FUNC_signature_freectx_fn eddsa_freectx;
 static OSSL_FUNC_signature_dupctx_fn eddsa_dupctx;
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     ECX_KEY *key;
 } PROV_EDDSA_CTX;
 

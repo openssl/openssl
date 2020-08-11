@@ -1188,7 +1188,7 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
  */
 static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
                              void *to_keydata, EVP_KEYMGMT *to_keymgmt,
-                             OPENSSL_CTX *libctx, const char *propq)
+                             OSSL_CTX *libctx, const char *propq)
 {
     RSA *rsa = from->pkey.rsa;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
@@ -1317,7 +1317,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
 }
 
 static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                              EVP_KEYMGMT *to_keymgmt, OSSL_CTX *libctx,
                               const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSA, to_keydata,
@@ -1325,7 +1325,7 @@ static int rsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 }
 
 static int rsa_pss_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                                  EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                                  EVP_KEYMGMT *to_keymgmt, OSSL_CTX *libctx,
                                   const char *propq)
 {
     return rsa_int_export_to(from, RSA_FLAG_TYPE_RSASSAPSS, to_keydata,

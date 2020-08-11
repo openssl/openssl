@@ -23,7 +23,7 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+EC_GROUP *ec_group_new_with_libctx(OSSL_CTX *libctx, const char *propq,
                                    const EC_METHOD *meth)
 {
     EC_GROUP *ret;

@@ -37,7 +37,7 @@ Key_Encryption_ID       rsaEncryption
 */
 
 typedef struct PKCS7_CTX_st {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     char *propq;
 } PKCS7_CTX;
 
@@ -240,7 +240,7 @@ DECLARE_ASN1_FUNCTIONS(PKCS7_SIGN_ENVELOPE)
 DECLARE_ASN1_FUNCTIONS(PKCS7_DIGEST)
 DECLARE_ASN1_FUNCTIONS(PKCS7_ENCRYPT)
 DECLARE_ASN1_FUNCTIONS(PKCS7)
-PKCS7 *PKCS7_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
+PKCS7 *PKCS7_new_with_libctx(OSSL_CTX *libctx, const char *propq);
 
 DECLARE_ASN1_ITEM(PKCS7_ATTR_SIGN)
 DECLARE_ASN1_ITEM(PKCS7_ATTR_VERIFY)
@@ -301,7 +301,7 @@ PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
                   BIO *data, int flags);
 PKCS7 *PKCS7_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
                               STACK_OF(X509) *certs, BIO *data, int flags,
-                              OPENSSL_CTX *libctx, const char *propq);
+                              OSSL_CTX *libctx, const char *propq);
 
 PKCS7_SIGNER_INFO *PKCS7_sign_add_signer(PKCS7 *p7,
                                          X509 *signcert, EVP_PKEY *pkey,
@@ -316,7 +316,7 @@ PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
                      int flags);
 PKCS7 *PKCS7_encrypt_with_libctx(STACK_OF(X509) *certs, BIO *in,
                                  const EVP_CIPHER *cipher, int flags,
-                                 OPENSSL_CTX *libctx, const char *propq);
+                                 OSSL_CTX *libctx, const char *propq);
 int PKCS7_decrypt(PKCS7 *p7, EVP_PKEY *pkey, X509 *cert, BIO *data,
                   int flags);
 

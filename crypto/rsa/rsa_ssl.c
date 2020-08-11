@@ -21,7 +21,7 @@
 #include "internal/constant_time.h"
 #include "rsa_local.h"
 
-int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
+int rsa_padding_add_SSLv23_with_libctx(OSSL_CTX *libctx, unsigned char *to,
                                        int tlen, const unsigned char *from,
                                        int flen)
 {

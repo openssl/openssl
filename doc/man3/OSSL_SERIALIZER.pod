@@ -20,7 +20,7 @@ OSSL_SERIALIZER_names_do_all
 
  typedef struct ossl_serializer_st OSSL_SERIALIZER;
 
- OSSL_SERIALIZER *OSSL_SERIALIZER_fetch(OPENSSL_CTX *ctx, const char *name,
+ OSSL_SERIALIZER *OSSL_SERIALIZER_fetch(OSSL_CTX *ctx, const char *name,
                                         const char *properties);
  int OSSL_SERIALIZER_up_ref(OSSL_SERIALIZER *serializer);
  void OSSL_SERIALIZER_free(OSSL_SERIALIZER *serializer);
@@ -30,7 +30,7 @@ OSSL_SERIALIZER_names_do_all
  int OSSL_SERIALIZER_is_a(const OSSL_SERIALIZER *serializer,
                           const char *name);
  int OSSL_SERIALIZER_number(const OSSL_SERIALIZER *serializer);
- void OSSL_SERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
+ void OSSL_SERIALIZER_do_all_provided(OSSL_CTX *libctx,
                                       void (*fn)(OSSL_SERIALIZER *serializer,
                                                  void *arg),
                                       void *arg);
@@ -47,7 +47,7 @@ serialize an object of some kind to a serialized form, such as PEM,
 DER, or even human readable text.
 
 OSSL_SERIALIZER_fetch() looks for an algorithm within the provider that
-has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
+has been loaded into the B<OSSL_CTX> given by I<ctx>, having the
 name given by I<name> and the properties given by I<properties>.
 The I<name> determines what type of object the fetched serializer
 method is expected to be able to serialize, and the properties are
@@ -111,7 +111,7 @@ OSSL_SERIALIZER_number() returns an integer.
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_SERIALIZER_CTX(3)>, L<OSSL_SERIALIZER_to_bio(3)>,
-L<OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(3)>, L<OPENSSL_CTX(3)>
+L<OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(3)>, L<OSSL_CTX(3)>
 
 =head1 HISTORY
 

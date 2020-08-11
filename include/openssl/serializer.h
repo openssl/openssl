@@ -26,7 +26,7 @@
 extern "C" {
 # endif
 
-OSSL_SERIALIZER *OSSL_SERIALIZER_fetch(OPENSSL_CTX *libctx,
+OSSL_SERIALIZER *OSSL_SERIALIZER_fetch(OSSL_CTX *libctx,
                                        const char *name,
                                        const char *properties);
 int OSSL_SERIALIZER_up_ref(OSSL_SERIALIZER *ser);
@@ -38,7 +38,7 @@ int OSSL_SERIALIZER_number(const OSSL_SERIALIZER *ser);
 int OSSL_SERIALIZER_is_a(const OSSL_SERIALIZER *ser,
                          const char *name);
 
-void OSSL_SERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
+void OSSL_SERIALIZER_do_all_provided(OSSL_CTX *libctx,
                                      void (*fn)(OSSL_SERIALIZER *ser,
                                                 void *arg),
                                      void *arg);

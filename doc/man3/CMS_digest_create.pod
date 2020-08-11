@@ -11,7 +11,7 @@ CMS_digest_create_with_libctx, CMS_digest_create
 
  CMS_ContentInfo *CMS_digest_create_with_libctx(BIO *in,
      const EVP_MD *md, unsigned int flags,
-     OPENSSL_CTX *ctx, const char *propq);
+     OSSL_CTX *ctx, const char *propq);
 
  CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
                                     unsigned int flags);

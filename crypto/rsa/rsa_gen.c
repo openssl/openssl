@@ -27,7 +27,7 @@
 #include "rsa_local.h"
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
-static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
+static int rsa_keygen(OSSL_CTX *libctx, RSA *rsa, int bits, int primes,
                       BIGNUM *e_value, BN_GENCB *cb, int pairwise_test);
 
 /*
@@ -418,7 +418,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 }
 #endif /* FIPS_MODULE */
 
-static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
+static int rsa_keygen(OSSL_CTX *libctx, RSA *rsa, int bits, int primes,
                       BIGNUM *e_value, BN_GENCB *cb, int pairwise_test)
 {
     int ok = 0;

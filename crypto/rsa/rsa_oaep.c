@@ -52,7 +52,7 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
  * Step numbers are included here but not in the constant time inverse below
  * to avoid complicating an already difficult enough function.
  */
-int rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(OPENSSL_CTX *libctx,
+int rsa_padding_add_PKCS1_OAEP_mgf1_with_libctx(OSSL_CTX *libctx,
                                                 unsigned char *to, int tlen,
                                                 const unsigned char *from,
                                                 int flen,

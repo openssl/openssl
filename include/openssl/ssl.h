@@ -1528,7 +1528,7 @@ void BIO_ssl_shutdown(BIO *ssl_bio);
 
 __owur int SSL_CTX_set_cipher_list(SSL_CTX *, const char *str);
 __owur SSL_CTX *SSL_CTX_new(const SSL_METHOD *meth);
-__owur SSL_CTX *SSL_CTX_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+__owur SSL_CTX *SSL_CTX_new_with_libctx(OSSL_CTX *libctx, const char *propq,
                                         const SSL_METHOD *meth);
 int SSL_CTX_up_ref(SSL_CTX *ctx);
 void SSL_CTX_free(SSL_CTX *);
@@ -1631,7 +1631,7 @@ __owur int SSL_use_certificate_chain_file(SSL *ssl, const char *file);
 __owur STACK_OF(X509_NAME) *SSL_load_client_CA_file(const char *file);
 __owur STACK_OF(X509_NAME)
 *SSL_load_client_CA_file_with_libctx(const char *file,
-                                     OPENSSL_CTX *libctx, const char *propq);
+                                     OSSL_CTX *libctx, const char *propq);
 __owur int SSL_add_file_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,
                                                const char *file);
 int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stackCAs,

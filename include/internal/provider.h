@@ -27,9 +27,9 @@ extern "C" {
  */
 
 /* Provider Object finder, constructor and destructor */
-OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
+OSSL_PROVIDER *ossl_provider_find(OSSL_CTX *libctx, const char *name,
                                   int noconfig);
-OSSL_PROVIDER *ossl_provider_new(OPENSSL_CTX *libctx, const char *name,
+OSSL_PROVIDER *ossl_provider_new(OSSL_CTX *libctx, const char *name,
                                  OSSL_provider_init_fn *init_function,
                                  int noconfig);
 int ossl_provider_up_ref(OSSL_PROVIDER *prov);
@@ -54,7 +54,7 @@ int ossl_provider_available(OSSL_PROVIDER *prov);
 void *ossl_provider_ctx(const OSSL_PROVIDER *prov);
 
 /* Iterate over all loaded providers */
-int ossl_provider_forall_loaded(OPENSSL_CTX *,
+int ossl_provider_forall_loaded(OSSL_CTX *,
                                 int (*cb)(OSSL_PROVIDER *provider,
                                           void *cbdata),
                                 void *cbdata);
@@ -65,7 +65,7 @@ const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_name(const OSSL_PROVIDER *prov);
 const char *ossl_provider_module_path(const OSSL_PROVIDER *prov);
 void *ossl_provider_prov_ctx(const OSSL_PROVIDER *prov);
-OPENSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov);
+OSSL_CTX *ossl_provider_library_context(const OSSL_PROVIDER *prov);
 
 /* Thin wrappers around calls to the provider */
 void ossl_provider_teardown(const OSSL_PROVIDER *prov);

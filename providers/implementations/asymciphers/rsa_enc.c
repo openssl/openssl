@@ -60,7 +60,7 @@ static OSSL_ITEM padding_item[] = {
  */
 
 typedef struct {
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     RSA *rsa;
     int pad_mode;
     /* OAEP message digest */

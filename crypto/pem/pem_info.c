@@ -29,7 +29,7 @@ DEFINE_STACK_OF(X509_INFO)
 STACK_OF(X509_INFO)
 *PEM_X509_INFO_read_with_libctx(FILE *fp, STACK_OF(X509_INFO) *sk,
                                 pem_password_cb *cb, void *u,
-                                OPENSSL_CTX *libctx, const char *propq)
+                                OSSL_CTX *libctx, const char *propq)
 {
     BIO *b;
     STACK_OF(X509_INFO) *ret;
@@ -54,7 +54,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
 STACK_OF(X509_INFO)
 *PEM_X509_INFO_read_bio_with_libctx(BIO *bp, STACK_OF(X509_INFO) *sk,
                                     pem_password_cb *cb, void *u,
-                                    OPENSSL_CTX *libctx, const char *propq)
+                                    OSSL_CTX *libctx, const char *propq)
 {
     X509_INFO *xi = NULL;
     char *name = NULL, *header = NULL;

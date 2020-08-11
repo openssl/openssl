@@ -520,7 +520,7 @@ static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
+                              EVP_KEYMGMT *to_keymgmt, OSSL_CTX *libctx,
                               const char *propq)
 {
     DSA *dsa = from->pkey.dsa;

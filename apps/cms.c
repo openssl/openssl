@@ -34,7 +34,7 @@ static int cms_cb(int ok, X509_STORE_CTX *ctx);
 static void receipt_request_print(CMS_ContentInfo *cms);
 static CMS_ReceiptRequest *make_receipt_request(
     STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
-    STACK_OF(OPENSSL_STRING) *rr_from, OPENSSL_CTX *libctx, const char *propq);
+    STACK_OF(OPENSSL_STRING) *rr_from, OSSL_CTX *libctx, const char *propq);
 static int cms_set_pkey_param(EVP_PKEY_CTX *pctx,
                               STACK_OF(OPENSSL_STRING) *param);
 
@@ -239,7 +239,7 @@ const OPTIONS cms_options[] = {
 
 static CMS_ContentInfo *load_content_info(int informat, BIO *in, BIO **indata,
                                           const char *name,
-                                          OPENSSL_CTX *libctx, const char *propq)
+                                          OSSL_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *ret, *ci;
 
@@ -307,7 +307,7 @@ int cms_main(int argc, char **argv)
     long ltmp;
     const char *mime_eol = "\n";
     OPTION_CHOICE o;
-    OPENSSL_CTX *libctx = app_get0_libctx();
+    OSSL_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
 
     if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
@@ -1394,7 +1394,7 @@ static STACK_OF(GENERAL_NAMES) *make_names_stack(STACK_OF(OPENSSL_STRING) *ns)
 static CMS_ReceiptRequest *make_receipt_request(
    STACK_OF(OPENSSL_STRING) *rr_to, int rr_allorfirst,
    STACK_OF(OPENSSL_STRING) *rr_from,
-   OPENSSL_CTX *libctx, const char *propq)
+   OSSL_CTX *libctx, const char *propq)
 {
     STACK_OF(GENERAL_NAMES) *rct_to = NULL, *rct_from = NULL;
     CMS_ReceiptRequest *rr;

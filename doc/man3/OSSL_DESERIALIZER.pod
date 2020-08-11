@@ -22,7 +22,7 @@ OSSL_DESERIALIZER_get_params
 
  typedef struct ossl_deserializer_st OSSL_DESERIALIZER;
 
- OSSL_DESERIALIZER *OSSL_DESERIALIZER_fetch(OPENSSL_CTX *ctx, const char *name,
+ OSSL_DESERIALIZER *OSSL_DESERIALIZER_fetch(OSSL_CTX *ctx, const char *name,
                                             const char *properties);
  int OSSL_DESERIALIZER_up_ref(OSSL_DESERIALIZER *deserializer);
  void OSSL_DESERIALIZER_free(OSSL_DESERIALIZER *deserializer);
@@ -32,7 +32,7 @@ OSSL_DESERIALIZER_get_params
  int OSSL_DESERIALIZER_is_a(const OSSL_DESERIALIZER *deserializer,
                             const char *name);
  int OSSL_DESERIALIZER_number(const OSSL_DESERIALIZER *deserializer);
- void OSSL_DESERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
+ void OSSL_DESERIALIZER_do_all_provided(OSSL_CTX *libctx,
                                         void (*fn)(OSSL_DESERIALIZER *deserializer,
                                                    void *arg),
                                         void *arg);
@@ -50,7 +50,7 @@ deserialize serialized data into an object of some type that the rest
 of OpenSSL knows how to handle.
 
 OSSL_DESERIALIZER_fetch() looks for an algorithm within the provider that
-has been loaded into the B<OPENSSL_CTX> given by I<ctx>, having the
+has been loaded into the B<OSSL_CTX> given by I<ctx>, having the
 name given by I<name> and the properties given by I<properties>.
 The I<name> determines what type of object the fetched deserializer
 method is expected to be able to deserialize, and the properties are
@@ -128,7 +128,7 @@ Text, because pod2xxx doesn't like empty sections
 =head1 SEE ALSO
 
 L<provider(7)>, L<OSSL_DESERIALIZER_CTX(3)>, L<OSSL_DESERIALIZER_from_bio(3)>,
-L<OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(3)>, L<OPENSSL_CTX(3)>
+L<OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(3)>, L<OSSL_CTX(3)>
 
 =head1 HISTORY
 

@@ -23,14 +23,14 @@ EVP_PKEY_get_raw_public_key
  int EVP_PKEY_up_ref(EVP_PKEY *key);
  void EVP_PKEY_free(EVP_PKEY *key);
 
- EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OPENSSL_CTX *libctx,
+ EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OSSL_CTX *libctx,
                                                     const char *keytype,
                                                     const char *propq,
                                                     const unsigned char *key,
                                                     size_t keylen);
  EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
                                         const unsigned char *key, size_t keylen);
- EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OPENSSL_CTX *libctx,
+ EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OSSL_CTX *libctx,
                                                    const char *keytype,
                                                    const char *propq,
                                                    const unsigned char *key,

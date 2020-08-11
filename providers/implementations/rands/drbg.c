@@ -265,12 +265,12 @@ typedef struct prov_drbg_nonce_global_st {
 
 /*
  * drbg_ossl_ctx_new() calls drgb_setup() which calls rand_drbg_get_nonce()
- * which needs to get the rand_nonce_lock out of the OPENSSL_CTX...but since
+ * which needs to get the rand_nonce_lock out of the OSSL_CTX...but since
  * drbg_ossl_ctx_new() hasn't finished running yet we need the rand_nonce_lock
  * to be in a different global data object. Otherwise we will go into an
  * infinite recursion loop.
  */
-static void *prov_drbg_nonce_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *prov_drbg_nonce_ossl_ctx_new(OSSL_CTX *libctx)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = OPENSSL_zalloc(sizeof(*dngbl));
 
@@ -298,7 +298,7 @@ static void prov_drbg_nonce_ossl_ctx_free(void *vdngbl)
     OPENSSL_free(dngbl);
 }
 
-static const OPENSSL_CTX_METHOD drbg_nonce_ossl_ctx_method = {
+static const OSSL_CTX_METHOD drbg_nonce_ossl_ctx_method = {
     prov_drbg_nonce_ossl_ctx_new,
     prov_drbg_nonce_ossl_ctx_free,
 };
@@ -311,9 +311,9 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
     size_t ret = 0, n;
     RAND_POOL *pool;
     unsigned char *buf = NULL;
-    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
+    OSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
     PROV_DRBG_NONCE_GLOBAL *dngbl
-        = openssl_ctx_get_data(libctx, OPENSSL_CTX_DRBG_NONCE_INDEX,
+        = ossl_ctx_get_data(libctx, OSSL_CTX_DRBG_NONCE_INDEX,
                                &drbg_nonce_ossl_ctx_method);
     struct {
         void *instance;

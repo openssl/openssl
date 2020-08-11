@@ -33,12 +33,12 @@ EC_KEY *EC_KEY_new(void)
 }
 #endif
 
-EC_KEY *EC_KEY_new_with_libctx(OPENSSL_CTX *ctx, const char *propq)
+EC_KEY *EC_KEY_new_with_libctx(OSSL_CTX *ctx, const char *propq)
 {
     return ec_key_new_method_int(ctx, propq, NULL);
 }
 
-EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx,
+EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OSSL_CTX *ctx,
                                              const char *propq, int nid)
 {
     EC_KEY *ret = EC_KEY_new_with_libctx(ctx, propq);
@@ -255,7 +255,7 @@ int ossl_ec_key_gen(EC_KEY *eckey)
  *                   fails then the keypair is not generated,
  * Returns 1 if the keypair was generated or 0 otherwise.
  */
-int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
+int ec_generate_key(OSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
 {
     int ok = 0;
     BIGNUM *priv_key = NULL;
@@ -635,7 +635,7 @@ int EC_KEY_set_public_key_affine_coordinates(EC_KEY *key, BIGNUM *x,
 
 }
 
-OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *key)
+OSSL_CTX *ec_key_get_libctx(const EC_KEY *key)
 {
     return key->libctx;
 }

@@ -305,7 +305,7 @@ static void collect_deserializer(OSSL_DESERIALIZER *deser, void *arg)
 OSSL_DESERIALIZER_CTX *
 OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
                                       const char *input_type,
-                                      OPENSSL_CTX *libctx,
+                                      OSSL_CTX *libctx,
                                       const char *propquery)
 {
     OSSL_DESERIALIZER_CTX *ctx = NULL;

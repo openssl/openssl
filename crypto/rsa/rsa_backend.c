@@ -204,7 +204,7 @@ int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss, const char *propq,
 }
 
 int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
-                               const OSSL_PARAM params[], OPENSSL_CTX *libctx)
+                               const OSSL_PARAM params[], OSSL_CTX *libctx)
 {
     const OSSL_PARAM *param_md, *param_mgf, *param_mgf1md,  *param_saltlen;
     EVP_MD *md = NULL, *mgf1md = NULL;

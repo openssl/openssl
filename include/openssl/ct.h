@@ -74,7 +74,7 @@ typedef enum {
  * The caller is responsible for calling CT_POLICY_EVAL_CTX_free when finished
  * with the CT_POLICY_EVAL_CTX.
  */
-CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OPENSSL_CTX *libctx,
+CT_POLICY_EVAL_CTX *CT_POLICY_EVAL_CTX_new_with_libctx(OSSL_CTX *libctx,
                                                        const char *propq);
                                                        
 /*
@@ -425,7 +425,7 @@ SCT *o2i_SCT(SCT **psct, const unsigned char **in, size_t len);
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
 CTLOG *CTLOG_new_with_libctx(EVP_PKEY *public_key, const char *name,
-                             OPENSSL_CTX *libctx, const char *propq);
+                             OSSL_CTX *libctx, const char *propq);
 
 /*
  * The same as CTLOG_new_with_libctx except that the default library context and
@@ -442,7 +442,7 @@ CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name);
  * Should be deleted by the caller using CTLOG_free when no longer needed.
  */
 int CTLOG_new_from_base64_with_libctx(CTLOG **ct_log, const char *pkey_base64,
-                                      const char *name, OPENSSL_CTX *libctx,
+                                      const char *name, OSSL_CTX *libctx,
                                       const char *propq);
 
 /*
@@ -475,7 +475,7 @@ EVP_PKEY *CTLOG_get0_public_key(const CTLOG *log);
  * property query string.
  * Should be deleted by the caller using CTLOG_STORE_free when no longer needed.
  */
-CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
+CTLOG_STORE *CTLOG_STORE_new_with_libctx(OSSL_CTX *libctx, const char *propq);
 
 /*
  * Same as CTLOG_STORE_new_with_libctx except that the default libctx and

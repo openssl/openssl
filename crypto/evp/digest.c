@@ -883,7 +883,7 @@ static void evp_md_free(void *md)
     EVP_MD_free(md);
 }
 
-EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_MD *EVP_MD_fetch(OSSL_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
     EVP_MD *md =
@@ -916,7 +916,7 @@ void EVP_MD_free(EVP_MD *md)
     OPENSSL_free(md);
 }
 
-void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
+void EVP_MD_do_all_provided(OSSL_CTX *libctx,
                             void (*fn)(EVP_MD *mac, void *arg),
                             void *arg)
 {

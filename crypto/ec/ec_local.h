@@ -273,7 +273,7 @@ struct ec_group_st {
         EC_PRE_COMP *ec;
     } pre_comp;
 
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     char *propq;
 };
 
@@ -297,7 +297,7 @@ struct ec_key_st {
     CRYPTO_EX_DATA ex_data;
 #endif
     CRYPTO_RWLOCK *lock;
-    OPENSSL_CTX *libctx;
+    OSSL_CTX *libctx;
     char *propq;
 
     /* Provider data */
@@ -599,7 +599,7 @@ int ec_group_simple_order_bits(const EC_GROUP *group);
  *  \param   meth   EC_METHOD to use
  *  \return  newly created EC_GROUP object or NULL in case of an error.
  */
-EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
+EC_GROUP *ec_group_new_with_libctx(OSSL_CTX *libctx, const char *propq,
                                    const EC_METHOD *meth);
 
 #ifdef ECP_NISTZ256_ASM
@@ -655,7 +655,7 @@ struct ec_key_method_st {
 
 #define EC_KEY_METHOD_DYNAMIC   1
 
-EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, const char *propq,
+EC_KEY *ec_key_new_method_int(OSSL_CTX *libctx, const char *propq,
                               ENGINE *engine);
 
 int ossl_ec_key_gen(EC_KEY *eckey);

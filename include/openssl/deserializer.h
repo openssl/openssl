@@ -26,7 +26,7 @@
 extern "C" {
 # endif
 
-OSSL_DESERIALIZER *OSSL_DESERIALIZER_fetch(OPENSSL_CTX *libctx,
+OSSL_DESERIALIZER *OSSL_DESERIALIZER_fetch(OSSL_CTX *libctx,
                                            const char *name,
                                            const char *properties);
 int OSSL_DESERIALIZER_up_ref(OSSL_DESERIALIZER *ser);
@@ -38,7 +38,7 @@ int OSSL_DESERIALIZER_number(const OSSL_DESERIALIZER *ser);
 int OSSL_DESERIALIZER_is_a(const OSSL_DESERIALIZER *ser,
                            const char *name);
 
-void OSSL_DESERIALIZER_do_all_provided(OPENSSL_CTX *libctx,
+void OSSL_DESERIALIZER_do_all_provided(OSSL_CTX *libctx,
                                        void (*fn)(OSSL_DESERIALIZER *ser,
                                                   void *arg),
                                        void *arg);
@@ -75,7 +75,7 @@ int OSSL_DESERIALIZER_CTX_set_input_type(OSSL_DESERIALIZER_CTX *ctx,
 int OSSL_DESERIALIZER_CTX_add_deserializer(OSSL_DESERIALIZER_CTX *ctx,
                                            OSSL_DESERIALIZER *deser);
 int OSSL_DESERIALIZER_CTX_add_extra(OSSL_DESERIALIZER_CTX *ctx,
-                                    OPENSSL_CTX *libctx, const char *propq);
+                                    OSSL_CTX *libctx, const char *propq);
 int OSSL_DESERIALIZER_CTX_num_deserializers(OSSL_DESERIALIZER_CTX *ctx);
 
 typedef struct ossl_deserializer_instance_st OSSL_DESERIALIZER_INSTANCE;
@@ -116,7 +116,7 @@ int OSSL_DESERIALIZER_from_fp(OSSL_DESERIALIZER_CTX *ctx, FILE *in);
  */
 OSSL_DESERIALIZER_CTX *
 OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey, const char *input_type,
-                                      OPENSSL_CTX *libctx,
+                                      OSSL_CTX *libctx,
                                       const char *propquery);
 
 # ifdef __cplusplus

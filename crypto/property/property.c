@@ -57,7 +57,7 @@ typedef struct {
 } ALGORITHM;
 
 struct ossl_method_store_st {
-    OPENSSL_CTX *ctx;
+    OSSL_CTX *ctx;
     size_t nelem;
     SPARSE_ARRAY_OF(ALGORITHM) *algs;
     int need_flush;
@@ -85,20 +85,20 @@ static void ossl_ctx_global_properties_free(void *vstore)
     }
 }
 
-static void *ossl_ctx_global_properties_new(OPENSSL_CTX *ctx)
+static void *ossl_ctx_global_properties_new(OSSL_CTX *ctx)
 {
     return OPENSSL_zalloc(sizeof(OSSL_PROPERTY_LIST **));
 }
 
 
-static const OPENSSL_CTX_METHOD ossl_ctx_global_properties_method = {
+static const OSSL_CTX_METHOD ossl_ctx_global_properties_method = {
     ossl_ctx_global_properties_new,
     ossl_ctx_global_properties_free,
 };
 
-OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OPENSSL_CTX *libctx)
+OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_CTX *libctx)
 {
-    return openssl_ctx_get_data(libctx, OPENSSL_CTX_GLOBAL_PROPERTIES,
+    return ossl_ctx_get_data(libctx, OSSL_CTX_GLOBAL_PROPERTIES,
                                 &ossl_ctx_global_properties_method);
 }
 
@@ -164,10 +164,10 @@ static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
 }
 
 /*
- * The OPENSSL_CTX param here allows access to underlying property data needed
+ * The OSSL_CTX param here allows access to underlying property data needed
  * for computation
  */
-OSSL_METHOD_STORE *ossl_method_store_new(OPENSSL_CTX *ctx)
+OSSL_METHOD_STORE *ossl_method_store_new(OSSL_CTX *ctx)
 {
     OSSL_METHOD_STORE *res;
 

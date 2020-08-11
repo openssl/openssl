@@ -9,7 +9,7 @@ NCONF_new_with_libctx, NCONF_new, NCONF_free, NCONF_default, NCONF_load
 
  #include <openssl/conf.h>
 
- CONF *NCONF_new_with_libctx(OPENSSL_CTX *libctx, CONF_METHOD *meth);
+ CONF *NCONF_new_with_libctx(OSSL_CTX *libctx, CONF_METHOD *meth);
  CONF *NCONF_new(CONF_METHOD *meth);
  void NCONF_free(CONF *conf);
  CONF_METHOD *NCONF_default(void);

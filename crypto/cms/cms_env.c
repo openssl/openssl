@@ -141,7 +141,7 @@ EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri)
 }
 
 CMS_ContentInfo *CMS_EnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
-                                                      OPENSSL_CTX *libctx,
+                                                      OSSL_CTX *libctx,
                                                       const char *propq)
 {
     CMS_ContentInfo *cms;
