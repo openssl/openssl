@@ -976,7 +976,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
 
     plen = CMS_SharedInfo_encode(&der, kekalg, ukm, keylen);
 
-    if (!plen)
+    if (plen <= 0)
         goto err;
 
     if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, der, plen) <= 0)
