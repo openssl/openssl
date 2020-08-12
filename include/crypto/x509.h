@@ -8,6 +8,8 @@
  */
 
 #include "internal/refcount.h"
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
 
 /* Internal X509 structures and functions: not for application use */
 
