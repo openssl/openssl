@@ -27,6 +27,7 @@
 #include <openssl/params.h>
 #include <openssl/dsa.h>
 #include <openssl/dh.h>
+#include <openssl/aes.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
@@ -1254,23 +1255,69 @@ static int test_EVP_PKEY_check(int i)
 }
 
 #ifndef OPENSSL_NO_CMAC
+static int get_cmac_val(EVP_PKEY *pkey, unsigned char *mac)
+{
+    EVP_MD_CTX *mdctx = EVP_MD_CTX_new();
+    const char msg[] = "Hello World";
+    size_t maclen;
+    int ret = 1;
+
+    if (!TEST_ptr(mdctx)
+            || !TEST_true(EVP_DigestSignInit(mdctx, NULL, NULL, NULL, pkey))
+            || !TEST_true(EVP_DigestSignUpdate(mdctx, msg, sizeof(msg)))
+            || !TEST_true(EVP_DigestSignFinal(mdctx, mac, &maclen))
+            || !TEST_size_t_eq(maclen, AES_BLOCK_SIZE))
+        ret = 0;
+
+    EVP_MD_CTX_free(mdctx);
+
+    return ret;
+}
 static int test_CMAC_keygen(void)
 {
+    static unsigned char key[] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b,
+        0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
+    };
     /*
      * This is a legacy method for CMACs, but should still work.
      * This verifies that it works without an ENGINE.
      */
     EVP_PKEY_CTX *kctx = EVP_PKEY_CTX_new_id(EVP_PKEY_CMAC, NULL);
     int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    unsigned char mac[AES_BLOCK_SIZE], mac2[AES_BLOCK_SIZE];
 
-    if (!TEST_true(EVP_PKEY_keygen_init(kctx) > 0)
-        && !TEST_true(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
-                                        EVP_PKEY_CTRL_CIPHER,
-                                        0, (void *)EVP_aes_256_ecb()) > 0))
+    /* Test a CMAC key created using the "generated" method */
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(kctx), 0)
+            || !TEST_int_gt(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
+                                            EVP_PKEY_CTRL_CIPHER,
+                                            0, (void *)EVP_aes_256_ecb()), 0)
+            || !TEST_int_gt(EVP_PKEY_CTX_ctrl(kctx, -1, EVP_PKEY_OP_KEYGEN,
+                                            EVP_PKEY_CTRL_SET_MAC_KEY,
+                                            sizeof(key), (void *)key), 0)
+            || !TEST_int_gt(EVP_PKEY_keygen(kctx, &pkey), 0)
+            || !TEST_ptr(pkey)
+            || !TEST_true(get_cmac_val(pkey, mac)))
         goto done;
+
+    EVP_PKEY_free(pkey);
+
+    /*
+     * Test a CMAC key using the direct method, and compare with the mac
+     * created above.
+     */
+    pkey = EVP_PKEY_new_CMAC_key(NULL, key, sizeof(key), EVP_aes_256_ecb());
+    if (!TEST_ptr(pkey)
+            || !TEST_true(get_cmac_val(pkey, mac2))
+            || !TEST_mem_eq(mac, sizeof(mac), mac2, sizeof(mac2)))
+        goto done;
+
     ret = 1;
 
  done:
+    EVP_PKEY_free(pkey);
     EVP_PKEY_CTX_free(kctx);
     return ret;
 }
