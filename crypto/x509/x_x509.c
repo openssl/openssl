@@ -152,10 +152,7 @@ X509 *X509_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
     X509 *cert = NULL;
 
     cert = (X509 *)ASN1_item_new((X509_it()));
-    if (cert != NULL) {
-        cert->libctx = libctx;
-        cert->propq = propq;
-    }
+    (void)x509_set0_libctx(cert, libctx, propq);
     return cert;
 }
 
