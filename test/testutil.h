@@ -10,12 +10,13 @@
 #ifndef OSSL_TESTUTIL_H
 # define OSSL_TESTUTIL_H
 
-#include <stdarg.h>
+# include <stdarg.h>
 
-#include <openssl/err.h>
-#include <openssl/e_os2.h>
-#include <openssl/bn.h>
-#include "opt.h"
+# include <openssl/provider.h>
+# include <openssl/err.h>
+# include <openssl/e_os2.h>
+# include <openssl/bn.h>
+# include "opt.h"
 
 /*-
  * Simple unit tests should implement setup_tests().
@@ -125,7 +126,7 @@
 
 
 /* The default test enum which should be common to all tests */
-#define OPT_TEST_ENUM \
+# define OPT_TEST_ENUM \
     OPT_TEST_HELP = 500, \
     OPT_TEST_LIST, \
     OPT_TEST_SINGLE, \
@@ -134,7 +135,7 @@
     OPT_TEST_SEED
 
 /* The Default test OPTIONS common to all tests (without a usage string) */
-#define OPT_TEST_OPTIONS \
+# define OPT_TEST_OPTIONS \
     { OPT_HELP_STR, 1,  '-', "Valid options are:\n" }, \
     { "help", OPT_TEST_HELP, '-', "Display this summary" }, \
     { "list", OPT_TEST_LIST, '-', "Display the list of tests available" }, \
@@ -144,12 +145,12 @@
     { "seed", OPT_TEST_SEED, 'n', "Seed value to randomize tests with" }
 
 /* The Default test OPTIONS common to all tests starting with an additional usage string */
-#define OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(usage) \
+# define OPT_TEST_OPTIONS_WITH_EXTRA_USAGE(usage) \
     { OPT_HELP_STR, 1, '-', "Usage: %s [options] " usage }, \
     OPT_TEST_OPTIONS
 
 /* The Default test OPTIONS common to all tests with an default usage string */
-#define OPT_TEST_OPTIONS_DEFAULT_USAGE \
+# define OPT_TEST_OPTIONS_DEFAULT_USAGE \
     { OPT_HELP_STR, 1, '-', "Usage: %s [options]\n" }, \
     OPT_TEST_OPTIONS
 
@@ -157,7 +158,7 @@
  * Optional Cases that need to be ignored by the test app when using opt_next(),
  * (that are handled internally).
  */
-#define OPT_TEST_CASES \
+# define OPT_TEST_CASES \
          OPT_TEST_HELP: \
     case OPT_TEST_LIST: \
     case OPT_TEST_SINGLE: \
@@ -179,7 +180,7 @@
  *      well as the additional options that need to be handled.
  *  (3) case OPT_TEST_CASES: break; inside the opt_next() handling code.
  */
-#define OPT_TEST_DECLARE_USAGE(usage_str) \
+# define OPT_TEST_DECLARE_USAGE(usage_str) \
 const OPTIONS *test_get_options(void) \
 { \
     enum { OPT_TEST_ENUM }; \
@@ -203,6 +204,10 @@ size_t test_get_argument_count(void);
  * test_get_argument()
  */
 int test_skip_common_options(void);
+
+int test_get_libctx(OPENSSL_CTX **libctx,
+                    OSSL_PROVIDER **default_null_provider,
+                    OSSL_PROVIDER **provider, int argn, const char *usage);
 
 /*
  * Internal helpers. Test programs shouldn't use these directly, but should
@@ -235,17 +240,17 @@ const OPTIONS *test_get_options(void);
  *  Test assumption verification helpers.
  */
 
-#define PRINTF_FORMAT(a, b)
-#if defined(__GNUC__) && defined(__STDC_VERSION__)
+# define PRINTF_FORMAT(a, b)
+# if defined(__GNUC__) && defined(__STDC_VERSION__)
   /*
    * Because we support the 'z' modifier, which made its appearance in C99,
    * we can't use __attribute__ with pre C99 dialects.
    */
-# if __STDC_VERSION__ >= 199901L
-#  undef PRINTF_FORMAT
-#  define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+#  if __STDC_VERSION__ >= 199901L
+#   undef PRINTF_FORMAT
+#   define PRINTF_FORMAT(a, b)   __attribute__ ((format(printf, a, b)))
+#  endif
 # endif
-#endif
 
 # define DECLARE_COMPARISON(type, name, opname)                         \
     int test_ ## name ## _ ## opname(const char *, int,                 \
@@ -503,7 +508,7 @@ void test_output_memory(const char *name, const unsigned char *m, size_t l);
 /*
  * Utilities to parse a test file.
  */
-#define TESTMAXPAIRS        150
+# define TESTMAXPAIRS        150
 
 typedef struct pair_st {
     char *key;
