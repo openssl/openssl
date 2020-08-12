@@ -67,6 +67,7 @@
  * object called "fixture". It will also allocate the "result" variable used
  * by EXECUTE_TEST. set_up() should take a const char* specifying the test
  * case name and return a TEST_FIXTURE_TYPE by reference.
+ * If case set_up() fails then 0 is returned.
  *
  * EXECUTE_TEST will pass fixture to execute_func() by reference, call
  * tear_down(), and return the result of execute_func(). execute_func() should
@@ -94,7 +95,11 @@
  */
 # define SETUP_TEST_FIXTURE(TEST_FIXTURE_TYPE, set_up)\
     TEST_FIXTURE_TYPE *fixture = set_up(TEST_CASE_NAME); \
-    int result = 0
+    int result = 0; \
+\
+    if (fixture == NULL) \
+        return 0
+
 
 # define EXECUTE_TEST(execute_func, tear_down)\
     if (fixture != NULL) {\

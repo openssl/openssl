@@ -151,8 +151,6 @@ static void tear_down(SSL_TEST_CTX_TEST_FIXTURE *fixture)
 static int test_empty_configuration(void)
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->test_section = "ssltest_default";
     fixture->expected_ctx->expected_result = SSL_TEST_SUCCESS;
     EXECUTE_SSL_TEST_CTX_TEST();
@@ -162,8 +160,6 @@ static int test_empty_configuration(void)
 static int test_good_configuration(void)
 {
     SETUP_SSL_TEST_CTX_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->test_section = "ssltest_good";
     fixture->expected_ctx->method = SSL_TEST_METHOD_DTLS;
     fixture->expected_ctx->handshake_mode = SSL_TEST_HANDSHAKE_RESUME;
