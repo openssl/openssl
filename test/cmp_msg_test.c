@@ -137,10 +137,12 @@ static int set1_newPkey(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey)
 
 static int test_cmp_create_ir_protection_set(void)
 {
-    SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    OSSL_CMP_CTX *ctx;
     unsigned char secret[16];
 
+    SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
+
+    ctx = fixture->cmp_ctx;
     fixture->bodytype = OSSL_CMP_PKIBODY_IR;
     fixture->err_code = -1;
     fixture->expected = 1;
@@ -213,10 +215,11 @@ static int test_cmp_create_certreq_with_invalid_bodytype(void)
 
 static int test_cmp_create_p10cr(void)
 {
-    SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
-    OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    OSSL_CMP_CTX *ctx;
     X509_REQ *p10cr = NULL;
 
+    SETUP_TEST_FIXTURE(CMP_MSG_TEST_FIXTURE, set_up);
+    ctx = fixture->cmp_ctx;
     fixture->bodytype = OSSL_CMP_PKIBODY_P10CR;
     fixture->err_code = CMP_R_ERROR_CREATING_CERTREQ;
     fixture->expected = 1;

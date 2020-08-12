@@ -199,8 +199,6 @@ static int execute_test(CIPHERLIST_TEST_FIXTURE *fixture)
 static int test_default_cipherlist_implicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     EXECUTE_CIPHERLIST_TEST();
     return result;
 }
@@ -208,8 +206,6 @@ static int test_default_cipherlist_implicit(void)
 static int test_default_cipherlist_explicit(void)
 {
     SETUP_CIPHERLIST_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     if (!TEST_true(SSL_CTX_set_cipher_list(fixture->server, "DEFAULT"))
             || !TEST_true(SSL_CTX_set_cipher_list(fixture->client, "DEFAULT")))
         tear_down(fixture);
@@ -220,11 +216,8 @@ static int test_default_cipherlist_explicit(void)
 /* SSL_CTX_set_cipher_list() should fail if it clears all TLSv1.2 ciphers. */
 static int test_default_cipherlist_clear(void)
 {
-    SETUP_CIPHERLIST_TEST_FIXTURE();
     SSL *s = NULL;
-
-    if (fixture == NULL)
-        return 0;
+    SETUP_CIPHERLIST_TEST_FIXTURE();
 
     if (!TEST_int_eq(SSL_CTX_set_cipher_list(fixture->server, "no-such"), 0))
         goto end;

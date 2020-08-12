@@ -140,12 +140,13 @@ static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)
 
 static int test_validate_msg_mac_alg_protection(void)
 {
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     /* secret value belonging to cmp-test/CMP_IP_waitingStatus_PBM.der */
     const unsigned char sec_1[] = {
         '9', 'p', 'p', '8', '-', 'b', '3', '5', 'i', '-', 'X', 'd', '3',
         'Q', '-', 'u', 'd', 'N', 'R'
     };
+
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
 
     fixture->expected = 1;
     if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_1,
@@ -161,11 +162,12 @@ static int test_validate_msg_mac_alg_protection(void)
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_mac_alg_protection_bad(void)
 {
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     const unsigned char sec_bad[] = {
         '9', 'p', 'p', '8', '-', 'b', '3', '5', 'i', '-', 'X', 'd', '3',
         'Q', '-', 'u', 'd', 'N', 'r'
     };
+
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     fixture->expected = 0;
 
     if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx, sec_bad,
@@ -192,9 +194,11 @@ static int add_untrusted(OSSL_CMP_CTX *ctx, X509 *cert)
 
 static int test_validate_msg_signature_partial_chain(int expired)
 {
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    X509_STORE *ts = OSSL_CMP_CTX_get0_trustedStore(fixture->cmp_ctx);
+    X509_STORE *ts;
 
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+
+    ts = OSSL_CMP_CTX_get0_trustedStore(fixture->cmp_ctx);
     fixture->expected = !expired;
     if (ts == NULL
             || !TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f))

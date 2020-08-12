@@ -402,8 +402,9 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
 
 static int test_HDR_init_with_ref(void)
 {
-    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
+
+    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
 
     fixture->expected = 1;
     if (!TEST_int_eq(1, RAND_bytes(ref, sizeof(ref)))
@@ -418,9 +419,9 @@ static int test_HDR_init_with_ref(void)
 
 static int test_HDR_init_with_subject(void)
 {
-    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     X509_NAME *subject = NULL;
 
+    SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
     fixture->expected = 1;
     if (!TEST_ptr(subject = X509_NAME_new())
             || !TEST_true(X509_NAME_ADD(subject, "CN", "Common Name"))
