@@ -86,7 +86,6 @@ struct evp_pkey_asn1_method_st {
 
 DEFINE_STACK_OF_CONST(EVP_PKEY_ASN1_METHOD)
 
-extern const EVP_PKEY_ASN1_METHOD cmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dh_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dhx_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD dsa_asn1_meths[5];
@@ -96,12 +95,9 @@ extern const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed25519_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD ed448_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD sm2_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD poly1305_asn1_meth;
 
-extern const EVP_PKEY_ASN1_METHOD hmac_asn1_meth;
 extern const EVP_PKEY_ASN1_METHOD rsa_asn1_meths[2];
 extern const EVP_PKEY_ASN1_METHOD rsa_pss_asn1_meth;
-extern const EVP_PKEY_ASN1_METHOD siphash_asn1_meth;
 
 /*
  * These are used internally in the ASN1_OBJECT to keep track of whether the

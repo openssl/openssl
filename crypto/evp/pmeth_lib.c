@@ -52,10 +52,6 @@ static pmeth_fn standard_methods[] = {
 # ifndef OPENSSL_NO_EC
     ec_pkey_method,
 # endif
-    hmac_pkey_method,
-# ifndef OPENSSL_NO_CMAC
-    cmac_pkey_method,
-# endif
 # ifndef OPENSSL_NO_RSA
     rsa_pss_pkey_method,
 # endif
@@ -65,12 +61,6 @@ static pmeth_fn standard_methods[] = {
 # ifndef OPENSSL_NO_EC
     ecx25519_pkey_method,
     ecx448_pkey_method,
-# endif
-# ifndef OPENSSL_NO_POLY1305
-    poly1305_pkey_method,
-# endif
-# ifndef OPENSSL_NO_SIPHASH
-    siphash_pkey_method,
 # endif
 # ifndef OPENSSL_NO_EC
     ed25519_pkey_method,

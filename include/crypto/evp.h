@@ -131,7 +131,6 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 
-const EVP_PKEY_METHOD *cmac_pkey_method(void);
 const EVP_PKEY_METHOD *dh_pkey_method(void);
 const EVP_PKEY_METHOD *dhx_pkey_method(void);
 const EVP_PKEY_METHOD *dsa_pkey_method(void);
@@ -141,11 +140,8 @@ const EVP_PKEY_METHOD *ecx25519_pkey_method(void);
 const EVP_PKEY_METHOD *ecx448_pkey_method(void);
 const EVP_PKEY_METHOD *ed25519_pkey_method(void);
 const EVP_PKEY_METHOD *ed448_pkey_method(void);
-const EVP_PKEY_METHOD *hmac_pkey_method(void);
 const EVP_PKEY_METHOD *rsa_pkey_method(void);
 const EVP_PKEY_METHOD *rsa_pss_pkey_method(void);
-const EVP_PKEY_METHOD *poly1305_pkey_method(void);
-const EVP_PKEY_METHOD *siphash_pkey_method(void);
 
 struct evp_mac_st {
     OSSL_PROVIDER *prov;

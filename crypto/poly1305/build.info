@@ -29,7 +29,7 @@ IF[{- !$disabled{asm} -}]
   ENDIF
 ENDIF
 
-SOURCE[../../libcrypto]=poly1305_ameth.c poly1305.c $POLY1305ASM
+SOURCE[../../libcrypto]=poly1305.c $POLY1305ASM
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
