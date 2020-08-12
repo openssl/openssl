@@ -89,7 +89,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         goto err;
     }
 
-    while ((x = sk_X509_pop(ocerts))) {
+    while ((x = sk_X509_shift(ocerts))) {
         if (pkey != NULL && *pkey != NULL
                 && cert != NULL && *cert == NULL) {
             ERR_set_mark();

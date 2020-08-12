@@ -1172,6 +1172,11 @@ OpenSSL 3.0
 
    *Martin Elshuber*
 
+ * `PKCS12_parse` now maintains the order of the parsed certificates
+   when outputting them via `*ca` (rather than reversing it).
+
+   *David von Oheimb*
+
 OpenSSL 1.1.1
 -------------
 
