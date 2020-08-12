@@ -112,9 +112,9 @@ OpenSSL 3.0
 
    *Rich Salz and Richard Levitte*
 
- * Added a library context that applications as well as other
-   libraries can use to form a separate context within which libcrypto
-   operations are performed.
+ * Added a library context `OSSL_LIB_CTX` that applications as well as
+   other libraries can use to form a separate context within which
+   libcrypto operations are performed.
 
    There are two ways this can be used:
 
@@ -131,6 +131,9 @@ OpenSSL 3.0
    Library code that changes the default library context using
    `OSSL_LIB_CTX_set0_default` should take care to restore it with a
    second call before returning to the caller.
+
+   _(Note: the library context was initially called `OPENSSL_CTX` and
+   renamed to `OSSL_LIB_CTX` in version 3.0.0 beta7.)_
 
    *Richard Levitte*
 

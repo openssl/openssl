@@ -397,9 +397,11 @@ void cms_resolve_libctx(CMS_ContentInfo *ci);
 CMS_ContentInfo *cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 
 CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
-                                         OSSL_LIB_CTX *libctx, const char *propq);
+                                         OSSL_LIB_CTX *libctx,
+                                         const char *propq);
 BIO *cms_DigestedData_init_bio(const CMS_ContentInfo *cms);
-int cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain, int verify);
+int cms_DigestedData_do_final(const CMS_ContentInfo *cms,
+                              BIO *chain, int verify);
 
 BIO *cms_SignedData_init_bio(CMS_ContentInfo *cms);
 int cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain);

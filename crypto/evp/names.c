@@ -72,7 +72,8 @@ const EVP_CIPHER *EVP_get_cipherbyname(const char *name)
     return evp_get_cipherbyname_ex(NULL, name);
 }
 
-const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx, const char *name)
+const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx,
+                                          const char *name)
 {
     const EVP_CIPHER *cp;
     OSSL_NAMEMAP *namemap;

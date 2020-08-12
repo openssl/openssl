@@ -576,7 +576,8 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
 
 static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
                                   const char *cipher_name,
-                                  const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
+                                  const EVP_CIPHER *cipher,
+                                  OSSL_LIB_CTX *libctx,
                                   const char *propq, ENGINE *e)
 {
 # ifndef OPENSSL_NO_CMAC

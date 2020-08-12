@@ -110,7 +110,7 @@ static void dealloc_tmp_decoder_store(void *store)
 static OSSL_METHOD_STORE *get_decoder_store(OSSL_LIB_CTX *libctx)
 {
     return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DECODER_STORE_INDEX,
-                                &decoder_store_method);
+                                 &decoder_store_method);
 }
 
 /* Get decoder methods from a store, or put one in */

@@ -1242,7 +1242,8 @@ int i2d_PublicKey(const EVP_PKEY *a, unsigned char **pp);
 
 
 EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
-                            long length, OSSL_LIB_CTX *libctx, const char *propq);
+                            long length, OSSL_LIB_CTX *libctx,
+                            const char *propq);
 EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
                          long length);
 EVP_PKEY *d2i_AutoPrivateKey_ex(EVP_PKEY **a, const unsigned char **pp,

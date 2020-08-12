@@ -45,7 +45,8 @@ int ossl_method_store_fetch(OSSL_METHOD_STORE *store, int nid,
                             const char *prop_query, void **method);
 
 /* Get the global properties associate with the specified library context */
-OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx, int loadconfig);
+OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *ctx,
+                                                int loadconfig);
 
 /* property query cache functions */
 int ossl_method_store_cache_get(OSSL_METHOD_STORE *store, int nid,

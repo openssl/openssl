@@ -16,10 +16,10 @@ ossl_lib_ctx_get_data, ossl_lib_ctx_run_once, ossl_lib_ctx_onfree
  } OSSL_LIB_CTX_METHOD;
 
  void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
-                            const OSSL_LIB_CTX_METHOD *meth);
+                             const OSSL_LIB_CTX_METHOD *meth);
 
  int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
-                          ossl_lib_ctx_run_once_fn run_once_fn);
+                           ossl_lib_ctx_run_once_fn run_once_fn);
  int ossl_lib_ctx_onfree(OSSL_LIB_CTX *ctx, ossl_lib_ctx_onfree_fn onfreefn);
 
 =head1 DESCRIPTION
@@ -118,8 +118,8 @@ To get and use the data stored in the library context, simply do this:
  int foo_some_function(OSSL_LIB_CTX *ctx)
  {
     if (!ossl_lib_ctx_run_once(ctx,
-                              OSSL_LIB_CTX_FOO_RUN_ONCE_INDEX,
-                              do_foo_init))
+                               OSSL_LIB_CTX_FOO_RUN_ONCE_INDEX,
+                               do_foo_init))
         return 0;
 
     /* Do some work using foo resources in ctx */

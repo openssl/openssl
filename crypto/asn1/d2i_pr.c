@@ -22,7 +22,8 @@
 #include "crypto/evp.h"
 
 EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
-                            long length, OSSL_LIB_CTX *libctx, const char *propq)
+                            long length, OSSL_LIB_CTX *libctx,
+                            const char *propq)
 {
     EVP_PKEY *ret;
     const unsigned char *p = *pp;

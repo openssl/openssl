@@ -152,7 +152,7 @@ OSSL_PROPERTY_IDX ossl_property_name(OSSL_LIB_CTX *ctx, const char *s,
 {
     PROPERTY_STRING_DATA *propdata
         = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
-                               &property_string_data_method);
+                                &property_string_data_method);
 
     if (propdata == NULL)
         return 0;
@@ -166,7 +166,7 @@ OSSL_PROPERTY_IDX ossl_property_value(OSSL_LIB_CTX *ctx, const char *s,
 {
     PROPERTY_STRING_DATA *propdata
         = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_PROPERTY_STRING_INDEX,
-                               &property_string_data_method);
+                                &property_string_data_method);
 
     if (propdata == NULL)
         return 0;

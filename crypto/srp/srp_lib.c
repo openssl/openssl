@@ -49,7 +49,8 @@ static BIGNUM *srp_Calc_xy(const BIGNUM *x, const BIGNUM *y, const BIGNUM *N,
     return res;
 }
 
-static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g, OSSL_LIB_CTX *libctx,
+static BIGNUM *srp_Calc_k(const BIGNUM *N, const BIGNUM *g,
+                          OSSL_LIB_CTX *libctx,
                           const char *propq)
 {
     /* k = SHA1(N | PAD(g)) -- tls-srp RFC 5054 */

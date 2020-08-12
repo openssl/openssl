@@ -224,8 +224,8 @@ int ossl_lib_ctx_is_global_default(OSSL_LIB_CTX *ctx)
 }
 
 static void ossl_lib_ctx_generic_new(void *parent_ign, void *ptr_ign,
-                                    CRYPTO_EX_DATA *ad, int index,
-                                    long argl_ign, void *argp)
+                                     CRYPTO_EX_DATA *ad, int index,
+                                     long argl_ign, void *argp)
 {
     const OSSL_LIB_CTX_METHOD *meth = argp;
     void *ptr = meth->new_func(crypto_ex_data_get_ossl_lib_ctx(ad));
@@ -234,8 +234,8 @@ static void ossl_lib_ctx_generic_new(void *parent_ign, void *ptr_ign,
         CRYPTO_set_ex_data(ad, index, ptr);
 }
 static void ossl_lib_ctx_generic_free(void *parent_ign, void *ptr,
-                                     CRYPTO_EX_DATA *ad, int index,
-                                     long argl_ign, void *argp)
+                                      CRYPTO_EX_DATA *ad, int index,
+                                      long argl_ign, void *argp)
 {
     const OSSL_LIB_CTX_METHOD *meth = argp;
 
@@ -244,7 +244,7 @@ static void ossl_lib_ctx_generic_free(void *parent_ign, void *ptr,
 
 /* Non-static so we can use it in context_internal_test */
 static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
-                                  const OSSL_LIB_CTX_METHOD *meth)
+                                   const OSSL_LIB_CTX_METHOD *meth)
 {
     int idx;
 
@@ -264,7 +264,7 @@ static int ossl_lib_ctx_init_index(OSSL_LIB_CTX *ctx, int static_index,
 }
 
 void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index,
-                           const OSSL_LIB_CTX_METHOD *meth)
+                            const OSSL_LIB_CTX_METHOD *meth)
 {
     void *data = NULL;
     int dynidx;
@@ -322,7 +322,7 @@ OSSL_EX_DATA_GLOBAL *ossl_lib_ctx_get_ex_data_global(OSSL_LIB_CTX *ctx)
 }
 
 int ossl_lib_ctx_run_once(OSSL_LIB_CTX *ctx, unsigned int idx,
-                         ossl_lib_ctx_run_once_fn run_once_fn)
+                          ossl_lib_ctx_run_once_fn run_once_fn)
 {
     int done = 0, ret = 0;
 

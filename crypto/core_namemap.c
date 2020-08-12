@@ -394,7 +394,7 @@ OSSL_NAMEMAP *ossl_namemap_stored(OSSL_LIB_CTX *libctx)
 {
     OSSL_NAMEMAP *namemap =
         ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_NAMEMAP_INDEX,
-                             &stored_namemap_method);
+                              &stored_namemap_method);
 
 #ifndef FIPS_MODULE
     if (namemap != NULL && ossl_namemap_empty(namemap)) {

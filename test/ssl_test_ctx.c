@@ -606,7 +606,8 @@ __owur static int parse_expected_client_sign_hash(SSL_TEST_CTX *test_ctx,
 }
 
 __owur static int parse_expected_ca_names(STACK_OF(X509_NAME) **pnames,
-                                          const char *value, OSSL_LIB_CTX *libctx)
+                                          const char *value,
+                                          OSSL_LIB_CTX *libctx)
 {
     if (value == NULL)
         return 0;

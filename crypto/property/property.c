@@ -104,7 +104,7 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OSSL_LIB_CTX *libctx,
         return NULL;
 #endif
     return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_GLOBAL_PROPERTIES,
-                                &ossl_ctx_global_properties_method);
+                                 &ossl_ctx_global_properties_method);
 }
 
 static int ossl_method_up_ref(METHOD *method)

@@ -213,7 +213,7 @@ void OPENSSL_thread_stop_ex(OSSL_LIB_CTX *ctx)
     ctx = ossl_lib_ctx_get_concrete(ctx);
     /*
      * TODO(3.0). It would be nice if we could figure out a way to do this on
-     * all threads that have used the OSSL_LIB_CTX when the OSSL_LIB_CTX is freed.
+     * all threads that have used the OSSL_LIB_CTX when the context is freed.
      * This is currently not possible due to the use of thread local variables.
      */
     ossl_ctx_thread_stop(ctx);
@@ -284,7 +284,7 @@ void ossl_ctx_thread_stop(void *arg)
     OSSL_LIB_CTX *ctx = arg;
     CRYPTO_THREAD_LOCAL *local
         = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
-                               &thread_event_ossl_ctx_method);
+                                &thread_event_ossl_ctx_method);
 
     if (local == NULL)
         return;
@@ -333,12 +333,12 @@ int ossl_init_thread_start(const void *index, void *arg,
 
     /*
      * In FIPS mode the list of THREAD_EVENT_HANDLERs is unique per combination
-     * of OSSL_LIB_CTX and thread. This is because in FIPS mode each OSSL_LIB_CTX
-     * gets informed about thread stop events individually.
+     * of OSSL_LIB_CTX and thread. This is because in FIPS mode each
+     * OSSL_LIB_CTX gets informed about thread stop events individually.
      */
     CRYPTO_THREAD_LOCAL *local
         = ossl_lib_ctx_get_data(ctx, OSSL_LIB_CTX_THREAD_EVENT_HANDLER_INDEX,
-                               &thread_event_ossl_ctx_method);
+                                &thread_event_ossl_ctx_method);
 #else
     /*
      * Outside of FIPS mode the list of THREAD_EVENT_HANDLERs is unique per

@@ -801,8 +801,10 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 /* Use the SRP base64 alphabet instead of the standard one */
 #define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
 
-const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx, const char *name);
-const EVP_MD *evp_get_digestbyname_ex(OSSL_LIB_CTX *libctx, const char *name);
+const EVP_CIPHER *evp_get_cipherbyname_ex(OSSL_LIB_CTX *libctx,
+                                          const char *name);
+const EVP_MD *evp_get_digestbyname_ex(OSSL_LIB_CTX *libctx,
+                                      const char *name);
 
 int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
                          const unsigned char *salt, int saltlen, int iter,

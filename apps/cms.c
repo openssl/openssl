@@ -233,7 +233,8 @@ const OPTIONS cms_options[] = {
 
 static CMS_ContentInfo *load_content_info(int informat, BIO *in, BIO **indata,
                                           const char *name,
-                                          OSSL_LIB_CTX *libctx, const char *propq)
+                                          OSSL_LIB_CTX *libctx,
+                                          const char *propq)
 {
     CMS_ContentInfo *ret, *ci;
 

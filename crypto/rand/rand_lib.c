@@ -431,7 +431,7 @@ static const OSSL_LIB_CTX_METHOD rand_drbg_ossl_ctx_method = {
 static RAND_GLOBAL *rand_get_global(OSSL_LIB_CTX *libctx)
 {
     return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_DRBG_INDEX,
-                                &rand_drbg_ossl_ctx_method);
+                                 &rand_drbg_ossl_ctx_method);
 }
 
 static void rand_delete_thread_state(void *arg)

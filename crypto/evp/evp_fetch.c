@@ -73,7 +73,7 @@ static void *alloc_tmp_evp_method_store(OSSL_LIB_CTX *ctx)
 static OSSL_METHOD_STORE *get_evp_method_store(OSSL_LIB_CTX *libctx)
 {
     return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_EVP_METHOD_STORE_INDEX,
-                                &evp_method_store_method);
+                                 &evp_method_store_method);
 }
 
 /*

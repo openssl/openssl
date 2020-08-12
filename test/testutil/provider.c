@@ -32,7 +32,7 @@ int test_get_libctx(OSSL_LIB_CTX **libctx,
         }
 
         if (config_fname != NULL
-                && !TEST_true(OSSL_LIB_CTX_load_config(*libctx, config_fname))) {
+            && !TEST_true(OSSL_LIB_CTX_load_config(*libctx, config_fname))) {
             TEST_error("Error loading config file %s\n", config_fname);
             goto err;
         }

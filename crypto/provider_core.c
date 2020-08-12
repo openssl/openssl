@@ -189,7 +189,7 @@ static struct provider_store_st *get_provider_store(OSSL_LIB_CTX *libctx)
     struct provider_store_st *store = NULL;
 
     store = ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_PROVIDER_STORE_INDEX,
-                                 &provider_store_method);
+                                  &provider_store_method);
     if (store == NULL)
         CRYPTOerr(CRYPTO_F_GET_PROVIDER_STORE, ERR_R_INTERNAL_ERROR);
     return store;
@@ -430,7 +430,8 @@ int ossl_provider_add_parameter(OSSL_PROVIDER *prov,
  */
 static const OSSL_DISPATCH *core_dispatch; /* Define further down */
 
-int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx, const char *path)
+int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
+                                          const char *path)
 {
     struct provider_store_st *store;
     char *p = NULL;

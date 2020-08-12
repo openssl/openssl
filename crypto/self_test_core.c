@@ -53,7 +53,7 @@ static const OSSL_LIB_CTX_METHOD self_test_set_callback_method = {
 static SELF_TEST_CB *get_self_test_callback(OSSL_LIB_CTX *libctx)
 {
     return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_SELF_TEST_CB_INDEX,
-                                &self_test_set_callback_method);
+                                 &self_test_set_callback_method);
 }
 
 void OSSL_SELF_TEST_set_callback(OSSL_LIB_CTX *libctx, OSSL_CALLBACK *cb,
