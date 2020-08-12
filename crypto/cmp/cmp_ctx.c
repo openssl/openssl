@@ -12,6 +12,7 @@
 #include <openssl/trace.h>
 #include <openssl/bio.h>
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
+#include "crypto/x509.h" /* for x509v3_cache_extensions() */
 
 #include "cmp_local.h"
 
@@ -579,6 +580,8 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val) \
     return 1; \
 }
 
+#define X509_invalid(cert) (!x509v3_cache_extensions(cert))
+#define EVP_PKEY_invalid(key) 0
 #define DEFINE_OSSL_CMP_CTX_set1_up_ref(FIELD, TYPE) \
 int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
 { \
@@ -587,6 +590,11 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
         return 0; \
     } \
     \
+    /* prevent misleading error later on malformed cert or provider issue */ \
+    if (val != NULL && TYPE##_invalid(val)) { \
+        CMPerr(0, CMP_R_POTENTIALLY_INVALID_CERTIFICATE); \
+        return 0; \
+    } \
     if (val != NULL && !TYPE##_up_ref(val)) \
         return 0; \
     TYPE##_free(ctx->FIELD); \

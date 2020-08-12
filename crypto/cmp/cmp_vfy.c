@@ -24,12 +24,7 @@
 
 DEFINE_STACK_OF(X509)
 
-/*-
- * Verify a message protected by signature according to section 5.1.3.3
- * (sha1+RSA/DSA or any other algorithm supported by OpenSSL).
- *
- * Returns 1 on successful validation and 0 otherwise.
- */
+/* Verify a message protected by signature according to RFC section 5.1.3.3 */
 static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
                             const OSSL_CMP_MSG *msg, X509 *cert)
 {
@@ -304,6 +299,11 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
 
     if (!check_kid(ctx, X509_get0_subject_key_id(cert), msg->header->senderKID))
         return 0;
+    /* prevent misleading error later in case x509v3_cache_extensions() fails */
+    if (!x509v3_cache_extensions(cert)) {
+        ossl_cmp_warn(ctx, "cert appears to be invalid");
+        return 0;
+    }
     if (!verify_signature(ctx, msg, cert)) {
         ossl_cmp_warn(ctx, "msg signature verification failed");
         return 0;
