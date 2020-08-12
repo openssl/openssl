@@ -33,6 +33,9 @@ typedef struct test_fixture {
     STACK_OF(X509) *caPubs;
 } CMP_SES_TEST_FIXTURE;
 
+static OPENSSL_CTX *libctx = NULL;
+static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
+
 static EVP_PKEY *server_key = NULL;
 static X509 *server_cert = NULL;
 static EVP_PKEY *client_key = NULL;
@@ -62,7 +65,7 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->srv_ctx = ossl_cmp_mock_srv_new(NULL, NULL))
+    if (!TEST_ptr(fixture->srv_ctx = ossl_cmp_mock_srv_new(libctx, NULL))
             || !OSSL_CMP_SRV_CTX_set_accept_unprotected(fixture->srv_ctx, 1)
             || !ossl_cmp_mock_srv_set1_certOut(fixture->srv_ctx, client_cert)
             || (srv_cmp_ctx =
@@ -70,7 +73,7 @@ static CMP_SES_TEST_FIXTURE *set_up(const char *const test_case_name)
             || !OSSL_CMP_CTX_set1_cert(srv_cmp_ctx, server_cert)
             || !OSSL_CMP_CTX_set1_pkey(srv_cmp_ctx, server_key))
         goto err;
-    if (!TEST_ptr(fixture->cmp_ctx = ctx = OSSL_CMP_CTX_new(NULL, NULL))
+    if (!TEST_ptr(fixture->cmp_ctx = ctx = OSSL_CMP_CTX_new(libctx, NULL))
             || !OSSL_CMP_CTX_set_log_cb(fixture->cmp_ctx, print_to_bio_out)
             || !OSSL_CMP_CTX_set_transfer_cb(ctx, OSSL_CMP_CTX_server_perform)
             || !OSSL_CMP_CTX_set_transfer_cb_arg(ctx, fixture->srv_ctx)
@@ -343,8 +346,12 @@ void cleanup_tests(void)
     EVP_PKEY_free(server_key);
     X509_free(client_cert);
     EVP_PKEY_free(client_key);
+    OPENSSL_CTX_free(libctx);
     return;
 }
+
+#define USAGE "server.key server.crt client.key client.crt client.csr module_name [module_conf_file]\n"
+OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
 {
@@ -358,15 +365,18 @@ int setup_tests(void)
             || !TEST_ptr(client_key_f = test_get_argument(2))
             || !TEST_ptr(client_cert_f = test_get_argument(3))
             || !TEST_ptr(pkcs10_f = test_get_argument(4))) {
-        TEST_error("usage: cmp_client_test server.key server.crt client.key client.crt client.csr\n");
+        TEST_error("usage: cmp_client_test %s", USAGE);
         return 0;
     }
 
+    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 5, USAGE))
+        return 0;
+
     if (!TEST_ptr(server_key = load_pem_key(server_key_f))
-            || !TEST_ptr(server_cert = load_pem_cert(server_cert_f))
+            || !TEST_ptr(server_cert = load_pem_cert(server_cert_f, libctx))
             || !TEST_ptr(client_key = load_pem_key(client_key_f))
-            || !TEST_ptr(client_cert = load_pem_cert(client_cert_f))
-            || !TEST_int_eq(1, RAND_bytes(ref, sizeof(ref)))) {
+            || !TEST_ptr(client_cert = load_pem_cert(client_cert_f, libctx))
+            || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref)))) {
         cleanup_tests();
         return 0;
     }

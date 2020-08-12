@@ -15,6 +15,7 @@
 # include <openssl/cmp.h>
 # include <openssl/pem.h>
 # include <openssl/rand.h>
+# include "crypto/x509.h" /* for x509_set0_libctx() and x509_dup_with_libctx() */
 
 # include "../crypto/cmp/cmp_local.h"
 
@@ -23,7 +24,7 @@
 # ifndef OPENSSL_NO_CMP
 #  define CMP_TEST_REFVALUE_LENGTH 15 /* arbitrary value */
 EVP_PKEY *load_pem_key(const char *file);
-X509 *load_pem_cert(const char *file);
+X509 *load_pem_cert(const char *file, OPENSSL_CTX *libctx);
 X509_REQ *load_csr(const char *file);
 OSSL_CMP_MSG *load_pkimsg(const char *file);
 int valid_asn1_encoding(const OSSL_CMP_MSG *msg);

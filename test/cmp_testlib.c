@@ -28,15 +28,16 @@ EVP_PKEY *load_pem_key(const char *file)
     return key;
 }
 
-X509 *load_pem_cert(const char *file)
+X509 *load_pem_cert(const char *file, OPENSSL_CTX *libctx)
 {
     X509 *cert = NULL;
     BIO *bio = NULL;
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
         return NULL;
-    if (TEST_int_gt(BIO_read_filename(bio, file), 0))
-        (void)TEST_ptr(cert = PEM_read_bio_X509(bio, NULL, NULL, NULL));
+    if (TEST_int_gt(BIO_read_filename(bio, file), 0)
+            && TEST_ptr(cert = X509_new_with_libctx(libctx, NULL)))
+        (void)TEST_ptr(cert = PEM_read_bio_X509(bio, &cert, NULL, NULL));
 
     BIO_free(bio);
     return cert;
