@@ -202,14 +202,12 @@ DH *DH_get_2048_256(void);
 DH *DH_new_by_nid(int nid);
 DEPRECATEDIN_3_0(int DH_get_nid(const DH *dh))
 
-#  ifndef OPENSSL_NO_CMS
 /* RFC2631 KDF */
 DEPRECATEDIN_3_0(int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                                   const unsigned char *Z, size_t Zlen,
                                   ASN1_OBJECT *key_oid,
                                   const unsigned char *ukm,
                                   size_t ukmlen, const EVP_MD *md))
-#  endif
 
 void DH_get0_pqg(const DH *dh,
                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
@@ -316,9 +314,7 @@ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
 /* KDF types */
 #  define EVP_PKEY_DH_KDF_NONE                            1
-#  ifndef OPENSSL_NO_CMS
-#   define EVP_PKEY_DH_KDF_X9_42                          2
-#  endif
+#  define EVP_PKEY_DH_KDF_X9_42                           2
 
 #  ifdef  __cplusplus
 }

@@ -60,7 +60,7 @@ err:
     return ret;
 }
 
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_CMS)
+#if !defined(FIPS_MODULE)
 int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                  const unsigned char *Z, size_t Zlen,
                  ASN1_OBJECT *key_oid,
@@ -81,4 +81,4 @@ int DH_KDF_X9_42(unsigned char *out, size_t outlen,
     return dh_KDF_X9_42_asn1(out, outlen, Z, Zlen, key_alg,
                              ukm, ukmlen, md, libctx, NULL);
 }
-#endif /* !defined(FIPS_MODULE) && !defined(OPENSSL_NO_CMS) */
+#endif /* !defined(FIPS_MODULE) */
