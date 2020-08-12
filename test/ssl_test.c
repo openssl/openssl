@@ -513,12 +513,12 @@ err:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("conf_file modulename [fips_conf_file]\n")
+#define USAGE "conf_file module_name [module_conf_file]\n"
+OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
 {
     long num_tests;
-    const char *modulename;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
@@ -529,28 +529,13 @@ int setup_tests(void)
             /* argv[1] should point to the test conf file */
             || !TEST_int_gt(NCONF_load(conf, test_get_argument(0), NULL), 0)
             || !TEST_int_ne(NCONF_get_number_e(conf, NULL, "num_tests",
-                                               &num_tests), 0))
+                                               &num_tests), 0)) {
+        TEST_error("usage: ssl_test %s", USAGE);
         return 0;
-
-    if (!TEST_ptr(modulename = test_get_argument(1)))
-        return 0;
-
-    if (strcmp(modulename, "none") != 0) {
-        const char *configfile = test_get_argument(2);
-
-        defctxnull = OSSL_PROVIDER_load(NULL, "null");
-        libctx = OPENSSL_CTX_new();
-        if (!TEST_ptr(libctx))
-            return 0;
-
-        if (configfile != NULL
-                && !TEST_true(OPENSSL_CTX_load_config(libctx, configfile)))
-            return 0;
-
-        thisprov = OSSL_PROVIDER_load(libctx, modulename);
-        if (!TEST_ptr(thisprov))
-            return 0;
     }
+
+    if (!test_get_libctx(&libctx, &defctxnull, &thisprov, 1, USAGE))
+        return 0;
 
     ADD_ALL_TESTS(test_handshake, (int)num_tests);
     return 1;
