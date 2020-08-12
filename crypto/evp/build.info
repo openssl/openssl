@@ -16,7 +16,6 @@ SOURCE[../../libcrypto]=$COMMON\
         pmeth_fn.c\
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
         e_chacha20_poly1305.c \
-        pkey_mac.c \
         legacy_sha.c
 
 IF[{- !$disabled{'deprecated-3.0'} -}]
