@@ -396,6 +396,7 @@ int x509v3_cache_extensions(X509 *x)
         CRYPTO_THREAD_unlock(x->lock);
         return (x->ex_flags & EXFLAG_INVALID) == 0;
     }
+    ERR_set_mark();
 
     if (!X509_digest(x, EVP_sha1(), x->sha1_hash, NULL))
             x->ex_flags |= EXFLAG_INVALID;
@@ -572,6 +573,7 @@ int x509v3_cache_extensions(X509 *x)
      * all stores are visible on all processors. Hence the release fence.
      */
 #endif
+    ERR_pop_to_mark();
     CRYPTO_THREAD_unlock(x->lock);
 
     return (x->ex_flags & EXFLAG_INVALID) == 0;
