@@ -1883,7 +1883,7 @@ const OSSL_PARAM *EVP_PKEY_gettable_params(EVP_PKEY *pkey)
         || pkey->keymgmt == NULL
         || pkey->keydata == NULL)
         return 0;
-    return evp_keymgmt_gettable_params(pkey->keymgmt);
+    return EVP_KEYMGMT_gettable_params(pkey->keymgmt);
 }
 
 int EVP_PKEY_get_bn_param(EVP_PKEY *pkey, const char *key_name, BIGNUM **bn)

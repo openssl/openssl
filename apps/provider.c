@@ -52,8 +52,10 @@ struct info_st {
     void (*collect_names_fn)(void *method, STACK_OF(OPENSSL_CSTRING) *names);
     void *method;
     const OSSL_PARAM *gettable_params;
+    const OSSL_PARAM *settable_params;
     const OSSL_PARAM *gettable_ctx_params;
     const OSSL_PARAM *settable_ctx_params;
+    const OSSL_PARAM *gen_settable_params;
 };
 
 struct meta_st {
@@ -134,12 +136,16 @@ static void print_caps(META *meta, INFO *info)
         BIO_printf(bio_out, "%*s%s ", meta->indent, "", meta->label);
         print_method_names(bio_out, info);
         BIO_printf(bio_out, "\n");
+        print_param_types("settable keygen parameters",
+                          info->gen_settable_params, meta->subindent);
+        print_param_types("settable algorithm parameters",
+                          info->settable_params, meta->subindent);
         print_param_types("retrievable algorithm parameters",
                           info->gettable_params, meta->subindent);
-        print_param_types("retrievable operation parameters",
-                          info->gettable_ctx_params, meta->subindent);
         print_param_types("settable operation parameters",
                           info->settable_ctx_params, meta->subindent);
+        print_param_types("retrievable operation parameters",
+                          info->gettable_ctx_params, meta->subindent);
         break;
     }
     meta->first = 0;
@@ -155,11 +161,33 @@ static void do_method(void *method,
 {
     INFO info;
 
+    memset(&info, 0, sizeof(info));
     info.collect_names_fn = collect_names_fn;
     info.method = method;
     info.gettable_params = gettable_params;
     info.gettable_ctx_params = gettable_ctx_params;
     info.settable_ctx_params = settable_ctx_params;
+    meta->fn(meta, &info);
+    meta->total++;
+}
+
+static void do_keymgmt_method(void *method,
+                              void (*collect_names_fn)(void *method,
+                                                       STACK_OF(OPENSSL_CSTRING)
+                                                       *names),
+                              const OSSL_PARAM *gettable_params,
+                              const OSSL_PARAM *settable_params,
+                              const OSSL_PARAM *gen_settable_params,
+                              META *meta)
+{
+    INFO info;
+
+    memset(&info, 0, sizeof(info));
+    info.collect_names_fn = collect_names_fn;
+    info.method = method;
+    info.gettable_params = gettable_params;
+    info.settable_params = settable_params;
+    info.gen_settable_params = gen_settable_params;
     meta->fn(meta, &info);
     meta->total++;
 }
@@ -193,49 +221,28 @@ static void do_mac(EVP_MAC *mac, void *meta)
 
 static void do_keymgmt(EVP_KEYMGMT *keymgmt, void *meta)
 {
-    do_method(keymgmt, collect_keymgmt_names,
-/*
- * TODO(3.0) Enable when KEYMGMT and KEYEXCH have gettables and settables
- */
-#if 0
-              EVP_KEYMGMT_gettable_params(keymgmt),
-              EVP_KEYMGMT_gettable_ctx_params(keymgmt),
-              EVP_KEYMGMT_settable_ctx_params(keymgmt),
-#else
-              NULL, NULL, NULL,
-#endif
-              meta);
+    do_keymgmt_method(keymgmt, collect_keymgmt_names,
+                      EVP_KEYMGMT_gettable_params(keymgmt),
+                      EVP_KEYMGMT_settable_params(keymgmt),
+                      EVP_KEYMGMT_gen_settable_params(keymgmt),
+                      meta);
 }
 
 static void do_keyexch(EVP_KEYEXCH *keyexch, void *meta)
 {
     do_method(keyexch, collect_keyexch_names,
-/*
- * TODO(3.0) Enable when KEYMGMT and KEYEXCH have gettables and settables
- */
-#if 0
-              EVP_KEYEXCH_gettable_params(keyexch),
+              NULL,
               EVP_KEYEXCH_gettable_ctx_params(keyexch),
               EVP_KEYEXCH_settable_ctx_params(keyexch),
-#else
-              NULL, NULL, NULL,
-#endif
               meta);
 }
 
 static void do_signature(EVP_SIGNATURE *signature, void *meta)
 {
     do_method(signature, collect_signature_names,
-/*
- * TODO(3.0) Enable when KEYMGMT and SIGNATURE have gettables and settables
- */
-#if 0
-              EVP_SIGNATURE_gettable_params(signature),
+              NULL,
               EVP_SIGNATURE_gettable_ctx_params(signature),
               EVP_SIGNATURE_settable_ctx_params(signature),
-#else
-              NULL, NULL, NULL,
-#endif
               meta);
 }
 

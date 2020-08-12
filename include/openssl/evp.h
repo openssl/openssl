@@ -1588,6 +1588,9 @@ void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
                               void (*fn)(const char *name, void *data),
                               void *data);
+const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
@@ -1667,6 +1670,8 @@ void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
                                 void (*fn)(const char *name, void *data),
                                 void *data);
+const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig);
+const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig);
 
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);
@@ -1939,6 +1944,8 @@ void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
                               void (*fn)(const char *name, void *data),
                               void *data);
+const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch);
+const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch);
 
 void EVP_add_alg_module(void);
 

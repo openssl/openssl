@@ -75,7 +75,7 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
 int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
 {
     if (pdefs == NULL) {
-        BIO_printf(bio_out, "%*sNo declared %s\n", indent, "", thing);
+        return 1;
     } else if (pdefs->key == NULL) {
         /*
          * An empty list?  This shouldn't happen, but let's just make sure to
