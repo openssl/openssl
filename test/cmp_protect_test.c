@@ -514,7 +514,7 @@ int setup_tests(void)
         return 0;
     }
     if (!TEST_ptr(loadedkey = load_pem_key(server_key_f))
-            || !TEST_ptr(cert = load_pem_cert(server_cert_f)))
+            || !TEST_ptr(cert = load_pem_cert(server_cert_f, NULL)))
         return 0;
 
     if (!TEST_ptr(loadedprivkey = load_pem_key(server_f)))
@@ -524,10 +524,10 @@ int setup_tests(void)
     if (!TEST_ptr(ir_protected = load_pkimsg(ir_protected_f))
             || !TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f)))
         return 0;
-    if (!TEST_ptr(endentity1 = load_pem_cert(endentity1_f))
-            || !TEST_ptr(endentity2 = load_pem_cert(endentity2_f))
-            || !TEST_ptr(root = load_pem_cert(root_f))
-            || !TEST_ptr(intermediate = load_pem_cert(intermediate_f)))
+    if (!TEST_ptr(endentity1 = load_pem_cert(endentity1_f, NULL))
+            || !TEST_ptr(endentity2 = load_pem_cert(endentity2_f, NULL))
+            || !TEST_ptr(root = load_pem_cert(root_f, NULL))
+            || !TEST_ptr(intermediate = load_pem_cert(intermediate_f, NULL)))
         return 0;
     if (!TEST_int_eq(1, RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH)))
         return 0;

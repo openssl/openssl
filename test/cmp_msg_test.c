@@ -554,7 +554,7 @@ int setup_tests(void)
     }
 
     if (!TEST_ptr(newkey = gen_rsa())
-            || !TEST_ptr(cert = load_pem_cert(server_cert_f))
+            || !TEST_ptr(cert = load_pem_cert(server_cert_f, NULL))
             || !TEST_int_eq(1, RAND_bytes(ref, sizeof(ref)))) {
         cleanup_tests();
         return 0;
