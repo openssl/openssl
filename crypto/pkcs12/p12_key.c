@@ -14,11 +14,7 @@
 #include <openssl/trace.h>
 #include <openssl/kdf.h>
 #include <openssl/core_names.h>
-
-/* PKCS12 compatible key/IV generation */
-#ifndef min
-# define min(a,b) ((a) < (b) ? (a) : (b))
-#endif
+#include "internal/provider.h"
 
 int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
@@ -78,7 +74,12 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
     if (n <= 0)
         return 0;
 
-    kdf = EVP_KDF_fetch(NULL, "PKCS12KDF", NULL);
+    /*
+     * The parameter query isn't available but the library context can be
+     * extracted from the passed digest.
+     */
+    kdf = EVP_KDF_fetch(ossl_provider_library_context(EVP_MD_provider(md_type)),
+                        "PKCS12KDF", NULL);
     if (kdf == NULL)
         return 0;
     ctx = EVP_KDF_CTX_new(kdf);
