@@ -19,6 +19,7 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
+#include "crypto/x509.h" /* for x509_set0_libctx() */
 
 DEFINE_STACK_OF(OSSL_CMP_CERTSTATUS)
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
@@ -994,6 +995,8 @@ X509 *ossl_cmp_certresponse_get1_certificate(EVP_PKEY *privkey,
     }
     if (crt == NULL)
         CMPerr(0, CMP_R_CERTIFICATE_NOT_FOUND);
+    else
+        (void)x509_set0_libctx(crt, ctx->libctx, ctx->propq);
     return crt;
 }
 
