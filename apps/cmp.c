@@ -1653,8 +1653,11 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
             CMP_err1("digest algorithm name not recognized: '%s'", opt_digest);
             goto err;
         }
-        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_DIGEST_ALGNID, digest);
-        (void)OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_OWF_ALGNID, digest);
+        if (!OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_DIGEST_ALGNID, digest)
+            || !OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_OWF_ALGNID, digest)) {
+            CMP_err1("digest algorithm name not supported: '%s'", opt_digest);
+            goto err;
+        }
     }
 
     if (opt_mac != NULL) {

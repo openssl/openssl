@@ -207,7 +207,7 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
 
 /*-
  * Builds up the chain of intermediate CA certificates
- * starting from of the given certificate <cert> as high up as possible using
+ * starting from the given certificate <cert> as high up as possible using
  * the given list of candidate certificates, similarly to ssl_add_cert_chain().
  *
  * Intended use of this function is to find all the certificates above the trust

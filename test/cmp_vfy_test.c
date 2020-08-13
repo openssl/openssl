@@ -98,7 +98,7 @@ static int execute_verify_popo_test(CMP_VFY_TEST_FIXTURE *fixture)
             return 0;
     }
     return TEST_int_eq(fixture->expected,
-                       ossl_cmp_verify_popo(fixture->msg,
+                       ossl_cmp_verify_popo(fixture->cmp_ctx, fixture->msg,
                                             fixture->additional_arg));
 }
 

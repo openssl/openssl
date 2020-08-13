@@ -23,8 +23,6 @@ typedef struct test_fixture {
     /* for protection tests */
     OSSL_CMP_MSG *msg;
     OSSL_CMP_PKISI *si; /* for error and response messages */
-    ASN1_OCTET_STRING *secret;
-    EVP_PKEY *privkey;
     EVP_PKEY *pubkey;
     unsigned char *mem;
     int memlen;
@@ -39,7 +37,6 @@ static void tear_down(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX_free(fixture->cmp_ctx);
     OSSL_CMP_MSG_free(fixture->msg);
-    ASN1_OCTET_STRING_free(fixture->secret);
     OSSL_CMP_PKISI_free(fixture->si);
 
     OPENSSL_free(fixture->mem);
@@ -75,8 +72,7 @@ static X509 *endentity1 = NULL, *endentity2 = NULL,
 static int execute_calc_protection_fails_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     ASN1_BIT_STRING *protection =
-        ossl_cmp_calc_protection(fixture->msg, fixture->secret,
-                                 fixture->privkey);
+        ossl_cmp_calc_protection(fixture->cmp_ctx, fixture->msg);
     int res = TEST_ptr_null(protection);
 
     ASN1_BIT_STRING_free(protection);
@@ -86,7 +82,7 @@ static int execute_calc_protection_fails_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 static int execute_calc_protection_pbmac_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     ASN1_BIT_STRING *protection =
-        ossl_cmp_calc_protection(fixture->msg, fixture->secret, NULL);
+        ossl_cmp_calc_protection(fixture->cmp_ctx, fixture->msg);
     int res = TEST_ptr(protection)
             && TEST_true(ASN1_STRING_cmp(protection,
                                          fixture->msg->protection) == 0);
@@ -101,13 +97,12 @@ static int execute_calc_protection_pbmac_test(CMP_PROTECT_TEST_FIXTURE *fixture)
  */
 static int verify_signature(OSSL_CMP_MSG *msg,
                             ASN1_BIT_STRING *protection,
-                            EVP_PKEY *pkey, int digest_nid)
+                            EVP_PKEY *pkey, EVP_MD *digest)
 {
     OSSL_CMP_PROTECTEDPART prot_part;
     unsigned char *prot_part_der = NULL;
     int len;
     EVP_MD_CTX *ctx = NULL;
-    const EVP_MD *digest = EVP_get_digestbynid(digest_nid);
     int res;
 
     prot_part.header = OSSL_CMP_MSG_get0_header(msg);
@@ -131,7 +126,7 @@ static int execute_calc_protection_signature_test(CMP_PROTECT_TEST_FIXTURE *
                                                   fixture)
 {
     ASN1_BIT_STRING *protection =
-        ossl_cmp_calc_protection(fixture->msg, NULL, fixture->privkey);
+        ossl_cmp_calc_protection(fixture->cmp_ctx, fixture->msg);
     int ret = (TEST_ptr(protection)
                    && TEST_true(ASN1_STRING_cmp(protection,
                                                 fixture->msg->protection) == 0)
@@ -161,8 +156,8 @@ static int test_cmp_calc_protection_pkey(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
     fixture->pubkey = loadedpubkey;
-    fixture->privkey = loadedprivkey;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f))) {
+    if (!TEST_true(OSSL_CMP_CTX_set1_pkey(fixture->cmp_ctx, loadedprivkey))
+            || !TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -175,9 +170,8 @@ static int test_cmp_calc_protection_pbmac(void)
     unsigned char sec_insta[] = { 'i', 'n', 's', 't', 'a' };
 
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
-    if (!TEST_ptr(fixture->secret = ASN1_OCTET_STRING_new())
-            || !TEST_true(ASN1_OCTET_STRING_set
-                          (fixture->secret, sec_insta, sizeof(sec_insta)))
+    if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx,
+                                                 sec_insta, sizeof(sec_insta)))
             || !TEST_ptr(fixture->msg = load_pkimsg(ip_PBM_f))) {
         tear_down(fixture);
         fixture = NULL;
@@ -214,8 +208,7 @@ static int test_MSG_protect_with_msg_sig_alg_protection_plus_rsa_key(void)
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
     fixture->expected = 1;
 
-    if (!TEST_ptr(fixture->msg =
-                  OSSL_CMP_MSG_dup(ir_unprotected))
+    if (!TEST_ptr(fixture->msg = OSSL_CMP_MSG_dup(ir_unprotected))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 0))
             /*
              * Use half of the 16 bytes of random input

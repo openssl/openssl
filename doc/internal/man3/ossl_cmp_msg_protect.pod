@@ -3,6 +3,7 @@
 =head1 NAME
 
 ossl_cmp_build_cert_chain,
+ossl_cmp_calc_protection,
 ossl_cmp_msg_protect,
 ossl_cmp_msg_add_extraCerts
 - functions for producing CMP message protection
@@ -14,14 +15,15 @@ ossl_cmp_msg_add_extraCerts
  STACK_OF(X509)
      *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
                                 STACK_OF(X509) *certs, X509 *cert);
-
+ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
+                                           const OSSL_CMP_MSG *msg);
  int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
  int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg);
 
 =head1 DESCRIPTION
 
 ossl_cmp_build_cert_chain() builds up the chain of intermediate CA certificates
-starting from of the given certificate B<cert> as high up as possible using
+starting from the given certificate I<cert> as high up as possible using
 the given list of candidate certificates, similarly to ssl_add_cert_chain().
 It internally uses a B<X509_STORE_CTX> structure associated with the library
 context I<libctx> and property query string I<propq>, both of which may be NULL.
@@ -34,18 +36,22 @@ so when not needed any more the stack and all its elements should be freed.
 In case there is more than one possibility for the chain,
 OpenSSL seems to take the first one; check X509_verify_cert() for details.
 
-ossl_cmp_msg_protect() (re-)protects the given message B<msg> using an algorithm
-depending on the available context information given in the B<ctx>.
+ossl_cmp_calc_protection() calculates the protection for the given I<msg>
+according to the algorithm and parameters in the message header's protectionAlg
+using the credentials, library context, and property criteria in the I<ctx>.
+
+ossl_cmp_msg_protect() (re-)protects the given message I<msg> using an algorithm
+depending on the available context information given in the I<ctx>.
 If there is a secretValue it selects PBMAC, else if there is a protection cert
-it selects Signature and uses B<ossl_cmp_msg_add_extraCerts()>.
+it selects Signature and uses L<ossl_cmp_msg_add_extraCerts(3)>.
 It also sets the protectionAlg field in the message header accordingly.
 
 ossl_cmp_msg_add_extraCerts() adds elements to the extraCerts field in the given
-message B<msg>. It tries to build the certificate chain of the client cert in
-the B<ctx> if present by using certificates in ctx->untrusted_certs;
+message I<msg>. It tries to build the certificate chain of the client cert in
+the I<ctx> if present by using certificates in ctx->untrusted_certs;
 if no untrusted certs are set, it will at least add the client certificate.
 In any case all the certificates explicitly specified to be sent out (i.e.,
-B<ctx->extraCertsOut>) are added. Note that it will NOT add the root certificate
+I<ctx->extraCertsOut>) are added. Note that it will NOT add the root certificate
 of the chain, i.e, the trust anchor (unless it is part of extraCertsOut).
 
 =head1 NOTES
@@ -59,6 +65,8 @@ else a pointer to a stack of (up_ref'ed) certificates
 containing the EE certificate given in the function arguments (cert)
 and all intermediate certificates up the chain toward the trust anchor.
 The (self-signed) trust anchor is not included.
+
+ossl_cmp_calc_protection() returns the protection on success, else NULL.
 
 All other functions return 1 on success, 0 on error.
 

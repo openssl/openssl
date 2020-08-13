@@ -10,6 +10,7 @@
 
 #ifndef OPENSSL_CRMFERR_H
 # define OPENSSL_CRMFERR_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -62,6 +63,7 @@ int ERR_load_CRMF_strings(void);
 #  define CRMF_R_ITERATIONCOUNT_BELOW_100                  108
 #  define CRMF_R_MALFORMED_IV                              101
 #  define CRMF_R_NULL_ARGUMENT                             109
+#  define CRMF_R_POPOSKINPUT_NOT_SUPPORTED                 113
 #  define CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY              117
 #  define CRMF_R_POPO_MISSING                              121
 #  define CRMF_R_POPO_MISSING_PUBLIC_KEY                   118
@@ -70,7 +72,6 @@ int ERR_load_CRMF_strings(void);
 #  define CRMF_R_SETTING_MAC_ALGOR_FAILURE                 110
 #  define CRMF_R_SETTING_OWF_ALGOR_FAILURE                 111
 #  define CRMF_R_UNSUPPORTED_ALGORITHM                     112
-#  define CRMF_R_UNSUPPORTED_ALG_FOR_POPSIGNINGKEY         113
 #  define CRMF_R_UNSUPPORTED_CIPHER                        114
 #  define CRMF_R_UNSUPPORTED_METHOD_FOR_CREATING_POPO      115
 #  define CRMF_R_UNSUPPORTED_POPO_METHOD                   116
