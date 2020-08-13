@@ -19,6 +19,9 @@ X509_add_cert() adds a certificate I<cert> to the given list I<sk>.
 
 X509_add_certs() adds a list of certificate I<certs> to the given list I<sk>.
 The I<certs> argument may be NULL, which implies no effect.
+It does not modify the list I<certs> but
+in case the B<X509_ADD_FLAG_UP_REF> flag (described below) is set
+the reference counters of those of its members added to I<sk> are increased.
 
 Both these functions have a I<flags> parameter,
 which is used to control details of the operation.
@@ -41,6 +44,15 @@ which is determined using L<X509_self_signed(3)>, are ignored.
 =head1 RETURN VALUES
 
 Both functions return 1 for success and 0 for failure.
+
+=head1 NOTES
+
+If X509_add_certs() is used with the flags B<X509_ADD_FLAG_NO_DUP> or
+B<X509_ADD_FLAG_NO_SS> it is advisable to use also B<X509_ADD_FLAG_UP_REF>
+because otherwise likely not for all members of the I<certs> list
+the ownership is transferred to the list of certificates I<sk>.
+
+Care should also be taken in case the I<certs> argument equals I<sk>.
 
 =head1 SEE ALSO
 
