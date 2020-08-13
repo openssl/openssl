@@ -355,8 +355,9 @@ OSSL_CMP_MSG *ossl_cmp_certreq_new(OSSL_CMP_CTX *ctx, int type,
                                                type == OSSL_CMP_PKIBODY_KUR,
                                                OSSL_CMP_CERTREQID);
             if (local_crm == NULL
-                || !OSSL_CRMF_MSG_create_popo(local_crm, privkey, ctx->digest,
-                                              ctx->popoMethod))
+                || !OSSL_CRMF_MSG_create_popo(ctx->popoMethod, local_crm,
+                                              privkey, ctx->digest,
+                                              ctx->libctx, ctx->propq))
                 goto err;
         } else {
             if ((local_crm = OSSL_CRMF_MSG_dup(crm)) == NULL)
@@ -957,19 +958,18 @@ ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
     return NULL;
 }
 
-/*
- * CMP_CERTRESPONSE_get1_certificate() attempts to retrieve the returned
- * certificate from the given certResponse B<crep>.
- * Uses the privkey in case of indirect POP from B<ctx>.
+/*-
+ * Retrieve the newly enrolled certificate from the given certResponse crep.
+ * In case of indirect POPO uses the libctx and propq from ctx and private key.
  * Returns a pointer to a copy of the found certificate, or NULL if not found.
  */
-X509 *ossl_cmp_certresponse_get1_certificate(EVP_PKEY *privkey,
-                                             const OSSL_CMP_CERTRESPONSE *crep)
+X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CERTRESPONSE *crep,
+                                      const OSSL_CMP_CTX *ctx, EVP_PKEY *pkey)
 {
     OSSL_CMP_CERTORENCCERT *coec;
     X509 *crt = NULL;
 
-    if (!ossl_assert(crep != NULL))
+    if (!ossl_assert(crep != NULL && ctx != NULL))
         return NULL;
 
     if (crep->certifiedKeyPair
@@ -980,13 +980,14 @@ X509 *ossl_cmp_certresponse_get1_certificate(EVP_PKEY *privkey,
             break;
         case OSSL_CMP_CERTORENCCERT_ENCRYPTEDCERT:
             /* cert encrypted for indirect PoP; RFC 4210, 5.2.8.2 */
-            if (privkey == NULL) {
+            if (pkey == NULL) {
                 CMPerr(0, CMP_R_MISSING_PRIVATE_KEY);
                 return NULL;
             }
             crt =
                 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(coec->value.encryptedCert,
-                                                      privkey);
+                                                      ctx->libctx, ctx->propq,
+                                                      pkey);
             break;
         default:
             CMPerr(0, CMP_R_UNKNOWN_CERT_TYPE);

@@ -90,6 +90,20 @@ int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
     return 0;
 }
 
+static int cmp_ctx_set_md(OSSL_CMP_CTX *ctx, EVP_MD **pmd, int nid)
+{
+    EVP_MD *md = EVP_MD_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propq);
+    /* fetching in advance to be able to throw error early if unsupported */
+
+    if (md == NULL) {
+        CMPerr(0, CMP_R_UNSUPPORTED_ALGORITHM);
+        return 0;
+    }
+    EVP_MD_free(*pmd);
+    *pmd = md;
+    return 1;
+}
+
 /*
  * Allocates and initializes OSSL_CMP_CTX context structure with default values.
  * Returns new context on success, NULL on error
@@ -116,11 +130,13 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq)
         goto err;
 
     ctx->pbm_slen = 16;
-    ctx->pbm_owf = NID_sha256;
+    if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, NID_sha256))
+        goto err;
     ctx->pbm_itercnt = 500;
     ctx->pbm_mac = NID_hmac_sha1;
 
-    ctx->digest = NID_sha256;
+    if (!cmp_ctx_set_md(ctx, &ctx->digest, NID_sha256))
+        goto err;
     ctx->popoMethod = OSSL_CRMF_POPO_SIGNATURE;
     ctx->revocationReason = CRL_REASON_NONE;
 
@@ -177,8 +193,10 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     if (ctx->secretValue != NULL)
         OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
     ASN1_OCTET_STRING_free(ctx->secretValue);
+    EVP_MD_free(ctx->pbm_owf);
 
     X509_NAME_free(ctx->recipient);
+    EVP_MD_free(ctx->digest);
     ASN1_OCTET_STRING_free(ctx->transactionID);
     ASN1_OCTET_STRING_free(ctx->senderNonce);
     ASN1_OCTET_STRING_free(ctx->recipNonce);
@@ -977,10 +995,12 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         ctx->popoMethod = val;
         break;
     case OSSL_CMP_OPT_DIGEST_ALGNID:
-        ctx->digest = val;
+        if (!cmp_ctx_set_md(ctx, &ctx->digest, val))
+            return 0;
         break;
     case OSSL_CMP_OPT_OWF_ALGNID:
-        ctx->pbm_owf = val;
+        if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, val))
+            return 0;
         break;
     case OSSL_CMP_OPT_MAC_ALGNID:
         ctx->pbm_mac = val;
@@ -1044,9 +1064,9 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_POPO_METHOD:
         return ctx->popoMethod;
     case OSSL_CMP_OPT_DIGEST_ALGNID:
-        return ctx->digest;
+        return EVP_MD_type(ctx->digest);
     case OSSL_CMP_OPT_OWF_ALGNID:
-        return ctx->pbm_owf;
+        return EVP_MD_type(ctx->pbm_owf);
     case OSSL_CMP_OPT_MAC_ALGNID:
         return ctx->pbm_mac;
     case OSSL_CMP_OPT_MSG_TIMEOUT:

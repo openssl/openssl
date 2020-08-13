@@ -30,11 +30,13 @@ OSSL_CRMF_MSGS_verify_popo
 
  int OSSL_CRMF_MSG_push0_extension(OSSL_CRMF_MSG *crm, X509_EXTENSION *ext);
 
- int OSSL_CRMF_MSG_create_popo(OSSL_CRMF_MSG *crm, EVP_PKEY *pkey,
-                               int dgst, int ppmtd);
+ int OSSL_CRMF_MSG_create_popo(int meth, OSSL_CRMF_MSG *crm,
+                               EVP_PKEY *pkey, const EVP_MD *digest,
+                               OPENSSL_CTX *libctx, const char *propq);
 
  int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
-                                int rid, int acceptRAVerified);
+                                int rid, int acceptRAVerified,
+                                OPENSSL_CTX *libctx, const char *propq);
 
 =head1 DESCRIPTION
 
@@ -59,11 +61,13 @@ OSSL_CRMF_MSG_push0_extension() pushes the X509 extension I<ext> to the
 extensions in the certTemplate of I<crm>.  Consumes I<ext>.
 
 OSSL_CRMF_MSG_create_popo() creates and sets the Proof-of-Possession (POPO)
-according to the method I<ppmtd> in I<crm>.
+according to the method I<meth> in I<crm>.<
+The library context I<libctx> and property query string I<propq>,
+may be NULL to select the defaults.
 In case the method is OSSL_CRMF_POPO_SIGNATURE the POPO is calculated
-using the private I<pkey> and the digest algorithm NID I<dgst>.
+using the private key I<pkey> and the digest method I<digest>.
 
-I<ppmtd> can be one of the following:
+I<meth> can be one of the following:
 
 =over 8
 
@@ -86,7 +90,8 @@ challenge-response exchange (challengeResp) not yet supported.
 =back
 
 OSSL_CRMF_MSGS_verify_popo verifies the Proof-of-Possession of the request with
-the given I<rid> in the list of I<reqs>. Optionally accepts RAVerified.
+the given I<rid> in the list of I<reqs>. Optionally accepts RAVerified. It can
+make use of the library context I<libctx> and property query string I<propq>.
 
 =head1 RETURN VALUES
 

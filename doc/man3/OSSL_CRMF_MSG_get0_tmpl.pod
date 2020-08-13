@@ -26,6 +26,7 @@ OSSL_CRMF_MSG_get_certReqId
 
  X509
  *OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert(const OSSL_CRMF_ENCRYPTEDVALUE *ecert,
+                                        OPENSSL_CTX *libctx, const char *propq,
                                         EVP_PKEY *pkey);
 
  int OSSL_CRMF_MSG_get_certReqId(const OSSL_CRMF_MSG *crm);
@@ -33,27 +34,28 @@ OSSL_CRMF_MSG_get_certReqId
 
 =head1 DESCRIPTION
 
-OSSL_CRMF_MSG_get0_tmpl() retrieves the certificate template of B<crm>.
+OSSL_CRMF_MSG_get0_tmpl() retrieves the certificate template of I<crm>.
 
 OSSL_CRMF_CERTTEMPLATE_get0_serialNumber() retrieves the serialNumber of the
-given certificate template B<tmpl>.
+given certificate template I<tmpl>.
 
 OSSL_CRMF_CERTTEMPLATE_get0_issuer() retrieves the issuer name of the
-given certificate template B<tmpl>.
+given certificate template I<tmpl>.
 
 OSSL_CRMF_CERTID_get0_serialNumber retrieves the serialNumber
-of the given CertId B<cid>.
+of the given CertId I<cid>.
 
 OSSL_CRMF_CERTID_get0_issuer retrieves the issuer name
-of the given CertId B<cid>, which must be of ASN.1 type GEN_DIRNAME.
+of the given CertId I<cid>, which must be of ASN.1 type GEN_DIRNAME.
 
 OSSL_CRMF_ENCRYPTEDVALUE_get1_encCert() decrypts the certificate in the given
-encryptedValue B<ecert>, using the private key B<pkey>.
-This is needed for the indirect PoP method as in RFC 4210 section 5.2.8.2.
+encryptedValue I<ecert>, using the private key I<pkey>, library context
+I<libctx> and property query string I<propq> (see L<OPENSSL_CTX(3)>).
+This is needed for the indirect POPO method as in RFC 4210 section 5.2.8.2.
 The function returns the decrypted certificate as a copy, leaving its ownership
 with the caller, who is responsible for freeing it.
 
-OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of B<crm>.
+OSSL_CRMF_MSG_get_certReqId() retrieves the certReqId of I<crm>.
 
 
 =head1 RETURN VALUES
@@ -65,7 +67,7 @@ All other functions return a pointer with the intended result or NULL on error.
 
 =head1 SEE ALSO
 
-B<RFC 4211>
+RFC 4211
 
 =head1 HISTORY
 

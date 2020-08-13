@@ -206,7 +206,7 @@ static OSSL_CMP_MSG *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
         certReqId = OSSL_CRMF_MSG_get_certReqId(crm);
     }
 
-    if (!ossl_cmp_verify_popo(req, srv_ctx->acceptRAVerified)) {
+    if (!ossl_cmp_verify_popo(srv_ctx->ctx, req, srv_ctx->acceptRAVerified)) {
         /* Proof of possession could not be verified */
         si = OSSL_CMP_STATUSINFO_new(OSSL_CMP_PKISTATUS_rejection,
                                      1 << OSSL_CMP_PKIFAILUREINFO_badPOP,
