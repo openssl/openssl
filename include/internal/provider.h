@@ -41,6 +41,9 @@ int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
 int ossl_provider_add_parameter(OSSL_PROVIDER *prov, const char *name,
                                 const char *value);
 
+/* Disable fallback loading */
+int ossl_provider_disable_fallback_loading(OPENSSL_CTX *libctx);
+
 /*
  * Activate the Provider
  * If the Provider is a module, the module will be loaded

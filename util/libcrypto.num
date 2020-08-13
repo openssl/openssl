@@ -4487,6 +4487,7 @@ OSSL_trace_enabled                      ?	3_0_0	EXIST::FUNCTION:
 OSSL_trace_begin                        ?	3_0_0	EXIST::FUNCTION:
 OSSL_trace_end                          ?	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_load                      ?	3_0_0	EXIST::FUNCTION:
+OSSL_PROVIDER_try_load                  ?	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_unload                    ?	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_add_builtin               ?	3_0_0	EXIST::FUNCTION:
 OSSL_PROVIDER_gettable_params           ?	3_0_0	EXIST::FUNCTION:

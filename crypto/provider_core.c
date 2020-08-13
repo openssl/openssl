@@ -195,6 +195,17 @@ static struct provider_store_st *get_provider_store(OPENSSL_CTX *libctx)
     return store;
 }
 
+int ossl_provider_disable_fallback_loading(OPENSSL_CTX *libctx)
+{
+    struct provider_store_st *store;
+
+    if ((store = get_provider_store(libctx)) != NULL) {
+        store->use_fallbacks = 0;
+        return 1;
+    }
+    return 0;
+}
+
 OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
                                   int noconfig)
 {
