@@ -278,12 +278,6 @@ static const char *get_sigtype(int nid)
         return "Falcon-1024";
     case NID_p521_falcon1024:
         return "ECDSA p521 - Falcon-1024";
-    case NID_mqdss3148:
-        return "MQDSS-31-48";
-    case NID_p256_mqdss3148:
-        return "ECDSA p256 - MQDSS-31-48";
-    case NID_rsa3072_mqdss3148:
-        return "RSA3072 - MQDSS-31-48";
     case NID_picnicl1full:
         return "Picnic L1 full";
     case NID_p256_picnicl1full:
@@ -296,16 +290,6 @@ static const char *get_sigtype(int nid)
         return "ECDSA p256 - Picnic3 L1";
     case NID_rsa3072_picnic3l1:
         return "RSA3072 - Picnic3 L1";
-    case NID_qteslapi:
-        return "qTesla-I-p";
-    case NID_p256_qteslapi:
-        return "ECDSA p256 - qTesla-I-p";
-    case NID_rsa3072_qteslapi:
-        return "RSA3072 - qTesla-I-p";
-    case NID_qteslapiii:
-        return "qTESLA-p-III";
-    case NID_p384_qteslapiii:
-        return "ECDSA p384 - qTESLA-p-III";
     case NID_rainbowIaclassic:
         return "Rainbow-Ia-Classic";
     case NID_p256_rainbowIaclassic:
@@ -489,8 +473,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x020F: return "kyber512";
   case 0x0210: return "kyber768";
   case 0x0211: return "kyber1024";
-  case 0x0212: return "newhope512cca";
-  case 0x0213: return "newhope1024cca";
   case 0x0214: return "ntru_hps2048509";
   case 0x0215: return "ntru_hps2048677";
   case 0x0216: return "ntru_hps4096821";
@@ -509,12 +491,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
   case 0x0229: return "kyber90s512";
   case 0x022A: return "kyber90s768";
   case 0x022B: return "kyber90s1024";
-  case 0x022C: return "babybear";
-  case 0x022D: return "mamabear";
-  case 0x022E: return "papabear";
-  case 0x022F: return "babybearephem";
-  case 0x0230: return "mamabearephem";
-  case 0x0231: return "papabearephem";
   case 0x0232: return "hqc128_1_cca2";
   case 0x0233: return "hqc192_1_cca2";
   case 0x0234: return "hqc192_2_cca2";
@@ -537,8 +513,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F0F: return "p256_kyber512 hybrid";
    case 0x2F10: return "p384_kyber768 hybrid";
    case 0x2F11: return "p521_kyber1024 hybrid";
-   case 0x2F12: return "p256_newhope512cca hybrid";
-   case 0x2F13: return "p521_newhope1024cca hybrid";
    case 0x2F14: return "p256_ntru_hps2048509 hybrid";
    case 0x2F15: return "p384_ntru_hps2048677 hybrid";
    case 0x2F16: return "p521_ntru_hps4096821 hybrid";
@@ -557,12 +531,6 @@ static const char* OQS_CURVE_ID_NAME_STR(int id) {
    case 0x2F29: return "p256_kyber90s512 hybrid";
    case 0x2F2A: return "p384_kyber90s768 hybrid";
    case 0x2F2B: return "p521_kyber90s1024 hybrid";
-   case 0x2F2C: return "p256_babybear hybrid";
-   case 0x2F2D: return "p384_mamabear hybrid";
-   case 0x2F2E: return "p521_papabear hybrid";
-   case 0x2F2F: return "p256_babybearephem hybrid";
-   case 0x2F30: return "p384_mamabearephem hybrid";
-   case 0x2F31: return "p521_papabearephem hybrid";
    case 0x2F32: return "p256_hqc128_1_cca2 hybrid";
    case 0x2F33: return "p384_hqc192_1_cca2 hybrid";
    case 0x2F34: return "p384_hqc192_2_cca2 hybrid";

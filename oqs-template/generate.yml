@@ -80,18 +80,6 @@ kems:
     oqs_alg: "OQS_KEM_alg_kyber_1024"
     bit_security: 256
   -
-    name_group: "newhope512cca"
-    nid: "0x0212"
-    nid_hybrid: "0x2F12"
-    oqs_alg: "OQS_KEM_alg_newhope_512cca"
-    bit_security: 128
-  -
-    name_group: "newhope1024cca"
-    nid: "0x0213"
-    nid_hybrid: "0x2F13"
-    oqs_alg: "OQS_KEM_alg_newhope_1024cca"
-    bit_security: 256
-  -
     name_group: "ntru_hps2048509"
     nid: "0x0214"
     nid_hybrid: "0x2F14"
@@ -198,42 +186,6 @@ kems:
     nid: "0x022B"
     nid_hybrid: "0x2F2B"
     oqs_alg: "OQS_KEM_alg_kyber_1024_90s"
-    bit_security: 256
-  -
-    name_group: "babybear"
-    nid: "0x022C"
-    nid_hybrid: "0x2F2C"
-    oqs_alg: "OQS_KEM_alg_threebears_babybear"
-    bit_security: 128
-  -
-    name_group: "mamabear"
-    nid: "0x022D"
-    nid_hybrid: "0x2F2D"
-    oqs_alg: "OQS_KEM_alg_threebears_mamabear"
-    bit_security: 192
-  -
-    name_group: "papabear"
-    nid: "0x022E"
-    nid_hybrid: "0x2F2E"
-    oqs_alg: "OQS_KEM_alg_threebears_papabear"
-    bit_security: 256
-  -
-    name_group: "babybearephem"
-    nid: "0x022F"
-    nid_hybrid: "0x2F2F"
-    oqs_alg: "OQS_KEM_alg_threebears_babybear_ephem"
-    bit_security: 128
-  -
-    name_group: "mamabearephem"
-    nid: "0x0230"
-    nid_hybrid: "0x2F30"
-    oqs_alg: "OQS_KEM_alg_threebears_mamabear_ephem"
-    bit_security: 192
-  -
-    name_group: "papabearephem"
-    nid: "0x0231"
-    nid_hybrid: "0x2F31"
-    oqs_alg: "OQS_KEM_alg_threebears_papabear_ephem"
     bit_security: 256
   -
     name_group: "hqc128_1_cca2"
@@ -399,40 +351,6 @@ sigs:
   -
     # iso (1)
     # identified-organization (3)
-    # reserved (9999)
-    # mqdss (4)
-    variants:
-      -
-        name: "mqdss3148"
-        pretty_name: "MQDSS-31-48"
-        oqs_meth: "OQS_SIG_alg_mqdss_31_48"
-        security: 128
-        oid: "1.3.9999.4.1"
-        code_point: "0xfe10"
-        enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.9999.4.2",
-                    "code_point": "0xfe11"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.9999.4.3",
-                    "code_point": "0xfe12"}]
-      -
-        name: "mqdss3164"
-        pretty_name: "MQDSS-31-64"
-        oqs_meth: "OQS_SIG_alg_mqdss_31_64"
-        security: 192
-        oid: "1.3.9999.4.4"
-        code_point: "0xfe13"
-        enable: false
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.9999.4.5",
-                    "code_point": "0xfe14"}]
-  -
-    # iso (1)
-    # identified-organization (3)
     # dod (6)
     # internet (1)
     # private (4)
@@ -530,46 +448,6 @@ sigs:
                     "pretty_name": "ECDSA p521",
                     "oid": "1.3.6.1.4.1.311.89.2.1.27",
                     "code_point": "0xfe21"}]
-  -
-    # iso (1)
-    # identified-organization (3)
-    # dod (6)
-    # internet (1)
-    # private (4)
-    # enterprise (1)
-    # Microsoft (311)
-    # MSRCrypto (89)
-    # PQC (2)
-    # qTESLA (2)
-    variants:
-      -
-        name: "qteslapi"
-        pretty_name: "qTesla-I-p"
-        oqs_meth: "OQS_SIG_alg_qTesla_p_I"
-        security: 128
-        oid: "1.3.6.1.4.1.311.89.2.2.10"
-        code_point: "0xfe22"
-        enable: true
-        mix_with: [{"name": "p256",
-                    "pretty_name": "ECDSA p256",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.11",
-                    "code_point": "0xfe23"},
-                   {"name": "rsa3072",
-                    "pretty_name": "RSA3072",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.12",
-                    "code_point": "0xfe24"}]
-      -
-        name: "qteslapiii"
-        pretty_name: "qTESLA-p-III"
-        oqs_meth: "OQS_SIG_alg_qTesla_p_III"
-        security: 192
-        oid: "1.3.6.1.4.1.311.89.2.2.20"
-        code_point: "0xfe25"
-        enable: true
-        mix_with: [{"name": "p384",
-                    "pretty_name": "ECDSA p384",
-                    "oid": "1.3.6.1.4.1.311.89.2.2.21",
-                    "code_point": "0xfe26"}]
   -
     variants:
       -

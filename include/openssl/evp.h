@@ -80,20 +80,12 @@
 # define EVP_PKEY_RSA3072_FALCON512 NID_rsa3072_falcon512
 # define EVP_PKEY_FALCON1024 NID_falcon1024
 # define EVP_PKEY_P521_FALCON1024 NID_p521_falcon1024
-# define EVP_PKEY_MQDSS3148 NID_mqdss3148
-# define EVP_PKEY_P256_MQDSS3148 NID_p256_mqdss3148
-# define EVP_PKEY_RSA3072_MQDSS3148 NID_rsa3072_mqdss3148
 # define EVP_PKEY_PICNICL1FULL NID_picnicl1full
 # define EVP_PKEY_P256_PICNICL1FULL NID_p256_picnicl1full
 # define EVP_PKEY_RSA3072_PICNICL1FULL NID_rsa3072_picnicl1full
 # define EVP_PKEY_PICNIC3L1 NID_picnic3l1
 # define EVP_PKEY_P256_PICNIC3L1 NID_p256_picnic3l1
 # define EVP_PKEY_RSA3072_PICNIC3L1 NID_rsa3072_picnic3l1
-# define EVP_PKEY_QTESLAPI NID_qteslapi
-# define EVP_PKEY_P256_QTESLAPI NID_p256_qteslapi
-# define EVP_PKEY_RSA3072_QTESLAPI NID_rsa3072_qteslapi
-# define EVP_PKEY_QTESLAPIII NID_qteslapiii
-# define EVP_PKEY_P384_QTESLAPIII NID_p384_qteslapiii
 # define EVP_PKEY_RAINBOWIACLASSIC NID_rainbowIaclassic
 # define EVP_PKEY_P256_RAINBOWIACLASSIC NID_p256_rainbowIaclassic
 # define EVP_PKEY_RSA3072_RAINBOWIACLASSIC NID_rsa3072_rainbowIaclassic
@@ -102,8 +94,8 @@
 # define EVP_PKEY_SPHINCSHARAKA128FROBUST NID_sphincsharaka128frobust
 # define EVP_PKEY_P256_SPHINCSHARAKA128FROBUST NID_p256_sphincsharaka128frobust
 # define EVP_PKEY_RSA3072_SPHINCSHARAKA128FROBUST NID_rsa3072_sphincsharaka128frobust
-#define OQS_OPENSSL_SIG_algs_length 38
-#define OQS_OPENSSL_KEM_algs_length 45
+#define OQS_OPENSSL_SIG_algs_length 30
+#define OQS_OPENSSL_KEM_algs_length 37
 #define IS_OQS_OPENSSL_KEM_NID(a) ((a >= NID_oqs_kem_default) && (a <= NID_p521_hqc256_3_cca2))
 #define IS_OQS_OPENSSL_SIG_NID(a) ((a >= NID_oqs_sig_default) && (a <= NID_rsa3072_sphincsharaka128frobust))
 /////// OQS_TEMPLATE_FRAGMENT_DEFINE_EVP_PKEYS_END

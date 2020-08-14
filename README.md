@@ -79,12 +79,9 @@ The following quantum-safe algorithms from liboqs are supported (assuming they h
 - **FrodoKEM**: `frodo640aes`, `frodo640shake`, `frodo976aes`, `frodo976shake`, `frodo1344aes`, `frodo1344shake`
 - **HQC**: `hqc128_1_cca2`, `hqc192_1_cca2`, `hqc192_2_cca2`, `hqc256_1_cca2`† , `hqc256_2_cca2`†, `hqc256_3_cca2`†
 - **Kyber**: `kyber512`, `kyber768`, `kyber1024`, `kyber90s512`, `kyber90s768`, `kyber90s1024`
-- **LEDA**: `ledacryptkemlt12`, `ledacryptkemlt32`, `ledacryptkemlt52`
-- **NewHope**: `newhope512cca`, `newhope1024cca`
 - **NTRU**: `ntru_hps2048509`, `ntru_hps2048677`, `ntru_hps4096821`, `ntru_hrss701`
 - **Saber**: `lightsaber`, `saber`, `firesaber`
 - **SIDH** and **SIKE**: `sidhp434`, `sidhp503`, `sidhp610`, `sidhp751`, `sikep434`, `sikep503`, `sikep610`, `sikep751`
-- **ThreeBears**: `babybear`,`mamabear`,`papabear`,`babybearephem`,`mamabearephem`,`papabearephem`
 
 If ``<KEX>`` is any of the algorithms listed above, the following hybrid algorithms are supported:
 
@@ -103,9 +100,7 @@ The following digital signature algorithms from liboqs are supported by the fork
 - `oqs_sig_default*` (see [here](https://github.com/open-quantum-safe/openssl/wiki/Using-liboqs-algorithms-that-are-not-in-the-forks#oqsdefault) for what this denotes)
 - **CRYSTALS-DILITHIUM**: `dilithium2*`, `dilithium3*`, `dilithium4*`
 - **Falcon**: `falcon512*`, `falcon1024*`
-- **MQDSS**: `mqdss3148*`, `mqdss3164`
 - **Picnic**: `picnicl1fs`, `picnicl1ur`, `picnicl1full*`, `picnic3l1*`, `picnic3l3`, `picnic3l5`
-- **qTESLA**: `qteslapi*`, `qteslapiii*`
 - **Rainbow**: `rainbowIaclassic*`, `rainbowIacyclic`, `rainbowIacycliccompressed`, `rainbowIIIcclassic`, `rainbowIIIccyclic`, `rainbowIIIccycliccompressed`, `rainbowVcclassic*`, `rainbowVccylic`, `rainbowVccycliccompressed`
 - **SPHINCS-Haraka**: `sphincsharaka128frobust*`, `sphincsharaka128fsimple`, `sphincsharaka128srobust`, `sphincsharaka128ssimple`, `sphincsharaka192frobust`, `sphincsharaka192fsimple`, `sphincsharaka192srobust`, `sphincsharaka192ssimple`, `sphincsharaka256frobust`, `sphincsharaka256fsimple`, `sphincsharaka256srobust`, `sphincsharaka256ssimple`
 - **SPHINCS-SHA256**: `sphincssha256128frobust`, `sphincssha256128fsimple`, `sphincssha256128srobust`, `sphincssha256128ssimple`, `sphincssha256192frobust`, `sphincssha256192fsimple`, `sphincssha256192srobust`, `sphincssha256192ssimple`, `sphincssha256256frobust`, `sphincssha256256fsimple`, `sphincssha256256srobust`, `sphincssha256256ssimple`
