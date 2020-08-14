@@ -480,6 +480,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                         || ameth2->pkey_flags & ASN1_PKEY_ALIAS)
                         continue;
 
+                    ERR_set_mark(); /* prevent flooding error queue */
                     tmp_pkey =
                         d2i_PrivateKey_ex(ameth2->pkey_id, NULL,
                                           &tmp_blob, len, libctx, propq);
@@ -490,6 +491,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                             pkey = tmp_pkey;
                         (*matchcount)++;
                     }
+                    ERR_pop_to_mark();
                 }
             }
             curengine = ENGINE_get_next(curengine);
@@ -504,6 +506,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
             if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
                 continue;
 
+            ERR_set_mark(); /* prevent flooding error queue */
             tmp_pkey = d2i_PrivateKey_ex(ameth->pkey_id, NULL, &tmp_blob, len,
                                          libctx, propq);
             if (tmp_pkey != NULL) {
@@ -513,6 +516,7 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                     pkey = tmp_pkey;
                 (*matchcount)++;
             }
+            ERR_pop_to_mark();
         }
 
         if (*matchcount > 1) {
@@ -625,6 +629,8 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
             if (ameth->pkey_flags & ASN1_PKEY_ALIAS)
                 continue;
 
+            ERR_set_mark(); /* prevent flooding error queue */
+
             if (EVP_PKEY_set_type(tmp_pkey, ameth->pkey_id)
                 && (ameth = EVP_PKEY_get0_asn1(tmp_pkey)) != NULL
                 && ameth->param_decode != NULL
@@ -636,6 +642,7 @@ static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
                 tmp_pkey = NULL;
                 (*matchcount)++;
             }
+            ERR_pop_to_mark();
         }
 
         EVP_PKEY_free(tmp_pkey);
@@ -936,8 +943,7 @@ static OSSL_STORE_LOADER_CTX *file_open_with_libctx
         return NULL;
     }
 
-    /* Successfully found a working path, clear possible collected errors */
-    ERR_clear_error();
+    /* Successfully found a working path */
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
@@ -1124,11 +1130,22 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
             const FILE_HANDLER *handler = file_handlers[i];
             int try_matchcount = 0;
             void *tmp_handler_ctx = NULL;
-            OSSL_STORE_INFO *tmp_result =
+            OSSL_STORE_INFO *tmp_result;
+            unsigned long err;
+
+            ERR_set_mark();
+            tmp_result =
                 handler->try_decode(pem_name, pem_header, data, len,
                                     &tmp_handler_ctx, &try_matchcount,
                                     ui_method, ui_data, ctx->uri,
                                     ctx->libctx, ctx->propq);
+            /* avoid flooding error queue with low-level ASN.1 parse errors */
+            err = ERR_peek_last_error();
+            if (ERR_GET_LIB(err) == ERR_LIB_ASN1
+                    && ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR)
+                ERR_pop_to_mark();
+            else
+                ERR_clear_last_mark();
 
             if (try_matchcount > 0) {
 
@@ -1176,9 +1193,6 @@ static OSSL_STORE_INFO *file_load_try_decode(OSSL_STORE_LOADER_CTX *ctx,
         result = NULL;
         goto again;
     }
-
-    if (result != NULL)
-        ERR_clear_error();
 
     return result;
 }
@@ -1448,7 +1462,6 @@ static OSSL_STORE_INFO *file_load(OSSL_STORE_LOADER_CTX *ctx,
     OSSL_STORE_INFO *result = NULL;
 
     ctx->errcnt = 0;
-    ERR_clear_error();
 
     if (ctx->type == is_dir) {
         do {
