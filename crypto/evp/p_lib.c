@@ -617,9 +617,11 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
                                             (void *)priv, len);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_CIPHER,
                                             (char *)cipher_name, 0);
+#  ifndef OPENSSL_NO_ENGINE
     if (engine_id != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ENGINE,
                                                 (char *)engine_id, 0);
+#  endif
     *p = OSSL_PARAM_construct_end();
 
     if (!EVP_PKEY_fromdata(ctx, &pkey, params)) {
