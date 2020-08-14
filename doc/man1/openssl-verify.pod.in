@@ -40,7 +40,7 @@ Print out a usage message.
 
 =item B<-CRLfile> I<file>
 
-The I<file> should contain one or more CRLs in PEM format.
+The file or URI should contain one or more CRLs in PEM or DER format.
 This option can be specified more than once to include CRLs from multiple
 I<file>s.
 
@@ -60,13 +60,14 @@ Print extra information about the operations being performed.
 
 =item B<-trusted> I<file>
 
-A file of trusted certificates in PEM format.
+A file or URI of trusted certificates in PEM, DER, or PKCS#12 format.
 This option can be specified more than once to load certificates from multiple
 I<file>s.
 
 =item B<-untrusted> I<file>
 
-A file of untrusted certificates in PEM format to use for chain building.
+A file or URI of untrusted certificates in PEM, DER, or PKCS#12 format
+to use for chain building.
 This option can be specified more than once to load certificates from multiple
 I<file>s.
 

@@ -130,6 +130,7 @@ the OCSP request is not signed.
 =item B<-sign_other> I<filename>
 
 Additional certificates to include in the signed request.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-nonce>, B<-no_nonce>
 
@@ -180,10 +181,12 @@ the complete request is received.
 
 =item B<-verify_other> I<file>
 
-File containing additional certificates to search when attempting to locate
+File or URI containing additional certificates to search
+when attempting to locate
 the OCSP response signing certificate. Some responders omit the actual signer's
 certificate from the response: this option can be used to supply the necessary
 certificate in such cases.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-trust_other>
 
@@ -194,8 +197,9 @@ root CA is not appropriate.
 
 =item B<-VAfile> I<file>
 
-File containing explicitly trusted responder certificates. Equivalent to the
-B<-verify_other> and B<-trust_other> options.
+File or URI containing explicitly trusted responder certificates.
+Equivalent to the B<-verify_other> and B<-trust_other> options.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-noverify>
 
@@ -296,6 +300,7 @@ must also be present.
 
 CA certificate corresponding to the revocation information in the index
 file given with B<-index>.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-rsigner> I<file>
 
@@ -314,6 +319,7 @@ see L<openssl(1)/Pass Phrase Options>.
 =item B<-rother> I<file>
 
 Additional certificates to include in the OCSP response.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-rsigopt> I<nm>:I<v>
 

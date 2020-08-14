@@ -491,8 +491,8 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
 
     if (desc == NULL)
         desc = "certificate";
-    (void)load_key_cert_crl(uri, maybe_stdin, pass, desc,
-                            NULL, NULL, &cert, NULL);
+    (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
+                              NULL, NULL, &cert, NULL, NULL, NULL);
     if (cert == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -513,8 +513,8 @@ X509_CRL *load_crl(const char *uri, int format, const char *desc)
 
     if (desc == NULL)
         desc = "CRL";
-    (void)load_key_cert_crl(uri, 0, NULL, desc,
-                            NULL, NULL, NULL, &crl);
+    (void)load_key_certs_crls(uri, 0, NULL, desc,
+                              NULL,  NULL, NULL, NULL, &crl, NULL);
     if (crl == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
@@ -593,8 +593,8 @@ EVP_PKEY *load_key(const char *uri, int format, int may_stdin,
 #endif
         }
     } else {
-        (void)load_key_cert_crl(uri, may_stdin, pass, desc,
-                                &pkey, NULL, NULL, NULL);
+        (void)load_key_certs_crls(uri, may_stdin, pass, desc,
+                                  &pkey, NULL, NULL, NULL, NULL, NULL);
     }
 
     if (pkey == NULL) {
@@ -632,97 +632,14 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
 #endif
         }
     } else {
-        (void)load_key_cert_crl(uri, maybe_stdin, pass, desc,
-                                NULL, &pkey, NULL, NULL);
+        (void)load_key_certs_crls(uri, maybe_stdin, pass, desc,
+                                  NULL, &pkey, NULL, NULL, NULL, NULL);
     }
     if (pkey == NULL) {
         BIO_printf(bio_err, "Unable to load %s\n", desc);
         ERR_print_errors(bio_err);
     }
     return pkey;
-}
-
-static int load_certs_crls(const char *file, int format,
-                           const char *pass, const char *desc,
-                           STACK_OF(X509) **pcerts,
-                           STACK_OF(X509_CRL) **pcrls)
-{
-    int i;
-    BIO *bio;
-    STACK_OF(X509_INFO) *xis = NULL;
-    X509_INFO *xi;
-    PW_CB_DATA cb_data;
-    int rv = 0;
-
-    cb_data.password = pass;
-    cb_data.prompt_info = file;
-
-    if (format != FORMAT_PEM) {
-        BIO_printf(bio_err, "Bad input format specified for %s\n", desc);
-        return 0;
-    }
-
-    bio = bio_open_default(file, 'r', FORMAT_PEM);
-    if (bio == NULL)
-        return 0;
-
-    xis = PEM_X509_INFO_read_bio_with_libctx(bio, NULL,
-                                             (pem_password_cb *)password_callback,
-                                             &cb_data,
-                                             app_get0_libctx(),
-                                             app_get0_propq());
-
-    BIO_free(bio);
-
-    if (pcerts != NULL && *pcerts == NULL) {
-        *pcerts = sk_X509_new_null();
-        if (*pcerts == NULL)
-            goto end;
-    }
-
-    if (pcrls != NULL && *pcrls == NULL) {
-        *pcrls = sk_X509_CRL_new_null();
-        if (*pcrls == NULL)
-            goto end;
-    }
-
-    for (i = 0; i < sk_X509_INFO_num(xis); i++) {
-        xi = sk_X509_INFO_value(xis, i);
-        if (xi->x509 != NULL && pcerts != NULL) {
-            if (!sk_X509_push(*pcerts, xi->x509))
-                goto end;
-            xi->x509 = NULL;
-        }
-        if (xi->crl != NULL && pcrls != NULL) {
-            if (!sk_X509_CRL_push(*pcrls, xi->crl))
-                goto end;
-            xi->crl = NULL;
-        }
-    }
-
-    if (pcerts != NULL && sk_X509_num(*pcerts) > 0)
-        rv = 1;
-
-    if (pcrls != NULL && sk_X509_CRL_num(*pcrls) > 0)
-        rv = 1;
-
- end:
-
-    sk_X509_INFO_pop_free(xis, X509_INFO_free);
-
-    if (rv == 0) {
-        if (pcerts != NULL) {
-            sk_X509_pop_free(*pcerts, X509_free);
-            *pcerts = NULL;
-        }
-        if (pcrls != NULL) {
-            sk_X509_CRL_pop_free(*pcrls, X509_CRL_free);
-            *pcrls = NULL;
-        }
-        BIO_printf(bio_err, "Unable to load %s\n", desc != NULL ? desc :
-                   pcerts != NULL ? "certificates" : "CRLs");
-    }
-    return rv;
 }
 
 void app_bail_out(char *fmt, ...)
@@ -749,37 +666,49 @@ void* app_malloc(int sz, const char *what)
 /*
  * Initialize or extend, if *certs != NULL, a certificate stack.
  */
-int load_certs(const char *file, STACK_OF(X509) **certs, int format,
+int load_certs(const char *uri, STACK_OF(X509) **certs,
                const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, desc, certs, NULL);
+    return load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
+                               NULL, certs, NULL, NULL);
 }
 
 /*
  * Initialize or extend, if *crls != NULL, a certificate stack.
  */
-int load_crls(const char *file, STACK_OF(X509_CRL) **crls, int format,
+int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
               const char *pass, const char *desc)
 {
-    return load_certs_crls(file, format, pass, desc, NULL, crls);
+    return load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
+                               NULL, NULL, NULL, crls);
 }
 
 /*
  * Load those types of credentials for which the result pointer is not NULL.
  * Reads from stdio if uri is NULL and maybe_stdin is nonzero.
- * For each type the first credential found in the store is loaded.
- * May yield partial result even if rv == 0.
+ * For non-NULL ppkey, pcert, and pcrl the first suitable value found is loaded.
+ * If pcerts is non-NULL and *pcerts == NULL then a new cert list is allocated.
+ * If pcerts is non-NULL then all available certificates are appended to *pcerts
+ * except any certificate assigned to *pcert.
+ * If pcrls is non-NULL and *pcrls == NULL then a new list of CRLs is allocated.
+ * If pcrls is non-NULL then all available CRLs are appended to *pcerts
+ * except any CRL assigned to *pcrl.
+ * In any case (also on error) the caller is responsible for freeing all members
+ * of *pcerts and *pcrls (as far as they are not NULL).
  */
-int load_key_cert_crl(const char *uri, int maybe_stdin,
-                      const char *pass, const char *desc,
-                      EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
-                      X509 **pcert, X509_CRL **pcrl)
+int load_key_certs_crls(const char *uri, int maybe_stdin,
+                        const char *pass, const char *desc,
+                        EVP_PKEY **ppkey, EVP_PKEY **ppubkey,
+                        X509 **pcert, STACK_OF(X509) **pcerts,
+                        X509_CRL **pcrl, STACK_OF(X509_CRL) **pcrls)
 {
     PW_CB_DATA uidata;
     OSSL_STORE_CTX *ctx = NULL;
     OPENSSL_CTX *libctx = app_get0_libctx();
     const char *propq = app_get0_propq();
-    int ret = 0;
+    int ncerts = 0;
+    int ncrls = 0;
+    const char *failed = NULL;
     /* TODO make use of the engine reference 'eng' when loading pkeys */
 
     if (ppkey != NULL)
@@ -788,8 +717,18 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
         *ppubkey = NULL;
     if (pcert != NULL)
         *pcert = NULL;
+    if (pcerts != NULL && *pcerts == NULL
+            && (*pcerts = sk_X509_new_null()) == NULL) {
+        BIO_printf(bio_err, "Out of memory");
+        return 0;
+    }
     if (pcrl != NULL)
         *pcrl = NULL;
+    if (pcrls != NULL && *pcrls == NULL
+            && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
+        BIO_printf(bio_err, "Out of memory");
+        return 0;
+    }
 
     if (desc == NULL)
         desc = "key/certificate/CRL";
@@ -799,6 +738,7 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
     if (uri == NULL) {
         BIO *bio;
 
+        uri = "<stdin>";
         if (!maybe_stdin) {
             BIO_printf(bio_err, "No filename or uri specified for loading %s\n",
                        desc);
@@ -809,7 +749,6 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
         if (bio != NULL)
             ctx = OSSL_STORE_attach(bio, "file", libctx, propq,
                                     get_ui_method(), &uidata, NULL, NULL);
-        uri = "<stdin>";
     } else {
         ctx = OSSL_STORE_open_with_libctx(uri, libctx, propq, get_ui_method(),
                                           &uidata, NULL, NULL);
@@ -820,61 +759,71 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
         goto end;
     }
 
-    for (;;) {
+    while (!OSSL_STORE_eof(ctx)) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int type = info == NULL ? 0 : OSSL_STORE_INFO_get_type(info);
-        const char *infostr =
-            info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);
-        int err = 0;
-
-        if (info == NULL) {
-            if (OSSL_STORE_eof(ctx))
-                ret = 1;
-            break;
-        }
+        int ok = 1;
 
         switch (type) {
         case OSSL_STORE_INFO_PKEY:
             if (ppkey != NULL && *ppkey == NULL)
-                err = ((*ppkey = OSSL_STORE_INFO_get1_PKEY(info)) == NULL);
+                ok = (*ppkey = OSSL_STORE_INFO_get1_PKEY(info)) != NULL;
 
             /*
              * An EVP_PKEY with private parts also holds the public parts,
              * so if the caller asked for a public key, and we got a private
              * key, we can still pass it back.
              */
-            if (ppubkey != NULL && *ppubkey == NULL)
-                err = ((*ppubkey = OSSL_STORE_INFO_get1_PKEY(info)) == NULL);
+            if (ok && ppubkey != NULL && *ppubkey == NULL)
+                ok = ((*ppubkey = OSSL_STORE_INFO_get1_PKEY(info)) != NULL);
             break;
         case OSSL_STORE_INFO_PUBKEY:
             if (ppubkey != NULL && *ppubkey == NULL)
-                err = ((*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) == NULL);
+                ok = ((*ppubkey = OSSL_STORE_INFO_get1_PUBKEY(info)) != NULL);
             break;
         case OSSL_STORE_INFO_CERT:
             if (pcert != NULL && *pcert == NULL)
-                err = ((*pcert = OSSL_STORE_INFO_get1_CERT(info)) == NULL);
+                ok = (*pcert = OSSL_STORE_INFO_get1_CERT(info)) != NULL;
+            else if (pcerts != NULL)
+                ok = X509_add_cert(*pcerts,
+                                   OSSL_STORE_INFO_get1_CERT(info),
+                                   X509_ADD_FLAG_DEFAULT);
+            ncerts += ok;
             break;
         case OSSL_STORE_INFO_CRL:
             if (pcrl != NULL && *pcrl == NULL)
-                err = ((*pcrl = OSSL_STORE_INFO_get1_CRL(info)) == NULL);
+                ok = (*pcrl = OSSL_STORE_INFO_get1_CRL(info)) != NULL;
+            else if (pcrls != NULL)
+                ok = sk_X509_CRL_push(*pcrls, OSSL_STORE_INFO_get1_CRL(info));
+            ncrls += ok;
             break;
         default:
             /* skip any other type */
             break;
         }
         OSSL_STORE_INFO_free(info);
-        if (err) {
-            BIO_printf(bio_err, "Could not read %s of %s from %s\n",
-                       infostr, desc, uri);
+        if (!ok) {
+            failed = info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);
+            BIO_printf(bio_err, "Error reading %s of %s from %s\n",
+                       failed, desc, uri);
             break;
         }
     }
 
  end:
     OSSL_STORE_close(ctx);
-    if (!ret)
+    if (ppkey != NULL && *ppkey == NULL)
+        failed = "key";
+    else if ((pcert != NULL || pcerts != NULL) && ncerts == 0)
+        failed = "cert";
+    else if ((pcrl != NULL || pcrls != NULL) && ncrls == 0)
+        failed = "CRL";
+    if (failed != NULL) {
+        BIO_printf(bio_err, "Could not read any %s of %s from %s\n",
+                   failed, desc, uri);
         ERR_print_errors(bio_err);
-    return ret;
+    }
+    return failed == NULL;
 }
 
 

@@ -214,7 +214,7 @@ const OPTIONS ca_options[] = {
 
     OPT_SECTION("Signing"),
     {"md", OPT_MD, 's', "md to use; one of md2, md5, sha or sha1"},
-    {"keyfile", OPT_KEYFILE, 's', "Private key"},
+    {"keyfile", OPT_KEYFILE, 's', "The CA private key"},
     {"keyform", OPT_KEYFORM, 'f', "Private key file format (ENGINE, other values ignored)"},
     {"passin", OPT_PASSIN, 's', "Input file pass phrase source"},
     {"key", OPT_KEY, 's', "Key to decode the private key if it is encrypted"},

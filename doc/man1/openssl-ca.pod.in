@@ -140,7 +140,7 @@ F<.pem> appended.
 
 =item B<-cert>
 
-The CA certificate file.
+The CA certificate, which must match with B<-keyfile>.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
@@ -149,7 +149,7 @@ This option has no effect and is retained for backward compatibility only.
 
 =item B<-keyfile> I<filename>
 
-The private key to sign requests with.
+The CA private key to sign requests with. This must match with B<-cert>.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>
 
@@ -179,6 +179,7 @@ The password used to encrypt the private key. Since on some
 systems the command line arguments are visible (e.g., when using
 L<ps(1)> on Unix),
 this option should be used with caution.
+Better use B<-passin>.
 
 =item B<-selfsign>
 

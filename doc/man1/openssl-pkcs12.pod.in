@@ -13,6 +13,7 @@ B<openssl> B<pkcs12>
 [B<-chain>]
 [B<-inkey> I<file_or_id>]
 [B<-certfile> I<filename>]
+[B<-passcerts> I<arg>]
 [B<-name> I<name>]
 [B<-caname> I<name>]
 [B<-in> I<filename>]
@@ -85,8 +86,10 @@ Print out a usage message.
 
 =item B<-in> I<filename>
 
-This specifies filename of the PKCS#12 file to be parsed. Standard input is used
-by default.
+This specifies filename or URI of the PKCS#12 file to be parsed.
+With B<-export>, this refers to the the certificate and/or key input,
+which can be in PEM, DER, or PKCS#12 format.
+Standard input is used by default.
 
 =item B<-out> I<filename>
 
@@ -195,9 +198,10 @@ by default.
 
 =item B<-in> I<filename>
 
-The filename to read certificates and private keys from, standard input by
-default.  They must all be in PEM format. The order doesn't matter but one
-private key and its corresponding certificate should be present. If additional
+The filename or URI to read certificates and private keys from, standard input
+by default. They can be in PEM, DER, or PKCS#12 format.
+The order doesn't matter but one private key and
+its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 file.
 
 =item B<-inkey> I<file_or_id>
@@ -214,7 +218,14 @@ name is typically displayed in list boxes by software importing the file.
 
 =item B<-certfile> I<filename>
 
-A filename to read additional certificates from.
+A filename or URI to read additional certificates from.
+The file can be in PEM, DER, or PKCS#12 format.
+
+=item B<-passcerts> I<arg>
+
+The password source for certificate input such as B<-certfile>.
+For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-caname> I<friendlyname>
 

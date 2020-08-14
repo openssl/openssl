@@ -59,7 +59,7 @@ typedef enum OPTION_choice {
     OPT_CACERTS, OPT_NOOUT, OPT_INFO, OPT_CHAIN, OPT_TWOPASS, OPT_NOMACVER,
     OPT_DESCERT, OPT_EXPORT, OPT_ITER, OPT_NOITER, OPT_MACITER, OPT_NOMACITER,
     OPT_NOMAC, OPT_LMK, OPT_NODES, OPT_NOENC, OPT_MACALG, OPT_CERTPBE, OPT_KEYPBE,
-    OPT_INKEY, OPT_CERTFILE, OPT_NAME, OPT_CSP, OPT_CANAME,
+    OPT_INKEY, OPT_CERTFILE, OPT_PASSCERTS, OPT_NAME, OPT_CSP, OPT_CANAME,
     OPT_IN, OPT_OUT, OPT_PASSIN, OPT_PASSOUT, OPT_PASSWORD, OPT_CAPATH,
     OPT_CAFILE, OPT_CASTORE, OPT_NOCAPATH, OPT_NOCAFILE, OPT_NOCASTORE, OPT_ENGINE,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_LEGACY_ALG
@@ -87,6 +87,7 @@ const OPTIONS pkcs12_options[] = {
     OPT_SECTION("Input"),
     {"inkey", OPT_INKEY, 's', "Private key if not infile"},
     {"certfile", OPT_CERTFILE, '<', "Load certs from file"},
+    {"passcerts", OPT_PASSCERTS, 's', "Certificate file pass phrase source"},
     {"name", OPT_NAME, 's', "Use name as friendly name"},
     {"CSP", OPT_CSP, 's', "Microsoft CSP name"},
     {"caname", OPT_CANAME, 's',
@@ -143,6 +144,7 @@ const OPTIONS pkcs12_options[] = {
 int pkcs12_main(int argc, char **argv)
 {
     char *infile = NULL, *outfile = NULL, *keyname = NULL, *certfile = NULL;
+    char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
     int export_cert = 0, options = 0, chain = 0, twopass = 0, keytype = 0, use_legacy = 0;
@@ -260,6 +262,9 @@ int pkcs12_main(int argc, char **argv)
         case OPT_CERTFILE:
             certfile = opt_arg();
             break;
+        case OPT_PASSCERTS:
+            passcertsarg = opt_arg();
+            break;
         case OPT_NAME:
             name = opt_arg();
             break;
@@ -322,6 +327,9 @@ int pkcs12_main(int argc, char **argv)
     }
     argc = opt_num_rest();
 
+    if (!export_cert && passcertsarg != NULL)
+        BIO_printf(bio_err,
+                   "Warning: -passcerts option ignored without -export\n");
     if (use_legacy) {
         /* load the legacy provider if not loaded already*/
         if (!OSSL_PROVIDER_available(app_get0_libctx(), "legacy")) {
@@ -348,6 +356,11 @@ int pkcs12_main(int argc, char **argv)
         goto opthelp;
 
     private = 1;
+
+    if (!app_passwd(passcertsarg, NULL, &passcerts, NULL)) {
+        BIO_printf(bio_err, "Error getting certificate file password\n");
+        goto end;
+    }
 
     if (passarg != NULL) {
         if (export_cert)
@@ -424,8 +437,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Load in all certs in input file */
         if (!(options & NOCERTS)) {
-            if (!load_certs(infile, &certs, FORMAT_PEM, NULL,
-                            "certificates"))
+            if (!load_certs(infile, &certs, passin, "input certificates"))
                 goto export_end;
 
             if (key != NULL) {
@@ -453,7 +465,7 @@ int pkcs12_main(int argc, char **argv)
 
         /* Add any more certificates asked for */
         if (certfile != NULL) {
-            if (!load_certs(certfile, &certs, FORMAT_PEM, NULL,
+            if (!load_certs(certfile, &certs, passcerts,
                             "certificates from certfile"))
                 goto export_end;
         }
@@ -652,6 +664,7 @@ int pkcs12_main(int argc, char **argv)
     BIO_free_all(out);
     sk_OPENSSL_STRING_free(canames);
     OPENSSL_free(badpass);
+    OPENSSL_free(passcerts);
     OPENSSL_free(passin);
     OPENSSL_free(passout);
     return ret;

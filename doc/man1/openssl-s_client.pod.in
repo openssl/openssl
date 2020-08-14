@@ -248,8 +248,9 @@ This option has no effect and is retained for backward compatibility only.
 
 =item B<-cert_chain>
 
-A file containing untrusted certificates to use when attempting to build the
+A file or URI of untrusted certificates to use when attempting to build the
 certificate chain related to the certificate specified via the B<-cert> option.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-build_chain>
 

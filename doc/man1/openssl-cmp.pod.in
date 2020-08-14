@@ -69,7 +69,6 @@ B<openssl> B<cmp>
 
 [B<-certform> I<PEM|DER>]
 [B<-keyform> I<PEM|DER|P12|ENGINE>]
-[B<-certsform> I<PEM|DER|P12>]
 [B<-otherpass> I<arg>]
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
@@ -681,15 +680,10 @@ Send messages without CMP-level protection.
 File format to use when saving a certificate to a file.
 Default value is PEM.
 
-=item B<-keyform> I<PEM|DER|P12>
+=item B<-keyform> I<PEM|DER|P12|ENGINE>
 
-Format to assume when reading key files.
-Default value is PEM.
-
-=item B<-certsform> I<PEM|DER|P12>
-
-Format to try first when reading multiple certificates from file(s).
-Default value is PEM.
+The format of the key input.
+The only value with effect is B<ENGINE>.
 
 =item B<-otherpass> I<arg>
 

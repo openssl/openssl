@@ -1040,8 +1040,7 @@ int load_excert(SSL_EXCERT **pexc)
         if (exc->key == NULL)
             return 0;
         if (exc->chainfile != NULL) {
-            if (!load_certs(exc->chainfile, &exc->chain, FORMAT_PEM, NULL,
-                            "Server Chain"))
+            if (!load_certs(exc->chainfile, &exc->chain, NULL, "Server Chain"))
                 return 0;
         }
     }

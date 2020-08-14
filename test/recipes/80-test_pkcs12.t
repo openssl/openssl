@@ -57,7 +57,7 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 2;
+plan tests => 4;
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -67,5 +67,28 @@ ok(run(app(["openssl", "pkcs12", "-noout",
             "-password", "pass:$pass",
             "-in", srctop_file("test", "shibboleth.pfx")])),
    "test_pkcs12");
+
+my @path = qw(test certs);
+my $tmpfile = "tmp.p12";
+
+# Test the -passcerts option
+ok(run(app(["openssl", "pkcs12", "-export",
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-certfile", srctop_file(@path, "v3-certs-TDES.p12"),
+            "-passcerts", "pass:v3-certs",
+            "-nokeys", "-passout", "pass:v3-certs", "-descert",
+            "-out", $tmpfile])),
+   "test_pkcs12_passcert");
+unlink $tmpfile;
+
+# Test reading legacy PKCS#12 file
+ok(run(app(["openssl", "pkcs12", "-export",
+            "-in", srctop_file(@path, "v3-certs-RC2.p12"),
+            "-passin", "pass:v3-certs",
+            "-provider", "default", "-provider", "legacy",
+            "-nokeys", "-passout", "pass:v3-certs", "-descert",
+            "-out", $tmpfile])),
+   "test_pkcs12_passcert");
+unlink $tmpfile;
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));
