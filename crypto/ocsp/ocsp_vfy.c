@@ -54,6 +54,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
         flags |= OCSP_NOVERIFY;
     if (!(flags & OCSP_NOSIGS)) {
         EVP_PKEY *skey;
+
         skey = X509_get0_pubkey(signer);
         if (skey == NULL) {
             OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, OCSP_R_NO_SIGNER_KEY);
@@ -153,6 +154,7 @@ static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,
 {
     X509 *signer;
     OCSP_RESPID *rid = &bs->tbsResponseData.responderId;
+
     if ((signer = ocsp_find_signer_sk(certs, rid))) {
         *psigner = signer;
         return 2;
@@ -187,8 +189,9 @@ static X509 *ocsp_find_signer_sk(STACK_OF(X509) *certs, OCSP_RESPID *id)
     /* Calculate hash of each key and compare */
     for (i = 0; i < sk_X509_num(certs); i++) {
         x = sk_X509_value(certs, i);
-        X509_pubkey_digest(x, EVP_sha1(), tmphash, NULL);
-        if (!memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH))
+        if (!X509_pubkey_digest(x, EVP_sha1(), tmphash, NULL))
+            break;
+        if (memcmp(keyhash, tmphash, SHA_DIGEST_LENGTH) == 0)
             return x;
     }
     return NULL;
@@ -200,8 +203,8 @@ static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain)
     X509 *signer, *sca;
     OCSP_CERTID *caid = NULL;
     int i;
-    sresp = bs->tbsResponseData.responses;
 
+    sresp = bs->tbsResponseData.responses;
     if (sk_X509_num(chain) <= 0) {
         OCSPerr(OCSP_F_OCSP_CHECK_ISSUER, OCSP_R_NO_CERTIFICATES_IN_CHAIN);
         return -1;
@@ -283,10 +286,10 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         const X509_NAME *iname;
         int mdlen;
         unsigned char md[EVP_MAX_MD_SIZE];
+
         if ((dgst = EVP_get_digestbyobj(cid->hashAlgorithm.algorithm))
                 == NULL) {
-            OCSPerr(OCSP_F_OCSP_MATCH_ISSUERID,
-                    OCSP_R_UNKNOWN_MESSAGE_DIGEST);
+            OCSPerr(0, OCSP_R_UNKNOWN_MESSAGE_DIGEST);
             return -1;
         }
 
@@ -301,8 +304,11 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
             return -1;
         if (memcmp(md, cid->issuerNameHash.data, mdlen))
             return 0;
-        X509_pubkey_digest(cert, dgst, md, NULL);
-        if (memcmp(md, cid->issuerKeyHash.data, mdlen))
+        if (!X509_pubkey_digest(cert, dgst, md, NULL)) {
+            OCSPerr(0, OCSP_R_DIGEST_ERR);
+            return -1;
+        }
+        if (memcmp(md, cid->issuerKeyHash.data, mdlen) != 0)
             return 0;
 
         return 1;
@@ -311,6 +317,7 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         /* We have to match the whole lot */
         int i, ret;
         OCSP_CERTID *tmpid;
+
         for (i = 0; i < sk_OCSP_SINGLERESP_num(sresp); i++) {
             tmpid = sk_OCSP_SINGLERESP_value(sresp, i)->certId;
             ret = ocsp_match_issuerid(cert, tmpid, NULL);
@@ -381,6 +388,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
     }
     if (!(flags & OCSP_NOVERIFY)) {
         int init_res;
+
         if (flags & OCSP_NOCHAIN)
             init_res = X509_STORE_CTX_init(ctx, store, signer, NULL);
         else
@@ -419,6 +427,7 @@ static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
                                 unsigned long flags)
 {
     X509 *signer;
+
     if (!(flags & OCSP_NOINTERN)) {
         signer = X509_find_by_subject(req->optionalSignature->certs, nm);
         if (signer) {
