@@ -17,6 +17,8 @@ static const ERR_STRING_DATA OCSP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_OCSP, 0, OCSP_R_CERTIFICATE_VERIFY_ERROR),
     "certificate verify error"},
     {ERR_PACK(ERR_LIB_OCSP, 0, OCSP_R_DIGEST_ERR), "digest err"},
+    {ERR_PACK(ERR_LIB_OCSP, 0, OCSP_R_DIGEST_NAME_ERR), "digest name err"},
+    {ERR_PACK(ERR_LIB_OCSP, 0, OCSP_R_DIGEST_SIZE_ERR), "digest size err"},
     {ERR_PACK(ERR_LIB_OCSP, 0, OCSP_R_ERROR_IN_NEXTUPDATE_FIELD),
     "error in nextupdate field"},
     {ERR_PACK(ERR_LIB_OCSP, 0, OCSP_R_ERROR_IN_THISUPDATE_FIELD),

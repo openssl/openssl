@@ -2678,6 +2678,8 @@ OBJ_R_UNKNOWN_NID:101:unknown nid
 OBJ_R_UNKNOWN_OBJECT_NAME:103:unknown object name
 OCSP_R_CERTIFICATE_VERIFY_ERROR:101:certificate verify error
 OCSP_R_DIGEST_ERR:102:digest err
+OCSP_R_DIGEST_NAME_ERR:106:digest name err
+OCSP_R_DIGEST_SIZE_ERR:107:digest size err
 OCSP_R_ERROR_IN_NEXTUPDATE_FIELD:122:error in nextupdate field
 OCSP_R_ERROR_IN_THISUPDATE_FIELD:123:error in thisupdate field
 OCSP_R_MISSING_OCSPSIGNING_USAGE:103:missing ocspsigning usage
