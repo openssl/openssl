@@ -809,9 +809,9 @@ const OPTIONS s_server_options[] = {
     {"Verify", OPT_UPPER_V_VERIFY, 'n',
      "Turn on peer certificate verification, must have a cert"},
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
-    {"cert", OPT_CERT, '<', "Server certificate file to use; default is " TEST_CERT},
+    {"cert", OPT_CERT, '<', "Server certificate file to use; default " TEST_CERT},
     {"cert2", OPT_CERT2, '<',
-     "Certificate file to use for servername; default is" TEST_CERT2},
+     "Certificate file to use for servername; default " TEST_CERT2},
     {"certform", OPT_CERTFORM, 'F',
      "Server certificate file format (PEM/DER/P12); has no effect"},
     {"cert_chain", OPT_CERT_CHAIN, '<',
@@ -824,7 +824,7 @@ const OPTIONS s_server_options[] = {
     {"key2", OPT_KEY2, '<',
      "-Private Key file to use for servername if not in -cert2"},
     {"keyform", OPT_KEYFORM, 'f', "Key format (ENGINE, other values ignored)"},
-    {"pass", OPT_PASS, 's', "Private key file pass phrase source"},
+    {"pass", OPT_PASS, 's', "Private key and cert file pass phrase source"},
     {"dcert", OPT_DCERT, '<',
      "Second server certificate file to use (usually for DSA)"},
     {"dcertform", OPT_DCERTFORM, 'F',
@@ -835,16 +835,14 @@ const OPTIONS s_server_options[] = {
      "Second private key file to use (usually for DSA)"},
     {"dkeyform", OPT_DKEYFORM, 'F',
      "Second key file format (ENGINE, other values ignored)"},
-    {"dpass", OPT_DPASS, 's', "Second private key file pass phrase source"},
+    {"dpass", OPT_DPASS, 's', "Second private key and cert file pass phrase source"},
     {"dhparam", OPT_DHPARAM, '<', "DH parameters file to use"},
     {"servername", OPT_SERVERNAME, 's',
      "Servername for HostName TLS extension"},
     {"servername_fatal", OPT_SERVERNAME_FATAL, '-',
      "mismatch send fatal alert (default warning alert)"},
-
     {"nbio_test", OPT_NBIO_TEST, '-', "Test with the non-blocking test bio"},
     {"crlf", OPT_CRLF, '-', "Convert LF from terminal into CRLF"},
-
     {"quiet", OPT_QUIET, '-', "No server output"},
     {"no_resume_ephemeral", OPT_NO_RESUME_EPHEMERAL, '-',
      "Disable caching and tickets if ephemeral (EC)DH is used"},
@@ -860,7 +858,7 @@ const OPTIONS s_server_options[] = {
     {"keymatexport", OPT_KEYMATEXPORT, 's',
      "Export keying material using label"},
     {"keymatexportlen", OPT_KEYMATEXPORTLEN, 'p',
-     "Export len bytes of keying material (default 20)"},
+     "Export len bytes of keying material; default 20"},
     {"CRL", OPT_CRL, '<', "CRL file to use"},
     {"CRLform", OPT_CRLFORM, 'F', "CRL file format (PEM or DER); default PEM"},
     {"crl_download", OPT_CRL_DOWNLOAD, '-',
@@ -1752,7 +1750,7 @@ int s_server_main(int argc, char *argv[])
         if (s_key == NULL)
             goto end;
 
-        s_cert = load_cert(s_cert_file, s_cert_format,
+        s_cert = load_cert_pass(s_cert_file, s_cert_format, pass,
                            "server certificate file");
 
         if (s_cert == NULL)
@@ -1769,7 +1767,7 @@ int s_server_main(int argc, char *argv[])
             if (s_key2 == NULL)
                 goto end;
 
-            s_cert2 = load_cert(s_cert_file2, s_cert_format,
+            s_cert2 = load_cert_pass(s_cert_file2, s_cert_format, pass,
                                 "second server certificate file");
 
             if (s_cert2 == NULL)
@@ -1814,7 +1812,7 @@ int s_server_main(int argc, char *argv[])
         if (s_dkey == NULL)
             goto end;
 
-        s_dcert = load_cert(s_dcert_file, s_dcert_format,
+        s_dcert = load_cert_pass(s_dcert_file, s_dcert_format, dpass,
                             "second server certificate file");
 
         if (s_dcert == NULL) {

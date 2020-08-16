@@ -138,7 +138,7 @@ The directory to output certificates to. The certificate will be
 written to a filename consisting of the serial number in hex with
 F<.pem> appended.
 
-=item B<-cert>
+=item B<-cert> I<filename>
 
 The CA certificate, which must match with B<-keyfile>.
 
@@ -197,7 +197,8 @@ self-signed certificate.
 
 =item B<-passin> I<arg>
 
-The key password source. For more information about the format of B<arg>
+The key and certificate password source.
+For more information about the format of B<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-notext>

@@ -258,7 +258,7 @@ See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<val>
 
-The private key password source.
+The private key and certificate file password source.
 For more information about the format of I<val>,
 see L<openssl(1)/Pass Phrase Options>.
 
@@ -293,7 +293,7 @@ See L<openssl(1)/Format Options>.
 
 =item B<-dpass> I<val>
 
-The passphrase for the additional private key.
+The passphrase for the additional private key and certificate.
 For more information about the format of I<val>,
 see L<openssl(1)/Pass Phrase Options>.
 

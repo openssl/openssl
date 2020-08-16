@@ -234,7 +234,7 @@ Suppresses sending of the SNI (Server Name Indication) extension in the
 ClientHello message. Cannot be used in conjunction with the B<-servername> or
 <-dane_tlsa_domain> options.
 
-=item B<-cert> I<certname>
+=item B<-cert> I<filename>
 
 The client certificate to use, if one is requested by the server.
 The default is not to use a certificate.
@@ -283,7 +283,8 @@ See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<arg>
 
-the private key password source. For more information about the format of I<arg>
+the private key and certifiate file password source.
+For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-verify> I<depth>

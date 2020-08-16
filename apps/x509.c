@@ -80,7 +80,7 @@ const OPTIONS x509_options[] = {
     {"inform", OPT_INFORM, 'f',
      "CSR input format (DER or PEM) - default PEM"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
+    {"passin", OPT_PASSIN, 's', "Private key and cert file pass-phrase source"},
     {"outform", OPT_OUTFORM, 'f',
      "Output format (DER or PEM) - default PEM"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -633,7 +633,7 @@ int x509_main(int argc, char **argv)
         if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
             goto end;
     } else {
-        x = load_cert(infile, FORMAT_UNDEF, "Certificate");
+        x = load_cert_pass(infile, FORMAT_UNDEF, passin, "Certificate");
         if (x == NULL)
             goto end;
         if (fkey != NULL && !X509_set_pubkey(x, fkey))
@@ -643,7 +643,7 @@ int x509_main(int argc, char **argv)
     }
 
     if (CA_flag) {
-        xca = load_cert(CAfile, CAformat, "CA Certificate");
+        xca = load_cert_pass(CAfile, CAformat, passin, "CA Certificate");
         if (xca == NULL)
             goto end;
     }
@@ -963,7 +963,7 @@ int x509_main(int argc, char **argv)
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
     ASN1_OBJECT_free(objtmp);
     release_engine(e);
-    OPENSSL_free(passin);
+    clear_free(passin);
     return ret;
 }
 
