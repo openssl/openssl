@@ -64,37 +64,37 @@ static int base_get_params(void *provctx, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_ALGORITHM base_serializer[] = {
-#define SER(name, fips, format, type, func_table)                           \
+static const OSSL_ALGORITHM base_encoder[] = {
+#define ENCODER(name, fips, format, type, func_table)                           \
     { name,                                                                 \
       "provider=base,fips=" fips ",format=" format ",type=" type,           \
       (func_table) }
 
-#include "serializers.inc"
+#include "encoders.inc"
     { NULL, NULL, NULL }
 };
-#undef SER
+#undef ENCODER
 
-static const OSSL_ALGORITHM base_deserializer[] = {
-#define DESER(name, fips, input, func_table)                                \
+static const OSSL_ALGORITHM base_decoder[] = {
+#define DECODER(name, fips, input, func_table)                                \
     { name,                                                                 \
       "provider=base,fips=" fips ",input=" input,                           \
       (func_table) }
 
-#include "deserializers.inc"
+#include "decoders.inc"
     { NULL, NULL, NULL }
 };
-#undef DESER
+#undef DECODER
 
 static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
                                          int *no_cache)
 {
     *no_cache = 0;
     switch (operation_id) {
-    case OSSL_OP_SERIALIZER:
-        return base_serializer;
-    case OSSL_OP_DESERIALIZER:
-        return base_deserializer;
+    case OSSL_OP_ENCODER:
+        return base_encoder;
+    case OSSL_OP_DECODER:
+        return base_decoder;
     }
     return NULL;
 }

@@ -35,7 +35,7 @@ make sure to get implementations of this provider and none other.
 The "fips=yes" property can be use to make sure only FIPS approved
 implementations are used for crypto operations.  This may also include
 other non-crypto support operations that are not in the fips provider,
-such as asymmetric key serializers,
+such as asymmetric key encoders,
 see L<OSSL_PROVIDER-default(7)/Asymmetric Key Management>.
 
 =head1 OPERATIONS AND ALGORITHMS

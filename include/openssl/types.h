@@ -212,10 +212,10 @@ typedef struct ossl_param_bld_st OSSL_PARAM_BLD;
 
 typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
-typedef struct ossl_serializer_st OSSL_SERIALIZER;
-typedef struct ossl_serializer_ctx_st OSSL_SERIALIZER_CTX;
-typedef struct ossl_deserializer_st OSSL_DESERIALIZER;
-typedef struct ossl_deserializer_ctx_st OSSL_DESERIALIZER_CTX;
+typedef struct ossl_encoder_st OSSL_ENCODER;
+typedef struct ossl_encoder_ctx_st OSSL_ENCODER_CTX;
+typedef struct ossl_decoder_st OSSL_DECODER;
+typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
 

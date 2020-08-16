@@ -19,7 +19,6 @@
 #include <openssl/dh.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
-#include <openssl/serializer.h>
 #include "crypto/store.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"

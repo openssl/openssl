@@ -13,17 +13,17 @@
  */
 
 #include <openssl/pem.h>
-#include <openssl/serializer.h>
+#include <openssl/encoder.h>
 
-/* Alternative IMPLEMENT macros for provided serializers */
+/* Alternative IMPLEMENT macros for provided encoders */
 
 # define IMPLEMENT_PEM_provided_write_body_vars(type, asn1)             \
     int ret = 0;                                                        \
-    const char *pq = OSSL_SERIALIZER_##asn1##_TO_PEM_PQ;                \
-    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_##type(x, pq); \
+    const char *pq = OSSL_ENCODER_##asn1##_TO_PEM_PQ;                   \
+    OSSL_ENCODER_CTX *ctx = OSSL_ENCODER_CTX_new_by_##type(x, pq);      \
                                                                         \
-    if (ctx != NULL && OSSL_SERIALIZER_CTX_get_serializer(ctx) == NULL) { \
-        OSSL_SERIALIZER_CTX_free(ctx);                                  \
+    if (ctx != NULL && OSSL_ENCODER_CTX_get_encoder(ctx) == NULL) {     \
+        OSSL_ENCODER_CTX_free(ctx);                                     \
         goto legacy;                                                    \
     }
 # define IMPLEMENT_PEM_provided_write_body_pass()                       \
@@ -38,31 +38,31 @@
     }                                                                   \
     if (enc != NULL) {                                                  \
         ret = 0;                                                        \
-        if (OSSL_SERIALIZER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),   \
-                                           NULL)) {                     \
+        if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),      \
+                                        NULL)) {                        \
             ret = 1;                                                    \
             if (kstr != NULL                                            \
-                && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, kstr, klen)) \
+                && !OSSL_ENCODER_CTX_set_passphrase(ctx, kstr, klen))   \
                 ret = 0;                                                \
             else if (cb != NULL                                         \
-                     && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx,     \
-                                                               cb, u))  \
+                     && !OSSL_ENCODER_CTX_set_passphrase_cb(ctx,        \
+                                                            cb, u))     \
                 ret = 0;                                                \
         }                                                               \
     }                                                                   \
     if (!ret) {                                                         \
-        OSSL_SERIALIZER_CTX_free(ctx);                                  \
+        OSSL_ENCODER_CTX_free(ctx);                                     \
         return 0;                                                       \
     }
 # define IMPLEMENT_PEM_provided_write_body_main(type, outtype)          \
-    ret = OSSL_SERIALIZER_to_##outtype(ctx, out);                       \
-    OSSL_SERIALIZER_CTX_free(ctx);                                      \
+    ret = OSSL_ENCODER_to_##outtype(ctx, out);                          \
+    OSSL_ENCODER_CTX_free(ctx);                                         \
     return ret
 # define IMPLEMENT_PEM_provided_write_body_fallback(str, asn1,          \
                                                     writename)          \
     legacy:                                                             \
     return PEM_ASN1_##writename((i2d_of_void *)i2d_##asn1, str, out,    \
-                                  x, NULL, NULL, 0, NULL, NULL)
+                                x, NULL, NULL, 0, NULL, NULL)
 # define IMPLEMENT_PEM_provided_write_body_fallback_cb(str, asn1,       \
                                                        writename)       \
     legacy:                                                             \
@@ -114,15 +114,15 @@
     IMPLEMENT_PEM_provided_write_bio(name, type, str, asn1)     \
     IMPLEMENT_PEM_provided_write_fp(name, type, str, asn1)
 
-# define IMPLEMENT_PEM_provided_write_cb(name, type, str, asn1) \
-    IMPLEMENT_PEM_provided_write_cb_bio(name, type, str, asn1)  \
+# define IMPLEMENT_PEM_provided_write_cb(name, type, str, asn1)         \
+    IMPLEMENT_PEM_provided_write_cb_bio(name, type, str, asn1)          \
     IMPLEMENT_PEM_provided_write_cb_fp(name, type, str, asn1)
 
-# define IMPLEMENT_PEM_provided_rw(name, type, str, asn1) \
+# define IMPLEMENT_PEM_provided_rw(name, type, str, asn1)       \
     IMPLEMENT_PEM_read(name, type, str, asn1)                   \
     IMPLEMENT_PEM_provided_write(name, type, str, asn1)
 
-# define IMPLEMENT_PEM_provided_rw_cb(name, type, str, asn1) \
+# define IMPLEMENT_PEM_provided_rw_cb(name, type, str, asn1)    \
     IMPLEMENT_PEM_read(name, type, str, asn1)                   \
     IMPLEMENT_PEM_provided_write_cb(name, type, str, asn1)
 

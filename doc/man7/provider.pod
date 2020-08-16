@@ -154,13 +154,13 @@ The number for this operation is B<OSSL_OP_ASYM_CIPHER>.
 The functions the provider can offer are described in
 L<provider-asym_cipher(7)>
 
-=item Serialization
+=item Encoding
 
 In the OpenSSL libraries, the corresponding method object is
-B<OSSL_SERIALIZER>.
-The number for this operation is B<OSSL_OP_SERIALIZER>.
+B<OSSL_ENCODER>.
+The number for this operation is B<OSSL_OP_ENCODER>.
 The functions the provider can offer are described in
-L<provider-serializer(7)>
+L<provider-encoder(7)>
 
 =back
 
@@ -277,7 +277,7 @@ The base provider is built in as part of the F<libcrypto> library.
 Should it be needed (if other providers are loaded and offer
 implementations of the same algorithms), the property "provider=base"
 can be used as a search criterion for these implementations. Some
-non-cryptographic algorithms (such as serializers for loading keys and
+non-cryptographic algorithms (such as encoders for loading keys and
 parameters from files) are not FIPS algorithm implementations in themselves but
 support algorithms from the FIPS provider and are allowed for use in "FIPS
 mode". The property "fips=yes" can be used to select such algorithms.

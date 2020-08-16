@@ -40,16 +40,16 @@ L OSSL_STORE    include/openssl/store.h         crypto/store/store_err.c
 L ESS           include/openssl/ess.h           crypto/ess/ess_err.c
 L PROP          include/internal/property.h     crypto/property/property_err.c
 L PROV          providers/common/include/prov/providercommon.h providers/common/provider_err.c
-L OSSL_SERIALIZER include/openssl/serializer.h  crypto/serializer/serializer_err.c
-L OSSL_DESERIALIZER include/openssl/deserializer.h  crypto/serializer/deserializer_err.c
+L OSSL_ENCODER  include/openssl/encoder.h       crypto/encoder/encoder_err.c
+L OSSL_DECODER  include/openssl/decoder.h       crypto/encoder/decoder_err.c
 L HTTP          include/openssl/http.h          crypto/http/http_err.c
 
 # additional header files to be scanned for function names
 L NONE          include/openssl/x509_vfy.h      NONE
-L NONE          crypto/ec/ec_local.h              NONE
-L NONE          crypto/cms/cms_local.h            NONE
-L NONE          crypto/ct/ct_local.h             NONE
-L NONE          ssl/ssl_local.h                  NONE
+L NONE          crypto/ec/ec_local.h            NONE
+L NONE          crypto/cms/cms_local.h          NONE
+L NONE          crypto/ct/ct_local.h            NONE
+L NONE          ssl/ssl_local.h                 NONE
 
 # SSL/TLS alerts
 R SSL_R_SSLV3_ALERT_UNEXPECTED_MESSAGE          1010
