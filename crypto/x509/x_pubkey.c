@@ -22,7 +22,7 @@
 #include "crypto/x509.h"
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
-#include <openssl/serializer.h>
+#include <openssl/encoder.h>
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;
@@ -97,18 +97,18 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         }
     } else if (pkey->keymgmt != NULL) {
         BIO *bmem = BIO_new(BIO_s_mem());
-        const char *serprop = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
-        OSSL_SERIALIZER_CTX *sctx =
-            OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, serprop);
+        const char *encprop = OSSL_ENCODER_PUBKEY_TO_DER_PQ;
+        OSSL_ENCODER_CTX *ectx =
+            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, encprop);
 
-        if (OSSL_SERIALIZER_to_bio(sctx, bmem)) {
+        if (OSSL_ENCODER_to_bio(ectx, bmem)) {
             const unsigned char *der = NULL;
             long derlen = BIO_get_mem_data(bmem, (char **)&der);
 
             pk = d2i_X509_PUBKEY(NULL, &der, derlen);
         }
 
-        OSSL_SERIALIZER_CTX_free(sctx);
+        OSSL_ENCODER_CTX_free(ectx);
         BIO_free(bmem);
     }
 
@@ -124,7 +124,7 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
 
     /*
      * pk->pkey is NULL when using the legacy routine, but is non-NULL when
-     * going through the serializer, and for all intents and purposes, it's
+     * going through the encoder, and for all intents and purposes, it's
      * a perfect copy of |pkey|, just not the same instance.  In that case,
      * we could simply return early, right here.
      * However, in the interest of being cautious leaning on paranoia, some
@@ -303,16 +303,16 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         }
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
-        const char *serprop = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
-        OSSL_SERIALIZER_CTX *ctx =
-            OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(a, serprop);
+        const char *encprop = OSSL_ENCODER_PUBKEY_TO_DER_PQ;
+        OSSL_ENCODER_CTX *ctx =
+            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, encprop);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
 
         if (ctx != NULL
             && out != NULL
-            && OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL
-            && OSSL_SERIALIZER_to_bio(ctx, out)
+            && OSSL_ENCODER_CTX_get_encoder(ctx) != NULL
+            && OSSL_ENCODER_to_bio(ctx, out)
             && BIO_get_mem_ptr(out, &buf) > 0) {
             ret = buf->length;
 
@@ -328,7 +328,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
             }
         }
         BIO_free(out);
-        OSSL_SERIALIZER_CTX_free(ctx);
+        OSSL_ENCODER_CTX_free(ctx);
     }
 
     return ret;

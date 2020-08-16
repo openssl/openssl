@@ -6,7 +6,7 @@ OSSL_PROVIDER-base - OpenSSL base provider
 
 =head1 DESCRIPTION
 
-The OpenSSL base provider supplies the serialization for OpenSSL's
+The OpenSSL base provider supplies the encoding for OpenSSL's
 asymmetric cryptography.
 
 =head2 Properties
@@ -36,7 +36,7 @@ implementations of this provider and none other.
 =back
 
 These may be used in a property query string with fetching functions to select
-which data are to be serialized.  Either the private key material, the public
+which data are to be encoded.  Either the private key material, the public
 key material or the domain parameters can be selected.
 
 =over 4
@@ -50,32 +50,32 @@ key material or the domain parameters can be selected.
 =back
 
 These may be used in a property query string with fetching functions to select
-the serialization output format.  Either the DER, PEM and plaintext are
+the encoding output format.  Either the DER, PEM and plaintext are
 currently permitted.
 
 =head1 OPERATIONS AND ALGORITHMS
 
 The OpenSSL base provider supports these operations and algorithms:
 
-=head2 Asymmetric Key Serializer
+=head2 Asymmetric Key Encoder
 
-In addition to "provider=base", some of these serializers define the
+In addition to "provider=base", some of these encoders define the
 property "fips=yes", to allow them to be used together with the FIPS
 provider.
 
 =over 4
 
-=item RSA, see L<OSSL_SERIALIZER-RSA(7)>
+=item RSA, see L<OSSL_ENCODER-RSA(7)>
 
-=item DH, see L<OSSL_SERIALIZER-DH(7)>
+=item DH, see L<OSSL_ENCODER-DH(7)>
 
-=item DSA, see L<OSSL_SERIALIZER-DSA(7)>
+=item DSA, see L<OSSL_ENCODER-DSA(7)>
 
-=item EC, see L<OSSL_SERIALIZER-EC(7)>
+=item EC, see L<OSSL_ENCODER-EC(7)>
 
-=item X25519, see L<OSSL_SERIALIZER-X25519(7)>
+=item X25519, see L<OSSL_ENCODER-X25519(7)>
 
-=item X448, see L<OSSL_SERIALIZER-X448(7)>
+=item X448, see L<OSSL_ENCODER-X448(7)>
 
 =back
 

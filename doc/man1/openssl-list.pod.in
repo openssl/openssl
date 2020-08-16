@@ -19,8 +19,8 @@ B<openssl list>
 [B<-random-generators>]
 [B<-cipher-commands>]
 [B<-cipher-algorithms>]
-[B<-serializers>]
-[B<-deserializers>]
+[B<-encoders>]
+[B<-decoders>]
 [B<-public-key-algorithms>]
 {- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-public-key-methods>]
@@ -84,18 +84,18 @@ Display a list of random number generators.
 See L</Display of algorithm names> for a description of how names are
 displayed.
 
-=item B<-serializers>
+=item B<-encoders>
 
-Display a list of serializers.
+Display a list of encoders.
 See L</Display of algorithm names> for a description of how names are
 displayed.
 
 In verbose mode, the algorithms provided by a provider will get additional
 information on what parameters each implementation supports.
 
-=item B<-deserializers>
+=item B<-decoders>
 
-Display a list of deserializers.
+Display a list of decoders.
 See L</Display of algorithm names> for a description of how names are
 displayed.
 

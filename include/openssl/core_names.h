@@ -400,23 +400,23 @@ extern "C" {
 #define OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION   "tls-negotiated-version"
 
 /*
- * Serializer / deserializer parameters
+ * Encoder / decoder parameters
  */
 /* The passphrase may be passed as a utf8 string or an octet string */
-#define OSSL_SERIALIZER_PARAM_CIPHER            OSSL_ALG_PARAM_CIPHER
-#define OSSL_SERIALIZER_PARAM_PROPERTIES        OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_SERIALIZER_PARAM_PASS              "passphrase"
+#define OSSL_ENCODER_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER
+#define OSSL_ENCODER_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES
+#define OSSL_ENCODER_PARAM_PASS         "passphrase"
 
-#define OSSL_DESERIALIZER_PARAM_CIPHER          OSSL_ALG_PARAM_CIPHER
-#define OSSL_DESERIALIZER_PARAM_PROPERTIES      OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_DESERIALIZER_PARAM_PASS            "passphrase"
-#define OSSL_DESERIALIZER_PARAM_INPUT_TYPE      "input-type"
-#define OSSL_DESERIALIZER_PARAM_DATA_TYPE       "data-type"
-#define OSSL_DESERIALIZER_PARAM_DATA            "data"
-#define OSSL_DESERIALIZER_PARAM_REFERENCE       "reference"
+#define OSSL_DECODER_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER
+#define OSSL_DECODER_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES
+#define OSSL_DECODER_PARAM_PASS         "passphrase"
+#define OSSL_DECODER_PARAM_INPUT_TYPE   "input-type"
+#define OSSL_DECODER_PARAM_DATA_TYPE    "data-type"
+#define OSSL_DECODER_PARAM_DATA         "data"
+#define OSSL_DECODER_PARAM_REFERENCE    "reference"
 
 /* Passphrase callback parameters */
-#define OSSL_PASSPHRASE_PARAM_INFO              "info"
+#define OSSL_PASSPHRASE_PARAM_INFO      "info"
 
 /* Keygen callback parameters, from provider to libcrypto */
 #define OSSL_GEN_PARAM_POTENTIAL            "potential" /* integer */

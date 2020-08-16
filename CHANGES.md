@@ -612,22 +612,22 @@ OpenSSL 3.0
 
    *Rich Salz*
 
- * Introduced a new method type and API, OSSL_SERIALIZER, to
-   represent generic serializers.  An implementation is expected to
-   be able to serialize an object associated with a given name (such
+ * Introduced a new method type and API, OSSL_ENCODER, to
+   represent generic encoders.  An implementation is expected to
+   be able to encode an object associated with a given name (such
    as an algorithm name for an asymmetric key) into forms given by
    implementation properties.
 
-   Serializers are primarily used from inside libcrypto, through
+   Encoders are primarily used from inside libcrypto, through
    calls to functions like EVP_PKEY_print_private(),
    PEM_write_bio_PrivateKey() and similar.
 
-   Serializers are specified in such a way that they can be made to
+   Encoders are specified in such a way that they can be made to
    directly handle the provider side portion of an object, if this
-   provider side part comes from the same provider as the serializer
+   provider side part comes from the same provider as the encoder
    itself, but can also be made to handle objects in parametrized
    form (as an OSSL_PARAM array of data).  This allows a provider to
-   offer generic serializers as a service for any other provider.
+   offer generic encoders as a service for any other provider.
 
    *Richard Levitte*
 
@@ -769,13 +769,13 @@ OpenSSL 3.0
    *Richard Levitte*
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
-   used even when parsing explicit parameters, when loading a serialized key
+   used even when parsing explicit parameters, when loading a encoded key
    or calling `EC_GROUP_new_from_ecpkparameters()`/
    `EC_GROUP_new_from_ecparameters()`.
    This prevents bypass of security hardening and performance gains,
    especially for curves with specialized EC_METHODs.
    By default, if a key encoded with explicit parameters is loaded and later
-   serialized, the output is still encoded with explicit parameters, even if
+   encoded, the output is still encoded with explicit parameters, even if
    internally a "named" EC_GROUP is used for computation.
 
    *Nicola Tuveri*
@@ -1255,13 +1255,13 @@ OpenSSL 1.1.1
    *Matthias St. Pierre*
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
-   used even when parsing explicit parameters, when loading a serialized key
+   used even when parsing explicit parameters, when loading a encoded key
    or calling `EC_GROUP_new_from_ecpkparameters()`/
    `EC_GROUP_new_from_ecparameters()`.
    This prevents bypass of security hardening and performance gains,
    especially for curves with specialized EC_METHODs.
    By default, if a key encoded with explicit parameters is loaded and later
-   serialized, the output is still encoded with explicit parameters, even if
+   encoded, the output is still encoded with explicit parameters, even if
    internally a "named" EC_GROUP is used for computation.
 
    *Nicola Tuveri*
@@ -2025,13 +2025,13 @@ OpenSSL 1.1.0
 ### Changes between 1.1.0k and 1.1.0l [10 Sep 2019]
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
-   used even when parsing explicit parameters, when loading a serialized key
+   used even when parsing explicit parameters, when loading a encoded key
    or calling `EC_GROUP_new_from_ecpkparameters()`/
    `EC_GROUP_new_from_ecparameters()`.
    This prevents bypass of security hardening and performance gains,
    especially for curves with specialized EC_METHODs.
    By default, if a key encoded with explicit parameters is loaded and later
-   serialized, the output is still encoded with explicit parameters, even if
+   encoded, the output is still encoded with explicit parameters, even if
    internally a "named" EC_GROUP is used for computation.
 
    *Nicola Tuveri*
@@ -3822,13 +3822,13 @@ OpenSSL 1.0.2
 ### Changes between 1.0.2s and 1.0.2t [10 Sep 2019]
 
  * For built-in EC curves, ensure an EC_GROUP built from the curve name is
-   used even when parsing explicit parameters, when loading a serialized key
+   used even when parsing explicit parameters, when loading a encoded key
    or calling `EC_GROUP_new_from_ecpkparameters()`/
    `EC_GROUP_new_from_ecparameters()`.
    This prevents bypass of security hardening and performance gains,
    especially for curves with specialized EC_METHODs.
    By default, if a key encoded with explicit parameters is loaded and later
-   serialized, the output is still encoded with explicit parameters, even if
+   encoded, the output is still encoded with explicit parameters, even if
    internally a "named" EC_GROUP is used for computation.
 
    *Nicola Tuveri*

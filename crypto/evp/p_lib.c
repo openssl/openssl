@@ -29,7 +29,7 @@
 #include <openssl/engine.h>
 #include <openssl/params.h>
 #include <openssl/param_build.h>
-#include <openssl/serializer.h>
+#include <openssl/encoder.h>
 #include <openssl/core_names.h>
 
 #include "crypto/asn1.h"
@@ -1143,23 +1143,23 @@ static int unsup_alg(BIO *out, const EVP_PKEY *pkey, int indent,
 }
 
 static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
-                      const char *propquery /* For provided serialization */,
+                      const char *propquery /* For provided encoding */,
                       int (*legacy_print)(BIO *out, const EVP_PKEY *pkey,
                                           int indent, ASN1_PCTX *pctx),
                       ASN1_PCTX *legacy_pctx /* For legacy print */)
 {
     int pop_f_prefix;
     long saved_indent;
-    OSSL_SERIALIZER_CTX *ctx = NULL;
+    OSSL_ENCODER_CTX *ctx = NULL;
     int ret = -2;                /* default to unsupported */
 
     if (!print_set_indent(&out, &pop_f_prefix, &saved_indent, indent))
         return 0;
 
-    ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pkey, propquery);
-    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL)
-        ret = OSSL_SERIALIZER_to_bio(ctx, out);
-    OSSL_SERIALIZER_CTX_free(ctx);
+    ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, propquery);
+    if (OSSL_ENCODER_CTX_get_encoder(ctx) != NULL)
+        ret = OSSL_ENCODER_to_bio(ctx, out);
+    OSSL_ENCODER_CTX_free(ctx);
 
     if (ret != -2)
         goto end;
@@ -1178,7 +1178,7 @@ static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
 int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx)
 {
-    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ,
+    return print_pkey(pkey, out, indent, OSSL_ENCODER_PUBKEY_TO_TEXT_PQ,
                       (pkey->ameth != NULL ? pkey->ameth->pub_print : NULL),
                       pctx);
 }
@@ -1186,7 +1186,7 @@ int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
 int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
                            int indent, ASN1_PCTX *pctx)
 {
-    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ,
+    return print_pkey(pkey, out, indent, OSSL_ENCODER_PrivateKey_TO_TEXT_PQ,
                       (pkey->ameth != NULL ? pkey->ameth->priv_print : NULL),
                       pctx);
 }
@@ -1194,7 +1194,7 @@ int EVP_PKEY_print_private(BIO *out, const EVP_PKEY *pkey,
 int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
                           int indent, ASN1_PCTX *pctx)
 {
-    return print_pkey(pkey, out, indent, OSSL_SERIALIZER_Parameters_TO_TEXT_PQ,
+    return print_pkey(pkey, out, indent, OSSL_ENCODER_Parameters_TO_TEXT_PQ,
                       (pkey->ameth != NULL ? pkey->ameth->param_print : NULL),
                       pctx);
 }

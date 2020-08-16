@@ -27,7 +27,6 @@
 /* TODO(3.0) remove when provider SM2 key generation is implemented */
 #ifdef TMP_SM2_HACK
 # include <openssl/ec.h>
-# include <openssl/serializer.h>
 # include "internal/sizes.h"
 #endif
 

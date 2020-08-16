@@ -16,8 +16,8 @@
 #include <openssl/provider.h>
 #include <openssl/safestack.h>
 #include <openssl/kdf.h>
-#include <openssl/serializer.h>
-#include <openssl/deserializer.h>
+#include <openssl/encoder.h>
+#include <openssl/decoder.h>
 #include <openssl/core_names.h>
 #include "apps.h"
 #include "app_params.h"
@@ -355,124 +355,124 @@ static void list_random_generators(void)
 }
 
 /*
- * Serializers
+ * Encoders
  */
-DEFINE_STACK_OF(OSSL_SERIALIZER)
-static int serializer_cmp(const OSSL_SERIALIZER * const *a,
-                          const OSSL_SERIALIZER * const *b)
+DEFINE_STACK_OF(OSSL_ENCODER)
+static int encoder_cmp(const OSSL_ENCODER * const *a,
+                       const OSSL_ENCODER * const *b)
 {
-    int ret = OSSL_SERIALIZER_number(*a) - OSSL_SERIALIZER_number(*b);
+    int ret = OSSL_ENCODER_number(*a) - OSSL_ENCODER_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_SERIALIZER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_SERIALIZER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_ENCODER_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_ENCODER_provider(*b)));
     return ret;
 }
 
-static void collect_serializers(OSSL_SERIALIZER *serializer, void *stack)
+static void collect_encoders(OSSL_ENCODER *encoder, void *stack)
 {
-    STACK_OF(OSSL_SERIALIZER) *serializer_stack = stack;
+    STACK_OF(OSSL_ENCODER) *encoder_stack = stack;
 
-    sk_OSSL_SERIALIZER_push(serializer_stack, serializer);
-    OSSL_SERIALIZER_up_ref(serializer);
+    sk_OSSL_ENCODER_push(encoder_stack, encoder);
+    OSSL_ENCODER_up_ref(encoder);
 }
 
-static void list_serializers(void)
+static void list_encoders(void)
 {
-    STACK_OF(OSSL_SERIALIZER) *serializers;
+    STACK_OF(OSSL_ENCODER) *encoders;
     int i;
 
-    serializers = sk_OSSL_SERIALIZER_new(serializer_cmp);
-    if (serializers == NULL) {
+    encoders = sk_OSSL_ENCODER_new(encoder_cmp);
+    if (encoders == NULL) {
         BIO_printf(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided SERIALIZERs:\n");
-    OSSL_SERIALIZER_do_all_provided(NULL, collect_serializers, serializers);
-    sk_OSSL_SERIALIZER_sort(serializers);
+    BIO_printf(bio_out, "Provided ENCODERs:\n");
+    OSSL_ENCODER_do_all_provided(NULL, collect_encoders, encoders);
+    sk_OSSL_ENCODER_sort(encoders);
 
-    for (i = 0; i < sk_OSSL_SERIALIZER_num(serializers); i++) {
-        OSSL_SERIALIZER *k = sk_OSSL_SERIALIZER_value(serializers, i);
+    for (i = 0; i < sk_OSSL_ENCODER_num(encoders); i++) {
+        OSSL_ENCODER *k = sk_OSSL_ENCODER_value(encoders, i);
         STACK_OF(OPENSSL_CSTRING) *names =
             sk_OPENSSL_CSTRING_new(name_cmp);
 
-        OSSL_SERIALIZER_names_do_all(k, collect_names, names);
+        OSSL_ENCODER_names_do_all(k, collect_names, names);
 
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s (%s)\n",
-                   OSSL_PROVIDER_name(OSSL_SERIALIZER_provider(k)),
-                   OSSL_SERIALIZER_properties(k));
+                   OSSL_PROVIDER_name(OSSL_ENCODER_provider(k)),
+                   OSSL_ENCODER_properties(k));
 
         sk_OPENSSL_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("settable operation parameters",
-                              OSSL_SERIALIZER_settable_ctx_params(k), 4);
+                              OSSL_ENCODER_settable_ctx_params(k), 4);
         }
     }
-    sk_OSSL_SERIALIZER_pop_free(serializers, OSSL_SERIALIZER_free);
+    sk_OSSL_ENCODER_pop_free(encoders, OSSL_ENCODER_free);
 }
 
 /*
- * Deserializers
+ * Decoders
  */
-DEFINE_STACK_OF(OSSL_DESERIALIZER)
-static int deserializer_cmp(const OSSL_DESERIALIZER * const *a,
-                            const OSSL_DESERIALIZER * const *b)
+DEFINE_STACK_OF(OSSL_DECODER)
+static int decoder_cmp(const OSSL_DECODER * const *a,
+                       const OSSL_DECODER * const *b)
 {
-    int ret = OSSL_DESERIALIZER_number(*a) - OSSL_DESERIALIZER_number(*b);
+    int ret = OSSL_DECODER_number(*a) - OSSL_DECODER_number(*b);
 
     if (ret == 0)
-        ret = strcmp(OSSL_PROVIDER_name(OSSL_DESERIALIZER_provider(*a)),
-                     OSSL_PROVIDER_name(OSSL_DESERIALIZER_provider(*b)));
+        ret = strcmp(OSSL_PROVIDER_name(OSSL_DECODER_provider(*a)),
+                     OSSL_PROVIDER_name(OSSL_DECODER_provider(*b)));
     return ret;
 }
 
-static void collect_deserializers(OSSL_DESERIALIZER *deserializer, void *stack)
+static void collect_decoders(OSSL_DECODER *decoder, void *stack)
 {
-    STACK_OF(OSSL_DESERIALIZER) *deserializer_stack = stack;
+    STACK_OF(OSSL_DECODER) *decoder_stack = stack;
 
-    sk_OSSL_DESERIALIZER_push(deserializer_stack, deserializer);
-    OSSL_DESERIALIZER_up_ref(deserializer);
+    sk_OSSL_DECODER_push(decoder_stack, decoder);
+    OSSL_DECODER_up_ref(decoder);
 }
 
-static void list_deserializers(void)
+static void list_decoders(void)
 {
-    STACK_OF(OSSL_DESERIALIZER) *deserializers;
+    STACK_OF(OSSL_DECODER) *decoders;
     int i;
 
-    deserializers = sk_OSSL_DESERIALIZER_new(deserializer_cmp);
-    if (deserializers == NULL) {
+    decoders = sk_OSSL_DECODER_new(decoder_cmp);
+    if (decoders == NULL) {
         BIO_printf(bio_err, "ERROR: Memory allocation\n");
         return;
     }
-    BIO_printf(bio_out, "Provided DESERIALIZERs:\n");
-    OSSL_DESERIALIZER_do_all_provided(NULL, collect_deserializers,
-                                      deserializers);
-    sk_OSSL_DESERIALIZER_sort(deserializers);
+    BIO_printf(bio_out, "Provided DECODERs:\n");
+    OSSL_DECODER_do_all_provided(NULL, collect_decoders,
+                                 decoders);
+    sk_OSSL_DECODER_sort(decoders);
 
-    for (i = 0; i < sk_OSSL_DESERIALIZER_num(deserializers); i++) {
-        OSSL_DESERIALIZER *k = sk_OSSL_DESERIALIZER_value(deserializers, i);
+    for (i = 0; i < sk_OSSL_DECODER_num(decoders); i++) {
+        OSSL_DECODER *k = sk_OSSL_DECODER_value(decoders, i);
         STACK_OF(OPENSSL_CSTRING) *names =
             sk_OPENSSL_CSTRING_new(name_cmp);
 
-        OSSL_DESERIALIZER_names_do_all(k, collect_names, names);
+        OSSL_DECODER_names_do_all(k, collect_names, names);
 
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
         BIO_printf(bio_out, " @ %s (%s)\n",
-                   OSSL_PROVIDER_name(OSSL_DESERIALIZER_provider(k)),
-                   OSSL_DESERIALIZER_properties(k));
+                   OSSL_PROVIDER_name(OSSL_DECODER_provider(k)),
+                   OSSL_DECODER_properties(k));
 
         sk_OPENSSL_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("settable operation parameters",
-                              OSSL_DESERIALIZER_settable_ctx_params(k), 4);
+                              OSSL_DECODER_settable_ctx_params(k), 4);
         }
     }
-    sk_OSSL_DESERIALIZER_pop_free(deserializers, OSSL_DESERIALIZER_free);
+    sk_OSSL_DECODER_pop_free(decoders, OSSL_DECODER_free);
 }
 
 static void list_missing_help(void)
@@ -554,7 +554,7 @@ static void list_options_for_command(const char *command)
             break;
     if (fp->name == NULL) {
         BIO_printf(bio_err, "Invalid command '%s'; type \"help\" for a list.\n",
-                command);
+                   command);
         return;
     }
 
@@ -821,8 +821,8 @@ typedef enum HELPLIST_CHOICE {
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED,
-    OPT_KDF_ALGORITHMS, OPT_RANDOM_GENERATORS, OPT_SERIALIZERS,
-    OPT_DESERIALIZERS,
+    OPT_KDF_ALGORITHMS, OPT_RANDOM_GENERATORS, OPT_ENCODERS,
+    OPT_DECODERS,
     OPT_MISSING_HELP, OPT_OBJECTS,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES, 
@@ -847,15 +847,14 @@ const OPTIONS list_options[] = {
     {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
      "List of key derivation and pseudo random function algorithms"},
     {"random-generators", OPT_RANDOM_GENERATORS, '-',
-      "List of random number generators"},
+     "List of random number generators"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
      "List of message authentication code algorithms"},
     {"cipher-commands", OPT_CIPHER_COMMANDS, '-', "List of cipher commands"},
     {"cipher-algorithms", OPT_CIPHER_ALGORITHMS, '-',
      "List of cipher algorithms"},
-    {"serializers", OPT_SERIALIZERS, '-', "List of serialization methods" },
-    {"deserializers", OPT_DESERIALIZERS, '-',
-      "List of deserialization methods" },
+    {"encoders", OPT_ENCODERS, '-', "List of encoding methods" },
+    {"decoders", OPT_DECODERS, '-', "List of decoding methods" },
     {"public-key-algorithms", OPT_PK_ALGORITHMS, '-',
      "List of public key algorithms"},
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -890,8 +889,8 @@ int list_main(int argc, char **argv)
         unsigned int mac_algorithms:1;
         unsigned int cipher_commands:1;
         unsigned int cipher_algorithms:1;
-        unsigned int serializer_algorithms:1;
-        unsigned int deserializer_algorithms:1;
+        unsigned int encoder_algorithms:1;
+        unsigned int decoder_algorithms:1;
         unsigned int pk_algorithms:1;
         unsigned int pk_method:1;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -943,11 +942,11 @@ opthelp:
         case OPT_CIPHER_ALGORITHMS:
             todo.cipher_algorithms = 1;
             break;
-        case OPT_SERIALIZERS:
-            todo.serializer_algorithms = 1;
+        case OPT_ENCODERS:
+            todo.encoder_algorithms = 1;
             break;
-        case OPT_DESERIALIZERS:
-            todo.deserializer_algorithms = 1;
+        case OPT_DECODERS:
+            todo.decoder_algorithms = 1;
             break;
         case OPT_PK_ALGORITHMS:
             todo.pk_algorithms = 1;
@@ -1003,10 +1002,10 @@ opthelp:
         list_type(FT_cipher, one);
     if (todo.cipher_algorithms)
         list_ciphers();
-    if (todo.serializer_algorithms)
-        list_serializers();
-    if (todo.deserializer_algorithms)
-        list_deserializers();
+    if (todo.encoder_algorithms)
+        list_encoders();
+    if (todo.decoder_algorithms)
+        list_decoders();
     if (todo.pk_algorithms)
         list_pkey();
 #ifndef OPENSSL_NO_DEPRECATED_3_0

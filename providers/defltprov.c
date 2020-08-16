@@ -395,27 +395,27 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM deflt_serializer[] = {
-#define SER(name, fips, format, type, func_table)                           \
+static const OSSL_ALGORITHM deflt_encoder[] = {
+#define ENCODER(name, fips, format, type, func_table)                           \
     { name,                                                                 \
       "provider=default,fips=" fips ",format=" format ",type=" type,        \
       (func_table) }
 
-#include "serializers.inc"
+#include "encoders.inc"
     { NULL, NULL, NULL }
 };
-#undef SER
+#undef ENCODER
 
-static const OSSL_ALGORITHM deflt_deserializer[] = {
-#define DESER(name, fips, input, func_table)                                \
+static const OSSL_ALGORITHM deflt_decoder[] = {
+#define DECODER(name, fips, input, func_table)                                \
     { name,                                                                 \
       "provider=default,fips=" fips ",input=" input,                        \
       (func_table) }
 
-#include "deserializers.inc"
+#include "decoders.inc"
     { NULL, NULL, NULL }
 };
-#undef DESER
+#undef DECODER
 
 static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
                                          int *no_cache)
@@ -441,10 +441,10 @@ static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
         return deflt_signature;
     case OSSL_OP_ASYM_CIPHER:
         return deflt_asym_cipher;
-    case OSSL_OP_SERIALIZER:
-        return deflt_serializer;
-    case OSSL_OP_DESERIALIZER:
-        return deflt_deserializer;
+    case OSSL_OP_ENCODER:
+        return deflt_encoder;
+    case OSSL_OP_DECODER:
+        return deflt_decoder;
     }
     return NULL;
 }

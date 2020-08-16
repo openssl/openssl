@@ -113,8 +113,8 @@ struct err_state_st {
 # define ERR_LIB_CRMF            56
 # define ERR_LIB_PROV            57
 # define ERR_LIB_CMP             58
-# define ERR_LIB_OSSL_SERIALIZER 59
-# define ERR_LIB_OSSL_DESERIALIZER 60
+# define ERR_LIB_OSSL_ENCODER 59
+# define ERR_LIB_OSSL_DECODER 60
 # define ERR_LIB_HTTP            61
 
 # define ERR_LIB_USER            128

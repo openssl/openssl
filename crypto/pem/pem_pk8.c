@@ -15,7 +15,7 @@
 #include <openssl/x509.h>
 #include <openssl/pkcs12.h>
 #include <openssl/pem.h>
-#include <openssl/serializer.h>
+#include <openssl/encoder.h>
 
 static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder,
                       int nid, const EVP_CIPHER *enc,
@@ -69,9 +69,9 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
 {
     int ret = 0;
     const char *pq = isder
-        ? OSSL_SERIALIZER_PrivateKey_TO_DER_PQ
-        : OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ;
-    OSSL_SERIALIZER_CTX *ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(x, pq);
+        ? OSSL_ENCODER_PrivateKey_TO_DER_PQ
+        : OSSL_ENCODER_PrivateKey_TO_PEM_PQ;
+    OSSL_ENCODER_CTX *ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(x, pq);
 
     if (ctx == NULL)
         return 0;
@@ -90,12 +90,11 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
         }
     }
 
-    if (OSSL_SERIALIZER_CTX_get_serializer(ctx) != NULL) {
+    if (OSSL_ENCODER_CTX_get_encoder(ctx) != NULL) {
         ret = 1;
         if (enc != NULL) {
             ret = 0;
-            if (OSSL_SERIALIZER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc),
-                                               NULL)) {
+            if (OSSL_ENCODER_CTX_set_cipher(ctx, EVP_CIPHER_name(enc), NULL)) {
                 const unsigned char *ukstr = (const unsigned char *)kstr;
 
                 /*
@@ -106,14 +105,14 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
                  */
                 ret = 1;
                 if (kstr != NULL
-                    && !OSSL_SERIALIZER_CTX_set_passphrase(ctx, ukstr, klen))
+                    && !OSSL_ENCODER_CTX_set_passphrase(ctx, ukstr, klen))
                     ret = 0;
                 else if (cb != NULL
-                         && !OSSL_SERIALIZER_CTX_set_passphrase_cb(ctx, cb, u))
+                         && !OSSL_ENCODER_CTX_set_passphrase_cb(ctx, cb, u))
                     ret = 0;
             }
         }
-        ret = ret && OSSL_SERIALIZER_to_bio(ctx, bp);
+        ret = ret && OSSL_ENCODER_to_bio(ctx, bp);
     } else {
         X509_SIG *p8;
         PKCS8_PRIV_KEY_INFO *p8inf;
@@ -153,7 +152,7 @@ static int do_pk8pkey(BIO *bp, const EVP_PKEY *x, int isder, int nid,
      legacy_end:
         PKCS8_PRIV_KEY_INFO_free(p8inf);
     }
-    OSSL_SERIALIZER_CTX_free(ctx);
+    OSSL_ENCODER_CTX_free(ctx);
     return ret;
 }
 
@@ -261,4 +260,4 @@ IMPLEMENT_PEM_rw(PKCS8, X509_SIG, PEM_STRING_PKCS8, X509_SIG)
 
 
 IMPLEMENT_PEM_rw(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO, PEM_STRING_PKCS8INF,
-             PKCS8_PRIV_KEY_INFO)
+                 PKCS8_PRIV_KEY_INFO)

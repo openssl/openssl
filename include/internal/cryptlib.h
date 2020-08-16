@@ -155,8 +155,8 @@ typedef struct ossl_ex_data_global_st {
 # define OPENSSL_CTX_RAND_CRNGT_INDEX               7
 # define OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX     8
 # define OPENSSL_CTX_FIPS_PROV_INDEX                9
-# define OPENSSL_CTX_SERIALIZER_STORE_INDEX        10
-# define OPENSSL_CTX_DESERIALIZER_STORE_INDEX      11
+# define OPENSSL_CTX_ENCODER_STORE_INDEX        10
+# define OPENSSL_CTX_DECODER_STORE_INDEX      11
 # define OPENSSL_CTX_SELF_TEST_CB_INDEX            12
 # define OPENSSL_CTX_BIO_PROV_INDEX                13
 # define OPENSSL_CTX_GLOBAL_PROPERTIES             14

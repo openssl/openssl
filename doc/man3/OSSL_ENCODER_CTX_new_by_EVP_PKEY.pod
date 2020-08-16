@@ -1,0 +1,144 @@
+=pod
+
+=head1 NAME
+
+OSSL_ENCODER_CTX_new_by_EVP_PKEY,
+OSSL_ENCODER_CTX_set_cipher,
+OSSL_ENCODER_CTX_set_passphrase,
+OSSL_ENCODER_CTX_set_passphrase_cb,
+OSSL_ENCODER_CTX_set_passphrase_ui,
+OSSL_ENCODER_PUBKEY_TO_PEM_PQ,
+OSSL_ENCODER_PrivateKey_TO_PEM_PQ,
+OSSL_ENCODER_Parameters_TO_PEM_PQ,
+OSSL_ENCODER_PUBKEY_TO_DER_PQ,
+OSSL_ENCODER_PrivateKey_TO_DER_PQ,
+OSSL_ENCODER_Parameters_TO_DER_PQ,
+OSSL_ENCODER_PUBKEY_TO_TEXT_PQ,
+OSSL_ENCODER_PrivateKey_TO_TEXT_PQ,
+OSSL_ENCODER_Parameters_TO_TEXT_PQ
+- Encoder routines to encode EVP_PKEYs
+
+=head1 SYNOPSIS
+
+ #include <openssl/encoder.h>
+
+ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
+                                                    const char *propquery);
+
+ int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
+                                 const char *cipher_name,
+                                 const char *propquery);
+ int OSSL_ENCODER_CTX_set_passphrase(OSSL_ENCODER_CTX *ctx,
+                                     const unsigned char *kstr,
+                                     size_t klen);
+ int OSSL_ENCODER_CTX_set_passphrase_cb(OSSL_ENCODER_CTX *ctx,
+                                        pem_password_cb *cb, void *cbarg);
+ int OSSL_ENCODER_CTX_set_passphrase_ui(OSSL_ENCODER_CTX *ctx,
+                                        const UI_METHOD *ui_method,
+                                        void *ui_data);
+
+ #define OSSL_ENCODER_PUBKEY_TO_PEM_PQ "format=pem,type=public"
+ #define OSSL_ENCODER_PrivateKey_TO_PEM_PQ "format=pem,type=private"
+ #define OSSL_ENCODER_Parameters_TO_PEM_PQ "format=pem,type=parameters"
+
+ #define OSSL_ENCODER_PUBKEY_TO_DER_PQ "format=der,type=public"
+ #define OSSL_ENCODER_PrivateKey_TO_DER_PQ "format=der,type=private"
+ #define OSSL_ENCODER_Parameters_TO_DER_PQ "format=der,type=parameters"
+
+ #define OSSL_ENCODER_PUBKEY_TO_TEXT_PQ "format=text,type=public"
+ #define OSSL_ENCODER_PrivateKey_TO_TEXT_PQ "format=text,type=private"
+ #define OSSL_ENCODER_Parameters_TO_TEXT_PQ "format=text,type=parameters"
+
+=head1 DESCRIPTION
+
+OSSL_ENCODER_CTX_new_by_EVP_PKEY() creates a B<OSSL_ENCODER_CTX>
+with a suitable attached output routine for B<EVP_PKEY>s.  It will
+search for a encoder implementation that matches the algorithm of
+the B<EVP_PKEY> and the property query given with I<propquery>.  It
+will prefer to find a encoder from the same provider as the key
+data of the B<EVP_PKEY> itself, but failing that, it will choose the
+first encoder that supplies a generic encoding function.
+
+If no suitable encoder was found, OSSL_ENCODER_CTX_new_by_EVP_PKEY()
+still creates a B<OSSL_ENCODER_CTX>, but with no associated
+encoder (L<OSSL_ENCODER_CTX_get_encoder(3)> returns NULL).
+This helps the caller distinguish between an error when creating
+the B<OSSL_ENCODER_CTX>, and the lack the encoder support and
+act accordingly.
+
+OSSL_ENCODER_CTX_set_cipher() tells the implementation what cipher
+should be used to encrypt encoded keys.  The cipher is given by
+name I<cipher_name>.  The interpretation of that I<cipher_name> is
+implementation dependent.  The implementation may implement the digest
+directly itself or by other implementations, or it may choose to fetch
+it.  If the implementation supports fetching the cipher, then it may
+use I<propquery> as properties to be queried for when fetching.
+I<cipher_name> may also be NULL, which will result in unencrypted
+encoding.
+
+OSSL_ENCODER_CTX_set_passphrase() gives the implementation a
+pass phrase to use when encrypting the encoded private key.
+Alternatively, a pass phrase callback may be specified with the
+following functions.
+
+OSSL_ENCODER_CTX_set_passphrase_cb() and
+OSSL_ENCODER_CTX_set_passphrase_ui() sets up a callback method that
+the implementation can use to prompt for a pass phrase.
+
+=for comment Note that the callback method is called indirectly,
+through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
+
+The macros B<OSSL_ENCODER_PUBKEY_TO_PEM_PQ>,
+B<OSSL_ENCODER_PrivateKey_TO_PEM_PQ>,
+B<OSSL_ENCODER_Parameters_TO_PEM_PQ>,
+B<OSSL_ENCODER_PUBKEY_TO_DER_PQ>,
+B<OSSL_ENCODER_PrivateKey_TO_DER_PQ>,
+B<OSSL_ENCODER_Parameters_TO_DER_PQ>,
+B<OSSL_ENCODER_PUBKEY_TO_TEXT_PQ>,
+B<OSSL_ENCODER_PrivateKey_TO_TEXT_PQ>,
+B<OSSL_ENCODER_Parameters_TO_TEXT_PQ> are convenience macros with
+property queries to encode the B<EVP_PKEY> as a public key, private
+key or parameters to B<PEM>, to B<DER>, or to text.
+
+=head1 RETURN VALUES
+
+OSSL_ENCODER_CTX_new_by_EVP_PKEY() returns a pointer to a
+B<OSSL_ENCODER_CTX>, or NULL if it couldn't be created.
+
+OSSL_ENCODER_CTX_set_cipher(),
+OSSL_ENCODER_CTX_set_passphrase(),
+OSSL_ENCODER_CTX_set_passphrase_cb(), and
+OSSL_ENCODER_CTX_set_passphrase_ui() all return 1 on success, or 0
+on failure.
+
+=head1 NOTES
+
+Parts of the function and macro names are made to match already
+existing OpenSSL names.
+
+B<EVP_PKEY> in OSSL_ENCODER_CTX_new_by_EVP_PKEY() matches the type
+name, thus making for the naming pattern
+B<OSSL_ENCODER_CTX_new_by_I<TYPE>>() when new types are handled.
+
+B<PUBKEY>, B<PrivateKey> and B<Parameters> in the macro names match
+the B<I<TYPE>> part of B<PEM_write_bio_I<TYPE>> functions as well
+as B<i2d_I<TYPE>_bio> functions.
+
+=head1 SEE ALSO
+
+L<provider(7)>, L<OSSL_ENCODER(3)>, L<OSSL_ENCODER_CTX(3)>
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

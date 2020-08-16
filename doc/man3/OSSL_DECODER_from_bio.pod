@@ -1,0 +1,276 @@
+=pod
+
+=head1 NAME
+
+OSSL_DECODER_from_bio,
+OSSL_DECODER_from_fp,
+OSSL_DECODER_CTX_set_input_type,
+OSSL_DECODER_CTX_add_decoder,
+OSSL_DECODER_CTX_add_extra,
+OSSL_DECODER_CTX_num_decoders,
+OSSL_DECODER_INSTANCE,
+OSSL_DECODER_CONSTRUCT,
+OSSL_DECODER_CLEANUP,
+OSSL_DECODER_CTX_set_construct,
+OSSL_DECODER_CTX_set_construct_data,
+OSSL_DECODER_CTX_set_cleanup,
+OSSL_DECODER_CTX_get_construct,
+OSSL_DECODER_CTX_get_construct_data,
+OSSL_DECODER_CTX_get_cleanup,
+OSSL_DECODER_export,
+OSSL_DECODER_INSTANCE_decoder,
+OSSL_DECODER_INSTANCE_decoder_ctx
+- Routines to perform a decoding
+
+=head1 SYNOPSIS
+
+ #include <openssl/decoder.h>
+
+ int OSSL_DECODER_from_bio(OSSL_DECODER_CTX *ctx, BIO *in);
+ int OSSL_DECODER_from_fp(OSSL_DECODER_CTX *ctx, FILE *fp);
+
+ int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
+                                     const char *input_type);
+ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder);
+ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx);
+ int OSSL_DECODER_CTX_num_decoders(OSSL_DECODER_CTX *ctx);
+
+ typedef struct ossl_decoder_instance_st OSSL_DECODER_INSTANCE;
+ OSSL_DECODER *
+ OSSL_DECODER_INSTANCE_decoder(OSSL_DECODER_INSTANCE *decoder_inst);
+ void *OSSL_DECODER_INSTANCE_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
+
+ typedef int (OSSL_DECODER_CONSTRUCT)(OSSL_DECODER_INSTANCE *decoder_inst,
+                                      const OSSL_PARAM *params,
+                                      void *construct_data);
+ typedef void (OSSL_DECODER_CLEANUP)(void *construct_data);
+
+ int OSSL_DECODER_CTX_set_construct(OSSL_DECODER_CTX *ctx,
+                                    OSSL_DECODER_CONSTRUCT *construct);
+ int OSSL_DECODER_CTX_set_construct_data(OSSL_DECODER_CTX *ctx,
+                                         void *construct_data);
+ int OSSL_DECODER_CTX_set_cleanup(OSSL_DECODER_CTX *ctx,
+                                  OSSL_DECODER_CLEANUP *cleanup);
+ OSSL_DECODER_CONSTRUCT *OSSL_DECODER_CTX_get_construct(OSSL_DECODER_CTX *ctx);
+ void *OSSL_DECODER_CTX_get_construct_data(OSSL_DECODER_CTX *ctx);
+ OSSL_DECODER_CLEANUP *OSSL_DECODER_CTX_get_cleanup(OSSL_DECODER_CTX *ctx);
+
+ int OSSL_DECODER_export(OSSL_DECODER_INSTANCE *decoder_inst,
+                         void *reference, size_t reference_sz,
+                         OSSL_CALLBACK *export_cb, void *export_cbarg);
+
+Feature availability macros:
+
+=over 4
+
+=item OSSL_DECODER_from_fp() is only available when B<OPENSSL_NO_STDIO>
+is undefined.
+
+=back
+
+=head1 DESCRIPTION
+
+The B<OSSL_DECODER_CTX> holds data about multiple decoders, as
+needed to figure out what the input data is and to attempt to unpack it into
+one of several possible related results.  This also includes chaining
+decoders, so the output from one can become the input for another.
+This allows having generic format decoders such as PEM to DER, as well
+as more specialized decoders like DER to RSA.
+
+The chains may be limited by specifying an input type, which is considered a
+starting point.
+This is both considered by OSSL_DECODER_CTX_add_extra(), which will
+stop adding on more decoder implementations when it has already added
+those that take the specified input type, and OSSL_DECODER_from_bio(),
+which will only start the decoding process with the decoder
+implementations that take that input type.  For example, if the input type
+is set to C<DER>, a PEM to DER decoder will be ignored.
+
+The input type can also be NULL, which means that the caller doesn't know
+what type of input they have.  In this case, OSSL_DECODER_from_bio()
+will simply try with one decoder implementation after the other, and
+thereby discover what kind of input the caller gave it.
+
+For every decoding done, even an intermediary one, a constructor
+provided by the caller is called to attempt to construct an appropriate type
+/ structure that the caller knows how to handle from the current
+decoding result.
+The constructor is set with OSSL_DECODER_CTX_set_construct().
+
+B<OSSL_DECODER_INSTANCE> is an opaque structure that contains
+data about the decoder that was just used, and that may be
+useful for the constructor.  There are some functions to extract data
+from this type, described further down.
+
+=head2 Functions
+
+OSSL_DECODER_from_bio() runs the decoding process for the
+context I<ctx>, with the input coming from the B<BIO> I<in>.  Should
+it make a difference, it's recommended to have the BIO set in binary
+mode rather than text mode.
+
+OSSL_DECODER_from_fp() does the same thing as OSSL_DECODER_from_bio(),
+except that the input is coming from the B<FILE> I<fp>.
+
+OSSL_DECODER_CTX_add_decoder() populates the B<OSSL_DECODER_CTX>
+I<ctx> with a decoder, to be used to attempt to decode some
+encoded input.
+
+OSSL_DECODER_CTX_add_extra() finds decoders that generate
+input for already added decoders, and adds them as well.  This is
+used to build decoder chains.
+
+OSSL_DECODER_CTX_set_input_type() sets the starting input type.  This
+limits the decoder chains to be considered, as explained in the general
+description above.
+
+OSSL_DECODER_CTX_num_decoders() gets the number of
+decoders currently added to the context I<ctx>.
+
+OSSL_DECODER_CTX_set_construct() sets the constructor I<construct>.
+
+OSSL_DECODER_CTX_set_construct_data() sets the constructor data that is
+passed to the constructor every time it's called.
+
+OSSL_DECODER_CTX_set_cleanup() sets the constructor data I<cleanup>
+function.  This is called by L<OSSL_DECODER_CTX_free(3)>.
+
+OSSL_DECODER_CTX_get_construct(),
+OSSL_DECODER_CTX_get_construct_data() and
+OSSL_DECODER_CTX_get_cleanup()
+return the values that have been set by
+OSSL_DECODER_CTX_set_construct(),
+OSSL_DECODER_CTX_set_construct_data() and
+OSSL_DECODER_CTX_set_cleanup() respectively.
+
+OSSL_DECODER_export() is a fallback function for constructors that
+cannot use the data they get directly for diverse reasons.  It takes the same
+decode instance I<decoder_inst> that the constructor got and an object
+I<reference>, unpacks the object which it refers to, and exports it by creating
+an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>, along with
+I<export_arg>.
+
+OSSL_DECODER_INSTANCE_decoder() can be used to get the
+decoder method from a decoder instance I<decoder_inst>.
+
+OSSL_DECODER_INSTANCE_decoder-ctx() can be used to get the
+decoder method's provider context from a decoder instance
+I<decoder_inst>.
+
+=head2 Constructor
+
+A B<OSSL_DECODER_CONSTRUCT> gets the following arguments:
+
+=over 4
+
+=item I<decoder_inst>
+
+The B<OSSL_DECODER_INSTANCE> for the decoder from which
+the constructor gets its data.
+
+=item I<params>
+
+The data produced by the decoder, further described below.
+
+=item I<construct_data>
+
+The pointer that was set with OSSL_DECODE_CTX_set_construct_data().
+
+=back
+
+The constructor is expected to return 1 when the data it receives can
+be constructed, otherwise 0.
+
+The globally known parameters that the constructor can get in I<params>
+are:
+
+=over 4
+
+=item "data-type" (B<OSSL_DECODER_PARAM_DATA_TYPE>) <UTF8 string>
+
+This is a detected content type that some decoders may provide.
+For example, PEM input sometimes has a type specified in its header,
+and some decoders may add that information as this parameter.
+This is an optional parameter, but may be useful for extra checks in
+the constructor.
+
+=item "data" (B<OSSL_DECODER_PARAM_DATA>) <octet string>
+
+The decoded data itself, as an octet string.  This is produced by
+decoders when it's possible to pass an object in this form.  Most
+often, this is simply meant to be passed to the next decoder in a
+chain, but could be considered final data as well, at the discretion
+of the constructor.
+
+=item "reference" (B<OSSL_DECODER_PARAM_DATA>) <octet string>
+
+The decoded data itself, as a reference to an object.  The
+reference itself is an octet string, and can be passed to other
+operations and functions within the same provider as the one that
+provides I<decoder>.
+
+=back
+
+At least one of "data" or "reference" must be present, and it's
+possible that both can be.  A constructor should choose to use the
+"reference" parameter if possible, otherwise it should use the "data"
+parameter.
+
+If it's not possible to use the "reference" parameter, but that's
+still what a constructor wants to do, it is possible to use
+OSSL_DECODER_export() as a fallback.
+
+=head1 RETURN VALUES
+
+OSSL_DECODER_from_bio() and OSSL_DECODER_from_fp() return 1 on
+success, or 0 on failure.
+
+OSSL_DECODER_CTX_add_decoder(),
+OSSL_DECODER_CTX_add_extra(),
+OSSL_DECODER_CTX_set_construct(),
+OSSL_DECODER_CTX_set_construct_data() and
+OSSL_DECODER_CTX_set_cleanup() return 1 on success, or 0 on
+failure.
+
+OSSL_DECODER_CTX_get_construct(),
+OSSL_DECODER_CTX_get_construct_data() and
+OSSL_DECODER_CTX_get_cleanup() return the current pointers to the
+cosntructor, the constructor data and the cleanup functions, respectively.
+
+OSSL_DECODER_CTX_num_decoders() returns the current
+number of decoders.  It returns 0 if I<ctx> is NULL.
+
+OSSL_DECODER_export() returns 1 on success, or 0 on failure.
+
+OSSL_DECODER_INSTANCE_decoder() returns an
+B<OSSL_DECODER> pointer on success, or NULL on failure.
+
+OSSL_DECODER_INSTANCE_decoder_ctx() returns a provider
+context pointer on success, or NULL on failure.>
+
+=begin comment TODO(3.0) Add examples!
+
+=head1 EXAMPLES
+
+Text, because pod2xxx doesn't like empty sections
+
+=end comment
+
+=head1 SEE ALSO
+
+L<provider(7)>, L<OSSL_DECODER_CTX(3)>
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.0.
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

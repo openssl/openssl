@@ -1,8 +1,0 @@
-SOURCE[../../libcrypto]=serdes_pass.c
-
-SOURCE[../../libcrypto]=serializer_meth.c serializer_lib.c serializer_pkey.c
-SOURCE[../../libcrypto]=deserializer_meth.c deserializer_lib.c \
-        deserializer_pkey.c
-
-SOURCE[../../libcrypto]=serializer_err.c
-SOURCE[../../libcrypto]=deserializer_err.c
