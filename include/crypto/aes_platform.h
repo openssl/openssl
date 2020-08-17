@@ -93,8 +93,8 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #    define HWAES_ctr32_encrypt_blocks aes_v8_ctr32_encrypt_blocks
 #    define AES_PMULL_CAPABLE ((OPENSSL_armcap_P & ARMV8_PMULL) && (OPENSSL_armcap_P & ARMV8_AES))
 
-/* Currently only support armv8 AES-GCM asm for AES_PMULL_CAPABLE target */
-#    if __ARM_MAX_ARCH__>=8 && AES_PMULL_CAPABLE
+/* Currently only support armv8 AES-GCM asm for target with crypto extension */
+#    if __ARM_MAX_ARCH__>=8 && defined(__ARM_FEATURE_CRYPTO)
 #     define AES_GCM_ENC_BYTES 512
 #     define AES_GCM_DEC_BYTES 512
 #     define AES_gcm_encrypt armv8_aes_gcm_encrypt
