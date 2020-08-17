@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
@@ -77,7 +80,7 @@ MAC_NEWCTX(cmac, "CMAC")
 static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
 {
     PROV_MAC_CTX *pmacctx = (PROV_MAC_CTX *)vpmacctx;
-    OSSL_PARAM params[5], *p = params;
+    const char *ciphername = NULL, *engine = NULL;
 
     if (pmacctx == NULL || vkey == NULL || !mac_key_up_ref(vkey))
         return 0;
@@ -86,22 +89,20 @@ static int mac_digest_sign_init(void *vpmacctx, const char *mdname, void *vkey)
     mac_key_free(pmacctx->key);
     pmacctx->key = vkey;
 
-    /* Read only so cast away of const is safe */
-    if (mdname != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                (char *)mdname, 0);
-    if (pmacctx->key->cipher_name != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                                pmacctx->key->cipher_name, 0);
-    if (pmacctx->key->engine_name != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_ENGINE,
-                                                pmacctx->key->engine_name, 0);
-    *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
-                                             pmacctx->key->priv_key,
-                                             pmacctx->key->priv_key_len);
-    *p = OSSL_PARAM_construct_end();
+    if (pmacctx->key->cipher.cipher != NULL)
+        ciphername = (char *)EVP_CIPHER_name(pmacctx->key->cipher.cipher);
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
+    if (pmacctx->key->cipher.engine != NULL)
+        engine = (char *)ENGINE_get_id(pmacctx->key->cipher.engine);
+#endif
 
-    if (!EVP_MAC_CTX_set_params(pmacctx->macctx, params))
+    if (!ossl_prov_set_macctx(pmacctx->macctx, NULL,
+                              (char *)ciphername,
+                              (char *)mdname,
+                              (char *)engine,
+                              pmacctx->key->properties,
+                              pmacctx->key->priv_key,
+                              pmacctx->key->priv_key_len))
         return 0;
 
     if (!EVP_MAC_init(pmacctx->macctx))

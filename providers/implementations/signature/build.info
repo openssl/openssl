@@ -3,7 +3,6 @@
 
 $DSA_GOAL=../../libimplementations.a
 $EC_GOAL=../../libimplementations.a
-$MAC_GOAL=../../libimplementations.a
 
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DSA_GOAL]=dsa.c
@@ -22,4 +21,5 @@ DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
 DEPEND[dsa.o]=../../common/include/prov/der_dsa.h
 DEPEND[ecdsa.o]=../../common/include/prov/der_ec.h
 
-SOURCE[$MAC_GOAL]=mac_legacy.c
+SOURCE[../../libfips.a]=mac_legacy.c
+SOURCE[../../libnonfips.a]=mac_legacy.c

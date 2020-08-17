@@ -595,7 +595,7 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 #  ifndef OPENSSL_NO_ENGINE
     const char *engine_id = e != NULL ? ENGINE_get_id(e) : NULL;
 #  endif
-    OSSL_PARAM params[4], *p = params;
+    OSSL_PARAM params[5], *p = params;
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx;
 
@@ -622,6 +622,9 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
                                             (void *)priv, len);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_CIPHER,
                                             (char *)cipher_name, 0);
+    if (propq != NULL)
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,
+                                                (char *)propq, 0);
 #  ifndef OPENSSL_NO_ENGINE
     if (engine_id != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_ENGINE,

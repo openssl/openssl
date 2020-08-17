@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <openssl/crypto.h>
 #include "internal/refcount.h"
+#include "prov/provider_util.h"
 
 struct mac_key_st {
     CRYPTO_RWLOCK *lock;
@@ -17,8 +18,8 @@ struct mac_key_st {
     CRYPTO_REF_COUNT refcnt;
     unsigned char *priv_key;
     size_t priv_key_len;
-    char *cipher_name;
-    char *engine_name;
+    PROV_CIPHER cipher;
+    char *properties;
     int cmac;
 };
 

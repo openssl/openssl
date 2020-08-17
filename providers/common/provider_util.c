@@ -164,6 +164,72 @@ ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd)
     return pd->engine;
 }
 
+int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
+                         const OSSL_PARAM params[],
+                         const char *ciphername,
+                         const char *mdname,
+                         const char *engine,
+                         const char *properties,
+                         const unsigned char *key,
+                         size_t keylen)
+{
+    const OSSL_PARAM *p;
+    OSSL_PARAM mac_params[6], *mp = mac_params;
+
+    if (params != NULL) {
+        if (mdname == NULL) {
+            if ((p = OSSL_PARAM_locate_const(params,
+                                            OSSL_ALG_PARAM_DIGEST)) != NULL) {
+                if (p->data_type != OSSL_PARAM_UTF8_STRING)
+                    return 0;
+                mdname = p->data;
+            }
+        }
+        if (ciphername == NULL) {
+            if ((p = OSSL_PARAM_locate_const(params,
+                                            OSSL_ALG_PARAM_CIPHER)) != NULL) {
+                if (p->data_type != OSSL_PARAM_UTF8_STRING)
+                    return 0;
+                ciphername = p->data;
+            }
+        }
+        if (engine == NULL) {
+            if ((p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_ENGINE))
+                    != NULL) {
+                if (p->data_type != OSSL_PARAM_UTF8_STRING)
+                    return 0;
+                engine = p->data;
+            }
+        }
+    }
+
+    if (mdname != NULL)
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
+                                                 (char *)mdname, 0);
+    if (ciphername != NULL)
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
+                                                 (char *)ciphername, 0);
+    if (properties != NULL)
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
+                                                 (char *)properties, 0);
+
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
+    if (engine != NULL)
+        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_ENGINE,
+                                                 (char *) engine, 0);
+#endif
+
+    if (key != NULL)
+        *mp++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+                                                  (unsigned char *)key,
+                                                  keylen);
+
+    *mp = OSSL_PARAM_construct_end();
+
+    return EVP_MAC_CTX_set_params(macctx, mac_params);
+
+}
+
 int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
                                       const OSSL_PARAM params[],
                                       const char *macname,
@@ -172,7 +238,6 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
                                       OPENSSL_CTX *libctx)
 {
     const OSSL_PARAM *p;
-    OSSL_PARAM mac_params[5], *mp = mac_params;
     const char *properties = NULL;
 
     if (macname == NULL
@@ -207,44 +272,8 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
     if (*macctx == NULL)
         return 1;
 
-    if (mdname == NULL) {
-        if ((p = OSSL_PARAM_locate_const(params,
-                                         OSSL_ALG_PARAM_DIGEST)) != NULL) {
-            if (p->data_type != OSSL_PARAM_UTF8_STRING)
-                return 0;
-            mdname = p->data;
-        }
-    }
-    if (ciphername == NULL) {
-        if ((p = OSSL_PARAM_locate_const(params,
-                                         OSSL_ALG_PARAM_CIPHER)) != NULL) {
-            if (p->data_type != OSSL_PARAM_UTF8_STRING)
-                return 0;
-            ciphername = p->data;
-        }
-    }
-
-    if (mdname != NULL)
-        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
-                                                 (char *)mdname, 0);
-    if (ciphername != NULL)
-        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_CIPHER,
-                                                 (char *)ciphername, 0);
-    if (properties != NULL)
-        *mp++ = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_PROPERTIES,
-                                                 (char *)properties, 0);
-
-#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
-    if ((p = OSSL_PARAM_locate_const(params, "engine")) != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING)
-            return 0;
-        *mp++ = OSSL_PARAM_construct_utf8_string("engine",
-                                                 p->data, p->data_size);
-    }
-#endif
-    *mp = OSSL_PARAM_construct_end();
-
-    if (EVP_MAC_CTX_set_params(*macctx, mac_params))
+    if (ossl_prov_set_macctx(*macctx, params, ciphername, mdname, NULL,
+                             properties, NULL, 0))
         return 1;
 
     EVP_MAC_CTX_free(*macctx);
