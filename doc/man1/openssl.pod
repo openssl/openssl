@@ -777,7 +777,7 @@ Use the provider identified by I<name> and use all the methods it
 implements (algorithms, key storage, etc.).  This option can be specified
 multiple time to load more than one provider.
 
-=item B<-provider_path> I<path>
+=item B<-provider-path> I<path>
 
 Specify the search I<path> that is used to locate provider modules.  The format
 of I<path> varies depending on the operating system being used.

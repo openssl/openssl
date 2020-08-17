@@ -179,7 +179,7 @@ Corrupt any self tests which have the description C<SHA1>:
 Validate that the fips module can be loaded from a base configuration file:
 
  export OPENSSL_CONF_INCLUDE=<path of configuration files>
- export OPENSSL_MODULES=<provider_path>
+ export OPENSSL_MODULES=<provider-path>
  openssl fipsinstall -config' 'default.cnf'
 
 
