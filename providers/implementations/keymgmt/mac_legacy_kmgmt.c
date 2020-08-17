@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <string.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -45,7 +48,7 @@ struct mac_gen_ctx {
     int selection;
     unsigned char *priv_key;
     size_t priv_key_len;
-    char *cipher_name;
+    PROV_CIPHER cipher;
 };
 
 MAC_KEY *mac_key_new(OPENSSL_CTX *libctx, int cmac)
@@ -79,8 +82,8 @@ void mac_key_free(MAC_KEY *mackey)
         return;
 
     OPENSSL_secure_clear_free(mackey->priv_key, mackey->priv_key_len);
-    OPENSSL_free(mackey->cipher_name);
-    OPENSSL_free(mackey->engine_name);
+    OPENSSL_free(mackey->properties);
+    ossl_prov_cipher_reset(&mackey->cipher);
     CRYPTO_THREAD_lock_free(mackey->lock);
     OPENSSL_free(mackey);
 }
@@ -137,15 +140,16 @@ static int mac_match(const void *keydata1, const void *keydata2, int selection)
         if ((key1->priv_key == NULL && key2->priv_key != NULL)
                 || (key1->priv_key != NULL && key2->priv_key == NULL)
                 || key1->priv_key_len != key2->priv_key_len
-                || (key1->cipher_name == NULL && key2->cipher_name != NULL)
-                || (key1->cipher_name != NULL && key2->cipher_name == NULL))
+                || (key1->cipher.cipher == NULL && key2->cipher.cipher != NULL)
+                || (key1->cipher.cipher != NULL && key2->cipher.cipher == NULL))
             ok = 0;
         else
             ok = ok && (key1->priv_key == NULL /* implies key2->privkey == NULL */
                         || CRYPTO_memcmp(key1->priv_key, key2->priv_key,
                                          key1->priv_key_len) == 0);
-        if (key1->cipher_name != NULL)
-            ok = ok && (strcasecmp(key1->cipher_name, key2->cipher_name) == 0);
+        if (key1->cipher.cipher != NULL)
+            ok = ok && EVP_CIPHER_is_a(key1->cipher.cipher,
+                                       EVP_CIPHER_name(key2->cipher.cipher));
     }
     return ok;
 }
@@ -170,34 +174,27 @@ static int mac_key_fromdata(MAC_KEY *key, const OSSL_PARAM params[])
         key->priv_key_len = p->data_size;
     }
 
-    if (key->cmac) {
-        p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_CIPHER);
-        if (p != NULL) {
-            if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
-                return 0;
-            }
-            key->cipher_name = OPENSSL_strdup(p->data);
-            if (key->cipher_name == NULL) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-                return 0;
-            }
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_PROPERTIES);
+    if (p != NULL) {
+        if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
         }
-        p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_ENGINE);
-        if (p != NULL) {
-            if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
-                return 0;
-            }
-            key->engine_name = OPENSSL_strdup(p->data);
-            if (key->engine_name == NULL) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-                return 0;
-            }
+        OPENSSL_free(key->properties);
+        key->properties = OPENSSL_strdup(p->data);
+        if (key->properties == NULL) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            return 0;
         }
     }
 
-    if (key->priv_key != NULL && (!key->cmac || key->cipher_name != NULL))
+    if (key->cmac && !ossl_prov_cipher_load_from_params(&key->cipher, params,
+                                                        key->libctx)) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    if (key->priv_key != NULL)
         return 1;
 
     return 0;
@@ -228,17 +225,19 @@ static int key_to_params(MAC_KEY *key, OSSL_PARAM_BLD *tmpl,
                                               key->priv_key, key->priv_key_len))
         return 0;
 
-    if (key->cipher_name != NULL
+    if (key->cipher.cipher != NULL
         && !ossl_param_build_set_utf8_string(tmpl, params,
                                              OSSL_PKEY_PARAM_CIPHER,
-                                             key->cipher_name))
+                                             EVP_CIPHER_name(key->cipher.cipher)))
         return 0;
 
-    if (key->engine_name != NULL
+#if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
+    if (key->cipher.engine != NULL
         && !ossl_param_build_set_utf8_string(tmpl, params,
                                              OSSL_PKEY_PARAM_ENGINE,
-                                             key->engine_name))
+                                             ENGINE_get_id(key->cipher.engine)))
         return 0;
+#endif
 
     return 1;
 }
@@ -275,6 +274,7 @@ err:
 
 static const OSSL_PARAM mac_key_types[] = {
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *mac_imexport_types(int selection)
@@ -288,6 +288,7 @@ static const OSSL_PARAM cmac_key_types[] = {
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_CIPHER, NULL, 0),
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_ENGINE, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *cmac_imexport_types(int selection)
@@ -388,22 +389,14 @@ static int mac_gen_set_params(void *genctx, const OSSL_PARAM params[])
 static int cmac_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct mac_gen_ctx *gctx = genctx;
-    const OSSL_PARAM *p;
 
     if (!mac_gen_set_params(genctx, params))
         return 0;
 
-    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_CIPHER);
-    if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
-            return 0;
-        }
-        gctx->cipher_name = OPENSSL_strdup(p->data);
-        if (gctx->cipher_name == NULL) {
-            ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
-            return 0;
-        }
+    if (!ossl_prov_cipher_load_from_params(&gctx->cipher, params,
+                                           gctx->libctx)) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
     }
 
     return 1;
@@ -457,12 +450,15 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
      * previously set in the gctx. Hopefully at some point in the future all
      * of this can be removed and we will only support the EVP_KDF APIs.
      */
+    if (!ossl_prov_cipher_copy(&key->cipher, &gctx->cipher)) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
+    ossl_prov_cipher_reset(&gctx->cipher);
     key->priv_key = gctx->priv_key;
     key->priv_key_len = gctx->priv_key_len;
-    key->cipher_name = gctx->cipher_name;
     gctx->priv_key_len = 0;
     gctx->priv_key = NULL;
-    gctx->cipher_name = NULL;
 
     return key;
 }
@@ -472,7 +468,7 @@ static void mac_gen_cleanup(void *genctx)
     struct mac_gen_ctx *gctx = genctx;
 
     OPENSSL_secure_clear_free(gctx->priv_key, gctx->priv_key_len);
-    OPENSSL_free(gctx->cipher_name);
+    ossl_prov_cipher_reset(&gctx->cipher);
     OPENSSL_free(gctx);
 }
 
