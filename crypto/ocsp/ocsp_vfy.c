@@ -277,32 +277,40 @@ static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
     return 1;
 }
 
+/*
+ * Match the certificate issuer ID.
+ * Returns -1 on error, 0 if there is no match and 1 if there is a match.
+ */
 static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
                                STACK_OF(OCSP_SINGLERESP) *sresp)
 {
     /* If only one ID to match then do it */
-    if (cid) {
+    if (cid != NULL) {
         const EVP_MD *dgst;
         const X509_NAME *iname;
         int mdlen;
         unsigned char md[EVP_MAX_MD_SIZE];
 
-        if ((dgst = EVP_get_digestbyobj(cid->hashAlgorithm.algorithm))
-                == NULL) {
+        dgst = EVP_get_digestbyobj(cid->hashAlgorithm.algorithm);
+        if (dgst == NULL) {
             OCSPerr(0, OCSP_R_UNKNOWN_MESSAGE_DIGEST);
             return -1;
         }
 
         mdlen = EVP_MD_size(dgst);
-        if (mdlen < 0)
+        if (mdlen < 0) {
+            OCSPerr(0, OCSP_R_DIGEST_SIZE_ERR);
             return -1;
-        if ((cid->issuerNameHash.length != mdlen) ||
-            (cid->issuerKeyHash.length != mdlen))
+        }
+        if (cid->issuerNameHash.length != mdlen ||
+            cid->issuerKeyHash.length != mdlen)
             return 0;
         iname = X509_get_subject_name(cert);
-        if (!X509_NAME_digest(iname, dgst, md, NULL))
+        if (!X509_NAME_digest(iname, dgst, md, NULL)) {
+            OCSPerr(0, OCSP_R_DIGEST_NAME_ERR);
             return -1;
-        if (memcmp(md, cid->issuerNameHash.data, mdlen))
+        }
+        if (memcmp(md, cid->issuerNameHash.data, mdlen) != 0)
             return 0;
         if (!X509_pubkey_digest(cert, dgst, md, NULL)) {
             OCSPerr(0, OCSP_R_DIGEST_ERR);
@@ -310,9 +318,6 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
         }
         if (memcmp(md, cid->issuerKeyHash.data, mdlen) != 0)
             return 0;
-
-        return 1;
-
     } else {
         /* We have to match the whole lot */
         int i, ret;
@@ -324,9 +329,8 @@ static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
             if (ret <= 0)
                 return ret;
         }
-        return 1;
     }
-
+    return 1;
 }
 
 static int ocsp_check_delegated(X509 *x)
