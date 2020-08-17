@@ -75,7 +75,7 @@ These functions manipulate the B<X509_VERIFY_PARAM> structure associated with
 a certificate verification operation.
 
 The X509_VERIFY_PARAM_set_flags() function sets the flags in B<param> by oring
-it with B<flags>. See the B<VERIFICATION FLAGS> section for a complete
+it with B<flags>. See L</VERIFICATION FLAGS> for a complete
 description of values the B<flags> parameter can take.
 
 X509_VERIFY_PARAM_get_flags() returns the flags in B<param>.

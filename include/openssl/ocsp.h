@@ -102,6 +102,7 @@ extern "C" {
 #  define OCSP_TRUSTOTHER                 0x200
 #  define OCSP_RESPID_KEY                 0x400
 #  define OCSP_NOTIME                     0x800
+#  define OCSP_PARTIAL_CHAIN              0x1000
 
 typedef struct ocsp_cert_id_st OCSP_CERTID;
 typedef struct ocsp_one_request_st OCSP_ONEREQ;

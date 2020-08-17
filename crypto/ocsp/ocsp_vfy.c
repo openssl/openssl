@@ -38,6 +38,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
     STACK_OF(X509) *chain = NULL;
     STACK_OF(X509) *untrusted = NULL;
     X509_STORE_CTX *ctx = NULL;
+    X509_VERIFY_PARAM *vp;
     int i, ret = ocsp_find_signer(&signer, bs, certs, flags);
 
     if (!ret) {
@@ -85,6 +86,9 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
             OCSPerr(OCSP_F_OCSP_BASIC_VERIFY, ERR_R_X509_LIB);
             goto f_err;
         }
+        if ((flags & OCSP_PARTIAL_CHAIN) != 0
+                && (vp = X509_STORE_CTX_get0_param(ctx)) != NULL)
+            X509_VERIFY_PARAM_set_flags(vp, X509_V_FLAG_PARTIAL_CHAIN);
 
         X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_OCSP_HELPER);
         ret = X509_verify_cert(ctx);
