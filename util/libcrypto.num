@@ -2939,7 +2939,7 @@ TS_RESP_CTX_set_status_info             3001	3_0_0	EXIST::FUNCTION:TS
 BIO_f_nbio_test                         3002	3_0_0	EXIST::FUNCTION:
 SEED_ofb128_encrypt                     3003	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,SEED
 d2i_RSAPrivateKey_bio                   3004	3_0_0	EXIST::FUNCTION:RSA
-DH_KDF_X9_42                            3005	3_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_3_0,DH
+DH_KDF_X9_42                            3005	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,DH
 EVP_PKEY_meth_set_signctx               3006	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 X509_CRL_get_version                    3007	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get0_info                 3008	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
