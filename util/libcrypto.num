@@ -5271,3 +5271,4 @@ OSSL_STORE_INFO_get1_PUBKEY             ?	3_0_0	EXIST::FUNCTION:
 PEM_read_bio_PUBKEY_ex                  ?	3_0_0	EXIST::FUNCTION:
 PEM_read_PUBKEY_ex                      ?	3_0_0	EXIST::FUNCTION:STDIO
 PEM_read_bio_Parameters_ex              ?	3_0_0	EXIST::FUNCTION:
+EC_GROUP_new_from_params                ?	3_0_0	EXIST::FUNCTION:EC
