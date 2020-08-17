@@ -104,9 +104,9 @@ EVP_PKEY_new_raw_private_key() except it is only for the B<EVP_PKEY_CMAC>
 algorithm type. In addition to the raw private key data, it also takes a cipher
 algorithm to be used during creation of a CMAC in the I<cipher> argument. The
 cipher should be a standard encryption only cipher. For example AEAD and XTS
-ciphers should not be used. Finally it also take a library context I<libctx>
-and property query I<propq> used when fetching any cryptographic algorithms
-which may be NULL to use the default values.
+ciphers should not be used. Finally it also takes a library context I<libctx>
+and property query I<propq> which are used when fetching any cryptographic
+algorithms which may be NULL to use the default values.
 
 EVP_PKEY_new_CMAC_key() is the same as EVP_PKEY_new_CMAC_key_with_libctx()
 except that the default values are used for I<libctx> and I<propq>.
@@ -172,7 +172,7 @@ EVP_PKEY_get_raw_public_key() functions were added in OpenSSL 1.1.1.
 
 The EVP_PKEY_new_raw_private_key_with_libctx(),
 EVP_PKEY_new_raw_public_key_with_libctx() and
-EVP_PKEY_new_CMAC_key_with_libctx()functions were added in OpenSSL 3.0.
+EVP_PKEY_new_CMAC_key_with_libctx() functions were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
