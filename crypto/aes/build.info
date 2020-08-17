@@ -31,7 +31,7 @@ IF[{- !$disabled{asm} -}]
   $AESASM_armv4=aes_cbc.c aes-armv4.S bsaes-armv7.S aesv8-armx.S
   $AESDEF_armv4=AES_ASM BSAES_ASM
   $AESASM_aarch64=aes_core.c aes_cbc.c aesv8-armx.S vpaes-armv8.S
-  $AESDEF_aarch64=VPAES_ASM
+  $AESDEF_aarch64=AES_ASM VPAES_ASM
 
   $AESASM_parisc11=aes_core.c aes_cbc.c aes-parisc.s
   $AESDEF_parisc11=AES_ASM
