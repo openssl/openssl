@@ -33,10 +33,10 @@ plan skip_all => "CMS is not supported by this OpenSSL build"
 my $provpath = bldtop_dir("providers");
 
 # Some tests require legacy algorithms to be included.
-my @legacyprov = ("-provider_path", $provpath,
+my @legacyprov = ("-provider-path", $provpath,
                   "-provider", "default",
                   "-provider", "legacy" );
-my @defaultprov = ("-provider_path", $provpath,
+my @defaultprov = ("-provider-path", $provpath,
                    "-provider", "default");
 
 my @config = ( );
@@ -64,7 +64,7 @@ unless ($no_fips) {
 }
 
 $ENV{OPENSSL_TEST_LIBCTX} = "1";
-my @prov = ("-provider_path", $provpath,
+my @prov = ("-provider-path", $provpath,
             @config,
             "-provider", $provname);
 

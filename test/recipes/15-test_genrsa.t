@@ -119,7 +119,7 @@ ok(!run(app([ 'openssl', 'genpkey', '-algorithm', 'RSA',
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips.cnf");
     my $provpath = bldtop_dir("providers");
-    my @prov = ( "-provider_path", $provpath,
+    my @prov = ( "-provider-path", $provpath,
                  "-provider", "base",
                  "-config", $provconf);
     my $infile = bldtop_file('providers', platform->dso('fips'));
