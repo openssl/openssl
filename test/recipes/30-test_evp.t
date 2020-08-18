@@ -47,8 +47,8 @@ my @files = qw(
                 evpmd_sha.txt
                 evppbe_pbkdf2.txt
                 evppkey_dsa.txt 
-                evppkey_ecc.txt
-                evppkey_ecdh.txt
+                evppkey_ecc_nist.txt
+                evppkey_ecdh_nist.txt
                 evppkey_ecdsa.txt
                 evppkey_ecx.txt
                 evppkey_ffdhe.txt
@@ -93,6 +93,8 @@ my @defltfiles = qw(
                      evpmd_whirlpool.txt
                      evppbe_scrypt.txt
                      evppbe_pkcs12.txt
+                     evppkey_ecc.txt
+                     evppkey_ecdh.txt
                      evppkey_brainpool.txt
                      evppkey_kdf_scrypt.txt
                      evppkey_kdf_tls1_prf.txt
