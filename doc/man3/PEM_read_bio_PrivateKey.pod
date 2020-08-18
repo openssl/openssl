@@ -8,7 +8,8 @@ PEM_read_PrivateKey, PEM_write_bio_PrivateKey,
 PEM_write_bio_PrivateKey_traditional, PEM_write_PrivateKey,
 PEM_write_bio_PKCS8PrivateKey, PEM_write_PKCS8PrivateKey,
 PEM_write_bio_PKCS8PrivateKey_nid, PEM_write_PKCS8PrivateKey_nid,
-PEM_read_bio_PUBKEY, PEM_read_PUBKEY, PEM_write_bio_PUBKEY, PEM_write_PUBKEY,
+PEM_read_bio_PUBKEY_ex, PEM_read_bio_PUBKEY, PEM_read_PUBKEY_ex,
+PEM_read_PUBKEY, PEM_write_bio_PUBKEY, PEM_write_PUBKEY,
 PEM_read_bio_RSAPrivateKey, PEM_read_RSAPrivateKey,
 PEM_write_bio_RSAPrivateKey, PEM_write_RSAPrivateKey,
 PEM_read_bio_RSAPublicKey, PEM_read_RSAPublicKey, PEM_write_bio_RSAPublicKey,
@@ -16,8 +17,8 @@ PEM_write_RSAPublicKey, PEM_read_bio_RSA_PUBKEY, PEM_read_RSA_PUBKEY,
 PEM_write_bio_RSA_PUBKEY, PEM_write_RSA_PUBKEY, PEM_read_bio_DSAPrivateKey,
 PEM_read_DSAPrivateKey, PEM_write_bio_DSAPrivateKey, PEM_write_DSAPrivateKey,
 PEM_read_bio_DSA_PUBKEY, PEM_read_DSA_PUBKEY, PEM_write_bio_DSA_PUBKEY,
-PEM_write_DSA_PUBKEY, PEM_read_bio_Parameters, PEM_write_bio_Parameters,
-PEM_read_bio_DSAparams, PEM_read_DSAparams,
+PEM_write_DSA_PUBKEY, PEM_read_bio_Parameters_ex, PEM_read_bio_Parameters,
+PEM_write_bio_Parameters, PEM_read_bio_DSAparams, PEM_read_DSAparams,
 PEM_write_bio_DSAparams, PEM_write_DSAparams, PEM_read_bio_DHparams,
 PEM_read_DHparams, PEM_write_bio_DHparams, PEM_write_DHparams,
 PEM_read_bio_X509, PEM_read_X509, PEM_write_bio_X509, PEM_write_X509,
@@ -67,8 +68,14 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                                    char *kstr, int klen,
                                    pem_password_cb *cb, void *u);
 
+ EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
+                                  pem_password_cb *cb, void *u,
+                                  OPENSSL_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x,
                                pem_password_cb *cb, void *u);
+ EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
+                              pem_password_cb *cb, void *u,
+                              OPENSSL_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x,
                            pem_password_cb *cb, void *u);
  int PEM_write_bio_PUBKEY(BIO *bp, EVP_PKEY *x);
@@ -117,6 +124,8 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_bio_DSA_PUBKEY(BIO *bp, DSA *x);
  int PEM_write_DSA_PUBKEY(FILE *fp, DSA *x);
 
+ EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
+                                      OPENSSL_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
  int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 
@@ -506,8 +515,9 @@ The old Netscape certificate sequences were no longer documented
 in OpenSSL 1.1.0; applications should use the PKCS7 standard instead
 as they will be formally deprecated in a future releases.
 
-PEM_read_bio_PrivateKey_ex() and PEM_read_PrivateKey_ex() were introduced in
-OpenSSL 3.0.
+PEM_read_bio_PrivateKey_ex(), PEM_read_PrivateKey_ex(),
+PEM_read_bio_PUBKEY_ex(), PEM_read_PUBKEY_ex() and
+PEM_read_bio_Parameters_ex() were introduced in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

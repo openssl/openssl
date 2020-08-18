@@ -356,15 +356,23 @@ DECLARE_PEM_rw(DHparams, DH)
 DECLARE_PEM_write(DHxparams, DH)
 # endif
 DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
-EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
-                                     void *u, OPENSSL_CTX *libctx,
-                                     const char *propq);
+EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
+                                     pem_password_cb *cb, void *u,
+                                     OPENSSL_CTX *libctx, const char *propq);
 # ifndef OPENSSL_NO_STDIO
-EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
-                                 void *u, OPENSSL_CTX *libctx,
-                                 const char *propq);
+EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x,
+                                 pem_password_cb *cb, void *u,
+                                 OPENSSL_CTX *libctx, const char *propq);
 # endif
 DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
+EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
+                                 pem_password_cb *cb, void *u,
+                                 OPENSSL_CTX *libctx, const char *propq);
+# ifndef OPENSSL_NO_STDIO
+EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
+                             pem_password_cb *cb, void *u,
+                             OPENSSL_CTX *libctx, const char *propq);
+# endif
 
 int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                                          const EVP_CIPHER *enc,
@@ -405,6 +413,8 @@ int PEM_write_PKCS8PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc
                               const char *kstr, int klen,
                               pem_password_cb *cd, void *u);
 # endif
+EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
+                                     OPENSSL_CTX *libctx, const char *propq);
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x);
 int PEM_write_bio_Parameters(BIO *bp, const EVP_PKEY *x);
 
