@@ -5265,3 +5265,6 @@ EVP_KEYEXCH_settable_ctx_params         ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_new_PUBKEY              ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get0_PUBKEY             ?	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_INFO_get1_PUBKEY             ?	3_0_0	EXIST::FUNCTION:
+PEM_read_bio_PUBKEY_ex                  ?	3_0_0	EXIST::FUNCTION:
+PEM_read_PUBKEY_ex                      ?	3_0_0	EXIST::FUNCTION:STDIO
+PEM_read_bio_Parameters_ex              ?	3_0_0	EXIST::FUNCTION:
