@@ -304,18 +304,18 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
 
     if (!check_kid(ctx, X509_get0_subject_key_id(cert), msg->header->senderKID))
         return 0;
+    if (!verify_signature(ctx, msg, cert)) {
+        ossl_cmp_warn(ctx, "msg signature verification failed");
+        return 0;
+    }
     /* acceptable also if there is no senderKID in msg header */
     ossl_cmp_info(ctx, " cert seems acceptable");
     return 1;
 }
 
-static int check_msg_valid_cert(const OSSL_CMP_CTX *ctx, X509_STORE *store,
-                                X509 *scrt, const OSSL_CMP_MSG *msg)
+static int check_cert_path(const OSSL_CMP_CTX *ctx, X509_STORE *store,
+                           X509 *scrt)
 {
-    if (!verify_signature(ctx, msg, scrt)) {
-        ossl_cmp_warn(ctx, "msg signature verification failed");
-        return 0;
-    }
     if (OSSL_CMP_validate_cert_path(ctx, store, scrt))
         return 1;
 
@@ -328,11 +328,11 @@ static int check_msg_valid_cert(const OSSL_CMP_CTX *ctx, X509_STORE *store,
  * Exceptional handling for 3GPP TS 33.310 [3G/LTE Network Domain Security
  * (NDS); Authentication Framework (AF)], only to use for IP messages
  * and if the ctx option is explicitly set: use self-issued certificates
- * from extraCerts as trust anchor to validate sender cert and msg -
+ * from extraCerts as trust anchor to validate sender cert -
  * provided it also can validate the newly enrolled certificate
  */
-static int check_msg_valid_cert_3gpp(const OSSL_CMP_CTX *ctx, X509 *scrt,
-                                     const OSSL_CMP_MSG *msg)
+static int check_cert_path_3gpp(const OSSL_CMP_CTX *ctx,
+                                const OSSL_CMP_MSG *msg, X509 *scrt)
 {
     int valid = 0;
     X509_STORE *store;
@@ -378,8 +378,8 @@ static int check_msg_given_cert(const OSSL_CMP_CTX *ctx, X509 *cert,
 {
     return cert_acceptable(ctx, "previously validated", "sender cert",
                            cert, NULL, NULL, msg)
-        && (check_msg_valid_cert(ctx, ctx->trusted, cert, msg)
-            || check_msg_valid_cert_3gpp(ctx, cert, msg));
+        && (check_cert_path(ctx, ctx->trusted, cert)
+            || check_cert_path_3gpp(ctx, msg, cert));
 }
 
 /*-
@@ -411,8 +411,8 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
                              already_checked1, already_checked2, msg))
             continue;
         n_acceptable_certs++;
-        if (mode_3gpp ? check_msg_valid_cert_3gpp(ctx, cert, msg)
-                      : check_msg_valid_cert(ctx, ctx->trusted, cert, msg)) {
+        if (mode_3gpp ? check_cert_path_3gpp(ctx, msg, cert)
+                      : check_cert_path(ctx, ctx->trusted, cert)) {
             /* store successful sender cert for further msgs in transaction */
             if (!X509_up_ref(cert))
                 return 0;
@@ -802,7 +802,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                 if (!ossl_cmp_X509_STORE_add1_certs(ctx->trusted, certs, 0))
                     /* adds both self-issued and not self-issued certs */
                     return 0;
-                }
+            }
             break;
         default:
             break;
