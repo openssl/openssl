@@ -3342,7 +3342,7 @@ start:
         }
         klist = &private_keys;
     } else if (strcmp(pp->key, "PublicKey") == 0) {
-        pkey = PEM_read_bio_PUBKEY(t->s.key, NULL, 0, NULL);
+        pkey = PEM_read_bio_PUBKEY_ex(t->s.key, NULL, 0, NULL, libctx, NULL);
         if (pkey == NULL && !key_unsupported()) {
             EVP_PKEY_free(pkey);
             TEST_info("Can't read public key %s", pp->value);
