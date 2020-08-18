@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 6
+num_tests = 9
 
 test-0 = 0-disable-encrypt-then-mac-server-sha
 test-1 = 1-disable-encrypt-then-mac-client-sha
@@ -8,6 +8,9 @@ test-2 = 2-disable-encrypt-then-mac-both-sha
 test-3 = 3-disable-encrypt-then-mac-server-sha2
 test-4 = 4-disable-encrypt-then-mac-client-sha2
 test-5 = 5-disable-encrypt-then-mac-both-sha2
+test-6 = 6-disable-encrypt-then-mac-server-sha-tls1
+test-7 = 7-disable-encrypt-then-mac-client-sha-tls1
+test-8 = 8-disable-encrypt-then-mac-both-sha-tls1
 # ===========================================================
 
 [0-disable-encrypt-then-mac-server-sha]
@@ -157,6 +160,85 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-5]
+ExpectedResult = Success
+
+
+# ===========================================================
+
+[6-disable-encrypt-then-mac-server-sha-tls1]
+ssl_conf = 6-disable-encrypt-then-mac-server-sha-tls1-ssl
+
+[6-disable-encrypt-then-mac-server-sha-tls1-ssl]
+server = 6-disable-encrypt-then-mac-server-sha-tls1-server
+client = 6-disable-encrypt-then-mac-server-sha-tls1-client
+
+[6-disable-encrypt-then-mac-server-sha-tls1-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+Options = -EncryptThenMac
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[6-disable-encrypt-then-mac-server-sha-tls1-client]
+CipherString = AES128-SHA@SECLEVEL=0
+MaxProtocol = TLSv1
+MinProtocol = TLSv1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-6]
+ExpectedResult = Success
+
+
+# ===========================================================
+
+[7-disable-encrypt-then-mac-client-sha-tls1]
+ssl_conf = 7-disable-encrypt-then-mac-client-sha-tls1-ssl
+
+[7-disable-encrypt-then-mac-client-sha-tls1-ssl]
+server = 7-disable-encrypt-then-mac-client-sha-tls1-server
+client = 7-disable-encrypt-then-mac-client-sha-tls1-client
+
+[7-disable-encrypt-then-mac-client-sha-tls1-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[7-disable-encrypt-then-mac-client-sha-tls1-client]
+CipherString = AES128-SHA@SECLEVEL=0
+MaxProtocol = TLSv1
+MinProtocol = TLSv1
+Options = -EncryptThenMac
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-7]
+ExpectedResult = Success
+
+
+# ===========================================================
+
+[8-disable-encrypt-then-mac-both-sha-tls1]
+ssl_conf = 8-disable-encrypt-then-mac-both-sha-tls1-ssl
+
+[8-disable-encrypt-then-mac-both-sha-tls1-ssl]
+server = 8-disable-encrypt-then-mac-both-sha-tls1-server
+client = 8-disable-encrypt-then-mac-both-sha-tls1-client
+
+[8-disable-encrypt-then-mac-both-sha-tls1-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+Options = -EncryptThenMac
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[8-disable-encrypt-then-mac-both-sha-tls1-client]
+CipherString = AES128-SHA@SECLEVEL=0
+MaxProtocol = TLSv1
+MinProtocol = TLSv1
+Options = -EncryptThenMac
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-8]
 ExpectedResult = Success
 
 
