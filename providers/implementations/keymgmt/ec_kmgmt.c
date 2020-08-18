@@ -285,11 +285,12 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
     const EC_KEY *ec2 = keydata2;
     const EC_GROUP *group_a = EC_KEY_get0_group(ec1);
     const EC_GROUP *group_b = EC_KEY_get0_group(ec2);
+    BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(ec1));
     int ok = 1;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && group_a != NULL && group_b != NULL
-            && EC_GROUP_cmp(group_a, group_b, NULL) == 0;
+            && EC_GROUP_cmp(group_a, group_b, ctx) == 0;
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         const BIGNUM *pa = EC_KEY_get0_private_key(ec1);
         const BIGNUM *pb = EC_KEY_get0_private_key(ec2);
@@ -300,8 +301,9 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
         const EC_POINT *pa = EC_KEY_get0_public_key(ec1);
         const EC_POINT *pb = EC_KEY_get0_public_key(ec2);
 
-        ok = ok && EC_POINT_cmp(group_b, pa, pb, NULL) == 0;
+        ok = ok && EC_POINT_cmp(group_b, pa, pb, ctx) == 0;
     }
+    BN_CTX_free(ctx);
     return ok;
 }
 
