@@ -652,6 +652,21 @@ int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len)
 
 int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
 {
+    if (evp_pkey_is_provided(pkey)) {
+        const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+        OPENSSL_CTX *libctx = ossl_provider_library_context(prov);
+        const char *keytype = NULL;
+
+        if (((keytype = OBJ_nid2sn(type)) != NULL
+             && evp_keymgmt_util_convert(pkey, keytype, libctx, NULL))
+            || ((keytype = OBJ_nid2ln(type)) != NULL
+                && evp_keymgmt_util_convert(pkey, keytype, libctx, NULL)))
+            goto end;
+
+        if (!evp_pkey_downgrade(pkey))
+            return 0;
+    }
+
     if (pkey->type == type) {
         return 1; /* it already is that type */
     }
@@ -665,6 +680,7 @@ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type)
         return 0;
     }
 
+ end:
     pkey->type = type;
     return 1;
 }

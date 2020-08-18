@@ -681,6 +681,8 @@ void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
 int evp_keymgmt_util_has(EVP_PKEY *pk, int selection);
 int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection);
 int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection);
+int evp_keymgmt_util_convert(EVP_PKEY *target, const char *keytype,
+                             OPENSSL_CTX *libctx, const char *propq);
 void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                            void *genctx, OSSL_CALLBACK *cb, void *cbarg);
 int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,

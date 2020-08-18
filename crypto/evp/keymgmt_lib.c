@@ -429,6 +429,59 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
     return 1;
 }
 
+/* This is the provided variant of EVP_PKEY_set_alias_type() */
+int evp_keymgmt_util_convert(EVP_PKEY *target, const char *keytype,
+                             OPENSSL_CTX *libctx, const char *propq)
+{
+    EVP_KEYMGMT *new_keymgmt;
+    EVP_PKEY tmp = { 0, };
+    struct evp_keymgmt_util_try_import_data_st import_data;
+    int selection = OSSL_KEYMGMT_SELECT_ALL;
+
+    if (target == NULL || keytype == NULL || !evp_pkey_is_typed(target)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* If it's already the keytype we want, there's nothing more to do */
+    if (EVP_KEYMGMT_is_a(target->keymgmt, keytype))
+        return 1;
+
+    if ((new_keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propq)) == NULL)
+        return 0;
+
+    /* Save away |*target| */
+    tmp = *target;
+
+    /* Clear away |*target|, and try to copy the old data with new keytype */
+    memset(target, 0, sizeof(*target));
+
+    import_data.keymgmt = new_keymgmt;
+    import_data.keydata = NULL;
+    import_data.selection = selection;
+
+    if (evp_keymgmt_export(tmp.keymgmt, tmp.keydata, selection,
+                           &evp_keymgmt_util_try_import, &import_data)
+        && evp_keymgmt_util_assign_pkey(target, new_keymgmt,
+                                        import_data.keydata)) {
+        /* All went well, we can clear the old data */
+        evp_keymgmt_freedata(tmp.keymgmt, tmp.keydata);
+        EVP_KEYMGMT_free(tmp.keymgmt);
+        tmp.keymgmt = NULL;
+        tmp.keydata = NULL;
+    }
+
+    EVP_KEYMGMT_free(new_keymgmt);
+
+    if (tmp.keydata == NULL)
+        return 1;
+
+    /* Restore |*target| */
+    *target = tmp;
+
+    return 0;
+}
+
 void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
                            void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 {
