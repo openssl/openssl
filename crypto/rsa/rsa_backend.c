@@ -120,6 +120,10 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
     RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
     rsa_get0_all_params(rsa, factors, exps, coeffs);
 
+    if (!ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_N, rsa_n)
+        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_E, rsa_e))
+        goto err;
+
     /* Check private key data integrity */
     if (rsa_d != NULL) {
         int numprimes = sk_BIGNUM_const_num(factors);
@@ -134,18 +138,18 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
         if (numprimes != 0
             && (numprimes < 2 || numexps < 2 || numcoeffs < 1))
             goto err;
+
+        if (!ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_D,
+                                     rsa_d)
+            || !ossl_param_build_set_multi_key_bn(bld, params,
+                                                  rsa_mp_factor_names, factors)
+            || !ossl_param_build_set_multi_key_bn(bld, params,
+                                                  rsa_mp_exp_names, exps)
+            || !ossl_param_build_set_multi_key_bn(bld, params,
+                                                  rsa_mp_coeff_names, coeffs))
+        goto err;
     }
 
-    if (!ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_N, rsa_n)
-        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_E, rsa_e)
-        || !ossl_param_build_set_bn(bld, params, OSSL_PKEY_PARAM_RSA_D, rsa_d)
-        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_factor_names,
-                                              factors)
-        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_exp_names,
-                                              exps)
-        || !ossl_param_build_set_multi_key_bn(bld, params, rsa_mp_coeff_names,
-                                              coeffs))
-        goto err;
 #if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
     /* The acvp test results are not meant for export so check for bld == NULL */
     if (bld == NULL)
