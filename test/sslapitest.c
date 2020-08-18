@@ -7511,7 +7511,9 @@ static int cert_cb(SSL *s, void *arg)
         BIO_free(in);
         if (!TEST_ptr(in = BIO_new(BIO_s_file()))
                 || !TEST_int_ge(BIO_read_filename(in, ecdsakey), 0)
-                || !TEST_ptr(pkey = PEM_read_bio_PrivateKey(in, NULL, NULL, NULL)))
+                || !TEST_ptr(pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
+                                                               NULL, NULL,
+                                                               libctx, NULL)))
             goto out;
         rv = SSL_check_chain(s, x509, pkey, chain);
         /*
@@ -7656,8 +7658,9 @@ static int client_cert_cb(SSL *ssl, X509 **x509, EVP_PKEY **pkey)
     if (!TEST_ptr(xcert = X509_new_with_libctx(libctx, NULL))
             || !TEST_ptr(PEM_read_bio_X509(in, &xcert, NULL, NULL))
             || !TEST_ptr(priv_in = BIO_new_file(privkey, "r"))
-            || !TEST_ptr(privpkey = PEM_read_bio_PrivateKey(priv_in, NULL, NULL,
-                                                            NULL)))
+            || !TEST_ptr(privpkey = PEM_read_bio_PrivateKey_ex(priv_in, NULL,
+                                                               NULL, NULL,
+                                                               libctx, NULL)))
         goto err;
 
     *x509 = xcert;
