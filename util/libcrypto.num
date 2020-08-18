@@ -5262,3 +5262,4 @@ EVP_SIGNATURE_gettable_ctx_params       ?	3_0_0	EXIST::FUNCTION:
 EVP_SIGNATURE_settable_ctx_params       ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_gettable_ctx_params         ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYEXCH_settable_ctx_params         ?	3_0_0	EXIST::FUNCTION:
+d2i_PUBKEY_ex                           ?	3_0_0	EXIST::FUNCTION:

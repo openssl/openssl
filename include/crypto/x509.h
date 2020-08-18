@@ -306,3 +306,6 @@ int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *type,
                                  unsigned int *len, OPENSSL_CTX *libctx,
                                  const char *propq);
 int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
+
+int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,
+                            const X509_PUBKEY *key);

@@ -4,7 +4,7 @@
 
 X509_PUBKEY_new, X509_PUBKEY_free, X509_PUBKEY_dup,
 X509_PUBKEY_set, X509_PUBKEY_get0, X509_PUBKEY_get,
-d2i_PUBKEY, i2d_PUBKEY, d2i_PUBKEY_bio, d2i_PUBKEY_fp,
+d2i_PUBKEY_ex, d2i_PUBKEY, i2d_PUBKEY, d2i_PUBKEY_bio, d2i_PUBKEY_fp,
 i2d_PUBKEY_fp, i2d_PUBKEY_bio, X509_PUBKEY_set0_param, X509_PUBKEY_get0_param,
 X509_PUBKEY_eq - SubjectPublicKeyInfo public key functions
 
@@ -20,6 +20,8 @@ X509_PUBKEY_eq - SubjectPublicKeyInfo public key functions
  EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key);
  EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key);
 
+ EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
+                         OPENSSL_CTX *libctx, const char *propq);
  EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length);
  int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp);
 
@@ -58,9 +60,15 @@ X509_PUBKEY_get() is similar to X509_PUBKEY_get0() except the reference
 count on the returned key is incremented so it B<MUST> be freed using
 EVP_PKEY_free() after use.
 
-d2i_PUBKEY() and i2d_PUBKEY() decode and encode an B<EVP_PKEY> structure
-using B<SubjectPublicKeyInfo> format. They otherwise follow the conventions of
-other ASN.1 functions such as d2i_X509().
+d2i_PUBKEY_ex() decodes an B<EVP_PKEY> structure using B<SubjectPublicKeyInfo>
+format.  Some public key decoding implementations may use cryptographic
+algorithms. In this case the supplied library context I<libctx> and property
+query string I<propq> are used.
+d2i_PUBKEY() does the same as d2i_PUBKEY_ex() except that the default
+library context and property query string are used.
+
+i2d_PUBKEY() encodes an B<EVP_PKEY> structure using B<SubjectPublicKeyInfo>
+format.
 
 d2i_PUBKEY_bio(), d2i_PUBKEY_fp(), i2d_PUBKEY_bio() and i2d_PUBKEY_fp() are
 similar to d2i_PUBKEY() and i2d_PUBKEY() except they decode or encode using a

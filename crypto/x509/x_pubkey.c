@@ -28,6 +28,10 @@ struct X509_pubkey_st {
     X509_ALGOR *algor;
     ASN1_BIT_STRING *public_key;
     EVP_PKEY *pkey;
+
+    /* extra data for the callback, used by d2i_PUBKEY_ex */
+    OPENSSL_CTX *libctx;
+    const char *propq;
 };
 
 static int x509_pubkey_decode(EVP_PKEY **pk, const X509_PUBKEY *key);
@@ -228,30 +232,55 @@ EVP_PKEY *X509_PUBKEY_get(const X509_PUBKEY *key)
 }
 
 /*
- * Now two pseudo ASN1 routines that take an EVP_PKEY structure and encode or
- * decode as X509_PUBKEY
+ * Now three pseudo ASN1 routines that take an EVP_PKEY structure and encode
+ * or decode as X509_PUBKEY
  */
 
-EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
+EVP_PKEY *d2i_PUBKEY_ex(EVP_PKEY **a, const unsigned char **pp, long length,
+                        OPENSSL_CTX *libctx, const char *propq)
 {
-    X509_PUBKEY *xpk;
-    EVP_PKEY *pktmp;
+    X509_PUBKEY *xpk, *xpk2 = NULL, **pxpk = NULL;
+    EVP_PKEY *pktmp = NULL;
     const unsigned char *q;
 
     q = *pp;
-    xpk = d2i_X509_PUBKEY(NULL, &q, length);
+
+    /*
+     * If libctx or propq are non-NULL, we take advantage of the reuse
+     * feature.  It's not generally recommended, but is safe enough for
+     * newly created structures.
+     */
+    if (libctx != NULL || propq != NULL) {
+        xpk2 = OPENSSL_zalloc(sizeof(*xpk2));
+        if (xpk2 == NULL) {
+            ERR_raise(ERR_LIB_X509, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+        xpk2->libctx = libctx;
+        xpk2->propq = propq;
+        pxpk = &xpk2;
+    }
+    xpk = d2i_X509_PUBKEY(pxpk, &q, length);
     if (xpk == NULL)
-        return NULL;
+        goto end;
     pktmp = X509_PUBKEY_get(xpk);
     X509_PUBKEY_free(xpk);
+    xpk2 = NULL;                 /* We know that xpk == xpk2 */
     if (pktmp == NULL)
-        return NULL;
+        goto end;
     *pp = q;
     if (a != NULL) {
         EVP_PKEY_free(*a);
         *a = pktmp;
     }
+ end:
+    X509_PUBKEY_free(xpk2);
     return pktmp;
+}
+
+EVP_PKEY *d2i_PUBKEY(EVP_PKEY **a, const unsigned char **pp, long length)
+{
+    return d2i_PUBKEY_ex(a, pp, length, NULL, NULL);
 }
 
 int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
@@ -492,4 +521,14 @@ int X509_PUBKEY_eq(const X509_PUBKEY *a, const X509_PUBKEY *b)
         || (pB = X509_PUBKEY_get0(b)) == NULL)
         return -2;
     return EVP_PKEY_eq(pA, pB);
+}
+
+int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,
+                            const X509_PUBKEY *key)
+{
+    if (plibctx)
+        *plibctx = key->libctx;
+    if (ppropq)
+        *ppropq = key->propq;
+    return 1;
 }
