@@ -13,6 +13,7 @@
 
 DEFINE_STACK_OF(OSSL_CMP_CERTRESPONSE)
 
+static const char *newkey_f;
 static const char *server_cert_f;
 static const char *pkcs10_f;
 
@@ -30,6 +31,19 @@ typedef struct test_fixture {
     /* for error and response messages */
     OSSL_CMP_PKISI *si;
 } CMP_MSG_TEST_FIXTURE;
+
+static OPENSSL_CTX *libctx = NULL;
+static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
+
+/* TODO(3.0) Clean this up - See issue #12680 */
+static X509 *X509_dup_with_libctx(const X509 *cert)
+{
+    X509 *dup = X509_dup(cert);
+
+    if (dup != NULL)
+        x509_set0_libctx(dup, libctx, NULL);
+    return dup;
+}
 
 static unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
 
@@ -51,7 +65,7 @@ static CMP_MSG_TEST_FIXTURE *set_up(const char *const test_case_name)
         return NULL;
     fixture->test_case_name = test_case_name;
 
-    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new(NULL, NULL))
+    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new(libctx, NULL))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(fixture->cmp_ctx, 1))
             || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
                                                            ref, sizeof(ref)))) {
@@ -146,7 +160,7 @@ static int test_cmp_create_ir_protection_set(void)
     fixture->bodytype = OSSL_CMP_PKIBODY_IR;
     fixture->err_code = -1;
     fixture->expected = 1;
-    if (!TEST_int_eq(1, RAND_bytes(secret, sizeof(secret)))
+    if (!TEST_int_eq(1, RAND_bytes_ex(libctx, secret, sizeof(secret)))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(ctx, 0))
             || !TEST_true(set1_newPkey(ctx, newkey))
             || !TEST_true(OSSL_CMP_CTX_set1_secretValue(ctx, secret,
@@ -283,7 +297,7 @@ static int test_cmp_create_certconf(void)
     fixture->fail_info = 0;
     fixture->expected = 1;
     if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
-                                             X509_dup(cert)))) {
+                                             X509_dup_with_libctx(cert)))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -297,7 +311,7 @@ static int test_cmp_create_certconf_badAlg(void)
     fixture->fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_badAlg;
     fixture->expected = 1;
     if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
-                                             X509_dup(cert)))) {
+                                             X509_dup_with_libctx(cert)))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -311,7 +325,7 @@ static int test_cmp_create_certconf_fail_info_max(void)
     fixture->fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_MAX;
     fixture->expected = 1;
     if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
-                                             X509_dup(cert)))) {
+                                             X509_dup_with_libctx(cert)))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -392,7 +406,7 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
     cresp->certifiedKeyPair->certOrEncCert->type =
         OSSL_CMP_CERTORENCCERT_CERTIFICATE;
     if ((cresp->certifiedKeyPair->certOrEncCert->value.certificate =
-         X509_dup(cert)) == NULL
+         X509_dup_with_libctx(cert)) == NULL
             || !sk_OSSL_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
         goto err;
     cresp = NULL;
@@ -538,7 +552,11 @@ void cleanup_tests(void)
 {
     EVP_PKEY_free(newkey);
     X509_free(cert);
+    OPENSSL_CTX_free(libctx);
 }
+
+#define USAGE "new.key server.crt pkcs10.der module_name [module_conf_file]\n"
+OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
 {
@@ -547,15 +565,19 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!TEST_ptr(server_cert_f = test_get_argument(0))
-            || !TEST_ptr(pkcs10_f = test_get_argument(1))) {
-        TEST_error("usage: cmp_msg_test server.crt pkcs10.der\n");
+    if (!TEST_ptr(newkey_f = test_get_argument(0))
+            || !TEST_ptr(server_cert_f = test_get_argument(1))
+            || !TEST_ptr(pkcs10_f = test_get_argument(2))) {
+        TEST_error("usage: cmp_msg_test %s", USAGE);
         return 0;
     }
 
-    if (!TEST_ptr(newkey = gen_rsa())
-            || !TEST_ptr(cert = load_pem_cert(server_cert_f, NULL))
-            || !TEST_int_eq(1, RAND_bytes(ref, sizeof(ref)))) {
+    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 3, USAGE))
+        return 0;
+
+    if (!TEST_ptr(newkey = load_pem_key(newkey_f))
+            || !TEST_ptr(cert = load_pem_cert(server_cert_f, libctx))
+            || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref)))) {
         cleanup_tests();
         return 0;
     }
