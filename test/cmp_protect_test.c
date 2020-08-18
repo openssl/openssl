@@ -33,6 +33,9 @@ typedef struct test_fixture {
     int expected;
 } CMP_PROTECT_TEST_FIXTURE;
 
+static OPENSSL_CTX *libctx = NULL;
+static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
+
 static void tear_down(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     OSSL_CMP_CTX_free(fixture->cmp_ctx);
@@ -53,7 +56,7 @@ static CMP_PROTECT_TEST_FIXTURE *set_up(const char *const test_case_name)
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
     fixture->test_case_name = test_case_name;
-    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new(NULL, NULL))) {
+    if (!TEST_ptr(fixture->cmp_ctx = OSSL_CMP_CTX_new(libctx, NULL))) {
         tear_down(fixture);
         return NULL;
     }
@@ -477,8 +480,13 @@ void cleanup_tests(void)
     X509_free(intermediate);
     OSSL_CMP_MSG_free(ir_protected);
     OSSL_CMP_MSG_free(ir_unprotected);
-
+    OPENSSL_CTX_free(libctx);
 }
+
+#define USAGE "server.pem IR_protected.der IR_unprotected.der IP_PBM.der " \
+    "server.crt server.pem EndEntity1.crt EndEntity2.crt Root_CA.crt " \
+    "Intermediate_CA.crt module_name [module_conf_file]\n"
+OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
 {
@@ -506,15 +514,15 @@ int setup_tests(void)
             || !TEST_ptr(endentity2_f = test_get_argument(7))
             || !TEST_ptr(root_f = test_get_argument(8))
             || !TEST_ptr(intermediate_f = test_get_argument(9))) {
-        TEST_error("usage: cmp_protect_test server.pem "
-                   "IR_protected.der IR_unprotected.der IP_PBM.der "
-                   "server.crt server.pem"
-                   "EndEntity1.crt EndEntity2.crt "
-                   "Root_CA.crt Intermediate_CA.crt\n");
+        TEST_error("usage: cmp_protect_test %s", USAGE);
         return 0;
     }
+
+    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 10, USAGE))
+        return 0;
+
     if (!TEST_ptr(loadedkey = load_pem_key(server_key_f))
-            || !TEST_ptr(cert = load_pem_cert(server_cert_f, NULL)))
+            || !TEST_ptr(cert = load_pem_cert(server_cert_f, libctx)))
         return 0;
 
     if (!TEST_ptr(loadedprivkey = load_pem_key(server_f)))
@@ -524,10 +532,10 @@ int setup_tests(void)
     if (!TEST_ptr(ir_protected = load_pkimsg(ir_protected_f))
             || !TEST_ptr(ir_unprotected = load_pkimsg(ir_unprotected_f)))
         return 0;
-    if (!TEST_ptr(endentity1 = load_pem_cert(endentity1_f, NULL))
-            || !TEST_ptr(endentity2 = load_pem_cert(endentity2_f, NULL))
-            || !TEST_ptr(root = load_pem_cert(root_f, NULL))
-            || !TEST_ptr(intermediate = load_pem_cert(intermediate_f, NULL)))
+    if (!TEST_ptr(endentity1 = load_pem_cert(endentity1_f, libctx))
+            || !TEST_ptr(endentity2 = load_pem_cert(endentity2_f, libctx))
+            || !TEST_ptr(root = load_pem_cert(root_f, libctx))
+            || !TEST_ptr(intermediate = load_pem_cert(intermediate_f, libctx)))
         return 0;
     if (!TEST_int_eq(1, RAND_bytes(rand_data, OSSL_CMP_TRANSACTIONID_LENGTH)))
         return 0;
