@@ -234,5 +234,5 @@ struct ocsp_service_locator_st {
         &(a)->optionalSignature->signatureAlgorithm,\
         (a)->optionalSignature->signature,&(a)->tbsRequest,r)
 
-#  define OCSP_BASICRESP_verify(a,r,d) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_RESPDATA),\
+#  define OCSP_BASICRESP_verify(a,r) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_RESPDATA),\
         &(a)->signatureAlgorithm,(a)->signature,&(a)->tbsResponseData,r)
