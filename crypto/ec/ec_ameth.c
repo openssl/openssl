@@ -22,6 +22,7 @@
 #include <openssl/asn1t.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+#include "crypto/x509.h"
 #include <openssl/core_names.h>
 #include "openssl/param_build.h"
 #include "ec_local.h"
@@ -161,12 +162,15 @@ static int eckey_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
     int ptype, pklen;
     EC_KEY *eckey = NULL;
     X509_ALGOR *palg;
+    OPENSSL_CTX *libctx = NULL;
+    const char *propq = NULL;
 
-    if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
+    if (!X509_PUBKEY_get0_libctx(&libctx, &propq, pubkey)
+        || !X509_PUBKEY_get0_param(NULL, &p, &pklen, &palg, pubkey))
         return 0;
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
-    eckey = eckey_type2param(ptype, pval, NULL, NULL);
+    eckey = eckey_type2param(ptype, pval, libctx, propq);
 
     if (!eckey) {
         ECerr(EC_F_ECKEY_PUB_DECODE, ERR_R_EC_LIB);

@@ -127,7 +127,7 @@ static int der2key_deserialize(void *vctx, OSSL_CORE_BIO *cin,
                              libctx, NULL);
     if (pkey == NULL) {
         derp = der;
-        pkey = d2i_PUBKEY(NULL, &derp, der_len);
+        pkey = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, NULL);
     }
 
     if (pkey == NULL) {
@@ -142,7 +142,7 @@ static int der2key_deserialize(void *vctx, OSSL_CORE_BIO *cin,
          *
          * TODO(3.0): The check should be done with EVP_PKEY_is_a(), but
          * as long as we still have #legacy internal keys, it's safer to
-         * use the type numbers in side the provider.
+         * use the type numbers inside the provider.
          */
         if (EVP_PKEY_id(pkey) == ctx->desc->type)
             key = ctx->desc->extract_key(pkey);
