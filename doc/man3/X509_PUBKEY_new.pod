@@ -67,7 +67,7 @@ query string I<propq> are used.
 d2i_PUBKEY() does the same as d2i_PUBKEY_ex() except that the default
 library context and property query string are used.
 
-i2d_PUBKEY() encode an B<EVP_PKEY> structure using B<SubjectPublicKeyInfo>
+i2d_PUBKEY() encodes an B<EVP_PKEY> structure using B<SubjectPublicKeyInfo>
 format.
 
 d2i_PUBKEY_bio(), d2i_PUBKEY_fp(), i2d_PUBKEY_bio() and i2d_PUBKEY_fp() are
