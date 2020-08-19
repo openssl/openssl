@@ -331,9 +331,18 @@ int pkeyutl_main(int argc, char **argv)
             if (passin == NULL) {
                 /* Get password interactively */
                 char passwd_buf[4096];
+                int r;
+
                 BIO_snprintf(passwd_buf, sizeof(passwd_buf), "Enter %s: ", opt);
-                EVP_read_pw_string(passwd_buf, sizeof(passwd_buf) - 1,
-                                   passwd_buf, 0);
+                r = EVP_read_pw_string(passwd_buf, sizeof(passwd_buf) - 1,
+                                       passwd_buf, 0);
+                if (r < 0) {
+                    if (r == -2)
+                        BIO_puts(bio_err, "user abort\n");
+                    else
+                        BIO_puts(bio_err, "entry failed\n");
+                    goto end;
+                }
                 passwd = OPENSSL_strdup(passwd_buf);
                 if (passwd == NULL) {
                     BIO_puts(bio_err, "out of memory\n");
