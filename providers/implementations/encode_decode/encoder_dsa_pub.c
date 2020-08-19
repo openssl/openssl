@@ -173,7 +173,7 @@ static int dsa_pub_print(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
     if (out == NULL)
         return 0;
 
-    ret = ossl_prov_print_dsa(out, dsa, 0);
+    ret = ossl_prov_print_dsa(out, dsa, dsa_print_pub);
     BIO_free(out);
 
     return ret;
