@@ -33,16 +33,6 @@ typedef struct test_fixture {
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *default_null_provider = NULL, *provider = NULL;
 
-/* TODO(3.0) Clean this up - See issue #12680 */
-static X509 *X509_dup_ex(const X509 *cert)
-{
-    X509 *dup = X509_dup(cert);
-
-    if (dup != NULL)
-        x509_set0_libctx(dup, libctx, NULL);
-    return dup;
-}
-
 static unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
 
 static void tear_down(CMP_MSG_TEST_FIXTURE *fixture)
@@ -296,7 +286,7 @@ static int test_cmp_create_certconf(void)
     fixture->fail_info = 0;
     fixture->expected = 1;
     if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
-                                             X509_dup_ex(cert)))) {
+                                             X509_dup(cert)))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -310,7 +300,7 @@ static int test_cmp_create_certconf_badAlg(void)
     fixture->fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_badAlg;
     fixture->expected = 1;
     if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
-                                             X509_dup_ex(cert)))) {
+                                             X509_dup(cert)))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -324,7 +314,7 @@ static int test_cmp_create_certconf_fail_info_max(void)
     fixture->fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_MAX;
     fixture->expected = 1;
     if (!TEST_true(ossl_cmp_ctx_set0_newCert(fixture->cmp_ctx,
-                                             X509_dup_ex(cert)))) {
+                                             X509_dup(cert)))) {
         tear_down(fixture);
         fixture = NULL;
     }
@@ -405,7 +395,7 @@ static int execute_certrep_create(CMP_MSG_TEST_FIXTURE *fixture)
     cresp->certifiedKeyPair->certOrEncCert->type =
         OSSL_CMP_CERTORENCCERT_CERTIFICATE;
     if ((cresp->certifiedKeyPair->certOrEncCert->value.certificate =
-         X509_dup_ex(cert)) == NULL
+         X509_dup(cert)) == NULL
             || !sk_OSSL_CMP_CERTRESPONSE_push(crepmsg->response, cresp))
         goto err;
     cresp = NULL;

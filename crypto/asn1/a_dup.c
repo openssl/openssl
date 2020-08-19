@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
-#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
 
 #ifndef NO_OLD_ASN1
 
@@ -48,13 +48,25 @@ void *ASN1_dup(i2d_of_void *i2d, d2i_of_void *d2i, const void *x)
 
 void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
 {
+    ASN1_aux_cb *asn1_cb = NULL;
     unsigned char *b = NULL;
     const unsigned char *p;
     long i;
-    void *ret;
+    ASN1_VALUE *ret;
 
     if (x == NULL)
         return NULL;
+
+    if (it->itype == ASN1_ITYPE_SEQUENCE || it->itype == ASN1_ITYPE_CHOICE
+        || it->itype == ASN1_ITYPE_NDEF_SEQUENCE) {
+        const ASN1_AUX *aux = it->funcs;
+
+        asn1_cb = aux != NULL ? aux->asn1_cb : NULL;
+    }
+
+    if (asn1_cb != NULL
+        && !asn1_cb(ASN1_OP_DUP_PRE, (ASN1_VALUE **)&x, it, NULL))
+        goto auxerr;
 
     i = ASN1_item_i2d(x, &b, it);
     if (b == NULL) {
@@ -64,5 +76,14 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     p = b;
     ret = ASN1_item_d2i(NULL, &p, i, it);
     OPENSSL_free(b);
+
+    if (asn1_cb != NULL
+        && !asn1_cb(ASN1_OP_DUP_POST, &ret, it, (void *)x))
+        goto auxerr;
+
     return ret;
+
+ auxerr:
+    ERR_raise_data(ERR_LIB_ASN1, ASN1_R_AUX_ERROR, "Type=%s", it->sname);
+    return NULL;
 }

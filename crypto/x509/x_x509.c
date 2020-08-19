@@ -97,6 +97,17 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
 
+    case ASN1_OP_DUP_POST:
+        {
+            X509 *old = exarg;
+
+            ret->libctx = old->libctx;
+            ret->propq = old->propq;
+        }
+        break;
+
+    default:
+        break;
     }
 
     return 1;
