@@ -122,7 +122,7 @@ EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = PEM_read_bio_PrivateKey_ex(b, x, cb, u, libctx, propq);
+    ret = PEM_read_bio_PUBKEY_ex(b, x, cb, u, libctx, propq);
     BIO_free(b);
     return ret;
 }
