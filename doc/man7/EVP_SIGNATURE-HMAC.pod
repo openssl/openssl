@@ -11,8 +11,8 @@ EVP_SIGNATURE-CMAC
 The algorithms described here have legacy support for creating MACs using
 L<EVP_DigestSignInit(3)> and related functions. This is not the preferred way of
 creating MACs. Instead you should use the newer L<EVP_MAC_init(3)> functions.
-However this mechanism is provided for backwards compatibility with older
-versions of OpenSSL. 
+This mechanism is provided for backwards compatibility with older versions of
+OpenSSL. 
 
 There are no parameters supported by the legacy EVP_PKEY MAC signature
 algorithms. See L<EVP_PKEY-HMAC(7)>, L<EVP_PKEY-SIPHASH(7)>,
