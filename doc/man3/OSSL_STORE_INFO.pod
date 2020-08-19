@@ -84,15 +84,17 @@ OSSL_STORE_INFO_get0_NAME(), OSSL_STORE_INFO_get0_NAME_description(),
 OSSL_STORE_INFO_get0_PARAMS(), OSSL_STORE_INFO_get0_PUBKEY(),
 OSSL_STORE_INFO_get0_PKEY(), OSSL_STORE_INFO_get0_CERT(),
 OSSL_STORE_INFO_get0_CRL()
-all take a B<OSSL_STORE_INFO> and return the held object of the appropriate
-OpenSSL type provided that's what's held.
+all take a B<OSSL_STORE_INFO> and return the object if holds if the
+B<OSSL_STORE_INFO> type (as returned by OSSL_STORE_INFO_get_type())
+matches the function, otherwise NULL.
 
 OSSL_STORE_INFO_get1_NAME(), OSSL_STORE_INFO_get1_NAME_description(),
 OSSL_STORE_INFO_get1_PARAMS(), OSSL_STORE_INFO_get1_PUBKEY(),
 OSSL_STORE_INFO_get1_PKEY(), OSSL_STORE_INFO_get1_CERT() and
 OSSL_STORE_INFO_get1_CRL()
-all take a B<OSSL_STORE_INFO> and return a duplicate of the held object of the
-appropriate OpenSSL type provided that's what's held.
+all take a B<OSSL_STORE_INFO> and return a duplicate the object if
+holds if the B<OSSL_STORE_INFO> type (as returned by
+OSSL_STORE_INFO_get_type()) matches the function, otherwise NULL.
 
 OSSL_STORE_INFO_free() frees a B<OSSL_STORE_INFO> and its contained type.
 

@@ -835,12 +835,14 @@ int load_key_cert_crl(const char *uri, int maybe_stdin,
 
         switch (type) {
         case OSSL_STORE_INFO_PKEY:
-            /*
-             * A PKEY can serve both as PKEY and PUBKEY.
-             * We use OSSL_STORE_INFO_get1_PKEY() to get the refcounts right.
-             */
             if (ppkey != NULL && *ppkey == NULL)
                 err = ((*ppkey = OSSL_STORE_INFO_get1_PKEY(info)) == NULL);
+
+            /*
+             * An EVP_PKEY with private parts also holds the public parts,
+             * so if the caller asked for a public key, and we got a private
+             * key, we can still pass it back.
+             */
             if (ppubkey != NULL && *ppubkey == NULL)
                 err = ((*ppubkey = OSSL_STORE_INFO_get1_PKEY(info)) == NULL);
             break;
