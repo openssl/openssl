@@ -17,9 +17,7 @@
 
 char *ossl_safe_getenv(const char *name)
 {
-#if (defined(_WIN32)) && defined(CP_UTF8) && !defined(_WIN32_WCE)
-
-    /* try work like win32_utf8argv */
+#if defined(_WIN32) && defined(CP_UTF8) && !defined(_WIN32_WCE)
     if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
 
         char *val = NULL;
@@ -35,27 +33,25 @@ char *ossl_safe_getenv(const char *name)
         if (NULL != namew) {
             /* convert name to wide string */
             fsize = mbstowcs(namew, name, rsize);
-            /* if conversion is ok */
-            if (fsize > 0) {
-                /* determine value string size in wchars */
+            /* if conversion is ok, then determine value string size in wchars */
+            if (fsize > 0)
                 envlen = GetEnvironmentVariableW(namew, NULL, 0);
-            }
         }
 
-        if (envlen > 0) {
+        if (envlen > 0)
             valw = _malloca(envlen * sizeof(WCHAR));
-        }
 
         if (NULL != valw) {
             if (GetEnvironmentVariableW(namew, valw, envlen) < envlen) {
                 /* determine value string size in utf-8 */
                 int sz = WideCharToMultiByte(CP_UTF8, 0, valw, -1,
-                           NULL, 0, NULL, NULL);
+                                             NULL, 0, NULL, NULL);
+
                 if (sz != 0) {
                     val = OPENSSL_malloc(sz);
                     /* convert value string from wide to utf-8 */
                     if (WideCharToMultiByte(CP_UTF8, 0, valw, -1,
-                          val, sz, NULL, NULL) == 0) {
+                                            val, sz, NULL, NULL) == 0) {
                         OPENSSL_free(val);
                         val = NULL;
                     }
