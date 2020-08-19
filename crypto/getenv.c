@@ -30,7 +30,7 @@ char *ossl_safe_getenv(const char *name)
         rsize = mbstowcs(NULL, name, 0);
         /* if name is valid string */
         if (rsize > -1) {
-            /* one to leave room for the null terminator */
+            /* add one to leave room for the null terminator */
             rsize++;
             namew = _malloca(rsize * sizeof(WCHAR));
         }
