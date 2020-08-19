@@ -602,6 +602,11 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     if (cipher != NULL)
         cipher_name = EVP_CIPHER_name(cipher);
 
+    if (cipher_name == NULL) {
+        EVPerr(0, EVP_R_KEY_SETUP_FAILED);
+        goto err;
+    }
+
     ctx = EVP_PKEY_CTX_new_from_name(libctx, "CMAC", propq);
     if (ctx == NULL) {
         EVPerr(0, ERR_R_MALLOC_FAILURE);
