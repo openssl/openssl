@@ -17,39 +17,60 @@
 
 char *ossl_safe_getenv(const char *name)
 {
-#if (defined(OPENSSL_SYS_WINDOWS)) && defined(CP_UTF8) && !defined(_WIN32_WCE)
+#if (defined(_WIN32)) && defined(CP_UTF8) && !defined(_WIN32_WCE)
 
-    if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) == 0)
-        return getenv(name);
+    /* try work like win32_utf8argv */
+    if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
 
-    /* convert name to wide string */
-    int rsize = mbstowcs(NULL, name, 0) + 1;
-    WCHAR * namew = _alloca(rsize * sizeof(WCHAR));
-    int fsize = mbstowcs(namew, name, rsize);
+        char *val = NULL;
+        WCHAR *namew = NULL;
+        WCHAR *valw = NULL;
+        DWORD envlen = 0;
+        int rsize, fsize;
 
-    char *val = NULL;
+        /* query for buffer len */
+        rsize = mbstowcs(NULL, name, 0) + 1;
+        namew = _malloca(rsize * sizeof(WCHAR));
 
-    /* determine value string size in wchars */
-    DWORD envlen = GetEnvironmentVariableW(namew, NULL, 0);    
+        if (NULL != namew) {
+            /* convert name to wide string */
+            fsize = mbstowcs(namew, name, rsize);
+            /* if conversion is ok */
+            if (fsize > 0) {
+                /* determine value string size in wchars */
+                envlen = GetEnvironmentVariableW(namew, NULL, 0);
+            }
+        }
 
-    if (envlen != 0) {
-        WCHAR *valw = _alloca(envlen * sizeof(WCHAR));
-        if (GetEnvironmentVariableW(namew, valw, envlen) < envlen) {
-            /* determine value string size in utf-8 */
-            int sz = WideCharToMultiByte(CP_UTF8, 0, valw, -1, 
-                       NULL, 0, NULL, NULL);
-            if (sz != 0) {
-                val = OPENSSL_malloc(sz);
-                /* convert value string from wide to utf-8 */
-                if (WideCharToMultiByte(CP_UTF8, 0, valw, -1, 
-                      val, sz, NULL, NULL) == 0) {
-                    OPENSSL_free(val);
-                    val = NULL;
+        if (envlen > 0) {
+            valw = _malloca(envlen * sizeof(WCHAR));
+        }
+
+        if (NULL != valw) {
+            if (GetEnvironmentVariableW(namew, valw, envlen) < envlen) {
+                /* determine value string size in utf-8 */
+                int sz = WideCharToMultiByte(CP_UTF8, 0, valw, -1,
+                           NULL, 0, NULL, NULL);
+                if (sz != 0) {
+                    val = OPENSSL_malloc(sz);
+                    /* convert value string from wide to utf-8 */
+                    if (WideCharToMultiByte(CP_UTF8, 0, valw, -1,
+                          val, sz, NULL, NULL) == 0) {
+                        OPENSSL_free(val);
+                        val = NULL;
+                    }
                 }
             }
         }
-    }    
-    return val;
+
+        if (NULL != namew)
+            _freea(namew);
+
+        if (NULL != valw)
+            _freea(valw);
+
+        return val;
+    }
 #endif
 
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
