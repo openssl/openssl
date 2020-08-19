@@ -128,7 +128,7 @@ static int ec_priv_der_data(void *vctx, const OSSL_PARAM params[],
         EC_KEY *eckey;
 
         if ((eckey = ec_new(ctx->provctx)) != NULL
-            && ec_import(eckey, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && ec_import(eckey, OSSL_KEYMGMT_SELECT_ALL, params)
             && ec_priv_der(ctx, eckey, out, cb, cbarg))
             ok = 1;
         ec_free(eckey);
@@ -175,7 +175,7 @@ static int ec_pem_priv_data(void *vctx, const OSSL_PARAM params[],
         EC_KEY *eckey;
 
         if ((eckey = ec_new(ctx->provctx)) != NULL
-            && ec_import(eckey, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && ec_import(eckey, OSSL_KEYMGMT_SELECT_ALL, params)
             && ec_pem_priv(ctx, eckey, out, cb, cbarg))
             ok = 1;
         ec_free(eckey);
@@ -233,7 +233,7 @@ static int ec_priv_print_data(void *vctx, const OSSL_PARAM params[],
         EC_KEY *eckey;
 
         if ((eckey = ec_new(ctx->provctx)) != NULL
-            && ec_import(eckey, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && ec_import(eckey, OSSL_KEYMGMT_SELECT_ALL, params)
             && ec_priv_print(ctx, eckey, out, cb, cbarg))
             ok = 1;
         ec_free(eckey);
