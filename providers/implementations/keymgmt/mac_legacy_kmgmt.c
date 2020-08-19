@@ -320,7 +320,6 @@ static const OSSL_PARAM *cmac_gettable_params(void *provctx)
     return gettable_params;
 }
 
-
 static int mac_set_params(void *keydata, const OSSL_PARAM params[])
 {
     MAC_KEY *key = keydata;
@@ -469,7 +468,7 @@ static void mac_gen_cleanup(void *genctx)
     OPENSSL_free(gctx);
 }
 
-const OSSL_DISPATCH mac_keymgmt_functions[] = {
+const OSSL_DISPATCH mac_legacy_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))mac_new },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))mac_free },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))mac_get_params },
@@ -491,7 +490,7 @@ const OSSL_DISPATCH mac_keymgmt_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH cmac_keymgmt_functions[] = {
+const OSSL_DISPATCH cmac_legacy_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))mac_new_cmac },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))mac_free },
     { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))mac_get_params },

@@ -436,9 +436,9 @@ static const OSSL_ALGORITHM fips_signature[] = {
     { "ED448", FIPS_DEFAULT_PROPERTIES, ed448_signature_functions },
     { "ECDSA", FIPS_DEFAULT_PROPERTIES, ecdsa_signature_functions },
 #endif
-    { "HMAC", FIPS_DEFAULT_PROPERTIES, mac_hmac_signature_functions },
+    { "HMAC", FIPS_DEFAULT_PROPERTIES, mac_legacy_hmac_signature_functions },
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", FIPS_DEFAULT_PROPERTIES, mac_cmac_signature_functions },
+    { "CMAC", FIPS_DEFAULT_PROPERTIES, mac_legacy_cmac_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -468,9 +468,9 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
 #endif
     { "TLS1-PRF", FIPS_DEFAULT_PROPERTIES, kdf_keymgmt_functions },
     { "HKDF", FIPS_DEFAULT_PROPERTIES, kdf_keymgmt_functions },
-    { "HMAC", FIPS_DEFAULT_PROPERTIES, mac_keymgmt_functions },
+    { "HMAC", FIPS_DEFAULT_PROPERTIES, mac_legacy_keymgmt_functions },
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", FIPS_DEFAULT_PROPERTIES, cmac_keymgmt_functions },
+    { "CMAC", FIPS_DEFAULT_PROPERTIES, cmac_legacy_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };

@@ -364,13 +364,13 @@ static const OSSL_ALGORITHM deflt_signature[] = {
     { "ED448:Ed448", "provider=default", ed448_signature_functions },
     { "ECDSA", "provider=default", ecdsa_signature_functions },
 #endif
-    { "HMAC", "provider=default", mac_hmac_signature_functions },
-    { "SIPHASH", "provider=default", mac_siphash_signature_functions },
+    { "HMAC", "provider=default", mac_legacy_hmac_signature_functions },
+    { "SIPHASH", "provider=default", mac_legacy_siphash_signature_functions },
 #ifndef OPENSSL_NO_POLY1305
-    { "POLY1305", "provider=default", mac_poly1305_signature_functions },
+    { "POLY1305", "provider=default", mac_legacy_poly1305_signature_functions },
 #endif
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", "provider=default", mac_cmac_signature_functions },
+    { "CMAC", "provider=default", mac_legacy_cmac_signature_functions },
 #endif
     { NULL, NULL, NULL }
 };
@@ -400,13 +400,13 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
     { "TLS1-PRF", "provider=default", kdf_keymgmt_functions },
     { "HKDF", "provider=default", kdf_keymgmt_functions },
     { "SCRYPT:id-scrypt", "provider=default", kdf_keymgmt_functions },
-    { "HMAC", "provider=default", mac_keymgmt_functions },
-    { "SIPHASH", "provider=default", mac_keymgmt_functions },
+    { "HMAC", "provider=default", mac_legacy_keymgmt_functions },
+    { "SIPHASH", "provider=default", mac_legacy_keymgmt_functions },
 #ifndef OPENSSL_NO_POLY1305
-    { "POLY1305", "provider=default", mac_keymgmt_functions },
+    { "POLY1305", "provider=default", mac_legacy_keymgmt_functions },
 #endif
 #ifndef OPENSSL_NO_CMAC
-    { "CMAC", "provider=default", cmac_keymgmt_functions },
+    { "CMAC", "provider=default", cmac_legacy_keymgmt_functions },
 #endif
     { NULL, NULL, NULL }
 };
