@@ -434,7 +434,7 @@ int evp_keymgmt_util_convert(EVP_PKEY *target, const char *keytype,
                              OPENSSL_CTX *libctx, const char *propq)
 {
     EVP_KEYMGMT *new_keymgmt;
-    EVP_PKEY tmp = { 0, };
+    EVP_PKEY tmp;
     struct evp_keymgmt_util_try_import_data_st import_data;
     int selection = OSSL_KEYMGMT_SELECT_ALL;
 
