@@ -20,14 +20,20 @@ char *ossl_safe_getenv(const char *name)
 #if defined(_WIN32) && defined(CP_UTF8) && !defined(_WIN32_WCE)
     if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
         char *val = NULL;
+        int vallen = 0;
         WCHAR *namew = NULL;
         WCHAR *valw = NULL;
         DWORD envlen = 0;
         int rsize, fsize;
 
         /* query for buffer len */
-        rsize = mbstowcs(NULL, name, 0) + 1;
-        namew = _malloca(rsize * sizeof(WCHAR));
+        rsize = mbstowcs(NULL, name, 0);
+        /* if name is valid string */
+        if (rsize > -1) {
+            /* one to leave room for the null terminator */
+            rsize++;
+            namew = _malloca(rsize * sizeof(WCHAR));
+        }
 
         if (NULL != namew) {
             /* convert name to wide string */
@@ -41,20 +47,23 @@ char *ossl_safe_getenv(const char *name)
             valw = _malloca(envlen * sizeof(WCHAR));
 
         if (NULL != valw) {
+            /* if can get env value as wide string */
             if (GetEnvironmentVariableW(namew, valw, envlen) < envlen) {
                 /* determine value string size in utf-8 */
-                int sz = WideCharToMultiByte(CP_UTF8, 0, valw, -1,
-                                             NULL, 0, NULL, NULL);
+                vallen = WideCharToMultiByte(CP_UTF8, 0, valw, -1, NULL, 0,
+                                             NULL, NULL);
+            }
+        }
 
-                if (sz != 0) {
-                    val = OPENSSL_malloc(sz);
-                    /* convert value string from wide to utf-8 */
-                    if (WideCharToMultiByte(CP_UTF8, 0, valw, -1,
-                                            val, sz, NULL, NULL) == 0) {
-                        OPENSSL_free(val);
-                        val = NULL;
-                    }
-                }
+        if (vallen > 0)
+            val = OPENSSL_malloc(vallen);
+
+        if (NULL != val) {
+            /* convert value string from wide to utf-8 */
+            if (WideCharToMultiByte(CP_UTF8, 0, valw, -1, val, vallen,
+                                    NULL, NULL) == 0) {
+                OPENSSL_free(val);
+                val = NULL;
             }
         }
 
