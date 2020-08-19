@@ -2241,7 +2241,7 @@ static void print_itavs(STACK_OF(OSSL_CMP_ITAV) *itavs)
 {
     OSSL_CMP_ITAV *itav = NULL;
     char buf[128];
-    int i;
+    int i, r;
     int n = sk_OSSL_CMP_ITAV_num(itavs); /* itavs == NULL leads to 0 */
 
     if (n == 0) {
@@ -2251,8 +2251,13 @@ static void print_itavs(STACK_OF(OSSL_CMP_ITAV) *itavs)
 
     for (i = 0; i < n; i++) {
         itav = sk_OSSL_CMP_ITAV_value(itavs, i);
-        OBJ_obj2txt(buf, 128, OSSL_CMP_ITAV_get0_type(itav), 0);
-        CMP_info1("genp contains ITAV of type: %s", buf);
+        r = OBJ_obj2txt(buf, 128, OSSL_CMP_ITAV_get0_type(itav), 0);
+        if (r < 0)
+            CMP_err("could not get ITAV details");
+        else if (r == 0)
+            CMP_info("genp contains empty ITAV");
+        else
+            CMP_info1("genp contains ITAV of type: %s", buf);
     }
 }
 
