@@ -56,6 +56,8 @@ my %openssl_args = ();
 $openssl_args{'failure_verbosity'} = $ENV{HARNESS_VERBOSE} ? 0 :
     $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS} ? 2 :
     1; # $ENV{HARNESS_VERBOSE_FAILURE}
+print "Warning: HARNESS_JOBS > 1 overrides HARNESS_VERBOSE\n"
+    if $ENV{HARNESS_JOBS} > 1;
 print "Warning: HARNESS_VERBOSE overrides HARNESS_VERBOSE_FAILURE*\n"
     if ($ENV{HARNESS_VERBOSE} && ($ENV{HARNESS_VERBOSE_FAILURE}
                                   || $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS}));
