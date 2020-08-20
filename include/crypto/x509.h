@@ -319,3 +319,7 @@ int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
 
 int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,
                             const X509_PUBKEY *key);
+X509_ALGOR *pkcs5_pbkdf2_set_with_libctx(int iter,
+                                         unsigned char *salt, int saltlen,
+                                         int prf_nid, int keylen,
+                                         OPENSSL_CTX *libctx);

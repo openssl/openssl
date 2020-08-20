@@ -9,9 +9,11 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/provider.h"
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/rand.h>
+#include "crypto/x509.h"
 
 /* PKCS#5 v2.0 password based encryption structures */
 
@@ -46,6 +48,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
     EVP_CIPHER_CTX *ctx = NULL;
     unsigned char iv[EVP_MAX_IV_LENGTH];
     PBE2PARAM *pbe2 = NULL;
+    OPENSSL_CTX *libctx = ossl_provider_library_context(EVP_CIPHER_provider(cipher));
 
     alg_nid = EVP_CIPHER_type(cipher);
     if (alg_nid == NID_undef) {
@@ -67,7 +70,7 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
     if (EVP_CIPHER_iv_length(cipher)) {
         if (aiv)
             memcpy(iv, aiv, EVP_CIPHER_iv_length(cipher));
-        else if (RAND_bytes(iv, EVP_CIPHER_iv_length(cipher)) <= 0)
+        else if (RAND_bytes_ex(libctx, iv, EVP_CIPHER_iv_length(cipher)) <= 0)
             goto err;
     }
 
@@ -105,7 +108,8 @@ X509_ALGOR *PKCS5_pbe2_set_iv(const EVP_CIPHER *cipher, int iter,
 
     X509_ALGOR_free(pbe2->keyfunc);
 
-    pbe2->keyfunc = PKCS5_pbkdf2_set(iter, salt, saltlen, prf_nid, keylen);
+    pbe2->keyfunc = pkcs5_pbkdf2_set_with_libctx(iter, salt, saltlen, prf_nid,
+                                                 keylen, libctx);
 
     if (pbe2->keyfunc == NULL)
         goto merr;
@@ -146,8 +150,10 @@ X509_ALGOR *PKCS5_pbe2_set(const EVP_CIPHER *cipher, int iter,
     return PKCS5_pbe2_set_iv(cipher, iter, salt, saltlen, NULL, -1);
 }
 
-X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
-                             int prf_nid, int keylen)
+X509_ALGOR *pkcs5_pbkdf2_set_with_libctx(int iter,
+                                         unsigned char *salt, int saltlen,
+                                         int prf_nid, int keylen,
+                                         OPENSSL_CTX *libctx)
 {
     X509_ALGOR *keyfunc = NULL;
     PBKDF2PARAM *kdf = NULL;
@@ -170,7 +176,7 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 
     if (salt)
         memcpy(osalt->data, salt, saltlen);
-    else if (RAND_bytes(osalt->data, saltlen) <= 0)
+    else if (RAND_bytes_ex(libctx, osalt->data, saltlen) <= 0)
         goto merr;
 
     if (iter <= 0)
@@ -214,8 +220,15 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
     return keyfunc;
 
  merr:
-    ASN1err(ASN1_F_PKCS5_PBKDF2_SET, ERR_R_MALLOC_FAILURE);
+    ASN1err(0, ERR_R_MALLOC_FAILURE);
     PBKDF2PARAM_free(kdf);
     X509_ALGOR_free(keyfunc);
     return NULL;
+}
+
+X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
+                             int prf_nid, int keylen)
+{
+    return pkcs5_pbkdf2_set_with_libctx(iter, salt, saltlen, prf_nid, keylen,
+                                        NULL);
 }

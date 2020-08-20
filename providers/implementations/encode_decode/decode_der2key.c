@@ -157,6 +157,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
                           OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
 {
     struct der2key_ctx_st *ctx = vctx;
+    OPENSSL_CTX *save_libctx = NULL;
     void *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
     unsigned char *der = NULL;
     const unsigned char *derp;
@@ -174,11 +175,13 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
      * Opportunistic attempt to decrypt.  If it doesn't work, we try to
      * decode our input unencrypted.
      */
+    save_libctx = OPENSSL_CTX_set0_default(libctx);
     if (der_from_p8(&new_der, &new_der_len, der, der_len, pw_cb, pw_cbarg)) {
         OPENSSL_free(der);
         der = new_der;
         der_len = new_der_len;
     }
+    OPENSSL_CTX_set0_default(save_libctx);
 
     derp = der;
     pkey = d2i_PrivateKey_ex(ctx->desc->type, NULL, &derp, der_len,

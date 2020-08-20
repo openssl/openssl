@@ -17,6 +17,7 @@
 #include <openssl/aes.h>
 #include "cms_local.h"
 #include "crypto/asn1.h"
+#include "crypto/x509.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
                                     unsigned char *pass, ossl_ssize_t passlen)
@@ -150,7 +151,8 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     /* Setup PBE algorithm */
 
-    pwri->keyDerivationAlgorithm = PKCS5_pbkdf2_set(iter, NULL, 0, -1, -1);
+    pwri->keyDerivationAlgorithm = pkcs5_pbkdf2_set_with_libctx(iter,
+                                       NULL, 0, -1, -1, cms_ctx->libctx);
 
     if (pwri->keyDerivationAlgorithm == NULL)
         goto err;

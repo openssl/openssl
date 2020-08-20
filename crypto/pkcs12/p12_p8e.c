@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/provider.h"
 #include <openssl/pkcs12.h>
 #include "crypto/x509.h"
 
@@ -19,6 +20,7 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
 {
     X509_SIG *p8 = NULL;
     X509_ALGOR *pbe;
+    OPENSSL_CTX *save_libctx = NULL;
 
     if (pbe_nid == -1)
         pbe = PKCS5_pbe2_set(cipher, iter, salt, saltlen);
@@ -32,12 +34,12 @@ X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
         PKCS12err(PKCS12_F_PKCS8_ENCRYPT, ERR_R_ASN1_LIB);
         return NULL;
     }
+    save_libctx = OPENSSL_CTX_set0_default(
+                      ossl_provider_library_context(EVP_CIPHER_provider(cipher)));
     p8 = PKCS8_set0_pbe(pass, passlen, p8inf, pbe);
-    if (p8 == NULL) {
+    if (p8 == NULL)
         X509_ALGOR_free(pbe);
-        return NULL;
-    }
-
+    OPENSSL_CTX_set0_default(save_libctx);
     return p8;
 }
 
