@@ -36,7 +36,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
                            size_t *md_out_size,
                            const unsigned char header[13],
                            const unsigned char *data,
-                           size_t data_plus_mac_size,
+                           size_t data_size,
                            size_t data_plus_mac_plus_padding_size,
                            const unsigned char *mac_secret,
                            size_t mac_secret_length, char is_sslv3);
@@ -161,16 +161,13 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  *   md_out_size: if non-NULL, the number of output bytes is written here.
  *   header: the 13-byte, TLS record header.
  *   data: the record data itself, less any preceding explicit IV.
- *   data_plus_mac_size: the secret, reported length of the data and MAC
- *     once the padding has been removed.
+ *   data_size: the secret, reported length of the data once the MAC and padding
+ *              has been removed.
  *   data_plus_mac_plus_padding_size: the public length of the whole
- *     record, including padding.
+ *     record, including MAC and padding.
  *   is_sslv3: non-zero if we are to use SSLv3. Otherwise, TLS.
  *
- * On entry: by virtue of having been through one of the remove_padding
- * functions, above, we know that data_plus_mac_size is large enough to contain
- * a padding byte and MAC. (If the padding was invalid, it might contain the
- * padding too. )
+ * On entry: we know that data is data_plus_mac_plus_padding_size in length
  * Returns 1 on success or 0 on error
  */
 int ssl3_cbc_digest_record(const EVP_MD *md,
@@ -178,7 +175,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
                            size_t *md_out_size,
                            const unsigned char header[13],
                            const unsigned char *data,
-                           size_t data_plus_mac_size,
+                           size_t data_size,
                            size_t data_plus_mac_plus_padding_size,
                            const unsigned char *mac_secret,
                            size_t mac_secret_length, char is_sslv3)
@@ -343,7 +340,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
     /*
      * mac_end_offset is the index just past the end of the data to be MACed.
      */
-    mac_end_offset = data_plus_mac_size + header_length - md_size;
+    mac_end_offset = data_size + header_length;
     /*
      * c is the index of the 0x80 byte in the final hash block that contains
      * application data.
