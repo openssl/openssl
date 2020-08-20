@@ -24,20 +24,31 @@ char *ossl_safe_getenv(const char *name)
         WCHAR *namew = NULL;
         WCHAR *valw = NULL;
         DWORD envlen = 0;
+        DWORD dwFlags = MB_ERR_INVALID_CHARS;
         int rsize, fsize;
+        UINT curacp;
+
+        curacp = GetACP();
+
+        /* For the code pages listed below, dwFlags must be set to 0.
+         * Otherwise, the function fails with ERROR_INVALID_FLAGS.
+         */
+        if (curacp == 50220 || curacp == 50221 || curacp == 50222 ||
+            curacp == 50225 || curacp == 50227 || curacp == 50229 ||
+            (57002 <= curacp && curacp <=57011) || curacp == 65000 ||
+            curacp == 42)
+            dwFlags = 0;
 
         /* query for buffer len */
-        rsize = mbstowcs(NULL, name, 0);
-        /* if name is valid string */
-        if (rsize > -1) {
-            /* add one to leave room for the null terminator */
-            rsize++;
+        rsize = MultiByteToWideChar(curacp, dwFlags, name, -1, NULL, 0);
+        /* if name is valid string and can be converted to wide string */
+        if (rsize > 0) {
             namew = _malloca(rsize * sizeof(WCHAR));
         }
 
         if (NULL != namew) {
             /* convert name to wide string */
-            fsize = mbstowcs(namew, name, rsize);
+            fsize = MultiByteToWideChar(curacp, dwFlags, name, -1, namew, rsize);
             /* if conversion is ok, then determine value string size in wchars */
             if (fsize > 0)
                 envlen = GetEnvironmentVariableW(namew, NULL, 0);
