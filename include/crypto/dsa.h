@@ -21,7 +21,6 @@ int dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
 
 int dsa_sign_int(int type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa);
-const unsigned char *dsa_algorithmidentifier_encoding(int md_nid, size_t *len);
 
 FFC_PARAMS *dsa_get0_params(DSA *dsa);
 int dsa_ffc_params_fromdata(DSA *dsa, const OSSL_PARAM params[]);
