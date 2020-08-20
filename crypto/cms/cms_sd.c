@@ -830,7 +830,11 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         return -1;
 
     name = OBJ_nid2sn(OBJ_obj2nid(si->digestAlgorithm->algorithm));
+
+    (void)ERR_set_mark();
     fetched_md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
+    (void)ERR_pop_to_mark();
+
     if (fetched_md != NULL)
         md = fetched_md;
     else

@@ -483,7 +483,10 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
         const char *name = OBJ_nid2sn(OBJ_obj2nid(calg->algorithm));
 
+        (void)ERR_set_mark();
         fetched_cipher = EVP_CIPHER_fetch(ctx->libctx, name, ctx->propq);
+        (void)ERR_pop_to_mark();
+
         if (fetched_cipher != NULL)
             cipher = fetched_cipher;
         else
