@@ -21,11 +21,19 @@
 #include "prov/macsignature.h"
 
 static OSSL_FUNC_signature_newctx_fn mac_hmac_newctx;
+static OSSL_FUNC_signature_newctx_fn mac_siphash_newctx;
+static OSSL_FUNC_signature_newctx_fn mac_poly1305_newctx;
+static OSSL_FUNC_signature_newctx_fn mac_cmac_newctx;
 static OSSL_FUNC_signature_digest_sign_init_fn mac_digest_sign_init;
 static OSSL_FUNC_signature_digest_sign_update_fn mac_digest_sign_update;
 static OSSL_FUNC_signature_digest_sign_final_fn mac_digest_sign_final;
 static OSSL_FUNC_signature_freectx_fn mac_freectx;
 static OSSL_FUNC_signature_dupctx_fn mac_dupctx;
+static OSSL_FUNC_signature_set_ctx_params_fn mac_set_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn mac_hmac_settable_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn mac_siphash_settable_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn mac_poly1305_settable_ctx_params;
+static OSSL_FUNC_signature_settable_ctx_params_fn mac_cmac_settable_ctx_params;
 
 typedef struct {
     OPENSSL_CTX *libctx;
@@ -171,6 +179,40 @@ static void *mac_dupctx(void *vpmacctx)
     return NULL;
 }
 
+static int mac_set_ctx_params(void *vpmacctx, const OSSL_PARAM params[])
+{
+    PROV_MAC_CTX *ctx = (PROV_MAC_CTX *)vpmacctx;
+
+    return EVP_MAC_CTX_set_params(ctx->macctx, params);
+}
+
+static const OSSL_PARAM *mac_settable_ctx_params(void *provctx,
+                                                 const char *macname)
+{
+    EVP_MAC *mac = EVP_MAC_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), macname,
+                                 NULL);
+    const OSSL_PARAM *params;
+
+    if (mac == NULL)
+        return NULL;
+
+    params = EVP_MAC_settable_ctx_params(mac);
+    EVP_MAC_free(mac);
+
+    return params;
+}
+
+#define MAC_SETTABLE_CTX_PARAMS(funcname, macname) \
+    static const OSSL_PARAM *mac_##funcname##_settable_ctx_params(void *provctx) \
+    { \
+        return mac_settable_ctx_params(provctx, macname); \
+    }
+
+MAC_SETTABLE_CTX_PARAMS(hmac, "HMAC")
+MAC_SETTABLE_CTX_PARAMS(siphash, "SIPHASH")
+MAC_SETTABLE_CTX_PARAMS(poly1305, "POLY1305")
+MAC_SETTABLE_CTX_PARAMS(cmac, "CMAC")
+
 #define MAC_SIGNATURE_FUNCTIONS(funcname) \
     const OSSL_DISPATCH mac_legacy_##funcname##_signature_functions[] = { \
         { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))mac_##funcname##_newctx }, \
@@ -182,6 +224,10 @@ static void *mac_dupctx(void *vpmacctx)
         (void (*)(void))mac_digest_sign_final }, \
         { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))mac_freectx }, \
         { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))mac_dupctx }, \
+        { OSSL_FUNC_SIGNATURE_SET_CTX_PARAMS, \
+          (void (*)(void))mac_set_ctx_params }, \
+        { OSSL_FUNC_SIGNATURE_SETTABLE_CTX_PARAMS, \
+          (void (*)(void))mac_##funcname##_settable_ctx_params }, \
         { 0, NULL } \
     };
 
