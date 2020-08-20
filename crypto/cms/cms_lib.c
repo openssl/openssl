@@ -403,17 +403,19 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
 
     (void)ERR_set_mark();
     fetched_digest = EVP_MD_fetch(ctx->libctx, alg, ctx->propq);
-    (void)ERR_pop_to_mark();
 
     if (fetched_digest != NULL)
         digest = fetched_digest;
     else
         digest = EVP_get_digestbyobj(digestoid);
     if (digest == NULL) {
+        (void)ERR_clear_last_mark();
         CMSerr(CMS_F_CMS_DIGESTALGORITHM_INIT_BIO,
                CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         goto err;
     }
+    (void)ERR_pop_to_mark();
+
     mdbio = BIO_new(BIO_f_md());
     if (mdbio == NULL || !BIO_set_md(mdbio, digest)) {
         CMSerr(CMS_F_CMS_DIGESTALGORITHM_INIT_BIO, CMS_R_MD_BIO_INIT_ERROR);

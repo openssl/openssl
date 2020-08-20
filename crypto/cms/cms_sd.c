@@ -833,14 +833,18 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 
     (void)ERR_set_mark();
     fetched_md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
-    (void)ERR_pop_to_mark();
 
     if (fetched_md != NULL)
         md = fetched_md;
     else
         md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
-    if (md == NULL)
+    if (md == NULL) {
+        (void)ERR_clear_last_mark();
+        CMSerr(0, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         return -1;
+    }
+    (void)ERR_pop_to_mark();
+
     if (si->mctx == NULL && (si->mctx = EVP_MD_CTX_new()) == NULL) {
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, ERR_R_MALLOC_FAILURE);
         goto err;

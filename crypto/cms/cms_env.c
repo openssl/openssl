@@ -485,16 +485,17 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
         (void)ERR_set_mark();
         fetched_cipher = EVP_CIPHER_fetch(ctx->libctx, name, ctx->propq);
-        (void)ERR_pop_to_mark();
 
         if (fetched_cipher != NULL)
             cipher = fetched_cipher;
         else
             cipher = EVP_get_cipherbyobj(calg->algorithm);
         if (cipher == NULL) {
+            (void)ERR_clear_last_mark();
             CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, CMS_R_UNKNOWN_CIPHER);
             return 0;
         }
+        (void)ERR_pop_to_mark();
 
         fixlen = EVP_CIPHER_key_length(cipher);
         EVP_CIPHER_free(fetched_cipher);
