@@ -817,7 +817,8 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     unsigned char *abuf = NULL;
     int alen, r = -1;
     const char *name;
-    EVP_MD *md = NULL;
+    const EVP_MD *md;
+    EVP_MD *fetched_md = NULL;
     const CMS_CTX *ctx = si->cms_ctx;
 
     if (si->pkey == NULL) {
@@ -829,7 +830,11 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         return -1;
 
     name = OBJ_nid2sn(OBJ_obj2nid(si->digestAlgorithm->algorithm));
-    md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
+    fetched_md = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
+    if (fetched_md != NULL)
+        md = fetched_md;
+    else
+        md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
     if (md == NULL)
         return -1;
     if (si->mctx == NULL && (si->mctx = EVP_MD_CTX_new()) == NULL) {
@@ -860,7 +865,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     if (r <= 0)
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY, CMS_R_VERIFICATION_FAILURE);
  err:
-    EVP_MD_free(md);
+    EVP_MD_free(fetched_md);
     EVP_MD_CTX_reset(mctx);
     return r;
 }

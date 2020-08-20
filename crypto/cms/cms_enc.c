@@ -54,21 +54,22 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             ec->cipher = NULL;
     } else {
         cipher = EVP_get_cipherbyobj(calg->algorithm);
-    }
-    if (cipher != NULL) {
-        fetched_ciph = EVP_CIPHER_fetch(cms_ctx->libctx, EVP_CIPHER_name(cipher),
-                                        cms_ctx->propq);
-        if (fetched_ciph == NULL) {
+        if (cipher != NULL) {
+            fetched_ciph = EVP_CIPHER_fetch(cms_ctx->libctx, EVP_CIPHER_name(cipher),
+                                            cms_ctx->propq);
+            if (fetched_ciph != NULL)
+                cipher = fetched_ciph;
+        }
+        if (cipher == NULL) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO, CMS_R_UNKNOWN_CIPHER);
             goto err;
         }
     }
-    if (EVP_CipherInit_ex(ctx, fetched_ciph, NULL, NULL, NULL, enc) <= 0) {
+    if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc) <= 0) {
         CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
                CMS_R_CIPHER_INITIALISATION_ERROR);
         goto err;
     }
-    EVP_CIPHER_free(fetched_ciph);
 
     if (enc) {
         int ivlen;
@@ -159,6 +160,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     ok = 1;
 
  err:
+    EVP_CIPHER_free(fetched_ciph);
     if (!keep_key || !ok) {
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
