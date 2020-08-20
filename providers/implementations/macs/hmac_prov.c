@@ -65,7 +65,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
                            size_t *md_out_size,
                            const unsigned char header[13],
                            const unsigned char *data,
-                           size_t data_plus_mac_size,
+                           size_t data_size,
                            size_t data_plus_mac_plus_padding_size,
                            const unsigned char *mac_secret,
                            size_t mac_secret_length, char is_sslv3);

@@ -1365,7 +1365,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
         if (ssl3_cbc_digest_record(EVP_MD_CTX_md(hash),
                                    md, &md_size,
                                    header, rec->input,
-                                   rec->length + md_size, rec->orig_len,
+                                   rec->length, rec->orig_len,
                                    mac_sec, md_size, 1) <= 0)
             return 0;
     } else {
