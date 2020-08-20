@@ -57,7 +57,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
     if (cipher != NULL) {
         fetched_ciph = EVP_CIPHER_fetch(cms_ctx->libctx, EVP_CIPHER_name(cipher),
-                                            cms_ctx->propq);
+                                        cms_ctx->propq);
         if (fetched_ciph != NULL)
             cipher = fetched_ciph;
     }
