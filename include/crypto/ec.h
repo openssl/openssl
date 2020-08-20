@@ -57,7 +57,6 @@ OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *eckey);
 const char *ec_key_get0_propq(const EC_KEY *eckey);
 const char *ec_curve_nid2name(int nid);
 int ec_curve_name2nid(const char *name);
-const unsigned char *ecdsa_algorithmidentifier_encoding(int md_nid, size_t *len);
 
 /* Backend support */
 int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private);
