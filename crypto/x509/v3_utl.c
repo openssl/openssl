@@ -979,6 +979,7 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 char *ipaddr_to_asc(unsigned char *p, int len)
 {
     char buf[40], *out;
+    int i = 0, remain = 0;
 
     switch (len) {
     case 4: /* IPv4 */
@@ -986,8 +987,10 @@ char *ipaddr_to_asc(unsigned char *p, int len)
         break;
         /* TODO possibly combine with static i2r_address() in v3_addr.c */
     case 16: /* IPv6 */
-        for (out = buf; out < buf + 8 * 3; out += 3) {
-            BIO_snprintf(out, 3 + 1, "%X:", p[0] << 8 | p[1]);
+        for (out = buf, remain = sizeof(buf);
+             i >= 0 && out < buf + sizeof(buf) - 1;
+             out += i, remain -= i) {
+            i = BIO_snprintf(out, remain, "%X:", p[0] << 8 | p[1]);
             p += 2;
         }
         out[-1] = '\0';
