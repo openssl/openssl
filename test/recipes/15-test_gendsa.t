@@ -11,15 +11,25 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 
-setup("test_gendsa");
+BEGIN {
+    setup("test_gendsa");
+}
+
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
 plan skip_all => "This test is unsupported in a no-dsa build"
     if disabled("dsa");
 
-plan tests => 11;
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+
+plan tests =>
+    ($no_fips ? 0 : 3)          # FIPS install test + fips related tests
+    + 11;
 
 ok(run(app([ 'openssl', 'genpkey', '-genparam',
              '-algorithm', 'DSA',
@@ -97,3 +107,39 @@ ok(run(app([ 'openssl', 'genpkey',
 ok(!run(app([ 'openssl', 'genpkey',
               '-algorithm', 'DSA'])),
    "genpkey DSA with no params should fail");
+
+unless ($no_fips) {
+    my $provconf = srctop_file("test", "fips-and-base.cnf");
+    my $provpath = bldtop_dir("providers");
+    my @prov = ( "-provider-path", $provpath,
+                 "-config", $provconf);
+    my $infile = bldtop_file('providers', platform->dso('fips'));
+
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
+                '-module', $infile,
+                '-provider_name', 'fips', '-mac_name', 'HMAC',
+                '-section_name', 'fips_sect'])),
+       "fipsinstall");
+
+    $ENV{OPENSSL_TEST_LIBCTX} = "1";
+
+    # Generate params
+    ok(run(app(['openssl', 'genpkey',
+                @prov,
+               '-genparam',
+               '-algorithm', 'DSA',
+               '-pkeyopt', 'pbits:3072',
+               '-pkeyopt', 'qbits:256',
+               '-out', 'gendsatest3072params.pem'])),
+       "Generating 3072-bit DSA params");
+
+    # Generate keypair
+    ok(run(app(['openssl', 'genpkey',
+                @prov,
+               '-paramfile', 'gendsatest3072params.pem',
+               '-text',
+               '-out', 'gendsatest3072.pem'])),
+       "Generating 3072-bit DSA keypair");
+
+}
