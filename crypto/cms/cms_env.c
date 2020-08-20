@@ -466,7 +466,8 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     size_t eklen;
     int ret = 0;
     size_t fixlen = 0;
-    EVP_CIPHER *ciph = NULL;
+    const EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER *fetched_cipher = NULL;
     CMS_EncryptedContentInfo *ec;
     const CMS_CTX *ctx = cms_get0_cmsctx(cms);
 
@@ -482,14 +483,22 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
         const char *name = OBJ_nid2sn(OBJ_obj2nid(calg->algorithm));
 
-        ciph = EVP_CIPHER_fetch(ctx->libctx, name, ctx->propq);
-        if (ciph == NULL) {
+        (void)ERR_set_mark();
+        fetched_cipher = EVP_CIPHER_fetch(ctx->libctx, name, ctx->propq);
+
+        if (fetched_cipher != NULL)
+            cipher = fetched_cipher;
+        else
+            cipher = EVP_get_cipherbyobj(calg->algorithm);
+        if (cipher == NULL) {
+            (void)ERR_clear_last_mark();
             CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, CMS_R_UNKNOWN_CIPHER);
             return 0;
         }
+        (void)ERR_pop_to_mark();
 
-        fixlen = EVP_CIPHER_key_length(ciph);
-        EVP_CIPHER_free(ciph);
+        fixlen = EVP_CIPHER_key_length(cipher);
+        EVP_CIPHER_free(fetched_cipher);
     }
 
     ktri->pctx = EVP_PKEY_CTX_new_from_pkey(ctx->libctx, pkey, ctx->propq);
@@ -514,7 +523,6 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         goto err;
 
     ek = OPENSSL_malloc(eklen);
-
     if (ek == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_KTRI_DECRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
