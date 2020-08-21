@@ -30,7 +30,8 @@ char *ossl_safe_getenv(const char *name)
 
         curacp = GetACP();
 
-        /* For the code pages listed below, dwFlags must be set to 0.
+        /*
+         * For the code pages listed below, dwFlags must be set to 0.
          * Otherwise, the function fails with ERROR_INVALID_FLAGS.
          */
         if (curacp == 50220 || curacp == 50221 || curacp == 50222 ||
@@ -42,9 +43,8 @@ char *ossl_safe_getenv(const char *name)
         /* query for buffer len */
         rsize = MultiByteToWideChar(curacp, dwFlags, name, -1, NULL, 0);
         /* if name is valid string and can be converted to wide string */
-        if (rsize > 0) {
+        if (rsize > 0)
             namew = _malloca(rsize * sizeof(WCHAR));
-        }
 
         if (NULL != namew) {
             /* convert name to wide string */
