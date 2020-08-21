@@ -279,11 +279,10 @@ int SSL_use_PrivateKey_file(SSL *ssl, const char *file, int type)
     }
     if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
-                                          ssl->default_passwd_callback,
-                                          ssl->default_passwd_callback_userdata,
-                                          ssl->ctx->libctx,
-                                          ssl->ctx->propq);
+        pkey = PEM_read_bio_PrivateKey_with_libctx(in, NULL,
+                   ssl->default_passwd_callback,
+                   ssl->default_passwd_callback_userdata,
+                   ssl->ctx->libctx, ssl->ctx->propq);
     } else if (type == SSL_FILETYPE_ASN1) {
         j = ERR_R_ASN1_LIB;
         pkey = d2i_PrivateKey_bio_with_libctx(in, NULL, ssl->ctx->libctx,
@@ -579,10 +578,10 @@ int SSL_CTX_use_PrivateKey_file(SSL_CTX *ctx, const char *file, int type)
     }
     if (type == SSL_FILETYPE_PEM) {
         j = ERR_R_PEM_LIB;
-        pkey = PEM_read_bio_PrivateKey_ex(in, NULL,
-                                       ctx->default_passwd_callback,
-                                       ctx->default_passwd_callback_userdata,
-                                       ctx->libctx, ctx->propq);
+        pkey = PEM_read_bio_PrivateKey_with_libctx(in, NULL,
+                   ctx->default_passwd_callback,
+                   ctx->default_passwd_callback_userdata,
+                   ctx->libctx, ctx->propq);
     } else if (type == SSL_FILETYPE_ASN1) {
         j = ERR_R_ASN1_LIB;
         pkey = d2i_PrivateKey_bio_with_libctx(in, NULL, ctx->libctx, ctx->propq);

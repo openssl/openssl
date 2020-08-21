@@ -3333,7 +3333,8 @@ top:
     pkey = NULL;
 start:
     if (strcmp(pp->key, "PrivateKey") == 0) {
-        pkey = PEM_read_bio_PrivateKey_ex(t->s.key, NULL, 0, NULL, libctx, NULL);
+        pkey = PEM_read_bio_PrivateKey_with_libctx(t->s.key, NULL, 0, NULL,
+                                                   libctx, NULL);
         if (pkey == NULL && !key_unsupported()) {
             EVP_PKEY_free(pkey);
             TEST_info("Can't read private key %s", pp->value);
@@ -3342,7 +3343,8 @@ start:
         }
         klist = &private_keys;
     } else if (strcmp(pp->key, "PublicKey") == 0) {
-        pkey = PEM_read_bio_PUBKEY_ex(t->s.key, NULL, 0, NULL, libctx, NULL);
+        pkey = PEM_read_bio_PUBKEY_with_libctx(t->s.key, NULL, 0, NULL,
+                                               libctx, NULL);
         if (pkey == NULL && !key_unsupported()) {
             EVP_PKEY_free(pkey);
             TEST_info("Can't read public key %s", pp->value);

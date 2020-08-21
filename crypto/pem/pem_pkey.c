@@ -94,9 +94,10 @@ static EVP_PKEY *pem_read_bio_key(BIO *bp, EVP_PKEY **x,
     return ret;
 }
 
-EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
-                                 pem_password_cb *cb, void *u,
-                                 OPENSSL_CTX *libctx, const char *propq)
+EVP_PKEY *PEM_read_bio_PUBKEY_with_libctx(BIO *bp, EVP_PKEY **x,
+                                          pem_password_cb *cb, void *u,
+                                          OPENSSL_CTX *libctx,
+                                          const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
                             OSSL_STORE_INFO_PUBKEY, 0);
@@ -105,13 +106,13 @@ EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
 EVP_PKEY *PEM_read_bio_PUBKEY(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
                               void *u)
 {
-    return PEM_read_bio_PUBKEY_ex(bp, x, cb, u, NULL, NULL);
+    return PEM_read_bio_PUBKEY_with_libctx(bp, x, cb, u, NULL, NULL);
 }
 
 #ifndef OPENSSL_NO_STDIO
-EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
-                             pem_password_cb *cb, void *u,
-                             OPENSSL_CTX *libctx, const char *propq)
+EVP_PKEY *PEM_read_PUBKEY_with_libctx(FILE *fp, EVP_PKEY **x,
+                                      pem_password_cb *cb, void *u,
+                                      OPENSSL_CTX *libctx, const char *propq)
 {
     BIO *b;
     EVP_PKEY *ret;
@@ -121,20 +122,21 @@ EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = PEM_read_bio_PUBKEY_ex(b, x, cb, u, libctx, propq);
+    ret = PEM_read_bio_PUBKEY_with_libctx(b, x, cb, u, libctx, propq);
     BIO_free(b);
     return ret;
 }
 
 EVP_PKEY *PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x, pem_password_cb *cb, void *u)
 {
-    return PEM_read_PUBKEY_ex(fp, x, cb, u, NULL, NULL);
+    return PEM_read_PUBKEY_with_libctx(fp, x, cb, u, NULL, NULL);
 }
 #endif
 
-EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
-                                     pem_password_cb *cb, void *u,
-                                     OPENSSL_CTX *libctx, const char *propq)
+EVP_PKEY *PEM_read_bio_PrivateKey_with_libctx(BIO *bp, EVP_PKEY **x,
+                                              pem_password_cb *cb, void *u,
+                                              OPENSSL_CTX *libctx,
+                                              const char *propq)
 {
     return pem_read_bio_key(bp, x, cb, u, libctx, propq,
                             OSSL_STORE_INFO_PKEY, 1);
@@ -143,7 +145,7 @@ EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
 EVP_PKEY *PEM_read_bio_PrivateKey(BIO *bp, EVP_PKEY **x, pem_password_cb *cb,
                                   void *u)
 {
-    return PEM_read_bio_PrivateKey_ex(bp, x, cb, u, NULL, NULL);
+    return PEM_read_bio_PrivateKey_with_libctx(bp, x, cb, u, NULL, NULL);
 }
 
 PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
@@ -171,8 +173,9 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                               pem_str, bp, x, enc, kstr, klen, cb, u);
 }
 
-EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
-                                     OPENSSL_CTX *libctx, const char *propq)
+EVP_PKEY *PEM_read_bio_Parameters_with_libctx(BIO *bp, EVP_PKEY **x,
+                                              OPENSSL_CTX *libctx,
+                                              const char *propq)
 {
     return pem_read_bio_key(bp, x, NULL, NULL, libctx, propq,
                             OSSL_STORE_INFO_PARAMS, 0);
@@ -180,7 +183,7 @@ EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
 
 EVP_PKEY *PEM_read_bio_Parameters(BIO *bp, EVP_PKEY **x)
 {
-    return PEM_read_bio_Parameters_ex(bp, x, NULL, NULL);
+    return PEM_read_bio_Parameters_with_libctx(bp, x, NULL, NULL);
 }
 
 PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
@@ -200,9 +203,9 @@ PEM_write_fnsig(Parameters, EVP_PKEY, BIO, write_bio)
 }
 
 #ifndef OPENSSL_NO_STDIO
-EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
-                                 void *u, OPENSSL_CTX *libctx,
-                                 const char *propq)
+EVP_PKEY *PEM_read_PrivateKey_with_libctx(FILE *fp, EVP_PKEY **x,
+                                          pem_password_cb *cb, void *u,
+                                          OPENSSL_CTX *libctx, const char *propq)
 {
     BIO *b;
     EVP_PKEY *ret;
@@ -212,7 +215,7 @@ EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = PEM_read_bio_PrivateKey_ex(b, x, cb, u, libctx, propq);
+    ret = PEM_read_bio_PrivateKey_with_libctx(b, x, cb, u, libctx, propq);
     BIO_free(b);
     return ret;
 }
@@ -220,7 +223,7 @@ EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
 EVP_PKEY *PEM_read_PrivateKey(FILE *fp, EVP_PKEY **x, pem_password_cb *cb,
                               void *u)
 {
-    return PEM_read_PrivateKey_ex(fp, x, cb, u, NULL, NULL);
+    return PEM_read_PrivateKey_with_libctx(fp, x, cb, u, NULL, NULL);
 }
 
 int PEM_write_PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
