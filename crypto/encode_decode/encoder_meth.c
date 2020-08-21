@@ -475,7 +475,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new(OSSL_ENCODER *encoder)
         void *provctx = ossl_provider_ctx(prov);
 
         if (OSSL_ENCODER_up_ref(encoder)) {
-            ctx->serctx = encoder->newctx(provctx);
+            ctx->encoderctx = encoder->newctx(provctx);
         } else {
             OSSL_ENCODER_free(encoder);
             OPENSSL_free(ctx);
@@ -507,7 +507,7 @@ int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
     }
 
     if (ctx->encoder != NULL && ctx->encoder->set_ctx_params != NULL)
-        return ctx->encoder->set_ctx_params(ctx->serctx, params);
+        return ctx->encoder->set_ctx_params(ctx->encoderctx, params);
     return 0;
 }
 
@@ -515,7 +515,7 @@ void OSSL_ENCODER_CTX_free(OSSL_ENCODER_CTX *ctx)
 {
     if (ctx != NULL) {
         if (ctx->encoder != NULL && ctx->encoder->freectx != NULL)
-            ctx->encoder->freectx(ctx->serctx);
+            ctx->encoder->freectx(ctx->encoderctx);
         OSSL_ENCODER_free(ctx->encoder);
         ossl_pw_clear_passphrase_data(&ctx->pwdata);
         OPENSSL_free(ctx);

@@ -514,10 +514,11 @@ int OSSL_DECODER_CTX_set_params(OSSL_DECODER_CTX *ctx,
         OSSL_DECODER_INSTANCE *decoder_inst =
             sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
 
-        if (decoder_inst->deserctx == NULL
+        if (decoder_inst->decoderctx == NULL
             || decoder_inst->decoder->set_ctx_params == NULL)
             continue;
-        if (!decoder_inst->decoder->set_ctx_params(decoder_inst->deserctx, params))
+        if (!decoder_inst->decoder->set_ctx_params(decoder_inst->decoderctx,
+                                                   params))
             return 0;
     }
     return 1;
@@ -528,8 +529,8 @@ OSSL_DECODER_INSTANCE_free(OSSL_DECODER_INSTANCE *decoder_inst)
 {
     if (decoder_inst != NULL) {
         if (decoder_inst->decoder->freectx != NULL)
-            decoder_inst->decoder->freectx(decoder_inst->deserctx);
-        decoder_inst->deserctx = NULL;
+            decoder_inst->decoder->freectx(decoder_inst->decoderctx);
+        decoder_inst->decoderctx = NULL;
         OSSL_DECODER_free(decoder_inst->decoder);
         decoder_inst->decoder = NULL;
         OPENSSL_free(decoder_inst);

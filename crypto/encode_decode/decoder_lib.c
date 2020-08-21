@@ -22,7 +22,7 @@ struct decoder_process_data_st {
     BIO *bio;
 
     /* Index of the current decoder instance to be processed */
-    size_t current_deser_inst_index;
+    size_t current_decoder_inst_index;
 };
 
 static int decoder_process(const OSSL_PARAM params[], void *arg);
@@ -136,7 +136,7 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
         || !OSSL_PARAM_modified(&params[0]))
         goto err;
 
-    if ((decoder_inst->deserctx = decoder_inst->decoder->newctx(provctx))
+    if ((decoder_inst->decoderctx = decoder_inst->decoder->newctx(provctx))
         == NULL)
         goto err;
 
@@ -147,7 +147,7 @@ int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
  err:
     if (decoder_inst != NULL) {
         if (decoder_inst->decoder != NULL)
-            decoder_inst->decoder->freectx(decoder_inst->deserctx);
+            decoder_inst->decoder->freectx(decoder_inst->decoderctx);
         OSSL_DECODER_free(decoder_inst->decoder);
         OPENSSL_free(decoder_inst);
     }
@@ -344,7 +344,7 @@ int OSSL_DECODER_export(OSSL_DECODER_INSTANCE *decoder_inst,
         return 0;
     }
 
-    return decoder_inst->decoder->export_object(decoder_inst->deserctx,
+    return decoder_inst->decoder->export_object(decoder_inst->decoderctx,
                                                 reference, reference_sz,
                                                 export_cb, export_cbarg);
 }
@@ -360,7 +360,7 @@ void *OSSL_DECODER_INSTANCE_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst)
 {
     if (decoder_inst == NULL)
         return NULL;
-    return decoder_inst->deserctx;
+    return decoder_inst->decoderctx;
 }
 
 static int decoder_process(const OSSL_PARAM params[], void *arg)
@@ -382,7 +382,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     if (params == NULL) {
         /* First iteration, where we prepare for what is to come */
 
-        data->current_deser_inst_index =
+        data->current_decoder_inst_index =
             OSSL_DECODER_CTX_num_decoders(ctx);
 
         bio = data->bio;
@@ -391,7 +391,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
 
         decoder_inst =
             sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts,
-                                           data->current_deser_inst_index);
+                                           data->current_decoder_inst_index);
         decoder = OSSL_DECODER_INSTANCE_decoder(decoder_inst);
 
         if (ctx->construct != NULL
@@ -422,7 +422,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
      * If we have no more decoders to look through at this point,
      * we failed
      */
-    if (data->current_deser_inst_index == 0)
+    if (data->current_decoder_inst_index == 0)
         goto end;
 
     if ((loc = BIO_tell(bio)) < 0) {
@@ -430,11 +430,11 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
         goto end;
     }
 
-    for (i = data->current_deser_inst_index; i-- > 0;) {
-        OSSL_DECODER_INSTANCE *new_deser_inst =
+    for (i = data->current_decoder_inst_index; i-- > 0;) {
+        OSSL_DECODER_INSTANCE *new_decoder_inst =
             sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
-        OSSL_DECODER *new_deser =
-            OSSL_DECODER_INSTANCE_decoder(new_deser_inst);
+        OSSL_DECODER *new_decoder =
+            OSSL_DECODER_INSTANCE_decoder(new_decoder_inst);
 
         /*
          * If |decoder| is NULL, it means we've just started, and the caller
@@ -443,7 +443,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          */
         if (decoder == NULL && ctx->start_input_type != NULL
             && strcasecmp(ctx->start_input_type,
-                          new_deser_inst->input_type) != 0)
+                          new_decoder_inst->input_type) != 0)
             continue;
 
         /*
@@ -453,7 +453,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
          * value for that decoder.
          */
         if (decoder != NULL
-            && !OSSL_DECODER_is_a(decoder, new_deser_inst->input_type))
+            && !OSSL_DECODER_is_a(decoder, new_decoder_inst->input_type))
             continue;
 
         /*
@@ -471,11 +471,12 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
             goto end;
 
         /* Recurse */
-        new_data.current_deser_inst_index = i;
-        ok = new_deser->decode(new_deser_inst->deserctx, (OSSL_CORE_BIO *)bio,
-                               decoder_process, &new_data,
-                               ossl_pw_passphrase_callback_dec,
-                               &new_data.ctx->pwdata);
+        new_data.current_decoder_inst_index = i;
+        ok = new_decoder->decode(new_decoder_inst->decoderctx,
+                                 (OSSL_CORE_BIO *)bio,
+                                 decoder_process, &new_data,
+                                 ossl_pw_passphrase_callback_dec,
+                                 &new_data.ctx->pwdata);
         if (ok)
             break;
     }

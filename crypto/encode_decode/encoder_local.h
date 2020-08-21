@@ -16,7 +16,7 @@
 #include "internal/passphrase.h"
 #include "internal/refcount.h"
 
-struct ossl_serdes_base_st {
+struct ossl_endecode_base_st {
     OSSL_PROVIDER *prov;
     int id;
     const char *propdef;
@@ -26,7 +26,7 @@ struct ossl_serdes_base_st {
 };
 
 struct ossl_encoder_st {
-    struct ossl_serdes_base_st base;
+    struct ossl_endecode_base_st base;
     OSSL_FUNC_encoder_newctx_fn *newctx;
     OSSL_FUNC_encoder_freectx_fn *freectx;
     OSSL_FUNC_encoder_set_ctx_params_fn *set_ctx_params;
@@ -36,7 +36,7 @@ struct ossl_encoder_st {
 };
 
 struct ossl_decoder_st {
-    struct ossl_serdes_base_st base;
+    struct ossl_endecode_base_st base;
     OSSL_FUNC_decoder_newctx_fn *newctx;
     OSSL_FUNC_decoder_freectx_fn *freectx;
     OSSL_FUNC_decoder_get_params_fn *get_params;
@@ -49,7 +49,7 @@ struct ossl_decoder_st {
 
 struct ossl_encoder_ctx_st {
     OSSL_ENCODER *encoder;
-    void *serctx;
+    void *encoderctx;
 
     int selection;
 
@@ -69,8 +69,8 @@ struct ossl_encoder_ctx_st {
 };
 
 struct ossl_decoder_instance_st {
-    OSSL_DECODER *decoder;    /* Never NULL */
-    void *deserctx;              /* Never NULL */
+    OSSL_DECODER *decoder;       /* Never NULL */
+    void *decoderctx;            /* Never NULL */
     const char *input_type;      /* Never NULL */
 };
 
