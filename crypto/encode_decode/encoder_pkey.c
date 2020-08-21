@@ -96,7 +96,8 @@ static int encoder_write_cb(const OSSL_PARAM params[], void *arg)
     OSSL_ENCODER_CTX *ctx = write_data->ctx;
     BIO *out = write_data->out;
 
-    return ctx->encoder->encode_data(ctx->serctx, params, (OSSL_CORE_BIO *)out,
+    return ctx->encoder->encode_data(ctx->encoderctx, params,
+                                     (OSSL_CORE_BIO *)out,
                                      ossl_pw_passphrase_callback_enc,
                                      &ctx->pwdata);
 }
@@ -135,7 +136,7 @@ static int encoder_EVP_PKEY_to_bio(OSSL_ENCODER_CTX *ctx, BIO *out)
                                   &encoder_write_cb, &write_data);
     }
 
-    return ctx->encoder->encode_object(ctx->serctx, keydata,
+    return ctx->encoder->encode_object(ctx->encoderctx, keydata,
                                        (OSSL_CORE_BIO *)out,
                                        ossl_pw_passphrase_callback_enc,
                                        &ctx->pwdata);
@@ -172,8 +173,8 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
          * Select the encoder in two steps.  First, get the names of all of
          * the encoders.  Then determine which is the best one to use.
          * This has to be broken because it isn't possible to fetch the
-         * serialisers inside EVP_KEYMGMT_names_do_all() due to locking
-         * order inversions with the store lock.
+         * encoders inside EVP_KEYMGMT_names_do_all() due to locking order
+         * inversions with the store lock.
          */
         sel_data.error = 0;
         sel_data.names = sk_OPENSSL_CSTRING_new_null();

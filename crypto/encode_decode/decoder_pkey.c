@@ -63,7 +63,7 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
     struct decoder_EVP_PKEY_data_st *data = construct_data;
     OSSL_DECODER *decoder =
         OSSL_DECODER_INSTANCE_decoder(decoder_inst);
-    void *deserctx = OSSL_DECODER_INSTANCE_decoder_ctx(decoder_inst);
+    void *decoderctx = OSSL_DECODER_INSTANCE_decoder_ctx(decoder_inst);
     size_t i, end_i;
     /*
      * |object_ref| points to a provider reference to an object, its exact
@@ -150,7 +150,8 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
                  * No need to check for errors here, the value of
                  * |import_data.keydata| is as much an indicator.
                  */
-                (void)decoder->export_object(deserctx, object_ref, object_ref_sz,
+                (void)decoder->export_object(decoderctx,
+                                             object_ref, object_ref_sz,
                                              &evp_keymgmt_util_try_import,
                                              &import_data);
                 keydata = import_data.keydata;
