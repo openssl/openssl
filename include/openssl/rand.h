@@ -60,10 +60,10 @@ int RAND_bytes(unsigned char *buf, int num);
 int RAND_priv_bytes(unsigned char *buf, int num);
 
 /* Equivalent of RAND_priv_bytes() but additionally taking an OPENSSL_CTX */
-int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+int RAND_priv_bytes_with_libctx(OPENSSL_CTX *ctx, unsigned char *buf, int num);
 
 /* Equivalent of RAND_bytes() but additionally taking an OPENSSL_CTX */
-int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+int RAND_bytes_with_libctx(OPENSSL_CTX *ctx, unsigned char *buf, int num);
 
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 

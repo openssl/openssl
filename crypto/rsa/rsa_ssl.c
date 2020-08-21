@@ -41,12 +41,12 @@ int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
     /* pad out with non-zero random data */
     j = tlen - 3 - 8 - flen;
 
-    if (RAND_bytes_ex(libctx, p, j) <= 0)
+    if (RAND_bytes_with_libctx(libctx, p, j) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes_ex(libctx, p, 1) <= 0)
+                if (RAND_bytes_with_libctx(libctx, p, 1) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;

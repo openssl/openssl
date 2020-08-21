@@ -1208,8 +1208,8 @@ int tls_construct_client_hello(SSL *s, WPACKET *pkt)
             s->tmp_session_id_len = sess_id_len;
             session_id = s->tmp_session_id;
             if (s->hello_retry_request == SSL_HRR_NONE
-                    && RAND_bytes_ex(s->ctx->libctx, s->tmp_session_id,
-                                     sess_id_len) <= 0) {
+                    && RAND_bytes_with_libctx(s->ctx->libctx, s->tmp_session_id,
+                                              sess_id_len) <= 0) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                          SSL_F_TLS_CONSTRUCT_CLIENT_HELLO,
                          ERR_R_INTERNAL_ERROR);
@@ -3007,7 +3007,7 @@ static int tls_construct_cke_rsa(SSL *s, WPACKET *pkt)
     pms[0] = s->client_version >> 8;
     pms[1] = s->client_version & 0xff;
     /* TODO(size_t): Convert this function */
-    if (RAND_bytes_ex(s->ctx->libctx, pms + 2, (int)(pmslen - 2)) <= 0) {
+    if (RAND_bytes_with_libctx(s->ctx->libctx, pms + 2, (int)(pmslen - 2)) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_RSA,
                  ERR_R_MALLOC_FAILURE);
         goto err;
@@ -3231,7 +3231,7 @@ static int tls_construct_cke_gost(SSL *s, WPACKET *pkt)
         /* Generate session key
          * TODO(size_t): Convert this function
          */
-        || RAND_bytes_ex(s->ctx->libctx, pms, (int)pmslen) <= 0) {
+        || RAND_bytes_with_libctx(s->ctx->libctx, pms, (int)pmslen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST,
                  ERR_R_INTERNAL_ERROR);
         goto err;
@@ -3365,7 +3365,7 @@ static int tls_construct_cke_gost18(SSL *s, WPACKET *pkt)
         goto err;
     }
 
-    if (RAND_bytes_ex(s->ctx->libctx, pms, (int)pmslen) <= 0) {
+    if (RAND_bytes_with_libctx(s->ctx->libctx, pms, (int)pmslen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_GOST18,
                  ERR_R_INTERNAL_ERROR);
         goto err;

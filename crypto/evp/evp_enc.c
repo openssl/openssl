@@ -1202,7 +1202,7 @@ int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key)
         OPENSSL_CTX *libctx = EVP_CIPHER_CTX_get_libctx(ctx);
 
         kl = EVP_CIPHER_CTX_key_length(ctx);
-        if (kl <= 0 || RAND_priv_bytes_ex(libctx, key, kl) <= 0)
+        if (kl <= 0 || RAND_priv_bytes_with_libctx(libctx, key, kl) <= 0)
             return 0;
         return 1;
     }

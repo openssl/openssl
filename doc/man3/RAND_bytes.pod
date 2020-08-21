@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RAND_bytes, RAND_priv_bytes, RAND_bytes_ex, RAND_priv_bytes_ex,
+RAND_bytes, RAND_priv_bytes, RAND_bytes_with_libctx, RAND_priv_bytes_with_libctx,
 RAND_pseudo_bytes - generate random data
 
 =head1 SYNOPSIS
@@ -12,8 +12,8 @@ RAND_pseudo_bytes - generate random data
  int RAND_bytes(unsigned char *buf, int num);
  int RAND_priv_bytes(unsigned char *buf, int num);
 
- int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
- int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+ int RAND_bytes_with_libctx(OPENSSL_CTX *ctx, unsigned char *buf, int num);
+ int RAND_priv_bytes_with_libctx(OPENSSL_CTX *ctx, unsigned char *buf, int num);
 
 Deprecated since OpenSSL 1.1.0, can be hidden entirely by defining
 B<OPENSSL_API_COMPAT> with a suitable version value, see
@@ -33,8 +33,9 @@ instance so that a compromise of the "public" PRNG instance will not
 affect the secrecy of these private values, as described in L<RAND(7)>
 and L<EVP_RAND(7)>.
 
-RAND_bytes_ex() and RAND_priv_bytes_ex() are the same as RAND_bytes() and
-RAND_priv_bytes() except that they both take an additional I<ctx> parameter.
+RAND_bytes_with_libctx() and RAND_priv_bytes_with_libctx() are the same as
+RAND_bytes() and RAND_priv_bytes() except that they both take an additional
+I<ctx> parameter.
 The DRBG used for the operation is the public or private DRBG associated with
 the specified I<ctx>. The parameter can be NULL, in which case
 the default library context is used (see L<OPENSSL_CTX(3)>.
@@ -91,7 +92,8 @@ The RAND_priv_bytes() function was added in OpenSSL 1.1.1.
 
 =item *
 
-The RAND_bytes_ex() and RAND_priv_bytes_ex() functions were added in OpenSSL 3.0
+The RAND_bytes_with_libctx() and RAND_priv_bytes_with_libctx() functions
+were added in OpenSSL 3.0
 
 =back
 

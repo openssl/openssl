@@ -262,7 +262,7 @@ const RAND_METHOD *RAND_get_rand_method(void)
  * the default method, then just call RAND_bytes().  Otherwise make
  * sure we're instantiated and use the private DRBG.
  */
-int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int RAND_priv_bytes_with_libctx(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 {
     EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -270,7 +270,7 @@ int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
     if (meth != NULL && meth != RAND_OpenSSL()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
-        RANDerr(RAND_F_RAND_PRIV_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        RANDerr(0, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
@@ -283,10 +283,10 @@ int RAND_priv_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 
 int RAND_priv_bytes(unsigned char *buf, int num)
 {
-    return RAND_priv_bytes_ex(NULL, buf, num);
+    return RAND_priv_bytes_with_libctx(NULL, buf, num);
 }
 
-int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
+int RAND_bytes_with_libctx(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 {
     EVP_RAND_CTX *rand;
     const RAND_METHOD *meth = RAND_get_rand_method();
@@ -294,7 +294,7 @@ int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
     if (meth != NULL && meth != RAND_OpenSSL()) {
         if (meth->bytes != NULL)
             return meth->bytes(buf, num);
-        RANDerr(RAND_F_RAND_BYTES_EX, RAND_R_FUNC_NOT_IMPLEMENTED);
+        RANDerr(0, RAND_R_FUNC_NOT_IMPLEMENTED);
         return -1;
     }
 
@@ -307,7 +307,7 @@ int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num)
 
 int RAND_bytes(unsigned char *buf, int num)
 {
-    return RAND_bytes_ex(NULL, buf, num);
+    return RAND_bytes_with_libctx(NULL, buf, num);
 }
 
 typedef struct rand_global_st {

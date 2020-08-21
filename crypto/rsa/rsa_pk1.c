@@ -145,12 +145,12 @@ int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
     /* pad out with non-zero random data */
     j = tlen - 3 - flen;
 
-    if (RAND_bytes_ex(libctx, p, j) <= 0)
+    if (RAND_bytes_with_libctx(libctx, p, j) <= 0)
         return 0;
     for (i = 0; i < j; i++) {
         if (*p == '\0')
             do {
-                if (RAND_bytes_ex(libctx, p, 1) <= 0)
+                if (RAND_bytes_with_libctx(libctx, p, 1) <= 0)
                     return 0;
             } while (*p == '\0');
         p++;
@@ -321,8 +321,8 @@ int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *libctx, unsigned char *to,
      * Generate a random premaster secret to use in the event that we fail
      * to decrypt.
      */
-    if (RAND_priv_bytes_ex(libctx, rand_premaster_secret,
-                           sizeof(rand_premaster_secret)) <= 0) {
+    if (RAND_priv_bytes_with_libctx(libctx, rand_premaster_secret,
+                                    sizeof(rand_premaster_secret)) <= 0) {
         ERR_raise(ERR_LIB_RSA, ERR_R_INTERNAL_ERROR);
         return -1;
     }

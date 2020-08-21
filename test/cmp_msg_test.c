@@ -160,7 +160,7 @@ static int test_cmp_create_ir_protection_set(void)
     fixture->bodytype = OSSL_CMP_PKIBODY_IR;
     fixture->err_code = -1;
     fixture->expected = 1;
-    if (!TEST_int_eq(1, RAND_bytes_ex(libctx, secret, sizeof(secret)))
+    if (!TEST_int_eq(1, RAND_bytes_with_libctx(libctx, secret, sizeof(secret)))
             || !TEST_true(SET_OPT_UNPROTECTED_SEND(ctx, 0))
             || !TEST_true(set1_newPkey(ctx, newkey))
             || !TEST_true(OSSL_CMP_CTX_set1_secretValue(ctx, secret,
@@ -577,7 +577,8 @@ int setup_tests(void)
 
     if (!TEST_ptr(newkey = load_pem_key(newkey_f))
             || !TEST_ptr(cert = load_pem_cert(server_cert_f, libctx))
-            || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref)))) {
+            || !TEST_int_eq(1, RAND_bytes_with_libctx(libctx, ref,
+                                                      sizeof(ref)))) {
         cleanup_tests();
         return 0;
     }

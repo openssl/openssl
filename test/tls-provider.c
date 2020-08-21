@@ -381,7 +381,7 @@ static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
-        if (RAND_bytes_ex(gctx->libctx, key->privkey, XOR_KEY_SIZE) <= 0) {
+        if (RAND_bytes_with_libctx(gctx->libctx, key->privkey, XOR_KEY_SIZE) <= 0) {
             OPENSSL_free(key);
             return NULL;
         }
@@ -460,7 +460,8 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
      * Randomise the group_id we're going to use to ensure we don't interoperate
      * with anything but ourselves.
      */
-    if (!RAND_bytes_ex(libctx, (unsigned char *)&group_id, sizeof(group_id)))
+    if (!RAND_bytes_with_libctx(libctx, (unsigned char *)&group_id,
+                                sizeof(group_id)))
         return 0;
     /*
      * Ensure group_id is within the IANA Reserved for private use range

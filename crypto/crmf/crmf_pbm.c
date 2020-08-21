@@ -52,7 +52,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
      */
     if ((salt = OPENSSL_malloc(slen)) == NULL)
         goto err;
-    if (RAND_bytes_ex(libctx, salt, (int)slen) <= 0) {
+    if (RAND_bytes_with_libctx(libctx, salt, (int)slen) <= 0) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_FAILURE_OBTAINING_RANDOM);
         goto err;
     }
