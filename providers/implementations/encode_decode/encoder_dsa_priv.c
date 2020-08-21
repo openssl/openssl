@@ -25,6 +25,9 @@
 #include "prov/provider_ctx.h"
 #include "encoder_local.h"
 
+#define DSA_SELECT_PRIVATE_IMPORTABLE                                          \
+    (OSSL_KEYMGMT_SELECT_KEYPAIR | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
+
 static OSSL_FUNC_encoder_newctx_fn dsa_priv_newctx;
 static OSSL_FUNC_encoder_freectx_fn dsa_priv_freectx;
 static OSSL_FUNC_encoder_set_ctx_params_fn dsa_priv_set_ctx_params;
@@ -132,7 +135,7 @@ static int dsa_priv_der_data(void *vctx, const OSSL_PARAM params[],
         DSA *dsa;
 
         if ((dsa = dsa_new(ctx->provctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_import(dsa, DSA_SELECT_PRIVATE_IMPORTABLE, params)
             && dsa_priv_der(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
@@ -177,7 +180,7 @@ static int dsa_pem_priv_data(void *vctx, const OSSL_PARAM params[],
         DSA *dsa;
 
         if ((dsa = dsa_new(ctx->provctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_import(dsa, DSA_SELECT_PRIVATE_IMPORTABLE, params)
             && dsa_pem_priv(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
@@ -233,7 +236,7 @@ static int dsa_priv_print_data(void *vctx, const OSSL_PARAM params[],
         DSA *dsa;
 
         if ((dsa = dsa_new(ctx->provctx)) != NULL
-            && dsa_import(dsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dsa_import(dsa, DSA_SELECT_PRIVATE_IMPORTABLE, params)
             && dsa_priv_print(ctx, dsa, out, cb, cbarg))
             ok = 1;
         dsa_free(dsa);
