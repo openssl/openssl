@@ -5282,3 +5282,4 @@ CMS_AuthEnvelopedData_create_with_libctx ?	3_0_0	EXIST::FUNCTION:CMS
 EVP_PKEY_CTX_set_ec_param_enc           ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_get0_first_alg_name            ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_get0_first_name             ?	3_0_0	EXIST::FUNCTION:
+EC_KEY_decoded_from_explicit_params     ?	3_0_0	EXIST::FUNCTION:EC
