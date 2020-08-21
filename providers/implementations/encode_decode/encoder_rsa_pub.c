@@ -24,6 +24,9 @@
 #include "prov/provider_ctx.h"
 #include "encoder_local.h"
 
+#define RSA_SELECT_PUBLIC_IMPORTABLE                                           \
+    (OSSL_KEYMGMT_SELECT_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS)
+
 static OSSL_FUNC_encoder_newctx_fn rsa_pub_newctx;
 static OSSL_FUNC_encoder_freectx_fn rsa_pub_freectx;
 static OSSL_FUNC_encoder_encode_data_fn rsa_pub_der_data;
@@ -63,7 +66,7 @@ static int rsa_pub_der_data(void *ctx, const OSSL_PARAM params[],
 
         /* ctx == provctx */
         if ((rsa = rsa_new(ctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && rsa_import(rsa, RSA_SELECT_PUBLIC_IMPORTABLE, params)
             && rsa_pub_der(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
@@ -104,7 +107,7 @@ static int rsa_pub_pem_data(void *ctx, const OSSL_PARAM params[],
 
         /* ctx == provctx */
         if ((rsa = rsa_new(ctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && rsa_import(rsa, RSA_SELECT_PUBLIC_IMPORTABLE, params)
             && rsa_pub_pem(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
@@ -144,7 +147,7 @@ static int rsa_pub_print_data(void *ctx, const OSSL_PARAM params[],
 
         /* ctx == provctx */
         if ((rsa = rsa_new(ctx)) != NULL
-            && rsa_import(rsa, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && rsa_import(rsa, RSA_SELECT_PUBLIC_IMPORTABLE, params)
             && rsa_pub_print(ctx, rsa, out, cb, cbarg))
             ok = 1;
         rsa_free(rsa);
