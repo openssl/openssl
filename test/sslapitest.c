@@ -1727,7 +1727,8 @@ static int ocsp_server_cb(SSL *s, void *arg)
             return SSL_TLSEXT_ERR_ALERT_FATAL;
 
         id = sk_OCSP_RESPID_value(ids, 0);
-        if (id == NULL || !OCSP_RESPID_match_ex(id, ocspcert, libctx, NULL))
+        if (id == NULL
+            || !OCSP_RESPID_match_with_libctx(id, ocspcert, libctx, NULL))
             return SSL_TLSEXT_ERR_ALERT_FATAL;
     } else if (*argi != 1) {
         return SSL_TLSEXT_ERR_ALERT_FATAL;
@@ -1855,7 +1856,8 @@ static int test_tlsext_status_type(void)
             || !TEST_ptr(ids = sk_OCSP_RESPID_new_null())
             || !TEST_ptr(ocspcert = X509_new_with_libctx(libctx, NULL))
             || !TEST_ptr(PEM_read_bio_X509(certbio, &ocspcert, NULL, NULL))
-            || !TEST_true(OCSP_RESPID_set_by_key_ex(id, ocspcert, libctx, NULL))
+            || !TEST_true(OCSP_RESPID_set_by_key_with_libctx(id, ocspcert,
+                                                             libctx, NULL))
             || !TEST_true(sk_OCSP_RESPID_push(ids, id)))
         goto end;
     id = NULL;
