@@ -452,8 +452,8 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                 && (ameth = EVP_PKEY_asn1_find_str(NULL, pem_name,
                                                    slen)) != NULL) {
                 *matchcount = 1;
-                pkey = d2i_PrivateKey_ex(ameth->pkey_id, NULL, &blob, len,
-                                         libctx, propq);
+                pkey = d2i_PrivateKey_with_libctx(ameth->pkey_id, NULL, &blob,
+                                                  len, libctx, propq);
             }
         }
     } else {
@@ -482,8 +482,9 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
 
                     ERR_set_mark(); /* prevent flooding error queue */
                     tmp_pkey =
-                        d2i_PrivateKey_ex(ameth2->pkey_id, NULL,
-                                          &tmp_blob, len, libctx, propq);
+                        d2i_PrivateKey_with_libctx(ameth2->pkey_id, NULL,
+                                                   &tmp_blob, len,
+                                                   libctx, propq);
                     if (tmp_pkey != NULL) {
                         if (pkey != NULL)
                             EVP_PKEY_free(tmp_pkey);
@@ -507,8 +508,9 @@ static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
                 continue;
 
             ERR_set_mark(); /* prevent flooding error queue */
-            tmp_pkey = d2i_PrivateKey_ex(ameth->pkey_id, NULL, &tmp_blob, len,
-                                         libctx, propq);
+            tmp_pkey = d2i_PrivateKey_with_libctx(ameth->pkey_id, NULL,
+                                                  &tmp_blob, len,
+                                                  libctx, propq);
             if (tmp_pkey != NULL) {
                 if (pkey != NULL)
                     EVP_PKEY_free(tmp_pkey);

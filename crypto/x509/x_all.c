@@ -556,8 +556,8 @@ EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
     return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, fp, a);
 }
 
-EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
-                               const char *propq)
+EVP_PKEY *d2i_PrivateKey_fp_with_libctx(FILE *fp, EVP_PKEY **a,
+                                        OPENSSL_CTX *libctx, const char *propq)
 {
     BIO *b;
     void *ret;
@@ -567,7 +567,7 @@ EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
         return NULL;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = d2i_PrivateKey_ex_bio(b, a, libctx, propq);
+    ret = d2i_PrivateKey_bio_with_libctx(b, a, libctx, propq);
     BIO_free(b);
     return ret;
 }
@@ -620,8 +620,8 @@ EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
     return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, bp, a);
 }
 
-EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OPENSSL_CTX *libctx,
-                                const char *propq)
+EVP_PKEY *d2i_PrivateKey_bio_with_libctx(BIO *bp, EVP_PKEY **a,
+                                         OPENSSL_CTX *libctx, const char *propq)
 {
     BUF_MEM *b = NULL;
     const unsigned char *p;
@@ -633,7 +633,7 @@ EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OPENSSL_CTX *libctx,
         goto err;
 
     p = (unsigned char *)b->data;
-    ret = d2i_AutoPrivateKey_ex(a, &p, len, libctx, propq);
+    ret = d2i_AutoPrivateKey_with_libctx(a, &p, len, libctx, propq);
  err:
     BUF_MEM_free(b);
     return ret;

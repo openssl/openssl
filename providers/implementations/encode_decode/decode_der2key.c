@@ -123,8 +123,8 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
     }
 
     derp = der;
-    pkey = d2i_PrivateKey_ex(ctx->desc->type, NULL, &derp, der_len,
-                             libctx, NULL);
+    pkey = d2i_PrivateKey_with_libctx(ctx->desc->type, NULL, &derp, der_len,
+                                      libctx, NULL);
     if (pkey == NULL) {
         derp = der;
         pkey = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, NULL);

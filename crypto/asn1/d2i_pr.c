@@ -22,8 +22,9 @@
 #include "crypto/evp.h"
 
 DEFINE_STACK_OF(ASN1_TYPE)
-EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
-                            long length, OPENSSL_CTX *libctx, const char *propq)
+EVP_PKEY *d2i_PrivateKey_with_libctx(int type, EVP_PKEY **a,
+                                     const unsigned char **pp, long length,
+                                     OPENSSL_CTX *libctx, const char *propq)
 {
     EVP_PKEY *ret;
     const unsigned char *p = *pp;
@@ -81,7 +82,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
 EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
                          long length)
 {
-    return d2i_PrivateKey_ex(type, a, pp, length, NULL, NULL);
+    return d2i_PrivateKey_with_libctx(type, a, pp, length, NULL, NULL);
 }
 
 /*
@@ -89,9 +90,9 @@ EVP_PKEY *d2i_PrivateKey(int type, EVP_PKEY **a, const unsigned char **pp,
  * type
  */
 
-EVP_PKEY *d2i_AutoPrivateKey_ex(EVP_PKEY **a, const unsigned char **pp,
-                                long length, OPENSSL_CTX *libctx,
-                                const char *propq)
+EVP_PKEY *d2i_AutoPrivateKey_with_libctx(EVP_PKEY **a,
+                                         const unsigned char **pp, long length,
+                                         OPENSSL_CTX *libctx, const char *propq)
 {
     STACK_OF(ASN1_TYPE) *inkey;
     const unsigned char *p;
@@ -135,11 +136,11 @@ EVP_PKEY *d2i_AutoPrivateKey_ex(EVP_PKEY **a, const unsigned char **pp,
         keytype = EVP_PKEY_RSA;
     }
     sk_ASN1_TYPE_pop_free(inkey, ASN1_TYPE_free);
-    return d2i_PrivateKey_ex(keytype, a, pp, length, libctx, propq);
+    return d2i_PrivateKey_with_libctx(keytype, a, pp, length, libctx, propq);
 }
 
 EVP_PKEY *d2i_AutoPrivateKey(EVP_PKEY **a, const unsigned char **pp,
                              long length)
 {
-    return d2i_AutoPrivateKey_ex(a, pp, length, NULL, NULL);
+    return d2i_AutoPrivateKey_with_libctx(a, pp, length, NULL, NULL);
 }

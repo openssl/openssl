@@ -187,7 +187,7 @@ static APK_DATA keydata[] = {
 };
 
 /* This is the equivalent of test_d2i_AutoPrivateKey in evp_extra_test */
-static int test_d2i_AutoPrivateKey_ex(int i)
+static int test_d2i_AutoPrivateKey_with_libctx(int i)
 {
     int ret = 0;
     const unsigned char *p;
@@ -198,8 +198,8 @@ static int test_d2i_AutoPrivateKey_ex(int i)
     int expected_id = ak->evptype;
 
     p = input;
-    if (!TEST_ptr(pkey = d2i_AutoPrivateKey_ex(NULL, &p, input_len, mainctx,
-                                               NULL))
+    if (!TEST_ptr(pkey = d2i_AutoPrivateKey_with_libctx(NULL, &p, input_len,
+                                                        mainctx, NULL))
             || !TEST_ptr_eq(p, input + input_len)
             || !TEST_int_eq(EVP_PKEY_id(pkey), expected_id))
         goto done;
@@ -263,7 +263,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_alternative_default);
-    ADD_ALL_TESTS(test_d2i_AutoPrivateKey_ex, OSSL_NELEM(keydata));
+    ADD_ALL_TESTS(test_d2i_AutoPrivateKey_with_libctx, OSSL_NELEM(keydata));
 
     return 1;
 }

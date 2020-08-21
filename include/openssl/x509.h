@@ -424,8 +424,8 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
 int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, const PKCS8_PRIV_KEY_INFO *p8inf);
 int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key);
 int i2d_PrivateKey_fp(FILE *fp, const EVP_PKEY *pkey);
-EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OPENSSL_CTX *libctx,
-                               const char *propq);
+EVP_PKEY *d2i_PrivateKey_fp_with_libctx(FILE *fp, EVP_PKEY **a,
+                                        OPENSSL_CTX *libctx, const char *propq);
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a);
 int i2d_PUBKEY_fp(FILE *fp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a);
@@ -466,8 +466,8 @@ PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, const PKCS8_PRIV_KEY_INFO *p8inf);
 int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key);
 int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey);
-EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OPENSSL_CTX *libctx,
-                                const char *propq);
+EVP_PKEY *d2i_PrivateKey_bio_with_libctx(BIO *bp, EVP_PKEY **a,
+                                         OPENSSL_CTX *libctx, const char *propq);
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a);
 int i2d_PUBKEY_bio(BIO *bp, const EVP_PKEY *pkey);
 EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a);
