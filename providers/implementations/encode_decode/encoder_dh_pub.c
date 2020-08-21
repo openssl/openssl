@@ -34,6 +34,9 @@ static OSSL_FUNC_encoder_encode_object_fn dh_pub_pem;
 static OSSL_FUNC_encoder_encode_data_fn dh_pub_print_data;
 static OSSL_FUNC_encoder_encode_object_fn dh_pub_print;
 
+#define DH_SELECT_PUBLIC_IMPORTABLE                                            \
+    (OSSL_KEYMGMT_SELECT_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)
+
 /* Public key : context */
 
 /*
@@ -63,7 +66,7 @@ static int dh_pub_der_data(void *ctx, const OSSL_PARAM params[],
 
         /* ctx == provctx */
         if ((dh = dh_new(ctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dh_import(dh, DH_SELECT_PUBLIC_IMPORTABLE, params)
             && dh_pub_der(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);
@@ -104,7 +107,7 @@ static int dh_pub_pem_data(void *ctx, const OSSL_PARAM params[],
 
         /* ctx == provctx */
         if ((dh = dh_new(ctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dh_import(dh, DH_SELECT_PUBLIC_IMPORTABLE, params)
             && dh_pub_pem(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);
@@ -144,7 +147,7 @@ static int dh_pub_print_data(void *ctx, const OSSL_PARAM params[],
 
         /* ctx == provctx */
         if ((dh = dh_new(ctx)) != NULL
-            && dh_import(dh, OSSL_KEYMGMT_SELECT_KEYPAIR, params)
+            && dh_import(dh, DH_SELECT_PUBLIC_IMPORTABLE, params)
             && dh_pub_print(ctx, dh, out, cb, cbarg))
             ok = 1;
         dh_free(dh);
