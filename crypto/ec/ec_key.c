@@ -564,6 +564,13 @@ void EC_KEY_clear_flags(EC_KEY *key, int flags)
     key->flags &= ~flags;
 }
 
+int EC_KEY_decoded_from_explicit_params(const EC_KEY *key)
+{
+    if (key == NULL || key->group == NULL)
+        return -1;
+    return key->group->decoded_from_explicit_params;
+}
+
 size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,
                         unsigned char **pbuf, BN_CTX *ctx)
 {
