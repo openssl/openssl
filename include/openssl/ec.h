@@ -896,6 +896,8 @@ void EC_KEY_set_flags(EC_KEY *key, int flags);
 
 void EC_KEY_clear_flags(EC_KEY *key, int flags);
 
+int EC_KEY_decoded_from_explicit_params(const EC_KEY *key);
+
 /**
  *  Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object.
