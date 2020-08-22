@@ -767,10 +767,10 @@ OSSL_CORE_MAKE_FUNC(int, decoder_export_object,
  * Objects are scanned by using the 'open', 'load', 'eof' and 'close'
  * functions, which implement an OSSL_STORE loader.
  *
- * store_load() works in a way that's very similar to the deserializers,
- * in that they pass an abstract object through a callback, either as a
- * DER octet string or as an object reference, which libcrypto will have
- * to deal with.
+ * store_load() works in a way that's very similar to the decoders, in
+ * that they pass an abstract object through a callback, either as a DER
+ * octet string or as an object reference, which libcrypto will have to
+ * deal with.
  */
 
 #define OSSL_FUNC_STORE_OPEN                        1
