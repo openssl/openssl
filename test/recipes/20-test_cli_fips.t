@@ -28,24 +28,19 @@ plan skip_all => "Test only supported in a fips build" if disabled("fips");
 plan tests => 6;
 
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
-my $fipskey = $ENV{FIPSKEY} // '00';
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
 my $tbs_data = $fipsmodule;
 my $bogus_data = $fipsconf;
 
-# output a fips.cnf file containing mac data
-ok(run(app(['openssl', 'fipsinstall', '-out', 'fipsmodule.cnf', '-module', $fipsmodule,
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-            '-section_name', 'fips_sect'])),
+# output a fipsmodule.cnf file containing mac data
+ok(run(app(['openssl', 'fipsinstall', '-out', 'fipsmodule.cnf',
+            '-module', $fipsmodule, ])),
    "fipsinstall");
 
 # verify the $fipsconf file
 ok(run(app(['openssl', 'fipsinstall', '-in', 'fipsmodule.cnf', '-module', $fipsmodule,
-            '-provider_name', 'fips', '-mac_name', 'HMAC',
-            '-macopt', 'digest:SHA256', '-macopt', "hexkey:$fipskey",
-            '-section_name', 'fips_sect', '-verify'])),
+            '-verify'])),
    "fipsinstall verify");
 
 $ENV{OPENSSL_CONF_INCLUDE} = abs2rel(curdir());
