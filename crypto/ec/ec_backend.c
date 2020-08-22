@@ -10,15 +10,178 @@
 #include <openssl/core_names.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
+#include <openssl/err.h>
 #include "crypto/bn.h"
 #include "crypto/ec.h"
+#include "ec_local.h"
+#include "e_os.h"
+#include "internal/param_build_set.h"
+
+/* Mapping between a flag and a name */
+static const OSSL_ITEM encoding_nameid_map[] = {
+    { OPENSSL_EC_EXPLICIT_CURVE, OSSL_PKEY_EC_ENCODING_EXPLICIT },
+    { OPENSSL_EC_NAMED_CURVE, OSSL_PKEY_EC_ENCODING_GROUP },
+};
+
+int ec_encoding_name2id(const char *name)
+{
+    size_t i, sz;
+
+    /* Return the default value if there is no name */
+    if (name == NULL)
+        return OPENSSL_EC_NAMED_CURVE;
+
+    for (i = 0, sz = OSSL_NELEM(encoding_nameid_map); i < sz; i++) {
+        if (strcasecmp(name, encoding_nameid_map[i].ptr) == 0)
+            return encoding_nameid_map[i].id;
+    }
+    return -1;
+}
+
+static char *ec_param_encoding_id2name(int id)
+{
+    size_t i, sz;
+
+    for (i = 0, sz = OSSL_NELEM(encoding_nameid_map); i < sz; i++) {
+        if (id == (int)encoding_nameid_map[i].id)
+            return encoding_nameid_map[i].ptr;
+    }
+    return NULL;
+}
+
+int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
+                    OSSL_PARAM params[], OPENSSL_CTX *libctx, const char *propq,
+                    BN_CTX *bnctx, unsigned char **genbuf)
+{
+    int ret = 0, curve_nid, encoding_flag;
+    const char *field_type, *encoding_name;
+    const BIGNUM *cofactor, *order;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL;
+    point_conversion_form_t genform;
+    const EC_POINT *genpt;
+    unsigned char *seed = NULL;
+    size_t genbuf_len, seed_len;
+
+    if (group == NULL) {
+        ECerr(0,EC_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    encoding_flag = EC_GROUP_get_asn1_flag(group) & OPENSSL_EC_NAMED_CURVE;
+    encoding_name = ec_param_encoding_id2name(encoding_flag);
+    if (encoding_name == NULL
+        || !ossl_param_build_set_utf8_string(tmpl, params,
+                                             OSSL_PKEY_PARAM_EC_ENCODING,
+                                             encoding_name)) {
+        ECerr(0, EC_R_INVALID_ENCODING);
+        return 0;
+    }
+
+    curve_nid = EC_GROUP_get_curve_name(group);
+    if (curve_nid == NID_undef) {
+        /* explicit curve */
+        int fid = EC_GROUP_get_field_type(group);
+
+        if (fid == NID_X9_62_prime_field) {
+            field_type = SN_X9_62_prime_field;
+        } else if (fid == NID_X9_62_characteristic_two_field) {
+            field_type = SN_X9_62_characteristic_two_field;
+        } else {
+            ECerr(0, EC_R_INVALID_FIELD);
+            return 0;
+        }
+
+        p = BN_CTX_get(bnctx);
+        a = BN_CTX_get(bnctx);
+        b = BN_CTX_get(bnctx);
+        if (b == NULL) {
+            ECerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        if (!EC_GROUP_get_curve(group, p, a, b, bnctx)) {
+            ECerr(0, EC_R_INVALID_CURVE);
+            goto err;
+        }
+
+        order = EC_GROUP_get0_order(group);
+        if (order == NULL) {
+            ECerr(0, EC_R_INVALID_GROUP_ORDER);
+            goto err;
+        }
+        genpt = EC_GROUP_get0_generator(group);
+        if (genpt == NULL) {
+            ECerr(0, EC_R_INVALID_GENERATOR);
+            goto err;
+        }
+        genform = EC_GROUP_get_point_conversion_form(group);
+        genbuf_len = EC_POINT_point2buf(group, genpt, genform, genbuf, bnctx);
+        if (genbuf_len == 0) {
+            ECerr(0, EC_R_INVALID_GENERATOR);
+            goto err;
+        }
+
+        if (!ossl_param_build_set_utf8_string(tmpl, params,
+                                              OSSL_PKEY_PARAM_EC_FIELD_TYPE,
+                                              field_type)
+            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_P, p)
+            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_A, a)
+            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_B, b)
+            || !ossl_param_build_set_bn(tmpl, params, OSSL_PKEY_PARAM_EC_ORDER,
+                                        order)
+            || !ossl_param_build_set_octet_string(tmpl, params,
+                                                  OSSL_PKEY_PARAM_EC_GENERATOR,
+                                                  *genbuf, genbuf_len)) {
+            ECerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        cofactor = EC_GROUP_get0_cofactor(group);
+        if (cofactor != NULL
+            && !ossl_param_build_set_bn(tmpl, params,
+                                        OSSL_PKEY_PARAM_EC_COFACTOR, cofactor)) {
+            ECerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+
+        seed = EC_GROUP_get0_seed(group);
+        seed_len = EC_GROUP_get_seed_len(group);
+        if (seed != NULL
+            && seed_len > 0
+            && !ossl_param_build_set_octet_string(tmpl, params,
+                                                  OSSL_PKEY_PARAM_EC_SEED,
+                                                  seed, seed_len)) {
+            ECerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+#ifdef OPENSSL_NO_EC2M
+        if (fid == NID_X9_62_characteristic_two_field) {
+            ECerr(0, EC_R_GF2M_NOT_SUPPORTED);
+            goto err;
+        }
+#endif
+    } else {
+        /* named curve */
+        const char *curve_name = curve_name = ec_curve_nid2name(curve_nid);
+
+        if (curve_name == NULL
+            || !ossl_param_build_set_utf8_string(tmpl, params,
+                                                 OSSL_PKEY_PARAM_GROUP_NAME,
+                                                 curve_name)) {
+            ECerr(0, EC_R_INVALID_CURVE);
+            goto err;
+        }
+    }
+    ret = 1;
+err:
+    return ret;
+}
 
 /*
  * The intention with the "backend" source file is to offer backend support
  * for legacy backends (EVP_PKEY_ASN1_METHOD and EVP_PKEY_METHOD) and provider
  * implementations alike.
  */
-
 int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode)
 {
     const EC_GROUP *ecg = EC_KEY_get0_group(ec);
@@ -163,52 +326,27 @@ int ec_key_fromdata(EC_KEY *ec, const OSSL_PARAM params[], int include_private)
     return ok;
 }
 
-int ec_key_domparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
+int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *param_ec_name;
-    EC_GROUP *ecg = NULL;
-    char *curve_name = NULL;
     int ok = 0;
+    EC_GROUP *group = NULL;
 
     if (ec == NULL)
         return 0;
 
-    param_ec_name = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
-    if (param_ec_name == NULL) {
-        /* explicit parameters */
+     group = EC_GROUP_new_from_params(params, ec_key_get_libctx(ec),
+                                      ec_key_get0_propq(ec));
 
-        /*
-         * TODO(3.0): should we support explicit parameters curves?
-         */
-        return 0;
-    } else {
-        /* named curve */
-        int curve_nid;
-
-        if (!OSSL_PARAM_get_utf8_string(param_ec_name, &curve_name, 0)
-                || curve_name == NULL
-                || (curve_nid = ec_curve_name2nid(curve_name)) == NID_undef)
-            goto err;
-
-        if ((ecg = EC_GROUP_new_by_curve_name_with_libctx(ec_key_get_libctx(ec),
-                                                          ec_key_get0_propq(ec),
-                                                          curve_nid)) == NULL)
-            goto err;
-    }
-
-    if (!EC_KEY_set_group(ec, ecg))
+    if (!EC_KEY_set_group(ec, group))
         goto err;
 
     /*
      * TODO(3.0): if the group has changed, should we invalidate the private and
      * public key?
      */
-
     ok = 1;
-
- err:
-    OPENSSL_free(curve_name);
-    EC_GROUP_free(ecg);
+err:
+    EC_GROUP_free(group);
     return ok;
 }
 
@@ -227,5 +365,6 @@ int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[])
             || !ec_set_ecdh_cofactor_mode(ec, mode))
             return 0;
     }
+
     return 1;
 }

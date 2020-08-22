@@ -59,10 +59,14 @@ const char *ec_curve_nid2name(int nid);
 int ec_curve_name2nid(const char *name);
 
 /* Backend support */
+int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
+                    OSSL_PARAM params[], OPENSSL_CTX *libctx, const char *propq,
+                    BN_CTX *bnctx, unsigned char **genbuf);
+int ec_group_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_key_fromdata(EC_KEY *ecx, const OSSL_PARAM params[], int include_private);
-int ec_key_domparams_fromdata(EC_KEY *ecx, const OSSL_PARAM params[]);
 int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
+int ec_encoding_name2id(const char *name);
 
 # endif /* OPENSSL_NO_EC */
 #endif
