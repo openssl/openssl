@@ -54,7 +54,7 @@ $ENV{OPENSSL_CONF} = $fipsconf;
 ok(run(app(['openssl', 'provider', '-v', 'fips'])),
    "provider listing");
 
-my $tsignverify_count = 6;
+my $tsignverify_count = 8;
 sub tsignverify {
     my $prefix = shift;
     my $fips_key = shift;
@@ -83,6 +83,15 @@ sub tsignverify {
                 $tbs_data])),
        $testtext);
 
+    $testtext = $prefix.': '.
+        'Verify a valid signature against the wrong data with a FIPS key'.
+        ' (should fail)';
+    ok(!run(app(['openssl', 'dgst', '-sha256',
+                 '-verify', $fips_key,
+                 '-signature', $sigfile,
+                 $bogus_data])),
+       $testtext);
+
     $ENV{OPENSSL_CONF} = $defaultconf;
 
     $sigfile = $nonfips_sigfile;
@@ -96,7 +105,7 @@ sub tsignverify {
        $testtext);
 
     $testtext = $prefix.': '.
-        'Verify something with a FIPS key'.
+        'Verify something with a non-FIPS key'.
         ' with the default provider';
     ok(run(app(['openssl', 'dgst', '-sha256',
                 '-verify', $nonfips_key,
@@ -122,6 +131,15 @@ sub tsignverify {
                  '-verify', $nonfips_key,
                  '-signature', $sigfile,
                  $tbs_data])),
+       $testtext);
+
+    $testtext = $prefix.': '.
+        'Verify a valid signature against the wrong data with a non-FIPS key'.
+        ' (should fail)';
+    ok(!run(app(['openssl', 'dgst', '-sha256',
+                 '-verify', $nonfips_key,
+                 '-signature', $sigfile,
+                 $bogus_data])),
        $testtext);
 }
 
@@ -150,6 +168,7 @@ SKIP : {
            $testtext);
 
         $ENV{OPENSSL_CONF} = $fipsconf;
+
         $curvename = $a_fips_curve;
         $testtext = $testtext_prefix.': '.
             'Generate a key with a FIPS algorithm';
