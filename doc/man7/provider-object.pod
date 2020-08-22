@@ -32,9 +32,10 @@ I<By value>
 This means that the I<object data> is passed as an octet string or an UTF8
 string, which can be handled in diverse ways by other provided implementations.
 The encoding of the object depends on the context it's used in; for example,
-L<OSSL_DESERIALIZER(3)> allows multiple encodings, depending on existing
-deserializers.  If central OpenSSL library functionality is to handle the
-data directly, it B<must> be encoded in DER.
+L<OSSL_DECODER(3)> allows multiple encodings, depending on existing decoders.
+If central OpenSSL library functionality is to handle the data directly, it
+B<must> be encoded in DER for all object types except for B<OSSL_OBJECT_NAME>
+(see L</Parameter reference> below), where it's assumed to a plain UTF8 string.
 
 =for comment A future extension might be to be able to specify encoding as a
 separate parameter.
@@ -66,12 +67,12 @@ The target implementation (Y) may have a function that can take an I<object
 reference>.  This can only be used if the target implementation is from the
 same provider as the one originating the object abstraction in question (X).
 
-The exact target implementation is determined from the I<object type> and
-possibly the I<object data type>.  For example, an object abstraction with
-
-the I<object type> B<OSSL_OBJECT_PKEY> will have code to fetch a
-L<provider-keymgmt(7)> using the I<object data type> as its key type (the
-second argument in L<EVP_KEYMGMT_fetch(3)>).
+The exact target implementation to use is determined from the I<object type>
+and possibly the I<object data type>.
+For example, when the OpenSSL library receives an object abstraction with the
+I<object type> B<OSSL_OBJECT_PKEY>, it will fetch a L<provider-keymgmt(7)>
+using the I<object data type> as its key type (the second argument in
+L<EVP_KEYMGMT_fetch(3)>).
 
 =item 2.
 
@@ -148,15 +149,28 @@ object type; if it is B<OSSL_OBJECT_PKEY>, the data type is expected to be a
 key type suitable for fetching a L<provider-keymgmt(7)> that can handle the
 data.
 
+=for comment For objects with an unknown object type (OSSL_OBJECT_PARAM_TYPE
+missing or having the value OSSL_OBJECT_UNKNOWN), libcrypto interprets the
+object data type as the input type for a deserializer.
+
 =item "desc" (B<OSSL_OBJECT_PARAM_DESC>) <utf8 string>
 
 A human readable text that describes extra details on the object.
 
 =back
 
+When a provider-native object abtraction is used, it I<must> contain object
+data in at least one form (object data I<passed by value>, i.e. the "data"
+item, or object data I<passed by reference>, i.e. the "reference" item).
+Both may be present at once, in which case the OpenSSL library code that
+receives this will use the most optimal variant.
+
+For objects with the object type B<OSSL_OBJECT_NAME>, that object type
+I<must> be given.
+
 =head1 SEE ALSO
 
-L<provider(7)>
+L<provider(7)>, L<OSSL_DECODER(3)>
 
 =head1 HISTORY
 
