@@ -138,10 +138,10 @@ of an algorithm that's identifiable with I<scheme>.
 OSSL_STORE_LOADER_number() returns the internal dynamic number assigned
 to the given I<loader>.
 
-OSSL_STORE_LOADER_do_all_provided() traverses all serializer
-implementations by all activated providers in the library context
-I<libctx>, and for each of the implementations, calls I<fn> with the
-implementation method and I<data> as arguments.
+OSSL_STORE_LOADER_do_all_provided() traverses all store implementations
+by all activated providers in the library context I<libctx>, and for each
+of the implementations, calls I<fn> with the implementation method and
+I<data> as arguments.
 
 OSSL_STORE_LOADER_names_do_all() traverses all names for the given
 I<loader>, and calls I<fn> with each name and I<data>.
