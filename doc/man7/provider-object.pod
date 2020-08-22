@@ -150,8 +150,8 @@ key type suitable for fetching a L<provider-keymgmt(7)> that can handle the
 data.
 
 =for comment For objects with an unknown object type (OSSL_OBJECT_PARAM_TYPE
-missing or having the value OSSL_OBJECT_UNKNOWN), libcrypto interprets the
-object data type as the input type for a deserializer.
+is either missing or has the value OSSL_OBJECT_UNKNOWN), libcrypto
+interprets the object data type as the input type for a decoder.
 
 =item "desc" (B<OSSL_OBJECT_PARAM_DESC>) <utf8 string>
 
