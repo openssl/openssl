@@ -27,8 +27,8 @@
  * -   password caching.  This is to be used by APIs where it's likely
  *     that the same passphrase may be asked for more than once, but the
  *     user shouldn't get prompted more than once.  For example, this is
- *     useful for OSSL_DESERIALIZER, which may have to use a passphrase
- *     while trying to find out what input it has.
+ *     useful for OSSL_DECODER, which may have to use a passphrase while
+ *     trying to find out what input it has.
  */
 
 /*
