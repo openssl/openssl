@@ -763,9 +763,8 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
      * internal provider. This is not something that most providers would be
      * able to do.
      */
-    ossl_prov_ctx_set0_libctx(
-        *provctx, (OSSL_LIB_CTX *)c_internal_get_libctx(handle)
-    );
+    ossl_prov_ctx_set0_libctx(*provctx,
+                              (OSSL_LIB_CTX *)c_internal_get_libctx(handle));
     ossl_prov_ctx_set0_handle(*provctx, handle);
 
     *out = intern_dispatch_table;
