@@ -309,18 +309,12 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
             /*
              * It wasn't PKCS#8, so we must try the hard way.
              * However, we can cheat a little bit, because we know
-             * what's not yet supported in out decoders.
+             * what's not yet fully supported in out decoders.
              * TODO(3.0) Eliminate these when we have decoder support.
              */
             if (pk == NULL) {
                 derp = der;
                 pk = d2i_PrivateKey_ex(EVP_PKEY_SM2, NULL,
-                                       &derp, der_len,
-                                       libctx, NULL);
-            }
-            if (pk == NULL) {
-                derp = der;
-                pk = d2i_PrivateKey_ex(EVP_PKEY_EC, NULL,
                                        &derp, der_len,
                                        libctx, NULL);
             }
@@ -342,12 +336,6 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
     if (pk == NULL) {
         derp = der;
         pk = d2i_KeyParams(EVP_PKEY_SM2, NULL, &derp, der_len);
-        if (pk != NULL)
-            *store_info_new = OSSL_STORE_INFO_new_PARAMS;
-    }
-    if (pk == NULL) {
-        derp = der;
-        pk = d2i_KeyParams(EVP_PKEY_EC, NULL, &derp, der_len);
         if (pk != NULL)
             *store_info_new = OSSL_STORE_INFO_new_PARAMS;
     }
