@@ -47,7 +47,7 @@ int async_fibre_init_dispatcher(async_fibre *fibre)
     return 1;
 }
 
-VOID CALLBACK async_start_func_win(PVOID unused)
+VOID CALLBACK async_start_func_win(ossl_unused PVOID unused__arg)
 {
     async_start_func();
 }

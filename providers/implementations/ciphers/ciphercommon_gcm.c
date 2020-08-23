@@ -306,7 +306,7 @@ int gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
 }
 
 int gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
-                     size_t outsize)
+                     ossl_unused size_t unused__outsize)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     int i;

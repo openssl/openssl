@@ -119,6 +119,8 @@ EC_KEY *ec_key_new_method_int(OPENSSL_CTX *libctx, const char *propq,
             goto err;
         }
     }
+#else
+    (void)engine; /* silence -Wunused-parameter */
 #endif
 
     ret->version = 1;

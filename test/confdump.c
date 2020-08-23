@@ -51,7 +51,7 @@ static void dump_section(const char *name, const CONF *cnf)
     }
 }
 
-int main(int argc, char **argv)
+int main(ossl_unused int unused__argc, char **argv)
 {
     long eline;
     CONF *conf = NCONF_new(NCONF_default());

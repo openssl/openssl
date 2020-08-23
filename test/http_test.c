@@ -100,8 +100,13 @@ static int mock_http_server(BIO *in, BIO *out,
     }
 }
 
-static long http_bio_cb_ex(BIO *bio, int oper, const char *argp, size_t len,
-                           int cmd, long argl, int ret, size_t *processed)
+static long http_bio_cb_ex(BIO *bio, int oper,
+                           ossl_unused const char *unused__argp,
+                           ossl_unused size_t unused__len,
+                           int cmd,
+                           ossl_unused long unused__argl,
+                           int ret,
+                           ossl_unused size_t *unused__processed)
 {
 
     if (oper == (BIO_CB_CTRL | BIO_CB_RETURN) && cmd == BIO_CTRL_FLUSH)

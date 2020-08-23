@@ -44,7 +44,7 @@ static OSSL_FUNC_cipher_get_params_fn rc4_hmac_md5_get_params;
 #define rc4_hmac_md5_final cipher_generic_stream_final
 #define rc4_hmac_md5_cipher cipher_generic_cipher
 
-static void *rc4_hmac_md5_newctx(void *provctx)
+static void *rc4_hmac_md5_newctx(ossl_unused void *unused__provctx)
 {
     PROV_RC4_HMAC_MD5_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
@@ -72,7 +72,7 @@ static const OSSL_PARAM rc4_hmac_md5_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return rc4_hmac_md5_known_gettable_ctx_params;
 }
@@ -107,7 +107,7 @@ static const OSSL_PARAM rc4_hmac_md5_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return rc4_hmac_md5_known_settable_ctx_params;
 }

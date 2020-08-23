@@ -44,7 +44,7 @@ static int oid_module_init(CONF_IMODULE *md, const CONF *cnf)
     return 1;
 }
 
-static void oid_module_finish(CONF_IMODULE *md)
+static void oid_module_finish(ossl_unused CONF_IMODULE *unused__md)
 {
 }
 

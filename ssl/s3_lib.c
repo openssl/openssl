@@ -3271,17 +3271,15 @@ void ssl_sort_cipher_list(void)
     qsort(ssl3_scsvs, SSL3_NUM_SCSVS, sizeof(ssl3_scsvs[0]), cipher_compare);
 }
 
-static int ssl_undefined_function_1(SSL *ssl, unsigned char *r, size_t s,
-                                    const char * t, size_t u,
-                                    const unsigned char * v, size_t w, int x)
+static int ssl_undefined_function_1(SSL *ssl,
+                                    ossl_unused unsigned char *unused__r,
+                                    ossl_unused size_t unused__s,
+                                    ossl_unused const char *unused__t,
+                                    ossl_unused size_t unused__u,
+                                    ossl_unused const unsigned char *unused__v,
+                                    ossl_unused size_t unused__w,
+                                    ossl_unused int unused__x)
 {
-    (void)r;
-    (void)s;
-    (void)t;
-    (void)u;
-    (void)v;
-    (void)w;
-    (void)x;
     return ssl_undefined_function(ssl);
 }
 
@@ -3324,7 +3322,7 @@ const SSL_CIPHER *ssl3_get_cipher(unsigned int u)
         return NULL;
 }
 
-int ssl3_set_handshake_header(SSL *s, WPACKET *pkt, int htype)
+int ssl3_set_handshake_header(ossl_unused SSL *unused__ssl, WPACKET *pkt, int htype)
 {
     /* No header in the event of a CCS */
     if (htype == SSL3_MT_CHANGE_CIPHER_SPEC)
@@ -3427,7 +3425,7 @@ int ssl3_clear(SSL *s)
 }
 
 #ifndef OPENSSL_NO_SRP
-static char *srp_password_from_info_cb(SSL *s, void *arg)
+static char *srp_password_from_info_cb(SSL *s, ossl_unused void *unused__arg)
 {
     return OPENSSL_strdup(s->srp_ctx.info);
 }

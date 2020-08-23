@@ -76,7 +76,7 @@ typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;
 } FIPS_GLOBAL;
 
-static void *fips_prov_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *fips_prov_ossl_ctx_new(ossl_unused OPENSSL_CTX *unused__libctx)
 {
     FIPS_GLOBAL *fgbl = OPENSSL_zalloc(sizeof(*fgbl));
 
@@ -129,12 +129,12 @@ static OSSL_PARAM core_params[] =
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *fips_gettable_params(void *provctx)
+static const OSSL_PARAM *fips_gettable_params(ossl_unused void *unused__provctx)
 {
     return fips_param_types;
 }
 
-static int fips_get_params(void *provctx, OSSL_PARAM params[])
+static int fips_get_params(ossl_unused void *unused__provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -164,7 +164,7 @@ static void set_self_test_cb(const OSSL_CORE_HANDLE *handle)
     }
 }
 
-static int fips_self_test(void *provctx)
+static int fips_self_test(ossl_unused void *unused__provctx)
 {
     set_self_test_cb(FIPS_get_core_handle(selftest_params.libctx));
     return SELF_TEST_post(&selftest_params, 1) ? 1 : 0;
@@ -467,7 +467,8 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
+static const OSSL_ALGORITHM *fips_query(ossl_unused void *unused__provctx,
+                                        int operation_id,
                                         int *no_cache)
 {
     *no_cache = 0;

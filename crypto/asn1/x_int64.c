@@ -26,7 +26,7 @@
 #define INTxx_FLAG_ZERO_DEFAULT (1<<0)
 #define INTxx_FLAG_SIGNED       (1<<1)
 
-static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int uint64_new(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint64_t))) == NULL) {
         ASN1err(ASN1_F_UINT64_NEW, ERR_R_MALLOC_FAILURE);
@@ -35,18 +35,18 @@ static int uint64_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
     return 1;
 }
 
-static void uint64_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint64_free(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     OPENSSL_free(*pval);
     *pval = NULL;
 }
 
-static void uint64_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint64_clear(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     **(uint64_t **)pval = 0;
 }
 
-static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, ossl_unused int *unused__putype,
                       const ASN1_ITEM *it)
 {
     uint64_t utmp;
@@ -71,7 +71,7 @@ static int uint64_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                      int utype, char *free_cont, const ASN1_ITEM *it)
+                      ossl_unused int unused__utype, ossl_unused char *unused__free_cont, const ASN1_ITEM *it)
 {
     uint64_t utmp = 0;
     char *cp;
@@ -112,7 +112,7 @@ static int uint64_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 }
 
 static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                        int indent, const ASN1_PCTX *pctx)
+                        ossl_unused int unused__indent, ossl_unused const ASN1_PCTX *unused__pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
         return BIO_printf(out, "%jd\n", **(int64_t **)pval);
@@ -121,7 +121,7 @@ static int uint64_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
 
 /* 32-bit variants */
 
-static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int uint32_new(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     if ((*pval = (ASN1_VALUE *)OPENSSL_zalloc(sizeof(uint32_t))) == NULL) {
         ASN1err(ASN1_F_UINT32_NEW, ERR_R_MALLOC_FAILURE);
@@ -130,18 +130,18 @@ static int uint32_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
     return 1;
 }
 
-static void uint32_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint32_free(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     OPENSSL_free(*pval);
     *pval = NULL;
 }
 
-static void uint32_clear(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void uint32_clear(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     **(uint32_t **)pval = 0;
 }
 
-static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, ossl_unused int *unused__putype,
                       const ASN1_ITEM *it)
 {
     uint32_t utmp;
@@ -173,7 +173,7 @@ static int uint32_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 #define ABS_INT32_MIN ((uint32_t)INT32_MAX + 1)
 
 static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                      int utype, char *free_cont, const ASN1_ITEM *it)
+                      ossl_unused int unused__utype, ossl_unused char *unused__free_cont, const ASN1_ITEM *it)
 {
     uint64_t utmp = 0;
     uint32_t utmp2 = 0;
@@ -221,7 +221,7 @@ static int uint32_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
 }
 
 static int uint32_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                        int indent, const ASN1_PCTX *pctx)
+                        ossl_unused int unused__indent, ossl_unused const ASN1_PCTX *unused__pctx)
 {
     if ((it->size & INTxx_FLAG_SIGNED) == INTxx_FLAG_SIGNED)
         return BIO_printf(out, "%d\n", **(int32_t **)pval);

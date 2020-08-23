@@ -165,7 +165,9 @@ typedef struct {
     int len;
 } ENGINE_FIND_STR;
 
-static void look_str_cb(int nid, STACK_OF(ENGINE) *sk, ENGINE *def, void *arg)
+static void look_str_cb(int nid, STACK_OF(ENGINE) *sk,
+                        ossl_unused ENGINE *unused__def,
+                        void *arg)
 {
     ENGINE_FIND_STR *lk = arg;
     int i;

@@ -159,6 +159,8 @@ static int is_legacy_alg(int id, const char *keytype)
         return 0;
     }
 #else
+    (void)id;      /* silence -Wunused-parameter */
+    (void)keytype; /* silence -Wunused-parameter */
     return 0;
 #endif
 }

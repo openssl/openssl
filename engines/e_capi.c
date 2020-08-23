@@ -1896,7 +1896,7 @@ static int cert_select_dialog(ENGINE *e, SSL *ssl, STACK_OF(X509) *certs)
 OPENSSL_EXPORT
     int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns);
 OPENSSL_EXPORT
-    int bind_engine(ENGINE *e, const char *id, const dynamic_fns *fns)
+    int bind_engine(ossl_unused ENGINE *unused__e, ossl_unused const char *unused__id, ossl_unused const dynamic_fns *unused__fns)
 {
     return 0;
 }

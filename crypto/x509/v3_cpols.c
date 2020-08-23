@@ -91,7 +91,7 @@ ASN1_SEQUENCE(NOTICEREF) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(NOTICEREF)
 
-static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
+static STACK_OF(POLICYINFO) *r2i_certpol(ossl_unused X509V3_EXT_METHOD *unused__method,
                                          X509V3_CTX *ctx, const char *value)
 {
     STACK_OF(POLICYINFO) *pols;
@@ -285,7 +285,7 @@ static int displaytext_str2tag(const char *tagstr, unsigned int *tag_len)
     return V_ASN1_VISIBLESTRING;
 }
 
-static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
+static POLICYQUALINFO *notice_section(ossl_unused X509V3_CTX *unused__ctx,
                                       STACK_OF(CONF_VALUE) *unot, int ia5org)
 {
     int i, ret, len, tag;
@@ -404,7 +404,8 @@ static int nref_nos(STACK_OF(ASN1_INTEGER) *nnums, STACK_OF(CONF_VALUE) *nos)
     return 0;
 }
 
-static int i2r_certpol(X509V3_EXT_METHOD *method, STACK_OF(POLICYINFO) *pol,
+static int i2r_certpol(ossl_unused X509V3_EXT_METHOD *unused__method,
+                       STACK_OF(POLICYINFO) *pol,
                        BIO *out, int indent)
 {
     int i;

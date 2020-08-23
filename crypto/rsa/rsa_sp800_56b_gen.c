@@ -80,6 +80,8 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
         q1 = test->q1;
         q2 = test->q2;
     }
+#else
+    (void)test; /* silence -Wunused-parameter */
 #endif
 
     /* (Step 1) Check key length

@@ -163,7 +163,8 @@ int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
     return ret;
 }
 
-int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss, const char *propq,
+int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss,
+                             ossl_unused const char *unused__propq,
                              OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 {
     if (!rsa_pss_params_30_is_unrestricted(pss)) {

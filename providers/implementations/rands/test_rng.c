@@ -129,10 +129,10 @@ static int test_rng_generate(PROV_DRBG *drbg,
     return 1;
 }
 
-static int test_rng_generate_wrapper
-    (void *vdrbg, unsigned char *out, size_t outlen,
-      unsigned int strength, int prediction_resistance,
-      const unsigned char *adin, size_t adin_len)
+static int test_rng_generate_wrapper(void *vdrbg, unsigned char *out, size_t outlen,
+                                     unsigned int strength,
+                                     ossl_unused int unused__prediction_resistance,
+                                     const unsigned char *adin, size_t adin_len)
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
@@ -154,7 +154,7 @@ static int test_rng_reseed(PROV_DRBG *drbg,
     return 1;
 }
 
-static int test_rng_reseed_wrapper(void *vdrbg, int prediction_resistance,
+static int test_rng_reseed_wrapper(void *vdrbg, int ossl_unused prediction_resistance,
                                    const unsigned char *ent, size_t ent_len,
                                    const unsigned char *adin, size_t adin_len)
 {
@@ -186,7 +186,7 @@ static int test_rng_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
     return drbg_get_ctx_params(drbg, params);
 }
 
-static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *test_rng_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
         OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON,
@@ -264,7 +264,7 @@ static int test_rng_set_ctx_params(void *vdrbg, const OSSL_PARAM params[])
     return drbg_set_ctx_params(drbg, params);
 }
 
-static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY, NULL, 0),
@@ -285,7 +285,7 @@ static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
     return known_settable_ctx_params;
 }
 
-static int test_rng_verify_zeroization(void *vdrbg)
+static int test_rng_verify_zeroization(ossl_unused void *unused__vdrbg)
 {
     return 1;
 }

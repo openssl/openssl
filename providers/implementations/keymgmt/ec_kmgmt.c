@@ -631,7 +631,7 @@ static const OSSL_PARAM ec_known_gettable_params[] = {
 };
 
 static
-const OSSL_PARAM *ec_gettable_params(void *provctx)
+const OSSL_PARAM *ec_gettable_params(ossl_unused void *unused__provctx)
 {
     return ec_known_gettable_params;
 }
@@ -643,7 +643,7 @@ static const OSSL_PARAM ec_known_settable_params[] = {
 };
 
 static
-const OSSL_PARAM *ec_settable_params(void *provctx)
+const OSSL_PARAM *ec_settable_params(ossl_unused void *unused__provctx)
 {
     return ec_known_settable_params;
 }
@@ -894,7 +894,7 @@ err:
     return ret;
 }
 
-static const OSSL_PARAM *ec_gen_settable_params(void *provctx)
+static const OSSL_PARAM *ec_gen_settable_params(ossl_unused void *unused__provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
@@ -926,7 +926,7 @@ static int ec_gen_assign_group(EC_KEY *ec, EC_GROUP *group)
 /*
  * The callback arguments (osslcb & cbarg) are not used by EC_KEY generation
  */
-static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *ec_gen(void *genctx, ossl_unused OSSL_CALLBACK *unused__osslcb, ossl_unused void *unused__cbarg)
 {
     struct ec_gen_ctx *gctx = genctx;
     EC_KEY *ec = NULL;

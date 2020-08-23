@@ -183,7 +183,7 @@ static PROV_SHA3_METHOD shake_s390x_md =
 
 #define SHA3_newctx(typ, uname, name, bitlen, pad)                             \
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
-static void *name##_newctx(void *provctx)                                      \
+static void *name##_newctx(ossl_unused void *unused__provctx)                          \
 {                                                                              \
     KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
                                                                                \
@@ -196,7 +196,7 @@ static void *name##_newctx(void *provctx)                                      \
 
 #define KMAC_newctx(uname, bitlen, pad)                                        \
 static OSSL_FUNC_digest_newctx_fn uname##_newctx;                              \
-static void *uname##_newctx(void *provctx)                                     \
+static void *uname##_newctx(ossl_unused void *unused__provctx)                         \
 {                                                                              \
     KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
                                                                                \
@@ -250,7 +250,7 @@ static const OSSL_PARAM known_shake_settable_ctx_params[] = {
     {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_shake_settable_ctx_params;
 }

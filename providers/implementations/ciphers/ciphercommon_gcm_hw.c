@@ -49,7 +49,8 @@ int gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
 
 int gcm_one_shot(PROV_GCM_CTX *ctx, unsigned char *aad, size_t aad_len,
                  const unsigned char *in, size_t in_len,
-                 unsigned char *out, unsigned char *tag, size_t tag_len)
+                 unsigned char *out, unsigned char *tag,
+                 ossl_unused size_t unused__tag_len)
 {
     int ret = 0;
 

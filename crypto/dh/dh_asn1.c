@@ -21,8 +21,9 @@
 #include <openssl/asn1t.h>
 
 /* Override the default free and new methods */
-static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                 void *exarg)
+static int dh_cb(int operation, ASN1_VALUE **pval,
+                 ossl_unused const ASN1_ITEM *unused__it,
+                 ossl_unused void *unused__exarg)
 {
     if (operation == ASN1_OP_NEW_PRE) {
         *pval = (ASN1_VALUE *)DH_new();

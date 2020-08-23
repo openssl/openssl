@@ -21,7 +21,9 @@
  * verify) passphrase reading.
  */
 static int do_passphrase(char *pass, size_t pass_size, size_t *pass_len,
-                         const OSSL_PARAM params[], void *arg, int verify,
+                         const OSSL_PARAM params[],
+                         ossl_unused void *unused__arg,
+                         int verify,
                          const UI_METHOD *ui_method, void *ui_data, int errlib)
 {
     const OSSL_PARAM *p;

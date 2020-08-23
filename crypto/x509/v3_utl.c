@@ -146,7 +146,7 @@ static char *bignum_to_string(const BIGNUM *bn)
     return ret;
 }
 
-char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
+char *i2s_ASN1_ENUMERATED(ossl_unused X509V3_EXT_METHOD *unused__method, const ASN1_ENUMERATED *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
@@ -160,7 +160,7 @@ char *i2s_ASN1_ENUMERATED(X509V3_EXT_METHOD *method, const ASN1_ENUMERATED *a)
     return strtmp;
 }
 
-char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
+char *i2s_ASN1_INTEGER(ossl_unused X509V3_EXT_METHOD *unused__method, const ASN1_INTEGER *a)
 {
     BIGNUM *bntmp = NULL;
     char *strtmp = NULL;
@@ -174,7 +174,7 @@ char *i2s_ASN1_INTEGER(X509V3_EXT_METHOD *method, const ASN1_INTEGER *a)
     return strtmp;
 }
 
-ASN1_INTEGER *s2i_ASN1_INTEGER(X509V3_EXT_METHOD *method, const char *value)
+ASN1_INTEGER *s2i_ASN1_INTEGER(ossl_unused X509V3_EXT_METHOD *unused__method, const char *value)
 {
     BIGNUM *bn = NULL;
     ASN1_INTEGER *aint;
@@ -625,7 +625,7 @@ static int equal_case(const unsigned char *pattern, size_t pattern_len,
  */
 static int equal_email(const unsigned char *a, size_t a_len,
                        const unsigned char *b, size_t b_len,
-                       unsigned int unused_flags)
+                       ossl_unused unsigned int unused__flags)
 {
     size_t i = a_len;
 

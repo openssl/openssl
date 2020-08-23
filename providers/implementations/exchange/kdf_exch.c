@@ -81,7 +81,7 @@ static int kdf_init(void *vpkdfctx, void *vkdf)
 }
 
 static int kdf_derive(void *vpkdfctx, unsigned char *secret, size_t *secretlen,
-                      size_t outlen)
+                      ossl_unused size_t unused__outlen)
 {
     PROV_KDF_CTX *pkdfctx = (PROV_KDF_CTX *)vpkdfctx;
 

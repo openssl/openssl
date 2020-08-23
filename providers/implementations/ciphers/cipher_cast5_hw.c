@@ -31,7 +31,7 @@ static const PROV_CIPHER_HW cast5_##mode = {                                   \
     cipher_hw_cast5_initkey,                                                   \
     cipher_hw_cast5_##mode##_cipher                                            \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_cast5_##mode(size_t keybits)              \
+const PROV_CIPHER_HW *PROV_CIPHER_HW_cast5_##mode(ossl_unused size_t unused__keybits)  \
 {                                                                              \
     return &cast5_##mode;                                                      \
 }

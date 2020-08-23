@@ -228,7 +228,7 @@ static int dh_test(void)
     return ret;
 }
 
-static int cb(int p, int n, BN_GENCB *arg)
+static int cb(ossl_unused int unused__p, ossl_unused int unused__n, ossl_unused BN_GENCB *unused__arg)
 {
     return 1;
 }

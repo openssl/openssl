@@ -188,7 +188,7 @@ const EVP_CIPHER *EVP_camellia_##keylen##_##mode(void) \
 
 /* The subkey for Camellia is generated. */
 static int camellia_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             ossl_unused const unsigned char *unused__iv, int enc)
 {
     int ret, mode;
     EVP_CAMELLIA_KEY *dat = EVP_C_DATA(EVP_CAMELLIA_KEY,ctx);

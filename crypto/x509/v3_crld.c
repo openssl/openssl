@@ -296,8 +296,9 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
     return NULL;
 }
 
-static int dpn_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int dpn_cb(int operation, ASN1_VALUE **pval,
+                  ossl_unused const ASN1_ITEM *unused__it,
+                  ossl_unused void *unused__exarg)
 {
     DIST_POINT_NAME *dpn = (DIST_POINT_NAME *)*pval;
 
@@ -363,7 +364,8 @@ const X509V3_EXT_METHOD v3_idp = {
     NULL
 };
 
-static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+static void *v2i_idp(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                     X509V3_CTX *ctx,
                      STACK_OF(CONF_VALUE) *nval)
 {
     ISSUING_DIST_POINT *idp = NULL;
@@ -439,8 +441,8 @@ static int print_distpoint(BIO *out, DIST_POINT_NAME *dpn, int indent)
     return 1;
 }
 
-static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
-                   int indent)
+static int i2r_idp(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                   void *pidp, BIO *out, int indent)
 {
     ISSUING_DIST_POINT *idp = pidp;
     if (idp->distpoint)
@@ -463,8 +465,8 @@ static int i2r_idp(const X509V3_EXT_METHOD *method, void *pidp, BIO *out,
     return 1;
 }
 
-static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
-                     int indent)
+static int i2r_crldp(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                     void *pcrldp, BIO *out, int indent)
 {
     STACK_OF(DIST_POINT) *crld = pcrldp;
     DIST_POINT *point;

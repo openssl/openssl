@@ -818,7 +818,7 @@ static ossl_inline int conn_is_closed(void)
  * Perform any work that needs to be done after sending a message from the
  * server to the client.
  */
-WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_server_post_work(SSL *s, ossl_unused WORK_STATE unused__wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -1028,7 +1028,7 @@ WORK_STATE ossl_statem_server_post_work(SSL *s, WORK_STATE wst)
  *   1: Success
  *   0: Error
  */
-int ossl_statem_server_construct_message(SSL *s, WPACKET *pkt,
+int ossl_statem_server_construct_message(SSL *s, ossl_unused WPACKET *unused__pkt,
                                          confunc_f *confunc, int *mt)
 {
     OSSL_STATEM *st = &s->statem;
@@ -2488,7 +2488,7 @@ int tls_construct_server_hello(SSL *s, WPACKET *pkt)
     return 1;
 }
 
-int tls_construct_server_done(SSL *s, WPACKET *pkt)
+int tls_construct_server_done(SSL *s, ossl_unused WPACKET *unused__pkt)
 {
     if (!s->s3.tmp.cert_request) {
         if (!ssl3_digest_cached_records(s, 0)) {
@@ -3594,6 +3594,8 @@ WORK_STATE tls_post_process_client_key_exchange(SSL *s, WORK_STATE wst)
                      sizeof(sctpauthkey), sctpauthkey);
         }
     }
+#else
+    (void)wst; /* silence -Wunused-parameter */
 #endif
 
     if (s->statem.no_cert_verify || !s->session->peer) {

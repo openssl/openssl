@@ -276,7 +276,7 @@ static ASN1_PCTX *pctx;
 }
 
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(ossl_unused int *unused__argc, ossl_unused char ***unused__argv)
 {
     pctx = ASN1_PCTX_new();
     ASN1_PCTX_set_flags(pctx, ASN1_PCTX_FLAGS_SHOW_ABSENT |

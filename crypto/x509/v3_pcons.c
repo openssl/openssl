@@ -42,8 +42,8 @@ ASN1_SEQUENCE(POLICY_CONSTRAINTS) = {
 
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(POLICY_CONSTRAINTS)
 
-static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD
-                                                    *method, void *a, STACK_OF(CONF_VALUE)
+static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                                                    void *a, STACK_OF(CONF_VALUE)
                                                     *extlist)
 {
     POLICY_CONSTRAINTS *pcons = a;
@@ -54,8 +54,8 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD
     return extlist;
 }
 
-static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx,
+static void *v2i_POLICY_CONSTRAINTS(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                                    ossl_unused X509V3_CTX *unused__ctx,
                                     STACK_OF(CONF_VALUE) *values)
 {
     POLICY_CONSTRAINTS *pcons = NULL;

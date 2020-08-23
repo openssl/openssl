@@ -62,7 +62,7 @@ static int int_ctrl_cmd_by_num(const ENGINE_CMD_DEFN *defn, unsigned int num)
 }
 
 static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
-                           void (*f) (void))
+                           ossl_unused void (*f) (void))
 {
     int idx;
     char *s = (char *)p;

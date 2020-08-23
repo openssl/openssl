@@ -487,7 +487,7 @@ static int idx;
 time_t time(time_t *t) TIME_IMPL(t)
 #endif
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(ossl_unused int *unused__argc, ossl_unused char ***unused__argv)
 {
     STACK_OF(SSL_COMP) *comp_methods;
 

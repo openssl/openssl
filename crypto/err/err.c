@@ -267,7 +267,7 @@ int ERR_load_strings_const(const ERR_STRING_DATA *str)
     return 1;
 }
 
-int ERR_unload_strings(int lib, ERR_STRING_DATA *str)
+int ERR_unload_strings(ossl_unused int unused__lib, ERR_STRING_DATA *str)
 {
     if (!RUN_ONCE(&err_string_init, do_err_strings_init))
         return 0;
@@ -560,7 +560,7 @@ const char *ERR_lib_error_string(unsigned long e)
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-const char *ERR_func_error_string(unsigned long e)
+const char *ERR_func_error_string(ossl_unused unsigned long unused__e)
 {
     return NULL;
 }
@@ -595,7 +595,7 @@ const char *ERR_reason_error_string(unsigned long e)
 }
 
 /* TODO(3.0): arg ignored for now */
-static void err_delete_thread_state(void *arg)
+static void err_delete_thread_state(ossl_unused void *unused__arg)
 {
     ERR_STATE *state = CRYPTO_THREAD_get_local(&err_thread_local);
     if (state == NULL)
@@ -606,13 +606,13 @@ static void err_delete_thread_state(void *arg)
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
-void ERR_remove_thread_state(void *dummy)
+void ERR_remove_thread_state(ossl_unused void *unused__dummy)
 {
 }
 #endif
 
 #ifndef OPENSSL_NO_DEPRECATED_1_0_0
-void ERR_remove_state(unsigned long pid)
+void ERR_remove_state(ossl_unused unsigned long unused__pid)
 {
 }
 #endif

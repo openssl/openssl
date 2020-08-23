@@ -42,7 +42,7 @@ static unsigned char certstatus[] = {
 
 #define RECORD_SEQUENCE 10
 
-static unsigned int timer_cb(SSL *s, unsigned int timer_us)
+static unsigned int timer_cb(ossl_unused SSL *unused__ssl, unsigned int timer_us)
 {
     ++timer_cb_count;
 
@@ -247,7 +247,7 @@ static int test_dtls_drop_records(int idx)
 
 static const char dummy_cookie[] = "0123456";
 
-static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
+static int generate_cookie_cb(ossl_unused SSL *unused__ssl, unsigned char *cookie,
                               unsigned int *cookie_len)
 {
     memcpy(cookie, dummy_cookie, sizeof(dummy_cookie));
@@ -255,7 +255,7 @@ static int generate_cookie_cb(SSL *ssl, unsigned char *cookie,
     return 1;
 }
 
-static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+static int verify_cookie_cb(ossl_unused SSL *unused__ssl, const unsigned char *cookie,
                             unsigned int cookie_len)
 {
     return TEST_mem_eq(cookie, cookie_len, dummy_cookie, sizeof(dummy_cookie));

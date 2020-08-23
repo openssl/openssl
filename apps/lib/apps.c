@@ -136,7 +136,7 @@ int chopup_args(ARGS *arg, char *buf)
 }
 
 #ifndef APP_INIT
-int app_init(long mesgwin)
+int app_init(ossl_unused long unused__mesgwin)
 {
     return 1;
 }
@@ -501,7 +501,7 @@ X509 *load_cert_pass(const char *uri, int maybe_stdin,
 }
 
 /* the format parameter is meanwhile not needed anymore and thus ignored */
-X509_CRL *load_crl(const char *uri, int format, const char *desc)
+X509_CRL *load_crl(const char *uri, ossl_unused int unused__format, const char *desc)
 {
     X509_CRL *crl = NULL;
 
@@ -1951,7 +1951,7 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
  */
 
 static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
-                                        const X509_NAME *nm)
+                                        ossl_unused const X509_NAME *unused__nm)
 {
     X509 *x;
     STACK_OF(X509_CRL) *crls = NULL;

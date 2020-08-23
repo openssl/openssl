@@ -273,7 +273,7 @@ static long async_ctrl(BIO *bio, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int async_gets(BIO *bio, char *buf, int size)
+static int async_gets(ossl_unused BIO *unused__bio, ossl_unused char *unused__buf, ossl_unused int unused__size)
 {
     /* We don't support this - not needed anyway */
     return -1;

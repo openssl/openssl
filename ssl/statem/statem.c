@@ -115,7 +115,7 @@ void ossl_statem_set_renegotiate(SSL *s)
  * Put the state machine into an error state and send an alert if appropriate.
  * This is a permanent error for the current connection.
  */
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
+void ossl_statem_fatal(SSL *s, int al, ossl_unused int unused__func, int reason, const char *file,
                        int line)
 {
     ERR_raise(ERR_LIB_SSL, reason);

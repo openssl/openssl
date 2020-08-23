@@ -29,7 +29,7 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     { OSSL_CIPHER_PARAM_TLS_MAC, OSSL_PARAM_OCTET_PTR, NULL, 0, OSSL_PARAM_UNMODIFIED },
     OSSL_PARAM_END
 };
-const OSSL_PARAM *cipher_generic_gettable_params(void *provctx)
+const OSSL_PARAM *cipher_generic_gettable_params(ossl_unused void *unused__provctx)
 {
     return cipher_known_gettable_params;
 }
@@ -118,7 +118,7 @@ static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *cipher_aead_gettable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *cipher_aead_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return cipher_aead_known_gettable_ctx_params;
 }
@@ -131,7 +131,7 @@ static const OSSL_PARAM cipher_aead_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *cipher_aead_settable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *cipher_aead_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return cipher_aead_known_settable_ctx_params;
 }
@@ -430,8 +430,10 @@ int cipher_generic_stream_update(void *vctx, unsigned char *out, size_t *outl,
 
     return 1;
 }
-int cipher_generic_stream_final(void *vctx, unsigned char *out, size_t *outl,
-                                size_t outsize)
+int cipher_generic_stream_final(ossl_unused void *unused__vctx,
+                                ossl_unused unsigned char *unused__out,
+                                size_t *outl,
+                                ossl_unused size_t unused__outsize)
 {
     *outl = 0;
     return 1;

@@ -55,7 +55,8 @@ BLOCK_CIPHER_defs(idea, IDEA_KEY_SCHEDULE, NID_idea, 8, 16, 8, 64,
                   EVP_CIPHER_set_asn1_iv, EVP_CIPHER_get_asn1_iv, NULL)
 
 static int idea_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                         const unsigned char *iv, int enc)
+                         ossl_unused const unsigned char *unused__iv,
+                         int enc)
 {
     if (!enc) {
         if (EVP_CIPHER_CTX_mode(ctx) == EVP_CIPH_OFB_MODE)

@@ -223,6 +223,8 @@ OSSL_PROVIDER *ossl_provider_find(OPENSSL_CTX *libctx, const char *name,
          */
         if (!noconfig)
             OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL);
+#else
+        (void)noconfig; /* silence -Wunused-parameter */
 #endif
 
         tmpl.name = (char *)name;
@@ -792,6 +794,7 @@ const DSO *ossl_provider_dso(const OSSL_PROVIDER *prov)
 const char *ossl_provider_module_name(const OSSL_PROVIDER *prov)
 {
 #ifdef FIPS_MODULE
+    (void)prov; /* silence -Wunused-parameter */
     return NULL;
 #else
     return DSO_get_filename(prov->module);
@@ -801,6 +804,7 @@ const char *ossl_provider_module_name(const OSSL_PROVIDER *prov)
 const char *ossl_provider_module_path(const OSSL_PROVIDER *prov)
 {
 #ifdef FIPS_MODULE
+    (void)prov; /* silence -Wunused-parameter */
     return NULL;
 #else
     /* FIXME: Ensure it's a full path */
@@ -946,7 +950,7 @@ static OSSL_FUNC_core_clear_last_error_mark_fn core_clear_last_error_mark;
 static OSSL_FUNC_core_pop_error_to_mark_fn core_pop_error_to_mark;
 #endif
 
-static const OSSL_PARAM *core_gettable_params(const OSSL_CORE_HANDLE *handle)
+static const OSSL_PARAM *core_gettable_params(ossl_unused const OSSL_CORE_HANDLE *unused__handle)
 {
     return param_types;
 }
@@ -1020,12 +1024,12 @@ static int core_thread_start(const OSSL_CORE_HANDLE *handle,
  * We cannot currently do that since there's no support for it in the
  * ERR subsystem.
  */
-static void core_new_error(const OSSL_CORE_HANDLE *handle)
+static void core_new_error(ossl_unused const OSSL_CORE_HANDLE *unused__handle)
 {
     ERR_new();
 }
 
-static void core_set_error_debug(const OSSL_CORE_HANDLE *handle,
+static void core_set_error_debug(ossl_unused const OSSL_CORE_HANDLE *unused__handle,
                                  const char *file, int line, const char *func)
 {
     ERR_set_debug(file, line, func);
@@ -1052,17 +1056,17 @@ static void core_vset_error(const OSSL_CORE_HANDLE *handle,
     }
 }
 
-static int core_set_error_mark(const OSSL_CORE_HANDLE *handle)
+static int core_set_error_mark(ossl_unused const OSSL_CORE_HANDLE *unused__handle)
 {
     return ERR_set_mark();
 }
 
-static int core_clear_last_error_mark(const OSSL_CORE_HANDLE *handle)
+static int core_clear_last_error_mark(ossl_unused const OSSL_CORE_HANDLE *unused__handle)
 {
     return ERR_clear_last_mark();
 }
 
-static int core_pop_error_to_mark(const OSSL_CORE_HANDLE *handle)
+static int core_pop_error_to_mark(ossl_unused const OSSL_CORE_HANDLE *unused__handle)
 {
     return ERR_pop_to_mark();
 }

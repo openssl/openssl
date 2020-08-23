@@ -257,6 +257,7 @@ int RSA_check_key(const RSA *key)
 int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 {
 #ifdef FIPS_MODULE
+    (void)cb; /* silence -Wunused-parameter */
     return rsa_validate_public(key)
            && rsa_validate_private(key)
            && rsa_validate_pairwise(key);

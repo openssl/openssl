@@ -80,7 +80,9 @@ err:
 
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_DSA)                        \
     || !defined(OPENSSL_NO_RSA)
-static int sig_gen(EVP_PKEY *pkey, OSSL_PARAM *params, const char *digest_name,
+static int sig_gen(EVP_PKEY *pkey,
+                   ossl_unused OSSL_PARAM *unused__params,
+                   const char *digest_name,
                    const unsigned char *msg, size_t msg_len,
                    unsigned char **sig_out, size_t *sig_out_len)
 {
@@ -669,8 +671,8 @@ err:
 /* cipher encrypt/decrypt */
 static int cipher_enc(const char *alg,
                       const unsigned char *pt, size_t pt_len,
-                      const unsigned char *key, size_t key_len,
-                      const unsigned char *iv, size_t iv_len,
+                      const unsigned char *key, ossl_unused size_t unused__key_len,
+                      const unsigned char *iv, ossl_unused size_t unused__iv_len,
                       const unsigned char *ct, size_t ct_len,
                       int enc)
 {
@@ -714,7 +716,7 @@ static int cipher_enc_dec_test(int id)
 
 static int aes_ccm_enc_dec(const char *alg,
                            const unsigned char *pt, size_t pt_len,
-                           const unsigned char *key, size_t key_len,
+                           const unsigned char *key, ossl_unused size_t unused__key_len,
                            const unsigned char *iv, size_t iv_len,
                            const unsigned char *aad, size_t aad_len,
                            const unsigned char *ct, size_t ct_len,
@@ -801,7 +803,7 @@ static int aes_ccm_enc_dec_test(int id)
 
 static int aes_gcm_enc_dec(const char *alg,
                            const unsigned char *pt, size_t pt_len,
-                           const unsigned char *key, size_t key_len,
+                           const unsigned char *key, ossl_unused size_t unused__key_len,
                            const unsigned char *iv, size_t iv_len,
                            const unsigned char *aad, size_t aad_len,
                            const unsigned char *ct, size_t ct_len,

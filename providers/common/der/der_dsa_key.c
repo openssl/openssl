@@ -11,7 +11,7 @@
 #include "internal/packet.h"
 #include "prov/der_dsa.h"
 
-int DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa)
+int DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, ossl_unused DSA *unused__dsa)
 {
     return DER_w_begin_sequence(pkt, tag)
         /* No parameters (yet?) */

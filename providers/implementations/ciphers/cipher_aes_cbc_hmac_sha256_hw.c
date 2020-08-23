@@ -45,7 +45,7 @@ int cipher_capable_aes_cbc_hmac_sha256(void)
 
 static int aesni_cbc_hmac_sha256_init_key(PROV_CIPHER_CTX *vctx,
                                           const unsigned char *key,
-                                          size_t keylen)
+                                          ossl_unused size_t unused__keylen)
 {
     int ret;
     PROV_AES_HMAC_SHA_CTX *ctx = (PROV_AES_HMAC_SHA_CTX *)vctx;

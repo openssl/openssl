@@ -58,7 +58,7 @@ STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
 }
 
 ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
-                                     X509V3_CTX *ctx,
+                                     ossl_unused X509V3_CTX *unused__ctx,
                                      STACK_OF(CONF_VALUE) *nval)
 {
     CONF_VALUE *val;

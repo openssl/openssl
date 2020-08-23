@@ -21,7 +21,7 @@
 #define ks3 tks.ks[2]
 
 int cipher_hw_tdes_ede3_initkey(PROV_CIPHER_CTX *ctx, const unsigned char *key,
-                                size_t keylen)
+                                ossl_unused size_t unused__keylen)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
     DES_cblock *deskey = (DES_cblock *)key;

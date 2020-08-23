@@ -49,8 +49,9 @@ static const X509_CRL_METHOD *default_crl_method = &int_crl_meth;
  * the original encoding the signature won't be affected by reordering of the
  * revoked field.
  */
-static int crl_inf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      void *exarg)
+static int crl_inf_cb(int operation, ASN1_VALUE **pval,
+                      ossl_unused const ASN1_ITEM *unused__it,
+                      ossl_unused void *unused__exarg)
 {
     X509_CRL_INFO *a = (X509_CRL_INFO *)*pval;
 
@@ -154,8 +155,9 @@ static int crl_set_issuers(X509_CRL *crl)
  * The X509_CRL structure needs a bit of customisation. Cache some extensions
  * and hash of the whole CRL.
  */
-static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int crl_cb(int operation, ASN1_VALUE **pval,
+                  ossl_unused const ASN1_ITEM *unused__it,
+                  ossl_unused void *unused__exarg)
 {
     X509_CRL *crl = (X509_CRL *)*pval;
     STACK_OF(X509_EXTENSION) *exts;

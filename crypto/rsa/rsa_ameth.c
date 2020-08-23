@@ -444,13 +444,13 @@ static int pkey_rsa_print(BIO *bp, const EVP_PKEY *pkey, int off, int priv)
 }
 
 static int rsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                         ASN1_PCTX *ctx)
+                         ossl_unused ASN1_PCTX *unused__ctx)
 {
     return pkey_rsa_print(bp, pkey, indent, 0);
 }
 
 static int rsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          ossl_unused ASN1_PCTX *unused__ctx)
 {
     return pkey_rsa_print(bp, pkey, indent, 1);
 }
@@ -477,7 +477,8 @@ static RSA_PSS_PARAMS *rsa_pss_decode(const X509_ALGOR *alg)
 }
 
 static int rsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
-                         const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
+                         const ASN1_STRING *sig, int indent,
+                         ossl_unused ASN1_PCTX *unused__pctx)
 {
     if (OBJ_obj2nid(sigalg->algorithm) == EVP_PKEY_RSA_PSS) {
         int rv;
@@ -746,7 +747,8 @@ static int rsa_pss_to_ctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX *pkctx,
     return rv;
 }
 
-static int rsa_pss_verify_param(const EVP_MD **pmd, const EVP_MD **pmgf1md,
+static int rsa_pss_verify_param(ossl_unused const EVP_MD **unused__pmd,
+                                ossl_unused const EVP_MD **unused__pmgf1md,
                                 int *psaltlen, int *ptrailerField)
 {
     if (psaltlen != NULL && *psaltlen < 0) {
@@ -876,9 +878,12 @@ static int rsa_cms_verify(CMS_SignerInfo *si)
  * is encountered requiring special handling. We currently only handle PSS.
  */
 
-static int rsa_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
-                           const void *asn, const X509_ALGOR *sigalg,
-                           const ASN1_BIT_STRING *sig, EVP_PKEY *pkey)
+static int rsa_item_verify(EVP_MD_CTX *ctx,
+                           ossl_unused const ASN1_ITEM *unused__it,
+                           ossl_unused const void *unused__data,
+                           const X509_ALGOR *sigalg,
+                           ossl_unused const ASN1_BIT_STRING *unused__sig,
+                           EVP_PKEY *pkey)
 {
     /* Sanity check: make sure it is PSS */
     if (OBJ_obj2nid(sigalg->algorithm) != EVP_PKEY_RSA_PSS) {
@@ -920,9 +925,11 @@ static int rsa_cms_sign(CMS_SignerInfo *si)
 }
 #endif
 
-static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
+static int rsa_item_sign(EVP_MD_CTX *ctx,
+                         ossl_unused const ASN1_ITEM *unused__it,
+                         ossl_unused const void *unused__data,
                          X509_ALGOR *alg1, X509_ALGOR *alg2,
-                         ASN1_BIT_STRING *sig)
+                         ossl_unused ASN1_BIT_STRING *unused__sig)
 {
     int pad_mode;
     EVP_PKEY_CTX *pkctx = EVP_MD_CTX_pkey_ctx(ctx);
@@ -954,7 +961,7 @@ static int rsa_item_sign(EVP_MD_CTX *ctx, const ASN1_ITEM *it, const void *asn,
 }
 
 static int rsa_sig_info_set(X509_SIG_INFO *siginf, const X509_ALGOR *sigalg,
-                            const ASN1_STRING *sig)
+                            ossl_unused const ASN1_STRING *unused__sig)
 {
     int rv = 0;
     int mdnid, saltlen;
@@ -1186,9 +1193,9 @@ static size_t rsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
  * that the type flag for the RSA key is properly set by other functions
  * in this file.
  */
-static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
+static int rsa_int_export_to(const EVP_PKEY *from, ossl_unused int unused__rsa_type,
                              void *to_keydata, EVP_KEYMGMT *to_keymgmt,
-                             OPENSSL_CTX *libctx, const char *propq)
+                             ossl_unused OPENSSL_CTX *unused__libctx, const char *propq)
 {
     RSA *rsa = from->pkey.rsa;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();

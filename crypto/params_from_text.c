@@ -103,7 +103,7 @@ static int prepare_from_text(const OSSL_PARAM *paramdefs, const char *key,
 }
 
 static int construct_from_text(OSSL_PARAM *to, const OSSL_PARAM *paramdef,
-                               const char *value, size_t value_n, int ishex,
+                               const char *value, ossl_unused size_t unused__value_n, int ishex,
                                void *buf, size_t buf_n, BIGNUM *tmpbn)
 {
     if (buf == NULL)

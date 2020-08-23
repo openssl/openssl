@@ -187,7 +187,7 @@ void AES_ige_encrypt(const unsigned char *in, unsigned char *out,
 
 void AES_bi_ige_encrypt(const unsigned char *in, unsigned char *out,
                         size_t length, const AES_KEY *key,
-                        const AES_KEY *key2, const unsigned char *ivec,
+                        ossl_unused const AES_KEY *unused__key2, const unsigned char *ivec,
                         const int enc)
 {
     size_t n;

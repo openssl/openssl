@@ -44,12 +44,12 @@ static const OSSL_PARAM deflt_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *deflt_gettable_params(void *provctx)
+static const OSSL_PARAM *deflt_gettable_params(ossl_unused void *unused__provctx)
 {
     return deflt_param_types;
 }
 
-static int deflt_get_params(void *provctx, OSSL_PARAM params[])
+static int deflt_get_params(ossl_unused void *unused__provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -407,7 +407,7 @@ static const OSSL_ALGORITHM deflt_encoder[] = {
 #undef ENCODER
 
 static const OSSL_ALGORITHM deflt_decoder[] = {
-#define DECODER(name, fips, input, func_table)                                \
+#define DECODER(name, fips, input, func_table)                              \
     { name,                                                                 \
       "provider=default,fips=" fips ",input=" input,                        \
       (func_table) }
@@ -417,7 +417,8 @@ static const OSSL_ALGORITHM deflt_decoder[] = {
 };
 #undef DECODER
 
-static const OSSL_ALGORITHM *deflt_query(void *provctx, int operation_id,
+static const OSSL_ALGORITHM *deflt_query(ossl_unused void *unused__provctx,
+                                         int operation_id,
                                          int *no_cache)
 {
     *no_cache = 0;

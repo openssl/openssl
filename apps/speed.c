@@ -171,7 +171,7 @@ static const int aead_lengths_list[] = {
 
 #ifdef SIGALRM
 
-static void alarmed(int sig)
+static void alarmed(ossl_unused int unused__sig)
 {
     signal(SIGALRM, alarmed);
     run = 0;
@@ -322,7 +322,7 @@ enum {
     D_CBC_128_CML, D_CBC_192_CML, D_CBC_256_CML,
     D_EVP, D_SHA256, D_SHA512, D_WHIRLPOOL,
     D_IGE_128_AES, D_IGE_192_AES, D_IGE_256_AES,
-    D_GHASH, D_RAND, D_EVP_HMAC, D_EVP_CMAC, ALGOR_NUM 
+    D_GHASH, D_RAND, D_EVP_HMAC, D_EVP_CMAC, ALGOR_NUM
 };
 /* name of algorithms to test. MUST BE KEEP IN SYNC with above enum ! */
 static const char *names[ALGOR_NUM] = {
@@ -1997,13 +1997,13 @@ int speed_main(int argc, char **argv)
         memset(doit, 1, sizeof(doit));
         doit[D_EVP] = doit[D_EVP_HMAC] = doit[D_EVP_CMAC] = 0;
 #if !defined(OPENSSL_NO_MDC2) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-	doit[D_MDC2] = 0;
+        doit[D_MDC2] = 0;
 #endif
 #if !defined(OPENSSL_NO_MD4) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-	doit[D_MD4] = 0;
+        doit[D_MD4] = 0;
 #endif
 #if !defined(OPENSSL_NO_RMD160) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-	doit[D_RMD160] = 0;
+        doit[D_RMD160] = 0;
 #endif
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
         memset(rsa_doit, 1, sizeof(rsa_doit));
@@ -2110,7 +2110,7 @@ int speed_main(int argc, char **argv)
         BF_set_key(&bf_ks, 16, key16);
 #endif
 #if !defined(OPENSSL_NO_CAST) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-    if (doit[D_CBC_CAST]) 
+    if (doit[D_CBC_CAST])
         CAST_set_key(&cast_ks, 16, key16);
 #endif
 #ifndef SIGALRM
@@ -4036,7 +4036,7 @@ int speed_main(int argc, char **argv)
         for (k = 0; k < EdDSA_NUM; k++) {
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx[k]);
             EVP_MD_CTX_free(loopargs[i].eddsa_ctx2[k]);
-	}
+        }
 # ifndef OPENSSL_NO_SM2
         for (k = 0; k < SM2_NUM; k++) {
             EVP_PKEY_CTX *pctx = NULL;
@@ -4088,11 +4088,13 @@ static void print_message(const char *s, long num, int length, int tm)
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
+    (void)num; /* silence -Wunused-parameter */
 #else
     BIO_printf(bio_err,
                mr ? "+DN:%s:%ld:%d\n"
                : "Doing %s %ld times on %d size blocks: ", s, num, length);
     (void)BIO_flush(bio_err);
+    (void)tm; /* silence -Wunused-parameter */
 #endif
 }
 
@@ -4106,11 +4108,13 @@ static void pkey_print_message(const char *str, const char *str2, long num,
     (void)BIO_flush(bio_err);
     run = 1;
     alarm(tm);
+    (void)num; /* silence -Wunused-parameter */
 #else
     BIO_printf(bio_err,
                mr ? "+DNP:%ld:%d:%s:%s\n"
                : "Doing %ld %u bits %s %s's: ", num, bits, str, str2);
     (void)BIO_flush(bio_err);
+    (void)tm; /* silence -Wunused-parameter */
 #endif
 }
 

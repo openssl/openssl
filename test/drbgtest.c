@@ -141,7 +141,7 @@ static int crngt_skip(void)
  * Once the RNG infrastructure is able to disable these tests, it should be
  * reconstituted.
  */
-static int disable_crngt(EVP_RAND_CTX *drbg)
+static int disable_crngt(ossl_unused EVP_RAND_CTX *unused__drbg)
 {
     return 1;
 }
@@ -469,7 +469,7 @@ static int wait_for_thread(thread_t thread)
 
 typedef pthread_t thread_t;
 
-static void *thread_run(void *arg)
+static void *thread_run(ossl_unused void *unused__arg)
 {
     run_multi_thread_test();
     /*

@@ -126,7 +126,7 @@ static unsigned char server_ats_iv[] = {
 };
 
 /* Mocked out implementations of various functions */
-int ssl3_digest_cached_records(SSL *s, int keep)
+int ssl3_digest_cached_records(ossl_unused SSL *unused__ssl, ossl_unused int unused__keep)
 {
     return 1;
 }
@@ -134,7 +134,8 @@ int ssl3_digest_cached_records(SSL *s, int keep)
 static int full_hash = 0;
 
 /* Give a hash of the currently set handshake */
-int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
+int ssl_handshake_hash(ossl_unused SSL *unused__ssl,
+                       unsigned char *out, size_t outlen,
                        size_t *hashlen)
 {
     if (sizeof(hs_start_hash) > outlen
@@ -152,29 +153,34 @@ int ssl_handshake_hash(SSL *s, unsigned char *out, size_t outlen,
     return 1;
 }
 
-const EVP_MD *ssl_handshake_md(SSL *s)
+const EVP_MD *ssl_handshake_md(ossl_unused SSL *unused__ssl)
 {
     return EVP_sha256();
 }
 
-void RECORD_LAYER_reset_read_sequence(RECORD_LAYER *rl)
+void RECORD_LAYER_reset_read_sequence(ossl_unused RECORD_LAYER *unused__rl)
 {
 }
 
-void RECORD_LAYER_reset_write_sequence(RECORD_LAYER *rl)
+void RECORD_LAYER_reset_write_sequence(ossl_unused RECORD_LAYER *unused__rl)
 {
 }
 
-int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
-                                     const EVP_CIPHER **enc)
+int ssl_cipher_get_evp_cipher(ossl_unused SSL_CTX *unused__ctx,
+                              ossl_unused const SSL_CIPHER *unused__sslc,
+                              ossl_unused const EVP_CIPHER **unused__enc)
 {
     return 0;
 }
 
-int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
-                       const EVP_CIPHER **enc, const EVP_MD **md,
-                       int *mac_pkey_type, size_t *mac_secret_size,
-                       SSL_COMP **comp, int use_etm)
+int ssl_cipher_get_evp(ossl_unused SSL_CTX *unused__ctx,
+                       ossl_unused const SSL_SESSION *unused__s,
+                       ossl_unused const EVP_CIPHER **unused__enc,
+                       ossl_unused const EVP_MD **unused__md,
+                       ossl_unused int *unused__mac_pkey_type,
+                       ossl_unused size_t *unused__mac_secret_size,
+                       ossl_unused SSL_COMP **unused__comp,
+                       ossl_unused int unused__use_etm)
 
 {
     return 0;
@@ -185,39 +191,43 @@ int tls1_alert_code(int code)
     return code;
 }
 
-int ssl_log_secret(SSL *ssl,
-                   const char *label,
-                   const uint8_t *secret,
-                   size_t secret_len)
+int ssl_log_secret(ossl_unused SSL *unused__ssl,
+                   ossl_unused const char *unused__label,
+                   ossl_unused const uint8_t *unused__secret,
+                   ossl_unused size_t unused__secret_len)
 {
     return 1;
 }
 
-const EVP_MD *ssl_md(SSL_CTX *ctx, int idx)
+const EVP_MD *ssl_md(ossl_unused SSL_CTX *unused__ctx, ossl_unused int unused__idx)
 {
     return EVP_sha256();
 }
 
-void ossl_statem_fatal(SSL *s, int al, int func, int reason, const char *file,
-                           int line)
+void ossl_statem_fatal(ossl_unused SSL *unused__ssl,
+                       ossl_unused int unused__al,
+                       ossl_unused int unused__func,
+                       ossl_unused int unused__reason,
+                       ossl_unused const char *unused__file,
+                       ossl_unused int unused__line)
 {
 }
 
-int ossl_statem_export_allowed(SSL *s)
+int ossl_statem_export_allowed(ossl_unused SSL *unused__ssl)
 {
     return 1;
 }
 
-int ossl_statem_export_early_allowed(SSL *s)
+int ossl_statem_export_early_allowed(ossl_unused SSL *unused__ssl)
 {
     return 1;
 }
 
-void ssl_evp_cipher_free(const EVP_CIPHER *cipher)
+void ssl_evp_cipher_free(ossl_unused const EVP_CIPHER *unused__cipher)
 {
 }
 
-void ssl_evp_md_free(const EVP_MD *md)
+void ssl_evp_md_free(ossl_unused const EVP_MD *unused__md)
 {
 }
 

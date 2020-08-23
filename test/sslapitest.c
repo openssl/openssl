@@ -132,7 +132,7 @@ static unsigned char serverinfov2[] = {
     0xff        /* Dummy extension data */
 };
 
-static int hostname_cb(SSL *s, int *al, void *arg)
+static int hostname_cb(SSL *s, ossl_unused int *unused__al, ossl_unused void *unused__arg)
 {
     const char *hostname = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
 
@@ -143,7 +143,7 @@ static int hostname_cb(SSL *s, int *al, void *arg)
     return SSL_TLSEXT_ERR_NOACK;
 }
 
-static void client_keylog_callback(const SSL *ssl, const char *line)
+static void client_keylog_callback(ossl_unused const SSL *unused__ssl, const char *line)
 {
     int line_length = strlen(line);
 
@@ -159,7 +159,7 @@ static void client_keylog_callback(const SSL *ssl, const char *line)
     client_log_buffer[client_log_buffer_index++] = '\n';
 }
 
-static void server_keylog_callback(const SSL *ssl, const char *line)
+static void server_keylog_callback(ossl_unused const SSL *unused__ssl, const char *line)
 {
     int line_length = strlen(line);
 
@@ -544,7 +544,7 @@ end:
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
-static int full_client_hello_callback(SSL *s, int *al, void *arg)
+static int full_client_hello_callback(SSL *s, ossl_unused int *unused__al, void *arg)
 {
     int *ctr = arg;
     const unsigned char *p;
@@ -1054,7 +1054,7 @@ static int execute_test_ktls(int cis_ktls_tx, int cis_ktls_rx,
     }
 
     if (!TEST_true(ping_pong_query(clientssl, serverssl, cfd, sfd,
-				   rec_seq_size)))
+                                   rec_seq_size)))
         goto end;
 
     testresult = 1;
@@ -1892,7 +1892,7 @@ static int test_tlsext_status_type(void)
 #if !defined(OPENSSL_NO_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
 static int new_called, remove_called, get_called;
 
-static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
+static int new_session_cb(ossl_unused SSL *unused__ssl, SSL_SESSION *sess)
 {
     new_called++;
     /*
@@ -1903,14 +1903,16 @@ static int new_session_cb(SSL *ssl, SSL_SESSION *sess)
     return 1;
 }
 
-static void remove_session_cb(SSL_CTX *ctx, SSL_SESSION *sess)
+static void remove_session_cb(ossl_unused SSL_CTX *unused__ctx, ossl_unused SSL_SESSION *unused__sess)
 {
     remove_called++;
 }
 
 static SSL_SESSION *get_sess_val = NULL;
 
-static SSL_SESSION *get_session_cb(SSL *ssl, const unsigned char *id, int len,
+static SSL_SESSION *get_session_cb(ossl_unused SSL *unused__ssl,
+                                   ossl_unused const unsigned char *unused__id,
+                                   ossl_unused int unused__len,
                                    int *copy)
 {
     get_called++;
@@ -2268,7 +2270,7 @@ static int test_session_wo_ca_names(void)
 static SSL_SESSION *sesscache[6];
 static int do_cache;
 
-static int new_cachesession_cb(SSL *ssl, SSL_SESSION *sess)
+static int new_cachesession_cb(ossl_unused SSL *unused__ssl, SSL_SESSION *sess)
 {
     if (do_cache) {
         sesscache[new_called] = sess;
@@ -3069,7 +3071,7 @@ static int test_set_sigalgs(int idx)
 static int psk_client_cb_cnt = 0;
 static int psk_server_cb_cnt = 0;
 
-static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
+static int use_session_cb(ossl_unused SSL *unused__ssl, const EVP_MD *md, const unsigned char **id,
                           size_t *idlen, SSL_SESSION **sess)
 {
     switch (++use_session_cb_cnt) {
@@ -3101,7 +3103,9 @@ static int use_session_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
 }
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
+static unsigned int psk_client_cb(ossl_unused SSL *unused__ssl,
+                                  ossl_unused const char *unused__hint,
+                                  char *id,
                                   unsigned int max_id_len,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
@@ -3130,7 +3134,8 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *id,
 }
 #endif /* OPENSSL_NO_PSK */
 
-static int find_session_cb(SSL *ssl, const unsigned char *identity,
+static int find_session_cb(ossl_unused SSL *unused__ssl,
+                           const unsigned char *identity,
                            size_t identity_len, SSL_SESSION **sess)
 {
     find_session_cb_cnt++;
@@ -3157,7 +3162,8 @@ static int find_session_cb(SSL *ssl, const unsigned char *identity,
 }
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_server_cb(SSL *ssl, const char *identity,
+static unsigned int psk_server_cb(ossl_unused SSL *unused__ssl,
+                                  const char *identity,
                                   unsigned char *psk, unsigned int max_psk_len)
 {
     unsigned int psklen = 0;
@@ -3531,7 +3537,7 @@ static int test_early_data_read_write(int idx)
 
 static int allow_ed_cb_called = 0;
 
-static int allow_early_data_cb(SSL *s, void *arg)
+static int allow_early_data_cb(ossl_unused SSL *unused__ssl, void *arg)
 {
     int *usecb = (int *)arg;
 
@@ -3933,9 +3939,12 @@ static int test_early_data_not_sent(int idx)
 
 static const char *servalpn;
 
-static int alpn_select_cb(SSL *ssl, const unsigned char **out,
-                          unsigned char *outlen, const unsigned char *in,
-                          unsigned int inlen, void *arg)
+static int alpn_select_cb(ossl_unused SSL *unused__ssl,
+                          const unsigned char **out,
+                          unsigned char *outlen,
+                          const unsigned char *in,
+                          unsigned int inlen,
+                          ossl_unused void *unused__arg)
 {
     unsigned int protlen = 0;
     const unsigned char *prot;
@@ -5120,7 +5129,8 @@ static int test_tls13_psk(int idx)
 
 static unsigned char cookie_magic_value[] = "cookie magic";
 
-static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
+static int generate_cookie_callback(ossl_unused SSL *unused__ssl,
+                                    unsigned char *cookie,
                                     unsigned int *cookie_len)
 {
     /*
@@ -5133,7 +5143,8 @@ static int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     return 1;
 }
 
-static int verify_cookie_callback(SSL *ssl, const unsigned char *cookie,
+static int verify_cookie_callback(ossl_unused SSL *unused__ssl,
+                                  const unsigned char *cookie,
                                   unsigned int cookie_len)
 {
     if (cookie_len == sizeof(cookie_magic_value) - 1
@@ -5256,8 +5267,11 @@ static int snicb = 0;
 
 #define TEST_EXT_TYPE1  0xff00
 
-static int old_add_cb(SSL *s, unsigned int ext_type, const unsigned char **out,
-                      size_t *outlen, int *al, void *add_arg)
+static int old_add_cb(SSL *s,
+                      ossl_unused unsigned int unused__ext_type,
+                      const unsigned char **out,
+                      size_t *outlen,
+                      ossl_unused int *unused__al, void *add_arg)
 {
     int *server = (int *)add_arg;
     unsigned char *data;
@@ -5277,14 +5291,20 @@ static int old_add_cb(SSL *s, unsigned int ext_type, const unsigned char **out,
     return 1;
 }
 
-static void old_free_cb(SSL *s, unsigned int ext_type, const unsigned char *out,
-                        void *add_arg)
+static void old_free_cb(ossl_unused SSL *unused__ssl,
+                        ossl_unused unsigned int unused__ext_type,
+                        const unsigned char *out,
+                        ossl_unused void *unused__add_arg)
 {
     OPENSSL_free((unsigned char *)out);
 }
 
-static int old_parse_cb(SSL *s, unsigned int ext_type, const unsigned char *in,
-                        size_t inlen, int *al, void *parse_arg)
+static int old_parse_cb(SSL *s,
+                        ossl_unused unsigned int unused__ext_type,
+                        const unsigned char *in,
+                        size_t inlen,
+                        ossl_unused int *unused__al,
+                        void *parse_arg)
 {
     int *server = (int *)parse_arg;
 
@@ -5301,9 +5321,15 @@ static int old_parse_cb(SSL *s, unsigned int ext_type, const unsigned char *in,
     return 1;
 }
 
-static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
-                      const unsigned char **out, size_t *outlen, X509 *x,
-                      size_t chainidx, int *al, void *add_arg)
+static int new_add_cb(SSL *s,
+                      ossl_unused unsigned int unused__ext_type,
+                      ossl_unused unsigned int unused__context,
+                      const unsigned char **out,
+                      size_t *outlen,
+                      ossl_unused X509 *unused__x,
+                      ossl_unused size_t unused__chainidx,
+                      ossl_unused int *unused__al,
+                      void *add_arg)
 {
     int *server = (int *)add_arg;
     unsigned char *data;
@@ -5323,15 +5349,24 @@ static int new_add_cb(SSL *s, unsigned int ext_type, unsigned int context,
     return 1;
 }
 
-static void new_free_cb(SSL *s, unsigned int ext_type, unsigned int context,
-                        const unsigned char *out, void *add_arg)
+static void new_free_cb(ossl_unused SSL *unused__ssl,
+                        ossl_unused unsigned int unused__ext_type,
+                        ossl_unused unsigned int unused__context,
+                        const unsigned char *out,
+                        ossl_unused void *unused__add_arg)
 {
     OPENSSL_free((unsigned char *)out);
 }
 
-static int new_parse_cb(SSL *s, unsigned int ext_type, unsigned int context,
-                        const unsigned char *in, size_t inlen, X509 *x,
-                        size_t chainidx, int *al, void *parse_arg)
+static int new_parse_cb(SSL *s,
+                        ossl_unused unsigned int unused__ext_type,
+                        ossl_unused unsigned int unused__context,
+                        const unsigned char *in,
+                        size_t inlen,
+                        ossl_unused X509 *unused__x,
+                        ossl_unused size_t unused__chainidx,
+                        ossl_unused int *unused__al,
+                        void *parse_arg)
 {
     int *server = (int *)parse_arg;
 
@@ -6248,7 +6283,7 @@ static SRP_VBASE *vbase = NULL;
 
 DEFINE_STACK_OF(SRP_user_pwd)
 
-static int ssl_srp_cb(SSL *s, int *ad, void *arg)
+static int ssl_srp_cb(SSL *s, int *ad, ossl_unused void *unused__arg)
 {
     int ret = SSL3_AL_FATAL;
     char *username;
@@ -6956,7 +6991,7 @@ static int gen_tick_called, dec_tick_called, tick_key_cb_called;
 static int tick_key_renew = 0;
 static SSL_TICKET_RETURN tick_dec_ret = SSL_TICKET_RETURN_ABORT;
 
-static int gen_tick_cb(SSL *s, void *arg)
+static int gen_tick_cb(SSL *s, ossl_unused void *unused__arg)
 {
     gen_tick_called = 1;
 
@@ -6964,11 +6999,12 @@ static int gen_tick_cb(SSL *s, void *arg)
                                            strlen(appdata));
 }
 
-static SSL_TICKET_RETURN dec_tick_cb(SSL *s, SSL_SESSION *ss,
-                                     const unsigned char *keyname,
-                                     size_t keyname_length,
+static SSL_TICKET_RETURN dec_tick_cb(ossl_unused SSL *unused__ssl,
+                                     SSL_SESSION *ss,
+                                     ossl_unused const unsigned char *unused__keyname,
+                                     ossl_unused size_t unused__keyname_length,
                                      SSL_TICKET_STATUS status,
-                                     void *arg)
+                                     ossl_unused void *unused__arg)
 {
     void *tickdata;
     size_t tickdlen;
@@ -7009,7 +7045,8 @@ static SSL_TICKET_RETURN dec_tick_cb(SSL *s, SSL_SESSION *ss,
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-static int tick_key_cb(SSL *s, unsigned char key_name[16],
+static int tick_key_cb(ossl_unused SSL *unused__ssl,
+                       unsigned char key_name[16],
                        unsigned char iv[EVP_MAX_IV_LENGTH], EVP_CIPHER_CTX *ctx,
                        HMAC_CTX *hctx, int enc)
 {
@@ -7038,7 +7075,8 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
 }
 #endif
 
-static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
+static int tick_key_evp_cb(ossl_unused SSL *unused__ssl,
+                           unsigned char key_name[16],
                            unsigned char iv[EVP_MAX_IV_LENGTH],
                            EVP_CIPHER_CTX *ctx, EVP_MAC_CTX *hctx, int enc)
 {
@@ -7676,7 +7714,8 @@ err:
     return 0;
 }
 
-static int verify_cb(int preverify_ok, X509_STORE_CTX *x509_ctx)
+static int verify_cb(ossl_unused int unused__preverify_ok,
+                     ossl_unused X509_STORE_CTX *unused__x509_ctx)
 {
     return 1;
 }

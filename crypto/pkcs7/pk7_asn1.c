@@ -30,7 +30,7 @@ ASN1_ADB(PKCS7) = {
 } ASN1_ADB_END(PKCS7, 0, type, 0, &p7default_tt, NULL);
 
 /* PKCS#7 streaming support */
-static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
+static int pk7_cb(int operation, ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it,
                   void *exarg)
 {
     ASN1_STREAM_ARG *sarg = exarg;
@@ -126,8 +126,8 @@ ASN1_NDEF_SEQUENCE(PKCS7_SIGNED) = {
 IMPLEMENT_ASN1_FUNCTIONS(PKCS7_SIGNED)
 
 /* Minor tweak to operation: free up EVP_PKEY */
-static int si_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                 void *exarg)
+static int si_cb(int operation, ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it,
+                 ossl_unused void *unused__exarg)
 {
     if (operation == ASN1_OP_FREE_POST) {
         PKCS7_SIGNER_INFO *si = (PKCS7_SIGNER_INFO *)*pval;
@@ -169,8 +169,9 @@ ASN1_NDEF_SEQUENCE(PKCS7_ENVELOPE) = {
 IMPLEMENT_ASN1_FUNCTIONS(PKCS7_ENVELOPE)
 
 /* Minor tweak to operation: free up X509 */
-static int ri_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                 void *exarg)
+static int ri_cb(int operation, ASN1_VALUE **pval,
+                 ossl_unused const ASN1_ITEM *unused__it,
+                 ossl_unused void *unused__exarg)
 {
     if (operation == ASN1_OP_FREE_POST) {
         PKCS7_RECIP_INFO *ri = (PKCS7_RECIP_INFO *)*pval;

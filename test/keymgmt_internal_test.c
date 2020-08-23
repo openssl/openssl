@@ -38,7 +38,7 @@ static void tear_down(FIXTURE *fixture)
     }
 }
 
-static FIXTURE *set_up(const char *testcase_name)
+static FIXTURE *set_up(ossl_unused const char *unused__testcase_name)
 {
     FIXTURE *fixture;
 

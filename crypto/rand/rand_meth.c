@@ -12,7 +12,7 @@
 #include "rand_local.h"
 
 /* Implements the default OpenSSL RAND_add() method */
-static int drbg_add(const void *buf, int num, double randomness)
+static int drbg_add(const void *buf, int num, ossl_unused double unused__randomness)
 {
     EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
 

@@ -47,7 +47,8 @@ X509_LOOKUP_METHOD *X509_LOOKUP_file(void)
 }
 
 static int by_file_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
-                                    const char *argp, long argl, char **ret,
+                                    const char *argp, long argl,
+                                    ossl_unused char **unused__ret,
                                     OPENSSL_CTX *libctx, const char *propq)
 {
     int ok = 0;
@@ -261,4 +262,3 @@ int X509_load_cert_crl_file(X509_LOOKUP *ctx, const char *file, int type)
 {
     return X509_load_cert_crl_file_with_libctx(ctx, file, type, NULL, NULL);
 }
-

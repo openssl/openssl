@@ -264,21 +264,20 @@ void CRYPTO_clear_free(void *str, size_t num, const char *file, int line)
 #if !defined(OPENSSL_NO_CRYPTO_MDEBUG)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
-int CRYPTO_mem_ctrl(int mode)
+int CRYPTO_mem_ctrl(ossl_unused int unused__mode)
 {
-    (void)mode;
     return -1;
 }
 
-int CRYPTO_set_mem_debug(int flag)
+int CRYPTO_set_mem_debug(ossl_unused int unused__flag)
 {
-    (void)flag;
     return -1;
 }
 
-int CRYPTO_mem_debug_push(const char *info, const char *file, int line)
+int CRYPTO_mem_debug_push(ossl_unused const char *unused__info,
+                          ossl_unused const char *unused__file,
+                          ossl_unused int unused__line)
 {
-    (void)info; (void)file; (void)line;
     return -1;
 }
 
@@ -287,42 +286,45 @@ int CRYPTO_mem_debug_pop(void)
     return -1;
 }
 
-void CRYPTO_mem_debug_malloc(void *addr, size_t num, int flag,
-                             const char *file, int line)
+void CRYPTO_mem_debug_malloc(ossl_unused void *unused__addr,
+                             ossl_unused size_t unused__num,
+                             ossl_unused int unused__flag,
+                             ossl_unused const char *unused__file,
+                             ossl_unused int unused__line)
 {
-    (void)addr; (void)num; (void)flag; (void)file; (void)line;
 }
 
-void CRYPTO_mem_debug_realloc(void *addr1, void *addr2, size_t num, int flag,
-                              const char *file, int line)
+void CRYPTO_mem_debug_realloc(ossl_unused void *unused__addr1,
+                              ossl_unused void *unused__addr2,
+                              ossl_unused size_t unused__num,
+                              ossl_unused int unused__flag,
+                              ossl_unused const char *unused__file,
+                              ossl_unused int unused__line)
 {
-    (void)addr1; (void)addr2; (void)num; (void)flag; (void)file; (void)line;
 }
 
-void CRYPTO_mem_debug_free(void *addr, int flag,
-                           const char *file, int line)
+void CRYPTO_mem_debug_free(ossl_unused void *unused__addr,
+                           ossl_unused int unused__flag,
+                           ossl_unused const char *unused__file,
+                           ossl_unused int unused__line)
 {
-    (void)addr; (void)flag; (void)file; (void)line;
 }
 
-int CRYPTO_mem_leaks(BIO *b)
+int CRYPTO_mem_leaks(ossl_unused BIO *unused__b)
 {
-    (void)b;
     return -1;
 }
 
 #  ifndef OPENSSL_NO_STDIO
-int CRYPTO_mem_leaks_fp(FILE *fp)
+int CRYPTO_mem_leaks_fp(ossl_unused FILE *unused__fp)
 {
-    (void)fp;
     return -1;
 }
 #  endif
 
-int CRYPTO_mem_leaks_cb(int (*cb)(const char *str, size_t len, void *u),
-                        void *u)
+int CRYPTO_mem_leaks_cb(ossl_unused int (*unused__cb)(const char *str, size_t len, void *u),
+                        ossl_unused void *unused__u)
 {
-    (void)cb; (void)u;
     return -1;
 }
 

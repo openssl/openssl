@@ -398,7 +398,7 @@ static int common_dh_cb(int p, BIO *b)
 }
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
-static int dh_cb(int p, int n, BN_GENCB *cb)
+static int dh_cb(int p, ossl_unused int unused__n, BN_GENCB *cb)
 {
     return common_dh_cb(p, BN_GENCB_get_arg(cb));
 }

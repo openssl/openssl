@@ -46,14 +46,14 @@ static CMP_SRV_TEST_FIXTURE *set_up(const char *const test_case_name)
 
 static int dummy_errorCode = CMP_R_MULTIPLE_SAN_SOURCES; /* any reason code */
 
-static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
-                                            const OSSL_CMP_MSG *cert_req,
-                                            int certReqId,
-                                            const OSSL_CRMF_MSG *crm,
-                                            const X509_REQ *p10cr,
-                                            X509 **certOut,
-                                            STACK_OF(X509) **chainOut,
-                                            STACK_OF(X509) **caPubs)
+static OSSL_CMP_PKISI *process_cert_request(ossl_unused OSSL_CMP_SRV_CTX *unused__srv_ctx,
+                                            ossl_unused const OSSL_CMP_MSG *unused__cert_req,
+                                            ossl_unused int unused__certReqId,
+                                            ossl_unused const OSSL_CRMF_MSG *unused__crm,
+                                            ossl_unused const X509_REQ *unused__p10cr,
+                                            ossl_unused X509 **unused__certOut,
+                                            ossl_unused STACK_OF(X509) **chainOut,
+                                            ossl_unused STACK_OF(X509) **caPubs)
 {
     CMPerr(0, dummy_errorCode);
     return NULL;

@@ -361,7 +361,7 @@ err:
 static int generate_q_fips186_2(BN_CTX *ctx, BIGNUM *q, const EVP_MD *evpmd,
                                 unsigned char *buf, unsigned char *seed,
                                 size_t qsize, int generate_seed, int *retm,
-                                int *res, BN_GENCB *cb)
+                                ossl_unused int *unused__res, BN_GENCB *cb)
 {
     unsigned char buf2[EVP_MAX_MD_SIZE];
     unsigned char md[EVP_MAX_MD_SIZE];
@@ -774,7 +774,8 @@ err:
 }
 
 int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int mode, int type, size_t L, size_t N,
+                                    int mode, ossl_unused int unused__type,
+                                    size_t L, size_t N,
                                     int *res, BN_GENCB *cb)
 {
     int ok = FFC_PARAM_RET_STATUS_FAILED;

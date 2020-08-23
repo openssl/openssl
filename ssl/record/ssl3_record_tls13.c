@@ -21,7 +21,8 @@
  *    1: if the record encryption/decryption was successful.
  */
 int tls13_enc(SSL *s, SSL3_RECORD *recs, size_t n_recs, int sending,
-              SSL_MAC_BUF *mac, size_t macsize)
+              ossl_unused SSL_MAC_BUF *unused__mac,
+              ossl_unused size_t unused__macsize)
 {
     EVP_CIPHER_CTX *ctx;
     unsigned char iv[EVP_MAX_IV_LENGTH], recheader[SSL3_RT_HEADER_LENGTH];

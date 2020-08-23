@@ -168,6 +168,8 @@ static DSA *dsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
             goto err;
         }
     }
+#else
+    (void)engine; /* silence -Wunused-parameter */
 #endif
 
     ret->flags = ret->meth->flags & ~DSA_FLAG_NON_FIPS_ALLOW;

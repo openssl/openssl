@@ -46,9 +46,8 @@ ASN1_ITEM_TEMPLATE_END(POLICY_MAPPINGS)
 
 IMPLEMENT_ASN1_ALLOC_FUNCTIONS(POLICY_MAPPING)
 
-static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD
-                                                 *method, void *a, STACK_OF(CONF_VALUE)
-                                                 *ext_list)
+static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                                                 void *a, STACK_OF(CONF_VALUE) *ext_list)
 {
     POLICY_MAPPINGS *pmaps = a;
     POLICY_MAPPING *pmap;
@@ -65,8 +64,9 @@ static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD
     return ext_list;
 }
 
-static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
-                                 X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval)
+static void *v2i_POLICY_MAPPINGS(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                                 ossl_unused X509V3_CTX *unused__ctx,
+                                 STACK_OF(CONF_VALUE) *nval)
 {
     POLICY_MAPPING *pmap = NULL;
     ASN1_OBJECT *obj1 = NULL, *obj2 = NULL;

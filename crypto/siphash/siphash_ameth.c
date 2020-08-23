@@ -20,7 +20,7 @@
  * SIPHASH output length and to free up a SIPHASH key.
  */
 
-static int siphash_size(const EVP_PKEY *pkey)
+static int siphash_size(ossl_unused const EVP_PKEY *unused__pkey)
 {
     return SIPHASH_MAX_DIGEST_SIZE;
 }
@@ -36,7 +36,8 @@ static void siphash_key_free(EVP_PKEY *pkey)
     }
 }
 
-static int siphash_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int siphash_pkey_ctrl(ossl_unused EVP_PKEY *unused__pkey, ossl_unused int unused__op,
+                             ossl_unused long unused__arg1, ossl_unused void *unused__arg2)
 {
     /* nothing (including ASN1_PKEY_CTRL_DEFAULT_MD_NID), is supported */
     return -2;

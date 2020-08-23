@@ -55,7 +55,7 @@ static void pem2der_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *pem2der_gettable_params(void *provctx)
+static const OSSL_PARAM *pem2der_gettable_params(ossl_unused void *unused__provctx)
 {
     static const OSSL_PARAM gettables[] = {
         { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
@@ -82,7 +82,7 @@ struct pem2der_pass_data_st {
     void *cbarg;
 };
 
-static int pem2der_pass_helper(char *buf, int num, int w, void *data)
+static int pem2der_pass_helper(char *buf, int num, ossl_unused int unused__w, void *data)
 {
     struct pem2der_pass_data_st *pass_data = data;
     size_t plen;

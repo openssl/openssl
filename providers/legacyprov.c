@@ -43,12 +43,12 @@ static const OSSL_PARAM legacy_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *legacy_gettable_params(void *provctx)
+static const OSSL_PARAM *legacy_gettable_params(ossl_unused void *unused__provctx)
 {
     return legacy_param_types;
 }
 
-static int legacy_get_params(void *provctx, OSSL_PARAM params[])
+static int legacy_get_params(ossl_unused void *unused__provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -144,7 +144,7 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
+static const OSSL_ALGORITHM *legacy_query(ossl_unused void *unused__provctx, int operation_id,
                                           int *no_cache)
 {
     *no_cache = 0;

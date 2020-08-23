@@ -57,7 +57,7 @@ static void property_defns_free(void *vproperty_defns)
     }
 }
 
-static void *property_defns_new(OPENSSL_CTX *ctx) {
+static void *property_defns_new(ossl_unused OPENSSL_CTX *unused__ctx) {
     return lh_PROPERTY_DEFN_ELEM_new(&property_defn_hash, &property_defn_cmp);
 }
 

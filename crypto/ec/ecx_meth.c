@@ -36,7 +36,7 @@ typedef enum {
 /* Setup EVP_PKEY using public, private or generation */
 static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
                       const unsigned char *p, int plen, ecx_key_op_t op,
-                      OPENSSL_CTX *libctx, const char *propq)
+                      OPENSSL_CTX *libctx, ossl_unused const char *unused__propq)
 {
     ECX_KEY *key = NULL;
     unsigned char *privkey, *pubkey;
@@ -240,13 +240,14 @@ static void ecx_free(EVP_PKEY *pkey)
 }
 
 /* "parameters" are always equal */
-static int ecx_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
+static int ecx_cmp_parameters(ossl_unused const EVP_PKEY *unused__a,
+                              ossl_unused const EVP_PKEY *unused__b)
 {
     return 1;
 }
 
 static int ecx_key_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                         ASN1_PCTX *ctx, ecx_key_op_t op)
+                         ossl_unused ASN1_PCTX *unused__ctx, ecx_key_op_t op)
 {
     const ECX_KEY *ecxkey = pkey->pkey.ecx;
     const char *nm = OBJ_nid2ln(pkey->ameth->pkey_id);
@@ -318,7 +319,7 @@ static int ecx_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     }
 }
 
-static int ecd_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int ecd_ctrl(ossl_unused EVP_PKEY *unused__pkey, int op, ossl_unused long unused__arg1, void *arg2)
 {
     switch (op) {
     case ASN1_PKEY_CTRL_DEFAULT_MD_NID:
@@ -387,7 +388,7 @@ static int ecx_get_pub_key(const EVP_PKEY *pkey, unsigned char *pub,
     return 1;
 }
 
-static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
+static size_t ecx_pkey_dirty_cnt(ossl_unused const EVP_PKEY *unused__pkey)
 {
     /*
      * We provide no mechanism to "update" an ECX key once it has been set,
@@ -397,8 +398,9 @@ static size_t ecx_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
-                              const char *propq)
+                              EVP_KEYMGMT *to_keymgmt,
+                              ossl_unused OPENSSL_CTX *unused__libctx,
+                              ossl_unused const char *unused__propq)
 {
     const ECX_KEY *key = from->pkey.ecx;
     OSSL_PARAM_BLD *tmpl = OSSL_PARAM_BLD_new();
@@ -560,19 +562,22 @@ const EVP_PKEY_ASN1_METHOD ecx448_asn1_meth = {
     ecx_priv_decode_with_libctx
 };
 
-static int ecd_size25519(const EVP_PKEY *pkey)
+static int ecd_size25519(ossl_unused const EVP_PKEY *unused__pkey)
 {
     return ED25519_SIGSIZE;
 }
 
-static int ecd_size448(const EVP_PKEY *pkey)
+static int ecd_size448(ossl_unused const EVP_PKEY *unused__pkey)
 {
     return ED448_SIGSIZE;
 }
 
-static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
-                           const void *asn, const X509_ALGOR *sigalg,
-                           const ASN1_BIT_STRING *str, EVP_PKEY *pkey)
+static int ecd_item_verify(EVP_MD_CTX *ctx,
+                           ossl_unused const ASN1_ITEM *unused__it,
+                           ossl_unused const void *unused__data,
+                           const X509_ALGOR *sigalg,
+                           ossl_unused const ASN1_BIT_STRING *unused__sig,
+                           EVP_PKEY *pkey)
 {
     const ASN1_OBJECT *obj;
     int ptype;
@@ -592,10 +597,11 @@ static int ecd_item_verify(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
     return 2;
 }
 
-static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
-                              const void *asn,
+static int ecd_item_sign25519(ossl_unused EVP_MD_CTX *unused__ctx,
+                              ossl_unused const ASN1_ITEM *unused__it,
+                              ossl_unused const void *unused__data,
                               X509_ALGOR *alg1, X509_ALGOR *alg2,
-                              ASN1_BIT_STRING *str)
+                              ossl_unused ASN1_BIT_STRING *unused__str)
 {
     /* Set algorithms identifiers */
     X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED25519), V_ASN1_UNDEF, NULL);
@@ -605,18 +611,20 @@ static int ecd_item_sign25519(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
     return 3;
 }
 
-static int ecd_sig_info_set25519(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                                 const ASN1_STRING *sig)
+static int ecd_sig_info_set25519(X509_SIG_INFO *siginf,
+                                 ossl_unused const X509_ALGOR *unused__alg,
+                                 ossl_unused const ASN1_STRING *unused__sig)
 {
     X509_SIG_INFO_set(siginf, NID_undef, NID_ED25519, X25519_SECURITY_BITS,
                       X509_SIG_INFO_TLS);
     return 1;
 }
 
-static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
-                            const void *asn,
+static int ecd_item_sign448(ossl_unused EVP_MD_CTX *unused__ctx,
+                            ossl_unused const ASN1_ITEM *unused__it,
+                            ossl_unused const void *unused__data,
                             X509_ALGOR *alg1, X509_ALGOR *alg2,
-                            ASN1_BIT_STRING *str)
+                            ossl_unused ASN1_BIT_STRING *unused__str)
 {
     /* Set algorithm identifier */
     X509_ALGOR_set0(alg1, OBJ_nid2obj(NID_ED448), V_ASN1_UNDEF, NULL);
@@ -626,8 +634,9 @@ static int ecd_item_sign448(EVP_MD_CTX *ctx, const ASN1_ITEM *it,
     return 3;
 }
 
-static int ecd_sig_info_set448(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
-                               const ASN1_STRING *sig)
+static int ecd_sig_info_set448(X509_SIG_INFO *siginf,
+                               ossl_unused const X509_ALGOR *unused__alg,
+                               ossl_unused const ASN1_STRING *unused__sig)
 {
     X509_SIG_INFO_set(siginf, NID_undef, NID_ED448, X448_SECURITY_BITS,
                       X509_SIG_INFO_TLS);
@@ -744,10 +753,11 @@ static int pkey_ecx_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
                       NULL, NULL);
 }
 
-static int validate_ecx_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
-                                          size_t *keylen,
-                                          const unsigned char **privkey,
-                                          const unsigned char **pubkey)
+static int validate_ecx_derive(EVP_PKEY_CTX *ctx,
+                               ossl_unused unsigned char *unused__key,
+                               ossl_unused size_t *unused__keylen,
+                               const unsigned char **privkey,
+                               const unsigned char **pubkey)
 {
     const ECX_KEY *ecxkey, *peerkey;
 
@@ -797,7 +807,8 @@ static int pkey_ecx_derive448(EVP_PKEY_CTX *ctx, unsigned char *key,
     return 1;
 }
 
-static int pkey_ecx_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+static int pkey_ecx_ctrl(ossl_unused EVP_PKEY_CTX *unused__ctx, int type,
+                         ossl_unused int unused__p1, ossl_unused void *unused__p2)
 {
     /* Only need to handle peer key for derivation */
     if (type == EVP_PKEY_CTRL_PEER_KEY)
@@ -901,7 +912,8 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
     return ED448_verify(NULL, tbs, tbslen, sig, edkey->pubkey, NULL, 0);
 }
 
-static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
+static int pkey_ecd_ctrl(ossl_unused EVP_PKEY_CTX *unused__ctx, int type,
+                         ossl_unused int unused__p1, void *p2)
 {
     switch (type) {
     case EVP_PKEY_CTRL_MD:

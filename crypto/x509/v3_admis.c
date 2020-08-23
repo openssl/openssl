@@ -73,8 +73,8 @@ const X509V3_EXT_METHOD v3_ext_admission = {
 };
 
 
-static int i2r_NAMING_AUTHORITY(const struct v3_ext_method *method, void *in,
-                                BIO *bp, int ind)
+static int i2r_NAMING_AUTHORITY(ossl_unused const struct v3_ext_method *unused__method,
+                                void *in, BIO *bp, int ind)
 {
     NAMING_AUTHORITY * namingAuthority = (NAMING_AUTHORITY*) in;
 

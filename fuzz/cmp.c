@@ -20,7 +20,7 @@
 
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(ossl_unused int *unused__argc, ossl_unused char ***unused__argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
     ERR_clear_error();
@@ -31,7 +31,7 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 static int num_responses;
 
-static OSSL_CMP_MSG *transfer_cb(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
+static OSSL_CMP_MSG *transfer_cb(OSSL_CMP_CTX *ctx, ossl_unused const OSSL_CMP_MSG *unused__req)
 {
     if (num_responses++ > 2)
         return NULL; /* prevent loops due to repeated pollRep */
@@ -39,14 +39,19 @@ static OSSL_CMP_MSG *transfer_cb(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
                             OSSL_CMP_CTX_get_transfer_cb_arg(ctx));
 }
 
-static int print_noop(const char *func, const char *file, int line,
-                      OSSL_CMP_severity level, const char *msg)
+static int print_noop(ossl_unused const char *unused__func,
+                      ossl_unused const char *unused__file,
+                      ossl_unused int unused__line,
+                      ossl_unused OSSL_CMP_severity unused__level,
+                      ossl_unused const char *unused__msg)
 {
     return 1;
 }
 
-static int allow_unprotected(const OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *rep,
-                             int invalid_protection, int expected_type)
+static int allow_unprotected(ossl_unused const OSSL_CMP_CTX *unused__ctx,
+                             ossl_unused const OSSL_CMP_MSG *unused__rep,
+                             ossl_unused int unused__invalid_protection,
+                             ossl_unused int unused__expected_type)
 {
     return 1;
 }
@@ -102,57 +107,61 @@ static void cmp_client_process_response(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
     ASN1_INTEGER_free(serial);
 }
 
-static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
-                                            const OSSL_CMP_MSG *cert_req,
-                                            int certReqId,
-                                            const OSSL_CRMF_MSG *crm,
-                                            const X509_REQ *p10cr,
-                                            X509 **certOut,
-                                            STACK_OF(X509) **chainOut,
-                                            STACK_OF(X509) **caPubs)
+static OSSL_CMP_PKISI *process_cert_request(ossl_unused OSSL_CMP_SRV_CTX *unused__srv_ctx,
+                                            ossl_unused const OSSL_CMP_MSG *unused__cert_req,
+                                            ossl_unused int unused__certReqId,
+                                            ossl_unused const OSSL_CRMF_MSG *unused__crm,
+                                            ossl_unused const X509_REQ *unused__p10cr,
+                                            ossl_unused X509 **unused__certOut,
+                                            ossl_unused STACK_OF(X509) **chainOut,
+                                            ossl_unused STACK_OF(X509) **caPubs)
 {
     CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
     return NULL;
 }
 
-static OSSL_CMP_PKISI *process_rr(OSSL_CMP_SRV_CTX *srv_ctx,
-                                  const OSSL_CMP_MSG *rr,
-                                  const X509_NAME *issuer,
-                                  const ASN1_INTEGER *serial)
+static OSSL_CMP_PKISI *process_rr(ossl_unused OSSL_CMP_SRV_CTX *unused__srv_ctx,
+                                  ossl_unused const OSSL_CMP_MSG *unused__rr,
+                                  ossl_unused const X509_NAME *unused__issuer,
+                                  ossl_unused const ASN1_INTEGER *unused__serial)
 {
     CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
     return NULL;
 }
 
-static int process_genm(OSSL_CMP_SRV_CTX *srv_ctx,
-                        const OSSL_CMP_MSG *genm,
-                        const STACK_OF(OSSL_CMP_ITAV) *in,
-                        STACK_OF(OSSL_CMP_ITAV) **out)
+static int process_genm(ossl_unused OSSL_CMP_SRV_CTX *unused__srv_ctx,
+                        ossl_unused const OSSL_CMP_MSG *unused__genm,
+                        ossl_unused const STACK_OF(OSSL_CMP_ITAV) *in,
+                        ossl_unused STACK_OF(OSSL_CMP_ITAV) **out)
 {
     CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
 
-static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
-                          const OSSL_CMP_PKISI *statusInfo,
-                          const ASN1_INTEGER *errorCode,
-                          const OSSL_CMP_PKIFREETEXT *errorDetails)
+static void process_error(ossl_unused OSSL_CMP_SRV_CTX *unused__srv_ctx,
+                          ossl_unused const OSSL_CMP_MSG *unused__error,
+                          ossl_unused const OSSL_CMP_PKISI *unused__statusInfo,
+                          ossl_unused const ASN1_INTEGER *unused__errorCode,
+                          ossl_unused const OSSL_CMP_PKIFREETEXT *unused__errorDetails)
 {
     CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
 }
 
-static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
-                            const OSSL_CMP_MSG *certConf, int certReqId,
-                            const ASN1_OCTET_STRING *certHash,
-                            const OSSL_CMP_PKISI *si)
+static int process_certConf(ossl_unused OSSL_CMP_SRV_CTX *unused__srv_ctx,
+                            ossl_unused const OSSL_CMP_MSG *unused__certConf,
+                            ossl_unused int unused__certReqId,
+                            ossl_unused const ASN1_OCTET_STRING *unused__certHash,
+                            ossl_unused const OSSL_CMP_PKISI *unused__si)
 {
     CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;
 }
 
-static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
-                           const OSSL_CMP_MSG *pollReq, int certReqId,
-                           OSSL_CMP_MSG **certReq, int64_t *check_after)
+static int process_pollReq(ossl_unused OSSL_CMP_SRV_CTX *unused__srv_ctx,
+                           ossl_unused const OSSL_CMP_MSG *unused__pollReq,
+                           ossl_unused int unused__certReqId,
+                           ossl_unused OSSL_CMP_MSG **unused__certReq,
+                           ossl_unused int64_t *unused__check_after)
 {
     CMPerr(0, CMP_R_ERROR_PROCESSING_MESSAGE);
     return 0;

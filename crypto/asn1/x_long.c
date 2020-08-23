@@ -82,7 +82,8 @@ static int num_bits_ulong(unsigned long value)
     return (int)ret;
 }
 
-static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
+static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                    ossl_unused int *unused__putype,
                     const ASN1_ITEM *it)
 {
     long ltmp;
@@ -126,7 +127,8 @@ static int long_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                    int utype, char *free_cont, const ASN1_ITEM *it)
+                    ossl_unused int unused__utype, ossl_unused char *unused__free_cont,
+                    const ASN1_ITEM *it)
 {
     int i;
     long ltmp;
@@ -186,8 +188,10 @@ static int long_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return 1;
 }
 
-static int long_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      int indent, const ASN1_PCTX *pctx)
+static int long_print(BIO *out, const ASN1_VALUE **pval,
+                      ossl_unused const ASN1_ITEM *unused__it,
+                      ossl_unused int unused__indent,
+                      ossl_unused const ASN1_PCTX *unused__pctx)
 {
     long l;
 

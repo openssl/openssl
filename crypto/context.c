@@ -191,6 +191,8 @@ OPENSSL_CTX *OPENSSL_CTX_set0_default(OPENSSL_CTX *libctx)
     if ((current_defctx = get_default_context()) != NULL
         && set_default_context(libctx))
         return current_defctx;
+#else
+    (void)libctx; /* silence -Wunused-parameter */
 #endif
 
     return NULL;
@@ -201,6 +203,8 @@ OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx)
 #ifndef FIPS_MODULE
     if (ctx == NULL)
         return get_default_context();
+#else
+    (void)ctx; /* silence -Wunused-parameter */
 #endif
     return ctx;
 }
@@ -210,6 +214,8 @@ int openssl_ctx_is_default(OPENSSL_CTX *ctx)
 #ifndef FIPS_MODULE
     if (ctx == NULL || ctx == get_default_context())
         return 1;
+#else
+    (void)ctx; /* silence -Wunused-parameter */
 #endif
     return 0;
 }
@@ -219,13 +225,18 @@ int openssl_ctx_is_global_default(OPENSSL_CTX *ctx)
 #ifndef FIPS_MODULE
     if (openssl_ctx_get_concrete(ctx) == &default_context_int)
         return 1;
+#else
+    (void)ctx; /* silence -Wunused-parameter */
 #endif
     return 0;
 }
 
-static void openssl_ctx_generic_new(void *parent_ign, void *ptr_ign,
-                                    CRYPTO_EX_DATA *ad, int index,
-                                    long argl_ign, void *argp)
+static void openssl_ctx_generic_new(ossl_unused void *unused__parent_ign,
+                                    ossl_unused void *unused__ptr_ign,
+                                    CRYPTO_EX_DATA *ad,
+                                    int index,
+                                    ossl_unused long unused__argl_ign,
+                                    void *argp)
 {
     const OPENSSL_CTX_METHOD *meth = argp;
     void *ptr = meth->new_func(crypto_ex_data_get_openssl_ctx(ad));
@@ -233,9 +244,12 @@ static void openssl_ctx_generic_new(void *parent_ign, void *ptr_ign,
     if (ptr != NULL)
         CRYPTO_set_ex_data(ad, index, ptr);
 }
-static void openssl_ctx_generic_free(void *parent_ign, void *ptr,
-                                     CRYPTO_EX_DATA *ad, int index,
-                                     long argl_ign, void *argp)
+static void openssl_ctx_generic_free(ossl_unused void *unused__parent_ign,
+                                     void *ptr,
+                                     ossl_unused CRYPTO_EX_DATA *unused__ad,
+                                     ossl_unused int unused__index,
+                                     ossl_unused long unused__argl_ign,
+                                     void *argp)
 {
     const OPENSSL_CTX_METHOD *meth = argp;
 

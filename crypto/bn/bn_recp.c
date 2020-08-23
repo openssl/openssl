@@ -42,7 +42,7 @@ void BN_RECP_CTX_free(BN_RECP_CTX *recp)
         OPENSSL_free(recp);
 }
 
-int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, BN_CTX *ctx)
+int BN_RECP_CTX_set(BN_RECP_CTX *recp, const BIGNUM *d, ossl_unused BN_CTX *unused__ctx)
 {
     if (!BN_copy(&(recp->N), d))
         return 0;

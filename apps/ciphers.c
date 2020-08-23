@@ -77,16 +77,18 @@ const OPTIONS ciphers_options[] = {
 };
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int dummy_psk(SSL *ssl, const char *hint, char *identity,
-                              unsigned int max_identity_len,
-                              unsigned char *psk,
-                              unsigned int max_psk_len)
+static unsigned int dummy_psk(ossl_unused SSL *unused__ssl,
+                              ossl_unused const char *unused__hint,
+                              ossl_unused char *unused__identity,
+                              ossl_unused unsigned int unused__max_identity_len,
+                              ossl_unused unsigned char *unused__psk,
+                              ossl_unused unsigned int unused__max_psk_len)
 {
     return 0;
 }
 #endif
 #ifndef OPENSSL_NO_SRP
-static char *dummy_srp(SSL *ssl, void *arg)
+static char *dummy_srp(ossl_unused SSL *unused__ssl, ossl_unused void *unused__arg)
 {
     return "";
 }

@@ -206,7 +206,7 @@ static int x9_62_tests(int n)
  * - reject that signature after modifying the signature
  * - accept that signature after un-modifying the signature
  */
-static int set_sm2_id(EVP_MD_CTX *mctx, EVP_PKEY *pkey)
+static int set_sm2_id(EVP_MD_CTX *mctx, ossl_unused EVP_PKEY *unused__pkey)
 {
     /* With the SM2 key type, the SM2 ID is mandatory */
     static const char sm2_id[] = { 1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r' };

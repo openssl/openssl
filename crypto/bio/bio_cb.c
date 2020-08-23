@@ -14,8 +14,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/err.h>
 
-long BIO_debug_callback(BIO *bio, int cmd, const char *argp,
-                        int argi, long argl, long ret)
+long BIO_debug_callback(BIO *bio, int cmd, ossl_unused const char *unused__argp,
+                        int argi, ossl_unused long unused__argl, long ret)
 {
     BIO *b;
     char buf[256];

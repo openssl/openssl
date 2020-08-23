@@ -50,7 +50,9 @@ static char *ec_param_encoding_id2name(int id)
 }
 
 int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
-                    OSSL_PARAM params[], OPENSSL_CTX *libctx, const char *propq,
+                    OSSL_PARAM params[],
+                    ossl_unused OPENSSL_CTX *unused__libctx,
+                    ossl_unused const char *unused__propq,
                     BN_CTX *bnctx, unsigned char **genbuf)
 {
     int ret = 0, curve_nid, encoding_flag;

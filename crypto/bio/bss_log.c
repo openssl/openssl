@@ -387,7 +387,7 @@ static void xcloselog(BIO *bp)
 
 # else                          /* Unix/Watt32 */
 
-static void xopenlog(BIO *bp, char *name, int level)
+static void xopenlog(ossl_unused BIO *unused__bp, char *name, int level)
 {
 #  ifdef WATT32                 /* djgpp/DOS */
     openlog(name, LOG_PID | LOG_CONS | LOG_NDELAY, level);
@@ -396,12 +396,12 @@ static void xopenlog(BIO *bp, char *name, int level)
 #  endif
 }
 
-static void xsyslog(BIO *bp, int priority, const char *string)
+static void xsyslog(ossl_unused BIO *unused__bp, int priority, const char *string)
 {
     syslog(priority, "%s", string);
 }
 
-static void xcloselog(BIO *bp)
+static void xcloselog(ossl_unused BIO *unused__bp)
 {
     closelog();
 }

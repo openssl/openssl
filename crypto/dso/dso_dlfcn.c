@@ -194,7 +194,7 @@ static DSO_FUNC_TYPE dlfcn_bind_func(DSO *dso, const char *symname)
     return u.sym;
 }
 
-static char *dlfcn_merger(DSO *dso, const char *filespec1,
+static char *dlfcn_merger(ossl_unused DSO *unused__dso, const char *filespec1,
                           const char *filespec2)
 {
     char *merged;

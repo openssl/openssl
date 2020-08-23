@@ -77,7 +77,7 @@ static void kdf_freedata(void *kdfdata)
     kdf_data_free(kdfdata);
 }
 
-static int kdf_has(void *keydata, int selection)
+static int kdf_has(ossl_unused void *unused__keydata, ossl_unused int unused__selection)
 {
     return 0;
 }

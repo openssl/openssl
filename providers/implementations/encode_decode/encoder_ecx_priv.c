@@ -258,7 +258,8 @@ static int ecx_priv_print_data(void *vctx, const OSSL_PARAM params[],
 }
 
 static int ecx_priv_print(void *vctx, void *ecxkey, OSSL_CORE_BIO *cout,
-                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                          ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                          ossl_unused void *unused__cbarg)
 {
     struct ecx_priv_ctx_st *ctx = vctx;
     BIO *out = bio_new_from_core_bio(ctx->provctx, cout);

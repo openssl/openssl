@@ -92,7 +92,8 @@ int ossl_prov_print_dsa(BIO *out, DSA *dsa, enum dsa_print_type type)
     goto err;
 }
 
-int ossl_prov_prepare_dsa_params(const void *dsa, int nid,
+int ossl_prov_prepare_dsa_params(const void *dsa,
+                                 ossl_unused int unused__nid,
                                  void **pstr, int *pstrtype)
 {
     ASN1_STRING *params = ASN1_STRING_new();

@@ -18,7 +18,7 @@
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
 DEFINE_STACK_OF(ASN1_UTF8STRING)
- 
+
 /* the context for the CMP mock server */
 typedef struct
 {
@@ -176,8 +176,8 @@ int ossl_cmp_mock_srv_set_checkAfterTime(OSSL_CMP_SRV_CTX *srv_ctx, int sec)
 static OSSL_CMP_PKISI *process_cert_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             const OSSL_CMP_MSG *cert_req,
                                             int certReqId,
-                                            const OSSL_CRMF_MSG *crm,
-                                            const X509_REQ *p10cr,
+                                            ossl_unused const OSSL_CRMF_MSG *unused__crm,
+                                            ossl_unused const X509_REQ *unused__p10cr,
                                             X509 **certOut,
                                             STACK_OF(X509) **chainOut,
                                             STACK_OF(X509) **caPubs)
@@ -328,7 +328,7 @@ static void process_error(OSSL_CMP_SRV_CTX *srv_ctx, const OSSL_CMP_MSG *error,
 static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
                             const OSSL_CMP_MSG *certConf, int certReqId,
                             const ASN1_OCTET_STRING *certHash,
-                            const OSSL_CMP_PKISI *si)
+                            ossl_unused const OSSL_CMP_PKISI *unused__si)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
     ASN1_OCTET_STRING *digest;
@@ -360,8 +360,10 @@ static int process_certConf(OSSL_CMP_SRV_CTX *srv_ctx,
 }
 
 static int process_pollReq(OSSL_CMP_SRV_CTX *srv_ctx,
-                           const OSSL_CMP_MSG *pollReq, int certReqId,
-                           OSSL_CMP_MSG **certReq, int64_t *check_after)
+                           const OSSL_CMP_MSG *pollReq,
+                           ossl_unused int unused__certReqId,
+                           OSSL_CMP_MSG **certReq,
+                           int64_t *check_after)
 {
     mock_srv_ctx *ctx = OSSL_CMP_SRV_CTX_get0_custom_ctx(srv_ctx);
 

@@ -33,7 +33,7 @@ ASN1_SEQUENCE(PKEY_USAGE_PERIOD) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(PKEY_USAGE_PERIOD)
 
-static int i2r_PKEY_USAGE_PERIOD(X509V3_EXT_METHOD *method,
+static int i2r_PKEY_USAGE_PERIOD(ossl_unused X509V3_EXT_METHOD *unused__method,
                                  PKEY_USAGE_PERIOD *usage, BIO *out,
                                  int indent)
 {

@@ -119,7 +119,7 @@ static int dsa_test(void)
     return ret;
 }
 
-static int dsa_cb(int p, int n, BN_GENCB *arg)
+static int dsa_cb(int p, ossl_unused int unused__n, ossl_unused BN_GENCB *unused__arg)
 {
     static int ok = 0, num = 0;
 

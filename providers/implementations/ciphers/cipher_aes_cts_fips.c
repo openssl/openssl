@@ -360,8 +360,10 @@ int aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-int aes_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
-                            size_t outsize)
+int aes_cbc_cts_block_final(ossl_unused void *unused__vctx,
+                            ossl_unused unsigned char *unused__out,
+                            size_t *outl,
+                            ossl_unused size_t unused__outsize)
 {
     *outl = 0;
     return 1;

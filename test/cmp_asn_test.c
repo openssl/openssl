@@ -40,7 +40,7 @@ static void tear_down(CMP_ASN_TEST_FIXTURE *fixture)
     OPENSSL_free(fixture);
 }
 
-static int execute_cmp_asn1_get_int_test(CMP_ASN_TEST_FIXTURE *fixture)
+static int execute_cmp_asn1_get_int_test(ossl_unused CMP_ASN_TEST_FIXTURE *unused__fixture)
 {
     ASN1_INTEGER *asn1integer = ASN1_INTEGER_new();
     ASN1_INTEGER_set(asn1integer, 77);

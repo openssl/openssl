@@ -34,8 +34,9 @@ ASN1_SEQUENCE(ISSUER_SIGN_TOOL) = {
 IMPLEMENT_ASN1_FUNCTIONS(ISSUER_SIGN_TOOL)
 
 
-static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
-                        STACK_OF(CONF_VALUE) *nval)
+static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(ossl_unused X509V3_EXT_METHOD *unused__method,
+                                              ossl_unused X509V3_CTX *unused__ctx,
+                                              STACK_OF(CONF_VALUE) *nval)
 {
     ISSUER_SIGN_TOOL *ist = ISSUER_SIGN_TOOL_new();
     int i;
@@ -91,9 +92,9 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
     return ist;
 }
 
-static int i2r_issuer_sign_tool(X509V3_EXT_METHOD *method,
-                                 ISSUER_SIGN_TOOL *ist, BIO *out,
-                                 int indent)
+static int i2r_issuer_sign_tool(ossl_unused X509V3_EXT_METHOD *unused__method,
+                                ISSUER_SIGN_TOOL *ist, BIO *out,
+                                int indent)
 {
     int new_line = 0;
 

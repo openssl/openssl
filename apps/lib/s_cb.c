@@ -438,7 +438,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s)
 }
 
 long bio_dump_callback(BIO *bio, int cmd, const char *argp,
-                       int argi, long argl, long ret)
+                       int argi, ossl_unused long unused__argl, long ret)
 {
     BIO *out;
 
@@ -566,7 +566,7 @@ static STRINT_PAIR handshakes[] = {
 };
 
 void msg_cb(int write_p, int version, int content_type, const void *buf,
-            size_t len, SSL *ssl, void *arg)
+            size_t len, ossl_unused SSL *unused__ssl, void *arg)
 {
     BIO *bio = arg;
     const char *str_write_p = write_p ? ">>>" : "<<<";
@@ -721,7 +721,7 @@ static STRINT_PAIR signature_tls12_hash_list[] = {
     {NULL}
 };
 
-void tlsext_cb(SSL *s, int client_server, int type,
+void tlsext_cb(ossl_unused SSL *unused__ssl, int client_server, int type,
                const unsigned char *data, int len, void *arg)
 {
     BIO *bio = arg;
@@ -1519,7 +1519,7 @@ void ssl_ctx_security_debug(SSL_CTX *ctx, int verbose)
     SSL_CTX_set0_security_ex_data(ctx, &sdb);
 }
 
-static void keylog_callback(const SSL *ssl, const char *line)
+static void keylog_callback(ossl_unused const SSL *unused__ssl, const char *line)
 {
     if (bio_keylog == NULL) {
         BIO_printf(bio_err, "Keylog callback is invoked without valid file!\n");

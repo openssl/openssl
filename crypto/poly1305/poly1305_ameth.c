@@ -19,7 +19,7 @@
  * POLY1305 output length and to free up a POLY1305 key.
  */
 
-static int poly1305_size(const EVP_PKEY *pkey)
+static int poly1305_size(ossl_unused const EVP_PKEY *unused__pkey)
 {
     return POLY1305_DIGEST_SIZE;
 }
@@ -34,7 +34,8 @@ static void poly1305_key_free(EVP_PKEY *pkey)
     }
 }
 
-static int poly1305_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int poly1305_pkey_ctrl(ossl_unused EVP_PKEY *unused__pkey, ossl_unused int unused__op,
+                              ossl_unused long unused__arg1, ossl_unused void *unused__arg2)
 {
     /* nothing, (including ASN1_PKEY_CTRL_DEFAULT_MD_NID), is supported */
     return -2;

@@ -36,43 +36,51 @@ DEFINE_STACK_OF(OCSP_RESPID)
 DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
 DEFINE_STACK_OF(SCT)
 
-static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t,
-                                    SSL_MAC_BUF *mac, size_t macsize)
+static int ssl_undefined_function_1(SSL *ssl, ossl_unused SSL3_RECORD *unused__r,
+                                    ossl_unused size_t unused__s, ossl_unused int unused__t,
+                                    ossl_unused SSL_MAC_BUF *unused__mac,
+                                    ossl_unused size_t unused__macsize)
 {
     return ssl_undefined_function(ssl);
 }
 
-static int ssl_undefined_function_2(SSL *ssl, SSL3_RECORD *r, unsigned char *s,
-                                    int t)
+static int ssl_undefined_function_2(SSL *ssl, ossl_unused SSL3_RECORD *unused__r,
+                                    ossl_unused unsigned char *unused__s,
+                                    ossl_unused int unused__t)
 {
     return ssl_undefined_function(ssl);
 }
 
-static int ssl_undefined_function_3(SSL *ssl, unsigned char *r,
-                                    unsigned char *s, size_t t, size_t *u)
+static int ssl_undefined_function_3(SSL *ssl, ossl_unused unsigned char *unused__r,
+                                    ossl_unused unsigned char *unused__s,
+                                    ossl_unused size_t unused__t,
+                                    ossl_unused size_t *unused__u)
 {
     return ssl_undefined_function(ssl);
 }
 
-static int ssl_undefined_function_4(SSL *ssl, int r)
+static int ssl_undefined_function_4(SSL *ssl, ossl_unused int unused__r)
 {
     return ssl_undefined_function(ssl);
 }
 
-static size_t ssl_undefined_function_5(SSL *ssl, const char *r, size_t s,
-                                       unsigned char *t)
+static size_t ssl_undefined_function_5(SSL *ssl, ossl_unused const char *unused__r,
+                                       ossl_unused size_t unused__s,
+                                       ossl_unused unsigned char *unused__t)
 {
     return ssl_undefined_function(ssl);
 }
 
-static int ssl_undefined_function_6(int r)
+static int ssl_undefined_function_6(ossl_unused int unused__r)
 {
     return ssl_undefined_function(NULL);
 }
 
-static int ssl_undefined_function_7(SSL *ssl, unsigned char *r, size_t s,
-                                    const char *t, size_t u,
-                                    const unsigned char *v, size_t w, int x)
+static int ssl_undefined_function_7(SSL *ssl, ossl_unused unsigned char *unused__r,
+                                    ossl_unused size_t unused__s,
+                                    ossl_unused const char *unused__t, ossl_unused size_t unused__u,
+                                    ossl_unused const unsigned char *unused__v,
+                                    ossl_unused size_t unused__w, ossl_unused int unused__x)
 {
     return ssl_undefined_function(ssl);
 }
@@ -2085,6 +2093,10 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
     }
 
 #ifdef OPENSSL_NO_KTLS
+    (void)fd;     /* silence -Wunused-parameter */
+    (void)offset; /* silence -Wunused-parameter */
+    (void)size;   /* silence -Wunused-parameter */
+    (void)flags;  /* silence -Wunused-parameter */
     ERR_raise_data(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR,
                    "can't call ktls_sendfile(), ktls disabled");
     return -1;
@@ -2791,7 +2803,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
  * - if we are before or during/after the handshake,
  * - if a resumption or normal handshake is being attempted/has occurred
  * - whether we have negotiated TLSv1.2 (or below) or TLSv1.3
- * 
+ *
  * Note that only the host_name type is defined (RFC 3546).
  */
 const char *SSL_get_servername(const SSL *s, const int type)
@@ -3881,7 +3893,7 @@ void SSL_set_connect_state(SSL *s)
     clear_ciphers(s);
 }
 
-int ssl_undefined_function(SSL *s)
+int ssl_undefined_function(ossl_unused SSL *unused__ssl)
 {
     SSLerr(SSL_F_SSL_UNDEFINED_FUNCTION, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return 0;
@@ -3894,12 +3906,12 @@ int ssl_undefined_void_function(void)
     return 0;
 }
 
-int ssl_undefined_const_function(const SSL *s)
+int ssl_undefined_const_function(ossl_unused const SSL *unused__s)
 {
     return 0;
 }
 
-const SSL_METHOD *ssl_bad_method(int ver)
+const SSL_METHOD *ssl_bad_method(ossl_unused int unused__ver)
 {
     SSLerr(SSL_F_SSL_BAD_METHOD, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
     return NULL;
@@ -4792,11 +4804,9 @@ int SSL_is_server(const SSL *s)
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
-void SSL_set_debug(SSL *s, int debug)
+void SSL_set_debug(ossl_unused SSL *unused__s, ossl_unused int unused__debug)
 {
     /* Old function was do-nothing anyway... */
-    (void)s;
-    (void)debug;
 }
 #endif
 
@@ -5070,14 +5080,15 @@ const STACK_OF(SCT) *SSL_get0_peer_scts(SSL *s)
     return NULL;
 }
 
-static int ct_permissive(const CT_POLICY_EVAL_CTX * ctx,
-                         const STACK_OF(SCT) *scts, void *unused_arg)
+static int ct_permissive(ossl_unused const CT_POLICY_EVAL_CTX * unused__ctx,
+                         ossl_unused const STACK_OF(SCT) *scts,
+                         ossl_unused void *unused__arg)
 {
     return 1;
 }
 
-static int ct_strict(const CT_POLICY_EVAL_CTX * ctx,
-                     const STACK_OF(SCT) *scts, void *unused_arg)
+static int ct_strict(ossl_unused const CT_POLICY_EVAL_CTX * unused__ctx,
+                     const STACK_OF(SCT) *scts, ossl_unused void *unused__arg)
 {
     int count = scts != NULL ? sk_SCT_num(scts) : 0;
     int i;

@@ -149,7 +149,7 @@ static int bio_core_write_ex(BIO *bio, const char *data, size_t data_len,
     return ossl_prov_bio_write_ex(BIO_get_data(bio), data, data_len, written);
 }
 
-static long bio_core_ctrl(BIO *bio, int cmd, long num, void *ptr)
+static long bio_core_ctrl(ossl_unused BIO *unused__bio, ossl_unused int unused__cmd, ossl_unused long unused__num, ossl_unused void *unused__ptr)
 {
     /* We don't support this */
     assert(0);

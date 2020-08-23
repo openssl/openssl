@@ -96,7 +96,7 @@ static int allocate_string_stack(UI *ui)
     return 0;
 }
 
-static UI_STRING *general_allocate_prompt(UI *ui, const char *prompt,
+static UI_STRING *general_allocate_prompt(ossl_unused UI *unused__ui, const char *prompt,
                                           int prompt_freeable,
                                           enum UI_string_types type,
                                           int input_flags, char *result_buf)
@@ -457,7 +457,7 @@ int UI_get_result_length(UI *ui, int i)
     return UI_get_result_string_length(sk_UI_STRING_value(ui->strings, i));
 }
 
-static int print_error(const char *str, size_t len, UI *ui)
+static int print_error(const char *str, ossl_unused size_t unused__len, UI *ui)
 {
     UI_STRING uis;
 
@@ -550,7 +550,7 @@ int UI_process(UI *ui)
     return ok;
 }
 
-int UI_ctrl(UI *ui, int cmd, long i, void *p, void (*f) (void))
+int UI_ctrl(UI *ui, int cmd, long i, ossl_unused void *unused__p, ossl_unused void (*f) (void))
 {
     if (ui == NULL) {
         UIerr(UI_F_UI_CTRL, ERR_R_PASSED_NULL_PARAMETER);

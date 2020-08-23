@@ -85,7 +85,7 @@ static void ossl_ctx_global_properties_free(void *vstore)
     }
 }
 
-static void *ossl_ctx_global_properties_new(OPENSSL_CTX *ctx)
+static void *ossl_ctx_global_properties_new(ossl_unused OPENSSL_CTX *unused__ctx)
 {
     return OPENSSL_zalloc(sizeof(OSSL_PROPERTY_LIST **));
 }
@@ -102,6 +102,8 @@ OSSL_PROPERTY_LIST **ossl_ctx_global_properties(OPENSSL_CTX *libctx,
 #ifndef FIPS_MODULE
     if (loadconfig && !OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CONFIG, NULL))
         return NULL;
+#else
+    (void)loadconfig;
 #endif
     return openssl_ctx_get_data(libctx, OPENSSL_CTX_GLOBAL_PROPERTIES,
                                 &ossl_ctx_global_properties_method);
@@ -158,7 +160,7 @@ static void impl_cache_free(QUERY *elem)
     }
 }
 
-static void alg_cleanup(ossl_uintmax_t idx, ALGORITHM *a)
+static void alg_cleanup(ossl_unused ossl_uintmax_t unused__idx, ALGORITHM *a)
 {
     if (a != NULL) {
         sk_IMPLEMENTATION_pop_free(a->impls, &impl_free);
@@ -475,7 +477,7 @@ static void impl_cache_flush_cache(QUERY *c, IMPL_CACHE_FLUSH *state)
         state->nelem++;
 }
 
-static void impl_cache_flush_one_alg(ossl_uintmax_t idx, ALGORITHM *alg,
+static void impl_cache_flush_one_alg(ossl_unused ossl_uintmax_t unused__idx, ALGORITHM *alg,
                                      void *v)
 {
     IMPL_CACHE_FLUSH *state = (IMPL_CACHE_FLUSH *)v;

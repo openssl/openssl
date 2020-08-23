@@ -28,7 +28,7 @@ static BIGNUM *b3;
 static BIGNUM *b4;
 static BIGNUM *b5;
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(ossl_unused int *unused__argc, ossl_unused char ***unused__argv)
 {
     b1 = BN_new();
     b2 = BN_new();

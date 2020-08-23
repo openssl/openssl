@@ -395,7 +395,7 @@ err:
 }
 
 /* TODO(3.0): arg ignored for now */
-static void async_delete_thread_state(void *arg)
+static void async_delete_thread_state(ossl_unused void *unused__arg)
 {
     async_pool *pool = (async_pool *)CRYPTO_THREAD_get_local(&poolkey);
 

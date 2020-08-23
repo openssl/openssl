@@ -353,19 +353,19 @@ void engine_load_dasync_int(void)
     ERR_clear_error();
 }
 
-static int dasync_init(ENGINE *e)
+static int dasync_init(ossl_unused ENGINE *unused__e)
 {
     return 1;
 }
 
 
-static int dasync_finish(ENGINE *e)
+static int dasync_finish(ossl_unused ENGINE *unused__e)
 {
     return 1;
 }
 
 
-static int dasync_destroy(ENGINE *e)
+static int dasync_destroy(ossl_unused ENGINE *unused__e)
 {
     destroy_digests();
     destroy_ciphers();
@@ -374,7 +374,8 @@ static int dasync_destroy(ENGINE *e)
     return 1;
 }
 
-static int dasync_pkey(ENGINE *e, EVP_PKEY_METHOD **pmeth,
+static int dasync_pkey(ossl_unused ENGINE *unused__e,
+                       EVP_PKEY_METHOD **pmeth,
                        const int **pnids, int nid)
 {
     static const int rnid = EVP_PKEY_RSA;
@@ -393,7 +394,8 @@ static int dasync_pkey(ENGINE *e, EVP_PKEY_METHOD **pmeth,
     return 0;
 }
 
-static int dasync_digests(ENGINE *e, const EVP_MD **digest,
+static int dasync_digests(ossl_unused ENGINE *unused__e,
+                          const EVP_MD **digest,
                           const int **nids, int nid)
 {
     int ok = 1;
@@ -414,8 +416,9 @@ static int dasync_digests(ENGINE *e, const EVP_MD **digest,
     return ok;
 }
 
-static int dasync_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
-                                   const int **nids, int nid)
+static int dasync_ciphers(ossl_unused ENGINE *unused__e,
+                          const EVP_CIPHER **cipher,
+                          const int **nids, int nid)
 {
     int ok = 1;
     if (cipher == NULL) {
@@ -440,7 +443,8 @@ static int dasync_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
     return ok;
 }
 
-static void wait_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
+static void wait_cleanup(ossl_unused ASYNC_WAIT_CTX *unused__ctx,
+                         ossl_unused const void *unused__key,
                          OSSL_ASYNC_FD readfd, void *pvwritefd)
 {
     OSSL_ASYNC_FD *pwritefd = (OSSL_ASYNC_FD *)pvwritefd;

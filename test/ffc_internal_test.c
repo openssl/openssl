@@ -566,7 +566,7 @@ err:
     return ret;
 }
 
-static int ffc_private_gen_test(int index)
+static int ffc_private_gen_test(ossl_unused int unused__index)
 {
     int ret = 0, res = -1, N;
     FFC_PARAMS *params;

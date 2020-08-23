@@ -100,7 +100,7 @@ int ec_GF2m_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 /* Set the curve parameters of an EC_GROUP structure. */
 int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
                                    const BIGNUM *p, const BIGNUM *a,
-                                   const BIGNUM *b, BN_CTX *ctx)
+                                   const BIGNUM *b, ossl_unused BN_CTX *unused__ctx)
 {
     int ret = 0, i;
 
@@ -139,7 +139,7 @@ int ec_GF2m_simple_group_set_curve(EC_GROUP *group,
  * then there values will not be set but the method will return with success.
  */
 int ec_GF2m_simple_group_get_curve(const EC_GROUP *group, BIGNUM *p,
-                                   BIGNUM *a, BIGNUM *b, BN_CTX *ctx)
+                                   BIGNUM *a, BIGNUM *b, ossl_unused BN_CTX *unused__ctx)
 {
     int ret = 0;
 
@@ -274,7 +274,7 @@ int ec_GF2m_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
  * Set an EC_POINT to the point at infinity. A point at infinity is
  * represented by having Z=0.
  */
-int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
+int ec_GF2m_simple_point_set_to_infinity(ossl_unused const EC_GROUP *unused__group,
                                          EC_POINT *point)
 {
     point->Z_is_one = 0;
@@ -286,10 +286,11 @@ int ec_GF2m_simple_point_set_to_infinity(const EC_GROUP *group,
  * Set the coordinates of an EC_POINT using affine coordinates. Note that
  * the simple implementation only uses affine coordinates.
  */
-int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
+int ec_GF2m_simple_point_set_affine_coordinates(ossl_unused const EC_GROUP *unused__group,
                                                 EC_POINT *point,
                                                 const BIGNUM *x,
-                                                const BIGNUM *y, BN_CTX *ctx)
+                                                const BIGNUM *y,
+                                                ossl_unused BN_CTX *unused__ctx)
 {
     int ret = 0;
     if (x == NULL || y == NULL) {
@@ -321,7 +322,7 @@ int ec_GF2m_simple_point_set_affine_coordinates(const EC_GROUP *group,
 int ec_GF2m_simple_point_get_affine_coordinates(const EC_GROUP *group,
                                                 const EC_POINT *point,
                                                 BIGNUM *x, BIGNUM *y,
-                                                BN_CTX *ctx)
+                                                ossl_unused BN_CTX *unused__ctx)
 {
     int ret = 0;
 
@@ -496,7 +497,7 @@ int ec_GF2m_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
 }
 
 /* Indicates whether the given point is the point at infinity. */
-int ec_GF2m_simple_is_at_infinity(const EC_GROUP *group,
+int ec_GF2m_simple_is_at_infinity(ossl_unused const EC_GROUP *unused__group,
                                   const EC_POINT *point)
 {
     return BN_is_zero(point->Z);

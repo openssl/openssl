@@ -31,6 +31,6 @@ typedef struct async_fibre_st {
 # define async_fibre_free(f)             (DeleteFiber((f)->fibre))
 
 int async_fibre_init_dispatcher(async_fibre *fibre);
-VOID CALLBACK async_start_func_win(PVOID unused);
+VOID CALLBACK async_start_func_win(PVOID unused__arg);
 
 #endif

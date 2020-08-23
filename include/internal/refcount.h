@@ -30,7 +30,7 @@
 
 typedef _Atomic int CRYPTO_REF_COUNT;
 
-static inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, void *lock)
+static inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, ossl_unused void *lock)
 {
     *ret = atomic_fetch_add_explicit(val, 1, memory_order_relaxed) + 1;
     return 1;
@@ -46,7 +46,7 @@ static inline int CRYPTO_UP_REF(_Atomic int *val, int *ret, void *lock)
  * to mutable members doesn't have to be serialized anymore, which would
  * otherwise imply an acquire fence. Hence conditional acquire fence...
  */
-static inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, void *lock)
+static inline int CRYPTO_DOWN_REF(_Atomic int *val, int *ret, ossl_unused void *lock)
 {
     *ret = atomic_fetch_sub_explicit(val, 1, memory_order_relaxed) - 1;
     if (*ret == 0)

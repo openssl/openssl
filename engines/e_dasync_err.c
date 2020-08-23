@@ -47,7 +47,7 @@ static void ERR_unload_DASYNC_strings(void)
     }
 }
 
-static void ERR_DASYNC_error(int function, int reason, char *file, int line)
+static void ERR_DASYNC_error(ossl_unused int unused__function, int reason, char *file, int line)
 {
     if (lib_code == 0)
         lib_code = ERR_get_next_error_library();

@@ -38,7 +38,7 @@ DEFINE_STACK_OF(OSSL_CRMF_CERTID)
 static int unprotected_exception(const OSSL_CMP_CTX *ctx,
                                  const OSSL_CMP_MSG *rep,
                                  int invalid_protection,
-                                 int expected_type /* ignored here */)
+                                 ossl_unused int expected_type /* ignored here */)
 {
     int rcvd_type = ossl_cmp_msg_get_bodytype(rep /* may be NULL */);
     const char *msg_type = NULL;
@@ -484,10 +484,9 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
  * an EE must be able to validate the certificates it gets enrolled.
  */
 int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
-                         const char **text)
+                         ossl_unused const char **unused__text)
 {
     X509_STORE *out_trusted = OSSL_CMP_CTX_get_certConf_cb_arg(ctx);
-    (void)text; /* make (artificial) use of var to prevent compiler warning */
 
     if (fail_info != 0) /* accept any error flagged by CMP core library */
         return fail_info;
@@ -508,7 +507,7 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
  */
 static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                          OSSL_CMP_MSG **resp, int *checkAfter,
-                         int req_type, int expected_type)
+                         ossl_unused int unused__req_type, ossl_unused int unused__expected_type)
 {
     EVP_PKEY *rkey = OSSL_CMP_CTX_get0_newPkey(ctx /* may be NULL */, 0);
     int fail_info = 0; /* no failure */

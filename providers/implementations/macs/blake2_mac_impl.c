@@ -40,7 +40,7 @@ struct blake2_mac_data_st {
 
 static size_t blake2_mac_size(void *vmacctx);
 
-static void *blake2_mac_new(void *unused_provctx)
+static void *blake2_mac_new(ossl_unused void *unused__provctx)
 {
     struct blake2_mac_data_st *macctx = OPENSSL_zalloc(sizeof(*macctx));
 
@@ -97,7 +97,7 @@ static int blake2_mac_update(void *vmacctx,
 
 static int blake2_mac_final(void *vmacctx,
                             unsigned char *out, size_t *outl,
-                            size_t outsize)
+                            ossl_unused size_t unused__outsize)
 {
     struct blake2_mac_data_st *macctx = vmacctx;
 
@@ -109,7 +109,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *blake2_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *blake2_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -131,7 +131,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_SALT, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *blake2_mac_settable_ctx_params(ossl_unused void *p_ctx)
+static const OSSL_PARAM *blake2_mac_settable_ctx_params(ossl_unused void *unused__p_ctx)
 {
     return known_settable_ctx_params;
 }

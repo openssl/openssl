@@ -311,7 +311,7 @@ ASN1_OBJECT *X509_ATTRIBUTE_get0_object(X509_ATTRIBUTE *attr)
 }
 
 void *X509_ATTRIBUTE_get0_data(X509_ATTRIBUTE *attr, int idx,
-                               int atrtype, void *data)
+                               int atrtype, ossl_unused void *unused__data)
 {
     ASN1_TYPE *ttmp;
     ttmp = X509_ATTRIBUTE_get0_type(attr, idx);

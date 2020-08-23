@@ -347,7 +347,7 @@ static const OSSL_PARAM dh_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dh_gettable_params(void *provctx)
+static const OSSL_PARAM *dh_gettable_params(ossl_unused void *unused__provctx)
 {
     return dh_params;
 }
@@ -357,7 +357,7 @@ static const OSSL_PARAM dh_known_settable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dh_settable_params(void *provctx)
+static const OSSL_PARAM *dh_settable_params(ossl_unused void *unused__provctx)
 {
     return dh_known_settable_params;
 }
@@ -548,7 +548,7 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *dh_gen_settable_params(void *provctx)
+static const OSSL_PARAM *dh_gen_settable_params(ossl_unused void *unused__provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
@@ -722,7 +722,7 @@ const OSSL_DISPATCH dh_keymgmt_functions[] = {
 };
 
 /* For any DH key, we use the "DH" algorithms regardless of sub-type. */
-static const char *dhx_query_operation_name(int operation_id)
+static const char *dhx_query_operation_name(ossl_unused int unused__operation_id)
 {
     return "DH";
 }

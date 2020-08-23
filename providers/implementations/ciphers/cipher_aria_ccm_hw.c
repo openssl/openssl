@@ -34,7 +34,7 @@ static const PROV_CCM_HW ccm_aria = {
     ccm_generic_auth_decrypt,
     ccm_generic_gettag
 };
-const PROV_CCM_HW *PROV_ARIA_HW_ccm(size_t keybits)
+const PROV_CCM_HW *PROV_ARIA_HW_ccm(ossl_unused size_t unused__keybits)
 {
     return &ccm_aria;
 }

@@ -148,7 +148,7 @@ int DSA_SIG_set0(DSA_SIG *sig, BIGNUM *r, BIGNUM *s)
     return 1;
 }
 
-int dsa_sign_int(int type, const unsigned char *dgst,
+int dsa_sign_int(ossl_unused int unused__type, const unsigned char *dgst,
                  int dlen, unsigned char *sig, unsigned int *siglen, DSA *dsa)
 {
     DSA_SIG *s;
@@ -180,7 +180,7 @@ int DSA_sign(int type, const unsigned char *dgst, int dlen,
  *      0: incorrect signature
  *     -1: error
  */
-int DSA_verify(int type, const unsigned char *dgst, int dgst_len,
+int DSA_verify(ossl_unused int unused__type, const unsigned char *dgst, int dgst_len,
                const unsigned char *sigbuf, int siglen, DSA *dsa)
 {
     DSA_SIG *s;

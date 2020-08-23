@@ -119,7 +119,7 @@ static int test_mod_exp_zero(void)
     return ret;
 }
 
-static int test_mod_exp(int round)
+static int test_mod_exp(ossl_unused int unused__round)
 {
     BN_CTX *ctx;
     unsigned char c;

@@ -72,7 +72,7 @@ static size_t poly1305_size(void)
     return POLY1305_DIGEST_SIZE;
 }
 
-static int poly1305_init(void *vmacctx)
+static int poly1305_init(ossl_unused void *unused__vmacctx)
 {
     /* initialize the context in MAC_ctrl function */
     return 1;
@@ -89,7 +89,7 @@ static int poly1305_update(void *vmacctx, const unsigned char *data,
 }
 
 static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
-                          size_t outsize)
+                          ossl_unused size_t unused__outsize)
 {
     struct poly1305_data_st *ctx = vmacctx;
 
@@ -102,7 +102,7 @@ static const OSSL_PARAM known_gettable_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *poly1305_gettable_params(void *provctx)
+static const OSSL_PARAM *poly1305_gettable_params(ossl_unused void *unused__provctx)
 {
     return known_gettable_params;
 }
@@ -121,7 +121,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *poly1305_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_settable_ctx_params;
 }

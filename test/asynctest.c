@@ -19,14 +19,14 @@
 static int ctr = 0;
 static ASYNC_JOB *currjob = NULL;
 
-static int only_pause(void *args)
+static int only_pause(ossl_unused void *unused__args)
 {
     ASYNC_pause_job();
 
     return 1;
 }
 
-static int add_two(void *args)
+static int add_two(ossl_unused void *unused__args)
 {
     ctr++;
     ASYNC_pause_job();
@@ -35,7 +35,7 @@ static int add_two(void *args)
     return 2;
 }
 
-static int save_current(void *args)
+static int save_current(ossl_unused void *unused__args)
 {
     currjob = ASYNC_get_current_job();
     ASYNC_pause_job();
@@ -43,7 +43,7 @@ static int save_current(void *args)
     return 1;
 }
 
-static int change_deflt_libctx(void *args)
+static int change_deflt_libctx(ossl_unused void *unused__args)
 {
     OPENSSL_CTX *libctx = OPENSSL_CTX_new();
     OPENSSL_CTX *oldctx, *tmpctx;
@@ -77,7 +77,7 @@ static int change_deflt_libctx(void *args)
 
 
 #define MAGIC_WAIT_FD   ((OSSL_ASYNC_FD)99)
-static int waitfd(void *args)
+static int waitfd(ossl_unused void *unused__args)
 {
     ASYNC_JOB *job;
     ASYNC_WAIT_CTX *waitctx;
@@ -110,7 +110,7 @@ static int waitfd(void *args)
     return 1;
 }
 
-static int blockpause(void *args)
+static int blockpause(ossl_unused void *unused__args)
 {
     ASYNC_block_pause();
     ASYNC_pause_job();
@@ -156,7 +156,7 @@ static int test_ASYNC_init_thread(void)
     return 1;
 }
 
-static int test_callback(void *arg)
+static int test_callback(ossl_unused void *unused__arg)
 {
     printf("callback test pass\n");
     return 1;
@@ -413,7 +413,7 @@ static int test_ASYNC_start_job_with_libctx(void)
     return ret;
 }
 
-int main(int argc, char **argv)
+int main(ossl_unused int unused__argc, ossl_unused char **unused__argv)
 {
     if (!ASYNC_is_capable()) {
         fprintf(stderr,

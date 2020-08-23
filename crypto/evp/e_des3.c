@@ -224,7 +224,7 @@ BLOCK_CIPHER_defs(des_ede, DES_EDE_KEY, NID_des_ede, 8, 16, 8, 64,
                      des_ede3_init_key, NULL, NULL, NULL, des3_ctrl)
 
 static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            ossl_unused const unsigned char *unused__iv, int enc)
 {
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
@@ -243,6 +243,8 @@ static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             return 1;
         }
     }
+#else
+    (void)enc; /* silence -Wunused-parameter */
 # endif
     DES_set_key_unchecked(&deskey[0], &dat->ks1);
     DES_set_key_unchecked(&deskey[1], &dat->ks2);
@@ -251,7 +253,8 @@ static int des_ede_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 }
 
 static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             ossl_unused const unsigned char *unused__iv,
+                             int enc)
 {
     DES_cblock *deskey = (DES_cblock *)key;
     DES_EDE_KEY *dat = data(ctx);
@@ -270,6 +273,8 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
             return 1;
         }
     }
+#else
+    (void)enc; /* silence -Wunused-parameter */
 # endif
     DES_set_key_unchecked(&deskey[0], &dat->ks1);
     DES_set_key_unchecked(&deskey[1], &dat->ks2);
@@ -277,7 +282,7 @@ static int des_ede3_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
+static int des3_ctrl(EVP_CIPHER_CTX *ctx, int type, ossl_unused int unused__arg, void *ptr)
 {
 
     DES_cblock *deskey = ptr;

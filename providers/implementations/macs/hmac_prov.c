@@ -123,7 +123,7 @@ static int hmac_update(void *vmacctx, const unsigned char *data,
 }
 
 static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
-                      size_t outsize)
+                      ossl_unused size_t unused__outsize)
 {
     unsigned int hlen;
     struct hmac_data_st *macctx = vmacctx;
@@ -138,7 +138,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *hmac_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *hmac_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -160,7 +160,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_int(OSSL_MAC_PARAM_FLAGS, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *hmac_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_settable_ctx_params;
 }

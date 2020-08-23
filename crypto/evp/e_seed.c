@@ -34,7 +34,8 @@ IMPLEMENT_BLOCK_CIPHER(seed, ks, SEED, EVP_SEED_KEY, NID_seed,
                        seed_init_key, 0, 0, 0, 0)
 
 static int seed_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                         const unsigned char *iv, int enc)
+                         ossl_unused const unsigned char *unused__iv,
+                         ossl_unused int unused__enc)
 {
     SEED_set_key(key, &EVP_C_DATA(EVP_SEED_KEY,ctx)->ks);
     return 1;

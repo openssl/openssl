@@ -200,7 +200,7 @@ static int close_console(UI *ui);
  * The following function makes sure that info and error strings are printed
  * before any prompt.
  */
-static int write_string(UI *ui, UI_STRING *uis)
+static int write_string(ossl_unused UI *unused__ui, UI_STRING *uis)
 {
     switch (UI_get_string_type(uis)) {
     case UIT_ERROR:
@@ -487,7 +487,7 @@ static int open_console(UI *ui)
     return 1;
 }
 
-static int noecho_console(UI *ui)
+static int noecho_console(ossl_unused UI *unused__ui)
 {
 # ifdef TTY_FLAGS
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));
@@ -529,7 +529,7 @@ static int noecho_console(UI *ui)
     return 1;
 }
 
-static int echo_console(UI *ui)
+static int echo_console(ossl_unused UI *unused__ui)
 {
 # if defined(TTY_set) && !defined(OPENSSL_SYS_VMS)
     memcpy(&(tty_new), &(tty_orig), sizeof(tty_orig));

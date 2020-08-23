@@ -108,7 +108,8 @@ static int rsa_init(void *vprsactx, void *vrsa)
 }
 
 static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
-                       size_t outsize, const unsigned char *in, size_t inlen)
+                       ossl_unused size_t unused__outsize,
+                       const unsigned char *in, size_t inlen)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
@@ -382,7 +383,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *rsa_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -526,7 +527,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *rsa_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *rsa_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_settable_ctx_params;
 }

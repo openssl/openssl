@@ -211,7 +211,9 @@ static X509_ALGOR *pkcs5_scrypt_set(const unsigned char *salt, size_t saltlen,
 
 int PKCS5_v2_scrypt_keyivgen(EVP_CIPHER_CTX *ctx, const char *pass,
                              int passlen, ASN1_TYPE *param,
-                             const EVP_CIPHER *c, const EVP_MD *md, int en_de)
+                             ossl_unused const EVP_CIPHER *unused__c,
+                             ossl_unused const EVP_MD *unused__md,
+                             int en_de)
 {
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
     uint64_t p, r, N;

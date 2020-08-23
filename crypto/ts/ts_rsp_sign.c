@@ -43,7 +43,7 @@ static ASN1_GENERALIZEDTIME
                                     unsigned);
 
 /* Default callback for response generation. */
-static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
+static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, ossl_unused void *unused__data)
 {
     ASN1_INTEGER *serial = ASN1_INTEGER_new();
 
@@ -63,7 +63,7 @@ static ASN1_INTEGER *def_serial_cb(struct TS_resp_ctx *ctx, void *data)
 
 #if defined(OPENSSL_SYS_UNIX)
 
-static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
+static int def_time_cb(struct TS_resp_ctx *ctx, ossl_unused void *unused__data,
                        long *sec, long *usec)
 {
     struct timeval tv;
@@ -101,8 +101,9 @@ static int def_time_cb(struct TS_resp_ctx *ctx, void *data,
 
 #endif
 
-static int def_extension_cb(struct TS_resp_ctx *ctx, X509_EXTENSION *ext,
-                            void *data)
+static int def_extension_cb(struct TS_resp_ctx *ctx,
+                            ossl_unused X509_EXTENSION *unused__ext,
+                            ossl_unused void *unused__data)
 {
     TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
                                 "Unsupported extension.");

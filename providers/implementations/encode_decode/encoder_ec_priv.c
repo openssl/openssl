@@ -213,7 +213,7 @@ static void *ec_print_newctx(void *provctx)
     return provctx;
 }
 
-static void ec_print_freectx(void *ctx)
+static void ec_print_freectx(ossl_unused void *unused__ctx)
 {
 }
 
@@ -242,7 +242,8 @@ static int ec_priv_print_data(void *vctx, const OSSL_PARAM params[],
 }
 
 static int ec_priv_print(void *ctx, void *eckey, OSSL_CORE_BIO *cout,
-                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                         ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                         ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;

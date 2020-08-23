@@ -24,16 +24,16 @@ static int cipher_hw_blowfish_initkey(PROV_CIPHER_CTX *ctx,
     return 1;
 }
 
-# define PROV_CIPHER_HW_blowfish_mode(mode, UCMODE)                            \
-IMPLEMENT_CIPHER_HW_##UCMODE(mode, blowfish, PROV_BLOWFISH_CTX, BF_KEY,        \
-                             BF_##mode)                                        \
-static const PROV_CIPHER_HW bf_##mode = {                                      \
-    cipher_hw_blowfish_initkey,                                                \
-    cipher_hw_blowfish_##mode##_cipher                                         \
-};                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_blowfish_##mode(size_t keybits)           \
-{                                                                              \
-    return &bf_##mode;                                                         \
+# define PROV_CIPHER_HW_blowfish_mode(mode, UCMODE)                              \
+IMPLEMENT_CIPHER_HW_##UCMODE(mode, blowfish, PROV_BLOWFISH_CTX, BF_KEY,          \
+                             BF_##mode)                                          \
+static const PROV_CIPHER_HW bf_##mode = {                                        \
+    cipher_hw_blowfish_initkey,                                                  \
+    cipher_hw_blowfish_##mode##_cipher                                           \
+};                                                                               \
+const PROV_CIPHER_HW *PROV_CIPHER_HW_blowfish_##mode(ossl_unused size_t unused__keybits) \
+{                                                                                \
+    return &bf_##mode;                                                           \
 }
 
 PROV_CIPHER_HW_blowfish_mode(cbc, CBC)

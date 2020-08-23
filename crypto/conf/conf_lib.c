@@ -281,12 +281,12 @@ char *NCONF_get_string(const CONF *conf, const char *group, const char *name)
     return NULL;
 }
 
-static int default_is_number(const CONF *conf, char c)
+static int default_is_number(ossl_unused const CONF *unused__conf, char c)
 {
     return ossl_isdigit(c);
 }
 
-static int default_to_int(const CONF *conf, char c)
+static int default_to_int(ossl_unused const CONF *unused__conf, char c)
 {
     return (int)(c - '0');
 }

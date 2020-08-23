@@ -969,7 +969,7 @@ int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain, int ref)
 
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
-                                         void *ex)
+                                         ossl_unused void *unused__ex)
 {
     int level, minbits;
     static const int minbits_table[5] = { 80, 112, 128, 192, 256 };

@@ -35,7 +35,8 @@ typedef struct {
 
 static int chacha_init_key(EVP_CIPHER_CTX *ctx,
                            const unsigned char user_key[CHACHA_KEY_SIZE],
-                           const unsigned char iv[CHACHA_CTR_SIZE], int enc)
+                           const unsigned char iv[CHACHA_CTR_SIZE],
+                           ossl_unused int unused__enc)
 {
     EVP_CHACHA_KEY *key = data(ctx);
     unsigned int i;

@@ -64,7 +64,8 @@ struct pwdata_st {
 };
 
 pem_password_cb pw_pem_password_to_ossl_passhrase;
-int pw_pem_password_to_ossl_passhrase(char *buf, int size, int rwflag,
+int pw_pem_password_to_ossl_passhrase(char *buf, int size,
+                                      ossl_unused int unused__rwflag,
                                       void *userdata)
 {
     struct pwdata_st *data = userdata;

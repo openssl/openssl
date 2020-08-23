@@ -40,7 +40,7 @@ typedef struct {
     ECX_KEY *peerkey;
 } PROV_ECX_CTX;
 
-static void *ecx_newctx(void *provctx, size_t keylen)
+static void *ecx_newctx(ossl_unused void *unused__provctx, size_t keylen)
 {
     PROV_ECX_CTX *ctx = OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
 

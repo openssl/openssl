@@ -14,8 +14,8 @@
 #include "crypto/x509.h"
 
 /* Minor tweak to operation: zero private key data */
-static int pkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                   void *exarg)
+static int pkey_cb(int operation, ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it,
+                   ossl_unused void *unused__exarg)
 {
     /* Since the structure must still be valid use ASN1_OP_FREE_PRE */
     if (operation == ASN1_OP_FREE_PRE) {

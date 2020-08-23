@@ -14,7 +14,7 @@ DEFINE_STACK_OF(void)
 
 static DSO_METHOD *default_DSO_meth = NULL;
 
-static DSO *DSO_new_method(DSO_METHOD *meth)
+static DSO *DSO_new_method(ossl_unused DSO_METHOD *unused__meth)
 {
     DSO *ret;
 

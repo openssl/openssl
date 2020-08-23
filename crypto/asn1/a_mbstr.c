@@ -244,7 +244,7 @@ static int traverse_string(const unsigned char *p, int len, int inform,
 
 /* Just count number of characters */
 
-static int in_utf8(unsigned long value, void *arg)
+static int in_utf8(ossl_unused unsigned long unused__value, void *arg)
 {
     int *nchar;
     nchar = arg;

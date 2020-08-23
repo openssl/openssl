@@ -174,7 +174,7 @@ static int provider_conf_init(CONF_IMODULE *md, const CONF *cnf)
 }
 
 
-static void provider_conf_deinit(CONF_IMODULE *md)
+static void provider_conf_deinit(ossl_unused CONF_IMODULE *unused__md)
 {
     sk_OSSL_PROVIDER_pop_free(activated_providers, ossl_provider_free);
     activated_providers = NULL;

@@ -35,7 +35,8 @@ int RSA_padding_add_none(unsigned char *to, int tlen,
 }
 
 int RSA_padding_check_none(unsigned char *to, int tlen,
-                           const unsigned char *from, int flen, int num)
+                           const unsigned char *from, int flen,
+                           ossl_unused int unused__num)
 {
 
     if (flen > tlen) {

@@ -130,7 +130,7 @@ static const PROV_CIPHER_HW_AES_SIV aes_siv_hw =
     aes_siv_dupctx,
 };
 
-const PROV_CIPHER_HW_AES_SIV *PROV_CIPHER_HW_aes_siv(size_t keybits)
+const PROV_CIPHER_HW_AES_SIV *PROV_CIPHER_HW_aes_siv(ossl_unused size_t unused__keybits)
 {
     return &aes_siv_hw;
 }

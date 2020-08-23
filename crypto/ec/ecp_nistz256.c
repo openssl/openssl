@@ -936,9 +936,10 @@ __owur static int ecp_nistz256_mult_precompute(EC_GROUP *group, BN_CTX *ctx)
     return ret;
 }
 
-__owur static int ecp_nistz256_set_from_affine(EC_POINT *out, const EC_GROUP *group,
+__owur static int ecp_nistz256_set_from_affine(EC_POINT *out,
+                                               ossl_unused const EC_GROUP *unused__group,
                                                const P256_POINT_AFFINE *in,
-                                               BN_CTX *ctx)
+                                               ossl_unused BN_CTX *unused__ctx)
 {
     int ret = 0;
 
@@ -1176,7 +1177,8 @@ err:
 
 __owur static int ecp_nistz256_get_affine(const EC_GROUP *group,
                                           const EC_POINT *point,
-                                          BIGNUM *x, BIGNUM *y, BN_CTX *ctx)
+                                          BIGNUM *x, BIGNUM *y,
+                                          ossl_unused BN_CTX *unused__ctx)
 {
     BN_ULONG z_inv2[P256_LIMBS];
     BN_ULONG z_inv3[P256_LIMBS];

@@ -34,8 +34,9 @@ DEFINE_STACK_OF(X509_ATTRIBUTE)
  *
  */
 
-static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                   void *exarg)
+static int rinf_cb(int operation, ASN1_VALUE **pval,
+                   ossl_unused const ASN1_ITEM *unused__it,
+                   ossl_unused void *unused__exarg)
 {
     X509_REQ_INFO *rinf = (X509_REQ_INFO *)*pval;
 
@@ -47,8 +48,9 @@ static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     return 1;
 }
 
-static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int req_cb(int operation, ASN1_VALUE **pval,
+                  ossl_unused const ASN1_ITEM *unused__it,
+                  ossl_unused void *unused__exarg)
 {
 #ifndef OPENSSL_NO_SM2
     X509_REQ *ret = (X509_REQ *)*pval;

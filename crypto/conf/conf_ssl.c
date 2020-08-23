@@ -40,7 +40,7 @@ struct ssl_conf_cmd_st {
 static struct ssl_conf_name_st *ssl_names;
 static size_t ssl_names_count;
 
-static void ssl_module_free(CONF_IMODULE *md)
+static void ssl_module_free(ossl_unused CONF_IMODULE *unused__md)
 {
     size_t i, j;
     if (ssl_names == NULL)

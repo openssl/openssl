@@ -26,8 +26,10 @@ static int gbl_result;
  * Apps explicitly set/get ex_data as needed
  */
 
-static void exnew(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-          int idx, long argl, void *argp)
+static void exnew(ossl_unused void *unused__parent,
+                  void *ptr,
+                  ossl_unused CRYPTO_EX_DATA *unused__ad,
+                  int idx, long argl, void *argp)
 {
     if (!TEST_int_eq(idx, saved_idx)
         || !TEST_long_eq(argl, saved_argl)
@@ -36,8 +38,9 @@ static void exnew(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
         gbl_result = 0;
 }
 
-static int exdup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-          void **from_d, int idx, long argl, void *argp)
+static int exdup(ossl_unused CRYPTO_EX_DATA *unused__to,
+                 ossl_unused const CRYPTO_EX_DATA *unused__from,
+                 void **from_d, int idx, long argl, void *argp)
 {
     if (!TEST_int_eq(idx, saved_idx)
         || !TEST_long_eq(argl, saved_argl)
@@ -47,8 +50,10 @@ static int exdup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
     return 1;
 }
 
-static void exfree(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-            int idx, long argl, void *argp)
+static void exfree(ossl_unused void *unused__parent,
+                   ossl_unused void *unused__ptr,
+                   ossl_unused CRYPTO_EX_DATA *unused__ad,
+                   int idx, long argl, void *argp)
 {
     if (!TEST_int_eq(idx, saved_idx)
         || !TEST_long_eq(argl, saved_argl)
@@ -68,8 +73,9 @@ typedef struct myobj_ex_data_st {
     int dup;
 } MYOBJ_EX_DATA;
 
-static void exnew2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-          int idx, long argl, void *argp)
+static void exnew2(ossl_unused void *unused__parent,
+                   void *ptr, CRYPTO_EX_DATA *ad,
+                   int idx, long argl, void *argp)
 {
     MYOBJ_EX_DATA *ex_data = OPENSSL_zalloc(sizeof(*ex_data));
 
@@ -86,8 +92,9 @@ static void exnew2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
     }
 }
 
-static int exdup2(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-          void **from_d, int idx, long argl, void *argp)
+static int exdup2(CRYPTO_EX_DATA *to,
+                  ossl_unused const CRYPTO_EX_DATA *unused__from,
+                  void **from_d, int idx, long argl, void *argp)
 {
     MYOBJ_EX_DATA **update_ex_data = (MYOBJ_EX_DATA**)from_d;
     MYOBJ_EX_DATA *ex_data = NULL;
@@ -111,8 +118,10 @@ static int exdup2(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
     return 1;
 }
 
-static void exfree2(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-            int idx, long argl, void *argp)
+static void exfree2(ossl_unused void *unused__parent,
+                    ossl_unused void *unused__ptr,
+                    CRYPTO_EX_DATA *ad,
+                    int idx, long argl, void *argp)
 {
     MYOBJ_EX_DATA *ex_data = CRYPTO_get_ex_data(ad, idx);
 

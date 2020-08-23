@@ -91,7 +91,7 @@ static int run_pipe(void)
     return 1;
 }
 
-static int setup_bio_chain(const char *progname)
+static int setup_bio_chain(ossl_unused const char *unused__progname)
 {
     BIO *next = NULL;
     size_t n = amount;

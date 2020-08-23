@@ -354,7 +354,7 @@ static int dh_security_bits(const EVP_PKEY *pkey)
     return DH_security_bits(pkey->pkey.dh);
 }
 
-static int dh_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
+static int dh_cmp_parameters(const EVP_PKEY *a, ossl_unused const EVP_PKEY *unused__b)
 {
     return ffc_params_cmp(&a->pkey.dh->params, &a->pkey.dh->params,
                           a->ameth != &dhx_asn1_meth);
@@ -414,19 +414,19 @@ static int dh_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 }
 
 static int dh_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          ossl_unused ASN1_PCTX *unused__ctx)
 {
     return do_dh_print(bp, pkey->pkey.dh, indent, 0);
 }
 
 static int dh_public_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                           ASN1_PCTX *ctx)
+                           ossl_unused ASN1_PCTX *unused__ctx)
 {
     return do_dh_print(bp, pkey->pkey.dh, indent, 1);
 }
 
 static int dh_private_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                            ASN1_PCTX *ctx)
+                            ossl_unused ASN1_PCTX *unused__ctx)
 {
     return do_dh_print(bp, pkey->pkey.dh, indent, 2);
 }
@@ -453,7 +453,7 @@ static int dh_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
     }
 }
 
-static int dhx_pkey_ctrl(EVP_PKEY *pkey, int op, long arg1, void *arg2)
+static int dhx_pkey_ctrl(ossl_unused EVP_PKEY *unused__pkey, int op, long arg1, void *arg2)
 {
     switch (op) {
 #ifndef OPENSSL_NO_CMS
@@ -500,8 +500,9 @@ static size_t dh_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dh_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                             EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
-                             const char *propq)
+                             EVP_KEYMGMT *to_keymgmt,
+                             ossl_unused OPENSSL_CTX *unused__libctx,
+                             ossl_unused const char *unused__propq)
 {
     DH *dh = from->pkey.dh;
     OSSL_PARAM_BLD *tmpl;

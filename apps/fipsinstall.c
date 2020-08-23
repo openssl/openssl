@@ -486,7 +486,7 @@ cleanup:
     return ret;
 }
 
-static int self_test_events(const OSSL_PARAM params[], void *arg)
+static int self_test_events(const OSSL_PARAM params[], ossl_unused void *unused__arg)
 {
     const OSSL_PARAM *p = NULL;
     const char *phase = NULL, *type = NULL, *desc = NULL;

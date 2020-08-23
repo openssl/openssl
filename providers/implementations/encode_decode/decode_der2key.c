@@ -72,7 +72,7 @@ static void der2key_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
-static const OSSL_PARAM *der2key_gettable_params(void *provctx)
+static const OSSL_PARAM *der2key_gettable_params(ossl_unused void *unused__provctx)
 {
     static const OSSL_PARAM gettables[] = {
         { OSSL_DECODER_PARAM_INPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },

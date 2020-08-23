@@ -22,7 +22,7 @@ DEFINE_STACK_OF(X509_ALGOR)
 DEFINE_STACK_OF(PKCS7_RECIP_INFO)
 DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
 
-long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
+long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, ossl_unused char *unused__parg)
 {
     int nid;
     long ret;

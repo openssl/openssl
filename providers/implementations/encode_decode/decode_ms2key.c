@@ -151,7 +151,8 @@ static int ms2key_post(struct ms2key_ctx_st *ctx, EVP_PKEY *pkey,
 
 static int msblob2key_decode(void *vctx, OSSL_CORE_BIO *cin,
                              OSSL_CALLBACK *data_cb, void *data_cbarg,
-                             OSSL_PASSPHRASE_CALLBACK *pw_cb, void *pw_cbarg)
+                             ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__pw_cb,
+                             ossl_unused void *unused__pw_cbarg)
 {
     struct ms2key_ctx_st *ctx = vctx;
     int ispub = -1;

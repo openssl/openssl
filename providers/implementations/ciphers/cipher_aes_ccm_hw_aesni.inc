@@ -32,7 +32,7 @@ static const PROV_CCM_HW aesni_ccm = {
     ccm_generic_gettag
 };
 
-const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keybits)
+const PROV_CCM_HW *PROV_AES_HW_ccm(ossl_unused size_t keybits)
 {
     return AESNI_CAPABLE ? &aesni_ccm : &aes_ccm;
 }

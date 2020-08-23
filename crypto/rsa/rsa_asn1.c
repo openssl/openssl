@@ -25,8 +25,9 @@
  * and calculate helper products for multi-prime
  * RSA keys.
  */
-static int rsa_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                  void *exarg)
+static int rsa_cb(int operation, ASN1_VALUE **pval,
+                  ossl_unused const ASN1_ITEM *unused__it,
+                  ossl_unused void *unused__exarg)
 {
     if (operation == ASN1_OP_NEW_PRE) {
         *pval = (ASN1_VALUE *)RSA_new();
@@ -74,8 +75,9 @@ ASN1_SEQUENCE_cb(RSAPublicKey, rsa_cb) = {
 } ASN1_SEQUENCE_END_cb(RSA, RSAPublicKey)
 
 /* Free up maskHash */
-static int rsa_pss_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      void *exarg)
+static int rsa_pss_cb(int operation, ASN1_VALUE **pval,
+                      ossl_unused const ASN1_ITEM *unused__it,
+                      ossl_unused void *unused__exarg)
 {
     if (operation == ASN1_OP_FREE_PRE) {
         RSA_PSS_PARAMS *pss = (RSA_PSS_PARAMS *)*pval;
@@ -94,8 +96,9 @@ ASN1_SEQUENCE_cb(RSA_PSS_PARAMS, rsa_pss_cb) = {
 IMPLEMENT_ASN1_FUNCTIONS(RSA_PSS_PARAMS)
 
 /* Free up maskHash */
-static int rsa_oaep_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                       void *exarg)
+static int rsa_oaep_cb(int operation, ASN1_VALUE **pval,
+                       ossl_unused const ASN1_ITEM *unused__it,
+                       ossl_unused void *unused__exarg)
 {
     if (operation == ASN1_OP_FREE_PRE) {
         RSA_OAEP_PARAMS *oaep = (RSA_OAEP_PARAMS *)*pval;

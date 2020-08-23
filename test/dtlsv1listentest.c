@@ -259,7 +259,7 @@ static tests testpackets[9] = {
 
 # define COOKIE_LEN  20
 
-static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
+static int cookie_gen(ossl_unused SSL *unused__ssl, unsigned char *cookie, unsigned int *cookie_len)
 {
     unsigned int i;
 
@@ -270,7 +270,7 @@ static int cookie_gen(SSL *ssl, unsigned char *cookie, unsigned int *cookie_len)
     return 1;
 }
 
-static int cookie_verify(SSL *ssl, const unsigned char *cookie,
+static int cookie_verify(ossl_unused SSL *unused__ssl, const unsigned char *cookie,
                          unsigned int cookie_len)
 {
     unsigned int i;

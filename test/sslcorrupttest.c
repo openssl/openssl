@@ -76,13 +76,15 @@ static long tls_corrupt_ctrl(BIO *bio, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int tls_corrupt_gets(BIO *bio, char *buf, int size)
+static int tls_corrupt_gets(ossl_unused BIO *unused__bio,
+                            ossl_unused char *unused__buf,
+                            ossl_unused int unused__size)
 {
     /* We don't support this - not needed anyway */
     return -1;
 }
 
-static int tls_corrupt_puts(BIO *bio, const char *str)
+static int tls_corrupt_puts(ossl_unused BIO *unused__bio, ossl_unused const char *unused__str)
 {
     /* We don't support this - not needed anyway */
     return -1;

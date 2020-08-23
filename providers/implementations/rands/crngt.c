@@ -95,7 +95,7 @@ static const OPENSSL_CTX_METHOD rand_crng_ossl_ctx_method = {
 size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
-                              int prediction_resistance)
+                              ossl_unused int unused__prediction_resistance)
 {
     unsigned char buf[CRNGT_BUFSIZ], md[EVP_MAX_MD_SIZE];
     unsigned int sz;
@@ -132,7 +132,7 @@ err:
     return r;
 }
 
-void prov_crngt_cleanup_entropy(PROV_DRBG *drbg,
+void prov_crngt_cleanup_entropy(ossl_unused PROV_DRBG *unused__drbg,
                                 unsigned char *out, size_t outlen)
 {
     OPENSSL_secure_clear_free(out, outlen);

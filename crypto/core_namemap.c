@@ -64,7 +64,7 @@ static void namenum_free(NAMENUM_ENTRY *n)
 
 /* OPENSSL_CTX_METHOD functions for a namemap stored in a library context */
 
-static void *stored_namemap_new(OPENSSL_CTX *libctx)
+static void *stored_namemap_new(ossl_unused OPENSSL_CTX *unused__libctx)
 {
     OSSL_NAMEMAP *namemap = ossl_namemap_new();
 

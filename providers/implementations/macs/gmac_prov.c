@@ -87,7 +87,7 @@ static void *gmac_dup(void *vsrc)
     return dst;
 }
 
-static int gmac_init(void *vmacctx)
+static int gmac_init(ossl_unused void *unused__vmacctx)
 {
     return 1;
 }
@@ -109,7 +109,7 @@ static int gmac_update(void *vmacctx, const unsigned char *data,
 }
 
 static int gmac_final(void *vmacctx, unsigned char *out, size_t *outl,
-                      size_t outsize)
+                      ossl_unused size_t unused__outsize)
 {
     struct gmac_data_st *macctx = vmacctx;
     int hlen = 0;
@@ -136,7 +136,7 @@ static const OSSL_PARAM known_gettable_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *gmac_gettable_params(void *provctx)
+static const OSSL_PARAM *gmac_gettable_params(ossl_unused void *unused__provctx)
 {
     return known_gettable_params;
 }
@@ -158,7 +158,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_IV, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *gmac_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *gmac_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_settable_ctx_params;
 }

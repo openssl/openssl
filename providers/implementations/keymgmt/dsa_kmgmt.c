@@ -295,7 +295,7 @@ static const OSSL_PARAM dsa_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_gettable_params(void *provctx)
+static const OSSL_PARAM *dsa_gettable_params(ossl_unused void *unused__provctx)
 {
     return dsa_params;
 }
@@ -454,7 +454,7 @@ static int dsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *dsa_gen_settable_params(void *provctx)
+static const OSSL_PARAM *dsa_gen_settable_params(ossl_unused void *unused__provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_FFC_TYPE, NULL, 0),

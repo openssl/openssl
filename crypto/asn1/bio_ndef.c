@@ -102,7 +102,7 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     return NULL;
 }
 
-static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+static int ndef_prefix(ossl_unused BIO *unused__b, unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;
@@ -131,7 +131,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
     return 1;
 }
 
-static int ndef_prefix_free(BIO *b, unsigned char **pbuf, int *plen,
+static int ndef_prefix_free(ossl_unused BIO *unused__b, unsigned char **pbuf, int *plen,
                             void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
@@ -160,7 +160,7 @@ static int ndef_suffix_free(BIO *b, unsigned char **pbuf, int *plen,
     return 1;
 }
 
-static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
+static int ndef_suffix(ossl_unused BIO *unused__b, unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;

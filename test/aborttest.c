@@ -9,7 +9,7 @@
 
 #include <openssl/crypto.h>
 
-int main(int argc, char **argv)
+int main(ossl_unused int unused__argc, ossl_unused char **unused__argv)
 {
     OPENSSL_die("Voluntary abort", __FILE__, __LINE__);
     return 0;

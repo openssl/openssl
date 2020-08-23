@@ -68,7 +68,7 @@ static int sha1_int_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     return sha1_ctrl(ctx != NULL ? EVP_MD_CTX_md_data(ctx) : NULL, cmd, p1, p2);
 }
 
-static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, void *p2)
+static int shake_ctrl(EVP_MD_CTX *evp_ctx, int cmd, int p1, ossl_unused void *unused__p2)
 {
     KECCAK1600_CTX *ctx = evp_ctx->md_data;
 

@@ -736,7 +736,7 @@ WORK_STATE ossl_statem_client_pre_work(SSL *s, WORK_STATE wst)
  * Perform any work that needs to be done after sending a message from the
  * client to the server.
  */
-WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
+WORK_STATE ossl_statem_client_post_work(SSL *s, ossl_unused WORK_STATE unused__wst)
 {
     OSSL_STATEM *st = &s->statem;
 
@@ -890,7 +890,7 @@ WORK_STATE ossl_statem_client_post_work(SSL *s, WORK_STATE wst)
  *   1: Success
  *   0: Error
  */
-int ossl_statem_client_construct_message(SSL *s, WPACKET *pkt,
+int ossl_statem_client_construct_message(SSL *s, ossl_unused WPACKET *unused__pkt,
                                          confunc_f *confunc, int *mt)
 {
     OSSL_STATEM *st = &s->statem;
@@ -3986,7 +3986,7 @@ int ssl_cipher_list_to_bytes(SSL *s, STACK_OF(SSL_CIPHER) *sk, WPACKET *pkt)
     return 1;
 }
 
-int tls_construct_end_of_early_data(SSL *s, WPACKET *pkt)
+int tls_construct_end_of_early_data(SSL *s, ossl_unused WPACKET *unused__pkt)
 {
     if (s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING) {

@@ -222,12 +222,12 @@ static int client_hello_select_server_ctx(SSL *s, void *arg, int ignore)
  * configurations to ensure the state machine propagates the result
  * correctly.
  */
-static int servername_ignore_cb(SSL *s, int *ad, void *arg)
+static int servername_ignore_cb(SSL *s, ossl_unused int *unused__ad, void *arg)
 {
     return select_server_ctx(s, arg, 1);
 }
 
-static int servername_reject_cb(SSL *s, int *ad, void *arg)
+static int servername_reject_cb(SSL *s, ossl_unused int *unused__ad, void *arg)
 {
     return select_server_ctx(s, arg, 0);
 }
@@ -298,7 +298,7 @@ static int server_ocsp_cb(SSL *s, void *arg)
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int client_ocsp_cb(SSL *s, void *arg)
+static int client_ocsp_cb(SSL *s, ossl_unused void *unused__arg)
 {
     const unsigned char *resp;
     int len;
@@ -310,26 +310,31 @@ static int client_ocsp_cb(SSL *s, void *arg)
     return 1;
 }
 
-static int verify_reject_cb(X509_STORE_CTX *ctx, void *arg) {
+static int verify_reject_cb(X509_STORE_CTX *ctx, ossl_unused void *unused__arg) {
     X509_STORE_CTX_set_error(ctx, X509_V_ERR_APPLICATION_VERIFICATION);
     return 0;
 }
 
-static int verify_accept_cb(X509_STORE_CTX *ctx, void *arg) {
+static int verify_accept_cb(ossl_unused X509_STORE_CTX *unused__ctx, ossl_unused void *unused__arg) {
     return 1;
 }
 
-static int broken_session_ticket_cb(SSL *s, unsigned char *key_name,
-                                    unsigned char *iv, EVP_CIPHER_CTX *ctx,
-                                    EVP_MAC_CTX *hctx, int enc)
+static int broken_session_ticket_cb(ossl_unused SSL *unused__ssl,
+                                    ossl_unused unsigned char *unused__key_name,
+                                    ossl_unused unsigned char *unused__iv,
+                                    ossl_unused EVP_CIPHER_CTX *unused__ctx,
+                                    ossl_unused EVP_MAC_CTX *unused__hctx,
+                                    ossl_unused int unused__enc)
 {
     return 0;
 }
 
-static int do_not_call_session_ticket_cb(SSL *s, unsigned char *key_name,
-                                         unsigned char *iv,
-                                         EVP_CIPHER_CTX *ctx,
-                                         EVP_MAC_CTX *hctx, int enc)
+static int do_not_call_session_ticket_cb(SSL *s,
+                                         ossl_unused unsigned char *unused__key_name,
+                                         ossl_unused unsigned char *unused__iv,
+                                         ossl_unused EVP_CIPHER_CTX *unused__ctx,
+                                         ossl_unused EVP_MAC_CTX *unused__hctx,
+                                         ossl_unused int unused__enc)
 {
     HANDSHAKE_EX_DATA *ex_data =
         (HANDSHAKE_EX_DATA*)(SSL_get_ex_data(s, ex_data_idx));
@@ -386,7 +391,8 @@ err:
  * protocols, or the server doesn't advertise any, it SHOULD select the first
  * protocol that it supports.
  */
-static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
+static int client_npn_cb(ossl_unused SSL *unused__ssl,
+                         unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
@@ -401,7 +407,8 @@ static int client_npn_cb(SSL *s, unsigned char **out, unsigned char *outlen,
         ? SSL_TLSEXT_ERR_OK : SSL_TLSEXT_ERR_ALERT_FATAL;
 }
 
-static int server_npn_cb(SSL *s, const unsigned char **data,
+static int server_npn_cb(ossl_unused SSL *unused__ssl,
+                         const unsigned char **data,
                          unsigned int *len, void *arg)
 {
     CTX_DATA *ctx_data = (CTX_DATA*)(arg);
@@ -417,7 +424,8 @@ static int server_npn_cb(SSL *s, const unsigned char **data,
  * supports no protocols that the client advertises, then the server SHALL
  * respond with a fatal "no_application_protocol" alert.
  */
-static int server_alpn_cb(SSL *s, const unsigned char **out,
+static int server_alpn_cb(ossl_unused SSL *unused__ssl,
+                          const unsigned char **out,
                           unsigned char *outlen, const unsigned char *in,
                           unsigned int inlen, void *arg)
 {
@@ -443,7 +451,7 @@ static int server_alpn_cb(SSL *s, const unsigned char **out,
 }
 
 #ifndef OPENSSL_NO_SRP
-static char *client_srp_cb(SSL *s, void *arg)
+static char *client_srp_cb(ossl_unused SSL *unused__ssl, void *arg)
 {
     CTX_DATA *ctx_data = (CTX_DATA*)(arg);
     return OPENSSL_strdup(ctx_data->srp_password);
@@ -476,11 +484,12 @@ static int generate_session_ticket_cb(SSL *s, void *arg)
     return SSL_SESSION_set1_ticket_appdata(ss, app_data, strlen(app_data));
 }
 
-static int decrypt_session_ticket_cb(SSL *s, SSL_SESSION *ss,
-                                     const unsigned char *keyname,
-                                     size_t keyname_len,
+static int decrypt_session_ticket_cb(ossl_unused SSL *unused__ssl,
+                                     ossl_unused SSL_SESSION *unused__ss,
+                                     ossl_unused const unsigned char *unused__keyname,
+                                     ossl_unused size_t unused__keyname_len,
                                      SSL_TICKET_STATUS status,
-                                     void *arg)
+                                     ossl_unused void *unused__arg)
 {
     switch (status) {
     case SSL_TICKET_EMPTY:
@@ -729,7 +738,8 @@ err:
 }
 
 /* Configure per-SSL callbacks and other properties. */
-static void configure_handshake_ssl(SSL *server, SSL *client,
+static void configure_handshake_ssl(ossl_unused SSL *unused__server,
+                                    SSL *client,
                                     const SSL_TEST_EXTRA_CONF *extra)
 {
     if (extra->client.servername != SSL_TEST_SERVERNAME_NONE)

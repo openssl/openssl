@@ -106,7 +106,7 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
 
 static int internal_verify(X509_STORE_CTX *ctx);
 
-static int null_callback(int ok, X509_STORE_CTX *e)
+static int null_callback(int ok, ossl_unused X509_STORE_CTX *unused__e)
 {
     return ok;
 }
@@ -1320,7 +1320,7 @@ static int check_crl_path(X509_STORE_CTX *ctx, X509 *x)
  * RFC5280 version
  */
 
-static int check_crl_chain(X509_STORE_CTX *ctx,
+static int check_crl_chain(ossl_unused X509_STORE_CTX *unused__ctx,
                            STACK_OF(X509) *cert_path,
                            STACK_OF(X509) *crl_path)
 {
@@ -1985,7 +1985,8 @@ int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 /* Make a delta CRL as the diff between two full CRLs */
 
 X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
-                        EVP_PKEY *skey, const EVP_MD *md, unsigned int flags)
+                        EVP_PKEY *skey, const EVP_MD *md,
+                        ossl_unused unsigned int unused__flags)
 {
     X509_CRL *crl = NULL;
     int i;
@@ -2474,7 +2475,8 @@ void X509_STORE_CTX_set_flags(X509_STORE_CTX *ctx, unsigned long flags)
     X509_VERIFY_PARAM_set_flags(ctx->param, flags);
 }
 
-void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx, unsigned long flags,
+void X509_STORE_CTX_set_time(X509_STORE_CTX *ctx,
+                             ossl_unused unsigned long unused__flags,
                              time_t t)
 {
     X509_VERIFY_PARAM_set_time(ctx->param, t);

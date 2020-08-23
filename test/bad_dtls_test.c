@@ -354,7 +354,7 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     return 1;
 }
 
-static int send_finished(SSL *s, BIO *rbio)
+static int send_finished(ossl_unused SSL *unused__ssl, BIO *rbio)
 {
     static unsigned char finished_msg[DTLS1_HM_HEADER_LENGTH +
                                       TLS1_FINISH_MAC_LENGTH] = {

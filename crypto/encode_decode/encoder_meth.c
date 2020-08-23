@@ -138,8 +138,10 @@ static void *get_encoder_from_store(OPENSSL_CTX *libctx, void *store,
 
 static int put_encoder_in_store(OPENSSL_CTX *libctx, void *store,
                                 void *method, const OSSL_PROVIDER *prov,
-                                int operation_id, const char *names,
-                                const char *propdef, void *unused)
+                                ossl_unused int unused__operation_id,
+                                const char *names,
+                                const char *propdef,
+                                ossl_unused void *unused__data)
 {
     OSSL_NAMEMAP *namemap;
     int id;
@@ -231,7 +233,8 @@ static void *encoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
  * then call encoder_from_dispatch() with that identity number.
  */
 static void *construct_encoder(const OSSL_ALGORITHM *algodef,
-                               OSSL_PROVIDER *prov, void *unused)
+                               OSSL_PROVIDER *prov,
+                               ossl_unused void *unused__data)
 {
     /*
      * This function is only called if get_encoder_from_store() returned
@@ -252,7 +255,7 @@ static void *construct_encoder(const OSSL_ALGORITHM *algodef,
 }
 
 /* Intermediary function to avoid ugly casts, used below */
-static void destruct_encoder(void *method, void *data)
+static void destruct_encoder(void *method, ossl_unused void *unused__data)
 {
     OSSL_ENCODER_free(method);
 }
@@ -389,7 +392,8 @@ struct encoder_do_all_data_st {
 
 static void encoder_do_one(OSSL_PROVIDER *provider,
                            const OSSL_ALGORITHM *algodef,
-                           int no_store, void *vdata)
+                           ossl_unused int unused__no_store,
+                           void *vdata)
 {
     struct encoder_do_all_data_st *data = vdata;
     OPENSSL_CTX *libctx = ossl_provider_library_context(provider);

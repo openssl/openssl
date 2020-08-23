@@ -25,7 +25,7 @@
         break;
 
 int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
-                                            EC_KEY *ec, int mdnid)
+                                            ossl_unused EC_KEY *unused__ec, int mdnid)
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;

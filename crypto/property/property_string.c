@@ -81,7 +81,7 @@ static void property_string_data_free(void *vpropdata)
     OPENSSL_free(propdata);
 }
 
-static void *property_string_data_new(OPENSSL_CTX *ctx) {
+static void *property_string_data_new(ossl_unused OPENSSL_CTX *unused__ctx) {
     PROPERTY_STRING_DATA *propdata = OPENSSL_zalloc(sizeof(*propdata));
 
     if (propdata == NULL)

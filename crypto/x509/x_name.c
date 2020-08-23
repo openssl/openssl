@@ -90,7 +90,7 @@ IMPLEMENT_ASN1_FUNCTIONS(X509_NAME)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(X509_NAME)
 
-static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
+static int x509_name_ex_new(ASN1_VALUE **val, ossl_unused const ASN1_ITEM *unused__it)
 {
     X509_NAME *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -113,7 +113,7 @@ static int x509_name_ex_new(ASN1_VALUE **val, const ASN1_ITEM *it)
     return 0;
 }
 
-static void x509_name_ex_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static void x509_name_ex_free(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     X509_NAME *a;
 
@@ -140,7 +140,8 @@ static void local_sk_X509_NAME_ENTRY_pop_free(STACK_OF(X509_NAME_ENTRY) *ne)
 
 static int x509_name_ex_d2i(ASN1_VALUE **val,
                             const unsigned char **in, long len,
-                            const ASN1_ITEM *it, int tag, int aclass,
+                            ossl_unused const ASN1_ITEM *unused__it,
+                            int tag, int aclass,
                             char opt, ASN1_TLC *ctx)
 {
     const unsigned char *p = *in, *q;
@@ -212,7 +213,9 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
 }
 
 static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
-                            const ASN1_ITEM *it, int tag, int aclass)
+                            ossl_unused const ASN1_ITEM *unused__it,
+                            ossl_unused int unused__tag,
+                            ossl_unused int unused__aclass)
 {
     int ret;
     X509_NAME *a = (X509_NAME *)*val;
@@ -285,7 +288,7 @@ static int x509_name_encode(X509_NAME *a)
 
 static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
                               int indent,
-                              const char *fname, const ASN1_PCTX *pctx)
+                              ossl_unused const char *unused__fname, const ASN1_PCTX *pctx)
 {
     if (X509_NAME_print_ex(out, (const X509_NAME *)*pval,
                            indent, pctx->nm_flags) <= 0)

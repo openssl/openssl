@@ -29,10 +29,13 @@ typedef struct {
  * Provide thin wrapper callbacks which convert new style arguments to old style
  */
 static int custom_ext_add_old_cb_wrap(SSL *s, unsigned int ext_type,
-                                      unsigned int context,
+                                      ossl_unused unsigned int unused__context,
                                       const unsigned char **out,
-                                      size_t *outlen, X509 *x, size_t chainidx,
-                                      int *al, void *add_arg)
+                                      size_t *outlen,
+                                      ossl_unused X509 *unused__x,
+                                      ossl_unused size_t unused__chainidx,
+                                      int *al,
+                                      void *add_arg)
 {
     custom_ext_add_cb_wrap *add_cb_wrap = (custom_ext_add_cb_wrap *)add_arg;
 
@@ -44,7 +47,7 @@ static int custom_ext_add_old_cb_wrap(SSL *s, unsigned int ext_type,
 }
 
 static void custom_ext_free_old_cb_wrap(SSL *s, unsigned int ext_type,
-                                        unsigned int context,
+                                        ossl_unused unsigned int unused__context,
                                         const unsigned char *out, void *add_arg)
 {
     custom_ext_add_cb_wrap *add_cb_wrap = (custom_ext_add_cb_wrap *)add_arg;
@@ -56,10 +59,13 @@ static void custom_ext_free_old_cb_wrap(SSL *s, unsigned int ext_type,
 }
 
 static int custom_ext_parse_old_cb_wrap(SSL *s, unsigned int ext_type,
-                                        unsigned int context,
+                                        ossl_unused unsigned int unused__context,
                                         const unsigned char *in,
-                                        size_t inlen, X509 *x, size_t chainidx,
-                                        int *al, void *parse_arg)
+                                        size_t inlen,
+                                        ossl_unused X509 *unused__x,
+                                        ossl_unused size_t unused__chainidx,
+                                        int *al,
+                                        void *parse_arg)
 {
     custom_ext_parse_cb_wrap *parse_cb_wrap =
         (custom_ext_parse_cb_wrap *)parse_arg;

@@ -10,7 +10,7 @@
 #include "output.h"
 #include "tu_local.h"
 
-int openssl_error_cb(const char *str, size_t len, void *u)
+int openssl_error_cb(const char *str, ossl_unused size_t unused__len, ossl_unused void *unused__u)
 {
     return test_printf_stderr("%s", str);
 }

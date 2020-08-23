@@ -398,6 +398,8 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     if (p_getentropy.p != NULL)
         return p_getentropy.f(buf, buflen) == 0 ? (ssize_t)buflen : -1;
 #  endif
+   (void)buf;    /* silence -Wunused-parameter */
+   (void)buflen; /* silence -Wunused-parameter */
 
     /* Linux supports this since version 3.17 */
 #  if defined(__linux) && defined(__NR_getrandom)

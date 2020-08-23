@@ -191,15 +191,19 @@ static EVP_PKEY_METHOD *test_rsa = NULL;
 static int called_encrypt = 0;
 
 /* Test function to check operation has been redirected */
-static int test_encrypt(EVP_PKEY_CTX *ctx, unsigned char *sig,
-                        size_t *siglen, const unsigned char *tbs, size_t tbslen)
+static int test_encrypt(ossl_unused EVP_PKEY_CTX *unused__ctx,
+                        ossl_unused unsigned char *unused__sig,
+                        ossl_unused size_t *unused__siglen,
+                        ossl_unused const unsigned char *unused__tbs,
+                        ossl_unused size_t unused__tbslen)
 {
     called_encrypt = 1;
     return 1;
 }
 
-static int test_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
-                           const int **pnids, int nid)
+static int test_pkey_meths (ossl_unused ENGINE *unused__e,
+                            EVP_PKEY_METHOD **pmeth,
+                            const int **pnids, int nid)
 {
     static const int rnid = EVP_PKEY_RSA;
     if (pmeth == NULL) {

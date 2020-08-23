@@ -37,7 +37,7 @@ const X509V3_EXT_METHOD v3_akey_id = {
     NULL
 };
 
-static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
+static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(ossl_unused X509V3_EXT_METHOD *unused__method,
                                                  AUTHORITY_KEYID *akeyid,
                                                  STACK_OF(CONF_VALUE)
                                                  *extlist)
@@ -76,7 +76,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
  * this is always included.
  */
 
-static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(X509V3_EXT_METHOD *method,
+static AUTHORITY_KEYID *v2i_AUTHORITY_KEYID(ossl_unused X509V3_EXT_METHOD *unused__method,
                                             X509V3_CTX *ctx,
                                             STACK_OF(CONF_VALUE) *values)
 {

@@ -57,7 +57,8 @@ ASN1_SEQUENCE(SXNET) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(SXNET)
 
-static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
+static int sxnet_i2r(ossl_unused X509V3_EXT_METHOD *unused__method,
+                     SXNET *sx, BIO *out,
                      int indent)
 {
     long v;
@@ -84,7 +85,8 @@ static int sxnet_i2r(X509V3_EXT_METHOD *method, SXNET *sx, BIO *out,
  * they should really be separate values for each user.
  */
 
-static SXNET *sxnet_v2i(X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
+static SXNET *sxnet_v2i(ossl_unused X509V3_EXT_METHOD *unused__method,
+                        ossl_unused X509V3_CTX *unused__ctx,
                         STACK_OF(CONF_VALUE) *nval)
 {
     CONF_VALUE *cnf;

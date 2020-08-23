@@ -57,7 +57,8 @@ typedef struct {
 
 /* The subkey for ARIA is generated. */
 static int aria_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                         ossl_unused const unsigned char *unused__iv,
+                         int enc)
 {
     int ret;
     int mode = EVP_CIPHER_CTX_mode(ctx);
@@ -114,7 +115,7 @@ static void aria_cfb8_encrypt(const unsigned char *in, unsigned char *out,
 }
 
 static void aria_ecb_encrypt(const unsigned char *in, unsigned char *out,
-                             const ARIA_KEY *key, const int enc)
+                             const ARIA_KEY *key, ossl_unused const int unused__enc)
 {
     aria_encrypt(in, out, key);
 }
@@ -203,7 +204,7 @@ static void ctr64_inc(unsigned char *counter)
 }
 
 static int aria_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                                 const unsigned char *iv, int enc)
+                             const unsigned char *iv, ossl_unused int unused__enc)
 {
     int ret;
     EVP_ARIA_GCM_CTX *gctx = EVP_C_DATA(EVP_ARIA_GCM_CTX,ctx);
@@ -499,7 +500,7 @@ static int aria_gcm_cleanup(EVP_CIPHER_CTX *ctx)
 }
 
 static int aria_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                             const unsigned char *iv, ossl_unused int unused__enc)
 {
     int ret;
     EVP_ARIA_CCM_CTX *cctx = EVP_C_DATA(EVP_ARIA_CCM_CTX,ctx);

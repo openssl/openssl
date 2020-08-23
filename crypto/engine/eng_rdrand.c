@@ -49,7 +49,7 @@ static RAND_METHOD rdrand_meth = {
     random_status,
 };
 
-static int rdrand_init(ENGINE *e)
+static int rdrand_init(ossl_unused ENGINE *unused__e)
 {
     return 1;
 }

@@ -2640,7 +2640,8 @@ static void keypair_test_cleanup(EVP_TEST *t)
 /*
  * For tests that do not accept any custom keywords.
  */
-static int void_test_parse(EVP_TEST *t, const char *keyword, const char *value)
+static int void_test_parse(ossl_unused EVP_TEST *unused__t, ossl_unused const char *unused__keyword,
+                           ossl_unused const char *unused__value)
 {
     return 0;
 }
@@ -3623,6 +3624,8 @@ static int is_pkey_disabled(const char *name)
 #ifdef OPENSSL_NO_RSA
     if (STR_STARTS_WITH(name, "RSA"))
         return 1;
+#else
+    (void)name; /* silence -Wunused-parameter */
 #endif
 #ifdef OPENSSL_NO_EC
     if (STR_STARTS_WITH(name, "EC"))
@@ -3645,6 +3648,8 @@ static int is_mac_disabled(const char *name)
     if (STR_STARTS_WITH(name, "BLAKE2BMAC")
         || STR_STARTS_WITH(name, "BLAKE2SMAC"))
         return 1;
+#else
+    (void)name; /* silence -Wunused-parameter */
 #endif
 #ifdef OPENSSL_NO_CMAC
     if (STR_STARTS_WITH(name, "CMAC"))
@@ -3665,6 +3670,8 @@ static int is_kdf_disabled(const char *name)
 #ifdef OPENSSL_NO_SCRYPT
     if (STR_ENDS_WITH(name, "SCRYPT"))
         return 1;
+#else
+    (void)name; /* silence -Wunused-parameter */
 #endif
 #ifdef OPENSSL_NO_CMS
     if (strcasecmp(name, "X942KDF") == 0)

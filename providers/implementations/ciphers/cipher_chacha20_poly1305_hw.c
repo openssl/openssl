@@ -399,7 +399,7 @@ static const PROV_CIPHER_HW_CHACHA20_POLY1305 chacha20poly1305_hw =
     chacha_poly1305_tls_iv_set_fixed
 };
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20_poly1305(size_t keybits)
+const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20_poly1305(ossl_unused size_t unused__keybits)
 {
     return (PROV_CIPHER_HW *)&chacha20poly1305_hw;
 }

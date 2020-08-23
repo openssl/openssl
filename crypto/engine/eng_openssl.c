@@ -198,7 +198,8 @@ typedef struct {
 } TEST_RC4_KEY;
 # define test(ctx) ((TEST_RC4_KEY *)EVP_CIPHER_CTX_get_cipher_data(ctx))
 static int test_rc4_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             ossl_unused const unsigned char *unused__iv,
+                             ossl_unused int unused__enc)
 {
     const int n = EVP_CIPHER_CTX_key_length(ctx);
 
@@ -290,7 +291,7 @@ static int test_cipher_nids(const int **nids)
     return pos;
 }
 
-static int openssl_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+static int openssl_ciphers(ossl_unused ENGINE *unused__e, const EVP_CIPHER **cipher,
                            const int **nids, int nid)
 {
     if (!cipher) {
@@ -386,7 +387,7 @@ static int test_digest_nids(const int **nids)
     return pos;
 }
 
-static int openssl_digests(ENGINE *e, const EVP_MD **digest,
+static int openssl_digests(ossl_unused ENGINE *unused__e, const EVP_MD **digest,
                            const int **nids, int nid)
 {
     if (!digest) {
@@ -409,9 +410,10 @@ static int openssl_digests(ENGINE *e, const EVP_MD **digest,
 #endif
 
 #ifdef TEST_ENG_OPENSSL_PKEY
-static EVP_PKEY *openssl_load_privkey(ENGINE *eng, const char *key_id,
-                                      UI_METHOD *ui_method,
-                                      void *callback_data)
+static EVP_PKEY *openssl_load_privkey(ossl_unused ENGINE *unused__eng,
+                                      const char *key_id,
+                                      ossl_unused UI_METHOD *unused__ui_method,
+                                      ossl_unused void *unused__callback_data)
 {
     BIO *in;
     EVP_PKEY *key;
@@ -651,7 +653,7 @@ static int ossl_pkey_meths(ENGINE *e, EVP_PKEY_METHOD **pmeth,
 
 #endif
 
-int openssl_destroy(ENGINE *e)
+int openssl_destroy(ossl_unused ENGINE *unused__e)
 {
     test_sha_md_destroy();
 #ifdef TEST_ENG_OPENSSL_RC4
@@ -660,4 +662,3 @@ int openssl_destroy(ENGINE *e)
 #endif
     return 1;
 }
-

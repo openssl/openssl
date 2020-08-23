@@ -2096,7 +2096,7 @@ static int write_cert(BIO *bio, X509 *cert)
  * where DER does not make much sense for writing more than one cert!
  * Returns number of written certificates on success, 0 on error.
  */
-static int save_certs(OSSL_CMP_CTX *ctx,
+static int save_certs(ossl_unused OSSL_CMP_CTX *unused__ctx,
                       STACK_OF(X509) *certs, char *destFile, char *desc)
 {
     BIO *bio = NULL;

@@ -25,7 +25,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
 /*
  * Top secret. This algorithm only works if no one knows what this number is.
  * Please don't tell anyone what it is.
- * 
+ *
  * This algorithm is for testing only - don't really use it!
  */
 static const unsigned char private_constant[XOR_KEY_SIZE] = {
@@ -70,7 +70,8 @@ static const OSSL_PARAM xor_group_params[] = {
     OSSL_PARAM_END
 };
 
-static int tls_prov_get_capabilities(void *provctx, const char *capability,
+static int tls_prov_get_capabilities(ossl_unused void *unused__provctx,
+                                     const char *capability,
                                      OSSL_CALLBACK *cb, void *arg)
 {
     /* We're only adding one group so we only call the callback once */
@@ -98,7 +99,7 @@ typedef struct {
     XORKEY *peerkey;
 } PROV_XOR_CTX;
 
-static void *xor_newctx(void *provctx)
+static void *xor_newctx(ossl_unused void *unused__provctx)
 {
     PROV_XOR_CTX *pxorctx = OPENSSL_zalloc(sizeof(PROV_XOR_CTX));
 
@@ -204,7 +205,7 @@ static OSSL_FUNC_keymgmt_gettable_params_fn xor_gettable_params;
 static OSSL_FUNC_keymgmt_set_params_fn xor_set_params;
 static OSSL_FUNC_keymgmt_settable_params_fn xor_settable_params;
 
-static void *xor_newdata(void *provctx)
+static void *xor_newdata(ossl_unused void *unused__provctx)
 {
     return OPENSSL_zalloc(sizeof(XORKEY));
 }
@@ -290,7 +291,7 @@ static const OSSL_PARAM xor_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *xor_gettable_params(void *provctx)
+static const OSSL_PARAM *xor_gettable_params(ossl_unused void *unused__provctx)
 {
     return xor_params;
 }
@@ -317,7 +318,7 @@ static const OSSL_PARAM xor_known_settable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *xor_settable_params(void *provctx)
+static const OSSL_PARAM *xor_settable_params(ossl_unused void *unused__provctx)
 {
     return xor_known_settable_params;
 }
@@ -362,7 +363,7 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *xor_gen_settable_params(void *provctx)
+static const OSSL_PARAM *xor_gen_settable_params(ossl_unused void *unused__provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
@@ -371,7 +372,9 @@ static const OSSL_PARAM *xor_gen_settable_params(void *provctx)
     return settable;
 }
 
-static void *xor_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *xor_gen(void *genctx,
+                     ossl_unused OSSL_CALLBACK *unused__osslcb,
+                     ossl_unused void *unused__cbarg)
 {
     struct xor_gen_ctx *gctx = genctx;
     XORKEY *key = OPENSSL_zalloc(sizeof(*key));
@@ -426,7 +429,8 @@ static const OSSL_ALGORITHM tls_prov_keymgmt[] = {
     { NULL, NULL, NULL }
 };
 
-static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
+static const OSSL_ALGORITHM *tls_prov_query(ossl_unused void *unused__provctx,
+                                            int operation_id,
                                             int *no_cache)
 {
     *no_cache = 0;
@@ -447,8 +451,8 @@ static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
     { 0, NULL }
 };
 
-int tls_provider_init(const OSSL_CORE_HANDLE *handle,
-                      const OSSL_DISPATCH *in,
+int tls_provider_init(ossl_unused const OSSL_CORE_HANDLE *unused__handle,
+                      ossl_unused const OSSL_DISPATCH *unused__in,
                       const OSSL_DISPATCH **out,
                       void **provctx)
 {

@@ -194,7 +194,8 @@ int ossl_prov_print_rsa(BIO *out, RSA *rsa, int priv)
  * functionality doesn't allow that.
  */
 
-int ossl_prov_prepare_rsa_params(const void *rsa, int nid,
+int ossl_prov_prepare_rsa_params(const void *rsa,
+                                 ossl_unused int unused__nid,
                                  void **pstr, int *pstrtype)
 {
     const RSA_PSS_PARAMS_30 *pss = rsa_get0_pss_params_30((RSA *)rsa);

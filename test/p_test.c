@@ -43,7 +43,7 @@ static OSSL_FUNC_provider_gettable_params_fn p_gettable_params;
 static OSSL_FUNC_provider_get_params_fn p_get_params;
 static OSSL_FUNC_provider_get_reason_strings_fn p_get_reason_strings;
 
-static const OSSL_PARAM *p_gettable_params(void *_)
+static const OSSL_PARAM *p_gettable_params(ossl_unused void *unused___)
 {
     return p_param_types;
 }
@@ -101,7 +101,7 @@ static int p_get_params(void *vhand, OSSL_PARAM params[])
     return ok;
 }
 
-static const OSSL_ITEM *p_get_reason_strings(void *_)
+static const OSSL_ITEM *p_get_reason_strings(ossl_unused void *unused___)
 {
     static const OSSL_ITEM reason_strings[] = {
         {1, "dummy reason string"},

@@ -66,7 +66,7 @@ void log_message(const char *prog, int level, const char *fmt, ...)
 }
 
 #ifdef HTTP_DAEMON
-void socket_timeout(int signum)
+void socket_timeout(ossl_unused int unused__signum)
 {
     if (acfd != (int)INVALID_SOCKET)
         (void)shutdown(acfd, SHUT_RD);

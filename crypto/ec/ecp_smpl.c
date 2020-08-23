@@ -364,7 +364,7 @@ int ec_GFp_simple_point_copy(EC_POINT *dest, const EC_POINT *src)
     return 1;
 }
 
-int ec_GFp_simple_point_set_to_infinity(const EC_GROUP *group,
+int ec_GFp_simple_point_set_to_infinity(ossl_unused const EC_GROUP *unused__group,
                                         EC_POINT *point)
 {
     point->Z_is_one = 0;
@@ -940,7 +940,8 @@ int ec_GFp_simple_dbl(const EC_GROUP *group, EC_POINT *r, const EC_POINT *a,
     return ret;
 }
 
-int ec_GFp_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
+int ec_GFp_simple_invert(const EC_GROUP *group, EC_POINT *point,
+                         ossl_unused BN_CTX *unused__ctx)
 {
     if (EC_POINT_is_at_infinity(group, point) || BN_is_zero(point->Y))
         /* point is its own inverse */
@@ -949,7 +950,7 @@ int ec_GFp_simple_invert(const EC_GROUP *group, EC_POINT *point, BN_CTX *ctx)
     return BN_usub(point->Y, group->field, point->Y);
 }
 
-int ec_GFp_simple_is_at_infinity(const EC_GROUP *group, const EC_POINT *point)
+int ec_GFp_simple_is_at_infinity(ossl_unused const EC_GROUP *unused__group, const EC_POINT *point)
 {
     return BN_is_zero(point->Z);
 }

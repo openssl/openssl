@@ -31,7 +31,7 @@ struct ossl_self_test_st
     void *cb_arg;
 };
 
-static void *self_test_set_callback_new(OPENSSL_CTX *ctx)
+static void *self_test_set_callback_new(ossl_unused OPENSSL_CTX *unused__ctx)
 {
     SELF_TEST_CB *stcb;
 

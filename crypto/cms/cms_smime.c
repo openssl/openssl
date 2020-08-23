@@ -945,14 +945,16 @@ CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
 
 #else
 
-int CMS_uncompress(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
-                   unsigned int flags)
+int CMS_uncompress(ossl_unused CMS_ContentInfo *unused__cms, ossl_unused BIO *unused__dcont,
+                   ossl_unused BIO *unused__out,
+                   ossl_unused unsigned int unused__flags)
 {
     CMSerr(CMS_F_CMS_UNCOMPRESS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return 0;
 }
 
-CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags)
+CMS_ContentInfo *CMS_compress(ossl_unused BIO *unused__in, ossl_unused int unused__comp_nid,
+                              ossl_unused unsigned int unused__flags)
 {
     CMSerr(CMS_F_CMS_COMPRESS, CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
     return NULL;

@@ -64,7 +64,8 @@ int aesni_cbc_sha256_enc(const void *inp, void *out, size_t blocks,
 
 static int aesni_cbc_hmac_sha256_init_key(EVP_CIPHER_CTX *ctx,
                                           const unsigned char *inkey,
-                                          const unsigned char *iv, int enc)
+                                          ossl_unused const unsigned char *unused__iv,
+                                          int enc)
 {
     EVP_AES_HMAC_SHA256 *key = data(ctx);
     int ret;

@@ -437,8 +437,9 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     return ret;
 }
 
-static int no_log_cb(const char *func, const char *file, int line,
-                     OSSL_CMP_severity level, const char *msg)
+static int no_log_cb(ossl_unused const char *unused__func, ossl_unused const char *unused__file,
+                     ossl_unused int unused__line, ossl_unused OSSL_CMP_severity unused__level,
+                     ossl_unused const char *unused__msg)
 {
     return 1;
 }

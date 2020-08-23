@@ -390,19 +390,19 @@ static int dsa_param_encode(const EVP_PKEY *pkey, unsigned char **pder)
 }
 
 static int dsa_param_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                           ASN1_PCTX *ctx)
+                           ossl_unused ASN1_PCTX *unused__ctx)
 {
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 0);
 }
 
 static int dsa_pub_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                         ASN1_PCTX *ctx)
+                         ossl_unused ASN1_PCTX *unused__ctx)
 {
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 1);
 }
 
 static int dsa_priv_print(BIO *bp, const EVP_PKEY *pkey, int indent,
-                          ASN1_PCTX *ctx)
+                          ossl_unused ASN1_PCTX *unused__ctx)
 {
     return do_dsa_print(bp, pkey->pkey.dsa, indent, 2);
 }
@@ -426,8 +426,9 @@ static int old_dsa_priv_encode(const EVP_PKEY *pkey, unsigned char **pder)
     return i2d_DSAPrivateKey(pkey->pkey.dsa, pder);
 }
 
-static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
-                         const ASN1_STRING *sig, int indent, ASN1_PCTX *pctx)
+static int dsa_sig_print(BIO *bp, ossl_unused const X509_ALGOR *unused__sigalg,
+                         const ASN1_STRING *sig, int indent,
+                         ossl_unused ASN1_PCTX *unused__pctx)
 {
     DSA_SIG *dsa_sig;
     const unsigned char *p;
@@ -520,8 +521,9 @@ static size_t dsa_pkey_dirty_cnt(const EVP_PKEY *pkey)
 }
 
 static int dsa_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
-                              EVP_KEYMGMT *to_keymgmt, OPENSSL_CTX *libctx,
-                              const char *propq)
+                              EVP_KEYMGMT *to_keymgmt,
+                              ossl_unused OPENSSL_CTX *unused__libctx,
+                              ossl_unused const char *unused__propq)
 {
     DSA *dsa = from->pkey.dsa;
     OSSL_PARAM_BLD *tmpl;

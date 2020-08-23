@@ -183,7 +183,7 @@ static int cms_copy_messageDigest(CMS_ContentInfo *cms, CMS_SignerInfo *si)
 }
 
 int cms_set1_SignerIdentifier(CMS_SignerIdentifier *sid, X509 *cert, int type,
-                              const CMS_CTX *ctx)
+                              ossl_unused const CMS_CTX *unused__ctx)
 {
     switch (type) {
     case CMS_SIGNERINFO_ISSUER_SERIAL:

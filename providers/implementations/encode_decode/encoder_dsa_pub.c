@@ -44,7 +44,7 @@ static void *dsa_pub_newctx(void *provctx)
     return provctx;
 }
 
-static void dsa_pub_freectx(void *ctx)
+static void dsa_pub_freectx(ossl_unused void *unused__ctx)
 {
 }
 
@@ -72,7 +72,8 @@ static int dsa_pub_der_data(void *ctx, const OSSL_PARAM params[],
 }
 
 static int dsa_pub_der(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
-                       OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                       ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                       ossl_unused void *unused__cbarg)
 {
     /*
      * TODO(v3.0) implement setting save_parameters, see dsa_pub_encode()
@@ -123,7 +124,8 @@ static int dsa_pub_pem_data(void *ctx, const OSSL_PARAM params[],
 }
 
 static int dsa_pub_pem(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
-                       OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                       ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                       ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
@@ -163,7 +165,8 @@ static int dsa_pub_print_data(void *ctx, const OSSL_PARAM params[],
 }
 
 static int dsa_pub_print(void *ctx, void *dsa, OSSL_CORE_BIO *cout,
-                         OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                         ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                         ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;

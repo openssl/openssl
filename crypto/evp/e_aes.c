@@ -142,7 +142,8 @@ static void ctr64_inc(unsigned char *counter)
 # endif
 
 static int aesni_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                          const unsigned char *iv, int enc)
+                          ossl_unused const unsigned char *unused__iv,
+                          int enc)
 {
     int ret, mode;
     EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
@@ -219,7 +220,7 @@ static int aesni_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
                             const unsigned char *in, size_t len);
 
 static int aesni_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                              const unsigned char *iv, int enc)
+                              const unsigned char *iv, ossl_unused int unused__enc)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,ctx);
     if (!iv && !key)
@@ -2283,7 +2284,7 @@ const EVP_CIPHER *EVP_aes_##keylen##_##mode(void) \
         BLOCK_CIPHER_generic(nid,keylen,1,16,ctr,ctr,CTR,flags)
 
 static int aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                        const unsigned char *iv, int enc)
+                        ossl_unused const unsigned char *unused__iv, int enc)
 {
     int ret, mode;
     EVP_AES_KEY *dat = EVP_C_DATA(EVP_AES_KEY,ctx);
@@ -2672,7 +2673,7 @@ static int aes_gcm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 }
 
 static int aes_gcm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            const unsigned char *iv, ossl_unused int unused__enc)
 {
     EVP_AES_GCM_CTX *gctx = EVP_C_DATA(EVP_AES_GCM_CTX,ctx);
     if (!iv && !key)
@@ -3060,7 +3061,7 @@ BLOCK_CIPHER_custom(NID_aes, 128, 1, 12, gcm, GCM,
     BLOCK_CIPHER_custom(NID_aes, 256, 1, 12, gcm, GCM,
                     EVP_CIPH_FLAG_AEAD_CIPHER | CUSTOM_FLAGS)
 
-static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
+static int aes_xts_ctrl(EVP_CIPHER_CTX *c, int type, ossl_unused int unused__arg, void *ptr)
 {
     EVP_AES_XTS_CTX *xctx = EVP_C_DATA(EVP_AES_XTS_CTX, c);
 
@@ -3343,7 +3344,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 }
 
 static int aes_ccm_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            const unsigned char *iv, ossl_unused int unused__enc)
 {
     EVP_AES_CCM_CTX *cctx = EVP_C_DATA(EVP_AES_CCM_CTX,ctx);
     if (!iv && !key)
@@ -3526,7 +3527,7 @@ typedef struct {
 } EVP_AES_WRAP_CTX;
 
 static int aes_wrap_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             const unsigned char *iv, ossl_unused int unused__enc)
 {
     EVP_AES_WRAP_CTX *wctx = EVP_C_DATA(EVP_AES_WRAP_CTX,ctx);
     if (!iv && !key)
@@ -3787,6 +3788,8 @@ static int aes_ocb_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                     return 0;
                 break;
             }
+# else
+            (void)enc; /* silence -Wunused-parameter */
 # endif
 # ifdef VPAES_CAPABLE
             if (VPAES_CAPABLE) {
@@ -4010,7 +4013,7 @@ typedef SIV128_CONTEXT EVP_AES_SIV_CTX;
 
 #define aesni_siv_init_key aes_siv_init_key
 static int aes_siv_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                            const unsigned char *iv, int enc)
+                            ossl_unused const unsigned char *unused__iv, ossl_unused int unused__enc)
 {
     const EVP_CIPHER *ctr;
     const EVP_CIPHER *cbc;

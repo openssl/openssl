@@ -16,7 +16,8 @@
 #include "cipher_seed.h"
 
 static int cipher_hw_seed_initkey(PROV_CIPHER_CTX *ctx,
-                                  const unsigned char *key, size_t keylen)
+                                  const unsigned char *key,
+                                  ossl_unused size_t unused__keylen)
 {
     PROV_SEED_CTX *sctx =  (PROV_SEED_CTX *)ctx;
 
@@ -31,7 +32,7 @@ static const PROV_CIPHER_HW seed_##mode = {                                    \
     cipher_hw_seed_initkey,                                                    \
     cipher_hw_seed_##mode##_cipher                                             \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_##mode(size_t keybits)               \
+const PROV_CIPHER_HW *PROV_CIPHER_HW_seed_##mode(ossl_unused size_t unused__keybits)   \
 {                                                                              \
     return &seed_##mode;                                                       \
 }

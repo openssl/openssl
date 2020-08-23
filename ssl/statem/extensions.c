@@ -879,7 +879,7 @@ int tls_construct_extensions(SSL *s, WPACKET *pkt, unsigned int context,
  * otherwise. These functions return 1 on success or 0 on failure.
  */
 
-static int final_renegotiate(SSL *s, unsigned int context, int sent)
+static int final_renegotiate(SSL *s, ossl_unused unsigned int unused__context, int sent)
 {
     if (!s->server) {
         /*
@@ -910,7 +910,7 @@ static int final_renegotiate(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-static int init_server_name(SSL *s, unsigned int context)
+static int init_server_name(SSL *s, ossl_unused unsigned int unused__context)
 {
     if (s->server) {
         s->servername_done = 0;
@@ -922,7 +922,7 @@ static int init_server_name(SSL *s, unsigned int context)
     return 1;
 }
 
-static int final_server_name(SSL *s, unsigned int context, int sent)
+static int final_server_name(SSL *s, ossl_unused unsigned int unused__context, int sent)
 {
     int ret = SSL_TLSEXT_ERR_NOACK;
     int altmp = SSL_AD_UNRECOGNIZED_NAME;
@@ -1024,7 +1024,7 @@ static int final_server_name(SSL *s, unsigned int context, int sent)
 }
 
 #ifndef OPENSSL_NO_EC
-static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
+static int final_ec_pt_formats(SSL *s, ossl_unused unsigned int unused__context, ossl_unused int unused__sent)
 {
     unsigned long alg_k, alg_a;
 
@@ -1063,7 +1063,7 @@ static int final_ec_pt_formats(SSL *s, unsigned int context, int sent)
 }
 #endif
 
-static int init_session_ticket(SSL *s, unsigned int context)
+static int init_session_ticket(SSL *s, ossl_unused unsigned int unused__context)
 {
     if (!s->server)
         s->ext.ticket_expected = 0;
@@ -1072,7 +1072,7 @@ static int init_session_ticket(SSL *s, unsigned int context)
 }
 
 #ifndef OPENSSL_NO_OCSP
-static int init_status_request(SSL *s, unsigned int context)
+static int init_status_request(SSL *s, ossl_unused unsigned int unused__context)
 {
     if (s->server) {
         s->ext.status_type = TLSEXT_STATUSTYPE_nothing;
@@ -1091,7 +1091,7 @@ static int init_status_request(SSL *s, unsigned int context)
 #endif
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-static int init_npn(SSL *s, unsigned int context)
+static int init_npn(SSL *s, ossl_unused unsigned int unused__context)
 {
     s->s3.npn_seen = 0;
 
@@ -1099,7 +1099,7 @@ static int init_npn(SSL *s, unsigned int context)
 }
 #endif
 
-static int init_alpn(SSL *s, unsigned int context)
+static int init_alpn(SSL *s, ossl_unused unsigned int unused__context)
 {
     OPENSSL_free(s->s3.alpn_selected);
     s->s3.alpn_selected = NULL;
@@ -1112,7 +1112,7 @@ static int init_alpn(SSL *s, unsigned int context)
     return 1;
 }
 
-static int final_alpn(SSL *s, unsigned int context, int sent)
+static int final_alpn(SSL *s, ossl_unused unsigned int unused__context, int sent)
 {
     if (!s->server && !sent && s->session->ext.alpn_selected != NULL)
             s->ext.early_data_ok = 0;
@@ -1132,7 +1132,7 @@ static int final_alpn(SSL *s, unsigned int context, int sent)
     return tls_handle_alpn(s);
 }
 
-static int init_sig_algs(SSL *s, unsigned int context)
+static int init_sig_algs(SSL *s, ossl_unused unsigned int unused__context)
 {
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3.tmp.peer_sigalgs);
@@ -1141,7 +1141,7 @@ static int init_sig_algs(SSL *s, unsigned int context)
     return 1;
 }
 
-static int init_sig_algs_cert(SSL *s, unsigned int context)
+static int init_sig_algs_cert(SSL *s, ossl_unused unsigned int unused__context)
 {
     /* Clear any signature algorithms extension received */
     OPENSSL_free(s->s3.tmp.peer_cert_sigalgs);
@@ -1151,7 +1151,7 @@ static int init_sig_algs_cert(SSL *s, unsigned int context)
 }
 
 #ifndef OPENSSL_NO_SRP
-static int init_srp(SSL *s, unsigned int context)
+static int init_srp(SSL *s, ossl_unused unsigned int unused__context)
 {
     OPENSSL_free(s->srp_ctx.login);
     s->srp_ctx.login = NULL;
@@ -1160,14 +1160,14 @@ static int init_srp(SSL *s, unsigned int context)
 }
 #endif
 
-static int init_etm(SSL *s, unsigned int context)
+static int init_etm(SSL *s, ossl_unused unsigned int unused__context)
 {
     s->ext.use_etm = 0;
 
     return 1;
 }
 
-static int init_ems(SSL *s, unsigned int context)
+static int init_ems(SSL *s, ossl_unused unsigned int unused__context)
 {
     if (s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS) {
         s->s3.flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
@@ -1177,7 +1177,7 @@ static int init_ems(SSL *s, unsigned int context)
     return 1;
 }
 
-static int final_ems(SSL *s, unsigned int context, int sent)
+static int final_ems(SSL *s, ossl_unused unsigned int unused__context, ossl_unused int unused__sent)
 {
     /*
      * Check extended master secret extension is not dropped on
@@ -1205,7 +1205,7 @@ static int final_ems(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-static int init_certificate_authorities(SSL *s, unsigned int context)
+static int init_certificate_authorities(SSL *s, ossl_unused unsigned int unused__context)
 {
     sk_X509_NAME_pop_free(s->s3.tmp.peer_ca_names, X509_NAME_free);
     s->s3.tmp.peer_ca_names = NULL;
@@ -1213,9 +1213,9 @@ static int init_certificate_authorities(SSL *s, unsigned int context)
 }
 
 static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
-                                                        unsigned int context,
-                                                        X509 *x,
-                                                        size_t chainidx)
+                                                        ossl_unused unsigned int unused__context,
+                                                        ossl_unused X509 *unused__x,
+                                                        ossl_unused size_t unused__chainidx)
 {
     const STACK_OF(X509_NAME) *ca_sk = get_ca_names(s);
 
@@ -1246,8 +1246,9 @@ static EXT_RETURN tls_construct_certificate_authorities(SSL *s, WPACKET *pkt,
 }
 
 static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
-                                             unsigned int context, X509 *x,
-                                             size_t chainidx)
+                                             ossl_unused unsigned int unused__context,
+                                             ossl_unused X509 *unused__x,
+                                             ossl_unused size_t unused__chainidx)
 {
     if (!parse_ca_names(s, pkt))
         return 0;
@@ -1260,7 +1261,7 @@ static int tls_parse_certificate_authorities(SSL *s, PACKET *pkt,
 }
 
 #ifndef OPENSSL_NO_SRTP
-static int init_srtp(SSL *s, unsigned int context)
+static int init_srtp(SSL *s, ossl_unused unsigned int unused__context)
 {
     if (s->server)
         s->srtp_profile = NULL;
@@ -1269,7 +1270,7 @@ static int init_srtp(SSL *s, unsigned int context)
 }
 #endif
 
-static int final_sig_algs(SSL *s, unsigned int context, int sent)
+static int final_sig_algs(SSL *s, ossl_unused unsigned int unused__context, int sent)
 {
     if (!sent && SSL_IS_TLS13(s) && !s->hit) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION, SSL_F_FINAL_SIG_ALGS,
@@ -1444,7 +1445,7 @@ static int final_key_share(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-static int init_psk_kex_modes(SSL *s, unsigned int context)
+static int init_psk_kex_modes(SSL *s, ossl_unused unsigned int unused__context)
 {
     s->ext.psk_kex_mode = TLSEXT_KEX_MODE_FLAG_NONE;
     return 1;
@@ -1684,7 +1685,7 @@ static int final_early_data(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-static int final_maxfragmentlen(SSL *s, unsigned int context, int sent)
+static int final_maxfragmentlen(SSL *s, ossl_unused unsigned int unused__context, int sent)
 {
     /*
      * Session resumption on server-side with MFL extension active
@@ -1709,7 +1710,7 @@ static int final_maxfragmentlen(SSL *s, unsigned int context, int sent)
     return 1;
 }
 
-static int init_post_handshake_auth(SSL *s, unsigned int context)
+static int init_post_handshake_auth(SSL *s, ossl_unused unsigned int unused__context)
 {
     s->post_handshake_auth = SSL_PHA_NONE;
 

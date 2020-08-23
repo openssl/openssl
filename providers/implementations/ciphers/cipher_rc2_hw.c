@@ -16,7 +16,8 @@
 #include "cipher_rc2.h"
 
 static int cipher_hw_rc2_initkey(PROV_CIPHER_CTX *ctx,
-                                 const unsigned char *key, size_t keylen)
+                                 const unsigned char *key,
+                                 ossl_unused size_t unused__keylen)
 {
     PROV_RC2_CTX *rctx =  (PROV_RC2_CTX *)ctx;
     RC2_KEY *ks = &(rctx->ks.ks);
@@ -32,7 +33,7 @@ static const PROV_CIPHER_HW rc2_##mode = {                                     \
     cipher_hw_rc2_initkey,                                                     \
     cipher_hw_rc2_##mode##_cipher                                              \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc2_##mode(size_t keybits)                \
+const PROV_CIPHER_HW *PROV_CIPHER_HW_rc2_##mode(ossl_unused size_t unused__keybits)    \
 {                                                                              \
     return &rc2_##mode;                                                        \
 }

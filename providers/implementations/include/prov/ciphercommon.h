@@ -322,6 +322,7 @@ static const OSSL_PARAM name##_known_gettable_ctx_params[] = {                 \
 };                                                                             \
 const OSSL_PARAM * name##_gettable_ctx_params(void *provctx)                   \
 {                                                                              \
+    (void)provctx;                                                             \
     return name##_known_gettable_ctx_params;                                   \
 }
 
@@ -334,7 +335,8 @@ static const OSSL_PARAM name##_known_settable_ctx_params[] = {                 \
 };                                                                             \
 const OSSL_PARAM * name##_settable_ctx_params(void *provctx)                   \
 {                                                                              \
-    return name##_known_settable_ctx_params;                                   \
+    (void)provctx;                                                             \
+    return name##_known_settable_ctx_params;	                               \
 }
 
 int cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,

@@ -202,7 +202,7 @@ static int i2r_IPAddressOrRanges(BIO *out,
 /*
  * i2r handler for an IPAddrBlocks extension.
  */
-static int i2r_IPAddrBlocks(const X509V3_EXT_METHOD *method,
+static int i2r_IPAddrBlocks(ossl_unused const X509V3_EXT_METHOD *unused__method,
                             void *ext, BIO *out, int indent)
 {
     const IPAddrBlocks *addr = ext;
@@ -891,8 +891,8 @@ int X509v3_addr_canonize(IPAddrBlocks *addr)
 /*
  * v2i handler for the IPAddrBlocks extension.
  */
-static void *v2i_IPAddrBlocks(const struct v3_ext_method *method,
-                              struct v3_ext_ctx *ctx,
+static void *v2i_IPAddrBlocks(ossl_unused const struct v3_ext_method *unused__method,
+                              ossl_unused struct v3_ext_ctx *unused__ctx,
                               STACK_OF(CONF_VALUE) *values)
 {
     static const char v4addr_chars[] = "0123456789.";

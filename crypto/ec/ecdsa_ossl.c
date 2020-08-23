@@ -55,7 +55,7 @@ int ossl_ecdsa_verify_sig(const unsigned char *dgst, int dgst_len,
     return eckey->group->meth->ecdsa_verify_sig(dgst, dgst_len, sig, eckey);
 }
 
-int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,
+int ossl_ecdsa_sign(ossl_unused int unused__type, const unsigned char *dgst, int dlen,
                     unsigned char *sig, unsigned int *siglen,
                     const BIGNUM *kinv, const BIGNUM *r, EC_KEY *eckey)
 {
@@ -330,7 +330,7 @@ ECDSA_SIG *ecdsa_simple_sign_sig(const unsigned char *dgst, int dgst_len,
  *      0: incorrect signature
  *     -1: error
  */
-int ossl_ecdsa_verify(int type, const unsigned char *dgst, int dgst_len,
+int ossl_ecdsa_verify(ossl_unused int unused__type, const unsigned char *dgst, int dgst_len,
                       const unsigned char *sigbuf, int sig_len, EC_KEY *eckey)
 {
     ECDSA_SIG *s;

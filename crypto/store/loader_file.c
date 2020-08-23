@@ -116,7 +116,7 @@ static int file_fill_pem_pass_data(struct pem_pass_data *pass_data,
 }
 
 /* This is used anywhere a pem_password_cb is needed */
-static int file_get_pem_pass(char *buf, int num, int w, void *data)
+static int file_get_pem_pass(char *buf, int num, ossl_unused int unused__w, void *data)
 {
     struct pem_pass_data *pass_data = data;
     char *pass = file_get_pass(pass_data->ui_method, buf, num,
@@ -207,14 +207,14 @@ typedef struct file_handler_st {
  * then serving them one piece at a time.
  */
 static OSSL_STORE_INFO *try_decode_PKCS12(const char *pem_name,
-                                          const char *pem_header,
+                                          ossl_unused const char *unused__pem_header,
                                           const unsigned char *blob,
                                           size_t len, void **pctx,
                                           int *matchcount,
                                           const UI_METHOD *ui_method,
                                           void *ui_data, const char *uri,
-                                          OPENSSL_CTX *libctx,
-                                          const char *propq)
+                                          ossl_unused OPENSSL_CTX *unused__libctx,
+                                          ossl_unused const char *unused__propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
     STACK_OF(OSSL_STORE_INFO) *ctx = *pctx;
@@ -343,15 +343,16 @@ static FILE_HANDLER PKCS12_handler = {
  * decoding process will then start over with the new blob.
  */
 static OSSL_STORE_INFO *try_decode_PKCS8Encrypted(const char *pem_name,
-                                                  const char *pem_header,
+                                                  ossl_unused const char *unused__pem_header,
                                                   const unsigned char *blob,
-                                                  size_t len, void **pctx,
+                                                  size_t len,
+                                                  ossl_unused void **unused__pctx,
                                                   int *matchcount,
                                                   const UI_METHOD *ui_method,
                                                   void *ui_data,
                                                   const char *uri,
-                                                  OPENSSL_CTX *libctx,
-                                                  const char *propq)
+                                                  ossl_unused OPENSSL_CTX *unused__libctx,
+                                                  ossl_unused const char *unused__propq)
 {
     X509_SIG *p8 = NULL;
     char kbuf[PEM_BUFSIZE];
@@ -423,12 +424,14 @@ static FILE_HANDLER PKCS8Encrypted_handler = {
  */
 int pem_check_suffix(const char *pem_str, const char *suffix);
 static OSSL_STORE_INFO *try_decode_PrivateKey(const char *pem_name,
-                                              const char *pem_header,
+                                              ossl_unused const char *unused__pem_header,
                                               const unsigned char *blob,
-                                              size_t len, void **pctx,
+                                              size_t len,
+                                              ossl_unused void **unused__pctx,
                                               int *matchcount,
-                                              const UI_METHOD *ui_method,
-                                              void *ui_data, const char *uri,
+                                              ossl_unused const UI_METHOD *unused__ui_method,
+                                              ossl_unused void *unused__ui_data,
+                                              ossl_unused const char *unused__uri,
                                               OPENSSL_CTX *libctx,
                                               const char *propq)
 {
@@ -544,14 +547,16 @@ static FILE_HANDLER PrivateKey_handler = {
  * Public key decoder.  Only supports SubjectPublicKeyInfo formatted keys.
  */
 static OSSL_STORE_INFO *try_decode_PUBKEY(const char *pem_name,
-                                          const char *pem_header,
+                                          ossl_unused const char *unused__pem_header,
                                           const unsigned char *blob,
-                                          size_t len, void **pctx,
+                                          size_t len,
+                                          ossl_unused void **unused__pctx,
                                           int *matchcount,
-                                          const UI_METHOD *ui_method,
-                                          void *ui_data, const char *uri,
-                                          OPENSSL_CTX *libctx,
-                                          const char *propq)
+                                          ossl_unused const UI_METHOD *unused__ui_method,
+                                          ossl_unused void *unused__ui_data,
+                                          ossl_unused const char *unused__uri,
+                                          ossl_unused OPENSSL_CTX *unused__libctx,
+                                          ossl_unused const char *unused__propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
     EVP_PKEY *pkey = NULL;
@@ -580,14 +585,16 @@ static FILE_HANDLER PUBKEY_handler = {
  * Key parameter decoder.
  */
 static OSSL_STORE_INFO *try_decode_params(const char *pem_name,
-                                          const char *pem_header,
+                                          ossl_unused const char *unused__pem_header,
                                           const unsigned char *blob,
-                                          size_t len, void **pctx,
+                                          size_t len,
+                                          ossl_unused void **unused__pctx,
                                           int *matchcount,
-                                          const UI_METHOD *ui_method,
-                                          void *ui_data, const char *uri,
-                                          OPENSSL_CTX *libctx,
-                                          const char *propq)
+                                          ossl_unused const UI_METHOD *unused__ui_method,
+                                          ossl_unused void *unused__ui_data,
+                                          ossl_unused const char *unused__uri,
+                                          ossl_unused OPENSSL_CTX *unused__libctx,
+                                          ossl_unused const char *unused__propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
     int slen = 0;
@@ -668,13 +675,14 @@ static FILE_HANDLER params_handler = {
  * X.509 certificate decoder.
  */
 static OSSL_STORE_INFO *try_decode_X509Certificate(const char *pem_name,
-                                                   const char *pem_header,
+                                                   ossl_unused const char *unused__pem_header,
                                                    const unsigned char *blob,
-                                                   size_t len, void **pctx,
+                                                   size_t len,
+                                                   ossl_unused void **unused__pctx,
                                                    int *matchcount,
-                                                   const UI_METHOD *ui_method,
-                                                   void *ui_data,
-                                                   const char *uri,
+                                                   ossl_unused const UI_METHOD *unused__ui_method,
+                                                   ossl_unused void *unused__ui_data,
+                                                   ossl_unused const char *unused__uri,
                                                    OPENSSL_CTX *libctx,
                                                    const char *propq)
 {
@@ -725,14 +733,16 @@ static FILE_HANDLER X509Certificate_handler = {
  * X.509 CRL decoder.
  */
 static OSSL_STORE_INFO *try_decode_X509CRL(const char *pem_name,
-                                           const char *pem_header,
+                                           ossl_unused const char *unused__pem_header,
                                            const unsigned char *blob,
-                                           size_t len, void **pctx,
+                                           size_t len,
+                                           ossl_unused void **unused__pctx,
                                            int *matchcount,
-                                           const UI_METHOD *ui_method,
-                                           void *ui_data, const char *uri,
-                                           OPENSSL_CTX *libctx,
-                                           const char *propq)
+                                           ossl_unused const UI_METHOD *unused__ui_method,
+                                           ossl_unused void *unused__ui_data,
+                                           ossl_unused const char *unused__uri,
+                                           ossl_unused OPENSSL_CTX *unused__libctx,
+                                           ossl_unused const char *unused__propq)
 {
     OSSL_STORE_INFO *store_info = NULL;
     X509_CRL *crl = NULL;
@@ -862,10 +872,12 @@ static int file_find_type(OSSL_STORE_LOADER_CTX *ctx)
     return 1;
 }
 
-static OSSL_STORE_LOADER_CTX *file_open_with_libctx
-    (const OSSL_STORE_LOADER *loader, const char *uri,
-     OPENSSL_CTX *libctx, const char *propq,
-     const UI_METHOD *ui_method, void *ui_data)
+static OSSL_STORE_LOADER_CTX *file_open_with_libctx (ossl_unused const OSSL_STORE_LOADER *unused__loader,
+                                                     const char *uri,
+                                                     OPENSSL_CTX *libctx,
+                                                     const char *propq,
+                                                     ossl_unused const UI_METHOD *unused__ui_method,
+                                                     ossl_unused void *unused__ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
     struct stat st;
@@ -991,17 +1003,20 @@ static OSSL_STORE_LOADER_CTX *file_open_with_libctx
     return NULL;
 }
 
-static OSSL_STORE_LOADER_CTX *file_open
-    (const OSSL_STORE_LOADER *loader, const char *uri,
-     const UI_METHOD *ui_method, void *ui_data)
+static OSSL_STORE_LOADER_CTX *file_open(const OSSL_STORE_LOADER *loader,
+                                        const char *uri,
+                                        const UI_METHOD *ui_method,
+                                        void *ui_data)
 {
     return file_open_with_libctx(loader, uri, NULL, NULL, ui_method, ui_data);
 }
 
-static OSSL_STORE_LOADER_CTX *file_attach
-    (const OSSL_STORE_LOADER *loader, BIO *bp,
-     OPENSSL_CTX *libctx, const char *propq,
-     const UI_METHOD *ui_method, void *ui_data)
+static OSSL_STORE_LOADER_CTX *file_attach(ossl_unused const OSSL_STORE_LOADER *unused__loader,
+                                          BIO *bp,
+                                          OPENSSL_CTX *libctx,
+                                          const char *propq,
+                                          ossl_unused const UI_METHOD *unused__ui_method,
+                                          ossl_unused void *unused__ui_data)
 {
     OSSL_STORE_LOADER_CTX *ctx = NULL;
 

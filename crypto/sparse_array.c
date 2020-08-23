@@ -107,7 +107,7 @@ static void sa_free_node(void **p)
     OPENSSL_free(p);
 }
 
-static void sa_free_leaf(ossl_uintmax_t n, void *p, void *arg)
+static void sa_free_leaf(ossl_unused ossl_uintmax_t unused__n, void *p, ossl_unused void *unused__arg)
 {
     OPENSSL_free(p);
 }

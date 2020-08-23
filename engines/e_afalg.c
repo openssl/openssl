@@ -147,8 +147,10 @@ static ossl_inline int io_getevents(aio_context_t ctx, long min, long max,
 #endif
 }
 
-static void afalg_waitfd_cleanup(ASYNC_WAIT_CTX *ctx, const void *key,
-                                 OSSL_ASYNC_FD waitfd, void *custom)
+static void afalg_waitfd_cleanup(ossl_unused ASYNC_WAIT_CTX *unused__ctx,
+                                 ossl_unused const void *unused__key,
+                                 OSSL_ASYNC_FD waitfd,
+                                 ossl_unused void *unused__custom)
 {
     close(waitfd);
 }
@@ -512,7 +514,8 @@ static int afalg_start_cipher_sk(afalg_ctx *actx, const unsigned char *in,
 }
 
 static int afalg_cipher_init(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             ossl_unused const unsigned char *unused__iv,
+                             ossl_unused int unused__enc)
 {
     int ciphertype;
     int ret;
@@ -705,7 +708,8 @@ static const EVP_CIPHER *afalg_aes_cbc(int nid)
     return cipher_handle->_hidden;
 }
 
-static int afalg_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
+static int afalg_ciphers(ossl_unused ENGINE *unused__e,
+                         const EVP_CIPHER **cipher,
                          const int **nids, int nid)
 {
     int r = 1;
@@ -854,12 +858,12 @@ void engine_load_afalg_int(void)
 }
 # endif
 
-static int afalg_init(ENGINE *e)
+static int afalg_init(ossl_unused ENGINE *unused__e)
 {
     return 1;
 }
 
-static int afalg_finish(ENGINE *e)
+static int afalg_finish(ossl_unused ENGINE *unused__e)
 {
     return 1;
 }
@@ -874,7 +878,7 @@ static int free_cbc(void)
     return 1;
 }
 
-static int afalg_destroy(ENGINE *e)
+static int afalg_destroy(ossl_unused ENGINE *unused__e)
 {
     ERR_unload_AFALG_strings();
     free_cbc();

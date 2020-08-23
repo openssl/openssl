@@ -1200,7 +1200,7 @@ int EVP_PKEY_print_params(BIO *out, const EVP_PKEY *pkey,
 }
 
 static int legacy_asn1_ctrl_to_param(EVP_PKEY *pkey, int op,
-                                     int arg1, void *arg2)
+                                     ossl_unused int unused__arg1, void *arg2)
 {
     if (pkey->keymgmt == NULL)
         return 0;
@@ -1440,8 +1440,10 @@ static int pkey_set_type(EVP_PKEY *pkey, ENGINE *e, int type, const char *str,
     if (pkey == NULL && eptr != NULL)
         ENGINE_finish(e);
 # endif
+#else
+    (void)str; /* silence -Wunused-parameter */
+    (void)len; /* silence -Wunused-parameter */
 #endif
-
 
     {
         int check = 1;

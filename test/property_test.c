@@ -29,12 +29,12 @@ static int add_property_names(const char *n, ...)
     return res;
 }
 
-static int up_ref(void *p)
+static int up_ref(ossl_unused void *unused__p)
 {
     return 1;
 }
 
-static void down_ref(void *p)
+static void down_ref(ossl_unused void *unused__p)
 {
 }
 

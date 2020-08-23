@@ -108,8 +108,8 @@ static void by_store_free(X509_LOOKUP *ctx)
 }
 
 static int by_store_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
-                                     const char *argp, long argl,
-                                     char **retp,
+                                     const char *argp, ossl_unused long unused__argl,
+                                     ossl_unused char **unused__retp,
                                      OPENSSL_CTX *libctx, const char *propq)
 {
     switch (cmd) {
@@ -143,8 +143,9 @@ static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
     return by_store_ctrl_with_libctx(ctx, cmd, argp, argl, retp, NULL, NULL);
 }
 
-static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                    const OSSL_STORE_SEARCH *criterion, X509_OBJECT *ret,
+static int by_store(X509_LOOKUP *ctx, ossl_unused X509_LOOKUP_TYPE unused__type,
+                    const OSSL_STORE_SEARCH *criterion,
+                    ossl_unused X509_OBJECT *unused__ret,
                     OPENSSL_CTX *libctx, const char *propq)
 {
     STACK_OF(OPENSSL_STRING) *uris = X509_LOOKUP_get_method_data(ctx);

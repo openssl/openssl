@@ -346,6 +346,9 @@ int OSSL_trace_set_channel(int category, BIO *channel)
     if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, SIMPLE_CHANNEL, &channel, NULL, NULL,
                               trace_attach_cb, trace_detach_cb);
+#else
+    (void) category; /* silence -Wunused-parameter */
+    (void) channel;  /* silence -Wunused-parameter */
 #endif
     return 0;
 }
@@ -405,6 +408,10 @@ int OSSL_trace_set_callback(int category, OSSL_trace_cb callback, void *data)
  err:
     BIO_free(channel);
     OPENSSL_free(trace_data);
+#else
+    (void) category; /* silence -Wunused-parameter */
+    (void) callback; /* silence -Wunused-parameter */
+    (void) data;     /* silence -Wunused-parameter */
 #endif
 
     return 0;
@@ -416,6 +423,9 @@ int OSSL_trace_set_prefix(int category, const char *prefix)
     if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, &prefix, NULL,
                               trace_attach_cb, trace_detach_cb);
+#else
+    (void) category; /* silence -Wunused-parameter */
+    (void) prefix;   /* silence -Wunused-parameter */
 #endif
     return 0;
 }
@@ -426,6 +436,9 @@ int OSSL_trace_set_suffix(int category, const char *suffix)
     if (category >= 0 && category < OSSL_TRACE_CATEGORY_NUM)
         return set_trace_data(category, 0, NULL, NULL, &suffix,
                               trace_attach_cb, trace_detach_cb);
+#else
+    (void) category; /* silence -Wunused-parameter */
+    (void) suffix;   /* silence -Wunused-parameter */
 #endif
     return 0;
 }
@@ -448,6 +461,8 @@ int OSSL_trace_enabled(int category)
     category = ossl_trace_get_category(category);
     if (category >= 0)
         ret = trace_channels[category].bio != NULL;
+#else
+    (void) category; /* silence -Wunused-parameter */
 #endif
     return ret;
 }
@@ -481,6 +496,8 @@ BIO *OSSL_trace_begin(int category)
             break;
         }
     }
+#else
+    (void) category; /* silence -Wunused-parameter */
 #endif
     return channel;
 }
@@ -510,5 +527,8 @@ void OSSL_trace_end(int category, BIO * channel)
         current_channel = NULL;
         CRYPTO_THREAD_unlock(trace_lock);
     }
+#else
+    (void) category; /* silence -Wunused-parameter */
+    (void) channel;  /* silence -Wunused-parameter */
 #endif
 }

@@ -289,7 +289,7 @@ static int pkey_mac_signctx_init(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
 }
 
 static int pkey_mac_signctx(EVP_PKEY_CTX *ctx, unsigned char *sig,
-                             size_t *siglen, EVP_MD_CTX *mctx)
+                            size_t *siglen, ossl_unused EVP_MD_CTX *unused__mctx)
 {
     MAC_PKEY_CTX *hctx = EVP_PKEY_CTX_get_data(ctx);
 

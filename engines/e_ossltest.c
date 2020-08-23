@@ -375,19 +375,19 @@ void ENGINE_load_ossltest(void)
 }
 
 
-static int ossltest_init(ENGINE *e)
+static int ossltest_init(ossl_unused ENGINE *unused__e)
 {
     return 1;
 }
 
 
-static int ossltest_finish(ENGINE *e)
+static int ossltest_finish(ossl_unused ENGINE *unused__e)
 {
     return 1;
 }
 
 
-static int ossltest_destroy(ENGINE *e)
+static int ossltest_destroy(ossl_unused ENGINE *unused__e)
 {
     destroy_digests();
     destroy_ciphers();
@@ -395,8 +395,9 @@ static int ossltest_destroy(ENGINE *e)
     return 1;
 }
 
-static int ossltest_digests(ENGINE *e, const EVP_MD **digest,
-                          const int **nids, int nid)
+static int ossltest_digests(ossl_unused ENGINE *unused__e,
+                            const EVP_MD **digest,
+                            const int **nids, int nid)
 {
     int ok = 1;
     if (!digest) {
@@ -428,8 +429,9 @@ static int ossltest_digests(ENGINE *e, const EVP_MD **digest,
     return ok;
 }
 
-static int ossltest_ciphers(ENGINE *e, const EVP_CIPHER **cipher,
-                          const int **nids, int nid)
+static int ossltest_ciphers(ossl_unused ENGINE *unused__e,
+                            const EVP_CIPHER **cipher,
+                            const int **nids, int nid)
 {
     int ok = 1;
     if (!cipher) {

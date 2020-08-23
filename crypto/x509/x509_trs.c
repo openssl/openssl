@@ -240,7 +240,7 @@ static int trust_1oid(X509_TRUST *trust, X509 *x, int flags)
     return obj_trust(trust->arg1, x, flags);
 }
 
-static int trust_compat(X509_TRUST *trust, X509 *x, int flags)
+static int trust_compat(ossl_unused X509_TRUST *unused__trust, X509 *x, int flags)
 {
     /* Call for side-effect of computing hash and caching extensions */
     if (X509_check_purpose(x, -1, 0) != 1)

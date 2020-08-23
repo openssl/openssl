@@ -25,7 +25,8 @@ struct construct_data_st {
 };
 
 static int ossl_method_construct_precondition(OSSL_PROVIDER *provider,
-                                              int operation_id, void *cbdata,
+                                              int operation_id,
+                                              ossl_unused void *unused__cbdata,
                                               int *result)
 {
     if (!ossl_assert(result != NULL)) {
@@ -48,7 +49,7 @@ static int ossl_method_construct_precondition(OSSL_PROVIDER *provider,
 
 static int ossl_method_construct_postcondition(OSSL_PROVIDER *provider,
                                                int operation_id, int no_store,
-                                               void *cbdata, int *result)
+                                               ossl_unused void *unused__cbdata, int *result)
 {
     if (!ossl_assert(result != NULL)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);

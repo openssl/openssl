@@ -1144,17 +1144,17 @@ static int test_set_get_raw_keys(int tst)
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-static int pkey_custom_check(EVP_PKEY *pkey)
+static int pkey_custom_check(ossl_unused EVP_PKEY *unused__pkey)
 {
     return 0xbeef;
 }
 
-static int pkey_custom_pub_check(EVP_PKEY *pkey)
+static int pkey_custom_pub_check(ossl_unused EVP_PKEY *unused__pkey)
 {
     return 0xbeef;
 }
 
-static int pkey_custom_param_check(EVP_PKEY *pkey)
+static int pkey_custom_param_check(ossl_unused EVP_PKEY *unused__pkey)
 {
     return 0xbeef;
 }

@@ -271,7 +271,7 @@ int ccm_stream_update(void *vctx, unsigned char *out, size_t *outl,
 }
 
 int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
-                            size_t outsize)
+                     ossl_unused size_t unused__outsize)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     int i;
@@ -432,4 +432,3 @@ void ccm_initctx(PROV_CCM_CTX *ctx, size_t keybits, const PROV_CCM_HW *hw)
     ctx->tls_aad_len = UNINITIALISED_SIZET;
     ctx->hw = hw;
 }
-

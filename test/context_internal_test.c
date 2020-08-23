@@ -27,7 +27,7 @@ typedef struct foo_st {
     void *data;
 } FOO;
 
-static void *foo_new(OPENSSL_CTX *ctx)
+static void *foo_new(ossl_unused OPENSSL_CTX *unused__ctx)
 {
     FOO *ptr = OPENSSL_zalloc(sizeof(*ptr));
     if (ptr != NULL)

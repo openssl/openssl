@@ -236,7 +236,7 @@ int SMIME_write_ASN1_with_libctx(BIO *bio, ASN1_VALUE *val, BIO *data, int flags
                                  int ctype_nid, int econt_nid,
                                  STACK_OF(X509_ALGOR) *mdalgs,
                                  const ASN1_ITEM *it,
-                                 OPENSSL_CTX *libctx, const char *propq)
+                                 OPENSSL_CTX *libctx, ossl_unused const char *unused__propq)
 {
     char bound[33], c;
     int i;

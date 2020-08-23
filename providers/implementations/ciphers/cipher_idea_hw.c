@@ -17,7 +17,8 @@
 #include "cipher_idea.h"
 
 static int cipher_hw_idea_initkey(PROV_CIPHER_CTX *ctx,
-                                  const unsigned char *key, size_t keylen)
+                                  const unsigned char *key,
+                                  ossl_unused size_t unused__keylen)
 {
     PROV_IDEA_CTX *ictx =  (PROV_IDEA_CTX *)ctx;
     IDEA_KEY_SCHEDULE *ks = &(ictx->ks.ks);
@@ -43,7 +44,7 @@ static const PROV_CIPHER_HW idea_##mode = {                                    \
     cipher_hw_idea_initkey,                                                    \
     cipher_hw_idea_##mode##_cipher                                             \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_##mode(size_t keybits)               \
+const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_##mode(ossl_unused size_t unused__keybits)   \
 {                                                                              \
     return &idea_##mode;                                                       \
 }

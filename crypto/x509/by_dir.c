@@ -76,7 +76,7 @@ X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
 }
 
 static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-                    char **retp)
+                    ossl_unused char **unused__retp)
 {
     int ret = 0;
     BY_DIR *ld = (BY_DIR *)ctx->method_data;

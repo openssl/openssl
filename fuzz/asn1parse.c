@@ -21,7 +21,7 @@
 
 static BIO *bio_out;
 
-int FuzzerInitialize(int *argc, char ***argv)
+int FuzzerInitialize(ossl_unused int *unused__argc, ossl_unused char ***unused__argv)
 {
     bio_out = BIO_new_file("/dev/null", "w");
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);

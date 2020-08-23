@@ -331,17 +331,19 @@ static int encode_public_EVP_PKEY_MSBLOB(void **encoded,
 
 # ifndef OPENSSL_NO_RC4
 static pem_password_cb pass_pw;
-static int pass_pw(char *buf, int size, int rwflag, void *userdata)
+static int pass_pw(char *buf, int size,
+                   ossl_unused int unused__rwflag,
+                   void *userdata)
 {
     OPENSSL_strlcpy(buf, userdata, size);
     return strlen(userdata);
 }
 
 static int encode_EVP_PKEY_PVK(void **encoded, long *encoded_len,
-                                  void *object,
-                                  const char *pass,
-                                  ossl_unused const char *pcipher,
-                                  ossl_unused const char *encoder_propq)
+                               void *object,
+                               const char *pass,
+                               ossl_unused const char *pcipher,
+                               ossl_unused const char *encoder_propq)
 {
     EVP_PKEY *pkey = object;
     BIO *mem_ser = NULL;
@@ -421,8 +423,9 @@ static int test_unprotected_via_DER(const char *type, EVP_PKEY *key)
                                       0);
 }
 
-static int check_unprotected_PKCS8_PEM(const char *type,
-                                       const void *data, size_t data_len)
+static int check_unprotected_PKCS8_PEM(ossl_unused const char *unused__type,
+                                       const void *data,
+                                       ossl_unused size_t unused__data_len)
 {
     static const char pem_header[] = "-----BEGIN " PEM_STRING_PKCS8INF "-----";
 
@@ -441,7 +444,8 @@ static int test_unprotected_via_PEM(const char *type, EVP_PKEY *key)
 }
 
 static int check_unprotected_legacy_PEM(const char *type,
-                                        const void *data, size_t data_len)
+                                        const void *data,
+                                        ossl_unused size_t unused__data_len)
 {
     static char pem_header[80];
 
@@ -454,15 +458,16 @@ static int check_unprotected_legacy_PEM(const char *type,
 static int test_unprotected_via_legacy_PEM(const char *type, EVP_PKEY *key)
 {
     return test_encode_decode(type, key, NULL, NULL,
-                                      encode_EVP_PKEY_legacy_PEM,
-                                      decode_EVP_PKEY_prov,
-                                      test_text,
-                                      check_unprotected_legacy_PEM, dump_pem,
-                                      NULL, 1);
+                              encode_EVP_PKEY_legacy_PEM,
+                              decode_EVP_PKEY_prov,
+                              test_text,
+                              check_unprotected_legacy_PEM, dump_pem,
+                              NULL, 1);
 }
 
 #ifndef OPENSSL_NO_DSA
-static int check_MSBLOB(const char *type, const void *data, size_t data_len)
+static int check_MSBLOB(ossl_unused const char *unused__type,
+                        const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
     EVP_PKEY *pkey = b2i_PrivateKey(&datap, data_len);
@@ -483,7 +488,8 @@ static int test_unprotected_via_MSBLOB(const char *type, EVP_PKEY *key)
 }
 
 # ifndef OPENSSL_NO_RC4
-static int check_PVK(const char *type, const void *data, size_t data_len)
+static int check_PVK(ossl_unused const char *unused__type,
+                     const void *data, size_t data_len)
 {
     const unsigned char *in = data;
     unsigned int saltlen = 0, keylen = 0;
@@ -507,7 +513,7 @@ static int test_unprotected_via_PVK(const char *type, EVP_PKEY *key)
 static const char *pass_cipher = "AES-256-CBC";
 static const char *pass = "the holy handgrenade of antioch";
 
-static int check_protected_PKCS8_DER(const char *type,
+static int check_protected_PKCS8_DER(ossl_unused const char *unused__type,
                                      const void *data, size_t data_len)
 {
     const unsigned char *datap = data;
@@ -529,8 +535,9 @@ static int test_protected_via_DER(const char *type, EVP_PKEY *key)
                                       0);
 }
 
-static int check_protected_PKCS8_PEM(const char *type,
-                                     const void *data, size_t data_len)
+static int check_protected_PKCS8_PEM(ossl_unused const char *unused__type,
+                                     const void *data,
+                                     ossl_unused size_t unused__data_len)
 {
     static const char pem_header[] = "-----BEGIN " PEM_STRING_PKCS8 "-----";
 
@@ -549,7 +556,8 @@ static int test_protected_via_PEM(const char *type, EVP_PKEY *key)
 }
 
 static int check_protected_legacy_PEM(const char *type,
-                                      const void *data, size_t data_len)
+                                      const void *data,
+                                      ossl_unused size_t unused__data_len)
 {
     static char pem_header[80];
 
@@ -603,7 +611,9 @@ static int test_public_via_DER(const char *type, EVP_PKEY *key)
                                       0);
 }
 
-static int check_public_PEM(const char *type, const void *data, size_t data_len)
+static int check_public_PEM(ossl_unused const char *unused__type,
+                            const void *data,
+                            ossl_unused size_t unused__data_len)
 {
     static const char pem_header[] = "-----BEGIN " PEM_STRING_PUBLIC "-----";
 
@@ -623,7 +633,7 @@ static int test_public_via_PEM(const char *type, EVP_PKEY *key)
 }
 
 #ifndef OPENSSL_NO_DSA
-static int check_public_MSBLOB(const char *type,
+static int check_public_MSBLOB(ossl_unused const char *unused__type,
                                const void *data, size_t data_len)
 {
     const unsigned char *datap = data;

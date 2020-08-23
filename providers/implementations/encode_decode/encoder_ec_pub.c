@@ -39,7 +39,7 @@ static void *ec_pub_newctx(void *provctx)
     return provctx;
 }
 
-static void ec_pub_freectx(void *ctx)
+static void ec_pub_freectx(ossl_unused void *unused__ctx)
 {
 }
 
@@ -69,7 +69,8 @@ static int ec_pub_der_data(void *vctx, const OSSL_PARAM params[],
 }
 
 static int ec_pub_der(void *ctx, void *eckey, OSSL_CORE_BIO *cout,
-                      OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                      ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                      ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
@@ -111,7 +112,8 @@ static int ec_pub_pem_data(void *vctx, const OSSL_PARAM params[],
 }
 
 static int ec_pub_pem(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
-                      OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                      ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                      ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(vctx, cout);
     int ret;
@@ -152,7 +154,8 @@ static int ec_pub_print_data(void *vctx, const OSSL_PARAM params[],
 }
 
 static int ec_pub_print(void *vctx, void *eckey, OSSL_CORE_BIO *cout,
-                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                        ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                        ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(vctx, cout);
     int ret;

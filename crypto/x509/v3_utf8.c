@@ -27,7 +27,7 @@ const X509V3_EXT_METHOD v3_utf8_list[1] = {
     EXT_UTF8STRING(NID_subjectSignTool),
 };
 
-char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
+char *i2s_ASN1_UTF8STRING(ossl_unused X509V3_EXT_METHOD *unused__method,
                           ASN1_UTF8STRING *utf8)
 {
     char *tmp;
@@ -45,8 +45,9 @@ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
     return tmp;
 }
 
-ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
-                                     X509V3_CTX *ctx, const char *str)
+ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(ossl_unused X509V3_EXT_METHOD *unused__method,
+                                     ossl_unused X509V3_CTX *unused__ctx,
+                                     const char *str)
 {
     ASN1_UTF8STRING *utf8;
     if (str == NULL) {

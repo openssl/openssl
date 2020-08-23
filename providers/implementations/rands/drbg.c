@@ -270,7 +270,7 @@ typedef struct prov_drbg_nonce_global_st {
  * to be in a different global data object. Otherwise we will go into an
  * infinite recursion loop.
  */
-static void *prov_drbg_nonce_ossl_ctx_new(OPENSSL_CTX *libctx)
+static void *prov_drbg_nonce_ossl_ctx_new(ossl_unused OPENSSL_CTX *unused__libctx)
 {
     PROV_DRBG_NONCE_GLOBAL *dngbl = OPENSSL_zalloc(sizeof(*dngbl));
 
@@ -306,7 +306,8 @@ static const OPENSSL_CTX_METHOD drbg_nonce_ossl_ctx_method = {
 /* Get a nonce from the operating system */
 static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
                                   unsigned char **pout,
-                                  int entropy, size_t min_len, size_t max_len)
+                                  ossl_unused int unused__entropy,
+                                  size_t min_len, size_t max_len)
 {
     size_t ret = 0, n;
     RAND_POOL *pool;
@@ -319,7 +320,7 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
         void *instance;
         int count;
     } data;
-    
+
     if (dngbl == NULL)
         return 0;
 
@@ -365,7 +366,8 @@ static size_t prov_drbg_get_nonce(PROV_DRBG *drbg,
     return ret;
 }
 
-static void prov_drbg_clear_nonce(PROV_DRBG *drbg, unsigned char *nonce,
+static void prov_drbg_clear_nonce(ossl_unused PROV_DRBG *unused__drbg,
+                                  unsigned char *nonce,
                                   size_t noncelen)
 {
     OPENSSL_clear_free(nonce, noncelen);
@@ -456,7 +458,7 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
 #ifndef PROV_RAND_GET_RANDOM_NONCE
         else { /* parent == NULL */
             noncelen = prov_drbg_get_nonce(drbg, &nonce, drbg->strength / 2,
-                                           drbg->min_noncelen, 
+                                           drbg->min_noncelen,
                                            drbg->max_noncelen);
             if (noncelen < drbg->min_noncelen
                     || noncelen > drbg->max_noncelen) {

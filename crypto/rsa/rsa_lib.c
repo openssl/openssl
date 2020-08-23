@@ -108,6 +108,8 @@ static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
             goto err;
         }
     }
+#else
+    (void)engine; /* silence -Wunused-parameter */
 #endif
 
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;
@@ -647,6 +649,7 @@ const BIGNUM *RSA_get0_iqmp(const RSA *r)
 const RSA_PSS_PARAMS *RSA_get0_pss_params(const RSA *r)
 {
 #ifdef FIPS_MODULE
+    (void)r; /* silence -Wunused-parameter */
     return NULL;
 #else
     return r->pss;

@@ -312,7 +312,7 @@ static int pkey_sm2_digest_custom(EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)
     return EVP_DigestUpdate(mctx, z, (size_t)mdlen);
 }
 
-static int pkey_sm2_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
+static int pkey_sm2_paramgen(ossl_unused EVP_PKEY_CTX *unused__ctx, EVP_PKEY *pkey)
 {
     EC_KEY *ec = NULL;
     int ret;

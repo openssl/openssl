@@ -54,7 +54,7 @@ static int alg##_##kbits##_get_params(OSSL_PARAM params[])                     \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
 static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_newctx;                      \
-static void * alg##_##kbits##_newctx(void *provctx)                            \
+static void * alg##_##kbits##_newctx(ossl_unused void *unused__provctx)                \
 {                                                                              \
      PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
      if (ctx != NULL) {                                                        \

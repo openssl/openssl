@@ -66,7 +66,8 @@ const X509V3_EXT_METHOD v3_pci =
     NULL,
 };
 
-static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *pci,
+static int i2r_pci(ossl_unused X509V3_EXT_METHOD *unused__method,
+                   PROXY_CERT_INFO_EXTENSION *pci,
                    BIO *out, int indent)
 {
     BIO_printf(out, "%*sPath Length Constraint: ", indent, "");
@@ -242,7 +243,7 @@ static int process_pci_value(CONF_VALUE *val,
     return 0;
 }
 
-static PROXY_CERT_INFO_EXTENSION *r2i_pci(X509V3_EXT_METHOD *method,
+static PROXY_CERT_INFO_EXTENSION *r2i_pci(ossl_unused X509V3_EXT_METHOD *unused__method,
                                           X509V3_CTX *ctx, char *value)
 {
     PROXY_CERT_INFO_EXTENSION *pci = NULL;

@@ -40,6 +40,7 @@ int dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
 {
     int ret, res;
 
+    (void)type; /* silence -Wunused-parameter */
 #ifndef FIPS_MODULE
     if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
         ret = ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
@@ -115,6 +116,7 @@ int DH_generate_parameters_ex(DH *ret, int prime_len, int generator,
                               BN_GENCB *cb)
 {
 #ifdef FIPS_MODULE
+    (void)cb; /* silence -Wunused-parameter */
     if (generator != 2)
         return 0;
     return dh_gen_named_group(ret->libctx, ret, prime_len);

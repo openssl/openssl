@@ -85,19 +85,22 @@ void crypto_cleanup_all_ex_data_int(OPENSSL_CTX *ctx)
  * Unregister a new index by replacing the callbacks with no-ops.
  * Any in-use instances are leaked.
  */
-static void dummy_new(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
-                     long argl, void *argp)
+static void dummy_new(ossl_unused void *unused__parent,ossl_unused void *unused__ptr,
+                      ossl_unused CRYPTO_EX_DATA *unused__ad, ossl_unused int unused__idx,
+                      ossl_unused long unused__argl, ossl_unused void *unused__argp)
 {
 }
 
-static void dummy_free(void *parent, void *ptr, CRYPTO_EX_DATA *ad, int idx,
-                       long argl, void *argp)
+static void dummy_free(ossl_unused void *unused__parent, ossl_unused void *unused__ptr,
+                       ossl_unused CRYPTO_EX_DATA *unused__ad, ossl_unused int unused__idx,
+                       ossl_unused long unused__argl, ossl_unused void *unused__argp)
 {
 }
 
-static int dummy_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-                     void **from_d, int idx,
-                     long argl, void *argp)
+static int dummy_dup(ossl_unused CRYPTO_EX_DATA *unused__to,
+                     ossl_unused const CRYPTO_EX_DATA *unused__from,
+                     ossl_unused void **unused__from_d, ossl_unused int unused__idx,
+                     ossl_unused long unused__argl, ossl_unused void *unused__argp)
 {
     return 1;
 }

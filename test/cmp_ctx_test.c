@@ -120,8 +120,11 @@ static int test_CTX_reinit(void)
 #if !defined(OPENSSL_NO_ERR) && !defined(OPENSSL_NO_AUTOERRINIT)
 
 static int msg_total_size = 0;
-static int msg_total_size_log_cb(const char *func, const char *file, int line,
-                                 OSSL_CMP_severity level, const char *msg)
+static int msg_total_size_log_cb(ossl_unused const char *unused__func,
+                                 ossl_unused const char *unused__file,
+                                 ossl_unused int unused__line,
+                                 ossl_unused OSSL_CMP_severity unused__level,
+                                 const char *msg)
 {
     msg_total_size += strlen(msg);
     TEST_note("total=%d len=%zu msg='%s'\n", msg_total_size, strlen(msg), msg);
@@ -305,19 +308,22 @@ static int test_cmp_ctx_log_cb(void)
     return result;
 }
 
-static BIO *test_http_cb(BIO *bio, void *arg, int use_ssl, int detail)
+static BIO *test_http_cb(ossl_unused BIO *unused__bio, ossl_unused void *unused__arg,
+                         ossl_unused int unused__use_ssl, ossl_unused int unused__detail)
 {
     return NULL;
 }
 
-static OSSL_CMP_MSG *test_transfer_cb(OSSL_CMP_CTX *ctx,
-                                      const OSSL_CMP_MSG *req)
+static OSSL_CMP_MSG *test_transfer_cb(ossl_unused OSSL_CMP_CTX *unused__ctx,
+                                      ossl_unused const OSSL_CMP_MSG *unused__req)
 {
     return NULL;
 }
 
-static int test_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
-                            const char **txt)
+static int test_certConf_cb(ossl_unused OSSL_CMP_CTX *unused__ctx,
+                            ossl_unused X509 *unused__cert,
+                            ossl_unused int unused__fail_info,
+                            ossl_unused const char **unused__txt)
 {
     return 0;
 }

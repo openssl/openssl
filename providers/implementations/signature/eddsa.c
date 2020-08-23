@@ -36,7 +36,7 @@ typedef struct {
     ECX_KEY *key;
 } PROV_EDDSA_CTX;
 
-static void *eddsa_newctx(void *provctx, const char *propq_unused)
+static void *eddsa_newctx(void *provctx, ossl_unused const char *unused__propq)
 {
     PROV_EDDSA_CTX *peddsactx = OPENSSL_zalloc(sizeof(PROV_EDDSA_CTX));
 

@@ -41,7 +41,7 @@ void chacha20_initctx(PROV_CHACHA20_CTX *ctx)
                            NULL);
 }
 
-static void *chacha20_newctx(void *provctx)
+static void *chacha20_newctx(ossl_unused void *unused__provctx)
 {
      PROV_CHACHA20_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
@@ -68,7 +68,7 @@ static int chacha20_get_params(OSSL_PARAM params[])
                                      CHACHA20_IVLEN * 8);
 }
 
-static int chacha20_get_ctx_params(void *vctx, OSSL_PARAM params[])
+static int chacha20_get_ctx_params(ossl_unused void *unused__vctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -91,12 +91,12 @@ static const OSSL_PARAM chacha20_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_gettable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *chacha20_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return chacha20_known_gettable_ctx_params;
 }
 
-static int chacha20_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int chacha20_set_ctx_params(ossl_unused void *unused__vctx, const OSSL_PARAM params[])
 {
     const OSSL_PARAM *p;
     size_t len;
@@ -131,7 +131,7 @@ static const OSSL_PARAM chacha20_known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *chacha20_settable_ctx_params(ossl_unused void *provctx)
+const OSSL_PARAM *chacha20_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return chacha20_known_settable_ctx_params;
 }

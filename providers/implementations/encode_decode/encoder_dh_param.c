@@ -44,7 +44,7 @@ static void *dh_param_newctx(void *provctx)
     return provctx;
 }
 
-static void dh_param_freectx(void *ctx)
+static void dh_param_freectx(ossl_unused void *unused__ctx)
 {
 }
 
@@ -72,7 +72,8 @@ static int dh_param_der_data(void *ctx, const OSSL_PARAM params[],
 }
 
 static int dh_param_der(void *ctx, void *dh, OSSL_CORE_BIO *cout,
-                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                        ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                        ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
@@ -109,7 +110,8 @@ static int dh_param_pem_data(void *ctx, const OSSL_PARAM params[],
 }
 
 static int dh_param_pem(void *ctx, void *dh, OSSL_CORE_BIO *cout,
-                        OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                        ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                        ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;
@@ -146,7 +148,8 @@ static int dh_param_print_data(void *ctx, const OSSL_PARAM params[],
 }
 
 static int dh_param_print(void *ctx, void *dh, OSSL_CORE_BIO *cout,
-                          OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)
+                          ossl_unused OSSL_PASSPHRASE_CALLBACK *unused__cb,
+                          ossl_unused void *unused__cbarg)
 {
     BIO *out = bio_new_from_core_bio(ctx, cout);
     int ret;

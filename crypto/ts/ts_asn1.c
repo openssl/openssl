@@ -156,8 +156,8 @@ static int ts_resp_set_tst_info(TS_RESP *a)
     return 1;
 }
 
-static int ts_resp_cb(int op, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                      void *exarg)
+static int ts_resp_cb(int op, ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it,
+                      ossl_unused void *unused__exarg)
 {
     TS_RESP *ts_resp = (TS_RESP *)*pval;
     if (op == ASN1_OP_NEW_POST) {

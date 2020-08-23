@@ -10,7 +10,8 @@
 #include "cipher_sm4.h"
 
 static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
-                                 const unsigned char *key, size_t keylen)
+                                 const unsigned char *key,
+                                 ossl_unused size_t unused__keylen)
 {
     PROV_SM4_CTX *sctx =  (PROV_SM4_CTX *)ctx;
     SM4_KEY *ks = &sctx->ks.ks;
@@ -34,7 +35,7 @@ static const PROV_CIPHER_HW sm4_##mode = {                                     \
     cipher_hw_chunked_##mode,                                                  \
     cipher_hw_sm4_copyctx                                                      \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_##mode(size_t keybits)                \
+const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_##mode(ossl_unused size_t unused__keybits)    \
 {                                                                              \
     return &sm4_##mode;                                                        \
 }

@@ -293,7 +293,7 @@ static int allws(const char *cp)
 }
 
 static int test_tlsafile(SSL_CTX *ctx, const char *base_name,
-                         BIO *f, const char *path)
+                         BIO *f, ossl_unused const char *unused__path)
 {
     char *line;
     int testno = 0;

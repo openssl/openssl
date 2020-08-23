@@ -20,7 +20,7 @@
 #include <openssl/rsa.h>
 #include <stdlib.h>
 
-int main(int argc, char *argv[])
+int main(ossl_unused int unused__argc, ossl_unused char *argv[])
 {
     /* There are explicitly no run time checks for this one */
     return EXIT_SUCCESS;

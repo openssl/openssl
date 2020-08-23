@@ -27,7 +27,7 @@ int dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
                                 BN_GENCB *cb)
 {
     int ret = 0, res;
-
+    (void)type; /* silence -Wunused-parameter */
 #ifndef FIPS_MODULE
     if (type == DSA_PARAMGEN_TYPE_FIPS_186_2)
         ret = ffc_params_FIPS186_2_generate(dsa->libctx, &dsa->params,

@@ -427,8 +427,10 @@ static int execute_msg_check_test(CMP_VFY_TEST_FIXTURE *fixture)
                                              fixture->cmp_ctx->transactionID));
 }
 
-static int allow_unprotected(const OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
-                             int invalid_protection, int allow)
+static int allow_unprotected(ossl_unused const OSSL_CMP_CTX *unused__ctx,
+                             ossl_unused const OSSL_CMP_MSG *unused__msg,
+                             ossl_unused int unused__invalid_protection,
+                             int allow)
 {
     return allow;
 }

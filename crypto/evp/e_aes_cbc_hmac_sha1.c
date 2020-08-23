@@ -68,7 +68,8 @@ void aesni256_cbc_sha1_dec(const void *inp, void *out, size_t blocks,
 
 static int aesni_cbc_hmac_sha1_init_key(EVP_CIPHER_CTX *ctx,
                                         const unsigned char *inkey,
-                                        const unsigned char *iv, int enc)
+                                        ossl_unused const unsigned char *unused__iv,
+                                        int enc)
 {
     EVP_AES_HMAC_SHA1 *key = data(ctx);
     int ret;

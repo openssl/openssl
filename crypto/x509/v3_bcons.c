@@ -44,7 +44,7 @@ ASN1_SEQUENCE(BASIC_CONSTRAINTS) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(BASIC_CONSTRAINTS)
 
-static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
+static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(ossl_unused X509V3_EXT_METHOD *unused__method,
                                                    BASIC_CONSTRAINTS *bcons,
                                                    STACK_OF(CONF_VALUE)
                                                    *extlist)
@@ -54,8 +54,8 @@ static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
     return extlist;
 }
 
-static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
-                                                X509V3_CTX *ctx,
+static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(ossl_unused X509V3_EXT_METHOD *unused__method,
+                                                ossl_unused X509V3_CTX *unused__ctx,
                                                 STACK_OF(CONF_VALUE) *values)
 {
     BASIC_CONSTRAINTS *bcons = NULL;

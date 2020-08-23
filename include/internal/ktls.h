@@ -411,29 +411,34 @@ static ossl_inline int ktls_configure_crypto(const EVP_CIPHER *c, int tls_versio
 # endif /* HEADER_INTERNAL_KTLS */
 #else /* defined(OPENSSL_NO_KTLS) */
 /* Dummy functions here */
-static ossl_inline int ktls_enable(int fd)
+static ossl_inline int ktls_enable(ossl_unused int fd)
 {
     return 0;
 }
 
-static ossl_inline int ktls_start(int fd, void *crypto_info,
-                                  size_t len, int is_tx)
+static ossl_inline int ktls_start(ossl_unused int fd, ossl_unused void *crypto_info,
+                                  ossl_unused size_t len, ossl_unused int is_tx)
 {
     return 0;
 }
 
-static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
-                                              const void *data, size_t length)
+static ossl_inline int ktls_send_ctrl_message(ossl_unused int fd,
+					      ossl_unused unsigned char record_type,
+                                              ossl_unused const void *data,
+					      ossl_unused size_t length)
 {
     return -1;
 }
 
-static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+static ossl_inline int ktls_read_record(ossl_unused int fd, ossl_unused void *data,
+					ossl_unused size_t length)
 {
     return -1;
 }
 
-static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
+static ossl_inline ossl_ssize_t ktls_sendfile(ossl_unused int s, ossl_unused int fd,
+					      ossl_unused off_t off, ossl_unused size_t size,
+					      ossl_unused int flags)
 {
     return -1;
 }

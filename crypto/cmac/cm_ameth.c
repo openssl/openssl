@@ -23,7 +23,7 @@
  * length and to free up a CMAC key.
  */
 
-static int cmac_size(const EVP_PKEY *pkey)
+static int cmac_size(ossl_unused const EVP_PKEY *unused__pkey)
 {
     return EVP_MAX_BLOCK_LENGTH;
 }

@@ -297,7 +297,7 @@ int tls13_generate_handshake_secret(SSL *s, const unsigned char *insecret,
  * failure.
  */
 int tls13_generate_master_secret(SSL *s, unsigned char *out,
-                                 unsigned char *prev, size_t prevlen,
+                                 unsigned char *prev, ossl_unused size_t unused__prevlen,
                                  size_t *secret_size)
 {
     const EVP_MD *md = ssl_handshake_md(s);
@@ -311,7 +311,7 @@ int tls13_generate_master_secret(SSL *s, unsigned char *out,
  * Generates the mac for the Finished message. Returns the length of the MAC or
  * 0 on error.
  */
-size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
+size_t tls13_final_finish_mac(SSL *s, const char *str, ossl_unused size_t unused__slen,
                              unsigned char *out)
 {
     const char *mdname = EVP_MD_name(ssl_handshake_md(s));

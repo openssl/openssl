@@ -41,12 +41,12 @@ static const OSSL_PARAM base_param_types[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *base_gettable_params(void *provctx)
+static const OSSL_PARAM *base_gettable_params(ossl_unused void *unused__provctx)
 {
     return base_param_types;
 }
 
-static int base_get_params(void *provctx, OSSL_PARAM params[])
+static int base_get_params(ossl_unused void *unused__provctx, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -76,7 +76,7 @@ static const OSSL_ALGORITHM base_encoder[] = {
 #undef ENCODER
 
 static const OSSL_ALGORITHM base_decoder[] = {
-#define DECODER(name, fips, input, func_table)                                \
+#define DECODER(name, fips, input, func_table)                              \
     { name,                                                                 \
       "provider=base,fips=" fips ",input=" input,                           \
       (func_table) }
@@ -86,8 +86,9 @@ static const OSSL_ALGORITHM base_decoder[] = {
 };
 #undef DECODER
 
-static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
-                                         int *no_cache)
+static const OSSL_ALGORITHM *base_query(ossl_unused void *unused__provctx,
+                                        int operation_id,
+                                        int *no_cache)
 {
     *no_cache = 0;
     switch (operation_id) {

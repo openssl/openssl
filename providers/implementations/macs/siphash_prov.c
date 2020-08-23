@@ -80,7 +80,7 @@ static size_t siphash_size(void *vmacctx)
     return SipHash_hash_size(&ctx->siphash);
 }
 
-static int siphash_init(void *vmacctx)
+static int siphash_init(ossl_unused void *unused__vmacctx)
 {
     /* Not much to do here, actual initialization happens through controls */
     return 1;
@@ -112,7 +112,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_MAC_PARAM_SIZE, NULL),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *siphash_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *siphash_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -132,7 +132,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_MAC_PARAM_KEY, NULL, 0),
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *siphash_settable_params(void *provctx)
+static const OSSL_PARAM *siphash_settable_params(ossl_unused void *unused__provctx)
 {
     return known_settable_ctx_params;
 }

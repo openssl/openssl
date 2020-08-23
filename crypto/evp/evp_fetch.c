@@ -464,7 +464,7 @@ struct do_all_data_st {
 };
 
 static void do_one(OSSL_PROVIDER *provider, const OSSL_ALGORITHM *algo,
-                   int no_store, void *vdata)
+                   ossl_unused int unused__no_store, void *vdata)
 {
     struct do_all_data_st *data = vdata;
     OPENSSL_CTX *libctx = ossl_provider_library_context(provider);

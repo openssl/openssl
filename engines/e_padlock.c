@@ -131,7 +131,7 @@ static ENGINE *ENGINE_padlock(void)
 #  endif
 
 /* Check availability of the engine */
-static int padlock_init(ENGINE *e)
+static int padlock_init(ossl_unused ENGINE *unused__e)
 {
     return (padlock_use_rng || padlock_use_ace);
 }
@@ -516,7 +516,7 @@ DECLARE_AES_EVP(256, ofb, OFB)
 DECLARE_AES_EVP(256, ctr, CTR)
 
 static int
-padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
+padlock_ciphers(ossl_unused ENGINE *unused__e, const EVP_CIPHER **cipher, const int **nids,
                 int nid)
 {
     /* No specific cipher => return a list of supported nids ... */
@@ -587,7 +587,7 @@ padlock_ciphers(ENGINE *e, const EVP_CIPHER **cipher, const int **nids,
 /* Prepare the encryption key for PadLock usage */
 static int
 padlock_aes_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                     const unsigned char *iv, int enc)
+                     ossl_unused const unsigned char *unused__iv, int enc)
 {
     struct padlock_cipher_data *cdata;
     int key_len = EVP_CIPHER_CTX_key_length(ctx) * 8;

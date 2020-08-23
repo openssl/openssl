@@ -18,7 +18,9 @@
 
 #ifndef FIPS_MODULE
 
-static int update(EVP_MD_CTX *ctx, const void *data, size_t datalen)
+static int update(ossl_unused EVP_MD_CTX *unused__ctx,
+                  ossl_unused const void *unused__data,
+                  ossl_unused size_t unused__datalen)
 {
     EVPerr(EVP_F_UPDATE, EVP_R_ONLY_ONESHOT_SUPPORTED);
     return 0;

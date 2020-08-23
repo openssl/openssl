@@ -240,7 +240,7 @@ static int util_verbose(ENGINE *e, int verbose, BIO *out, const char *indent)
 }
 
 static void util_do_cmds(ENGINE *e, STACK_OF(OPENSSL_STRING) *cmds,
-                         BIO *out, const char *indent)
+                         BIO *out, ossl_unused const char *unused__indent)
 {
     int loop, res, num = sk_OPENSSL_STRING_num(cmds);
 

@@ -25,12 +25,12 @@ static const OSSL_ITEM null_param_types[] = {
     { 0, NULL }
 };
 
-static const OSSL_ITEM *null_gettable_params(const OSSL_PROVIDER *prov)
+static const OSSL_ITEM *null_gettable_params(ossl_unused const OSSL_PROVIDER *unused__prov)
 {
     return null_param_types;
 }
 
-static int null_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
+static int null_get_params(ossl_unused const OSSL_PROVIDER *unused__prov, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -47,9 +47,9 @@ static int null_get_params(const OSSL_PROVIDER *prov, OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_ALGORITHM *null_query(OSSL_PROVIDER *prov,
-                                          int operation_id,
-                                          int *no_cache)
+static const OSSL_ALGORITHM *null_query(ossl_unused OSSL_PROVIDER *unused__prov,
+                                        ossl_unused int unused__operation_id,
+                                        int *no_cache)
 {
     *no_cache = 0;
     return NULL;
@@ -64,7 +64,7 @@ static const OSSL_DISPATCH null_dispatch_table[] = {
 };
 
 int ossl_null_provider_init(const OSSL_CORE_HANDLE *handle,
-                            const OSSL_DISPATCH *in,
+                            ossl_unused const OSSL_DISPATCH *unused__in,
                             const OSSL_DISPATCH **out,
                             void **provctx)
 {

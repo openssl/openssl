@@ -15,17 +15,19 @@
 
 DEFINE_STACK_OF(SCT)
 
-static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
+static char *i2s_poison(ossl_unused const X509V3_EXT_METHOD *unused__method, ossl_unused void *unused__val)
 {
     return OPENSSL_strdup("NULL");
 }
 
-static void *s2i_poison(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx, const char *str)
+static void *s2i_poison(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                        ossl_unused X509V3_CTX *unused__ctx,
+                        ossl_unused const char *unused__str)
 {
    return ASN1_NULL_new();
 }
 
-static int i2r_SCT_LIST(X509V3_EXT_METHOD *method, STACK_OF(SCT) *sct_list,
+static int i2r_SCT_LIST(ossl_unused X509V3_EXT_METHOD *unused__method, STACK_OF(SCT) *sct_list,
                  BIO *out, int indent)
 {
     SCT_LIST_print(sct_list, out, indent, "\n", NULL);

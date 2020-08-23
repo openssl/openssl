@@ -52,21 +52,21 @@ static OSSL_FUNC_provider_get_params_fn filter_get_params;
 static OSSL_FUNC_provider_query_operation_fn filter_query;
 static OSSL_FUNC_provider_teardown_fn filter_teardown;
 
-static const OSSL_PARAM *filter_gettable_params(void *provctx)
+static const OSSL_PARAM *filter_gettable_params(ossl_unused void *unused__provctx)
 {
     struct filter_prov_globals_st *globs = get_globals();
 
     return OSSL_PROVIDER_gettable_params(globs->deflt);
 }
 
-static int filter_get_params(void *provctx, OSSL_PARAM params[])
+static int filter_get_params(ossl_unused void *unused__provctx, OSSL_PARAM params[])
 {
     struct filter_prov_globals_st *globs = get_globals();
 
     return OSSL_PROVIDER_get_params(globs->deflt, params);
 }
 
-static int filter_get_capabilities(void *provctx, const char *capability,
+static int filter_get_capabilities(ossl_unused void *unused__provctx, const char *capability,
                                    OSSL_CALLBACK *cb, void *arg)
 {
     struct filter_prov_globals_st *globs = get_globals();
@@ -74,7 +74,7 @@ static int filter_get_capabilities(void *provctx, const char *capability,
     return OSSL_PROVIDER_get_capabilities(globs->deflt, capability, cb, arg);
 }
 
-static const OSSL_ALGORITHM *filter_query(void *provctx,
+static const OSSL_ALGORITHM *filter_query(ossl_unused void *unused__provctx,
                                           int operation_id,
                                           int *no_cache)
 {
@@ -92,7 +92,7 @@ static const OSSL_ALGORITHM *filter_query(void *provctx,
     return OSSL_PROVIDER_query_operation(globs->deflt, operation_id, no_cache);
 }
 
-static void filter_teardown(void *provctx)
+static void filter_teardown(ossl_unused void *unused__provctx)
 {
     struct filter_prov_globals_st *globs = get_globals();
 
@@ -110,8 +110,8 @@ static const OSSL_DISPATCH filter_dispatch_table[] = {
     { 0, NULL }
 };
 
-int filter_provider_init(const OSSL_CORE_HANDLE *handle,
-                         const OSSL_DISPATCH *in,
+int filter_provider_init(ossl_unused const OSSL_CORE_HANDLE *unused__handle,
+                         ossl_unused const OSSL_DISPATCH *unused__in,
                          const OSSL_DISPATCH **out,
                          void **provctx)
 {

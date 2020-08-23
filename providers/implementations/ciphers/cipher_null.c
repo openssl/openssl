@@ -21,7 +21,7 @@ typedef struct prov_cipher_null_ctx_st {
 } PROV_CIPHER_NULL_CTX;
 
 static OSSL_FUNC_cipher_newctx_fn null_newctx;
-static void *null_newctx(void *provctx)
+static void *null_newctx(ossl_unused void *unused__provctx)
 {
     return OPENSSL_zalloc(sizeof(PROV_CIPHER_NULL_CTX));
 }
@@ -33,8 +33,11 @@ static void null_freectx(void *vctx)
 }
 
 static OSSL_FUNC_cipher_encrypt_init_fn null_einit;
-static int null_einit(void *vctx, const unsigned char *key, size_t keylen,
-                      const unsigned char *iv, size_t ivlen)
+static int null_einit(void *vctx,
+                      ossl_unused const unsigned char *unused__key,
+                      ossl_unused size_t unused__keylen,
+                      ossl_unused const unsigned char *unused__iv,
+                      ossl_unused size_t unused__ivlen)
 {
     PROV_CIPHER_NULL_CTX *ctx = (PROV_CIPHER_NULL_CTX *)vctx;
 
@@ -43,8 +46,11 @@ static int null_einit(void *vctx, const unsigned char *key, size_t keylen,
 }
 
 static OSSL_FUNC_cipher_decrypt_init_fn null_dinit;
-static int null_dinit(void *vctx, const unsigned char *key, size_t keylen,
-                      const unsigned char *iv, size_t ivlen)
+static int null_dinit(ossl_unused void *unused__vctx,
+                      ossl_unused const unsigned char *unused__key,
+                      ossl_unused size_t unused__keylen,
+                      ossl_unused const unsigned char *unused__iv,
+                      ossl_unused size_t unused__ivlen)
 {
     return 1;
 }
@@ -74,8 +80,10 @@ static int null_cipher(void *vctx, unsigned char *out, size_t *outl,
 }
 
 static OSSL_FUNC_cipher_final_fn null_final;
-static int null_final(void *vctx, unsigned char *out, size_t *outl,
-                      size_t outsize)
+static int null_final(ossl_unused void *unused__vctx,
+                      ossl_unused unsigned char *unused__out,
+                      size_t *outl,
+                      ossl_unused size_t unused__outsize)
 {
     *outl = 0;
     return 1;
@@ -95,7 +103,7 @@ static const OSSL_PARAM null_known_gettable_ctx_params[] = {
 };
 
 static OSSL_FUNC_cipher_gettable_ctx_params_fn null_gettable_ctx_params;
-static const OSSL_PARAM *null_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *null_gettable_ctx_params(ossl_unused void *unused__provctx)
 {
     return null_known_gettable_ctx_params;
 }
@@ -131,7 +139,7 @@ static const OSSL_PARAM null_known_settable_ctx_params[] = {
 };
 
 static OSSL_FUNC_cipher_settable_ctx_params_fn null_settable_ctx_params;
-static const OSSL_PARAM *null_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *null_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return null_known_settable_ctx_params;
 }

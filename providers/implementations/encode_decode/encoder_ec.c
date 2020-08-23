@@ -238,7 +238,8 @@ static int ossl_prov_prepare_ec_explicit_params(const void *eckey,
     return 1;
 }
 
-int ossl_prov_prepare_ec_params(const void *eckey, int nid,
+int ossl_prov_prepare_ec_params(const void *eckey,
+                                ossl_unused int unused__nid,
                                 void **pstr, int *pstrtype)
 {
     int curve_nid;

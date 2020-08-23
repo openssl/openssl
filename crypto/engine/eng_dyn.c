@@ -136,9 +136,12 @@ static void int_free_str(char *s)
  * a "free" handler and that will get called if an ENGINE is being destroyed
  * and there was an ex_data element corresponding to our context type.
  */
-static void dynamic_data_ctx_free_func(void *parent, void *ptr,
-                                       CRYPTO_EX_DATA *ad, int idx, long argl,
-                                       void *argp)
+static void dynamic_data_ctx_free_func(ossl_unused void *unused__parent,
+                                       void *ptr,
+                                       ossl_unused CRYPTO_EX_DATA *unused__ad,
+                                       ossl_unused int unused__idx,
+                                       ossl_unused long unused__argl,
+                                       ossl_unused void *unused__argp)
 {
     if (ptr) {
         dynamic_data_ctx *ctx = (dynamic_data_ctx *)ptr;
@@ -273,7 +276,7 @@ void engine_load_dynamic_int(void)
     ERR_clear_error();
 }
 
-static int dynamic_init(ENGINE *e)
+static int dynamic_init(ossl_unused ENGINE *unused__e)
 {
     /*
      * We always return failure - the "dynamic" engine itself can't be used
@@ -282,7 +285,7 @@ static int dynamic_init(ENGINE *e)
     return 0;
 }
 
-static int dynamic_finish(ENGINE *e)
+static int dynamic_finish(ossl_unused ENGINE *unused__e)
 {
     /*
      * This should never be called on account of "dynamic_init" always
@@ -291,7 +294,7 @@ static int dynamic_finish(ENGINE *e)
     return 0;
 }
 
-static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, void (*f) (void))
+static int dynamic_ctrl(ENGINE *e, int cmd, long i, void *p, ossl_unused void (*f) (void))
 {
     dynamic_data_ctx *ctx = dynamic_get_data_ctx(e);
     int initialised;

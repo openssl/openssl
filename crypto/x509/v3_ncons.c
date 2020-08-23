@@ -169,7 +169,7 @@ static int i2r_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method, void *a,
     return 1;
 }
 
-static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
+static int do_i2r_name_constraints(ossl_unused const X509V3_EXT_METHOD *unused__method,
                                    STACK_OF(GENERAL_SUBTREE) *trees,
                                    BIO *bp, int ind, const char *name)
 {

@@ -105,7 +105,8 @@ static int restore_errno(void)
 static char *psk_identity = "Client_identity";
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
+static unsigned int psk_client_cb(ossl_unused SSL *unused__ssl,
+                                  const char *hint, char *identity,
                                   unsigned int max_identity_len,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
@@ -235,7 +236,7 @@ typedef struct tlsextctx_st {
     int ack;
 } tlsextctx;
 
-static int ssl_servername_cb(SSL *s, int *ad, void *arg)
+static int ssl_servername_cb(SSL *s, ossl_unused int *unused__ad, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     const char *hn = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
@@ -335,7 +336,7 @@ static int ssl_srp_verify_param_cb(SSL *s, void *arg)
 
 # define PWD_STRLEN 1024
 
-static char *ssl_give_srp_client_pwd_cb(SSL *s, void *arg)
+static char *ssl_give_srp_client_pwd_cb(ossl_unused SSL *unused__ssl, void *arg)
 {
     SRP_ARG *srp_arg = (SRP_ARG *)arg;
     char *pass = app_malloc(PWD_STRLEN + 1, "SRP password buffer");
@@ -366,7 +367,8 @@ typedef struct tlsextnextprotoctx_st {
 
 static tlsextnextprotoctx next_proto;
 
-static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
+static int next_proto_cb(ossl_unused SSL *unused__ssl,
+                         unsigned char **out, unsigned char *outlen,
                          const unsigned char *in, unsigned int inlen,
                          void *arg)
 {
@@ -391,9 +393,10 @@ static int next_proto_cb(SSL *s, unsigned char **out, unsigned char *outlen,
 }
 #endif                         /* ndef OPENSSL_NO_NEXTPROTONEG */
 
-static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
+static int serverinfo_cli_parse_cb(ossl_unused SSL *unused__ssl,
+                                   unsigned int ext_type,
                                    const unsigned char *in, size_t inlen,
-                                   int *al, void *arg)
+                                   ossl_unused int *unused__al, ossl_unused void *unused__arg)
 {
     char pem_name[100];
     unsigned char ext_buf[4 + 65536];

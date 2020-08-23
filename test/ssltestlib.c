@@ -236,7 +236,7 @@ static long tls_dump_ctrl(BIO *bio, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int tls_dump_gets(BIO *bio, char *buf, int size)
+static int tls_dump_gets(ossl_unused BIO *unused__bio, ossl_unused char *unused__buf, ossl_unused int unused__size)
 {
     /* We don't support this - not needed anyway */
     return -1;
@@ -527,7 +527,7 @@ static int mempacket_test_write(BIO *bio, const char *in, int inl)
     return mempacket_test_inject(bio, in, inl, -1, STANDARD_PACKET);
 }
 
-static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
+static long mempacket_test_ctrl(BIO *bio, int cmd, long num, ossl_unused void *unused__ptr)
 {
     long ret = 1;
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
@@ -579,7 +579,7 @@ static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int mempacket_test_gets(BIO *bio, char *buf, int size)
+static int mempacket_test_gets(ossl_unused BIO *unused__bio, ossl_unused char *unused__buf, ossl_unused int unused__size)
 {
     /* We don't support this - not needed anyway */
     return -1;
@@ -640,19 +640,19 @@ static int always_retry_free(BIO *bio)
     return 1;
 }
 
-static int always_retry_read(BIO *bio, char *out, int outl)
+static int always_retry_read(BIO *bio, ossl_unused char *unused__out, ossl_unused int unused__outl)
 {
     BIO_set_retry_read(bio);
     return -1;
 }
 
-static int always_retry_write(BIO *bio, const char *in, int inl)
+static int always_retry_write(BIO *bio, ossl_unused const char *unused__in, ossl_unused int unused__inl)
 {
     BIO_set_retry_write(bio);
     return -1;
 }
 
-static long always_retry_ctrl(BIO *bio, int cmd, long num, void *ptr)
+static long always_retry_ctrl(BIO *bio, int cmd, ossl_unused long unused__num, ossl_unused void *unused__ptr)
 {
     long ret = 1;
 
@@ -672,13 +672,13 @@ static long always_retry_ctrl(BIO *bio, int cmd, long num, void *ptr)
     return ret;
 }
 
-static int always_retry_gets(BIO *bio, char *buf, int size)
+static int always_retry_gets(BIO *bio, ossl_unused char *unused__buf, ossl_unused int unused__size)
 {
     BIO_set_retry_read(bio);
     return -1;
 }
 
-static int always_retry_puts(BIO *bio, const char *str)
+static int always_retry_puts(BIO *bio, ossl_unused const char *unused__str)
 {
     BIO_set_retry_write(bio);
     return -1;

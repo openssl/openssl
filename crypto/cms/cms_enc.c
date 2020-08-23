@@ -179,7 +179,7 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
 int cms_EncryptedContent_init(CMS_EncryptedContentInfo *ec,
                               const EVP_CIPHER *cipher,
                               const unsigned char *key, size_t keylen,
-                              const CMS_CTX *cms_ctx)
+                              ossl_unused const CMS_CTX *unused__cms_ctx)
 {
     ec->cipher = cipher;
     if (key) {

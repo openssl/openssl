@@ -17,7 +17,8 @@
 #include "cipher_des.h"
 
 static int cipher_hw_des_initkey(PROV_CIPHER_CTX *ctx,
-                                 const unsigned char *key, size_t keylen)
+                                 const unsigned char *key,
+                                 ossl_unused size_t unused__keylen)
 {
     PROV_DES_CTX *dctx = (PROV_DES_CTX *)ctx;
     DES_cblock *deskey = (DES_cblock *)key;

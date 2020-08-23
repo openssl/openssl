@@ -41,7 +41,7 @@ static OSSL_FUNC_cipher_gettable_ctx_params_fn chacha20_poly1305_gettable_ctx_pa
 #define chacha20_poly1305_gettable_params cipher_generic_gettable_params
 #define chacha20_poly1305_update chacha20_poly1305_cipher
 
-static void *chacha20_poly1305_newctx(void *provctx)
+static void *chacha20_poly1305_newctx(ossl_unused void *unused__provctx)
 {
     PROV_CHACHA20_POLY1305_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
@@ -136,7 +136,7 @@ static const OSSL_PARAM chacha20_poly1305_known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 static const OSSL_PARAM *chacha20_poly1305_gettable_ctx_params
-    (ossl_unused void *provctx)
+    (ossl_unused void *unused__provctx)
 {
     return chacha20_poly1305_known_gettable_ctx_params;
 }
@@ -282,7 +282,7 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
 }
 
 static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
-                                   size_t outsize)
+                                   ossl_unused size_t unused__outsize)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =

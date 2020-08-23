@@ -24,7 +24,8 @@ DEFINE_STACK_OF(SSL_CIPHER)
 
 static int debug = 0;
 
-static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
+static unsigned int clnt_psk_callback(ossl_unused SSL *unused__ssl,
+                                      ossl_unused const char *unused__hint,
                                       char *ident, unsigned int max_ident_len,
                                       unsigned char *psk,
                                       unsigned int max_psk_len)
@@ -38,7 +39,8 @@ static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
     return max_psk_len;
 }
 
-static unsigned int srvr_psk_callback(SSL *ssl, const char *identity,
+static unsigned int srvr_psk_callback(ossl_unused SSL *unused__ssl,
+                                      ossl_unused const char *unused__identity,
                                       unsigned char *psk,
                                       unsigned int max_psk_len)
 {

@@ -12,7 +12,7 @@
 #include "cipher_chacha20.h"
 
 static int chacha20_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
-                            size_t keylen)
+                            ossl_unused size_t unused__keylen)
 {
     PROV_CHACHA20_CTX *ctx = (PROV_CHACHA20_CTX *)bctx;
     unsigned int i;
@@ -114,7 +114,7 @@ static const PROV_CIPHER_HW_CHACHA20 chacha20_hw = {
     chacha20_initiv
 };
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20(size_t keybits)
+const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20(ossl_unused size_t unused__keybits)
 {
     return (PROV_CIPHER_HW *)&chacha20_hw;
 }

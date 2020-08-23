@@ -62,7 +62,7 @@ ASN1_ITEM_start(CBIGNUM)
         ASN1_ITYPE_PRIMITIVE, V_ASN1_INTEGER, NULL, 0, &cbignum_pf, BN_SENSITIVE, "CBIGNUM"
 ASN1_ITEM_end(CBIGNUM)
 
-static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int bn_new(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     *pval = (ASN1_VALUE *)BN_new();
     if (*pval != NULL)
@@ -71,7 +71,7 @@ static int bn_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
         return 0;
 }
 
-static int bn_secure_new(ASN1_VALUE **pval, const ASN1_ITEM *it)
+static int bn_secure_new(ASN1_VALUE **pval, ossl_unused const ASN1_ITEM *unused__it)
 {
     *pval = (ASN1_VALUE *)BN_secure_new();
     if (*pval != NULL)
@@ -91,8 +91,9 @@ static void bn_free(ASN1_VALUE **pval, const ASN1_ITEM *it)
     *pval = NULL;
 }
 
-static int bn_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
-                  const ASN1_ITEM *it)
+static int bn_i2c(const ASN1_VALUE **pval, unsigned char *cont,
+                  ossl_unused int *unused__putype,
+                  ossl_unused const ASN1_ITEM *unused__it)
 {
     BIGNUM *bn;
     int pad;
@@ -113,7 +114,8 @@ static int bn_i2c(const ASN1_VALUE **pval, unsigned char *cont, int *putype,
 }
 
 static int bn_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
-                  int utype, char *free_cont, const ASN1_ITEM *it)
+                  ossl_unused int unused__utype, ossl_unused char *unused__free_cont,
+                  const ASN1_ITEM *it)
 {
     BIGNUM *bn;
 
@@ -146,8 +148,10 @@ static int bn_secure_c2i(ASN1_VALUE **pval, const unsigned char *cont, int len,
     return ret;
 }
 
-static int bn_print(BIO *out, const ASN1_VALUE **pval, const ASN1_ITEM *it,
-                    int indent, const ASN1_PCTX *pctx)
+static int bn_print(BIO *out, const ASN1_VALUE **pval,
+                    ossl_unused const ASN1_ITEM *unused__it,
+                    ossl_unused int unused__indent,
+                    ossl_unused const ASN1_PCTX *unused__pctx)
 {
     if (!BN_print(out, *(BIGNUM **)pval))
         return 0;

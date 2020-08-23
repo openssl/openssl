@@ -104,7 +104,7 @@ static int aes_xts_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return aes_xts_init(vctx, key, keylen, iv, ivlen, 0);
 }
 
-static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
+static void *aes_xts_newctx(ossl_unused void *unused__provctx, unsigned int mode, uint64_t flags,
                             size_t kbits, size_t blkbits, size_t ivbits)
 {
     PROV_AES_XTS_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
@@ -147,7 +147,7 @@ static void *aes_xts_dupctx(void *vctx)
 }
 
 static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
-                          size_t outsize, const unsigned char *in, size_t inl)
+                          ossl_unused size_t unused__outsize, const unsigned char *in, size_t inl)
 {
     PROV_AES_XTS_CTX *ctx = (PROV_AES_XTS_CTX *)vctx;
 
@@ -199,8 +199,9 @@ static int aes_xts_stream_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-static int aes_xts_stream_final(void *vctx, unsigned char *out, size_t *outl,
-                                size_t outsize)
+static int aes_xts_stream_final(ossl_unused void *unused__vctx, ossl_unused unsigned char *unused__out,
+                                size_t *outl,
+                                ossl_unused size_t unused__outsize)
 {
     *outl = 0;
     return 1;
@@ -211,7 +212,7 @@ static const OSSL_PARAM aes_xts_known_settable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *aes_xts_settable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *aes_xts_settable_ctx_params(ossl_unused void *unused__provctx)
 {
     return aes_xts_known_settable_ctx_params;
 }

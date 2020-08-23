@@ -57,7 +57,8 @@ const EVP_CIPHER *EVP_desx_cbc(void)
 }
 
 static int desx_cbc_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
-                             const unsigned char *iv, int enc)
+                             ossl_unused const unsigned char *unused__iv,
+                             ossl_unused int unused__enc)
 {
     DES_cblock *deskey = (DES_cblock *)key;
 

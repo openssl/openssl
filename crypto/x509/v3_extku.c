@@ -53,8 +53,8 @@ ASN1_ITEM_TEMPLATE_END(EXTENDED_KEY_USAGE)
 
 IMPLEMENT_ASN1_FUNCTIONS(EXTENDED_KEY_USAGE)
 
-static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD
-                                                    *method, void *a, STACK_OF(CONF_VALUE)
+static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                                                    void *a, STACK_OF(CONF_VALUE)
                                                     *ext_list)
 {
     EXTENDED_KEY_USAGE *eku = a;
@@ -69,8 +69,8 @@ static STACK_OF(CONF_VALUE) *i2v_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD
     return ext_list;
 }
 
-static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
-                                    X509V3_CTX *ctx,
+static void *v2i_EXTENDED_KEY_USAGE(ossl_unused const X509V3_EXT_METHOD *unused__method,
+                                    ossl_unused X509V3_CTX *unused__ctx,
                                     STACK_OF(CONF_VALUE) *nval)
 {
     EXTENDED_KEY_USAGE *extku;

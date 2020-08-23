@@ -783,11 +783,15 @@ static int serverinfo_find_extension(const unsigned char *serverinfo,
     /* Unreachable */
 }
 
-static int serverinfoex_srv_parse_cb(SSL *s, unsigned int ext_type,
-                                     unsigned int context,
-                                     const unsigned char *in,
-                                     size_t inlen, X509 *x, size_t chainidx,
-                                     int *al, void *arg)
+static int serverinfoex_srv_parse_cb(ossl_unused SSL *unused__ssl,
+                                     ossl_unused unsigned int unused__ext_type,
+                                     ossl_unused unsigned int unused__context,
+                                     ossl_unused const unsigned char *unused__in,
+                                     size_t inlen,
+                                     ossl_unused X509 *unused__x,
+                                     ossl_unused size_t unused__chainidx,
+                                     int *al,
+                                     ossl_unused void *unused__arg)
 {
 
     if (inlen != 0) {
@@ -809,8 +813,11 @@ static int serverinfo_srv_parse_cb(SSL *s, unsigned int ext_type,
 static int serverinfoex_srv_add_cb(SSL *s, unsigned int ext_type,
                                    unsigned int context,
                                    const unsigned char **out,
-                                   size_t *outlen, X509 *x, size_t chainidx,
-                                   int *al, void *arg)
+                                   size_t *outlen,
+                                   ossl_unused X509 *unused__x,
+                                   size_t chainidx,
+                                   int *al,
+                                   ossl_unused void *unused__arg)
 {
     const unsigned char *serverinfo = NULL;
     size_t serverinfo_length = 0;

@@ -111,7 +111,7 @@ static int i2r_ASIdentifierChoice(BIO *out,
 /*
  * i2r method for an ASIdentifier extension.
  */
-static int i2r_ASIdentifiers(const X509V3_EXT_METHOD *method,
+static int i2r_ASIdentifiers(ossl_unused const X509V3_EXT_METHOD *unused__method,
                              void *ext, BIO *out, int indent)
 {
     ASIdentifiers *asid = ext;
@@ -519,8 +519,8 @@ int X509v3_asid_canonize(ASIdentifiers *asid)
 /*
  * v2i method for an ASIdentifier extension.
  */
-static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
-                               struct v3_ext_ctx *ctx,
+static void *v2i_ASIdentifiers(ossl_unused const struct v3_ext_method *unused__method,
+                               ossl_unused struct v3_ext_ctx *unused__ctx,
                                STACK_OF(CONF_VALUE) *values)
 {
     ASN1_INTEGER *min = NULL, *max = NULL;

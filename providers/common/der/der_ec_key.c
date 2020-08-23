@@ -11,7 +11,7 @@
 #include "internal/packet.h"
 #include "prov/der_ec.h"
 
-int DER_w_algorithmIdentifier_EC(WPACKET *pkt, int cont, EC_KEY *ec)
+int DER_w_algorithmIdentifier_EC(WPACKET *pkt, int cont, ossl_unused EC_KEY *unused__ec)
 {
     return DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */

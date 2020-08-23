@@ -20,7 +20,8 @@
 #define ks3 tks.ks[2]
 
 static int cipher_hw_tdes_ede2_initkey(PROV_CIPHER_CTX *ctx,
-                                       const unsigned char *key, size_t keylen)
+                                       const unsigned char *key,
+                                       ossl_unused size_t unused__keylen)
 {
     PROV_TDES_CTX *tctx = (PROV_TDES_CTX *)ctx;
     DES_cblock *deskey = (DES_cblock *)key;
@@ -143,4 +144,3 @@ PROV_CIPHER_HW_tdes_mode(ede2, ecb)
 PROV_CIPHER_HW_tdes_mode(ede2, cbc)
 PROV_CIPHER_HW_tdes_mode(ede2, ofb)
 PROV_CIPHER_HW_tdes_mode(ede2, cfb)
-

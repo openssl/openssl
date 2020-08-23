@@ -43,7 +43,8 @@ void rc4_md5_enc(RC4_KEY *key, const void *in0, void *out,
 
 static int rc4_hmac_md5_init_key(EVP_CIPHER_CTX *ctx,
                                  const unsigned char *inkey,
-                                 const unsigned char *iv, int enc)
+                                 ossl_unused const unsigned char *unused__iv,
+                                 ossl_unused int unused__enc)
 {
     EVP_RC4_HMAC_MD5 *key = data(ctx);
 

@@ -37,8 +37,9 @@ struct X509_pubkey_st {
 static int x509_pubkey_decode(EVP_PKEY **pk, const X509_PUBKEY *key);
 
 /* Minor tweak to operation: free up EVP_PKEY */
-static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
-                     void *exarg)
+static int pubkey_cb(int operation, ASN1_VALUE **pval,
+                     ossl_unused const ASN1_ITEM *unused__it,
+                     ossl_unused void *unused__exarg)
 {
     if (operation == ASN1_OP_FREE_POST) {
         X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;

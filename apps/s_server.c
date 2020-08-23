@@ -134,7 +134,8 @@ char *psk_key = NULL;           /* by default PSK is not used */
 static char http_server_binmode = 0; /* for now: 0/1 = default/binary */
 
 #ifndef OPENSSL_NO_PSK
-static unsigned int psk_server_cb(SSL *ssl, const char *identity,
+static unsigned int psk_server_cb(ossl_unused SSL *unused__ssl,
+                                  const char *identity,
                                   unsigned char *psk,
                                   unsigned int max_psk_len)
 {
@@ -463,7 +464,7 @@ typedef struct tlsextctx_st {
     int extension_error;
 } tlsextctx;
 
-static int ssl_servername_cb(SSL *s, int *ad, void *arg)
+static int ssl_servername_cb(SSL *s, ossl_unused int *unused__ad, void *arg)
 {
     tlsextctx *p = (tlsextctx *) arg;
     const char *servername = SSL_get_servername(s, TLSEXT_NAMETYPE_host_name);
@@ -676,7 +677,7 @@ typedef struct tlsextnextprotoctx_st {
     size_t len;
 } tlsextnextprotoctx;
 
-static int next_proto_cb(SSL *s, const unsigned char **data,
+static int next_proto_cb(ossl_unused SSL *unused__ssl, const unsigned char **data,
                          unsigned int *len, void *arg)
 {
     tlsextnextprotoctx *next_proto = arg;
@@ -694,7 +695,8 @@ typedef struct tlsextalpnctx_st {
     size_t len;
 } tlsextalpnctx;
 
-static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
+static int alpn_cb(ossl_unused SSL *unused__ssl,
+                   const unsigned char **out, unsigned char *outlen,
                    const unsigned char *in, unsigned int inlen, void *arg)
 {
     tlsextalpnctx *alpn_ctx = arg;
@@ -727,7 +729,7 @@ static int alpn_cb(SSL *s, const unsigned char **out, unsigned char *outlen,
     return SSL_TLSEXT_ERR_OK;
 }
 
-static int not_resumable_sess_cb(SSL *s, int is_forward_secure)
+static int not_resumable_sess_cb(ossl_unused SSL *unused__ssl, int is_forward_secure)
 {
     /* disable resumption for sessions with forward secure ciphers */
     return is_forward_secure;
@@ -2311,7 +2313,7 @@ static void print_stats(BIO *bio, SSL_CTX *ssl_ctx)
                SSL_CTX_sess_get_cache_size(ssl_ctx));
 }
 
-static int sv_body(int s, int stype, int prot, unsigned char *context)
+static int sv_body(int s, int stype, ossl_unused int unused__prot, unsigned char *context)
 {
     char *buf = NULL;
     fd_set readfds;
@@ -3025,7 +3027,8 @@ static DH *load_dh_param(const char *dhfile)
 }
 #endif
 
-static int www_body(int s, int stype, int prot, unsigned char *context)
+static int www_body(int s, ossl_unused int unused__stype, ossl_unused int unused__prot,
+                    unsigned char *context)
 {
     char *buf = NULL;
     int ret = 1;
@@ -3460,7 +3463,8 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
     return ret;
 }
 
-static int rev_body(int s, int stype, int prot, unsigned char *context)
+static int rev_body(int s, ossl_unused int unused__stype, ossl_unused int unused__prot,
+                    unsigned char *context)
 {
     char *buf = NULL;
     int i;
@@ -3660,7 +3664,7 @@ typedef struct simple_ssl_session_st {
 
 static simple_ssl_session *first = NULL;
 
-static int add_session(SSL *ssl, SSL_SESSION *session)
+static int add_session(ossl_unused SSL *unused__ssl, SSL_SESSION *session)
 {
     simple_ssl_session *sess = app_malloc(sizeof(*sess), "get session");
     unsigned char *p;
@@ -3699,7 +3703,7 @@ static int add_session(SSL *ssl, SSL_SESSION *session)
     return 0;
 }
 
-static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
+static SSL_SESSION *get_session(ossl_unused SSL *unused__ssl, const unsigned char *id, int idlen,
                                 int *do_copy)
 {
     simple_ssl_session *sess;
@@ -3715,7 +3719,7 @@ static SSL_SESSION *get_session(SSL *ssl, const unsigned char *id, int idlen,
     return NULL;
 }
 
-static void del_session(SSL_CTX *sctx, SSL_SESSION *session)
+static void del_session(ossl_unused SSL_CTX *unused__sctx, SSL_SESSION *session)
 {
     simple_ssl_session *sess, *prev = NULL;
     const unsigned char *id;

@@ -61,8 +61,10 @@ struct pem_password_cb_data {
     int rwflag;
 };
 
-static void ui_new_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-                               int idx, long argl, void *argp)
+static void ui_new_method_data(ossl_unused void *unused__parent, ossl_unused void *unused__ptr,
+                               ossl_unused CRYPTO_EX_DATA *unused__ad,
+                               ossl_unused int unused__idx, ossl_unused long unused__argl,
+                               ossl_unused void *unused__argp)
 {
     /*
      * Do nothing, the data is allocated externally and assigned later with
@@ -70,16 +72,19 @@ static void ui_new_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
      */
 }
 
-static int ui_dup_method_data(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
-                              void **pptr, int idx, long argl, void *argp)
+static int ui_dup_method_data(ossl_unused CRYPTO_EX_DATA *unused__to,
+                              ossl_unused const CRYPTO_EX_DATA *unused__from,
+                              void **pptr, ossl_unused int unused__idx,
+                              ossl_unused long unused__argl, ossl_unused void *unused__argp)
 {
     if (*pptr != NULL)
         *pptr = OPENSSL_memdup(*pptr, sizeof(struct pem_password_cb_data));
     return 1;
 }
 
-static void ui_free_method_data(void *parent, void *ptr, CRYPTO_EX_DATA *ad,
-                                int idx, long argl, void *argp)
+static void ui_free_method_data(ossl_unused void *unused__parent, void *ptr,
+                                ossl_unused CRYPTO_EX_DATA *unused__ad, ossl_unused int unused__idx,
+                                ossl_unused long unused__argl, ossl_unused void *unused__argp)
 {
     OPENSSL_free(ptr);
 }
@@ -95,7 +100,7 @@ DEFINE_RUN_ONCE_STATIC(ui_method_data_index_init)
     return 1;
 }
 
-static int ui_open(UI *ui)
+static int ui_open(ossl_unused UI *unused__ui)
 {
     return 1;
 }
@@ -129,11 +134,11 @@ static int ui_read(UI *ui, UI_STRING *uis)
     }
     return 1;
 }
-static int ui_write(UI *ui, UI_STRING *uis)
+static int ui_write(ossl_unused UI *unused__ui, ossl_unused UI_STRING *unused__uis)
 {
     return 1;
 }
-static int ui_close(UI *ui)
+static int ui_close(ossl_unused UI *unused__ui)
 {
     return 1;
 }

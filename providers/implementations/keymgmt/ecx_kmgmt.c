@@ -259,7 +259,7 @@ static int ecx_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
     return key_to_params(ecx, NULL, params);
 }
 
-static int ed_get_params(void *key, OSSL_PARAM params[])
+static int ed_get_params(ossl_unused void *unused__key, OSSL_PARAM params[])
 {
     OSSL_PARAM *p;
 
@@ -314,22 +314,22 @@ static const OSSL_PARAM ed_gettable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *x25519_gettable_params(void *provctx)
+static const OSSL_PARAM *x25519_gettable_params(ossl_unused void *unused__provctx)
 {
     return ecx_gettable_params;
 }
 
-static const OSSL_PARAM *x448_gettable_params(void *provctx)
+static const OSSL_PARAM *x448_gettable_params(ossl_unused void *unused__provctx)
 {
     return ecx_gettable_params;
 }
 
-static const OSSL_PARAM *ed25519_gettable_params(void *provctx)
+static const OSSL_PARAM *ed25519_gettable_params(ossl_unused void *unused__provctx)
 {
     return ed_gettable_params;
 }
 
-static const OSSL_PARAM *ed448_gettable_params(void *provctx)
+static const OSSL_PARAM *ed448_gettable_params(ossl_unused void *unused__provctx)
 {
     return ed_gettable_params;
 }
@@ -365,12 +365,12 @@ static int x448_set_params(void *key, const OSSL_PARAM params[])
     return ecx_set_params(key, params);
 }
 
-static int ed25519_set_params(void *key, const OSSL_PARAM params[])
+static int ed25519_set_params(ossl_unused void *unused__key, ossl_unused const OSSL_PARAM params[])
 {
     return 1;
 }
 
-static int ed448_set_params(void *key, const OSSL_PARAM params[])
+static int ed448_set_params(ossl_unused void *unused__key, ossl_unused const OSSL_PARAM params[])
 {
     return 1;
 }
@@ -384,22 +384,22 @@ static const OSSL_PARAM ed_settable_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *x25519_settable_params(void *provctx)
+static const OSSL_PARAM *x25519_settable_params(ossl_unused void *unused__provctx)
 {
     return ecx_settable_params;
 }
 
-static const OSSL_PARAM *x448_settable_params(void *provctx)
+static const OSSL_PARAM *x448_settable_params(ossl_unused void *unused__provctx)
 {
     return ecx_settable_params;
 }
 
-static const OSSL_PARAM *ed25519_settable_params(void *provctx)
+static const OSSL_PARAM *ed25519_settable_params(ossl_unused void *unused__provctx)
 {
     return ed_settable_params;
 }
 
-static const OSSL_PARAM *ed448_settable_params(void *provctx)
+static const OSSL_PARAM *ed448_settable_params(ossl_unused void *unused__provctx)
 {
     return ed_settable_params;
 }
@@ -476,7 +476,7 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *ecx_gen_settable_params(void *provctx)
+static const OSSL_PARAM *ecx_gen_settable_params(ossl_unused void *unused__provctx)
 {
     static OSSL_PARAM settable[] = {
         OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
@@ -535,7 +535,7 @@ err:
     return NULL;
 }
 
-static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *x25519_gen(void *genctx, ossl_unused OSSL_CALLBACK *unused__osslcb, ossl_unused void *unused__cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
 
@@ -546,7 +546,7 @@ static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     return ecx_gen(gctx);
 }
 
-static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *x448_gen(void *genctx, ossl_unused OSSL_CALLBACK *unused__osslcb, ossl_unused void *unused__cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
 
@@ -557,7 +557,7 @@ static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     return ecx_gen(gctx);
 }
 
-static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *ed25519_gen(void *genctx, ossl_unused OSSL_CALLBACK *unused__osslcb, ossl_unused void *unused__cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
 #ifdef S390X_EC_ASM
@@ -570,7 +570,7 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     return ecx_gen(gctx);
 }
 
-static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+static void *ed448_gen(void *genctx, ossl_unused OSSL_CALLBACK *unused__osslcb, ossl_unused void *unused__cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
 

@@ -59,7 +59,8 @@ static uint64_t test_values_64[] = {
 };
 
 static int test_binary_op(unsigned int (*op) (unsigned int a, unsigned int b),
-                          const char *op_name, unsigned int a, unsigned int b,
+                          ossl_unused const char *unused__op_name,
+                          unsigned int a, unsigned int b,
                           int is_true)
 {
     if (is_true && !TEST_uint_eq(op(a, b), CONSTTIME_TRUE))
@@ -71,7 +72,8 @@ static int test_binary_op(unsigned int (*op) (unsigned int a, unsigned int b),
 
 static int test_binary_op_8(unsigned
                             char (*op) (unsigned int a, unsigned int b),
-                            const char *op_name, unsigned int a,
+                            ossl_unused const char *unused__op_name,
+                            unsigned int a,
                             unsigned int b, int is_true)
 {
     if (is_true && !TEST_uint_eq(op(a, b), CONSTTIME_TRUE_8))
@@ -82,7 +84,8 @@ static int test_binary_op_8(unsigned
 }
 
 static int test_binary_op_s(size_t (*op) (size_t a, size_t b),
-                            const char *op_name, size_t a, size_t b,
+                            ossl_unused const char *unused__op_name,
+                            size_t a, size_t b,
                             int is_true)
 {
     if (is_true && !TEST_size_t_eq(op(a,b), CONSTTIME_TRUE_S))
