@@ -23,7 +23,7 @@
 
 # ifndef OPENSSL_NO_CMP
 #  define CMP_TEST_REFVALUE_LENGTH 15 /* arbitrary value */
-EVP_PKEY *load_pem_key(const char *file);
+EVP_PKEY *load_pem_key(const char *file, OPENSSL_CTX *libctx);
 X509 *load_pem_cert(const char *file, OPENSSL_CTX *libctx);
 X509_REQ *load_csr(const char *file);
 OSSL_CMP_MSG *load_pkimsg(const char *file);

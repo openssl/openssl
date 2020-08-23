@@ -14,7 +14,7 @@
 
 DEFINE_STACK_OF(X509)
 
-EVP_PKEY *load_pem_key(const char *file)
+EVP_PKEY *load_pem_key(const char *file, OPENSSL_CTX *libctx)
 {
     EVP_PKEY *key = NULL;
     BIO *bio = NULL;
@@ -22,7 +22,8 @@ EVP_PKEY *load_pem_key(const char *file)
     if (!TEST_ptr(bio = BIO_new(BIO_s_file())))
         return NULL;
     if (TEST_int_gt(BIO_read_filename(bio, file), 0))
-        (void)TEST_ptr(key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL));
+        (void)TEST_ptr(key = PEM_read_bio_PrivateKey_ex(bio, NULL, NULL, NULL,
+                                                        libctx, NULL));
 
     BIO_free(bio);
     return key;
