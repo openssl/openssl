@@ -419,7 +419,7 @@ void OSSL_ENCODER_do_all_provided(OPENSSL_CTX *libctx,
 
     /*
      * No pre- or post-condition for this call, as this only creates methods
-     * temporarly and then promptly destroys them.
+     * temporarily and then promptly destroys them.
      */
     ossl_algorithm_do_all(libctx, OSSL_OP_ENCODER, NULL, NULL,
                           encoder_do_one, NULL, &data);

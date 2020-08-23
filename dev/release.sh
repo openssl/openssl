@@ -224,7 +224,7 @@ elif $force; then
     :
 else
     echo >&2 "Not in master or any recognised release branch"
-    echo >&2 "Please 'git checkout' an approprite branch"
+    echo >&2 "Please 'git checkout' an appropriate branch"
     exit 1
 fi
 
@@ -258,7 +258,7 @@ if [ "$current_branch" = "$orig_branch" ]; then
 elif [ "$current_branch" = "$new_branch" ]; then
     :
 else
-   echo >&2 "The cloned sub-directory '$release_clone' is on a branch"
+   echo >&2 "The cloned subdirectory '$release_clone' is on a branch"
    echo >&2 "other than '$current_branch' or '$new_branch'"
    echo >&2 "Please 'cd \"$(pwd)\"; git checkout $current_branch'"
    exit 1
@@ -347,7 +347,7 @@ for fixup in "$HERE/dev/release-aux"/fixup-*-release.pl; do
         perl -pi $fixup $file
 done
 
-$VERBOSE "== Comitting updates and tagging"
+$VERBOSE "== Committing updates and tagging"
 git add -u
 git commit $git_quiet -m "Prepare for release of $release_text"
 if [ -n "$reviewers" ]; then
@@ -447,7 +447,7 @@ for fixup in "$HERE/dev/release-aux"/fixup-*-postrelease.pl; do
         perl -pi $fixup $file
 done
 
-$VERBOSE "== Comitting updates"
+$VERBOSE "== Committing updates"
 git add -u
 git commit $git_quiet -m "Prepare for $release_text"
 if [ -n "$reviewers" ]; then
@@ -474,7 +474,7 @@ if $do_branch; then
             perl -pi $fixup $file
     done
 
-    $VERBOSE "== Comitting updates"
+    $VERBOSE "== Committing updates"
     git add -u
     git commit $git_quiet -m "Prepare for $release_text"
     if [ -n "$reviewers" ]; then
@@ -581,7 +581,7 @@ branch (see L</RELEASE BRANCHES AND TAGS> below for a discussion on those).
 B<release.sh> tries to be smart and figure out the next release if no hints
 are given through options, and will exit with an error in ambiguous cases.
 
-B<release.sh> always clones the current workspace into a sub-directory
+B<release.sh> always clones the current workspace into a subdirectory
 named C<< openssl-I<SERIES>-tmp >>, where C<< I<SERIES> >> is taken from
 the available version information in the source.
 

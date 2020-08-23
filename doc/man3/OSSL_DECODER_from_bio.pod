@@ -235,7 +235,7 @@ failure.
 OSSL_DECODER_CTX_get_construct(),
 OSSL_DECODER_CTX_get_construct_data() and
 OSSL_DECODER_CTX_get_cleanup() return the current pointers to the
-cosntructor, the constructor data and the cleanup functions, respectively.
+constructor, the constructor data and the cleanup functions, respectively.
 
 OSSL_DECODER_CTX_num_decoders() returns the current
 number of decoders.  It returns 0 if I<ctx> is NULL.

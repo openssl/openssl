@@ -16,7 +16,7 @@ This implementation is based on a number of assumptions:
   across an entire provider.  Likewise for, hardware, accelerated, software,
   HSM and, perhaps, constant_time.
 
-* There are a lot of algorithm implementations, therefore property
+* There are a lot of algorithm implementations, therefore, property
   definitions should be space efficient.  However...
 
 * ... property queries are very common.  These must be fast.

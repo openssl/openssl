@@ -337,7 +337,7 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         ctx->op.kex.exchprovctx = NULL;
         ctx->op.kex.exchange = NULL;
     }
-/* TODO(3.0): add dependancies and uncomment this when available for fips mode */
+/* TODO(3.0): add dependencies and uncomment this when available for fips mode */
 #ifndef FIPS_MODULE
     else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         if (ctx->op.ciph.ciphprovctx != NULL && ctx->op.ciph.cipher != NULL)

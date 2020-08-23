@@ -129,7 +129,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 /* Arrange 32-bit pointer to (copied) string storage, if needed. */
 #if __INITIAL_POINTER_SIZE == 64
 # define CTX_FILESPEC ctx_filespec_32p
-        /* Copy the file name to storage with a 32-bit pointer. */
+        /* Copy the filename to storage with a 32-bit pointer. */
         ctx_filespec_32p = ctx_filespec_32;
         strcpy(ctx_filespec_32p, (*ctx)->filespec);
 #else                           /* __INITIAL_POINTER_SIZE == 64 */
@@ -164,7 +164,7 @@ const char *LP_find_file(LP_DIR_CTX **ctx, const char *directory)
 
     /*
      * Quick, cheap and dirty way to discard any device and directory, since
-     * we only want file names
+     * we only want filenames
      */
     l = (*ctx)->result_dsc.dsc$w_length;
     p = (*ctx)->result_dsc.dsc$a_pointer;

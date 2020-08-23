@@ -9,7 +9,7 @@
 
 /*-
  * A minimal program to do SSL to a passed host and port.
- * It is actually using non-blocking IO but in a very simple manner
+ * It is actually using nonblocking IO but in a very simple manner
  * sconnect host:port - it does a 'GET / HTTP/1.0'
  *
  * cc -I../../include sconnect.c -L../.. -lssl -lcrypto
@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
     SSL_CTX_load_verify_locations(ssl_ctx, CAfile, NULL);
 
-    /* Lets make a SSL structure */
+    /* Lets make an SSL structure */
     ssl = SSL_new(ssl_ctx);
     SSL_set_connect_state(ssl);
 

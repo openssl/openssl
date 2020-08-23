@@ -3547,7 +3547,7 @@ int setup_tests(void)
 
     /*
      * Load the 'null' provider into the default library context to ensure that
-     * the the tests do not fallback to using the default provider.
+     * the tests do not fallback to using the default provider.
      */
     prov_null = OSSL_PROVIDER_load(NULL, "null");
     if (prov_null == NULL) {

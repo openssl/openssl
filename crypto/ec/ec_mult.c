@@ -9,7 +9,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -115,7 +115,7 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
 
 /*-
  * This functions computes a single point multiplication over the EC group,
- * using, at a high level, a Montgomery ladder with conditional swaps, with
+ * using, at a high-level, a Montgomery ladder with conditional swaps, with
  * various timing attack defenses.
  *
  * It performs either a fixed point multiplication
@@ -128,7 +128,7 @@ void EC_ec_pre_comp_free(EC_PRE_COMP *pre)
  * constant time bets are off (where n is the cardinality of the EC group).
  *
  * This function expects `group->order` and `group->cardinality` to be well
- * defined and non-zero: it fails with an error code otherwise.
+ * defined and nonzero: it fails with an error code otherwise.
  *
  * NB: This says nothing about the constant-timeness of the ladder step
  * implementation (i.e., the default implementation is based on EC_POINT_add and

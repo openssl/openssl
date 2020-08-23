@@ -8,7 +8,7 @@
  */
 
 /*
- * This file uses the low level AES functions (which are deprecated for
+ * This file uses the low-level AES functions (which are deprecated for
  * non-internal use) in order to implement the EVP AES ciphers.
  */
 #include "internal/deprecated.h"
@@ -3295,7 +3295,7 @@ static int aes_ccm_ctrl(EVP_CIPHER_CTX *c, int type, int arg, void *ptr)
 
     case EVP_CTRL_AEAD_SET_IVLEN:
         arg = 15 - arg;
-        /* fall thru */
+        /* fall through */
     case EVP_CTRL_CCM_SET_L:
         if (arg < 2 || arg > 8)
             return 0;
@@ -3558,7 +3558,7 @@ static int aes_wrap_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     /* No final operation so always return zero length */
     if (!in)
         return 0;
-    /* Input length must always be non-zero */
+    /* Input length must always be nonzero */
     if (!inlen)
         return -1;
     /* If decrypting need at least 16 bytes and multiple of 8 */
@@ -3857,7 +3857,7 @@ static int aes_ocb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
 
     if (in != NULL) {
         /*
-         * Need to ensure we are only passing full blocks to low level OCB
+         * Need to ensure we are only passing full blocks to low-level OCB
          * routines. We do it here rather than in EVP_EncryptUpdate/
          * EVP_DecryptUpdate because we need to pass full blocks of AAD too
          * and those routines don't support that

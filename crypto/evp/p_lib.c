@@ -8,7 +8,7 @@
  */
 
 /*
- * DSA low level APIs are deprecated for public use, but still ok for
+ * DSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -1653,7 +1653,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
 #ifndef FIPS_MODULE
     if (pk->pkey.ptr != NULL) {
         /*
-         * If the legacy key doesn't have an dirty counter or export function,
+         * If the legacy key doesn't have a dirty counter or export function,
          * give up
          */
         if (pk->ameth->dirty_cnt == NULL || pk->ameth->export_to == NULL)
@@ -1790,7 +1790,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
 
     /*
      * If the type is EVP_PKEY_NONE, then we have a problem somewhere else
-     * in our code.  If it's not one of the well known EVP_PKEY_xxx values,
+     * in our code.  If it's not one of the well-known EVP_PKEY_xxx values,
      * it should at least be EVP_PKEY_KEYMGMT at this point.
      * TODO(3.0) remove this check when we're confident that the rest of the
      * code treats this correctly.

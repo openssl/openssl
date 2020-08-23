@@ -1041,7 +1041,7 @@ static void core_vset_error(const OSSL_CORE_HANDLE *handle,
     OSSL_PROVIDER *prov = (OSSL_PROVIDER *)handle;
 
     /*
-     * If the uppermost 8 bits are non-zero, it's an OpenSSL library
+     * If the uppermost 8 bits are nonzero, it's an OpenSSL library
      * error and will be treated as such.  Otherwise, it's a new style
      * provider error and will be treated as such.
      */

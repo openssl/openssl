@@ -28,7 +28,7 @@ DEFINE_STACK_OF(X509_ALGOR)
  */
 
 /*
- * MIME format structures Note that all are translated to lower case apart
+ * MIME format structures Note that all are translated to lowercase apart
  * from parameter values. Quotes are stripped off
  */
 

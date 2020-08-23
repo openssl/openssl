@@ -325,7 +325,7 @@ length of a cipher when passed an B<EVP_CIPHER> or B<EVP_CIPHER_CTX>.
 It will return zero if the cipher does not use an IV.  The constant
 B<EVP_MAX_IV_LENGTH> is the maximum IV length for all ciphers.
 
-EVP_CIPHER_CTX_tag_length() returns the tag length of a AEAD cipher when passed
+EVP_CIPHER_CTX_tag_length() returns the tag length of an AEAD cipher when passed
 a B<EVP_CIPHER_CTX>. It will return zero if the cipher does not support a tag.
 It returns a default value if the tag length has not been set.
 

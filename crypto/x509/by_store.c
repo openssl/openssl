@@ -29,7 +29,7 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
 
     /*
      * We try to set the criterion, but don't care if it was valid or not.
-     * For a OSSL_STORE, it merely serves as an optimization, the expectation
+     * For an OSSL_STORE, it merely serves as an optimization, the expectation
      * being that if the criterion couldn't be used, we will get *everything*
      * from the container that the URI represents rather than the subset that
      * the criterion indicates, so the biggest harm is that we cache more
@@ -192,7 +192,7 @@ static int by_store_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
          *
          * To be noted is that X509_OBJECT_set1_* increment the refcount,
          * but so does X509_STORE_CTX_get_by_subject upon return of this
-         * function, so we must ensure the the refcount is decremented
+         * function, so we must ensure the refcount is decremented
          * before we return, or we will get a refcount leak.  We cannot do
          * this with X509_OBJECT_free(), though, as that will free a bit
          * too much.

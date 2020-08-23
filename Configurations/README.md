@@ -128,13 +128,13 @@ In each table entry, the following keys are significant:
                            implemented yet)
         shlib_variant   => A "variant" identifier inserted between the base
                            shared library name and the extension.  On "unixy"
-                           platforms (BSD, Linux, Solaris, MacOS/X, ...) this
+                           platforms (BSD, Linux, Solaris, macOS, ...) this
                            supports installation of custom OpenSSL libraries
                            that don't conflict with other builds of OpenSSL
                            installed on the system.  The variant identifier
                            becomes part of the SONAME of the library and also
                            any symbol versions (symbol versions are not used or
-                           needed with MacOS/X).  For example, on a system
+                           needed with macOS).  For example, on a system
                            where a default build would normally create the SSL
                            shared library as 'libssl.so -> libssl.so.1.1' with
                            the value of the symlink as the SONAME, a target
@@ -145,13 +145,13 @@ In each table entry, the following keys are significant:
                            would then be 'OPENSSL_ABC_<version>' rather than
                            the default 'OPENSSL_<version>'. The string inserted
                            into symbol versions is obtained by mapping all
-                           letters in the "variant" identifier to upper case
+                           letters in the "variant" identifier to uppercase
                            and all non-alphanumeric characters to '_'.
 
         thread_scheme   => The type of threads is used on the
                            configured platform.  Currently known
                            values are "(unknown)", "pthreads",
-                           "uithreads" (a.k.a solaris threads) and
+                           "uithreads" (aka solaris threads) and
                            "winthreads".  Except for "(unknown)", the
                            actual value is currently ignored but may
                            be used in the future.  See further notes
@@ -555,7 +555,7 @@ They are all expected to return a string with the lines they produce.
                         obj2lib(lib => "PATH/TO/libfile",
                                 objs => [ "PATH/TO/objectfile", ... ]);
 
-                  'lib' has the intended library file name *without*
+                  'lib' has the intended library filename *without*
                   extension, obj2lib is expected to add that.  'objs'
                   has the list of object files to build this library.
 
@@ -578,7 +578,7 @@ They are all expected to return a string with the lines they produce.
                                   objs => [ "PATH/TO/objectfile", ... ],
                                   deps => [ "PATH/TO/otherlibfile", ... ]);
 
-                  'lib' has the base (static) library ffile name
+                  'lib' has the base (static) library filename
                   *without* extension.  This is useful in case
                   supporting files are needed (such as import
                   libraries on Windows).
@@ -611,7 +611,7 @@ They are all expected to return a string with the lines they produce.
                                 objs => [ "PATH/TO/objectfile", ... ],
                                 deps => [ "PATH/TO/libfile", ... ]);
 
-                  'bin' has the intended executable file name
+                  'bin' has the intended executable filename
                   *without* extension, obj2bin is expected to add
                   that.  'objs' has the list of object files to build
                   this library.  'deps' has the list of library files
@@ -626,7 +626,7 @@ They are all expected to return a string with the lines they produce.
                         in2script(script => "PATH/TO/scriptfile",
                                   sources => [ "PATH/TO/infile", ... ]);
 
-                  'script' has the intended script file name.
+                  'script' has the intended script filename.
                   'sources' has the list of source files to build the
                   resulting script from.
 
@@ -656,6 +656,6 @@ either `{build_platform}-{build_file}-checker.pm` or
 `build_scheme` list element from the configuration target data, and
 `{build_file}` is `build_file` from the same target data.
 
-If the check succeeds, the script is expected to end with a non-zero
+If the check succeeds, the script is expected to end with a nonzero
 expression.  If the check fails, the script can end with a zero, or
 with a `die`.

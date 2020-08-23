@@ -77,7 +77,7 @@ extern "C" {
                 #tname \
         ASN1_ITEM_end(tname)
 
-/* This is a ASN1 type which just embeds a template */
+/* This is an ASN1 type which just embeds a template */
 
 /*-
  * This pair helps declare a SEQUENCE. We can do:

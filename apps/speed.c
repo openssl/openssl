@@ -3243,7 +3243,7 @@ int speed_main(int argc, char **argv)
             /* Let's try to create a ctx directly from the NID: this works for
              * curves like Curve25519 that are not implemented through the low
              * level EC interface.
-             * If this fails we try creating a EVP_PKEY_EC generic param ctx,
+             * If this fails we try creating an EVP_PKEY_EC generic param ctx,
              * then we set the curve by NID before deriving the actual keygen
              * ctx for that specific curve. */
             kctx = EVP_PKEY_CTX_new_id(ec_curves[testnum].nid, NULL); /* keygen ctx from NID */

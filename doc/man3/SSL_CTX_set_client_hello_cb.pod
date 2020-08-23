@@ -37,7 +37,7 @@ of the last call if needed to continue.  On the next call into the handshake
 function, the ClientHello callback will be called again, and, if it returns
 success, normal handshake processing will continue from that point.
 
-SSL_client_hello_isv2() indicates whether the ClientHello was carried in a
+SSL_client_hello_isv2() indicates whether the ClientHello was carried in an
 SSLv2 record and is in the SSLv2 format.  The SSLv2 format has substantial
 differences from the normal SSLv3 format, including using three bytes per
 cipher suite, and not allowing extensions.  Additionally, the SSLv2 format

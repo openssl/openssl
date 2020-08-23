@@ -243,17 +243,17 @@ struct collected_data_st {
     STACK_OF(OPENSSL_CSTRING) *names;
     OSSL_DECODER_CTX *ctx;
 
-    unsigned int error_occured:1;
+    unsigned int error_occurred:1;
 };
 
 static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
 {
     struct collected_data_st *data = arg;
 
-    if (data->error_occured)
+    if (data->error_occurred)
         return;
 
-    data->error_occured = 1;         /* Assume the worst */
+    data->error_occurred = 1;        /* Assume the worst */
 
     if (!EVP_KEYMGMT_up_ref(keymgmt) /* ref++ */)
         return;
@@ -262,22 +262,22 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
         return;
     }
 
-    data->error_occured = 0;         /* All is good now */
+    data->error_occurred = 0;        /* All is good now */
 }
 
 static void collect_name(const char *name, void *arg)
 {
     struct collected_data_st *data = arg;
 
-    if (data->error_occured)
+    if (data->error_occurred)
         return;
 
-    data->error_occured = 1;         /* Assume the worst */
+    data->error_occurred = 1;        /* Assume the worst */
 
     if (sk_OPENSSL_CSTRING_push(data->names, name) <= 0)
         return;
 
-    data->error_occured = 0;         /* All is good now */
+    data->error_occurred = 0;        /* All is good now */
 }
 
 static void collect_decoder(OSSL_DECODER *decoder, void *arg)
@@ -285,10 +285,10 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
     struct collected_data_st *data = arg;
     size_t i, end_i;
 
-    if (data->error_occured)
+    if (data->error_occurred)
         return;
 
-    data->error_occured = 1;         /* Assume the worst */
+    data->error_occurred = 1;        /* Assume the worst */
 
     end_i = sk_OPENSSL_CSTRING_num(data->names);
     for (i = 0; i < end_i; i++) {
@@ -299,7 +299,7 @@ static void collect_decoder(OSSL_DECODER *decoder, void *arg)
         (void)OSSL_DECODER_CTX_add_decoder(data->ctx, decoder);
     }
 
-    data->error_occured = 0;         /* All is good now */
+    data->error_occurred = 0;        /* All is good now */
 }
 
 OSSL_DECODER_CTX *OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
@@ -328,7 +328,7 @@ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
     /* First, find all keymgmts to form goals */
     EVP_KEYMGMT_do_all_provided(libctx, collect_keymgmt, data);
 
-    if (data->error_occured)
+    if (data->error_occurred)
         goto err;
 
     /* Then, we collect all the keymgmt names */
@@ -339,7 +339,7 @@ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
 
         EVP_KEYMGMT_names_do_all(keymgmt, collect_name, data);
 
-        if (data->error_occured)
+        if (data->error_occurred)
             goto err;
     }
 
@@ -349,7 +349,7 @@ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new_by_EVP_PKEY(EVP_PKEY **pkey,
      */
     OSSL_DECODER_do_all_provided(libctx, collect_decoder, data);
 
-    if (data->error_occured)
+    if (data->error_occurred)
         goto err;
 
     /* If we found no decoders to match the keymgmts, we err */

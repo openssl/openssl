@@ -244,7 +244,7 @@ static int test_WPACKET_set_flags(void)
     WPACKET pkt;
     size_t written;
 
-    /* Set packet to be non-zero length */
+    /* Set packet to be nonzero length */
     if (!TEST_true(WPACKET_init(&pkt, buf))
             || !TEST_true(WPACKET_set_flags(&pkt, WPACKET_FLAGS_NON_ZERO_LENGTH))
                 /* Should fail because of zero length */
@@ -268,7 +268,7 @@ static int test_WPACKET_set_flags(void)
             || !TEST_mem_eq(buf->data, written, simple1, sizeof(simple1)))
         return cleanup(&pkt);
 
-    /* Set packet to abandon non-zero length */
+    /* Set packet to abandon nonzero length */
     if (!TEST_true(WPACKET_init_len(&pkt, buf, 1))
             || !TEST_true(WPACKET_set_flags(&pkt, WPACKET_FLAGS_ABANDON_ON_ZERO_LENGTH))
             || !TEST_true(WPACKET_finish(&pkt))

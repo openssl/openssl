@@ -237,13 +237,13 @@ int OPENSSL_isservice(void)
 #   if 1
     /*
      * This doesn't cover "interactive" services [working with real
-     * WinSta0's] nor programs started non-interactively by Task Scheduler
+     * WinSta0's] nor programs started noninteractively by Task Scheduler
      * [those are working with SAWinSta].
      */
     if (wcsstr(name, L"Service-0x"))
         return 1;
 #   else
-    /* This covers all non-interactive programs such as services. */
+    /* This covers all noninteractive programs such as services. */
     if (!wcsstr(name, L"WinSta0"))
         return 1;
 #   endif
@@ -432,7 +432,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
 
 #if !defined(OPENSSL_CPUID_OBJ)
 /*
- * The volatile is used to to ensure that the compiler generates code that reads
+ * The volatile is used to ensure that the compiler generates code that reads
  * all values from the array and doesn't try to optimize this away. The standard
  * doesn't actually require this behavior if the original data pointed to is
  * not volatile, but compilers do this in practice anyway.

@@ -28,7 +28,7 @@ typedef struct {
      * We know of two MAC types:
      *
      * 1. those who take a secret in raw form, i.e. raw data as a
-     *    ASN1_OCTET_STRING embedded in a EVP_PKEY.  So far, that's
+     *    ASN1_OCTET_STRING embedded in an EVP_PKEY.  So far, that's
      *    all of them but CMAC.
      * 2. those who take a secret with associated cipher in very generic
      *    form, i.e. a complete EVP_MAC_CTX embedded in a PKEY.  So far,

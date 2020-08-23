@@ -8,7 +8,7 @@
  */
 
 /*
- * DES low level APIs are deprecated for public use, but still ok for internal
+ * DES low-level APIs are deprecated for public use, but still ok for internal
  * use.  We access the DES_set_odd_parity(3) function here.
  */
 #include "internal/deprecated.h"

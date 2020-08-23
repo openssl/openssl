@@ -134,7 +134,7 @@ BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
          * So if we set  (X, Y, sign) := (Y + D*X, X, -sign), we arrive back at
          *      -sign*X*a  ==  B   (mod |n|),
          *       sign*Y*a  ==  A   (mod |n|).
-         * Note that  X  and  Y  stay non-negative all the time.
+         * Note that  X  and  Y  stay nonnegative all the time.
          */
 
         if (!BN_mul(tmp, D, X, ctx))
@@ -154,7 +154,7 @@ BIGNUM *bn_mod_inverse_no_branch(BIGNUM *in,
      *      A == gcd(a,n);
      * we have
      *       sign*Y*a  ==  A  (mod |n|),
-     * where  Y  is non-negative.
+     * where  Y  is nonnegative.
      */
 
     if (sign < 0) {
@@ -437,7 +437,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
              * So if we set  (X, Y, sign) := (Y + D*X, X, -sign), we arrive back at
              *      -sign*X*a  ==  B   (mod |n|),
              *       sign*Y*a  ==  A   (mod |n|).
-             * Note that  X  and  Y  stay non-negative all the time.
+             * Note that  X  and  Y  stay nonnegative all the time.
              */
 
             /*
@@ -478,7 +478,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
      *      A == gcd(a,n);
      * we have
      *       sign*Y*a  ==  A  (mod |n|),
-     * where  Y  is non-negative.
+     * where  Y  is nonnegative.
      */
 
     if (sign < 0) {

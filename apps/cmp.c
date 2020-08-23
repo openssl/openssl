@@ -421,9 +421,9 @@ const OPTIONS cmp_options[] = {
      "Extra certificates to provide to TLS server during TLS handshake"},
     {"tls_trusted", OPT_TLS_TRUSTED, 's',
      "Trusted certificates to use for verifying the TLS server certificate;"},
-    {OPT_MORE_STR, 0, 0, "this implies host name validation"},
+    {OPT_MORE_STR, 0, 0, "this implies hostname validation"},
     {"tls_host", OPT_TLS_HOST, 's',
-     "Address to be checked (rather than -server) during TLS host name validation"},
+     "Address to be checked (rather than -server) during TLS hostname validation"},
 
     OPT_SECTION("Client-side debugging"),
     {"batch", OPT_BATCH, '-',
@@ -741,12 +741,12 @@ static int load_certs_pwd(const char *infile, STACK_OF(X509) **certs,
     return ret;
 }
 
-/* set expected host name/IP addr and clears the email addr in the given ts */
+/* set expected hostname/IP addr and clears the email addr in the given ts */
 static int truststore_set_host_etc(X509_STORE *ts, char *host)
 {
     X509_VERIFY_PARAM *ts_vpm = X509_STORE_get0_param(ts);
 
-    /* first clear any host names, IP, and email addresses */
+    /* first clear any hostnames, IP, and email addresses */
     if (!X509_VERIFY_PARAM_set1_host(ts_vpm, NULL, 0)
             || !X509_VERIFY_PARAM_set1_ip(ts_vpm, NULL, 0)
             || !X509_VERIFY_PARAM_set1_email(ts_vpm, NULL, 0))
@@ -776,7 +776,7 @@ static X509_STORE *sk_X509_to_store(X509_STORE *store /* may be NULL */,
     return store;
 }
 
-/* write OSSL_CMP_MSG DER-encoded to the specified file name item */
+/* write OSSL_CMP_MSG DER-encoded to the specified filename item */
 static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
 {
     char *file;
@@ -786,7 +786,7 @@ static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
         return 0;
     }
     if (*filenames == NULL) {
-        CMP_err("Not enough file names provided for writing PKIMessage");
+        CMP_err("Not enough filenames provided for writing PKIMessage");
         return 0;
     }
 
@@ -799,7 +799,7 @@ static int write_PKIMESSAGE(const OSSL_CMP_MSG *msg, char **filenames)
     return 1;
 }
 
-/* read DER-encoded OSSL_CMP_MSG from the specified file name item */
+/* read DER-encoded OSSL_CMP_MSG from the specified filename item */
 static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
 {
     char *file;
@@ -810,7 +810,7 @@ static OSSL_CMP_MSG *read_PKIMESSAGE(char **filenames)
         return NULL;
     }
     if (*filenames == NULL) {
-        CMP_err("Not enough file names provided for reading PKIMessage");
+        CMP_err("Not enough filenames provided for reading PKIMessage");
         return NULL;
     }
 
@@ -1273,7 +1273,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     if (opt_grant_implicitconf)
         (void)OSSL_CMP_SRV_CTX_set_grant_implicit_confirm(srv_ctx, 1);
 
-    if (opt_failure != INT_MIN) { /* option has been set explicity */
+    if (opt_failure != INT_MIN) { /* option has been set explicitly */
         if (opt_failure < 0 || OSSL_CMP_PKIFAILUREINFO_MAX < opt_failure) {
             CMP_err1("-failure out of range, should be >= 0 and <= %d",
                      OSSL_CMP_PKIFAILUREINFO_MAX);
@@ -1537,7 +1537,7 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         if (!truststore_set_host_etc(trust_store,
                                      opt_tls_host != NULL ?
                                      opt_tls_host : opt_server))
-            /* TODO: is the server host name correct for TLS via proxy? */
+            /* TODO: is the server hostname correct for TLS via proxy? */
             goto err;
         SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
     }
@@ -2722,7 +2722,7 @@ int cmp_main(int argc, char **argv)
 
     /* read default values for options from config file */
     configfile = opt_config != NULL ? opt_config : default_config_file;
-    if (configfile && configfile[0] != '\0' /* non-empty string */
+    if (configfile && configfile[0] != '\0' /* nonempty string */
             && (configfile != default_config_file
                     || access(configfile, F_OK) != -1)) {
         CMP_info1("using OpenSSL configuration file '%s'", configfile);

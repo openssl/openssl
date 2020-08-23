@@ -10,7 +10,7 @@
 /* Dispatch functions for Seed cipher modes ecb, cbc, ofb, cfb */
 
 /*
- * SEED low level APIs are deprecated for public use, but still ok for
+ * SEED low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"

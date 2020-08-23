@@ -38,7 +38,7 @@ DEFINE_STACK_OF(CONF_VALUE)
 #define HTTP_STATUS_CODE_FOUND             302
 
 
-/* Stateful HTTP request code, supporting blocking and non-blocking I/O */
+/* Stateful HTTP request code, supporting blocking and nonblocking I/O */
 
 /* Opaque HTTP request status structure */
 
@@ -465,12 +465,12 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
         }
         rctx->state = OHS_WRITE_INIT;
 
-        /* fall thru */
+        /* fall through */
     case OHS_WRITE_INIT:
         n_to_send = BIO_get_mem_data(rctx->mem, NULL);
         rctx->state = OHS_WRITE;
 
-        /* fall thru */
+        /* fall through */
     case OHS_WRITE:
         n = BIO_get_mem_data(rctx->mem, &p);
 
@@ -492,7 +492,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         (void)BIO_reset(rctx->mem);
 
-        /* fall thru */
+        /* fall through */
     case OHS_FLUSH:
 
         i = BIO_flush(rctx->wbio);
@@ -632,7 +632,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
 
         rctx->state = OHS_ASN1_HEADER;
 
-        /* Fall thru */
+        /* Fall through */
     case OHS_ASN1_HEADER:
         /*
          * Now reading ASN1 header: can read at least 2 bytes which is enough
@@ -679,7 +679,7 @@ int OSSL_HTTP_REQ_CTX_nbio(OSSL_HTTP_REQ_CTX *rctx)
  content:
         rctx->state = OHS_CONTENT;
 
-        /* Fall thru */
+        /* Fall through */
     case OHS_CONTENT:
     default:
         n = BIO_get_mem_data(rctx->mem, NULL);
@@ -821,7 +821,7 @@ static int update_timeout(int timeout, time_t start_time)
  * whereby it may make use of any custom defined argument 'arg'.
  * During connection establishment, just after BIO_do_connect_retry(),
  * the callback function is invoked with the 'conn' argument being 1
- * 'detail' indicating whether a HTTPS (i.e., TLS) connection is requested.
+ * 'detail' indicating whether an HTTPS (i.e., TLS) connection is requested.
  * On disconnect 'conn' is 0 and 'detail' indicates that no error occurred.
  * For instance, on connect the funct may prepend a TLS BIO to implement HTTPS;
  * after disconnect it may do some error diagnostics and/or specific cleanup.
@@ -1198,7 +1198,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     for (;;) {
         if (BIO_flush(fbio) != 0)
             break;
-        /* potentially needs to be retried if BIO is non-blocking */
+        /* potentially needs to be retried if BIO is nonblocking */
         if (!BIO_should_retry(fbio))
             break;
     }
@@ -1259,7 +1259,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     do {
         /*
          * TODO: This does not necessarily catch the case when the full
-         * HTTP response came in in more than a single TCP message.
+         * HTTP response came in more than a single TCP message.
          */
         read_len = BIO_gets(fbio, mbuf, BUF_SIZE);
     } while (read_len > 2);

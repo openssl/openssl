@@ -135,7 +135,7 @@ const OPTIONS cms_options[] = {
     {"cades", OPT_CADES, '-', "Include signer certificate digest"},
     {"verify", OPT_VERIFY, '-', "Verify signed message"},
     {"verify_retcode", OPT_VERIFY_RETCODE, '-',
-        "Exit non-zero on verification failure"},
+        "Exit nonzero on verification failure"},
     {"verify_receipt", OPT_VERIFY_RECEIPT, '<',
         "Verify receipts; exit if receipt signatures do not verify"},
     {"digest_verify", OPT_DIGEST_VERIFY, '-',

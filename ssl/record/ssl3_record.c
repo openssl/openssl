@@ -161,7 +161,7 @@ int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
 /*-
  * Call this to get new input records.
  * It will return <= 0 if more data is needed, normally due to an error
- * or non-blocking IO.
+ * or nonblocking IO.
  * When it finishes, |numrpipes| records have been decoded. For each record 'i':
  * rr[i].type    - is the type of record
  * rr[i].data,   - data
@@ -214,7 +214,7 @@ int ssl3_get_record(SSL *s)
             if (rret <= 0) {
 #ifndef OPENSSL_NO_KTLS
                 if (!BIO_get_ktls_recv(s->rbio))
-                    return rret;     /* error or non-blocking */
+                    return rret;     /* error or nonblocking */
                 switch (errno) {
                 case EBADMSG:
                     SSLfatal(s, SSL_AD_BAD_RECORD_MAC,
@@ -438,7 +438,7 @@ int ssl3_get_record(SSL *s)
 
             rret = ssl3_read_n(s, more, more, 1, 0, &n);
             if (rret <= 0)
-                return rret;     /* error or non-blocking io */
+                return rret;     /* error or nonblocking io */
         }
 
         /* set state for later operations */
@@ -712,7 +712,7 @@ int ssl3_get_record(SSL *s)
         }
 
         /*
-         * TLSv1.3 alert and handshake records are required to be non-zero in
+         * TLSv1.3 alert and handshake records are required to be nonzero in
          * length.
          */
         if (SSL_IS_TLS13(s)
@@ -1695,7 +1695,7 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
- * or non-blocking IO.
+ * or nonblocking IO.
  * When it finishes, one packet has been decoded and can be found in
  * ssl->s3.rrec.type    - is the type of record
  * ssl->s3.rrec.data    - data
@@ -1718,7 +1718,7 @@ int dtls1_get_record(SSL *s)
  again:
     /*
      * The epoch may have changed.  If so, process all the pending records.
-     * This is a non-blocking operation.
+     * This is a nonblocking operation.
      */
     if (!dtls1_process_buffered_records(s)) {
         /* SSLfatal() already called */
@@ -1739,7 +1739,7 @@ int dtls1_get_record(SSL *s)
         /* read timeout is handled by dtls1_read_bytes */
         if (rret <= 0) {
             /* SSLfatal() already called if appropriate */
-            return rret;         /* error or non-blocking */
+            return rret;         /* error or nonblocking */
         }
 
         /* this packet contained a partial record, dump it */

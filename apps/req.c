@@ -1501,7 +1501,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         else
             len = strlen(gstr);
         /*
-         * The lookup of a the string will cover all engines so keep a note
+         * The lookup of the string will cover all engines so keep a note
          * of the implementation.
          */
 

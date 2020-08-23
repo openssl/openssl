@@ -141,7 +141,7 @@ int UI_dup_error_string(UI *ui, const char *text);
  * The following function helps construct a prompt.  object_desc is a
  * textual short description of the object, for example "pass phrase",
  * and object_name is the name of the object (might be a card name or
- * a file name.
+ * a filename.
  * The returned string shall always be allocated on the heap with
  * OPENSSL_malloc(), and need to be free'd with OPENSSL_free().
  *
@@ -237,7 +237,7 @@ const UI_METHOD *UI_null(void);
 
 /* ---------- For method writers ---------- */
 /*-
-   A method contains a number of functions that implement the low level
+   A method contains a number of functions that implement the low-level
    of the User Interface.  The functions are:
 
         an opener       This function starts a session, maybe by opening

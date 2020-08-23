@@ -60,8 +60,8 @@ static void ctr128_inc_aligned(unsigned char *counter)
 #endif
 
 /*
- * The input encrypted as though 128bit counter mode is being used.  The
- * extra state information to record how much of the 128bit block we have
+ * The input encrypted as though 128-bit counter mode is being used.  The
+ * extra state information to record how much of the 128-bit block we have
  * used is contained in *num, and the encrypted counter is kept in
  * ecount_buf.  Both *num and ecount_buf must be initialised with zeros
  * before the first call to CRYPTO_ctr128_encrypt(). This algorithm assumes

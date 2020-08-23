@@ -139,7 +139,7 @@ static int file_get_pem_pass(char *buf, int num, int w, void *data)
 /*-
  * The try_decode function is called to check if the blob of data can
  * be used by this handler, and if it can, decodes it into a supported
- * OpenSSL type and returns a OSSL_STORE_INFO with the decoded data.
+ * OpenSSL type and returns an OSSL_STORE_INFO with the decoded data.
  * Input:
  *    pem_name:     If this blob comes from a PEM file, this holds
  *                  the PEM name.  If it comes from another type of
@@ -167,7 +167,7 @@ static int file_get_pem_pass(char *buf, int num, int w, void *data)
  *    libctx:       The library context to be used if applicable
  *    propq:        The property query string for any algorithm fetches
  * Output:
- *    a OSSL_STORE_INFO
+ *    an OSSL_STORE_INFO
  */
 typedef OSSL_STORE_INFO *(*file_try_decode_fn)(const char *pem_name,
                                                const char *pem_header,
@@ -1448,7 +1448,7 @@ static int file_name_check(OSSL_STORE_LOADER_CTX *ctx, const char *name)
 
     /*
      * If we've reached the end of the string at this point, we've successfully
-     * found a fitting file name.
+     * found a fitting filename.
      */
     return *p == '\0';
 }

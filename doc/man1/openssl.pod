@@ -862,7 +862,7 @@ supplied purpose and all other certificates must also be valid CA certificates.
 The precise extensions required are described in more detail in
 L<openssl-x509(1)/CERTIFICATE EXTENSIONS>.
 
-The third step is to check the trust settings on the last certficate,
+The third step is to check the trust settings on the last certificate,
 typically of a root CA.
 It should be trusted for the supplied purpose.
 For compatibility with previous versions of OpenSSL,

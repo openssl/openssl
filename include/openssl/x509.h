@@ -997,7 +997,7 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
 
 int X509_verify_cert(X509_STORE_CTX *ctx);
 
-/* lookup a cert from a X509 STACK */
+/* lookup a cert from an X509 STACK */
 X509 *X509_find_by_issuer_and_serial(STACK_OF(X509) *sk, const X509_NAME *name,
                                      const ASN1_INTEGER *serial);
 X509 *X509_find_by_subject(STACK_OF(X509) *sk, const X509_NAME *name);

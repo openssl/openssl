@@ -35,7 +35,7 @@ struct ossl_cmp_ctx_st {
 
     /* message transfer */
     OSSL_CMP_transfer_cb_t transfer_cb; /* default: OSSL_CMP_MSG_http_perform */
-    void *transfer_cb_arg; /* allows to store optional argument to cb */
+    void *transfer_cb_arg; /* allows us to store optional argument to cb */
     /* HTTP-based transfer */
     char *serverPath;
     char *server;
@@ -47,7 +47,7 @@ struct ossl_cmp_ctx_st {
     /* attempts polling for a response if a 'waiting' PKIStatus is received */
     time_t end_time; /* session start time + totaltimeout */
     OSSL_HTTP_bio_cb_t http_cb;
-    void *http_cb_arg; /* allows to store optional argument to cb */
+    void *http_cb_arg; /* allows us to store optional argument to cb */
 
     /* server authentication */
     /*
@@ -72,7 +72,7 @@ struct ossl_cmp_ctx_st {
     int unprotectedSend; /* send unprotected PKI messages */
     X509 *cert; /* protection cert used to identify and sign for MSG_SIG_ALG */
     EVP_PKEY *pkey; /* the key pair corresponding to cert */
-    ASN1_OCTET_STRING *referenceValue; /* optional user name for MSG_MAC_ALG */
+    ASN1_OCTET_STRING *referenceValue; /* optional username for MSG_MAC_ALG */
     ASN1_OCTET_STRING *secretValue; /* password/shared secret for MSG_MAC_ALG */
     /* PBMParameters for MSG_MAC_ALG */
     size_t pbm_slen; /* salt length, currently fixed to 16 */
@@ -125,7 +125,7 @@ struct ossl_cmp_ctx_st {
 
     /* certificate confirmation */
     OSSL_CMP_certConf_cb_t certConf_cb; /* callback for app checking new cert */
-    void *certConf_cb_arg; /* allows to store an argument individual to cb */
+    void *certConf_cb_arg; /* allows us to store an argument individual to cb */
 } /* OSSL_CMP_CTX */;
 
 /*

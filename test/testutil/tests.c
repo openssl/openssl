@@ -53,7 +53,7 @@ void test_fail_message_prefix(const char *prefix, const char *file,
  * printf format with following arguments that spell out the failure
  * details i.e. the actual values compared and the operator used.
  *
- * The typical use for this is from an utility test function:
+ * The typical use for this is from a utility test function:
  *
  * int test6(const char *file, int line, int n) {
  *     if (n != 6) {

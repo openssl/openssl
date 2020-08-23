@@ -499,7 +499,7 @@ void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
 
     /*
      * No pre- or post-condition for this call, as this only creates methods
-     * temporarly and then promptly destroys them.
+     * temporarily and then promptly destroys them.
      */
     ossl_algorithm_do_all(libctx, operation_id, NULL, NULL, do_one, NULL,
                           &data);

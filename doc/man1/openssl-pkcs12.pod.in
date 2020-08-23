@@ -87,7 +87,7 @@ Print out a usage message.
 =item B<-in> I<filename>
 
 This specifies filename or URI of the PKCS#12 file to be parsed.
-With B<-export>, this refers to the the certificate and/or key input,
+With B<-export>, this refers to the certificate and/or key input,
 which can be in PEM, DER, or PKCS#12 format.
 Standard input is used by default.
 

@@ -8,7 +8,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -1116,7 +1116,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (a == NULL || (*a) == NULL || (*a)->group == NULL) {
         /*
-         * sorry, but a EC_GROUP-structure is necessary to set the public key
+         * sorry, but an EC_GROUP-structure is necessary to set the public key
          */
         ECerr(EC_F_O2I_ECPUBLICKEY, ERR_R_PASSED_NULL_PARAMETER);
         return 0;

@@ -387,7 +387,7 @@ extern "C" {
  *
  * Currently the sole internal user of OSSL_EXCHANGE_PARAM_KDF_UKM is
  * EVP_PKEY_CTX_{set0,get0}_ecdh_kdf_ukm():
- *      OSSL_EXCHANGE_PARAM_KDF_UKM is handled as a octet_string on set0,
+ *      OSSL_EXCHANGE_PARAM_KDF_UKM is handled as an octet_string on set0,
  *      and as an octet_ptr on get0.
  *
  * This pattern is borrowed from the handling of

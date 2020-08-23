@@ -13,7 +13,7 @@
  */
 
 /*
- * DSA low level APIs are deprecated for public use, but still ok for
+ * DSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -127,7 +127,7 @@ int ossl_do_blob_header(const unsigned char **in, unsigned int length,
 
     case MS_DSS1MAGIC:
         *pisdss = 1;
-        /* fall thru */
+        /* fall through */
     case MS_RSA1MAGIC:
         if (*pispub == 0) {
             PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_EXPECTING_PRIVATE_KEY_BLOB);
@@ -137,7 +137,7 @@ int ossl_do_blob_header(const unsigned char **in, unsigned int length,
 
     case MS_DSS2MAGIC:
         *pisdss = 1;
-        /* fall thru */
+        /* fall through */
     case MS_RSA2MAGIC:
         if (*pispub == 1) {
             PEMerr(PEM_F_OSSL_DO_BLOB_HEADER, PEM_R_EXPECTING_PUBLIC_KEY_BLOB);

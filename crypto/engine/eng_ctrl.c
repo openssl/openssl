@@ -13,14 +13,14 @@
 #include "eng_local.h"
 
 /*
- * When querying a ENGINE-specific control command's 'description', this
+ * When querying an ENGINE-specific control command's 'description', this
  * string is used if the ENGINE_CMD_DEFN has cmd_desc set to NULL.
  */
 static const char *int_no_description = "";
 
 /*
  * These internal functions handle 'CMD'-related control commands when the
- * ENGINE in question has asked us to take care of it (ie. the ENGINE did not
+ * ENGINE in question has asked us to take care of it (i.e. the ENGINE did not
  * set the ENGINE_FLAGS_MANUAL_CMD_CTRL flag.
  */
 
@@ -68,7 +68,7 @@ static int int_ctrl_helper(ENGINE *e, int cmd, long i, void *p,
     char *s = (char *)p;
     const ENGINE_CMD_DEFN *cdp;
 
-    /* Take care of the easy one first (eg. it requires no searches) */
+    /* Take care of the easy one first (e.g. it requires no searches) */
     if (cmd == ENGINE_CTRL_GET_FIRST_CMD_TYPE) {
         if ((e->cmd_defns == NULL) || int_ctrl_cmd_is_null(e->cmd_defns))
             return 0;

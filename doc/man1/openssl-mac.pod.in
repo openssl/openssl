@@ -133,7 +133,7 @@ To create a hex-encoded KMAC128 MAC from a file with a Customisation String
  openssl mac -macopt custom:Tag -macopt hexkey:40414243444546 \
          -macopt size:16 -in msg.bin KMAC128
 
-To create a hex-encoded GMAC-AES-128-GCM with a IV from a file: \
+To create a hex-encoded GMAC-AES-128-GCM with an IV from a file: \
  openssl mac -macopt cipher:AES-128-GCM -macopt hexiv:E0E00F19FED7BA0136A797F3 \
          -macopt hexkey:77A77FAF290C1FA30C683DF16BA7A77B -in msg.bin GMAC
 

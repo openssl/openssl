@@ -8,7 +8,7 @@
  */
 
 /*
- * RSA low level APIs are deprecated for public use, but still ok for
+ * RSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -142,7 +142,7 @@ int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
     *(p++) = 0;
     *(p++) = 2;                 /* Public Key BT (Block Type) */
 
-    /* pad out with non-zero random data */
+    /* pad out with nonzero random data */
     j = tlen - 3 - flen;
 
     if (RAND_bytes_ex(libctx, p, j) <= 0)
@@ -358,7 +358,7 @@ int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *libctx, unsigned char *to,
      * However, buggy clients exist that send the negotiated protocol
      * version instead if the server does not support the requested
      * protocol version. If SSL_OP_TLS_ROLLBACK_BUG is set then we tolerate
-     * such clients. In that case alt_version will be non-zero and set to
+     * such clients. In that case alt_version will be nonzero and set to
      * the negotiated version.
      */
     if (alt_version > 0) {

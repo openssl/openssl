@@ -40,7 +40,7 @@ static int sanity_check_bytes(size_t (*rng)(unsigned char *, size_t),
         }
 
         /*-
-         * Verify that we don't have too many unexpected runs of zeroes,
+         * Verify that we don't have too many unexpected runs of zeros,
          * implying that we might be accidentally using the 32-bit RDRAND
          * instead of the 64-bit one on 64-bit systems.
          */

@@ -77,7 +77,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_FAILED_TO_SIGN                            175
 # define PROV_R_GENERATE_ERROR                            191
 # define PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE       165
-# define PROV_R_INAVLID_UKM_LENGTH                        146
+# define PROV_R_INVALID_UKM_LENGTH                        146
 # define PROV_R_INDICATOR_INTEGRITY_FAILURE               210
 # define PROV_R_INSUFFICIENT_DRBG_STRENGTH                181
 # define PROV_R_INVALID_AAD                               108

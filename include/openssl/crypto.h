@@ -394,7 +394,7 @@ int OPENSSL_gmtime_diff(int *pday, int *psec,
  * It takes an amount of time dependent on |len|, but independent of the
  * contents of |a| and |b|. Unlike memcmp, it cannot be used to put elements
  * into a defined order as the return value when a != b is undefined, other
- * than to be non-zero.
+ * than to be nonzero.
  */
 int CRYPTO_memcmp(const void * in_a, const void * in_b, size_t len);
 

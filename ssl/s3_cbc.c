@@ -8,7 +8,7 @@
  */
 
 /*
- * MD5 and SHA-1 low level APIs are deprecated for public use, but still ok for
+ * MD5 and SHA-1 low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -123,7 +123,7 @@ char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
  *     once the padding has been removed.
  *   data_plus_mac_plus_padding_size: the public length of the whole
  *     record, including padding.
- *   is_sslv3: non-zero if we are to use SSLv3. Otherwise, TLS.
+ *   is_sslv3: nonzero if we are to use SSLv3. Otherwise, TLS.
  *
  * On entry: by virtue of having been through one of the remove_padding
  * functions, above, we know that data_plus_mac_size is large enough to contain
@@ -264,7 +264,7 @@ int ssl3_cbc_digest_record(SSL *s,
      * of hash termination (0x80 + 64-bit length) don't fit in the final
      * block, we say that the final two blocks can vary based on the padding.
      * TLSv1 has MACs up to 48 bytes long (SHA-384) and the padding is not
-     * required to be minimal. Therefore we say that the final |variance_blocks|
+     * required to be minimal. Therefore, we say that the final |variance_blocks|
      * blocks can
      * vary based on the padding. Later in the function, if the message is
      * short and there obviously cannot be this many blocks then
@@ -375,7 +375,7 @@ int ssl3_cbc_digest_record(SSL *s,
              * consumes: either 7 bytes (SHA1) or 11 bytes (MD5). There are no
              * ciphersuites in SSLv3 that are not SHA1 or MD5 based and
              * therefore we can be confident that the header_length will be
-             * greater than |md_block_size|. However we add a sanity check just
+             * greater than |md_block_size|. However, we add a sanity check just
              * in case
              */
             if (header_length <= md_block_size) {

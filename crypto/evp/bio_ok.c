@@ -25,7 +25,7 @@
         file damages which cause garbage on BIO_f_cipher's output.
 
         The easy way is to push the BIO_f_md and save the checksum at
-        the end of the file. However there are several problems with this
+        the end of the file. However, there are several problems with this
         approach:
 
         1) you must somehow separate checksum from actual data.

@@ -525,7 +525,7 @@ static void KeccakF1600(uint64_t A[5][5])
 #elif defined(KECCAK_2X)
 /*
  * This implementation is variant of KECCAK_1X above with outer-most
- * round loop unrolled twice. This allows to take temporary storage
+ * round loop unrolled twice. This allows one to take temporary storage
  * out of round procedure and simplify references to it by alternating
  * it with actual data (see round loop below). Originally it was meant
  * rather as reference for an assembly implementation, but it seems to
@@ -683,7 +683,7 @@ static void KeccakF1600(uint64_t A[5][5])
 #else   /* define KECCAK_INPLACE to compile this code path */
 /*
  * This implementation is KECCAK_1X from above combined 4 times with
- * a twist that allows to omit temporary storage and perform in-place
+ * a twist that allows one to omit temporary storage and perform in-place
  * processing. It's discussed in section 2.5 of "Keccak implementation
  * overview". It's likely to be best suited for processors with large
  * register bank... On the other hand processor with large register

@@ -165,7 +165,7 @@ static X509 *lookup_cert_match(X509_STORE_CTX *ctx, X509 *x)
  * If B<err> is not X509_V_OK, that's the error value, otherwise leave
  * unchanged (presumably set by the caller).
  *
- * Returns 0 to abort verification with an error, non-zero to continue.
+ * Returns 0 to abort verification with an error, nonzero to continue.
  */
 static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
 {
@@ -181,7 +181,7 @@ static int verify_cb_cert(X509_STORE_CTX *ctx, X509 *x, int depth, int err)
  * error depth and certificate are already set, we just specify the error
  * number.
  *
- * Returns 0 to abort verification with an error, non-zero to continue.
+ * Returns 0 to abort verification with an error, nonzero to continue.
  */
 static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
 {
@@ -541,7 +541,7 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             plen++;
         /*
          * If this certificate is a proxy certificate, the next certificate
-         * must be another proxy certificate or a EE certificate.  If not,
+         * must be another proxy certificate or an EE certificate.  If not,
          * the next certificate must be a CA certificate.
          */
         if (x->ex_flags & EXFLAG_PROXY) {
@@ -780,7 +780,7 @@ static int check_trust(X509_STORE_CTX *ctx, int num_untrusted)
 
     /*
      * Check trusted certificates in chain at depth num_untrusted and up.
-     * Note, that depths 0..num_untrusted-1 may also contain trusted
+     * Note that depths 0..num_untrusted-1 may also contain trusted
      * certificates, but the caller is expected to have already checked those,
      * and wants to incrementally check just any added since.
      */
@@ -1772,7 +1772,7 @@ static int internal_verify(X509_STORE_CTX *ctx)
              * step (n) we must check any given key usage extension in a CA cert
              * when preparing the verification of a certificate issued by it.
              * According to https://tools.ietf.org/html/rfc5280#section-4.2.1.3
-             * we must not verify a certifiate signature if the key usage of the
+             * we must not verify a certificate signature if the key usage of the
              * CA certificate that issued the certificate prohibits signing.
              * In case the 'issuing' certificate is the last in the chain and is
              * not a CA certificate but a 'self-issued' end-entity cert (i.e.,

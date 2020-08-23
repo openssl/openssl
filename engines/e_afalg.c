@@ -191,7 +191,7 @@ static int afalg_setup_async_event_notification(afalg_aio *aio)
                 close(aio->efd);
                 return 0;
             }
-            /* make fd non-blocking in async mode */
+            /* make fd nonblocking in async mode */
             if (fcntl(aio->efd, F_SETFL, O_NONBLOCK) != 0) {
                 ALG_WARN("%s(%d): Failed to set event fd as NONBLOCKING",
                          __FILE__, __LINE__);

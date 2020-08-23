@@ -22,7 +22,7 @@
  * 2) Handshake state machine
  *
  * The Message flow state machine controls the reading and sending of messages
- * including handling of non-blocking IO events, flushing of the underlying
+ * including handling of nonblocking IO events, flushing of the underlying
  * write BIO, handling unexpected messages, etc. It is itself broken into two
  * separate sub-state machines which control reading and writing respectively.
  *
@@ -581,7 +581,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
             }
 
             if (ret == 0) {
-                /* Could be non-blocking IO */
+                /* Could be nonblocking IO */
                 return SUB_STATE_ERROR;
             }
 
@@ -623,7 +623,7 @@ static SUB_STATE_RETURN read_state_machine(SSL *s)
                 /* We already got this above for DTLS */
                 ret = tls_get_message_body(s, &len);
                 if (ret == 0) {
-                    /* Could be non-blocking IO */
+                    /* Could be nonblocking IO */
                     return SUB_STATE_ERROR;
                 }
             }

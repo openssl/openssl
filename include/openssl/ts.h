@@ -248,7 +248,7 @@ typedef ASN1_INTEGER *(*TS_serial_cb) (struct TS_resp_ctx *, void *);
 
 /*
  * This must return the seconds and microseconds since Jan 1, 1970 in the sec
- * and usec variables allocated by the caller. Return non-zero for success
+ * and usec variables allocated by the caller. Return nonzero for success
  * and zero for failure.
  */
 typedef int (*TS_time_cb) (struct TS_resp_ctx *, void *, long *sec,

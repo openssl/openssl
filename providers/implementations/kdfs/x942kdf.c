@@ -354,7 +354,7 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
          * Note the ukm length MUST be 512 bits.
          * For backwards compatibility the old check is being done.
          */
-        ERR_raise(ERR_LIB_PROV, PROV_R_INAVLID_UKM_LENGTH);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_UKM_LENGTH);
         return 0;
     }
     /* generate the otherinfo der */

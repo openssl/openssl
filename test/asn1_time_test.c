@@ -54,7 +54,7 @@ static struct testdata tbl_testdata_pos[] = {
     { "19700101000000X",   V_ASN1_GENERALIZEDTIME, V_ASN1_GENERALIZEDTIME, 0,           0,  0, 0, },
     { "19700101000000Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,           0, -1, 1, }, /* Epoch begins */
     { "700101000000Z",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,           0, -1, 1, }, /* ditto */
-    { "20380119031407Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,  0x7FFFFFFF,  1, 1, }, /* Max 32bit time_t */
+    { "20380119031407Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,  0x7FFFFFFF,  1, 1, }, /* Max 32-bit time_t */
     { "380119031407Z",     V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         1,  0x7FFFFFFF,  1, 1, },
     { "20371231235959Z",   V_ASN1_GENERALIZEDTIME, V_ASN1_UTCTIME,         1,  2145916799,  1, 1, }, /* Just before 2038 */
     { "20371231235959Z",   V_ASN1_UTCTIME,         V_ASN1_UTCTIME,         0,           0,  0, 1, }, /* Bad UTC time */

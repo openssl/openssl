@@ -2542,8 +2542,8 @@ EVP_R_EXPECTING_AN_HMAC_KEY:174:expecting an hmac key
 EVP_R_EXPECTING_AN_RSA_KEY:127:expecting an rsa key
 EVP_R_EXPECTING_A_DH_KEY:128:expecting a dh key
 EVP_R_EXPECTING_A_DSA_KEY:129:expecting a dsa key
-EVP_R_EXPECTING_A_ECX_KEY:219:expecting a ecx key
-EVP_R_EXPECTING_A_EC_KEY:142:expecting a ec key
+EVP_R_EXPECTING_A_ECX_KEY:219:expecting an ecx key
+EVP_R_EXPECTING_A_EC_KEY:142:expecting an ec key
 EVP_R_EXPECTING_A_POLY1305_KEY:164:expecting a poly1305 key
 EVP_R_EXPECTING_A_SIPHASH_KEY:175:expecting a siphash key
 EVP_R_FETCH_FAILED:202:fetch failed
@@ -2768,7 +2768,7 @@ PEM_R_UNEXPECTED_DEK_IV:130:unexpected dek iv
 PEM_R_UNSUPPORTED_CIPHER:113:unsupported cipher
 PEM_R_UNSUPPORTED_ENCRYPTION:114:unsupported encryption
 PEM_R_UNSUPPORTED_KEY_COMPONENTS:126:unsupported key components
-PKCS12_R_CANT_PACK_STRUCTURE:100:cant pack structure
+PKCS12_R_CANT_PACK_STRUCTURE:100:cannot pack structure
 PKCS12_R_CONTENT_TYPE_NOT_DATA:121:content type not data
 PKCS12_R_DECODE_ERROR:101:decode error
 PKCS12_R_ENCODE_ERROR:102:encode error
@@ -2834,7 +2834,7 @@ PKCS7_R_WRONG_CONTENT_TYPE:113:wrong content type
 PKCS7_R_WRONG_PKCS7_TYPE:114:wrong pkcs7 type
 PROP_R_NAME_TOO_LONG:100:name too long
 PROP_R_NOT_AN_ASCII_CHARACTER:101:not an ascii character
-PROP_R_NOT_AN_HEXADECIMAL_DIGIT:102:not an hexadecimal digit
+PROP_R_NOT_AN_HEXADECIMAL_DIGIT:102:not a hexadecimal digit
 PROP_R_NOT_AN_IDENTIFIER:103:not an identifier
 PROP_R_NOT_AN_OCTAL_DIGIT:104:not an octal digit
 PROP_R_NOT_A_DECIMAL_DIGIT:105:not a decimal digit
@@ -2872,7 +2872,7 @@ PROV_R_FAILED_TO_SIGN:175:failed to sign
 PROV_R_GENERATE_ERROR:191:generate error
 PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:165:\
 	illegal or unsupported padding mode
-PROV_R_INAVLID_UKM_LENGTH:146:inavlid ukm length
+PROV_R_INVALID_UKM_LENGTH:146:invalid ukm length
 PROV_R_INDICATOR_INTEGRITY_FAILURE:210:indicator integrity failure
 PROV_R_INSUFFICIENT_DRBG_STRENGTH:181:insufficient drbg strength
 PROV_R_INVALID_AAD:108:invalid aad
@@ -3430,7 +3430,7 @@ TS_R_MESSAGE_IMPRINT_MISMATCH:103:message imprint mismatch
 TS_R_NONCE_MISMATCH:104:nonce mismatch
 TS_R_NONCE_NOT_RETURNED:105:nonce not returned
 TS_R_NO_CONTENT:106:no content
-TS_R_NO_TIME_STAMP_TOKEN:107:no time stamp token
+TS_R_NO_TIMESTAMP_TOKEN:107:no timestamp token
 TS_R_PKCS7_ADD_SIGNATURE_ERROR:118:pkcs7 add signature error
 TS_R_PKCS7_ADD_SIGNED_ATTR_ERROR:119:pkcs7 add signed attr error
 TS_R_PKCS7_TO_TS_TST_INFO_FAILED:129:pkcs7 to ts tst info failed
@@ -3466,7 +3466,7 @@ UI_R_SYSQIOW_ERROR:111:sys$qiow error
 UI_R_UNKNOWN_CONTROL_COMMAND:106:unknown control command
 UI_R_UNKNOWN_TTYGET_ERRNO_VALUE:108:unknown ttyget errno value
 UI_R_USER_DATA_DUPLICATION_UNSUPPORTED:112:user data duplication unsupported
-X509V3_R_BAD_IP_ADDRESS:118:bad ip address
+X509V3_R_BAD_IP_ADDRESS:118:bad IP address
 X509V3_R_BAD_OBJECT:119:bad object
 X509V3_R_BN_DEC2BN_ERROR:100:bn dec2bn error
 X509V3_R_BN_TO_ASN1_INTEGER_ERROR:101:bn to asn1 integer error
@@ -3538,7 +3538,7 @@ X509_R_AKID_MISMATCH:110:akid mismatch
 X509_R_BAD_SELECTOR:133:bad selector
 X509_R_BAD_X509_FILETYPE:100:bad x509 filetype
 X509_R_BASE64_DECODE_ERROR:118:base64 decode error
-X509_R_CANT_CHECK_DH_KEY:114:cant check dh key
+X509_R_CANT_CHECK_DH_KEY:114:cannot check dh key
 X509_R_CERTIFICATE_VERIFICATION_FAILED:139:certificate verification failed
 X509_R_CERT_ALREADY_IN_HASH_TABLE:101:cert already in hash table
 X509_R_CRL_ALREADY_DELTA:127:crl already delta

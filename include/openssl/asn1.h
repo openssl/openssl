@@ -155,7 +155,7 @@ struct asn1_string_st {
     /*
      * The value of the following field depends on the type being held.  It
      * is mostly being used for BIT_STRING so if the input data has a
-     * non-zero 'unused bits' value, it will be handled correctly
+     * nonzero 'unused bits' value, it will be handled correctly
      */
     long flags;
 };
@@ -217,7 +217,7 @@ typedef struct ASN1_TLC_st ASN1_TLC;
 /* This is just an opaque pointer */
 typedef struct ASN1_VALUE_st ASN1_VALUE;
 
-/* Declare ASN1 functions: the implement macro in in asn1t.h */
+/* Declare ASN1 functions: the implement macro in asn1t.h */
 
 # define DECLARE_ASN1_FUNCTIONS(type) DECLARE_ASN1_FUNCTIONS_name(type, type)
 

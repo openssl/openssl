@@ -305,7 +305,7 @@ static ossl_inline int ERR_FATAL_ERROR(unsigned long errcode)
 # define ERR_R_OSSL_STORE_LIB ERR_LIB_OSSL_STORE/* 44 */
 
 /*
- * global reason codes, range 64..99 (sub-system specific codes start at 100)
+ * global reason codes, range 64..99 (subsystem specific codes start at 100)
  *
  * ERR_R_FATAL had dual purposes in pre-3.0 OpenSSL, as a standalone reason
  * code as well as a fatal flag.  This is still possible to do, as 2**6 (64)

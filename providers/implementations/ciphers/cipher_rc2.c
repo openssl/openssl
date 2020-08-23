@@ -10,7 +10,7 @@
 /* Dispatch functions for RC2 cipher modes ecb, cbc, ofb, cfb */
 
 /*
- * RC2 low level APIs are deprecated for public use, but still ok for internal
+ * RC2 low-level APIs are deprecated for public use, but still ok for internal
  * use.
  */
 #include "internal/deprecated.h"

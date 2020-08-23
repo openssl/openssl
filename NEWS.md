@@ -47,7 +47,7 @@ OpenSSL 3.0
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
   * Deprecated ERR_put_error().
-  * Added OSSL_PROVIDER_available(), to check provider availibility.
+  * Added OSSL_PROVIDER_available(), to check provider availability.
   * Added 'openssl mac' that uses the EVP_MAC API.
   * Added 'openssl kdf' that uses the EVP_KDF API.
   * Add OPENSSL_info() and 'openssl info' to get built-in data.
@@ -774,7 +774,7 @@ OpenSSL 1.0.0
   * Multiple signer and signer add support for PKCS#7 and CMS.
   * ASN1 printing support.
   * Whirlpool hash algorithm added.
-  * RFC3161 time stamp support.
+  * RFC3161 timestamp support.
   * New generalised public key API supporting ENGINE based algorithms.
   * New generalised public key API utilities.
   * New ENGINE supporting GOST algorithms.
@@ -1302,7 +1302,7 @@ OpenSSL 0.9.x
   * Added BIO proxy and filtering functionality
   * Extended Big Number (BN) library
   * Added RIPE MD160 message digest
-  * Added support for RC2/64bit cipher
+  * Added support for RC2/64-bit cipher
   * Extended ASN.1 parser routines
   * Adjustments of the source tree for CVS
   * Support for various new platforms

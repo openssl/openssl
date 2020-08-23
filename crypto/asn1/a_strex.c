@@ -32,7 +32,7 @@
                   ASN1_STRFLGS_ESC_MSB)
 
 /*
- * Three IO functions for sending data to memory, a BIO and and a FILE
+ * Three IO functions for sending data to memory, a BIO and a FILE
  * pointer.
  */
 static int send_bio_chars(void *arg, const void *buf, int len)

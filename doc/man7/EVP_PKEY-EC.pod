@@ -15,7 +15,7 @@ The B<EC> keytype is implemented in OpenSSL's default provider.
 The normal way of specifying domain parameters for an EC curve is via the
 curve name "group". For curves with no curve name, explicit parameters can be
 used that specify "field-type", "p", "a", "b", "generator" and "order".
-Explicit parameters are supported for backwards compability reasons, but they
+Explicit parameters are supported for backwards compatibility reasons, but they
 are not compliant with multiple standards (including RFC5915) which only allow
 named curves.
 

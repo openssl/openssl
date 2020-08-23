@@ -3,7 +3,7 @@ ENGINES
 
   With OpenSSL 0.9.6, a new component was added to support alternative
   cryptography implementations, most commonly for interfacing with external
-  crypto devices (eg. accelerator cards). This component is called ENGINE,
+  crypto devices (e.g. accelerator cards). This component is called ENGINE,
   and its presence in OpenSSL 0.9.6 (and subsequent bug-fix releases)
   caused a little confusion as 0.9.6** releases were rolled in two
   versions, a "standard" and an "engine" version. In development for 0.9.7,
@@ -44,7 +44,7 @@ ENGINES
   implementation supports, and for an application to directly feed string
   based input to those ENGINEs, in the form of name-value pairs. This is an
   extensible way for ENGINEs to define their own "configuration" mechanisms
-  that are specific to a given ENGINE (eg. for a particular hardware
+  that are specific to a given ENGINE (e.g. for a particular hardware
   device) but that should be consistent across *all* OpenSSL-based
   applications when they use that ENGINE. Work is in progress (or at least
   in planning) for supporting these control commands from the CONF (or
@@ -80,7 +80,7 @@ ENGINES
   file), and in the case of implementations for commercial hardware
   devices, also through whatever vendor support channels are available.  If
   none of this is possible, or the problem seems to be something about the
-  ENGINE API itself (ie. not necessarily specific to a particular ENGINE
+  ENGINE API itself (i.e. not necessarily specific to a particular ENGINE
   implementation) then you should mail complete details to the relevant
   OpenSSL mailing list. For a definition of "complete details", refer to
   the OpenSSL "README" file. As for which list to send it to:
@@ -127,7 +127,7 @@ ENGINES
   have known problems and you wish to use a newer version with an existing
   application. It could equally be because the application (or OpenSSL
   library) you are using simply doesn't have support for the ENGINE you
-  wish to use, and the ENGINE provider (eg. hardware vendor) is providing
+  wish to use, and the ENGINE provider (e.g. hardware vendor) is providing
   you with a self-contained implementation in the form of a shared-library.
   The other use-case for "dynamic" is with applications that wish to
   maintain the smallest foot-print possible and so do not link in various
@@ -209,10 +209,10 @@ ENGINES
   such commands through to ENGINEs. As such, you would select "dynamic"
   as the ENGINE to use, and the parameters/commands you pass would
   control the *actual* ENGINE used. Each command is actually a name-value
-  pair and the value can sometimes be omitted (eg. the "LOAD" command).
+  pair and the value can sometimes be omitted (e.g. the "LOAD" command).
   Whilst the syntax demonstrated in "openssl engine" uses a colon to
   separate the command name from the value, applications may provide
-  their own syntax for making that separation (eg. a win32 registry
+  their own syntax for making that separation (e.g. a win32 registry
   key-value pair may be used by some applications). The reason for the
   "-pre" syntax in the "openssl engine" utility is that some commands
   might be issued to an ENGINE *after* it has been initialised for use.
@@ -275,7 +275,7 @@ ENGINES
   "hw_atalla.c" file but with the following two changes;
   * add "-DENGINE_DYNAMIC_SUPPORT" to the command line switches,
   * change the output file from "hw_atalla.o" to something new,
-  eg. "tmp_atalla.o"
+  e.g. "tmp_atalla.o"
 
   4. Link "tmp_atalla.o" into a shared-library using the top-level
   OpenSSL libraries to resolve any dependencies. The syntax for doing
@@ -294,7 +294,7 @@ ENGINES
   If the shared-library loads successfully, you will see both "-pre"
   commands marked as "SUCCESS" and the list of control commands
   displayed (because of "-vvvv") will be the control commands for the
-  *atalla* ENGINE (ie. *not* the 'dynamic' ENGINE). You can also add
+  *atalla* ENGINE (i.e. *not* the 'dynamic' ENGINE). You can also add
   the "-t" switch to the utility if you want it to try and initialise
   the atalla ENGINE for use to test any possible hardware/driver issues.
 

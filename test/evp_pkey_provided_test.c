@@ -194,7 +194,7 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
         goto err;
 
     /* Make a context, it's valid for several prints */
-    TEST_note("Setting up a OSSL_ENCODER context with passphrase");
+    TEST_note("Setting up an OSSL_ENCODER context with passphrase");
     if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, pq))
         /* Check that this operation is supported */
         || !TEST_ptr(OSSL_ENCODER_CTX_get_encoder(ctx)))

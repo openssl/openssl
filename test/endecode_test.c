@@ -96,7 +96,7 @@ static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
 
 /*
  * TODO(3.0) For better error output, changed the callbacks to take __FILE__
- * and __LINE__ as first two arguments, and have them use the lower case
+ * and __LINE__ as first two arguments, and have them use the lowercase
  * functions, such as test_strn_eq(), rather than the uppercase macros
  * (TEST_strn2_eq(), for example).
  */

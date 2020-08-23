@@ -8,7 +8,7 @@
  */
 
 /*
- * MD5 and SHA-1 low level APIs are deprecated for public use, but still ok for
+ * MD5 and SHA-1 low-level APIs are deprecated for public use, but still ok for
  * internal use.  The prov/md5_sha1.h include requires this, but this must
  * be the first include loaded.
  */

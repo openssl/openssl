@@ -29,10 +29,10 @@ few possible exceptions [1]) have information about end products (such
 as scripts, library files and programs) and source files (such as C
 files, C header files, assembler files, etc).  Intermediate files such
 as object files are rarely directly referred to in `build.info` files (and
-when they are, it's always with the file name extension `.o`), they are
+when they are, it's always with the filename extension `.o`), they are
 inferred by `Configure`.  By the same rule of minimalism, end product
-file name extensions (such as `.so`, `.a`, `.exe`, etc) are never mentioned
-in `build.info`.  Their file name extensions will be inferred by the
+filename extensions (such as `.so`, `.a`, `.exe`, etc) are never mentioned
+in `build.info`.  Their filename extensions will be inferred by the
 build-file templates, adapted for the platform they are meant for (see
 sections on `%unified_info` and build-file templates further down).
 
@@ -75,7 +75,7 @@ library, and that the library `libssl` depend on the library
 This is the `build.info` file in `apps/`, one may notice that all file
 paths mentioned are relative to the directory the `build.info` file is
 located in.  This one tells us that there's a program to be built
-called `apps/openss` (the file name extension will depend on the
+called `apps/openss` (the filename extension will depend on the
 platform and is therefore not mentioned in the `build.info` file).  It's
 built from one source file, `apps/openssl.c`, and building it requires
 the use of `.` and `include/` include directories (both are declared
@@ -477,7 +477,7 @@ etc.
                         obj2lib(lib => "PATH/TO/libfile",
                                 objs => [ "PATH/TO/objectfile", ... ]);
 
-                  'lib' has the intended library file name *without*
+                  'lib' has the intended library filename *without*
                   extension, obj2lib is expected to add that.  'objs'
                   has the list of object files to build this library.
 
@@ -500,7 +500,7 @@ etc.
                                   objs => [ "PATH/TO/objectfile", ... ],
                                   deps => [ "PATH/TO/otherlibfile", ... ]);
 
-                  'lib' has the base (static) library file name
+                  'lib' has the base (static) library filename
                   *without* extension.  This is useful in case
                   supporting files are needed (such as import
                   libraries on Windows).
@@ -533,7 +533,7 @@ etc.
                                 objs => [ "PATH/TO/objectfile", ... ],
                                 deps => [ "PATH/TO/libfile", ... ]);
 
-                  'bin' has the intended executable file name
+                  'bin' has the intended executable filename
                   *without* extension, obj2bin is expected to add
                   that.  'objs' has the list of object files to build
                   this library.  'deps' has the list of library files
@@ -548,7 +548,7 @@ etc.
                         in2script(script => "PATH/TO/scriptfile",
                                   sources => [ "PATH/TO/infile", ... ]);
 
-                  'script' has the intended script file name.
+                  'script' has the intended script filename.
                   'sources' has the list of source files to build the
                   resulting script from.
 

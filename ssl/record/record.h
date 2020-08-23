@@ -131,7 +131,7 @@ typedef struct record_layer_st {
     SSL *s;
     /*
      * Read as many input bytes as possible (for
-     * non-blocking reads)
+     * nonblocking reads)
      */
     int read_ahead;
     /* where we are when reading */

@@ -8,7 +8,7 @@
  */
 
 /*
- * RSA low level APIs are deprecated for public use, but still ok for
+ * RSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -38,7 +38,7 @@ int rsa_padding_add_SSLv23_with_libctx(OPENSSL_CTX *libctx, unsigned char *to,
     *(p++) = 0;
     *(p++) = 2;                 /* Public Key BT (Block Type) */
 
-    /* pad out with non-zero random data */
+    /* pad out with nonzero random data */
     j = tlen - 3 - 8 - flen;
 
     if (RAND_bytes_ex(libctx, p, j) <= 0)

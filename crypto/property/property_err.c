@@ -18,7 +18,7 @@ static const ERR_STRING_DATA PROP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROP, 0, PROP_R_NOT_AN_ASCII_CHARACTER),
     "not an ascii character"},
     {ERR_PACK(ERR_LIB_PROP, 0, PROP_R_NOT_AN_HEXADECIMAL_DIGIT),
-    "not an hexadecimal digit"},
+    "not a hexadecimal digit"},
     {ERR_PACK(ERR_LIB_PROP, 0, PROP_R_NOT_AN_IDENTIFIER), "not an identifier"},
     {ERR_PACK(ERR_LIB_PROP, 0, PROP_R_NOT_AN_OCTAL_DIGIT),
     "not an octal digit"},

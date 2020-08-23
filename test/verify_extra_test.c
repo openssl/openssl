@@ -280,7 +280,7 @@ static int test_self_signed_bad(void)
 
 static int test_self_signed_error(void)
 {
-    return test_self_signed("nonexistent file name", -1);
+    return test_self_signed("nonexistent filename", -1);
 }
 
 int setup_tests(void)

@@ -54,7 +54,7 @@ static const unsigned char srpdata_bin2ascii[65] =
 
 
 /*-
- * 0xF0 is a EOLN
+ * 0xF0 is an EOLN
  * 0xF1 is ignore but next needs to be 0xF0 (for \r\n processing).
  * 0xF2 is EOF
  * 0xE0 is ignore at start of line.

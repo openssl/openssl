@@ -9,7 +9,7 @@
  */
 
 /*
- * ECDSA low level APIs are deprecated for public use, but still ok for
+ * ECDSA low-level APIs are deprecated for public use, but still ok for
  * internal use.
  */
 #include "internal/deprecated.h"
@@ -2156,7 +2156,7 @@ static const struct {
 
 /* IPSec curves */
 /*
- * NOTE: The of curves over a extension field of non prime degree is not
+ * NOTE: The of curves over an extension field of non prime degree is not
  * recommended (Weil-descent). As the group order is not a prime this curve
  * is not suitable for ECDSA.
  */
@@ -2191,7 +2191,7 @@ static const struct {
 };
 
 /*
- * NOTE: The of curves over a extension field of non prime degree is not
+ * NOTE: The of curves over an extension field of non prime degree is not
  * recommended (Weil-descent). As the group order is not a prime this curve
  * is not suitable for ECDSA.
  */

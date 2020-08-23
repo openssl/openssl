@@ -351,7 +351,7 @@ static void get_legacy_evp_names(const char *main_name, const char *alias,
     /*
      * We could check that the returned value is the same as main_id,
      * but since this is a void function, there's no sane way to report
-     * the error.  The best we can do is trust ourselve to keep the legacy
+     * the error.  The best we can do is trust ourselves to keep the legacy
      * method database conflict free.
      *
      * This registers any alias with the same number as the main name.

@@ -79,7 +79,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
 
     p = host;
     if (host[0] == '[') {
-        /* ipv6 literal */
+        /* IPv6 literal */
         host++;
         p = strchr(host, ']');
         if (p == NULL)

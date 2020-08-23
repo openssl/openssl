@@ -109,7 +109,7 @@ static ASYNC_JOB *async_get_pool_job(void) {
     if (pool == NULL) {
         /*
          * Pool has not been initialised, so init with the defaults, i.e.
-         * no max size and no pre-created jobs
+         * no max size and no precreated jobs
          */
         if (ASYNC_init_thread(0, 0) == 0)
             return NULL;

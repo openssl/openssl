@@ -13,7 +13,7 @@
 int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 {
     /*
-     * like BN_mod, but returns non-negative remainder (i.e., 0 <= r < |d|
+     * like BN_mod, but returns nonnegative remainder (i.e., 0 <= r < |d|
      * always holds)
      */
 
@@ -236,7 +236,7 @@ int BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 }
 
 /*
- * BN_mod_lshift1 variant that may be used if a is non-negative and less than
+ * BN_mod_lshift1 variant that may be used if a is nonnegative and less than
  * m
  */
 int BN_mod_lshift1_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *m)
@@ -273,7 +273,7 @@ int BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m,
 }
 
 /*
- * BN_mod_lshift variant that may be used if a is non-negative and less than
+ * BN_mod_lshift variant that may be used if a is nonnegative and less than
  * m
  */
 int BN_mod_lshift_quick(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m)

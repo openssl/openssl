@@ -162,7 +162,7 @@ extern "C" {
  * ciphers normally not being used.
  * Example: "RC4" will activate all ciphers using RC4 including ciphers
  * without authentication, which would normally disabled by DEFAULT (due
- * the "!ADH" being part of default). Therefore "RC4:!COMPLEMENTOFDEFAULT"
+ * the "!ADH" being part of default). Therefore, "RC4:!COMPLEMENTOFDEFAULT"
  * will make sure that it is also disabled in the specific selection.
  * COMPLEMENTOF* identifiers are portable between version, as adjustments
  * to the default cipher setup will also be included here.
@@ -381,7 +381,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
  */
 # define SSL_OP_CIPHER_SERVER_PREFERENCE                 0x00400000U
 /*
- * If set, a server will allow a client to issue a SSLv3.0 version number as
+ * If set, a server will allow a client to issue an SSLv3.0 version number as
  * latest version supported in the premaster secret, even when TLSv1.0
  * (version 3.1) was announced in the client hello. Normally this is
  * forbidden to prevent version rollback attacks.
@@ -478,7 +478,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 /*
  * Make it possible to retry SSL_write() with changed buffer location (buffer
  * contents must stay the same!); this is not the default to avoid the
- * misconception that non-blocking SSL_write() behaves like non-blocking
+ * misconception that nonblocking SSL_write() behaves like nonblocking
  * write():
  */
 # define SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER 0x00000002U
@@ -680,7 +680,7 @@ __owur int SRP_Calc_A_param(SSL *s);
 /*
  * This callback type is used inside SSL_CTX, SSL, and in the functions that
  * set them. It is used to override the generation of SSL/TLS session IDs in
- * a server. Return value should be zero on an error, non-zero to proceed.
+ * a server. Return value should be zero on an error, nonzero to proceed.
  * Also, callbacks should themselves check if the id they generate is unique
  * otherwise the SSL handshake will fail with an error - callbacks can do
  * this using the 'ssl' value they're passed by;
@@ -920,7 +920,7 @@ __owur int SSL_extension_supported(unsigned int ext_type);
 # define SSL_ASYNC_NO_JOBS      6
 # define SSL_CLIENT_HELLO_CB    7
 
-/* These will only be used when doing non-blocking IO */
+/* These will only be used when doing nonblocking IO */
 # define SSL_want_nothing(s)         (SSL_want(s) == SSL_NOTHING)
 # define SSL_want_read(s)            (SSL_want(s) == SSL_READING)
 # define SSL_want_write(s)           (SSL_want(s) == SSL_WRITING)

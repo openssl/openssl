@@ -8,7 +8,7 @@
  */
 
 /*
- * This file uses the low level AES and engine functions (which are deprecated
+ * This file uses the low-level AES and engine functions (which are deprecated
  * for non-internal use) in order to implement the padlock engine AES ciphers.
  */
 #define OPENSSL_SUPPRESS_DEPRECATED

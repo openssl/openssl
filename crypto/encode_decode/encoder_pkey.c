@@ -213,7 +213,7 @@ OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new_by_EVP_PKEY(const EVP_PKEY *pkey,
 
         /*
          * Encoders offer two functions, one that handles object data in
-         * the form of a OSSL_PARAM array, and one that directly handles a
+         * the form of an OSSL_PARAM array, and one that directly handles a
          * provider side object.  The latter requires that the encoder
          * is offered by the same provider that holds that object, but is
          * more desirable because it usually provides faster encoding.

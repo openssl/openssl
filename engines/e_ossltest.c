@@ -17,8 +17,8 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 /*
- * SHA low level APIs are deprecated for public use, but still ok for
- * internal use.  Note, that due to symbols not being exported, only the
+ * SHA low-level APIs are deprecated for public use, but still ok for
+ * internal use.  Note that due to symbols not being exported, only the
  * #defines and type definitions can be accessed, function calls are not
  * available.  The digest lengths, block sizes and sizeof(CTX) are used herein
  * for several different digests.

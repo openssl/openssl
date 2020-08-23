@@ -27,7 +27,7 @@
  *
  * Production machine code would be the same, so one can wonder why
  * bother. Having Thread Sanitizer accept "thread-opportunistic" code
- * allows to move on trouble-shooting real bugs.
+ * allows us to move on trouble-shooting real bugs.
  *
  * Resolving Thread Sanitizer nits was the initial purpose for this module,
  * but it was later extended with more nuanced primitives that are useful

@@ -12,7 +12,7 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 /*
- * RC4 and SHA-1 low level APIs and EVP _meth_ APISs are deprecated for public
+ * RC4 and SHA-1 low-level APIs and EVP _meth_ APISs are deprecated for public
  * use, but still ok for internal use.
  */
 #include "internal/deprecated.h"

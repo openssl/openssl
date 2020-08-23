@@ -1108,7 +1108,7 @@ typedef struct {
     int total;
     /* The position of a zero (corresponding to '::') */
     int zero_pos;
-    /* Number of zeroes */
+    /* Number of zeros */
     int zero_cnt;
 } IPV6_STAT;
 
@@ -1137,15 +1137,15 @@ static int ipv6_from_asc(unsigned char *v6, const char *in)
         /* If '::' must have less than 16 bytes */
         if (v6stat.total == 16)
             return 0;
-        /* More than three zeroes is an error */
+        /* More than three zeros is an error */
         if (v6stat.zero_cnt > 3) {
             return 0;
-        /* Can only have three zeroes if nothing else present */
+        /* Can only have three zeros if nothing else present */
         } else if (v6stat.zero_cnt == 3) {
             if (v6stat.total > 0)
                 return 0;
         } else if (v6stat.zero_cnt == 2) {
-            /* Can only have two zeroes if at start or end */
+            /* Can only have two zeros if at start or end */
             if ((v6stat.zero_pos != 0)
                 && (v6stat.zero_pos != v6stat.total))
                 return 0;

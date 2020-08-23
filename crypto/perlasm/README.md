@@ -16,7 +16,7 @@ The first thing we do is setup the file and type of assembler
 
 The first argument is the 'type'.  Currently
 `cpp`, `sol`, `a.out`, `elf` or `win32`.
-The second argument is the file name.
+The second argument is the filename.
 
 The reciprocal function is
 `&asm_finish()` which should be called at the end.

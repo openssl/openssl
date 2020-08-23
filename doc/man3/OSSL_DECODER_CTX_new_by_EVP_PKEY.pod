@@ -58,7 +58,7 @@ following functions.
 OSSL_DECODER_CTX_set_pem_password_cb() and
 OSSL_DECODER_CTX_set_passphrase_ui() set up a callback method that
 the implementation can use to prompt for a pass phrase, giving the caller
-the choice of prefered pass phrase callback form.  These are called
+the choice of preferred pass phrase callback form.  These are called
 indirectly, through an internal B<OSSL_PASSPHRASE_CALLBACK> function.
 
 The internal B<OSSL_PASSPHRASE_CALLBACK> function caches the pass phrase, to

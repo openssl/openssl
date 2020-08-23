@@ -65,7 +65,7 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
         goto end;
     }
 
-    /* now  B  is non-zero */
+    /* now  B  is nonzero */
     i = 0;
     while (!BN_is_bit_set(B, i))
         i++;
@@ -104,7 +104,7 @@ int BN_kronecker(const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
             goto end;
         }
 
-        /* now  A  is non-zero */
+        /* now  A  is nonzero */
         i = 0;
         while (!BN_is_bit_set(A, i))
             i++;

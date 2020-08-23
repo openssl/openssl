@@ -475,11 +475,11 @@ BIGNUM *BN_bin2bn(const unsigned char *s, int len, BIGNUM *ret)
     return ret;
 }
 
-typedef enum {big, little} endianess_t;
+typedef enum {big, little} endianness_t;
 
 /* ignore negative */
 static
-int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endianess)
+int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianness_t endianness)
 {
     int n;
     size_t i, lasti, j, atop, mask;
@@ -511,14 +511,14 @@ int bn2binpad(const BIGNUM *a, unsigned char *to, int tolen, endianess_t endiane
 
     lasti = atop - 1;
     atop = a->top * BN_BYTES;
-    if (endianess == big)
+    if (endianness == big)
         to += tolen; /* start from the end of the buffer */
     for (i = 0, j = 0; j < (size_t)tolen; j++) {
         unsigned char val;
         l = a->d[i / BN_BYTES];
         mask = 0 - ((j - atop) >> (8 * sizeof(i) - 1));
         val = (unsigned char)(l >> (8 * (i % BN_BYTES)) & mask);
-        if (endianess == big)
+        if (endianness == big)
             *--to = val;
         else
             *to++ = val;
@@ -553,7 +553,7 @@ BIGNUM *BN_lebin2bn(const unsigned char *s, int len, BIGNUM *ret)
         return NULL;
     bn_check_top(ret);
     s += len;
-    /* Skip trailing zeroes. */
+    /* Skip trailing zeros. */
     for ( ; len > 0 && s[-1] == 0; s--, len--)
         continue;
     n = len;

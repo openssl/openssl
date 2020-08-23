@@ -35,7 +35,7 @@
 static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx);
 
 /*
- * Define a HTTP get command globally.
+ * Define an HTTP get command globally.
  * Also define the size of the command, this is two bytes less than
  * the size of the string because the %s is replaced by the URL.
  */

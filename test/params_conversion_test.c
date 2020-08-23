@@ -12,7 +12,7 @@
 #include <openssl/params.h>
 #include "testutil.h"
 
-/* On machines that dont support <inttypes.h> just disable the tests */
+/* On machines that don't support <inttypes.h> just disable the tests */
 #if !defined(OPENSSL_NO_INTTYPES_H)
 
 # ifdef OPENSSL_SYS_WINDOWS

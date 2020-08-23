@@ -57,7 +57,7 @@ static int _dopr(char **sbuffer, char **buffer,
 #define DP_F_SPACE      (1 << 2)
 /* print 0/0x prefix for octal/hex and decimal point for floating point */
 #define DP_F_NUM        (1 << 3)
-/* print leading zeroes */
+/* print leading zeros */
 #define DP_F_ZERO       (1 << 4)
 /* print HEX in UPPPERcase */
 #define DP_F_UP         (1 << 5)
@@ -270,7 +270,7 @@ _dopr(char **sbuffer,
                 break;
             case 'E':
                 flags |= DP_F_UP;
-                /* fall thru */
+                /* fall through */
             case 'e':
                 if (cflags == DP_C_LDOUBLE)
                     fvalue = va_arg(args, LDOUBLE);
@@ -282,7 +282,7 @@ _dopr(char **sbuffer,
                 break;
             case 'G':
                 flags |= DP_F_UP;
-                /* fall thru */
+                /* fall through */
             case 'g':
                 if (cflags == DP_C_LDOUBLE)
                     fvalue = va_arg(args, LDOUBLE);

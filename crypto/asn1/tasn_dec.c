@@ -22,7 +22,7 @@ DEFINE_STACK_OF(ASN1_VALUE)
 /*
  * Constructed types with a recursive definition (such as can be found in PKCS7)
  * could eventually exceed the stack given malicious input with excessive
- * recursion. Therefore we limit the stack depth. This is the maximum number of
+ * recursion. Therefore, we limit the stack depth. This is the maximum number of
  * recursive invocations of asn1_item_embed_d2i().
  */
 #define ASN1_MAX_CONSTRUCTED_NEST 30
@@ -391,7 +391,7 @@ static int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         }
 
         /*
-         * If we get here we've got no more data in the SEQUENCE, however we
+         * If we get here we've got no more data in the SEQUENCE, however, we
          * may not have read all fields so check all remaining are OPTIONAL
          * and clear any that are.
          */

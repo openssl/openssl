@@ -149,7 +149,7 @@ as their UI_add counterparts, except that they make their own copies
 of all strings.
 
 UI_construct_prompt() is a helper function that can be used to create
-a prompt from two pieces of information: an description and a name.
+a prompt from two pieces of information: a description and a name.
 The default constructor (if there is none provided by the method used)
 creates a string "Enter I<description> for I<name>:".  With the
 description "pass phrase" and the filename "foo.key", that becomes

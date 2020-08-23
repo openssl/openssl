@@ -164,7 +164,7 @@ static int blake2_mac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
             return 0;
         }
-        /* Pad with zeroes at the end */
+        /* Pad with zeros at the end */
         memset(macctx->key + len, 0, BLAKE2_KEYBYTES - len);
 
         BLAKE2_PARAM_SET_KEY_LENGTH(&macctx->params, (uint8_t)len);

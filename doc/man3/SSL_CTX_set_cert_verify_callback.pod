@@ -20,7 +20,7 @@ the time when L<SSL_new(3)> is called.
 
 =head1 NOTES
 
-Whenever a certificate is verified during a SSL/TLS handshake, a verification
+Whenever a certificate is verified during an SSL/TLS handshake, a verification
 function is called. If the application does not explicitly specify a
 verification callback function, the built-in verification function is used.
 If a verification callback I<callback> is specified via

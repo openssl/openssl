@@ -122,7 +122,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
  * |maclen| if not NULL, will set variable to the length of the mac on success
  * returns 1 on success, 0 on error
  */
-/* TODO try to combine with other MAC calculations in the libray */
+/* TODO try to combine with other MAC calculations in the library */
 int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
                       const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
