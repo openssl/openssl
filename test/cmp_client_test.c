@@ -372,9 +372,9 @@ int setup_tests(void)
     if (!test_get_libctx(&libctx, &default_null_provider, &provider, 5, USAGE))
         return 0;
 
-    if (!TEST_ptr(server_key = load_pem_key(server_key_f))
+    if (!TEST_ptr(server_key = load_pem_key(server_key_f, libctx))
             || !TEST_ptr(server_cert = load_pem_cert(server_cert_f, libctx))
-            || !TEST_ptr(client_key = load_pem_key(client_key_f))
+            || !TEST_ptr(client_key = load_pem_key(client_key_f, libctx))
             || !TEST_ptr(client_cert = load_pem_cert(client_cert_f, libctx))
             || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref)))) {
         cleanup_tests();

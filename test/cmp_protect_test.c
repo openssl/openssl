@@ -521,11 +521,11 @@ int setup_tests(void)
     if (!test_get_libctx(&libctx, &default_null_provider, &provider, 10, USAGE))
         return 0;
 
-    if (!TEST_ptr(loadedkey = load_pem_key(server_key_f))
+    if (!TEST_ptr(loadedkey = load_pem_key(server_key_f, libctx))
             || !TEST_ptr(cert = load_pem_cert(server_cert_f, libctx)))
         return 0;
 
-    if (!TEST_ptr(loadedprivkey = load_pem_key(server_f)))
+    if (!TEST_ptr(loadedprivkey = load_pem_key(server_f, libctx)))
         return 0;
     if (TEST_true(EVP_PKEY_up_ref(loadedprivkey)))
         loadedpubkey = loadedprivkey;

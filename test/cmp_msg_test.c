@@ -575,7 +575,7 @@ int setup_tests(void)
     if (!test_get_libctx(&libctx, &default_null_provider, &provider, 3, USAGE))
         return 0;
 
-    if (!TEST_ptr(newkey = load_pem_key(newkey_f))
+    if (!TEST_ptr(newkey = load_pem_key(newkey_f, libctx))
             || !TEST_ptr(cert = load_pem_cert(server_cert_f, libctx))
             || !TEST_int_eq(1, RAND_bytes_ex(libctx, ref, sizeof(ref)))) {
         cleanup_tests();
