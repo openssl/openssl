@@ -1508,11 +1508,16 @@ EOF
       my %args = @_;
       my $lib = platform->staticlib($args{lib});
       my @objs = map { platform->obj($_) } @{$args{objs}};
-      my $objs = join(" \\\n" . ' ' x (length($lib) + 2),
+      my $deps = join(" \\\n" . ' ' x (length($lib) + 2),
                       fill_lines(' ', $COLUMNS - length($lib) - 2, @objs));
+      my $max_per_call = 250;
+      my @objs_grouped;
+      push @objs_grouped, join(" ", splice @objs, 0, $max_per_call) while @objs;
+      my $fill_lib =
+          join("\n\t", (map { "\$(AR) \$(ARFLAGS) $lib $_" } @objs_grouped));
       return <<"EOF";
-$lib: $objs
-	\$(AR) \$(ARFLAGS) \$\@ \$\?
+$lib: $deps
+	$fill_lib
 	\$(RANLIB) \$\@ || echo Never mind.
 EOF
   }
