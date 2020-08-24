@@ -430,12 +430,12 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
 int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
-    unsigned char *p, *pp;
+    unsigned char *p, *pp = NULL;
     int len;
 
     /* Add SigningCertificateV2 signed attribute to the signer info. */
     len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
-    if ((pp = OPENSSL_malloc(len)) == NULL)
+    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
         goto err;
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
@@ -462,12 +462,12 @@ int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
 int cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
 {
     ASN1_STRING *seq = NULL;
-    unsigned char *p, *pp;
+    unsigned char *p, *pp = NULL;
     int len;
 
     /* Add SigningCertificate signed attribute to the signer info. */
     len = i2d_ESS_SIGNING_CERT(sc, NULL);
-    if ((pp = OPENSSL_malloc(len)) == NULL)
+    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
         goto err;
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);
