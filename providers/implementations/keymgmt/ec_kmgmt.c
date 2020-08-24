@@ -321,7 +321,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
               void *cbarg)
 {
     EC_KEY *ec = keydata;
-    OSSL_PARAM_BLD *tmpl;
+    OSSL_PARAM_BLD *tmpl = NULL;
     OSSL_PARAM *params = NULL;
     unsigned char *pub_key = NULL, *genbuf = NULL;
     BN_CTX *bnctx = NULL;
@@ -358,8 +358,11 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
         bnctx = BN_CTX_new_ex(ec_key_get_libctx(ec));
+        if (bnctx == NULL) {
+            ok = 0;
+            goto end;
+        }
         BN_CTX_start(bnctx);
-        ok = ok && (bnctx != NULL);
         ok = ok && ec_group_todata(EC_KEY_get0_group(ec), tmpl, NULL,
                                    ec_key_get_libctx(ec), ec_key_get0_propq(ec),
                                    bnctx, &genbuf);
@@ -376,7 +379,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
 
     if (ok && (params = OSSL_PARAM_BLD_to_param(tmpl)) != NULL)
         ok = param_cb(params, cbarg);
-
+end:
     OSSL_PARAM_BLD_free_params(params);
     OSSL_PARAM_BLD_free(tmpl);
     OPENSSL_free(pub_key);
