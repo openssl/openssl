@@ -313,8 +313,10 @@ int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent)
         goto err;
     if (ffc->seed != NULL) {
         size_t i;
-        BIO_indent(bp, indent, 128);
-        BIO_puts(bp, "seed:");
+
+        if (!BIO_indent(bp, indent, 128)
+            || BIO_puts(bp, "seed:") <= 0)
+            goto err;
         for (i = 0; i < ffc->seedlen; i++) {
             if ((i % 15) == 0) {
                 if (BIO_puts(bp, "\n") <= 0
@@ -329,8 +331,8 @@ int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent)
             return 0;
     }
     if (ffc->pcounter != -1) {
-        BIO_indent(bp, indent, 128);
-        if (BIO_printf(bp, "counter: %d\n", ffc->pcounter) <= 0)
+        if (!BIO_indent(bp, indent, 128)
+            || BIO_printf(bp, "counter: %d\n", ffc->pcounter) <= 0)
             goto err;
     }
     return 1;
