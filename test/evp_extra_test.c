@@ -980,11 +980,13 @@ static int test_EVP_SM2_verify(void)
 
     EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
 
+    if (!TEST_true(EVP_PKEY_verify_init(pctx)))
+        goto done;
+
     if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
-    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, (const uint8_t *)id,
-                                          strlen(id)), 0))
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(pctx, id, strlen(id)), 0))
         goto done;
 
     if (!TEST_true(EVP_DigestVerifyUpdate(mctx, msg, strlen(msg))))
@@ -1085,7 +1087,13 @@ static int test_EVP_SM2(void)
 
     /* Ensure that the signature round-trips. */
 
+    if (!TEST_true(EVP_PKEY_verify_init(sctx)))
+        goto done;
+
     if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
+        goto done;
+
+    if (!TEST_int_gt(EVP_PKEY_CTX_set1_id(sctx, sm2_id, sizeof(sm2_id)), 0))
         goto done;
 
     if (!TEST_true(EVP_DigestVerifyUpdate(md_ctx_verify, kMsg, sizeof(kMsg))))

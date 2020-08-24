@@ -1152,8 +1152,21 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
         return NULL;
 
+    if (gctx->gen_group == NULL) {
+        if (!ec_gen_set_group_from_params(gctx))
+            goto err;
+    } else {
+        if (gctx->encoding) {
+            int flags = ec_encoding_name2id(gctx->encoding);
+            if (flags < 0)
+                goto err;
+            EC_GROUP_set_asn1_flag(gctx->gen_group, flags);
+        }
+    }
+
     /* We must always assign a group, no matter what */
     ret = ec_gen_assign_group(ec, gctx->gen_group);
+
     /* Whether you want it or not, you get a keypair, not just one half */
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         /*
@@ -1166,7 +1179,9 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (ret)
         return ec;
-
+err:
+    /* Something went wrong, throw the key away */
+    EC_KEY_free(ec);
     return NULL;
 }
 #endif
