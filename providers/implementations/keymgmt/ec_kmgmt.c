@@ -526,10 +526,10 @@ int ec_get_params(void *key, OSSL_PARAM params[])
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
         && !OSSL_PARAM_set_int(p, ECDSA_size(eck)))
-        return 0;
+        goto err;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
         && !OSSL_PARAM_set_int(p, EC_GROUP_order_bits(ecg)))
-        return 0;
+        goto err;
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL) {
         int ecbits, sec_bits;
 
@@ -565,12 +565,12 @@ int ec_get_params(void *key, OSSL_PARAM params[])
             sec_bits = ecbits / 2;
 
         if (!OSSL_PARAM_set_int(p, sec_bits))
-            return 0;
+            goto err;
     }
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
         && !OSSL_PARAM_set_utf8_string(p, EC_DEFAULT_MD))
-        return 0;
+        goto err;
 
     p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
     if (p != NULL) {
@@ -580,7 +580,7 @@ int ec_get_params(void *key, OSSL_PARAM params[])
             (EC_KEY_get_flags(eck) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
 
         if (!OSSL_PARAM_set_int(p, ecdh_cofactor_mode))
-            return 0;
+            goto err;
     }
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
         p->return_size = EC_POINT_point2oct(EC_KEY_get0_group(key),
