@@ -267,7 +267,7 @@ int TS_RESP_CTX_set_accuracy(TS_RESP_CTX *ctx,
     return 0;
 }
 
-void TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags)
+void TS_RESP_CTX_set_flags(TS_RESP_CTX *ctx, int flags)
 {
     ctx->flags |= flags;
 }

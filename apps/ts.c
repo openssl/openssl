@@ -928,7 +928,7 @@ static TS_VERIFY_CTX *create_verify_ctx(const char *data, const char *digest,
     }
 
     /* Add the signature verification flag and arguments. */
-    TS_VERIFY_CTX_add_flags(ctx, f | TS_VFY_SIGNATURE);
+    TS_VERIFY_CTX_set_flags(ctx, f | TS_VFY_SIGNATURE);
 
     /* Initialising the X509_STORE object. */
     if (TS_VERIFY_CTX_set_store(ctx,

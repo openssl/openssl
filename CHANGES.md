@@ -23,6 +23,14 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecate TS_VERIFY_CTX_add_flags and TS_RESP_CTX_add_flags have been
+   deprecated. Use the "set_flags" versions instead. This makes the TS
+   code more consistent with all other objects that have a set_flags API.
+   Developers who want the previous behavior should call the new function
+   TS_VERIFY_CTX_clear_flags() first.
+
+   *Rich Salz*
+
  * Remove the RAND_DRBG API
 
    The RAND_DRBG API did not fit well into the new provider concept as

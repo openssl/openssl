@@ -454,7 +454,7 @@ static int ts_CONF_add_flag(CONF *conf, const char *section,
 
     if (value) {
         if (strcmp(value, ENV_VALUE_YES) == 0)
-            TS_RESP_CTX_add_flags(ctx, flag);
+            TS_RESP_CTX_set_flags(ctx, flag);
         else if (strcmp(value, ENV_VALUE_NO) != 0) {
             ts_CONF_invalid(section, field);
             return 0;

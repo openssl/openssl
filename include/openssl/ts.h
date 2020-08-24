@@ -313,7 +313,7 @@ int TS_RESP_CTX_set_clock_precision_digits(TS_RESP_CTX *ctx,
 # define TS_MAX_STATUS_LENGTH   (1024 * 1024)
 
 /* No flags are set by default. */
-void TS_RESP_CTX_add_flags(TS_RESP_CTX *ctx, int flags);
+void TS_RESP_CTX_set_flags(TS_RESP_CTX *ctx, int flags);
 
 /* Default callback always returns a constant. */
 void TS_RESP_CTX_set_serial_cb(TS_RESP_CTX *ctx, TS_serial_cb cb, void *data);
@@ -414,15 +414,18 @@ void TS_VERIFY_CTX_init(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx);
 void TS_VERIFY_CTX_cleanup(TS_VERIFY_CTX *ctx);
 int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f);
-int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int f);
+void TS_VERIFY_CTX_clear_flags(TS_VERIFY_CTX *ctx);
 BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b);
 unsigned char *TS_VERIFY_CTX_set_imprint(TS_VERIFY_CTX *ctx,
                                          unsigned char *hexstr, long len);
 X509_STORE *TS_VERIFY_CTX_set_store(TS_VERIFY_CTX *ctx, X509_STORE *s);
+STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs);
+
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define TS_VERIFY_CTS_set_certs(ctx, cert) TS_VERIFY_CTX_set_certs(ctx,cert)
+#  define TS_VERIFY_CTX_add_flags(ctx, f) TS_VERIFY_CTX_set_flags(ctx, f)
+#  define TS_RESP_CTX_add_flags(ctx, flags) TS_RESP_CTX_set_flags(ctx, flags)
 # endif
-STACK_OF(X509) *TS_VERIFY_CTX_set_certs(TS_VERIFY_CTX *ctx, STACK_OF(X509) *certs);
 
 /*-
  * If ctx is NULL, it allocates and returns a new object, otherwise

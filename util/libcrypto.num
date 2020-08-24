@@ -749,7 +749,7 @@ AES_decrypt                             767	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3
 BIO_fd_should_retry                     768	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_new                         769	3_0_0	EXIST::FUNCTION:
 ENGINE_init                             770	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,ENGINE
-TS_RESP_CTX_add_flags                   771	3_0_0	EXIST::FUNCTION:TS
+TS_RESP_CTX_set_flags                   771	3_0_0	EXIST::FUNCTION:TS
 BIO_gethostbyname                       772	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_1_1_0,SOCK
 X509V3_EXT_add                          773	3_0_0	EXIST::FUNCTION:
 UI_add_verify_string                    774	3_0_0	EXIST::FUNCTION:
@@ -2176,7 +2176,6 @@ X509_REQ_get_extension_nids             2223	3_0_0	EXIST::FUNCTION:
 TS_REQ_get_ext_by_OBJ                   2224	3_0_0	EXIST::FUNCTION:TS
 i2d_X509                                2225	3_0_0	EXIST::FUNCTION:
 PEM_read_X509_AUX                       2226	3_0_0	EXIST::FUNCTION:STDIO
-TS_VERIFY_CTX_set_flags                 2227	3_0_0	EXIST::FUNCTION:TS
 IPAddressRange_new                      2228	3_0_0	EXIST::FUNCTION:RFC3779
 TS_REQ_get_exts                         2229	3_0_0	EXIST::FUNCTION:TS
 POLICY_CONSTRAINTS_new                  2230	3_0_0	EXIST::FUNCTION:
@@ -2533,8 +2532,8 @@ CRYPTO_clear_realloc                    2586	3_0_0	EXIST::FUNCTION:
 OPENSSL_strnlen                         2587	3_0_0	EXIST::FUNCTION:
 IDEA_ecb_encrypt                        2588	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,IDEA
 ASN1_STRING_set_default_mask            2589	3_0_0	EXIST::FUNCTION:
-TS_VERIFY_CTX_add_flags                 2590	3_0_0	EXIST::FUNCTION:TS
-FIPS_mode                               2591	3_0_0	NOEXIST::FUNCTION:
+TS_VERIFY_CTX_set_flags                 2590	3_0_0	EXIST::FUNCTION:TS
+TS_VERIFY_CTX_clear_flags               ?	3_0_0	EXIST::FUNCTION:TS
 d2i_ASN1_UNIVERSALSTRING                2592	3_0_0	EXIST::FUNCTION:
 NAME_CONSTRAINTS_free                   2593	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get_order                      2594	3_0_0	EXIST::FUNCTION:EC

@@ -38,16 +38,15 @@ void TS_VERIFY_CTX_free(TS_VERIFY_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
-int TS_VERIFY_CTX_add_flags(TS_VERIFY_CTX *ctx, int f)
+int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f)
 {
     ctx->flags |= f;
     return ctx->flags;
 }
 
-int TS_VERIFY_CTX_set_flags(TS_VERIFY_CTX *ctx, int f)
+void TS_VERIFY_CTX_clear_flags(TS_VERIFY_CTX *ctx)
 {
-    ctx->flags = f;
-    return ctx->flags;
+    ctx->flags = 0;
 }
 
 BIO *TS_VERIFY_CTX_set_data(TS_VERIFY_CTX *ctx, BIO *b)
