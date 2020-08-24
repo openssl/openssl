@@ -162,7 +162,7 @@ int ec_group_todata(const EC_GROUP *group, OSSL_PARAM_BLD *tmpl,
 #endif
     } else {
         /* named curve */
-        const char *curve_name = curve_name = ec_curve_nid2name(curve_nid);
+        const char *curve_name = ec_curve_nid2name(curve_nid);
 
         if (curve_name == NULL
             || !ossl_param_build_set_utf8_string(tmpl, params,
