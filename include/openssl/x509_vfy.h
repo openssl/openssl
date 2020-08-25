@@ -229,6 +229,8 @@ X509_LOOKUP_ctrl_with_libctx((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER       86
 # define X509_V_ERR_EMPTY_SUBJECT_ALT_NAME               87
 # define X509_V_ERR_CA_BCONS_NOT_CRITICAL                88
+# define X509_V_ERR_AUTHORITY_KEY_IDENTIFIER_CRITICAL    89
+# define X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL      90
 
 /* Certificate verify flags */
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0

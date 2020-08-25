@@ -377,6 +377,8 @@ struct ISSUING_DIST_POINT_st {
 # define EXFLAG_SS               0x2000 /* cert is apparently self-signed */
 
 # define EXFLAG_BCONS_CRITICAL   0x10000
+# define EXFLAG_AKID_CRITICAL    0x20000
+# define EXFLAG_SKID_CRITICAL    0x40000
 
 # define KU_DIGITAL_SIGNATURE    0x0080
 # define KU_NON_REPUDIATION      0x0040
