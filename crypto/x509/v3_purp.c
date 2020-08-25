@@ -608,6 +608,9 @@ int x509v3_cache_extensions(X509 *x)
         case NID_subject_key_identifier:
             x->ex_flags |= EXFLAG_SKID_CRITICAL;
             break;
+        case NID_subject_alt_name:
+            x->ex_flags |= EXFLAG_SAN_CRITICAL;
+            break;
         default:
             break;
         }
