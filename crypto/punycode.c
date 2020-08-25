@@ -61,7 +61,7 @@ static ossl_inline int is_basic(unsigned int a)
     return (a < 0x80) ? 1 : 0;
 }
 
-/*
+/*-
  * code points    digit-values
  * ------------   ----------------------
  * 41..5A (A-Z) =  0 to 25, respectively
@@ -238,7 +238,7 @@ static int codepoint2utf8(unsigned char *out, unsigned long utf)
     }
 }
 
-/*
+/*-
  * Return values:
  * 1 - ok, *outlen contains valid buf length
  * 0 - ok but buf was too short, *outlen contains valid buf length
@@ -247,7 +247,7 @@ static int codepoint2utf8(unsigned char *out, unsigned long utf)
 
 int ossl_a2ulabel(const char *in, char *out, size_t *outlen)
 {
-    /*
+    /*-
      * Domain name has some parts consisting of ASCII chars joined with dot.
      * If a part is shorter than 5 chars, it becomes U-label as is.
      * If it does not start with xn--,    it becomes U-label as is.
@@ -317,7 +317,7 @@ int ossl_a2ulabel(const char *in, char *out, size_t *outlen)
     return result;
 }
 
-/*
+/*-
  * a MUST be A-label
  * u MUST be U-label
  * Returns 0 if compared values are equal
