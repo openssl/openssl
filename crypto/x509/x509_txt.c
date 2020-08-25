@@ -206,6 +206,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Authority Key Identifier marked critical";
     case X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL:
         return "Subject Key Identifier marked critical";
+    case X509_V_ERR_CA_CERT_MISSING_KEY_USAGE:
+        return "CA cert does not include key usage extension";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */
