@@ -16,10 +16,10 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_eai_data");
 
-#LD_LIBRARY_PATH=. apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/ascii_chain.pem test/recipes/25-test_eai_data/ascii_leaf.pem
-#LD_LIBRARY_PATH=. apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/utf8_chain.pem test/recipes/25-test_eai_data/utf8_leaf.pem
-#LD_LIBRARY_PATH=. apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/utf8_chain.pem test/recipes/25-test_eai_data/ascii_leaf.pem
-#LD_LIBRARY_PATH=. apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/ascii_chain.pem test/recipes/25-test_eai_data/utf8_leaf.pem
+#./util/wrap.pl apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/ascii_chain.pem test/recipes/25-test_eai_data/ascii_leaf.pem
+#./util/wrap.pl apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/utf8_chain.pem test/recipes/25-test_eai_data/utf8_leaf.pem
+#./util/wrap.pl apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/utf8_chain.pem test/recipes/25-test_eai_data/ascii_leaf.pem
+#./util/wrap.pl apps/openssl verify -nameopt utf8 -no_check_time -CAfile test/recipes/25-test_eai_data/ascii_chain.pem test/recipes/25-test_eai_data/utf8_leaf.pem
 
 plan tests => 11;
 
