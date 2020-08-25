@@ -549,12 +549,10 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                  || x->altname == NULL
                  ) && X509_NAME_entry_count(X509_get_subject_name(x)) == 0)
                 ctx->error = X509_V_ERR_SUBJECT_NAME_EMPTY;
-                /*
-                 * TODO check: If subject naming information is present only in
-                 * the subjectAltName extension,
-                 * then the subject name MUST be an empty sequence
-                 * and the subjectAltName extension MUST be critical.
-                 */
+            if (X509_NAME_entry_count(X509_get_subject_name(x)) == 0
+                    && x->altname != NULL
+                    && (x->ex_flags & EXFLAG_SAN_CRITICAL) == 0)
+                ctx->error = X509_V_ERR_EMPTY_SUBJECT_SAN_NOT_CRITICAL;
             /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
             if (x->altname != NULL && sk_GENERAL_NAME_num(x->altname) <= 0)
                 ctx->error = X509_V_ERR_EMPTY_SUBJECT_ALT_NAME;
