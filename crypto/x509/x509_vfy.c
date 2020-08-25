@@ -528,7 +528,14 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 if ((x->ex_kusage & KU_KEY_CERT_SIGN) == 0)
                     ctx->error = X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN;
             }
-            /* TODO check basic constrains of CA cert are marked critical */
+            /*
+             * Check Basic Constraints of CA cert are marked critical,
+             * TODO should be only if cert is intended for verifying other certs
+             */
+            if ((x->ex_flags & EXFLAG_CA) != 0
+                    && (x->ex_flags & EXFLAG_BCONS) != 0
+                    && (x->ex_flags & EXFLAG_BCONS_CRITICAL) == 0)
+                ctx->error = X509_V_ERR_CA_BCONS_NOT_CRITICAL;
             /* Check keyCertSign according to RFC 5280 section 4.2.1.3 */
             if ((x->ex_flags & EXFLAG_CA) == 0
                     && (x->ex_kusage & KU_KEY_CERT_SIGN) != 0)

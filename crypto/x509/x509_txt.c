@@ -198,6 +198,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Missing Subject Key Identifier";
     case X509_V_ERR_EMPTY_SUBJECT_ALT_NAME:
         return "Empty Subject Alternative Name extension";
+    case X509_V_ERR_CA_BCONS_NOT_CRITICAL:
+        return "Basic Constraints of CA cert not marked critical";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

@@ -470,7 +470,7 @@ int x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_INVALID;
     }
 
-    /* Handle basic key usage */
+    /* Handle (basic) key usage */
     if ((usage = X509_get_ext_d2i(x, NID_key_usage, &i, NULL)) != NULL) {
         x->ex_kusage = 0;
         if (usage->length > 0) {
@@ -593,6 +593,8 @@ int x509v3_cache_extensions(X509 *x)
             x->ex_flags |= EXFLAG_FRESHEST;
         if (!X509_EXTENSION_get_critical(ex))
             continue;
+        if (OBJ_obj2nid(X509_EXTENSION_get_object(ex)) == NID_basic_constraints)
+            x->ex_flags |= EXFLAG_BCONS_CRITICAL;
         if (!X509_supported_extension(ex)) {
             x->ex_flags |= EXFLAG_CRITICAL;
             break;

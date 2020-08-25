@@ -364,8 +364,7 @@ struct ISSUING_DIST_POINT_st {
 # define EXFLAG_NSCERT           0x8
 
 # define EXFLAG_CA               0x10
-/* Really self issued not necessarily self signed */
-# define EXFLAG_SI               0x20
+# define EXFLAG_SI               0x20 /* self-issued, maybe not self-signed */
 # define EXFLAG_V1               0x40
 # define EXFLAG_INVALID          0x80
 /* EXFLAG_SET is set to indicate that some values have been precomputed */
@@ -375,8 +374,9 @@ struct ISSUING_DIST_POINT_st {
 
 # define EXFLAG_INVALID_POLICY   0x800
 # define EXFLAG_FRESHEST         0x1000
-/* Self signed */
-# define EXFLAG_SS               0x2000
+# define EXFLAG_SS               0x2000 /* cert is apparently self-signed */
+
+# define EXFLAG_BCONS_CRITICAL   0x10000
 
 # define KU_DIGITAL_SIGNATURE    0x0080
 # define KU_NON_REPUDIATION      0x0040
