@@ -536,10 +536,14 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                     && (x->ex_flags & EXFLAG_BCONS) != 0
                     && (x->ex_flags & EXFLAG_BCONS_CRITICAL) == 0)
                 ctx->error = X509_V_ERR_CA_BCONS_NOT_CRITICAL;
-            /* Check keyCertSign according to RFC 5280 section 4.2.1.3 */
-            if ((x->ex_flags & EXFLAG_CA) == 0
-                    && (x->ex_kusage & KU_KEY_CERT_SIGN) != 0)
-                ctx->error = X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA;
+            /* Check key usages according to RFC 5280 section 4.2.1.3 */
+            if ((x->ex_flags & EXFLAG_CA) != 0) {
+                if ((x->ex_flags & EXFLAG_KUSAGE) == 0)
+                    ctx->error = X509_V_ERR_CA_CERT_MISSING_KEY_USAGE;
+            } else {
+                if ((x->ex_kusage & KU_KEY_CERT_SIGN) != 0)
+                    ctx->error = X509_V_ERR_KU_KEY_CERT_SIGN_INVALID_FOR_NON_CA;
+            }
             /* Check issuer is non-empty acc. to RFC 5280 section 4.1.2.4 */
             if (X509_NAME_entry_count(X509_get_issuer_name(x)) == 0)
                 ctx->error = X509_V_ERR_ISSUER_NAME_EMPTY;
