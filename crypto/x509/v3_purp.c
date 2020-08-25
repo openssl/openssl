@@ -401,7 +401,6 @@ int x509v3_cache_extensions(X509 *x)
     ASN1_BIT_STRING *usage;
     ASN1_BIT_STRING *ns;
     EXTENDED_KEY_USAGE *extusage;
-    X509_EXTENSION *ex;
     int i;
     int res;
 
@@ -588,15 +587,28 @@ int x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_INVALID;
 #endif
     for (i = 0; i < X509_get_ext_count(x); i++) {
-        ex = X509_get_ext(x, i);
-        if (OBJ_obj2nid(X509_EXTENSION_get_object(ex)) == NID_freshest_crl)
+        X509_EXTENSION *ex = X509_get_ext(x, i);
+        int nid = OBJ_obj2nid(X509_EXTENSION_get_object(ex));
+
+        if (nid == NID_freshest_crl)
             x->ex_flags |= EXFLAG_FRESHEST;
         if (!X509_EXTENSION_get_critical(ex))
             continue;
-        if (OBJ_obj2nid(X509_EXTENSION_get_object(ex)) == NID_basic_constraints)
-            x->ex_flags |= EXFLAG_BCONS_CRITICAL;
         if (!X509_supported_extension(ex)) {
             x->ex_flags |= EXFLAG_CRITICAL;
+            break;
+        }
+        switch (nid) {
+        case NID_basic_constraints:
+            x->ex_flags |= EXFLAG_BCONS_CRITICAL;
+            break;
+        case NID_authority_key_identifier:
+            x->ex_flags |= EXFLAG_AKID_CRITICAL;
+            break;
+        case NID_subject_key_identifier:
+            x->ex_flags |= EXFLAG_SKID_CRITICAL;
+            break;
+        default:
             break;
         }
     }

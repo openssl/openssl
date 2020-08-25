@@ -562,6 +562,10 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
             if (X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0)
                 ctx->error = X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY;
+            if (x->akid != NULL && (x->ex_flags & EXFLAG_AKID_CRITICAL) != 0)
+                ctx->error = X509_V_ERR_AUTHORITY_KEY_IDENTIFIER_CRITICAL;
+            if (x->skid != NULL && (x->ex_flags & EXFLAG_SKID_CRITICAL) != 0)
+                ctx->error = X509_V_ERR_SUBJECT_KEY_IDENTIFIER_CRITICAL;
             if (X509_get_version(x) >= 2) { /* at least X.509v3 */
                 /* Check AKID presence acc. to RFC 5280 section 4.2.1.1 */
                 if (i + 1 < num /*
@@ -570,11 +574,9 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                                  */
                         && (x->akid == NULL || x->akid->keyid == NULL))
                     ctx->error = X509_V_ERR_MISSING_AUTHORITY_KEY_IDENTIFIER;
-                /* TODO check that AKID extension is not critical */
                 /* Check SKID presence acc. to RFC 5280 section 4.2.1.2 */
                 if ((x->ex_flags & EXFLAG_CA) != 0 && x->skid == NULL)
                     ctx->error = X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER;
-                /* TODO check that SKID extension is not be critical */
             }
         }
         if (ctx->error != X509_V_OK)
