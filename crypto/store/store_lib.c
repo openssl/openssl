@@ -473,6 +473,7 @@ static int ossl_store_close_it(OSSL_STORE_CTX *ctx)
     sk_OSSL_STORE_INFO_pop_free(ctx->cached_info, OSSL_STORE_INFO_free);
     OSSL_STORE_LOADER_free(ctx->fetched_loader);
     OPENSSL_free(ctx->properties);
+    ossl_pw_clear_passphrase_data(&ctx->pwdata);
     return ret;
 }
 
