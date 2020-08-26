@@ -51,6 +51,7 @@ static char *opt_config = NULL;
 #define SECTION_NAME_MAX 40 /* max length of section name */
 #define DEFAULT_SECTION "default"
 static char *opt_section = CMP_SECTION;
+static int opt_verbosity = OSSL_CMP_LOG_INFO;
 
 #undef PROG
 #define PROG cmp_main
@@ -194,7 +195,7 @@ static X509_VERIFY_PARAM *vpm = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_CONFIG, OPT_SECTION,
+    OPT_CONFIG, OPT_SECTION, OPT_VERBOSITY,
 
     OPT_CMD, OPT_INFOTYPE, OPT_GENINFO,
 
@@ -257,6 +258,8 @@ const OPTIONS cmp_options[] = {
      "Configuration file to use. \"\" = none. Default from env variable OPENSSL_CONF"},
     {"section", OPT_SECTION, 's',
      "Section(s) in config file to get options from. \"\" = 'default'. Default 'cmp'"},
+    {"verbosity", OPT_VERBOSITY, 'n',
+     "Log level; 3=ERR, 4=WARN, 6=INFO, 7=DEBUG, 8=TRACE. Default 6 = INFO"},
 
     OPT_SECTION("Generic message"),
     {"cmd", OPT_CMD, 's', "CMP request to send: ir/cr/kur/p10cr/rr/genm"},
@@ -507,7 +510,7 @@ typedef union {
     long *num_long;
 } varref;
 static varref cmp_vars[] = { /* must be in same order as enumerated above! */
-    {&opt_config}, {&opt_section},
+    {&opt_config}, {&opt_section}, {(char **)&opt_verbosity},
 
     {&opt_cmd_s}, {&opt_infotype_s}, {&opt_geninfo},
 
@@ -564,28 +567,32 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {NULL}
 };
 
-#ifndef NDEBUG
-# define FUNC (strcmp(OPENSSL_FUNC, "(unknown function)") == 0  \
-               ? "CMP" : "OPENSSL_FUNC")
-# define PRINT_LOCATION(bio) BIO_printf(bio, "%s:%s:%d:", \
-                                        FUNC, OPENSSL_FILE, OPENSSL_LINE)
-#else
-# define PRINT_LOCATION(bio) ((void)0)
-#endif
-#define CMP_print(bio, prefix, msg, a1, a2, a3) \
-    (PRINT_LOCATION(bio), \
-     BIO_printf(bio, "CMP %s: " msg "\n", prefix, a1, a2, a3))
-#define CMP_INFO(msg, a1, a2, a3)  CMP_print(bio_out, "info", msg, a1, a2, a3)
+#define FUNC (strcmp(OPENSSL_FUNC, "(unknown function)") == 0   \
+              ? "CMP" : OPENSSL_FUNC)
+#define CMP_print(bio, level, prefix, msg, a1, a2, a3) \
+    ((void)(level > opt_verbosity ? 0 : \
+            (BIO_printf(bio, "%s:%s:%d:CMP %s: " msg "\n", \
+                        FUNC, OPENSSL_FILE, OPENSSL_LINE, prefix, a1, a2, a3))))
+#define CMP_DEBUG(m, a1, a2, a3) \
+    CMP_print(bio_out, OSSL_CMP_LOG_DEBUG, "debug", m, a1, a2, a3)
+#define CMP_debug(msg)             CMP_DEBUG(msg"%s%s%s", "", "", "")
+#define CMP_debug1(msg, a1)        CMP_DEBUG(msg"%s%s",   a1, "", "")
+#define CMP_debug2(msg, a1, a2)    CMP_DEBUG(msg"%s",     a1, a2, "")
+#define CMP_debug3(msg, a1, a2, a3) CMP_DEBUG(msg,        a1, a2, a3)
+#define CMP_INFO(msg, a1, a2, a3) \
+    CMP_print(bio_out, OSSL_CMP_LOG_INFO, "info", msg, a1, a2, a3)
 #define CMP_info(msg)              CMP_INFO(msg"%s%s%s", "", "", "")
 #define CMP_info1(msg, a1)         CMP_INFO(msg"%s%s",   a1, "", "")
 #define CMP_info2(msg, a1, a2)     CMP_INFO(msg"%s",     a1, a2, "")
 #define CMP_info3(msg, a1, a2, a3) CMP_INFO(msg,         a1, a2, a3)
-#define CMP_WARN(m, a1, a2, a3)    CMP_print(bio_out, "warning", m, a1, a2, a3)
+#define CMP_WARN(m, a1, a2, a3) \
+    CMP_print(bio_out, OSSL_CMP_LOG_WARNING, "warning", m, a1, a2, a3)
 #define CMP_warn(msg)              CMP_WARN(msg"%s%s%s", "", "", "")
 #define CMP_warn1(msg, a1)         CMP_WARN(msg"%s%s",   a1, "", "")
 #define CMP_warn2(msg, a1, a2)     CMP_WARN(msg"%s",     a1, a2, "")
 #define CMP_warn3(msg, a1, a2, a3) CMP_WARN(msg,         a1, a2, a3)
-#define CMP_ERR(msg, a1, a2, a3)   CMP_print(bio_err, "error", msg, a1, a2, a3)
+#define CMP_ERR(msg, a1, a2, a3) \
+    CMP_print(bio_err, OSSL_CMP_LOG_ERR, "error", msg, a1, a2, a3)
 #define CMP_err(msg)               CMP_ERR(msg"%s%s%s", "", "", "")
 #define CMP_err1(msg, a1)          CMP_ERR(msg"%s%s",   a1, "", "")
 #define CMP_err2(msg, a1, a2)      CMP_ERR(msg"%s",     a1, a2, "")
@@ -595,6 +602,16 @@ static int print_to_bio_out(const char *func, const char *file, int line,
                             OSSL_CMP_severity level, const char *msg)
 {
     return OSSL_CMP_print_to_bio(bio_out, func, file, line, level, msg);
+}
+
+static int set_verbosity(int level)
+{
+    if (level < OSSL_CMP_LOG_EMERG || level > OSSL_CMP_LOG_MAX) {
+        CMP_err1("Logging verbosity level %d out of range (0 .. 8)", level);
+        return 0;
+    }
+    opt_verbosity = level;
+    return 1;
 }
 
 static char *next_item(char *opt) /* in list separated by comma and/or space */
@@ -1476,11 +1493,14 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 goto err;
             }
         }
-        if (!SSL_CTX_build_cert_chain(ssl_ctx,
-                                      SSL_BUILD_CHAIN_FLAG_UNTRUSTED |
-                                      SSL_BUILD_CHAIN_FLAG_NO_ROOT)) {
-            CMP_warn("could not build cert chain for own TLS cert");
+        CMP_debug("trying to build cert chain for own TLS cert");
+        if (SSL_CTX_build_cert_chain(ssl_ctx,
+                                     SSL_BUILD_CHAIN_FLAG_UNTRUSTED |
+                                     SSL_BUILD_CHAIN_FLAG_NO_ROOT)) {
+            CMP_debug("succeeded building cert chain for own TLS cert");
+        } else {
             OSSL_CMP_CTX_print_errors(ctx);
+            CMP_warn("could not build cert chain for own TLS cert");
         }
 
         /* If present we append to the list also the certs from opt_tls_extra */
@@ -2224,12 +2244,14 @@ static int read_config(void)
     const OPTIONS *opt;
     int provider_option;
     int verification_option;
-
+    int start = OPT_VERBOSITY;
     /*
-     * starting with offset OPT_SECTION because OPT_CONFIG and OPT_SECTION would
-     * not make sense within the config file. They have already been handled.
+     * starting with offset OPT_VERBOSITY because OPT_CONFIG and OPT_SECTION
+     * would not make sense within the config file.
+     * Moreover, these two options and OPT_VERBOSITY have already been handled.
      */
-    for (i = OPT_SECTION - OPT_HELP, opt = &cmp_options[OPT_SECTION];
+
+    for (i = start - OPT_HELP, opt = &cmp_options[start];
          opt->name; i++, opt++) {
         if (!strcmp(opt->name, OPT_SECTION_STR)
                 || !strcmp(opt->name, OPT_MORE_STR)) {
@@ -2255,11 +2277,6 @@ static int read_config(void)
                 continue; /* option not provided */
             }
             break;
-            /*
-             * do not use '<' in cmp_options. Incorrect treatment
-             * somewhere in args_verify() can wrongly set badarg = 1
-             */
-        case '<':
         case 's':
         case 'M':
             txt = conf_get_string(conf, opt_section, opt->name);
@@ -2368,8 +2385,8 @@ static int get_opts(int argc, char **argv)
             opt_help(cmp_options);
             return -1;
         case OPT_CONFIG: /* has already been handled */
-            break;
         case OPT_SECTION: /* has already been handled */
+        case OPT_VERBOSITY: /* has already been handled */
             break;
         case OPT_SERVER:
             opt_server = opt_str("server");
@@ -2700,15 +2717,20 @@ int cmp_main(int argc, char **argv)
     }
 
     /*
-     * handle OPT_CONFIG and OPT_SECTION upfront to take effect for other opts
+     * handle options -config, -section, and -verbosity upfront
+     * to take effect for other options
      */
     for (i = 1; i < argc - 1; i++) {
         if (*argv[i] == '-') {
             if (!strcmp(argv[i] + 1, cmp_options[OPT_CONFIG - OPT_HELP].name))
-                opt_config = argv[i + 1];
+                opt_config = argv[++i];
             else if (!strcmp(argv[i] + 1,
                              cmp_options[OPT_SECTION - OPT_HELP].name))
-                opt_section = argv[i + 1];
+                opt_section = argv[++i];
+            else if (strcmp(argv[i] + 1,
+                            cmp_options[OPT_VERBOSITY - OPT_HELP].name) == 0
+                     && !set_verbosity(atoi(argv[++i])))
+                goto err;
         }
     }
     if (opt_section[0] == '\0') /* empty string */
@@ -2783,6 +2805,7 @@ int cmp_main(int argc, char **argv)
     cmp_ctx = OSSL_CMP_CTX_new(app_get0_libctx(), app_get0_propq());
     if (cmp_ctx == NULL)
         goto err;
+    OSSL_CMP_CTX_set_log_verbosity(cmp_ctx, opt_verbosity);
     if (!OSSL_CMP_CTX_set_log_cb(cmp_ctx, print_to_bio_out)) {
         CMP_err1("cannot set up error reporting and logging for %s", prog);
         goto err;
@@ -2943,6 +2966,11 @@ int cmp_main(int argc, char **argv)
                                                OSSL_CMP_PKISI_BUFLEN);
 
             CMP_print(bio_err,
+                      status == OSSL_CMP_PKISTATUS_accepted
+                      ? OSSL_CMP_LOG_INFO :
+                      status == OSSL_CMP_PKISTATUS_rejection
+                      || status == OSSL_CMP_PKISTATUS_waiting
+                      ? OSSL_CMP_LOG_ERR : OSSL_CMP_LOG_WARNING,
                       status == OSSL_CMP_PKISTATUS_accepted ? "info" :
                       status == OSSL_CMP_PKISTATUS_rejection ? "server error" :
                       status == OSSL_CMP_PKISTATUS_waiting ? "internal error"

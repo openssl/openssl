@@ -420,6 +420,8 @@ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb)
 /* Print OpenSSL and CMP errors via the log cb of the ctx or ERR_print_errors */
 void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx)
 {
+    if (ctx != NULL && OSSL_CMP_LOG_ERR > ctx->log_verbosity)
+        return; /* suppress output since severity is not sufficient */
     OSSL_CMP_print_errors_cb(ctx == NULL ? NULL : ctx->log_cb);
 }
 
@@ -954,7 +956,7 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
 
     switch (opt) {
     case OSSL_CMP_OPT_LOG_VERBOSITY:
-        if (val > OSSL_CMP_LOG_DEBUG) {
+        if (val > OSSL_CMP_LOG_MAX) {
             CMPerr(0, CMP_R_VALUE_TOO_LARGE);
             return 0;
         }

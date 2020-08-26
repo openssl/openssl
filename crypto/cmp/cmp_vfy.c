@@ -552,6 +552,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 {
     X509 *scrt;
 
+    ossl_cmp_debug(ctx, "validating CMP message");
     if (ctx == NULL || msg == NULL
             || msg->header == NULL || msg->body == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
@@ -593,8 +594,11 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
             default:
                 break;
             }
+            ossl_cmp_debug(ctx,
+                           "sucessfully validated PBM-based CMP message protection");
             return 1;
         }
+        ossl_cmp_warn(ctx, "verifying PBM-based CMP message protection failed");
         break;
 
         /*
@@ -615,9 +619,13 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
                 return 1;
         } else { /* use pinned sender cert */
             /* use ctx->srvCert for signature check even if not acceptable */
-            if (verify_signature(ctx, msg, scrt))
+            if (verify_signature(ctx, msg, scrt)) {
+                ossl_cmp_debug(ctx,
+                               "sucessfully validated signature-based CMP message protection");
+
                 return 1;
-            ossl_cmp_warn(ctx, "msg signature verification failed");
+            }
+            ossl_cmp_warn(ctx, "CMP message signature verification failed");
             CMPerr(0, CMP_R_SRVCERT_DOES_NOT_VALIDATE_MSG);
         }
         break;
