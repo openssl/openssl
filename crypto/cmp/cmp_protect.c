@@ -147,16 +147,24 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             return 0;
         /* if we have untrusted certs, try to add intermediate certs */
         if (ctx->untrusted_certs != NULL) {
-            STACK_OF(X509) *chain =
-                ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
-                                          ctx->untrusted_certs, ctx->cert);
-            int res = X509_add_certs(msg->extraCerts, chain,
-                                     X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                                     | X509_ADD_FLAG_NO_SS);
+            STACK_OF(X509) *chain;
+            int res;
 
+            ossl_cmp_debug(ctx,
+                           "trying to build chain for own CMP signer cert");
+            chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
+                                              ctx->untrusted_certs, ctx->cert);
+            res = X509_add_certs(msg->extraCerts, chain,
+                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
+                                 | X509_ADD_FLAG_NO_SS);
             sk_X509_pop_free(chain, X509_free);
-            if (res == 0)
+            if (res == 0) {
+                ossl_cmp_err(ctx,
+                             "could not build chain for own CMP signer cert");
                 return 0;
+            }
+            ossl_cmp_debug(ctx,
+                           "succeeded building chain for own CMP signer cert");
         }
     }
 

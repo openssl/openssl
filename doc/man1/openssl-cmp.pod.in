@@ -81,6 +81,7 @@ B<openssl> B<cmp>
 [B<-tls_trusted> I<filenames>]
 [B<-tls_host> I<name>]
 
+[B<-verbosity> I<level>]
 [B<-batch>]
 [B<-repeat> I<number>]
 [B<-reqin>] I<filenames>
@@ -769,6 +770,13 @@ If not given it defaults to the B<-server> address.
 =head2 Client-side debugging options
 
 =over 4
+
+=item B<-verbosity> I<level>
+
+Level of verbosity for logging, error output, etc.
+0 = EMERG, 1 = ALERT, 2 = CRIT, 3 = ERR, 4 = WARN, 5 = NOTE,
+6 = INFO, 7 = DEBUG, 8 = TRACE.
+Defaults to 6 = INFO.
 
 =item B<-batch>
 
