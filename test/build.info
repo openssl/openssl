@@ -52,7 +52,7 @@ IF[{- !$disabled{tests} -}]
           cipherbytes_test \
           asn1_encode_test asn1_decode_test asn1_string_table_test \
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
-          recordlentest drbgtest sslbuffertest \
+          recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           http_test servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test gosttest \
@@ -379,6 +379,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[drbgtest]=drbgtest.c
   INCLUDE[drbgtest]=../include ../apps/include
   DEPEND[drbgtest]=../libcrypto.a libtestutil.a
+
+  SOURCE[rand_status_test]=rand_status_test.c
+  INCLUDE[rand_status_test]=../include ../apps/include
+  DEPEND[rand_status_test]=../libcrypto libtestutil.a
 
   SOURCE[x509_dup_cert_test]=x509_dup_cert_test.c
   INCLUDE[x509_dup_cert_test]=../include ../apps/include

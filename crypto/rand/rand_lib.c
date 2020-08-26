@@ -246,7 +246,7 @@ int RAND_status(void)
         return meth->status != NULL ? meth->status() : 0;
 
     if ((rand = RAND_get0_primary(NULL)) == NULL)
-        return EVP_RAND_STATE_UNINITIALISED;
+        return 0;
     return EVP_RAND_state(rand) == EVP_RAND_STATE_READY;
 }
 #else  /* !FIPS_MODULE */
@@ -467,7 +467,12 @@ static EVP_RAND_CTX *rand_new_drbg(OPENSSL_CTX *libctx, EVP_RAND_CTX *parent,
     if (!EVP_RAND_set_ctx_params(ctx, params)) {
         RANDerr(0, RAND_R_ERROR_INITIALISING_DRBG);
         EVP_RAND_CTX_free(ctx);
-        ctx = NULL;
+        return NULL;
+    }
+    if (!EVP_RAND_instantiate(ctx, 0, 0, NULL, 0)) {
+        RANDerr(0, RAND_R_ERROR_INSTANTIATING_DRBG);
+        EVP_RAND_CTX_free(ctx);
+        return NULL;
     }
     return ctx;
 }
