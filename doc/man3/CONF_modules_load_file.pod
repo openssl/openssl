@@ -24,7 +24,8 @@ library context B<libctx> file B<filename> and application name B<appname>.
 If B<filename> is NULL the standard OpenSSL configuration file is used.
 If B<appname> is NULL the standard OpenSSL application name B<openssl_conf> is
 used.
-The behaviour can be customized using B<flags>.
+The behaviour can be customized using B<flags>. Note that, the error suppressing
+can be overriden by B<config_diagnostics> as described in L<config(5)>.
 
 CONF_modules_load_file() is the same as CONF_modules_load_file_with_libctx() but
 has a NULL library context.

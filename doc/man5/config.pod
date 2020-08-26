@@ -160,6 +160,12 @@ how to configure any modules in the library. It is not an error to leave
 any module in its default configuration. An application can specify a
 different name by calling CONF_modules_load_file(), for example, directly.
 
+OpenSSL also looks up the value of B<config_diagnostics>.
+If this exists and has a nonzero numeric value, any error suppressing flags
+passed to CONF_modules_load() will be ignored.
+This is useful for diagnosing misconfigurations and should not be used in
+production.
+
  # This must be in the default section
  openssl_conf = openssl_init
 
@@ -482,6 +488,7 @@ L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>,
 L<openssl-fipsinstall(1)>,
 L<ASN1_generate_nconf(3)>,
 L<EVP_set_default_properties(3)>,
+L<CONF_modules_load(3)>,
 L<CONF_modules_load_file(3)>,
 L<fips_config(5)>, and
 L<x509v3_config(5)>.

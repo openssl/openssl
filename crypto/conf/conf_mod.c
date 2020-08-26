@@ -79,6 +79,18 @@ static int module_init(CONF_MODULE *pmod, const char *name, const char *value,
 static CONF_MODULE *module_load_dso(const CONF *cnf, const char *name,
                                     const char *value);
 
+static int conf_diagnostics(const CONF *cnf)
+{
+    long int lflag = 0;
+    int res;
+
+    ERR_set_mark();
+    res = NCONF_get_number(cnf, NULL, "config_diagnostics", &lflag)
+          && lflag != 0;
+    ERR_pop_to_mark();
+    return res;
+}
+
 /* Main function: load modules from a CONF structure */
 
 int CONF_modules_load(const CONF *cnf, const char *appname,
@@ -87,11 +99,16 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
     STACK_OF(CONF_VALUE) *values;
     CONF_VALUE *vl;
     char *vsection = NULL;
-
     int ret, i;
 
     if (!cnf)
         return 1;
+
+    if (conf_diagnostics(cnf))
+        flags &= ~(CONF_MFLAGS_IGNORE_ERRORS
+                   | CONF_MFLAGS_IGNORE_RETURN_CODES
+                   | CONF_MFLAGS_SILENT
+                   | CONF_MFLAGS_IGNORE_MISSING_FILE);
 
     if (appname)
         vsection = NCONF_get_string(cnf, NULL, appname);
@@ -135,7 +152,7 @@ int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
 {
     char *file = NULL;
     CONF *conf = NULL;
-    int ret = 0;
+    int ret = 0, diagnostics = 0;
 
     conf = NCONF_new_with_libctx(libctx, NULL);
     if (conf == NULL)
@@ -159,13 +176,14 @@ int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
     }
 
     ret = CONF_modules_load(conf, appname, flags);
+    diagnostics = conf_diagnostics(conf);
 
  err:
     if (filename == NULL)
         OPENSSL_free(file);
     NCONF_free(conf);
 
-    if (flags & CONF_MFLAGS_IGNORE_RETURN_CODES)
+    if ((flags & CONF_MFLAGS_IGNORE_RETURN_CODES) != 0 && !diagnostics)
         return 1;
 
     return ret;
