@@ -50,7 +50,7 @@ my @cc_version =
     (
      clang => sub {
          my $v = `$CROSS_COMPILE$CC -v 2>&1`;
-         $v =~ m/(?:(?:^clang|LLVM) version|.*based on LLVM)\s+([0-9]+\.[0-9]+)/;
+         $v =~ m/(?:(?:clang|LLVM) version|.*based on LLVM)\s+([0-9]+\.[0-9]+)/;
          return $1;
      },
      gnu => sub {
