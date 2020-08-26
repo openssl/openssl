@@ -183,17 +183,23 @@ static size_t prov_drbg_get_entropy(PROV_DRBG *drbg, unsigned char **pout,
         if (buffer != NULL) {
             size_t bytes = 0;
 
+            if (drbg->parent_generate == NULL)
+                goto err;
             /*
-             * Get random data from parent. Include our address as additional input,
-             * in order to provide some additional distinction between different
-             * DRBG child instances.
              * Our lock is already held, but we need to lock our parent before
              * generating bits from it. (Note: taking the lock will be a no-op
              * if locking if drbg->parent->lock == NULL.)
              */
-            if (drbg->parent_generate == NULL)
-                goto err;
             drbg_lock_parent(drbg);
+            /*
+             * Get random data from parent.  Include our DRBG address as
+             * additional input, in order to provide a distinction between
+             * different DRBG child instances.
+             *
+             * Note: using the sizeof() operator on a pointer triggers
+             *       a warning in some static code analyzers, but it's
+             *       intentional and correct here.
+             */
             if (drbg->parent_generate(drbg->parent, buffer, bytes_needed,
                                       drbg->strength, prediction_resistance,
                                       (unsigned char *)&drbg,
