@@ -520,7 +520,14 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 ret = 1;
             break;
         }
-        if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0) {
+        /*
+         * Do the following set of checks only if strict checking is requrested
+         * and not for self-issued (including self-signed) EE (non-CA) certs
+         * because RFC 5280 does not apply to them according RFC 6818 section 2.
+         */
+        if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
+            && !(i == 0 && (x->ex_flags & EXFLAG_CA) == 0
+                 && (x->ex_flags & EXFLAG_SI) != 0)) {
             /* Check Basic Constraints according to RFC 5280 section 4.2.1.9 */
             if (x->ex_pathlen != -1) {
                 if ((x->ex_flags & EXFLAG_CA) == 0)
@@ -528,15 +535,11 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 if ((x->ex_kusage & KU_KEY_CERT_SIGN) == 0)
                     ctx->error = X509_V_ERR_PATHLEN_WITHOUT_KU_KEY_CERT_SIGN;
             }
-            /*
-             * Check Basic Constraints of CA cert are marked critical,
-             * TODO should be only if cert is intended for verifying other certs
-             */
             if ((x->ex_flags & EXFLAG_CA) != 0
                     && (x->ex_flags & EXFLAG_BCONS) != 0
                     && (x->ex_flags & EXFLAG_BCONS_CRITICAL) == 0)
                 ctx->error = X509_V_ERR_CA_BCONS_NOT_CRITICAL;
-            /* Check key usages according to RFC 5280 section 4.2.1.3 */
+            /* Check Key Usage according to RFC 5280 section 4.2.1.3 */
             if ((x->ex_flags & EXFLAG_CA) != 0) {
                 if ((x->ex_flags & EXFLAG_KUSAGE) == 0)
                     ctx->error = X509_V_ERR_CA_CERT_MISSING_KEY_USAGE;
