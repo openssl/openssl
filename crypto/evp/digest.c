@@ -34,8 +34,10 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
      * pctx should be freed by the user of EVP_MD_CTX
      * if EVP_MD_CTX_FLAG_KEEP_PKEY_CTX is set
      */
-    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX))
+    if (!EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX)) {
         EVP_PKEY_CTX_free(ctx->pctx);
+        ctx->pctx = NULL;
+    }
 #endif
 
     EVP_MD_free(ctx->fetched_digest);
