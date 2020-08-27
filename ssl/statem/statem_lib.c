@@ -94,6 +94,8 @@ int tls_close_construct_packet(SSL *s, WPACKET *pkt, int htype)
 
 int tls_setup_handshake(SSL *s)
 {
+    int ver_min, ver_max, ok;
+
     if (!ssl3_init_finished_mac(s)) {
         /* SSLfatal() already called */
         return 0;
@@ -102,20 +104,61 @@ int tls_setup_handshake(SSL *s)
     /* Reset any extension flags */
     memset(s->ext.extflags, 0, sizeof(s->ext.extflags));
 
+    if (ssl_get_min_max_version(s, &ver_min, &ver_max, NULL) != 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_SETUP_HANDSHAKE,
+                    ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    /* Sanity check that we have MD5-SHA1 if we need it */
+    if (s->ctx->ssl_digest_methods[SSL_MD_MD5_SHA1_IDX] == NULL) {
+        int md5sha1_needed = 0;
+
+        /* We don't have MD5-SHA1 - do we need it? */
+        if (SSL_IS_DTLS(s)) {
+            if (DTLS_VERSION_LE(ver_max, DTLS1_VERSION))
+                md5sha1_needed = 1;
+        } else {
+            if (ver_max <= TLS1_1_VERSION)
+                md5sha1_needed = 1;
+        }
+        if (md5sha1_needed) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_SETUP_HANDSHAKE,
+                        SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
+            ERR_add_error_data(1, "The max supported SSL/TLS version needs the"
+                                    " MD5-SHA1 digest but it is not available"
+                                    " in the loaded providers. Use (D)TLSv1.2 or"
+                                    " above, or load different providers");
+            return 0;
+        }
+
+        ok = 1;
+        /* Don't allow TLSv1.1 or below to be negotiated */
+        if (SSL_IS_DTLS(s)) {
+            if (DTLS_VERSION_LT(ver_min, DTLS1_2_VERSION))
+                ok = SSL_set_min_proto_version(s, DTLS1_2_VERSION);
+        } else {
+            if (ver_min < TLS1_2_VERSION)
+                ok = SSL_set_min_proto_version(s, TLS1_2_VERSION);
+        }
+        if (!ok) {
+            /* Shouldn't happen */
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_TLS_SETUP_HANDSHAKE,
+                     ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+
+    ok = 0;
     if (s->server) {
         STACK_OF(SSL_CIPHER) *ciphers = SSL_get_ciphers(s);
-        int i, ver_min, ver_max, ok = 0;
+        int i;
 
         /*
          * Sanity check that the maximum version we accept has ciphers
          * enabled. For clients we do this check during construction of the
          * ClientHello.
          */
-        if (ssl_get_min_max_version(s, &ver_min, &ver_max, NULL) != 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_SETUP_HANDSHAKE,
-                     ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
         for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
             const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
 
