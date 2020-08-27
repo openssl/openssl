@@ -2,11 +2,11 @@
 
 =head1 NAME
 
-EVP_MAC-Siphash - The SipHash EVP_MAC implementation
+EVP_MAC-Siphash - The Siphash EVP_MAC implementation
 
 =head1 DESCRIPTION
 
-Support for computing SipHash MACs through the B<EVP_MAC> API.
+Support for computing Siphash MACs through the B<EVP_MAC> API.
 
 =head2 Identity
 

@@ -93,7 +93,7 @@ Support no digests (the digest B<type> must be NULL)
 
 Supports any digest
 
-=item CMAC, Poly1305 and SipHash
+=item CMAC, Poly1305 and Siphash
 
 Will ignore any digest provided.
 

@@ -2,22 +2,22 @@
 
 =head1 NAME
 
-EVP_PKEY-HMAC, EVP_KEYMGMT-HMAC, EVP_PKEY-SIPHASH, EVP_KEYMGMT-SIPHASH,
-EVP_PKEY-POLY1305, EVP_KEYMGMT-POLY1305, EVP_PKEY-CMAC, EVP_KEYMGMT-CMAC
+EVP_PKEY-HMAC, EVP_KEYMGMT-HMAC, EVP_PKEY-Siphash, EVP_KEYMGMT-Siphash,
+EVP_PKEY-Poly1305, EVP_KEYMGMT-Poly1305, EVP_PKEY-CMAC, EVP_KEYMGMT-CMAC
 - EVP_PKEY legacy MAC keytypes and algorithm support
 
 =head1 DESCRIPTION
 
 The B<HMAC> and B<CMAC> key types are implemented in OpenSSL's default and FIPS
-providers. Additionally the B<SIPHASH> and B<POLY1305> key types are implemented
+providers. Additionally the B<Siphash> and B<Poly1305> key types are implemented
 in the default provider. Performing MAC operations via an EVP_PKEY
 is considered legacy and are only available for backwards compatibility purposes
 and for a restricted set of algorithms. The preferred way of performing MAC
 operations is via the EVP_MAC APIs. See L<EVP_MAC_init(3)>.
 
 For further details on using EVP_PKEY based MAC keys see
-L<EVP_SIGNATURE-HMAC(7)>, L<EVP_SIGNATURE-SIPHASH(7)>,
-L<EVP_SIGNATURE-POLY1305(7)> or L<EVP_SIGNATURE-CMAC(7)>.
+L<EVP_SIGNATURE-HMAC(7)>, L<EVP_SIGNATURE-Siphash(7)>,
+L<EVP_SIGNATURE-Poly1305(7)> or L<EVP_SIGNATURE-CMAC(7)>.
 
 =head2 Common MAC parameters
 
