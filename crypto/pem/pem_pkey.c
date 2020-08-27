@@ -166,6 +166,11 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                                          pem_password_cb *cb, void *u)
 {
     char pem_str[80];
+
+    if (x->ameth == NULL || x->ameth->old_priv_encode == NULL) {
+        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+        return 0;
+    }
     BIO_snprintf(pem_str, 80, "%s PRIVATE KEY", x->ameth->pem_str);
     return PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
                               pem_str, bp, x, enc, kstr, klen, cb, u);

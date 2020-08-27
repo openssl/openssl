@@ -2768,6 +2768,7 @@ PEM_R_UNEXPECTED_DEK_IV:130:unexpected dek iv
 PEM_R_UNSUPPORTED_CIPHER:113:unsupported cipher
 PEM_R_UNSUPPORTED_ENCRYPTION:114:unsupported encryption
 PEM_R_UNSUPPORTED_KEY_COMPONENTS:126:unsupported key components
+PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE:110:unsupported public key type
 PKCS12_R_CANT_PACK_STRUCTURE:100:cant pack structure
 PKCS12_R_CONTENT_TYPE_NOT_DATA:121:content type not data
 PKCS12_R_DECODE_ERROR:101:decode error
