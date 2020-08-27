@@ -33,7 +33,7 @@ error occurs if B<a> is shorter than B<n> bits.
 BN_is_bit_set() tests if bit B<n> in B<a> is set.
 
 BN_mask_bits() truncates B<a> to an B<n> bit number
-(C<a&=~((~0)E<gt>E<gt>n)>).  An error occurs if B<a> already is
+(C<a&=~((~0)E<lt>E<lt>n)>).  An error occurs if B<a> already is
 shorter than B<n> bits.
 
 BN_lshift() shifts B<a> left by B<n> bits and places the result in
