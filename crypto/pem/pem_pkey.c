@@ -110,7 +110,8 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
     char pem_str[80];
 
     if (x->ameth == NULL || x->ameth->old_priv_encode == NULL) {
-        ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
+        PEMerr(PEM_F_PEM_WRITE_BIO_PRIVATEKEY_TRADITIONAL,
+               PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
         return 0;
     }
     BIO_snprintf(pem_str, 80, "%s PRIVATE KEY", x->ameth->pem_str);

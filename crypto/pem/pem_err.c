@@ -60,6 +60,8 @@ static const ERR_STRING_DATA PEM_str_functs[] = {
     {ERR_PACK(ERR_LIB_PEM, PEM_F_PEM_SIGNFINAL, 0), "PEM_SignFinal"},
     {ERR_PACK(ERR_LIB_PEM, PEM_F_PEM_WRITE, 0), "PEM_write"},
     {ERR_PACK(ERR_LIB_PEM, PEM_F_PEM_WRITE_BIO, 0), "PEM_write_bio"},
+    {ERR_PACK(ERR_LIB_PEM, PEM_F_PEM_WRITE_BIO_PRIVATEKEY_TRADITIONAL, 0),
+     "PEM_write_bio_PrivateKey_traditional"},
     {ERR_PACK(ERR_LIB_PEM, PEM_F_PEM_WRITE_PRIVATEKEY, 0),
      "PEM_write_PrivateKey"},
     {ERR_PACK(ERR_LIB_PEM, PEM_F_PEM_X509_INFO_READ, 0), "PEM_X509_INFO_read"},
