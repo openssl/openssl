@@ -248,6 +248,21 @@ EVP_MAC_final() should produce.
 The allowed sizes vary between MAC implementations, but must never exceed
 what can be given with a B<size_t>.
 
+=item "tls-data-size" (B<OSSL_MAC_PARAM_TLS_DATA_SIZE>) <unsigned integer>
+
+This parameter is only supported by HMAC. If set then special handling is
+activated for calculating the MAC of a received mac-then-encrypt TLS record
+where variable length record padding has been used (as in the case of CBC mode
+ciphersuites). The value represents the total length of the record that is
+having the MAC calculated including the received MAC and the record padding.
+
+When used EVP_MAC_update must be called precisely twice. The first time with
+the 13 bytes of TLS "header" data, and the second time with the entire record
+including the MAC itself and any padding. The entire record length must equal
+the value passed in the "tls-data-size" parameter. The length passed in the
+B<datalen> parameter to EVP_MAC_update() should be equal to the length of the
+record after the MAC and any padding has been removed.
+
 =back
 
 All these parameters should be used before the calls to any of

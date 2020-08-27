@@ -120,6 +120,12 @@ This has the property "provider=fips,fips=no"
 
 =item DSA, see L<EVP_KEYEXCH-DSA(7)>
 
+=item RSA, see L<EVP_SIGNATURE-RSA(7)>
+
+=item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
+
+=item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
+
 =back
 
 =head2 Asymmetric Cipher

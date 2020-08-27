@@ -164,6 +164,14 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item RSA, see L<EVP_SIGNATURE-RSA(7)>
 
+=item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
+
+=item SIPHASH, see L<EVP_SIGNATURE-Siphash(7)>
+
+=item POLY1305, see L<EVP_SIGNATURE-Poly1305(7)>
+
+=item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
+
 =back
 
 =head2 Asymmetric Cipher
