@@ -684,11 +684,6 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     {                                                                   \
         return test_unprotected_via_PEM(KEYTYPEstr, key_##KEYTYPE);     \
     }                                                                   \
-    static int test_unprotected_##KEYTYPE##_via_legacy_PEM(void)        \
-    {                                                                   \
-        return test_unprotected_via_legacy_PEM(KEYTYPEstr,              \
-                                               legacy_key_##KEYTYPE);   \
-    }                                                                   \
     static int test_protected_##KEYTYPE##_via_DER(void)                 \
     {                                                                   \
         return test_protected_via_DER(KEYTYPEstr, key_##KEYTYPE);       \
@@ -696,11 +691,6 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     static int test_protected_##KEYTYPE##_via_PEM(void)                 \
     {                                                                   \
         return test_protected_via_PEM(KEYTYPEstr, key_##KEYTYPE);       \
-    }                                                                   \
-    static int test_protected_##KEYTYPE##_via_legacy_PEM(void)          \
-    {                                                                   \
-        return test_protected_via_legacy_PEM(KEYTYPEstr,                \
-                                             legacy_key_##KEYTYPE);     \
     }                                                                   \
     static int test_public_##KEYTYPE##_via_DER(void)                    \
     {                                                                   \
@@ -714,12 +704,26 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
 #define ADD_TEST_SUITE(KEYTYPE)                                 \
     ADD_TEST(test_unprotected_##KEYTYPE##_via_DER);             \
     ADD_TEST(test_unprotected_##KEYTYPE##_via_PEM);             \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_legacy_PEM);      \
     ADD_TEST(test_protected_##KEYTYPE##_via_DER);               \
     ADD_TEST(test_protected_##KEYTYPE##_via_PEM);               \
-    ADD_TEST(test_protected_##KEYTYPE##_via_legacy_PEM);        \
     ADD_TEST(test_public_##KEYTYPE##_via_DER);                  \
     ADD_TEST(test_public_##KEYTYPE##_via_PEM)
+
+#define IMPLEMENT_TEST_SUITE_LEGACY(KEYTYPE, KEYTYPEstr)                \
+    static int test_unprotected_##KEYTYPE##_via_legacy_PEM(void)        \
+    {                                                                   \
+        return test_unprotected_via_legacy_PEM(KEYTYPEstr,              \
+                                               legacy_key_##KEYTYPE);   \
+    }                                                                   \
+    static int test_protected_##KEYTYPE##_via_legacy_PEM(void)          \
+    {                                                                   \
+        return test_protected_via_legacy_PEM(KEYTYPEstr,                \
+                                             legacy_key_##KEYTYPE);     \
+    }
+
+#define ADD_TEST_SUITE_LEGACY(KEYTYPE)                                 \
+    ADD_TEST(test_unprotected_##KEYTYPE##_via_legacy_PEM);      \
+    ADD_TEST(test_protected_##KEYTYPE##_via_legacy_PEM)
 
 #ifndef OPENSSL_NO_DSA
 # define IMPLEMENT_TEST_SUITE_MSBLOB(KEYTYPE, KEYTYPEstr)               \
@@ -758,10 +762,15 @@ DOMAIN_KEYS(DH);
 IMPLEMENT_TEST_SUITE(DH, "DH")
 DOMAIN_KEYS(DHX);
 IMPLEMENT_TEST_SUITE(DHX, "X9.42 DH")
+/*
+ * DH has no support for PEM_write_bio_PrivateKey_traditional(),
+ * so no legacy tests.
+ */
 #endif
 #ifndef OPENSSL_NO_DSA
 DOMAIN_KEYS(DSA);
 IMPLEMENT_TEST_SUITE(DSA, "DSA")
+IMPLEMENT_TEST_SUITE_LEGACY(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
 # ifndef OPENSSL_NO_RC4
 IMPLEMENT_TEST_SUITE_PVK(DSA, "DSA")
@@ -770,15 +779,20 @@ IMPLEMENT_TEST_SUITE_PVK(DSA, "DSA")
 #ifndef OPENSSL_NO_EC
 DOMAIN_KEYS(EC);
 IMPLEMENT_TEST_SUITE(EC, "EC")
+IMPLEMENT_TEST_SUITE_LEGACY(EC, "EC")
 DOMAIN_KEYS(ECExplicitPrimeNamedCurve);
 IMPLEMENT_TEST_SUITE(ECExplicitPrimeNamedCurve, "EC")
+IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitPrimeNamedCurve, "EC")
 DOMAIN_KEYS(ECExplicitPrime2G);
 IMPLEMENT_TEST_SUITE(ECExplicitPrime2G, "EC")
+IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitPrime2G, "EC")
 # ifndef OPENSSL_NO_EC2M
 DOMAIN_KEYS(ECExplicitTriNamedCurve);
 IMPLEMENT_TEST_SUITE(ECExplicitTriNamedCurve, "EC")
+IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitTriNamedCurve, "EC")
 DOMAIN_KEYS(ECExplicitTri2G);
 IMPLEMENT_TEST_SUITE(ECExplicitTri2G, "EC")
+IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitTri2G, "EC")
 # endif
 KEYS(ED25519);
 IMPLEMENT_TEST_SUITE(ED25519, "ED25519")
@@ -788,11 +802,20 @@ KEYS(X25519);
 IMPLEMENT_TEST_SUITE(X25519, "X25519")
 KEYS(X448);
 IMPLEMENT_TEST_SUITE(X448, "X448")
+/*
+ * ED25519, ED448, X25519 and X448 have no support for
+ * PEM_write_bio_PrivateKey_traditional(), so no legacy tests.
+ */
 #endif
 KEYS(RSA);
 IMPLEMENT_TEST_SUITE(RSA, "RSA")
+IMPLEMENT_TEST_SUITE_LEGACY(RSA, "RSA")
 KEYS(RSA_PSS);
 IMPLEMENT_TEST_SUITE(RSA_PSS, "RSA-PSS")
+/*
+ * RSA-PSS has no support for PEM_write_bio_PrivateKey_traditional(),
+ * so no legacy tests.
+ */
 #ifndef OPENSSL_NO_DSA
 IMPLEMENT_TEST_SUITE_MSBLOB(RSA, "RSA")
 # ifndef OPENSSL_NO_RC4
@@ -1062,9 +1085,14 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DH
         ADD_TEST_SUITE(DH);
         ADD_TEST_SUITE(DHX);
+        /*
+         * DH has no support for PEM_write_bio_PrivateKey_traditional(),
+         * so no legacy tests.
+         */
 #endif
 #ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE(DSA);
+        ADD_TEST_SUITE_LEGACY(DSA);
         ADD_TEST_SUITE_MSBLOB(DSA);
 # ifndef OPENSSL_NO_RC4
         ADD_TEST_SUITE_PVK(DSA);
@@ -1072,19 +1100,33 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
         ADD_TEST_SUITE(EC);
+        ADD_TEST_SUITE_LEGACY(EC);
         ADD_TEST_SUITE(ECExplicitPrimeNamedCurve);
+        ADD_TEST_SUITE_LEGACY(ECExplicitPrimeNamedCurve);
         ADD_TEST_SUITE(ECExplicitPrime2G);
+        ADD_TEST_SUITE_LEGACY(ECExplicitPrime2G);
 # ifndef OPENSSL_NO_EC2M
         ADD_TEST_SUITE(ECExplicitTriNamedCurve);
+        ADD_TEST_SUITE_LEGACY(ECExplicitTriNamedCurve);
         ADD_TEST_SUITE(ECExplicitTri2G);
+        ADD_TEST_SUITE_LEGACY(ECExplicitTri2G);
 # endif
         ADD_TEST_SUITE(ED25519);
         ADD_TEST_SUITE(ED448);
         ADD_TEST_SUITE(X25519);
         ADD_TEST_SUITE(X448);
+        /*
+         * ED25519, ED448, X25519 and X448 have no support for
+         * PEM_write_bio_PrivateKey_traditional(), so no legacy tests.
+         */
 #endif
         ADD_TEST_SUITE(RSA);
+        ADD_TEST_SUITE_LEGACY(RSA);
         ADD_TEST_SUITE(RSA_PSS);
+        /*
+         * RSA-PSS has no support for PEM_write_bio_PrivateKey_traditional(),
+         * so no legacy tests.
+         */
 #ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE_MSBLOB(RSA);
 # ifndef OPENSSL_NO_RC4
