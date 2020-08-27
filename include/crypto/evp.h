@@ -591,6 +591,7 @@ struct evp_pkey_st {
 # endif
 
     /* == Common attributes == */
+    /* If these are modified, so must evp_pkey_downgrade() */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
@@ -672,6 +673,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery);
 #ifndef FIPS_MODULE
+int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
 int evp_pkey_downgrade(EVP_PKEY *pk);
 void evp_pkey_free_legacy(EVP_PKEY *x);
 #endif
