@@ -1816,6 +1816,8 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     /*
      * SM2 is always available because it is implemented via legacy codepaths
      * and not in a provider at all. We expect this to pass.
+     * TODO(3.0): This can be removed once there are no more algorithms
+     * available via legacy codepaths
      */
     if (tst == 1 && !TEST_ptr(pctx))
         goto err;
