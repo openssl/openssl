@@ -2356,7 +2356,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
         if (!tls1_lookup_md(s->ctx, s->s3.tmp.peer_sigalg, &md)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                     ERR_R_INTERNAL_ERROR);
+                     SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
             goto err;
         }
         if (SSL_USE_SIGALGS(s))

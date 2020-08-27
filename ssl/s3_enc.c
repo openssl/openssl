@@ -408,7 +408,12 @@ int ssl3_digest_cached_records(SSL *s, int keep)
         }
 
         md = ssl_handshake_md(s);
-        if (md == NULL || !EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)
+        if (md == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_DIGEST_CACHED_RECORDS,
+                     SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
+            return 0;
+        }
+        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)
             || !EVP_DigestUpdate(s->s3.handshake_dgst, hdata, hdatalen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_DIGEST_CACHED_RECORDS,
                      ERR_R_INTERNAL_ERROR);
