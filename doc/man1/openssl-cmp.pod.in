@@ -495,11 +495,14 @@ Each source may contain multiple certificates.
 
 =item B<-untrusted> I<sources>
 
-Non-trusted intermediate CA certificate(s) that may be useful for cert path
-construction for the CMP client certificate (to include in the extraCerts field
-of outgoing messages), for the TLS client certificate (if TLS is enabled),
+Non-trusted intermediate CA certificate(s).
+Any extra certificates given with the B<-cert> option are appended to it.
+All these certificates may be useful for cert path construction
+for the CMP client certificate (to include in the extraCerts field of outgoing
+messages) and for the TLS client certificate (if TLS is enabled)
+as well as for chain building
 when verifying the CMP server certificate (checking signature-based
-CMP message protection), and when verifying newly enrolled certificates.
+CMP message protection) and when verifying newly enrolled certificates.
 
 Multiple filenames may be given, separated by commas and/or whitespace.
 Each file may contain multiple certificates.
@@ -716,8 +719,9 @@ The only value with effect is B<ENGINE>.
 =item B<-otherpass> I<arg>
 
 Pass phrase source for certificate given with the B<-trusted>, B<-untrusted>,
-B<-own_trusted>,
-B<-out_trusted>, B<-extracerts>, B<-tls_extra>, or B<-tls_trusted> options.
+B<-own_trusted>, B<-srvcert>, B<-out_trusted>, B<-extracerts>,
+B<-srv_trusted>, B<-srv_untrusted>, B<-rsp_extracerts>, B<-rsp_capubs>,
+B<-tls_extra>, and B<-tls_trusted> options.
 If not given here, the password will be prompted for if needed.
 
 For more information about the format of B<arg> see the
