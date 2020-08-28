@@ -681,6 +681,7 @@ Defaults to C<hmac-sha1> as per RFC 4210.
 =item B<-extracerts> I<sources>
 
 Certificates to append in the extraCerts field when sending messages.
+They can be used as the default CMP signer certificate chain to include.
 
 Multiple filenames or URLs may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").

@@ -13,8 +13,7 @@ OSSL_CMP_P10CR,
 OSSL_CMP_KUR,
 OSSL_CMP_try_certreq,
 OSSL_CMP_exec_RR_ses,
-OSSL_CMP_exec_GENM_ses,
-OSSL_CMP_certConf_cb
+OSSL_CMP_exec_GENM_ses
 - functions implementing CMP client transactions
 
 =head1 SYNOPSIS
@@ -33,8 +32,6 @@ OSSL_CMP_certConf_cb
  #define OSSL_CMP_KUR
  int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
                           const OSSL_CRMF_MSG *crm, int *checkAfter);
- int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
-                          const char **text);
  X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx);
  STACK_OF(OSSL_CMP_ITAV) *OSSL_CMP_exec_GENM_ses(OSSL_CMP_CTX *ctx);
 
@@ -101,12 +98,6 @@ If the caller decides to abort the pending certificate request and provides
 a negative value as the B<req_type> argument then OSSL_CMP_try_certreq()
 aborts the CMP transaction by sending an error message to the server.
 
-OSSL_CMP_certConf_cb() is a basic certificate confirmation callback validating
-that the new certificate can be verified with the trusted/untrusted certificates
-in B<ctx>.
-As there is no requirement in RFC 4210 that the certificate can be
-validated by the client, this callback is not set by default in the context.
-
 OSSL_CMP_exec_RR_ses() requests the revocation of the certificate
 specified in the B<ctx> using L<OSSL_CMP_CTX_set1_oldCert(3)>.
 RFC 4210 is vague in which PKIStatus should be returned by the server.
@@ -145,10 +136,6 @@ in case a 'waiting' status has been received and checkAfter value is available.
 In the latter case L<OSSL_CMP_CTX_get0_newCert(3)> yields NULL
 and the output parameter B<checkAfter> has been used to
 assign the received value unless B<checkAfter> is NULL.
-
-OSSL_CMP_certConf_cb() returns B<fail_info> if it is not equal to B<0>,
-else B<0> on successful validation,
-or else a bit field with the B<OSSL_CMP_PKIFAILUREINFO_incorrectData> bit set.
 
 OSSL_CMP_exec_RR_ses() returns the
 pointer to the revoked certificate on success, B<NULL> on error.
