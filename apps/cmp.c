@@ -1546,10 +1546,8 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         }
         EVP_PKEY_free(pkey);
     }
-    if (opt_secret == NULL && opt_srvcert == NULL && opt_trusted == NULL) {
-        CMP_err("missing -secret or -srvcert or -trusted");
-        goto err;
-    }
+    if (opt_secret == NULL && opt_srvcert == NULL && opt_trusted == NULL)
+        CMP_warn("will not authenticate server due to missing -secret, -trusted, or -srvcert");
 
     if (opt_cert != NULL) {
         X509 *cert;

@@ -174,6 +174,7 @@ Default filename is from the environment variable C<OPENSSL_CONF>.
 Section(s) to use within config file defining CMP options.
 An empty string C<""> means no specific section.
 Default is C<cmp>.
+
 Multiple section names may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Contents of sections named later may override contents of sections named before.
@@ -484,6 +485,9 @@ during CMP server authentication.
 This option gives more flexibility than the B<-srvcert> option because the
 protection certificate is not pinned but may be any certificate
 for which a chain to one of the given trusted certificates can be constructed.
+
+If no B<-trusted>, B<-srvcert>, and B<-secret> option is given
+then protected response messages from the server are not authenticated.
 
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -809,6 +813,7 @@ Default is one invocation.
 =item B<-reqin> I<filenames>
 
 Take sequence of CMP requests from file(s).
+
 Multiple filenames may be given, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 As many files are read as needed for a complete transaction.
@@ -823,18 +828,21 @@ and the CMP server complains that the transaction ID has already been used.
 =item B<-reqout> I<filenames>
 
 Save sequence of CMP requests to file(s).
+
 Multiple filenames may be given, separated by commas and/or whitespace.
 As many files are written as needed to store the complete transaction.
 
 =item B<-rspin> I<filenames>
 
 Process sequence of CMP responses provided in file(s), skipping server.
+
 Multiple filenames may be given, separated by commas and/or whitespace.
 As many files are read as needed for the complete transaction.
 
 =item B<-rspout> I<filenames>
 
 Save sequence of CMP responses to file(s).
+
 Multiple filenames may be given, separated by commas and/or whitespace.
 As many files are written as needed to store the complete transaction.
 
