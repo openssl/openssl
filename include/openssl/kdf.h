@@ -79,6 +79,13 @@ void EVP_KDF_names_do_all(const EVP_KDF *kdf,
 # define EVP_KDF_CTRL_SET_UKM                0x16 /* unsigned char *, size_t */
 # define EVP_KDF_CTRL_SET_CEK_ALG            0x17 /* char * */
 # define EVP_KDF_CTRL_SET_SHARED_INFO        EVP_KDF_CTRL_SET_SSKDF_INFO
+# define EVP_KDF_CTRL_SET_ARGON2_LANES       0xf1 /* uint32 */
+# define EVP_KDF_CTRL_SET_ARGON2_THREADS     0xf2 /* uint32 */
+# define EVP_KDF_CTRL_SET_ARGON2_MEM_COST    0xf3 /* uint32 */
+# define EVP_KDF_CTRL_SET_ARGON2_AD          0xf4 /* uint32 */
+# define EVP_KDF_CTRL_SET_ARGON2_FLAGS       0xf5 /* uint32 */
+# define EVP_KDF_CTRL_SET_ARGON2_SIZE        0xf6 /* uint32 */
+# define EVP_KDF_CTRL_SET_ARGON2_SECRET      0xf7 /* char * */
 
 # define EVP_KDF_HKDF_MODE_EXTRACT_AND_EXPAND  0
 # define EVP_KDF_HKDF_MODE_EXTRACT_ONLY        1

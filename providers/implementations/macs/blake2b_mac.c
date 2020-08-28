@@ -18,6 +18,7 @@
 /* Function names */
 #define BLAKE2_PARAM_INIT blake2b_param_init
 #define BLAKE2_INIT_KEY blake2b_init_key
+#define BLAKE2_INIT blake2b_init
 #define BLAKE2_UPDATE blake2b_update
 #define BLAKE2_FINAL blake2b_final
 #define BLAKE2_PARAM_SET_DIGEST_LENGTH blake2b_param_set_digest_length

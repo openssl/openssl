@@ -260,7 +260,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[threadstest]=threadstest.c
   INCLUDE[threadstest]=../include ../apps/include
-  DEPEND[threadstest]=../libcrypto libtestutil.a
+  DEPEND[threadstest]=../libcrypto.a libtestutil.a
 
   SOURCE[afalgtest]=afalgtest.c
   INCLUDE[afalgtest]=../include ../apps/include

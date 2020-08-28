@@ -1,0 +1,105 @@
+=pod
+
+=head1 NAME
+
+CRYPTO_THREAD_enable, CRYPTO_THREAD_disable, CRYPTO_THREAD_enabled,
+CRYPTO_THREAD_spawn_worker, CRYPTO_THREAD_cap
+- thread management functions and misc types
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ typedef enum {
+     CRYPTO_WORKER_TERMINATE,
+     CRYPTO_WORKER_POLL,
+ } CRYPTO_WORKER_CMD;
+
+ int CRYPTO_THREAD_enabled(OPENSSL_CTX *ctx);
+ int CRYPTO_THREAD_enable(OPENSSL_CTX *ctx, int max_threads);
+ int CRYPTO_THREAD_disable(OPENSSL_CTX *ctx);
+ int CRYPTO_THREAD_cap(OPENSSL_CTX *ctx, int max_threads);
+ int CRYPTO_THREAD_spawn_worker(OPENSSL_CTX *ctx, CRYPTO_WORKER_CALLBACK cb);
+
+=head1 DESCRIPTION
+
+OpenSSL support for preemptive multitasking. The feature is disabled by
+default and it will not be implicitly enabled at any time by OpenSSL itself.
+
+=head2 Context-wide preemption
+
+B<CRYPTO_THREAD_enable> is the single way of enabling preemption. You may
+specify the maximal number of threads that OpenSSL is able to spawn as well
+as the library context in which preemption is to be enabled. A negative number of
+threads amounts to no limit.
+
+To change the maximal number of threads OpenSSL is able to spawn, use
+B<CRYPTO_THREAD_cap>. Pass 0 to use supplied workers only and negative number
+to indicate no limit.
+
+Once enabled, preemption will remain enabled until an explicit call to
+B<CRYPTO_THREAD_disable> is made. The call will fail with zero return code
+if there are busy threads/workers. It will terminate any idle user-supplied
+workers.
+
+To check whether preemption is enabled for a given context, use
+B<CRYPTO_THREAD_enabled>.
+
+It is highly recommended to setup signal masking while threading is enabled.
+See B<CRYPTO_SIGNAL_block> for more information.
+
+=head2 Providing workers for OpenSSL
+
+The previous section talks about preemption enablement and ways of limiting
+the number of threads that OpenSSL may use in a given context. In a sense
+these are (context-)global limits, but they offer no control over when the
+threads are spawned. This section introduces a concept of worker threads.
+
+A worker thread is a thread spawned by calling B<CRYPTO_THREAD_spawn_worker>
+at any time from your code, assuming threading is enabled.
+
+Each such call spawns a single thread that becomes immediately available for
+use in OpenSSL. If there are any tasks requesting preemption at that time,
+it will execute one (FIFO), otherwise it will sleep until then.
+
+After the task is completed, the worker may then exit or be reused. This may
+be controlled by providing a callback of type
+C<typedef CRYPTO_WORKER_CMD (*CRYPTO_WORKER_CALLBACK)(OPENSSL_CTX *, size_t)>
+to B<CRYPTO_THREAD_spawn_worker>. If the callback returns B<CRYPTO_WORKER_POLL>,
+the worker thread will then pick up/await for a next task. By default, worker
+threads are not reused and terminate immediately. Library context and current
+queue size are passed to the callback.
+
+=head2 Using workers
+
+OpenSSL imposes no limit on the number of worker threads. Similarly, the number
+of worker threads plays no role in the per-context cap on the number of threads
+as specified via B<CRYPTO_THREAD_enable> or B<CRYPTO_THREAD_cap>. If capped at
+a nonnegative value, OpenSSL will still be able to spawn B<max_threads> threads
+itself, however, it will do so when and only when all worker threads are busy.
+Similarly, OpenSSL will try to use workers even if there are no limits on the
+number of threads that it may spawn.
+
+=head1 RETURN VALUES
+
+B<CRYPTO_THREAD_enable>, B<CRYPTO_THREAD_disable>, B<CRYPTO_THREAD_cap>,
+B<CRYPTO_THREAD_spawn_worker> all return 1 on success, 0 on failure.
+
+B<CRYPTO_WORKER_CALLBACK> returns either B<CRYPTO_WORKER_TERMINATE> (or
+B<CRYPTO_WORKER_POLL>) to indicate that the worker thread is to terminate
+(or to be reused).
+
+=head1 SEE ALSO
+
+L<CRYPTO_SIGNAL_block(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2020 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

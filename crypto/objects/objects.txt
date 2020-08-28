@@ -1609,6 +1609,12 @@ secg-scheme 14 3 : dhSinglePass-cofactorDH-sha512kdf-scheme
 !Cname id-scrypt
 1 3 6 1 4 1 11591 4 11		: id-scrypt         : scrypt
 
+# NIDs for a family of Argon2 algorithms
+
+                            : ARGON2I  : argon2i
+                            : ARGON2D  : argon2d
+                            : ARGON2ID : argon2id
+
 # NID for TLS1 PRF
                             : TLS1-PRF          : tls1-prf
 
