@@ -1601,7 +1601,8 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
  */
 static int setup_request_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
-    if (opt_subject == NULL && opt_oldcert == NULL && opt_cert == NULL)
+    if (opt_subject == NULL && opt_oldcert == NULL && opt_cert == NULL
+            && opt_cmd != CMP_RR && opt_cmd != CMP_GENM)
         CMP_warn("no -subject given, neither -oldcert nor -cert available as default");
     if (!set_name(opt_subject, OSSL_CMP_CTX_set1_subjectName, ctx, "subject")
             || !set_name(opt_issuer, OSSL_CMP_CTX_set1_issuer, ctx, "issuer"))
@@ -2949,5 +2950,5 @@ int cmp_main(int argc, char **argv)
     NCONF_free(conf); /* must not do as long as opt_... variables are used */
     OSSL_CMP_log_close();
 
-    return ret == 0 ? EXIT_FAILURE : EXIT_SUCCESS;
+    return ret == 0 ? EXIT_FAILURE : EXIT_SUCCESS; /* ret == -1 for -help */
 }
