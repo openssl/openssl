@@ -395,7 +395,9 @@ const OPTIONS cmp_options[] = {
     {"mac", OPT_MAC, 's',
      "MAC algorithm to use in PBM-based message protection. Default \"hmac-sha1\""},
     {"extracerts", OPT_EXTRACERTS, 's',
-     "Certificates to append in extraCerts field of outgoing messages"},
+     "Certificates to append in extraCerts field of outgoing messages."},
+    {OPT_MORE_STR, 0, 0,
+     "This can be used as the default CMP signer cert chain to include"},
     {"unprotected_requests", OPT_UNPROTECTED_REQUESTS, '-',
      "Send messages without CMP-level protection"},
 
