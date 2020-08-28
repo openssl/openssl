@@ -378,14 +378,16 @@ const OPTIONS cmp_options[] = {
     {"ref", OPT_REF, 's',
      "Reference value to use as senderKID in case no -cert is given"},
     {"secret", OPT_SECRET, 's',
-     "Password source for client authentication with a pre-shared key (secret)"},
+     "Prefer PBM (over signatures) for protecting msgs with given password source"},
     {"cert", OPT_CERT, 's',
-     "Client's current certificate (needed unless using -secret for PBM);"},
+     "Client's CMP signer certificate; its public key must match the -key argument"},
     {OPT_MORE_STR, 0, 0,
-     "any further certs included are appended in extraCerts field"},
+     "This also used as default reference for subject DN and SANs."},
+    {OPT_MORE_STR, 0, 0,
+     "Any further certs included are appended to the untrusted certs"},
     {"own_trusted", OPT_OWN_TRUSTED, 's',
      "Optional certs to verify chain building for own CMP signer cert"},
-    {"key", OPT_KEY, 's', "Private key for the client's current certificate"},
+    {"key", OPT_KEY, 's', "CMP signer private key, not used when -secret given"},
     {"keypass", OPT_KEYPASS, 's',
      "Client private key (and cert and old cert file) pass phrase source"},
     {"digest", OPT_DIGEST, 's',
@@ -1479,8 +1481,8 @@ static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
  */
 static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
-    if (!opt_unprotected_requests && opt_secret == NULL && opt_cert == NULL) {
-        CMP_err("must give client credentials unless -unprotected_requests is set");
+    if (!opt_unprotected_requests && opt_secret == NULL && opt_key == NULL) {
+        CMP_err("must give -key or -secret unless -unprotected_requests is used");
         return 0;
     }
 
@@ -1507,7 +1509,7 @@ static int setup_protection_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
                 return 0;
         }
         if (opt_cert != NULL || opt_key != NULL)
-            CMP_warn("no signature-based protection used since -secret is given");
+            CMP_warn("-cert and -key not used for protection since -secret is given");
     }
     if (opt_ref != NULL
             && !OSSL_CMP_CTX_set1_referenceValue(ctx, (unsigned char *)opt_ref,
