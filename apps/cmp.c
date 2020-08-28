@@ -567,18 +567,12 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
     {NULL}
 };
 
-#ifndef NDEBUG
-# define FUNC (strcmp(OPENSSL_FUNC, "(unknown function)") == 0  \
-               ? "CMP" : "OPENSSL_FUNC")
-# define PRINT_LOCATION(bio) BIO_printf(bio, "%s:%s:%d:", \
-                                        FUNC, OPENSSL_FILE, OPENSSL_LINE)
-#else
-# define PRINT_LOCATION(bio) ((void)0)
-#endif
-#define CMP_print(bio, level, prefix, msg, a1, a2, a3)   \
-    (level > opt_verbosity ? 1 : PRINT_LOCATION(bio), \
-     level > opt_verbosity ? 1 : \
-     BIO_printf(bio, "CMP %s: " msg "\n", prefix, a1, a2, a3))
+#define FUNC (strcmp(OPENSSL_FUNC, "(unknown function)") == 0   \
+              ? "CMP" : OPENSSL_FUNC)
+#define CMP_print(bio, level, prefix, msg, a1, a2, a3) \
+    ((void)(level > opt_verbosity ? 0 : \
+            (BIO_printf(bio, "%s:%s:%d:CMP %s: " msg "\n", \
+                        FUNC, OPENSSL_FILE, OPENSSL_LINE, prefix, a1, a2, a3))))
 #define CMP_DEBUG(m, a1, a2, a3) \
     CMP_print(bio_out, OSSL_CMP_LOG_DEBUG, "debug", m, a1, a2, a3)
 #define CMP_debug(msg)             CMP_DEBUG(msg"%s%s%s", "", "", "")
