@@ -64,6 +64,7 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
     BIO *btmp;
     const char *name;
     EVP_MD *fetched = NULL;
+    const EVP_MD *md;
 
     if ((btmp = BIO_new(BIO_f_md())) == NULL) {
         PKCS7err(PKCS7_F_PKCS7_BIO_ADD_DIGEST, ERR_R_BIO_LIB);
@@ -71,13 +72,21 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
     }
 
     name = OBJ_nid2sn(OBJ_obj2nid(alg->algorithm));
+
+    (void)ERR_set_mark();
     fetched = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
-    if (fetched == NULL) {
+    if (fetched != NULL)
+        md = fetched;
+    else
+        md = EVP_get_digestbyname(name);
+
+    if (md == NULL) {
         PKCS7err(PKCS7_F_PKCS7_BIO_ADD_DIGEST, PKCS7_R_UNKNOWN_DIGEST_TYPE);
         goto err;
     }
+    (void)ERR_pop_to_mark();
 
-    BIO_set_md(btmp, fetched);
+    BIO_set_md(btmp, md);
     EVP_MD_free(fetched);
     if (*pbio == NULL)
         *pbio = btmp;
@@ -389,6 +398,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     X509_ALGOR *xa;
     ASN1_OCTET_STRING *data_body = NULL;
     EVP_MD *evp_md = NULL;
+		const EVP_MD *md;
     EVP_CIPHER *evp_cipher = NULL;
     EVP_CIPHER_CTX *evp_ctx = NULL;
     X509_ALGOR *enc_alg = NULL;
@@ -480,14 +490,22 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             }
 
             name = OBJ_nid2sn(OBJ_obj2nid(xa->algorithm));
+
+            (void)ERR_set_mark();
             evp_md = EVP_MD_fetch(p7_ctx->libctx, name, p7_ctx->propq);
-            if (evp_md == NULL) {
+            if (evp_md != NULL)
+                md = evp_md;
+            else
+                md = EVP_get_digestbyname(name);
+
+            if (md == NULL) {
                 PKCS7err(PKCS7_F_PKCS7_DATADECODE,
                          PKCS7_R_UNKNOWN_DIGEST_TYPE);
                 goto err;
             }
+            (void)ERR_pop_to_mark();
 
-            BIO_set_md(btmp, evp_md);
+            BIO_set_md(btmp, md);
             EVP_MD_free(evp_md);
             if (out == NULL)
                 out = btmp;
@@ -1023,6 +1041,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
 {
     ASN1_OCTET_STRING *os;
     EVP_MD_CTX *mdc_tmp, *mdc;
+    const EVP_MD *md;
     EVP_MD *fetched_md = NULL;
     int ret = 0, i;
     int md_type;
@@ -1097,9 +1116,17 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             goto err;
         }
 
+        (void)ERR_set_mark();
         fetched_md = EVP_MD_fetch(ctx->libctx, OBJ_nid2sn(md_type), ctx->propq);
-        if (fetched_md == NULL || !EVP_VerifyInit_ex(mdc_tmp, fetched_md, NULL))
+
+        if (fetched_md != NULL)
+            md = fetched_md;
+        else
+            md = EVP_get_digestbynid(md_type);
+
+        if (md == NULL || !EVP_VerifyInit_ex(mdc_tmp, md, NULL))
             goto err;
+        (void)ERR_pop_to_mark();
 
         alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
                              ASN1_ITEM_rptr(PKCS7_ATTR_VERIFY));
