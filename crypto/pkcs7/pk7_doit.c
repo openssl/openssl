@@ -81,6 +81,7 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
         md = EVP_get_digestbyname(name);
 
     if (md == NULL) {
+        (void)ERR_clear_last_mark();
         PKCS7err(PKCS7_F_PKCS7_BIO_ADD_DIGEST, PKCS7_R_UNKNOWN_DIGEST_TYPE);
         goto err;
     }
@@ -408,7 +409,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     X509_ALGOR *xa;
     ASN1_OCTET_STRING *data_body = NULL;
     EVP_MD *evp_md = NULL;
-		const EVP_MD *md;
+    const EVP_MD *md;
     EVP_CIPHER *evp_cipher = NULL;
     const EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *evp_ctx = NULL;
