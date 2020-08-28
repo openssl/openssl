@@ -60,7 +60,7 @@ struct ossl_cmp_ctx_st {
     X509 *validatedSrvCert; /* caches any already validated server cert */
     X509_NAME *expected_sender; /* expected sender in header of response */
     X509_STORE *trusted; /* trust store maybe w CRLs and cert verify callback */
-    STACK_OF(X509) *untrusted_certs; /* untrusted (intermediate) certs */
+    STACK_OF(X509) *untrusted; /* untrusted (intermediate CA) certs */
     int ignore_keyusage; /* ignore key usage entry when validating certs */
     /*
      * permitTAInExtraCertsForIR allows use of root certs in extracerts

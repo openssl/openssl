@@ -26,8 +26,8 @@ OSSL_CMP_CTX_set1_srvCert,
 OSSL_CMP_CTX_set1_expected_sender,
 OSSL_CMP_CTX_set0_trustedStore,
 OSSL_CMP_CTX_get0_trustedStore,
-OSSL_CMP_CTX_set1_untrusted_certs,
-OSSL_CMP_CTX_get0_untrusted_certs,
+OSSL_CMP_CTX_set1_untrusted,
+OSSL_CMP_CTX_get0_untrusted,
 OSSL_CMP_CTX_set1_cert,
 OSSL_CMP_CTX_build_cert_chain,
 OSSL_CMP_CTX_set1_pkey,
@@ -99,9 +99,8 @@ OSSL_CMP_CTX_set1_senderNonce
                                       const X509_NAME *name);
  int OSSL_CMP_CTX_set0_trustedStore(OSSL_CMP_CTX *ctx, X509_STORE *store);
  X509_STORE *OSSL_CMP_CTX_get0_trustedStore(const OSSL_CMP_CTX *ctx);
- int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx,
-                                       STACK_OF(X509) *certs);
- STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted_certs(const OSSL_CMP_CTX *ctx);
+ int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs);
+ STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted(const OSSL_CMP_CTX *ctx);
 
  /* client authentication: */
  int OSSL_CMP_CTX_set1_cert(OSSL_CMP_CTX *ctx, X509 *cert);
@@ -420,13 +419,13 @@ When given a NULL parameter the entry is cleared.
 OSSL_CMP_CTX_get0_trustedStore() returns a pointer to the currently set
 certificate store containing trusted cert etc., or an empty store if unset.
 
-OSSL_CMP_CTX_set1_untrusted_certs() sets up a list of non-trusted certificates
+OSSL_CMP_CTX_set1_untrusted() sets up a list of non-trusted certificates
 of intermediate CAs that may be useful for path construction for the CMP client
 certificate, for the TLS client certificate (if any), when verifying
 the CMP server certificate, and when verifying newly enrolled certificates.
 The reference counts of those certificates handled successfully are increased.
 
-OSSL_CMP_CTX_get0_untrusted_certs(OSSL_CMP_CTX *ctx) returns a pointer to the
+OSSL_CMP_CTX_get0_untrusted(OSSL_CMP_CTX *ctx) returns a pointer to the
 list of untrusted certs, which may be empty if unset.
 
 OSSL_CMP_CTX_set1_cert() sets the certificate used for CMP message protection.
@@ -629,7 +628,7 @@ OSSL_CMP_CTX_new(),
 OSSL_CMP_CTX_get_http_cb_arg(),
 OSSL_CMP_CTX_get_transfer_cb_arg(),
 OSSL_CMP_CTX_get0_trustedStore(),
-OSSL_CMP_CTX_get0_untrusted_certs(),
+OSSL_CMP_CTX_get0_untrusted(),
 OSSL_CMP_CTX_get0_newPkey(),
 OSSL_CMP_CTX_get_certConf_cb_arg(),
 OSSL_CMP_CTX_get0_statusString(),

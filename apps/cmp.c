@@ -1234,8 +1234,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
     }
     if (!setup_certs(opt_srv_untrusted,
                      "untrusted certificates for mock server", ctx,
-                     (add_X509_stack_fn_t)OSSL_CMP_CTX_set1_untrusted_certs,
-                     NULL))
+                     (add_X509_stack_fn_t)OSSL_CMP_CTX_set1_untrusted, NULL))
         goto err;
 
     if (opt_rsp_cert == NULL) {
@@ -1316,7 +1315,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(ENGINE *engine)
 static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
 {
     if (!setup_certs(opt_untrusted, "untrusted certificates", ctx,
-                     (add_X509_stack_fn_t)OSSL_CMP_CTX_set1_untrusted_certs,
+                     (add_X509_stack_fn_t)OSSL_CMP_CTX_set1_untrusted,
                      NULL))
         goto err;
 
@@ -1413,7 +1412,7 @@ static int setup_verification_ctx(OSSL_CMP_CTX *ctx)
  */
 static SSL_CTX *setup_ssl_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
-    STACK_OF(X509) *untrusted_certs = OSSL_CMP_CTX_get0_untrusted_certs(ctx);
+    STACK_OF(X509) *untrusted_certs = OSSL_CMP_CTX_get0_untrusted(ctx);
     EVP_PKEY *pkey = NULL;
     X509_STORE *trust_store = NULL;
     SSL_CTX *ssl_ctx;

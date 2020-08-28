@@ -26,7 +26,7 @@ In case of signature algorithm, the certificate to use for the signature check
 is preferably the one provided by a call to L<OSSL_CMP_CTX_set1_srvCert(3)>.
 If no such sender cert has been pinned then candidate sender certificates are
 taken from the list of certificates received in the C<msg> extraCerts, then any
-certificates provided before via L<OSSL_CMP_CTX_set1_untrusted_certs(3)>, and
+certificates provided before via L<OSSL_CMP_CTX_set1_untrusted(3)>, and
 then all trusted certificates provided via L<OSSL_CMP_CTX_set0_trustedStore(3)>,
 where a candidate is acceptable only if has not expired, its subject DN matches
 the C<msg> sender DN (as far as present), and its subject key identifier

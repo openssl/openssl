@@ -57,36 +57,36 @@ int OSSL_CMP_CTX_set0_trustedStore(OSSL_CMP_CTX *ctx, X509_STORE *store)
 }
 
 /* Get current list of non-trusted intermediate certs */
-STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted_certs(const OSSL_CMP_CTX *ctx)
+STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted(const OSSL_CMP_CTX *ctx)
 {
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    return ctx->untrusted_certs;
+    return ctx->untrusted;
 }
 
 /*
  * Set untrusted certificates for path construction in authentication of
  * the CMP server and potentially others (TLS server, newly enrolled cert).
  */
-int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
+int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
 {
-    STACK_OF(X509) *untrusted_certs;
+    STACK_OF(X509) *untrusted;
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if ((untrusted_certs = sk_X509_new_null()) == NULL)
+    if ((untrusted = sk_X509_new_null()) == NULL)
         return 0;
-    if (X509_add_certs(untrusted_certs, certs,
+    if (X509_add_certs(untrusted, certs,
                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) != 1)
         goto err;
-    sk_X509_pop_free(ctx->untrusted_certs, X509_free);
-    ctx->untrusted_certs = untrusted_certs;
+    sk_X509_pop_free(ctx->untrusted, X509_free);
+    ctx->untrusted = untrusted;
     return 1;
  err:
-    sk_X509_pop_free(untrusted_certs, X509_free);
+    sk_X509_pop_free(untrusted, X509_free);
     return 0;
 }
 
@@ -126,7 +126,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq)
 
     ctx->msg_timeout = 2 * 60;
 
-    if ((ctx->untrusted_certs = sk_X509_new_null()) == NULL)
+    if ((ctx->untrusted = sk_X509_new_null()) == NULL)
         goto err;
 
     ctx->pbm_slen = 16;
@@ -186,7 +186,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     X509_free(ctx->validatedSrvCert);
     X509_NAME_free(ctx->expected_sender);
     X509_STORE_free(ctx->trusted);
-    sk_X509_pop_free(ctx->untrusted_certs, X509_free);
+    sk_X509_pop_free(ctx->untrusted, X509_free);
 
     X509_free(ctx->cert);
     EVP_PKEY_free(ctx->pkey);
@@ -752,15 +752,15 @@ int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
         return 0;
     }
 
-    if (ctx->untrusted_certs != NULL ?
-        !X509_add_certs(ctx->untrusted_certs, candidates,
+    if (ctx->untrusted != NULL ?
+        !X509_add_certs(ctx->untrusted, candidates,
                         X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) :
-        !OSSL_CMP_CTX_set1_untrusted_certs(ctx, candidates))
+        !OSSL_CMP_CTX_set1_untrusted(ctx, candidates))
         return 0;
 
     ossl_cmp_debug(ctx, "trying to build chain for own CMP signer cert");
     chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, own_trusted,
-                                      ctx->untrusted_certs, ctx->cert);
+                                      ctx->untrusted, ctx->cert);
     if (chain == NULL) {
         CMPerr(0, CMP_R_FAILED_BUILDING_OWN_CHAIN);
         return 0;

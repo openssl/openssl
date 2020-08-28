@@ -469,7 +469,7 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
 /*-
  * Callback fn validating that the new certificate can be verified, using
  * ctx->certConf_cb_arg, which has been initialized using opt_out_trusted, and
- * ctx->untrusted_certs, which at this point already contains ctx->extraCertsIn.
+ * ctx->untrusted, which at this point already contains ctx->extraCertsIn.
  * Returns 0 on acceptance, else a bit field reflecting PKIFailureInfo.
  * Quoting from RFC 4210 section 5.1. Overall PKI Message:
  *     The extraCerts field can contain certificates that may be useful to

@@ -191,7 +191,7 @@ static int add_trusted(OSSL_CMP_CTX *ctx, X509 *cert)
 
 static int add_untrusted(OSSL_CMP_CTX *ctx, X509 *cert)
 {
-    return X509_add_cert(OSSL_CMP_CTX_get0_untrusted_certs(ctx), cert,
+    return X509_add_cert(OSSL_CMP_CTX_get0_untrusted(ctx), cert,
                          X509_ADD_FLAG_UP_REF);
 }
 
