@@ -335,7 +335,7 @@ is provided via the B<-newkey> or B<-key> options.
 
 =item B<-csr> I<filename>
 
-CSR in PKCS#10 format to use in legacy P10CR messages.
+PKCS#10 CSR in PEM or DER format to use in legacy P10CR messages.
 
 =item B<-out_trusted> I<filenames>
 
