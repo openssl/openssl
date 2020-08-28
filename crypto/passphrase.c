@@ -273,7 +273,8 @@ int ossl_pw_get_passphrase(char *pass, size_t pass_size, size_t *pass_len,
 
  do_cache:
     if (ret && data->flag_cache_passphrase) {
-        if (*pass_len > data->cached_passphrase_len) {
+        if (data->cached_passphrase == NULL
+            || *pass_len > data->cached_passphrase_len) {
             void *new_cache =
                 OPENSSL_clear_realloc(data->cached_passphrase,
                                       data->cached_passphrase_len,
