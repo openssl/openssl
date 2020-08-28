@@ -218,6 +218,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     BIO *out = NULL, *btmp = NULL;
     X509_ALGOR *xa = NULL;
     EVP_CIPHER *fetched_cipher = NULL;
+    const EVP_CIPHER *cipher;
     const EVP_CIPHER *evp_cipher = NULL;
     STACK_OF(X509_ALGOR) *md_sk = NULL;
     STACK_OF(PKCS7_RECIP_INFO) *rsk = NULL;
@@ -310,13 +311,22 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
             if (RAND_bytes_ex(p7_ctx->libctx, iv, ivlen) <= 0)
                 goto err;
 
+        (void)ERR_set_mark();
         fetched_cipher = EVP_CIPHER_fetch(p7_ctx->libctx,
                                           EVP_CIPHER_name(evp_cipher),
                                           p7_ctx->propq);
-        if (fetched_cipher == NULL)
-            goto err;
+        if (fetched_cipher != NULL)
+            cipher = fetched_cipher;
+        else
+            cipher = evp_cipher;
 
-        if (EVP_CipherInit_ex(ctx, fetched_cipher, NULL, NULL, NULL, 1) <= 0)
+        if (cipher == NULL) {
+            (void)ERR_clear_last_mark();
+            goto err;
+        }
+        (void)ERR_pop_to_mark();
+
+        if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, 1) <= 0)
             goto err;
 
         EVP_CIPHER_free(fetched_cipher);
@@ -400,6 +410,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     EVP_MD *evp_md = NULL;
 		const EVP_MD *md;
     EVP_CIPHER *evp_cipher = NULL;
+    const EVP_CIPHER *cipher = NULL;
     EVP_CIPHER_CTX *evp_ctx = NULL;
     X509_ALGOR *enc_alg = NULL;
     STACK_OF(X509_ALGOR) *md_sk = NULL;
@@ -449,12 +460,21 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         enc_alg = p7->d.signed_and_enveloped->enc_data->algorithm;
 
         name = OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm));
+
+        (void)ERR_set_mark();
         evp_cipher = EVP_CIPHER_fetch(p7_ctx->libctx, name, p7_ctx->propq);
-        if (evp_cipher == NULL) {
+        if (evp_cipher != NULL)
+            cipher = evp_cipher;
+        else
+            cipher = EVP_get_cipherbyname(name);
+
+        if (cipher == NULL) {
+            (void)ERR_clear_last_mark();
             PKCS7err(PKCS7_F_PKCS7_DATADECODE,
                      PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
             goto err;
         }
+        (void)ERR_pop_to_mark();
         break;
     case NID_pkcs7_enveloped:
         rsk = p7->d.enveloped->recipientinfo;
@@ -462,12 +482,21 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         /* data_body is NULL if the optional EncryptedContent is missing. */
         data_body = p7->d.enveloped->enc_data->enc_data;
         name = OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm));
+	
+        (void)ERR_set_mark();
         evp_cipher = EVP_CIPHER_fetch(p7_ctx->libctx, name, p7_ctx->propq);
-        if (evp_cipher == NULL) {
+        if (evp_cipher != NULL)
+            cipher = evp_cipher;
+        else
+            cipher = EVP_get_cipherbyname(name);
+
+        if (cipher == NULL) {
+            (void)ERR_clear_last_mark();
             PKCS7err(PKCS7_F_PKCS7_DATADECODE,
                      PKCS7_R_UNSUPPORTED_CIPHER_TYPE);
             goto err;
         }
+        (void)ERR_pop_to_mark();
         break;
     default:
         PKCS7err(PKCS7_F_PKCS7_DATADECODE, PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
@@ -515,7 +544,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         }
     }
 
-    if (evp_cipher != NULL) {
+    if (cipher != NULL) {
         if ((etmp = BIO_new(BIO_f_cipher())) == NULL) {
             PKCS7err(PKCS7_F_PKCS7_DATADECODE, ERR_R_BIO_LIB);
             goto err;
@@ -555,7 +584,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
                 ri = sk_PKCS7_RECIP_INFO_value(rsk, i);
                 ri->ctx = p7_ctx;
                 if (pkcs7_decrypt_rinfo(&ek, &eklen, ri, pkey,
-                        EVP_CIPHER_key_length(evp_cipher)) < 0)
+                        EVP_CIPHER_key_length(cipher)) < 0)
                     goto err;
                 ERR_clear_error();
             }
@@ -569,7 +598,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
 
         evp_ctx = NULL;
         BIO_get_cipher_ctx(etmp, &evp_ctx);
-        if (EVP_CipherInit_ex(evp_ctx, evp_cipher, NULL, NULL, NULL, 0) <= 0)
+        if (EVP_CipherInit_ex(evp_ctx, cipher, NULL, NULL, NULL, 0) <= 0)
             goto err;
         if (EVP_CIPHER_asn1_to_param(evp_ctx, enc_alg->parameter) < 0)
             goto err;
