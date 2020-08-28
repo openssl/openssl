@@ -48,6 +48,7 @@ OSSL_CMP_CTX_set1_oldCert,
 OSSL_CMP_CTX_set1_p10CSR,
 OSSL_CMP_CTX_push0_genm_ITAV,
 OSSL_CMP_certConf_cb_t,
+OSSL_CMP_certConf_cb,
 OSSL_CMP_CTX_set_certConf_cb,
 OSSL_CMP_CTX_set_certConf_cb_arg,
 OSSL_CMP_CTX_get_certConf_cb_arg,
@@ -137,6 +138,8 @@ OSSL_CMP_CTX_set1_senderNonce
  /* certificate confirmation: */
  typedef int (*OSSL_CMP_certConf_cb_t)(OSSL_CMP_CTX *ctx, X509 *cert,
                                        int fail_info, const char **txt);
+ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
+                          const char **text);
  int OSSL_CMP_CTX_set_certConf_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_certConf_cb_t cb);
  int OSSL_CMP_CTX_set_certConf_cb_arg(OSSL_CMP_CTX *ctx, void *arg);
  void *OSSL_CMP_CTX_get_certConf_cb_arg(const OSSL_CMP_CTX *ctx);
@@ -430,7 +433,7 @@ list of untrusted certs, which may be empty if unset.
 
 OSSL_CMP_CTX_set1_cert() sets the certificate used for CMP message protection.
 The public key of this B<cert> must correspond to
-the private key set via B<OSSL_CMP_CTX_set1_pkey()>.
+the private key set before or thereafter via B<OSSL_CMP_CTX_set1_pkey()>.
 When using signature-based protection of CMP request messages
 this "protection certificate" will be included first in the extraCerts field.
 The subject of this B<cert> will be used as the sender field of outgoing
@@ -552,6 +555,16 @@ OSSL_CMP_CTX_set1_p10CSR() sets the PKCS#10 CSR to be used in P10CR.
 OSSL_CMP_CTX_push0_genm_ITAV() adds B<itav> to the stack in the B<ctx> which
 will be the body of a General Message sent with this context.
 
+OSSL_CMP_certConf_cb() is the default certificate confirmation callback function.
+If the callback argument is not NULL it must point to a trust store.
+In this case the function checks that the newly enrolled certificate can be
+verified using this trust store and untrusted certificates from the B<ctx>,
+which have been augmented by the list of extraCerts received.
+If the callback argument is NULL the function tries building an approximate
+chain as far as possible using the same untrusted certificates from the B<ctx>,
+and if this fails it takes the received extraCerts as fallback.
+The resulting cert chain can be retrieved using OSSL_CMP_CTX_get1_newChain().
+
 OSSL_CMP_CTX_set_certConf_cb() sets the callback used for evaluating the newly
 enrolled certificate before the library sends, depending on its result,
 a positive or negative certConf message to the server. The callback has type
@@ -643,6 +656,10 @@ OSSL_CMP_CTX_reqExtensions_have_SAN(),
 OSSL_CMP_CTX_get_status(), and
 OSSL_CMP_CTX_get_failInfoCode()
 return the intended value as described above or -1 on error.
+
+OSSL_CMP_certConf_cb() returns B<fail_info> if it is not equal to B<0>,
+else B<0> on successful validation,
+or else a bit field with the B<OSSL_CMP_PKIFAILUREINFO_incorrectData> bit set.
 
 All other functions return 1 on success, 0 on error.
 

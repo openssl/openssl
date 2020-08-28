@@ -139,32 +139,37 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
             && (msg->extraCerts = sk_X509_new_null()) == NULL)
         return 0;
 
-    if (ctx->cert != NULL && ctx->pkey != NULL) {
-        /* make sure that our own cert is included in the first position */
-        if (!X509_add_cert(msg->extraCerts, ctx->cert,
-                           X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                           | X509_ADD_FLAG_PREPEND))
-            return 0;
-        /* if we have untrusted certs, try to add intermediate certs */
-        if (ctx->untrusted != NULL) {
-            STACK_OF(X509) *chain;
-            int res;
+    /* Add first ctx->cert and its chain if using signature-based protection */
+    if (!ctx->unprotectedSend && ctx->secretValue == NULL) {
+        int flags_prepend = X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
+            | X509_ADD_FLAG_PREPEND | X509_ADD_FLAG_NO_SS;
 
+        /* if not yet done try to build chain using available untrusted certs */
+        if (ctx->chain == NULL) {
             ossl_cmp_debug(ctx,
                            "trying to build chain for own CMP signer cert");
-            chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
-                                              ctx->untrusted, ctx->cert);
-            res = X509_add_certs(msg->extraCerts, chain,
-                                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
-                                 | X509_ADD_FLAG_NO_SS);
-            sk_X509_pop_free(chain, X509_free);
-            if (res == 0) {
-                ossl_cmp_err(ctx,
-                             "could not build chain for own CMP signer cert");
-                return 0;
+            ctx->chain =
+                ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
+                                          ctx->untrusted, ctx->cert);
+            if (ctx->chain != NULL) {
+                ossl_cmp_debug(ctx,
+                               "success building chain for own CMP signer cert");
+            } else {
+                /* dump errors to avoid confusion when printing further ones */
+                OSSL_CMP_CTX_print_errors(ctx);
+                ossl_cmp_warn(ctx,
+                              "could not build chain for own CMP signer cert");
             }
+        }
+        if (ctx->chain != NULL) {
+            if (!X509_add_certs(msg->extraCerts, ctx->chain, flags_prepend))
+                return 0;
+        } else {
+            /* make sure that at least our own signer cert is included first */
+            if (!X509_add_cert(msg->extraCerts, ctx->cert, flags_prepend))
+                return 0;
             ossl_cmp_debug(ctx,
-                           "succeeded building chain for own CMP signer cert");
+                           "fallback: adding just own CMP signer cert");
         }
     }
 

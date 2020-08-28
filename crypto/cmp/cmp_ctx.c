@@ -189,6 +189,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     sk_X509_pop_free(ctx->untrusted, X509_free);
 
     X509_free(ctx->cert);
+    sk_X509_pop_free(ctx->chain, X509_free);
     EVP_PKEY_free(ctx->pkey);
     ASN1_OCTET_STRING_free(ctx->referenceValue);
     if (ctx->secretValue != NULL)
@@ -489,11 +490,7 @@ int ossl_cmp_ctx_set1_newChain(OSSL_CMP_CTX *ctx, STACK_OF(X509) *newChain)
     return (ctx->newChain = X509_chain_up_ref(newChain)) != NULL;
 }
 
-/*
- * Returns the stack of certificates received in a response message.
- * The stack is duplicated so the caller must handle freeing it!
- * Returns pointer to created stack on success, NULL on error
- */
+/* Returns the stack of extraCerts received in CertRepMessage, NULL on error */
 STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx)
 {
     if (ctx == NULL) {
@@ -523,7 +520,7 @@ int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
 }
 
 /*
- * Duplicate and set the given stack as the new stack of X509
+ * Copies any given stack as the new stack of X509
  * certificates to send out in the extraCerts field.
  */
 int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
@@ -596,7 +593,7 @@ STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx)
 }
 
 /*
- * Duplicate and copy the given stack of certificates to the given
+ * Copies any given stack of certificates to the given
  * OSSL_CMP_CTX structure so that they may be retrieved later.
  */
 int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
@@ -766,7 +763,7 @@ int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
         return 0;
     }
     ossl_cmp_debug(ctx, "success building chain for own CMP signer cert");
-    sk_X509_pop_free(chain, X509_free); /* TODO(3.0) replace this by 'ctx->chain = chain;' when ctx->chain is available */    
+    ctx->chain = chain;
     return 1;
 }
 
