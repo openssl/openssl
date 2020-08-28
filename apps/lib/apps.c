@@ -702,7 +702,7 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
     const char *propq = app_get0_propq();
     int ncerts = 0;
     int ncrls = 0;
-    const char *failed = NULL;
+    const char *failed = "any";
     /* TODO make use of the engine reference 'eng' when loading pkeys */
 
     if (ppkey != NULL)
@@ -714,14 +714,14 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
     if (pcerts != NULL && *pcerts == NULL
             && (*pcerts = sk_X509_new_null()) == NULL) {
         BIO_printf(bio_err, "Out of memory");
-        return 0;
+        goto end;
     }
     if (pcrl != NULL)
         *pcrl = NULL;
     if (pcrls != NULL && *pcrls == NULL
             && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
         BIO_printf(bio_err, "Out of memory");
-        return 0;
+        goto end;
     }
 
     if (desc == NULL)
@@ -753,6 +753,7 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         goto end;
     }
 
+    failed = NULL;
     while (!OSSL_STORE_eof(ctx)) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
         int type = info == NULL ? 0 : OSSL_STORE_INFO_get_type(info);
@@ -806,17 +807,19 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
 
  end:
     OSSL_STORE_close(ctx);
-    if (ppkey != NULL && *ppkey == NULL)
-        failed = "key";
-    else if ((pcert != NULL || pcerts != NULL) && ncerts == 0)
-        failed = "cert";
-    else if ((pcrl != NULL || pcrls != NULL) && ncrls == 0)
-        failed = "CRL";
-    if (failed != NULL) {
-        BIO_printf(bio_err, "Could not read any %s of %s from %s\n",
-                   failed, desc, uri);
-        ERR_print_errors(bio_err);
+    if (failed == NULL) {
+        if (ppkey != NULL && *ppkey == NULL)
+            failed = "key";
+        else if ((pcert != NULL || pcerts != NULL) && ncerts == 0)
+            failed = "cert";
+        else if ((pcrl != NULL || pcrls != NULL) && ncrls == 0)
+            failed = "CRL";
+        if (failed != NULL)
+            BIO_printf(bio_err, "Could not read any %s of %s from %s\n",
+                       failed, desc, uri);
     }
+    if (failed != NULL)
+        ERR_print_errors(bio_err);
     return failed == NULL;
 }
 
