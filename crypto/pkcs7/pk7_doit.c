@@ -529,6 +529,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
                 md = EVP_get_digestbyname(name);
 
             if (md == NULL) {
+                (void)ERR_clear_last_mark();
                 PKCS7err(PKCS7_F_PKCS7_DATADECODE,
                          PKCS7_R_UNKNOWN_DIGEST_TYPE);
                 goto err;
@@ -1154,8 +1155,10 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         else
             md = EVP_get_digestbynid(md_type);
 
-        if (md == NULL || !EVP_VerifyInit_ex(mdc_tmp, md, NULL))
+        if (md == NULL || !EVP_VerifyInit_ex(mdc_tmp, md, NULL)) {
+            (void)ERR_clear_last_mark();
             goto err;
+        }
         (void)ERR_pop_to_mark();
 
         alen = ASN1_item_i2d((ASN1_VALUE *)sk, &abuf,
