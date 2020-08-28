@@ -483,7 +483,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         /* data_body is NULL if the optional EncryptedContent is missing. */
         data_body = p7->d.enveloped->enc_data->enc_data;
         name = OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm));
-	
+
         (void)ERR_set_mark();
         evp_cipher = EVP_CIPHER_fetch(p7_ctx->libctx, name, p7_ctx->propq);
         if (evp_cipher != NULL)
