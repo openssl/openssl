@@ -1,0 +1,4 @@
+---
+seq:
+    - seq: *thread*
+    - par: **

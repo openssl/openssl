@@ -5,7 +5,11 @@
 CRYPTO_THREAD_run_once,
 CRYPTO_THREAD_lock_new, CRYPTO_THREAD_read_lock, CRYPTO_THREAD_write_lock,
 CRYPTO_THREAD_unlock, CRYPTO_THREAD_lock_free,
-CRYPTO_atomic_add - OpenSSL thread support
+CRYPTO_atomic_add, CRYPTO_mem_barrier,
+CRYPTO_MUTEX_create, CRYPTO_MUTEX_init, CRYPTO_MUTEX_lock,
+CRYPTO_MUTEX_try_lock, CRYPTO_MUTEX_unlock, CRYPTO_MUTEX_destroy,
+CRYPTO_CONDVAR_wait, CRYPTO_CONDVAR_create, CRYPTO_CONDVAR_init,
+CRYPTO_CONDVAR_broadcast, CRYPTO_CONDVAR_destroy - OpenSSL thread support
 
 =head1 SYNOPSIS
 
@@ -21,6 +25,22 @@ CRYPTO_atomic_add - OpenSSL thread support
  void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
  int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
+
+ CRYPTO_MUTEX CRYPTO_MUTEX_create(void);
+ int CRYPTO_MUTEX_init(CRYPTO_MUTEX mutex);
+ void CRYPTO_MUTEX_lock(CRYPTO_MUTEX mutex);
+ int CRYPTO_MUTEX_try_lock(CRYPTO_MUTEX mutex);
+ void CRYPTO_MUTEX_unlock(CRYPTO_MUTEX mutex);
+ void CRYPTO_MUTEX_destroy(CRYPTO_MUTEX* mutex);
+ void CRYPTO_CONDVAR_wait(CRYPTO_CONDVAR cv, CRYPTO_MUTEX mutex);
+
+ CRYPTO_CONDVAR CRYPTO_CONDVAR_create(void);
+ void CRYPTO_CONDVAR_wait(CRYPTO_CONDVAR cv, CRYPTO_MUTEX mutex);
+ int CRYPTO_CONDVAR_init(CRYPTO_CONDVAR cv);
+ void CRYPTO_CONDVAR_broadcast(CRYPTO_CONDVAR cv);
+ void CRYPTO_CONDVAR_destroy(CRYPTO_CONDVAR* cv);
+
+ void CRYPTO_mem_barrier(void);
 
 =head1 DESCRIPTION
 
@@ -74,6 +94,47 @@ result of the operation in B<ret>. B<lock> will be locked, unless atomic
 operations are supported on the specific platform. Because of this, if a
 variable is modified by CRYPTO_atomic_add() then CRYPTO_atomic_add() must
 be the only way that the variable is modified.
+
+=item *
+
+CRYPTO_MUTEX_create() creates an architecture dependent mutex object.
+
+=item *
+
+CRYPTO_MUTEX_init() initializes a mutex object from CRYPTO_MUTEX_CREATE().
+
+=item *
+
+CRYPTO_MUTEX_lock() locks the mutex.
+
+=item *
+
+CRYPTO_MUTEX_unlock() unlocks the mutex.
+
+=item *
+
+CRYPTO_MUTEX_destroy() deinitializes the mutex and frees associated data
+
+=item *
+
+CRYPTO_CONDVAR_create() creates a conditional variable.
+
+=item *
+
+CRYPTO_CONDVAR_init() initializes a conditional variable.
+
+=item *
+
+CRYPTO_CONDVAR_wait() expects an acquired mutex and awaits a broadcast.
+
+=item *
+
+CRYPTO_CONDVAR_broadcast() executes a broadcast for a conditional variable.
+
+=item *
+
+CRYPTO_CONDVAR_destroy() deinitializes frees associated data with the
+conditional variable
 
 =back
 

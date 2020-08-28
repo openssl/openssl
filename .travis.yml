@@ -30,49 +30,49 @@ compiler:
 
 env:
     # Note: env entry here must exactly match the value in the exclude: table below that contains env:, otherwise it will not find a match.
-    - CONFIG_OPTS="" DESTDIR="_install"
-    - CONFIG_OPTS="no-asm --debug --strict-warnings no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
-    - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
+    - CONFIG_OPTS="" DESTDIR="_install" HARNESS_RULESFILE=.rules.yml
+    - CONFIG_OPTS="no-asm --debug --strict-warnings no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1" HARNESS_RULESFILE=.rules.yml
+    - CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi" HARNESS_RULESFILE=.rules.yml
 
 jobs:
     exclude:
         - os: linux
           compiler: clang
-          env: CONFIG_OPTS="" DESTDIR="_install"
+          env: CONFIG_OPTS="" DESTDIR="_install" HARNESS_RULESFILE=.rules.yml
         - os: linux
           compiler: clang
-          env: CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings --with-rand-seed=rdcpu,os -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
+          env: CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings --with-rand-seed=rdcpu,os -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi" HARNESS_RULESFILE=.rules.yml
         - os: osx
           compiler: gcc
         - os: osx
-          env: CONFIG_OPTS="no-asm --debug --strict-warnings no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1"
+          env: CONFIG_OPTS="no-asm --debug --strict-warnings no-afalgeng no-shared enable-rc5 enable-md2 -fsanitize=address" LSAN_OPTIONS="report_objects=1" HARNESS_RULESFILE=.rules.yml
     include:
         - os: linux
           arch: arm64
           compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings" MAKEVERBOSE="yes"
+          env: CONFIG_OPTS="--strict-warnings" MAKEVERBOSE="yes" HARNESS_RULESFILE=.rules.yml
         - os: linux
           arch: arm64
           compiler: gcc
-          env: CONFIG_OPTS="no-asm no-makedepend no-deprecated enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi"
+          env: CONFIG_OPTS="no-asm no-makedepend no-deprecated enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" GENERATE="yes" CPPFLAGS="-ansi" HARNESS_RULESFILE=.rules.yml
         - os: linux
           arch: s390x
           compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings"
+          env: CONFIG_OPTS="--strict-warnings" HARNESS_RULESFILE=.rules.yml
         - os: linux-ppc64le
           compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings"
+          env: CONFIG_OPTS="--strict-warnings" HARNESS_RULESFILE=.rules.yml
         - os: linux
           compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings no-ec enable-trace enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd" COMMENT="Move to the BORINGTEST build when interoperable"
+          env: CONFIG_OPTS="--strict-warnings no-ec enable-trace enable-ssl-trace enable-zlib enable-zlib-dynamic enable-crypto-mdebug enable-crypto-mdebug-backtrace enable-egd" COMMENT="Move to the BORINGTEST build when interoperable" HARNESS_RULESFILE=.rules.yml
         - os: linux
           dist: trusty
           compiler: clang
-          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES"
+          env: CONFIG_OPTS="--strict-warnings -D__NO_STRING_INLINES" HARNESS_RULESFILE=.rules.yml
         - os: linux
           dist: xenial
           compiler: gcc
-          env: CONFIG_OPTS="--strict-warnings no-deprecated enable-rc5 enable-md2"
+          env: CONFIG_OPTS="--strict-warnings no-deprecated enable-rc5 enable-md2" HARNESS_RULESFILE=.rules.yml
         - os: linux
           addons:
               apt:
@@ -80,14 +80,14 @@ jobs:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes"
+          env: CONFIG_OPTS="no-stdio" BUILDONLY="yes" HARNESS_RULESFILE=.rules.yml
         - os: linux
           addons:
               apt:
                   packages:
                       - golang-1.10
           compiler: gcc
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared enable-buildtest-c++ -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug --coverage no-asm enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-ssl3 enable-ssl3-method enable-nextprotoneg enable-weak-ssl-ciphers no-shared enable-buildtest-c++ -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION" COVERALLS="yes" BORINGSSL_TESTS="yes" CXX="g++" HARNESS_RULESFILE=.rules.yml
         - os: linux
           addons:
               apt:
@@ -97,16 +97,16 @@ jobs:
                       - libtest2-suite-perl
           compiler: gcc
           # External test pyca-cryptography temporarily disabled due to long term travis failures
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++" BORINGSSL_TESTS="yes" CXX="g++" TESTS="test_external_boringssl test_external_krb5 test_external_gost_engine"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="--debug enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-external-tests enable-buildtest-c++" BORINGSSL_TESTS="yes" CXX="g++" TESTS="test_external_boringssl test_external_krb5 test_external_gost_engine" HARNESS_RULESFILE=.rules.yml
         - os: linux
           compiler: clang
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -Wno-unused-command-line-argument"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="enable-msan disable-afalgeng -Wno-unused-command-line-argument" HARNESS_RULESFILE=.rules.yml
         - os: linux
           compiler: clang
-          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -Wno-unused-command-line-argument" CXX="clang++"
+          env:  EXTENDED_TEST="yes" CONFIG_OPTS="no-asm enable-ubsan enable-rc5 enable-md2 enable-ssl3 enable-ssl3-method enable-nextprotoneg no-shared enable-buildtest-c++ -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION -Wno-unused-command-line-argument" CXX="clang++" HARNESS_RULESFILE=.rules.yml
         - os: linux
           compiler: gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-buildtest-c++" OPENSSL_TEST_RAND_ORDER=0
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="--debug no-asm enable-asan enable-ubsan enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 enable-buildtest-c++" OPENSSL_TEST_RAND_ORDER=0 HARNESS_RULESFILE=.rules.yml
         - os: linux
           dist: xenial
           addons:
@@ -115,7 +115,7 @@ jobs:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: i686-w64-mingw32-gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" HARNESS_RULESFILE=.rules.yml
         - os: linux
           dist: xenial
           addons:
@@ -124,7 +124,7 @@ jobs:
                       - binutils-mingw-w64
                       - gcc-mingw-w64
           compiler: x86_64-w64-mingw32-gcc
-          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic"
+          env: EXTENDED_TEST="yes" CONFIG_OPTS="no-pic" HARNESS_RULESFILE=.rules.yml
         - os: linux
           language: python
           python: 3.7
@@ -137,7 +137,7 @@ jobs:
           script: true
         - os: linux
           compiler: gcc
-          env: CONFIGURE_TARGET="linux-generic32" MARKDOWNLINT="yes" CONFIG_OPTS="--strict-warnings no-shared no-dso no-pic no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-cmp no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-ktls no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-siv no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT"
+          env: CONFIGURE_TARGET="linux-generic32" MARKDOWNLINT="yes" CONFIG_OPTS="--strict-warnings no-shared no-dso no-pic no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-cmp no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-ktls no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-siv no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_NO_SECURE_MEMORY -DOPENSSL_SMALL_FOOTPRINT" HARNESS_RULESFILE=.rules.yml
 
 
 before_script:

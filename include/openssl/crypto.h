@@ -80,6 +80,58 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock);
 
 int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock);
 
+#if defined(OPENSSL_SYS_WINDOWS) || defined(_WIN32) || defined(__CYGWIN__)
+typedef void (*CRYPTO_SIGNAL_CALLBACK)(long);
+#else
+typedef void (*CRYPTO_SIGNAL_CALLBACK)(int);
+#endif
+
+typedef struct {
+    long signal;
+    CRYPTO_SIGNAL_CALLBACK callback;
+} CRYPTO_SIGNAL;
+
+int CRYPTO_SIGNAL_block(CRYPTO_SIGNAL *p);
+int CRYPTO_SIGNAL_block_set(CRYPTO_SIGNAL **props);
+int CRYPTO_SIGNAL_unblock_all(void);
+
+# if defined(OPENSSL_THREADS)
+
+typedef enum {
+    CRYPTO_THREAD_START_AWAIT = 1 << 0
+} CRYPTO_THREAD_START_OPTIONS;
+
+typedef enum {
+    CRYPTO_WORKER_TERMINATE,
+    CRYPTO_WORKER_POLL
+} CRYPTO_WORKER_CMD;
+
+typedef CRYPTO_WORKER_CMD (*CRYPTO_WORKER_CALLBACK)(OPENSSL_CTX *, size_t);
+
+void CRYPTO_mem_barrier(void);
+
+int CRYPTO_THREAD_enabled(OPENSSL_CTX *ctx);
+int CRYPTO_THREAD_enable(OPENSSL_CTX *ctx, int max_threads);
+int CRYPTO_THREAD_disable(OPENSSL_CTX *ctx);
+int CRYPTO_THREAD_cap(OPENSSL_CTX *ctx, int max_threads);
+int CRYPTO_THREAD_spawn_worker(OPENSSL_CTX *ctx, CRYPTO_WORKER_CALLBACK cb);
+
+typedef void * CRYPTO_MUTEX;
+CRYPTO_MUTEX CRYPTO_MUTEX_create(void);
+int CRYPTO_MUTEX_init(CRYPTO_MUTEX mutex);
+void CRYPTO_MUTEX_lock(CRYPTO_MUTEX mutex);
+int CRYPTO_MUTEX_try_lock(CRYPTO_MUTEX mutex);
+void CRYPTO_MUTEX_unlock(CRYPTO_MUTEX mutex);
+void CRYPTO_MUTEX_destroy(CRYPTO_MUTEX* mutex);
+
+typedef void* CRYPTO_CONDVAR;
+CRYPTO_CONDVAR CRYPTO_CONDVAR_create(void);
+void CRYPTO_CONDVAR_wait(CRYPTO_CONDVAR cv, CRYPTO_MUTEX mutex);
+int CRYPTO_CONDVAR_init(CRYPTO_CONDVAR cv);
+void CRYPTO_CONDVAR_broadcast(CRYPTO_CONDVAR cv);
+void CRYPTO_CONDVAR_destroy(CRYPTO_CONDVAR* cv);
+# endif /* OPENSSL_THREADS */
+
 /* No longer needed, so this is a no-op */
 #define OPENSSL_malloc_init() while(0) continue
 

@@ -1,0 +1,4 @@
+LIBS=../../libcrypto
+SOURCE[../../libcrypto]=\
+        api.c worker.c task.c arch.c \
+	arch/thread_win.c arch/thread_posix.c arch/thread_none.c
