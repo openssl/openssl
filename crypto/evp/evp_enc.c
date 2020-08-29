@@ -174,10 +174,8 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
                                                       : OBJ_nid2sn(cipher->nid),
                              "");
 
-        if (provciph == NULL) {
-            EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        if (provciph == NULL)
             return 0;
-        }
         cipher = provciph;
         EVP_CIPHER_free(ctx->fetched_cipher);
         ctx->fetched_cipher = provciph;
