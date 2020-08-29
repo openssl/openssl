@@ -381,10 +381,8 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
                                          strtype != NULL ? strtype
                                                          : OBJ_nid2sn(nidtype),
                                          propq);
-        if (ctx == NULL) {
-            EVPerr(0, ERR_R_MALLOC_FAILURE);
+        if (ctx == NULL)
             goto err;
-        }
         /* May fail if no provider available */
         ERR_set_mark();
         if (EVP_PKEY_key_fromdata_init(ctx) == 1) {
