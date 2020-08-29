@@ -37,38 +37,59 @@
  * Verify that the passed in L, N pair for DH or DSA is valid.
  * Returns 0 if invalid, otherwise it returns the security strength.
  */
+
+#ifdef FIPS_MODULE
 static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
 {
     if (type == FFC_PARAM_TYPE_DH) {
-#ifndef FIPS_MODULE
-        /* Allow legacy 1024/160 in non fips mode */
-        if (L == 1024 && N == 160)
-            return 80;
-#endif
         /* Valid DH L,N parameters from SP800-56Ar3 5.5.1 Table 1 */
         if (L == 2048 && (N == 224 || N == 256))
             return 112;
-#ifndef OPENSSL_NO_DH
+# ifndef OPENSSL_NO_DH
         DHerr(0, DH_R_BAD_FFC_PARAMETERS);
-#endif
+# endif
     } else if (type == FFC_PARAM_TYPE_DSA) {
         /* Valid DSA L,N parameters from FIPS 186-4 Section 4.2 */
-#ifdef FIPS_MODULE
         /* In fips mode 1024/160 can only be used for verification */
-        if (verify)
-#endif
-            if (L == 1024 && N == 160)
-                return 80;
+        if (verify && L == 1024 && N == 160)
+            return 80;
         if (L == 2048 && (N == 224 || N == 256))
             return 112;
         if (L == 3072 && N == 256)
             return 128;
-#ifndef OPENSSL_NO_DSA
+# ifndef OPENSSL_NO_DSA
         DSAerr(0, DSA_R_BAD_FFC_PARAMETERS);
-#endif
+# endif
     }
     return 0;
 }
+#else
+static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
+{
+    if (type == FFC_PARAM_TYPE_DH) {
+        /* Allow legacy 1024/160 in non fips mode */
+        if (L == 1024 && N == 160)
+            return 80;
+        /* Valid DH L,N parameters from SP800-56Ar3 5.5.1 Table 1 */
+        if (L == 2048 && (N == 224 || N == 256))
+            return 112;
+# ifndef OPENSSL_NO_DH
+        DHerr(0, DH_R_BAD_FFC_PARAMETERS);
+# endif
+    } else if (type == FFC_PARAM_TYPE_DSA) {
+        if (L == 1024 && N == 160)
+            return 80;
+        if (L == 2048 && (N == 224 || N == 256))
+            return 112;
+        if (L == 3072 && N == 256)
+            return 128;
+# ifndef OPENSSL_NO_DSA
+        DSAerr(0, DSA_R_BAD_FFC_PARAMETERS);
+# endif
+    }
+    return 0;
+}
+#endif /* FIPS_MODULE */
 
 /* FIPS186-4 A.2.1 Unverifiable Generation of Generator g */
 static int generate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont, BIGNUM *g,

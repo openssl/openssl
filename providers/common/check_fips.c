@@ -22,7 +22,8 @@
 /*
  * FIPS requires a minimum security strength of 112 bits (for encryption or
  * signing), and for legacy purposes 80 bits (for decryption or verifying).
- * Set protect = 1 for encryption or signing operations, or 0 otherwise.
+ * Set protect = 1 for encryption or signing operations, or 0 otherwise. See
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf.
  */
 int rsa_check_key(const RSA *rsa, int protect)
 {

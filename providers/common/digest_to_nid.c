@@ -21,19 +21,14 @@
 int digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it, size_t it_len)
 {
     size_t i;
-    int mdnid = NID_undef;
 
     if (md == NULL)
-        goto end;
+        return NID_undef;
 
-    for (i = 0; i < it_len; i++) {
-        if (EVP_MD_is_a(md, it[i].ptr)) {
-            mdnid = (int)it[i].id;
-            break;
-        }
-    }
- end:
-    return mdnid;
+    for (i = 0; i < it_len; i++)
+        if (EVP_MD_is_a(md, it[i].ptr))
+            return (int)it[i].id;
+    return NID_undef;
 }
 
 /*
