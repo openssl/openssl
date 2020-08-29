@@ -1845,6 +1845,7 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
                     ossl_provider_library_context(keymgmt->prov);
                 EVP_PKEY_CTX *pctx =
                     EVP_PKEY_CTX_new_from_pkey(libctx, *dest, NULL);
+
                 if (pctx == NULL)
                     ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
 
@@ -1853,24 +1854,10 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
                                           OSSL_KEYMGMT_SELECT_ALL,
                                           (*dest)->ameth->import_from,
                                           pctx)) {
-                    /*
-                     * Save the provider side data in the operation cache,
-                     * so they'll find it again.  evp_pkey_free_it() cleared
-                     * the cache, so it's safe to assume slot zero is free.
-                     * Note that evp_keymgmt_util_cache_keydata() increments
-                     * keymgmt's reference count.
-                     */
-                    evp_keymgmt_util_cache_keydata(*dest, 0, keymgmt, keydata);
-                    EVP_PKEY_CTX_free(pctx);
-
                     /* Synchronize the dirty count */
                     (*dest)->dirty_cnt_copy = (*dest)->ameth->dirty_cnt(*dest);
 
-                    /*
-                     * evp_keymgmt_util_cache_keydata() increased the
-                     * reference count...
-                     */
-                    EVP_KEYMGMT_free(keymgmt);
+                    EVP_PKEY_CTX_free(pctx);
                     return 1;
                 }
                 EVP_PKEY_CTX_free(pctx);
@@ -1913,7 +1900,22 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         tmp_copy.attributes = NULL;
         memset(&tmp_copy.ex_data, 0, sizeof(tmp_copy.ex_data));
 
-        /* Clear things we know are copied by evp_pkey_copy_downgraded() */
+        /*
+         * Save the provider side data in the operation cache, so they'll
+         * find it again.  |pk| is new, so it's safe to assume slot zero
+         * is free.
+         * Note that evp_keymgmt_util_cache_keydata() increments keymgmt's
+         * reference count, so we need to decrement it, or there will be a
+         * leak.
+         */
+        evp_keymgmt_util_cache_keydata(pk, 0, tmp_copy.keymgmt,
+                                       tmp_copy.keydata);
+        EVP_KEYMGMT_free(tmp_copy.keymgmt);
+
+        /*
+         * Clear keymgmt and keydata from |tmp_copy|, or they'll get
+         * inadvertently freed.
+         */
         tmp_copy.keymgmt = NULL;
         tmp_copy.keydata = NULL;
 
