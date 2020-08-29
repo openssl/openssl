@@ -65,7 +65,7 @@ my @cmp_basic_tests = (
 );
 
 my $rsp_cert = "signer_only.crt";
-my $outfile = "test.cert.pem";
+my $outfile = "test.certout.pem";
 my $secret = "pass:test";
 
 # this uses the mock server directly in the cmp app, without TCP
@@ -87,7 +87,7 @@ sub use_mock_srv_internally
                 "-certout" , $outfile]))
        && compare_text($outfile, $rsp_cert) == 0,
        "CMP app with -use_mock_srv and -poll_count 1");
-    unlink $outfile;
+    # not unlinking $outfile
 }
 
 # the CMP server configuration consists of:
@@ -200,7 +200,7 @@ sub test_cmp_cli_aspect {
             }
         }
     };
-    unlink "test.cert.pem", "test.cacerts.pem", "test.extracerts.pem";
+    # not unlinking "test.cert.pem", "test.cacerts.pem", "test.extracerts.pem"
 }
 
 indir data_dir() => sub {
