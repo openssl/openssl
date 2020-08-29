@@ -125,8 +125,12 @@ int genpkey_main(int argc, char **argv)
             }
             break;
         case OPT_GENPARAM:
-            if (ctx != NULL)
+            if (ctx != NULL) {
+                BIO_printf(bio_err,
+                           "%s: '-genparam' option must be set before"
+                            " the '-algorithm' option.\n", prog);
                 goto opthelp;
+            }
             do_param = 1;
             break;
         case OPT_TEXT:
