@@ -29,13 +29,14 @@
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+#include "prov/check.h"
 
 #include <stdlib.h>
 
 static OSSL_FUNC_asym_cipher_newctx_fn rsa_newctx;
-static OSSL_FUNC_asym_cipher_encrypt_init_fn rsa_init;
+static OSSL_FUNC_asym_cipher_encrypt_init_fn rsa_encrypt_init;
 static OSSL_FUNC_asym_cipher_encrypt_fn rsa_encrypt;
-static OSSL_FUNC_asym_cipher_decrypt_init_fn rsa_init;
+static OSSL_FUNC_asym_cipher_decrypt_init_fn rsa_decrypt_init;
 static OSSL_FUNC_asym_cipher_decrypt_fn rsa_decrypt;
 static OSSL_FUNC_asym_cipher_freectx_fn rsa_freectx;
 static OSSL_FUNC_asym_cipher_dupctx_fn rsa_dupctx;
@@ -64,6 +65,7 @@ typedef struct {
     OPENSSL_CTX *libctx;
     RSA *rsa;
     int pad_mode;
+    int operation;
     /* OAEP message digest */
     EVP_MD *oaep_md;
     /* message digest for MGF1 */
@@ -90,7 +92,7 @@ static void *rsa_newctx(void *provctx)
     return prsactx;
 }
 
-static int rsa_init(void *vprsactx, void *vrsa)
+static int rsa_init(void *vprsactx, void *vrsa, int operation)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
@@ -101,6 +103,7 @@ static int rsa_init(void *vprsactx, void *vrsa)
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
+    prsactx->operation = operation;
 
     switch (RSA_test_flags(prsactx->rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
@@ -110,8 +113,21 @@ static int rsa_init(void *vprsactx, void *vrsa)
         ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
-
+    if (!rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCRYPT)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
     return 1;
+}
+
+static int rsa_encrypt_init(void *vprsactx, void *vrsa)
+{
+    return rsa_init(vprsactx, vrsa, EVP_PKEY_OP_ENCRYPT);
+}
+
+static int rsa_decrypt_init(void *vprsactx, void *vrsa)
+{
+    return rsa_init(vprsactx, vrsa, EVP_PKEY_OP_DECRYPT);
 }
 
 static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
@@ -549,9 +565,9 @@ static const OSSL_PARAM *rsa_settable_ctx_params(ossl_unused void *provctx)
 
 const OSSL_DISPATCH rsa_asym_cipher_functions[] = {
     { OSSL_FUNC_ASYM_CIPHER_NEWCTX, (void (*)(void))rsa_newctx },
-    { OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT, (void (*)(void))rsa_init },
+    { OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT, (void (*)(void))rsa_encrypt_init },
     { OSSL_FUNC_ASYM_CIPHER_ENCRYPT, (void (*)(void))rsa_encrypt },
-    { OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT, (void (*)(void))rsa_init },
+    { OSSL_FUNC_ASYM_CIPHER_DECRYPT_INIT, (void (*)(void))rsa_decrypt_init },
     { OSSL_FUNC_ASYM_CIPHER_DECRYPT, (void (*)(void))rsa_decrypt },
     { OSSL_FUNC_ASYM_CIPHER_FREECTX, (void (*)(void))rsa_freectx },
     { OSSL_FUNC_ASYM_CIPHER_DUPCTX, (void (*)(void))rsa_dupctx },
