@@ -24,6 +24,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "prov/provider_util.h"
 #include "crypto/ec.h" /* ecdh_KDF_X9_63() */
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
@@ -110,7 +111,7 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
     pecdhctx->k = vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
-    return 1;
+    return ossl_prov_ec_check(vecdh, 1);
 }
 
 static
@@ -125,7 +126,7 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
         return 0;
     EC_KEY_free(pecdhctx->peerk);
     pecdhctx->peerk = vecdh;
-    return 1;
+    return ossl_prov_ec_check(vecdh, 1);
 }
 
 static
@@ -253,7 +254,12 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pectx->kdf_md);
         pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
-
+#ifdef FIPS_MODULE
+        if (!ossl_prov_digest_get_approved_nid(pectx->kdf_md, 1)) {
+            EVP_MD_free(pectx->kdf_md);
+            pectx->kdf_md = NULL;
+        }
+#endif
         if (pectx->kdf_md == NULL)
             return 0;
     }
