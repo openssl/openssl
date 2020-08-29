@@ -83,6 +83,23 @@ static int try_crl(struct extracted_param_data_st *, OSSL_STORE_INFO **,
 static int try_pkcs12(struct extracted_param_data_st *, OSSL_STORE_INFO **,
                       OSSL_STORE_CTX *, OPENSSL_CTX *, const char *);
 
+#define SET_ERR_MARK() ERR_set_mark()
+#define CLEAR_ERR_MARK()                                                \
+    do {                                                                \
+        int err = ERR_peek_last_error();                                \
+                                                                        \
+        if (ERR_GET_LIB(err) == ERR_LIB_ASN1                            \
+            && ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR)          \
+            ERR_pop_to_mark();                                          \
+        else                                                            \
+            ERR_clear_last_mark();                                      \
+    } while(0)
+#define RESET_ERR_MARK()                                                \
+    do {                                                                \
+        CLEAR_ERR_MARK();                                               \
+        SET_ERR_MARK();                                                 \
+    } while(0)
+
 int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
 {
     struct ossl_load_result_data_st *cbdata = arg;
@@ -123,14 +140,26 @@ int ossl_store_handle_load_result(const OSSL_PARAM params[], void *arg)
      * The helper functions return 0 on actual errors, otherwise 1, even if
      * they didn't fill out |*v|.
      */
-    if (!try_name(&helper_data, v)
-        || !try_key(&helper_data, v, ctx, provider, libctx, propq)
-        || !try_cert(&helper_data, v, libctx, propq)
-        || !try_crl(&helper_data, v, libctx, propq)
-        || !try_pkcs12(&helper_data, v, ctx, libctx, propq))
-        return 0;
+    SET_ERR_MARK();
+    if (!try_name(&helper_data, v))
+        goto err;
+    RESET_ERR_MARK();
+    if (!try_key(&helper_data, v, ctx, provider, libctx, propq))
+        goto err;
+    RESET_ERR_MARK();
+    if (!try_cert(&helper_data, v, libctx, propq))
+        goto err;
+    RESET_ERR_MARK();
+    if (!try_crl(&helper_data, v, libctx, propq))
+        goto err;
+    RESET_ERR_MARK();
+    if (!try_pkcs12(&helper_data, v, ctx, libctx, propq))
+        goto err;
+    CLEAR_ERR_MARK();
 
     return (*v != NULL);
+ err:
+    return 0;
 }
 
 static int try_name(struct extracted_param_data_st *data, OSSL_STORE_INFO **v)
