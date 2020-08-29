@@ -132,3 +132,4 @@ void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
 int ossl_prov_digest_md_to_nid(const EVP_MD *md, const OSSL_ITEM *it,
                                size_t it_len);
 int ossl_prov_digest_get_approved_nid(const EVP_MD *md, int sha1_allowed);
+int ossl_prov_ec_check(const EC_KEY *ec, int protect);

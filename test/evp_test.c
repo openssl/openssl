@@ -1627,8 +1627,11 @@ static int pderive_test_parse(EVP_TEST *t,
         EVP_PKEY *peer;
         if (find_key(&peer, value, public_keys) == 0)
             return -1;
-        if (EVP_PKEY_derive_set_peer(kdata->ctx, peer) <= 0)
-            return -1;
+        if (EVP_PKEY_derive_set_peer(kdata->ctx, peer) <= 0) {
+            t->err = "DERIVE_SET_PEER_ERROR";
+            return 1;
+        }
+        t->err = NULL;
         return 1;
     }
     if (strcmp(keyword, "SharedSecret") == 0)

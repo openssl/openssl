@@ -10,14 +10,14 @@ test-4 = 4-P-256 CipherString and Signature Algorithm Selection
 test-5 = 5-ECDSA CipherString Selection, no ECDSA certificate
 test-6 = 6-ECDSA Signature Algorithm Selection
 test-7 = 7-ECDSA Signature Algorithm Selection SHA384
-test-8 = 8-ECDSA Signature Algorithm Selection SHA1
-test-9 = 9-ECDSA Signature Algorithm Selection compressed point
-test-10 = 10-ECDSA Signature Algorithm Selection, no ECDSA certificate
-test-11 = 11-RSA Signature Algorithm Selection
-test-12 = 12-RSA-PSS Signature Algorithm Selection
-test-13 = 13-RSA key exchange with all RSA certificate types
-test-14 = 14-Suite B P-256 Hash Algorithm Selection
-test-15 = 15-Suite B P-384 Hash Algorithm Selection
+test-8 = 8-ECDSA Signature Algorithm Selection compressed point
+test-9 = 9-ECDSA Signature Algorithm Selection, no ECDSA certificate
+test-10 = 10-RSA Signature Algorithm Selection
+test-11 = 11-RSA-PSS Signature Algorithm Selection
+test-12 = 12-RSA key exchange with all RSA certificate types
+test-13 = 13-Suite B P-256 Hash Algorithm Selection
+test-14 = 14-Suite B P-384 Hash Algorithm Selection
+test-15 = 15-ECDSA Signature Algorithm Selection SHA1
 test-16 = 16-Ed25519 CipherString and Signature Algorithm Selection
 test-17 = 17-Ed448 CipherString and Signature Algorithm Selection
 test-18 = 18-ECDSA with brainpool
@@ -319,48 +319,14 @@ ExpectedServerSignType = EC
 
 # ===========================================================
 
-[8-ECDSA Signature Algorithm Selection SHA1]
-ssl_conf = 8-ECDSA Signature Algorithm Selection SHA1-ssl
+[8-ECDSA Signature Algorithm Selection compressed point]
+ssl_conf = 8-ECDSA Signature Algorithm Selection compressed point-ssl
 
-[8-ECDSA Signature Algorithm Selection SHA1-ssl]
-server = 8-ECDSA Signature Algorithm Selection SHA1-server
-client = 8-ECDSA Signature Algorithm Selection SHA1-client
+[8-ECDSA Signature Algorithm Selection compressed point-ssl]
+server = 8-ECDSA Signature Algorithm Selection compressed point-server
+client = 8-ECDSA Signature Algorithm Selection compressed point-client
 
-[8-ECDSA Signature Algorithm Selection SHA1-server]
-Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT:@SECLEVEL=0
-ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
-ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-key.pem
-Ed25519.Certificate = ${ENV::TEST_CERTS_DIR}/server-ed25519-cert.pem
-Ed25519.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ed25519-key.pem
-Ed448.Certificate = ${ENV::TEST_CERTS_DIR}/server-ed448-cert.pem
-Ed448.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ed448-key.pem
-MaxProtocol = TLSv1.2
-PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
-
-[8-ECDSA Signature Algorithm Selection SHA1-client]
-CipherString = DEFAULT:@SECLEVEL=0
-SignatureAlgorithms = ECDSA+SHA1
-VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
-VerifyMode = Peer
-
-[test-8]
-ExpectedResult = Success
-ExpectedServerCertType = P-256
-ExpectedServerSignHash = SHA1
-ExpectedServerSignType = EC
-
-
-# ===========================================================
-
-[9-ECDSA Signature Algorithm Selection compressed point]
-ssl_conf = 9-ECDSA Signature Algorithm Selection compressed point-ssl
-
-[9-ECDSA Signature Algorithm Selection compressed point-ssl]
-server = 9-ECDSA Signature Algorithm Selection compressed point-server
-client = 9-ECDSA Signature Algorithm Selection compressed point-client
-
-[9-ECDSA Signature Algorithm Selection compressed point-server]
+[8-ECDSA Signature Algorithm Selection compressed point-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-cecdsa-cert.pem
@@ -368,13 +334,13 @@ ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-cecdsa-key.pem
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[9-ECDSA Signature Algorithm Selection compressed point-client]
+[8-ECDSA Signature Algorithm Selection compressed point-client]
 CipherString = DEFAULT
 SignatureAlgorithms = ECDSA+SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-9]
+[test-8]
 ExpectedResult = Success
 ExpectedServerCertType = P-256
 ExpectedServerSignHash = SHA256
@@ -383,39 +349,39 @@ ExpectedServerSignType = EC
 
 # ===========================================================
 
-[10-ECDSA Signature Algorithm Selection, no ECDSA certificate]
-ssl_conf = 10-ECDSA Signature Algorithm Selection, no ECDSA certificate-ssl
+[9-ECDSA Signature Algorithm Selection, no ECDSA certificate]
+ssl_conf = 9-ECDSA Signature Algorithm Selection, no ECDSA certificate-ssl
 
-[10-ECDSA Signature Algorithm Selection, no ECDSA certificate-ssl]
-server = 10-ECDSA Signature Algorithm Selection, no ECDSA certificate-server
-client = 10-ECDSA Signature Algorithm Selection, no ECDSA certificate-client
+[9-ECDSA Signature Algorithm Selection, no ECDSA certificate-ssl]
+server = 9-ECDSA Signature Algorithm Selection, no ECDSA certificate-server
+client = 9-ECDSA Signature Algorithm Selection, no ECDSA certificate-client
 
-[10-ECDSA Signature Algorithm Selection, no ECDSA certificate-server]
+[9-ECDSA Signature Algorithm Selection, no ECDSA certificate-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[10-ECDSA Signature Algorithm Selection, no ECDSA certificate-client]
+[9-ECDSA Signature Algorithm Selection, no ECDSA certificate-client]
 CipherString = DEFAULT
 SignatureAlgorithms = ECDSA+SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-10]
+[test-9]
 ExpectedResult = ServerFail
 
 
 # ===========================================================
 
-[11-RSA Signature Algorithm Selection]
-ssl_conf = 11-RSA Signature Algorithm Selection-ssl
+[10-RSA Signature Algorithm Selection]
+ssl_conf = 10-RSA Signature Algorithm Selection-ssl
 
-[11-RSA Signature Algorithm Selection-ssl]
-server = 11-RSA Signature Algorithm Selection-server
-client = 11-RSA Signature Algorithm Selection-client
+[10-RSA Signature Algorithm Selection-ssl]
+server = 10-RSA Signature Algorithm Selection-server
+client = 10-RSA Signature Algorithm Selection-client
 
-[11-RSA Signature Algorithm Selection-server]
+[10-RSA Signature Algorithm Selection-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
@@ -427,13 +393,13 @@ Ed448.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ed448-key.pem
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[11-RSA Signature Algorithm Selection-client]
+[10-RSA Signature Algorithm Selection-client]
 CipherString = DEFAULT
 SignatureAlgorithms = RSA+SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-11]
+[test-10]
 ExpectedResult = Success
 ExpectedServerCertType = RSA
 ExpectedServerSignHash = SHA256
@@ -442,14 +408,14 @@ ExpectedServerSignType = RSA
 
 # ===========================================================
 
-[12-RSA-PSS Signature Algorithm Selection]
-ssl_conf = 12-RSA-PSS Signature Algorithm Selection-ssl
+[11-RSA-PSS Signature Algorithm Selection]
+ssl_conf = 11-RSA-PSS Signature Algorithm Selection-ssl
 
-[12-RSA-PSS Signature Algorithm Selection-ssl]
-server = 12-RSA-PSS Signature Algorithm Selection-server
-client = 12-RSA-PSS Signature Algorithm Selection-client
+[11-RSA-PSS Signature Algorithm Selection-ssl]
+server = 11-RSA-PSS Signature Algorithm Selection-server
+client = 11-RSA-PSS Signature Algorithm Selection-client
 
-[12-RSA-PSS Signature Algorithm Selection-server]
+[11-RSA-PSS Signature Algorithm Selection-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
@@ -461,13 +427,13 @@ Ed448.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ed448-key.pem
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[12-RSA-PSS Signature Algorithm Selection-client]
+[11-RSA-PSS Signature Algorithm Selection-client]
 CipherString = DEFAULT
 SignatureAlgorithms = RSA-PSS+SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-12]
+[test-11]
 ExpectedResult = Success
 ExpectedServerCertType = RSA
 ExpectedServerSignHash = SHA256
@@ -476,41 +442,41 @@ ExpectedServerSignType = RSA-PSS
 
 # ===========================================================
 
-[13-RSA key exchange with all RSA certificate types]
-ssl_conf = 13-RSA key exchange with all RSA certificate types-ssl
+[12-RSA key exchange with all RSA certificate types]
+ssl_conf = 12-RSA key exchange with all RSA certificate types-ssl
 
-[13-RSA key exchange with all RSA certificate types-ssl]
-server = 13-RSA key exchange with all RSA certificate types-server
-client = 13-RSA key exchange with all RSA certificate types-client
+[12-RSA key exchange with all RSA certificate types-ssl]
+server = 12-RSA key exchange with all RSA certificate types-server
+client = 12-RSA key exchange with all RSA certificate types-client
 
-[13-RSA key exchange with all RSA certificate types-server]
+[12-RSA key exchange with all RSA certificate types-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 PSS.Certificate = ${ENV::TEST_CERTS_DIR}/server-pss-cert.pem
 PSS.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-pss-key.pem
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[13-RSA key exchange with all RSA certificate types-client]
+[12-RSA key exchange with all RSA certificate types-client]
 CipherString = kRSA
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
-[test-13]
+[test-12]
 ExpectedResult = Success
 ExpectedServerCertType = RSA
 
 
 # ===========================================================
 
-[14-Suite B P-256 Hash Algorithm Selection]
-ssl_conf = 14-Suite B P-256 Hash Algorithm Selection-ssl
+[13-Suite B P-256 Hash Algorithm Selection]
+ssl_conf = 13-Suite B P-256 Hash Algorithm Selection-ssl
 
-[14-Suite B P-256 Hash Algorithm Selection-ssl]
-server = 14-Suite B P-256 Hash Algorithm Selection-server
-client = 14-Suite B P-256 Hash Algorithm Selection-client
+[13-Suite B P-256 Hash Algorithm Selection-ssl]
+server = 13-Suite B P-256 Hash Algorithm Selection-server
+client = 13-Suite B P-256 Hash Algorithm Selection-client
 
-[14-Suite B P-256 Hash Algorithm Selection-server]
+[13-Suite B P-256 Hash Algorithm Selection-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = SUITEB128
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/p256-server-cert.pem
@@ -518,13 +484,13 @@ ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/p256-server-key.pem
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[14-Suite B P-256 Hash Algorithm Selection-client]
+[13-Suite B P-256 Hash Algorithm Selection-client]
 CipherString = DEFAULT
 SignatureAlgorithms = ECDSA+SHA384:ECDSA+SHA256
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
 VerifyMode = Peer
 
-[test-14]
+[test-13]
 ExpectedResult = Success
 ExpectedServerCertType = P-256
 ExpectedServerSignHash = SHA256
@@ -533,14 +499,14 @@ ExpectedServerSignType = EC
 
 # ===========================================================
 
-[15-Suite B P-384 Hash Algorithm Selection]
-ssl_conf = 15-Suite B P-384 Hash Algorithm Selection-ssl
+[14-Suite B P-384 Hash Algorithm Selection]
+ssl_conf = 14-Suite B P-384 Hash Algorithm Selection-ssl
 
-[15-Suite B P-384 Hash Algorithm Selection-ssl]
-server = 15-Suite B P-384 Hash Algorithm Selection-server
-client = 15-Suite B P-384 Hash Algorithm Selection-client
+[14-Suite B P-384 Hash Algorithm Selection-ssl]
+server = 14-Suite B P-384 Hash Algorithm Selection-server
+client = 14-Suite B P-384 Hash Algorithm Selection-client
 
-[15-Suite B P-384 Hash Algorithm Selection-server]
+[14-Suite B P-384 Hash Algorithm Selection-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = SUITEB128
 ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/p384-server-cert.pem
@@ -548,16 +514,50 @@ ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/p384-server-key.pem
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[15-Suite B P-384 Hash Algorithm Selection-client]
+[14-Suite B P-384 Hash Algorithm Selection-client]
 CipherString = DEFAULT
 SignatureAlgorithms = ECDSA+SHA256:ECDSA+SHA384
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
 VerifyMode = Peer
 
-[test-15]
+[test-14]
 ExpectedResult = Success
 ExpectedServerCertType = P-384
 ExpectedServerSignHash = SHA384
+ExpectedServerSignType = EC
+
+
+# ===========================================================
+
+[15-ECDSA Signature Algorithm Selection SHA1]
+ssl_conf = 15-ECDSA Signature Algorithm Selection SHA1-ssl
+
+[15-ECDSA Signature Algorithm Selection SHA1-ssl]
+server = 15-ECDSA Signature Algorithm Selection SHA1-server
+client = 15-ECDSA Signature Algorithm Selection SHA1-client
+
+[15-ECDSA Signature Algorithm Selection SHA1-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT:@SECLEVEL=0
+ECDSA.Certificate = ${ENV::TEST_CERTS_DIR}/server-ecdsa-cert.pem
+ECDSA.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ecdsa-key.pem
+Ed25519.Certificate = ${ENV::TEST_CERTS_DIR}/server-ed25519-cert.pem
+Ed25519.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ed25519-key.pem
+Ed448.Certificate = ${ENV::TEST_CERTS_DIR}/server-ed448-cert.pem
+Ed448.PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ed448-key.pem
+MaxProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[15-ECDSA Signature Algorithm Selection SHA1-client]
+CipherString = DEFAULT:@SECLEVEL=0
+SignatureAlgorithms = ECDSA+SHA1
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-15]
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+ExpectedServerSignHash = SHA1
 ExpectedServerSignType = EC
 
 
