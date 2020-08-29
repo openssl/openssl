@@ -44,11 +44,16 @@ MEkwEwYHKoZIzj0CAQYIKoZIzj0DAQEDMgAEQupt2Zad0qYf6hqsf46Y7cyJbG5V
 hXzA375dfGH6yIsRgRveMo6KDRK/AanSBLUj
 -----END PUBLIC KEY-----
 
-
+Availablein = default
 Derive=KAS-ECC-CDH_P-192_C0
 PeerKey=KAS-ECC-CDH_P-192_C0-Peer-PUBLIC
 Ctrl=ecdh_cofactor_mode:1
 SharedSecret=803d8ab2e5b6e6fca715737c3a82f7ce3c783124f6d51cd0
+
+Availablein = fips
+Derive=KAS-ECC-CDH_P-192_C0
+PeerKey=KAS-ECC-CDH_P-192_C0-Peer-PUBLIC
+Result = DERIVE_SET_PEER_ERROR
 
 PrivateKey=KAS-ECC-CDH_P-192_C1
 -----BEGIN PRIVATE KEY-----
