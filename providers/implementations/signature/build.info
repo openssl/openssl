@@ -5,7 +5,8 @@ $DSA_GOAL=../../libimplementations.a
 $EC_GOAL=../../libimplementations.a
 
 IF[{- !$disabled{dsa} -}]
-  SOURCE[$DSA_GOAL]=dsa.c
+  SOURCE[../../libfips.a]=dsa.c
+  SOURCE[../../libnonfips.a]=dsa.c
 ENDIF
 
 IF[{- !$disabled{ec} -}]

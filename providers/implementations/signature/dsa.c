@@ -30,18 +30,19 @@
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
+#include "prov/provider_util.h"
 #include "crypto/dsa.h"
 #include "prov/der_dsa.h"
 
 static OSSL_FUNC_signature_newctx_fn dsa_newctx;
-static OSSL_FUNC_signature_sign_init_fn dsa_signature_init;
-static OSSL_FUNC_signature_verify_init_fn dsa_signature_init;
+static OSSL_FUNC_signature_sign_init_fn dsa_sign_init;
+static OSSL_FUNC_signature_verify_init_fn dsa_verify_init;
 static OSSL_FUNC_signature_sign_fn dsa_sign;
 static OSSL_FUNC_signature_verify_fn dsa_verify;
-static OSSL_FUNC_signature_digest_sign_init_fn dsa_digest_signverify_init;
+static OSSL_FUNC_signature_digest_sign_init_fn dsa_digest_sign_init;
 static OSSL_FUNC_signature_digest_sign_update_fn dsa_digest_signverify_update;
 static OSSL_FUNC_signature_digest_sign_final_fn dsa_digest_sign_final;
-static OSSL_FUNC_signature_digest_verify_init_fn dsa_digest_signverify_init;
+static OSSL_FUNC_signature_digest_verify_init_fn dsa_digest_verify_init;
 static OSSL_FUNC_signature_digest_verify_update_fn dsa_digest_signverify_update;
 static OSSL_FUNC_signature_digest_verify_final_fn dsa_digest_verify_final;
 static OSSL_FUNC_signature_freectx_fn dsa_freectx;
@@ -85,7 +86,49 @@ typedef struct {
     EVP_MD *md;
     EVP_MD_CTX *mdctx;
     size_t mdsize;
+    int operation;
+
 } PROV_DSA_CTX;
+
+/*
+ * Check for valid key sizes if fips mode. Refer to
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
+ * "Table 2"
+ */
+static int dsa_check_key_size(const PROV_DSA_CTX *ctx)
+{
+#ifdef FIPS_MODULE
+    size_t L, N;
+    const BIGNUM *p, *q;
+    DSA *dsa = ctx->dsa;
+
+    if (dsa == NULL)
+        return 0;
+
+    p = DSA_get0_p(dsa);
+    q = DSA_get0_q(dsa);
+    if (p == NULL || q == NULL)
+        return 0;
+
+    L = BN_num_bits(p);
+    N = BN_num_bits(q);
+
+    /*
+     * Valid sizes or verification - Note this could be a fips186-2 type
+     * key - so we allow 512 also. When this is no longer suppported the
+     * lower bound should be increased to 1024.
+     */
+    if (ctx->operation != EVP_PKEY_OP_SIGN)
+        return (L >= 512 && N >= 160);
+
+     /* Valid sizes for both sign and verify */
+    if (L == 2048 && (N == 224 || N == 256))
+        return 1;
+    return (L == 3072 && N == 256);
+#else
+    return 1;
+#endif
+}
 
 static size_t dsa_get_md_size(const PROV_DSA_CTX *pdsactx)
 {
@@ -94,42 +137,11 @@ static size_t dsa_get_md_size(const PROV_DSA_CTX *pdsactx)
     return 0;
 }
 
-static int dsa_get_md_nid(const EVP_MD *md)
+static int dsa_get_md_nid(const PROV_DSA_CTX *ctx, const EVP_MD *md)
 {
-    /*
-     * Because the DSA library deals with NIDs, we need to translate.
-     * We do so using EVP_MD_is_a(), and therefore need a name to NID
-     * map.
-     */
-    static const OSSL_ITEM name_to_nid[] = {
-        { NID_sha1,   OSSL_DIGEST_NAME_SHA1   },
-        { NID_sha224, OSSL_DIGEST_NAME_SHA2_224 },
-        { NID_sha256, OSSL_DIGEST_NAME_SHA2_256 },
-        { NID_sha384, OSSL_DIGEST_NAME_SHA2_384 },
-        { NID_sha512, OSSL_DIGEST_NAME_SHA2_512 },
-        { NID_sha3_224, OSSL_DIGEST_NAME_SHA3_224 },
-        { NID_sha3_256, OSSL_DIGEST_NAME_SHA3_256 },
-        { NID_sha3_384, OSSL_DIGEST_NAME_SHA3_384 },
-        { NID_sha3_512, OSSL_DIGEST_NAME_SHA3_512 },
-    };
-    size_t i;
-    int mdnid = NID_undef;
+    int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
 
-    if (md == NULL)
-        goto end;
-
-    for (i = 0; i < OSSL_NELEM(name_to_nid); i++) {
-        if (EVP_MD_is_a(md, name_to_nid[i].ptr)) {
-            mdnid = (int)name_to_nid[i].id;
-            break;
-        }
-    }
-
-    if (mdnid == NID_undef)
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-
- end:
-    return mdnid;
+    return ossl_prov_digest_get_approved_nid(md, sha1_allowed);
 }
 
 static void *dsa_newctx(void *provctx, const char *propq)
@@ -160,11 +172,21 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         mdprops = ctx->propq;
 
     if (mdname != NULL) {
-        EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
-        int md_nid = dsa_get_md_nid(md);
         WPACKET pkt;
+        EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
+        int md_nid = dsa_get_md_nid(ctx, md);
+        size_t mdname_len = strlen(mdname);
 
         if (md == NULL || md_nid == NID_undef) {
+            if (md == NULL)
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                               "%s could not be fetched", mdname);
+            if (md_nid == NID_undef)
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
+                               "digest=%s", mdname);
+            if (mdname_len >= sizeof(ctx->mdname))
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
+                               "%s exceeds name buffer length", mdname);
             EVP_MD_free(md);
             return 0;
         }
@@ -196,7 +218,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
     return 1;
 }
 
-static int dsa_signature_init(void *vpdsactx, void *vdsa)
+static int dsa_signverify_init(void *vpdsactx, void *vdsa, int operation)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -207,7 +229,22 @@ static int dsa_signature_init(void *vpdsactx, void *vdsa)
         return 0;
     DSA_free(pdsactx->dsa);
     pdsactx->dsa = vdsa;
+    pdsactx->operation = operation;
+    if (!dsa_check_key_size(pdsactx)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
     return 1;
+}
+
+static int dsa_sign_init(void *vpdsactx, void *vdsa)
+{
+    return dsa_signverify_init(vpdsactx, vdsa, EVP_PKEY_OP_SIGN);
+}
+
+static int dsa_verify_init(void *vpdsactx, void *vdsa)
+{
+    return dsa_signverify_init(vpdsactx, vdsa, EVP_PKEY_OP_VERIFY);
 }
 
 static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
@@ -254,7 +291,7 @@ static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
 }
 
 static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
-                                      void *vdsa)
+                                      void *vdsa, int operation)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
@@ -262,7 +299,7 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
         return 0;
 
     pdsactx->flag_allow_md = 0;
-    if (!dsa_signature_init(vpdsactx, vdsa))
+    if (!dsa_signverify_init(vpdsactx, vdsa, operation))
         return 0;
 
     if (!dsa_setup_md(pdsactx, mdname, NULL))
@@ -283,6 +320,17 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
     pdsactx->mdctx = NULL;
     pdsactx->md = NULL;
     return 0;
+}
+
+static int dsa_digest_sign_init(void *vpdsactx, const char *mdname,
+                                      void *vdsa)
+{
+    return dsa_digest_signverify_init(vpdsactx, mdname, vdsa, EVP_PKEY_OP_SIGN);
+}
+
+static int dsa_digest_verify_init(void *vpdsactx, const char *mdname, void *vdsa)
+{
+    return dsa_digest_signverify_init(vpdsactx, mdname, vdsa, EVP_PKEY_OP_VERIFY);
 }
 
 int dsa_digest_signverify_update(void *vpdsactx, const unsigned char *data,
@@ -428,7 +476,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
     OSSL_PARAM_END
 };
 
-static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *provctx)
+static const OSSL_PARAM *dsa_gettable_ctx_params(ossl_unused void *vctx)
 {
     return known_gettable_ctx_params;
 }
@@ -477,6 +525,12 @@ static const OSSL_PARAM *dsa_settable_ctx_params(ossl_unused void *provctx)
      * params if the ctx is being used for a DigestSign/DigestVerify? In that
      * case it is not allowed to set the digest size/digest name because the
      * digest is explicitly set as part of the init.
+     * NOTE: Ideally we would check pdsactx->flag_allow_md, but this is
+     * problematic because there is no nice way of passing the
+     * PROV_DSA_CTX down to this function...
+     * Because we have API's that dont know about their parent..
+     * e.g: EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig).
+     * We could pass NULL for that case (but then how useful is the check?).
      */
     return known_settable_ctx_params;
 }
@@ -523,18 +577,18 @@ static const OSSL_PARAM *dsa_settable_ctx_md_params(void *vpdsactx)
 
 const OSSL_DISPATCH dsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))dsa_newctx },
-    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))dsa_signature_init },
+    { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))dsa_sign_init },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))dsa_sign },
-    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))dsa_signature_init },
+    { OSSL_FUNC_SIGNATURE_VERIFY_INIT, (void (*)(void))dsa_verify_init },
     { OSSL_FUNC_SIGNATURE_VERIFY, (void (*)(void))dsa_verify },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
-      (void (*)(void))dsa_digest_signverify_init },
+      (void (*)(void))dsa_digest_sign_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_UPDATE,
       (void (*)(void))dsa_digest_signverify_update },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_FINAL,
       (void (*)(void))dsa_digest_sign_final },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_INIT,
-      (void (*)(void))dsa_digest_signverify_init },
+      (void (*)(void))dsa_digest_verify_init },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_UPDATE,
       (void (*)(void))dsa_digest_signverify_update },
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY_FINAL,
