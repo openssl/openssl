@@ -30,7 +30,7 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
-#include "prov/provider_util.h"
+#include "prov/check.h"
 
 #define RSA_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 
@@ -120,58 +120,6 @@ static size_t rsa_get_md_size(const PROV_RSA_CTX *prsactx)
     return 0;
 }
 
-static int rsa_get_md_nid_check(const PROV_RSA_CTX *ctx, const EVP_MD *md,
-                                int sha1_allowed)
-{
-    int mdnid = NID_undef;
-
-    #ifndef FIPS_MODULE
-    static const OSSL_ITEM name_to_nid[] = {
-        { NID_md5,       OSSL_DIGEST_NAME_MD5       },
-        { NID_md5_sha1,  OSSL_DIGEST_NAME_MD5_SHA1  },
-        { NID_md2,       OSSL_DIGEST_NAME_MD2       },
-        { NID_md4,       OSSL_DIGEST_NAME_MD4       },
-        { NID_mdc2,      OSSL_DIGEST_NAME_MDC2      },
-        { NID_ripemd160, OSSL_DIGEST_NAME_RIPEMD160 },
-    };
-    #endif
-
-    if (md == NULL)
-        goto end;
-
-    mdnid = ossl_prov_digest_get_approved_nid(md, sha1_allowed);
-
-    #ifndef FIPS_MODULE
-    if (mdnid == NID_undef)
-        mdnid = ossl_prov_digest_md_to_nid(md, name_to_nid,
-                                           OSSL_NELEM(name_to_nid));
-    #endif
-    end:
-    return mdnid;
-}
-
-static int rsa_get_md_nid(const PROV_RSA_CTX *ctx, const EVP_MD *md)
-{
-    return rsa_get_md_nid_check(ctx, md, ctx->operation != EVP_PKEY_OP_SIGN);
-}
-
-static int rsa_get_md_mgf1_nid(const PROV_RSA_CTX *ctx, const EVP_MD *md)
-{
-    /* The default for mgf1 is SHA1 - so allow this */
-    return rsa_get_md_nid_check(ctx, md, 1);
-}
-
-static int rsa_check_key_size(const PROV_RSA_CTX *prsactx)
-{
-#ifdef FIPS_MODULE
-    int sz = RSA_bits(prsactx->rsa);
-
-    return (prsactx->operation == EVP_PKEY_OP_SIGN) ? (sz >= 2048) : (sz >= 1024);
-#else
-    return 1;
-#endif
-}
-
 static int rsa_check_padding(int mdnid, int padding)
 {
     if (padding == RSA_NO_PADDING) {
@@ -240,7 +188,8 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
     if (mdname != NULL) {
         WPACKET pkt;
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
-        int md_nid = rsa_get_md_nid(ctx, md);
+        int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
+        int md_nid = digest_rsa_sign_get_md_nid(md, sha1_allowed);
         size_t mdname_len = strlen(mdname);
 
         if (md == NULL
@@ -306,7 +255,8 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
                        "%s could not be fetched", mdname);
         return 0;
     }
-    if (rsa_get_md_mgf1_nid(ctx, md) == NID_undef) {
+    /* The default for mgf1 is SHA1 - so allow SHA1 */
+    if (digest_rsa_sign_get_md_nid(md, 1) == NID_undef) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DIGEST_NOT_ALLOWED,
                        "digest=%s", mdname);
         EVP_MD_free(md);
@@ -337,7 +287,7 @@ static int rsa_signverify_init(void *vprsactx, void *vrsa, int operation)
     prsactx->rsa = vrsa;
     prsactx->operation = operation;
 
-    if (!rsa_check_key_size(prsactx)) {
+    if (!rsa_check_key(vrsa, operation == EVP_PKEY_OP_SIGN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }

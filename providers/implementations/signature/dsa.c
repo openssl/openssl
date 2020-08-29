@@ -30,7 +30,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
-#include "prov/provider_util.h"
+#include "prov/check.h"
 #include "crypto/dsa.h"
 #include "prov/der_dsa.h"
 
@@ -87,61 +87,14 @@ typedef struct {
     EVP_MD_CTX *mdctx;
     size_t mdsize;
     int operation;
-
 } PROV_DSA_CTX;
 
-/*
- * Check for valid key sizes if fips mode. Refer to
- * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
- * "Table 2"
- */
-static int dsa_check_key_size(const PROV_DSA_CTX *ctx)
-{
-#ifdef FIPS_MODULE
-    size_t L, N;
-    const BIGNUM *p, *q;
-    DSA *dsa = ctx->dsa;
-
-    if (dsa == NULL)
-        return 0;
-
-    p = DSA_get0_p(dsa);
-    q = DSA_get0_q(dsa);
-    if (p == NULL || q == NULL)
-        return 0;
-
-    L = BN_num_bits(p);
-    N = BN_num_bits(q);
-
-    /*
-     * Valid sizes or verification - Note this could be a fips186-2 type
-     * key - so we allow 512 also. When this is no longer suppported the
-     * lower bound should be increased to 1024.
-     */
-    if (ctx->operation != EVP_PKEY_OP_SIGN)
-        return (L >= 512 && N >= 160);
-
-     /* Valid sizes for both sign and verify */
-    if (L == 2048 && (N == 224 || N == 256))
-        return 1;
-    return (L == 3072 && N == 256);
-#else
-    return 1;
-#endif
-}
 
 static size_t dsa_get_md_size(const PROV_DSA_CTX *pdsactx)
 {
     if (pdsactx->md != NULL)
         return EVP_MD_size(pdsactx->md);
     return 0;
-}
-
-static int dsa_get_md_nid(const PROV_DSA_CTX *ctx, const EVP_MD *md)
-{
-    int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-
-    return ossl_prov_digest_get_approved_nid(md, sha1_allowed);
 }
 
 static void *dsa_newctx(void *provctx, const char *propq)
@@ -172,9 +125,10 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         mdprops = ctx->propq;
 
     if (mdname != NULL) {
+        int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
         WPACKET pkt;
         EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
-        int md_nid = dsa_get_md_nid(ctx, md);
+        int md_nid = digest_get_approved_nid_with_sha1(md, sha1_allowed);
         size_t mdname_len = strlen(mdname);
 
         if (md == NULL || md_nid == NID_undef) {
@@ -230,7 +184,7 @@ static int dsa_signverify_init(void *vpdsactx, void *vdsa, int operation)
     DSA_free(pdsactx->dsa);
     pdsactx->dsa = vdsa;
     pdsactx->operation = operation;
-    if (!dsa_check_key_size(pdsactx)) {
+    if (!dsa_check_key(vdsa, operation == EVP_PKEY_OP_SIGN)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }

@@ -28,7 +28,7 @@
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "prov/provider_util.h"
+#include "prov/check.h"
 #include "crypto/ec.h"
 #include "prov/der_ec.h"
 
@@ -84,7 +84,7 @@ typedef struct {
      */
     BIGNUM *kinv;
     BIGNUM *r;
-#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+#if !defined(OPENSSL_NO_ACVP_TESTS)
     /*
      * This indicates that KAT (CAVS) test is running. Externally an app will
      * override the random callback such that the generated private key and k
@@ -128,7 +128,7 @@ static int ecdsa_signverify_init(void *vctx, void *ec, int operation)
     EC_KEY_free(ctx->ec);
     ctx->ec = ec;
     ctx->operation = operation;
-    return ossl_prov_ec_check(ec, operation == EVP_PKEY_OP_SIGN);
+    return ec_check_key(ec, operation == EVP_PKEY_OP_SIGN);
 }
 
 static int ecdsa_sign_init(void *vctx, void *ec)
@@ -157,7 +157,7 @@ static int ecdsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
         return 1;
     }
 
-#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+#if !defined(OPENSSL_NO_ACVP_TESTS)
     if (ctx->kattest && !ECDSA_sign_setup(ctx->ec, NULL, &ctx->kinv, &ctx->r))
         return 0;
 #endif
@@ -187,13 +187,6 @@ static int ecdsa_verify(void *vctx, const unsigned char *sig, size_t siglen,
     return ECDSA_verify(0, tbs, tbslen, sig, siglen, ctx->ec);
 }
 
-static int get_md_nid(const PROV_ECDSA_CTX *ctx, const EVP_MD *md)
-{
-    int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
-
-    return ossl_prov_digest_get_approved_nid(md, sha1_allowed);
-}
-
 static void free_md(PROV_ECDSA_CTX *ctx)
 {
     OPENSSL_free(ctx->propq);
@@ -211,6 +204,7 @@ static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
     int md_nid = NID_undef;
     WPACKET pkt;
+    int sha1_allowed = (ctx->operation != EVP_PKEY_OP_SIGN);
 
     if (!ossl_prov_is_running())
         return 0;
@@ -221,7 +215,7 @@ static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
         return 0;
 
     ctx->md = EVP_MD_fetch(ctx->libctx, mdname, ctx->propq);
-    md_nid = get_md_nid(ctx, ctx->md);
+    md_nid = digest_get_approved_nid_with_sha1(ctx->md, sha1_allowed);
     if (md_nid == NID_undef)
         goto error;
 
@@ -428,7 +422,7 @@ static int ecdsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
          */
         return 1;
     }
-#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+#if !defined(OPENSSL_NO_ACVP_TESTS)
     p = OSSL_PARAM_locate_const(params, OSSL_SIGNATURE_PARAM_KAT);
     if (p != NULL && !OSSL_PARAM_get_uint(p, &ctx->kattest))
         return 0;
