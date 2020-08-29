@@ -161,7 +161,7 @@ my @smime_pkcs7_tests = (
     ],
 
     [ "signed content S/MIME format, RSA key SHA1",
-      [ "{cmd1}", @prov, "-sign", "-in", $smcont, "-md", "sha1",
+      [ "{cmd1}", @defaultprov, "-sign", "-in", $smcont, "-md", "sha1",
         "-certfile", catfile($smdir, "smroot.pem"),
         "-signer", catfile($smdir, "smrsa1.pem"), "-out", "{output}.cms" ],
       [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms",

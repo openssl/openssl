@@ -55,7 +55,7 @@ my @files = qw(
                 evppkey_kas.txt
                 evppkey_kdf_hkdf.txt
                 evppkey_mismatch.txt
-                evppkey_rsa.txt
+                evppkey_rsa_common.txt
                 evprand.txt
               );
 
@@ -96,6 +96,7 @@ my @defltfiles = qw(
                      evppkey_brainpool.txt
                      evppkey_kdf_scrypt.txt
                      evppkey_kdf_tls1_prf.txt
+                     evppkey_rsa.txt
                      evppkey_sm2.txt
                     );
 
