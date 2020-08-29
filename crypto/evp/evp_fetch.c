@@ -47,6 +47,9 @@ struct evp_method_data_st {
     int name_id;                 /* For get_evp_method_from_store() */
     const char *names;           /* For get_evp_method_from_store() */
     const char *propquery;       /* For get_evp_method_from_store() */
+
+    unsigned int flag_construct_error_occured : 1;
+
     void *(*method_from_dispatch)(int name_id, const OSSL_DISPATCH *,
                                   OSSL_PROVIDER *);
     int (*refcnt_up_method)(void *method);
@@ -186,11 +189,23 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     const char *names = algodef->algorithm_names;
     int name_id = ossl_namemap_add_names(namemap, 0, names, NAME_SEPARATOR);
+    void *method;
 
     if (name_id == 0)
         return NULL;
-    return methdata->method_from_dispatch(name_id, algodef->implementation,
-                                          prov);
+
+    method = methdata->method_from_dispatch(name_id, algodef->implementation,
+                                            prov);
+
+    /*
+     * Flag to indicate that there was actual construction errors.  This
+     * helps inner_evp_generic_fetch() determine what error it should
+     * record on inaccessible algorithms.
+     */
+    if (method == NULL)
+        methdata->flag_construct_error_occured = 1;
+
+    return method;
 }
 
 static void destruct_evp_method(void *method, void *data)
@@ -198,6 +213,19 @@ static void destruct_evp_method(void *method, void *data)
     struct evp_method_data_st *methdata = data;
 
     methdata->destruct_method(method);
+}
+
+static const char *libctx_descriptor(OPENSSL_CTX *libctx)
+{
+#ifdef FIPS_MODULE
+    return "FIPS internal library context";
+#else
+    if (openssl_ctx_is_global_default(libctx))
+        return "Global default library context";
+    if (openssl_ctx_is_default(libctx))
+        return "Thread-local default library context";
+    return "Non-default library context";
+#endif
 }
 
 static void *
@@ -214,23 +242,30 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
     uint32_t meth_id = 0;
     void *method = NULL;
+    int unsupported = 0;
 
-    if (store == NULL || namemap == NULL)
+    if (store == NULL || namemap == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
+    }
 
     /*
      * If there's ever an operation_id == 0 passed, we have an internal
      * programming error.
      */
-    if (!ossl_assert(operation_id > 0))
+    if (!ossl_assert(operation_id > 0)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return NULL;
+    }
 
     /*
      * If we have been passed neither a name_id or a name, we have an
      * internal programming error.
      */
-    if (!ossl_assert(name_id != 0 || name != NULL))
+    if (!ossl_assert(name_id != 0 || name != NULL)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return NULL;
+    }
 
     /* If we haven't received a name id yet, try to get one for the name */
     if (name_id == 0)
@@ -242,9 +277,19 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
      * evp_method_id returns 0 if we have too many operations (more than
      * about 2^8) or too many names (more than about 2^24).  In that case,
      * we can't create any new method.
+     * For all intents and purposes, this is an internal error.
      */
-    if (name_id != 0 && (meth_id = evp_method_id(name_id, operation_id)) == 0)
+    if (name_id != 0 && (meth_id = evp_method_id(name_id, operation_id)) == 0) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return NULL;
+    }
+
+    /*
+     * If we haven't found the name yet, chances are that the algorithm to
+     * be fetched is unsupported.
+     */
+    if (name_id == 0)
+        unsupported = 1;
 
     if (meth_id == 0
         || !ossl_method_store_cache_get(store, meth_id, properties, &method)) {
@@ -267,6 +312,7 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         mcmdata.method_from_dispatch = new_method;
         mcmdata.refcnt_up_method = up_ref_method;
         mcmdata.destruct_method = free_method;
+        mcmdata.flag_construct_error_occured = 0;
         if ((method = ossl_method_construct(libctx, operation_id,
                                             0 /* !force_cache */,
                                             &mcm, &mcmdata)) != NULL) {
@@ -282,21 +328,29 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
             ossl_method_store_cache_set(store, meth_id, properties, method,
                                         up_ref_method, free_method);
         }
+
+        /*
+         * If we never were in the constructor, the algorithm to be fetched
+         * is unsupported.
+         */
+        unsupported = !mcmdata.flag_construct_error_occured;
+    }
+
+    if (method == NULL) {
+        int code =
+            unsupported ? EVP_R_UNSUPPORTED_ALGORITHM : EVP_R_FETCH_FAILED;
+
+        if (name == NULL)
+            name = ossl_namemap_num2name(namemap, name_id, 0);
+        ERR_raise_data(ERR_LIB_EVP, code,
+                       "%s, Algorithm (%s : %d), Properties (%s)",
+                       libctx_descriptor(libctx),
+                       name = NULL ? "<null>" : name, name_id,
+                       properties == NULL ? "<null>" : properties);
     }
 
     return method;
 }
-
-#ifndef FIPS_MODULE
-static const char *libctx_descriptor(OPENSSL_CTX *libctx)
-{
-    if (openssl_ctx_is_global_default(libctx))
-        return "Global default library context";
-    if (openssl_ctx_is_default(libctx))
-        return "Thread-local default library context";
-    return "Non-default library context";
-}
-#endif
 
 void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         const char *name, const char *properties,
@@ -306,24 +360,9 @@ void *evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
                         int (*up_ref_method)(void *),
                         void (*free_method)(void *))
 {
-    void *ret = inner_evp_generic_fetch(libctx,
-                                        operation_id, 0, name, properties,
-                                        new_method, up_ref_method, free_method);
-
-    if (ret == NULL) {
-        int code = EVP_R_FETCH_FAILED;
-
-#ifdef FIPS_MODULE
-        ERR_raise(ERR_LIB_EVP, code);
-#else
-        ERR_raise_data(ERR_LIB_EVP, code,
-                       "%s, Algorithm (%s), Properties (%s)",
-                       libctx_descriptor(libctx),
-                       name = NULL ? "<null>" : name,
-                       properties == NULL ? "<null>" : properties);
-#endif
-    }
-    return ret;
+    return inner_evp_generic_fetch(libctx,
+                                   operation_id, 0, name, properties,
+                                   new_method, up_ref_method, free_method);
 }
 
 /*
@@ -341,32 +380,10 @@ void *evp_generic_fetch_by_number(OPENSSL_CTX *libctx, int operation_id,
                                   int (*up_ref_method)(void *),
                                   void (*free_method)(void *))
 {
-    void *ret = inner_evp_generic_fetch(libctx,
-                                        operation_id, name_id, NULL,
-                                        properties, new_method, up_ref_method,
-                                        free_method);
-
-    if (ret == NULL) {
-        int code = EVP_R_FETCH_FAILED;
-
-#ifdef FIPS_MODULE
-        ERR_raise(ERR_LIB_EVP, code);
-#else
-        {
-            OSSL_NAMEMAP *namemap = ossl_namemap_stored(libctx);
-            const char *name = (namemap == NULL)
-                               ? NULL
-                               : ossl_namemap_num2name(namemap, name_id, 0);
-
-            ERR_raise_data(ERR_LIB_EVP, code,
-                           "%s, Algorithm (%s), Properties (%s)",
-                           libctx_descriptor(libctx),
-                           name = NULL ? "<null>" : name,
-                           properties == NULL ? "<null>" : properties);
-        }
-#endif
-    }
-    return ret;
+    return inner_evp_generic_fetch(libctx,
+                                   operation_id, name_id, NULL,
+                                   properties, new_method, up_ref_method,
+                                   free_method);
 }
 
 void evp_method_store_flush(OPENSSL_CTX *libctx)

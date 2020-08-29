@@ -213,10 +213,8 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
 #else
         EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
 
-        if (provmd == NULL) {
-            EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
+        if (provmd == NULL)
             return 0;
-        }
         type = provmd;
         EVP_MD_free(ctx->fetched_digest);
         ctx->fetched_digest = provmd;
