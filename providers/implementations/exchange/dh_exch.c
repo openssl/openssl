@@ -23,7 +23,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "prov/provider_util.h"
+#include "prov/check.h"
 #include "crypto/dh.h"
 
 static OSSL_FUNC_keyexch_newctx_fn dh_newctx;
@@ -90,43 +90,6 @@ static void *dh_newctx(void *provctx)
     pdhctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     pdhctx->kdf_type = PROV_DH_KDF_NONE;
     return pdhctx;
-}
-
-/*
- * For DH key agreement refer to SP800-56A
- * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar3.pdf
- * "Section 5.5.1.1FFC Domain Parameter Selection/Generation" and
- * "Appendix D" FFC Safe-prime Groups
- */
-static int dh_check_key(const DH *dh)
-{
-#ifdef FIPS_MODULE
-    size_t L, N;
-    const BIGNUM *p, *q;
-
-    if (dh == NULL)
-        return 0;
-
-    p = DH_get0_p(dh);
-    q = DH_get0_q(dh);
-    if (p == NULL || q == NULL)
-        return 0;
-
-    L = BN_num_bits(p);
-    if (L < 2048)
-        return 0;
-
-    /* If it is a safe prime group then it is ok */
-    if (DH_get_nid(dh))
-        return 1;
-
-    /* If not then it must be FFC, which only allows certain sizes. */
-    N = BN_num_bits(q);
-
-    return (L == 2048 && (N == 224 || N == 256));
-#else
-    return 1;
-#endif
 }
 
 static int dh_init(void *vpdhctx, void *vdh)
@@ -358,12 +321,10 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pdhctx->kdf_md);
         pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
-#ifdef FIPS_MODULE
-        if (!ossl_prov_digest_get_approved_nid(pdhctx->kdf_md, 1)) {
+        if (!digest_is_allowed(pdhctx->kdf_md)) {
             EVP_MD_free(pdhctx->kdf_md);
             pdhctx->kdf_md = NULL;
         }
-#endif
         if (pdhctx->kdf_md == NULL)
             return 0;
     }
