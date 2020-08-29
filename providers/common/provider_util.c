@@ -353,3 +353,66 @@ int ossl_prov_digest_get_approved_nid(const EVP_MD *md, int sha1_allowed)
 #endif
     return mdnid;
 }
+
+/*
+ * In FIPS mode:
+ * protect should be 1 for any operations that need 112 bits of security
+ * strength (such as signing, and key exchange), or 0 for operations that allow
+ * a lower security strength (such as verify).
+ *
+ * For ECDH key agreement refer to SP800-56A
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-56Ar3.pdf
+ * "Appendix D"
+ *
+ * For ECDSA signatures refer to
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf
+ * "Table 2"
+ */
+int ossl_prov_ec_check(const EC_KEY *ec, int protect)
+{
+#ifdef FIPS_MODULE
+    int nid, strength;
+    const char *curve_name;
+    const EC_GROUP *group = EC_KEY_get0_group(ec);
+
+    if (group == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_CURVE, "No group");
+        return 0;
+    }
+    nid = EC_GROUP_get_curve_name(group);
+    if (nid == NID_undef) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_CURVE,
+                       "Explicit curves are not allowed in fips mode");
+        return 0;
+    }
+
+    curve_name = EC_curve_nid2nist(nid);
+    if (curve_name == NULL) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_CURVE,
+                       "Curve %s is not approved in FIPS mode", curve_name);
+        return 0;
+    }
+
+    /*
+     * For EC the security strength is the (order_bits / 2)
+     * e.g. P-224 is 112 bits.
+     */
+    strength = EC_GROUP_order_bits(group) / 2;
+    /* The min security strength allowed for legacy verification is 80 bits */
+    if (strength < 80) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CURVE);
+        return 0;
+    }
+
+    /*
+     * For signing/or key agreement only allow curves with at least 112 bits of
+     * security strength
+     */
+    if (protect && strength < 112) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_CURVE,
+                       "Curve %s cannot be used for signing", curve_name);
+        return 0;
+    }
+#endif
+    return 1;
+}
