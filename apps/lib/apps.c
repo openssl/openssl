@@ -659,22 +659,38 @@ void* app_malloc(int sz, const char *what)
 
 /*
  * Initialize or extend, if *certs != NULL, a certificate stack.
+ * The caller is responsible for freeing *certs if its value is left not NULL.
  */
 int load_certs(const char *uri, STACK_OF(X509) **certs,
                const char *pass, const char *desc)
 {
-    return load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
-                               NULL, certs, NULL, NULL);
+    int was_NULL = *certs == NULL;
+    int ret = load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
+                                  NULL, certs, NULL, NULL);
+
+    if (!ret && was_NULL) {
+        sk_X509_pop_free(*certs, X509_free);
+        *certs = NULL;
+    }
+    return ret;
 }
 
 /*
  * Initialize or extend, if *crls != NULL, a certificate stack.
+ * The caller is responsible for freeing *crls if its value is left not NULL.
  */
 int load_crls(const char *uri, STACK_OF(X509_CRL) **crls,
               const char *pass, const char *desc)
 {
-    return load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
-                               NULL, NULL, NULL, crls);
+    int was_NULL = *crls == NULL;
+    int ret = load_key_certs_crls(uri, 0, pass, desc, NULL, NULL,
+                                  NULL, NULL, NULL, crls);
+
+    if (!ret && was_NULL) {
+        sk_X509_CRL_pop_free(*crls, X509_CRL_free);
+        *crls = NULL;
+    }
+    return ret;
 }
 
 /*
