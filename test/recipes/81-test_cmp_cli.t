@@ -200,7 +200,7 @@ sub test_cmp_cli_aspect {
             }
         }
     };
-    # not unlinking "test.cert.pem", "test.cacerts.pem", "test.extracerts.pem"
+    # not unlinking test.certout_*.pem, test.cacerts.pem, and test.extracerts.pem
 }
 
 indir data_dir() => sub {
