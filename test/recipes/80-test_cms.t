@@ -59,7 +59,7 @@ unless ($no_fips) {
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
                 '-module', $infile])),
        "fipsinstall");
-    @config = ( "-config", srctop_file("test", "fips.cnf") );
+    @config = ( "-config", srctop_file("test", "fips-and-base.cnf") );
     $provname = 'fips';
 }
 

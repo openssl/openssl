@@ -106,7 +106,8 @@ subtest 'test_ss' => sub {
 note('test_ssl -- key U');
 testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default.cnf"));
 unless ($no_fips) {
-    testssl("keyU.ss", $Ucert, $CAcert, "fips", srctop_file("test","fips.cnf"));
+    testssl("keyU.ss", $Ucert, $CAcert, "fips",
+            srctop_file("test","fips-and-base.cnf"));
 }
 
 # -----------

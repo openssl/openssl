@@ -27,7 +27,7 @@ plan tests =>
     + 9;
 
 my @prov = ( );
-my $provconf = srctop_file("test", "fips.cnf");
+my $provconf = srctop_file("test", "fips-and-base.cnf");
 my $provpath = bldtop_dir("providers");
 my $msg_file = data_file("plain_text");
 my $enc1_file = "enc1.bin";

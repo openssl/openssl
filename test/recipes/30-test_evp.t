@@ -29,7 +29,7 @@ my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
 
 my @configs = ( $defaultcnf );
 # Only add the FIPS config if the FIPS module has been built
-push @configs, 'fips.cnf' unless $no_fips;
+push @configs, 'fips-and-base.cnf' unless $no_fips;
 
 # A list of tests that run with both the default and fips provider.
 my @files = qw(
