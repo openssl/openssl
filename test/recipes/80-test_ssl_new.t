@@ -171,7 +171,7 @@ sub test_conf {
 
       if ($provider eq "fips") {
           ok(run(test(["ssl_test", $output_file, $provider,
-                       srctop_file("test", "fips.cnf")])),
+                       srctop_file("test", "fips-and-base.cnf")])),
              "running ssl_test $conf");
       } else {
           ok(run(test(["ssl_test", $output_file, $provider])),

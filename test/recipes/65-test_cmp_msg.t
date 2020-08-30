@@ -42,5 +42,6 @@ unless ($no_fips) {
                 '-module', bldtop_file('providers', platform->dso('fips'))])),
        "fipsinstall");
 
-    ok(run(test([@basic_cmd, "fips", srctop_file("test", "fips.cnf")])));
+    ok(run(test([@basic_cmd,
+                 "fips", srctop_file("test", "fips-and-base.cnf")])));
 }

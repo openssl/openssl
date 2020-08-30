@@ -45,7 +45,7 @@ unless ($no_fips) {
     ok(run(test(["sslapitest", srctop_dir("test", "certs"),
                  srctop_file("test", "recipes", "90-test_sslapi_data",
                              "passwd.txt"), $tmpfilename, "fips",
-                 srctop_file("test", "fips.cnf")])),
+                 srctop_file("test", "fips-and-base.cnf")])),
                  "running sslapitest");
 }
 
