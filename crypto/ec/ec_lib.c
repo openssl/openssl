@@ -1552,8 +1552,6 @@ EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
         group = group_new_from_name(ptmp, libctx, propq);
         if (group != NULL)
             EC_GROUP_set_asn1_flag(group, encoding_flag);
-        else
-            ECerr(0, ERR_R_EC_LIB);
         return group;
     }
     bnctx = BN_CTX_new_ex(libctx);
