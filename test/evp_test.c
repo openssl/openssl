@@ -3268,7 +3268,8 @@ static int key_unsupported(void)
      * disabled).
      */
     if (ERR_GET_LIB(err) == ERR_LIB_EC
-        && ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP) {
+        && (ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP
+            || ERR_GET_REASON(err) == EC_R_INVALID_CURVE)) {
         ERR_clear_error();
         return 1;
     }
