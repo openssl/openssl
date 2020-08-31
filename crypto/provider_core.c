@@ -875,14 +875,17 @@ int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum)
     unsigned char bit = (1 << (bitnum % 8)) & 0xFF;
 
     if (provider->operation_bits_sz <= byte) {
-        provider->operation_bits = OPENSSL_realloc(provider->operation_bits,
-                                                   byte + 1);
-        if (provider->operation_bits == NULL) {
+        unsigned char *tmp = OPENSSL_realloc(provider->operation_bits,
+                                             byte + 1);
+
+        if (tmp == NULL) {
             ERR_raise(ERR_LIB_CRYPTO, ERR_R_MALLOC_FAILURE);
             return 0;
         }
+        provider->operation_bits = tmp;
         memset(provider->operation_bits + provider->operation_bits_sz,
                '\0', byte + 1 - provider->operation_bits_sz);
+        provider->operation_bits_sz = byte + 1;
     }
     provider->operation_bits[byte] |= bit;
     return 1;
