@@ -16,6 +16,7 @@
 # include <openssl/hmac.h>
 # include <openssl/ec.h>
 # include <openssl/rand_drbg.h>
+# include "internal/tsan_assist.h"
 
 # include "internal/numbers.h"
 
@@ -247,9 +248,15 @@ struct rand_drbg_st {
      * This value is ignored if it is zero.
      */
     time_t reseed_time_interval;
+
+    /*
+     * Enables reseed propagation (see following comment)
+     */
+    unsigned int enable_reseed_propagation;
+
     /*
      * Counts the number of reseeds since instantiation.
-     * This value is ignored if it is zero.
+     * This value is ignored if enable_reseed_propagation is zero.
      *
      * This counter is used only for seed propagation from the <master> DRBG
      * to its two children, the <public> and <private> DRBG. This feature is
@@ -257,7 +264,7 @@ struct rand_drbg_st {
      * is added by RAND_add() or RAND_seed() will have an immediate effect on
      * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
-    unsigned int reseed_prop_counter;
+    TSAN_QUALIFIER unsigned int reseed_prop_counter;
 
     size_t seedlen;
     DRBG_STATUS state;

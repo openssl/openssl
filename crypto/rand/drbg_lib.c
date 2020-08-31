@@ -354,11 +354,12 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     drbg->state = DRBG_READY;
     drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
-    if (drbg->reseed_prop_counter > 0) {
+    if (drbg->enable_reseed_propagation) {
         if (drbg->parent == NULL)
-            drbg->reseed_prop_counter++;
+            tsan_counter(&drbg->reseed_prop_counter);
         else
-            drbg->reseed_prop_counter = drbg->parent->reseed_prop_counter;
+            tsan_store(&drbg->reseed_prop_counter,
+                       tsan_load(&drbg->parent->reseed_prop_counter));
     }
 
  end:
@@ -443,11 +444,12 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
     drbg->state = DRBG_READY;
     drbg->reseed_gen_counter = 1;
     drbg->reseed_time = time(NULL);
-    if (drbg->reseed_prop_counter > 0) {
+    if (drbg->enable_reseed_propagation) {
         if (drbg->parent == NULL)
-            drbg->reseed_prop_counter++;
+            tsan_counter(&drbg->reseed_prop_counter);
         else
-            drbg->reseed_prop_counter = drbg->parent->reseed_prop_counter;
+            tsan_store(&drbg->reseed_prop_counter,
+                       tsan_load(&drbg->parent->reseed_prop_counter));
     }
 
  end:
@@ -876,7 +878,8 @@ static RAND_DRBG *drbg_setup(RAND_DRBG *parent)
     if (parent == NULL && rand_drbg_enable_locking(drbg) == 0)
         goto err;
 
-    /* enable seed propagation */
+    /* enable reseed propagation */
+    drbg->enable_reseed_propagation = 1;
     drbg->reseed_prop_counter = 1;
 
     /*
