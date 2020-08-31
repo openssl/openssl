@@ -91,6 +91,9 @@ static int siphash_update(void *vmacctx, const unsigned char *data,
 {
     struct siphash_data_st *ctx = vmacctx;
 
+    if (datalen == 0)
+        return 1;
+
     SipHash_Update(&ctx->siphash, data, datalen);
     return 1;
 }

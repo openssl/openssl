@@ -92,6 +92,9 @@ static int blake2_mac_update(void *vmacctx,
 {
     struct blake2_mac_data_st *macctx = vmacctx;
 
+    if (datalen == 0)
+        return 1;
+
     return BLAKE2_UPDATE(&macctx->ctx, data, datalen);
 }
 
