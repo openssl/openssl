@@ -420,22 +420,26 @@ static RAND_GLOBAL *rand_get_global(OPENSSL_CTX *libctx)
                                 &rand_drbg_ossl_ctx_method);
 }
 
+static void rand_delete_thread_drbg(CRYPTO_THREAD_LOCAL *key)
+{
+    EVP_RAND_CTX *rand = CRYPTO_THREAD_get_local(key);
+
+    if (rand != NULL) {
+        CRYPTO_THREAD_set_local(key, NULL);
+        EVP_RAND_CTX_free(rand);
+    }
+}
+
 static void rand_delete_thread_state(void *arg)
 {
     OPENSSL_CTX *ctx = arg;
     RAND_GLOBAL *dgbl = rand_get_global(ctx);
-    EVP_RAND_CTX *rand;
 
     if (dgbl == NULL)
         return;
 
-    rand = CRYPTO_THREAD_get_local(&dgbl->public);
-    CRYPTO_THREAD_set_local(&dgbl->public, NULL);
-    EVP_RAND_CTX_free(rand);
-
-    rand = CRYPTO_THREAD_get_local(&dgbl->private);
-    CRYPTO_THREAD_set_local(&dgbl->private, NULL);
-    EVP_RAND_CTX_free(rand);
+    rand_delete_thread_drbg(&dgbl->public);
+    rand_delete_thread_drbg(&dgbl->private);
 }
 
 static EVP_RAND_CTX *rand_new_drbg(OPENSSL_CTX *libctx, EVP_RAND_CTX *parent,
@@ -564,4 +568,40 @@ EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx)
         CRYPTO_THREAD_set_local(&dgbl->private, rand);
     }
     return rand;
+}
+
+int RAND_set0_primary(OPENSSL_CTX *ctx, EVP_RAND_CTX *rand)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return 0;
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+        return 0;
+    EVP_RAND_CTX_free(dgbl->primary);
+    dgbl->primary = rand;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+    return 1;
+}
+
+int RAND_set0_public(OPENSSL_CTX *ctx, EVP_RAND_CTX *rand)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return 0;
+    EVP_RAND_CTX_free(CRYPTO_THREAD_get_local(&dgbl->public));
+    CRYPTO_THREAD_set_local(&dgbl->public, rand);
+    return 1;
+}
+
+int RAND_set0_private(OPENSSL_CTX *ctx, EVP_RAND_CTX *rand)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return 0;
+    EVP_RAND_CTX_free(CRYPTO_THREAD_get_local(&dgbl->private));
+    CRYPTO_THREAD_set_local(&dgbl->private, rand);
+    return 1;
 }

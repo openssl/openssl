@@ -26,6 +26,8 @@
 #include <openssl/dh.h>
 #include <openssl/safestack.h>
 #include <openssl/x509.h>
+#include <openssl/core_names.h>
+#include <openssl/rand.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
@@ -430,6 +432,38 @@ err:
     return ret;
 }
 
+static int test_rng_replacement(void)
+{
+    EVP_RAND_CTX *ctx = NULL;
+    EVP_RAND *rand = EVP_RAND_fetch(libctx, "TEST-RAND", NULL);
+    OSSL_PARAM params[2], *p = params;
+    static char entropy[] = "abcdefghijklmnopq_rstuvwxyz";
+    unsigned char buf[sizeof(entropy)];
+    int res = 0;
+
+    if (rand == NULL)
+        return TEST_skip("unable to load test RAND, skipping");
+    if (!TEST_ptr(rand)
+        || (!TEST_ptr(ctx = EVP_RAND_CTX_new(rand, NULL))))
+        goto err;
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                             (unsigned char *)entropy,
+                                             sizeof(entropy));
+    *p = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_set_ctx_params(ctx, params))
+        || !TEST_true(RAND_set0_public(libctx, ctx))
+        || !TEST_true(EVP_RAND_generate(ctx, buf, sizeof(buf), 0, 0, NULL, 0))
+        || !TEST_mem_eq((void *)entropy, sizeof(entropy), buf, sizeof(buf)))
+        goto err;
+    res = 1;
+ err:
+    EVP_RAND_free(rand);
+    if (!TEST_true(RAND_set0_public(libctx, NULL))) {
+        TEST_info("failed to restore DRBG back to default");
+        res = 0;
+    }
+    return res;
+}
 
 static int name_cmp(const char * const *a, const char * const *b)
 {
@@ -483,6 +517,7 @@ int setup_tests(void)
     if (!TEST_ptr(libprov))
         return 0;
 
+    ADD_TEST(test_rng_replacement);
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)
     ADD_ALL_TESTS(test_dsa_param_keygen, 3 * 3 * 3);
 #endif
