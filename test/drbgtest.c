@@ -388,15 +388,15 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Instantiate again with valid data */
     if (!instantiate(drbg, td, &t))
         goto err;
-    reseed_counter_tmp = drbg->reseed_gen_counter;
-    drbg->reseed_gen_counter = drbg->reseed_interval;
+    reseed_counter_tmp = drbg->generate_counter;
+    drbg->generate_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
             || !TEST_int_eq(t.entropycnt, 1)
-            || !TEST_int_eq(drbg->reseed_gen_counter, reseed_counter_tmp + 1)
+            || !TEST_int_eq(drbg->generate_counter, reseed_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
 
@@ -413,15 +413,15 @@ static int error_check(DRBG_SELFTEST_DATA *td)
     /* Test reseed counter works */
     if (!instantiate(drbg, td, &t))
         goto err;
-    reseed_counter_tmp = drbg->reseed_gen_counter;
-    drbg->reseed_gen_counter = drbg->reseed_interval;
+    reseed_counter_tmp = drbg->generate_counter;
+    drbg->generate_counter = drbg->reseed_interval;
 
     /* Generate output and check entropy has been requested for reseed */
     t.entropycnt = 0;
     if (!TEST_true(RAND_DRBG_generate(drbg, buff, td->exlen, 0,
                                       td->adin, td->adinlen))
             || !TEST_int_eq(t.entropycnt, 1)
-            || !TEST_int_eq(drbg->reseed_gen_counter, reseed_counter_tmp + 1)
+            || !TEST_int_eq(drbg->generate_counter, reseed_counter_tmp + 1)
             || !uninstantiate(drbg))
         goto err;
 
@@ -600,14 +600,14 @@ static int test_drbg_reseed(int expect_success,
      */
 
     /* Test whether seed propagation is enabled */
-    if (!TEST_int_ne(master->reseed_prop_counter, 0)
-        || !TEST_int_ne(public->reseed_prop_counter, 0)
-        || !TEST_int_ne(private->reseed_prop_counter, 0))
+    if (!TEST_int_ne(master->reseed_counter, 0)
+        || !TEST_int_ne(public->reseed_counter, 0)
+        || !TEST_int_ne(private->reseed_counter, 0))
         return 0;
 
     /* Check whether the master DRBG's reseed counter is the largest one */
-    if (!TEST_int_le(public->reseed_prop_counter, master->reseed_prop_counter)
-        || !TEST_int_le(private->reseed_prop_counter, master->reseed_prop_counter))
+    if (!TEST_int_le(public->reseed_counter, master->reseed_counter)
+        || !TEST_int_le(private->reseed_counter, master->reseed_counter))
         return 0;
 
     /*
@@ -655,8 +655,8 @@ static int test_drbg_reseed(int expect_success,
 
     if (expect_success == 1) {
         /* Test whether all three reseed counters are synchronized */
-        if (!TEST_int_eq(public->reseed_prop_counter, master->reseed_prop_counter)
-            || !TEST_int_eq(private->reseed_prop_counter, master->reseed_prop_counter))
+        if (!TEST_int_eq(public->reseed_counter, master->reseed_counter)
+            || !TEST_int_eq(private->reseed_counter, master->reseed_counter))
             return 0;
 
         /* Test whether reseed time of master DRBG is set correctly */
@@ -770,7 +770,7 @@ static int test_rand_drbg_reseed(void)
      * Test whether the public and private DRBG are both reseeded when their
      * reseed counters differ from the master's reseed counter.
      */
-    master->reseed_prop_counter++;
+    master->reseed_counter++;
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 1, 0)))
         goto error;
     reset_drbg_hook_ctx();
@@ -779,8 +779,8 @@ static int test_rand_drbg_reseed(void)
      * Test whether the public DRBG is reseeded when its reseed counter differs
      * from the master's reseed counter.
      */
-    master->reseed_prop_counter++;
-    private->reseed_prop_counter++;
+    master->reseed_counter++;
+    private->reseed_counter++;
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 1, 0, 0)))
         goto error;
     reset_drbg_hook_ctx();
@@ -789,8 +789,8 @@ static int test_rand_drbg_reseed(void)
      * Test whether the private DRBG is reseeded when its reseed counter differs
      * from the master's reseed counter.
      */
-    master->reseed_prop_counter++;
-    public->reseed_prop_counter++;
+    master->reseed_counter++;
+    public->reseed_counter++;
     if (!TEST_true(test_drbg_reseed(1, master, public, private, 0, 0, 1, 0)))
         goto error;
     reset_drbg_hook_ctx();
@@ -823,7 +823,7 @@ static int test_rand_drbg_reseed(void)
      * Test whether none of the DRBGs is reseed if the master fails to reseed
      */
     master_ctx.fail = 1;
-    master->reseed_prop_counter++;
+    master->reseed_counter++;
     RAND_add(rand_add_buf, sizeof(rand_add_buf), sizeof(rand_add_buf));
     if (!TEST_true(test_drbg_reseed(0, master, public, private, 0, 0, 0, 0)))
         goto error;

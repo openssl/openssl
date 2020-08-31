@@ -235,7 +235,7 @@ struct rand_drbg_st {
     size_t max_perslen, max_adinlen;
 
     /* Counts the number of generate requests since the last reseed. */
-    unsigned int reseed_gen_counter;
+    unsigned int generate_counter;
     /*
      * Maximum number of generate requests until a reseed is required.
      * This value is ignored if it is zero.
@@ -264,7 +264,7 @@ struct rand_drbg_st {
      * is added by RAND_add() or RAND_seed() will have an immediate effect on
      * the output of RAND_bytes() resp. RAND_priv_bytes().
      */
-    TSAN_QUALIFIER unsigned int reseed_prop_counter;
+    TSAN_QUALIFIER unsigned int reseed_counter;
 
     size_t seedlen;
     DRBG_STATUS state;
