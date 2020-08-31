@@ -214,8 +214,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
     if (!ossl_assert(data_plus_mac_plus_padding_size < 1024 * 1024))
         return 0;
 
-    switch (EVP_MD_type(md)) {
-    case NID_md5:
+    if (EVP_MD_is_a(md, "MD5")) {
         if (MD5_Init((MD5_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_md5_final_raw;
@@ -224,32 +223,28 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         md_size = 16;
         sslv3_pad_length = 48;
         length_is_big_endian = 0;
-        break;
-    case NID_sha1:
+    } else if (EVP_MD_is_a(md, "SHA1")) {
         if (SHA1_Init((SHA_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_sha1_final_raw;
         md_transform =
             (void (*)(void *ctx, const unsigned char *block))SHA1_Transform;
         md_size = 20;
-        break;
-    case NID_sha224:
+    } else if (EVP_MD_is_a(md, "SHA2-224")) {
         if (SHA224_Init((SHA256_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_sha256_final_raw;
         md_transform =
             (void (*)(void *ctx, const unsigned char *block))SHA256_Transform;
         md_size = 224 / 8;
-        break;
-    case NID_sha256:
+     } else if (EVP_MD_is_a(md, "SHA2-256")) {
         if (SHA256_Init((SHA256_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_sha256_final_raw;
         md_transform =
             (void (*)(void *ctx, const unsigned char *block))SHA256_Transform;
         md_size = 32;
-        break;
-    case NID_sha384:
+     } else if (EVP_MD_is_a(md, "SHA2-384")) {
         if (SHA384_Init((SHA512_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_sha512_final_raw;
@@ -258,8 +253,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         md_size = 384 / 8;
         md_block_size = 128;
         md_length_size = 16;
-        break;
-    case NID_sha512:
+    } else if (EVP_MD_is_a(md, "SHA2-512")) {
         if (SHA512_Init((SHA512_CTX *)md_state.c) <= 0)
             return 0;
         md_final_raw = tls1_sha512_final_raw;
@@ -268,8 +262,7 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
         md_size = 64;
         md_block_size = 128;
         md_length_size = 16;
-        break;
-    default:
+    } else {
         /*
          * ssl3_cbc_record_digest_supported should have been called first to
          * check that the hash function is supported.
