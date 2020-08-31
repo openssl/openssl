@@ -17,7 +17,7 @@ int quic_get_message(SSL *s, int *mt, size_t *len)
     QUIC_DATA *qd = s->quic_input_data_head;
     uint8_t *p;
 
-    if (qd == NULL || (qd->length - qd->offset) != 0) {
+    if (qd == NULL) {
         s->rwstate = SSL_READING;
         *mt = *len = 0;
         return 0;
@@ -43,7 +43,7 @@ int quic_get_message(SSL *s, int *mt, size_t *len)
     }
 
     /* Copy buffered data */
-    memcpy(s->init_buf->data, (void*)(qd + 1), qd->length);
+    memcpy(s->init_buf->data, s->quic_buf->data + qd->start, qd->length);
     s->init_buf->length = qd->length;
     s->quic_input_data_head = qd->next;
     if (s->quic_input_data_head == NULL)
@@ -62,6 +62,13 @@ int quic_get_message(SSL *s, int *mt, size_t *len)
         *len = 0;
         return 0;
     }
+    /* No KeyUpdate in QUIC */
+    if (*mt == SSL3_MT_KEY_UPDATE) {
+        SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+        *len = 0;
+        return 0;
+    }
+
 
     /*
      * If receiving Finished, record MAC of prior handshake messages for
