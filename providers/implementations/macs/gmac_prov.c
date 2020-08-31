@@ -99,6 +99,9 @@ static int gmac_update(void *vmacctx, const unsigned char *data,
     EVP_CIPHER_CTX *ctx = macctx->ctx;
     int outlen;
 
+    if (datalen == 0)
+        return 1;
+
     while (datalen > INT_MAX) {
         if (!EVP_EncryptUpdate(ctx, NULL, &outlen, data, INT_MAX))
             return 0;
