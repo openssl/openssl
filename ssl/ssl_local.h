@@ -524,7 +524,7 @@ struct ssl_method_st {
  * Matches the length of PSK_MAX_PSK_LEN. We keep it the same value for
  * consistency, even in the event of OPENSSL_NO_PSK being defined.
  */
-# define TLS13_MAX_RESUMPTION_PSK_LENGTH      256
+# define TLS13_MAX_RESUMPTION_PSK_LENGTH      512
 
 /*-
  * Lets make this into an ASN.1 type structure as follows

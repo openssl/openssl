@@ -850,7 +850,7 @@ void SSL_get0_alpn_selected(const SSL *ssl, const unsigned char **data,
  * resulting identity/psk
  */
 #  define PSK_MAX_IDENTITY_LEN 128
-#  define PSK_MAX_PSK_LEN 256
+#  define PSK_MAX_PSK_LEN 512
 typedef unsigned int (*SSL_psk_client_cb_func)(SSL *ssl,
                                                const char *hint,
                                                char *identity,
