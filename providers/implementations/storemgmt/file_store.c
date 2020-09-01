@@ -70,8 +70,8 @@ struct file_ctx_st {
     void *provctx;
     char *uri;                   /* The URI we currently try to load */
     enum {
-        is_file = 0,             /* Read file and pass results */
-        is_dir                   /* Pass directory entry names */
+        IS_FILE = 0,             /* Read file and pass results */
+        IS_DIR                   /* Pass directory entry names */
     } type;
 
     /* Flag bits */
@@ -79,7 +79,7 @@ struct file_ctx_st {
     unsigned int flag_buffered:1;
 
     union {
-        /* Used with |is_any| and |is_pem| */
+        /* Used with |IS_FILE| */
         struct {
             BIO *file;
 
@@ -88,7 +88,7 @@ struct file_ctx_st {
             char *propq;    /* The properties we got as a parameter */
         } file;
 
-        /* Used with |is_dir| */
+        /* Used with |IS_DIR| */
         struct {
             OPENSSL_DIR_CTX *ctx;
             int end_reached;
@@ -120,7 +120,7 @@ static void free_file_ctx(struct file_ctx_st *ctx)
         return;
 
     OPENSSL_free(ctx->uri);
-    if (ctx->type != is_dir) {
+    if (ctx->type != IS_DIR) {
         OSSL_DECODER_CTX_free(ctx->_.file.decoderctx);
         OPENSSL_free(ctx->_.file.propq);
         OPENSSL_free(ctx->_.file.input_type);
@@ -162,7 +162,7 @@ static struct file_ctx_st *file_open_stream(BIO *source, const char *uri,
 {
     struct file_ctx_st *ctx;
 
-    if ((ctx = new_file_ctx(is_file, uri, provctx)) == NULL
+    if ((ctx = new_file_ctx(IS_FILE, uri, provctx)) == NULL
         || (input_type != NULL
             && (ctx->_.file.input_type =
                 OPENSSL_strdup(input_type)) == NULL)) {
@@ -182,7 +182,7 @@ static void *file_open_dir(const char *path, const char *uri, void *provctx)
 {
     struct file_ctx_st *ctx;
 
-    if ((ctx = new_file_ctx(is_dir, uri, provctx)) == NULL) {
+    if ((ctx = new_file_ctx(IS_DIR, uri, provctx)) == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -394,8 +394,8 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
     /*
      * After peeking, we know that the underlying source BIO has moved ahead
      * from its earlier position and that if it supports BIO_tell(), that
-     * should a number that differs from |loc|.  Otherwise, we will get the
-     * same value, which may one of:
+     * should be a number that differs from |loc|.  Otherwise, we will get
+     * the same value, which may one of:
      *
      * -   zero (the source BIO doesn't support BIO_tell() / BIO_seek() /
      *     BIO_reset())
@@ -403,8 +403,8 @@ void *file_attach(void *provctx, OSSL_CORE_BIO *cin)
      *     support BIO_tell() / BIO_seek() / BIO_reset())
      *
      * If it turns out that the source BIO does support BIO_tell(), we pop
-     * the buffer BIO filter and mark this input as |is_any|, which fully
-     * unleashes OSSL_DECODER to do its thing.
+     * the buffer BIO filter and mark this input as |INPUT_TYPE_ANY|, which
+     * fully unleashes OSSL_DECODER to do its thing.
      */
     if (BIO_tell(new_bio) != loc) {
         /* In this case, anything goes */
@@ -472,7 +472,7 @@ static int file_set_ctx_params(void *loaderctx, const OSSL_PARAM params[])
         X509_NAME *x509_name;
         unsigned long hash;
 
-        if (ctx->type != is_dir) {
+        if (ctx->type != IS_DIR) {
             ERR_raise(ERR_LIB_PROV,
                       PROV_R_SEARCH_ONLY_SUPPORTED_FOR_DIRECTORIES);
             return 0;
@@ -811,9 +811,9 @@ static int file_load(void *loaderctx,
     struct file_ctx_st *ctx = loaderctx;
 
     switch (ctx->type) {
-    case is_file:
+    case IS_FILE:
         return file_load_file(ctx, object_cb, object_cbarg, pw_cb, pw_cbarg);
-    case is_dir:
+    case IS_DIR:
         return
             file_load_dir_entry(ctx, object_cb, object_cbarg, pw_cb, pw_cbarg);
     default:
@@ -835,9 +835,9 @@ static int file_eof(void *loaderctx)
     struct file_ctx_st *ctx = loaderctx;
 
     switch (ctx->type) {
-    case is_dir:
+    case IS_DIR:
         return ctx->_.dir.end_reached;
-    case is_file:
+    case IS_FILE:
         /*
          * BIO_pending() checks any filter BIO.
          * BIO_eof() checks the source BIO.
@@ -896,9 +896,9 @@ static int file_close(void *loaderctx)
     struct file_ctx_st *ctx = loaderctx;
 
     switch (ctx->type) {
-    case is_dir:
+    case IS_DIR:
         return file_close_dir(ctx);
-    case is_file:
+    case IS_FILE:
         return file_close_stream(ctx);
     }
 
