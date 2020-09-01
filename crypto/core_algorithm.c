@@ -31,7 +31,7 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
     int first_operation = 1;
     int last_operation = OSSL_OP__HIGHEST;
     int cur_operation;
-    int ok = 0;
+    int ok = 1;
 
     if (data->operation_id != 0)
         first_operation = last_operation = data->operation_id;
@@ -77,9 +77,9 @@ static int algorithm_do_this(OSSL_PROVIDER *provider, void *cbdata)
                 return 0;
         }
 
-        /* If post-condition fulfilled, set general success */
-        if (ret)
-            ok = 1;
+        /* If post-condition not fulfilled, set general failure */
+        if (!ret)
+            ok = 0;
     }
 
     return ok;
