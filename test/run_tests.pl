@@ -31,7 +31,7 @@ my $srctop = $ENV{SRCTOP} || $ENV{TOP};
 my $bldtop = $ENV{BLDTOP} || $ENV{TOP};
 my $recipesdir = catdir($srctop, "test", "recipes");
 my $libdir = rel2abs(catdir($srctop, "util", "perl"));
-my $jobs = $ENV{HARNESS_JOBS};
+my $jobs = $ENV{HARNESS_JOBS} // 1;
 
 $ENV{OPENSSL_CONF} = rel2abs(catdir($srctop, "apps", "openssl.cnf"));
 $ENV{OPENSSL_CONF_INCLUDE} = rel2abs(catdir($bldtop, "providers"));
@@ -46,7 +46,7 @@ my %tapargs =
       merge             => 1,
     );
 
-$tapargs{jobs} = $jobs if defined $jobs;
+$tapargs{jobs} = $jobs if $jobs > 1;
 
 # Additional OpenSSL special TAP arguments.  Because we can't pass them via
 # TAP::Harness->new(), they will be accessed directly, see the
@@ -57,7 +57,7 @@ $openssl_args{'failure_verbosity'} = $ENV{HARNESS_VERBOSE} ? 0 :
     $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS} ? 2 :
     1; # $ENV{HARNESS_VERBOSE_FAILURE}
 print "Warning: HARNESS_JOBS > 1 overrides HARNESS_VERBOSE\n"
-    if $ENV{HARNESS_JOBS} > 1;
+    if $jobs > 1;
 print "Warning: HARNESS_VERBOSE overrides HARNESS_VERBOSE_FAILURE*\n"
     if ($ENV{HARNESS_VERBOSE} && ($ENV{HARNESS_VERBOSE_FAILURE}
                                   || $ENV{HARNESS_VERBOSE_FAILURE_PROGRESS}));
