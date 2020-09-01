@@ -36,8 +36,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-#include "crypto/evp.h"
-
 DEFINE_STACK_OF(X509_EXTENSION)
 DEFINE_STACK_OF(OSSL_CRMF_MSG)
 
@@ -452,7 +450,6 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
     OSSL_CRMF_MSG *req = NULL;
     X509_PUBKEY *pubkey = NULL;
     OSSL_CRMF_POPOSIGNINGKEY *sig = NULL;
-    EVP_PKEY *pkey = NULL;
     const ASN1_ITEM *it;
     void *asn;
 
@@ -508,11 +505,10 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
             it = ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST);
             asn = req->certReq;
         }
-        if ((pkey = X509_PUBKEY_get0(pubkey)) == NULL
-            || !evp_pkey_downgrade(pkey)
-            || ASN1_item_verify_with_libctx(it, sig->algorithmIdentifier,
-                                            sig->signature, asn, NULL,
-                                            pkey, libctx, propq) < 1)
+        if (ASN1_item_verify_with_libctx(it, sig->algorithmIdentifier,
+                                         sig->signature, asn, NULL,
+                                         X509_PUBKEY_get0(pubkey),
+                                         libctx, propq) < 1)
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
