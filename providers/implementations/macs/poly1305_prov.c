@@ -83,7 +83,7 @@ static int poly1305_update(void *vmacctx, const unsigned char *data,
 {
     struct poly1305_data_st *ctx = vmacctx;
 
-    if (datalen == 1)
+    if (datalen == 0)
         return 1;
 
     /* poly1305 has nothing to return in its update function */
