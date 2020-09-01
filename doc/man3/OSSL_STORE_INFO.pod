@@ -116,7 +116,7 @@ information printout.
 
 OSSL_STORE_INFO_new() creates a B<OSSL_STORE_INFO> with an arbitrary I<type>
 number and I<data> structure.  It's the responsibility of the caller to
-define type numbers other than the ones defined by F<< <openssl/store.> >>,
+define type numbers other than the ones defined by F<< <openssl/store.h> >>,
 and to handle freeing the associated data structure on their own.
 I<Using type numbers that are defined by F<< <openssl/store.h> >> may cause
 undefined behaviours, including crashes>.
