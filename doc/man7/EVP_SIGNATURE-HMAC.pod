@@ -14,7 +14,7 @@ creating MACs. Instead you should use the newer L<EVP_MAC_init(3)> functions.
 This mechanism is provided for backwards compatibility with older versions of
 OpenSSL.
 
-The smae signature parameters can be set using EVP_PKEY_CTX_set_params() as can
+The same signature parameters can be set using EVP_PKEY_CTX_set_params() as can
 be set via EVP_MAC_CTX_set_params() for the underlying EVP_MAC. See
 L<EVP_MAC-HMAC(7)>, L<EVP_MAC-Siphash(7)>, L<EVP_MAC-Poly1305(7)> and
 L<EVP_MAC-CMAC(7)> for details.
