@@ -1708,6 +1708,7 @@ struct ssl_st {
 #ifndef OPENSSL_NO_QUIC
     OSSL_ENCRYPTION_LEVEL quic_read_level;
     OSSL_ENCRYPTION_LEVEL quic_write_level;
+    OSSL_ENCRYPTION_LEVEL quic_latest_level_received;
     BUF_MEM *quic_buf;          /* buffer incoming handshake messages */
     QUIC_DATA *quic_input_data_head;
     QUIC_DATA *quic_input_data_tail;

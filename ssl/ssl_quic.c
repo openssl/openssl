@@ -100,7 +100,8 @@ int SSL_provide_quic_data(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
 
     /* Level can be different than the current read, but not less */
     if (level < ssl->quic_read_level
-            || (ssl->quic_input_data_tail != NULL && level < ssl->quic_input_data_tail->level)) {
+            || (ssl->quic_input_data_tail != NULL && level < ssl->quic_input_data_tail->level)
+            || level < ssl->quic_latest_level_received) {
         SSLerr(SSL_F_SSL_PROVIDE_QUIC_DATA, SSL_R_WRONG_ENCRYPTION_LEVEL_RECEIVED);
         return 0;
     }
@@ -121,6 +122,15 @@ int SSL_provide_quic_data(SSL *ssl, OSSL_ENCRYPTION_LEVEL level,
         ssl->quic_buf->length = 0;
         buf = NULL;
     }
+
+    /* A TLS message must not cross an encryption level boundary */
+    if (ssl->quic_buf->length != ssl->quic_next_record_start
+            && level != ssl->quic_latest_level_received) {
+        SSLerr(SSL_F_SSL_PROVIDE_QUIC_DATA,
+               SSL_R_WRONG_ENCRYPTION_LEVEL_RECEIVED);
+        return 0;
+    }
+    ssl->quic_latest_level_received = level;
 
     offset = ssl->quic_buf->length;
     if (!BUF_MEM_grow(ssl->quic_buf, offset + len)) {
