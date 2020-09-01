@@ -154,7 +154,6 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     int *ip;
 # ifndef OPENSSL_NO_KTLS
-    size_t crypto_info_len;
     ktls_crypto_info_t *crypto_info;
 # endif
 
@@ -187,12 +186,7 @@ static long sock_ctrl(BIO *b, int cmd, long num, void *ptr)
 # ifndef OPENSSL_NO_KTLS
     case BIO_CTRL_SET_KTLS:
         crypto_info = (ktls_crypto_info_t *)ptr;
-#  ifdef __FreeBSD__
-        crypto_info_len = sizeof(*crypto_info);
-#  else
-        crypto_info_len = crypto_info->tls_crypto_info_len;
-#  endif
-        ret = ktls_start(b->num, crypto_info, crypto_info_len, num);
+        ret = ktls_start(b->num, crypto_info, num);
         if (ret)
             BIO_set_ktls_flag(b, num);
         break;

@@ -66,15 +66,14 @@ static ossl_inline int ktls_enable(int fd)
  * as using TLS.  If successful, then data received for this socket will
  * be authenticated and decrypted using the tls_en provided here.
  */
-static ossl_inline int ktls_start(int fd,
-                                  void *tls_en,
-                                  size_t len, int is_tx)
+static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *tls_en, int is_tx)
 {
     if (is_tx)
         return setsockopt(fd, IPPROTO_TCP, TCP_TXTLS_ENABLE,
-                          tls_en, len) ? 0 : 1;
+                          tls_en, sizeof(*tls_en)) ? 0 : 1;
 #   ifndef OPENSSL_NO_KTLS_RX
-    return setsockopt(fd, IPPROTO_TCP, TCP_RXTLS_ENABLE, tls_en, len) ? 0 : 1;
+    return setsockopt(fd, IPPROTO_TCP, TCP_RXTLS_ENABLE, tls_en,
+                      sizeof(*tls_en)) ? 0 : 1;
 #   else
     return 0;
 #   endif
@@ -281,11 +280,11 @@ static ossl_inline int ktls_enable(int fd)
  * If successful, then data received using this socket will be decrypted,
  * authenticated and decapsulated using the crypto_info provided here.
  */
-static ossl_inline int ktls_start(int fd, void *crypto_info,
-                                  size_t len, int is_tx)
+static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *crypto_info,
+                                  int is_tx)
 {
     return setsockopt(fd, SOL_TLS, is_tx ? TLS_TX : TLS_RX,
-                      crypto_info, len) ? 0 : 1;
+                      crypto_info, crypto_info->tls_crypto_info_len) ? 0 : 1;
 }
 
 /*
