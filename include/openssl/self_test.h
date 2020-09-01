@@ -60,6 +60,7 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_KA_ECDH        "ECDH"
 # define OSSL_SELF_TEST_DESC_KDF_HKDF       "HKDF"
 # define OSSL_SELF_TEST_DESC_KDF_SSKDF      "SSKDF"
+# define OSSL_SELF_TEST_DESC_RNG            "RNG"
 
 # ifdef __cplusplus
 }
@@ -75,7 +76,7 @@ void OSSL_SELF_TEST_free(OSSL_SELF_TEST *st);
 
 void OSSL_SELF_TEST_onbegin(OSSL_SELF_TEST *st, const char *type,
                             const char *desc);
-void OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes);
+int OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes);
 void OSSL_SELF_TEST_onend(OSSL_SELF_TEST *st, int ret);
 
 #endif /* OPENSSL_SELF_TEST_H */

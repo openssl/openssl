@@ -212,6 +212,10 @@ Known answer test for a Deterministic Random Bit Generator.
 
 Conditional test that is run during the generation of key pairs.
 
+=item "Continuous_RNG_Test" (B<OSSL_SELF_TEST_TYPE_CRNG>)
+
+Continuous random number generator test.
+
 =back
 
 The "Module_Integrity" self test is always run at startup.
@@ -288,6 +292,10 @@ Key Derivation Function tests used with the "KAT_KDF" type.
 =item "HMAC" (B<OSSL_SELF_TEST_DESC_DRBG_HMAC>)
 
 DRBG tests used with the "DRBG" type.
+
+= item "RNG" (B<OSSL_SELF_TEST_DESC_RNG>)
+
+"Continuous_RNG_Test" uses this.
 
 =back
 
