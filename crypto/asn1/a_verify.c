@@ -163,7 +163,7 @@ int ASN1_item_verify_ctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
         }
 
         /* Check public key OID matches public key type */
-        if (EVP_PKEY_type(pknid) != pkey->ameth->pkey_id) {
+        if (!EVP_PKEY_is_a(pkey, OBJ_nid2sn(pknid))) {
             ASN1err(0, ASN1_R_WRONG_PUBLIC_KEY_TYPE);
             goto err;
         }
