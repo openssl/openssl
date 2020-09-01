@@ -118,7 +118,7 @@ static void *hmac_dup(void *vsrc)
         hmac_free(dst);
         return NULL;
     }
-    if (src->keylen > 0) {
+    if (src->key != NULL) {
         /* There is no "secure" OPENSSL_memdup */
         dst->key = OPENSSL_secure_malloc(src->keylen);
         if (dst->key == NULL) {
@@ -158,7 +158,6 @@ static int hmac_update(void *vmacctx, const unsigned char *data,
 
     if (macctx->tls_data_size > 0) {
         /* We're doing a TLS HMAC */
-
         if (!macctx->tls_header_set) {
             /* We expect the first update call to contain the TLS header */
             if (datalen != sizeof(macctx->tls_header))
@@ -197,7 +196,7 @@ static int hmac_final(void *vmacctx, unsigned char *out, size_t *outl,
             return 0;
         if (outl != NULL)
             *outl = macctx->tls_mac_out_size;
-        memcpy (out, macctx->tls_mac_out, macctx->tls_mac_out_size);
+        memcpy(out, macctx->tls_mac_out, macctx->tls_mac_out_size);
         return 1;
     }
     if (!HMAC_Final(macctx->ctx, out, &hlen))

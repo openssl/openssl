@@ -9,7 +9,7 @@
 
 /*
  * This file has no dependencies on the rest of libssl because it is shared
- * with the providers. It contains functions for low level MAC calculation.
+ * with the providers. It contains functions for low level MAC calculations.
  * Responsibility for this lies with the HMAC implementation in the
  * providers. However there are legacy code paths in libssl which also need to
  * do this. In time those legacy code paths can be removed and this file can be
