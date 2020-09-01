@@ -46,18 +46,27 @@ static char prog[40];
  * Return the simple name of the program; removing various platform gunk.
  */
 #if defined(OPENSSL_SYS_WIN32)
+
+const char *opt_path_end(const char *filename)
+{
+    const char *p;
+
+    /* find the last '/', '\' or ':' */
+    for (p = filename + strlen(filename); --p > filename; )
+        if (*p == '/' || *p == '\\' || *p == ':') {
+            p++;
+            break;
+        }
+    return p;
+}
+
 char *opt_progname(const char *argv0)
 {
     size_t i, n;
     const char *p;
     char *q;
 
-    /* find the last '/', '\' or ':' */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
-        if (*p == '/' || *p == '\\' || *p == ':') {
-            p++;
-            break;
-        }
+    p = opt_path_end(argv0);
 
     /* Strip off trailing nonsense. */
     n = strlen(p);
@@ -76,17 +85,25 @@ char *opt_progname(const char *argv0)
 
 #elif defined(OPENSSL_SYS_VMS)
 
+const char *opt_path_end(const char *filename)
+{
+    const char *p;
+
+    /* Find last special character sys:[foo.bar]openssl */
+    for (p = filename + strlen(filename); --p > filename;)
+        if (*p == ':' || *p == ']' || *p == '>') {
+            p++;
+            break;
+        }
+    return p;
+}
+
 char *opt_progname(const char *argv0)
 {
     const char *p, *q;
 
     /* Find last special character sys:[foo.bar]openssl */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
-        if (*p == ':' || *p == ']' || *p == '>') {
-            p++;
-            break;
-        }
-
+    p = opt_path_end(argv0);
     q = strrchr(p, '.');
     strncpy(prog, p, sizeof(prog) - 1);
     prog[sizeof(prog) - 1] = '\0';
@@ -97,16 +114,24 @@ char *opt_progname(const char *argv0)
 
 #else
 
-char *opt_progname(const char *argv0)
+const char *opt_path_end(const char *filename)
 {
     const char *p;
 
     /* Could use strchr, but this is like the ones above. */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
+    for (p = filename + strlen(filename); --p > filename;)
         if (*p == '/') {
             p++;
             break;
         }
+    return p;
+}
+
+char *opt_progname(const char *argv0)
+{
+    const char *p;
+
+    p = opt_path_end(argv0);
     strncpy(prog, p, sizeof(prog) - 1);
     prog[sizeof(prog) - 1] = '\0';
     return prog;
