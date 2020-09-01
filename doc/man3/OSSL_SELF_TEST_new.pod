@@ -17,7 +17,7 @@ OSSL_SELF_TEST_onend - functionality to trigger a callback during a self test
 
  void OSSL_SELF_TEST_onbegin(OSSL_SELF_TEST *st, const char *type,
                              const char *desc);
- void OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes);
+ int OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes);
  void OSSL_SELF_TEST_onend(OSSL_SELF_TEST *st, int ret);
 
 =head1 DESCRIPTION
@@ -103,6 +103,9 @@ This allows the callback to identify the sub category of the test being run.
 
 OSSL_SELF_TEST_new() returns the allocated B<OSSL_SELF_TEST> object, or NULL if
 it fails.
+
+OSSL_SELF_TEST_oncorrupt_byte() returns 1 if corruption occurs, otherwise it
+returns 0.
 
 =head1 EXAMPLES
 

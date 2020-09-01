@@ -94,8 +94,8 @@ static const OPENSSL_CTX_METHOD rand_crng_ossl_ctx_method = {
 };
 
 static int prov_crngt_compare_previous(const unsigned char *prev,
-                                        const unsigned char *cur,
-                                        size_t sz)
+                                       const unsigned char *cur,
+                                       size_t sz)
 {
     const int res = memcmp(prev, cur, sz) != 0;
 
@@ -113,11 +113,14 @@ size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
     unsigned int sz;
     RAND_POOL *pool;
     size_t q, r = 0, s, t = 0;
-    int attempts = 3;
+    int attempts = 3, crng_test_pass = 1;
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(drbg->provctx);
     CRNG_TEST_GLOBAL *crngt_glob
         = openssl_ctx_get_data(libctx, OPENSSL_CTX_RAND_CRNGT_INDEX,
                                &rand_crng_ossl_ctx_method);
+    OSSL_CALLBACK *stcb = NULL;
+    void *stcbarg = NULL;
+    OSSL_SELF_TEST *st = NULL;
 
     if (crngt_glob == NULL)
         return 0;
@@ -125,12 +128,27 @@ size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
     if ((pool = rand_pool_new(entropy, 1, min_len, max_len)) == NULL)
         return 0;
 
+    OSSL_SELF_TEST_get_callback(libctx, &stcb, &stcbarg);
+    if (stcb != NULL) {
+        st = OSSL_SELF_TEST_new(stcb, stcbarg);
+        if (st == NULL)
+            goto err;
+        OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_CRNG,
+                               OSSL_SELF_TEST_DESC_RNG);
+    }
+
     while ((q = rand_pool_bytes_needed(pool, 1)) > 0 && attempts-- > 0) {
         s = q > sizeof(buf) ? sizeof(buf) : q;
-        if (!crngt_get_entropy(libctx, crngt_glob->crngt_pool, buf, md,
-                               &sz)
-            || !prov_crngt_compare_previous(crngt_glob->crngt_prev, md, sz)
-            || !rand_pool_add(pool, buf, s, s * 8))
+        if (!crngt_get_entropy(libctx, crngt_glob->crngt_pool, buf, md, &sz))
+            goto err;
+        /* Force a failure here if the callback returns 1 */
+        if (OSSL_SELF_TEST_oncorrupt_byte(st, md))
+            memcpy(md, crngt_glob->crngt_prev, sz);
+        if (!prov_crngt_compare_previous(crngt_glob->crngt_prev, md, sz)) {
+            crng_test_pass = 0;
+            goto err;
+        }
+        if (!rand_pool_add(pool, buf, s, s * 8))
             goto err;
         memcpy(crngt_glob->crngt_prev, md, sz);
         t += s;
@@ -139,6 +157,8 @@ size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
     r = t;
     *pout = rand_pool_detach(pool);
 err:
+    OSSL_SELF_TEST_onend(st, crng_test_pass);
+    OSSL_SELF_TEST_free(st);
     OPENSSL_cleanse(buf, sizeof(buf));
     rand_pool_free(pool);
     return r;

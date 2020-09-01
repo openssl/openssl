@@ -342,8 +342,6 @@ err:
     return ret;
 }
 
-
-
 static int self_test_ka(const ST_KAT_KAS *t,
                         OSSL_SELF_TEST *st, OPENSSL_CTX *libctx)
 {

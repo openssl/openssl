@@ -157,12 +157,15 @@ void OSSL_SELF_TEST_onend(OSSL_SELF_TEST *st, int ret)
  * is modified (corrupted). This is used to modify output signatures or
  * ciphertext before they are verified or decrypted.
  */
-void OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes)
+int OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes)
 {
     if (st != NULL && st->cb != NULL) {
         st->phase = OSSL_SELF_TEST_PHASE_CORRUPT;
         self_test_setparams(st);
-        if (!st->cb(st->params, st->cb_arg))
+        if (!st->cb(st->params, st->cb_arg)) {
             bytes[0] ^= 1;
+            return 1;
+        }
     }
+    return 0;
 }
