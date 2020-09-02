@@ -154,6 +154,12 @@ The number for this operation is B<OSSL_OP_ASYM_CIPHER>.
 The functions the provider can offer are described in
 L<provider-asym_cipher(7)>
 
+=item Asymmetric Key Encapsulation
+
+In the OpenSSL libraries, the corresponding method object is B<EVP_KEM>.
+The number for this operation is B<OSSL_OP_KEM>.
+The functions the provider can offer are described in L<provider-kem(7)>
+
 =item Encoding
 
 In the OpenSSL libraries, the corresponding method object is

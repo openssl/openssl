@@ -67,7 +67,8 @@ EVP_PKEY_CTX_set_ecdh_kdf_outlen,
 EVP_PKEY_CTX_get_ecdh_kdf_outlen,
 EVP_PKEY_CTX_set0_ecdh_kdf_ukm,
 EVP_PKEY_CTX_get0_ecdh_kdf_ukm,
-EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
+EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len,
+EVP_PKEY_CTX_set_kem_op
 - algorithm specific control operations
 
 =head1 SYNOPSIS
@@ -90,6 +91,8 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
                               int len);
  int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name);
  int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen);
+
+ int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op);
 
  #include <openssl/rsa.h>
 
@@ -606,6 +609,12 @@ memory for further calls to EVP_PKEY_CTX_get1_id(). EVP_PKEY_CTX_get1_id()
 returns the previously set ID value to caller in I<id>. The caller should
 allocate adequate memory space for the I<id> before calling EVP_PKEY_CTX_get1_id().
 
+EVP_PKEY_CTX_set_kem_op() sets the KEM operation to run. This can be set after
+EVP_PKEY_encapsulate_init() or EVP_PKEY_decapsulate_init() to select the
+kem operation. RSA is the only key type that supports encapsulation currently,
+and as there is no default operation for the RSA type, this function must be
+called before EVP_PKEY_encapsulate() or EVP_PKEY_decapsulate().
+
 =head1 RETURN VALUES
 
 All other functions described on this page return a positive value for success
@@ -623,6 +632,8 @@ L<EVP_PKEY_verify(3)>,
 L<EVP_PKEY_verify_recover(3)>,
 L<EVP_PKEY_derive(3)>,
 L<EVP_PKEY_keygen(3)>
+L<EVP_PKEY_encapsulate(3)>
+L<EVP_PKEY_decapsulate(3)>
 
 =head1 HISTORY
 

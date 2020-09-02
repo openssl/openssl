@@ -304,6 +304,9 @@ extern const OSSL_DISPATCH mac_legacy_cmac_signature_functions[];
 /* Asym Cipher */
 extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
 
+/* Asym Key encapsulation  */
+extern const OSSL_DISPATCH rsa_asym_kem_functions[];
+
 /* Encoders */
 extern const OSSL_DISPATCH rsa_priv_to_text_encoder_functions[];
 extern const OSSL_DISPATCH rsa_pub_to_text_encoder_functions[];

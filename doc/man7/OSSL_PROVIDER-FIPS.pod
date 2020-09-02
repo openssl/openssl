@@ -136,6 +136,14 @@ This has the property "provider=fips,fips=no"
 
 =back
 
+=head2 Asymmetric Key Encapsulation
+
+=over 4
+
+=item RSA, see L<EVP_KEM-RSA(7)>
+
+=back
+
 =head2 Asymmetric Key Management
 
 =over 4

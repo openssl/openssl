@@ -50,6 +50,10 @@ struct evp_pkey_ctx_st {
             EVP_ASYM_CIPHER *cipher;
             void *ciphprovctx;
         } ciph;
+        struct {
+            EVP_KEM *kem;
+            void *kemprovctx;
+        } encap;
     } op;
 
     /*
@@ -664,6 +668,10 @@ struct evp_pkey_st {
 #define EVP_PKEY_CTX_IS_GEN_OP(ctx) \
     ((ctx)->operation == EVP_PKEY_OP_PARAMGEN \
      || (ctx)->operation == EVP_PKEY_OP_KEYGEN)
+
+#define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_ENCAPSULATE \
+     || (ctx)->operation == EVP_PKEY_OP_DECAPSULATE)
 
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);

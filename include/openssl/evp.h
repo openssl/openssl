@@ -1496,6 +1496,8 @@ int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const void *id, int len);
 int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id);
 int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len);
 
+int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op);
+
 const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 
 # define EVP_PKEY_OP_UNDEFINED           0
@@ -1511,6 +1513,8 @@ const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 # define EVP_PKEY_OP_ENCRYPT             (1<<10)
 # define EVP_PKEY_OP_DECRYPT             (1<<11)
 # define EVP_PKEY_OP_DERIVE              (1<<12)
+# define EVP_PKEY_OP_ENCAPSULATE         (1<<13)
+# define EVP_PKEY_OP_DECAPSULATE         (1<<14)
 
 # define EVP_PKEY_OP_TYPE_SIG    \
         (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY | EVP_PKEY_OP_VERIFYRECOVER \
@@ -1689,6 +1693,18 @@ void EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,
                                   void (*fn)(const char *name, void *data),
                                   void *data);
 
+void EVP_KEM_free(EVP_KEM *wrap);
+int EVP_KEM_up_ref(EVP_KEM *wrap);
+OSSL_PROVIDER *EVP_KEM_provider(const EVP_KEM *wrap);
+EVP_KEM *EVP_KEM_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                       const char *properties);
+int EVP_KEM_is_a(const EVP_KEM *wrap, const char *name);
+int EVP_KEM_number(const EVP_KEM *wrap);
+void EVP_KEM_do_all_provided(OPENSSL_CTX *libctx,
+                             void (*fn)(EVP_KEM *wrap, void *arg), void *arg);
+void EVP_KEM_names_do_all(const EVP_KEM *wrap,
+                          void (*fn)(const char *name, void *data), void *data);
+
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
                   unsigned char *sig, size_t *siglen,
@@ -1713,6 +1729,15 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
+
+int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
+                         unsigned char *wrappedkey, size_t *wrappedkeylen,
+                         unsigned char *genkey, size_t *genkeylen);
+int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
+                         unsigned char *unwrapped, size_t *unwrappedlen,
+                         const unsigned char *wrapped, size_t wrappedlen);
 
 typedef int EVP_PKEY_gen_cb(EVP_PKEY_CTX *ctx);
 

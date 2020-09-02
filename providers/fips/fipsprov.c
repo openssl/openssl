@@ -462,6 +462,11 @@ static const OSSL_ALGORITHM fips_asym_cipher[] = {
     { NULL, NULL, NULL }
 };
 
+static const OSSL_ALGORITHM fips_asym_kem[] = {
+    { "RSA", FIPS_DEFAULT_PROPERTIES, rsa_asym_kem_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM fips_keymgmt[] = {
 #ifndef OPENSSL_NO_DH
     { "DH:dhKeyAgreement", FIPS_DEFAULT_PROPERTIES, dh_keymgmt_functions },
@@ -517,6 +522,8 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
         return fips_signature;
     case OSSL_OP_ASYM_CIPHER:
         return fips_asym_cipher;
+    case OSSL_OP_KEM:
+        return fips_asym_kem;
     }
     return NULL;
 }
