@@ -19,8 +19,6 @@
 
 #ifndef OPENSSL_NO_SRTP
 
-DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
-
 static SRTP_PROTECTION_PROFILE srtp_known_profiles[] = {
     {
      "SRTP_AES128_CM_SHA1_80",

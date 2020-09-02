@@ -20,8 +20,6 @@
 
 #include "rand.inc"
 
-DEFINE_STACK_OF(SSL_COMP)
-
 /* unused, to avoid warning. */
 static int idx;
 

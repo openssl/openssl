@@ -81,7 +81,6 @@
 # include <unistd.h>
 #endif
 
-DEFINE_STACK_OF(SSL_COMP)
 DEFINE_STACK_OF_STRING()
 
 static SSL_CTX *s_ctx = NULL;

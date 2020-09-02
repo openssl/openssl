@@ -15,12 +15,14 @@ DEPEND[libssl]=libcrypto
 # unconditionally before anything else.
 DEPEND[]=include/openssl/configuration.h include/openssl/opensslv.h \
          include/openssl/fipskey.h \
+         include/openssl/ssl.h \
          include/crypto/bn_conf.h include/crypto/dso_conf.h \
          doc/man7/openssl_user_macros.pod
 
 GENERATE[include/openssl/configuration.h]=include/openssl/configuration.h.in
 GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
 GENERATE[include/openssl/fipskey.h]=include/openssl/fipskey.h.in
+GENERATE[include/openssl/ssl.h]=include/openssl/ssl.h.in
 GENERATE[include/crypto/bn_conf.h]=include/crypto/bn_conf.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 GENERATE[doc/man7/openssl_user_macros.pod]=doc/man7/openssl_user_macros.pod.in

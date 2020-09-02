@@ -23,7 +23,6 @@
 
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(X509_NAME)
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
 
 /*
  * Map error codes to TLS/SSL alart types.
