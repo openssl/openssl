@@ -1318,15 +1318,6 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
             return EVP_PKEY_CTX_set0_ecdh_kdf_ukm(ctx, p2, p1);
         }
     }
-#  ifndef OPENSSL_NO_SM2
-    /* Only SM2 needs this at current stage */
-    if (keytype == EVP_PKEY_SM2) {
-        switch (cmd) {
-        case EVP_PKEY_CTRL_SET1_ID:
-            return EVP_PKEY_CTX_set1_dist_id(ctx, p2, p1);
-        }
-    }
-#  endif
 # endif
     if (keytype == EVP_PKEY_RSA) {
         switch (cmd) {
