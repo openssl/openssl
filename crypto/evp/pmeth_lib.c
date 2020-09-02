@@ -123,20 +123,46 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
 }
 #endif /* FIPS_MODULE */
 
+static int get_legacy_alg_type_from_name(const char *keytype)
+{
+    int id = NID_undef;
+
+#ifndef FIPS_MODULE
+    id = OBJ_sn2nid(keytype);
+    if (id == NID_undef)
+        id = OBJ_ln2nid(keytype);
+#endif
+    return id;
+}
+
+static void help_get_legacy_alg_type_from_keymgmt(const char *keytype,
+                                                  void *arg)
+{
+    int *type = arg;
+
+    if (*type == NID_undef)
+        *type = get_legacy_alg_type_from_name(keytype);
+}
+
+static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
+{
+    int type = NID_undef;
+
+    EVP_KEYMGMT_names_do_all(keymgmt, help_get_legacy_alg_type_from_keymgmt,
+                             &type);
+    return type;
+}
+
 static int is_legacy_alg(int id, const char *keytype)
 {
 #ifndef FIPS_MODULE
     /* Certain EVP_PKEY keytypes are only available in legacy form */
-    if (id == -1) {
-        id = OBJ_sn2nid(keytype);
-        if (id == NID_undef)
-            id = OBJ_ln2nid(keytype);
-        if (id == NID_undef)
-            return  0;
-    }
+    if (id == -1)
+        id = get_legacy_alg_type_from_name(keytype);
+
     switch (id) {
     /*
-     * TODO(3.0): Remove SM2 and DHX when they are converted to have provider
+     * TODO(3.0): Remove SM2 when they are converted to have provider
      * support
      */
     case EVP_PKEY_SM2:
@@ -155,7 +181,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
                                  int id)
 
 {
-    EVP_PKEY_CTX *ret;
+    EVP_PKEY_CTX *ret = NULL;
     const EVP_PKEY_METHOD *pmeth = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
 
@@ -167,7 +193,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         goto common;
 
     /*
-     * If the internal key is provided, we extract the keytype from its
+     * If the given |pkey| is provided, we extract the keytype from its
      * keymgmt and skip over the legacy code.
      */
     if (pkey != NULL && evp_pkey_is_provided(pkey)) {
@@ -177,12 +203,18 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         keytype = evp_first_name(pkey->keymgmt->prov, pkey->keymgmt->name_id);
         goto common;
     }
+
 #ifndef FIPS_MODULE
-    /* TODO(3.0) Legacy code should be removed when all is provider based */
+    /*
+     * TODO(3.0) This legacy code section should be removed when we stop
+     * supporting engines
+     */
     /* BEGIN legacy */
     if (id == -1) {
-        if (pkey == NULL)
+        if (pkey == NULL) {
+            EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
             return NULL;
+        }
         id = pkey->type;
     }
 
@@ -219,24 +251,11 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      * If an ENGINE handled this method look it up. Otherwise use internal
      * tables.
      */
-    if (e != NULL) {
+    if (e != NULL)
         pmeth = ENGINE_get_pkey_meth(e, id);
-        /*
-         * We are supposed to use an engine, so no point in looking for a
-         * provided implementation. If pmeth is NULL here we just fail.
-         */
-        if (pmeth == NULL) {
-            ENGINE_finish(e);
-            EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
-            return NULL;
-        }
-    } else
+    else
 # endif
         pmeth = EVP_PKEY_meth_find(id);
-        /*
-         * if pmeth is NULL here we can keep trying to see if we have a provided
-         * implementation below.
-         */
 
     /* END legacy */
 #endif /* FIPS_MODULE */
@@ -248,33 +267,58 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     if (e == NULL && keytype != NULL) {
         int legacy = is_legacy_alg(id, keytype);
 
-        if (legacy) {
-            /* This could fail so ignore errors */
+        /* This could fail so ignore errors */
+        if (legacy)
             ERR_set_mark();
-        }
+
+        /*
+         * If we know that we should have everything covered by a provider
+         * backend, at least in the default provider, then we can drop the
+         * corresponding EVP_PKEY_METHOD.
+         */
+        if (!legacy)
+            pmeth = NULL;
 
         keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
-        if (legacy) {
+        if (legacy)
             ERR_pop_to_mark();
-        } else if (keymgmt == NULL) {
-            EVPerr(EVP_F_INT_CTX_NEW, EVP_R_FETCH_FAILED);
-            return NULL;
-        }
+
+        /*
+         * Chase down the legacy NID, as that might be needed for diverse
+         * purposes, such as ensure that EVP_PKEY_type() can return sensible
+         * values, or that there's a better chance to "downgrade" a key when
+         * needed.  We go through all keymgmt names, because the keytype
+         * that's passed to this function doesn't necessarily translate
+         * directly.
+         * TODO: Remove this when #legacy keys are gone.
+         */
+        if (keymgmt != NULL)
+            id = get_legacy_alg_type_from_keymgmt(keymgmt);
     }
 
-    ret = OPENSSL_zalloc(sizeof(*ret));
-    if (ret == NULL) {
-        EVP_KEYMGMT_free(keymgmt);
+    if (pmeth == NULL && keymgmt == NULL) {
+        EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
+    } else {
+        ret = OPENSSL_zalloc(sizeof(*ret));
+        if (ret == NULL)
+            EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+    }
+
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
+    if ((ret == NULL || pmeth == NULL) && e != NULL)
         ENGINE_finish(e);
 #endif
-        EVPerr(EVP_F_INT_CTX_NEW, ERR_R_MALLOC_FAILURE);
+
+    if (ret == NULL) {
+        EVP_KEYMGMT_free(keymgmt);
         return NULL;
     }
+
     ret->libctx = libctx;
     ret->propquery = propquery;
     ret->keytype = keytype;
     ret->keymgmt = keymgmt;
+    ret->legacy_keytype = id;   /* TODO: Remove when #legacy key are gone */
     ret->engine = e;
     ret->pmeth = pmeth;
     ret->operation = EVP_PKEY_OP_UNDEFINED;

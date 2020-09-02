@@ -62,6 +62,8 @@ struct evp_pkey_ctx_st {
 
     /* Legacy fields below */
 
+    /* EVP_PKEY identity */
+    int legacy_keytype;
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
     /* Engine that implements this method or NULL if builtin */
