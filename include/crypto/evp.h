@@ -52,6 +52,21 @@ struct evp_pkey_ctx_st {
         } ciph;
     } op;
 
+    /*
+     * Cached parameters.  Operation inits should call
+     * evp_pkey_ctx_unleash_delayed_data() when the operation has been set
+     * up properly.
+     */
+    struct {
+        /* Distinguishing Identifier, ISO/IEC 15946-3, FIPS 196 */
+        char *dist_id_name; /* The name used with EVP_PKEY_CTX_ctrl_str() */
+        void *dist_id;      /* The distinguishing ID itself */
+        size_t dist_id_len; /* The length of the distinguishing ID */
+
+        /* Indicators of what has been set.  Keep them together! */
+        unsigned int dist_id_set : 1;
+    } cached_parameters;
+
     /* Application specific data, usually used by the callback */
     void *app_data;
     /* Keygen callback */
@@ -769,6 +784,12 @@ EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
                                        const ASN1_OCTET_STRING *id,
                                        OPENSSL_CTX *libctx, const char *propq);
 int evp_pkey_name2type(const char *name);
+
+int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
+int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
+int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
+
+int evp_pkey_ctx_unleash_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
 void evp_method_store_flush(OPENSSL_CTX *libctx);
 int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,

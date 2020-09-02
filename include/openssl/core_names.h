@@ -261,6 +261,7 @@ extern "C" {
 #define OSSL_PKEY_PARAM_MGF1_PROPERTIES     "mgf1-properties"
 #define OSSL_PKEY_PARAM_TLS_ENCODED_PT      "tls-encoded-pt"
 #define OSSL_PKEY_PARAM_GROUP_NAME          "group"
+#define OSSL_PKEY_PARAM_DIST_ID             "distid"
 #define OSSL_PKEY_PARAM_PUB_KEY             "pub"
 #define OSSL_PKEY_PARAM_PRIV_KEY            "priv"
 
