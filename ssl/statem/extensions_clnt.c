@@ -12,8 +12,6 @@
 #include "internal/cryptlib.h"
 #include "statem_local.h"
 
-DEFINE_STACK_OF(SRTP_PROTECTION_PROFILE)
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
 DEFINE_STACK_OF(OCSP_RESPID)
 
 EXT_RETURN tls_construct_ctos_renegotiate(SSL *s, WPACKET *pkt,

@@ -15,8 +15,6 @@
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_STDNAME,

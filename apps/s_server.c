@@ -63,7 +63,6 @@ typedef unsigned int u_int;
 DEFINE_STACK_OF(X509_EXTENSION)
 DEFINE_STACK_OF(X509_CRL)
 DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(SSL_CIPHER)
 DEFINE_STACK_OF_STRING()
 
 static int not_resumable_sess_cb(SSL *s, int is_forward_secure);

@@ -21,8 +21,6 @@
 #include "internal/nelem.h"
 #include "testutil.h"
 
-DEFINE_STACK_OF(SSL_CIPHER)
-
 static SSL_CTX *ctx;
 static SSL *s;
 

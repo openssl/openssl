@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  * Copyright 2005 Nokia. All rights reserved.
@@ -8,6 +10,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros generate_const_stack_macros);
+-}
 
 #ifndef OPENSSL_SSL_H
 # define OPENSSL_SSL_H
@@ -240,7 +246,9 @@ typedef struct srtp_protection_profile_st {
     const char *name;
     unsigned long id;
 } SRTP_PROTECTION_PROFILE;
-DEFINE_OR_DECLARE_STACK_OF(SRTP_PROTECTION_PROFILE)
+{-
+    generate_stack_macros("SRTP_PROTECTION_PROFILE");
+-}
 
 
 typedef int (*tls_session_ticket_ext_cb_fn)(SSL *s, const unsigned char *data,
@@ -980,8 +988,10 @@ extern "C" {
  * These need to be after the above set of includes due to a compiler bug
  * in VisualStudio 2015
  */
-DEFINE_OR_DECLARE_STACK_OF(SSL_CIPHER)
-DEFINE_OR_DECLARE_STACK_OF(SSL_COMP)
+{-
+    generate_const_stack_macros("SSL_CIPHER")
+    .generate_stack_macros("SSL_COMP");
+-}
 
 /* compatibility */
 # define SSL_set_app_data(s,arg)         (SSL_set_ex_data(s,0,(char *)(arg)))

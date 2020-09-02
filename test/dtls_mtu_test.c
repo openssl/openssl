@@ -20,8 +20,6 @@
 /* for SSL_READ_ETM() */
 #include "../ssl/ssl_local.h"
 
-DEFINE_STACK_OF(SSL_CIPHER)
-
 static int debug = 0;
 
 static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
