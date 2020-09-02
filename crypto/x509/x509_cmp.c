@@ -30,8 +30,8 @@ int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
     ai = &a->cert_info;
     bi = &b->cert_info;
     i = ASN1_INTEGER_cmp(&ai->serialNumber, &bi->serialNumber);
-    if (i)
-        return i;
+    if (i != 0)
+        return i < 0 ? -1 : 1;
     return X509_NAME_cmp(ai->issuer, bi->issuer);
 }
 
@@ -83,7 +83,9 @@ int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
 
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 {
-    return memcmp(a->sha1_hash, b->sha1_hash, 20);
+    int rv = memcmp(a->sha1_hash, b->sha1_hash, 20);
+
+    return rv < 0 ? -1 : rv > 0;
 }
 
 X509_NAME *X509_get_issuer_name(const X509 *a)
@@ -149,18 +151,18 @@ int X509_cmp(const X509 *a, const X509 *b)
         return -2;
 
     rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
-    if (rv)
-        return rv;
+    if (rv != 0)
+        return rv < 0 ? -1 : 1;
     /* Check for match against stored encoding too */
     if (!a->cert_info.enc.modified && !b->cert_info.enc.modified) {
         if (a->cert_info.enc.len < b->cert_info.enc.len)
             return -1;
         if (a->cert_info.enc.len > b->cert_info.enc.len)
             return 1;
-        return memcmp(a->cert_info.enc.enc, b->cert_info.enc.enc,
-                      a->cert_info.enc.len);
+        rv = memcmp(a->cert_info.enc.enc,
+                    b->cert_info.enc.enc, a->cert_info.enc.len);
     }
-    return rv;
+    return rv < 0 ? -1 : rv > 0;
 }
 
 int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags)
@@ -208,7 +210,7 @@ int X509_add_certs(STACK_OF(X509) *sk, STACK_OF(X509) *certs, int flags)
 {
     int n = sk_X509_num(certs); /* certs may be NULL */
     int i;
- 
+
     for (i = 0; i < n; i++) {
         int j = (flags & X509_ADD_FLAG_PREPEND) == 0 ? i : n - 1 - i;
         /* if prepend, add certs in reverse order to keep original order */
@@ -242,12 +244,10 @@ int X509_NAME_cmp(const X509_NAME *a, const X509_NAME *b)
     }
 
     ret = a->canon_enclen - b->canon_enclen;
+    if (ret == 0 && a->canon_enclen != 0)
+        ret = memcmp(a->canon_enc, b->canon_enc, a->canon_enclen);
 
-    if (ret != 0 || a->canon_enclen == 0)
-        return ret;
-
-    return memcmp(a->canon_enc, b->canon_enc, a->canon_enclen);
-
+    return ret < 0 ? -1 : ret > 0;
 }
 
 unsigned long X509_NAME_hash(const X509_NAME *x)
@@ -410,9 +410,9 @@ static int check_suite_b(EVP_PKEY *pkey, int sign_nid, unsigned long *pflags)
             return X509_V_ERR_SUITE_B_INVALID_SIGNATURE_ALGORITHM;
         if (!(*pflags & X509_V_FLAG_SUITEB_128_LOS_ONLY))
             return X509_V_ERR_SUITE_B_LOS_NOT_ALLOWED;
-    } else
+    } else {
         return X509_V_ERR_SUITE_B_INVALID_CURVE;
-
+    }
     return X509_V_OK;
 }
 
@@ -430,9 +430,9 @@ int X509_chain_check_suiteb(int *perror_depth, X509 *x, STACK_OF(X509) *chain,
     if (x == NULL) {
         x = sk_X509_value(chain, 0);
         i = 1;
-    } else
+    } else {
         i = 0;
-
+    }
     pk = X509_get0_pubkey(x);
 
     /*
@@ -533,7 +533,7 @@ STACK_OF(X509) *X509_chain_up_ref(STACK_OF(X509) *chain)
     return ret;
  err:
     while (i-- > 0)
-        X509_free (sk_X509_value(ret, i));
+        X509_free(sk_X509_value(ret, i));
     sk_X509_free(ret);
     return NULL;
 }
