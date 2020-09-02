@@ -127,7 +127,7 @@ const OPTIONS req_options[] = {
     {"subj", OPT_SUBJ, 's', "Set or modify request subject"},
     {"subject", OPT_SUBJECT, '-', "Output the request's subject"},
     {"multivalue-rdn", OPT_MULTIVALUE_RDN, '-',
-     "Enable support for multivalued RDNs"},
+     "Deprecated; multi-valued RDNs support is always on."},
     {"days", OPT_DAYS, 'p', "Number of days cert is valid for"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"addext", OPT_ADDEXT, 's',
@@ -257,7 +257,7 @@ int req_main(int argc, char **argv)
     int ret = 1, x509 = 0, days = 0, i = 0, newreq = 0, verbose = 0;
     int pkey_type = -1, private = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, keyform = FORMAT_PEM;
-    int modulus = 0, multirdn = 0, verify = 0, noout = 0, text = 0;
+    int modulus = 0, multirdn = 1, verify = 0, noout = 0, text = 0;
     int noenc = 0, newhdr = 0, subject = 0, pubkey = 0, precert = 0;
     long newkey = -1;
     unsigned long chtype = MBSTRING_ASC, reqflag = 0;
@@ -421,7 +421,7 @@ int req_main(int argc, char **argv)
             subj = opt_arg();
             break;
         case OPT_MULTIVALUE_RDN:
-            multirdn = 1;
+            /* obsolete */
             break;
         case OPT_ADDEXT:
             p = opt_arg();

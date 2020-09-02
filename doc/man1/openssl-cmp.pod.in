@@ -268,19 +268,23 @@ For KUR, it defaults to the subject DN of the reference certificate
 (see B<-oldcert>).
 This default is used for IR and CR only if no SANs are set.
 
-The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
-
 The subject DN is also used as fallback sender of outgoing CMP messages
 if no B<-cert> and no B<-oldcert> are given.
+
+The argument must be formatted as I</type0=value0/type1=value1/type2=...>.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
+Empty values are permitted, but the corresponding type will not be included.
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
+
+C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 =item B<-issuer> I<name>
 
 X509 issuer Distinguished Name (DN) of the CA server
 to place in the requested certificate template in IR/CR/KUR.
-
-The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
 
 If neither B<-srvcert> nor B<-recipient> is available,
 the name given in this option is also set as the recipient of the CMP message.
@@ -519,10 +523,6 @@ and as default value for the expected sender of incoming CMP messages.
 Distinguished Name (DN) to use in the recipient field of CMP request messages,
 i.e., the CMP server (usually the addressed CA).
 
-The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
-The empty name (NULL-DN) can be given explicitly as a single slash: 'I</>'.
-
 The recipient field in the header of a CMP message is mandatory.
 If not given explicitly the recipient is determined in the following order:
 the subject of the CMP server certificate given with the B<-srvcert> option,
@@ -535,9 +535,6 @@ as far as any of those is present, else the NULL-DN as last resort.
 
 Distinguished Name (DN) expected in the sender field of incoming CMP messages.
 Defaults to the subject DN of the pinned B<-srvcert>, if any.
-
-The argument must be formatted as I</type0=value0/type1=value1/type2=...>,
-characters may be escaped by C<\>E<nbsp>(backslash), no spaces are skipped.
 
 This can be used to make sure that only a particular entity is accepted as
 CMP message signer, and attackers are not able to use arbitrary certificates
