@@ -285,11 +285,17 @@ used).
 =item B<-subj> I<arg>
 
 Supersedes subject name given in the request.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by C<\> (backslash), and whitespace is
-retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the resulting certificate.
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
+
+C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 =item B<-utf8>
 
@@ -313,12 +319,7 @@ This overrides any option or configuration to use a serial number file.
 
 =item B<-multivalue-rdn>
 
-This option causes the -subj argument to be interpreted with full
-support for multivalued RDNs. Example:
-
-C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
-
-If B<-multi-rdn> is not used then the UID value is C<123456+CN=John Doe>.
+This option has been deprecated and has no effect.
 
 {- $OpenSSL::safe::opt_r_item -}
 
@@ -791,7 +792,8 @@ retained mainly for compatibility reasons.
 
 The B<-section> option was added in OpenSSL 3.0.0.
 
-The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
+The B<-certform> and B<-multivalue-rdn> options
+have become obsolete in OpenSSL 3.0.0 and have no effect.
 
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.

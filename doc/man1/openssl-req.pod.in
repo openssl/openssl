@@ -32,7 +32,6 @@ B<openssl> B<req>
 [B<-I<digest>>]
 [B<-config> I<filename>]
 [B<-section> I<name>]
-[B<-multivalue-rdn>]
 [B<-x509>]
 [B<-days> I<n>]
 [B<-set_serial> I<n>]
@@ -45,6 +44,7 @@ B<openssl> B<req>
 [B<-reqopt>]
 [B<-subject>]
 [B<-subj> I<arg>]
+[B<-multivalue-rdn>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-vfyopt> I<nm>:I<v>]
 [B<-batch>]
@@ -233,19 +233,21 @@ Specifies the name of the section to use; the default is B<req>.
 
 Sets subject name for new request or supersedes the subject name
 when processing a request.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the request.
-
-=item B<-multivalue-rdn>
-
-This option causes the -subj argument to be interpreted with full
-support for multivalued RDNs. Example:
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
 
 C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-If -multi-rdn is not used then the UID value is C<123456+CN=John Doe>.
+=item B<-multivalue-rdn>
+
+This option has been deprecated and has no effect.
 
 =item B<-x509>
 
@@ -697,8 +699,8 @@ L<x509v3_config(5)>
 
 The B<-section> option was added in OpenSSL 3.0.0.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+All B<-keyform> values except B<ENGINE> and the B<-multivalue-rdn> option
+have become obsolete in OpenSSL 3.0.0 and have no effect.
 
 The B<-engine> option was deprecated in OpenSSL 3.0.
 The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.

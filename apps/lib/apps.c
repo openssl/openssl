@@ -1629,7 +1629,8 @@ int parse_yesno(const char *str, int def)
 
 /*
  * name is expected to be in the format /type0=value0/type1=value1/type2=...
- * where characters may be escaped by \
+ * where + can be used instead of / to form multi-valued RDNs if canmulti
+ * and characters may be escaped by \
  */
 X509_NAME *parse_name(const char *cp, int chtype, int canmulti,
                       const char *desc)
@@ -1682,6 +1683,7 @@ X509_NAME *parse_name(const char *cp, int chtype, int canmulti,
         /* Collect the value. */
         valstr = (unsigned char *)bp;
         for (; *cp != '\0' && *cp != '/'; *bp++ = *cp++) {
+            /* unescaped '+' symbol string signals further member of multiRDN */
             if (canmulti && *cp == '+') {
                 nextismulti = 1;
                 break;
@@ -1705,6 +1707,9 @@ X509_NAME *parse_name(const char *cp, int chtype, int canmulti,
             BIO_printf(bio_err,
                        "%s: Skipping unknown %s name attribute \"%s\"\n",
                        opt_getprog(), desc, typestr);
+            if (ismulti)
+                BIO_printf(bio_err,
+                           "Hint: a '+' in a value string needs be escaped using '\\' else a new member of a multi-valued RDN is expected\n");
             continue;
         }
         if (*valstr == '\0') {

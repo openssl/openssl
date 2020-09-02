@@ -80,11 +80,19 @@ returned.
 =item B<-subject> I<arg>
 
 Search for an object having the subject name I<arg>.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted but are ignored for the search.  That is,
 a search with an empty value will have the same effect as not specifying
 the type at all.
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+
+Example:
+
+C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 =item B<-issuer> I<arg>
 
