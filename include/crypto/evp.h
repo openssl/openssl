@@ -62,6 +62,8 @@ struct evp_pkey_ctx_st {
 
     /* Legacy fields below */
 
+    /* EVP_PKEY identity */
+    int legacy_keytype;
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
     /* Engine that implements this method or NULL if builtin */
@@ -766,6 +768,7 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
                                        const ASN1_OCTET_STRING *id,
                                        OPENSSL_CTX *libctx, const char *propq);
+int evp_pkey_name2type(const char *name);
 #endif /* !defined(FIPS_MODULE) */
 void evp_method_store_flush(OPENSSL_CTX *libctx);
 int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,

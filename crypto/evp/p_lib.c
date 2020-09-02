@@ -988,51 +988,62 @@ int EVP_PKEY_base_id(const EVP_PKEY *pkey)
     return EVP_PKEY_type(pkey->type);
 }
 
+#ifndef FIPS_MODULE
+int evp_pkey_name2type(const char *name)
+{
+    /*
+     * These hard coded cases are pure hackery to get around the fact
+     * that names in crypto/objects/objects.txt are a mess.  There is
+     * no "EC", and "RSA" leads to the NID for 2.5.8.1.1, an OID that's
+     * fallen out in favor of { pkcs-1 1 }, i.e. 1.2.840.113549.1.1.1,
+     * the NID of which is used for EVP_PKEY_RSA.  Strangely enough,
+     * "DSA" is accurate...  but still, better be safe and hard-code
+     * names that we know.
+     * On a similar topic, EVP_PKEY_type(EVP_PKEY_SM2) will result in
+     * EVP_PKEY_EC, because of aliasing.
+     * TODO Clean this away along with all other #legacy support.
+     */
+    int type = NID_undef;
+
+    if (strcasecmp(name, "RSA") == 0)
+        type = EVP_PKEY_RSA;
+    else if (strcasecmp(name, "RSA-PSS") == 0)
+        type = EVP_PKEY_RSA_PSS;
+    else if (strcasecmp(name, "EC") == 0)
+        type = EVP_PKEY_EC;
+    else if (strcasecmp(name, "ED25519") == 0)
+        type = EVP_PKEY_ED25519;
+    else if (strcasecmp(name, "ED448") == 0)
+        type = EVP_PKEY_ED448;
+    else if (strcasecmp(name, "X25519") == 0)
+        type = EVP_PKEY_X25519;
+    else if (strcasecmp(name, "X448") == 0)
+        type = EVP_PKEY_X448;
+    else if (strcasecmp(name, "SM2") == 0)
+        type = EVP_PKEY_SM2;
+    else if (strcasecmp(name, "DH") == 0)
+        type = EVP_PKEY_DH;
+    else if (strcasecmp(name, "X9.42 DH") == 0)
+        type = EVP_PKEY_DHX;
+    else if (strcasecmp(name, "DSA") == 0)
+        type = EVP_PKEY_DSA;
+
+    if (type == NID_undef)
+        type = EVP_PKEY_type(OBJ_sn2nid(name));
+    if (type == NID_undef)
+        type = EVP_PKEY_type(OBJ_ln2nid(name));
+
+    return type;
+}
+#endif
+
 int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
 {
 #ifndef FIPS_MODULE
     if (pkey->keymgmt == NULL) {
-        /*
-         * These hard coded cases are pure hackery to get around the fact
-         * that names in crypto/objects/objects.txt are a mess.  There is
-         * no "EC", and "RSA" leads to the NID for 2.5.8.1.1, an OID that's
-         * fallen out in favor of { pkcs-1 1 }, i.e. 1.2.840.113549.1.1.1,
-         * the NID of which is used for EVP_PKEY_RSA.  Strangely enough,
-         * "DSA" is accurate...  but still, better be safe and hard-code
-         * names that we know.
-         * TODO Clean this away along with all other #legacy support.
-         */
-        int type;
+        int type = evp_pkey_name2type(name);
 
-        if (strcasecmp(name, "RSA") == 0)
-            type = EVP_PKEY_RSA;
-        else if (strcasecmp(name, "RSA-PSS") == 0)
-            type = EVP_PKEY_RSA_PSS;
-#ifndef OPENSSL_NO_EC
-        else if (strcasecmp(name, "EC") == 0)
-            type = EVP_PKEY_EC;
-        else if (strcasecmp(name, "ED25519") == 0)
-            type = EVP_PKEY_ED25519;
-        else if (strcasecmp(name, "ED448") == 0)
-            type = EVP_PKEY_ED448;
-        else if (strcasecmp(name, "X25519") == 0)
-            type = EVP_PKEY_X25519;
-        else if (strcasecmp(name, "X448") == 0)
-            type = EVP_PKEY_X448;
-#endif
-#ifndef OPENSSL_NO_DH
-        else if (strcasecmp(name, "DH") == 0)
-            type = EVP_PKEY_DH;
-        else if (strcasecmp(name, "X9.42 DH") == 0)
-            type = EVP_PKEY_DHX;
-#endif
-#ifndef OPENSSL_NO_DSA
-        else if (strcasecmp(name, "DSA") == 0)
-            type = EVP_PKEY_DSA;
-#endif
-        else
-            type = EVP_PKEY_type(OBJ_sn2nid(name));
-        return EVP_PKEY_type(pkey->type) == type;
+        return pkey->type == type;
     }
 #endif
     return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
