@@ -482,7 +482,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
         ctx->op.sig.sigprovctx = NULL;
         goto err;
     }
-    return 1;
+    goto end;
 
  legacy:
     /*
@@ -523,8 +523,13 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
     }
     if (ret <= 0)
         goto err;
-    return ret;
+ end:
+#ifndef FIPS_MODULE
+    if (ret > 0)
+        ret = evp_pkey_ctx_use_cached_data(ctx);
+#endif
 
+    return ret;
  err:
     evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;

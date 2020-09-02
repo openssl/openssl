@@ -204,7 +204,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                           mdname, provkey);
     }
 
-    return ret ? 1 : 0;
+    goto end;
+
  err:
     evp_pkey_ctx_free_old_ops(locpctx);
     locpctx->operation = EVP_PKEY_OP_UNDEFINED;
@@ -279,7 +280,15 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (ctx->pctx->pmeth->digest_custom != NULL)
         ctx->pctx->flag_call_digest_custom = 1;
 
-    return 1;
+    ret = 1;
+
+ end:
+#ifndef FIPS_MODULE
+    if (ret > 0)
+        ret = evp_pkey_ctx_use_cached_data(locpctx);
+#endif
+
+    return ret > 0 ? 1 : 0;
 }
 
 int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,

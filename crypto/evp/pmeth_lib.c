@@ -33,6 +33,14 @@
 
 #ifndef FIPS_MODULE
 
+static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
+                                          int keytype, int optype,
+                                          int cmd, const char *name,
+                                          const void *data, size_t data_len);
+static void evp_pkey_ctx_free_cached_data(EVP_PKEY_CTX *ctx,
+                                          int cmd, const char *name);
+static void evp_pkey_ctx_free_all_cached_data(EVP_PKEY_CTX *ctx);
+
 typedef const EVP_PKEY_METHOD *(*pmeth_fn)(void);
 typedef int sk_cmp_fn_type(const char *const *a, const char *const *b);
 
@@ -120,6 +128,29 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     pmeth->pkey_id = id;
     pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
     return pmeth;
+}
+
+/* Three possible states: */
+# define EVP_PKEY_STATE_UNKNOWN         0
+# define EVP_PKEY_STATE_LEGACY          1
+# define EVP_PKEY_STATE_PROVIDER        2
+
+static int evp_pkey_ctx_state(EVP_PKEY_CTX *ctx)
+{
+    if (ctx->operation == EVP_PKEY_OP_UNDEFINED)
+        return EVP_PKEY_STATE_UNKNOWN;
+
+    if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx)
+         && ctx->op.kex.exchprovctx != NULL)
+        || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
+            && ctx->op.sig.sigprovctx != NULL)
+        || (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
+            && ctx->op.ciph.ciphprovctx != NULL)
+        || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
+            && ctx->op.keymgmt.genctx != NULL))
+        return EVP_PKEY_STATE_PROVIDER;
+
+    return EVP_PKEY_STATE_LEGACY;
 }
 
 static void help_get_legacy_alg_type_from_keymgmt(const char *keytype,
@@ -388,6 +419,9 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
         ctx->pmeth->cleanup(ctx);
 
     evp_pkey_ctx_free_old_ops(ctx);
+#ifndef FIPS_MODULE
+    evp_pkey_ctx_free_all_cached_data(ctx);
+#endif
     EVP_KEYMGMT_free(ctx->keymgmt);
 
     EVP_PKEY_free(ctx->pkey);
@@ -1068,6 +1102,15 @@ int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
 static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
                                 int cmd, int p1, void *p2)
 {
+    switch (cmd) {
+    case EVP_PKEY_CTRL_SET1_ID:
+        return evp_pkey_ctx_set1_id_prov(ctx, p2, p1);
+    case EVP_PKEY_CTRL_GET1_ID:
+        return evp_pkey_ctx_get1_id_prov(ctx, p2);
+    case EVP_PKEY_CTRL_GET1_ID_LEN:
+        return evp_pkey_ctx_get1_id_len_prov(ctx, p2);
+    }
+
 # ifndef OPENSSL_NO_DH
     if (keytype == EVP_PKEY_DHX) {
         switch (cmd) {
@@ -1281,53 +1324,77 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
     return 0;
 }
 
+static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
+                                 int cmd, int p1, void *p2)
+{
+    int ret = 0;
+
+    if (ctx == NULL) {
+        EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+
+    /*
+     * If the method has a |digest_custom| function, we can relax the
+     * operation type check, since this can be called before the operation
+     * is initialized.
+     */
+    if (ctx->pmeth == NULL || ctx->pmeth->digest_custom == NULL) {
+        if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
+            EVPerr(0, EVP_R_NO_OPERATION_SET);
+            return -1;
+        }
+
+        if ((optype != -1) && !(ctx->operation & optype)) {
+            EVPerr(0, EVP_R_INVALID_OPERATION);
+            return -1;
+        }
+    }
+
+    switch (evp_pkey_ctx_state(ctx)) {
+    case EVP_PKEY_STATE_PROVIDER:
+        return legacy_ctrl_to_param(ctx, keytype, optype, cmd, p1, p2);
+    case EVP_PKEY_STATE_UNKNOWN:
+    case EVP_PKEY_STATE_LEGACY:
+        if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
+            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+            return -2;
+        }
+        if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
+            return -1;
+
+        ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
+
+        if (ret == -2)
+            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+        break;
+    }
+    return ret;
+}
+
 int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
                       int cmd, int p1, void *p2)
 {
-    int ret;
+    int ret = 0;
 
-    if (ctx == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+    /* If unsupported, we don't want that reported here */
+    ERR_set_mark();
+    ret = evp_pkey_ctx_store_cached_data(ctx, keytype, optype,
+                                         cmd, NULL, p2, p1);
+    if (ret == -2) {
+        ERR_pop_to_mark();
+    } else {
+        ERR_clear_last_mark();
+        /*
+         * If there was an error, there was an error.
+         * If the operation isn't initialized yet, we also return, as
+         * the saved values will be used then anyway.
+         */
+        if (ret < 1 || ctx->operation == EVP_PKEY_OP_UNDEFINED)
+            return ret;
     }
 
-    if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx) && ctx->op.kex.exchprovctx != NULL)
-            || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
-                && ctx->op.sig.sigprovctx != NULL)
-            || (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-                && ctx->op.ciph.ciphprovctx != NULL)
-            || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-                && ctx->op.keymgmt.genctx != NULL))
-        return legacy_ctrl_to_param(ctx, keytype, optype, cmd, p1, p2);
-
-    if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
-    }
-    if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
-        return -1;
-
-    /* Skip the operation checks since this is called in a very early stage */
-    if (ctx->pmeth->digest_custom != NULL)
-        goto doit;
-
-    if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_NO_OPERATION_SET);
-        return -1;
-    }
-
-    if ((optype != -1) && !(ctx->operation & optype)) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_OPERATION);
-        return -1;
-    }
-
- doit:
-    ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
-
-    if (ret == -2)
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
-
-    return ret;
+    return evp_pkey_ctx_ctrl_int(ctx, keytype, optype, cmd, p1, p2);
 }
 
 int EVP_PKEY_CTX_ctrl_uint64(EVP_PKEY_CTX *ctx, int keytype, int optype,
@@ -1429,31 +1496,152 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
     }
 }
 
+static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
+                                     const char *name, const char *value)
+{
+    int ret = 0;
+
+    if (ctx == NULL) {
+        EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+
+    switch (evp_pkey_ctx_state(ctx)) {
+    case EVP_PKEY_STATE_PROVIDER:
+        return legacy_ctrl_str_to_param(ctx, name, value);
+    case EVP_PKEY_STATE_UNKNOWN:
+    case EVP_PKEY_STATE_LEGACY:
+        if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->ctrl_str == NULL) {
+            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
+            return -2;
+        }
+        if (strcmp(name, "digest") == 0)
+            ret = EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_SIG,
+                                  EVP_PKEY_CTRL_MD, value);
+        else
+            ret = ctx->pmeth->ctrl_str(ctx, name, value);
+        break;
+    }
+
+    return ret;
+}
+
 int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
                           const char *name, const char *value)
 {
-    if (ctx == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+    int ret = 0;
+
+    /* If unsupported, we don't want that reported here */
+    ERR_set_mark();
+    ret = evp_pkey_ctx_store_cached_data(ctx, -1, -1, -1,
+                                         name, value, strlen(value) + 1);
+    if (ret == -2) {
+        ERR_pop_to_mark();
+    } else {
+        ERR_clear_last_mark();
+        /*
+         * If there was an error, there was an error.
+         * If the operation isn't initialized yet, we also return, as
+         * the saved values will be used then anyway.
+         */
+        if (ret < 1 || ctx->operation == EVP_PKEY_OP_UNDEFINED)
+            return ret;
     }
 
-    if ((EVP_PKEY_CTX_IS_DERIVE_OP(ctx) && ctx->op.kex.exchprovctx != NULL)
-            || (EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx)
-                && ctx->op.sig.sigprovctx != NULL)
-            || (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
-                && ctx->op.ciph.ciphprovctx != NULL)
-            || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-                && ctx->op.keymgmt.genctx != NULL))
-        return legacy_ctrl_str_to_param(ctx, name, value);
+    return evp_pkey_ctx_ctrl_str_int(ctx, name, value);
+}
 
-    if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
-        return -2;
+static int decode_cmd(int cmd, const char *name)
+{
+    if (cmd == -1) {
+        /*
+         * The consequence of the assertion not being true is that this
+         * function will return -1, which will cause the calling functions
+         * to signal that the command is unsupported...  in non-debug mode.
+         */
+        if (ossl_assert(name != NULL))
+            if (strcmp(name, "distid") == 0 || strcmp(name, "hexdistid") == 0)
+                cmd = EVP_PKEY_CTRL_SET1_ID;
     }
-    if (strcmp(name, "digest") == 0)
-        return EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_SIG, EVP_PKEY_CTRL_MD,
-                               value);
-    return ctx->pmeth->ctrl_str(ctx, name, value);
+
+    return cmd;
+}
+
+static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
+                                          int keytype, int optype,
+                                          int cmd, const char *name,
+                                          const void *data, size_t data_len)
+{
+    if ((keytype != -1 && ctx->pmeth->pkey_id != keytype)
+        || ((optype != -1) && !(ctx->operation & optype))) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return -1;
+    }
+
+    cmd = decode_cmd(cmd, name);
+    switch (cmd) {
+    case EVP_PKEY_CTRL_SET1_ID:
+        evp_pkey_ctx_free_cached_data(ctx, cmd, name);
+        if (name != NULL) {
+            ctx->cached_parameters.dist_id_name = OPENSSL_strdup(name);
+            if (ctx->cached_parameters.dist_id_name == NULL) {
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+        }
+        if (data_len > 0) {
+            ctx->cached_parameters.dist_id = OPENSSL_memdup(data, data_len);
+            if (ctx->cached_parameters.dist_id == NULL) {
+                ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+                return 0;
+            }
+        }
+        ctx->cached_parameters.dist_id_set = 1;
+        ctx->cached_parameters.dist_id_len = data_len;
+        return 1;
+    }
+
+    ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+    return -2;
+}
+
+static void evp_pkey_ctx_free_cached_data(EVP_PKEY_CTX *ctx,
+                                          int cmd, const char *name)
+{
+    cmd = decode_cmd(cmd, name);
+    switch (cmd) {
+    case EVP_PKEY_CTRL_SET1_ID:
+        OPENSSL_free(ctx->cached_parameters.dist_id);
+        OPENSSL_free(ctx->cached_parameters.dist_id_name);
+        ctx->cached_parameters.dist_id = NULL;
+        ctx->cached_parameters.dist_id_name = NULL;
+        break;
+    }
+}
+
+static void evp_pkey_ctx_free_all_cached_data(EVP_PKEY_CTX *ctx)
+{
+    evp_pkey_ctx_free_cached_data(ctx, EVP_PKEY_CTRL_SET1_ID, NULL);
+}
+
+int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx)
+{
+    int ret = 1;
+
+    if (ret && ctx->cached_parameters.dist_id_set) {
+        const char *name = ctx->cached_parameters.dist_id_name;
+        const void *val = ctx->cached_parameters.dist_id;
+        size_t len = ctx->cached_parameters.dist_id_len;
+
+        if (name != NULL)
+            ret = evp_pkey_ctx_ctrl_str_int(ctx, name, val);
+        else
+            ret = evp_pkey_ctx_ctrl_int(ctx, -1, ctx->operation,
+                                        EVP_PKEY_CTRL_SET1_ID,
+                                        (int)len, (void *)val);
+    }
+
+    return ret;
 }
 
 /* Utility functions to send a string of hex string to a ctrl */
