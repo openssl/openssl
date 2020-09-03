@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 2007-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright Nokia 2007-2019
  * Copyright Siemens AG 2015-2019
@@ -8,6 +10,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros);
+-}
 
 #ifndef OPENSSL_CMP_H
 # define OPENSSL_CMP_H
@@ -210,21 +216,31 @@ typedef struct ossl_cmp_msg_st OSSL_CMP_MSG;
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_MSG)
 DECLARE_ASN1_ENCODE_FUNCTIONS(OSSL_CMP_MSG, OSSL_CMP_MSG, OSSL_CMP_MSG)
 typedef struct ossl_cmp_certstatus_st OSSL_CMP_CERTSTATUS;
-DEFINE_OR_DECLARE_STACK_OF(OSSL_CMP_CERTSTATUS)
+{-
+    generate_stack_macros("OSSL_CMP_CERTSTATUS");
+-}
 typedef struct ossl_cmp_itav_st OSSL_CMP_ITAV;
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_ITAV)
-DEFINE_OR_DECLARE_STACK_OF(OSSL_CMP_ITAV)
+{-
+    generate_stack_macros("OSSL_CMP_ITAV");
+-}
 typedef struct ossl_cmp_revrepcontent_st OSSL_CMP_REVREPCONTENT;
 typedef struct ossl_cmp_pkisi_st OSSL_CMP_PKISI;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_PKISI)
 DECLARE_ASN1_DUP_FUNCTION(OSSL_CMP_PKISI)
-DEFINE_OR_DECLARE_STACK_OF(OSSL_CMP_PKISI)
+{-
+    generate_stack_macros("OSSL_CMP_PKISI");
+-}
 typedef struct ossl_cmp_certrepmessage_st OSSL_CMP_CERTREPMESSAGE;
-DEFINE_OR_DECLARE_STACK_OF(OSSL_CMP_CERTREPMESSAGE)
+{-
+    generate_stack_macros("OSSL_CMP_CERTREPMESSAGE");
+-}
 typedef struct ossl_cmp_pollrep_st OSSL_CMP_POLLREP;
 typedef STACK_OF(OSSL_CMP_POLLREP) OSSL_CMP_POLLREPCONTENT;
 typedef struct ossl_cmp_certresponse_st OSSL_CMP_CERTRESPONSE;
-DEFINE_OR_DECLARE_STACK_OF(OSSL_CMP_CERTRESPONSE)
+{-
+    generate_stack_macros("OSSL_CMP_CERTRESPONSE");
+-}
 typedef STACK_OF(ASN1_UTF8STRING) OSSL_CMP_PKIFREETEXT;
 
 /*

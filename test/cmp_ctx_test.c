@@ -13,8 +13,6 @@
 
 #include <openssl/x509_vfy.h>
 
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
-
 typedef struct test_fixture {
     const char *test_case_name;
     OSSL_CMP_CTX *ctx;

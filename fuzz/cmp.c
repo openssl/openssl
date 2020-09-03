@@ -18,8 +18,6 @@
 #include "fuzzer.h"
 #include "rand.inc"
 
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
-
 int FuzzerInitialize(int *argc, char ***argv)
 {
     OPENSSL_init_crypto(OPENSSL_INIT_LOAD_CRYPTO_STRINGS, NULL);
