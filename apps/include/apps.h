@@ -75,6 +75,9 @@ int has_stdin_waiting(void);
 void corrupt_signature(const ASN1_STRING *signature);
 int set_cert_times(X509 *x, const char *startdate, const char *enddate,
                    int days);
+int set_crl_lastupdate(X509_CRL *crl, const char *lastupdate);
+int set_crl_nextupdate(X509_CRL *crl, const char *nextupdate,
+                       long days, long hours, long secs);
 
 typedef struct args_st {
     int size;
