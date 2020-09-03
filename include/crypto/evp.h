@@ -808,3 +808,5 @@ int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 void evp_method_store_flush(OPENSSL_CTX *libctx);
 int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
                                    int loadconfig);
+
+void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);

@@ -177,6 +177,12 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
         if (mdname != NULL) {
             /*
+             * We're about to get a new digest so clear anything associated with
+             * an old digest.
+             */
+            evp_md_ctx_clear_digest(ctx, 1);
+
+            /*
              * This might be requested by a later call to EVP_MD_CTX_md().
              * In that case the "explicit fetch" rules apply for that
              * function (as per man pages), i.e. the ref count is not updated
@@ -185,6 +191,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              */
             ctx->digest = ctx->reqdigest = ctx->fetched_digest =
                 EVP_MD_fetch(locpctx->libctx, mdname, props);
+            if (ctx->digest == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                goto err;
+            }
         }
     }
 
