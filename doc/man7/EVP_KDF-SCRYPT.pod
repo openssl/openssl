@@ -72,7 +72,7 @@ fixed digest internally. NULL is used if this value is not set.
 
 A context for scrypt can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch("SCRYPT", NULL, NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an scrypt key derivation is specified via the
@@ -88,7 +88,7 @@ This example derives a 64-byte long test vector using scrypt with the password
  unsigned char out[64];
  OSSL_PARAM params[6], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "SCRYPT", NULL);
+ kdf = EVP_KDF_fetch("SCRYPT", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 

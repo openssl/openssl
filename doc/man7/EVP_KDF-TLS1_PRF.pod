@@ -50,7 +50,7 @@ this should be more than enough for any normal use of the TLS PRF.
 
 A context for the TLS PRF can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "TLS1-PRF", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch("TLS1-PRF", NULL, NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The digest, secret value and seed must be set before a key is derived otherwise
@@ -69,7 +69,7 @@ and seed value "seed":
  unsigned char out[10];
  OSSL_PARAM params[4], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "TLS1-PRF", NULL);
+ kdf = EVP_KDF_fetch("TLS1-PRF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 

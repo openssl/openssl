@@ -195,7 +195,7 @@ static int self_test_kdf(const ST_KAT_KDF *t, OSSL_SELF_TEST *st,
     if (bld == NULL)
         goto err;
 
-    kdf = EVP_KDF_fetch(libctx, t->algorithm, "");
+    kdf = EVP_KDF_fetch(t->algorithm, libctx, NULL);
     if (kdf == NULL)
         goto err;
 

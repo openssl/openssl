@@ -38,7 +38,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
 #else
     static const unsigned char label_prefix[] = "tls13 ";
 #endif
-    EVP_KDF *kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_HKDF,
+    EVP_KDF *kdf = EVP_KDF_fetch(OSSL_KDF_NAME_HKDF, s->ctx->libctx,
                                  s->ctx->propq);
     EVP_KDF_CTX *kctx;
     OSSL_PARAM params[5], *p = params;
@@ -197,7 +197,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
 #endif
     unsigned char preextractsec[EVP_MAX_MD_SIZE];
 
-    kdf = EVP_KDF_fetch(s->ctx->libctx, OSSL_KDF_NAME_HKDF, s->ctx->propq);
+    kdf = EVP_KDF_fetch(OSSL_KDF_NAME_HKDF, s->ctx->libctx, s->ctx->propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL) {

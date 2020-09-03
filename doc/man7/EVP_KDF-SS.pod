@@ -65,7 +65,7 @@ This parameter sets an optional value for fixedinfo, also known as otherinfo.
 
 A context for SSKDF can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "SSKDF", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch("SSKDF", NULL, NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an SSKDF is specified via the I<keylen>
@@ -81,7 +81,7 @@ and fixedinfo value "label":
  unsigned char out[10];
  OSSL_PARAM params[4], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "SSKDF", NULL);
+ kdf = EVP_KDF_fetch("SSKDF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
@@ -109,7 +109,7 @@ fixedinfo value "label" and salt "salt":
  unsigned char out[10];
  OSSL_PARAM params[6], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "SSKDF", NULL);
+ kdf = EVP_KDF_fetch("SSKDF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
@@ -141,7 +141,7 @@ fixedinfo value "label", salt of "salt" and KMAC outlen of 20:
  unsigned char out[10];
  OSSL_PARAM params[7], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "SSKDF", NULL);
+ kdf = EVP_KDF_fetch("SSKDF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 

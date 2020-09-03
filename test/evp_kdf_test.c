@@ -20,7 +20,7 @@
 
 static EVP_KDF_CTX *get_kdfbyname(const char *name)
 {
-    EVP_KDF *kdf = EVP_KDF_fetch(NULL, name, NULL);
+    EVP_KDF *kdf = EVP_KDF_fetch(name, NULL, NULL);
     EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
     EVP_KDF_free(kdf);
@@ -666,8 +666,8 @@ static int test_kdf_get_kdf(void)
     int ok = 1;
 
     if (!TEST_ptr(obj = OBJ_nid2obj(NID_id_pbkdf2))
-        || !TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL))
-        || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(OBJ_obj2nid(obj)),
+        || !TEST_ptr(kdf1 = EVP_KDF_fetch(OSSL_KDF_NAME_PBKDF2, NULL, NULL))
+        || !TEST_ptr(kdf2 = EVP_KDF_fetch(OBJ_nid2sn(OBJ_obj2nid(obj)), NULL,
                                           NULL))
         || !TEST_ptr_eq(kdf1, kdf2))
         ok = 0;
@@ -676,15 +676,15 @@ static int test_kdf_get_kdf(void)
     EVP_KDF_free(kdf2);
     kdf2 = NULL;
 
-    if (!TEST_ptr(kdf1 = EVP_KDF_fetch(NULL, SN_tls1_prf, NULL))
-        || !TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, LN_tls1_prf, NULL))
+    if (!TEST_ptr(kdf1 = EVP_KDF_fetch(SN_tls1_prf, NULL, NULL))
+        || !TEST_ptr(kdf2 = EVP_KDF_fetch(LN_tls1_prf, NULL, NULL))
         || !TEST_ptr_eq(kdf1, kdf2))
         ok = 0;
     /* kdf1 is re-used below, so don't free it here */
     EVP_KDF_free(kdf2);
     kdf2 = NULL;
 
-    if (!TEST_ptr(kdf2 = EVP_KDF_fetch(NULL, OBJ_nid2sn(NID_tls1_prf), NULL))
+    if (!TEST_ptr(kdf2 = EVP_KDF_fetch(OBJ_nid2sn(NID_tls1_prf), NULL, NULL))
         || !TEST_ptr_eq(kdf1, kdf2))
         ok = 0;
     EVP_KDF_free(kdf1);

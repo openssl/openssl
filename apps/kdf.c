@@ -99,7 +99,7 @@ opthelp:
         goto opthelp;
     }
 
-    if ((kdf = EVP_KDF_fetch(NULL, argv[0], NULL)) == NULL) {
+    if ((kdf = EVP_KDF_fetch(argv[0], NULL, NULL)) == NULL) {
         BIO_printf(bio_err, "Invalid KDF name %s\n", argv[0]);
         goto opthelp;
     }

@@ -56,7 +56,7 @@ Depending on whether mac is CMAC or HMAC, either digest or cipher is required
 
 A context for KBKDF can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch("KBKDF", NULL, NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an KBKDF is specified via the C<keylen>
@@ -75,7 +75,7 @@ Label "label", and Context "context".
  unsigned char out[10];
  OSSL_PARAM params[6], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
+ kdf = EVP_KDF_fetch("KBKDF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 
@@ -106,7 +106,7 @@ Label "label", and IV "sixteen bytes iv".
  OSSL_PARAM params[8], *p = params;
  unsigned char *iv = "sixteen bytes iv";
 
- kdf = EVP_KDF_fetch(NULL, "KBKDF", NULL);
+ kdf = EVP_KDF_fetch("KBKDF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 

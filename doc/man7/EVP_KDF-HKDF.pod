@@ -86,7 +86,7 @@ an error will occur.
 
 A context for HKDF can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch("HKDF", NULL, NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an HKDF expand operation is specified via the I<keylen>
@@ -106,7 +106,7 @@ salt value "salt" and info value "label":
  unsigned char out[10];
  OSSL_PARAM params[5], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "HKDF", NULL);
+ kdf = EVP_KDF_fetch("HKDF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 

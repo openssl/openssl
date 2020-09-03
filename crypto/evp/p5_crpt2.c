@@ -42,7 +42,7 @@ int pkcs5_pbkdf2_hmac_with_libctx(const char *pass, int passlen,
     if (salt == NULL && saltlen == 0)
         salt = (unsigned char *)empty;
 
-    kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, propq);
+    kdf = EVP_KDF_fetch(OSSL_KDF_NAME_PBKDF2, libctx, propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)

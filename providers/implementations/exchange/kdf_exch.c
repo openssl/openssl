@@ -44,7 +44,8 @@ static void *kdf_newctx(const char *kdfname, void *provctx)
 
     kdfctx->provctx = provctx;
 
-    kdf = EVP_KDF_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), kdfname, NULL);
+    /* TODO(3.0): Does this need to use the propq? */
+    kdf = EVP_KDF_fetch(kdfname, PROV_LIBRARY_CONTEXT_OF(provctx), NULL);
     if (kdf == NULL)
         goto err;
     kdfctx->kdfctx = EVP_KDF_CTX_new(kdf);
@@ -133,7 +134,7 @@ static int kdf_set_ctx_params(void *vpkdfctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *kdf_settable_ctx_params(void *provctx,
                                                  const char *kdfname)
 {
-    EVP_KDF *kdf = EVP_KDF_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), kdfname,
+    EVP_KDF *kdf = EVP_KDF_fetch(kdfname, PROV_LIBRARY_CONTEXT_OF(provctx),
                                  NULL);
     const OSSL_PARAM *params;
 

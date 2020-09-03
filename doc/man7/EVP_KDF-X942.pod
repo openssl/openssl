@@ -48,7 +48,7 @@ This parameter sets the CEK wrapping algorithm name.
 
 A context for X942KDF can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "X942KDF", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch("X942KDF", NULL, NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of an X942KDF is specified via the I<keylen>
@@ -68,7 +68,7 @@ keying material:
   if (RAND_bytes(ukm, sizeof(ukm)) <= 0)
       error("RAND_bytes");
 
- kdf = EVP_KDF_fetch(NULL, "X942KDF", NULL);
+ kdf = EVP_KDF_fetch("X942KDF", NULL, NULL);
  if (kctx == NULL)
      error("EVP_KDF_fetch");
  kctx = EVP_KDF_CTX_new(kdf);

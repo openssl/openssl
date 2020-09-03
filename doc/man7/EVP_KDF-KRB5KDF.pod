@@ -43,7 +43,7 @@ If a value is already set, the contents are replaced.
 
 A context for KRB5KDF can be obtained by calling:
 
- EVP_KDF *kdf = EVP_KDF_fetch(NULL, "KRB5KDF", NULL);
+ EVP_KDF *kdf = EVP_KDF_fetch("KRB5KDF", NULL, NULL);
  EVP_KDF_CTX *kctx = EVP_KDF_CTX_new(kdf);
 
 The output length of the KRB5KDF derivation is specified via the I<keylen>
@@ -69,7 +69,7 @@ This example derives a key using the AES-128-CBC cipher:
  size_t outlen = sizeof(out);
  OSSL_PARAM params[4], *p = params;
 
- kdf = EVP_KDF_fetch(NULL, "KRB5KDF", NULL);
+ kdf = EVP_KDF_fetch("KRB5KDF", NULL, NULL);
  kctx = EVP_KDF_CTX_new(kdf);
  EVP_KDF_free(kdf);
 

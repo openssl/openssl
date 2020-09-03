@@ -27,7 +27,7 @@ extern "C" {
 
 int EVP_KDF_up_ref(EVP_KDF *kdf);
 void EVP_KDF_free(EVP_KDF *kdf);
-EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_KDF *EVP_KDF_fetch(const char *algorithm, OPENSSL_CTX *libctx,
                        const char *properties);
 
 EVP_KDF_CTX *EVP_KDF_CTX_new(EVP_KDF *kdf);
