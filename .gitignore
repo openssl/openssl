@@ -31,6 +31,7 @@
 /include/openssl/opensslv.h
 /include/openssl/pkcs7.h
 /include/openssl/safestack.h
+/include/openssl/srp.h
 /include/openssl/ssl.h
 /include/openssl/x509.h
 /include/openssl/x509v3.h

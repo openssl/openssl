@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 2004-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2004, EdelKey Project. All Rights Reserved.
  *
@@ -10,6 +12,10 @@
  * Originally written by Christophe Renou and Peter Sylvester,
  * for the EdelKey project.
  */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros);
+-}
 
 #ifndef OPENSSL_SRP_H
 # define OPENSSL_SRP_H
@@ -37,7 +43,10 @@ typedef struct SRP_gN_cache_st {
     char *b64_bn;
     BIGNUM *bn;
 } SRP_gN_cache;
-DEFINE_OR_DECLARE_STACK_OF(SRP_gN_cache)
+{-
+    generate_stack_macros("SRP_gN_cache");
+-}
+
 
 typedef struct SRP_user_pwd_st {
     /* Owned by us. */
@@ -50,7 +59,9 @@ typedef struct SRP_user_pwd_st {
     /* Owned by us. */
     char *info;
 } SRP_user_pwd;
-DEFINE_OR_DECLARE_STACK_OF(SRP_user_pwd)
+{-
+    generate_stack_macros("SRP_user_pwd");
+-}
 
 SRP_user_pwd *SRP_user_pwd_new(void);
 void SRP_user_pwd_free(SRP_user_pwd *user_pwd);
@@ -76,7 +87,10 @@ typedef struct SRP_gN_st {
     const BIGNUM *g;
     const BIGNUM *N;
 } SRP_gN;
-DEFINE_OR_DECLARE_STACK_OF(SRP_gN)
+{-
+    generate_stack_macros("SRP_gN");
+-}
+
 
 SRP_VBASE *SRP_VBASE_new(char *seed_key);
 void SRP_VBASE_free(SRP_VBASE *vb);
