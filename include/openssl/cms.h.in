@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 2008-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -6,6 +8,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros);
+-}
 
 #ifndef OPENSSL_CMS_H
 # define OPENSSL_CMS_H
@@ -36,10 +42,12 @@ typedef struct CMS_Receipt_st CMS_Receipt;
 typedef struct CMS_RecipientEncryptedKey_st CMS_RecipientEncryptedKey;
 typedef struct CMS_OtherKeyAttribute_st CMS_OtherKeyAttribute;
 
-DEFINE_OR_DECLARE_STACK_OF(CMS_SignerInfo)
-DEFINE_OR_DECLARE_STACK_OF(CMS_RecipientEncryptedKey)
-DEFINE_OR_DECLARE_STACK_OF(CMS_RecipientInfo)
-DEFINE_OR_DECLARE_STACK_OF(CMS_RevocationInfoChoice)
+{-
+    generate_stack_macros("CMS_SignerInfo")
+    .generate_stack_macros("CMS_RecipientEncryptedKey")
+    .generate_stack_macros("CMS_RecipientInfo")
+    .generate_stack_macros("CMS_RevocationInfoChoice");
+-}
 
 DECLARE_ASN1_FUNCTIONS(CMS_ContentInfo)
 DECLARE_ASN1_FUNCTIONS(CMS_ReceiptRequest)

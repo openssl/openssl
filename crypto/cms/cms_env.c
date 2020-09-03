@@ -19,9 +19,6 @@
 #include "crypto/x509.h"
 #include "cms_local.h"
 
-DEFINE_STACK_OF(CMS_RecipientInfo)
-DEFINE_STACK_OF(CMS_RevocationInfoChoice)
-
 /* CMS EnvelopedData Utilities */
 static void cms_env_set_version(CMS_EnvelopedData *env);
 
