@@ -11,7 +11,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include <openssl/trace.h>
-#include <openssl/evp.h>
 
 /*
  * Encrypt/Decrypt a buffer based on password and algor, result in a
@@ -23,7 +22,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
                                 unsigned char **data, int *datalen, int en_de)
 {
     unsigned char *out = NULL;
-    int outlen = 0, i;
+    int outlen, i;
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     int max_out_len, mac_len = 0;
 
@@ -47,7 +46,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
      * MAC should be processed on decrypting separately from plain text
      */
     max_out_len = inlen + EVP_CIPHER_CTX_block_size(ctx);
-    if (EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD, 0, &mac_len) < 0) {
             PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -91,7 +90,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
         goto err;
     }
     outlen += i;
-    if (EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
         if (EVP_CIPHER_CTX_encrypting(ctx)) {
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
                 (int)mac_len, out+outlen) < 0) {
@@ -120,10 +119,10 @@ void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
                               const char *pass, int passlen,
                               const ASN1_OCTET_STRING *oct, int zbuf)
 {
-    unsigned char *out;
+    unsigned char *out = NULL;
     const unsigned char *p;
     void *ret;
-    int outlen;
+    int outlen = 0;
 
     if (!PKCS12_pbe_crypt(algor, pass, passlen, oct->data, oct->length,
                           &out, &outlen, 0)) {
