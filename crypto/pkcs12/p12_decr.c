@@ -24,13 +24,14 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     unsigned char *out = NULL;
     int outlen, i;
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
+    size_t max_out_len, mac_len;
 
     if (ctx == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
-    /* Decrypt data */
+    /* Process data */
     if (!EVP_PBE_CipherInit(algor->algorithm, pass, passlen,
                             algor->parameter, ctx, en_de)) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
@@ -38,8 +39,37 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
         goto err;
     }
 
-    if ((out = OPENSSL_malloc(inlen + EVP_CIPHER_CTX_block_size(ctx)))
-            == NULL) {
+    /*
+     * GOST algorithm specifics:
+     * OMAC algorithm calculate and encrypt MAC of the encrypted objects
+     * It's appended to encrypted text on encrypting
+     * MAC should be processed on decrypting separately from plain text
+     */
+    max_out_len = inlen + EVP_CIPHER_CTX_block_size(ctx);
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD, 0, &mac_len) < 0) {
+            PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+
+        if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            max_out_len += mac_len;
+        } else {
+            if (inlen < mac_len) {
+                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
+                PKCS12_R_UNSUPPORTED_PKCS12_MODE);
+                goto err;
+            }
+            inlen -= mac_len;
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
+                                    (int)mac_len, (unsigned char *)in+inlen) < 0) {
+                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        }
+    }
+
+    if ((out = OPENSSL_malloc(max_out_len)) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
         goto err;
     }
@@ -60,6 +90,16 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
         goto err;
     }
     outlen += i;
+    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+        if (EVP_CIPHER_CTX_encrypting(ctx)) {
+            if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
+                (int)mac_len, out+outlen) < 0) {
+                PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+            outlen += mac_len;
+        }
+    }
     if (datalen)
         *datalen = outlen;
     if (data)
