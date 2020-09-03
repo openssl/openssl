@@ -21,8 +21,6 @@
 
 #include "ct_local.h"
 
-DEFINE_STACK_OF(SCT)
-
 int o2i_SCT_signature(SCT *sct, const unsigned char **in, size_t len)
 {
     size_t siglen;

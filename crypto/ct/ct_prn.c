@@ -16,8 +16,6 @@
 
 #include "ct_local.h"
 
-DEFINE_STACK_OF(SCT)
-
 static void SCT_signature_algorithms_print(const SCT *sct, BIO *out)
 {
     int nid = SCT_get_signature_nid(sct);

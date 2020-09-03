@@ -13,8 +13,6 @@
 
 #include "ct_local.h"
 
-DEFINE_STACK_OF(SCT)
-
 static char *i2s_poison(const X509V3_EXT_METHOD *method, void *val)
 {
     return OPENSSL_strdup("NULL");
