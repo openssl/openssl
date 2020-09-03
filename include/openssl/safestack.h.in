@@ -163,28 +163,6 @@ extern "C" {
 typedef char *OPENSSL_STRING;
 typedef const char *OPENSSL_CSTRING;
 
-# define DEFINE_STACK_OF_STRING() \
-        DEFINE_SPECIAL_STACK_OF(OPENSSL_STRING, char)
-# define DEFINE_STACK_OF_CSTRING() \
-        DEFINE_SPECIAL_STACK_OF_CONST(OPENSSL_CSTRING, char)
-
-/*
- * If we're building OpenSSL, or we have no-deprecated configured,
- * then we don't define the inline functions (see |SKM_DEFINE_STACK_OF|,
- * above), we just declare the stack datatypes. Otherwise, for compatibility
- * and to not remove the API's, we define the functions.  We have the
- * trailing semicolon so that uses of this never need it.
- */
-#if defined(OPENSSL_BUILDING_OPENSSL) || defined(OPENSSL_NO_DEPRECATED_3_0)
-# define DEFINE_OR_DECLARE_STACK_OF(s) STACK_OF(s);
-# define DEFINE_OR_DECLARE_STACK_OF_STRING() STACK_OF(OPENSSL_STRING);
-# define DEFINE_OR_DECLARE_STACK_OF_CSTRING() STACK_OF(OPENSSL_CSTRING);
-#else
-# define DEFINE_OR_DECLARE_STACK_OF(s) DEFINE_STACK_OF(s)
-# define DEFINE_OR_DECLARE_STACK_OF_STRING() DEFINE_STACK_OF_STRING()
-# define DEFINE_OR_DECLARE_STACK_OF_CSTRING() DEFINE_STACK_OF_CSTRING()
-#endif
-
 /*-
  * Confusingly, LHASH_OF(STRING) deals with char ** throughout, but
  * STACK_OF(STRING) is really more like STACK_OF(char), only, as mentioned
@@ -207,41 +185,6 @@ typedef void *OPENSSL_BLOCK;
     generate_stack_block_macros();
 -}
 #endif
-
-/*
- * If called without higher optimization (min. -xO3) the Oracle Developer
- * Studio compiler generates code for the defined (static inline) functions
- * above.
- * This would later lead to the linker complaining about missing symbols when
- * this header file is included but the resulting object is not linked against
- * the Crypto library (openssl#6912).
- */
-# ifdef __SUNPRO_C
-#  pragma weak OPENSSL_sk_num
-#  pragma weak OPENSSL_sk_value
-#  pragma weak OPENSSL_sk_new
-#  pragma weak OPENSSL_sk_new_null
-#  pragma weak OPENSSL_sk_new_reserve
-#  pragma weak OPENSSL_sk_reserve
-#  pragma weak OPENSSL_sk_free
-#  pragma weak OPENSSL_sk_zero
-#  pragma weak OPENSSL_sk_delete
-#  pragma weak OPENSSL_sk_delete_ptr
-#  pragma weak OPENSSL_sk_push
-#  pragma weak OPENSSL_sk_unshift
-#  pragma weak OPENSSL_sk_pop
-#  pragma weak OPENSSL_sk_shift
-#  pragma weak OPENSSL_sk_pop_free
-#  pragma weak OPENSSL_sk_insert
-#  pragma weak OPENSSL_sk_set
-#  pragma weak OPENSSL_sk_find
-#  pragma weak OPENSSL_sk_find_ex
-#  pragma weak OPENSSL_sk_sort
-#  pragma weak OPENSSL_sk_is_sorted
-#  pragma weak OPENSSL_sk_dup
-#  pragma weak OPENSSL_sk_deep_copy
-#  pragma weak OPENSSL_sk_set_cmp_func
-# endif /* __SUNPRO_C */
 
 # ifdef  __cplusplus
 }
