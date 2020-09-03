@@ -11,7 +11,6 @@
 
 #include "cmp_testlib.h"
 #include "../crypto/crmf/crmf_local.h" /* for manipulating POPO signature */
-DEFINE_STACK_OF(OSSL_CRMF_MSG)
 
 static const char *server_f;
 static const char *client_f;
