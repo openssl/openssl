@@ -15,9 +15,6 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(GENERAL_NAMES)
-
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
                             const X509_REVOKED *const *b);
 static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);

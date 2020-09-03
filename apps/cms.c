@@ -24,8 +24,6 @@
 # include <openssl/cms.h>
 
 DEFINE_STACK_OF(CMS_SignerInfo)
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(GENERAL_NAMES)
 DEFINE_STACK_OF_STRING()
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);

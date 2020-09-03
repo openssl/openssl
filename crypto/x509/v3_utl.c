@@ -22,8 +22,6 @@
 #include "x509_local.h"
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(ACCESS_DESCRIPTION)
 DEFINE_STACK_OF_STRING()
 
 static char *strip_spaces(char *name);
