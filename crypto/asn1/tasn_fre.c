@@ -13,8 +13,6 @@
 #include <openssl/objects.h>
 #include "asn1_local.h"
 
-DEFINE_STACK_OF(ASN1_VALUE)
-
 /* Free up an ASN1 structure */
 
 void ASN1_item_free(ASN1_VALUE *val, const ASN1_ITEM *it)
