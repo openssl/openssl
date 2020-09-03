@@ -400,33 +400,5 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
 #   endif /* OPENSSL_NO_KTLS_RX */
 
 #  endif /* OPENSSL_SYS_LINUX */
-# else /* OPENSSL_NO_KTLS */
-/* Dummy functions here */
-static ossl_inline int ktls_enable(int fd)
-{
-    return 0;
-}
-
-static ossl_inline int ktls_start(int fd, void *crypto_info,
-                                  size_t len, int is_tx)
-{
-    return 0;
-}
-
-static ossl_inline int ktls_send_ctrl_message(int fd, unsigned char record_type,
-                                              const void *data, size_t length)
-{
-    return -1;
-}
-
-static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
-{
-    return -1;
-}
-
-static ossl_inline ossl_ssize_t ktls_sendfile(int s, int fd, off_t off, size_t size, int flags)
-{
-    return -1;
-}
 # endif /* OPENSSL_NO_KTLS */
 #endif /* HEADER_INTERNAL_KTLS */
