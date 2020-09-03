@@ -606,10 +606,8 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
     }
 
     ctx = EVP_PKEY_CTX_new_from_name(libctx, "CMAC", propq);
-    if (ctx == NULL) {
-        EVPerr(0, ERR_R_MALLOC_FAILURE);
+    if (ctx == NULL)
         goto err;
-    }
 
     if (!EVP_PKEY_key_fromdata_init(ctx)) {
         EVPerr(0, EVP_R_KEY_SETUP_FAILED);
