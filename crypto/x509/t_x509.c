@@ -17,7 +17,6 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(ASN1_OBJECT)
 
 #ifndef OPENSSL_NO_STDIO

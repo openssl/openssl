@@ -13,7 +13,6 @@
 #include <string.h>
 
 DEFINE_STACK_OF(OCSP_ONEREQ)
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(OCSP_SINGLERESP)
 
 static int ocsp_find_signer(X509 **psigner, OCSP_BASICRESP *bs,

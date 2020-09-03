@@ -11,8 +11,6 @@
 
 #include "cmp_testlib.h"
 
-DEFINE_STACK_OF(X509)
-
 static const char *ir_protected_f;
 static const char *ir_unprotected_f;
 static const char *ip_PBM_f;

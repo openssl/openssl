@@ -18,7 +18,6 @@
 #include <openssl/ocsp.h>
 #include "ocsp_local.h"
 
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(OCSP_ONEREQ)
 DEFINE_STACK_OF(OCSP_SINGLERESP)
 

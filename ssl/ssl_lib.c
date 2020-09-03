@@ -28,9 +28,6 @@
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_NAME)
-DEFINE_STACK_OF(X509_EXTENSION)
 DEFINE_STACK_OF(OCSP_RESPID)
 DEFINE_STACK_OF(SCT)
 

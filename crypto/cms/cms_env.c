@@ -21,7 +21,6 @@
 
 DEFINE_STACK_OF(CMS_RecipientInfo)
 DEFINE_STACK_OF(CMS_RevocationInfoChoice)
-DEFINE_STACK_OF(X509_ATTRIBUTE)
 
 /* CMS EnvelopedData Utilities */
 static void cms_env_set_version(CMS_EnvelopedData *env);

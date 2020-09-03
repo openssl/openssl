@@ -15,7 +15,6 @@
 #include <openssl/pem.h>
 
 DEFINE_STACK_OF(OCSP_ONEREQ)
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(OCSP_SINGLERESP)
 
 static int ocsp_certid_print(BIO *bp, OCSP_CERTID *a, int indent)

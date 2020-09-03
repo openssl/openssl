@@ -58,7 +58,6 @@ IMPLEMENT_ASN1_FUNCTIONS(ASIdentifiers)
 
 DEFINE_STACK_OF(ASIdOrRange)
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(X509)
 
 /*
  * i2r method for an ASIdentifierChoice.

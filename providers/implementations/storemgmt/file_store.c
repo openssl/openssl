@@ -33,7 +33,6 @@
 #include "prov/providercommonerr.h"
 #include "file_store_local.h"
 
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 
 #ifdef _WIN32

@@ -22,8 +22,6 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(X509)
-
 /* Verify a message protected by signature according to RFC section 5.1.3.3 */
 static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
                             const OSSL_CMP_MSG *msg, X509 *cert)

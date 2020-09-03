@@ -13,7 +13,6 @@
 #include "internal/cryptlib.h"
 
 DEFINE_STACK_OF(OCSP_RESPID)
-DEFINE_STACK_OF(X509_EXTENSION)
 
 #define COOKIE_STATE_FORMAT_VERSION     0
 

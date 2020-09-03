@@ -12,7 +12,6 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(PKCS7)
 DEFINE_STACK_OF(PKCS12_SAFEBAG)
 

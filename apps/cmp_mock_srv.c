@@ -15,7 +15,6 @@
 #include <openssl/err.h>
 #include <openssl/cmperr.h>
 
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
 DEFINE_STACK_OF(ASN1_UTF8STRING)
  

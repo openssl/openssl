@@ -26,8 +26,6 @@
 #include <openssl/core_names.h>
 #include <openssl/asn1t.h>
 
-DEFINE_STACK_OF(X509)
-
 #define TICKET_NONCE_SIZE       8
 
 typedef struct {

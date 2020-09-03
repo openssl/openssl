@@ -59,8 +59,6 @@
  * reference.
  */
 
-DEFINE_STACK_OF(X509)
-
 struct extracted_param_data_st {
     int object_type;
     const char *data_type;

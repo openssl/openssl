@@ -15,8 +15,6 @@
 #include "crypto/x509.h"
 #include "crypto/ctype.h"
 
-DEFINE_STACK_OF(X509_NAME_ENTRY)
-
 /*
  * Limit to ensure we don't overflow: much greater than
  * anything encountered in practice.

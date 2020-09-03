@@ -23,7 +23,6 @@
 # include <openssl/x509v3.h>
 # include <openssl/cms.h>
 
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(CMS_SignerInfo)
 DEFINE_STACK_OF(GENERAL_NAME)
 DEFINE_STACK_OF(GENERAL_NAMES)

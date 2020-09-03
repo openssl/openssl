@@ -16,8 +16,6 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(X509_NAME_ENTRY)
-
 int X509_NAME_get_text_by_NID(const X509_NAME *name, int nid,
                               char *buf, int len)
 {

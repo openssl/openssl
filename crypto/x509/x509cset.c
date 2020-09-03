@@ -16,8 +16,6 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(X509_REVOKED)
-
 int X509_CRL_set_version(X509_CRL *x, long version)
 {
     if (x == NULL)

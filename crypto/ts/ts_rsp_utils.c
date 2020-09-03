@@ -14,8 +14,6 @@
 #include <openssl/pkcs7.h>
 #include "ts_local.h"
 
-DEFINE_STACK_OF(X509_EXTENSION)
-
 int TS_RESP_set_status_info(TS_RESP *a, TS_STATUS_INFO *status_info)
 {
     TS_STATUS_INFO *new_status_info;
