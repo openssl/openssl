@@ -155,7 +155,8 @@ typedef enum OPTION_choice {
     OPT_KEY, OPT_CERT, OPT_CERTFORM, OPT_SELFSIGN,
     OPT_IN, OPT_INFORM, OPT_OUT, OPT_OUTDIR, OPT_VFYOPT,
     OPT_SIGOPT, OPT_NOTEXT, OPT_BATCH, OPT_PRESERVEDN, OPT_NOEMAILDN,
-    OPT_GENCRL, OPT_MSIE_HACK, OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
+    OPT_GENCRL, OPT_MSIE_HACK, OPT_CRL_LASTUPDATE, OPT_CRL_NEXTUPDATE,
+    OPT_CRLDAYS, OPT_CRLHOURS, OPT_CRLSEC,
     OPT_INFILES, OPT_SS_CERT, OPT_SPKAC, OPT_REVOKE, OPT_VALID,
     OPT_EXTENSIONS, OPT_EXTFILE, OPT_STATUS, OPT_UPDATEDB, OPT_CRLEXTS,
     OPT_RAND_SERIAL,
@@ -241,6 +242,10 @@ const OPTIONS ca_options[] = {
      "sets compromise time to val and the revocation reason to keyCompromise"},
     {"crl_CA_compromise", OPT_CRL_CA_COMPROMISE, 's',
      "sets compromise time to val and the revocation reason to CACompromise"},
+    {"crl_lastupdate", OPT_CRL_LASTUPDATE, 's',
+     "Sets the CRL lastUpdate time to val (YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ)"},
+    {"crl_nextupdate", OPT_CRL_NEXTUPDATE, 's',
+     "Sets the CRL nextUpdate time to val (YYMMDDHHMMSSZ or YYYYMMDDHHMMSSZ)"},
     {"crldays", OPT_CRLDAYS, 'p', "Days until the next CRL is due"},
     {"crlhours", OPT_CRLHOURS, 'p', "Hours until the next CRL is due"},
     {"crlsec", OPT_CRLSEC, 'p', "Seconds until the next CRL is due"},
@@ -262,7 +267,6 @@ int ca_main(int argc, char **argv)
     EVP_PKEY *pkey = NULL;
     BIO *in = NULL, *out = NULL, *Sout = NULL;
     ASN1_INTEGER *tmpser;
-    ASN1_TIME *tmptm;
     CA_DB *db = NULL;
     DB_ATTR db_attr;
     STACK_OF(CONF_VALUE) *attribs = NULL;
@@ -291,6 +295,7 @@ int ca_main(int argc, char **argv)
     int keyformat = FORMAT_PEM, multirdn = 1, notext = 0, output_der = 0;
     int ret = 1, email_dn = 1, req = 0, verbose = 0, gencrl = 0, dorevoke = 0;
     int rand_ser = 0, i, j, selfsign = 0, def_nid, def_ret;
+    char *crl_lastupdate = NULL, *crl_nextupdate = NULL;
     long crldays = 0, crlhours = 0, crlsec = 0, days = 0;
     unsigned long chtype = MBSTRING_ASC, certopt = 0;
     X509 *x509 = NULL, *x509p = NULL, *x = NULL;
@@ -424,6 +429,12 @@ opthelp:
             break;
         case OPT_MSIE_HACK:
             msie_hack = 1;
+            break;
+        case OPT_CRL_LASTUPDATE:
+            crl_lastupdate = opt_arg();
+            break;
+        case OPT_CRL_NEXTUPDATE:
+            crl_nextupdate = opt_arg();
             break;
         case OPT_CRLDAYS:
             crldays = atol(opt_arg());
@@ -1146,7 +1157,8 @@ end_of_options:
                 crlhours = 0;
             ERR_clear_error();
         }
-        if ((crldays == 0) && (crlhours == 0) && (crlsec == 0)) {
+        if ((crl_nextupdate == NULL) &&
+                (crldays == 0) && (crlhours == 0) && (crlsec == 0)) {
             BIO_printf(bio_err,
                        "cannot lookup how long until the next CRL is issued\n");
             goto end;
@@ -1159,19 +1171,18 @@ end_of_options:
         if (!X509_CRL_set_issuer_name(crl, X509_get_subject_name(x509)))
             goto end;
 
-        tmptm = ASN1_TIME_new();
-        if (tmptm == NULL
-                || X509_gmtime_adj(tmptm, 0) == NULL
-                || !X509_CRL_set1_lastUpdate(crl, tmptm)
-                || X509_time_adj_ex(tmptm, crldays, crlhours * 60 * 60 + crlsec,
-                                    NULL) == NULL) {
-            BIO_puts(bio_err, "error setting CRL nextUpdate\n");
-            ASN1_TIME_free(tmptm);
+        if (!set_crl_lastupdate(crl, crl_lastupdate)) {
+            BIO_puts(bio_err, "error setting CRL lastUpdate\n");
+            ret = 1;
             goto end;
         }
-        X509_CRL_set1_nextUpdate(crl, tmptm);
 
-        ASN1_TIME_free(tmptm);
+        if (!set_crl_nextupdate(crl, crl_nextupdate,
+                                crldays, crlhours, crlsec)) {
+            BIO_puts(bio_err, "error setting CRL nextUpdate\n");
+            ret = 1;
+            goto end;
+        }
 
         for (i = 0; i < sk_OPENSSL_PSTRING_num(db->db->data); i++) {
             pp = sk_OPENSSL_PSTRING_value(db->db->data, i);

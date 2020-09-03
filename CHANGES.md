@@ -1158,6 +1158,12 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
+ * Added the options `-crl_lastupdate` and `-crl_nextupdate` to `openssl ca`,
+   allowing the `lastUpdate` and `nextUpdate` fields in the generated CRL to
+   be set explicitly.
+
+   *Chris Novakovic*
+
  * Added support for Linux Kernel TLS data-path. The Linux Kernel data-path
    improves application performance by removing data copies and providing
    applications with zero-copy system calls such as sendfile and splice.
