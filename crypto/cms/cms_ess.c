@@ -20,9 +20,6 @@
 #include "crypto/x509.h"
 #include "cms_local.h"
 
-DEFINE_STACK_OF(ESS_CERT_ID)
-DEFINE_STACK_OF(ESS_CERT_ID_V2)
-
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
 /* ESS services */
