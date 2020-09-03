@@ -16,9 +16,6 @@
 #include <openssl/ocsp.h>
 #include "ocsp_local.h"
 
-DEFINE_STACK_OF(OCSP_ONEREQ)
-DEFINE_STACK_OF(OCSP_SINGLERESP)
-
 /*
  * Utility functions related to sending OCSP responses and extracting
  * relevant information from the request.

@@ -12,8 +12,6 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 
-DEFINE_STACK_OF(OCSP_RESPID)
-
 #define COOKIE_STATE_FORMAT_VERSION     0
 
 /*

@@ -27,6 +27,7 @@
 /include/openssl/cms.h
 /include/openssl/configuration.h
 /include/openssl/fipskey.h
+/include/openssl/ocsp.h
 /include/openssl/opensslv.h
 /include/openssl/safestack.h
 /include/openssl/ssl.h
