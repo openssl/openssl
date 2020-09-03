@@ -12,8 +12,6 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
-DEFINE_STACK_OF(PKCS12_SAFEBAG)
-
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                           PKCS12_SAFEBAG *bag);
 

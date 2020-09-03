@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -6,6 +8,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros);
+-}
 
 #ifndef OPENSSL_PKCS12_H
 # define OPENSSL_PKCS12_H
@@ -52,7 +58,9 @@ typedef struct PKCS12_st PKCS12;
 
 typedef struct PKCS12_SAFEBAG_st PKCS12_SAFEBAG;
 
-DEFINE_OR_DECLARE_STACK_OF(PKCS12_SAFEBAG)
+{-
+    generate_stack_macros("PKCS12_SAFEBAG");
+-}
 
 typedef struct pkcs12_bag_st PKCS12_BAGS;
 
