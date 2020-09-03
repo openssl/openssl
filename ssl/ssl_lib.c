@@ -28,8 +28,6 @@
 #include "internal/refcount.h"
 #include "internal/ktls.h"
 
-DEFINE_STACK_OF(SCT)
-
 static int ssl_undefined_function_1(SSL *ssl, SSL3_RECORD *r, size_t s, int t,
                                     SSL_MAC_BUF *mac, size_t macsize)
 {

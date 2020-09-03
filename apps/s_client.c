@@ -59,8 +59,6 @@ typedef unsigned int u_int;
 # endif
 #endif
 
-DEFINE_STACK_OF(SCT)
-
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8
 #define S_CLIENT_IRC_READ_TIMEOUT 8
