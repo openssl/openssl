@@ -275,7 +275,7 @@ int ocsp_main(int argc, char **argv)
             OPENSSL_free(tpath);
             thost = tport = tpath = NULL;
             if (!OSSL_HTTP_parse_url(opt_arg(),
-                                     &host, &port, &path, &use_ssl)) {
+                                     &host, &port, NULL, &path, &use_ssl)) {
                 BIO_printf(bio_err, "%s Error parsing URL\n", prog);
                 goto end;
             }

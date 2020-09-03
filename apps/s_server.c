@@ -535,7 +535,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
     aia = X509_get1_ocsp(x);
     if (aia != NULL) {
         if (!OSSL_HTTP_parse_url(sk_OPENSSL_STRING_value(aia, 0),
-                                 &host, &port, &path, &use_ssl)) {
+                                 &host, &port, NULL, &path, &use_ssl)) {
             BIO_puts(bio_err, "cert_status: can't parse AIA URL\n");
             goto err;
         }
@@ -1405,7 +1405,7 @@ int s_server_main(int argc, char *argv[])
 #ifndef OPENSSL_NO_OCSP
             s_tlsextstatus = 1;
             if (!OSSL_HTTP_parse_url(opt_arg(),
-                                     &tlscstatp.host, &tlscstatp.port,
+                                     &tlscstatp.host, &tlscstatp.port, NULL,
                                      &tlscstatp.path, &tlscstatp.use_ssl)) {
                 BIO_printf(bio_err, "Error parsing URL\n");
                 goto end;
