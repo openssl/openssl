@@ -1,4 +1,4 @@
-# Copyright 1999-2019 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,7 @@ AFALG_F_AFALG_CREATE_SK:101:afalg_create_sk
 AFALG_F_AFALG_INIT_AIO:102:afalg_init_aio
 AFALG_F_AFALG_SETUP_ASYNC_EVENT_NOTIFICATION:103:\
 	afalg_setup_async_event_notification
+AFALG_F_AFALG_SET_AAD:106:
 AFALG_F_AFALG_SET_KEY:104:afalg_set_key
 AFALG_F_BIND_AFALG:105:bind_afalg
 
@@ -27,4 +28,5 @@ AFALG_R_SOCKET_ACCEPT_FAILED:110:socket accept failed
 AFALG_R_SOCKET_BIND_FAILED:103:socket bind failed
 AFALG_R_SOCKET_CREATE_FAILED:109:socket create failed
 AFALG_R_SOCKET_OPERATION_FAILED:104:socket operation failed
+AFALG_R_SOCKET_SET_AAD_FAILED:112:socket set aad failed
 AFALG_R_SOCKET_SET_KEY_FAILED:106:socket set key failed

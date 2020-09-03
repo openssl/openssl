@@ -45,7 +45,19 @@
 # define AES_KEY_SIZE_256 32
 # define AES_IV_LEN       16
 
+# define AES_KEY_SIZE_256 32
+# define AES_GCM_IV_LEN   12
+
+/* Socket options */
+# define ALG_SET_KEY                     1
+# define ALG_SET_IV                      2
+# define ALG_SET_OP                      3
+# define ALG_SET_AEAD_ASSOCLEN           4
+# define ALG_SET_AEAD_AUTHSIZE           5
+
 # define MAX_INFLIGHTS 1
+# define AFALG_UPDATE_CALLED 0x00000001
+
 
 typedef enum {
     MODE_UNINIT = 0,
@@ -56,15 +68,19 @@ typedef enum {
 enum {
     AES_CBC_128 = 0,
     AES_CBC_192,
-    AES_CBC_256
+    AES_CBC_256,
+    AES_GCM_128,
+    AES_GCM_192,
+    AES_GCM_256
 };
 
-struct cbc_cipher_handles {
+struct aes_cipher_handles {
     int key_size;
     EVP_CIPHER *_hidden;
 };
 
-typedef struct cbc_cipher_handles cbc_handles;
+typedef struct aes_cipher_handles aes_handles;
+
 
 struct afalg_aio_st {
     int efd;
@@ -92,4 +108,20 @@ struct afalg_ctx_st {
 };
 
 typedef struct afalg_ctx_st afalg_ctx;
+
+struct afalg_aead_ctx_st {
+    afalg_ctx ctx;
+    int key_set;
+    int iv_set;
+    unsigned char *iv;
+    int ivlen;
+    int taglen;
+    int iv_gen;
+    int iovlen;
+    int aad_len;
+    int len;
+    struct iovec iov[16];
+};
+typedef struct afalg_aead_ctx_st afalg_aead_ctx;
+
 #endif
