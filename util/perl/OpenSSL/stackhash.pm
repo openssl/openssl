@@ -24,34 +24,7 @@ sub generate_stack_macros_int {
     my $plaintype = shift;
 
     my $macros = <<END_MACROS;
-STACK_OF(${nametype});
-typedef int (*sk_${nametype}_compfunc)(const ${plaintype} * const *a, const ${plaintype} *const *b);
-typedef void (*sk_${nametype}_freefunc)(${plaintype} *a);
-typedef ${plaintype} * (*sk_${nametype}_copyfunc)(const ${plaintype} *a);
-static ossl_unused ossl_inline ${realtype} *ossl_check_${nametype}_type(${realtype} *ptr)
-{
-    return ptr;
-}
-static ossl_unused ossl_inline const OPENSSL_STACK *ossl_check_const_${nametype}_sk_type(const STACK_OF(${nametype}) *sk)
-{
-    return (const OPENSSL_STACK *)sk;
-}
-static ossl_unused ossl_inline OPENSSL_STACK *ossl_check_${nametype}_sk_type(STACK_OF(${nametype}) *sk)
-{
-    return (OPENSSL_STACK *)sk;
-}
-static ossl_unused ossl_inline OPENSSL_sk_compfunc ossl_check_${nametype}_compfunc_type(sk_${nametype}_compfunc cmp)
-{
-    return (OPENSSL_sk_compfunc)cmp;
-}
-static ossl_unused ossl_inline OPENSSL_sk_copyfunc ossl_check_${nametype}_copyfunc_type(sk_${nametype}_copyfunc cpy)
-{
-    return (OPENSSL_sk_copyfunc)cpy;
-}
-static ossl_unused ossl_inline OPENSSL_sk_freefunc ossl_check_${nametype}_freefunc_type(sk_${nametype}_freefunc fr)
-{
-    return (OPENSSL_sk_freefunc)fr;
-}
+SKM_DEFINE_STACK_OF_INTERNAL(${nametype}, ${realtype}, ${plaintype})
 #define sk_${nametype}_num(sk) OPENSSL_sk_num(ossl_check_const_${nametype}_sk_type(sk))
 #define sk_${nametype}_value(sk, idx) ((${realtype} *)OPENSSL_sk_value(ossl_check_const_${nametype}_sk_type(sk), (idx)))
 #define sk_${nametype}_new(cmp) ((STACK_OF(${nametype}) *)OPENSSL_sk_new(ossl_check_${nametype}_compfunc_type(cmp)))
