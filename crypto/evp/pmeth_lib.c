@@ -1516,7 +1516,8 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
             return -2;
         }
         if (strcmp(name, "digest") == 0)
-            ret = EVP_PKEY_CTX_md(ctx, EVP_PKEY_OP_TYPE_SIG,
+            ret = EVP_PKEY_CTX_md(ctx,
+                                  EVP_PKEY_OP_TYPE_SIG | EVP_PKEY_OP_TYPE_CRYPT,
                                   EVP_PKEY_CTRL_MD, value);
         else
             ret = ctx->pmeth->ctrl_str(ctx, name, value);
