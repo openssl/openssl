@@ -176,6 +176,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         }
 
         if (mdname != NULL) {
+            /*
+             * If the old digest was a legacy one then we should ensure we free
+             * any md_data. This can be removed once no more legacy.
+             */
             if (ctx->digest != NULL && ctx->digest->ctx_size > 0)
                 OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
             ctx->md_data = NULL;
@@ -188,6 +192,10 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              */
             ctx->digest = ctx->reqdigest = ctx->fetched_digest =
                 EVP_MD_fetch(locpctx->libctx, mdname, props);
+            if (ctx->digest == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                goto err;
+            }
         }
     }
 
