@@ -200,9 +200,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         }
     }
 
-    if (!(cflag & X509_FLAG_NO_EXTENSIONS))
-        X509V3_extensions_print(bp, "X509v3 extensions",
-                                X509_get0_extensions(x), cflag, 8);
+    if (!(cflag & X509_FLAG_NO_EXTENSIONS)
+        && !X509V3_extensions_print(bp, "X509v3 extensions",
+                                    X509_get0_extensions(x), cflag, 8))
+        goto err;
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
         const X509_ALGOR *sig_alg;
@@ -415,7 +416,8 @@ int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
     if (X509_cmp_current_time(X509_get0_notAfter(cert)) < 0)
         if (BIO_printf(bio, "        no more valid\n") <= 0)
             return 0;
-    return X509_print_ex(bio, cert, flags, ~(neg_cflags));
+    return X509_print_ex(bio, cert, flags,
+                         ~neg_cflags & ~X509_FLAG_EXTENSIONS_ONLY_KID);
 }
 
 static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
@@ -427,8 +429,15 @@ static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
 
     for (i = 0; i < sk_X509_num(certs); i++) {
         X509 *cert = sk_X509_value(certs, i);
-        if (cert != NULL && !x509_print_ex_brief(bio, cert, 0))
-            return 0;
+
+        if (cert != NULL) {
+            if (!x509_print_ex_brief(bio, cert, 0))
+                return 0;
+            if (!X509V3_extensions_print(bio, NULL,
+                                         X509_get0_extensions(cert),
+                                         X509_FLAG_EXTENSIONS_ONLY_KID, 8))
+                return 0;
+            }
     }
     return 1;
 }
