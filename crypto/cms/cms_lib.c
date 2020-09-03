@@ -21,8 +21,6 @@
 static STACK_OF(CMS_CertificateChoices)
 **cms_get0_certificate_choices(CMS_ContentInfo *cms);
 
-DEFINE_STACK_OF(CMS_RevocationInfoChoice)
-
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
 
 CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,

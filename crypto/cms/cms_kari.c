@@ -23,8 +23,6 @@
 #include "cms_local.h"
 #include "crypto/asn1.h"
 
-DEFINE_STACK_OF(CMS_RecipientEncryptedKey)
-
 /* Key Agreement Recipient Info (KARI) routines */
 
 int CMS_RecipientInfo_kari_get0_alg(CMS_RecipientInfo *ri,
