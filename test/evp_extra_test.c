@@ -970,9 +970,6 @@ static int test_EVP_SM2_verify(void)
 
     EVP_MD_CTX_set_pkey_ctx(mctx, pctx);
 
-    if (!TEST_true(EVP_PKEY_verify_init(pctx)))
-        goto done;
-
     if (!TEST_true(EVP_DigestVerifyInit(mctx, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
@@ -1008,13 +1005,11 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX *md_ctx_verify = NULL;
     EVP_PKEY_CTX *cctx = NULL;
 
-#if 0
     uint8_t ciphertext[128];
     size_t ctext_len = sizeof(ciphertext);
 
     uint8_t plaintext[8];
     size_t ptext_len = sizeof(plaintext);
-#endif
 
     uint8_t sm2_id[] = {1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r'};
 
@@ -1025,6 +1020,7 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_paramgen_init(pctx) == 1))
         goto done;
 
+    /* TODO is this even needed? */
     if (!TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_sm2)))
         goto done;
 
@@ -1053,9 +1049,6 @@ static int test_EVP_SM2(void)
     EVP_MD_CTX_set_pkey_ctx(md_ctx, sctx);
     EVP_MD_CTX_set_pkey_ctx(md_ctx_verify, sctx);
 
-    if (!TEST_true(EVP_PKEY_sign_init(sctx)))
-        goto done;
-
     if (!TEST_true(EVP_DigestSignInit(md_ctx, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
@@ -1075,11 +1068,6 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_DigestSignFinal(md_ctx, sig, &sig_len)))
         goto done;
 
-    /* Ensure that the signature round-trips. */
-
-    if (!TEST_true(EVP_PKEY_verify_init(sctx)))
-        goto done;
-
     if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
@@ -1094,10 +1082,13 @@ static int test_EVP_SM2(void)
 
     /* now check encryption/decryption */
     /*
-     * Skip this since SM2 public key encrytion is not moved into
-     * default provider yet
+     * SM2 public key encrytion is not moved into default provider yet,
+     * so we make sure the key gets downgraded for the moment being.
+     * TODO Remove this call when provided SM2 encryption is implemented
      */
-#if 0
+    if (!TEST_ptr(EVP_PKEY_get0(pkey)))
+       goto done;
+
     if (!TEST_ptr(cctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
 
@@ -1118,7 +1109,6 @@ static int test_EVP_SM2(void)
 
     if (!TEST_true(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
         goto done;
-#endif
 
     ret = 1;
 done:
