@@ -298,7 +298,7 @@ OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)
     return signature->prov;
 }
 
-EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_SIGNATURE *EVP_SIGNATURE_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                    const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
@@ -416,7 +416,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
      * checking if signature is already there.
      */
     signature =
-        EVP_SIGNATURE_fetch(ctx->libctx, supported_sig, ctx->propquery);
+        EVP_SIGNATURE_fetch(supported_sig, ctx->libctx, ctx->propquery);
 
     if (signature == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)

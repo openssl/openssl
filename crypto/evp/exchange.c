@@ -166,7 +166,7 @@ OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange)
     return exchange->prov;
 }
 
-EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_KEYEXCH *EVP_KEYEXCH_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYEXCH, algorithm, properties,
@@ -251,7 +251,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      * Because we cleared out old ops, we shouldn't need to worry about
      * checking if exchange is already there.
      */
-    exchange = EVP_KEYEXCH_fetch(ctx->libctx, supported_exch, ctx->propquery);
+    exchange = EVP_KEYEXCH_fetch(supported_exch, ctx->libctx, ctx->propquery);
 
     if (exchange == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)

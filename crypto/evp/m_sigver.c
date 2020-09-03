@@ -127,7 +127,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * Because we cleared out old ops, we shouldn't need to worry about
      * checking if signature is already there.
      */
-    signature = EVP_SIGNATURE_fetch(locpctx->libctx, supported_sig,
+    signature = EVP_SIGNATURE_fetch(supported_sig, locpctx->libctx,
                                     locpctx->propquery);
 
     if (signature == NULL

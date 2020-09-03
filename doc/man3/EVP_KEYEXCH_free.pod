@@ -12,7 +12,7 @@ EVP_KEYEXCH_gettable_ctx_params, EVP_KEYEXCH_settable_ctx_params
 
  #include <openssl/evp.h>
 
- EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_KEYEXCH *EVP_KEYEXCH_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                 const char *properties);
  void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange);
  int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange);

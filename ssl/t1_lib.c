@@ -355,7 +355,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
      * it.
      */
     ret = 1;
-    keymgmt = EVP_KEYMGMT_fetch(ctx->libctx, ginf->algorithm, ctx->propq);
+    keymgmt = EVP_KEYMGMT_fetch(ginf->algorithm, ctx->libctx, ctx->propq);
     if (keymgmt != NULL) {
         /*
          * We have successfully fetched the algorithm - however if the provider

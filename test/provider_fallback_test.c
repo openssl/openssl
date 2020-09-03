@@ -19,7 +19,7 @@ static int test_provider(OPENSSL_CTX *ctx)
     int ok;
 
     ok = TEST_true(OSSL_PROVIDER_available(ctx, "default"))
-        && TEST_ptr(rsameth = EVP_KEYMGMT_fetch(ctx, "RSA", NULL))
+        && TEST_ptr(rsameth = EVP_KEYMGMT_fetch("RSA", ctx, NULL))
         && TEST_ptr(prov = EVP_KEYMGMT_provider(rsameth))
         && TEST_str_eq(OSSL_PROVIDER_name(prov), "default");
 

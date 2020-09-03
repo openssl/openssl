@@ -202,7 +202,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
     if (data->data_type == NULL)
         return 0;
 
-    keymgmt = EVP_KEYMGMT_fetch(libctx, data->data_type, propq);
+    keymgmt = EVP_KEYMGMT_fetch(data->data_type, libctx, propq);
     if (keymgmt != NULL) {
         /*
          * There are two possible cases

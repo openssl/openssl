@@ -253,7 +253,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
             ERR_set_mark();
         }
 
-        keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
+        keymgmt = EVP_KEYMGMT_fetch(keytype, libctx, propquery);
         if (legacy) {
             ERR_pop_to_mark();
         } else if (keymgmt == NULL) {

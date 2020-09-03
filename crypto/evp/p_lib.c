@@ -1067,7 +1067,7 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
             : evp_first_name(prov, pkey->keymgmt->name_id);
         EVP_SIGNATURE *signature = NULL;
 
-        signature = EVP_SIGNATURE_fetch(libctx, supported_sig, NULL);
+        signature = EVP_SIGNATURE_fetch(supported_sig, libctx, NULL);
         if (signature != NULL) {
             EVP_SIGNATURE_free(signature);
             return 1;

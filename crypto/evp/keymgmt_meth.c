@@ -207,7 +207,7 @@ EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
                                        (void (*)(void *))EVP_KEYMGMT_free);
 }
 
-EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_KEYMGMT *EVP_KEYMGMT_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_KEYMGMT, algorithm, properties,

@@ -11,7 +11,7 @@ EVP_ASYM_CIPHER_do_all_provided, EVP_ASYM_CIPHER_names_do_all
 
  #include <openssl/evp.h>
 
- EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                         const char *properties);
  void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
  int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);

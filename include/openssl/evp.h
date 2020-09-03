@@ -1566,7 +1566,7 @@ DEPRECATEDIN_3_0(int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth))
 DEPRECATEDIN_3_0(size_t EVP_PKEY_meth_get_count(void))
 DEPRECATEDIN_3_0(const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx))
 
-EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_KEYMGMT *EVP_KEYMGMT_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                const char *properties);
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt);
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
@@ -1655,7 +1655,7 @@ void *EVP_PKEY_CTX_get_app_data(EVP_PKEY_CTX *ctx);
 void EVP_SIGNATURE_free(EVP_SIGNATURE *signature);
 int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature);
 OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature);
-EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_SIGNATURE *EVP_SIGNATURE_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                    const char *properties);
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name);
 int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature);
@@ -1672,7 +1672,7 @@ const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig);
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);
 OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher);
-EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                        const char *properties);
 int EVP_ASYM_CIPHER_is_a(const EVP_ASYM_CIPHER *cipher, const char *name);
 int EVP_ASYM_CIPHER_number(const EVP_ASYM_CIPHER *cipher);
@@ -1929,7 +1929,7 @@ DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_digest_custom
 
 void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange);
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange);
-EVP_KEYEXCH *EVP_KEYEXCH_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_KEYEXCH *EVP_KEYEXCH_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                const char *properties);
 OSSL_PROVIDER *EVP_KEYEXCH_provider(const EVP_KEYEXCH *exchange);
 int EVP_KEYEXCH_is_a(const EVP_KEYEXCH *keyexch, const char *name);

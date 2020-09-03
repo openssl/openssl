@@ -208,8 +208,8 @@ static int test_pass_rsa(FIXTURE *fixture)
         goto err;
     rsa = NULL;
 
-    if (!TEST_ptr(km1 = EVP_KEYMGMT_fetch(fixture->ctx1, "RSA", NULL))
-        || !TEST_ptr(km2 = EVP_KEYMGMT_fetch(fixture->ctx2, "RSA", NULL))
+    if (!TEST_ptr(km1 = EVP_KEYMGMT_fetch("RSA", fixture->ctx1, NULL))
+        || !TEST_ptr(km2 = EVP_KEYMGMT_fetch("RSA", fixture->ctx2, NULL))
         || !TEST_ptr_ne(km1, km2))
         goto err;
 

@@ -74,7 +74,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
      * checking if cipher is already there.
      */
     cipher =
-        EVP_ASYM_CIPHER_fetch(ctx->libctx, supported_ciph, ctx->propquery);
+        EVP_ASYM_CIPHER_fetch(supported_ciph, ctx->libctx, ctx->propquery);
 
     if (cipher == NULL
         || (EVP_KEYMGMT_provider(ctx->keymgmt)
@@ -405,7 +405,7 @@ OSSL_PROVIDER *EVP_ASYM_CIPHER_provider(const EVP_ASYM_CIPHER *cipher)
     return cipher->prov;
 }
 
-EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_ASYM_CIPHER *EVP_ASYM_CIPHER_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                        const char *properties)
 {
     return evp_generic_fetch(ctx, OSSL_OP_ASYM_CIPHER, algorithm, properties,

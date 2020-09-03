@@ -22,7 +22,7 @@ EVP_KEYMGMT_gen_settable_params
 
  typedef struct evp_keymgmt_st EVP_KEYMGMT;
 
- EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_KEYMGMT *EVP_KEYMGMT_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                                 const char *properties);
  int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt);
  void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
