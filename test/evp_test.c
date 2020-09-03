@@ -2098,7 +2098,7 @@ static int rand_test_init(EVP_TEST *t, const char *name)
         return 0;
 
     /* TEST-RAND is available in the FIPS provider but not with "fips=yes" */
-    rand = EVP_RAND_fetch(libctx, "TEST-RAND", "-fips");
+    rand = EVP_RAND_fetch("TEST-RAND", libctx, "-fips");
     if (rand == NULL)
         goto err;
     rdata->parent = EVP_RAND_CTX_new(rand, NULL);
@@ -2110,7 +2110,7 @@ static int rand_test_init(EVP_TEST *t, const char *name)
     if (!EVP_RAND_set_ctx_params(rdata->parent, params))
         goto err;
 
-    rand = EVP_RAND_fetch(libctx, name, NULL);
+    rand = EVP_RAND_fetch(name, libctx, NULL);
     if (rand == NULL)
         goto err;
     rdata->ctx = EVP_RAND_CTX_new(rand, rdata->parent);

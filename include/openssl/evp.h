@@ -1132,7 +1132,7 @@ void EVP_MAC_names_do_all(const EVP_MAC *mac,
                           void *data);
 
 /* RAND stuff */
-EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_RAND *EVP_RAND_fetch(const char *algorithm, OPENSSL_CTX *libctx,
                          const char *properties);
 int EVP_RAND_up_ref(EVP_RAND *rand);
 void EVP_RAND_free(EVP_RAND *rand);

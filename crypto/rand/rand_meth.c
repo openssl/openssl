@@ -14,7 +14,7 @@
 /* Implements the default OpenSSL RAND_add() method */
 static int drbg_add(const void *buf, int num, double randomness)
 {
-    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
+    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL, NULL);
 
     if (drbg == NULL || num <= 0)
         return 0;
@@ -31,7 +31,7 @@ static int drbg_seed(const void *buf, int num)
 /* Implements the default OpenSSL RAND_status() method */
 static int drbg_status(void)
 {
-    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL);
+    EVP_RAND_CTX *drbg = RAND_get0_primary(NULL, NULL);
 
     if (drbg == NULL)
         return 0;
@@ -42,7 +42,7 @@ static int drbg_status(void)
 /* Implements the default OpenSSL RAND_bytes() method */
 static int drbg_bytes(unsigned char *out, int count)
 {
-    EVP_RAND_CTX *drbg = RAND_get0_public(NULL);
+    EVP_RAND_CTX *drbg = RAND_get0_public(NULL, NULL);
 
     if (drbg == NULL)
         return 0;

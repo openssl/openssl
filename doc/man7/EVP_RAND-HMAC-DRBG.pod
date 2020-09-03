@@ -58,7 +58,7 @@ These parameters work as described in L<EVP_RAND(3)/PARAMETERS>.
 
 A context for HMAC DRBG can be obtained by calling:
 
- EVP_RAND *rand = EVP_RAND_fetch(NULL, "HMAC-DRBG", NULL);
+ EVP_RAND *rand = EVP_RAND_fetch("HMAC-DRBG", NULL, NULL);
  EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
 
 =head1 EXAMPLES
@@ -69,7 +69,7 @@ A context for HMAC DRBG can be obtained by calling:
  OSSL_PARAM params[3], *p = params;
  unsigned int strength = 128;
 
- rand = EVP_RAND_fetch(NULL, "HMAC-DRBG", NULL);
+ rand = EVP_RAND_fetch("HMAC-DRBG", NULL, NULL);
  rctx = EVP_RAND_CTX_new(rand, NULL);
  EVP_RAND_free(rand);
 

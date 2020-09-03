@@ -63,7 +63,7 @@ to set this value result in an error.
 
 A context for CTR DRBG can be obtained by calling:
 
- EVP_RAND *rand = EVP_RAND_fetch(NULL, "CTR-DRBG", NULL);
+ EVP_RAND *rand = EVP_RAND_fetch("CTR-DRBG", NULL, NULL);
  EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
 
 =head1 EXAMPLES
@@ -74,7 +74,7 @@ A context for CTR DRBG can be obtained by calling:
  OSSL_PARAM params[2], *p = params;
  unsigned int strength = 128;
 
- rand = EVP_RAND_fetch(NULL, "CTR-DRBG", NULL);
+ rand = EVP_RAND_fetch("CTR-DRBG", NULL, NULL);
  rctx = EVP_RAND_CTX_new(rand, NULL);
  EVP_RAND_free(rand);
 

@@ -1856,7 +1856,7 @@ static int test_rand_agglomeration(void)
     unsigned char out[sizeof(seed)];
 
     if (!TEST_int_ne(sizeof(seed) % step, 0)
-            || !TEST_ptr(rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL)))
+            || !TEST_ptr(rand = EVP_RAND_fetch("TEST-RAND", NULL, NULL)))
         return 0;
     ctx = EVP_RAND_CTX_new(rand, NULL);
     EVP_RAND_free(rand);

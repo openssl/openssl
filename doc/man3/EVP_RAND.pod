@@ -21,8 +21,8 @@ EVP_RAND_STATE_ERROR - EVP RAND routines
  typedef struct evp_rand_st EVP_RAND;
  typedef struct evp_rand_ctx_st EVP_RAND_CTX;
 
- EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
-                        const char *properties);
+ EVP_RAND *EVP_RAND_fetch(const char *algorithm, OPENSSL_CTX *libctx,
+                          const char *properties);
  int EVP_RAND_up_ref(EVP_RAND *rand);
  void EVP_RAND_free(EVP_RAND *rand);
  EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent);

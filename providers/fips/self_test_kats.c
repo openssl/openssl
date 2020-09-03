@@ -250,7 +250,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_DRBG, t->desc);
 
-    rand = EVP_RAND_fetch(libctx, "TEST-RAND", NULL);
+    rand = EVP_RAND_fetch("TEST-RAND", libctx, NULL);
     if (rand == NULL)
         goto err;
 
@@ -264,7 +264,7 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
     if (!EVP_RAND_set_ctx_params(test, drbg_params))
         goto err;
 
-    rand = EVP_RAND_fetch(libctx, t->algorithm, NULL);
+    rand = EVP_RAND_fetch(t->algorithm, libctx, NULL);
     if (rand == NULL)
         goto err;
 

@@ -11,9 +11,9 @@ RAND_get0_private
 
  #include <openssl/rand.h>
 
- EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx);
- EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx);
- EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx);
+ EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx, const char *propq);
+ EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx, const char *propq);
+ EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx, const char *propq);
 
 
 =head1 DESCRIPTION
@@ -31,15 +31,15 @@ These functions here provide access to the shared DRBG instances.
 =head1 RETURN VALUES
 
 RAND_get0_primary() returns a pointer to the I<primary> DRBG instance
-for the given OPENSSL_CTX B<ctx>.
+for the given OPENSSL_CTX I<ctx> and property query I<propq>.
 
 RAND_get0_public() returns a pointer to the I<public> DRBG instance
-for the given OPENSSL_CTX B<ctx>.
+for the given OPENSSL_CTX I<ctx> and property query I<propq>.
 
 RAND_get0_private() returns a pointer to the I<private> DRBG instance
-for the given OPENSSL_CTX B<ctx>.
+for the given OPENSSL_CTX I<ctx> and property query I<propq>.
 
-In all the above cases the B<ctx> parameter can
+In all the above cases the I<ctx> parameter can
 be NULL in which case the default OPENSSL_CTX is used.
 
 =head1 NOTES

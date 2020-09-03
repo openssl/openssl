@@ -263,7 +263,7 @@ static void *evp_rand_from_dispatch(int name_id,
     return rand;
 }
 
-EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_RAND *EVP_RAND_fetch(const char *algorithm, OPENSSL_CTX *libctx,
                          const char *properties)
 {
     return evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,

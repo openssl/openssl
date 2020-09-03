@@ -67,9 +67,9 @@ int RAND_bytes_ex(OPENSSL_CTX *ctx, unsigned char *buf, int num);
 
 DEPRECATEDIN_1_1_0(int RAND_pseudo_bytes(unsigned char *buf, int num))
 
-EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx);
-EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx);
-EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx);
+EVP_RAND_CTX *RAND_get0_primary(OPENSSL_CTX *ctx, const char *propq);
+EVP_RAND_CTX *RAND_get0_public(OPENSSL_CTX *ctx, const char *propq);
+EVP_RAND_CTX *RAND_get0_private(OPENSSL_CTX *ctx, const char *propq);
 
 void RAND_seed(const void *buf, int num);
 void RAND_keep_random_devices_open(int keep);

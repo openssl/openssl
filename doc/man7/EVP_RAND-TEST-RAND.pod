@@ -67,7 +67,7 @@ Each nonce request will return all of the bytes.
 
 A context for a test generator can be obtained by calling:
 
- EVP_RAND *rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
+ EVP_RAND *rand = EVP_RAND_fetch("TEST-RAND", NULL, NULL);
  EVP_RAND_CTX *rctx = EVP_RAND_CTX_new(rand);
 
 =head1 EXAMPLES
@@ -80,7 +80,7 @@ A context for a test generator can be obtained by calling:
  unsigned char nonce[20] = { ... };
  unsigned int strength = 48;
 
- rand = EVP_RAND_fetch(NULL, "TEST-RAND", NULL);
+ rand = EVP_RAND_fetch("TEST-RAND", NULL, NULL);
  rctx = EVP_RAND_CTX_new(rand, NULL);
  EVP_RAND_free(rand);
 
