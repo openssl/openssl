@@ -74,7 +74,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
                             int timeout, BIO *bio_err, const char *prog);
 
 int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
-                        char **ppath, int *pssl);
+                        int *pport_num, char **ppath, int *pssl);
 
 # ifdef  __cplusplus
 }
