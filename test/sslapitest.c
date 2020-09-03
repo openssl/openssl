@@ -47,7 +47,6 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
                       const OSSL_DISPATCH *in,
                       const OSSL_DISPATCH **out,
                       void **provctx);
-DEFINE_STACK_OF(OCSP_RESPID)
 
 static OPENSSL_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;

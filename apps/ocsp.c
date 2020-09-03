@@ -33,7 +33,6 @@
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 
-DEFINE_STACK_OF(OCSP_CERTID)
 DEFINE_STACK_OF(CONF_VALUE)
 
 #if defined(__TANDEM)

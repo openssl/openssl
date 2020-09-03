@@ -19,6 +19,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/configuration.h \
          include/openssl/fipskey.h \
          include/openssl/opensslv.h \
+         include/openssl/ocsp.h \
          include/openssl/safestack.h \
          include/openssl/ssl.h \
          include/openssl/x509.h \
@@ -31,6 +32,7 @@ GENERATE[include/openssl/configuration.h]=include/openssl/configuration.h.in
 GENERATE[include/openssl/cmp.h]=include/openssl/cmp.h.in
 GENERATE[include/openssl/cms.h]=include/openssl/cms.h.in
 GENERATE[include/openssl/fipskey.h]=include/openssl/fipskey.h.in
+GENERATE[include/openssl/ocsp.h]=include/openssl/ocsp.h.in
 GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
 GENERATE[include/openssl/safestack.h]=include/openssl/safestack.h.in
 GENERATE[include/openssl/ssl.h]=include/openssl/ssl.h.in
