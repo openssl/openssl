@@ -389,5 +389,4 @@ struct ossl_crmf_msg_st {
     /* 1 */
     STACK_OF(OSSL_CRMF_ATTRIBUTETYPEANDVALUE) *regInfo;
 } /* OSSL_CRMF_MSG */;
-/* DEFINE_STACK_OF(OSSL_CRMF_MSG) */
 #endif

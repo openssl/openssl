@@ -21,9 +21,6 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h" /* for x509_set0_libctx() */
 
-DEFINE_STACK_OF(OSSL_CRMF_MSG)
-DEFINE_STACK_OF(OSSL_CRMF_CERTID)
-
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg)
 {
     if (msg == NULL) {

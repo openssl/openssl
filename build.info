@@ -17,6 +17,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/cmp.h \
          include/openssl/cms.h \
          include/openssl/configuration.h \
+         include/openssl/crmf.h \
          include/openssl/fipskey.h \
          include/openssl/opensslv.h \
          include/openssl/ocsp.h \
@@ -31,9 +32,10 @@ DEPEND[]=include/openssl/asn1.h \
          doc/man7/openssl_user_macros.pod
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
-GENERATE[include/openssl/configuration.h]=include/openssl/configuration.h.in
 GENERATE[include/openssl/cmp.h]=include/openssl/cmp.h.in
 GENERATE[include/openssl/cms.h]=include/openssl/cms.h.in
+GENERATE[include/openssl/configuration.h]=include/openssl/configuration.h.in
+GENERATE[include/openssl/crmf.h]=include/openssl/crmf.h.in
 GENERATE[include/openssl/fipskey.h]=include/openssl/fipskey.h.in
 GENERATE[include/openssl/ocsp.h]=include/openssl/ocsp.h.in
 GENERATE[include/openssl/opensslv.h]=include/openssl/opensslv.h.in
