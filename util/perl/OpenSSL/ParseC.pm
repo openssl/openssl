@@ -360,6 +360,21 @@ static ossl_inline sk_$1_compfunc sk_$1_set_cmp_func(STACK_OF($1) *sk,
 EOF
       }
     },
+    { regexp   => qr/SKM_DEFINE_STACK_OF_INTERNAL<<<\((.*),\s*(.*),\s*(.*)\)>>>/,
+      massager => sub {
+          return (<<"EOF");
+STACK_OF($1);
+typedef int (*sk_$1_compfunc)(const $3 * const *a, const $3 *const *b);
+typedef void (*sk_$1_freefunc)($3 *a);
+typedef $3 * (*sk_$1_copyfunc)(const $3 *a);
+static ossl_unused ossl_inline $2 *ossl_check_$1_type($2 *ptr);
+static ossl_unused ossl_inline const OPENSSL_STACK *ossl_check_const_$1_sk_type(const STACK_OF($1) *sk);
+static ossl_unused ossl_inline OPENSSL_sk_compfunc ossl_check_$1_compfunc_type(sk_$1_compfunc cmp);
+static ossl_unused ossl_inline OPENSSL_sk_copyfunc ossl_check_$1_copyfunc_type(sk_$1_copyfunc cpy);
+static ossl_unused ossl_inline OPENSSL_sk_freefunc ossl_check_$1_freefunc_type(sk_$1_freefunc fr);
+EOF
+      }
+    },
     { regexp   => qr/DEFINE_SPECIAL_STACK_OF<<<\((.*),\s*(.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,$2,$2)"); },
     },
@@ -371,28 +386,6 @@ EOF
     },
     { regexp   => qr/DEFINE_STACK_OF_CONST<<<\((.*)\)>>>/,
       massager => sub { return ("SKM_DEFINE_STACK_OF($1,const $1,$1)"); },
-    },
-    { regexp   => qr/DEFINE_STACK_OF_STRING<<<\((.*?)\)>>>/,
-      massager => sub {
-          return ("DEFINE_SPECIAL_STACK_OF(OPENSSL_STRING, char)");
-      }
-    },
-    { regexp   => qr/DEFINE_STACK_OF_CSTRING<<<\((.*?)\)>>>/,
-      massager => sub {
-          return ("DEFINE_SPECIAL_STACK_OF_CONST(OPENSSL_CSTRING, char)");
-      }
-    },
-    # DEFINE_OR_DECLARE macro calls must be interpretted as DEFINE macro
-    # calls, because that's what they look like to the external apps.
-    # (if that ever changes, we must change the substitutions to STACK_OF)
-    { regexp   => qr/DEFINE_OR_DECLARE_STACK_OF<<<\((.*?)\)>>>/,
-      massager => sub { return ("DEFINE_STACK_OF($1)"); }
-    },
-    { regexp   => qr/DEFINE_OR_DECLARE_STACK_OF_STRING<<<\(\)>>>/,
-      massager => sub { return ("DEFINE_STACK_OF_STRING()"); },
-    },
-    { regexp   => qr/DEFINE_OR_DECLARE_STACK_OF_CSTRING<<<\(\)>>>/,
-      massager => sub { return ("DEFINE_STACK_OF_CSTRING()"); },
     },
 
     #####
