@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 1999-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -6,6 +8,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros);
+-}
 
 #ifndef OPENSSL_X509V3_H
 # define OPENSSL_X509V3_H
@@ -97,7 +103,9 @@ struct v3_ext_ctx {
 
 typedef struct v3_ext_method X509V3_EXT_METHOD;
 
-DEFINE_OR_DECLARE_STACK_OF(X509V3_EXT_METHOD)
+{-
+    generate_stack_macros("X509V3_EXT_METHOD");
+-}
 
 /* ext_flags values */
 # define X509V3_EXT_DYNAMIC      0x1
@@ -163,15 +171,19 @@ typedef struct ACCESS_DESCRIPTION_st {
     GENERAL_NAME *location;
 } ACCESS_DESCRIPTION;
 
-DEFINE_OR_DECLARE_STACK_OF(ACCESS_DESCRIPTION)
-DEFINE_OR_DECLARE_STACK_OF(GENERAL_NAME)
+{-
+    generate_stack_macros("ACCESS_DESCRIPTION")
+    .generate_stack_macros("GENERAL_NAME");
+-}
 
 typedef STACK_OF(ACCESS_DESCRIPTION) AUTHORITY_INFO_ACCESS;
 typedef STACK_OF(ASN1_OBJECT) EXTENDED_KEY_USAGE;
 typedef STACK_OF(ASN1_INTEGER) TLS_FEATURE;
 typedef STACK_OF(GENERAL_NAME) GENERAL_NAMES;
 
-DEFINE_OR_DECLARE_STACK_OF(GENERAL_NAMES)
+{-
+    generate_stack_macros("GENERAL_NAMES");
+-}
 
 typedef struct DIST_POINT_NAME_st {
     int type;
@@ -204,7 +216,9 @@ struct DIST_POINT_st {
     int dp_reasons;
 };
 
-DEFINE_OR_DECLARE_STACK_OF(DIST_POINT)
+{-
+    generate_stack_macros("DIST_POINT");
+-}
 
 typedef STACK_OF(DIST_POINT) CRL_DIST_POINTS;
 
@@ -221,7 +235,10 @@ typedef struct SXNET_ID_st {
     ASN1_OCTET_STRING *user;
 } SXNETID;
 
-DEFINE_OR_DECLARE_STACK_OF(SXNETID)
+{-
+    generate_stack_macros("SXNETID");
+-}
+
 
 typedef struct SXNET_st {
     ASN1_INTEGER *version;
@@ -254,14 +271,19 @@ typedef struct POLICYQUALINFO_st {
     } d;
 } POLICYQUALINFO;
 
-DEFINE_OR_DECLARE_STACK_OF(POLICYQUALINFO)
+{-
+    generate_stack_macros("POLICYQUALINFO");
+-}
+
 
 typedef struct POLICYINFO_st {
     ASN1_OBJECT *policyid;
     STACK_OF(POLICYQUALINFO) *qualifiers;
 } POLICYINFO;
 
-DEFINE_OR_DECLARE_STACK_OF(POLICYINFO)
+{-
+    generate_stack_macros("POLICYINFO");
+-}
 
 typedef STACK_OF(POLICYINFO) CERTIFICATEPOLICIES;
 
@@ -270,7 +292,9 @@ typedef struct POLICY_MAPPING_st {
     ASN1_OBJECT *subjectDomainPolicy;
 } POLICY_MAPPING;
 
-DEFINE_OR_DECLARE_STACK_OF(POLICY_MAPPING)
+{-
+    generate_stack_macros("POLICY_MAPPING");
+-}
 
 typedef STACK_OF(POLICY_MAPPING) POLICY_MAPPINGS;
 
@@ -280,7 +304,9 @@ typedef struct GENERAL_SUBTREE_st {
     ASN1_INTEGER *maximum;
 } GENERAL_SUBTREE;
 
-DEFINE_OR_DECLARE_STACK_OF(GENERAL_SUBTREE)
+{-
+    generate_stack_macros("GENERAL_SUBTREE");
+-}
 
 struct NAME_CONSTRAINTS_st {
     STACK_OF(GENERAL_SUBTREE) *permittedSubtrees;
@@ -423,7 +449,10 @@ typedef struct x509_purpose_st {
     void *usr_data;
 } X509_PURPOSE;
 
-DEFINE_OR_DECLARE_STACK_OF(X509_PURPOSE)
+{-
+    generate_stack_macros("X509_PURPOSE");
+-}
+
 
 # define X509_PURPOSE_SSL_CLIENT         1
 # define X509_PURPOSE_SSL_SERVER         2
@@ -735,7 +764,10 @@ int X509V3_NAME_from_section(X509_NAME *nm, STACK_OF(CONF_VALUE) *dn_sk,
                              unsigned long chtype);
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent);
-DEFINE_OR_DECLARE_STACK_OF(X509_POLICY_NODE)
+{-
+    generate_stack_macros("X509_POLICY_NODE");
+-}
+
 
 #ifndef OPENSSL_NO_RFC3779
 typedef struct ASRange_st {
@@ -753,7 +785,9 @@ typedef struct ASIdOrRange_st {
     } u;
 } ASIdOrRange;
 
-DEFINE_OR_DECLARE_STACK_OF(ASIdOrRange)
+{-
+    generate_stack_macros("ASIdOrRange");
+-}
 
 typedef STACK_OF(ASIdOrRange) ASIdOrRanges;
 
@@ -792,7 +826,9 @@ typedef struct IPAddressOrRange_st {
     } u;
 } IPAddressOrRange;
 
-DEFINE_OR_DECLARE_STACK_OF(IPAddressOrRange)
+{-
+    generate_stack_macros("IPAddressOrRange");
+-}
 
 typedef STACK_OF(IPAddressOrRange) IPAddressOrRanges;
 
@@ -812,7 +848,10 @@ typedef struct IPAddressFamily_st {
     IPAddressChoice *ipAddressChoice;
 } IPAddressFamily;
 
-DEFINE_OR_DECLARE_STACK_OF(IPAddressFamily)
+{-
+    generate_stack_macros("IPAddressFamily");
+-}
+
 
 typedef STACK_OF(IPAddressFamily) IPAddrBlocks;
 
@@ -886,7 +925,9 @@ int X509v3_addr_validate_resource_set(STACK_OF(X509) *chain,
 
 #endif                         /* OPENSSL_NO_RFC3779 */
 
-DEFINE_OR_DECLARE_STACK_OF(ASN1_STRING)
+{-
+    generate_stack_macros("ASN1_STRING");
+-}
 
 /*
  * Admission Syntax
@@ -899,8 +940,10 @@ DECLARE_ASN1_FUNCTIONS(NAMING_AUTHORITY)
 DECLARE_ASN1_FUNCTIONS(PROFESSION_INFO)
 DECLARE_ASN1_FUNCTIONS(ADMISSIONS)
 DECLARE_ASN1_FUNCTIONS(ADMISSION_SYNTAX)
-DEFINE_OR_DECLARE_STACK_OF(PROFESSION_INFO)
-DEFINE_OR_DECLARE_STACK_OF(ADMISSIONS)
+{-
+    generate_stack_macros("PROFESSION_INFO")
+    .generate_stack_macros("ADMISSIONS");
+-}
 typedef STACK_OF(PROFESSION_INFO) PROFESSION_INFOS;
 
 const ASN1_OBJECT *NAMING_AUTHORITY_get0_authorityId(

@@ -19,8 +19,6 @@
 #include "x509_local.h"
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(DIST_POINT)
 
 static void *v2i_crld(const X509V3_EXT_METHOD *method,
                       X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);

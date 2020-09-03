@@ -16,8 +16,6 @@
 # include <openssl/x509v3.h>
 # include "../x509/ext_dat.h"
 
-DEFINE_STACK_OF(ACCESS_DESCRIPTION)
-
 /*
  * OCSP extensions and a couple of CRL entry extensions
  */

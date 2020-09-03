@@ -14,7 +14,6 @@
 
 #include "pcy_local.h"
 
-DEFINE_STACK_OF(POLICY_MAPPING)
 DEFINE_STACK_OF(ASN1_OBJECT)
 
 /*
