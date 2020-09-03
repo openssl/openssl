@@ -15,9 +15,6 @@
 #include "ts_local.h"
 #include "crypto/ess.h"
 
-DEFINE_STACK_OF(ESS_CERT_ID)
-DEFINE_STACK_OF(ESS_CERT_ID_V2)
-
 static int ts_verify_cert(X509_STORE *store, STACK_OF(X509) *untrusted,
                           X509 *signer, STACK_OF(X509) **chain);
 static int ts_check_signing_certs(PKCS7_SIGNER_INFO *si,
