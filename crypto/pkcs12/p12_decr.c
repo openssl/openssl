@@ -24,7 +24,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
     unsigned char *out = NULL;
     int outlen, i;
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
-    size_t max_out_len, mac_len;
+    size_t max_out_len, mac_len = 0;
 
     if (ctx == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_MALLOC_FAILURE);
