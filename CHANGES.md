@@ -23,6 +23,12 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Changed all "STACK" functions to be macros instead of inline functions. Macro
+   parameters are still checked for type safety at compile time via helper
+   inline functions.
+
+   *Matt Caswell*
+
  * Remove the RAND_DRBG API
 
    The RAND_DRBG API did not fit well into the new provider concept as
@@ -607,8 +613,7 @@ OpenSSL 3.0
 
    *Rich Salz*
 
- * Added documentation for the STACK API. OpenSSL only defines the STACK
-   functions where they are used.
+ * Added documentation for the STACK API.
 
    *Rich Salz*
 
