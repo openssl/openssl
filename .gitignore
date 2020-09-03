@@ -30,6 +30,7 @@
 /include/openssl/conf.h
 /include/openssl/configuration.h
 /include/openssl/crmf.h
+/include/openssl/crypto.h
 /include/openssl/ct.h
 /include/openssl/ess.h
 /include/openssl/fipskey.h
