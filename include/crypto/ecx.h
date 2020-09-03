@@ -62,6 +62,7 @@ typedef enum {
 
 struct ecx_key_st {
     OPENSSL_CTX *libctx;
+    char *propq;
     unsigned int haspubkey:1;
     unsigned char pubkey[MAX_KEYLEN];
     unsigned char *privkey;
@@ -74,7 +75,8 @@ struct ecx_key_st {
 typedef struct ecx_key_st ECX_KEY;
 
 size_t ecx_key_length(ECX_KEY_TYPE type);
-ECX_KEY *ecx_key_new(OPENSSL_CTX *libctx, ECX_KEY_TYPE type, int haspubkey);
+ECX_KEY *ecx_key_new(ECX_KEY_TYPE type, int haspubkey,
+                     OPENSSL_CTX *libctx, const char *propq);
 unsigned char *ecx_key_allocate_privkey(ECX_KEY *key);
 void ecx_key_free(ECX_KEY *key);
 int ecx_key_up_ref(ECX_KEY *key);
@@ -84,8 +86,9 @@ int X25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 void X25519_public_from_private(uint8_t out_public_value[32],
                                 const uint8_t private_key[32]);
 
-int ED25519_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[32],
-                                const uint8_t private_key[32]);
+int ED25519_public_from_private(uint8_t out_public_key[32],
+                                const uint8_t private_key[32],
+                                OPENSSL_CTX *ctx, const char *propq);
 int ED25519_sign(uint8_t *out_sig, const uint8_t *message, size_t message_len,
                  const uint8_t public_key[32], const uint8_t private_key[32],
                  OPENSSL_CTX *libctx, const char *propq);
@@ -93,16 +96,18 @@ int ED25519_verify(const uint8_t *message, size_t message_len,
                    const uint8_t signature[64], const uint8_t public_key[32],
                    OPENSSL_CTX *libctx, const char *propq);
 
-int ED448_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[57],
-                              const uint8_t private_key[57]);
-int ED448_sign(OPENSSL_CTX *ctx, uint8_t *out_sig, const uint8_t *message,
+int ED448_public_from_private(uint8_t out_public_key[57],
+                              const uint8_t private_key[57],
+                              OPENSSL_CTX *ctx,  const char *propq);
+int ED448_sign(uint8_t *out_sig, const uint8_t *message,
                size_t message_len, const uint8_t public_key[57],
                const uint8_t private_key[57], const uint8_t *context,
-               size_t context_len);
+               size_t context_len, OPENSSL_CTX *ctx, const char *propq);
 
-int ED448_verify(OPENSSL_CTX *ctx, const uint8_t *message, size_t message_len,
+int ED448_verify(const uint8_t *message, size_t message_len,
                  const uint8_t signature[114], const uint8_t public_key[57],
-                 const uint8_t *context, size_t context_len);
+                 const uint8_t *context, size_t context_len,
+                 OPENSSL_CTX *ctx, const char *propq);
 
 int X448(uint8_t out_shared_key[56], const uint8_t private_key[56],
          const uint8_t peer_public_value[56]);

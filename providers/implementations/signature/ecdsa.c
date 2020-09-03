@@ -226,7 +226,7 @@ static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
     if (!ecdsa_signature_init(vctx, ec))
         return 0;
 
-    ctx->md = EVP_MD_fetch(ctx->libctx, mdname, ctx->propq);
+    ctx->md = EVP_MD_fetch(mdname, ctx->libctx, ctx->propq);
     if ((md_nid = get_md_nid(ctx->md)) == NID_undef)
         goto error;
 
