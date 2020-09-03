@@ -11,6 +11,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
 #include <openssl/trace.h>
+#include <openssl/evp.h>
 
 /*
  * Encrypt/Decrypt a buffer based on password and algor, result in a
@@ -22,7 +23,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
                                 unsigned char **data, int *datalen, int en_de)
 {
     unsigned char *out = NULL;
-    int outlen, i;
+    int outlen = 0, i;
     EVP_CIPHER_CTX *ctx = EVP_CIPHER_CTX_new();
     int max_out_len, mac_len = 0;
 
