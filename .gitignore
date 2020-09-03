@@ -22,9 +22,10 @@
 # Auto generated headers
 /crypto/buildinf.h
 /include/crypto/*_conf.h
+/include/openssl/asn1.h
 /include/openssl/configuration.h
-/include/openssl/opensslv.h
 /include/openssl/fipskey.h
+/include/openssl/opensslv.h
 /include/openssl/safestack.h
 /include/openssl/ssl.h
 /include/openssl/x509.h

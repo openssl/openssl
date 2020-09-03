@@ -20,7 +20,6 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 
-DEFINE_STACK_OF(ASN1_UTF8STRING)
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
 
 int ossl_cmp_hdr_set_pvno(OSSL_CMP_PKIHEADER *hdr, int pvno)

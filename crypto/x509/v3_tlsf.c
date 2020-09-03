@@ -16,7 +16,6 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF(ASN1_INTEGER)
 DEFINE_STACK_OF(CONF_VALUE)
 
 static STACK_OF(CONF_VALUE) *i2v_TLS_FEATURE(const X509V3_EXT_METHOD *method,

@@ -12,7 +12,6 @@
 #include "cmp_testlib.h"
 
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
-DEFINE_STACK_OF(ASN1_UTF8STRING)
 
 static unsigned char rand_data[OSSL_CMP_TRANSACTIONID_LENGTH];
 

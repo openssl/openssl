@@ -16,8 +16,6 @@
 #include <openssl/rand.h>
 #include <openssl/x509v3.h>
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 /* Standard wrapper functions for extensions */
 
 /* OCSP request extensions */

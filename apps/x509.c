@@ -28,8 +28,6 @@
 # include <openssl/dsa.h>
 #endif
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 #undef POSTFIX
 #define POSTFIX ".srl"
 #define DEF_DAYS        30

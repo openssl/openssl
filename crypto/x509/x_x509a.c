@@ -14,8 +14,6 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 /*
  * X509_CERT_AUX routines. These are used to encode additional user
  * modifiable data about a certificate. This data is appended to the X509
