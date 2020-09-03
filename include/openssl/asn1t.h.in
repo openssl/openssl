@@ -1,4 +1,6 @@
 /*
+ * {- join("\n * ", @autowarntext) -}
+ *
  * Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -6,6 +8,10 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+{-
+use OpenSSL::stackhash qw(generate_stack_macros);
+-}
 
 #ifndef OPENSSL_ASN1T_H
 # define OPENSSL_ASN1T_H
@@ -880,7 +886,10 @@ DECLARE_ASN1_ITEM(LONG)
 DECLARE_ASN1_ITEM(ZLONG)
 # endif
 
-DEFINE_OR_DECLARE_STACK_OF(ASN1_VALUE)
+{-
+    generate_stack_macros("ASN1_VALUE");
+-}
+
 
 /* Functions used internally by the ASN1 code */
 
