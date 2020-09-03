@@ -209,7 +209,7 @@ int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
                                                     (char *)mdname, 0);
     macparams[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                      basekey, bklen);
-    if ((mac = EVP_MAC_fetch(libctx, "HMAC", propq)) == NULL
+    if ((mac = EVP_MAC_fetch("HMAC", libctx, propq)) == NULL
             || (mctx = EVP_MAC_CTX_new(mac)) == NULL
             || !EVP_MAC_CTX_set_params(mctx, macparams)
             || !EVP_MAC_init(mctx)

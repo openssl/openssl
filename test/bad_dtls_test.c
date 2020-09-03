@@ -304,7 +304,7 @@ static int send_record(BIO *rbio, unsigned char type, uint64_t seqnr,
     memcpy(enc, msg, len);
 
     /* Append HMAC to data */
-    hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    hmac = EVP_MAC_fetch("HMAC", NULL, NULL);
     ctx = EVP_MAC_CTX_new(hmac);
     EVP_MAC_free(hmac);
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,

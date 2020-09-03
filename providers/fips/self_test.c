@@ -148,7 +148,7 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex
 
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
 
-    mac = EVP_MAC_fetch(libctx, MAC_NAME, NULL);
+    mac = EVP_MAC_fetch(MAC_NAME, libctx, NULL);
     ctx = EVP_MAC_CTX_new(mac);
     if (mac == NULL || ctx == NULL)
         goto err;

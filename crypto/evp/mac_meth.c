@@ -149,7 +149,7 @@ static void *evp_mac_from_dispatch(int name_id,
     return mac;
 }
 
-EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_MAC *EVP_MAC_fetch(const char *algorithm, OPENSSL_CTX *libctx,
                        const char *properties)
 {
     return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,

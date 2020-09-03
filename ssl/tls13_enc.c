@@ -315,7 +315,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
                              unsigned char *out)
 {
     const char *mdname = EVP_MD_name(ssl_handshake_md(s));
-    EVP_MAC *hmac = EVP_MAC_fetch(s->ctx->libctx, "HMAC", s->ctx->propq);
+    EVP_MAC *hmac = EVP_MAC_fetch("HMAC", s->ctx->libctx, s->ctx->propq);
     unsigned char hash[EVP_MAX_MD_SIZE];
     unsigned char finsecret[EVP_MAX_MD_SIZE];
     size_t hashlen, ret = 0;

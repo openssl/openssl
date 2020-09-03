@@ -56,7 +56,7 @@ static void *mac_newctx(void *provctx, const char *propq, const char *macname)
         goto err;
     }
 
-    mac = EVP_MAC_fetch(pmacctx->libctx, macname, propq);
+    mac = EVP_MAC_fetch(macname, pmacctx->libctx, propq);
     if (mac == NULL)
         goto err;
 

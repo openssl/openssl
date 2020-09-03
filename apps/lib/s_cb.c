@@ -802,7 +802,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     BIO_ADDR_rawaddress(peer, buffer + sizeof(port), NULL);
 
     /* Calculate HMAC of buffer using the secret */
-    hmac = EVP_MAC_fetch(NULL, "HMAC", NULL);
+    hmac = EVP_MAC_fetch("HMAC", NULL, NULL);
     if (hmac == NULL) {
             BIO_printf(bio_err, "HMAC not found\n");
             goto end;

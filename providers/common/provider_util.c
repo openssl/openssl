@@ -255,7 +255,7 @@ int ossl_prov_macctx_load_from_params(EVP_MAC_CTX **macctx,
 
     /* If we got a new mac name, we make a new EVP_MAC_CTX */
     if (macname != NULL) {
-        EVP_MAC *mac = EVP_MAC_fetch(libctx, macname, properties);
+        EVP_MAC *mac = EVP_MAC_fetch(macname, libctx, properties);
 
         EVP_MAC_CTX_free(*macctx);
         *macctx = mac == NULL ? NULL : EVP_MAC_CTX_new(mac);

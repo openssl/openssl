@@ -108,7 +108,7 @@ opthelp:
         goto opthelp;
     }
 
-    mac = EVP_MAC_fetch(NULL, argv[0], NULL);
+    mac = EVP_MAC_fetch(argv[0], NULL, NULL);
     if (mac == NULL) {
         BIO_printf(bio_err, "Invalid MAC name %s\n", argv[0]);
         goto opthelp;

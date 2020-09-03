@@ -1099,7 +1099,7 @@ void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
 
 /* MAC stuff */
 
-EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+EVP_MAC *EVP_MAC_fetch(const char *algorithm, OPENSSL_CTX *libctx,
                        const char *properties);
 int EVP_MAC_up_ref(EVP_MAC *mac);
 void EVP_MAC_free(EVP_MAC *mac);

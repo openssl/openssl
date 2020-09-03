@@ -389,7 +389,7 @@ opthelp:
     if (read_buffer == NULL)
         goto end;
 
-    mac = EVP_MAC_fetch(NULL, mac_name, NULL);
+    mac = EVP_MAC_fetch(mac_name, NULL, NULL);
     if (mac == NULL) {
         BIO_printf(bio_err, "Unable to get MAC of type %s\n", mac_name);
         goto end;
