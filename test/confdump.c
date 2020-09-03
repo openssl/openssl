@@ -15,7 +15,6 @@
 #include <openssl/err.h>
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF_CSTRING()
 
 static STACK_OF(OPENSSL_CSTRING) *section_names = NULL;
 

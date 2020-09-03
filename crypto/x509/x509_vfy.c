@@ -25,8 +25,6 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF_STRING()
-
 /* CRL score values */
 
 /* No unhandled critical extensions */

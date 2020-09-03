@@ -19,8 +19,6 @@
 #include "apps.h"
 #include "progs.h"
 
-DEFINE_STACK_OF_STRING()
-
 #define BUFSIZE 4096
 
 /* Configuration file values */

@@ -21,8 +21,6 @@
 #include <openssl/hmac.h>
 #include <ctype.h>
 
-DEFINE_STACK_OF_STRING()
-
 #undef BUFSIZE
 #define BUFSIZE 1024*8
 

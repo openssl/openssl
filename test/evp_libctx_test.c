@@ -31,8 +31,6 @@
 #include "crypto/bn_dh.h"   /* _bignum_ffdhe2048_p */
 #include "../e_os.h"        /* strcasecmp */
 
-DEFINE_STACK_OF_CSTRING()
-
 static OPENSSL_CTX *libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;

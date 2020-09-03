@@ -20,8 +20,6 @@
  * prototypes.
  */
 
-DEFINE_STACK_OF_STRING()
-
 /* Our ENGINE handlers */
 static int dynamic_init(ENGINE *e);
 static int dynamic_finish(ENGINE *e);

@@ -26,8 +26,6 @@
 
 #define COOKIE_SECRET_LENGTH    16
 
-DEFINE_STACK_OF_STRING()
-
 VERIFY_CB_ARGS verify_args = { -1, 0, X509_V_OK, 0 };
 
 #ifndef OPENSSL_NO_SOCK

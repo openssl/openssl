@@ -24,7 +24,6 @@
 # include <openssl/cms.h>
 
 DEFINE_STACK_OF(CMS_SignerInfo)
-DEFINE_STACK_OF_STRING()
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);

@@ -187,8 +187,6 @@ static void decoder_clean_EVP_PKEY_construct_arg(void *construct_data)
     }
 }
 
-DEFINE_STACK_OF_CSTRING()
-
 struct collected_data_st {
     struct decoder_EVP_PKEY_data_st *process_data;
     STACK_OF(OPENSSL_CSTRING) *names;
