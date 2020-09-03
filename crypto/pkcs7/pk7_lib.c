@@ -16,7 +16,6 @@
 #include "crypto/x509.h" /* for sk_X509_add1_cert() */
 #include "pk7_local.h"
 
-DEFINE_STACK_OF(X509_ALGOR)
 DEFINE_STACK_OF(PKCS7_RECIP_INFO)
 DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
 

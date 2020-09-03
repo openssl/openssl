@@ -18,7 +18,6 @@
 
 #include "x509_local.h"
 
-DEFINE_STACK_OF(ASN1_OBJECT)
 DEFINE_STACK_OF(X509_VERIFY_PARAM)
 
 /* X509_VERIFY_PARAM functions */

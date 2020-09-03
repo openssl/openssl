@@ -26,8 +26,6 @@
 #include <openssl/x509.h>
 #include <openssl/asn1err.h> /* for ASN1_R_TOO_SMALL and ASN1_R_TOO_LARGE */
 
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-
 /* CMP functions related to PKIStatus */
 
 int ossl_cmp_pkisi_get_status(const OSSL_CMP_PKISI *si)

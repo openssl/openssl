@@ -20,7 +20,6 @@
 #include "asn1_local.h"
 
 DEFINE_STACK_OF(BIO)
-DEFINE_STACK_OF(X509_ALGOR)
 
 /*
  * Generalised MIME like utilities for streaming ASN1. Although many have a

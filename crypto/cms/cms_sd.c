@@ -24,7 +24,6 @@
 
 DEFINE_STACK_OF(CMS_RevocationInfoChoice)
 DEFINE_STACK_OF(CMS_SignerInfo)
-DEFINE_STACK_OF(X509_ALGOR)
 
 /* CMS SignedData Utilities */
 

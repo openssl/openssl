@@ -16,8 +16,6 @@
 #include "internal/tsan_assist.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
                                     int ca);

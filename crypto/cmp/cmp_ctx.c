@@ -21,7 +21,6 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 
-DEFINE_STACK_OF(ASN1_UTF8STRING)
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
 
 /*

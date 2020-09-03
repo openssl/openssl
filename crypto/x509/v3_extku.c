@@ -14,7 +14,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(ASN1_OBJECT)
 DEFINE_STACK_OF(CONF_VALUE)
 
 static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,

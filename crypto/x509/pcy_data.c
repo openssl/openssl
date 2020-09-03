@@ -13,8 +13,6 @@
 
 #include "pcy_local.h"
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 /* Policy Node routines */
 
 void policy_data_free(X509_POLICY_DATA *data)

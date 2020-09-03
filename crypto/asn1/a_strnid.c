@@ -12,8 +12,6 @@
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
 
-DEFINE_STACK_OF(ASN1_STRING_TABLE)
-
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;
 static void st_free(ASN1_STRING_TABLE *tbl);
 static int sk_table_cmp(const ASN1_STRING_TABLE *const *a,
