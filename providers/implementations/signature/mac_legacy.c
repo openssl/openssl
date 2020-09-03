@@ -189,7 +189,7 @@ static int mac_set_ctx_params(void *vpmacctx, const OSSL_PARAM params[])
 static const OSSL_PARAM *mac_settable_ctx_params(void *provctx,
                                                  const char *macname)
 {
-    EVP_MAC *mac = EVP_MAC_fetch(PROV_LIBRARY_CONTEXT_OF(provctx), macname,
+    EVP_MAC *mac = EVP_MAC_fetch( macname, PROV_LIBRARY_CONTEXT_OF(provctx),
                                  NULL);
     const OSSL_PARAM *params;
 
