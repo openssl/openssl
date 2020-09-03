@@ -1230,7 +1230,7 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
             || !rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
             || !rsa_pss_params_30_set_maskgenhashalg(&pss_params, mgf1md_nid)
             || !rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
-            || !rsa_pss_params_30_todata(&pss_params, propq, tmpl, NULL))
+            || !rsa_pss_params_30_todata(&pss_params, tmpl, NULL))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
     }
@@ -1264,7 +1264,8 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
     RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
     RSA_set_flags(rsa, rsa_type);
 
-    if (!rsa_pss_params_30_fromdata(&rsa_pss_params, params, pctx->libctx))
+    if (!rsa_pss_params_30_fromdata(&rsa_pss_params, params,
+                                    pctx->libctx))
         goto err;
 
     switch (rsa_type) {

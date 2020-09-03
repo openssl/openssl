@@ -89,6 +89,7 @@ static RSA *rsa_new_intern(ENGINE *engine, OPENSSL_CTX *libctx)
     }
 
     ret->libctx = libctx;
+
     ret->meth = RSA_get_default_method();
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ret->flags = ret->meth->flags & ~RSA_FLAG_NON_FIPS_ALLOW;

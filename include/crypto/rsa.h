@@ -60,10 +60,11 @@ int rsa_get0_all_params(RSA *r, STACK_OF(BIGNUM_const) *primes,
 
 int rsa_todata(RSA *rsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int rsa_fromdata(RSA *rsa, const OSSL_PARAM params[]);
-int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss, const char *propq,
+int rsa_pss_params_30_todata(const RSA_PSS_PARAMS_30 *pss,
                              OSSL_PARAM_BLD *bld, OSSL_PARAM params[]);
 int rsa_pss_params_30_fromdata(RSA_PSS_PARAMS_30 *pss_params,
-                               const OSSL_PARAM params[], OPENSSL_CTX *libctx);
+                               const OSSL_PARAM params[],
+                               OPENSSL_CTX *libctx);
 
 int rsa_padding_check_PKCS1_type_2_TLS(OPENSSL_CTX *ctx, unsigned char *to,
                                        size_t tlen, const unsigned char *from,
