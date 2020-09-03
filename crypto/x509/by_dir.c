@@ -22,8 +22,6 @@
 #include "crypto/x509.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF(X509_OBJECT)
-
 struct lookup_dir_hashes_st {
     unsigned long hash;
     int suffix;

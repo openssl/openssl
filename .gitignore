@@ -35,6 +35,7 @@
 /include/openssl/ssl.h
 /include/openssl/x509.h
 /include/openssl/x509v3.h
+/include/openssl/x509_vfy.h
 
 # Auto generated doc files
 doc/man1/openssl-*.pod
