@@ -15,6 +15,7 @@ DEPEND[libssl]=libcrypto
 # unconditionally before anything else.
 DEPEND[]=include/openssl/asn1.h \
          include/openssl/asn1t.h \
+         include/openssl/bio.h \
          include/openssl/cmp.h \
          include/openssl/cms.h \
          include/openssl/configuration.h \
@@ -36,6 +37,7 @@ DEPEND[]=include/openssl/asn1.h \
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
+GENERATE[include/openssl/bio.h]=include/openssl/bio.h.in
 GENERATE[include/openssl/cmp.h]=include/openssl/cmp.h.in
 GENERATE[include/openssl/cms.h]=include/openssl/cms.h.in
 GENERATE[include/openssl/configuration.h]=include/openssl/configuration.h.in

@@ -24,6 +24,7 @@
 /include/crypto/*_conf.h
 /include/openssl/asn1.h
 /include/openssl/asn1t.h
+/include/openssl/bio.h
 /include/openssl/cmp.h
 /include/openssl/cms.h
 /include/openssl/configuration.h
