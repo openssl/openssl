@@ -32,7 +32,7 @@ static int test_is_fips_enabled(void)
      * Fetching an algorithm shouldn't change the state and should come from
      * expected provider.
      */
-    sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL);
+    sha256 = EVP_MD_fetch("SHA2-256", NULL, NULL);
     if (!TEST_ptr(sha256))
         return 0;
     if (is_fips

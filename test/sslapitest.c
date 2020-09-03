@@ -6712,7 +6712,7 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     const unsigned char tick_hmac_key[16] = "0123456789abcdef";
     EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch("AES-128-CBC", libctx, NULL);
-    EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA-256", NULL);
+    EVP_MD *sha256 = EVP_MD_fetch("SHA-256", libctx, NULL);
     int ret;
 
     tick_key_cb_called = 1;

@@ -141,7 +141,7 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
 
     EVP_MD_free(pd->alloc_md);
     ERR_set_mark();
-    pd->md = pd->alloc_md = EVP_MD_fetch(ctx, p->data, propquery);
+    pd->md = pd->alloc_md = EVP_MD_fetch(p->data, ctx, propquery);
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy digests */
     if (pd->md == NULL)

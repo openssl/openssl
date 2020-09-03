@@ -5965,7 +5965,7 @@ const EVP_MD *ssl_evp_md_fetch(OPENSSL_CTX *libctx,
 
     /* Otherwise we do an explicit fetch */
     ERR_set_mark();
-    md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), properties);
+    md = EVP_MD_fetch(OBJ_nid2sn(nid), libctx, properties);
     ERR_pop_to_mark();
     return md;
 }

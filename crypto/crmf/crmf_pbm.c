@@ -156,7 +156,7 @@ int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
      * support SHA-1.
      */
     mdname = OBJ_nid2sn(OBJ_obj2nid(pbmp->owf->algorithm));
-    if ((owf = EVP_MD_fetch(libctx, mdname, propq)) == NULL) {
+    if ((owf = EVP_MD_fetch(mdname, libctx, propq)) == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }

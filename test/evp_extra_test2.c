@@ -221,7 +221,7 @@ static int test_alternative_default(void)
      * setup_tests() loaded the "null" provider in the current default, so
      * we know this fetch should fail.
      */
-    if (!TEST_ptr_null(sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
+    if (!TEST_ptr_null(sha256 = EVP_MD_fetch("SHA2-256", NULL, NULL)))
         goto err;
 
     /*
@@ -229,7 +229,7 @@ static int test_alternative_default(void)
      * providers are loaded in this one, it should fall back to the default.
      */
     if (!TEST_ptr(oldctx = OPENSSL_CTX_set0_default(mainctx))
-        || !TEST_ptr(sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
+        || !TEST_ptr(sha256 = EVP_MD_fetch("SHA2-256", NULL, NULL)))
         goto err;
     EVP_MD_free(sha256);
     sha256 = NULL;
@@ -239,7 +239,7 @@ static int test_alternative_default(void)
      * fetching SHA2-256 should fail again.
      */
     if (!TEST_ptr_eq(OPENSSL_CTX_set0_default(oldctx), mainctx)
-        || !TEST_ptr_null(sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL)))
+        || !TEST_ptr_null(sha256 = EVP_MD_fetch("SHA2-256", NULL, NULL)))
         goto err;
 
     ok = 1;

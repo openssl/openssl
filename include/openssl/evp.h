@@ -636,7 +636,7 @@ __owur int EVP_DigestFinal(EVP_MD_CTX *ctx, unsigned char *md,
 __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
                               size_t len);
 
-__owur EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+__owur EVP_MD *EVP_MD_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                             const char *properties);
 
 int EVP_MD_up_ref(EVP_MD *md);

@@ -274,7 +274,7 @@ int BN_generate_dsa_nonce(BIGNUM *out, const BIGNUM *range,
         goto err;
     }
 
-    md = EVP_MD_fetch(libctx, "SHA512", NULL);
+    md = EVP_MD_fetch("SHA512", libctx, NULL);
     if (md == NULL) {
         BNerr(BN_F_BN_GENERATE_DSA_NONCE, BN_R_NO_SUITABLE_DIGEST);
         goto err;

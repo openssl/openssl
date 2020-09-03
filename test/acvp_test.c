@@ -640,7 +640,7 @@ static int dsa_sigver_test(int id)
         goto err;
     rbn = sbn = NULL;
 
-    if (!TEST_ptr(md = EVP_MD_fetch(libctx, tst->digest_alg, ""))
+    if (!TEST_ptr(md = EVP_MD_fetch(tst->digest_alg, libctx, NULL))
         || !TEST_true(EVP_Digest(tst->msg, tst->msg_len,
                                  digest, &digest_len, md, NULL)))
         goto err;

@@ -238,7 +238,7 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
         }
 
         EVP_MD_free(pectx->kdf_md);
-        pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
+        pectx->kdf_md = EVP_MD_fetch(name, pectx->libctx, mdprops);
 
         if (pectx->kdf_md == NULL)
             return 0;

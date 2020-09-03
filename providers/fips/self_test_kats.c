@@ -24,7 +24,7 @@ static int self_test_digest(const ST_KAT_DIGEST *t, OSSL_SELF_TEST *st,
     unsigned char out[EVP_MAX_MD_SIZE];
     unsigned int out_len = 0;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    EVP_MD *md = EVP_MD_fetch(libctx, t->algorithm, NULL);
+    EVP_MD *md = EVP_MD_fetch(t->algorithm, libctx, NULL);
 
     OSSL_SELF_TEST_onbegin(st, OSSL_SELF_TEST_TYPE_KAT_DIGEST, t->desc);
 

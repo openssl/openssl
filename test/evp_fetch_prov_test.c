@@ -133,7 +133,7 @@ static int test_EVP_MD_fetch(void)
         goto err;
 
     /* Fetch the digest from a provider using properties. */
-    md = EVP_MD_fetch(ctx, "SHA256", fetch_property);
+    md = EVP_MD_fetch("SHA256", ctx, fetch_property);
     if (expected_fetch_result != 0) {
         if (!TEST_ptr(md)
             || !TEST_int_eq(EVP_MD_nid(md), NID_sha256)

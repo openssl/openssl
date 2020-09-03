@@ -74,7 +74,7 @@ static int pkcs7_bio_add_digest(BIO **pbio, X509_ALGOR *alg,
     name = OBJ_nid2sn(OBJ_obj2nid(alg->algorithm));
 
     (void)ERR_set_mark();
-    fetched = EVP_MD_fetch(ctx->libctx, name, ctx->propq);
+    fetched = EVP_MD_fetch(name, ctx->libctx, ctx->propq);
     if (fetched != NULL)
         md = fetched;
     else
@@ -521,7 +521,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
             name = OBJ_nid2sn(OBJ_obj2nid(xa->algorithm));
 
             (void)ERR_set_mark();
-            evp_md = EVP_MD_fetch(p7_ctx->libctx, name, p7_ctx->propq);
+            evp_md = EVP_MD_fetch(name, p7_ctx->libctx, p7_ctx->propq);
             if (evp_md != NULL)
                 md = evp_md;
             else
@@ -1147,7 +1147,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         }
 
         (void)ERR_set_mark();
-        fetched_md = EVP_MD_fetch(ctx->libctx, OBJ_nid2sn(md_type), ctx->propq);
+        fetched_md = EVP_MD_fetch(OBJ_nid2sn(md_type), ctx->libctx, ctx->propq);
 
         if (fetched_md != NULL)
             md = fetched_md;

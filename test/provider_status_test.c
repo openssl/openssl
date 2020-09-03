@@ -120,7 +120,7 @@ static int test_provider_status(void)
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, params))
         || !TEST_true(status == 1))
         goto err;
-    if (!TEST_ptr(fetch = EVP_MD_fetch(libctx, "SHA256", NULL)))
+    if (!TEST_ptr(fetch = EVP_MD_fetch("SHA256", libctx, NULL)))
         goto err;
     EVP_MD_free(fetch);
     fetch = NULL;
@@ -139,7 +139,7 @@ static int test_provider_status(void)
     if (!TEST_true(OSSL_PROVIDER_get_params(prov, params))
         || !TEST_uint_eq(status, 0))
         goto err;
-    if (!TEST_ptr_null(fetch = EVP_MD_fetch(libctx, "SHA256", NULL)))
+    if (!TEST_ptr_null(fetch = EVP_MD_fetch("SHA256", libctx, NULL)))
         goto err;
 
     ret = 1;

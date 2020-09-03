@@ -161,7 +161,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(digest), propq);
+    fetched_digest = EVP_MD_fetch(EVP_MD_name(digest), libctx, propq);
     if (fetched_digest == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_INTERNAL_ERROR);
         goto done;

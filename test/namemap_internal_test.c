@@ -154,7 +154,7 @@ static int test_cipher_is_a(void)
  */
 static int test_digest_is_a(void)
 {
-    EVP_MD *fetched = EVP_MD_fetch(NULL, "SHA2-512", NULL);
+    EVP_MD *fetched = EVP_MD_fetch("SHA2-512", NULL, NULL);
     int rv = 1;
 
     if (!TEST_ptr(fetched))

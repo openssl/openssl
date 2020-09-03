@@ -2698,7 +2698,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL *s, PACKET *pkt)
      * elsewhere in OpenSSL. The session ID is set to the SHA256 hash of the
      * ticket.
      */
-    sha256 = EVP_MD_fetch(s->ctx->libctx, "SHA2-256", s->ctx->propq);
+    sha256 = EVP_MD_fetch("SHA2-256", s->ctx->libctx, s->ctx->propq);
     if (sha256 == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_NEW_SESSION_TICKET,
                  SSL_R_ALGORITHM_FETCH_FAILED);

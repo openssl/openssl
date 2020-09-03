@@ -92,7 +92,7 @@ int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
 
 static int cmp_ctx_set_md(OSSL_CMP_CTX *ctx, EVP_MD **pmd, int nid)
 {
-    EVP_MD *md = EVP_MD_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propq);
+    EVP_MD *md = EVP_MD_fetch(OBJ_nid2sn(nid), ctx->libctx, ctx->propq);
     /* fetching in advance to be able to throw error early if unsupported */
 
     if (md == NULL) {

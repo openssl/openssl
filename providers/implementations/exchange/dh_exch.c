@@ -302,7 +302,7 @@ static int dh_set_ctx_params(void *vpdhctx, const OSSL_PARAM params[])
         }
 
         EVP_MD_free(pdhctx->kdf_md);
-        pdhctx->kdf_md = EVP_MD_fetch(pdhctx->libctx, name, mdprops);
+        pdhctx->kdf_md = EVP_MD_fetch(name, pdhctx->libctx, mdprops);
 
         if (pdhctx->kdf_md == NULL)
             return 0;

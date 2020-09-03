@@ -184,7 +184,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              * EVP_MD_CTX.
              */
             ctx->digest = ctx->reqdigest = ctx->fetched_digest =
-                EVP_MD_fetch(locpctx->libctx, mdname, props);
+                EVP_MD_fetch(mdname, locpctx->libctx, props);
         }
     }
 

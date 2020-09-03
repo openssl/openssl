@@ -156,7 +156,7 @@ static int dsa_setup_md(PROV_DSA_CTX *ctx,
         mdprops = ctx->propq;
 
     if (mdname != NULL) {
-        EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
+        EVP_MD *md = EVP_MD_fetch(mdname, ctx->libctx, mdprops);
         int md_nid = dsa_get_md_nid(md);
         WPACKET pkt;
 

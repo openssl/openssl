@@ -134,7 +134,7 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         }
         if (prsactx->oaep_md == NULL) {
             OPENSSL_free(tbuf);
-            prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
+            prsactx->oaep_md = EVP_MD_fetch("SHA-1", prsactx->libctx, NULL);
             PROVerr(0, ERR_R_INTERNAL_ERROR);
             return 0;
         }
@@ -217,7 +217,7 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
         }
         if (prsactx->pad_mode == RSA_PKCS1_OAEP_PADDING) {
             if (prsactx->oaep_md == NULL) {
-                prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA-1", NULL);
+                prsactx->oaep_md = EVP_MD_fetch("SHA-1", prsactx->libctx, NULL);
                 if (prsactx->oaep_md == NULL) {
                     PROVerr(0, ERR_R_INTERNAL_ERROR);
                     return 0;
@@ -412,7 +412,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         }
 
         EVP_MD_free(prsactx->oaep_md);
-        prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, mdname, mdprops);
+        prsactx->oaep_md = EVP_MD_fetch(mdname, prsactx->libctx, mdprops);
 
         if (prsactx->oaep_md == NULL)
             return 0;
@@ -453,7 +453,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         if (pad_mode == RSA_PKCS1_PSS_PADDING)
             return 0;
         if (pad_mode == RSA_PKCS1_OAEP_PADDING && prsactx->oaep_md == NULL) {
-            prsactx->oaep_md = EVP_MD_fetch(prsactx->libctx, "SHA1", mdprops);
+            prsactx->oaep_md = EVP_MD_fetch("SHA1", prsactx->libctx, mdprops);
             if (prsactx->oaep_md == NULL)
                 return 0;
         }
@@ -476,7 +476,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
         }
 
         EVP_MD_free(prsactx->mgf1_md);
-        prsactx->mgf1_md = EVP_MD_fetch(prsactx->libctx, mdname, str);
+        prsactx->mgf1_md = EVP_MD_fetch(mdname, prsactx->libctx, str);
 
         if (prsactx->mgf1_md == NULL)
             return 0;

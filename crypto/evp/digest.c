@@ -206,7 +206,7 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
         EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
         return 0;
 #else
-        EVP_MD *provmd = EVP_MD_fetch(NULL, OBJ_nid2sn(type->type), "");
+        EVP_MD *provmd = EVP_MD_fetch(OBJ_nid2sn(type->type), NULL, NULL);
 
         if (provmd == NULL) {
             EVPerr(EVP_F_EVP_DIGESTINIT_EX, EVP_R_INITIALIZATION_ERROR);
@@ -933,7 +933,7 @@ static void evp_md_free(void *md)
     EVP_MD_free(md);
 }
 
-EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_MD *EVP_MD_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                      const char *properties)
 {
     EVP_MD *md =

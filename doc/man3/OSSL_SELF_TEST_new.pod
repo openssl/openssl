@@ -115,7 +115,7 @@ A single self test could be set up in the following way:
     unsigned char out[EVP_MAX_MD_SIZE];
     unsigned int out_len = 0;
     EVP_MD_CTX *ctx = EVP_MD_CTX_new();
-    EVP_MD *md = EVP_MD_fetch(libctx, t->algorithm, NULL);
+    EVP_MD *md = EVP_MD_fetch(t->algorithm, libctx, NULL);
 
     /*
      * Retrieve the callback - will be NULL if not set by the application via

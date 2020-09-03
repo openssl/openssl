@@ -490,20 +490,20 @@ static int test_EVP_set_default_properties(void)
     int res = 0;
 
     if (!TEST_ptr(ctx = OPENSSL_CTX_new())
-            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
+            || !TEST_ptr(md = EVP_MD_fetch("sha256", ctx, NULL)))
         goto err;
     EVP_MD_free(md);
     md = NULL;
 
     if (!TEST_true(EVP_set_default_properties(ctx, "provider=fizzbang"))
-            || !TEST_ptr_null(md = EVP_MD_fetch(ctx, "sha256", NULL))
-            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", "-provider")))
+            || !TEST_ptr_null(md = EVP_MD_fetch("sha256", ctx, NULL))
+            || !TEST_ptr(md = EVP_MD_fetch("sha256", ctx, "-provider")))
         goto err;
     EVP_MD_free(md);
     md = NULL;
 
     if (!TEST_true(EVP_set_default_properties(ctx, NULL))
-            || !TEST_ptr(md = EVP_MD_fetch(ctx, "sha256", NULL)))
+            || !TEST_ptr(md = EVP_MD_fetch("sha256", ctx, NULL)))
         goto err;
     res = 1;
 err:
@@ -610,7 +610,7 @@ static int test_EVP_DigestSignInit(int tst)
     }
 
     if (tst >= 3 && tst <= 5)
-        md = mdexp = EVP_MD_fetch(NULL, "SHA256", NULL);
+        md = mdexp = EVP_MD_fetch("SHA256", NULL, NULL);
     else
         md = EVP_sha256();
 

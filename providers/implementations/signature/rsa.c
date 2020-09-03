@@ -222,7 +222,7 @@ static int rsa_setup_md(PROV_RSA_CTX *ctx, const char *mdname,
         mdprops = ctx->propq;
 
     if (mdname != NULL) {
-        EVP_MD *md = EVP_MD_fetch(ctx->libctx, mdname, mdprops);
+        EVP_MD *md = EVP_MD_fetch(mdname, ctx->libctx, mdprops);
         int md_nid = rsa_get_md_nid(md);
         WPACKET pkt;
         size_t mdname_len = strlen(mdname);
@@ -284,7 +284,7 @@ static int rsa_setup_mgf1_md(PROV_RSA_CTX *ctx, const char *mdname,
     if (ctx->mgf1_mdname[0] != '\0')
         EVP_MD_free(ctx->mgf1_md);
 
-    if ((ctx->mgf1_md = EVP_MD_fetch(ctx->libctx, mdname, mdprops)) == NULL) {
+    if ((ctx->mgf1_md = EVP_MD_fetch(mdname, ctx->libctx, mdprops)) == NULL) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_DIGEST,
                        "%s could not be fetched", mdname);
         return 0;

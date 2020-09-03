@@ -316,7 +316,7 @@ prevent that from happening you can explicitly load the null provider.
 
 Fetch any available implementation of SHA2-256 in the default context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", NULL);
+ EVP_MD *md = EVP_MD_fetch("SHA2-256", NULL, NULL);
  ...
  EVP_MD_meth_free(md);
 
@@ -329,21 +329,21 @@ Fetch any available implementation of AES-128-CBC in the default context:
 Fetch an implementation of SHA2-256 from the default provider in the default
 context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider=default");
+ EVP_MD *md = EVP_MD_fetch("SHA2-256", NULL, "provider=default");
  ...
  EVP_MD_meth_free(md);
 
 Fetch an implementation of SHA2-256 that is not from the default provider in the
 default context:
 
- EVP_MD *md = EVP_MD_fetch(NULL, "SHA2-256", "provider!=default");
+ EVP_MD *md = EVP_MD_fetch("SHA2-256", NULL, "provider!=default");
  ...
  EVP_MD_meth_free(md);
 
 Fetch an implementation of SHA2-256 from the default provider in the specified
 context:
 
- EVP_MD *md = EVP_MD_fetch(ctx, "SHA2-256", "provider=default");
+ EVP_MD *md = EVP_MD_fetch("SHA2-256", ctx, "provider=default");
  ...
  EVP_MD_meth_free(md);
 
@@ -353,7 +353,7 @@ implementation of WHIRLPOOL from it:
  /* This only needs to be done once - usually at application start up */
  OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
 
- EVP_MD *md = EVP_MD_fetch(NULL, "WHIRLPOOL", "provider=legacy");
+ EVP_MD *md = EVP_MD_fetch("WHIRLPOOL", NULL, "provider=legacy");
  ...
  EVP_MD_meth_free(md);
 
@@ -367,8 +367,8 @@ other providers:
  OSSL_PROVIDER *legacy = OSSL_PROVIDER_load(NULL, "legacy");
  OSSL_PROVIDER *default = OSSL_PROVIDER_load(NULL, "default");
 
- EVP_MD *md_whirlpool = EVP_MD_fetch(NULL, "whirlpool", NULL);
- EVP_MD *md_sha256 = EVP_MD_fetch(NULL, "SHA2-256", NULL);
+ EVP_MD *md_whirlpool = EVP_MD_fetch("whirlpool", NULL, NULL);
+ EVP_MD *md_sha256 = EVP_MD_fetch("SHA2-256", NULL, NULL);
  ...
  EVP_MD_meth_free(md_whirlpool);
  EVP_MD_meth_free(md_sha256);

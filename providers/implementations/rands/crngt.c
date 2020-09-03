@@ -28,9 +28,10 @@ typedef struct crng_test_global_st {
     RAND_POOL *crngt_pool;
 } CRNG_TEST_GLOBAL;
 
-static int crngt_get_entropy(OPENSSL_CTX *ctx, RAND_POOL *pool,
+static int crngt_get_entropy(RAND_POOL *pool,
                              unsigned char *buf, unsigned char *md,
-                             unsigned int *md_size)
+                             unsigned int *md_size,
+                             OPENSSL_CTX *ctx, const char *propq)
 {
     int r;
     size_t n;
@@ -42,7 +43,7 @@ static int crngt_get_entropy(OPENSSL_CTX *ctx, RAND_POOL *pool,
 
     n = prov_pool_acquire_entropy(pool);
     if (n >= CRNGT_BUFSIZ) {
-        fmd = EVP_MD_fetch(ctx, "SHA256", "");
+        fmd = EVP_MD_fetch("SHA256", ctx, propq);
         if (fmd == NULL)
             return 0;
         p = rand_pool_detach(pool);
@@ -77,8 +78,9 @@ static void *rand_crng_ossl_ctx_new(OPENSSL_CTX *ctx)
         OPENSSL_free(crngt_glob);
         return NULL;
     }
-    if (crngt_get_entropy(ctx, crngt_glob->crngt_pool, buf,
-                          crngt_glob->crngt_prev, NULL)) {
+    /* TODO(3.0): How do we correctly pass the propq here ? */
+    if (crngt_get_entropy(crngt_glob->crngt_pool, buf,
+                          crngt_glob->crngt_prev, NULL, ctx, NULL)) {
         OPENSSL_cleanse(buf, sizeof(buf));
         return crngt_glob;
     }
@@ -115,8 +117,9 @@ size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
 
     while ((q = rand_pool_bytes_needed(pool, 1)) > 0 && attempts-- > 0) {
         s = q > sizeof(buf) ? sizeof(buf) : q;
-        if (!crngt_get_entropy(libctx, crngt_glob->crngt_pool, buf, md,
-                               &sz)
+        /* TODO(3.0): How do we correctly pass the propq here ? */
+        if (!crngt_get_entropy(crngt_glob->crngt_pool, buf, md,
+                               &sz, libctx, NULL)
             || memcmp(crngt_glob->crngt_prev, md, sz) == 0
             || !rand_pool_add(pool, buf, s, s * 8))
             goto err;

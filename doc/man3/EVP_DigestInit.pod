@@ -27,7 +27,7 @@ EVP_MD_do_all_provided
 
  #include <openssl/evp.h>
 
- EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_MD *EVP_MD_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                       const char *properties);
  int EVP_MD_up_ref(EVP_MD *md);
  void EVP_MD_free(EVP_MD *md);

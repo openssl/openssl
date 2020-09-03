@@ -130,6 +130,7 @@ static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,
     SM2_PKEY_CTX *dctx = ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
     OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
+    const char *propq = ec_key_get0_propq(ec);
     EVP_MD *fetched_md = NULL;
 
     if (out == NULL) {
@@ -139,7 +140,7 @@ static int pkey_sm2_encrypt(EVP_PKEY_CTX *ctx,
             return 1;
     }
 
-    fetched_md = EVP_MD_fetch(libctx, EVP_MD_name(md), 0);
+    fetched_md = EVP_MD_fetch(EVP_MD_name(md), libctx, propq);
     if (fetched_md == NULL)
         return 0;
     ret = sm2_encrypt(ec, fetched_md, in, inlen, out, outlen);
@@ -156,6 +157,7 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
     SM2_PKEY_CTX *dctx = ctx->data;
     const EVP_MD *md = (dctx->md == NULL) ? EVP_sm3() : dctx->md;
     OPENSSL_CTX *libctx = ec_key_get_libctx(ec);
+    const char *propq = ec_key_get0_propq(ec);
     EVP_MD *fetched_md = NULL;
 
     if (out == NULL) {
@@ -165,7 +167,7 @@ static int pkey_sm2_decrypt(EVP_PKEY_CTX *ctx,
             return 1;
     }
 
-    fetched_md = EVP_MD_fetch(libctx, EVP_MD_name(md), 0);
+    fetched_md = EVP_MD_fetch(EVP_MD_name(md), libctx, propq);
     if (fetched_md == NULL)
         return 0;
     ret = sm2_decrypt(ec, fetched_md, in, inlen, out, outlen);

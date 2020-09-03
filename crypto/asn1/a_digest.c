@@ -74,7 +74,7 @@ int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *md,
             ENGINE_finish(tmpeng);
         else
 #endif
-            fetched_md = EVP_MD_fetch(libctx, EVP_MD_name(md), propq);
+            fetched_md = EVP_MD_fetch(EVP_MD_name(md), libctx, propq);
     }
      if (fetched_md == NULL)
          goto err;

@@ -348,7 +348,7 @@ static int digest_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
-    if ((digest = fetched_digest = EVP_MD_fetch(libctx, alg, NULL)) == NULL
+    if ((digest = fetched_digest = EVP_MD_fetch(alg, libctx, NULL)) == NULL
         && (digest = EVP_get_digestbyname(alg)) == NULL)
         return 0;
     if (!TEST_ptr(mdat = OPENSSL_zalloc(sizeof(*mdat))))
@@ -1870,7 +1870,7 @@ static int pbe_test_run(EVP_TEST *t)
         }
 #endif
     } else if (expected->pbe_type == PBE_TYPE_PKCS12) {
-        fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(expected->md), NULL);
+        fetched_digest = EVP_MD_fetch(EVP_MD_name(expected->md), libctx, NULL);
         if (fetched_digest == NULL) {
             t->err = "PKCS12_ERROR";
             goto err;

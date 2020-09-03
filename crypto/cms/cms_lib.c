@@ -402,7 +402,7 @@ BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     alg = OBJ_nid2sn(OBJ_obj2nid(digestoid));
 
     (void)ERR_set_mark();
-    fetched_digest = EVP_MD_fetch(ctx->libctx, alg, ctx->propq);
+    fetched_digest = EVP_MD_fetch(alg, ctx->libctx, ctx->propq);
 
     if (fetched_digest != NULL)
         digest = fetched_digest;

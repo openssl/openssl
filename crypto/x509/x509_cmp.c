@@ -275,7 +275,7 @@ unsigned long X509_NAME_hash(const X509_NAME *x)
 
 unsigned long X509_NAME_hash_old(const X509_NAME *x)
 {
-    EVP_MD *md5 = EVP_MD_fetch(NULL, OSSL_DIGEST_NAME_MD5, "-fips");
+    EVP_MD *md5 = EVP_MD_fetch(OSSL_DIGEST_NAME_MD5, NULL, "-fips");
     EVP_MD_CTX *md_ctx = EVP_MD_CTX_new();
     unsigned long ret = 0;
     unsigned char md[16];

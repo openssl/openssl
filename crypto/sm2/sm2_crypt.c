@@ -222,7 +222,7 @@ int sm2_encrypt(const EC_KEY *key,
     for (i = 0; i != msg_len; ++i)
         msg_mask[i] ^= msg[i];
 
-    fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(digest), propq);
+    fetched_digest = EVP_MD_fetch(EVP_MD_name(digest), libctx, propq);
     if (fetched_digest == NULL) {
         SM2err(SM2_F_SM2_ENCRYPT, ERR_R_INTERNAL_ERROR);
         goto done;
