@@ -46,7 +46,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
      * MAC should be processed on decrypting separately from plain text
      */
     max_out_len = inlen + EVP_CIPHER_CTX_block_size(ctx);
-    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+    if (EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
         if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_TLS1_AAD, 0, &mac_len) < 0) {
             PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT, ERR_R_INTERNAL_ERROR);
             goto err;
@@ -90,7 +90,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
         goto err;
     }
     outlen += i;
-    if (EVP_CIPHER_flags(EVP_CIPHER_CTX_cipher(ctx)) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
+    if (EVP_CIPHER_CTX_flags(ctx) & EVP_CIPH_FLAG_CIPHER_WITH_MAC) {
         if (EVP_CIPHER_CTX_encrypting(ctx)) {
             if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_GET_TAG,
                 (int)mac_len, out+outlen) < 0) {
