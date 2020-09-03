@@ -16,9 +16,6 @@
 #include <openssl/err.h>
 #include "pk7_local.h"
 
-DEFINE_STACK_OF(PKCS7_RECIP_INFO)
-DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
-
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
                          void *value);
 static ASN1_TYPE *get_attribute(STACK_OF(X509_ATTRIBUTE) *sk, int nid);

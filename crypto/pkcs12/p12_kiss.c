@@ -12,7 +12,6 @@
 #include <openssl/pkcs12.h>
 #include "crypto/x509.h" /* for X509_add_cert_new() */
 
-DEFINE_STACK_OF(PKCS7)
 DEFINE_STACK_OF(PKCS12_SAFEBAG)
 
 /* Simplified PKCS#12 routines */

@@ -15,7 +15,6 @@
 #include "ts_local.h"
 #include "crypto/ess.h"
 
-DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
 DEFINE_STACK_OF(ESS_CERT_ID)
 DEFINE_STACK_OF(ESS_CERT_ID_V2)
 
