@@ -20,7 +20,6 @@
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
 
-DEFINE_STACK_OF(PKCS7)
 DEFINE_STACK_OF(PKCS12_SAFEBAG)
 
 #define NOKEYS          0x1

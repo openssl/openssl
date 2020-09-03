@@ -17,7 +17,6 @@
 
 #define BUFFERSIZE 4096
 
-DEFINE_STACK_OF(PKCS7_SIGNER_INFO)
 
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 

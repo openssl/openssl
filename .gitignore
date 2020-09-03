@@ -29,6 +29,7 @@
 /include/openssl/fipskey.h
 /include/openssl/ocsp.h
 /include/openssl/opensslv.h
+/include/openssl/pkcs7.h
 /include/openssl/safestack.h
 /include/openssl/ssl.h
 /include/openssl/x509.h
