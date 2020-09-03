@@ -37,7 +37,6 @@
 
 #include "e_loader_attic_err.c"
 
-DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 
 #ifdef _WIN32

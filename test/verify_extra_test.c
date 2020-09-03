@@ -16,8 +16,6 @@
 #include <openssl/err.h>
 #include "testutil.h"
 
-DEFINE_STACK_OF(X509)
-
 static const char *root_f;
 static const char *roots_f;
 static const char *untrusted_f;

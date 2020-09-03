@@ -18,7 +18,6 @@
 #include <openssl/x509v3.h>
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(X509_EXTENSION)
 
 static int v3_check_critical(const char **value);
 static int v3_check_generic(const char **value);

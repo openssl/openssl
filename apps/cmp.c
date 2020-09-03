@@ -42,8 +42,6 @@
 #include <openssl/objects.h>
 #include <openssl/x509.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_EXTENSION)
 DEFINE_STACK_OF(OSSL_CMP_ITAV)
 
 static char *opt_config = NULL;

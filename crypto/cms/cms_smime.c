@@ -17,8 +17,6 @@
 #include "crypto/asn1.h"
 
 DEFINE_STACK_OF(CMS_SignerInfo)
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_CRL)
 DEFINE_STACK_OF(CMS_RecipientEncryptedKey)
 DEFINE_STACK_OF(CMS_RecipientInfo)
 

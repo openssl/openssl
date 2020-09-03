@@ -17,8 +17,6 @@
 #include <openssl/objects.h>
 #include <openssl/buffer.h>
 
-DEFINE_STACK_OF(X509_ATTRIBUTE)
-
 X509 *X509_REQ_to_X509(X509_REQ *r, int days, EVP_PKEY *pkey)
 {
     X509 *ret = NULL;

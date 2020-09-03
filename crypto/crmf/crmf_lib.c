@@ -36,7 +36,6 @@
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
-DEFINE_STACK_OF(X509_EXTENSION)
 DEFINE_STACK_OF(OSSL_CRMF_MSG)
 
 /*-

@@ -15,8 +15,6 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
-DEFINE_STACK_OF(X509_REVOKED)
-
 #ifndef OPENSSL_NO_STDIO
 int X509_CRL_print_fp(FILE *fp, X509_CRL *x)
 {

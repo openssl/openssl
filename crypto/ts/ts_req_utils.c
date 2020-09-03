@@ -14,8 +14,6 @@
 #include <openssl/ts.h>
 #include "ts_local.h"
 
-DEFINE_STACK_OF(X509_EXTENSION)
-
 int TS_REQ_set_version(TS_REQ *a, long version)
 {
     return ASN1_INTEGER_set(a->version, version);

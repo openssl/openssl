@@ -25,9 +25,6 @@
 #include "ssl_cert_table.h"
 #include "internal/thread_once.h"
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_NAME)
-
 static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
                                          int op, int bits, int nid, void *other,
                                          void *ex);

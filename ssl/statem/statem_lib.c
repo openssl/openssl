@@ -21,9 +21,6 @@
 #include <openssl/x509.h>
 #include <openssl/trace.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_NAME)
-
 /*
  * Map error codes to TLS/SSL alart types.
  */

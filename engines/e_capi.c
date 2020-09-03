@@ -34,9 +34,6 @@
 #  include <openssl/rsa.h>
 #  include <openssl/dsa.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_NAME)
-
 /*
  * This module uses several "new" interfaces, among which is
  * CertGetCertificateContextProperty. CERT_KEY_PROV_INFO_PROP_ID is

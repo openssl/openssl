@@ -12,8 +12,6 @@
 #include "cmp_testlib.h"
 #include <openssl/rsa.h> /* needed in case config no-deprecated */
 
-DEFINE_STACK_OF(X509)
-
 EVP_PKEY *load_pem_key(const char *file, OPENSSL_CTX *libctx)
 {
     EVP_PKEY *key = NULL;

@@ -18,8 +18,6 @@
 
 #include "testutil.h"
 
-DEFINE_STACK_OF(X509)
-
 static const char *certstr;
 static const char *privkeystr;
 

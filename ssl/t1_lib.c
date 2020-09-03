@@ -28,9 +28,6 @@
 #include "ssl_local.h"
 #include <openssl/ct.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_NAME)
-
 static const SIGALG_LOOKUP *find_sig_alg(SSL *s, X509 *x, EVP_PKEY *pkey);
 static int tls12_sigalg_allowed(const SSL *s, int op, const SIGALG_LOOKUP *lu);
 

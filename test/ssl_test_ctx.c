@@ -21,7 +21,6 @@
 #endif
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(X509_NAME)
 
 static const int default_app_data_size = 256;
 /* Default set to be as small as possible to exercise fragmentation. */

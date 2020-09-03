@@ -18,8 +18,6 @@
 #include <openssl/err.h>
 #include <openssl/x509.h>
 
-DEFINE_STACK_OF(X509)
-
 /*
  * This function is also used by the internal verify_PBMAC() in cmp_vfy.c.
  *

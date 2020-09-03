@@ -15,7 +15,6 @@
 #include <openssl/x509v3.h>
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(X509_EXTENSION)
 
 /* Extension printing routines */
 

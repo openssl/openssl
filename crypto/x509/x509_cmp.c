@@ -16,8 +16,6 @@
 #include <openssl/core_names.h>
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(X509)
-
 int X509_issuer_and_serial_cmp(const X509 *a, const X509 *b)
 {
     int i;

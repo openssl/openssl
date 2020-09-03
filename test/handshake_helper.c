@@ -26,8 +26,6 @@
 #include <netinet/sctp.h>
 #endif
 
-DEFINE_STACK_OF(X509_NAME)
-
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
     HANDSHAKE_RESULT *ret;

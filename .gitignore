@@ -26,6 +26,7 @@
 /include/openssl/opensslv.h
 /include/openssl/fipskey.h
 /include/openssl/ssl.h
+/include/openssl/x509.h
 
 # Auto generated doc files
 doc/man1/openssl-*.pod
