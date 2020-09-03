@@ -14,8 +14,6 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 #include <openssl/cmperr.h>
-
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
  
 /* the context for the CMP mock server */
 typedef struct

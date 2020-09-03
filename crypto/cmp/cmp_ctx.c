@@ -21,8 +21,6 @@
 #include <openssl/crmf.h>
 #include <openssl/err.h>
 
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
-
 /*
  * Get current certificate store containing trusted root CA certs
  */

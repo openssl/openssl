@@ -23,6 +23,7 @@
 /crypto/buildinf.h
 /include/crypto/*_conf.h
 /include/openssl/asn1.h
+/include/openssl/cmp.h
 /include/openssl/configuration.h
 /include/openssl/fipskey.h
 /include/openssl/opensslv.h
