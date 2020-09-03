@@ -5939,8 +5939,6 @@ static int test_pha_key_update(void)
 
 static SRP_VBASE *vbase = NULL;
 
-DEFINE_STACK_OF(SRP_user_pwd)
-
 static int ssl_srp_cb(SSL *s, int *ad, void *arg)
 {
     int ret = SSL3_AL_FATAL;
