@@ -16,8 +16,6 @@
 #include <openssl/trace.h>
 #include "crypto/evp.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 /* Algorithm configuration module. */
 
 static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)

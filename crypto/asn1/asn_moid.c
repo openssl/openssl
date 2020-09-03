@@ -16,8 +16,6 @@
 #include "crypto/asn1.h"
 #include "crypto/objects.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 /* Simple ASN1 OID module: add all objects in a given section */
 
 static int do_create(const char *value, const char *name);

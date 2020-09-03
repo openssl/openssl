@@ -33,8 +33,6 @@
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 #if defined(__TANDEM)
 # if defined(OPENSSL_TANDEM_FLOSS)
 #  include <floss.h(floss_fork)>

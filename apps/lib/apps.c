@@ -62,7 +62,6 @@ static int WIN32_rename(const char *from, const char *to);
 #define PASS_SOURCE_SIZE_MAX 4
 
 DEFINE_STACK_OF(CONF)
-DEFINE_STACK_OF(CONF_VALUE)
 
 typedef struct {
     const char *name;

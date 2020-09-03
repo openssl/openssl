@@ -28,8 +28,6 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 /*
  * Send the PKIMessage req and on success return the response, else NULL.
  * Any previous error queue entries will likely be removed by ERR_clear_error().

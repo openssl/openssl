@@ -20,8 +20,6 @@
 #include "crypto/punycode.h"
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 static void *v2i_NAME_CONSTRAINTS(const X509V3_EXT_METHOD *method,
                                   X509V3_CTX *ctx,
                                   STACK_OF(CONF_VALUE) *nval);

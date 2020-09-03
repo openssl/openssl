@@ -15,7 +15,6 @@
 #include "internal/provider.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
-DEFINE_STACK_OF(CONF_VALUE)
 
 /* PROVIDER config module */
 

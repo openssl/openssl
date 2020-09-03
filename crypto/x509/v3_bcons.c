@@ -16,8 +16,6 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 static STACK_OF(CONF_VALUE) *i2v_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
                                                    BASIC_CONSTRAINTS *bcons,
                                                    STACK_OF(CONF_VALUE)

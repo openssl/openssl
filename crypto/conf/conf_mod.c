@@ -21,7 +21,6 @@
 #include <openssl/trace.h>
 #include <openssl/engine.h>
 
-DEFINE_STACK_OF(CONF_VALUE)
 DEFINE_STACK_OF(CONF_MODULE)
 DEFINE_STACK_OF(CONF_IMODULE)
 
