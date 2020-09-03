@@ -4020,7 +4020,7 @@ static int construct_stateless_ticket(SSL *s, WPACKET *pkt, uint32_t age_add,
         }
         iv_len = EVP_CIPHER_CTX_iv_length(ctx);
     } else {
-        EVP_CIPHER *cipher = EVP_CIPHER_fetch(s->ctx->libctx, "AES-256-CBC",
+        EVP_CIPHER *cipher = EVP_CIPHER_fetch("AES-256-CBC", s->ctx->libctx,
                                               s->ctx->propq);
 
         if (cipher == NULL) {

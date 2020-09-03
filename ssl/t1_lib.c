@@ -1873,7 +1873,7 @@ SSL_TICKET_STATUS tls_decrypt_ticket(SSL *s, const unsigned char *etick,
             goto end;
         }
 
-        aes256cbc = EVP_CIPHER_fetch(s->ctx->libctx, "AES-256-CBC",
+        aes256cbc = EVP_CIPHER_fetch("AES-256-CBC", s->ctx->libctx,
                                      s->ctx->propq);
         if (aes256cbc == NULL
             || ssl_hmac_init(hctx, tctx->ext.secure->tick_hmac_key,

@@ -313,9 +313,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
                 goto err;
 
         (void)ERR_set_mark();
-        fetched_cipher = EVP_CIPHER_fetch(p7_ctx->libctx,
-                                          EVP_CIPHER_name(evp_cipher),
-                                          p7_ctx->propq);
+        fetched_cipher = EVP_CIPHER_fetch(EVP_CIPHER_name(evp_cipher),
+                                          p7_ctx->libctx, p7_ctx->propq);
         if (fetched_cipher != NULL)
             cipher = fetched_cipher;
         else
@@ -463,7 +462,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         name = OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm));
 
         (void)ERR_set_mark();
-        evp_cipher = EVP_CIPHER_fetch(p7_ctx->libctx, name, p7_ctx->propq);
+        evp_cipher = EVP_CIPHER_fetch(name, p7_ctx->libctx, p7_ctx->propq);
         if (evp_cipher != NULL)
             cipher = evp_cipher;
         else
@@ -485,7 +484,7 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
         name = OBJ_nid2sn(OBJ_obj2nid(enc_alg->algorithm));
 
         (void)ERR_set_mark();
-        evp_cipher = EVP_CIPHER_fetch(p7_ctx->libctx, name, p7_ctx->propq);
+        evp_cipher = EVP_CIPHER_fetch(name, p7_ctx->libctx, p7_ctx->propq);
         if (evp_cipher != NULL)
             cipher = evp_cipher;
         else

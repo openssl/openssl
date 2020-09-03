@@ -481,7 +481,7 @@ static int cms_wrap_init(CMS_KeyAgreeRecipientInfo *kari,
     else
         kekcipher_name = SN_id_aes256_wrap;
 enc:
-    fetched_kekcipher = EVP_CIPHER_fetch(cms_ctx->libctx, kekcipher_name,
+    fetched_kekcipher = EVP_CIPHER_fetch(kekcipher_name, cms_ctx->libctx,
                                          cms_ctx->propq);
     if (fetched_kekcipher == NULL)
         return 0;

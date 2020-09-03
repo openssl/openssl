@@ -249,7 +249,7 @@ static int encode_EVP_PKEY_legacy_PEM(void **encoded,
 
     if (pcipher != NULL && pass != NULL) {
         passlen = strlen(pass);
-        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(NULL, pcipher, NULL)))
+        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(pcipher, NULL, NULL)))
             goto end;
     }
     if (!TEST_ptr(mem_ser = BIO_new(BIO_s_mem()))

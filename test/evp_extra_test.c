@@ -1915,7 +1915,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 5:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-cbc", NULL);
+                                EVP_CIPHER_fetch("aes-128-cbc", testctx, NULL);
         ref_iv = cbc_state;
         ref_len = sizeof(cbc_state);
         break;
@@ -1924,7 +1924,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 6:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-ofb", NULL);
+                                EVP_CIPHER_fetch("aes-128-ofb", testctx, NULL);
         ref_iv = ofb_state;
         ref_len = sizeof(ofb_state);
         break;
@@ -1933,7 +1933,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 7:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-gcm", NULL);
+                                EVP_CIPHER_fetch("aes-128-gcm", testctx, NULL);
         ref_iv = gcm_state;
         ref_len = sizeof(gcm_state);
         break;
@@ -1942,7 +1942,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 8:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-ccm", NULL);
+                                EVP_CIPHER_fetch("aes-128-ccm", testctx, NULL);
         ref_iv = ccm_state;
         ref_len = sizeof(ccm_state);
         break;
@@ -1956,7 +1956,7 @@ static int test_evp_iv(int idx)
         /* FALLTHROUGH */
     case 9:
         type = (type != NULL) ? type :
-                                EVP_CIPHER_fetch(testctx, "aes-128-ocb", NULL);
+                                EVP_CIPHER_fetch("aes-128-ocb", testctx, NULL);
         ref_iv = ocb_state;
         ref_len = sizeof(ocb_state);
         break;

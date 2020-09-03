@@ -32,16 +32,16 @@ static int aes_siv_initkey(void *vctx, const unsigned char *key, size_t keylen)
 
     switch (klen) {
     case 16:
-        ctx->cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", propq);
-        ctx->ctr = EVP_CIPHER_fetch(libctx, "AES-128-CTR", propq);
+        ctx->cbc = EVP_CIPHER_fetch("AES-128-CBC", libctx, propq);
+        ctx->ctr = EVP_CIPHER_fetch("AES-128-CTR", libctx, propq);
         break;
     case 24:
-        ctx->cbc = EVP_CIPHER_fetch(libctx, "AES-192-CBC", propq);
-        ctx->ctr = EVP_CIPHER_fetch(libctx, "AES-192-CTR", propq);
+        ctx->cbc = EVP_CIPHER_fetch("AES-192-CBC", libctx, propq);
+        ctx->ctr = EVP_CIPHER_fetch("AES-192-CTR", libctx, propq);
         break;
     case 32:
-        ctx->cbc = EVP_CIPHER_fetch(libctx, "AES-256-CBC", propq);
-        ctx->ctr = EVP_CIPHER_fetch(libctx, "AES-256-CTR", propq);
+        ctx->cbc = EVP_CIPHER_fetch("AES-256-CBC", libctx, propq);
+        ctx->ctr = EVP_CIPHER_fetch("AES-256-CTR", libctx, propq);
         break;
     default:
         break;

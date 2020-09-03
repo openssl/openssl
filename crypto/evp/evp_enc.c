@@ -169,10 +169,9 @@ int EVP_CipherInit_ex(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         return 0;
 #else
         EVP_CIPHER *provciph =
-            EVP_CIPHER_fetch(NULL,
-                             cipher->nid == NID_undef ? "NULL"
+            EVP_CIPHER_fetch(cipher->nid == NID_undef ? "NULL"
                                                       : OBJ_nid2sn(cipher->nid),
-                             "");
+                             NULL, NULL);
 
         if (provciph == NULL) {
             EVPerr(EVP_F_EVP_CIPHERINIT_EX, EVP_R_INITIALIZATION_ERROR);
@@ -1458,7 +1457,7 @@ static void evp_cipher_free(void *cipher)
     EVP_CIPHER_free(cipher);
 }
 
-EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+EVP_CIPHER *EVP_CIPHER_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                              const char *properties)
 {
     EVP_CIPHER *cipher =

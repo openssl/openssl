@@ -530,7 +530,7 @@ static int cipher_test_init(EVP_TEST *t, const char *alg)
         return 1;
     }
 
-    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(libctx, alg, NULL)) == NULL
+    if ((cipher = fetched_cipher = EVP_CIPHER_fetch(alg, libctx, NULL)) == NULL
         && (cipher = EVP_get_cipherbyname(alg)) == NULL)
         return 0;
 
@@ -1157,7 +1157,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = NULL;
             goto err;
         }
-        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, expected->alg, NULL))) {
+        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(expected->alg, libctx, NULL))) {
             t->err = "MAC_KEY_CREATE_ERROR";
             goto err;
         }

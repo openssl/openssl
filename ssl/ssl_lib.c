@@ -5910,7 +5910,7 @@ const EVP_CIPHER *ssl_evp_cipher_fetch(OPENSSL_CTX *libctx,
 
     /* Otherwise we do an explicit fetch. This may fail and that could be ok */
     ERR_set_mark();
-    ciph = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), properties);
+    ciph = EVP_CIPHER_fetch(OBJ_nid2sn(nid), libctx, properties);
     ERR_pop_to_mark();
     return ciph;
 }

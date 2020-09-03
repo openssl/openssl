@@ -323,7 +323,7 @@ static int test_cipher_reinit(int test_id)
         goto err;
 
     TEST_note("Fetching %s\n", name);
-    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(name, libctx, NULL)))
         goto err;
 
     /* ccm fails on the second update - this matches OpenSSL 1_1_1 behaviour */
@@ -394,7 +394,7 @@ static int test_cipher_reinit_partialupdate(int test_id)
         goto err;
 
     TEST_note("Fetching %s\n", name);
-    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, name, NULL)))
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(name, libctx, NULL)))
         goto err;
 
     in_len = EVP_CIPHER_block_size(cipher) / 2;

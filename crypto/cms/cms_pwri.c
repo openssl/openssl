@@ -318,7 +318,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     }
 
     name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
-    kekcipher = EVP_CIPHER_fetch(cms_ctx->libctx, name, cms_ctx->propq);
+    kekcipher = EVP_CIPHER_fetch(name, cms_ctx->libctx, cms_ctx->propq);
 
     if (kekcipher == NULL) {
         CMSerr(CMS_F_CMS_RECIPIENTINFO_PWRI_CRYPT, CMS_R_UNKNOWN_CIPHER);

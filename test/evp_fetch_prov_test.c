@@ -211,7 +211,7 @@ static int test_EVP_CIPHER_fetch(void)
         goto err;
 
     /* Fetch the cipher from a provider using properties. */
-    cipher = EVP_CIPHER_fetch(ctx, "AES-128-CBC", fetch_property);
+    cipher = EVP_CIPHER_fetch("AES-128-CBC", ctx, fetch_property);
     if (expected_fetch_result != 0) {
         if (!TEST_ptr(cipher)
             || !TEST_true(encrypt_decrypt(cipher, testmsg, sizeof(testmsg)))) {

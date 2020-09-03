@@ -962,7 +962,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     if (kekctx == NULL)
         goto err;
     name = OBJ_nid2sn(OBJ_obj2nid(kekalg->algorithm));
-    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, NULL);
+    kekcipher = EVP_CIPHER_fetch(name, pctx->libctx, pctx->propquery);
     if (kekcipher == NULL || EVP_CIPHER_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))

@@ -6711,7 +6711,7 @@ static int tick_key_cb(SSL *s, unsigned char key_name[16],
 {
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     const unsigned char tick_hmac_key[16] = "0123456789abcdef";
-    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
+    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch("AES-128-CBC", libctx, NULL);
     EVP_MD *sha256 = EVP_MD_fetch(libctx, "SHA-256", NULL);
     int ret;
 
@@ -6741,7 +6741,7 @@ static int tick_key_evp_cb(SSL *s, unsigned char key_name[16],
     const unsigned char tick_aes_key[16] = "0123456789abcdef";
     unsigned char tick_hmac_key[16] = "0123456789abcdef";
     OSSL_PARAM params[3];
-    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch(libctx, "AES-128-CBC", NULL);
+    EVP_CIPHER *aes128cbc = EVP_CIPHER_fetch("AES-128-CBC", libctx, NULL);
     int ret;
 
     tick_key_cb_called = 1;
@@ -7604,7 +7604,7 @@ static int test_multiblock_write(int test_index)
      * Check if the cipher exists before attempting to use it since it only has
      * a hardware specific implementation.
      */
-    ciph = EVP_CIPHER_fetch(NULL, fetchable_ciphers[test_index], "");
+    ciph = EVP_CIPHER_fetch(fetchable_ciphers[test_index], NULL, NULL);
     if (ciph == NULL) {
         TEST_skip("Multiblock cipher is not available for %s", cipherlist);
         return 1;

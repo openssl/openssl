@@ -81,7 +81,7 @@ int ossl_prov_cipher_load_from_params(PROV_CIPHER *pc,
 
     EVP_CIPHER_free(pc->alloc_cipher);
     ERR_set_mark();
-    pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(ctx, p->data, propquery);
+    pc->cipher = pc->alloc_cipher = EVP_CIPHER_fetch(p->data, ctx, propquery);
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy ciphers */
     if (pc->cipher == NULL)

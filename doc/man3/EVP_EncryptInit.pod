@@ -72,7 +72,7 @@ EVP_CIPHER_do_all_provided
 
  #include <openssl/evp.h>
 
- EVP_CIPHER *EVP_CIPHER_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+ EVP_CIPHER *EVP_CIPHER_fetch(const char *algorithm, OPENSSL_CTX *ctx,
                               const char *properties);
  int EVP_CIPHER_up_ref(EVP_CIPHER *cipher);
  void EVP_CIPHER_free(EVP_CIPHER *cipher);
@@ -822,7 +822,7 @@ Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
      OSSL_PARAM params[2];
 
      ctx = EVP_CIPHER_CTX_new();
-     cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC-CTS", NULL);
+     cipher = EVP_CIPHER_fetch("AES-256-CBC-CTS", NULL, NULL);
      if (ctx == NULL || cipher == NULL)
          goto err;
 

@@ -132,7 +132,7 @@ static int test_cipherbyname(void)
  */
 static int test_cipher_is_a(void)
 {
-    EVP_CIPHER *fetched = EVP_CIPHER_fetch(NULL, "AES-256-CCM", NULL);
+    EVP_CIPHER *fetched = EVP_CIPHER_fetch("AES-256-CCM", NULL, NULL);
     int rv = 1;
 
     if (!TEST_ptr(fetched))

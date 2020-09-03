@@ -681,7 +681,7 @@ static int cipher_enc(const char *alg,
 
     TEST_note("%s : %s", alg, enc ? "encrypt" : "decrypt");
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
-        || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, alg, ""))
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(alg, libctx, NULL))
         || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, enc))
         || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
         || !TEST_true(EVP_CipherUpdate(ctx, out, &len, pt, pt_len))
@@ -731,7 +731,7 @@ static int aes_ccm_enc_dec(const char *alg,
               pass ? "pass" : "fail");
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
-        || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, alg, ""))
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(alg, libctx, NULL))
         || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc))
         || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, iv_len,
                                           NULL))
@@ -818,7 +818,7 @@ static int aes_gcm_enc_dec(const char *alg,
               pass ? "pass" : "fail");
 
     if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
-        || !TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, alg, ""))
+        || !TEST_ptr(cipher = EVP_CIPHER_fetch(alg, libctx, NULL))
         || !TEST_true(EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, enc))
         || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, iv_len,
                                           NULL)))

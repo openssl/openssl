@@ -96,7 +96,7 @@ static int self_test_cipher(const ST_KAT_CIPHER *t, OSSL_SELF_TEST *st,
     ctx = EVP_CIPHER_CTX_new();
     if (ctx == NULL)
         goto err;
-    cipher = EVP_CIPHER_fetch(libctx, t->base.algorithm, "");
+    cipher = EVP_CIPHER_fetch(t->base.algorithm, libctx, NULL);
     if (cipher == NULL)
         goto err;
 

@@ -484,7 +484,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         const char *name = OBJ_nid2sn(OBJ_obj2nid(calg->algorithm));
 
         (void)ERR_set_mark();
-        fetched_cipher = EVP_CIPHER_fetch(ctx->libctx, name, ctx->propq);
+        fetched_cipher = EVP_CIPHER_fetch(name, ctx->libctx, ctx->propq);
 
         if (fetched_cipher != NULL)
             cipher = fetched_cipher;
@@ -755,7 +755,7 @@ static EVP_CIPHER *cms_get_key_wrap_cipher(size_t keylen, const CMS_CTX *ctx)
     default:
         return NULL;
     }
-    return EVP_CIPHER_fetch(ctx->libctx, alg, ctx->propq);
+    return EVP_CIPHER_fetch(alg, ctx->libctx, ctx->propq);
 }
 
 

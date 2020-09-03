@@ -685,8 +685,8 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         strcpy(ecb + p->data_size - sizeof("ECB"), "ECB");
         EVP_CIPHER_free(ctr->cipher_ecb);
         EVP_CIPHER_free(ctr->cipher_ctr);
-        ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
-        ctr->cipher_ecb = EVP_CIPHER_fetch(libctx, ecb, propquery);
+        ctr->cipher_ctr = EVP_CIPHER_fetch(base, libctx, propquery);
+        ctr->cipher_ecb = EVP_CIPHER_fetch(ecb, libctx, propquery);
         OPENSSL_free(ecb);
         if (ctr->cipher_ctr == NULL || ctr->cipher_ecb == NULL) {
             ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_FIND_CIPHERS);

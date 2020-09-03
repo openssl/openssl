@@ -322,7 +322,7 @@ Fetch any available implementation of SHA2-256 in the default context:
 
 Fetch any available implementation of AES-128-CBC in the default context:
 
- EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-CBC", NULL);
+ EVP_CIPHER *cipher = EVP_CIPHER_fetch("AES-128-CBC", NULL, NULL);
  ...
  EVP_CIPHER_meth_free(cipher);
 

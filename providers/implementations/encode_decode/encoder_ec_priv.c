@@ -80,6 +80,7 @@ static int ec_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct ec_priv_ctx_st *ctx = vctx;
     const OSSL_PARAM *p;
+    OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_CIPHER))
         != NULL) {
@@ -96,7 +97,7 @@ static int ec_priv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         EVP_CIPHER_free(ctx->sc.cipher);
         ctx->sc.cipher_intent = p->data != NULL;
         if (p->data != NULL
-            && ((ctx->sc.cipher = EVP_CIPHER_fetch(NULL, p->data, props))
+            && ((ctx->sc.cipher = EVP_CIPHER_fetch(p->data, libctx, props))
                 == NULL))
             return 0;
     }
