@@ -18,8 +18,6 @@
 #include "ext_dat.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 static void *v2i_crld(const X509V3_EXT_METHOD *method,
                       X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,

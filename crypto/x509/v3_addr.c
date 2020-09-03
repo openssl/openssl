@@ -26,8 +26,6 @@
 
 #ifndef OPENSSL_NO_RFC3779
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 /*
  * OpenSSL ASN.1 template translation of RFC 3779 2.2.3.
  */

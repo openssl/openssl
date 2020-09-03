@@ -14,8 +14,6 @@
 #include <openssl/conf.h>
 #include <openssl/trace.h>
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 /* ENGINE config module */
 
 static const char *skip_dot(const char *name)

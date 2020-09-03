@@ -14,8 +14,6 @@
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 /* Extension printing routines */
 
 static int unknown_ext_print(BIO *out, const unsigned char *ext, int extlen,

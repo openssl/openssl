@@ -34,8 +34,6 @@
 #include "apps.h"
 #include "progs.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 #ifndef W_OK
 # define F_OK 0
 # define W_OK 2

@@ -35,8 +35,6 @@
 # include <openssl/dsa.h>
 #endif
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 #define BITS            "default_bits"
 #define KEYFILE         "default_keyfile"
 #define PROMPT          "prompt"
