@@ -21,8 +21,6 @@
 #include "testutil.h"
 #include "pkcs12_helper.h"
 
-DEFINE_STACK_OF(PKCS12_SAFEBAG)
-
 /* Set this to > 0 write test data to file */
 int write_files = 0;
 
