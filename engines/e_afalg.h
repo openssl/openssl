@@ -58,7 +58,6 @@
 # define MAX_INFLIGHTS 1
 # define AFALG_UPDATE_CALLED 0x00000001
 
-
 typedef enum {
     MODE_UNINIT = 0,
     MODE_SYNC,
@@ -119,6 +118,7 @@ struct afalg_aead_ctx_st {
     int iv_gen;
     int iovlen;
     int aad_len;
+    int is_tls;
     int len;
     struct iovec iov[16];
 };
