@@ -35,7 +35,6 @@
 #include "progs.h"
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF_STRING()
 
 #ifndef W_OK
 # define F_OK 0

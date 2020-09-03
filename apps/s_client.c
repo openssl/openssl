@@ -60,7 +60,6 @@ typedef unsigned int u_int;
 #endif
 
 DEFINE_STACK_OF(SCT)
-DEFINE_STACK_OF_STRING()
 
 #undef BUFSIZZ
 #define BUFSIZZ 1024*8

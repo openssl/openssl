@@ -18,8 +18,6 @@
 #include "crypto/evp.h"
 #include "encoder_local.h"
 
-DEFINE_STACK_OF_CSTRING()
-
 int OSSL_ENCODER_CTX_set_cipher(OSSL_ENCODER_CTX *ctx,
                                 const char *cipher_name,
                                 const char *propquery)

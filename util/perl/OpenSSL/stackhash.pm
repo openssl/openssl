@@ -13,7 +13,10 @@ use warnings;
 
 require Exporter;
 our @ISA = qw(Exporter);
-our @EXPORT_OK = qw(generate_stack_macros generate_const_stack_macros);
+our @EXPORT_OK = qw(generate_stack_macros generate_const_stack_macros
+                    generate_stack_string_macros
+                    generate_stack_const_string_macros
+                    generate_stack_block_macros);
 
 sub generate_stack_macros_int {
     my $nametype = shift;
@@ -88,5 +91,17 @@ sub generate_const_stack_macros {
     my $type = shift;
 
     return generate_stack_macros_int($type, "const $type", $type);
+}
+
+sub generate_stack_string_macros {
+    return generate_stack_macros_int("OPENSSL_STRING", "char", "char");
+}
+
+sub generate_stack_const_string_macros {
+    return generate_stack_macros_int("OPENSSL_CSTRING", "const char", "char");
+}
+
+sub generate_stack_block_macros {
+    return generate_stack_macros_int("OPENSSL_BLOCK", "void", "void");
 }
 1;

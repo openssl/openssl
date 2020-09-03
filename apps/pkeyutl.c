@@ -15,8 +15,6 @@
 #include <openssl/evp.h>
 #include <sys/stat.h>
 
-DEFINE_STACK_OF_STRING()
-
 #define KEY_NONE        0
 #define KEY_PRIVKEY     1
 #define KEY_PUBKEY      2

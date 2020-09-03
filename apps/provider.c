@@ -24,8 +24,6 @@
 # include <string.h> /* memset */
 #endif
 
-DEFINE_STACK_OF_CSTRING()
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_V = 100, OPT_VV, OPT_VVV

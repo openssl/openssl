@@ -22,7 +22,6 @@
 #include "x509_local.h"
 
 DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF_STRING()
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);

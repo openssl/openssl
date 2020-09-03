@@ -19,8 +19,6 @@
 #include <openssl/pem.h>
 #include <openssl/objects.h>
 
-DEFINE_STACK_OF_STRING()
-
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
 
 typedef enum OPTION_choice {
