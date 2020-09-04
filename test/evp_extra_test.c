@@ -1814,8 +1814,8 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     OPENSSL_CTX *tmpctx = OPENSSL_CTX_new();
     OSSL_PROVIDER *nullprov = NULL;
     EVP_PKEY_CTX *pctx = NULL;
-    const char *keytype;
-    int expect_null;
+    const char *keytype = NULL;
+    int expect_null = 0;
     int ret = 0;
 
     if (!TEST_ptr(tmpctx))
@@ -1845,6 +1845,9 @@ static int test_pkey_ctx_fail_without_provider(int tst)
         goto end;
 #endif
         break;
+    default:
+        TEST_error("No test for case %d", tst);
+        goto err;
     }
 
     pctx = EVP_PKEY_CTX_new_from_name(tmpctx, keytype, "");
