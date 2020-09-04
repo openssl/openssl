@@ -12,7 +12,7 @@ B<openssl> B<cmp>
 [B<-config> I<filename>]
 [B<-section> I<names>]
 
-[B<-server> I<address[:port]>]
+[B<-server> I<[http[s]://]address[:port][/path]>]
 [B<-proxy> I<[http[s]://]address[:port][/path]>]
 [B<-no_proxy> I<addresses>]
 [B<-path> I<remote_path>]
@@ -431,11 +431,12 @@ Reason numbers defined in RFC 5280 are:
 
 =over 4
 
-=item B<-server> I<[http[s]://]address[:port]>
+=item B<-server> I<[http[s]://]address[:port][/path]>
 
 The IP address or DNS hostname and optionally port (defaulting to 80 or 443)
 of the CMP server to connect to using HTTP(S) transport.
 The optional I<http://> or I<https://> prefix is ignored.
+If a path is included it provides the default value for the B<-path> option.
 
 =item B<-proxy> I<[http[s]://]address[:port][/path]>
 
@@ -454,7 +455,7 @@ Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 =item B<-path> I<remote_path>
 
 HTTP path at the CMP server (aka CMP alias) to use for POST requests.
-Defaults to I</>.
+Defaults to any path given with B<-server>, else C<"/">.
 
 =item B<-msg_timeout> I<seconds>
 
