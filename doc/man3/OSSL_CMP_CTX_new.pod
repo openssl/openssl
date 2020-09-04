@@ -29,6 +29,7 @@ OSSL_CMP_CTX_get0_trustedStore,
 OSSL_CMP_CTX_set1_untrusted_certs,
 OSSL_CMP_CTX_get0_untrusted_certs,
 OSSL_CMP_CTX_set1_cert,
+OSSL_CMP_CTX_build_cert_chain,
 OSSL_CMP_CTX_set1_pkey,
 OSSL_CMP_CTX_set1_referenceValue,
 OSSL_CMP_CTX_set1_secretValue,
@@ -103,6 +104,8 @@ OSSL_CMP_CTX_set1_senderNonce
 
  /* client authentication: */
  int OSSL_CMP_CTX_set1_cert(OSSL_CMP_CTX *ctx, X509 *cert);
+ int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
+                                   STACK_OF(X509) *candidates);
  int OSSL_CMP_CTX_set1_pkey(OSSL_CMP_CTX *ctx, EVP_PKEY *pkey);
  int OSSL_CMP_CTX_set1_referenceValue(OSSL_CMP_CTX *ctx,
                                       const unsigned char *ref, int len);
@@ -433,6 +436,20 @@ The subject of this B<cert> will be used as the sender field of outgoing
 messages, while the subject of any cert set via B<OSSL_CMP_CTX_set1_oldCert()>
 and any value set via B<OSSL_CMP_CTX_set1_subjectName()> are used as fallback.
 The B<cert> argument may be NULL to clear the entry.
+
+OSSL_CMP_CTX_build_cert_chain() builds a certificate chain for the CMP signer
+certificate previously set in the B<ctx>. It adds the optional B<candidates>,
+a list of intermediate CA certs that may already constitute the targeted chain,
+to the untrusted certs that may already exist in the B<ctx>.
+Then the function uses this augumented set of certs for chain construction.
+If I<own_trusted> is NULL it builds the chain as far down as possible and
+ignores any verification errors. Else the CMP signer certificate must be
+verifiable where the chain reaches a trust anchor contained in I<own_trusted>.
+On success the function stores the resulting chain in B<ctx>
+for inclusion in the extraCerts field of signature-protected messages.
+Calling this function is optional; by default a chain construction
+is performed on demand that is equivalent to calling this function
+with the B<candidates> and I<own_trusted> arguments being NULL.
 
 OSSL_CMP_CTX_set1_pkey() sets the private key corresponding to the
 protection certificate B<cert> set via B<OSSL_CMP_CTX_set1_cert()>.

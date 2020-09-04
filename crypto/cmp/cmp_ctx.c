@@ -712,6 +712,34 @@ int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
  */
 DEFINE_OSSL_CMP_CTX_set1_up_ref(cert, X509)
 
+int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
+                                  STACK_OF(X509) *candidates)
+{
+    STACK_OF(X509) *chain;
+
+    if (ctx == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+
+    if (ctx->untrusted_certs != NULL ?
+        !X509_add_certs(ctx->untrusted_certs, candidates,
+                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) :
+        !OSSL_CMP_CTX_set1_untrusted_certs(ctx, candidates))
+        return 0;
+
+    ossl_cmp_debug(ctx, "trying to build chain for own CMP signer cert");
+    chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, own_trusted,
+                                      ctx->untrusted_certs, ctx->cert);
+    if (chain == NULL) {
+        CMPerr(0, CMP_R_FAILED_BUILDING_OWN_CHAIN);
+        return 0;
+    }
+    ossl_cmp_debug(ctx, "success building chain for own CMP signer cert");
+    sk_X509_pop_free(chain, X509_free); /* TODO(3.0) replace this by 'ctx->chain = chain;' when ctx->chain is available */    
+    return 1;
+}
+
 /*
  * Set the old certificate that we are updating in KUR
  * or the certificate to be revoked in RR, respectively.
