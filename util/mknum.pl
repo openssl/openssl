@@ -54,7 +54,7 @@ $ordinals->invalidate();
 
 foreach my $f (($symhacks_file // (), @ARGV)) {
     print STDERR $f," ","-" x (69 - length($f)),"\n" if $verbose;
-    open IN, $f || die "Couldn't open $f: $!\n";
+    open IN, $f or die "Couldn't open $f: $!\n";
     foreach (parse(<IN>, { filename => $f,
                            warnings => $warnings,
                            verbose => $verbose,
