@@ -140,7 +140,8 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
         return 0;
 
     /* Add first ctx->cert and its chain if using signature-based protection */
-    if (!ctx->unprotectedSend && ctx->secretValue == NULL) {
+    if (!ctx->unprotectedSend && ctx->secretValue == NULL
+            && ctx->cert != NULL && ctx->pkey != NULL) {
         int flags_prepend = X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
             | X509_ADD_FLAG_PREPEND | X509_ADD_FLAG_NO_SS;
 
