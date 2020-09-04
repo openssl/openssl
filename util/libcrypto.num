@@ -5296,6 +5296,6 @@ asn1_d2i_read_bio                       ?	3_0_0	EXIST::FUNCTION:
 EVP_PKCS82PKEY_with_libctx              ?	3_0_0	EXIST::FUNCTION:
 ossl_b2i                                ?	3_0_0	EXIST::FUNCTION:DSA
 ossl_b2i_bio                            ?	3_0_0	EXIST::FUNCTION:DSA
-EVP_PKEY_CTX_set1_id                    ?	3_0_0	EXIST::FUNCTION:EC
-EVP_PKEY_CTX_get1_id                    ?	3_0_0	EXIST::FUNCTION:EC
-EVP_PKEY_CTX_get1_id_len                ?	3_0_0	EXIST::FUNCTION:EC
+EVP_PKEY_CTX_set1_id                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_get1_id                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_get1_id_len                ?	3_0_0	EXIST::FUNCTION:
