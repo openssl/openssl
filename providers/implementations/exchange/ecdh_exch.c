@@ -24,7 +24,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
-#include "prov/check.h"
+#include "prov/securitycheck.h"
 #include "crypto/ec.h" /* ecdh_KDF_X9_63() */
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;

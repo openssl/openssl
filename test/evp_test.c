@@ -3443,7 +3443,14 @@ start:
     }
 
     for (pp++, i = 1; i < (t->s.numpairs - skip_availablein); pp++, i++) {
-        if (strcmp(pp->key, "Availablein") == 0) {
+        if (strcmp(pp->key, "Securitycheck") == 0) {
+#if defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
+            TEST_info("skipping, securitycheck is not available: %s:%d",
+                      t->s.test_file, t->s.start);
+            t->skip = 1;
+            return 0;
+#endif
+        } else if (strcmp(pp->key, "Availablein") == 0) {
             TEST_info("Line %d: 'Availablein' should be the first option",
                       t->s.curr);
             return 0;

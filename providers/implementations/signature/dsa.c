@@ -30,7 +30,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
-#include "prov/check.h"
+#include "prov/securitycheck.h"
 #include "crypto/dsa.h"
 #include "prov/der_dsa.h"
 

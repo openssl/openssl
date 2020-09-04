@@ -52,6 +52,7 @@ SharedSecret=803d8ab2e5b6e6fca715737c3a82f7ce3c783124f6d51cd0
 
 Availablein = fips
 Derive=KAS-ECC-CDH_P-192_C0
+Securitycheck = 1
 PeerKey=KAS-ECC-CDH_P-192_C0-Peer-PUBLIC
 Result = DERIVE_SET_PEER_ERROR
 

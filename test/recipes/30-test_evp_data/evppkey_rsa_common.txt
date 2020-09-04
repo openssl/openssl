@@ -1297,6 +1297,7 @@ Output = 80382819f51b197c42f9fc02a85198683d918059afc013ae155992442563dd289700829
 # Signing with SHA1 is not allowed in fips mode
 Availablein = fips
 DigestSign = SHA1
+Securitycheck = 1
 Key = RSA-2048
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
@@ -1304,6 +1305,7 @@ Result = DIGESTSIGNINIT_ERROR
 # Signing with a 1024 bit key is not allowed in fips mode
 Availablein = fips
 DigestSign = SHA256
+Securitycheck = 1
 Key = RSA-1024
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
@@ -1311,6 +1313,7 @@ Result = DIGESTSIGNINIT_ERROR
 # Verifying with a legacy digest in fips mode is not allowed
 Availablein = fips
 DigestVerify = MD5
+Securitycheck = 1
 Key = RSA-2048
 Input = "Hello"
 Result = DIGESTVERIFYINIT_ERROR
@@ -1318,6 +1321,7 @@ Result = DIGESTVERIFYINIT_ERROR
 # Verifying with a key smaller than 1024 bits in fips mode is not allowed
 Availablein = fips
 DigestVerify = SHA256
+Securitycheck = 1
 Key = RSA-512
 Input = "Hello"
 Result = DIGESTVERIFYINIT_ERROR

@@ -294,6 +294,7 @@ Title = Fips Negative Tests (using different key sizes and digests)
 # Test sign with a 1024 bit key is not allowed in fips mode
 Availablein = fips
 DigestSign = SHA256
+Securitycheck = 1
 Key = DSA-1024-FIPS186-2
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
@@ -301,6 +302,7 @@ Result = DIGESTSIGNINIT_ERROR
 # Test sign with SHA1 is not allowed in fips mode
 Availablein = fips
 DigestSign = SHA1
+Securitycheck = 1
 Key = DSA-2048
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
@@ -308,6 +310,7 @@ Result = DIGESTSIGNINIT_ERROR
 # Test sign with a 3072 bit key with N == 224 is not allowed in fips mode
 Availablein = fips
 DigestSign = SHA256
+Securitycheck = 1
 Key = DSA-3072-224
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR
@@ -315,6 +318,7 @@ Result = DIGESTSIGNINIT_ERROR
 # Test sign with a 4096 bit key is not allowed in fips mode
 Availablein = fips
 DigestSign = SHA256
+Securitycheck = 1
 Key = DSA-4096-256
 Input = "Hello"
 Result = DIGESTSIGNINIT_ERROR

@@ -29,7 +29,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "prov/check.h"
+#include "prov/securitycheck.h"
 
 #include <stdlib.h>
 
