@@ -1330,7 +1330,7 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
     int ret = 0;
 
     if (ctx == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+        EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
 
@@ -1341,12 +1341,12 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
      */
     if (ctx->pmeth == NULL || ctx->pmeth->digest_custom == NULL) {
         if (ctx->operation == EVP_PKEY_OP_UNDEFINED) {
-            EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_NO_OPERATION_SET);
+            EVPerr(0, EVP_R_NO_OPERATION_SET);
             return -1;
         }
 
         if ((optype != -1) && !(ctx->operation & optype)) {
-            EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_INVALID_OPERATION);
+            EVPerr(0, EVP_R_INVALID_OPERATION);
             return -1;
         }
     }
@@ -1357,7 +1357,7 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
     case EVP_PKEY_STATE_UNKNOWN:
     case EVP_PKEY_STATE_LEGACY:
         if (ctx->pmeth == NULL || ctx->pmeth->ctrl == NULL) {
-            EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
             return -2;
         }
         if ((keytype != -1) && (ctx->pmeth->pkey_id != keytype))
@@ -1366,7 +1366,7 @@ static int evp_pkey_ctx_ctrl_int(EVP_PKEY_CTX *ctx, int keytype, int optype,
         ret = ctx->pmeth->ctrl(ctx, cmd, p1, p2);
 
         if (ret == -2)
-            EVPerr(EVP_F_EVP_PKEY_CTX_CTRL, EVP_R_COMMAND_NOT_SUPPORTED);
+            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
         break;
     }
     return ret;
@@ -1502,7 +1502,7 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
     int ret;
 
     if (ctx == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
+        EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
         return -2;
     }
 
@@ -1512,7 +1512,7 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
     case EVP_PKEY_STATE_UNKNOWN:
     case EVP_PKEY_STATE_LEGACY:
         if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {
-            EVPerr(EVP_F_EVP_PKEY_CTX_CTRL_STR, EVP_R_COMMAND_NOT_SUPPORTED);
+            EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
             return -2;
         }
         if (strcmp(name, "digest") == 0)
