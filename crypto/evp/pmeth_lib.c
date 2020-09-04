@@ -128,9 +128,9 @@ static int get_legacy_alg_type_from_name(const char *keytype)
     int id = NID_undef;
 
 #ifndef FIPS_MODULE
-    id = OBJ_sn2nid(keytype);
+    id = EVP_PKEY_type(OBJ_sn2nid(keytype));
     if (id == NID_undef)
-        id = OBJ_ln2nid(keytype);
+        id = EVP_PKEY_type(OBJ_ln2nid(keytype));
 #endif
     return id;
 }
