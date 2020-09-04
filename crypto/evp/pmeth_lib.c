@@ -185,12 +185,14 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     const EVP_PKEY_METHOD *pmeth = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
 
+#if 0
     /*
      * When using providers, the context is bound to the algo implementation
      * later.
      */
     if (pkey == NULL && e == NULL && id == -1)
         goto common;
+#endif
 
     /*
      * If the given |pkey| is provided, we extract the keytype from its
@@ -211,12 +213,16 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
      */
     /* BEGIN legacy */
     if (id == -1) {
-        if (pkey == NULL) {
-            EVPerr(EVP_F_INT_CTX_NEW, EVP_R_UNSUPPORTED_ALGORITHM);
-            return NULL;
-        }
-        id = pkey->type;
+        if (pkey != NULL)
+            id = pkey->type;
+        else if (keytype != NULL)
+            id = get_legacy_alg_type_from_name(keytype);
+        if (id == NID_undef)
+            id = -1;
     }
+    /* If no ID was found here, we can only resort to find a keymgmt */
+    if (id == -1)
+        goto common;
 
     /*
      * Here, we extract what information we can for the purpose of
