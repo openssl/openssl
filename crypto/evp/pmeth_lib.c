@@ -185,15 +185,6 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
     const EVP_PKEY_METHOD *pmeth = NULL;
     EVP_KEYMGMT *keymgmt = NULL;
 
-#if 0
-    /*
-     * When using providers, the context is bound to the algo implementation
-     * later.
-     */
-    if (pkey == NULL && e == NULL && id == -1)
-        goto common;
-#endif
-
     /*
      * If the given |pkey| is provided, we extract the keytype from its
      * keymgmt and skip over the legacy code.
