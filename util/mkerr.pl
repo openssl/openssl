@@ -263,7 +263,9 @@ while ( ( my $hdr, my $lib ) = each %libinc ) {
     my $linenr = 0;
     my $cpp = 0;
 
-    open(IN, "<$hdr") || die "Can't open $hdr, $!,";
+    open(IN, "<$hdr")
+        || open(IN, "<$hdr.in")
+        || die "Can't open $hdr or $hdr.in, $!,";
     while ( <IN> ) {
         $linenr++;
 
@@ -435,7 +437,6 @@ foreach my $lib ( keys %errorfile ) {
     # Rewrite the header file
 
     my $hfile = $hinc{$lib};
-    $hfile =~ s/.h$/err.h/ if $internal;
     open( OUT, ">$hfile" ) || die "Can't write to $hfile, $!,";
     print OUT <<"EOF";
 /*
