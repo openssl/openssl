@@ -23,7 +23,7 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
- * Changed all "STACK" functions to be macros instead of inline function. Macro
+ * Changed all "STACK" functions to be macros instead of inline functions. Macro
    parameters are still checked for type safety at compile time via helper
    inline functions.
 
