@@ -271,17 +271,11 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         if (legacy)
             ERR_set_mark();
 
-        /*
-         * If we know that we should have everything covered by a provider
-         * backend, at least in the default provider, then we can drop the
-         * corresponding EVP_PKEY_METHOD.
-         */
-        if (!legacy)
-            pmeth = NULL;
-
         keymgmt = EVP_KEYMGMT_fetch(libctx, keytype, propquery);
         if (legacy)
             ERR_pop_to_mark();
+        else if (keymgmt == NULL)
+            return NULL;   /* EVP_KEYMGMT_fetch() recorded an error */
 
         /*
          * Chase down the legacy NID, as that might be needed for diverse
