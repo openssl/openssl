@@ -421,6 +421,7 @@ my @disablables = (
     "external-tests",
     "filenames",
     "fips",
+    "fips-securitychecks",
     "fuzz-libfuzzer",
     "fuzz-afl",
     "gost",

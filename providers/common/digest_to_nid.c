@@ -11,7 +11,7 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/core.h>
-#include "prov/check.h"
+#include "prov/securitycheck.h"
 #include "internal/nelem.h"
 
 /*

@@ -172,6 +172,7 @@ Title = FIPS Negative tests (using different curves and digests)
 # Test that a explicit curve is not allowed in fips mode
 Availablein = fips
 DigestVerify = SHA256
+Securitycheck = 1
 Key = EC_EXPLICIT
 Input = "Hello World"
 Result = DIGESTVERIFYINIT_ERROR
@@ -179,6 +180,7 @@ Result = DIGESTVERIFYINIT_ERROR
 # Test that a curve with < 112 bits is not allowed in fips mode for signing
 Availablein = fips
 DigestSign = SHA3-512
+Securitycheck = 1
 Key = B-163
 Input = "Hello World"
 Result = DIGESTSIGNINIT_ERROR
@@ -186,6 +188,7 @@ Result = DIGESTSIGNINIT_ERROR
 # Test that a non nist curve is not allowed in fips mode
 Availablein = fips
 DigestSign = SHA3-512
+Securitycheck = 1
 Key = secp256k1
 Input = "Hello World"
 Result = DIGESTSIGNINIT_ERROR

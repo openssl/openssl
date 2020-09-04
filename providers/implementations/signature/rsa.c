@@ -30,7 +30,7 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_rsa.h"
-#include "prov/check.h"
+#include "prov/securitycheck.h"
 
 #define RSA_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 

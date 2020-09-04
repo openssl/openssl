@@ -13,44 +13,13 @@
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
-#include "prov/check.h"
+#include "prov/securitycheck.h"
 #include "internal/nelem.h"
 
-int rsa_check_key(ossl_unused const RSA *rsa, ossl_unused int protect)
+/* Disable the security checks in the default provider */
+int securitycheck_enabled(void)
 {
-    return 1;
-}
-
-#ifndef OPENSSL_NO_EC
-int ec_check_key(ossl_unused const EC_KEY *ec, ossl_unused int protect)
-{
-    return 1;
-}
-#endif
-
-#ifndef OPENSSL_NO_DSA
-int dsa_check_key(ossl_unused const DSA *dsa, ossl_unused int sign)
-{
-    return 1;
-}
-#endif
-
-#ifndef OPENSSL_NO_DH
-int dh_check_key(const DH *dh)
-{
-    return 1;
-}
-#endif
-
-int digest_is_allowed(ossl_unused const EVP_MD *md)
-{
-    return 1;
-}
-
-int digest_get_approved_nid_with_sha1(const EVP_MD *md,
-                                      ossl_unused int sha1_allowed)
-{
-    return digest_get_approved_nid(md);
+    return 0;
 }
 
 int digest_rsa_sign_get_md_nid(const EVP_MD *md, ossl_unused int sha1_allowed)
@@ -65,8 +34,6 @@ int digest_rsa_sign_get_md_nid(const EVP_MD *md, ossl_unused int sha1_allowed)
         { NID_mdc2,      OSSL_DIGEST_NAME_MDC2      },
         { NID_ripemd160, OSSL_DIGEST_NAME_RIPEMD160 },
     };
-    if (md == NULL)
-        return NID_undef;
 
     mdnid = digest_get_approved_nid_with_sha1(md, 1);
     if (mdnid == NID_undef)

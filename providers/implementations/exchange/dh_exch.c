@@ -23,7 +23,7 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "prov/check.h"
+#include "prov/securitycheck.h"
 #include "crypto/dh.h"
 
 static OSSL_FUNC_keyexch_newctx_fn dh_newctx;
