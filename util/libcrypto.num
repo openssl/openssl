@@ -4797,6 +4797,7 @@ OSSL_CMP_CTX_get_status                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_statusString          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get_failInfoCode           ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_newCert               ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_get1_newChain              ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get1_caPubs                ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get1_extraCertsIn          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_transactionID         ?	3_0_0	EXIST::FUNCTION:CMP
