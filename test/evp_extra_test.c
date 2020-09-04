@@ -1840,10 +1840,10 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     case 1:
         keytype = "SM2";
         expect_null = 0; /* TODO: change to 1 when we have a SM2 keymgmt */
-# ifdef OPENSSL_NO_EC
+#ifdef OPENSSL_NO_EC
         TEST_info("EC disable, skipping SM2 check...");
         goto end;
-# endif
+#endif
         break;
     }
 
@@ -1851,7 +1851,9 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     if (expect_null ? !TEST_ptr_null(pctx) : !TEST_ptr(pctx))
         goto err;
 
+#ifdef OPENSSL_NO_EC
  end:
+#endif
     ret = 1;
 
  err:
