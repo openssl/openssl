@@ -77,7 +77,7 @@ static char *opt_server = NULL;
 static char server_port[32] = { '\0' };
 static char *opt_proxy = NULL;
 static char *opt_no_proxy = NULL;
-static char *opt_path = "/";
+static char *opt_path = NULL;
 static int opt_msg_timeout = -1;
 static int opt_total_timeout = -1;
 
@@ -333,9 +333,9 @@ const OPTIONS cmp_options[] = {
 
     OPT_SECTION("Message transfer"),
     {"server", OPT_SERVER, 's',
-     "[http[s]://]address[:port] of CMP server. Default port 80 or 443."},
+     "[http[s]://]address[:port][/path] of CMP server. Default port 80 or 443."},
     {OPT_MORE_STR, 0, 0,
-     "The address may be a DNS name or an IP address"},
+     "address may be a DNS name or an IP address; path can be overridden by -path"},
     {"proxy", OPT_PROXY, 's',
      "[http[s]://]address[:port][/path] of HTTP(S) proxy to use; path is ignored"},
     {"no_proxy", OPT_NO_PROXY, 's',
@@ -343,7 +343,7 @@ const OPTIONS cmp_options[] = {
     {OPT_MORE_STR, 0, 0,
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
     {"path", OPT_PATH, 's',
-     "HTTP path (aka CMP alias) at the CMP server. Default \"/\""},
+     "HTTP path (aka CMP alias) at the CMP server. Default from -server, else \"/\""},
     {"msg_timeout", OPT_MSG_TIMEOUT, 'n',
      "Timeout per CMP message round trip (or 0 for none). Default 120 seconds"},
     {"total_timeout", OPT_TOTAL_TIMEOUT, 'n',
@@ -1852,7 +1852,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
 static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
     int ret = 0;
-    char *server = NULL, *port = NULL, *path = NULL;
+    char *server = NULL, *port = NULL, *path = NULL, *used_path;
     int portnum, ssl;
     char server_buf[200] = { '\0' };
     char proxy_buf[200] = { '\0' };
@@ -1860,7 +1860,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     char *proxy_port_str = NULL;
 
     if (opt_server == NULL) {
-        CMP_err("missing server address[:port]");
+        CMP_err("missing -server option");
         goto err;
     }
     if (!OSSL_HTTP_parse_url(opt_server, &server, &port, &portnum, &path, &ssl))
@@ -1870,9 +1870,10 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto err;
     }
     strncpy(server_port, port, sizeof(server_port));
+    used_path = opt_path != NULL ? opt_path : path;
     if (!OSSL_CMP_CTX_set1_server(ctx, server)
             || !OSSL_CMP_CTX_set_serverPort(ctx, portnum)
-            || !OSSL_CMP_CTX_set1_serverPath(ctx, opt_path))
+            || !OSSL_CMP_CTX_set1_serverPath(ctx, used_path))
         goto oom;
     if (opt_proxy != NULL && !OSSL_CMP_CTX_set1_proxy(ctx, opt_proxy))
         goto oom;
@@ -1880,7 +1881,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         goto oom;
     (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s:%s/%s",
                        opt_tls_used ? "s" : "", server, port,
-                       opt_path[0] == '/' ? opt_path + 1 : opt_path);
+                       *used_path == '/' ? used_path + 1 : used_path);
 
     if (opt_proxy != NULL)
         (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", opt_proxy);
@@ -2836,11 +2837,6 @@ int cmp_main(int argc, char **argv)
         }
         opt_server = mock_server;
         opt_proxy = "API";
-    } else {
-        if (opt_server == NULL) {
-            CMP_err("missing -server option");
-            goto err;
-        }
     }
 
     if (!setup_client_ctx(cmp_ctx, engine)) {

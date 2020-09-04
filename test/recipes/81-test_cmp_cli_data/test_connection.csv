@@ -22,6 +22,9 @@ TBD,server IP address with TLS port, -section,, -server,_SERVER_IP:_SERVER_TLS,,
 1,proxy default port, -section,, -server,_SERVER_HOST:_SERVER_PORT, -proxy,127.0.0.1,,,BLANK,,BLANK,,BLANK,,BLANK, -no_proxy,nonmatch.com,-msg_timeout,1
 1,proxy missing argument, -section,, -server,_SERVER_HOST:_SERVER_PORT, -proxy,,,,BLANK,,BLANK,,BLANK,,BLANK, -no_proxy,nonmatch.com
 ,,,,,,,,,,,,,,,,,,,,,,,,,
+0,path explicit, -section,, -server,_SERVER_HOST:_SERVER_PORT,,, -path,_SERVER_PATH,BLANK,,BLANK,,BLANK,,BLANK,
+0,path overrides -server path, -section,, -server,_SERVER_HOST:_SERVER_PORT/ignored,,, -path,_SERVER_PATH,BLANK,,BLANK,,BLANK,,BLANK,
+0,path default -server path, -section,, -server,_SERVER_HOST:_SERVER_PORT/_SERVER_PATH,,, -path,"""",BLANK,,BLANK,,BLANK,,BLANK,
 1,path missing argument, -section,,,,,, -path,,BLANK,,BLANK,,BLANK,,BLANK,
 1,path wrong, -section,,,,,, -path,/publicweb/cmp/example,BLANK,,BLANK,,BLANK,,BLANK,
 0,path with additional '/'s fine according to RFC 3986, -section,,,,,, -path,/_SERVER_PATH////,BLANK,,BLANK,,BLANK,,BLANK
