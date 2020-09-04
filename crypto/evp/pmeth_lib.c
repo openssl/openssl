@@ -1499,7 +1499,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
 static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
                                      const char *name, const char *value)
 {
-    int ret;
+    int ret = 0;
 
     if (ctx == NULL) {
         EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
@@ -1555,8 +1555,14 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 static int decode_cmd(int cmd, const char *name)
 {
     if (cmd == -1) {
-        if (strcmp(name, "distid") == 0 || strcmp(name, "hexdistid") == 0)
-            cmd = EVP_PKEY_CTRL_SET1_ID;
+        /*
+         * The consequence of the assertion not being true is that this
+         * function will return -1, which will cause the calling functions
+         * to signal that the command is unsupported...  in non-debug mode.
+         */
+        if (ossl_assert(name != NULL))
+            if (strcmp(name, "distid") == 0 || strcmp(name, "hexdistid") == 0)
+                cmd = EVP_PKEY_CTRL_SET1_ID;
     }
 
     return cmd;
