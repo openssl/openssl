@@ -120,7 +120,7 @@ struct ossl_cmp_ctx_st {
     /* TODO: this should be a stack since there could be more than one */
     X509 *newCert; /* newly enrolled cert received from the CA */
     /* TODO: this should be a stack since there could be more than one */
-    STACK_OF(X509) *newChain; /* CA certs received from server (in IP message) */
+    STACK_OF(X509) *newChain; /* chain of newly enrolled cert received */
     STACK_OF(X509) *caPubs; /* CA certs received from server (in IP message) */
     STACK_OF(X509) *extraCertsIn; /* extraCerts received from server */
 
