@@ -86,6 +86,7 @@ static X509 *cert = NULL;
             TEST_ptr_null(msg = (expr)); \
  \
         OSSL_CMP_MSG_free(msg); \
+        ERR_print_errors_fp(stderr); \
         return good; \
     } while (0)
 

@@ -350,7 +350,7 @@ void cleanup_tests(void)
     return;
 }
 
-#define USAGE "server.key server.crt client.key client.crt client.csr module_name [module_conf_file]\n"
+# define USAGE "server.key server.crt client.key client.crt client.csr module_name [module_conf_file]\n"
 OPT_TEST_DECLARE_USAGE(USAGE)
 
 int setup_tests(void)
