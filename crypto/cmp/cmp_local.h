@@ -747,6 +747,7 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len);
 STACK_OF(X509)
     *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
+                               X509_STORE *store,
                                STACK_OF(X509) *certs, X509 *cert);
 
 /* from cmp_ctx.c */

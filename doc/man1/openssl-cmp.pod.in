@@ -32,6 +32,7 @@ B<openssl> B<cmp>
 [B<-ref> I<value>]
 [B<-secret> I<arg>]
 [B<-cert> I<filename>]
+[B<-own_trusted> I<filenames>]
 [B<-key> I<filename>]
 [B<-keypass> I<arg>]
 [B<-digest> I<name>]
@@ -617,7 +618,7 @@ B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-cert> I<filename>
 
-The client's current certificate.
+The client's current CMP signer certificate.
 Requires the corresponding key to be given with B<-key>.
 The subject of this certificate will be used as sender of outgoing CMP messages,
 while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
@@ -628,6 +629,16 @@ using an external entity certificate as defined in appendix E.7 of RFC 4210.
 For Key Update Request (KUR) messages this is also used as
 the certificate to be updated if the B<-oldcert> option is not given.
 If the file includes further certs, they are appended to the untrusted certs.
+
+=item B<-own_trusted> I<filenames>
+
+If this list of certificates is provided then the chain built for
+the CMP signer certificate given with the B<-cert> option is verified
+using the given certificates as trust anchors.
+
+Multiple filenames may be given, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
+Each source may contain multiple certificates.
 
 =item B<-key> I<filename>
 
@@ -694,6 +705,7 @@ The only value with effect is B<ENGINE>.
 =item B<-otherpass> I<arg>
 
 Pass phrase source for certificate given with the B<-trusted>, B<-untrusted>,
+B<-own_trusted>,
 B<-out_trusted>, B<-extracerts>, B<-tls_extra>, or B<-tls_trusted> options.
 If not given here, the password will be prompted for if needed.
 

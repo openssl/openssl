@@ -152,7 +152,7 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
             ossl_cmp_debug(ctx,
                            "trying to build chain for own CMP signer cert");
-            chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
+            chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
                                               ctx->untrusted_certs, ctx->cert);
             res = X509_add_certs(msg->extraCerts, chain,
                                  X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP

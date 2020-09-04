@@ -333,8 +333,9 @@ static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     int ret = 0;
     OSSL_CMP_CTX *ctx = fixture->cmp_ctx;
+    X509_STORE *store;
     STACK_OF(X509) *chain =
-        ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
+        ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
                                   fixture->certs, fixture->cert);
 
     if (TEST_ptr(chain)) {
@@ -342,12 +343,30 @@ static int execute_cmp_build_cert_chain_test(CMP_PROTECT_TEST_FIXTURE *fixture)
         ret = TEST_int_eq(0, STACK_OF_X509_cmp(chain, fixture->chain));
         sk_X509_pop_free(chain, X509_free);
     }
+    if (!ret)
+        return 0;
+
+    if (TEST_ptr(store = X509_STORE_new())
+            && TEST_true(X509_STORE_add_cert(store, root))) {
+        X509_VERIFY_PARAM_set_flags(X509_STORE_get0_param(store),
+                                    X509_V_FLAG_NO_CHECK_TIME);
+        chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
+                                          store, fixture->certs, fixture->cert);
+        ret = TEST_int_eq(fixture->expected, chain != NULL);
+        if (ret && chain != NULL) {
+            /* Check whether chain built is equal to the expected one */
+            ret = TEST_int_eq(0, STACK_OF_X509_cmp(chain, fixture->chain));
+            sk_X509_pop_free(chain, X509_free);
+        }
+    }
+    X509_STORE_free(store);
     return ret;
 }
 
 static int test_cmp_build_cert_chain(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
+    fixture->expected = 1;
     fixture->cert = endentity2;
     if (!TEST_ptr(fixture->certs = sk_X509_new_null())
             || !TEST_ptr(fixture->chain = sk_X509_new_null())
@@ -366,6 +385,7 @@ static int test_cmp_build_cert_chain(void)
 static int test_cmp_build_cert_chain_missing_intermediate(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
+    fixture->expected = 0;
     fixture->cert = endentity2;
     if (!TEST_ptr(fixture->certs = sk_X509_new_null())
             || !TEST_ptr(fixture->chain = sk_X509_new_null())
@@ -379,9 +399,10 @@ static int test_cmp_build_cert_chain_missing_intermediate(void)
     return result;
 }
 
-static int test_cmp_build_cert_chain_missing_root(void)
+static int test_cmp_build_cert_chain_no_root(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
+    fixture->expected = 1;
     fixture->cert = endentity2;
     if (!TEST_ptr(fixture->certs = sk_X509_new_null())
             || !TEST_ptr(fixture->chain = sk_X509_new_null())
@@ -399,6 +420,7 @@ static int test_cmp_build_cert_chain_missing_root(void)
 static int test_cmp_build_cert_chain_no_certs(void)
 {
     SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
+    fixture->expected = 0;
     fixture->cert = endentity2;
     if (!TEST_ptr(fixture->certs = sk_X509_new_null())
             || !TEST_ptr(fixture->chain = sk_X509_new_null())
@@ -556,7 +578,7 @@ int setup_tests(void)
 
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_cmp_build_cert_chain);
-    ADD_TEST(test_cmp_build_cert_chain_missing_root);
+    ADD_TEST(test_cmp_build_cert_chain_no_root);
     ADD_TEST(test_cmp_build_cert_chain_missing_intermediate);
     ADD_TEST(test_cmp_build_cert_chain_no_certs);
 #endif
