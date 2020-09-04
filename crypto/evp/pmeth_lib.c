@@ -283,8 +283,23 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
          * directly.
          * TODO: Remove this when #legacy keys are gone.
          */
-        if (keymgmt != NULL)
-            id = get_legacy_alg_type_from_keymgmt(keymgmt);
+        if (keymgmt != NULL) {
+            int tmp_id = get_legacy_alg_type_from_keymgmt(keymgmt);
+
+            if (id == -1) {
+                id = tmp_id;
+            } else {
+                /*
+                 * It really really shouldn't differ.  If it still does,
+                 * something is very wrong.
+                 */
+                if (!ossl_assert(id == tmp_id)) {
+                    EVPerr(EVP_F_INT_CTX_NEW, ERR_R_INTERNAL_ERROR);
+                    EVP_KEYMGMT_free(keymgmt);
+                    return NULL;
+                }
+            }
+        }
     }
 
     if (pmeth == NULL && keymgmt == NULL) {
