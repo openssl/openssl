@@ -63,6 +63,7 @@ B<openssl> B<cmp>
 [B<-implicit_confirm>]
 [B<-disable_confirm>]
 [B<-certout> I<filename>]
+[B<-chainout> I<filename>]
 
 [B<-oldcert> I<filename>]
 [B<-revreason> I<number>]
@@ -377,6 +378,10 @@ B<WARNING:> This leads to behavior violating RFC 4210.
 =item B<-certout> I<filename>
 
 The file where the newly enrolled certificate should be saved.
+
+=item B<-chainout> I<filename>
+
+The file where the chain of the newly enrolled certificate should be saved.
 
 =back
 

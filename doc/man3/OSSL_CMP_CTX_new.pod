@@ -54,6 +54,7 @@ OSSL_CMP_CTX_get_status,
 OSSL_CMP_CTX_get0_statusString,
 OSSL_CMP_CTX_get_failInfoCode,
 OSSL_CMP_CTX_get0_newCert,
+OSSL_CMP_CTX_get1_newChain,
 OSSL_CMP_CTX_get1_caPubs,
 OSSL_CMP_CTX_get1_extraCertsIn,
 OSSL_CMP_CTX_set1_transactionID,
@@ -144,6 +145,7 @@ OSSL_CMP_CTX_set1_senderNonce
  int OSSL_CMP_CTX_get_failInfoCode(const OSSL_CMP_CTX *ctx);
 
  X509 *OSSL_CMP_CTX_get0_newCert(const OSSL_CMP_CTX *ctx);
+ STACK_OF(X509) *OSSL_CMP_CTX_get1_newChain(const OSSL_CMP_CTX *ctx);
  STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx);
  STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx);
 
@@ -170,7 +172,7 @@ OSSL_CMP_CTX_free() deallocates an OSSL_CMP_CTX structure.
 
 OSSL_CMP_CTX_reinit() prepares the given B<ctx> for a further transaction by
 clearing the internal CMP transaction (aka session) status, PKIStatusInfo,
-and any previous results (newCert, caPubs, and extraCertsIn)
+and any previous results (newCert, newChain, caPubs, and extraCertsIn)
 from the last executed transaction.
 All other field values (i.e., CMP options) are retained for potential re-use.
 
@@ -579,6 +581,10 @@ OSSL_CMP_CTX_FAILINFO_badAlg. Returns -1 if the failInfoCode field is unset.
 OSSL_CMP_CTX_get0_newCert() returns the pointer to the newly obtained
 certificate in case it is available, else NULL.
 
+OSSL_CMP_CTX_get1_newChain() returns a pointer to a duplicate of the stack of
+X.509 certificates computed by OSSL_CMP_certConf_cb() (if this function has
+been called) on the last received certificate response message IP/CP/KUP.
+
 OSSL_CMP_CTX_get1_caPubs() returns a pointer to a duplicate of the stack of
 X.509 certificates received in the caPubs field of last received certificate
 response message IP/CP/KUP.
@@ -611,6 +617,7 @@ OSSL_CMP_CTX_get0_newPkey(),
 OSSL_CMP_CTX_get_certConf_cb_arg(),
 OSSL_CMP_CTX_get0_statusString(),
 OSSL_CMP_CTX_get0_newCert(),
+OSSL_CMP_CTX_get0_newChain(),
 OSSL_CMP_CTX_get1_caPubs(), and
 OSSL_CMP_CTX_get1_extraCertsIn()
 return the intended pointer value as described above or NULL on error.

@@ -162,6 +162,7 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
 
     return ossl_cmp_ctx_set0_statusString(ctx, NULL)
         && ossl_cmp_ctx_set0_newCert(ctx, NULL)
+        && ossl_cmp_ctx_set1_newChain(ctx, NULL)
         && ossl_cmp_ctx_set1_caPubs(ctx, NULL)
         && ossl_cmp_ctx_set1_extraCertsIn(ctx, NULL)
         && ossl_cmp_ctx_set0_validatedSrvCert(ctx, NULL)
@@ -216,6 +217,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
 
     sk_ASN1_UTF8STRING_pop_free(ctx->statusString, ASN1_UTF8STRING_free);
     X509_free(ctx->newCert);
+    sk_X509_pop_free(ctx->newChain, X509_free);
     sk_X509_pop_free(ctx->caPubs, X509_free);
     sk_X509_pop_free(ctx->extraCertsIn, X509_free);
 
@@ -457,6 +459,34 @@ int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
     }
     ctx->secretValue = secretValue;
     return 1;
+}
+
+/* Returns the cert chain computed by OSSL_CMP_certConf_cb(), NULL on error */
+STACK_OF(X509) *OSSL_CMP_CTX_get1_newChain(const OSSL_CMP_CTX *ctx)
+{
+    if (ctx == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    if (ctx->newChain == NULL)
+        return sk_X509_new_null();
+    return X509_chain_up_ref(ctx->newChain);
+}
+
+/*
+ * Copies any given stack of inbound X509 certificates to newChain
+ * of the OSSL_CMP_CTX structure so that they may be retrieved later.
+ */
+int ossl_cmp_ctx_set1_newChain(OSSL_CMP_CTX *ctx, STACK_OF(X509) *newChain)
+{
+    if (!ossl_assert(ctx != NULL))
+        return 0;
+
+    sk_X509_pop_free(ctx->newChain, X509_free);
+    ctx->newChain= NULL;
+    if (newChain == NULL)
+        return 1;
+    return (ctx->newChain = X509_chain_up_ref(newChain)) != NULL;
 }
 
 /*
