@@ -74,8 +74,7 @@ typedef enum {
 
 /* message transfer */
 static char *opt_server = NULL;
-static char server_port_s[32] = { '\0' };
-static int server_port = 0;
+static char server_port[32] = { '\0' };
 static char *opt_proxy = NULL;
 static char *opt_no_proxy = NULL;
 static char *opt_path = "/";
@@ -887,49 +886,6 @@ static OSSL_CMP_MSG *read_write_req_resp(OSSL_CMP_CTX *ctx,
  err:
     OSSL_CMP_MSG_free(req_new);
     return res;
-}
-
-/*
- * parse string as integer value, not allowing trailing garbage, see also
- * https://www.gnu.org/software/libc/manual/html_node/Parsing-of-Integers.html
- *
- * returns integer value, or INT_MIN on error
- */
-static int atoint(const char *str)
-{
-    char *tailptr;
-    long res = strtol(str, &tailptr, 10);
-
-    if  ((*tailptr != '\0') || (res < INT_MIN) || (res > INT_MAX))
-        return INT_MIN;
-    else
-        return (int)res;
-}
-
-static int parse_addr(char **opt_string, int port, const char *name)
-{
-    char *port_string;
-
-    if (strncasecmp(*opt_string, OSSL_HTTP_PREFIX,
-                    strlen(OSSL_HTTP_PREFIX)) == 0) {
-        *opt_string += strlen(OSSL_HTTP_PREFIX);
-    } else if (strncasecmp(*opt_string, OSSL_HTTPS_PREFIX,
-                           strlen(OSSL_HTTPS_PREFIX)) == 0) {
-        *opt_string += strlen(OSSL_HTTPS_PREFIX);
-        if (port == 0)
-            port = 443; /* == integer value of OSSL_HTTPS_PORT */
-    }
-
-    if ((port_string = strrchr(*opt_string, ':')) == NULL)
-        return port; /* using default */
-    *(port_string++) = '\0';
-    port = atoint(port_string);
-    if ((port <= 0) || (port > 65535)) {
-        CMP_err2("invalid %s port '%s' given, sane range 1-65535",
-                 name, port_string);
-        return -1;
-    }
-    return port;
 }
 
 static int set1_store_parameters(X509_STORE *ts)
@@ -1896,6 +1852,8 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
 static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
 {
     int ret = 0;
+    char *server = NULL, *port = NULL, *path = NULL;
+    int portnum, ssl;
     char server_buf[200] = { '\0' };
     char proxy_buf[200] = { '\0' };
     char *proxy_host = NULL;
@@ -1904,24 +1862,24 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     if (opt_server == NULL) {
         CMP_err("missing server address[:port]");
         goto err;
-    } else if ((server_port =
-                parse_addr(&opt_server, server_port, "server")) < 0) {
+    }
+    if (!OSSL_HTTP_parse_url(opt_server, &server, &port, &portnum, &path, &ssl))
+        goto err;
+    if (ssl && !opt_tls_used) {
+        CMP_err("missing -tls_used option since -server URL indicates https");
         goto err;
     }
-    if (server_port != 0)
-        BIO_snprintf(server_port_s, sizeof(server_port_s), "%d", server_port);
-    if (!OSSL_CMP_CTX_set1_server(ctx, opt_server)
-            || !OSSL_CMP_CTX_set_serverPort(ctx, server_port)
+    strncpy(server_port, port, sizeof(server_port));
+    if (!OSSL_CMP_CTX_set1_server(ctx, server)
+            || !OSSL_CMP_CTX_set_serverPort(ctx, portnum)
             || !OSSL_CMP_CTX_set1_serverPath(ctx, opt_path))
         goto oom;
     if (opt_proxy != NULL && !OSSL_CMP_CTX_set1_proxy(ctx, opt_proxy))
         goto oom;
     if (opt_no_proxy != NULL && !OSSL_CMP_CTX_set1_no_proxy(ctx, opt_no_proxy))
         goto oom;
-    (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s%s%s/%s",
-                       opt_tls_used ? "s" : "", opt_server,
-                       server_port == 0 ? "" : ":", server_port_s,
-                       opt_path == NULL ? "" :
+    (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s:%s/%s",
+                       opt_tls_used ? "s" : "", server, port,
                        opt_path[0] == '/' ? opt_path + 1 : opt_path);
 
     if (opt_proxy != NULL)
@@ -2023,7 +1981,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         (void)OSSL_CMP_CTX_set_http_cb_arg(ctx, info);
         /* info will be freed along with CMP ctx */
         info->server = opt_server;
-        info->port = server_port_s;
+        info->port = server_port;
         info->use_proxy = opt_proxy != NULL;
         info->timeout = OSSL_CMP_CTX_get_option(ctx, OSSL_CMP_OPT_MSG_TIMEOUT);
         info->ssl_ctx = setup_ssl_ctx(ctx, engine);
@@ -2053,6 +2011,9 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
     ret = 1;
 
  err:
+    OPENSSL_free(server);
+    OPENSSL_free(port);
+    OPENSSL_free(path);
     OPENSSL_free(proxy_host);
     OPENSSL_free(proxy_port_str);
     return ret;
