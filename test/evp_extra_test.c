@@ -1803,14 +1803,19 @@ static int test_keygen_with_empty_template(int n)
 
 /*
  * Test that we fail if we attempt to use an algorithm that is not available
- * in the current library context (unless we are using an algorithm that should
- * be made available via legacy codepaths).
+ * in the current library context (unless we are using an algorithm that
+ * should be made available via legacy codepaths).
+ *
+ * 0:   RSA
+ * 1:   SM2
  */
 static int test_pkey_ctx_fail_without_provider(int tst)
 {
     OPENSSL_CTX *tmpctx = OPENSSL_CTX_new();
     OSSL_PROVIDER *nullprov = NULL;
     EVP_PKEY_CTX *pctx = NULL;
+    const char *keytype = NULL;
+    int expect_null = 0;
     int ret = 0;
 
     if (!TEST_ptr(tmpctx))
@@ -1820,21 +1825,42 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     if (!TEST_ptr(nullprov))
         goto err;
 
-    pctx = EVP_PKEY_CTX_new_from_name(tmpctx, tst == 0 ? "RSA" : "SM2", "");
-
-    /* RSA is not available via any provider so we expect this to fail */
-    if (tst == 0 && !TEST_ptr_null(pctx))
-        goto err;
-
     /*
-     * SM2 is always available because it is implemented via legacy codepaths
-     * and not in a provider at all. We expect this to pass.
-     * TODO(3.0): This can be removed once there are no more algorithms
-     * available via legacy codepaths
+     * We check for certain algos in the null provider.
+     * If an algo is expected to have a provider keymgmt, contructing an
+     * EVP_PKEY_CTX is expected to fail (return NULL).
+     * Otherwise, if it's expected to have legacy support, contructing an
+     * EVP_PKEY_CTX is expected to succeed (return non-NULL).
      */
-    if (tst == 1 && !TEST_ptr(pctx))
+    switch (tst) {
+    case 0:
+        keytype = "RSA";
+        expect_null = 1;
+        break;
+    case 1:
+        keytype = "SM2";
+        expect_null = 0; /* TODO: change to 1 when we have a SM2 keymgmt */
+#ifdef OPENSSL_NO_EC
+        TEST_info("EC disable, skipping SM2 check...");
+        goto end;
+#endif
+#ifdef OPENSSL_NO_SM2
+        TEST_info("SM2 disable, skipping SM2 check...");
+        goto end;
+#endif
+        break;
+    default:
+        TEST_error("No test for case %d", tst);
+        goto err;
+    }
+
+    pctx = EVP_PKEY_CTX_new_from_name(tmpctx, keytype, "");
+    if (expect_null ? !TEST_ptr_null(pctx) : !TEST_ptr(pctx))
         goto err;
 
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_SM2)
+ end:
+#endif
     ret = 1;
 
  err:
