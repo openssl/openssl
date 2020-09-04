@@ -177,17 +177,11 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
         if (mdname != NULL) {
             /*
-             * If the old digest was a legacy one then we should ensure we free
-             * any md_data. This can be removed once no more legacy.
+             * We're about to get a new digest so clear anything associated with
+             * an old digest.
              */
-            if (ctx->digest != NULL) {
-                if (ctx->digest->cleanup != NULL
-                        && !EVP_MD_CTX_test_flags(ctx, EVP_MD_CTX_FLAG_CLEANED))
-                    ctx->digest->cleanup(ctx);
-                if (ctx->digest->ctx_size > 0)
-                    OPENSSL_clear_free(ctx->md_data, ctx->digest->ctx_size);
-                ctx->md_data = NULL;
-            }
+            evp_md_ctx_clear_digest(ctx, 1);
+
             /*
              * This might be requested by a later call to EVP_MD_CTX_md().
              * In that case the "explicit fetch" rules apply for that
