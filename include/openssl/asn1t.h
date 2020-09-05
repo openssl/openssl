@@ -42,7 +42,7 @@ extern "C" {
                 static const ASN1_ITEM local_it = {
 
 # define static_ASN1_ITEM_start(itname) \
-        static ASN1_ITEM_start(itname)
+        static ossl_unused ASN1_ITEM_start(itname)
 
 # define ASN1_ITEM_end(itname) \
                 }; \
@@ -824,13 +824,13 @@ typedef struct ASN1_STREAM_ARG_st {
         }
 
 # define IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(stname) \
-        static stname *d2i_##stname(stname **a, \
+        static ossl_unused stname *d2i_##stname(stname **a, \
                                    const unsigned char **in, long len) \
         { \
                 return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, \
                                                ASN1_ITEM_rptr(stname)); \
         } \
-        static int i2d_##stname(const stname *a, unsigned char **out) \
+        static ossl_unused int i2d_##stname(const stname *a, unsigned char **out) \
         { \
                 return ASN1_item_i2d((const ASN1_VALUE *)a, out, \
                                      ASN1_ITEM_rptr(stname)); \
