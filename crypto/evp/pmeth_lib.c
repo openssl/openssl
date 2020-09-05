@@ -33,10 +33,10 @@
 
 #ifndef FIPS_MODULE
 
-static int evp_pkey_ctx_handle_cached_data(EVP_PKEY_CTX *ctx,
-                                           int keytype, int optype,
-                                           int cmd, const char *name,
-                                           const void *data, size_t data_len);
+static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
+                                          int keytype, int optype,
+                                          int cmd, const char *name,
+                                          const void *data, size_t data_len);
 static void evp_pkey_ctx_free_cached_data(EVP_PKEY_CTX *ctx,
                                           int cmd, const char *name);
 static void evp_pkey_ctx_free_all_cached_data(EVP_PKEY_CTX *ctx);
@@ -1461,8 +1461,8 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
 
     /* If unsupported, we don't want that reported here */
     ERR_set_mark();
-    ret = evp_pkey_ctx_handle_cached_data(ctx, keytype, optype,
-                                          cmd, NULL, p2, p1);
+    ret = evp_pkey_ctx_store_cached_data(ctx, keytype, optype,
+                                         cmd, NULL, p2, p1);
     if (ret == -2) {
         ERR_pop_to_mark();
     } else {
@@ -1470,7 +1470,7 @@ int EVP_PKEY_CTX_ctrl(EVP_PKEY_CTX *ctx, int keytype, int optype,
         /*
          * If there was an error, there was an error.
          * If the operation isn't initialized yet, we also return, as
-         * the saved values will be unleashed then anyway.
+         * the saved values will be used then anyway.
          */
         if (ret < 1 || ctx->operation == EVP_PKEY_OP_UNDEFINED)
             return ret;
@@ -1616,8 +1616,8 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
 
     /* If unsupported, we don't want that reported here */
     ERR_set_mark();
-    ret = evp_pkey_ctx_handle_cached_data(ctx, -1, -1, -1,
-                                          name, value, strlen(value) + 1);
+    ret = evp_pkey_ctx_store_cached_data(ctx, -1, -1, -1,
+                                         name, value, strlen(value) + 1);
     if (ret == -2) {
         ERR_pop_to_mark();
     } else {
@@ -1625,7 +1625,7 @@ int EVP_PKEY_CTX_ctrl_str(EVP_PKEY_CTX *ctx,
         /*
          * If there was an error, there was an error.
          * If the operation isn't initialized yet, we also return, as
-         * the saved values will be unleashed then anyway.
+         * the saved values will be used then anyway.
          */
         if (ret < 1 || ctx->operation == EVP_PKEY_OP_UNDEFINED)
             return ret;
@@ -1650,10 +1650,10 @@ static int decode_cmd(int cmd, const char *name)
     return cmd;
 }
 
-static int evp_pkey_ctx_handle_cached_data(EVP_PKEY_CTX *ctx,
-                                           int keytype, int optype,
-                                           int cmd, const char *name,
-                                           const void *data, size_t data_len)
+static int evp_pkey_ctx_store_cached_data(EVP_PKEY_CTX *ctx,
+                                          int keytype, int optype,
+                                          int cmd, const char *name,
+                                          const void *data, size_t data_len)
 {
     if ((keytype != -1 && ctx->pmeth->pkey_id != keytype)
         || ((optype != -1) && !(ctx->operation & optype))) {
@@ -1707,7 +1707,7 @@ static void evp_pkey_ctx_free_all_cached_data(EVP_PKEY_CTX *ctx)
     evp_pkey_ctx_free_cached_data(ctx, EVP_PKEY_CTRL_SET1_ID, NULL);
 }
 
-int evp_pkey_ctx_unleash_cached_data(EVP_PKEY_CTX *ctx)
+int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx)
 {
     int ret = 1;
 

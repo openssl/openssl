@@ -526,7 +526,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
  end:
 #ifndef FIPS_MODULE
     if (ret > 0)
-        ret = evp_pkey_ctx_unleash_cached_data(ctx);
+        ret = evp_pkey_ctx_use_cached_data(ctx);
 #endif
 
     return ret;

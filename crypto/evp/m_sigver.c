@@ -285,7 +285,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
  end:
 #ifndef FIPS_MODULE
     if (ret > 0)
-        ret = evp_pkey_ctx_unleash_cached_data(locpctx);
+        ret = evp_pkey_ctx_use_cached_data(locpctx);
 #endif
 
     return ret > 0 ? 1 : 0;
