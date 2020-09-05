@@ -33,17 +33,43 @@ section, as described in L<config(5)/Provider Configuration Module>.
 
 =over 4
 
-=item B<module-mac>
+=item B<activate>
 
-The calculated MAC of the FIPS provider file.
+If present, the module is activated. The value assigned to this name is not
+significant.
 
 =item B<install-version>
 
 A version number for the fips install process. Should be 1.
 
+=item B<conditional-errors>
+
+The FIPS module normally enters an internal error mode if any self test fails.
+Once this error mode is active, no services or cryptographic algorithms are
+accessible from this point on.
+Continuous tests are a subset of the self tests (e.g., a key pair test during key
+generation, or the CRNG output test).
+Setting this value to C<0> allows the error mode to not be triggered if any
+continuous test fails. The default value of C<1> will trigger the error mode.
+Regardless of the value, the operation (e.g., key generation) that called the
+continuous test will return an error code if its continuous test fails. The
+operation may then be retried if the error mode has not been triggered.
+
+=item B<security-checks>
+
+This indicates if run-time checks related to enforcement of security parameters
+such as minimum security strength of keys and approved curve names are used.
+A value of '1' will perform the checks, otherwise if the value is '0' the checks
+are not performed and FIPS compliance must be done by procedures documented in
+the relevant Security Policy.
+
+=item B<module-mac>
+
+The calculated MAC of the FIPS provider file.
+
 =item B<install-status>
 
-An indicator that the self-tests were run.
+An indicator that the self-tests were successfully run.
 This should only be written after the module has
 successfully passed its self tests during installation.
 If this field is not present, then the self tests will run when the module
@@ -60,7 +86,10 @@ It is written-to at the same time as B<install-status> is updated.
 For example:
 
  [fips_sect]
+ activate = 1
  install-version = 1
+ conditional-errors = 1
+ security-checks = 1
  module-mac = 41:D0:FA:C2:5D:41:75:CD:7D:C3:90:55:6F:A4:DC
  install-mac = FE:10:13:5A:D3:B4:C7:82:1B:1E:17:4C:AC:84:0C
  install-status = INSTALL_SELF_TEST_KATS_RUN
@@ -68,6 +97,7 @@ For example:
 =head1 SEE ALSO
 
 L<config(5)>
+L<openssl-fipsinstall(1)>
 
 =head1 COPYRIGHT
 

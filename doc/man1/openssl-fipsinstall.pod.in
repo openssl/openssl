@@ -20,6 +20,7 @@ B<openssl fipsinstall>
 [B<-noout>]
 [B<-quiet>]
 [B<-no_conditional_errors>]
+[B<-no_security_checks>]
 [B<-corrupt_desc> I<selftest_description>]
 [B<-corrupt_type> I<selftest_type>]
 [B<-config> I<parent_config>]
@@ -54,6 +55,14 @@ If the value is '0' then the module error state will not be entered.
 Regardless of whether the error state is entered or not, the current operation
 (e.g. key generation) will return an error. The user is responsible for retrying
 the operation if the module error state is not entered.
+
+=item - A control to indicate whether run-time security checks are done.
+
+This indicates if run-time checks related to enforcement of security parameters
+such as minimum security strength of keys and approved curve names are used.
+The default value of '1' will perform the checks.
+If the value is '0' the checks are not performed and FIPS compliance must
+be done by procedures documented in the relevant Security Policy.
 
 =back
 
@@ -150,6 +159,9 @@ Disable logging of the self tests.
 Configure the module to not enter an error state if a conditional self test
 fails as described above.
 
+=item B<-no_security_checks>
+
+Configure the module to not perform run-time security checks as described above.
 
 =item B<-quiet>
 
@@ -179,21 +191,15 @@ All other options are ignored if '-config' is used.
 Calculate the mac of a FIPS module F<fips.so> and run a FIPS self test
 for the module, and save the F<fips.cnf> configuration file:
 
- openssl fipsinstall -module ./fips.so -out fips.cnf -provider_name fips \
-         -section_name fipsinstall -mac_name HMAC -macopt digest:SHA256 \
-         -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213
+ openssl fipsinstall -module ./fips.so -out fips.cnf -provider_name fips
 
 Verify that the configuration file F<fips.cnf> contains the correct info:
 
- openssl fipsinstall -module ./fips.so -in fips.cnf  -provider_name fips \
-          -section_name fips_install -mac_name HMAC -macopt digest:SHA256 \
-          -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 -verify
+ openssl fipsinstall -module ./fips.so -in fips.cnf  -provider_name fips -verify
 
 Corrupt any self tests which have the description C<SHA1>:
 
  openssl fipsinstall -module ./fips.so -out fips.cnf -provider_name fips \
-         -section_name fipsinstall -mac_name HMAC -macopt digest:SHA256 \
-         -macopt hexkey:000102030405060708090A0B0C0D0E0F10111213 \
          -corrupt_desc 'SHA1'
 
 Validate that the fips module can be loaded from a base configuration file:

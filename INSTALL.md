@@ -695,6 +695,11 @@ memory allocation).
 
 Don't compile the FIPS provider
 
+### no-fips-securitychecks
+
+Don't perform FIPS module run-time checks related to enforcement of security
+parameters such as minimum security strength of keys.
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.

@@ -37,7 +37,8 @@ typedef enum OPTION_choice {
     OPT_IN, OPT_OUT, OPT_MODULE,
     OPT_PROV_NAME, OPT_SECTION_NAME, OPT_MAC_NAME, OPT_MACOPT, OPT_VERIFY,
     OPT_NO_LOG, OPT_CORRUPT_DESC, OPT_CORRUPT_TYPE, OPT_QUIET, OPT_CONFIG,
-    OPT_NO_CONDITIONAL_ERRORS
+    OPT_NO_CONDITIONAL_ERRORS,
+    OPT_NO_SECURITY_CHECKS
 } OPTION_CHOICE;
 
 const OPTIONS fipsinstall_options[] = {
@@ -52,6 +53,8 @@ const OPTIONS fipsinstall_options[] = {
      {"no_conditional_errors", OPT_NO_CONDITIONAL_ERRORS, '-',
       "Disable the ability of the fips module to enter an error state if"
       " any conditional self tests fail"},
+    {"no_security_checks", OPT_NO_SECURITY_CHECKS, '-',
+     "Disable the run-time FIPS security checks in the module"},
     OPT_SECTION("Input"),
     {"in", OPT_IN, '<', "Input config file, used when verifying"},
 
@@ -133,8 +136,8 @@ static int write_config_header(BIO *out, const char *prov_name,
 
 /*
  * Outputs a fips related config file that contains entries for the fips
- * module checksum, installation indicator checksum and the option
- * conditional_errors.
+ * module checksum, installation indicator checksum and the options
+ * conditional_errors and security_checks.
  *
  * Returns 1 if the config file is written otherwise it returns 0 on error.
  */
@@ -142,6 +145,7 @@ static int write_config_fips_section(BIO *out, const char *section,
                                      unsigned char *module_mac,
                                      size_t module_mac_len,
                                      int conditional_errors,
+                                     int security_checks,
                                      unsigned char *install_mac,
                                      size_t install_mac_len)
 {
@@ -153,16 +157,17 @@ static int write_config_fips_section(BIO *out, const char *section,
                       VERSION_VAL) <= 0
         || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
                       conditional_errors ? "1" : "0") <= 0
+        || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS,
+                      security_checks ? "1" : "0") <= 0
         || !print_mac(out, OSSL_PROV_FIPS_PARAM_MODULE_MAC, module_mac,
                       module_mac_len))
         goto end;
 
     if (install_mac != NULL) {
-        if (!(print_mac(out, OSSL_PROV_FIPS_PARAM_INSTALL_MAC, install_mac,
-                      install_mac_len)
-              && BIO_printf(out, "%s = %s\n",
-                            OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
-                            INSTALL_STATUS_VAL) > 0))
+        if (!print_mac(out, OSSL_PROV_FIPS_PARAM_INSTALL_MAC, install_mac,
+                       install_mac_len)
+            || BIO_printf(out, "%s = %s\n", OSSL_PROV_FIPS_PARAM_INSTALL_STATUS,
+                          INSTALL_STATUS_VAL) <= 0)
         goto end;
     }
     ret = 1;
@@ -174,7 +179,8 @@ static CONF *generate_config_and_load(const char *prov_name,
                                       const char *section,
                                       unsigned char *module_mac,
                                       size_t module_mac_len,
-                                      int conditional_errors)
+                                      int conditional_errors,
+                                      int security_checks)
 {
     BIO *mem_bio = NULL;
     CONF *conf = NULL;
@@ -186,6 +192,7 @@ static CONF *generate_config_and_load(const char *prov_name,
          || !write_config_fips_section(mem_bio, section,
                                        module_mac, module_mac_len,
                                        conditional_errors,
+                                       security_checks,
                                        NULL, 0))
         goto end;
 
@@ -280,7 +287,7 @@ end:
 int fipsinstall_main(int argc, char **argv)
 {
     int ret = 1, verify = 0, gotkey = 0, gotdigest = 0;
-    int enable_conditional_errors = 1;
+    int enable_conditional_errors = 1, enable_security_checks = 1;
     const char *section_name = "fips_sect";
     const char *mac_name = "HMAC";
     const char *prov_name = "fips";
@@ -322,6 +329,9 @@ opthelp:
             break;
         case OPT_NO_CONDITIONAL_ERRORS:
             enable_conditional_errors = 0;
+            break;
+        case OPT_NO_SECURITY_CHECKS:
+            enable_security_checks = 0;
             break;
         case OPT_QUIET:
             quiet = 1;
@@ -470,7 +480,8 @@ opthelp:
 
         conf = generate_config_and_load(prov_name, section_name, module_mac,
                                         module_mac_len,
-                                        enable_conditional_errors);
+                                        enable_conditional_errors,
+                                        enable_security_checks);
         if (conf == NULL)
             goto end;
         if (!load_fips_prov_and_run_self_test(prov_name))
@@ -484,6 +495,7 @@ opthelp:
         if (!write_config_fips_section(fout, section_name,
                                        module_mac, module_mac_len,
                                        enable_conditional_errors,
+                                       enable_security_checks,
                                        install_mac, install_mac_len))
             goto end;
         if (!quiet)

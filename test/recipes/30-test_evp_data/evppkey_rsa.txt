@@ -14,7 +14,7 @@
 
 # Private keys used for PKEY operations.
 
-# Any Tests that keys <2048 bits OR sign with SHA1 are in this file.
+# Any Tests that have keys < 2048 bits OR sign with SHA1 are in this file.
 
 # RSA 2048 bit key.
 

@@ -46,6 +46,12 @@ extern "C" {
  */
 # define OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS "conditional-errors"
 
+/*
+ * A boolean that determines if the runtime FIPS security checks are performed.
+ * Type: OSSL_PARAM_UTF8_STRING
+ */
+# define OSSL_PROV_FIPS_PARAM_SECURITY_CHECKS "security-checks"
+
 # ifdef __cplusplus
 }
 # endif
