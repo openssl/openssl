@@ -121,19 +121,6 @@ EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags)
     pmeth->flags = flags | EVP_PKEY_FLAG_DYNAMIC;
     return pmeth;
 }
-#endif /* FIPS_MODULE */
-
-static int get_legacy_alg_type_from_name(const char *keytype)
-{
-    int id = NID_undef;
-
-#ifndef FIPS_MODULE
-    id = EVP_PKEY_type(OBJ_sn2nid(keytype));
-    if (id == NID_undef)
-        id = EVP_PKEY_type(OBJ_ln2nid(keytype));
-#endif
-    return id;
-}
 
 static void help_get_legacy_alg_type_from_keymgmt(const char *keytype,
                                                   void *arg)
@@ -141,7 +128,7 @@ static void help_get_legacy_alg_type_from_keymgmt(const char *keytype,
     int *type = arg;
 
     if (*type == NID_undef)
-        *type = get_legacy_alg_type_from_name(keytype);
+        *type = evp_pkey_name2type(keytype);
 }
 
 static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
@@ -152,13 +139,14 @@ static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
                              &type);
     return type;
 }
+#endif /* FIPS_MODULE */
 
 static int is_legacy_alg(int id, const char *keytype)
 {
 #ifndef FIPS_MODULE
     /* Certain EVP_PKEY keytypes are only available in legacy form */
     if (id == -1)
-        id = get_legacy_alg_type_from_name(keytype);
+        id = evp_pkey_name2type(keytype);
 
     switch (id) {
     /*
@@ -207,7 +195,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         if (pkey != NULL)
             id = pkey->type;
         else if (keytype != NULL)
-            id = get_legacy_alg_type_from_name(keytype);
+            id = evp_pkey_name2type(keytype);
         if (id == NID_undef)
             id = -1;
     }
@@ -274,6 +262,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
         else if (keymgmt == NULL)
             return NULL;   /* EVP_KEYMGMT_fetch() recorded an error */
 
+#ifndef FIPS_MODULE
         /*
          * Chase down the legacy NID, as that might be needed for diverse
          * purposes, such as ensure that EVP_PKEY_type() can return sensible
@@ -302,6 +291,7 @@ static EVP_PKEY_CTX *int_ctx_new(OPENSSL_CTX *libctx,
                 }
             }
         }
+#endif
     }
 
     if (pmeth == NULL && keymgmt == NULL) {
