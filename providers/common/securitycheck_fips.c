@@ -19,11 +19,12 @@
 #include "prov/securitycheck.h"
 #include "prov/providercommonerr.h"
 
+extern int FIPS_security_check_enabled(void);
+
 int securitycheck_enabled(void)
 {
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
-    /* TODO(3.0): make this configurable */
-    return 1;
+    return FIPS_security_check_enabled();
 #else
     return 0;
 #endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
