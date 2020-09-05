@@ -123,7 +123,7 @@ TODO Write a set of cookbook documents and link to them.
  #include <openssl/param_build.h>
 
  /*
-  * Fix data to represent the private and public key.
+  * Fixed data to represent the private and public key.
   */
  const unsigned char priv_data[] = {
      0xb9, 0x2f, 0x3c, 0xe6, 0x2f, 0xfb, 0x45, 0x68,
