@@ -58,6 +58,8 @@ Print a usage message.
 =item B<-module> I<filename>
 
 Filename of the FIPS module to perform an integrity check on.
+The path provided in the filename is used to load the module when it is
+activated, and this overrides the environment variable B<OPENSSL_MODULES>.
 
 =item B<-out> I<configfilename>
 
