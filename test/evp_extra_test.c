@@ -1844,6 +1844,10 @@ static int test_pkey_ctx_fail_without_provider(int tst)
         TEST_info("EC disable, skipping SM2 check...");
         goto end;
 #endif
+#ifdef OPENSSL_NO_SM2
+        TEST_info("SM2 disable, skipping SM2 check...");
+        goto end;
+#endif
         break;
     default:
         TEST_error("No test for case %d", tst);
@@ -1854,7 +1858,7 @@ static int test_pkey_ctx_fail_without_provider(int tst)
     if (expect_null ? !TEST_ptr_null(pctx) : !TEST_ptr(pctx))
         goto err;
 
-#ifdef OPENSSL_NO_EC
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_SM2)
  end:
 #endif
     ret = 1;
