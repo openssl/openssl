@@ -31,7 +31,6 @@
 #include <openssl/sha.h>
 
 char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 int ssl3_cbc_digest_record(const EVP_MD *md,
                            unsigned char *md_out,
                            size_t *md_out_size,
@@ -129,31 +128,10 @@ static void tls1_sha512_final_raw(void *ctx, unsigned char *md_out)
         l2n8(sha512->h[i], md_out);
     }
 }
-#endif
 
 #undef  LARGEST_DIGEST_CTX
 #define LARGEST_DIGEST_CTX SHA512_CTX
 
-/*
- * ssl3_cbc_record_digest_supported returns 1 iff |ctx| uses a hash function
- * which ssl3_cbc_digest_record supports.
- */
-char ssl3_cbc_record_digest_supported(const EVP_MD_CTX *ctx)
-{
-    switch (EVP_MD_CTX_type(ctx)) {
-    case NID_md5:
-    case NID_sha1:
-    case NID_sha224:
-    case NID_sha256:
-    case NID_sha384:
-    case NID_sha512:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 /*-
  * ssl3_cbc_digest_record computes the MAC of a decrypted, padded SSLv3/TLS
  * record.
@@ -526,4 +504,3 @@ int ssl3_cbc_digest_record(const EVP_MD *md,
     EVP_MD_CTX_free(md_ctx);
     return ret;
 }
-#endif
