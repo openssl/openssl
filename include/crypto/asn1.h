@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/asn1.h>
+
 /* Internal ASN1 structures and functions: not for application use */
 
 /* ASN1 public key method structure */
@@ -124,3 +126,10 @@ struct asn1_pctx_st {
     unsigned long oid_flags;
     unsigned long str_flags;
 } /* ASN1_PCTX */ ;
+
+/* ASN1 type functions */
+
+int asn1_type_set_octetstring_int(ASN1_TYPE *a, long num,
+                                  unsigned char *data, int len);
+int asn1_type_get_octetstring_int(const ASN1_TYPE *a, long *num,
+                                  unsigned char *data, int max_len);

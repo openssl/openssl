@@ -82,6 +82,7 @@ int ERR_load_ASN1_strings(void);
 #  define ASN1_F_ASN1_TIME_ADJ                             0
 #  define ASN1_F_ASN1_TYPE_GET_INT_OCTETSTRING             0
 #  define ASN1_F_ASN1_TYPE_GET_OCTETSTRING                 0
+#  define ASN1_F_ASN1_TYPE_GET_OCTETSTRING_INT             0
 #  define ASN1_F_ASN1_UTCTIME_ADJ                          0
 #  define ASN1_F_ASN1_VERIFY                               0
 #  define ASN1_F_B64_READ_ASN1                             0

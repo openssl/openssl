@@ -22,11 +22,59 @@
 #include <openssl/dh.h>
 #include <openssl/ec.h>
 #include "crypto/evp.h"
+#include "crypto/asn1.h"
 #include "internal/provider.h"
 #include "evp_local.h"
 
 #if !defined(FIPS_MODULE)
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+{
+    return evp_cipher_param_to_asn1_ex(c, type, NULL);
+}
+
+int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+{
+    return evp_cipher_asn1_to_param_ex(c, type, NULL);
+}
+
+int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+{
+    int i = 0;
+    unsigned int l;
+
+    if (type != NULL) {
+        unsigned char iv[EVP_MAX_IV_LENGTH];
+
+        l = EVP_CIPHER_CTX_iv_length(ctx);
+        if (!ossl_assert(l <= sizeof(iv)))
+            return -1;
+        i = ASN1_TYPE_get_octetstring(type, iv, l);
+        if (i != (int)l)
+            return -1;
+
+        if (!EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1))
+            return -1;
+    }
+    return i;
+}
+
+int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+{
+    int i = 0;
+    unsigned int j;
+    unsigned char *oiv = NULL;
+
+    if (type != NULL) {
+        oiv = (unsigned char *)EVP_CIPHER_CTX_original_iv(c);
+        j = EVP_CIPHER_CTX_iv_length(c);
+        OPENSSL_assert(j <= sizeof(c->iv));
+        i = ASN1_TYPE_set_octetstring(type, oiv, j);
+    }
+    return i;
+}
+
+int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *asn1_params)
 {
     int ret = -1;                /* Assume the worst */
     const EVP_CIPHER *cipher = c->cipher;
@@ -58,6 +106,9 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
             break;
 
         case EVP_CIPH_GCM_MODE:
+            ret = evp_cipher_set_asn1_aead_params(c, type, asn1_params);
+            break;
+
         case EVP_CIPH_CCM_MODE:
         case EVP_CIPH_XTS_MODE:
         case EVP_CIPH_OCB_MODE:
@@ -104,15 +155,16 @@ int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 
  err:
     if (ret == -2)
-        EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, ASN1_R_UNSUPPORTED_CIPHER);
+        EVPerr(0, EVP_R_UNSUPPORTED_CIPHER);
     else if (ret <= 0)
-        EVPerr(EVP_F_EVP_CIPHER_PARAM_TO_ASN1, EVP_R_CIPHER_PARAMETER_ERROR);
+        EVPerr(0, EVP_R_CIPHER_PARAMETER_ERROR);
     if (ret < -1)
         ret = -1;
     return ret;
 }
 
-int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *asn1_params)
 {
     int ret = -1;                /* Assume the worst */
     const EVP_CIPHER *cipher = c->cipher;
@@ -142,6 +194,9 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
             break;
 
         case EVP_CIPH_GCM_MODE:
+            ret = evp_cipher_get_asn1_aead_params(c, type, asn1_params);
+            break;
+
         case EVP_CIPH_CCM_MODE:
         case EVP_CIPH_XTS_MODE:
         case EVP_CIPH_OCB_MODE:
@@ -170,47 +225,43 @@ int EVP_CIPHER_asn1_to_param(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     }
 
     if (ret == -2)
-        EVPerr(EVP_F_EVP_CIPHER_ASN1_TO_PARAM, EVP_R_UNSUPPORTED_CIPHER);
+        EVPerr(0, EVP_R_UNSUPPORTED_CIPHER);
     else if (ret <= 0)
-        EVPerr(EVP_F_EVP_CIPHER_ASN1_TO_PARAM, EVP_R_CIPHER_PARAMETER_ERROR);
+        EVPerr(0, EVP_R_CIPHER_PARAMETER_ERROR);
     if (ret < -1)
         ret = -1;
     return ret;
 }
 
-int EVP_CIPHER_get_asn1_iv(EVP_CIPHER_CTX *ctx, ASN1_TYPE *type)
+int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                    evp_cipher_aead_asn1_params *asn1_params)
 {
     int i = 0;
-    unsigned int l;
+    long tl;
+    unsigned char iv[EVP_MAX_IV_LENGTH];
 
-    if (type != NULL) {
-        unsigned char iv[EVP_MAX_IV_LENGTH];
+    if (type == NULL || asn1_params == NULL)
+        return 0;
 
-        l = EVP_CIPHER_CTX_iv_length(ctx);
-        if (!ossl_assert(l <= sizeof(iv)))
-            return -1;
-        i = ASN1_TYPE_get_octetstring(type, iv, l);
-        if (i != (int)l)
-            return -1;
+    i = asn1_type_get_octetstring_int(type, &tl, NULL, EVP_MAX_IV_LENGTH);
+    if (i <= 0)
+        return -1;
+    asn1_type_get_octetstring_int(type, &tl, iv, i);
 
-        if (!EVP_CipherInit_ex(ctx, NULL, NULL, NULL, iv, -1))
-            return -1;
-    }
+    memcpy(asn1_params->iv, iv, i);
+    asn1_params->iv_len = i;
+
     return i;
 }
 
-int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
+int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                    evp_cipher_aead_asn1_params *asn1_params)
 {
-    int i = 0;
-    unsigned int j;
-    unsigned char oiv[EVP_MAX_IV_LENGTH];
+    if (type == NULL || asn1_params == NULL)
+        return 0;
 
-    if (type != NULL && EVP_CIPHER_CTX_get_iv(c, oiv, sizeof(oiv))) {
-        j = EVP_CIPHER_CTX_iv_length(c);
-        OPENSSL_assert(j <= sizeof(c->iv));
-        i = ASN1_TYPE_set_octetstring(type, oiv, j);
-    }
-    return i;
+    return asn1_type_set_octetstring_int(type, asn1_params->tag_len,
+                                         asn1_params->iv, asn1_params->iv_len);
 }
 #endif /* !defined(FIPS_MODULE) */
 
