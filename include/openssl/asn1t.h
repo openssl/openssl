@@ -825,7 +825,7 @@ typedef struct ASN1_STREAM_ARG_st {
 
 # define IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(stname) \
         static ossl_unused stname *d2i_##stname(stname **a, \
-                                   const unsigned char **in, long len) \
+                                                const unsigned char **in, long len) \
         { \
                 return (stname *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, \
                                                ASN1_ITEM_rptr(stname)); \
