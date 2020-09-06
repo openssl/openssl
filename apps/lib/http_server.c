@@ -24,6 +24,12 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 
+#if defined(__TANDEM)
+# if defined(OPENSSL_TANDEM_FLOSS)
+#  include <floss.h(floss_fork)>
+# endif
+#endif
+
 int multi = 0; /* run multiple responder processes */
 
 #ifdef HTTP_DAEMON

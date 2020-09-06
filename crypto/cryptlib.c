@@ -471,3 +471,11 @@ size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
     return 0;
 }
 #endif
+
+#if defined(__TANDEM) && defined(OPENSSL_VPROC)
+/* Define VPROC function for HP NonStop build crypto library */
+# define OPENSSL_VPROC_STRING_(x)    x##_CRYPTO
+# define OPENSSL_VPROC_STRING(x)     OPENSSL_VPROC_STRING_(x)
+# define OPENSSL_VPROC_FUNC          OPENSSL_VPROC_STRING(OPENSSL_VPROC)
+void OPENSSL_VPROC_FUNC(void) {}
+#endif /* __TANDEM */

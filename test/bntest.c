@@ -10,6 +10,9 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+#ifdef __TANDEM
+#include <strings.h>
+#endif
 #include <ctype.h>
 
 #include <openssl/bn.h>
