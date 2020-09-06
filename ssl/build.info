@@ -23,7 +23,7 @@ SOURCE[../libssl]=\
         pqueue.c ../crypto/packet.c \
         statem/statem_srvr.c statem/statem_clnt.c  s3_lib.c  s3_enc.c record/rec_layer_s3.c \
         statem/statem_lib.c statem/extensions.c statem/extensions_srvr.c \
-        statem/extensions_clnt.c statem/extensions_cust.c s3_cbc.c s3_msg.c \
+        statem/extensions_clnt.c statem/extensions_cust.c s3_msg.c \
         methods.c   t1_lib.c  t1_enc.c tls13_enc.c \
         d1_lib.c  record/rec_layer_d1.c d1_msg.c \
         statem/statem_dtls.c d1_srtp.c \
@@ -34,6 +34,9 @@ SOURCE[../libssl]=\
         record/ssl3_buffer.c record/ssl3_record.c record/dtls1_bitmap.c \
         statem/statem.c record/ssl3_record_tls13.c record/tls_pad.c \
         $KTLSSRC
+IF[{- !$disabled{'deprecated-3.0'} -}]
+  SOURCE[../libssl]=s3_cbc.c
+ENDIF
 DEFINE[../libssl]=$AESDEF
 
 SOURCE[../providers/libcommon.a]=record/tls_pad.c
