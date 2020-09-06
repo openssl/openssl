@@ -1335,6 +1335,9 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
     if (!sending &&
         EVP_CIPHER_CTX_mode(ssl->enc_read_ctx) == EVP_CIPH_CBC_MODE &&
         ssl3_cbc_record_digest_supported(hash)) {
+#ifdef OPENSSL_NO_DEPRECATED_3_0
+        return 0;
+#else
         /*
          * This is a CBC-encrypted record. We must avoid leaking any
          * timing-side channel information about how many blocks of data we
@@ -1368,6 +1371,7 @@ int n_ssl3_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
                                    rec->length, rec->orig_len,
                                    mac_sec, md_size, 1) <= 0)
             return 0;
+#endif
     } else {
         unsigned int md_size_u;
         /* Chop the digest off the end :-) */
