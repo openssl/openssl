@@ -57,7 +57,7 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
         } else {
             if (inlen < mac_len) {
                 PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                PKCS12_R_UNSUPPORTED_PKCS12_MODE);
+                          PKCS12_R_UNSUPPORTED_PKCS12_MODE);
                 goto err;
             }
             inlen -= mac_len;
