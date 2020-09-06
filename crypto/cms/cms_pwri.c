@@ -44,8 +44,9 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
                                                ossl_ssize_t passlen,
                                                const EVP_CIPHER *kekciph)
 {
+    STACK_OF(CMS_RecipientInfo) *ris;
     CMS_RecipientInfo *ri = NULL;
-    CMS_EnvelopedData *env;
+    CMS_EncryptedContentInfo *ec;
     CMS_PasswordRecipientInfo *pwri;
     EVP_CIPHER_CTX *ctx = NULL;
     X509_ALGOR *encalg = NULL;
@@ -53,8 +54,11 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     int ivlen;
     const CMS_CTX *cms_ctx = cms_get0_cmsctx(cms);
 
-    env = cms_get0_enveloped(cms);
-    if (!env)
+    ec = cms_get0_env_enc_content(cms);
+    if (ec == NULL)
+        return NULL;
+    ris = CMS_get0_RecipientInfos(cms);
+    if (ris == NULL)
         return NULL;
 
     if (wrap_nid <= 0)
@@ -65,7 +69,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
 
     /* Get from enveloped data */
     if (kekciph == NULL)
-        kekciph = env->encryptedContentInfo->cipher;
+        kekciph = ec->cipher;
 
     if (kekciph == NULL) {
         CMSerr(CMS_F_CMS_ADD0_RECIPIENT_PASSWORD, CMS_R_NO_CIPHER);
@@ -156,7 +160,7 @@ CMS_RecipientInfo *CMS_add0_recipient_password(CMS_ContentInfo *cms,
     CMS_RecipientInfo_set0_password(ri, pass, passlen);
     pwri->version = 0;
 
-    if (!sk_CMS_RecipientInfo_push(env->recipientInfos, ri))
+    if (!sk_CMS_RecipientInfo_push(ris, ri))
         goto merr;
 
     return ri;
@@ -292,7 +296,7 @@ int cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     size_t keylen;
     const CMS_CTX *cms_ctx = cms_get0_cmsctx(cms);
 
-    ec = cms->d.envelopedData->encryptedContentInfo;
+    ec = cms_get0_env_enc_content(cms);
 
     pwri = ri->d.pwri;
 

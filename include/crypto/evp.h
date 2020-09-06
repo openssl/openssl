@@ -511,6 +511,18 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
+typedef struct {
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned int iv_len;
+    unsigned int tag_len;
+} evp_cipher_aead_asn1_params;
+
+int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *params);
+
+int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *params);
+
 /*
  * An EVP_PKEY can have the following states:
  *
