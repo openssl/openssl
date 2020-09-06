@@ -1,0 +1,42 @@
+## Probably have to be set:
+# COMP_ROOT=$(cygpath -w /path/to/comp_rooot)   # must be path format for system (ie windows)
+# CC=/path/to/c99                               # must be executable by shell
+
+## Optionally
+# DBGFLAG="--debug"
+# CIPHENABLES="enable-ssl3 enable-ssl3-method enable-weak-ssl-ciphers enable-rc4"
+# onplatform cross compile (nsx->nsi): SYSTEMLIBS="-L/E/cs3/usr/local/lib"
+## VPROC
+## For Itanium:
+# OPENSSL_VPROC_PREFIX=T0085H06
+## For X86:
+# OPENSSL_VPROC_PREFIX=T0085L01
+# export OPENSSL_VPROC=${OPENSSL_VPROC_PREFIX}_$(cat include/openssl/opensslv.h |\
+#  sed -n -e 's/^ *# *define  *OPENSSL_VERSION_TEXT[^"]*"\([^"]*\)"/\1/p' |\
+#  sed -e 's/[. ]/_/g' -e 's/[.-]/_/g' |\
+#  grep -v fips \
+#  )
+
+## Current Configure targets
+#  Guardian targets' libraries will have so-names 'ssl' and 'crypto'
+./Configure nonstop-nsx          --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nsx_g        --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nsx_put      --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  threads "-D_REENTRANT" --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nsx_spt      --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  threads "-D_REENTRANT" --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nsx_64       --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nsx_64_put   --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  threads "-D_REENTRANT" --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nsx_g_tandem --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+
+./Configure nonstop-nse          --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nse_g        --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nse_put      --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  threads "-D_REENTRANT" --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nse_spt      --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  threads "-D_REENTRANT" --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nse_64       --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nse_64_put   --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  threads "-D_REENTRANT" --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+./Configure nonstop-nse_g_tandem --prefix=${PWD}/install --openssldir=${PWD}/install no-dynamic-engine  no-threads             --with-rand-seed=egd ${CIPHENABLES} ${DBGFLAG} ${SYSTEMLIBS}
+
+## Build loop:
+#  Configure <...>
+#  Make
+#  ...
+#  Make install

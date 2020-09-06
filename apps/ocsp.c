@@ -38,6 +38,12 @@ DEFINE_STACK_OF(CONF_VALUE)
 DEFINE_STACK_OF(X509)
 DEFINE_STACK_OF_STRING()
 
+#if defined(__TANDEM)
+# if defined(OPENSSL_TANDEM_FLOSS)
+#  include <floss.h(floss_fork)>
+# endif
+#endif
+
 #if defined(OPENSSL_SYS_VXWORKS)
 /* not supported */
 int setpgid(pid_t pid, pid_t pgid)

@@ -138,6 +138,21 @@ extern "C" {
 #  endif
 # endif
 
+/* ---------------------------- HP NonStop -------------------------------- */
+# ifdef __TANDEM
+#  ifdef _STRING
+#   include <strings.h>
+#  endif
+# define OPENSSL_USE_BUILD_DATE
+# if defined(OPENSSL_THREADS) && defined(_SPT_MODEL_)
+#  define  SPT_THREAD_SIGNAL 1
+#  define  SPT_THREAD_AWARE 1
+#  include <spthread.h>
+# elif defined(OPENSSL_THREADS) && defined(_PUT_MODEL_)
+#  include <pthread.h>
+# endif
+# endif
+
 /**
  * That's it for OS-specific stuff
  *****************************************************************************/
