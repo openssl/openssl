@@ -10,7 +10,7 @@
  */
 
 /* Serialized OID's */
-static const unsigned char so[7845] = {
+static const unsigned char so[7901] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1086,9 +1086,16 @@ static const unsigned char so[7845] = {
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x05,       /* [ 7820] OBJ_XmppAddr */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x07,       /* [ 7828] OBJ_SRVName */
     0x2B,0x06,0x01,0x05,0x05,0x07,0x08,0x08,       /* [ 7836] OBJ_NAIRealm */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x1D,       /* [ 7844] OBJ_cmcArchive */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x1E,       /* [ 7852] OBJ_id_kp_bgpsec_router */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x1F,       /* [ 7860] OBJ_id_kp_BrandIndicatorforMessageIdentification */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x03,0x20,       /* [ 7868] OBJ_cmKGA */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x11,       /* [ 7876] OBJ_id_it_caCerts */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x12,       /* [ 7884] OBJ_id_it_rootCaKeyUpdate */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x04,0x13,       /* [ 7892] OBJ_id_it_certReqTemplate */
 };
 
-#define NUM_NID 1219
+#define NUM_NID 1226
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2309,9 +2316,16 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"modp_6144", "modp_6144", NID_modp_6144},
     {"modp_8192", "modp_8192", NID_modp_8192},
     {"KxGOST18", "kx-gost18", NID_kx_gost18},
+    {"cmcArchive", "CMC Archive Server", NID_cmcArchive, 8, &so[7844]},
+    {"id-kp-bgpsec-router", "BGPsec Router", NID_id_kp_bgpsec_router, 8, &so[7852]},
+    {"id-kp-BrandIndicatorforMessageIdentification", "Brand Indicator for Message Identification", NID_id_kp_BrandIndicatorforMessageIdentification, 8, &so[7860]},
+    {"cmKGA", "Certificate Management Key Generation Authority", NID_cmKGA, 8, &so[7868]},
+    {"id-it-caCerts", "id-it-caCerts", NID_id_it_caCerts, 8, &so[7876]},
+    {"id-it-rootCaKeyUpdate", "id-it-rootCaKeyUpdate", NID_id_it_rootCaKeyUpdate, 8, &so[7884]},
+    {"id-it-certReqTemplate", "id-it-certReqTemplate", NID_id_it_certReqTemplate, 8, &so[7892]},
 };
 
-#define NUM_SN 1210
+#define NUM_SN 1217
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -2692,6 +2706,8 @@ static const unsigned int sn_objs[NUM_SN] = {
      407,    /* "characteristic-two-field" */
      395,    /* "clearance" */
      130,    /* "clientAuth" */
+    1222,    /* "cmKGA" */
+    1219,    /* "cmcArchive" */
     1131,    /* "cmcCA" */
     1132,    /* "cmcRA" */
      131,    /* "codeSigning" */
@@ -2931,8 +2947,10 @@ static const unsigned int sn_objs[NUM_SN] = {
     1104,    /* "id-hmacWithSHA3-384" */
     1105,    /* "id-hmacWithSHA3-512" */
      260,    /* "id-it" */
+    1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
+    1225,    /* "id-it-certReqTemplate" */
      311,    /* "id-it-confirmWaitTime" */
      303,    /* "id-it-currentCRL" */
      300,    /* "id-it-encKeyPairTypes" */
@@ -2942,12 +2960,15 @@ static const unsigned int sn_objs[NUM_SN] = {
      312,    /* "id-it-origPKIMessage" */
      301,    /* "id-it-preferredSymmAlg" */
      309,    /* "id-it-revPassphrase" */
+    1224,    /* "id-it-rootCaKeyUpdate" */
      299,    /* "id-it-signKeyPairTypes" */
      305,    /* "id-it-subscriptionRequest" */
      306,    /* "id-it-subscriptionResponse" */
      784,    /* "id-it-suppLangTags" */
      304,    /* "id-it-unsupportedOIDs" */
      128,    /* "id-kp" */
+    1221,    /* "id-kp-BrandIndicatorforMessageIdentification" */
+    1220,    /* "id-kp-bgpsec-router" */
      280,    /* "id-mod-attribute-cert" */
      274,    /* "id-mod-cmc" */
      277,    /* "id-mod-cmp" */
@@ -3525,7 +3546,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1093,    /* "x509ExtAdmission" */
 };
 
-#define NUM_LN 1210
+#define NUM_LN 1217
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -3533,16 +3554,20 @@ static const unsigned int ln_objs[NUM_LN] = {
      910,    /* "Any Extended Key Usage" */
      664,    /* "Any language" */
      177,    /* "Authority Information Access" */
+    1220,    /* "BGPsec Router" */
      365,    /* "Basic OCSP Response" */
      285,    /* "Biometric Info" */
+    1221,    /* "Brand Indicator for Message Identification" */
      179,    /* "CA Issuers" */
      785,    /* "CA Repository" */
+    1219,    /* "CMC Archive Server" */
     1131,    /* "CMC Certificate Authority" */
     1132,    /* "CMC Registration Authority" */
      954,    /* "CT Certificate SCTs" */
      952,    /* "CT Precertificate Poison" */
      951,    /* "CT Precertificate SCTs" */
      953,    /* "CT Precertificate Signer" */
+    1222,    /* "Certificate Management Key Generation Authority" */
      131,    /* "Code Signing" */
     1024,    /* "Ctrl/Provision WAP Termination" */
     1023,    /* "Ctrl/provision WAP Access" */
@@ -4144,8 +4169,10 @@ static const unsigned int ln_objs[NUM_LN] = {
      508,    /* "id-hex-multipart-message" */
      507,    /* "id-hex-partial-message" */
      260,    /* "id-it" */
+    1223,    /* "id-it-caCerts" */
      302,    /* "id-it-caKeyUpdateInfo" */
      298,    /* "id-it-caProtEncCert" */
+    1225,    /* "id-it-certReqTemplate" */
      311,    /* "id-it-confirmWaitTime" */
      303,    /* "id-it-currentCRL" */
      300,    /* "id-it-encKeyPairTypes" */
@@ -4155,6 +4182,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      312,    /* "id-it-origPKIMessage" */
      301,    /* "id-it-preferredSymmAlg" */
      309,    /* "id-it-revPassphrase" */
+    1224,    /* "id-it-rootCaKeyUpdate" */
      299,    /* "id-it-signKeyPairTypes" */
      305,    /* "id-it-subscriptionRequest" */
      306,    /* "id-it-subscriptionResponse" */
@@ -4739,7 +4767,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1081
+#define NUM_OBJ 1088
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -5345,6 +5373,10 @@ static const unsigned int obj_objs[NUM_OBJ] = {
     1030,    /* OBJ_sendProxiedOwner             1 3 6 1 5 5 7 3 26 */
     1131,    /* OBJ_cmcCA                        1 3 6 1 5 5 7 3 27 */
     1132,    /* OBJ_cmcRA                        1 3 6 1 5 5 7 3 28 */
+    1219,    /* OBJ_cmcArchive                   1 3 6 1 5 5 7 3 29 */
+    1220,    /* OBJ_id_kp_bgpsec_router          1 3 6 1 5 5 7 3 30 */
+    1221,    /* OBJ_id_kp_BrandIndicatorforMessageIdentification 1 3 6 1 5 5 7 3 31 */
+    1222,    /* OBJ_cmKGA                        1 3 6 1 5 5 7 3 32 */
      298,    /* OBJ_id_it_caProtEncCert          1 3 6 1 5 5 7 4 1 */
      299,    /* OBJ_id_it_signKeyPairTypes       1 3 6 1 5 5 7 4 2 */
      300,    /* OBJ_id_it_encKeyPairTypes        1 3 6 1 5 5 7 4 3 */
@@ -5361,6 +5393,9 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      311,    /* OBJ_id_it_confirmWaitTime        1 3 6 1 5 5 7 4 14 */
      312,    /* OBJ_id_it_origPKIMessage         1 3 6 1 5 5 7 4 15 */
      784,    /* OBJ_id_it_suppLangTags           1 3 6 1 5 5 7 4 16 */
+    1223,    /* OBJ_id_it_caCerts                1 3 6 1 5 5 7 4 17 */
+    1224,    /* OBJ_id_it_rootCaKeyUpdate        1 3 6 1 5 5 7 4 18 */
+    1225,    /* OBJ_id_it_certReqTemplate        1 3 6 1 5 5 7 4 19 */
      313,    /* OBJ_id_regCtrl                   1 3 6 1 5 5 7 5 1 */
      314,    /* OBJ_id_regInfo                   1 3 6 1 5 5 7 5 2 */
      323,    /* OBJ_id_alg_des40                 1 3 6 1 5 5 7 6 1 */
