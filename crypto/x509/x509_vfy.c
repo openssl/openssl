@@ -526,8 +526,11 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
          * because RFC 5280 does not apply to them according RFC 6818 section 2.
          */
         if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
-            && !(i == 0 && (x->ex_flags & EXFLAG_CA) == 0
-                 && (x->ex_flags & EXFLAG_SI) != 0)) {
+            && num > 1) { /*
+                           * this should imply
+                           * !(i == 0 && (x->ex_flags & EXFLAG_CA) == 0
+                           *          && (x->ex_flags & EXFLAG_SI) != 0)
+                           */
             /* Check Basic Constraints according to RFC 5280 section 4.2.1.9 */
             if (x->ex_pathlen != -1) {
                 if ((x->ex_flags & EXFLAG_CA) == 0)
