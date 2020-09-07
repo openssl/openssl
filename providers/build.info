@@ -188,6 +188,6 @@ ENDIF
 # Because the null provider is built in, it means that libcrypto must
 # include all the object files that are needed.
 $NULLGOAL=../libcrypto
-SOURCE[$NULLGOAL]=nullprov.c
+SOURCE[$NULLGOAL]=nullprov.c prov_running.c
 
-
+SOURCE[$LIBNONFIPS]=prov_running.c
