@@ -24,7 +24,18 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
-#include "encoder_local.h"
+#include "endecoder_local.h"
+
+static int read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
+                    char **pem_name, char **pem_header,
+                    unsigned char **data, long *len)
+{
+    BIO *in = bio_new_from_core_bio(provctx, cin);
+    int ok = (PEM_read_bio(in, pem_name, pem_header, data, len) > 0);
+
+    BIO_free(in);
+    return ok;
+}
 
 static OSSL_FUNC_decoder_newctx_fn pem2der_newctx;
 static OSSL_FUNC_decoder_freectx_fn pem2der_freectx;
@@ -104,8 +115,8 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin,
     long der_len = 0;
     int ok = 0;
 
-    if (ossl_prov_read_pem(ctx->provctx, cin, &pem_name, &pem_header,
-                           &der, &der_len) <= 0)
+    if (read_pem(ctx->provctx, cin, &pem_name, &pem_header,
+                 &der, &der_len) <= 0)
         return 0;
 
     /*

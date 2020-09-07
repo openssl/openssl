@@ -136,6 +136,7 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NOT_A_PRIVATE_KEY), "not a private key"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NOT_A_PUBLIC_KEY), "not a public key"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NOT_INSTANTIATED), "not instantiated"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NOT_PARAMETERS), "not parameters"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NOT_SUPPORTED), "not supported"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_NOT_XOF_OR_INVALID_LENGTH),
     "not xof or invalid length"},

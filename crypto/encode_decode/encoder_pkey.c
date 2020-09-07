@@ -40,12 +40,7 @@ int OSSL_ENCODER_CTX_set_passphrase(OSSL_ENCODER_CTX *ctx,
                                     const unsigned char *kstr,
                                     size_t klen)
 {
-    OSSL_PARAM params[] = { OSSL_PARAM_END, OSSL_PARAM_END };
-
-    params[0] = OSSL_PARAM_construct_octet_string(OSSL_ENCODER_PARAM_PASS,
-                                                  (void *)kstr, klen);
-
-    return OSSL_ENCODER_CTX_set_params(ctx, params);
+    return ossl_pw_set_passphrase(&ctx->pwdata, kstr, klen);
 }
 
 int OSSL_ENCODER_CTX_set_passphrase_ui(OSSL_ENCODER_CTX *ctx,

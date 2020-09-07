@@ -10,26 +10,12 @@ $DSA_GOAL=../../libimplementations.a
 $ECX_GOAL=../../libimplementations.a
 $EC_GOAL=../../libimplementations.a
 
-SOURCE[$ENCODER_GOAL]=encoder_common.c decode_common.c
+SOURCE[$ENCODER_GOAL]=endecoder_common.c
 
 SOURCE[$DECODER_GOAL]=decode_der2key.c decode_pem2der.c
 IF[{- !$disabled{dsa} -}]
   SOURCE[$DECODER_GOAL]=decode_ms2key.c
 ENDIF
 
-SOURCE[$RSA_GOAL]=encoder_rsa.c encoder_rsa_priv.c encoder_rsa_pub.c
-DEPEND[encoder_rsa.o]=../../common/include/prov/der_rsa.h
-
-IF[{- !$disabled{"dh"} || !$disabled{"dsa"} -}]
-  SOURCE[$FFC_GOAL]=encoder_ffc_params.c
-ENDIF
-IF[{- !$disabled{dh} -}]
-  SOURCE[$DH_GOAL]=encoder_dh.c encoder_dh_priv.c encoder_dh_pub.c encoder_dh_param.c
-ENDIF
-IF[{- !$disabled{dsa} -}]
-  SOURCE[$DSA_GOAL]=encoder_dsa.c encoder_dsa_priv.c encoder_dsa_pub.c encoder_dsa_param.c
-ENDIF
-IF[{- !$disabled{ec} -}]
-  SOURCE[$ECX_GOAL]=encoder_ecx.c encoder_ecx_priv.c encoder_ecx_pub.c
-  SOURCE[$EC_GOAL]=encoder_ec.c encoder_ec_priv.c encoder_ec_pub.c encoder_ec_param.c
-ENDIF
+SOURCE[$DECODER_GOAL]=encode_key2any.c encode_key2text.c
+DEPEND[encode_key2any.o]=../../common/include/prov/der_rsa.h
