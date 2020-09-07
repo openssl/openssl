@@ -29,13 +29,6 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     long portnum = 80;
     size_t https_len = strlen(OSSL_HTTPS_NAME);
 
-    if (!ossl_assert(https_len >= strlen(OSSL_HTTP_NAME)))
-        return 0;
-    if (url == NULL) {
-        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
-
     if (phost != NULL)
         *phost = NULL;
     if (pport != NULL)
@@ -44,6 +37,14 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
         *ppath = NULL;
     if (pssl != NULL)
         *pssl = 0;
+
+    /* https_len is used below as an upper bound of the prefix length */
+    if (!ossl_assert(https_len >= strlen(OSSL_HTTP_NAME)))
+        return 0;
+    if (url == NULL) {
+        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     /* dup the buffer since we are going to mess with it */
     if ((buf = OPENSSL_strdup(url)) == NULL)
@@ -81,10 +82,11 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
             goto parse_err;
         *host_end++ = '\0';
     } else {
-        host_end = strchr(host, ':');
+        host_end = strchr(host, ':'); /* look for start of optional port */
         if (host_end == NULL)
-            host_end = strchr(host, '/');
+            host_end = strchr(host, '/'); /* look for start of optional path */
         if (host_end == NULL)
+            /* the remaining string is just the hostname */
             host_end = host + strlen(host);
     }
 
@@ -100,7 +102,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
             portnum = strtol(port, &p, 10);
             if (p == port || (*p != '\0' && *p != '/'))
                 goto parse_err;
-            if (portnum < 1 || portnum > 65535) {
+            if (portnum <= 0 || portnum >= 65536) {
                 HTTPerr(0, HTTP_R_INVALID_PORT_NUMBER);
                 goto err;
             }
@@ -111,6 +113,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
 
     /* check for optional path at end of url starting with '/' */
     path = url + (p - buf);
+    /* cannot use p + 1 because *p is '\0' and path must start with '/' */
     if (*path == '\0')
         path = "/";
     else if (*path != '/')

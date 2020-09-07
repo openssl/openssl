@@ -191,21 +191,20 @@ L<openssl-s_client(1)> it uses the B<bio_err> and B<prog> parameters (unless
 NULL) to print additional diagnostic information in a user-oriented way.
 
 OSSL_HTTP_parse_url() parses its input string B<url> as a URL
-of the form C<[http[s]://]address[:port][/path]> and splits it up
-into host, port and path components and a flag whether it begins with 'https'.
-The host component may be a DNS name or an IPv4 address
-or an IPv6 address enclosed in C<[> and C<]>.
+of the form C<[http[s]://]address[:port][/path]> and splits it up into host,
+port, and path components and a flag indicating whether it begins with 'https'.
+The host component may be a DNS name or an IP address
+where IPv6 addresses should be enclosed in square brackets C<[> and C<]>.
 The port component is optional and defaults to "443" for HTTPS, else "80".
 If the B<pport_num> argument is NULL the port specification
 can be in mnemonic form such as "http" like with L<BIO_set_conn_port(3)>, else
 it must be in numerical form and its integer value is assigned to B<*pport_num>.
 The path component is also optional and defaults to "/".
-As far as the result pointer arguments are not NULL the function assigns
-via them the respective url components.
-For string values these are non-NULL pointers to copies of the strings
-where B<*ppath> is guaranteed to begin with a C</> character.
-The strings returned this way must be deallocated by the caller using
-L<OPENSSL_free(3)> unless they are NULL, which is their default value on error.
+A path string returned is guaranteed to begin with a C</> character.
+On success the function assigns via each non-NULL result pointer argument
+the respective url component. On error, string results are assigned to NULL,
+else they are guaranteed to be non-NULL pointers to copies of the strings.
+It is the reponsibility of the caller to free them using L<OPENSSL_free(3)>.
 
 =head1 NOTES
 
