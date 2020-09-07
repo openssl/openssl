@@ -416,12 +416,19 @@ static SSL *doConnection(SSL *scon, const char *host, SSL_CTX *ctx)
     if ((conn = BIO_new(BIO_s_connect())) == NULL)
         return NULL;
 
-    BIO_set_conn_hostname(conn, host);
-    BIO_set_conn_mode(conn, BIO_SOCK_NODELAY);
+    if (BIO_set_conn_hostname(conn, host) <= 0
+            || BIO_set_conn_mode(conn, BIO_SOCK_NODELAY) <= 0) {
+        BIO_free(conn);
+        return NULL;
+    }
 
-    if (scon == NULL)
+    if (scon == NULL) {
         serverCon = SSL_new(ctx);
-    else {
+        if (serverCon == NULL) {
+            BIO_free(conn);
+            return NULL;
+        }
+    } else {
         serverCon = scon;
         SSL_set_connect_state(serverCon);
     }
