@@ -20,6 +20,7 @@
 #include "prov/rand_pool.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommonerr.h"
+#include "prov/providercommon.h"
 
 /*
  * Support framework for NIST SP 800-90A DRBG
@@ -397,6 +398,9 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
     size_t noncelen = 0, entropylen = 0;
     size_t min_entropy, min_entropylen, max_entropylen;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (strength > drbg->strength) {
         PROVerr(0, PROV_R_INSUFFICIENT_DRBG_STRENGTH);
         goto end;
@@ -536,6 +540,9 @@ int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
     unsigned char *entropy = NULL;
     size_t entropylen = 0;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (drbg->state != EVP_RAND_STATE_READY) {
         /* try to recover from previous errors */
         rand_drbg_restart(drbg);
@@ -646,6 +653,9 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
 {
     int fork_id;
     int reseed_required = 0;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (drbg->state != EVP_RAND_STATE_READY) {
         /* try to recover from previous errors */
@@ -810,10 +820,14 @@ PROV_DRBG *prov_rand_drbg_new
      int (*generate)(PROV_DRBG *, unsigned char *out, size_t outlen,
                      const unsigned char *adin, size_t adin_len))
 {
-    PROV_DRBG *drbg = OPENSSL_zalloc(sizeof(*drbg));
+    PROV_DRBG *drbg;
     unsigned int p_str;
     const OSSL_DISPATCH *pfunc;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    drbg = OPENSSL_zalloc(sizeof(*drbg));
     if (drbg == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
