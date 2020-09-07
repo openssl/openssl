@@ -18,6 +18,7 @@
 #include "internal/numbers.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
@@ -55,6 +56,9 @@ static void kdf_scrypt_init(KDF_SCRYPT *ctx);
 static void *kdf_scrypt_new(void *provctx)
 {
     KDF_SCRYPT *ctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
@@ -126,6 +130,9 @@ static int kdf_scrypt_derive(void *vctx, unsigned char *key,
                              size_t keylen)
 {
     KDF_SCRYPT *ctx = (KDF_SCRYPT *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (ctx->pass == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_PASS);

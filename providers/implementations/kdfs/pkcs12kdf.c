@@ -18,6 +18,7 @@
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
@@ -138,6 +139,9 @@ static void *kdf_pkcs12_new(void *provctx)
 {
     KDF_PKCS12 *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
@@ -195,7 +199,10 @@ static int kdf_pkcs12_derive(void *vctx, unsigned char *key,
                              size_t keylen)
 {
     KDF_PKCS12 *ctx = (KDF_PKCS12 *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (ctx->pass == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_PASS);
@@ -207,6 +214,7 @@ static int kdf_pkcs12_derive(void *vctx, unsigned char *key,
         return 0;
     }
 
+    md = ossl_prov_digest_md(&ctx->digest);
     return pkcs12kdf_derive(ctx->pass, ctx->pass_len, ctx->salt, ctx->salt_len,
                             ctx->id, ctx->iter, md, key, keylen);
 }
