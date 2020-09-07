@@ -92,12 +92,13 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
 
     default:
         CMSerr(CMS_F_CMS_DATAINIT, CMS_R_UNSUPPORTED_TYPE);
-        return NULL;
+        goto err;
     }
 
     if (cmsbio)
         return BIO_push(cmsbio, cont);
 
+err:
     if (!icont)
         BIO_free(cont);
     return NULL;
