@@ -28,6 +28,7 @@
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 #include <stdlib.h>
 
@@ -77,8 +78,11 @@ typedef struct {
 
 static void *rsa_newctx(void *provctx)
 {
-    PROV_RSA_CTX *prsactx =  OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
+    PROV_RSA_CTX *prsactx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+    prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX));
     if (prsactx == NULL)
         return NULL;
     prsactx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
@@ -90,7 +94,10 @@ static int rsa_init(void *vprsactx, void *vrsa)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
-    if (prsactx == NULL || vrsa == NULL || !RSA_up_ref(vrsa))
+    if (!ossl_prov_is_running()
+            || prsactx == NULL
+            || vrsa == NULL
+            || !RSA_up_ref(vrsa))
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
@@ -112,6 +119,9 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (out == NULL) {
         size_t len = RSA_size(prsactx->rsa);
@@ -170,6 +180,9 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
     size_t len = RSA_size(prsactx->rsa);
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (prsactx->pad_mode == RSA_PKCS1_WITH_TLS_PADDING) {
         if (out == NULL) {
@@ -268,6 +281,9 @@ static void *rsa_dupctx(void *vprsactx)
 {
     PROV_RSA_CTX *srcctx = (PROV_RSA_CTX *)vprsactx;
     PROV_RSA_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
