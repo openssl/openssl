@@ -58,6 +58,7 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -158,6 +159,9 @@ static struct kmac_data_st *kmac_new(void *provctx)
 {
     struct kmac_data_st *kctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if ((kctx = OPENSSL_zalloc(sizeof(*kctx))) == NULL
             || (kctx->ctx = EVP_MD_CTX_new()) == NULL) {
         kmac_free(kctx);
@@ -206,8 +210,12 @@ static void *kmac256_new(void *provctx)
 static void *kmac_dup(void *vsrc)
 {
     struct kmac_data_st *src = vsrc;
-    struct kmac_data_st *dst = kmac_new(src->provctx);
+    struct kmac_data_st *dst;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    dst = kmac_new(src->provctx);
     if (dst == NULL)
         return NULL;
 
@@ -239,6 +247,8 @@ static int kmac_init(void *vmacctx)
     unsigned char out[KMAC_MAX_BLOCKSIZE];
     int out_len, block_len;
 
+    if (!ossl_prov_is_running())
+        return 0;
 
     /* Check key has been set */
     if (kctx->key_len == 0) {
@@ -291,6 +301,9 @@ static int kmac_final(void *vmacctx, unsigned char *out, size_t *outl,
     int lbits, len;
     unsigned char encoded_outlen[KMAC_MAX_ENCODED_HEADER_LEN];
     int ok;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     /* KMAC XOF mode sets the encoded length to 0 */
     lbits = (kctx->xof_mode ? 0 : (kctx->out_len * 8));

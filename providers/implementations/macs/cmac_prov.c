@@ -23,6 +23,7 @@
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -52,6 +53,9 @@ static void *cmac_new(void *provctx)
 {
     struct cmac_data_st *macctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if ((macctx = OPENSSL_zalloc(sizeof(*macctx))) == NULL
         || (macctx->ctx = CMAC_CTX_new()) == NULL) {
         OPENSSL_free(macctx);
@@ -77,8 +81,12 @@ static void cmac_free(void *vmacctx)
 static void *cmac_dup(void *vsrc)
 {
     struct cmac_data_st *src = vsrc;
-    struct cmac_data_st *dst = cmac_new(src->provctx);
+    struct cmac_data_st *dst;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    dst = cmac_new(src->provctx);
     if (!CMAC_CTX_copy(dst->ctx, src->ctx)
         || !ossl_prov_cipher_copy(&dst->cipher, &src->cipher)) {
         cmac_free(dst);
@@ -97,9 +105,14 @@ static size_t cmac_size(void *vmacctx)
 static int cmac_init(void *vmacctx)
 {
     struct cmac_data_st *macctx = vmacctx;
-    int rv = CMAC_Init(macctx->ctx, NULL, 0,
-                       ossl_prov_cipher_cipher(&macctx->cipher),
-                       ossl_prov_cipher_engine(&macctx->cipher));
+    int rv;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    rv = CMAC_Init(macctx->ctx, NULL, 0,
+                   ossl_prov_cipher_cipher(&macctx->cipher),
+                   ossl_prov_cipher_engine(&macctx->cipher));
 
     ossl_prov_cipher_reset(&macctx->cipher);
     return rv;
@@ -117,6 +130,9 @@ static int cmac_final(void *vmacctx, unsigned char *out, size_t *outl,
                       size_t outsize)
 {
     struct cmac_data_st *macctx = vmacctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     return CMAC_Final(macctx->ctx, out, outl);
 }
