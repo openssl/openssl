@@ -432,7 +432,7 @@ int RAND_DRBG_reseed(RAND_DRBG *drbg,
     drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
     if (drbg->reseed_next_counter) {
         drbg->reseed_next_counter++;
-        if(!drbg->reseed_next_counter)
+        if (!drbg->reseed_next_counter)
             drbg->reseed_next_counter = 1;
     }
 
@@ -554,7 +554,7 @@ int rand_drbg_restart(RAND_DRBG *drbg,
             drbg->meth->reseed(drbg, adin, adinlen, NULL, 0);
         } else if (reseeded == 0) {
             /* do a full reseeding if it has not been done yet above */
-            if(!RAND_DRBG_reseed(drbg, NULL, 0, 0)) {
+            if (!RAND_DRBG_reseed(drbg, NULL, 0, 0)) {
                 RANDerr(RAND_F_RAND_DRBG_RESTART, RAND_R_RESEED_ERROR);
             }
         }
