@@ -29,6 +29,8 @@ static OSSL_FUNC_keymgmt_free_fn mac_free;
 static OSSL_FUNC_keymgmt_gen_init_fn mac_gen_init;
 static OSSL_FUNC_keymgmt_gen_fn mac_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn mac_gen_cleanup;
+static OSSL_FUNC_keymgmt_gen_set_params_fn mac_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn mac_gen_settable_params;
 static OSSL_FUNC_keymgmt_get_params_fn mac_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn mac_gettable_params;
 static OSSL_FUNC_keymgmt_set_params_fn mac_set_params;
@@ -40,6 +42,13 @@ static OSSL_FUNC_keymgmt_import_types_fn mac_imexport_types;
 static OSSL_FUNC_keymgmt_export_fn mac_export;
 static OSSL_FUNC_keymgmt_export_types_fn mac_imexport_types;
 
+static OSSL_FUNC_keymgmt_new_fn mac_new_cmac;
+static OSSL_FUNC_keymgmt_gettable_params_fn cmac_gettable_params;
+static OSSL_FUNC_keymgmt_import_types_fn cmac_imexport_types;
+static OSSL_FUNC_keymgmt_export_types_fn cmac_imexport_types;
+static OSSL_FUNC_keymgmt_gen_set_params_fn cmac_gen_set_params;
+static OSSL_FUNC_keymgmt_gen_settable_params_fn cmac_gen_settable_params;
+
 struct mac_gen_ctx {
     OPENSSL_CTX *libctx;
     int selection;
@@ -50,8 +59,12 @@ struct mac_gen_ctx {
 
 MAC_KEY *mac_key_new(OPENSSL_CTX *libctx, int cmac)
 {
-    MAC_KEY *mackey = OPENSSL_zalloc(sizeof(*mackey));
+    MAC_KEY *mackey;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    mackey = OPENSSL_zalloc(sizeof(*mackey));
     if (mackey == NULL)
         return NULL;
 
@@ -89,6 +102,16 @@ int mac_key_up_ref(MAC_KEY *mackey)
 {
     int ref = 0;
 
+    /* This is effectively doing a new operation on the MAC_KEY and should be
+     * adequately guarded again modules' error states.  However, both current
+     * calls here are guarded propery in signature/mac_legacy.c.  Thus, it
+     * could be removed here.  The concern is that something in the future
+     * might call this function without adequate guards.  It's a cheap call,
+     * it seems best to leave it even though it is currently redundant.
+     */
+    if (!ossl_prov_is_running())
+        return 0;
+
     CRYPTO_UP_REF(&mackey->refcnt, &ref, mackey->lock);
     return 1;
 }
@@ -113,7 +136,7 @@ static int mac_has(void *keydata, int selection)
     MAC_KEY *key = keydata;
     int ok = 0;
 
-    if (key != NULL) {
+    if (ossl_prov_is_running() && key != NULL) {
         /*
          * MAC keys always have all the parameters they need (i.e. none).
          * Therefore we always return with 1, if asked about parameters.
@@ -132,6 +155,9 @@ static int mac_match(const void *keydata1, const void *keydata2, int selection)
     const MAC_KEY *key1 = keydata1;
     const MAC_KEY *key2 = keydata2;
     int ok = 1;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         if ((key1->priv_key == NULL && key2->priv_key != NULL)
@@ -201,7 +227,7 @@ static int mac_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     MAC_KEY *key = keydata;
 
-    if (key == NULL)
+    if (!ossl_prov_is_running() || key == NULL)
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) == 0)
@@ -247,7 +273,7 @@ static int mac_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     OSSL_PARAM *params = NULL;
     int ret = 0;
 
-    if (key == NULL)
+    if (!ossl_prov_is_running() || key == NULL)
         return 0;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -349,6 +375,9 @@ static void *mac_gen_init(void *provctx, int selection)
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct mac_gen_ctx *gctx = NULL;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
         gctx->libctx = libctx;
         gctx->selection = selection;
@@ -422,7 +451,7 @@ static void *mac_gen(void *genctx, OSSL_CALLBACK *cb, void *cbarg)
     struct mac_gen_ctx *gctx = genctx;
     MAC_KEY *key;
 
-    if (gctx == NULL)
+    if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
 
     if ((key = mac_key_new(gctx->libctx, 0)) == NULL) {
@@ -511,3 +540,4 @@ const OSSL_DISPATCH cmac_legacy_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))mac_gen_cleanup },
     { 0, NULL }
 };
+

@@ -135,10 +135,12 @@ static void *dh_newdata(void *provctx)
 {
     DH *dh = NULL;
 
-    dh = dh_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx));
-    if (dh != NULL) {
-        DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
-        DH_set_flags(dh, DH_FLAG_TYPE_DH);
+    if (ossl_prov_is_running()) {
+        dh = dh_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx));
+        if (dh != NULL) {
+            DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+            DH_set_flags(dh, DH_FLAG_TYPE_DH);
+        }
     }
     return dh;
 }
@@ -165,7 +167,7 @@ static int dh_has(void *keydata, int selection)
     DH *dh = keydata;
     int ok = 0;
 
-    if (dh != NULL) {
+    if (ossl_prov_is_running() && dh != NULL) {
         if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
             ok = 1;
 
@@ -185,6 +187,9 @@ static int dh_match(const void *keydata1, const void *keydata2, int selection)
     const DH *dh2 = keydata2;
     int ok = 1;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok && BN_cmp(DH_get0_pub_key(dh1), DH_get0_pub_key(dh2)) == 0;
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
@@ -203,7 +208,7 @@ static int dh_import(void *keydata, int selection, const OSSL_PARAM params[])
     DH *dh = keydata;
     int ok = 1;
 
-    if (dh == NULL)
+    if (!ossl_prov_is_running() || dh == NULL)
         return 0;
 
     if ((selection & DH_POSSIBLE_SELECTIONS) == 0)
@@ -226,7 +231,7 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     OSSL_PARAM *params = NULL;
     int ok = 1;
 
-    if (dh == NULL)
+    if (!ossl_prov_is_running() || dh == NULL)
         return 0;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -402,6 +407,9 @@ static int dh_validate(void *keydata, int selection)
     DH *dh = keydata;
     int ok = 0;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if ((selection & DH_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
@@ -424,6 +432,9 @@ static void *dh_gen_init_base(void *provctx, int selection, int type)
 {
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct dh_gen_ctx *gctx = NULL;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     if ((selection & (OSSL_KEYMGMT_SELECT_KEYPAIR
                       | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS)) == 0)
@@ -460,7 +471,7 @@ static int dh_gen_set_template(void *genctx, void *templ)
     struct dh_gen_ctx *gctx = genctx;
     DH *dh = templ;
 
-    if (gctx == NULL || dh == NULL)
+    if (!ossl_prov_is_running() || gctx == NULL || dh == NULL)
         return 0;
     gctx->ffc_params = dh_get0_params(dh);
     return 1;
@@ -587,7 +598,7 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     BN_GENCB *gencb = NULL;
     FFC_PARAMS *ffc;
 
-    if (gctx == NULL)
+    if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
 
     /* For parameter generation - If there is a group name just create it */
@@ -686,7 +697,7 @@ void *dh_load(const void *reference, size_t reference_sz)
 {
     DH *dh = NULL;
 
-    if (reference_sz == sizeof(dh)) {
+    if (ossl_prov_is_running() && reference_sz == sizeof(dh)) {
         /* The contents of the reference is the address to our object */
         dh = *(DH **)reference;
         /* We grabbed, so we detach it */

@@ -82,21 +82,29 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
 
 static void *x25519_new_key(void *provctx)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X25519, 0);
 }
 
 static void *x448_new_key(void *provctx)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_X448, 0);
 }
 
 static void *ed25519_new_key(void *provctx)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED25519, 0);
 }
 
 static void *ed448_new_key(void *provctx)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return ecx_key_new(PROV_LIBRARY_CONTEXT_OF(provctx), ECX_KEY_TYPE_ED448, 0);
 }
 
@@ -105,7 +113,7 @@ static int ecx_has(void *keydata, int selection)
     ECX_KEY *key = keydata;
     int ok = 0;
 
-    if (key != NULL) {
+    if (ossl_prov_is_running() && key != NULL) {
         /*
          * ECX keys always have all the parameters they need (i.e. none).
          * Therefore we always return with 1, if asked about parameters.
@@ -126,6 +134,9 @@ static int ecx_match(const void *keydata1, const void *keydata2, int selection)
     const ECX_KEY *key1 = keydata1;
     const ECX_KEY *key2 = keydata2;
     int ok = 1;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && key1->type == key2->type;
@@ -157,7 +168,7 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
     int ok = 1;
     int include_private = 0;
 
-    if (key == NULL)
+    if (!ossl_prov_is_running() || key == NULL)
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
@@ -197,7 +208,7 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     OSSL_PARAM *params = NULL;
     int ret = 0;
 
-    if (key == NULL)
+    if (!ossl_prov_is_running() || key == NULL)
         return 0;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -409,6 +420,9 @@ static void *ecx_gen_init(void *provctx, int selection, ECX_KEY_TYPE type)
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct ecx_gen_ctx *gctx = NULL;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if ((gctx = OPENSSL_malloc(sizeof(*gctx))) != NULL) {
         gctx->libctx = libctx;
         gctx->type = type;
@@ -539,6 +553,9 @@ static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
 #ifdef S390X_EC_ASM
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519))
         return s390x_ecx_keygen25519(gctx);
@@ -550,6 +567,9 @@ static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
 #ifdef S390X_EC_ASM
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X448))
         return s390x_ecx_keygen448(gctx);
@@ -560,6 +580,10 @@ static void *x448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
 #ifdef S390X_EC_ASM
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED25519)
         && OPENSSL_s390xcap_P.kdsa[0] & S390X_CAPBIT(S390X_EDDSA_SIGN_ED25519)
@@ -573,6 +597,9 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 {
     struct ecx_gen_ctx *gctx = genctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
 #ifdef S390X_EC_ASM
     if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_ED448)
@@ -594,7 +621,7 @@ void *ecx_load(const void *reference, size_t reference_sz)
 {
     ECX_KEY *key = NULL;
 
-    if (reference_sz == sizeof(key)) {
+    if (ossl_prov_is_running() && reference_sz == sizeof(key)) {
         /* The contents of the reference is the address to our object */
         key = *(ECX_KEY **)reference;
         /* We grabbed, so we detach it */
