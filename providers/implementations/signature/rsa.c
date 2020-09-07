@@ -25,6 +25,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/rsa.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -198,6 +199,9 @@ static void *rsa_newctx(void *provctx, const char *propq)
     PROV_RSA_CTX *prsactx = NULL;
     char *propq_copy = NULL;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if ((prsactx = OPENSSL_zalloc(sizeof(PROV_RSA_CTX))) == NULL
         || (propq != NULL
             && (propq_copy = OPENSSL_strdup(propq)) == NULL)) {
@@ -303,6 +307,9 @@ static int rsa_signature_init(void *vprsactx, void *vrsa, int operation)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (prsactx == NULL || vrsa == NULL || !RSA_up_ref(vrsa))
         return 0;
 
@@ -404,6 +411,8 @@ static void free_tbuf(PROV_RSA_CTX *ctx)
 
 static int rsa_sign_init(void *vprsactx, void *vrsa)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return rsa_signature_init(vprsactx, vrsa, EVP_PKEY_OP_SIGN);
 }
 
@@ -414,6 +423,9 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
     int ret;
     size_t rsasize = RSA_size(prsactx->rsa);
     size_t mdsize = rsa_get_md_size(prsactx);
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (sig == NULL) {
         *siglen = rsasize;
@@ -552,6 +564,8 @@ static int rsa_sign(void *vprsactx, unsigned char *sig, size_t *siglen,
 
 static int rsa_verify_recover_init(void *vprsactx, void *vrsa)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return rsa_signature_init(vprsactx, vrsa, EVP_PKEY_OP_VERIFYRECOVER);
 }
 
@@ -564,6 +578,9 @@ static int rsa_verify_recover(void *vprsactx,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     int ret;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (rout == NULL) {
         *routlen = RSA_size(prsactx->rsa);
@@ -638,6 +655,8 @@ static int rsa_verify_recover(void *vprsactx,
 
 static int rsa_verify_init(void *vprsactx, void *vrsa)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return rsa_signature_init(vprsactx, vrsa, EVP_PKEY_OP_VERIFY);
 }
 
@@ -647,6 +666,8 @@ static int rsa_verify(void *vprsactx, const unsigned char *sig, size_t siglen,
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     size_t rslen;
 
+    if (!ossl_prov_is_running())
+        return 0;
     if (prsactx->md != NULL) {
         switch (prsactx->pad_mode) {
         case RSA_PKCS1_PADDING:
@@ -725,6 +746,9 @@ static int rsa_digest_signverify_init(void *vprsactx, const char *mdname,
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (prsactx != NULL)
         prsactx->flag_allow_md = 0;
     if (!rsa_signature_init(vprsactx, vrsa, operation)
@@ -765,6 +789,8 @@ static int rsa_digest_signverify_update(void *vprsactx,
 static int rsa_digest_sign_init(void *vprsactx, const char *mdname,
                                 void *vrsa)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return rsa_digest_signverify_init(vprsactx, mdname, vrsa,
                                       EVP_PKEY_OP_SIGN);
 }
@@ -776,7 +802,7 @@ static int rsa_digest_sign_final(void *vprsactx, unsigned char *sig,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    if (prsactx == NULL)
+    if (!ossl_prov_is_running() || prsactx == NULL)
         return 0;
     prsactx->flag_allow_md = 1;
     if (prsactx->mdctx == NULL)
@@ -801,6 +827,8 @@ static int rsa_digest_sign_final(void *vprsactx, unsigned char *sig,
 static int rsa_digest_verify_init(void *vprsactx, const char *mdname,
                                   void *vrsa)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     return rsa_digest_signverify_init(vprsactx, mdname, vrsa,
                                       EVP_PKEY_OP_VERIFY);
 }
@@ -811,6 +839,9 @@ int rsa_digest_verify_final(void *vprsactx, const unsigned char *sig,
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (prsactx == NULL)
         return 0;
@@ -850,6 +881,9 @@ static void *rsa_dupctx(void *vprsactx)
 {
     PROV_RSA_CTX *srcctx = (PROV_RSA_CTX *)vprsactx;
     PROV_RSA_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL) {
