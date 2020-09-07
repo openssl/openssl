@@ -18,3 +18,5 @@ int cipher_capable_aes_cbc_hmac_sha1(void);
 int cipher_capable_aes_cbc_hmac_sha256(void);
 
 OSSL_FUNC_provider_get_capabilities_fn provider_get_capabilities;
+
+int ossl_prov_is_running(void);

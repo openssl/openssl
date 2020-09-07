@@ -41,6 +41,7 @@ static const OSSL_PARAM deflt_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_STATUS, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -63,7 +64,7 @@ static int deflt_get_params(void *provctx, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_FULL_VERSION_STR))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_STATUS);
-    if (p != NULL && !OSSL_PARAM_set_uint(p, 1))
+    if (p != NULL && !OSSL_PARAM_set_int(p, ossl_prov_is_running()))
         return 0;
     return 1;
 }
