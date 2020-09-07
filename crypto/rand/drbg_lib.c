@@ -330,7 +330,7 @@ int RAND_DRBG_instantiate(RAND_DRBG *drbg,
     drbg->reseed_next_counter = tsan_load(&drbg->reseed_prop_counter);
     if (drbg->reseed_next_counter) {
         drbg->reseed_next_counter++;
-        if(!drbg->reseed_next_counter)
+        if (!drbg->reseed_next_counter)
             drbg->reseed_next_counter = 1;
     }
 
