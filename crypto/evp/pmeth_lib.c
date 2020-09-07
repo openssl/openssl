@@ -1593,7 +1593,7 @@ static int evp_pkey_ctx_ctrl_str_int(EVP_PKEY_CTX *ctx,
         return legacy_ctrl_str_to_param(ctx, name, value);
     case EVP_PKEY_STATE_UNKNOWN:
     case EVP_PKEY_STATE_LEGACY:
-        if (!ctx || !ctx->pmeth || !ctx->pmeth->ctrl_str) {
+        if (ctx == NULL || ctx->pmeth == NULL || ctx->pmeth->ctrl_str == NULL) {
             EVPerr(0, EVP_R_COMMAND_NOT_SUPPORTED);
             return -2;
         }

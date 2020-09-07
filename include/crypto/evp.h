@@ -53,8 +53,8 @@ struct evp_pkey_ctx_st {
     } op;
 
     /*
-     * Cached parameters.  Operation inits should call
-     * evp_pkey_ctx_unleash_delayed_data() when the operation has been set
+     * Cached parameters.  Inits of operations that depend on these should
+     * call evp_pkey_ctx_use_delayed_data() when the operation has been set
      * up properly.
      */
     struct {
