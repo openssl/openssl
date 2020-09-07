@@ -24,6 +24,7 @@
 
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -49,8 +50,11 @@ struct siphash_data_st {
 
 static void *siphash_new(void *provctx)
 {
-    struct siphash_data_st *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    struct siphash_data_st *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ctx->provctx = provctx;
     return ctx;
@@ -64,8 +68,11 @@ static void siphash_free(void *vmacctx)
 static void *siphash_dup(void *vsrc)
 {
     struct siphash_data_st *ssrc = vsrc;
-    struct siphash_data_st *sdst = siphash_new(ssrc->provctx);
+    struct siphash_data_st *sdst;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+    sdst = siphash_new(ssrc->provctx);
     if (sdst == NULL)
         return NULL;
 
@@ -83,7 +90,7 @@ static size_t siphash_size(void *vmacctx)
 static int siphash_init(void *vmacctx)
 {
     /* Not much to do here, actual initialization happens through controls */
-    return 1;
+    return ossl_prov_is_running();
 }
 
 static int siphash_update(void *vmacctx, const unsigned char *data,
@@ -104,7 +111,7 @@ static int siphash_final(void *vmacctx, unsigned char *out, size_t *outl,
     struct siphash_data_st *ctx = vmacctx;
     size_t hlen = siphash_size(ctx);
 
-    if (outsize < hlen)
+    if (!ossl_prov_is_running() || outsize < hlen)
         return 0;
 
     *outl = hlen;

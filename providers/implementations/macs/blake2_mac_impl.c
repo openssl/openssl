@@ -15,6 +15,7 @@
 #include "internal/cryptlib.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
@@ -42,8 +43,12 @@ static size_t blake2_mac_size(void *vmacctx);
 
 static void *blake2_mac_new(void *unused_provctx)
 {
-    struct blake2_mac_data_st *macctx = OPENSSL_zalloc(sizeof(*macctx));
+    struct blake2_mac_data_st *macctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    macctx = OPENSSL_zalloc(sizeof(*macctx));
     if (macctx != NULL) {
         BLAKE2_PARAM_INIT(&macctx->params);
         /* ctx initialization is deferred to BLAKE2b_Init() */
@@ -55,6 +60,9 @@ static void *blake2_mac_dup(void *vsrc)
 {
     struct blake2_mac_data_st *dst;
     struct blake2_mac_data_st *src = vsrc;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dst = OPENSSL_zalloc(sizeof(*dst));
     if (dst == NULL)
@@ -77,6 +85,9 @@ static void blake2_mac_free(void *vmacctx)
 static int blake2_mac_init(void *vmacctx)
 {
     struct blake2_mac_data_st *macctx = vmacctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     /* Check key has been set */
     if (macctx->params.key_length == 0) {
@@ -103,6 +114,9 @@ static int blake2_mac_final(void *vmacctx,
                             size_t outsize)
 {
     struct blake2_mac_data_st *macctx = vmacctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     *outl = blake2_mac_size(macctx);
     return BLAKE2_FINAL(out, &macctx->ctx);
