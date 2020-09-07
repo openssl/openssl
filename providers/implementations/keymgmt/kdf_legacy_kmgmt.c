@@ -28,8 +28,12 @@ static OSSL_FUNC_keymgmt_has_fn kdf_has;
 
 KDF_DATA *kdf_data_new(void *provctx)
 {
-    KDF_DATA *kdfdata = OPENSSL_zalloc(sizeof(*kdfdata));
+    KDF_DATA *kdfdata;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    kdfdata = OPENSSL_zalloc(sizeof(*kdfdata));
     if (kdfdata == NULL)
         return NULL;
 
@@ -62,6 +66,9 @@ void kdf_data_free(KDF_DATA *kdfdata)
 int kdf_data_up_ref(KDF_DATA *kdfdata)
 {
     int ref = 0;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     CRYPTO_UP_REF(&kdfdata->refcnt, &ref, kdfdata->lock);
     return 1;

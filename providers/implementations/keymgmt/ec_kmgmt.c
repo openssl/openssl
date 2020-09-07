@@ -212,6 +212,8 @@ int otherparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
 static
 void *ec_newdata(void *provctx)
 {
+    if (!ossl_prov_is_running())
+        return NULL;
     return EC_KEY_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx), NULL);
 }
 
@@ -227,7 +229,7 @@ int ec_has(void *keydata, int selection)
     EC_KEY *ec = keydata;
     int ok = 0;
 
-    if (ec != NULL) {
+    if (ossl_prov_is_running() && ec != NULL) {
         if ((selection & EC_POSSIBLE_SELECTIONS) != 0)
             ok = 1;
 
@@ -255,6 +257,9 @@ static int ec_match(const void *keydata1, const void *keydata2, int selection)
     BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(ec1));
     int ok = 1;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
         ok = ok && group_a != NULL && group_b != NULL
             && EC_GROUP_cmp(group_a, group_b, ctx) == 0;
@@ -280,7 +285,7 @@ int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
     EC_KEY *ec = keydata;
     int ok = 1;
 
-    if (ec == NULL)
+    if (!ossl_prov_is_running() || ec == NULL)
         return 0;
 
     /*
@@ -327,7 +332,7 @@ int ec_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     BN_CTX *bnctx = NULL;
     int ok = 1;
 
-    if (ec == NULL)
+    if (!ossl_prov_is_running() || ec == NULL)
         return 0;
 
     /*
@@ -681,7 +686,7 @@ int ec_validate(void *keydata, int selection)
     int ok = 0;
     BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(eck));
 
-    if (ctx == NULL)
+    if (!ossl_prov_is_running() || ctx == NULL)
         return 0;
 
     if ((selection & EC_POSSIBLE_SELECTIONS) != 0)
@@ -721,7 +726,7 @@ static void *ec_gen_init(void *provctx, int selection)
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct ec_gen_ctx *gctx = NULL;
 
-    if ((selection & (EC_POSSIBLE_SELECTIONS)) == 0)
+    if (!ossl_prov_is_running() || (selection & (EC_POSSIBLE_SELECTIONS)) == 0)
         return NULL;
 
     if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
@@ -753,7 +758,7 @@ static int ec_gen_set_template(void *genctx, void *templ)
     EC_KEY *ec = templ;
     const EC_GROUP *ec_group;
 
-    if (gctx == NULL || ec == NULL)
+    if (!ossl_prov_is_running() || gctx == NULL || ec == NULL)
         return 0;
     if ((ec_group = EC_KEY_get0_group(ec)) == NULL)
         return 0;
@@ -935,7 +940,8 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     EC_KEY *ec = NULL;
     int ret = 0;
 
-    if (gctx == NULL
+    if (!ossl_prov_is_running()
+        || gctx == NULL
         || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
         return NULL;
 
@@ -994,7 +1000,7 @@ void *ec_load(const void *reference, size_t reference_sz)
 {
     EC_KEY *ec = NULL;
 
-    if (reference_sz == sizeof(ec)) {
+    if (ossl_prov_is_running() && reference_sz == sizeof(ec)) {
         /* The contents of the reference is the address to our object */
         ec = *(EC_KEY **)reference;
         /* We grabbed, so we detach it */

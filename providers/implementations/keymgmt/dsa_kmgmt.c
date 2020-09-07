@@ -111,6 +111,8 @@ static int dsa_key_todata(DSA *dsa, OSSL_PARAM_BLD *bld, OSSL_PARAM params[])
 
 static void *dsa_newdata(void *provctx)
 {
+    if (!ossl_prov_is_running())
+        return NULL;
     return dsa_new_with_ctx(PROV_LIBRARY_CONTEXT_OF(provctx));
 }
 
@@ -124,7 +126,7 @@ static int dsa_has(void *keydata, int selection)
     DSA *dsa = keydata;
     int ok = 0;
 
-    if (dsa != NULL) {
+    if (ossl_prov_is_running() && dsa != NULL) {
         if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
             ok = 1;
 
@@ -143,6 +145,9 @@ static int dsa_match(const void *keydata1, const void *keydata2, int selection)
     const DSA *dsa1 = keydata1;
     const DSA *dsa2 = keydata2;
     int ok = 1;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
         ok = ok
@@ -164,7 +169,7 @@ static int dsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     DSA *dsa = keydata;
     int ok = 1;
 
-    if (dsa == NULL)
+    if (!ossl_prov_is_running() || dsa == NULL)
         return 0;
 
     if ((selection & DSA_POSSIBLE_SELECTIONS) == 0)
@@ -186,7 +191,7 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
     OSSL_PARAM *params = NULL;
     int ok = 1;
 
-    if (dsa == NULL)
+    if (!ossl_prov_is_running() || dsa == NULL)
         goto err;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
@@ -334,6 +339,9 @@ static int dsa_validate(void *keydata, int selection)
     DSA *dsa = keydata;
     int ok = 0;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if ((selection & DSA_POSSIBLE_SELECTIONS) != 0)
         ok = 1;
 
@@ -358,7 +366,7 @@ static void *dsa_gen_init(void *provctx, int selection)
     OPENSSL_CTX *libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     struct dsa_gen_ctx *gctx = NULL;
 
-    if ((selection & DSA_POSSIBLE_SELECTIONS) == 0)
+    if (!ossl_prov_is_running() || (selection & DSA_POSSIBLE_SELECTIONS) == 0)
         return NULL;
 
     if ((gctx = OPENSSL_zalloc(sizeof(*gctx))) != NULL) {
@@ -379,7 +387,7 @@ static int dsa_gen_set_template(void *genctx, void *templ)
     struct dsa_gen_ctx *gctx = genctx;
     DSA *dsa = templ;
 
-    if (gctx == NULL || dsa == NULL)
+    if (!ossl_prov_is_running() || gctx == NULL || dsa == NULL)
         return 0;
     gctx->ffc_params = dsa_get0_params(dsa);
     return 1;
@@ -490,7 +498,7 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     int ret = 0;
     FFC_PARAMS *ffc;
 
-    if (gctx == NULL)
+    if (!ossl_prov_is_running() || gctx == NULL)
         return NULL;
     dsa = dsa_new_with_ctx(gctx->libctx);
     if (dsa == NULL)
@@ -564,7 +572,7 @@ void *dsa_load(const void *reference, size_t reference_sz)
 {
     DSA *dsa = NULL;
 
-    if (reference_sz == sizeof(dsa)) {
+    if (ossl_prov_is_running() && reference_sz == sizeof(dsa)) {
         /* The contents of the reference is the address to our object */
         dsa = *(DSA **)reference;
         /* We grabbed, so we detach it */
