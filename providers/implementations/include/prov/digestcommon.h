@@ -13,6 +13,7 @@
 # include <openssl/core_dispatch.h>
 # include <openssl/core_names.h>
 # include <openssl/params.h>
+# include "prov/providercommon.h"
 
 # ifdef __cplusplus
 extern "C" {
@@ -37,7 +38,7 @@ static OSSL_FUNC_digest_freectx_fn name##_freectx;                              
 static OSSL_FUNC_digest_dupctx_fn name##_dupctx;                                 \
 static void *name##_newctx(void *prov_ctx)                                     \
 {                                                                              \
-    CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                                   \
+    CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) : NULL;    \
     return ctx;                                                                \
 }                                                                              \
 static void name##_freectx(void *vctx)                                         \
@@ -48,16 +49,21 @@ static void name##_freectx(void *vctx)                                         \
 static void *name##_dupctx(void *ctx)                                          \
 {                                                                              \
     CTX *in = (CTX *)ctx;                                                      \
-    CTX *ret = OPENSSL_malloc(sizeof(*ret));                                   \
+    CTX *ret = ossl_prov_is_running() ? OPENSSL_malloc(sizeof(*ret)) : NULL;    \
     if (ret != NULL)                                                           \
         *ret = *in;                                                            \
     return ret;                                                                \
 }                                                                              \
-static OSSL_FUNC_digest_final_fn name##_internal_final;                          \
+static OSSL_FUNC_digest_init_fn name##_internal_init;                          \
+static int name##_internal_init(void *ctx)                                     \
+{                                                                              \
+    return ossl_prov_is_running() ? init(ctx) : 0;                              \
+}                                                                              \
+static OSSL_FUNC_digest_final_fn name##_internal_final;                        \
 static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
                                  size_t outsz)                                 \
 {                                                                              \
-    if (outsz >= dgstsize && fin(out, ctx)) {                                  \
+    if (ossl_prov_is_running() && outsz >= dgstsize && fin(out, ctx)) {         \
         *outl = dgstsize;                                                      \
         return 1;                                                              \
     }                                                                          \
@@ -66,7 +72,7 @@ static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
 PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
 const OSSL_DISPATCH name##_functions[] = {                                     \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
-    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))init },                           \
+    { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_internal_init },           \
     { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))upd },                          \
     { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))name##_internal_final },         \
     { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))name##_freectx },              \

@@ -47,6 +47,8 @@ static sha3_final_fn generic_sha3_final;
 
 static int keccak_init(void *vctx)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     /* The newctx() handles most of the ctx fixed setup. */
     sha3_reset((KECCAK1600_CTX *)vctx);
     return 1;
@@ -95,6 +97,8 @@ static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
     int ret = 1;
     KECCAK1600_CTX *ctx = vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
     if (outsz > 0)
         ret = ctx->meth.final(out, ctx);
 
@@ -145,6 +149,8 @@ static int s390x_sha3_final(unsigned char *md, void *vctx)
 {
     KECCAK1600_CTX *ctx = vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
     s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, ctx->pad, ctx->A);
     memcpy(md, ctx->A, ctx->md_size);
     return 1;
@@ -154,6 +160,8 @@ static int s390x_shake_final(unsigned char *md, void *vctx)
 {
     KECCAK1600_CTX *ctx = vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
     s390x_klmd(ctx->buf, ctx->bufsz, md, ctx->md_size, ctx->pad, ctx->A);
     return 1;
 }
@@ -185,7 +193,8 @@ static PROV_SHA3_METHOD shake_s390x_md =
 static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
-    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
+    KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
+                                                : NULL;                        \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -198,7 +207,8 @@ static void *name##_newctx(void *provctx)                                      \
 static OSSL_FUNC_digest_newctx_fn uname##_newctx;                              \
 static void *uname##_newctx(void *provctx)                                     \
 {                                                                              \
-    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
+    KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
+                                                : NULL;                        \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -239,7 +249,8 @@ static void keccak_freectx(void *vctx)
 static void *keccak_dupctx(void *ctx)
 {
     KECCAK1600_CTX *in = (KECCAK1600_CTX *)ctx;
-    KECCAK1600_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    KECCAK1600_CTX *ret = ossl_prov_is_running() ? OPENSSL_malloc(sizeof(*ret))
+                                                : NULL;
 
     if (ret != NULL)
         *ret = *in;
