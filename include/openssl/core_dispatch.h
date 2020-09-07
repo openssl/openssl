@@ -735,7 +735,7 @@ OSSL_CORE_MAKE_FUNC(int, encoder_encode_data,
                     (void *ctx, const OSSL_PARAM[], OSSL_CORE_BIO *out,
                      OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg))
 OSSL_CORE_MAKE_FUNC(int, encoder_encode_object,
-                    (void *ctx, void *obj, OSSL_CORE_BIO *out,
+                    (void *ctx, const void *obj, OSSL_CORE_BIO *out,
                      OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg))
 
 # define OSSL_FUNC_DECODER_NEWCTX                      1
