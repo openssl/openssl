@@ -2153,7 +2153,16 @@ static int read_config(void)
      * would not make sense within the config file.
      * Moreover, these two options and OPT_VERBOSITY have already been handled.
      */
+    int n_options = OSSL_NELEM(cmp_options) - 1;
 
+    for (i = start - OPT_HELP, opt = &cmp_options[start];
+         opt->name; i++, opt++)
+        if (!strcmp(opt->name, OPT_SECTION_STR)
+                || !strcmp(opt->name, OPT_MORE_STR))
+            n_options--;
+    OPENSSL_assert(OSSL_NELEM(cmp_vars) == n_options
+                 + OPT_PROV__FIRST + 1 - OPT_PROV__LAST
+                 + OPT_V__FIRST + 1 - OPT_V__LAST);
     for (i = start - OPT_HELP, opt = &cmp_options[start];
          opt->name; i++, opt++) {
         if (!strcmp(opt->name, OPT_SECTION_STR)
@@ -2167,10 +2176,6 @@ static int read_config(void)
                                    && opt->retval < OPT_V__LAST);
         if (provider_option || verification_option)
             i--;
-        if (cmp_vars[i].txt == NULL) {
-            CMP_err1("internal: cmp_vars array too short, i=%d", i);
-            return 0;
-        }
         switch (opt->valtype) {
         case '-':
         case 'n':
