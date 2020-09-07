@@ -16,7 +16,7 @@
 #include <openssl/err.h>
 #include "internal/nelem.h"
 #include "internal/sizes.h"
-#include "prov/providercommonerr.h"
+#include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
@@ -38,8 +38,12 @@ typedef struct {
 
 static void *eddsa_newctx(void *provctx, const char *propq_unused)
 {
-    PROV_EDDSA_CTX *peddsactx = OPENSSL_zalloc(sizeof(PROV_EDDSA_CTX));
+    PROV_EDDSA_CTX *peddsactx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    peddsactx = OPENSSL_zalloc(sizeof(PROV_EDDSA_CTX));
     if (peddsactx == NULL) {
         PROVerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -55,6 +59,9 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     ECX_KEY *edkey = (ECX_KEY *)vedkey;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (mdname != NULL && mdname[0] != '\0') {
         PROVerr(0, PROV_R_INVALID_DIGEST);
@@ -77,6 +84,9 @@ int ed25519_digest_sign(void *vpeddsactx, unsigned char *sigret,
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (sigret == NULL) {
         *siglen = ED25519_SIGSIZE;
@@ -103,6 +113,9 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (sigret == NULL) {
         *siglen = ED448_SIGSIZE;
         return 1;
@@ -128,7 +141,7 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
 
-    if (siglen != ED25519_SIGSIZE)
+    if (!ossl_prov_is_running() || siglen != ED25519_SIGSIZE)
         return 0;
 
     return ED25519_verify(tbs, tbslen, sig, edkey->pubkey, peddsactx->libctx,
@@ -142,7 +155,7 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     const ECX_KEY *edkey = peddsactx->key;
 
-    if (siglen != ED448_SIGSIZE)
+    if (!ossl_prov_is_running() || siglen != ED448_SIGSIZE)
         return 0;
 
     return ED448_verify(peddsactx->libctx, tbs, tbslen, sig, edkey->pubkey,
@@ -162,6 +175,9 @@ static void *eddsa_dupctx(void *vpeddsactx)
 {
     PROV_EDDSA_CTX *srcctx = (PROV_EDDSA_CTX *)vpeddsactx;
     PROV_EDDSA_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)

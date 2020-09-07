@@ -26,7 +26,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
-#include "prov/providercommonerr.h"
+#include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
@@ -134,8 +134,12 @@ static int dsa_get_md_nid(const EVP_MD *md)
 
 static void *dsa_newctx(void *provctx, const char *propq)
 {
-    PROV_DSA_CTX *pdsactx = OPENSSL_zalloc(sizeof(PROV_DSA_CTX));
+    PROV_DSA_CTX *pdsactx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    pdsactx = OPENSSL_zalloc(sizeof(PROV_DSA_CTX));
     if (pdsactx == NULL)
         return NULL;
 
@@ -196,7 +200,10 @@ static int dsa_signature_init(void *vpdsactx, void *vdsa)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
 
-    if (pdsactx == NULL || vdsa == NULL || !DSA_up_ref(vdsa))
+    if (!ossl_prov_is_running()
+            || pdsactx == NULL
+            || vdsa == NULL
+            || !DSA_up_ref(vdsa))
         return 0;
     DSA_free(pdsactx->dsa);
     pdsactx->dsa = vdsa;
@@ -211,6 +218,9 @@ static int dsa_sign(void *vpdsactx, unsigned char *sig, size_t *siglen,
     unsigned int sltmp;
     size_t dsasize = DSA_size(pdsactx->dsa);
     size_t mdsize = dsa_get_md_size(pdsactx);
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (sig == NULL) {
         *siglen = dsasize;
@@ -237,7 +247,7 @@ static int dsa_verify(void *vpdsactx, const unsigned char *sig, size_t siglen,
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
     size_t mdsize = dsa_get_md_size(pdsactx);
 
-    if (mdsize != 0 && tbslen != mdsize)
+    if (!ossl_prov_is_running() || (mdsize != 0 && tbslen != mdsize))
         return 0;
 
     return DSA_verify(0, tbs, tbslen, sig, siglen, pdsactx->dsa);
@@ -247,6 +257,9 @@ static int dsa_digest_signverify_init(void *vpdsactx, const char *mdname,
                                       void *vdsa)
 {
     PROV_DSA_CTX *pdsactx = (PROV_DSA_CTX *)vpdsactx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     pdsactx->flag_allow_md = 0;
     if (!dsa_signature_init(vpdsactx, vdsa))
@@ -290,7 +303,7 @@ int dsa_digest_sign_final(void *vpdsactx, unsigned char *sig, size_t *siglen,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    if (pdsactx == NULL || pdsactx->mdctx == NULL)
+    if (!ossl_prov_is_running() || pdsactx == NULL || pdsactx->mdctx == NULL)
         return 0;
 
     /*
@@ -320,7 +333,7 @@ int dsa_digest_verify_final(void *vpdsactx, const unsigned char *sig,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    if (pdsactx == NULL || pdsactx->mdctx == NULL)
+    if (!ossl_prov_is_running() || pdsactx == NULL || pdsactx->mdctx == NULL)
         return 0;
 
     /*
@@ -355,6 +368,9 @@ static void *dsa_dupctx(void *vpdsactx)
 {
     PROV_DSA_CTX *srcctx = (PROV_DSA_CTX *)vpdsactx;
     PROV_DSA_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)

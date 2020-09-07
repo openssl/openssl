@@ -24,6 +24,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
@@ -95,8 +96,12 @@ typedef struct {
 
 static void *ecdsa_newctx(void *provctx, const char *propq)
 {
-    PROV_ECDSA_CTX *ctx = OPENSSL_zalloc(sizeof(PROV_ECDSA_CTX));
+    PROV_ECDSA_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(PROV_ECDSA_CTX));
     if (ctx == NULL)
         return NULL;
 
@@ -113,7 +118,10 @@ static int ecdsa_signature_init(void *vctx, void *ec)
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
 
-    if (ctx == NULL || ec == NULL || !EC_KEY_up_ref(ec))
+    if (!ossl_prov_is_running()
+            || ctx == NULL
+            || ec == NULL
+            || !EC_KEY_up_ref(ec))
         return 0;
     EC_KEY_free(ctx->ec);
     ctx->ec = ec;
@@ -127,6 +135,9 @@ static int ecdsa_sign(void *vctx, unsigned char *sig, size_t *siglen,
     int ret;
     unsigned int sltmp;
     size_t ecsize = ECDSA_size(ctx->ec);
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (sig == NULL) {
         *siglen = ecsize;
@@ -157,7 +168,7 @@ static int ecdsa_verify(void *vctx, const unsigned char *sig, size_t siglen,
 {
     PROV_ECDSA_CTX *ctx = (PROV_ECDSA_CTX *)vctx;
 
-    if (ctx->mdsize != 0 && tbslen != ctx->mdsize)
+    if (!ossl_prov_is_running() || (ctx->mdsize != 0 && tbslen != ctx->mdsize))
         return 0;
 
     return ECDSA_verify(0, tbs, tbslen, sig, siglen, ctx->ec);
@@ -221,6 +232,9 @@ static int ecdsa_digest_signverify_init(void *vctx, const char *mdname,
     int md_nid = NID_undef;
     WPACKET pkt;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     free_md(ctx);
 
     if (!ecdsa_signature_init(vctx, ec))
@@ -277,7 +291,7 @@ int ecdsa_digest_sign_final(void *vctx, unsigned char *sig, size_t *siglen,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    if (ctx == NULL || ctx->mdctx == NULL)
+    if (!ossl_prov_is_running() || ctx == NULL || ctx->mdctx == NULL)
         return 0;
 
     /*
@@ -304,7 +318,7 @@ int ecdsa_digest_verify_final(void *vctx, const unsigned char *sig,
     unsigned char digest[EVP_MAX_MD_SIZE];
     unsigned int dlen = 0;
 
-    if (ctx == NULL || ctx->mdctx == NULL)
+    if (!ossl_prov_is_running() || ctx == NULL || ctx->mdctx == NULL)
         return 0;
 
     /*
@@ -333,6 +347,9 @@ static void *ecdsa_dupctx(void *vctx)
 {
     PROV_ECDSA_CTX *srcctx = (PROV_ECDSA_CTX *)vctx;
     PROV_ECDSA_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
