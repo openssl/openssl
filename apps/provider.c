@@ -21,7 +21,7 @@
 #include <openssl/core_dispatch.h>
 
 #ifdef __TANDEM
-#include <string.h>
+# include <string.h> /* memset */
 #endif
 
 DEFINE_STACK_OF_CSTRING()

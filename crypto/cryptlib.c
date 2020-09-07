@@ -473,7 +473,11 @@ size_t OPENSSL_instrument_bus2(unsigned int *out, size_t cnt, size_t max)
 #endif
 
 #if defined(__TANDEM) && defined(OPENSSL_VPROC)
-/* Define VPROC function for HP NonStop build crypto library */
+/*
+ * Define a VPROC function for HP NonStop build crypto library.
+ * This is used by platform version identification tools.
+ * Do not inline this procedure or make it static.
+ */
 # define OPENSSL_VPROC_STRING_(x)    x##_CRYPTO
 # define OPENSSL_VPROC_STRING(x)     OPENSSL_VPROC_STRING_(x)
 # define OPENSSL_VPROC_FUNC          OPENSSL_VPROC_STRING(OPENSSL_VPROC)

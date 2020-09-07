@@ -296,6 +296,7 @@ struct servent *getservbyname(const char *name, const char *proto);
 /* end vxworks */
 
 /* ----------------------------- HP NonStop -------------------------------- */
+/* Required to support platform variant without getpid() and pid_t. */
 #ifdef __TANDEM
 #  include <strings.h>
 #  include <netdb.h>

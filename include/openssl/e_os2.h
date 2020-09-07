@@ -138,7 +138,8 @@ extern "C" {
 #  endif
 # endif
 
-/* ---------------------------- HP NONSTOP -------------------------------- */
+/* ---------------------------- HP NonStop -------------------------------- */
+/* Required to support platform variant without getpid() and pid_t. */
 # ifdef __TANDEM
 #  ifdef NO_GETPID
 inline int nssgetpid();

@@ -10,9 +10,6 @@
 #include "e_os.h"
 #include <stdio.h>
 #include <string.h>
-#ifdef __TANDEM
-#include <strings.h>
-#endif
 #include "internal/conf.h"
 #include "crypto/ctype.h"
 #include <openssl/crypto.h>

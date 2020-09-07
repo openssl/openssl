@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 #ifdef __TANDEM
-#include <strings.h>
+# include <strings.h> /* strcasecmp */
 #endif
 #include <ctype.h>
 
