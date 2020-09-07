@@ -17,6 +17,7 @@
 #include "internal/packet.h"
 #include "internal/der.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
@@ -276,6 +277,9 @@ static void *x942kdf_new(void *provctx)
 {
     KDF_X942 *ctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
     ctx->provctx = provctx;
@@ -331,16 +335,20 @@ static size_t x942kdf_size(KDF_X942 *ctx)
 static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_X942 *ctx = (KDF_X942 *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md;
     int ret = 0;
     unsigned char *ctr;
     unsigned char *der = NULL;
     size_t der_len = 0;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (ctx->secret == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SECRET);
         return 0;
     }
+    md = ossl_prov_digest_md(&ctx->digest);
     if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;

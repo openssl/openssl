@@ -17,9 +17,10 @@
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
-# include "prov/provider_util.h"
+#include "prov/provider_util.h"
 
 /* See RFC 4253, Section 7.2 */
 static OSSL_FUNC_kdf_newctx_fn kdf_sshkdf_new;
@@ -52,6 +53,9 @@ typedef struct {
 static void *kdf_sshkdf_new(void *provctx)
 {
     KDF_SSHKDF *ctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
@@ -94,8 +98,12 @@ static int kdf_sshkdf_derive(void *vctx, unsigned char *key,
                              size_t keylen)
 {
     KDF_SSHKDF *ctx = (KDF_SSHKDF *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
+    md = ossl_prov_digest_md(&ctx->digest);
     if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;

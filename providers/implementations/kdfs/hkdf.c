@@ -24,6 +24,7 @@
 #include "internal/numbers.h"
 #include "crypto/evp.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
@@ -69,6 +70,9 @@ typedef struct {
 static void *kdf_hkdf_new(void *provctx)
 {
     KDF_HKDF *ctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
@@ -122,8 +126,12 @@ static size_t kdf_hkdf_size(KDF_HKDF *ctx)
 static int kdf_hkdf_derive(void *vctx, unsigned char *key, size_t keylen)
 {
     KDF_HKDF *ctx = (KDF_HKDF *)vctx;
-    const EVP_MD *md = ossl_prov_digest_md(&ctx->digest);
+    const EVP_MD *md;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
+    md = ossl_prov_digest_md(&ctx->digest);
     if (md == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MESSAGE_DIGEST);
         return 0;
