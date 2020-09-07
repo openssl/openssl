@@ -22,6 +22,7 @@
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "crypto/ec.h" /* ecdh_KDF_X9_63() */
 
@@ -79,8 +80,12 @@ typedef struct {
 static
 void *ecdh_newctx(void *provctx)
 {
-    PROV_ECDH_CTX *pectx = OPENSSL_zalloc(sizeof(*pectx));
+    PROV_ECDH_CTX *pectx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    pectx = OPENSSL_zalloc(sizeof(*pectx));
     if (pectx == NULL)
         return NULL;
 
@@ -96,7 +101,10 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
 {
     PROV_ECDH_CTX *pecdhctx = (PROV_ECDH_CTX *)vpecdhctx;
 
-    if (pecdhctx == NULL || vecdh == NULL || !EC_KEY_up_ref(vecdh))
+    if (!ossl_prov_is_running()
+            || pecdhctx == NULL
+            || vecdh == NULL
+            || !EC_KEY_up_ref(vecdh))
         return 0;
     EC_KEY_free(pecdhctx->k);
     pecdhctx->k = vecdh;
@@ -110,7 +118,10 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
 {
     PROV_ECDH_CTX *pecdhctx = (PROV_ECDH_CTX *)vpecdhctx;
 
-    if (pecdhctx == NULL || vecdh == NULL || !EC_KEY_up_ref(vecdh))
+    if (!ossl_prov_is_running()
+            || pecdhctx == NULL
+            || vecdh == NULL
+            || !EC_KEY_up_ref(vecdh))
         return 0;
     EC_KEY_free(pecdhctx->peerk);
     pecdhctx->peerk = vecdh;
@@ -136,6 +147,9 @@ void *ecdh_dupctx(void *vpecdhctx)
 {
     PROV_ECDH_CTX *srcctx = (PROV_ECDH_CTX *)vpecdhctx;
     PROV_ECDH_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
