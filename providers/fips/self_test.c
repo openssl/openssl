@@ -15,6 +15,8 @@
 #include <openssl/err.h>
 #include "e_os.h"
 #include "prov/providercommonerr.h"
+#include "prov/providercommon.h"
+
 /*
  * We're cheating here. Normally we don't allow RUN_ONCE usage inside the FIPS
  * module because all such initialisation should be associated with an
@@ -307,7 +309,7 @@ end:
 }
 
 
-unsigned int FIPS_is_running(void)
+int ossl_prov_is_running(void)
 {
     return FIPS_state == FIPS_STATE_RUNNING
            || FIPS_state == FIPS_STATE_SELFTEST;
