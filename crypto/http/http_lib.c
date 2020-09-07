@@ -27,7 +27,6 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     char *host, *host_end;
     const char *path, *port = OSSL_HTTP_PORT;
     long portnum = 80;
-    size_t https_len = strlen(OSSL_HTTPS_NAME);
 
     if (phost != NULL)
         *phost = NULL;
@@ -38,9 +37,6 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     if (pssl != NULL)
         *pssl = 0;
 
-    /* https_len is used below as an upper bound of the prefix length */
-    if (!ossl_assert(https_len >= strlen(OSSL_HTTP_NAME)))
-        return 0;
     if (url == NULL) {
         HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
@@ -50,26 +46,22 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     if ((buf = OPENSSL_strdup(url)) == NULL)
         goto err;
 
-    /* check for optional http[s]:// prefix */
-    p = strchr(buf, ':');
-    if (p == NULL || (size_t)(p - buf) > https_len) {
+    /* check for optional prefix "http[s]://" */
+    p = strstr(buf, "://");
+    if (p == NULL) {
         p = buf;
     } else {
-        *(p++) = '\0';
-
+        *p = '\0'; /* p points to end of scheme name */
         if (strcmp(buf, OSSL_HTTPS_NAME) == 0) {
             if (pssl != NULL)
                 *pssl = 1;
             port = OSSL_HTTPS_PORT;
             portnum = 443;
         } else if (strcmp(buf, OSSL_HTTP_NAME) != 0) {
-            goto parse_err;
+            HTTPerr(0, HTTP_R_INVALID_URL_PREFIX);
+            goto err;
         }
-
-        /* check for double slash */
-        if ((p[0] != '/') || (p[1] != '/'))
-            goto parse_err;
-        p += 2;
+        p += 3;
     }
     host = p;
 
@@ -114,10 +106,12 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     /* check for optional path at end of url starting with '/' */
     path = url + (p - buf);
     /* cannot use p + 1 because *p is '\0' and path must start with '/' */
-    if (*path == '\0')
+    if (*path == '\0') {
         path = "/";
-    else if (*path != '/')
+    } else if (*path != '/') {
+        HTTPerr(0, HTTP_R_INVALID_URL_PATH);
         goto parse_err;
+    }
 
     if (phost != NULL && (*phost = OPENSSL_strdup(host)) == NULL)
         goto err;
