@@ -127,7 +127,7 @@ static void *hmac_dup(void *vsrc)
     }
     if (src->key != NULL) {
         /* There is no "secure" OPENSSL_memdup */
-        dst->key = OPENSSL_secure_malloc(src->keylen);
+        dst->key = OPENSSL_secure_malloc(src->keylen > 0 ? src->keylen : 1);
         if (dst->key == NULL) {
             hmac_free(dst);
             return 0;
@@ -278,7 +278,7 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
         if (macctx->keylen > 0)
             OPENSSL_secure_clear_free(macctx->key, macctx->keylen);
         /* Keep a copy of the key if we need it for TLS HMAC */
-        macctx->key = OPENSSL_secure_malloc(p->data_size);
+        macctx->key = OPENSSL_secure_malloc(p->data_size > 0 ? p->data_size : 1);
         if (macctx->key == NULL)
             return 0;
         memcpy(macctx->key, p->data, p->data_size);
