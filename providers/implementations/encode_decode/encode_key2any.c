@@ -243,10 +243,11 @@ static int key_to_pem_pubkey_bio(BIO *out, const void *key, int key_nid,
 
 /* ---------------------------------------------------------------------- */
 
-#define dh_param_selection      OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-#define dh_pub_selection        (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
+#ifndef OPENSSL_NO_DH
+# define dh_param_selection     OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+# define dh_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
                                  | dh_param_selection)
-#define dh_priv_selection       (OSSL_KEYMGMT_SELECT_KEYPAIR \
+# define dh_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
                                  | dh_param_selection)
 
 static int dh_type_to_evp(const DH *dh)
@@ -332,16 +333,18 @@ static int dh_params_to_pem_bio(BIO *out, const void *key)
 {
     return PEM_write_bio_DHparams(out, key);
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 
-#define dsa_param_selection     OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-#define dsa_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
+#ifndef OPENSSL_NO_DSA
+# define dsa_param_selection    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+# define dsa_pub_selection      (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
                                  | dsa_param_selection)
-#define dsa_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
+# define dsa_priv_selection     (OSSL_KEYMGMT_SELECT_KEYPAIR \
                                  | dsa_param_selection)
 
-#define dsa_type_to_evp(key) EVP_PKEY_DSA
+# define dsa_type_to_evp(key) EVP_PKEY_DSA
 
 static int prepare_some_dsa_params(const void *dsa, int nid,
                                    void **pstr, int *pstrtype)
@@ -446,16 +449,18 @@ static int dsa_params_to_pem_bio(BIO *out, const void *key)
 {
     return PEM_write_bio_DSAparams(out, key);
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 
-#define ec_param_selection      OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
-#define ec_pub_selection        (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
+#ifndef OPENSSL_NO_EC
+# define ec_param_selection     OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+# define ec_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
                                  | ec_param_selection)
-#define ec_priv_selection       (OSSL_KEYMGMT_SELECT_KEYPAIR \
+# define ec_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
                                  | ec_param_selection)
 
-#define ec_type_to_evp(key) EVP_PKEY_EC
+# define ec_type_to_evp(key) EVP_PKEY_EC
 
 static int prepare_ec_explicit_params(const void *eckey,
                                       void **pstr, int *pstrtype)
@@ -545,18 +550,20 @@ static int ec_priv_to_der(const void *veckey, unsigned char **pder)
     EC_KEY_set_enc_flags(eckey, old_flags); /* restore old flags */
     return ret; /* return the length of the der encoded data */
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 
-#define ecx_pub_selection       OSSL_KEYMGMT_SELECT_PUBLIC_KEY
-#define ecx_priv_selection      OSSL_KEYMGMT_SELECT_KEYPAIR
+#ifndef OPENSSL_NO_EC
+# define ecx_pub_selection      OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+# define ecx_priv_selection     OSSL_KEYMGMT_SELECT_KEYPAIR
 
-#define ed25519_type_to_evp(key) EVP_PKEY_ED25519
-#define ed448_type_to_evp(key) EVP_PKEY_ED448
-#define x25519_type_to_evp(key) EVP_PKEY_X25519
-#define x448_type_to_evp(key) EVP_PKEY_X448
+# define ed25519_type_to_evp(key) EVP_PKEY_ED25519
+# define ed448_type_to_evp(key) EVP_PKEY_ED448
+# define x25519_type_to_evp(key) EVP_PKEY_X25519
+# define x448_type_to_evp(key) EVP_PKEY_X448
 
-#define prepare_ecx_params NULL
+# define prepare_ecx_params NULL
 
 static int ecx_pub_to_der(const void *vecxkey, unsigned char **pder)
 {
@@ -602,8 +609,8 @@ static int ecx_priv_to_der(const void *vecxkey, unsigned char **pder)
     return keybloblen;
 }
 
-#define ecx_params_to_der_bio NULL
-#define ecx_params_to_pem_bio NULL
+# define ecx_params_to_der_bio NULL
+# define ecx_params_to_pem_bio NULL
 
 static int rsa_type_to_evp(const RSA *rsa)
 {
@@ -617,6 +624,7 @@ static int rsa_type_to_evp(const RSA *rsa)
     /* Currently unsupported RSA key type */
     return EVP_PKEY_NONE;
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 

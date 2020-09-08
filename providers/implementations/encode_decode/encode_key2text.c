@@ -204,10 +204,11 @@ err:
 
 /* ---------------------------------------------------------------------- */
 
-#define dh_param_selection      OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-#define dh_pub_selection        (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
+#ifndef OPENSSL_NO_DH
+# define dh_param_selection     OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+# define dh_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
                                  | dh_param_selection)
-#define dh_priv_selection       (OSSL_KEYMGMT_SELECT_KEYPAIR \
+# define dh_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
                                  | dh_param_selection)
 
 static int dh_to_text(BIO *out, const void *key, int selection)
@@ -272,13 +273,15 @@ static int dh_to_text(BIO *out, const void *key, int selection)
 
     return 1;
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 
-#define dsa_param_selection     OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-#define dsa_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
+#ifndef OPENSSL_NO_DSA
+# define dsa_param_selection    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+# define dsa_pub_selection      (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
                                  | dsa_param_selection)
-#define dsa_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
+# define dsa_priv_selection     (OSSL_KEYMGMT_SELECT_KEYPAIR \
                                  | dsa_param_selection)
 
 static int dsa_to_text(BIO *out, const void *key, int selection)
@@ -343,13 +346,15 @@ static int dsa_to_text(BIO *out, const void *key, int selection)
 
     return 1;
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 
-#define ec_param_selection      OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
-#define ec_pub_selection        (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
+#ifndef OPENSSL_NO_EC
+# define ec_param_selection     OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
+# define ec_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
                                  | ec_param_selection)
-#define ec_priv_selection       (OSSL_KEYMGMT_SELECT_KEYPAIR \
+# define ec_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
                                  | ec_param_selection)
 
 static int ec_param_explicit_curve_to_text(BIO *out, const EC_GROUP *group,
@@ -545,11 +550,13 @@ err:
     OPENSSL_free(pub);
     return ret;
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 
-#define ecx_pub_selection       OSSL_KEYMGMT_SELECT_PUBLIC_KEY
-#define ecx_priv_selection      OSSL_KEYMGMT_SELECT_KEYPAIR
+#ifndef OPENSSL_NO_EC
+# define ecx_pub_selection      OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+# define ecx_priv_selection     OSSL_KEYMGMT_SELECT_KEYPAIR
 
 static int ecx_to_text(BIO *out, const void *key, int selection)
 {
@@ -582,7 +589,8 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
             break;
         }
     } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
-        if (ecx->pubkey == NULL) {
+        /* ecx->pubkey is an array, not a pointer... */
+        if (!ecx->haspubkey) {
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_A_PUBLIC_KEY);
             return 0;
         }
@@ -614,6 +622,7 @@ static int ecx_to_text(BIO *out, const void *key, int selection)
 
     return 1;
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 

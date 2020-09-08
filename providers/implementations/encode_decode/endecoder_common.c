@@ -62,7 +62,7 @@ void *ossl_prov_import_key(const OSSL_DISPATCH *fns, void *provctx,
     OSSL_FUNC_keymgmt_free_fn *kmgmt_free = ossl_prov_get_keymgmt_free(fns);
     OSSL_FUNC_keymgmt_import_fn *kmgmt_import =
         ossl_prov_get_keymgmt_import(fns);
-    void *key;
+    void *key = NULL;
 
     if (kmgmt_new != NULL && kmgmt_import != NULL && kmgmt_free != NULL) {
         if ((key = kmgmt_new(provctx)) == NULL
