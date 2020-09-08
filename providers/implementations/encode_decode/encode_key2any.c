@@ -611,6 +611,15 @@ static int ecx_priv_to_der(const void *vecxkey, unsigned char **pder)
 
 # define ecx_params_to_der_bio NULL
 # define ecx_params_to_pem_bio NULL
+#endif
+
+/* ---------------------------------------------------------------------- */
+
+#define rsa_param_selection     OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS
+#define rsa_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
+                                 | rsa_param_selection)
+#define rsa_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
+                                 | rsa_param_selection)
 
 static int rsa_type_to_evp(const RSA *rsa)
 {
@@ -624,15 +633,6 @@ static int rsa_type_to_evp(const RSA *rsa)
     /* Currently unsupported RSA key type */
     return EVP_PKEY_NONE;
 }
-#endif
-
-/* ---------------------------------------------------------------------- */
-
-#define rsa_param_selection     OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS
-#define rsa_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
-                                 | rsa_param_selection)
-#define rsa_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
-                                 | rsa_param_selection)
 
 /*
  * Helper functions to prepare RSA-PSS params for encoding.  We would
