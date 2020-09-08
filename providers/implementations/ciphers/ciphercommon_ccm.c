@@ -11,6 +11,7 @@
 
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_ccm.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
@@ -21,7 +22,7 @@ static int ccm_tls_init(PROV_CCM_CTX *ctx, unsigned char *aad, size_t alen)
 {
     size_t len;
 
-    if (alen != EVP_AEAD_TLS1_AAD_LEN)
+    if (!ossl_prov_is_running() || alen != EVP_AEAD_TLS1_AAD_LEN)
         return 0;
 
     /* Save the aad for later use. */
@@ -220,6 +221,9 @@ static int ccm_init(void *vctx, const unsigned char *key, size_t keylen,
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     ctx->enc = enc;
 
     if (iv != NULL) {
@@ -276,6 +280,9 @@ int ccm_stream_final(void *vctx, unsigned char *out, size_t *outl,
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
     int i;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     i = ccm_cipher_internal(ctx, out, outl, NULL, 0);
     if (i <= 0)
         return 0;
@@ -289,6 +296,9 @@ int ccm_cipher(void *vctx,
                       const unsigned char *in, size_t inl)
 {
     PROV_CCM_CTX *ctx = (PROV_CCM_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -319,6 +329,9 @@ static int ccm_tls_cipher(PROV_CCM_CTX *ctx,
 {
     int rv = 0;
     size_t olen = 0;
+
+    if (!ossl_prov_is_running())
+        goto err;
 
     /* Encrypt/decrypt must be performed in place */
     if (in == NULL || out != in || len < EVP_CCM_TLS_EXPLICIT_IV_LEN + ctx->m)

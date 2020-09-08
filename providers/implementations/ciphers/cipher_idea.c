@@ -18,6 +18,7 @@
 
 #include "cipher_idea.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_cipher_freectx_fn idea_freectx;
 static OSSL_FUNC_cipher_dupctx_fn idea_dupctx;
@@ -33,8 +34,12 @@ static void idea_freectx(void *vctx)
 static void *idea_dupctx(void *ctx)
 {
     PROV_IDEA_CTX *in = (PROV_IDEA_CTX *)ctx;
-    PROV_IDEA_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_IDEA_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

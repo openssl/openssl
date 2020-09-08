@@ -18,6 +18,7 @@
 
 #include "cipher_aes.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_cipher_freectx_fn aes_freectx;
 static OSSL_FUNC_cipher_dupctx_fn aes_dupctx;
@@ -33,8 +34,12 @@ static void aes_freectx(void *vctx)
 static void *aes_dupctx(void *ctx)
 {
     PROV_AES_CTX *in = (PROV_AES_CTX *)ctx;
-    PROV_AES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_AES_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

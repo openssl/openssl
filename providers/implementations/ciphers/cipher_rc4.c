@@ -17,6 +17,7 @@
 
 #include "cipher_rc4.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 /* TODO (3.0) Figure out what flags are required */
 #define RC4_FLAGS EVP_CIPH_FLAG_DEFAULT_ASN1
@@ -35,8 +36,12 @@ static void rc4_freectx(void *vctx)
 static void *rc4_dupctx(void *ctx)
 {
     PROV_RC4_CTX *in = (PROV_RC4_CTX *)ctx;
-    PROV_RC4_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_RC4_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -56,7 +61,10 @@ static int alg##_##kbits##_get_params(OSSL_PARAM params[])                     \
 static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_newctx;                      \
 static void * alg##_##kbits##_newctx(void *provctx)                            \
 {                                                                              \
-     PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
+     PROV_##UCALG##_CTX *ctx;                                                  \
+     if (!ossl_prov_is_running())                                               \
+        return NULL;                                                           \
+     ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits, 0, flags,         \
                                 PROV_CIPHER_HW_##alg(kbits), NULL);            \

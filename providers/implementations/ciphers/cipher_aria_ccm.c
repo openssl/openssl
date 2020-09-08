@@ -11,13 +11,18 @@
 
 #include "cipher_aria_ccm.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_cipher_freectx_fn aria_ccm_freectx;
 
 static void *aria_ccm_newctx(void *provctx, size_t keybits)
 {
-    PROV_ARIA_CCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_ARIA_CCM_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         ccm_initctx(&ctx->base, keybits, PROV_ARIA_HW_ccm(keybits));
     return ctx;

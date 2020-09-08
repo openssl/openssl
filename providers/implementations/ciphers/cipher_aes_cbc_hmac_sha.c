@@ -20,6 +20,7 @@
 #include <openssl/ssl.h>
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 #ifndef AES_CBC_HMAC_SHA_CAPABLE
 # define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
@@ -299,8 +300,12 @@ static void *aes_cbc_hmac_sha1_newctx(void *provctx, size_t kbits,
                                       size_t blkbits, size_t ivbits,
                                       uint64_t flags)
 {
-    PROV_AES_HMAC_SHA1_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_HMAC_SHA1_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         base_init(provctx, &ctx->base_ctx,
                   PROV_CIPHER_HW_aes_cbc_hmac_sha1(), kbits, blkbits,
@@ -322,8 +327,12 @@ static void *aes_cbc_hmac_sha256_newctx(void *provctx, size_t kbits,
                                         size_t blkbits, size_t ivbits,
                                         uint64_t flags)
 {
-    PROV_AES_HMAC_SHA256_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_HMAC_SHA256_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         base_init(provctx, &ctx->base_ctx,
                   PROV_CIPHER_HW_aes_cbc_hmac_sha256(), kbits, blkbits,

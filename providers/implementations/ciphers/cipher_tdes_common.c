@@ -17,13 +17,18 @@
 #include "cipher_tdes.h"
 #include <openssl/rand.h>
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
                   size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)
 {
-    PROV_TDES_CTX *tctx = OPENSSL_zalloc(sizeof(*tctx));
+    PROV_TDES_CTX *tctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    tctx = OPENSSL_zalloc(sizeof(*tctx));
     if (tctx != NULL)
         cipher_generic_initkey(tctx, kbits, blkbits, ivbits, mode, flags, hw,
                                provctx);
@@ -33,8 +38,12 @@ void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
 void *tdes_dupctx(void *ctx)
 {
     PROV_TDES_CTX *in = (PROV_TDES_CTX *)ctx;
-    PROV_TDES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_TDES_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -56,6 +65,9 @@ static int tdes_init(void *vctx, const unsigned char *key, size_t keylen,
                      const unsigned char *iv, size_t ivlen, int enc)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     ctx->num = 0;
     ctx->bufsz = 0;

@@ -17,6 +17,7 @@
 
 #include "cipher_rc4_hmac_md5.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 /* TODO(3.0) Figure out what flags are required */
@@ -46,8 +47,12 @@ static OSSL_FUNC_cipher_get_params_fn rc4_hmac_md5_get_params;
 
 static void *rc4_hmac_md5_newctx(void *provctx)
 {
-    PROV_RC4_HMAC_MD5_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_RC4_HMAC_MD5_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         cipher_generic_initkey(ctx, RC4_HMAC_MD5_KEY_BITS,
                                RC4_HMAC_MD5_BLOCK_BITS,

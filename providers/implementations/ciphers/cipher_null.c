@@ -12,6 +12,7 @@
 #include <openssl/core_dispatch.h>
 #include "prov/implementations.h"
 #include "prov/ciphercommon.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 typedef struct prov_cipher_null_ctx_st {
@@ -23,6 +24,9 @@ typedef struct prov_cipher_null_ctx_st {
 static OSSL_FUNC_cipher_newctx_fn null_newctx;
 static void *null_newctx(void *provctx)
 {
+    if (!ossl_prov_is_running())
+        return NULL;
+
     return OPENSSL_zalloc(sizeof(PROV_CIPHER_NULL_CTX));
 }
 
@@ -38,6 +42,9 @@ static int null_einit(void *vctx, const unsigned char *key, size_t keylen,
 {
     PROV_CIPHER_NULL_CTX *ctx = (PROV_CIPHER_NULL_CTX *)vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     ctx->enc = 1;
     return 1;
 }
@@ -46,6 +53,9 @@ static OSSL_FUNC_cipher_decrypt_init_fn null_dinit;
 static int null_dinit(void *vctx, const unsigned char *key, size_t keylen,
                       const unsigned char *iv, size_t ivlen)
 {
+    if (!ossl_prov_is_running())
+        return 0;
+
     return 1;
 }
 
@@ -54,6 +64,9 @@ static int null_cipher(void *vctx, unsigned char *out, size_t *outl,
                        size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_CIPHER_NULL_CTX *ctx = (PROV_CIPHER_NULL_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (!ctx->enc && ctx->tlsmacsize > 0) {
         /*
@@ -77,6 +90,9 @@ static OSSL_FUNC_cipher_final_fn null_final;
 static int null_final(void *vctx, unsigned char *out, size_t *outl,
                       size_t outsize)
 {
+    if (!ossl_prov_is_running())
+        return 0;
+
     *outl = 0;
     return 1;
 }
