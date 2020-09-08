@@ -87,8 +87,8 @@ static const OSSL_ALGORITHM base_decoder[] = {
 #undef DECODER
 
 static const OSSL_ALGORITHM base_store[] = {
-#define STORE(name, fips, func_table)                           \
-    { name, "provider=base,fips=" fips, (func_table) },
+#define STORE(name, _fips, func_table)                           \
+    { name, "provider=base,fips=" _fips, (func_table) },
 
 #include "stores.inc"
     { NULL, NULL, NULL }
