@@ -152,6 +152,7 @@ static int print_labeled_buf(BIO *out, const char *label,
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_DSA)
 static int ffc_params_to_text(BIO *out, const FFC_PARAMS *ffc)
 {
     if (ffc->nid != NID_undef) {
@@ -201,6 +202,7 @@ static int ffc_params_to_text(BIO *out, const FFC_PARAMS *ffc)
 err:
     return 0;
 }
+#endif
 
 /* ---------------------------------------------------------------------- */
 
