@@ -26,6 +26,7 @@
 #include "x509_local.h"
 
 DEFINE_STACK_OF(X509)
+DEFINE_STACK_OF(X509_EXTENSION)
 DEFINE_STACK_OF(X509_REVOKED)
 DEFINE_STACK_OF(GENERAL_NAME)
 DEFINE_STACK_OF(X509_CRL)
@@ -585,6 +586,9 @@ static int check_chain_extensions(X509_STORE_CTX *ctx)
                 /* Check SKID presence acc. to RFC 5280 section 4.2.1.2 */
                 if ((x->ex_flags & EXFLAG_CA) != 0 && x->skid == NULL)
                     ctx->error = X509_V_ERR_MISSING_SUBJECT_KEY_IDENTIFIER;
+            } else {
+                if (sk_X509_EXTENSION_num(X509_get0_extensions(x)) > 0)
+                    ctx->error = X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3;
             }
         }
         if (ctx->error != X509_V_OK)
