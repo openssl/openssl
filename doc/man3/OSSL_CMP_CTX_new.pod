@@ -617,14 +617,14 @@ OSSL_CMP_CTX_get1_newChain() returns a pointer to a duplicate of the stack of
 X.509 certificates computed by OSSL_CMP_certConf_cb() (if this function has
 been called) on the last received certificate response message IP/CP/KUP.
 
-OSSL_CMP_CTX_get1_caPubs() returns a pointer to a duplicate of the stack of
+OSSL_CMP_CTX_get1_caPubs() returns a pointer to a duplicate of the list of
 X.509 certificates received in the caPubs field of last received certificate
 response message IP/CP/KUP.
 
-OSSL_CMP_CTX_get1_extraCertsIn() returns a pointer to a duplicate of the stack
-of X.509 certificates received in the last received nonempty extraCerts field.
-Returns an empty stack if no extraCerts have been received in the current
-transaction.
+OSSL_CMP_CTX_get1_extraCertsIn() returns a pointer to a duplicate of the list
+of X.509 certificates contained in the extraCerts field of the last received
+response message (except for pollRep and PKIConf), or
+an empty stack if no extraCerts have been received in the current transaction.
 
 OSSL_CMP_CTX_set1_transactionID() sets the given transaction ID in the given
 OSSL_CMP_CTX structure.

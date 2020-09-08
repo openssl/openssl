@@ -190,6 +190,11 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
      */
     ossl_cmp_log1(INFO, ctx, "received %s", ossl_cmp_bodytype_to_string(bt));
 
+    /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
+    if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
+            && !ossl_cmp_ctx_set1_extraCertsIn(ctx, (*rep)->extraCerts))
+        return 0;
+
     if (!ossl_cmp_msg_check_update(ctx, *rep, unprotected_exception,
                                    expected_type))
         return 0;
@@ -470,7 +475,7 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
 /*-
  * Callback fn validating that the new certificate can be verified, using
  * ctx->certConf_cb_arg, which has been initialized using opt_out_trusted, and
- * ctx->untrusted, which at this point already contains ctx->extraCertsIn.
+ * ctx->untrusted, which at this point already contains msg->extraCerts.
  * Returns 0 on acceptance, else a bit field reflecting PKIFailureInfo.
  * Quoting from RFC 4210 section 5.1. Overall PKI Message:
  *     The extraCerts field can contain certificates that may be useful to
@@ -595,10 +600,6 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             && !ossl_cmp_ctx_set1_caPubs(ctx, crepmsg->caPubs))
         return 0;
 
-    /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
-    if (!ossl_cmp_ctx_set1_extraCertsIn(ctx, (*resp)->extraCerts))
-        return 0;
-
     subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
     if (rkey != NULL
         /* X509_check_private_key() also works if rkey is just public key */
@@ -606,8 +607,8 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_incorrectData;
         txt = "public key in new certificate does not match our enrollment key";
         /*-
-         * not callling (void)ossl_cmp_exchange_error(ctx,
-         *                    OSSL_CMP_PKISTATUS_rejection, fail_info, txt)
+         * not calling (void)ossl_cmp_exchange_error(ctx,
+         *                   OSSL_CMP_PKISTATUS_rejection, fail_info, txt)
          * not throwing CMP_R_CERTIFICATE_NOT_ACCEPTED with txt
          * not returning 0
          * since we better leave this for the certConf_cb to decide
