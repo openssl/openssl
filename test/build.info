@@ -685,7 +685,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[keymgmt_internal_test]=../libcrypto.a libtestutil.a
 
     SOURCE[ffc_internal_test]=ffc_internal_test.c
-    INCLUDE[ffc_internal_test]=.. ../include ../apps/include ../crypto/include
+    INCLUDE[ffc_internal_test]=.. ../include ../apps/include
     DEPEND[ffc_internal_test]=../libcrypto.a libtestutil.a
 
     IF[{- !$disabled{mdc2} -}]
