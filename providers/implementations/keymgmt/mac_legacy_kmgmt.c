@@ -102,6 +102,13 @@ int mac_key_up_ref(MAC_KEY *mackey)
 {
     int ref = 0;
 
+    /* This is effectively doing a new operation on the MAC_KEY and should be
+     * adequately guarded again modules' error states.  However, both current
+     * calls here are guarded propery in signature/mac_legacy.c.  Thus, it
+     * could be removed here.  The concern is that something in the future
+     * might call this function without adequate guards.  It's a cheap call,
+     * it seems best to leave it even though it is currently redundant.
+     */
     if (!ossl_prov_is_running())
         return 0;
 
