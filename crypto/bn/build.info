@@ -126,8 +126,6 @@ DEFINE[../../providers/libfips.a]=$BNDEF
 DEFINE[../../providers/liblegacy.a]=$BNDEF
 DEFINE[../../providers/libimplementations.a]=$BNDEF
 
-INCLUDE[../../libcrypto]=../../crypto/include
-
 INCLUDE[bn_exp.o]=..
 
 GENERATE[bn-586.s]=asm/bn-586.pl
