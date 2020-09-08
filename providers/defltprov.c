@@ -434,8 +434,8 @@ static const OSSL_ALGORITHM deflt_decoder[] = {
 #undef DECODER
 
 static const OSSL_ALGORITHM deflt_store[] = {
-#define STORE(name, fips, func_table)                           \
-    { name, "provider=default,fips=" fips, (func_table) },
+#define STORE(name, _fips, func_table)                           \
+    { name, "provider=default,fips=" _fips, (func_table) },
 
 #include "stores.inc"
     { NULL, NULL, NULL }
