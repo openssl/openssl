@@ -202,6 +202,7 @@ BN_F_BN_DIV_RECP:130:BN_div_recp
 BN_F_BN_EXP:123:BN_exp
 BN_F_BN_EXPAND_INTERNAL:120:bn_expand_internal
 BN_F_BN_GENCB_NEW:143:BN_GENCB_new
+BN_F_BN_GENERATE_DSA_DETERMINISTIC_NONCE:152:bn_generate_dsa_deterministic_nonce
 BN_F_BN_GENERATE_DSA_NONCE:140:BN_generate_dsa_nonce
 BN_F_BN_GENERATE_PRIME_EX:141:BN_generate_prime_ex
 BN_F_BN_GENERATE_PRIME_EX2:152:BN_generate_prime_ex2

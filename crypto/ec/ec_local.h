@@ -668,7 +668,8 @@ struct ECDSA_SIG_st {
     BIGNUM *r;
     BIGNUM *s;
 };
-
+int ossl_ecdsa_deterministic_sign(int type, const unsigned char *dgst, int dlen,
+                    unsigned char *sig, unsigned int *siglen, EC_KEY *eckey);
 int ossl_ecdsa_sign_setup(EC_KEY *eckey, BN_CTX *ctx_in, BIGNUM **kinvp,
                           BIGNUM **rp);
 int ossl_ecdsa_sign(int type, const unsigned char *dgst, int dlen,

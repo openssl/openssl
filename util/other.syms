@@ -250,6 +250,7 @@ EVP_PKEY_CTX_get_ecdh_cofactor_mode     define
 EVP_PKEY_CTX_get_ecdh_kdf_md            define
 EVP_PKEY_CTX_get_ecdh_kdf_outlen        define
 EVP_PKEY_CTX_get_ecdh_kdf_type          define
+EVP_PKEY_CTX_get_ecdsa_nonce_type       define
 EVP_PKEY_CTX_get_rsa_mgf1_md            define
 EVP_PKEY_CTX_get_rsa_oaep_md            define
 EVP_PKEY_CTX_get_rsa_padding            define
@@ -285,6 +286,7 @@ EVP_PKEY_CTX_set_ecdh_cofactor_mode     define
 EVP_PKEY_CTX_set_ecdh_kdf_md            define
 EVP_PKEY_CTX_set_ecdh_kdf_outlen        define
 EVP_PKEY_CTX_set_ecdh_kdf_type          define
+EVP_PKEY_CTX_set_ecdsa_nonce_type       define
 EVP_PKEY_CTX_set_hkdf_md                define
 EVP_PKEY_CTX_set_mac_key                define
 EVP_PKEY_CTX_set_rsa_keygen_bits        define

@@ -81,9 +81,11 @@ size use L<EVP_PKEY_sign(3)> with a NULL B<sig> parameter.
 ECDSA_sign() computes a digital signature of the B<dgstlen> bytes hash value
 B<dgst> using the private EC key B<eckey>. The DER encoded signatures is
 stored in B<sig> and its length is returned in B<sig_len>. Note: B<sig> must
-point to ECDSA_size(eckey) bytes of memory. The parameter B<type> is currently
-ignored. ECDSA_sign() is wrapper function for ECDSA_sign_ex() with B<kinv>
-and B<rp> set to NULL.
+point to ECDSA_size(eckey) bytes of memory. If the parameter B<type> is of
+non-positive value, it will be ignored and the signature's K (nonce) will be
+produced randomly, which is the default action. If the parameter B<type> is
+of positive value, it will be considered as the HashType (hash nid) for RFC6979
+deterministic signature generation.
 
 ECDSA_do_sign() is similar to ECDSA_sign() except the signature is returned
 as a newly allocated B<ECDSA_SIG> structure (or NULL on error). ECDSA_do_sign()
@@ -111,7 +113,10 @@ ECDSA_sign_ex() computes a digital signature of the B<dgstlen> bytes hash value
 B<dgst> using the private EC key B<eckey> and the optional pre-computed values
 B<kinv> and B<rp>. The DER encoded signature is stored in B<sig> and its
 length is returned in B<sig_len>. Note: B<sig> must point to ECDSA_size(eckey)
-bytes of memory. The parameter B<type> is ignored.
+bytes of memory. If the parameter B<type> is of non-positive value, it will be
+ignored and the signature's K (nonce) will be produced randomly, which is the
+default action. If the parameter B<type> is of positive value, it will be considered
+as the HashType (hash nid) for RFC6979 deterministic signature generation.
 
 ECDSA_do_sign_ex() is similar to ECDSA_sign_ex() except the signature is
 returned as a newly allocated B<ECDSA_SIG> structure (or NULL on error).

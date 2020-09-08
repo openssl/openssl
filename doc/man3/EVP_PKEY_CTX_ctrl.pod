@@ -67,6 +67,8 @@ EVP_PKEY_CTX_set_ecdh_kdf_outlen,
 EVP_PKEY_CTX_get_ecdh_kdf_outlen,
 EVP_PKEY_CTX_set0_ecdh_kdf_ukm,
 EVP_PKEY_CTX_get0_ecdh_kdf_ukm,
+EVP_PKEY_CTX_set_ecdsa_nonce_type,
+EVP_PKEY_CTX_get_ecdsa_nonce_type,
 EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
 - algorithm specific control operations
 
@@ -169,6 +171,8 @@ EVP_PKEY_CTX_set1_id, EVP_PKEY_CTX_get1_id, EVP_PKEY_CTX_get1_id_len
  int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
  int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len);
  int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
+ int EVP_PKEY_CTX_set_ecdsa_nonce_type(EVP_PKEY_CTX *ctx, int nonce);
+ int EVP_PKEY_CTX_get_ecdsa_nonce_type(EVP_PKEY_CTX *ctx);
 
  int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, void *id, size_t id_len);
  int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id);
@@ -597,6 +601,17 @@ so the caller should not free the original memory pointed to by I<ukm>.
 The EVP_PKEY_CTX_get0_ecdh_kdf_ukm() macro gets the user key material for I<ctx>.
 The return value is the user key material length. The resulting pointer is owned
 by the library and should not be freed by the caller.
+
+=head2 ECDSA K (nonce) type parameters
+
+The EVP_PKEY_CTX_set_ecdsa_nonce_type() macro sets the ECDSA K (nonce) type to
+B<nonce_type> for ECDSA signing. Possible values are B<EVP_PKEY_ECDSA_NONCE_RANDOM>
+and B<EVP_PKEY_ECDSA_NONCE_DETERMINISTIC> which uses the DSA nonce generation process
+specified in RFC6979.
+
+The EVP_PKEY_CTX_get_ecdsa_nonce_type() macro returns the ECDSA K (nonce) type
+for B<ctx> used for ECDSA signing. Possible values are B<EVP_PKEY_ECDSA_NONCE_RANDOM>
+and B<EVP_PKEY_ECDSA_NONCE_DETERMINISTIC>.
 
 =head2 Other parameters
 
