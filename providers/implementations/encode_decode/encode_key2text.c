@@ -875,7 +875,6 @@ static int key2text_encode(void *vctx, const void *key, int selection,
 
 #ifndef OPENSSL_NO_DH
 MAKE_TEXT_ENCODER(dh, dh);
-MAKE_TEXT_ENCODER(dhx, dh);
 #endif
 #ifndef OPENSSL_NO_DSA
 MAKE_TEXT_ENCODER(dsa, dsa);
