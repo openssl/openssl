@@ -1068,6 +1068,8 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_DigestSignFinal(md_ctx, sig, &sig_len)))
         goto done;
 
+    /* Ensure that the signature round-trips. */
+
     if (!TEST_true(EVP_DigestVerifyInit(md_ctx_verify, NULL, EVP_sm3(), NULL, pkey)))
         goto done;
 
