@@ -471,7 +471,6 @@ static int ec_param_to_text(BIO *out, const EC_GROUP *group,
         if (BIO_printf(out, "%s: %s\n", "ASN1 OID", OBJ_nid2sn(curve_nid)) <= 0)
             return 0;
 
-        /* TODO(3.0): Only named curves are currently supported */
         curve_name = EC_curve_nid2nist(curve_nid);
         return (curve_name == NULL
                 || BIO_printf(out, "%s: %s\n", "NIST CURVE", curve_name) > 0);
@@ -719,7 +718,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
         }
     }
 
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
+    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0) {
         switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
         case RSA_FLAG_TYPE_RSA:
             if (!rsa_pss_params_30_is_unrestricted(pss_params)) {
@@ -788,7 +787,7 @@ static void *key2text_newctx(void *provctx)
     return provctx;
 }
 
-static void key2text_freectx(void *vctx)
+static void key2text_freectx(ossl_unused void *vctx)
 {
 }
 
@@ -866,8 +865,6 @@ static int key2text_encode(void *vctx, const void *key, int selection,
     MAKE_TEXT_ENCODER_KIND(impl, priv, type)
 
 #ifndef OPENSSL_NO_DH
-#define dh_text_params_bio i2d_DHparams_bio
-#define pem_dh_params_bio PEM_write_bio_DHparams
 MAKE_TEXT_ENCODER(dh, dh);
 MAKE_TEXT_ENCODER(dhx, dh);
 #endif

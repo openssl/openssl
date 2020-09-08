@@ -42,7 +42,6 @@ struct key2any_ctx_st {
     int cipher_intent;
 
     EVP_CIPHER *cipher;
-    int pbe_nid;                 /* For future variation */
 
     struct ossl_passphrase_data_st pwdata;
 };
@@ -93,7 +92,7 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
         ERR_raise(ERR_LIB_PROV, PROV_R_READ_KEY);
         return NULL;
     }
-    /* NID == -1 means "standard" */
+    /* First argument == -1 means "standard" */
     p8 = PKCS8_encrypt(-1, ctx->cipher, kstr, klen, NULL, 0, 0, p8info);
     OPENSSL_cleanse(kstr, klen);
     return p8;
