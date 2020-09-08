@@ -389,7 +389,6 @@ CONF *app_load_config_bio(BIO *in, const char *filename)
     else
         BIO_printf(bio_err, "config input");
 
-    CONF_modules_load(conf, NULL, 0);
     NCONF_free(conf);
     return NULL;
 }
