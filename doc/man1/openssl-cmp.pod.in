@@ -12,7 +12,7 @@ B<openssl> B<cmp>
 [B<-config> I<filename>]
 [B<-section> I<names>]
 
-[B<-server> I<address[:port]>]
+[B<-server> I<[http[s]://]address[:port][/path]>]
 [B<-proxy> I<[http[s]://]address[:port][/path]>]
 [B<-no_proxy> I<addresses>]
 [B<-path> I<remote_path>]
@@ -32,6 +32,7 @@ B<openssl> B<cmp>
 [B<-ref> I<value>]
 [B<-secret> I<arg>]
 [B<-cert> I<filename>]
+[B<-own_trusted> I<filenames>]
 [B<-key> I<filename>]
 [B<-keypass> I<arg>]
 [B<-digest> I<name>]
@@ -63,6 +64,7 @@ B<openssl> B<cmp>
 [B<-implicit_confirm>]
 [B<-disable_confirm>]
 [B<-certout> I<filename>]
+[B<-chainout> I<filename>]
 
 [B<-oldcert> I<filename>]
 [B<-revreason> I<number>]
@@ -378,6 +380,10 @@ B<WARNING:> This leads to behavior violating RFC 4210.
 
 The file where the newly enrolled certificate should be saved.
 
+=item B<-chainout> I<filename>
+
+The file where the chain of the newly enrolled certificate should be saved.
+
 =back
 
 
@@ -425,11 +431,12 @@ Reason numbers defined in RFC 5280 are:
 
 =over 4
 
-=item B<-server> I<[http[s]://]address[:port]>
+=item B<-server> I<[http[s]://]address[:port][/path]>
 
 The IP address or DNS hostname and optionally port (defaulting to 80 or 443)
 of the CMP server to connect to using HTTP(S) transport.
 The optional I<http://> or I<https://> prefix is ignored.
+If a path is included it provides the default value for the B<-path> option.
 
 =item B<-proxy> I<[http[s]://]address[:port][/path]>
 
@@ -448,7 +455,7 @@ Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 =item B<-path> I<remote_path>
 
 HTTP path at the CMP server (aka CMP alias) to use for POST requests.
-Defaults to I</>.
+Defaults to any path given with B<-server>, else C<"/">.
 
 =item B<-msg_timeout> I<seconds>
 
@@ -612,7 +619,7 @@ B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-cert> I<filename>
 
-The client's current certificate.
+The client's current CMP signer certificate.
 Requires the corresponding key to be given with B<-key>.
 The subject of this certificate will be used as sender of outgoing CMP messages,
 while the subject of B<-oldcert> or B<-subjectName> may provide fallback values.
@@ -623,6 +630,16 @@ using an external entity certificate as defined in appendix E.7 of RFC 4210.
 For Key Update Request (KUR) messages this is also used as
 the certificate to be updated if the B<-oldcert> option is not given.
 If the file includes further certs, they are appended to the untrusted certs.
+
+=item B<-own_trusted> I<filenames>
+
+If this list of certificates is provided then the chain built for
+the CMP signer certificate given with the B<-cert> option is verified
+using the given certificates as trust anchors.
+
+Multiple filenames may be given, separated by commas and/or whitespace
+(where in the latter case the whole argument must be enclosed in "...").
+Each source may contain multiple certificates.
 
 =item B<-key> I<filename>
 
@@ -689,6 +706,7 @@ The only value with effect is B<ENGINE>.
 =item B<-otherpass> I<arg>
 
 Pass phrase source for certificate given with the B<-trusted>, B<-untrusted>,
+B<-own_trusted>,
 B<-out_trusted>, B<-extracerts>, B<-tls_extra>, or B<-tls_trusted> options.
 If not given here, the password will be prompted for if needed.
 

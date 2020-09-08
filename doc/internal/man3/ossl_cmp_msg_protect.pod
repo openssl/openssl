@@ -14,6 +14,7 @@ ossl_cmp_msg_add_extraCerts
 
  STACK_OF(X509)
      *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
+                                X509_STORE *store,
                                 STACK_OF(X509) *certs, X509 *cert);
  ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
                                            const OSSL_CMP_MSG *msg);
@@ -22,19 +23,15 @@ ossl_cmp_msg_add_extraCerts
 
 =head1 DESCRIPTION
 
-ossl_cmp_build_cert_chain() builds up the chain of intermediate CA certificates
-starting from the given certificate I<cert> as high up as possible using
-the given list of candidate certificates, similarly to ssl_add_cert_chain().
+ossl_cmp_build_cert_chain() builds a certificate chain starting from I<cert>
+using the optional list of intermediate CA certificates I<certs>.
+If I<store> is NULL builds the chain as far down as possible, ignoring errors.
+Else the chain must reach a trust anchor contained in I<store>.
 It internally uses a B<X509_STORE_CTX> structure associated with the library
 context I<libctx> and property query string I<propq>, both of which may be NULL.
-Intended use of this function is to find all the certificates above the trust
-anchor needed to verify an EE's own certificate.
-Those are supposed to be included in the ExtraCerts field of every first
-CMP message of a transaction when MSG_SIG_ALG is utilized.
-This allocates a stack and increments the reference count of each cert,
-so when not needed any more the stack and all its elements should be freed.
+If a non-NULL stack is returned the caller is responsible for freeing it.
 In case there is more than one possibility for the chain,
-OpenSSL seems to take the first one; check X509_verify_cert() for details.
+OpenSSL seems to take the first one; check L<X509_verify_cert(3)> for details.
 
 ossl_cmp_calc_protection() calculates the protection for the given I<msg>
 according to the algorithm and parameters in the message header's protectionAlg
@@ -46,10 +43,10 @@ If there is a secretValue it selects PBMAC, else if there is a protection cert
 it selects Signature and uses L<ossl_cmp_msg_add_extraCerts(3)>.
 It also sets the protectionAlg field in the message header accordingly.
 
-ossl_cmp_msg_add_extraCerts() adds elements to the extraCerts field in the given
-message I<msg>. It tries to build the certificate chain of the client cert in
-the I<ctx> if present by using certificates in ctx->untrusted_certs;
-if no untrusted certs are set, it will at least add the client certificate.
+ossl_cmp_msg_add_extraCerts() adds elements to the extraCerts field in I<msg>.
+If signature-based message protection is used it adds first the CMP signer cert
+ctx->cert and then its chain ctx->chain. If this chain is not present in I<ctx>
+tries to build it using ctx->untrusted_certs and caches the result in ctx->chain.
 In any case all the certificates explicitly specified to be sent out (i.e.,
 I<ctx->extraCertsOut>) are added. Note that it will NOT add the root certificate
 of the chain, i.e, the trust anchor (unless it is part of extraCertsOut).
@@ -62,9 +59,8 @@ CMP is defined in RFC 4210 (and CRMF in RFC 4211).
 
 ossl_cmp_build_cert_chain() returns NULL on error,
 else a pointer to a stack of (up_ref'ed) certificates
-containing the EE certificate given in the function arguments (cert)
-and all intermediate certificates up the chain toward the trust anchor.
-The (self-signed) trust anchor is not included.
+starting with given EE certificate and followed by all available intermediate
+certificates down towards (but excluding) any trusted root certificate.
 
 ossl_cmp_calc_protection() returns the protection on success, else NULL.
 

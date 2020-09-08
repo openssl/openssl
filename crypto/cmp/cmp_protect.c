@@ -146,14 +146,14 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
                            | X509_ADD_FLAG_PREPEND))
             return 0;
         /* if we have untrusted certs, try to add intermediate certs */
-        if (ctx->untrusted_certs != NULL) {
+        if (ctx->untrusted != NULL) {
             STACK_OF(X509) *chain;
             int res;
 
             ossl_cmp_debug(ctx,
                            "trying to build chain for own CMP signer cert");
-            chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
-                                              ctx->untrusted_certs, ctx->cert);
+            chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, NULL,
+                                              ctx->untrusted, ctx->cert);
             res = X509_add_certs(msg->extraCerts, chain,
                                  X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                                  | X509_ADD_FLAG_NO_SS);
@@ -298,7 +298,7 @@ int ossl_cmp_msg_protect(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
         /*
          * will add ctx->cert followed, if possible, by its chain built
-         * from ctx->untrusted_certs, and then ctx->extraCertsOut
+         * from ctx->untrusted, and then ctx->extraCertsOut
          */
     } else {
         CMPerr(0, CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION);

@@ -165,20 +165,36 @@ PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
     return PEM_write_bio_PrivateKey_traditional(out, x, enc, kstr, klen, cb, u);
 }
 
+/*
+ * Note: there is no way to tell a provided pkey encoder to use "traditional"
+ * encoding.  Therefore, if the pkey is provided, we try to take a copy 
+ * TODO: when #legacy keys are gone, this function will not be possible any
+ * more and should be removed.
+ */
 int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                                          const EVP_CIPHER *enc,
                                          const unsigned char *kstr, int klen,
                                          pem_password_cb *cb, void *u)
 {
     char pem_str[80];
+    EVP_PKEY *copy = NULL;
+    int ret;
+
+    if (evp_pkey_is_assigned(x)
+        && evp_pkey_is_provided(x)
+        && evp_pkey_copy_downgraded(&copy, x))
+        x = copy;
 
     if (x->ameth == NULL || x->ameth->old_priv_encode == NULL) {
         ERR_raise(ERR_LIB_PEM, PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
         return 0;
     }
     BIO_snprintf(pem_str, 80, "%s PRIVATE KEY", x->ameth->pem_str);
-    return PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
-                              pem_str, bp, x, enc, kstr, klen, cb, u);
+    ret = PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
+                             pem_str, bp, x, enc, kstr, klen, cb, u);
+
+    EVP_PKEY_free(copy);
+    return ret;
 }
 
 EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,

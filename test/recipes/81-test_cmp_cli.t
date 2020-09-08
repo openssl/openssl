@@ -37,9 +37,9 @@ plan skip_all => "Tests involving CMP server not available on Windows or VMS"
 plan skip_all => "Tests involving CMP server not available in cross-compile builds"
     if defined $ENV{EXE_SHELL};
 plan skip_all => "Tests involving CMP server require 'kill' command"
-    unless `which kill`;
+    if system("which kill");
 plan skip_all => "Tests involving CMP server require 'lsof' command"
-    unless `which lsof`; # this typically excludes Solaris
+    if system("which lsof"); # this typically excludes Solaris
 
 sub chop_dblquot { # chop any leading & trailing '"' (needed for Windows)
     my $str = shift;

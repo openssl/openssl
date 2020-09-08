@@ -189,6 +189,11 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
 STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
 EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri);
+CMS_ContentInfo *CMS_AuthEnvelopedData_create(const EVP_CIPHER *cipher);
+CMS_ContentInfo *
+CMS_AuthEnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
+                                         OPENSSL_CTX *ctx,
+                                         const char *propq);
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher);
 CMS_ContentInfo *CMS_EnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
                                                       OPENSSL_CTX *ctx,

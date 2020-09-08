@@ -206,56 +206,49 @@ int ossl_cmp_X509_STORE_add1_certs(X509_STORE *store, STACK_OF(X509) *certs,
 }
 
 /*-
- * Builds up the chain of intermediate CA certificates
- * starting from the given certificate <cert> as high up as possible using
- * the given list of candidate certificates, similarly to ssl_add_cert_chain().
+ * Builds a certificate chain starting from <cert>
+ * using the optional list of intermediate CA certificates <certs>.
+ * If <store> is NULL builds the chain as far down as possible, ignoring errors.
+ * Else the chain must reach a trust anchor contained in <store>.
  *
- * Intended use of this function is to find all the certificates above the trust
- * anchor needed to verify an EE's own certificate.  Those are supposed to be
- * included in the ExtraCerts field of every first CMP message of a transaction
- * when MSG_SIG_ALG is utilized.
+ * Returns NULL on error, else a pointer to a stack of (up_ref'ed) certificates
+ * starting with given EE certificate and followed by all available intermediate
+ * certificates down towards any trust anchor but without including the latter.
  *
- * NOTE: This allocates a stack and increments the reference count of each cert,
- * so when not needed any more the stack and all its elements should be freed.
+ * NOTE: If a non-NULL stack is returned the caller is responsible for freeing.
  * NOTE: In case there is more than one possibility for the chain,
  * OpenSSL seems to take the first one; check X509_verify_cert() for details.
- *
- * returns a pointer to a stack of (up_ref'ed) X509 certificates containing:
- *      - the EE certificate given in the function arguments (cert)
- *      - all intermediate certificates up the chain toward the trust anchor
- *        whereas the (self-signed) trust anchor is not included
- * returns NULL on error
  */
+/* TODO this should be of more general interest and thus be exported. */
 STACK_OF(X509)
     *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
+                               X509_STORE *store,
                                STACK_OF(X509) *certs, X509 *cert)
 {
     STACK_OF(X509) *chain = NULL, *result = NULL;
-    X509_STORE *store = X509_STORE_new();
+    X509_STORE *ts = store == NULL ? X509_STORE_new() : store;
     X509_STORE_CTX *csc = NULL;
 
-    if (certs == NULL || cert == NULL || store == NULL) {
+    if (ts == NULL || cert == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         goto err;
     }
 
-    csc = X509_STORE_CTX_new_with_libctx(libctx, propq);
-    if (csc == NULL)
+    if ((csc = X509_STORE_CTX_new_with_libctx(libctx, propq)) == NULL)
         goto err;
-
-    if (!ossl_cmp_X509_STORE_add1_certs(store, certs, 0)
-            || !X509_STORE_CTX_init(csc, store, cert, NULL))
+    if (store == NULL && certs != NULL
+            && !ossl_cmp_X509_STORE_add1_certs(ts, certs, 0))
         goto err;
+    if (!X509_STORE_CTX_init(csc, ts, cert,
+                             store == NULL ? NULL : certs))
+        goto err;
+    /* disable any cert status/revocation checking etc. */
+    X509_VERIFY_PARAM_clear_flags(X509_STORE_CTX_get0_param(csc),
+                                  ~(X509_V_FLAG_USE_CHECK_TIME
+                                    | X509_V_FLAG_NO_CHECK_TIME));
 
-    (void)ERR_set_mark();
-    /*
-     * ignore return value as it would fail without trust anchor given in store
-     */
-    (void)X509_verify_cert(csc);
-
-    /* don't leave any new errors in the queue */
-    (void)ERR_pop_to_mark();
-
+    if (X509_verify_cert(csc) <= 0 && store != NULL)
+        goto err;
     chain = X509_STORE_CTX_get0_chain(csc);
 
     /* result list to store the up_ref'ed not self-signed certificates */
@@ -269,7 +262,8 @@ STACK_OF(X509)
     }
 
  err:
-    X509_STORE_free(store);
+    if (store == NULL)
+        X509_STORE_free(ts);
     X509_STORE_CTX_free(csc);
     return result;
 }

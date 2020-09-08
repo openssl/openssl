@@ -1005,7 +1005,8 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         return NULL;
 
     for (;;) {
-        if (!OSSL_HTTP_parse_url(current_url, &host, &port, &path, &use_ssl))
+        if (!OSSL_HTTP_parse_url(current_url, &host, &port, NULL /* port_num */,
+                                 &path, &use_ssl))
             break;
 
      new_rpath:

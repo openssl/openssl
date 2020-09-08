@@ -52,6 +52,21 @@ struct evp_pkey_ctx_st {
         } ciph;
     } op;
 
+    /*
+     * Cached parameters.  Inits of operations that depend on these should
+     * call evp_pkey_ctx_use_delayed_data() when the operation has been set
+     * up properly.
+     */
+    struct {
+        /* Distinguishing Identifier, ISO/IEC 15946-3, FIPS 196 */
+        char *dist_id_name; /* The name used with EVP_PKEY_CTX_ctrl_str() */
+        void *dist_id;      /* The distinguishing ID itself */
+        size_t dist_id_len; /* The length of the distinguishing ID */
+
+        /* Indicators of what has been set.  Keep them together! */
+        unsigned int dist_id_set : 1;
+    } cached_parameters;
+
     /* Application specific data, usually used by the callback */
     void *app_data;
     /* Keygen callback */
@@ -62,6 +77,8 @@ struct evp_pkey_ctx_st {
 
     /* Legacy fields below */
 
+    /* EVP_PKEY identity */
+    int legacy_keytype;
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
     /* Engine that implements this method or NULL if builtin */
@@ -494,6 +511,18 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
+typedef struct {
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned int iv_len;
+    unsigned int tag_len;
+} evp_cipher_aead_asn1_params;
+
+int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *params);
+
+int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *params);
+
 /*
  * An EVP_PKEY can have the following states:
  *
@@ -562,6 +591,7 @@ struct evp_pkey_st {
 # endif
 
     /* == Common attributes == */
+    /* If these are modified, so must evp_pkey_downgrade() */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
@@ -643,6 +673,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery);
 #ifndef FIPS_MODULE
+int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
 int evp_pkey_downgrade(EVP_PKEY *pk);
 void evp_pkey_free_legacy(EVP_PKEY *x);
 #endif
@@ -766,6 +797,13 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
                                        const ASN1_OCTET_STRING *id,
                                        OPENSSL_CTX *libctx, const char *propq);
+int evp_pkey_name2type(const char *name);
+
+int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
+int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
+int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
+
+int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
 void evp_method_store_flush(OPENSSL_CTX *libctx);
 int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,

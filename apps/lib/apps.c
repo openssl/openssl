@@ -2066,7 +2066,7 @@ ASN1_VALUE *app_http_get_asn1(const char *url, const char *proxy,
         return NULL;
     }
 
-    if (!OSSL_HTTP_parse_url(url, &server, &port, NULL /* ppath */, &use_ssl))
+    if (!OSSL_HTTP_parse_url(url, &server, &port, NULL, NULL, &use_ssl))
         return NULL;
     if (use_ssl && ssl_ctx == NULL) {
         HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);

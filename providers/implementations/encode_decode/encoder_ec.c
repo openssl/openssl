@@ -69,23 +69,20 @@ static int ossl_prov_print_ec_param_explicit_gen(BIO *out,
         || EC_POINT_point2bn(group, point, form, gen, ctx) == NULL)
         return 0;
 
-    if (gen != NULL) {
-        switch (form) {
-        case POINT_CONVERSION_COMPRESSED:
-           glabel = "Generator (compressed):";
-           break;
-        case POINT_CONVERSION_UNCOMPRESSED:
-            glabel = "Generator (uncompressed):";
-            break;
-        case POINT_CONVERSION_HYBRID:
-            glabel = "Generator (hybrid):";
-            break;
-        default:
-            return 0;
-        }
-        return ossl_prov_print_labeled_bignum(out, glabel, gen);
+    switch (form) {
+    case POINT_CONVERSION_COMPRESSED:
+       glabel = "Generator (compressed):";
+       break;
+    case POINT_CONVERSION_UNCOMPRESSED:
+        glabel = "Generator (uncompressed):";
+        break;
+    case POINT_CONVERSION_HYBRID:
+        glabel = "Generator (hybrid):";
+        break;
+    default:
+        return 0;
     }
-    return 1;
+    return ossl_prov_print_labeled_bignum(out, glabel, gen);
 }
 
 /* Print explicit parameters */

@@ -60,7 +60,7 @@ struct ossl_cmp_ctx_st {
     X509 *validatedSrvCert; /* caches any already validated server cert */
     X509_NAME *expected_sender; /* expected sender in header of response */
     X509_STORE *trusted; /* trust store maybe w CRLs and cert verify callback */
-    STACK_OF(X509) *untrusted_certs; /* untrusted (intermediate) certs */
+    STACK_OF(X509) *untrusted; /* untrusted (intermediate CA) certs */
     int ignore_keyusage; /* ignore key usage entry when validating certs */
     /*
      * permitTAInExtraCertsForIR allows use of root certs in extracerts
@@ -120,6 +120,7 @@ struct ossl_cmp_ctx_st {
     /* TODO: this should be a stack since there could be more than one */
     X509 *newCert; /* newly enrolled cert received from the CA */
     /* TODO: this should be a stack since there could be more than one */
+    STACK_OF(X509) *newChain; /* chain of newly enrolled cert received */
     STACK_OF(X509) *caPubs; /* CA certs received from server (in IP message) */
     STACK_OF(X509) *extraCertsIn; /* extraCerts received from server */
 
@@ -746,6 +747,7 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
                                           const unsigned char *bytes, int len);
 STACK_OF(X509)
     *ossl_cmp_build_cert_chain(OPENSSL_CTX *libctx, const char *propq,
+                               X509_STORE *store,
                                STACK_OF(X509) *certs, X509 *cert);
 
 /* from cmp_ctx.c */
@@ -780,6 +782,7 @@ int ossl_cmp_ctx_set0_statusString(OSSL_CMP_CTX *ctx,
                                    OSSL_CMP_PKIFREETEXT *text);
 int ossl_cmp_ctx_set_failInfoCode(OSSL_CMP_CTX *ctx, int fail_info);
 int ossl_cmp_ctx_set0_newCert(OSSL_CMP_CTX *ctx, X509 *cert);
+int ossl_cmp_ctx_set1_newChain(OSSL_CMP_CTX *ctx, STACK_OF(X509) *newChain);
 int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs);
 int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
                                    STACK_OF(X509) *extraCertsIn);

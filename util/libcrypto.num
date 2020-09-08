@@ -3189,7 +3189,7 @@ EVP_read_pw_string_min                  3254	3_0_0	EXIST::FUNCTION:
 X509_set1_notBefore                     3255	3_0_0	EXIST::FUNCTION:
 MD4                                     3256	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,MD4
 EVP_PKEY_CTX_dup                        3257	3_0_0	EXIST::FUNCTION:
-ENGINE_setup_bsd_cryptodev              3258	3_0_0	EXIST:__FreeBSD__:FUNCTION:DEPRECATEDIN_1_1_0,DEPRECATEDIN_3_0,ENGINE
+ENGINE_setup_bsd_cryptodev              3258	3_0_0	EXIST:__FreeBSD__:FUNCTION:DEPRECATEDIN_1_1_0,ENGINE
 PEM_read_bio_DHparams                   3259	3_0_0	EXIST::FUNCTION:DH
 CMS_SharedInfo_encode                   3260	3_0_0	EXIST::FUNCTION:CMS
 ASN1_OBJECT_create                      3261	3_0_0	EXIST::FUNCTION:
@@ -4770,10 +4770,11 @@ OSSL_CMP_CTX_set1_srvCert               ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_expected_sender       ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set0_trustedStore          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_trustedStore          ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_CTX_set1_untrusted_certs       ?	3_0_0	EXIST::FUNCTION:CMP
-OSSL_CMP_CTX_get0_untrusted_certs       ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_set1_untrusted             ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_get0_untrusted             ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_cert                  ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_pkey                  ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_build_cert_chain           ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_referenceValue        ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_secretValue           ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_recipient             ?	3_0_0	EXIST::FUNCTION:CMP
@@ -4797,6 +4798,7 @@ OSSL_CMP_CTX_get_status                 ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_statusString          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get_failInfoCode           ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get0_newCert               ?	3_0_0	EXIST::FUNCTION:CMP
+OSSL_CMP_CTX_get1_newChain              ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get1_caPubs                ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_get1_extraCertsIn          ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_CTX_set1_transactionID         ?	3_0_0	EXIST::FUNCTION:CMP
@@ -5294,4 +5296,9 @@ asn1_d2i_read_bio                       ?	3_0_0	EXIST::FUNCTION:
 EVP_PKCS82PKEY_with_libctx              ?	3_0_0	EXIST::FUNCTION:
 ossl_b2i                                ?	3_0_0	EXIST::FUNCTION:DSA
 ossl_b2i_bio                            ?	3_0_0	EXIST::FUNCTION:DSA
+EVP_PKEY_CTX_set1_id                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_get1_id                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_get1_id_len                ?	3_0_0	EXIST::FUNCTION:
+CMS_AuthEnvelopedData_create            ?	3_0_0	EXIST::FUNCTION:CMS
+CMS_AuthEnvelopedData_create_with_libctx ?	3_0_0	EXIST::FUNCTION:CMS
 ERR_GET_LIB                             ?	3_0_0	EXIST::FUNCTION:

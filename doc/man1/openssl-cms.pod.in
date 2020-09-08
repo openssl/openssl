@@ -309,6 +309,9 @@ EVP_get_cipherbyname() function) can also be used preceded by a dash, for
 example B<-aes-128-cbc>. See L<openssl-enc(1)> for a list of ciphers
 supported by your version of OpenSSL.
 
+Currently the AES variants with GCM mode are the only supported AEAD
+algorithms.
+
 If not specified triple DES is used. Only used with B<-encrypt> and
 B<-EncryptedData_create> commands.
 

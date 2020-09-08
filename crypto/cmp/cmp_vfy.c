@@ -122,7 +122,7 @@ int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
 
     if ((csc = X509_STORE_CTX_new_with_libctx(ctx->libctx, ctx->propq)) == NULL
             || !X509_STORE_CTX_init(csc, trusted_store,
-                                    cert, ctx->untrusted_certs))
+                                    cert, ctx->untrusted))
         goto err;
 
     valid = X509_verify_cert(csc) > 0;
@@ -398,7 +398,7 @@ static int check_msg_with_certs(OSSL_CMP_CTX *ctx, const STACK_OF(X509) *certs,
 }
 
 /*-
- * Verify msg trying first ctx->untrusted_certs, which should include extraCerts
+ * Verify msg trying first ctx->untrusted, which should include extraCerts
  * at its front, then trying the trusted certs in truststore (if any) of ctx.
  * On success cache the found cert using ossl_cmp_ctx_set0_validatedSrvCert().
  */
@@ -418,7 +418,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     if (check_msg_with_certs(ctx, msg->extraCerts, "extraCerts",
                              NULL, NULL, msg, mode_3gpp))
         return 1;
-    if (check_msg_with_certs(ctx, ctx->untrusted_certs, "untrusted certs",
+    if (check_msg_with_certs(ctx, ctx->untrusted, "untrusted certs",
                              msg->extraCerts, NULL, msg, mode_3gpp))
         return 1;
 
@@ -430,7 +430,7 @@ static int check_msg_all_certs(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
         ret = check_msg_with_certs(ctx, trusted,
                                    mode_3gpp ? "self-issued extraCerts"
                                              : "certs in trusted store",
-                                   msg->extraCerts, ctx->untrusted_certs,
+                                   msg->extraCerts, ctx->untrusted,
                                    msg, mode_3gpp);
         sk_X509_pop_free(trusted, X509_free);
     }
@@ -536,7 +536,7 @@ static int check_msg_find_cert(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
  * Validate the protection of the given PKIMessage using either password-
  * based mac (PBM) or a signature algorithm. In the case of signature algorithm,
  * the sender certificate can have been pinned by providing it in ctx->srvCert,
- * else it is searched in msg->extraCerts, ctx->untrusted_certs, in ctx->trusted
+ * else it is searched in msg->extraCerts, ctx->untrusted, in ctx->trusted
  * (in this order) and is path is validated against ctx->trusted.
  * On success cache the found cert using ossl_cmp_ctx_set0_validatedSrvCert().
  *
@@ -636,7 +636,7 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
 
 /*-
  * Check received message (i.e., response by server or request from client)
- * Any msg->extraCerts are prepended to ctx->untrusted_certs.
+ * Any msg->extraCerts are prepended to ctx->untrusted.
  *
  * Ensures that:
  * its sender is of appropriate type (curently only X509_NAME) and
@@ -693,7 +693,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * extraCerts because they do not belong to the protected msg part anyway.
      * For efficiency, the extraCerts are prepended so they get used first.
      */
-    if (!X509_add_certs(ctx->untrusted_certs, msg->extraCerts,
+    if (!X509_add_certs(ctx->untrusted, msg->extraCerts,
                         /* this allows self-signed certs */
                         X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                         | X509_ADD_FLAG_PREPEND))
@@ -775,7 +775,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * the peer does not need to send them again in the same transaction.
      * For efficiency, the extraCerts are prepended so they get used first.
      */
-    if (!X509_add_certs(ctx->untrusted_certs, msg->extraCerts,
+    if (!X509_add_certs(ctx->untrusted, msg->extraCerts,
                         /* this allows self-signed certs */
                         X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                         | X509_ADD_FLAG_PREPEND))

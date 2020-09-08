@@ -159,6 +159,7 @@ DEFINE_OR_DECLARE_STACK_OF(X509_TRUST)
 # define X509_FLAG_NO_AUX                (1L << 10)
 # define X509_FLAG_NO_ATTRIBUTES         (1L << 11)
 # define X509_FLAG_NO_IDS                (1L << 12)
+# define X509_FLAG_EXTENSIONS_ONLY_KID   (1L << 13)
 
 /* Flags specific to X509_NAME_print_ex() */
 

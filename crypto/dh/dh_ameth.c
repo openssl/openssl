@@ -564,13 +564,12 @@ static int dh_pkey_import_from_type(const OSSL_PARAM params[], void *vpctx,
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     DH *dh = dh_new_with_libctx(pctx->libctx);
 
-    DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
-    DH_set_flags(dh, type == EVP_PKEY_DH ? DH_FLAG_TYPE_DH : DH_FLAG_TYPE_DHX);
-
     if (dh == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
         return 0;
     }
+    DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
+    DH_set_flags(dh, type == EVP_PKEY_DH ? DH_FLAG_TYPE_DH : DH_FLAG_TYPE_DHX);
 
     if (!dh_ffc_params_fromdata(dh, params)
         || !dh_key_fromdata(dh, params)

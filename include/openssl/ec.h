@@ -1492,18 +1492,6 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm,
                                    int len);
 int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
-/* SM2 will skip the operation check so no need to pass operation here */
-#  define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \
-        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
-                          EVP_PKEY_CTRL_SET1_ID, (int)id_len, (void*)(id))
-#  define EVP_PKEY_CTX_get1_id(ctx, id) \
-        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
-                          EVP_PKEY_CTRL_GET1_ID, 0, (void*)(id))
-
-#  define EVP_PKEY_CTX_get1_id_len(ctx, id_len) \
-        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
-                          EVP_PKEY_CTRL_GET1_ID_LEN, 0, (void*)(id_len))
-
 #  define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID         (EVP_PKEY_ALG_CTRL + 1)
 #  define EVP_PKEY_CTRL_EC_PARAM_ENC                  (EVP_PKEY_ALG_CTRL + 2)
 #  define EVP_PKEY_CTRL_EC_ECDH_COFACTOR              (EVP_PKEY_ALG_CTRL + 3)
@@ -1514,10 +1502,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 #  define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN             (EVP_PKEY_ALG_CTRL + 8)
 #  define EVP_PKEY_CTRL_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 9)
 #  define EVP_PKEY_CTRL_GET_EC_KDF_UKM                (EVP_PKEY_ALG_CTRL + 10)
-/* TODO move next three #defines to evp.h when 'breaking' change is possible */
-#  define EVP_PKEY_CTRL_SET1_ID                       15
-#  define EVP_PKEY_CTRL_GET1_ID                       16
-#  define EVP_PKEY_CTRL_GET1_ID_LEN                   17
 
 /* KDF types */
 #  define EVP_PKEY_ECDH_KDF_NONE                      1

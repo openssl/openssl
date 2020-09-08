@@ -442,11 +442,13 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     if (biosk == NULL) {
                         if ((biosk = sk_BIO_new_null()) == NULL) {
                             CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                            BIO_free(next);
                             goto err;
                         }
                     }
                     if (!sk_BIO_push(biosk, in)) {
                         CONFerr(CONF_F_DEF_LOAD_BIO, ERR_R_MALLOC_FAILURE);
+                        BIO_free(next);
                         goto err;
                     }
                     /* continue with reading from the included BIO */

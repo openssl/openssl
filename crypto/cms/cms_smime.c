@@ -638,7 +638,10 @@ CMS_ContentInfo *CMS_encrypt_with_libctx(STACK_OF(X509) *certs,
     int i;
     X509 *recip;
 
-    cms = CMS_EnvelopedData_create_with_libctx(cipher, libctx, propq);
+
+    cms = (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
+          ? CMS_AuthEnvelopedData_create_with_libctx(cipher, libctx, propq)
+          : CMS_EnvelopedData_create_with_libctx(cipher, libctx, propq);
     if (cms == NULL)
         goto merr;
     for (i = 0; i < sk_X509_num(certs); i++) {
@@ -711,7 +714,7 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
 
     ris = CMS_get0_RecipientInfos(cms);
     if (ris != NULL)
-        debug = cms->d.envelopedData->encryptedContentInfo->debug;
+        debug = cms_get0_env_enc_content(cms)->debug;
 
     cms_pkey_ri_type = cms_pkey_get_ri_type(pk);
     if (cms_pkey_ri_type == CMS_RECIPINFO_NONE) {
@@ -848,20 +851,23 @@ int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pk, X509 *cert,
     int r;
     BIO *cont;
 
-    if (OBJ_obj2nid(CMS_get0_type(cms)) != NID_pkcs7_enveloped) {
+    int nid = OBJ_obj2nid(CMS_get0_type(cms));
+
+    if (nid != NID_pkcs7_enveloped
+            && nid != NID_id_smime_ct_authEnvelopedData) {
         CMSerr(CMS_F_CMS_DECRYPT, CMS_R_TYPE_NOT_ENVELOPED_DATA);
         return 0;
     }
     if (dcont == NULL && !check_content(cms))
         return 0;
     if (flags & CMS_DEBUG_DECRYPT)
-        cms->d.envelopedData->encryptedContentInfo->debug = 1;
+        cms_get0_env_enc_content(cms)->debug = 1;
     else
-        cms->d.envelopedData->encryptedContentInfo->debug = 0;
+        cms_get0_env_enc_content(cms)->debug = 0;
     if (cert == NULL)
-        cms->d.envelopedData->encryptedContentInfo->havenocert = 1;
+        cms_get0_env_enc_content(cms)->havenocert = 1;
     else
-        cms->d.envelopedData->encryptedContentInfo->havenocert = 0;
+        cms_get0_env_enc_content(cms)->havenocert = 0;
     if (pk == NULL && cert == NULL && dcont == NULL && out == NULL)
         return 1;
     if (pk != NULL && !CMS_decrypt_set1_pkey(cms, pk, cert))
