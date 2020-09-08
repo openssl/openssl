@@ -208,6 +208,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Subject Key Identifier marked critical";
     case X509_V_ERR_CA_CERT_MISSING_KEY_USAGE:
         return "CA cert does not include key usage extension";
+    case X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3:
+        return "Using cert extension requires at least X509v3";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */
