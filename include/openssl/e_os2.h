@@ -274,6 +274,8 @@ typedef unsigned __int64 uint64_t;
 #  define ossl_unused
 # endif
 
+#define ossl_unused_inline ossl_unused ossl_inline
+
 #ifdef  __cplusplus
 }
 #endif

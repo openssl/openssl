@@ -119,13 +119,13 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
  */
 
 # define IMPLEMENT_OBJ_BSEARCH_CMP_FN(type1, type2, nm)  \
-  static ossl_unused int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
+  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
       { \
       type1 const *a = a_; \
       type2 const *b = b_; \
       return nm##_cmp(a,b); \
       } \
-  static ossl_unused type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
+  static type2 *OBJ_bsearch_##nm(type1 *key, type2 const *base, int num) \
       { \
       return (type2 *)OBJ_bsearch_(key, base, num, sizeof(type2), \
                                         nm##_cmp_BSEARCH_CMP_FN); \
@@ -133,7 +133,7 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
       extern void dummy_prototype(void)
 
 # define IMPLEMENT_OBJ_BSEARCH_GLOBAL_CMP_FN(type1, type2, nm)   \
-  static ossl_unused int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
+  static int nm##_cmp_BSEARCH_CMP_FN(const void *a_, const void *b_)    \
       { \
       type1 const *a = a_; \
       type2 const *b = b_; \

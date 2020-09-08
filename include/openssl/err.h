@@ -214,33 +214,33 @@ struct err_state_st {
 
 # define ERR_SYSTEM_ERROR(errcode)      (((errcode) & ERR_SYSTEM_FLAG) != 0)
 
-static ossl_unused ossl_inline int ERR_GET_LIB(unsigned long errcode)
+static ossl_unused_inline int ERR_GET_LIB(unsigned long errcode)
 {
     if (ERR_SYSTEM_ERROR(errcode))
         return ERR_LIB_SYS;
     return (errcode >> ERR_LIB_OFFSET) & ERR_LIB_MASK;
 }
 
-static ossl_unused ossl_inline int ERR_GET_FUNC(unsigned long errcode ossl_unused)
+static ossl_unused_inline int ERR_GET_FUNC(unsigned long errcode ossl_unused)
 {
     return 0;
 }
 
-static ossl_unused ossl_inline int ERR_GET_RFLAGS(unsigned long errcode)
+static ossl_unused_inline int ERR_GET_RFLAGS(unsigned long errcode)
 {
     if (ERR_SYSTEM_ERROR(errcode))
         return 0;
     return errcode & (ERR_RFLAGS_MASK << ERR_RFLAGS_OFFSET);
 }
 
-static ossl_unused ossl_inline int ERR_GET_REASON(unsigned long errcode)
+static ossl_unused_inline int ERR_GET_REASON(unsigned long errcode)
 {
     if (ERR_SYSTEM_ERROR(errcode))
         return errcode & ERR_SYSTEM_MASK;
     return errcode & ERR_REASON_MASK;
 }
 
-static ossl_unused ossl_inline int ERR_FATAL_ERROR(unsigned long errcode)
+static ossl_unused_inline int ERR_FATAL_ERROR(unsigned long errcode)
 {
     return (ERR_GET_RFLAGS(errcode) & ERR_RFLAG_FATAL) != 0;
 }
