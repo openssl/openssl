@@ -26,6 +26,7 @@
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include "internal/passphrase.h"
+#include "internal/cryptlib.h"
 #include "crypto/ecx.h"
 #include "crypto/rsa.h"
 #include "prov/implementations.h"
@@ -802,6 +803,9 @@ static int key2any_encode_params(struct key2any_ctx_st *ctx, const void *key,
     return ret;
 }
 
+#define ALLOWED_SELECTORS \
+    (OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR)
+
 #define MAKE_ENCODER_KIND(impl, kind, type, evp_type, output)           \
     static OSSL_FUNC_encoder_encode_data_fn                             \
     impl##_##kind##2##output##_encode_d;                                \
@@ -837,6 +841,11 @@ static int key2any_encode_params(struct key2any_ctx_st *ctx, const void *key,
     {                                                                   \
         int selection = type##_##kind##_selection;                      \
                                                                         \
+        if (!ossl_assert(selection != 0)                                \
+            || !ossl_assert((selection & ~ALLOWED_SELECTORS) == 0)) {   \
+            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);              \
+            return 0;                                                   \
+        }                                                               \
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)         \
             return key2any_encode(vctx, key, impl##_type_to_evp(key),   \
                                   cout, key_to_##output##_pkcs8_bio,    \
