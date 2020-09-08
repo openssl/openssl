@@ -196,6 +196,12 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
         evp_pkey_free_legacy(*ppkey);
 #endif
 
+    /*
+     * Because we still have legacy keys, and evp_pkey_downgrade()
+     * TODO remove this #legacy internal keys are gone
+     */
+    (*ppkey)->type = ctx->legacy_keytype;
+
     goto end;
 
  legacy:
