@@ -17,6 +17,7 @@
 
 #include "cipher_rc2.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 #define RC2_40_MAGIC    0xa0
@@ -39,8 +40,12 @@ static void rc2_freectx(void *vctx)
 static void *rc2_dupctx(void *ctx)
 {
     PROV_RC2_CTX *in = (PROV_RC2_CTX *)ctx;
-    PROV_RC2_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_RC2_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -198,7 +203,10 @@ static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
-     PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
+     PROV_##UCALG##_CTX *ctx;                                                  \
+     if (!ossl_prov_is_running())                                               \
+        return NULL;                                                           \
+     ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
                                 EVP_CIPH_##UCMODE##_MODE, flags,               \

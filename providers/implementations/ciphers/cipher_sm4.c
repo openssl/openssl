@@ -11,6 +11,7 @@
 
 #include "cipher_sm4.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_cipher_freectx_fn sm4_freectx;
 static OSSL_FUNC_cipher_dupctx_fn sm4_dupctx;
@@ -26,8 +27,12 @@ static void sm4_freectx(void *vctx)
 static void *sm4_dupctx(void *ctx)
 {
     PROV_SM4_CTX *in = (PROV_SM4_CTX *)ctx;
-    PROV_SM4_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_SM4_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

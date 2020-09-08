@@ -15,6 +15,7 @@
 #include <openssl/ssl.h>
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 /*-
@@ -154,6 +155,9 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
     ctx->bufsz = 0;
     ctx->updated = 0;
     ctx->enc = enc ? 1 : 0;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
         if (!cipher_generic_initiv(ctx, iv, ivlen))
@@ -334,6 +338,9 @@ int cipher_generic_block_final(void *vctx, unsigned char *out, size_t *outl,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (ctx->tlsversion > 0) {
         /* We never finalize TLS, so this is an error */
         ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
@@ -433,6 +440,9 @@ int cipher_generic_stream_update(void *vctx, unsigned char *out, size_t *outl,
 int cipher_generic_stream_final(void *vctx, unsigned char *out, size_t *outl,
                                 size_t outsize)
 {
+    if (!ossl_prov_is_running())
+        return 0;
+
     *outl = 0;
     return 1;
 }
@@ -442,6 +452,9 @@ int cipher_generic_cipher(void *vctx,
                           const unsigned char *in, size_t inl)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);

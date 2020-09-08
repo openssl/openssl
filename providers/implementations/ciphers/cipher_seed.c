@@ -17,6 +17,7 @@
 
 #include "cipher_seed.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_cipher_freectx_fn seed_freectx;
 static OSSL_FUNC_cipher_dupctx_fn seed_dupctx;
@@ -32,8 +33,12 @@ static void seed_freectx(void *vctx)
 static void *seed_dupctx(void *ctx)
 {
     PROV_SEED_CTX *in = (PROV_SEED_CTX *)ctx;
-    PROV_SEED_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_SEED_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

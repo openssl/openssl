@@ -11,11 +11,16 @@
 
 #include "cipher_aria_gcm.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static void *aria_gcm_newctx(void *provctx, size_t keybits)
 {
-    PROV_ARIA_GCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_ARIA_GCM_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         gcm_initctx(provctx, &ctx->base, keybits, PROV_ARIA_HW_gcm(keybits), 4);
     return ctx;

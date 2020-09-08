@@ -18,11 +18,16 @@
 
 #include "cipher_aes_gcm.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static void *aes_gcm_newctx(void *provctx, size_t keybits)
 {
-    PROV_AES_GCM_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_GCM_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         gcm_initctx(provctx, &ctx->base, keybits, PROV_AES_HW_gcm(keybits), 8);
     return ctx;

@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include "cipher_aes.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/implementations.h"
 
@@ -49,9 +50,14 @@ typedef struct prov_aes_wrap_ctx_st {
 static void *aes_wrap_newctx(size_t kbits, size_t blkbits,
                              size_t ivbits, unsigned int mode, uint64_t flags)
 {
-    PROV_AES_WRAP_CTX *wctx = OPENSSL_zalloc(sizeof(*wctx));
-    PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)wctx;
+    PROV_AES_WRAP_CTX *wctx;
+    PROV_CIPHER_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    wctx = OPENSSL_zalloc(sizeof(*wctx));
+    ctx = (PROV_CIPHER_CTX *)wctx;
     if (ctx != NULL) {
         cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags,
                                NULL, NULL);
@@ -74,6 +80,9 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     PROV_AES_WRAP_CTX *wctx = (PROV_AES_WRAP_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     ctx->enc = enc;
     ctx->block = enc ? (block128_f)AES_encrypt : (block128_f)AES_decrypt;
@@ -160,6 +169,9 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
 static int aes_wrap_final(void *vctx, unsigned char *out, size_t *outl,
                           size_t outsize)
 {
+    if (!ossl_prov_is_running())
+        return 0;
+
     *outl = 0;
     return 1;
 }
@@ -170,6 +182,9 @@ static int aes_wrap_cipher(void *vctx,
 {
     PROV_AES_WRAP_CTX *ctx = (PROV_AES_WRAP_CTX *)vctx;
     size_t len;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (inl == 0) {
         *outl = 0;

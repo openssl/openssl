@@ -16,6 +16,7 @@
 
 #include "cipher_aes_xts.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags need to be set */
@@ -74,6 +75,9 @@ static int aes_xts_init(void *vctx, const unsigned char *key, size_t keylen,
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)vctx;
     PROV_CIPHER_CTX *ctx = &xctx->base;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     ctx->enc = enc;
 
     if (iv != NULL) {
@@ -129,6 +133,9 @@ static void *aes_xts_dupctx(void *vctx)
     PROV_AES_XTS_CTX *in = (PROV_AES_XTS_CTX *)vctx;
     PROV_AES_XTS_CTX *ret = NULL;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
     if (in->xts.key1 != NULL) {
         if (in->xts.key1 != &in->ks1)
             return NULL;
@@ -151,7 +158,8 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_AES_XTS_CTX *ctx = (PROV_AES_XTS_CTX *)vctx;
 
-    if (ctx->xts.key1 == NULL
+    if (!ossl_prov_is_running()
+            || ctx->xts.key1 == NULL
             || ctx->xts.key2 == NULL
             || !ctx->base.iv_set
             || out == NULL
@@ -202,6 +210,8 @@ static int aes_xts_stream_update(void *vctx, unsigned char *out, size_t *outl,
 static int aes_xts_stream_final(void *vctx, unsigned char *out, size_t *outl,
                                 size_t outsize)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     *outl = 0;
     return 1;
 }

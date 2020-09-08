@@ -11,6 +11,7 @@
 
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
@@ -43,11 +44,15 @@ void chacha20_initctx(PROV_CHACHA20_CTX *ctx)
 
 static void *chacha20_newctx(void *provctx)
 {
-     PROV_CHACHA20_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_CHACHA20_CTX *ctx;
 
-     if (ctx != NULL)
-         chacha20_initctx(ctx);
-     return ctx;
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
+    if (ctx != NULL)
+        chacha20_initctx(ctx);
+    return ctx;
 }
 
 static void chacha20_freectx(void *vctx)
@@ -141,6 +146,7 @@ int chacha20_einit(void *vctx, const unsigned char *key, size_t keylen,
 {
     int ret;
 
+    /* The generic function checks for ossl_prov_is_running() */
     ret= cipher_generic_einit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
@@ -156,6 +162,7 @@ int chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
 {
     int ret;
 
+    /* The generic function checks for ossl_prov_is_running() */
     ret= cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;

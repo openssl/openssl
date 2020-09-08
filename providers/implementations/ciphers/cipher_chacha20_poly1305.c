@@ -11,6 +11,7 @@
 
 #include "cipher_chacha20_poly1305.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 
@@ -43,8 +44,12 @@ static OSSL_FUNC_cipher_gettable_ctx_params_fn chacha20_poly1305_gettable_ctx_pa
 
 static void *chacha20_poly1305_newctx(void *provctx)
 {
-    PROV_CHACHA20_POLY1305_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_CHACHA20_POLY1305_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         cipher_generic_initkey(&ctx->base, CHACHA20_POLY1305_KEYLEN * 8,
                                CHACHA20_POLY1305_BLKLEN * 8,
@@ -229,6 +234,7 @@ static int chacha20_poly1305_einit(void *vctx, const unsigned char *key,
 {
     int ret;
 
+    /* The generic function checks for ossl_prov_is_running() */
     ret = cipher_generic_einit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
@@ -246,6 +252,7 @@ static int chacha20_poly1305_dinit(void *vctx, const unsigned char *key,
 {
     int ret;
 
+    /* The generic function checks for ossl_prov_is_running() */
     ret = cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
@@ -264,6 +271,9 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (inl == 0) {
         *outl = 0;
@@ -287,6 +297,9 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
         (PROV_CIPHER_HW_CHACHA20_POLY1305 *)ctx->hw;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (hw->aead_cipher(ctx, out, outl, NULL, 0) <= 0)
         return 0;

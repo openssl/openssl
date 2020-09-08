@@ -18,6 +18,7 @@
 #include "cipher_tdes_default.h"
 #include "crypto/evp.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 /* TODO (3.0) Figure out what flags are required */
@@ -133,6 +134,9 @@ static int tdes_wrap_cipher(void *vctx,
     int ret;
 
     *outl = 0;
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (outsize < inl) {
         PROVerr(0, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;

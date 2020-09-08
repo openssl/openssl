@@ -17,6 +17,7 @@
 
 #include "cipher_cast.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 #define CAST5_FLAGS (EVP_CIPH_VARIABLE_LENGTH)
@@ -35,8 +36,12 @@ static void cast5_freectx(void *vctx)
 static void *cast5_dupctx(void *ctx)
 {
     PROV_CAST_CTX *in = (PROV_CAST_CTX *)ctx;
-    PROV_CAST_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_CAST_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

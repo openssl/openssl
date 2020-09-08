@@ -11,6 +11,7 @@
 
 #include "cipher_aria.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_cipher_freectx_fn aria_freectx;
 static OSSL_FUNC_cipher_dupctx_fn aria_dupctx;
@@ -26,8 +27,12 @@ static void aria_freectx(void *vctx)
 static void *aria_dupctx(void *ctx)
 {
     PROV_ARIA_CTX *in = (PROV_ARIA_CTX *)ctx;
-    PROV_ARIA_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_ARIA_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

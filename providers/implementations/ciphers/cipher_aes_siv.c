@@ -17,6 +17,7 @@
 
 #include "cipher_aes_siv.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/provider_ctx.h"
@@ -27,8 +28,12 @@
 static void *aes_siv_newctx(void *provctx, size_t keybits, unsigned int mode,
                             uint64_t flags)
 {
-    PROV_AES_SIV_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_SIV_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         ctx->taglen = SIV_LEN;
         ctx->mode = mode;
@@ -53,8 +58,12 @@ static void aes_siv_freectx(void *vctx)
 static void *siv_dupctx(void *vctx)
 {
     PROV_AES_SIV_CTX *in = (PROV_AES_SIV_CTX *)vctx;
-    PROV_AES_SIV_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_AES_SIV_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -70,6 +79,9 @@ static int siv_init(void *vctx, const unsigned char *key, size_t keylen,
                     const unsigned char *iv, size_t ivlen, int enc)
 {
     PROV_AES_SIV_CTX *ctx = (PROV_AES_SIV_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     ctx->enc = enc;
 
@@ -100,6 +112,9 @@ static int siv_cipher(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_AES_SIV_CTX *ctx = (PROV_AES_SIV_CTX *)vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (inl == 0) {
         *outl = 0;
         return 1;
@@ -122,6 +137,9 @@ static int siv_stream_final(void *vctx, unsigned char *out, size_t *outl,
                             size_t outsize)
 {
     PROV_AES_SIV_CTX *ctx = (PROV_AES_SIV_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (!ctx->hw->cipher(vctx, out, NULL, 0))
         return 0;
