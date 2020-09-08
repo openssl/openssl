@@ -2818,27 +2818,27 @@ int cmp_main(int argc, char **argv)
         switch (opt_cmd) {
         case CMP_IR:
             newcert = OSSL_CMP_exec_IR_ses(cmp_ctx);
-            if (newcert == NULL)
-                goto err;
+            if (newcert != NULL)
+                ret = 1;
             break;
         case CMP_KUR:
             newcert = OSSL_CMP_exec_KUR_ses(cmp_ctx);
-            if (newcert == NULL)
-                goto err;
+            if (newcert != NULL)
+                ret = 1;
             break;
         case CMP_CR:
             newcert = OSSL_CMP_exec_CR_ses(cmp_ctx);
-            if (newcert == NULL)
-                goto err;
+            if (newcert != NULL)
+                ret = 1;
             break;
         case CMP_P10CR:
             newcert = OSSL_CMP_exec_P10CR_ses(cmp_ctx);
-            if (newcert == NULL)
-                goto err;
+            if (newcert != NULL)
+                ret = 1;
             break;
         case CMP_RR:
-            if (OSSL_CMP_exec_RR_ses(cmp_ctx) == NULL)
-                goto err;
+            if (OSSL_CMP_exec_RR_ses(cmp_ctx) != NULL)
+                ret = 1;
             break;
         case CMP_GENM:
             {
@@ -2852,10 +2852,11 @@ int cmp_main(int argc, char **argv)
                     OSSL_CMP_CTX_push0_genm_ITAV(cmp_ctx, itav);
                 }
 
-                if ((itavs = OSSL_CMP_exec_GENM_ses(cmp_ctx)) == NULL)
-                    goto err;
-                print_itavs(itavs);
-                sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
+                if ((itavs = OSSL_CMP_exec_GENM_ses(cmp_ctx)) != NULL) {
+                    print_itavs(itavs);
+                    sk_OSSL_CMP_ITAV_pop_free(itavs, OSSL_CMP_ITAV_free);
+                    ret = 1;
+                }
                 break;
             }
         default:
@@ -2863,7 +2864,7 @@ int cmp_main(int argc, char **argv)
         }
 
         {
-            /* print PKIStatusInfo (this is in case there has been no error) */
+            /* print PKIStatusInfo */
             int status = OSSL_CMP_CTX_get_status(cmp_ctx);
             char *buf = app_malloc(OSSL_CMP_PKISI_BUFLEN, "PKIStatusInfo buf");
             const char *string =
@@ -2885,11 +2886,14 @@ int cmp_main(int argc, char **argv)
             OPENSSL_free(buf);
         }
 
-        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
-                            opt_cacertsout, "CA") < 0)
-            goto err;
         if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_extraCertsIn(cmp_ctx),
                             opt_extracertsout, "extra") < 0)
+            ret = 0;
+        if (!ret)
+            goto err;
+        ret = 0;
+        if (save_free_certs(cmp_ctx, OSSL_CMP_CTX_get1_caPubs(cmp_ctx),
+                            opt_cacertsout, "CA") < 0)
             goto err;
         if (newcert != NULL) {
             STACK_OF(X509) *certs = sk_X509_new_null();

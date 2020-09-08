@@ -590,13 +590,13 @@ with a signature key."
 
 =item B<-extracertsout> I<filename>
 
-The file where to save any extra certificates received in the extraCerts field
-of response messages.
+The file where to save all certificates contained in the extraCerts field
+of the last received response message (except for pollRep and PKIConf).
 
 =item B<-cacertsout> I<filename>
 
-The file where to save any CA certificates received in the caPubs field of
-Initialization Response (IP) messages.
+The file where to save any CA certificates contained in the caPubs field of
+the last received certificate response (i.e., IP, CP, or KUP) message.
 
 =back
 
