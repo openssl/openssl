@@ -139,31 +139,7 @@ extern "C" {
 # endif
 
 /* ---------------------------- HP NonStop -------------------------------- */
-/* Required to support platform variant without getpid() and pid_t. */
 # ifdef __TANDEM
-#  ifdef NO_GETPID
-inline int nssgetpid();
-#    ifndef NSSGETPID_MACRO
-#      define NSSGETPID_MACRO
-#      include <cextdecs.h(PROCESSHANDLE_GETMINE_)>
-#      include <cextdecs.h(PROCESSHANDLE_DECOMPOSE_)>
-       inline int nssgetpid()
-       {
-         short phandle[10]={0};
-         union pseudo_pid {
-          struct {
-           short cpu;
-           short pin;
-         } cpu_pin ;
-         int ppid;
-        } ppid = { 0 };
-        PROCESSHANDLE_GETMINE_(phandle);
-        PROCESSHANDLE_DECOMPOSE_(phandle, &ppid.cpu_pin.cpu, &ppid.cpu_pin.pin);
-        return ppid.ppid;
-       }
-#    endif /* NSSGETPID_MACRO */
-#    define getpid(a) nssgetpid(a)
-#  endif /* NO_GETPID */
 #  ifdef _STRING
 #   include <strings.h>
 #  endif
