@@ -10,6 +10,12 @@
 #include <openssl/e_os2.h>
 #include "prov/providercommon.h"
 
+/* By default, our providers don't have an error state */
+void ossl_set_error_state(void)
+{
+}
+
+/* By default, out providers are always in a happy state */
 int ossl_prov_is_running(void)
 {
     return 1;
