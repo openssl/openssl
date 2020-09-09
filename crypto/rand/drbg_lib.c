@@ -620,7 +620,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
             || now - drbg->reseed_time >= drbg->reseed_time_interval)
             reseed_required = 1;
     }
-    if (drbg->reseed_counter > 0 && drbg->parent != NULL) {
+    if (rbg->enable_reseed_propagation && drbg->parent != NULL) {
         if (drbg->reseed_counter != tsan_load(&drbg->parent->reseed_counter))
             reseed_required = 1;
     }
