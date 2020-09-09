@@ -297,7 +297,7 @@ struct servent *getservbyname(const char *name, const char *proto);
 
 /* ----------------------------- HP NonStop -------------------------------- */
 /* Required to support platform variant without getpid() and pid_t. */
-#ifdef __TANDEM
+# ifdef __TANDEM
 #  include <strings.h>
 #  include <netdb.h>
 #  define getservbyname(name,proto)          getservbyname((char*)name,proto)
@@ -305,10 +305,10 @@ struct servent *getservbyname(const char *name, const char *proto);
 #  define ioctlsocket(a,b,c)	ioctl(a,b,c)
 #  ifdef NO_GETPID
 inline int nssgetpid();
-#    ifndef NSSGETPID_MACRO
-#      define NSSGETPID_MACRO
-#      include <cextdecs.h(PROCESSHANDLE_GETMINE_)>
-#      include <cextdecs.h(PROCESSHANDLE_DECOMPOSE_)>
+#   ifndef NSSGETPID_MACRO
+#    define NSSGETPID_MACRO
+#    include <cextdecs.h(PROCESSHANDLE_GETMINE_)>
+#    include <cextdecs.h(PROCESSHANDLE_DECOMPOSE_)>
        inline int nssgetpid()
        {
          short phandle[10]={0};
@@ -323,8 +323,8 @@ inline int nssgetpid();
         PROCESSHANDLE_DECOMPOSE_(phandle, &ppid.cpu_pin.cpu, &ppid.cpu_pin.pin);
         return ppid.ppid;
        }
-#    define getpid(a) nssgetpid(a)
-#    endif /* NSSGETPID_MACRO */
+#   define getpid(a) nssgetpid(a)
+#   endif /* NSSGETPID_MACRO */
 #  endif /* NO_GETPID */
 /*#  define setsockopt(a,b,c,d,f) setsockopt(a,b,c,(char*)d,f)*/
 /*#  define getsockopt(a,b,c,d,f) getsockopt(a,b,c,(char*)d,f)*/
@@ -335,9 +335,9 @@ inline int nssgetpid();
   /*
    * HPNS SPT threads
    */
-#  define  SPT_THREAD_SIGNAL 1
-#  define  SPT_THREAD_AWARE 1
-#  include <spthread.h>
+#   define  SPT_THREAD_SIGNAL 1
+#   define  SPT_THREAD_AWARE 1
+#   include <spthread.h>
 #   undef close
 #   define close spt_close
 /*
@@ -351,7 +351,7 @@ inline int nssgetpid();
 #   define accept(a,b,c)        accept(a,(struct sockaddr *)b,c)
 #   define recvfrom(a,b,c,d,e,f) recvfrom(a,b,(socklen_t)c,d,e,f)
 #  endif
-#endif
+# endif
 
 # ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 #  define CRYPTO_memcmp memcmp
