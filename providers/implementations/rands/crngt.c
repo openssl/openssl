@@ -92,6 +92,17 @@ static const OPENSSL_CTX_METHOD rand_crng_ossl_ctx_method = {
     rand_crng_ossl_ctx_free,
 };
 
+static int prov_crngt_compare_previous(const unsigned char *prev,
+                                        const unsigned char *cur,
+                                        size_t sz)
+{
+    const int res = memcmp(prev, cur, sz) != 0;
+
+    if (!res)
+        ossl_set_error_state();
+    return res;
+}
+
 size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
                               unsigned char **pout,
                               int entropy, size_t min_len, size_t max_len,
@@ -117,7 +128,7 @@ size_t prov_crngt_get_entropy(PROV_DRBG *drbg,
         s = q > sizeof(buf) ? sizeof(buf) : q;
         if (!crngt_get_entropy(libctx, crngt_glob->crngt_pool, buf, md,
                                &sz)
-            || memcmp(crngt_glob->crngt_prev, md, sz) == 0
+            || !prov_crngt_compare_previous(crngt_glob->crngt_prev, md, sz)
             || !rand_pool_add(pool, buf, s, s * 8))
             goto err;
         memcpy(crngt_glob->crngt_prev, md, sz);
