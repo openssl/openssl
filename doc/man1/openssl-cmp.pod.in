@@ -235,7 +235,7 @@ e.g., C<signKeyPairTypes>.
 =item B<-geninfo> I<OID:int:N>
 
 generalInfo integer values to place in request PKIHeader with given OID,
-e.g., C<1.2.3:int:987>.
+e.g., C<1.2.3.4:int:56789>.
 
 =back
 
