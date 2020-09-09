@@ -135,9 +135,8 @@ OSSL_STORE_open_with_libctx(const char *uri,
         goto err;
     }
 
-    if ((ui_method != NULL
-         && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data))
-        || !ossl_pw_enable_passphrase_caching(&ctx->pwdata)) {
+    if (ui_method != NULL
+        && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data)) {
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_CRYPTO_LIB);
         goto err;
     }
@@ -421,7 +420,6 @@ OSSL_STORE_INFO *OSSL_STORE_load(OSSL_STORE_CTX *ctx)
         }
     }
 
-    ossl_pw_clear_passphrase_cache(&ctx->pwdata);
     if (v != NULL)
         OSSL_TRACE1(STORE, "Got a %s\n",
                     OSSL_STORE_INFO_type_string(OSSL_STORE_INFO_get_type(v)));
@@ -968,9 +966,8 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         return NULL;
     }
 
-    if ((ui_method != NULL
-         && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data))
-        || !ossl_pw_enable_passphrase_caching(&ctx->pwdata)) {
+    if (ui_method != NULL
+        && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data)) {
         OPENSSL_free(ctx);
         return NULL;
     }
