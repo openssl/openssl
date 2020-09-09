@@ -12,7 +12,7 @@ use warnings;
 
 use POSIX;
 use File::Path 2.00 qw/rmtree/;
-use OpenSSL::Test qw/:DEFAULT cmdstr srctop_file/;
+use OpenSSL::Test qw/:DEFAULT cmdstr data_file srctop_file/;
 use OpenSSL::Test::Utils;
 use Time::Local qw/timegm/;
 
@@ -123,17 +123,19 @@ sub test_revoke {
     }
 
     subtest "Revoke certificate and generate CRL: $filename" => sub {
+        $ENV{CN2} = $filename;
         ok(
             run(app(['openssl',
                      'req',
-                     '-config', $cnf,
+                     '-config',  $cnf,
                      '-new',
-                     '-key',    srctop_file('test', 'certs', 'leaf.key'),
-                     '-out',    "$filename-req.pem",
-                     '-subj',   "/CN=$filename/",
+                     '-key',     data_file('revoked.key'),
+                     '-out',     "$filename-req.pem",
+                     '-section', 'userreq',
             ])),
             'Generate CSR'
         );
+        delete $ENV{CN2};
 
         ok(
             run(app(['openssl',
@@ -141,8 +143,7 @@ sub test_revoke {
                      '-batch',
                      '-config',  $cnf,
                      '-in',      "$filename-req.pem",
-                     '-out',     demoCA_file('newcerts', "$filename-cert.pem"),
-                     '-keyfile', demoCA_file('private', 'cakey.pem'),
+                     '-out',     "$filename-cert.pem",
             ])),
             'Sign CSR'
         );
@@ -151,7 +152,7 @@ sub test_revoke {
             run(app(['openssl',
                      'ca',
                      '-config', $cnf,
-                     '-revoke', demoCA_file('newcerts', "$filename-cert.pem"),
+                     '-revoke', "$filename-cert.pem",
             ])),
             'Revoke certificate'
         );
@@ -171,7 +172,7 @@ sub test_revoke {
                      'ca',
                      '-config', $cnf,
                      '-gencrl',
-                     '-out',    demoCA_file('crl', "$filename-crl.pem"),
+                     '-out',    "$filename-crl.pem",
                      '-crlsec', '60',
                      @gencrl_opts,
             ])),
@@ -184,7 +185,7 @@ sub test_revoke {
         # generated:
         return unless $opts->{should_succeed};
 
-        my $crl_lastupdate = crl_field(demoCA_file('crl', "$filename-crl.pem"), 'lastUpdate');
+        my $crl_lastupdate = crl_field("$filename-crl.pem", 'lastUpdate');
         if (exists $opts->{lastupdate}) {
             is(
                 $crl_lastupdate,
@@ -202,7 +203,7 @@ sub test_revoke {
             );
         }
 
-        my $crl_nextupdate = crl_field(demoCA_file('crl', "$filename-crl.pem"), 'nextUpdate');
+        my $crl_nextupdate = crl_field("$filename-crl.pem", 'nextUpdate');
         if (exists $opts->{nextupdate}) {
             is(
                 $crl_nextupdate,
@@ -277,8 +278,4 @@ sub rfc5280_time {
     my ($y, $mo, $d, $h, $m, $s) = $asn1 =~ /^(\d{2,4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})Z$/;
 
     return timegm($s, $m, $h, $d, $mo - 1, $y);
-}
-
-sub demoCA_file {
-    return srctop_file('test-runs', 'test_ca', 'demoCA', @_);
 }
