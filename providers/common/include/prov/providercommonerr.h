@@ -75,6 +75,8 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_FAILED_TO_GET_PARAMETER                   103
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
 # define PROV_R_FAILED_TO_SIGN                            175
+# define PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE          224
+# define PROV_R_FIPS_MODULE_IN_ERROR_STATE                225
 # define PROV_R_GENERATE_ERROR                            191
 # define PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE       165
 # define PROV_R_INAVLID_UKM_LENGTH                        146

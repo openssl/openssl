@@ -32,6 +32,12 @@
 #define FIPS_STATE_RUNNING  2
 #define FIPS_STATE_ERROR    3
 
+/*
+ * The number of times the module will reoprt it is in the error state
+ * before going quiet.
+ */
+#define FIPS_ERROR_REPORTING_RATE_LIMIT     10
+
 /* The size of a temp buffer used to read in data */
 #define INTEGRITY_BUF_SIZE (4096)
 #define MAX_MD_SIZE 64
@@ -302,15 +308,32 @@ end:
         (*st->bio_free_cb)(bio_indicator);
         (*st->bio_free_cb)(bio_module);
     }
-    FIPS_state = ok ? FIPS_STATE_RUNNING : FIPS_STATE_ERROR;
+    if (ok)
+        FIPS_state = FIPS_STATE_RUNNING;
+    else
+        ossl_set_error_state();
     CRYPTO_THREAD_unlock(self_test_lock);
 
     return ok;
 }
 
+void ossl_set_error_state(void)
+{
+    FIPS_state = FIPS_STATE_ERROR;
+    ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
+}
 
 int ossl_prov_is_running(void)
 {
-    return FIPS_state == FIPS_STATE_RUNNING
-           || FIPS_state == FIPS_STATE_SELFTEST;
+    const int res = FIPS_state == FIPS_STATE_RUNNING
+                    || FIPS_state == FIPS_STATE_SELFTEST;
+    static unsigned int rate_limit = 0;
+
+    if (res) {
+        rate_limit = 0;
+    } else if (FIPS_state == FIPS_STATE_ERROR) {
+        if (rate_limit++ < FIPS_ERROR_REPORTING_RATE_LIMIT)
+            ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_IN_ERROR_STATE);
+    }
+    return res;
 }

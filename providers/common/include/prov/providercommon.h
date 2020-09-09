@@ -19,4 +19,8 @@ int cipher_capable_aes_cbc_hmac_sha256(void);
 
 OSSL_FUNC_provider_get_capabilities_fn provider_get_capabilities;
 
+/* Set the error state if this is a FIPS module */
+void ossl_set_error_state(void);
+
+/* Return true if the module is in a usable condition */
 int ossl_prov_is_running(void);
