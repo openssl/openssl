@@ -2,7 +2,7 @@ LIBS=../../libcrypto
 $COMMON=digest.c evp_enc.c evp_lib.c evp_fetch.c cmeth_lib.c evp_utils.c \
         mac_lib.c mac_meth.c keymgmt_meth.c keymgmt_lib.c kdf_lib.c kdf_meth.c \
         m_sigver.c pmeth_lib.c signature.c p_lib.c pmeth_gn.c exchange.c \
-        pmeth_check.c evp_rand.c
+        pmeth_check.c evp_rand.c asymcipher.c
 
 SOURCE[../../libcrypto]=$COMMON\
         encode.c evp_key.c evp_cnf.c \
@@ -13,7 +13,6 @@ SOURCE[../../libcrypto]=$COMMON\
         bio_md.c bio_b64.c bio_enc.c evp_err.c e_null.c \
         c_allc.c c_alld.c bio_ok.c \
         evp_pkey.c evp_pbe.c p5_crpt.c p5_crpt2.c pbe_scrypt.c \
-        pmeth_fn.c\
         e_aes_cbc_hmac_sha1.c e_aes_cbc_hmac_sha256.c e_rc4_hmac_md5.c \
         e_chacha20_poly1305.c \
         legacy_sha.c

@@ -184,6 +184,10 @@ file after successfully running the self tests during installation.
 
 Known answer test for a symmetric cipher.
 
+=item "KAT_AsymmetricCipher" (B<OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER>)
+
+Known answer test for a asymmetric cipher.
+
 =item "KAT_Digest" (B<OSSL_SELF_TEST_TYPE_KAT_DIGEST>)
 
 Known answer test for a digest.
@@ -236,6 +240,12 @@ The FIPS module passes the following descriptions(s) to OSSL_SELF_TEST_onbegin()
 =item "DSA" (B<OSSL_SELF_TEST_DESC_PCT_DSA>)
 
 Key generation tests used with the "Pairwise_Consistency_Test" type.
+
+=item "RSA_Encrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_ENC>)
+
+=item "RSA_Decrypt" (B<OSSL_SELF_TEST_DESC_ASYM_RSA_DEC>)
+
+"KAT_AsymmetricCipher" uses this to indicate an encrypt or decrypt KAT.
 
 =item "AES_GCM" (B<OSSL_SELF_TEST_DESC_CIPHER_AES_GCM>)
 
