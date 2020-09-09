@@ -269,7 +269,7 @@ const OPTIONS cmp_options[] = {
     {"geninfo", OPT_GENINFO, 's',
      "generalInfo integer values to place in request PKIHeader with given OID"},
     {OPT_MORE_STR, 0, 0,
-     "specified in the form <OID>:int:<n>, e.g. \"1.2.3:int:987\""},
+     "specified in the form <OID>:int:<n>, e.g. \"1.2.3.4:int:56789\""},
 
     OPT_SECTION("Certificate enrollment"),
     {"newkey", OPT_NEWKEY, 's',
