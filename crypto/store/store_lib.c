@@ -968,7 +968,12 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         return NULL;
     }
 
-    (void)ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data);
+    if ((ui_method != NULL
+         && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data))
+        || !ossl_pw_enable_passphrase_caching(&ctx->pwdata)) {
+        OPENSSL_free(ctx);
+        return NULL;
+    }
     ctx->fetched_loader = fetched_loader;
     ctx->loader = loader;
     ctx->loader_ctx = loader_ctx;
