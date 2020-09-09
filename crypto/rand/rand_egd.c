@@ -81,30 +81,22 @@ int hpns_socket(int family,
 #  define AF_UNIX_COMPATIBILITY  "$ZPLS"
 
     if (!_arg_present(transport) || transport != NULL || transport[0] == '\0')
-    {
-      return socket(family, type, protocol);
-    }
+        return socket(family, type, protocol);
 
     socket_transport_name_get(AF_UNIX, current_transport, 20);
 
     if (strcmp(current_transport,transport) == 0)
-    {
-      return socket(family, type, protocol);
-    }
+        return socket(family, type, protocol);
 
     /* set the requested socket transport */
     if (socket_transport_name_set(AF_UNIX, transport))
-    {
-      return -1;
-    }
+        return -1;
 
     socket_rc = socket(family,type,protocol);
 
     /* set mode back to what it was */
     if (socket_transport_name_set(AF_UNIX, current_transport))
-    {
-      return -1;
-    }
+        return -1;
 
     return socket_rc;
 }

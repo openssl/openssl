@@ -323,7 +323,7 @@ inline int nssgetpid();
         PROCESSHANDLE_DECOMPOSE_(phandle, &ppid.cpu_pin.cpu, &ppid.cpu_pin.pin);
         return ppid.ppid;
        }
-#   define getpid(a) nssgetpid(a)
+#    define getpid(a) nssgetpid(a)
 #   endif /* NSSGETPID_MACRO */
 #  endif /* NO_GETPID */
 /*#  define setsockopt(a,b,c,d,f) setsockopt(a,b,c,(char*)d,f)*/
