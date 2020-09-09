@@ -621,7 +621,7 @@ int RAND_DRBG_generate(RAND_DRBG *drbg, unsigned char *out, size_t outlen,
             reseed_required = 1;
     }
     if (drbg->reseed_prop_counter > 0 && drbg->parent != NULL) {
-        if (drbg->reseed_prop_counter != drbg->parent->reseed_prop_counter)
+        if (drbg->reseed_prop_counter != tsan_load(&drbg->parent->reseed_prop_counter))
             reseed_required = 1;
     }
 
