@@ -135,6 +135,7 @@ my @gcc_devteam_warn = qw(
     -DPEDANTIC -pedantic -Wno-long-long
     -Wall
     -Wextra
+    -Wno-unused-function
     -Wno-unused-parameter
     -Wno-missing-field-initializers
     -Wswitch
