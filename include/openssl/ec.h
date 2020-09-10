@@ -1470,12 +1470,7 @@ DEPRECATEDIN_3_0(void EC_KEY_METHOD_get_verify
 #  endif
 
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
-
-#  define EVP_PKEY_CTX_set_ec_param_enc(ctx, flag) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN, \
-                          EVP_PKEY_CTRL_EC_PARAM_ENC, flag, NULL)
-
+int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
 int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
 int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx);
 

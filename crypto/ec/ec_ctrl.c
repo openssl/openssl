@@ -443,4 +443,44 @@ int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid)
 
     return EVP_PKEY_CTX_set_group_name(ctx, OBJ_nid2sn(nid));
 }
+
+int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc)
+{
+    const char *enc = NULL;
+    OSSL_PARAM params[2], *p = params;
+    int ret = -2;                /* Assume unsupported */
+
+    if (ctx == NULL
+        || !EVP_PKEY_CTX_IS_GEN_OP(ctx)
+        || ctx->op.keymgmt.genctx == NULL)
+        goto end;
+
+    switch (param_enc) {
+    case OPENSSL_EC_EXPLICIT_CURVE:
+        enc = OSSL_PKEY_EC_ENCODING_EXPLICIT;
+        break;
+    case OPENSSL_EC_NAMED_CURVE:
+        enc = OSSL_PKEY_EC_ENCODING_GROUP;
+        break;
+    default:
+        goto end;
+    }
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
+                                            (char *)enc, 0);
+    *p++ = OSSL_PARAM_construct_end();
+
+    ret = evp_pkey_ctx_set_params_strict(ctx, params);
+ end:
+    if (ret == -2)
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+    return ret;
+}
+
+int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc)
+{
+    return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
+                             EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_EC_PARAM_ENC, param_enc, NULL);
+}
 #endif
