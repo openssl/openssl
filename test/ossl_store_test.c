@@ -40,6 +40,17 @@ static int test_store_open(void)
     return ret;
 }
 
+static int test_store_search_by_key_fingerprint_fail(void)
+{
+    int ret;
+    OSSL_STORE_SEARCH *search = NULL;
+
+    ret = TEST_ptr_null(search = OSSL_STORE_SEARCH_by_key_fingerprint(
+                                     EVP_sha256(), NULL, 0));
+    OSSL_STORE_SEARCH_free(search);
+    return ret;
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
@@ -68,5 +79,6 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_store_open);
+    ADD_TEST(test_store_search_by_key_fingerprint_fail);
     return 1;
 }
