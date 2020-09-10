@@ -26,6 +26,7 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/dh.h"
+#include "crypto/ec.h"
 #include "internal/ffc.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
@@ -1248,6 +1249,8 @@ static int legacy_ctrl_to_param(EVP_PKEY_CTX *ctx, int keytype, int optype,
 # ifndef OPENSSL_NO_EC
     if (keytype == EVP_PKEY_EC) {
         switch (cmd) {
+        case EVP_PKEY_CTRL_EC_PARAM_ENC:
+            return evp_pkey_ctx_set_ec_param_enc_prov(ctx, p1);
         case EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID:
             return EVP_PKEY_CTX_set_ec_paramgen_curve_nid(ctx, p1);
         case EVP_PKEY_CTRL_EC_ECDH_COFACTOR:

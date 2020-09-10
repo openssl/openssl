@@ -68,5 +68,7 @@ int ec_key_otherparams_fromdata(EC_KEY *ec, const OSSL_PARAM params[]);
 int ec_set_ecdh_cofactor_mode(EC_KEY *ec, int mode);
 int ec_encoding_name2id(const char *name);
 
+int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
+
 # endif /* OPENSSL_NO_EC */
 #endif
