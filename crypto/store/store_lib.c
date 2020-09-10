@@ -178,6 +178,7 @@ OSSL_STORE_open_with_libctx(const char *uri,
     }
     OSSL_STORE_LOADER_free(fetched_loader);
     OPENSSL_free(propq_copy);
+    OPENSSL_free(ctx);
     return NULL;
 }
 
