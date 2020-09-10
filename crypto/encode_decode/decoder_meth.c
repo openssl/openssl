@@ -215,7 +215,7 @@ void *ossl_decoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
      */
     if (!((decoder->newctx == NULL && decoder->freectx == NULL)
           || (decoder->newctx != NULL && decoder->freectx != NULL))
-        || (decoder->decode == NULL && decoder->export_object == NULL)) {
+        || decoder->decode == NULL) {
         OSSL_DECODER_free(decoder);
         ERR_raise(ERR_LIB_OSSL_DECODER, ERR_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
