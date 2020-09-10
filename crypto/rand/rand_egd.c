@@ -159,15 +159,15 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
             break;
         default:
 # if defined(OPENSSL_SYSNAME_TANDEM)
-              if (hpns_connect_attempt == 0)
-              {
+            if (hpns_connect_attempt == 0) {
                 /* try the other kind of AF_UNIX socket */
                 close(fd);
                 fd = hpns_socket(AF_UNIX, SOCK_STREAM, 0, AF_UNIX_PORTABILITY);
-                if (fd == -1) return (-1);
+                if (fd == -1)
+                    return -1;
                 ++hpns_connect_attempt;
                 break;  /* try the connect again */
-              }
+            }
 # endif
 
             ret = -1;
