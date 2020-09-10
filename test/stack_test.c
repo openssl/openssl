@@ -237,7 +237,7 @@ static int test_uchar_stack(int reserve)
         goto end;
 
     /* set */
-    sk_uchar_set(r, 1, v + 1);
+    (void)sk_uchar_set(r, 1, v + 1);
     for (i = 0; i < 2; i++)
         if (!TEST_ptr_eq(sk_uchar_value(r, i), v + i)) {
             TEST_info("uchar set %d", i);

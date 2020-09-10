@@ -1683,7 +1683,7 @@ static int check_policy(X509_STORE_CTX *ctx)
     ret = X509_policy_check(&ctx->tree, &ctx->explicit_policy, ctx->chain,
                             ctx->param->policies, ctx->param->flags);
     if (ctx->bare_ta_signed)
-        sk_X509_pop(ctx->chain);
+        (void)sk_X509_pop(ctx->chain);
 
     if (ret == X509_PCY_TREE_INTERNAL) {
         X509err(X509_F_CHECK_POLICY, ERR_R_MALLOC_FAILURE);
