@@ -126,6 +126,9 @@ static OSSL_PARAM core_params[] =
     OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_INSTALL_VERSION,
                         selftest_params.indicator_version,
                         sizeof(selftest_params.indicator_version)),
+    OSSL_PARAM_utf8_ptr(OSSL_PROV_FIPS_PARAM_CONDITIONAL_ERRORS,
+                        selftest_params.conditional_error_check,
+                        sizeof(selftest_params.conditional_error_check)),
     OSSL_PARAM_END
 };
 
@@ -645,6 +648,10 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
     }
+    /* Disable the conditional error check if is disabled in the fips config file*/
+    if (selftest_params.conditional_error_check != NULL
+        && strcmp(selftest_params.conditional_error_check, "0") == 0)
+        SELF_TEST_disable_conditional_error_state();
 
     /*  Create a context. */
     if ((*provctx = PROV_CTX_new()) == NULL

@@ -16,6 +16,7 @@
 #include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/params.h>
+#include <openssl/self_test.h>
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "internal/cryptlib.h"
@@ -99,7 +100,7 @@ static int prov_crngt_compare_previous(const unsigned char *prev,
     const int res = memcmp(prev, cur, sz) != 0;
 
     if (!res)
-        ossl_set_error_state();
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_CRNG);
     return res;
 }
 

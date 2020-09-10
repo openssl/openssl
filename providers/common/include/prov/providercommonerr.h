@@ -75,6 +75,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_FAILED_TO_GET_PARAMETER                   103
 # define PROV_R_FAILED_TO_SET_PARAMETER                   104
 # define PROV_R_FAILED_TO_SIGN                            175
+# define PROV_R_FIPS_MODULE_CONDITIONAL_ERROR             227
 # define PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE          224
 # define PROV_R_FIPS_MODULE_IN_ERROR_STATE                225
 # define PROV_R_GENERATE_ERROR                            191
@@ -133,7 +134,7 @@ int ERR_load_PROV_strings(void);
 # define PROV_R_NOT_A_PRIVATE_KEY                         221
 # define PROV_R_NOT_A_PUBLIC_KEY                          220
 # define PROV_R_NOT_INSTANTIATED                          193
-# define PROV_R_NOT_PARAMETERS                            224
+# define PROV_R_NOT_PARAMETERS                            226
 # define PROV_R_NOT_SUPPORTED                             136
 # define PROV_R_NOT_XOF_OR_INVALID_LENGTH                 113
 # define PROV_R_NO_KEY_SET                                114

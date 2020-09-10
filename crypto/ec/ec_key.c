@@ -21,6 +21,7 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/self_test.h>
+#include "prov/providercommon.h"
 #include "crypto/bn.h"
 
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
@@ -330,6 +331,7 @@ int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
 err:
     /* Step (9): If there is an error return an invalid keypair. */
     if (!ok) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         BN_clear(eckey->priv_key);
         if (eckey->pub_key != NULL)
             EC_POINT_set_to_infinity(group, eckey->pub_key);

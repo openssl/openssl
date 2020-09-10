@@ -27,6 +27,7 @@ extern "C" {
 # define OSSL_SELF_TEST_TYPE_NONE               "None"
 # define OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY   "Module_Integrity"
 # define OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY  "Install_Integrity"
+# define OSSL_SELF_TEST_TYPE_CRNG               "Continuous_RNG_Test"
 # define OSSL_SELF_TEST_TYPE_PCT                "Pairwise_Consistency_Test"
 # define OSSL_SELF_TEST_TYPE_KAT_CIPHER         "KAT_Cipher"
 # define OSSL_SELF_TEST_TYPE_KAT_DIGEST         "KAT_Digest"

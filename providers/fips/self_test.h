@@ -21,6 +21,9 @@ typedef struct self_test_post_params_st {
     const char *indicator_data;             /* data to perform MAC on */
     const char *indicator_checksum_data;    /* Expected MAC integrity value */
 
+    /* Used for continuous tests */
+    const char *conditional_error_check;
+
     /* BIO callbacks supplied to the FIPS provider */
     OSSL_FUNC_BIO_new_file_fn *bio_new_file_cb;
     OSSL_FUNC_BIO_new_membuf_fn *bio_new_buffer_cb;
@@ -34,3 +37,5 @@ typedef struct self_test_post_params_st {
 
 int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test);
 int SELF_TEST_kats(OSSL_SELF_TEST *event, OPENSSL_CTX *libctx);
+
+void SELF_TEST_disable_conditional_error_state(void);

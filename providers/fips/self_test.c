@@ -44,6 +44,7 @@
 #define MAC_NAME    "HMAC"
 #define DIGEST_NAME "SHA256"
 
+static int FIPS_conditional_error_check = 1;
 static int FIPS_state = FIPS_STATE_INIT;
 static CRYPTO_RWLOCK *self_test_lock = NULL;
 static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
@@ -311,16 +312,27 @@ end:
     if (ok)
         FIPS_state = FIPS_STATE_RUNNING;
     else
-        ossl_set_error_state();
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_NONE);
     CRYPTO_THREAD_unlock(self_test_lock);
 
     return ok;
 }
 
-void ossl_set_error_state(void)
+void SELF_TEST_disable_conditional_error_state(void)
 {
-    FIPS_state = FIPS_STATE_ERROR;
-    ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
+    FIPS_conditional_error_check = 0;
+}
+
+void ossl_set_error_state(const char *type)
+{
+    int cond_test = (type != NULL && strcmp(type, OSSL_SELF_TEST_TYPE_PCT) == 0);
+
+    if (!cond_test || (FIPS_conditional_error_check == 1)) {
+        FIPS_state = FIPS_STATE_ERROR;
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
+    } else {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_CONDITIONAL_ERROR);
+    }
 }
 
 int ossl_prov_is_running(void)
