@@ -850,6 +850,7 @@ OSSL_STORE_SEARCH *OSSL_STORE_SEARCH_by_key_fingerprint(const EVP_MD *digest,
                        OSSL_STORE_R_FINGERPRINT_SIZE_DOES_NOT_MATCH_DIGEST,
                        "%s size is %d, fingerprint size is %zu",
                        EVP_MD_name(digest), EVP_MD_size(digest), len);
+        OPENSSL_free(search);
         return NULL;
     }
 
