@@ -272,6 +272,10 @@ int OSSL_STORE_find(OSSL_STORE_CTX *ctx, const OSSL_STORE_SEARCH *search)
         ERR_raise(ERR_LIB_OSSL_STORE, OSSL_STORE_R_LOADING_STARTED);
         return 0;
     }
+    if (search == NULL) {
+        ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
 
     if (ctx->fetched_loader != NULL) {
         OSSL_PARAM_BLD *bld;
