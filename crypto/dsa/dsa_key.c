@@ -18,6 +18,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
+#include "prov/providercommon.h"
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
@@ -113,6 +114,7 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
         OSSL_SELF_TEST_get_callback(dsa->libctx, &cb, &cbarg);
         ok = dsa_keygen_pairwise_test(dsa, cb, cbarg);
         if (!ok) {
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
             BN_free(dsa->pub_key);
             BN_clear_free(dsa->priv_key);
             dsa->pub_key = NULL;

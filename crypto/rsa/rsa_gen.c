@@ -24,6 +24,7 @@
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
+#include "prov/providercommon.h"
 #include "rsa_local.h"
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
@@ -444,6 +445,7 @@ static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
         OSSL_SELF_TEST_get_callback(libctx, &stcb, &stcbarg);
         ok = rsa_keygen_pairwise_test(rsa, stcb, stcbarg);
         if (!ok) {
+            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
             /* Clear intermediate results */
             BN_clear_free(rsa->d);
             BN_clear_free(rsa->p);

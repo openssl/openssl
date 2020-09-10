@@ -11,7 +11,7 @@
 #include "prov/providercommon.h"
 
 /* By default, our providers don't have an error state */
-void ossl_set_error_state(void)
+void ossl_set_error_state(const char *type)
 {
 }
 
