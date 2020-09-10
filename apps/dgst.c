@@ -319,7 +319,8 @@ int dgst_main(int argc, char **argv)
 
     if (hmac_key != NULL) {
         sigkey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, impl,
-                                              (unsigned char *)hmac_key, -1);
+                                              (unsigned char *)hmac_key,
+                                              strlen(hmac_key));
         if (sigkey == NULL)
             goto end;
     }
