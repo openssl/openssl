@@ -76,9 +76,6 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
 #endif
 
     evp_md_ctx_clear_digest(ctx, 0);
-
-    /* TODO(3.0): End of legacy code */
-
     OPENSSL_cleanse(ctx, sizeof(*ctx));
 
     return 1;
