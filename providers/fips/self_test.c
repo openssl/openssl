@@ -33,7 +33,7 @@
 #define FIPS_STATE_ERROR    3
 
 /*
- * The number of times the module will reoprt it is in the error state
+ * The number of times the module will report it is in the error state
  * before going quiet.
  */
 #define FIPS_ERROR_REPORTING_RATE_LIMIT     10
