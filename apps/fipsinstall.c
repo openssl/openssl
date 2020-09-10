@@ -277,7 +277,8 @@ int fipsinstall_main(int argc, char **argv)
     const char *prov_name = "fips";
     BIO *module_bio = NULL, *mem_bio = NULL, *fout = NULL;
     char *in_fname = NULL, *out_fname = NULL, *prog;
-    char *module_fname = NULL, *parent_config = NULL;
+    char *module_fname = NULL, *parent_config = NULL, *module_path = NULL;
+    const char *tail;
     EVP_MAC_CTX *ctx = NULL, *ctx2 = NULL;
     STACK_OF(OPENSSL_STRING) *opts = NULL;
     OPTION_CHOICE o;
@@ -367,6 +368,16 @@ opthelp:
         || (!verify && out_fname == NULL)
         || argc != 0)
         goto opthelp;
+
+    tail = opt_path_end(module_fname);
+    if (tail != NULL) {
+        module_path = OPENSSL_strdup(module_fname);
+        if (module_path == NULL)
+            goto end;
+        module_path[tail - module_fname] = '\0';
+        if (!OSSL_PROVIDER_set_default_search_path(NULL, module_path))
+            goto end;
+    }
 
     if (self_test_log
             || self_test_corrupt_desc != NULL
@@ -474,6 +485,7 @@ end:
     }
 
 cleanup:
+    OPENSSL_free(module_path);
     BIO_free(fout);
     BIO_free(mem_bio);
     BIO_free(module_bio);
