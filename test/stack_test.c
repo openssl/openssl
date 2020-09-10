@@ -131,7 +131,7 @@ static int test_int_stack(int reserve)
     /* sorting */
     if (!TEST_false(sk_sint_is_sorted(s)))
         goto end;
-    sk_sint_set_cmp_func(s, &int_compare);
+    (void)sk_sint_set_cmp_func(s, &int_compare);
     sk_sint_sort(s);
     if (!TEST_true(sk_sint_is_sorted(s)))
         goto end;
@@ -237,7 +237,7 @@ static int test_uchar_stack(int reserve)
         goto end;
 
     /* set */
-    sk_uchar_set(r, 1, v + 1);
+    (void)sk_uchar_set(r, 1, v + 1);
     for (i = 0; i < 2; i++)
         if (!TEST_ptr_eq(sk_uchar_value(r, i), v + i)) {
             TEST_info("uchar set %d", i);

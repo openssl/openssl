@@ -1257,7 +1257,7 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
                     || addr_contains(fp->ipAddressChoice->u.addressesOrRanges,
                                      fc->ipAddressChoice->u.addressesOrRanges,
                                      length_from_afi(X509v3_addr_get_afi(fc))))
-                    sk_IPAddressFamily_set(child, j, fp);
+                    (void)sk_IPAddressFamily_set(child, j, fp);
                 else
                     validation_err(X509_V_ERR_UNNESTED_RESOURCE);
             }

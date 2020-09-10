@@ -316,7 +316,7 @@ int ossl_method_store_remove(OSSL_METHOD_STORE *store, int nid,
 
         if (impl->method.method == method) {
             impl_free(impl);
-            sk_IMPLEMENTATION_delete(alg->impls, i);
+            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
             ossl_property_unlock(store);
             return 1;
         }
