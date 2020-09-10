@@ -316,16 +316,11 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         fetched_cipher = EVP_CIPHER_fetch(p7_ctx->libctx,
                                           EVP_CIPHER_name(evp_cipher),
                                           p7_ctx->propq);
+        (void)ERR_pop_to_mark();
         if (fetched_cipher != NULL)
             cipher = fetched_cipher;
         else
             cipher = evp_cipher;
-
-        if (cipher == NULL) {
-            (void)ERR_clear_last_mark();
-            goto err;
-        }
-        (void)ERR_pop_to_mark();
 
         if (EVP_CipherInit_ex(ctx, cipher, NULL, NULL, NULL, 1) <= 0)
             goto err;
