@@ -500,6 +500,9 @@ int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len)
     int ret;
     OSSL_PARAM params[2], *p = params;
 
+    if (len <= 0)
+        return -1;
+
     ret = dh_param_derive_check(ctx);
     if (ret != 1)
         return ret;
