@@ -252,6 +252,7 @@ static int test_builtin(int n, int as)
         || !TEST_ptr(eckey_neg = EC_KEY_new_by_curve_name(nid))
         || !TEST_true(EC_KEY_generate_key(eckey_neg))
         || !TEST_ptr(pkey_neg = EVP_PKEY_new())
+        || !TEST_false(EVP_PKEY_assign_EC_KEY(pkey_neg, NULL))
         || !TEST_true(EVP_PKEY_assign_EC_KEY(pkey_neg, eckey_neg)))
         goto err;
 
