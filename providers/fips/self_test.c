@@ -327,9 +327,12 @@ void ossl_set_error_state(const char *type)
 {
     int cond_test = (type != NULL && strcmp(type, OSSL_SELF_TEST_TYPE_PCT) == 0);
 
-    if (!cond_test || (FIPS_conditional_error_check == 1))
+    if (!cond_test || (FIPS_conditional_error_check == 1)) {
         FIPS_state = FIPS_STATE_ERROR;
-    ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
+    } else {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_CONDITIONAL_ERROR);
+    }
 }
 
 int ossl_prov_is_running(void)

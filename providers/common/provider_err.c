@@ -58,6 +58,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_SET_PARAMETER),
     "failed to set parameter"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FAILED_TO_SIGN), "failed to sign"},
+    {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FIPS_MODULE_CONDITIONAL_ERROR),
+    "fips module conditional error"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE),
     "fips module entering error state"},
     {ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FIPS_MODULE_IN_ERROR_STATE),
