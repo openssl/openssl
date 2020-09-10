@@ -323,7 +323,7 @@ struct ec_point_st {
 static ossl_inline int ec_point_is_compat(const EC_POINT *point,
                                           const EC_GROUP *group)
 {
-    return group->meth == point->meth
+    return group->meth->field_type == point->meth->field_type
            && (group->curve_name == 0
                || point->curve_name == 0
                || group->curve_name == point->curve_name);
