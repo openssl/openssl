@@ -210,6 +210,8 @@ const char *X509_verify_cert_error_string(long n)
         return "CA cert does not include key usage extension";
     case X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3:
         return "Using cert extension requires at least X509v3";
+    case X509_V_ERR_EC_KEY_EXPLICIT_PARAMS:
+        return "Certificate public key has explicit ECC parameters";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */
