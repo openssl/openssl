@@ -23,6 +23,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/crmf.h \
          include/openssl/crypto.h \
          include/openssl/ct.h \
+         include/openssl/err.h \
          include/openssl/ess.h \
          include/openssl/fipskey.h \
          include/openssl/opensslv.h \
@@ -49,6 +50,7 @@ GENERATE[include/openssl/configuration.h]=include/openssl/configuration.h.in
 GENERATE[include/openssl/crmf.h]=include/openssl/crmf.h.in
 GENERATE[include/openssl/crypto.h]=include/openssl/crypto.h.in
 GENERATE[include/openssl/ct.h]=include/openssl/ct.h.in
+GENERATE[include/openssl/err.h]=include/openssl/err.h.in
 GENERATE[include/openssl/ess.h]=include/openssl/ess.h.in
 GENERATE[include/openssl/fipskey.h]=include/openssl/fipskey.h.in
 GENERATE[include/openssl/ocsp.h]=include/openssl/ocsp.h.in
