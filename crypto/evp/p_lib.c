@@ -527,9 +527,8 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
         raw_key.len = len;
         raw_key.selection = OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
-        return evp_keymgmt_export(pkey->keymgmt, pkey->keydata,
-                                  OSSL_KEYMGMT_SELECT_PRIVATE_KEY,
-                                  get_raw_key_details, &raw_key);
+        return evp_keymgmt_util_export(pkey, OSSL_KEYMGMT_SELECT_PRIVATE_KEY,
+                                       get_raw_key_details, &raw_key);
     }
 
     if (pkey->ameth == NULL) {
@@ -560,9 +559,8 @@ int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
         raw_key.len = len;
         raw_key.selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
 
-        return evp_keymgmt_export(pkey->keymgmt, pkey->keydata,
-                                  OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
-                                  get_raw_key_details, &raw_key);
+        return evp_keymgmt_util_export(pkey, OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                                       get_raw_key_details, &raw_key);
     }
 
     if (pkey->ameth == NULL) {
@@ -1115,9 +1113,9 @@ int evp_pkey_get_EC_KEY_curve_nid(const EVP_PKEY *pkey)
     } else if (EVP_PKEY_is_a(pkey, "EC") || EVP_PKEY_is_a(pkey, "SM2")) {
         char *curve_name = NULL;
 
-        ret = evp_keymgmt_export(pkey->keymgmt, pkey->keydata,
-                                 OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
-                                 get_ec_curve_name_cb, &curve_name);
+        ret = evp_keymgmt_util_export(pkey,
+                                      OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                      get_ec_curve_name_cb, &curve_name);
         if (ret)
             ret = ec_curve_name2nid(curve_name);
         OPENSSL_free(curve_name);
