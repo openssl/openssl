@@ -431,7 +431,7 @@ int x509v3_cache_extensions(X509 *x)
             x->ex_flags |= EXFLAG_CA;
         if (bs->pathlen != NULL) {
             /*
-             * the error case !bs->ca is checked by check_chain_extensions()
+             * the error case !bs->ca is checked by check_chain()
              * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
              */
             if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
