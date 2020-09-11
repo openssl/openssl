@@ -140,6 +140,25 @@ int EVP_DigestInit_ex(EVP_MD_CTX *ctx, const EVP_MD *type, ENGINE *impl)
     ENGINE *tmpimpl = NULL;
 #endif
 
+#if !defined(FIPS_MODULE)
+    if (ctx->pctx != NULL
+            && EVP_PKEY_CTX_IS_SIGNATURE_OP(ctx->pctx)
+            && ctx->pctx->op.sig.sigprovctx != NULL) {
+        /*
+         * Prior to OpenSSL 3.0 calling EVP_DigestInit_ex() on an mdctx
+         * previously initialised with EVP_DigestSignInit() would retain
+         * information about the key, and re-initialise for another sign
+         * operation. So in that case we redirect to EVP_DigestSignInit()
+         */
+        if (ctx->pctx->operation == EVP_PKEY_OP_SIGNCTX)
+            return EVP_DigestSignInit(ctx, NULL, type, impl, NULL);
+        if (ctx->pctx->operation == EVP_PKEY_OP_VERIFYCTX)
+            return EVP_DigestVerifyInit(ctx, NULL, type, impl, NULL);
+        EVPerr(0, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+#endif
+
     EVP_MD_CTX_clear_flags(ctx, EVP_MD_CTX_FLAG_CLEANED);
 
     if (ctx->provctx != NULL) {
