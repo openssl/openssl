@@ -131,7 +131,7 @@ static int test_int_stack(int reserve)
     /* sorting */
     if (!TEST_false(sk_sint_is_sorted(s)))
         goto end;
-    sk_sint_set_cmp_func(s, &int_compare);
+    (void)sk_sint_set_cmp_func(s, &int_compare);
     sk_sint_sort(s);
     if (!TEST_true(sk_sint_is_sorted(s)))
         goto end;
