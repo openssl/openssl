@@ -174,6 +174,8 @@ const char *X509_verify_cert_error_string(long n)
         return "OCSP verification failed";
     case X509_V_ERR_OCSP_CERT_UNKNOWN:
         return "OCSP unknown cert";
+    case X509_V_ERR_EC_KEY_EXPLICIT_PARAMS:
+        return "Certificate public key has explicit ECC parameters";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

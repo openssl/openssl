@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 138;
+plan tests => 143;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -279,6 +279,27 @@ ok(verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level",
    "accept md5 leaf at auth level 0");
 ok(!verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"]),
    "reject md5 leaf at auth level 1");
+
+# Explicit vs named curve tests
+SKIP: {
+    skip "EC is not supported by this OpenSSL build", 5
+        if disabled("ec");
+    ok(verify("ee-cert-ec-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-named"]),
+        "accept explicit curve leaf with named curve intermediate without strict");
+    ok(verify("ee-cert-ec-named-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-explicit"]),
+        "accept named curve leaf with explicit curve intermediate without strict");
+    ok(!verify("ee-cert-ec-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-named"], "-x509_strict"),
+        "reject explicit curve leaf with named curve intermediate with strict");
+    ok(!verify("ee-cert-ec-named-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-explicit"], "-x509_strict"),
+        "reject named curve leaf with explicit curve intermediate with strict");
+    ok(verify("ee-cert-ec-named-named", "sslserver", ["root-cert"],
+              ["ca-cert-ec-named"], "-x509_strict"),
+        "accept named curve leaf with named curve intermediate with strict");
+}
 
 # Depth tests, note the depth limit bounds the number of CA certificates
 # between the trust-anchor and the leaf, so, for example, with a root->ca->leaf
