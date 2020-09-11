@@ -15,7 +15,7 @@ void ossl_set_error_state(const char *type)
 {
 }
 
-/* By default, out providers are always in a happy state */
+/* By default, our providers are always in a happy state */
 int ossl_prov_is_running(void)
 {
     return 1;
