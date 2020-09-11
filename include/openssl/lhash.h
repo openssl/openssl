@@ -125,6 +125,42 @@ void OPENSSL_LH_node_usage_stats_bio(const OPENSSL_LHASH *lh, BIO *out);
 
 # define LHASH_OF(type) struct lhash_st_##type
 
+/* Helper macro for internal use */
+# define DEFINE_LHASH_OF_INTERNAL(type) \
+    LHASH_OF(type) { union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; }; \
+    typedef int (*lh_##type##_compfunc)(const type *a, const type *b); \
+    typedef unsigned long (*lh_##type##_hashfunc)(const type *a); \
+    typedef void (*lh_##type##_doallfunc)(type *a); \
+    static ossl_unused ossl_inline type *ossl_check_##type##_lh_plain_type(type *ptr) \
+    { \
+        return ptr; \
+    } \
+    static ossl_unused ossl_inline const type *ossl_check_const_##type##_lh_plain_type(const type *ptr) \
+    { \
+        return ptr; \
+    } \
+    static ossl_unused ossl_inline const OPENSSL_LHASH *ossl_check_const_##type##_lh_type(const LHASH_OF(type) *lh) \
+    { \
+        return (const OPENSSL_LHASH *)lh; \
+    } \
+    static ossl_unused ossl_inline OPENSSL_LHASH *ossl_check_##type##_lh_type(LHASH_OF(type) *lh) \
+    { \
+        return (OPENSSL_LHASH *)lh; \
+    } \
+    static ossl_unused ossl_inline OPENSSL_LH_COMPFUNC ossl_check_##type##_lh_compfunc_type(lh_##type##_compfunc cmp) \
+    { \
+        return (OPENSSL_LH_COMPFUNC)cmp; \
+    } \
+    static ossl_unused ossl_inline OPENSSL_LH_HASHFUNC ossl_check_##type##_lh_hashfunc_type(lh_##type##_hashfunc hfn) \
+    { \
+        return (OPENSSL_LH_HASHFUNC)hfn; \
+    } \
+    static ossl_unused ossl_inline OPENSSL_LH_DOALL_FUNC ossl_check_##type##_lh_doallfunc_type(lh_##type##_doallfunc dfn) \
+    { \
+        return (OPENSSL_LH_DOALL_FUNC)dfn; \
+    } \
+    LHASH_OF(type)
+
 # define DEFINE_LHASH_OF(type) \
     LHASH_OF(type) { union lh_##type##_dummy { void* d1; unsigned long d2; int d3; } dummy; }; \
     static ossl_unused ossl_inline LHASH_OF(type) *lh_##type##_new(unsigned long (*hfn)(const type *), \
