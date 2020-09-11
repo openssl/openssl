@@ -175,6 +175,7 @@ plan tests => scalar(@curve_list) * scalar(keys %params_encodings)
     * 2                             # Test generating parameters and keys
     + 1                             # Checking that with no curve it fails
     + 1                             # Checking that with unknown curve it fails
+    + 2                             # Test explicit or named_curve encoding
     + 1                             # Subtest for explicit only curves
     + 1                             # base serializer test
     ;
@@ -196,6 +197,20 @@ ok(run(app([ 'openssl', 'genpkey',
              '-pkeyopt', 'ec_paramgen_curve:prime256v1',
              '-text'])),
     "generate a private key and serialize it using the base provider");
+
+ok(run(app([ 'openssl', 'genpkey',
+             '-algorithm', 'EC',
+             '-pkeyopt', 'ec_paramgen_curve:P-256',
+             '-pkeyopt', 'ec_param_enc:explicit',
+             '-text'])),
+   "generate a key with explicit encoding");
+
+ok(run(app([ 'openssl', 'genpkey',
+             '-algorithm', 'EC',
+             '-pkeyopt', 'ec_paramgen_curve:P-256',
+             '-pkeyopt', 'ec_param_enc:named_curve',
+             '-text'])),
+   "generate a key with named_curve encoding");
 
 foreach my $curvename (@curve_list) {
     foreach my $paramenc (sort keys %params_encodings) {
