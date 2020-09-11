@@ -696,6 +696,8 @@ int evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
                                  void *keydata);
 EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata);
 
+int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
+                            OSSL_CALLBACK *export_cb, void *export_cbarg);
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
 size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
                                                    EVP_KEYMGMT *keymgmt);

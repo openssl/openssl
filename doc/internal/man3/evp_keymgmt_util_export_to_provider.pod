@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+evp_keymgmt_util_export,
 evp_keymgmt_util_export_to_provider,
 evp_keymgmt_util_find_operation_cache_index,
 evp_keymgmt_util_clear_operation_cache,
@@ -14,6 +15,8 @@ evp_keymgmt_util_fromdata
 
  #include "crypto/evp.h"
 
+ int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
+                             OSSL_CALLBACK *export_cb, void *export_cbarg);
  void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
  size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
                                                     EVP_KEYMGMT *keymgmt);
@@ -25,6 +28,9 @@ evp_keymgmt_util_fromdata
                                  int selection, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
+
+evp_keymgmt_util_export() calls L<evp_keymgmt_export(3)> with the
+I<keymgmt> and I<keydata> from I<pk>.  This is a convenience function.
 
 evp_keymgmt_util_export_to_provider() exports cached key material
 (provider side key material) from the given key I<pk> to a provider

@@ -77,6 +77,13 @@ EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata)
     return pkey;
 }
 
+int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
+                            OSSL_CALLBACK *export_cb, void *export_cbarg)
+{
+    return evp_keymgmt_export(pk->keymgmt, pk->keydata, selection,
+                              export_cb, export_cbarg);
+}
+
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
 {
     struct evp_keymgmt_util_try_import_data_st import_data;
@@ -139,8 +146,8 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      * The export function calls the callback (evp_keymgmt_util_try_import),
      * which does the import for us.  If successful, we're done.
      */
-    if (!evp_keymgmt_export(pk->keymgmt, pk->keydata, OSSL_KEYMGMT_SELECT_ALL,
-                            &evp_keymgmt_util_try_import, &import_data)) {
+    if (!evp_keymgmt_util_export(pk, OSSL_KEYMGMT_SELECT_ALL,
+                                 &evp_keymgmt_util_try_import, &import_data)) {
         /* If there was an error, bail out */
         evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
@@ -392,8 +399,9 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
         import_data.keydata = to_keydata;
         import_data.selection = selection;
 
-        if (!evp_keymgmt_export(from->keymgmt, from->keydata, selection,
-                                &evp_keymgmt_util_try_import, &import_data)) {
+        if (!evp_keymgmt_util_export(from, selection,
+                                     &evp_keymgmt_util_try_import,
+                                     &import_data)) {
             evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
         }
