@@ -545,8 +545,8 @@ generating an EC key.
 EVP_PKEY_CTX_get_group_name() (described above) can be used to obtain the curve
 name that's currently set with I<ctx>.
 
-The EVP_PKEY_CTX_set_ec_param_enc() macro sets the EC parameter encoding to
-I<param_enc> when generating EC parameters or an EC key. The encoding can be
+EVP_PKEY_CTX_set_ec_param_enc() sets the EC parameter encoding to I<param_enc>
+when generating EC parameters or an EC key. The encoding can be
 B<OPENSSL_EC_EXPLICIT_CURVE> for explicit parameters (the default in versions
 of OpenSSL before 1.1.0) or B<OPENSSL_EC_NAMED_CURVE> to use named curve form.
 For maximum compatibility the named curve form should be used. Note: the
@@ -643,7 +643,8 @@ EVP_PKEY_CTX_set_dh_kdf_type(), EVP_PKEY_CTX_get_dh_kdf_type(),
 EVP_PKEY_CTX_set0_dh_kdf_oid(), EVP_PKEY_CTX_get0_dh_kdf_oid(),
 EVP_PKEY_CTX_set_dh_kdf_md(), EVP_PKEY_CTX_get_dh_kdf_md(),
 EVP_PKEY_CTX_set_dh_kdf_outlen(), EVP_PKEY_CTX_get_dh_kdf_outlen(),
-EVP_PKEY_CTX_set0_dh_kdf_ukm() and EVP_PKEY_CTX_get0_dh_kdf_ukm()
+EVP_PKEY_CTX_set0_dh_kdf_ukm(), EVP_PKEY_CTX_get0_dh_kdf_ukm() and
+EVP_PKEY_CTX_set_ec_param_enc(), EVP_PKEY_CTX_set_ec_paramgen_curve_nid()
 were macros in OpenSSL 1.1.1 and below.
 From OpenSSL 3.0 they are functions.
 
