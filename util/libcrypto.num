@@ -5301,3 +5301,4 @@ EVP_PKEY_CTX_get1_id                    ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_get1_id_len                ?	3_0_0	EXIST::FUNCTION:
 CMS_AuthEnvelopedData_create            ?	3_0_0	EXIST::FUNCTION:CMS
 CMS_AuthEnvelopedData_create_with_libctx ?	3_0_0	EXIST::FUNCTION:CMS
+EVP_PKEY_CTX_set_ec_param_enc           ?	3_0_0	EXIST::FUNCTION:EC
