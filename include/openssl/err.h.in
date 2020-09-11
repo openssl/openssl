@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+{-
+use OpenSSL::stackhash qw(generate_lhash_macros);
+-}
+
 #ifndef OPENSSL_ERR_H
 # define OPENSSL_ERR_H
 # pragma once
@@ -337,7 +341,9 @@ typedef struct ERR_string_data_st {
     const char *string;
 } ERR_STRING_DATA;
 
-DEFINE_LHASH_OF(ERR_STRING_DATA);
+{-
+    generate_lhash_macros("ERR_STRING_DATA");
+-}
 
 /* 12 lines and some on an 80 column terminal */
 #define ERR_MAX_DATA_SIZE       1024
