@@ -32,6 +32,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "../e_os.h" /* strcasecmp */
 
 #ifndef OPENSSL_NO_SM2
 /*
@@ -841,6 +842,80 @@ static int test_privatekey_to_pkcs8(void)
     BIO_free_all(membio);
     return ok;
 }
+
+#ifndef OPENSSL_NO_EC
+static const struct {
+    int encoding;
+    const char *encoding_name;
+} ec_encodings[] = {
+    { OPENSSL_EC_EXPLICIT_CURVE, OSSL_PKEY_EC_ENCODING_EXPLICIT },
+    { OPENSSL_EC_NAMED_CURVE,    OSSL_PKEY_EC_ENCODING_GROUP }
+};
+
+static int ec_export_get_encoding_cb(const OSSL_PARAM params[], void *arg)
+{
+    const OSSL_PARAM *p;
+    const char *enc_name = NULL;
+    int *enc = arg;
+    size_t i;
+
+    *enc = -1;
+
+    if (!TEST_ptr(p = OSSL_PARAM_locate_const(params,
+                                              OSSL_PKEY_PARAM_EC_ENCODING))
+        || !TEST_true(OSSL_PARAM_get_utf8_string_ptr(p, &enc_name)))
+        return 0;
+
+    for (i = 0; i < OSSL_NELEM(ec_encodings); i++) {
+        if (strcasecmp(enc_name, ec_encodings[i].encoding_name) == 0) {
+            *enc = ec_encodings[i].encoding;
+            break;
+        }
+    }
+
+    return (*enc != -1);
+}
+
+static int test_EC_keygen_with_enc(int idx)
+{
+    EVP_PKEY *params = NULL, *key = NULL;
+    EVP_PKEY_CTX *pctx = NULL, *kctx = NULL;
+    int enc;
+    int ret = 0;
+
+    enc = ec_encodings[idx].encoding;
+
+    /* Create key parameters */
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "EC", NULL))
+        || !TEST_true(EVP_PKEY_paramgen_init(pctx))
+        || !TEST_true(EVP_PKEY_CTX_set_group_name(pctx, "P-256"))
+        || !TEST_true(EVP_PKEY_CTX_set_ec_param_enc(pctx, enc))
+        || !TEST_true(EVP_PKEY_paramgen(pctx, &params))
+        || !TEST_ptr(params))
+        goto done;
+
+    /* Create key */
+    if (!TEST_ptr(kctx = EVP_PKEY_CTX_new_from_pkey(testctx, params, NULL))
+        || !TEST_true(EVP_PKEY_keygen_init(kctx))
+        || !TEST_true(EVP_PKEY_keygen(kctx, &key))
+        || !TEST_ptr(key))
+        goto done;
+
+    /* Check that the encoding got all the way into the key */
+    if (!TEST_true(evp_keymgmt_util_export(key, OSSL_KEYMGMT_SELECT_ALL,
+                                           ec_export_get_encoding_cb, &enc))
+        || !TEST_int_eq(enc, ec_encodings[idx].encoding))
+        goto done;
+
+    ret = 1;
+ done:
+    EVP_PKEY_free(key);
+    EVP_PKEY_free(params);
+    EVP_PKEY_CTX_free(kctx);
+    EVP_PKEY_CTX_free(pctx);
+    return ret;
+}
+#endif
 
 #if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODULE)
 
@@ -2028,6 +2103,9 @@ int setup_tests(void)
     ADD_TEST(test_privatekey_to_pkcs8);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EVP_PKCS82PKEY);
+#endif
+#ifndef OPENSSL_NO_EC
+    ADD_ALL_TESTS(test_EC_keygen_with_enc, OSSL_NELEM(ec_encodings));
 #endif
 #if !defined(OPENSSL_NO_SM2) && !defined(FIPS_MODULE)
     ADD_TEST(test_EVP_SM2);
