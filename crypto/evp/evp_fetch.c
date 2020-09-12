@@ -215,16 +215,18 @@ static void destruct_evp_method(void *method, void *data)
     methdata->destruct_method(method);
 }
 
-#ifndef FIPS_MODULE
 static const char *libctx_descriptor(OPENSSL_CTX *libctx)
 {
+#ifdef FIPS_MODULE
+    return "FIPS internal library context";
+#else
     if (openssl_ctx_is_global_default(libctx))
         return "Global default library context";
     if (openssl_ctx_is_default(libctx))
         return "Thread-local default library context";
     return "Non-default library context";
-}
 #endif
+}
 
 static void *
 inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
@@ -242,22 +244,28 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
     void *method = NULL;
     int unsupported = 0;
 
-    if (store == NULL || namemap == NULL)
-        goto end;
+    if (store == NULL || namemap == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return NULL;
+    }
 
     /*
      * If there's ever an operation_id == 0 passed, we have an internal
      * programming error.
      */
-    if (!ossl_assert(operation_id > 0))
-        goto end;
+    if (!ossl_assert(operation_id > 0)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
 
     /*
      * If we have been passed neither a name_id or a name, we have an
      * internal programming error.
      */
-    if (!ossl_assert(name_id != 0 || name != NULL))
-        goto end;
+    if (!ossl_assert(name_id != 0 || name != NULL)) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
 
     /* If we haven't received a name id yet, try to get one for the name */
     if (name_id == 0)
@@ -269,9 +277,12 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
      * evp_method_id returns 0 if we have too many operations (more than
      * about 2^8) or too many names (more than about 2^24).  In that case,
      * we can't create any new method.
+     * For all intents and purposes, this is an internal error.
      */
-    if (name_id != 0 && (meth_id = evp_method_id(name_id, operation_id)) == 0)
-        goto end;
+    if (name_id != 0 && (meth_id = evp_method_id(name_id, operation_id)) == 0) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+        return NULL;
+    }
 
     /*
      * If we haven't found the name yet, chances are that the algorithm to
@@ -325,25 +336,17 @@ inner_evp_generic_fetch(OPENSSL_CTX *libctx, int operation_id,
         unsupported = !mcmdata.flag_construct_error_occured;
     }
 
- end:
     if (method == NULL) {
         int code =
             unsupported ? EVP_R_UNSUPPORTED_ALGORITHM : EVP_R_FETCH_FAILED;
 
-#ifdef FIPS_MODULE
-        ERR_raise(ERR_LIB_EVP, code);
-#else
-        if (name == NULL) {
-            name = ((namemap == NULL)
-                    ? NULL
-                    : ossl_namemap_num2name(namemap, name_id, 0));
-        }
+        if (name == NULL)
+            name = ossl_namemap_num2name(namemap, name_id, 0);
         ERR_raise_data(ERR_LIB_EVP, code,
                        "%s, Algorithm (%s : %d), Properties (%s)",
                        libctx_descriptor(libctx),
                        name = NULL ? "<null>" : name, name_id,
                        properties == NULL ? "<null>" : properties);
-#endif
     }
 
     return method;
