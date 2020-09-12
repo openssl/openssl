@@ -4198,17 +4198,6 @@ OSSL_STORE_LOADER_get0_engine           4287	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_
 OPENSSL_fork_prepare                    4288	3_0_0	EXIST:UNIX:FUNCTION:
 OPENSSL_fork_parent                     4289	3_0_0	EXIST:UNIX:FUNCTION:
 OPENSSL_fork_child                      4290	3_0_0	EXIST:UNIX:FUNCTION:
-RAND_DRBG_instantiate                   4292	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_uninstantiate                 4293	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_set                           4295	3_0_0	NOEXIST::FUNCTION:DEPRECATEDIN_3_0
-RAND_DRBG_set_callbacks                 4296	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_new                           4297	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_set_reseed_interval           4298	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_free                          4299	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_generate                      4300	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_reseed                        4301	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_set_ex_data                   4302	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_get_ex_data                   4303	3_0_0	NOEXIST::FUNCTION:
 EVP_sha3_224                            4304	3_0_0	EXIST::FUNCTION:
 EVP_sha3_256                            4305	3_0_0	EXIST::FUNCTION:
 EVP_sha3_384                            4306	3_0_0	EXIST::FUNCTION:
@@ -4223,7 +4212,6 @@ SCRYPT_PARAMS_it                        4314	3_0_0	EXIST::FUNCTION:SCRYPT
 CRYPTO_secure_clear_free                4315	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_meth_get0                      4316	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 EVP_PKEY_meth_get_count                 4317	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
-RAND_DRBG_get0_public                   4319	3_0_0	NOEXIST::FUNCTION:
 RAND_priv_bytes                         4320	3_0_0	EXIST::FUNCTION:
 BN_priv_rand                            4321	3_0_0	EXIST::FUNCTION:
 BN_priv_rand_range                      4322	3_0_0	EXIST::FUNCTION:
@@ -4233,7 +4221,6 @@ ASN1_TIME_compare                       4325	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_ctrl_uint64                4326	3_0_0	EXIST::FUNCTION:
 EVP_DigestFinalXOF                      4327	3_0_0	EXIST::FUNCTION:
 ERR_clear_last_mark                     4328	3_0_0	EXIST::FUNCTION:
-RAND_DRBG_get0_private                  4329	3_0_0	NOEXIST::FUNCTION:
 EVP_aria_192_ccm                        4330	3_0_0	EXIST::FUNCTION:ARIA
 EVP_aria_256_gcm                        4331	3_0_0	EXIST::FUNCTION:ARIA
 EVP_aria_256_ccm                        4332	3_0_0	EXIST::FUNCTION:ARIA
@@ -4281,8 +4268,6 @@ RSA_set0_multi_prime_params             4376	3_0_0	EXIST::FUNCTION:RSA
 RSA_get_version                         4377	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
 RSA_meth_get_multi_prime_keygen         4378	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
 RSA_meth_set_multi_prime_keygen         4379	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
-RAND_DRBG_get0_master                   4380	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_set_reseed_time_interval      4381	3_0_0	NOEXIST::FUNCTION:
 PROFESSION_INFO_get0_addProfessionInfo  4382	3_0_0	EXIST::FUNCTION:
 ADMISSION_SYNTAX_free                   4383	3_0_0	EXIST::FUNCTION:
 d2i_ADMISSION_SYNTAX                    4384	3_0_0	EXIST::FUNCTION:
@@ -4332,7 +4317,6 @@ ADMISSION_SYNTAX_new                    4427	3_0_0	EXIST::FUNCTION:
 EVP_sha512_256                          4428	3_0_0	EXIST::FUNCTION:
 EVP_sha512_224                          4429	3_0_0	EXIST::FUNCTION:
 OCSP_basic_sign_ctx                     4430	3_0_0	EXIST::FUNCTION:OCSP
-RAND_DRBG_bytes                         4431	3_0_0	NOEXIST::FUNCTION:
 OSSL_STORE_vctrl                        4433	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_SEARCH_by_alias              4434	3_0_0	EXIST::FUNCTION:
 BIO_bind                                4435	3_0_0	EXIST::FUNCTION:SOCK
@@ -4352,13 +4336,11 @@ X509_get0_authority_key_id              4448	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_LOADER_set_find              4449	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 OSSL_STORE_SEARCH_free                  4450	3_0_0	EXIST::FUNCTION:
 OSSL_STORE_SEARCH_get0_digest           4451	3_0_0	EXIST::FUNCTION:
-RAND_DRBG_set_reseed_defaults           4452	3_0_0	NOEXIST::FUNCTION:
 EVP_PKEY_new_raw_private_key            4453	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_raw_public_key             4454	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_CMAC_key                   4455	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_set_priv_key          4456	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_asn1_set_set_pub_key           4457	3_0_0	EXIST::FUNCTION:
-RAND_DRBG_set_defaults                  4458	3_0_0	NOEXIST::FUNCTION:
 conf_ssl_name_find                      4469	3_0_0	EXIST::FUNCTION:
 conf_ssl_get_cmd                        4470	3_0_0	EXIST::FUNCTION:
 conf_ssl_get                            4471	3_0_0	EXIST::FUNCTION:
@@ -4643,7 +4625,6 @@ OSSL_CMP_MSG_free                       ?	3_0_0	EXIST::FUNCTION:CMP
 ERR_load_CMP_strings                    ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_MD_CTX_set_params                   ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_CTX_get_params                   ?	3_0_0	EXIST::FUNCTION:
-RAND_DRBG_new_ex                        ?	3_0_0	NOEXIST::FUNCTION:
 OPENSSL_CTX_get0_primary_drbg           ?	3_0_0	NOEXIST::FUNCTION:
 OPENSSL_CTX_get0_public_drbg            ?	3_0_0	NOEXIST::FUNCTION:
 OPENSSL_CTX_get0_private_drbg           ?	3_0_0	NOEXIST::FUNCTION:
@@ -4930,8 +4911,6 @@ EVP_PKEY_pairwise_check                 ?	3_0_0	EXIST::FUNCTION:
 ASN1_item_verify_ctx                    ?	3_0_0	EXIST::FUNCTION:
 ASN1_item_sign_with_libctx              ?	3_0_0	EXIST::FUNCTION:
 ASN1_item_verify_with_libctx            ?	3_0_0	EXIST::FUNCTION:
-RAND_DRBG_set_callback_data             ?	3_0_0	NOEXIST::FUNCTION:
-RAND_DRBG_get_callback_data             ?	3_0_0	NOEXIST::FUNCTION:
 BIO_socket_wait                         ?	3_0_0	EXIST::FUNCTION:SOCK
 BIO_wait                                ?	3_0_0	EXIST::FUNCTION:
 BIO_do_connect_retry                    ?	3_0_0	EXIST::FUNCTION:
@@ -5118,7 +5097,6 @@ EVP_RAND_enable_locking                 ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_verify_zeroization             ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_strength                       ?	3_0_0	EXIST::FUNCTION:
 EVP_RAND_state                          ?	3_0_0	EXIST::FUNCTION:
-RAND_DRBG_verify_zeroization            ?	3_0_0	NOEXIST::FUNCTION:
 EVP_default_properties_is_fips_enabled  ?	3_0_0	EXIST::FUNCTION:
 EVP_default_properties_enable_fips      ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_new_raw_private_key_with_libctx ?	3_0_0	EXIST::FUNCTION:

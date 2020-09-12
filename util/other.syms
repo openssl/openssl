@@ -71,10 +71,6 @@ OSSL_STORE_post_process_info_fn         datatype
 OSSL_trace_cb                           datatype
 PROFESSION_INFO                         datatype
 PROFESSION_INFOS                        datatype
-RAND_DRBG_cleanup_entropy_fn            datatype
-RAND_DRBG_cleanup_nonce_fn              datatype
-RAND_DRBG_get_entropy_fn                datatype
-RAND_DRBG_get_nonce_fn                  datatype
 RAND_poll_cb                            datatype
 SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
@@ -427,7 +423,6 @@ PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
 RAND_cleanup                            define deprecated 1.1.0
-RAND_DRBG_get_ex_new_index              define
 SSL_COMP_free_compression_methods       define deprecated 1.1.0
 SSL_CTX_add0_chain_cert                 define
 SSL_CTX_add1_chain_cert                 define
