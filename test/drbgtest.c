@@ -7,12 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * RAND_DRBG_set is deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
-
 #include <string.h>
 #include "internal/nelem.h"
 #include <openssl/crypto.h>
