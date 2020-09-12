@@ -587,7 +587,7 @@ int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
     }
 
     if (ent != NULL) {
-#ifdef FIP_MODULE
+#ifdef FIPS_MODULE
         /*
          * NIST SP-800-90A mandates that entropy *shall not* be provided
          * by the consuming application. Instead the data is added as additional
