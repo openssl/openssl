@@ -5283,3 +5283,16 @@ EVP_PKEY_CTX_set_ec_param_enc           ?	3_0_0	EXIST::FUNCTION:EC
 EVP_PKEY_get0_first_alg_name            ?	3_0_0	EXIST::FUNCTION:
 EVP_KEYMGMT_get0_first_name             ?	3_0_0	EXIST::FUNCTION:
 EC_KEY_decoded_from_explicit_params     ?	3_0_0	EXIST::FUNCTION:EC
+EVP_KEM_free                            ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_up_ref                          ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_provider                        ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_fetch                           ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_is_a                            ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_number                          ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_do_all_provided                 ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_names_do_all                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_encapsulate_init               ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_encapsulate                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_decapsulate_init               ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_decapsulate                    ?	3_0_0	EXIST::FUNCTION:
+EVP_PKEY_CTX_set_kem_op                 ?	3_0_0	EXIST::FUNCTION:
