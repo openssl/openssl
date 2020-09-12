@@ -32,6 +32,7 @@
 #include "internal/nelem.h"
 #include "internal/sizes.h"
 #include "crypto/evp.h"
+#include "../e_os.h" /* strcasecmp */
 
 #ifndef OPENSSL_NO_SM2
 /*
