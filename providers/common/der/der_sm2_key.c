@@ -16,7 +16,7 @@ int DER_w_algorithmIdentifier_SM2(WPACKET *pkt, int cont, EC_KEY *ec)
 {
     return DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
-        /* It seems SM2 identifier is the same to id_ecPublidKey */
+        /* It seems SM2 identifier is the same as id_ecPublidKey */
         && DER_w_precompiled(pkt, -1, der_oid_id_ecPublicKey,
                              sizeof(der_oid_id_ecPublicKey))
         && DER_w_end_sequence(pkt, cont);

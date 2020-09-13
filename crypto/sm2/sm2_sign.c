@@ -428,19 +428,19 @@ int sm2_internal_sign(const unsigned char *dgst, int dgstlen,
 
     e = BN_bin2bn(dgst, dgstlen, NULL);
     if (e == NULL) {
-       SM2err(SM2_F_SM2_INTERNAL_SIGN, ERR_R_BN_LIB);
+       SM2err(0, ERR_R_BN_LIB);
        goto done;
     }
 
     s = sm2_sig_gen(eckey, e);
     if (s == NULL) {
-        SM2err(SM2_F_SM2_INTERNAL_SIGN, ERR_R_INTERNAL_ERROR);
+        SM2err(0, ERR_R_INTERNAL_ERROR);
         goto done;
     }
 
     sigleni = i2d_ECDSA_SIG(s, &sig);
     if (sigleni < 0) {
-       SM2err(SM2_F_SM2_INTERNAL_SIGN, ERR_R_INTERNAL_ERROR);
+       SM2err(0, ERR_R_INTERNAL_ERROR);
        goto done;
     }
     *siglen = (unsigned int)sigleni;
@@ -465,23 +465,23 @@ int sm2_internal_verify(const unsigned char *dgst, int dgstlen,
 
     s = ECDSA_SIG_new();
     if (s == NULL) {
-        SM2err(SM2_F_SM2_INTERNAL_VERIFY, ERR_R_MALLOC_FAILURE);
+        SM2err(0, ERR_R_MALLOC_FAILURE);
         goto done;
     }
     if (d2i_ECDSA_SIG(&s, &p, sig_len) == NULL) {
-        SM2err(SM2_F_SM2_INTERNAL_VERIFY, SM2_R_INVALID_ENCODING);
+        SM2err(0, SM2_R_INVALID_ENCODING);
         goto done;
     }
     /* Ensure signature uses DER and doesn't have trailing garbage */
     derlen = i2d_ECDSA_SIG(s, &der);
     if (derlen != sig_len || memcmp(sig, der, derlen) != 0) {
-        SM2err(SM2_F_SM2_INTERNAL_VERIFY, SM2_R_INVALID_ENCODING);
+        SM2err(0, SM2_R_INVALID_ENCODING);
         goto done;
     }
 
     e = BN_bin2bn(dgst, dgstlen, NULL);
     if (e == NULL) {
-        SM2err(SM2_F_SM2_INTERNAL_VERIFY, ERR_R_BN_LIB);
+        SM2err(0, ERR_R_BN_LIB);
         goto done;
     }
 
