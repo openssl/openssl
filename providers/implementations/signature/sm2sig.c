@@ -95,37 +95,6 @@ typedef struct {
     size_t id_len;
 } PROV_SM2_CTX;
 
-/* TODO: it seems SM2 doesn't need this */
-static int sm2sig_get_md_nid(const EVP_MD *md)
-{
-    /*
-     * Because the EC library deals with NIDs, we need to translate.
-     * We do so using EVP_MD_is_a(), and therefore need a name to NID
-     * map.
-     */
-    static const OSSL_ITEM name_to_nid[] = {
-        { NID_sm3,   OSSL_DIGEST_NAME_SM3 },
-    };
-    size_t i;
-    int mdnid = NID_undef;
-
-    if (md == NULL)
-        goto end;
-
-    for (i = 0; i < OSSL_NELEM(name_to_nid); i++) {
-        if (EVP_MD_is_a(md, name_to_nid[i].ptr)) {
-            mdnid = (int)name_to_nid[i].id;
-            break;
-        }
-    }
-
-    if (mdnid == NID_undef)
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DIGEST);
-
- end:
-    return mdnid;
-}
-
 static void *sm2sig_newctx(void *provctx, const char *propq)
 {
     PROV_SM2_CTX *ctx = OPENSSL_zalloc(sizeof(PROV_SM2_CTX));
@@ -207,7 +176,7 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
                                          void *ec)
 {
     PROV_SM2_CTX *ctx = (PROV_SM2_CTX *)vpsm2ctx;
-    int md_nid = NID_undef;
+    int md_nid = NID_sm3;
     WPACKET pkt;
     int ret = 0;
 
@@ -217,9 +186,6 @@ static int sm2sig_digest_signverify_init(void *vpsm2ctx, const char *mdname,
         return ret;
 
     ctx->md = EVP_MD_fetch(ctx->libctx, mdname, ctx->propq);
-    if ((md_nid = sm2sig_get_md_nid(ctx->md)) == NID_undef)
-        goto error;
-
     ctx->mdsize = EVP_MD_size(ctx->md);
     ctx->mdctx = EVP_MD_CTX_new();
     if (ctx->mdctx == NULL)
