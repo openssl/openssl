@@ -3214,6 +3214,7 @@ static int build_chain(X509_STORE_CTX *ctx)
                     }
                     self_signed = X509_self_signed(x, 0);
                     if (self_signed < 0) {
+                        sk_X509_free(sktmp);
                         ctx->error = X509_V_ERR_UNSPECIFIED;
                         return 0;
                     }
