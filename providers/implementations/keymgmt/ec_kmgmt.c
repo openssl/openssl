@@ -783,10 +783,20 @@ int sm2_get_params(void *key, OSSL_PARAM params[])
         return 0;
 
     /* XXX:
-     * I dropped the support of OSSL_PKEY_PARAM_SECURITY_BITS since
+     * We assume SM2 security bits the same as in normal EC case since
      * I didn't find definition of SM2 security bits so far. This could
-     * be supported if the definition is clear in the future.
+     * be updated if the definition is clear in the future.
      */
+    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL) {
+        int ecbits, sec_bits;
+
+        ecbits = EC_GROUP_order_bits(ecg);
+        /* SM2 has only one curve so the sec_bits should always be a constant */
+        sec_bits = ecbits / 2;
+
+        if (!OSSL_PARAM_set_int(p, sec_bits))
+            return 0;
+    }
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
         && !OSSL_PARAM_set_utf8_string(p, SM2_DEFAULT_MD))
@@ -814,6 +824,7 @@ int sm2_get_params(void *key, OSSL_PARAM params[])
 
 static const OSSL_PARAM sm2_known_gettable_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+    OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_TLS_ENCODED_PT, NULL, 0),
     EC_IMEXPORTABLE_DOM_PARAMETERS,
