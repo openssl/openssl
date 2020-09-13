@@ -42,7 +42,7 @@ The supported parameters are:
 
 =item "max_adinlen" (B<OSSL_DRBG_PARAM_MAX_ADINLEN>) <unsigned integer>
 
-=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
+=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
 =item "properties" (B<OSSL_DRBG_PARAM_PROPERTIES>) <UTF8 string>
 

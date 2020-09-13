@@ -112,7 +112,7 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
     void *parent = drbg->parent;
     unsigned int r;
 
-    *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_CTR, &r);
+    *params = OSSL_PARAM_construct_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, &r);
     if (!drbg_lock_parent(drbg)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_UNABLE_TO_LOCK_PARENT);
         goto err;
@@ -500,7 +500,7 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
     }
 
     drbg->state = EVP_RAND_STATE_READY;
-    drbg->reseed_gen_counter = 1;
+    drbg->generate_counter = 1;
     drbg->reseed_time = time(NULL);
     tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
 
@@ -624,7 +624,7 @@ int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
         goto end;
 
     drbg->state = EVP_RAND_STATE_READY;
-    drbg->reseed_gen_counter = 1;
+    drbg->generate_counter = 1;
     drbg->reseed_time = time(NULL);
     tsan_store(&drbg->reseed_counter, drbg->reseed_next_counter);
     if (drbg->parent != NULL)
@@ -692,7 +692,7 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
     }
 
     if (drbg->reseed_interval > 0) {
-        if (drbg->reseed_gen_counter >= drbg->reseed_interval)
+        if (drbg->generate_counter >= drbg->reseed_interval)
             reseed_required = 1;
     }
     if (drbg->reseed_time_interval > 0) {
@@ -721,7 +721,7 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         return 0;
     }
 
-    drbg->reseed_gen_counter++;
+    drbg->generate_counter++;
 
     return 1;
 }
@@ -860,7 +860,7 @@ PROV_DRBG *prov_rand_drbg_new
     drbg->max_noncelen = DRBG_MAX_LENGTH;
     drbg->max_perslen = DRBG_MAX_LENGTH;
     drbg->max_adinlen = DRBG_MAX_LENGTH;
-    drbg->reseed_gen_counter = 1;
+    drbg->generate_counter = 1;
     drbg->reseed_counter = 1;
     drbg->reseed_interval = RESEED_INTERVAL;
     drbg->reseed_time_interval = TIME_INTERVAL;
@@ -949,7 +949,7 @@ int drbg_get_ctx_params(PROV_DRBG *drbg, OSSL_PARAM params[])
     if (p != NULL && !OSSL_PARAM_set_time_t(p, drbg->reseed_time_interval))
         return 0;
 
-    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_CTR);
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_RESEED_COUNTER);
     if (p != NULL
             && !OSSL_PARAM_set_uint(p, tsan_load(&drbg->reseed_counter)))
         return 0;
