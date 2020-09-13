@@ -786,6 +786,7 @@ int generate_cookie_callback(SSL *ssl, unsigned char *cookie,
     /* Create buffer with peer's address and port */
     if (!BIO_ADDR_rawaddress(peer, NULL, &length)) {
         BIO_printf(bio_err, "Failed getting peer address\n");
+        BIO_ADDR_free(lpeer);
         return 0;
     }
     OPENSSL_assert(length != 0);
