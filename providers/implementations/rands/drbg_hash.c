@@ -323,7 +323,7 @@ static int drbg_hash_generate(PROV_DRBG *drbg,
 {
     PROV_DRBG_HASH *hash = (PROV_DRBG_HASH *)drbg->data;
     unsigned char counter[4];
-    int reseed_counter = drbg->reseed_gen_counter;
+    int reseed_counter = drbg->generate_counter;
 
     counter[0] = (unsigned char)((reseed_counter >> 24) & 0xff);
     counter[1] = (unsigned char)((reseed_counter >> 16) & 0xff);

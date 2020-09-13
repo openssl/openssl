@@ -208,7 +208,7 @@ instantiate the DRBG.
 Specify the minimum and maximum number of bytes of personalisation string
 that can be used with the DRBG.
 
-=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
+=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
 Specifies the number of times the DRBG has been seeded or reseeded.
 

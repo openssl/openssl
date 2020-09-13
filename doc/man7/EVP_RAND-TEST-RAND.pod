@@ -44,7 +44,7 @@ These parameter works as described in L<EVP_RAND(3)/PARAMETERS>.
 
 =item "max_adinlen" (B<OSSL_DRBG_PARAM_MAX_ADINLEN>) <unsigned integer>
 
-=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_CTR>) <unsigned integer>
+=item "reseed_counter" (B<OSSL_DRBG_PARAM_RESEED_COUNTER>) <unsigned integer>
 
 These parameters work as described in L<EVP_RAND(3)/PARAMETERS>, except that
 they can all be set as well as read.

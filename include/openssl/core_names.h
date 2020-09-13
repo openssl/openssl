@@ -227,7 +227,7 @@ extern "C" {
 #define OSSL_DRBG_PARAM_MAX_NONCELEN            "max_noncelen"
 #define OSSL_DRBG_PARAM_MAX_PERSLEN             "max_perslen"
 #define OSSL_DRBG_PARAM_MAX_ADINLEN             "max_adinlen"
-#define OSSL_DRBG_PARAM_RESEED_CTR              "reseed_counter"
+#define OSSL_DRBG_PARAM_RESEED_COUNTER          "reseed_counter"
 #define OSSL_DRBG_PARAM_RESEED_TIME             "reseed_time"
 #define OSSL_DRBG_PARAM_PROPERTIES              OSSL_ALG_PARAM_PROPERTIES
 #define OSSL_DRBG_PARAM_DIGEST                  OSSL_ALG_PARAM_DIGEST

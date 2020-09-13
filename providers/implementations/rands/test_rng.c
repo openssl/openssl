@@ -236,7 +236,7 @@ static int test_rng_set_ctx_params(void *vdrbg, const OSSL_PARAM params[])
         t->nonce_len = size;
     }
 
-    p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_CTR);
+    p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_RESEED_COUNTER);
     if (p != NULL) {
         if (!OSSL_PARAM_get_uint(p, &uint))
             return 0;
@@ -277,7 +277,7 @@ static const OSSL_PARAM *test_rng_settable_ctx_params(ossl_unused void *provctx)
         OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_NONCELEN, NULL),
         OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_PERSLEN, NULL),
         OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_ADINLEN, NULL),
-        OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_CTR, NULL),
+        OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, NULL),
         OSSL_PARAM_time_t(OSSL_DRBG_PARAM_RESEED_TIME, NULL),
         OSSL_PARAM_DRBG_SETTABLE_CTX_COMMON,
         OSSL_PARAM_END

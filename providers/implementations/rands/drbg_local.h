@@ -150,7 +150,7 @@ struct prov_drbg_st {
      * (Starts at 1). This value is the reseed_counter as defined in
      * NIST SP 800-90Ar1
      */
-    unsigned int reseed_gen_counter;
+    unsigned int generate_counter;
     /*
      * Maximum number of generate requests until a reseed is required.
      * This value is ignored if it is zero.
@@ -252,7 +252,7 @@ int drbg_set_ctx_params(PROV_DRBG *drbg, const OSSL_PARAM params[]);
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_NONCELEN, NULL),              \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_PERSLEN, NULL),               \
     OSSL_PARAM_size_t(OSSL_DRBG_PARAM_MAX_ADINLEN, NULL),               \
-    OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_CTR, NULL),                  \
+    OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_COUNTER, NULL),                  \
     OSSL_PARAM_time_t(OSSL_DRBG_PARAM_RESEED_TIME, NULL),               \
     OSSL_PARAM_uint(OSSL_DRBG_PARAM_RESEED_REQUESTS, NULL),             \
     OSSL_PARAM_uint64(OSSL_DRBG_PARAM_RESEED_TIME_INTERVAL, NULL)
