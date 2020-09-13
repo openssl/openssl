@@ -163,3 +163,20 @@ int EVP_PKEY_add1_attr_by_txt(EVP_PKEY *key,
         return 1;
     return 0;
 }
+
+const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key)
+{
+    const EVP_PKEY_ASN1_METHOD *ameth;
+    const char *name = NULL;
+
+    if (key->keymgmt != NULL)
+        return EVP_KEYMGMT_get0_first_name(key->keymgmt);
+
+    /* Otherwise fallback to legacy */
+    ameth = EVP_PKEY_get0_asn1(key);
+    if (ameth != NULL)
+        EVP_PKEY_asn1_get0_info(NULL, NULL,
+                                NULL, NULL, &name, ameth);
+
+    return name;
+}
