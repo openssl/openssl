@@ -1051,12 +1051,16 @@ int dtls1_buffer_message(SSL *s, int is_ccs)
         if (!ossl_assert(s->d1->w_msg_hdr.msg_len +
                          ((s->version ==
                            DTLS1_BAD_VER) ? 3 : DTLS1_CCS_HEADER_LENGTH)
-                         == (unsigned int)s->init_num))
+                         == (unsigned int)s->init_num)) {
+            dtls1_hm_fragment_free(frag);
             return 0;
+        }
     } else {
         if (!ossl_assert(s->d1->w_msg_hdr.msg_len +
-                         DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num))
+                         DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num)) {
+            dtls1_hm_fragment_free(frag);
             return 0;
+        }
     }
 
     frag->msg_header.msg_len = s->d1->w_msg_hdr.msg_len;
