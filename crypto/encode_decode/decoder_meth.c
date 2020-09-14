@@ -508,29 +508,17 @@ int OSSL_DECODER_CTX_set_params(OSSL_DECODER_CTX *ctx,
     for (i = 0; i < l; i++) {
         OSSL_DECODER_INSTANCE *decoder_inst =
             sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
+        OSSL_DECODER *decoder =
+            OSSL_DECODER_INSTANCE_get_decoder(decoder_inst);
+        OSSL_DECODER *decoderctx =
+            OSSL_DECODER_INSTANCE_get_decoder_ctx(decoder_inst);
 
-        if (decoder_inst->decoderctx == NULL
-            || decoder_inst->decoder->set_ctx_params == NULL)
+        if (decoderctx == NULL || decoder->set_ctx_params == NULL)
             continue;
-        if (!decoder_inst->decoder->set_ctx_params(decoder_inst->decoderctx,
-                                                   params))
+        if (!decoder->set_ctx_params(decoderctx, params))
             return 0;
     }
     return 1;
-}
-
-static void
-OSSL_DECODER_INSTANCE_free(OSSL_DECODER_INSTANCE *decoder_inst)
-{
-    if (decoder_inst != NULL) {
-        if (decoder_inst->decoder->freectx != NULL)
-            decoder_inst->decoder->freectx(decoder_inst->decoderctx);
-        decoder_inst->decoderctx = NULL;
-        OSSL_DECODER_free(decoder_inst->decoder);
-        decoder_inst->decoder = NULL;
-        OPENSSL_free(decoder_inst);
-        decoder_inst = NULL;
-    }
 }
 
 void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx)
@@ -539,7 +527,7 @@ void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx)
         if (ctx->cleanup != NULL)
             ctx->cleanup(ctx->construct_data);
         sk_OSSL_DECODER_INSTANCE_pop_free(ctx->decoder_insts,
-                                          OSSL_DECODER_INSTANCE_free);
+                                          ossl_decoder_instance_free);
         ossl_pw_clear_passphrase_data(&ctx->pwdata);
         OPENSSL_free(ctx);
     }

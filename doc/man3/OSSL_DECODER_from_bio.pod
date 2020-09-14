@@ -7,7 +7,7 @@ OSSL_DECODER_from_fp,
 OSSL_DECODER_CTX_set_input_type,
 OSSL_DECODER_CTX_add_decoder,
 OSSL_DECODER_CTX_add_extra,
-OSSL_DECODER_CTX_num_decoders,
+OSSL_DECODER_CTX_get_num_decoders,
 OSSL_DECODER_INSTANCE,
 OSSL_DECODER_CONSTRUCT,
 OSSL_DECODER_CLEANUP,
@@ -18,8 +18,9 @@ OSSL_DECODER_CTX_get_construct,
 OSSL_DECODER_CTX_get_construct_data,
 OSSL_DECODER_CTX_get_cleanup,
 OSSL_DECODER_export,
-OSSL_DECODER_INSTANCE_decoder,
-OSSL_DECODER_INSTANCE_decoder_ctx
+OSSL_DECODER_INSTANCE_get_decoder,
+OSSL_DECODER_INSTANCE_get_decoder_ctx,
+OSSL_DECODER_INSTANCE_get_input_type
 - Routines to perform a decoding
 
 =head1 SYNOPSIS
@@ -33,12 +34,13 @@ OSSL_DECODER_INSTANCE_decoder_ctx
                                      const char *input_type);
  int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder);
  int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx);
- int OSSL_DECODER_CTX_num_decoders(OSSL_DECODER_CTX *ctx);
+ int OSSL_DECODER_CTX_get_num_decoders(OSSL_DECODER_CTX *ctx);
 
  typedef struct ossl_decoder_instance_st OSSL_DECODER_INSTANCE;
  OSSL_DECODER *
- OSSL_DECODER_INSTANCE_decoder(OSSL_DECODER_INSTANCE *decoder_inst);
- void *OSSL_DECODER_INSTANCE_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
+ OSSL_DECODER_INSTANCE_get_decoder(OSSL_DECODER_INSTANCE *decoder_inst);
+ void *
+ OSSL_DECODER_INSTANCE_get_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
 
  typedef int (OSSL_DECODER_CONSTRUCT)(OSSL_DECODER_INSTANCE *decoder_inst,
                                       const OSSL_PARAM *object,
@@ -124,7 +126,7 @@ OSSL_DECODER_CTX_set_input_type() sets the starting input type.  This
 limits the decoder chains to be considered, as explained in the general
 description above.
 
-OSSL_DECODER_CTX_num_decoders() gets the number of
+OSSL_DECODER_CTX_get_num_decoders() gets the number of
 decoders currently added to the context I<ctx>.
 
 OSSL_DECODER_CTX_set_construct() sets the constructor I<construct>.
@@ -150,11 +152,15 @@ I<reference>, unpacks the object which it refers to, and exports it by creating
 an L<OSSL_PARAM(3)> array that it then passes to I<export_cb>, along with
 I<export_arg>.
 
-OSSL_DECODER_INSTANCE_decoder() can be used to get the
+OSSL_DECODER_INSTANCE_get_decoder() can be used to get the
 decoder method from a decoder instance I<decoder_inst>.
 
-OSSL_DECODER_INSTANCE_decoder-ctx() can be used to get the
+OSSL_DECODER_INSTANCE_get_decoder_ctx() can be used to get the
 decoder method's provider context from a decoder instance
+I<decoder_inst>.
+
+OSSL_DECODER_INSTANCE_get_input_type() can be used to get the
+decoder method's input type from a decoder instance
 I<decoder_inst>.
 
 =head2 Constructor
