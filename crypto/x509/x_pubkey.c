@@ -97,9 +97,11 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
         }
     } else if (pkey->keymgmt != NULL) {
         BIO *bmem = BIO_new(BIO_s_mem());
-        const char *encprop = OSSL_ENCODER_PUBKEY_TO_DER_PQ;
+        int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+                         | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ectx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, encprop);
+            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, "DER", selection,
+                                             NULL, NULL);
 
         if (OSSL_ENCODER_to_bio(ectx, bmem)) {
             const unsigned char *der = NULL;
@@ -303,15 +305,16 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         }
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
-        const char *encprop = OSSL_ENCODER_PUBKEY_TO_DER_PQ;
+        int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+                         | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ctx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, encprop);
+            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection, NULL, NULL);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
 
         if (ctx != NULL
             && out != NULL
-            && OSSL_ENCODER_CTX_get_encoder(ctx) != NULL
+            && OSSL_ENCODER_CTX_num_encoders(ctx) != 0
             && OSSL_ENCODER_to_bio(ctx, out)
             && BIO_get_mem_ptr(out, &buf) > 0) {
             ret = buf->length;
