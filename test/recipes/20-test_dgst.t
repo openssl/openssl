@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_dgst");
 
-plan tests => 5;
+plan tests => 6;
 
 sub tsignverify {
     my $testtext = shift;
@@ -102,3 +102,17 @@ SKIP: {
                     srctop_file("test","tested448pub.pem"));
     };
 }
+
+subtest "HMAC generation with `dgst` CLI" => sub {
+    plan tests => 2;
+
+    my $testdata = srctop_file('test', 'data.txt');
+    #HMAC the data twice to check consistency
+    my @hmacdata = run(app(['openssl', 'dgst', '-sha256', '-hmac', '123456',
+                            $testdata, $testdata]), capture => 1);
+    chomp(@hmacdata);
+    my $expected = qr/HMAC-SHA256\([^\)]*data.txt\)= 6f12484129c4a761747f13d8234a1ff0e074adb34e9e9bf3a155c391b97b9a7c/;
+    ok($hmacdata[0] =~ $expected, "HMAC: Check HMAC value is as expected ($hmacdata[0]) vs ($expected)");
+    ok($hmacdata[1] =~ $expected,
+       "HMAC: Check second HMAC value is consistent with the first ($hmacdata[1]) vs ($expected)");
+};
