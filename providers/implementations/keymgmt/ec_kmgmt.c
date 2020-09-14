@@ -623,9 +623,15 @@ int common_get_params(void *key, OSSL_PARAM params[], int sm2)
             goto err;
     }
 
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
-        && !OSSL_PARAM_set_utf8_string(p, EC_DEFAULT_MD))
-        goto err;
+    if (!sm2) {
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
+                && !OSSL_PARAM_set_utf8_string(p, EC_DEFAULT_MD))
+            goto err;
+    } else {
+        if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
+                && !OSSL_PARAM_set_utf8_string(p, SM2_DEFAULT_MD))
+            goto err;
+    }
 
     /* SM2 doesn't support this PARAM */
     if (!sm2) {
