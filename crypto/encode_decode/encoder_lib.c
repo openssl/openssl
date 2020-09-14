@@ -76,8 +76,6 @@ int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection)
     return 1;
 }
 
-static void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst);
-
 static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
                                                         void *encoderctx)
 {
@@ -129,7 +127,7 @@ static OSSL_ENCODER_INSTANCE *ossl_encoder_instance_new(OSSL_ENCODER *encoder,
     return NULL;
 }
 
-static void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst)
+void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst)
 {
     if (encoder_inst != NULL) {
         if (encoder_inst->encoder != NULL)
@@ -193,7 +191,7 @@ int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
     return 1;
 }
 
-int OSSL_ENCODER_CTX_num_encoders(OSSL_ENCODER_CTX *ctx)
+int OSSL_ENCODER_CTX_get_num_encoders(OSSL_ENCODER_CTX *ctx)
 {
     if (ctx == NULL || ctx->encoder_insts == NULL)
         return 0;
@@ -233,14 +231,16 @@ int OSSL_ENCODER_CTX_set_cleanup(OSSL_ENCODER_CTX *ctx,
     return 1;
 }
 
-OSSL_ENCODER *OSSL_ENCODER_INSTANCE_encoder(OSSL_ENCODER_INSTANCE *encoder_inst)
+OSSL_ENCODER *
+OSSL_ENCODER_INSTANCE_get_encoder(OSSL_ENCODER_INSTANCE *encoder_inst)
 {
     if (encoder_inst == NULL)
         return NULL;
     return encoder_inst->encoder;
 }
 
-void *OSSL_ENCODER_INSTANCE_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst)
+void *
+OSSL_ENCODER_INSTANCE_get_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst)
 {
     if (encoder_inst == NULL)
         return NULL;
@@ -248,7 +248,7 @@ void *OSSL_ENCODER_INSTANCE_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst)
 }
 
 const char *
-OSSL_ENCODER_INSTANCE_input_type(OSSL_ENCODER_INSTANCE *encoder_inst)
+OSSL_ENCODER_INSTANCE_get_input_type(OSSL_ENCODER_INSTANCE *encoder_inst)
 {
     if (encoder_inst == NULL)
         return NULL;
@@ -256,7 +256,7 @@ OSSL_ENCODER_INSTANCE_input_type(OSSL_ENCODER_INSTANCE *encoder_inst)
 }
 
 const char *
-OSSL_ENCODER_INSTANCE_output_type(OSSL_ENCODER_INSTANCE *encoder_inst)
+OSSL_ENCODER_INSTANCE_get_output_type(OSSL_ENCODER_INSTANCE *encoder_inst)
 {
     if (encoder_inst == NULL)
         return NULL;
@@ -276,12 +276,12 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
     for (i = 0; i < end; i++) {
         OSSL_ENCODER_INSTANCE *encoder_inst =
             sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);
-        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_encoder(encoder_inst);
-        void *encoderctx = OSSL_ENCODER_INSTANCE_encoder_ctx(encoder_inst);
+        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
+        void *encoderctx = OSSL_ENCODER_INSTANCE_get_encoder_ctx(encoder_inst);
         const char *current_input_type =
-            OSSL_ENCODER_INSTANCE_input_type(encoder_inst);
+            OSSL_ENCODER_INSTANCE_get_input_type(encoder_inst);
         const char *current_output_type =
-            OSSL_ENCODER_INSTANCE_output_type(encoder_inst);
+            OSSL_ENCODER_INSTANCE_get_output_type(encoder_inst);
         BIO *current_out;
         BIO *allocated_out = NULL;
         const void *current_data = NULL;

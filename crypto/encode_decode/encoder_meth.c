@@ -500,8 +500,8 @@ int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
     for (i = 0; i < l; i++) {
         OSSL_ENCODER_INSTANCE *encoder_inst =
             sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);
-        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_encoder(encoder_inst);
-        void *encoderctx = OSSL_ENCODER_INSTANCE_encoder_ctx(encoder_inst);
+        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
+        void *encoderctx = OSSL_ENCODER_INSTANCE_get_encoder_ctx(encoder_inst);
 
         if (encoderctx == NULL || encoder->set_ctx_params == NULL)
             continue;
@@ -511,25 +511,11 @@ int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
     return 1;
 }
 
-static void
-OSSL_ENCODER_INSTANCE_free(OSSL_ENCODER_INSTANCE *encoder_inst)
-{
-    if (encoder_inst != NULL) {
-        if (encoder_inst->encoder->freectx != NULL)
-            encoder_inst->encoder->freectx(encoder_inst->encoderctx);
-        encoder_inst->encoderctx = NULL;
-        OSSL_ENCODER_free(encoder_inst->encoder);
-        encoder_inst->encoder = NULL;
-        OPENSSL_free(encoder_inst);
-        encoder_inst = NULL;
-    }
-}
-
 void OSSL_ENCODER_CTX_free(OSSL_ENCODER_CTX *ctx)
 {
     if (ctx != NULL) {
         sk_OSSL_ENCODER_INSTANCE_pop_free(ctx->encoder_insts,
-                                          OSSL_ENCODER_INSTANCE_free);
+                                          ossl_encoder_instance_free);
         OPENSSL_free(ctx->construct_data);
         ossl_pw_clear_passphrase_data(&ctx->pwdata);
         OPENSSL_free(ctx);

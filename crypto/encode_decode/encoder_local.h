@@ -59,6 +59,8 @@ struct ossl_encoder_instance_st {
 
 DEFINE_STACK_OF(OSSL_ENCODER_INSTANCE)
 
+void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst);
+
 struct ossl_encoder_ctx_st {
     /*
      * The desired output type.  The encoder implementation have a gettable

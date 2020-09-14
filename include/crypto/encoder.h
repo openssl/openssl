@@ -11,5 +11,3 @@
 
 OSSL_ENCODER *ossl_encoder_fetch_by_number(OPENSSL_CTX *libctx, int id,
                                            const char *properties);
-OSSL_DECODER *ossl_decoder_fetch_by_number(OPENSSL_CTX *libctx, int id,
-                                           const char *properties);

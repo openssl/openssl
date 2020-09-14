@@ -71,19 +71,20 @@ int OSSL_ENCODER_CTX_set_selection(OSSL_ENCODER_CTX *ctx, int selection);
 int OSSL_ENCODER_CTX_add_encoder(OSSL_ENCODER_CTX *ctx, OSSL_ENCODER *encoder);
 int OSSL_ENCODER_CTX_add_extra(OSSL_ENCODER_CTX *ctx,
                                OPENSSL_CTX *libctx, const char *propq);
-int OSSL_ENCODER_CTX_num_encoders(OSSL_ENCODER_CTX *ctx);
+int OSSL_ENCODER_CTX_get_num_encoders(OSSL_ENCODER_CTX *ctx);
 
 typedef struct ossl_encoder_instance_st OSSL_ENCODER_INSTANCE;
 OSSL_ENCODER *
-OSSL_ENCODER_INSTANCE_encoder(OSSL_ENCODER_INSTANCE *encoder_inst);
-void *OSSL_ENCODER_INSTANCE_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst);
+OSSL_ENCODER_INSTANCE_get_encoder(OSSL_ENCODER_INSTANCE *encoder_inst);
+void *
+OSSL_ENCODER_INSTANCE_get_encoder_ctx(OSSL_ENCODER_INSTANCE *encoder_inst);
 const char *
-OSSL_ENCODER_INSTANCE_input_type(OSSL_ENCODER_INSTANCE *encoder_inst);
+OSSL_ENCODER_INSTANCE_get_input_type(OSSL_ENCODER_INSTANCE *encoder_inst);
 const char *
-OSSL_ENCODER_INSTANCE_output_type(OSSL_ENCODER_INSTANCE *encoder_inst);
+OSSL_ENCODER_INSTANCE_get_output_type(OSSL_ENCODER_INSTANCE *encoder_inst);
 
 typedef const void *OSSL_ENCODER_CONSTRUCT(OSSL_ENCODER_INSTANCE *encoder_inst,
-                                             void *construct_data);
+                                           void *construct_data);
 typedef void OSSL_ENCODER_CLEANUP(void *construct_data);
 
 int OSSL_ENCODER_CTX_set_construct(OSSL_ENCODER_CTX *ctx,

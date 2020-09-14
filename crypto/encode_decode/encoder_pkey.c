@@ -140,8 +140,8 @@ static int encoder_import_cb(const OSSL_PARAM params[], void *arg)
 {
     struct construct_data_st *construct_data = arg;
     OSSL_ENCODER_INSTANCE *encoder_inst = construct_data->encoder_inst;
-    OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_encoder(encoder_inst);
-    void *encoderctx = OSSL_ENCODER_INSTANCE_encoder_ctx(encoder_inst);
+    OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
+    void *encoderctx = OSSL_ENCODER_INSTANCE_get_encoder_ctx(encoder_inst);
 
     construct_data->constructed_obj =
         encoder->import_object(encoderctx, construct_data->selection, params);
@@ -155,7 +155,8 @@ encoder_construct_EVP_PKEY(OSSL_ENCODER_INSTANCE *encoder_inst, void *arg)
     struct construct_data_st *data = arg;
 
     if (data->obj == NULL) {
-        OSSL_ENCODER *encoder = OSSL_ENCODER_INSTANCE_encoder(encoder_inst);
+        OSSL_ENCODER *encoder =
+            OSSL_ENCODER_INSTANCE_get_encoder(encoder_inst);
         const EVP_PKEY *pk = data->pk;
         const OSSL_PROVIDER *k_prov = EVP_KEYMGMT_provider(pk->keymgmt);
         const OSSL_PROVIDER *e_prov = OSSL_ENCODER_provider(encoder);
@@ -181,7 +182,7 @@ static void encoder_destruct_EVP_PKEY(void *arg)
 
     if (data->encoder_inst != NULL) {
         OSSL_ENCODER *encoder =
-            OSSL_ENCODER_INSTANCE_encoder(data->encoder_inst);
+            OSSL_ENCODER_INSTANCE_get_encoder(data->encoder_inst);
 
         encoder->free_object(data->constructed_obj);
     }
@@ -191,7 +192,7 @@ static void encoder_destruct_EVP_PKEY(void *arg)
 /*
  * OSSL_ENCODER_CTX_new_by_EVP_PKEY() returns a ctx with no encoder if
  * it couldn't find a suitable encoder.  This allows a caller to detect if
- * a suitable encoder was found, with OSSL_ENCODER_CTX_num_encoder(),
+ * a suitable encoder was found, with OSSL_ENCODER_CTX_get_num_encoder(),
  * and to use fallback methods if the result is NULL.
  */
 static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
@@ -305,7 +306,7 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
         sk_OSSL_ENCODER_pop_free(encoder_data.encoders, OSSL_ENCODER_free);
     }
 
-    if (OSSL_ENCODER_CTX_num_encoders(ctx) == 0)
+    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0)
         goto err;
 
     data->pk = pkey;
