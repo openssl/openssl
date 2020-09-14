@@ -182,6 +182,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              */
             evp_md_ctx_clear_digest(ctx, 1);
 
+            /* legacy code support for engines */
+            ERR_set_mark();
             /*
              * This might be requested by a later call to EVP_MD_CTX_md().
              * In that case the "explicit fetch" rules apply for that
@@ -189,12 +191,19 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              * so the EVP_MD should not be used beyound the lifetime of the
              * EVP_MD_CTX.
              */
-            ctx->digest = ctx->reqdigest = ctx->fetched_digest =
-                EVP_MD_fetch(locpctx->libctx, mdname, props);
-            if (ctx->digest == NULL) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
-                goto err;
+            ctx->fetched_digest = EVP_MD_fetch(locpctx->libctx, mdname, props);
+            if (ctx->fetched_digest != NULL) {
+                ctx->digest = ctx->reqdigest = ctx->fetched_digest;
+            } else {
+                /* legacy engine support : remove the mark when this is deleted */
+                ctx->reqdigest = ctx->digest = EVP_get_digestbyname(mdname);
+                if (ctx->digest == NULL) {
+                    (void)ERR_clear_last_mark();
+                    ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                    goto err;
+                }
             }
+            (void)ERR_pop_to_mark();
         }
     }
 
