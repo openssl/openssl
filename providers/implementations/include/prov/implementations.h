@@ -308,70 +308,45 @@ extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
 extern const OSSL_DISPATCH rsa_asym_kem_functions[];
 
 /* Encoders */
-extern const OSSL_DISPATCH rsa_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH rsa_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH rsa_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH rsa_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH rsa_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH rsa_pub_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH rsa_to_der_encoder_functions[];
+extern const OSSL_DISPATCH rsa_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH rsa_to_text_encoder_functions[];
 
-extern const OSSL_DISPATCH dh_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH dh_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH dh_param_to_text_encoder_functions[];
-extern const OSSL_DISPATCH dh_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH dh_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH dh_param_to_der_encoder_functions[];
-extern const OSSL_DISPATCH dh_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH dh_pub_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH dh_param_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH rsapss_to_der_encoder_functions[];
+extern const OSSL_DISPATCH rsapss_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH rsapss_to_text_encoder_functions[];
 
-extern const OSSL_DISPATCH dsa_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH dsa_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH dsa_param_to_text_encoder_functions[];
-extern const OSSL_DISPATCH dsa_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH dsa_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH dsa_param_to_der_encoder_functions[];
-extern const OSSL_DISPATCH dsa_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH dsa_pub_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH dsa_param_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH dh_to_der_encoder_functions[];
+extern const OSSL_DISPATCH dh_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH dh_to_text_encoder_functions[];
 
-extern const OSSL_DISPATCH x25519_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH x25519_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH x25519_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH x25519_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH x25519_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH x25519_pub_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH dhx_to_der_encoder_functions[];
+extern const OSSL_DISPATCH dhx_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH dhx_to_text_encoder_functions[];
 
-extern const OSSL_DISPATCH x448_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH x448_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH x448_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH x448_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH x448_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH x448_pub_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH dsa_to_der_encoder_functions[];
+extern const OSSL_DISPATCH dsa_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH dsa_to_text_encoder_functions[];
 
-extern const OSSL_DISPATCH ed25519_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH ed25519_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH ed25519_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH ed25519_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH ed25519_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH ed25519_pub_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH x25519_to_der_encoder_functions[];
+extern const OSSL_DISPATCH x25519_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH x25519_to_text_encoder_functions[];
 
-extern const OSSL_DISPATCH ed448_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH ed448_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH ed448_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH ed448_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH ed448_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH ed448_pub_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH x448_to_der_encoder_functions[];
+extern const OSSL_DISPATCH x448_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH x448_to_text_encoder_functions[];
 
-extern const OSSL_DISPATCH ec_priv_to_text_encoder_functions[];
-extern const OSSL_DISPATCH ec_pub_to_text_encoder_functions[];
-extern const OSSL_DISPATCH ec_param_to_text_encoder_functions[];
-extern const OSSL_DISPATCH ec_priv_to_der_encoder_functions[];
-extern const OSSL_DISPATCH ec_pub_to_der_encoder_functions[];
-extern const OSSL_DISPATCH ec_param_to_der_encoder_functions[];
-extern const OSSL_DISPATCH ec_priv_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH ec_pub_to_pem_encoder_functions[];
-extern const OSSL_DISPATCH ec_param_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH ed25519_to_der_encoder_functions[];
+extern const OSSL_DISPATCH ed25519_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH ed25519_to_text_encoder_functions[];
+
+extern const OSSL_DISPATCH ed448_to_der_encoder_functions[];
+extern const OSSL_DISPATCH ed448_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH ed448_to_text_encoder_functions[];
+
+extern const OSSL_DISPATCH ec_to_der_encoder_functions[];
+extern const OSSL_DISPATCH ec_to_pem_encoder_functions[];
+extern const OSSL_DISPATCH ec_to_text_encoder_functions[];
 
 /* Decoders */
 extern const OSSL_DISPATCH der_to_dh_decoder_functions[];

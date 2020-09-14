@@ -47,6 +47,7 @@ struct key2any_ctx_st {
     struct ossl_passphrase_data_st pwdata;
 };
 
+typedef int check_key_type_fn(const void *key, int nid);
 typedef int key_to_paramstring_fn(const void *key, int nid,
                                   void **str, int *strtype);
 typedef int key_to_der_fn(BIO *out, const void *key, int key_nid,
@@ -241,20 +242,12 @@ static int key_to_pem_pubkey_bio(BIO *out, const void *key, int key_nid,
     return ret;
 }
 
+#define der_output_type         "DER"
+#define pem_output_type         "PEM"
+
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_DH
-# define dh_param_selection     OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-# define dh_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
-                                 | dh_param_selection)
-# define dh_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
-                                 | dh_param_selection)
-
-static int dh_type_to_evp(const DH *dh)
-{
-    return DH_test_flags(dh, DH_FLAG_TYPE_DHX) ? EVP_PKEY_DHX : EVP_PKEY_DH;
-}
-
 static int prepare_dh_params(const void *dh, int nid,
                              void **pstr, int *pstrtype)
 {
@@ -333,19 +326,24 @@ static int dh_params_to_pem_bio(BIO *out, const void *key)
 {
     return PEM_write_bio_DHparams(out, key);
 }
+
+static int dh_check_key_type(const void *key, int expected_type)
+{
+    int type =
+        DH_test_flags(key, DH_FLAG_TYPE_DHX) ? EVP_PKEY_DHX : EVP_PKEY_DH;
+
+    return type == expected_type;
+}
+
+# define dh_evp_type            EVP_PKEY_DH
+# define dhx_evp_type           EVP_PKEY_DHX
+# define dh_input_type          "DH"
+# define dhx_input_type         "DHX"
 #endif
 
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_DSA
-# define dsa_param_selection    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
-# define dsa_pub_selection      (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
-                                 | dsa_param_selection)
-# define dsa_priv_selection     (OSSL_KEYMGMT_SELECT_KEYPAIR \
-                                 | dsa_param_selection)
-
-# define dsa_type_to_evp(key) EVP_PKEY_DSA
-
 static int prepare_some_dsa_params(const void *dsa, int nid,
                                    void **pstr, int *pstrtype)
 {
@@ -449,19 +447,15 @@ static int dsa_params_to_pem_bio(BIO *out, const void *key)
 {
     return PEM_write_bio_DSAparams(out, key);
 }
+
+# define dsa_check_key_type     NULL
+# define dsa_evp_type           EVP_PKEY_DSA
+# define dsa_input_type         "DSA"
 #endif
 
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_EC
-# define ec_param_selection     OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
-# define ec_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
-                                 | ec_param_selection)
-# define ec_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
-                                 | ec_param_selection)
-
-# define ec_type_to_evp(key) EVP_PKEY_EC
-
 static int prepare_ec_explicit_params(const void *eckey,
                                       void **pstr, int *pstrtype)
 {
@@ -550,19 +544,15 @@ static int ec_priv_to_der(const void *veckey, unsigned char **pder)
     EC_KEY_set_enc_flags(eckey, old_flags); /* restore old flags */
     return ret; /* return the length of the der encoded data */
 }
+
+# define ec_check_key_type      NULL
+# define ec_evp_type            EVP_PKEY_EC
+# define ec_input_type          "EC"
 #endif
 
 /* ---------------------------------------------------------------------- */
 
 #ifndef OPENSSL_NO_EC
-# define ecx_pub_selection      OSSL_KEYMGMT_SELECT_PUBLIC_KEY
-# define ecx_priv_selection     OSSL_KEYMGMT_SELECT_KEYPAIR
-
-# define ed25519_type_to_evp(key) EVP_PKEY_ED25519
-# define ed448_type_to_evp(key) EVP_PKEY_ED448
-# define x25519_type_to_evp(key) EVP_PKEY_X25519
-# define x448_type_to_evp(key) EVP_PKEY_X448
-
 # define prepare_ecx_params NULL
 
 static int ecx_pub_to_der(const void *vecxkey, unsigned char **pder)
@@ -609,30 +599,21 @@ static int ecx_priv_to_der(const void *vecxkey, unsigned char **pder)
     return keybloblen;
 }
 
-# define ecx_params_to_der_bio NULL
-# define ecx_params_to_pem_bio NULL
+# define ecx_params_to_der_bio  NULL
+# define ecx_params_to_pem_bio  NULL
+# define ecx_check_key_type     NULL
+
+# define ed25519_evp_type       EVP_PKEY_ED25519
+# define ed448_evp_type         EVP_PKEY_ED448
+# define x25519_evp_type        EVP_PKEY_X25519
+# define x448_evp_type          EVP_PKEY_X448
+# define ed25519_input_type     "ED25519"
+# define ed448_input_type       "ED448"
+# define x25519_input_type      "X25519"
+# define x448_input_type        "X448"
 #endif
 
 /* ---------------------------------------------------------------------- */
-
-#define rsa_param_selection     OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS
-#define rsa_pub_selection       (OSSL_KEYMGMT_SELECT_PUBLIC_KEY \
-                                 | rsa_param_selection)
-#define rsa_priv_selection      (OSSL_KEYMGMT_SELECT_KEYPAIR \
-                                 | rsa_param_selection)
-
-static int rsa_type_to_evp(const RSA *rsa)
-{
-    switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
-    case RSA_FLAG_TYPE_RSA:
-        return EVP_PKEY_RSA;
-    case RSA_FLAG_TYPE_RSASSAPSS:
-        return EVP_PKEY_RSA_PSS;
-    }
-
-    /* Currently unsupported RSA key type */
-    return EVP_PKEY_NONE;
-}
 
 /*
  * Helper functions to prepare RSA-PSS params for encoding.  We would
@@ -709,15 +690,34 @@ static int prepare_rsa_params(const void *rsa, int nid,
     return 0;
 }
 
-#define rsa_params_to_der_bio NULL
-#define rsa_params_to_pem_bio NULL
-#define rsa_priv_to_der (i2d_of_void *)i2d_RSAPrivateKey
-#define rsa_pub_to_der (i2d_of_void *)i2d_RSAPublicKey
+#define rsa_params_to_der_bio   NULL
+#define rsa_params_to_pem_bio   NULL
+#define rsa_priv_to_der         (i2d_of_void *)i2d_RSAPrivateKey
+#define rsa_pub_to_der          (i2d_of_void *)i2d_RSAPublicKey
+
+static int rsa_check_key_type(const void *rsa, int expected_type)
+{
+    switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
+    case RSA_FLAG_TYPE_RSA:
+        return expected_type == EVP_PKEY_RSA;
+    case RSA_FLAG_TYPE_RSASSAPSS:
+        return expected_type == EVP_PKEY_RSA_PSS;
+    }
+
+    /* Currently unsupported RSA key type */
+    return EVP_PKEY_NONE;
+}
+
+#define rsa_evp_type            EVP_PKEY_RSA
+#define rsapss_evp_type         EVP_PKEY_RSA_PSS
+#define rsa_input_type          "RSA"
+#define rsapss_input_type       "RSA-PSS"
 
 /* ---------------------------------------------------------------------- */
 
 static OSSL_FUNC_decoder_newctx_fn key2any_newctx;
 static OSSL_FUNC_decoder_freectx_fn key2any_freectx;
+static OSSL_FUNC_decoder_gettable_params_fn key2any_gettable_params;
 
 static void *key2any_newctx(void *provctx)
 {
@@ -736,6 +736,32 @@ static void key2any_freectx(void *vctx)
     ossl_pw_clear_passphrase_data(&ctx->pwdata);
     EVP_CIPHER_free(ctx->cipher);
     OPENSSL_free(ctx);
+}
+
+static const OSSL_PARAM *key2any_gettable_params(void *provctx)
+{
+    static const OSSL_PARAM gettables[] = {
+        { OSSL_ENCODER_PARAM_OUTPUT_TYPE, OSSL_PARAM_UTF8_PTR, NULL, 0, 0 },
+        OSSL_PARAM_END,
+    };
+
+    return gettables;
+}
+
+static int key2any_get_params(OSSL_PARAM params[], const char *input_type,
+                              const char *output_type)
+{
+    OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_INPUT_TYPE);
+    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, input_type))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_ENCODER_PARAM_OUTPUT_TYPE);
+    if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, output_type))
+        return 0;
+
+    return 1;
 }
 
 static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)
@@ -777,127 +803,145 @@ static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static int key2any_encode(struct key2any_ctx_st *ctx,
+static int key2any_encode(struct key2any_ctx_st *ctx, OSSL_CORE_BIO *cout,
                           const void *key, int type,
-                          OSSL_CORE_BIO *cout, key_to_der_fn *writer,
+                          check_key_type_fn *checker,
+                          key_to_der_fn *writer,
                           OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg,
                           key_to_paramstring_fn *key2paramstring,
                           i2d_of_void *key2der)
 {
-    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
     int ret = 0;
 
-    if (out != NULL
-        && writer != NULL
-        && ossl_pw_set_ossl_passphrase_cb(&ctx->pwdata, cb, cbarg))
-        ret = writer(out, key, type, key2paramstring, key2der, ctx);
+    if (key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+    } else if (checker == NULL || checker(key, type)) {
+        BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
 
-    BIO_free(out);
+        if (out != NULL
+            && writer != NULL
+            && ossl_pw_set_ossl_passphrase_cb(&ctx->pwdata, cb, cbarg))
+            ret = writer(out, key, type, key2paramstring, key2der, ctx);
+
+        BIO_free(out);
+    } else {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+    }
     return ret;
 }
 
-static int key2any_encode_params(struct key2any_ctx_st *ctx, const void *key,
+static int key2any_encode_params(struct key2any_ctx_st *ctx,
                                  OSSL_CORE_BIO *cout,
+                                 const void *key, int type,
+                                 check_key_type_fn *checker,
                                  write_bio_of_void_fn *writer)
 {
     int ret = 0;
-    BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
 
-    if (out != NULL && writer != NULL)
-        ret = writer(out, key);
+    if (key == NULL) {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_NULL_PARAMETER);
+    } else if (checker == NULL || checker(key, type)) {
+        BIO *out = bio_new_from_core_bio(ctx->provctx, cout);
 
-    BIO_free(out);
+        if (out != NULL && writer != NULL)
+            ret = writer(out, key);
+
+        BIO_free(out);
+    } else {
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+    }
 
     return ret;
 }
 
-#define ALLOWED_SELECTORS \
-    (OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR)
-
-#define MAKE_ENCODER_KIND(impl, kind, type, evp_type, output)           \
-    static OSSL_FUNC_encoder_encode_data_fn                             \
-    impl##_##kind##2##output##_encode_d;                                \
-    static OSSL_FUNC_encoder_encode_object_fn                           \
-    impl##_##kind##2##output##_encode_o;                                \
-    static int                                                          \
-    impl##_##kind##2##output##_encode_d(void *vctx,                     \
-                                        const OSSL_PARAM params[],      \
-                                        OSSL_CORE_BIO *cout,            \
-                                        OSSL_PASSPHRASE_CALLBACK *cb,   \
-                                        void *cbarg)                    \
-    {                                                                   \
-        struct key2any_ctx_st *ctx = vctx;                              \
-        int selection = type##_##kind##_selection;                      \
-        void *key = ossl_prov_import_key(impl##_keymgmt_functions,      \
-                                         ctx->provctx, selection,       \
-                                         params);                       \
-        int ret;                                                        \
-                                                                        \
-        if (key == NULL)                                                \
-            return 0;                                                   \
-                                                                        \
-        ret = impl##_##kind##2##output##_encode_o(ctx, key, cout,       \
-                                                  cb, cbarg);           \
-        ossl_prov_free_key(impl##_keymgmt_functions, key);              \
-        return ret;                                                     \
-    }                                                                   \
-    static int                                                          \
-    impl##_##kind##2##output##_encode_o(void *vctx, const void *key,    \
-                                        OSSL_CORE_BIO *cout,            \
-                                        OSSL_PASSPHRASE_CALLBACK *cb,   \
-                                        void *cbarg)                    \
-    {                                                                   \
-        int selection = type##_##kind##_selection;                      \
-                                                                        \
-        if (!ossl_assert(selection != 0)                                \
-            || !ossl_assert((selection & ~ALLOWED_SELECTORS) == 0)) {   \
-            ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);              \
-            return 0;                                                   \
-        }                                                               \
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)         \
-            return key2any_encode(vctx, key, impl##_type_to_evp(key),   \
-                                  cout, key_to_##output##_pkcs8_bio,    \
-                                  cb, cbarg,                            \
-                                  prepare_##type##_params,              \
-                                  type##_priv_to_der);                  \
-        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)          \
-            return key2any_encode(vctx, key, impl##_type_to_evp(key),   \
-                                  cout, key_to_##output##_pubkey_bio,   \
-                                  cb, cbarg,                            \
-                                  prepare_##type##_params,              \
-                                  type##_pub_to_der);                   \
-        return key2any_encode_params(vctx, key, cout,                   \
-                                     type##_params_to_##output##_bio);  \
-    }                                                                   \
-    const OSSL_DISPATCH                                                 \
-    impl##_##kind##_to_##output##_encoder_functions[] = {               \
-        { OSSL_FUNC_ENCODER_NEWCTX,                                     \
-          (void (*)(void))key2any_newctx },                             \
-        { OSSL_FUNC_ENCODER_FREECTX,                                    \
-          (void (*)(void))key2any_freectx },                            \
-        { OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS,                        \
-          (void (*)(void))key2any_settable_ctx_params },                \
-        { OSSL_FUNC_ENCODER_SET_CTX_PARAMS,                             \
-          (void (*)(void))key2any_set_ctx_params },                     \
-        { OSSL_FUNC_ENCODER_ENCODE_DATA,                                \
-          (void (*)(void))impl##_##kind##2##output##_encode_d },        \
-        { OSSL_FUNC_ENCODER_ENCODE_OBJECT,                              \
-          (void (*)(void))impl##_##kind##2##output##_encode_o },        \
-        { 0, NULL }                                                     \
+#define MAKE_ENCODER(impl, type, evp_type, output)                          \
+    static OSSL_FUNC_encoder_get_params_fn                                  \
+    impl##2##output##_get_params;                                           \
+    static OSSL_FUNC_encoder_import_object_fn                               \
+    impl##2##output##_import_object;                                        \
+    static OSSL_FUNC_encoder_free_object_fn                                 \
+    impl##2##output##_free_object;                                          \
+    static OSSL_FUNC_encoder_encode_fn impl##2##output##_encode;            \
+                                                                            \
+    static int impl##2##output##_get_params(OSSL_PARAM params[])            \
+    {                                                                       \
+        return key2any_get_params(params, impl##_input_type,                \
+                                  output##_output_type);                    \
+    }                                                                       \
+    static void *                                                           \
+    impl##2##output##_import_object(void *vctx, int selection,              \
+                                    const OSSL_PARAM params[])              \
+    {                                                                       \
+        struct key2any_ctx_st *ctx = vctx;                                  \
+        return ossl_prov_import_key(impl##_keymgmt_functions,               \
+                                    ctx->provctx, selection, params);       \
+    }                                                                       \
+    static void impl##2##output##_free_object(void *key)                    \
+    {                                                                       \
+        ossl_prov_free_key(impl##_keymgmt_functions, key);                  \
+    }                                                                       \
+    static int                                                              \
+    impl##2##output##_encode(void *ctx, OSSL_CORE_BIO *cout,                \
+                             const void *key,                               \
+                             const OSSL_PARAM key_abstract[],               \
+                             int selection,                                 \
+                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)     \
+    {                                                                       \
+        /* We don't deal with abstract objects */                           \
+        if (key_abstract != NULL) {                                         \
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);         \
+            return 0;                                                       \
+        }                                                                   \
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)             \
+            return key2any_encode(ctx, cout, key, impl##_evp_type,          \
+                                  type##_check_key_type,                    \
+                                  key_to_##output##_pkcs8_bio,              \
+                                  cb, cbarg,                                \
+                                  prepare_##type##_params,                  \
+                                  type##_priv_to_der);                      \
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)              \
+            return key2any_encode(ctx, cout, key, impl##_evp_type,          \
+                                  type##_check_key_type,                    \
+                                  key_to_##output##_pubkey_bio,             \
+                                  cb, cbarg,                                \
+                                  prepare_##type##_params,                  \
+                                  type##_pub_to_der);                       \
+        if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)          \
+            return key2any_encode_params(ctx, cout, key,                    \
+                                         impl##_evp_type,                   \
+                                         type##_check_key_type,             \
+                                         type##_params_to_##output##_bio);  \
+                                                                            \
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);             \
+        return 0;                                                           \
+    }                                                                       \
+    const OSSL_DISPATCH impl##_to_##output##_encoder_functions[] = {        \
+        { OSSL_FUNC_ENCODER_NEWCTX,                                         \
+          (void (*)(void))key2any_newctx },                                 \
+        { OSSL_FUNC_ENCODER_FREECTX,                                        \
+          (void (*)(void))key2any_freectx },                                \
+        { OSSL_FUNC_ENCODER_GETTABLE_PARAMS,                                \
+          (void (*)(void))key2any_gettable_params },                        \
+        { OSSL_FUNC_ENCODER_GET_PARAMS,                                     \
+          (void (*)(void))impl##2##output##_get_params },                   \
+        { OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS,                            \
+          (void (*)(void))key2any_settable_ctx_params },                    \
+        { OSSL_FUNC_ENCODER_SET_CTX_PARAMS,                                 \
+          (void (*)(void))key2any_set_ctx_params },                         \
+        { OSSL_FUNC_ENCODER_IMPORT_OBJECT,                                  \
+          (void (*)(void))impl##2##output##_import_object },                \
+        { OSSL_FUNC_ENCODER_FREE_OBJECT,                                    \
+          (void (*)(void))impl##2##output##_free_object },                  \
+        { OSSL_FUNC_ENCODER_ENCODE,                                         \
+          (void (*)(void))impl##2##output##_encode },                       \
+        { 0, NULL }                                                         \
     }
-
-#define MAKE_ENCODER(impl, type, evp_type, output)                      \
-    MAKE_ENCODER_KIND(impl, param, type, evp_type, output);             \
-    MAKE_ENCODER_KIND(impl, pub, type, evp_type, output);               \
-    MAKE_ENCODER_KIND(impl, priv, type, evp_type, output)
-
-#define MAKE_ENCODER_NOPARAM(impl, type, evp_type, output)              \
-    MAKE_ENCODER_KIND(impl, pub, type, evp_type, output);               \
-    MAKE_ENCODER_KIND(impl, priv, type, evp_type, output)
 
 #ifndef OPENSSL_NO_DH
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, der);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, pem);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, der);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, pem);
 #endif
 #ifndef OPENSSL_NO_DSA
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, der);
@@ -906,19 +950,16 @@ MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, pem);
 #ifndef OPENSSL_NO_EC
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, der);
 MAKE_ENCODER(ec, ec, EVP_PKEY_EC, pem);
-MAKE_ENCODER_NOPARAM(ed25519, ecx, EVP_PKEY_ED25519, der);
-MAKE_ENCODER_NOPARAM(ed25519, ecx, EVP_PKEY_ED25519, pem);
-MAKE_ENCODER_NOPARAM(ed448, ecx, EVP_PKEY_ED448, der);
-MAKE_ENCODER_NOPARAM(ed448, ecx, EVP_PKEY_ED448, pem);
-MAKE_ENCODER_NOPARAM(x25519, ecx, EVP_PKEY_X25519, der);
-MAKE_ENCODER_NOPARAM(x25519, ecx, EVP_PKEY_X25519, pem);
-MAKE_ENCODER_NOPARAM(x448, ecx, EVP_PKEY_ED448, der);
-MAKE_ENCODER_NOPARAM(x448, ecx, EVP_PKEY_ED448, pem);
+MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, der);
+MAKE_ENCODER(ed25519, ecx, EVP_PKEY_ED25519, pem);
+MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, der);
+MAKE_ENCODER(ed448, ecx, EVP_PKEY_ED448, pem);
+MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, der);
+MAKE_ENCODER(x25519, ecx, EVP_PKEY_X25519, pem);
+MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, der);
+MAKE_ENCODER(x448, ecx, EVP_PKEY_ED448, pem);
 #endif
-/*
- * RSA-PSS does have parameters, but we don't have a separate output for them,
- * so we don't pretend we do.  Parameter handling remains internal within the
- * RSA helper functions.
- */
-MAKE_ENCODER_NOPARAM(rsa, rsa, EVP_PKEY_RSA, der);
-MAKE_ENCODER_NOPARAM(rsa, rsa, EVP_PKEY_RSA, pem);
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, der);
+MAKE_ENCODER(rsa, rsa, EVP_PKEY_RSA, pem);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, der);
+MAKE_ENCODER(rsapss, rsa, EVP_PKEY_RSA, pem);

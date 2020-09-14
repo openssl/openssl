@@ -69,9 +69,9 @@ static int base_get_params(void *provctx, OSSL_PARAM params[])
 }
 
 static const OSSL_ALGORITHM base_encoder[] = {
-#define ENCODER(name, _fips, _format, _type, func_table)                    \
+#define ENCODER(name, _fips, _output, func_table)                           \
     { name,                                                                 \
-      "provider=base,fips=" _fips ",format=" _format ",type=" _type,        \
+      "provider=base,fips=" _fips ",output=" _output,                       \
       (func_table) }
 
 #include "encoders.inc"
