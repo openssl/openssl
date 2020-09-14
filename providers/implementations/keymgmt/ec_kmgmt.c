@@ -88,41 +88,6 @@ const char *sm2_query_operation_name(int operation_id)
 }
 #endif
 
-static ossl_inline
-int domparams_to_params(const EC_KEY *ec, OSSL_PARAM_BLD *tmpl,
-                        OSSL_PARAM params[])
-{
-    const EC_GROUP *ecg;
-    int curve_nid;
-
-    if (ec == NULL)
-        return 0;
-
-    ecg = EC_KEY_get0_group(ec);
-    if (ecg == NULL)
-        return 0;
-
-    curve_nid = EC_GROUP_get_curve_name(ecg);
-
-    if (curve_nid == NID_undef) {
-        /* TODO(3.0): should we support explicit parameters curves? */
-        return 0;
-    } else {
-        /* named curve */
-        const char *curve_name = NULL;
-
-        if ((curve_name = ec_curve_nid2name(curve_nid)) == NULL)
-            return 0;
-        if (!ossl_param_build_set_utf8_string(tmpl, params,
-                                              OSSL_PKEY_PARAM_GROUP_NAME,
-                                              curve_name))
-
-            return 0;
-    }
-
-    return 1;
-}
-
 /*
  * Callers of key_to_params MUST make sure that domparams_to_params is also
  * called!
@@ -591,7 +556,7 @@ err:
 }
 
 static
-int ec_get_params(void *key, OSSL_PARAM params[])
+int common_get_params(void *key, OSSL_PARAM params[], int sm2)
 {
     int ret = 0;
     EC_KEY *eck = key;
@@ -662,15 +627,18 @@ int ec_get_params(void *key, OSSL_PARAM params[])
         && !OSSL_PARAM_set_utf8_string(p, EC_DEFAULT_MD))
         goto err;
 
-    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
-    if (p != NULL) {
-        int ecdh_cofactor_mode = 0;
+    /* SM2 doesn't support this PARAM */
+    if (!sm2) {
+        p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_USE_COFACTOR_ECDH);
+        if (p != NULL) {
+            int ecdh_cofactor_mode = 0;
 
-        ecdh_cofactor_mode =
-            (EC_KEY_get_flags(eck) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
+            ecdh_cofactor_mode =
+                (EC_KEY_get_flags(eck) & EC_FLAG_COFACTOR_ECDH) ? 1 : 0;
 
-        if (!OSSL_PARAM_set_int(p, ecdh_cofactor_mode))
-            goto err;
+            if (!OSSL_PARAM_set_int(p, ecdh_cofactor_mode))
+                goto err;
+        }
     }
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
         p->return_size = EC_POINT_point2oct(EC_KEY_get0_group(key),
@@ -691,6 +659,12 @@ err:
     BN_CTX_end(bnctx);
     BN_CTX_free(bnctx);
     return ret;
+}
+
+static
+int ec_get_params(void *key, OSSL_PARAM params[])
+{
+    return common_get_params(key, params, 0);
 }
 
 #ifndef OPENSSL_NO_EC2M
@@ -765,61 +739,7 @@ int ec_set_params(void *key, const OSSL_PARAM params[])
 static
 int sm2_get_params(void *key, OSSL_PARAM params[])
 {
-    int ret;
-    EC_KEY *eck = key;
-    const EC_GROUP *ecg = NULL;
-    OSSL_PARAM *p;
-    unsigned char *pub_key = NULL;
-
-    ecg = EC_KEY_get0_group(eck);
-    if (ecg == NULL)
-        return 0;
-
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_MAX_SIZE)) != NULL
-        && !OSSL_PARAM_set_int(p, ECDSA_size(eck)))
-        return 0;
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_BITS)) != NULL
-        && !OSSL_PARAM_set_int(p, EC_GROUP_order_bits(ecg)))
-        return 0;
-
-    /* XXX:
-     * We assume SM2 security bits the same as in normal EC case since
-     * I didn't find definition of SM2 security bits so far. This could
-     * be updated if the definition is clear in the future.
-     */
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL) {
-        int ecbits, sec_bits;
-
-        ecbits = EC_GROUP_order_bits(ecg);
-        /* SM2 has only one curve so the sec_bits should always be a constant */
-        sec_bits = ecbits / 2;
-
-        if (!OSSL_PARAM_set_int(p, sec_bits))
-            return 0;
-    }
-
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
-        && !OSSL_PARAM_set_utf8_string(p, SM2_DEFAULT_MD))
-        return 0;
-
-    if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
-        BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
-
-        if (ctx == NULL)
-            return 0;
-        p->return_size = EC_POINT_point2oct(EC_KEY_get0_group(key),
-                                            EC_KEY_get0_public_key(key),
-                                            POINT_CONVERSION_UNCOMPRESSED,
-                                            p->data, p->return_size, ctx);
-        BN_CTX_free(ctx);
-        if (p->return_size == 0)
-            return 0;
-    }
-
-    ret = domparams_to_params(eck, NULL, params)
-          && key_to_params(eck, NULL, params, 1, &pub_key);
-    OPENSSL_free(pub_key);
-    return ret;
+    return common_get_params(key, params, 1);
 }
 
 static const OSSL_PARAM sm2_known_gettable_params[] = {
