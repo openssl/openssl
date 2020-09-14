@@ -458,6 +458,24 @@ void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
     }
 }
 
+const OSSL_PARAM *
+OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder)
+{
+    if (encoder != NULL && encoder->gettable_params != NULL) {
+        void *provctx = ossl_provider_ctx(OSSL_ENCODER_provider(encoder));
+
+        return encoder->gettable_params(provctx);
+    }
+    return NULL;
+}
+
+int OSSL_ENCODER_get_params(OSSL_ENCODER *encoder, OSSL_PARAM params[])
+{
+    if (encoder != NULL && encoder->get_params != NULL)
+        return encoder->get_params(params);
+    return 0;
+}
+
 const OSSL_PARAM *OSSL_ENCODER_settable_ctx_params(OSSL_ENCODER *encoder)
 {
     if (encoder != NULL && encoder->settable_ctx_params != NULL) {
