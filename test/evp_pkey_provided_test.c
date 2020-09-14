@@ -212,7 +212,7 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
                                                          selection,
                                                          NULL, NULL))
         /* Check that this operation is supported */
-        || !TEST_int_ne(OSSL_ENCODER_CTX_num_encoders(ctx), 0))
+        || !TEST_int_ne(OSSL_ENCODER_CTX_get_num_encoders(ctx), 0))
         goto err;
 
     /* Use no cipher.  This should give us an unencrypted PEM */
