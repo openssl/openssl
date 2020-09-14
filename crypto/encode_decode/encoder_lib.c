@@ -272,7 +272,7 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
     const char *last_input_type = NULL;
     int ok = 0;
 
-    end = sk_OSSL_ENCODER_INSTANCE_num(ctx->encoder_insts);
+    end = OSSL_ENCODER_CTX_get_num_encoders(ctx);
     for (i = 0; i < end; i++) {
         OSSL_ENCODER_INSTANCE *encoder_inst =
             sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);

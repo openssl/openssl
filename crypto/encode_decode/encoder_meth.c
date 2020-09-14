@@ -514,7 +514,7 @@ int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
     if (ctx->encoder_insts == NULL)
         return 1;
 
-    l = (size_t)sk_OSSL_ENCODER_INSTANCE_num(ctx->encoder_insts);
+    l = OSSL_ENCODER_CTX_get_num_encoders(ctx);
     for (i = 0; i < l; i++) {
         OSSL_ENCODER_INSTANCE *encoder_inst =
             sk_OSSL_ENCODER_INSTANCE_value(ctx->encoder_insts, i);
