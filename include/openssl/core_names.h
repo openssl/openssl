@@ -449,9 +449,7 @@ extern "C" {
 #define OSSL_ENCODER_PARAM_INPUT_TYPE   "input-type"
 #define OSSL_ENCODER_PARAM_OUTPUT_TYPE  "output-type"
 
-#define OSSL_DECODER_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER
 #define OSSL_DECODER_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_DECODER_PARAM_PASS         "passphrase"
 #define OSSL_DECODER_PARAM_INPUT_TYPE   "input-type"
 
 /* Passphrase callback parameters */

@@ -207,7 +207,7 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
     if (!EVP_KEYMGMT_up_ref(keymgmt) /* ref++ */)
         return;
     if (sk_EVP_KEYMGMT_push(data->process_data->keymgmts, keymgmt) <= 0) {
-        EVP_KEYMGMT_free(keymgmt); /* ref-- */
+        EVP_KEYMGMT_free(keymgmt);   /* ref-- */
         return;
     }
 

@@ -159,8 +159,7 @@ int ossl_decoder_ctx_add_decoder_inst(OSSL_DECODER_CTX *ctx,
     return (sk_OSSL_DECODER_INSTANCE_push(ctx->decoder_insts, di) > 0);
 }
 
-int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx,
-                                           OSSL_DECODER *decoder)
+int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder)
 {
     OSSL_DECODER_INSTANCE *decoder_inst = NULL;
     const OSSL_PROVIDER *prov = NULL;
