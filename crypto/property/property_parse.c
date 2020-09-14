@@ -596,9 +596,9 @@ int ossl_property_parse_init(OPENSSL_CTX *ctx)
         "provider",     /* Name of provider (default, legacy, fips) */
         "version",      /* Version number of this provider */
         "fips",         /* FIPS validated or FIPS supporting algorithm */
-        "format",       /* output format for encoders */
-        "type",         /* output type for encoders */
-        "input",        /* input type for decoders */
+        "output",       /* Output type for encoders */
+        "input",        /* Input type for decoders */
+        "structure",    /* Structure name for encoders and decoders */
     };
     size_t i;
 
