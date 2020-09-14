@@ -1189,6 +1189,9 @@ DEPRECATEDIN_3_0(int EVP_PKEY_encrypt_old(unsigned char *enc_key,
                                           const unsigned char *key,
                                           int key_len, EVP_PKEY *pub_key))
 int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name);
+void EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
 int EVP_PKEY_type(int type);
 int EVP_PKEY_id(const EVP_PKEY *pkey);
 int EVP_PKEY_base_id(const EVP_PKEY *pkey);

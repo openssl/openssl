@@ -1040,6 +1040,22 @@ int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name)
     return EVP_KEYMGMT_is_a(pkey->keymgmt, name);
 }
 
+void EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
+                               void (*fn)(const char *name, void *data),
+                               void *data)
+{
+    if (!evp_pkey_is_typed(pkey))
+        return;
+
+    if (!evp_pkey_is_provided(pkey)) {
+        const char *name = OBJ_nid2sn(EVP_PKEY_id(pkey));
+
+        fn(name, data);
+        return;
+    }
+    EVP_KEYMGMT_names_do_all(pkey->keymgmt, fn, data);
+}
+
 int EVP_PKEY_can_sign(const EVP_PKEY *pkey)
 {
     if (pkey->keymgmt == NULL) {
