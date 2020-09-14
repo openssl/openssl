@@ -210,7 +210,7 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
     }
 
     if (pkey->keymgmt != NULL) {
-        OSSL_ENCODER *found;
+        OSSL_ENCODER *found = NULL;
         const OSSL_PROVIDER *desired_prov = EVP_KEYMGMT_provider(pkey->keymgmt);
         struct collected_encoder_st encoder_data;
         struct collected_names_st keymgmt_data;
@@ -306,18 +306,17 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
         sk_OSSL_ENCODER_pop_free(encoder_data.encoders, OSSL_ENCODER_free);
     }
 
-    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0)
-        goto err;
+    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0) {
+        if (!OSSL_ENCODER_CTX_set_construct(ctx, encoder_construct_EVP_PKEY)
+            || !OSSL_ENCODER_CTX_set_construct_data(ctx, data)
+            || !OSSL_ENCODER_CTX_set_cleanup(ctx, encoder_destruct_EVP_PKEY))
+            goto err;
 
-    data->pk = pkey;
-    data->selection = selection;
+        data->pk = pkey;
+        data->selection = selection;
 
-    if (!OSSL_ENCODER_CTX_set_construct(ctx, encoder_construct_EVP_PKEY)
-        || !OSSL_ENCODER_CTX_set_construct_data(ctx, data)
-        || !OSSL_ENCODER_CTX_set_cleanup(ctx, encoder_destruct_EVP_PKEY))
-        goto err;
-
-    data = NULL;                 /* Avoid it being freed */
+        data = NULL;             /* Avoid it being freed */
+    }
 
     ok = 1;
  err:
