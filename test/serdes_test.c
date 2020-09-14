@@ -22,7 +22,8 @@
 
 #include "testutil.h"
 
-static OPENSSL_CTX *libctx = NULL;
+static OPENSSL_CTX *encoder_libctx = NULL;
+static OPENSSL_CTX *crypto_libctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *libprov = NULL;
 
@@ -58,7 +59,7 @@ const OPTIONS *test_get_options(void)
 static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 {
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(libctx, type, NULL);
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(crypto_libctx, type, NULL);
 
     /*
      * No real need to check the errors other than for the cascade
@@ -80,8 +81,8 @@ static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx =
         template != NULL
-        ? EVP_PKEY_CTX_new_from_pkey(libctx, template, NULL)
-        : EVP_PKEY_CTX_new_from_name(libctx, type, NULL);
+        ? EVP_PKEY_CTX_new_from_pkey(crypto_libctx, template, NULL)
+        : EVP_PKEY_CTX_new_from_name(crypto_libctx, type, NULL);
 
     /*
      * No real need to check the errors other than for the cascade
@@ -228,7 +229,7 @@ static int deserialize_EVP_PKEY_prov(void **object,
     int ok = 0;
 
     if (!TEST_ptr(dctx = OSSL_DESERIALIZER_CTX_new_by_EVP_PKEY(&pkey, NULL,
-                                                               libctx, NULL))
+                                                               encoder_libctx, NULL))
         || (pass != NULL
             && !OSSL_DESERIALIZER_CTX_set_passphrase(dctx, upass,
                                                      strlen(pass)))
@@ -259,7 +260,7 @@ static int serialize_EVP_PKEY_legacy_PEM(void **serialized,
 
     if (pcipher != NULL && pass != NULL) {
         passlen = strlen(pass);
-        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(libctx, pcipher, NULL)))
+        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(encoder_libctx, pcipher, NULL)))
             goto end;
     }
     if (!TEST_ptr(mem_ser = BIO_new(BIO_s_mem()))
@@ -852,16 +853,23 @@ int setup_tests(void)
     if (!TEST_ptr(nullprov))
         return 0;
 
-    libctx = OPENSSL_CTX_new();
-    if (!TEST_ptr(libctx))
+    encoder_libctx = OPENSSL_CTX_new();
+    if (!TEST_ptr(encoder_libctx))
+        return 0;
+    if (!TEST_ptr(OSSL_PROVIDER_load(encoder_libctx, "default")))
+        return 0;
+    if (!TEST_ptr(OSSL_PROVIDER_load(encoder_libctx, "legacy")))
+        return 0;
+
+    crypto_libctx = OPENSSL_CTX_new();
+    if (!TEST_ptr(crypto_libctx))
         return 0;
 
     if (config_file != NULL) {
-        if (!TEST_true(OPENSSL_CTX_load_config(libctx, config_file)))
+        if (!TEST_true(OPENSSL_CTX_load_config(crypto_libctx, config_file)))
             return 0;
     }
-
-    libprov = OSSL_PROVIDER_load(libctx, prov_name);
+    libprov = OSSL_PROVIDER_load(crypto_libctx, prov_name);
     if (!TEST_ptr(libprov))
         return 0;
 
@@ -935,6 +943,7 @@ void cleanup_tests(void)
     FREE_KEYS(RSA);
     FREE_KEYS(RSA_PSS);
     OSSL_PROVIDER_unload(libprov);
-    OPENSSL_CTX_free(libctx);
+    OPENSSL_CTX_free(encoder_libctx);
+    OPENSSL_CTX_free(crypto_libctx);
     OSSL_PROVIDER_unload(nullprov);
 }

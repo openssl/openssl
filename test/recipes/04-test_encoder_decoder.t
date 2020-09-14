@@ -9,15 +9,36 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test::Simple;
-use OpenSSL::Test qw/:DEFAULT srctop_file bldtop_dir/;
-use Cwd qw(abs_path);
+use OpenSSL::Test qw/:DEFAULT srctop_dir srctop_file bldtop_dir bldtop_file/;
+use OpenSSL::Test::Utils;
 
-setup("test_encoder_decoder");
+BEGIN {
+    setup("test_encoder_decoder");
+}
 
-plan tests => 1;
+use lib srctop_dir('Configurations');
+use lib bldtop_dir('.');
+use platform;
 
-$ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("providers"));
-$ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default-and-legacy.cnf"));
+my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-ok(run(test(["endecode_test"])));
+plan tests =>
+    ($no_fips ? 0 : 2)          # FIPS install test + test
+    + 1;
+
+my $conf = srctop_file("test", "default-and-legacy.cnf");
+ok(run(test(["endecode_test", "-config", $conf])));
+
+unless ($no_fips) {
+    my $infile = bldtop_file('providers', platform->dso('fips'));
+
+    ok(run(app(['openssl', 'fipsinstall',
+                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
+                '-module', $infile])),
+       "fipsinstall");
+
+    my $conf = srctop_file("test", "fips.cnf");
+    ok(run(test(["endecode_test",
+                 "-config", $conf,
+                 "-provider", "fips"])));
+}

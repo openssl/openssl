@@ -17,11 +17,19 @@
 #include <openssl/param_build.h>
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
+#include <openssl/provider.h>
 
 #include "internal/pem.h"        /* For PVK and "blob" PEM headers */
 #include "internal/cryptlib.h"   /* ossl_assert */
 
 #include "testutil.h"
+
+static int fips_tests = 0;
+static OPENSSL_CTX *encoder_libctx = NULL;
+static OPENSSL_CTX *crypto_libctx = NULL;
+static OSSL_PROVIDER *prov_null = NULL;
+static OSSL_PROVIDER *prov_legacy = NULL;
+static OSSL_PROVIDER *prov_default = NULL;
 
 #ifndef OPENSSL_NO_EC
 static BN_CTX *bnctx = NULL;
@@ -38,10 +46,32 @@ static OSSL_PARAM *ec_explicit_tri_params_explicit = NULL;
 # endif
 #endif
 
+typedef enum OPTION_choice {
+    OPT_ERR = -1,
+    OPT_EOF = 0,
+    OPT_CONFIG_FILE,
+    OPT_PROVIDER_NAME,
+    OPT_TEST_ENUM
+} OPTION_CHOICE;
+
+const OPTIONS *test_get_options(void)
+{
+    static const OPTIONS test_options[] = {
+        OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "config", OPT_CONFIG_FILE, '<',
+          "The configuration file to use for the libctx" },
+        { "provider", OPT_PROVIDER_NAME, 's',
+          "The provider to load (The default value is 'default'" },
+        { NULL }
+    };
+    return test_options;
+}
+
+
 static EVP_PKEY *make_template(const char *type, OSSL_PARAM *genparams)
 {
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(NULL, type, NULL);
+    EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_from_name(crypto_libctx, type, NULL);
 
     /*
      * No real need to check the errors other than for the cascade
@@ -63,8 +93,8 @@ static EVP_PKEY *make_key(const char *type, EVP_PKEY *template,
     EVP_PKEY *pkey = NULL;
     EVP_PKEY_CTX *ctx =
         template != NULL
-        ? EVP_PKEY_CTX_new(template, NULL)
-        : EVP_PKEY_CTX_new_from_name(NULL, type, NULL);
+        ? EVP_PKEY_CTX_new_from_pkey(crypto_libctx, template, NULL)
+        : EVP_PKEY_CTX_new_from_name(crypto_libctx, type, NULL);
 
     /*
      * No real need to check the errors other than for the cascade
@@ -195,7 +225,7 @@ static int decode_EVP_PKEY_prov(void **object,
     int ok = 0;
 
     if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, NULL,
-                                                               NULL, NULL))
+                                                          encoder_libctx, NULL))
         || (pass != NULL
             && !OSSL_DECODER_CTX_set_passphrase(dctx, upass,
                                                      strlen(pass)))
@@ -226,7 +256,7 @@ static int encode_EVP_PKEY_legacy_PEM(void **encoded,
 
     if (pcipher != NULL && pass != NULL) {
         passlen = strlen(pass);
-        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(NULL, pcipher, NULL)))
+        if (!TEST_ptr(cipher = EVP_CIPHER_fetch(encoder_libctx, pcipher, NULL)))
             goto end;
     }
     if (!TEST_ptr(mem_ser = BIO_new(BIO_s_mem()))
@@ -946,13 +976,23 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
 int setup_tests(void)
 {
     int ok = 1;
+    const char *prov_name = "default";
+    char *config_file = NULL;
+    OPTION_CHOICE o;
 
 #ifndef OPENSSL_NO_DSA
     static size_t qbits = 160;  /* PVK only tolerates 160 Q bits */
     static size_t pbits = 1024; /* With 160 Q bits, we MUST use 1024 P bits */
+    static size_t pbits_fips = 2048;
+    static size_t qbits_fips = 256;
     OSSL_PARAM DSA_params[] = {
         OSSL_PARAM_size_t("pbits", &pbits),
         OSSL_PARAM_size_t("qbits", &qbits),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM DSA_params_fips[] = {
+        OSSL_PARAM_size_t("pbits", &pbits_fips),
+        OSSL_PARAM_size_t("qbits", &qbits_fips),
         OSSL_PARAM_END
     };
 #endif
@@ -972,8 +1012,46 @@ int setup_tests(void)
         OSSL_PARAM_END
     };
 
+    while ((o = opt_next()) != OPT_EOF) {
+        switch (o) {
+        case OPT_PROVIDER_NAME:
+            prov_name = opt_arg();
+            break;
+        case OPT_CONFIG_FILE:
+            config_file = opt_arg();
+            break;
+        case OPT_TEST_CASES:
+           break;
+        default:
+        case OPT_ERR:
+            return 0;
+        }
+    }
+    if (!TEST_ptr(prov_null = OSSL_PROVIDER_load(NULL, "null")))
+        return 0;
+
+    /* Use the default provider for loading and saving keys */
+    encoder_libctx = OPENSSL_CTX_new();
+    if (!TEST_ptr(encoder_libctx))
+        return 0;
+    if (!TEST_ptr(prov_default = OSSL_PROVIDER_load(encoder_libctx, "default")))
+        return 0;
+    if (!TEST_ptr(prov_legacy = OSSL_PROVIDER_load(encoder_libctx, "legacy")))
+        return 0;
+
+    /* Setup a separate libctx for cryptographic operations on keys */
+    crypto_libctx = OPENSSL_CTX_new();
+    if (!TEST_ptr(crypto_libctx))
+        return 0;
+    if (config_file != NULL) {
+        if (!TEST_true(OPENSSL_CTX_load_config(crypto_libctx, config_file)))
+            return 0;
+    }
+    if (strcmp(prov_name, "fips") == 0)
+        fips_tests = 1;
+
 #ifndef OPENSSL_NO_EC
-    if (!TEST_ptr(bnctx = BN_CTX_new_ex(NULL))
+    if (!TEST_ptr(bnctx = BN_CTX_new_ex(crypto_libctx))
         || !TEST_ptr(bld_prime_nc = OSSL_PARAM_BLD_new())
         || !TEST_ptr(bld_prime = OSSL_PARAM_BLD_new())
         || !create_ec_explicit_prime_params_namedcurve(bld_prime_nc)
@@ -999,7 +1077,7 @@ int setup_tests(void)
     MAKE_DOMAIN_KEYS(DHX, "X9.42 DH", NULL);
 #endif
 #ifndef OPENSSL_NO_DSA
-    MAKE_DOMAIN_KEYS(DSA, "DSA", DSA_params);
+    MAKE_DOMAIN_KEYS(DSA, "DSA", fips_tests ? DSA_params_fips : DSA_params);
 #endif
 #ifndef OPENSSL_NO_EC
     MAKE_DOMAIN_KEYS(EC, "EC", EC_params);
@@ -1072,7 +1150,7 @@ int setup_tests(void)
 #endif
     }
 
-    return 1;
+    return ok;
 }
 
 void cleanup_tests(void)
@@ -1113,4 +1191,9 @@ void cleanup_tests(void)
 #endif
     FREE_KEYS(RSA);
     FREE_KEYS(RSA_PSS);
+    OSSL_PROVIDER_unload(prov_null);
+    OSSL_PROVIDER_unload(prov_default);
+    OSSL_PROVIDER_unload(prov_legacy);
+    OPENSSL_CTX_free(encoder_libctx);
+    OPENSSL_CTX_free(crypto_libctx);
 }
