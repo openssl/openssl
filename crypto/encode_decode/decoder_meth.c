@@ -504,7 +504,7 @@ int OSSL_DECODER_CTX_set_params(OSSL_DECODER_CTX *ctx,
     if (ctx->decoder_insts == NULL)
         return 1;
 
-    l = (size_t)sk_OSSL_DECODER_INSTANCE_num(ctx->decoder_insts);
+    l = OSSL_DECODER_CTX_get_num_decoders(ctx);
     for (i = 0; i < l; i++) {
         OSSL_DECODER_INSTANCE *decoder_inst =
             sk_OSSL_DECODER_INSTANCE_value(ctx->decoder_insts, i);
