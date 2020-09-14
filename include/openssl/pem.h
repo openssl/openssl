@@ -66,13 +66,33 @@ extern "C" {
  * IMPLEMENT_PEM_rw_cb(...)
  */
 
-# define PEM_write_fnsig(name, type, OUTTYPE, writename)        \
+# define PEM_read_cb_fnsig(name, type, INTYPE, readname)                \
+    type *PEM_##readname##_##name(INTYPE *out, type **x,                \
+                                 pem_password_cb *cb, void *u)
+# define PEM_read_cb_ex_fnsig(name, type, INTYPE, readname)             \
+    type *PEM_##readname##_##name##_ex(INTYPE *out, type **x,           \
+                                       pem_password_cb *cb, void *u,    \
+                                       OSSL_LIB_CTX *libctx,            \
+                                       const char *propq)
+
+# define PEM_write_fnsig(name, type, OUTTYPE, writename)                \
     int PEM_##writename##_##name(OUTTYPE *out, const type *x)
 # define PEM_write_cb_fnsig(name, type, OUTTYPE, writename)             \
     int PEM_##writename##_##name(OUTTYPE *out, const type *x,           \
                                  const EVP_CIPHER *enc,                 \
                                  const unsigned char *kstr, int klen,   \
                                  pem_password_cb *cb, void *u)
+# define PEM_write_ex_fnsig(name, type, OUTTYPE, writename)             \
+    int PEM_##writename##_##name##_ex(OUTTYPE *out, const type *x,      \
+                                      OSSL_LIB_CTX *libctx,             \
+                                      const char *propq)
+# define PEM_write_cb_ex_fnsig(name, type, OUTTYPE, writename)          \
+    int PEM_##writename##_##name##_ex(OUTTYPE *out, const type *x,      \
+                                      const EVP_CIPHER *enc,            \
+                                      const unsigned char *kstr, int klen, \
+                                      pem_password_cb *cb, void *u,     \
+                                      OSSL_LIB_CTX *libctx,             \
+                                      const char *propq)
 
 # ifdef OPENSSL_NO_STDIO
 
@@ -199,50 +219,70 @@ extern "C" {
 # if defined(OPENSSL_NO_STDIO)
 
 #  define DECLARE_PEM_read_fp_attr(attr, name, type) /**/
+#  define DECLARE_PEM_read_fp_ex_attr(attr, name, type) /**/
 #  define DECLARE_PEM_write_fp_attr(attr, name, type) /**/
-#  define DECLARE_PEM_write_fp_attr(attr, name, type) /**/
+#  define DECLARE_PEM_write_fp_ex_attr(attr, name, type) /**/
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_fp_const_attr(attr, name, type) /**/
 #  endif
 #  define DECLARE_PEM_write_cb_fp_attr(attr, name, type) /**/
+#  define DECLARE_PEM_write_cb_fp_ex_attr(attr, name, type) /**/
 
 # else
 
 #  define DECLARE_PEM_read_fp_attr(attr, name, type)                        \
-    attr type *PEM_read_##name(FILE *fp, type **x,                          \
-                               pem_password_cb *cb, void *u);
+    attr PEM_read_cb_fnsig(name, type, FILE, read);
+#  define DECLARE_PEM_read_fp_ex_attr(attr, name, type)                     \
+    attr PEM_read_cb_fnsig(name, type, FILE, read);                         \
+    attr PEM_read_cb_ex_fnsig(name, type, FILE, read);
+
 #  define DECLARE_PEM_write_fp_attr(attr, name, type)                       \
     attr PEM_write_fnsig(name, type, FILE, write);
+#  define DECLARE_PEM_write_fp_ex_attr(attr, name, type)                    \
+    attr PEM_write_fnsig(name, type, FILE, write);                          \
+    attr PEM_write_ex_fnsig(name, type, FILE, write);
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_fp_const_attr(attr, name, type)                \
     attr PEM_write_fnsig(name, type, FILE, write);
 #  endif
 #  define DECLARE_PEM_write_cb_fp_attr(attr, name, type)                    \
     attr PEM_write_cb_fnsig(name, type, FILE, write);
+#  define DECLARE_PEM_write_cb_fp_ex_attr(attr, name, type)                 \
+    attr PEM_write_cb_fnsig(name, type, FILE, write);                       \
+    attr PEM_write_cb_ex_fnsig(name, type, FILE, write);
 
 # endif
 
-# define DECLARE_PEM_read_fp(name, type)                                   \
+# define DECLARE_PEM_read_fp(name, type)                                    \
     DECLARE_PEM_read_fp_attr(extern, name, type)
-# define DECLARE_PEM_write_fp(name, type)                                  \
+# define DECLARE_PEM_write_fp(name, type)                                   \
     DECLARE_PEM_write_fp_attr(extern, name, type)
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #   define DECLARE_PEM_write_fp_const(name, type)                           \
     DECLARE_PEM_write_fp_const_attr(extern, name, type)
 # endif
-# define DECLARE_PEM_write_cb_fp(name, type)                               \
+# define DECLARE_PEM_write_cb_fp(name, type)                                \
     DECLARE_PEM_write_cb_fp_attr(extern, name, type)
 
-# define DECLARE_PEM_read_bio_attr(attr, name, type)                        \
-    attr type *PEM_read_bio_##name(BIO *bp, type **x,                       \
-                                   pem_password_cb *cb, void *u);
+#  define DECLARE_PEM_read_bio_attr(attr, name, type)                       \
+    attr PEM_read_cb_fnsig(name, type, BIO, read_bio);
+#  define DECLARE_PEM_read_bio_ex_attr(attr, name, type)                    \
+    attr PEM_read_cb_fnsig(name, type, BIO, read_bio);                      \
+    attr PEM_read_cb_ex_fnsig(name, type, BIO, read_bio);
 # define DECLARE_PEM_read_bio(name, type)                                   \
     DECLARE_PEM_read_bio_attr(extern, name, type)
+# define DECLARE_PEM_read_bio_ex(name, type)                                \
+    DECLARE_PEM_read_bio_ex_attr(extern, name, type)
 
 # define DECLARE_PEM_write_bio_attr(attr, name, type)                       \
     attr PEM_write_fnsig(name, type, BIO, write_bio);
+# define DECLARE_PEM_write_bio_ex_attr(attr, name, type)                    \
+    attr PEM_write_fnsig(name, type, BIO, write_bio);                       \
+    attr PEM_write_ex_fnsig(name, type, BIO, write_bio);
 # define DECLARE_PEM_write_bio(name, type)                                  \
     DECLARE_PEM_write_bio_attr(extern, name, type)
+# define DECLARE_PEM_write_bio_ex(name, type)                               \
+    DECLARE_PEM_write_bio_ex_attr(extern, name, type)
 
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DECLARE_PEM_write_bio_const_attr(attr, name, type)                \
@@ -253,14 +293,24 @@ extern "C" {
 
 # define DECLARE_PEM_write_cb_bio_attr(attr, name, type)                    \
     attr PEM_write_cb_fnsig(name, type, BIO, write_bio);
+# define DECLARE_PEM_write_cb_bio_ex_attr(attr, name, type)                 \
+    attr PEM_write_cb_fnsig(name, type, BIO, write_bio);                    \
+    attr PEM_write_cb_ex_fnsig(name, type, BIO, write_bio);
 # define DECLARE_PEM_write_cb_bio(name, type)                               \
     DECLARE_PEM_write_cb_bio_attr(extern, name, type)
+# define DECLARE_PEM_write_cb_ex_bio(name, type)                            \
+    DECLARE_PEM_write_cb_bio_ex_attr(extern, name, type)
 
 # define DECLARE_PEM_write_attr(attr, name, type)                           \
     DECLARE_PEM_write_bio_attr(attr, name, type)                            \
     DECLARE_PEM_write_fp_attr(attr, name, type)
+# define DECLARE_PEM_write_ex_attr(attr, name, type)                        \
+    DECLARE_PEM_write_bio_ex_attr(attr, name, type)                         \
+    DECLARE_PEM_write_fp_ex_attr(attr, name, type)
 # define DECLARE_PEM_write(name, type) \
     DECLARE_PEM_write_attr(extern, name, type)
+# define DECLARE_PEM_write_ex(name, type) \
+    DECLARE_PEM_write_ex_attr(extern, name, type)
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DECLARE_PEM_write_const_attr(attr, name, type)                    \
     DECLARE_PEM_write_bio_const_attr(attr, name, type)                      \
@@ -271,18 +321,33 @@ extern "C" {
 # define DECLARE_PEM_write_cb_attr(attr, name, type)                        \
     DECLARE_PEM_write_cb_bio_attr(attr, name, type)                         \
     DECLARE_PEM_write_cb_fp_attr(attr, name, type)
+# define DECLARE_PEM_write_cb_ex_attr(attr, name, type)                     \
+    DECLARE_PEM_write_cb_bio_ex_attr(attr, name, type)                      \
+    DECLARE_PEM_write_cb_fp_ex_attr(attr, name, type)
 # define DECLARE_PEM_write_cb(name, type)                                   \
     DECLARE_PEM_write_cb_attr(extern, name, type)
+# define DECLARE_PEM_write_cb_ex(name, type)                                \
+    DECLARE_PEM_write_cb_ex_attr(extern, name, type)
 # define DECLARE_PEM_read_attr(attr, name, type)                            \
     DECLARE_PEM_read_bio_attr(attr, name, type)                             \
     DECLARE_PEM_read_fp_attr(attr, name, type)
+# define DECLARE_PEM_read_ex_attr(attr, name, type)                         \
+    DECLARE_PEM_read_bio_ex_attr(attr, name, type)                          \
+    DECLARE_PEM_read_fp_ex_attr(attr, name, type)
 # define DECLARE_PEM_read(name, type)                                       \
     DECLARE_PEM_read_attr(extern, name, type)
+# define DECLARE_PEM_read_ex(name, type)                                    \
+    DECLARE_PEM_read_ex_attr(extern, name, type)
 # define DECLARE_PEM_rw_attr(attr, name, type)                              \
     DECLARE_PEM_read_attr(attr, name, type)                                 \
     DECLARE_PEM_write_attr(attr, name, type)
+# define DECLARE_PEM_rw_ex_attr(attr, name, type)                           \
+    DECLARE_PEM_read_ex_attr(attr, name, type)                              \
+    DECLARE_PEM_write_ex_attr(attr, name, type)
 # define DECLARE_PEM_rw(name, type) \
     DECLARE_PEM_rw_attr(extern, name, type)
+# define DECLARE_PEM_rw_ex(name, type) \
+    DECLARE_PEM_rw_ex_attr(extern, name, type)
 # ifndef OPENSSL_NO_DEPRECATED_3_0
 #  define DECLARE_PEM_rw_const_attr(attr, name, type)                       \
     DECLARE_PEM_read_attr(attr, name, type)                                 \
@@ -293,8 +358,13 @@ extern "C" {
 # define DECLARE_PEM_rw_cb_attr(attr, name, type)                           \
     DECLARE_PEM_read_attr(attr, name, type)                                 \
     DECLARE_PEM_write_cb_attr(attr, name, type)
+# define DECLARE_PEM_rw_cb_ex_attr(attr, name, type)                        \
+    DECLARE_PEM_read_ex_attr(attr, name, type)                              \
+    DECLARE_PEM_write_cb_ex_attr(attr, name, type)
 # define DECLARE_PEM_rw_cb(name, type) \
     DECLARE_PEM_rw_cb_attr(extern, name, type)
+# define DECLARE_PEM_rw_cb_ex(name, type) \
+    DECLARE_PEM_rw_cb_ex_attr(extern, name, type)
 
 int PEM_get_EVP_CIPHER_INFO(char *header, EVP_CIPHER_INFO *cipher);
 int PEM_do_header(EVP_CIPHER_INFO *cipher, unsigned char *data, long *len,
@@ -396,24 +466,8 @@ DECLARE_PEM_rw_attr(OSSL_DEPRECATEDIN_3_0, DHparams, DH)
 DECLARE_PEM_write_attr(OSSL_DEPRECATEDIN_3_0, DHxparams, DH)
 #  endif
 # endif
-DECLARE_PEM_rw_cb(PrivateKey, EVP_PKEY)
-EVP_PKEY *PEM_read_bio_PrivateKey_ex(BIO *bp, EVP_PKEY **x,
-                                     pem_password_cb *cb, void *u,
-                                     OSSL_LIB_CTX *libctx, const char *propq);
-# ifndef OPENSSL_NO_STDIO
-EVP_PKEY *PEM_read_PrivateKey_ex(FILE *fp, EVP_PKEY **x,
-                                 pem_password_cb *cb, void *u,
-                                 OSSL_LIB_CTX *libctx, const char *propq);
-# endif
-DECLARE_PEM_rw(PUBKEY, EVP_PKEY)
-EVP_PKEY *PEM_read_bio_PUBKEY_ex(BIO *bp, EVP_PKEY **x,
-                                 pem_password_cb *cb, void *u,
-                                 OSSL_LIB_CTX *libctx, const char *propq);
-# ifndef OPENSSL_NO_STDIO
-EVP_PKEY *PEM_read_PUBKEY_ex(FILE *fp, EVP_PKEY **x,
-                             pem_password_cb *cb, void *u,
-                             OSSL_LIB_CTX *libctx, const char *propq);
-# endif
+DECLARE_PEM_rw_cb_ex(PrivateKey, EVP_PKEY)
+DECLARE_PEM_rw_ex(PUBKEY, EVP_PKEY)
 
 int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                                          const EVP_CIPHER *enc,
