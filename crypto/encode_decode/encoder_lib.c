@@ -335,7 +335,7 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
 
         /*
          * If the desired output type matches the output type of the currently
-         * considered encoder, we're setting upp final output.  Otherwise, set
+         * considered encoder, we're setting up final output.  Otherwise, set
          * up an intermediary memory output.
          */
         if (strcasecmp(ctx->output_type, current_output_type) == 0)
