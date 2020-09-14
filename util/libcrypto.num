@@ -5280,3 +5280,7 @@ OSSL_DECODER_CTX_set_input_structure    ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_INSTANCE_get_input_structure ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_output_structure   ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_INSTANCE_get_output_structure ?	3_0_0	EXIST::FUNCTION:
+PEM_write_PrivateKey_ex                 ?	3_0_0	EXIST::FUNCTION:STDIO
+PEM_write_bio_PrivateKey_ex             ?	3_0_0	EXIST::FUNCTION:
+PEM_write_PUBKEY_ex                     ?	3_0_0	EXIST::FUNCTION:STDIO
+PEM_write_bio_PUBKEY_ex                 ?	3_0_0	EXIST::FUNCTION:
