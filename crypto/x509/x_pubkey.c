@@ -23,6 +23,7 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 #include <openssl/encoder.h>
+#include "internal/provider.h"
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;
@@ -96,12 +97,14 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
             goto error;
         }
     } else if (pkey->keymgmt != NULL) {
+        const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(pkey->keymgmt);
+        OPENSSL_CTX *libctx = ossl_provider_library_context(pkprov);
         BIO *bmem = BIO_new(BIO_s_mem());
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
                          | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ectx =
             OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, "DER", selection,
-                                             NULL, NULL);
+                                             libctx, NULL);
 
         if (OSSL_ENCODER_to_bio(ectx, bmem)) {
             const unsigned char *der = NULL;
@@ -305,10 +308,12 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
         }
         X509_PUBKEY_free(xpk);
     } else if (a->keymgmt != NULL) {
+        const OSSL_PROVIDER *pkprov = EVP_KEYMGMT_provider(a->keymgmt);
+        OPENSSL_CTX *libctx = ossl_provider_library_context(pkprov);
         int selection = (OSSL_KEYMGMT_SELECT_PUBLIC_KEY
                          | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS);
         OSSL_ENCODER_CTX *ctx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection, NULL, NULL);
+            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection, libctx, NULL);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
 
