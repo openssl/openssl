@@ -182,6 +182,12 @@ L<ps(1)> on Unix),
 this option should be used with caution.
 Better use B<-passin>.
 
+=item B<-passin> I<arg>
+
+The key password source for key files and certificate PKCS#12 files.
+For more information about the format of B<arg>
+see L<openssl(1)/Pass Phrase Options>.
+
 =item B<-selfsign>
 
 Indicates the issued certificates are to be signed with the key
@@ -195,12 +201,6 @@ certificate appears among the entries in the certificate database
 (see the configuration option B<database>), and uses the same
 serial number counter as all other certificates sign with the
 self-signed certificate.
-
-=item B<-passin> I<arg>
-
-The password source for key files and certificate PKCS#12 files.
-For more information about the format of B<arg>
-see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-notext>
 
