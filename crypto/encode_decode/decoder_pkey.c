@@ -300,17 +300,16 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
     if (data->error_occured)
         goto err;
 
-    /* If we found no decoders to match the keymgmts, we err */
-    if (OSSL_DECODER_CTX_get_num_decoders(ctx) == 0)
-        goto err;
+    if (OSSL_DECODER_CTX_get_num_decoders(ctx) != 0) {
+        if (!OSSL_DECODER_CTX_set_construct(ctx, decoder_construct_EVP_PKEY)
+            || !OSSL_DECODER_CTX_set_construct_data(ctx, data->process_data)
+            || !OSSL_DECODER_CTX_set_cleanup(ctx,
+                                             decoder_clean_EVP_PKEY_construct_arg))
+            goto err;
 
-    if (!OSSL_DECODER_CTX_set_construct(ctx, decoder_construct_EVP_PKEY)
-        || !OSSL_DECODER_CTX_set_construct_data(ctx, data->process_data)
-        || !OSSL_DECODER_CTX_set_cleanup(ctx,
-                                         decoder_clean_EVP_PKEY_construct_arg))
-        goto err;
+        data->process_data = NULL; /* Avoid it being freed */
+    }
 
-    data->process_data = NULL;
     ok = 1;
  err:
     if (data != NULL) {
