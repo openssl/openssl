@@ -444,10 +444,10 @@ extern "C" {
 /*
  * Encoder / decoder parameters
  */
-/* The passphrase may be passed as a utf8 string or an octet string */
 #define OSSL_ENCODER_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER
 #define OSSL_ENCODER_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES
-#define OSSL_ENCODER_PARAM_PASS         "passphrase"
+#define OSSL_ENCODER_PARAM_INPUT_TYPE   "input-type"
+#define OSSL_ENCODER_PARAM_OUTPUT_TYPE  "output-type"
 
 #define OSSL_DECODER_PARAM_CIPHER       OSSL_ALG_PARAM_CIPHER
 #define OSSL_DECODER_PARAM_PROPERTIES   OSSL_ALG_PARAM_PROPERTIES
