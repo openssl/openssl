@@ -40,8 +40,8 @@ L OSSL_STORE    include/openssl/store.h         crypto/store/store_err.c
 L ESS           include/openssl/ess.h           crypto/ess/ess_err.c
 L PROP          include/internal/property.h     crypto/property/property_err.c
 L PROV          providers/common/include/prov/providercommon.h providers/common/provider_err.c
-L OSSL_ENCODER  include/openssl/encoder.h       crypto/encoder/encoder_err.c
-L OSSL_DECODER  include/openssl/decoder.h       crypto/encoder/decoder_err.c
+L OSSL_ENCODER  include/openssl/encoder.h       crypto/encode_decode/encoder_err.c
+L OSSL_DECODER  include/openssl/decoder.h       crypto/encode_decode/decoder_err.c
 L HTTP          include/openssl/http.h          crypto/http/http_err.c
 
 # additional header files to be scanned for function names

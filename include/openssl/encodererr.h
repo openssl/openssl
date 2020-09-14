@@ -30,7 +30,8 @@ int ERR_load_OSSL_ENCODER_strings(void);
 /*
  * OSSL_ENCODER reason codes.
  */
-# define OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY       100
-# define OSSL_ENCODER_R_ENCODER_NOT_FOUND           101
+# define OSSL_ENCODER_R_ENCODER_NOT_FOUND                 101
+# define OSSL_ENCODER_R_INCORRECT_PROPERTY_QUERY          100
+# define OSSL_ENCODER_R_MISSING_GET_PARAMS                102
 
 #endif

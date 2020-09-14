@@ -11,7 +11,9 @@ OSSL_ENCODER_properties,
 OSSL_ENCODER_is_a,
 OSSL_ENCODER_number,
 OSSL_ENCODER_do_all_provided,
-OSSL_ENCODER_names_do_all
+OSSL_ENCODER_names_do_all,
+OSSL_ENCODER_gettable_params,
+OSSL_ENCODER_get_params
 - Encoder method routines
 
 =head1 SYNOPSIS
@@ -34,10 +36,10 @@ OSSL_ENCODER_names_do_all
  void OSSL_ENCODER_names_do_all(const OSSL_ENCODER *encoder,
                                 void (*fn)(const char *name, void *data),
                                 void *data);
+ const OSSL_PARAM *OSSL_ENCODER_gettable_params(OSSL_ENCODER *encoder);
+ int OSSL_ENCODER_get_params(OSSL_ENCODER_CTX *ctx, const OSSL_PARAM params[]);
 
 =head1 DESCRIPTION
-
-=for comment Future development should also talk about decoding
 
 B<OSSL_ENCODER> is a method for encoders, which know how to
 encode an object of some kind to a encoded form, such as PEM,
@@ -77,6 +79,13 @@ OSSL_ENCODER_do_all_provided() traverses all encoder
 implementations by all activated providers in the library context
 I<libctx>, and for each of the implementations, calls I<fn> with the
 implementation method and I<data> as arguments.
+
+OSSL_ENCODER_gettable_params() returns an L<OSSL_PARAM(3)>
+array of parameter descriptors.
+
+OSSL_ENCODER_get_params() attempts to get parameters specified
+with an L<OSSL_PARAM(3)> array I<params>.  Parameters that the
+implementation doesn't recognise should be ignored.
 
 =head1 NOTES
 

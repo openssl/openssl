@@ -29,10 +29,13 @@ struct ossl_encoder_st {
     struct ossl_endecode_base_st base;
     OSSL_FUNC_encoder_newctx_fn *newctx;
     OSSL_FUNC_encoder_freectx_fn *freectx;
+    OSSL_FUNC_encoder_get_params_fn *get_params;
+    OSSL_FUNC_encoder_gettable_params_fn *gettable_params;
     OSSL_FUNC_encoder_set_ctx_params_fn *set_ctx_params;
     OSSL_FUNC_encoder_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_FUNC_encoder_encode_data_fn *encode_data;
-    OSSL_FUNC_encoder_encode_object_fn *encode_object;
+    OSSL_FUNC_encoder_encode_fn *encode;
+    OSSL_FUNC_encoder_import_object_fn *import_object;
+    OSSL_FUNC_encoder_free_object_fn *free_object;
 };
 
 struct ossl_decoder_st {
@@ -47,22 +50,43 @@ struct ossl_decoder_st {
     OSSL_FUNC_decoder_export_object_fn *export_object;
 };
 
-struct ossl_encoder_ctx_st {
-    OSSL_ENCODER *encoder;
-    void *encoderctx;
+struct ossl_encoder_instance_st {
+    OSSL_ENCODER *encoder;       /* Never NULL */
+    void *encoderctx;            /* Never NULL */
+    const char *input_type;      /* May be NULL */
+    const char *output_type;     /* Never NULL */
+};
 
+DEFINE_STACK_OF(OSSL_ENCODER_INSTANCE)
+
+void ossl_encoder_instance_free(OSSL_ENCODER_INSTANCE *encoder_inst);
+
+struct ossl_encoder_ctx_st {
+    /*
+     * The desired output type.  The encoder implementation have a gettable
+     * "output-type" parameter that this will match against.
+     */
+    const char *output_type;
+    /*
+     * Select what parts of an object will be encoded.  This selection is
+     * bit encoded, and the bits correspond to selection bits available with
+     * the provider side operation.  For example, when encoding an EVP_PKEY,
+     * the OSSL_KEYMGMT_SELECT_ macros are used for this.
+     */
     int selection;
 
-    /*-
-     * Output / encoding data, used by OSSL_ENCODER_to_{bio,fp}
-     *
-     * |object|         is the libcrypto object to handle.
-     * |do_output|      performs the actual encoding.
-     *
-     * |do_output| must have intimate knowledge of |object|.
+    /*
+     * Decoders that are components of any current decoding path.
      */
-    const void *object;
-    int (*do_output)(OSSL_ENCODER_CTX *ctx, BIO *out);
+    STACK_OF(OSSL_ENCODER_INSTANCE) *encoder_insts;
+
+    /*
+     * The constructor and destructor of an object to pass to the first
+     * encoder in a chain.
+     */
+    OSSL_ENCODER_CONSTRUCT *construct;
+    OSSL_ENCODER_CLEANUP *cleanup;
+    void *construct_data;
 
     /* For any function that needs a passphrase reader */
     struct ossl_passphrase_data_st pwdata;
