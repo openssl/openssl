@@ -1180,7 +1180,7 @@ static int print_pkey(const EVP_PKEY *pkey, BIO *out, int indent,
 
     ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, "TEXT", selection,
                                            libctx, propquery);
-    if (OSSL_ENCODER_CTX_num_encoders(ctx) != 0)
+    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0)
         ret = OSSL_ENCODER_to_bio(ctx, out);
     OSSL_ENCODER_CTX_free(ctx);
 

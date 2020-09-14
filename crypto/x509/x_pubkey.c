@@ -314,7 +314,7 @@ int i2d_PUBKEY(const EVP_PKEY *a, unsigned char **pp)
 
         if (ctx != NULL
             && out != NULL
-            && OSSL_ENCODER_CTX_num_encoders(ctx) != 0
+            && OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0
             && OSSL_ENCODER_to_bio(ctx, out)
             && BIO_get_mem_ptr(out, &buf) > 0) {
             ret = buf->length;
