@@ -53,11 +53,9 @@ void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx);
 
 /* Utilities that help set specific parameters */
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
-                                    const unsigned char *kstr,
-                                    size_t klen);
+                                    const unsigned char *kstr, size_t klen);
 int OSSL_DECODER_CTX_set_pem_password_cb(OSSL_DECODER_CTX *ctx,
-                                         pem_password_cb *cb,
-                                         void *cbarg);
+                                         pem_password_cb *cb, void *cbarg);
 int OSSL_DECODER_CTX_set_passphrase_cb(OSSL_DECODER_CTX *ctx,
                                        OSSL_PASSPHRASE_CALLBACK *cb,
                                        void *cbarg);
@@ -75,17 +73,20 @@ int OSSL_DECODER_CTX_set_input_type(OSSL_DECODER_CTX *ctx,
 int OSSL_DECODER_CTX_add_decoder(OSSL_DECODER_CTX *ctx, OSSL_DECODER *decoder);
 int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
                                OPENSSL_CTX *libctx, const char *propq);
-int OSSL_DECODER_CTX_num_decoders(OSSL_DECODER_CTX *ctx);
+int OSSL_DECODER_CTX_get_num_decoders(OSSL_DECODER_CTX *ctx);
 
 typedef struct ossl_decoder_instance_st OSSL_DECODER_INSTANCE;
 OSSL_DECODER *
-OSSL_DECODER_INSTANCE_decoder(OSSL_DECODER_INSTANCE *decoder_inst);
-void *OSSL_DECODER_INSTANCE_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
+OSSL_DECODER_INSTANCE_get_decoder(OSSL_DECODER_INSTANCE *decoder_inst);
+void *
+OSSL_DECODER_INSTANCE_get_decoder_ctx(OSSL_DECODER_INSTANCE *decoder_inst);
+const char *
+OSSL_DECODER_INSTANCE_get_input_type(OSSL_DECODER_INSTANCE *decoder_inst);
 
-typedef int (OSSL_DECODER_CONSTRUCT)(OSSL_DECODER_INSTANCE *decoder_inst,
-                                     const OSSL_PARAM *params,
-                                     void *construct_data);
-typedef void (OSSL_DECODER_CLEANUP)(void *construct_data);
+typedef int OSSL_DECODER_CONSTRUCT(OSSL_DECODER_INSTANCE *decoder_inst,
+                                   const OSSL_PARAM *params,
+                                   void *construct_data);
+typedef void OSSL_DECODER_CLEANUP(void *construct_data);
 
 int OSSL_DECODER_CTX_set_construct(OSSL_DECODER_CTX *ctx,
                                    OSSL_DECODER_CONSTRUCT *construct);

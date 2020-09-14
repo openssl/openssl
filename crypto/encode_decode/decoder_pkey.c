@@ -62,9 +62,8 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
                                       void *construct_data)
 {
     struct decoder_EVP_PKEY_data_st *data = construct_data;
-    OSSL_DECODER *decoder =
-        OSSL_DECODER_INSTANCE_decoder(decoder_inst);
-    void *decoderctx = OSSL_DECODER_INSTANCE_decoder_ctx(decoder_inst);
+    OSSL_DECODER *decoder = OSSL_DECODER_INSTANCE_get_decoder(decoder_inst);
+    void *decoderctx = OSSL_DECODER_INSTANCE_get_decoder_ctx(decoder_inst);
     size_t i, end_i;
     /*
      * |object_ref| points to a provider reference to an object, its exact
@@ -207,7 +206,7 @@ static void collect_keymgmt(EVP_KEYMGMT *keymgmt, void *arg)
     if (!EVP_KEYMGMT_up_ref(keymgmt) /* ref++ */)
         return;
     if (sk_EVP_KEYMGMT_push(data->process_data->keymgmts, keymgmt) <= 0) {
-        EVP_KEYMGMT_free(keymgmt); /* ref-- */
+        EVP_KEYMGMT_free(keymgmt);   /* ref-- */
         return;
     }
 
@@ -301,17 +300,16 @@ int ossl_decoder_ctx_setup_for_EVP_PKEY(OSSL_DECODER_CTX *ctx,
     if (data->error_occured)
         goto err;
 
-    /* If we found no decoders to match the keymgmts, we err */
-    if (OSSL_DECODER_CTX_num_decoders(ctx) == 0)
-        goto err;
+    if (OSSL_DECODER_CTX_get_num_decoders(ctx) != 0) {
+        if (!OSSL_DECODER_CTX_set_construct(ctx, decoder_construct_EVP_PKEY)
+            || !OSSL_DECODER_CTX_set_construct_data(ctx, data->process_data)
+            || !OSSL_DECODER_CTX_set_cleanup(ctx,
+                                             decoder_clean_EVP_PKEY_construct_arg))
+            goto err;
 
-    if (!OSSL_DECODER_CTX_set_construct(ctx, decoder_construct_EVP_PKEY)
-        || !OSSL_DECODER_CTX_set_construct_data(ctx, data->process_data)
-        || !OSSL_DECODER_CTX_set_cleanup(ctx,
-                                         decoder_clean_EVP_PKEY_construct_arg))
-        goto err;
+        data->process_data = NULL; /* Avoid it being freed */
+    }
 
-    data->process_data = NULL;
     ok = 1;
  err:
     if (data != NULL) {
