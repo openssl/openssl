@@ -34,12 +34,12 @@ static OSSL_PARAM *construct_tls1_prf_params(const char *digest, const char *sec
     OSSL_PARAM *p = params;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char*)digest, strlen(digest));
+                                            (char *)digest, strlen(digest));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
-                                             (unsigned char*)secret,
+                                             (unsigned char *)secret,
                                              strlen(secret));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SEED,
-                                             (unsigned char*)seed,
+                                             (unsigned char *)seed,
                                              strlen(seed));
     *p = OSSL_PARAM_construct_end();
 
@@ -195,7 +195,7 @@ static OSSL_PARAM *construct_hkdf_params(char *digest, char *key,
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                              salt, strlen(salt));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
-                                             (unsigned char*)key, keylen);
+                                             (unsigned char *)key, keylen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                              info, strlen(info));
     *p = OSSL_PARAM_construct_end();
@@ -904,7 +904,7 @@ static int test_kdf_kbkdf_empty_key(void)
     EVP_KDF_CTX *kctx;
     OSSL_PARAM *params;
 
-    static unsigned char key[] = {};
+    static unsigned char key[] = {0x01};
     unsigned char result[32] = { 0 };
 
     params = construct_kbkdf_params("sha256", "HMAC", key, 0, "prf", "test");
