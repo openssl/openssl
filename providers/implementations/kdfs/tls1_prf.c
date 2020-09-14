@@ -151,6 +151,10 @@ static int kdf_tls1_prf_derive(void *vctx, unsigned char *key,
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_SEED);
         return 0;
     }
+    if (keylen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
 
     return tls1_prf_alg(ctx->P_hash, ctx->P_sha1,
                         ctx->sec, ctx->seclen,

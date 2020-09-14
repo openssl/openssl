@@ -212,6 +212,12 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
         return 0;
     }
 
+    /* Fail if the output length is zero */
+    if (keylen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
+        return 0;
+    }
+
     h = EVP_MAC_size(ctx->ctx_init);
     if (h == 0)
         goto done;
