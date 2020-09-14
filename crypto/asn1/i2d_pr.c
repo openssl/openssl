@@ -31,16 +31,18 @@ int i2d_PrivateKey(const EVP_PKEY *a, unsigned char **pp)
         return ret;
     }
     if (a->keymgmt != NULL) {
-        const char *encprop = OSSL_ENCODER_PrivateKey_TO_DER_PQ;
+        /* The private key includes everything */
+        int selection =
+            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR;
         OSSL_ENCODER_CTX *ctx =
-            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, encprop);
+            OSSL_ENCODER_CTX_new_by_EVP_PKEY(a, "DER", selection, NULL, NULL);
         BIO *out = BIO_new(BIO_s_mem());
         BUF_MEM *buf = NULL;
         int ret = -1;
 
         if (ctx != NULL
             && out != NULL
-            && OSSL_ENCODER_CTX_get_encoder(ctx) != NULL
+            && OSSL_ENCODER_CTX_get_num_encoders(ctx) != 0
             && OSSL_ENCODER_to_bio(ctx, out)
             && BIO_get_mem_ptr(out, &buf) > 0) {
             ret = buf->length;

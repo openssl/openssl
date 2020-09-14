@@ -12,17 +12,37 @@
  * moved here.
  */
 
+#include <openssl/core_dispatch.h>
 #include <openssl/pem.h>
 #include <openssl/encoder.h>
+
+/*
+ * Selectors, named according to the ASN.1 names used throughout libcrypto.
+ *
+ * Note that these are not absolutely mandatory, they are rather a wishlist
+ * of sorts.  The provider implementations are free to make choices that
+ * make sense for them, based on these selectors.
+ * For example, the EC backend is likely to really just output the private
+ * key to a PKCS#8 structure, even thought PEM_SELECTION_PrivateKey specifies
+ * the public key as well.  This is fine, as long as the corresponding
+ * decoding operation can return an object that contains what libcrypto
+ * expects.
+ */
+# define PEM_SELECTION_PUBKEY                                           \
+    (OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_PUBLIC_KEY)
+# define PEM_SELECTION_PrivateKey                                       \
+    (OSSL_KEYMGMT_SELECT_ALL_PARAMETERS | OSSL_KEYMGMT_SELECT_KEYPAIR)
+# define PEM_SELECTION_Parameters OSSL_KEYMGMT_SELECT_ALL_PARAMETERS
 
 /* Alternative IMPLEMENT macros for provided encoders */
 
 # define IMPLEMENT_PEM_provided_write_body_vars(type, asn1)             \
     int ret = 0;                                                        \
-    const char *pq = OSSL_ENCODER_##asn1##_TO_PEM_PQ;                   \
-    OSSL_ENCODER_CTX *ctx = OSSL_ENCODER_CTX_new_by_##type(x, pq);      \
+    OSSL_ENCODER_CTX *ctx =                                             \
+        OSSL_ENCODER_CTX_new_by_##type(x, "PEM", PEM_SELECTION_##asn1,  \
+                                       NULL, NULL);                     \
                                                                         \
-    if (ctx != NULL && OSSL_ENCODER_CTX_get_encoder(ctx) == NULL) {     \
+    if (OSSL_ENCODER_CTX_get_num_encoders(ctx) == 0) {                  \
         OSSL_ENCODER_CTX_free(ctx);                                     \
         goto legacy;                                                    \
     }
@@ -45,8 +65,8 @@
                 && !OSSL_ENCODER_CTX_set_passphrase(ctx, kstr, klen))   \
                 ret = 0;                                                \
             else if (cb != NULL                                         \
-                     && !OSSL_ENCODER_CTX_set_passphrase_cb(ctx,        \
-                                                            cb, u))     \
+                     && !OSSL_ENCODER_CTX_set_pem_password_cb(ctx,      \
+                                                              cb, u))   \
                 ret = 0;                                                \
         }                                                               \
     }                                                                   \
