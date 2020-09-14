@@ -153,36 +153,49 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
 }
 
 static int test_print_key_type_using_encoder(const char *alg, int type,
-                                                const EVP_PKEY *pk)
+                                             const EVP_PKEY *pk)
 {
-    const char *pq;
+    const char *output_type;
+    int selection;
     OSSL_ENCODER_CTX *ctx = NULL;
     BIO *membio = BIO_new(BIO_s_mem());
     int ret = 0;
 
     switch (type) {
     case PRIV_TEXT:
-        pq = OSSL_ENCODER_PrivateKey_TO_TEXT_PQ;
+        output_type = "TEXT";
+        selection = OSSL_KEYMGMT_SELECT_KEYPAIR
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_PEM:
-        pq = OSSL_ENCODER_PrivateKey_TO_PEM_PQ;
+        output_type = "PEM";
+        selection = OSSL_KEYMGMT_SELECT_KEYPAIR
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_DER:
-        pq = OSSL_ENCODER_PrivateKey_TO_DER_PQ;
+        output_type = "DER";
+        selection = OSSL_KEYMGMT_SELECT_KEYPAIR
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_TEXT:
-        pq = OSSL_ENCODER_PUBKEY_TO_TEXT_PQ;
+        output_type = "TEXT";
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_PEM:
-        pq = OSSL_ENCODER_PUBKEY_TO_PEM_PQ;
+        output_type = "PEM";
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_DER:
-        pq = OSSL_ENCODER_PUBKEY_TO_DER_PQ;
+        output_type = "DER";
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     default:
@@ -195,9 +208,11 @@ static int test_print_key_type_using_encoder(const char *alg, int type,
 
     /* Make a context, it's valid for several prints */
     TEST_note("Setting up a OSSL_ENCODER context with passphrase");
-    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, pq))
+    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, output_type,
+                                                         selection,
+                                                         NULL, NULL))
         /* Check that this operation is supported */
-        || !TEST_ptr(OSSL_ENCODER_CTX_get_encoder(ctx)))
+        || !TEST_int_ne(OSSL_ENCODER_CTX_get_num_encoders(ctx), 0))
         goto err;
 
     /* Use no cipher.  This should give us an unencrypted PEM */
