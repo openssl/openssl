@@ -14,7 +14,7 @@
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
 
 #define GCM_IV_DEFAULT_SIZE 12 /* IV's for AES_GCM should normally be 12 bytes */
-#define GCM_IV_MAX_SIZE     64
+#define GCM_IV_MAX_SIZE     (1024 / 8)
 #define GCM_TAG_MAX_SIZE    16
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__s390__)
