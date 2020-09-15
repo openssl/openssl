@@ -143,15 +143,15 @@ subtest "generating certificate requests with Ed25519" => sub {
 
     SKIP: {
         skip "Ed25519 is not supported by this OpenSSL build", 2
-            if disabled("ec") || !@tmp_loader_hack;
+            if disabled("ec");
 
-        ok(run(app(["openssl", "req", @tmp_loader_hack,
+        ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq-ed25519.pem", "-utf8",
                     "-key", srctop_file("test", "tested25519.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req", @tmp_loader_hack,
+        ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-ed25519.pem", "-noout"])),
            "Verifying signature on request");
@@ -163,15 +163,15 @@ subtest "generating certificate requests with Ed448" => sub {
 
     SKIP: {
         skip "Ed448 is not supported by this OpenSSL build", 2
-            if disabled("ec") || !@tmp_loader_hack;
+            if disabled("ec");
 
-        ok(run(app(["openssl", "req", @tmp_loader_hack,
+        ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-new", "-out", "testreq-ed448.pem", "-utf8",
                     "-key", srctop_file("test", "tested448.pem")])),
            "Generating request");
 
-        ok(run(app(["openssl", "req", @tmp_loader_hack,
+        ok(run(app(["openssl", "req",
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq-ed448.pem", "-noout"])),
            "Verifying signature on request");
