@@ -1839,7 +1839,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx, ENGINE *engine)
         CMP_err("missing -tls_used option since -server URL indicates https");
         goto err;
     }
-    strncpy(server_port, port, sizeof(server_port));
+    BIO_snprintf(server_port, sizeof(server_port), "%s", port);
     used_path = opt_path != NULL ? opt_path : path;
     if (!OSSL_CMP_CTX_set1_server(ctx, server)
             || !OSSL_CMP_CTX_set_serverPort(ctx, portnum)
