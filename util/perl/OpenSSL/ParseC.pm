@@ -601,6 +601,7 @@ my @chandlers = (
       massager => sub { return (); }
     },
     # Function returning function pointer declaration
+    # This sort of declaration may have a body (inline functions, for example)
     { regexp   => qr/(?:(typedef)\s?)?          # Possible typedef      ($1)
                      ((?:\w|\*|\s)*?)           # Return type           ($2)
                      \s?                        # Possible space
@@ -609,14 +610,15 @@ my @chandlers = (
                      (\(.*\))                   # Parameters            ($4)
                      \)>>>
                      <<<(\(.*\))>>>             # F.p. parameters       ($5)
-                     ;
+                     (?:<<<\{.*\}>>>|;)         # Body or semicolon
                     /x,
       massager => sub {
-          return ("", $3, 'F', "", "$2(*$4)$5", all_conds())
+          return ("", $3, 'T', "", "$2(*$4)$5", all_conds())
               if defined $1;
           return ("", $3, 'F', "$2(*)$5", "$2(*$4)$5", all_conds()); }
     },
     # Function pointer declaration, or typedef thereof
+    # This sort of declaration never has a function body
     { regexp   => qr/(?:(typedef)\s?)?          # Possible typedef      ($1)
                      ((?:\w|\*|\s)*?)           # Return type           ($2)
                      <<<\(\*([[:alpha:]_]\w*)\)>>> # T.d. or var name   ($3)
@@ -630,12 +632,13 @@ my @chandlers = (
       },
     },
     # Function declaration, or typedef thereof
+    # This sort of declaration may have a body (inline functions, for example)
     { regexp   => qr/(?:(typedef)\s?)?          # Possible typedef      ($1)
                      ((?:\w|\*|\s)*?)           # Return type           ($2)
                      \s?                        # Possible space
                      ([[:alpha:]_]\w*)          # Function name         ($3)
                      <<<(\(.*\))>>>             # Parameters            ($4)
-                     ;
+                     (?:<<<\{.*\}>>>|;)         # Body or semicolon
                     /x,
       massager => sub {
           return ("", $3, 'T', "", "$2$4", all_conds())
