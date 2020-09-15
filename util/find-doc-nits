@@ -104,6 +104,9 @@ my $ignored = qr/(?| ^i2d_
                  |   ^DEFINE_LHASH_OF_INTERNAL
                  )/x;
 
+# A common regexp for C symbol names
+my $C_symbol = qr/\b[[:alpha:]][_[:alnum:]]*\b/;
+
 # Collect all POD files, both internal and public, and regardless of location
 # We collect them in a hash table with each file being a key, so we can attach
 # tags to them.  For example, internal docs will have the word "internal"
@@ -367,27 +370,27 @@ sub name_synopsis {
         if ( $line =~ /env (\S*)=/ ) {
             # environment variable env NAME=...
             $sym = $1;
-        } elsif ( $line =~ /typedef.*\(\*?(\S+)\)\s*\(/ ) {
+        } elsif ( $line =~ /typedef.*\(\*?($C_symbol)\)\s*\(/ ) {
             # a callback function pointer: typedef ... (*NAME)(...
             # a callback function signature: typedef ... (NAME)(...
             $sym = $1;
-        } elsif ( $line =~ /typedef.* (\S+)\s*\(/ ) {
+        } elsif ( $line =~ /typedef.*($C_symbol)\s*\(/ ) {
             # a callback function signature: typedef ... NAME(...
             $sym = $1;
-        } elsif ( $line =~ /typedef.* (\S+);/ ) {
+        } elsif ( $line =~ /typedef.*($C_symbol);/ ) {
             # a simple typedef: typedef ... NAME;
             $is_prototype = 0;
             $sym = $1;
-        } elsif ( $line =~ /enum (\S*) \{/ ) {
+        } elsif ( $line =~ /enum ($C_symbol) \{/ ) {
             # an enumeration: enum ... {
             $sym = $1;
-        } elsif ( $line =~ /#\s*(?:define|undef) ([A-Za-z0-9_]+)/ ) {
+        } elsif ( $line =~ /#\s*(?:define|undef) ($C_symbol)/ ) {
             $is_prototype = 0;
             $sym = $1;
-        } elsif ( $line =~ /^[^\(]*?\(\*([A-Za-z0-9_]+)\s*\(/ ) {
+        } elsif ( $line =~ /^[^\(]*?\(\*($C_symbol)\s*\(/ ) {
             # a function returning a function pointer: TYPE (*NAME(args))(args)
             $sym = $1;
-        } elsif ( $line =~ /^[^\(]*?([A-Za-z0-9_]+)\s*\(/ ) {
+        } elsif ( $line =~ /^[^\(]*?($C_symbol)\s*\(/ ) {
             # a simple function declaration
             $sym = $1;
         }
