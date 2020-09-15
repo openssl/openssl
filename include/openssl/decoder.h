@@ -53,11 +53,9 @@ void OSSL_DECODER_CTX_free(OSSL_DECODER_CTX *ctx);
 
 /* Utilities that help set specific parameters */
 int OSSL_DECODER_CTX_set_passphrase(OSSL_DECODER_CTX *ctx,
-                                    const unsigned char *kstr,
-                                    size_t klen);
+                                    const unsigned char *kstr, size_t klen);
 int OSSL_DECODER_CTX_set_pem_password_cb(OSSL_DECODER_CTX *ctx,
-                                         pem_password_cb *cb,
-                                         void *cbarg);
+                                         pem_password_cb *cb, void *cbarg);
 int OSSL_DECODER_CTX_set_passphrase_cb(OSSL_DECODER_CTX *ctx,
                                        OSSL_PASSPHRASE_CALLBACK *cb,
                                        void *cbarg);

@@ -6,7 +6,7 @@ OSSL_DECODER_CTX,
 OSSL_DECODER_CTX_new,
 OSSL_DECODER_settable_ctx_params,
 OSSL_DECODER_CTX_set_params,
-OSSL_DECODER_CTX_free
+OSSL_DECODER_CTX_free,
 OSSL_DECODER_CTX_set_input_type,
 OSSL_DECODER_CTX_add_decoder,
 OSSL_DECODER_CTX_add_extra,
