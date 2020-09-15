@@ -4,7 +4,6 @@
 
 OSSL_ENCODER_CTX,
 OSSL_ENCODER_CTX_new,
-OSSL_ENCODER_CTX_get_encoder,
 OSSL_ENCODER_settable_ctx_params,
 OSSL_ENCODER_CTX_set_params,
 OSSL_ENCODER_CTX_free
@@ -17,7 +16,6 @@ OSSL_ENCODER_CTX_free
  typedef struct ossl_encoder_ctx_st OSSL_ENCODER_CTX;
 
  OSSL_ENCODER_CTX *OSSL_ENCODER_CTX_new(OSSL_ENCODER *encoder);
- const OSSL_ENCODER *OSSL_ENCODER_CTX_get_encoder(OSSL_ENCODER_CTX *ctx);
  const OSSL_PARAM *OSSL_ENCODER_settable_ctx_params(OSSL_ENCODER *encoder);
  int OSSL_ENCODER_CTX_set_params(OSSL_ENCODER_CTX *ctx,
                                  const OSSL_PARAM params[]);

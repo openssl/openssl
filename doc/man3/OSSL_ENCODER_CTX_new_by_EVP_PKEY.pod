@@ -7,7 +7,7 @@ OSSL_ENCODER_CTX_set_cipher,
 OSSL_ENCODER_CTX_set_passphrase,
 OSSL_ENCODER_CTX_set_pem_password_cb,
 OSSL_ENCODER_CTX_set_passphrase_cb,
-OSSL_ENCODER_CTX_set_passphrase_ui,
+OSSL_ENCODER_CTX_set_passphrase_ui
 - Encoder routines to encode EVP_PKEYs
 
 =head1 SYNOPSIS
@@ -30,6 +30,9 @@ OSSL_ENCODER_CTX_set_passphrase_ui,
  int OSSL_ENCODER_CTX_set_passphrase_ui(OSSL_ENCODER_CTX *ctx,
                                         const UI_METHOD *ui_method,
                                         void *ui_data);
+ int OSSL_ENCODER_CTX_set_passphrase_cb(OSSL_ENCODER_CTX *ctx,
+                                        OSSL_PASSPHRASE_CALLBACK *cb,
+                                        void *cbarg)
 
 =head1 DESCRIPTION
 
@@ -46,7 +49,7 @@ implicitly fetched using I<libctx> and I<propquery>.
 
 If no suitable encoder implementation is found,
 OSSL_ENCODER_CTX_new_by_EVP_PKEY() still creates a B<OSSL_ENCODER_CTX>, but
-with no associated encoder (L<OSSL_ENCODER_CTX_num_encoder(3)> returns
+with no associated encoder (L<OSSL_ENCODER_CTX_get_num_encoders(3)> returns
 zero).  This helps the caller distinguish between an error when creating the
 B<OSSL_ENCODER_CTX>, and the lack the encoder support and act accordingly.
 
