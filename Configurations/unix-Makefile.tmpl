@@ -1083,8 +1083,8 @@ errors:
            include/openssl/ebcdic.h
            include/openssl/opensslconf.h
            include/openssl/symhacks.h ) );
-   our @cryptoheaders = ();
-   our @sslheaders = ();
+   our %cryptoheaders = ();
+   our %sslheaders = ();
    foreach my $d ( qw( include/openssl include/internal ) ) {
        my @header_patterns =
            map { catfile($config{sourcedir}, $d, $_) } ( '*.h', '*.h.in' );
@@ -1104,20 +1104,20 @@ errors:
            # file to be added must be either in the public header directory
            # or one of the pre-declared internal headers, and must under no
            # circumstances be one of those that must be skipped.
-           push @cryptoheaders, $new_f
+           $cryptoheaders{$new_f} = 1
                if (($d eq 'include/openssl'
                     || ( grep { $_ eq $fn } @cryptoheaders_tmpl ))
                    && !( grep { $_ eq $fn } @cryptoskipheaders ));
            # The logic to add files to @sslheaders is much simpler...
-           push @sslheaders, $new_f if grep { $_ eq $fn } @sslheaders_tmpl;
+           $sslheaders{$new_f} = 1 if grep { $_ eq $fn } @sslheaders_tmpl;
        }
    }
    "";
 -}
 CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
-                      fill_lines(" ", $COLUMNS - 14, sort @cryptoheaders)) -}
+                      fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
-                   fill_lines(" ", $COLUMNS - 11, sort @sslheaders)) -}
+                   fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
 ordinals: build_generated
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION) --no-warnings \
                 --ordinals $(SRCDIR)/util/libcrypto.num \
