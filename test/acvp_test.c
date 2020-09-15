@@ -14,6 +14,7 @@
  * providers/fips/self_test_kats.c
  */
 
+#include <string.h>
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
@@ -23,13 +24,11 @@
 #include <openssl/rsa.h>
 #include <openssl/param_build.h>
 #include <openssl/provider.h>
+#include <openssl/self_test.h>
 #include "testutil.h"
 #include "testutil/output.h"
 #include "acvp_test.inc"
 #include "internal/nelem.h"
-
-static OSSL_PROVIDER *prov_null = NULL;
-static OPENSSL_CTX *libctx = NULL;
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
@@ -37,6 +36,16 @@ typedef enum OPTION_choice {
     OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
+
+typedef struct st_args {
+    int enable;
+    int called;
+} SELF_TEST_ARGS;
+
+static OSSL_PROVIDER *prov_null = NULL;
+static OPENSSL_CTX *libctx = NULL;
+static SELF_TEST_ARGS self_test_args = { 0 };
+static OSSL_CALLBACK self_test_events;
 
 const OPTIONS *test_get_options(void)
 {
@@ -119,10 +128,13 @@ static int ecdsa_keygen_test(int id)
     size_t priv_len = 0, pubx_len = 0, puby_len = 0;
     const struct ecdsa_keygen_st *tst = &ecdsa_keygen_data[id];
 
+    self_test_args.called = 0;
+    self_test_args.enable = 1;
     if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", NULL))
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_group_name(ctx, tst->curve_name))
         || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
+        || !TEST_int_eq(self_test_args.called, 3)
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_PRIV_KEY, &priv,
                                         &priv_len))
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_EC_PUB_X, &pubx,
@@ -136,6 +148,8 @@ static int ecdsa_keygen_test(int id)
     test_output_memory("d", priv, priv_len);
     ret = 1;
 err:
+    self_test_args.enable = 0;
+    self_test_args.called = 0;
     OPENSSL_clear_free(priv, priv_len);
     OPENSSL_free(pubx);
     OPENSSL_free(puby);
@@ -1292,6 +1306,37 @@ err:
 }
 #endif /* OPENSSL_NO_RSA */
 
+static int self_test_events(const OSSL_PARAM params[], void *varg)
+{
+    SELF_TEST_ARGS *args = varg;
+    const OSSL_PARAM *p = NULL;
+    const char *phase = NULL, *type = NULL, *desc = NULL;
+    int ret = 0;
+
+    if (!args->enable)
+        return 1;
+
+    args->called++;
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_PHASE);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    phase = (const char *)p->data;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_DESC);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    desc = (const char *)p->data;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PROV_PARAM_SELF_TEST_TYPE);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING)
+        goto err;
+    type = (const char *)p->data;
+
+    BIO_printf(bio_out, "%s %s %s\n", phase, desc, type);
+    ret = 1;
+err:
+    return ret;
+}
 
 int setup_tests(void)
 {
@@ -1324,6 +1369,7 @@ int setup_tests(void)
         opt_printf_stderr("Failed to load config\n");
         return 0;
     }
+    OSSL_SELF_TEST_set_callback(libctx, self_test_events, &self_test_args);
 
     ADD_ALL_TESTS(cipher_enc_dec_test, OSSL_NELEM(cipher_enc_data));
     ADD_ALL_TESTS(aes_ccm_enc_dec_test, OSSL_NELEM(aes_ccm_enc_data));
