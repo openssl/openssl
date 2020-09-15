@@ -20,6 +20,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommonerr.h"
 #include "prov/provider_ctx.h"
+#include "prov/der_ecx.h"
 #include "crypto/ecx.h"
 
 static OSSL_FUNC_signature_newctx_fn eddsa_newctx;
@@ -30,10 +31,17 @@ static OSSL_FUNC_signature_digest_verify_fn ed25519_digest_verify;
 static OSSL_FUNC_signature_digest_verify_fn ed448_digest_verify;
 static OSSL_FUNC_signature_freectx_fn eddsa_freectx;
 static OSSL_FUNC_signature_dupctx_fn eddsa_dupctx;
+static OSSL_FUNC_signature_get_ctx_params_fn eddsa_get_ctx_params;
+static OSSL_FUNC_signature_gettable_ctx_params_fn eddsa_gettable_ctx_params;
 
 typedef struct {
     OPENSSL_CTX *libctx;
     ECX_KEY *key;
+
+    /* The Algorithm Identifier of the signature algorithm */
+    unsigned char aid_buf[OSSL_MAX_ALGORITHM_ID_SIZE];
+    unsigned char *aid;
+    size_t  aid_len;
 } PROV_EDDSA_CTX;
 
 static void *eddsa_newctx(void *provctx, const char *propq_unused)
@@ -59,6 +67,8 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
 {
     PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
     ECX_KEY *edkey = (ECX_KEY *)vedkey;
+    WPACKET pkt;
+    int ret;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -72,6 +82,33 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
         PROVerr(0, ERR_R_INTERNAL_ERROR);
         return 0;
     }
+
+    /*
+     * TODO(3.0) Should we care about DER writing errors?
+     * All it really means is that for some reason, there's no
+     * AlgorithmIdentifier to be had, but the operation itself is
+     * still valid, just as long as it's not used to construct
+     * anything that needs an AlgorithmIdentifier.
+     */
+    peddsactx->aid_len = 0;
+    ret = WPACKET_init_der(&pkt, peddsactx->aid_buf, sizeof(peddsactx->aid_buf));
+    switch (edkey->type) {
+    case ECX_KEY_TYPE_ED25519:
+        ret = ret && DER_w_algorithmIdentifier_ED25519(&pkt, -1, edkey);
+        break;
+    case ECX_KEY_TYPE_ED448:
+        ret = ret && DER_w_algorithmIdentifier_ED448(&pkt, -1, edkey);
+        break;
+    default:
+        /* Should never happen */
+        PROVerr(0, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (ret && WPACKET_finish(&pkt)) {
+        WPACKET_get_total_written(&pkt, &peddsactx->aid_len);
+        peddsactx->aid = WPACKET_get_curr(&pkt);
+    }
+    WPACKET_cleanup(&pkt);
 
     peddsactx->key = edkey;
 
@@ -198,6 +235,32 @@ static void *eddsa_dupctx(void *vpeddsactx)
     return NULL;
 }
 
+static int eddsa_get_ctx_params(void *vpeddsactx, OSSL_PARAM *params)
+{
+    PROV_EDDSA_CTX *peddsactx = (PROV_EDDSA_CTX *)vpeddsactx;
+    OSSL_PARAM *p;
+
+    if (peddsactx == NULL || params == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_SIGNATURE_PARAM_ALGORITHM_ID);
+    if (p != NULL && !OSSL_PARAM_set_octet_string(p, peddsactx->aid,
+                                                  peddsactx->aid_len))
+        return 0;
+
+    return 1;
+}
+
+static const OSSL_PARAM known_gettable_ctx_params[] = {
+    OSSL_PARAM_octet_string(OSSL_SIGNATURE_PARAM_ALGORITHM_ID, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *provctx)
+{
+    return known_gettable_ctx_params;
+}
+
 const OSSL_DISPATCH ed25519_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
@@ -210,6 +273,9 @@ const OSSL_DISPATCH ed25519_signature_functions[] = {
       (void (*)(void))ed25519_digest_verify },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))eddsa_freectx },
     { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))eddsa_dupctx },
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))eddsa_get_ctx_params },
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+      (void (*)(void))eddsa_gettable_ctx_params },
     { 0, NULL }
 };
 
@@ -225,5 +291,8 @@ const OSSL_DISPATCH ed448_signature_functions[] = {
       (void (*)(void))ed448_digest_verify },
     { OSSL_FUNC_SIGNATURE_FREECTX, (void (*)(void))eddsa_freectx },
     { OSSL_FUNC_SIGNATURE_DUPCTX, (void (*)(void))eddsa_dupctx },
+    { OSSL_FUNC_SIGNATURE_GET_CTX_PARAMS, (void (*)(void))eddsa_get_ctx_params },
+    { OSSL_FUNC_SIGNATURE_GETTABLE_CTX_PARAMS,
+      (void (*)(void))eddsa_gettable_ctx_params },
     { 0, NULL }
 };

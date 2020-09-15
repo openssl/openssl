@@ -18,6 +18,7 @@ SOURCE[../../libnonfips.a]=rsa.c
 DEPEND[rsa.o]=../../common/include/prov/der_rsa.h
 DEPEND[dsa.o]=../../common/include/prov/der_dsa.h
 DEPEND[ecdsa.o]=../../common/include/prov/der_ec.h
+DEPEND[eddsa.o]=../../common/include/prov/der_ecx.h
 
 SOURCE[../../libfips.a]=mac_legacy.c
 SOURCE[../../libnonfips.a]=mac_legacy.c
