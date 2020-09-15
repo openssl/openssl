@@ -94,8 +94,7 @@ Filename to output to, or standard output by default.
 =item B<-sign filename>
 
 Digitally sign the digest using the private key in "filename". Note this option
-does not support Ed25519 or Ed448 private keys. Use the B<pkeyutl> command
-instead for this.
+does not support Ed25519 or Ed448 private keys.
 
 =item B<-keyform arg>
 

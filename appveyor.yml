@@ -1,3 +1,6 @@
+image:
+  - Visual Studio 2017
+
 platform:
     - x64
     - x86
@@ -5,7 +8,7 @@ platform:
 environment:
     fast_finish: true
     matrix:
-        - VSVER: 14
+        - VSVER: 15
 
 configuration:
     - shared
@@ -13,6 +16,12 @@ configuration:
     - minimal
 
 before_build:
+    - ps: >-
+        Install-Module VSSetup -Scope CurrentUser
+    - ps: >-
+        Get-VSSetupInstance -All
+    - ps: >-
+        gci env:* | sort-object name
     - ps: >-
         If ($env:Platform -Match "x86") {
             $env:VCVARS_PLATFORM="x86"
@@ -25,12 +34,11 @@ before_build:
         If ($env:Configuration -Match "shared") {
             $env:SHARED="no-makedepend"
         } ElseIf ($env:Configuration -Match "minimal") {
-            $env:SHARED="no-shared no-dso no-makedepend no-autoload-config no-engine no-comp no-cms no-dh no-dsa no-ec2m no-srp no-des no-mdc2 no-md4 no-rc2 no-rc4 no-bf no-camellia no-cast no-idea no-seed no-whirlpool no-ocsp no-sm2 no-sm3 no-sm4 no-ssl3 no-ssl3-method no-psk no-heartbeats no-nextprotoneg no-sctp no-srtp no-asm -DOPENSSL_SMALL_FOOTPRINT"
+            $env:SHARED="no-shared no-dso no-makedepend no-aria no-async no-autoload-config no-blake2 no-bf no-camellia no-cast no-chacha no-cmac no-cms no-comp no-ct no-des no-dgram no-dh no-dsa no-dtls no-ec2m no-engine no-filenames no-gost no-idea no-mdc2 no-md4 no-multiblock no-nextprotoneg no-ocsp no-ocb no-poly1305 no-psk no-rc2 no-rc4 no-rmd160 no-seed no-siphash no-sm2 no-sm3 no-sm4 no-srp no-srtp no-ssl3 no-ssl3-method no-ts no-ui-console no-whirlpool no-asm -DOPENSSL_SMALL_FOOTPRINT"
         } Else {
             $env:SHARED="no-shared no-makedepend"
         }
-    - ps: $env:VSCOMNTOOLS=(Get-Content ("env:VS" + "$env:VSVER" + "0COMNTOOLS"))
-    - call "%VSCOMNTOOLS%\..\..\VC\vcvarsall.bat" %VCVARS_PLATFORM%
+    - call "C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvarsall.bat" %VCVARS_PLATFORM%
     - mkdir _build
     - cd _build
     - perl ..\Configure %TARGET% %SHARED%
@@ -38,7 +46,8 @@ before_build:
     - cd ..
     - ps: >-
         if (-not $env:APPVEYOR_PULL_REQUEST_NUMBER`
-            -or (&git log -2 | Select-String "\[extended tests\]") ) {
+            -or (&git log -1 $env:APPVEYOR_PULL_REQUEST_HEAD_COMMIT |
+                 Select-String "\[extended tests\]") ) {
             $env:EXTENDED_TESTS="yes"
         }
 

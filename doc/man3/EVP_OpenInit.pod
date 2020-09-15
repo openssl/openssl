@@ -16,7 +16,7 @@ EVP_OpenInit, EVP_OpenUpdate, EVP_OpenFinal - EVP envelope decryption
 
 =head1 DESCRIPTION
 
-The EVP envelope routines are a high level interface to envelope
+The EVP envelope routines are a high-level interface to envelope
 decryption. They decrypt a public key encrypted symmetric key and
 then decrypt data using it.
 

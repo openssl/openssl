@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -547,9 +547,16 @@ ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
          */
         tmp = EC_GROUP_get_curve_name(group);
         if (tmp) {
-            ret->type = 0;
-            if ((ret->value.named_curve = OBJ_nid2obj(tmp)) == NULL)
+            ASN1_OBJECT *asn1obj = OBJ_nid2obj(tmp);
+
+            if (asn1obj == NULL || OBJ_length(asn1obj) == 0) {
+                ASN1_OBJECT_free(asn1obj);
+                ECerr(EC_F_EC_GROUP_GET_ECPKPARAMETERS, EC_R_MISSING_OID);
                 ok = 0;
+            } else {
+                ret->type = 0;
+                ret->value.named_curve = asn1obj;
+            }
         } else
             /* we don't know the nid => ERROR */
             ok = 0;
@@ -1297,5 +1304,7 @@ int ECDSA_size(const EC_KEY *r)
     i = i2d_ASN1_INTEGER(&bs, NULL);
     i += i;                     /* r and s */
     ret = ASN1_object_size(1, i, V_ASN1_SEQUENCE);
+    if (ret < 0)
+        return 0;
     return ret;
 }

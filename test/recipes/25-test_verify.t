@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 135;
+plan tests => 138;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -222,6 +222,10 @@ ok(verify("ee-client", "sslclient", [qw(ee+clientAuth)], [], "-partial_chain"),
    "accept direct match with client trust");
 ok(!verify("ee-client", "sslclient", [qw(ee-clientAuth)], [], "-partial_chain"),
    "reject direct match with client mistrust");
+ok(verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept non-ca with pathlen:0 by default");
+ok(!verify("ee-pathlen", "sslserver", [qw(root-cert)], [qw(ca-cert)], "-x509_strict"),
+   "reject non-ca with pathlen:0 with strict flag");
 
 # Proxy certificates
 ok(!verify("pc1-cert", "sslclient", [qw(root-cert)], [qw(ee-client ca-cert)]),
@@ -363,6 +367,9 @@ ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"]
     "Not too many names and constraints to check (3)");
 ok(verify("root-cert-rsa2", "sslserver", ["root-cert-rsa2"], [], "-check_ss_sig"),
     "Public Key Algorithm rsa instead of rsaEncryption");
+
+    ok(verify("ee-self-signed", "sslserver", ["ee-self-signed"], []),
+       "accept trusted self-signed EE cert excluding key usage keyCertSign");
 
 SKIP: {
     skip "Ed25519 is not supported by this OpenSSL build", 1

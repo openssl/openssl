@@ -432,9 +432,9 @@ used in conjunction with B<-early_data>.
 =item B<-id_prefix val>
 
 Generate SSL/TLS session IDs prefixed by B<val>. This is mostly useful
-for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
+for testing any SSL/TLS code (e.g. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
-IDs (eg. with a certain prefix).
+IDs (e.g. with a certain prefix).
 
 =item B<-rand file...>
 

@@ -284,6 +284,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             ssl_free(b);
             if (!ssl_new(b))
                 return 0;
+            bs = BIO_get_data(b);
         }
         BIO_set_shutdown(b, num);
         ssl = (SSL *)ptr;

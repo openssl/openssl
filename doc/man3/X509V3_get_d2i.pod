@@ -78,7 +78,7 @@ of a certificate a CRL or a CRL entry respectively.
 =head1 NOTES
 
 In almost all cases an extension can occur at most once and multiple
-occurrences is an error. Therefore the B<idx> parameter is usually B<NULL>.
+occurrences is an error. Therefore, the B<idx> parameter is usually B<NULL>.
 
 The B<flags> parameter may be one of the following values.
 

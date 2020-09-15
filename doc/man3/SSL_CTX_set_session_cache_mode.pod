@@ -96,7 +96,7 @@ session caching (callback) that is configured for the SSL_CTX. This flag will
 prevent sessions being stored in the internal cache (though the application can
 add them manually using L<SSL_CTX_add_session(3)>). Note:
 in any SSL/TLS servers where external caching is configured, any successful
-session lookups in the external cache (ie. for session-resume requests) would
+session lookups in the external cache (i.e. for session-resume requests) would
 normally be copied into the local cache before processing continues - this flag
 prevents these additions to the internal cache as well.
 

@@ -249,6 +249,7 @@ static int test_big(void)
     if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
                                   "%f\n", 2 * (double)ULONG_MAX), -1))
         return 0;
+
     return 1;
 }
 

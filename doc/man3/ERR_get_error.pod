@@ -45,7 +45,7 @@ messages.
 
 ERR_get_error_line(), ERR_peek_error_line() and
 ERR_peek_last_error_line() are the same as the above, but they
-additionally store the file name and line number where
+additionally store the filename and line number where
 the error occurred in *B<file> and *B<line>, unless these are B<NULL>.
 
 ERR_get_error_line_data(), ERR_peek_error_line_data() and

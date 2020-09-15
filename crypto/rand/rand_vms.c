@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -13,6 +13,8 @@
 # define __NEW_STARLET 1         /* New starlet definitions since VMS 7.0 */
 # include <unistd.h>
 # include "internal/cryptlib.h"
+# include <openssl/bio.h>
+# include <openssl/err.h>
 # include <openssl/rand.h>
 # include "crypto/rand.h"
 # include "rand_local.h"
@@ -456,9 +458,12 @@ size_t data_collect_method(RAND_POOL *pool)
      * If we can't feed the requirements from the caller, we're in deep trouble.
      */
     if (!ossl_assert(total_length >= bytes_needed)) {
-        ERR_raise_data(ERR_LIB_RAND, RAND_R_RANDOM_POOL_UNDERFLOW,
-                       "Needed: %zu, Available: %zu",
-                       bytes_needed, total_length);
+        char buf[100];           /* That should be enough */
+
+        BIO_snprintf(buf, sizeof(buf), "Needed: %zu, Available: %zu",
+                     bytes_needed, total_length);
+        RANDerr(RAND_F_DATA_COLLECT_METHOD, RAND_R_RANDOM_POOL_UNDERFLOW);
+        ERR_add_error_data(1, buf);
         return 0;
     }
 
@@ -485,7 +490,7 @@ int rand_pool_add_nonce_data(RAND_POOL *pool)
     /*
      * Add process id, thread id, and a high resolution timestamp
      * (where available, which is OpenVMS v8.4 and up) to ensure that
-     * the nonce is unique whith high probability for different process
+     * the nonce is unique with high probability for different process
      * instances.
      */
     data.pid = getpid();

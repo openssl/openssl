@@ -81,7 +81,7 @@ DH_get0_engine() returns a handle to the ENGINE that has been set for this DH
 object, or NULL if no such ENGINE has been set.
 
 The DH_get_length() and DH_set_length() functions get and set the optional
-length parameter associated with this DH object. If the length is non-zero then
+length parameter associated with this DH object. If the length is nonzero then
 it is used, otherwise it is ignored. The B<length> parameter indicates the
 length of the secret exponent (private key) in bits.
 

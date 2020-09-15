@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the OpenSSL license (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -44,7 +44,9 @@ use constant {
     COMPAT_SIGALGS => 6,
     SIGALGS_CERT_ALL => 7,
     SIGALGS_CERT_PKCS => 8,
-    SIGALGS_CERT_INVALID => 9
+    SIGALGS_CERT_INVALID => 9,
+    UNRECOGNIZED_SIGALGS_CERT => 10,
+    UNRECOGNIZED_SIGALG => 11
 };
 
 #Note: Throughout this test we override the default ciphersuites where TLSv1.2
@@ -53,7 +55,7 @@ use constant {
 
 #Test 1: Default sig algs should succeed
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 22;
+plan tests => 26;
 ok(TLSProxy::Message->success, "Default sigalgs");
 my $testtype;
 
@@ -132,19 +134,40 @@ SKIP: {
 }
 
 SKIP: {
-    skip "EC or TLSv1.2 disabled", 8 if disabled("tls1_2") || disabled("ec");
+    skip "EC or TLSv1.2 disabled", 10 if disabled("tls1_2") || disabled("ec");
 
     $proxy->filter(\&sigalgs_filter);
 
-    #Test 10: Sending no sig algs extension in TLSv1.2 should succeed
+    #Test 10: Sending no sig algs extension in TLSv1.2 should succeed at
+    #         security level 1
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
-    $proxy->clientflags("-no_tls1_3");
-    $proxy->ciphers("ECDHE-RSA-AES128-SHA");
+    $proxy->clientflags("-no_tls1_3 -cipher DEFAULT\@SECLEVEL=1");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA\@SECLEVEL=1");
     $proxy->start();
-    ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs");
+    ok(TLSProxy::Message->success, "No TLSv1.2 sigalgs seclevel 1");
 
-    #Test 11: Sending an empty sig algs extension in TLSv1.2 should fail
+    #Test 11: Sending no sig algs extension in TLSv1.2 should fail at security
+    #         level 2 since it will try to use SHA1. Testing client at level 1,
+    #         server level 2.
+    $proxy->clear();
+    $testtype = NO_SIG_ALGS_EXT;
+    $proxy->clientflags("-tls1_2 -cipher DEFAULT\@SECLEVEL=1");
+    $proxy->ciphers("DEFAULT\@SECLEVEL=2");
+    $proxy->start();
+    ok(TLSProxy::Message->fail, "No TLSv1.2 sigalgs server seclevel 2");
+
+    #Test 12: Sending no sig algs extension in TLSv1.2 should fail at security
+    #         level 2 since it will try to use SHA1. Testing client at level 2,
+    #         server level 1.
+    $proxy->clear();
+    $testtype = NO_SIG_ALGS_EXT;
+    $proxy->clientflags("-tls1_2 -cipher DEFAULT\@SECLEVEL=2");
+    $proxy->ciphers("DEFAULT\@SECLEVEL=1");
+    $proxy->start();
+    ok(TLSProxy::Message->fail, "No TLSv1.2 sigalgs client seclevel 2");
+
+    #Test 13: Sending an empty sig algs extension in TLSv1.2 should fail
     $proxy->clear();
     $testtype = EMPTY_SIG_ALGS_EXT;
     $proxy->clientflags("-no_tls1_3");
@@ -152,7 +175,7 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->fail, "Empty TLSv1.2 sigalgs");
 
-    #Test 12: Sending a list with no recognised sig algs in TLSv1.2 should fail
+    #Test 14: Sending a list with no recognised sig algs in TLSv1.2 should fail
     $proxy->clear();
     $testtype = NO_KNOWN_SIG_ALGS;
     $proxy->clientflags("-no_tls1_3");
@@ -160,7 +183,7 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->fail, "No known TLSv1.3 sigalgs");
 
-    #Test 13: Sending a sig algs list without pss for an RSA cert in TLSv1.2
+    #Test 15: Sending a sig algs list without pss for an RSA cert in TLSv1.2
     #         should succeed
     $proxy->clear();
     $testtype = NO_PSS_SIG_ALGS;
@@ -169,7 +192,7 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->success, "No PSS TLSv1.2 sigalgs");
 
-    #Test 14: Sending only TLSv1.3 PSS sig algs in TLSv1.2 should succeed
+    #Test 16: Sending only TLSv1.3 PSS sig algs in TLSv1.2 should succeed
     $proxy->clear();
     $testtype = PSS_ONLY_SIG_ALGS;
     $proxy->serverflags("-no_tls1_3");
@@ -177,7 +200,7 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->success, "PSS only sigalgs in TLSv1.2");
 
-    #Test 15: Responding with a sig alg we did not send in TLSv1.2 should fail
+    #Test 17: Responding with a sig alg we did not send in TLSv1.2 should fail
     #         We send rsa_pkcs1_sha256 and respond with rsa_pss_rsae_sha256
     #         TODO(TLS1.3): Add a similar test to the TLSv1.3 section above
     #         when we have an API capable of configuring the TLSv1.3 sig algs
@@ -188,7 +211,7 @@ SKIP: {
     $proxy->start();
     ok(TLSProxy::Message->fail, "Sigalg we did not send in TLSv1.2");
 
-    #Test 16: Sending a valid sig algs list but not including a sig type that
+    #Test 18: Sending a valid sig algs list but not including a sig type that
     #         matches the certificate should fail in TLSv1.2
     $proxy->clear();
     $proxy->clientflags("-no_tls1_3 -sigalgs ECDSA+SHA256");
@@ -198,7 +221,7 @@ SKIP: {
     ok(TLSProxy::Message->fail, "No matching TLSv1.2 sigalgs");
     $proxy->filter(\&sigalgs_filter);
 
-    #Test 17: No sig algs extension, ECDSA cert, TLSv1.2 should succeed
+    #Test 19: No sig algs extension, ECDSA cert, TLSv1.2 should succeed
     $proxy->clear();
     $testtype = NO_SIG_ALGS_EXT;
     $proxy->clientflags("-no_tls1_3");
@@ -214,7 +237,7 @@ SKIP: {
 my ($dsa_status, $sha1_status, $sha224_status);
 SKIP: {
     skip "TLSv1.3 disabled", 2 if disabled("tls1_3") || disabled("dsa");
-    #Test 18: signature_algorithms with 1.3-only ClientHello
+    #Test 20: signature_algorithms with 1.3-only ClientHello
     $testtype = PURE_SIGALGS;
     $dsa_status = $sha1_status = $sha224_status = 0;
     $proxy->clear();
@@ -224,7 +247,7 @@ SKIP: {
     ok($dsa_status && $sha1_status && $sha224_status,
        "DSA/SHA2 sigalg sent for 1.3-only ClientHello");
 
-    #Test 19: signature_algorithms with backwards compatible ClientHello
+    #Test 21: signature_algorithms with backwards compatible ClientHello
     SKIP: {
         skip "TLSv1.2 disabled", 1 if disabled("tls1_2");
         $testtype = COMPAT_SIGALGS;
@@ -239,26 +262,59 @@ SKIP: {
 
 SKIP: {
     skip "TLSv1.3 disabled", 3 if disabled("tls1_3");
-    #Test 20: Insert signature_algorithms_cert that match normal sigalgs
+    #Test 22: Insert signature_algorithms_cert that match normal sigalgs
     $testtype = SIGALGS_CERT_ALL;
     $proxy->clear();
     $proxy->filter(\&modify_sigalgs_cert_filter);
     $proxy->start();
     ok(TLSProxy::Message->success, "sigalgs_cert in TLSv1.3");
 
-    #Test 21: Insert signature_algorithms_cert that forces PKCS#1 cert
+    #Test 23: Insert signature_algorithms_cert that forces PKCS#1 cert
     $testtype = SIGALGS_CERT_PKCS;
     $proxy->clear();
     $proxy->filter(\&modify_sigalgs_cert_filter);
     $proxy->start();
     ok(TLSProxy::Message->success, "sigalgs_cert in TLSv1.3 with PKCS#1 cert");
 
-    #Test 22: Insert signature_algorithms_cert that fails
+    #Test 24: Insert signature_algorithms_cert that fails
     $testtype = SIGALGS_CERT_INVALID;
     $proxy->clear();
     $proxy->filter(\&modify_sigalgs_cert_filter);
     $proxy->start();
     ok(TLSProxy::Message->fail, "No matching certificate for sigalgs_cert");
+}
+
+SKIP: {
+    skip "TLS 1.3 disabled", 2 if disabled("tls1_3");
+    #Test 25: Send an unrecognized signature_algorithms_cert
+    #        We should be able to skip over the unrecognized value and use a
+    #        valid one that appears later in the list.
+    $proxy->clear();
+    $proxy->filter(\&inject_unrecognized_sigalg);
+    $proxy->clientflags("-tls1_3");
+    # Use -xcert to get SSL_check_chain() to run in the cert_cb.  This is
+    # needed to trigger (e.g.) CVE-2020-1967
+    $proxy->serverflags("" .
+            " -xcert " . srctop_file("test", "certs", "servercert.pem") .
+            " -xkey " . srctop_file("test", "certs", "serverkey.pem") .
+            " -xchain " . srctop_file("test", "certs", "rootcert.pem"));
+    $testtype = UNRECOGNIZED_SIGALGS_CERT;
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Unrecognized sigalg_cert in ClientHello");
+
+    #Test 26: Send an unrecognized signature_algorithms
+    #        We should be able to skip over the unrecognized value and use a
+    #        valid one that appears later in the list.
+    $proxy->clear();
+    $proxy->filter(\&inject_unrecognized_sigalg);
+    $proxy->clientflags("-tls1_3");
+    $proxy->serverflags("" .
+            " -xcert " . srctop_file("test", "certs", "servercert.pem") .
+            " -xkey " . srctop_file("test", "certs", "serverkey.pem") .
+            " -xchain " . srctop_file("test", "certs", "rootcert.pem"));
+    $testtype = UNRECOGNIZED_SIGALG;
+    $proxy->start();
+    ok(TLSProxy::Message->success(), "Unrecognized sigalg in ClientHello");
 }
 
 
@@ -405,4 +461,31 @@ sub modify_cert_verify_sigalg
             $message->repack();
         }
     }
+}
+
+sub inject_unrecognized_sigalg
+{
+    my $proxy = shift;
+    my $type;
+
+    # We're only interested in the initial ClientHello
+    if ($proxy->flight != 0) {
+        return;
+    }
+    if ($testtype == UNRECOGNIZED_SIGALGS_CERT) {
+        $type = TLSProxy::Message::EXT_SIG_ALGS_CERT;
+    } elsif ($testtype == UNRECOGNIZED_SIGALG) {
+        $type = TLSProxy::Message::EXT_SIG_ALGS;
+    } else {
+        return;
+    }
+
+    my $ext = pack "C8",
+        0x00, 0x06, #Extension length
+        0xfe, 0x18, #private use
+        0x04, 0x01, #rsa_pkcs1_sha256
+        0x08, 0x04; #rsa_pss_rsae_sha256;
+    my $message = ${$proxy->message_list}[0];
+    $message->set_extension($type, $ext);
+    $message->repack;
 }

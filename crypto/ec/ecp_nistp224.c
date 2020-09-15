@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2010-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the OpenSSL license (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -72,6 +72,7 @@ typedef uint64_t u64;
  */
 
 typedef uint64_t limb;
+typedef uint64_t limb_aX __attribute((__aligned__(1)));
 typedef uint128_t widelimb;
 
 typedef limb felem[4];
@@ -307,10 +308,10 @@ const EC_METHOD *EC_GFp_nistp224_method(void)
  */
 static void bin28_to_felem(felem out, const u8 in[28])
 {
-    out[0] = *((const uint64_t *)(in)) & 0x00ffffffffffffff;
-    out[1] = (*((const uint64_t *)(in + 7))) & 0x00ffffffffffffff;
-    out[2] = (*((const uint64_t *)(in + 14))) & 0x00ffffffffffffff;
-    out[3] = (*((const uint64_t *)(in+20))) >> 8;
+    out[0] = *((const limb *)(in)) & 0x00ffffffffffffff;
+    out[1] = (*((const limb_aX *)(in + 7))) & 0x00ffffffffffffff;
+    out[2] = (*((const limb_aX *)(in + 14))) & 0x00ffffffffffffff;
+    out[3] = (*((const limb_aX *)(in + 20))) >> 8;
 }
 
 static void felem_to_bin28(u8 out[28], const felem in)
@@ -907,6 +908,7 @@ static void point_add(felem x3, felem y3, felem z3,
     felem ftmp, ftmp2, ftmp3, ftmp4, ftmp5, x_out, y_out, z_out;
     widefelem tmp, tmp2;
     limb z1_is_zero, z2_is_zero, x_equal, y_equal;
+    limb points_equal;
 
     if (!mixed) {
         /* ftmp2 = z2^2 */
@@ -963,15 +965,41 @@ static void point_add(felem x3, felem y3, felem z3,
     felem_reduce(ftmp, tmp);
 
     /*
-     * the formulae are incorrect if the points are equal so we check for
-     * this and do doubling if this happens
+     * The formulae are incorrect if the points are equal, in affine coordinates
+     * (X_1, Y_1) == (X_2, Y_2), so we check for this and do doubling if this
+     * happens.
+     *
+     * We use bitwise operations to avoid potential side-channels introduced by
+     * the short-circuiting behaviour of boolean operators.
      */
     x_equal = felem_is_zero(ftmp);
     y_equal = felem_is_zero(ftmp3);
+    /*
+     * The special case of either point being the point at infinity (z1 and/or
+     * z2 are zero), is handled separately later on in this function, so we
+     * avoid jumping to point_double here in those special cases.
+     */
     z1_is_zero = felem_is_zero(z1);
     z2_is_zero = felem_is_zero(z2);
-    /* In affine coordinates, (X_1, Y_1) == (X_2, Y_2) */
-    if (x_equal && y_equal && !z1_is_zero && !z2_is_zero) {
+
+    /*
+     * Compared to `ecp_nistp256.c` and `ecp_nistp521.c`, in this
+     * specific implementation `felem_is_zero()` returns truth as `0x1`
+     * (rather than `0xff..ff`).
+     *
+     * This implies that `~true` in this implementation becomes
+     * `0xff..fe` (rather than `0x0`): for this reason, to be used in
+     * the if expression, we mask out only the last bit in the next
+     * line.
+     */
+    points_equal = (x_equal & y_equal & (~z1_is_zero) & (~z2_is_zero)) & 1;
+
+    if (points_equal) {
+        /*
+         * This is obviously not constant-time but, as mentioned before, this
+         * case never happens during single point multiplication, so there is no
+         * timing leak for ECDH or ECDSA signing.
+         */
         point_double(x3, y3, z3, x1, y1, z1);
         return;
     }

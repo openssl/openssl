@@ -24,7 +24,7 @@ it adds a nonce to OCSP basic response B<resp>.
 
 OCSP_check_nonce() compares the nonce value in B<req> and B<resp>.
 
-OCSP_copy_nonce() copys any nonce value present in B<req> to B<resp>.
+OCSP_copy_nonce() copies any nonce value present in B<req> to B<resp>.
 
 =head1 RETURN VALUES
 
@@ -57,7 +57,7 @@ performance reasons. As a result they do not support nonces.
 
 The return values of OCSP_check_nonce() can be checked to cover each case.  A
 positive return value effectively indicates success: nonces are both present
-and match, both absent or present in the response only. A non-zero return
+and match, both absent or present in the response only. A nonzero return
 additionally covers the case where the nonce is present in the request only:
 this will happen if the responder doesn't support nonces. A zero return value
 indicates present and mismatched nonces: this should be treated as an error
@@ -74,7 +74,7 @@ L<OCSP_sendreq_new(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2015-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the OpenSSL license (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

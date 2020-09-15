@@ -122,7 +122,7 @@ EC_KEY_precompute_mult() stores multiples of the underlying EC_GROUP generator
 for faster point multiplication. See also L<EC_POINT_add(3)>.
 
 EC_KEY_oct2key() and EC_KEY_key2buf() are identical to the functions
-EC_POINT_oct2point() and EC_KEY_point2buf() except they use the public key
+EC_POINT_oct2point() and EC_POINT_point2buf() except they use the public key
 EC_POINT in B<eckey>.
 
 EC_KEY_oct2priv() and EC_KEY_priv2oct() convert between the private key
