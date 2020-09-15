@@ -46,7 +46,6 @@ OSSL_DECODER_CTX                        datatype
 OSSL_DECODER_CONSTRUCT                  datatype
 OSSL_DECODER_CLEANUP                    datatype
 OSSL_DECODER_INSTANCE                   datatype
-OSSL_DECODER_CTX                        datatype
 OSSL_HTTP_bio_cb_t                      datatype
 OSSL_PARAM                              datatype
 OSSL_PROVIDER                           datatype

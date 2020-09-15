@@ -49,7 +49,7 @@ explained in L<OSSL_DECODER_CTX_set_input_type(3)>.
 
 If no suitable decoder was found, OSSL_DECODER_CTX_new_by_EVP_PKEY()
 still creates a B<OSSL_DECODER_CTX>, but with no associated
-decoder (L<OSSL_DECODER_CTX_num_decoders(3)> returns
+decoder (L<OSSL_DECODER_CTX_get_num_decoders(3)> returns
 zero).  This helps the caller distinguish between an error when
 creating the B<OSSL_DECODER_CTX>, and the lack the decoder
 support and act accordingly.
