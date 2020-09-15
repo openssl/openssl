@@ -256,7 +256,7 @@ int ossl_ec_key_gen(EC_KEY *eckey)
  *                   fails then the keypair is not generated,
  * Returns 1 if the keypair was generated or 0 otherwise.
  */
-int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
+static int ec_generate_key(EC_KEY *eckey, int pairwise_test)
 {
     int ok = 0;
     BIGNUM *priv_key = NULL;
@@ -325,7 +325,7 @@ int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
         OSSL_CALLBACK *cb = NULL;
         void *cbarg = NULL;
 
-        OSSL_SELF_TEST_get_callback(libctx, &cb, &cbarg);
+        OSSL_SELF_TEST_get_callback(eckey->libctx, &cb, &cbarg);
         ok = ecdsa_keygen_pairwise_test(eckey, cb, cbarg);
     }
 err:
@@ -345,7 +345,7 @@ err:
 
 int ec_key_simple_generate_key(EC_KEY *eckey)
 {
-    return ec_generate_key(NULL, eckey, 0);
+    return ec_generate_key(eckey, 0);
 }
 
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
