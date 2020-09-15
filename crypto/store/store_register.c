@@ -236,7 +236,7 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
     if (!ossl_store_register_init())
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_INTERNAL_ERROR);
     else if ((loader = lh_OSSL_STORE_LOADER_retrieve(loader_register,
-                                                     &template)) == NULL)
+                                                     &templateLoader)) == NULL)
         ERR_raise_data(ERR_LIB_OSSL_STORE, OSSL_STORE_R_UNREGISTERED_SCHEME,
                        "scheme=%s", scheme);
 
