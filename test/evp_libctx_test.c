@@ -644,14 +644,11 @@ int setup_tests(void)
         return 0;
 
     libctx = OPENSSL_CTX_new();
-
     if (!TEST_ptr(libctx))
         return 0;
-
-    if (config_file != NULL) {
-        if (!TEST_true(OPENSSL_CTX_load_config(libctx, config_file)))
-            return 0;
-    }
+    if (config_file != NULL
+        && !TEST_true(OPENSSL_CTX_load_config(libctx, config_file)))
+        return 0;
 
     libprov = OSSL_PROVIDER_load(libctx, prov_name);
     if (!TEST_ptr(libprov))

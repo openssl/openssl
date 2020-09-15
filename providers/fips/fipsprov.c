@@ -886,3 +886,20 @@ int FIPS_security_check_enabled(void)
 {
     return fips_security_checks;
 }
+
+void OSSL_SELF_TEST_get_callback(OPENSSL_CTX *libctx, OSSL_CALLBACK **cb,
+                                 void **cbarg)
+{
+    if (libctx == NULL)
+        libctx = selftest_params.libctx;
+
+    if (c_stcbfn != NULL && c_get_libctx != NULL) {
+        /* Get the parent libctx */
+        c_stcbfn(c_get_libctx(FIPS_get_core_handle(libctx)), cb, cbarg);
+    } else {
+        if (cb != NULL)
+            *cb = NULL;
+        if (cbarg != NULL)
+            *cbarg = NULL;
+    }
+}
