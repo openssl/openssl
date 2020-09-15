@@ -32,7 +32,7 @@ OSSL_ENCODER_CTX_set_passphrase_ui
                                         void *ui_data);
  int OSSL_ENCODER_CTX_set_passphrase_cb(OSSL_ENCODER_CTX *ctx,
                                         OSSL_PASSPHRASE_CALLBACK *cb,
-                                        void *cbarg)
+                                        void *cbarg);
 
 =head1 DESCRIPTION
 

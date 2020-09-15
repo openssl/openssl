@@ -6,7 +6,7 @@ OSSL_ENCODER_CTX,
 OSSL_ENCODER_CTX_new,
 OSSL_ENCODER_settable_ctx_params,
 OSSL_ENCODER_CTX_set_params,
-OSSL_ENCODER_CTX_free
+OSSL_ENCODER_CTX_free,
 OSSL_ENCODER_CTX_set_output_type,
 OSSL_ENCODER_CTX_set_selection,
 OSSL_ENCODER_CTX_add_encoder,
@@ -58,7 +58,7 @@ OSSL_ENCODER_CTX_set_cleanup
  typedef const void *OSSL_ENCODER_CONSTRUCT(OSSL_ENCODER_INSTANCE *encoder_inst,
                                             void *construct_data);
  typedef void OSSL_ENCODER_CLEANUP(void *construct_data);
- 
+
  int OSSL_ENCODER_CTX_set_construct(OSSL_ENCODER_CTX *ctx,
                                     OSSL_ENCODER_CONSTRUCT *construct);
  int OSSL_ENCODER_CTX_set_construct_data(OSSL_ENCODER_CTX *ctx,

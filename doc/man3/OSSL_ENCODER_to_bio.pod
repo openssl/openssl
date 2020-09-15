@@ -3,7 +3,7 @@
 =head1 NAME
 
 OSSL_ENCODER_to_bio,
-OSSL_ENCODER_to_fp,
+OSSL_ENCODER_to_fp
 - Routines to perform an encoding
 
 =head1 SYNOPSIS
