@@ -100,6 +100,8 @@ my $ignored = qr/(?| ^i2d_
                  |   ^_?DECLARE_
                  |   ^sk_
                  |   ^SKM_DEFINE_STACK_OF_INTERNAL
+                 |   ^lh_
+                 |   ^DEFINE_LHASH_OF_INTERNAL
                  )/x;
 
 # Collect all POD files, both internal and public, and regardless of location
