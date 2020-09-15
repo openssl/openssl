@@ -53,10 +53,12 @@ void OSSL_ENCODER_CTX_free(OSSL_ENCODER_CTX *ctx);
 
 /* Utilities that help set specific parameters */
 int OSSL_ENCODER_CTX_set_passphrase(OSSL_ENCODER_CTX *ctx,
-                                    const unsigned char *kstr,
-                                    size_t klen);
+                                    const unsigned char *kstr, size_t klen);
 int OSSL_ENCODER_CTX_set_pem_password_cb(OSSL_ENCODER_CTX *ctx,
                                          pem_password_cb *cb, void *cbarg);
+int OSSL_ENCODER_CTX_set_passphrase_cb(OSSL_ENCODER_CTX *ctx,
+                                       OSSL_PASSPHRASE_CALLBACK *cb,
+                                       void *cbarg);
 int OSSL_ENCODER_CTX_set_passphrase_ui(OSSL_ENCODER_CTX *ctx,
                                        const UI_METHOD *ui_method,
                                        void *ui_data);
