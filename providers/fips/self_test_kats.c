@@ -503,7 +503,7 @@ err:
 }
 
 /*
- * Test a encrypt or decrypt KAT..
+ * Test an encrypt or decrypt KAT..
  *
  * FIPS 140-2 IG D.9 states that separate KAT tests are needed for encrypt
  * and decrypt..

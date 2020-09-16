@@ -225,7 +225,7 @@ SKIP: {
        "fipsinstall fails when the signature result is corrupted");
 }
 
-# corrupt a Asymmetric cipher test
+# corrupt an Asymmetric cipher test
 SKIP: {
     skip "Skipping Asymmetric RSA corruption test because of no rsa in this build", 1
         if disabled("rsa");
