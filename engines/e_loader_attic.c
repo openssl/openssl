@@ -1739,7 +1739,7 @@ static int loader_attic_destroy(ENGINE *e)
 static int bind_loader_attic(ENGINE *e)
 {
 
-    /* Ensure the ATTIC error handdling is set up on best effort basis */
+    /* Ensure the ATTIC error handling is set up on best effort basis */
     ERR_load_ATTIC_strings();
 
     if (/* Create the OSSL_STORE_LOADER */
