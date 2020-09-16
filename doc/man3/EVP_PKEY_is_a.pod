@@ -27,7 +27,7 @@ I<pkey> contains a private key.
 
 EVP_PKEY_typenames_do_all() traverses all names for I<pkey>'s key type, and
 calls I<fn> with each name and I<data>.  For example, an RSA B<EVP_PKEY> may
-be named both C<RSA> an C<rsaEncryption>.
+be named both C<RSA> and C<rsaEncryption>.
 The order of the names is undefined.
 
 EVP_PKEY_get0_first_alg_name() returns the first algorithm name that is found
