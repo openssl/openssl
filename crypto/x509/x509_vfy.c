@@ -3446,7 +3446,7 @@ static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
  * Check whether the public key of ``cert`` does not use explicit params
  * for an elliptic curve.
  *
- * Returns 1 on success, 0 otherwise.
+ * Returns 1 on success, 0 if check fails, -1 for other errors.
  */
 static int check_curve(X509 *cert)
 {
