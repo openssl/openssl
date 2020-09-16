@@ -50,8 +50,9 @@ implicitly fetched using I<libctx> and I<propquery>.
 If no suitable encoder implementation is found,
 OSSL_ENCODER_CTX_new_by_EVP_PKEY() still creates a B<OSSL_ENCODER_CTX>, but
 with no associated encoder (L<OSSL_ENCODER_CTX_get_num_encoders(3)> returns
-zero).  This helps the caller distinguish between an error when creating the
-B<OSSL_ENCODER_CTX>, and the lack the encoder support and act accordingly.
+zero).  This helps the caller to distinguish between an error when creating
+the B<OSSL_ENCODER_CTX>and missing encoder implementation, and allows it to
+act accordingly.
 
 OSSL_ENCODER_CTX_set_cipher() tells the implementation what cipher
 should be used to encrypt encoded keys.  The cipher is given by
