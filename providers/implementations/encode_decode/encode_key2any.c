@@ -854,82 +854,87 @@ static int key2any_encode_params(struct key2any_ctx_st *ctx,
     return ret;
 }
 
-#define MAKE_ENCODER(impl, type, evp_type, output)                      \
-    static OSSL_FUNC_encoder_get_params_fn                              \
-    impl##2##output##_get_params;                                       \
-    static OSSL_FUNC_encoder_import_object_fn                           \
-    impl##2##output##_import_object;                                    \
-    static OSSL_FUNC_encoder_free_object_fn                             \
-    impl##2##output##_free_object;                                      \
-    static OSSL_FUNC_encoder_encode_fn impl##2##output##_encode;        \
-                                                                        \
-    static int impl##2##output##_get_params(OSSL_PARAM params[])        \
-    {                                                                   \
-        return key2any_get_params(params, impl##_input_type,            \
-                                  output##_output_type);                \
-    }                                                                   \
-    static void *                                                       \
-    impl##2##output##_import_object(void *vctx, int selection,          \
-                                    const OSSL_PARAM params[])          \
-    {                                                                   \
-        struct key2any_ctx_st *ctx = vctx;                              \
-        return ossl_prov_import_key(impl##_keymgmt_functions,           \
-                                    ctx->provctx, selection, params);   \
-    }                                                                   \
-    static void impl##2##output##_free_object(void *key)                \
-    {                                                                   \
-        ossl_prov_free_key(impl##_keymgmt_functions, key);              \
-    }                                                                   \
-    static int                                                          \
-    impl##2##output##_encode(void *ctx, OSSL_CORE_BIO *cout,            \
-                             const void *key,                           \
-                             const OSSL_PARAM key_abstract[],           \
-                             int selection,                             \
-                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg) \
-    {                                                                   \
-        /* We don't deal with abstract objects */                       \
-        if (key_abstract != NULL) {                                     \
-            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);     \
-            return 0;                                                   \
-        }                                                               \
-        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)         \
-            return key2any_encode(ctx, cout, key, impl##_evp_type,      \
-                                  type##_check_key_type,                \
-                                  key_to_##output##_pkcs8_bio,          \
-                                  cb, cbarg,                            \
-                                  prepare_##type##_params,              \
-                                  type##_priv_to_der);                  \
-        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)          \
-            return key2any_encode(ctx, cout, key, impl##_evp_type,      \
-                                  type##_check_key_type,                \
-                                  key_to_##output##_pubkey_bio,         \
-                                  cb, cbarg,                            \
-                                  prepare_##type##_params,              \
-                                  type##_pub_to_der);                   \
-        return key2any_encode_params(ctx, cout, key, impl##_evp_type,   \
-                                     type##_check_key_type,             \
-                                     type##_params_to_##output##_bio);  \
-    }                                                                   \
-    const OSSL_DISPATCH impl##_to_##output##_encoder_functions[] = {    \
-        { OSSL_FUNC_ENCODER_NEWCTX,                                     \
-          (void (*)(void))key2any_newctx },                             \
-        { OSSL_FUNC_ENCODER_FREECTX,                                    \
-          (void (*)(void))key2any_freectx },                            \
-        { OSSL_FUNC_ENCODER_GETTABLE_PARAMS,                            \
-          (void (*)(void))key2any_gettable_params },                    \
-        { OSSL_FUNC_ENCODER_GET_PARAMS,                                 \
-          (void (*)(void))impl##2##output##_get_params },               \
-        { OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS,                        \
-          (void (*)(void))key2any_settable_ctx_params },                \
-        { OSSL_FUNC_ENCODER_SET_CTX_PARAMS,                             \
-          (void (*)(void))key2any_set_ctx_params },                     \
-        { OSSL_FUNC_ENCODER_IMPORT_OBJECT,                              \
-          (void (*)(void))impl##2##output##_import_object },            \
-        { OSSL_FUNC_ENCODER_FREE_OBJECT,                                \
-          (void (*)(void))impl##2##output##_free_object },              \
-        { OSSL_FUNC_ENCODER_ENCODE,                                     \
-          (void (*)(void))impl##2##output##_encode },                   \
-        { 0, NULL }                                                     \
+#define MAKE_ENCODER(impl, type, evp_type, output)                          \
+    static OSSL_FUNC_encoder_get_params_fn                                  \
+    impl##2##output##_get_params;                                           \
+    static OSSL_FUNC_encoder_import_object_fn                               \
+    impl##2##output##_import_object;                                        \
+    static OSSL_FUNC_encoder_free_object_fn                                 \
+    impl##2##output##_free_object;                                          \
+    static OSSL_FUNC_encoder_encode_fn impl##2##output##_encode;            \
+                                                                            \
+    static int impl##2##output##_get_params(OSSL_PARAM params[])            \
+    {                                                                       \
+        return key2any_get_params(params, impl##_input_type,                \
+                                  output##_output_type);                    \
+    }                                                                       \
+    static void *                                                           \
+    impl##2##output##_import_object(void *vctx, int selection,              \
+                                    const OSSL_PARAM params[])              \
+    {                                                                       \
+        struct key2any_ctx_st *ctx = vctx;                                  \
+        return ossl_prov_import_key(impl##_keymgmt_functions,               \
+                                    ctx->provctx, selection, params);       \
+    }                                                                       \
+    static void impl##2##output##_free_object(void *key)                    \
+    {                                                                       \
+        ossl_prov_free_key(impl##_keymgmt_functions, key);                  \
+    }                                                                       \
+    static int                                                              \
+    impl##2##output##_encode(void *ctx, OSSL_CORE_BIO *cout,                \
+                             const void *key,                               \
+                             const OSSL_PARAM key_abstract[],               \
+                             int selection,                                 \
+                             OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg)     \
+    {                                                                       \
+        /* We don't deal with abstract objects */                           \
+        if (key_abstract != NULL) {                                         \
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);         \
+            return 0;                                                       \
+        }                                                                   \
+        if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)             \
+            return key2any_encode(ctx, cout, key, impl##_evp_type,          \
+                                  type##_check_key_type,                    \
+                                  key_to_##output##_pkcs8_bio,              \
+                                  cb, cbarg,                                \
+                                  prepare_##type##_params,                  \
+                                  type##_priv_to_der);                      \
+        if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)              \
+            return key2any_encode(ctx, cout, key, impl##_evp_type,          \
+                                  type##_check_key_type,                    \
+                                  key_to_##output##_pubkey_bio,             \
+                                  cb, cbarg,                                \
+                                  prepare_##type##_params,                  \
+                                  type##_pub_to_der);                       \
+        if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)          \
+            return key2any_encode_params(ctx, cout, key,                    \
+                                         impl##_evp_type,                   \
+                                         type##_check_key_type,             \
+                                         type##_params_to_##output##_bio);  \
+                                                                            \
+        ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);             \
+        return 0;                                                           \
+    }                                                                       \
+    const OSSL_DISPATCH impl##_to_##output##_encoder_functions[] = {        \
+        { OSSL_FUNC_ENCODER_NEWCTX,                                         \
+          (void (*)(void))key2any_newctx },                                 \
+        { OSSL_FUNC_ENCODER_FREECTX,                                        \
+          (void (*)(void))key2any_freectx },                                \
+        { OSSL_FUNC_ENCODER_GETTABLE_PARAMS,                                \
+          (void (*)(void))key2any_gettable_params },                        \
+        { OSSL_FUNC_ENCODER_GET_PARAMS,                                     \
+          (void (*)(void))impl##2##output##_get_params },                   \
+        { OSSL_FUNC_ENCODER_SETTABLE_CTX_PARAMS,                            \
+          (void (*)(void))key2any_settable_ctx_params },                    \
+        { OSSL_FUNC_ENCODER_SET_CTX_PARAMS,                                 \
+          (void (*)(void))key2any_set_ctx_params },                         \
+        { OSSL_FUNC_ENCODER_IMPORT_OBJECT,                                  \
+          (void (*)(void))impl##2##output##_import_object },                \
+        { OSSL_FUNC_ENCODER_FREE_OBJECT,                                    \
+          (void (*)(void))impl##2##output##_free_object },                  \
+        { OSSL_FUNC_ENCODER_ENCODE,                                         \
+          (void (*)(void))impl##2##output##_encode },                       \
+        { 0, NULL }                                                         \
     }
 
 #ifndef OPENSSL_NO_DH
