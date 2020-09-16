@@ -24,7 +24,7 @@ use platform;
 
 plan skip_all => "Test only supported in a fips build" if disabled("fips");
 
-plan tests => 23;
+plan tests => 24;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 my $fipskey = $ENV{FIPSKEY} // '00';
@@ -223,6 +223,16 @@ SKIP: {
                 '-corrupt_desc', 'DSA',
                 '-corrupt_type', 'KAT_Signature'])),
        "fipsinstall fails when the signature result is corrupted");
+}
+
+# corrupt an Asymmetric cipher test
+SKIP: {
+    skip "Skipping Asymmetric RSA corruption test because of no rsa in this build", 1
+        if disabled("rsa");
+    ok(!run(app(['openssl', 'fipsinstall', '-out', 'fips.cnf', '-module', $infile,
+                '-corrupt_desc', 'RSA_Encrypt',
+                '-corrupt_type', 'KAT_AsymmetricCipher'])),
+       "fipsinstall fails when the asymmetric cipher result is corrupted");
 }
 
 $ENV{OPENSSL_CONF_INCLUDE} = ".";

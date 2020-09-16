@@ -396,10 +396,7 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         EVP_KEYEXCH_free(ctx->op.kex.exchange);
         ctx->op.kex.exchprovctx = NULL;
         ctx->op.kex.exchange = NULL;
-    }
-/* TODO(3.0): add dependancies and uncomment this when available for fips mode */
-#ifndef FIPS_MODULE
-    else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
+    } else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         if (ctx->op.ciph.ciphprovctx != NULL && ctx->op.ciph.cipher != NULL)
             ctx->op.ciph.cipher->freectx(ctx->op.ciph.ciphprovctx);
         EVP_ASYM_CIPHER_free(ctx->op.ciph.cipher);
@@ -409,7 +406,6 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         if (ctx->op.keymgmt.genctx != NULL && ctx->keymgmt != NULL)
             evp_keymgmt_gen_cleanup(ctx->keymgmt, ctx->op.keymgmt.genctx);
     }
-#endif
 }
 
 void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
