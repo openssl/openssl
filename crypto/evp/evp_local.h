@@ -69,6 +69,9 @@ struct evp_kdf_ctx_st {
 struct evp_rand_ctx_st {
     EVP_RAND *meth;             /* Method structure */
     void *data;                 /* Algorithm-specific data */
+    EVP_RAND_CTX *parent;       /* Parent EVP_RAND or NULL if none */
+    CRYPTO_REF_COUNT refcnt;    /* Context reference count */
+    CRYPTO_RWLOCK *refcnt_lock;
 } /* EVP_RAND_CTX */ ;
 
 struct evp_keymgmt_st {

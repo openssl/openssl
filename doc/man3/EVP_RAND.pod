@@ -85,6 +85,7 @@ cryptographically secure random bytes.
 B<EVP_RAND> is a type that holds the implementation of a RAND.
 
 B<EVP_RAND_CTX> is a context type that holds the algorithm inputs.
+B<EVP_RAND_CTX> structures are reference counted.
 
 =head2 Algorithm implementation fetching
 
