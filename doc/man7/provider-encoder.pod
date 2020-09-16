@@ -119,7 +119,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
 =head2 Names and properties
 
 The name of an implementation should match the type of object it handles.
-For example, an implementation that encodes an RSA key hould be named "RSA".
+For example, an implementation that encodes an RSA key should be named "RSA".
 Likewise, an implementation that further encodes DER should be named "DER".
 
 Properties can be use to further specify details about an implementation:
@@ -164,7 +164,7 @@ anything about.
 
 =head2 Subset selections
 
-Sometimes, and object has more than subset of data that are interesting to
+Sometimes, an object has more than one subset of data that is interesting to
 treat separately or together.  It's possible to specify what subsets are to
 be encoded, with a set of bits I<selection> that are passed in an B<int>.
 
