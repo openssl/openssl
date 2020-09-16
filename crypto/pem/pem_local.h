@@ -20,7 +20,7 @@
  * Selectors, named according to the ASN.1 names used throughout libcrypto.
  *
  * Note that these are not absolutely mandatory, they are rather a wishlist
- * oof sorts.  The provider implementations are free to make choices that
+ * of sorts.  The provider implementations are free to make choices that
  * make sense for them, based on these selectors.
  * For example, the EC backend is likely to really just output the private
  * key to a PKCS#8 structure, even thought PEM_SELECTION_PrivateKey specifies
