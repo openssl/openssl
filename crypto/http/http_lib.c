@@ -89,7 +89,7 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
         if (pport_num == NULL) {
             p = strchr(port, '/');
             if (p == NULL)
-                p = p + strlen(port);
+                p = host_end + 1 + strlen(port);
         } else { /* make sure a numerical port value is given */
             portnum = strtol(port, &p, 10);
             if (p == port || (*p != '\0' && *p != '/'))
