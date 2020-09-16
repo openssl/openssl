@@ -66,15 +66,18 @@ static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
     if (BSAES_CAPABLE) {
         stream_enc = bsaes_xts_encrypt;
         stream_dec = bsaes_xts_decrypt;
-    }
+    } else
 #endif /* BSAES_CAPABLE */
-
 #ifdef VPAES_CAPABLE
     if (VPAES_CAPABLE) {
         XTS_SET_KEY_FN(vpaes_set_encrypt_key, vpaes_set_decrypt_key,
                        vpaes_encrypt, vpaes_decrypt, stream_enc, stream_dec);
+        return 1;
     } else
 #endif /* VPAES_CAPABLE */
+    {
+        (void)0;
+    }
     {
         XTS_SET_KEY_FN(AES_set_encrypt_key, AES_set_decrypt_key,
                        AES_encrypt, AES_decrypt, stream_enc, stream_dec);
