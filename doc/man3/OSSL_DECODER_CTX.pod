@@ -82,7 +82,7 @@ decoders like DER to RSA.
 
 The chains may be limited by specifying an input type, which is considered a
 starting point.  This is both considered by OSSL_DECODER_CTX_add_extra(),
-which will stop adding on more decoder implementations when it has already
+which will stop adding one more decoder implementations when it has already
 added those that take the specified input type, and functions like
 L<OSSL_DECODER_from_bio(3)>, which will only start the decoding process with
 the decoder implementations that take that input type.  For example, if the
