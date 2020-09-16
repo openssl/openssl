@@ -34,7 +34,7 @@ static OSSL_PARAM *construct_tls1_prf_params(const char *digest, const char *sec
     OSSL_PARAM *p = params;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)digest, strlen(digest));
+                                            (char *)digest, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
                                              (unsigned char *)secret,
                                              strlen(secret));
@@ -191,7 +191,7 @@ static OSSL_PARAM *construct_hkdf_params(char *digest, char *key,
     OSSL_PARAM *p = params;
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            digest, strlen(digest));
+                                            digest, 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                              salt, strlen(salt));
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
@@ -332,7 +332,7 @@ static OSSL_PARAM *construct_pbkdf2_params(char *pass, char *digest, char *salt,
                                              (unsigned char *)salt, strlen(salt));
     *p++ = OSSL_PARAM_construct_uint(OSSL_KDF_PARAM_ITER, iter);
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                             digest, strlen(digest));
+                                             digest, 0);
     *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS5, mode);
     *p = OSSL_PARAM_construct_end();
 
@@ -842,9 +842,9 @@ static OSSL_PARAM *construct_kbkdf_params(char *digest, char *mac, unsigned char
     OSSL_PARAM *p = params;
 
     *p++ = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_DIGEST, digest, strlen(digest));
+        OSSL_KDF_PARAM_DIGEST, digest, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_MAC, mac, strlen(mac));
+        OSSL_KDF_PARAM_MAC, mac, 0);
     *p++ = OSSL_PARAM_construct_utf8_string(
         OSSL_KDF_PARAM_MODE, "COUNTER", 0);
     *p++ = OSSL_PARAM_construct_octet_string(
@@ -985,9 +985,9 @@ static int test_kdf_kbkdf_8009_prf1(void)
     unsigned char result[sizeof(output)] = { 0 };
 
     params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_DIGEST, digest, strlen(digest) + 1);
+        OSSL_KDF_PARAM_DIGEST, digest, 0);
     params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_MAC, mac, strlen(mac) + 1);
+        OSSL_KDF_PARAM_MAC, mac, 0);
     params[i++] = OSSL_PARAM_construct_octet_string(
         OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
     params[i++] = OSSL_PARAM_construct_octet_string(
@@ -1030,9 +1030,9 @@ static int test_kdf_kbkdf_8009_prf2(void)
     unsigned char result[sizeof(output)] = { 0 };
 
     params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_DIGEST, digest, strlen(digest) + 1);
+        OSSL_KDF_PARAM_DIGEST, digest, 0);
     params[i++] = OSSL_PARAM_construct_utf8_string(
-        OSSL_KDF_PARAM_MAC, mac, strlen(mac) + 1);
+        OSSL_KDF_PARAM_MAC, mac, 0);
     params[i++] = OSSL_PARAM_construct_octet_string(
         OSSL_KDF_PARAM_KEY, input_key, sizeof(input_key));
     params[i++] = OSSL_PARAM_construct_octet_string(
@@ -1254,12 +1254,11 @@ static int test_kdf_x942_asn1(void)
     };
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                                            (char *)"sha1", sizeof("sha1"));
+                                            (char *)"sha1", 0);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY, z,
                                              sizeof(z));
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
-                                            (char *)cek_alg,
-                                            strlen(cek_alg) + 1);
+                                            (char *)cek_alg, 0);
     *p = OSSL_PARAM_construct_end();
 
     ret =
