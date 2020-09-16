@@ -438,10 +438,8 @@ static int eckey_param_decode(EVP_PKEY *pkey,
 {
     EC_KEY *eckey;
 
-    if ((eckey = d2i_ECParameters(NULL, pder, derlen)) == NULL) {
-        ECerr(EC_F_ECKEY_PARAM_DECODE, ERR_R_EC_LIB);
+    if ((eckey = d2i_ECParameters(NULL, pder, derlen)) == NULL)
         return 0;
-    }
     EVP_PKEY_assign_EC_KEY(pkey, eckey);
     return 1;
 }

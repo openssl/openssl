@@ -103,7 +103,6 @@ static const ERR_STRING_DATA EVP_str_reasons[] = {
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_SEED_LENGTH),
     "invalid seed length"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_INVALID_VALUE), "invalid value"},
-    {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_KEYGEN_FAILURE), "keygen failure"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_KEYMGMT_EXPORT_FAILURE),
     "keymgmt export failure"},
     {ERR_PACK(ERR_LIB_EVP, 0, EVP_R_KEY_SETUP_FAILED), "key setup failed"},

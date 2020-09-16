@@ -214,7 +214,6 @@ int ERR_load_EVP_strings(void);
 # define EVP_R_INVALID_SECRET_LENGTH                      223
 # define EVP_R_INVALID_SEED_LENGTH                        220
 # define EVP_R_INVALID_VALUE                              222
-# define EVP_R_KEYGEN_FAILURE                             120
 # define EVP_R_KEYMGMT_EXPORT_FAILURE                     205
 # define EVP_R_KEY_SETUP_FAILED                           180
 # define EVP_R_LOCKING_NOT_SUPPORTED                      213

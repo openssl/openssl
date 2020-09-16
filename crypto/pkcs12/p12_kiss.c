@@ -80,7 +80,11 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     }
 
     if (!parse_pk12(p12, pass, -1, pkey, ocerts)) {
-        PKCS12err(PKCS12_F_PKCS12_PARSE, PKCS12_R_PARSE_ERROR);
+        int err = ERR_peek_last_error();
+
+        if (ERR_GET_LIB(err) != ERR_LIB_EVP
+                && ERR_GET_REASON(err) != EVP_R_UNSUPPORTED_ALGORITHM)
+            PKCS12err(0, PKCS12_R_PARSE_ERROR);
         goto err;
     }
 

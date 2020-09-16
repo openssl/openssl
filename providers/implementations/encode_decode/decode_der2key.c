@@ -165,10 +165,11 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
     long new_der_len;
     EVP_PKEY *pkey = NULL;
     void *key = NULL;
-    int ok = 0;
+    int err, ok = 0;
 
+    ERR_set_mark();
     if (!read_der(ctx->provctx, cin, &der, &der_len))
-        return 0;
+        goto err;
 
     /*
      * Opportunistic attempt to decrypt.  If it doesn't work, we try to
@@ -192,6 +193,18 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
         derp = der;
         pkey = d2i_KeyParams(ctx->desc->type, NULL, &derp, der_len);
     }
+ err:
+    /*
+     * Prune low-level ASN.1 parse errors from error queue, assuming that
+     * this is called by decoder_process() in a loop trying several formats.
+     */
+    err = ERR_peek_last_error();
+    if (ERR_GET_LIB(err) == ERR_LIB_ASN1
+            && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG
+                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
 
     if (pkey != NULL) {
         /*

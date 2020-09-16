@@ -885,13 +885,11 @@ EC_GROUP *d2i_ECPKParameters(EC_GROUP **a, const unsigned char **in, long len)
     const unsigned char *p = *in;
 
     if ((params = d2i_ECPKPARAMETERS(NULL, &p, len)) == NULL) {
-        ECerr(EC_F_D2I_ECPKPARAMETERS, EC_R_D2I_ECPKPARAMETERS_FAILURE);
         ECPKPARAMETERS_free(params);
         return NULL;
     }
 
     if ((group = EC_GROUP_new_from_ecpkparameters(params)) == NULL) {
-        ECerr(EC_F_D2I_ECPKPARAMETERS, EC_R_PKPARAMETERS2GROUP_FAILURE);
         ECPKPARAMETERS_free(params);
         return NULL;
     }
@@ -934,10 +932,8 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
     EC_PRIVATEKEY *priv_key = NULL;
     const unsigned char *p = *in;
 
-    if ((priv_key = d2i_EC_PRIVATEKEY(NULL, &p, len)) == NULL) {
-        ECerr(EC_F_D2I_ECPRIVATEKEY, ERR_R_EC_LIB);
+    if ((priv_key = d2i_EC_PRIVATEKEY(NULL, &p, len)) == NULL)
         return NULL;
-    }
 
     if (a == NULL || *a == NULL) {
         if ((ret = EC_KEY_new()) == NULL) {
@@ -1110,7 +1106,6 @@ EC_KEY *d2i_ECParameters(EC_KEY **a, const unsigned char **in, long len)
         ret = *a;
 
     if (!d2i_ECPKParameters(&ret->group, in, len)) {
-        ECerr(EC_F_D2I_ECPARAMETERS, ERR_R_EC_LIB);
         if (a == NULL || *a != ret)
              EC_KEY_free(ret);
         else
