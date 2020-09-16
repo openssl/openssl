@@ -269,10 +269,8 @@ static int dh_param_decode(EVP_PKEY *pkey,
 {
     DH *dh;
 
-    if ((dh = d2i_dhp(pkey, pder, derlen)) == NULL) {
-        DHerr(DH_F_DH_PARAM_DECODE, ERR_R_DH_LIB);
+    if ((dh = d2i_dhp(pkey, pder, derlen)) == NULL)
         return 0;
-    }
     dh->dirty_cnt++;
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, dh);
     return 1;

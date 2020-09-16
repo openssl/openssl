@@ -113,10 +113,8 @@ static int rsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 
     if (!X509_PUBKEY_get0_param(NULL, &p, &pklen, &alg, pubkey))
         return 0;
-    if ((rsa = d2i_RSAPublicKey(NULL, &p, pklen)) == NULL) {
-        RSAerr(RSA_F_RSA_PUB_DECODE, ERR_R_RSA_LIB);
+    if ((rsa = d2i_RSAPublicKey(NULL, &p, pklen)) == NULL)
         return 0;
-    }
     if (!rsa_param_decode(rsa, alg)) {
         RSA_free(rsa);
         return 0;
@@ -164,10 +162,8 @@ static int old_rsa_priv_decode(EVP_PKEY *pkey,
 {
     RSA *rsa;
 
-    if ((rsa = d2i_RSAPrivateKey(NULL, pder, derlen)) == NULL) {
-        RSAerr(RSA_F_OLD_RSA_PRIV_DECODE, ERR_R_RSA_LIB);
+    if ((rsa = d2i_RSAPrivateKey(NULL, pder, derlen)) == NULL)
         return 0;
-    }
     EVP_PKEY_assign(pkey, pkey->ameth->pkey_id, rsa);
     return 1;
 }

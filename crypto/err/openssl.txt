@@ -2412,7 +2412,6 @@ EC_R_COORDINATES_OUT_OF_RANGE:146:coordinates out of range
 EC_R_CURVE_DOES_NOT_SUPPORT_ECDH:160:curve does not support ecdh
 EC_R_CURVE_DOES_NOT_SUPPORT_ECDSA:170:curve does not support ecdsa
 EC_R_CURVE_DOES_NOT_SUPPORT_SIGNING:159:curve does not support signing
-EC_R_D2I_ECPKPARAMETERS_FAILURE:117:d2i ecpkparameters failure
 EC_R_DECODE_ERROR:142:decode error
 EC_R_DISCRIMINANT_IS_ZERO:118:discriminant is zero
 EC_R_EC_GROUP_NEW_BY_NAME_FAILURE:119:ec group new by name failure
@@ -2462,7 +2461,6 @@ EC_R_NO_PRIVATE_VALUE:154:no private value
 EC_R_OPERATION_NOT_SUPPORTED:152:operation not supported
 EC_R_PASSED_NULL_PARAMETER:134:passed null parameter
 EC_R_PEER_KEY_ERROR:149:peer key error
-EC_R_PKPARAMETERS2GROUP_FAILURE:127:pkparameters2group failure
 EC_R_POINT_ARITHMETIC_FAILURE:155:point arithmetic failure
 EC_R_POINT_AT_INFINITY:106:point at infinity
 EC_R_POINT_COORDINATES_BLIND_FAILURE:163:point coordinates blind failure
@@ -2571,7 +2569,6 @@ EVP_R_INVALID_SALT_LENGTH:186:invalid salt length
 EVP_R_INVALID_SECRET_LENGTH:223:invalid secret length
 EVP_R_INVALID_SEED_LENGTH:220:invalid seed length
 EVP_R_INVALID_VALUE:222:invalid value
-EVP_R_KEYGEN_FAILURE:120:keygen failure
 EVP_R_KEYMGMT_EXPORT_FAILURE:205:keymgmt export failure
 EVP_R_KEY_SETUP_FAILED:180:key setup failed
 EVP_R_LOCKING_NOT_SUPPORTED:213:locking not supported
@@ -2791,9 +2788,7 @@ PKCS12_R_MAC_SETUP_ERROR:110:mac setup error
 PKCS12_R_MAC_STRING_SET_ERROR:111:mac string set error
 PKCS12_R_MAC_VERIFY_FAILURE:113:mac verify failure
 PKCS12_R_PARSE_ERROR:114:parse error
-PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR:115:pkcs12 algor cipherinit error
 PKCS12_R_PKCS12_CIPHERFINAL_ERROR:116:pkcs12 cipherfinal error
-PKCS12_R_PKCS12_PBE_CRYPT_ERROR:117:pkcs12 pbe crypt error
 PKCS12_R_UNKNOWN_DIGEST_ALGORITHM:118:unknown digest algorithm
 PKCS12_R_UNSUPPORTED_PKCS12_MODE:119:unsupported pkcs12 mode
 PKCS7_R_CERTIFICATE_VERIFY_ERROR:117:certificate verify error

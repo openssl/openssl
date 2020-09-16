@@ -77,9 +77,7 @@ int ERR_load_PKCS12_strings(void);
 # define PKCS12_R_MAC_STRING_SET_ERROR                    111
 # define PKCS12_R_MAC_VERIFY_FAILURE                      113
 # define PKCS12_R_PARSE_ERROR                             114
-# define PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR           115
 # define PKCS12_R_PKCS12_CIPHERFINAL_ERROR                116
-# define PKCS12_R_PKCS12_PBE_CRYPT_ERROR                  117
 # define PKCS12_R_UNKNOWN_DIGEST_ALGORITHM                118
 # define PKCS12_R_UNSUPPORTED_PKCS12_MODE                 119
 

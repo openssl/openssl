@@ -27,6 +27,8 @@
 #include <openssl/core_object.h>
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
+#include <openssl/err.h>
+#include <openssl/asn1err.h>
 #include <openssl/params.h>
 #include "internal/asn1.h"
 #include "prov/bio.h"
@@ -85,8 +87,21 @@ static int der2obj_decode(void *provctx, OSSL_CORE_BIO *cin,
      */
     BIO *in = (BIO *)cin;
     BUF_MEM *mem = NULL;
-    int ok = (asn1_d2i_read_bio(in, &mem) >= 0);
+    int err, ok;
 
+    ERR_set_mark();
+    ok = (asn1_d2i_read_bio(in, &mem) >= 0);
+    /*
+     * Prune low-level ASN.1 parse errors from error queue, assuming that
+     * this is called by decoder_process() in a loop trying several formats.
+     */
+    err = ERR_peek_last_error();
+    if (ERR_GET_LIB(err) == ERR_LIB_ASN1
+            && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG
+                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))
+        ERR_pop_to_mark();
+    else
+        ERR_clear_last_mark();
     if (ok) {
         OSSL_PARAM params[3];
         int object_type = OSSL_OBJECT_UNKNOWN;

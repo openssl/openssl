@@ -33,11 +33,8 @@ unsigned char *PKCS12_pbe_crypt(const X509_ALGOR *algor,
 
     /* Process data */
     if (!EVP_PBE_CipherInit(algor->algorithm, pass, passlen,
-                            algor->parameter, ctx, en_de)) {
-        PKCS12err(PKCS12_F_PKCS12_PBE_CRYPT,
-                  PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR);
+                            algor->parameter, ctx, en_de))
         goto err;
-    }
 
     /*
      * GOST algorithm specifics:
@@ -125,11 +122,8 @@ void *PKCS12_item_decrypt_d2i(const X509_ALGOR *algor, const ASN1_ITEM *it,
     int outlen = 0;
 
     if (!PKCS12_pbe_crypt(algor, pass, passlen, oct->data, oct->length,
-                          &out, &outlen, 0)) {
-        PKCS12err(PKCS12_F_PKCS12_ITEM_DECRYPT_D2I,
-                  PKCS12_R_PKCS12_PBE_CRYPT_ERROR);
+                          &out, &outlen, 0))
         return NULL;
-    }
     p = out;
     OSSL_TRACE_BEGIN(PKCS12_DECRYPT) {
         BIO_printf(trc_out, "\n");

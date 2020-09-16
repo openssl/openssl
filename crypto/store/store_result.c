@@ -87,7 +87,8 @@ static int try_pkcs12(struct extracted_param_data_st *, OSSL_STORE_INFO **,
         int err = ERR_peek_last_error();                                \
                                                                         \
         if (ERR_GET_LIB(err) == ERR_LIB_ASN1                            \
-            && ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR)          \
+            && (ERR_GET_REASON(err) == ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE   \
+                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))     \
             ERR_pop_to_mark();                                          \
         else                                                            \
             ERR_clear_last_mark();                                      \
@@ -279,11 +280,13 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
     const unsigned char *der = data->octet_data, *derp;
     long der_len = (long)data->octet_data_size;
 
+    SET_ERR_MARK();
     /* Try PUBKEY first, that's a real easy target */
     derp = der;
     pk = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, propq);
     if (pk != NULL)
         *store_info_new = OSSL_STORE_INFO_new_PUBKEY;
+    RESET_ERR_MARK();
 
     /* Try private keys next */
     if (pk == NULL) {
@@ -319,6 +322,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
             }
             X509_SIG_free(p8);
         }
+        RESET_ERR_MARK();
 
         /*
          * If the encrypted PKCS#8 couldn't be decrypted,
@@ -328,6 +332,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
             /* Try to unpack an unencrypted PKCS#8, that's easy */
             derp = der;
             p8info = d2i_PKCS8_PRIV_KEY_INFO(NULL, &derp, der_len);
+            RESET_ERR_MARK();
             if (p8info != NULL) {
                 pk = EVP_PKCS82PKEY_with_libctx(p8info, libctx, propq);
                 PKCS8_PRIV_KEY_INFO_free(p8info);
@@ -344,6 +349,7 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
                 pk = d2i_PrivateKey_ex(EVP_PKEY_SM2, NULL,
                                        &derp, der_len,
                                        libctx, NULL);
+                RESET_ERR_MARK();
             }
         }
 
@@ -363,9 +369,11 @@ static EVP_PKEY *try_key_value_legacy(struct extracted_param_data_st *data,
     if (pk == NULL) {
         derp = der;
         pk = d2i_KeyParams(EVP_PKEY_SM2, NULL, &derp, der_len);
+        RESET_ERR_MARK();
         if (pk != NULL)
             *store_info_new = OSSL_STORE_INFO_new_PARAMS;
     }
+    CLEAR_ERR_MARK();
 
     return pk;
 }

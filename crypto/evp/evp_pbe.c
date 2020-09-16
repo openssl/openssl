@@ -114,6 +114,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         cipher = EVP_get_cipherbynid(cipher_nid);
         if (!cipher) {
             EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_UNKNOWN_CIPHER);
+            ERR_add_error_data(1, OBJ_nid2sn(cipher_nid));
             return 0;
         }
     }
@@ -128,11 +129,7 @@ int EVP_PBE_CipherInit(ASN1_OBJECT *pbe_obj, const char *pass, int passlen,
         }
     }
 
-    if (!keygen(ctx, pass, passlen, param, cipher, md, en_de)) {
-        EVPerr(EVP_F_EVP_PBE_CIPHERINIT, EVP_R_KEYGEN_FAILURE);
-        return 0;
-    }
-    return 1;
+    return keygen(ctx, pass, passlen, param, cipher, md, en_de);
 }
 
 DECLARE_OBJ_BSEARCH_CMP_FN(EVP_PBE_CTL, EVP_PBE_CTL, pbe2);
