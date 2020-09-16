@@ -298,7 +298,7 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
 
             current_data = ctx->construct(encoder_inst, ctx->construct_data);
 
-            /* Assume that the conrtuctor recorded an error */
+            /* Assume that the constructor recorded an error */
             if (current_data == NULL)
                 goto loop_end;
         } else {
@@ -330,7 +330,7 @@ static int encoder_process(OSSL_ENCODER_CTX *ctx, BIO *out)
                 OSSL_PARAM_construct_octet_string(OSSL_OBJECT_PARAM_DATA,
                                                   latest_output,
                                                   latest_output_length);
-            *abstract_p++ = OSSL_PARAM_construct_end();
+            *abstract_p = OSSL_PARAM_construct_end();
             current_abstract = abstract;
         }
 

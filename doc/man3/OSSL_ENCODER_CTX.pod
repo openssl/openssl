@@ -69,7 +69,7 @@ OSSL_ENCODER_CTX_set_cleanup
 =head1 DESCRIPTION
 
 Encoding an input object to the desired encoding may be done with a chain of
-encoder implementations, which means that the input from one encoder may be
+encoder implementations, which means that the output from one encoder may be
 the input for the next in the chain.  The B<OSSL_ENCODER_CTX> holds all the
 data about these encoders.  This allows having generic format encoders such
 as DER to PEM, as well as more specialized encoders like RSA to DER.
@@ -77,9 +77,9 @@ as DER to PEM, as well as more specialized encoders like RSA to DER.
 The final output type must be given, and a chain of encoders must end with
 an implementation that produces that output type.
 
-At the beginning of the encoding process starts, a contructor provided by
-the caller is called to ensure that there is an appropriate provider-side
-object to start with.
+At the beginning of the encoding process, a contructor provided by the
+caller is called to ensure that there is an appropriate provider-side object
+to start with.
 The contructor is set with OSSL_ENCODER_CTX_set_construct().
 
 B<OSSL_ENCODER_INSTANCE> is an opaque structure that contains data about the

@@ -231,7 +231,7 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
 
         /*
          * Select the encoder in two steps.  First, collect all encoders
-         * that has the correct output type, as well as all keymgmt names.
+         * that have the correct output type, as well as all keymgmt names.
          */
         encoder_data.output_type = ctx->output_type;
         encoder_data.encoders = sk_OSSL_ENCODER_new_null();
@@ -285,7 +285,7 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
             if (OSSL_ENCODER_provider(encoder) == desired_prov
                 && encoder->encode != NULL) {
                 /*
-                 * We found on in the same provider as the keymgmt.  Choose
+                 * We found one in the same provider as the keymgmt.  Choose
                  * it and stop looking.
                  */
                 found = encoder;
