@@ -532,11 +532,11 @@ static EVP_PKEY_CTX *init_ctx(const char *kdfalg, int *pkeysize,
     }
     switch (key_type) {
     case KEY_PRIVKEY:
-        pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, keyform, 0, passin, e, "private key");
         break;
 
     case KEY_PUBKEY:
-        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "Public Key");
+        pkey = load_pubkey(keyfile, keyform, 0, NULL, e, "public key");
         break;
 
     case KEY_CERT:
@@ -644,7 +644,7 @@ static int setup_peer(EVP_PKEY_CTX *ctx, int peerform, const char *file,
 
     if (peerform == FORMAT_ENGINE)
         engine = e;
-    peer = load_pubkey(file, peerform, 0, NULL, engine, "Peer Key");
+    peer = load_pubkey(file, peerform, 0, NULL, engine, "peer key");
     if (peer == NULL) {
         BIO_printf(bio_err, "Error reading peer key %s\n", file);
         ERR_print_errors(bio_err);

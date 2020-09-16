@@ -1269,7 +1269,8 @@ end_of_options:
         } else {
             X509 *revcert;
 
-            revcert = load_cert_pass(infile, certformat, passin, infile);
+            revcert = load_cert_pass(infile, certformat, passin,
+                                     "certificate to be revoked");
             if (revcert == NULL)
                 goto end;
             if (dorevoke == 2)
@@ -1403,7 +1404,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    if ((req = load_cert_pass(infile, certformat, passin, infile)) == NULL)
+    if ((req = load_cert_pass(infile, certformat, passin, "template certificate")) == NULL)
         goto end;
     if (verbose)
         X509_print(bio_err, req);

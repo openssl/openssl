@@ -165,9 +165,9 @@ int dsa_main(int argc, char **argv)
 
     BIO_printf(bio_err, "read DSA key\n");
     if (pubin)
-        pkey = load_pubkey(infile, informat, 1, passin, e, "Public Key");
+        pkey = load_pubkey(infile, informat, 1, passin, e, "public key");
     else
-        pkey = load_key(infile, informat, 1, passin, e, "Private Key");
+        pkey = load_key(infile, informat, 1, passin, e, "private key");
 
     if (pkey != NULL)
         dsa = EVP_PKEY_get1_DSA(pkey);

@@ -591,7 +591,7 @@ int req_main(int argc, char **argv)
     }
 
     if (keyfile != NULL) {
-        pkey = load_key(keyfile, keyform, 0, passin, e, "Private Key");
+        pkey = load_key(keyfile, keyform, 0, passin, e, "private key");
         if (pkey == NULL)
             goto end;
         app_RAND_load_conf(req_conf, section);

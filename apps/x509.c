@@ -522,7 +522,7 @@ int x509_main(int argc, char **argv)
         goto end;
     }
     if (fkeyfile != NULL) {
-        fkey = load_pubkey(fkeyfile, keyformat, 0, NULL, e, "Forced key");
+        fkey = load_pubkey(fkeyfile, keyformat, 0, NULL, e, "forced key");
         if (fkey == NULL)
             goto end;
     }
@@ -629,7 +629,7 @@ int x509_main(int argc, char **argv)
         if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
             goto end;
     } else {
-        x = load_cert_pass(infile, FORMAT_UNDEF, passin, "Certificate");
+        x = load_cert_pass(infile, FORMAT_UNDEF, passin, "certificate");
         if (x == NULL)
             goto end;
         if (fkey != NULL && !X509_set_pubkey(x, fkey))
@@ -639,7 +639,7 @@ int x509_main(int argc, char **argv)
     }
 
     if (CA_flag) {
-        xca = load_cert_pass(CAfile, CAformat, passin, "CA Certificate");
+        xca = load_cert_pass(CAfile, CAformat, passin, "CA certificate");
         if (xca == NULL)
             goto end;
     }
@@ -846,7 +846,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(bio_err, "Getting Private key\n");
                 if (Upkey == NULL) {
                     Upkey = load_key(keyfile, keyformat, 0,
-                                     passin, e, "Private key");
+                                     passin, e, "private key");
                     if (Upkey == NULL)
                         goto end;
                 }
@@ -858,7 +858,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(bio_err, "Getting CA Private Key\n");
                 if (CAkeyfile != NULL) {
                     CApkey = load_key(CAkeyfile, CAkeyformat,
-                                      0, passin, e, "CA Private Key");
+                                      0, passin, e, "CA private key");
                     if (CApkey == NULL)
                         goto end;
                 }

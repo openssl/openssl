@@ -708,7 +708,10 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
     const char *propq = app_get0_propq();
     int ncerts = 0;
     int ncrls = 0;
-    const char *failed = "any";
+    const char *failed =
+        ppkey != NULL ? "key" : ppubkey != NULL ? "public key" :
+        pcert != NULL ? "cert" : pcrl != NULL ? "CRL" :
+        pcerts != NULL ? "certs" : pcrls != NULL ? "CRLs" : NULL;
     /* TODO make use of the engine reference 'eng' when loading pkeys */
 
     if (ppkey != NULL)
@@ -717,33 +720,36 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         *ppubkey = NULL;
     if (pcert != NULL)
         *pcert = NULL;
+    if (failed == NULL) {
+        BIO_printf(bio_err, "Internal error: nothing to load into from %s\n",
+                   uri != NULL ? uri : "<stdin>");
+        return 0;
+    }
+
     if (pcerts != NULL && *pcerts == NULL
             && (*pcerts = sk_X509_new_null()) == NULL) {
-        BIO_printf(bio_err, "Out of memory");
+        BIO_printf(bio_err, "Out of memory loading");
         goto end;
     }
     if (pcrl != NULL)
         *pcrl = NULL;
     if (pcrls != NULL && *pcrls == NULL
             && (*pcrls = sk_X509_CRL_new_null()) == NULL) {
-        BIO_printf(bio_err, "Out of memory");
+        BIO_printf(bio_err, "Out of memory loading");
         goto end;
     }
 
-    if (desc == NULL)
-        desc = "key/certificate/CRL";
     uidata.password = pass;
     uidata.prompt_info = uri;
 
     if (uri == NULL) {
         BIO *bio;
 
-        uri = "<stdin>";
         if (!maybe_stdin) {
-            BIO_printf(bio_err, "No filename or uri specified for loading %s\n",
-                       desc);
+            BIO_printf(bio_err, "No filename or uri specified for loading");
             goto end;
         }
+        uri = "<stdin>";
         unbuffer(stdin);
         bio = BIO_new_fp(stdin, 0);
         if (bio != NULL)
@@ -754,17 +760,18 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
                                           &uidata, NULL, NULL);
     }
     if (ctx == NULL) {
-        BIO_printf(bio_err, "Could not open file or uri %s for loading %s\n",
-                   uri, desc);
+        BIO_printf(bio_err, "Could not open file or uri for loading");
         goto end;
     }
 
     failed = NULL;
     while (!OSSL_STORE_eof(ctx)) {
         OSSL_STORE_INFO *info = OSSL_STORE_load(ctx);
-        int type = info == NULL ? 0 : OSSL_STORE_INFO_get_type(info);
-        int ok = 1;
+        int type, ok = 1;
 
+        if (info == NULL)
+            break;
+        type = OSSL_STORE_INFO_get_type(info);
         switch (type) {
         case OSSL_STORE_INFO_PKEY:
             if (ppkey != NULL && *ppkey == NULL)
@@ -805,8 +812,7 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
         OSSL_STORE_INFO_free(info);
         if (!ok) {
             failed = info == NULL ? NULL : OSSL_STORE_INFO_type_string(type);
-            BIO_printf(bio_err, "Error reading %s of %s from %s\n",
-                       failed, desc, uri);
+            BIO_printf(bio_err, "Error reading");
             break;
         }
     }
@@ -814,18 +820,37 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
  end:
     OSSL_STORE_close(ctx);
     if (failed == NULL) {
-        if (ppkey != NULL && *ppkey == NULL)
+        int any = 0;
+
+        if (ppkey != NULL && *ppkey == NULL) {
             failed = "key";
-        else if ((pcert != NULL || pcerts != NULL) && ncerts == 0)
+        } else if ((pcert != NULL || pcerts != NULL) && ncerts == 0) {
+            if (pcert == NULL)
+                any = 1;
             failed = "cert";
-        else if ((pcrl != NULL || pcrls != NULL) && ncrls == 0)
+        } else if ((pcrl != NULL || pcrls != NULL) && ncrls == 0) {
+            if (pcrl == NULL)
+                any = 1;
             failed = "CRL";
+        }
         if (failed != NULL)
-            BIO_printf(bio_err, "Could not read any %s of %s from %s\n",
-                       failed, desc, uri);
+            BIO_printf(bio_err, "Could not read");
+        if (any)
+            BIO_printf(bio_err, " any");
     }
-    if (failed != NULL)
+    if (failed != NULL) {
+        if (desc != NULL && strstr(desc, failed) != NULL) {
+            BIO_printf(bio_err, " %s", desc);
+        } else {
+            BIO_printf(bio_err, " %s", failed);
+            if (desc != NULL)
+                BIO_printf(bio_err, " of %s", desc);
+        }
+        if (uri != NULL)
+            BIO_printf(bio_err, " from %s", uri);
+        BIO_printf(bio_err, "\n");
         ERR_print_errors(bio_err);
+    }
     return failed == NULL;
 }
 

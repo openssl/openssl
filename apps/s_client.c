@@ -1728,13 +1728,13 @@ int s_client_main(int argc, char **argv)
 
     if (key_file != NULL) {
         key = load_key(key_file, key_format, 0, pass, e,
-                       "client certificate private key file");
+                       "client certificate private key");
         if (key == NULL)
             goto end;
     }
 
     if (cert_file != NULL) {
-        cert = load_cert_pass(cert_file, cert_format, pass, "client certificate file");
+        cert = load_cert_pass(cert_file, cert_format, pass, "client certificate");
         if (cert == NULL)
             goto end;
     }
