@@ -282,14 +282,17 @@ ok(!verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"]),
 
 # Explicit vs named curve tests
 SKIP: {
-    skip "EC is not supported by this OpenSSL build", 2
+    skip "EC is not supported by this OpenSSL build", 3
         if disabled("ec");
-    ok(!verify("ee-cert-ec-explicit", "sslserver", ["root-cert"], ["ca-cert-ec-named"]),
+    ok(!verify("ee-cert-ec-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-named"]),
         "reject explicit curve leaf with named curve intermediate");
-    ok(!verify("ee-cert-ec-named", "sslserver", ["root-cert"], ["ca-cert-ec-explicit"]),
+    ok(!verify("ee-cert-ec-named-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-explicit"]),
         "reject named curve leaf with explicit curve intermediate");
-    ok(verify("ee-cert-ec-namnam", "sslserver", ["root-cert"], ["ca-cert-ec-named"]),
-        "accept named curve leaf with explicit curve intermediate");
+    ok(verify("ee-cert-ec-named-named", "sslserver", ["root-cert"],
+              ["ca-cert-ec-named"]),
+        "accept named curve leaf with named curve intermediate");
 }
 
 # Depth tests, note the depth limit bounds the number of CA certificates
