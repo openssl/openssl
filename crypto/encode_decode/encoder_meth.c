@@ -219,13 +219,13 @@ static void *encoder_from_dispatch(int id, const OSSL_ALGORITHM *algodef,
     /*
      * Try to check that the method is sensible.
      * If you have a constructor, you must have a destructor and vice versa.
-     * You must have at least one of the encoding driver functions.
+     * You must have the encoding driver functions.
      */
     if (!((encoder->newctx == NULL && encoder->freectx == NULL)
           || (encoder->newctx != NULL && encoder->freectx != NULL)
           || (encoder->import_object != NULL && encoder->free_object != NULL)
           || (encoder->import_object == NULL && encoder->free_object == NULL))
-        || (encoder->encode == NULL && encoder->import_object == NULL)
+        || encoder->encode == NULL
         || encoder->gettable_params == NULL
         || encoder->get_params == NULL) {
         OSSL_ENCODER_free(encoder);

@@ -97,7 +97,7 @@ static void collect_encoder(OSSL_ENCODER *encoder, void *arg)
         || strcasecmp(output_type, data->output_type) != 0)
         return;
 
-    data->error_occured = 1;         /* Assume the först */
+    data->error_occured = 1;         /* Assume the worst */
 
     if (!OSSL_ENCODER_up_ref(encoder) /* ref++ */)
         return;
@@ -282,8 +282,7 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
                 continue;
 
             /* We found one!  Process it */
-            if (OSSL_ENCODER_provider(encoder) == desired_prov
-                && encoder->encode != NULL) {
+            if (OSSL_ENCODER_provider(encoder) == desired_prov) {
                 /*
                  * We found one in the same provider as the keymgmt.  Choose
                  * it and stop looking.
@@ -328,6 +327,7 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
 
     ok = 1;
  err:
+    OSSL_ENCODER_CTX_set_construct_data(ctx, NULL);
     OPENSSL_free(data);
     return ok;
 }

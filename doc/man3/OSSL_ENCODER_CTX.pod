@@ -80,7 +80,7 @@ an implementation that produces that output type.
 At the beginning of the encoding process, a contructor provided by the
 caller is called to ensure that there is an appropriate provider-side object
 to start with.
-The contructor is set with OSSL_ENCODER_CTX_set_construct().
+The constructor is set with OSSL_ENCODER_CTX_set_construct().
 
 B<OSSL_ENCODER_INSTANCE> is an opaque structure that contains data about the
 encoder that is going to be used, and that may be useful for the
