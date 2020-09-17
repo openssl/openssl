@@ -47,11 +47,11 @@ The search of decoder implementations can be limited with I<input_type>,
 which specifies a starting input type.  This is further explained in
 L<OSSL_DECODER_CTX_set_input_type(3)>.
 
-If no suitable decoder implementation found,
+If no suitable decoder implementation is found,
 OSSL_DECODER_CTX_new_by_EVP_PKEY() still creates a B<OSSL_DECODER_CTX>, but
 with no associated decoder (L<OSSL_DECODER_CTX_get_num_decoders(3)> returns
 zero).  This helps the caller to distinguish between an error when creating
-the B<OSSL_ENCODER_CTX>and missing encoder implementation, and allows it to
+the B<OSSL_ENCODER_CTX> and missing encoder implementation, and allows it to
 act accordingly.
 
 OSSL_DECODER_CTX_set_passphrase() gives the implementation a pass phrase to
