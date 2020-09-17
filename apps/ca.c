@@ -1399,23 +1399,23 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
                         CONF *lconf, int verbose, unsigned long certopt,
                         unsigned long nameopt, int default_op, int ext_copy)
 {
-    X509 *req = NULL;
+    X509 *template_cert = NULL;
     X509_REQ *rreq = NULL;
     EVP_PKEY *pktmp = NULL;
     int ok = -1, i;
 
-    if ((req = load_cert_pass(infile, certformat, passin, "template certificate")) == NULL)
+    if ((template_cert = load_cert_pass(infile, certformat, passin, "template certificate")) == NULL)
         goto end;
     if (verbose)
-        X509_print(bio_err, req);
+        X509_print(bio_err, template_cert);
 
     BIO_printf(bio_err, "Check that the request matches the signature\n");
 
-    if ((pktmp = X509_get0_pubkey(req)) == NULL) {
+    if ((pktmp = X509_get0_pubkey(template_cert)) == NULL) {
         BIO_printf(bio_err, "error unpacking public key\n");
         goto end;
     }
-    i = do_X509_verify(req, pktmp, vfyopts);
+    i = do_X509_verify(template_cert, pktmp, vfyopts);
     if (i < 0) {
         ok = 0;
         BIO_printf(bio_err, "Signature verification problems....\n");
@@ -1429,7 +1429,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
         BIO_printf(bio_err, "Signature ok\n");
     }
 
-    if ((rreq = X509_to_X509_REQ(req, NULL, NULL)) == NULL)
+    if ((rreq = X509_to_X509_REQ(template_cert, NULL, NULL)) == NULL)
         goto end;
 
     ok = do_body(xret, pkey, x509, dgst, sigopts, policy, db, serial, subj,
@@ -1439,7 +1439,7 @@ static int certify_cert(X509 **xret, const char *infile, int certformat,
 
  end:
     X509_REQ_free(rreq);
-    X509_free(req);
+    X509_free(template_cert);
     return ok;
 }
 
