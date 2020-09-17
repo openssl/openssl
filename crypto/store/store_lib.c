@@ -931,9 +931,16 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
 
     OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
+    ERR_set_mark();
     if ((loader = ossl_store_get0_loader_int(scheme)) != NULL)
         loader_ctx = loader->attach(loader, bp, libctx, propq,
                                     ui_method, ui_data);
+    /*
+     * ossl_store_get0_loader_int will will raise an error if the loader for
+     * the scheme cannot be retrieved. This error is cleared as the code below
+     * will try to fetch the loader from the provider.
+     */
+    ERR_pop_to_mark();
 #endif
     if (loader == NULL
         && (fetched_loader =
