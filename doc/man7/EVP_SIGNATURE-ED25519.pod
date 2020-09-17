@@ -15,10 +15,23 @@ one-shot digest sign and digest verify using PureEdDSA and B<Ed25519> or B<Ed448
 (see RFC8032). It has associated private and public key formats compatible with
 RFC 8410.
 
+=head2 ED25591 and ED448 Signature Parameters
+
 No additional parameters can be set during one-shot signing or verification.
 In particular, because PureEdDSA is used, a digest must B<NOT> be specified when
 signing or verifying.
 See L<EVP_PKEY-X25519(7)> for information related to B<X25519> and B<X448> keys.
+
+The following signature parameters can be retrieved using
+EVP_PKEY_CTX_get_params().
+
+=over 4
+
+=item "algorithm-id" (B<OSSL_SIGNATURE_PARAM_ALGORITHM_ID>) <octet string>
+
+The parameters are described in L<provider-signature(7)>.
+
+=back
 
 =head1 NOTES
 
