@@ -83,9 +83,12 @@ $COMMON=\
         $DER_RSA_COMMON \
         $DER_DSA_GEN $DER_DSA_AUX \
         $DER_EC_GEN $DER_EC_AUX \
-        $DER_ECX_GEN $DER_ECX_AUX \
         $DER_DIGESTS_GEN \
         $DER_WRAP_GEN
+
+IF[{- !$disabled{ec} -}]
+  $COMMON = $COMMON $DER_ECX_GEN $DER_ECX_AUX
+ENDIF
 
 SOURCE[../../libfips.a]=$COMMON $DER_RSA_FIPSABLE
 SOURCE[../../libnonfips.a]=$COMMON $DER_RSA_FIPSABLE
