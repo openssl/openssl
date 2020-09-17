@@ -44,14 +44,16 @@ A version number for the fips install process. Should be 1.
 
 =item B<conditional-errors>
 
-If a continuous test (e.g a key pair test) fails then the FIPS module
-will enter an error state, and no services or cryptographic algorithms will be
-able to be accessed after this point.
-The value of '1' will cause the FIPS module error state to be entered.
-If the value is '0' then the module error state will not be entered.
-Regardless of whether the error state is entered or not, the current operation
-(e.g. key generation) will return an error. The user is responsible for retrying
-the operation if the module error state is not entered.
+The FIPS module normally enters an internal error mode if any self test fails.
+Once this error mode is active, no services or cryptographic algorithms are
+accessible from this point on.
+Continuous tests are a subset of the self tests (e.g., a key pair test during key
+generation, or the CRNG output test).
+Setting this value to C<0> allows the error mode to not be triggered if any
+continuous test fails. The default value of C<1> will trigger the error mode.
+Regardless of the value, the operation (e.g., key generation) that called the
+continuous test will return an error code if its continuous test fails. The
+operation may then be retried if the error mode has not been triggered.
 
 =item B<security-checks>
 

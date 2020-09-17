@@ -203,7 +203,7 @@ int digest_is_allowed(const EVP_MD *md)
 {
 # if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
     if (securitycheck_enabled())
-        return (digest_get_approved_nid(md) != NID_undef);
+        return digest_get_approved_nid(md) != NID_undef;
 # endif /* OPENSSL_NO_FIPS_SECURITYCHECKS */
     return 1;
 }

@@ -3289,23 +3289,29 @@ static char *take_value(PAIR *pp)
 
 static int securitycheck_enabled(void)
 {
-    if (OSSL_PROVIDER_available(libctx, "fips")) {
-        OSSL_PARAM params[2];
-        OSSL_PROVIDER *prov = NULL;
-        int check = 1;
+    static int enabled = -1;
 
-        prov = OSSL_PROVIDER_load(libctx, "fips");
-        if (prov != NULL) {
-            params[0] =
-                OSSL_PARAM_construct_int(OSSL_PROV_PARAM_SECURITY_CHECKS,
-                                         &check);
-            params[1] = OSSL_PARAM_construct_end();
-            OSSL_PROVIDER_get_params(prov, params);
-            OSSL_PROVIDER_unload(prov);
+    if (enabled == -1) {
+        if (OSSL_PROVIDER_available(libctx, "fips")) {
+            OSSL_PARAM params[2];
+            OSSL_PROVIDER *prov = NULL;
+            int check = 1;
+
+            prov = OSSL_PROVIDER_load(libctx, "fips");
+            if (prov != NULL) {
+                params[0] =
+                    OSSL_PARAM_construct_int(OSSL_PROV_PARAM_SECURITY_CHECKS,
+                                             &check);
+                params[1] = OSSL_PARAM_construct_end();
+                OSSL_PROVIDER_get_params(prov, params);
+                OSSL_PROVIDER_unload(prov);
+            }
+            enabled = check;
+            return enabled;
         }
-        return check;
+        enabled = 0;
     }
-    return 0;
+    return enabled;
 }
 
 /*
