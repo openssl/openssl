@@ -25,7 +25,7 @@ static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
                                 const X509_NAME *nm, STACK_OF(X509) *certs,
                                 unsigned long flags);
 
-/* Returns 1 on success, 0 on error, or -1 on fatal error like malloc failure */
+/* Returns 1 on success, 0 on failure, or -1 on fatal error */
 static int ocsp_verify_signer(X509 *signer, X509_STORE *st, unsigned long flags,
                               STACK_OF(X509) *untrusted, STACK_OF(X509) **chain)
 {
@@ -94,10 +94,9 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
     STACK_OF(X509) *untrusted = NULL;
     int ret = ocsp_find_signer(&signer, bs, certs, flags);
 
-    if (!ret) {
+    if (ret == 0) {
         OCSPerr(OCSP_F_OCSP_BASIC_VERIFY,
                 OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
-        ret = 0;
         goto end;
     }
     if ((ret == 2) && (flags & OCSP_TRUSTOTHER) != 0)
@@ -219,7 +218,6 @@ static int ocsp_check_issuer(OCSP_BASICRESP *bs, STACK_OF(X509) *chain)
     OCSP_CERTID *caid = NULL;
     int ret;
 
-    sresp = bs->tbsResponseData.responses;
     if (sk_X509_num(chain) <= 0) {
         OCSPerr(OCSP_F_OCSP_CHECK_ISSUER, OCSP_R_NO_CERTIFICATES_IN_CHAIN);
         return -1;
@@ -293,7 +291,7 @@ static int ocsp_check_ids(STACK_OF(OCSP_SINGLERESP) *sresp, OCSP_CERTID **ret)
 
 /*
  * Match the certificate issuer ID.
- * Returns -1 on error, 0 if there is no match and 1 if there is a match.
+ * Returns -1 on fatal error, 0 if there is no match and 1 if there is a match.
  */
 static int ocsp_match_issuerid(X509 *cert, OCSP_CERTID *cid,
                                STACK_OF(OCSP_SINGLERESP) *sresp)
@@ -358,7 +356,7 @@ static int ocsp_check_delegated(X509 *x)
 /*
  * Verify an OCSP request. This is much easier than OCSP response verify.
  * Just find the signer's certificate and verify it against a given trust value.
- * Returns 1 on success, 0 on error, or -1 on fatal error like malloc failure.
+ * Returns 1 on success, 0 on failure, or -1 on fatal error like malloc failure.
  */
 int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags)
