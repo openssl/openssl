@@ -132,6 +132,33 @@ static int test_store_get_params(int idx)
     return 1;
 }
 
+/*
+ * This test verifies that calling OSSL_STORE_ATTACH does not set an
+ * "unregistered scheme" error when called.
+ */
+static int test_store_attach_unregistered_scheme(void)
+{
+    int ret;
+    OSSL_STORE_CTX *store_ctx;
+    OSSL_PROVIDER *provider;
+    OSSL_LIB_CTX *libctx;
+    BIO *bio;
+    libctx = OSSL_LIB_CTX_new();
+    provider = OSSL_PROVIDER_load(libctx, "default");
+    bio = BIO_new_file("test/certs/sm2-root.crt", "r");
+
+    ret = TEST_ptr(store_ctx = OSSL_STORE_attach(bio, "file", libctx, NULL,
+                                                 NULL, NULL, NULL, NULL)) &&
+          TEST_int_ne(ERR_GET_LIB(ERR_peek_error()), ERR_LIB_OSSL_STORE) &&
+          TEST_int_ne(ERR_GET_REASON(ERR_peek_error()),
+                      OSSL_STORE_R_UNREGISTERED_SCHEME);
+
+    BIO_free(bio);
+    OSSL_STORE_close(store_ctx);
+    OSSL_PROVIDER_unload(provider);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
 
 const OPTIONS *test_get_options(void)
 {
@@ -172,5 +199,6 @@ int setup_tests(void)
     ADD_TEST(test_store_open);
     ADD_TEST(test_store_search_by_key_fingerprint_fail);
     ADD_ALL_TESTS(test_store_get_params, 3);
+    ADD_TEST(test_store_attach_unregistered_scheme);
     return 1;
 }

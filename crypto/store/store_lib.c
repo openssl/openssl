@@ -930,6 +930,7 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         scheme = "file";
 
     OSSL_TRACE1(STORE, "Looking up scheme %s\n", scheme);
+    ERR_set_mark();
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     if ((loader = ossl_store_get0_loader_int(scheme)) != NULL)
         loader_ctx = loader->attach(loader, bp, libctx, propq,
@@ -963,24 +964,36 @@ OSSL_STORE_CTX *OSSL_STORE_attach(BIO *bp, const char *scheme,
         loader = fetched_loader;
     }
 
-    if (loader_ctx == NULL)
+    if (loader_ctx == NULL) {
+        ERR_clear_last_mark();
         return NULL;
+    }
 
     if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL) {
+        ERR_clear_last_mark();
         ERR_raise(ERR_LIB_OSSL_STORE, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
 
     if (ui_method != NULL
         && !ossl_pw_set_ui_method(&ctx->pwdata, ui_method, ui_data)) {
+        ERR_clear_last_mark();
         OPENSSL_free(ctx);
         return NULL;
     }
+
     ctx->fetched_loader = fetched_loader;
     ctx->loader = loader;
     ctx->loader_ctx = loader_ctx;
     ctx->post_process = post_process;
     ctx->post_process_data = post_process_data;
+
+    /*
+     * ossl_store_get0_loader_int will raise an error if the loader for the
+     * the scheme cannot be retrieved. But if a loader was successfully
+     * fetched then we remove this error from the error stack.
+     */
+    ERR_pop_to_mark();
 
     return ctx;
 }
