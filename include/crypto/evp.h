@@ -156,7 +156,6 @@ const EVP_PKEY_METHOD *dh_pkey_method(void);
 const EVP_PKEY_METHOD *dhx_pkey_method(void);
 const EVP_PKEY_METHOD *dsa_pkey_method(void);
 const EVP_PKEY_METHOD *ec_pkey_method(void);
-const EVP_PKEY_METHOD *sm2_pkey_method(void);
 const EVP_PKEY_METHOD *ecx25519_pkey_method(void);
 const EVP_PKEY_METHOD *ecx448_pkey_method(void);
 const EVP_PKEY_METHOD *ed25519_pkey_method(void);
