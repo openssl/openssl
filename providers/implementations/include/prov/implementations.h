@@ -307,6 +307,9 @@ extern const OSSL_DISPATCH sm2_signature_functions[];
 
 /* Asym Cipher */
 extern const OSSL_DISPATCH rsa_asym_cipher_functions[];
+#ifndef OPENSSL_NO_SM2
+extern const OSSL_DISPATCH sm2_asym_cipher_functions[];
+#endif
 
 /* Asym Key encapsulation  */
 extern const OSSL_DISPATCH rsa_asym_kem_functions[];

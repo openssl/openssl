@@ -124,6 +124,15 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src)
     return 1;
 }
 
+const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OPENSSL_CTX *libctx,
+                           const char *mdname, const char *propquery)
+{
+    EVP_MD_free(pd->alloc_md);
+    pd->md = pd->alloc_md = EVP_MD_fetch(libctx, mdname, propquery);
+
+    return pd->md;
+}
+
 int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
                                       const OSSL_PARAM params[],
                                       OPENSSL_CTX *ctx)
@@ -141,9 +150,8 @@ int ossl_prov_digest_load_from_params(PROV_DIGEST *pd,
     if (p->data_type != OSSL_PARAM_UTF8_STRING)
         return 0;
 
-    EVP_MD_free(pd->alloc_md);
     ERR_set_mark();
-    pd->md = pd->alloc_md = EVP_MD_fetch(ctx, p->data, propquery);
+    ossl_prov_digest_fetch(pd, ctx, p->data, propquery);
     /* TODO legacy stuff, to be removed */
 #ifndef FIPS_MODULE /* Inside the FIPS module, we don't support legacy digests */
     if (pd->md == NULL)
