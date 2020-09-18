@@ -1813,7 +1813,7 @@ BIO_next                                1855	3_0_0	EXIST::FUNCTION:
 ASN1_STRING_set_default_mask_asc        1856	3_0_0	EXIST::FUNCTION:
 X509_CRL_new                            1857	3_0_0	EXIST::FUNCTION:
 i2b_PrivateKey_bio                      1858	3_0_0	EXIST::FUNCTION:DSA
-ASN1_STRING_length_set                  1859	3_0_0	EXIST::FUNCTION:
+ASN1_STRING_length_set                  1859	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0
 PEM_write_PKCS8                         1860	3_0_0	EXIST::FUNCTION:STDIO
 PKCS7_digest_from_attributes            1861	3_0_0	EXIST::FUNCTION:
 EC_GROUP_set_curve_GFp                  1862	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,EC
