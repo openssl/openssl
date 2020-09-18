@@ -27,6 +27,8 @@ static OSSL_FUNC_asym_cipher_decrypt_init_fn sm2_init;
 static OSSL_FUNC_asym_cipher_decrypt_fn sm2_asym_decrypt;
 static OSSL_FUNC_asym_cipher_freectx_fn sm2_freectx;
 static OSSL_FUNC_asym_cipher_dupctx_fn sm2_dupctx;
+static OSSL_FUNC_asym_cipher_get_ctx_params_fn sm2_get_ctx_params;
+static OSSL_FUNC_asym_cipher_gettable_ctx_params_fn sm2_gettable_ctx_params;
 static OSSL_FUNC_asym_cipher_set_ctx_params_fn sm2_set_ctx_params;
 static OSSL_FUNC_asym_cipher_settable_ctx_params_fn sm2_settable_ctx_params;
 
@@ -148,6 +150,36 @@ static void *sm2_dupctx(void *vpsm2ctx)
     return dstctx;
 }
 
+static int sm2_get_ctx_params(void *vpsm2ctx, OSSL_PARAM *params)
+{
+    PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
+    OSSL_PARAM *p;
+
+    if (vpsm2ctx == NULL || params == NULL)
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_ASYM_CIPHER_PARAM_DIGEST);
+    if (p != NULL) {
+        const EVP_MD *md = ossl_prov_digest_md(&psm2ctx->md);
+
+        if (!OSSL_PARAM_set_utf8_string(p, md == NULL ? ""
+                                                      : EVP_MD_name(md)))
+            return 0;
+    }
+
+    return 1;
+}
+
+static const OSSL_PARAM known_gettable_ctx_params[] = {
+    OSSL_PARAM_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *sm2_gettable_ctx_params(ossl_unused void *provctx)
+{
+    return known_gettable_ctx_params;
+}
+
 static int sm2_set_ctx_params(void *vpsm2ctx, const OSSL_PARAM params[])
 {
     PROV_SM2_CTX *psm2ctx = (PROV_SM2_CTX *)vpsm2ctx;
@@ -182,6 +214,10 @@ const OSSL_DISPATCH sm2_asym_cipher_functions[] = {
     { OSSL_FUNC_ASYM_CIPHER_DECRYPT, (void (*)(void))sm2_asym_decrypt },
     { OSSL_FUNC_ASYM_CIPHER_FREECTX, (void (*)(void))sm2_freectx },
     { OSSL_FUNC_ASYM_CIPHER_DUPCTX, (void (*)(void))sm2_dupctx },
+    { OSSL_FUNC_ASYM_CIPHER_GET_CTX_PARAMS,
+      (void (*)(void))sm2_get_ctx_params },
+    { OSSL_FUNC_ASYM_CIPHER_GETTABLE_CTX_PARAMS,
+      (void (*)(void))sm2_gettable_ctx_params },
     { OSSL_FUNC_ASYM_CIPHER_SET_CTX_PARAMS,
       (void (*)(void))sm2_set_ctx_params },
     { OSSL_FUNC_ASYM_CIPHER_SETTABLE_CTX_PARAMS,
