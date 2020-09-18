@@ -437,6 +437,7 @@ foreach my $lib ( keys %errorfile ) {
     # Rewrite the header file
 
     my $hfile = $hinc{$lib};
+    $hfile =~ s/.h$/err.h/ if $internal;
     open( OUT, ">$hfile" ) || die "Can't write to $hfile, $!,";
     print OUT <<"EOF";
 /*
