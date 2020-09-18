@@ -995,7 +995,7 @@ static int test_EVP_SM2(void)
 {
     int ret = 0;
     EVP_PKEY *pkey = NULL;
-    EVP_PKEY *params = NULL;
+    EVP_PKEY *pkeyparams = NULL;
     EVP_PKEY_CTX *pctx = NULL;
     EVP_PKEY_CTX *kctx = NULL;
     EVP_PKEY_CTX *sctx = NULL;
@@ -1013,6 +1013,11 @@ static int test_EVP_SM2(void)
 
     uint8_t sm2_id[] = {1, 2, 3, 4, 'l', 'e', 't', 't', 'e', 'r'};
 
+    OSSL_PARAM sparams[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
+    OSSL_PARAM gparams[2] = {OSSL_PARAM_END, OSSL_PARAM_END};
+    int i;
+    char mdname[20];
+
     pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_SM2, NULL);
     if (!TEST_ptr(pctx))
         goto done;
@@ -1024,10 +1029,10 @@ static int test_EVP_SM2(void)
     if (!TEST_true(EVP_PKEY_CTX_set_ec_paramgen_curve_nid(pctx, NID_sm2)))
         goto done;
 
-    if (!TEST_true(EVP_PKEY_paramgen(pctx, &params)))
+    if (!TEST_true(EVP_PKEY_paramgen(pctx, &pkeyparams)))
         goto done;
 
-    kctx = EVP_PKEY_CTX_new(params, NULL);
+    kctx = EVP_PKEY_CTX_new(pkeyparams, NULL);
     if (!TEST_ptr(kctx))
         goto done;
 
@@ -1084,26 +1089,53 @@ static int test_EVP_SM2(void)
 
     /* now check encryption/decryption */
 
-    if (!TEST_ptr(cctx = EVP_PKEY_CTX_new(pkey, NULL)))
-        goto done;
+    gparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
+                                                  mdname, sizeof(mdname));
+    for (i = 0; i < 2; i++) {
+        EVP_PKEY_CTX_free(cctx);
 
-    if (!TEST_true(EVP_PKEY_encrypt_init(cctx)))
-        goto done;
+        sparams[0] = OSSL_PARAM_construct_utf8_string(OSSL_ASYM_CIPHER_PARAM_DIGEST,
+                                                      i == 0 ? "SM3" : "SHA2-256",
+                                                      0);
 
-    if (!TEST_true(EVP_PKEY_encrypt(cctx, ciphertext, &ctext_len, kMsg, sizeof(kMsg))))
-        goto done;
+        if (!TEST_ptr(cctx = EVP_PKEY_CTX_new(pkey, NULL)))
+            goto done;
 
-    if (!TEST_true(EVP_PKEY_decrypt_init(cctx)))
-        goto done;
+        if (!TEST_true(EVP_PKEY_encrypt_init(cctx)))
+            goto done;
 
-    if (!TEST_true(EVP_PKEY_decrypt(cctx, plaintext, &ptext_len, ciphertext, ctext_len)))
-        goto done;
+        if (!TEST_true(EVP_PKEY_CTX_set_params(cctx, sparams)))
+            goto done;
 
-    if (!TEST_true(ptext_len == sizeof(kMsg)))
-        goto done;
+        if (!TEST_true(EVP_PKEY_encrypt(cctx, ciphertext, &ctext_len, kMsg,
+                                        sizeof(kMsg))))
+            goto done;
 
-    if (!TEST_true(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
-        goto done;
+        if (!TEST_true(EVP_PKEY_decrypt_init(cctx)))
+            goto done;
+
+        if (!TEST_true(EVP_PKEY_CTX_set_params(cctx, sparams)))
+            goto done;
+
+        if (!TEST_true(EVP_PKEY_decrypt(cctx, plaintext, &ptext_len, ciphertext,
+                                        ctext_len)))
+            goto done;
+
+        if (!TEST_true(EVP_PKEY_CTX_get_params(cctx, gparams)))
+            goto done;
+
+        /* Test we're still using the digest we think we are */
+        if (i == 0 && !TEST_int_eq(strcmp(mdname, "SM3"), 0))
+            goto done;
+        if (i == 1 && !TEST_int_eq(strcmp(mdname, "SHA2-256"), 0))
+            goto done;
+
+        if (!TEST_true(ptext_len == sizeof(kMsg)))
+            goto done;
+
+        if (!TEST_true(memcmp(plaintext, kMsg, sizeof(kMsg)) == 0))
+            goto done;
+    }
 
     ret = 1;
 done:
@@ -1112,7 +1144,7 @@ done:
     EVP_PKEY_CTX_free(sctx);
     EVP_PKEY_CTX_free(cctx);
     EVP_PKEY_free(pkey);
-    EVP_PKEY_free(params);
+    EVP_PKEY_free(pkeyparams);
     EVP_MD_CTX_free(md_ctx);
     EVP_MD_CTX_free(md_ctx_verify);
     OPENSSL_free(sig);
