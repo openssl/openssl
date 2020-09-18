@@ -1338,6 +1338,85 @@ err:
     return ret;
 }
 
+static int drbg_test(int id)
+{
+    OSSL_PARAM params[3];
+    EVP_RAND *rand = NULL;
+    EVP_RAND_CTX *ctx = NULL, *parent = NULL;
+    unsigned char returned_bits[64];
+    const size_t returned_bits_len = sizeof(returned_bits);
+    unsigned int strength = 256;
+    const struct drbg_st *tst  = &drbg_data[id];
+    int res = 0;
+
+    /* Create the seed source */
+    if (!TEST_ptr(rand = EVP_RAND_fetch(libctx, "TEST-RAND", "-fips"))
+        || !TEST_ptr(parent = EVP_RAND_CTX_new(rand, NULL)))
+        goto err;
+    EVP_RAND_free(rand);
+    rand = NULL;
+
+    params[0] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_set_ctx_params(parent, params)))
+        goto err;
+
+    /* Get the DRBG */
+    if (!TEST_ptr(rand = EVP_RAND_fetch(libctx, tst->drbg_name, ""))
+        || !TEST_ptr(ctx = EVP_RAND_CTX_new(rand, parent)))
+        goto err;
+
+    /* Set the DRBG up */
+    params[0] = OSSL_PARAM_construct_int(OSSL_DRBG_PARAM_USE_DF,
+                                         (int *)&tst->use_df);
+    params[1] = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+                                                 (char *)tst->cipher, 0);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_set_ctx_params(ctx, params)))
+        goto err;
+
+    /* Feed in the entropy and nonce */
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+                                                  (void *)tst->entropy_input,
+                                                  tst->entropy_input_len);
+    params[1] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_NONCE,
+                                                  (void *)tst->nonce,
+                                                  tst->nonce_len);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_set_ctx_params(parent, params)))
+        goto err;
+
+    /*
+     * Run the test
+     * A NULL personalisation string defaults to the built in so something
+     * non-NULL is needed if there is no personalisation string
+     */
+    if (!TEST_true(EVP_RAND_instantiate(ctx, 0, 0, (void *)"", 0))
+        || !TEST_true(EVP_RAND_generate(ctx, returned_bits, returned_bits_len,
+                                        0, 0, NULL, 0))
+        || !TEST_true(EVP_RAND_generate(ctx, returned_bits, returned_bits_len,
+                                        0, 0, NULL, 0)))
+        goto err;
+
+    test_output_memory("returned bits", returned_bits, returned_bits_len);
+
+    /* Clean up */
+    if (!TEST_true(EVP_RAND_uninstantiate(ctx))
+        || !TEST_true(EVP_RAND_uninstantiate(parent)))
+        goto err;
+
+    /* Verify the output */
+    if (!TEST_mem_eq(returned_bits, returned_bits_len,
+                     tst->returned_bits, tst->returned_bits_len))
+        goto err;
+    res = 1;
+err:
+    EVP_RAND_CTX_free(ctx);
+    EVP_RAND_CTX_free(parent);
+    EVP_RAND_free(rand);
+    return res;
+}
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -1404,6 +1483,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(ecdsa_siggen_test, OSSL_NELEM(ecdsa_siggen_data));
     ADD_ALL_TESTS(ecdsa_sigver_test, OSSL_NELEM(ecdsa_sigver_data));
 #endif /* OPENSSL_NO_EC */
+
+    ADD_ALL_TESTS(drbg_test, OSSL_NELEM(drbg_data));
     return 1;
 }
 
