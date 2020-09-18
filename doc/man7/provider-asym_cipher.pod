@@ -193,9 +193,18 @@ further details.
 Gets or sets the name of the OAEP digest algorithm used when OAEP padding is in
 use.
 
+=item "digest" (B<OSSL_ASYM_CIPHER_PARAM_DIGEST>) <UTF8 string>
+
+Gets or sets the name of the digest algorithm used by the algorithm (where
+applicable).
+
 =item "digest-props" (B<OSSL_ASYM_CIPHER_PARAM_OAEP_DIGEST_PROPS>) <UTF8 string>
 
 Gets or sets the properties to use when fetching the OAEP digest algorithm.
+
+=item "digest-props" (B<OSSL_ASYM_CIPHER_PARAM_DIGEST_PROPS>) <UTF8 string>
+
+Gets or sets the properties to use when fetching the cipher digest algorithm.
 
 =item "mgf1-digest" (B<OSSL_ASYM_CIPHER_PARAM_MGF1_DIGEST>) <UTF8 string>
 
