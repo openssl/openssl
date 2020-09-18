@@ -296,10 +296,6 @@ OpenSSL 3.0
 
    *David von Oheimb*
 
- * OCSP_request_verify now returns -1 on internal fatal error.
-
-  *David von Oheimb*
-
  * All of the low level RSA functions have been deprecated including:
 
    RSA_new_method, RSA_size, RSA_security_bits, RSA_get0_pss_params,

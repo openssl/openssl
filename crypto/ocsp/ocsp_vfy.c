@@ -356,7 +356,7 @@ static int ocsp_check_delegated(X509 *x)
 /*
  * Verify an OCSP request. This is much easier than OCSP response verify.
  * Just find the signer's certificate and verify it against a given trust value.
- * Returns 1 on success, 0 on failure, or -1 on fatal error like malloc failure.
+ * Returns 1 on success, 0 on failure and on fatal error.
  */
 int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
                         X509_STORE *store, unsigned long flags)
@@ -374,25 +374,26 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
     if (!gen || gen->type != GEN_DIRNAME) {
         OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
                 OCSP_R_UNSUPPORTED_REQUESTORNAME_TYPE);
-        return -1;
+        return 0; /* not returning -1 here for backward compatibility*/
     }
     nm = gen->d.directoryName;
     ret = ocsp_req_find_signer(&signer, req, nm, certs, flags);
     if (ret <= 0) {
         OCSPerr(OCSP_F_OCSP_REQUEST_VERIFY,
                 OCSP_R_SIGNER_CERTIFICATE_NOT_FOUND);
-        return -1;
+        return 0; /* not returning -1 here for backward compatibility*/
     }
     if ((ret == 2) && (flags & OCSP_TRUSTOTHER) != 0)
         flags |= OCSP_NOVERIFY;
 
     if ((ret = ocsp_verify(req, NULL, signer, flags)) <= 0)
-        return ret;
+        return 0; /* not returning 'ret' here for backward compatibility*/
     if ((flags & OCSP_NOVERIFY) != 0)
         return 1;
     return ocsp_verify_signer(signer, store, flags,
                               (flags & OCSP_NOCHAIN) != 0 ?
-                              NULL : req->optionalSignature->certs, NULL);
+                              NULL : req->optionalSignature->certs, NULL) > 0;
+    /* using '> 0' here to avoid breaking backward compatibility returning -1 */
 }
 
 static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
