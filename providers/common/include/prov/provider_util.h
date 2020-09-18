@@ -58,6 +58,14 @@ const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
 ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
 
 /* Digest functions */
+
+/*
+ * Fetch a digest from the specified libctx using the provided mdname and
+ * propquery. Store the result in the PROV_DIGEST and return the fetched md.
+ */
+const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OPENSSL_CTX *libctx,
+                                     const char *mdname, const char *propquery);
+
 /*
  * Load a digest from the specified parameters with the specified context.
  * The params "properties", "engine" and "digest" are used to determine the
