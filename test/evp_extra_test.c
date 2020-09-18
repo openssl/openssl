@@ -1083,13 +1083,6 @@ static int test_EVP_SM2(void)
         goto done;
 
     /* now check encryption/decryption */
-    /*
-     * SM2 public key encrytion is not moved into default provider yet,
-     * so we make sure the key gets downgraded for the moment being.
-     * TODO Remove this call when provided SM2 encryption is implemented
-     */
-    if (!TEST_ptr(EVP_PKEY_get0(pkey)))
-       goto done;
 
     if (!TEST_ptr(cctx = EVP_PKEY_CTX_new(pkey, NULL)))
         goto done;
