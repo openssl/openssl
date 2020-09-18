@@ -62,7 +62,7 @@ static int add_ocsp_cert(OCSP_REQUEST **req, X509 *cert,
 static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
                            const EVP_MD *cert_id_md, X509 *issuer,
                            STACK_OF(OCSP_CERTID) *ids);
-static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
+static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               STACK_OF(OPENSSL_STRING) *names,
                               STACK_OF(OCSP_CERTID) *ids, long nsec,
                               long maxage);
@@ -813,7 +813,8 @@ redo_accept:
         }
     }
 
-    print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage);
+    if (!print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage))
+        ret = 1;
 
  end:
     ERR_print_errors(bio_err);
@@ -929,7 +930,7 @@ static int add_ocsp_serial(OCSP_REQUEST **req, char *serial,
     return 0;
 }
 
-static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
+static int print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
                               STACK_OF(OPENSSL_STRING) *names,
                               STACK_OF(OCSP_CERTID) *ids, long nsec,
                               long maxage)
@@ -938,10 +939,13 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
     const char *name;
     int i, status, reason;
     ASN1_GENERALIZEDTIME *rev, *thisupd, *nextupd;
+    int ret = 1;
 
-    if (bs == NULL || req == NULL || !sk_OPENSSL_STRING_num(names)
-        || !sk_OCSP_CERTID_num(ids))
-        return;
+    if (req == NULL || !sk_OPENSSL_STRING_num(names))
+        return 1;
+
+    if (bs == NULL || !sk_OCSP_CERTID_num(ids))
+        return 0;
 
     for (i = 0; i < sk_OCSP_CERTID_num(ids); i++) {
         id = sk_OCSP_CERTID_value(ids, i);
@@ -951,6 +955,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
         if (!OCSP_resp_find_status(bs, id, &status, &reason,
                                    &rev, &thisupd, &nextupd)) {
             BIO_puts(out, "ERROR: No Status found.\n");
+            ret = 0;
             continue;
         }
 
@@ -984,6 +989,7 @@ static void print_ocsp_summary(BIO *out, OCSP_BASICRESP *bs, OCSP_REQUEST *req,
         ASN1_GENERALIZEDTIME_print(out, rev);
         BIO_puts(out, "\n");
     }
+    return ret;
 }
 
 static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req,
