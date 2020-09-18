@@ -221,7 +221,8 @@ used (currently only on Unix).
 
 It returns a CODEREF to be used by C<run>, C<pipe> or C<cmdstr>.
 
-The options that C<cmd> can take are in the form of hash values:
+The options that C<cmd> (as well as its derivatives described below) can take
+are in the form of hash values:
 
 =over 4
 
@@ -389,7 +390,7 @@ derivatives, anything else will most likely cause an error unless you
 know what you're doing.
 
 C<run> executes the command returned by CODEREF and return either the
-resulting output (if the option C<capture> is set true) or a boolean
+resulting standard output (if the option C<capture> is set true) or a boolean
 indicating if the command succeeded or not.
 
 The options that C<run> can take are in the form of hash values:
@@ -398,10 +399,10 @@ The options that C<run> can take are in the form of hash values:
 
 =item B<capture =E<gt> 0|1>
 
-If true, the command will be executed with a perl backtick, and C<run> will
-return the resulting output as an array of lines.  If false or not given,
-the command will be executed with C<system()>, and C<run> will return 1 if
-the command was successful or 0 if it wasn't.
+If true, the command will be executed with a perl backtick,
+and C<run> will return the resulting standard output as an array of lines.
+If false or not given, the command will be executed with C<system()>,
+and C<run> will return 1 if the command was successful or 0 if it wasn't.
 
 =item B<prefix =E<gt> EXPR>
 
@@ -417,6 +418,7 @@ particularly useful together with B<capture>.
 
 =back
 
+Usually 1 indicates that the command was successful and 0 indicates failure.
 For further discussion on what is considered a successful command or not, see
 the function C<with> further down.
 
