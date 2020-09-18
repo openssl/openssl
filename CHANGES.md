@@ -23,6 +23,15 @@ OpenSSL 3.0
 
 ### Changes between 1.1.1 and 3.0 [xx XXX xxxx]
 
+ * Deprecated EVP_PKEY_set_alias_type().  This function was previously
+   needed as a workaround to recognise SM2 keys.  With OpenSSL 3.0, this key
+   type is internally recognised so the workaround is no longer needed.
+
+   Functionality is still retained as it is, but will only work with
+   EVP_PKEYs with a legacy internal key.
+
+   *Richard Levitte*
+
  * Changed all "STACK" functions to be macros instead of inline functions. Macro
    parameters are still checked for type safety at compile time via helper
    inline functions.
