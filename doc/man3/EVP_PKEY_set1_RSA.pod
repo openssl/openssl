@@ -67,10 +67,15 @@ EVP_PKEY_set1_engine, EVP_PKEY_get0_engine - EVP_PKEY assignment functions
  int EVP_PKEY_id(const EVP_PKEY *pkey);
  int EVP_PKEY_base_id(const EVP_PKEY *pkey);
  int EVP_PKEY_type(int type);
- int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
  ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
  int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *engine);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
 =head1 DESCRIPTION
 
@@ -193,6 +198,10 @@ algorithms with EVP_PKEY_set_alias_type:
 =head1 SEE ALSO
 
 L<EVP_PKEY_new(3)>, L<SM2(7)>
+
+=head1 HISTORY
+
+EVP_PKEY_set_alias_type() was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
