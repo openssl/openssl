@@ -327,8 +327,10 @@ static int ossl_encoder_ctx_setup_for_EVP_PKEY(OSSL_ENCODER_CTX *ctx,
 
     ok = 1;
  err:
-    OSSL_ENCODER_CTX_set_construct_data(ctx, NULL);
-    OPENSSL_free(data);
+    if (data != NULL) {
+        OSSL_ENCODER_CTX_set_construct_data(ctx, NULL);
+        OPENSSL_free(data);
+    }
     return ok;
 }
 
