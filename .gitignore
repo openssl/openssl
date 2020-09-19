@@ -103,6 +103,10 @@ providers/common/include/prov/der_wrap.h
 /test/provider_internal_test.cnf
 /test/fipsmodule.cnf
 /providers/fipsmodule.cnf
+/test/recipes/81-test_cmp_cli_data/Mock/test.certout*
+/test/recipes/81-test_cmp_cli_data/Mock/test.cacerts.pem
+/test/recipes/81-test_cmp_cli_data/Mock/test.cert.pem
+/test/recipes/81-test_cmp_cli_data/Mock/test.extracerts.pem
 
 # Fuzz stuff.
 # Anything without an extension is an executable on Unix, so we keep files
