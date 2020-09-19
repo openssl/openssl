@@ -452,6 +452,7 @@ Defaults to the environment variable C<http_proxy> if set, else C<HTTP_PROXY>
 in case no TLS is used, otherwise C<https_proxy> if set, else C<HTTPS_PROXY>.
 
 =item B<-no_proxy> I<addresses>
+
 List of IP addresses and/or DNS names of servers
 not to use an HTTP(S) proxy for, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
@@ -1026,10 +1027,14 @@ to issue the following shell commands.
 
   cd /path/to/openssl
   export OPENSSL_CONF=openssl.cnf
+
 =begin comment
+
   wget 'http://pki.certificate.fi:8081/install-ca-cert.html/ca-certificate.crt\
         ?ca-id=632&download-certificate=1' -O insta.ca.crt
+
 =end comment
+
   openssl genrsa -out insta.priv.pem
   openssl cmp -section insta
 
