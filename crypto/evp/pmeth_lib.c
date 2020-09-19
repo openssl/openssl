@@ -148,7 +148,9 @@ static int evp_pkey_ctx_state(EVP_PKEY_CTX *ctx)
         || (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)
             && ctx->op.ciph.ciphprovctx != NULL)
         || (EVP_PKEY_CTX_IS_GEN_OP(ctx)
-            && ctx->op.keymgmt.genctx != NULL))
+            && ctx->op.keymgmt.genctx != NULL)
+        || (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+            && ctx->op.encap.kemprovctx != NULL))
         return EVP_PKEY_STATE_PROVIDER;
 
     return EVP_PKEY_STATE_LEGACY;
@@ -396,7 +398,14 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         EVP_KEYEXCH_free(ctx->op.kex.exchange);
         ctx->op.kex.exchprovctx = NULL;
         ctx->op.kex.exchange = NULL;
-    } else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
+    } else if (EVP_PKEY_CTX_IS_KEM_OP(ctx)) {
+        if (ctx->op.encap.kemprovctx != NULL && ctx->op.encap.kem != NULL)
+            ctx->op.encap.kem->freectx(ctx->op.encap.kemprovctx);
+        EVP_KEM_free(ctx->op.encap.kem);
+        ctx->op.encap.kemprovctx = NULL;
+        ctx->op.encap.kem = NULL;
+    }
+    else if (EVP_PKEY_CTX_IS_ASYM_CIPHER_OP(ctx)) {
         if (ctx->op.ciph.ciphprovctx != NULL && ctx->op.ciph.cipher != NULL)
             ctx->op.ciph.cipher->freectx(ctx->op.ciph.ciphprovctx);
         EVP_ASYM_CIPHER_free(ctx->op.ciph.cipher);
@@ -559,6 +568,26 @@ EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *pctx)
             }
             return rctx;
         }
+    } else if (EVP_PKEY_CTX_IS_KEM_OP(pctx)) {
+        if (pctx->op.encap.kem != NULL) {
+            rctx->op.encap.kem = pctx->op.encap.kem;
+            if (!EVP_KEM_up_ref(rctx->op.encap.kem)) {
+                OPENSSL_free(rctx);
+                return NULL;
+            }
+        }
+        if (pctx->op.encap.kemprovctx != NULL) {
+            if (!ossl_assert(pctx->op.encap.kem != NULL))
+                return NULL;
+            rctx->op.encap.kemprovctx
+                = pctx->op.encap.kem->dupctx(pctx->op.encap.kemprovctx);
+            if (rctx->op.encap.kemprovctx == NULL) {
+                EVP_KEM_free(rctx->op.encap.kem);
+                OPENSSL_free(rctx);
+                return NULL;
+            }
+            return rctx;
+        }
     }
 
     rctx->pmeth = pctx->pmeth;
@@ -659,6 +688,12 @@ int EVP_PKEY_CTX_set_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
         && ctx->keymgmt->gen_set_params != NULL)
         return evp_keymgmt_gen_set_params(ctx->keymgmt, ctx->op.keymgmt.genctx,
                                           params);
+    if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+        && ctx->op.encap.kemprovctx != NULL
+        && ctx->op.encap.kem != NULL
+        && ctx->op.encap.kem->set_ctx_params != NULL)
+        return ctx->op.encap.kem->set_ctx_params(ctx->op.encap.kemprovctx,
+                                                 params);
     return 0;
 }
 
@@ -682,6 +717,12 @@ int EVP_PKEY_CTX_get_params(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
             && ctx->op.ciph.cipher->get_ctx_params != NULL)
         return ctx->op.ciph.cipher->get_ctx_params(ctx->op.ciph.ciphprovctx,
                                                    params);
+    if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+        && ctx->op.encap.kemprovctx != NULL
+        && ctx->op.encap.kem != NULL
+        && ctx->op.encap.kem->get_ctx_params != NULL)
+        return ctx->op.encap.kem->get_ctx_params(ctx->op.encap.kemprovctx,
+                                                 params);
     return 0;
 }
 
@@ -709,6 +750,12 @@ const OSSL_PARAM *EVP_PKEY_CTX_gettable_params(EVP_PKEY_CTX *ctx)
         provctx = ossl_provider_ctx(
                       EVP_ASYM_CIPHER_provider(ctx->op.ciph.cipher));
         return ctx->op.ciph.cipher->gettable_ctx_params(provctx);
+    }
+    if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+        && ctx->op.encap.kem != NULL
+        && ctx->op.encap.kem->gettable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(EVP_KEM_provider(ctx->op.encap.kem));
+        return ctx->op.encap.kem->gettable_ctx_params(provctx);
     }
     return NULL;
 }
@@ -740,7 +787,12 @@ const OSSL_PARAM *EVP_PKEY_CTX_settable_params(EVP_PKEY_CTX *ctx)
     if (EVP_PKEY_CTX_IS_GEN_OP(ctx)
             && ctx->keymgmt != NULL)
         return EVP_KEYMGMT_gen_settable_params(ctx->keymgmt);
-
+    if (EVP_PKEY_CTX_IS_KEM_OP(ctx)
+        && ctx->op.encap.kem != NULL
+        && ctx->op.encap.kem->settable_ctx_params != NULL) {
+        provctx = ossl_provider_ctx(EVP_KEM_provider(ctx->op.encap.kem));
+        return ctx->op.encap.kem->settable_ctx_params(provctx);
+    }
     return NULL;
 }
 
@@ -1094,6 +1146,24 @@ int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
                                           EVP_PKEY_OP_KEYGEN,
                                           EVP_PKEY_CTRL_SET_MAC_KEY,
                                           key, keylen);
+}
+
+int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op)
+{
+    OSSL_PARAM params[2], *p = params;
+
+    if (ctx == NULL || op == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+        return 0;
+    }
+    if (!EVP_PKEY_CTX_IS_KEM_OP(ctx)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
+        return -2;
+    }
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
+                                            (char *)op, 0);
+    *p = OSSL_PARAM_construct_end();
+    return EVP_PKEY_CTX_set_params(ctx, params);
 }
 
 int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len)

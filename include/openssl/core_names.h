@@ -475,9 +475,15 @@ extern "C" {
 #define OSSL_PKEY_PARAM_RSA_TEST_Q2  "q2"
 #define OSSL_SIGNATURE_PARAM_KAT "kat"
 
+/* KEM parameters */
+#define OSSL_KEM_PARAM_OPERATION            "operation"
+
+/* OSSL_KEM_PARAM_OPERATION values */
+#define OSSL_KEM_PARAM_OPERATION_RSASVE     "RSASVE"
+
 /* Capabilities */
 
-/* TLS-GROUP Capbility */
+/* TLS-GROUP Capability */
 #define OSSL_CAPABILITY_TLS_GROUP_NAME              "tls-group-name"
 #define OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL     "tls-group-name-internal"
 #define OSSL_CAPABILITY_TLS_GROUP_ID                "tls-group-id"

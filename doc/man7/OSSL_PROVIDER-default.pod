@@ -182,6 +182,14 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =back
 
+=head2 Asymmetric Key Encapsulation
+
+=over 4
+
+=item RSA, see L<EVP_KEM-RSA(7)>
+
+=back
+
 =head2 Asymmetric Key Management
 
 =over 4
