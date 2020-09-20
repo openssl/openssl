@@ -123,6 +123,22 @@ DEP_DECLARE()
 #elif defined(__GNUC__)
 # define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
 # define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
+
+#elif defined(__TANDEM)
+DEP_DECLARE() /* must be declared before calling init() or cleanup() */
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
+
+/* Method automatically called by the NonStop OS when the DLL loads */
+void __INIT__init(void) {
+    init();
+}
+
+/* Method automatically called by the NonStop OS prior to unloading the DLL */
+void __TERM__cleanup(void) {
+    cleanup();
+}
+
 #endif
 
 #if defined(DEP_INIT_ATTRIBUTE) && defined(DEP_FINI_ATTRIBUTE)
