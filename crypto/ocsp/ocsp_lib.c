@@ -38,6 +38,39 @@ OCSP_CERTID *OCSP_cert_to_id(const EVP_MD *dgst, const X509 *subject,
     return OCSP_cert_id_new(dgst, iname, ikey, serial);
 }
 
+/*
+ * Convert a certificate and its issuer to an OCSP_CERTID
+ * based on the digest algorithm pulled from the response
+ */
+
+OCSP_CERTID *OCSP_resp_cert_to_id(OCSP_BASICRESP *br,
+                                  const X509 *subject,
+                                  const X509 *issuer, int idx)
+{
+    const EVP_MD *dgst = NULL;
+    ASN1_OBJECT  *pmd = NULL;
+    OCSP_CERTID  *cid;
+    const OCSP_SINGLERESP *single;
+
+    single = OCSP_resp_get0(br, idx);
+    if (single == NULL) {
+        return NULL;
+    }
+
+    cid = (OCSP_CERTID *)OCSP_SINGLERESP_get0_id(single);
+    if (cid == NULL) {
+        return NULL;
+    }
+
+    if (OCSP_id_get0_info(NULL, &pmd, NULL, NULL, cid)) {
+        dgst = EVP_get_digestbyobj(pmd);
+    } else {
+        return NULL;
+    }
+
+    return (OCSP_cert_to_id(dgst, subject, issuer));
+}
+
 OCSP_CERTID *OCSP_cert_id_new(const EVP_MD *dgst,
                               const X509_NAME *issuerName,
                               const ASN1_BIT_STRING *issuerKey,
