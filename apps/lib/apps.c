@@ -2410,7 +2410,7 @@ int raw_write_stdout(const void *buf, int siz)
     else
         return -1;
 }
-#elif defined(OPENSSL_SYSNAME_TANDEM) && defined(OPENSSL_THREADS) && defined(_SPT_MODEL_)
+#elif defined(OPENSSL_SYS_TANDEM) && defined(OPENSSL_THREADS) && defined(_SPT_MODEL_)
 # if defined(__TANDEM)
 #  if defined(OPENSSL_TANDEM_FLOSS)
 #   include <floss.h(floss_write)>
