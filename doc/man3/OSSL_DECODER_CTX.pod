@@ -32,7 +32,7 @@ OSSL_DECODER_INSTANCE_get_input_type
 
  typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
- OSSL_DECODER_CTX *OSSL_DECODER_CTX_new(OPENSSL_CTX *libctx);
+ OSSL_DECODER_CTX *OSSL_DECODER_CTX_new(void);
  const OSSL_PARAM *OSSL_DECODER_settable_ctx_params(OSSL_DECODER *decoder);
  int OSSL_DECODER_CTX_set_params(OSSL_DECODER_CTX *ctx,
                                  const OSSL_PARAM params[]);
