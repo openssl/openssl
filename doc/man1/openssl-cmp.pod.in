@@ -3,7 +3,7 @@
 
 =head1 NAME
 
-openssl-cmp - client for the Certificate Management Protocol (CMP, RFC 4210)
+openssl-cmp - Certificate Management Protocol (CMP, RFC 4210) application
 
 =head1 SYNOPSIS
 
@@ -11,38 +11,15 @@ B<openssl> B<cmp>
 [B<-help>]
 [B<-config> I<filename>]
 [B<-section> I<names>]
+[B<-verbosity> I<level>]
 
-[B<-server> I<[http[s]://]address[:port][/path]>]
-[B<-proxy> I<[http[s]://]address[:port][/path]>]
-[B<-no_proxy> I<addresses>]
-[B<-path> I<remote_path>]
-[B<-msg_timeout> I<seconds>]
-[B<-total_timeout> I<seconds>]
+Generic message options:
 
-[B<-trusted> I<filenames>]
-[B<-untrusted> I<sources>]
-[B<-srvcert> I<filename>]
-[B<-recipient> I<name>]
-[B<-expect_sender> I<name>]
-[B<-ignore_keyusage>]
-[B<-unprotected_errors>]
-[B<-extracertsout> I<filename>]
-[B<-cacertsout> I<filename>]
-
-[B<-ref> I<value>]
-[B<-secret> I<arg>]
-[B<-cert> I<filename>]
-[B<-own_trusted> I<filenames>]
-[B<-key> I<filename>]
-[B<-keypass> I<arg>]
-[B<-digest> I<name>]
-[B<-mac> I<name>]
-[B<-extracerts> I<sources>]
-[B<-unprotected_requests>]
-
-[B<-cmd> I<ir|cr|kur|p10cr|rr|genm>]
+[B<-cmd> I<i r|cr|kur|p10cr|rr|genm>]
 [B<-infotype> I<name>]
 [B<-geninfo> I<OID:int:N>]
+
+Certificate enrollment options:
 
 [B<-newkey> I<filename>]
 [B<-newkeypass> I<arg>]
@@ -66,14 +43,53 @@ B<openssl> B<cmp>
 [B<-certout> I<filename>]
 [B<-chainout> I<filename>]
 
+Certificate enrollment and revocation options:
+
 [B<-oldcert> I<filename>]
 [B<-revreason> I<number>]
+
+Message transfer options:
+
+[B<-server> I<[http[s]://]address[:port][/path]>]
+[B<-path> I<remote_path>]
+[B<-proxy> I<[http[s]://]address[:port][/path]>]
+[B<-no_proxy> I<addresses>]
+[B<-msg_timeout> I<seconds>]
+[B<-total_timeout> I<seconds>]
+
+Server authentication options:
+
+[B<-trusted> I<filenames>]
+[B<-untrusted> I<sources>]
+[B<-srvcert> I<filename>]
+[B<-recipient> I<name>]
+[B<-expect_sender> I<name>]
+[B<-ignore_keyusage>]
+[B<-unprotected_errors>]
+[B<-extracertsout> I<filename>]
+[B<-cacertsout> I<filename>]
+
+Client authentication options:
+
+[B<-ref> I<value>]
+[B<-secret> I<arg>]
+[B<-cert> I<filename>]
+[B<-own_trusted> I<filenames>]
+[B<-key> I<filename>]
+[B<-keypass> I<arg>]
+[B<-digest> I<name>]
+[B<-mac> I<name>]
+[B<-extracerts> I<sources>]
+[B<-unprotected_requests>]
+
+Credentials format options:
 
 [B<-certform> I<PEM|DER>]
 [B<-keyform> I<PEM|DER|P12|ENGINE>]
 [B<-otherpass> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
+
+TLS connection options:
 
 [B<-tls_used>]
 [B<-tls_cert> I<filename>]
@@ -83,7 +99,8 @@ B<openssl> B<cmp>
 [B<-tls_trusted> I<filenames>]
 [B<-tls_host> I<name>]
 
-[B<-verbosity> I<level>]
+Client-side debugging options:
+
 [B<-batch>]
 [B<-repeat> I<number>]
 [B<-reqin>] I<filenames>
@@ -92,6 +109,36 @@ B<openssl> B<cmp>
 [B<-rspin>] I<filenames>
 [B<-rspout>] I<filenames>
 [B<-use_mock_srv>]
+
+Mock server options:
+
+[B<-port> I<number>]
+[B<-max_msgs> I<number>]
+[B<-srv_ref> I<value>]
+[B<-srv_secret> I<arg>]
+[B<-srv_cert> I<filename>]
+[B<-srv_key> I<filename>]
+[B<-srv_keypass> I<arg>]
+[B<-srv_trusted> I<filenames>]
+[B<-srv_untrusted> I<filenames>]
+[B<-rsp_cert> I<filename>]
+[B<-rsp_extracerts> I<filenames>]
+[B<-rsp_capubs> I<filenames>]
+[B<-poll_count> I<number>]
+[B<-check_after> I<number>]
+[B<-grant_implicitconf>]
+[B<-pkistatus> I<number>]
+[B<-failure> I<number>]
+[B<-failurebits> I<number>]
+[B<-statusstring> I<arg>]
+[B<-send_error>]
+[B<-send_unprotected>]
+[B<-send_unprot_err>]
+[B<-accept_unprotected>]
+[B<-accept_unprot_err>]
+[B<-accept_raverified>]
+
+Certificate verification options, for both CMP and TLS:
 
 [B<-policy> I<arg>]
 [B<-purpose> I<purpose>]
@@ -120,32 +167,6 @@ B<openssl> B<cmp>
 [B<-no_alt_chains>]
 [B<-no_check_time>]
 [B<-allow_proxy_certs>]
-
-[B<-port> I<number>]
-[B<-max_msgs> I<number>]
-[B<-srv_ref> I<value>]
-[B<-srv_secret> I<arg>]
-[B<-srv_cert> I<filename>]
-[B<-srv_key> I<filename>]
-[B<-srv_keypass> I<arg>]
-[B<-srv_trusted> I<filenames>]
-[B<-srv_untrusted> I<filenames>]
-[B<-rsp_cert> I<filename>]
-[B<-rsp_extracerts> I<filenames>]
-[B<-rsp_capubs> I<filenames>]
-[B<-poll_count> I<number>]
-[B<-check_after> I<number>]
-[B<-grant_implicitconf>]
-[B<-pkistatus> I<number>]
-[B<-failure> I<number>]
-[B<-failurebits> I<number>]
-[B<-statusstring> I<arg>]
-[B<-send_error>]
-[B<-send_unprotected>]
-[B<-send_unprot_err>]
-[B<-accept_unprotected>]
-[B<-accept_unprot_err>]
-[B<-accept_raverified>]
 
 =head1 DESCRIPTION
 
@@ -181,8 +202,14 @@ Contents of sections named later may override contents of sections named before.
 In any case, as usual, the C<[default]> section and finally the unnamed
 section (as far as present) can provide per-option fallback values.
 
-=back
+=item B<-verbosity> I<level>
 
+Level of verbosity for logging, error output, etc.
+0 = EMERG, 1 = ALERT, 2 = CRIT, 3 = ERR, 4 = WARN, 5 = NOTE,
+6 = INFO, 7 = DEBUG, 8 = TRACE.
+Defaults to 6 = INFO.
+
+=back
 
 =head2 Generic message options
 
@@ -239,8 +266,7 @@ e.g., C<1.2.3.4:int:56789>.
 
 =back
 
-
-=head2 Certificate request options
+=head2 Certificate enrollment options
 
 =over 4
 
@@ -391,8 +417,7 @@ The file where the chain of the newly enrolled certificate should be saved.
 
 =back
 
-
-=head2 Certificate revocation options
+=head2 Certificate enrollment and revocation options
 
 =over 4
 
@@ -431,7 +456,6 @@ Reason numbers defined in RFC 5280 are:
 
 =back
 
-
 =head2 Message transfer options
 
 =over 4
@@ -442,6 +466,11 @@ The IP address or DNS hostname and optionally port (defaulting to 80 or 443)
 of the CMP server to connect to using HTTP(S) transport.
 The optional I<http://> or I<https://> prefix is ignored.
 If a path is included it provides the default value for the B<-path> option.
+
+=item B<-path> I<remote_path>
+
+HTTP path at the CMP server (aka CMP alias) to use for POST requests.
+Defaults to any path given with B<-server>, else C<"/">.
 
 =item B<-proxy> I<[http[s]://]address[:port][/path]>
 
@@ -458,11 +487,6 @@ not to use an HTTP(S) proxy for, separated by commas and/or whitespace
 (where in the latter case the whole argument must be enclosed in "...").
 Default is from the environment variable C<no_proxy> if set, else C<NO_PROXY>.
 
-=item B<-path> I<remote_path>
-
-HTTP path at the CMP server (aka CMP alias) to use for POST requests.
-Defaults to any path given with B<-server>, else C<"/">.
-
 =item B<-msg_timeout> I<seconds>
 
 Number of seconds (or 0 for infinite) a CMP request-response message round trip
@@ -476,7 +500,6 @@ including attempts polling for certificates on C<waiting> PKIStatus.
 Default is 0 (infinite).
 
 =back
-
 
 =head2 Server authentication options
 
@@ -601,7 +624,6 @@ the last received certificate response (i.e., IP, CP, or KUP) message.
 
 =back
 
-
 =head2 Client authentication options
 
 =over 4
@@ -699,7 +721,6 @@ Send messages without CMP-level protection.
 
 =back
 
-
 =head2 Credentials format options
 
 =over 4
@@ -746,8 +767,7 @@ C<-key engine:pkcs11:object=my-private-key;type=private;pin-value=1234>
 
 =back
 
-
-=head2 TLS options
+=head2 TLS connection options
 
 =over 4
 
@@ -796,17 +816,9 @@ If not given it defaults to the B<-server> address.
 
 =back
 
-
 =head2 Client-side debugging options
 
 =over 4
-
-=item B<-verbosity> I<level>
-
-Level of verbosity for logging, error output, etc.
-0 = EMERG, 1 = ALERT, 2 = CRIT, 3 = ERR, 4 = WARN, 5 = NOTE,
-6 = INFO, 7 = DEBUG, 8 = TRACE.
-Defaults to 6 = INFO.
 
 =item B<-batch>
 
@@ -861,31 +873,7 @@ This works at API level, bypassing HTTP transport.
 
 =back
 
-
-=head2 Certificate verification options, for both CMP and TLS
-
-=over 4
-
-=item B<-policy>, B<-purpose>, B<-verify_name>, B<-verify_depth>,
-B<-attime>,
-B<-ignore_critical>, B<-issuer_checks>,
-B<-policy_check>,
-B<-explicit_policy>, B<-inhibit_any>, B<-inhibit_map>,
-B<-x509_strict>, B<-extended_crl>, B<-use_deltas>,
-B<-policy_print>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
-B<-trusted_first>,
-B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>,
-B<-partial_chain>, B<-no_alt_chains>, B<-no_check_time>,
-B<-auth_level>,
-B<-allow_proxy_certs>
-
-Set various options of certificate chain verification.
-See L<openssl(1)/Verification Options> for details.
-
-=back
-
-
-=head2 Mock server options, for testing purposes only
+=head2 Mock server options
 
 =over 4
 
@@ -949,7 +937,6 @@ Number of times the client must poll before receiving a certificate.
 
 The checkAfter value (number of seconds to wait) to include in poll response.
 
-
 =item B<-grant_implicitconf>
 
 Grant implicit confirmation of newly enrolled certificate.
@@ -1000,6 +987,27 @@ Accept RAVERIFED as proof-of-possession (POPO).
 
 =back
 
+=head2 Certificate verification options, for both CMP and TLS
+
+=over 4
+
+=item B<-policy>, B<-purpose>, B<-verify_name>, B<-verify_depth>,
+B<-attime>,
+B<-ignore_critical>, B<-issuer_checks>,
+B<-policy_check>,
+B<-explicit_policy>, B<-inhibit_any>, B<-inhibit_map>,
+B<-x509_strict>, B<-extended_crl>, B<-use_deltas>,
+B<-policy_print>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
+B<-trusted_first>,
+B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>,
+B<-partial_chain>, B<-no_alt_chains>, B<-no_check_time>,
+B<-auth_level>,
+B<-allow_proxy_certs>
+
+Set various options of certificate chain verification.
+See L<openssl(1)/Verification Options> for details.
+
+=back
 
 =head1 NOTES
 
@@ -1012,7 +1020,6 @@ In this case the client will reject them, and thus their contents are not shown
 although they usually contain hints that would be helpful for diagnostics.
 For assisting in such cases the CMP client offers a workaround via the
 B<-unprotected_errors> option, which allows accepting such negative messages.
-
 
 =head1 EXAMPLES
 
@@ -1113,12 +1120,11 @@ In below command line usage examples the C<\> at line ends is just used
 for formatting; each of the command invocations should be on a single line.
 
   openssl genrsa -out cl_key.pem
-  openssl cmp -cmd ir -server 127.0.0.1:80 -path pkix/ \
+  openssl cmp -cmd ir -server 127.0.0.1:80/pkix/ \
     -ref 1234 -secret pass:1234-5678-1234-5678 \
     -recipient "/CN=CMPserver" \
     -newkey cl_key.pem -subject "/CN=MyName" \
     -cacertsout capubs.pem -certout cl_cert.pem
-
 
 =head2 Certificate update
 
@@ -1129,7 +1135,7 @@ for its own authentication.
 Then it can start using the new cert and key.
 
   openssl genrsa -out cl_key_new.pem
-  openssl cmp -cmd kur -server 127.0.0.1:80 -path pkix/ \
+  openssl cmp -cmd kur -server 127.0.0.1:80/pkix/ \
     -trusted capubs.pem \
     -cert cl_cert.pem -key cl_key.pem \
     -newkey cl_key_new.pem -certout cl_cert.pem
@@ -1137,16 +1143,14 @@ Then it can start using the new cert and key.
 
 This command sequence can be repated as often as needed.
 
-
 =head2 Requesting information from CMP server
 
 Requesting "all relevant information" with an empty General Message.
 This prints information about all received ITAV B<infoType>s to stdout.
 
-  openssl cmp -cmd genm -server 127.0.0.1 -path pkix/ \
+  openssl cmp -cmd genm -server 127.0.0.1/pkix/ \
     -ref 1234 -secret pass:1234-5678-1234-5678 \
     -recipient "/CN=CMPserver"
-
 
 =head2 Using a custom configuration file
 
