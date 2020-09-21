@@ -325,6 +325,26 @@ static void drbg_hmac_free(void *vdrbg)
 static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    PROV_DRBG_HMAC *hmac = (PROV_DRBG_HMAC *)drbg->data;
+    const char *name;
+    const EVP_MD *md;
+    OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_MAC);
+    if (p != NULL) {
+        if (hmac->ctx == NULL)
+            return 0;
+        name = EVP_MAC_name(EVP_MAC_CTX_mac(hmac->ctx));
+        if (!OSSL_PARAM_set_utf8_string(p, name))
+            return 0;
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_DIGEST);
+    if (p != NULL) {
+        md = ossl_prov_digest_md(&hmac->digest);
+        if (md == NULL || !OSSL_PARAM_set_utf8_string(p, EVP_MD_name(md)))
+            return 0;
+    }
 
     return drbg_get_ctx_params(drbg, params);
 }
@@ -332,6 +352,8 @@ static int drbg_hmac_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 static const OSSL_PARAM *drbg_hmac_gettable_ctx_params(ossl_unused void *p_ctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_MAC, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_DIGEST, NULL, 0),
         OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON,
         OSSL_PARAM_END
     };
