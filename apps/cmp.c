@@ -71,9 +71,9 @@ typedef enum {
 /* message transfer */
 static char *opt_server = NULL;
 static char server_port[32] = { '\0' };
+static char *opt_path = NULL;
 static char *opt_proxy = NULL;
 static char *opt_no_proxy = NULL;
-static char *opt_path = NULL;
 static int opt_msg_timeout = -1;
 static int opt_total_timeout = -1;
 
@@ -206,7 +206,7 @@ typedef enum OPTION_choice {
 
     OPT_OLDCERT, OPT_REVREASON,
 
-    OPT_SERVER, OPT_PROXY, OPT_NO_PROXY, OPT_PATH,
+    OPT_SERVER, OPT_PATH, OPT_PROXY, OPT_NO_PROXY,
     OPT_MSG_TIMEOUT, OPT_TOTAL_TIMEOUT,
 
     OPT_TRUSTED, OPT_UNTRUSTED, OPT_SRVCERT,
@@ -231,8 +231,9 @@ typedef enum OPTION_choice {
 
     OPT_BATCH, OPT_REPEAT,
     OPT_REQIN, OPT_REQIN_NEW_TID, OPT_REQOUT, OPT_RSPIN, OPT_RSPOUT,
+    OPT_USE_MOCK_SRV,
 
-    OPT_USE_MOCK_SRV, OPT_PORT, OPT_MAX_MSGS,
+    OPT_PORT, OPT_MAX_MSGS,
     OPT_SRV_REF, OPT_SRV_SECRET,
     OPT_SRV_CERT, OPT_SRV_KEY, OPT_SRV_KEYPASS,
     OPT_SRV_TRUSTED, OPT_SRV_UNTRUSTED,
@@ -332,14 +333,14 @@ const OPTIONS cmp_options[] = {
      "[http[s]://]address[:port][/path] of CMP server. Default port 80 or 443."},
     {OPT_MORE_STR, 0, 0,
      "address may be a DNS name or an IP address; path can be overridden by -path"},
+    {"path", OPT_PATH, 's',
+     "HTTP path (aka CMP alias) at the CMP server. Default from -server, else \"/\""},
     {"proxy", OPT_PROXY, 's',
      "[http[s]://]address[:port][/path] of HTTP(S) proxy to use; path is ignored"},
     {"no_proxy", OPT_NO_PROXY, 's',
      "List of addresses of servers not to use HTTP(S) proxy for"},
     {OPT_MORE_STR, 0, 0,
      "Default from environment variable 'no_proxy', else 'NO_PROXY', else none"},
-    {"path", OPT_PATH, 's',
-     "HTTP path (aka CMP alias) at the CMP server. Default from -server, else \"/\""},
     {"msg_timeout", OPT_MSG_TIMEOUT, 'n',
      "Timeout per CMP message round trip (or 0 for none). Default 120 seconds"},
     {"total_timeout", OPT_TOTAL_TIMEOUT, 'n',
