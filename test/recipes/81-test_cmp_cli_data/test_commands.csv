@@ -9,38 +9,38 @@ expected,description, -section,val, -cmd,val,val2, -cacertsout,val,val2, -infoty
 1,cmd incomplete, -section,, -cmd,i,,BLANK,,,BLANK,,,BLANK,,BLANK,
 ,,,,,,,,,,,,,,,,,
 0,no cacertsout, -section,, -cmd,ir,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,cacertsout given, -section,, -cmd,ir,, -cacertsout,test.cacerts.pem,,BLANK,,,BLANK,,BLANK,
+0,cacertsout given, -section,, -cmd,ir,, -cacertsout,_RESULT_DIR/test.cacerts.pem,,BLANK,,,BLANK,,BLANK,
 1,cacertsout missing arg, -section,, -cmd,ir,, -cacertsout,,,BLANK,,,BLANK,,BLANK,
 ,,,,,,,,,,,,,,,,,
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason unspecified, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,0
+0,revreason unspecified, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,0
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason keyCompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,1
+0,revreason keyCompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,1
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason CACompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,2
+0,revreason CACompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,2
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason affiliationChanged, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,3
+0,revreason affiliationChanged, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,3
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason superseded, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,4
+0,revreason superseded, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,4
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason cessationOfOperation, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,5
+0,revreason cessationOfOperation, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,5
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason certificateHold, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,6
-0,revreason removeFromCRL, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,8
-1,revreason 7 (invalid), -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,7
+0,revreason certificateHold, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,6
+0,revreason removeFromCRL, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,8
+1,revreason 7 (invalid), -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,7
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason priviligeWithdrawn, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,9
+0,revreason priviligeWithdrawn, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,9
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
-0,revreason AACompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,10
+0,revreason AACompromise, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,10
 0, --- get certificate for revocation ----, -section,, -cmd,cr,,BLANK,,,BLANK,,,BLANK,,BLANK,
 1,without oldcert, -section,, -cmd,rr,,BLANK,,,BLANK,,,BLANK,,BLANK,
 1,oldcert is directory, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,dir/,BLANK,
 1,oldcert file nonexistent, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,idontexist,BLANK,
 1,empty oldcert file, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,empty.txt,BLANK,
 1,oldcert and key do not match, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,trusted.crt, -revreason,0
-1,revreason 11 (invalid), -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,11
-1,revreason string, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,abc
-1,revreason out of integer range, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,test.cert.pem, -revreason,010000000000000000000
+1,revreason 11 (invalid), -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,11
+1,revreason string, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,abc
+1,revreason out of integer range, -section,, -cmd,rr,,BLANK,,,BLANK,,, -oldcert,_RESULT_DIR/test.cert.pem, -revreason,010000000000000000000
 ,,,,,,,,,,,,,,,,,
 0,ir + infotype, -section,, -cmd,ir,,BLANK,,, -infotype,signKeyPairTypes,,BLANK,,BLANK,
 1,genm with missing infotype value, -section,, -cmd,genm,,BLANK,,, -infotype,,,BLANK,,BLANK,
