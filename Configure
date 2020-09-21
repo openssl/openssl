@@ -3162,6 +3162,8 @@ sub print_table_entry
         "loutflag",
         "ex_libs",
         "bn_ops",
+        "enable",
+        "disable",
         "poly1035_asm_src",
         "thread_scheme",
         "perlasm_scheme",
