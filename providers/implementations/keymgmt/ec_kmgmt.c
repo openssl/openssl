@@ -788,9 +788,13 @@ int ec_validate(void *keydata, int selection)
 {
     EC_KEY *eck = keydata;
     int ok = 0;
-    BN_CTX *ctx = BN_CTX_new_ex(ec_key_get_libctx(eck));
+    BN_CTX *ctx = NULL;
 
-    if (!ossl_prov_is_running() || ctx == NULL)
+    if (!ossl_prov_is_running())
+        return 0;
+
+    ctx = BN_CTX_new_ex(ec_key_get_libctx(eck));
+    if  (ctx == NULL)
         return 0;
 
     if ((selection & EC_POSSIBLE_SELECTIONS) != 0)
