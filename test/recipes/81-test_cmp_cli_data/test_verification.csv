@@ -45,7 +45,7 @@ expected,description, -section,val, -recipient,val, -expect_sender,val, -srvcert
 0,no unprotected errors - no errors, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK,BLANK,BLANK,,,,,,,,
 1,unprotected_errors with parameter, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK,BLANK,BLANK,,, -unprotected_errors,123,,,,
 ,,,,,,,,,,,,,,,,,,,,,,,,,
-0,extracertsout, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,test.extracerts.pem,,,,,,,
+0,extracertsout, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,_RESULT_DIR/test.extracerts.pem,,,,,,,
 1,extracertsout no parameter, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,,,,,,,,
 1,extracertsout directory, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,directory/,,,,,,,
 1,extracertsout multiple arguments, -section,, -recipient,_CA_DN,BLANK,,BLANK,, -trusted,trusted.crt,BLANK,,BLANK, -unprotected_errors, -extracertsout,abc,def,,,,,,

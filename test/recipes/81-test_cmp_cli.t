@@ -14,7 +14,7 @@ use warnings;
 use POSIX;
 use File::Spec::Functions qw/catfile/;
 use File::Compare qw/compare_text/;
-use OpenSSL::Test qw/:DEFAULT with data_file data_dir srctop_dir bldtop_dir/;
+use OpenSSL::Test qw/:DEFAULT with data_file data_dir srctop_dir bldtop_dir result_dir result_file/;
 use OpenSSL::Test::Utils;
 use Data::Dumper; # for debugging purposes only
 
@@ -64,13 +64,12 @@ my @cmp_basic_tests = (
     [ "bad int: out of range",            [ "-config", '""', "-days", "2147483648" ], 1 ],
 );
 
-my $rsp_cert = "signer_only.crt";
-my $outfile = "test.certout.pem";
-my $secret = "pass:test";
-
 # this uses the mock server directly in the cmp app, without TCP
 sub use_mock_srv_internally
 {
+    my $secret = "pass:test";
+    my $rsp_cert = "signer_only.crt";
+    my $outfile = result_file("test.certout.pem");
     ok(run(cmd([bldtop_dir($app),
                 "-config", '""',
                 "-use_mock_srv", "-srv_ref", "mock server",
@@ -84,7 +83,7 @@ sub use_mock_srv_internally
                 "-recipient", "/O=openssl_cmp", # if given must be consistent with sender
                 "-secret", $secret,
                 "-ref", "client under test",
-                "-certout" , $outfile]))
+                "-certout", $outfile]))
        && compare_text($outfile, $rsp_cert) == 0,
        "CMP app with -use_mock_srv and -poll_count 1");
     # not unlinking $outfile
@@ -200,8 +199,17 @@ sub test_cmp_cli_aspect {
             }
         }
     };
-    # not unlinking test.certout_*.pem, test.cacerts.pem, and test.extracerts.pem
+    # not unlinking test.certout*.pem, test.cacerts.pem, and test.extracerts.pem
 }
+
+# The input files for the tests done here dynamically depend on the test server
+# selected (where the Mock server used by default is just one possibility).
+# On the other hand the main test configuration file test.cnf, which references
+# several server-dependent input files by relative file names, is static.
+# Moreover the tests use much greater variety of input files than output files.
+# Therefore we chose the current directory as a subdirectory of $SRCTOP and it
+# was simpler to prepend the output file names by BLDTOP than doing the tests
+# from $BLDTOP/test-runs/test_cmp_cli and prepending the input files by SRCTOP.
 
 indir data_dir() => sub {
     plan tests => 1 + @server_configurations * @all_aspects
@@ -248,6 +256,7 @@ sub load_tests {
     my $aspect = shift;
     my $test_config = $ENV{OPENSSL_CMP_CONFIG} // "$server_name/test.cnf";
     my $file = data_file("test_$aspect.csv");
+    my $result_dir = result_dir();
     my @result;
 
     open(my $data, '<', $file) || die "Cannot open $file for reading: $!";
@@ -266,6 +275,7 @@ sub load_tests {
         $line =~ s{_PBM_PORT}{$pbm_port}g;
         $line =~ s{_PBM_REF}{$pbm_ref}g;
         $line =~ s{_PBM_SECRET}{$pbm_secret}g;
+        $line =~ s{_RESULT_DIR}{$result_dir}g;
 
         next LOOP if $server_tls == 0 && $line =~ m/,\s*-tls_used\s*,/;
         my $noproxy = $no_proxy;
@@ -280,6 +290,7 @@ sub load_tests {
         } else {
             $line =~ s{-section,,}{-section,,-proxy,$proxy,};
         }
+        $line =~ s{-section,,}{-section,,-certout,$result_dir/test.cert.pem,};
         $line =~ s{-section,,}{-config,../$test_config,-section,$server_name $aspect,};
 
         my @fields = grep /\S/, split ",", $line;
