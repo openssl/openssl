@@ -31,8 +31,7 @@ B<openssl> B<ec>
 [B<-param_enc> I<arg>]
 [B<-no_public>]
 [B<-check>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 

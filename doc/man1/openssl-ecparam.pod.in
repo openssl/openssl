@@ -24,8 +24,7 @@ B<openssl ecparam>
 [B<-param_enc> I<arg>]
 [B<-no_seed>]
 [B<-genkey>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine

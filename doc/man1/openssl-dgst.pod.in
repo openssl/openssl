@@ -29,8 +29,7 @@ B<openssl> B<dgst>|I<digest>
 [B<-mac> I<alg>]
 [B<-macopt> I<nm>:I<v>]
 [B<-fips-fingerprint>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- output_off() if $disabled{"deprecated-3.0"}; ""
+{- $OpenSSL::safe::opt_engine_synopsis -}{- output_off() if $disabled{"deprecated-3.0"}; ""
 -}[B<-engine_impl> I<id>]{-
   output_on() if $disabled{"deprecated-3.0"}; "" -}
 {- $OpenSSL::safe::opt_r_synopsis -}

@@ -41,7 +41,7 @@ $OpenSSL::safe::opt_v_synopsis = ""
 . "[B<-verify_ip> I<ip>]\n"
 . "[B<-verify_name> I<name>]\n"
 . "[B<-x509_strict>]\n"
-. "[B<-issuer_checks>]\n";
+. "[B<-issuer_checks>]";
 $OpenSSL::safe::opt_v_item = ""
 . "=item B<-allow_proxy_certs>, B<-attime>, B<-no_check_time>,\n"
 . "B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,\n"
@@ -103,7 +103,7 @@ $OpenSSL::safe::opt_provider_item = ""
 
 # Configuration option
 $OpenSSL::safe::opt_config_synopsis = ""
-. "[B<-config> I<configfile>]\n";
+. "[B<-config> I<configfile>]";
 $OpenSSL::safe::opt_config_item = ""
 . "=item B<-config> I<configfile>\n"
 . "\n"
@@ -114,7 +114,7 @@ $OpenSSL::safe::opt_engine_synopsis = "";
 $OpenSSL::safe::opt_engine_item = "";
 if (!$disabled{"deprecated-3.0"}) {
   $OpenSSL::safe::opt_engine_synopsis = ""
-  . "[B<-engine> I<id>]";
+  . "[B<-engine> I<id>]\n";
   $OpenSSL::safe::opt_engine_item = ""
   . "=item B<-engine> I<id>\n"
   . "\n"

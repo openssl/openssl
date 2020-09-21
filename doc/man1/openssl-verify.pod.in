@@ -18,8 +18,7 @@ B<openssl> B<verify>
 [B<-vfyopt> I<nm>:I<v>]
 {- $OpenSSL::safe::opt_name_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_v_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [B<-->]
 [I<certificate> ...]

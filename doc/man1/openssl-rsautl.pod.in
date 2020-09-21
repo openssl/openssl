@@ -31,8 +31,7 @@ B<openssl> B<rsautl>
 [B<-raw>]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine

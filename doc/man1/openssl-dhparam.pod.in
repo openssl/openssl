@@ -21,8 +21,7 @@ B<openssl dhparam>
 [B<-2>]
 [B<-3>]
 [B<-5>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<numbits>]
 

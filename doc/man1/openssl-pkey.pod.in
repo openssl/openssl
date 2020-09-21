@@ -30,8 +30,7 @@ B<openssl> B<pkey>
 [B<-pubcheck>]
 [B<-ec_conv_form> I<arg>]
 [B<-ec_param_enc> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 

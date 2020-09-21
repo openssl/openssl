@@ -18,8 +18,7 @@ B<openssl> B<pkeyparam>
 [B<-text>]
 [B<-noout>]
 [B<-check>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 

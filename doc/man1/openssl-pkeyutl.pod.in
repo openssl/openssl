@@ -34,8 +34,7 @@ B<openssl> B<pkeyutl>
 [B<-pkeyopt_passin> I<opt>[:I<passarg>]]
 [B<-hexdump>]
 [B<-asn1parse>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-engine_impl>]
+{- $OpenSSL::safe::opt_engine_synopsis -}[B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}
