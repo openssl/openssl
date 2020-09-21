@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SM2 - Chinese SM2 signature and encryption algorithm support
+EVP_PKEY-SM2, EVP_KEYMGMT-SM2, SM2
+- EVP_PKEY keytype support for the Chinese SM2 signature and encryption algorithms
 
 =head1 DESCRIPTION
 
@@ -33,7 +34,7 @@ that B<EVP_PKEY_CTX> should be assigned to the B<EVP_MD_CTX>, like this:
 There is normally no need to pass a B<pctx> parameter to EVP_DigestSignInit()
 or EVP_DigestVerifyInit() in such a scenario.
 
-SM2 can be tested with the L<openssl-speed(1)> application since version 3.0.0.
+SM2 can be tested with the L<openssl-speed(1)> application since version 3.0.
 Currently, the only valid algorithm name is B<sm2>.
 
 =head1 EXAMPLES

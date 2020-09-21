@@ -17,7 +17,7 @@ Asymmetric Cipher support for the B<SM2> key type.
 
 =item "digest-props" (B<OSSL_ASYM_CIPHER_PARAM_DIGEST_PROPS>) <UTF8 string>
 
-See L<provider-asym_cipher(7)/Asymmetric Cipher Parameters.
+See L<provider-asym_cipher(7)/Asymmetric Cipher Parameters>.
 
 =back
 
