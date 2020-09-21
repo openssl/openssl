@@ -854,7 +854,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
 
     alen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &abuf,
                          ASN1_ITEM_rptr(CMS_Attributes_Verify));
-    if (!abuf)
+    if (abuf == NULL || alen < 0)
         goto err;
     r = EVP_DigestVerifyUpdate(mctx, abuf, alen);
     OPENSSL_free(abuf);
