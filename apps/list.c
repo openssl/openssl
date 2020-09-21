@@ -19,6 +19,7 @@
 #include <openssl/encoder.h>
 #include <openssl/decoder.h>
 #include <openssl/core_names.h>
+#include <openssl/rand.h>
 #include "apps.h"
 #include "app_params.h"
 #include "progs.h"
@@ -350,6 +351,74 @@ static void list_random_generators(void)
         }
     }
     sk_EVP_RAND_pop_free(rands, EVP_RAND_free);
+}
+
+static void display_random(const char *name, EVP_RAND_CTX *drbg)
+{
+    EVP_RAND *rand;
+    uint64_t u;
+    const char *p;
+    const OSSL_PARAM *gettables;
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    unsigned char buf[1000];
+
+    BIO_printf(bio_out, "%s:\n", name);
+    if (drbg != NULL) {
+        rand = EVP_RAND_CTX_rand(drbg);
+
+        BIO_printf(bio_out, "  %s", EVP_RAND_name(rand));
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_RAND_provider(rand)));
+
+        switch (EVP_RAND_state(drbg)) {
+        case EVP_RAND_STATE_UNINITIALISED:
+            p = "uninitialised";
+            break;
+        case EVP_RAND_STATE_READY:
+            p = "ready";
+            break;
+        case EVP_RAND_STATE_ERROR:
+            p = "error";
+            break;
+        default:
+            p = "unknown";
+            break;
+        }
+        BIO_printf(bio_out, "  state = %s\n", p);
+
+        gettables = EVP_RAND_gettable_ctx_params(rand);
+        if (gettables != NULL)
+            for (; gettables->key != NULL; gettables++) {
+                /* State has been dealt with already, so ignore */
+                if (strcasecmp(gettables->key, OSSL_RAND_PARAM_STATE) == 0)
+                    continue;
+                /* Outside of verbose mode, we skip non-string values */
+                if (gettables->data_type != OSSL_PARAM_UTF8_STRING
+                        && gettables->data_type != OSSL_PARAM_UTF8_PTR
+                        && !verbose)
+                    continue;
+                params->key = gettables->key;
+                params->data_type = gettables->data_type;
+                if (gettables->data_type == OSSL_PARAM_UNSIGNED_INTEGER
+                        || gettables->data_type == OSSL_PARAM_INTEGER) {
+                    params->data = &u;
+                    params->data_size = sizeof(u);
+                } else {
+                    params->data = buf;
+                    params->data_size = sizeof(buf);
+                }
+                params->return_size = 0;
+                if (EVP_RAND_get_ctx_params(drbg, params))
+                    print_param_value(params, 2);
+            }
+    }
+}
+
+static void list_random_instances(void)
+{
+    display_random("primary", RAND_get0_primary(NULL));
+    display_random("public", RAND_get0_public(NULL));
+    display_random("private", RAND_get0_private(NULL));
 }
 
 /*
@@ -819,8 +888,8 @@ typedef enum HELPLIST_CHOICE {
     OPT_COMMANDS, OPT_DIGEST_COMMANDS, OPT_MAC_ALGORITHMS, OPT_OPTIONS,
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED,
-    OPT_KDF_ALGORITHMS, OPT_RANDOM_GENERATORS, OPT_ENCODERS,
-    OPT_DECODERS,
+    OPT_KDF_ALGORITHMS, OPT_RANDOM_INSTANCES, OPT_RANDOM_GENERATORS,
+    OPT_ENCODERS, OPT_DECODERS,
     OPT_MISSING_HELP, OPT_OBJECTS,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES, 
@@ -844,6 +913,8 @@ const OPTIONS list_options[] = {
      "List of message digest algorithms"},
     {"kdf-algorithms", OPT_KDF_ALGORITHMS, '-',
      "List of key derivation and pseudo random function algorithms"},
+    {"random-instances", OPT_RANDOM_INSTANCES, '-',
+     "List the primary, pubic and private random number generator details"},
     {"random-generators", OPT_RANDOM_GENERATORS, '-',
      "List of random number generators"},
     {"mac-algorithms", OPT_MAC_ALGORITHMS, '-',
@@ -880,6 +951,7 @@ int list_main(int argc, char **argv)
     int one = 0, done = 0;
     struct {
         unsigned int commands:1;
+        unsigned int random_instances:1;
         unsigned int random_generators:1;
         unsigned int digest_commands:1;
         unsigned int digest_algorithms:1;
@@ -927,6 +999,9 @@ opthelp:
             break;
         case OPT_KDF_ALGORITHMS:
             todo.kdf_algorithms = 1;
+            break;
+        case OPT_RANDOM_INSTANCES:
+            todo.random_instances = 1;
             break;
         case OPT_RANDOM_GENERATORS:
             todo.random_generators = 1;
@@ -986,6 +1061,8 @@ opthelp:
 
     if (todo.commands)
         list_type(FT_general, one);
+    if (todo.random_instances)
+        list_random_instances();
     if (todo.random_generators)
         list_random_generators();
     if (todo.digest_commands)
