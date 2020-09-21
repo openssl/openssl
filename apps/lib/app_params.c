@@ -94,3 +94,39 @@ int print_param_types(const char *thing, const OSSL_PARAM *pdefs, int indent)
     return 1;
 }
 
+void print_param_value(const OSSL_PARAM *p, int indent)
+{
+    int64_t i;
+    uint64_t u;
+
+    printf("%*s%s: ", indent, "", p->key);
+    switch (p->data_type) {
+    case OSSL_PARAM_UNSIGNED_INTEGER:
+        if (OSSL_PARAM_get_uint64(p, &u))
+            BIO_printf(bio_out, "%llu\n", (unsigned long long int)u);
+        else
+            BIO_printf(bio_out, "error getting value\n");
+        break;
+    case OSSL_PARAM_INTEGER:
+        if (OSSL_PARAM_get_int64(p, &i))
+            BIO_printf(bio_out, "%lld\n", (long long int)i);
+        else
+            BIO_printf(bio_out, "error getting value\n");
+        break;
+    case OSSL_PARAM_UTF8_PTR:
+        BIO_printf(bio_out, "'%s'\n", *(char **)(p->data));
+        break;
+    case OSSL_PARAM_UTF8_STRING:
+        BIO_printf(bio_out, "'%s'\n", (char *)p->data);
+        break;
+    case OSSL_PARAM_OCTET_PTR:
+    case OSSL_PARAM_OCTET_STRING:
+        BIO_printf(bio_out, "<%zu bytes>\n", p->data_size);
+        break;
+    default:
+        BIO_printf(bio_out, "unknown type (%u) of %zu bytes\n",
+                   p->data_type, p->data_size);
+        break;
+    }
+}
+
