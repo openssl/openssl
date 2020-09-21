@@ -88,4 +88,9 @@ void rand_pool_cleanup(void);
  */
 void rand_pool_keep_random_devices_open(int keep);
 
+/*
+ * Configuration
+ */
+void ossl_random_add_conf_module(void);
+
 #endif
