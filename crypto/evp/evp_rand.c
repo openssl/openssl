@@ -405,7 +405,7 @@ const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand)
 
 const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
 {
-    if (rand->gettable_params == NULL)
+    if (rand->gettable_ctx_params == NULL)
         return NULL;
     return rand->gettable_ctx_params(
                ossl_provider_ctx(EVP_RAND_provider(rand)));
@@ -413,7 +413,7 @@ const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand)
 
 const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand)
 {
-    if (rand->gettable_params == NULL)
+    if (rand->settable_ctx_params == NULL)
         return NULL;
     return rand->settable_ctx_params(
                ossl_provider_ctx(EVP_RAND_provider(rand)));
