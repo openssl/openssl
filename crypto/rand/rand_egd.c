@@ -54,7 +54,7 @@ struct sockaddr_un {
 # include <string.h>
 # include <errno.h>
 
-# if defined(OPENSSL_SYSNAME_TANDEM)
+# if defined(OPENSSL_SYS_TANDEM)
 /*
  * HPNS:
  *
@@ -125,7 +125,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
         return -1;
     strcpy(addr.sun_path, path);
     i = offsetof(struct sockaddr_un, sun_path) + strlen(path);
-#if defined(OPENSSL_SYSNAME_TANDEM)
+#if defined(OPENSSL_SYS_TANDEM)
     fd = hpns_socket(AF_UNIX, SOCK_STREAM, 0, AF_UNIX_COMPATIBILITY);
 #else
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
@@ -158,7 +158,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
             /* No error, try again */
             break;
         default:
-# if defined(OPENSSL_SYSNAME_TANDEM)
+# if defined(OPENSSL_SYS_TANDEM)
             if (hpns_connect_attempt == 0) {
                 /* try the other kind of AF_UNIX socket */
                 close(fd);

@@ -145,7 +145,7 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 #  define closesocket(s)              close(s)
 #  define readsocket(s,b,n)           read((s),(b),(n))
 #  define writesocket(s,b,n)          write((s),(char *)(b),(n))
-# elif defined(OPENSSL_SYSNAME_TANDEM)
+# elif defined(OPENSSL_SYS_TANDEM)
 #  if defined(OPENSSL_TANDEM_FLOSS)
 #   include <floss.h(floss_read, floss_write)>
 #   define readsocket(s,b,n)       floss_read((s),(b),(n))
