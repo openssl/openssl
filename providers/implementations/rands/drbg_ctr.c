@@ -631,6 +631,19 @@ static void drbg_ctr_free(void *vdrbg)
 static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
+    PROV_DRBG_CTR *ctr = (PROV_DRBG_CTR *)drbg->data;
+    OSSL_PARAM *p;
+
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_USE_DF);
+    if (p != NULL && !OSSL_PARAM_set_int(p, ctr->use_df))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_DRBG_PARAM_CIPHER);
+    if (p != NULL) {
+        if (ctr->cipher_ctr == NULL
+            || !OSSL_PARAM_set_utf8_string(p, EVP_CIPHER_name(ctr->cipher_ctr)))
+            return 0;
+    }
 
     return drbg_get_ctx_params(drbg, params);
 }
@@ -638,6 +651,8 @@ static int drbg_ctr_get_ctx_params(void *vdrbg, OSSL_PARAM params[])
 static const OSSL_PARAM *drbg_ctr_gettable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_DRBG_PARAM_CIPHER, NULL, 0),
+        OSSL_PARAM_int(OSSL_DRBG_PARAM_USE_DF, NULL),
         OSSL_PARAM_DRBG_GETTABLE_CTX_COMMON,
         OSSL_PARAM_END
     };
