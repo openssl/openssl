@@ -4452,6 +4452,7 @@ EVP_KDF_CTX_free                        ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_reset                           ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_size                            ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_derive                          ?	3_0_0	EXIST::FUNCTION:
+EVP_KDF_name                            ?	3_0_0	EXIST::FUNCTION:
 EC_GROUP_get0_field                     ?	3_0_0	EXIST::FUNCTION:EC
 CRYPTO_alloc_ex_data                    ?	3_0_0	EXIST::FUNCTION:
 OPENSSL_CTX_new                         ?	3_0_0	EXIST::FUNCTION:
@@ -4692,6 +4693,7 @@ EVP_MAC_get_params                      ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_gettable_params                 ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_provider                        ?	3_0_0	EXIST::FUNCTION:
 EVP_MAC_do_all_provided                 ?	3_0_0	EXIST::FUNCTION:
+EVP_MAC_name                            ?	3_0_0	EXIST::FUNCTION:
 EVP_MD_free                             ?	3_0_0	EXIST::FUNCTION:
 EVP_CIPHER_free                         ?	3_0_0	EXIST::FUNCTION:
 EVP_KDF_up_ref                          ?	3_0_0	EXIST::FUNCTION:
@@ -5309,6 +5311,6 @@ OSSL_ENCODER_INSTANCE_get_output_type   ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_construct          ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_construct_data     ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_cleanup            ?	3_0_0	EXIST::FUNCTION:
-OSSL_DECODER_INSTANCE_get_input_type    ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_passphrase_cb      ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_typenames_do_all               ?	3_0_0	EXIST::FUNCTION:
+OSSL_DECODER_INSTANCE_get_input_type    ?	3_0_0	EXIST::FUNCTION:
