@@ -25,8 +25,7 @@ B<openssl> B<gendsa>
 [B<-idea>]
 [B<-verbose>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<paramfile>]
 
 =for openssl ifdef engine

@@ -21,8 +21,7 @@ B<openssl srp>
 [B<-userinfo> I<text>]
 [B<-passin> I<arg>]
 [B<-passout> I<arg>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [I<user> ...]
 

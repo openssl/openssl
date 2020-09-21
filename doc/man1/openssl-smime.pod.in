@@ -46,8 +46,7 @@ B<openssl> B<smime>
 [B<-stream>]
 [B<-md> I<digest>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 {- $OpenSSL::safe::opt_config_synopsis -}

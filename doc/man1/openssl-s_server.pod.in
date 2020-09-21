@@ -142,8 +142,7 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_x_synopsis -}
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef unix 4 6 unlink no_dhe nextprotoneg use_srtp engine
 

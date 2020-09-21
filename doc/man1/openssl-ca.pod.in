@@ -62,8 +62,7 @@ B<openssl> B<ca>
 [B<-rand_serial>]
 [B<-multivalue-rdn>]
 {- $OpenSSL::safe::opt_r_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 [I<certreq>...]
 
 =for openssl ifdef engine

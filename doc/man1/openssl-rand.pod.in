@@ -12,8 +12,7 @@ B<openssl rand>
 [B<-out> I<file>]
 [B<-base64>]
 [B<-hex>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_r_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 I<num>
 

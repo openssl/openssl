@@ -24,8 +24,7 @@ B<openssl> B<spkac>
 [B<-spksect> I<section>]
 [B<-noout>]
 [B<-verify>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef engine
 

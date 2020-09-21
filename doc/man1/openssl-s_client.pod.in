@@ -121,8 +121,7 @@ B<openssl> B<s_client>
 {- $OpenSSL::safe::opt_s_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-{- $OpenSSL::safe::opt_engine_synopsis -}
-[B<-ssl_client_engine> I<id>]
+{- $OpenSSL::safe::opt_engine_synopsis -}[B<-ssl_client_engine> I<id>]
 {- $OpenSSL::safe::opt_v_synopsis -}
 [I<host>:I<port>]
 

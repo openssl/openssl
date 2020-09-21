@@ -40,8 +40,7 @@ B<openssl> B<rsa>
 [B<-pubout>]
 [B<-RSAPublicKey_in>]
 [B<-RSAPublicKey_out>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef pvk-strong pvk-weak pvk-none engine
 

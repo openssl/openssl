@@ -36,8 +36,7 @@ B<openssl> B<dsa>
 [B<-modulus>]
 [B<-pubin>]
 [B<-pubout>]
-{- $OpenSSL::safe::opt_engine_synopsis -}
-{- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_engine_synopsis -}{- $OpenSSL::safe::opt_provider_synopsis -}
 
 =for openssl ifdef pvk-string pvk-weak pvk-none engine
 
