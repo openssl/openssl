@@ -175,6 +175,7 @@ production.
  alg_section = evp_properties
  ssl_conf = ssl_configuration
  engines = engines
+ random = random
 
  [oids]
  ... new oids here ...
@@ -190,6 +191,9 @@ production.
 
  [engines]
  ... engine properties here ...
+
+ [random]
+ ... random properties here ...
 
 The semantics of each module are described below. The phrase "in the
 initialization section" refers to the section identified by the
@@ -388,6 +392,53 @@ For example:
  some_ctrl = some_value
  default_algorithms = ALL
  other_ctrl = EMPTY
+
+=head2 Random Configuration
+
+The name B<random> in the initialization section names the section
+containing the random number generater settings.
+
+Within the random section, the following names have meaning:
+
+=over 4
+
+=item B<random>
+
+This is used to specify the random bit generator.
+For example:
+
+ [random]
+ random = CTR-DRBG
+
+The available random bit generators are:
+
+=over 4
+
+=item B<CTR-DRBG>
+
+=item B<HASH-DRBG>
+
+=item B<HMAC-DRBG>
+
+=back
+
+=item B<cipher>
+
+This specifies what cipher a B<CTR-DRBG> random bit generator will use.
+Other random bit generators ignore this name.
+The default value is B<AES-256-CTR>.
+
+=item B<digest>
+
+This specifies what digest the B<HASH-DRBG> or B<HMAC-DRBG> random bit
+generators will use.  Other random bit generators ignore this name.
+
+=item B<properties>
+
+This sets the property query used when fetching the random bit generator and
+any underlying algorithms.
+
+=back
 
 =head1 EXAMPLES
 
