@@ -5312,4 +5312,3 @@ OSSL_ENCODER_CTX_set_cleanup            ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_INSTANCE_get_input_type    ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_passphrase_cb      ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_typenames_do_all               ?	3_0_0	EXIST::FUNCTION:
-OSSL_DECODER_INSTANCE_get_input_type    ?	3_0_0	EXIST::FUNCTION:
