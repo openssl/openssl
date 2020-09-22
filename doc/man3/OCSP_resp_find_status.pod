@@ -121,24 +121,25 @@ signed and that the signer certificate can be validated. It takes I<st> as
 the trusted store and I<certs> as a set of untrusted intermediate certificates.
 The function first tries to find the signer certificate of the response
 in I<certs>. It then searches the certificates the responder may have included
-in I<bs> unless the I<flags> contain B<OCSP_NOINTERN>.
+in I<bs> unless I<flags> contains B<OCSP_NOINTERN>.
 It fails if the signer certificate cannot be found.
-Next, unless the I<flags> contain B<OCSP_NOSIGS>, the function checks
+Next, unless I<flags> contains B<OCSP_NOSIGS>, the function checks
 the signature of I<bs> and fails on error. Then the function already returns
-success if the I<flags> contain B<OCSP_NOVERIFY> or if the signer certificate
-was found in I<certs> and the I<flags> contain B<OCSP_TRUSTOTHER>.
+success if I<flags> contains B<OCSP_NOVERIFY> or if the signer certificate
+was found in I<certs> and I<flags> contains B<OCSP_TRUSTOTHER>.
 Otherwise the function continues by validating the signer certificate.
-If I<flags> contains B<OCSP_PARTIAL_CHAIN>, intermediate CA certificates
-in I<st> are trust anchors.
+If I<flags> contains B<OCSP_PARTIAL_CHAIN> it takes intermediate CA
+certificates in I<st> as trust anchors.
 For more details, see the description of B<X509_V_FLAG_PARTIAL_CHAIN>
 in L<X509_VERIFY_PARAM_set_flags(3)/VERIFICATION FLAGS>.
-To this end, all certificates in I<cert> and in I<bs> are considered as
-untrusted certificates for the construction of the validation path for the
-signer certificate unless the B<OCSP_NOCHAIN> flag is set. After successful path
+If I<flags> contains B<OCSP_NOCHAIN> it ignores all certificates in I<certs>
+and in I<bs>, else it takes them as untrusted intermediate CA certificates
+and uses them for constructing the validation path for the signer certificate.
+After successful path
 validation the function returns success if the B<OCSP_NOCHECKS> flag is set.
 Otherwise it verifies that the signer certificate meets the OCSP issuer
 criteria including potential delegation. If this does not succeed and the
-I<flags> do not contain B<OCSP_NOEXPLICIT> the function checks for explicit
+B<OCSP_NOEXPLICIT> flag is not set the function checks for explicit
 trust for OCSP signing in the root CA certificate.
 
 =head1 RETURN VALUES
