@@ -283,6 +283,9 @@ int X509_supported_extension(X509_EXTENSION *ex)
         NID_sbgp_ipAddrBlock,   /* 290 */
         NID_sbgp_autonomousSysNum, /* 291 */
 #endif
+#ifndef OPENSSL_NO_OCSP
+        NID_id_pkix_OCSP_noCheck, /* 369 */
+#endif
         NID_policy_constraints, /* 401 */
         NID_proxyCertInfo,      /* 663 */
         NID_name_constraints,   /* 666 */
