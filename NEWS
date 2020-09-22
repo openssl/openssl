@@ -7,7 +7,11 @@
 
   Major changes between OpenSSL 1.1.1g and OpenSSL 1.1.1h [under development]
 
-      o
+      o Disallow explicit curve parameters in verifications chains when
+        X509_V_FLAG_X509_STRICT is used
+      o Enable 'MinProtocol' and 'MaxProtocol' to configure both TLS and DTLS
+        contexts
+      o Oracle Developer Studio will start reporting deprecation warnings
 
   Major changes between OpenSSL 1.1.1f and OpenSSL 1.1.1g [21 Apr 2020]
 
