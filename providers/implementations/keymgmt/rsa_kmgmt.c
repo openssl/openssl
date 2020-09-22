@@ -193,7 +193,7 @@ static int rsa_export(void *keydata, int selection,
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
         ok = ok && (rsa_pss_params_30_is_unrestricted(pss_params)
-                    || rsa_pss_params_30_todata(pss_params, NULL, tmpl, NULL));
+                    || rsa_pss_params_30_todata(pss_params, tmpl, NULL));
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && rsa_todata(rsa, tmpl, NULL);
 
@@ -339,7 +339,7 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         }
     }
     return (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
-            || rsa_pss_params_30_todata(pss_params, NULL, NULL, params))
+            || rsa_pss_params_30_todata(pss_params, NULL, params))
         && rsa_todata(rsa, NULL, params);
 }
 
@@ -383,6 +383,7 @@ static int rsa_validate(void *keydata, int selection)
 
 struct rsa_gen_ctx {
     OPENSSL_CTX *libctx;
+    const char *propq;
 
     int rsa_type;
 
@@ -493,6 +494,7 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
  */
 #define rsa_gen_pss                                                     \
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST, NULL, 0),        \
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST_PROPS, NULL, 0),  \
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MASKGENFUNC, NULL, 0),   \
     OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST, NULL, 0),   \
     OSSL_PARAM_int(OSSL_PKEY_PARAM_RSA_PSS_SALTLEN, NULL)

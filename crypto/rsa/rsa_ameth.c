@@ -1239,7 +1239,7 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
             || !rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
             || !rsa_pss_params_30_set_maskgenhashalg(&pss_params, mgf1md_nid)
             || !rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
-            || !rsa_pss_params_30_todata(&pss_params, propq, tmpl, NULL))
+            || !rsa_pss_params_30_todata(&pss_params, tmpl, NULL))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
     }
