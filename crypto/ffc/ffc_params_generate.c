@@ -542,7 +542,7 @@ int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
             *res = FFC_CHECK_INVALID_Q_VALUE;
             goto err;
         }
-        md = EVP_MD_fetch(libctx, def_name, NULL);
+        md = EVP_MD_fetch(libctx, def_name, params->mdprops);
     }
     if (md == NULL)
         goto err;
@@ -835,7 +835,7 @@ int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
             *res = FFC_CHECK_INVALID_Q_VALUE;
             goto err;
         }
-        md = EVP_MD_fetch(libctx, def_name, NULL);
+        md = EVP_MD_fetch(libctx, def_name, params->mdprops);
     }
     if (md == NULL)
         goto err;
