@@ -3385,7 +3385,7 @@ SSL_HMAC *ssl_hmac_new(const SSL_CTX *ctx)
         return ret;
     }
 #endif
-    mac = EVP_MAC_fetch(ctx->libctx, "HMAC", NULL);
+    mac = EVP_MAC_fetch(ctx->libctx, "HMAC", ctx->propq);
     if (mac == NULL || (ret->ctx = EVP_MAC_CTX_new(mac)) == NULL)
         goto err;
     EVP_MAC_free(mac);
