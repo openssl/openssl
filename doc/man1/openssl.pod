@@ -232,10 +232,6 @@ Public key algorithm cryptographic operation command.
 
 Compute prime numbers.
 
-=item B<provider>
-
-Load and query providers.
-
 =item B<rand>
 
 Generate pseudo-random bytes.
@@ -764,26 +760,6 @@ This file can be used in a subsequent command invocation.
 
 =back
 
-=head2 Provider Options
-
-With the move to provider based cryptographic operations in OpenSSL 3.0,
-options were added to allow specific providers or sets of providers to be used.
-
-=over 4
-
-=item B<-provider> I<name>
-
-Use the provider identified by I<name> and use all the methods it
-implements (algorithms, key storage, etc.).  This option can be specified
-multiple time to load more than one provider.
-
-=item B<-provider-path> I<path>
-
-Specify the search I<path> that is used to locate provider modules.  The format
-of I<path> varies depending on the operating system being used.
-
-=back
-
 =head2 Extended Verification Options
 
 Sometimes there may be more than one certificate chain leading to an
@@ -1281,7 +1257,7 @@ in L<config(5)/Engine Configuration Module>.
 
 The OpenSSL library can be take some configuration parameters from the
 environment.  Some of these variables are listed below.  For information
-about specific commands, see L<openssl-engine(1)>, L<openssl-provider(1)>,
+about specific commands, see L<openssl-engine(1)>,
 L<openssl-rehash(1)>, and L<tsget(1)>.
 
 For information about the use of environment variables in configuration,
