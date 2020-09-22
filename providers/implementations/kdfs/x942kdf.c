@@ -67,13 +67,14 @@ static const struct {
 #endif
 };
 
-static int find_alg_id(OPENSSL_CTX *libctx, const char *algname, size_t *id)
+static int find_alg_id(OPENSSL_CTX *libctx, const char *algname,
+                       const char *propq, size_t *id)
 {
     int ret = 1;
     size_t i;
     EVP_CIPHER *cipher;
 
-    cipher = EVP_CIPHER_fetch(libctx, algname, NULL);
+    cipher = EVP_CIPHER_fetch(libctx, algname, propq);
     if (cipher != NULL) {
         for (i = 0; i < OSSL_NELEM(kek_algs); i++) {
             if (EVP_CIPHER_is_a(cipher, kek_algs[i].name)) {
@@ -381,9 +382,10 @@ static int x942kdf_derive(void *vctx, unsigned char *key, size_t keylen)
 
 static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
-    const OSSL_PARAM *p;
+    const OSSL_PARAM *p, *pq;
     KDF_X942 *ctx = vctx;
     OPENSSL_CTX *provctx = PROV_LIBRARY_CONTEXT_OF(ctx->provctx);
+    const char *propq = NULL;
     size_t id;
 
     if (!ossl_prov_digest_load_from_params(&ctx->digest, params, provctx))
@@ -401,7 +403,14 @@ static int x942kdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate_const(params, OSSL_KDF_PARAM_CEK_ALG)) != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        if (find_alg_id(provctx, p->data, &id) == 0)
+        pq = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_PROPERTIES);
+        /*
+         * We already grab the properties during ossl_prov_digest_load_from_params()
+         * so there is no need to check the validity again..
+         */
+        if (pq != NULL)
+            propq = p->data;
+        if (find_alg_id(provctx, p->data, propq, &id) == 0)
             return 0;
         ctx->cek_oid = kek_algs[id].oid;
         ctx->cek_oid_len = kek_algs[id].oid_len;
