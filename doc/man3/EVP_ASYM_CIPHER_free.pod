@@ -4,7 +4,8 @@
 
 EVP_ASYM_CIPHER_fetch, EVP_ASYM_CIPHER_free, EVP_ASYM_CIPHER_up_ref,
 EVP_ASYM_CIPHER_number, EVP_ASYM_CIPHER_is_a, EVP_ASYM_CIPHER_provider,
-EVP_ASYM_CIPHER_do_all_provided, EVP_ASYM_CIPHER_names_do_all
+EVP_ASYM_CIPHER_do_all_provided, EVP_ASYM_CIPHER_names_do_all,
+EVP_ASYM_CIPHER_gettable_ctx_params, EVP_ASYM_CIPHER_settable_ctx_params
 - Functions to manage EVP_ASYM_CIPHER algorithm objects
 
 =head1 SYNOPSIS
@@ -25,6 +26,8 @@ EVP_ASYM_CIPHER_do_all_provided, EVP_ASYM_CIPHER_names_do_all
  void EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,
                                    void (*fn)(const char *name, void *data),
                                    void *data);
+ const OSSL_PARAM *EVP_ASYM_CIPHER_gettable_ctx_params(const EVP_ASYM_CIPHER *cip);
+ const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip);
 
 =head1 DESCRIPTION
 
@@ -61,12 +64,20 @@ I<cipher>.
 EVP_ASYM_CIPHER_names_do_all() traverses all names for I<cipher>, and calls
 I<fn> with each name and I<data>.
 
+EVP_ASYM_CIPHER_gettable_ctx_params() and EVP_ASYM_CIPHER_settable_ctx_params()
+return a constant B<OSSL_PARAM> array that describes the names and types of key
+parameters that can be retrieved or set by a key encryption algorithm using
+L<EVP_PKEY_CTX_get_params(3)> and L<EVP_PKEY_CTX_set_params(3)>.
+
 =head1 RETURN VALUES
 
 EVP_ASYM_CIPHER_fetch() returns a pointer to an B<EVP_ASYM_CIPHER> for success
 or B<NULL> for failure.
 
 EVP_ASYM_CIPHER_up_ref() returns 1 for success or 0 otherwise.
+
+EVP_ASYM_CIPHER_gettable_ctx_params() and EVP_ASYM_CIPHER_settable_ctx_params()
+return a constant B<OSSL_PARAM> array or NULL on error.
 
 =head1 SEE ALSO
 
