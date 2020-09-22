@@ -90,28 +90,4 @@ my %shared_info;
             shared_sonameflag => "-Wl,-h,",
         };
     },
-    'nonstop-mips-oss-shared' => {
-        shared_ldflag         => '-Wshared -Wld="-export_all"',
-        shared_extension      => ".so",
-    },
-    'nonstop-itanium-oss-shared' => {
-        shared_ldflag         => '-Wshared -Weld="-export_all"',
-        shared_extension      => ".so",
-    },
-    'nonstop-x86-oss-shared' => {
-        shared_ldflag         => '-Wshared -Wxld="-export_all"',
-        shared_extension      => ".so",
-    },
-    'nonstop-mips-guardian-shared' => {
-        shared_ldflag         => '-Wshared -Wld="-export_all -soname $(@:lib%.so=%)"',
-        shared_extension      => ".so",
-    },
-    'nonstop-itanium-guardian-shared' => {
-        shared_ldflag         => '-Wshared -Weld="-export_all -soname $(@:lib%.so=%)"',
-        shared_extension      => ".so",
-    },
-    'nonstop-x86-guardian-shared' => {
-        shared_ldflag         => '-Wshared -Wxld="-export_all -soname $(@:lib%.so=%)"',
-        shared_extension      => ".so",
-    },
 );
