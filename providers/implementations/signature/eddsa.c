@@ -163,7 +163,7 @@ int ed448_digest_sign(void *vpeddsactx, unsigned char *sigret,
     }
 
     if (ED448_sign(peddsactx->libctx, sigret, tbs, tbslen, edkey->pubkey,
-                   edkey->privkey, NULL, 0) == 0) {
+                   edkey->privkey, NULL, 0, edkey->propq) == 0) {
         PROVerr(0, PROV_R_FAILED_TO_SIGN);
         return 0;
     }
@@ -182,7 +182,7 @@ int ed25519_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return 0;
 
     return ED25519_verify(tbs, tbslen, sig, edkey->pubkey, peddsactx->libctx,
-                          NULL);
+                          edkey->propq);
 }
 
 int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
@@ -196,7 +196,7 @@ int ed448_digest_verify(void *vpeddsactx, const unsigned char *sig,
         return 0;
 
     return ED448_verify(peddsactx->libctx, tbs, tbslen, sig, edkey->pubkey,
-                        NULL, 0);
+                        NULL, 0, edkey->propq);
 }
 
 static void eddsa_freectx(void *vpeddsactx)

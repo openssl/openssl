@@ -59,7 +59,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
         }
     }
 
-    key = ecx_key_new(libctx, KEYNID2TYPE(id), 1);
+    key = ecx_key_new(libctx, KEYNID2TYPE(id), 1, propq);
     if (key == NULL) {
         ECerr(EC_F_ECX_KEY_OP, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -75,7 +75,7 @@ static int ecx_key_op(EVP_PKEY *pkey, int id, const X509_ALGOR *palg,
             goto err;
         }
         if (op == KEY_OP_KEYGEN) {
-            if (RAND_priv_bytes(privkey, KEYLENID(id)) <= 0)
+            if (RAND_priv_bytes_ex(libctx, privkey, KEYLENID(id)) <= 0)
                 goto err;
             if (id == EVP_PKEY_X25519) {
                 privkey[0] &= 248;
@@ -439,7 +439,8 @@ static int ecx_generic_import_from(const OSSL_PARAM params[], void *vpctx,
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    ECX_KEY *ecx = ecx_key_new(pctx->libctx, KEYNID2TYPE(keytype), 0);
+    ECX_KEY *ecx = ecx_key_new(pctx->libctx, KEYNID2TYPE(keytype), 0,
+                               pctx->propquery);
 
     if (ecx == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
@@ -862,12 +863,8 @@ static int pkey_ecd_digestsign448(EVP_MD_CTX *ctx, unsigned char *sig,
         return 0;
     }
 
-    /*
-     * TODO(3.0): We use NULL for the library context for now. Will need to
-     * change later.
-     */
-    if (ED448_sign(NULL, sig, tbs, tbslen, edkey->pubkey, edkey->privkey,
-                   NULL, 0) == 0)
+    if (ED448_sign(edkey->libctx, sig, tbs, tbslen, edkey->pubkey, edkey->privkey,
+                   NULL, 0, edkey->propq) == 0)
         return 0;
     *siglen = ED448_SIGSIZE;
     return 1;
@@ -882,7 +879,8 @@ static int pkey_ecd_digestverify25519(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (siglen != ED25519_SIGSIZE)
         return 0;
 
-    return ED25519_verify(tbs, tbslen, sig, edkey->pubkey, NULL, NULL);
+    return ED25519_verify(tbs, tbslen, sig, edkey->pubkey,
+                          edkey->libctx, edkey->propq);
 }
 
 static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
@@ -894,11 +892,8 @@ static int pkey_ecd_digestverify448(EVP_MD_CTX *ctx, const unsigned char *sig,
     if (siglen != ED448_SIGSIZE)
         return 0;
 
-    /*
-     * TODO(3.0): We send NULL for the OPENSSL_CTX for now. This will need to
-     * change.
-     */
-    return ED448_verify(NULL, tbs, tbslen, sig, edkey->pubkey, NULL, 0);
+    return ED448_verify(edkey->libctx, tbs, tbslen, sig, edkey->pubkey, NULL, 0,
+                        edkey->propq);
 }
 
 static int pkey_ecd_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
@@ -949,7 +944,8 @@ static int s390x_pkey_ecx_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_X25519, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_X25519, 1,
+                               ctx->propquery);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -965,7 +961,7 @@ static int s390x_pkey_ecx_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, X25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, X25519_KEYLEN) <= 0)
         goto err;
 
     privkey[0] &= 248;
@@ -991,7 +987,8 @@ static int s390x_pkey_ecx_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
         0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_X448, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_X448, 1,
+                               ctx->propquery);
     unsigned char *privkey = NULL, *pubkey;
 
     if (key == NULL) {
@@ -1007,7 +1004,7 @@ static int s390x_pkey_ecx_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, X448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, X448_KEYLEN) <= 0)
         goto err;
 
     privkey[0] &= 252;
@@ -1036,7 +1033,8 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
     };
     unsigned char x_dst[32], buff[SHA512_DIGEST_LENGTH];
-    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_ED25519, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_ED25519, 1,
+                               ctx->propquery);
     unsigned char *privkey = NULL, *pubkey;
     unsigned int sz;
 
@@ -1053,7 +1051,7 @@ static int s390x_pkey_ecd_keygen25519(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, ED25519_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED25519_KEYLEN) <= 0)
         goto err;
 
     if (!EVP_Digest(privkey, 32, buff, &sz, EVP_sha512(), NULL))
@@ -1093,7 +1091,8 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         0x24, 0xbc, 0xb6, 0x6e, 0x71, 0x46, 0x3f, 0x69, 0x00
     };
     unsigned char x_dst[57], buff[114];
-    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_ED448, 1);
+    ECX_KEY *key = ecx_key_new(ctx->libctx, ECX_KEY_TYPE_ED448, 1,
+                               ctx->propquery);
     unsigned char *privkey = NULL, *pubkey;
     EVP_MD_CTX *hashctx = NULL;
 
@@ -1110,7 +1109,7 @@ static int s390x_pkey_ecd_keygen448(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         goto err;
     }
 
-    if (RAND_priv_bytes(privkey, ED448_KEYLEN) <= 0)
+    if (RAND_priv_bytes_ex(ctx->libctx, privkey, ED448_KEYLEN) <= 0)
         goto err;
 
     hashctx = EVP_MD_CTX_new();
