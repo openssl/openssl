@@ -9,6 +9,10 @@
 
  Changes between 1.1.1g and 1.1.1h [xx XXX xxxx]
 
+  *) Certificates with explicit curve parameters are now disallowed in
+     verification chains if the X509_V_FLAG_X509_STRICT flag is used.
+     [Tomas Mraz]
+
   *) The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
      ignore TLS protocol version bounds when configuring DTLS-based contexts, and
      conversely, silently ignore DTLS protocol version bounds when configuring
