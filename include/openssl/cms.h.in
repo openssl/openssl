@@ -114,7 +114,7 @@ int i2d_CMS_bio_stream(BIO *out, CMS_ContentInfo *cms, BIO *in, int flags);
 int PEM_write_bio_CMS_stream(BIO *out, CMS_ContentInfo *cms, BIO *in,
                              int flags);
 CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont);
-CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, BIO **bcont, CMS_ContentInfo **ci);
+CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont, CMS_ContentInfo **ci);
 int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags);
 
 int CMS_final(CMS_ContentInfo *cms, BIO *data, BIO *dcont,
