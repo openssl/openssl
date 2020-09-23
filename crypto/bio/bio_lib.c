@@ -478,6 +478,37 @@ int BIO_gets(BIO *b, char *buf, int size)
     return ret;
 }
 
+int BIO_get_line(BIO *bio, char *buf, int size)
+{
+    int ret = 0;
+    char *ptr = buf;
+
+    if (buf == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (size <= 0) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_INVALID_ARGUMENT);
+        return -1;
+    }
+    *buf = '\0';
+
+    if (bio == NULL) {
+        ERR_raise(ERR_LIB_BIO, ERR_R_PASSED_NULL_PARAMETER);
+        return -1;
+    }
+    if (!bio->init) {
+        ERR_raise(ERR_LIB_BIO, BIO_R_UNINITIALIZED);
+        return -1;
+    }
+
+    while (size-- > 1 && (ret = BIO_read(bio, ptr, 1)) > 0)
+        if (*ptr++ == '\n')
+            break;
+    *ptr = '\0';
+    return ret > 0 || BIO_eof(bio) ? ptr - buf : ret;
+}
+
 int BIO_indent(BIO *b, int indent, int max)
 {
     if (indent < 0)
