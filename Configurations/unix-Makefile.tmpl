@@ -1472,19 +1472,22 @@ EOF
       my $fullobjs =
           join(" \\\n\t\t", fill_lines(' ', $COLUMNS - 16, @fullobjs));
 
-      my $recipe = <<"EOF";
+      my $recipe = '';
+
+      if ($simple ne $full) {
+          if (sharedaix()) {
+              $recipe .= <<"EOF";
 $simple: $full
-EOF
-      if (sharedaix()) {
-          $recipe .= <<"EOF";
 	rm -f $simple && \\
 	\$(AR) r $simple $full
 EOF
-      } elsif ($simple ne $full) {
-          $recipe .= <<"EOF";
+          } else {
+              $recipe .= <<"EOF";
+$simple: $full
 	rm -f $simple && \\
 	ln -s $full $simple
 EOF
+          }
       }
       $recipe .= <<"EOF";
 $full: $fulldeps
