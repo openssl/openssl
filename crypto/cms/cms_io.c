@@ -90,11 +90,11 @@ int SMIME_write_CMS(BIO *bio, CMS_ContentInfo *cms, BIO *data, int flags)
                                ossl_cms_ctx_get0_propq(ctx));
 }
 
-CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, BIO **bcont, CMS_ContentInfo **cms)
+CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont, CMS_ContentInfo **cms)
 {
     CMS_ContentInfo *ci;
 
-    ci = (CMS_ContentInfo *)SMIME_read_ASN1_ex(bio, bcont,
+    ci = (CMS_ContentInfo *)SMIME_read_ASN1_ex(bio, flags, bcont,
                                                ASN1_ITEM_rptr(CMS_ContentInfo),
                                                (ASN1_VALUE **)cms);
     if (ci != NULL)
@@ -104,5 +104,5 @@ CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, BIO **bcont, CMS_ContentInfo **cms)
 
 CMS_ContentInfo *SMIME_read_CMS(BIO *bio, BIO **bcont)
 {
-    return SMIME_read_CMS_ex(bio, bcont, NULL);
+    return SMIME_read_CMS_ex(bio, 0, bcont, NULL);
 }

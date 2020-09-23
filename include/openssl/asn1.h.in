@@ -919,7 +919,7 @@ int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                         STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it,
                         OSSL_LIB_CTX *libctx, const char *propq);
 ASN1_VALUE *SMIME_read_ASN1(BIO *bio, BIO **bcont, const ASN1_ITEM *it);
-ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, BIO **bcont, const ASN1_ITEM *it,
+ASN1_VALUE *SMIME_read_ASN1_ex(BIO *bio, int flags, BIO **bcont, const ASN1_ITEM *it,
                                ASN1_VALUE **x);
 int SMIME_crlf_copy(BIO *in, BIO *out, int flags);
 int SMIME_text(BIO *in, BIO *out);
