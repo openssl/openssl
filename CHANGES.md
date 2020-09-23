@@ -29,7 +29,7 @@ OpenSSL 3.0
 
    Functionality is still retained as it is, but will only work with
    EVP_PKEYs with a legacy internal key.
-   
+
    *Richard Levitte*
 
  * Changed all "STACK" functions to be macros instead of inline functions. Macro
