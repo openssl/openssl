@@ -276,7 +276,7 @@
         ":INVALID_COMPRESSION_LIST:":"no compression specified",
         ":NO_SHARED_CIPHER:":"no shared cipher",
         ":WRONG_CIPHER_RETURNED:":"wrong cipher returned",
-        ":HANDSHAKE_FAILURE_ON_CLIENT_HELLO:":"sslv3 alert handshake failure",
+        ":HANDSHAKE_FAILURE_ON_CLIENT_HELLO:":"tls/ssl alert handshake failure",
         ":UNKNOWN_CIPHER_RETURNED:":"unknown cipher returned",
         ":BAD_SIGNATURE:":"bad signature",
         ":BAD_DH_P_LENGTH:":"dh key too small",
