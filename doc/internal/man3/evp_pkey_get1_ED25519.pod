@@ -3,9 +3,7 @@
 =head1 NAME
 
 evp_pkey_get1_ED25519, evp_pkey_get1_ED448,
-evp_pkey_get1_X25519, evp_pkey_get1_X448,
-evp_pkey_get0_ED25519, evp_pkey_get0_ED448,
-evp_pkey_get0_X25519, evp_pkey_get0_X448
+evp_pkey_get1_X25519, evp_pkey_get1_X448
 - internal ECX from EVP_PKEY getter functions
 
 =head1 SYNOPSIS
@@ -17,28 +15,17 @@ evp_pkey_get0_X25519, evp_pkey_get0_X448
  ECX_KEY *evp_pkey_get1_X25519(EVP_PKEY *pkey);
  ECX_KEY *evp_pkey_get1_X448(EVP_PKEY *pkey);
 
- ECX_KEY *evp_pkey_get0_ED25519(EVP_PKEY *pkey);
- ECX_KEY *evp_pkey_get0_ED448(EVP_PKEY *pkey);
- ECX_KEY *evp_pkey_get0_X25519(EVP_PKEY *pkey);
- ECX_KEY *evp_pkey_get0_X448(EVP_PKEY *pkey);
-
 =head1 DESCRIPTION
 
 evp_pkey_get1_ED25519(), evp_pkey_get1_ED448(), evp_pkey_get1_X25519() and
 evp_pkey_get1_X448() return the referenced key in I<pkey> or NULL if the key
 is not of the correct type.  The returned key must be freed after use.
 
-evp_pkey_get0_ED25519(), evp_pkey_get0_ED448(), evp_pkey_get0_X25519() and
-evp_pkey_get0_X448() return the referenced key in I<pkey> or NULL if the key
-is not of the correct type but the reference count of the returned key is
-B<not> incremented and so must not be freed after use.
-
 =head1 RETURN VALUES
 
-evp_pkey_get1_ED25519(), evp_pkey_get1_ED448(), evp_pkey_get1_X25519(),
-evp_pkey_get1_X448(), evp_pkey_get0_ED25519(), evp_pkey_get0_ED448(),
-evp_pkey_get0_X25519() and evp_pkey_get0_X448() return the referenced key or
-NULL if an error occurred.
+evp_pkey_get1_ED25519(), evp_pkey_get1_ED448(), evp_pkey_get1_X25519() and
+evp_pkey_get1_X448() return the referenced key or NULL if an error
+occurred.
 
 =head1 HISTORY
 

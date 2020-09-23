@@ -115,13 +115,9 @@ int ecx_public_from_private(ECX_KEY *key);
 int ecx_key_fromdata(ECX_KEY *ecx, const OSSL_PARAM params[],
                      int include_private);
 
-ECX_KEY *evp_pkey_get0_X25519(const EVP_PKEY *pkey);
 ECX_KEY *evp_pkey_get1_X25519(EVP_PKEY *pkey);
-ECX_KEY *evp_pkey_get0_X448(const EVP_PKEY *pkey);
 ECX_KEY *evp_pkey_get1_X448(EVP_PKEY *pkey);
-ECX_KEY *evp_pkey_get0_ED25519(const EVP_PKEY *pkey);
 ECX_KEY *evp_pkey_get1_ED25519(EVP_PKEY *pkey);
-ECX_KEY *evp_pkey_get0_ED448(const EVP_PKEY *pkey);
 ECX_KEY *evp_pkey_get1_ED448(EVP_PKEY *pkey);
 # endif /* OPENSSL_NO_EC */
 #endif

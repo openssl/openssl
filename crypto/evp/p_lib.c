@@ -892,10 +892,6 @@ static ECX_KEY *evp_pkey_get1_ECX_KEY(EVP_PKEY *pkey, int type)
 }
 
 #  define IMPLEMENT_ECX_VARIANT(NAME)                                   \
-    ECX_KEY *evp_pkey_get0_##NAME(const EVP_PKEY *pkey)                 \
-    {                                                                   \
-        return evp_pkey_get0_ECX_KEY(pkey, EVP_PKEY_##NAME);            \
-    }                                                                   \
     ECX_KEY *evp_pkey_get1_##NAME(EVP_PKEY *pkey)                       \
     {                                                                   \
         return evp_pkey_get1_ECX_KEY(pkey, EVP_PKEY_##NAME);            \
