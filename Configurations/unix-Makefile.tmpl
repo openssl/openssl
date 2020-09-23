@@ -1437,6 +1437,7 @@ EOF
 
       my $simple = platform->sharedlib_simple($args{lib});
       my $full = platform->sharedlib($args{lib});
+      my $argfile = defined $target{shared_argfileflag} ? $full.".args" : undef;
       my $shared_soname = "";
       $shared_soname .= ' '.$target{shared_sonameflag}.basename($full)
           if defined $target{shared_sonameflag};
@@ -1445,10 +1446,31 @@ EOF
           if defined $target{shared_impflag};
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
 
-      my $objs = join(" \\\n\t\t", fill_lines(' ', $COLUMNS - 16, @objs));
-      my $deps = join(" \\\n" . ' ' x (length($full) + 2),
-                      fill_lines(' ', $COLUMNS - length($full) - 2,
-                                 @objs, @defs, @deps));
+      # There is at least one platform where the compiler-as-linker needs to
+      # have one object file directly on the command line.  That won't hurt
+      # any other platform, so we do that for everyone when there's an argfile
+      # to be had.  This depends heavily on splice, which removes elements from
+      # the given array, and returns them so they can be captured.
+      my @argfileobjs = $argfile
+          ? splice(@objs, 1)
+          : ();
+      my $argfilecmds = $argfile
+          ? join("\n\t", map { "echo $_ >> $argfile" } @argfileobjs)
+          : undef;
+      my $argfiledeps = $argfile
+          ? join(" \\\n" . ' ' x (length($argfile) + 2),
+                 fill_lines(' ', $COLUMNS - length($full) - 2, @argfileobjs))
+          : undef;
+      my @fulldeps = (@objs, ($argfile ? $argfile : ()), @defs, @deps);
+      my @fullobjs = (
+          @objs,
+          ($argfile ? $target{shared_argfileflag}.$argfile : ())
+      );
+      my $fulldeps =
+          join(" \\\n" . ' ' x (length($full) + 2),
+               fill_lines(' ', $COLUMNS - length($full) - 2, @fulldeps));
+      my $fullobjs =
+          join(" \\\n\t\t", fill_lines(' ', $COLUMNS - 16, @fullobjs));
 
       my $recipe = <<"EOF";
 $simple: $full
@@ -1465,10 +1487,10 @@ EOF
 EOF
       }
       $recipe .= <<"EOF";
-$full: $deps
+$full: $fulldeps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
 		-o $full$shared_def \\
-		$objs \\
+		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
 EOF
       if (windowsdll()) {
@@ -1481,6 +1503,11 @@ EOF
 	cp -p $full fuzz/
 EOF
       }
+      $recipe .= <<"EOF" if defined $argfile;
+$argfile: $argfiledeps
+	\$(RM) $argfile
+	$argfilecmds
+EOF
       return $recipe;
   }
   sub obj2dso {
