@@ -9,15 +9,20 @@ SMIME_read_ASN1_ex, SMIME_read_ASN1
 
  #include <openssl/asn1.h>
 
- ASN1_VALUE *SMIME_read_ASN1_ex(BIO *in, BIO **bcont, const ASN1_ITEM *it,
-                                ASN1_VALUE **x);
+ ASN1_VALUE *SMIME_read_ASN1_ex(BIO *in, int flags, BIO **bcont,
+                                const ASN1_ITEM *it, ASN1_VALUE **x);
  ASN1_VALUE *SMIME_read_ASN1(BIO *in, BIO **bcont, const ASN1_ITEM *it);
 
 =head1 DESCRIPTION
 
 SMIME_read_ASN1_ex() parses a message in S/MIME format.
 
-I<in> is a BIO to read the message from. I<x> can be used to optionally supply
+I<in> is a BIO to read the message from.
+If the I<flags> argument contains B<CMS_BINARY> then the input is assumed to be
+in binary format and is not translated to canonical form.
+If in addition B<SMIME_ASCIICRLF> is set then the binary input is assumed
+to be followed by B<CR> and B<LF> characters, else only by an B<LF> character.
+I<x> can be used to optionally supply
 a previously created I<it> ASN1_VALUE object (such as CMS_ContentInfo or PKCS7),
 it can be set to NULL. Valid values that can be used by ASN.1 structure I<it>
 are ASN1_ITEM_rptr(PKCS7) or ASN1_ITEM_rptr(CMS_ContentInfo).
@@ -28,7 +33,7 @@ written to I<*bcont>, otherwise I<*bcont> is set to NULL.
 The parsed ASN1_VALUE structure is returned or NULL if an error occurred.
 
 SMIME_read_ASN1() is similar to SMIME_read_ASN1_ex() but sets the value of I<x>
-to NULL.
+to NULL and the value of I<flags> to 0.
 
 =head1 NOTES
 
