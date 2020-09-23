@@ -21,6 +21,7 @@ $VERSION = "1.0";
 @EXPORT_OK = (@Test::More::EXPORT_OK, qw(bldtop_dir bldtop_file
                                          srctop_dir srctop_file
                                          data_file data_dir
+                                         result_file result_dir
                                          pipe with cmdstr quotify
                                          openssl_versions
                                          ok_nofips is_nofips isnt_nofips));
@@ -124,8 +125,8 @@ most likely refuse to run.
 C<setup> checks for environment variables (see L</ENVIRONMENT> below),
 checks that C<$TOP/Configure> or C<$SRCTOP/Configure> exists, C<chdir>
 into the results directory (defined by the C<$RESULT_D> environment
-variable if defined, otherwise C<$BLDTOP/test> or C<$TOP/test>, whichever
-is defined).
+variable if defined, otherwise C<$BLDTOP/test-runs> or C<$TOP/test-runs>,
+whichever is defined).
 
 =back
 
@@ -651,6 +652,43 @@ sub data_file {
 
 =over 4
 
+=item B<result_dir>
+
+C<result_dir> returns the directory where test output files should be placed
+as a string, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_dir {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    return catfile($directories{RESULTS});
+}
+
+=over 4
+
+=item B<result_file FILENAME>
+
+FILENAME is the name of a test output file.
+C<result_file> returns the path of the given file as a string,
+prepending to the file name the path to the directory where test output files
+should be placed, adapted to the local operating system.
+
+=back
+
+=cut
+
+sub result_file {
+    BAIL_OUT("Must run setup() first") if (! $test_name);
+
+    my $f = pop;
+    return catfile(result_dir(),@_,$f);
+}
+
+=over 4
+
 =item B<pipe LIST>
 
 LIST is a list of CODEREFs returned by C<app> or C<test>, from which C<pipe>
@@ -1065,13 +1103,6 @@ sub __data_dir {
     BAIL_OUT("Must run setup() first") if (! $test_name);
 
     return catdir($directories{SRCDATA},@_);
-}
-
-sub __results_file {
-    BAIL_OUT("Must run setup() first") if (! $test_name);
-
-    my $f = pop;
-    return catfile($directories{RESULTS},@_,$f);
 }
 
 # __cwd DIR
