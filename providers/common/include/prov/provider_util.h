@@ -61,10 +61,10 @@ ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
 
 /*
  * Fetch a digest from the specified libctx using the provided mdname and
- * propquery. Stored the result in the PROV_DIGEST and return the fetched md.
+ * propquery. Store the result in the PROV_DIGEST and return the fetched md.
  */
 const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OPENSSL_CTX *libctx,
-                           const char *mdname, const char *propquery);
+                                     const char *mdname, const char *propquery);
 
 /*
  * Load a digest from the specified parameters with the specified context.

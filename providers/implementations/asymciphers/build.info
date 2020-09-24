@@ -6,6 +6,6 @@ $SM2_GOAL=../../libimplementations.a
 
 SOURCE[$RSA_GOAL]=rsa_enc.c
 
-IF[{- !disabled{"sm2"} -}]
+IF[{- !$disabled{"sm2"} -}]
   SOURCE[$SM2_GOAL]=sm2_enc.c
 ENDIF
