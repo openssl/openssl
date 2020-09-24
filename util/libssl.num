@@ -512,8 +512,8 @@ SSL_CTX_load_verify_file                ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_load_verify_dir                 ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_load_verify_store               ?	3_0_0	EXIST::FUNCTION:
 SSL_CTX_set_tlsext_ticket_key_evp_cb    ?	3_0_0	EXIST::FUNCTION:
-SSL_CTX_new_with_libctx                 ?	3_0_0	EXIST::FUNCTION:
+SSL_CTX_new_ex                          ?	3_0_0	EXIST::FUNCTION:
 SSL_new_session_ticket                  ?	3_0_0	EXIST::FUNCTION:
 SSL_get0_peer_certificate               ?	3_0_0	EXIST::FUNCTION:
 SSL_get1_peer_certificate               ?	3_0_0	EXIST::FUNCTION:
-SSL_load_client_CA_file_with_libctx     ?	3_0_0	EXIST::FUNCTION:
+SSL_load_client_CA_file_ex              ?	3_0_0	EXIST::FUNCTION:

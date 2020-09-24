@@ -153,7 +153,7 @@ L<X509_STORE_get0_param(3)>
 =head1 HISTORY
 
 The functions X509_STORE_set_default_paths_ex(),
-X509_STORE_load_file_with_libctx(), X509_STORE_load_store_ex() and
+X509_STORE_load_file_ex(), X509_STORE_load_store_ex() and
 X509_STORE_load_locations_ex() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT

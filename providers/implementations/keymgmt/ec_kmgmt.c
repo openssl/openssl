@@ -1094,7 +1094,7 @@ static void *sm2_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     int ret = 1;
 
     if (gctx == NULL
-        || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
+        || (ec = EC_KEY_new_ex(gctx->libctx, NULL)) == NULL)
         return NULL;
 
     if (gctx->gen_group == NULL) {
