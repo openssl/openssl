@@ -21,6 +21,7 @@
 
 #include "internal/cryptlib.h"   /* ossl_assert */
 #include "crypto/pem.h"          /* For PVK and "blob" PEM headers */
+#include "crypto/decoder.h"      /* ossl_decoder_ctx_setup_for_EVP_PKEY */
 
 #include "testutil.h"
 
@@ -1139,6 +1140,26 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
 # endif /* OPENSSL_NO_EC2M */
 #endif /* OPENSSL_NO_EC */
 
+static int test_decoder_ctx_setup_for_EVP_PKEY_input_type_pem() {
+  int ret;
+  OPENSSL_CTX *ctx;
+  OSSL_DECODER_CTX *dctx;
+  EVP_PKEY *pkey;
+  OSSL_DECODER *pem_decoder;
+  ctx = OPENSSL_CTX_new();
+  dctx = OSSL_DECODER_CTX_new();
+  OSSL_DECODER_CTX_set_input_type(dctx, "PEM");
+
+  ret = TEST_true(ossl_decoder_ctx_setup_for_EVP_PKEY(dctx, &pkey, ctx, NULL))
+        && TEST_ptr(pem_decoder = OSSL_DECODER_fetch(ctx, "RSA",
+        "provider=default,fips=yes,input=pem"));
+
+  OSSL_DECODER_free(pem_decoder);
+  OSSL_DECODER_CTX_free(dctx);
+  OPENSSL_CTX_free(ctx);
+  return ret;
+}
+
 int setup_tests(void)
 {
     int ok = 1;
@@ -1260,6 +1281,7 @@ int setup_tests(void)
         ADD_TEST_SUITE(RSA);
         ADD_TEST_SUITE_LEGACY(RSA);
         ADD_TEST_SUITE(RSA_PSS);
+        ADD_TEST(test_decoder_ctx_setup_for_EVP_PKEY_input_type_pem);
         /*
          * RSA-PSS has no support for PEM_write_bio_PrivateKey_traditional(),
          * so no legacy tests.

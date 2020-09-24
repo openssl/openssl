@@ -82,3 +82,4 @@ DECODER("RSA", pvk, rsa, yes),
 #endif
 
 DECODER("DER", pem, der, yes),
+DECODER("RSA", pem, der, yes),
