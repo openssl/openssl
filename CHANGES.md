@@ -1199,7 +1199,8 @@ OpenSSL 1.1.1
 
  * Certificates with explicit curve parameters are now disallowed in
    verification chains if the X509_V_FLAG_X509_STRICT flag is used.
-   [Tomas Mraz]
+
+   *Tomas Mraz*
 
  * The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
    ignore TLS protocol version bounds when configuring DTLS-based contexts, and
@@ -1214,10 +1215,12 @@ OpenSSL 1.1.1
    attempts to apply bounds to these protocol versions would result in an
    error.  Now only the "version-flexible" SSL_CTX instances are subject to
    limits in configuration files in command-line options.
-   [Viktor Dukhovni]
+
+   *Viktor Dukhovni*
 
  * Handshake now fails if Extended Master Secret extension is dropped
    on renegotiation.
+
    *Tomas Mraz*
 
  * The Oracle Developer Studio compiler will start reporting deprecated APIs
