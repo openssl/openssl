@@ -1205,7 +1205,82 @@ OpenSSL 3.0
 OpenSSL 1.1.1
 -------------
 
-### Changes between 1.1.1e and 1.1.1f [xx XXX xxxx]
+### Changes between 1.1.1h and 1.1.1i [xx XXX xxxx]
+
+ *
+
+### Changes between 1.1.1g and 1.1.1h [22 Sep 2020]
+
+ * Certificates with explicit curve parameters are now disallowed in
+   verification chains if the X509_V_FLAG_X509_STRICT flag is used.
+
+   *Tomas Mraz*
+
+ * The 'MinProtocol' and 'MaxProtocol' configuration commands now silently
+   ignore TLS protocol version bounds when configuring DTLS-based contexts, and
+   conversely, silently ignore DTLS protocol version bounds when configuring
+   TLS-based contexts.  The commands can be repeated to set bounds of both
+   types.  The same applies with the corresponding "min_protocol" and
+   "max_protocol" command-line switches, in case some application uses both TLS
+   and DTLS.
+
+   SSL_CTX instances that are created for a fixed protocol version (e.g.
+   TLSv1_server_method()) also silently ignore version bounds.  Previously
+   attempts to apply bounds to these protocol versions would result in an
+   error.  Now only the "version-flexible" SSL_CTX instances are subject to
+   limits in configuration files in command-line options.
+
+   *Viktor Dukhovni*
+
+ * Handshake now fails if Extended Master Secret extension is dropped
+   on renegotiation.
+
+   *Tomas Mraz*
+
+ * The Oracle Developer Studio compiler will start reporting deprecated APIs
+
+### Changes between 1.1.1f and 1.1.1g [21 Apr 2020]
+
+ * Fixed segmentation fault in SSL_check_chain()
+   Server or client applications that call the SSL_check_chain() function
+   during or after a TLS 1.3 handshake may crash due to a NULL pointer
+   dereference as a result of incorrect handling of the
+   "signature_algorithms_cert" TLS extension. The crash occurs if an invalid
+   or unrecognised signature algorithm is received from the peer. This could
+   be exploited by a malicious peer in a Denial of Service attack.
+   [CVE-2020-1967][]
+
+   *Benjamin Kaduk*
+
+ * Added AES consttime code for no-asm configurations
+   an optional constant time support for AES was added
+   when building openssl for no-asm.
+   Enable with: ./config no-asm -DOPENSSL_AES_CONST_TIME
+   Disable with: ./config no-asm -DOPENSSL_NO_AES_CONST_TIME
+   At this time this feature is by default disabled.
+   It will be enabled by default in 3.0.
+
+   *Bernd Edlinger*
+
+### Changes between 1.1.1e and 1.1.1f [31 Mar 2020]
+
+ * Revert the change of EOF detection while reading in libssl to avoid
+   regressions in applications depending on the current way of reporting
+   the EOF. As the existing method is not fully accurate the change to
+   reporting the EOF via SSL_ERROR_SSL is kept on the current development
+   branch and will be present in the 3.0 release.
+
+   *Tomas Mraz*
+
+ * Revised BN_generate_prime_ex to not avoid factors 3..17863 in p-1
+   when primes for RSA keys are computed.
+   Since we previously always generated primes == 2 (mod 3) for RSA keys,
+   the 2-prime and 3-prime RSA modules were easy to distinguish, since
+   N = p*q = 1 (mod 3), but N = p*q*r = 2 (mod 3). Therefore fingerprinting
+   2-prime vs. 3-prime RSA keys was possible by computing N mod 3.
+   This avoids possible fingerprinting of newly generated RSA modules.
+
+   *Bernd Edlinger*
 
 ### Changes between 1.1.1d and 1.1.1e [17 Mar 2020]
 
@@ -18455,6 +18530,7 @@ ndif
 
 <!-- Links -->
 
+[CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
 [CVE-2019-1559]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1559
 [CVE-2019-1552]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1552
