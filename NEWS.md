@@ -72,9 +72,25 @@ OpenSSL 3.0
 OpenSSL 1.1.1
 -------------
 
-### Major changes between OpenSSL 1.1.1e and OpenSSL 1.1.1f [under development]
+### Major changes between OpenSSL 1.1.1h and OpenSSL 1.1.1i [under development]
 
   *
+
+### Major changes between OpenSSL 1.1.1g and OpenSSL 1.1.1h [22 Sep 2020]
+
+  * Disallow explicit curve parameters in verifications chains when
+    X509_V_FLAG_X509_STRICT is used
+  * Enable 'MinProtocol' and 'MaxProtocol' to configure both TLS and DTLS
+    contexts
+  * Oracle Developer Studio will start reporting deprecation warnings
+
+### Major changes between OpenSSL 1.1.1f and OpenSSL 1.1.1g [21 Apr 2020]
+
+  * Fixed segmentation fault in SSL_check_chain() ([CVE-2020-1967][])
+
+### Major changes between OpenSSL 1.1.1e and OpenSSL 1.1.1f [31 Mar 2020]
+
+  * Revert the unexpected EOF reporting via SSL_ERROR_SSL
 
 ### Major changes between OpenSSL 1.1.1d and OpenSSL 1.1.1e [17 Mar 2020]
 
@@ -1309,6 +1325,7 @@ OpenSSL 0.9.x
 
 <!-- Links -->
 
+[CVE-2020-1967]: https://www.openssl.org/news/vulnerabilities.html#CVE-2020-1967
 [CVE-2019-1563]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1563
 [CVE-2019-1559]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1559
 [CVE-2019-1552]: https://www.openssl.org/news/vulnerabilities.html#CVE-2019-1552
