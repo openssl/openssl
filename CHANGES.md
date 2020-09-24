@@ -618,7 +618,7 @@ OpenSSL 3.0
    have to re-use the DH512 private key, which is not recommended anyway.
    Also applications directly using the low level API BN_mod_exp may be
    affected if they use BN_FLG_CONSTTIME.
-   [CVE-2019-1551][]
+   ([CVE-2019-1551])
 
    *Andy Polyakov*
 
@@ -803,7 +803,7 @@ OpenSSL 3.0
    this change, EC_GROUP_set_generator would accept order and/or cofactor as
    NULL. After this change, only the cofactor parameter can be NULL. It also
    does some minimal sanity checks on the passed order.
-   [CVE-2019-1547][]
+   ([CVE-2019-1547])
 
    *Billy Bob Brumley*
 
@@ -1248,7 +1248,7 @@ OpenSSL 1.1.1
    "signature_algorithms_cert" TLS extension. The crash occurs if an invalid
    or unrecognised signature algorithm is received from the peer. This could
    be exploited by a malicious peer in a Denial of Service attack.
-   [CVE-2020-1967][]
+   ([CVE-2020-1967])
 
    *Benjamin Kaduk*
 
@@ -1350,7 +1350,7 @@ OpenSSL 1.1.1
 
    If an application already calls OPENSSL_init_crypto() explicitly using
    OPENSSL_INIT_ATFORK then this problem does not occur at all.
-   [CVE-2019-1549][]
+   ([CVE-2019-1549])
 
    *Matthias St. Pierre*
 
@@ -1370,7 +1370,7 @@ OpenSSL 1.1.1
    this change, EC_GROUP_set_generator would accept order and/or cofactor as
    NULL. After this change, only the cofactor parameter can be NULL. It also
    does some minimal sanity checks on the passed order.
-   [CVE-2019-1547][]
+   ([CVE-2019-1547])
 
    *Billy Bob Brumley*
 
@@ -1386,7 +1386,7 @@ OpenSSL 1.1.1
    certifiate is not given and all recipientInfo are tried out.
    The old behaviour can be re-enabled in the CMS code by setting the
    CMS_DEBUG_DECRYPT flag.
-   [CVE-2019-1563][]
+   ([CVE-2019-1563])
 
    *Bernd Edlinger*
 
@@ -1412,7 +1412,7 @@ OpenSSL 1.1.1
 
    Mingw isn't a POSIX environment per se, which means that Windows
    paths should be used for installation.
-   [CVE-2019-1552][]
+   ([CVE-2019-1552])
 
    *Richard Levitte*
 
@@ -1514,7 +1514,7 @@ OpenSSL 1.1.1
 
    This issue was reported to OpenSSL on 16th of March 2019 by Joran Dirk
    Greef of Ronomon.
-   [CVE-2019-1543][]
+   ([CVE-2019-1543])
 
    *Matt Caswell*
 
@@ -1555,7 +1555,7 @@ OpenSSL 1.1.1
    algorithm to recover the private key.
 
    This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
-   [CVE-2018-0734][]
+   ([CVE-2018-0734])
 
    *Paul Dale*
 
@@ -1566,7 +1566,7 @@ OpenSSL 1.1.1
    algorithm to recover the private key.
 
    This issue was reported to OpenSSL on 25th October 2018 by Samuel Weiser.
-   [CVE-2018-0735][]
+   ([CVE-2018-0735])
 
    *Paul Dale*
 
@@ -2140,7 +2140,7 @@ OpenSSL 1.1.0
    this change, EC_GROUP_set_generator would accept order and/or cofactor as
    NULL. After this change, only the cofactor parameter can be NULL. It also
    does some minimal sanity checks on the passed order.
-   [CVE-2019-1547][]
+   ([CVE-2019-1547])
 
    *Billy Bob Brumley*
 
@@ -2156,7 +2156,7 @@ OpenSSL 1.1.0
    certifiate is not given and all recipientInfo are tried out.
    The old behaviour can be re-enabled in the CMS code by setting the
    CMS_DEBUG_DECRYPT flag.
-   [CVE-2019-1563][]
+   ([CVE-2019-1563])
 
    *Bernd Edlinger*
 
@@ -2164,7 +2164,7 @@ OpenSSL 1.1.0
 
    Mingw isn't a POSIX environment per se, which means that Windows
    paths should be used for installation.
-   [CVE-2019-1552][]
+   ([CVE-2019-1552])
 
    *Richard Levitte*
 
@@ -2205,7 +2205,7 @@ OpenSSL 1.1.0
 
    This issue was reported to OpenSSL on 16th of March 2019 by Joran Dirk
    Greef of Ronomon.
-   [CVE-2019-1543][]
+   ([CVE-2019-1543])
 
    *Matt Caswell*
 
@@ -2240,7 +2240,7 @@ OpenSSL 1.1.0
    algorithm to recover the private key.
 
    This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
-   [CVE-2018-0734][]
+   ([CVE-2018-0734])
 
    *Paul Dale*
 
@@ -2251,7 +2251,7 @@ OpenSSL 1.1.0
    algorithm to recover the private key.
 
    This issue was reported to OpenSSL on 25th October 2018 by Samuel Weiser.
-   [CVE-2018-0735][]
+   ([CVE-2018-0735])
 
    *Paul Dale*
 
@@ -2272,7 +2272,7 @@ OpenSSL 1.1.0
    could be exploited in a Denial Of Service attack.
 
    This issue was reported to OpenSSL on 5th June 2018 by Guido Vranken
-   [CVE-2018-0732][]
+   ([CVE-2018-0732])
 
    *Guido Vranken*
 
@@ -2285,7 +2285,7 @@ OpenSSL 1.1.0
 
    This issue was reported to OpenSSL on 4th April 2018 by Alejandro Cabrera
    Aldaya, Billy Brumley, Cesar Pereida Garcia and Luis Manuel Alvarez Tapia.
-   [CVE-2018-0737][]
+   ([CVE-2018-0737])
 
    *Billy Brumley*
 
@@ -2358,7 +2358,7 @@ OpenSSL 1.1.0
 
    This issue was reported to OpenSSL on 4th January 2018 by the OSS-fuzz
    project.
-   [CVE-2018-0739][]
+   ([CVE-2018-0739])
 
    *Matt Caswell*
 
@@ -2373,7 +2373,7 @@ OpenSSL 1.1.0
 
    This issue was reported to OpenSSL on 2nd March 2018 by Peter Waltenberg
    (IBM).
-   [CVE-2018-0733][]
+   ([CVE-2018-0733])
 
    *Andy Polyakov*
 
@@ -2421,7 +2421,7 @@ OpenSSL 1.1.0
 
    This issue was reported to OpenSSL by David Benjamin (Google). The issue
    was originally found via the OSS-Fuzz project.
-   [CVE-2017-3738][]
+   ([CVE-2017-3738])
 
    *Andy Polyakov*
 
@@ -2445,7 +2445,7 @@ OpenSSL 1.1.0
    like Intel Broadwell (5th generation) and later or AMD Ryzen.
 
    This issue was reported to OpenSSL by the OSS-Fuzz project.
-   [CVE-2017-3736][]
+   ([CVE-2017-3736])
 
    *Andy Polyakov*
 
@@ -2456,7 +2456,7 @@ OpenSSL 1.1.0
    would be an erroneous display of the certificate in text format.
 
    This issue was reported to OpenSSL by the OSS-Fuzz project.
-   [CVE-2017-3735][]
+   ([CVE-2017-3735])
 
    *Rich Salz*
 
@@ -2483,7 +2483,7 @@ OpenSSL 1.1.0
    and servers are affected.
 
    This issue was reported to OpenSSL by Joe Orton (Red Hat).
-   [CVE-2017-3733][]
+   ([CVE-2017-3733])
 
    *Matt Caswell*
 
@@ -2496,7 +2496,7 @@ OpenSSL 1.1.0
    perform an out-of-bounds read, usually resulting in a crash.
 
    This issue was reported to OpenSSL by Robert Święcki of Google.
-   [CVE-2017-3731][]
+   ([CVE-2017-3731])
 
    *Andy Polyakov*
 
@@ -2508,7 +2508,7 @@ OpenSSL 1.1.0
    of Service attack.
 
    This issue was reported to OpenSSL by Guido Vranken.
-   [CVE-2017-3730][]
+   ([CVE-2017-3730])
 
    *Matt Caswell*
 
@@ -2529,7 +2529,7 @@ OpenSSL 1.1.0
    similar to CVE-2015-3193 but must be treated as a separate problem.
 
    This issue was reported to OpenSSL by the OSS-Fuzz project.
-   [CVE-2017-3732][]
+   ([CVE-2017-3732])
 
    *Andy Polyakov*
 
@@ -2542,7 +2542,7 @@ OpenSSL 1.1.0
    crash. This issue is not considered to be exploitable beyond a DoS.
 
    This issue was reported to OpenSSL by Robert Święcki (Google Security Team)
-   [CVE-2016-7054][]
+   ([CVE-2016-7054])
 
    *Richard Levitte*
 
@@ -2556,7 +2556,7 @@ OpenSSL 1.1.0
    affected.
 
    This issue was reported to OpenSSL by Tyler Nighswander of ForAllSecure.
-   [CVE-2016-7053][]
+   ([CVE-2016-7053])
 
    *Stephen Henson*
 
@@ -2580,7 +2580,7 @@ OpenSSL 1.1.0
    This issue was publicly reported as transient failures and was not
    initially recognized as a security issue. Thanks to Richard Morgan for
    providing reproducible case.
-   [CVE-2016-7055][]
+   ([CVE-2016-7055])
 
    *Andy Polyakov*
 
@@ -2603,7 +2603,7 @@ OpenSSL 1.1.0
    This issue only affects OpenSSL 1.1.0a.
 
    This issue was reported to OpenSSL by Robert Święcki.
-   [CVE-2016-6309][]
+   ([CVE-2016-6309])
 
    *Matt Caswell*
 
@@ -2620,7 +2620,7 @@ OpenSSL 1.1.0
    the "no-ocsp" build time option are not affected.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6304][]
+   ([CVE-2016-6304])
 
    *Matt Caswell*
 
@@ -2631,7 +2631,7 @@ OpenSSL 1.1.0
    Denial Of Service attack.
 
    This issue was reported to OpenSSL by Alex Gaynor.
-   [CVE-2016-6305][]
+   ([CVE-2016-6305])
 
    *Matt Caswell*
 
@@ -2697,7 +2697,7 @@ OpenSSL 1.1.0
 
    *Andy Polyakov*
 
- * To mitigate the SWEET32 attack [CVE-2016-2183][], 3DES cipher suites
+ * To mitigate the SWEET32 attack ([CVE-2016-2183]), 3DES cipher suites
    have been disabled by default and removed from DEFAULT, just like RC4.
    See the RC4 item below to re-enable both.
 
@@ -2948,7 +2948,7 @@ OpenSSL 1.1.0
 
  * Deprecate SRP_VBASE_get_by_user.
    SRP_VBASE_get_by_user had inconsistent memory management behaviour.
-   In order to fix an unavoidable memory leak [CVE-2016-0798][],
+   In order to fix an unavoidable memory leak ([CVE-2016-0798]),
    SRP_VBASE_get_by_user was changed to ignore the "fake user" SRP
    seed, even if the seed is configured.
 
@@ -3590,7 +3590,7 @@ OpenSSL 1.1.0
 
    Thanks for Neel Mehta of Google Security for discovering this bug and to
    Adam Langley <agl@chromium.org> and Bodo Moeller <bmoeller@acm.org> for
-   preparing the fix [CVE-2014-0160][]
+   preparing the fix ([CVE-2014-0160])
 
    *Adam Langley, Bodo Moeller*
 
@@ -3600,7 +3600,7 @@ OpenSSL 1.1.0
    <http://eprint.iacr.org/2014/140>
 
    Thanks to Yuval Yarom and Naomi Benger for discovering this
-   flaw and to Yuval Yarom for supplying a fix [CVE-2014-0076][]
+   flaw and to Yuval Yarom for supplying a fix ([CVE-2014-0076])
 
    *Yuval Yarom and Naomi Benger*
 
@@ -3937,7 +3937,7 @@ OpenSSL 1.0.2
    this change, EC_GROUP_set_generator would accept order and/or cofactor as
    NULL. After this change, only the cofactor parameter can be NULL. It also
    does some minimal sanity checks on the passed order.
-   [CVE-2019-1547][]
+   ([CVE-2019-1547])
 
    *Billy Bob Brumley*
 
@@ -3953,7 +3953,7 @@ OpenSSL 1.0.2
    certifiate is not given and all recipientInfo are tried out.
    The old behaviour can be re-enabled in the CMS code by setting the
    CMS_DEBUG_DECRYPT flag.
-   [CVE-2019-1563][]
+   ([CVE-2019-1563])
 
    *Bernd Edlinger*
 
@@ -3961,7 +3961,7 @@ OpenSSL 1.0.2
 
    '/usr/local/ssl' is an unsafe prefix for location to install OpenSSL
    binaries and run-time config file.
-   [CVE-2019-1552][]
+   ([CVE-2019-1552])
 
    *Richard Levitte*
 
@@ -4005,7 +4005,7 @@ OpenSSL 1.0.2
    This issue was discovered by Juraj Somorovsky, Robert Merget and Nimrod
    Aviram, with additional investigation by Steven Collison and Andrew
    Hourselt. It was reported to OpenSSL on 10th December 2018.
-   [CVE-2019-1559][]
+   ([CVE-2019-1559])
 
    *Matt Caswell*
 
@@ -4025,7 +4025,7 @@ OpenSSL 1.0.2
    This issue was reported to OpenSSL on 26th October 2018 by Alejandro
    Cabrera Aldaya, Billy Brumley, Sohaib ul Hassan, Cesar Pereida Garcia and
    Nicola Tuveri.
-   [CVE-2018-5407][]
+   ([CVE-2018-5407])
 
    *Billy Brumley*
 
@@ -4036,7 +4036,7 @@ OpenSSL 1.0.2
    algorithm to recover the private key.
 
    This issue was reported to OpenSSL on 16th October 2018 by Samuel Weiser.
-   [CVE-2018-0734][]
+   ([CVE-2018-0734])
 
    *Paul Dale*
 
@@ -4057,7 +4057,7 @@ OpenSSL 1.0.2
    could be exploited in a Denial Of Service attack.
 
    This issue was reported to OpenSSL on 5th June 2018 by Guido Vranken
-   [CVE-2018-0732][]
+   ([CVE-2018-0732])
 
    *Guido Vranken*
 
@@ -4070,7 +4070,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL on 4th April 2018 by Alejandro Cabrera
    Aldaya, Billy Brumley, Cesar Pereida Garcia and Luis Manuel Alvarez Tapia.
-   [CVE-2018-0737][]
+   ([CVE-2018-0737])
 
    *Billy Brumley*
 
@@ -4125,7 +4125,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL on 4th January 2018 by the OSS-fuzz
    project.
-   [CVE-2018-0739][]
+   ([CVE-2018-0739])
 
    *Matt Caswell*
 
@@ -4150,7 +4150,7 @@ OpenSSL 1.0.2
    already received a fatal error.
 
    This issue was reported to OpenSSL by David Benjamin (Google).
-   [CVE-2017-3737][]
+   ([CVE-2017-3737])
 
    *Matt Caswell*
 
@@ -4172,7 +4172,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL by David Benjamin (Google). The issue
    was originally found via the OSS-Fuzz project.
-   [CVE-2017-3738][]
+   ([CVE-2017-3738])
 
    *Andy Polyakov*
 
@@ -4196,7 +4196,7 @@ OpenSSL 1.0.2
    like Intel Broadwell (5th generation) and later or AMD Ryzen.
 
    This issue was reported to OpenSSL by the OSS-Fuzz project.
-   [CVE-2017-3736][]
+   ([CVE-2017-3736])
 
    *Andy Polyakov*
 
@@ -4207,7 +4207,7 @@ OpenSSL 1.0.2
    would be an erroneous display of the certificate in text format.
 
    This issue was reported to OpenSSL by the OSS-Fuzz project.
-   [CVE-2017-3735][]
+   ([CVE-2017-3735])
 
    *Rich Salz*
 
@@ -4227,7 +4227,7 @@ OpenSSL 1.0.2
    perform an out-of-bounds read, usually resulting in a crash.
 
    This issue was reported to OpenSSL by Robert Święcki of Google.
-   [CVE-2017-3731][]
+   ([CVE-2017-3731])
 
    *Andy Polyakov*
 
@@ -4248,7 +4248,7 @@ OpenSSL 1.0.2
    similar to CVE-2015-3193 but must be treated as a separate problem.
 
    This issue was reported to OpenSSL by the OSS-Fuzz project.
-   [CVE-2017-3732][]
+   ([CVE-2017-3732])
 
    *Andy Polyakov*
 
@@ -4272,7 +4272,7 @@ OpenSSL 1.0.2
    This issue was publicly reported as transient failures and was not
    initially recognized as a security issue. Thanks to Richard Morgan for
    providing reproducible case.
-   [CVE-2016-7055][]
+   ([CVE-2016-7055])
 
    *Andy Polyakov*
 
@@ -4292,7 +4292,7 @@ OpenSSL 1.0.2
    CRLs in OpenSSL 1.0.2i will crash with a null pointer exception.
 
    This issue only affects the OpenSSL 1.0.2i
-   [CVE-2016-7052][]
+   ([CVE-2016-7052])
 
    *Matt Caswell*
 
@@ -4309,7 +4309,7 @@ OpenSSL 1.0.2
    the "no-ocsp" build time option are not affected.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6304][]
+   ([CVE-2016-6304])
 
    *Matt Caswell*
 
@@ -4318,7 +4318,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL Karthikeyan Bhargavan and Gaetan
    Leurent (INRIA)
-   [CVE-2016-2183][]
+   ([CVE-2016-2183])
 
    *Rich Salz*
 
@@ -4334,7 +4334,7 @@ OpenSSL 1.0.2
    on most platforms.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6303][]
+   ([CVE-2016-6303])
 
    *Stephen Henson*
 
@@ -4348,7 +4348,7 @@ OpenSSL 1.0.2
    a custom server callback and ticket lookup mechanism.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6302][]
+   ([CVE-2016-6302])
 
    *Stephen Henson*
 
@@ -4361,7 +4361,7 @@ OpenSSL 1.0.2
    record limits will reject an oversized certificate before it is parsed.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-2182][]
+   ([CVE-2016-2182])
 
    *Stephen Henson*
 
@@ -4373,7 +4373,7 @@ OpenSSL 1.0.2
    presented.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-2180][]
+   ([CVE-2016-2180])
 
    *Stephen Henson*
 
@@ -4399,7 +4399,7 @@ OpenSSL 1.0.2
    values of len that are too big and therefore p + len < limit.
 
    This issue was reported to OpenSSL by Guido Vranken
-   [CVE-2016-2177][]
+   ([CVE-2016-2177])
 
    *Matt Caswell*
 
@@ -4414,7 +4414,7 @@ OpenSSL 1.0.2
    This issue was reported by César Pereida (Aalto University), Billy Brumley
    (Tampere University of Technology), and Yuval Yarom (The University of
    Adelaide and NICTA).
-   [CVE-2016-2178][]
+   ([CVE-2016-2178])
 
    *César Pereida*
 
@@ -4432,7 +4432,7 @@ OpenSSL 1.0.2
    attacker could cause a DoS attack through memory exhaustion.
 
    This issue was reported to OpenSSL by Quan Luo.
-   [CVE-2016-2179][]
+   ([CVE-2016-2179])
 
    *Matt Caswell*
 
@@ -4447,7 +4447,7 @@ OpenSSL 1.0.2
    service for a specific DTLS connection.
 
    This issue was reported to OpenSSL by the OCAP audit team.
-   [CVE-2016-2181][]
+   ([CVE-2016-2181])
 
    *Matt Caswell*
 
@@ -4463,7 +4463,7 @@ OpenSSL 1.0.2
    against a client or a server which enables client authentication.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6306][]
+   ([CVE-2016-6306])
 
    *Stephen Henson*
 
@@ -4476,14 +4476,14 @@ OpenSSL 1.0.2
    AES-NI.
 
    This issue was introduced as part of the fix for Lucky 13 padding
-   attack [CVE-2013-0169][]. The padding check was rewritten to be in
+   attack ([CVE-2013-0169]). The padding check was rewritten to be in
    constant time by making sure that always the same bytes are read and
    compared against either the MAC or padding bytes. But it no longer
    checked that there was enough data to have both the MAC and padding
    bytes.
 
    This issue was reported by Juraj Somorovsky using TLS-Attacker.
-   [CVE-2016-2107][]
+   ([CVE-2016-2107])
 
    *Kurt Roeckx*
 
@@ -4502,7 +4502,7 @@ OpenSSL 1.0.2
    with large amounts of untrusted data may also be vulnerable.
 
    This issue was reported by Guido Vranken.
-   [CVE-2016-2105][]
+   ([CVE-2016-2105])
 
    *Matt Caswell*
 
@@ -4526,7 +4526,7 @@ OpenSSL 1.0.2
    instances in internal usage where an overflow could occur.
 
    This issue was reported by Guido Vranken.
-   [CVE-2016-2106][]
+   ([CVE-2016-2106])
 
    *Matt Caswell*
 
@@ -4542,7 +4542,7 @@ OpenSSL 1.0.2
    applications are not affected.
 
    This issue was reported by Brian Carpenter.
-   [CVE-2016-2109][]
+   ([CVE-2016-2109])
 
    *Stephen Henson*
 
@@ -4553,7 +4553,7 @@ OpenSSL 1.0.2
    in arbitrary stack data being returned in the buffer.
 
    This issue was reported by Guido Vranken.
-   [CVE-2016-2176][]
+   ([CVE-2016-2176])
 
    *Matt Caswell*
 
@@ -4595,7 +4595,7 @@ OpenSSL 1.0.2
   server variants, SSLv2 ciphers vulnerable to exhaustive search key
   recovery have been removed.  Specifically, the SSLv2 40-bit EXPORT
   ciphers, and SSLv2 56-bit DES are no longer available.
-  [CVE-2016-0800][]
+  ([CVE-2016-0800])
 
    *Viktor Dukhovni*
 
@@ -4608,7 +4608,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL by Adam Langley(Google/BoringSSL) using
    libFuzzer.
-   [CVE-2016-0705][]
+   ([CVE-2016-0705])
 
    *Stephen Henson*
 
@@ -4628,7 +4628,7 @@ OpenSSL 1.0.2
    credentials, this behaviour is not constant time and no strong
    guarantees are made that the handshake is indistinguishable from
    that of a valid user.
-   [CVE-2016-0798][]
+   ([CVE-2016-0798])
 
    *Emilia Käsper*
 
@@ -4653,7 +4653,7 @@ OpenSSL 1.0.2
    consequences. This is also anticipated to be rare.
 
    This issue was reported to OpenSSL by Guido Vranken.
-   [CVE-2016-0797][]
+   ([CVE-2016-0797])
 
    *Matt Caswell*
 
@@ -4685,7 +4685,7 @@ OpenSSL 1.0.2
    trigger these issues because of message size limits enforced within libssl.
 
    This issue was reported to OpenSSL Guido Vranken.
-   [CVE-2016-0799][]
+   ([CVE-2016-0799])
 
    *Matt Caswell*
 
@@ -4701,7 +4701,7 @@ OpenSSL 1.0.2
    Adelaide and NICTA, Daniel Genkin, Technion and Tel Aviv University, and
    Nadia Heninger, University of Pennsylvania with more information at
    <http://cachebleed.info>.
-   [CVE-2016-0702][]
+   ([CVE-2016-0702])
 
    *Andy Polyakov*
 
@@ -4742,7 +4742,7 @@ OpenSSL 1.0.2
    default and cannot be disabled. This could have some performance impact.
 
    This issue was reported to OpenSSL by Antonio Sanso (Adobe).
-   [CVE-2016-0701][]
+   ([CVE-2016-0701])
 
    *Matt Caswell*
 
@@ -4755,7 +4755,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL on 26th December 2015 by Nimrod Aviram
    and Sebastian Schinzel.
-   [CVE-2015-3197][]
+   ([CVE-2015-3197])
 
    *Viktor Dukhovni*
 
@@ -4777,7 +4777,7 @@ OpenSSL 1.0.2
    default in OpenSSL DHE based SSL/TLS ciphersuites.
 
    This issue was reported to OpenSSL by Hanno Böck.
-   [CVE-2015-3193][]
+   ([CVE-2015-3193])
 
    *Andy Polyakov*
 
@@ -4793,7 +4793,7 @@ OpenSSL 1.0.2
    authentication.
 
    This issue was reported to OpenSSL by Loïc Jonas Etienne (Qnective AG).
-   [CVE-2015-3194][]
+   ([CVE-2015-3194])
 
    *Stephen Henson*
 
@@ -4806,7 +4806,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
    libFuzzer.
-   [CVE-2015-3195][]
+   ([CVE-2015-3195])
 
    *Stephen Henson*
 
@@ -4860,7 +4860,7 @@ OpenSSL 1.0.2
    client authentication enabled.
 
    This issue was reported to OpenSSL by Joseph Barr-Pixton.
-   [CVE-2015-1788][]
+   ([CVE-2015-1788])
 
    *Andy Polyakov*
 
@@ -4880,7 +4880,7 @@ OpenSSL 1.0.2
 
    This issue was reported to OpenSSL by Robert Swiecki (Google), and
    independently by Hanno Böck.
-   [CVE-2015-1789][]
+   ([CVE-2015-1789])
 
    *Emilia Käsper*
 
@@ -4895,7 +4895,7 @@ OpenSSL 1.0.2
    servers are not affected.
 
    This issue was reported to OpenSSL by Michal Zalewski (Google).
-   [CVE-2015-1790][]
+   ([CVE-2015-1790])
 
    *Emilia Käsper*
 
@@ -4906,7 +4906,7 @@ OpenSSL 1.0.2
    denial of service against any system which verifies signedData messages using
    the CMS code.
    This issue was reported to OpenSSL by Johannes Bauer.
-   [CVE-2015-1792][]
+   ([CVE-2015-1792])
 
    *Stephen Henson*
 
@@ -4915,7 +4915,7 @@ OpenSSL 1.0.2
    If a NewSessionTicket is received by a multi-threaded client when attempting to
    reuse a previous ticket then a race condition can occur potentially leading to
    a double free of the ticket data.
-   [CVE-2015-1791][]
+   ([CVE-2015-1791])
 
    *Matt Caswell*
 
@@ -4935,7 +4935,7 @@ OpenSSL 1.0.2
 
    This issue was was reported to OpenSSL by David Ramos of Stanford
    University.
-   [CVE-2015-0291][]
+   ([CVE-2015-0291])
 
    *Stephen Henson and Matt Caswell*
 
@@ -4951,7 +4951,7 @@ OpenSSL 1.0.2
    fault will be triggered, thus enabling a potential DoS attack.
 
    This issue was reported to OpenSSL by Daniel Danner and Rainer Mueller.
-   [CVE-2015-0290][]
+   ([CVE-2015-0290])
 
    *Matt Caswell*
 
@@ -4968,7 +4968,7 @@ OpenSSL 1.0.2
    server.
 
    This issue was reported to OpenSSL by Per Allansson.
-   [CVE-2015-0207][]
+   ([CVE-2015-0207])
 
    *Matt Caswell*
 
@@ -4980,7 +4980,7 @@ OpenSSL 1.0.2
    certificate verification operation and exploited in a DoS attack. Any
    application which performs certificate verification is vulnerable including
    OpenSSL clients and servers which enable client authentication.
-   [CVE-2015-0286][]
+   ([CVE-2015-0286])
 
    *Stephen Henson*
 
@@ -4995,7 +4995,7 @@ OpenSSL 1.0.2
    OpenSSL clients and servers which enable client authentication.
 
    This issue was was reported to OpenSSL by Brian Carpenter.
-   [CVE-2015-0208][]
+   ([CVE-2015-0208])
 
    *Stephen Henson*
 
@@ -5009,7 +5009,7 @@ OpenSSL 1.0.2
    components may be affected. Certificate parsing (d2i_X509 and related
    functions) are however not affected. OpenSSL clients and servers are
    not affected.
-   [CVE-2015-0287][]
+   ([CVE-2015-0287])
 
    *Stephen Henson*
 
@@ -5024,7 +5024,7 @@ OpenSSL 1.0.2
    affected. OpenSSL clients and servers are not affected.
 
    This issue was reported to OpenSSL by Michal Zalewski (Google).
-   [CVE-2015-0289][]
+   ([CVE-2015-0289])
 
    *Emilia Käsper*
 
@@ -5036,7 +5036,7 @@ OpenSSL 1.0.2
 
    This issue was discovered by Sean Burford (Google) and Emilia Käsper
    (OpenSSL development team).
-   [CVE-2015-0293][]
+   ([CVE-2015-0293])
 
    *Emilia Käsper*
 
@@ -5045,7 +5045,7 @@ OpenSSL 1.0.2
    If client auth is used then a server can seg fault in the event of a DHE
    ciphersuite being selected and a zero length ClientKeyExchange message
    being sent by the client. This could be exploited in a DoS attack.
-   [CVE-2015-1787][]
+   ([CVE-2015-1787])
 
    *Matt Caswell*
 
@@ -5068,7 +5068,7 @@ OpenSSL 1.0.2
    succeed on an unpatched platform:
 
    openssl s_client -psk 1a2b3c4d -tls1_2 -cipher PSK-RC4-SHA
-   [CVE-2015-0285][]
+   ([CVE-2015-0285])
 
    *Matt Caswell*
 
@@ -5083,7 +5083,7 @@ OpenSSL 1.0.2
 
    This issue was discovered by the BoringSSL project and fixed in their
    commit 517073cd4b.
-   [CVE-2015-0209][]
+   ([CVE-2015-0209])
 
    *Matt Caswell*
 
@@ -5093,7 +5093,7 @@ OpenSSL 1.0.2
    the certificate key is invalid. This function is rarely used in practice.
 
    This issue was discovered by Brian Carpenter.
-   [CVE-2015-0288][]
+   ([CVE-2015-0288])
 
    *Stephen Henson*
 
@@ -5511,7 +5511,7 @@ OpenSSL 1.0.1
    the "no-ocsp" build time option are not affected.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6304][]
+   ([CVE-2016-6304])
 
    *Matt Caswell*
 
@@ -5520,7 +5520,7 @@ OpenSSL 1.0.1
 
    This issue was reported to OpenSSL Karthikeyan Bhargavan and Gaetan
    Leurent (INRIA)
-   [CVE-2016-2183][]
+   ([CVE-2016-2183])
 
    *Rich Salz*
 
@@ -5536,7 +5536,7 @@ OpenSSL 1.0.1
    on most platforms.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6303][]
+   ([CVE-2016-6303])
 
    *Stephen Henson*
 
@@ -5550,7 +5550,7 @@ OpenSSL 1.0.1
    a custom server callback and ticket lookup mechanism.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6302][]
+   ([CVE-2016-6302])
 
    *Stephen Henson*
 
@@ -5563,7 +5563,7 @@ OpenSSL 1.0.1
    record limits will reject an oversized certificate before it is parsed.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-2182][]
+   ([CVE-2016-2182])
 
    *Stephen Henson*
 
@@ -5575,7 +5575,7 @@ OpenSSL 1.0.1
    presented.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-2180][]
+   ([CVE-2016-2180])
 
    *Stephen Henson*
 
@@ -5601,7 +5601,7 @@ OpenSSL 1.0.1
    values of len that are too big and therefore p + len < limit.
 
    This issue was reported to OpenSSL by Guido Vranken
-   [CVE-2016-2177][]
+   ([CVE-2016-2177])
 
    *Matt Caswell*
 
@@ -5616,7 +5616,7 @@ OpenSSL 1.0.1
    This issue was reported by César Pereida (Aalto University), Billy Brumley
    (Tampere University of Technology), and Yuval Yarom (The University of
    Adelaide and NICTA).
-   [CVE-2016-2178][]
+   ([CVE-2016-2178])
 
    *César Pereida*
 
@@ -5634,7 +5634,7 @@ OpenSSL 1.0.1
    attacker could cause a DoS attack through memory exhaustion.
 
    This issue was reported to OpenSSL by Quan Luo.
-   [CVE-2016-2179][]
+   ([CVE-2016-2179])
 
    *Matt Caswell*
 
@@ -5649,7 +5649,7 @@ OpenSSL 1.0.1
    service for a specific DTLS connection.
 
    This issue was reported to OpenSSL by the OCAP audit team.
-   [CVE-2016-2181][]
+   ([CVE-2016-2181])
 
    *Matt Caswell*
 
@@ -5665,7 +5665,7 @@ OpenSSL 1.0.1
    against a client or a server which enables client authentication.
 
    This issue was reported to OpenSSL by Shi Lei (Gear Team, Qihoo 360 Inc.)
-   [CVE-2016-6306][]
+   ([CVE-2016-6306])
 
    *Stephen Henson*
 
@@ -5678,14 +5678,14 @@ OpenSSL 1.0.1
    AES-NI.
 
    This issue was introduced as part of the fix for Lucky 13 padding
-   attack [CVE-2013-0169][]. The padding check was rewritten to be in
+   attack ([CVE-2013-0169]). The padding check was rewritten to be in
    constant time by making sure that always the same bytes are read and
    compared against either the MAC or padding bytes. But it no longer
    checked that there was enough data to have both the MAC and padding
    bytes.
 
    This issue was reported by Juraj Somorovsky using TLS-Attacker.
-   [CVE-2016-2107][]
+   ([CVE-2016-2107])
 
    *Kurt Roeckx*
 
@@ -5704,7 +5704,7 @@ OpenSSL 1.0.1
    with large amounts of untrusted data may also be vulnerable.
 
    This issue was reported by Guido Vranken.
-   [CVE-2016-2105][]
+   ([CVE-2016-2105])
 
    *Matt Caswell*
 
@@ -5728,7 +5728,7 @@ OpenSSL 1.0.1
    instances in internal usage where an overflow could occur.
 
    This issue was reported by Guido Vranken.
-   [CVE-2016-2106][]
+   ([CVE-2016-2106])
 
    *Matt Caswell*
 
@@ -5744,7 +5744,7 @@ OpenSSL 1.0.1
    applications are not affected.
 
    This issue was reported by Brian Carpenter.
-   [CVE-2016-2109][]
+   ([CVE-2016-2109])
 
    *Stephen Henson*
 
@@ -5755,7 +5755,7 @@ OpenSSL 1.0.1
    in arbitrary stack data being returned in the buffer.
 
    This issue was reported by Guido Vranken.
-   [CVE-2016-2176][]
+   ([CVE-2016-2176])
 
    *Matt Caswell*
 
@@ -5797,7 +5797,7 @@ OpenSSL 1.0.1
   server variants, SSLv2 ciphers vulnerable to exhaustive search key
   recovery have been removed.  Specifically, the SSLv2 40-bit EXPORT
   ciphers, and SSLv2 56-bit DES are no longer available.
-  [CVE-2016-0800][]
+  ([CVE-2016-0800])
 
   *Viktor Dukhovni*
 
@@ -5810,7 +5810,7 @@ OpenSSL 1.0.1
 
    This issue was reported to OpenSSL by Adam Langley(Google/BoringSSL) using
    libFuzzer.
-   [CVE-2016-0705][]
+   ([CVE-2016-0705])
 
    *Stephen Henson*
 
@@ -5830,7 +5830,7 @@ OpenSSL 1.0.1
    credentials, this behaviour is not constant time and no strong
    guarantees are made that the handshake is indistinguishable from
    that of a valid user.
-   [CVE-2016-0798][]
+   ([CVE-2016-0798])
 
    *Emilia Käsper*
 
@@ -5855,7 +5855,7 @@ OpenSSL 1.0.1
    consequences. This is also anticipated to be rare.
 
    This issue was reported to OpenSSL by Guido Vranken.
-   [CVE-2016-0797][]
+   ([CVE-2016-0797])
 
    *Matt Caswell*
 
@@ -5887,7 +5887,7 @@ OpenSSL 1.0.1
    trigger these issues because of message size limits enforced within libssl.
 
    This issue was reported to OpenSSL Guido Vranken.
-   [CVE-2016-0799][]
+   ([CVE-2016-0799])
 
    *Matt Caswell*
 
@@ -5903,7 +5903,7 @@ OpenSSL 1.0.1
    Adelaide and NICTA, Daniel Genkin, Technion and Tel Aviv University, and
    Nadia Heninger, University of Pennsylvania with more information at
    <http://cachebleed.info>.
-   [CVE-2016-0702][]
+   ([CVE-2016-0702])
 
    *Andy Polyakov*
 
@@ -5933,7 +5933,7 @@ OpenSSL 1.0.1
 
    This issue was reported to OpenSSL on 26th December 2015 by Nimrod Aviram
    and Sebastian Schinzel.
-   [CVE-2015-3197][]
+   ([CVE-2015-3197])
 
    *Viktor Dukhovni*
 
@@ -5955,7 +5955,7 @@ OpenSSL 1.0.1
    authentication.
 
    This issue was reported to OpenSSL by Loïc Jonas Etienne (Qnective AG).
-   [CVE-2015-3194][]
+   ([CVE-2015-3194])
 
    *Stephen Henson*
 
@@ -5968,7 +5968,7 @@ OpenSSL 1.0.1
 
    This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
    libFuzzer.
-   [CVE-2015-3195][]
+   ([CVE-2015-3195])
 
    *Stephen Henson*
 
@@ -5997,7 +5997,7 @@ OpenSSL 1.0.1
 
    This issue was reported to OpenSSL by Adam Langley/David Benjamin
    (Google/BoringSSL).
-   [CVE-2015-1793][]
+   ([CVE-2015-1793])
 
    *Matt Caswell*
 
@@ -6007,7 +6007,7 @@ OpenSSL 1.0.1
    the values are wrongly updated in the parent SSL_CTX structure. This can
    result in a race condition potentially leading to a double free of the
    identify hint data.
-   [CVE-2015-3196][]
+   ([CVE-2015-3196])
 
    *Stephen Henson*
 
@@ -6031,7 +6031,7 @@ OpenSSL 1.0.1
    client authentication enabled.
 
    This issue was reported to OpenSSL by Joseph Barr-Pixton.
-   [CVE-2015-1788][]
+   ([CVE-2015-1788])
 
    *Andy Polyakov*
 
@@ -6051,7 +6051,7 @@ OpenSSL 1.0.1
 
    This issue was reported to OpenSSL by Robert Swiecki (Google), and
    independently by Hanno Böck.
-   [CVE-2015-1789][]
+   ([CVE-2015-1789])
 
    *Emilia Käsper*
 
@@ -6066,7 +6066,7 @@ OpenSSL 1.0.1
    servers are not affected.
 
    This issue was reported to OpenSSL by Michal Zalewski (Google).
-   [CVE-2015-1790][]
+   ([CVE-2015-1790])
 
    *Emilia Käsper*
 
@@ -6077,7 +6077,7 @@ OpenSSL 1.0.1
    denial of service against any system which verifies signedData messages using
    the CMS code.
    This issue was reported to OpenSSL by Johannes Bauer.
-   [CVE-2015-1792][]
+   ([CVE-2015-1792])
 
    *Stephen Henson*
 
@@ -6086,7 +6086,7 @@ OpenSSL 1.0.1
    If a NewSessionTicket is received by a multi-threaded client when attempting to
    reuse a previous ticket then a race condition can occur potentially leading to
    a double free of the ticket data.
-   [CVE-2015-1791][]
+   ([CVE-2015-1791])
 
    *Matt Caswell*
 
@@ -6108,7 +6108,7 @@ OpenSSL 1.0.1
    certificate verification operation and exploited in a DoS attack. Any
    application which performs certificate verification is vulnerable including
    OpenSSL clients and servers which enable client authentication.
-   [CVE-2015-0286][]
+   ([CVE-2015-0286])
 
    *Stephen Henson*
 
@@ -6122,7 +6122,7 @@ OpenSSL 1.0.1
    components may be affected. Certificate parsing (d2i_X509 and related
    functions) are however not affected. OpenSSL clients and servers are
    not affected.
-   [CVE-2015-0287][]
+   ([CVE-2015-0287])
 
    *Stephen Henson*
 
@@ -6137,7 +6137,7 @@ OpenSSL 1.0.1
    affected. OpenSSL clients and servers are not affected.
 
    This issue was reported to OpenSSL by Michal Zalewski (Google).
-   [CVE-2015-0289][]
+   ([CVE-2015-0289])
 
    *Emilia Käsper*
 
@@ -6149,7 +6149,7 @@ OpenSSL 1.0.1
 
    This issue was discovered by Sean Burford (Google) and Emilia Käsper
    (OpenSSL development team).
-   [CVE-2015-0293][]
+   ([CVE-2015-0293])
 
    *Emilia Käsper*
 
@@ -6164,7 +6164,7 @@ OpenSSL 1.0.1
 
    This issue was discovered by the BoringSSL project and fixed in their
    commit 517073cd4b.
-   [CVE-2015-0209][]
+   ([CVE-2015-0209])
 
    *Matt Caswell*
 
@@ -6174,7 +6174,7 @@ OpenSSL 1.0.1
    the certificate key is invalid. This function is rarely used in practice.
 
    This issue was discovered by Brian Carpenter.
-   [CVE-2015-0288][]
+   ([CVE-2015-0288])
 
    *Stephen Henson*
 
@@ -6194,7 +6194,7 @@ OpenSSL 1.0.1
    message can cause a segmentation fault in OpenSSL due to a NULL pointer
    dereference. This could lead to a Denial Of Service attack. Thanks to
    Markus Stenberg of Cisco Systems, Inc. for reporting this issue.
-   [CVE-2014-3571][]
+   ([CVE-2014-3571])
 
    *Steve Henson*
 
@@ -6204,7 +6204,7 @@ OpenSSL 1.0.1
    sequence number but for the next epoch. The memory leak could be exploited
    by an attacker in a Denial of Service attack through memory exhaustion.
    Thanks to Chris Mueller for reporting this issue.
-   [CVE-2015-0206][]
+   ([CVE-2015-0206])
 
    *Matt Caswell*
 
@@ -6212,7 +6212,7 @@ OpenSSL 1.0.1
    built with the no-ssl3 option and a SSL v3 ClientHello is received the ssl
    method would be set to NULL which could later result in a NULL pointer
    dereference. Thanks to Frank Schmirler for reporting this issue.
-   [CVE-2014-3569][]
+   ([CVE-2014-3569])
 
    *Kurt Roeckx*
 
@@ -6221,7 +6221,7 @@ OpenSSL 1.0.1
 
    Thanks to Karthikeyan Bhargavan of the PROSECCO team at INRIA for
    reporting this issue.
-   [CVE-2014-3572][]
+   ([CVE-2014-3572])
 
    *Steve Henson*
 
@@ -6231,7 +6231,7 @@ OpenSSL 1.0.1
    downgrade the RSA key length used to a value smaller than the server
    certificate. Thanks for Karthikeyan Bhargavan of the PROSECCO team at
    INRIA or reporting this issue.
-   [CVE-2015-0204][]
+   ([CVE-2015-0204])
 
    *Steve Henson*
 
@@ -6243,7 +6243,7 @@ OpenSSL 1.0.1
    containing DH keys: these are extremely rare and hardly ever encountered.
    Thanks for Karthikeyan Bhargavan of the PROSECCO team at INRIA or reporting
    this issue.
-   [CVE-2015-0205][]
+   ([CVE-2015-0205])
 
    *Steve Henson*
 
@@ -6289,7 +6289,7 @@ OpenSSL 1.0.1
    Further analysis was conducted and fixes were developed by Stephen Henson
    of the OpenSSL core team.
 
-   [CVE-2014-8275][]
+   ([CVE-2014-8275])
 
    *Steve Henson*
 
@@ -6301,7 +6301,7 @@ OpenSSL 1.0.1
    fix. Further analysis was conducted by the OpenSSL development team and
    Adam Langley of Google. The final fix was developed by Andy Polyakov of
    the OpenSSL core team.
-   [CVE-2014-3570][]
+   ([CVE-2014-3570])
 
    *Andy Polyakov*
 
@@ -6343,7 +6343,7 @@ OpenSSL 1.0.1
    have been compiled with OPENSSL_NO_SRTP defined are not affected.
 
    The fix was developed by the OpenSSL team.
-   [CVE-2014-3513][]
+   ([CVE-2014-3513])
 
    *OpenSSL team*
 
@@ -6355,7 +6355,7 @@ OpenSSL 1.0.1
    causing a memory leak. By sending a large number of invalid session
    tickets an attacker could exploit this issue in a Denial Of Service
    attack.
-   [CVE-2014-3567][]
+   ([CVE-2014-3567])
 
    *Steve Henson*
 
@@ -6364,14 +6364,14 @@ OpenSSL 1.0.1
    When OpenSSL is configured with "no-ssl3" as a build option, servers
    could accept and complete a SSL 3.0 handshake, and clients could be
    configured to send them.
-   [CVE-2014-3568][]
+   ([CVE-2014-3568])
 
    *Akamai and the OpenSSL team*
 
  * Add support for TLS_FALLBACK_SCSV.
    Client applications doing fallback retries should call
    SSL_set_mode(s, SSL_MODE_SEND_FALLBACK_SCSV).
-   [CVE-2014-3566][]
+   ([CVE-2014-3566])
 
    *Adam Langley, Bodo Moeller*
 
@@ -6393,7 +6393,7 @@ OpenSSL 1.0.1
 
    Thanks to Sean Devlin and Watson Ladd of Cryptography Services, NCC
    Group for discovering this issue.
-   [CVE-2014-3512][]
+   ([CVE-2014-3512])
 
    *Steve Henson*
 
@@ -6405,7 +6405,7 @@ OpenSSL 1.0.1
 
    Thanks to David Benjamin and Adam Langley (Google) for discovering and
    researching this issue.
-   [CVE-2014-3511][]
+   ([CVE-2014-3511])
 
    *David Benjamin*
 
@@ -6416,14 +6416,14 @@ OpenSSL 1.0.1
 
    Thanks to Felix Gröbert (Google) for discovering and researching this
    issue.
-   [CVE-2014-3510][]
+   ([CVE-2014-3510])
 
    *Emilia Käsper*
 
  * By sending carefully crafted DTLS packets an attacker could cause openssl
    to leak memory. This can be exploited through a Denial of Service attack.
    Thanks to Adam Langley for discovering and researching this issue.
-   [CVE-2014-3507][]
+   ([CVE-2014-3507])
 
    *Adam Langley*
 
@@ -6431,7 +6431,7 @@ OpenSSL 1.0.1
    processing DTLS handshake messages. This can be exploited through a
    Denial of Service attack.
    Thanks to Adam Langley for discovering and researching this issue.
-   [CVE-2014-3506][]
+   ([CVE-2014-3506])
 
    *Adam Langley*
 
@@ -6440,7 +6440,7 @@ OpenSSL 1.0.1
    can be exploited through a Denial of Service attack.
    Thanks to Adam Langley and Wan-Teh Chang for discovering and researching
    this issue.
-   [CVE-2014-3505][]
+   ([CVE-2014-3505])
 
    *Adam Langley*
 
@@ -6450,7 +6450,7 @@ OpenSSL 1.0.1
 
    Thanks to Gabor Tyukasz (LogMeIn Inc) for discovering and researching this
    issue.
-   [CVE-2014-3509][]
+   ([CVE-2014-3509])
 
    *Gabor Tyukasz*
 
@@ -6461,7 +6461,7 @@ OpenSSL 1.0.1
 
    Thanks to Joonas Kuorilehto and Riku Hietamäki (Codenomicon) for
    discovering and researching this issue.
-   [CVE-2014-5139][]
+   ([CVE-2014-5139])
 
    *Steve Henson*
 
@@ -6471,7 +6471,7 @@ OpenSSL 1.0.1
    output to the attacker.
 
    Thanks to Ivan Fratric (Google) for discovering this issue.
-   [CVE-2014-3508][]
+   ([CVE-2014-3508])
 
    *Emilia Käsper, and Steve Henson*
 
@@ -6488,7 +6488,7 @@ OpenSSL 1.0.1
    SSL/TLS clients and servers.
 
    Thanks to KIKUCHI Masashi (Lepidum Co. Ltd.) for discovering and
-   researching this issue. [CVE-2014-0224][]
+   researching this issue. ([CVE-2014-0224])
 
    *KIKUCHI Masashi, Steve Henson*
 
@@ -6497,7 +6497,7 @@ OpenSSL 1.0.1
    in a DoS attack.
 
    Thanks to Imre Rad (Search-Lab Ltd.) for discovering this issue.
-   [CVE-2014-0221][]
+   ([CVE-2014-0221])
 
    *Imre Rad, Steve Henson*
 
@@ -6506,7 +6506,7 @@ OpenSSL 1.0.1
    client or server. This is potentially exploitable to run arbitrary
    code on a vulnerable client or server.
 
-   Thanks to Jüri Aedla for reporting this issue. [CVE-2014-0195][]
+   Thanks to Jüri Aedla for reporting this issue. ([CVE-2014-0195])
 
    *Jüri Aedla, Steve Henson*
 
@@ -6514,7 +6514,7 @@ OpenSSL 1.0.1
    are subject to a denial of service attack.
 
    Thanks to Felix Gröbert and Ivan Fratric at Google for discovering
-   this issue. [CVE-2014-3470][]
+   this issue. ([CVE-2014-3470])
 
    *Felix Gröbert, Ivan Fratric, Steve Henson*
 
@@ -6540,7 +6540,7 @@ OpenSSL 1.0.1
 
    Thanks for Neel Mehta of Google Security for discovering this bug and to
    Adam Langley <agl@chromium.org> and Bodo Moeller <bmoeller@acm.org> for
-   preparing the fix [CVE-2014-0160][]
+   preparing the fix ([CVE-2014-0160])
 
    *Adam Langley, Bodo Moeller*
 
@@ -6550,7 +6550,7 @@ OpenSSL 1.0.1
    <http://eprint.iacr.org/2014/140>
 
    Thanks to Yuval Yarom and Naomi Benger for discovering this
-   flaw and to Yuval Yarom for supplying a fix [CVE-2014-0076][]
+   flaw and to Yuval Yarom for supplying a fix ([CVE-2014-0076])
 
    *Yuval Yarom and Naomi Benger*
 
@@ -6568,11 +6568,11 @@ OpenSSL 1.0.1
  * Fix for TLS record tampering bug. A carefully crafted invalid
    handshake could crash OpenSSL with a NULL pointer exception.
    Thanks to Anton Johansson for reporting this issues.
-   [CVE-2013-4353][]
+   ([CVE-2013-4353])
 
  * Keep original DTLS digest and encryption contexts in retransmission
    structures so we can use the previous session parameters if they need
-   to be resent. [CVE-2013-6450][]
+   to be resent. ([CVE-2013-6450])
 
    *Steve Henson*
 
@@ -6604,7 +6604,7 @@ OpenSSL 1.0.1
    Security Group at Royal Holloway, University of London
    (www.isg.rhul.ac.uk) for discovering this flaw and Adam Langley and
    Emilia Käsper for the initial patch.
-   [CVE-2013-0169][]
+   ([CVE-2013-0169])
 
    *Emilia Käsper, Adam Langley, Ben Laurie, Andy Polyakov, Steve Henson*
 
@@ -6613,12 +6613,12 @@ OpenSSL 1.0.1
    Thanks go to and to Adam Langley <agl@chromium.org> for discovering
    and detecting this bug and to Wolfgang Ettlinger
    <wolfgang.ettlinger@gmail.com> for independently discovering this issue.
-   [CVE-2012-2686][]
+   ([CVE-2012-2686])
 
    *Adam Langley*
 
  * Return an error when checking OCSP signatures when key is NULL.
-   This fixes a DoS attack. [CVE-2013-0166][]
+   This fixes a DoS attack. ([CVE-2013-0166])
 
    *Steve Henson*
 
@@ -6649,7 +6649,7 @@ OpenSSL 1.0.1
 
    Thanks to Codenomicon for discovering this issue using Fuzz-o-Matic
    fuzzing as a service testing platform.
-   [CVE-2012-2333][]
+   ([CVE-2012-2333])
 
    *Steve Henson*
 
@@ -6696,7 +6696,7 @@ OpenSSL 1.0.1
 
    Thanks to Tavis Ormandy, Google Security Team, for discovering this
    issue and to Adam Langley <agl@chromium.org> for fixing it.
-   [CVE-2012-2110][]
+   ([CVE-2012-2110])
 
    *Adam Langley (Google), Tavis Ormandy, Google Security Team*
 
@@ -7076,7 +7076,7 @@ OpenSSL 1.0.0
 
    This issue was reported to OpenSSL by Adam Langley (Google/BoringSSL) using
    libFuzzer.
-   [CVE-2015-3195][]
+   ([CVE-2015-3195])
 
    *Stephen Henson*
 
@@ -7086,7 +7086,7 @@ OpenSSL 1.0.0
    the values are wrongly updated in the parent SSL_CTX structure. This can
    result in a race condition potentially leading to a double free of the
    identify hint data.
-   [CVE-2015-3196][]
+   ([CVE-2015-3196])
 
    *Stephen Henson*
 
@@ -7104,7 +7104,7 @@ OpenSSL 1.0.0
    client authentication enabled.
 
    This issue was reported to OpenSSL by Joseph Barr-Pixton.
-   [CVE-2015-1788][]
+   ([CVE-2015-1788])
 
    *Andy Polyakov*
 
@@ -7124,7 +7124,7 @@ OpenSSL 1.0.0
 
    This issue was reported to OpenSSL by Robert Swiecki (Google), and
    independently by Hanno Böck.
-   [CVE-2015-1789][]
+   ([CVE-2015-1789])
 
    *Emilia Käsper*
 
@@ -7139,7 +7139,7 @@ OpenSSL 1.0.0
    servers are not affected.
 
    This issue was reported to OpenSSL by Michal Zalewski (Google).
-   [CVE-2015-1790][]
+   ([CVE-2015-1790])
 
    *Emilia Käsper*
 
@@ -7150,7 +7150,7 @@ OpenSSL 1.0.0
    denial of service against any system which verifies signedData messages using
    the CMS code.
    This issue was reported to OpenSSL by Johannes Bauer.
-   [CVE-2015-1792][]
+   ([CVE-2015-1792])
 
    *Stephen Henson*
 
@@ -7159,7 +7159,7 @@ OpenSSL 1.0.0
    If a NewSessionTicket is received by a multi-threaded client when attempting to
    reuse a previous ticket then a race condition can occur potentially leading to
    a double free of the ticket data.
-   [CVE-2015-1791][]
+   ([CVE-2015-1791])
 
    *Matt Caswell*
 
@@ -7173,7 +7173,7 @@ OpenSSL 1.0.0
    certificate verification operation and exploited in a DoS attack. Any
    application which performs certificate verification is vulnerable including
    OpenSSL clients and servers which enable client authentication.
-   [CVE-2015-0286][]
+   ([CVE-2015-0286])
 
    *Stephen Henson*
 
@@ -7187,7 +7187,7 @@ OpenSSL 1.0.0
    components may be affected. Certificate parsing (d2i_X509 and related
    functions) are however not affected. OpenSSL clients and servers are
    not affected.
-   [CVE-2015-0287][]
+   ([CVE-2015-0287])
 
    *Stephen Henson*
 
@@ -7202,7 +7202,7 @@ OpenSSL 1.0.0
    affected. OpenSSL clients and servers are not affected.
 
    This issue was reported to OpenSSL by Michal Zalewski (Google).
-   [CVE-2015-0289][]
+   ([CVE-2015-0289])
 
    *Emilia Käsper*
 
@@ -7214,7 +7214,7 @@ OpenSSL 1.0.0
 
    This issue was discovered by Sean Burford (Google) and Emilia Käsper
    (OpenSSL development team).
-   [CVE-2015-0293][]
+   ([CVE-2015-0293])
 
    *Emilia Käsper*
 
@@ -7229,7 +7229,7 @@ OpenSSL 1.0.0
 
    This issue was discovered by the BoringSSL project and fixed in their
    commit 517073cd4b.
-   [CVE-2015-0209][]
+   ([CVE-2015-0209])
 
    *Matt Caswell*
 
@@ -7239,7 +7239,7 @@ OpenSSL 1.0.0
    the certificate key is invalid. This function is rarely used in practice.
 
    This issue was discovered by Brian Carpenter.
-   [CVE-2015-0288][]
+   ([CVE-2015-0288])
 
    *Stephen Henson*
 
@@ -7259,7 +7259,7 @@ OpenSSL 1.0.0
    message can cause a segmentation fault in OpenSSL due to a NULL pointer
    dereference. This could lead to a Denial Of Service attack. Thanks to
    Markus Stenberg of Cisco Systems, Inc. for reporting this issue.
-   [CVE-2014-3571][]
+   ([CVE-2014-3571])
 
    *Steve Henson*
 
@@ -7269,7 +7269,7 @@ OpenSSL 1.0.0
    sequence number but for the next epoch. The memory leak could be exploited
    by an attacker in a Denial of Service attack through memory exhaustion.
    Thanks to Chris Mueller for reporting this issue.
-   [CVE-2015-0206][]
+   ([CVE-2015-0206])
 
    *Matt Caswell*
 
@@ -7277,7 +7277,7 @@ OpenSSL 1.0.0
    built with the no-ssl3 option and a SSL v3 ClientHello is received the ssl
    method would be set to NULL which could later result in a NULL pointer
    dereference. Thanks to Frank Schmirler for reporting this issue.
-   [CVE-2014-3569][]
+   ([CVE-2014-3569])
 
    *Kurt Roeckx*
 
@@ -7286,7 +7286,7 @@ OpenSSL 1.0.0
 
    Thanks to Karthikeyan Bhargavan of the PROSECCO team at INRIA for
    reporting this issue.
-   [CVE-2014-3572][]
+   ([CVE-2014-3572])
 
    *Steve Henson*
 
@@ -7296,7 +7296,7 @@ OpenSSL 1.0.0
    downgrade the RSA key length used to a value smaller than the server
    certificate. Thanks for Karthikeyan Bhargavan of the PROSECCO team at
    INRIA or reporting this issue.
-   [CVE-2015-0204][]
+   ([CVE-2015-0204])
 
    *Steve Henson*
 
@@ -7308,7 +7308,7 @@ OpenSSL 1.0.0
    containing DH keys: these are extremely rare and hardly ever encountered.
    Thanks for Karthikeyan Bhargavan of the PROSECCO team at INRIA or reporting
    this issue.
-   [CVE-2015-0205][]
+   ([CVE-2015-0205])
 
    *Steve Henson*
 
@@ -7320,7 +7320,7 @@ OpenSSL 1.0.0
    fix. Further analysis was conducted by the OpenSSL development team and
    Adam Langley of Google. The final fix was developed by Andy Polyakov of
    the OpenSSL core team.
-   [CVE-2014-3570][]
+   ([CVE-2014-3570])
 
    *Andy Polyakov*
 
@@ -7358,7 +7358,7 @@ OpenSSL 1.0.0
    Further analysis was conducted and fixes were developed by Stephen Henson
    of the OpenSSL core team.
 
-   [CVE-2014-8275][]
+   ([CVE-2014-8275])
 
    *Steve Henson*
 
@@ -7372,7 +7372,7 @@ OpenSSL 1.0.0
    causing a memory leak. By sending a large number of invalid session
    tickets an attacker could exploit this issue in a Denial Of Service
    attack.
-   [CVE-2014-3567][]
+   ([CVE-2014-3567])
 
    *Steve Henson*
 
@@ -7381,14 +7381,14 @@ OpenSSL 1.0.0
    When OpenSSL is configured with "no-ssl3" as a build option, servers
    could accept and complete a SSL 3.0 handshake, and clients could be
    configured to send them.
-   [CVE-2014-3568][]
+   ([CVE-2014-3568])
 
    *Akamai and the OpenSSL team*
 
  * Add support for TLS_FALLBACK_SCSV.
    Client applications doing fallback retries should call
    SSL_set_mode(s, SSL_MODE_SEND_FALLBACK_SCSV).
-   [CVE-2014-3566][]
+   ([CVE-2014-3566])
 
    *Adam Langley, Bodo Moeller*
 
@@ -7411,14 +7411,14 @@ OpenSSL 1.0.0
 
    Thanks to Felix Gröbert (Google) for discovering and researching this
    issue.
-   [CVE-2014-3510][]
+   ([CVE-2014-3510])
 
    *Emilia Käsper*
 
  * By sending carefully crafted DTLS packets an attacker could cause openssl
    to leak memory. This can be exploited through a Denial of Service attack.
    Thanks to Adam Langley for discovering and researching this issue.
-   [CVE-2014-3507][]
+   ([CVE-2014-3507])
 
    *Adam Langley*
 
@@ -7426,7 +7426,7 @@ OpenSSL 1.0.0
    processing DTLS handshake messages. This can be exploited through a
    Denial of Service attack.
    Thanks to Adam Langley for discovering and researching this issue.
-   [CVE-2014-3506][]
+   ([CVE-2014-3506])
 
    *Adam Langley*
 
@@ -7435,7 +7435,7 @@ OpenSSL 1.0.0
    can be exploited through a Denial of Service attack.
    Thanks to Adam Langley and Wan-Teh Chang for discovering and researching
    this issue.
-   [CVE-2014-3505][]
+   ([CVE-2014-3505])
 
    *Adam Langley*
 
@@ -7445,7 +7445,7 @@ OpenSSL 1.0.0
 
    Thanks to Gabor Tyukasz (LogMeIn Inc) for discovering and researching this
    issue.
-   [CVE-2014-3509][]
+   ([CVE-2014-3509])
 
    *Gabor Tyukasz*
 
@@ -7455,7 +7455,7 @@ OpenSSL 1.0.0
    output to the attacker.
 
    Thanks to Ivan Fratric (Google) for discovering this issue.
-   [CVE-2014-3508][]
+   ([CVE-2014-3508])
 
    *Emilia Käsper, and Steve Henson*
 
@@ -7472,7 +7472,7 @@ OpenSSL 1.0.0
    SSL/TLS clients and servers.
 
    Thanks to KIKUCHI Masashi (Lepidum Co. Ltd.) for discovering and
-   researching this issue. [CVE-2014-0224][]
+   researching this issue. ([CVE-2014-0224])
 
    *KIKUCHI Masashi, Steve Henson*
 
@@ -7481,7 +7481,7 @@ OpenSSL 1.0.0
    in a DoS attack.
 
    Thanks to Imre Rad (Search-Lab Ltd.) for discovering this issue.
-   [CVE-2014-0221][]
+   ([CVE-2014-0221])
 
    *Imre Rad, Steve Henson*
 
@@ -7490,7 +7490,7 @@ OpenSSL 1.0.0
    client or server. This is potentially exploitable to run arbitrary
    code on a vulnerable client or server.
 
-   Thanks to Jüri Aedla for reporting this issue. [CVE-2014-0195][]
+   Thanks to Jüri Aedla for reporting this issue. ([CVE-2014-0195])
 
    *Jüri Aedla, Steve Henson*
 
@@ -7498,7 +7498,7 @@ OpenSSL 1.0.0
    are subject to a denial of service attack.
 
    Thanks to Felix Gröbert and Ivan Fratric at Google for discovering
-   this issue. [CVE-2014-3470][]
+   this issue. ([CVE-2014-3470])
 
    *Felix Gröbert, Ivan Fratric, Steve Henson*
 
@@ -7522,7 +7522,7 @@ OpenSSL 1.0.0
    <http://eprint.iacr.org/2014/140>
 
    Thanks to Yuval Yarom and Naomi Benger for discovering this
-   flaw and to Yuval Yarom for supplying a fix [CVE-2014-0076][]
+   flaw and to Yuval Yarom for supplying a fix ([CVE-2014-0076])
 
    *Yuval Yarom and Naomi Benger*
 
@@ -7530,7 +7530,7 @@ OpenSSL 1.0.0
 
  * Keep original DTLS digest and encryption contexts in retransmission
    structures so we can use the previous session parameters if they need
-   to be resent. [CVE-2013-6450][]
+   to be resent. ([CVE-2013-6450])
 
    *Steve Henson*
 
@@ -7555,12 +7555,12 @@ OpenSSL 1.0.0
    Security Group at Royal Holloway, University of London
    (www.isg.rhul.ac.uk) for discovering this flaw and Adam Langley and
    Emilia Käsper for the initial patch.
-   [CVE-2013-0169][]
+   ([CVE-2013-0169])
 
    *Emilia Käsper, Adam Langley, Ben Laurie, Andy Polyakov, Steve Henson*
 
  * Return an error when checking OCSP signatures when key is NULL.
-   This fixes a DoS attack. [CVE-2013-0166][]
+   This fixes a DoS attack. ([CVE-2013-0166])
 
    *Steve Henson*
 
@@ -7586,7 +7586,7 @@ OpenSSL 1.0.1.]
 
    Thanks to Codenomicon for discovering this issue using Fuzz-o-Matic
    fuzzing as a service testing platform.
-   [CVE-2012-2333][]
+   ([CVE-2012-2333])
 
    *Steve Henson*
 
@@ -7603,7 +7603,7 @@ OpenSSL 1.0.1.]
 
    Thanks to Tavis Ormandy, Google Security Team, for discovering this
    issue and to Adam Langley <agl@chromium.org> for fixing it.
-   [CVE-2012-2110][]
+   ([CVE-2012-2110])
 
    *Adam Langley (Google), Tavis Ormandy, Google Security Team*
 
@@ -7617,7 +7617,7 @@ OpenSSL 1.0.1.]
    CMS_DEBUG_DECRYPT flag: this is useful for debugging and testing where
    an MMA defence is not necessary.
    Thanks to Ivan Nestlerode <inestlerode@us.ibm.com> for discovering
-   this issue. [CVE-2012-0884][]
+   this issue. ([CVE-2012-0884])
 
    *Steve Henson*
 
@@ -7632,7 +7632,7 @@ OpenSSL 1.0.1.]
  * Fix for DTLS DoS issue introduced by fix for CVE-2011-4109.
    Thanks to Antonio Martin, Enterprise Secure Access Research and
    Development, Cisco Systems, Inc. for discovering this bug and
-   preparing a fix. [CVE-2012-0050][]
+   preparing a fix. ([CVE-2012-0050])
 
    *Antonio Martin*
 
@@ -7649,28 +7649,28 @@ OpenSSL 1.0.1.]
    Security Group at Royal Holloway, University of London
    (www.isg.rhul.ac.uk) for discovering this flaw and to Robin Seggelmann
    <seggelmann@fh-muenster.de> and Michael Tuexen <tuexen@fh-muenster.de>
-   for preparing the fix. [CVE-2011-4108][]
+   for preparing the fix. ([CVE-2011-4108])
 
    *Robin Seggelmann, Michael Tuexen*
 
  * Clear bytes used for block padding of SSL 3.0 records.
-   [CVE-2011-4576][]
+   ([CVE-2011-4576])
 
    *Adam Langley (Google)*
 
  * Only allow one SGC handshake restart for SSL/TLS. Thanks to George
    Kadianakis <desnacked@gmail.com> for discovering this issue and
-   Adam Langley for preparing the fix. [CVE-2011-4619][]
+   Adam Langley for preparing the fix. ([CVE-2011-4619])
 
    *Adam Langley (Google)*
 
- * Check parameters are not NULL in GOST ENGINE. [CVE-2012-0027][]
+ * Check parameters are not NULL in GOST ENGINE. ([CVE-2012-0027])
 
    *Andrey Kulikov <amdeich@gmail.com>*
 
  * Prevent malformed RFC3779 data triggering an assertion failure.
    Thanks to Andrew Chi, BBN Technologies, for discovering the flaw
-   and Rob Austein <sra@hactrn.net> for fixing it. [CVE-2011-4577][]
+   and Rob Austein <sra@hactrn.net> for fixing it. ([CVE-2011-4577])
 
    *Rob Austein <sra@hactrn.net>*
 
@@ -7709,12 +7709,12 @@ OpenSSL 1.0.1.]
 ### Changes between 1.0.0d and 1.0.0e [6 Sep 2011]
 
  * Fix bug where CRLs with nextUpdate in the past are sometimes accepted
-   by initialising X509_STORE_CTX properly. [CVE-2011-3207][]
+   by initialising X509_STORE_CTX properly. ([CVE-2011-3207])
 
    *Kaspar Brand <ossl@velox.ch>*
 
  * Fix SSL memory handling for (EC)DH ciphersuites, in particular
-   for multi-threaded use of ECDH. [CVE-2011-3210][]
+   for multi-threaded use of ECDH. ([CVE-2011-3210])
 
    *Adam Langley (Google)*
 
@@ -7776,7 +7776,7 @@ OpenSSL 1.0.1.]
 ### Changes between 1.0.0 and 1.0.0a  [01 Jun 2010]
 
  * Check return value of int_rsa_verify in pkey_rsa_verifyrecover
-   [CVE-2010-1633][]
+   ([CVE-2010-1633])
 
    *Steve Henson, Peter-Michael Hager <hager@dortmund.net>*
 
@@ -8750,7 +8750,7 @@ OpenSSL 0.9.x
    - OpenSSL 0.9.8f if 'short' is longer than 16 bits,
    the previous behavior could result in a read attempt at NULL when
    receiving specific incorrect SSL/TLS records once record payload
-   protection is active.  [CVE-2010-0740][]
+   protection is active.  ([CVE-2010-0740])
 
    *Bodo Moeller, Adam Langley <agl@chromium.org>*
 
@@ -8761,7 +8761,7 @@ OpenSSL 0.9.x
 
 ### Changes between 0.9.8l and 0.9.8m [25 Feb 2010]
 
- * Always check bn_wexpand() return values for failure.  [CVE-2009-3245][]
+ * Always check bn_wexpand() return values for failure.  ([CVE-2009-3245])
 
    *Martin Olsson, Neel Mehta*
 
@@ -8920,7 +8920,7 @@ OpenSSL 0.9.x
    left. Additionally every future message was buffered, even if the
    sequence number made no sense and would be part of another handshake.
    So only messages with sequence numbers less than 10 in advance will be
-   buffered.  [CVE-2009-1378][]
+   buffered.  ([CVE-2009-1378])
 
    *Robin Seggelmann, discovered by Daniel Mentz*
 
@@ -8930,12 +8930,12 @@ OpenSSL 0.9.x
    a DOS attack with sending records with future epochs until there is no
    memory left. This patch adds the pqueue_size() function to determine
    the size of a buffer and limits the record buffer to 100 entries.
-   [CVE-2009-1377][]
+   ([CVE-2009-1377])
 
    *Robin Seggelmann, discovered by Daniel Mentz*
 
  * Keep a copy of frag->msg_header.frag_len so it can be used after the
-   parent structure is freed.  [CVE-2009-1379][]
+   parent structure is freed.  ([CVE-2009-1379])
 
    *Daniel Mentz*
 
@@ -8950,7 +8950,7 @@ OpenSSL 0.9.x
 ### Changes between 0.9.8k and 0.9.8l  [5 Nov 2009]
 
  * Disable renegotiation completely - this fixes a severe security
-   problem [CVE-2009-3555][] at the cost of breaking all
+   problem ([CVE-2009-3555]) at the cost of breaking all
    renegotiation. Renegotiation can be re-enabled by setting
    SSL3_FLAGS_ALLOW_UNSAFE_LEGACY_RENEGOTIATION in s3->flags at
    run-time. This is really not recommended unless you know what
@@ -8962,19 +8962,19 @@ OpenSSL 0.9.x
 
  * Don't set val to NULL when freeing up structures, it is freed up by
    underlying code. If `sizeof(void *) > sizeof(long)` this can result in
-   zeroing past the valid field. [CVE-2009-0789][]
+   zeroing past the valid field. ([CVE-2009-0789])
 
    *Paolo Ganci <Paolo.Ganci@AdNovum.CH>*
 
  * Fix bug where return value of CMS_SignerInfo_verify_content() was not
    checked correctly. This would allow some invalid signed attributes to
-   appear to verify correctly. [CVE-2009-0591][]
+   appear to verify correctly. ([CVE-2009-0591])
 
    *Ivan Nestlerode <inestlerode@us.ibm.com>*
 
  * Reject UniversalString and BMPString types with invalid lengths. This
    prevents a crash in ASN1_STRING_print_ex() which assumes the strings have
-   a legal length. [CVE-2009-0590][]
+   a legal length. ([CVE-2009-0590])
 
    *Steve Henson*
 
@@ -9015,7 +9015,7 @@ OpenSSL 0.9.x
 ### Changes between 0.9.8i and 0.9.8j  [07 Jan 2009]
 
  * Properly check EVP_VerifyFinal() and similar return values
-   [CVE-2008-5077][].
+   ([CVE-2008-5077]).
 
    *Ben Laurie, Bodo Moeller, Google Security Team*
 
@@ -9062,7 +9062,7 @@ OpenSSL 0.9.x
 ### Changes between 0.9.8h and 0.9.8i  [15 Sep 2008]
 
  * Fix NULL pointer dereference if a DTLS server received
-   ChangeCipherSpec as first record [CVE-2009-1386][].
+   ChangeCipherSpec as first record ([CVE-2009-1386]).
 
    *PR #1679*
 
@@ -9135,12 +9135,12 @@ OpenSSL 0.9.x
 
  * Fix flaw if 'Server Key exchange message' is omitted from a TLS
    handshake which could lead to a client crash as found using the
-   Codenomicon TLS test suite [CVE-2008-1672][]
+   Codenomicon TLS test suite ([CVE-2008-1672])
 
    *Steve Henson, Mark Cox*
 
  * Fix double free in TLS server name extensions which could lead to
-   a remote crash found by Codenomicon TLS test suite [CVE-2008-0891][]
+   a remote crash found by Codenomicon TLS test suite ([CVE-2008-0891])
 
    *Joe Orton*
 
@@ -9460,7 +9460,7 @@ OpenSSL 0.9.x
 
  * Update the SSL_get_shared_ciphers() fix CVE-2006-3738 which was
    not complete and could lead to a possible single byte overflow
-   [CVE-2007-5135][] [Ben Laurie]
+   ([CVE-2007-5135]) [Ben Laurie]
 
 ### Changes between 0.9.8d and 0.9.8e  [23 Feb 2007]
 
@@ -9507,18 +9507,18 @@ OpenSSL 0.9.x
 ### Changes between 0.9.8c and 0.9.8d  [28 Sep 2006]
 
  * Introduce limits to prevent malicious keys being able to
-   cause a denial of service.  [CVE-2006-2940][]
+   cause a denial of service.  ([CVE-2006-2940])
 
    *Steve Henson, Bodo Moeller*
 
  * Fix ASN.1 parsing of certain invalid structures that can result
-   in a denial of service.  [CVE-2006-2937][]  [Steve Henson]
+   in a denial of service.  ([CVE-2006-2937])  [Steve Henson]
 
  * Fix buffer overflow in SSL_get_shared_ciphers() function.
-   [CVE-2006-3738][] [Tavis Ormandy and Will Drewry, Google Security Team]
+   ([CVE-2006-3738]) [Tavis Ormandy and Will Drewry, Google Security Team]
 
  * Fix SSL client code which could crash if connecting to a
-   malicious SSLv2 server.  [CVE-2006-4343][]
+   malicious SSLv2 server.  ([CVE-2006-4343])
 
    *Tavis Ormandy and Will Drewry, Google Security Team*
 
@@ -9552,7 +9552,7 @@ OpenSSL 0.9.x
 ### Changes between 0.9.8b and 0.9.8c  [05 Sep 2006]
 
  * Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
-   [CVE-2006-4339][]  [Ben Laurie and Google Security Team]
+   ([CVE-2006-4339])  [Ben Laurie and Google Security Team]
 
  * Add AES IGE and biIGE modes.
 
@@ -9672,7 +9672,7 @@ OpenSSL 0.9.x
    (part of SSL_OP_ALL).  This option used to disable the
    countermeasure against man-in-the-middle protocol-version
    rollback in the SSL 2.0 server implementation, which is a bad
-   idea.  [CVE-2005-2969][]
+   idea.  ([CVE-2005-2969])
 
    *Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
    for Information Security, National Institute of Advanced Industrial
@@ -10680,18 +10680,18 @@ OpenSSL 0.9.8.]
 ### Changes between 0.9.7k and 0.9.7l  [28 Sep 2006]
 
  * Introduce limits to prevent malicious keys being able to
-   cause a denial of service.  [CVE-2006-2940][]
+   cause a denial of service.  ([CVE-2006-2940])
 
    *Steve Henson, Bodo Moeller*
 
  * Fix ASN.1 parsing of certain invalid structures that can result
-   in a denial of service.  [CVE-2006-2937][]  [Steve Henson]
+   in a denial of service.  ([CVE-2006-2937])  [Steve Henson]
 
  * Fix buffer overflow in SSL_get_shared_ciphers() function.
-   [CVE-2006-3738][] [Tavis Ormandy and Will Drewry, Google Security Team]
+   ([CVE-2006-3738]) [Tavis Ormandy and Will Drewry, Google Security Team]
 
  * Fix SSL client code which could crash if connecting to a
-   malicious SSLv2 server.  [CVE-2006-4343][]
+   malicious SSLv2 server.  ([CVE-2006-4343])
 
    *Tavis Ormandy and Will Drewry, Google Security Team*
 
@@ -10708,7 +10708,7 @@ OpenSSL 0.9.8.]
 ### Changes between 0.9.7j and 0.9.7k  [05 Sep 2006]
 
  * Avoid PKCS #1 v1.5 signature attack discovered by Daniel Bleichenbacher
-   [CVE-2006-4339][]  [Ben Laurie and Google Security Team]
+   ([CVE-2006-4339])  [Ben Laurie and Google Security Team]
 
  * Change the Unix randomness entropy gathering to use poll() when
    possible instead of select(), since the latter has some
@@ -10771,7 +10771,7 @@ OpenSSL 0.9.8.]
    (part of SSL_OP_ALL).  This option used to disable the
    countermeasure against man-in-the-middle protocol-version
    rollback in the SSL 2.0 server implementation, which is a bad
-   idea.  [CVE-2005-2969][]
+   idea.  ([CVE-2005-2969])
 
    *Bodo Moeller; problem pointed out by Yutaka Oiwa (Research Center
    for Information Security, National Institute of Advanced Industrial
@@ -10957,12 +10957,12 @@ OpenSSL 0.9.8.]
 ### Changes between 0.9.7c and 0.9.7d  [17 Mar 2004]
 
  * Fix null-pointer assignment in do_change_cipher_spec() revealed
-   by using the Codenomicon TLS Test Tool [CVE-2004-0079][]
+   by using the Codenomicon TLS Test Tool ([CVE-2004-0079])
 
    *Joe Orton, Steve Henson*
 
  * Fix flaw in SSL/TLS handshaking when using Kerberos ciphersuites
-   [CVE-2004-0112][]
+   ([CVE-2004-0112])
 
    *Joe Orton, Steve Henson*
 
@@ -11014,7 +11014,7 @@ OpenSSL 0.9.8.]
    Stop out of bounds reads in the ASN1 code when presented with
    invalid tags (CVE-2003-0543 and CVE-2003-0544).
 
-   Free up ASN1_TYPE correctly if ANY type is invalid [CVE-2003-0545][].
+   Free up ASN1_TYPE correctly if ANY type is invalid ([CVE-2003-0545]).
 
    If verify callback ignores invalid public key errors don't try to check
    certificate signature with the NULL public key.
@@ -11111,7 +11111,7 @@ OpenSSL 0.9.8.]
    via timing by performing a MAC computation even if incorrect
    block cipher padding has been found.  This is a countermeasure
    against active attacks where the attacker has to distinguish
-   between bad padding and a MAC verification error. [CVE-2003-0078][]
+   between bad padding and a MAC verification error. ([CVE-2003-0078])
 
    *Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
    Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
@@ -11369,7 +11369,7 @@ OpenSSL 0.9.7.]
 
    Remote buffer overflow in SSL3 protocol - an attacker could
    supply an oversized master key in Kerberos-enabled versions.
-   [CVE-2002-0657][]
+   ([CVE-2002-0657])
 
    *Ben Laurie (CHATS)*
 
@@ -13280,7 +13280,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
 ### Changes between 0.9.6l and 0.9.6m  [17 Mar 2004]
 
  * Fix null-pointer assignment in do_change_cipher_spec() revealed
-   by using the Codenomicon TLS Test Tool [CVE-2004-0079][]
+   by using the Codenomicon TLS Test Tool ([CVE-2004-0079])
 
    *Joe Orton, Steve Henson*
 
@@ -13289,7 +13289,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  * Fix additional bug revealed by the NISCC test suite:
 
    Stop bug triggering large recursion when presented with
-   certain ASN.1 tags [CVE-2003-0851][]
+   certain ASN.1 tags ([CVE-2003-0851])
 
    *Steve Henson*
 
@@ -13356,7 +13356,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    via timing by performing a MAC computation even if incorrect
    block cipher padding has been found.  This is a countermeasure
    against active attacks where the attacker has to distinguish
-   between bad padding and a MAC verification error. [CVE-2003-0078][]
+   between bad padding and a MAC verification error. ([CVE-2003-0078])
 
    *Bodo Moeller; problem pointed out by Brice Canvel (EPFL),
    Alain Hiltgen (UBS), Serge Vaudenay (EPFL), and
@@ -13505,7 +13505,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
  * Add various sanity checks to asn1_get_length() to reject
    the ASN1 length bytes if they exceed sizeof(long), will appear
    negative or the content length exceeds the length of the
-   supplied buffer. [CVE-2002-0659][]
+   supplied buffer. ([CVE-2002-0659])
 
    *Steve Henson, Adi Stav <stav@mercury.co.il>, James Yonan <jim@ntlp.com>*
 
@@ -13515,16 +13515,16 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    *Ben Laurie (CHATS)*
 
  * Various temporary buffers to hold ASCII versions of integers were
-   too small for 64 bit platforms. [CVE-2002-0655][]
+   too small for 64 bit platforms. ([CVE-2002-0655])
    *Matthew Byng-Maddick <mbm@aldigital.co.uk> and Ben Laurie (CHATS)>*
 
  * Remote buffer overflow in SSL3 protocol - an attacker could
-   supply an oversized session ID to a client. [CVE-2002-0656][]
+   supply an oversized session ID to a client. ([CVE-2002-0656])
 
    *Ben Laurie (CHATS)*
 
  * Remote buffer overflow in SSL2 protocol - an attacker could
-   supply an oversized client master key. [CVE-2002-0656][]
+   supply an oversized client master key. ([CVE-2002-0656])
 
    *Ben Laurie (CHATS)*
 
