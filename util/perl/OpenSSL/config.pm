@@ -872,8 +872,11 @@ EOF
       # model (PUT, SPT or nothing), target execution environment (OSS or
       # GUARDIAN).  And still, there must be some kind of default when
       # nothing else is said.
+      #
+      # nsv is a virtual x86 environment, equivalent to nsx, so we enforce
+      # the latter.
       [ 'nse-tandem-nsk.*',       { target => 'nonstop-nse' } ],
-      [ 'nsv-tandem-nsk.*',       { target => 'nonstop-nsv' } ],
+      [ 'nsv-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
       [ 'nsx-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
 
     ];
