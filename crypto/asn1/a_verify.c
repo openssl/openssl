@@ -89,20 +89,18 @@ int ASN1_item_verify(const ASN1_ITEM *it, const X509_ALGOR *alg,
                      const ASN1_BIT_STRING *signature, const void *data,
                      EVP_PKEY *pkey)
 {
-    return ASN1_item_verify_with_libctx(it, alg, signature, data, NULL, pkey,
-                                        NULL, NULL);
+    return ASN1_item_verify_ex(it, alg, signature, data, NULL, pkey, NULL, NULL);
 }
 
-int ASN1_item_verify_with_libctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
-                                 const ASN1_BIT_STRING *signature,
-                                 const void *data,
-                                 const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
-                                 OPENSSL_CTX *libctx, const char *propq)
+int ASN1_item_verify_ex(const ASN1_ITEM *it, const X509_ALGOR *alg,
+                        const ASN1_BIT_STRING *signature, const void *data,
+                        const ASN1_OCTET_STRING *id, EVP_PKEY *pkey,
+                        OPENSSL_CTX *libctx, const char *propq)
 {
     EVP_MD_CTX *ctx;
     int rv = -1;
 
-    if ((ctx = evp_md_ctx_new_with_libctx(pkey, id, libctx, propq)) != NULL) {
+    if ((ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq)) != NULL) {
         rv = ASN1_item_verify_ctx(it, alg, signature, data, ctx);
         EVP_PKEY_CTX_free(EVP_MD_CTX_pkey_ctx(ctx));
         EVP_MD_CTX_free(ctx);

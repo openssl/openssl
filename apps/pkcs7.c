@@ -118,7 +118,7 @@ int pkcs7_main(int argc, char **argv)
     if (in == NULL)
         goto end;
 
-    p7 = PKCS7_new_with_libctx(libctx, propq);
+    p7 = PKCS7_new_ex(libctx, propq);
     if (p7 == NULL) {
         BIO_printf(bio_err, "unable to allocate PKCS7 object\n");
         ERR_print_errors(bio_err);

@@ -230,7 +230,7 @@ STACK_OF(X509)
         goto err;
     }
 
-    if ((csc = X509_STORE_CTX_new_with_libctx(libctx, propq)) == NULL)
+    if ((csc = X509_STORE_CTX_new_ex(libctx, propq)) == NULL)
         goto err;
     if (store == NULL && certs != NULL
             && !ossl_cmp_X509_STORE_add1_certs(ts, certs, 0))

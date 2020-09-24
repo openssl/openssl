@@ -11,8 +11,8 @@
 #include <openssl/dh.h>
 #include "internal/ffc.h"
 
-DH *dh_new_by_nid_with_libctx(OPENSSL_CTX *libctx, int nid);
-DH *dh_new_with_libctx(OPENSSL_CTX *libctx);
+DH *dh_new_by_nid_ex(OPENSSL_CTX *libctx, int nid);
+DH *dh_new_ex(OPENSSL_CTX *libctx);
 
 int dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
                                BN_GENCB *cb);

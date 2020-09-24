@@ -112,7 +112,7 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval,
     EC_KEY *eckey = NULL;
     EC_GROUP *group = NULL;
 
-    if ((eckey = EC_KEY_new_with_libctx(libctx, propq)) == NULL) {
+    if ((eckey = EC_KEY_new_ex(libctx, propq)) == NULL) {
         ECerr(EC_F_ECKEY_TYPE2PARAM, ERR_R_MALLOC_FAILURE);
         goto ecerr;
     }
@@ -134,8 +134,7 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval,
          * type == V_ASN1_OBJECT => the parameters are given by an asn1 OID
          */
 
-        group = EC_GROUP_new_by_curve_name_with_libctx(libctx, propq,
-                                                       OBJ_obj2nid(poid));
+        group = EC_GROUP_new_by_curve_name_ex(libctx, propq, OBJ_obj2nid(poid));
         if (group == NULL)
             goto ecerr;
         EC_GROUP_set_asn1_flag(group, OPENSSL_EC_NAMED_CURVE);
@@ -208,10 +207,8 @@ static int eckey_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
     return -2;
 }
 
-static int eckey_priv_decode_with_libctx(EVP_PKEY *pkey,
-                                         const PKCS8_PRIV_KEY_INFO *p8,
-                                         OPENSSL_CTX *libctx,
-                                         const char *propq)
+static int eckey_priv_decode_ex(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8,
+                                OPENSSL_CTX *libctx, const char *propq)
 {
     const unsigned char *p = NULL;
     const void *pval;
@@ -751,7 +748,7 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    EC_KEY *ec = EC_KEY_new_with_libctx(pctx->libctx, pctx->propquery);
+    EC_KEY *ec = EC_KEY_new_ex(pctx->libctx, pctx->propquery);
 
     if (ec == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_MALLOC_FAILURE);
@@ -815,7 +812,7 @@ const EVP_PKEY_ASN1_METHOD eckey_asn1_meth = {
     ec_pkey_dirty_cnt,
     ec_pkey_export_to,
     ec_pkey_import_from,
-    eckey_priv_decode_with_libctx
+    eckey_priv_decode_ex
 };
 
 #if !defined(OPENSSL_NO_SM2)

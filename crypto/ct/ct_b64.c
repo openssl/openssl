@@ -132,9 +132,9 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
  * 0 on decoding failure, or invalid parameter if any
  * -1 on internal (malloc) failure
  */
-int CTLOG_new_from_base64_with_libctx(CTLOG **ct_log, const char *pkey_base64,
-                                      const char *name, OPENSSL_CTX *libctx,
-                                      const char *propq)
+int CTLOG_new_from_base64_ex(CTLOG **ct_log, const char *pkey_base64,
+                             const char *name, OPENSSL_CTX *libctx,
+                             const char *propq)
 {
     unsigned char *pkey_der = NULL;
     int pkey_der_len;
@@ -160,7 +160,7 @@ int CTLOG_new_from_base64_with_libctx(CTLOG **ct_log, const char *pkey_base64,
         return 0;
     }
 
-    *ct_log = CTLOG_new_with_libctx(pkey, name, libctx, propq);
+    *ct_log = CTLOG_new_ex(pkey, name, libctx, propq);
     if (*ct_log == NULL) {
         EVP_PKEY_free(pkey);
         return 0;
@@ -172,6 +172,5 @@ int CTLOG_new_from_base64_with_libctx(CTLOG **ct_log, const char *pkey_base64,
 int CTLOG_new_from_base64(CTLOG **ct_log, const char *pkey_base64,
                           const char *name)
 {
-    return CTLOG_new_from_base64_with_libctx(ct_log, pkey_base64, name, NULL,
-                                             NULL);
+    return CTLOG_new_from_base64_ex(ct_log, pkey_base64, name, NULL, NULL);
 }

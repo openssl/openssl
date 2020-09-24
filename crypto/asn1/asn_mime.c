@@ -229,11 +229,10 @@ static int asn1_write_micalg(BIO *out, STACK_OF(X509_ALGOR) *mdalgs)
 
 /* SMIME sender */
 
-int SMIME_write_ASN1_with_libctx(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
-                                 int ctype_nid, int econt_nid,
-                                 STACK_OF(X509_ALGOR) *mdalgs,
-                                 const ASN1_ITEM *it,
-                                 OPENSSL_CTX *libctx, const char *propq)
+int SMIME_write_ASN1_ex(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
+                        int ctype_nid, int econt_nid,
+                        STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it,
+                        OPENSSL_CTX *libctx, const char *propq)
 {
     char bound[33], c;
     int i;
@@ -326,8 +325,8 @@ int SMIME_write_ASN1(BIO *bio, ASN1_VALUE *val, BIO *data, int flags,
                      int ctype_nid, int econt_nid,
                      STACK_OF(X509_ALGOR) *mdalgs, const ASN1_ITEM *it)
 {
-    return SMIME_write_ASN1_with_libctx(bio, val, data, flags, ctype_nid,
-                                        econt_nid, mdalgs, it, NULL, NULL);
+    return SMIME_write_ASN1_ex(bio, val, data, flags, ctype_nid, econt_nid,
+                               mdalgs, it, NULL, NULL);
 }
 
 /* Handle output of ASN1 data */

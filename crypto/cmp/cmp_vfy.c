@@ -50,10 +50,10 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     prot_part.header = msg->header;
     prot_part.body = msg->body;
 
-    if (ASN1_item_verify_with_libctx(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART),
-                                     msg->header->protectionAlg,
-                                     msg->protection, &prot_part, NULL, pubkey,
-                                     cmp_ctx->libctx, cmp_ctx->propq) > 0) {
+    if (ASN1_item_verify_ex(ASN1_ITEM_rptr(OSSL_CMP_PROTECTEDPART),
+                            msg->header->protectionAlg, msg->protection,
+                            &prot_part, NULL, pubkey, cmp_ctx->libctx,
+                            cmp_ctx->propq) > 0) {
         res = 1;
         goto end;
     }
@@ -118,7 +118,7 @@ int OSSL_CMP_validate_cert_path(const OSSL_CMP_CTX *ctx,
         return 0;
     }
 
-    if ((csc = X509_STORE_CTX_new_with_libctx(ctx->libctx, ctx->propq)) == NULL
+    if ((csc = X509_STORE_CTX_new_ex(ctx->libctx, ctx->propq)) == NULL
             || !X509_STORE_CTX_init(csc, trusted_store,
                                     cert, ctx->untrusted))
         goto err;
@@ -825,8 +825,8 @@ int ossl_cmp_verify_popo(const OSSL_CMP_CTX *ctx,
         {
             X509_REQ *req = msg->body->value.p10cr;
 
-            if (X509_REQ_verify_with_libctx(req, X509_REQ_get0_pubkey(req),
-                                            ctx->libctx, ctx->propq) <= 0) {
+            if (X509_REQ_verify_ex(req, X509_REQ_get0_pubkey(req), ctx->libctx,
+                                   ctx->propq) <= 0) {
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
                 CMPerr(0, CMP_R_REQUEST_NOT_ACCEPTED);
                 return 0;

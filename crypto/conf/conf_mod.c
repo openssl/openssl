@@ -145,15 +145,14 @@ int CONF_modules_load(const CONF *cnf, const char *appname,
 
 }
 
-int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
-                                       const char *filename,
-                                       const char *appname, unsigned long flags)
+int CONF_modules_load_file_ex(OPENSSL_CTX *libctx, const char *filename,
+                              const char *appname, unsigned long flags)
 {
     char *file = NULL;
     CONF *conf = NULL;
     int ret = 0, diagnostics = 0;
 
-    conf = NCONF_new_with_libctx(libctx, NULL);
+    conf = NCONF_new_ex(libctx, NULL);
     if (conf == NULL)
         goto err;
 
@@ -191,7 +190,7 @@ int CONF_modules_load_file_with_libctx(OPENSSL_CTX *libctx,
 int CONF_modules_load_file(const char *filename,
                            const char *appname, unsigned long flags)
 {
-    return CONF_modules_load_file_with_libctx(NULL, filename, appname, flags);
+    return CONF_modules_load_file_ex(NULL, filename, appname, flags);
 }
 
 DEFINE_RUN_ONCE_STATIC(do_load_builtin_modules)

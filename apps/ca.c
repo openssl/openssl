@@ -1652,7 +1652,7 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
         BIO_printf(bio_err,
                    "Everything appears to be ok, creating and signing the certificate\n");
 
-    if ((ret = X509_new_with_libctx(app_get0_libctx(), app_get0_propq())) == NULL)
+    if ((ret = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
         goto end;
 
 #ifdef X509_V3

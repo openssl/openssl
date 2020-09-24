@@ -450,11 +450,10 @@ static EVP_PKEY *new_raw_key_int(OPENSSL_CTX *libctx,
     return pkey;
 }
 
-EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OPENSSL_CTX *libctx,
-                                                   const char *keytype,
-                                                   const char *propq,
-                                                   const unsigned char *priv,
-                                                   size_t len)
+EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OPENSSL_CTX *libctx,
+                                          const char *keytype,
+                                          const char *propq,
+                                          const unsigned char *priv, size_t len)
 {
     return new_raw_key_int(libctx, keytype, propq, EVP_PKEY_NONE, NULL, priv,
                            len, 1);
@@ -467,11 +466,9 @@ EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
     return new_raw_key_int(NULL, NULL, NULL, type, e, priv, len, 1);
 }
 
-EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OPENSSL_CTX *libctx,
-                                                  const char *keytype,
-                                                  const char *propq,
-                                                  const unsigned char *pub,
-                                                  size_t len)
+EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OPENSSL_CTX *libctx,
+                                         const char *keytype, const char *propq,
+                                         const unsigned char *pub, size_t len)
 {
     return new_raw_key_int(libctx, keytype, propq, EVP_PKEY_NONE, NULL, pub,
                            len, 0);
@@ -636,11 +633,9 @@ static EVP_PKEY *new_cmac_key_int(const unsigned char *priv, size_t len,
 # endif
 }
 
-EVP_PKEY *EVP_PKEY_new_CMAC_key_with_libctx(const unsigned char *priv,
-                                            size_t len,
-                                            const char *cipher_name,
-                                            OPENSSL_CTX *libctx,
-                                            const char *propq)
+EVP_PKEY *EVP_PKEY_new_CMAC_key_ex(const unsigned char *priv, size_t len,
+                                   const char *cipher_name, OPENSSL_CTX *libctx,
+                                   const char *propq)
 {
     return new_cmac_key_int(priv, len, cipher_name, NULL, libctx, propq, NULL);
 }

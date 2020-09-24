@@ -21,8 +21,7 @@ static int cache_objects(X509_LOOKUP *lctx, const char *uri,
     OSSL_STORE_CTX *ctx = NULL;
     X509_STORE *xstore = X509_LOOKUP_get_store(lctx);
 
-    if ((ctx = OSSL_STORE_open_with_libctx(uri, libctx, propq,
-                                           NULL, NULL, NULL, NULL)) == NULL)
+    if ((ctx = OSSL_STORE_open_ex(uri, libctx, propq, NULL, NULL, NULL, NULL)) == NULL)
         return 0;
 
     /*
@@ -105,10 +104,9 @@ static void by_store_free(X509_LOOKUP *ctx)
     sk_OPENSSL_STRING_pop_free(uris, free_uri);
 }
 
-static int by_store_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
-                                     const char *argp, long argl,
-                                     char **retp,
-                                     OPENSSL_CTX *libctx, const char *propq)
+static int by_store_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp,
+                            long argl, char **retp, OPENSSL_CTX *libctx,
+                            const char *propq)
 {
     switch (cmd) {
     case X509_L_ADD_STORE:
@@ -138,7 +136,7 @@ static int by_store_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd,
 static int by_store_ctrl(X509_LOOKUP *ctx, int cmd,
                          const char *argp, long argl, char **retp)
 {
-    return by_store_ctrl_with_libctx(ctx, cmd, argp, argl, retp, NULL, NULL);
+    return by_store_ctrl_ex(ctx, cmd, argp, argl, retp, NULL, NULL);
 }
 
 static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
@@ -159,9 +157,9 @@ static int by_store(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
     return ok;
 }
 
-static int by_store_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
-                                        const X509_NAME *name, X509_OBJECT *ret,
-                                        OPENSSL_CTX *libctx, const char *propq)
+static int by_store_subject_ex(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                               const X509_NAME *name, X509_OBJECT *ret,
+                               OPENSSL_CTX *libctx, const char *propq)
 {
     OSSL_STORE_SEARCH *criterion =
         OSSL_STORE_SEARCH_by_name((X509_NAME *)name); /* won't modify it */
@@ -216,7 +214,7 @@ static int by_store_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
 static int by_store_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                             const X509_NAME *name, X509_OBJECT *ret)
 {
-    return by_store_subject_with_libctx(ctx, type, name, ret, NULL, NULL);
+    return by_store_subject_ex(ctx, type, name, ret, NULL, NULL);
 }
 
 /*
@@ -236,8 +234,8 @@ static X509_LOOKUP_METHOD x509_store_lookup = {
     NULL,                        /* get_by_issuer_serial */
     NULL,                        /* get_by_fingerprint */
     NULL,                        /* get_by_alias */
-    by_store_subject_with_libctx,
-    by_store_ctrl_with_libctx
+    by_store_subject_ex,
+    by_store_ctrl_ex
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_store(void)

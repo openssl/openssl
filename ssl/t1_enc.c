@@ -373,11 +373,9 @@ int tls1_change_cipher_state(SSL *s, int which)
 
     if (!(EVP_CIPHER_flags(c) & EVP_CIPH_FLAG_AEAD_CIPHER)) {
         if (mac_type == EVP_PKEY_HMAC) {
-            mac_key = EVP_PKEY_new_raw_private_key_with_libctx(s->ctx->libctx,
-                                                               "HMAC",
-                                                               s->ctx->propq,
-                                                               mac_secret,
-                                                               *mac_secret_size);
+            mac_key = EVP_PKEY_new_raw_private_key_ex(s->ctx->libctx, "HMAC",
+                                                      s->ctx->propq, mac_secret,
+                                                      *mac_secret_size);
         } else {
             /*
              * If its not HMAC then the only other types of MAC we support are
@@ -388,9 +386,8 @@ int tls1_change_cipher_state(SSL *s, int which)
                                            (int)*mac_secret_size);
         }
         if (mac_key == NULL
-            || EVP_DigestSignInit_with_libctx(mac_ctx, NULL, EVP_MD_name(m),
-                                              s->ctx->libctx, s->ctx->propq,
-                                              mac_key) <= 0) {
+            || EVP_DigestSignInit_ex(mac_ctx, NULL, EVP_MD_name(m),
+                                     s->ctx->libctx, s->ctx->propq, mac_key) <= 0) {
             EVP_PKEY_free(mac_key);
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS1_CHANGE_CIPHER_STATE,
                      ERR_R_INTERNAL_ERROR);

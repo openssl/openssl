@@ -59,7 +59,7 @@ L<ERR_get_error(3)>,
 L<SMIME_read_CMS_ex(3)>,
 L<SMIME_read_PKCS7_ex(3)>,
 L<SMIME_write_ASN1(3)>,
-L<SMIME_write_ASN1_with_libctx(3)>
+L<SMIME_write_ASN1_ex(3)>
 
 =head1 HISTORY
 

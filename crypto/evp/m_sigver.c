@@ -310,10 +310,9 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     return ret > 0 ? 1 : 0;
 }
 
-int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                                   const char *mdname,
-                                   OPENSSL_CTX *libctx, const char *props,
-                                   EVP_PKEY *pkey)
+int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                          const char *mdname, OPENSSL_CTX *libctx,
+                          const char *props, EVP_PKEY *pkey)
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0);
 }
@@ -324,10 +323,9 @@ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 0);
 }
 
-int EVP_DigestVerifyInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                                     const char *mdname,
-                                     OPENSSL_CTX *libctx, const char *props,
-                                     EVP_PKEY *pkey)
+int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                            const char *mdname, OPENSSL_CTX *libctx,
+                            const char *props, EVP_PKEY *pkey)
 {
     return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1);
 }

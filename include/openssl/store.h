@@ -57,11 +57,10 @@ OSSL_STORE_open(const char *uri, const UI_METHOD *ui_method, void *ui_data,
                 OSSL_STORE_post_process_info_fn post_process,
                 void *post_process_data);
 OSSL_STORE_CTX *
-OSSL_STORE_open_with_libctx(const char *uri,
-                            OPENSSL_CTX *libctx, const char *propq,
-                            const UI_METHOD *ui_method, void *ui_data,
-                            OSSL_STORE_post_process_info_fn post_process,
-                            void *post_process_data);
+OSSL_STORE_open_ex(const char *uri, OPENSSL_CTX *libctx, const char *propq,
+                   const UI_METHOD *ui_method, void *ui_data,
+                   OSSL_STORE_post_process_info_fn post_process,
+                   void *post_process_data);
 
 /*
  * Control / fine tune the OSSL_STORE channel.  |cmd| determines what is to be
@@ -284,7 +283,7 @@ typedef struct ossl_store_loader_ctx_st OSSL_STORE_LOADER_CTX;
 typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_fn)
     (const OSSL_STORE_LOADER *loader, const char *uri,
      const UI_METHOD *ui_method, void *ui_data);
-typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_with_libctx_fn)
+typedef OSSL_STORE_LOADER_CTX *(*OSSL_STORE_open_ex_fn)
     (const OSSL_STORE_LOADER *loader,
      const char *uri, OPENSSL_CTX *libctx, const char *propq,
      const UI_METHOD *ui_method, void *ui_data);
@@ -312,9 +311,9 @@ DEPRECATEDIN_3_0(OSSL_STORE_LOADER *OSSL_STORE_LOADER_new
 DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_open
                  (OSSL_STORE_LOADER *loader,
                   OSSL_STORE_open_fn open_function))
-DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_open_with_libctx
+DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_open_ex
                  (OSSL_STORE_LOADER *loader,
-                  OSSL_STORE_open_with_libctx_fn open_with_libctx_function))
+                  OSSL_STORE_open_ex_fn open_ex_function))
 DEPRECATEDIN_3_0(int OSSL_STORE_LOADER_set_attach
                  (OSSL_STORE_LOADER *loader,
                   OSSL_STORE_attach_fn attach_function))

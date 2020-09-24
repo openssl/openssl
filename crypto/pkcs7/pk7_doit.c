@@ -847,8 +847,8 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
                 if (abuf == NULL)
                     goto err;
 
-                if (!EVP_SignFinal_with_libctx(ctx_tmp, abuf, &abuflen, si->pkey,
-                                               p7_ctx->libctx, p7_ctx->propq)) {
+                if (!EVP_SignFinal_ex(ctx_tmp, abuf, &abuflen, si->pkey,
+                                      p7_ctx->libctx, p7_ctx->propq)) {
                     OPENSSL_free(abuf);
                     PKCS7err(PKCS7_F_PKCS7_DATAFINAL, ERR_R_EVP_LIB);
                     goto err;
@@ -919,9 +919,8 @@ int PKCS7_SIGNER_INFO_sign(PKCS7_SIGNER_INFO *si)
         goto err;
     }
 
-    if (EVP_DigestSignInit_with_libctx(mctx, &pctx,
-                                       EVP_MD_name(md), ctx->libctx, ctx->propq,
-                                       si->pkey) <= 0)
+    if (EVP_DigestSignInit_ex(mctx, &pctx, EVP_MD_name(md), ctx->libctx,
+                              ctx->propq, si->pkey) <= 0)
         goto err;
 
     /*
@@ -1171,8 +1170,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         goto err;
     }
 
-    i = EVP_VerifyFinal_with_libctx(mdc_tmp, os->data, os->length, pkey,
-                                    ctx->libctx, ctx->propq);
+    i = EVP_VerifyFinal_ex(mdc_tmp, os->data, os->length, pkey, ctx->libctx,
+                           ctx->propq);
     if (i <= 0) {
         PKCS7err(PKCS7_F_PKCS7_SIGNATUREVERIFY, PKCS7_R_SIGNATURE_FAILURE);
         ret = -1;

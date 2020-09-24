@@ -1160,15 +1160,12 @@ static int mac_test_run_pkey(EVP_TEST *t)
             t->err = "MAC_KEY_CREATE_ERROR";
             goto err;
         }
-        key = EVP_PKEY_new_CMAC_key_with_libctx(expected->key,
-                                                expected->key_len,
-                                                EVP_CIPHER_name(cipher),
-                                                libctx, NULL);
+        key = EVP_PKEY_new_CMAC_key_ex(expected->key, expected->key_len,
+                                       EVP_CIPHER_name(cipher), libctx, NULL);
     } else {
-        key = EVP_PKEY_new_raw_private_key_with_libctx(libctx,
-                                                       OBJ_nid2sn(expected->type),
-                                                       NULL, expected->key,
-                                                       expected->key_len);
+        key = EVP_PKEY_new_raw_private_key_ex(libctx,
+                                              OBJ_nid2sn(expected->type), NULL,
+                                              expected->key, expected->key_len);
     }
     if (key == NULL) {
         t->err = "MAC_KEY_CREATE_ERROR";
@@ -1188,7 +1185,7 @@ static int mac_test_run_pkey(EVP_TEST *t)
         t->err = "INTERNAL_ERROR";
         goto err;
     }
-    if (!EVP_DigestSignInit_with_libctx(mctx, &pctx, mdname, libctx, NULL, key)) {
+    if (!EVP_DigestSignInit_ex(mctx, &pctx, mdname, libctx, NULL, key)) {
         t->err = "DIGESTSIGNINIT_ERROR";
         goto err;
     }
@@ -2895,13 +2892,13 @@ static int digestsigver_test_parse(EVP_TEST *t,
             return 1;
         }
         if (mdata->is_verify) {
-            if (!EVP_DigestVerifyInit_with_libctx(mdata->ctx, &mdata->pctx,
-                                                  name, libctx, NULL, pkey))
+            if (!EVP_DigestVerifyInit_ex(mdata->ctx, &mdata->pctx, name, libctx,
+                                         NULL, pkey))
                 t->err = "DIGESTVERIFYINIT_ERROR";
             return 1;
         }
-        if (!EVP_DigestSignInit_with_libctx(mdata->ctx, &mdata->pctx,
-                                            name, libctx, NULL, pkey))
+        if (!EVP_DigestSignInit_ex(mdata->ctx, &mdata->pctx, name, libctx, NULL,
+                                   pkey))
             t->err = "DIGESTSIGNINIT_ERROR";
         return 1;
     }
@@ -3415,11 +3412,11 @@ start:
             return 0;
         }
         if (klist == &private_keys)
-            pkey = EVP_PKEY_new_raw_private_key_with_libctx(libctx, strnid, NULL,
-                                                            keybin, keylen);
+            pkey = EVP_PKEY_new_raw_private_key_ex(libctx, strnid, NULL, keybin,
+                                                   keylen);
         else
-            pkey = EVP_PKEY_new_raw_public_key_with_libctx(libctx, strnid, NULL,
-                                                           keybin, keylen);
+            pkey = EVP_PKEY_new_raw_public_key_ex(libctx, strnid, NULL, keybin,
+                                                  keylen);
         if (pkey == NULL && !key_unsupported()) {
             TEST_info("Can't read %s data", pp->key);
             OPENSSL_free(keybin);

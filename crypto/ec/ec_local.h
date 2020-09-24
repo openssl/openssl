@@ -601,8 +601,8 @@ int ec_group_simple_order_bits(const EC_GROUP *group);
  *  \param   meth   EC_METHOD to use
  *  \return  newly created EC_GROUP object or NULL in case of an error.
  */
-EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
-                                   const EC_METHOD *meth);
+EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const char *propq,
+                          const EC_METHOD *meth);
 
 #ifdef ECP_NISTZ256_ASM
 /** Returns GFp methods using montgomery multiplication, with x86-64 optimized

@@ -70,11 +70,11 @@ int OSSL_STORE_LOADER_set_open(OSSL_STORE_LOADER *loader,
     return 1;
 }
 
-int OSSL_STORE_LOADER_set_open_with_libctx
+int OSSL_STORE_LOADER_set_open_ex
     (OSSL_STORE_LOADER *loader,
-     OSSL_STORE_open_with_libctx_fn open_with_libctx_function)
+     OSSL_STORE_open_ex_fn open_ex_function)
 {
-    loader->open_with_libctx = open_with_libctx_function;
+    loader->open_ex = open_ex_function;
     return 1;
 }
 
@@ -222,7 +222,7 @@ const OSSL_STORE_LOADER *ossl_store_get0_loader_int(const char *scheme)
     template.load = NULL;
     template.eof = NULL;
     template.close = NULL;
-    template.open_with_libctx = NULL;
+    template.open_ex = NULL;
 
     if (!ossl_store_init_once())
         return NULL;

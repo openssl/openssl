@@ -118,9 +118,8 @@ int CMS_data(CMS_ContentInfo *cms, BIO *out, unsigned int flags)
     return r;
 }
 
-CMS_ContentInfo *CMS_data_create_with_libctx(BIO *in, unsigned int flags,
-                                             OPENSSL_CTX *libctx,
-                                             const char *propq)
+CMS_ContentInfo *CMS_data_create_ex(BIO *in, unsigned int flags,
+                                    OPENSSL_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *cms = cms_Data_create(libctx, propq);
 
@@ -136,7 +135,7 @@ CMS_ContentInfo *CMS_data_create_with_libctx(BIO *in, unsigned int flags,
 
 CMS_ContentInfo *CMS_data_create(BIO *in, unsigned int flags)
 {
-    return CMS_data_create_with_libctx(in, flags, NULL, NULL);
+    return CMS_data_create_ex(in, flags, NULL, NULL);
 }
 
 int CMS_digest_verify(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
@@ -164,11 +163,9 @@ int CMS_digest_verify(CMS_ContentInfo *cms, BIO *dcont, BIO *out,
     return r;
 }
 
-CMS_ContentInfo *CMS_digest_create_with_libctx(BIO *in,
-                                               const EVP_MD *md,
-                                               unsigned int flags,
-                                               OPENSSL_CTX *ctx,
-                                               const char *propq)
+CMS_ContentInfo *CMS_digest_create_ex(BIO *in, const EVP_MD *md,
+                                      unsigned int flags, OPENSSL_CTX *ctx,
+                                      const char *propq)
 {
     CMS_ContentInfo *cms;
 
@@ -191,7 +188,7 @@ CMS_ContentInfo *CMS_digest_create_with_libctx(BIO *in,
 CMS_ContentInfo *CMS_digest_create(BIO *in, const EVP_MD *md,
                                    unsigned int flags)
 {
-    return CMS_digest_create_with_libctx(in, md, flags, NULL, NULL);
+    return CMS_digest_create_ex(in, md, flags, NULL, NULL);
 }
 
 int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
@@ -220,13 +217,11 @@ int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
     return r;
 }
 
-CMS_ContentInfo *CMS_EncryptedData_encrypt_with_libctx(BIO *in,
-                                                       const EVP_CIPHER *cipher,
-                                                       const unsigned char *key,
-                                                       size_t keylen,
-                                                       unsigned int flags,
-                                                       OPENSSL_CTX *libctx,
-                                                       const char *propq)
+CMS_ContentInfo *CMS_EncryptedData_encrypt_ex(BIO *in, const EVP_CIPHER *cipher,
+                                              const unsigned char *key,
+                                              size_t keylen, unsigned int flags,
+                                              OPENSSL_CTX *libctx,
+                                              const char *propq)
 {
     CMS_ContentInfo *cms;
 
@@ -234,7 +229,7 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt_with_libctx(BIO *in,
         CMSerr(0, CMS_R_NO_CIPHER);
         return NULL;
     }
-    cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    cms = CMS_ContentInfo_new_ex(libctx, propq);
     if (cms == NULL)
         return NULL;
     if (!CMS_EncryptedData_set1_key(cms, cipher, key, keylen))
@@ -255,8 +250,8 @@ CMS_ContentInfo *CMS_EncryptedData_encrypt(BIO *in, const EVP_CIPHER *cipher,
                                            const unsigned char *key,
                                            size_t keylen, unsigned int flags)
 {
-    return CMS_EncryptedData_encrypt_with_libctx(in, cipher, key, keylen, flags,
-                                                 NULL, NULL);
+    return CMS_EncryptedData_encrypt_ex(in, cipher, key, keylen, flags, NULL,
+                                        NULL);
 }
 
 static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
@@ -270,7 +265,7 @@ static int cms_signerinfo_verify_cert(CMS_SignerInfo *si,
     X509 *signer;
     int i, j, r = 0;
 
-    ctx = X509_STORE_CTX_new_with_libctx(cms_ctx->libctx, cms_ctx->propq);
+    ctx = X509_STORE_CTX_new_ex(cms_ctx->libctx, cms_ctx->propq);
     if (ctx == NULL) {
         CMSerr(CMS_F_CMS_SIGNERINFO_VERIFY_CERT, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -503,15 +498,15 @@ int CMS_verify_receipt(CMS_ContentInfo *rcms, CMS_ContentInfo *ocms,
     return cms_Receipt_verify(rcms, ocms);
 }
 
-CMS_ContentInfo *CMS_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
-                                      STACK_OF(X509) *certs, BIO *data,
-                                      unsigned int flags,
-                                      OPENSSL_CTX *libctx, const char *propq)
+CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
+                             STACK_OF(X509) *certs, BIO *data,
+                             unsigned int flags, OPENSSL_CTX *libctx,
+                             const char *propq)
 {
     CMS_ContentInfo *cms;
     int i;
 
-    cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    cms = CMS_ContentInfo_new_ex(libctx, propq);
     if (cms == NULL || !CMS_SignedData_init(cms))
         goto merr;
     if (flags & CMS_ASCIICRLF
@@ -551,7 +546,7 @@ CMS_ContentInfo *CMS_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
 CMS_ContentInfo *CMS_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
                           BIO *data, unsigned int flags)
 {
-    return CMS_sign_with_libctx(signcert, pkey, certs, data, flags, NULL, NULL);
+    return CMS_sign_ex(signcert, pkey, certs, data, flags, NULL, NULL);
 }
 
 CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
@@ -575,8 +570,7 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 
     /* Initialize signed data */
 
-    cms = CMS_sign_with_libctx(NULL, NULL, certs, NULL, flags,
-                               ctx->libctx, ctx->propq);
+    cms = CMS_sign_ex(NULL, NULL, certs, NULL, flags, ctx->libctx, ctx->propq);
     if (cms == NULL)
         goto err;
 
@@ -623,10 +617,9 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
 
 }
 
-CMS_ContentInfo *CMS_encrypt_with_libctx(STACK_OF(X509) *certs,
-                                         BIO *data, const EVP_CIPHER *cipher,
-                                         unsigned int flags,
-                                         OPENSSL_CTX *libctx, const char *propq)
+CMS_ContentInfo *CMS_encrypt_ex(STACK_OF(X509) *certs, BIO *data,
+                                const EVP_CIPHER *cipher, unsigned int flags,
+                                OPENSSL_CTX *libctx, const char *propq)
 {
     CMS_ContentInfo *cms;
     int i;
@@ -634,8 +627,8 @@ CMS_ContentInfo *CMS_encrypt_with_libctx(STACK_OF(X509) *certs,
 
 
     cms = (EVP_CIPHER_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER)
-          ? CMS_AuthEnvelopedData_create_with_libctx(cipher, libctx, propq)
-          : CMS_EnvelopedData_create_with_libctx(cipher, libctx, propq);
+          ? CMS_AuthEnvelopedData_create_ex(cipher, libctx, propq)
+          : CMS_EnvelopedData_create_ex(cipher, libctx, propq);
     if (cms == NULL)
         goto merr;
     for (i = 0; i < sk_X509_num(certs); i++) {
@@ -665,7 +658,7 @@ CMS_ContentInfo *CMS_encrypt_with_libctx(STACK_OF(X509) *certs,
 CMS_ContentInfo *CMS_encrypt(STACK_OF(X509) *certs, BIO *data,
                              const EVP_CIPHER *cipher, unsigned int flags)
 {
-    return CMS_encrypt_with_libctx(certs, data, cipher, flags, NULL, NULL);
+    return CMS_encrypt_ex(certs, data, cipher, flags, NULL, NULL);
 }
 
 static int cms_kari_set1_pkey_and_peer(CMS_ContentInfo *cms,

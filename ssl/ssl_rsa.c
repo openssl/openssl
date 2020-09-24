@@ -64,7 +64,7 @@ int SSL_use_certificate_file(SSL *ssl, const char *file, int type)
         SSLerr(SSL_F_SSL_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
-    x = X509_new_with_libctx(ssl->ctx->libctx, ssl->ctx->propq);
+    x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
         SSLerr(0, ERR_R_MALLOC_FAILURE);
         goto end;
@@ -98,7 +98,7 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
     X509 *x;
     int ret;
 
-    x = X509_new_with_libctx(ssl->ctx->libctx, ssl->ctx->propq);
+    x = X509_new_ex(ssl->ctx->libctx, ssl->ctx->propq);
     if (x == NULL) {
         SSLerr(0, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -398,7 +398,7 @@ int SSL_CTX_use_certificate_file(SSL_CTX *ctx, const char *file, int type)
         SSLerr(SSL_F_SSL_CTX_USE_CERTIFICATE_FILE, SSL_R_BAD_SSL_FILETYPE);
         goto end;
     }
-    x = X509_new_with_libctx(ctx->libctx, ctx->propq);
+    x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
         SSLerr(0, ERR_R_MALLOC_FAILURE);
         goto end;
@@ -428,7 +428,7 @@ int SSL_CTX_use_certificate_ASN1(SSL_CTX *ctx, int len, const unsigned char *d)
     X509 *x;
     int ret;
 
-    x = X509_new_with_libctx(ctx->libctx, ctx->propq);
+    x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x == NULL) {
         SSLerr(0, ERR_R_MALLOC_FAILURE);
         return 0;
@@ -634,7 +634,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         goto end;
     }
 
-    x = X509_new_with_libctx(real_ctx->libctx, real_ctx->propq);
+    x = X509_new_ex(real_ctx->libctx, real_ctx->propq);
     if (x == NULL) {
         SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_MALLOC_FAILURE);
         goto end;
@@ -673,7 +673,7 @@ static int use_certificate_chain_file(SSL_CTX *ctx, SSL *ssl, const char *file)
         }
 
         while (1) {
-            ca = X509_new_with_libctx(real_ctx->libctx, real_ctx->propq);
+            ca = X509_new_ex(real_ctx->libctx, real_ctx->propq);
             if (ca == NULL) {
                 SSLerr(SSL_F_USE_CERTIFICATE_CHAIN_FILE, ERR_R_MALLOC_FAILURE);
                 goto end;

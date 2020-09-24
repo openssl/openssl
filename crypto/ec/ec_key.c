@@ -34,18 +34,18 @@ EC_KEY *EC_KEY_new(void)
 }
 #endif
 
-EC_KEY *EC_KEY_new_with_libctx(OPENSSL_CTX *ctx, const char *propq)
+EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx, const char *propq)
 {
     return ec_key_new_method_int(ctx, propq, NULL);
 }
 
-EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx,
-                                             const char *propq, int nid)
+EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, const char *propq,
+                                    int nid)
 {
-    EC_KEY *ret = EC_KEY_new_with_libctx(ctx, propq);
+    EC_KEY *ret = EC_KEY_new_ex(ctx, propq);
     if (ret == NULL)
         return NULL;
-    ret->group = EC_GROUP_new_by_curve_name_with_libctx(ctx, propq, nid);
+    ret->group = EC_GROUP_new_by_curve_name_ex(ctx, propq, nid);
     if (ret->group == NULL) {
         EC_KEY_free(ret);
         return NULL;
@@ -61,7 +61,7 @@ EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx,
 #ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new_by_curve_name(int nid)
 {
-    return EC_KEY_new_by_curve_name_with_libctx(NULL, NULL, nid);
+    return EC_KEY_new_by_curve_name_ex(NULL, NULL, nid);
 }
 #endif
 
@@ -122,8 +122,7 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     if (src->group != NULL) {
         /* clear the old group */
         EC_GROUP_free(dest->group);
-        dest->group = ec_group_new_with_libctx(src->libctx, src->propq,
-                                               src->group->meth);
+        dest->group = ec_group_new_ex(src->libctx, src->propq, src->group->meth);
         if (dest->group == NULL)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))

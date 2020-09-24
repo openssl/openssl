@@ -36,7 +36,7 @@ CMS_ContentInfo *cms_CompressedData_create(int comp_nid, OPENSSL_CTX *libctx,
                CMS_R_UNSUPPORTED_COMPRESSION_ALGORITHM);
         return NULL;
     }
-    cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    cms = CMS_ContentInfo_new_ex(libctx, propq);
     if (cms == NULL)
         return NULL;
 

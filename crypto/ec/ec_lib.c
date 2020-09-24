@@ -26,8 +26,8 @@
 
 /* functions for EC_GROUP objects */
 
-EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
-                                   const EC_METHOD *meth)
+EC_GROUP *ec_group_new_ex(OPENSSL_CTX *libctx, const char *propq,
+                          const EC_METHOD *meth)
 {
     EC_GROUP *ret;
 
@@ -81,7 +81,7 @@ EC_GROUP *ec_group_new_with_libctx(OPENSSL_CTX *libctx, const char *propq,
 # ifndef FIPS_MODULE
 EC_GROUP *EC_GROUP_new(const EC_METHOD *meth)
 {
-    return ec_group_new_with_libctx(NULL, NULL, meth);
+    return ec_group_new_ex(NULL, NULL, meth);
 }
 # endif
 #endif
@@ -271,7 +271,7 @@ EC_GROUP *EC_GROUP_dup(const EC_GROUP *a)
     if (a == NULL)
         return NULL;
 
-    if ((t = ec_group_new_with_libctx(a->libctx, a->propq, a->meth)) == NULL)
+    if ((t = ec_group_new_ex(a->libctx, a->propq, a->meth)) == NULL)
         return NULL;
     if (!EC_GROUP_copy(t, a))
         goto err;
@@ -1438,8 +1438,7 @@ static EC_GROUP *ec_group_explicit_to_named(const EC_GROUP *group,
             curve_name_nid = NID_secp224r1;
 #endif /* !def(OPENSSL_NO_EC_NISTP_64_GCC_128) */
 
-        ret_group = EC_GROUP_new_by_curve_name_with_libctx(libctx, propq,
-                                                           curve_name_nid);
+        ret_group = EC_GROUP_new_by_curve_name_ex(libctx, propq, curve_name_nid);
         if (ret_group == NULL)
             goto err;
 
@@ -1522,7 +1521,7 @@ static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
             ECerr(0, EC_R_INVALID_CURVE);
             return NULL;
         } else {
-            return EC_GROUP_new_by_curve_name_with_libctx(libctx, propq, nid);
+            return EC_GROUP_new_by_curve_name_ex(libctx, propq, nid);
         }
     }
     return NULL;

@@ -170,7 +170,7 @@ OPENSSL_CTX *OPENSSL_CTX_new(void)
 #ifndef FIPS_MODULE
 int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file)
 {
-    return CONF_modules_load_file_with_libctx(ctx, config_file, NULL, 0) > 0;
+    return CONF_modules_load_file_ex(ctx, config_file, NULL, 0) > 0;
 }
 #endif
 
