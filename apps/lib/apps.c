@@ -364,7 +364,7 @@ CONF *app_load_config_bio(BIO *in, const char *filename)
     CONF *conf;
     int i;
 
-    conf = NCONF_new_with_libctx(app_libctx, NULL);
+    conf = NCONF_new_ex(app_libctx, NULL);
     i = NCONF_load_bio(conf, in, &errorline);
     if (i > 0)
         return conf;
@@ -756,8 +756,8 @@ int load_key_certs_crls(const char *uri, int maybe_stdin,
             ctx = OSSL_STORE_attach(bio, "file", libctx, propq,
                                     get_ui_method(), &uidata, NULL, NULL);
     } else {
-        ctx = OSSL_STORE_open_with_libctx(uri, libctx, propq, get_ui_method(),
-                                          &uidata, NULL, NULL);
+        ctx = OSSL_STORE_open_ex(uri, libctx, propq, get_ui_method(), &uidata,
+                                 NULL, NULL);
     }
     if (ctx == NULL) {
         BIO_printf(bio_err, "Could not open file or uri for loading");
@@ -1116,16 +1116,14 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         if (lookup == NULL)
             goto end;
         if (CAfile != NULL) {
-            if (!X509_LOOKUP_load_file_with_libctx(lookup, CAfile,
-                                                   X509_FILETYPE_PEM,
-                                                   libctx, propq)) {
+            if (!X509_LOOKUP_load_file_ex(lookup, CAfile, X509_FILETYPE_PEM,
+                                          libctx, propq)) {
                 BIO_printf(bio_err, "Error loading file %s\n", CAfile);
                 goto end;
             }
         } else {
-            X509_LOOKUP_load_file_with_libctx(lookup, NULL,
-                                              X509_FILETYPE_DEFAULT,
-                                              libctx, propq);
+            X509_LOOKUP_load_file_ex(lookup, NULL, X509_FILETYPE_DEFAULT,
+                                     libctx, propq);
         }
     }
 
@@ -1147,7 +1145,7 @@ X509_STORE *setup_verify(const char *CAfile, int noCAfile,
         lookup = X509_STORE_add_lookup(store, X509_LOOKUP_store());
         if (lookup == NULL)
             goto end;
-        if (!X509_LOOKUP_add_store_with_libctx(lookup, CAstore, libctx, propq)) {
+        if (!X509_LOOKUP_add_store_ex(lookup, CAstore, libctx, propq)) {
             if (CAstore != NULL)
                 BIO_printf(bio_err, "Error loading store URI %s\n", CAstore);
             goto end;

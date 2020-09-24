@@ -32,11 +32,10 @@
 static int ossl_store_close_it(OSSL_STORE_CTX *ctx);
 
 OSSL_STORE_CTX *
-OSSL_STORE_open_with_libctx(const char *uri,
-                            OPENSSL_CTX *libctx, const char *propq,
-                            const UI_METHOD *ui_method, void *ui_data,
-                            OSSL_STORE_post_process_info_fn post_process,
-                            void *post_process_data)
+OSSL_STORE_open_ex(const char *uri, OPENSSL_CTX *libctx, const char *propq,
+                   const UI_METHOD *ui_method, void *ui_data,
+                   OSSL_STORE_post_process_info_fn post_process,
+                   void *post_process_data)
 {
     const OSSL_STORE_LOADER *loader = NULL;
     OSSL_STORE_LOADER *fetched_loader = NULL;
@@ -85,9 +84,9 @@ OSSL_STORE_open_with_libctx(const char *uri,
         OSSL_TRACE1(STORE, "Looking up scheme %s\n", schemes[i]);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
         if ((loader = ossl_store_get0_loader_int(schemes[i])) != NULL) {
-            if (loader->open_with_libctx != NULL)
-                loader_ctx = loader->open_with_libctx(loader, uri, libctx, propq,
-                                                      ui_method, ui_data);
+            if (loader->open_ex != NULL)
+                loader_ctx = loader->open_ex(loader, uri, libctx, propq,
+                                             ui_method, ui_data);
             else
                 loader_ctx = loader->open(loader, uri, ui_method, ui_data);
         }
@@ -187,8 +186,8 @@ OSSL_STORE_CTX *OSSL_STORE_open(const char *uri,
                                 OSSL_STORE_post_process_info_fn post_process,
                                 void *post_process_data)
 {
-    return OSSL_STORE_open_with_libctx(uri, NULL, NULL, ui_method, ui_data,
-                                       post_process, post_process_data);
+    return OSSL_STORE_open_ex(uri, NULL, NULL, ui_method, ui_data, post_process,
+                              post_process_data);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0

@@ -80,7 +80,7 @@ struct evp_pkey_asn1_method_st {
                       const char *propq);
     OSSL_CALLBACK *import_from;
 
-    int (*priv_decode_with_libctx) (EVP_PKEY *pk,
+    int (*priv_decode_ex) (EVP_PKEY *pk,
                                     const PKCS8_PRIV_KEY_INFO *p8inf,
                                     OPENSSL_CTX *libctx,
                                     const char *propq);

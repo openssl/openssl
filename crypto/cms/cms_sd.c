@@ -411,10 +411,8 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             if (EVP_PKEY_CTX_set_signature_md(si->pctx, md) <= 0)
                 goto err;
-        } else if (EVP_DigestSignInit_with_libctx(si->mctx, &si->pctx,
-                                                  EVP_MD_name(md),
-                                                  ctx->libctx, ctx->propq,
-                                                  pk) <= 0) {
+        } else if (EVP_DigestSignInit_ex(si->mctx, &si->pctx, EVP_MD_name(md),
+                                         ctx->libctx, ctx->propq, pk) <= 0) {
             goto err;
         }
     }
@@ -676,8 +674,8 @@ static int cms_SignerInfo_content_sign(CMS_ContentInfo *cms,
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, ERR_R_MALLOC_FAILURE);
             goto err;
         }
-        if (!EVP_SignFinal_with_libctx(mctx, sig, &siglen, si->pkey,
-                                       ctx->libctx, ctx->propq)) {
+        if (!EVP_SignFinal_ex(mctx, sig, &siglen, si->pkey, ctx->libctx,
+                              ctx->propq)) {
             CMSerr(CMS_F_CMS_SIGNERINFO_CONTENT_SIGN, CMS_R_SIGNFINAL_ERROR);
             OPENSSL_free(sig);
             goto err;
@@ -735,9 +733,8 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
         pctx = si->pctx;
     else {
         EVP_MD_CTX_reset(mctx);
-        if (EVP_DigestSignInit_with_libctx(mctx, &pctx,
-                                           md_name, ctx->libctx, ctx->propq,
-                                           si->pkey) <= 0)
+        if (EVP_DigestSignInit_ex(mctx, &pctx, md_name, ctx->libctx, ctx->propq,
+                                  si->pkey) <= 0)
             goto err;
         si->pctx = pctx;
     }
@@ -844,9 +841,8 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         goto err;
     }
     mctx = si->mctx;
-    if (EVP_DigestVerifyInit_with_libctx(mctx, &si->pctx,
-                                         EVP_MD_name(md), ctx->libctx, NULL,
-                                         si->pkey) <= 0)
+    if (EVP_DigestVerifyInit_ex(mctx, &si->pctx, EVP_MD_name(md), ctx->libctx,
+                                NULL, si->pkey) <= 0)
         goto err;
 
     if (!cms_sd_asn1_ctrl(si, 1))

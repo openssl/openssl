@@ -436,7 +436,7 @@ most of them are set to 0 or NULL.
 
 To read a certificate with a library context in PEM format from a BIO:
 
- X509 *x = X509_new_with_libctx(libctx, NULL);
+ X509 *x = X509_new_ex(libctx, NULL);
 
  if (x == NULL)
      /* Error */

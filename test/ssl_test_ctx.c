@@ -613,7 +613,7 @@ __owur static int parse_expected_ca_names(STACK_OF(X509_NAME) **pnames,
     if (!strcmp(value, "empty"))
         *pnames = sk_X509_NAME_new_null();
     else
-        *pnames = SSL_load_client_CA_file_with_libctx(value, libctx, NULL);
+        *pnames = SSL_load_client_CA_file_ex(value, libctx, NULL);
     return *pnames != NULL;
 }
 __owur static int parse_expected_server_ca_names(SSL_TEST_CTX *test_ctx,

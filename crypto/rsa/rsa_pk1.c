@@ -124,10 +124,9 @@ int RSA_padding_check_PKCS1_type_1(unsigned char *to, int tlen,
     return j;
 }
 
-int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
-                                             unsigned char *to, int tlen,
-                                             const unsigned char *from,
-                                             int flen)
+int rsa_padding_add_PKCS1_type_2_ex(OPENSSL_CTX *libctx, unsigned char *to,
+                                    int tlen, const unsigned char *from,
+                                    int flen)
 {
     int i, j;
     unsigned char *p;
@@ -165,7 +164,7 @@ int rsa_padding_add_PKCS1_type_2_with_libctx(OPENSSL_CTX *libctx,
 int RSA_padding_add_PKCS1_type_2(unsigned char *to, int tlen,
                                  const unsigned char *from, int flen)
 {
-    return rsa_padding_add_PKCS1_type_2_with_libctx(NULL, to, tlen, from, flen);
+    return rsa_padding_add_PKCS1_type_2_ex(NULL, to, tlen, from, flen);
 }
 
 int RSA_padding_check_PKCS1_type_2(unsigned char *to, int tlen,

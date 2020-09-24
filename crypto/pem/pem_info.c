@@ -25,9 +25,8 @@
 
 #ifndef OPENSSL_NO_STDIO
 STACK_OF(X509_INFO)
-*PEM_X509_INFO_read_with_libctx(FILE *fp, STACK_OF(X509_INFO) *sk,
-                                pem_password_cb *cb, void *u,
-                                OPENSSL_CTX *libctx, const char *propq)
+*PEM_X509_INFO_read_ex(FILE *fp, STACK_OF(X509_INFO) *sk, pem_password_cb *cb,
+                       void *u, OPENSSL_CTX *libctx, const char *propq)
 {
     BIO *b;
     STACK_OF(X509_INFO) *ret;
@@ -37,7 +36,7 @@ STACK_OF(X509_INFO)
         return 0;
     }
     BIO_set_fp(b, fp, BIO_NOCLOSE);
-    ret = PEM_X509_INFO_read_bio_with_libctx(b, sk, cb, u, libctx, propq);
+    ret = PEM_X509_INFO_read_bio_ex(b, sk, cb, u, libctx, propq);
     BIO_free(b);
     return ret;
 }
@@ -45,14 +44,14 @@ STACK_OF(X509_INFO)
 STACK_OF(X509_INFO) *PEM_X509_INFO_read(FILE *fp, STACK_OF(X509_INFO) *sk,
                                         pem_password_cb *cb, void *u)
 {
-    return PEM_X509_INFO_read_with_libctx(fp, sk, cb, u, NULL, NULL);
+    return PEM_X509_INFO_read_ex(fp, sk, cb, u, NULL, NULL);
 }
 #endif
 
 STACK_OF(X509_INFO)
-*PEM_X509_INFO_read_bio_with_libctx(BIO *bp, STACK_OF(X509_INFO) *sk,
-                                    pem_password_cb *cb, void *u,
-                                    OPENSSL_CTX *libctx, const char *propq)
+*PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
+                           pem_password_cb *cb, void *u, OPENSSL_CTX *libctx,
+                           const char *propq)
 {
     X509_INFO *xi = NULL;
     char *name = NULL, *header = NULL;
@@ -98,7 +97,7 @@ STACK_OF(X509_INFO)
                     goto err;
                 goto start;
             }
-            xi->x509 = X509_new_with_libctx(libctx, propq);
+            xi->x509 = X509_new_ex(libctx, propq);
             if (xi->x509 == NULL)
                 goto err;
             pp = &(xi->x509);
@@ -111,7 +110,7 @@ STACK_OF(X509_INFO)
                     goto err;
                 goto start;
             }
-            xi->x509 = X509_new_with_libctx(libctx, propq);
+            xi->x509 = X509_new_ex(libctx, propq);
             if (xi->x509 == NULL)
                 goto err;
             pp = &(xi->x509);
@@ -268,7 +267,7 @@ STACK_OF(X509_INFO)
 STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio(BIO *bp, STACK_OF(X509_INFO) *sk,
                                             pem_password_cb *cb, void *u)
 {
-    return PEM_X509_INFO_read_bio_with_libctx(bp, sk, cb, u, NULL, NULL);
+    return PEM_X509_INFO_read_bio_ex(bp, sk, cb, u, NULL, NULL);
 }
 
 /* A TJH addition */

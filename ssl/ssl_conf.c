@@ -492,13 +492,12 @@ static int do_store(SSL_CONF_CTX *cctx,
             return 0;
     }
 
-    if (CAfile != NULL && !X509_STORE_load_file_with_libctx(*st, CAfile,
-                                                            libctx, propq))
+    if (CAfile != NULL && !X509_STORE_load_file_ex(*st, CAfile, libctx, propq))
         return 0;
     if (CApath != NULL && !X509_STORE_load_path(*st, CApath))
         return 0;
-    if (CAstore != NULL && !X509_STORE_load_store_with_libctx(*st, CAstore,
-                                                              libctx, propq))
+    if (CAstore != NULL && !X509_STORE_load_store_ex(*st, CAstore, libctx,
+                                                     propq))
         return 0;
     return 1;
 }

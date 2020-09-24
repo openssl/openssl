@@ -365,10 +365,9 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
         return 0;
     }
 
-    return ASN1_item_sign_with_libctx(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
-                                      ps->algorithmIdentifier, NULL,
-                                      ps->signature, cr, NULL, pkey, digest,
-                                      libctx, propq);
+    return ASN1_item_sign_ex(ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST),
+                             ps->algorithmIdentifier, NULL, ps->signature, cr,
+                             NULL, pkey, digest, libctx, propq);
 }
 
 
@@ -502,10 +501,9 @@ int OSSL_CRMF_MSGS_verify_popo(const OSSL_CRMF_MSGS *reqs,
             it = ASN1_ITEM_rptr(OSSL_CRMF_CERTREQUEST);
             asn = req->certReq;
         }
-        if (ASN1_item_verify_with_libctx(it, sig->algorithmIdentifier,
-                                         sig->signature, asn, NULL,
-                                         X509_PUBKEY_get0(pubkey),
-                                         libctx, propq) < 1)
+        if (ASN1_item_verify_ex(it, sig->algorithmIdentifier, sig->signature,
+                                asn, NULL, X509_PUBKEY_get0(pubkey), libctx,
+                                propq) < 1)
             return 0;
         break;
     case OSSL_CRMF_POPO_KEYENC:
@@ -680,7 +678,7 @@ X509
     outlen += n;
 
     /* convert decrypted certificate from DER to internal ASN.1 structure */
-    if ((cert = X509_new_with_libctx(libctx, propq)) == NULL)
+    if ((cert = X509_new_ex(libctx, propq)) == NULL)
         goto end;
     if (d2i_X509(&cert, &p, outlen) == NULL)
         CRMFerr(CRMF_F_OSSL_CRMF_ENCRYPTEDVALUE_GET1_ENCCERT,

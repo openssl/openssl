@@ -18,8 +18,8 @@
 
 /* Extract a private key from a PKCS8 structure */
 
-EVP_PKEY *EVP_PKCS82PKEY_with_libctx(const PKCS8_PRIV_KEY_INFO *p8,
-                                     OPENSSL_CTX *libctx, const char *propq)
+EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
+                            const char *propq)
 {
     EVP_PKEY *pkey = NULL;
     const ASN1_OBJECT *algoid;
@@ -40,8 +40,8 @@ EVP_PKEY *EVP_PKCS82PKEY_with_libctx(const PKCS8_PRIV_KEY_INFO *p8,
         goto error;
     }
 
-    if (pkey->ameth->priv_decode_with_libctx != NULL) {
-        if (!pkey->ameth->priv_decode_with_libctx(pkey, p8, libctx, propq))
+    if (pkey->ameth->priv_decode_ex != NULL) {
+        if (!pkey->ameth->priv_decode_ex(pkey, p8, libctx, propq))
             goto error;
     } else if (pkey->ameth->priv_decode != NULL) {
         if (!pkey->ameth->priv_decode(pkey, p8)) {
@@ -62,7 +62,7 @@ EVP_PKEY *EVP_PKCS82PKEY_with_libctx(const PKCS8_PRIV_KEY_INFO *p8,
 
 EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
 {
-    return EVP_PKCS82PKEY_with_libctx(p8, NULL, NULL);
+    return EVP_PKCS82PKEY_ex(p8, NULL, NULL);
 }
 
 /* Turn a private key into a PKCS8 structure */

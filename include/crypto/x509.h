@@ -311,10 +311,9 @@ int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
 int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq);
 int x509_crl_set0_libctx(X509_CRL *x, OPENSSL_CTX *libctx, const char *propq);
 int x509_init_sig_info(X509 *x);
-int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *type,
-                                 void *data, unsigned char *md,
-                                 unsigned int *len, OPENSSL_CTX *libctx,
-                                 const char *propq);
+int asn1_item_digest_ex(const ASN1_ITEM *it, const EVP_MD *type, void *data,
+                        unsigned char *md, unsigned int *len,
+                        OPENSSL_CTX *libctx, const char *propq);
 int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
 
 int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,

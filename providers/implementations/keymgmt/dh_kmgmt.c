@@ -136,7 +136,7 @@ static void *dh_newdata(void *provctx)
     DH *dh = NULL;
 
     if (ossl_prov_is_running()) {
-        dh = dh_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx));
+        dh = dh_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx));
         if (dh != NULL) {
             DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
             DH_set_flags(dh, DH_FLAG_TYPE_DH);
@@ -149,7 +149,7 @@ static void *dhx_newdata(void *provctx)
 {
     DH *dh = NULL;
 
-    dh = dh_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx));
+    dh = dh_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx));
     if (dh != NULL) {
         DH_clear_flags(dh, DH_FLAG_TYPE_MASK);
         DH_set_flags(dh, DH_FLAG_TYPE_DHX);
@@ -608,12 +608,12 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
             gctx->group_nid = dh_get_named_group_uid_from_size(gctx->pbits);
         if (gctx->group_nid == NID_undef)
             return NULL;
-        dh = dh_new_by_nid_with_libctx(gctx->libctx, gctx->group_nid);
+        dh = dh_new_by_nid_ex(gctx->libctx, gctx->group_nid);
         if (dh == NULL)
             return NULL;
         ffc = dh_get0_params(dh);
     } else {
-        dh = dh_new_with_libctx(gctx->libctx);
+        dh = dh_new_ex(gctx->libctx);
         if (dh == NULL)
             return NULL;
         ffc = dh_get0_params(dh);

@@ -32,23 +32,22 @@ int X509_verify(X509 *a, EVP_PKEY *r)
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature))
         return 0;
 
-    return ASN1_item_verify_with_libctx(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
-                                        &a->signature, &a->cert_info,
-                                        a->distinguishing_id, r,
-                                        a->libctx, a->propq);
+    return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
+                               &a->signature, &a->cert_info,
+                               a->distinguishing_id, r, a->libctx, a->propq);
 }
 
-int X509_REQ_verify_with_libctx(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
-                                const char *propq)
+int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
+                       const char *propq)
 {
-    return ASN1_item_verify_with_libctx(ASN1_ITEM_rptr(X509_REQ_INFO),
-                                        &a->sig_alg, a->signature, &a->req_info,
-                                        a->distinguishing_id, r, libctx, propq);
+    return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &a->sig_alg,
+                               a->signature, &a->req_info, a->distinguishing_id,
+                               r, libctx, propq);
 }
 
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r)
 {
-    return X509_REQ_verify_with_libctx(a, r, NULL, NULL);
+    return X509_REQ_verify_ex(a, r, NULL, NULL);
 }
 
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r)
@@ -403,8 +402,8 @@ int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
         memcpy(data, cert->sha1_hash, sizeof(cert->sha1_hash));
         return 1;
     }
-    return (asn1_item_digest_with_libctx(ASN1_ITEM_rptr(X509), md, (char *)cert,
-                                         data, len, cert->libctx, cert->propq));
+    return (asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert, data,
+                                len, cert->libctx, cert->propq));
 }
 
 /* calculate cert digest using the same hash algorithm as in its signature */

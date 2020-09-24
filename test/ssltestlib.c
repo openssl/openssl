@@ -695,13 +695,13 @@ const SSL_METHOD *cm,
 
     if (*sctx != NULL)
         serverctx = *sctx;
-    else if (!TEST_ptr(serverctx = SSL_CTX_new_with_libctx(libctx, NULL, sm)))
+    else if (!TEST_ptr(serverctx = SSL_CTX_new_ex(libctx, NULL, sm)))
         goto err;
 
     if (cctx != NULL) {
         if (*cctx != NULL)
             clientctx = *cctx;
-        else if (!TEST_ptr(clientctx = SSL_CTX_new_with_libctx(libctx, NULL, cm)))
+        else if (!TEST_ptr(clientctx = SSL_CTX_new_ex(libctx, NULL, cm)))
             goto err;
     }
 

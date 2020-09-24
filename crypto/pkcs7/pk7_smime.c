@@ -20,14 +20,14 @@
 
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si);
 
-PKCS7 *PKCS7_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
-                              STACK_OF(X509) *certs, BIO *data, int flags,
-                              OPENSSL_CTX *libctx, const char *propq)
+PKCS7 *PKCS7_sign_ex(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
+                     BIO *data, int flags, OPENSSL_CTX *libctx,
+                     const char *propq)
 {
     PKCS7 *p7;
     int i;
 
-    if ((p7 = PKCS7_new_with_libctx(libctx, propq)) == NULL) {
+    if ((p7 = PKCS7_new_ex(libctx, propq)) == NULL) {
         PKCS7err(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -67,7 +67,7 @@ PKCS7 *PKCS7_sign_with_libctx(X509 *signcert, EVP_PKEY *pkey,
 PKCS7 *PKCS7_sign(X509 *signcert, EVP_PKEY *pkey, STACK_OF(X509) *certs,
                   BIO *data, int flags)
 {
-    return PKCS7_sign_with_libctx(signcert, pkey, certs, data, flags, NULL, NULL);
+    return PKCS7_sign_ex(signcert, pkey, certs, data, flags, NULL, NULL);
 }
 
 
@@ -268,7 +268,7 @@ int PKCS7_verify(PKCS7 *p7, STACK_OF(X509) *certs, X509_STORE *store,
 
     /* Now verify the certificates */
     p7_ctx = pkcs7_get0_ctx(p7);
-    cert_ctx = X509_STORE_CTX_new_with_libctx(p7_ctx->libctx, p7_ctx->propq);
+    cert_ctx = X509_STORE_CTX_new_ex(p7_ctx->libctx, p7_ctx->propq);
     if (cert_ctx == NULL)
         goto err;
     if (!(flags & PKCS7_NOVERIFY))
@@ -443,16 +443,16 @@ STACK_OF(X509) *PKCS7_get0_signers(PKCS7 *p7, STACK_OF(X509) *certs,
 
 /* Build a complete PKCS#7 enveloped data */
 
-PKCS7 *PKCS7_encrypt_with_libctx(STACK_OF(X509) *certs, BIO *in,
-                                 const EVP_CIPHER *cipher, int flags,
-                                 OPENSSL_CTX *libctx, const char *propq)
+PKCS7 *PKCS7_encrypt_ex(STACK_OF(X509) *certs, BIO *in,
+                        const EVP_CIPHER *cipher, int flags,
+                        OPENSSL_CTX *libctx, const char *propq)
 {
     PKCS7 *p7;
     BIO *p7bio = NULL;
     int i;
     X509 *x509;
 
-    if ((p7 = PKCS7_new_with_libctx(libctx, propq)) == NULL) {
+    if ((p7 = PKCS7_new_ex(libctx, propq)) == NULL) {
         PKCS7err(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -489,7 +489,7 @@ PKCS7 *PKCS7_encrypt_with_libctx(STACK_OF(X509) *certs, BIO *in,
 PKCS7 *PKCS7_encrypt(STACK_OF(X509) *certs, BIO *in, const EVP_CIPHER *cipher,
                      int flags)
 {
-    return PKCS7_encrypt_with_libctx(certs, in, cipher, flags, NULL, NULL);
+    return PKCS7_encrypt_ex(certs, in, cipher, flags, NULL, NULL);
 }
 
 

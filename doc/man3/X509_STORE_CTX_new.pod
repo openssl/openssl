@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-X509_STORE_CTX_new_with_libctx, X509_STORE_CTX_new, X509_STORE_CTX_cleanup,
+X509_STORE_CTX_new_ex, X509_STORE_CTX_new, X509_STORE_CTX_cleanup,
 X509_STORE_CTX_free, X509_STORE_CTX_init, X509_STORE_CTX_set0_trusted_stack,
 X509_STORE_CTX_set_cert, X509_STORE_CTX_set0_crls,
 X509_STORE_CTX_get0_chain, X509_STORE_CTX_set0_verified_chain,
@@ -18,8 +18,7 @@ X509_STORE_CTX_verify_fn
 
  #include <openssl/x509_vfy.h>
 
- X509_STORE_CTX *X509_STORE_CTX_new_with_libctx(OPENSSL_CTX *libctx,
-                                                const char *propq);
+ X509_STORE_CTX *X509_STORE_CTX_new_ex(OPENSSL_CTX *libctx, const char *propq);
  X509_STORE_CTX *X509_STORE_CTX_new(void);
  void X509_STORE_CTX_cleanup(X509_STORE_CTX *ctx);
  void X509_STORE_CTX_free(X509_STORE_CTX *ctx);
@@ -51,13 +50,13 @@ X509_STORE_CTX_verify_fn
 These functions initialise an B<X509_STORE_CTX> structure for subsequent use
 by X509_verify_cert().
 
-X509_STORE_CTX_new_with_libctx() returns a newly initialised B<X509_STORE_CTX>
+X509_STORE_CTX_new_ex() returns a newly initialised B<X509_STORE_CTX>
 structure associated with the specified library context I<libctx> and property
 query string I<propq>. Any cryptographic algorithms fetched while performing
 processing with the X509_STORE_CTX will use that library context and property
 query string.
 
-X509_STORE_CTX_new() is the same as X509_STORE_CTX_new_with_libctx() except that
+X509_STORE_CTX_new() is the same as X509_STORE_CTX_new_ex() except that
 the default library context and a NULL property query string are used.
 
 X509_STORE_CTX_cleanup() internally cleans up an B<X509_STORE_CTX> structure.
@@ -170,7 +169,7 @@ L<X509_VERIFY_PARAM_set_flags(3)>
 
 The X509_STORE_CTX_set0_crls() function was added in OpenSSL 1.0.0.
 The X509_STORE_CTX_get_num_untrusted() function was added in OpenSSL 1.1.0.
-The X509_STORE_CTX_new_with_libctx() function was added in OpenSSL 3.0.
+The X509_STORE_CTX_new_ex() function was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

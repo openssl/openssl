@@ -491,7 +491,7 @@ int smime_main(int argc, char **argv)
     if (operation & SMIME_IP) {
         PKCS7 *p7_in = NULL;
 
-        p7 = PKCS7_new_with_libctx(libctx, propq);
+        p7 = PKCS7_new_ex(libctx, propq);
         if (p7 == NULL) {
             BIO_printf(bio_err, "Error allocating PKCS7 object\n");
             goto end;
@@ -538,7 +538,7 @@ int smime_main(int argc, char **argv)
     if (operation == SMIME_ENCRYPT) {
         if (indef)
             flags |= PKCS7_STREAM;
-        p7 = PKCS7_encrypt_with_libctx(encerts, in, cipher, flags, libctx, propq);
+        p7 = PKCS7_encrypt_ex(encerts, in, cipher, flags, libctx, propq);
     } else if (operation & SMIME_SIGNERS) {
         int i;
         /*
@@ -553,8 +553,7 @@ int smime_main(int argc, char **argv)
                 flags |= PKCS7_STREAM;
             }
             flags |= PKCS7_PARTIAL;
-            p7 = PKCS7_sign_with_libctx(NULL, NULL, other, in, flags, libctx,
-                                        propq);
+            p7 = PKCS7_sign_ex(NULL, NULL, other, in, flags, libctx, propq);
             if (p7 == NULL)
                 goto end;
             if (flags & PKCS7_NOCERTS) {

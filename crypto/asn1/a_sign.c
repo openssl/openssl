@@ -119,18 +119,18 @@ int ASN1_item_sign(const ASN1_ITEM *it, X509_ALGOR *algor1, X509_ALGOR *algor2,
                    ASN1_BIT_STRING *signature, const void *data,
                    EVP_PKEY *pkey, const EVP_MD *md)
 {
-    return ASN1_item_sign_with_libctx(it, algor1, algor2, signature, data, NULL,
-                                      pkey, md, NULL, NULL);
+    return ASN1_item_sign_ex(it, algor1, algor2, signature, data, NULL, pkey,
+                             md, NULL, NULL);
 }
 
-int ASN1_item_sign_with_libctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
-                               X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
-                               const void *data, const ASN1_OCTET_STRING *id,
-                               EVP_PKEY *pkey, const EVP_MD *md,
-                               OPENSSL_CTX *libctx, const char *propq)
+int ASN1_item_sign_ex(const ASN1_ITEM *it, X509_ALGOR *algor1,
+                      X509_ALGOR *algor2, ASN1_BIT_STRING *signature,
+                      const void *data, const ASN1_OCTET_STRING *id,
+                      EVP_PKEY *pkey, const EVP_MD *md, OPENSSL_CTX *libctx,
+                      const char *propq)
 {
     int rv = 0;
-    EVP_MD_CTX *ctx = evp_md_ctx_new_with_libctx(pkey, id, libctx, propq);
+    EVP_MD_CTX *ctx = evp_md_ctx_new_ex(pkey, id, libctx, propq);
 
     if (ctx == NULL) {
         ASN1err(0, ERR_R_MALLOC_FAILURE);

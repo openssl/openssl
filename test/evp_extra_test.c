@@ -1189,7 +1189,7 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
         inlen = strlen(keys[tst].pub);
         in = (unsigned char *)keys[tst].pub;
         if (uselibctx) {
-            pkey = EVP_PKEY_new_raw_public_key_with_libctx(
+            pkey = EVP_PKEY_new_raw_public_key_ex(
                         testctx,
                         OBJ_nid2sn(keys[tst].type),
                         NULL,
@@ -1205,7 +1205,7 @@ static int test_set_get_raw_keys_int(int tst, int pub, int uselibctx)
         inlen = strlen(keys[tst].priv);
         in = (unsigned char *)keys[tst].priv;
         if (uselibctx) {
-            pkey = EVP_PKEY_new_raw_private_key_with_libctx(
+            pkey = EVP_PKEY_new_raw_private_key_ex(
                         testctx, OBJ_nid2sn(keys[tst].type),
                         NULL,
                         in,
@@ -1605,9 +1605,8 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
      */
     mdctx = EVP_MD_CTX_new();
     if (!TEST_ptr(mdctx)
-        || !TEST_true(EVP_DigestSignInit_with_libctx(mdctx, NULL,
-                                                     "SHA1", NULL, NULL,
-                                                     pkey)))
+        || !TEST_true(EVP_DigestSignInit_ex(mdctx, NULL, "SHA1", NULL, NULL,
+                                            pkey)))
         goto err;
 
     /*

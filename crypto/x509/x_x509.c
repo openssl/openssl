@@ -132,7 +132,7 @@ int i2d_X509(const X509 *a, unsigned char **out)
 /*
  * This should only be used if the X509 object was embedded inside another
  * asn1 object and it needs a libctx to operate.
- * Use X509_new_with_libctx() instead if possible.
+ * Use X509_new_ex() instead if possible.
  */
 int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq)
 {
@@ -143,7 +143,7 @@ int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq)
     return 1;
 }
 
-X509 *X509_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
+X509 *X509_new_ex(OPENSSL_CTX *libctx, const char *propq)
 {
     X509 *cert = NULL;
 

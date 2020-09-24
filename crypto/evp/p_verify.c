@@ -14,9 +14,9 @@
 #include <openssl/x509.h>
 #include "crypto/evp.h"
 
-int EVP_VerifyFinal_with_libctx(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
-                                unsigned int siglen, EVP_PKEY *pkey,
-                                OPENSSL_CTX *libctx, const char *propq)
+int EVP_VerifyFinal_ex(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
+                       unsigned int siglen, EVP_PKEY *pkey, OPENSSL_CTX *libctx,
+                       const char *propq)
 {
     unsigned char m[EVP_MAX_MD_SIZE];
     unsigned int m_len = 0;
@@ -59,5 +59,5 @@ int EVP_VerifyFinal_with_libctx(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
 int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                     unsigned int siglen, EVP_PKEY *pkey)
 {
-    return EVP_VerifyFinal_with_libctx(ctx, sigbuf, siglen, pkey, NULL, NULL);
+    return EVP_VerifyFinal_ex(ctx, sigbuf, siglen, pkey, NULL, NULL);
 }

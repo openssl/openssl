@@ -203,14 +203,14 @@ EVP_PKEY_CTX *CMS_RecipientInfo_get0_pkey_ctx(CMS_RecipientInfo *ri)
     return NULL;
 }
 
-CMS_ContentInfo *CMS_EnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
-                                                      OPENSSL_CTX *libctx,
-                                                      const char *propq)
+CMS_ContentInfo *CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher,
+                                             OPENSSL_CTX *libctx,
+                                             const char *propq)
 {
     CMS_ContentInfo *cms;
     CMS_EnvelopedData *env;
 
-    cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    cms = CMS_ContentInfo_new_ex(libctx, propq);
     if (cms == NULL)
         goto merr;
     env = cms_enveloped_data_init(cms);
@@ -229,18 +229,17 @@ CMS_ContentInfo *CMS_EnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
 
 CMS_ContentInfo *CMS_EnvelopedData_create(const EVP_CIPHER *cipher)
 {
-    return CMS_EnvelopedData_create_with_libctx(cipher, NULL, NULL);
+    return CMS_EnvelopedData_create_ex(cipher, NULL, NULL);
 }
 
 CMS_ContentInfo *
-CMS_AuthEnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
-                                         OPENSSL_CTX *libctx,
-                                         const char *propq)
+CMS_AuthEnvelopedData_create_ex(const EVP_CIPHER *cipher, OPENSSL_CTX *libctx,
+                                const char *propq)
 {
     CMS_ContentInfo *cms;
     CMS_AuthEnvelopedData *aenv;
 
-    cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    cms = CMS_ContentInfo_new_ex(libctx, propq);
     if (cms == NULL)
         goto merr;
     aenv = cms_auth_enveloped_data_init(cms);
@@ -259,7 +258,7 @@ CMS_AuthEnvelopedData_create_with_libctx(const EVP_CIPHER *cipher,
 
 CMS_ContentInfo *CMS_AuthEnvelopedData_create(const EVP_CIPHER *cipher)
 {
-    return CMS_AuthEnvelopedData_create_with_libctx(cipher, NULL, NULL);
+    return CMS_AuthEnvelopedData_create_ex(cipher, NULL, NULL);
 }
 
 /* Key Transport Recipient Info (KTRI) routines */

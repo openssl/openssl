@@ -741,8 +741,7 @@ int req_main(int argc, char **argv)
         if (x509) {
             EVP_PKEY *tmppkey;
             X509V3_CTX ext_ctx;
-            if ((x509ss = X509_new_with_libctx(app_get0_libctx(),
-                                               app_get0_propq())) == NULL)
+            if ((x509ss = X509_new_ex(app_get0_libctx(), app_get0_propq())) == NULL)
                 goto end;
 
             /* Set version to V3 */

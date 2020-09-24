@@ -691,9 +691,9 @@ __owur int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
 
 __owur int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
                          EVP_PKEY *pkey);
-__owur int EVP_SignFinal_with_libctx(EVP_MD_CTX *ctx, unsigned char *md,
-                                     unsigned int *s, EVP_PKEY *pkey,
-                                     OPENSSL_CTX *libctx, const char *propq);
+__owur int EVP_SignFinal_ex(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
+                            EVP_PKEY *pkey, OPENSSL_CTX *libctx,
+                            const char *propq);
 
 __owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
                           size_t *siglen, const unsigned char *tbs,
@@ -701,19 +701,17 @@ __owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
 
 __owur int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                            unsigned int siglen, EVP_PKEY *pkey);
-__owur int EVP_VerifyFinal_with_libctx(EVP_MD_CTX *ctx,
-                                       const unsigned char *sigbuf,
-                                       unsigned int siglen, EVP_PKEY *pkey,
-                                       OPENSSL_CTX *libctx, const char *propq);
+__owur int EVP_VerifyFinal_ex(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
+                              unsigned int siglen, EVP_PKEY *pkey,
+                              OPENSSL_CTX *libctx, const char *propq);
 
 __owur int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
                             size_t siglen, const unsigned char *tbs,
                             size_t tbslen);
 
-int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                                   const char *mdname,
-                                   OPENSSL_CTX *libctx, const char *props,
-                                   EVP_PKEY *pkey);
+int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                          const char *mdname, OPENSSL_CTX *libctx,
+                          const char *props, EVP_PKEY *pkey);
 /*__owur*/ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                   const EVP_MD *type, ENGINE *e,
                                   EVP_PKEY *pkey);
@@ -721,10 +719,9 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize);
 __owur int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                                size_t *siglen);
 
-int EVP_DigestVerifyInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                                     const char *mdname,
-                                     OPENSSL_CTX *libctx, const char *props,
-                                     EVP_PKEY *pkey);
+int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                            const char *mdname, OPENSSL_CTX *libctx,
+                            const char *props, EVP_PKEY *pkey);
 __owur int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                 const EVP_MD *type, ENGINE *e,
                                 EVP_PKEY *pkey);
@@ -1606,19 +1603,16 @@ void EVP_PKEY_CTX_set0_keygen_info(EVP_PKEY_CTX *ctx, int *dat, int datlen);
 
 EVP_PKEY *EVP_PKEY_new_mac_key(int type, ENGINE *e,
                                const unsigned char *key, int keylen);
-EVP_PKEY *EVP_PKEY_new_raw_private_key_with_libctx(OPENSSL_CTX *libctx,
-                                                   const char *keytype,
-                                                   const char *propq,
-                                                   const unsigned char *priv,
-                                                   size_t len);
+EVP_PKEY *EVP_PKEY_new_raw_private_key_ex(OPENSSL_CTX *libctx,
+                                          const char *keytype,
+                                          const char *propq,
+                                          const unsigned char *priv, size_t len);
 EVP_PKEY *EVP_PKEY_new_raw_private_key(int type, ENGINE *e,
                                        const unsigned char *priv,
                                        size_t len);
-EVP_PKEY *EVP_PKEY_new_raw_public_key_with_libctx(OPENSSL_CTX *libctx,
-                                                  const char *keytype,
-                                                  const char *propq,
-                                                  const unsigned char *pub,
-                                                  size_t len);
+EVP_PKEY *EVP_PKEY_new_raw_public_key_ex(OPENSSL_CTX *libctx,
+                                         const char *keytype, const char *propq,
+                                         const unsigned char *pub, size_t len);
 EVP_PKEY *EVP_PKEY_new_raw_public_key(int type, ENGINE *e,
                                       const unsigned char *pub,
                                       size_t len);
@@ -1627,11 +1621,9 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
 int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                 size_t *len);
 
-EVP_PKEY *EVP_PKEY_new_CMAC_key_with_libctx(const unsigned char *priv,
-                                            size_t len,
-                                            const char *cipher_name,
-                                            OPENSSL_CTX *libctx,
-                                            const char *propq);
+EVP_PKEY *EVP_PKEY_new_CMAC_key_ex(const unsigned char *priv, size_t len,
+                                   const char *cipher_name, OPENSSL_CTX *libctx,
+                                   const char *propq);
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher);
 

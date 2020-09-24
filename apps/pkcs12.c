@@ -897,8 +897,7 @@ static int get_cert_chain(X509 *cert, X509_STORE *store,
     STACK_OF(X509) *chn = NULL;
     int i = 0;
 
-    store_ctx = X509_STORE_CTX_new_with_libctx(app_get0_libctx(),
-                                               app_get0_propq());
+    store_ctx = X509_STORE_CTX_new_ex(app_get0_libctx(), app_get0_propq());
     if (store_ctx == NULL) {
         i =  X509_V_ERR_UNSPECIFIED;
         goto end;

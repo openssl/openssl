@@ -279,7 +279,7 @@ static int dhx_cert_load(void)
     };
 
     if (!TEST_ptr(bio = BIO_new_mem_buf(dhx_cert, sizeof(dhx_cert)))
-        || !TEST_ptr(cert = X509_new_with_libctx(libctx, NULL))
+        || !TEST_ptr(cert = X509_new_ex(libctx, NULL))
         || !TEST_ptr(d2i_X509_bio(bio, &cert)))
         goto err;
     ret = 1;

@@ -339,7 +339,7 @@ static int test_ASYNC_block_pause(void)
     return 1;
 }
 
-static int test_ASYNC_start_job_with_libctx(void)
+static int test_ASYNC_start_job_ex(void)
 {
     ASYNC_JOB *job = NULL;
     int funcret;
@@ -350,7 +350,7 @@ static int test_ASYNC_start_job_with_libctx(void)
 
     if (libctx == NULL) {
         fprintf(stderr,
-                "test_ASYNC_start_job_with_libctx() failed to create libctx\n");
+                "test_ASYNC_start_job_ex() failed to create libctx\n");
         goto err;
     }
 
@@ -361,7 +361,7 @@ static int test_ASYNC_start_job_with_libctx(void)
                                NULL, 0)
                != ASYNC_PAUSE) {
         fprintf(stderr,
-                "test_ASYNC_start_job_with_libctx() failed to start job\n");
+                "test_ASYNC_start_job_ex() failed to start job\n");
         goto err;
     }
 
@@ -370,14 +370,14 @@ static int test_ASYNC_start_job_with_libctx(void)
     oldctx = OPENSSL_CTX_set0_default(tmpctx);
     if (tmpctx != libctx) {
         fprintf(stderr,
-                "test_ASYNC_start_job_with_libctx() failed - unexpected libctx\n");
+                "test_ASYNC_start_job_ex() failed - unexpected libctx\n");
         goto err;
     }
 
     if (ASYNC_start_job(&job, waitctx, &funcret, change_deflt_libctx, NULL, 0)
                != ASYNC_PAUSE) {
         fprintf(stderr,
-                "test_ASYNC_start_job_with_libctx() - restarting job failed\n");
+                "test_ASYNC_start_job_ex() - restarting job failed\n");
         goto err;
     }
 
@@ -385,7 +385,7 @@ static int test_ASYNC_start_job_with_libctx(void)
     tmpctx = OPENSSL_CTX_set0_default(oldctx);
     if (tmpctx != libctx) {
         fprintf(stderr,
-                "test_ASYNC_start_job_with_libctx() failed - unexpected libctx\n");
+                "test_ASYNC_start_job_ex() failed - unexpected libctx\n");
         goto err;
     }
 
@@ -393,7 +393,7 @@ static int test_ASYNC_start_job_with_libctx(void)
                != ASYNC_FINISH
                 || funcret != 1) {
         fprintf(stderr,
-                "test_ASYNC_start_job_with_libctx() - finishing job failed\n");
+                "test_ASYNC_start_job_ex() - finishing job failed\n");
         goto err;
     }
 
@@ -402,7 +402,7 @@ static int test_ASYNC_start_job_with_libctx(void)
     OPENSSL_CTX_set0_default(tmpctx);
     if (tmpctx != globalctx) {
         fprintf(stderr,
-                "test_ASYNC_start_job_with_libctx() failed - global libctx check failed\n");
+                "test_ASYNC_start_job_ex() failed - global libctx check failed\n");
         goto err;
     }
 
@@ -425,7 +425,7 @@ int main(int argc, char **argv)
                 || !test_ASYNC_get_current_job()
                 || !test_ASYNC_WAIT_CTX_get_all_fds()
                 || !test_ASYNC_block_pause()
-                || !test_ASYNC_start_job_with_libctx()) {
+                || !test_ASYNC_start_job_ex()) {
             return 1;
         }
     }

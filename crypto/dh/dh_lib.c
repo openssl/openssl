@@ -63,7 +63,7 @@ DH *DH_new_method(ENGINE *engine)
 }
 #endif /* !FIPS_MODULE */
 
-DH *dh_new_with_libctx(OPENSSL_CTX *libctx)
+DH *dh_new_ex(OPENSSL_CTX *libctx)
 {
     return dh_new_intern(NULL, libctx);
 }

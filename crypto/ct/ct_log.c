@@ -100,7 +100,7 @@ err:
     return ret;
 }
 
-CTLOG_STORE *CTLOG_STORE_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
+CTLOG_STORE *CTLOG_STORE_new_ex(OPENSSL_CTX *libctx, const char *propq)
 {
     CTLOG_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -132,7 +132,7 @@ err:
 
 CTLOG_STORE *CTLOG_STORE_new(void)
 {
-    return CTLOG_STORE_new_with_libctx(NULL, NULL);
+    return CTLOG_STORE_new_ex(NULL, NULL);
 }
 
 void CTLOG_STORE_free(CTLOG_STORE *store)
@@ -161,8 +161,8 @@ static int ctlog_new_from_conf(CTLOG_STORE *store, CTLOG **ct_log,
         return 0;
     }
 
-    return CTLOG_new_from_base64_with_libctx(ct_log, pkey_base64, description,
-                                             store->libctx, store->propq);
+    return CTLOG_new_from_base64_ex(ct_log, pkey_base64, description,
+                                    store->libctx, store->propq);
 }
 
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
@@ -264,8 +264,8 @@ end:
  * Takes ownership of the public key.
  * Copies the name.
  */
-CTLOG *CTLOG_new_with_libctx(EVP_PKEY *public_key, const char *name,
-                             OPENSSL_CTX *libctx, const char *propq)
+CTLOG *CTLOG_new_ex(EVP_PKEY *public_key, const char *name, OPENSSL_CTX *libctx,
+                    const char *propq)
 {
     CTLOG *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -301,7 +301,7 @@ err:
 
 CTLOG *CTLOG_new(EVP_PKEY *public_key, const char *name)
 {
-    return CTLOG_new_with_libctx(public_key, name, NULL, NULL);
+    return CTLOG_new_ex(public_key, name, NULL, NULL);
 }
 
 /* Frees CT log and associated structures */

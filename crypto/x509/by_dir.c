@@ -47,12 +47,9 @@ static void free_dir(X509_LOOKUP *lu);
 static int add_cert_dir(BY_DIR *ctx, const char *dir, int type);
 static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                                const X509_NAME *name, X509_OBJECT *ret);
-static int get_cert_by_subject_with_libctx(X509_LOOKUP *xl,
-                                           X509_LOOKUP_TYPE type,
-                                           const X509_NAME *name,
-                                           X509_OBJECT *ret,
-                                           OPENSSL_CTX *libctx,
-                                           const char *propq);
+static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
+                                  const X509_NAME *name, X509_OBJECT *ret,
+                                  OPENSSL_CTX *libctx, const char *propq);
 static X509_LOOKUP_METHOD x509_dir_lookup = {
     "Load certs from files in a directory",
     new_dir,                         /* new_item */
@@ -64,8 +61,8 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
     NULL,                            /* get_by_issuer_serial */
     NULL,                            /* get_by_fingerprint */
     NULL,                            /* get_by_alias */
-    get_cert_by_subject_with_libctx, /* get_by_subject_with_libctx */
-    NULL,                            /* ctrl_with_libctx */
+    get_cert_by_subject_ex, /* get_by_subject_ex */
+    NULL,                            /* ctrl_ex */
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
@@ -217,12 +214,9 @@ static int add_cert_dir(BY_DIR *ctx, const char *dir, int type)
     return 1;
 }
 
-static int get_cert_by_subject_with_libctx(X509_LOOKUP *xl,
-                                           X509_LOOKUP_TYPE type,
-                                           const X509_NAME *name,
-                                           X509_OBJECT *ret,
-                                           OPENSSL_CTX *libctx,
-                                           const char *propq)
+static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
+                                  const X509_NAME *name, X509_OBJECT *ret,
+                                  OPENSSL_CTX *libctx, const char *propq)
 {
     BY_DIR *ctx;
     union {
@@ -327,8 +321,8 @@ static int get_cert_by_subject_with_libctx(X509_LOOKUP *xl,
 #endif
             /* found one. */
             if (type == X509_LU_X509) {
-                if ((X509_load_cert_file_with_libctx(xl, b->data, ent->dir_type,
-                                                     libctx, propq)) == 0)
+                if ((X509_load_cert_file_ex(xl, b->data, ent->dir_type, libctx,
+                                            propq)) == 0)
                     break;
             } else if (type == X509_LU_CRL) {
                 if ((X509_load_crl_file(xl, b->data, ent->dir_type)) == 0)
@@ -406,5 +400,5 @@ static int get_cert_by_subject_with_libctx(X509_LOOKUP *xl,
 static int get_cert_by_subject(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
                                const X509_NAME *name, X509_OBJECT *ret)
 {
-    return get_cert_by_subject_with_libctx(xl, type, name, ret, NULL, NULL);
+    return get_cert_by_subject_ex(xl, type, name, ret, NULL, NULL);
 }

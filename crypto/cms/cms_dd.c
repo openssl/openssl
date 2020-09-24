@@ -23,7 +23,7 @@ CMS_ContentInfo *cms_DigestedData_create(const EVP_MD *md,
     CMS_ContentInfo *cms;
     CMS_DigestedData *dd;
 
-    cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    cms = CMS_ContentInfo_new_ex(libctx, propq);
     if (cms == NULL)
         return NULL;
 

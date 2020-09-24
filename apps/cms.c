@@ -237,7 +237,7 @@ static CMS_ContentInfo *load_content_info(int informat, BIO *in, BIO **indata,
 {
     CMS_ContentInfo *ret, *ci;
 
-    ret = CMS_ContentInfo_new_with_libctx(libctx, propq);
+    ret = CMS_ContentInfo_new_ex(libctx, propq);
     if (ret == NULL) {
         BIO_printf(bio_err, "Error allocating CMS_contentinfo\n");
         return NULL;
@@ -926,15 +926,15 @@ int cms_main(int argc, char **argv)
     ret = 3;
 
     if (operation == SMIME_DATA_CREATE) {
-        cms = CMS_data_create_with_libctx(in, flags, libctx, propq);
+        cms = CMS_data_create_ex(in, flags, libctx, propq);
     } else if (operation == SMIME_DIGEST_CREATE) {
-        cms = CMS_digest_create_with_libctx(in, sign_md, flags, libctx, propq);
+        cms = CMS_digest_create_ex(in, sign_md, flags, libctx, propq);
     } else if (operation == SMIME_COMPRESS) {
         cms = CMS_compress(in, -1, flags);
     } else if (operation == SMIME_ENCRYPT) {
         int i;
         flags |= CMS_PARTIAL;
-        cms = CMS_encrypt_with_libctx(NULL, in, cipher, flags, libctx, propq);
+        cms = CMS_encrypt_ex(NULL, in, cipher, flags, libctx, propq);
         if (cms == NULL)
             goto end;
         for (i = 0; i < sk_X509_num(encerts); i++) {
@@ -999,9 +999,8 @@ int cms_main(int argc, char **argv)
                 goto end;
         }
     } else if (operation == SMIME_ENCRYPTED_ENCRYPT) {
-        cms = CMS_EncryptedData_encrypt_with_libctx(in, cipher, secret_key,
-                                                    secret_keylen, flags,
-                                                    libctx, propq);
+        cms = CMS_EncryptedData_encrypt_ex(in, cipher, secret_key,
+                                           secret_keylen, flags, libctx, propq);
 
     } else if (operation == SMIME_SIGN_RECEIPT) {
         CMS_ContentInfo *srcms = NULL;
@@ -1029,7 +1028,7 @@ int cms_main(int argc, char **argv)
                     flags |= CMS_STREAM;
             }
             flags |= CMS_PARTIAL;
-            cms = CMS_sign_with_libctx(NULL, NULL, other, in, flags, libctx, propq);
+            cms = CMS_sign_ex(NULL, NULL, other, in, flags, libctx, propq);
             if (cms == NULL)
                 goto end;
             if (econtent_type != NULL)
@@ -1416,8 +1415,8 @@ static CMS_ReceiptRequest *make_receipt_request(
     } else {
         rct_from = NULL;
     }
-    rr = CMS_ReceiptRequest_create0_with_libctx(NULL, -1, rr_allorfirst,
-                                                rct_from, rct_to, libctx, propq);
+    rr = CMS_ReceiptRequest_create0_ex(NULL, -1, rr_allorfirst, rct_from,
+                                       rct_to, libctx, propq);
     return rr;
  err:
     sk_GENERAL_NAMES_pop_free(rct_to, GENERAL_NAMES_free);

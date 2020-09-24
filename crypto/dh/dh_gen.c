@@ -100,7 +100,7 @@ static int dh_gen_named_group(OPENSSL_CTX *libctx, DH *ret, int prime_len)
     if (nid == NID_undef)
         return 0;
 
-    dh = dh_new_by_nid_with_libctx(libctx, nid);
+    dh = dh_new_by_nid_ex(libctx, nid);
     if (dh != NULL
         && ffc_params_copy(&ret->params, &dh->params)) {
         ok = 1;

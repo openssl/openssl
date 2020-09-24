@@ -1380,9 +1380,9 @@ int main(int argc, char *argv[])
             goto end;
     }
 
-    c_ctx = SSL_CTX_new_with_libctx(libctx, NULL, meth);
-    s_ctx = SSL_CTX_new_with_libctx(libctx, NULL, meth);
-    s_ctx2 = SSL_CTX_new_with_libctx(libctx, NULL, meth); /* no SSL_CTX_dup! */
+    c_ctx = SSL_CTX_new_ex(libctx, NULL, meth);
+    s_ctx = SSL_CTX_new_ex(libctx, NULL, meth);
+    s_ctx2 = SSL_CTX_new_ex(libctx, NULL, meth); /* no SSL_CTX_dup! */
     if ((c_ctx == NULL) || (s_ctx == NULL) || (s_ctx2 == NULL)) {
         ERR_print_errors(bio_err);
         goto end;

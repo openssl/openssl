@@ -236,7 +236,7 @@ void *ec_newdata(void *provctx)
 {
     if (!ossl_prov_is_running())
         return NULL;
-    return EC_KEY_new_with_libctx(PROV_LIBRARY_CONTEXT_OF(provctx), NULL);
+    return EC_KEY_new_ex(PROV_LIBRARY_CONTEXT_OF(provctx), NULL);
 }
 
 static
@@ -1050,7 +1050,7 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (!ossl_prov_is_running()
         || gctx == NULL
-        || (ec = EC_KEY_new_with_libctx(gctx->libctx, NULL)) == NULL)
+        || (ec = EC_KEY_new_ex(gctx->libctx, NULL)) == NULL)
         return NULL;
 
     if (gctx->gen_group == NULL) {

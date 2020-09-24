@@ -365,8 +365,8 @@ const char *X509_verify_cert_error_string(long n);
 int X509_verify(X509 *a, EVP_PKEY *r);
 int X509_self_signed(X509 *cert, int verify_signature);
 
-int X509_REQ_verify_with_libctx(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
-                                const char *propq);
+int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OPENSSL_CTX *libctx,
+                       const char *propq);
 int X509_REQ_verify(X509_REQ *a, EVP_PKEY *r);
 int X509_CRL_verify(X509_CRL *a, EVP_PKEY *r);
 int NETSCAPE_SPKI_verify(NETSCAPE_SPKI *a, EVP_PKEY *r);
@@ -576,7 +576,7 @@ int X509_NAME_set(X509_NAME **xn, const X509_NAME *name);
 
 DECLARE_ASN1_FUNCTIONS(X509_CINF)
 DECLARE_ASN1_FUNCTIONS(X509)
-X509 *X509_new_with_libctx(OPENSSL_CTX *libctx, const char *propq);
+X509 *X509_new_ex(OPENSSL_CTX *libctx, const char *propq);
 DECLARE_ASN1_FUNCTIONS(X509_CERT_AUX)
 
 #define X509_get_ex_new_index(l, p, newf, dupf, freef) \
@@ -1054,8 +1054,8 @@ X509_ALGOR *PKCS5_pbkdf2_set(int iter, unsigned char *salt, int saltlen,
 DECLARE_ASN1_FUNCTIONS(PKCS8_PRIV_KEY_INFO)
 
 EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8);
-EVP_PKEY *EVP_PKCS82PKEY_with_libctx(const PKCS8_PRIV_KEY_INFO *p8,
-                                     OPENSSL_CTX *libctx, const char *propq);
+EVP_PKEY *EVP_PKCS82PKEY_ex(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
+                            const char *propq);
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey);
 
 int PKCS8_pkey_set0(PKCS8_PRIV_KEY_INFO *priv, ASN1_OBJECT *aobj,

@@ -19,11 +19,10 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-int pkcs5_pbkdf2_hmac_with_libctx(const char *pass, int passlen,
-                                  const unsigned char *salt, int saltlen,
-                                  int iter, const EVP_MD *digest, int keylen,
-                                  unsigned char *out,
-                                  OPENSSL_CTX *libctx, const char *propq)
+int pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
+                         const unsigned char *salt, int saltlen, int iter,
+                         const EVP_MD *digest, int keylen, unsigned char *out,
+                         OPENSSL_CTX *libctx, const char *propq)
 {
     const char *empty = "";
     int rv = 1, mode = 1;
@@ -84,8 +83,8 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
                       int saltlen, int iter, const EVP_MD *digest, int keylen,
                       unsigned char *out)
 {
-    return pkcs5_pbkdf2_hmac_with_libctx(pass, passlen, salt, saltlen, iter,
-                                         digest, keylen, out, NULL, NULL);
+    return pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, iter, digest,
+                                keylen, out, NULL, NULL);
 }
 
 
