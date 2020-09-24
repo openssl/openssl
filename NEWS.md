@@ -830,7 +830,7 @@ OpenSSL 0.9.x
 ### Major changes between OpenSSL 0.9.8j and OpenSSL 0.9.8k [25 Mar 2009]
 
   * Fix various build issues.
-  * Fix security issues [CVE-2009-0590], [CVE-2009-0591][], [CVE-2009-0789]
+  * Fix security issues [CVE-2009-0590], [CVE-2009-0591], [CVE-2009-0789]
 
 ### Major changes between OpenSSL 0.9.8i and OpenSSL 0.9.8j [7 Jan 2009]
 
