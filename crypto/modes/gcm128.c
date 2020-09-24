@@ -1359,8 +1359,8 @@ int CRYPTO_gcm128_decrypt(GCM128_CONTEXT *ctx,
                 else
                     ctx->Yi.d[3] = ctr;
                 for (i = 0; i < 16 / sizeof(size_t); ++i) {
-                    size_t c = in[i];
-                    out[i] = c ^ ctx->EKi.t[i];
+                    size_t c = in_t[i];
+                    out_t[i] = c ^ ctx->EKi.t[i];
                     ctx->Xi.t[i] ^= c;
                 }
                 GCM_MUL(ctx);
