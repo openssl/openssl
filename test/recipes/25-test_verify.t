@@ -51,12 +51,8 @@ ok(verify("ee-cert-noncrit-unknown-ext", "sslserver", [qw(root-cert)], [qw(ca-ce
    "accept non-critical unknown extension");
 ok(!verify("ee-cert-crit-unknown-ext", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
    "reject critical unknown extension");
-SKIP: {
-    skip "OCSP is not supported by this OpenSSL build", 1
-        if disabled("ocsp");
-    ok(verify("ee-cert-ocsp-nocheck", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
-       "accept critical OCSP No Check");
-}
+ok(verify("ee-cert-ocsp-nocheck", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept critical OCSP No Check");
 
 # Explicit trust/purpose combinations
 #
