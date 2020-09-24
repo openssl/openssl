@@ -32,6 +32,11 @@ OpenSSL 3.0
 
    *Richard Levitte*
 
+ * Deprecated EVP_PKEY_CTX_set_rsa_keygen_pubexp() & introduced
+   EVP_PKEY_CTX_set1_rsa_keygen_pubexp(), which is now preferred.
+
+   *Jeremy Walch*
+
  * Changed all "STACK" functions to be macros instead of inline functions. Macro
    parameters are still checked for type safety at compile time via helper
    inline functions.

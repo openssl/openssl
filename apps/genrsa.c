@@ -188,7 +188,7 @@ opthelp:
         BIO_printf(bio_err, "Error allocating RSA public exponent\n");
         goto end;
     }
-    if (EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, bn) <= 0) {
+    if (EVP_PKEY_CTX_set1_rsa_keygen_pubexp(ctx, bn) <= 0) {
         BIO_printf(bio_err, "Error setting RSA public exponent\n");
         goto end;
     }

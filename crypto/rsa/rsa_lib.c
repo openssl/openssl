@@ -1345,7 +1345,9 @@ int EVP_PKEY_CTX_set_rsa_keygen_bits(EVP_PKEY_CTX *ctx, int bits)
     return 1;
 }
 
-int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
+static int evp_pkey_ctx_set_rsa_keygen_pubexp_intern(EVP_PKEY_CTX *ctx,
+                                                     BIGNUM *pubexp,
+                                                     int copy)
 {
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params;
@@ -1362,9 +1364,15 @@ int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
         return -1;
 
     /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN,
-                                 EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp);
+    if (ctx->op.keymgmt.genctx == NULL) {
+        if (copy == 1)
+            pubexp = BN_dup(pubexp);
+        ret = EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_RSA, EVP_PKEY_OP_KEYGEN,
+                                EVP_PKEY_CTRL_RSA_KEYGEN_PUBEXP, 0, pubexp);
+        if ((copy == 1) && (ret <= 0))
+            BN_free(pubexp);
+        return ret;
+    }
 
     if ((tmpl = OSSL_PARAM_BLD_new()) == NULL)
         return 0;
@@ -1377,7 +1385,26 @@ int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
 
     ret = EVP_PKEY_CTX_set_params(ctx, params);
     OSSL_PARAM_BLD_free_params(params);
+
+    /*
+     * Satisfy memory semantics for pre-3.0 callers of
+     * EVP_PKEY_CTX_set_rsa_keygen_pubexp(): their expectation is that input
+     * pubexp BIGNUM becomes managed by the EVP_PKEY_CTX on success.
+     */
+    if ((copy == 0) && (ret > 0))
+        ctx->rsa_pubexp = pubexp;
+
     return ret;
+}
+
+int EVP_PKEY_CTX_set_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
+{
+    return evp_pkey_ctx_set_rsa_keygen_pubexp_intern(ctx, pubexp, 0);
+}
+
+int EVP_PKEY_CTX_set1_rsa_keygen_pubexp(EVP_PKEY_CTX *ctx, BIGNUM *pubexp)
+{
+    return evp_pkey_ctx_set_rsa_keygen_pubexp_intern(ctx, pubexp, 1);
 }
 
 int EVP_PKEY_CTX_set_rsa_keygen_primes(EVP_PKEY_CTX *ctx, int primes)

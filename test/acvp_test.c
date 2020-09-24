@@ -1119,7 +1119,7 @@ static int rsa_keygen_test(int id)
         || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
         || !TEST_true(EVP_PKEY_CTX_set_params(ctx, params))
         || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, tst->mod))
-        || !TEST_true(EVP_PKEY_CTX_set_rsa_keygen_pubexp(ctx, e_bn))
+        || !TEST_true(EVP_PKEY_CTX_set1_rsa_keygen_pubexp(ctx, e_bn))
         || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
         || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_TEST_P1,
                                         &p1, &p1_len))
