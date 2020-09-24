@@ -160,6 +160,11 @@ my $guess_patterns = [
     [ 'CYGWIN.*',                   '${MACHINE}-pc-cygwin' ],
     [ 'vxworks.*',                  '${MACHINE}-whatever-vxworks' ],
 
+    # Note: there's also NEO and NSR, but they are old and unsupported
+    [ 'NONSTOP_KERNEL:.*:NSE-.*?',  'nse-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSV-.*?',  'nsv-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSX-.*?',  'nsx-tandem-nsk${RELEASE}' ],
+
     [ sub { -d '/usr/apollo' },     'whatever-apollo-whatever' ],
 ];
 
@@ -859,6 +864,20 @@ EOF
       # we'll get in the upcoming x86_64 port...
       [ '.*Alpha.*?-.*?-OpenVMS', { target => 'vms-alpha' } ],
       [ '.*?-.*?-OpenVMS',        { target => 'vms-ia64'  } ],
+
+      # TODO: There are a few more choices among OpenSSL config targets, but
+      # reaching them involves a bit more than just a host tripet.  Select
+      # environment variables could do the job to cover for more granular
+      # build options such as data model (ILP32 or LP64), thread support
+      # model (PUT, SPT or nothing), target execution environment (OSS or
+      # GUARDIAN).  And still, there must be some kind of default when
+      # nothing else is said.
+      #
+      # nsv is a virtual x86 environment, equivalent to nsx, so we enforce
+      # the latter.
+      [ 'nse-tandem-nsk.*',       { target => 'nonstop-nse' } ],
+      [ 'nsv-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
+      [ 'nsx-tandem-nsk.*',       { target => 'nonstop-nsx' } ],
 
     ];
 
