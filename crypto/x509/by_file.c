@@ -36,7 +36,7 @@ static X509_LOOKUP_METHOD x509_file_lookup = {
     NULL,                       /* get_by_fingerprint */
     NULL,                       /* get_by_alias */
     NULL,                       /* get_by_subject_ex */
-    by_file_ctrl_ex,   /* ctrl_ex */
+    by_file_ctrl_ex,            /* ctrl_ex */
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_file(void)

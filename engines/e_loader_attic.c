@@ -1744,7 +1744,7 @@ static int bind_loader_attic(ENGINE *e)
 
     if (/* Create the OSSL_STORE_LOADER */
         (loader_attic = OSSL_STORE_LOADER_new(e, "file")) == NULL
-        || !OSSL_STORE_LOADER_set_open_ex(loader_attic, file_open_with_libctx)
+        || !OSSL_STORE_LOADER_set_open_ex(loader_attic, file_open_ex)
         || !OSSL_STORE_LOADER_set_open(loader_attic, file_open)
         || !OSSL_STORE_LOADER_set_attach(loader_attic, file_attach)
         || !OSSL_STORE_LOADER_set_ctrl(loader_attic, file_ctrl)

@@ -177,7 +177,7 @@ EC_KEY_priv2buf() converts an EC_KEY private key into an allocated buffer.
 
 =head1 RETURN VALUES
 
-EC_KEY_new_with_libctx(), EC_KEY_new(), EC_KEY_new_by_curve_name_ex(),
+EC_KEY_new_ex(), EC_KEY_new(), EC_KEY_new_by_curve_name_ex(),
 EC_KEY_new_by_curve_name() and EC_KEY_dup() return a pointer to the newly
 created EC_KEY object, or NULL on error.
 

@@ -61,7 +61,7 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
     NULL,                            /* get_by_issuer_serial */
     NULL,                            /* get_by_fingerprint */
     NULL,                            /* get_by_alias */
-    get_cert_by_subject_ex, /* get_by_subject_ex */
+    get_cert_by_subject_ex,          /* get_by_subject_ex */
     NULL,                            /* ctrl_ex */
 };
 

@@ -361,7 +361,7 @@ B<I<TYPE>_print_ctx>() returns 1 on success or zero on failure.
 
 =head1 HISTORY
 
-The functions PKCS7_new_with_libctx() and CMS_ContentInfo_new_ex() were
+The functions PKCS7_new_ex() and CMS_ContentInfo_new_ex() were
 added in OpenSSL 3.0.
 
 =head1 COPYRIGHT

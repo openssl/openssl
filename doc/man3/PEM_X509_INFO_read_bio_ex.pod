@@ -37,7 +37,7 @@ fetching algorithms from providers.
 
 =head1 RETURN VALUES
 
-PEM_X509_INFO_read_with_libctx() and PEM_X509_INFO_read_bio_ex() return
+PEM_X509_INFO_read_ex() and PEM_X509_INFO_read_bio_ex() return
 a stack of B<X509_INFO> objects or NULL on failure.
 
 =head1 SEE ALSO

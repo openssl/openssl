@@ -68,7 +68,7 @@ OSSL_STORE_eof_fn                       datatype
 OSSL_STORE_error_fn                     datatype
 OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
-OSSL_STORE_open_with_libctx_fn          datatype
+OSSL_STORE_open_ex_fn                   datatype
 OSSL_STORE_post_process_info_fn         datatype
 OSSL_trace_cb                           datatype
 PROFESSION_INFO                         datatype
@@ -580,11 +580,11 @@ X509_CRL_http_nbio                      define
 X509_http_nbio                          define
 X509_LOOKUP_add_dir                     define
 X509_LOOKUP_add_store                   define
-X509_LOOKUP_add_store_with_libctx       define
+X509_LOOKUP_add_store_ex                define
 X509_LOOKUP_load_file                   define
-X509_LOOKUP_load_file_with_libctx       define
+X509_LOOKUP_load_file_ex                define
 X509_LOOKUP_load_store                  define
-X509_LOOKUP_load_store_with_libctx      define
+X509_LOOKUP_load_store_ex               define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define
