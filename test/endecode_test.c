@@ -1140,7 +1140,7 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
 # endif /* OPENSSL_NO_EC2M */
 #endif /* OPENSSL_NO_EC */
 
-static int test_decoder_ctx_setup_for_EVP_PKEY_input_type_pem() {
+static int test_decoder_ctx_setup_for_EVP_PKEY_input_type_pem(void) {
   int ret;
   OPENSSL_CTX *ctx;
   OSSL_DECODER_CTX *dctx;
