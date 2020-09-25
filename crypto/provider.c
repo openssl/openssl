@@ -75,6 +75,13 @@ const OSSL_ALGORITHM *OSSL_PROVIDER_query_operation(const OSSL_PROVIDER *prov,
     return ossl_provider_query_operation(prov, operation_id, no_cache);
 }
 
+void OSSL_PROVIDER_unquery_operation(const OSSL_PROVIDER *prov,
+                                     int operation_id,
+                                     const OSSL_ALGORITHM *algs)
+{
+    ossl_provider_unquery_operation(prov, operation_id, algs);
+}
+
 void *OSSL_PROVIDER_get0_provider_ctx(const OSSL_PROVIDER *prov)
 {
     return ossl_provider_prov_ctx(prov);

@@ -83,6 +83,9 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov);
 const OSSL_ALGORITHM *ossl_provider_query_operation(const OSSL_PROVIDER *prov,
                                                     int operation_id,
                                                     int *no_cache);
+void ossl_provider_unquery_operation(const OSSL_PROVIDER *prov,
+                                     int operation_id,
+                                     const OSSL_ALGORITHM *algs);
 
 /* Cache of bits to see if we already queried an operation */
 int ossl_provider_set_operation_bit(OSSL_PROVIDER *provider, size_t bitnum);
