@@ -842,3 +842,8 @@ int evp_set_default_properties_int(OSSL_LIB_CTX *libctx, const char *propq,
                                    int loadconfig);
 
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
+
+/* Remove this eventually when no more legacy */
+# define LEGACY_EVP_PKEY_CTX_CTRL(_cond, _ctx, _ktype, _op, _cmd, _p1, _p2)    \
+if (_cond)                                                                     \
+    return EVP_PKEY_CTX_ctrl(_ctx, _ktype, _op, _cmd, _p1, _p2);

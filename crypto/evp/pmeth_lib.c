@@ -1164,7 +1164,7 @@ int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len)
                                               * read only so should be safe
                                               */
                                              (void *)id, (size_t)len);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2)
@@ -1192,7 +1192,7 @@ static int get1_id_data(EVP_PKEY_CTX *ctx, void *id, size_t *id_len)
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_PKEY_PARAM_DIST_ID,
                                           &tmp_id, 0);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {

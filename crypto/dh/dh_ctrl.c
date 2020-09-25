@@ -7,22 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * DH low level APIs are deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
-
-#include <stdio.h>
-#include "crypto/evp.h"
-#include <openssl/bn.h>
-#include <openssl/engine.h>
+#include "e_os.h"
 #include <openssl/obj_mac.h>
 #include <openssl/core_names.h>
-#include "internal/cryptlib.h"
-#include "internal/refcount.h"
+#include <openssl/err.h>
+#include "crypto/evp.h"
 #include "crypto/dh.h"
-#include "dh_local.h"
+
+#define LEGACY_SET_DH_PARAMGEN(_ctx, _cmd, _p1, _p2)                           \
+    LEGACY_EVP_PKEY_CTX_CTRL(_ctx->op.keymgmt.genctx == NULL, _ctx,            \
+                             EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN, _cmd, _p1, _p2)
+#define LEGACY_SET_DHX_PARAMGEN(_ctx, _cmd, _p1, _p2)                          \
+    LEGACY_EVP_PKEY_CTX_CTRL(_ctx->op.keymgmt.genctx == NULL, _ctx,            \
+                             EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN, _cmd, _p1, _p2)
+#define LEGACY_SET_DHX_EXCH(_ctx, _cmd, _p1, _p2)                              \
+LEGACY_EVP_PKEY_CTX_CTRL(_ctx->op.kex.exchprovctx == NULL, _ctx,               \
+                         EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, _cmd, _p1, _p2)
 
 static int dh_paramgen_check(EVP_PKEY_CTX *ctx)
 {
@@ -94,10 +94,7 @@ int EVP_PKEY_CTX_set_dh_paramgen_type(EVP_PKEY_CTX *ctx, int typ)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_TYPE, typ, NULL);
+    LEGACY_SET_DH_PARAMGEN(ctx, EVP_PKEY_CTRL_DH_PARAMGEN_TYPE, typ, NULL);
 
     name = dh_gen_type_id2name(typ);
     if (name == NULL)
@@ -118,11 +115,8 @@ int EVP_PKEY_CTX_set_dh_paramgen_prime_len(EVP_PKEY_CTX *ctx, int pbits)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN, pbits,
-                                 NULL);
+    LEGACY_SET_DH_PARAMGEN(ctx, EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN, pbits, NULL);
+
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_PBITS, &bits);
     *p = OSSL_PARAM_construct_end();
     return EVP_PKEY_CTX_set_params(ctx, params);
@@ -137,11 +131,8 @@ int EVP_PKEY_CTX_set_dh_paramgen_subprime_len(EVP_PKEY_CTX *ctx, int qbits)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN, qbits,
-                                 NULL);
+    LEGACY_SET_DH_PARAMGEN(ctx, EVP_PKEY_CTRL_DH_PARAMGEN_SUBPRIME_LEN, qbits, NULL);
+
     *p++ = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_FFC_QBITS, &bits2);
     *p = OSSL_PARAM_construct_end();
 
@@ -156,10 +147,8 @@ int EVP_PKEY_CTX_set_dh_paramgen_generator(EVP_PKEY_CTX *ctx, int gen)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR, gen, NULL);
+    LEGACY_SET_DH_PARAMGEN(ctx, EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR, gen, NULL);
+
     *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_DH_GENERATOR, &gen);
     *p = OSSL_PARAM_construct_end();
 
@@ -175,10 +164,8 @@ int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_PARAMGEN,
-                                 EVP_PKEY_CTRL_DH_RFC5114, gen, NULL);
+    LEGACY_SET_DHX_PARAMGEN(ctx, EVP_PKEY_CTRL_DH_RFC5114, gen, NULL);
+
     name = ossl_ffc_named_group_from_uid(gen);
     if (name == NULL)
         return 0;
@@ -203,11 +190,11 @@ int EVP_PKEY_CTX_set_dh_nid(EVP_PKEY_CTX *ctx, int nid)
     if ((ret = dh_paramgen_check(ctx)) <= 0)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.keymgmt.genctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DH,
-                                 EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
-                                 EVP_PKEY_CTRL_DH_NID, nid, NULL);
+    LEGACY_EVP_PKEY_CTX_CTRL(ctx->op.keymgmt.genctx == NULL, ctx,
+                             EVP_PKEY_DH,
+                             EVP_PKEY_OP_PARAMGEN | EVP_PKEY_OP_KEYGEN,
+                             EVP_PKEY_CTRL_DH_NID, nid, NULL);
+
     name = ossl_ffc_named_group_from_uid(nid);
     if (name == NULL)
         return 0;
@@ -228,10 +215,8 @@ int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_TYPE, kdf, NULL);
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_DH_KDF_TYPE, kdf, NULL);
+
     switch (kdf) {
         case EVP_PKEY_DH_KDF_NONE:
             kdf_type = "";
@@ -270,10 +255,8 @@ int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_TYPE, -2, NULL);
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_DH_KDF_TYPE, -2, NULL);
+
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
                                             kdf_type, sizeof(kdf_type));
     *p = OSSL_PARAM_construct_end();
@@ -305,10 +288,8 @@ int EVP_PKEY_CTX_set0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT *oid)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)(oid));
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)(oid));
+
     oid_name = OBJ_nid2sn(OBJ_obj2nid(oid));
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
@@ -334,10 +315,8 @@ int EVP_PKEY_CTX_get0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT **oid)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)(oid));
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)(oid));
+
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
                                             oid_name, sizeof(oid_name));
     *p = OSSL_PARAM_construct_end();
@@ -367,10 +346,8 @@ int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md));
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md));
+
     md_name = (md == NULL) ? "" : EVP_MD_name(md);
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
@@ -400,10 +377,8 @@ int EVP_PKEY_CTX_get_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_DH_KDF_MD, 0, (void *)(pmd));
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_GET_DH_KDF_MD, 0, (void *)(pmd));
+
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
                                             name, sizeof(name));
     *p = OSSL_PARAM_construct_end();
@@ -433,10 +408,8 @@ int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int inlen)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_OUTLEN, inlen, NULL);
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_DH_KDF_OUTLEN, inlen, NULL);
+
     if (inlen <= 0) {
         /*
          * This would ideally be -1 or 0, but we have to retain compatibility
@@ -469,11 +442,8 @@ int EVP_PKEY_CTX_get_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN, 0,
-                                 (void *)(plen));
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN, 0, (void *)(plen));
+
     *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
                                        &len);
     *p = OSSL_PARAM_construct_end();
@@ -507,10 +477,7 @@ int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_DH_KDF_UKM, len, (void *)(ukm));
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_DH_KDF_UKM, len, (void *)(ukm));
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                             /*
@@ -542,10 +509,7 @@ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_DH_KDF_UKM, 0, (void *)(pukm));
+    LEGACY_SET_DHX_EXCH(ctx, EVP_PKEY_CTRL_GET_DH_KDF_UKM, 0, (void *)(pukm));
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                           (void **)pukm, 0);

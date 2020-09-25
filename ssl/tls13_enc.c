@@ -103,7 +103,7 @@ int tls13_hkdf_expand(SSL *s, const EVP_MD *md, const unsigned char *secret,
                                              (unsigned char *)secret, hashlen);
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                              hkdflabel, hkdflabellen);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
         || EVP_KDF_derive(kctx, out, outlen) <= 0;
@@ -256,7 +256,7 @@ int tls13_generate_secret(SSL *s, const EVP_MD *md,
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
                                              (unsigned char *)prevsecret,
                                              prevsecretlen);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = EVP_KDF_CTX_set_params(kctx, params) <= 0
         || EVP_KDF_derive(kctx, outsecret, mdlen) <= 0;
@@ -350,7 +350,7 @@ size_t tls13_final_finish_mac(SSL *s, const char *str, size_t slen,
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY, finsecret,
                                                  hashlen);
     }
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ctx = EVP_MAC_CTX_new(hmac);
     if (ctx == NULL

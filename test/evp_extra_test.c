@@ -1622,7 +1622,7 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
     param_md = param;
     *param++ = OSSL_PARAM_construct_utf8_string(OSSL_SIGNATURE_PARAM_DIGEST,
                                                 mdname, 0);
-    *param++ = OSSL_PARAM_construct_end();
+    *param = OSSL_PARAM_construct_end();
 
     if (!TEST_true(EVP_PKEY_CTX_set_params(ctx, ourparams)))
         goto err;
@@ -1667,7 +1667,7 @@ static int test_EVP_PKEY_CTX_get_set_params(EVP_PKEY *pkey)
     memset(ssl3ms, 0, sizeof(ssl3ms));
     *param++ = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_SSL3_MS,
                                                  ssl3ms, sizeof(ssl3ms));
-    *param++ = OSSL_PARAM_construct_end();
+    *param = OSSL_PARAM_construct_end();
 
     if (!TEST_true(EVP_MD_CTX_set_params(mdctx, ourparams)))
         goto err;

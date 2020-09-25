@@ -1201,7 +1201,7 @@ static int rsa_siggen_test(int id)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
                                         &salt_len);
     }
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(pkey = rsa_keygen(tst->mod))
        || !TEST_true(pkey_get_bn_bytes(pkey, OSSL_PKEY_PARAM_RSA_N, &n, &n_len))
@@ -1246,7 +1246,7 @@ static int rsa_sigver_test(int id)
         *p++ = OSSL_PARAM_construct_int(OSSL_SIGNATURE_PARAM_PSS_SALTLEN,
                                         &salt_len);
     }
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(bn_ctx = BN_CTX_new())
         || !TEST_true(rsa_create_pkey(&pkey, tst->n, tst->n_len,

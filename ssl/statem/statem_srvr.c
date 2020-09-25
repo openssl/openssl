@@ -2918,7 +2918,7 @@ static int tls_process_cke_rsa(SSL *s, PACKET *pkt)
         *p++ = OSSL_PARAM_construct_uint(
             OSSL_ASYM_CIPHER_PARAM_TLS_NEGOTIATED_VERSION,
             (unsigned int *)&s->version);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     if (!EVP_PKEY_CTX_set_params(ctx, params)
             || EVP_PKEY_decrypt(ctx, rsa_decrypt, &outlen,

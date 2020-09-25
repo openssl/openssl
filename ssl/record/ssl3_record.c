@@ -1463,7 +1463,7 @@ int tls1_mac(SSL *ssl, SSL3_RECORD *rec, unsigned char *md, int sending)
 
         *p++ = OSSL_PARAM_construct_size_t(OSSL_MAC_PARAM_TLS_DATA_SIZE,
                                            &rec->orig_len);
-        *p++ = OSSL_PARAM_construct_end();
+        *p = OSSL_PARAM_construct_end();
 
         if (!EVP_PKEY_CTX_set_params(EVP_MD_CTX_pkey_ctx(mac_ctx),
                                      tls_hmac_params))

@@ -330,7 +330,6 @@ OSSL_LIB_CTX *app_get0_libctx(void)
     return app_libctx;
 }
 
-/* TODO(3.0): Make this an environment variable if required */
 const char *app_get0_propq(void)
 {
     return NULL;

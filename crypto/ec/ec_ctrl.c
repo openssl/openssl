@@ -7,15 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-
-#include <openssl/err.h>
-#include <openssl/opensslv.h>
-
+#include "e_os.h" /* strcasecmp() */
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include "crypto/evp.h"
+#include "crypto/ec.h"
 
-#include "ec_local.h"
+#define LEGACY_SET_EC_EXCH(_ctx, _cmd, _p1, _p2)                               \
+LEGACY_EVP_PKEY_CTX_CTRL(_ctx->op.kex.exchprovctx == NULL, _ctx,               \
+                         EVP_PKEY_EC, EVP_PKEY_OP_DERIVE, _cmd, _p1, _p2)
 
 /*
  * This file is meant to contain functions to provide EVP_PKEY support for EC
@@ -58,16 +58,11 @@ int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode)
         return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_EC_ECDH_COFACTOR,
-                                 cofactor_mode, NULL);
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_EC_ECDH_COFACTOR, cofactor_mode, NULL);
 
     *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE,
                                     &cofactor_mode);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
@@ -88,15 +83,11 @@ int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_EC_ECDH_COFACTOR, -2, NULL);
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_EC_ECDH_COFACTOR, -2, NULL);
 
     *p++ = OSSL_PARAM_construct_int(OSSL_EXCHANGE_PARAM_EC_ECDH_COFACTOR_MODE,
                                     &mode);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
@@ -139,11 +130,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
             return -2;
     }
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_EC_KDF_TYPE, kdf, NULL);
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_EC_KDF_TYPE, kdf, NULL);
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
                                             /*
@@ -151,7 +138,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
                                              * only so should be safe
                                              */
                                             (char *)kdf_type, 0);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
@@ -174,15 +161,11 @@ int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_EC_KDF_TYPE, -2, NULL);
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_EC_KDF_TYPE, -2, NULL);
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_TYPE,
                                             kdf_type, sizeof(kdf_type));
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
@@ -195,7 +178,7 @@ int EVP_PKEY_CTX_get_ecdh_kdf_type(EVP_PKEY_CTX *ctx)
 
     if (kdf_type[0] == '\0')
         return EVP_PKEY_ECDH_KDF_NONE;
-    else if (strcmp(kdf_type, OSSL_KDF_NAME_X963KDF) == 0)
+    else if (strcasecmp(kdf_type, OSSL_KDF_NAME_X963KDF) == 0)
         return EVP_PKEY_ECDH_KDF_X9_63;
 
     return -1;
@@ -211,11 +194,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_EC_KDF_MD, 0, (void *)(md));
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_EC_KDF_MD, 0, (void *)(md));
 
     md_name = (md == NULL) ? "" : EVP_MD_name(md);
 
@@ -225,7 +204,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
                                              * only so should be safe
                                              */
                                             (char *)md_name, 0);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
@@ -247,15 +226,11 @@ int EVP_PKEY_CTX_get_ecdh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_EC_KDF_MD, 0, (void *)(pmd));
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_GET_EC_KDF_MD, 0, (void *)(pmd));
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_EXCHANGE_PARAM_KDF_DIGEST,
                                             name, sizeof(name));
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
@@ -282,11 +257,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int in)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_EC_KDF_OUTLEN, in, NULL);
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_EC_KDF_OUTLEN, in, NULL);
 
     if (in <= 0) {
         /*
@@ -299,7 +270,7 @@ int EVP_PKEY_CTX_set_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int in)
 
     *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
                                        &len);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
@@ -320,16 +291,11 @@ int EVP_PKEY_CTX_get_ecdh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN, 0,
-                                 (void *)(plen));
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN, 0, (void *)(plen));
 
     *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_OUTLEN,
                                        &len);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
@@ -357,11 +323,7 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int le
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_EC_KDF_UKM, len, (void *)(ukm));
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_EC_KDF_UKM, len, (void *)(ukm));
 
     *p++ = OSSL_PARAM_construct_octet_string(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                             /*
@@ -370,7 +332,7 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int le
                                              */
                                             (void *)ukm,
                                             (size_t)len);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
@@ -393,18 +355,13 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
     if (ret != 1)
         return ret;
 
-    /* TODO(3.0): Remove this eventually when no more legacy */
-    if (ctx->op.kex.exchprovctx == NULL)
-        return EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC,
-                                 EVP_PKEY_OP_DERIVE,
-                                 EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0,
-                                 (void *)(pukm));
+    LEGACY_SET_EC_EXCH(ctx, EVP_PKEY_CTRL_GET_EC_KDF_UKM, 0, (void *)(pukm));
 
     *p++ = OSSL_PARAM_construct_octet_ptr(OSSL_EXCHANGE_PARAM_KDF_UKM,
                                           (void **)pukm, 0);
     *p++ = OSSL_PARAM_construct_size_t(OSSL_EXCHANGE_PARAM_KDF_UKM_LEN,
                                        &ukmlen);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
@@ -421,7 +378,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
     return (int)ukmlen;
 }
 
-#ifndef FIPS_MODULE
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid)
 {
     if (ctx == NULL || !EVP_PKEY_CTX_IS_GEN_OP(ctx)) {
@@ -468,7 +424,7 @@ int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc)
 
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
                                             (char *)enc, 0);
-    *p++ = OSSL_PARAM_construct_end();
+    *p = OSSL_PARAM_construct_end();
 
     ret = evp_pkey_ctx_set_params_strict(ctx, params);
  end:
@@ -483,4 +439,3 @@ int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc)
                              EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN,
                              EVP_PKEY_CTRL_EC_PARAM_ENC, param_enc, NULL);
 }
-#endif
