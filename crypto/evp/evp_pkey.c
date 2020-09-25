@@ -12,6 +12,8 @@
 #include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/rand.h>
+#include <openssl/encoder.h>
+#include "internal/provider.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
@@ -69,35 +71,65 @@ EVP_PKEY *EVP_PKCS82PKEY(const PKCS8_PRIV_KEY_INFO *p8)
 
 PKCS8_PRIV_KEY_INFO *EVP_PKEY2PKCS8(const EVP_PKEY *pkey)
 {
-    PKCS8_PRIV_KEY_INFO *p8 = PKCS8_PRIV_KEY_INFO_new();
-    if (p8  == NULL) {
-        EVPerr(EVP_F_EVP_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
-        return NULL;
-    }
+    PKCS8_PRIV_KEY_INFO *p8 = NULL;
+    OSSL_ENCODER_CTX *ctx = NULL;
 
-    /* Force a key downgrade if that's possible */
-    /* TODO(3.0) Is there a better way for provider-native keys? */
-    if (EVP_PKEY_get0(pkey) == NULL)
-        goto error;
+    /*
+     * The implementation for provider-native keys is to encode the
+     * key to a DER encoded PKCS#8 structure, then convert it to a
+     * PKCS8_PRIV_KEY_INFO with good old d2i functions.
+     */
+    if (evp_pkey_is_provided(pkey)) {
+        int selection = OSSL_KEYMGMT_SELECT_ALL;
+        const OSSL_PROVIDER *prov = EVP_KEYMGMT_provider(pkey->keymgmt);
+        OSSL_LIB_CTX *libctx = ossl_provider_libctx(prov);
+        unsigned char *der = NULL;
+        size_t derlen = 0;
+        const unsigned char *pp;
 
-    if (pkey->ameth) {
-        if (pkey->ameth->priv_encode) {
-            if (!pkey->ameth->priv_encode(p8, pkey)) {
-                EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_PRIVATE_KEY_ENCODE_ERROR);
+        if ((ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey, selection,
+                                                    "DER", "pkcs8",
+                                                    libctx, NULL)) == NULL
+            || !OSSL_ENCODER_to_data(ctx, &der, &derlen))
+            goto error;
+
+        pp = der;
+        p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &pp, (long)derlen);
+        OPENSSL_free(der);
+        if (p8 == NULL)
+            goto error;
+    } else {
+        p8 = PKCS8_PRIV_KEY_INFO_new();
+        if (p8  == NULL) {
+            EVPerr(EVP_F_EVP_PKEY2PKCS8, ERR_R_MALLOC_FAILURE);
+            return NULL;
+        }
+
+        if (pkey->ameth != NULL) {
+            if (pkey->ameth->priv_encode != NULL) {
+                if (!pkey->ameth->priv_encode(p8, pkey)) {
+                    EVPerr(EVP_F_EVP_PKEY2PKCS8,
+                           EVP_R_PRIVATE_KEY_ENCODE_ERROR);
+                    goto error;
+                }
+            } else {
+                EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_METHOD_NOT_SUPPORTED);
                 goto error;
             }
         } else {
-            EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_METHOD_NOT_SUPPORTED);
+            EVPerr(EVP_F_EVP_PKEY2PKCS8,
+                   EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
             goto error;
         }
-    } else {
-        EVPerr(EVP_F_EVP_PKEY2PKCS8, EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM);
-        goto error;
     }
-    return p8;
+    goto end;
  error:
     PKCS8_PRIV_KEY_INFO_free(p8);
-    return NULL;
+    p8 = NULL;
+ end:
+    OSSL_ENCODER_CTX_free(ctx);
+    return p8;
+
 }
 
 /* EVP_PKEY attribute functions */
