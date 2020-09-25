@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/x509.h" /* for X509_add_cert_new() */
+
 /*-  CertID ::= SEQUENCE {
  *       hashAlgorithm            AlgorithmIdentifier,
  *       issuerNameHash     OCTET STRING, -- Hash of Issuer's DN
@@ -232,5 +234,5 @@ struct ocsp_service_locator_st {
         &(a)->optionalSignature->signatureAlgorithm,\
         (a)->optionalSignature->signature,&(a)->tbsRequest,r)
 
-#  define OCSP_BASICRESP_verify(a,r,d) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_RESPDATA),\
+#  define OCSP_BASICRESP_verify(a,r) ASN1_item_verify(ASN1_ITEM_rptr(OCSP_RESPDATA),\
         &(a)->signatureAlgorithm,(a)->signature,&(a)->tbsResponseData,r)

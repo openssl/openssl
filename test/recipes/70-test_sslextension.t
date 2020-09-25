@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -206,6 +206,7 @@ SKIP: {
     #Test 3: Sending a zero length extension block should pass
     $proxy->clear();
     $proxy->filter(\&extension_filter);
+    $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
     $proxy->start();
     ok(TLSProxy::Message->success, "Zero extension length test");
 

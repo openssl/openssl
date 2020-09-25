@@ -57,12 +57,46 @@ if (eval { require Win32::API; 1; }) {
 }
 $ENV{OPENSSL_WIN32_UTF8}=1;
 
-plan tests => 1;
+plan tests => 5;
+
+# Test different PKCS#12 formats
+ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
 
 # just see that we can read shibboleth.pfx protected with $pass
 ok(run(app(["openssl", "pkcs12", "-noout",
             "-password", "pass:$pass",
             "-in", srctop_file("test", "shibboleth.pfx")])),
    "test_pkcs12");
+
+my @path = qw(test certs);
+my $tmpfile = "tmp.p12";
+
+# Test the -chain option with -untrusted
+ok(run(app(["openssl", "pkcs12", "-export", "-chain",
+            "-CAfile",  srctop_file(@path,  "sroot-cert.pem"),
+            "-untrusted", srctop_file(@path, "ca-cert.pem"),
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-nokeys", "-passout", "pass:", "-out", $tmpfile])),
+   "test_pkcs12_chain_untrusted");
+
+# Test the -passcerts option
+ok(run(app(["openssl", "pkcs12", "-export",
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-certfile", srctop_file(@path, "v3-certs-TDES.p12"),
+            "-passcerts", "pass:v3-certs",
+            "-nokeys", "-passout", "pass:v3-certs", "-descert",
+            "-out", $tmpfile])),
+   "test_pkcs12_passcert");
+unlink $tmpfile;
+
+# Test reading legacy PKCS#12 file
+ok(run(app(["openssl", "pkcs12", "-export",
+            "-in", srctop_file(@path, "v3-certs-RC2.p12"),
+            "-passin", "pass:v3-certs",
+            "-provider", "default", "-provider", "legacy",
+            "-nokeys", "-passout", "pass:v3-certs", "-descert",
+            "-out", $tmpfile])),
+   "test_pkcs12_passcert");
+unlink $tmpfile;
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));

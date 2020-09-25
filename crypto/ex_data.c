@@ -10,8 +10,6 @@
 #include "crypto/cryptlib.h"
 #include "internal/thread_once.h"
 
-DEFINE_STACK_OF(void)
-
 int do_ex_data_init(OPENSSL_CTX *ctx)
 {
     OSSL_EX_DATA_GLOBAL *global = openssl_ctx_get_ex_data_global(ctx);
@@ -447,7 +445,11 @@ int CRYPTO_set_ex_data(CRYPTO_EX_DATA *ad, int idx, void *val)
             return 0;
         }
     }
-    sk_void_set(ad->sk, idx, val);
+    if (sk_void_set(ad->sk, idx, val) != val) {
+        /* Probably the index is out of bounds */
+        CRYPTOerr(CRYPTO_F_CRYPTO_SET_EX_DATA, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
     return 1;
 }
 

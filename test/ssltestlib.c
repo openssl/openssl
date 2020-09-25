@@ -741,8 +741,10 @@ const SSL_METHOD *cm,
     return 1;
 
  err:
-    SSL_CTX_free(serverctx);
-    SSL_CTX_free(clientctx);
+    if (*sctx == NULL)
+        SSL_CTX_free(serverctx);
+    if (cctx != NULL && *cctx == NULL)
+        SSL_CTX_free(clientctx);
     return 0;
 }
 

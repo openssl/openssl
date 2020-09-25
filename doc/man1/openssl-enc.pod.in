@@ -241,7 +241,7 @@ a strong block cipher, such as AES, in CBC mode.
 
 All the block ciphers normally use PKCS#5 padding, also known as standard
 block padding. This allows a rudimentary integrity or password check to
-be performed. However since the chance of random data passing the test
+be performed. However, since the chance of random data passing the test
 is better than 1 in 256 it isn't a very good test.
 
 If padding is disabled then the input data must be a multiple of the cipher
@@ -316,7 +316,7 @@ standard data format and performs the needed key/iv/nonce management.
  desx               DESX algorithm.
 
  gost89             GOST 28147-89 in CFB mode (provided by ccgost engine)
- gost89-cnt        `GOST 28147-89 in CNT mode (provided by ccgost engine)
+ gost89-cnt         GOST 28147-89 in CNT mode (provided by ccgost engine)
 
  idea-cbc           IDEA algorithm in CBC mode
  idea               same as idea-cbc
@@ -426,7 +426,7 @@ The default digest was changed from MD5 to SHA256 in OpenSSL 1.1.0.
 
 The B<-list> option was added in OpenSSL 1.1.1e.
 
-The B<-ciphers> option was deprecated in OpenSSL 3.0.
+The B<-ciphers> and B<-engine> options were deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

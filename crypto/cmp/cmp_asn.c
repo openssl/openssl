@@ -17,8 +17,6 @@
 #include <openssl/cmp.h>
 #include <openssl/crmf.h>
 
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
-
 /* ASN.1 declarations from RFC4210 */
 ASN1_SEQUENCE(OSSL_CMP_REVANNCONTENT) = {
     /* OSSL_CMP_PKISTATUS is effectively ASN1_INTEGER so it is used directly */

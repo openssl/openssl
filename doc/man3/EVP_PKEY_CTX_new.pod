@@ -16,7 +16,8 @@ EVP_PKEY_CTX_new_from_pkey, EVP_PKEY_CTX_dup, EVP_PKEY_CTX_free
                                           const char *name,
                                           const char *propquery);
  EVP_PKEY_CTX *EVP_PKEY_CTX_new_from_pkey(OPENSSL_CTX *libctx,
-                                          EVP_PKEY *pkey);
+                                          EVP_PKEY *pkey,
+                                          const char *propquery);
  EVP_PKEY_CTX *EVP_PKEY_CTX_dup(const EVP_PKEY_CTX *ctx);
  void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx);
 
@@ -56,7 +57,7 @@ If I<ctx> is NULL, nothing is done.
 =head2 On B<EVP_PKEY_CTX>
 
 The B<EVP_PKEY_CTX> structure is an opaque public key algorithm context used
-by the OpenSSL high level public key API. Contexts B<MUST NOT> be shared between
+by the OpenSSL high-level public key API. Contexts B<MUST NOT> be shared between
 threads: that is it is not permissible to use the same context simultaneously
 in two threads.
 
@@ -96,7 +97,7 @@ documentation for more information.
 =head1 RETURN VALUES
 
 EVP_PKEY_CTX_new(), EVP_PKEY_CTX_new_id(), EVP_PKEY_CTX_dup() returns either
-the newly allocated B<EVP_PKEY_CTX> structure of B<NULL> if an error occurred.
+the newly allocated B<EVP_PKEY_CTX> structure or B<NULL> if an error occurred.
 
 EVP_PKEY_CTX_free() does not return a value.
 

@@ -14,8 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/trace.h>
-
-DEFINE_STACK_OF(CONF_VALUE)
+#include "crypto/evp.h"
 
 /* Algorithm configuration module. */
 
@@ -52,7 +51,7 @@ static int alg_module_init(CONF_IMODULE *md, const CONF *cnf)
                 return 0;
             }
         } else if (strcmp(oval->name, "default_properties") == 0) {
-            if (!EVP_set_default_properties(cnf->libctx, oval->value)) {
+            if (!evp_set_default_properties_int(cnf->libctx, oval->value, 0)) {
                 EVPerr(EVP_F_ALG_MODULE_INIT, EVP_R_SET_DEFAULT_PROPERTY_FAILURE);
                 return 0;
             }

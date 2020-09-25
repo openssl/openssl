@@ -30,10 +30,6 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
     &eckey_asn1_meth,
 #endif
-    &hmac_asn1_meth,
-#ifndef OPENSSL_NO_CMAC
-    &cmac_asn1_meth,
-#endif
 #ifndef OPENSSL_NO_RSA
     &rsa_pss_asn1_meth,
 #endif
@@ -43,12 +39,6 @@ static const EVP_PKEY_ASN1_METHOD *standard_methods[] = {
 #ifndef OPENSSL_NO_EC
     &ecx25519_asn1_meth,
     &ecx448_asn1_meth,
-#endif
-#ifndef OPENSSL_NO_POLY1305
-    &poly1305_asn1_meth,
-#endif
-#ifndef OPENSSL_NO_SIPHASH
-    &siphash_asn1_meth,
 #endif
 #ifndef OPENSSL_NO_EC
     &ed25519_asn1_meth,

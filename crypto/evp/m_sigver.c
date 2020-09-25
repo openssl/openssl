@@ -38,8 +38,8 @@ static const char *canon_mdname(const char *mdname)
 
 static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                           const EVP_MD *type, const char *mdname,
-                          const char *props, ENGINE *e, EVP_PKEY *pkey,
-                          OPENSSL_CTX *libctx, int ver)
+                          OPENSSL_CTX *libctx, const char *props,
+                          ENGINE *e, EVP_PKEY *pkey, int ver)
 {
     EVP_PKEY_CTX *locpctx = NULL;
     EVP_SIGNATURE *signature = NULL;
@@ -85,13 +85,25 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
 
     /*
      * Ensure that the key is provided, either natively, or as a cached export.
-     *  If not, go legacy
      */
     tmp_keymgmt = locpctx->keymgmt;
     provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
                                           &tmp_keymgmt, locpctx->propquery);
-    if (provkey == NULL)
-        goto legacy;
+    if (provkey == NULL) {
+        /*
+         * If we couldn't find a keymgmt at all try legacy.
+         * TODO(3.0): Once all legacy algorithms (SM2, HMAC etc) have provider
+         * based implementations this fallback shouldn't be necessary. Either
+         * we have an ENGINE based implementation (in which case we should have
+         * already fallen back in the test above here), or we don't have the
+         * provider based implementation loaded (in which case this is an
+         * application config error)
+         */
+        if (locpctx->keymgmt == NULL)
+            goto legacy;
+        ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+        goto err;
+    }
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
         ERR_clear_last_mark();
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
@@ -160,13 +172,18 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                                        locmdname,
                                                        sizeof(locmdname)) > 0) {
                 mdname = canon_mdname(locmdname);
-            } else {
-                EVPerr(EVP_F_DO_SIGVER_INIT, EVP_R_NO_DEFAULT_DIGEST);
-                return 0;
             }
         }
 
         if (mdname != NULL) {
+            /*
+             * We're about to get a new digest so clear anything associated with
+             * an old digest.
+             */
+            evp_md_ctx_clear_digest(ctx, 1);
+
+            /* legacy code support for engines */
+            ERR_set_mark();
             /*
              * This might be requested by a later call to EVP_MD_CTX_md().
              * In that case the "explicit fetch" rules apply for that
@@ -174,8 +191,19 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              * so the EVP_MD should not be used beyound the lifetime of the
              * EVP_MD_CTX.
              */
-            ctx->reqdigest = ctx->fetched_digest =
-                EVP_MD_fetch(locpctx->libctx, mdname, props);
+            ctx->fetched_digest = EVP_MD_fetch(locpctx->libctx, mdname, props);
+            if (ctx->fetched_digest != NULL) {
+                ctx->digest = ctx->reqdigest = ctx->fetched_digest;
+            } else {
+                /* legacy engine support : remove the mark when this is deleted */
+                ctx->reqdigest = ctx->digest = EVP_get_digestbyname(mdname);
+                if (ctx->digest == NULL) {
+                    (void)ERR_clear_last_mark();
+                    ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+                    goto err;
+                }
+            }
+            (void)ERR_pop_to_mark();
         }
     }
 
@@ -195,7 +223,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                           mdname, provkey);
     }
 
-    return ret ? 1 : 0;
+    goto end;
+
  err:
     evp_pkey_ctx_free_old_ops(locpctx);
     locpctx->operation = EVP_PKEY_OP_UNDEFINED;
@@ -270,34 +299,43 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     if (ctx->pctx->pmeth->digest_custom != NULL)
         ctx->pctx->flag_call_digest_custom = 1;
 
-    return 1;
+    ret = 1;
+
+ end:
+#ifndef FIPS_MODULE
+    if (ret > 0)
+        ret = evp_pkey_ctx_use_cached_data(locpctx);
+#endif
+
+    return ret > 0 ? 1 : 0;
 }
 
-int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                          const char *mdname, const char *props, EVP_PKEY *pkey,
-                          OPENSSL_CTX *libctx)
+int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                                   const char *mdname,
+                                   OPENSSL_CTX *libctx, const char *props,
+                                   EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, libctx,
-                          0);
+    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 0);
 }
 
 int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                        const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, NULL, 0);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 0);
 }
 
-int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                            const char *mdname, const char *props,
-                            EVP_PKEY *pkey, OPENSSL_CTX *libctx)
+int EVP_DigestVerifyInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                                     const char *mdname,
+                                     OPENSSL_CTX *libctx, const char *props,
+                                     EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, NULL, mdname, props, NULL, pkey, libctx, 1);
+    return do_sigver_init(ctx, pctx, NULL, mdname, libctx, props, NULL, pkey, 1);
 }
 
 int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                          const EVP_MD *type, ENGINE *e, EVP_PKEY *pkey)
 {
-    return do_sigver_init(ctx, pctx, type, NULL, NULL, e, pkey, NULL, 1);
+    return do_sigver_init(ctx, pctx, type, NULL, NULL, NULL, e, pkey, 1);
 }
 #endif /* FIPS_MDOE */
 

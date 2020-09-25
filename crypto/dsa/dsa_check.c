@@ -19,8 +19,8 @@ int dsa_check_params(const DSA *dsa, int *ret)
      * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
      * validity tests.
      */
-    return ffc_params_FIPS186_4_validate(&dsa->params, FFC_PARAM_TYPE_DSA, NULL,
-                                         FFC_PARAMS_VALIDATE_ALL, ret, NULL);
+    return ffc_params_FIPS186_4_validate(dsa->libctx, &dsa->params,
+                                         FFC_PARAM_TYPE_DSA, ret, NULL);
 }
 
 /*

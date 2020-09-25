@@ -7,11 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "eng_local.h"
 #include <openssl/conf.h>
 #include <openssl/trace.h>
-
-DEFINE_STACK_OF(CONF_VALUE)
 
 /* ENGINE config module */
 

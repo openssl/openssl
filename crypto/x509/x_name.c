@@ -16,9 +16,6 @@
 #include "crypto/asn1.h"
 #include "x509_local.h"
 
-DEFINE_STACK_OF(X509_NAME_ENTRY)
-DEFINE_STACK_OF(ASN1_VALUE)
-
 /*
  * Maximum length of X509_NAME: much larger than anything we should
  * ever see in practice.
@@ -189,7 +186,7 @@ static int x509_name_ex_d2i(ASN1_VALUE **val,
             entry->set = i;
             if (!sk_X509_NAME_ENTRY_push(nm.x->entries, entry))
                 goto err;
-            sk_X509_NAME_ENTRY_set(entries, j, NULL);
+            (void)sk_X509_NAME_ENTRY_set(entries, j, NULL);
         }
     }
     ret = x509_name_canon(nm.x);

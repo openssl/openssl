@@ -10,6 +10,7 @@
 
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#include <openssl/core.h>
 #include "crypto/bn.h"
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
@@ -25,20 +26,23 @@
  *
  * Params:
  *     rsa  Object used to store primes p & q.
- *     p1, p2 The returned auxiliary primes for p. If NULL they are not returned.
- *     Xpout An optionally returned random number used during generation of p.
- *     Xp An optional passed in value (that is random number used during
- *        generation of p).
- *     Xp1, Xp2 Optionally passed in randomly generated numbers from which
- *              auxiliary primes p1 & p2 are calculated. If NULL these values
- *              are generated internally.
- *     q1, q2 The returned auxiliary primes for q. If NULL they are not returned.
- *     Xqout An optionally returned random number used during generation of q.
- *     Xq An optional passed in value (that is random number used during
- *        generation of q).
- *     Xq1, Xq2 Optionally passed in randomly generated numbers from which
- *              auxiliary primes q1 & q2 are calculated. If NULL these values
- *              are generated internally.
+ *     test Object used for CAVS testing only.that contains..
+ *       p1, p2 The returned auxiliary primes for p.
+ *              If NULL they are not returned.
+ *       Xpout An optionally returned random number used during generation of p.
+ *       Xp An optional passed in value (that is random number used during
+ *          generation of p).
+ *       Xp1, Xp2 Optionally passed in randomly generated numbers from which
+ *                auxiliary primes p1 & p2 are calculated. If NULL these values
+ *                are generated internally.
+ *       q1, q2 The returned auxiliary primes for q.
+ *              If NULL they are not returned.
+ *       Xqout An optionally returned random number used during generation of q.
+ *       Xq An optional passed in value (that is random number used during
+ *          generation of q).
+ *       Xq1, Xq2 Optionally passed in randomly generated numbers from which
+ *                auxiliary primes q1 & q2 are calculated. If NULL these values
+ *                are generated internally.
  *     nbits The key size in bits (The size of the modulus n).
  *     e The public exponent.
  *     ctx A BN_CTX object.
@@ -49,23 +53,41 @@
  *     Xp, Xp1, Xp2, Xq, Xq1, Xq2 are optionally passed in.
  *     (Required for CAVS testing).
  */
-int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
-                                  BIGNUM *Xpout, const BIGNUM *Xp,
-                                  const BIGNUM *Xp1, const BIGNUM *Xp2,
-                                  BIGNUM *q1, BIGNUM *q2, BIGNUM *Xqout,
-                                  const BIGNUM *Xq, const BIGNUM *Xq1,
-                                  const BIGNUM *Xq2, int nbits,
+int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test, int nbits,
                                   const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb)
 {
     int ret = 0, ok;
+    /* Temp allocated BIGNUMS */
     BIGNUM *Xpo = NULL, *Xqo = NULL, *tmp = NULL;
+    /* Intermediate BIGNUMS that can be returned for testing */
+    BIGNUM *p1 = NULL, *p2 = NULL;
+    BIGNUM *q1 = NULL, *q2 = NULL;
+    /* Intermediate BIGNUMS that can be input for testing */
+    BIGNUM *Xpout = NULL, *Xqout = NULL;
+    BIGNUM *Xp = NULL, *Xp1 = NULL, *Xp2 = NULL;
+    BIGNUM *Xq = NULL, *Xq1 = NULL, *Xq2 = NULL;
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    if (test != NULL) {
+        Xp1 = test->Xp1;
+        Xp2 = test->Xp2;
+        Xq1 = test->Xq1;
+        Xq2 = test->Xq2;
+        Xp = test->Xp;
+        Xq = test->Xq;
+        p1 = test->p1;
+        p2 = test->p2;
+        q1 = test->q1;
+        q2 = test->q2;
+    }
+#endif
 
     /* (Step 1) Check key length
      * NOTE: SP800-131A Rev1 Disallows key lengths of < 2048 bits for RSA
      * Signature Generation and Key Agree/Transport.
      */
     if (nbits < RSA_FIPS1864_MIN_KEYGEN_KEYSIZE) {
-        RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES, RSA_R_INVALID_KEY_LENGTH);
+        RSAerr(RSA_F_RSA_FIPS186_4_GEN_PROB_PRIMES, RSA_R_KEY_SIZE_TOO_SMALL);
         return 0;
     }
 
@@ -86,6 +108,8 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
     Xqo = (Xqout != NULL) ? Xqout : BN_CTX_get(ctx);
     if (tmp == NULL || Xpo == NULL || Xqo == NULL)
         goto err;
+    BN_set_flags(Xpo, BN_FLG_CONSTTIME);
+    BN_set_flags(Xqo, BN_FLG_CONSTTIME);
 
     if (rsa->p == NULL)
         rsa->p = BN_secure_new();
@@ -93,6 +117,8 @@ int rsa_fips186_4_gen_prob_primes(RSA *rsa, BIGNUM *p1, BIGNUM *p2,
         rsa->q = BN_secure_new();
     if (rsa->p == NULL || rsa->q == NULL)
         goto err;
+    BN_set_flags(rsa->p, BN_FLG_CONSTTIME);
+    BN_set_flags(rsa->q, BN_FLG_CONSTTIME);
 
     /* (Step 4) Generate p, Xp */
     if (!bn_rsa_fips186_4_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
@@ -146,12 +172,13 @@ err:
 int rsa_sp800_56b_validate_strength(int nbits, int strength)
 {
     int s = (int)ifc_ffc_compute_security_bits(nbits);
-
+#ifdef FIPS_MODULE
     if (s < RSA_FIPS1864_MIN_KEYGEN_STRENGTH
             || s > RSA_FIPS1864_MAX_KEYGEN_STRENGTH) {
         RSAerr(RSA_F_RSA_SP800_56B_VALIDATE_STRENGTH, RSA_R_INVALID_MODULUS);
         return 0;
     }
+#endif
     if (strength != -1 && s != strength) {
         RSAerr(RSA_F_RSA_SP800_56B_VALIDATE_STRENGTH, RSA_R_INVALID_STRENGTH);
         return 0;
@@ -194,6 +221,12 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (gcd == NULL)
         goto err;
 
+    BN_set_flags(p1, BN_FLG_CONSTTIME);
+    BN_set_flags(q1, BN_FLG_CONSTTIME);
+    BN_set_flags(lcm, BN_FLG_CONSTTIME);
+    BN_set_flags(p1q1, BN_FLG_CONSTTIME);
+    BN_set_flags(gcd, BN_FLG_CONSTTIME);
+
     /* LCM((p-1, q-1)) */
     if (rsa_get_lcm(ctx, rsa->p, rsa->q, lcm, gcd, p1, q1, p1q1) != 1)
         goto err;
@@ -207,7 +240,10 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     BN_clear_free(rsa->d);
     /* (Step 3) d = (e^-1) mod (LCM(p-1, q-1)) */
     rsa->d = BN_secure_new();
-    if (rsa->d == NULL || BN_mod_inverse(rsa->d, e, lcm, ctx) == NULL)
+    if (rsa->d == NULL)
+        goto err;
+    BN_set_flags(rsa->d, BN_FLG_CONSTTIME);
+    if (BN_mod_inverse(rsa->d, e, lcm, ctx) == NULL)
         goto err;
 
     /* (Step 3) return an error if d is too small */
@@ -224,21 +260,29 @@ int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
 
     /* (Step 5a) dP = d mod (p-1) */
     if (rsa->dmp1 == NULL)
-        rsa->dmp1 = BN_new();
-    if (rsa->dmp1 == NULL || !BN_mod(rsa->dmp1, rsa->d, p1, ctx))
+        rsa->dmp1 = BN_secure_new();
+    if (rsa->dmp1 == NULL)
+	    goto err;
+    BN_set_flags(rsa->dmp1, BN_FLG_CONSTTIME);
+    if (!BN_mod(rsa->dmp1, rsa->d, p1, ctx))
         goto err;
 
     /* (Step 5b) dQ = d mod (q-1) */
     if (rsa->dmq1 == NULL)
         rsa->dmq1 = BN_secure_new();
-    if (rsa->dmq1 == NULL || !BN_mod(rsa->dmq1, rsa->d, q1, ctx))
+    if (rsa->dmq1 == NULL)
+	    goto err;
+    BN_set_flags(rsa->dmq1, BN_FLG_CONSTTIME);
+    if (!BN_mod(rsa->dmq1, rsa->d, q1, ctx))
         goto err;
 
     /* (Step 5c) qInv = (inverse of q) mod p */
     BN_free(rsa->iqmp);
     rsa->iqmp = BN_secure_new();
-    if (rsa->iqmp == NULL
-            || BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
+    if (rsa->iqmp == NULL)
+	    goto err;
+    BN_set_flags(rsa->iqmp, BN_FLG_CONSTTIME);
+    if (BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
         goto err;
 
     rsa->dirty_cnt++;
@@ -293,6 +337,11 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     int ok;
     BN_CTX *ctx = NULL;
     BIGNUM *e = NULL;
+    RSA_ACVP_TEST *info = NULL;
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    info = rsa->acvp_test;
+#endif
 
     /* (Steps 1a-1b) : Currently ignores the strength check */
     if (!rsa_sp800_56b_validate_strength(nbits, -1))
@@ -310,13 +359,12 @@ int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
     } else {
         e = (BIGNUM *)efixed;
     }
-    /* (Step 1c) fixed exponent is checked later . */
+    /* (Step 1c) fixed exponent is checked later .*/
 
     for (;;) {
         /* (Step 2) Generate prime factors */
-        if (!rsa_fips186_4_gen_prob_primes(rsa, NULL, NULL, NULL, NULL, NULL,
-                                           NULL, NULL, NULL, NULL, NULL, NULL,
-                                           NULL, nbits, e, ctx, cb))
+        if (!rsa_fips186_4_gen_prob_primes(rsa, info, nbits, e, ctx,
+                                           cb))
             goto err;
         /* (Steps 3-5) Compute params d, n, dP, dQ, qInv */
         ok = rsa_sp800_56b_derive_params_from_pq(rsa, nbits, e, ctx);
@@ -352,6 +400,7 @@ int rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx)
     k = BN_CTX_get(ctx);
     if (k == NULL)
         goto err;
+    BN_set_flags(k, BN_FLG_CONSTTIME);
 
     ret = (BN_set_word(k, 2)
           && BN_mod_exp(tmp, k, rsa->e, rsa->n, ctx)

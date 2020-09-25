@@ -16,8 +16,11 @@
 
 /* Dispatch functions for AES_CBC_HMAC_SHA ciphers */
 
+/* Only for SSL3_VERSION and TLS1_VERSION */
+#include <openssl/ssl.h>
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 #ifndef AES_CBC_HMAC_SHA_CAPABLE
 # define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
@@ -33,12 +36,12 @@ const OSSL_DISPATCH nm##kbits##sub##_functions[] = {                           \
                                  | EVP_CIPH_FLAG_AEAD_CIPHER                   \
                                  | EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK)
 
-static OSSL_OP_cipher_freectx_fn aes_cbc_hmac_sha1_freectx;
-static OSSL_OP_cipher_freectx_fn aes_cbc_hmac_sha256_freectx;
-static OSSL_OP_cipher_get_ctx_params_fn aes_get_ctx_params;
-static OSSL_OP_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn aes_set_ctx_params;
-static OSSL_OP_cipher_settable_ctx_params_fn aes_settable_ctx_params;
+static OSSL_FUNC_cipher_freectx_fn aes_cbc_hmac_sha1_freectx;
+static OSSL_FUNC_cipher_freectx_fn aes_cbc_hmac_sha256_freectx;
+static OSSL_FUNC_cipher_get_ctx_params_fn aes_get_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn aes_gettable_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn aes_set_ctx_params;
+static OSSL_FUNC_cipher_settable_ctx_params_fn aes_settable_ctx_params;
 # define aes_gettable_params cipher_generic_gettable_params
 # define aes_einit cipher_generic_einit
 # define aes_dinit cipher_generic_dinit
@@ -59,7 +62,7 @@ static const OSSL_PARAM cipher_aes_known_settable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *aes_settable_ctx_params(void)
+const OSSL_PARAM *aes_settable_ctx_params(ossl_unused void *provctx)
 {
     return cipher_aes_known_settable_ctx_params;
 }
@@ -172,6 +175,26 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
     }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS_VERSION);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_uint(p, &ctx->base.tlsversion)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        if (ctx->base.tlsversion == SSL3_VERSION
+                || ctx->base.tlsversion == TLS1_VERSION) {
+            if (!ossl_assert(ctx->base.removetlspad >= AES_BLOCK_SIZE)) {
+                ERR_raise(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+            /*
+             * There is no explicit IV with these TLS versions, so don't attempt
+             * to remove it.
+             */
+            ctx->base.removetlspad -= AES_BLOCK_SIZE;
+        }
+    }
     return ret;
 }
 
@@ -229,7 +252,14 @@ static int aes_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL
-        && !OSSL_PARAM_set_octet_string(p, ctx->base.oiv, ctx->base.ivlen)) {
+        && !OSSL_PARAM_set_octet_string(p, ctx->base.oiv, ctx->base.ivlen)
+        && !OSSL_PARAM_set_octet_ptr(p, &ctx->base.oiv, ctx->base.ivlen)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_string(p, ctx->base.iv, ctx->base.ivlen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -247,9 +277,10 @@ static const OSSL_PARAM cipher_aes_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV_STATE, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *aes_gettable_ctx_params(void)
+const OSSL_PARAM *aes_gettable_ctx_params(ossl_unused void *provctx)
 {
     return cipher_aes_known_gettable_ctx_params;
 }
@@ -269,8 +300,12 @@ static void *aes_cbc_hmac_sha1_newctx(void *provctx, size_t kbits,
                                       size_t blkbits, size_t ivbits,
                                       uint64_t flags)
 {
-    PROV_AES_HMAC_SHA1_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_HMAC_SHA1_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         base_init(provctx, &ctx->base_ctx,
                   PROV_CIPHER_HW_aes_cbc_hmac_sha1(), kbits, blkbits,
@@ -282,16 +317,22 @@ static void aes_cbc_hmac_sha1_freectx(void *vctx)
 {
     PROV_AES_HMAC_SHA1_CTX *ctx = (PROV_AES_HMAC_SHA1_CTX *)vctx;
 
-    if (ctx != NULL)
+    if (ctx != NULL) {
+        cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
+    }
 }
 
 static void *aes_cbc_hmac_sha256_newctx(void *provctx, size_t kbits,
                                         size_t blkbits, size_t ivbits,
                                         uint64_t flags)
 {
-    PROV_AES_HMAC_SHA256_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_AES_HMAC_SHA256_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         base_init(provctx, &ctx->base_ctx,
                   PROV_CIPHER_HW_aes_cbc_hmac_sha256(), kbits, blkbits,
@@ -303,17 +344,19 @@ static void aes_cbc_hmac_sha256_freectx(void *vctx)
 {
     PROV_AES_HMAC_SHA256_CTX *ctx = (PROV_AES_HMAC_SHA256_CTX *)vctx;
 
-    if (ctx != NULL)
+    if (ctx != NULL) {
+        cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
+    }
 }
 
-# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)               \
-static OSSL_OP_cipher_newctx_fn nm##_##kbits##_##sub##_newctx;                 \
+# define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags)              \
+static OSSL_FUNC_cipher_newctx_fn nm##_##kbits##_##sub##_newctx;               \
 static void *nm##_##kbits##_##sub##_newctx(void *provctx)                      \
 {                                                                              \
     return nm##_##sub##_newctx(provctx, kbits, blkbits, ivbits, flags);        \
 }                                                                              \
-static OSSL_OP_cipher_get_params_fn nm##_##kbits##_##sub##_get_params;         \
+static OSSL_FUNC_cipher_get_params_fn nm##_##kbits##_##sub##_get_params;       \
 static int nm##_##kbits##_##sub##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_CBC_MODE,                \

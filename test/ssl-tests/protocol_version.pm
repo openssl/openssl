@@ -151,10 +151,12 @@ sub generate_version_tests {
                         push @tests, {
                             "name" => "version-negotiation",
                             "client" => {
+                                "CipherString" => "DEFAULT:\@SECLEVEL=0",
                                 "MinProtocol" => $min_protocols[$c_min],
                                 "MaxProtocol" => $max_protocols[$c_max],
                             },
                             "server" => {
+                                "CipherString" => "DEFAULT:\@SECLEVEL=0",
                                 "MinProtocol" => $min_protocols[$s_min],
                                 "MaxProtocol" => $max_protocols[$s_max],
                             },
@@ -254,13 +256,17 @@ sub generate_resumption_tests {
                     # Client is flexible, server upgrades/downgrades.
                     push @server_tests, {
                         "name" => "resumption",
-                        "client" => { },
+                        "client" => {
+                            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+                        },
                         "server" => {
+                            "CipherString" => "DEFAULT:\@SECLEVEL=0",
                             "MinProtocol" => $protocols[$original_protocol],
                             "MaxProtocol" => $protocols[$original_protocol],
                             "Options" => $ticket,
                         },
                         "resume_server" => {
+                            "CipherString" => "DEFAULT:\@SECLEVEL=0",
                             "MaxProtocol" => $protocols[$resume_protocol],
                             "Options" => $ticket,
                         },
@@ -276,13 +282,16 @@ sub generate_resumption_tests {
                     push @client_tests, {
                         "name" => "resumption",
                         "client" => {
+                            "CipherString" => "DEFAULT:\@SECLEVEL=0",
                             "MinProtocol" => $protocols[$original_protocol],
                             "MaxProtocol" => $protocols[$original_protocol],
                         },
                         "server" => {
+                            "CipherString" => "DEFAULT:\@SECLEVEL=0",
                             "Options" => $ticket,
                         },
                         "resume_client" => {
+                            "CipherString" => "DEFAULT:\@SECLEVEL=0",
                             "MaxProtocol" => $protocols[$resume_protocol],
                         },
                         "test" => {

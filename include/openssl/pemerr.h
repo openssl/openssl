@@ -102,5 +102,6 @@ int ERR_load_PEM_strings(void);
 # define PEM_R_UNSUPPORTED_CIPHER                         113
 # define PEM_R_UNSUPPORTED_ENCRYPTION                     114
 # define PEM_R_UNSUPPORTED_KEY_COMPONENTS                 126
+# define PEM_R_UNSUPPORTED_PUBLIC_KEY_TYPE                110
 
 #endif

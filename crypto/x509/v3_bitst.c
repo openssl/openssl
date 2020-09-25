@@ -13,8 +13,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 static BIT_STRING_BITNAME ns_cert_type_table[] = {
     {0, "SSL Client", "client"},
     {1, "SSL Server", "server"},
@@ -86,7 +84,7 @@ ASN1_BIT_STRING *v2i_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
         if (!bnam->lname) {
             X509V3err(X509V3_F_V2I_ASN1_BIT_STRING,
                       X509V3_R_UNKNOWN_BIT_STRING_ARGUMENT);
-            X509V3_conf_err(val);
+            ERR_add_error_data(1, val->name);
             ASN1_BIT_STRING_free(bs);
             return NULL;
         }

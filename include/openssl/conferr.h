@@ -68,6 +68,7 @@ int ERR_load_CONF_strings(void);
 # define CONF_R_NO_SUCH_FILE                              114
 # define CONF_R_NO_VALUE                                  108
 # define CONF_R_NUMBER_TOO_LARGE                          121
+# define CONF_R_OPENSSL_CONF_REFERENCES_MISSING_SECTION   124
 # define CONF_R_RECURSIVE_DIRECTORY_INCLUDE               111
 # define CONF_R_SSL_COMMAND_SECTION_EMPTY                 117
 # define CONF_R_SSL_COMMAND_SECTION_NOT_FOUND             118

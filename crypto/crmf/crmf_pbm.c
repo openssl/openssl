@@ -29,14 +29,15 @@
 
 /*-
  * creates and initializes OSSL_CRMF_PBMPARAMETER (section 4.4)
- * |slen| SHOULD be > 8    (16 is common)
+ * |slen| SHOULD be at least 8 (16 is common)
  * |owfnid| e.g., NID_sha256
- * |itercnt| MUST be > 100 (500 is common)
+ * |itercnt| MUST be >= 100 (e.g., 500) and <= OSSL_CRMF_PBM_MAX_ITERATION_COUNT
  * |macnid| e.g., NID_hmac_sha1
  * returns pointer to OSSL_CRMF_PBMPARAMETER on success, NULL on error
  */
-OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
-                                           int itercnt, int macnid)
+OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(OPENSSL_CTX *libctx, size_t slen,
+                                           int owfnid, size_t itercnt,
+                                           int macnid)
 {
     OSSL_CRMF_PBMPARAMETER *pbm = NULL;
     unsigned char *salt = NULL;
@@ -51,7 +52,7 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
      */
     if ((salt = OPENSSL_malloc(slen)) == NULL)
         goto err;
-    if (RAND_bytes(salt, (int)slen) <= 0) {
+    if (RAND_bytes_ex(libctx, salt, (int)slen) <= 0) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_FAILURE_OBTAINING_RANDOM);
         goto err;
     }
@@ -80,6 +81,10 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
      */
     if (itercnt < 100) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_ITERATIONCOUNT_BELOW_100);
+        goto err;
+    }
+    if (itercnt > OSSL_CRMF_PBM_MAX_ITERATION_COUNT) {
+        CRMFerr(CRMF_F_OSSL_CRMF_PBMP_NEW, CRMF_R_BAD_PBM_ITERATIONCOUNT);
         goto err;
     }
 
@@ -117,14 +122,16 @@ OSSL_CRMF_PBMPARAMETER *OSSL_CRMF_pbmp_new(size_t slen, int owfnid,
  * |maclen| if not NULL, will set variable to the length of the mac on success
  * returns 1 on success, 0 on error
  */
-int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
+/* TODO try to combine with other MAC calculations in the libray */
+int OSSL_CRMF_pbm_new(OPENSSL_CTX *libctx, const char *propq,
+                      const OSSL_CRMF_PBMPARAMETER *pbmp,
                       const unsigned char *msg, size_t msglen,
                       const unsigned char *sec, size_t seclen,
                       unsigned char **out, size_t *outlen)
 {
     int mac_nid, hmac_md_nid = NID_undef;
-    const char *mdname = NULL;
-    const EVP_MD *m = NULL;
+    const char *mdname;
+    EVP_MD *owf = NULL;
     EVP_MD_CTX *ctx = NULL;
     unsigned char basekey[EVP_MAX_MD_SIZE];
     unsigned int bklen = EVP_MAX_MD_SIZE;
@@ -148,7 +155,8 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
      * compute the key used in the MAC process.  All implementations MUST
      * support SHA-1.
      */
-    if ((m = EVP_get_digestbyobj(pbmp->owf->algorithm)) == NULL) {
+    mdname = OBJ_nid2sn(OBJ_obj2nid(pbmp->owf->algorithm));
+    if ((owf = EVP_MD_fetch(libctx, mdname, propq)) == NULL) {
         CRMFerr(CRMF_F_OSSL_CRMF_PBM_NEW, CRMF_R_UNSUPPORTED_ALGORITHM);
         goto err;
     }
@@ -157,7 +165,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
         goto err;
 
     /* compute the basekey of the salted secret */
-    if (!EVP_DigestInit_ex(ctx, m, NULL))
+    if (!EVP_DigestInit_ex(ctx, owf, NULL))
         goto err;
     /* first the secret */
     if (!EVP_DigestUpdate(ctx, sec, seclen))
@@ -176,7 +184,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
 
     /* the first iteration was already done above */
     while (--iterations > 0) {
-        if (!EVP_DigestInit_ex(ctx, m, NULL))
+        if (!EVP_DigestInit_ex(ctx, owf, NULL))
             goto err;
         if (!EVP_DigestUpdate(ctx, basekey, bklen))
             goto err;
@@ -201,7 +209,7 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
                                                     (char *)mdname, 0);
     macparams[1] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
                                                      basekey, bklen);
-    if ((mac = EVP_MAC_fetch(NULL, "HMAC", NULL)) == NULL
+    if ((mac = EVP_MAC_fetch(libctx, "HMAC", propq)) == NULL
             || (mctx = EVP_MAC_CTX_new(mac)) == NULL
             || !EVP_MAC_CTX_set_params(mctx, macparams)
             || !EVP_MAC_init(mctx)
@@ -212,10 +220,10 @@ int OSSL_CRMF_pbm_new(const OSSL_CRMF_PBMPARAMETER *pbmp,
     ok = 1;
 
  err:
-    /* cleanup */
     OPENSSL_cleanse(basekey, bklen);
     EVP_MAC_CTX_free(mctx);
     EVP_MAC_free(mac);
+    EVP_MD_free(owf);
     EVP_MD_CTX_free(ctx);
 
     if (ok == 1) {

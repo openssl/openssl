@@ -8,6 +8,8 @@
 # Set some Perl variables for use by util/dofile.pl when processing
 # POD files (mainly man1).
 
+use configdata;
+
 # Verify options
 $OpenSSL::safe::opt_v_synopsis = ""
 . "[B<-allow_proxy_certs>]\n"
@@ -91,21 +93,34 @@ $OpenSSL::safe::opt_r_item = ""
 # Provider options
 $OpenSSL::safe::opt_provider_synopsis = ""
 . "[B<-provider> I<name>]\n"
-. "[B<-provider_path> I<path>]";
+. "[B<-provider-path> I<path>]";
 $OpenSSL::safe::opt_provider_item = ""
 . "=item B<-provider> I<name>\n"
 . "\n"
-. "=item B<-provider_path> I<path>\n"
+. "=item B<-provider-path> I<path>\n"
 . "\n"
 . "See L<openssl(1)/Provider Options>.";
 
-# Engine option
-$OpenSSL::safe::opt_engine_synopsis = ""
-. "[B<-engine> I<id>]";
-$OpenSSL::safe::opt_engine_item = ""
-. "=item B<-engine> I<id>\n"
+# Configuration option
+$OpenSSL::safe::opt_config_synopsis = ""
+. "[B<-config> I<configfile>]\n";
+$OpenSSL::safe::opt_config_item = ""
+. "=item B<-config> I<configfile>\n"
 . "\n"
-. "See L<openssl(1)/Engine Options>.";
+. "See L<openssl(1)/Configuration Option>.";
+
+# Engine option
+$OpenSSL::safe::opt_engine_synopsis = "";
+$OpenSSL::safe::opt_engine_item = "";
+if (!$disabled{"deprecated-3.0"}) {
+  $OpenSSL::safe::opt_engine_synopsis = ""
+  . "[B<-engine> I<id>]";
+  $OpenSSL::safe::opt_engine_item = ""
+  . "=item B<-engine> I<id>\n"
+  . "\n"
+  . "See L<openssl(1)/Engine Options>.\n"
+  . "This option is deprecated.";
+}
 
 # Trusted certs options
 $OpenSSL::safe::opt_trust_synopsis = ""

@@ -54,8 +54,8 @@ guidelines:
     (usually by rebasing) before it will be acceptable.
 
  4. Patches should follow our [coding style][] and compile without warnings.
-    Where gcc or clang is available you should use the
-    --strict-warnings Configure option.  OpenSSL compiles on many varied
+    Where `gcc` or `clang` is available you should use the
+    `--strict-warnings` `Configure` option.  OpenSSL compiles on many varied
     platforms: try to ensure you only use portable features.  Clean builds
     via Travis and AppVeyor are required, and they are started automatically
     whenever a PR is created or updated.
@@ -64,7 +64,7 @@ guidelines:
 
  5. When at all possible, patches should include tests. These can
     either be added to an existing test, or completely new.  Please see
-    test/README for information on the test framework.
+    [test/README.md](test/README.md) for information on the test framework.
 
  6. New features or changed functionality must include
     documentation. Please look at the "pod" files in doc/man[1357] for
@@ -77,7 +77,7 @@ guidelines:
     explain the grander details.
     Have a look through existing entries for inspiration.
     Please note that this is NOT simply a copy of git-log one-liners.
-    Also note that security fixes get an entry in CHANGES.md.
+    Also note that security fixes get an entry in [CHANGES.md](CHANGES.md).
     This file helps users get more in depth information of what comes
     with a specific release without having to sift through the higher
     noise ratio in git-log.
@@ -89,3 +89,6 @@ guidelines:
     OpenSSL 1.1.0).
     This file helps users get a very quick summary of what comes with a
     specific release, to see if an upgrade is worth the effort.
+
+ 9. Guidelines how to integrate error output of new crypto library modules
+    can be found in [crypto/err/README.md](crypto/err/README.md).

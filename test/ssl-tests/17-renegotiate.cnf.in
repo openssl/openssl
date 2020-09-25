@@ -243,6 +243,24 @@ our @tests_tls1_2 = (
             "ResumptionExpected" => "No",
             "ExpectedResult" => "ClientFail"
         }
+    },
+    {
+        name => "no-extms-on-renegotiation",
+        server => {
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "MaxProtocol" => "TLSv1.2",
+            extra => {
+                "RenegotiateNoExtms" => "Yes"
+            }
+        },
+        test => {
+            "Method" => "TLS",
+            "HandshakeMode" => "RenegotiateClient",
+            "ResumptionExpected" => "No",
+            "ExpectedResult" => "ServerFail"
+        }
     }
 );
 

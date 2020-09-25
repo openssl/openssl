@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -170,6 +170,7 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                     int (*func)(void *), void *args, size_t size)
 {
     async_ctx *ctx;
+    OPENSSL_CTX *libctx;
 
     if (!OPENSSL_init_crypto(OPENSSL_INIT_ASYNC, NULL))
         return ASYNC_ERR;
@@ -203,6 +204,11 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
 
             if (ctx->currjob->status == ASYNC_JOB_PAUSED) {
                 ctx->currjob = *job;
+                /*
+                 * Restore the default libctx to what it was the last time the
+                 * fibre ran
+                 */
+                libctx = OPENSSL_CTX_set0_default(ctx->currjob->libctx);
                 /* Resume previous job */
                 if (!async_fibre_swapcontext(&ctx->dispatcher,
                         &ctx->currjob->fibrectx, 1)) {
@@ -210,6 +216,12 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
                              ASYNC_R_FAILED_TO_SWAP_CONTEXT);
                     goto err;
                 }
+                /*
+                 * In case the fibre changed the default libctx we set it back
+                 * again to what it was originally, and remember what it had
+                 * been changed to.
+                 */
+                ctx->currjob->libctx = OPENSSL_CTX_set0_default(libctx);
                 continue;
             }
 
@@ -240,11 +252,17 @@ int ASYNC_start_job(ASYNC_JOB **job, ASYNC_WAIT_CTX *wctx, int *ret,
 
         ctx->currjob->func = func;
         ctx->currjob->waitctx = wctx;
+        libctx = openssl_ctx_get_concrete(NULL);
         if (!async_fibre_swapcontext(&ctx->dispatcher,
                 &ctx->currjob->fibrectx, 1)) {
             ASYNCerr(ASYNC_F_ASYNC_START_JOB, ASYNC_R_FAILED_TO_SWAP_CONTEXT);
             goto err;
         }
+        /*
+         * In case the fibre changed the default libctx we set it back again
+         * to what it was, and remember what it had been changed to.
+         */
+        ctx->currjob->libctx = OPENSSL_CTX_set0_default(libctx);
     }
 
 err:

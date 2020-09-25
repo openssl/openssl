@@ -31,7 +31,8 @@ SKIP: {
                       '-out', 'sm2.sig', '-rawin',
                       '-digest', 'sm3', '-pkeyopt', 'distid:someid']))),
                       "Sign a piece of data using SM2");
-    ok_nofips(run(app(([ 'openssl', 'pkeyutl', '-verify', '-certin',
+    ok_nofips(run(app(([ 'openssl', 'pkeyutl',
+                      '-verify', '-certin',
                       '-in', srctop_file('test', 'certs', 'sm2.pem'),
                       '-inkey', srctop_file('test', 'certs', 'sm2.pem'),
                       '-sigfile', 'sm2.sig', '-rawin',
@@ -74,8 +75,8 @@ sub tsignverify {
     my $pubkey = shift;
     my @extraopts = @_;
 
-    my $data_to_sign = srctop_file('test', 'README');
-    my $other_data = srctop_file('test', 'README.external');
+    my $data_to_sign = srctop_file('test', 'data.txt');
+    my $other_data = srctop_file('test', 'data2.txt');
     my $sigfile = basename($privkey, '.pem') . '.sig';
 
     my @args = ();

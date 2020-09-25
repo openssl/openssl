@@ -16,25 +16,27 @@
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/ec.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "prov/securitycheck.h"
 #include "crypto/ec.h" /* ecdh_KDF_X9_63() */
 
-static OSSL_OP_keyexch_newctx_fn ecdh_newctx;
-static OSSL_OP_keyexch_init_fn ecdh_init;
-static OSSL_OP_keyexch_set_peer_fn ecdh_set_peer;
-static OSSL_OP_keyexch_derive_fn ecdh_derive;
-static OSSL_OP_keyexch_freectx_fn ecdh_freectx;
-static OSSL_OP_keyexch_dupctx_fn ecdh_dupctx;
-static OSSL_OP_keyexch_set_ctx_params_fn ecdh_set_ctx_params;
-static OSSL_OP_keyexch_settable_ctx_params_fn ecdh_settable_ctx_params;
-static OSSL_OP_keyexch_get_ctx_params_fn ecdh_get_ctx_params;
-static OSSL_OP_keyexch_gettable_ctx_params_fn ecdh_gettable_ctx_params;
+static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
+static OSSL_FUNC_keyexch_init_fn ecdh_init;
+static OSSL_FUNC_keyexch_set_peer_fn ecdh_set_peer;
+static OSSL_FUNC_keyexch_derive_fn ecdh_derive;
+static OSSL_FUNC_keyexch_freectx_fn ecdh_freectx;
+static OSSL_FUNC_keyexch_dupctx_fn ecdh_dupctx;
+static OSSL_FUNC_keyexch_set_ctx_params_fn ecdh_set_ctx_params;
+static OSSL_FUNC_keyexch_settable_ctx_params_fn ecdh_settable_ctx_params;
+static OSSL_FUNC_keyexch_get_ctx_params_fn ecdh_get_ctx_params;
+static OSSL_FUNC_keyexch_gettable_ctx_params_fn ecdh_gettable_ctx_params;
 
 enum kdf_type {
     PROV_ECDH_KDF_NONE = 0,
@@ -79,8 +81,12 @@ typedef struct {
 static
 void *ecdh_newctx(void *provctx)
 {
-    PROV_ECDH_CTX *pectx = OPENSSL_zalloc(sizeof(*pectx));
+    PROV_ECDH_CTX *pectx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    pectx = OPENSSL_zalloc(sizeof(*pectx));
     if (pectx == NULL)
         return NULL;
 
@@ -96,13 +102,16 @@ int ecdh_init(void *vpecdhctx, void *vecdh)
 {
     PROV_ECDH_CTX *pecdhctx = (PROV_ECDH_CTX *)vpecdhctx;
 
-    if (pecdhctx == NULL || vecdh == NULL || !EC_KEY_up_ref(vecdh))
+    if (!ossl_prov_is_running()
+            || pecdhctx == NULL
+            || vecdh == NULL
+            || !EC_KEY_up_ref(vecdh))
         return 0;
     EC_KEY_free(pecdhctx->k);
     pecdhctx->k = vecdh;
     pecdhctx->cofactor_mode = -1;
     pecdhctx->kdf_type = PROV_ECDH_KDF_NONE;
-    return 1;
+    return ec_check_key(vecdh, 1);
 }
 
 static
@@ -110,11 +119,14 @@ int ecdh_set_peer(void *vpecdhctx, void *vecdh)
 {
     PROV_ECDH_CTX *pecdhctx = (PROV_ECDH_CTX *)vpecdhctx;
 
-    if (pecdhctx == NULL || vecdh == NULL || !EC_KEY_up_ref(vecdh))
+    if (!ossl_prov_is_running()
+            || pecdhctx == NULL
+            || vecdh == NULL
+            || !EC_KEY_up_ref(vecdh))
         return 0;
     EC_KEY_free(pecdhctx->peerk);
     pecdhctx->peerk = vecdh;
-    return 1;
+    return ec_check_key(vecdh, 1);
 }
 
 static
@@ -136,6 +148,9 @@ void *ecdh_dupctx(void *vpecdhctx)
 {
     PROV_ECDH_CTX *srcctx = (PROV_ECDH_CTX *)vpecdhctx;
     PROV_ECDH_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL)
@@ -239,7 +254,10 @@ int ecdh_set_ctx_params(void *vpecdhctx, const OSSL_PARAM params[])
 
         EVP_MD_free(pectx->kdf_md);
         pectx->kdf_md = EVP_MD_fetch(pectx->libctx, name, mdprops);
-
+        if (!digest_is_allowed(pectx->kdf_md)) {
+            EVP_MD_free(pectx->kdf_md);
+            pectx->kdf_md = NULL;
+        }
         if (pectx->kdf_md == NULL)
             return 0;
     }
@@ -279,7 +297,7 @@ static const OSSL_PARAM known_settable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_settable_ctx_params(void)
+const OSSL_PARAM *ecdh_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_settable_ctx_params;
 }
@@ -360,7 +378,7 @@ static const OSSL_PARAM known_gettable_ctx_params[] = {
 };
 
 static
-const OSSL_PARAM *ecdh_gettable_ctx_params(void)
+const OSSL_PARAM *ecdh_gettable_ctx_params(ossl_unused void *provctx)
 {
     return known_gettable_ctx_params;
 }
@@ -458,7 +476,6 @@ int ecdh_plain_derive(void *vpecdhctx, unsigned char *secret,
     return ret;
 }
 
-#ifndef FIPS_MODULE
 static ossl_inline
 int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
                           size_t *psecretlen, size_t outlen)
@@ -489,7 +506,8 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
                         stmp, stmplen,
                         pecdhctx->kdf_ukm,
                         pecdhctx->kdf_ukmlen,
-                        pecdhctx->kdf_md))
+                        pecdhctx->kdf_md,
+                        pecdhctx->libctx, NULL))
         goto err;
     *psecretlen = pecdhctx->kdf_outlen;
     ret = 1;
@@ -498,7 +516,6 @@ int ecdh_X9_63_kdf_derive(void *vpecdhctx, unsigned char *secret,
     OPENSSL_secure_clear_free(stmp, stmplen);
     return ret;
 }
-#endif /* FIPS_MODULE */
 
 static
 int ecdh_derive(void *vpecdhctx, unsigned char *secret,
@@ -509,19 +526,13 @@ int ecdh_derive(void *vpecdhctx, unsigned char *secret,
     switch (pecdhctx->kdf_type) {
         case PROV_ECDH_KDF_NONE:
             return ecdh_plain_derive(vpecdhctx, secret, psecretlen, outlen);
-#ifndef FIPS_MODULE
         case PROV_ECDH_KDF_X9_63:
             return ecdh_X9_63_kdf_derive(vpecdhctx, secret, psecretlen, outlen);
-
-#endif /* FIPS_MODULE */
         default:
             break;
     }
-
     return 0;
 }
-
-
 
 const OSSL_DISPATCH ecdh_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))ecdh_newctx },

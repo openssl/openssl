@@ -126,7 +126,7 @@ failure. In the event of failure the connection setup fails.
 =head1 NOTES
 
 There are no known security issues with sharing the same PSK between TLSv1.2 (or
-below) and TLSv1.3. However the RFC has this note of caution:
+below) and TLSv1.3. However, the RFC has this note of caution:
 
 "While there is no known way in which the same PSK might produce related output
 in both versions, only limited analysis has been done.  Implementations can
@@ -146,7 +146,7 @@ were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

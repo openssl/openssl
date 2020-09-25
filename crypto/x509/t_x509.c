@@ -17,9 +17,6 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 #ifndef OPENSSL_NO_STDIO
 int X509_print_fp(FILE *fp, X509 *x)
 {
@@ -55,7 +52,6 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
     int ret = 0, i;
     char *m = NULL, mlch = ' ';
     int nmindent = 0;
-    ASN1_INTEGER *bs;
     EVP_PKEY *pkey = NULL;
     const char *neg;
 
@@ -84,11 +80,11 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         }
     }
     if (!(cflag & X509_FLAG_NO_SERIAL)) {
+        const ASN1_INTEGER *bs = X509_get0_serialNumber(x);
 
         if (BIO_write(bp, "        Serial Number:", 22) <= 0)
             goto err;
 
-        bs = X509_get_serialNumber(x);
         if (bs->length <= (int)sizeof(long)) {
                 ERR_set_mark();
                 l = ASN1_INTEGER_get(bs);
@@ -201,9 +197,10 @@ int X509_print_ex(BIO *bp, X509 *x, unsigned long nmflags,
         }
     }
 
-    if (!(cflag & X509_FLAG_NO_EXTENSIONS))
-        X509V3_extensions_print(bp, "X509v3 extensions",
-                                X509_get0_extensions(x), cflag, 8);
+    if (!(cflag & X509_FLAG_NO_EXTENSIONS)
+        && !X509V3_extensions_print(bp, "X509v3 extensions",
+                                    X509_get0_extensions(x), cflag, 8))
+        goto err;
 
     if (!(cflag & X509_FLAG_NO_SIGDUMP)) {
         const X509_ALGOR *sig_alg;
@@ -416,7 +413,8 @@ int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags)
     if (X509_cmp_current_time(X509_get0_notAfter(cert)) < 0)
         if (BIO_printf(bio, "        no more valid\n") <= 0)
             return 0;
-    return X509_print_ex(bio, cert, flags, ~(neg_cflags));
+    return X509_print_ex(bio, cert, flags,
+                         ~neg_cflags & ~X509_FLAG_EXTENSIONS_ONLY_KID);
 }
 
 static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
@@ -428,8 +426,15 @@ static int print_certs(BIO *bio, const STACK_OF(X509) *certs)
 
     for (i = 0; i < sk_X509_num(certs); i++) {
         X509 *cert = sk_X509_value(certs, i);
-        if (cert != NULL && !x509_print_ex_brief(bio, cert, 0))
-            return 0;
+
+        if (cert != NULL) {
+            if (!x509_print_ex_brief(bio, cert, 0))
+                return 0;
+            if (!X509V3_extensions_print(bio, NULL,
+                                         X509_get0_extensions(cert),
+                                         X509_FLAG_EXTENSIONS_ONLY_KID, 8))
+                return 0;
+            }
     }
     return 1;
 }

@@ -112,23 +112,22 @@ int EVP_MAC_init(EVP_MAC_CTX *ctx)
 
 int EVP_MAC_update(EVP_MAC_CTX *ctx, const unsigned char *data, size_t datalen)
 {
-    if (datalen == 0)
-        return 1;
     return ctx->meth->update(ctx->data, data, datalen);
 }
 
 int EVP_MAC_final(EVP_MAC_CTX *ctx,
                   unsigned char *out, size_t *outl, size_t outsize)
 {
-    int l = EVP_MAC_size(ctx);
+    size_t l;
+    int res = 1;
 
-    if (l < 0)
-        return 0;
+    if (out != NULL)
+        res = ctx->meth->final(ctx->data, out, &l, outsize);
+    else
+        l = EVP_MAC_size(ctx);
     if (outl != NULL)
         *outl = l;
-    if (out == NULL)
-        return 1;
-    return ctx->meth->final(ctx->data, out, outl, outsize);
+    return res;
 }
 
 /*
@@ -161,6 +160,13 @@ int EVP_MAC_CTX_set_params(EVP_MAC_CTX *ctx, const OSSL_PARAM params[])
 int EVP_MAC_number(const EVP_MAC *mac)
 {
     return mac->name_id;
+}
+
+const char *EVP_MAC_name(const EVP_MAC *mac)
+{
+    if (mac->prov != NULL)
+        return evp_first_name(mac->prov, mac->name_id);
+    return NULL;
 }
 
 int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)

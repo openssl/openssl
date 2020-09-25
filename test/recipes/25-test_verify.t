@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 139;
+plan tests => 148;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -280,6 +280,21 @@ ok(verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level",
 ok(!verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"]),
    "reject md5 leaf at auth level 1");
 
+# Explicit vs named curve tests
+SKIP: {
+    skip "EC is not supported by this OpenSSL build", 3
+        if disabled("ec");
+    ok(!verify("ee-cert-ec-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-named"]),
+        "reject explicit curve leaf with named curve intermediate");
+    ok(!verify("ee-cert-ec-named-explicit", "sslserver", ["root-cert"],
+               ["ca-cert-ec-explicit"]),
+        "reject named curve leaf with explicit curve intermediate");
+    ok(verify("ee-cert-ec-named-named", "sslserver", ["root-cert"],
+              ["ca-cert-ec-named"]),
+        "accept named curve leaf with named curve intermediate");
+}
+
 # Depth tests, note the depth limit bounds the number of CA certificates
 # between the trust-anchor and the leaf, so, for example, with a root->ca->leaf
 # chain, depth = 1 is sufficient, but depth == 0 is not.
@@ -368,13 +383,31 @@ ok(verify("some-names2", "sslserver", ["many-constraints"], ["many-constraints"]
 ok(verify("root-cert-rsa2", "sslserver", ["root-cert-rsa2"], [], "-check_ss_sig"),
     "Public Key Algorithm rsa instead of rsaEncryption");
 
+    ok(verify("ee-self-signed", "sslserver", ["ee-self-signed"], []),
+       "accept trusted self-signed EE cert excluding key usage keyCertSign");
+
 SKIP: {
-    skip "Ed25519 is not supported by this OpenSSL build", 1
+    skip "Ed25519 is not supported by this OpenSSL build", 6
 	      if disabled("ec");
 
     # ED25519 certificate from draft-ietf-curdle-pkix-04
     ok(verify("ee-ed25519", "sslserver", ["root-ed25519"], []),
-       "ED25519 signature");
+       "accept X25519 EE cert issued by trusted Ed25519 self-signed CA cert");
+
+    ok(!verify("ee-ed25519", "sslserver", ["root-ed25519"], [], "-x509_strict"),
+       "reject X25519 EE cert in strict mode since AKID is missing");
+
+    ok(!verify("root-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail Ed25519 CA and EE certs swapped");
+
+    ok(verify("root-ed25519", "sslserver", ["root-ed25519"], []),
+       "accept trusted Ed25519 self-signed CA cert");
+
+    ok(!verify("ee-ed25519", "sslserver", ["ee-ed25519"], []),
+       "fail trusted Ed25519-signed self-issued X25519 cert");
+
+    ok(verify("ee-ed25519", "sslserver", ["ee-ed25519"], [], "-partial_chain"),
+       "accept last-resort direct leaf match Ed25519-signed self-issued cert");
 
 }
 

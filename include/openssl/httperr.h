@@ -10,6 +10,7 @@
 
 #ifndef OPENSSL_HTTPERR_H
 # define OPENSSL_HTTPERR_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -37,6 +38,9 @@ int ERR_load_HTTP_strings(void);
 # define HTTP_R_ERROR_RECEIVING                           103
 # define HTTP_R_ERROR_SENDING                             102
 # define HTTP_R_INCONSISTENT_CONTENT_LENGTH               120
+# define HTTP_R_INVALID_PORT_NUMBER                       123
+# define HTTP_R_INVALID_URL_PATH                          125
+# define HTTP_R_INVALID_URL_PREFIX                        124
 # define HTTP_R_MAX_RESP_LEN_EXCEEDED                     117
 # define HTTP_R_MISSING_ASN1_ENCODING                     110
 # define HTTP_R_MISSING_CONTENT_TYPE                      121

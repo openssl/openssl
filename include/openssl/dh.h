@@ -40,6 +40,10 @@ extern "C" {
 
 #  define DH_FLAG_CACHE_MONT_P     0x01
 
+#  define DH_FLAG_TYPE_MASK             0xF000
+#  define DH_FLAG_TYPE_DH               0x0000
+#  define DH_FLAG_TYPE_DHX              0x1000
+
 #  ifndef OPENSSL_NO_DEPRECATED_1_1_0
 /*
  * Does nothing. Previously this switched off constant time behaviour.
@@ -198,14 +202,12 @@ DH *DH_get_2048_256(void);
 DH *DH_new_by_nid(int nid);
 DEPRECATEDIN_3_0(int DH_get_nid(const DH *dh))
 
-#  ifndef OPENSSL_NO_CMS
 /* RFC2631 KDF */
 DEPRECATEDIN_3_0(int DH_KDF_X9_42(unsigned char *out, size_t outlen,
                                   const unsigned char *Z, size_t Zlen,
                                   ASN1_OBJECT *key_oid,
                                   const unsigned char *ukm,
                                   size_t ukmlen, const EVP_MD *md))
-#  endif
 
 void DH_get0_pqg(const DH *dh,
                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g);
@@ -282,45 +284,16 @@ int EVP_PKEY_CTX_set_dh_rfc5114(EVP_PKEY_CTX *ctx, int gen);
 int EVP_PKEY_CTX_set_dhx_rfc5114(EVP_PKEY_CTX *ctx, int gen);
 int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
 
-#  define EVP_PKEY_CTX_set_dh_kdf_type(ctx, kdf) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_TYPE, kdf, NULL)
-
-#  define EVP_PKEY_CTX_get_dh_kdf_type(ctx) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_TYPE, -2, NULL)
-
-#  define EVP_PKEY_CTX_set0_dh_kdf_oid(ctx, oid) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_OID, 0, (void *)(oid))
-
-#  define EVP_PKEY_CTX_get0_dh_kdf_oid(ctx, poid) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX,  EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_OID, 0, (void *)(poid))
-
-#  define EVP_PKEY_CTX_set_dh_kdf_md(ctx, md) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_MD, 0, (void *)(md))
-
-#  define EVP_PKEY_CTX_get_dh_kdf_md(ctx, pmd) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_MD, 0, (void *)(pmd))
-
-#  define EVP_PKEY_CTX_set_dh_kdf_outlen(ctx, len) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_OUTLEN, len, NULL)
-
-#  define EVP_PKEY_CTX_get_dh_kdf_outlen(ctx, plen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX, EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_OUTLEN, 0, (void *)(plen))
-
-#  define EVP_PKEY_CTX_set0_dh_kdf_ukm(ctx, p, plen) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX,  EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_DH_KDF_UKM, plen, (void *)(p))
-
-#  define EVP_PKEY_CTX_get0_dh_kdf_ukm(ctx, p) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_DHX,  EVP_PKEY_OP_DERIVE, \
-                          EVP_PKEY_CTRL_GET_DH_KDF_UKM, 0, (void *)(p))
+int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf);
+int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_CTX_set0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT *oid);
+int EVP_PKEY_CTX_get0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT **oid);
+int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
+int EVP_PKEY_CTX_get_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
+int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int len);
+int EVP_PKEY_CTX_get_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int *len);
+int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len);
+int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
 #  define EVP_PKEY_CTRL_DH_PARAMGEN_PRIME_LEN     (EVP_PKEY_ALG_CTRL + 1)
 #  define EVP_PKEY_CTRL_DH_PARAMGEN_GENERATOR     (EVP_PKEY_ALG_CTRL + 2)
@@ -341,9 +314,7 @@ int EVP_PKEY_CTX_set_dh_pad(EVP_PKEY_CTX *ctx, int pad);
 
 /* KDF types */
 #  define EVP_PKEY_DH_KDF_NONE                            1
-#  ifndef OPENSSL_NO_CMS
-#   define EVP_PKEY_DH_KDF_X9_42                          2
-#  endif
+#  define EVP_PKEY_DH_KDF_X9_42                           2
 
 #  ifdef  __cplusplus
 }

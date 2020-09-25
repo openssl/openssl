@@ -5578,14 +5578,14 @@ err:
 }
 
 int ED25519_public_from_private(OPENSSL_CTX *ctx, uint8_t out_public_key[32],
-                                const uint8_t private_key[32])
+                                const uint8_t private_key[32], const char *propq)
 {
     uint8_t az[SHA512_DIGEST_LENGTH];
     ge_p3 A;
     int r;
     EVP_MD *sha512 = NULL;
 
-    sha512 = EVP_MD_fetch(ctx, SN_sha512, NULL);
+    sha512 = EVP_MD_fetch(ctx, SN_sha512, propq);
     if (sha512 == NULL)
         return 0;
     r = EVP_Digest(private_key, 32, az, NULL, sha512, NULL);

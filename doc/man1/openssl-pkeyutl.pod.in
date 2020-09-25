@@ -38,12 +38,13 @@ B<openssl> B<pkeyutl>
 [B<-engine_impl>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 
 =for openssl ifdef engine engine_impl
 
 =head1 DESCRIPTION
 
-This command can be used to perform low level public key
+This command can be used to perform low-level public key
 operations using any supported algorithm.
 
 =head1 OPTIONS
@@ -192,6 +193,8 @@ engine I<id> for crypto operations.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 =back
 
@@ -408,6 +411,8 @@ L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

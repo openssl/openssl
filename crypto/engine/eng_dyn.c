@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "eng_local.h"
 #include "internal/dso.h"
 #include <openssl/crypto.h>
@@ -16,8 +19,6 @@
  * loader should implement the hook-up functions with the following
  * prototypes.
  */
-
-DEFINE_STACK_OF_STRING()
 
 /* Our ENGINE handlers */
 static int dynamic_init(ENGINE *e);

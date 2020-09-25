@@ -46,18 +46,27 @@ static char prog[40];
  * Return the simple name of the program; removing various platform gunk.
  */
 #if defined(OPENSSL_SYS_WIN32)
+
+const char *opt_path_end(const char *filename)
+{
+    const char *p;
+
+    /* find the last '/', '\' or ':' */
+    for (p = filename + strlen(filename); --p > filename; )
+        if (*p == '/' || *p == '\\' || *p == ':') {
+            p++;
+            break;
+        }
+    return p;
+}
+
 char *opt_progname(const char *argv0)
 {
     size_t i, n;
     const char *p;
     char *q;
 
-    /* find the last '/', '\' or ':' */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
-        if (*p == '/' || *p == '\\' || *p == ':') {
-            p++;
-            break;
-        }
+    p = opt_path_end(argv0);
 
     /* Strip off trailing nonsense. */
     n = strlen(p);
@@ -76,17 +85,25 @@ char *opt_progname(const char *argv0)
 
 #elif defined(OPENSSL_SYS_VMS)
 
+const char *opt_path_end(const char *filename)
+{
+    const char *p;
+
+    /* Find last special character sys:[foo.bar]openssl */
+    for (p = filename + strlen(filename); --p > filename;)
+        if (*p == ':' || *p == ']' || *p == '>') {
+            p++;
+            break;
+        }
+    return p;
+}
+
 char *opt_progname(const char *argv0)
 {
     const char *p, *q;
 
     /* Find last special character sys:[foo.bar]openssl */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
-        if (*p == ':' || *p == ']' || *p == '>') {
-            p++;
-            break;
-        }
-
+    p = opt_path_end(argv0);
     q = strrchr(p, '.');
     strncpy(prog, p, sizeof(prog) - 1);
     prog[sizeof(prog) - 1] = '\0';
@@ -97,16 +114,24 @@ char *opt_progname(const char *argv0)
 
 #else
 
-char *opt_progname(const char *argv0)
+const char *opt_path_end(const char *filename)
 {
     const char *p;
 
     /* Could use strchr, but this is like the ones above. */
-    for (p = argv0 + strlen(argv0); --p > argv0;)
+    for (p = filename + strlen(filename); --p > filename;)
         if (*p == '/') {
             p++;
             break;
         }
+    return p;
+}
+
+char *opt_progname(const char *argv0)
+{
+    const char *p;
+
+    p = opt_path_end(argv0);
     strncpy(prog, p, sizeof(prog) - 1);
     prog[sizeof(prog) - 1] = '\0';
     return prog;
@@ -209,6 +234,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
 {
     switch (*s) {
     default:
+        opt_printf_stderr("%s: Bad format \"%s\"\n", prog, s);
         return 0;
     case 'D':
     case 'd':
@@ -275,6 +301,7 @@ int opt_format(const char *s, unsigned long flags, int *result)
                 return opt_format_error(s, flags);
             *result = FORMAT_PKCS12;
         } else {
+            opt_printf_stderr("%s: Bad format \"%s\"\n", prog, s);
             return 0;
         }
         break;
@@ -740,40 +767,29 @@ int opt_next(void)
             break;
         case 'p':
         case 'n':
-            if (!opt_int(arg, &ival)
-                    || (o->valtype == 'p' && ival <= 0)) {
+            if (!opt_int(arg, &ival))
+                return -1;
+            if (o->valtype == 'p' && ival <= 0) {
                 opt_printf_stderr("%s: Non-positive number \"%s\" for -%s\n",
                                   prog, arg, o->name);
                 return -1;
             }
             break;
         case 'M':
-            if (!opt_imax(arg, &imval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_imax(arg, &imval))
                 return -1;
-            }
             break;
         case 'U':
-            if (!opt_umax(arg, &umval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_umax(arg, &umval))
                 return -1;
-            }
             break;
         case 'l':
-            if (!opt_long(arg, &lval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_long(arg, &lval))
                 return -1;
-            }
             break;
         case 'u':
-            if (!opt_ulong(arg, &ulval)) {
-                opt_printf_stderr("%s: Invalid number \"%s\" for -%s\n",
-                                  prog, arg, o->name);
+            if (!opt_ulong(arg, &ulval))
                 return -1;
-            }
             break;
         case 'c':
         case 'E':

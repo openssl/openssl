@@ -10,8 +10,6 @@
 #include "dso_local.h"
 #include "internal/refcount.h"
 
-DEFINE_STACK_OF(void)
-
 static DSO_METHOD *default_DSO_meth = NULL;
 
 static DSO *DSO_new_method(DSO_METHOD *meth)

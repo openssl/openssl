@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2019 Red Hat, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -37,9 +37,11 @@
 #include "internal/cryptlib.h"
 #include "crypto/evp.h"
 #include "internal/numbers.h"
+#include "internal/endian.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 #include "e_os.h"
@@ -69,23 +71,22 @@ typedef struct {
 } KBKDF;
 
 /* Definitions needed for typechecking. */
-static OSSL_OP_kdf_newctx_fn kbkdf_new;
-static OSSL_OP_kdf_freectx_fn kbkdf_free;
-static OSSL_OP_kdf_reset_fn kbkdf_reset;
-static OSSL_OP_kdf_derive_fn kbkdf_derive;
-static OSSL_OP_kdf_settable_ctx_params_fn kbkdf_settable_ctx_params;
-static OSSL_OP_kdf_set_ctx_params_fn kbkdf_set_ctx_params;
+static OSSL_FUNC_kdf_newctx_fn kbkdf_new;
+static OSSL_FUNC_kdf_freectx_fn kbkdf_free;
+static OSSL_FUNC_kdf_reset_fn kbkdf_reset;
+static OSSL_FUNC_kdf_derive_fn kbkdf_derive;
+static OSSL_FUNC_kdf_settable_ctx_params_fn kbkdf_settable_ctx_params;
+static OSSL_FUNC_kdf_set_ctx_params_fn kbkdf_set_ctx_params;
+static OSSL_FUNC_kdf_gettable_ctx_params_fn kbkdf_gettable_ctx_params;
+static OSSL_FUNC_kdf_get_ctx_params_fn kbkdf_get_ctx_params;
 
 /* Not all platforms have htobe32(). */
 static uint32_t be32(uint32_t host)
 {
     uint32_t big = 0;
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
-    if (!is_endian.little)
+    if (!IS_LITTLE_ENDIAN)
         return host;
 
     big |= (host & 0xff000000) >> 24;
@@ -98,6 +99,9 @@ static uint32_t be32(uint32_t host)
 static void *kbkdf_new(void *provctx)
 {
     KBKDF *ctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL) {
@@ -122,6 +126,7 @@ static void kbkdf_free(void *vctx)
 static void kbkdf_reset(void *vctx)
 {
     KBKDF *ctx = (KBKDF *)vctx;
+    void *provctx = ctx->provctx;
 
     EVP_MAC_CTX_free(ctx->ctx_init);
     OPENSSL_clear_free(ctx->context, ctx->context_len);
@@ -129,6 +134,7 @@ static void kbkdf_reset(void *vctx)
     OPENSSL_clear_free(ctx->ki, ctx->ki_len);
     OPENSSL_clear_free(ctx->iv, ctx->iv_len);
     memset(ctx, 0, sizeof(*ctx));
+    ctx->provctx = provctx;
 }
 
 /* SP800-108 section 5.1 or section 5.2 depending on mode. */
@@ -190,6 +196,9 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
     uint32_t l = be32(keylen * 8);
     size_t h = 0;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     /* label, context, and iv are permitted to be empty.  Check everything
      * else. */
     if (ctx->ctx_init == NULL) {
@@ -200,6 +209,12 @@ static int kbkdf_derive(void *vctx, unsigned char *key, size_t keylen)
         /* Could either be missing MAC or missing message digest or missing
          * cipher - arbitrarily, I pick this one. */
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_MAC);
+        return 0;
+    }
+
+    /* Fail if the output length is zero */
+    if (keylen == 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
 
@@ -296,7 +311,7 @@ static int kbkdf_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-static const OSSL_PARAM *kbkdf_settable_ctx_params(void)
+static const OSSL_PARAM *kbkdf_settable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_settable_ctx_params[] = {
         OSSL_PARAM_octet_string(OSSL_KDF_PARAM_INFO, NULL, 0),
@@ -326,7 +341,7 @@ static int kbkdf_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return OSSL_PARAM_set_size_t(p, SIZE_MAX);
 }
 
-static const OSSL_PARAM *kbkdf_gettable_ctx_params(void)
+static const OSSL_PARAM *kbkdf_gettable_ctx_params(ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_gettable_ctx_params[] =
         { OSSL_PARAM_size_t(OSSL_KDF_PARAM_SIZE, NULL), OSSL_PARAM_END };

@@ -8,6 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <openssl/rand.h>
 #include <openssl/engine.h>
@@ -15,8 +18,6 @@
 #include "internal/cryptlib.h"
 #include "ssl_local.h"
 #include "statem/statem_local.h"
-
-DEFINE_STACK_OF(X509)
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);

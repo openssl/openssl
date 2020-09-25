@@ -62,8 +62,8 @@ int DH_check_params(const DH *dh, int *ret)
      * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
      * validity tests.
      */
-    return ffc_params_FIPS186_4_validate(&dh->params, FFC_PARAM_TYPE_DH, NULL,
-                                         FFC_PARAMS_VALIDATE_ALL, ret, NULL);
+    return ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
+                                         FFC_PARAM_TYPE_DH, ret, NULL);
 }
 #else
 int DH_check_params(const DH *dh, int *ret)

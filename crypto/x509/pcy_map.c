@@ -14,9 +14,6 @@
 
 #include "pcy_local.h"
 
-DEFINE_STACK_OF(POLICY_MAPPING)
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 /*
  * Set policy mapping entries in cache. Note: this modifies the passed
  * POLICY_MAPPINGS structure

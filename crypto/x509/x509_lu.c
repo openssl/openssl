@@ -15,11 +15,6 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
-DEFINE_STACK_OF(X509_LOOKUP)
-DEFINE_STACK_OF(X509_OBJECT)
-DEFINE_STACK_OF(X509_CRL)
-DEFINE_STACK_OF(X509)
-
 X509_LOOKUP *X509_LOOKUP_new(X509_LOOKUP_METHOD *method)
 {
     X509_LOOKUP *ret = OPENSSL_zalloc(sizeof(*ret));
@@ -76,25 +71,46 @@ int X509_LOOKUP_shutdown(X509_LOOKUP *ctx)
         return 1;
 }
 
-int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
-                     char **ret)
+int X509_LOOKUP_ctrl_with_libctx(X509_LOOKUP *ctx, int cmd, const char *argc,
+                                 long argl, char **ret,
+                                 OPENSSL_CTX *libctx, const char *propq)
 {
     if (ctx->method == NULL)
         return -1;
+    if (ctx->method->ctrl_with_libctx != NULL)
+        return ctx->method->ctrl_with_libctx(ctx, cmd, argc, argl, ret,
+                                             libctx, propq);
     if (ctx->method->ctrl != NULL)
         return ctx->method->ctrl(ctx, cmd, argc, argl, ret);
+    return 1;
+}
+
+int X509_LOOKUP_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc, long argl,
+                     char **ret)
+{
+    return X509_LOOKUP_ctrl_with_libctx(ctx, cmd, argc, argl, ret, NULL, NULL);
+}
+
+int X509_LOOKUP_by_subject_with_libctx(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                                       const X509_NAME *name, X509_OBJECT *ret,
+                                       OPENSSL_CTX *libctx, const char *propq)
+{
+    if (ctx->skip
+        || ctx->method == NULL
+        || (ctx->method->get_by_subject == NULL
+            && ctx->method->get_by_subject_with_libctx == NULL))
+        return 0;
+    if (ctx->method->get_by_subject_with_libctx != NULL)
+        return ctx->method->get_by_subject_with_libctx(ctx, type, name, ret,
+                                                       libctx, propq);
     else
-        return 1;
+        return ctx->method->get_by_subject(ctx, type, name, ret);
 }
 
 int X509_LOOKUP_by_subject(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                            const X509_NAME *name, X509_OBJECT *ret)
 {
-    if ((ctx->method == NULL) || (ctx->method->get_by_subject == NULL))
-        return 0;
-    if (ctx->skip)
-        return 0;
-    return ctx->method->get_by_subject(ctx, type, name, ret);
+    return X509_LOOKUP_by_subject_with_libctx(ctx, type, name, ret, NULL, NULL);
 }
 
 int X509_LOOKUP_by_issuer_serial(X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
@@ -168,34 +184,33 @@ X509_STORE *X509_STORE_new(void)
     X509_STORE *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL) {
-        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
     if ((ret->objs = sk_X509_OBJECT_new(x509_object_cmp)) == NULL) {
-        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     ret->cache = 1;
     if ((ret->get_cert_methods = sk_X509_LOOKUP_new_null()) == NULL) {
-        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if ((ret->param = X509_VERIFY_PARAM_new()) == NULL) {
-        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509_STORE, ret, &ret->ex_data)) {
-        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     ret->lock = CRYPTO_THREAD_lock_new();
     if (ret->lock == NULL) {
-        X509err(X509_F_X509_STORE_NEW, ERR_R_MALLOC_FAILURE);
+        X509err(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
-
     ret->references = 1;
     return ret;
 
@@ -315,7 +330,8 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *vs,
     if (tmp == NULL || type == X509_LU_CRL) {
         for (i = 0; i < sk_X509_LOOKUP_num(store->get_cert_methods); i++) {
             lu = sk_X509_LOOKUP_value(store->get_cert_methods, i);
-            j = X509_LOOKUP_by_subject(lu, type, name, &stmp);
+            j = X509_LOOKUP_by_subject_with_libctx(lu, type, name, &stmp,
+                                                   vs->libctx, vs->propq);
             if (j) {
                 tmp = &stmp;
                 break;
@@ -557,14 +573,9 @@ STACK_OF(X509) *X509_STORE_get1_all_certs(X509_STORE *store)
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
         X509 *cert = X509_OBJECT_get0_X509(sk_X509_OBJECT_value(objs, i));
 
-        if (cert != NULL) {
-            if (!X509_up_ref(cert))
-                goto err;
-            if (!sk_X509_push(sk, cert)) {
-                X509_free(cert);
-                goto err;
-            }
-        }
+        if (cert != NULL
+            && !X509_add_cert(sk, cert, X509_ADD_FLAG_UP_REF))
+            goto err;
     }
     X509_STORE_unlock(store);
     return sk;
@@ -617,14 +628,8 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(X509_STORE_CTX *ctx,
     for (i = 0; i < cnt; i++, idx++) {
         obj = sk_X509_OBJECT_value(store->objs, idx);
         x = obj->data.x509;
-        if (!X509_up_ref(x)) {
+        if (!X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF)) {
             X509_STORE_unlock(store);
-            sk_X509_pop_free(sk, X509_free);
-            return NULL;
-        }
-        if (!sk_X509_push(sk, x)) {
-            X509_STORE_unlock(store);
-            X509_free(x);
             sk_X509_pop_free(sk, X509_free);
             return NULL;
         }

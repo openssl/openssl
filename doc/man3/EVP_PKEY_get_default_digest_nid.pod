@@ -10,7 +10,7 @@ EVP_PKEY_get_default_digest_nid, EVP_PKEY_get_default_digest_name
  #include <openssl/evp.h>
 
  int EVP_PKEY_get_default_digest_name(EVP_PKEY *pkey,
-                                      char *mdname, size_t mdname_sz)
+                                      char *mdname, size_t mdname_sz);
  int EVP_PKEY_get_default_digest_nid(EVP_PKEY *pkey, int *pnid);
 
 =head1 DESCRIPTION

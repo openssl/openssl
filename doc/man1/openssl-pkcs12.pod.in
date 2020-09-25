@@ -13,6 +13,8 @@ B<openssl> B<pkcs12>
 [B<-chain>]
 [B<-inkey> I<file_or_id>]
 [B<-certfile> I<filename>]
+[B<-untrusted> I<filename>]
+[B<-passcerts> I<arg>]
 [B<-name> I<name>]
 [B<-caname> I<name>]
 [B<-in> I<filename>]
@@ -36,6 +38,7 @@ B<openssl> B<pkcs12>
 [B<-camellia128>]
 [B<-camellia192>]
 [B<-camellia256>]
+[B<-noenc>]
 [B<-nodes>]
 [B<-iter> I<count>]
 [B<-noiter>]
@@ -43,6 +46,7 @@ B<openssl> B<pkcs12>
 [B<-maciter>]
 [B<-nomac>]
 [B<-twopass>]
+[B<-legacy>]
 [B<-descert>]
 [B<-certpbe> I<cipher>]
 [B<-keypbe> I<cipher>]
@@ -70,8 +74,9 @@ programs including Netscape, MSIE and MS Outlook.
 =head1 OPTIONS
 
 There are a lot of options the meaning of some depends of whether a PKCS#12 file
-is being created or parsed. By default a PKCS#12 file is parsed. A PKCS#12
-file can be created by using the B<-export> option (see below).
+is being created or parsed. By default a PKCS#12 file is parsed.
+A PKCS#12 file can be created by using the B<-export> option (see below).
+Many further options such as B<-chain> make sense only with B<-export>.
 
 =head1 PARSING OPTIONS
 
@@ -83,8 +88,10 @@ Print out a usage message.
 
 =item B<-in> I<filename>
 
-This specifies filename of the PKCS#12 file to be parsed. Standard input is used
-by default.
+This specifies the input filename or URI.
+Standard input is used by default.
+Without the B<-export> option this is a PKCS#12 file to be parsed.
+With the B<-export> option this is a file with certificates and possibly a key.
 
 =item B<-out> I<filename>
 
@@ -98,8 +105,8 @@ otherwise it is equivalent to B<-passin>.
 
 =item B<-noout>
 
-This option inhibits output of the keys and certificates to the output file
-version of the PKCS#12 file.
+This option inhibits credentials output,
+and so the PKCS#12 input is just verified.
 
 =item B<-clcerts>
 
@@ -146,9 +153,13 @@ Use ARIA to encrypt private keys before outputting.
 
 Use Camellia to encrypt private keys before outputting.
 
-=item B<-nodes>
+=item B<-noenc>
 
 Don't encrypt the private keys at all.
+
+=item B<-nodes>
+
+This option is deprecated since OpenSSL 3.0; use B<-noenc> instead.
 
 =item B<-nomacver>
 
@@ -160,6 +171,16 @@ Prompt for separate integrity and encryption passwords: most software
 always assumes these are the same so this option will render such
 PKCS#12 files unreadable. Cannot be used in combination with the options
 B<-password>, B<-passin> if importing, or B<-passout> if exporting.
+
+=item B<-legacy>
+
+Use legacy mode of operation and automatically load the legacy provider.
+In the legacy mode, the default algorithm for certificate encryption
+is RC2_CBC or 3DES_CBC depending on whether the RC2 cipher is enabled
+in the build. The default algorithm for private key encryption is 3DES_CBC.
+If the legacy option is not specified, then the legacy provider is not loaded
+and the default encryption algorithm for both certificates and private keys is
+AES_256_CBC with PBKDF2 for key derivation by default.
 
 =back
 
@@ -179,15 +200,16 @@ by default.
 
 =item B<-in> I<filename>
 
-The filename to read certificates and private keys from, standard input by
-default.  They must all be in PEM format. The order doesn't matter but one
-private key and its corresponding certificate should be present. If additional
+The filename or URI to read certificates and private keys from, standard input
+by default. They can be in PEM, DER, or PKCS#12 format.
+The order doesn't matter but one private key and
+its corresponding certificate should be present. If additional
 certificates are present they will also be included in the PKCS#12 file.
 
 =item B<-inkey> I<file_or_id>
 
-File to read private key from. If not present then a private key must be present
-in the input file.
+File to read private key from for PKCS12 output.
+If not present then the input file (B<-in> argument) must contain a private key.
 If no engine is used, the argument is taken as a file; if an engine is
 specified, the argument is given to the engine as a key identifier.
 
@@ -198,7 +220,21 @@ name is typically displayed in list boxes by software importing the file.
 
 =item B<-certfile> I<filename>
 
-A filename to read additional certificates from.
+An input file with extra certificates to be added to the PKCS12 output
+if the B<-export> option is given.
+
+=item B<-untrusted> I<filename>
+
+An input file of untrusted certificates that may be used
+for chain building, which is relevant only when a PKCS#12 file is created
+with the B<-export> option and the B<-chain> option is given as well.
+Any certificates that are actually part of the chain are added to the output.
+
+=item B<-passcerts> I<arg>
+
+The password source for certificate input such as B<-certfile>.
+For more information about the format of B<arg>
+see the B<PASS PHRASE ARGUMENTS> section in L<openssl(1)>.
 
 =item B<-caname> I<friendlyname>
 
@@ -216,16 +252,20 @@ see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-chain>
 
-If this option is present then an attempt is made to include the entire
-certificate chain of the user certificate. The standard CA store is used
-for this search. If the search fails it is considered a fatal error.
+If this option is present then the certificate chain of the end entity
+certificate is built and included in the PKCS#12 output file.
+The end entity certificate is the first one read from the B<-in> file
+if no key is given, else the first certificate matching the given key.
+The standard CA trust store is used for chain building,
+as well as any untrusted CA certificates given with the B<-untrusted> option.
 
 =item B<-descert>
 
 Encrypt the certificate using triple DES, this may render the PKCS#12
 file unreadable by some "export grade" software. By default the private
-key is encrypted using triple DES and the certificate using 40 bit RC2
-unless RC2 is disabled in which case triple DES is used.
+key is encrypted using AES and the certificate using triple DES unless
+the '-legacy' option is used. If '-descert' is used with the '-legacy'
+then both, the private key and the certificate are encrypted using triple DES.
 
 =item B<-keypbe> I<alg>, B<-certpbe> I<alg>
 
@@ -244,7 +284,7 @@ This option is only interpreted by MSIE and similar MS software. Normally
 encryption purposes but arbitrary length keys for signing. The B<-keysig>
 option marks the key for signing only. Signing only keys can be used for
 S/MIME signing, authenticode (ActiveX control signing)  and SSL client
-authentication, however due to a bug only MSIE 5.0 and later support
+authentication, however, due to a bug only MSIE 5.0 and later support
 the use of signing only keys for SSL client authentication.
 
 =item B<-macalg> I<digest>
@@ -344,11 +384,15 @@ Output only client certificates to a file:
 
 Don't encrypt the private key:
 
- openssl pkcs12 -in file.p12 -out file.pem -nodes
+ openssl pkcs12 -in file.p12 -out file.pem -noenc
 
 Print some info about a PKCS#12 file:
 
  openssl pkcs12 -in file.p12 -info -noout
+
+Print some info about a PKCS#12 file in legacy mode:
+
+ openssl pkcs12 -in file.p12 -info -noout -legacy
 
 Create a PKCS#12 file:
 
@@ -359,11 +403,20 @@ Include some extra certificates:
  openssl pkcs12 -export -in file.pem -out file.p12 -name "My Certificate" \
   -certfile othercerts.pem
 
+Export a PKCS#12 file with default encryption algorithms as in the legacy provider:
+
+ openssl pkcs12 -export -in cert.pem -inkey key.pem -out file.p12 -legacy
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
 L<openssl-pkcs8(1)>,
 L<ossl_store-file(7)>
+
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+The B<-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 
 =head1 COPYRIGHT
 

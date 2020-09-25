@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 /* Required for vmsplice */
 #ifndef _GNU_SOURCE
 # define _GNU_SOURCE

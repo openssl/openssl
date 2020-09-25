@@ -273,9 +273,12 @@
         OPT_PROV_PROVIDER, OPT_PROV_PROVIDER_PATH, \
         OPT_PROV__LAST
 
+# define OPT_CONFIG_OPTION \
+        { "config", OPT_CONFIG, '<', "Load a configuration file (this may load modules)" }
+
 # define OPT_PROV_OPTIONS \
         OPT_SECTION("Provider"), \
-        { "provider_path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
+        { "provider-path", OPT_PROV_PROVIDER_PATH, 's', "Provider load path (must be before 'provider' argument if required)" }, \
         { "provider", OPT_PROV_PROVIDER, 's', "Provider to load (can be specified multiple times)" }
 
 # define OPT_PROV_CASES \
@@ -336,6 +339,7 @@ typedef struct string_int_pair_st {
 #define OPT_SECTION(sec) { OPT_SECTION_STR, 1, '-', sec " options:\n" }
 #define OPT_PARAMETERS() { OPT_PARAM_STR, 1, '-', "Parameters:\n" }
 
+const char *opt_path_end(const char *filename);
 char *opt_progname(const char *argv0);
 char *opt_getprog(void);
 char *opt_init(int ac, char **av, const OPTIONS * o);

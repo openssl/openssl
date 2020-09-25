@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -437,7 +437,7 @@ BN_MONT_CTX *BN_MONT_CTX_set_locked(BN_MONT_CTX **pmont, CRYPTO_RWLOCK *lock,
         return ret;
 
     /*
-     * We don't want to serialise globally while doing our lazy-init math in
+     * We don't want to serialize globally while doing our lazy-init math in
      * BN_MONT_CTX_set. That punishes threads that are doing independent
      * things. Instead, punish the case where more than one thread tries to
      * lazy-init the same 'pmont', by having each do the lazy-init math work

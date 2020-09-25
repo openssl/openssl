@@ -11,6 +11,7 @@
 
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #include <openssl/rand.h>
 #include "prov/provider_ctx.h"
@@ -42,6 +43,9 @@ static int gcm_init(void *vctx, const unsigned char *key, size_t keylen,
                     const unsigned char *iv, size_t ivlen, int enc)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     ctx->enc = enc;
 
@@ -154,13 +158,29 @@ int gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV);
     if (p != NULL) {
-        if (ctx->iv_gen != 1 && ctx->iv_gen_rand != 1)
+        if (ctx->iv_state == IV_STATE_UNINITIALISED)
             return 0;
-        if (ctx->ivlen != p->data_size) {
+        if (ctx->ivlen > p->data_size) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
             return 0;
         }
-        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)) {
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
+    }
+
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    if (p != NULL) {
+        if (ctx->iv_state == IV_STATE_UNINITIALISED)
+            return 0;
+        if (ctx->ivlen > p->data_size) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
+            return 0;
+        }
+        if (!OSSL_PARAM_set_octet_string(p, ctx->iv, ctx->ivlen)
+            && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
@@ -279,12 +299,12 @@ int gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
-        return -1;
+        return 0;
     }
 
     if (gcm_cipher_internal(ctx, out, outl, in, inl) <= 0) {
         ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
-        return -1;
+        return 0;
     }
     return 1;
 }
@@ -294,6 +314,9 @@ int gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
     int i;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     i = gcm_cipher_internal(ctx, out, outl, NULL, 0);
     if (i <= 0)
@@ -308,6 +331,9 @@ int gcm_cipher(void *vctx,
                const unsigned char *in, size_t inl)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -408,7 +434,7 @@ static int gcm_tls_init(PROV_GCM_CTX *dat, unsigned char *aad, size_t aad_len)
     unsigned char *buf;
     size_t len;
 
-    if (aad_len != EVP_AEAD_TLS1_AAD_LEN)
+    if (!ossl_prov_is_running() || aad_len != EVP_AEAD_TLS1_AAD_LEN)
        return 0;
 
     /* Save the aad for later use. */
@@ -473,7 +499,7 @@ static int gcm_tls_cipher(PROV_GCM_CTX *ctx, unsigned char *out, size_t *padlen,
     size_t plen = 0;
     unsigned char *tag = NULL;
 
-    if (!ctx->key_set)
+    if (!ossl_prov_is_running() || !ctx->key_set)
         goto err;
 
     /* Encrypt/decrypt must be performed in place */

@@ -15,9 +15,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(SXNETID)
-DEFINE_STACK_OF(CONF_VALUE)
-
 /* Support for Thawte strong extranet extension */
 
 #define SXNET_TEST

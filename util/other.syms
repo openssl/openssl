@@ -35,15 +35,25 @@ EVP_MAC_CTX                             datatype
 EVP_PKEY_gen_cb                         datatype
 EVP_PKEY_METHOD                         datatype
 EVP_PKEY_ASN1_METHOD                    datatype
+EVP_RAND                                datatype
+EVP_RAND_CTX                            datatype
 GEN_SESSION_CB                          datatype
 OPENSSL_Applink                         external
 OPENSSL_CTX                             datatype
 NAMING_AUTHORITY                        datatype
+OSSL_DECODER                            datatype
+OSSL_DECODER_CTX                        datatype
+OSSL_DECODER_CONSTRUCT                  datatype
+OSSL_DECODER_CLEANUP                    datatype
+OSSL_DECODER_INSTANCE                   datatype
 OSSL_HTTP_bio_cb_t                      datatype
 OSSL_PARAM                              datatype
 OSSL_PROVIDER                           datatype
-OSSL_SERIALIZER                         datatype
-OSSL_SERIALIZER_CTX                     datatype
+OSSL_ENCODER                            datatype
+OSSL_ENCODER_CTX                        datatype
+OSSL_ENCODER_CONSTRUCT                  datatype
+OSSL_ENCODER_CLEANUP                    datatype
+OSSL_ENCODER_INSTANCE                   datatype
 OSSL_STORE_CTX                          datatype
 OSSL_STORE_INFO                         datatype
 OSSL_STORE_LOADER                       datatype
@@ -58,14 +68,11 @@ OSSL_STORE_eof_fn                       datatype
 OSSL_STORE_error_fn                     datatype
 OSSL_STORE_load_fn                      datatype
 OSSL_STORE_open_fn                      datatype
+OSSL_STORE_open_with_libctx_fn          datatype
 OSSL_STORE_post_process_info_fn         datatype
 OSSL_trace_cb                           datatype
 PROFESSION_INFO                         datatype
 PROFESSION_INFOS                        datatype
-RAND_DRBG_cleanup_entropy_fn            datatype
-RAND_DRBG_cleanup_nonce_fn              datatype
-RAND_DRBG_get_entropy_fn                datatype
-RAND_DRBG_get_nonce_fn                  datatype
 RAND_poll_cb                            datatype
 SSL_CTX_allow_early_data_cb_fn          datatype
 SSL_CTX_keylog_cb_func                  datatype
@@ -258,7 +265,7 @@ EVP_PKEY_CTX_set1_scrypt_salt           define
 EVP_PKEY_CTX_set1_tls1_prf_secret       define
 EVP_PKEY_CTX_set_dh_paramgen_generator  define
 EVP_PKEY_CTX_set_dh_paramgen_prime_len  define
-EVP_PKEY_CTX_set_dh_paramgen_subprime_len     define
+EVP_PKEY_CTX_set_dh_paramgen_subprime_len define
 EVP_PKEY_CTX_set_dh_paramgen_type       define
 EVP_PKEY_CTX_set_dh_kdf_md              define
 EVP_PKEY_CTX_set_dh_kdf_outlen          define
@@ -300,6 +307,9 @@ EVP_PKEY_assign_EC_KEY                  define
 EVP_PKEY_assign_POLY1305                define
 EVP_PKEY_assign_RSA                     define
 EVP_PKEY_assign_SIPHASH                 define
+EVP_RAND_STATE_ERROR                    define
+EVP_RAND_STATE_READY                    define
+EVP_RAND_STATE_UNINITIALISED            define
 EVP_SealUpdate                          define
 EVP_SignInit                            define
 EVP_SignInit_ex                         define
@@ -357,6 +367,10 @@ OpenSSL_add_all_algorithms              define deprecated 1.1.0
 OpenSSL_add_all_ciphers                 define deprecated 1.1.0
 OpenSSL_add_all_digests                 define deprecated 1.1.0
 OpenSSL_add_ssl_algorithms              define
+OSSL_CMP_exec_IR_ses                    define
+OSSL_CMP_exec_CR_ses                    define
+OSSL_CMP_exec_P10CR_ses                 define
+OSSL_CMP_exec_KUR_ses                   define
 OSSL_CMP_CTX_set_log_verbosity          define
 OSSL_CMP_CR                             define
 OSSL_CMP_IR                             define
@@ -368,6 +382,7 @@ OSSL_CMP_LOG_EMERG                      define
 OSSL_CMP_LOG_ERR                        define
 OSSL_CMP_LOG_INFO                       define
 OSSL_CMP_LOG_NOTICE                     define
+OSSL_CMP_LOG_TRACE                      define
 OSSL_CMP_LOG_WARNING                    define
 OSSL_CMP_MSTR_HELPER                    define
 OSSL_CMP_MSTR                           define
@@ -393,20 +408,19 @@ OSSL_PARAM_utf8_string                  define
 OSSL_PARAM_get_TYPE                     generic
 OSSL_PARAM_END                          define
 OSSL_PARAM_set_TYPE                     generic
-OSSL_SERIALIZER_PUBKEY_TO_DER_PQ        define
-OSSL_SERIALIZER_PrivateKey_TO_DER_PQ    define
-OSSL_SERIALIZER_Parameters_TO_DER_PQ    define
-OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ        define
-OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ    define
-OSSL_SERIALIZER_Parameters_TO_PEM_PQ    define
-OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ       define
-OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ   define
-OSSL_SERIALIZER_Parameters_TO_TEXT_PQ   define
+OSSL_ENCODER_PUBKEY_TO_DER_PQ           define
+OSSL_ENCODER_PrivateKey_TO_DER_PQ       define
+OSSL_ENCODER_Parameters_TO_DER_PQ       define
+OSSL_ENCODER_PUBKEY_TO_PEM_PQ           define
+OSSL_ENCODER_PrivateKey_TO_PEM_PQ       define
+OSSL_ENCODER_Parameters_TO_PEM_PQ       define
+OSSL_ENCODER_PUBKEY_TO_TEXT_PQ          define
+OSSL_ENCODER_PrivateKey_TO_TEXT_PQ      define
+OSSL_ENCODER_Parameters_TO_TEXT_PQ      define
 PEM_FLAG_EAY_COMPATIBLE                 define
 PEM_FLAG_ONLY_B64                       define
 PEM_FLAG_SECURE                         define
 RAND_cleanup                            define deprecated 1.1.0
-RAND_DRBG_get_ex_new_index              define
 SSL_COMP_free_compression_methods       define deprecated 1.1.0
 SSL_CTX_add0_chain_cert                 define
 SSL_CTX_add1_chain_cert                 define
@@ -500,6 +514,7 @@ SSL_get_max_cert_list                   define
 SSL_get_max_proto_version               define
 SSL_get_min_proto_version               define
 SSL_get_mode                            define
+SSL_get_peer_certificate                define deprecated 3.0.0
 SSL_get_peer_signature_nid              define
 SSL_get_peer_tmp_key                    define
 SSL_get_secure_renegotiation_support    define
@@ -565,8 +580,11 @@ X509_CRL_http_nbio                      define
 X509_http_nbio                          define
 X509_LOOKUP_add_dir                     define
 X509_LOOKUP_add_store                   define
+X509_LOOKUP_add_store_with_libctx       define
 X509_LOOKUP_load_file                   define
+X509_LOOKUP_load_file_with_libctx       define
 X509_LOOKUP_load_store                  define
+X509_LOOKUP_load_store_with_libctx      define
 X509_STORE_set_lookup_crls_cb           define
 X509_STORE_set_verify_func              define
 EVP_PKEY_CTX_set1_id                    define

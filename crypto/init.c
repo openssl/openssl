@@ -1,11 +1,14 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "e_os.h"
 #include "crypto/cryptlib.h"
@@ -409,8 +412,11 @@ void OPENSSL_cleanup(void)
     OSSL_TRACE(INIT, "OPENSSL_cleanup: engine_cleanup_int()\n");
     engine_cleanup_int();
 #endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     OSSL_TRACE(INIT, "OPENSSL_cleanup: ossl_store_cleanup_int()\n");
     ossl_store_cleanup_int();
+#endif
 
     OSSL_TRACE(INIT, "OPENSSL_cleanup: openssl_ctx_default_deinit()\n");
     openssl_ctx_default_deinit();

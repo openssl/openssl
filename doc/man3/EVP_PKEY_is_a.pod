@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-EVP_PKEY_is_a, EVP_PKEY_can_sign
+EVP_PKEY_is_a, EVP_PKEY_can_sign, EVP_PKEY_typenames_do_all,
+EVP_PKEY_get0_first_alg_name
 - key type and capabilities functions
 
 =head1 SYNOPSIS
@@ -11,6 +12,10 @@ EVP_PKEY_is_a, EVP_PKEY_can_sign
 
  int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name);
  int EVP_PKEY_can_sign(const EVP_PKEY *pkey);
+ void EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
+                                void (*fn)(const char *name, void *data),
+                                void *data);
+ const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
 
 =head1 DESCRIPTION
 
@@ -20,6 +25,17 @@ EVP_PKEY_can_sign() checks if the functionality for the key type of
 I<pkey> supports signing.  No other check is done, such as whether
 I<pkey> contains a private key.
 
+EVP_PKEY_typenames_do_all() traverses all names for I<pkey>'s key type, and
+calls I<fn> with each name and I<data>.  For example, an RSA B<EVP_PKEY> may
+be named both C<RSA> and C<rsaEncryption>.
+The order of the names is undefined.
+
+EVP_PKEY_get0_first_alg_name() returns the first algorithm name that is found
+for the given I<pkey>. Note that the I<pkey> may have multiple synonyms
+associated with it. In this case it is undefined which one will be returned.
+Ownership of the returned string is retained by the I<pkey> object and should
+not be freed by the caller.
+
 =head1 RETURN VALUES
 
 EVP_PKEY_is_a() returns 1 if I<pkey> has the key type I<name>,
@@ -27,6 +43,8 @@ otherwise 0.
 
 EVP_PKEY_can_sign() returns 1 if the I<pkey> key type functionality
 supports signing, otherwise 0.
+
+EVP_PKEY_get0_first_alg_name() returns the name that is found or NULL on error.
 
 =head1 EXAMPLES
 
@@ -59,6 +77,10 @@ this as an crude example:
          exit(1);
      }
      /* Sign something... */
+
+=head1 HISTORY
+
+The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

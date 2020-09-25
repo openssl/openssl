@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free, OPENSSL_CTX_load_config
+OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free, OPENSSL_CTX_load_config,
+OPENSSL_CTX_set0_default
 - OpenSSL library context
 
 =head1 SYNOPSIS
@@ -14,37 +15,53 @@ OPENSSL_CTX, OPENSSL_CTX_new, OPENSSL_CTX_free, OPENSSL_CTX_load_config
  OPENSSL_CTX *OPENSSL_CTX_new(void);
  int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file);
  void OPENSSL_CTX_free(OPENSSL_CTX *ctx);
+ OPENSSL_CTX *OPENSSL_CTX_set0_default(OPENSSL_CTX *ctx);
 
 =head1 DESCRIPTION
 
-C<OPENSSL_CTX> is an internal OpenSSL library context type.
-Applications may allocate their own, but may also use C<NULL> to use
-the internal default context with functions that take a C<OPENSSL_CTX>
+B<OPENSSL_CTX> is an internal OpenSSL library context type.
+Applications may allocate their own, but may also use NULL to use
+a default context with functions that take an B<OPENSSL_CTX>
 argument.
 
-OPENSSL_CTX_new() creates a new OpenSSL library context.
 When a non default library context is in use care should be taken with
 multi-threaded applications to properly clean up thread local resources before
 the OPENSSL_CTX is freed.
 See L<OPENSSL_thread_stop_ex(3)> for more information.
 
-OPENSSL_CTX_load_config() loads a configuration file using the given C<ctx>.
-This can be used to associate a libctx with providers that are loaded from
-a configuration.
+OPENSSL_CTX_new() creates a new OpenSSL library context.
 
-OPENSSL_CTX_free() frees the given C<ctx>.
+OPENSSL_CTX_load_config() loads a configuration file using the given C<ctx>.
+This can be used to associate a library context with providers that are loaded
+from a configuration.
+
+OPENSSL_CTX_free() frees the given I<ctx>, unless it happens to be the
+default OpenSSL library context.
+
+OPENSSL_CTX_set0_default() sets the default OpenSSL library context to be
+I<ctx> in the current thread.  The previous default library context is
+returned.  Care should be taken by the caller to restore the previous
+default library context with a subsequent call of this function.
+
+Care should be taken when changing the default library context and starting
+async jobs (see L<ASYNC_start_job(3)>), as the default library context when
+the job is started will be used throughout the lifetime of an async job, no
+matter how the calling thread makes further default library context changes
+in the mean time.  This means that the calling thread must not free the
+library context that was the default at the start of the async job before
+that job has finished.
 
 =head1 RETURN VALUES
 
-OPENSSL_CTX_new() return a library context pointer on success, or
-C<NULL> on error.
+OPENSSL_CTX_new() and OPENSSL_CTX_set0_default() return a library context
+pointer on success, or NULL on error.
 
 OPENSSL_CTX_free() doesn't return any value.
 
 =head1 HISTORY
 
-OPENSSL_CTX, OPENSSL_CTX_new(), OPENSSL_CTX_load_config() and OPENSSL_CTX_free()
-were added in OpenSSL 3.0.
+OPENSSL_CTX, OPENSSL_CTX_new(), OPENSSL_CTX_load_config(), OPENSSL_CTX_free()
+and OPENSSL_CTX_set0_default() were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

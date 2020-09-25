@@ -37,7 +37,7 @@ String extensions simply have a string which contains either the value itself
 or how it is obtained.
 
 Multi-valued extensions have a short form and a long form. The short form
-is a commma-separated list of names and values:
+is a comma-separated list of names and values:
 
  basicConstraints = critical, CA:true, pathlen:1
 
@@ -68,7 +68,7 @@ will produce an error but the equivalent form:
 
 is valid.
 
-OpenSSL does not support multiple occurences of the same field within a
+OpenSSL does not support multiple occurrences of the same field within a
 section. In this example:
 
  [extensions]
@@ -105,7 +105,7 @@ They do not define the semantics of the extension.
 This is a multi-valued extension which indicates whether a certificate is
 a CA certificate. The first value is B<CA> followed by B<TRUE> or
 B<FALSE>. If B<CA> is B<TRUE> then an optional B<pathlen> name followed by a
-non-negative value can be included.
+nonnegative value can be included.
 
 For example:
 
@@ -167,7 +167,7 @@ Examples:
 This is a string extension with one of two legal values. If it is the word
 B<hash>, then OpenSSL will follow the process in RFC 5280 to calculate the
 hash value.
-Otherwise, the value should be a hex string to output directly, however this
+Otherwise, the value should be a hex string to output directly, however, this
 is strongly discouraged.
 
 Example:
@@ -240,6 +240,15 @@ Examples:
  O = My Organization
  OU = My Unit
  CN = My Name
+
+Non-ASCII Email Address conforming the syntax defined in Section 3.3 of RFC 6531
+are provided as otherName.SmtpUTF8Mailbox. According to RFC 8398, the email
+address should be provided as UTF8String. To enforce the valid representation in
+the certificate, the SmtpUTF8Mailbox should be provided as follows
+
+ subjectAltName=@alts
+ [alts]
+ otherName = 1.3.6.1.5.5.7.8.9;FORMAT:UTF8,UTF8String:nonasciiname.example.com
 
 =head2 Issuer Alternative Name
 

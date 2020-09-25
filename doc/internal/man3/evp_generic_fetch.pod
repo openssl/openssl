@@ -38,7 +38,7 @@ it to create an EVP method with the help of the functions
 I<new_method>, I<up_ref_method>, and I<free_method>.
 
 evp_generic_fetch_by_number() does the same thing as evp_generic_fetch(), 
-but takes a I<name_id> instead of a number.
+but takes a numeric I<name_id> instead of a name.
 I<name_id> must always be nonzero; as a matter of fact, it being zero
 is considered a programming error.
 This is meant to be used when one method needs to fetch an associated
@@ -78,22 +78,23 @@ This is a short example of the fictitious EVP API and operation called
 B<EVP_FOO>.
 
 To begin with, let's assume something like this in
-F<include/openssl/core_numbers.h>:
+F<include/openssl/core_dispatch.h>:
 
-    #define OSSL_OP_FOO                         100
+    #define OSSL_OP_FOO                           100
 
-    #define OSSL_OP_FOO_NEWCTX_FUNC            2001
-    #define OSSL_OP_FOO_INIT                   2002
-    #define OSSL_OP_FOO_OPERATE                2003
-    #define OSSL_OP_FOO_CLEANCTX_FUNC          2004
-    #define OSSL_OP_FOO_FREECTX_FUNC           2005
-    OSSL_CORE_MAKE_FUNC(void *,OP_foo_newctx,(void))
-    OSSL_CORE_MAKE_FUNC(int,OP_foo_init,(void *vctx))
-    OSSL_CORE_MAKE_FUNC(int,OP_foo_operate,(void *vctx,
-                                            unsigned char *out, size_t *out_l,
-                                            unsigned char *in, size_t in_l))
-    OSSL_CORE_MAKE_FUNC(void,OP_foo_cleanctx,(void *vctx))
-    OSSL_CORE_MAKE_FUNC(void,OP_foo_freectx,(void *vctx))
+    #define OSSL_FUNC_FOO_NEWCTX_FUNC            2001
+    #define OSSL_FUNC_FOO_INIT                   2002
+    #define OSSL_FUNC_FOO_OPERATE                2003
+    #define OSSL_FUNC_FOO_CLEANCTX_FUNC          2004
+    #define OSSL_FUNC_FOO_FREECTX_FUNC           2005
+
+    OSSL_CORE_MAKE_FUNC(void *, foo_newctx, (void))
+    OSSL_CORE_MAKE_FUNC(int, foo_init, (void *vctx))
+    OSSL_CORE_MAKE_FUNC(int, foo_operate, (void *vctx,
+                                           unsigned char *out, size_t *out_l,
+                                           unsigned char *in, size_t in_l))
+    OSSL_CORE_MAKE_FUNC(void, foo_cleanctx, (void *vctx))
+    OSSL_CORE_MAKE_FUNC(void, foo_freectx, (void *vctx))
 
 And here's the implementation of the FOO method fetcher:
 
@@ -102,11 +103,11 @@ And here's the implementation of the FOO method fetcher:
         OSSL_PROVIDER *prov;
         int name_id;
 	CRYPTO_REF_COUNT refcnt;
-        OSSL_OP_foo_newctx_fn *newctx;
-        OSSL_OP_foo_init_fn *init;
-        OSSL_OP_foo_operate_fn *operate;
-        OSSL_OP_foo_cleanctx_fn *cleanctx;
-        OSSL_OP_foo_freectx_fn *freectx;
+        OSSL_FUNC_foo_newctx_fn *newctx;
+        OSSL_FUNC_foo_init_fn *init;
+        OSSL_FUNC_foo_operate_fn *operate;
+        OSSL_FUNC_foo_cleanctx_fn *cleanctx;
+        OSSL_FUNC_foo_freectx_fn *freectx;
     };
 
     /*
@@ -127,20 +128,20 @@ And here's the implementation of the FOO method fetcher:
 
         for (; fns->function_id != 0; fns++) {
             switch (fns->function_id) {
-            case OSSL_OP_FOO_NEWCTX_FUNC:
-                foo->newctx = OSSL_get_OP_foo_newctx(fns);
+            case OSSL_FUNC_FOO_NEWCTX:
+                foo->newctx = OSSL_FUNC_foo_newctx(fns);
                 break;
-            case OSSL_OP_FOO_INIT:
-                foo->init = OSSL_get_OP_foo_init(fns);
+            case OSSL_FUNC_FOO_INIT:
+                foo->init = OSSL_FUNC_foo_init(fns);
                 break;
-            case OSSL_OP_FOO_OPERATE:
-                foo->operate = OSSL_get_OP_foo_operate(fns);
+            case OSSL_FUNC_FOO_OPERATE:
+                foo->operate = OSSL_FUNC_foo_operate(fns);
                 break;
-            case OSSL_OP_FOO_CLEANCTX_FUNC:
-                foo->cleanctx = OSSL_get_OP_foo_cleanctx(fns);
+            case OSSL_FUNC_FOO_CLEANCTX:
+                foo->cleanctx = OSSL_FUNC_foo_cleanctx(fns);
                 break;
-            case OSSL_OP_FOO_FREECTX_FUNC:
-                foo->freectx = OSSL_get_OP_foo_freectx(fns);
+            case OSSL_FUNC_FOO_FREECTX:
+                foo->freectx = OSSL_FUNC_foo_freectx(fns);
                 break;
             }
         }
@@ -260,7 +261,7 @@ The functions described here were all added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

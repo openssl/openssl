@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -167,7 +167,7 @@ void win32_utf8argv(int *argc, char **argv[])
         int in_quote = 0;
 
         if (*p == L' ' || *p == L'\t') {
-            p++; /* skip over white spaces */
+            p++; /* skip over whitespace */
             continue;
         }
 

@@ -38,7 +38,7 @@ it might be used in a verification callback to set an error based on additional
 checks.
 
 X509_STORE_CTX_get_error_depth() returns the B<depth> of the error. This is a
-non-negative integer representing where in the certificate chain the error
+nonnegative integer representing where in the certificate chain the error
 occurred. If it is zero it occurred in the end entity certificate, one if
 it is the certificate which signed the end entity certificate and so on.
 
@@ -79,7 +79,7 @@ verification error B<n>.
 
 X509_STORE_CTX_get_error() returns B<X509_V_OK> or an error code.
 
-X509_STORE_CTX_get_error_depth() returns a non-negative error depth.
+X509_STORE_CTX_get_error_depth() returns a nonnegative error depth.
 
 X509_STORE_CTX_get_current_cert() returns the certificate which caused the
 error or B<NULL> if no certificate is relevant to the error.
@@ -107,24 +107,29 @@ Unspecified error; should not happen.
 
 The issuer certificate of a locally looked up certificate could not be found.
 This normally means the list of trusted certificates is not complete.
+To allow any certificate (not only a self-signed one) in the trust store
+to terminate the chain the B<X509_V_FLAG_PARTIAL_CHAIN> flag may be set.
 
 =item B<X509_V_ERR_UNABLE_TO_GET_CRL: unable to get certificate CRL>
 
 The CRL of a certificate could not be found.
 
-=item B<X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE: unable to decrypt certificate's signature>
+=item B<X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:
+unable to decrypt certificate's signature>
 
 The certificate signature could not be decrypted. This means that the actual
 signature value could not be determined rather than it not matching the
 expected value, this is only meaningful for RSA keys.
 
-=item B<X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE: unable to decrypt CRL's signature>
+=item B<X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:
+unable to decrypt CRL's signature>
 
 The CRL signature could not be decrypted: this means that the actual signature
 value could not be determined rather than it not matching the expected value.
 Unused.
 
-=item B<X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY: unable to decode issuer public key>
+=item B<X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:
+unable to decode issuer public key>
 
 The public key in the certificate C<SubjectPublicKeyInfo> field could
 not be read.
@@ -155,19 +160,23 @@ The CRL is not yet valid.
 
 The CRL has expired.
 
-=item B<X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD: format error in certificate's notBefore field>
+=item B<X509_V_ERR_ERROR_IN_CERT_NOT_BEFORE_FIELD:
+format error in certificate's notBefore field>
 
 The certificate B<notBefore> field contains an invalid time.
 
-=item B<X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD: format error in certificate's notAfter field>
+=item B<X509_V_ERR_ERROR_IN_CERT_NOT_AFTER_FIELD:
+format error in certificate's notAfter field>
 
 The certificate B<notAfter> field contains an invalid time.
 
-=item B<X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD: format error in CRL's lastUpdate field>
+=item B<X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD:
+format error in CRL's lastUpdate field>
 
 The CRL B<lastUpdate> field contains an invalid time.
 
-=item B<X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD: format error in CRL's nextUpdate field>
+=item B<X509_V_ERR_ERROR_IN_CRL_NEXT_UPDATE_FIELD:
+format error in CRL's nextUpdate field>
 
 The CRL B<nextUpdate> field contains an invalid time.
 
@@ -175,25 +184,29 @@ The CRL B<nextUpdate> field contains an invalid time.
 
 An error occurred trying to allocate memory.
 
-=item B<X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: self signed certificate>
+=item B<X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT: self-signed certificate>
 
 The passed certificate is self-signed and the same certificate cannot be found
 in the list of trusted certificates.
 
-=item B<X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN: self signed certificate in certificate chain>
+=item B<X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN:
+self-signed certificate in certificate chain>
 
-The certificate chain could be built up using the untrusted certificates but
-the root could not be found locally.
+The certificate chain could be built up using the untrusted certificates
+but no suitable trust anchor (which typically is a self-signed root certificate)
+could be found in the trust store.
 
-=item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY: unable to get local issuer certificate>
+=item B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY:
+unable to get local issuer certificate>
 
 The issuer certificate could not be found: this occurs if the issuer certificate
 of an untrusted certificate cannot be found.
 
-=item B<X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE: unable to verify the first certificate>
+=item B<X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE:
+unable to verify the first certificate>
 
 No signatures could be verified because the chain contains only one certificate
-and it is not self signed.
+and it is not self-signed and the B<X509_V_FLAG_PARTIAL_CHAIN> flag is not set.
 
 =item B<X509_V_ERR_CERT_CHAIN_TOO_LONG: certificate chain too long>
 
@@ -214,7 +227,7 @@ The basicConstraints path-length parameter has been exceeded.
 
 =item B<X509_V_ERR_INVALID_PURPOSE: unsupported certificate purpose>
 
-The supplied certificate cannot be used for the specified purpose.
+The target certificate cannot be used for the specified purpose.
 
 =item B<X509_V_ERR_CERT_UNTRUSTED: certificate not trusted>
 
@@ -229,32 +242,37 @@ The root CA is marked to reject the specified purpose.
 The current candidate issuer certificate was rejected because its subject name
 did not match the issuer name of the current certificate.
 
-=item B<X509_V_ERR_AKID_SKID_MISMATCH: authority and subject key identifier mismatch>
+=item B<X509_V_ERR_AKID_SKID_MISMATCH:
+authority and subject key identifier mismatch>
 
 The current candidate issuer certificate was rejected because its subject key
 identifier was present and did not match the authority key identifier current
 certificate.
 Not used as of OpenSSL 1.1.0.
 
-=item B<X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH: authority and issuer serial number mismatch>
+=item B<X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH:
+authority and issuer serial number mismatch>
 
 The current candidate issuer certificate was rejected because its issuer name
 and serial number was present and did not match the authority key identifier of
 the current certificate.
 Not used as of OpenSSL 1.1.0.
 
-=item B<X509_V_ERR_KEYUSAGE_NO_CERTSIGN:key usage does not include certificate signing>
+=item B<X509_V_ERR_KEYUSAGE_NO_CERTSIGN:
+key usage does not include certificate signing>
 
 The current candidate issuer certificate was rejected because its B<keyUsage>
 extension does not permit certificate signing.
 Not used as of OpenSSL 1.1.0.
 
-=item B<X509_V_ERR_INVALID_EXTENSION: invalid or inconsistent certificate extension>
+=item B<X509_V_ERR_INVALID_EXTENSION:
+invalid or inconsistent certificate extension>
 
 A certificate extension had an invalid value (for example an incorrect
 encoding) or some value inconsistent with other extensions.
 
-=item B<X509_V_ERR_INVALID_POLICY_EXTENSION: invalid or inconsistent certificate policy extension>
+=item B<X509_V_ERR_INVALID_POLICY_EXTENSION:
+invalid or inconsistent certificate policy extension>
 
 A certificate policies extension had an invalid value (for example an incorrect
 encoding) or some value inconsistent with other extensions. This error only
@@ -265,7 +283,7 @@ occurs if policy processing is enabled.
 The verification flags were set to require and explicit policy but none was
 present.
 
-=item B<X509_V_ERR_DIFFERENT_CRL_SCOPE: Different CRL scope>
+=item B<X509_V_ERR_DIFFERENT_CRL_SCOPE: different CRL scope>
 
 The only CRLs that could be found did not match the scope of the certificate.
 
@@ -281,17 +299,20 @@ A name constraint violation occurred in the permitted subtrees.
 
 A name constraint violation occurred in the excluded subtrees.
 
-=item B<X509_V_ERR_SUBTREE_MINMAX: name constraints minimum and maximum not supported>
+=item B<X509_V_ERR_SUBTREE_MINMAX:
+name constraints minimum and maximum not supported>
 
 A certificate name constraints extension included a minimum or maximum field:
 this is not supported.
 
-=item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE: unsupported name constraint type>
+=item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE:
+unsupported name constraint type>
 
 An unsupported name constraint type was encountered. OpenSSL currently only
 supports directory name, DNS name, email and URI types.
 
-=item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX: unsupported or invalid name constraint syntax>
+=item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_SYNTAX:
+unsupported or invalid name constraint syntax>
 
 The format of the name constraint is not recognised: for example an email
 address format of a form not mentioned in RFC3280. This could be caused by
@@ -384,7 +405,7 @@ CA signature digest algorithm too weak.
 
 =item B<X509_V_ERR_INVALID_CALL: invalid certificate verification context>
 
-invalid certificate verification context.
+Invalid certificate verification context.
 
 =item B<X509_V_ERR_STORE_LOOKUP: issuer certificate lookup error>
 

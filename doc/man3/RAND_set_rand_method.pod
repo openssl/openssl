@@ -23,7 +23,8 @@ RAND_OpenSSL() returns the default B<RAND_METHOD> implementation by OpenSSL.
 This implementation ensures that the PRNG state is unique for each thread.
 
 If an B<ENGINE> is loaded that provides the RAND API, however, it will
-be used instead of the method returned by RAND_OpenSSL().
+be used instead of the method returned by RAND_OpenSSL().  This is deprecated
+in OpenSSL 3.0.
 
 RAND_set_rand_method() makes B<meth> the method for PRNG use.  If an
 ENGINE was providing the method, it will be released first.
@@ -57,6 +58,11 @@ methods.
 L<RAND_bytes(3)>,
 L<ENGINE_by_id(3)>,
 L<RAND(7)>
+
+=head1 HISTORY
+
+The ability for an B<ENGINE> to replace the RAND API was deprecated in
+OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

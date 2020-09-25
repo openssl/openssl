@@ -123,11 +123,70 @@ default is 2.  It isn't permitted to specify a larger number of primes than
 being generated so the maximum number could be less.
 Some providers may only support a value of 2.
 
+=item "e" (B<OSSL_PKEY_PARAM_RSA_E>) <unsigned integer>
+
+The RSA "e" value. The value may be any odd number greater than or equal to
+65537. The default value is 65537.
+For legacy reasons a value of 3 is currently accepted but is deprecated.
+
+=back
+
+=head2 RSA key generation parameters for FIPS module testing
+
+When generating RSA keys, the following additional key generation parameters may
+be used for algorithm testing purposes only. Do not use these to generate
+RSA keys for a production environment.
+
+=over 4
+
+=item "xp" (B<OSSL_PKEY_PARAM_RSA_TEST_XP>) <unsigned integer>
+
+=item "xq" (B<OSSL_PKEY_PARAM_RSA_TEST_XQ>) <unsigned integer>
+
+These 2 fields are normally randomly generated and are used to generate "p" and
+"q".
+
+=item "xp1" (B<OSSL_PKEY_PARAM_RSA_TEST_XP1>) <unsigned integer>
+
+=item "xp2" (B<OSSL_PKEY_PARAM_RSA_TEST_XP2>) <unsigned integer>
+
+=item "xq1" (B<OSSL_PKEY_PARAM_RSA_TEST_XQ1>) <unsigned integer>
+
+=item "xq2" (B<OSSL_PKEY_PARAM_RSA_TEST_XQ2>) <unsigned integer>
+
+These 4 fields are normally randomly generated. The prime factors "p1", "p2",
+"q1" and "q2" are determined from these values.
+
+=back
+
+=head2 RSA key parameters for FIPS module testing
+
+The following intermediate values can be retrieved only if the values
+specified in L</"RSA key generation parameters for FIPS module testing"> are set.
+These should not be accessed in a production environment.
+
+=over 4
+
+=item "p1" (B<OSSL_PKEY_PARAM_RSA_TEST_P1>) <unsigned integer>
+
+=item "p2" (B<OSSL_PKEY_PARAM_RSA_TEST_P2>) <unsigned integer>
+
+=item "q1" (B<OSSL_PKEY_PARAM_RSA_TEST_Q1>) <unsigned integer>
+
+=item "q2" (B<OSSL_PKEY_PARAM_RSA_TEST_Q2>) <unsigned integer>
+
+The auxiliary probable primes.
+
 =back
 
 =head1 CONFORMING TO
 
 =over 4
+
+=item FIPS186-4
+
+Section B.3.6  Generation of Probable Primes with Conditions Based on
+Auxiliary Probable Primes
 
 =item RFC 8017, excluding RSA-PSS and RSA-OAEP
 

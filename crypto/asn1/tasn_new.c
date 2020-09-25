@@ -15,8 +15,6 @@
 #include <string.h>
 #include "asn1_local.h"
 
-DEFINE_STACK_OF(ASN1_VALUE)
-
 static int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
                                int embed);
 static int asn1_primitive_new(ASN1_VALUE **pval, const ASN1_ITEM *it,

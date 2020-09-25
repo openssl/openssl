@@ -386,7 +386,8 @@ Names and values of these options are algorithm-specific.
 
 =item B<-passin> I<arg>
 
-The key password source. For more information about the format of I<arg>
+The key and certificate file password source.
+For more information about the format of I<arg>
 see L<openssl(1)/Pass Phrase Options>.
 
 =item B<-clrext>
@@ -516,11 +517,17 @@ generate a certificate containing any desired public key.
 =item B<-subj> I<arg>
 
 When a certificate is created set its subject name to the given value.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
-in the certificate. Giving a single C</> will lead to an empty sequence of RDNs
-(a NULL subject DN).
+in the certificate.
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
+
+C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
 Unless the B<-CA> option is given the issuer is set to the same value.
 
@@ -834,6 +841,8 @@ All B<-keyform> and B<-CAkeyform> values except B<ENGINE>
 have become obsolete in OpenSSL 3.0.0 and have no effect.
 
 The B<-CAform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

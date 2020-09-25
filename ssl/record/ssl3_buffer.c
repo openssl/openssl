@@ -180,6 +180,8 @@ int ssl3_release_read_buffer(SSL *s)
     SSL3_BUFFER *b;
 
     b = RECORD_LAYER_get_rbuf(&s->rlayer);
+    if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+        OPENSSL_cleanse(b->buf, b->len);
     OPENSSL_free(b->buf);
     b->buf = NULL;
     return 1;

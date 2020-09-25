@@ -167,7 +167,7 @@ the session. In this way the server can operate statelessly - no session
 information needs to be cached locally.
 
 The TLSv1.3 protocol only supports tickets and does not directly support session
-ids. However OpenSSL allows two modes of ticket operation in TLSv1.3: stateful
+ids. However, OpenSSL allows two modes of ticket operation in TLSv1.3: stateful
 and stateless. Stateless tickets work the same way as in TLSv1.2 and below.
 Stateful tickets mimic the session id behaviour available in TLSv1.2 and below.
 The session information is cached on the server and the session id is wrapped up
@@ -264,6 +264,20 @@ mitigate the replay risks in other ways and in such cases the built in OpenSSL
 functionality is not required. Those applications can turn this feature off by
 setting this option. This is a server-side opton only. It is ignored by
 clients.
+
+=item SSL_OP_CLEANSE_PLAINTEXT
+
+By default TLS connections keep a copy of received plaintext
+application data in a static buffer until it is overwritten by the
+next portion of data. When enabling SSL_OP_CLEANSE_PLAINTEXT
+deciphered application data is cleansed by calling OPENSSL_cleanse(3)
+after passing data to the application. Data is also cleansed when
+releasing the connection (e.g. L<SSL_free(3)>).
+
+Since OpenSSL only cleanses internal buffers, the application is still
+responsible for cleansing all other buffers. Most notably, this
+applies to buffers passed to functions like L<SSL_read(3)>,
+L<SSL_peek(3)> but also like L<SSL_write(3)>.
 
 =back
 

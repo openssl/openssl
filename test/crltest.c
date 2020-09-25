@@ -17,9 +17,6 @@
 
 #include "testutil.h"
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_CRL)
-
 #define PARAM_TIME 1474934400 /* Sep 27th, 2016 */
 
 static const char *kCRLTestRoot[] = {

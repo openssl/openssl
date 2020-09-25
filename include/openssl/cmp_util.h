@@ -38,6 +38,8 @@ typedef int OSSL_CMP_severity;
 #  define OSSL_CMP_LOG_NOTICE  5
 #  define OSSL_CMP_LOG_INFO    6
 #  define OSSL_CMP_LOG_DEBUG   7
+#  define OSSL_CMP_LOG_TRACE   8
+#  define OSSL_CMP_LOG_MAX     OSSL_CMP_LOG_TRACE
 typedef int (*OSSL_CMP_log_cb_t)(const char *func, const char *file, int line,
                                  OSSL_CMP_severity level, const char *msg);
 

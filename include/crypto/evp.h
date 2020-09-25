@@ -8,7 +8,7 @@
  */
 
 #include <openssl/evp.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "internal/refcount.h"
 #include "crypto/ecx.h"
 
@@ -50,7 +50,26 @@ struct evp_pkey_ctx_st {
             EVP_ASYM_CIPHER *cipher;
             void *ciphprovctx;
         } ciph;
+        struct {
+            EVP_KEM *kem;
+            void *kemprovctx;
+        } encap;
     } op;
+
+    /*
+     * Cached parameters.  Inits of operations that depend on these should
+     * call evp_pkey_ctx_use_delayed_data() when the operation has been set
+     * up properly.
+     */
+    struct {
+        /* Distinguishing Identifier, ISO/IEC 15946-3, FIPS 196 */
+        char *dist_id_name; /* The name used with EVP_PKEY_CTX_ctrl_str() */
+        void *dist_id;      /* The distinguishing ID itself */
+        size_t dist_id_len; /* The length of the distinguishing ID */
+
+        /* Indicators of what has been set.  Keep them together! */
+        unsigned int dist_id_set : 1;
+    } cached_parameters;
 
     /* Application specific data, usually used by the callback */
     void *app_data;
@@ -62,6 +81,8 @@ struct evp_pkey_ctx_st {
 
     /* Legacy fields below */
 
+    /* EVP_PKEY identity */
+    int legacy_keytype;
     /* Method associated with this operation */
     const EVP_PKEY_METHOD *pmeth;
     /* Engine that implements this method or NULL if builtin */
@@ -131,24 +152,16 @@ DEFINE_STACK_OF_CONST(EVP_PKEY_METHOD)
 
 void evp_pkey_set_cb_translate(BN_GENCB *cb, EVP_PKEY_CTX *ctx);
 
-const EVP_PKEY_METHOD *cmac_pkey_method(void);
 const EVP_PKEY_METHOD *dh_pkey_method(void);
 const EVP_PKEY_METHOD *dhx_pkey_method(void);
 const EVP_PKEY_METHOD *dsa_pkey_method(void);
 const EVP_PKEY_METHOD *ec_pkey_method(void);
-const EVP_PKEY_METHOD *sm2_pkey_method(void);
 const EVP_PKEY_METHOD *ecx25519_pkey_method(void);
 const EVP_PKEY_METHOD *ecx448_pkey_method(void);
 const EVP_PKEY_METHOD *ed25519_pkey_method(void);
 const EVP_PKEY_METHOD *ed448_pkey_method(void);
-const EVP_PKEY_METHOD *hmac_pkey_method(void);
 const EVP_PKEY_METHOD *rsa_pkey_method(void);
 const EVP_PKEY_METHOD *rsa_pss_pkey_method(void);
-const EVP_PKEY_METHOD *scrypt_pkey_method(void);
-const EVP_PKEY_METHOD *tls1_prf_pkey_method(void);
-const EVP_PKEY_METHOD *hkdf_pkey_method(void);
-const EVP_PKEY_METHOD *poly1305_pkey_method(void);
-const EVP_PKEY_METHOD *siphash_pkey_method(void);
 
 struct evp_mac_st {
     OSSL_PROVIDER *prov;
@@ -157,19 +170,19 @@ struct evp_mac_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_mac_newctx_fn *newctx;
-    OSSL_OP_mac_dupctx_fn *dupctx;
-    OSSL_OP_mac_freectx_fn *freectx;
-    OSSL_OP_mac_size_fn *size;
-    OSSL_OP_mac_init_fn *init;
-    OSSL_OP_mac_update_fn *update;
-    OSSL_OP_mac_final_fn *final;
-    OSSL_OP_mac_gettable_params_fn *gettable_params;
-    OSSL_OP_mac_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_mac_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_mac_get_params_fn *get_params;
-    OSSL_OP_mac_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_mac_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_mac_newctx_fn *newctx;
+    OSSL_FUNC_mac_dupctx_fn *dupctx;
+    OSSL_FUNC_mac_freectx_fn *freectx;
+    OSSL_FUNC_mac_size_fn *size;
+    OSSL_FUNC_mac_init_fn *init;
+    OSSL_FUNC_mac_update_fn *update;
+    OSSL_FUNC_mac_final_fn *final;
+    OSSL_FUNC_mac_gettable_params_fn *gettable_params;
+    OSSL_FUNC_mac_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_mac_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_mac_get_params_fn *get_params;
+    OSSL_FUNC_mac_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_mac_set_ctx_params_fn *set_ctx_params;
 };
 
 struct evp_kdf_st {
@@ -178,17 +191,17 @@ struct evp_kdf_st {
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
 
-    OSSL_OP_kdf_newctx_fn *newctx;
-    OSSL_OP_kdf_dupctx_fn *dupctx;
-    OSSL_OP_kdf_freectx_fn *freectx;
-    OSSL_OP_kdf_reset_fn *reset;
-    OSSL_OP_kdf_derive_fn *derive;
-    OSSL_OP_kdf_gettable_params_fn *gettable_params;
-    OSSL_OP_kdf_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_kdf_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_kdf_get_params_fn *get_params;
-    OSSL_OP_kdf_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_kdf_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_kdf_newctx_fn *newctx;
+    OSSL_FUNC_kdf_dupctx_fn *dupctx;
+    OSSL_FUNC_kdf_freectx_fn *freectx;
+    OSSL_FUNC_kdf_reset_fn *reset;
+    OSSL_FUNC_kdf_derive_fn *derive;
+    OSSL_FUNC_kdf_gettable_params_fn *gettable_params;
+    OSSL_FUNC_kdf_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_kdf_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_kdf_get_params_fn *get_params;
+    OSSL_FUNC_kdf_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_kdf_set_ctx_params_fn *set_ctx_params;
 };
 
 struct evp_md_st {
@@ -216,19 +229,19 @@ struct evp_md_st {
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
-    OSSL_OP_digest_newctx_fn *newctx;
-    OSSL_OP_digest_init_fn *dinit;
-    OSSL_OP_digest_update_fn *dupdate;
-    OSSL_OP_digest_final_fn *dfinal;
-    OSSL_OP_digest_digest_fn *digest;
-    OSSL_OP_digest_freectx_fn *freectx;
-    OSSL_OP_digest_dupctx_fn *dupctx;
-    OSSL_OP_digest_get_params_fn *get_params;
-    OSSL_OP_digest_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_digest_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_digest_gettable_params_fn *gettable_params;
-    OSSL_OP_digest_settable_ctx_params_fn *settable_ctx_params;
-    OSSL_OP_digest_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_digest_newctx_fn *newctx;
+    OSSL_FUNC_digest_init_fn *dinit;
+    OSSL_FUNC_digest_update_fn *dupdate;
+    OSSL_FUNC_digest_final_fn *dfinal;
+    OSSL_FUNC_digest_digest_fn *digest;
+    OSSL_FUNC_digest_freectx_fn *freectx;
+    OSSL_FUNC_digest_dupctx_fn *dupctx;
+    OSSL_FUNC_digest_get_params_fn *get_params;
+    OSSL_FUNC_digest_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_digest_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_digest_gettable_params_fn *gettable_params;
+    OSSL_FUNC_digest_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_digest_gettable_ctx_params_fn *gettable_ctx_params;
 
 } /* EVP_MD */ ;
 
@@ -269,20 +282,20 @@ struct evp_cipher_st {
     OSSL_PROVIDER *prov;
     CRYPTO_REF_COUNT refcnt;
     CRYPTO_RWLOCK *lock;
-    OSSL_OP_cipher_newctx_fn *newctx;
-    OSSL_OP_cipher_encrypt_init_fn *einit;
-    OSSL_OP_cipher_decrypt_init_fn *dinit;
-    OSSL_OP_cipher_update_fn *cupdate;
-    OSSL_OP_cipher_final_fn *cfinal;
-    OSSL_OP_cipher_cipher_fn *ccipher;
-    OSSL_OP_cipher_freectx_fn *freectx;
-    OSSL_OP_cipher_dupctx_fn *dupctx;
-    OSSL_OP_cipher_get_params_fn *get_params;
-    OSSL_OP_cipher_get_ctx_params_fn *get_ctx_params;
-    OSSL_OP_cipher_set_ctx_params_fn *set_ctx_params;
-    OSSL_OP_cipher_gettable_params_fn *gettable_params;
-    OSSL_OP_cipher_gettable_ctx_params_fn *gettable_ctx_params;
-    OSSL_OP_cipher_settable_ctx_params_fn *settable_ctx_params;
+    OSSL_FUNC_cipher_newctx_fn *newctx;
+    OSSL_FUNC_cipher_encrypt_init_fn *einit;
+    OSSL_FUNC_cipher_decrypt_init_fn *dinit;
+    OSSL_FUNC_cipher_update_fn *cupdate;
+    OSSL_FUNC_cipher_final_fn *cfinal;
+    OSSL_FUNC_cipher_cipher_fn *ccipher;
+    OSSL_FUNC_cipher_freectx_fn *freectx;
+    OSSL_FUNC_cipher_dupctx_fn *dupctx;
+    OSSL_FUNC_cipher_get_params_fn *get_params;
+    OSSL_FUNC_cipher_get_ctx_params_fn *get_ctx_params;
+    OSSL_FUNC_cipher_set_ctx_params_fn *set_ctx_params;
+    OSSL_FUNC_cipher_gettable_params_fn *gettable_params;
+    OSSL_FUNC_cipher_gettable_ctx_params_fn *gettable_ctx_params;
+    OSSL_FUNC_cipher_settable_ctx_params_fn *settable_ctx_params;
 } /* EVP_CIPHER */ ;
 
 /* Macros to code block cipher wrappers */
@@ -314,7 +327,7 @@ static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
 {\
         while(inl>=EVP_MAXCHUNK) {\
             int num = EVP_CIPHER_CTX_num(ctx);\
-            cprefix##_ofb##cbits##_encrypt(in, out, (long)EVP_MAXCHUNK, &EVP_C_DATA(kstruct,ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx), &num); \
+            cprefix##_ofb##cbits##_encrypt(in, out, (long)EVP_MAXCHUNK, &EVP_C_DATA(kstruct,ctx)->ksched, ctx->iv, &num); \
             EVP_CIPHER_CTX_set_num(ctx, num);\
             inl-=EVP_MAXCHUNK;\
             in +=EVP_MAXCHUNK;\
@@ -322,7 +335,7 @@ static int cname##_ecb_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
         }\
         if (inl) {\
             int num = EVP_CIPHER_CTX_num(ctx);\
-            cprefix##_ofb##cbits##_encrypt(in, out, (long)inl, &EVP_C_DATA(kstruct,ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx), &num); \
+            cprefix##_ofb##cbits##_encrypt(in, out, (long)inl, &EVP_C_DATA(kstruct,ctx)->ksched, ctx->iv, &num); \
             EVP_CIPHER_CTX_set_num(ctx, num);\
         }\
         return 1;\
@@ -333,13 +346,13 @@ static int cname##_cbc_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, const uns
 {\
         while(inl>=EVP_MAXCHUNK) \
             {\
-            cprefix##_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &EVP_C_DATA(kstruct,ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx), EVP_CIPHER_CTX_encrypting(ctx));\
+            cprefix##_cbc_encrypt(in, out, (long)EVP_MAXCHUNK, &EVP_C_DATA(kstruct,ctx)->ksched, ctx->iv, EVP_CIPHER_CTX_encrypting(ctx));\
             inl-=EVP_MAXCHUNK;\
             in +=EVP_MAXCHUNK;\
             out+=EVP_MAXCHUNK;\
             }\
         if (inl)\
-            cprefix##_cbc_encrypt(in, out, (long)inl, &EVP_C_DATA(kstruct,ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx), EVP_CIPHER_CTX_encrypting(ctx));\
+            cprefix##_cbc_encrypt(in, out, (long)inl, &EVP_C_DATA(kstruct,ctx)->ksched, ctx->iv, EVP_CIPHER_CTX_encrypting(ctx));\
         return 1;\
 }
 
@@ -356,7 +369,7 @@ static int cname##_cfb##cbits##_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out, 
             ((cbits == 1) \
                 && !EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_FLAG_LENGTH_BITS) \
                 ? chunk*8 : chunk), \
-            &EVP_C_DATA(kstruct, ctx)->ksched, EVP_CIPHER_CTX_iv_noconst(ctx),\
+            &EVP_C_DATA(kstruct, ctx)->ksched, ctx->iv,\
             &num, EVP_CIPHER_CTX_encrypting(ctx));\
         EVP_CIPHER_CTX_set_num(ctx, num);\
         inl -= chunk;\
@@ -501,6 +514,18 @@ const EVP_CIPHER *EVP_##cname##_ecb(void) { return &cname##_ecb; }
                              (fl)|EVP_CIPH_FLAG_DEFAULT_ASN1, \
                              cipher##_init_key, NULL, NULL, NULL, NULL)
 
+typedef struct {
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned int iv_len;
+    unsigned int tag_len;
+} evp_cipher_aead_asn1_params;
+
+int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *params);
+
+int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                evp_cipher_aead_asn1_params *params);
+
 /*
  * An EVP_PKEY can have the following states:
  *
@@ -569,6 +594,7 @@ struct evp_pkey_st {
 # endif
 
     /* == Common attributes == */
+    /* If these are modified, so must evp_pkey_downgrade() */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
@@ -642,6 +668,10 @@ struct evp_pkey_st {
     ((ctx)->operation == EVP_PKEY_OP_PARAMGEN \
      || (ctx)->operation == EVP_PKEY_OP_KEYGEN)
 
+#define EVP_PKEY_CTX_IS_KEM_OP(ctx) \
+    ((ctx)->operation == EVP_PKEY_OP_ENCAPSULATE \
+     || (ctx)->operation == EVP_PKEY_OP_DECAPSULATE)
+
 void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
@@ -650,6 +680,7 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                   EVP_KEYMGMT **keymgmt,
                                   const char *propquery);
 #ifndef FIPS_MODULE
+int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
 int evp_pkey_downgrade(EVP_PKEY *pk);
 void evp_pkey_free_legacy(EVP_PKEY *x);
 #endif
@@ -657,6 +688,23 @@ void evp_pkey_free_legacy(EVP_PKEY *x);
 /*
  * KEYMGMT utility functions
  */
+
+/*
+ * Key import structure and helper function, to be used as an export callback
+ */
+struct evp_keymgmt_util_try_import_data_st {
+    EVP_KEYMGMT *keymgmt;
+    void *keydata;
+
+    int selection;
+};
+int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg);
+int evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
+                                 void *keydata);
+EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata);
+
+int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
+                            OSSL_CALLBACK *export_cb, void *export_cbarg);
 void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
 size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
                                                    EVP_KEYMGMT *keymgmt);
@@ -682,21 +730,19 @@ void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
 void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
 int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
                            void *keydata, OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_gettable_params(const EVP_KEYMGMT *keymgmt);
 int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt,
                            void *keydata, const OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_settable_params(const EVP_KEYMGMT *keymgmt);
-
 void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection);
 int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
                                  void *template);
 int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
                                const OSSL_PARAM params[]);
-const OSSL_PARAM *
-evp_keymgmt_gen_settable_params(const EVP_KEYMGMT *keymgmt);
 void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
                       OSSL_CALLBACK *cb, void *cbarg);
 void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);
+
+void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
+                       const void *objref, size_t objref_sz);
 
 int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
 int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
@@ -735,6 +781,12 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
 const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
 
+int pkcs5_pbkdf2_hmac_with_libctx(const char *pass, int passlen,
+                                  const unsigned char *salt, int saltlen,
+                                  int iter, const EVP_MD *digest, int keylen,
+                                  unsigned char *out,
+                                  OPENSSL_CTX *libctx, const char *propq);
+
 #ifndef FIPS_MODULE
 /*
  * Internal helpers for stricter EVP_PKEY_CTX_{set,get}_params().
@@ -751,6 +803,19 @@ const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
 int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 
-EVP_PKEY *evp_pkcs82pkey_int(const PKCS8_PRIV_KEY_INFO *p8, OPENSSL_CTX *libctx,
-                             const char *propq);
+EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
+                                       const ASN1_OCTET_STRING *id,
+                                       OPENSSL_CTX *libctx, const char *propq);
+int evp_pkey_name2type(const char *name);
+
+int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
+int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
+int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
+
+int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
+void evp_method_store_flush(OPENSSL_CTX *libctx);
+int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
+                                   int loadconfig);
+
+void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);

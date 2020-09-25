@@ -9,6 +9,9 @@
 
 #include "internal/refcount.h"
 
+#define X509V3_conf_add_error_name_value(val) \
+    ERR_add_error_data(4, "name=", (val)->name, ", value=", (val)->value)
+
 /*
  * This structure holds all parameters associated with a verify operation by
  * including an X509_VERIFY_PARAM structure in related structures the
@@ -87,6 +90,12 @@ struct x509_lookup_method_st {
                                X509_OBJECT *ret);
     int (*get_by_alias) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
                          const char *str, int len, X509_OBJECT *ret);
+    int (*get_by_subject_with_libctx) (X509_LOOKUP *ctx, X509_LOOKUP_TYPE type,
+                                       const X509_NAME *name, X509_OBJECT *ret,
+                                       OPENSSL_CTX *libctx, const char *propq);
+    int (*ctrl_with_libctx) (X509_LOOKUP *ctx, int cmd,
+                             const char *argc, long argl, char **ret,
+                             OPENSSL_CTX *libctx, const char *propq);
 };
 
 /* This is the functions plus an instance of the local variables. */
@@ -149,3 +158,5 @@ DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 
 void x509_set_signature_info(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
                              const ASN1_STRING *sig);
+int x509_likely_issued(X509 *issuer, X509 *subject);
+int x509_signing_allowed(const X509 *issuer, const X509 *subject);

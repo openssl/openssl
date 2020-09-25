@@ -11,7 +11,12 @@
 #include <openssl/evp.h>
 #include <openssl/params.h>
 #include <openssl/crypto.h>
+#include <openssl/fipskey.h>
+#include <openssl/err.h>
 #include "e_os.h"
+#include "prov/providercommonerr.h"
+#include "prov/providercommon.h"
+
 /*
  * We're cheating here. Normally we don't allow RUN_ONCE usage inside the FIPS
  * module because all such initialisation should be associated with an
@@ -27,15 +32,22 @@
 #define FIPS_STATE_RUNNING  2
 #define FIPS_STATE_ERROR    3
 
+/*
+ * The number of times the module will report it is in the error state
+ * before going quiet.
+ */
+#define FIPS_ERROR_REPORTING_RATE_LIMIT     10
+
 /* The size of a temp buffer used to read in data */
 #define INTEGRITY_BUF_SIZE (4096)
 #define MAX_MD_SIZE 64
 #define MAC_NAME    "HMAC"
 #define DIGEST_NAME "SHA256"
 
+static int FIPS_conditional_error_check = 1;
 static int FIPS_state = FIPS_STATE_INIT;
 static CRYPTO_RWLOCK *self_test_lock = NULL;
-static unsigned char fixed_key[32] = { 0 };
+static unsigned char fixed_key[32] = { FIPS_KEY_ELEMENTS };
 
 static CRYPTO_ONCE fips_self_test_init = CRYPTO_ONCE_STATIC_INIT;
 DEFINE_RUN_ONCE_STATIC(do_fips_self_test_init)
@@ -92,7 +104,7 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
     }
     return TRUE;
 }
-#elif defined(__sun)
+#elif defined(__sun) || defined(_AIX)
 
 DEP_DECLARE() /* must be declared before pragma */
 # define DEP_INIT_ATTRIBUTE
@@ -111,6 +123,22 @@ DEP_DECLARE()
 #elif defined(__GNUC__)
 # define DEP_INIT_ATTRIBUTE static __attribute__((constructor))
 # define DEP_FINI_ATTRIBUTE static __attribute__((destructor))
+
+#elif defined(__TANDEM)
+DEP_DECLARE() /* must be declared before calling init() or cleanup() */
+# define DEP_INIT_ATTRIBUTE
+# define DEP_FINI_ATTRIBUTE
+
+/* Method automatically called by the NonStop OS when the DLL loads */
+void __INIT__init(void) {
+    init();
+}
+
+/* Method automatically called by the NonStop OS prior to unloading the DLL */
+void __TERM__cleanup(void) {
+    cleanup();
+}
+
 #endif
 
 #if defined(DEP_INIT_ATTRIBUTE) && defined(DEP_FINI_ATTRIBUTE)
@@ -130,7 +158,7 @@ DEP_FINI_ATTRIBUTE void cleanup(void)
  * the result matches the expected value.
  * Return 1 if verified, or 0 if it fails.
  */
-static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
+static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_FUNC_BIO_read_ex_fn read_ex_cb,
                             unsigned char *expected, size_t expected_len,
                             OPENSSL_CTX *libctx, OSSL_SELF_TEST *ev,
                             const char *event_type)
@@ -146,8 +174,10 @@ static int verify_integrity(OSSL_CORE_BIO *bio, OSSL_BIO_read_ex_fn read_ex_cb,
     OSSL_SELF_TEST_onbegin(ev, event_type, OSSL_SELF_TEST_DESC_INTEGRITY_HMAC);
 
     mac = EVP_MAC_fetch(libctx, MAC_NAME, NULL);
+    if (mac == NULL)
+        goto err;
     ctx = EVP_MAC_CTX_new(mac);
-    if (mac == NULL || ctx == NULL)
+    if (ctx == NULL)
         goto err;
 
     *p++ = OSSL_PARAM_construct_utf8_string("digest", DIGEST_NAME,
@@ -205,6 +235,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         if (!on_demand_test)
             return 1;
     } else if (loclstate != FIPS_STATE_SELFTEST) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
     }
 
@@ -217,11 +248,14 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
         FIPS_state = FIPS_STATE_SELFTEST;
     } else if (FIPS_state != FIPS_STATE_SELFTEST) {
         CRYPTO_THREAD_unlock(self_test_lock);
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_STATE);
         return 0;
     }
     if (st == NULL
-            || st->module_checksum_data == NULL)
+            || st->module_checksum_data == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
         goto end;
+    }
 
     ev = OSSL_SELF_TEST_new(st->cb, st->cb_arg);
     if (ev == NULL)
@@ -229,16 +263,20 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
 
     module_checksum = OPENSSL_hexstr2buf(st->module_checksum_data,
                                          &checksum_len);
-    if (module_checksum == NULL)
+    if (module_checksum == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
         goto end;
+    }
     bio_module = (*st->bio_new_file_cb)(st->module_filename, "rb");
 
     /* Always check the integrity of the fips module */
     if (bio_module == NULL
             || !verify_integrity(bio_module, st->bio_read_ex_cb,
                                  module_checksum, checksum_len, st->libctx,
-                                 ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY))
+                                 ev, OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_MODULE_INTEGRITY_FAILURE);
         goto end;
+    }
 
     /* This will be NULL during installation - so the self test KATS will run */
     if (st->indicator_data != NULL) {
@@ -246,12 +284,16 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
          * If the kats have already passed indicator is set - then check the
          * integrity of the indicator.
          */
-        if (st->indicator_checksum_data == NULL)
+        if (st->indicator_checksum_data == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
             goto end;
+        }
         indicator_checksum = OPENSSL_hexstr2buf(st->indicator_checksum_data,
                                                 &checksum_len);
-        if (indicator_checksum == NULL)
+        if (indicator_checksum == NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CONFIG_DATA);
             goto end;
+        }
 
         bio_indicator =
             (*st->bio_new_buffer_cb)(st->indicator_data,
@@ -260,16 +302,20 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, int on_demand_test)
                 || !verify_integrity(bio_indicator, st->bio_read_ex_cb,
                                      indicator_checksum, checksum_len,
                                      st->libctx, ev,
-                                     OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY))
+                                     OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INDICATOR_INTEGRITY_FAILURE);
             goto end;
-        else
+        } else {
             kats_already_passed = 1;
+        }
     }
 
     /* Only runs the KAT's during installation OR on_demand() */
     if (on_demand_test || kats_already_passed == 0) {
-        if (!SELF_TEST_kats(ev, st->libctx))
+        if (!SELF_TEST_kats(ev, st->libctx)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_SELF_TEST_KAT_FAILURE);
             goto end;
+        }
     }
     ok = 1;
 end:
@@ -281,8 +327,43 @@ end:
         (*st->bio_free_cb)(bio_indicator);
         (*st->bio_free_cb)(bio_module);
     }
-    FIPS_state = ok ? FIPS_STATE_RUNNING : FIPS_STATE_ERROR;
+    if (ok)
+        FIPS_state = FIPS_STATE_RUNNING;
+    else
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_NONE);
     CRYPTO_THREAD_unlock(self_test_lock);
 
     return ok;
+}
+
+void SELF_TEST_disable_conditional_error_state(void)
+{
+    FIPS_conditional_error_check = 0;
+}
+
+void ossl_set_error_state(const char *type)
+{
+    int cond_test = (type != NULL && strcmp(type, OSSL_SELF_TEST_TYPE_PCT) == 0);
+
+    if (!cond_test || (FIPS_conditional_error_check == 1)) {
+        FIPS_state = FIPS_STATE_ERROR;
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE);
+    } else {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_CONDITIONAL_ERROR);
+    }
+}
+
+int ossl_prov_is_running(void)
+{
+    const int res = FIPS_state == FIPS_STATE_RUNNING
+                    || FIPS_state == FIPS_STATE_SELFTEST;
+    static unsigned int rate_limit = 0;
+
+    if (res) {
+        rate_limit = 0;
+    } else if (FIPS_state == FIPS_STATE_ERROR) {
+        if (rate_limit++ < FIPS_ERROR_REPORTING_RATE_LIMIT)
+            ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_IN_ERROR_STATE);
+    }
+    return res;
 }

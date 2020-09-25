@@ -20,6 +20,7 @@
 #include <assert.h>
 #include <openssl/seed.h>
 #include "crypto/evp.h"
+#include "evp_local.h"
 
 static int seed_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
                          const unsigned char *iv, int enc);

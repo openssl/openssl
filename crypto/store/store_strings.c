@@ -12,6 +12,7 @@
 static char *type_strings[] = {
     "Name",                      /* OSSL_STORE_INFO_NAME */
     "Parameters",                /* OSSL_STORE_INFO_PARAMS */
+    "Public key",                /* OSSL_STORE_INFO_PUBKEY */
     "Pkey",                      /* OSSL_STORE_INFO_PKEY */
     "Certificate",               /* OSSL_STORE_INFO_CERT */
     "CRL"                        /* OSSL_STORE_INFO_CRL */

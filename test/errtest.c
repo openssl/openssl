@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,24 +25,53 @@
 
 static int test_print_error_format(void)
 {
-    static const char expected_format[] =
-        ":error::system library:%s:Operation not permitted:"
+    /* Variables used to construct an error line */
+    const char *func = OPENSSL_FUNC;
 # ifndef OPENSSL_NO_FILENAMES
-        "errtest.c:30:";
+    const char *file = OPENSSL_FILE;
+    const int line = OPENSSL_LINE;
 # else
-        ":0:";
+    const char *file = "";
+    const int line = 0;
 # endif
-    char expected[256];
+    /* The format for OpenSSL error lines */
+    const char *expected_format = ":error::system library:%s:%s:%s:%d";
+    /*-
+     *                                                    ^^ ^^ ^^ ^^
+     * function name -------------------------------------++ || || ||
+     * reason string (system error string) ------------------++ || ||
+     * file name -----------------------------------------------++ ||
+     * line number ------------------------------------------------++
+     */
+    char expected[512];
+
     char *out = NULL, *p = NULL;
     int ret = 0, len;
     BIO *bio = NULL;
+    const int syserr = EPERM;
+    int reasoncode;
 
-    BIO_snprintf(expected, sizeof(expected), expected_format, OPENSSL_FUNC);
+    /*
+     * We set a mark here so we can clear the system error that we generate
+     * with ERR_PUT_error().  That is, after all, just a simulation to verify
+     * ERR_print_errors() output, not a real error.
+     */
+    ERR_set_mark();
+
+    ERR_PUT_error(ERR_LIB_SYS, 0, syserr, file, line);
+    reasoncode = ERR_GET_REASON(ERR_peek_error());
+
+    if (!TEST_int_eq(reasoncode, syserr)) {
+        ERR_pop_to_mark();
+        goto err;
+    }
+
+    BIO_snprintf(expected, sizeof(expected), expected_format,
+                 func, strerror(syserr), file, line);
 
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem())))
-        return 0;
+        goto err;
 
-    ERR_PUT_error(ERR_LIB_SYS, 0, 1, "errtest.c", 30);
     ERR_print_errors(bio);
 
     if (!TEST_int_gt(len = BIO_get_mem_data(bio, &out), 0))
@@ -106,7 +135,7 @@ static int raised_error(void)
     file = __FILE__;
     line = __LINE__ + 2; /* The error is generated on the ERR_raise_data line */
 #endif
-    ERR_raise_data(ERR_LIB_SYS, ERR_R_INTERNAL_ERROR,
+    ERR_raise_data(ERR_LIB_NONE, ERR_R_INTERNAL_ERROR,
                    "calling exit()");
     if (!TEST_ulong_ne(e = ERR_get_error_all(&f, &l, NULL, &data, NULL), 0)
             || !TEST_int_eq(ERR_GET_REASON(e), ERR_R_INTERNAL_ERROR)

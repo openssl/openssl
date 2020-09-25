@@ -44,6 +44,7 @@ B<openssl> B<cms>
 [B<-text>]
 [B<-noout>]
 [B<-print>]
+[B<-nameopt> I<option>]
 [B<-md> I<digest>]
 [B<-I<cipher>>]
 [B<-wrap> I<cipher>]
@@ -82,6 +83,7 @@ B<openssl> B<cms>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 [I<recipient-cert> ...]
 
 =for openssl ifdef des-wrap engine
@@ -288,6 +290,12 @@ structure is being checked.
 For the B<-cmsout> operation print out all fields of the CMS structure. This
 is mainly useful for testing purposes.
 
+=item B<-nameopt> I<option>
+
+For the B<-cmsout> operation when B<-print> option is in use, specifies
+printing options for string fields. For most cases B<utf8> is reasonable value.
+See L<openssl(1)/Name Format Options> for details.
+
 =item B<-md> I<digest>
 
 Digest algorithm to use when signing or resigning. If not present then the
@@ -300,6 +308,9 @@ or 256 bit AES - B<-aes256>. Any standard algorithm name (as used by the
 EVP_get_cipherbyname() function) can also be used preceded by a dash, for
 example B<-aes-128-cbc>. See L<openssl-enc(1)> for a list of ciphers
 supported by your version of OpenSSL.
+
+Currently the AES variants with GCM mode are the only supported AEAD
+algorithms.
 
 If not specified triple DES is used. Only used with B<-encrypt> and
 B<-EncryptedData_create> commands.
@@ -372,6 +383,7 @@ the MIME type multipart/signed is used.
 Allows additional certificates to be specified. When signing these will
 be included with the message. When verifying these will be searched for
 the signers certificates.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-certsout> I<file>
 
@@ -493,6 +505,8 @@ Any verification errors cause the command to exit.
 {- $OpenSSL::safe::opt_engine_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 =item I<recipient-cert> ...
 
@@ -771,6 +785,10 @@ The -no_alt_chains option was added in OpenSSL 1.0.2b.
 
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
+
+The B<-nameopt> option was added in OpenSSL 3.0.0.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

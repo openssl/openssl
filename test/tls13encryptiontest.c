@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -277,7 +277,7 @@ static int test_record(SSL3_RECORD *rec, RECORD_DATA *recd, int enc)
 {
     int ret = 0;
     unsigned char *refd;
-    size_t refdatalen;
+    size_t refdatalen = 0;
 
     if (enc)
         refd = multihexstr2buf(recd->ciphertext, &refdatalen);
@@ -368,7 +368,7 @@ static int test_tls13_encryption(void)
         }
 
         /* Encrypt it */
-        if (!TEST_size_t_eq(tls13_enc(s, &rec, 1, 1), 1)) {
+        if (!TEST_size_t_eq(tls13_enc(s, &rec, 1, 1, NULL, 0), 1)) {
             TEST_info("Failed to encrypt record %zu", ctr);
             goto err;
         }
@@ -378,7 +378,7 @@ static int test_tls13_encryption(void)
         }
 
         /* Decrypt it */
-        if (!TEST_int_eq(tls13_enc(s, &rec, 1, 0), 1)) {
+        if (!TEST_int_eq(tls13_enc(s, &rec, 1, 0, NULL, 0), 1)) {
             TEST_info("Failed to decrypt record %zu", ctr);
             goto err;
         }

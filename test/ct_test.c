@@ -22,8 +22,6 @@
 
 #ifndef OPENSSL_NO_CT
 
-DEFINE_STACK_OF(SCT)
-
 /* Used when declaring buffers to read text files into */
 # define CT_TEST_MAX_FILE_SIZE 8096
 
@@ -338,8 +336,6 @@ end:
 static int test_no_scts_in_certificate(void)
 {
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->certs_dir = certs_dir;
     fixture->certificate_file = "leaf.pem";
     fixture->issuer_file = "subinterCA.pem";
@@ -351,8 +347,6 @@ static int test_no_scts_in_certificate(void)
 static int test_one_sct_in_certificate(void)
 {
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->certs_dir = certs_dir;
     fixture->certificate_file = "embeddedSCTs1.pem";
     fixture->issuer_file = "embeddedSCTs1_issuer.pem";
@@ -366,8 +360,6 @@ static int test_one_sct_in_certificate(void)
 static int test_multiple_scts_in_certificate(void)
 {
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->certs_dir = certs_dir;
     fixture->certificate_file = "embeddedSCTs3.pem";
     fixture->issuer_file = "embeddedSCTs3_issuer.pem";
@@ -381,8 +373,6 @@ static int test_multiple_scts_in_certificate(void)
 static int test_verify_one_sct(void)
 {
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->certs_dir = certs_dir;
     fixture->certificate_file = "embeddedSCTs1.pem";
     fixture->issuer_file = "embeddedSCTs1_issuer.pem";
@@ -395,8 +385,6 @@ static int test_verify_one_sct(void)
 static int test_verify_multiple_scts(void)
 {
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->certs_dir = certs_dir;
     fixture->certificate_file = "embeddedSCTs3.pem";
     fixture->issuer_file = "embeddedSCTs3_issuer.pem";
@@ -409,8 +397,6 @@ static int test_verify_multiple_scts(void)
 static int test_verify_fails_for_future_sct(void)
 {
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->epoch_time_in_ms = 1365094800000ULL; /* Apr 4 17:00:00 2013 GMT */
     fixture->certs_dir = certs_dir;
     fixture->certificate_file = "embeddedSCTs1.pem";
@@ -443,8 +429,6 @@ static int test_decode_tls_sct(void)
         "\xED\xBF\x08";
 
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
     fixture->tls_sct_list = tls_sct_list;
     fixture->tls_sct_list_len = 0x7a;
     fixture->sct_dir = ct_dir;
@@ -463,8 +447,6 @@ static int test_encode_tls_sct(void)
     SCT *sct = NULL;
 
     SETUP_CT_TEST_FIXTURE();
-    if (fixture == NULL)
-        return 0;
 
     fixture->sct_list = sk_SCT_new_null();
     if (!TEST_ptr(sct = SCT_new_from_base64(SCT_VERSION_V1, log_id,

@@ -10,10 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
-
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(PKCS7)
-DEFINE_STACK_OF(PKCS12_SAFEBAG)
+#include "crypto/x509.h" /* for X509_add_cert_new() */
 
 /* Simplified PKCS#12 routines */
 
@@ -29,8 +26,8 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
 /*
  * Parse and decrypt a PKCS#12 structure returning user key, user cert and
  * other (CA) certs. Note either ca should be NULL, *ca should be NULL, or it
- * should point to a valid STACK structure. pkey and cert can be passed
- * uninitialised.
+ * should point to a valid STACK structure. pkey and/or cert may be NULL;
+ * if non-NULL the variables they point to can be passed uninitialised.
  */
 
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
@@ -39,9 +36,9 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     STACK_OF(X509) *ocerts = NULL;
     X509 *x = NULL;
 
-    if (pkey)
+    if (pkey != NULL)
         *pkey = NULL;
-    if (cert)
+    if (cert != NULL)
         *cert = NULL;
 
     /* Check for NULL PKCS12 structure */
@@ -75,53 +72,55 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
         goto err;
     }
 
-    /* Allocate stack for other certificates */
-    ocerts = sk_X509_new_null();
-
-    if (!ocerts) {
+    /* If needed, allocate stack for other certificates */
+    if ((cert != NULL || ca != NULL)
+            && (ocerts = sk_X509_new_null()) == NULL) {
         PKCS12err(PKCS12_F_PKCS12_PARSE, ERR_R_MALLOC_FAILURE);
         goto err;
     }
 
     if (!parse_pk12(p12, pass, -1, pkey, ocerts)) {
-        PKCS12err(PKCS12_F_PKCS12_PARSE, PKCS12_R_PARSE_ERROR);
+        int err = ERR_peek_last_error();
+
+        if (ERR_GET_LIB(err) != ERR_LIB_EVP
+                && ERR_GET_REASON(err) != EVP_R_UNSUPPORTED_ALGORITHM)
+            PKCS12err(0, PKCS12_R_PARSE_ERROR);
         goto err;
     }
 
-    while ((x = sk_X509_pop(ocerts))) {
+    /* Split the certs in ocerts over *cert and *ca as far as requested */
+    while ((x = sk_X509_shift(ocerts)) != NULL) {
         if (pkey != NULL && *pkey != NULL
                 && cert != NULL && *cert == NULL) {
+            int match;
+
             ERR_set_mark();
-            if (X509_check_private_key(x, *pkey)) {
-                *cert = x;
-                x = NULL;
-            }
+            match = X509_check_private_key(x, *pkey);
             ERR_pop_to_mark();
+            if (match) {
+                *cert = x;
+                continue;
+            }
         }
 
-        if (ca && x) {
-            if (*ca == NULL)
-                *ca = sk_X509_new_null();
-            if (*ca == NULL)
+        if (ca != NULL) {
+            if (!X509_add_cert_new(ca, x, X509_ADD_FLAG_DEFAULT))
                 goto err;
-            if (!sk_X509_push(*ca, x))
-                goto err;
-            x = NULL;
+            continue;
         }
         X509_free(x);
     }
-
-    sk_X509_pop_free(ocerts, X509_free);
+    sk_X509_free(ocerts);
 
     return 1;
 
  err:
 
-    if (pkey) {
+    if (pkey != NULL) {
         EVP_PKEY_free(*pkey);
         *pkey = NULL;
     }
-    if (cert) {
+    if (cert != NULL) {
         X509_free(*cert);
         *cert = NULL;
     }
@@ -133,6 +132,7 @@ int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
 
 /* Parse the outer PKCS#12 structure */
 
+/* pkey and/or ocerts may be NULL */
 static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
                       EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
 {
@@ -167,6 +167,7 @@ static int parse_pk12(PKCS12 *p12, const char *pass, int passlen,
     return 1;
 }
 
+/* pkey and/or ocerts may be NULL */
 static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
                       int passlen, EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
 {
@@ -179,6 +180,7 @@ static int parse_bags(const STACK_OF(PKCS12_SAFEBAG) *bags, const char *pass,
     return 1;
 }
 
+/* pkey and/or ocerts may be NULL */
 static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
                      EVP_PKEY **pkey, STACK_OF(X509) *ocerts)
 {
@@ -215,7 +217,8 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
         break;
 
     case NID_certBag:
-        if (PKCS12_SAFEBAG_get_bag_nid(bag) != NID_x509Certificate)
+        if (ocerts == NULL
+                || PKCS12_SAFEBAG_get_bag_nid(bag) != NID_x509Certificate)
             return 1;
         if ((x509 = PKCS12_SAFEBAG_get1_cert(bag)) == NULL)
             return 0;
@@ -226,6 +229,7 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
         if (fname) {
             int len, r;
             unsigned char *data;
+
             len = ASN1_STRING_to_UTF8(&data, fname);
             if (len >= 0) {
                 r = X509_alias_set1(x509, data, len);

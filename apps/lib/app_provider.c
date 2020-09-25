@@ -8,6 +8,7 @@
  */
 
 #include "apps.h"
+#include <string.h>
 #include <openssl/err.h>
 #include <openssl/provider.h>
 #include <openssl/safestack.h>
@@ -21,14 +22,19 @@ enum prov_range { OPT_PROV_ENUM };
 
 static STACK_OF(OSSL_PROVIDER) *app_providers = NULL;
 
-static int opt_provider_load(const char *provider)
+static void provider_free(OSSL_PROVIDER *prov)
+{
+    OSSL_PROVIDER_unload(prov);
+}
+
+int app_provider_load(OPENSSL_CTX *libctx, const char *provider_name)
 {
     OSSL_PROVIDER *prov;
 
-    prov = OSSL_PROVIDER_load(NULL, provider);
+    prov = OSSL_PROVIDER_load(libctx, provider_name);
     if (prov == NULL) {
         opt_printf_stderr("%s: unable to load provider %s\n",
-                          opt_getprog(), provider);
+                          opt_getprog(), provider_name);
         return 0;
     }
     if (app_providers == NULL)
@@ -41,11 +47,6 @@ static int opt_provider_load(const char *provider)
     return 1;
 }
 
-static void provider_free(OSSL_PROVIDER *prov)
-{
-    OSSL_PROVIDER_unload(prov);
-}
-
 void app_providers_cleanup(void)
 {
     sk_OSSL_PROVIDER_pop_free(app_providers, provider_free);
@@ -56,7 +57,7 @@ static int opt_provider_path(const char *path)
 {
     if (path != NULL && *path == '\0')
         path = NULL;
-    return OSSL_PROVIDER_set_default_search_path(NULL, path);
+    return OSSL_PROVIDER_set_default_search_path(app_get0_libctx(), path);
 }
 
 int opt_provider(int opt)
@@ -66,7 +67,7 @@ int opt_provider(int opt)
     case OPT_PROV__LAST:
         return 1;
     case OPT_PROV_PROVIDER:
-        return opt_provider_load(opt_arg());
+        return app_provider_load(app_get0_libctx(), opt_arg());
     case OPT_PROV_PROVIDER_PATH:
         return opt_provider_path(opt_arg());
     }

@@ -60,7 +60,8 @@ typedef struct st_kat_kdf_st {
 typedef struct st_kat_drbg_st {
     const char *desc;
     const char *algorithm;
-    int nid;
+    const char *param_name;
+    char *param_value;
     const unsigned char *entropyin;
     size_t entropyinlen;
     const unsigned char *nonce;
@@ -99,6 +100,18 @@ typedef struct st_kat_sign_st {
     const unsigned char *sig_expected; /* Set to NULL if this value changes */
     size_t sig_expected_len;
 } ST_KAT_SIGN;
+
+typedef struct st_kat_asym_cipher_st {
+    const char *desc;
+    const char *algorithm;
+    int encrypt;
+    const ST_KAT_PARAM *key;
+    const ST_KAT_PARAM *postinit;
+    const unsigned char *in;
+    size_t in_len;
+    const unsigned char *expected;
+    size_t expected_len;
+} ST_KAT_ASYM_CIPHER;
 
 /*- DIGEST TEST DATA */
 static const unsigned char sha1_pt[] = "abc";
@@ -458,8 +471,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
 {
     {
         OSSL_SELF_TEST_DESC_DRBG_HASH,
-        "SHA256",
-        NID_sha256,
+        "HASH-DRBG", "digest", "SHA256",
         ITM(drbg_hash_sha256_pr_entropyin),
         ITM(drbg_hash_sha256_pr_nonce),
         ITM(drbg_hash_sha256_pr_persstr),
@@ -471,8 +483,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
     },
     {
         OSSL_SELF_TEST_DESC_DRBG_CTR,
-        "AES-128",
-        NID_aes_128_ctr,
+        "CTR-DRBG", "cipher", "AES-128-CTR",
         ITM(drbg_ctr_aes128_pr_df_entropyin),
         ITM(drbg_ctr_aes128_pr_df_nonce),
         ITM(drbg_ctr_aes128_pr_df_persstr),
@@ -484,8 +495,7 @@ static const ST_KAT_DRBG st_kat_drbg_tests[] =
     },
     {
         OSSL_SELF_TEST_DESC_DRBG_HMAC,
-        "SHA1",
-        NID_sha1,
+        "HMAC-DRBG", "digest", "SHA1",
         ITM(drbg_hmac_sha1_pr_entropyin),
         ITM(drbg_hmac_sha1_pr_nonce),
         ITM(drbg_hmac_sha1_pr_persstr),
@@ -739,7 +749,7 @@ static const unsigned char ecdh_peer_pub[] = {
 };
 
 static const ST_KAT_PARAM ecdh_group[] = {
-    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_EC_NAME, ecdh_curve_name),
+    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecdh_curve_name),
     ST_KAT_PARAM_END()
 };
 static const ST_KAT_PARAM ecdh_host_key[] = {
@@ -945,7 +955,7 @@ static const unsigned char rsa_qInv[] = {
     0xF8, 0xF3, 0x95, 0xFE, 0x31, 0x25, 0x50, 0x12
 };
 
-static const ST_KAT_PARAM rsa_key[] = {
+static const ST_KAT_PARAM rsa_crt_key[] = {
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_N, rsa_n),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_E, rsa_e),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_D, rsa_d),
@@ -954,6 +964,25 @@ static const ST_KAT_PARAM rsa_key[] = {
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_EXPONENT, rsa_dp),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_EXPONENT, rsa_dq),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_COEFFICIENT, rsa_qInv),
+    ST_KAT_PARAM_END()
+};
+
+static const ST_KAT_PARAM rsa_pub_key[] = {
+    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_N, rsa_n),
+    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_E, rsa_e),
+    ST_KAT_PARAM_END()
+};
+
+static const ST_KAT_PARAM rsa_priv_key[] = {
+    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_N, rsa_n),
+    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_E, rsa_e),
+    ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_RSA_D, rsa_d),
+    ST_KAT_PARAM_END()
+};
+
+static const ST_KAT_PARAM rsa_enc_params[] = {
+    ST_KAT_PARAM_UTF8STRING(OSSL_ASYM_CIPHER_PARAM_PAD_MODE,
+                            OSSL_PKEY_RSA_PAD_MODE_NONE),
     ST_KAT_PARAM_END()
 };
 
@@ -992,6 +1021,45 @@ static const unsigned char rsa_expected_sig[256] = {
     0x2c, 0x68, 0xf0, 0x37, 0xa9, 0xd2, 0x56, 0xd6
 };
 
+static const unsigned char rsa_asym_plaintext_encrypt[256] = {
+   0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+   0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+};
+static const unsigned char rsa_asym_expected_encrypt[256] = {
+    0x54, 0xac, 0x23, 0x96, 0x1d, 0x82, 0x5d, 0x8b,
+    0x8f, 0x36, 0x33, 0xd0, 0xf4, 0x02, 0xa2, 0x61,
+    0xb1, 0x13, 0xd4, 0x4a, 0x46, 0x06, 0x37, 0x3c,
+    0xbf, 0x40, 0x05, 0x3c, 0xc6, 0x3b, 0x64, 0xdc,
+    0x22, 0x22, 0xaf, 0x36, 0x79, 0x62, 0x45, 0xf0,
+    0x97, 0x82, 0x22, 0x44, 0x86, 0x4a, 0x7c, 0xfa,
+    0xac, 0x03, 0x21, 0x84, 0x3f, 0x31, 0xad, 0x2a,
+    0xa4, 0x6e, 0x7a, 0xc5, 0x93, 0xf3, 0x0f, 0xfc,
+    0xf1, 0x62, 0xce, 0x82, 0x12, 0x45, 0xc9, 0x35,
+    0xb0, 0x7a, 0xcd, 0x99, 0x8c, 0x91, 0x6b, 0x5a,
+    0xd3, 0x46, 0xdb, 0xf9, 0x9e, 0x52, 0x49, 0xbd,
+    0x1e, 0xe8, 0xda, 0xac, 0x61, 0x47, 0xc2, 0xda,
+    0xfc, 0x1e, 0xfb, 0x74, 0xd7, 0xd6, 0xc1, 0x18,
+    0x86, 0x3e, 0x20, 0x9c, 0x7a, 0xe1, 0x04, 0xb7,
+    0x38, 0x43, 0xb1, 0x4e, 0xa0, 0xd8, 0xc1, 0x39,
+    0x4d, 0xe1, 0xd3, 0xb0, 0xb3, 0xf1, 0x82, 0x87,
+    0x1f, 0x74, 0xb5, 0x69, 0xfd, 0x33, 0xd6, 0x21,
+    0x7c, 0x61, 0x60, 0x28, 0xca, 0x70, 0xdb, 0xa0,
+    0xbb, 0xc8, 0x73, 0xa9, 0x82, 0xf8, 0x6b, 0xd8,
+    0xf0, 0xc9, 0x7b, 0x20, 0xdf, 0x9d, 0xfb, 0x8c,
+    0xd4, 0xa2, 0x89, 0xe1, 0x9b, 0x04, 0xad, 0xaa,
+    0x11, 0x6c, 0x8f, 0xce, 0x83, 0x29, 0x56, 0x69,
+    0xbb, 0x00, 0x3b, 0xef, 0xca, 0x2d, 0xcd, 0x52,
+    0xc8, 0xf1, 0xb3, 0x9b, 0xb4, 0x4f, 0x6d, 0x9c,
+    0x3d, 0x69, 0xcc, 0x6d, 0x1f, 0x38, 0x4d, 0xe6,
+    0xbb, 0x0c, 0x87, 0xdc, 0x5f, 0xa9, 0x24, 0x93,
+    0x03, 0x46, 0xa2, 0x33, 0x6c, 0xf4, 0xd8, 0x5d,
+    0x68, 0xf3, 0xd3, 0xe0, 0xf2, 0x30, 0xdb, 0xf5,
+    0x4f, 0x0f, 0xad, 0xc7, 0xd0, 0xaa, 0x47, 0xd9,
+    0x9f, 0x85, 0x1b, 0x2e, 0x6c, 0x3c, 0x57, 0x04,
+    0x29, 0xf4, 0xf5, 0x66, 0x7d, 0x93, 0x4a, 0xaa,
+    0x05, 0x52, 0x55, 0xc1, 0xc6, 0x06, 0x90, 0xab,
+};
+
 #endif /* OPENSSL_NO_RSA */
 
 #ifndef OPENSSL_NO_EC
@@ -1015,7 +1083,7 @@ static const unsigned char ecd_pub[] = {
 };
 
 static const ST_KAT_PARAM ecdsa_key[] = {
-    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_EC_NAME, ecd_curve_name),
+    ST_KAT_PARAM_UTF8STRING(OSSL_PKEY_PARAM_GROUP_NAME, ecd_curve_name),
     ST_KAT_PARAM_OCTET(OSSL_PKEY_PARAM_PUB_KEY, ecd_pub),
     ST_KAT_PARAM_BIGNUM(OSSL_PKEY_PARAM_PRIV_KEY, ecd_priv),
     ST_KAT_PARAM_END()
@@ -1155,7 +1223,7 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
         OSSL_SELF_TEST_DESC_SIGN_RSA,
         "RSA",
         "SHA-256",
-        rsa_key,
+        rsa_crt_key,
         ITM(rsa_expected_sig)
     },
 #endif /* OPENSSL_NO_RSA */
@@ -1183,4 +1251,36 @@ static const ST_KAT_SIGN st_kat_sign_tests[] = {
          */
     },
 #endif /* OPENSSL_NO_DSA */
+};
+
+static const ST_KAT_ASYM_CIPHER st_kat_asym_cipher_tests[] = {
+#ifndef OPENSSL_NO_RSA
+    {
+        OSSL_SELF_TEST_DESC_ASYM_RSA_ENC,
+        "RSA",
+        1,
+        rsa_pub_key,
+        rsa_enc_params,
+        ITM(rsa_asym_plaintext_encrypt),
+        ITM(rsa_asym_expected_encrypt),
+    },
+    {
+        OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
+        "RSA",
+        0,
+        rsa_priv_key,
+        rsa_enc_params,
+        ITM(rsa_asym_expected_encrypt),
+        ITM(rsa_asym_plaintext_encrypt),
+    },
+    {
+        OSSL_SELF_TEST_DESC_ASYM_RSA_DEC,
+        "RSA",
+        0,
+        rsa_crt_key,
+        rsa_enc_params,
+        ITM(rsa_asym_expected_encrypt),
+        ITM(rsa_asym_plaintext_encrypt),
+    },
+#endif /* OPENSSL_NO_RSA */
 };

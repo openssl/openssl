@@ -3,31 +3,35 @@
 =head1 NAME
 
 OSSL_PARAM_double, OSSL_PARAM_int, OSSL_PARAM_int32, OSSL_PARAM_int64,
-OSSL_PARAM_long, OSSL_PARAM_size_t, OSSL_PARAM_uint, OSSL_PARAM_uint32,
-OSSL_PARAM_uint64, OSSL_PARAM_ulong, OSSL_PARAM_BN, OSSL_PARAM_utf8_string,
-OSSL_PARAM_octet_string, OSSL_PARAM_utf8_ptr, OSSL_PARAM_octet_ptr,
+OSSL_PARAM_long, OSSL_PARAM_size_t, OSSL_PARAM_time_t, OSSL_PARAM_uint,
+OSSL_PARAM_uint32, OSSL_PARAM_uint64, OSSL_PARAM_ulong, OSSL_PARAM_BN,
+OSSL_PARAM_utf8_string, OSSL_PARAM_octet_string, OSSL_PARAM_utf8_ptr,
+OSSL_PARAM_octet_ptr,
 OSSL_PARAM_END,
 OSSL_PARAM_construct_double, OSSL_PARAM_construct_int,
 OSSL_PARAM_construct_int32, OSSL_PARAM_construct_int64,
 OSSL_PARAM_construct_long, OSSL_PARAM_construct_size_t,
-OSSL_PARAM_construct_uint, OSSL_PARAM_construct_uint32,
-OSSL_PARAM_construct_uint64, OSSL_PARAM_construct_ulong,
-OSSL_PARAM_construct_BN, OSSL_PARAM_construct_utf8_string,
-OSSL_PARAM_construct_utf8_ptr, OSSL_PARAM_construct_octet_string,
-OSSL_PARAM_construct_octet_ptr, OSSL_PARAM_construct_end,
+OSSL_PARAM_construct_time_t, OSSL_PARAM_construct_uint,
+OSSL_PARAM_construct_uint32, OSSL_PARAM_construct_uint64,
+OSSL_PARAM_construct_ulong, OSSL_PARAM_construct_BN,
+OSSL_PARAM_construct_utf8_string, OSSL_PARAM_construct_utf8_ptr,
+OSSL_PARAM_construct_octet_string, OSSL_PARAM_construct_octet_ptr,
+OSSL_PARAM_construct_end,
 OSSL_PARAM_locate, OSSL_PARAM_locate_const,
 OSSL_PARAM_get_double, OSSL_PARAM_get_int, OSSL_PARAM_get_int32,
 OSSL_PARAM_get_int64, OSSL_PARAM_get_long, OSSL_PARAM_get_size_t,
-OSSL_PARAM_get_uint, OSSL_PARAM_get_uint32, OSSL_PARAM_get_uint64,
-OSSL_PARAM_get_ulong, OSSL_PARAM_get_BN, OSSL_PARAM_get_utf8_string,
-OSSL_PARAM_get_octet_string, OSSL_PARAM_get_utf8_ptr,
-OSSL_PARAM_get_octet_ptr,
+OSSL_PARAM_get_time_t, OSSL_PARAM_get_uint, OSSL_PARAM_get_uint32,
+OSSL_PARAM_get_uint64, OSSL_PARAM_get_ulong, OSSL_PARAM_get_BN,
+OSSL_PARAM_get_utf8_string, OSSL_PARAM_get_octet_string,
+OSSL_PARAM_get_utf8_ptr, OSSL_PARAM_get_octet_ptr,
+OSSL_PARAM_get_utf8_string_ptr, OSSL_PARAM_get_octet_string_ptr,
 OSSL_PARAM_set_double, OSSL_PARAM_set_int, OSSL_PARAM_set_int32,
 OSSL_PARAM_set_int64, OSSL_PARAM_set_long, OSSL_PARAM_set_size_t,
-OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32, OSSL_PARAM_set_uint64,
-OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN, OSSL_PARAM_set_utf8_string,
-OSSL_PARAM_set_octet_string, OSSL_PARAM_set_utf8_ptr,
-OSSL_PARAM_set_octet_ptr, OSSL_PARAM_UNMODIFIED
+OSSL_PARAM_set_time_t, OSSL_PARAM_set_uint, OSSL_PARAM_set_uint32,
+OSSL_PARAM_set_uint64, OSSL_PARAM_set_ulong, OSSL_PARAM_set_BN,
+OSSL_PARAM_set_utf8_string, OSSL_PARAM_set_octet_string,
+OSSL_PARAM_set_utf8_ptr, OSSL_PARAM_set_octet_ptr,
+OSSL_PARAM_UNMODIFIED, OSSL_PARAM_modified, OSSL_PARAM_set_all_unmodified
 - OSSL_PARAM helpers
 
 =head1 SYNOPSIS
@@ -38,9 +42,9 @@ OSSL_PARAM_set_octet_ptr, OSSL_PARAM_UNMODIFIED
 
  /*
   * TYPE in function names is one of:
-  * double, int, int32, int64, long, size_t, uint, uint32, uint64, ulong
+  * double, int, int32, int64, long, size_t, time_t, uint, uint32, uint64, ulong
   * Corresponding TYPE in function arguments is one of:
-  * double, int, int32_t, int64_t, long, size_t, unsigned int, uint32_t,
+  * double, int, int32_t, int64_t, long, size_t, time_t, unsigned int, uint32_t,
   * uint64_t, unsigned long
   */
 
@@ -93,6 +97,10 @@ OSSL_PARAM_set_octet_ptr, OSSL_PARAM_UNMODIFIED
  int OSSL_PARAM_set_octet_ptr(OSSL_PARAM *p, const void *val,
                               size_t used_len);
 
+ int OSSL_PARAM_get_utf8_string_ptr(const OSSL_PARAM *p, const char **val);
+ int OSSL_PARAM_get_octet_string_ptr(const OSSL_PARAM *p, const void **val,
+                                     size_t *used_len);
+
  int OSSL_PARAM_modified(const OSSL_PARAM *param);
  void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *params);
 
@@ -122,6 +130,10 @@ int64 (int64_t)
 =item *
 
 long int (long)
+
+=item *
+
+time_t
 
 =item *
 
@@ -180,12 +192,12 @@ OSSL_PARAM_construct_octet_string() is a function that constructs an OCTET
 string OSSL_PARAM structure.
 A parameter with name B<key>, storage B<buf> and size B<bsize> is created.
 
-OSSL_PARAM_construct_utf8_ptr() is a function that constructes a UTF string
+OSSL_PARAM_construct_utf8_ptr() is a function that constructs a UTF string
 pointer OSSL_PARAM structure.
 A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
 is created.
 
-OSSL_PARAM_construct_octet_ptr() is a function that constructes an OCTET string
+OSSL_PARAM_construct_octet_ptr() is a function that constructs an OCTET string
 pointer OSSL_PARAM structure.
 A parameter with name B<key>, storage pointer B<*buf> and size B<bsize>
 is created.
@@ -256,6 +268,17 @@ The length of the OCTET string is stored in B<*used_len>.
 OSSL_PARAM_set_octet_ptr() sets the OCTET string pointer in the parameter
 referenced by B<p> to the values B<val>.
 The length of the OCTET string is provided by B<used_len>.
+
+OSSL_PARAM_get_utf8_string_ptr() retrieves the pointer to a UTF8 string from
+the parameter pointed to by B<p>, and stores that pointer in B<*val>.
+This is different from OSSL_PARAM_get_utf8_string(), which copies the
+string.
+
+OSSL_PARAM_get_octet_string_ptr() retrieves the pointer to a octet string
+from the parameter pointed to by B<p>, and stores that pointer in B<*val>,
+along with the string's length in B<*used_len>.
+This is different from OSSL_PARAM_get_octet_string(), which copies the
+string.
 
 The OSSL_PARAM_UNMODIFIED macro is used to detect if a parameter was set.  On
 creation, via either the macros or construct calls, the I<return_size> field

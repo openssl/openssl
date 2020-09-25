@@ -9,6 +9,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include <time.h>
 #include <assert.h>
@@ -24,10 +27,6 @@
 #include <openssl/engine.h>
 #include <openssl/trace.h>
 #include <internal/cryptlib.h>
-
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(SSL_COMP)
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL *s, PACKET *pkt);
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL *s, PACKET *pkt);
@@ -1855,12 +1854,20 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL *s, PACKET *pkt)
         }
 
         certstart = certbytes;
-        x = d2i_X509(NULL, (const unsigned char **)&certbytes, cert_len);
+        x = X509_new_with_libctx(s->ctx->libctx, s->ctx->propq);
         if (x == NULL) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR,
+                     SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_MALLOC_FAILURE);
+            SSLerr(0, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        if (d2i_X509(&x, (const unsigned char **)&certbytes,
+                     cert_len) == NULL) {
             SSLfatal(s, SSL_AD_BAD_CERTIFICATE,
                      SSL_F_TLS_PROCESS_SERVER_CERTIFICATE, ERR_R_ASN1_LIB);
             goto err;
         }
+
         if (certbytes != (certstart + cert_len)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_F_TLS_PROCESS_SERVER_CERTIFICATE,
@@ -2231,21 +2238,6 @@ static int tls_process_ske_ecdhe(SSL *s, PACKET *pkt, EVP_PKEY **pkey)
         return 0;
     }
 
-    /*
-     * TODO(3.0) Remove this when EVP_PKEY_get1_tls_encodedpoint()
-     * knows how to get a key from an encoded point with the help of
-     * a OSSL_SERIALIZER deserializer.  We know that EVP_PKEY_get0()
-     * downgrades an EVP_PKEY to contain a legacy key.
-     *
-     * THIS IS TEMPORARY
-     */
-    EVP_PKEY_get0(s->s3.peer_tmp);
-    if (EVP_PKEY_id(s->s3.peer_tmp) == EVP_PKEY_NONE) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_SKE_ECDHE,
-                 ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
-
     if (!EVP_PKEY_set1_tls_encodedpoint(s->s3.peer_tmp,
                                         PACKET_data(&encoded_pt),
                                         PACKET_remaining(&encoded_pt))) {
@@ -2360,7 +2352,7 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
 
         if (!tls1_lookup_md(s->ctx, s->s3.tmp.peer_sigalg, &md)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
-                     ERR_R_INTERNAL_ERROR);
+                     SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
             goto err;
         }
         if (SSL_USE_SIGALGS(s))
@@ -2381,9 +2373,10 @@ MSG_PROCESS_RETURN tls_process_key_exchange(SSL *s, PACKET *pkt)
             goto err;
         }
 
-        if (EVP_DigestVerifyInit_ex(md_ctx, &pctx,
-                                    md == NULL ? NULL : EVP_MD_name(md),
-                                    s->ctx->propq, pkey, s->ctx->libctx) <= 0) {
+        if (EVP_DigestVerifyInit_with_libctx(md_ctx, &pctx,
+                                             md == NULL ? NULL : EVP_MD_name(md),
+                                             s->ctx->libctx, s->ctx->propq,
+                                             pkey) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_KEY_EXCHANGE,
                      ERR_R_EVP_LIB);
             goto err;
@@ -2566,7 +2559,7 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL *s, PACKET *pkt)
      * after the CertificateVerify message has been received. This is because
      * in TLSv1.3 the CertificateRequest arrives before the Certificate message
      * but in TLSv1.2 it is the other way around. We want to make sure that
-     * SSL_get_peer_certificate() returns something sensible in
+     * SSL_get1_peer_certificate() returns something sensible in
      * client_cert_cb.
      */
     if (SSL_IS_TLS13(s) && s->post_handshake_auth != SSL_PHA_REQUESTED)
@@ -3072,9 +3065,9 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
 {
 #ifndef OPENSSL_NO_DH
     DH *dh_clnt = NULL;
-    const BIGNUM *pub_key;
     EVP_PKEY *ckey = NULL, *skey = NULL;
     unsigned char *keybytes = NULL;
+    int prime_len;
 
     skey = s->s3.peer_tmp;
     if (skey == NULL) {
@@ -3104,15 +3097,19 @@ static int tls_construct_cke_dhe(SSL *s, WPACKET *pkt)
     }
 
     /* send off the data */
-    DH_get0_key(dh_clnt, &pub_key, NULL);
-    if (!WPACKET_sub_allocate_bytes_u16(pkt, BN_num_bytes(pub_key),
-                                        &keybytes)) {
+    prime_len = BN_num_bytes(DH_get0_p(dh_clnt));
+    /*
+     * For interoperability with some versions of the Microsoft TLS
+     * stack, we need to zero pad the DHE pub key to the same length
+     * as the prime, so use the length of the prime here.
+     */
+    if (!WPACKET_sub_allocate_bytes_u16(pkt, prime_len, &keybytes)
+            || BN_bn2binpad(DH_get0_pub_key(dh_clnt), keybytes, prime_len) < 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_DHE,
                  ERR_R_INTERNAL_ERROR);
         goto err;
     }
 
-    BN_bn2bin(pub_key, keybytes);
     EVP_PKEY_free(ckey);
 
     return 1;
@@ -3145,21 +3142,6 @@ static int tls_construct_cke_ecdhe(SSL *s, WPACKET *pkt)
     if (ckey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_ECDHE,
                  ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
-
-    /*
-     * TODO(3.0) Remove this when EVP_PKEY_get1_tls_encodedpoint()
-     * knows how to get a key from an encoded point with the help of
-     * a OSSL_SERIALIZER deserializer.  We know that EVP_PKEY_get0()
-     * downgrades an EVP_PKEY to contain a legacy key.
-     *
-     * THIS IS TEMPORARY
-     */
-    EVP_PKEY_get0(ckey);
-    if (EVP_PKEY_id(skey) == EVP_PKEY_NONE) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_CONSTRUCT_CKE_ECDHE,
-                 ERR_R_INTERNAL_ERROR);
         goto err;
     }
 

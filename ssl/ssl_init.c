@@ -24,67 +24,6 @@ static CRYPTO_ONCE ssl_base = CRYPTO_ONCE_STATIC_INIT;
 static int ssl_base_inited = 0;
 DEFINE_RUN_ONCE_STATIC(ossl_init_ssl_base)
 {
-    OSSL_TRACE(INIT, "ossl_init_ssl_base: adding SSL ciphers and digests\n");
-#ifndef OPENSSL_NO_DES
-    EVP_add_cipher(EVP_des_cbc());
-    EVP_add_cipher(EVP_des_ede3_cbc());
-#endif
-#ifndef OPENSSL_NO_IDEA
-    EVP_add_cipher(EVP_idea_cbc());
-#endif
-#ifndef OPENSSL_NO_RC4
-    EVP_add_cipher(EVP_rc4());
-# ifndef OPENSSL_NO_MD5
-    EVP_add_cipher(EVP_rc4_hmac_md5());
-# endif
-#endif
-#ifndef OPENSSL_NO_RC2
-    EVP_add_cipher(EVP_rc2_cbc());
-    /*
-     * Not actually used for SSL/TLS but this makes PKCS#12 work if an
-     * application only calls SSL_library_init().
-     */
-    EVP_add_cipher(EVP_rc2_40_cbc());
-#endif
-    EVP_add_cipher(EVP_aes_128_cbc());
-    EVP_add_cipher(EVP_aes_192_cbc());
-    EVP_add_cipher(EVP_aes_256_cbc());
-    EVP_add_cipher(EVP_aes_128_gcm());
-    EVP_add_cipher(EVP_aes_256_gcm());
-    EVP_add_cipher(EVP_aes_128_ccm());
-    EVP_add_cipher(EVP_aes_256_ccm());
-    EVP_add_cipher(EVP_aes_128_cbc_hmac_sha1());
-    EVP_add_cipher(EVP_aes_256_cbc_hmac_sha1());
-    EVP_add_cipher(EVP_aes_128_cbc_hmac_sha256());
-    EVP_add_cipher(EVP_aes_256_cbc_hmac_sha256());
-#ifndef OPENSSL_NO_ARIA
-    EVP_add_cipher(EVP_aria_128_gcm());
-    EVP_add_cipher(EVP_aria_256_gcm());
-#endif
-#ifndef OPENSSL_NO_CAMELLIA
-    EVP_add_cipher(EVP_camellia_128_cbc());
-    EVP_add_cipher(EVP_camellia_256_cbc());
-#endif
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-    EVP_add_cipher(EVP_chacha20_poly1305());
-#endif
-
-#ifndef OPENSSL_NO_SEED
-    EVP_add_cipher(EVP_seed_cbc());
-#endif
-
-#ifndef OPENSSL_NO_MD5
-    EVP_add_digest(EVP_md5());
-    EVP_add_digest_alias(SN_md5, "ssl3-md5");
-    EVP_add_digest(EVP_md5_sha1());
-#endif
-    EVP_add_digest(EVP_sha1()); /* RSA with sha1 */
-    EVP_add_digest_alias(SN_sha1, "ssl3-sha1");
-    EVP_add_digest_alias(SN_sha1WithRSAEncryption, SN_sha1WithRSA);
-    EVP_add_digest(EVP_sha224());
-    EVP_add_digest(EVP_sha256());
-    EVP_add_digest(EVP_sha384());
-    EVP_add_digest(EVP_sha512());
 #ifndef OPENSSL_NO_COMP
     OSSL_TRACE(INIT, "ossl_init_ssl_base: "
                "SSL_COMP_get_compression_methods()\n");

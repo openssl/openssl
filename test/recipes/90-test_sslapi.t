@@ -39,16 +39,13 @@ ok(run(test(["sslapitest", srctop_dir("test", "certs"),
 unless ($no_fips) {
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                '-section_name', 'fips_sect'])),
+                '-module', bldtop_file('providers', platform->dso('fips'))])),
        "fipsinstall");
 
     ok(run(test(["sslapitest", srctop_dir("test", "certs"),
                  srctop_file("test", "recipes", "90-test_sslapi_data",
                              "passwd.txt"), $tmpfilename, "fips",
-                 srctop_file("test", "fips.cnf")])),
+                 srctop_file("test", "fips-and-base.cnf")])),
                  "running sslapitest");
 }
 

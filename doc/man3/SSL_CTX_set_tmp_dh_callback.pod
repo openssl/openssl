@@ -2,7 +2,9 @@
 
 =head1 NAME
 
-SSL_CTX_set_tmp_dh_callback, SSL_CTX_set_tmp_dh, SSL_set_tmp_dh_callback, SSL_set_tmp_dh - handle DH keys for ephemeral key exchange
+SSL_CTX_set_tmp_dh_callback, SSL_CTX_set_tmp_dh,
+SSL_set_tmp_dh_callback, SSL_set_tmp_dh
+- handle DH keys for ephemeral key exchange
 
 =head1 SYNOPSIS
 
@@ -16,7 +18,7 @@ SSL_CTX_set_tmp_dh_callback, SSL_CTX_set_tmp_dh, SSL_set_tmp_dh_callback, SSL_se
  void SSL_set_tmp_dh_callback(SSL *ctx,
                               DH *(*tmp_dh_callback)(SSL *ssl, int is_export,
                                                      int keylength));
- long SSL_set_tmp_dh(SSL *ssl, DH *dh)
+ long SSL_set_tmp_dh(SSL *ssl, DH *dh);
 
 =head1 DESCRIPTION
 

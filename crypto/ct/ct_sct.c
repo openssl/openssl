@@ -19,8 +19,6 @@
 
 #include "ct_local.h"
 
-DEFINE_STACK_OF(SCT)
-
 SCT *SCT_new(void)
 {
     SCT *sct = OPENSSL_zalloc(sizeof(*sct));

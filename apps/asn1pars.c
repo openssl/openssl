@@ -18,9 +18,6 @@
 #include <openssl/pem.h>
 #include <openssl/asn1t.h>
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-DEFINE_STACK_OF_STRING()
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_INFORM, OPT_IN, OPT_OUT, OPT_INDENT, OPT_NOOUT,

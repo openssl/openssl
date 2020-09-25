@@ -525,6 +525,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_CONTEXT_NOT_DANE_ENABLED                   167
 # define SSL_R_COOKIE_GEN_CALLBACK_FAILURE                400
 # define SSL_R_COOKIE_MISMATCH                            308
+# define SSL_R_COPY_PARAMETERS_FAILED                     296
 # define SSL_R_CUSTOM_EXT_HANDLER_ALREADY_INSTALLED       206
 # define SSL_R_DANE_ALREADY_ENABLED                       172
 # define SSL_R_DANE_CANNOT_OVERRIDE_MTYPE_FULL            173
@@ -633,6 +634,7 @@ int ERR_load_SSL_strings(void);
 # define SSL_R_NO_SHARED_GROUPS                           410
 # define SSL_R_NO_SHARED_SIGNATURE_ALGORITHMS             376
 # define SSL_R_NO_SRTP_PROFILES                           359
+# define SSL_R_NO_SUITABLE_DIGEST_ALGORITHM               297
 # define SSL_R_NO_SUITABLE_KEY_SHARE                      101
 # define SSL_R_NO_SUITABLE_SIGNATURE_ALGORITHM            118
 # define SSL_R_NO_VALID_SCTS                              216

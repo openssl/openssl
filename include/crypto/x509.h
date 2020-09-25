@@ -8,6 +8,8 @@
  */
 
 #include "internal/refcount.h"
+#include <openssl/asn1.h>
+#include <openssl/x509.h>
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -112,6 +114,9 @@ struct X509_crl_st {
     const X509_CRL_METHOD *meth;
     void *meth_data;
     CRYPTO_RWLOCK *lock;
+
+    OPENSSL_CTX *libctx;
+    const char *propq;
 };
 
 struct x509_revoked_st {
@@ -189,6 +194,9 @@ struct x509_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
+
+    OPENSSL_CTX *libctx;
+    const char *propq;
 } /* X509 */ ;
 
 /*
@@ -295,9 +303,19 @@ struct x509_object_st {
 int a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int x509_set1_time(ASN1_TIME **ptm, const ASN1_TIME *tm);
 int x509_print_ex_brief(BIO *bio, X509 *cert, unsigned long neg_cflags);
-
-void x509_init_sig_info(X509 *x);
-
-
+int x509v3_cache_extensions(X509 *x);
+int x509_init_sig_info(X509 *x);
 int x509_check_issued_int(X509 *issuer, X509 *subject, OPENSSL_CTX *libctx,
                           const char *propq);
+
+int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq);
+int x509_crl_set0_libctx(X509_CRL *x, OPENSSL_CTX *libctx, const char *propq);
+int x509_init_sig_info(X509 *x);
+int asn1_item_digest_with_libctx(const ASN1_ITEM *it, const EVP_MD *type,
+                                 void *data, unsigned char *md,
+                                 unsigned int *len, OPENSSL_CTX *libctx,
+                                 const char *propq);
+int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
+
+int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,
+                            const X509_PUBKEY *key);

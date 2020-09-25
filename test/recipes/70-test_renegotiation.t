@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -56,7 +56,8 @@ SKIP: {
     #        handshake
     $proxy->clear();
     $proxy->filter(undef);
-    $proxy->clientflags("-no_tls1_3");
+    $proxy->ciphers("DEFAULT:\@SECLEVEL=0");
+    $proxy->clientflags("-no_tls1_3 -cipher AES128-SHA:\@SECLEVEL=0");
     $proxy->serverflags("-no_tls1_3 -no_tls1_2");
     $proxy->reneg(1);
     $proxy->start();

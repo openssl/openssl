@@ -259,7 +259,7 @@ sub check_indent { # used for lines outside multi-line string literals
     ($alt_desc, $alt_indent) = ("outermost position", 1) if $expr_indent == 0 && $has_label;
 
     if (@nested_conds_indents != 0 && substr($_, $count, 1) eq ":") {
-        # leading ':' within stmt/expr/decl - this cannot happen for labels nor leading  '&&' or '||'
+        # leading ':' within stmt/expr/decl - this cannot happen for labels, leading '&&', or leading '||'
         # allow special indent at level of corresponding "?"
         ($alt_desc, $alt_indent) = ("leading ':'", @nested_conds_indents[-1]);
     }
@@ -512,7 +512,7 @@ while (<>) { # loop over all lines of all input files
 
     # detect end of comment, must be within multi-line comment, check if it is preceded by non-whitespace text
     if ((my ($head, $tail) = m|^(.*?)\*/(.*)$|) && $1 ne '/') { # ending comment: '*/'
-        report("no SPC nor '*' before '*/'") if $head =~ m/[^*\s]$/;
+        report("neither SPC nor '*' before '*/'") if $head =~ m/[^*\s]$/;
         report("no SPC after '*/'") if $tail =~ m/^[^\s,;)}\]]/; # no space or ,;)}] after '*/'
         if (!($head =~ m|/\*|)) { # not begin of comment '/*', which is is handled below
             if ($in_comment == 0) {
@@ -537,8 +537,8 @@ while (<>) { # loop over all lines of all input files
   MATCH_COMMENT:
     if (my ($head, $opt_minus, $tail) = m|^(.*?)/\*(-?)(.*)$|) { # begin of comment: '/*'
         report("no SPC before '/*'")
-            if $head =~ m/[^\s\*]$/; # no space (nor '*', needed to allow '*/' here) before comment delimiter
-        report("no SPC nor '*' after '/*' or '/*-'") if $tail =~ m/^[^\s*$self_test_exception]/;
+            if $head =~ m/[^\s(\*]$/; # not space, '(', or or '*' (needed to allow '*/') before comment delimiter
+        report("neither SPC nor '*' after '/*' or '/*-'") if $tail =~ m/^[^\s*$self_test_exception]/;
         my $cmt_text = $opt_minus.$tail; # preliminary
         if ($in_comment > 0) {
             report("unexpected '/*' inside multi-line comment");
@@ -647,8 +647,10 @@ while (<>) { # loop over all lines of all input files
         $intra_line =~ s/[A-Z_]+/int/g if $contents =~ m/^(.*?)\s*\\\s*$/;
         # treat double &&, ||, <<, and >> as single ones, simplifying matching below
         $intra_line =~ s/(&&|\|\||<<|>>)/substr($1, 0, 1)/eg;
-        # remove blinded comments etc. directly before ,;)}
-        while ($intra_line =~ s/\s*@+([,;)}\]])/$1/e) {} # /g does not work here
+        # remove blinded comments etc. directly after [{(
+        while ($intra_line =~ s/([\[\{\(])@+\s?/$1/e) {} # /g does not work here
+        # remove blinded comments etc. directly before ,;)}]
+        while ($intra_line =~ s/\s?@+([,;\)\}\]])/$1/e) {} # /g does not work here
         # treat remaining blinded comments and string literal contents as (single) space during matching below
         $intra_line =~ s/@+/ /g;                     # note that double SPC has already been handled above
         $intra_line =~ s/\s+$//;                     # strip any (resulting) space at EOL
@@ -826,7 +828,7 @@ while (<>) { # loop over all lines of all input files
 
     # check for code block containing a single line/statement
     if ($line_before2 > 0 && !$outermost_level && # within function body
-        $in_typedecl == 0 && @nested_indents == 0 && # not within type declaration nor inside stmt/expr
+        $in_typedecl == 0 && @nested_indents == 0 && # neither within type declaration nor inside stmt/expr
         m/^[\s@]*\}/) { # leading closing brace '}', any preceding blinded comment must not be matched
         # TODO extend detection from single-line to potentially multi-line statement
         if ($line_opening_brace > 0 &&
@@ -1072,7 +1074,13 @@ while (<>) { # loop over all lines of all input files
         $hanging_offset = 0; # compensate for this in case macro ends, e.g., as 'while (0)'
     }
 
-    unless (m/^\s*$/) { # essentially empty line: just whitespace (and maybe a '\')
+    if (m/^\s*$/) { # essentially empty line: just whitespace (and maybe a '\')
+            report("empty line at beginnig of file") if $line == 1 && !$sloppy_SPC;
+    } else {
+        if ($line_before > 0) {
+            my $linediff = $line - $line_before - 1;
+            report("$linediff empty lines before") if $linediff > 1 && !$sloppy_SPC;
+        }
         $line_before2      = $line_before;
         $contents_before2  = $contents_before;
         $contents_before_2 = $contents_before_;
@@ -1095,7 +1103,7 @@ while (<>) { # loop over all lines of all input files
     if (eof) {
         # check for essentially empty line (which may include a '\') just before EOF
         report(($1 eq "\n" ? "empty line" : $2 ne "" ? "'\\'" : "whitespace")." at EOF")
-            if $contents =~ m/^(\s*(\\?)\s*)$/;
+            if $contents =~ m/^(\s*(\\?)\s*)$/ && !$sloppy_SPC;
 
         # report unclosed expression-level nesting
         check_nested_nonblock_indents("expr at EOF"); # also adapts @nested_block_indents

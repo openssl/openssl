@@ -72,7 +72,7 @@ value.
   * is an EC key.
   */
 
- if (!EVP_PKEY_get_utf8_string_param(key, OSSL_PKEY_PARAM_EC_NAME,
+ if (!EVP_PKEY_get_utf8_string_param(key, OSSL_PKEY_PARAM_GROUP_NAME,
                                      curve_name, sizeof(curve_name), &len)) {
    /* Error */
  }

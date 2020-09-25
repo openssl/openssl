@@ -16,12 +16,10 @@
 
 #include "testutil.h"
 
-DEFINE_STACK_OF(X509)
-
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
 
-static int test_encrypt_decrypt(void)
+static int test_encrypt_decrypt(const EVP_CIPHER *cipher)
 {
     int testresult = 0;
     STACK_OF(X509) *certstack = sk_X509_new_null();
@@ -37,7 +35,7 @@ static int test_encrypt_decrypt(void)
     if (!TEST_int_gt(sk_X509_push(certstack, cert), 0))
         goto end;
 
-    content = CMS_encrypt(certstack, msgbio, EVP_aes_128_cbc(), CMS_TEXT);
+    content = CMS_encrypt(certstack, msgbio, cipher, CMS_TEXT);
     if (!TEST_ptr(content))
         goto end;
 
@@ -58,6 +56,26 @@ static int test_encrypt_decrypt(void)
     CMS_ContentInfo_free(content);
 
     return testresult;
+}
+
+static int test_encrypt_decrypt_aes_cbc(void)
+{
+    return test_encrypt_decrypt(EVP_aes_128_cbc());
+}
+
+static int test_encrypt_decrypt_aes_128_gcm(void)
+{
+    return test_encrypt_decrypt(EVP_aes_128_gcm());
+}
+
+static int test_encrypt_decrypt_aes_192_gcm(void)
+{
+    return test_encrypt_decrypt(EVP_aes_192_gcm());
+}
+
+static int test_encrypt_decrypt_aes_256_gcm(void)
+{
+    return test_encrypt_decrypt(EVP_aes_256_gcm());
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -99,7 +117,10 @@ int setup_tests(void)
     }
     BIO_free(privkeybio);
 
-    ADD_TEST(test_encrypt_decrypt);
+    ADD_TEST(test_encrypt_decrypt_aes_cbc);
+    ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
+    ADD_TEST(test_encrypt_decrypt_aes_192_gcm);
+    ADD_TEST(test_encrypt_decrypt_aes_256_gcm);
 
     return 1;
 }

@@ -47,6 +47,7 @@ int ERR_load_PKCS12_strings(void);
 #  define PKCS12_F_PKCS12_SAFEBAG_CREATE0_P8INF            0
 #  define PKCS12_F_PKCS12_SAFEBAG_CREATE0_PKCS8            0
 #  define PKCS12_F_PKCS12_SAFEBAG_CREATE_PKCS8_ENCRYPT     0
+#  define PKCS12_F_PKCS12_SAFEBAG_CREATE_SECRET            0
 #  define PKCS12_F_PKCS12_SETUP_MAC                        0
 #  define PKCS12_F_PKCS12_SET_MAC                          0
 #  define PKCS12_F_PKCS12_UNPACK_AUTHSAFES                 0
@@ -67,6 +68,7 @@ int ERR_load_PKCS12_strings(void);
 # define PKCS12_R_ERROR_SETTING_ENCRYPTED_DATA_TYPE       120
 # define PKCS12_R_INVALID_NULL_ARGUMENT                   104
 # define PKCS12_R_INVALID_NULL_PKCS12_POINTER             105
+# define PKCS12_R_INVALID_TYPE                            112
 # define PKCS12_R_IV_GEN_ERROR                            106
 # define PKCS12_R_KEY_GEN_ERROR                           107
 # define PKCS12_R_MAC_ABSENT                              108
@@ -75,9 +77,7 @@ int ERR_load_PKCS12_strings(void);
 # define PKCS12_R_MAC_STRING_SET_ERROR                    111
 # define PKCS12_R_MAC_VERIFY_FAILURE                      113
 # define PKCS12_R_PARSE_ERROR                             114
-# define PKCS12_R_PKCS12_ALGOR_CIPHERINIT_ERROR           115
 # define PKCS12_R_PKCS12_CIPHERFINAL_ERROR                116
-# define PKCS12_R_PKCS12_PBE_CRYPT_ERROR                  117
 # define PKCS12_R_UNKNOWN_DIGEST_ALGORITHM                118
 # define PKCS12_R_UNSUPPORTED_PKCS12_MODE                 119
 

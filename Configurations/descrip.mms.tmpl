@@ -106,6 +106,7 @@ OPTIONS={- $config{options} -}
 CONFIGURE_ARGS=({- join(", ",quotify_l(@{$config{perlargv}})) -})
 SRCDIR={- $config{sourcedir} -}
 BLDDIR={- $config{builddir} -}
+FIPSKEY={- $config{FIPSKEY} -}
 
 # Allow both V and VERBOSE to indicate verbosity.  This only applies
 # to testing.
@@ -439,19 +440,21 @@ all : build_sw build_docs
 test : tests
 {- dependmagic('tests'); -} : build_programs_nodep, build_modules_nodep copy-utils
         @ ! {- output_off() if $disabled{tests}; "" -}
-        DEFINE SRCTOP {- sourcedir() -}
-        DEFINE BLDTOP {- builddir() -}
+        DEFINE SRCTOP "$(SRCDIR)"
+        DEFINE BLDTOP "$(BLDDIR)"
+        DEFINE FIPSKEY "$(FIPSKEY)"
         IF "$(VERBOSE)" .NES. "" THEN DEFINE VERBOSE "$(VERBOSE)"
         $(PERL) {- sourcefile("test", "run_tests.pl") -} $(TESTS)
         DEASSIGN BLDTOP
         DEASSIGN SRCTOP
+        DEASSIGN FIPSKEY
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
         @ WRITE SYS$OUTPUT "Tests are not supported with your chosen Configure options"
         @ ! {- output_on() if !$disabled{tests}; "" -}
 
 list-tests :
         @ ! {- output_off() if $disabled{tests}; "" -}
-        @ DEFINE SRCTOP {- sourcedir() -}
+        @ DEFINE SRCTOP "$(SRCDIR)"
         @ $(PERL) {- sourcefile("test", "run_tests.pl") -} list
         @ DEASSIGN SRCTOP
         @ ! {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}

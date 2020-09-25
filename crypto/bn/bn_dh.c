@@ -29,7 +29,7 @@
  * The prime is: 2^1536 - 2^1472 - 1 + 2^64 * { [2^1406 pi] + 741804 }
  *
  * RFC3526 specifies a generator of 2.
- * RFC2312 specifies a generator of 22.
+ * RFC2412 specifies a generator of 22.
  */
 static const BN_ULONG modp_1536_p[] = {
     BN_DEF(0xFFFFFFFF, 0xFFFFFFFF), BN_DEF(0xCA237327, 0xF1746C08),

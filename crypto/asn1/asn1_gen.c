@@ -23,9 +23,6 @@
 
 #define ASN1_GEN_STR(str,val)   {str, sizeof(str) - 1, val}
 
-DEFINE_STACK_OF(ASN1_TYPE)
-DEFINE_STACK_OF(CONF_VALUE)
-
 #define ASN1_FLAG_EXP_MAX       20
 /* Maximum number of nested sequences */
 #define ASN1_GEN_SEQ_MAX_DEPTH  50

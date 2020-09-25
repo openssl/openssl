@@ -41,7 +41,7 @@ jobs:
           env: CONFIG_OPTS="" DESTDIR="_install"
         - os: linux
           compiler: clang
-          env: CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
+          env: CONFIG_OPTS="no-asm no-makedepend enable-buildtest-c++ --strict-warnings --with-rand-seed=rdcpu,os -D_DEFAULT_SOURCE" BUILDONLY="yes" CHECKDOCS="yes" CPPFLAGS="-ansi"
         - os: osx
           compiler: gcc
         - os: osx
@@ -173,6 +173,7 @@ before_script:
           fi;
       fi
     - ./configdata.pm --dump
+    - export HARNESS_JOBS=${HARNESS_JOBS:-4}
     - cd $top
 
 script:

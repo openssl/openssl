@@ -13,6 +13,9 @@
  * used for any purpose except testing
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 /*
  * SHA low level APIs are deprecated for public use, but still ok for
  * internal use.  Note, that due to symbols not being exported, only the

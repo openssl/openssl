@@ -14,9 +14,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(POLICY_MAPPING)
-DEFINE_STACK_OF(CONF_VALUE)
-
 static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
                                  X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
 static STACK_OF(CONF_VALUE) *i2v_POLICY_MAPPINGS(const X509V3_EXT_METHOD
@@ -85,7 +82,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
         if (!val->value || !val->name) {
             X509V3err(X509V3_F_V2I_POLICY_MAPPINGS,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
-            X509V3_conf_err(val);
+            ERR_add_error_data(1, val->name);
             goto err;
         }
         obj1 = OBJ_txt2obj(val->name, 0);
@@ -93,7 +90,7 @@ static void *v2i_POLICY_MAPPINGS(const X509V3_EXT_METHOD *method,
         if (!obj1 || !obj2) {
             X509V3err(X509V3_F_V2I_POLICY_MAPPINGS,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
-            X509V3_conf_err(val);
+            ERR_add_error_data(1, val->name);
             goto err;
         }
         pmap = POLICY_MAPPING_new();

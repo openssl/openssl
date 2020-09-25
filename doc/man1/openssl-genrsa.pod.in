@@ -28,12 +28,13 @@ B<openssl> B<genrsa>
 [B<-3>]
 [B<-primes> I<num>]
 [B<-verbose>]
+[B<-traditional>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_engine_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 [B<numbits>]
 
-=for openssl ifdef engine
+=for openssl ifdef engine 3
 
 =head1 DESCRIPTION
 
@@ -70,6 +71,7 @@ for if it is not supplied via the B<-passout> argument.
 =item B<-F4>, B<-f4>, B<-3>
 
 The public exponent to use, either 65537 or 3. The default is 65537.
+The B<-3> option has been deprecated.
 
 =item B<-primes> I<num>
 
@@ -81,6 +83,10 @@ RSA key, which is defined in RFC 8017.
 =item B<-verbose>
 
 Print extra details about the operations being performed.
+
+=item B<-traditional>
+
+Write the key using the traditional PKCS#1 format instead of the PKCS#8 format.
 
 {- $OpenSSL::safe::opt_r_item -}
 

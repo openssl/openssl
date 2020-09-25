@@ -50,6 +50,8 @@ int ERR_load_OCSP_strings(void);
  */
 #  define OCSP_R_CERTIFICATE_VERIFY_ERROR                  101
 #  define OCSP_R_DIGEST_ERR                                102
+#  define OCSP_R_DIGEST_NAME_ERR                           106
+#  define OCSP_R_DIGEST_SIZE_ERR                           107
 #  define OCSP_R_ERROR_IN_NEXTUPDATE_FIELD                 122
 #  define OCSP_R_ERROR_IN_THISUPDATE_FIELD                 123
 #  define OCSP_R_MISSING_OCSPSIGNING_USAGE                 103

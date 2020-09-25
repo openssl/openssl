@@ -263,7 +263,9 @@ while ( ( my $hdr, my $lib ) = each %libinc ) {
     my $linenr = 0;
     my $cpp = 0;
 
-    open(IN, "<$hdr") || die "Can't open $hdr, $!,";
+    open(IN, "<$hdr")
+        || open(IN, "<$hdr.in")
+        || die "Can't open $hdr or $hdr.in, $!,";
     while ( <IN> ) {
         $linenr++;
 

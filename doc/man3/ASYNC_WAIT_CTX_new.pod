@@ -67,7 +67,7 @@ associated with that job in I<*fd>. The number of file descriptors returned will
 be stored in I<*numfds>. It is the caller's responsibility to ensure that
 sufficient memory has been allocated in I<*fd> to receive all the file
 descriptors. Calling ASYNC_WAIT_CTX_get_all_fds() with a NULL I<fd> value will
-return no file descriptors but will still populate I<*numfds>. Therefore
+return no file descriptors but will still populate I<*numfds>. Therefore,
 application code is typically expected to call this function twice: once to get
 the number of fds, and then again when sufficient memory has been allocated. If
 only one asynchronous engine is being used then normally this call will only
@@ -130,7 +130,7 @@ descriptor is not appropriate.
 ASYNC_WAIT_CTX_set_callback() sets the callback and the callback argument. The
 callback will be called to notify user code when an engine completes a
 cryptography operation. It is a requirement that the callback function is small
-and non-blocking as it will be run in the context of a polling mechanism or an
+and nonblocking as it will be run in the context of a polling mechanism or an
 interrupt.
 
 ASYNC_WAIT_CTX_get_callback() returns the callback set in the B<ASYNC_WAIT_CTX>
@@ -195,7 +195,7 @@ ASYNC_WAIT_CTX_get_status() returns the engine status.
 On Windows platforms the openssl/async.h header is dependent on some
 of the types customarily made available by including windows.h. The
 application developer is likely to require control over when the latter
-is included, commonly as one of the first included headers. Therefore
+is included, commonly as one of the first included headers. Therefore,
 it is defined as an application developer's responsibility to include
 windows.h prior to async.h.
 
@@ -216,7 +216,7 @@ were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

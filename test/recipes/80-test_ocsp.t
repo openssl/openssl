@@ -45,7 +45,7 @@ sub test_ocsp {
                            "-partial_chain", @check_time,
                            "-CAfile", catfile($ocspdir, $CAfile),
                            "-verify_other", catfile($ocspdir, $untrusted),
-                           "-no-CApath"])),
+                           "-no-CApath", "-no-CAstore"])),
                   $title); });
 }
 

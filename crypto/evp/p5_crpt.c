@@ -91,7 +91,7 @@ int PKCS5_PBE_keyivgen(EVP_CIPHER_CTX *cctx, const char *pass, int passlen,
         goto err;
     mdsize = EVP_MD_size(md);
     if (mdsize < 0)
-        return 0;
+        goto err;
     for (i = 1; i < iter; i++) {
         if (!EVP_DigestInit_ex(ctx, md, NULL))
             goto err;

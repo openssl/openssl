@@ -39,13 +39,6 @@ struct openssl_ctx_st {
     struct openssl_ctx_onfree_list_st *onfreelist;
 };
 
-#ifndef FIPS_MODULE
-static OPENSSL_CTX default_context_int;
-
-/* Always points at default_context_int if it has been initialised */
-static OPENSSL_CTX *default_context = NULL;
-#endif
-
 static int context_init(OPENSSL_CTX *ctx)
 {
     size_t i;
@@ -120,18 +113,46 @@ static int context_deinit(OPENSSL_CTX *ctx)
 }
 
 #ifndef FIPS_MODULE
-void openssl_ctx_default_deinit(void)
-{
-    context_deinit(default_context);
-}
+/* The default default context */
+static OPENSSL_CTX default_context_int;
 
 static CRYPTO_ONCE default_context_init = CRYPTO_ONCE_STATIC_INIT;
-DEFINE_RUN_ONCE_STATIC(do_default_context_init)
-{
-    if (context_init(&default_context_int))
-        default_context = &default_context_int;
+static CRYPTO_THREAD_LOCAL default_context_thread_local;
 
-    return 1;
+DEFINE_RUN_ONCE_STATIC(default_context_do_init)
+{
+    return CRYPTO_THREAD_init_local(&default_context_thread_local, NULL)
+        && context_init(&default_context_int);
+}
+
+void openssl_ctx_default_deinit(void)
+{
+    context_deinit(&default_context_int);
+}
+
+static OPENSSL_CTX *get_thread_default_context(void)
+{
+    if (!RUN_ONCE(&default_context_init, default_context_do_init))
+        return NULL;
+
+    return CRYPTO_THREAD_get_local(&default_context_thread_local);
+}
+
+static OPENSSL_CTX *get_default_context(void)
+{
+    OPENSSL_CTX *current_defctx = get_thread_default_context();
+
+    if (current_defctx == NULL)
+        current_defctx = &default_context_int;
+    return current_defctx;
+}
+
+static int set_default_context(OPENSSL_CTX *defctx)
+{
+    if (defctx == &default_context_int)
+        defctx = NULL;
+
+    return CRYPTO_THREAD_set_local(&default_context_thread_local, defctx);
 }
 #endif
 
@@ -155,19 +176,31 @@ int OPENSSL_CTX_load_config(OPENSSL_CTX *ctx, const char *config_file)
 
 void OPENSSL_CTX_free(OPENSSL_CTX *ctx)
 {
-    if (ctx != NULL)
-        context_deinit(ctx);
+    if (openssl_ctx_is_default(ctx))
+        return;
+
+    context_deinit(ctx);
     OPENSSL_free(ctx);
+}
+
+OPENSSL_CTX *OPENSSL_CTX_set0_default(OPENSSL_CTX *libctx)
+{
+#ifndef FIPS_MODULE
+    OPENSSL_CTX *current_defctx;
+
+    if ((current_defctx = get_default_context()) != NULL
+        && set_default_context(libctx))
+        return current_defctx;
+#endif
+
+    return NULL;
 }
 
 OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx)
 {
 #ifndef FIPS_MODULE
-    if (ctx == NULL) {
-        if (!RUN_ONCE(&default_context_init, do_default_context_init))
-            return 0;
-        return default_context;
-    }
+    if (ctx == NULL)
+        return get_default_context();
 #endif
     return ctx;
 }
@@ -175,7 +208,16 @@ OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx)
 int openssl_ctx_is_default(OPENSSL_CTX *ctx)
 {
 #ifndef FIPS_MODULE
-    if (ctx == NULL || ctx == default_context)
+    if (ctx == NULL || ctx == get_default_context())
+        return 1;
+#endif
+    return 0;
+}
+
+int openssl_ctx_is_global_default(OPENSSL_CTX *ctx)
+{
+#ifndef FIPS_MODULE
+    if (openssl_ctx_get_concrete(ctx) == &default_context_int)
         return 1;
 #endif
     return 0;

@@ -33,9 +33,12 @@ static int genrsa_cb(EVP_PKEY_CTX *ctx);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
-    OPT_3, OPT_F4, OPT_ENGINE,
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    OPT_3,
+#endif
+    OPT_F4, OPT_ENGINE,
     OPT_OUT, OPT_PASSOUT, OPT_CIPHER, OPT_PRIMES, OPT_VERBOSE,
-    OPT_R_ENUM, OPT_PROV_ENUM
+    OPT_R_ENUM, OPT_PROV_ENUM, OPT_TRADITIONAL
 } OPTION_CHOICE;
 
 const OPTIONS genrsa_options[] = {
@@ -48,15 +51,19 @@ const OPTIONS genrsa_options[] = {
 #endif
 
     OPT_SECTION("Input"),
-    {"3", OPT_3, '-', "Use 3 for the E value"},
-    {"F4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
-    {"f4", OPT_F4, '-', "Use F4 (0x10001) for the E value"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    {"3", OPT_3, '-', "(deprecated) Use 3 for the E value"},
+#endif
+    {"F4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
+    {"f4", OPT_F4, '-', "Use the Fermat number F4 (0x10001) for the E value"},
 
     OPT_SECTION("Output"),
     {"out", OPT_OUT, '>', "Output the key to specified file"},
     {"passout", OPT_PASSOUT, 's', "Output file pass phrase source"},
     {"primes", OPT_PRIMES, 'p', "Specify number of primes"},
     {"verbose", OPT_VERBOSE, '-', "Verbose output"},
+    {"traditional", OPT_TRADITIONAL, '-',
+     "Use traditional format for private keys"},
     {"", OPT_CIPHER, '-', "Encrypt the output with any supported cipher"},
 
     OPT_R_OPTIONS,
@@ -83,7 +90,7 @@ int genrsa_main(int argc, char **argv)
     char *outfile = NULL, *passoutarg = NULL, *passout = NULL;
     char *prog, *hexe, *dece;
     OPTION_CHOICE o;
-    unsigned char *ebuf = NULL;
+    int traditional = 0;
 
     if (bn == NULL || cb == NULL)
         goto end;
@@ -100,9 +107,11 @@ opthelp:
             ret = 0;
             opt_help(genrsa_options);
             goto end;
+#ifndef OPENSSL_NO_DEPRECATED_3_0
         case OPT_3:
             f4 = RSA_3;
             break;
+#endif
         case OPT_F4:
             f4 = RSA_F4;
             break;
@@ -134,6 +143,9 @@ opthelp:
         case OPT_VERBOSE:
             verbose = 1;
             break;
+        case OPT_TRADITIONAL:
+            traditional = 1;
+            break;
         }
     }
     argc = opt_num_rest();
@@ -162,7 +174,7 @@ opthelp:
     if (out == NULL)
         goto end;
 
-    if (!init_gen_str(&ctx, "RSA", eng, 0))
+    if (!init_gen_str(&ctx, "RSA", eng, 0, NULL, NULL))
         goto end;
 
     EVP_PKEY_CTX_set_cb(ctx, genrsa_cb);
@@ -207,8 +219,14 @@ opthelp:
         OPENSSL_free(hexe);
         OPENSSL_free(dece);
     }
-    if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout))
-        goto end;
+    if (traditional) {
+        if (!PEM_write_bio_PrivateKey_traditional(out, pkey, enc, NULL, 0,
+                                                  NULL, passout))
+            goto end;
+    } else {
+        if (!PEM_write_bio_PrivateKey(out, pkey, enc, NULL, 0, NULL, passout))
+            goto end;
+    }
 
     ret = 0;
  end:
@@ -219,7 +237,6 @@ opthelp:
     BIO_free_all(out);
     release_engine(eng);
     OPENSSL_free(passout);
-    OPENSSL_free(ebuf);
     if (ret != 0)
         ERR_print_errors(bio_err);
     return ret;

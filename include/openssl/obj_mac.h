@@ -1647,6 +1647,26 @@
 #define NID_cmcRA               1132
 #define OBJ_cmcRA               OBJ_id_kp,28L
 
+#define SN_cmcArchive           "cmcArchive"
+#define LN_cmcArchive           "CMC Archive Server"
+#define NID_cmcArchive          1219
+#define OBJ_cmcArchive          OBJ_id_kp,29L
+
+#define SN_id_kp_bgpsec_router          "id-kp-bgpsec-router"
+#define LN_id_kp_bgpsec_router          "BGPsec Router"
+#define NID_id_kp_bgpsec_router         1220
+#define OBJ_id_kp_bgpsec_router         OBJ_id_kp,30L
+
+#define SN_id_kp_BrandIndicatorforMessageIdentification         "id-kp-BrandIndicatorforMessageIdentification"
+#define LN_id_kp_BrandIndicatorforMessageIdentification         "Brand Indicator for Message Identification"
+#define NID_id_kp_BrandIndicatorforMessageIdentification                1221
+#define OBJ_id_kp_BrandIndicatorforMessageIdentification                OBJ_id_kp,31L
+
+#define SN_cmKGA                "cmKGA"
+#define LN_cmKGA                "Certificate Management Key Generation Authority"
+#define NID_cmKGA               1222
+#define OBJ_cmKGA               OBJ_id_kp,32L
+
 #define SN_id_it_caProtEncCert          "id-it-caProtEncCert"
 #define NID_id_it_caProtEncCert         298
 #define OBJ_id_it_caProtEncCert         OBJ_id_it,1L
@@ -1710,6 +1730,18 @@
 #define SN_id_it_suppLangTags           "id-it-suppLangTags"
 #define NID_id_it_suppLangTags          784
 #define OBJ_id_it_suppLangTags          OBJ_id_it,16L
+
+#define SN_id_it_caCerts                "id-it-caCerts"
+#define NID_id_it_caCerts               1223
+#define OBJ_id_it_caCerts               OBJ_id_it,17L
+
+#define SN_id_it_rootCaKeyUpdate                "id-it-rootCaKeyUpdate"
+#define NID_id_it_rootCaKeyUpdate               1224
+#define OBJ_id_it_rootCaKeyUpdate               OBJ_id_it,18L
+
+#define SN_id_it_certReqTemplate                "id-it-certReqTemplate"
+#define NID_id_it_certReqTemplate               1225
+#define OBJ_id_it_certReqTemplate               OBJ_id_it,19L
 
 #define SN_id_regCtrl           "id-regCtrl"
 #define NID_id_regCtrl          313

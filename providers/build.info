@@ -27,6 +27,26 @@
 # libnonfips.a          Corresponds to libfips.a, but built with
 #                       FIPS_MODULE undefined.  The default and legacy
 #                       providers use this.
+#
+# This is how different provider modules should be linked:
+#
+# FIPS:
+#     -o fips.so {object files...} libimplementations.a libcommon.a libfips.a
+# Non-FIPS:
+#     -o module.so {object files...} libimplementations.a libcommon.a libnonfips.a
+#
+# It is crucial that code that checks for the FIPS_MODULE macro end up in
+# libfips.a and libnonfips.a, never in libcommon.a.
+# It is crucial that such code is written so libfips.a and libnonfips.a doesn't
+# end up depending on libimplementations.a or libcommon.a.
+# It is crucial that such code is written so libcommon.a doesn't end up
+# depending on libimplementations.a.
+#
+# Code in providers/implementations/ should be written in such a way that the
+# OSSL_DISPATCH arrays (and preferably the majority of the actual code) ends
+# up in either libimplementations.a or liblegacy.a.
+# If need be, write an abstraction layer in separate source files and make them
+# libfips.a / libnonfips.a sources.
 
 SUBDIRS=common implementations
 
@@ -48,7 +68,7 @@ $COMMON_INCLUDES=../crypto ../include implementations/include common/include
 INCLUDE[$LIBCOMMON]=$COMMON_INCLUDES
 INCLUDE[$LIBIMPLEMENTATIONS]=.. $COMMON_INCLUDES
 INCLUDE[$LIBLEGACY]=.. $COMMON_INCLUDES
-INCLUDE[$LIBNONFIPS]=$COMMON_INCLUDES
+INCLUDE[$LIBNONFIPS]=.. $COMMON_INCLUDES
 INCLUDE[$LIBFIPS]=.. $COMMON_INCLUDES
 DEFINE[$LIBFIPS]=FIPS_MODULE
 
@@ -87,6 +107,16 @@ SOURCE[$DEFAULTGOAL]=defltprov.c
 INCLUDE[$DEFAULTGOAL]=implementations/include
 
 LIBS=$DEFAULTGOAL
+
+#
+# Base provider stuff
+#
+# Because the base provider is built in, it means that libcrypto
+# must include all of the object files that are needed.
+$BASEGOAL=../libcrypto
+SOURCE[$BASEGOAL]=$LIBIMPLEMENTATIONS $LIBNONFIPS
+SOURCE[$BASEGOAL]=baseprov.c
+INCLUDE[$BASEGOAL]=implementations/include
 
 #
 # FIPS provider stuff
@@ -158,6 +188,6 @@ ENDIF
 # Because the null provider is built in, it means that libcrypto must
 # include all the object files that are needed.
 $NULLGOAL=../libcrypto
-SOURCE[$NULLGOAL]=nullprov.c
+SOURCE[$NULLGOAL]=nullprov.c prov_running.c
 
-
+SOURCE[$LIBNONFIPS]=prov_running.c

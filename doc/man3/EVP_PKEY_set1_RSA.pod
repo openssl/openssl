@@ -43,10 +43,15 @@ EVP_PKEY_set1_engine, EVP_PKEY_get0_engine - EVP_PKEY assignment functions
  int EVP_PKEY_id(const EVP_PKEY *pkey);
  int EVP_PKEY_base_id(const EVP_PKEY *pkey);
  int EVP_PKEY_type(int type);
- int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
  ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
  int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *engine);
+
+Deprecated since OpenSSL 3.0, can be hidden entirely by defining
+B<OPENSSL_API_COMPAT> with a suitable version value, see
+L<openssl_user_macros(7)>:
+
+ int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
 
 =head1 DESCRIPTION
 
@@ -54,20 +59,20 @@ EVP_PKEY_set1_RSA(), EVP_PKEY_set1_DSA(), EVP_PKEY_set1_DH() and
 EVP_PKEY_set1_EC_KEY() set the key referenced by I<pkey> to I<key>.
 
 EVP_PKEY_get1_RSA(), EVP_PKEY_get1_DSA(), EVP_PKEY_get1_DH() and
-EVP_PKEY_get1_EC_KEY() return the referenced key in I<pkey> or
-NULL if the key is not of the correct type.
+EVP_PKEY_get1_EC_KEY() return the referenced key in I<pkey> or NULL if the
+key is not of the correct type.  The returned key must be freed after use.
 
 EVP_PKEY_get0_hmac(), EVP_PKEY_get0_poly1305(), EVP_PKEY_get0_siphash(),
-EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH()
-and EVP_PKEY_get0_EC_KEY() also return the referenced key in I<pkey> or NULL
-if the key is not of the correct type but the reference count of the
-returned key is B<not> incremented and so must not be freed up after use.
+EVP_PKEY_get0_RSA(), EVP_PKEY_get0_DSA(), EVP_PKEY_get0_DH() and
+EVP_PKEY_get0_EC_KEY() return the referenced key in I<pkey> or NULL if the
+key is not of the correct type but the reference count of the returned key
+is B<not> incremented and so must not be freed after use.
 
 EVP_PKEY_assign_RSA(), EVP_PKEY_assign_DSA(), EVP_PKEY_assign_DH(),
 EVP_PKEY_assign_EC_KEY(), EVP_PKEY_assign_POLY1305() and
-EVP_PKEY_assign_SIPHASH() also set the referenced key to I<key>
-however these use the supplied I<key> internally and so I<key>
-will be freed when the parent I<pkey> is freed.
+EVP_PKEY_assign_SIPHASH() set the referenced key to I<key> however these use
+the supplied I<key> internally and so I<key> will be freed when the parent
+I<pkey> is freed.
 
 EVP_PKEY_base_id() returns the type of I<pkey>. For example
 an RSA key will return B<EVP_PKEY_RSA>.
@@ -162,6 +167,10 @@ algorithms with EVP_PKEY_set_alias_type:
 =head1 SEE ALSO
 
 L<EVP_PKEY_new(3)>, L<SM2(7)>
+
+=head1 HISTORY
+
+EVP_PKEY_set_alias_type() was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

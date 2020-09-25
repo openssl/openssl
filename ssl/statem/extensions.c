@@ -14,8 +14,6 @@
 #include "statem_local.h"
 #include "internal/cryptlib.h"
 
-DEFINE_STACK_OF(X509_NAME)
-
 static int final_renegotiate(SSL *s, unsigned int context, int sent);
 static int init_server_name(SSL *s, unsigned int context);
 static int final_server_name(SSL *s, unsigned int context, int sent);
@@ -1169,13 +1167,26 @@ static int init_etm(SSL *s, unsigned int context)
 
 static int init_ems(SSL *s, unsigned int context)
 {
-    s->s3.flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
+    if (s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS) {
+        s->s3.flags &= ~TLS1_FLAGS_RECEIVED_EXTMS;
+        s->s3.flags |= TLS1_FLAGS_REQUIRED_EXTMS;
+    }
 
     return 1;
 }
 
 static int final_ems(SSL *s, unsigned int context, int sent)
 {
+    /*
+     * Check extended master secret extension is not dropped on
+     * renegotiation.
+     */
+    if (!(s->s3.flags & TLS1_FLAGS_RECEIVED_EXTMS)
+        && (s->s3.flags & TLS1_FLAGS_REQUIRED_EXTMS)) {
+        SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_F_FINAL_EMS,
+                 SSL_R_INCONSISTENT_EXTMS);
+        return 0;
+    }
     if (!s->server && s->hit) {
         /*
          * Check extended master secret extension is consistent with
@@ -1585,8 +1596,10 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         goto err;
     }
 
-    mackey = EVP_PKEY_new_raw_private_key(EVP_PKEY_HMAC, NULL, finishedkey,
-                                          hashsize);
+    mackey = EVP_PKEY_new_raw_private_key_with_libctx(s->ctx->libctx, "HMAC",
+                                                      s->ctx->propq,
+                                                      finishedkey,
+                                                      hashsize);
     if (mackey == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PSK_DO_BINDER,
                  ERR_R_INTERNAL_ERROR);
@@ -1597,8 +1610,9 @@ int tls_psk_do_binder(SSL *s, const EVP_MD *md, const unsigned char *msgstart,
         binderout = tmpbinder;
 
     bindersize = hashsize;
-    if (EVP_DigestSignInit_ex(mctx, NULL, EVP_MD_name(md), s->ctx->propq,
-                              mackey, s->ctx->libctx) <= 0
+    if (EVP_DigestSignInit_with_libctx(mctx, NULL, EVP_MD_name(md),
+                                       s->ctx->libctx, s->ctx->propq,
+                                       mackey) <= 0
             || EVP_DigestSignUpdate(mctx, hash, hashsize) <= 0
             || EVP_DigestSignFinal(mctx, binderout, &bindersize) <= 0
             || bindersize != hashsize) {

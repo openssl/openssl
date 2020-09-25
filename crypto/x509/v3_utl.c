@@ -19,12 +19,7 @@
 #include "crypto/x509.h"
 #include <openssl/bn.h>
 #include "ext_dat.h"
-
-DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(ACCESS_DESCRIPTION)
-DEFINE_STACK_OF(X509_EXTENSION)
-DEFINE_STACK_OF_STRING()
+#include "x509_local.h"
 
 static char *strip_spaces(char *name);
 static int sk_strcmp(const char *const *a, const char *const *b);
@@ -271,7 +266,7 @@ int X509V3_get_value_bool(const CONF_VALUE *value, int *asn1_bool)
  err:
     X509V3err(X509V3_F_X509V3_GET_VALUE_BOOL,
               X509V3_R_INVALID_BOOLEAN_STRING);
-    X509V3_conf_err(value);
+    X509V3_conf_add_error_name_value(value);
     return 0;
 }
 
@@ -280,7 +275,7 @@ int X509V3_get_value_int(const CONF_VALUE *value, ASN1_INTEGER **aint)
     ASN1_INTEGER *itmp;
 
     if ((itmp = s2i_ASN1_INTEGER(NULL, value->value)) == NULL) {
-        X509V3_conf_err(value);
+        X509V3_conf_add_error_name_value(value);
         return 0;
     }
     *aint = itmp;
@@ -322,7 +317,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 ntmp = strip_spaces(q);
                 if (!ntmp) {
                     X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                              X509V3_R_INVALID_NULL_NAME);
+                              X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 q = p + 1;
@@ -332,7 +327,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
                 q = p + 1;
                 if (!ntmp) {
                     X509V3err(X509V3_F_X509V3_PARSE_LIST,
-                              X509V3_R_INVALID_NULL_NAME);
+                              X509V3_R_INVALID_EMPTY_NAME);
                     goto err;
                 }
                 X509V3_add_value(ntmp, NULL, &values);
@@ -368,7 +363,7 @@ STACK_OF(CONF_VALUE) *X509V3_parse_list(const char *line)
     } else {
         ntmp = strip_spaces(q);
         if (!ntmp) {
-            X509V3err(X509V3_F_X509V3_PARSE_LIST, X509V3_R_INVALID_NULL_NAME);
+            X509V3err(X509V3_F_X509V3_PARSE_LIST, X509V3_R_INVALID_EMPTY_NAME);
             goto err;
         }
         X509V3_add_value(ntmp, NULL, &values);
@@ -877,8 +872,22 @@ static int do_x509_check(X509 *x, const char *chk, size_t chklen,
             ASN1_STRING *cstr;
 
             gen = sk_GENERAL_NAME_value(gens, i);
-            if (gen->type != check_type)
-                continue;
+            if ((gen->type == GEN_OTHERNAME) && (check_type == GEN_EMAIL)) {
+                if (OBJ_obj2nid(gen->d.otherName->type_id) ==
+                    NID_id_on_SmtpUTF8Mailbox) {
+                    san_present = 1;
+                    cstr = gen->d.otherName->value->value.utf8string;
+
+                    /* Positive on success, negative on error! */
+                    if ((rv = do_check_string(cstr, 0, equal, flags,
+                                              chk, chklen, peername)) != 0)
+                        break;
+                } else
+                    continue;
+            } else {
+                if ((gen->type != check_type) && (gen->type != GEN_OTHERNAME))
+                    continue;
+            }
             san_present = 1;
             if (check_type == GEN_EMAIL)
                 cstr = gen->d.rfc822Name;
@@ -977,7 +986,12 @@ int X509_check_ip_asc(X509 *x, const char *ipasc, unsigned int flags)
 
 char *ipaddr_to_asc(unsigned char *p, int len)
 {
+    /*
+     * 40 is enough space for the longest IPv6 address + nul terminator byte
+     * XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX:XXXX\0
+     */
     char buf[40], *out;
+    int i = 0, remain = 0, bytes = 0;
 
     switch (len) {
     case 4: /* IPv4 */
@@ -985,11 +999,14 @@ char *ipaddr_to_asc(unsigned char *p, int len)
         break;
         /* TODO possibly combine with static i2r_address() in v3_addr.c */
     case 16: /* IPv6 */
-        for (out = buf; out < buf + 8 * 3; out += 3) {
-            BIO_snprintf(out, 3 + 1, "%X:", p[0] << 8 | p[1]);
+        for (out = buf, i = 8, remain = sizeof(buf);
+             i-- > 0 && bytes >= 0;
+             remain -= bytes, out += bytes) {
+            const char *template = (i > 0 ? "%X:" : "%X");
+
+            bytes = BIO_snprintf(out, remain, template, p[0] << 8 | p[1]);
             p += 2;
         }
-        out[-1] = '\0';
         break;
     default:
         BIO_snprintf(buf, sizeof(buf), "<invalid length=%d>", len);

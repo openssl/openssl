@@ -16,9 +16,6 @@
 
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(X509V3_EXT_METHOD)
-DEFINE_STACK_OF(X509_EXTENSION)
-
 static STACK_OF(X509V3_EXT_METHOD) *ext_list = NULL;
 
 static int ext_cmp(const X509V3_EXT_METHOD *const *a,

@@ -23,6 +23,7 @@
 #include "crypto/x509.h"
 #include <openssl/bn.h>
 #include "ext_dat.h"
+#include "x509_local.h"
 
 #ifndef OPENSSL_NO_RFC3779
 
@@ -54,10 +55,6 @@ IMPLEMENT_ASN1_FUNCTIONS(ASRange)
 IMPLEMENT_ASN1_FUNCTIONS(ASIdOrRange)
 IMPLEMENT_ASN1_FUNCTIONS(ASIdentifierChoice)
 IMPLEMENT_ASN1_FUNCTIONS(ASIdentifiers)
-
-DEFINE_STACK_OF(ASIdOrRange)
-DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(X509)
 
 /*
  * i2r method for an ASIdentifierChoice.
@@ -545,7 +542,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
         } else {
             X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
                       X509V3_R_EXTENSION_NAME_ERROR);
-            X509V3_conf_err(val);
+            X509V3_conf_add_error_name_value(val);
             goto err;
         }
 
@@ -557,7 +554,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
                 continue;
             X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
                       X509V3_R_INVALID_INHERITANCE);
-            X509V3_conf_err(val);
+            X509V3_conf_add_error_name_value(val);
             goto err;
         }
 
@@ -573,7 +570,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
             if (val->value[i2] != '-') {
                 X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
                           X509V3_R_INVALID_ASNUMBER);
-                X509V3_conf_err(val);
+                X509V3_conf_add_error_name_value(val);
                 goto err;
             }
             i2++;
@@ -582,7 +579,7 @@ static void *v2i_ASIdentifiers(const struct v3_ext_method *method,
             if (val->value[i3] != '\0') {
                 X509V3err(X509V3_F_V2I_ASIDENTIFIERS,
                           X509V3_R_INVALID_ASRANGE);
-                X509V3_conf_err(val);
+                X509V3_conf_add_error_name_value(val);
                 goto err;
             }
         }

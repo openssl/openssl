@@ -17,6 +17,7 @@
 
 #include "cipher_rc4_hmac_md5.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 /* TODO(3.0) Figure out what flags are required */
@@ -30,13 +31,13 @@
 
 #define GET_HW(ctx) ((PROV_CIPHER_HW_RC4_HMAC_MD5 *)ctx->base.hw)
 
-static OSSL_OP_cipher_newctx_fn rc4_hmac_md5_newctx;
-static OSSL_OP_cipher_freectx_fn rc4_hmac_md5_freectx;
-static OSSL_OP_cipher_get_ctx_params_fn rc4_hmac_md5_get_ctx_params;
-static OSSL_OP_cipher_gettable_ctx_params_fn rc4_hmac_md5_gettable_ctx_params;
-static OSSL_OP_cipher_set_ctx_params_fn rc4_hmac_md5_set_ctx_params;
-static OSSL_OP_cipher_settable_ctx_params_fn rc4_hmac_md5_settable_ctx_params;
-static OSSL_OP_cipher_get_params_fn rc4_hmac_md5_get_params;
+static OSSL_FUNC_cipher_newctx_fn rc4_hmac_md5_newctx;
+static OSSL_FUNC_cipher_freectx_fn rc4_hmac_md5_freectx;
+static OSSL_FUNC_cipher_get_ctx_params_fn rc4_hmac_md5_get_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn rc4_hmac_md5_gettable_ctx_params;
+static OSSL_FUNC_cipher_set_ctx_params_fn rc4_hmac_md5_set_ctx_params;
+static OSSL_FUNC_cipher_settable_ctx_params_fn rc4_hmac_md5_settable_ctx_params;
+static OSSL_FUNC_cipher_get_params_fn rc4_hmac_md5_get_params;
 #define rc4_hmac_md5_gettable_params cipher_generic_gettable_params
 #define rc4_hmac_md5_einit cipher_generic_einit
 #define rc4_hmac_md5_dinit cipher_generic_dinit
@@ -46,8 +47,12 @@ static OSSL_OP_cipher_get_params_fn rc4_hmac_md5_get_params;
 
 static void *rc4_hmac_md5_newctx(void *provctx)
 {
-    PROV_RC4_HMAC_MD5_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_RC4_HMAC_MD5_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         cipher_generic_initkey(ctx, RC4_HMAC_MD5_KEY_BITS,
                                RC4_HMAC_MD5_BLOCK_BITS,
@@ -62,6 +67,7 @@ static void rc4_hmac_md5_freectx(void *vctx)
 {
     PROV_RC4_HMAC_MD5_CTX *ctx = (PROV_RC4_HMAC_MD5_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
@@ -71,7 +77,7 @@ static const OSSL_PARAM rc4_hmac_md5_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(void)
+const OSSL_PARAM *rc4_hmac_md5_gettable_ctx_params(ossl_unused void *provctx)
 {
     return rc4_hmac_md5_known_gettable_ctx_params;
 }
@@ -106,7 +112,7 @@ static const OSSL_PARAM rc4_hmac_md5_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(void)
+const OSSL_PARAM *rc4_hmac_md5_settable_ctx_params(ossl_unused void *provctx)
 {
     return rc4_hmac_md5_known_settable_ctx_params;
 }

@@ -217,11 +217,13 @@ static int pkey_dsa_paramgen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
         BN_GENCB_free(pcb);
         return 0;
     }
+    if (dctx->md != NULL)
+        ffc_set_digest(&dsa->params, EVP_MD_name(dctx->md), NULL);
+
     ret = ffc_params_FIPS186_4_generate(NULL, &dsa->params, FFC_PARAM_TYPE_DSA,
-                                        dctx->nbits, dctx->qbits, dctx->pmd,
-                                        &res, pcb);
+                                        dctx->nbits, dctx->qbits, &res, pcb);
     BN_GENCB_free(pcb);
-    if (ret)
+    if (ret > 0)
         EVP_PKEY_assign_DSA(pkey, dsa);
     else
         DSA_free(dsa);

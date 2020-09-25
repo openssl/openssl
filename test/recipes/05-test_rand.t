@@ -9,11 +9,10 @@
 use strict;
 use warnings;
 use OpenSSL::Test;
+use OpenSSL::Test::Utils;
 
 plan tests => 2;
 setup("test_rand");
 
 ok(run(test(["drbgtest"])));
-ok(run(test(["drbg_cavs_test"])));
-# commented out due to long running time
-#ok(run(test(["drbg_extra_test"])));
+ok(run(test(["rand_status_test"])));

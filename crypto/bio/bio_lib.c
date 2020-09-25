@@ -786,41 +786,49 @@ void bio_cleanup(void)
 }
 
 /* Internal variant of the below BIO_wait() not calling BIOerr() */
-static int bio_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
+static int bio_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
 {
 #ifndef OPENSSL_NO_SOCK
     int fd;
 #endif
+    long sec_diff;
 
-    if (max_time == 0)
+    if (max_time == 0) /* no timeout */
         return 1;
 
 #ifndef OPENSSL_NO_SOCK
-    if (BIO_get_fd(bio, &fd) > 0)
+    if (BIO_get_fd(bio, &fd) > 0 && fd < FD_SETSIZE)
         return BIO_socket_wait(fd, BIO_should_read(bio), max_time);
 #endif
-    if (milliseconds > 1000) {
-        long sec_diff = (long)(max_time - time(NULL)); /* might overflow */
+    /* fall back to polling since no sockets are available */
 
-        if (sec_diff <= 0)
-            return 0; /* timeout */
-        if ((unsigned long)sec_diff < milliseconds / 1000)
-            milliseconds = (unsigned long)sec_diff * 1000;
+    sec_diff = (long)(max_time - time(NULL)); /* might overflow */
+    if (sec_diff < 0)
+        return 0; /* clearly timeout */
+
+    /* now take a nap at most the given number of milliseconds */
+    if (sec_diff == 0) { /* we are below the 1 seconds resolution of max_time */
+        if (nap_milliseconds > 1000)
+            nap_milliseconds = 1000;
+    } else { /* for sec_diff > 0, take min(sec_diff * 1000, nap_milliseconds) */
+        if ((unsigned long)sec_diff * 1000 < nap_milliseconds)
+            nap_milliseconds = (unsigned int)sec_diff * 1000;
     }
-    ossl_sleep(milliseconds);
+    ossl_sleep(nap_milliseconds);
     return 1;
 }
 
-/*
+/*-
  * Wait on (typically socket-based) BIO at most until max_time.
- * Succeed immediately if max_time == 0. If sockets are not available succeed
- * after waiting at most given milliseconds in order to avoid a tight busy loop.
- * Call BIOerr(...) unless success.
+ * Succeed immediately if max_time == 0.
+ * If sockets are not available support polling: succeed after waiting at most
+ * the number of nap_milliseconds in order to avoid a tight busy loop.
+ * Call BIOerr(...) on timeout or error.
  * Returns -1 on error, 0 on timeout, and 1 on success.
  */
-int BIO_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
+int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds)
 {
-    int rv = bio_wait(bio, max_time, milliseconds);
+    int rv = bio_wait(bio, max_time, nap_milliseconds);
 
     if (rv <= 0)
         BIOerr(0, rv == 0 ? BIO_R_TRANSFER_TIMEOUT : BIO_R_TRANSFER_ERROR);
@@ -828,13 +836,16 @@ int BIO_wait(BIO *bio, time_t max_time, unsigned int milliseconds)
 }
 
 /*
- * Connect via given BIO using BIO_do_handshake() until success/timeout/error.
- * Parameter timeout == 0 means infinite, < 0 leads to immediate timeout error.
+ * Connect via given BIO using BIO_do_connect() until success/timeout/error.
+ * Parameter timeout == 0 means no timeout, < 0 means exactly one try.
+ * For non-blocking and potentially even non-socket BIOs perform polling with
+ * the given density: between polls sleep nap_milliseconds using BIO_wait()
+ * in order to avoid a tight busy loop.
  * Returns -1 on error, 0 on timeout, and 1 on success.
  */
-int BIO_connect_retry(BIO *bio, int timeout)
+int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds)
 {
-    int blocking = timeout == 0;
+    int blocking = timeout <= 0;
     time_t max_time = timeout > 0 ? time(NULL) + timeout : 0;
     int rv;
 
@@ -843,40 +854,47 @@ int BIO_connect_retry(BIO *bio, int timeout)
         return -1;
     }
 
-    if (timeout < 0) {
-        BIOerr(0, BIO_R_CONNECT_TIMEOUT);
-        return 0;
-    }
+    if (nap_milliseconds < 0)
+        nap_milliseconds = 100;
+    BIO_set_nbio(bio, !blocking);
 
-    if (!blocking)
-        BIO_set_nbio(bio, 1);
+ retry:
+    rv = BIO_do_connect(bio); /* This may indirectly call ERR_clear_error(); */
 
- retry: /* it does not help here to set SSL_MODE_AUTO_RETRY */
-    rv = BIO_do_handshake(bio); /* This indirectly calls ERR_clear_error(); */
+    if (rv <= 0) { /* could be timeout or retryable error or fatal error */
+        int err = ERR_peek_last_error();
+        int reason = ERR_GET_REASON(err);
+        int do_retry = BIO_should_retry(bio); /* may be 1 only if !blocking */
 
-    if (rv <= 0) {
-        if (get_last_sys_error() == ETIMEDOUT) {
-            /*
-             * if blocking, despite blocking BIO, BIO_do_handshake() timed out
-             * when non-blocking, BIO_do_handshake() timed out early
-             * with rv == -1 and get_last_sys_error() == 0
-             */
-            ERR_clear_error();
-            (void)BIO_reset(bio);
-            /*
-             * unless using BIO_reset(), blocking next connect() may crash and
-             * non-blocking next BIO_do_handshake() will fail
-             */
-            goto retry;
-        } else if (BIO_should_retry(bio)) {
-            /* will not actually wait if timeout == 0 (i.e., blocking BIO) */
-            rv = bio_wait(bio, max_time, 100 /* milliseconds */);
+        if (ERR_GET_LIB(err) == ERR_LIB_BIO) {
+            switch (reason) {
+            case ERR_R_SYS_LIB:
+                /*
+                 * likely retryable system error occurred, which may be
+                 * EAGAIN (resource temporarily unavailable) some 40 secs after
+                 * calling getaddrinfo(): Temporary failure in name resolution
+                 * or a premature ETIMEDOUT, some 30 seconds after connect()
+                 */
+            case BIO_R_CONNECT_ERROR:
+            case BIO_R_NBIO_CONNECT_ERROR:
+                /* some likely retryable connection error occurred */
+                (void)BIO_reset(bio); /* often needed to avoid retry failure */
+                do_retry = 1;
+                break;
+            default:
+                break;
+            }
+        }
+        if (timeout >= 0 && do_retry) {
+            ERR_clear_error(); /* using ERR_pop_to_mark() would be cleaner */
+            /* will not actually wait if timeout == 0 (i.e., blocking BIO): */
+            rv = bio_wait(bio, max_time, nap_milliseconds);
             if (rv > 0)
                 goto retry;
             BIOerr(0, rv == 0 ? BIO_R_CONNECT_TIMEOUT : BIO_R_CONNECT_ERROR);
         } else {
             rv = -1;
-            if (ERR_peek_error() == 0) /* missing error queue entry */
+            if (err == 0) /* missing error queue entry */
                 BIOerr(0, BIO_R_CONNECT_ERROR); /* workaround: general error */
         }
     }

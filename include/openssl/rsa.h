@@ -40,7 +40,7 @@ extern "C" {
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 /* The types RSA and RSA_METHOD are defined in ossl_typ.h */
 
-#   define OPENSSL_RSA_FIPS_MIN_MODULUS_BITS 1024
+#   define OPENSSL_RSA_FIPS_MIN_MODULUS_BITS 2048
 
 #   ifndef OPENSSL_RSA_SMALL_MODULUS_BITS
 #    define OPENSSL_RSA_SMALL_MODULUS_BITS 3072

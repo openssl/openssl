@@ -80,7 +80,7 @@ resume-client = 0-resumption-client
 
 [0-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = SessionTicket
@@ -88,13 +88,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [0-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [0-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -117,7 +117,7 @@ resume-client = 1-resumption-client
 
 [1-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = -SessionTicket
@@ -125,13 +125,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [1-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [1-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -154,7 +154,7 @@ resume-client = 2-resumption-client
 
 [2-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = SessionTicket
@@ -162,13 +162,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [2-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -191,7 +191,7 @@ resume-client = 3-resumption-client
 
 [3-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = -SessionTicket
@@ -199,13 +199,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [3-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [3-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -228,7 +228,7 @@ resume-client = 4-resumption-client
 
 [4-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = SessionTicket
@@ -236,13 +236,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [4-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [4-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -265,7 +265,7 @@ resume-client = 5-resumption-client
 
 [5-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = -SessionTicket
@@ -273,13 +273,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [5-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [5-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -302,7 +302,7 @@ resume-client = 6-resumption-client
 
 [6-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = SessionTicket
@@ -310,13 +310,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [6-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [6-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -339,7 +339,7 @@ resume-client = 7-resumption-client
 
 [7-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 Options = -SessionTicket
@@ -347,13 +347,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [7-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [7-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -376,7 +376,7 @@ resume-client = 8-resumption-client
 
 [8-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = SessionTicket
@@ -384,13 +384,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [8-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [8-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -413,7 +413,7 @@ resume-client = 9-resumption-client
 
 [9-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = -SessionTicket
@@ -421,13 +421,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [9-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [9-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -450,7 +450,7 @@ resume-client = 10-resumption-client
 
 [10-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = SessionTicket
@@ -458,13 +458,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [10-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [10-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -487,7 +487,7 @@ resume-client = 11-resumption-client
 
 [11-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = -SessionTicket
@@ -495,13 +495,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [11-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [11-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -524,7 +524,7 @@ resume-client = 12-resumption-client
 
 [12-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = SessionTicket
@@ -532,13 +532,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [12-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [12-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -561,7 +561,7 @@ resume-client = 13-resumption-client
 
 [13-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = -SessionTicket
@@ -569,13 +569,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [13-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [13-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -598,7 +598,7 @@ resume-client = 14-resumption-client
 
 [14-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = SessionTicket
@@ -606,13 +606,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [14-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [14-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -635,7 +635,7 @@ resume-client = 15-resumption-client
 
 [15-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 Options = -SessionTicket
@@ -643,13 +643,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [15-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [15-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -672,7 +672,7 @@ resume-client = 16-resumption-client
 
 [16-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = SessionTicket
@@ -680,13 +680,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [16-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [16-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -709,7 +709,7 @@ resume-client = 17-resumption-client
 
 [17-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = -SessionTicket
@@ -717,13 +717,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [17-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [17-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -746,7 +746,7 @@ resume-client = 18-resumption-client
 
 [18-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = SessionTicket
@@ -754,13 +754,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [18-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [18-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -783,7 +783,7 @@ resume-client = 19-resumption-client
 
 [19-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = -SessionTicket
@@ -791,13 +791,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [19-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [19-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -820,7 +820,7 @@ resume-client = 20-resumption-client
 
 [20-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = SessionTicket
@@ -828,13 +828,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [20-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [20-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -857,7 +857,7 @@ resume-client = 21-resumption-client
 
 [21-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = -SessionTicket
@@ -865,13 +865,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [21-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [21-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -894,7 +894,7 @@ resume-client = 22-resumption-client
 
 [22-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = SessionTicket
@@ -902,13 +902,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [22-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [22-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -931,7 +931,7 @@ resume-client = 23-resumption-client
 
 [23-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 Options = -SessionTicket
@@ -939,13 +939,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [23-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [23-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -968,7 +968,7 @@ resume-client = 24-resumption-client
 
 [24-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = SessionTicket
@@ -976,13 +976,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [24-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [24-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1005,7 +1005,7 @@ resume-client = 25-resumption-client
 
 [25-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = -SessionTicket
@@ -1013,13 +1013,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [25-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [25-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1042,7 +1042,7 @@ resume-client = 26-resumption-client
 
 [26-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = SessionTicket
@@ -1050,13 +1050,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [26-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [26-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1079,7 +1079,7 @@ resume-client = 27-resumption-client
 
 [27-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = -SessionTicket
@@ -1087,13 +1087,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [27-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [27-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1116,7 +1116,7 @@ resume-client = 28-resumption-client
 
 [28-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = SessionTicket
@@ -1124,13 +1124,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [28-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [28-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1153,7 +1153,7 @@ resume-client = 29-resumption-client
 
 [29-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = -SessionTicket
@@ -1161,13 +1161,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [29-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [29-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1190,7 +1190,7 @@ resume-client = 30-resumption-client
 
 [30-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = SessionTicket
@@ -1198,13 +1198,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [30-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [30-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1227,7 +1227,7 @@ resume-client = 31-resumption-client
 
 [31-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 Options = -SessionTicket
@@ -1235,13 +1235,13 @@ PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [31-resumption-resume-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [31-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -1264,19 +1264,19 @@ resume-client = 32-resumption-resume-client
 
 [32-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [32-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [32-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1300,19 +1300,19 @@ resume-client = 33-resumption-resume-client
 
 [33-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [33-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [33-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1336,19 +1336,19 @@ resume-client = 34-resumption-resume-client
 
 [34-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [34-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [34-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1372,19 +1372,19 @@ resume-client = 35-resumption-resume-client
 
 [35-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [35-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [35-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1408,19 +1408,19 @@ resume-client = 36-resumption-resume-client
 
 [36-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [36-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [36-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1444,19 +1444,19 @@ resume-client = 37-resumption-resume-client
 
 [37-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [37-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [37-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1480,19 +1480,19 @@ resume-client = 38-resumption-resume-client
 
 [38-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [38-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [38-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1516,19 +1516,19 @@ resume-client = 39-resumption-resume-client
 
 [39-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [39-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [39-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1552,19 +1552,19 @@ resume-client = 40-resumption-resume-client
 
 [40-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [40-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [40-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1588,19 +1588,19 @@ resume-client = 41-resumption-resume-client
 
 [41-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [41-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [41-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1624,19 +1624,19 @@ resume-client = 42-resumption-resume-client
 
 [42-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [42-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [42-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1660,19 +1660,19 @@ resume-client = 43-resumption-resume-client
 
 [43-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [43-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [43-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1696,19 +1696,19 @@ resume-client = 44-resumption-resume-client
 
 [44-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [44-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [44-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1732,19 +1732,19 @@ resume-client = 45-resumption-resume-client
 
 [45-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [45-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [45-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1768,19 +1768,19 @@ resume-client = 46-resumption-resume-client
 
 [46-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [46-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [46-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1804,19 +1804,19 @@ resume-client = 47-resumption-resume-client
 
 [47-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [47-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [47-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1840,19 +1840,19 @@ resume-client = 48-resumption-resume-client
 
 [48-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [48-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [48-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1876,19 +1876,19 @@ resume-client = 49-resumption-resume-client
 
 [49-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [49-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [49-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1912,19 +1912,19 @@ resume-client = 50-resumption-resume-client
 
 [50-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [50-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [50-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1948,19 +1948,19 @@ resume-client = 51-resumption-resume-client
 
 [51-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [51-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [51-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -1984,19 +1984,19 @@ resume-client = 52-resumption-resume-client
 
 [52-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [52-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [52-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2020,19 +2020,19 @@ resume-client = 53-resumption-resume-client
 
 [53-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [53-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [53-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2056,19 +2056,19 @@ resume-client = 54-resumption-resume-client
 
 [54-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [54-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [54-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2092,19 +2092,19 @@ resume-client = 55-resumption-resume-client
 
 [55-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [55-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [55-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2128,19 +2128,19 @@ resume-client = 56-resumption-resume-client
 
 [56-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [56-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [56-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2164,19 +2164,19 @@ resume-client = 57-resumption-resume-client
 
 [57-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [57-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [57-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2200,19 +2200,19 @@ resume-client = 58-resumption-resume-client
 
 [58-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [58-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [58-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2236,19 +2236,19 @@ resume-client = 59-resumption-resume-client
 
 [59-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [59-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [59-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2272,19 +2272,19 @@ resume-client = 60-resumption-resume-client
 
 [60-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [60-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [60-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2308,19 +2308,19 @@ resume-client = 61-resumption-resume-client
 
 [61-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [61-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [61-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2344,19 +2344,19 @@ resume-client = 62-resumption-resume-client
 
 [62-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [62-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [62-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -2380,19 +2380,19 @@ resume-client = 63-resumption-resume-client
 
 [63-resumption-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 Options = -SessionTicket
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [63-resumption-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 MinProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [63-resumption-resume-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.3
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer

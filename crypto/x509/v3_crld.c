@@ -16,11 +16,7 @@
 
 #include "crypto/x509.h"
 #include "ext_dat.h"
-
-DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(DIST_POINT)
-DEFINE_STACK_OF(X509_NAME_ENTRY)
+#include "x509_local.h"
 
 static void *v2i_crld(const X509V3_EXT_METHOD *method,
                       X509V3_CTX *ctx, STACK_OF(CONF_VALUE) *nval);
@@ -256,7 +252,7 @@ static void *v2i_crld(const X509V3_EXT_METHOD *method,
         DIST_POINT *point;
 
         cnf = sk_CONF_VALUE_value(nval, i);
-        if (!cnf->value) {
+        if (cnf->value == NULL) {
             STACK_OF(CONF_VALUE) *dpsect;
             dpsect = X509V3_get_section(ctx, cnf->name);
             if (!dpsect)
@@ -398,7 +394,7 @@ static void *v2i_idp(const X509V3_EXT_METHOD *method, X509V3_CTX *ctx,
                 goto err;
         } else {
             X509V3err(X509V3_F_V2I_IDP, X509V3_R_INVALID_NAME);
-            X509V3_conf_err(cnf);
+            X509V3_conf_add_error_name_value(cnf);
             goto err;
         }
     }
@@ -484,30 +480,31 @@ static int i2r_crldp(const X509V3_EXT_METHOD *method, void *pcrldp, BIO *out,
     return 1;
 }
 
+/* Append any nameRelativeToCRLIssuer in dpn to iname, set in dpn->dpname */
 int DIST_POINT_set_dpname(DIST_POINT_NAME *dpn, const X509_NAME *iname)
 {
     int i;
     STACK_OF(X509_NAME_ENTRY) *frag;
     X509_NAME_ENTRY *ne;
-    if (!dpn || (dpn->type != 1))
+
+    if (dpn == NULL || dpn->type != 1)
         return 1;
     frag = dpn->name.relativename;
+    X509_NAME_free(dpn->dpname); /* just in case it was already set */
     dpn->dpname = X509_NAME_dup(iname);
-    if (!dpn->dpname)
+    if (dpn->dpname == NULL)
         return 0;
     for (i = 0; i < sk_X509_NAME_ENTRY_num(frag); i++) {
         ne = sk_X509_NAME_ENTRY_value(frag, i);
-        if (!X509_NAME_add_entry(dpn->dpname, ne, -1, i ? 0 : 1)) {
-            X509_NAME_free(dpn->dpname);
-            dpn->dpname = NULL;
-            return 0;
-        }
+        if (!X509_NAME_add_entry(dpn->dpname, ne, -1, i ? 0 : 1))
+            goto err;
     }
     /* generate cached encoding of name */
-    if (i2d_X509_NAME(dpn->dpname, NULL) < 0) {
-        X509_NAME_free(dpn->dpname);
-        dpn->dpname = NULL;
-        return 0;
-    }
-    return 1;
+    if (i2d_X509_NAME(dpn->dpname, NULL) >= 0)
+        return 1;
+
+ err:
+    X509_NAME_free(dpn->dpname);
+    dpn->dpname = NULL;
+    return 0;
 }

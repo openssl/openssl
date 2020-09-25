@@ -26,8 +26,6 @@
 
 #include "internal/nelem.h"
 
-DEFINE_STACK_OF(X509)
-
 #define _UC(c) ((unsigned char)(c))
 
 static const char *basedomain;

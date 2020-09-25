@@ -15,10 +15,6 @@
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
 
-#ifndef OPENSSL_NO_RFC3779
-DEFINE_STACK_OF(IPAddressFamily)
-#endif
-
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
         ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
         ASN1_EMBED(X509_CINF, serialNumber, ASN1_INTEGER),
@@ -113,8 +109,48 @@ ASN1_SEQUENCE_ref(X509, x509_cb) = {
         ASN1_EMBED(X509, signature, ASN1_BIT_STRING)
 } ASN1_SEQUENCE_END_ref(X509, X509)
 
-IMPLEMENT_ASN1_FUNCTIONS(X509)
+IMPLEMENT_ASN1_ALLOC_FUNCTIONS_fname(X509, X509, X509)
 IMPLEMENT_ASN1_DUP_FUNCTION(X509)
+
+X509 *d2i_X509(X509 **a, const unsigned char **in, long len)
+{
+    X509 *cert = NULL;
+
+    cert = (X509 *)ASN1_item_d2i((ASN1_VALUE **)a, in, len, (X509_it()));
+    /* Only cache the extensions if the cert object was passed in */
+    if (cert != NULL && a != NULL) {
+        if (!x509v3_cache_extensions(cert))
+            cert = NULL;
+    }
+    return cert;
+}
+int i2d_X509(const X509 *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (X509_it()));
+}
+
+/*
+ * This should only be used if the X509 object was embedded inside another
+ * asn1 object and it needs a libctx to operate.
+ * Use X509_new_with_libctx() instead if possible.
+ */
+int x509_set0_libctx(X509 *x, OPENSSL_CTX *libctx, const char *propq)
+{
+    if (x != NULL) {
+        x->libctx = libctx;
+        x->propq = propq;
+    }
+    return 1;
+}
+
+X509 *X509_new_with_libctx(OPENSSL_CTX *libctx, const char *propq)
+{
+    X509 *cert = NULL;
+
+    cert = (X509 *)ASN1_item_new((X509_it()));
+    (void)x509_set0_libctx(cert, libctx, propq);
+    return cert;
+}
 
 int X509_set_ex_data(X509 *r, int idx, void *arg)
 {

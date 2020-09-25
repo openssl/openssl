@@ -15,11 +15,6 @@
 #include <openssl/x509v3.h>
 #include "x509_local.h"
 
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(GENERAL_NAMES)
-DEFINE_STACK_OF(X509_REVOKED)
-DEFINE_STACK_OF(X509_EXTENSION)
-
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,
                             const X509_REVOKED *const *b);
 static int setup_idp(X509_CRL *crl, ISSUING_DIST_POINT *idp);
@@ -370,7 +365,7 @@ int X509_CRL_get0_by_cert(X509_CRL *crl, X509_REVOKED **ret, X509 *x)
 {
     if (crl->meth->crl_lookup)
         return crl->meth->crl_lookup(crl, ret,
-                                     X509_get_serialNumber(x),
+                                     X509_get0_serialNumber(x),
                                      X509_get_issuer_name(x));
     return 0;
 }
@@ -493,4 +488,13 @@ void X509_CRL_set_meth_data(X509_CRL *crl, void *dat)
 void *X509_CRL_get_meth_data(X509_CRL *crl)
 {
     return crl->meth_data;
+}
+
+int x509_crl_set0_libctx(X509_CRL *x, OPENSSL_CTX *libctx, const char *propq)
+{
+    if (x != NULL) {
+        x->libctx = libctx;
+        x->propq = propq;
+    }
+    return 1;
 }

@@ -25,6 +25,7 @@ use lib bldtop_dir('.');
 use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $infile = bldtop_file('providers', platform->dso('fips'));
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 
@@ -117,10 +118,7 @@ my %skip = (
 unless ($no_fips) {
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                '-section_name', 'fips_sect'])),
+                '-module', $infile])),
        "fipsinstall");
 }
 
@@ -173,7 +171,7 @@ sub test_conf {
 
       if ($provider eq "fips") {
           ok(run(test(["ssl_test", $output_file, $provider,
-                       srctop_file("test", "fips.cnf")])),
+                       srctop_file("test", "fips-and-base.cnf")])),
              "running ssl_test $conf");
       } else {
           ok(run(test(["ssl_test", $output_file, $provider])),

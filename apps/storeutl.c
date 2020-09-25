@@ -19,7 +19,7 @@
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog);
+                   const char *prog, OPENSSL_CTX *libctx, const char *propq);
 
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP, OPT_ENGINE, OPT_OUT, OPT_PASSIN,
@@ -84,6 +84,8 @@ int storeutl_main(int argc, char *argv[])
     char *alias = NULL;
     OSSL_STORE_SEARCH *search = NULL;
     const EVP_MD *digest = NULL;
+    OPENSSL_CTX *libctx = app_get0_libctx();
+    const char *propq = app_get0_propq();
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
@@ -155,11 +157,9 @@ int storeutl_main(int argc, char *argv[])
                            prog);
                 goto end;
             }
-            if ((subject = parse_name(opt_arg(), MBSTRING_UTF8, 1)) == NULL) {
-                BIO_printf(bio_err, "%s: can't parse subject argument.\n",
-                           prog);
+            subject = parse_name(opt_arg(), MBSTRING_UTF8, 1, "subject");
+            if (subject == NULL)
                 goto end;
-            }
             break;
         case OPT_CRITERION_ISSUER:
             if (criterion != 0
@@ -175,11 +175,9 @@ int storeutl_main(int argc, char *argv[])
                            prog);
                 goto end;
             }
-            if ((issuer = parse_name(opt_arg(), MBSTRING_UTF8, 1)) == NULL) {
-                BIO_printf(bio_err, "%s: can't parse issuer argument.\n",
-                           prog);
+            issuer = parse_name(opt_arg(), MBSTRING_UTF8, 1, "issuer");
+            if (issuer == NULL)
                 goto end;
-            }
             break;
         case OPT_CRITERION_SERIAL:
             if (criterion != 0
@@ -322,7 +320,7 @@ int storeutl_main(int argc, char *argv[])
 
     ret = process(argv[0], get_ui_method(), &pw_cb_data,
                   expected, criterion, search,
-                  text, noout, recursive, 0, out, prog);
+                  text, noout, recursive, 0, out, prog, libctx, propq);
 
  end:
     OPENSSL_free(fingerprint);
@@ -353,12 +351,13 @@ static int indent_printf(int indent, BIO *bio, const char *format, ...)
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                    int expected, int criterion, OSSL_STORE_SEARCH *search,
                    int text, int noout, int recursive, int indent, BIO *out,
-                   const char *prog)
+                   const char *prog, OPENSSL_CTX *libctx, const char *propq)
 {
     OSSL_STORE_CTX *store_ctx = NULL;
     int ret = 1, items = 0;
 
-    if ((store_ctx = OSSL_STORE_open(uri, uimeth, uidata, NULL, NULL))
+    if ((store_ctx = OSSL_STORE_open_with_libctx(uri, libctx, propq,
+                                                 uimeth, uidata, NULL, NULL))
         == NULL) {
         BIO_printf(bio_err, "Couldn't open file or uri %s\n", uri);
         ERR_print_errors(bio_err);
@@ -439,7 +438,8 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
                 const char *suburi = OSSL_STORE_INFO_get0_NAME(info);
                 ret += process(suburi, uimeth, uidata,
                                expected, criterion, search,
-                               text, noout, recursive, indent + 2, out, prog);
+                               text, noout, recursive, indent + 2, out, prog,
+                               libctx, propq);
             }
             break;
         case OSSL_STORE_INFO_PARAMS:
@@ -449,6 +449,13 @@ static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
             if (!noout)
                 PEM_write_bio_Parameters(out,
                                          OSSL_STORE_INFO_get0_PARAMS(info));
+            break;
+        case OSSL_STORE_INFO_PUBKEY:
+            if (text)
+                EVP_PKEY_print_public(out, OSSL_STORE_INFO_get0_PUBKEY(info),
+                                      0, NULL);
+            if (!noout)
+                PEM_write_bio_PUBKEY(out, OSSL_STORE_INFO_get0_PUBKEY(info));
             break;
         case OSSL_STORE_INFO_PKEY:
             if (text)

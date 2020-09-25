@@ -15,9 +15,6 @@
 #include <openssl/ts.h>
 #include "ts_local.h"
 
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-DEFINE_STACK_OF(CONF_VALUE)
-
 struct status_map_st {
     int bit;
     const char *text;

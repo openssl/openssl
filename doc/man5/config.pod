@@ -113,13 +113,13 @@ If a name is repeated in the same section, then all but the last
 value are ignored. In certain circumstances, such as with
 Certificate DNs, the same field may occur multiple times.
 In order to support this, commands like L<openssl-req(1)> ignore any
-leading text that is preceeded with a period. For example:
+leading text that is preceded with a period. For example:
 
  1.OU = First OU
  2.OU = Second OU
 
 The B<value> consists of the string following the B<=> character until end
-of line with any leading and trailing white space removed.
+of line with any leading and trailing whitespace removed.
 
 The value string undergoes variable expansion. The text C<$var> or C<${var}>
 inserts the value of the named variable from the current section.
@@ -160,6 +160,12 @@ how to configure any modules in the library. It is not an error to leave
 any module in its default configuration. An application can specify a
 different name by calling CONF_modules_load_file(), for example, directly.
 
+OpenSSL also looks up the value of B<config_diagnostics>.
+If this exists and has a nonzero numeric value, any error suppressing flags
+passed to CONF_modules_load() will be ignored.
+This is useful for diagnosing misconfigurations and should not be used in
+production.
+
  # This must be in the default section
  openssl_conf = openssl_init
 
@@ -169,6 +175,7 @@ different name by calling CONF_modules_load_file(), for example, directly.
  alg_section = evp_properties
  ssl_conf = ssl_configuration
  engines = engines
+ random = random
 
  [oids]
  ... new oids here ...
@@ -185,6 +192,9 @@ different name by calling CONF_modules_load_file(), for example, directly.
  [engines]
  ... engine properties here ...
 
+ [random]
+ ... random properties here ...
+
 The semantics of each module are described below. The phrase "in the
 initialization section" refers to the section identified by the
 B<openssl_conf> or other name (given as B<openssl_init> in the
@@ -198,7 +208,7 @@ containing name/value pairs of OID's.
 The name is the short name; the value is an optional long name followed
 by a comma, and the numeric value.
 While some OpenSSL commands have their own section for specifying OID's,
-this section makes them avilable to all commands and applications.
+this section makes them available to all commands and applications.
 
  [oids]
  shortName = a very long OID name, 1.2.3.4
@@ -299,10 +309,15 @@ section with the configuration for that name. For example:
 
 The configuration name B<system_default> has a special meaning.  If it
 exists, it is applied whenever an B<SSL_CTX> object is created.  For example,
-to impose a system-wide minimum on protocol version:
+to impose system-wide minimum TLS and DTLS protocol versions:
 
  [tls_system_default]
  MinProtocol = TLSv1.2
+ MinProtocol = DTLSv1.2
+
+The minimum TLS protocol is applied to B<SSL_CTX> objects that are TLS-based,
+and the minimum DTLS protocol to those are DTLS-based.
+The same applies also to maximum versions set with B<MaxProtocol>.
 
 Each configuration section consists of name/value pairs that are parsed
 by B<SSL_CONF_cmd(3)>, which will be called by SSL_CTX_config() or
@@ -377,6 +392,53 @@ For example:
  some_ctrl = some_value
  default_algorithms = ALL
  other_ctrl = EMPTY
+
+=head2 Random Configuration
+
+The name B<random> in the initialization section names the section
+containing the random number generater settings.
+
+Within the random section, the following names have meaning:
+
+=over 4
+
+=item B<random>
+
+This is used to specify the random bit generator.
+For example:
+
+ [random]
+ random = CTR-DRBG
+
+The available random bit generators are:
+
+=over 4
+
+=item B<CTR-DRBG>
+
+=item B<HASH-DRBG>
+
+=item B<HMAC-DRBG>
+
+=back
+
+=item B<cipher>
+
+This specifies what cipher a B<CTR-DRBG> random bit generator will use.
+Other random bit generators ignore this name.
+The default value is B<AES-256-CTR>.
+
+=item B<digest>
+
+This specifies what digest the B<HASH-DRBG> or B<HMAC-DRBG> random bit
+generators will use.  Other random bit generators ignore this name.
+
+=item B<properties>
+
+This sets the property query used when fetching the random bit generator and
+any underlying algorithms.
+
+=back
 
 =head1 EXAMPLES
 
@@ -474,8 +536,10 @@ configuration files using that syntax will have to be modified.
 =head1 SEE ALSO
 
 L<openssl-x509(1)>, L<openssl-req(1)>, L<openssl-ca(1)>,
+L<openssl-fipsinstall(1)>,
 L<ASN1_generate_nconf(3)>,
 L<EVP_set_default_properties(3)>,
+L<CONF_modules_load(3)>,
 L<CONF_modules_load_file(3)>,
 L<fips_config(5)>, and
 L<x509v3_config(5)>.

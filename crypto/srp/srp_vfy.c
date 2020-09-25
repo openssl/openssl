@@ -25,10 +25,6 @@
 # define SRP_RANDOM_SALT_LEN 20
 # define MAX_LEN 2500
 
-DEFINE_STACK_OF(SRP_user_pwd)
-DEFINE_STACK_OF(SRP_gN_cache)
-DEFINE_STACK_OF(SRP_gN)
-
 /*
  * Note that SRP uses its own variant of base 64 encoding. A different base64
  * alphabet is used and no padding '=' characters are added. Instead we pad to

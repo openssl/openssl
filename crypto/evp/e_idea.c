@@ -22,6 +22,7 @@
 # include <openssl/objects.h>
 # include "crypto/evp.h"
 # include <openssl/idea.h>
+# include "evp_local.h"
 
 /* Can't use IMPLEMENT_BLOCK_CIPHER because IDEA_ecb_encrypt is different */
 

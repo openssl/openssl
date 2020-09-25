@@ -15,15 +15,10 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "cms_local.h"
 #include "crypto/ess.h"
 #include "crypto/cms.h"
-
-DEFINE_STACK_OF(GENERAL_NAMES)
-DEFINE_STACK_OF(CMS_SignerInfo)
-DEFINE_STACK_OF(ESS_CERT_ID)
-DEFINE_STACK_OF(ESS_CERT_ID_V2)
-DEFINE_STACK_OF(X509)
+#include "crypto/x509.h"
+#include "cms_local.h"
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
 
@@ -119,11 +114,10 @@ int ess_check_signing_certs(CMS_SignerInfo *si, STACK_OF(X509) *chain)
     return ret;
 }
 
-CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
-                                               int allorfirst,
-                                               STACK_OF(GENERAL_NAMES)
-                                               *receiptList, STACK_OF(GENERAL_NAMES)
-                                               *receiptsTo)
+CMS_ReceiptRequest *CMS_ReceiptRequest_create0_with_libctx(
+    unsigned char *id, int idlen, int allorfirst,
+    STACK_OF(GENERAL_NAMES) *receiptList, STACK_OF(GENERAL_NAMES) *receiptsTo,
+    OPENSSL_CTX *libctx, const char *propq)
 {
     CMS_ReceiptRequest *rr;
 
@@ -135,14 +129,14 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
     else {
         if (!ASN1_STRING_set(rr->signedContentIdentifier, NULL, 32))
             goto merr;
-        if (RAND_bytes(rr->signedContentIdentifier->data, 32) <= 0)
+        if (RAND_bytes_ex(libctx, rr->signedContentIdentifier->data, 32) <= 0)
             goto err;
     }
 
     sk_GENERAL_NAMES_pop_free(rr->receiptsTo, GENERAL_NAMES_free);
     rr->receiptsTo = receiptsTo;
 
-    if (receiptList) {
+    if (receiptList != NULL) {
         rr->receiptsFrom->type = 1;
         rr->receiptsFrom->d.receiptList = receiptList;
     } else {
@@ -153,12 +147,21 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0(unsigned char *id, int idlen,
     return rr;
 
  merr:
-    CMSerr(CMS_F_CMS_RECEIPTREQUEST_CREATE0, ERR_R_MALLOC_FAILURE);
+    CMSerr(0, ERR_R_MALLOC_FAILURE);
 
  err:
     CMS_ReceiptRequest_free(rr);
     return NULL;
 
+}
+
+CMS_ReceiptRequest *CMS_ReceiptRequest_create0(
+    unsigned char *id, int idlen, int allorfirst,
+    STACK_OF(GENERAL_NAMES) *receiptList, STACK_OF(GENERAL_NAMES) *receiptsTo)
+{
+    return CMS_ReceiptRequest_create0_with_libctx(id, idlen, allorfirst,
+                                                  receiptList, receiptsTo,
+                                                  NULL, NULL);
 }
 
 int CMS_add1_ReceiptRequest(CMS_SignerInfo *si, CMS_ReceiptRequest *rr)
@@ -192,20 +195,20 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
                                     STACK_OF(GENERAL_NAMES) **plist,
                                     STACK_OF(GENERAL_NAMES) **prto)
 {
-    if (pcid)
+    if (pcid != NULL)
         *pcid = rr->signedContentIdentifier;
     if (rr->receiptsFrom->type == 0) {
-        if (pallorfirst)
+        if (pallorfirst != NULL)
             *pallorfirst = (int)rr->receiptsFrom->d.allOrFirstTier;
-        if (plist)
+        if (plist != NULL)
             *plist = NULL;
     } else {
-        if (pallorfirst)
+        if (pallorfirst != NULL)
             *pallorfirst = -1;
-        if (plist)
+        if (plist != NULL)
             *plist = rr->receiptsFrom->d.receiptList;
     }
-    if (prto)
+    if (prto != NULL)
         *prto = rr->receiptsTo;
 }
 
@@ -214,13 +217,13 @@ void CMS_ReceiptRequest_get0_values(CMS_ReceiptRequest *rr,
 static int cms_msgSigDigest(CMS_SignerInfo *si,
                             unsigned char *dig, unsigned int *diglen)
 {
-    const EVP_MD *md;
+    const EVP_MD *md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
 
-    md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
     if (md == NULL)
         return 0;
-    if (!ASN1_item_digest(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
-                          si->signedAttrs, dig, diglen))
+    if (!asn1_item_digest_with_libctx(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
+                                      si->signedAttrs, dig, diglen,
+                                      si->cms_ctx->libctx, si->cms_ctx->propq))
         return 0;
     return 1;
 }
@@ -421,12 +424,12 @@ ASN1_OCTET_STRING *cms_encode_Receipt(CMS_SignerInfo *si)
 int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
 {
     ASN1_STRING *seq = NULL;
-    unsigned char *p, *pp;
+    unsigned char *p, *pp = NULL;
     int len;
 
     /* Add SigningCertificateV2 signed attribute to the signer info. */
     len = i2d_ESS_SIGNING_CERT_V2(sc, NULL);
-    if ((pp = OPENSSL_malloc(len)) == NULL)
+    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
         goto err;
     p = pp;
     i2d_ESS_SIGNING_CERT_V2(sc, &p);
@@ -453,12 +456,12 @@ int cms_add1_signing_cert_v2(CMS_SignerInfo *si, ESS_SIGNING_CERT_V2 *sc)
 int cms_add1_signing_cert(CMS_SignerInfo *si, ESS_SIGNING_CERT *sc)
 {
     ASN1_STRING *seq = NULL;
-    unsigned char *p, *pp;
+    unsigned char *p, *pp = NULL;
     int len;
 
     /* Add SigningCertificate signed attribute to the signer info. */
     len = i2d_ESS_SIGNING_CERT(sc, NULL);
-    if ((pp = OPENSSL_malloc(len)) == NULL)
+    if (len <= 0 || (pp = OPENSSL_malloc(len)) == NULL)
         goto err;
     p = pp;
     i2d_ESS_SIGNING_CERT(sc, &p);

@@ -25,8 +25,6 @@
 
 #include "http_local.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
 #define HTTP_VERSION_STR_LEN 3
@@ -712,10 +710,15 @@ static BIO *HTTP_new_bio(const char *server /* optionally includes ":port" */,
     }
 
     host_end = strchr(host, '/');
-    if (host_end != NULL && (size_t)(host_end - host) < sizeof(host_name)) {
-        /* chop trailing string starting with '/' */
-        strncpy(host_name, host, host_end - host + 1);
-        host = host_name;
+    if (host_end != NULL) {
+        size_t host_len = host_end - host;
+
+        if (host_len < sizeof(host_name)) {
+            /* chop trailing string starting with '/' */
+            strncpy(host_name, host, host_len);
+            host_name[host_len] = '\0';
+            host = host_name;
+        }
     }
 
     cbio = BIO_new_connect(host /* optionally includes ":port" */);
@@ -814,7 +817,7 @@ static int update_timeout(int timeout, time_t start_time)
  *   BIO *(*OSSL_HTTP_bio_cb_t) (BIO *bio, void *arg, int conn, int detail);
  * The callback may modify the HTTP BIO provided in the bio argument,
  * whereby it may make use of any custom defined argument 'arg'.
- * During connection establishment, just after BIO_connect_retry(),
+ * During connection establishment, just after BIO_do_connect_retry(),
  * the callback function is invoked with the 'conn' argument being 1
  * 'detail' indicating whether a HTTPS (i.e., TLS) connection is requested.
  * On disconnect 'conn' is 0 and 'detail' indicates that no error occurred.
@@ -873,7 +876,7 @@ BIO *OSSL_HTTP_transfer(const char *server, const char *port, const char *path,
     /* remaining parameters are checked indirectly by the functions called */
 
     (void)ERR_set_mark(); /* prepare removing any spurious libssl errors */
-    if (rbio == NULL && BIO_connect_retry(cbio, timeout) <= 0)
+    if (rbio == NULL && BIO_do_connect_retry(cbio, timeout, -1) <= 0)
         goto end;
     /* now timeout is guaranteed to be >= 0 */
 
@@ -1000,7 +1003,8 @@ BIO *OSSL_HTTP_get(const char *url, const char *proxy, const char *no_proxy,
         return NULL;
 
     for (;;) {
-        if (!OSSL_HTTP_parse_url(current_url, &host, &port, &path, &use_ssl))
+        if (!OSSL_HTTP_parse_url(current_url, &host, &port, NULL /* port_num */,
+                                 &path, &use_ssl))
             break;
 
      new_rpath:

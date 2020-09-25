@@ -42,7 +42,7 @@ int sm2_compute_z_digest(uint8_t *out,
     uint8_t e_byte = 0;
 
     hash = EVP_MD_CTX_new();
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(ec_key_get_libctx(key));
     if (hash == NULL || ctx == NULL) {
         SM2err(SM2_F_SM2_COMPUTE_Z_DIGEST, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -146,6 +146,9 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
     const int md_size = EVP_MD_size(digest);
     uint8_t *z = NULL;
     BIGNUM *e = NULL;
+    EVP_MD *fetched_digest = NULL;
+    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
+    const char *propq = ec_key_get0_propq(key);
 
     if (md_size < 0) {
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, SM2_R_INVALID_DIGEST);
@@ -158,12 +161,18 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         goto done;
     }
 
-    if (!sm2_compute_z_digest(z, digest, id, id_len, key)) {
+    fetched_digest = EVP_MD_fetch(libctx, EVP_MD_name(digest), propq);
+    if (fetched_digest == NULL) {
+        SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+
+    if (!sm2_compute_z_digest(z, fetched_digest, id, id_len, key)) {
         /* SM2err already called */
         goto done;
     }
 
-    if (!EVP_DigestInit(hash, digest)
+    if (!EVP_DigestInit(hash, fetched_digest)
             || !EVP_DigestUpdate(hash, z, md_size)
             || !EVP_DigestUpdate(hash, msg, msg_len)
                /* reuse z buffer to hold H(Z || M) */
@@ -177,6 +186,7 @@ static BIGNUM *sm2_compute_msg_hash(const EVP_MD *digest,
         SM2err(SM2_F_SM2_COMPUTE_MSG_HASH, ERR_R_INTERNAL_ERROR);
 
  done:
+    EVP_MD_free(fetched_digest);
     OPENSSL_free(z);
     EVP_MD_CTX_free(hash);
     return e;
@@ -196,9 +206,10 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     BIGNUM *s = NULL;
     BIGNUM *x1 = NULL;
     BIGNUM *tmp = NULL;
+    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
 
     kG = EC_POINT_new(group);
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(libctx);
     if (kG == NULL || ctx == NULL) {
         SM2err(SM2_F_SM2_SIG_GEN, ERR_R_MALLOC_FAILURE);
         goto done;
@@ -227,7 +238,7 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     for (;;) {
-        if (!BN_priv_rand_range(k, order)) {
+        if (!BN_priv_rand_range_ex(k, order, ctx)) {
             SM2err(SM2_F_SM2_SIG_GEN, ERR_R_INTERNAL_ERROR);
             goto done;
         }
@@ -295,8 +306,9 @@ static int sm2_sig_verify(const EC_KEY *key, const ECDSA_SIG *sig,
     BIGNUM *x1 = NULL;
     const BIGNUM *r = NULL;
     const BIGNUM *s = NULL;
+    OPENSSL_CTX *libctx = ec_key_get_libctx(key);
 
-    ctx = BN_CTX_new();
+    ctx = BN_CTX_new_ex(libctx);
     pt = EC_POINT_new(group);
     if (ctx == NULL || pt == NULL) {
         SM2err(SM2_F_SM2_SIG_VERIFY, ERR_R_MALLOC_FAILURE);
@@ -406,8 +418,8 @@ int sm2_do_verify(const EC_KEY *key,
     return ret;
 }
 
-int sm2_sign(const unsigned char *dgst, int dgstlen,
-             unsigned char *sig, unsigned int *siglen, EC_KEY *eckey)
+int sm2_internal_sign(const unsigned char *dgst, int dgstlen,
+                      unsigned char *sig, unsigned int *siglen, EC_KEY *eckey)
 {
     BIGNUM *e = NULL;
     ECDSA_SIG *s = NULL;
@@ -416,15 +428,19 @@ int sm2_sign(const unsigned char *dgst, int dgstlen,
 
     e = BN_bin2bn(dgst, dgstlen, NULL);
     if (e == NULL) {
-       SM2err(SM2_F_SM2_SIGN, ERR_R_BN_LIB);
+       SM2err(0, ERR_R_BN_LIB);
        goto done;
     }
 
     s = sm2_sig_gen(eckey, e);
+    if (s == NULL) {
+        SM2err(0, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
 
     sigleni = i2d_ECDSA_SIG(s, &sig);
     if (sigleni < 0) {
-       SM2err(SM2_F_SM2_SIGN, ERR_R_INTERNAL_ERROR);
+       SM2err(0, ERR_R_INTERNAL_ERROR);
        goto done;
     }
     *siglen = (unsigned int)sigleni;
@@ -437,8 +453,8 @@ int sm2_sign(const unsigned char *dgst, int dgstlen,
     return ret;
 }
 
-int sm2_verify(const unsigned char *dgst, int dgstlen,
-               const unsigned char *sig, int sig_len, EC_KEY *eckey)
+int sm2_internal_verify(const unsigned char *dgst, int dgstlen,
+                        const unsigned char *sig, int sig_len, EC_KEY *eckey)
 {
     ECDSA_SIG *s = NULL;
     BIGNUM *e = NULL;
@@ -449,23 +465,23 @@ int sm2_verify(const unsigned char *dgst, int dgstlen,
 
     s = ECDSA_SIG_new();
     if (s == NULL) {
-        SM2err(SM2_F_SM2_VERIFY, ERR_R_MALLOC_FAILURE);
+        SM2err(0, ERR_R_MALLOC_FAILURE);
         goto done;
     }
     if (d2i_ECDSA_SIG(&s, &p, sig_len) == NULL) {
-        SM2err(SM2_F_SM2_VERIFY, SM2_R_INVALID_ENCODING);
+        SM2err(0, SM2_R_INVALID_ENCODING);
         goto done;
     }
     /* Ensure signature uses DER and doesn't have trailing garbage */
     derlen = i2d_ECDSA_SIG(s, &der);
     if (derlen != sig_len || memcmp(sig, der, derlen) != 0) {
-        SM2err(SM2_F_SM2_VERIFY, SM2_R_INVALID_ENCODING);
+        SM2err(0, SM2_R_INVALID_ENCODING);
         goto done;
     }
 
     e = BN_bin2bn(dgst, dgstlen, NULL);
     if (e == NULL) {
-        SM2err(SM2_F_SM2_VERIFY, ERR_R_BN_LIB);
+        SM2err(0, ERR_R_BN_LIB);
         goto done;
     }
 

@@ -190,6 +190,13 @@ int OSSL_PARAM_BLD_push_size_t(OSSL_PARAM_BLD *bld, const char *key,
                           OSSL_PARAM_UNSIGNED_INTEGER);
 }
 
+int OSSL_PARAM_BLD_push_time_t(OSSL_PARAM_BLD *bld, const char *key,
+                               time_t num)
+{
+    return param_push_num(bld, key, &num, sizeof(num),
+                          OSSL_PARAM_INTEGER);
+}
+
 int OSSL_PARAM_BLD_push_double(OSSL_PARAM_BLD *bld, const char *key,
                                double num)
 {

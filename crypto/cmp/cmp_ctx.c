@@ -12,6 +12,7 @@
 #include <openssl/trace.h>
 #include <openssl/bio.h>
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
+#include "crypto/x509.h" /* for x509v3_cache_extensions() */
 
 #include "cmp_local.h"
 
@@ -19,13 +20,6 @@
 #include <openssl/cmp.h>
 #include <openssl/crmf.h>
 #include <openssl/err.h>
-
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_EXTENSION)
-DEFINE_STACK_OF(POLICYINFO)
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-DEFINE_STACK_OF(GENERAL_NAME)
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
 
 /*
  * Get current certificate store containing trusted root CA certs
@@ -56,48 +50,67 @@ int OSSL_CMP_CTX_set0_trustedStore(OSSL_CMP_CTX *ctx, X509_STORE *store)
 }
 
 /* Get current list of non-trusted intermediate certs */
-STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted_certs(const OSSL_CMP_CTX *ctx)
+STACK_OF(X509) *OSSL_CMP_CTX_get0_untrusted(const OSSL_CMP_CTX *ctx)
 {
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
-    return ctx->untrusted_certs;
+    return ctx->untrusted;
 }
 
 /*
  * Set untrusted certificates for path construction in authentication of
  * the CMP server and potentially others (TLS server, newly enrolled cert).
  */
-int OSSL_CMP_CTX_set1_untrusted_certs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
+int OSSL_CMP_CTX_set1_untrusted(OSSL_CMP_CTX *ctx, STACK_OF(X509) *certs)
 {
-    STACK_OF(X509) *untrusted_certs;
+    STACK_OF(X509) *untrusted;
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if ((untrusted_certs = sk_X509_new_null()) == NULL)
+    if ((untrusted = sk_X509_new_null()) == NULL)
         return 0;
-    if (ossl_cmp_sk_X509_add1_certs(untrusted_certs, certs, 0, 1, 0) != 1)
+    if (X509_add_certs(untrusted, certs,
+                       X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) != 1)
         goto err;
-    sk_X509_pop_free(ctx->untrusted_certs, X509_free);
-    ctx->untrusted_certs = untrusted_certs;
+    sk_X509_pop_free(ctx->untrusted, X509_free);
+    ctx->untrusted = untrusted;
     return 1;
  err:
-    sk_X509_pop_free(untrusted_certs, X509_free);
+    sk_X509_pop_free(untrusted, X509_free);
     return 0;
+}
+
+static int cmp_ctx_set_md(OSSL_CMP_CTX *ctx, EVP_MD **pmd, int nid)
+{
+    EVP_MD *md = EVP_MD_fetch(ctx->libctx, OBJ_nid2sn(nid), ctx->propq);
+    /* fetching in advance to be able to throw error early if unsupported */
+
+    if (md == NULL) {
+        CMPerr(0, CMP_R_UNSUPPORTED_ALGORITHM);
+        return 0;
+    }
+    EVP_MD_free(*pmd);
+    *pmd = md;
+    return 1;
 }
 
 /*
  * Allocates and initializes OSSL_CMP_CTX context structure with default values.
  * Returns new context on success, NULL on error
  */
-OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
+OSSL_CMP_CTX *OSSL_CMP_CTX_new(OPENSSL_CTX *libctx, const char *propq)
 {
     OSSL_CMP_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
 
     if (ctx == NULL)
-        return NULL;
+        goto err;
+
+    ctx->libctx = libctx;
+    if (propq != NULL && (ctx->propq = OPENSSL_strdup(propq)) == NULL)
+        goto err;
 
     ctx->log_verbosity = OSSL_CMP_LOG_INFO;
 
@@ -106,15 +119,17 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
 
     ctx->msg_timeout = 2 * 60;
 
-    if ((ctx->untrusted_certs = sk_X509_new_null()) == NULL)
+    if ((ctx->untrusted = sk_X509_new_null()) == NULL)
         goto err;
 
     ctx->pbm_slen = 16;
-    ctx->pbm_owf = NID_sha256;
+    if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, NID_sha256))
+        goto err;
     ctx->pbm_itercnt = 500;
     ctx->pbm_mac = NID_hmac_sha1;
 
-    ctx->digest = NID_sha256;
+    if (!cmp_ctx_set_md(ctx, &ctx->digest, NID_sha256))
+        goto err;
     ctx->popoMethod = OSSL_CRMF_POPO_SIGNATURE;
     ctx->revocationReason = CRL_REASON_NONE;
 
@@ -123,6 +138,7 @@ OSSL_CMP_CTX *OSSL_CMP_CTX_new(void)
 
  err:
     OSSL_CMP_CTX_free(ctx);
+    X509err(0, ERR_R_MALLOC_FAILURE);
     return NULL;
 }
 
@@ -139,6 +155,7 @@ int OSSL_CMP_CTX_reinit(OSSL_CMP_CTX *ctx)
 
     return ossl_cmp_ctx_set0_statusString(ctx, NULL)
         && ossl_cmp_ctx_set0_newCert(ctx, NULL)
+        && ossl_cmp_ctx_set1_newChain(ctx, NULL)
         && ossl_cmp_ctx_set1_caPubs(ctx, NULL)
         && ossl_cmp_ctx_set1_extraCertsIn(ctx, NULL)
         && ossl_cmp_ctx_set0_validatedSrvCert(ctx, NULL)
@@ -162,16 +179,19 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
     X509_free(ctx->validatedSrvCert);
     X509_NAME_free(ctx->expected_sender);
     X509_STORE_free(ctx->trusted);
-    sk_X509_pop_free(ctx->untrusted_certs, X509_free);
+    sk_X509_pop_free(ctx->untrusted, X509_free);
 
     X509_free(ctx->cert);
+    sk_X509_pop_free(ctx->chain, X509_free);
     EVP_PKEY_free(ctx->pkey);
     ASN1_OCTET_STRING_free(ctx->referenceValue);
     if (ctx->secretValue != NULL)
         OPENSSL_cleanse(ctx->secretValue->data, ctx->secretValue->length);
     ASN1_OCTET_STRING_free(ctx->secretValue);
+    EVP_MD_free(ctx->pbm_owf);
 
     X509_NAME_free(ctx->recipient);
+    EVP_MD_free(ctx->digest);
     ASN1_OCTET_STRING_free(ctx->transactionID);
     ASN1_OCTET_STRING_free(ctx->senderNonce);
     ASN1_OCTET_STRING_free(ctx->recipNonce);
@@ -191,6 +211,7 @@ void OSSL_CMP_CTX_free(OSSL_CMP_CTX *ctx)
 
     sk_ASN1_UTF8STRING_pop_free(ctx->statusString, ASN1_UTF8STRING_free);
     X509_free(ctx->newCert);
+    sk_X509_pop_free(ctx->newChain, X509_free);
     sk_X509_pop_free(ctx->caPubs, X509_free);
     sk_X509_pop_free(ctx->extraCertsIn, X509_free);
 
@@ -393,8 +414,10 @@ int OSSL_CMP_CTX_set_log_cb(OSSL_CMP_CTX *ctx, OSSL_CMP_log_cb_t cb)
 }
 
 /* Print OpenSSL and CMP errors via the log cb of the ctx or ERR_print_errors */
-void OSSL_CMP_CTX_print_errors(OSSL_CMP_CTX *ctx)
+void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx)
 {
+    if (ctx != NULL && OSSL_CMP_LOG_ERR > ctx->log_verbosity)
+        return; /* suppress output since severity is not sufficient */
     OSSL_CMP_print_errors_cb(ctx == NULL ? NULL : ctx->log_cb);
 }
 
@@ -432,11 +455,35 @@ int OSSL_CMP_CTX_set1_secretValue(OSSL_CMP_CTX *ctx, const unsigned char *sec,
     return 1;
 }
 
+/* Returns the cert chain computed by OSSL_CMP_certConf_cb(), NULL on error */
+STACK_OF(X509) *OSSL_CMP_CTX_get1_newChain(const OSSL_CMP_CTX *ctx)
+{
+    if (ctx == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return NULL;
+    }
+    if (ctx->newChain == NULL)
+        return sk_X509_new_null();
+    return X509_chain_up_ref(ctx->newChain);
+}
+
 /*
- * Returns the stack of certificates received in a response message.
- * The stack is duplicated so the caller must handle freeing it!
- * Returns pointer to created stack on success, NULL on error
+ * Copies any given stack of inbound X509 certificates to newChain
+ * of the OSSL_CMP_CTX structure so that they may be retrieved later.
  */
+int ossl_cmp_ctx_set1_newChain(OSSL_CMP_CTX *ctx, STACK_OF(X509) *newChain)
+{
+    if (!ossl_assert(ctx != NULL))
+        return 0;
+
+    sk_X509_pop_free(ctx->newChain, X509_free);
+    ctx->newChain= NULL;
+    if (newChain == NULL)
+        return 1;
+    return (ctx->newChain = X509_chain_up_ref(newChain)) != NULL;
+}
+
+/* Returns the stack of extraCerts received in CertRepMessage, NULL on error */
 STACK_OF(X509) *OSSL_CMP_CTX_get1_extraCertsIn(const OSSL_CMP_CTX *ctx)
 {
     if (ctx == NULL) {
@@ -466,7 +513,7 @@ int ossl_cmp_ctx_set1_extraCertsIn(OSSL_CMP_CTX *ctx,
 }
 
 /*
- * Duplicate and set the given stack as the new stack of X509
+ * Copies any given stack as the new stack of X509
  * certificates to send out in the extraCerts field.
  */
 int OSSL_CMP_CTX_set1_extraCertsOut(OSSL_CMP_CTX *ctx,
@@ -539,7 +586,7 @@ STACK_OF(X509) *OSSL_CMP_CTX_get1_caPubs(const OSSL_CMP_CTX *ctx)
 }
 
 /*
- * Duplicate and copy the given stack of certificates to the given
+ * Copies any given stack of certificates to the given
  * OSSL_CMP_CTX structure so that they may be retrieved later.
  */
 int ossl_cmp_ctx_set1_caPubs(OSSL_CMP_CTX *ctx, STACK_OF(X509) *caPubs)
@@ -573,6 +620,8 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, const TYPE *val) \
     return 1; \
 }
 
+#define X509_invalid(cert) (!x509v3_cache_extensions(cert))
+#define EVP_PKEY_invalid(key) 0
 #define DEFINE_OSSL_CMP_CTX_set1_up_ref(FIELD, TYPE) \
 int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
 { \
@@ -581,6 +630,11 @@ int OSSL_CMP_CTX_set1_##FIELD(OSSL_CMP_CTX *ctx, TYPE *val) \
         return 0; \
     } \
     \
+    /* prevent misleading error later on malformed cert or provider issue */ \
+    if (val != NULL && TYPE##_invalid(val)) { \
+        CMPerr(0, CMP_R_POTENTIALLY_INVALID_CERTIFICATE); \
+        return 0; \
+    } \
     if (val != NULL && !TYPE##_up_ref(val)) \
         return 0; \
     TYPE##_free(ctx->FIELD); \
@@ -677,6 +731,34 @@ int OSSL_CMP_CTX_push1_subjectAltName(OSSL_CMP_CTX *ctx,
  * doing the IR with existing certificate.
  */
 DEFINE_OSSL_CMP_CTX_set1_up_ref(cert, X509)
+
+int OSSL_CMP_CTX_build_cert_chain(OSSL_CMP_CTX *ctx, X509_STORE *own_trusted,
+                                  STACK_OF(X509) *candidates)
+{
+    STACK_OF(X509) *chain;
+
+    if (ctx == NULL) {
+        CMPerr(0, CMP_R_NULL_ARGUMENT);
+        return 0;
+    }
+
+    if (ctx->untrusted != NULL ?
+        !X509_add_certs(ctx->untrusted, candidates,
+                        X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP) :
+        !OSSL_CMP_CTX_set1_untrusted(ctx, candidates))
+        return 0;
+
+    ossl_cmp_debug(ctx, "trying to build chain for own CMP signer cert");
+    chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq, own_trusted,
+                                      ctx->untrusted, ctx->cert);
+    if (chain == NULL) {
+        CMPerr(0, CMP_R_FAILED_BUILDING_OWN_CHAIN);
+        return 0;
+    }
+    ossl_cmp_debug(ctx, "success building chain for own CMP signer cert");
+    ctx->chain = chain;
+    return 1;
+}
 
 /*
  * Set the old certificate that we are updating in KUR
@@ -916,14 +998,14 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         break;
     }
     if (val < min_val) {
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        CMPerr(0, CMP_R_VALUE_TOO_SMALL);
         return 0;
     }
 
     switch (opt) {
     case OSSL_CMP_OPT_LOG_VERBOSITY:
-        if (val > OSSL_CMP_LOG_DEBUG) {
-            CMPerr(0, CMP_R_INVALID_ARGS);
+        if (val > OSSL_CMP_LOG_MAX) {
+            CMPerr(0, CMP_R_VALUE_TOO_LARGE);
             return 0;
         }
         ctx->log_verbosity = val;
@@ -957,16 +1039,18 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         break;
     case OSSL_CMP_OPT_POPO_METHOD:
         if (val > OSSL_CRMF_POPO_KEYAGREE) {
-            CMPerr(0, CMP_R_INVALID_ARGS);
+            CMPerr(0, CMP_R_VALUE_TOO_LARGE);
             return 0;
         }
         ctx->popoMethod = val;
         break;
     case OSSL_CMP_OPT_DIGEST_ALGNID:
-        ctx->digest = val;
+        if (!cmp_ctx_set_md(ctx, &ctx->digest, val))
+            return 0;
         break;
     case OSSL_CMP_OPT_OWF_ALGNID:
-        ctx->pbm_owf = val;
+        if (!cmp_ctx_set_md(ctx, &ctx->pbm_owf, val))
+            return 0;
         break;
     case OSSL_CMP_OPT_MAC_ALGNID:
         ctx->pbm_mac = val;
@@ -982,13 +1066,13 @@ int OSSL_CMP_CTX_set_option(OSSL_CMP_CTX *ctx, int opt, int val)
         break;
     case OSSL_CMP_OPT_REVOCATION_REASON:
         if (val > OCSP_REVOKED_STATUS_AACOMPROMISE) {
-            CMPerr(0, CMP_R_INVALID_ARGS);
+            CMPerr(0, CMP_R_VALUE_TOO_LARGE);
             return 0;
         }
         ctx->revocationReason = val;
         break;
     default:
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        CMPerr(0, CMP_R_INVALID_OPTION);
         return 0;
     }
 
@@ -1030,9 +1114,9 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_POPO_METHOD:
         return ctx->popoMethod;
     case OSSL_CMP_OPT_DIGEST_ALGNID:
-        return ctx->digest;
+        return EVP_MD_type(ctx->digest);
     case OSSL_CMP_OPT_OWF_ALGNID:
-        return ctx->pbm_owf;
+        return EVP_MD_type(ctx->pbm_owf);
     case OSSL_CMP_OPT_MAC_ALGNID:
         return ctx->pbm_mac;
     case OSSL_CMP_OPT_MSG_TIMEOUT:
@@ -1044,7 +1128,7 @@ int OSSL_CMP_CTX_get_option(const OSSL_CMP_CTX *ctx, int opt)
     case OSSL_CMP_OPT_REVOCATION_REASON:
         return ctx->revocationReason;
     default:
-        CMPerr(0, CMP_R_INVALID_ARGS);
+        CMPerr(0, CMP_R_INVALID_OPTION);
         return -1;
     }
 }

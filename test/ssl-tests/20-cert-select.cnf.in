@@ -200,19 +200,6 @@ our @tests = (
         },
     },
     {
-        name => "ECDSA Signature Algorithm Selection SHA1",
-        server => $server,
-        client => {
-            "SignatureAlgorithms" => "ECDSA+SHA1",
-        },
-        test   => {
-            "ExpectedServerCertType" => "P-256",
-            "ExpectedServerSignHash" => "SHA1",
-            "ExpectedServerSignType" => "EC",
-            "ExpectedResult" => "Success"
-        },
-    },
-    {
         name => "ECDSA Signature Algorithm Selection compressed point",
         server => {
             "ECDSA.Certificate" => test_pem("server-cecdsa-cert.pem"),
@@ -320,6 +307,29 @@ our @tests = (
 );
 
 my @tests_non_fips = (
+    {
+        name => "ECDSA Signature Algorithm Selection SHA1",
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+            "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+            "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
+            "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
+            "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
+            "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
+            "MaxProtocol" => "TLSv1.2"
+        },
+        client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "SignatureAlgorithms" => "ECDSA+SHA1",
+        },
+        test   => {
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedServerSignHash" => "SHA1",
+            "ExpectedServerSignType" => "EC",
+            "ExpectedResult" => "Success"
+        },
+    },
     # TODO(3.0) No Ed25519/Ed448 in FIPS mode at the moment
     {
         name => "Ed25519 CipherString and Signature Algorithm Selection",
@@ -669,8 +679,19 @@ my @tests_tls_1_3 = (
     },
     {
         name => "TLS 1.3 ECDSA Signature Algorithm Selection SHA1",
-        server => $server_tls_1_3,
+        server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
+            "ECDSA.Certificate" => test_pem("server-ecdsa-cert.pem"),
+            "ECDSA.PrivateKey" => test_pem("server-ecdsa-key.pem"),
+            "Ed25519.Certificate" => test_pem("server-ed25519-cert.pem"),
+            "Ed25519.PrivateKey" => test_pem("server-ed25519-key.pem"),
+            "Ed448.Certificate" => test_pem("server-ed448-cert.pem"),
+            "Ed448.PrivateKey" => test_pem("server-ed448-key.pem"),
+            "MinProtocol" => "TLSv1.3",
+            "MaxProtocol" => "TLSv1.3"
+        },
         client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
             "SignatureAlgorithms" => "ECDSA+SHA1",
         },
         test   => {
@@ -890,11 +911,9 @@ my @tests_tls_1_3_non_fips = (
         server =>  {
             "Certificate" => test_pem("server-ecdsa-brainpoolP256r1-cert.pem"),
             "PrivateKey" => test_pem("server-ecdsa-brainpoolP256r1-key.pem"),
-            "Groups" => "brainpoolP256r1",
         },
         client => {
             "RequestCAFile" => test_pem("root-cert.pem"),
-            "Groups" => "brainpoolP256r1",
             "MinProtocol" => "TLSv1.3",
             "MaxProtocol" => "TLSv1.3"
         },

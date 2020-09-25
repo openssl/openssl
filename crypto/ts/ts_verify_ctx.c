@@ -12,8 +12,6 @@
 #include <openssl/ts.h>
 #include "ts_local.h"
 
-DEFINE_STACK_OF(X509)
-
 TS_VERIFY_CTX *TS_VERIFY_CTX_new(void)
 {
     TS_VERIFY_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));

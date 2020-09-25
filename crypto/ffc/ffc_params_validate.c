@@ -44,37 +44,68 @@ int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
     return 1;
 }
 
-int ffc_params_FIPS186_4_validate(const FFC_PARAMS *params, int type,
-                                  const EVP_MD *evpmd, int validate_flags,
-                                  int *res, BN_GENCB *cb)
+int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+                                  int type, int *res, BN_GENCB *cb)
 {
     size_t L, N;
 
     if (params == NULL || params->p == NULL || params->q == NULL)
-        return FFC_PARAMS_RET_STATUS_FAILED;
+        return FFC_PARAM_RET_STATUS_FAILED;
 
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ffc_params_FIPS186_4_gen_verify(NULL, (FFC_PARAMS *)params, type, L, N,
-                                           evpmd, validate_flags, res, cb);
+    return ffc_params_FIPS186_4_gen_verify(libctx, (FFC_PARAMS *)params,
+                                           FFC_PARAM_MODE_VERIFY, type,
+                                           L, N, res, cb);
 }
 
 /* This may be used in FIPS mode to validate deprecated FIPS-186-2 Params */
-int ffc_params_FIPS186_2_validate(const FFC_PARAMS *params, int type,
-                                  const EVP_MD *evpmd, int validate_flags,
-                                  int *res, BN_GENCB *cb)
+int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
+                                  int type, int *res, BN_GENCB *cb)
 {
     size_t L, N;
 
-    if (params->p == NULL || params->q == NULL) {
+    if (params == NULL || params->p == NULL || params->q == NULL) {
         *res = FFC_CHECK_INVALID_PQ;
-        return FFC_PARAMS_RET_STATUS_FAILED;
+        return FFC_PARAM_RET_STATUS_FAILED;
     }
 
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ffc_params_FIPS186_2_gen_verify(NULL, (FFC_PARAMS *)params, type, L, N,
-                                           evpmd, validate_flags, res, cb);
+    return ffc_params_FIPS186_2_gen_verify(libctx, (FFC_PARAMS *)params,
+                                           FFC_PARAM_MODE_VERIFY, type,
+                                           L, N, res, cb);
+}
+
+/*
+ * This does a simple check of L and N and partial g.
+ * It makes no attempt to do a full validation of p, q or g since these require
+ * extra parameters such as the digest and seed, which may not be available for
+ * this test.
+ */
+int ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params, int type)
+{
+    int ret, res = 0;
+    int save_gindex;
+    unsigned int save_flags;
+
+    if (params == NULL)
+        return 0;
+
+    save_flags = params->flags;
+    save_gindex = params->gindex;
+    params->flags = FFC_PARAM_FLAG_VALIDATE_G;
+    params->gindex = FFC_UNVERIFIABLE_GINDEX;
+
+#ifndef FIPS_MODULE
+    if (save_flags & FFC_PARAM_FLAG_VALIDATE_LEGACY)
+        ret = ffc_params_FIPS186_2_validate(libctx, params, type, &res, NULL);
+    else
+#endif
+        ret = ffc_params_FIPS186_4_validate(libctx, params, type, &res, NULL);
+    params->flags = save_flags;
+    params->gindex = save_gindex;
+    return ret != FFC_PARAM_RET_STATUS_FAILED;
 }

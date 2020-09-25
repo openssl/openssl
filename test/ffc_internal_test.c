@@ -189,42 +189,40 @@ static int ffc_params_validate_g_unverified_test(void)
     ffc_params_set0_pqg(&params, p, q, NULL);
     p = NULL;
     q = NULL;
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha256(),
-                                                  FFC_PARAMS_VALIDATE_G, &res,
-                                                  NULL)))
+    ffc_params_set_flags(&params, FFC_PARAM_FLAG_VALIDATE_G);
+    ffc_set_digest(&params, "SHA256", NULL);
+
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     ffc_params_set0_pqg(&params, p, q, g);
     g = NULL;
-    if (!TEST_true(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                 EVP_sha256(),
-                                                 FFC_PARAMS_VALIDATE_G, &res,
-                                                 NULL)))
+    if (!TEST_true(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DSA,
+                                                 &res, NULL)))
         goto err;
 
     /* incorrect g */
     BN_add_word(g1, 1);
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha256(),
-                                                  FFC_PARAMS_VALIDATE_G, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     /* fail if g < 2 */
     BN_set_word(g1, 1);
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha256(),
-                                                  FFC_PARAMS_VALIDATE_G, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     BN_copy(g1, p1);
     /* Fail if g >= p */
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha256(),
-                                                  FFC_PARAMS_VALIDATE_G, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     ret = 1;
@@ -255,10 +253,12 @@ static int ffc_params_validate_pq_test(void)
     /* No p */
     ffc_params_set0_pqg(&params, NULL, q, NULL);
     q = NULL;
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha224(),
-                                                  FFC_PARAMS_VALIDATE_PQ, &res,
-                                                  NULL)))
+    ffc_params_set_flags(&params, FFC_PARAM_FLAG_VALIDATE_PQ);
+    ffc_set_digest(&params, "SHA224", NULL);
+
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     /* Test valid case */
@@ -267,40 +267,36 @@ static int ffc_params_validate_pq_test(void)
     ffc_params_set_validate_params(&params, dsa_2048_224_sha224_seed,
                                    sizeof(dsa_2048_224_sha224_seed),
                                    dsa_2048_224_sha224_counter);
-    if (!TEST_true(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                 EVP_sha224(),
-                                                 FFC_PARAMS_VALIDATE_PQ, &res,
-                                                 NULL)))
+    if (!TEST_true(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DSA,
+                                                 &res, NULL)))
         goto err;
 
     /* Bad counter - so p is not prime */
     ffc_params_set_validate_params(&params, dsa_2048_224_sha224_seed,
                                    sizeof(dsa_2048_224_sha224_seed),
                                    1);
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha224(),
-                                                  FFC_PARAMS_VALIDATE_PQ, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     /* seedlen smaller than N */
     ffc_params_set_validate_params(&params, dsa_2048_224_sha224_seed,
                                    sizeof(dsa_2048_224_sha224_seed)-1,
                                    dsa_2048_224_sha224_counter);
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha224(),
-                                                  FFC_PARAMS_VALIDATE_PQ, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     /* Provided seed doesnt produce a valid prime q */
     ffc_params_set_validate_params(&params, dsa_2048_224_sha224_bad_seed,
                                    sizeof(dsa_2048_224_sha224_bad_seed),
                                    dsa_2048_224_sha224_counter);
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha224(),
-                                                  FFC_PARAMS_VALIDATE_PQ, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     if (!TEST_ptr(p = BN_bin2bn(dsa_3072_256_sha512_p,
@@ -314,21 +310,20 @@ static int ffc_params_validate_pq_test(void)
 
     ffc_params_set0_pqg(&params, p, q, NULL);
     p = q  = NULL;
+    ffc_set_digest(&params, "SHA512", NULL);
     ffc_params_set_validate_params(&params, dsa_3072_256_sha512_seed,
                                    sizeof(dsa_3072_256_sha512_seed),
                                    dsa_3072_256_sha512_counter);
     /* Q doesn't div P-1 */
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  EVP_sha512(),
-                                                  FFC_PARAMS_VALIDATE_PQ, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
 
     /* Bad L/N for FIPS DH */
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DH,
-                                                  EVP_sha512(),
-                                                  FFC_PARAMS_VALIDATE_PQ, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DH,
+                                                  &res, NULL)))
         goto err;
 
     ret = 1;
@@ -347,13 +342,13 @@ static int ffc_params_gen_test(void)
     FFC_PARAMS params;
 
     ffc_params_init(&params);
-    if (!TEST_true(ffc_params_FIPS186_4_generate(NULL, &params, FFC_PARAM_TYPE_DH,
-                                                 2048, 256, NULL, &res, NULL)))
+    if (!TEST_true(ffc_params_FIPS186_4_generate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 2048, 256, &res, NULL)))
         goto err;
-    if (!TEST_true(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DH,
-                                                 NULL,
-                                                 FFC_PARAMS_VALIDATE_ALL, &res,
-                                                 NULL)))
+    if (!TEST_true(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 &res, NULL)))
         goto err;
 
     ret = 1;
@@ -369,13 +364,13 @@ static int ffc_params_gen_canonicalg_test(void)
 
     ffc_params_init(&params);
     params.gindex = 1;
-    if (!TEST_true(ffc_params_FIPS186_4_generate(NULL, &params, FFC_PARAM_TYPE_DH,
-                                                 2048, 256, NULL, &res, NULL)))
+    if (!TEST_true(ffc_params_FIPS186_4_generate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 2048, 256, &res, NULL)))
         goto err;
-    if (!TEST_true(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DH,
-                                                 NULL,
-                                                 FFC_PARAMS_VALIDATE_ALL, &res,
-                                                 NULL)))
+    if (!TEST_true(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 &res, NULL)))
         goto err;
 
     if (!TEST_true(ffc_params_print(bio_out, &params, 4)))
@@ -396,41 +391,32 @@ static int ffc_params_fips186_2_gen_validate_test(void)
     ffc_params_init(&params);
     if (!TEST_ptr(bn = BN_new()))
         goto err;
-    if (!TEST_true(ffc_params_FIPS186_2_generate(NULL, &params, FFC_PARAM_TYPE_DH,
-                                                 1024, 160, NULL, &res, NULL)))
+    if (!TEST_true(ffc_params_FIPS186_2_generate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 1024, 160, &res, NULL)))
         goto err;
-    if (!TEST_true(ffc_params_FIPS186_2_validate(&params, FFC_PARAM_TYPE_DH,
-                                                 NULL,
-                                                 FFC_PARAMS_VALIDATE_ALL, &res,
-                                                 NULL)))
-        goto err;
-    /* FIPS 186-4 L,N pair test will fail for DH */
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DH,
-                                                  NULL,
-                                                  FFC_PARAMS_VALIDATE_ALL, &res,
-                                                  NULL)))
-        goto err;
-    if (!TEST_int_eq(res, FFC_CHECK_BAD_LN_PAIR))
+    if (!TEST_true(ffc_params_FIPS186_2_validate(NULL, &params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 &res, NULL)))
         goto err;
 
     /*
      * The fips186-2 generation should produce a different q compared to
      * fips 186-4 given the same seed value. So validation of q will fail.
      */
-    if (!TEST_false(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                  NULL,
-                                                  FFC_PARAMS_VALIDATE_ALL, &res,
-                                                  NULL)))
+    if (!TEST_false(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                  FFC_PARAM_TYPE_DSA,
+                                                  &res, NULL)))
         goto err;
     /* As the params are randomly generated the error is one of the following */
     if (!TEST_true(res == FFC_CHECK_Q_MISMATCH || res == FFC_CHECK_Q_NOT_PRIME))
         goto err;
 
+    ffc_params_set_flags(&params, FFC_PARAM_FLAG_VALIDATE_G);
     /* Partially valid g test will still pass */
-    if (!TEST_int_eq(ffc_params_FIPS186_4_validate(&params, FFC_PARAM_TYPE_DSA,
-                                                 NULL,
-                                                 FFC_PARAMS_VALIDATE_G, &res,
-                                                 NULL), 2))
+    if (!TEST_int_eq(ffc_params_FIPS186_4_validate(NULL, &params,
+                                                   FFC_PARAM_TYPE_DSA,
+                                                   &res, NULL), 2))
         goto err;
 
     if (!TEST_true(ffc_params_print(bio_out, &params, 4)))

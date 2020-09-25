@@ -21,19 +21,12 @@
  */
 
 int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
-                        char **ppath, int *pssl)
+                        int *pport_num, char **ppath, int *pssl)
 {
     char *p, *buf;
-    char *host;
-    const char *port = OSSL_HTTP_PORT;
-    size_t https_len = strlen(OSSL_HTTPS_NAME);
-
-    if (!ossl_assert(https_len >= strlen(OSSL_HTTP_NAME)))
-        return 0;
-    if (url == NULL) {
-        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
-        return 0;
-    }
+    char *host, *host_end;
+    const char *path, *port = OSSL_HTTP_PORT;
+    long portnum = 80;
 
     if (phost != NULL)
         *phost = NULL;
@@ -44,58 +37,89 @@ int OSSL_HTTP_parse_url(const char *url, char **phost, char **pport,
     if (pssl != NULL)
         *pssl = 0;
 
+    if (url == NULL) {
+        HTTPerr(0, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
     /* dup the buffer since we are going to mess with it */
     if ((buf = OPENSSL_strdup(url)) == NULL)
         goto err;
 
-    /* Check for initial colon */
-    p = strchr(buf, ':');
-    if (p == NULL || (size_t)(p - buf) > https_len) {
+    /* check for optional prefix "http[s]://" */
+    p = strstr(buf, "://");
+    if (p == NULL) {
         p = buf;
     } else {
-        *(p++) = '\0';
-
+        *p = '\0'; /* p points to end of scheme name */
         if (strcmp(buf, OSSL_HTTPS_NAME) == 0) {
             if (pssl != NULL)
                 *pssl = 1;
             port = OSSL_HTTPS_PORT;
+            portnum = 443;
         } else if (strcmp(buf, OSSL_HTTP_NAME) != 0) {
-            goto parse_err;
+            HTTPerr(0, HTTP_R_INVALID_URL_PREFIX);
+            goto err;
         }
-
-        /* Check for double slash */
-        if ((p[0] != '/') || (p[1] != '/'))
-            goto parse_err;
-        p += 2;
+        p += 3;
     }
     host = p;
 
-    /* Check for trailing part of path */
-    p = strchr(p, '/');
-    if (ppath != NULL && (*ppath = OPENSSL_strdup(p == NULL ? "/" : p)) == NULL)
-        goto err;
-    if (p != NULL)
-        *p = '\0'; /* Set start of path to 0 so hostname[:port] is valid */
-
-    p = host;
+    /* parse host name/address as far as needed here */
     if (host[0] == '[') {
-        /* ipv6 literal */
+        /* ipv6 literal, which may include ':' */
         host++;
-        p = strchr(host, ']');
-        if (p == NULL)
+        host_end = strchr(host, ']');
+        if (host_end == NULL)
             goto parse_err;
-        *p = '\0';
-        p++;
+        *host_end++ = '\0';
+    } else {
+        host_end = strchr(host, ':'); /* look for start of optional port */
+        if (host_end == NULL)
+            host_end = strchr(host, '/'); /* look for start of optional path */
+        if (host_end == NULL)
+            /* the remaining string is just the hostname */
+            host_end = host + strlen(host);
     }
 
-    /* Look for optional ':' for port number */
-    if ((p = strchr(p, ':'))) {
-        *p = '\0';
-        port = p + 1;
+    /* parse optional port specification starting with ':' */
+    p = host_end;
+    if (*p == ':') {
+        port = ++p;
+        if (pport_num == NULL) {
+            p = strchr(port, '/');
+            if (p == NULL)
+                p = host_end + 1 + strlen(port);
+        } else { /* make sure a numerical port value is given */
+            portnum = strtol(port, &p, 10);
+            if (p == port || (*p != '\0' && *p != '/'))
+                goto parse_err;
+            if (portnum <= 0 || portnum >= 65536) {
+                HTTPerr(0, HTTP_R_INVALID_PORT_NUMBER);
+                goto err;
+            }
+        }
     }
+    *host_end = '\0';
+    *p = '\0'; /* terminate port string */
+
+    /* check for optional path at end of url starting with '/' */
+    path = url + (p - buf);
+    /* cannot use p + 1 because *p is '\0' and path must start with '/' */
+    if (*path == '\0') {
+        path = "/";
+    } else if (*path != '/') {
+        HTTPerr(0, HTTP_R_INVALID_URL_PATH);
+        goto parse_err;
+    }
+
     if (phost != NULL && (*phost = OPENSSL_strdup(host)) == NULL)
         goto err;
     if (pport != NULL && (*pport = OPENSSL_strdup(port)) == NULL)
+        goto err;
+    if (pport_num != NULL)
+        *pport_num = (int)portnum;
+    if (ppath != NULL && (*ppath = OPENSSL_strdup(path)) == NULL)
         goto err;
 
     OPENSSL_free(buf);

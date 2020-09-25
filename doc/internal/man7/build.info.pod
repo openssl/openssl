@@ -282,7 +282,7 @@ verbatim.
 =item B<${>I<NAME>B</>I<str>B</>I<subst>B<}>
 
 Substitution reference; the variable reference is replaced with its
-value, modified by replacing all occurences of I<str> with I<subst>.
+value, modified by replacing all occurrences of I<str> with I<subst>.
 
 =back
 
@@ -610,7 +610,7 @@ B<SCRIPTS>.
 For OpenSSL::Template documentation,
 C<perldoc -o man util/perl/OpenSSL/Template.pm>
 
-L<Text::Temlate|https://metacpan.org/pod/Text::Template>
+L<Text::Template|https://metacpan.org/pod/Text::Template>
 
 =head1 COPYRIGHT
 

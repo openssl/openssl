@@ -9,8 +9,12 @@ EVP_KEYMGMT_free,
 EVP_KEYMGMT_provider,
 EVP_KEYMGMT_is_a,
 EVP_KEYMGMT_number,
+EVP_KEYMGMT_get0_first_name,
 EVP_KEYMGMT_do_all_provided,
-EVP_KEYMGMT_names_do_all
+EVP_KEYMGMT_names_do_all,
+EVP_KEYMGMT_gettable_params,
+EVP_KEYMGMT_settable_params,
+EVP_KEYMGMT_gen_settable_params
 - EVP key management routines
 
 =head1 SYNOPSIS
@@ -26,12 +30,17 @@ EVP_KEYMGMT_names_do_all
  const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt);
  int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name);
  int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt);
+ const char *EVP_KEYMGMT_get0_first_name(const EVP_KEYMGMT *keymgmt);
+
  void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
                                   void (*fn)(EVP_KEYMGMT *keymgmt, void *arg),
                                   void *arg);
  void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
                                void (*fn)(const char *name, void *data),
                                void *data);
+ const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt);
+ const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
+ const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
 
 =head1 DESCRIPTION
 
@@ -63,6 +72,12 @@ algorithm that's identifiable with I<name>.
 EVP_KEYMGMT_number() returns the internal dynamic number assigned to
 the I<keymgmt>.
 
+EVP_KEYMGMT_get0_first_name() returns the first algorithm name that is found for
+the given I<keymgmt>. Note that the I<keymgmt> may have multiple synonyms
+associated with it. In this case it is undefined which one will be returned.
+Ownership of the returned string is retained by the I<keymgmt> object and should
+not be freed by the caller.
+
 EVP_KEYMGMT_names_do_all() traverses all names for the I<keymgmt>, and
 calls I<fn> with each name and I<data>.
 
@@ -70,6 +85,16 @@ EVP_KEYMGMT_do_all_provided() traverses all key keymgmt implementations by
 all activated providers in the library context I<libctx>, and for each
 of the implementations, calls I<fn> with the implementation method and
 I<data> as arguments.
+
+EVP_KEYMGMT_gettable_params() and EVP_KEYMGMT_settable_params() return a
+constant B<OSSL_PARAM> array that describes the names and types of key
+parameters that can be retrieved or set.
+EVP_KEYMGMT_gettable_params() is used by L<EVP_PKEY_gettable_params(3)>.
+See L<OSSL_PARAM(3)> for the use of B<OSSL_PARAM> as a parameter descriptor.
+
+EVP_KEYMGMT_gen_settable_params() returns a constant B<OSSL_PARAM> array that
+describes the names and types of key generation parameters that can be set via
+L<EVP_PKEY_CTX_set_params(3)>.
 
 =head1 NOTES
 
@@ -95,6 +120,12 @@ otherwise 0.
 
 EVP_KEYMGMT_number() returns an integer.
 
+EVP_KEYMGMT_get0_first_name() returns the name that is found or NULL on error.
+
+EVP_KEYMGMT_gettable_params(), EVP_KEYMGMT_settable_params() and
+EVP_KEYMGMT_gen_settable_params() return a constant B<OSSL_PARAM> array or
+NULL on error.
+
 =head1 SEE ALSO
 
 L<EVP_MD_fetch(3)>, L<OPENSSL_CTX(3)>
@@ -105,7 +136,7 @@ The functions described here were added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

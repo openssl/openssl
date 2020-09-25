@@ -15,8 +15,6 @@
 #include <openssl/err.h>
 #include "ui_local.h"
 
-DEFINE_STACK_OF(UI_STRING)
-
 UI *UI_new(void)
 {
     return UI_new_method(NULL);
@@ -356,22 +354,22 @@ int UI_dup_error_string(UI *ui, const char *text)
                                    0, 0, NULL);
 }
 
-char *UI_construct_prompt(UI *ui, const char *object_desc,
+char *UI_construct_prompt(UI *ui, const char *phrase_desc,
                           const char *object_name)
 {
     char *prompt = NULL;
 
-    if (ui->meth->ui_construct_prompt != NULL)
-        prompt = ui->meth->ui_construct_prompt(ui, object_desc, object_name);
+    if (ui != NULL && ui->meth != NULL && ui->meth->ui_construct_prompt != NULL)
+        prompt = ui->meth->ui_construct_prompt(ui, phrase_desc, object_name);
     else {
         char prompt1[] = "Enter ";
         char prompt2[] = " for ";
         char prompt3[] = ":";
         int len = 0;
 
-        if (object_desc == NULL)
+        if (phrase_desc == NULL)
             return NULL;
-        len = sizeof(prompt1) - 1 + strlen(object_desc);
+        len = sizeof(prompt1) - 1 + strlen(phrase_desc);
         if (object_name != NULL)
             len += sizeof(prompt2) - 1 + strlen(object_name);
         len += sizeof(prompt3) - 1;
@@ -381,7 +379,7 @@ char *UI_construct_prompt(UI *ui, const char *object_desc,
             return NULL;
         }
         OPENSSL_strlcpy(prompt, prompt1, len + 1);
-        OPENSSL_strlcat(prompt, object_desc, len + 1);
+        OPENSSL_strlcat(prompt, phrase_desc, len + 1);
         if (object_name != NULL) {
             OPENSSL_strlcat(prompt, prompt2, len + 1);
             OPENSSL_strlcat(prompt, object_name, len + 1);
@@ -690,10 +688,8 @@ int UI_method_set_data_duplicator(UI_METHOD *method,
 
 int UI_method_set_prompt_constructor(UI_METHOD *method,
                                      char *(*prompt_constructor) (UI *ui,
-                                                                  const char
-                                                                  *object_desc,
-                                                                  const char
-                                                                  *object_name))
+                                                                  const char *,
+                                                                  const char *))
 {
     if (method != NULL) {
         method->ui_construct_prompt = prompt_constructor;

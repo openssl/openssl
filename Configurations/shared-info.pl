@@ -40,12 +40,6 @@ my %shared_info;
         };
     },
     'bsd-gcc-shared' => sub { return $shared_info{'linux-shared'}; },
-    'bsd-shared' => sub {
-        return $shared_info{'gnu-shared'} if detect_gnu_ld();
-        return {
-            shared_ldflag     => '-shared -nostdlib',
-        };
-    },
     'darwin-shared' => {
         module_ldflags        => '-bundle',
         shared_ldflag         => '-dynamiclib -current_version $(SHLIB_VERSION_NUMBER) -compatibility_version $(SHLIB_VERSION_NUMBER)',
@@ -61,6 +55,7 @@ my %shared_info;
             # def_flag made to empty string so it still generates
             # something
             shared_defflag    => '',
+            shared_argfileflag => '@',
         };
     },
     'alpha-osf1-shared' => sub {

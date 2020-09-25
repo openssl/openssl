@@ -5,7 +5,7 @@ SUBDIRS=objects buffer bio stack lhash rand evp asn1 pem x509 conf \
         md2 md4 md5 sha mdc2 hmac ripemd whrlpool poly1305 \
         siphash sm3 des aes rc2 rc4 rc5 idea aria bf cast camellia \
         seed sm4 chacha modes bn ec rsa dsa dh sm2 dso engine \
-        err comp http ocsp cms ts srp cmac ct async ess crmf cmp serializer \
+        err comp http ocsp cms ts srp cmac ct async ess crmf cmp encode_decode \
         ffc
 
 LIBS=../libcrypto
@@ -71,13 +71,14 @@ $UTIL_COMMON=\
         cryptlib.c params.c params_from_text.c bsearch.c ex_data.c o_str.c \
         ctype.c threads_pthread.c threads_win.c threads_none.c initthread.c \
         context.c sparse_array.c asn1_dsa.c packet.c param_build.c $CPUIDASM \
-        param_build_set.c der_writer.c
+        param_build_set.c der_writer.c passphrase.c
 $UTIL_DEFINE=$CPUIDDEF
 
 SOURCE[../libcrypto]=$UTIL_COMMON \
         mem.c mem_sec.c \
         cversion.c info.c cpt_err.c ebcdic.c uid.c o_time.c o_dir.c \
         o_fopen.c getenv.c o_init.c init.c trace.c provider.c \
+        punycode.c \
         $UPLINKSRC
 SOURCE[../providers/libfips.a]=$UTIL_COMMON
 SOURCE[../providers/liblegacy.a]=$UTIL_COMMON

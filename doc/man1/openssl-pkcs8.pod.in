@@ -248,7 +248,7 @@ one million iterations of the password:
 Test vectors from this PKCS#5 v2.0 implementation were posted to the
 pkcs-tng mailing list using triple DES, DES and RC2 with high iteration
 counts, several people confirmed that they could decrypt the private
-keys produced and Therefore it can be assumed that the PKCS#5 v2.0
+keys produced and therefore, it can be assumed that the PKCS#5 v2.0
 implementation is reasonably accurate at least as far as these
 algorithms are concerned.
 
@@ -272,6 +272,8 @@ L<openssl-gendsa(1)>
 =head1 HISTORY
 
 The B<-iter> option was added in OpenSSL 1.1.0.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

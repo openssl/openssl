@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2018 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -372,6 +372,10 @@ ASN1_OBJECT *OBJ_txt2obj(const char *s, int no_name)
         if (((nid = OBJ_sn2nid(s)) != NID_undef) ||
             ((nid = OBJ_ln2nid(s)) != NID_undef))
             return OBJ_nid2obj(nid);
+        if (!ossl_isdigit(*s)) {
+            OBJerr(OBJ_F_OBJ_TXT2OBJ, OBJ_R_UNKNOWN_OBJECT_NAME);
+            return NULL;
+        }
     }
 
     /* Work out size of content octets */

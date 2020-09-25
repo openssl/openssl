@@ -26,10 +26,6 @@
 #include <openssl/core_names.h>
 #include <openssl/asn1t.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(SSL_COMP)
-DEFINE_STACK_OF_CONST(SSL_CIPHER)
-
 #define TICKET_NONCE_SIZE       8
 
 typedef struct {
@@ -1312,7 +1308,7 @@ int dtls_construct_hello_verify_request(SSL *s, WPACKET *pkt)
     if (s->ctx->app_gen_cookie_cb == NULL ||
         s->ctx->app_gen_cookie_cb(s, s->d1->cookie,
                                   &cookie_leni) == 0 ||
-        cookie_leni > 255) {
+        cookie_leni > DTLS1_COOKIE_LENGTH) {
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_F_DTLS_CONSTRUCT_HELLO_VERIFY_REQUEST,
                  SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return 0;
@@ -2636,20 +2632,6 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             goto err;
         }
 
-        /*
-         * TODO(3.0) Remove this when EVP_PKEY_get1_tls_encodedpoint()
-         * knows how to get a key from an encoded point with the help of
-         * a OSSL_SERIALIZER deserializer.  We know that EVP_PKEY_get0()
-         * downgrades an EVP_PKEY to contain a legacy key.
-         *
-         * THIS IS TEMPORARY
-         */
-        EVP_PKEY_get0(s->s3.tmp.pkey);
-        if (EVP_PKEY_id(s->s3.tmp.pkey) == EVP_PKEY_NONE) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, 0, ERR_R_EC_LIB);
-            goto err;
-        }
-
         /* Encode the public key. */
         encodedlen = EVP_PKEY_get1_tls_encodedpoint(s->s3.tmp.pkey,
                                                     &encodedPoint);
@@ -2821,9 +2803,10 @@ int tls_construct_server_key_exchange(SSL *s, WPACKET *pkt)
             goto err;
         }
 
-        if (EVP_DigestSignInit_ex(md_ctx, &pctx,
-                                  md == NULL ? NULL : EVP_MD_name(md),
-                                  s->ctx->propq, pkey, s->ctx->libctx) <= 0) {
+        if (EVP_DigestSignInit_with_libctx(md_ctx, &pctx,
+                                           md == NULL ? NULL : EVP_MD_name(md),
+                                           s->ctx->libctx, s->ctx->propq,
+                                           pkey) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                      SSL_F_TLS_CONSTRUCT_SERVER_KEY_EXCHANGE,
                      ERR_R_INTERNAL_ERROR);
@@ -3161,7 +3144,7 @@ static int tls_process_cke_dhe(SSL *s, PACKET *pkt)
     ckey = EVP_PKEY_new();
     if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_DHE,
-                 SSL_R_BN_LIB);
+                 SSL_R_COPY_PARAMETERS_FAILED);
         goto err;
     }
 
@@ -3230,22 +3213,7 @@ static int tls_process_cke_ecdhe(SSL *s, PACKET *pkt)
         ckey = EVP_PKEY_new();
         if (ckey == NULL || EVP_PKEY_copy_parameters(ckey, skey) <= 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_ECDHE,
-                     ERR_R_EVP_LIB);
-            goto err;
-        }
-
-        /*
-         * TODO(3.0) Remove this when EVP_PKEY_get1_tls_encodedpoint()
-         * knows how to get a key from an encoded point with the help of
-         * a OSSL_SERIALIZER deserializer.  We know that EVP_PKEY_get0()
-         * downgrades an EVP_PKEY to contain a legacy key.
-         *
-         * THIS IS TEMPORARY
-         */
-        EVP_PKEY_get0(ckey);
-        if (EVP_PKEY_id(ckey) == EVP_PKEY_NONE) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PROCESS_CKE_ECDHE,
-                     ERR_R_INTERNAL_ERROR);
+                     SSL_R_COPY_PARAMETERS_FAILED);
             goto err;
         }
 
@@ -3705,12 +3673,18 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL *s, PACKET *pkt)
         }
 
         certstart = certbytes;
-        x = d2i_X509(NULL, (const unsigned char **)&certbytes, l);
+        x = X509_new_with_libctx(s->ctx->libctx, s->ctx->propq);
         if (x == NULL) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR,
+                     SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_MALLOC_FAILURE);
+            goto err;
+        }
+        if (d2i_X509(&x, (const unsigned char **)&certbytes, l) == NULL) {
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE, ERR_R_ASN1_LIB);
             goto err;
         }
+
         if (certbytes != (certstart + l)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR,
                      SSL_F_TLS_PROCESS_CLIENT_CERTIFICATE,

@@ -60,6 +60,8 @@ static int aesni_cbc_hmac_sha1_init_key(PROV_CIPHER_CTX *vctx,
 
     ctx->payload_length = NO_PAYLOAD_LENGTH;
 
+    vctx->removetlspad = SHA_DIGEST_LENGTH + AES_BLOCK_SIZE;
+
     return ret < 0 ? 0 : 1;
 }
 

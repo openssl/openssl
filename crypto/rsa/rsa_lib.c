@@ -162,6 +162,11 @@ void RSA_free(RSA *r)
     BN_clear_free(r->dmp1);
     BN_clear_free(r->dmq1);
     BN_clear_free(r->iqmp);
+
+#if defined(FIPS_MODULE) && !defined(OPENSSL_NO_ACVP_TESTS)
+    rsa_acvp_test_free(r->acvp_test);
+#endif
+
 #ifndef FIPS_MODULE
     RSA_PSS_PARAMS_free(r->pss);
     sk_RSA_PRIME_INFO_pop_free(r->prime_infos, rsa_multip_info_free);
@@ -1001,7 +1006,7 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return -1;
 
     /* May be NULL meaning "unknown" */
-    *md = EVP_get_digestbyname(name);
+    *md = evp_get_digestbyname_ex(ctx->libctx, name);
 
     return 1;
 }
@@ -1154,7 +1159,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return -1;
 
     /* May be NULL meaning "unknown" */
-    *md = EVP_get_digestbyname(name);
+    *md = evp_get_digestbyname_ex(ctx->libctx, name);
 
     return 1;
 }

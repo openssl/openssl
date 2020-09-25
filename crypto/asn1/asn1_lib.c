@@ -13,8 +13,6 @@
 #include <openssl/asn1.h>
 #include "asn1_local.h"
 
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-
 static int asn1_get_length(const unsigned char **pp, int *inf, long *rl,
                            long max);
 static void asn1_put_length(unsigned char **pp, int length);
@@ -389,10 +387,12 @@ int ASN1_STRING_length(const ASN1_STRING *x)
     return x->length;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
 void ASN1_STRING_length_set(ASN1_STRING *x, int len)
 {
     x->length = len;
 }
+#endif
 
 int ASN1_STRING_type(const ASN1_STRING *x)
 {

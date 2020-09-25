@@ -3,7 +3,7 @@
 =head1 NAME
 
 EVP_MAC, EVP_MAC_fetch, EVP_MAC_up_ref, EVP_MAC_free,
-EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_names_do_all,
+EVP_MAC_is_a, EVP_MAC_number, EVP_MAC_name, EVP_MAC_names_do_all,
 EVP_MAC_provider, EVP_MAC_get_params, EVP_MAC_gettable_params,
 EVP_MAC_CTX, EVP_MAC_CTX_new, EVP_MAC_CTX_free, EVP_MAC_CTX_dup,
 EVP_MAC_CTX_mac, EVP_MAC_CTX_get_params, EVP_MAC_CTX_set_params,
@@ -24,6 +24,7 @@ EVP_MAC_do_all_provided - EVP MAC routines
  void EVP_MAC_free(EVP_MAC *mac);
  int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
  int EVP_MAC_number(const EVP_MAC *mac);
+ const char *EVP_MAC_name(const EVP_MAC *mac);
  void EVP_MAC_names_do_all(const EVP_MAC *mac,
                            void (*fn)(const char *name, void *data),
                            void *data);
@@ -177,6 +178,10 @@ and the given I<arg> as argument.
 EVP_MAC_number() returns the internal dynamic number assigned to
 I<mac>.
 
+EVP_MAC_name() return the name of the given MAC.  For fetched MACs
+with multiple names, only one of them is returned; it's
+recommended to use EVP_MAC_names_do_all() instead.
+
 EVP_MAC_names_do_all() traverses all names for I<mac>, and calls
 I<fn> with each name and I<data>.
 
@@ -248,6 +253,21 @@ EVP_MAC_final() should produce.
 The allowed sizes vary between MAC implementations, but must never exceed
 what can be given with a B<size_t>.
 
+=item "tls-data-size" (B<OSSL_MAC_PARAM_TLS_DATA_SIZE>) <unsigned integer>
+
+This parameter is only supported by HMAC. If set then special handling is
+activated for calculating the MAC of a received mac-then-encrypt TLS record
+where variable length record padding has been used (as in the case of CBC mode
+ciphersuites). The value represents the total length of the record that is
+having the MAC calculated including the received MAC and the record padding.
+
+When used EVP_MAC_update must be called precisely twice. The first time with
+the 13 bytes of TLS "header" data, and the second time with the entire record
+including the MAC itself and any padding. The entire record length must equal
+the value passed in the "tls-data-size" parameter. The length passed in the
+B<datalen> parameter to EVP_MAC_update() should be equal to the length of the
+record after the MAC and any padding has been removed.
+
 =back
 
 All these parameters should be used before the calls to any of
@@ -266,6 +286,8 @@ EVP_MAC_free() returns nothing at all.
 
 EVP_MAC_is_a() returns 1 if the given method can be identified with
 the given name, otherwise 0.
+
+EVP_MAC_name() returns a name of the MAC, or NULL on error.
 
 EVP_MAC_provider() returns a pointer to the provider for the MAC, or
 NULL on error.
@@ -307,7 +329,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
       EVP_MAC_CTX *ctx = NULL;
 
       unsigned char buf[4096];
-      ssize_t read_l;
+      size_t read_l;
       size_t final_l;
 
       size_t i;
@@ -317,12 +339,12 @@ EVP_MAC_do_all_provided() returns nothing at all.
 
       if (cipher != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("cipher", cipher, 0, NULL);
+              OSSL_PARAM_construct_utf8_string("cipher", (char*)cipher, 0);
       if (digest != NULL)
           params[params_n++] =
-              OSSL_PARAM_construct_utf8_string("digest", digest, 0, NULL);
+              OSSL_PARAM_construct_utf8_string("digest", (char*)digest, 0);
       params[params_n++] =
-          OSSL_PARAM_construct_octet_string("key", key, strlen(key), NULL);
+          OSSL_PARAM_construct_octet_string("key", (void*)key, strlen(key));
       params[params_n] = OSSL_PARAM_construct_end();
 
       if (mac == NULL
@@ -339,7 +361,7 @@ EVP_MAC_do_all_provided() returns nothing at all.
               goto err;
       }
 
-      if (!EVP_MAC_final(ctx, buf, &final_l))
+      if (!EVP_MAC_final(ctx, buf, &final_l, sizeof(buf)))
           goto err;
 
       printf("Result: ");

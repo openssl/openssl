@@ -10,19 +10,20 @@
 #include <string.h>
 #include <stdio.h>
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include "prov/provider_ctx.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 /*
  * Forward declarations to ensure that interface functions are correctly
  * defined.
  */
-static OSSL_provider_gettable_params_fn legacy_gettable_params;
-static OSSL_provider_get_params_fn legacy_get_params;
-static OSSL_provider_query_operation_fn legacy_query;
+static OSSL_FUNC_provider_gettable_params_fn legacy_gettable_params;
+static OSSL_FUNC_provider_get_params_fn legacy_get_params;
+static OSSL_FUNC_provider_query_operation_fn legacy_query;
 
 #define ALG(NAMES, FUNC) { NAMES, "provider=legacy", FUNC }
 
@@ -32,14 +33,15 @@ OSSL_provider_init_fn ossl_legacy_provider_init;
 #endif
 
 /* Functions provided by the core */
-static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
-static OSSL_core_get_params_fn *c_get_params = NULL;
+static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
+static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 
 /* Parameters we provide to the core */
 static const OSSL_PARAM legacy_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_VERSION, OSSL_PARAM_UTF8_PTR, NULL, 0),
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_BUILDINFO, OSSL_PARAM_UTF8_PTR, NULL, 0),
+    OSSL_PARAM_DEFN(OSSL_PROV_PARAM_STATUS, OSSL_PARAM_INTEGER, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -61,7 +63,9 @@ static int legacy_get_params(void *provctx, OSSL_PARAM params[])
     p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_BUILDINFO);
     if (p != NULL && !OSSL_PARAM_set_utf8_ptr(p, OPENSSL_FULL_VERSION_STR))
         return 0;
-
+    p = OSSL_PARAM_locate(params, OSSL_PROV_PARAM_STATUS);
+    if (p != NULL && !OSSL_PARAM_set_int(p, ossl_prov_is_running()))
+        return 0;
     return 1;
 }
 
@@ -111,9 +115,9 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
 #endif /* OPENSSL_NO_SEED */
 #ifndef OPENSSL_NO_RC2
     ALG("RC2-ECB", rc2128ecb_functions),
-    ALG("RC2-CBC", rc2128cbc_functions),
-    ALG("RC2-40-CBC", rc240cbc_functions),
-    ALG("RC2-64-CBC", rc264cbc_functions),
+    ALG("RC2-CBC:RC2:RC2-128", rc2128cbc_functions),
+    ALG("RC2-40-CBC:RC2-40", rc240cbc_functions),
+    ALG("RC2-64-CBC:RC2-64", rc264cbc_functions),
     ALG("RC2-CFB", rc2128cfb128_functions),
     ALG("RC2-OFB", rc2128ofb128_functions),
 #endif /* OPENSSL_NO_RC2 */
@@ -126,7 +130,7 @@ static const OSSL_ALGORITHM legacy_ciphers[] = {
 #endif /* OPENSSL_NO_RC4 */
 #ifndef OPENSSL_NO_RC5
     ALG("RC5-ECB", rc5128ecb_functions),
-    ALG("RC5-CBC", rc5128cbc_functions),
+    ALG("RC5-CBC:RC5", rc5128cbc_functions),
     ALG("RC5-OFB", rc5128ofb64_functions),
     ALG("RC5-CFB", rc5128cfb64_functions),
 #endif /* OPENSSL_NO_RC5 */
@@ -175,19 +179,19 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
                        const OSSL_DISPATCH **out,
                        void **provctx)
 {
-    OSSL_core_get_library_context_fn *c_get_libctx = NULL;
+    OSSL_FUNC_core_get_library_context_fn *c_get_libctx = NULL;
     OPENSSL_CTX *libctx = NULL;
 
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_get_core_gettable_params(in);
+            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_get_core_get_params(in);
+            c_get_params = OSSL_FUNC_core_get_params(in);
             break;
         case OSSL_FUNC_CORE_GET_LIBRARY_CONTEXT:
-            c_get_libctx = OSSL_get_core_get_library_context(in);
+            c_get_libctx = OSSL_FUNC_core_get_library_context(in);
             break;
         /* Just ignore anything we don't understand */
         default:

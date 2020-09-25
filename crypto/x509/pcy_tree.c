@@ -14,10 +14,6 @@
 
 #include "pcy_local.h"
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_POLICY_NODE)
-
 static void expected_print(BIO *channel,
                            X509_POLICY_LEVEL *lev, X509_POLICY_NODE *node,
                            int indent)

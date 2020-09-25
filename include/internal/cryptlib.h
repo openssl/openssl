@@ -155,10 +155,13 @@ typedef struct ossl_ex_data_global_st {
 # define OPENSSL_CTX_RAND_CRNGT_INDEX               7
 # define OPENSSL_CTX_THREAD_EVENT_HANDLER_INDEX     8
 # define OPENSSL_CTX_FIPS_PROV_INDEX                9
-# define OPENSSL_CTX_SERIALIZER_STORE_INDEX        10
-# define OPENSSL_CTX_SELF_TEST_CB_INDEX            11
-# define OPENSSL_CTX_BIO_PROV_INDEX                12
-# define OPENSSL_CTX_MAX_INDEXES                   13
+# define OPENSSL_CTX_ENCODER_STORE_INDEX        10
+# define OPENSSL_CTX_DECODER_STORE_INDEX      11
+# define OPENSSL_CTX_SELF_TEST_CB_INDEX            12
+# define OPENSSL_CTX_BIO_PROV_INDEX                13
+# define OPENSSL_CTX_GLOBAL_PROPERTIES             14
+# define OPENSSL_CTX_STORE_LOADER_STORE_INDEX      15
+# define OPENSSL_CTX_MAX_INDEXES                   16
 
 typedef struct openssl_ctx_method {
     void *(*new_func)(OPENSSL_CTX *ctx);
@@ -167,6 +170,7 @@ typedef struct openssl_ctx_method {
 
 OPENSSL_CTX *openssl_ctx_get_concrete(OPENSSL_CTX *ctx);
 int openssl_ctx_is_default(OPENSSL_CTX *ctx);
+int openssl_ctx_is_global_default(OPENSSL_CTX *ctx);
 
 /* Functions to retrieve pointers to data by index */
 void *openssl_ctx_get_data(OPENSSL_CTX *, int /* index */,
@@ -211,6 +215,10 @@ static ossl_inline void ossl_sleep(unsigned long millis)
     ts.tv_sec = (long int) (millis / 1000);
     ts.tv_nsec = (long int) (millis % 1000) * 1000000ul;
     nanosleep(&ts, NULL);
+# elif defined(__TANDEM) && !defined(_REENTRANT)
+#  include <cextdecs.h(PROCESS_DELAY_)>
+    /* HPNS does not support usleep for non threaded apps */
+    PROCESS_DELAY_(millis * 1000);
 # else
     usleep(millis * 1000);
 # endif

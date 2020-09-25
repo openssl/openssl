@@ -21,12 +21,6 @@
 
 #include "openssl/cmp_util.h"
 
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-DEFINE_STACK_OF(X509_CRL)
-DEFINE_STACK_OF(OSSL_CMP_CERTRESPONSE)
-DEFINE_STACK_OF(OSSL_CMP_PKISI)
-DEFINE_STACK_OF(OSSL_CRMF_CERTID)
-
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
                         || (t) == OSSL_CMP_PKIBODY_KUP)
 
@@ -189,8 +183,13 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
      */
     ossl_cmp_log1(INFO, ctx, "received %s", ossl_cmp_bodytype_to_string(bt));
 
-    if ((bt = ossl_cmp_msg_check_received(ctx, *rep, unprotected_exception,
-                                          expected_type)) < 0)
+    /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
+    if (bt != OSSL_CMP_PKIBODY_POLLREP && bt != OSSL_CMP_PKIBODY_PKICONF
+            && !ossl_cmp_ctx_set1_extraCertsIn(ctx, (*rep)->extraCerts))
+        return 0;
+
+    if (!ossl_cmp_msg_check_update(ctx, *rep, unprotected_exception,
+                                   expected_type))
         return 0;
 
     if (bt == expected_type
@@ -425,10 +424,8 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
         goto err;
     case OSSL_CMP_PKISTATUS_grantedWithMods:
         ossl_cmp_warn(ctx, "received \"grantedWithMods\" for certificate");
-        crt = ossl_cmp_certresponse_get1_certificate(privkey, crep);
         break;
     case OSSL_CMP_PKISTATUS_accepted:
-        crt = ossl_cmp_certresponse_get1_certificate(privkey, crep);
         break;
         /* get all information in case of a rejection before going to error */
     case OSSL_CMP_PKISTATUS_rejection:
@@ -438,19 +435,16 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
     case OSSL_CMP_PKISTATUS_revocationWarning:
         ossl_cmp_warn(ctx,
                       "received \"revocationWarning\" - a revocation of the cert is imminent");
-        crt = ossl_cmp_certresponse_get1_certificate(privkey, crep);
         break;
     case OSSL_CMP_PKISTATUS_revocationNotification:
         ossl_cmp_warn(ctx,
                       "received \"revocationNotification\" - a revocation of the cert has occurred");
-        crt = ossl_cmp_certresponse_get1_certificate(privkey, crep);
         break;
     case OSSL_CMP_PKISTATUS_keyUpdateWarning:
         if (bodytype != OSSL_CMP_PKIBODY_KUR) {
             CMPerr(0, CMP_R_ENCOUNTERED_KEYUPDATEWARNING);
             goto err;
         }
-        crt = ossl_cmp_certresponse_get1_certificate(privkey, crep);
         break;
     default:
         ossl_cmp_log1(ERROR, ctx,
@@ -459,6 +453,7 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
         CMPerr(0, CMP_R_UNKNOWN_PKISTATUS);
         goto err;
     }
+    crt = ossl_cmp_certresponse_get1_cert(crep, ctx, privkey);
     if (crt == NULL) /* according to PKIStatus, we can expect a cert */
         CMPerr(0, CMP_R_CERTIFICATE_NOT_FOUND);
 
@@ -473,7 +468,7 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
 /*-
  * Callback fn validating that the new certificate can be verified, using
  * ctx->certConf_cb_arg, which has been initialized using opt_out_trusted, and
- * ctx->untrusted_certs, which at this point already contains ctx->extraCertsIn.
+ * ctx->untrusted, which at this point already contains msg->extraCerts.
  * Returns 0 on acceptance, else a bit field reflecting PKIFailureInfo.
  * Quoting from RFC 4210 section 5.1. Overall PKI Message:
  *     The extraCerts field can contain certificates that may be useful to
@@ -491,14 +486,35 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
                          const char **text)
 {
     X509_STORE *out_trusted = OSSL_CMP_CTX_get_certConf_cb_arg(ctx);
+    STACK_OF(X509) *chain = NULL;
     (void)text; /* make (artificial) use of var to prevent compiler warning */
 
     if (fail_info != 0) /* accept any error flagged by CMP core library */
         return fail_info;
 
-    if (out_trusted != NULL
-            && !OSSL_CMP_validate_cert_path(ctx, out_trusted, cert))
-        fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_incorrectData;
+    ossl_cmp_debug(ctx, "trying to build chain for newly enrolled cert");
+    chain = ossl_cmp_build_cert_chain(ctx->libctx, ctx->propq,
+                                      out_trusted /* may be NULL */,
+                                      ctx->untrusted, cert);
+    if (sk_X509_num(chain) > 0)
+        X509_free(sk_X509_shift(chain)); /* remove leaf (EE) cert */
+    if (out_trusted != NULL) {
+        if (chain == NULL) {
+            ossl_cmp_err(ctx, "failed building chain for newly enrolled cert");
+            fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_incorrectData;
+        } else {
+            ossl_cmp_debug(ctx,
+                           "succeeded building proper chain for newly enrolled cert");
+        }
+    } else if (chain == NULL) {
+        ossl_cmp_warn(ctx, "could not build approximate chain for newly enrolled cert, resorting to received extraCerts");
+        chain = OSSL_CMP_CTX_get1_extraCertsIn(ctx);
+    } else {
+        ossl_cmp_debug(ctx,
+                       "success building approximate chain for newly enrolled cert");
+    }
+    (void)ossl_cmp_ctx_set1_newChain(ctx, chain);
+    sk_X509_pop_free(chain, X509_free);
 
     return fail_info;
 }
@@ -519,9 +535,13 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     const char *txt = NULL;
     OSSL_CMP_CERTREPMESSAGE *crepmsg;
     OSSL_CMP_CERTRESPONSE *crep;
+    OSSL_CMP_certConf_cb_t cb;
     X509 *cert;
     char *subj = NULL;
     int ret = 1;
+
+    if (!ossl_assert(ctx != NULL))
+        return 0;
 
  retry:
     crepmsg = (*resp)->body->value.ip; /* same for cp and kup */
@@ -573,10 +593,6 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
             && !ossl_cmp_ctx_set1_caPubs(ctx, crepmsg->caPubs))
         return 0;
 
-    /* copy received extraCerts to ctx->extraCertsIn so they can be retrieved */
-    if (!ossl_cmp_ctx_set1_extraCertsIn(ctx, (*resp)->extraCerts))
-        return 0;
-
     subj = X509_NAME_oneline(X509_get_subject_name(cert), NULL, 0);
     if (rkey != NULL
         /* X509_check_private_key() also works if rkey is just public key */
@@ -584,25 +600,23 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
         fail_info = 1 << OSSL_CMP_PKIFAILUREINFO_incorrectData;
         txt = "public key in new certificate does not match our enrollment key";
         /*-
-         * not callling (void)ossl_cmp_exchange_error(ctx,
-         *                    OSSL_CMP_PKISTATUS_rejection, fail_info, txt)
+         * not calling (void)ossl_cmp_exchange_error(ctx,
+         *                   OSSL_CMP_PKISTATUS_rejection, fail_info, txt)
          * not throwing CMP_R_CERTIFICATE_NOT_ACCEPTED with txt
          * not returning 0
-         * since we better leave this for any ctx->certConf_cb to decide
+         * since we better leave this for the certConf_cb to decide
          */
     }
 
     /*
-     * Execute the certification checking callback function possibly set in ctx,
+     * Execute the certification checking callback function,
      * which can determine whether to accept a newly enrolled certificate.
      * It may overrule the pre-decision reflected in 'fail_info' and '*txt'.
      */
-    if (ctx->certConf_cb
-            && (fail_info = ctx->certConf_cb(ctx, ctx->newCert,
-                                             fail_info, &txt)) != 0) {
-        if (txt == NULL)
-            txt = "CMP client application did not accept it";
-    }
+    cb = ctx->certConf_cb != NULL ? ctx->certConf_cb : OSSL_CMP_certConf_cb;
+    if ((fail_info = cb(ctx, ctx->newCert, fail_info, &txt)) != 0
+            && txt == NULL)
+        txt = "CMP client did not accept it";
     if (fail_info != 0) /* immediately log error before any certConf exchange */
         ossl_cmp_log1(ERROR, ctx,
                       "rejecting newly enrolled cert with subject: %s", subj);
@@ -630,7 +644,8 @@ static int cert_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
     return ret;
 }
 
-int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type, int *checkAfter)
+int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type,
+                         const OSSL_CRMF_MSG *crm, int *checkAfter)
 {
     OSSL_CMP_MSG *req = NULL;
     OSSL_CMP_MSG *rep = NULL;
@@ -652,7 +667,7 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type, int *checkAfter)
         if (ctx->total_timeout > 0) /* else ctx->end_time is not used */
             ctx->end_time = time(NULL) + ctx->total_timeout;
 
-        req = ossl_cmp_certReq_new(ctx, req_type, 0 /* req_err */);
+        req = ossl_cmp_certreq_new(ctx, req_type, crm);
         if (req == NULL) /* also checks if all necessary options are set */
             return 0;
 
@@ -685,18 +700,26 @@ int OSSL_CMP_try_certreq(OSSL_CMP_CTX *ctx, int req_type, int *checkAfter)
  * TODO: another function to request two certificates at once should be created.
  * Returns pointer to received certificate, or NULL if none was received.
  */
-static X509 *do_certreq_seq(OSSL_CMP_CTX *ctx, int req_type, int req_err,
-                            int rep_type)
+X509 *OSSL_CMP_exec_certreq(OSSL_CMP_CTX *ctx, int req_type,
+                            const OSSL_CRMF_MSG *crm)
 {
+
     OSSL_CMP_MSG *req = NULL;
     OSSL_CMP_MSG *rep = NULL;
-    int rid = (req_type == OSSL_CMP_PKIBODY_P10CR) ? -1 : OSSL_CMP_CERTREQID;
+    int is_p10 = req_type == OSSL_CMP_PKIBODY_P10CR;
+    int rid = is_p10 ? -1 : OSSL_CMP_CERTREQID;
+    int rep_type = is_p10 ? OSSL_CMP_PKIBODY_CP : req_type + 1;
     X509 *result = NULL;
 
     if (ctx == NULL) {
         CMPerr(0, CMP_R_NULL_ARGUMENT);
         return NULL;
     }
+    if (is_p10 && crm != NULL) {
+        CMPerr(0, CMP_R_INVALID_ARGS);
+        return NULL;
+    }
+
     ctx->status = -1;
     if (!ossl_cmp_ctx_set0_newCert(ctx, NULL))
         return NULL;
@@ -705,7 +728,7 @@ static X509 *do_certreq_seq(OSSL_CMP_CTX *ctx, int req_type, int req_err,
         ctx->end_time = time(NULL) + ctx->total_timeout;
 
     /* OSSL_CMP_certreq_new() also checks if all necessary options are set */
-    if ((req = ossl_cmp_certReq_new(ctx, req_type, req_err)) == NULL)
+    if ((req = ossl_cmp_certreq_new(ctx, req_type, crm)) == NULL)
         goto err;
 
     if (!send_receive_check(ctx, req, &rep, rep_type))
@@ -720,30 +743,6 @@ static X509 *do_certreq_seq(OSSL_CMP_CTX *ctx, int req_type, int req_err,
     OSSL_CMP_MSG_free(req);
     OSSL_CMP_MSG_free(rep);
     return result;
-}
-
-X509 *OSSL_CMP_exec_IR_ses(OSSL_CMP_CTX *ctx)
-{
-    return do_certreq_seq(ctx, OSSL_CMP_PKIBODY_IR,
-                          CMP_R_ERROR_CREATING_IR, OSSL_CMP_PKIBODY_IP);
-}
-
-X509 *OSSL_CMP_exec_CR_ses(OSSL_CMP_CTX *ctx)
-{
-    return do_certreq_seq(ctx, OSSL_CMP_PKIBODY_CR,
-                          CMP_R_ERROR_CREATING_CR, OSSL_CMP_PKIBODY_CP);
-}
-
-X509 *OSSL_CMP_exec_KUR_ses(OSSL_CMP_CTX *ctx)
-{
-    return do_certreq_seq(ctx, OSSL_CMP_PKIBODY_KUR,
-                          CMP_R_ERROR_CREATING_KUR, OSSL_CMP_PKIBODY_KUP);
-}
-
-X509 *OSSL_CMP_exec_P10CR_ses(OSSL_CMP_CTX *ctx)
-{
-    return do_certreq_seq(ctx, OSSL_CMP_PKIBODY_P10CR,
-                          CMP_R_ERROR_CREATING_P10CR, OSSL_CMP_PKIBODY_CP);
 }
 
 X509 *OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)

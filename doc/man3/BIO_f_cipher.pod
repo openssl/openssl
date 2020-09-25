@@ -14,8 +14,8 @@ BIO_f_cipher, BIO_set_cipher, BIO_get_cipher_status, BIO_get_cipher_ctx - cipher
  const BIO_METHOD *BIO_f_cipher(void);
  void BIO_set_cipher(BIO *b, const EVP_CIPHER *cipher,
                      unsigned char *key, unsigned char *iv, int enc);
- int BIO_get_cipher_status(BIO *b)
- int BIO_get_cipher_ctx(BIO *b, EVP_CIPHER_CTX **pctx)
+ int BIO_get_cipher_status(BIO *b);
+ int BIO_get_cipher_ctx(BIO *b, EVP_CIPHER_CTX **pctx);
 
 =head1 DESCRIPTION
 
@@ -71,7 +71,7 @@ BIO_get_cipher_ctx() currently always returns 1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

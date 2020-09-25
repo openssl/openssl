@@ -23,6 +23,7 @@ B<openssl> B<req>
 [B<-new>]
 [B<-newkey> I<arg>]
 [B<-pkeyopt> I<opt>:I<value>]
+[B<-noenc>]
 [B<-nodes>]
 [B<-key> I<filename>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>|B<ENGINE>]
@@ -31,7 +32,6 @@ B<openssl> B<req>
 [B<-I<digest>>]
 [B<-config> I<filename>]
 [B<-section> I<name>]
-[B<-multivalue-rdn>]
 [B<-x509>]
 [B<-days> I<n>]
 [B<-set_serial> I<n>]
@@ -44,6 +44,7 @@ B<openssl> B<req>
 [B<-reqopt>]
 [B<-subject>]
 [B<-subj> I<arg>]
+[B<-multivalue-rdn>]
 [B<-sigopt> I<nm>:I<v>]
 [B<-vfyopt> I<nm>:I<v>]
 [B<-batch>]
@@ -198,10 +199,14 @@ This gives the filename to write the newly created private key to.
 If this option is not specified then the filename present in the
 configuration file is used.
 
-=item B<-nodes>
+=item B<-noenc>
 
 If this option is specified then if a private key is created it
 will not be encrypted.
+
+=item B<-nodes>
+
+This option is deprecated since OpenSSL 3.0; use B<-noenc> instead.
 
 =item B<-I<digest>>
 
@@ -228,19 +233,21 @@ Specifies the name of the section to use; the default is B<req>.
 
 Sets subject name for new request or supersedes the subject name
 when processing a request.
+
 The arg must be formatted as C</type0=value0/type1=value1/type2=...>.
-Keyword characters may be escaped by \ (backslash), and whitespace is retained.
+Special characters may be escaped by C<\> (backslash), whitespace is retained.
 Empty values are permitted, but the corresponding type will not be included
 in the request.
-
-=item B<-multivalue-rdn>
-
-This option causes the -subj argument to be interpreted with full
-support for multivalued RDNs. Example:
+Giving a single C</> will lead to an empty sequence of RDNs (a NULL-DN).
+Multi-valued RDNs can be formed by placing a C<+> character instead of a C</>
+between the AttributeValueAssertions (AVAs) that specify the members of the set.
+Example:
 
 C</DC=org/DC=OpenSSL/DC=users/UID=123456+CN=John Doe>
 
-If -multi-rdn is not used then the UID value is C<123456+CN=John Doe>.
+=item B<-multivalue-rdn>
+
+This option has been deprecated and has no effect.
 
 =item B<-x509>
 
@@ -375,8 +382,8 @@ overridden by the B<-keyout> option.
 
 This specifies a file containing additional B<OBJECT IDENTIFIERS>.
 Each line of the file should consist of the numerical form of the
-object identifier followed by white space then the short name followed
-by white space and finally the long name.
+object identifier followed by whitespace then the short name followed
+by whitespace and finally the long name.
 
 =item B<oid_section>
 
@@ -394,7 +401,7 @@ It is used for private key generation.
 =item B<encrypt_key>
 
 If this is set to B<no> then if a private key is generated it is
-B<not> encrypted. This is equivalent to the B<-nodes> command line
+B<not> encrypted. This is equivalent to the B<-noenc> command line
 option. For compatibility B<encrypt_rsa_key> is an equivalent option.
 
 =item B<default_md>
@@ -692,8 +699,11 @@ L<x509v3_config(5)>
 
 The B<-section> option was added in OpenSSL 3.0.0.
 
-All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
-and have no effect.
+All B<-keyform> values except B<ENGINE> and the B<-multivalue-rdn> option
+have become obsolete in OpenSSL 3.0.0 and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+The <-nodes> option was deprecated in OpenSSL 3.0, too; use B<-noenc> instead.
 
 =head1 COPYRIGHT
 

@@ -13,12 +13,6 @@
 
 #include <openssl/x509_vfy.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(ASN1_UTF8STRING)
-DEFINE_STACK_OF(X509_EXTENSION)
-DEFINE_STACK_OF(OSSL_CMP_ITAV)
-DEFINE_STACK_OF(POLICYINFO)
-
 typedef struct test_fixture {
     const char *test_case_name;
     OSSL_CMP_CTX *ctx;
@@ -37,7 +31,7 @@ static OSSL_CMP_CTX_TEST_FIXTURE *set_up(const char *const test_case_name)
 
     if (!TEST_ptr(fixture = OPENSSL_zalloc(sizeof(*fixture))))
         return NULL;
-    if (!TEST_ptr(fixture->ctx = OSSL_CMP_CTX_new())) {
+    if (!TEST_ptr(fixture->ctx = OSSL_CMP_CTX_new(NULL, NULL))) {
         tear_down(fixture);
         return NULL;
     }
@@ -76,6 +70,7 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     if (!ossl_cmp_ctx_set0_statusString(ctx, sk_ASN1_UTF8STRING_new_null())
             || !ossl_cmp_ctx_set0_newCert(ctx, X509_new())
             || !TEST_ptr(certs = sk_X509_new_1())
+            || !ossl_cmp_ctx_set1_newChain(ctx, certs)
             || !ossl_cmp_ctx_set1_caPubs(ctx, certs)
             || !ossl_cmp_ctx_set1_extraCertsIn(ctx, certs)
             || !ossl_cmp_ctx_set0_validatedSrvCert(ctx, X509_new())
@@ -93,6 +88,7 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
                        && ctx->failInfoCode == -1
                        && ctx->statusString == NULL
                        && ctx->newCert == NULL
+                       && ctx->newChain == NULL
                        && ctx->caPubs == NULL
                        && ctx->extraCertsIn == NULL
                        && ctx->validatedSrvCert == NULL
@@ -744,7 +740,7 @@ DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trustedStore,
                          X509_STORE *, NULL,
                          DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
-DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted_certs)
+DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted)
 
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, cert, X509)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
@@ -780,6 +776,7 @@ DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, status)
 DEFINE_SET_GET_SK_TEST(ossl_cmp, ctx, 0, 0, statusString, ASN1_UTF8STRING)
 DEFINE_SET_GET_INT_TEST(ossl_cmp, ctx, failInfoCode)
 DEFINE_SET_GET_TEST(ossl_cmp, ctx, 0, 0, 0, newCert, X509)
+DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, newChain)
 DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, caPubs)
 DEFINE_SET_GET_SK_X509_TEST(ossl_cmp, ctx, 1, 1, extraCertsIn)
 
@@ -827,7 +824,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set0_get0_validatedSrvCert);
     ADD_TEST(test_CTX_set1_get0_expected_sender);
     ADD_TEST(test_CTX_set0_get0_trustedStore);
-    ADD_TEST(test_CTX_set1_get0_untrusted_certs);
+    ADD_TEST(test_CTX_set1_get0_untrusted);
     /* client authentication: */
     ADD_TEST(test_CTX_set1_get0_cert);
     ADD_TEST(test_CTX_set1_get0_pkey);
@@ -869,6 +866,7 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set0_get0_statusString);
     ADD_TEST(test_CTX_set_get_failInfoCode);
     ADD_TEST(test_CTX_set0_get0_newCert);
+    ADD_TEST(test_CTX_set1_get1_newChain);
     ADD_TEST(test_CTX_set1_get1_caPubs);
     ADD_TEST(test_CTX_set1_get1_extraCertsIn);
     /* exported for testing and debugging purposes: */

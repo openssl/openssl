@@ -25,6 +25,8 @@ use lib bldtop_dir('.');
 use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $infile = bldtop_file('providers', platform->dso('fips'));
+
 my ($no_rsa, $no_dsa, $no_dh, $no_ec, $no_psk,
     $no_ssl3, $no_tls1, $no_tls1_1, $no_tls1_2, $no_tls1_3,
     $no_dtls, $no_dtls1, $no_dtls1_2, $no_ct) =
@@ -85,10 +87,7 @@ plan tests =>
 unless ($no_fips) {
     ok(run(app(['openssl', 'fipsinstall',
                 '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips')),
-                '-provider_name', 'fips', '-mac_name', 'HMAC',
-                '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                '-section_name', 'fips_sect'])),
+                '-module', $infile])),
        "fipsinstall");
 }
 
@@ -107,7 +106,8 @@ subtest 'test_ss' => sub {
 note('test_ssl -- key U');
 testssl("keyU.ss", $Ucert, $CAcert, "default", srctop_file("test","default.cnf"));
 unless ($no_fips) {
-    testssl("keyU.ss", $Ucert, $CAcert, "fips", srctop_file("test","fips.cnf"));
+    testssl("keyU.ss", $Ucert, $CAcert, "fips",
+            srctop_file("test","fips-and-base.cnf"));
 }
 
 # -----------

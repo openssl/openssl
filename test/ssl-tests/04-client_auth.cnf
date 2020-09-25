@@ -49,11 +49,11 @@ client = 0-server-auth-flex-client
 
 [0-server-auth-flex-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [0-server-auth-flex-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -72,12 +72,12 @@ client = 1-client-auth-flex-request-client
 
 [1-client-auth-flex-request-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyMode = Request
 
 [1-client-auth-flex-request-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -96,13 +96,13 @@ client = 2-client-auth-flex-require-fail-client
 
 [2-client-auth-flex-require-fail-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Require
 
 [2-client-auth-flex-require-fail-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
@@ -122,14 +122,14 @@ client = 3-client-auth-flex-require-client
 
 [3-client-auth-flex-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Request
 
 [3-client-auth-flex-require-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -151,7 +151,7 @@ client = 4-client-auth-flex-require-non-empty-names-client
 
 [4-client-auth-flex-require-non-empty-names-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ClientCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
@@ -159,7 +159,7 @@ VerifyMode = Request
 
 [4-client-auth-flex-require-non-empty-names-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -181,13 +181,13 @@ client = 5-client-auth-flex-noroot-client
 
 [5-client-auth-flex-noroot-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyMode = Require
 
 [5-client-auth-flex-noroot-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
@@ -208,13 +208,13 @@ client = 6-server-auth-TLSv1-client
 
 [6-server-auth-TLSv1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [6-server-auth-TLSv1-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -235,14 +235,14 @@ client = 7-client-auth-TLSv1-request-client
 
 [7-client-auth-TLSv1-request-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyMode = Request
 
 [7-client-auth-TLSv1-request-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -263,7 +263,7 @@ client = 8-client-auth-TLSv1-require-fail-client
 
 [8-client-auth-TLSv1-require-fail-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -271,7 +271,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Require
 
 [8-client-auth-TLSv1-require-fail-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -293,7 +293,7 @@ client = 9-client-auth-TLSv1-require-client
 
 [9-client-auth-TLSv1-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -302,7 +302,7 @@ VerifyMode = Request
 
 [9-client-auth-TLSv1-require-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -326,7 +326,7 @@ client = 10-client-auth-TLSv1-require-non-empty-names-client
 
 [10-client-auth-TLSv1-require-non-empty-names-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ClientCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
@@ -336,7 +336,7 @@ VerifyMode = Request
 
 [10-client-auth-TLSv1-require-non-empty-names-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -360,7 +360,7 @@ client = 11-client-auth-TLSv1-noroot-client
 
 [11-client-auth-TLSv1-noroot-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -368,7 +368,7 @@ VerifyMode = Require
 
 [11-client-auth-TLSv1-noroot-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1
 MinProtocol = TLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -391,13 +391,13 @@ client = 12-server-auth-TLSv1.1-client
 
 [12-server-auth-TLSv1.1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [12-server-auth-TLSv1.1-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -418,14 +418,14 @@ client = 13-client-auth-TLSv1.1-request-client
 
 [13-client-auth-TLSv1.1-request-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyMode = Request
 
 [13-client-auth-TLSv1.1-request-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -446,7 +446,7 @@ client = 14-client-auth-TLSv1.1-require-fail-client
 
 [14-client-auth-TLSv1.1-require-fail-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -454,7 +454,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Require
 
 [14-client-auth-TLSv1.1-require-fail-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -476,7 +476,7 @@ client = 15-client-auth-TLSv1.1-require-client
 
 [15-client-auth-TLSv1.1-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -485,7 +485,7 @@ VerifyMode = Request
 
 [15-client-auth-TLSv1.1-require-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -509,7 +509,7 @@ client = 16-client-auth-TLSv1.1-require-non-empty-names-client
 
 [16-client-auth-TLSv1.1-require-non-empty-names-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ClientCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
@@ -519,7 +519,7 @@ VerifyMode = Request
 
 [16-client-auth-TLSv1.1-require-non-empty-names-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -543,7 +543,7 @@ client = 17-client-auth-TLSv1.1-noroot-client
 
 [17-client-auth-TLSv1.1-noroot-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -551,7 +551,7 @@ VerifyMode = Require
 
 [17-client-auth-TLSv1.1-noroot-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.1
 MinProtocol = TLSv1.1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -574,13 +574,13 @@ client = 18-server-auth-TLSv1.2-client
 
 [18-server-auth-TLSv1.2-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [18-server-auth-TLSv1.2-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -601,14 +601,14 @@ client = 19-client-auth-TLSv1.2-request-client
 
 [19-client-auth-TLSv1.2-request-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyMode = Request
 
 [19-client-auth-TLSv1.2-request-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -629,7 +629,7 @@ client = 20-client-auth-TLSv1.2-require-fail-client
 
 [20-client-auth-TLSv1.2-require-fail-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -637,7 +637,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Require
 
 [20-client-auth-TLSv1.2-require-fail-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -659,7 +659,7 @@ client = 21-client-auth-TLSv1.2-require-client
 
 [21-client-auth-TLSv1.2-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ClientSignatureAlgorithms = SHA256+RSA
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
@@ -669,7 +669,7 @@ VerifyMode = Request
 
 [21-client-auth-TLSv1.2-require-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -695,7 +695,7 @@ client = 22-client-auth-TLSv1.2-require-non-empty-names-client
 
 [22-client-auth-TLSv1.2-require-non-empty-names-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ClientCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 ClientSignatureAlgorithms = SHA256+RSA
 MaxProtocol = TLSv1.2
@@ -706,7 +706,7 @@ VerifyMode = Request
 
 [22-client-auth-TLSv1.2-require-non-empty-names-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -732,7 +732,7 @@ client = 23-client-auth-TLSv1.2-noroot-client
 
 [23-client-auth-TLSv1.2-noroot-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -740,7 +740,7 @@ VerifyMode = Require
 
 [23-client-auth-TLSv1.2-noroot-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = TLSv1.2
 MinProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -763,13 +763,13 @@ client = 24-server-auth-DTLSv1-client
 
 [24-server-auth-DTLSv1-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [24-server-auth-DTLSv1-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -791,14 +791,14 @@ client = 25-client-auth-DTLSv1-request-client
 
 [25-client-auth-DTLSv1-request-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyMode = Request
 
 [25-client-auth-DTLSv1-request-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -820,7 +820,7 @@ client = 26-client-auth-DTLSv1-require-fail-client
 
 [26-client-auth-DTLSv1-require-fail-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -828,7 +828,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Require
 
 [26-client-auth-DTLSv1-require-fail-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -851,7 +851,7 @@ client = 27-client-auth-DTLSv1-require-client
 
 [27-client-auth-DTLSv1-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -860,7 +860,7 @@ VerifyMode = Request
 
 [27-client-auth-DTLSv1-require-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -885,7 +885,7 @@ client = 28-client-auth-DTLSv1-require-non-empty-names-client
 
 [28-client-auth-DTLSv1-require-non-empty-names-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ClientCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
@@ -895,7 +895,7 @@ VerifyMode = Request
 
 [28-client-auth-DTLSv1-require-non-empty-names-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -920,7 +920,7 @@ client = 29-client-auth-DTLSv1-noroot-client
 
 [29-client-auth-DTLSv1-noroot-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -928,7 +928,7 @@ VerifyMode = Require
 
 [29-client-auth-DTLSv1-noroot-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1
 MinProtocol = DTLSv1
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -952,13 +952,13 @@ client = 30-server-auth-DTLSv1.2-client
 
 [30-server-auth-DTLSv1.2-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
 [30-server-auth-DTLSv1.2-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -980,14 +980,14 @@ client = 31-client-auth-DTLSv1.2-request-client
 
 [31-client-auth-DTLSv1.2-request-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 VerifyMode = Request
 
 [31-client-auth-DTLSv1.2-request-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1009,7 +1009,7 @@ client = 32-client-auth-DTLSv1.2-require-fail-client
 
 [32-client-auth-DTLSv1.2-require-fail-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -1017,7 +1017,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 VerifyMode = Require
 
 [32-client-auth-DTLSv1.2-require-fail-client]
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -1040,7 +1040,7 @@ client = 33-client-auth-DTLSv1.2-require-client
 
 [33-client-auth-DTLSv1.2-require-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -1049,7 +1049,7 @@ VerifyMode = Request
 
 [33-client-auth-DTLSv1.2-require-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -1074,7 +1074,7 @@ client = 34-client-auth-DTLSv1.2-require-non-empty-names-client
 
 [34-client-auth-DTLSv1.2-require-non-empty-names-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 ClientCAFile = ${ENV::TEST_CERTS_DIR}/root-cert.pem
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
@@ -1084,7 +1084,7 @@ VerifyMode = Request
 
 [34-client-auth-DTLSv1.2-require-non-empty-names-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem
@@ -1109,7 +1109,7 @@ client = 35-client-auth-DTLSv1.2-noroot-client
 
 [35-client-auth-DTLSv1.2-noroot-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
@@ -1117,7 +1117,7 @@ VerifyMode = Require
 
 [35-client-auth-DTLSv1.2-noroot-client]
 Certificate = ${ENV::TEST_CERTS_DIR}/ee-client-chain.pem
-CipherString = DEFAULT
+CipherString = DEFAULT:@SECLEVEL=0
 MaxProtocol = DTLSv1.2
 MinProtocol = DTLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/ee-key.pem

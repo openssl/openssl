@@ -11,8 +11,11 @@
  * Generic dispatch table functions for ciphers.
  */
 
+/* For SSL3_VERSION */
+#include <openssl/ssl.h>
 #include "ciphercommon_local.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 /*-
@@ -24,9 +27,10 @@ static const OSSL_PARAM cipher_known_gettable_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
     OSSL_PARAM_ulong(OSSL_CIPHER_PARAM_FLAGS, NULL),
+    { OSSL_CIPHER_PARAM_TLS_MAC, OSSL_PARAM_OCTET_PTR, NULL, 0, OSSL_PARAM_UNMODIFIED },
     OSSL_PARAM_END
 };
-const OSSL_PARAM *cipher_generic_gettable_params(void)
+const OSSL_PARAM *cipher_generic_gettable_params(void *provctx)
 {
     return cipher_known_gettable_params;
 }
@@ -69,6 +73,8 @@ CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(cipher_generic)
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(cipher_generic)
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(cipher_generic)
+OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS_VERSION, NULL),
+OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS_MAC_SIZE, NULL),
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(cipher_generic)
 
 /*
@@ -107,12 +113,13 @@ static const OSSL_PARAM cipher_aead_known_gettable_ctx_params[] = {
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV, NULL, 0),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_IV_STATE, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD_PAD, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_GET_IV_GEN, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *cipher_aead_gettable_ctx_params(void)
+const OSSL_PARAM *cipher_aead_gettable_ctx_params(ossl_unused void *provctx)
 {
     return cipher_aead_known_gettable_ctx_params;
 }
@@ -125,9 +132,18 @@ static const OSSL_PARAM cipher_aead_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_SET_IV_INV, NULL, 0),
     OSSL_PARAM_END
 };
-const OSSL_PARAM *cipher_aead_settable_ctx_params(void)
+const OSSL_PARAM *cipher_aead_settable_ctx_params(ossl_unused void *provctx)
 {
     return cipher_aead_known_settable_ctx_params;
+}
+
+void cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx)
+{
+    if (ctx != NULL && ctx->alloced) {
+        OPENSSL_free(ctx->tlsmac);
+        ctx->alloced = 0;
+        ctx->tlsmac = NULL;
+    }
 }
 
 static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
@@ -135,7 +151,13 @@ static int cipher_generic_init_internal(PROV_CIPHER_CTX *ctx,
                                         const unsigned char *iv, size_t ivlen,
                                         int enc)
 {
+    ctx->num = 0;
+    ctx->bufsz = 0;
+    ctx->updated = 0;
     ctx->enc = enc ? 1 : 0;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (iv != NULL && ctx->mode != EVP_CIPH_ECB_MODE) {
         if (!cipher_generic_initiv(ctx, iv, ivlen))
@@ -169,6 +191,9 @@ int cipher_generic_dinit(void *vctx, const unsigned char *key, size_t keylen,
                                         iv, ivlen, 0);
 }
 
+/* Max padding including padding length byte */
+#define MAX_PADDING 256
+
 int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
                                 size_t outsize, const unsigned char *in,
                                 size_t inl)
@@ -177,6 +202,81 @@ int cipher_generic_block_update(void *vctx, unsigned char *out, size_t *outl,
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
     size_t nextblocks;
+
+    if (ctx->tlsversion > 0) {
+        /*
+         * Each update call corresponds to a TLS record and is individually
+         * padded
+         */
+
+        /* Sanity check inputs */
+        if (in == NULL
+                || in != out
+                || outsize < inl
+                || !ctx->pad) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+            return 0;
+        }
+
+        if (ctx->enc) {
+            unsigned char padval;
+            size_t padnum, loop;
+
+            /* Add padding */
+
+            padnum = blksz - (inl % blksz);
+
+            if (outsize < inl + padnum) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+                return 0;
+            }
+
+            if (padnum > MAX_PADDING) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+                return 0;
+            }
+            padval = (unsigned char)(padnum - 1);
+            if (ctx->tlsversion == SSL3_VERSION) {
+                if (padnum > 1)
+                    memset(out + inl, 0, padnum - 1);
+                *(out + inl + padnum - 1) = padval;
+            } else {
+                /* we need to add 'padnum' padding bytes of value padval */
+                for (loop = inl; loop < inl + padnum; loop++)
+                    out[loop] = padval;
+            }
+            inl += padnum;
+        }
+
+        if ((inl % blksz) != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+            return 0;
+        }
+
+
+        /* Shouldn't normally fail */
+        if (!ctx->hw->cipher(ctx, out, in, inl)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+            return 0;
+        }
+
+        if (ctx->alloced) {
+            OPENSSL_free(ctx->tlsmac);
+            ctx->alloced = 0;
+            ctx->tlsmac = NULL;
+        }
+
+        /* This only fails if padding is publicly invalid */
+        *outl = inl;
+        if (!ctx->enc
+                && !tlsunpadblock(ctx->libctx, ctx->tlsversion, out, outl,
+                                  blksz, &ctx->tlsmac, &ctx->alloced,
+                                  ctx->tlsmacsize, 0)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+            return 0;
+        }
+        return 1;
+    }
 
     if (ctx->bufsz != 0)
         nextblocks = fillblock(ctx->buf, &ctx->bufsz, blksz, &in, &inl);
@@ -237,6 +337,15 @@ int cipher_generic_block_final(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     size_t blksz = ctx->blocksize;
+
+    if (!ossl_prov_is_running())
+        return 0;
+
+    if (ctx->tlsversion > 0) {
+        /* We never finalize TLS, so this is an error */
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+        return 0;
+    }
 
     if (ctx->enc) {
         if (ctx->pad) {
@@ -314,11 +423,26 @@ int cipher_generic_stream_update(void *vctx, unsigned char *out, size_t *outl,
     }
 
     *outl = inl;
+    /*
+     * Remove any TLS padding. Only used by cipher_aes_cbc_hmac_sha1_hw.c and
+     * cipher_aes_cbc_hmac_sha256_hw.c
+     */
+    if (!ctx->enc && ctx->removetlspad > 0) {
+        /* The actual padding length */
+        *outl -= out[inl - 1] + 1;
+
+        /* MAC and explicit IV */
+        *outl -= ctx->removetlspad;
+    }
+
     return 1;
 }
 int cipher_generic_stream_final(void *vctx, unsigned char *out, size_t *outl,
                                 size_t outsize)
 {
+    if (!ossl_prov_is_running())
+        return 0;
+
     *outl = 0;
     return 1;
 }
@@ -328,6 +452,9 @@ int cipher_generic_cipher(void *vctx,
                           const unsigned char *in, size_t inl)
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
@@ -365,6 +492,13 @@ int cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IV_STATE);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_ptr(p, &ctx->iv, ctx->ivlen)
+        && !OSSL_PARAM_set_octet_string(p, &ctx->iv, ctx->ivlen)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_NUM);
     if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->num)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
@@ -372,6 +506,12 @@ int cipher_generic_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->keylen)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+        return 0;
+    }
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_TLS_MAC);
+    if (p != NULL
+        && !OSSL_PARAM_set_octet_ptr(p, ctx->tlsmac, ctx->tlsmacsize)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -392,6 +532,20 @@ int cipher_generic_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
         ctx->pad = pad ? 1 : 0;
+    }
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS_VERSION);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_uint(p, &ctx->tlsversion)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+    }
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_TLS_MAC_SIZE);
+    if (p != NULL) {
+        if (!OSSL_PARAM_get_size_t(p, &ctx->tlsmacsize)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
     }
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_NUM);
     if (p != NULL) {

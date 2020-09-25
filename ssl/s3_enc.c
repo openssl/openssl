@@ -22,7 +22,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
     EVP_MD_CTX *s1;
     unsigned char buf[16], smd[SHA_DIGEST_LENGTH];
     unsigned char c = 'A';
-    unsigned int i, j, k;
+    unsigned int i, k;
     int ret = 0;
 
 #ifdef CHARSET_EBCDIC
@@ -47,8 +47,7 @@ static int ssl3_generate_key_block(SSL *s, unsigned char *km, int num)
             goto err;
         }
 
-        for (j = 0; j < k; j++)
-            buf[j] = c;
+        memset(buf, c, k);
         c++;
         if (!EVP_DigestInit_ex(s1, sha1, NULL)
             || !EVP_DigestUpdate(s1, buf, k)
@@ -241,6 +240,12 @@ int ssl3_change_cipher_state(SSL *s, int which)
         goto err;
     }
 
+    if (EVP_CIPHER_provider(c) != NULL
+            && !tls_provider_set_tls_params(s, dd, c, m)) {
+        /* SSLfatal already called */
+        goto err;
+    }
+
     s->statem.enc_write_state = ENC_WRITE_STATE_VALID;
     return 1;
  err:
@@ -403,7 +408,12 @@ int ssl3_digest_cached_records(SSL *s, int keep)
         }
 
         md = ssl_handshake_md(s);
-        if (md == NULL || !EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)
+        if (md == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_DIGEST_CACHED_RECORDS,
+                     SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
+            return 0;
+        }
+        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)
             || !EVP_DigestUpdate(s->s3.handshake_dgst, hdata, hdatalen)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL3_DIGEST_CACHED_RECORDS,
                      ERR_R_INTERNAL_ERROR);

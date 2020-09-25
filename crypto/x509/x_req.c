@@ -13,8 +13,6 @@
 #include <openssl/x509.h>
 #include "crypto/x509.h"
 
-DEFINE_STACK_OF(X509_ATTRIBUTE)
-
 /*-
  * X509_REQ_INFO is handled in an unusual way to get round
  * invalid encodings. Some broken certificate requests don't

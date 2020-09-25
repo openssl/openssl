@@ -14,13 +14,9 @@
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 
+#include "x509_local.h"
 #include "pcy_local.h"
 #include "ext_dat.h"
-
-DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF(POLICYINFO)
-DEFINE_STACK_OF(POLICYQUALINFO)
-DEFINE_STACK_OF(ASN1_INTEGER)
 
 /* Certificate policies extension support: this one is a bit complex... */
 
@@ -116,11 +112,10 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
     ia5org = 0;
     for (i = 0; i < num; i++) {
         cnf = sk_CONF_VALUE_value(vals, i);
-
-        if (cnf->value || !cnf->name) {
+        if (cnf->value != NULL || cnf->name == NULL) {
             X509V3err(X509V3_F_R2I_CERTPOL,
                       X509V3_R_INVALID_POLICY_IDENTIFIER);
-            X509V3_conf_err(cnf);
+            X509V3_conf_add_error_name_value(cnf);
             goto err;
         }
         pstr = cnf->name;
@@ -133,8 +128,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             polsect = X509V3_get_section(ctx, pstr + 1);
             if (polsect == NULL) {
                 X509V3err(X509V3_F_R2I_CERTPOL, X509V3_R_INVALID_SECTION);
-
-                X509V3_conf_err(cnf);
+                ERR_add_error_data(1, cnf->name);
                 goto err;
             }
             pol = policy_section(ctx, polsect, ia5org);
@@ -145,7 +139,7 @@ static STACK_OF(POLICYINFO) *r2i_certpol(X509V3_EXT_METHOD *method,
             if ((pobj = OBJ_txt2obj(cnf->name, 0)) == NULL) {
                 X509V3err(X509V3_F_R2I_CERTPOL,
                           X509V3_R_INVALID_OBJECT_IDENTIFIER);
-                X509V3_conf_err(cnf);
+                ERR_add_error_data(1, cnf->name);
                 goto err;
             }
             pol = POLICYINFO_new();
@@ -184,6 +178,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
         cnf = sk_CONF_VALUE_value(polstrs, i);
         if (strcmp(cnf->name, "policyIdentifier") == 0) {
             ASN1_OBJECT *pobj;
+
             if ((pobj = OBJ_txt2obj(cnf->value, 0)) == NULL) {
                 X509V3err(X509V3_F_POLICY_SECTION,
                           X509V3_R_INVALID_OBJECT_IDENTIFIER);
@@ -233,7 +228,6 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
                 goto merr;
         } else {
             X509V3err(X509V3_F_POLICY_SECTION, X509V3_R_INVALID_OPTION);
-
             X509V3_conf_err(cnf);
             goto err;
         }
@@ -307,6 +301,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
     qual->d.usernotice = not;
     for (i = 0; i < sk_CONF_VALUE_num(unot); i++) {
         cnf = sk_CONF_VALUE_value(unot, i);
+
         value = cnf->value;
         if (strcmp(cnf->name, "explicitText") == 0) {
             tag = displaytext_str2tag(value, &tag_len);
@@ -319,6 +314,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                 goto merr;
         } else if (strcmp(cnf->name, "organization") == 0) {
             NOTICEREF *nref;
+
             if (!not->noticeref) {
                 if ((nref = NOTICEREF_new()) == NULL)
                     goto merr;
@@ -334,6 +330,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                 goto merr;
         } else if (strcmp(cnf->name, "noticeNumbers") == 0) {
             NOTICEREF *nref;
+
             STACK_OF(CONF_VALUE) *nos;
             if (!not->noticeref) {
                 if ((nref = NOTICEREF_new()) == NULL)
@@ -344,7 +341,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             nos = X509V3_parse_list(cnf->value);
             if (!nos || !sk_CONF_VALUE_num(nos)) {
                 X509V3err(X509V3_F_NOTICE_SECTION, X509V3_R_INVALID_NUMBERS);
-                X509V3_conf_err(cnf);
+                X509V3_conf_add_error_name_value(cnf);
                 sk_CONF_VALUE_pop_free(nos, X509V3_conf_free);
                 goto err;
             }
@@ -354,7 +351,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                 goto err;
         } else {
             X509V3err(X509V3_F_NOTICE_SECTION, X509V3_R_INVALID_OPTION);
-            X509V3_conf_err(cnf);
+            X509V3_conf_add_error_name_value(cnf);
             goto err;
         }
     }

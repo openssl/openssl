@@ -14,24 +14,114 @@
 #include <openssl/bio.h>
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
+#include <openssl/cms.h>
+#include "crypto/x509.h"
 #include "cms_local.h"
 
-DEFINE_STACK_OF(CMS_RevocationInfoChoice)
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_CRL)
+static STACK_OF(CMS_CertificateChoices)
+**cms_get0_certificate_choices(CMS_ContentInfo *cms);
 
-IMPLEMENT_ASN1_FUNCTIONS(CMS_ContentInfo)
 IMPLEMENT_ASN1_PRINT_FUNCTION(CMS_ContentInfo)
+
+CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
+                                     const unsigned char **in, long len)
+{
+    CMS_ContentInfo *ci;
+
+    ci = (CMS_ContentInfo *)ASN1_item_d2i((ASN1_VALUE **)a, in, len,
+                                          (CMS_ContentInfo_it()));
+    if (ci != NULL && a != NULL)
+        cms_resolve_libctx(ci);
+    return ci;
+}
+
+int i2d_CMS_ContentInfo(const CMS_ContentInfo *a, unsigned char **out)
+{
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (CMS_ContentInfo_it()));
+}
+
+CMS_ContentInfo *CMS_ContentInfo_new_with_libctx(OPENSSL_CTX *libctx,
+                                                 const char *propq)
+{
+    CMS_ContentInfo *ci;
+
+    ci = (CMS_ContentInfo *)ASN1_item_new(ASN1_ITEM_rptr(CMS_ContentInfo));
+    if (ci != NULL) {
+        ci->ctx.libctx = libctx;
+        ci->ctx.propq = NULL;
+        if (propq != NULL) {
+            ci->ctx.propq = OPENSSL_strdup(propq);
+            if (ci->ctx.propq == NULL) {
+                CMS_ContentInfo_free(ci);
+                ci = NULL;
+                ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
+            }
+        }
+    }
+    return ci;
+}
+
+CMS_ContentInfo *CMS_ContentInfo_new(void)
+{
+    return CMS_ContentInfo_new_with_libctx(NULL, NULL);
+}
+
+void CMS_ContentInfo_free(CMS_ContentInfo *cms)
+{
+    if (cms != NULL) {
+        OPENSSL_free(cms->ctx.propq);
+        ASN1_item_free((ASN1_VALUE *)cms, ASN1_ITEM_rptr(CMS_ContentInfo));
+    }
+}
+
+const CMS_CTX *cms_get0_cmsctx(const CMS_ContentInfo *cms)
+{
+    return cms != NULL ? &cms->ctx : NULL;
+}
+
+OPENSSL_CTX *cms_ctx_get0_libctx(const CMS_CTX *ctx)
+{
+    return ctx->libctx;
+}
+
+const char *cms_ctx_get0_propq(const CMS_CTX *ctx)
+{
+    return ctx->propq;
+}
+
+void cms_resolve_libctx(CMS_ContentInfo *ci)
+{
+    int i;
+    CMS_CertificateChoices *cch;
+    STACK_OF(CMS_CertificateChoices) **pcerts;
+    const CMS_CTX *ctx;
+
+    if (ci == NULL)
+        return;
+
+    ctx = cms_get0_cmsctx(ci);
+    cms_SignerInfos_set_cmsctx(ci);
+    cms_RecipientInfos_set_cmsctx(ci);
+
+    pcerts = cms_get0_certificate_choices(ci);
+    if (pcerts != NULL) {
+        for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
+            cch = sk_CMS_CertificateChoices_value(*pcerts, i);
+            if (cch->type == CMS_CERTCHOICE_CERT)
+                x509_set0_libctx(cch->d.certificate, ctx->libctx, ctx->propq);
+        }
+    }
+}
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)
 {
     return cms->contentType;
 }
 
-CMS_ContentInfo *cms_Data_create(void)
+CMS_ContentInfo *cms_Data_create(OPENSSL_CTX *libctx, const char *propq)
 {
-    CMS_ContentInfo *cms;
-    cms = CMS_ContentInfo_new();
+    CMS_ContentInfo *cms = CMS_ContentInfo_new_with_libctx(libctx, propq);
+
     if (cms != NULL) {
         cms->contentType = OBJ_nid2obj(NID_pkcs7_data);
         /* Never detached */
@@ -95,14 +185,18 @@ BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
         cmsbio = cms_EnvelopedData_init_bio(cms);
         break;
 
+    case NID_id_smime_ct_authEnvelopedData:
+        cmsbio = cms_AuthEnvelopedData_init_bio(cms);
+        break;
+
     default:
         CMSerr(CMS_F_CMS_DATAINIT, CMS_R_UNSUPPORTED_TYPE);
-        return NULL;
+        goto err;
     }
 
     if (cmsbio)
         return BIO_push(cmsbio, cont);
-
+err:
     if (!icont)
         BIO_free(cont);
     return NULL;
@@ -145,6 +239,9 @@ int CMS_dataFinal(CMS_ContentInfo *cms, BIO *cmsbio)
     case NID_pkcs7_enveloped:
         return cms_EnvelopedData_final(cms, cmsbio);
 
+    case NID_id_smime_ct_authEnvelopedData:
+        return cms_AuthEnvelopedData_final(cms, cmsbio);
+
     case NID_pkcs7_signed:
         return cms_SignedData_final(cms, cmsbio);
 
@@ -180,6 +277,10 @@ ASN1_OCTET_STRING **CMS_get0_content(CMS_ContentInfo *cms)
 
     case NID_pkcs7_encrypted:
         return &cms->d.encryptedData->encryptedContentInfo->encryptedContent;
+
+    case NID_id_smime_ct_authEnvelopedData:
+        return &cms->d.authEnvelopedData->authEncryptedContentInfo
+                                        ->encryptedContent;
 
     case NID_id_smime_ct_authData:
         return &cms->d.authenticatedData->encapContentInfo->eContent;
@@ -217,6 +318,9 @@ static ASN1_OBJECT **cms_get0_econtent_type(CMS_ContentInfo *cms)
     case NID_pkcs7_encrypted:
         return &cms->d.encryptedData->encryptedContentInfo->contentType;
 
+    case NID_id_smime_ct_authEnvelopedData:
+        return &cms->d.authEnvelopedData->authEncryptedContentInfo
+                                        ->contentType;
     case NID_id_smime_ct_authData:
         return &cms->d.authenticatedData->encapContentInfo->eContentType;
 
@@ -295,25 +399,42 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
 
 /* Create a digest BIO from an X509_ALGOR structure */
 
-BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm)
+BIO *cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
+                                  const CMS_CTX *ctx)
 {
     BIO *mdbio = NULL;
     const ASN1_OBJECT *digestoid;
-    const EVP_MD *digest;
+    const EVP_MD *digest = NULL;
+    EVP_MD *fetched_digest = NULL;
+    const char *alg;
+
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
-    digest = EVP_get_digestbyobj(digestoid);
-    if (!digest) {
+    alg = OBJ_nid2sn(OBJ_obj2nid(digestoid));
+
+    (void)ERR_set_mark();
+    fetched_digest = EVP_MD_fetch(ctx->libctx, alg, ctx->propq);
+
+    if (fetched_digest != NULL)
+        digest = fetched_digest;
+    else
+        digest = EVP_get_digestbyobj(digestoid);
+    if (digest == NULL) {
+        (void)ERR_clear_last_mark();
         CMSerr(CMS_F_CMS_DIGESTALGORITHM_INIT_BIO,
                CMS_R_UNKNOWN_DIGEST_ALGORITHM);
         goto err;
     }
+    (void)ERR_pop_to_mark();
+
     mdbio = BIO_new(BIO_f_md());
     if (mdbio == NULL || !BIO_set_md(mdbio, digest)) {
         CMSerr(CMS_F_CMS_DIGESTALGORITHM_INIT_BIO, CMS_R_MD_BIO_INIT_ERROR);
         goto err;
     }
+    EVP_MD_free(fetched_digest);
     return mdbio;
  err:
+    EVP_MD_free(fetched_digest);
     BIO_free(mdbio);
     return NULL;
 }
@@ -360,6 +481,11 @@ static STACK_OF(CMS_CertificateChoices)
         if (cms->d.envelopedData->originatorInfo == NULL)
             return NULL;
         return &cms->d.envelopedData->originatorInfo->certificates;
+
+    case NID_id_smime_ct_authEnvelopedData:
+        if (cms->d.authEnvelopedData->originatorInfo == NULL)
+            return NULL;
+        return &cms->d.authEnvelopedData->originatorInfo->certificates;
 
     default:
         CMSerr(CMS_F_CMS_GET0_CERTIFICATE_CHOICES,
@@ -440,6 +566,11 @@ static STACK_OF(CMS_RevocationInfoChoice)
             return NULL;
         return &cms->d.envelopedData->originatorInfo->crls;
 
+    case NID_id_smime_ct_authEnvelopedData:
+        if (cms->d.authEnvelopedData->originatorInfo == NULL)
+            return NULL;
+        return &cms->d.authEnvelopedData->originatorInfo->crls;
+
     default:
         CMSerr(CMS_F_CMS_GET0_REVOCATION_CHOICES,
                CMS_R_UNSUPPORTED_CONTENT_TYPE);
@@ -503,16 +634,11 @@ STACK_OF(X509) *CMS_get1_certs(CMS_ContentInfo *cms)
     for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
         cch = sk_CMS_CertificateChoices_value(*pcerts, i);
         if (cch->type == 0) {
-            if (!certs) {
-                certs = sk_X509_new_null();
-                if (!certs)
-                    return NULL;
-            }
-            if (!sk_X509_push(certs, cch->d.certificate)) {
+            if (!X509_add_cert_new(&certs, cch->d.certificate,
+                                   X509_ADD_FLAG_UP_REF)) {
                 sk_X509_pop_free(certs, X509_free);
                 return NULL;
             }
-            X509_up_ref(cch->d.certificate);
         }
     }
     return certs;
@@ -553,7 +679,7 @@ int cms_ias_cert_cmp(CMS_IssuerAndSerialNumber *ias, X509 *cert)
     ret = X509_NAME_cmp(ias->issuer, X509_get_issuer_name(cert));
     if (ret)
         return ret;
-    return ASN1_INTEGER_cmp(ias->serialNumber, X509_get_serialNumber(cert));
+    return ASN1_INTEGER_cmp(ias->serialNumber, X509_get0_serialNumber(cert));
 }
 
 int cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert)
@@ -573,7 +699,7 @@ int cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert)
         goto err;
     if (!X509_NAME_set(&ias->issuer, X509_get_issuer_name(cert)))
         goto err;
-    if (!ASN1_STRING_copy(ias->serialNumber, X509_get_serialNumber(cert)))
+    if (!ASN1_STRING_copy(ias->serialNumber, X509_get0_serialNumber(cert)))
         goto err;
     M_ASN1_free_of(*pias, CMS_IssuerAndSerialNumber);
     *pias = ias;

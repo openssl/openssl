@@ -18,10 +18,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(X509_CRL)
-DEFINE_STACK_OF_STRING()
-
 static int cb(int ok, X509_STORE_CTX *ctx);
 static int check(X509_STORE *ctx, const char *file,
                  STACK_OF(X509) *uchain, STACK_OF(X509) *tchain,
@@ -60,7 +56,7 @@ const OPTIONS verify_options[] = {
      "Do not load the default trusted certificates file"},
     {"no-CApath", OPT_NOCAPATH, '-',
      "Do not load trusted certificates from the default directory"},
-    {"no-CAstore", OPT_NOCAPATH, '-',
+    {"no-CAstore", OPT_NOCASTORE, '-',
      "Do not load trusted certificates from the default certificates store"},
     {"untrusted", OPT_UNTRUSTED, '<', "A file of untrusted certificates"},
     {"CRLfile", OPT_CRLFILE, '<',
@@ -149,7 +145,7 @@ int verify_main(int argc, char **argv)
             break;
         case OPT_UNTRUSTED:
             /* Zero or more times */
-            if (!load_certs(opt_arg(), &untrusted, FORMAT_PEM, NULL,
+            if (!load_certs(opt_arg(), &untrusted, NULL,
                             "untrusted certificates"))
                 goto end;
             break;
@@ -158,14 +154,12 @@ int verify_main(int argc, char **argv)
             noCAfile = 1;
             noCApath = 1;
             noCAstore = 1;
-            if (!load_certs(opt_arg(), &trusted, FORMAT_PEM, NULL,
-                            "trusted certificates"))
+            if (!load_certs(opt_arg(), &trusted, NULL, "trusted certificates"))
                 goto end;
             break;
         case OPT_CRLFILE:
             /* Zero or more times */
-            if (!load_crls(opt_arg(), &crls, FORMAT_PEM, NULL,
-                           "other CRLs"))
+            if (!load_crls(opt_arg(), &crls, NULL, "other CRLs"))
                 goto end;
             break;
         case OPT_CRL_DOWNLOAD:
@@ -356,7 +350,7 @@ static int cb(int ok, X509_STORE_CTX *ctx)
             policies_print(ctx);
             /* fall thru */
         case X509_V_ERR_CERT_HAS_EXPIRED:
-            /* Continue even if the leaf is a self signed cert */
+            /* Continue even if the leaf is a self-signed cert */
         case X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT:
             /* Continue after extension errors too */
         case X509_V_ERR_INVALID_CA:

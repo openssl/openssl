@@ -114,11 +114,16 @@ typedef struct evp_keymgmt_st EVP_KEYMGMT;
 typedef struct evp_kdf_st EVP_KDF;
 typedef struct evp_kdf_ctx_st EVP_KDF_CTX;
 
+typedef struct evp_rand_st EVP_RAND;
+typedef struct evp_rand_ctx_st EVP_RAND_CTX;
+
 typedef struct evp_keyexch_st EVP_KEYEXCH;
 
 typedef struct evp_signature_st EVP_SIGNATURE;
 
 typedef struct evp_asym_cipher_st EVP_ASYM_CIPHER;
+
+typedef struct evp_kem_st EVP_KEM;
 
 typedef struct evp_Encode_Ctx_st EVP_ENCODE_CTX;
 
@@ -209,8 +214,10 @@ typedef struct ossl_param_bld_st OSSL_PARAM_BLD;
 
 typedef int pem_password_cb (char *buf, int size, int rwflag, void *userdata);
 
-typedef struct ossl_serializer_st OSSL_SERIALIZER;
-typedef struct ossl_serializer_ctx_st OSSL_SERIALIZER_CTX;
+typedef struct ossl_encoder_st OSSL_ENCODER;
+typedef struct ossl_encoder_ctx_st OSSL_ENCODER_CTX;
+typedef struct ossl_decoder_st OSSL_DECODER;
+typedef struct ossl_decoder_ctx_st OSSL_DECODER_CTX;
 
 typedef struct ossl_self_test_st OSSL_SELF_TEST;
 

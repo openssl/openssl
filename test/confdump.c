@@ -14,9 +14,6 @@
 #include <openssl/safestack.h>
 #include <openssl/err.h>
 
-DEFINE_STACK_OF(CONF_VALUE)
-DEFINE_STACK_OF_CSTRING()
-
 static STACK_OF(OPENSSL_CSTRING) *section_names = NULL;
 
 static void collect_section_name(CONF_VALUE *v)

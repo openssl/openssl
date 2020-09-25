@@ -50,6 +50,7 @@ B<openssl> B<smime>
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_v_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
+{- $OpenSSL::safe::opt_config_synopsis -}
 I<recipcert> ...
 
 =for openssl ifdef engine
@@ -237,6 +238,7 @@ option is present B<CRLF> is used instead.
 Allows additional certificates to be specified. When signing these will
 be included with the message. When verifying these will be searched for
 the signers certificates.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-signer> I<file>
 
@@ -291,6 +293,8 @@ Any verification errors cause the command to exit.
 {- $OpenSSL::safe::opt_r_item -}
 
 {- $OpenSSL::safe::opt_provider_item -}
+
+{- $OpenSSL::safe::opt_config_item -}
 
 =item I<recipcert> ...
 
@@ -482,6 +486,8 @@ The -no_alt_chains option was added in OpenSSL 1.1.0.
 
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

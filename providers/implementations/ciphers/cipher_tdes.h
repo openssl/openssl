@@ -8,7 +8,7 @@
  */
 
 #include <openssl/des.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "crypto/des_platform.h"
 
 #define DES_BLOCK_SIZE 8
@@ -32,13 +32,13 @@ typedef struct prov_tdes_ctx_st {
 
 #define IMPLEMENT_tdes_cipher(type, UCTYPE, lcmode, UCMODE, flags,            \
                               kbits, blkbits, ivbits, block)                   \
-static OSSL_OP_cipher_newctx_fn tdes_##type##_##lcmode##_newctx;               \
+static OSSL_FUNC_cipher_newctx_fn tdes_##type##_##lcmode##_newctx;               \
 static void *tdes_##type##_##lcmode##_newctx(void *provctx)                    \
 {                                                                              \
     return tdes_newctx(provctx, EVP_CIPH_##UCMODE##_MODE, kbits, blkbits,      \
                        ivbits, flags, PROV_CIPHER_HW_tdes_##type##_##lcmode());\
 }                                                                              \
-static OSSL_OP_cipher_get_params_fn tdes_##type##_##lcmode##_get_params;       \
+static OSSL_FUNC_cipher_get_params_fn tdes_##type##_##lcmode##_get_params;       \
 static int tdes_##type##_##lcmode##_get_params(OSSL_PARAM params[])            \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
@@ -71,12 +71,12 @@ const OSSL_DISPATCH tdes_##type##_##lcmode##_functions[] = {                   \
 
 void *tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
                   size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw);
-OSSL_OP_cipher_dupctx_fn tdes_dupctx;
-OSSL_OP_cipher_freectx_fn tdes_freectx;
-OSSL_OP_cipher_encrypt_init_fn tdes_einit;
-OSSL_OP_cipher_decrypt_init_fn tdes_dinit;
-OSSL_OP_cipher_get_ctx_params_fn tdes_get_ctx_params;
-OSSL_OP_cipher_gettable_ctx_params_fn tdes_gettable_ctx_params;
+OSSL_FUNC_cipher_dupctx_fn tdes_dupctx;
+OSSL_FUNC_cipher_freectx_fn tdes_freectx;
+OSSL_FUNC_cipher_encrypt_init_fn tdes_einit;
+OSSL_FUNC_cipher_decrypt_init_fn tdes_dinit;
+OSSL_FUNC_cipher_get_ctx_params_fn tdes_get_ctx_params;
+OSSL_FUNC_cipher_gettable_ctx_params_fn tdes_gettable_ctx_params;
 
 #define PROV_CIPHER_HW_tdes_mode(type, mode)                                  \
 static const PROV_CIPHER_HW type##_##mode = {                                  \

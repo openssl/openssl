@@ -20,7 +20,7 @@
 
 #include "internal/cryptlib.h"
 #include <openssl/pem.h>
-#include "internal/pem_int.h"
+#include "internal/pem.h"
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #if !defined(OPENSSL_NO_RSA) && !defined(OPENSSL_NO_DSA)
@@ -186,28 +186,27 @@ static unsigned int blob_length(unsigned bitlen, int isdss, int ispub)
 
 }
 
-static EVP_PKEY *do_b2i(const unsigned char **in, unsigned int length,
-                        int ispub)
+EVP_PKEY *ossl_b2i(const unsigned char **in, unsigned int length, int *ispub)
 {
     const unsigned char *p = *in;
     unsigned int bitlen, magic;
     int isdss;
-    if (ossl_do_blob_header(&p, length, &magic, &bitlen, &isdss, &ispub) <= 0) {
-        PEMerr(PEM_F_DO_B2I, PEM_R_KEYBLOB_HEADER_PARSE_ERROR);
+    if (ossl_do_blob_header(&p, length, &magic, &bitlen, &isdss, ispub) <= 0) {
+        PEMerr(0, PEM_R_KEYBLOB_HEADER_PARSE_ERROR);
         return NULL;
     }
     length -= 16;
-    if (length < blob_length(bitlen, isdss, ispub)) {
-        PEMerr(PEM_F_DO_B2I, PEM_R_KEYBLOB_TOO_SHORT);
+    if (length < blob_length(bitlen, isdss, *ispub)) {
+        PEMerr(0, PEM_R_KEYBLOB_TOO_SHORT);
         return NULL;
     }
     if (isdss)
-        return b2i_dss(&p, bitlen, ispub);
+        return b2i_dss(&p, bitlen, *ispub);
     else
-        return b2i_rsa(&p, bitlen, ispub);
+        return b2i_rsa(&p, bitlen, *ispub);
 }
 
-static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
+EVP_PKEY *ossl_b2i_bio(BIO *in, int *ispub)
 {
     const unsigned char *p;
     unsigned char hdr_buf[16], *buf = NULL;
@@ -215,33 +214,33 @@ static EVP_PKEY *do_b2i_bio(BIO *in, int ispub)
     int isdss;
     EVP_PKEY *ret = NULL;
     if (BIO_read(in, hdr_buf, 16) != 16) {
-        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_KEYBLOB_TOO_SHORT);
+        PEMerr(0, PEM_R_KEYBLOB_TOO_SHORT);
         return NULL;
     }
     p = hdr_buf;
-    if (ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, &ispub) <= 0)
+    if (ossl_do_blob_header(&p, 16, &magic, &bitlen, &isdss, ispub) <= 0)
         return NULL;
 
-    length = blob_length(bitlen, isdss, ispub);
+    length = blob_length(bitlen, isdss, *ispub);
     if (length > BLOB_MAX_LENGTH) {
-        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_HEADER_TOO_LONG);
+        PEMerr(0, PEM_R_HEADER_TOO_LONG);
         return NULL;
     }
     buf = OPENSSL_malloc(length);
     if (buf == NULL) {
-        PEMerr(PEM_F_DO_B2I_BIO, ERR_R_MALLOC_FAILURE);
+        PEMerr(0, ERR_R_MALLOC_FAILURE);
         goto err;
     }
     p = buf;
     if (BIO_read(in, buf, length) != (int)length) {
-        PEMerr(PEM_F_DO_B2I_BIO, PEM_R_KEYBLOB_TOO_SHORT);
+        PEMerr(0, PEM_R_KEYBLOB_TOO_SHORT);
         goto err;
     }
 
     if (isdss)
-        ret = b2i_dss(&p, bitlen, ispub);
+        ret = b2i_dss(&p, bitlen, *ispub);
     else
-        ret = b2i_rsa(&p, bitlen, ispub);
+        ret = b2i_rsa(&p, bitlen, *ispub);
 
  err:
     OPENSSL_free(buf);
@@ -391,22 +390,30 @@ static EVP_PKEY *b2i_rsa(const unsigned char **in,
 
 EVP_PKEY *b2i_PrivateKey(const unsigned char **in, long length)
 {
-    return do_b2i(in, length, 0);
+    int ispub = 0;
+
+    return ossl_b2i(in, length, &ispub);
 }
 
 EVP_PKEY *b2i_PublicKey(const unsigned char **in, long length)
 {
-    return do_b2i(in, length, 1);
+    int ispub = 1;
+
+    return ossl_b2i(in, length, &ispub);
 }
 
 EVP_PKEY *b2i_PrivateKey_bio(BIO *in)
 {
-    return do_b2i_bio(in, 0);
+    int ispub = 0;
+
+    return ossl_b2i_bio(in, &ispub);
 }
 
 EVP_PKEY *b2i_PublicKey_bio(BIO *in)
 {
-    return do_b2i_bio(in, 1);
+    int ispub = 1;
+
+    return ossl_b2i_bio(in, &ispub);
 }
 
 static void write_ledword(unsigned char **out, unsigned int dw)
@@ -852,9 +859,9 @@ static int i2b_PVK(unsigned char **out, const EVP_PKEY *pk, int enclevel,
         if (!EVP_EncryptInit_ex(cctx, EVP_rc4(), NULL, keybuf, NULL))
             goto error;
         OPENSSL_cleanse(keybuf, 20);
-        if (!EVP_DecryptUpdate(cctx, p, &enctmplen, p, pklen - 8))
+        if (!EVP_EncryptUpdate(cctx, p, &enctmplen, p, pklen - 8))
             goto error;
-        if (!EVP_DecryptFinal_ex(cctx, p + enctmplen, &enctmplen))
+        if (!EVP_EncryptFinal_ex(cctx, p + enctmplen, &enctmplen))
             goto error;
     }
 

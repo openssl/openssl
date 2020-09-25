@@ -85,6 +85,10 @@ L<openssl-dsa(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-gendsa(1)>
 
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
+
 =head1 COPYRIGHT
 
 Copyright 2006-2020 The OpenSSL Project Authors. All Rights Reserved.

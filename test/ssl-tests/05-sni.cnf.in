@@ -152,11 +152,13 @@ our @tests_tls_1_1 = (
     {
         name => "SNI-clienthello-disable-v12",
         server => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
             extra => {
                 "ServerNameCallback" => "ClientHelloNoV12",
             },
         },
         client => {
+            "CipherString" => "DEFAULT:\@SECLEVEL=0",
             extra => {
                 "ServerName" => "server2",
             },

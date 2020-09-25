@@ -107,6 +107,7 @@ int ERR_load_X509V3_strings(void);
 # define X509V3_R_DIRNAME_ERROR                           149
 # define X509V3_R_DISTPOINT_ALREADY_SET                   160
 # define X509V3_R_DUPLICATE_ZONE_ID                       133
+# define X509V3_R_EMPTY_KEY_USAGE                         169
 # define X509V3_R_ERROR_CONVERTING_ZONE                   131
 # define X509V3_R_ERROR_CREATING_EXTENSION                144
 # define X509V3_R_ERROR_IN_EXTENSION                      128
@@ -121,13 +122,14 @@ int ERR_load_X509V3_strings(void);
 # define X509V3_R_INVALID_ASNUMBER                        162
 # define X509V3_R_INVALID_ASRANGE                         163
 # define X509V3_R_INVALID_BOOLEAN_STRING                  104
+# define X509V3_R_INVALID_CERTIFICATE                     158
 # define X509V3_R_INVALID_EXTENSION_STRING                105
 # define X509V3_R_INVALID_INHERITANCE                     165
 # define X509V3_R_INVALID_IPADDRESS                       166
 # define X509V3_R_INVALID_MULTIPLE_RDNS                   161
 # define X509V3_R_INVALID_NAME                            106
 # define X509V3_R_INVALID_NULL_ARGUMENT                   107
-# define X509V3_R_INVALID_NULL_NAME                       108
+# define X509V3_R_INVALID_EMPTY_NAME                      108
 # define X509V3_R_INVALID_NULL_VALUE                      109
 # define X509V3_R_INVALID_NUMBER                          140
 # define X509V3_R_INVALID_NUMBERS                         141
@@ -142,6 +144,7 @@ int ERR_load_X509V3_strings(void);
 # define X509V3_R_ISSUER_DECODE_ERROR                     126
 # define X509V3_R_MISSING_VALUE                           124
 # define X509V3_R_NEED_ORGANIZATION_AND_NUMBERS           142
+# define X509V3_R_NEGATIVE_PATHLEN                        168
 # define X509V3_R_NO_CONFIG_DATABASE                      136
 # define X509V3_R_NO_ISSUER_CERTIFICATE                   121
 # define X509V3_R_NO_ISSUER_DETAILS                       127

@@ -12,11 +12,9 @@
 #include <openssl/pkcs12.h>
 #include <openssl/bn.h>
 #include <openssl/trace.h>
-
-/* PKCS12 compatible key/IV generation */
-#ifndef min
-# define min(a,b) ((a) < (b) ? (a) : (b))
-#endif
+#include <openssl/kdf.h>
+#include <openssl/core_names.h>
+#include "internal/provider.h"
 
 int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
@@ -35,10 +33,8 @@ int PKCS12_key_gen_asc(const char *pass, int passlen, unsigned char *salt,
     }
     ret = PKCS12_key_gen_uni(unipass, uniplen, salt, saltlen,
                              id, iter, n, out, md_type);
-    if (ret <= 0)
-        return 0;
     OPENSSL_clear_free(unipass, uniplen);
-    return ret;
+    return ret > 0;
 }
 
 int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
@@ -58,26 +54,45 @@ int PKCS12_key_gen_utf8(const char *pass, int passlen, unsigned char *salt,
     }
     ret = PKCS12_key_gen_uni(unipass, uniplen, salt, saltlen,
                              id, iter, n, out, md_type);
-    if (ret <= 0)
-        return 0;
     OPENSSL_clear_free(unipass, uniplen);
-    return ret;
+    return ret > 0;
 }
 
 int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
                        int saltlen, int id, int iter, int n,
                        unsigned char *out, const EVP_MD *md_type)
 {
-    unsigned char *B = NULL, *D = NULL, *I = NULL, *p = NULL, *Ai = NULL;
-    int Slen, Plen, Ilen;
-    int i, j, u, v;
-    int ret = 0;
-    EVP_MD_CTX *ctx = NULL;
-    unsigned char *tmpout = out;
-    int tmpn = n;
+    int res = 0;
+    EVP_KDF *kdf;
+    EVP_KDF_CTX *ctx;
+    OSSL_PARAM params[6], *p = params;
 
-    ctx = EVP_MD_CTX_new();
+    if (n <= 0)
+        return 0;
+
+    /*
+     * The parameter query isn't available but the library context can be
+     * extracted from the passed digest.
+     */
+    kdf = EVP_KDF_fetch(ossl_provider_library_context(EVP_MD_provider(md_type)),
+                        "PKCS12KDF", NULL);
+    if (kdf == NULL)
+        return 0;
+    ctx = EVP_KDF_CTX_new(kdf);
+    EVP_KDF_free(kdf);
     if (ctx == NULL)
+        return 0;
+
+    *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+                                            (char *)EVP_MD_name(md_type), 0);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
+                                             pass, passlen);
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
+                                             salt, saltlen);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_PKCS12_ID, &id);
+    *p++ = OSSL_PARAM_construct_int(OSSL_KDF_PARAM_ITER, &iter);
+    *p = OSSL_PARAM_construct_end();
+    if (!EVP_KDF_CTX_set_params(ctx, params))
         goto err;
 
     OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
@@ -89,77 +104,16 @@ int PKCS12_key_gen_uni(unsigned char *pass, int passlen, unsigned char *salt,
         BIO_hex_string(trc_out, 0, saltlen, salt, saltlen);
         BIO_printf(trc_out, "\n");
     } OSSL_TRACE_END(PKCS12_KEYGEN);
-    v = EVP_MD_block_size(md_type);
-    u = EVP_MD_size(md_type);
-    if (u < 0 || v <= 0)
-        goto err;
-    D = OPENSSL_malloc(v);
-    Ai = OPENSSL_malloc(u);
-    B = OPENSSL_malloc(v + 1);
-    Slen = v * ((saltlen + v - 1) / v);
-    if (passlen)
-        Plen = v * ((passlen + v - 1) / v);
-    else
-        Plen = 0;
-    Ilen = Slen + Plen;
-    I = OPENSSL_malloc(Ilen);
-    if (D == NULL || Ai == NULL || B == NULL || I == NULL)
-        goto err;
-    for (i = 0; i < v; i++)
-        D[i] = id;
-    p = I;
-    for (i = 0; i < Slen; i++)
-        *p++ = salt[i % saltlen];
-    for (i = 0; i < Plen; i++)
-        *p++ = pass[i % passlen];
-    for (;;) {
-        if (!EVP_DigestInit_ex(ctx, md_type, NULL)
-            || !EVP_DigestUpdate(ctx, D, v)
-            || !EVP_DigestUpdate(ctx, I, Ilen)
-            || !EVP_DigestFinal_ex(ctx, Ai, NULL))
-            goto err;
-        for (j = 1; j < iter; j++) {
-            if (!EVP_DigestInit_ex(ctx, md_type, NULL)
-                || !EVP_DigestUpdate(ctx, Ai, u)
-                || !EVP_DigestFinal_ex(ctx, Ai, NULL))
-                goto err;
-        }
-        memcpy(out, Ai, min(n, u));
-        if (u >= n) {
-            OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
-                BIO_printf(trc_out, "Output KEY (length %d)\n", tmpn);
-                BIO_hex_string(trc_out, 0, tmpn, tmpout, tmpn);
-                BIO_printf(trc_out, "\n");
-            } OSSL_TRACE_END(PKCS12_KEYGEN);
-            ret = 1;
-            goto end;
-        }
-        n -= u;
-        out += u;
-        for (j = 0; j < v; j++)
-            B[j] = Ai[j % u];
-        for (j = 0; j < Ilen; j += v) {
-            int k;
-            unsigned char *Ij = I + j;
-            uint16_t c = 1;
 
-            /* Work out Ij = Ij + B + 1 */
-            for (k = v - 1; k >= 0; k--) {
-                c += Ij[k] + B[k];
-                Ij[k] = (unsigned char)c;
-                c >>= 8;
-            }
-        }
+    if (EVP_KDF_derive(ctx, out, (size_t)n)) {
+        res = 1;
+        OSSL_TRACE_BEGIN(PKCS12_KEYGEN) {
+            BIO_printf(trc_out, "Output KEY (length %d)\n", n);
+            BIO_hex_string(trc_out, 0, n, out, n);
+            BIO_printf(trc_out, "\n");
+        } OSSL_TRACE_END(PKCS12_KEYGEN);
     }
-
  err:
-    PKCS12err(PKCS12_F_PKCS12_KEY_GEN_UNI, ERR_R_MALLOC_FAILURE);
-
- end:
-    OPENSSL_free(Ai);
-    OPENSSL_free(B);
-    OPENSSL_free(D);
-    OPENSSL_free(I);
-    EVP_MD_CTX_free(ctx);
-    return ret;
+    EVP_KDF_CTX_free(ctx);
+    return res;
 }

@@ -7,7 +7,7 @@ provider-base
 
 =head1 SYNOPSIS
 
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
 
  /*
   * None of these are actual functions, but are displayed like this for
@@ -74,6 +74,8 @@ provider-base
                                                 int operation_id,
                                                 const int *no_store);
  const OSSL_ITEM *provider_get_reason_strings(void *provctx);
+ int provider_get_capabilities(void *provctx, const char *capability,
+                               OSSL_CALLBACK *cb, void *arg);
 
 =head1 DESCRIPTION
 
@@ -85,16 +87,16 @@ for a description of the initialization function.
 All these "functions" have a corresponding function type definition
 named B<OSSL_{name}_fn>, and a helper function to retrieve the
 function pointer from a B<OSSL_DISPATCH> element named
-B<OSSL_get_{name}>.
+B<OSSL_FUNC_{name}>.
 For example, the "function" core_gettable_params() has these:
 
  typedef OSSL_PARAM *
-     (OSSL_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
+     (OSSL_FUNC_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
  static ossl_inline OSSL_NAME_core_gettable_params_fn
-     OSSL_get_core_gettable_params(const OSSL_DISPATCH *opf);
+     OSSL_FUNC_core_gettable_params(const OSSL_DISPATCH *opf);
 
 B<OSSL_DISPATCH> arrays are indexed by numbers that are provided as
-macros in L<openssl-core_numbers.h(7)>, as follows:
+macros in L<openssl-core_dispatch.h(7)>, as follows:
 
 For I<in> (the B<OSSL_DISPATCH> array passed from F<libcrypto> to the
 provider):
@@ -136,6 +138,8 @@ F<libcrypto>):
  provider_get_params            OSSL_FUNC_PROVIDER_GET_PARAMS
  provider_query_operation       OSSL_FUNC_PROVIDER_QUERY_OPERATION
  provider_get_reason_strings    OSSL_FUNC_PROVIDER_GET_REASON_STRINGS
+ provider_get_capabilities      OSSL_FUNC_PROVIDER_GET_CAPABILITIES
+ provider_self_test             OSSL_FUNC_PROVIDER_SELF_TEST
 
 =head2 Core functions
 
@@ -229,6 +233,20 @@ provider_get_reason_strings() should return a constant B<OSSL_ITEM>
 array that provides reason strings for reason codes the provider may
 use when reporting errors using core_put_error().
 
+The provider_get_capabilities() function should call the callback I<cb> passing
+it a set of B<OSSL_PARAM>s and the caller supplied argument I<arg>. The
+B<OSSL_PARAM>s should provide details about the capability with the name given
+in the I<capability> argument relevant for the provider context I<provctx>. If a
+provider supports multiple capabilities with the given name then it may call the
+callback multiple times (one for each capability). Capabilities can be useful for
+describing the services that a provider can offer. For further details see the
+L</CAPABILITIES> section below. It should return 1 on success or 0 on error.
+
+The provider_self_test() function should perform known answer tests on a subset
+of the algorithms that it uses, and may also verify the integrity of the
+provider module. It should return 1 on success or 0 on error. It will return 1
+if this function is not used.
+
 None of these functions are mandatory, but a provider is fairly
 useless without at least provider_query_operation(), and
 provider_gettable_params() is fairly useless if not accompanied by
@@ -255,6 +273,11 @@ for any third party provider. This string is for informational purposes only.
 This points to a string that is a build information associated with this provider.
 OpenSSL in-built providers use OPENSSL_FULL_VERSION_STR, but this may be
 different for any third party provider.
+
+=item "status" (B<OSSL_PROV_PARAM_STATUS>) <unsigned integer>
+
+This returns 0 if the provider has entered an error state, otherwise it returns
+1.
 
 =back 
 
@@ -332,6 +355,72 @@ pointing at the string "foo,bar"
 For more information on handling parameters, see L<OSSL_PARAM(3)> as
 L<OSSL_PARAM_int(3)>.
 
+=head1 CAPABILITIES
+
+Capabilities describe some of the services that a provider can offer.
+Applications can query the capabilities to discover those services.
+
+=head3 "TLS-GROUP" Capability
+
+The "TLS-GROUP" capability can be queried by libssl to discover the list of
+TLS groups that a provider can support. Each group supported can be used for
+key exchange during a TLS handshake. TLS clients can advertise the list of
+TLS groups they support in the supported_groups extension, and TLS servers can
+select a group from the offered list that they also support. In this way a
+provider can add to the list of groups that libssl already supports with
+additional ones.
+
+Each TLS group that a provider supports should be described via the callback
+passed in through the provider_get_capabilities function. Each group should have
+the following details supplied (all are mandatory):
+
+=over 4
+
+=item "tls-group-name" (B<OSSL_CAPABILITY_TLS_GROUP_NAME>) <utf8 string>
+
+The name of the group as given in the IANA TLS Supported Groups registry
+L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#tls-parameters-8>.
+
+=item "tls-group-name-internal" (B<OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL>) <utf8 string>
+
+The name of the group as known by the provider. This could be the same as the
+"tls-group-name", but does not have to be.
+
+=item "tls-group-id" (B<OSSL_CAPABILITY_TLS_GROUP_ID>) <unsigned integer>
+
+The TLS group id value as given in the IANA TLS Supported Groups registry.
+
+=item "tls-group-alg" (B<OSSL_CAPABILITY_TLS_GROUP_ALG>) <utf8 string>
+
+The name of a Key Management algorithm that the provider offers and that should
+be used with this group. Keys created should be able to support key exchange.
+The algorithm must support key and parameter generation as well as the
+key/parameter generation parameter, B<OSSL_PKEY_PARAM_GROUP_NAME>. The group
+name given via "tls-group-name-internal" above will be passed via
+B<OSSL_PKEY_PARAM_GROUP_NAME> when libssl wishes to generate keys/parameters.
+
+=item "tls-group-sec-bits" (B<OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS>) <unsigned integer>
+
+The number of bits of security offered by keys in this group. The number of bits
+should be comparable with the ones given in table 2 and 3 of the NIST SP800-57
+document.
+
+=item "tls-min-tls" (B<OSSL_CAPABILITY_TLS_GROUP_MIN_TLS>) <integer>
+
+=item "tls-max-tls" (B<OSSL_CAPABILITY_TLS_GROUP_MAX_TLS>) <integer>
+
+=item "tls-min-dtls" (B<OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS>) <integer>
+
+=item "tls-max-dtls" (B<OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS>) <integer>
+
+These parameters can be used to describe the minimum and maximum TLS and DTLS
+versions supported by the group. The values equate to the on-the-wire encoding
+of the various TLS versions. For example TLSv1.3 is 0x0304 (772 decimal), and
+TLSv1.2 is 0x0303 (771 decimal). A 0 indicates that there is no defined minimum
+or maximum. A -1 indicates that the group should not be used in that protocol.
+
+=back
+
 =head1 EXAMPLES
 
 This is an example of a simple provider made available as a
@@ -341,7 +430,7 @@ operation C<BAR>.
 
  #include <malloc.h>
  #include <openssl/core.h>
- #include <openssl/core_numbers.h>
+ #include <openssl/core_dispatch.h>
 
  /* Errors used in this provider */
  #define E_MALLOC       1
@@ -353,21 +442,21 @@ operation C<BAR>.
 
  /*
   * To ensure we get the function signature right, forward declare
-  * them using function types provided by openssl/core_numbers.h
+  * them using function types provided by openssl/core_dispatch.h
   */
- OSSL_OP_bar_newctx_fn foo_newctx;
- OSSL_OP_bar_freectx_fn foo_freectx;
- OSSL_OP_bar_init_fn foo_init;
- OSSL_OP_bar_update_fn foo_update;
- OSSL_OP_bar_final_fn foo_final;
+ OSSL_FUNC_bar_newctx_fn foo_newctx;
+ OSSL_FUNC_bar_freectx_fn foo_freectx;
+ OSSL_FUNC_bar_init_fn foo_init;
+ OSSL_FUNC_bar_update_fn foo_update;
+ OSSL_FUNC_bar_final_fn foo_final;
 
- OSSL_provider_query_operation_fn p_query;
- OSSL_provider_get_reason_strings_fn p_reasons;
- OSSL_provider_teardown_fn p_teardown;
+ OSSL_FUNC_provider_query_operation_fn p_query;
+ OSSL_FUNC_provider_get_reason_strings_fn p_reasons;
+ OSSL_FUNC_provider_teardown_fn p_teardown;
 
  OSSL_provider_init_fn OSSL_provider_init;
 
- OSSL_core_put_error *c_put_error = NULL;
+ OSSL_FUNC_core_put_error *c_put_error = NULL;
 
  /* Provider context */
  struct prov_ctx_st {
@@ -473,7 +562,7 @@ operation C<BAR>.
      for (; in->function_id != 0; in++)
          switch (in->function_id) {
          case OSSL_FUNC_CORE_PUT_ERROR:
-             c_put_error = OSSL_get_core_put_error(in);
+             c_put_error = OSSL_FUNC_core_put_error(in);
              break;
          }
 
@@ -491,35 +580,35 @@ operation C<BAR>.
      return 1;
  }
 
-This relies on a few things existing in F<openssl/core_numbers.h>:
+This relies on a few things existing in F<openssl/core_dispatch.h>:
 
  #define OSSL_OP_BAR            4711
 
  #define OSSL_FUNC_BAR_NEWCTX      1
- typedef void *(OSSL_OP_bar_newctx_fn)(void *provctx);
- static ossl_inline OSSL_get_bar_newctx(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_newctx_fn *)opf->function; }
+ typedef void *(OSSL_FUNC_bar_newctx_fn)(void *provctx);
+ static ossl_inline OSSL_FUNC_bar_newctx(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_newctx_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_FREECTX     2
- typedef void (OSSL_OP_bar_freectx_fn)(void *ctx);
- static ossl_inline OSSL_get_bar_newctx(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_freectx_fn *)opf->function; }
+ typedef void (OSSL_FUNC_bar_freectx_fn)(void *ctx);
+ static ossl_inline OSSL_FUNC_bar_newctx(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_freectx_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_INIT        3
- typedef void *(OSSL_OP_bar_init_fn)(void *ctx);
- static ossl_inline OSSL_get_bar_init(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_init_fn *)opf->function; }
+ typedef void *(OSSL_FUNC_bar_init_fn)(void *ctx);
+ static ossl_inline OSSL_FUNC_bar_init(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_init_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_UPDATE      4
- typedef void *(OSSL_OP_bar_update_fn)(void *ctx,
+ typedef void *(OSSL_FUNC_bar_update_fn)(void *ctx,
                                        unsigned char *in, size_t inl);
- static ossl_inline OSSL_get_bar_update(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_update_fn *)opf->function; }
+ static ossl_inline OSSL_FUNC_bar_update(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_update_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_FINAL       5
- typedef void *(OSSL_OP_bar_final_fn)(void *ctx);
- static ossl_inline OSSL_get_bar_final(const OSSL_DISPATCH *opf)
- { return (OSSL_OP_bar_final_fn *)opf->function; }
+ typedef void *(OSSL_FUNC_bar_final_fn)(void *ctx);
+ static ossl_inline OSSL_FUNC_bar_final(const OSSL_DISPATCH *opf)
+ { return (OSSL_FUNC_bar_final_fn *)opf->function; }
 
 =head1 SEE ALSO
 

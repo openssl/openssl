@@ -1,0 +1,6 @@
+SUBDIRS=seeding
+
+$COMMON=drbg.c test_rng.c drbg_ctr.c drbg_hash.c drbg_hmac.c crngt.c rand_pool.c
+
+SOURCE[../../libfips.a]=$COMMON
+SOURCE[../../libnonfips.a]=$COMMON

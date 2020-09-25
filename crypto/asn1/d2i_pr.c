@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some engine deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/bn.h>
@@ -18,7 +21,6 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 
-DEFINE_STACK_OF(ASN1_TYPE)
 EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
                             long length, OPENSSL_CTX *libctx, const char *propq)
 {
@@ -52,7 +54,7 @@ EVP_PKEY *d2i_PrivateKey_ex(int type, EVP_PKEY **a, const unsigned char **pp,
             p8 = d2i_PKCS8_PRIV_KEY_INFO(NULL, &p, length);
             if (p8 == NULL)
                 goto err;
-            tmp = evp_pkcs82pkey_int(p8, libctx, propq);
+            tmp = EVP_PKCS82PKEY_with_libctx(p8, libctx, propq);
             PKCS8_PRIV_KEY_INFO_free(p8);
             if (tmp == NULL)
                 goto err;
@@ -119,7 +121,7 @@ EVP_PKEY *d2i_AutoPrivateKey_ex(EVP_PKEY **a, const unsigned char **pp,
             ASN1err(0, ASN1_R_UNSUPPORTED_PUBLIC_KEY_TYPE);
             return NULL;
         }
-        ret = evp_pkcs82pkey_int(p8, libctx, propq);
+        ret = EVP_PKCS82PKEY_with_libctx(p8, libctx, propq);
         PKCS8_PRIV_KEY_INFO_free(p8);
         if (ret == NULL)
             return NULL;

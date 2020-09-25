@@ -76,6 +76,9 @@ int DER_w_boolean(WPACKET *pkt, int tag, int b);
 int DER_w_ulong(WPACKET *pkt, int tag, unsigned long v);
 int DER_w_bn(WPACKET *pkt, int tag, const BIGNUM *v);
 int DER_w_null(WPACKET *pkt, int tag);
+int DER_w_octet_string(WPACKET *pkt, int tag,
+                       const unsigned char *data, size_t data_n);
+int DER_w_octet_string_uint32(WPACKET *pkt, int tag, uint32_t value);
 
 /*
  * All constructors for constructed elements have a begin and a end function

@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <limits.h>
 #include "internal/cryptlib.h"
+#include "internal/endian.h"
 #include "bn_local.h"
 #include <openssl/opensslconf.h>
 #include "internal/constant_time.h"
@@ -87,6 +88,15 @@ const BIGNUM *BN_value_one(void)
     return &const_one;
 }
 
+/*
+ * Old Visual Studio ARM compiler miscompiles BN_num_bits_word()
+ * https://mta.openssl.org/pipermail/openssl-users/2018-August/008465.html
+ */
+#if defined(_MSC_VER) && defined(_ARM_) && defined(_WIN32_WCE) \
+    && _MSC_VER>=1400 && _MSC_VER<1501
+# define MS_BROKEN_BN_num_bits_word
+# pragma optimize("", off)
+#endif
 int BN_num_bits_word(BN_ULONG l)
 {
     BN_ULONG x, mask;
@@ -131,6 +141,9 @@ int BN_num_bits_word(BN_ULONG l)
 
     return bits;
 }
+#ifdef MS_BROKEN_BN_num_bits_word
+# pragma optimize("", on)
+#endif
 
 /*
  * This function still leaks `a->dmax`: it's caller's responsibility to
@@ -583,20 +596,20 @@ int BN_bn2lebinpad(const BIGNUM *a, unsigned char *to, int tolen)
 
 BIGNUM *BN_native2bn(const unsigned char *s, int len, BIGNUM *ret)
 {
-#ifdef B_ENDIAN
+    DECLARE_IS_ENDIAN;
+
+    if (IS_LITTLE_ENDIAN)
+        return BN_lebin2bn(s, len, ret);
     return BN_bin2bn(s, len, ret);
-#else
-    return BN_lebin2bn(s, len, ret);
-#endif
 }
 
 int BN_bn2nativepad(const BIGNUM *a, unsigned char *to, int tolen)
 {
-#ifdef B_ENDIAN
+    DECLARE_IS_ENDIAN;
+
+    if (IS_LITTLE_ENDIAN)
+        return BN_bn2lebinpad(a, to, tolen);
     return BN_bn2binpad(a, to, tolen);
-#else
-    return BN_bn2lebinpad(a, to, tolen);
-#endif
 }
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)

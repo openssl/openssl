@@ -15,6 +15,7 @@
 # include <openssl/modes.h>
 # include "crypto/sm4.h"
 # include "crypto/evp.h"
+# include "evp_local.h"
 
 typedef struct {
     SM4_KEY ks;
@@ -74,8 +75,7 @@ static int sm4_ctr_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     unsigned int num = EVP_CIPHER_CTX_num(ctx);
     EVP_SM4_KEY *dat = EVP_C_DATA(EVP_SM4_KEY, ctx);
 
-    CRYPTO_ctr128_encrypt(in, out, len, &dat->ks,
-                          EVP_CIPHER_CTX_iv_noconst(ctx),
+    CRYPTO_ctr128_encrypt(in, out, len, &dat->ks, ctx->iv,
                           EVP_CIPHER_CTX_buf_noconst(ctx), &num,
                           (block128_f)SM4_encrypt);
     EVP_CIPHER_CTX_set_num(ctx, num);

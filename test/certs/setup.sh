@@ -116,6 +116,10 @@ openssl x509 -in ca-cert-md5.pem -trustout \
 # CA has 768-bit key
 OPENSSL_KEYBITS=768 \
 ./mkcert.sh genca "CA" ca-key-768 ca-cert-768 root-key root-cert
+# EC cert with explicit curve
+./mkcert.sh genca "CA" ca-key-ec-explicit ca-cert-ec-explicit root-key root-cert
+# EC cert with named curve
+./mkcert.sh genca "CA" ca-key-ec-named ca-cert-ec-named root-key root-cert
 
 # client intermediate ca: cca-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
@@ -184,6 +188,17 @@ OPENSSL_SIGALG=md5 \
 # 768-bit leaf key
 OPENSSL_KEYBITS=768 \
 ./mkcert.sh genee server.example ee-key-768 ee-cert-768 ca-key ca-cert
+# EC cert with explicit curve signed by named curve ca
+./mkcert.sh genee server.example ee-key-ec-explicit ee-cert-ec-explicit ca-key-ec-named ca-cert-ec-named
+# EC cert with named curve signed by explicit curve ca
+./mkcert.sh genee server.example ee-key-ec-named-explicit \
+    ee-cert-ec-named-explicit ca-key-ec-explicit ca-cert-ec-explicit
+# EC cert with named curve signed by named curve ca
+./mkcert.sh genee server.example ee-key-ec-named-named \
+    ee-cert-ec-named-named ca-key-ec-named ca-cert-ec-named
+
+# self-signed end-entity cert with explicit keyUsage not including KeyCertSign
+openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed -out ee-self-signed.pem -addext keyUsage=digitalSignature -days 36500
 
 # Proxy certificates, off of ee-client
 # Start with some good ones
@@ -372,7 +387,7 @@ OPENSSL_KEYALG=ec OPENSSL_KEYBITS=brainpoolP256r1 ./mkcert.sh genee \
     "Server ECDSA brainpoolP256r1 cert" server-ecdsa-brainpoolP256r1-key \
     server-ecdsa-brainpoolP256r1-cert rootkey rootcert
 
-openssl req -new -nodes -subj "/CN=localhost" \
+openssl req -new -noenc -subj "/CN=localhost" \
     -newkey rsa-pss -keyout server-pss-restrict-key.pem \
     -pkeyopt rsa_pss_keygen_md:sha256 -pkeyopt rsa_pss_keygen_saltlen:32 | \
     ./mkcert.sh geneenocsr "Server RSA-PSS restricted cert" \

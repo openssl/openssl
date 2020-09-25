@@ -61,7 +61,7 @@ is set. See L<SSL_CTX_set_options(3)> for more details.
 The operation did not complete and can be retried later.
 
 B<SSL_ERROR_WANT_READ> is returned when the last operation was a read
-operation from a non-blocking B<BIO>.
+operation from a nonblocking B<BIO>.
 It means that not enough data was available at this time to complete the
 operation.
 If at a later time the underlying B<BIO> has data available for reading the same
@@ -73,8 +73,8 @@ for a blocking B<BIO>.
 See L<SSL_read(3)> for more information.
 
 B<SSL_ERROR_WANT_WRITE> is returned when the last operation was a write
-to a non-blocking B<BIO> and it was unable to sent all data to the B<BIO>.
-When the B<BIO> is writeable again, the same function can be called again.
+to a nonblocking B<BIO> and it was unable to sent all data to the B<BIO>.
+When the B<BIO> is writable again, the same function can be called again.
 
 Note that the retry may again lead to an B<SSL_ERROR_WANT_READ> or
 B<SSL_ERROR_WANT_WRITE> condition.
@@ -84,7 +84,7 @@ protocol level.
 
 It is safe to call SSL_read() or SSL_read_ex() when more data is available
 even when the call that set this error was an SSL_write() or SSL_write_ex().
-However if the call was an SSL_write() or SSL_write_ex(), it should be called
+However, if the call was an SSL_write() or SSL_write_ex(), it should be called
 again to continue sending the application data.
 
 For socket B<BIO>s (e.g. when SSL_set_fd() was used), select() or
@@ -178,7 +178,7 @@ The SSL_ERROR_WANT_CLIENT_HELLO_CB error code was added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

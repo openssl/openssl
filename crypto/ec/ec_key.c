@@ -21,6 +21,7 @@
 #include <openssl/err.h>
 #include <openssl/engine.h>
 #include <openssl/self_test.h>
+#include "prov/providercommon.h"
 #include "crypto/bn.h"
 
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
@@ -29,21 +30,22 @@ static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
 #ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new(void)
 {
-    return ec_key_new_method_int(NULL, NULL);
+    return ec_key_new_method_int(NULL, NULL, NULL);
 }
 #endif
 
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx)
+EC_KEY *EC_KEY_new_with_libctx(OPENSSL_CTX *ctx, const char *propq)
 {
-    return ec_key_new_method_int(ctx, NULL);
+    return ec_key_new_method_int(ctx, propq, NULL);
 }
 
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid)
+EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx,
+                                             const char *propq, int nid)
 {
-    EC_KEY *ret = EC_KEY_new_ex(ctx);
+    EC_KEY *ret = EC_KEY_new_with_libctx(ctx, propq);
     if (ret == NULL)
         return NULL;
-    ret->group = EC_GROUP_new_by_curve_name_ex(ctx, nid);
+    ret->group = EC_GROUP_new_by_curve_name_with_libctx(ctx, propq, nid);
     if (ret->group == NULL) {
         EC_KEY_free(ret);
         return NULL;
@@ -59,7 +61,7 @@ EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid)
 #ifndef FIPS_MODULE
 EC_KEY *EC_KEY_new_by_curve_name(int nid)
 {
-    return EC_KEY_new_by_curve_name_ex(NULL, nid);
+    return EC_KEY_new_by_curve_name_with_libctx(NULL, NULL, nid);
 }
 #endif
 
@@ -93,6 +95,7 @@ void EC_KEY_free(EC_KEY *r)
     EC_GROUP_free(r->group);
     EC_POINT_free(r->pub_key);
     BN_clear_free(r->priv_key);
+    OPENSSL_free(r->propq);
 
     OPENSSL_clear_free((void *)r, sizeof(EC_KEY));
 }
@@ -119,7 +122,8 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
     if (src->group != NULL) {
         /* clear the old group */
         EC_GROUP_free(dest->group);
-        dest->group = ec_group_new_ex(src->libctx, src->group->meth);
+        dest->group = ec_group_new_with_libctx(src->libctx, src->propq,
+                                               src->group->meth);
         if (dest->group == NULL)
             return NULL;
         if (!EC_GROUP_copy(dest->group, src->group))
@@ -180,7 +184,8 @@ EC_KEY *EC_KEY_copy(EC_KEY *dest, const EC_KEY *src)
 
 EC_KEY *EC_KEY_dup(const EC_KEY *ec_key)
 {
-    EC_KEY *ret = ec_key_new_method_int(ec_key->libctx, ec_key->engine);
+    EC_KEY *ret = ec_key_new_method_int(ec_key->libctx, ec_key->propq,
+                                        ec_key->engine);
 
     if (ret == NULL)
         return NULL;
@@ -251,14 +256,16 @@ int ossl_ec_key_gen(EC_KEY *eckey)
  *                   fails then the keypair is not generated,
  * Returns 1 if the keypair was generated or 0 otherwise.
  */
-int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
+static int ec_generate_key(EC_KEY *eckey, int pairwise_test)
 {
     int ok = 0;
     BIGNUM *priv_key = NULL;
-    const BIGNUM *order = NULL;
+    const BIGNUM *tmp = NULL;
+    BIGNUM *order = NULL;
     EC_POINT *pub_key = NULL;
     const EC_GROUP *group = eckey->group;
     BN_CTX *ctx = BN_CTX_secure_new_ex(eckey->libctx);
+    int sm2 = EC_KEY_get_flags(eckey) & EC_FLAG_SM2_RANGE ? 1 : 0;
 
     if (ctx == NULL)
         goto err;
@@ -276,8 +283,8 @@ int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
      * stated in the security policy.
      */
 
-    order = EC_GROUP_get0_order(group);
-    if (order == NULL)
+    tmp = EC_GROUP_get0_order(group);
+    if (tmp == NULL)
         goto err;
 
     /*
@@ -288,6 +295,18 @@ int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
      * 1 + rand[0..n-2] would effect the way that tests feed dummy entropy into
      * rand so the simpler backward compatible method has been used here.
      */
+
+    /* range of SM2 private key is [1, n-1) */
+    if (sm2) {
+        order = BN_new();
+        if (order == NULL || !BN_sub(order, tmp, BN_value_one()))
+            goto err;
+    } else {
+        order = BN_dup(tmp);
+        if (order == NULL)
+            goto err;
+    }
+
     do
         if (!BN_priv_rand_range_ex(priv_key, order, ctx))
             goto err;
@@ -320,12 +339,13 @@ int ec_generate_key(OPENSSL_CTX *libctx, EC_KEY *eckey, int pairwise_test)
         OSSL_CALLBACK *cb = NULL;
         void *cbarg = NULL;
 
-        OSSL_SELF_TEST_get_callback(libctx, &cb, &cbarg);
+        OSSL_SELF_TEST_get_callback(eckey->libctx, &cb, &cbarg);
         ok = ecdsa_keygen_pairwise_test(eckey, cb, cbarg);
     }
 err:
     /* Step (9): If there is an error return an invalid keypair. */
     if (!ok) {
+        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         BN_clear(eckey->priv_key);
         if (eckey->pub_key != NULL)
             EC_POINT_set_to_infinity(group, eckey->pub_key);
@@ -334,25 +354,31 @@ err:
     EC_POINT_free(pub_key);
     BN_clear_free(priv_key);
     BN_CTX_free(ctx);
+    BN_free(order);
     return ok;
 }
 
 int ec_key_simple_generate_key(EC_KEY *eckey)
 {
-    return ec_generate_key(NULL, eckey, 0);
+    return ec_generate_key(eckey, 0);
 }
 
 int ec_key_simple_generate_public_key(EC_KEY *eckey)
 {
     int ret;
+    BN_CTX *ctx = BN_CTX_new_ex(eckey->libctx);
+
+    if (ctx == NULL)
+        return 0;
 
     /*
      * See SP800-56AR3 5.6.1.2.2: Step (8)
      * pub_key = priv_key * G (where G is a point on the curve)
      */
     ret = EC_POINT_mul(eckey->group, eckey->pub_key, eckey->priv_key, NULL,
-                       NULL, NULL);
+                       NULL, ctx);
 
+    BN_CTX_free(ctx);
     if (ret == 1)
         eckey->dirty_cnt++;
 
@@ -631,6 +657,11 @@ OPENSSL_CTX *ec_key_get_libctx(const EC_KEY *key)
     return key->libctx;
 }
 
+const char *ec_key_get0_propq(const EC_KEY *key)
+{
+    return key->propq;
+}
+
 const EC_GROUP *EC_KEY_get0_group(const EC_KEY *key)
 {
     return key->group;
@@ -804,6 +835,13 @@ void EC_KEY_clear_flags(EC_KEY *key, int flags)
 {
     key->flags &= ~flags;
     key->dirty_cnt++;
+}
+
+int EC_KEY_decoded_from_explicit_params(const EC_KEY *key)
+{
+    if (key == NULL || key->group == NULL)
+        return -1;
+    return key->group->decoded_from_explicit_params;
 }
 
 size_t EC_KEY_key2buf(const EC_KEY *key, point_conversion_form_t form,

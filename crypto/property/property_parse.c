@@ -568,6 +568,7 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
     if (r == NULL)
         return NULL;
 
+    r->has_optional = 0;
     for (i = j = n = 0; i < a->n || j < b->n; n++) {
         if (i >= a->n) {
             copy = &bp[j++];
@@ -581,6 +582,7 @@ OSSL_PROPERTY_LIST *ossl_property_merge(const OSSL_PROPERTY_LIST *a,
             copy = &bp[j++];
         }
         memcpy(r->properties + n, copy, sizeof(r->properties[0]));
+        r->has_optional |= copy->optional;
     }
     r->n = n;
     if (n != t)
@@ -594,8 +596,9 @@ int ossl_property_parse_init(OPENSSL_CTX *ctx)
         "provider",     /* Name of provider (default, legacy, fips) */
         "version",      /* Version number of this provider */
         "fips",         /* FIPS validated or FIPS supporting algorithm */
-        "format",       /* output format for serializers */
-        "type",         /* output type for serializers */
+        "output",       /* Output type for encoders */
+        "input",        /* Input type for decoders */
+        "structure",    /* Structure name for encoders and decoders */
     };
     size_t i;
 

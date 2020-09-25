@@ -62,7 +62,7 @@ The input and formats; the default is B<PEM>.
 See L<openssl(1)/Format Options> for details.
 
 Private keys are a sequence of B<ASN.1 INTEGERS>: the version (zero), B<p>,
-B<q>, B<g>, and the public and and private key components.  Public keys
+B<q>, B<g>, and the public and private key components.  Public keys
 are a B<SubjectPublicKeyInfo> structure with the B<DSA> type.
 
 The B<PEM> format also accepts PKCS#8 data.
@@ -158,6 +158,10 @@ L<openssl-dsaparam(1)>,
 L<openssl-gendsa(1)>,
 L<openssl-rsa(1)>,
 L<openssl-genrsa(1)>
+
+=head1 HISTORY
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

@@ -58,6 +58,14 @@ const EVP_CIPHER *ossl_prov_cipher_cipher(const PROV_CIPHER *pc);
 ENGINE *ossl_prov_cipher_engine(const PROV_CIPHER *pc);
 
 /* Digest functions */
+
+/*
+ * Fetch a digest from the specified libctx using the provided mdname and
+ * propquery. Store the result in the PROV_DIGEST and return the fetched md.
+ */
+const EVP_MD *ossl_prov_digest_fetch(PROV_DIGEST *pd, OPENSSL_CTX *libctx,
+                                     const char *mdname, const char *propquery);
+
 /*
  * Load a digest from the specified parameters with the specified context.
  * The params "properties", "engine" and "digest" are used to determine the
@@ -77,6 +85,21 @@ int ossl_prov_digest_copy(PROV_DIGEST *dst, const PROV_DIGEST *src);
 /* Query the digest and associated engine (if any) */
 const EVP_MD *ossl_prov_digest_md(const PROV_DIGEST *pd);
 ENGINE *ossl_prov_digest_engine(const PROV_DIGEST *pd);
+
+
+/*
+ * Set the various parameters on an EVP_MAC_CTX from the supplied arguments.
+ * If any of the supplied ciphername/mdname etc are NULL then the values
+ * from the supplied params (if non NULL) are used instead.
+ */
+int ossl_prov_set_macctx(EVP_MAC_CTX *macctx,
+                         const OSSL_PARAM params[],
+                         const char *ciphername,
+                         const char *mdname,
+                         const char *engine,
+                         const char *properties,
+                         const unsigned char *key,
+                         size_t keylen);
 
 /* MAC functions */
 /*

@@ -10,7 +10,7 @@
 #include <string.h> /* memset */
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <openssl/serializer.h>
+#include <openssl/encoder.h>
 #include <openssl/provider.h>
 #include <openssl/param_build.h>
 #include <openssl/core_names.h>
@@ -152,41 +152,54 @@ static int test_print_key_using_pem(const char *alg, const EVP_PKEY *pk)
     return ret;
 }
 
-static int test_print_key_type_using_serializer(const char *alg, int type,
-                                                const EVP_PKEY *pk)
+static int test_print_key_type_using_encoder(const char *alg, int type,
+                                             const EVP_PKEY *pk)
 {
-    const char *pq;
-    OSSL_SERIALIZER_CTX *ctx = NULL;
+    const char *output_type;
+    int selection;
+    OSSL_ENCODER_CTX *ctx = NULL;
     BIO *membio = BIO_new(BIO_s_mem());
     int ret = 0;
 
     switch (type) {
     case PRIV_TEXT:
-        pq = OSSL_SERIALIZER_PrivateKey_TO_TEXT_PQ;
+        output_type = "TEXT";
+        selection = OSSL_KEYMGMT_SELECT_KEYPAIR
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_PEM:
-        pq = OSSL_SERIALIZER_PrivateKey_TO_PEM_PQ;
+        output_type = "PEM";
+        selection = OSSL_KEYMGMT_SELECT_KEYPAIR
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PRIV_DER:
-        pq = OSSL_SERIALIZER_PrivateKey_TO_DER_PQ;
+        output_type = "DER";
+        selection = OSSL_KEYMGMT_SELECT_KEYPAIR
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_TEXT:
-        pq = OSSL_SERIALIZER_PUBKEY_TO_TEXT_PQ;
+        output_type = "TEXT";
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_PEM:
-        pq = OSSL_SERIALIZER_PUBKEY_TO_PEM_PQ;
+        output_type = "PEM";
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     case PUB_DER:
-        pq = OSSL_SERIALIZER_PUBKEY_TO_DER_PQ;
+        output_type = "DER";
+        selection = OSSL_KEYMGMT_SELECT_PUBLIC_KEY
+            | OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS;
         break;
 
     default:
-        TEST_error("Invalid serialization type");
+        TEST_error("Invalid encoding type");
         goto err;
     }
 
@@ -194,58 +207,60 @@ static int test_print_key_type_using_serializer(const char *alg, int type,
         goto err;
 
     /* Make a context, it's valid for several prints */
-    TEST_note("Setting up a OSSL_SERIALIZER context with passphrase");
-    if (!TEST_ptr(ctx = OSSL_SERIALIZER_CTX_new_by_EVP_PKEY(pk, pq))
+    TEST_note("Setting up a OSSL_ENCODER context with passphrase");
+    if (!TEST_ptr(ctx = OSSL_ENCODER_CTX_new_by_EVP_PKEY(pk, output_type,
+                                                         selection,
+                                                         NULL, NULL))
         /* Check that this operation is supported */
-        || !TEST_ptr(OSSL_SERIALIZER_CTX_get_serializer(ctx)))
+        || !TEST_int_ne(OSSL_ENCODER_CTX_get_num_encoders(ctx), 0))
         goto err;
 
     /* Use no cipher.  This should give us an unencrypted PEM */
     TEST_note("Testing with no encryption");
-    if (!TEST_true(OSSL_SERIALIZER_to_bio(ctx, membio))
+    if (!TEST_true(OSSL_ENCODER_to_bio(ctx, membio))
         || !TEST_true(compare_with_file(alg, type, membio)))
         goto err;
 
     if (type == PRIV_PEM) {
         /* Set a passphrase to be used later */
-        if (!TEST_true(OSSL_SERIALIZER_CTX_set_passphrase(ctx,
+        if (!TEST_true(OSSL_ENCODER_CTX_set_passphrase(ctx,
                                                           (unsigned char *)"pass",
                                                           4)))
             goto err;
 
         /* Use a valid cipher name */
         TEST_note("Displaying PEM encrypted with AES-256-CBC");
-        if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, "AES-256-CBC", NULL))
-            || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+        if (!TEST_true(OSSL_ENCODER_CTX_set_cipher(ctx, "AES-256-CBC", NULL))
+            || !TEST_true(OSSL_ENCODER_to_bio(ctx, bio_out)))
             goto err;
 
         /* Use an invalid cipher name, which should generate no output */
         TEST_note("NOT Displaying PEM encrypted with (invalid) FOO");
-        if (!TEST_false(OSSL_SERIALIZER_CTX_set_cipher(ctx, "FOO", NULL))
-            || !TEST_false(OSSL_SERIALIZER_to_bio(ctx, bio_out)))
+        if (!TEST_false(OSSL_ENCODER_CTX_set_cipher(ctx, "FOO", NULL))
+            || !TEST_false(OSSL_ENCODER_to_bio(ctx, bio_out)))
             goto err;
 
         /* Clear the cipher.  This should give us an unencrypted PEM again */
         TEST_note("Testing with encryption cleared (no encryption)");
-        if (!TEST_true(OSSL_SERIALIZER_CTX_set_cipher(ctx, NULL, NULL))
-            || !TEST_true(OSSL_SERIALIZER_to_bio(ctx, membio))
+        if (!TEST_true(OSSL_ENCODER_CTX_set_cipher(ctx, NULL, NULL))
+            || !TEST_true(OSSL_ENCODER_to_bio(ctx, membio))
             || !TEST_true(compare_with_file(alg, type, membio)))
             goto err;
     }
     ret = 1;
 err:
     BIO_free(membio);
-    OSSL_SERIALIZER_CTX_free(ctx);
+    OSSL_ENCODER_CTX_free(ctx);
     return ret;
 }
 
-static int test_print_key_using_serializer(const char *alg, const EVP_PKEY *pk)
+static int test_print_key_using_encoder(const char *alg, const EVP_PKEY *pk)
 {
     int i;
     int ret = 1;
 
     for (i = 0; i < 6; i++)
-        ret = ret && test_print_key_type_using_serializer(alg, i, pk);
+        ret = ret && test_print_key_type_using_encoder(alg, i, pk);
 
     return ret;
 }
@@ -326,7 +341,7 @@ static int test_fromdata_rsa(void)
             goto err;
     }
     ret = test_print_key_using_pem("RSA", pk)
-          && test_print_key_using_serializer("RSA", pk);
+          && test_print_key_using_encoder("RSA", pk);
  err:
     BN_free(bn_from);
     BN_free(bn);
@@ -447,7 +462,7 @@ static int test_fromdata_dh_named_group(void)
         || !TEST_ptr(pub = BN_bin2bn(pub_data, sizeof(pub_data), NULL))
         || !TEST_ptr(priv = BN_bin2bn(priv_data, sizeof(priv_data), NULL))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
-                                                      OSSL_PKEY_PARAM_DH_GROUP,
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
                                                       group_name, 0))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
@@ -464,7 +479,7 @@ static int test_fromdata_dh_named_group(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 256))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_DH_GROUP,
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
                                                   name_out, sizeof(name_out),
                                                   &len))
         || !TEST_str_eq(name_out, group_name)
@@ -512,7 +527,7 @@ static int test_fromdata_dh_named_group(void)
         goto err;
 
     ret = test_print_key_using_pem("DH", pk)
-          && test_print_key_using_serializer("DH", pk);
+          && test_print_key_using_encoder("DH", pk);
 err:
     BN_free(p);
     BN_free(q);
@@ -588,7 +603,7 @@ static int test_fromdata_dh_fips186_4(void)
         || !TEST_ptr(pub = BN_bin2bn(pub_data, sizeof(pub_data), NULL))
         || !TEST_ptr(priv = BN_bin2bn(priv_data, sizeof(priv_data), NULL))
         || !TEST_true(OSSL_PARAM_BLD_push_utf8_string(bld,
-                                                      OSSL_PKEY_PARAM_DH_GROUP,
+                                                      OSSL_PKEY_PARAM_GROUP_NAME,
                                                       group_name, 0))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub))
         || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv))
@@ -605,7 +620,7 @@ static int test_fromdata_dh_fips186_4(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 256))
         goto err;
 
-    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_DH_GROUP,
+    if (!TEST_true(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
                                                   name_out, sizeof(name_out),
                                                   &len))
         || !TEST_str_eq(name_out, group_name)
@@ -648,7 +663,7 @@ static int test_fromdata_dh_fips186_4(void)
         goto err;
 
     ret = test_print_key_using_pem("DH", pk)
-          && test_print_key_using_serializer("DH", pk);
+          && test_print_key_using_encoder("DH", pk);
 err:
     BN_free(p);
     BN_free(q);
@@ -841,6 +856,8 @@ static int test_fromdata_ecx(int tst)
         size = ED448_KEYLEN;
         alg = "ED448";
         break;
+    default:
+        goto err;
     }
 
     ctx = EVP_PKEY_CTX_new_from_name(NULL, alg, NULL);
@@ -855,7 +872,8 @@ static int test_fromdata_ecx(int tst)
         goto err;
 
     if (!TEST_ptr(copy_pk = EVP_PKEY_new())
-        || !TEST_false(EVP_PKEY_copy_parameters(copy_pk, pk)))
+           /* This should succeed because there are no parameters to copy */
+        || !TEST_true(EVP_PKEY_copy_parameters(copy_pk, pk)))
         goto err;
 
     if (!TEST_true(EVP_PKEY_get_octet_string_param(
@@ -873,7 +891,7 @@ static int test_fromdata_ecx(int tst)
         goto err;
 
     ret = test_print_key_using_pem(alg, pk)
-          && test_print_key_using_serializer(alg, pk);
+          && test_print_key_using_encoder(alg, pk);
 
 err:
     EVP_PKEY_free(pk);
@@ -927,7 +945,7 @@ static int test_fromdata_ec(void)
                                          sizeof(ec_priv_keydata), NULL)))
         goto err;
 
-    if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_EC_NAME,
+    if (OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
                                         curve, 0) <= 0)
         goto err;
     if (OSSL_PARAM_BLD_push_octet_string(bld, OSSL_PKEY_PARAM_PUB_KEY,
@@ -954,12 +972,12 @@ static int test_fromdata_ec(void)
         goto err;
 
     if (!TEST_ptr(gettable = EVP_PKEY_gettable_params(pk))
-        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_EC_NAME))
+        || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_GROUP_NAME))
         || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_PUB_KEY))
         || !TEST_ptr(OSSL_PARAM_locate_const(gettable, OSSL_PKEY_PARAM_PRIV_KEY)))
         goto err;
 
-    if (!EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_EC_NAME,
+    if (!EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
                                         out_curve_name, sizeof(out_curve_name),
                                         &len)
         || !TEST_str_eq(out_curve_name, curve)
@@ -974,7 +992,7 @@ static int test_fromdata_ec(void)
         goto err;
 
     ret = test_print_key_using_pem(alg, pk)
-          && test_print_key_using_serializer(alg, pk);
+          && test_print_key_using_encoder(alg, pk);
 err:
     BN_free(bn_priv);
     BN_free(ec_priv_bn);
@@ -1143,7 +1161,7 @@ static int test_fromdata_dsa_fips186_4(void)
         || !TEST_int_eq(EVP_PKEY_size(pk), 2 + 2 * (3 + sizeof(q_data))))
         goto err;
 
-    if (!TEST_false(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_DH_GROUP,
+    if (!TEST_false(EVP_PKEY_get_utf8_string_param(pk, OSSL_PKEY_PARAM_GROUP_NAME,
                                                    name_out, sizeof(name_out),
                                                    &len))
         || !TEST_true(EVP_PKEY_get_bn_param(pk, OSSL_PKEY_PARAM_PUB_KEY,
@@ -1190,7 +1208,7 @@ static int test_fromdata_dsa_fips186_4(void)
         goto err;
 
     ret = test_print_key_using_pem("DSA", pk)
-          && test_print_key_using_serializer("DSA", pk);
+          && test_print_key_using_encoder("DSA", pk);
  err:
     OSSL_PARAM_BLD_free_params(fromdata_params);
     OSSL_PARAM_BLD_free(bld);

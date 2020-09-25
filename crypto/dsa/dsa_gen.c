@@ -23,29 +23,21 @@
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-int dsa_generate_ffc_parameters(DSA *dsa, int type,
-                                int pbits, int qbits,
-                                EVP_MD *md, BN_GENCB *cb)
+int dsa_generate_ffc_parameters(DSA *dsa, int type, int pbits, int qbits,
+                                BN_GENCB *cb)
 {
     int ret = 0, res;
 
-    if (qbits <= 0) {
-        if (md != NULL)
-            qbits = EVP_MD_size(md) * 8;
-        else
-            qbits = (pbits >= 2048 ? SHA256_DIGEST_LENGTH :
-                                     SHA_DIGEST_LENGTH) * 8;
-    }
 #ifndef FIPS_MODULE
     if (type == DSA_PARAMGEN_TYPE_FIPS_186_2)
         ret = ffc_params_FIPS186_2_generate(dsa->libctx, &dsa->params,
                                             FFC_PARAM_TYPE_DSA,
-                                            pbits, qbits, md, &res, cb);
+                                            pbits, qbits, &res, cb);
     else
 #endif
         ret = ffc_params_FIPS186_4_generate(dsa->libctx, &dsa->params,
                                             FFC_PARAM_TYPE_DSA,
-                                            pbits, qbits, md, &res, cb);
+                                            pbits, qbits, &res, cb);
     if (ret > 0)
         dsa->dirty_cnt++;
     return ret;
@@ -57,26 +49,21 @@ int DSA_generate_parameters_ex(DSA *dsa, int bits,
                                int *counter_ret, unsigned long *h_ret,
                                BN_GENCB *cb)
 {
-#ifndef FIPS_MODULE
     if (dsa->meth->dsa_paramgen)
         return dsa->meth->dsa_paramgen(dsa, bits, seed_in, seed_len,
                                        counter_ret, h_ret, cb);
-#endif
     if (seed_in != NULL
         && !ffc_params_set_validate_params(&dsa->params, seed_in, seed_len, -1))
         return 0;
 
-#ifndef FIPS_MODULE
     /* The old code used FIPS 186-2 DSA Parameter generation */
     if (bits <= 1024 && seed_len == 20) {
         if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_2,
-                                         bits, 160, NULL, cb))
+                                         bits, 160, cb))
             return 0;
-    } else
-#endif
-    {
+    } else {
         if (!dsa_generate_ffc_parameters(dsa, DSA_PARAMGEN_TYPE_FIPS_186_4,
-                                         bits, -1, NULL, cb))
+                                         bits, 0, cb))
             return 0;
     }
 

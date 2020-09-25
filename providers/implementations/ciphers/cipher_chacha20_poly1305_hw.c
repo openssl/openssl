@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 /* chacha20_poly1305 cipher implementation */
 
+#include "internal/endian.h"
 #include "cipher_chacha20_poly1305.h"
 
 static int chacha_poly1305_tls_init(PROV_CIPHER_CTX *bctx,
@@ -117,10 +118,7 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
     size_t tail, tohash_len, buf_len, plen = ctx->tls_payload_length;
     unsigned char *buf, *tohash, *ctr, storage[sizeof(zero) + 32];
 
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
     if (len != plen + POLY1305_BLOCK_SIZE)
         return 0;
@@ -214,7 +212,7 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
         Poly1305_Update(poly, zero, tail);
     }
 
-    if (is_endian.little) {
+    if (IS_LITTLE_ENDIAN) {
         memcpy(ctr, (unsigned char *)&ctx->len, POLY1305_BLOCK_SIZE);
     } else {
         ctr[0]  = (unsigned char)(ctx->len.aad);
@@ -252,6 +250,8 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
                        len - POLY1305_BLOCK_SIZE);
             return 0;
         }
+        /* Strip the tag */
+        len -= POLY1305_BLOCK_SIZE;
     }
 
     *out_padlen = len;
@@ -271,10 +271,7 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
     size_t olen = 0;
     int rv = 0;
 
-    const union {
-        long one;
-        char little;
-    } is_endian = { 1 };
+    DECLARE_IS_ENDIAN;
 
     if (!ctx->mac_inited) {
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
@@ -345,7 +342,7 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
         if ((rem = (size_t)ctx->len.text % POLY1305_BLOCK_SIZE))
             Poly1305_Update(poly, zero, POLY1305_BLOCK_SIZE - rem);
 
-        if (is_endian.little) {
+        if (IS_LITTLE_ENDIAN) {
             Poly1305_Update(poly, (unsigned char *)&ctx->len,
                             POLY1305_BLOCK_SIZE);
         } else {

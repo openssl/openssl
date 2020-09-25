@@ -47,6 +47,7 @@ typedef enum {
     POINT_CONVERSION_HYBRID = 6
 } point_conversion_form_t;
 
+#  include <openssl/params.h>
 #  ifndef OPENSSL_NO_DEPRECATED_3_0
 typedef struct ec_method_st EC_METHOD;
 #  endif
@@ -380,18 +381,34 @@ EC_GROUP *EC_GROUP_new_curve_GF2m(const BIGNUM *p, const BIGNUM *a,
 #  endif
 
 /**
+ * Creates a EC_GROUP object with a curve specified by parameters.
+ * The parameters may be explicit or a named curve,
+ *  \param  params A list of parameters describing the group.
+ *  \param  libctx The associated library context or NULL for the default
+ *                 context
+ *  \param  propq  A property query string
+ *  \return newly created EC_GROUP object with specified parameters or NULL
+ *          if an error occurred
+ */
+EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
+                                   OPENSSL_CTX *libctx, const char *propq);
+
+/**
  * Creates a EC_GROUP object with a curve specified by a NID
  *  \param  libctx The associated library context or NULL for the default
  *                 context
+ *  \param  propq  A property query string
  *  \param  nid    NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
  */
-EC_GROUP *EC_GROUP_new_by_curve_name_ex(OPENSSL_CTX *libctx, int nid);
+EC_GROUP *EC_GROUP_new_by_curve_name_with_libctx(OPENSSL_CTX *libctx,
+                                                 const char *propq, int nid);
 
 /**
  * Creates a EC_GROUP object with a curve specified by a NID. Same as
- * EC_GROUP_new_by_curve_name_ex but the libctx is always NULL.
+ * EC_GROUP_new_by_curve_name_with_libctx but the libctx and propq are always
+ * NULL.
  *  \param  nid    NID of the OID of the curve name
  *  \return newly created EC_GROUP object with specified curve or NULL
  *          if an error occurred
@@ -857,6 +874,7 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
 #  define EC_FLAG_NON_FIPS_ALLOW  0x1
 #  define EC_FLAG_FIPS_CHECKED    0x2
 #  define EC_FLAG_COFACTOR_ECDH   0x1000
+#  define EC_FLAG_SM2_RANGE       0x4
 
 /**
  *  Creates a new EC_KEY object.
@@ -864,11 +882,11 @@ int ECPKParameters_print_fp(FILE *fp, const EC_GROUP *x, int off);
  *               which case the default library context is used.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_ex(OPENSSL_CTX *ctx);
+EC_KEY *EC_KEY_new_with_libctx(OPENSSL_CTX *ctx, const char *propq);
 
 /**
- *  Creates a new EC_KEY object. Same as calling EC_KEY_new_ex with a NULL
- *  library context
+ *  Creates a new EC_KEY object. Same as calling EC_KEY_new_with_libctx with a
+ *  NULL library context
  *  \return EC_KEY object or NULL if an error occurred.
  */
 EC_KEY *EC_KEY_new(void);
@@ -879,20 +897,24 @@ void EC_KEY_set_flags(EC_KEY *key, int flags);
 
 void EC_KEY_clear_flags(EC_KEY *key, int flags);
 
+int EC_KEY_decoded_from_explicit_params(const EC_KEY *key);
+
 /**
  *  Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object.
- *  \param  ctx  The library context for to use for this EC_KEY. May be NULL in
- *               which case the default library context is used.
- *  \param  nid  NID of the named curve.
+ *  \param  ctx   The library context for to use for this EC_KEY. May be NULL in
+ *                which case the default library context is used.
+ *  \param  propq Any property query string
+ *  \param  nid   NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
-EC_KEY *EC_KEY_new_by_curve_name_ex(OPENSSL_CTX *ctx, int nid);
+EC_KEY *EC_KEY_new_by_curve_name_with_libctx(OPENSSL_CTX *ctx, const char *propq,
+                                             int nid);
 
 /**
  *  Creates a new EC_KEY object using a named curve as underlying
  *  EC_GROUP object. Same as calling EC_KEY_new_by_curve_name_ex with a NULL
- *  library context.
+ *  library context and property query string.
  *  \param  nid  NID of the named curve.
  *  \return EC_KEY object or NULL if an error occurred.
  */
@@ -1450,17 +1472,8 @@ DEPRECATEDIN_3_0(void EC_KEY_METHOD_get_verify
 #   endif
 #  endif
 
-int EVP_PKEY_CTX_set_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            const char *name);
-int EVP_PKEY_CTX_get_ec_paramgen_curve_name(EVP_PKEY_CTX *ctx,
-                                            char *name, size_t namelen);
 int EVP_PKEY_CTX_set_ec_paramgen_curve_nid(EVP_PKEY_CTX *ctx, int nid);
-
-#  define EVP_PKEY_CTX_set_ec_param_enc(ctx, flag) \
-        EVP_PKEY_CTX_ctrl(ctx, EVP_PKEY_EC, \
-                          EVP_PKEY_OP_PARAMGEN|EVP_PKEY_OP_KEYGEN, \
-                          EVP_PKEY_CTRL_EC_PARAM_ENC, flag, NULL)
-
+int EVP_PKEY_CTX_set_ec_param_enc(EVP_PKEY_CTX *ctx, int param_enc);
 int EVP_PKEY_CTX_set_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx, int cofactor_mode);
 int EVP_PKEY_CTX_get_ecdh_cofactor_mode(EVP_PKEY_CTX *ctx);
 
@@ -1477,18 +1490,6 @@ int EVP_PKEY_CTX_set0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm,
                                    int len);
 int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 
-/* SM2 will skip the operation check so no need to pass operation here */
-#  define EVP_PKEY_CTX_set1_id(ctx, id, id_len) \
-        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
-                          EVP_PKEY_CTRL_SET1_ID, (int)id_len, (void*)(id))
-#  define EVP_PKEY_CTX_get1_id(ctx, id) \
-        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
-                          EVP_PKEY_CTRL_GET1_ID, 0, (void*)(id))
-
-#  define EVP_PKEY_CTX_get1_id_len(ctx, id_len) \
-        EVP_PKEY_CTX_ctrl(ctx, -1, -1, \
-                          EVP_PKEY_CTRL_GET1_ID_LEN, 0, (void*)(id_len))
-
 #  define EVP_PKEY_CTRL_EC_PARAMGEN_CURVE_NID         (EVP_PKEY_ALG_CTRL + 1)
 #  define EVP_PKEY_CTRL_EC_PARAM_ENC                  (EVP_PKEY_ALG_CTRL + 2)
 #  define EVP_PKEY_CTRL_EC_ECDH_COFACTOR              (EVP_PKEY_ALG_CTRL + 3)
@@ -1499,9 +1500,6 @@ int EVP_PKEY_CTX_get0_ecdh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **ukm);
 #  define EVP_PKEY_CTRL_GET_EC_KDF_OUTLEN             (EVP_PKEY_ALG_CTRL + 8)
 #  define EVP_PKEY_CTRL_EC_KDF_UKM                    (EVP_PKEY_ALG_CTRL + 9)
 #  define EVP_PKEY_CTRL_GET_EC_KDF_UKM                (EVP_PKEY_ALG_CTRL + 10)
-#  define EVP_PKEY_CTRL_SET1_ID                       (EVP_PKEY_ALG_CTRL + 11)
-#  define EVP_PKEY_CTRL_GET1_ID                       (EVP_PKEY_ALG_CTRL + 12)
-#  define EVP_PKEY_CTRL_GET1_ID_LEN                   (EVP_PKEY_ALG_CTRL + 13)
 
 /* KDF types */
 #  define EVP_PKEY_ECDH_KDF_NONE                      1

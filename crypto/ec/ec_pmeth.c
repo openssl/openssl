@@ -216,7 +216,8 @@ static int pkey_ec_kdf_derive(EVP_PKEY_CTX *ctx,
         goto err;
     /* Do KDF stuff */
     if (!ecdh_KDF_X9_63(key, *keylen, ktmp, ktmplen,
-                        dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md))
+                        dctx->kdf_ukm, dctx->kdf_ukmlen, dctx->kdf_md,
+                        ctx->libctx, ctx->propquery))
         goto err;
     rv = 1;
 

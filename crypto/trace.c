@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -126,8 +126,10 @@ static const struct trace_category_st trace_categories[] = {
     TRACE_CATEGORY_(TLS),
     TRACE_CATEGORY_(TLS_CIPHER),
     TRACE_CATEGORY_(CONF),
+#ifndef OPENSSL_NO_ENGINE
     TRACE_CATEGORY_(ENGINE_TABLE),
     TRACE_CATEGORY_(ENGINE_REF_COUNT),
+#endif
     TRACE_CATEGORY_(PKCS5V2),
     TRACE_CATEGORY_(PKCS12_KEYGEN),
     TRACE_CATEGORY_(PKCS12_DECRYPT),

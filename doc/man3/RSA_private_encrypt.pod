@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-RSA_private_encrypt, RSA_public_decrypt - low level signature operations
+RSA_private_encrypt, RSA_public_decrypt - low-level signature operations
 
 =head1 SYNOPSIS
 
@@ -24,7 +24,7 @@ Both of the functions described on this page are deprecated.
 Applications should instead use L<EVP_PKEY_encrypt_init(3)>,
 L<EVP_PKEY_encrypt(3)>, L<EVP_PKEY_decrypt_init(3)> and L<EVP_PKEY_decrypt(3)>.
 
-These functions handle RSA signatures at a low level.
+These functions handle RSA signatures at a low-level.
 
 RSA_private_encrypt() signs the B<flen> bytes at B<from> (usually a
 message digest with an algorithm identifier) using the private key

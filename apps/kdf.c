@@ -17,8 +17,6 @@
 #include <openssl/kdf.h>
 #include <openssl/params.h>
 
-DEFINE_STACK_OF_STRING()
-
 typedef enum OPTION_choice {
     OPT_ERR = -1, OPT_EOF = 0, OPT_HELP,
     OPT_KDFOPT, OPT_BIN, OPT_KEYLEN, OPT_OUT,

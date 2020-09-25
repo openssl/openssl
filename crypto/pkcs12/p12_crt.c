@@ -12,10 +12,6 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
-DEFINE_STACK_OF(X509)
-DEFINE_STACK_OF(PKCS7)
-DEFINE_STACK_OF(PKCS12_SAFEBAG)
-
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,
                           PKCS12_SAFEBAG *bag);
 
@@ -205,6 +201,24 @@ PKCS12_SAFEBAG *PKCS12_add_key(STACK_OF(PKCS12_SAFEBAG) **pbags,
     PKCS12_SAFEBAG_free(bag);
     return NULL;
 
+}
+
+PKCS12_SAFEBAG *PKCS12_add_secret(STACK_OF(PKCS12_SAFEBAG) **pbags, 
+                                  int nid_type, const unsigned char *value, int len)
+{
+    PKCS12_SAFEBAG *bag = NULL;
+
+    /* Add secret, storing the value as an octet string */
+    if ((bag = PKCS12_SAFEBAG_create_secret(nid_type, V_ASN1_OCTET_STRING, value, len)) == NULL)
+        goto err;
+
+    if (!pkcs12_add_bag(pbags, bag))
+        goto err;
+
+    return bag;
+ err:
+    PKCS12_SAFEBAG_free(bag);
+    return NULL;
 }
 
 int PKCS12_add_safe(STACK_OF(PKCS7) **psafes, STACK_OF(PKCS12_SAFEBAG) *bags,

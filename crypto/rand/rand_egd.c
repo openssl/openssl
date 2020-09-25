@@ -54,6 +54,60 @@ struct sockaddr_un {
 # include <string.h>
 # include <errno.h>
 
+# if defined(OPENSSL_SYS_TANDEM)
+/*
+ * HPNS:
+ *
+ *  Our current MQ 5.3 EGD requies compatability-mode sockets
+ *  This code forces the mode to compatibility if required
+ *  and then restores the mode.
+ *
+ *  Needs review:
+ *
+ *  The better long-term solution is to either run two EGD's each in one of
+ *  the two modes or revise the EGD code to listen on two different sockets
+ *  (each in one of the two modes).
+ */
+_variable
+int hpns_socket(int family,
+                int type,
+                int protocol,
+                char* transport)
+{
+    int  socket_rc;
+    char current_transport[20];
+
+#  define AF_UNIX_PORTABILITY    "$ZAFN2"
+#  define AF_UNIX_COMPATIBILITY  "$ZPLS"
+
+    if (!_arg_present(transport) || transport != NULL || transport[0] == '\0')
+        return socket(family, type, protocol);
+
+    socket_transport_name_get(AF_UNIX, current_transport, 20);
+
+    if (strcmp(current_transport,transport) == 0)
+        return socket(family, type, protocol);
+
+    /* set the requested socket transport */
+    if (socket_transport_name_set(AF_UNIX, transport))
+        return -1;
+
+    socket_rc = socket(family,type,protocol);
+
+    /* set mode back to what it was */
+    if (socket_transport_name_set(AF_UNIX, current_transport))
+        return -1;
+
+    return socket_rc;
+}
+
+/*#define socket(a,b,c,...) hpns_socket(a,b,c,__VA_ARGS__) */
+
+static int hpns_connect_attempt = 0;
+
+# endif /* defined(OPENSSL_SYS_HPNS) */
+
+
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     FILE *fp = NULL;
@@ -71,7 +125,11 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
         return -1;
     strcpy(addr.sun_path, path);
     i = offsetof(struct sockaddr_un, sun_path) + strlen(path);
+#if defined(OPENSSL_SYS_TANDEM)
+    fd = hpns_socket(AF_UNIX, SOCK_STREAM, 0, AF_UNIX_COMPATIBILITY);
+#else
     fd = socket(AF_UNIX, SOCK_STREAM, 0);
+#endif
     if (fd == -1 || (fp = fdopen(fd, "r+")) == NULL)
         return -1;
     setbuf(fp, NULL);
@@ -100,6 +158,18 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
             /* No error, try again */
             break;
         default:
+# if defined(OPENSSL_SYS_TANDEM)
+            if (hpns_connect_attempt == 0) {
+                /* try the other kind of AF_UNIX socket */
+                close(fd);
+                fd = hpns_socket(AF_UNIX, SOCK_STREAM, 0, AF_UNIX_PORTABILITY);
+                if (fd == -1)
+                    return -1;
+                ++hpns_connect_attempt;
+                break;  /* try the connect again */
+            }
+# endif
+
             ret = -1;
             goto err;
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include "internal/cryptlib.h"
+#include "internal/endian.h"
 
 #ifndef OPENSSL_NO_CHACHA
 
@@ -310,12 +311,9 @@ static int chacha20_poly1305_tls_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
 
     {
-        const union {
-            long one;
-            char little;
-        } is_endian = { 1 };
+        DECLARE_IS_ENDIAN;
 
-        if (is_endian.little) {
+        if (IS_LITTLE_ENDIAN) {
             memcpy(ctr, (unsigned char *)&actx->len, POLY1305_BLOCK_SIZE);
         } else {
             ctr[0]  = (unsigned char)(actx->len.aad);
@@ -426,10 +424,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
     }
     if (in == NULL                              /* explicit final */
         || plen != len) {                       /* or tls mode */
-        const union {
-            long one;
-            char little;
-        } is_endian = { 1 };
+        DECLARE_IS_ENDIAN;
         unsigned char temp[POLY1305_BLOCK_SIZE];
 
         if (actx->aad) {                        /* wrap up aad */
@@ -443,7 +438,7 @@ static int chacha20_poly1305_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
             Poly1305_Update(POLY1305_ctx(actx), zero,
                             POLY1305_BLOCK_SIZE - rem);
 
-        if (is_endian.little) {
+        if (IS_LITTLE_ENDIAN) {
             Poly1305_Update(POLY1305_ctx(actx),
                             (unsigned char *)&actx->len, POLY1305_BLOCK_SIZE);
         } else {

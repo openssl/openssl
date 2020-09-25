@@ -23,13 +23,13 @@
  * necessary for the compiler, but provides an assurance that the signatures
  * of the functions in the dispatch table are correct.
  */
-static OSSL_OP_digest_init_fn keccak_init;
-static OSSL_OP_digest_update_fn keccak_update;
-static OSSL_OP_digest_final_fn keccak_final;
-static OSSL_OP_digest_freectx_fn keccak_freectx;
-static OSSL_OP_digest_dupctx_fn keccak_dupctx;
-static OSSL_OP_digest_set_ctx_params_fn shake_set_ctx_params;
-static OSSL_OP_digest_settable_ctx_params_fn shake_settable_ctx_params;
+static OSSL_FUNC_digest_init_fn keccak_init;
+static OSSL_FUNC_digest_update_fn keccak_update;
+static OSSL_FUNC_digest_final_fn keccak_final;
+static OSSL_FUNC_digest_freectx_fn keccak_freectx;
+static OSSL_FUNC_digest_dupctx_fn keccak_dupctx;
+static OSSL_FUNC_digest_set_ctx_params_fn shake_set_ctx_params;
+static OSSL_FUNC_digest_settable_ctx_params_fn shake_settable_ctx_params;
 static sha3_absorb_fn generic_sha3_absorb;
 static sha3_final_fn generic_sha3_final;
 
@@ -47,6 +47,8 @@ static sha3_final_fn generic_sha3_final;
 
 static int keccak_init(void *vctx)
 {
+    if (!ossl_prov_is_running())
+        return 0;
     /* The newctx() handles most of the ctx fixed setup. */
     sha3_reset((KECCAK1600_CTX *)vctx);
     return 1;
@@ -95,6 +97,8 @@ static int keccak_final(void *vctx, unsigned char *out, size_t *outl,
     int ret = 1;
     KECCAK1600_CTX *ctx = vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
     if (outsz > 0)
         ret = ctx->meth.final(out, ctx);
 
@@ -145,6 +149,8 @@ static int s390x_sha3_final(unsigned char *md, void *vctx)
 {
     KECCAK1600_CTX *ctx = vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
     s390x_klmd(ctx->buf, ctx->bufsz, NULL, 0, ctx->pad, ctx->A);
     memcpy(md, ctx->A, ctx->md_size);
     return 1;
@@ -154,6 +160,8 @@ static int s390x_shake_final(unsigned char *md, void *vctx)
 {
     KECCAK1600_CTX *ctx = vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
     s390x_klmd(ctx->buf, ctx->bufsz, md, ctx->md_size, ctx->pad, ctx->A);
     return 1;
 }
@@ -182,10 +190,11 @@ static PROV_SHA3_METHOD shake_s390x_md =
 #endif /* S390_SHA3 */
 
 #define SHA3_newctx(typ, uname, name, bitlen, pad)                             \
-static OSSL_OP_digest_newctx_fn name##_newctx;                                 \
+static OSSL_FUNC_digest_newctx_fn name##_newctx;                               \
 static void *name##_newctx(void *provctx)                                      \
 {                                                                              \
-    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
+    KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
+                                                : NULL;                        \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -195,10 +204,11 @@ static void *name##_newctx(void *provctx)                                      \
 }
 
 #define KMAC_newctx(uname, bitlen, pad)                                        \
-static OSSL_OP_digest_newctx_fn uname##_newctx;                                \
+static OSSL_FUNC_digest_newctx_fn uname##_newctx;                              \
 static void *uname##_newctx(void *provctx)                                     \
 {                                                                              \
-    KECCAK1600_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                        \
+    KECCAK1600_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx)) \
+                                                : NULL;                        \
                                                                                \
     if (ctx == NULL)                                                           \
         return NULL;                                                           \
@@ -239,7 +249,8 @@ static void keccak_freectx(void *vctx)
 static void *keccak_dupctx(void *ctx)
 {
     KECCAK1600_CTX *in = (KECCAK1600_CTX *)ctx;
-    KECCAK1600_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    KECCAK1600_CTX *ret = ossl_prov_is_running() ? OPENSSL_malloc(sizeof(*ret))
+                                                : NULL;
 
     if (ret != NULL)
         *ret = *in;
@@ -250,7 +261,7 @@ static const OSSL_PARAM known_shake_settable_ctx_params[] = {
     {OSSL_DIGEST_PARAM_XOFLEN, OSSL_PARAM_UNSIGNED_INTEGER, NULL, 0, 0},
     OSSL_PARAM_END
 };
-static const OSSL_PARAM *shake_settable_ctx_params(void)
+static const OSSL_PARAM *shake_settable_ctx_params(ossl_unused void *provctx)
 {
     return known_shake_settable_ctx_params;
 }

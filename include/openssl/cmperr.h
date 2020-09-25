@@ -10,6 +10,7 @@
 
 #ifndef OPENSSL_CMPERR_H
 # define OPENSSL_CMPERR_H
+# pragma once
 
 # include <openssl/opensslconf.h>
 # include <openssl/symhacks.h>
@@ -44,19 +45,15 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_CERTRESPONSE_NOT_FOUND                     113
 #  define CMP_R_CERT_AND_KEY_DO_NOT_MATCH                  114
 #  define CMP_R_CHECKAFTER_OUT_OF_RANGE                    181
-#  define CMP_R_CHECKING_PBM_NO_SECRET_AVAILABLE           166
 #  define CMP_R_ENCOUNTERED_KEYUPDATEWARNING               176
 #  define CMP_R_ENCOUNTERED_WAITING                        162
 #  define CMP_R_ERROR_CALCULATING_PROTECTION               115
 #  define CMP_R_ERROR_CREATING_CERTCONF                    116
 #  define CMP_R_ERROR_CREATING_CERTREP                     117
-#  define CMP_R_ERROR_CREATING_CR                          163
+#  define CMP_R_ERROR_CREATING_CERTREQ                     163
 #  define CMP_R_ERROR_CREATING_ERROR                       118
 #  define CMP_R_ERROR_CREATING_GENM                        119
 #  define CMP_R_ERROR_CREATING_GENP                        120
-#  define CMP_R_ERROR_CREATING_IR                          164
-#  define CMP_R_ERROR_CREATING_KUR                         165
-#  define CMP_R_ERROR_CREATING_P10CR                       121
 #  define CMP_R_ERROR_CREATING_PKICONF                     122
 #  define CMP_R_ERROR_CREATING_POLLREP                     123
 #  define CMP_R_ERROR_CREATING_POLLREQ                     124
@@ -68,12 +65,17 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_ERROR_SETTING_CERTHASH                     128
 #  define CMP_R_ERROR_UNEXPECTED_CERTCONF                  160
 #  define CMP_R_ERROR_VALIDATING_PROTECTION                140
+#  define CMP_R_ERROR_VALIDATING_SIGNATURE                 171
+#  define CMP_R_FAILED_BUILDING_OWN_CHAIN                  164
 #  define CMP_R_FAILED_EXTRACTING_PUBKEY                   141
 #  define CMP_R_FAILURE_OBTAINING_RANDOM                   110
 #  define CMP_R_FAIL_INFO_OUT_OF_RANGE                     129
 #  define CMP_R_INVALID_ARGS                               100
+#  define CMP_R_INVALID_OPTION                             174
 #  define CMP_R_MISSING_KEY_INPUT_FOR_CREATING_PROTECTION  130
 #  define CMP_R_MISSING_KEY_USAGE_DIGITALSIGNATURE         142
+#  define CMP_R_MISSING_P10CSR                             121
+#  define CMP_R_MISSING_PBM_SECRET                         166
 #  define CMP_R_MISSING_PRIVATE_KEY                        131
 #  define CMP_R_MISSING_PROTECTION                         143
 #  define CMP_R_MISSING_REFERENCE_CERT                     168
@@ -107,6 +109,8 @@ int ERR_load_CMP_strings(void);
 #  define CMP_R_UNSUPPORTED_ALGORITHM                      136
 #  define CMP_R_UNSUPPORTED_KEY_TYPE                       137
 #  define CMP_R_UNSUPPORTED_PROTECTION_ALG_DHBASEDMAC      154
+#  define CMP_R_VALUE_TOO_LARGE                            175
+#  define CMP_R_VALUE_TOO_SMALL                            177
 #  define CMP_R_WRONG_ALGORITHM_OID                        138
 #  define CMP_R_WRONG_CERTID_IN_RP                         187
 #  define CMP_R_WRONG_PBM_VALUE                            155

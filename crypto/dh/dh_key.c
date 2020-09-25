@@ -287,6 +287,10 @@ static int generate_key(DH *dh)
             } else
 #endif
             {
+                /* Do a partial check for invalid p, q, g */
+                if (!ffc_params_simple_validate(dh->libctx, &dh->params,
+                                                FFC_PARAM_TYPE_DH))
+                    goto err;
                 /*
                  * For FFC FIPS 186-4 keygen
                  * security strength s = 112,
@@ -351,10 +355,10 @@ err:
     return 0;
 }
 
-size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
+size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out, size_t size, int alloc)
 {
     const BIGNUM *pubkey;
-    unsigned char *pbuf;
+    unsigned char *pbuf = NULL;
     const BIGNUM *p;
     int p_size;
 
@@ -366,19 +370,29 @@ size_t dh_key2buf(const DH *dh, unsigned char **pbuf_out)
         DHerr(DH_F_DH_KEY2BUF, DH_R_INVALID_PUBKEY);
         return 0;
     }
-    if ((pbuf = OPENSSL_malloc(p_size)) == NULL) {
-        DHerr(DH_F_DH_KEY2BUF, ERR_R_MALLOC_FAILURE);
-        return 0;
+    if (pbuf_out != NULL && (alloc || *pbuf_out != NULL)) {
+        if (!alloc) {
+            if (size >= (size_t)p_size)
+                pbuf = *pbuf_out;
+        } else {
+            pbuf = OPENSSL_malloc(p_size);
+        }
+
+        if (pbuf == NULL) {
+            DHerr(DH_F_DH_KEY2BUF, ERR_R_MALLOC_FAILURE);
+            return 0;
+        }
+        /*
+         * As per Section 4.2.8.1 of RFC 8446 left pad public
+         * key with zeros to the size of p
+         */
+        if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
+            if (alloc)
+                OPENSSL_free(pbuf);
+            DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
+            return 0;
+        }
+        *pbuf_out = pbuf;
     }
-    /*
-     * As per Section 4.2.8.1 of RFC 8446 left pad public
-     * key with zeros to the size of p
-     */
-    if (BN_bn2binpad(pubkey, pbuf, p_size) < 0) {
-        OPENSSL_free(pbuf);
-        DHerr(DH_F_DH_KEY2BUF, DH_R_BN_ERROR);
-        return 0;
-    }
-    *pbuf_out = pbuf;
     return p_size;
 }

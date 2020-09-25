@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-evp_pkey_export_to_provider, evp_pkey_downgrade
+evp_pkey_export_to_provider, evp_pkey_copy_downgraded, evp_pkey_downgrade
 - internal EVP_PKEY support functions for providers
 
 =head1 SYNOPSIS
@@ -13,6 +13,7 @@ evp_pkey_export_to_provider, evp_pkey_downgrade
  void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
                                    EVP_KEYMGMT **keymgmt,
                                    const char *propquery);
+ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
  int evp_pkey_downgrade(EVP_PKEY *pk);
 
 =head1 DESCRIPTION
@@ -28,6 +29,13 @@ default context), the name of the legacy type of I<pk>, and the I<propquery>
 
 If I<keymgmt> isn't NULL but I<*keymgmt> is, and the "origin" was successfully
 exported, then I<*keymgmt> is assigned the implicitly fetched B<EVP_KEYMGMT>.
+
+evp_pkey_copy_downgraded() makes a copy of I<src> in legacy form into I<*dest>,
+if there's a corresponding legacy implementation.  This should be used if the
+use of a downgraded key is temporary.
+For example, L<PEM_write_bio_PrivateKey_traditional(3)> uses this to try its
+best to get "traditional" PEM output even if the input B<EVP_PKEY> has a
+provider-native internal key.
 
 evp_pkey_downgrade() converts an B<EVP_PKEY> with a provider side "origin" key
 to one with a legacy "origin", if there's a corresponding legacy implementation.

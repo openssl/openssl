@@ -15,7 +15,6 @@
 #include "internal/provider.h"
 
 DEFINE_STACK_OF(OSSL_PROVIDER)
-DEFINE_STACK_OF(CONF_VALUE)
 
 /* PROVIDER config module */
 
@@ -89,6 +88,7 @@ static int provider_conf_load(OPENSSL_CTX *libctx, const char *name,
 
     if (!ecmds) {
         CRYPTOerr(CRYPTO_F_PROVIDER_CONF_LOAD, CRYPTO_R_PROVIDER_SECTION_ERROR);
+        ERR_add_error_data(3, "section=", value, " not found");
         return 0;
     }
 

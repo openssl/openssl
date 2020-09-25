@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2003-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -287,7 +287,7 @@ char *OPENSSL_buf2hexstr(const unsigned char *buf, long buflen)
 
 int openssl_strerror_r(int errnum, char *buf, size_t buflen)
 {
-#if defined(_MSC_VER) && _MSC_VER>=1400
+#if defined(_MSC_VER) && _MSC_VER>=1400 && !defined(_WIN32_WCE)
     return !strerror_s(buf, buflen, errnum);
 #elif defined(_GNU_SOURCE)
     char *err;

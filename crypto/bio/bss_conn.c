@@ -377,11 +377,7 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
     long ret = 1;
     BIO_CONNECT *data;
 # ifndef OPENSSL_NO_KTLS
-#  ifdef __FreeBSD__
-    struct tls_enable *crypto_info;
-#  else
-    struct tls12_crypto_info_aes_gcm_128 *crypto_info;
-#  endif
+    ktls_crypto_info_t *crypto_info;
 # endif
 
     data = (BIO_CONNECT *)b->ptr;
@@ -438,12 +434,13 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
     case BIO_C_SET_CONNECT:
         if (ptr != NULL) {
             b->init = 1;
-            if (num == 0) {
+            if (num == 0) { /* BIO_set_conn_hostname */
                 char *hold_service = data->param_service;
                 /* We affect the hostname regardless.  However, the input
                  * string might contain a host:service spec, so we must
                  * parse it, which might or might not affect the service
                  */
+
                 OPENSSL_free(data->param_hostname);
                 data->param_hostname = NULL;
                 ret = BIO_parse_hostserv(ptr,
@@ -452,19 +449,29 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
                                          BIO_PARSE_PRIO_HOST);
                 if (hold_service != data->param_service)
                     OPENSSL_free(hold_service);
-            } else if (num == 1) {
+            } else if (num == 1) { /* BIO_set_conn_port */
                 OPENSSL_free(data->param_service);
-                data->param_service = OPENSSL_strdup(ptr);
-            } else if (num == 2) {
+                if ((data->param_service = OPENSSL_strdup(ptr)) == NULL)
+                    ret = 0;
+            } else if (num == 2) { /* BIO_set_conn_address */
                 const BIO_ADDR *addr = (const BIO_ADDR *)ptr;
+                char *host = BIO_ADDR_hostname_string(addr, 1);
+                char *service = BIO_ADDR_service_string(addr, 1);
+
+                ret = host != NULL && service != NULL;
                 if (ret) {
-                    data->param_hostname = BIO_ADDR_hostname_string(addr, 1);
-                    data->param_service = BIO_ADDR_service_string(addr, 1);
+                    OPENSSL_free(data->param_hostname);
+                    data->param_hostname = host;
+                    OPENSSL_free(data->param_service);
+                    data->param_service = service;
                     BIO_ADDRINFO_free(data->addr_first);
                     data->addr_first = NULL;
                     data->addr_iter = NULL;
+                } else {
+                    OPENSSL_free(host);
+                    OPENSSL_free(service);
                 }
-            } else if (num == 3) {
+            } else if (num == 3) { /* BIO_set_conn_ip_family */
                 data->connect_family = *(int *)ptr;
             } else {
                 ret = 0;
@@ -533,12 +540,8 @@ static long conn_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
 # ifndef OPENSSL_NO_KTLS
     case BIO_CTRL_SET_KTLS:
-#  ifdef __FreeBSD__
-        crypto_info = (struct tls_enable *)ptr;
-#  else
-        crypto_info = (struct tls12_crypto_info_aes_gcm_128 *)ptr;
-#  endif
-        ret = ktls_start(b->num, crypto_info, sizeof(*crypto_info), num);
+        crypto_info = (ktls_crypto_info_t *)ptr;
+        ret = ktls_start(b->num, crypto_info, num);
         if (ret)
             BIO_set_ktls_flag(b, num);
         break;

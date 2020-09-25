@@ -2,7 +2,7 @@ LIBS=../../libcrypto
 
 $CASTASM=c_enc.c
 # CAST assembly source is not PIC
-IF[{- !$disabled{asm} && !$disabled{pic} -}]
+IF[{- !$disabled{asm} && $disabled{pic} -}]
   $CASTASM_x86=cast-586.s
 
   # Now that we have defined all the arch specific variables, use the

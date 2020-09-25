@@ -34,7 +34,11 @@ SSL_set1_curves, SSL_set1_curves_list, SSL_get1_curves, SSL_get_shared_curve
 =head1 DESCRIPTION
 
 For all of the functions below that set the supported groups there must be at
-least one group in the list.
+least one group in the list. A number of these functions identify groups via a
+unique integer NID value. However, support for some groups may be added by
+external providers. In this case there will be no NID assigned for the group.
+When setting such groups applications should use the "list" form of these
+functions (i.e. SSL_CTX_set1_groups_list() and SSL_set1_groups_list).
 
 SSL_CTX_set1_groups() sets the supported groups for B<ctx> to B<glistlen>
 groups in the array B<glist>. The array consist of all NIDs of groups in
@@ -49,7 +53,8 @@ SSL_CTX_set1_groups_list() sets the supported groups for B<ctx> to
 string B<list>. The string is a colon separated list of group NIDs or
 names, for example "P-521:P-384:P-256:X25519:ffdhe2048". Currently supported
 groups for B<TLSv1.3> are B<P-256>, B<P-384>, B<P-521>, B<X25519>, B<X448>,
-B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>.
+B<ffdhe2048>, B<ffdhe3072>, B<ffdhe4096>, B<ffdhe6144>, B<ffdhe8192>. Support
+for other groups may be added by external providers.
 
 SSL_set1_groups() and SSL_set1_groups_list() are similar except they set
 supported groups for the SSL structure B<ssl>.
@@ -60,17 +65,22 @@ supported groups. The B<groups> parameter can be B<NULL> to simply
 return the number of groups for memory allocation purposes. The
 B<groups> array is in the form of a set of group NIDs in preference
 order. It can return zero if the client did not send a supported groups
-extension.
+extension. If a supported group NID is unknown then the value is set to the
+bitwise OR of TLSEXT_nid_unknown (0x1000000) and the id of the group.
 
-SSL_get_shared_group() returns shared group B<n> for a server-side
-SSL B<ssl>. If B<n> is -1 then the total number of shared groups is
+SSL_get_shared_group() returns the NID of the shared group B<n> for a
+server-side SSL B<ssl>. If B<n> is -1 then the total number of shared groups is
 returned, which may be zero. Other than for diagnostic purposes,
 most applications will only be interested in the first shared group
 so B<n> is normally set to zero. If the value B<n> is out of range,
-NID_undef is returned.
+NID_undef is returned. If the NID for the shared group is unknown then the value
+is set to the bitwise OR of TLSEXT_nid_unknown (0x1000000) and the id of the
+group.
 
-SSL_get_negotiated_group() returns the negotiated group on a TLSv1.3 connection
-for key exchange. This can be called by either client or server.
+SSL_get_negotiated_group() returns the NID of the negotiated group on a TLSv1.3
+connection for key exchange. This can be called by either client or server. If
+the NID for the shared group is unknown then the value is set to the bitwise OR
+of TLSEXT_nid_unknown (0x1000000) and the id of the group.
 
 All these functions are implemented as macros.
 
@@ -117,7 +127,7 @@ was added in OpenSSL 3.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2013-2018 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2013-2020 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

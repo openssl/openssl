@@ -192,7 +192,7 @@ When used with the B<-proxy> flag, the program will attempt to authenticate
 with the specified proxy using basic (base64) authentication.
 NB: Basic authentication is insecure; the credentials are sent to the proxy
 in easily reversible base64 encoding before any TLS/SSL session is established.
-Therefore these credentials are easily recovered by anyone able to sniff/trace
+Therefore, these credentials are easily recovered by anyone able to sniff/trace
 the network. Use with caution.
 
 =item B<-proxy_pass> I<arg>
@@ -234,7 +234,7 @@ Suppresses sending of the SNI (Server Name Indication) extension in the
 ClientHello message. Cannot be used in conjunction with the B<-servername> or
 <-dane_tlsa_domain> options.
 
-=item B<-cert> I<certname>
+=item B<-cert> I<filename>
 
 The client certificate to use, if one is requested by the server.
 The default is not to use a certificate.
@@ -248,8 +248,9 @@ This option has no effect and is retained for backward compatibility only.
 
 =item B<-cert_chain>
 
-A file containing untrusted certificates to use when attempting to build the
+A file or URI of untrusted certificates to use when attempting to build the
 certificate chain related to the certificate specified via the B<-cert> option.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-build_chain>
 
@@ -282,7 +283,8 @@ See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<arg>
 
-the private key password source. For more information about the format of I<arg>
+the private key and certifiate file password source.
+For more information about the format of I<arg>
 see L<openssl(1)/Pass phrase options>.
 
 =item B<-verify> I<depth>
@@ -478,11 +480,11 @@ File to send output of B<-msg> or B<-trace> to, default standard output.
 
 =item B<-nbio_test>
 
-Tests non-blocking I/O
+Tests nonblocking I/O
 
 =item B<-nbio>
 
-Turns on non-blocking I/O
+Turns on nonblocking I/O
 
 =item B<-crlf>
 
@@ -854,14 +856,14 @@ is that a web client complains it has no certificates or gives an empty
 list to choose from. This is normally because the server is not sending
 the clients certificate authority in its "acceptable CA list" when it
 requests a certificate. By using this command, the CA list can be viewed
-and checked. However some servers only request client authentication
+and checked. However, some servers only request client authentication
 after a specific URL is requested. To obtain the list in this case it
 is necessary to use the B<-prexit> option and send an HTTP request
 for an appropriate page.
 
 If a certificate is specified on the command line using the B<-cert>
 option it will not be used unless the server specifically requests
-a client certificate. Therefore merely including a client certificate
+a client certificate. Therefore, merely including a client certificate
 on the command line is no guarantee that the certificate works.
 
 If there are problems verifying a server certificate then the
@@ -870,7 +872,7 @@ server.
 
 This command is a test tool and is designed to continue the
 handshake after any certificate verification errors. As a result it will
-accept any certificate chain (trusted or not) sent by the peer. None test
+accept any certificate chain (trusted or not) sent by the peer. Non-test
 applications should B<not> do this as it makes them vulnerable to a MITM
 attack. This behaviour can be changed by with the B<-verify_return_error>
 option: any verify errors are then returned aborting the handshake.
@@ -909,6 +911,8 @@ The B<-certform> option has become obsolete in OpenSSL 3.0.0 and has no effect.
 
 All B<-keyform> values except B<ENGINE> have become obsolete in OpenSSL 3.0.0
 and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

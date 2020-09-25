@@ -1,6 +1,6 @@
 # Generated with generate_ssl_tests.pl
 
-num_tests = 14
+num_tests = 15
 
 test-0 = 0-renegotiate-client-no-resume
 test-1 = 1-renegotiate-client-resume
@@ -16,6 +16,7 @@ test-10 = 10-no-renegotiation-server-by-client
 test-11 = 11-no-renegotiation-server-by-server
 test-12 = 12-no-renegotiation-client-by-server
 test-13 = 13-no-renegotiation-client-by-client
+test-14 = 14-no-extms-on-renegotiation
 # ===========================================================
 
 [0-renegotiate-client-no-resume]
@@ -428,5 +429,37 @@ ExpectedResult = ClientFail
 HandshakeMode = RenegotiateClient
 Method = TLS
 ResumptionExpected = No
+
+
+# ===========================================================
+
+[14-no-extms-on-renegotiation]
+ssl_conf = 14-no-extms-on-renegotiation-ssl
+
+[14-no-extms-on-renegotiation-ssl]
+server = 14-no-extms-on-renegotiation-server
+client = 14-no-extms-on-renegotiation-client
+
+[14-no-extms-on-renegotiation-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
+CipherString = DEFAULT
+MaxProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
+
+[14-no-extms-on-renegotiation-client]
+CipherString = DEFAULT
+MaxProtocol = TLSv1.2
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
+VerifyMode = Peer
+
+[test-14]
+ExpectedResult = ServerFail
+HandshakeMode = RenegotiateClient
+Method = TLS
+ResumptionExpected = No
+client = 14-no-extms-on-renegotiation-client-extra
+
+[14-no-extms-on-renegotiation-client-extra]
+RenegotiateNoExtms = Yes
 
 

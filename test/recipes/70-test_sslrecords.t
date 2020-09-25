@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2016-2018 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -82,11 +82,17 @@ use constant {
     FRAGMENTED_IN_SSLV2 => 3,
     ALERT_BEFORE_SSLV2 => 4
 };
+
+# The TLSv1.2 in SSLv2 ClientHello need to run at security level 0
+# because in a SSLv2 ClientHello we can't send extentions to indicate
+# which signature algorithm we want to use, and the default is SHA1.
+
 #Test 5: Inject an SSLv2 style record format for a TLSv1.2 ClientHello
 my $sslv2testtype = TLSV1_2_IN_SSLV2;
 $proxy->clear();
 $proxy->filter(\&add_sslv2_filter);
 $proxy->serverflags("-tls1_2");
+$proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
 
@@ -96,6 +102,7 @@ ok(TLSProxy::Message->success(), "TLSv1.2 in SSLv2 ClientHello test");
 $sslv2testtype = SSLV2_IN_SSLV2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "SSLv2 in SSLv2 ClientHello test");
 
@@ -105,6 +112,7 @@ ok(TLSProxy::Message->fail(), "SSLv2 in SSLv2 ClientHello test");
 $sslv2testtype = FRAGMENTED_IN_TLSV1_2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
 
@@ -113,6 +121,7 @@ ok(TLSProxy::Message->success(), "Fragmented ClientHello in TLSv1.2 test");
 $sslv2testtype = FRAGMENTED_IN_SSLV2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
 
@@ -121,6 +130,7 @@ ok(TLSProxy::Message->fail(), "Fragmented ClientHello in TLSv1.2/SSLv2 test");
 $sslv2testtype = ALERT_BEFORE_SSLV2;
 $proxy->clear();
 $proxy->serverflags("-tls1_2");
+$proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
 $proxy->start();
 ok(TLSProxy::Message->fail(), "Alert before SSLv2 ClientHello test");
 
@@ -140,7 +150,8 @@ SKIP: {
     #Test 11: Sending an unrecognised record type in TLS1.1 should fail
     $fatal_alert = 0;
     $proxy->clear();
-    $proxy->clientflags("-tls1_1");
+    $proxy->clientflags("-tls1_1 -cipher DEFAULT:\@SECLEVEL=0");
+    $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
     $proxy->start();
     ok($fatal_alert, "Unrecognised record type in TLS1.1");
 }

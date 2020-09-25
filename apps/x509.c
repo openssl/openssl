@@ -28,10 +28,6 @@
 # include <openssl/dsa.h>
 #endif
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-DEFINE_STACK_OF(X509_EXTENSION)
-DEFINE_STACK_OF_STRING()
-
 #undef POSTFIX
 #define POSTFIX ".srl"
 #define DEF_DAYS        30
@@ -80,7 +76,7 @@ const OPTIONS x509_options[] = {
     {"inform", OPT_INFORM, 'f',
      "CSR input format (DER or PEM) - default PEM"},
     {"in", OPT_IN, '<', "Input file - default stdin"},
-    {"passin", OPT_PASSIN, 's', "Private key password/pass-phrase source"},
+    {"passin", OPT_PASSIN, 's', "Private key and cert file pass-phrase source"},
     {"outform", OPT_OUTFORM, 'f',
      "Output format (DER or PEM) - default PEM"},
     {"out", OPT_OUT, '>', "Output file - default stdout"},
@@ -117,9 +113,9 @@ const OPTIONS x509_options[] = {
     {"C", OPT_C, '-', "Print out C code forms"},
 #ifndef OPENSSL_NO_MD5
     {"subject_hash_old", OPT_SUBJECT_HASH_OLD, '-',
-     "Print old-style (MD5) issuer hash value"},
-    {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
      "Print old-style (MD5) subject hash value"},
+    {"issuer_hash_old", OPT_ISSUER_HASH_OLD, '-',
+     "Print old-style (MD5) issuer hash value"},
 #endif
     {"nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options"},
 
@@ -135,7 +131,7 @@ const OPTIONS x509_options[] = {
     {"setalias", OPT_SETALIAS, 's', "Set certificate alias"},
     {"days", OPT_DAYS, 'n',
      "How long till expiry of a signed certificate - def 30 days"},
-    {"signkey", OPT_SIGNKEY, 's', "Self sign cert with arg"},
+    {"signkey", OPT_SIGNKEY, 's', "Self-sign cert with arg"},
     {"set_serial", OPT_SET_SERIAL, 's', "Serial number to use"},
     {"extensions", OPT_EXTENSIONS, 's', "Section from config file to use"},
     {"certopt", OPT_CERTOPT, 's', "Various certificate text options"},
@@ -179,7 +175,7 @@ int x509_main(int argc, char **argv)
     char *subj = NULL;
     X509_NAME *fsubj = NULL;
     const unsigned long chtype = MBSTRING_ASC;
-    const int multirdn = 0;
+    const int multirdn = 1;
     STACK_OF(ASN1_OBJECT) *trust = NULL, *reject = NULL;
     STACK_OF(OPENSSL_STRING) *sigopts = NULL, *vfyopts = NULL;
     X509 *x = NULL, *xca = NULL;
@@ -510,7 +506,8 @@ int x509_main(int argc, char **argv)
         goto end;
     }
 
-    if (!X509_STORE_set_default_paths(ctx)) {
+    if (!X509_STORE_set_default_paths_with_libctx(ctx, app_get0_libctx(),
+                                                  app_get0_propq())) {
         ERR_print_errors(bio_err);
         goto end;
     }
@@ -525,7 +522,7 @@ int x509_main(int argc, char **argv)
         goto end;
     }
     if (fkeyfile != NULL) {
-        fkey = load_pubkey(fkeyfile, keyformat, 0, NULL, e, "Forced key");
+        fkey = load_pubkey(fkeyfile, keyformat, 0, NULL, e, "forced key");
         if (fkey == NULL)
             goto end;
     }
@@ -535,7 +532,8 @@ int x509_main(int argc, char **argv)
                    "The -new option requires a subject to be set using -subj\n");
         goto end;
     }
-    if (subj != NULL && (fsubj = parse_name(subj, chtype, multirdn)) == NULL)
+    if (subj != NULL
+            && (fsubj = parse_name(subj, chtype, multirdn, "subject")) == NULL)
         goto end;
 
     if (CAkeyfile == NULL && CA_flag && CAformat == FORMAT_PEM) {
@@ -607,7 +605,7 @@ int x509_main(int argc, char **argv)
                        "We need a private key to sign with, use -signkey or -CAkey or -CA <file> with private key\n");
             goto end;
         }
-        if ((x = X509_new()) == NULL)
+        if ((x = X509_new_with_libctx(app_get0_libctx(), app_get0_propq())) == NULL)
             goto end;
 
         if (sno == NULL) {
@@ -631,7 +629,7 @@ int x509_main(int argc, char **argv)
         if (!X509_set_pubkey(x, fkey != NULL ? fkey : X509_REQ_get0_pubkey(req)))
             goto end;
     } else {
-        x = load_cert(infile, FORMAT_UNDEF, "Certificate");
+        x = load_cert_pass(infile, FORMAT_UNDEF, passin, "certificate");
         if (x == NULL)
             goto end;
         if (fkey != NULL && !X509_set_pubkey(x, fkey))
@@ -641,7 +639,7 @@ int x509_main(int argc, char **argv)
     }
 
     if (CA_flag) {
-        xca = load_cert(CAfile, CAformat, "CA Certificate");
+        xca = load_cert_pass(CAfile, CAformat, passin, "CA certificate");
         if (xca == NULL)
             goto end;
     }
@@ -693,7 +691,7 @@ int x509_main(int argc, char **argv)
                            X509_get_subject_name(x), get_nameopt());
             } else if (serial == i) {
                 BIO_printf(out, "serial=");
-                i2a_ASN1_INTEGER(out, X509_get_serialNumber(x));
+                i2a_ASN1_INTEGER(out, X509_get0_serialNumber(x));
                 BIO_printf(out, "\n");
             } else if (next_serial == i) {
                 ASN1_INTEGER *ser = X509_get_serialNumber(x);
@@ -848,7 +846,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(bio_err, "Getting Private key\n");
                 if (Upkey == NULL) {
                     Upkey = load_key(keyfile, keyformat, 0,
-                                     passin, e, "Private key");
+                                     passin, e, "private key");
                     if (Upkey == NULL)
                         goto end;
                 }
@@ -860,7 +858,7 @@ int x509_main(int argc, char **argv)
                 BIO_printf(bio_err, "Getting CA Private Key\n");
                 if (CAkeyfile != NULL) {
                     CApkey = load_key(CAkeyfile, CAkeyformat,
-                                      0, passin, e, "CA Private Key");
+                                      0, passin, e, "CA private key");
                     if (CApkey == NULL)
                         goto end;
                 }
@@ -961,7 +959,7 @@ int x509_main(int argc, char **argv)
     sk_ASN1_OBJECT_pop_free(reject, ASN1_OBJECT_free);
     ASN1_OBJECT_free(objtmp);
     release_engine(e);
-    OPENSSL_free(passin);
+    clear_free(passin);
     return ret;
 }
 
@@ -1030,7 +1028,7 @@ static int x509_certify(X509_STORE *ctx, const char *CAfile, const EVP_MD *diges
         goto end;
 
     /*
-     * NOTE: this certificate can/should be self signed, unless it was a
+     * NOTE: this certificate can/should be self-signed, unless it was a
      * certificate request in which case it is not.
      */
     X509_STORE_CTX_set_cert(xsc, x);
@@ -1084,8 +1082,8 @@ static int callb(int ok, X509_STORE_CTX *ctx)
     X509 *err_cert;
 
     /*
-     * it is ok to use a self signed certificate This case will catch both
-     * the initial ok == 0 and the final ok == 1 calls to this function
+     * It is ok to use a self-signed certificate. This case will catch both
+     * the initial ok == 0 and the final ok == 1 calls to this function.
      */
     err = X509_STORE_CTX_get_error(ctx);
     if (err == X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT)
@@ -1098,7 +1096,7 @@ static int callb(int ok, X509_STORE_CTX *ctx)
      */
     if (ok) {
         BIO_printf(bio_err,
-                   "error with certificate to be certified - should be self signed\n");
+                   "error with certificate to be certified - should be self-signed\n");
         return 0;
     } else {
         err_cert = X509_STORE_CTX_get_current_cert(ctx);

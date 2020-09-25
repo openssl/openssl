@@ -945,6 +945,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
 
         if (SSL_TREAT_AS_TLS13(s)
+                && !BIO_get_ktls_send(s->wbio)
                 && s->enc_write_ctx != NULL
                 && (s->statem.enc_write_state != ENC_WRITE_STATE_WRITE_PLAIN_ALERTS
                     || type != SSL3_RT_ALERT)) {
@@ -1043,7 +1044,7 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
          * We haven't actually negotiated the version yet, but we're trying to
          * send early data - so we need to use the tls13enc function.
          */
-        if (tls13_enc(s, wr, numpipes, 1) < 1) {
+        if (tls13_enc(s, wr, numpipes, 1, NULL, mac_size) < 1) {
             if (!ossl_statem_in_error(s)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
                          ERR_R_INTERNAL_ERROR);
@@ -1052,7 +1053,8 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         }
     } else {
         if (!BIO_get_ktls_send(s->wbio)) {
-            if (s->method->ssl3_enc->enc(s, wr, numpipes, 1) < 1) {
+            if (s->method->ssl3_enc->enc(s, wr, numpipes, 1, NULL,
+                                         mac_size) < 1) {
                 if (!ossl_statem_in_error(s)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_DO_SSL3_WRITE,
                             ERR_R_INTERNAL_ERROR);
@@ -1105,14 +1107,14 @@ int do_ssl3_write(SSL *s, int type, const unsigned char *buf,
         if (s->msg_callback) {
             recordstart = WPACKET_get_curr(thispkt) - len
                           - SSL3_RT_HEADER_LENGTH;
-            s->msg_callback(1, 0, SSL3_RT_HEADER, recordstart,
+            s->msg_callback(1, thiswr->rec_version, SSL3_RT_HEADER, recordstart,
                             SSL3_RT_HEADER_LENGTH, s,
                             s->msg_callback_arg);
 
             if (SSL_TREAT_AS_TLS13(s) && s->enc_write_ctx != NULL) {
                 unsigned char ctype = type;
 
-                s->msg_callback(1, s->version, SSL3_RT_INNER_CONTENT_TYPE,
+                s->msg_callback(1, thiswr->rec_version, SSL3_RT_INNER_CONTENT_TYPE,
                                 &ctype, 1, s, s->msg_callback_arg);
             }
         }
@@ -1482,6 +1484,8 @@ int ssl3_read_bytes(SSL *s, int type, int *recvd_type, unsigned char *buf,
                 if (SSL3_RECORD_get_length(rr) == 0)
                     SSL3_RECORD_set_read(rr);
             } else {
+                if (s->options & SSL_OP_CLEANSE_PLAINTEXT)
+                    OPENSSL_cleanse(&(rr->data[rr->off]), n);
                 SSL3_RECORD_sub_length(rr, n);
                 SSL3_RECORD_add_off(rr, n);
                 if (SSL3_RECORD_get_length(rr) == 0) {

@@ -58,10 +58,12 @@ sub generate_tests() {
                     name => "server-auth-${protocol_name}"
                             .($sctp ? "-sctp" : ""),
                     server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol
                     },
                     client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol
                     },
@@ -77,11 +79,13 @@ sub generate_tests() {
                     name => "client-auth-${protocol_name}-request"
                             .($sctp ? "-sctp" : ""),
                     server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "VerifyMode" => "Request"
                     },
                     client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol
                     },
@@ -97,12 +101,14 @@ sub generate_tests() {
                     name => "client-auth-${protocol_name}-require-fail"
                             .($sctp ? "-sctp" : ""),
                     server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "VerifyCAFile" => test_pem("root-cert.pem"),
                         "VerifyMode" => "Require",
                     },
                     client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol
                     },
@@ -121,6 +127,7 @@ sub generate_tests() {
                     name => "client-auth-${protocol_name}-require"
                              .($sctp ? "-sctp" : ""),
                     server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "ClientSignatureAlgorithms" => $clisigalgs,
@@ -128,6 +135,7 @@ sub generate_tests() {
                         "VerifyMode" => "Request",
                     },
                     client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "Certificate" => test_pem("ee-client-chain.pem"),
@@ -149,6 +157,7 @@ sub generate_tests() {
                     name => "client-auth-${protocol_name}-require-non-empty-names"
                             .($sctp ? "-sctp" : ""),
                     server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "ClientSignatureAlgorithms" => $clisigalgs,
@@ -157,6 +166,7 @@ sub generate_tests() {
                         "VerifyMode" => "Request",
                     },
                     client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "Certificate" => test_pem("ee-client-chain.pem"),
@@ -178,11 +188,13 @@ sub generate_tests() {
                     name => "client-auth-${protocol_name}-noroot"
                             .($sctp ? "-sctp" : ""),
                     server => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "VerifyMode" => "Require",
                     },
                     client => {
+                        "CipherString" => "DEFAULT:\@SECLEVEL=0",
                         "MinProtocol" => $protocol,
                         "MaxProtocol" => $protocol,
                         "Certificate" => test_pem("ee-client-chain.pem"),

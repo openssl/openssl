@@ -18,8 +18,6 @@
 
 #include "internal/cryptlib.h"
 
-DEFINE_STACK_OF(CTLOG)
-
 /*
  * Information about a CT log server.
  */

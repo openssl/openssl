@@ -27,10 +27,10 @@
 #endif
 
 #include <openssl/core.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 
-static OSSL_core_gettable_params_fn *c_gettable_params = NULL;
-static OSSL_core_get_params_fn *c_get_params = NULL;
+static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
+static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
 
 /* Tell the core what params we provide and what type they are */
 static const OSSL_PARAM p_param_types[] = {
@@ -39,9 +39,9 @@ static const OSSL_PARAM p_param_types[] = {
 };
 
 /* This is a trick to ensure we define the provider functions correctly */
-static OSSL_provider_gettable_params_fn p_gettable_params;
-static OSSL_provider_get_params_fn p_get_params;
-static OSSL_provider_get_reason_strings_fn p_get_reason_strings;
+static OSSL_FUNC_provider_gettable_params_fn p_gettable_params;
+static OSSL_FUNC_provider_get_params_fn p_get_params;
+static OSSL_FUNC_provider_get_reason_strings_fn p_get_reason_strings;
 
 static const OSSL_PARAM *p_gettable_params(void *_)
 {
@@ -127,10 +127,10 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
         case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_get_core_gettable_params(in);
+            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
             break;
         case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_get_core_get_params(in);
+            c_get_params = OSSL_FUNC_core_get_params(in);
             break;
         default:
             /* Just ignore anything we don't understand */

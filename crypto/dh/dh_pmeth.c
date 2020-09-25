@@ -172,11 +172,7 @@ static int pkey_dh_ctrl(EVP_PKEY_CTX *ctx, int type, int p1, void *p2)
     case EVP_PKEY_CTRL_DH_KDF_TYPE:
         if (p1 == -2)
             return dctx->kdf_type;
-#ifdef OPENSSL_NO_CMS
-        if (p1 != EVP_PKEY_DH_KDF_NONE)
-#else
         if (p1 != EVP_PKEY_DH_KDF_NONE && p1 != EVP_PKEY_DH_KDF_X9_42)
-#endif
             return -2;
         dctx->kdf_type = p1;
         return 1;
@@ -286,7 +282,6 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
     int res;
     int prime_len = dctx->prime_len;
     int subprime_len = dctx->subprime_len;
-    const EVP_MD *md = dctx->md;
 
     if (dctx->paramgen_type > DH_PARAMGEN_TYPE_FIPS_186_4)
         return NULL;
@@ -300,26 +295,22 @@ static DH *ffc_params_generate(OPENSSL_CTX *libctx, DH_PKEY_CTX *dctx,
         else
             subprime_len = 160;
     }
-    if (md == NULL) {
-        if (prime_len >= 2048)
-            md = EVP_sha256();
-        else
-            md = EVP_sha1();
-    }
+
+    if (dctx->md != NULL)
+        ffc_set_digest(&ret->params, EVP_MD_name(dctx->md), NULL);
+
 # ifndef FIPS_MODULE
     if (dctx->paramgen_type == DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ffc_params_FIPS186_2_generate(libctx, &ret->params,
                                            FFC_PARAM_TYPE_DH,
-                                           prime_len, subprime_len, md, &res,
-                                           pcb);
+                                           prime_len, subprime_len, &res, pcb);
     else
 # endif
     /* For FIPS we always use the DH_PARAMGEN_TYPE_FIPS_186_4 generator */
     if (dctx->paramgen_type >= DH_PARAMGEN_TYPE_FIPS_186_2)
         rv = ffc_params_FIPS186_4_generate(libctx, &ret->params,
                                            FFC_PARAM_TYPE_DH,
-                                           prime_len, subprime_len, md, &res,
-                                           pcb);
+                                           prime_len, subprime_len, &res, pcb);
     if (rv <= 0) {
         DH_free(ret);
         return NULL;
@@ -450,7 +441,6 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         *keylen = ret;
         return 1;
     }
-#ifndef OPENSSL_NO_CMS
     else if (dctx->kdf_type == EVP_PKEY_DH_KDF_X9_42) {
 
         unsigned char *Z = NULL;
@@ -480,7 +470,6 @@ static int pkey_dh_derive(EVP_PKEY_CTX *ctx, unsigned char *key,
         OPENSSL_clear_free(Z, Zlen);
         return ret;
     }
-#endif
     return 0;
 }
 

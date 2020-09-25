@@ -28,8 +28,6 @@
 #include <openssl/cmp.h>
 #include <openssl/err.h>
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 /*
  * Send the PKIMessage req and on success return the response, else NULL.
  * Any previous error queue entries will likely be removed by ERR_clear_error().
@@ -40,6 +38,7 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
     char server_port[32] = { '\0' };
     STACK_OF(CONF_VALUE) *headers = NULL;
     const char *const content_type_pkix = "application/pkixcmp";
+    int tls_used;
     OSSL_CMP_MSG *res;
 
     if (ctx == NULL || req == NULL) {
@@ -53,16 +52,18 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
     if (ctx->serverPort != 0)
         BIO_snprintf(server_port, sizeof(server_port), "%d", ctx->serverPort);
 
+    tls_used = OSSL_CMP_CTX_get_http_cb_arg(ctx) != NULL;
+    ossl_cmp_log2(DEBUG, ctx, "connecting to CMP server %s%s",
+                  ctx->server, tls_used ? " using TLS" : "");
     res = (OSSL_CMP_MSG *)
         OSSL_HTTP_post_asn1(ctx->server, server_port, ctx->serverPath,
-                            OSSL_CMP_CTX_get_http_cb_arg(ctx) != NULL,
-                            ctx->proxy, ctx->no_proxy, NULL, NULL,
+                            tls_used, ctx->proxy, ctx->no_proxy, NULL, NULL,
                             ctx->http_cb, OSSL_CMP_CTX_get_http_cb_arg(ctx),
                             headers, content_type_pkix, (const ASN1_VALUE *)req,
                             ASN1_ITEM_rptr(OSSL_CMP_MSG),
                             0, 0, ctx->msg_timeout, content_type_pkix,
                             ASN1_ITEM_rptr(OSSL_CMP_MSG));
-
+    ossl_cmp_debug(ctx, "disconnected from CMP server");
     sk_CONF_VALUE_pop_free(headers, X509V3_conf_free);
     return res;
 }

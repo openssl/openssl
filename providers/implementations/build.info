@@ -1,2 +1,2 @@
-SUBDIRS=digests ciphers macs kdfs exchange keymgmt signature asymciphers \
-        serializers
+SUBDIRS=digests ciphers rands macs kdfs exchange keymgmt signature asymciphers \
+        encode_decode storemgmt kem

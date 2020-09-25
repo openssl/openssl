@@ -26,8 +26,6 @@
 #include <netinet/sctp.h>
 #endif
 
-DEFINE_STACK_OF(X509_NAME)
-
 HANDSHAKE_RESULT *HANDSHAKE_RESULT_new(void)
 {
     HANDSHAKE_RESULT *ret;
@@ -641,7 +639,8 @@ static int configure_handshake_ctx(SSL_CTX *server_ctx, SSL_CTX *server2_ctx,
     }
     if (extra->client.alpn_protocols != NULL) {
         unsigned char *alpn_protos = NULL;
-        size_t alpn_protos_len;
+        size_t alpn_protos_len = 0;
+
         if (!TEST_true(parse_protos(extra->client.alpn_protocols,
                                     &alpn_protos, &alpn_protos_len))
                 /* Reversed return value convention... */
@@ -938,16 +937,24 @@ static void do_reneg_setup_step(const SSL_TEST_CTX *test_ctx, PEER *peer)
             if (SSL_is_server(peer->ssl)) {
                 ret = SSL_renegotiate(peer->ssl);
             } else {
+                int full_reneg = 0;
+
+                if (test_ctx->extra.client.no_extms_on_reneg) {
+                    SSL_set_options(peer->ssl, SSL_OP_NO_EXTENDED_MASTER_SECRET);
+                    full_reneg = 1;
+                }
                 if (test_ctx->extra.client.reneg_ciphers != NULL) {
                     if (!SSL_set_cipher_list(peer->ssl,
                                 test_ctx->extra.client.reneg_ciphers)) {
                         peer->status = PEER_ERROR;
                         return;
                     }
-                    ret = SSL_renegotiate(peer->ssl);
-                } else {
-                    ret = SSL_renegotiate_abbreviated(peer->ssl);
+                    full_reneg = 1;
                 }
+                if (full_reneg)
+                    ret = SSL_renegotiate(peer->ssl);
+                else
+                    ret = SSL_renegotiate_abbreviated(peer->ssl);
             }
             if (!ret) {
                 peer->status = PEER_ERROR;
@@ -1276,14 +1283,10 @@ static int pkey_type(EVP_PKEY *pkey)
 
 static int peer_pkey_type(SSL *s)
 {
-    X509 *x = SSL_get_peer_certificate(s);
+    X509 *x = SSL_get0_peer_certificate(s);
 
-    if (x != NULL) {
-        int nid = pkey_type(X509_get0_pubkey(x));
-
-        X509_free(x);
-        return nid;
-    }
+    if (x != NULL)
+        return pkey_type(X509_get0_pubkey(x));
     return NID_undef;
 }
 

@@ -27,8 +27,10 @@ extern "C" {
 # define OSSL_SELF_TEST_TYPE_NONE               "None"
 # define OSSL_SELF_TEST_TYPE_MODULE_INTEGRITY   "Module_Integrity"
 # define OSSL_SELF_TEST_TYPE_INSTALL_INTEGRITY  "Install_Integrity"
+# define OSSL_SELF_TEST_TYPE_CRNG               "Continuous_RNG_Test"
 # define OSSL_SELF_TEST_TYPE_PCT                "Pairwise_Consistency_Test"
 # define OSSL_SELF_TEST_TYPE_KAT_CIPHER         "KAT_Cipher"
+# define OSSL_SELF_TEST_TYPE_KAT_ASYM_CIPHER    "KAT_AsymmetricCipher"
 # define OSSL_SELF_TEST_TYPE_KAT_DIGEST         "KAT_Digest"
 # define OSSL_SELF_TEST_TYPE_KAT_SIGNATURE      "KAT_Signature"
 # define OSSL_SELF_TEST_TYPE_KAT_KDF            "KAT_KDF"
@@ -43,6 +45,8 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_PCT_DSA        "DSA"
 # define OSSL_SELF_TEST_DESC_CIPHER_AES_GCM "AES_GCM"
 # define OSSL_SELF_TEST_DESC_CIPHER_TDES    "TDES"
+# define OSSL_SELF_TEST_DESC_ASYM_RSA_ENC   "RSA_Encrypt"
+# define OSSL_SELF_TEST_DESC_ASYM_RSA_DEC   "RSA_Decrypt"
 # define OSSL_SELF_TEST_DESC_MD_SHA1        "SHA1"
 # define OSSL_SELF_TEST_DESC_MD_SHA2        "SHA2"
 # define OSSL_SELF_TEST_DESC_MD_SHA3        "SHA3"
@@ -56,6 +60,7 @@ extern "C" {
 # define OSSL_SELF_TEST_DESC_KA_ECDH        "ECDH"
 # define OSSL_SELF_TEST_DESC_KDF_HKDF       "HKDF"
 # define OSSL_SELF_TEST_DESC_KDF_SSKDF      "SSKDF"
+# define OSSL_SELF_TEST_DESC_RNG            "RNG"
 
 # ifdef __cplusplus
 }
@@ -71,7 +76,7 @@ void OSSL_SELF_TEST_free(OSSL_SELF_TEST *st);
 
 void OSSL_SELF_TEST_onbegin(OSSL_SELF_TEST *st, const char *type,
                             const char *desc);
-void OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes);
+int OSSL_SELF_TEST_oncorrupt_byte(OSSL_SELF_TEST *st, unsigned char *bytes);
 void OSSL_SELF_TEST_onend(OSSL_SELF_TEST *st, int ret);
 
 #endif /* OPENSSL_SELF_TEST_H */

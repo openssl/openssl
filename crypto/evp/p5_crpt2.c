@@ -19,9 +19,11 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
-                      const unsigned char *salt, int saltlen, int iter,
-                      const EVP_MD *digest, int keylen, unsigned char *out)
+int pkcs5_pbkdf2_hmac_with_libctx(const char *pass, int passlen,
+                                  const unsigned char *salt, int saltlen,
+                                  int iter, const EVP_MD *digest, int keylen,
+                                  unsigned char *out,
+                                  OPENSSL_CTX *libctx, const char *propq)
 {
     const char *empty = "";
     int rv = 1, mode = 1;
@@ -40,7 +42,7 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     if (salt == NULL && saltlen == 0)
         salt = (unsigned char *)empty;
 
-    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL);
+    kdf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_PBKDF2, propq);
     kctx = EVP_KDF_CTX_new(kdf);
     EVP_KDF_free(kdf);
     if (kctx == NULL)
@@ -77,6 +79,15 @@ int PKCS5_PBKDF2_HMAC(const char *pass, int passlen,
     } OSSL_TRACE_END(PKCS5V2);
     return rv;
 }
+
+int PKCS5_PBKDF2_HMAC(const char *pass, int passlen, const unsigned char *salt,
+                      int saltlen, int iter, const EVP_MD *digest, int keylen,
+                      unsigned char *out)
+{
+    return pkcs5_pbkdf2_hmac_with_libctx(pass, passlen, salt, saltlen, iter,
+                                         digest, keylen, out, NULL, NULL);
+}
+
 
 int PKCS5_PBKDF2_HMAC_SHA1(const char *pass, int passlen,
                            const unsigned char *salt, int saltlen, int iter,

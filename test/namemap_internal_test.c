@@ -16,6 +16,20 @@
 #define ALIAS1 "alias1"
 #define ALIAS1_UC "ALIAS1"
 
+static int test_namemap_empty(void)
+{
+    OSSL_NAMEMAP *nm = NULL;
+    int ok;
+
+    ok = TEST_true(ossl_namemap_empty(NULL))
+         && TEST_ptr(nm = ossl_namemap_new())
+         && TEST_true(ossl_namemap_empty(nm))
+         && TEST_int_ne(ossl_namemap_add_name(nm, 0, NAME1), 0)
+         && TEST_false(ossl_namemap_empty(nm));
+    ossl_namemap_free(nm);
+    return ok;
+}
+
 static int test_namemap(OSSL_NAMEMAP *nm)
 {
     int num1 = ossl_namemap_add_name(nm, 0, NAME1);
@@ -42,7 +56,7 @@ static int test_namemap(OSSL_NAMEMAP *nm)
 static int test_namemap_independent(void)
 {
     OSSL_NAMEMAP *nm = ossl_namemap_new();
-    int ok = nm != NULL && test_namemap(nm);
+    int ok = TEST_ptr(nm) && test_namemap(nm);
 
     ossl_namemap_free(nm);
     return ok;
@@ -52,7 +66,7 @@ static int test_namemap_stored(void)
 {
     OSSL_NAMEMAP *nm = ossl_namemap_stored(NULL);
 
-    return nm != NULL
+    return TEST_ptr(nm)
         && test_namemap(nm);
 }
 
@@ -66,6 +80,8 @@ static int test_digestbyname(void)
     OSSL_NAMEMAP *nm = ossl_namemap_stored(NULL);
     const EVP_MD *sha256, *foo;
 
+    if (!TEST_ptr(nm))
+        return 0;
     id = ossl_namemap_add_name(nm, 0, "SHA256");
     if (!TEST_int_ne(id, 0))
         return 0;
@@ -92,6 +108,8 @@ static int test_cipherbyname(void)
     OSSL_NAMEMAP *nm = ossl_namemap_stored(NULL);
     const EVP_CIPHER *aes128, *bar;
 
+    if (!TEST_ptr(nm))
+        return 0;
     id = ossl_namemap_add_name(nm, 0, "AES-128-CBC");
     if (!TEST_int_ne(id, 0))
         return 0;
@@ -117,7 +135,7 @@ static int test_cipher_is_a(void)
     EVP_CIPHER *fetched = EVP_CIPHER_fetch(NULL, "AES-256-CCM", NULL);
     int rv = 1;
 
-    if (!TEST_ptr_ne(fetched, NULL))
+    if (!TEST_ptr(fetched))
         return 0;
     if (!TEST_true(EVP_CIPHER_is_a(fetched, "id-aes256-CCM"))
         || !TEST_false(EVP_CIPHER_is_a(fetched, "AES-128-GCM")))
@@ -139,7 +157,7 @@ static int test_digest_is_a(void)
     EVP_MD *fetched = EVP_MD_fetch(NULL, "SHA2-512", NULL);
     int rv = 1;
 
-    if (!TEST_ptr_ne(fetched, NULL))
+    if (!TEST_ptr(fetched))
         return 0;
     if (!TEST_true(EVP_MD_is_a(fetched, "SHA512"))
         || !TEST_false(EVP_MD_is_a(fetched, "SHA1")))
@@ -154,6 +172,7 @@ static int test_digest_is_a(void)
 
 int setup_tests(void)
 {
+    ADD_TEST(test_namemap_empty);
     ADD_TEST(test_namemap_independent);
     ADD_TEST(test_namemap_stored);
     ADD_TEST(test_digestbyname);

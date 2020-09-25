@@ -107,6 +107,7 @@ my %OS_data = (
     solaris     => { writer     => \&writer_linux,
                      sort       => sorter_linux(),
                      platforms  => { UNIX                       => 1 } },
+    "solaris-gcc" => 'solaris', # alias
     linux       => 'solaris',   # alias
     "bsd-gcc"   => 'solaris',   # alias
     aix         => { writer     => \&writer_aix,
@@ -127,6 +128,9 @@ my %OS_data = (
     NT          => 'WIN32',     # alias
     nt          => 'WIN32',     # alias
     mingw       => 'WINDOWS',   # alias
+    nonstop     => { writer     => \&writer_nonstop,
+                     sort       => OpenSSL::Ordinals::by_name(),
+                     platforms  => { TANDEM                     => 1 } },
    );
 
 do {
@@ -276,6 +280,12 @@ _____
 sub writer_aix {
     for (@_) {
         print $_->name(),"\n";
+    }
+}
+
+sub writer_nonstop {
+    for (@_) {
+        print "-export ",$_->name(),"\n";
     }
 }
 

@@ -89,42 +89,47 @@ int EVP_default_properties_enable_fips(OPENSSL_CTX *libctx, int enable);
 # define EVP_PKEY_MO_DECRYPT     0x0008
 
 # ifndef EVP_MD
-EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type);
-EVP_MD *EVP_MD_meth_dup(const EVP_MD *md);
-void EVP_MD_meth_free(EVP_MD *md);
+DEPRECATEDIN_3_0(EVP_MD *EVP_MD_meth_new(int md_type, int pkey_type))
+DEPRECATEDIN_3_0(EVP_MD *EVP_MD_meth_dup(const EVP_MD *md))
+DEPRECATEDIN_3_0(void EVP_MD_meth_free(EVP_MD *md))
 
-int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize);
-int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize);
-int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize);
-int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags);
-int EVP_MD_meth_set_init(EVP_MD *md, int (*init)(EVP_MD_CTX *ctx));
-int EVP_MD_meth_set_update(EVP_MD *md, int (*update)(EVP_MD_CTX *ctx,
-                                                     const void *data,
-                                                     size_t count));
-int EVP_MD_meth_set_final(EVP_MD *md, int (*final)(EVP_MD_CTX *ctx,
-                                                   unsigned char *md));
-int EVP_MD_meth_set_copy(EVP_MD *md, int (*copy)(EVP_MD_CTX *to,
-                                                 const EVP_MD_CTX *from));
-int EVP_MD_meth_set_cleanup(EVP_MD *md, int (*cleanup)(EVP_MD_CTX *ctx));
-int EVP_MD_meth_set_ctrl(EVP_MD *md, int (*ctrl)(EVP_MD_CTX *ctx, int cmd,
-                                                 int p1, void *p2));
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_input_blocksize(EVP_MD *md, int blocksize))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_result_size(EVP_MD *md, int resultsize))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_app_datasize(EVP_MD *md, int datasize))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_flags(EVP_MD *md, unsigned long flags))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_init(EVP_MD *md,
+                                          int (*init)(EVP_MD_CTX *ctx)))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_update(EVP_MD *md,
+                                            int (*update)(EVP_MD_CTX *ctx,
+                                                          const void *data,
+                                                          size_t count)))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_final(EVP_MD *md,
+                                           int (*final)(EVP_MD_CTX *ctx,
+                                                        unsigned char *md)))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_copy(EVP_MD *md,
+                                          int (*copy)(EVP_MD_CTX *to,
+                                                      const EVP_MD_CTX *from)))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_cleanup(EVP_MD *md,
+                                             int (*cleanup)(EVP_MD_CTX *ctx)))
+DEPRECATEDIN_3_0(int EVP_MD_meth_set_ctrl(EVP_MD *md,
+                                          int (*ctrl)(EVP_MD_CTX *ctx, int cmd,
+                                                      int p1, void *p2)))
 
-int EVP_MD_meth_get_input_blocksize(const EVP_MD *md);
-int EVP_MD_meth_get_result_size(const EVP_MD *md);
-int EVP_MD_meth_get_app_datasize(const EVP_MD *md);
-unsigned long EVP_MD_meth_get_flags(const EVP_MD *md);
-int (*EVP_MD_meth_get_init(const EVP_MD *md))(EVP_MD_CTX *ctx);
-int (*EVP_MD_meth_get_update(const EVP_MD *md))(EVP_MD_CTX *ctx,
-                                                const void *data,
-                                                size_t count);
-int (*EVP_MD_meth_get_final(const EVP_MD *md))(EVP_MD_CTX *ctx,
-                                               unsigned char *md);
-int (*EVP_MD_meth_get_copy(const EVP_MD *md))(EVP_MD_CTX *to,
-                                              const EVP_MD_CTX *from);
-int (*EVP_MD_meth_get_cleanup(const EVP_MD *md))(EVP_MD_CTX *ctx);
-int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
-                                              int p1, void *p2);
-
+DEPRECATEDIN_3_0(int EVP_MD_meth_get_input_blocksize(const EVP_MD *md))
+DEPRECATEDIN_3_0(int EVP_MD_meth_get_result_size(const EVP_MD *md))
+DEPRECATEDIN_3_0(int EVP_MD_meth_get_app_datasize(const EVP_MD *md))
+DEPRECATEDIN_3_0(unsigned long EVP_MD_meth_get_flags(const EVP_MD *md))
+DEPRECATEDIN_3_0(int (*EVP_MD_meth_get_init(const EVP_MD *md))(EVP_MD_CTX *ctx))
+DEPRECATEDIN_3_0(int (*EVP_MD_meth_get_update(const EVP_MD *md))
+    (EVP_MD_CTX *ctx, const void *data, size_t count))
+DEPRECATEDIN_3_0(int (*EVP_MD_meth_get_final(const EVP_MD *md))
+    (EVP_MD_CTX *ctx, unsigned char *md))
+DEPRECATEDIN_3_0(int (*EVP_MD_meth_get_copy(const EVP_MD *md))
+    (EVP_MD_CTX *to, const EVP_MD_CTX *from))
+DEPRECATEDIN_3_0(int (*EVP_MD_meth_get_cleanup(const EVP_MD *md))
+    (EVP_MD_CTX *ctx))
+DEPRECATEDIN_3_0(int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))
+    (EVP_MD_CTX *ctx, int cmd, int p1, void *p2))
 /* digest can only handle a single block */
 #  define EVP_MD_FLAG_ONESHOT     0x0001
 
@@ -199,51 +204,53 @@ int (*EVP_MD_meth_get_ctrl(const EVP_MD *md))(EVP_MD_CTX *ctx, int cmd,
 # define EVP_MD_CTX_FLAG_FINALISE        0x0200
 /* NOTE: 0x0400 is reserved for internal usage */
 
-EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len);
-EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher);
-void EVP_CIPHER_meth_free(EVP_CIPHER *cipher);
+DEPRECATEDIN_3_0(EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type,
+                                                 int block_size, int key_len))
+DEPRECATEDIN_3_0(EVP_CIPHER *EVP_CIPHER_meth_dup(const EVP_CIPHER *cipher))
+DEPRECATEDIN_3_0(void EVP_CIPHER_meth_free(EVP_CIPHER *cipher))
 
-int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher, int iv_len);
-int EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher, unsigned long flags);
-int EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher, int ctx_size);
-int EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_iv_length(EVP_CIPHER *cipher,
+                                                   int iv_len))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_flags(EVP_CIPHER *cipher,
+                                               unsigned long flags))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_impl_ctx_size(EVP_CIPHER *cipher,
+                                                       int ctx_size))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_init(EVP_CIPHER *cipher,
                              int (*init) (EVP_CIPHER_CTX *ctx,
                                           const unsigned char *key,
                                           const unsigned char *iv,
-                                          int enc));
-int EVP_CIPHER_meth_set_do_cipher(EVP_CIPHER *cipher,
-                                  int (*do_cipher) (EVP_CIPHER_CTX *ctx,
-                                                    unsigned char *out,
-                                                    const unsigned char *in,
-                                                    size_t inl));
-int EVP_CIPHER_meth_set_cleanup(EVP_CIPHER *cipher,
-                                int (*cleanup) (EVP_CIPHER_CTX *));
-int EVP_CIPHER_meth_set_set_asn1_params(EVP_CIPHER *cipher,
-                                        int (*set_asn1_parameters) (EVP_CIPHER_CTX *,
-                                                                    ASN1_TYPE *));
-int EVP_CIPHER_meth_set_get_asn1_params(EVP_CIPHER *cipher,
-                                        int (*get_asn1_parameters) (EVP_CIPHER_CTX *,
-                                                                    ASN1_TYPE *));
-int EVP_CIPHER_meth_set_ctrl(EVP_CIPHER *cipher,
-                             int (*ctrl) (EVP_CIPHER_CTX *, int type,
-                                          int arg, void *ptr));
+                                          int enc)))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_do_cipher
+    (EVP_CIPHER *cipher, int (*do_cipher) (EVP_CIPHER_CTX *ctx,
+                                           unsigned char *out,
+                                           const unsigned char *in,
+                                           size_t inl)))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_cleanup
+    (EVP_CIPHER *cipher, int (*cleanup) (EVP_CIPHER_CTX *)))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_set_asn1_params
+    (EVP_CIPHER *cipher, int (*set_asn1_parameters) (EVP_CIPHER_CTX *,
+                                                     ASN1_TYPE *)))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_get_asn1_params
+    (EVP_CIPHER *cipher, int (*get_asn1_parameters) (EVP_CIPHER_CTX *,
+                                                     ASN1_TYPE *)))
+DEPRECATEDIN_3_0(int EVP_CIPHER_meth_set_ctrl
+    (EVP_CIPHER *cipher, int (*ctrl) (EVP_CIPHER_CTX *, int type, int arg,
+                                      void *ptr)))
 
-int (*EVP_CIPHER_meth_get_init(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
-                                                          const unsigned char *key,
-                                                          const unsigned char *iv,
-                                                          int enc);
-int (*EVP_CIPHER_meth_get_do_cipher(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx,
-                                                               unsigned char *out,
-                                                               const unsigned char *in,
-                                                               size_t inl);
-int (*EVP_CIPHER_meth_get_cleanup(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *);
-int (*EVP_CIPHER_meth_get_set_asn1_params(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
-                                                                     ASN1_TYPE *);
-int (*EVP_CIPHER_meth_get_get_asn1_params(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
-                                                               ASN1_TYPE *);
-int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
-                                                          int type, int arg,
-                                                          void *ptr);
+DEPRECATEDIN_3_0(int (*EVP_CIPHER_meth_get_init
+    (const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+                                const unsigned char *iv, int enc))
+DEPRECATEDIN_3_0(int (*EVP_CIPHER_meth_get_do_cipher(const EVP_CIPHER *cipher))
+    (EVP_CIPHER_CTX *ctx, unsigned char *out, const unsigned char *in,
+     size_t inl))
+DEPRECATEDIN_3_0(int (*EVP_CIPHER_meth_get_cleanup(const EVP_CIPHER *cipher))
+    (EVP_CIPHER_CTX *))
+DEPRECATEDIN_3_0(int (*EVP_CIPHER_meth_get_set_asn1_params(const EVP_CIPHER *cipher))
+    (EVP_CIPHER_CTX *, ASN1_TYPE *))
+DEPRECATEDIN_3_0(int (*EVP_CIPHER_meth_get_get_asn1_params(const EVP_CIPHER *cipher))
+    (EVP_CIPHER_CTX *, ASN1_TYPE *))
+DEPRECATEDIN_3_0(int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))
+    (EVP_CIPHER_CTX *, int type, int arg, void *ptr))
 
 /* Values for cipher flags */
 
@@ -285,13 +292,15 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 /* Free:                                         0x1000 */
 /* Buffer length in bits not bytes: CFB1 mode only */
 # define         EVP_CIPH_FLAG_LENGTH_BITS       0x2000
-/* Note if suitable for use in FIPS mode */
-# define         EVP_CIPH_FLAG_FIPS              0x4000
-/* Allow non FIPS cipher in FIPS mode */
-# define         EVP_CIPH_FLAG_NON_FIPS_ALLOW    0x8000
+/* Deprecated FIPS flag: was 0x4000 */
+# define         EVP_CIPH_FLAG_FIPS              0
+/* Deprecated FIPS flag: was 0x8000 */
+# define         EVP_CIPH_FLAG_NON_FIPS_ALLOW    0
+
 /*
  * Cipher handles any and all padding logic as well as finalisation.
  */
+# define         EVP_CIPH_FLAG_CTS               0x4000
 # define         EVP_CIPH_FLAG_CUSTOM_CIPHER     0x100000
 # define         EVP_CIPH_FLAG_AEAD_CIPHER       0x200000
 # define         EVP_CIPH_FLAG_TLS1_1_MULTIBLOCK 0x400000
@@ -377,8 +386,7 @@ int (*EVP_CIPHER_meth_get_ctrl(const EVP_CIPHER *cipher))(EVP_CIPHER_CTX *,
 # define         EVP_CTRL_SET_PIPELINE_INPUT_LENS        0x24
 /* Get the IV length used by the cipher */
 # define         EVP_CTRL_GET_IVLEN                      0x25
-/* Get the IV used by the cipher */
-# define         EVP_CTRL_GET_IV                         0x26
+/* 0x26 is unused */
 /* Tell the cipher it's doing a speed test (SIV disallows multiple ops) */
 # define         EVP_CTRL_SET_SPEED                      0x27
 /* Get the unprotectedAttrs from cipher ctx */
@@ -528,9 +536,11 @@ int EVP_CIPHER_CTX_block_size(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_key_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_iv_length(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_tag_length(const EVP_CIPHER_CTX *ctx);
-const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx);
-const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx);
-unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx);
+DEPRECATEDIN_3_0(const unsigned char *EVP_CIPHER_CTX_iv(const EVP_CIPHER_CTX *ctx))
+DEPRECATEDIN_3_0(const unsigned char *EVP_CIPHER_CTX_original_iv(const EVP_CIPHER_CTX *ctx))
+DEPRECATEDIN_3_0(unsigned char *EVP_CIPHER_CTX_iv_noconst(EVP_CIPHER_CTX *ctx))
+int EVP_CIPHER_CTX_get_iv_state(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
+int EVP_CIPHER_CTX_get_iv(EVP_CIPHER_CTX *ctx, void *buf, size_t len);
 unsigned char *EVP_CIPHER_CTX_buf_noconst(EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_num(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_set_num(EVP_CIPHER_CTX *ctx, int num);
@@ -620,6 +630,7 @@ __owur int EVP_DigestFinalXOF(EVP_MD_CTX *ctx, unsigned char *md,
 
 __owur EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                             const char *properties);
+
 int EVP_MD_up_ref(EVP_MD *md);
 void EVP_MD_free(EVP_MD *md);
 
@@ -680,6 +691,9 @@ __owur int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *outm,
 
 __owur int EVP_SignFinal(EVP_MD_CTX *ctx, unsigned char *md, unsigned int *s,
                          EVP_PKEY *pkey);
+__owur int EVP_SignFinal_with_libctx(EVP_MD_CTX *ctx, unsigned char *md,
+                                     unsigned int *s, EVP_PKEY *pkey,
+                                     OPENSSL_CTX *libctx, const char *propq);
 
 __owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
                           size_t *siglen, const unsigned char *tbs,
@@ -687,14 +701,19 @@ __owur int EVP_DigestSign(EVP_MD_CTX *ctx, unsigned char *sigret,
 
 __owur int EVP_VerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sigbuf,
                            unsigned int siglen, EVP_PKEY *pkey);
+__owur int EVP_VerifyFinal_with_libctx(EVP_MD_CTX *ctx,
+                                       const unsigned char *sigbuf,
+                                       unsigned int siglen, EVP_PKEY *pkey,
+                                       OPENSSL_CTX *libctx, const char *propq);
 
 __owur int EVP_DigestVerify(EVP_MD_CTX *ctx, const unsigned char *sigret,
                             size_t siglen, const unsigned char *tbs,
                             size_t tbslen);
 
-int EVP_DigestSignInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                          const char *mdname, const char *props, EVP_PKEY *pkey,
-                          OPENSSL_CTX *libctx);
+int EVP_DigestSignInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                                   const char *mdname,
+                                   OPENSSL_CTX *libctx, const char *props,
+                                   EVP_PKEY *pkey);
 /*__owur*/ int EVP_DigestSignInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                   const EVP_MD *type, ENGINE *e,
                                   EVP_PKEY *pkey);
@@ -702,9 +721,10 @@ int EVP_DigestSignUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize);
 __owur int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
                                size_t *siglen);
 
-int EVP_DigestVerifyInit_ex(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
-                            const char *mdname, const char *props,
-                            EVP_PKEY *pkey, OPENSSL_CTX *libctx);
+int EVP_DigestVerifyInit_with_libctx(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
+                                     const char *mdname,
+                                     OPENSSL_CTX *libctx, const char *props,
+                                     EVP_PKEY *pkey);
 __owur int EVP_DigestVerifyInit(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
                                 const EVP_MD *type, ENGINE *e,
                                 EVP_PKEY *pkey);
@@ -1076,6 +1096,7 @@ EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
 int EVP_MAC_up_ref(EVP_MAC *mac);
 void EVP_MAC_free(EVP_MAC *mac);
 int EVP_MAC_number(const EVP_MAC *mac);
+const char *EVP_MAC_name(const EVP_MAC *mac);
 int EVP_MAC_is_a(const EVP_MAC *mac, const char *name);
 const OSSL_PROVIDER *EVP_MAC_provider(const EVP_MAC *mac);
 int EVP_MAC_get_params(EVP_MAC *mac, OSSL_PARAM params[]);
@@ -1103,6 +1124,55 @@ void EVP_MAC_names_do_all(const EVP_MAC *mac,
                           void (*fn)(const char *name, void *data),
                           void *data);
 
+/* RAND stuff */
+EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
+                         const char *properties);
+int EVP_RAND_up_ref(EVP_RAND *rand);
+void EVP_RAND_free(EVP_RAND *rand);
+int EVP_RAND_number(const EVP_RAND *rand);
+const char *EVP_RAND_name(const EVP_RAND *rand);
+int EVP_RAND_is_a(const EVP_RAND *rand, const char *name);
+const OSSL_PROVIDER *EVP_RAND_provider(const EVP_RAND *rand);
+int EVP_RAND_get_params(EVP_RAND *rand, OSSL_PARAM params[]);
+
+EVP_RAND_CTX *EVP_RAND_CTX_new(EVP_RAND *rand, EVP_RAND_CTX *parent);
+void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx);
+EVP_RAND *EVP_RAND_CTX_rand(EVP_RAND_CTX *ctx);
+int EVP_RAND_get_ctx_params(EVP_RAND_CTX *ctx, OSSL_PARAM params[]);
+int EVP_RAND_set_ctx_params(EVP_RAND_CTX *ctx, const OSSL_PARAM params[]);
+const OSSL_PARAM *EVP_RAND_gettable_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_gettable_ctx_params(const EVP_RAND *rand);
+const OSSL_PARAM *EVP_RAND_settable_ctx_params(const EVP_RAND *rand);
+
+void EVP_RAND_do_all_provided(OPENSSL_CTX *libctx,
+                              void (*fn)(EVP_RAND *rand, void *arg),
+                              void *arg);
+void EVP_RAND_names_do_all(const EVP_RAND *rand,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
+
+__owur int EVP_RAND_instantiate(EVP_RAND_CTX *ctx, unsigned int strength,
+                                int prediction_resistance,
+                                const unsigned char *pstr, size_t pstr_len);
+int EVP_RAND_uninstantiate(EVP_RAND_CTX *ctx);
+__owur int EVP_RAND_generate(EVP_RAND_CTX *ctx, unsigned char *out,
+                             size_t outlen, unsigned int strength,
+                             int prediction_resistance,
+                             const unsigned char *addin, size_t addin_len);
+int EVP_RAND_reseed(EVP_RAND_CTX *ctx, int prediction_resistance,
+                    const unsigned char *ent, size_t ent_len,
+                    const unsigned char *addin, size_t addin_len);
+__owur int EVP_RAND_nonce(EVP_RAND_CTX *ctx, unsigned char *out, size_t outlen);
+__owur int EVP_RAND_enable_locking(EVP_RAND_CTX *ctx);
+
+int EVP_RAND_verify_zeroization(EVP_RAND_CTX *ctx);
+unsigned int EVP_RAND_strength(EVP_RAND_CTX *ctx);
+int EVP_RAND_state(EVP_RAND_CTX *ctx);
+
+#define EVP_RAND_STATE_UNINITIALISED    0
+#define EVP_RAND_STATE_READY            1
+#define EVP_RAND_STATE_ERROR            2
+
 /* PKEY stuff */
 DEPRECATEDIN_3_0(int EVP_PKEY_decrypt_old(unsigned char *dec_key,
                                           const unsigned char *enc_key,
@@ -1112,6 +1182,9 @@ DEPRECATEDIN_3_0(int EVP_PKEY_encrypt_old(unsigned char *enc_key,
                                           const unsigned char *key,
                                           int key_len, EVP_PKEY *pub_key))
 int EVP_PKEY_is_a(const EVP_PKEY *pkey, const char *name);
+void EVP_PKEY_typenames_do_all(const EVP_PKEY *pkey,
+                               void (*fn)(const char *name, void *data),
+                               void *data);
 int EVP_PKEY_type(int type);
 int EVP_PKEY_id(const EVP_PKEY *pkey);
 int EVP_PKEY_base_id(const EVP_PKEY *pkey);
@@ -1122,7 +1195,7 @@ int EVP_PKEY_can_sign(const EVP_PKEY *pkey);
 int EVP_PKEY_set_type(EVP_PKEY *pkey, int type);
 int EVP_PKEY_set_type_str(EVP_PKEY *pkey, const char *str, int len);
 int EVP_PKEY_set_type_by_keymgmt(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt);
-int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type);
+DEPRECATEDIN_3_0(int EVP_PKEY_set_alias_type(EVP_PKEY *pkey, int type))
 # ifndef OPENSSL_NO_ENGINE
 int EVP_PKEY_set1_engine(EVP_PKEY *pkey, ENGINE *e);
 ENGINE *EVP_PKEY_get0_engine(const EVP_PKEY *pkey);
@@ -1191,14 +1264,10 @@ EVP_PKEY *d2i_KeyParams_bio(int type, EVP_PKEY **a, BIO *in);
 int EVP_PKEY_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from);
 int EVP_PKEY_missing_parameters(const EVP_PKEY *pkey);
 int EVP_PKEY_save_parameters(EVP_PKEY *pkey, int mode);
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b);
-#endif
 int EVP_PKEY_parameters_eq(const EVP_PKEY *a, const EVP_PKEY *b);
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 int EVP_PKEY_cmp(const EVP_PKEY *a, const EVP_PKEY *b);
-#endif
 int EVP_PKEY_eq(const EVP_PKEY *a, const EVP_PKEY *b);
 
 int EVP_PKEY_print_public(BIO *out, const EVP_PKEY *pkey,
@@ -1356,13 +1425,13 @@ void EVP_PKEY_asn1_set_ctrl(EVP_PKEY_ASN1_METHOD *ameth,
 void EVP_PKEY_asn1_set_item(EVP_PKEY_ASN1_METHOD *ameth,
                             int (*item_verify) (EVP_MD_CTX *ctx,
                                                 const ASN1_ITEM *it,
-                                                void *asn,
-                                                X509_ALGOR *a,
-                                                ASN1_BIT_STRING *sig,
+                                                const void *data,
+                                                const X509_ALGOR *a,
+                                                const ASN1_BIT_STRING *sig,
                                                 EVP_PKEY *pkey),
                             int (*item_sign) (EVP_MD_CTX *ctx,
                                               const ASN1_ITEM *it,
-                                              void *asn,
+                                              const void *data,
                                               X509_ALGOR *alg1,
                                               X509_ALGOR *alg2,
                                               ASN1_BIT_STRING *sig));
@@ -1406,6 +1475,14 @@ void EVP_PKEY_asn1_set_security_bits(EVP_PKEY_ASN1_METHOD *ameth,
 int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md);
 int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 
+int EVP_PKEY_CTX_set1_id(EVP_PKEY_CTX *ctx, const void *id, int len);
+int EVP_PKEY_CTX_get1_id(EVP_PKEY_CTX *ctx, void *id);
+int EVP_PKEY_CTX_get1_id_len(EVP_PKEY_CTX *ctx, size_t *id_len);
+
+int EVP_PKEY_CTX_set_kem_op(EVP_PKEY_CTX *ctx, const char *op);
+
+const char *EVP_PKEY_get0_first_alg_name(const EVP_PKEY *key);
+
 # define EVP_PKEY_OP_UNDEFINED           0
 # define EVP_PKEY_OP_PARAMGEN            (1<<1)
 # define EVP_PKEY_OP_KEYGEN              (1<<2)
@@ -1419,6 +1496,8 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 # define EVP_PKEY_OP_ENCRYPT             (1<<10)
 # define EVP_PKEY_OP_DECRYPT             (1<<11)
 # define EVP_PKEY_OP_DERIVE              (1<<12)
+# define EVP_PKEY_OP_ENCAPSULATE         (1<<13)
+# define EVP_PKEY_OP_DECAPSULATE         (1<<14)
 
 # define EVP_PKEY_OP_TYPE_SIG    \
         (EVP_PKEY_OP_SIGN | EVP_PKEY_OP_VERIFY | EVP_PKEY_OP_VERIFYRECOVER \
@@ -1436,34 +1515,27 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
 # define EVP_PKEY_OP_TYPE_FROMDATA \
         (EVP_PKEY_OP_PARAMFROMDATA | EVP_PKEY_OP_KEYFROMDATA)
 
-# define  EVP_PKEY_CTX_set_mac_key(ctx, key, len)        \
-                EVP_PKEY_CTX_ctrl(ctx, -1, EVP_PKEY_OP_KEYGEN,  \
-                                  EVP_PKEY_CTRL_SET_MAC_KEY, len, (void *)(key))
+int EVP_PKEY_CTX_set_mac_key(EVP_PKEY_CTX *ctx, const unsigned char *key,
+                             int keylen);
 
 # define EVP_PKEY_CTRL_MD                1
 # define EVP_PKEY_CTRL_PEER_KEY          2
-
 # define EVP_PKEY_CTRL_PKCS7_ENCRYPT     3
 # define EVP_PKEY_CTRL_PKCS7_DECRYPT     4
-
 # define EVP_PKEY_CTRL_PKCS7_SIGN        5
-
 # define EVP_PKEY_CTRL_SET_MAC_KEY       6
-
 # define EVP_PKEY_CTRL_DIGESTINIT        7
-
 /* Used by GOST key encryption in TLS */
 # define EVP_PKEY_CTRL_SET_IV            8
-
 # define EVP_PKEY_CTRL_CMS_ENCRYPT       9
 # define EVP_PKEY_CTRL_CMS_DECRYPT       10
 # define EVP_PKEY_CTRL_CMS_SIGN          11
-
 # define EVP_PKEY_CTRL_CIPHER            12
-
 # define EVP_PKEY_CTRL_GET_MD            13
-
 # define EVP_PKEY_CTRL_SET_DIGEST_SIZE   14
+# define EVP_PKEY_CTRL_SET1_ID           15
+# define EVP_PKEY_CTRL_GET1_ID           16
+# define EVP_PKEY_CTRL_GET1_ID_LEN       17
 
 # define EVP_PKEY_ALG_CTRL               0x1000
 
@@ -1473,22 +1545,24 @@ int EVP_PKEY_CTX_set_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD *md);
  */
 # define EVP_PKEY_FLAG_SIGCTX_CUSTOM     4
 
-const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type);
-EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags);
-void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
-                             const EVP_PKEY_METHOD *meth);
-void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst, const EVP_PKEY_METHOD *src);
-void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth);
-int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth);
-int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth);
-size_t EVP_PKEY_meth_get_count(void);
-const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx);
+DEPRECATEDIN_3_0(const EVP_PKEY_METHOD *EVP_PKEY_meth_find(int type))
+DEPRECATEDIN_3_0(EVP_PKEY_METHOD *EVP_PKEY_meth_new(int id, int flags))
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get0_info(int *ppkey_id, int *pflags,
+                                              const EVP_PKEY_METHOD *meth))
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_copy(EVP_PKEY_METHOD *dst,
+                                         const EVP_PKEY_METHOD *src))
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_free(EVP_PKEY_METHOD *pmeth))
+DEPRECATEDIN_3_0(int EVP_PKEY_meth_add0(const EVP_PKEY_METHOD *pmeth))
+DEPRECATEDIN_3_0(int EVP_PKEY_meth_remove(const EVP_PKEY_METHOD *pmeth))
+DEPRECATEDIN_3_0(size_t EVP_PKEY_meth_get_count(void))
+DEPRECATEDIN_3_0(const EVP_PKEY_METHOD *EVP_PKEY_meth_get0(size_t idx))
 
 EVP_KEYMGMT *EVP_KEYMGMT_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                const char *properties);
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt);
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt);
 const OSSL_PROVIDER *EVP_KEYMGMT_provider(const EVP_KEYMGMT *keymgmt);
+const char *EVP_KEYMGMT_get0_first_name(const EVP_KEYMGMT *keymgmt);
 int EVP_KEYMGMT_number(const EVP_KEYMGMT *keymgmt);
 int EVP_KEYMGMT_is_a(const EVP_KEYMGMT *keymgmt, const char *name);
 void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
@@ -1497,6 +1571,9 @@ void EVP_KEYMGMT_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_KEYMGMT_names_do_all(const EVP_KEYMGMT *keymgmt,
                               void (*fn)(const char *name, void *data),
                               void *data);
+const OSSL_PARAM *EVP_KEYMGMT_gettable_params(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *EVP_KEYMGMT_settable_params(const EVP_KEYMGMT *keymgmt);
+const OSSL_PARAM *EVP_KEYMGMT_gen_settable_params(const EVP_KEYMGMT *keymgmt);
 
 EVP_PKEY_CTX *EVP_PKEY_CTX_new(EVP_PKEY *pkey, ENGINE *e);
 EVP_PKEY_CTX *EVP_PKEY_CTX_new_id(int id, ENGINE *e);
@@ -1550,6 +1627,11 @@ int EVP_PKEY_get_raw_private_key(const EVP_PKEY *pkey, unsigned char *priv,
 int EVP_PKEY_get_raw_public_key(const EVP_PKEY *pkey, unsigned char *pub,
                                 size_t *len);
 
+EVP_PKEY *EVP_PKEY_new_CMAC_key_with_libctx(const unsigned char *priv,
+                                            size_t len,
+                                            const char *cipher_name,
+                                            OPENSSL_CTX *libctx,
+                                            const char *propq);
 EVP_PKEY *EVP_PKEY_new_CMAC_key(ENGINE *e, const unsigned char *priv,
                                 size_t len, const EVP_CIPHER *cipher);
 
@@ -1576,6 +1658,8 @@ void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
                                 void (*fn)(const char *name, void *data),
                                 void *data);
+const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig);
+const OSSL_PARAM *EVP_SIGNATURE_settable_ctx_params(const EVP_SIGNATURE *sig);
 
 void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher);
 int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher);
@@ -1591,6 +1675,18 @@ void EVP_ASYM_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,
                                   void (*fn)(const char *name, void *data),
                                   void *data);
+
+void EVP_KEM_free(EVP_KEM *wrap);
+int EVP_KEM_up_ref(EVP_KEM *wrap);
+OSSL_PROVIDER *EVP_KEM_provider(const EVP_KEM *wrap);
+EVP_KEM *EVP_KEM_fetch(OPENSSL_CTX *ctx, const char *algorithm,
+                       const char *properties);
+int EVP_KEM_is_a(const EVP_KEM *wrap, const char *name);
+int EVP_KEM_number(const EVP_KEM *wrap);
+void EVP_KEM_do_all_provided(OPENSSL_CTX *libctx,
+                             void (*fn)(EVP_KEM *wrap, void *arg), void *arg);
+void EVP_KEM_names_do_all(const EVP_KEM *wrap,
+                          void (*fn)(const char *name, void *data), void *data);
 
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,
@@ -1616,6 +1712,15 @@ int EVP_PKEY_decrypt(EVP_PKEY_CTX *ctx,
 int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_derive_set_peer(EVP_PKEY_CTX *ctx, EVP_PKEY *peer);
 int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen);
+
+int EVP_PKEY_encapsulate_init(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
+                         unsigned char *wrappedkey, size_t *wrappedkeylen,
+                         unsigned char *genkey, size_t *genkeylen);
+int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx);
+int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
+                         unsigned char *unwrapped, size_t *unwrappedlen,
+                         const unsigned char *wrapped, size_t wrappedlen);
 
 typedef int EVP_PKEY_gen_cb(EVP_PKEY_CTX *ctx);
 
@@ -1655,243 +1760,185 @@ EVP_PKEY_gen_cb *EVP_PKEY_CTX_get_cb(EVP_PKEY_CTX *ctx);
 
 int EVP_PKEY_CTX_get_keygen_info(EVP_PKEY_CTX *ctx, int idx);
 
-void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
-                            int (*init) (EVP_PKEY_CTX *ctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_init(EVP_PKEY_METHOD *pmeth,
+                                             int (*init) (EVP_PKEY_CTX *ctx)))
 
-void EVP_PKEY_meth_set_copy(EVP_PKEY_METHOD *pmeth,
-                            int (*copy) (EVP_PKEY_CTX *dst,
-                                         const EVP_PKEY_CTX *src));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_copy
+    (EVP_PKEY_METHOD *pmeth, int (*copy) (EVP_PKEY_CTX *dst,
+                                          const EVP_PKEY_CTX *src)))
 
-void EVP_PKEY_meth_set_cleanup(EVP_PKEY_METHOD *pmeth,
-                               void (*cleanup) (EVP_PKEY_CTX *ctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_cleanup
+    (EVP_PKEY_METHOD *pmeth, void (*cleanup) (EVP_PKEY_CTX *ctx)))
 
-void EVP_PKEY_meth_set_paramgen(EVP_PKEY_METHOD *pmeth,
-                                int (*paramgen_init) (EVP_PKEY_CTX *ctx),
-                                int (*paramgen) (EVP_PKEY_CTX *ctx,
-                                                 EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_paramgen
+    (EVP_PKEY_METHOD *pmeth, int (*paramgen_init) (EVP_PKEY_CTX *ctx),
+     int (*paramgen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_set_keygen(EVP_PKEY_METHOD *pmeth,
-                              int (*keygen_init) (EVP_PKEY_CTX *ctx),
-                              int (*keygen) (EVP_PKEY_CTX *ctx,
-                                             EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_keygen
+    (EVP_PKEY_METHOD *pmeth, int (*keygen_init) (EVP_PKEY_CTX *ctx),
+     int (*keygen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_set_sign(EVP_PKEY_METHOD *pmeth,
-                            int (*sign_init) (EVP_PKEY_CTX *ctx),
-                            int (*sign) (EVP_PKEY_CTX *ctx,
-                                         unsigned char *sig, size_t *siglen,
-                                         const unsigned char *tbs,
-                                         size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_sign
+    (EVP_PKEY_METHOD *pmeth, int (*sign_init) (EVP_PKEY_CTX *ctx),
+     int (*sign) (EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+                  const unsigned char *tbs, size_t tbslen)))
 
-void EVP_PKEY_meth_set_verify(EVP_PKEY_METHOD *pmeth,
-                              int (*verify_init) (EVP_PKEY_CTX *ctx),
-                              int (*verify) (EVP_PKEY_CTX *ctx,
-                                             const unsigned char *sig,
-                                             size_t siglen,
-                                             const unsigned char *tbs,
-                                             size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_verify
+    (EVP_PKEY_METHOD *pmeth, int (*verify_init) (EVP_PKEY_CTX *ctx),
+     int (*verify) (EVP_PKEY_CTX *ctx, const unsigned char *sig, size_t siglen,
+                    const unsigned char *tbs, size_t tbslen)))
 
-void EVP_PKEY_meth_set_verify_recover(EVP_PKEY_METHOD *pmeth,
-                                      int (*verify_recover_init) (EVP_PKEY_CTX
-                                                                  *ctx),
-                                      int (*verify_recover) (EVP_PKEY_CTX
-                                                             *ctx,
-                                                             unsigned char
-                                                             *sig,
-                                                             size_t *siglen,
-                                                             const unsigned
-                                                             char *tbs,
-                                                             size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_verify_recover
+    (EVP_PKEY_METHOD *pmeth, int (*verify_recover_init) (EVP_PKEY_CTX *ctx),
+     int (*verify_recover) (EVP_PKEY_CTX *ctx, unsigned char *sig,
+                            size_t *siglen, const unsigned char *tbs,
+                            size_t tbslen)))
 
-void EVP_PKEY_meth_set_signctx(EVP_PKEY_METHOD *pmeth,
-                               int (*signctx_init) (EVP_PKEY_CTX *ctx,
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_signctx
+    (EVP_PKEY_METHOD *pmeth, int (*signctx_init) (EVP_PKEY_CTX *ctx,
+                                                  EVP_MD_CTX *mctx),
+     int (*signctx) (EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+                     EVP_MD_CTX *mctx)))
+
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_verifyctx
+    (EVP_PKEY_METHOD *pmeth, int (*verifyctx_init) (EVP_PKEY_CTX *ctx,
                                                     EVP_MD_CTX *mctx),
-                               int (*signctx) (EVP_PKEY_CTX *ctx,
-                                               unsigned char *sig,
-                                               size_t *siglen,
-                                               EVP_MD_CTX *mctx));
+     int (*verifyctx) (EVP_PKEY_CTX *ctx, const unsigned char *sig, int siglen,
+                       EVP_MD_CTX *mctx)))
 
-void EVP_PKEY_meth_set_verifyctx(EVP_PKEY_METHOD *pmeth,
-                                 int (*verifyctx_init) (EVP_PKEY_CTX *ctx,
-                                                        EVP_MD_CTX *mctx),
-                                 int (*verifyctx) (EVP_PKEY_CTX *ctx,
-                                                   const unsigned char *sig,
-                                                   int siglen,
-                                                   EVP_MD_CTX *mctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_encrypt
+    (EVP_PKEY_METHOD *pmeth, int (*encrypt_init) (EVP_PKEY_CTX *ctx),
+     int (*encryptfn) (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+                       const unsigned char *in, size_t inlen)))
 
-void EVP_PKEY_meth_set_encrypt(EVP_PKEY_METHOD *pmeth,
-                               int (*encrypt_init) (EVP_PKEY_CTX *ctx),
-                               int (*encryptfn) (EVP_PKEY_CTX *ctx,
-                                                 unsigned char *out,
-                                                 size_t *outlen,
-                                                 const unsigned char *in,
-                                                 size_t inlen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_decrypt
+    (EVP_PKEY_METHOD *pmeth, int (*decrypt_init) (EVP_PKEY_CTX *ctx),
+     int (*decrypt) (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+                     const unsigned char *in, size_t inlen)))
 
-void EVP_PKEY_meth_set_decrypt(EVP_PKEY_METHOD *pmeth,
-                               int (*decrypt_init) (EVP_PKEY_CTX *ctx),
-                               int (*decrypt) (EVP_PKEY_CTX *ctx,
-                                               unsigned char *out,
-                                               size_t *outlen,
-                                               const unsigned char *in,
-                                               size_t inlen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_derive
+    (EVP_PKEY_METHOD *pmeth, int (*derive_init) (EVP_PKEY_CTX *ctx),
+     int (*derive) (EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)))
 
-void EVP_PKEY_meth_set_derive(EVP_PKEY_METHOD *pmeth,
-                              int (*derive_init) (EVP_PKEY_CTX *ctx),
-                              int (*derive) (EVP_PKEY_CTX *ctx,
-                                             unsigned char *key,
-                                             size_t *keylen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_ctrl
+    (EVP_PKEY_METHOD *pmeth, int (*ctrl) (EVP_PKEY_CTX *ctx, int type, int p1,
+                                          void *p2),
+     int (*ctrl_str) (EVP_PKEY_CTX *ctx, const char *type, const char *value)))
 
-void EVP_PKEY_meth_set_ctrl(EVP_PKEY_METHOD *pmeth,
-                            int (*ctrl) (EVP_PKEY_CTX *ctx, int type, int p1,
-                                         void *p2),
-                            int (*ctrl_str) (EVP_PKEY_CTX *ctx,
-                                             const char *type,
-                                             const char *value));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_digestsign
+    (EVP_PKEY_METHOD *pmeth,
+     int (*digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
+                        const unsigned char *tbs, size_t tbslen)))
 
-void EVP_PKEY_meth_set_digestsign(EVP_PKEY_METHOD *pmeth,
-                                  int (*digestsign) (EVP_MD_CTX *ctx,
-                                                     unsigned char *sig,
-                                                     size_t *siglen,
-                                                     const unsigned char *tbs,
-                                                     size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_digestverify
+    (EVP_PKEY_METHOD *pmeth,
+     int (*digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
+                          size_t siglen, const unsigned char *tbs,
+                          size_t tbslen)))
 
-void EVP_PKEY_meth_set_digestverify(EVP_PKEY_METHOD *pmeth,
-                                    int (*digestverify) (EVP_MD_CTX *ctx,
-                                                         const unsigned char *sig,
-                                                         size_t siglen,
-                                                         const unsigned char *tbs,
-                                                         size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_check
+    (EVP_PKEY_METHOD *pmeth, int (*check) (EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_set_check(EVP_PKEY_METHOD *pmeth,
-                             int (*check) (EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_public_check
+    (EVP_PKEY_METHOD *pmeth, int (*check) (EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_set_public_check(EVP_PKEY_METHOD *pmeth,
-                                    int (*check) (EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_param_check
+    (EVP_PKEY_METHOD *pmeth, int (*check) (EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_set_param_check(EVP_PKEY_METHOD *pmeth,
-                                   int (*check) (EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_set_digest_custom
+    (EVP_PKEY_METHOD *pmeth, int (*digest_custom) (EVP_PKEY_CTX *ctx,
+                                                   EVP_MD_CTX *mctx)))
 
-void EVP_PKEY_meth_set_digest_custom(EVP_PKEY_METHOD *pmeth,
-                                     int (*digest_custom) (EVP_PKEY_CTX *ctx,
-                                                           EVP_MD_CTX *mctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_init
+    (const EVP_PKEY_METHOD *pmeth, int (**pinit) (EVP_PKEY_CTX *ctx)))
 
-void EVP_PKEY_meth_get_init(const EVP_PKEY_METHOD *pmeth,
-                            int (**pinit) (EVP_PKEY_CTX *ctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_copy
+    (const EVP_PKEY_METHOD *pmeth, int (**pcopy) (EVP_PKEY_CTX *dst,
+                                                  const EVP_PKEY_CTX *src)))
 
-void EVP_PKEY_meth_get_copy(const EVP_PKEY_METHOD *pmeth,
-                            int (**pcopy) (EVP_PKEY_CTX *dst,
-                                           const EVP_PKEY_CTX *src));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_cleanup
+    (const EVP_PKEY_METHOD *pmeth, void (**pcleanup) (EVP_PKEY_CTX *ctx)))
 
-void EVP_PKEY_meth_get_cleanup(const EVP_PKEY_METHOD *pmeth,
-                               void (**pcleanup) (EVP_PKEY_CTX *ctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_paramgen
+    (const EVP_PKEY_METHOD *pmeth, int (**pparamgen_init) (EVP_PKEY_CTX *ctx),
+     int (**pparamgen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_get_paramgen(const EVP_PKEY_METHOD *pmeth,
-                                int (**pparamgen_init) (EVP_PKEY_CTX *ctx),
-                                int (**pparamgen) (EVP_PKEY_CTX *ctx,
-                                                   EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_keygen
+    (const EVP_PKEY_METHOD *pmeth, int (**pkeygen_init) (EVP_PKEY_CTX *ctx),
+     int (**pkeygen) (EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_get_keygen(const EVP_PKEY_METHOD *pmeth,
-                              int (**pkeygen_init) (EVP_PKEY_CTX *ctx),
-                              int (**pkeygen) (EVP_PKEY_CTX *ctx,
-                                               EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_sign
+    (const EVP_PKEY_METHOD *pmeth, int (**psign_init) (EVP_PKEY_CTX *ctx),
+     int (**psign) (EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+                    const unsigned char *tbs, size_t tbslen)))
 
-void EVP_PKEY_meth_get_sign(const EVP_PKEY_METHOD *pmeth,
-                            int (**psign_init) (EVP_PKEY_CTX *ctx),
-                            int (**psign) (EVP_PKEY_CTX *ctx,
-                                           unsigned char *sig, size_t *siglen,
-                                           const unsigned char *tbs,
-                                           size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_verify
+    (const EVP_PKEY_METHOD *pmeth, int (**pverify_init) (EVP_PKEY_CTX *ctx),
+     int (**pverify) (EVP_PKEY_CTX *ctx, const unsigned char *sig,
+                      size_t siglen, const unsigned char *tbs, size_t tbslen)))
 
-void EVP_PKEY_meth_get_verify(const EVP_PKEY_METHOD *pmeth,
-                              int (**pverify_init) (EVP_PKEY_CTX *ctx),
-                              int (**pverify) (EVP_PKEY_CTX *ctx,
-                                               const unsigned char *sig,
-                                               size_t siglen,
-                                               const unsigned char *tbs,
-                                               size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_verify_recover
+    (const EVP_PKEY_METHOD *pmeth,
+     int (**pverify_recover_init) (EVP_PKEY_CTX *ctx),
+     int (**pverify_recover) (EVP_PKEY_CTX *ctx, unsigned char *sig,
+                              size_t *siglen, const unsigned char *tbs,
+                              size_t tbslen)))
 
-void EVP_PKEY_meth_get_verify_recover(const EVP_PKEY_METHOD *pmeth,
-                                      int (**pverify_recover_init) (EVP_PKEY_CTX
-                                                                    *ctx),
-                                      int (**pverify_recover) (EVP_PKEY_CTX
-                                                               *ctx,
-                                                               unsigned char
-                                                               *sig,
-                                                               size_t *siglen,
-                                                               const unsigned
-                                                               char *tbs,
-                                                               size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_signctx
+    (const EVP_PKEY_METHOD *pmeth,
+     int (**psignctx_init) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx),
+     int (**psignctx) (EVP_PKEY_CTX *ctx, unsigned char *sig, size_t *siglen,
+                       EVP_MD_CTX *mctx)))
 
-void EVP_PKEY_meth_get_signctx(const EVP_PKEY_METHOD *pmeth,
-                               int (**psignctx_init) (EVP_PKEY_CTX *ctx,
-                                                      EVP_MD_CTX *mctx),
-                               int (**psignctx) (EVP_PKEY_CTX *ctx,
-                                                 unsigned char *sig,
-                                                 size_t *siglen,
-                                                 EVP_MD_CTX *mctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_verifyctx
+    (const EVP_PKEY_METHOD *pmeth,
+     int (**pverifyctx_init) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx),
+     int (**pverifyctx) (EVP_PKEY_CTX *ctx, const unsigned char *sig,
+                          int siglen, EVP_MD_CTX *mctx)))
 
-void EVP_PKEY_meth_get_verifyctx(const EVP_PKEY_METHOD *pmeth,
-                                 int (**pverifyctx_init) (EVP_PKEY_CTX *ctx,
-                                                          EVP_MD_CTX *mctx),
-                                 int (**pverifyctx) (EVP_PKEY_CTX *ctx,
-                                                     const unsigned char *sig,
-                                                     int siglen,
-                                                     EVP_MD_CTX *mctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_encrypt
+    (const EVP_PKEY_METHOD *pmeth, int (**pencrypt_init) (EVP_PKEY_CTX *ctx),
+     int (**pencryptfn) (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+                         const unsigned char *in, size_t inlen)))
 
-void EVP_PKEY_meth_get_encrypt(const EVP_PKEY_METHOD *pmeth,
-                               int (**pencrypt_init) (EVP_PKEY_CTX *ctx),
-                               int (**pencryptfn) (EVP_PKEY_CTX *ctx,
-                                                   unsigned char *out,
-                                                   size_t *outlen,
-                                                   const unsigned char *in,
-                                                   size_t inlen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_decrypt
+    (const EVP_PKEY_METHOD *pmeth, int (**pdecrypt_init) (EVP_PKEY_CTX *ctx),
+     int (**pdecrypt) (EVP_PKEY_CTX *ctx, unsigned char *out, size_t *outlen,
+                       const unsigned char *in, size_t inlen)))
 
-void EVP_PKEY_meth_get_decrypt(const EVP_PKEY_METHOD *pmeth,
-                               int (**pdecrypt_init) (EVP_PKEY_CTX *ctx),
-                               int (**pdecrypt) (EVP_PKEY_CTX *ctx,
-                                                 unsigned char *out,
-                                                 size_t *outlen,
-                                                 const unsigned char *in,
-                                                 size_t inlen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_derive
+    (const EVP_PKEY_METHOD *pmeth, int (**pderive_init) (EVP_PKEY_CTX *ctx),
+     int (**pderive) (EVP_PKEY_CTX *ctx, unsigned char *key, size_t *keylen)))
 
-void EVP_PKEY_meth_get_derive(const EVP_PKEY_METHOD *pmeth,
-                              int (**pderive_init) (EVP_PKEY_CTX *ctx),
-                              int (**pderive) (EVP_PKEY_CTX *ctx,
-                                               unsigned char *key,
-                                               size_t *keylen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_ctrl
+    (const EVP_PKEY_METHOD *pmeth,
+     int (**pctrl) (EVP_PKEY_CTX *ctx, int type, int p1, void *p2),
+     int (**pctrl_str) (EVP_PKEY_CTX *ctx, const char *type,
+                        const char *value)))
 
-void EVP_PKEY_meth_get_ctrl(const EVP_PKEY_METHOD *pmeth,
-                            int (**pctrl) (EVP_PKEY_CTX *ctx, int type, int p1,
-                                           void *p2),
-                            int (**pctrl_str) (EVP_PKEY_CTX *ctx,
-                                               const char *type,
-                                               const char *value));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_digestsign
+    (EVP_PKEY_METHOD *pmeth,
+     int (**digestsign) (EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
+                         const unsigned char *tbs, size_t tbslen)))
 
-void EVP_PKEY_meth_get_digestsign(EVP_PKEY_METHOD *pmeth,
-                                  int (**digestsign) (EVP_MD_CTX *ctx,
-                                                      unsigned char *sig,
-                                                      size_t *siglen,
-                                                      const unsigned char *tbs,
-                                                      size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_digestverify
+    (EVP_PKEY_METHOD *pmeth,
+     int (**digestverify) (EVP_MD_CTX *ctx, const unsigned char *sig,
+                           size_t siglen, const unsigned char *tbs,
+                           size_t tbslen)))
 
-void EVP_PKEY_meth_get_digestverify(EVP_PKEY_METHOD *pmeth,
-                                    int (**digestverify) (EVP_MD_CTX *ctx,
-                                                          const unsigned char *sig,
-                                                          size_t siglen,
-                                                          const unsigned char *tbs,
-                                                          size_t tbslen));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_check
+    (const EVP_PKEY_METHOD *pmeth, int (**pcheck) (EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_get_check(const EVP_PKEY_METHOD *pmeth,
-                             int (**pcheck) (EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_public_check
+    (const EVP_PKEY_METHOD *pmeth, int (**pcheck) (EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_get_public_check(const EVP_PKEY_METHOD *pmeth,
-                                    int (**pcheck) (EVP_PKEY *pkey));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_param_check
+    (const EVP_PKEY_METHOD *pmeth, int (**pcheck) (EVP_PKEY *pkey)))
 
-void EVP_PKEY_meth_get_param_check(const EVP_PKEY_METHOD *pmeth,
-                                   int (**pcheck) (EVP_PKEY *pkey));
-
-void EVP_PKEY_meth_get_digest_custom(EVP_PKEY_METHOD *pmeth,
-                                     int (**pdigest_custom) (EVP_PKEY_CTX *ctx,
-                                                             EVP_MD_CTX *mctx));
+DEPRECATEDIN_3_0(void EVP_PKEY_meth_get_digest_custom
+    (EVP_PKEY_METHOD *pmeth,
+     int (**pdigest_custom) (EVP_PKEY_CTX *ctx, EVP_MD_CTX *mctx)))
 
 void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange);
 int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange);
@@ -1906,6 +1953,8 @@ void EVP_KEYEXCH_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
                               void (*fn)(const char *name, void *data),
                               void *data);
+const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch);
+const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch);
 
 void EVP_add_alg_module(void);
 
@@ -1917,6 +1966,9 @@ int EVP_str2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
                  void *ctx, int cmd, const char *value);
 int EVP_hex2ctrl(int (*cb)(void *ctx, int cmd, void *buf, size_t buflen),
                  void *ctx, int cmd, const char *hex);
+
+int EVP_PKEY_CTX_set_group_name(EVP_PKEY_CTX *ctx, const char *name);
+int EVP_PKEY_CTX_get_group_name(EVP_PKEY_CTX *ctx, char *name, size_t namelen);
 
 # ifdef  __cplusplus
 }

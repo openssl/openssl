@@ -165,7 +165,7 @@ EVP_CIPHER_do_all_provided
 
 =head1 DESCRIPTION
 
-The EVP cipher routines are a high level interface to certain
+The EVP cipher routines are a high-level interface to certain
 symmetric ciphers.
 
 The B<EVP_CIPHER> type is a structure for cipher method implementation.
@@ -210,10 +210,15 @@ specified.
 EVP_EncryptUpdate() encrypts B<inl> bytes from the buffer B<in> and
 writes the encrypted version to B<out>. This function can be called
 multiple times to encrypt successive blocks of data. The amount
-of data written depends on the block alignment of the encrypted data:
-as a result the amount of data written may be anything from zero bytes
-to (inl + cipher_block_size - 1) so B<out> should contain sufficient
-room. The actual number of bytes written is placed in B<outl>. It also
+of data written depends on the block alignment of the encrypted data.
+For most ciphers and modes, the amount of data written can be anything
+from zero bytes to (inl + cipher_block_size - 1) bytes.
+For wrap cipher modes, the amount of data written can be anything
+from zero bytes to (inl + cipher_block_size) bytes.
+For stream ciphers, the amount of data written can be anything from zero
+bytes to inl bytes.
+Thus, B<out> should contain sufficient room for the operation being performed.
+The actual number of bytes written is placed in B<outl>. It also
 checks if B<in> and B<out> are partially overlapping, and if they are
 0 is returned to indicate failure.
 
@@ -558,7 +563,7 @@ Sets the CCM B<L> value. If not set a default is used (8 for AES).
 
 =item EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN, ivlen, NULL)
 
-Sets the CCM nonce (IV) length. This call can only be made before specifying an
+Sets the CCM nonce (IV) length. This call can only be made before specifying a 
 nonce value. The nonce length is given by B<15 - L> so it is 7 by default for
 AES.
 
@@ -642,10 +647,10 @@ This call is only valid when decrypting data.
 =head1 NOTES
 
 Where possible the B<EVP> interface to symmetric ciphers should be used in
-preference to the low level interfaces. This is because the code then becomes
+preference to the low-level interfaces. This is because the code then becomes
 transparent to the cipher used and much more flexible. Additionally, the
 B<EVP> interface will ensure the use of platform specific cryptographic
-acceleration such as AES-NI (the low level interfaces do not provide the
+acceleration such as AES-NI (the low-level interfaces do not provide the
 guarantee).
 
 PKCS padding works by adding B<n> padding bytes of value B<n> to make the total
@@ -800,6 +805,50 @@ with a 128-bit key:
      return 1;
  }
 
+Encryption using AES-CBC with a 256-bit key with "CS1" ciphertext stealing.
+
+ int encrypt(const unsigned char *key, const unsigned char *iv,
+             const unsigned char *msg, size_t msg_len, unsigned char *out)
+ {
+    /*
+     * This assumes that key size is 32 bytes and the iv is 16 bytes.
+     * For ciphertext stealing mode the length of the ciphertext "out" will be
+     * the same size as the plaintext size "msg_len".
+     * The "msg_len" can be any size >= 16.
+     */
+     int ret = 0, encrypt = 1, outlen, len;
+     EVP_CIPHER_CTX *ctx = NULL;
+     EVP_CIPHER *cipher = NULL;
+     OSSL_PARAM params[2];
+
+     ctx = EVP_CIPHER_CTX_new();
+     cipher = EVP_CIPHER_fetch(NULL, "AES-256-CBC-CTS", NULL);
+     if (ctx == NULL || cipher == NULL)
+         goto err;
+
+     if (!EVP_CipherInit_ex(ctx, cipher, NULL, key, iv, encrypt))
+         goto err;
+     /*
+      * The default is "CS1" so this is not really needed,
+      * but would be needed to set either "CS2" or "CS3".
+      */
+     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE,
+                                                  "CS1", 0);
+     params[1] = OSSL_PARAM_construct_end();
+     if (!EVP_CIPHER_CTX_set_params(ctx, params))
+         goto err;
+
+     /* NOTE: CTS mode does not support multiple calls to EVP_CipherUpdate() */
+     if (!EVP_CipherUpdate(ctx, encrypted, &outlen, msg, msglen))
+         goto err;
+      if (!EVP_CipherFinal_ex(ctx, encrypted + outlen, &len))
+         goto err;
+     ret = 1;
+ err:
+     EVP_CIPHER_free(cipher);
+     EVP_CIPHER_CTX_free(ctx);
+     return ret;
+ }
 
 =head1 SEE ALSO
 

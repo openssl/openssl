@@ -15,8 +15,6 @@
 
 #include "testutil.h"
 
-DEFINE_STACK_OF(CONF_VALUE)
-
 static const ASN1_ITEM *x509_it = NULL;
 static X509 *x509 = NULL;
 #define SERVER "mock.server"
@@ -151,6 +149,72 @@ static int test_http_x509(int do_get)
     return res;
 }
 
+static int test_http_url_ok(const char *url, const char *exp_host, int exp_ssl)
+{
+    char *host, *port, *path;
+    int num, ssl;
+    int res;
+
+    res = TEST_true(OSSL_HTTP_parse_url(url, &host, &port, &num, &path, &ssl))
+        && TEST_str_eq(host, exp_host)
+        && TEST_str_eq(port, "65535")
+        && TEST_int_eq(num, 65535)
+        && TEST_str_eq(path, "/pkix")
+        && TEST_int_eq(ssl, exp_ssl);
+    OPENSSL_free(host);
+    OPENSSL_free(port);
+    OPENSSL_free(path);
+    return res;
+}
+
+static int test_http_url_dns(void)
+{
+    return test_http_url_ok("server:65535/pkix", "server", 0);
+}
+
+static int test_http_url_ipv4(void)
+{
+    return test_http_url_ok("https://1.2.3.4:65535/pkix", "1.2.3.4", 1);
+}
+
+static int test_http_url_ipv6(void)
+{
+    return test_http_url_ok("http://[FF01::101]:65535/pkix", "FF01::101", 0);
+}
+
+static int test_http_url_invalid(const char *url)
+{
+    char *host = "1", *port = "1", *path = "1";
+    int num = 1, ssl = 1;
+    int res;
+
+    res = TEST_false(OSSL_HTTP_parse_url(url, &host, &port, &num, &path, &ssl))
+        && TEST_ptr_null(host)
+        && TEST_ptr_null(port)
+        && TEST_ptr_null(path);
+    if (!res) {
+        OPENSSL_free(host);
+        OPENSSL_free(port);
+        OPENSSL_free(path);
+    }
+    return res;
+}
+
+static int test_http_url_invalid_prefix(void)
+{
+    return test_http_url_invalid("htttps://1.2.3.4:65535/pkix");
+}
+
+static int test_http_url_invalid_port(void)
+{
+    return test_http_url_invalid("https://1.2.3.4:65536/pkix");
+}
+
+static int test_http_url_invalid_path(void)
+{
+    return test_http_url_invalid("https://[FF01::101]pkix");
+}
+
 static int test_http_get_x509(void)
 {
     return test_http_x509(1);
@@ -177,6 +241,12 @@ int setup_tests(void)
     if (!TEST_ptr((x509 = load_pem_cert(test_get_argument(0)))))
         return 1;
 
+    ADD_TEST(test_http_url_dns);
+    ADD_TEST(test_http_url_ipv4);
+    ADD_TEST(test_http_url_ipv6);
+    ADD_TEST(test_http_url_invalid_prefix);
+    ADD_TEST(test_http_url_invalid_port);
+    ADD_TEST(test_http_url_invalid_path);
     ADD_TEST(test_http_get_x509);
     ADD_TEST(test_http_post_x509);
     return 1;

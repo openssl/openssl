@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,16 +8,19 @@
  */
 
 #include <assert.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include "internal/cryptlib.h"
 #include "prov/bio.h"
 
-static OSSL_BIO_new_file_fn *c_bio_new_file = NULL;
-static OSSL_BIO_new_membuf_fn *c_bio_new_membuf = NULL;
-static OSSL_BIO_read_ex_fn *c_bio_read_ex = NULL;
-static OSSL_BIO_write_ex_fn *c_bio_write_ex = NULL;
-static OSSL_BIO_free_fn *c_bio_free = NULL;
-static OSSL_BIO_vprintf_fn *c_bio_vprintf = NULL;
+static OSSL_FUNC_BIO_new_file_fn *c_bio_new_file = NULL;
+static OSSL_FUNC_BIO_new_membuf_fn *c_bio_new_membuf = NULL;
+static OSSL_FUNC_BIO_read_ex_fn *c_bio_read_ex = NULL;
+static OSSL_FUNC_BIO_write_ex_fn *c_bio_write_ex = NULL;
+static OSSL_FUNC_BIO_gets_fn *c_bio_gets = NULL;
+static OSSL_FUNC_BIO_puts_fn *c_bio_puts = NULL;
+static OSSL_FUNC_BIO_ctrl_fn *c_bio_ctrl = NULL;
+static OSSL_FUNC_BIO_free_fn *c_bio_free = NULL;
+static OSSL_FUNC_BIO_vprintf_fn *c_bio_vprintf = NULL;
 
 int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns)
 {
@@ -25,27 +28,39 @@ int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns)
         switch (fns->function_id) {
         case OSSL_FUNC_BIO_NEW_FILE:
             if (c_bio_new_file == NULL)
-                c_bio_new_file = OSSL_get_BIO_new_file(fns);
+                c_bio_new_file = OSSL_FUNC_BIO_new_file(fns);
             break;
         case OSSL_FUNC_BIO_NEW_MEMBUF:
             if (c_bio_new_membuf == NULL)
-                c_bio_new_membuf = OSSL_get_BIO_new_membuf(fns);
+                c_bio_new_membuf = OSSL_FUNC_BIO_new_membuf(fns);
             break;
         case OSSL_FUNC_BIO_READ_EX:
             if (c_bio_read_ex == NULL)
-                c_bio_read_ex = OSSL_get_BIO_read_ex(fns);
+                c_bio_read_ex = OSSL_FUNC_BIO_read_ex(fns);
             break;
         case OSSL_FUNC_BIO_WRITE_EX:
             if (c_bio_write_ex == NULL)
-                c_bio_write_ex = OSSL_get_BIO_write_ex(fns);
+                c_bio_write_ex = OSSL_FUNC_BIO_write_ex(fns);
+            break;
+        case OSSL_FUNC_BIO_GETS:
+            if (c_bio_gets == NULL)
+                c_bio_gets = OSSL_FUNC_BIO_gets(fns);
+            break;
+        case OSSL_FUNC_BIO_PUTS:
+            if (c_bio_puts == NULL)
+                c_bio_puts = OSSL_FUNC_BIO_puts(fns);
+            break;
+        case OSSL_FUNC_BIO_CTRL:
+            if (c_bio_ctrl == NULL)
+                c_bio_ctrl = OSSL_FUNC_BIO_ctrl(fns);
             break;
         case OSSL_FUNC_BIO_FREE:
             if (c_bio_free == NULL)
-                c_bio_free = OSSL_get_BIO_free(fns);
+                c_bio_free = OSSL_FUNC_BIO_free(fns);
             break;
         case OSSL_FUNC_BIO_VPRINTF:
             if (c_bio_vprintf == NULL)
-                c_bio_vprintf = OSSL_get_BIO_vprintf(fns);
+                c_bio_vprintf = OSSL_FUNC_BIO_vprintf(fns);
             break;
         }
     }
@@ -81,6 +96,27 @@ int ossl_prov_bio_write_ex(OSSL_CORE_BIO *bio, const void *data, size_t data_len
     if (c_bio_write_ex == NULL)
         return 0;
     return c_bio_write_ex(bio, data, data_len, written);
+}
+
+int ossl_prov_bio_gets(OSSL_CORE_BIO *bio, char *buf, int size)
+{
+    if (c_bio_gets == NULL)
+        return -1;
+    return c_bio_gets(bio, buf, size);
+}
+
+int ossl_prov_bio_puts(OSSL_CORE_BIO *bio, const char *str)
+{
+    if (c_bio_puts == NULL)
+        return -1;
+    return c_bio_puts(bio, str);
+}
+
+int ossl_prov_bio_ctrl(OSSL_CORE_BIO *bio, int cmd, long num, void *ptr)
+{
+    if (c_bio_ctrl == NULL)
+        return -1;
+    return c_bio_ctrl(bio, cmd, num, ptr);
 }
 
 int ossl_prov_bio_free(OSSL_CORE_BIO *bio)
@@ -127,23 +163,17 @@ static int bio_core_write_ex(BIO *bio, const char *data, size_t data_len,
 
 static long bio_core_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {
-    /* We don't support this */
-    assert(0);
-    return 0;
+    return ossl_prov_bio_ctrl(BIO_get_data(bio), cmd, num, ptr);
 }
 
 static int bio_core_gets(BIO *bio, char *buf, int size)
 {
-    /* We don't support this */
-    assert(0);
-    return -1;
+    return ossl_prov_bio_gets(BIO_get_data(bio), buf, size);
 }
 
 static int bio_core_puts(BIO *bio, const char *str)
 {
-    /* We don't support this */
-    assert(0);
-    return -1;
+    return ossl_prov_bio_puts(BIO_get_data(bio), str);
 }
 
 static int bio_core_new(BIO *bio)

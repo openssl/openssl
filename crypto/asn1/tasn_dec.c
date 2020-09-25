@@ -17,8 +17,6 @@
 #include "internal/numbers.h"
 #include "asn1_local.h"
 
-DEFINE_STACK_OF(ASN1_VALUE)
-
 /*
  * Constructed types with a recursive definition (such as can be found in PKCS7)
  * could eventually exceed the stack given malicious input with excessive

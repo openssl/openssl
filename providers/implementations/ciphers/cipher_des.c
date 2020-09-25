@@ -17,23 +17,28 @@
 #include "cipher_des.h"
 #include <openssl/rand.h>
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 
 /* TODO(3.0) Figure out what flags need to be here */
 #define DES_FLAGS (EVP_CIPH_RAND_KEY)
 
-static OSSL_OP_cipher_freectx_fn des_freectx;
-static OSSL_OP_cipher_encrypt_init_fn des_einit;
-static OSSL_OP_cipher_decrypt_init_fn des_dinit;
-static OSSL_OP_cipher_get_ctx_params_fn des_get_ctx_params;
-static OSSL_OP_cipher_gettable_ctx_params_fn des_gettable_ctx_params;
+static OSSL_FUNC_cipher_freectx_fn des_freectx;
+static OSSL_FUNC_cipher_encrypt_init_fn des_einit;
+static OSSL_FUNC_cipher_decrypt_init_fn des_dinit;
+static OSSL_FUNC_cipher_get_ctx_params_fn des_get_ctx_params;
+static OSSL_FUNC_cipher_gettable_ctx_params_fn des_gettable_ctx_params;
 
 static void *des_newctx(void *provctx, size_t kbits, size_t blkbits,
                         size_t ivbits, unsigned int mode, uint64_t flags,
                         const PROV_CIPHER_HW *hw)
 {
-    PROV_DES_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    PROV_DES_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags, hw,
                                provctx);
@@ -43,8 +48,12 @@ static void *des_newctx(void *provctx, size_t kbits, size_t blkbits,
 static void *des_dupctx(void *ctx)
 {
     PROV_DES_CTX *in = (PROV_DES_CTX *)ctx;
-    PROV_DES_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_DES_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -58,6 +67,7 @@ static void des_freectx(void *vctx)
 {
     PROV_DES_CTX *ctx = (PROV_DES_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
@@ -66,6 +76,11 @@ static int des_init(void *vctx, const unsigned char *key, size_t keylen,
 {
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
+    ctx->num = 0;
+    ctx->bufsz = 0;
     ctx->enc = enc;
 
     if (iv != NULL) {
@@ -129,14 +144,14 @@ static int des_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
 #define IMPLEMENT_des_cipher(type, lcmode, UCMODE, flags,                      \
                              kbits, blkbits, ivbits, block)                    \
-static OSSL_OP_cipher_newctx_fn type##_##lcmode##_newctx;                      \
+static OSSL_FUNC_cipher_newctx_fn type##_##lcmode##_newctx;                    \
 static void *des_##lcmode##_newctx(void *provctx)                              \
 {                                                                              \
     return des_newctx(provctx, kbits, blkbits, ivbits,                         \
                       EVP_CIPH_##UCMODE##_MODE, flags,                         \
                       PROV_CIPHER_HW_des_##lcmode());                          \
 }                                                                              \
-static OSSL_OP_cipher_get_params_fn des_##lcmode##_get_params;                 \
+static OSSL_FUNC_cipher_get_params_fn des_##lcmode##_get_params;               \
 static int des_##lcmode##_get_params(OSSL_PARAM params[])                      \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \

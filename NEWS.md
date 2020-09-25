@@ -20,12 +20,16 @@ OpenSSL 3.0
 
 ### Major changes between OpenSSL 1.1.1 and OpenSSL 3.0 [under development]
 
+  * Remove the `RAND_DRBG` API.
+  * Deprecated the `ENGINE` API.
+  * Added `OPENSSL_CTX`, a libcrypto library context.
+  * Interactive mode is removed from the 'openssl' program.
   * The X25519, X448, Ed25519, Ed448 and SHAKE256 algorithms are included in
     the FIPS provider.  None have the "fips=yes" property set and, as such,
     will not be accidentially used.
   * The algorithm specific public key command line applications have
     been deprecated.  These include dhparam, gendsa and others.  The pkey
-    alternatives should be used intead: pkey, pkeyparam and genpkey.
+    alternatives should be used instead: pkey, pkeyparam and genpkey.
   * X509 certificates signed using SHA1 are no longer allowed at security
     level 1 or higher. The default security level for TLS is 1, so
     certificates signed using SHA1 are by default no longer trusted to
@@ -38,7 +42,8 @@ OpenSSL 3.0
     All widely used CMP features are supported for both clients and servers.
   * Added a proper HTTP(S) client to libcrypto supporting GET and POST,
     redirection, plain and ASN.1-encoded contents, proxies, and timeouts.
-  * Added OSSL_SERIALIZER, a generic serializer API.
+  * Added util/check-format.pl for checking adherence to the coding guidelines.
+  * Added OSSL_ENCODER, a generic encoder API.
   * Added OSSL_PARAM_BLD, an easier to use API to OSSL_PARAM.
   * Added error raising macros, ERR_raise() and ERR_raise_data().
   * Deprecated ERR_put_error().
@@ -55,13 +60,14 @@ OpenSSL 3.0
   * Removed the heartbeat message in DTLS feature.
   * Added EVP_KDF, an EVP layer KDF API, and a generic EVP_PKEY to EVP_KDF
     bridge.
-  * All of the low level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224,
+  * All of the low-level MD2, MD4, MD5, MDC2, RIPEMD160, SHA1, SHA224,
     SHA256, SHA384, SHA512 and Whirlpool digest functions have been
     deprecated.
-  * All of the low level AES, Blowfish, Camellia, CAST, DES, IDEA, RC2,
+  * All of the low-level AES, Blowfish, Camellia, CAST, DES, IDEA, RC2,
     RC4, RC5 and SEED cipher functions have been deprecated.
-  * All of the low level DH, DSA, ECDH, ECDSA and RSA public key functions
+  * All of the low-level DH, DSA, ECDH, ECDSA and RSA public key functions
     have been deprecated.
+  * SSL 3, TLS 1.0, TLS 1.1, and DTLS 1.0 only work at security level 0.
 
 OpenSSL 1.1.1
 -------------
@@ -678,7 +684,7 @@ OpenSSL 1.0.0
   Known issues in OpenSSL 1.0.0m:
 
   * EAP-FAST and other applications using tls_session_secret_cb
-    wont resume sessions. Fixed in 1.0.0n-dev
+    won't resume sessions. Fixed in 1.0.0n-dev
   * Compilation failure of s3_pkt.c on some platforms due to missing
     `<limits.h>` include. Fixed in 1.0.0n-dev
 
@@ -1186,14 +1192,14 @@ OpenSSL 0.9.x
   * Enhanced chain verification using key identifiers.
   * New sign and verify options to 'dgst' application.
   * Support for DER and PEM encoded messages in 'smime' application.
-  * New 'rsautl' application, low level RSA utility.
+  * New 'rsautl' application, low-level RSA utility.
   * MD4 now included.
   * Bugfix for SSL rollback padding check.
   * Support for external crypto devices [1].
   * Enhanced EVP interface.
 
   [1] The support for external crypto devices is currently a separate
-      distribution.  See the file README.ENGINE.
+      distribution.  See the file README-Engine.md.
 
 ### Major changes between OpenSSL 0.9.5 and OpenSSL 0.9.5a [1 Apr 2000]
 
@@ -1238,7 +1244,7 @@ OpenSSL 0.9.x
   * BIGNUM library bug fixes
   * Faster DSA parameter generation
   * Enhanced support for Alpha Linux
-  * Experimental MacOS support
+  * Experimental macOS support
 
 ### Major changes between OpenSSL 0.9.3 and OpenSSL 0.9.4 [9 Aug 1999]
 

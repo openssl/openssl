@@ -11,7 +11,7 @@
 #include <string.h>
 #include "testutil.h"
 #include "internal/nelem.h"
-#include "ossl_test_endian.h"
+#include "internal/endian.h"
 #include <openssl/params.h>
 #include <openssl/bn.h>
 
@@ -379,6 +379,33 @@ static int test_param_size_t(int n)
     return test_param_type_extra(&param, raw_values[n].value, sizeof(size_t));
 }
 
+static int test_param_time_t(int n)
+{
+    time_t in, out;
+    unsigned char buf[MAX_LEN], cmp[sizeof(size_t)];
+    const size_t len = raw_values[n].len >= sizeof(size_t)
+                       ? sizeof(time_t) : raw_values[n].len;
+    OSSL_PARAM param = OSSL_PARAM_time_t("a", NULL);
+
+    memset(buf, 0, sizeof(buf));
+    le_copy(buf, raw_values[n].value, sizeof(in));
+    memcpy(&in, buf, sizeof(in));
+    param.data = &out;
+    if (!TEST_true(OSSL_PARAM_set_time_t(&param, in)))
+        return 0;
+    le_copy(cmp, &out, sizeof(out));
+    if (!TEST_mem_eq(cmp, len, raw_values[n].value, len))
+        return 0;
+    in = 0;
+    if (!TEST_true(OSSL_PARAM_get_time_t(&param, &in)))
+        return 0;
+    le_copy(cmp, &in, sizeof(in));
+    if (!TEST_mem_eq(cmp, sizeof(in), raw_values[n].value, sizeof(in)))
+        return 0;
+    param.data = &out;
+    return test_param_type_extra(&param, raw_values[n].value, sizeof(size_t));
+}
+
 static int test_param_bignum(int n)
 {
     unsigned char buf[MAX_LEN], bnbuf[MAX_LEN];
@@ -608,6 +635,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_param_int32, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint32, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_size_t, OSSL_NELEM(raw_values));
+    ADD_ALL_TESTS(test_param_time_t, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_int64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_uint64, OSSL_NELEM(raw_values));
     ADD_ALL_TESTS(test_param_bignum, OSSL_NELEM(raw_values));

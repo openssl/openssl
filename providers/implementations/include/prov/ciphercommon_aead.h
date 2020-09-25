@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,13 +17,13 @@
                     | EVP_CIPH_CUSTOM_COPY)
 
 #define IMPLEMENT_aead_cipher(alg, lc, UCMODE, flags, kbits, blkbits, ivbits)  \
-static OSSL_OP_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;         \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lc##_get_params;         \
 static int alg##_##kbits##_##lc##_get_params(OSSL_PARAM params[])              \
 {                                                                              \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,         \
                                      flags, kbits, blkbits, ivbits);           \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn alg##kbits##lc##_newctx;                       \
+static OSSL_FUNC_cipher_newctx_fn alg##kbits##lc##_newctx;                       \
 static void * alg##kbits##lc##_newctx(void *provctx)                           \
 {                                                                              \
     return alg##_##lc##_newctx(provctx, kbits);                                \

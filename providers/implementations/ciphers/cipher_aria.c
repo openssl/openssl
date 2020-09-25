@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,22 +11,28 @@
 
 #include "cipher_aria.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
-static OSSL_OP_cipher_freectx_fn aria_freectx;
-static OSSL_OP_cipher_dupctx_fn aria_dupctx;
+static OSSL_FUNC_cipher_freectx_fn aria_freectx;
+static OSSL_FUNC_cipher_dupctx_fn aria_dupctx;
 
 static void aria_freectx(void *vctx)
 {
     PROV_ARIA_CTX *ctx = (PROV_ARIA_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
 static void *aria_dupctx(void *ctx)
 {
     PROV_ARIA_CTX *in = (PROV_ARIA_CTX *)ctx;
-    PROV_ARIA_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_ARIA_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;

@@ -21,6 +21,7 @@ use lib bldtop_dir('.');
 use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
+my $infile = bldtop_file('providers', platform->dso('fips'));
 
 my @types = ( "digest", "cipher" );
 
@@ -46,10 +47,7 @@ unless ($no_fips) {
     push @setups, {
         cmd     => app(['openssl', 'fipsinstall',
                         '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                        '-module', bldtop_file('providers', platform->dso('fips')),
-                        '-provider_name', 'fips', '-mac_name', 'HMAC',
-                        '-macopt', 'digest:SHA256', '-macopt', 'hexkey:00',
-                        '-section_name', 'fips_sect']),
+                        '-module', $infile]),
         message => "fipsinstall"
     };
     push @testdata, (

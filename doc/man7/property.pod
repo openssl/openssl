@@ -42,9 +42,9 @@ property names like
 A I<property> is a I<name=value> pair.
 A I<property definition> is a sequence of comma separated properties.
 There can be any number of properties in a definition.
-For example: "" defines a null property definition; "my.foo=bar"
-defines a property named I<my.foo> which has a string value I<bar> and
-"iteration.count=3" defines a property named I<iteration.count> which
+For example: "" defines an empty property definition (i.e., no restriction);
+"my.foo=bar" defines a property named I<my.foo> which has a string value I<bar>
+and "iteration.count=3" defines a property named I<iteration.count> which
 has a numeric value of I<3>.
 The full syntax for property definitions appears below.
 
@@ -60,7 +60,7 @@ provider defines I<provider=legacy> for all of their algorithms.
 =head2 Queries
 
 A I<property query clause> is a single conditional test.
-For example, "fips=yes", "provider!=default" or "?iteration.count!=3".
+For example, "fips=yes", "provider!=default" or "?iteration.count=3".
 The first two represent mandatory clauses, such clauses B<must> match
 for any algorithm to even be under consideration.
 The third clause represents an optional clause.

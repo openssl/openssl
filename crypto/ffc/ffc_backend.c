@@ -27,7 +27,7 @@ int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
     if (ffc == NULL)
         return 0;
 
-    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_DH_GROUP);
+    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (prm != NULL) {
         if (prm->data_type != OSSL_PARAM_UTF8_STRING)
             goto err;
@@ -78,6 +78,28 @@ int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[])
         if (!ffc_params_set_seed(ffc, prm->data, prm->data_size))
             goto err;
     }
+    prm  = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_VALIDATE_TYPE);
+    if (prm != NULL) {
+        if (prm->data_type != OSSL_PARAM_UTF8_STRING)
+            goto err;
+        ffc_params_set_flags(ffc, ffc_params_flags_from_name(prm->data));
+    }
+    prm = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST);
+    if (prm != NULL) {
+        const OSSL_PARAM *p1;
+        const char *props = NULL;
+
+        if (prm->data_type != OSSL_PARAM_UTF8_STRING)
+            goto err;
+        p1 = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_FFC_DIGEST_PROPS);
+        if (p1 != NULL) {
+            if (p1->data_type != OSSL_PARAM_UTF8_STRING)
+                goto err;
+        }
+        if (!ffc_set_digest(ffc, prm->data, props))
+            goto err;
+    }
+
     ffc_params_set0_pqg(ffc, p, q, g);
     ffc_params_set0_j(ffc, j);
     return 1;

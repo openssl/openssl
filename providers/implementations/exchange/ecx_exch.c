@@ -8,25 +8,26 @@
  */
 
 #include <openssl/crypto.h>
-#include <openssl/core_numbers.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
 #include "internal/cryptlib.h"
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 #include "prov/providercommonerr.h"
 #ifdef S390X_EC_ASM
 # include "s390x_arch.h"
 #endif
 
-static OSSL_OP_keyexch_newctx_fn x25519_newctx;
-static OSSL_OP_keyexch_newctx_fn x448_newctx;
-static OSSL_OP_keyexch_init_fn ecx_init;
-static OSSL_OP_keyexch_set_peer_fn ecx_set_peer;
-static OSSL_OP_keyexch_derive_fn ecx_derive;
-static OSSL_OP_keyexch_freectx_fn ecx_freectx;
-static OSSL_OP_keyexch_dupctx_fn ecx_dupctx;
+static OSSL_FUNC_keyexch_newctx_fn x25519_newctx;
+static OSSL_FUNC_keyexch_newctx_fn x448_newctx;
+static OSSL_FUNC_keyexch_init_fn ecx_init;
+static OSSL_FUNC_keyexch_set_peer_fn ecx_set_peer;
+static OSSL_FUNC_keyexch_derive_fn ecx_derive;
+static OSSL_FUNC_keyexch_freectx_fn ecx_freectx;
+static OSSL_FUNC_keyexch_dupctx_fn ecx_dupctx;
 
 /*
  * What's passed as an actual key is defined by the KEYMGMT interface.
@@ -42,8 +43,12 @@ typedef struct {
 
 static void *ecx_newctx(void *provctx, size_t keylen)
 {
-    PROV_ECX_CTX *ctx = OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
+    PROV_ECX_CTX *ctx;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ctx = OPENSSL_zalloc(sizeof(PROV_ECX_CTX));
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -69,6 +74,9 @@ static int ecx_init(void *vecxctx, void *vkey)
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
     ECX_KEY *key = vkey;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (ecxctx == NULL
             || key == NULL
             || key->keylen != ecxctx->keylen
@@ -88,6 +96,9 @@ static int ecx_set_peer(void *vecxctx, void *vkey)
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
     ECX_KEY *key = vkey;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (ecxctx == NULL
             || key == NULL
             || key->keylen != ecxctx->keylen
@@ -105,6 +116,9 @@ static int ecx_derive(void *vecxctx, unsigned char *secret, size_t *secretlen,
                       size_t outlen)
 {
     PROV_ECX_CTX *ecxctx = (PROV_ECX_CTX *)vecxctx;
+
+    if (!ossl_prov_is_running())
+        return 0;
 
     if (ecxctx->key == NULL
             || ecxctx->key->privkey == NULL
@@ -178,6 +192,9 @@ static void *ecx_dupctx(void *vecxctx)
 {
     PROV_ECX_CTX *srcctx = (PROV_ECX_CTX *)vecxctx;
     PROV_ECX_CTX *dstctx;
+
+    if (!ossl_prov_is_running())
+        return NULL;
 
     dstctx = OPENSSL_zalloc(sizeof(*srcctx));
     if (dstctx == NULL) {

@@ -20,17 +20,6 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_EC)
-# define TMP_SM2_HACK
-#endif
-
-/* TODO(3.0) remove when provider SM2 key generation is implemented */
-#ifdef TMP_SM2_HACK
-# include <openssl/ec.h>
-# include <openssl/serializer.h>
-# include "internal/sizes.h"
-#endif
-
 static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 {
     int ret = 0;
@@ -43,12 +32,6 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 
     if (ctx->keymgmt == NULL || ctx->keymgmt->gen_init == NULL)
         goto legacy;
-
-/* TODO remove when provider SM2 key generation is implemented */
-#ifdef TMP_SM2_HACK
-    if (ctx->pmeth != NULL && ctx->pmeth->pkey_id == EVP_PKEY_SM2)
-        goto legacy;
-#endif
 
     switch (operation) {
     case EVP_PKEY_OP_PARAMGEN:
@@ -144,6 +127,8 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     int ret = 0;
     OSSL_CALLBACK cb;
     EVP_PKEY *allocated_pkey = NULL;
+    /* Legacy compatible keygen callback info, only used with provider impls */
+    int gentmp[2];
 
     if (ppkey == NULL)
         return -1;
@@ -164,6 +149,18 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 
     if (ctx->op.keymgmt.genctx == NULL)
         goto legacy;
+
+    /*
+     * Asssigning gentmp to ctx->keygen_info is something our legacy
+     * implementations do.  Because the provider implementations aren't
+     * allowed to reach into our EVP_PKEY_CTX, we need to provide similar
+     * space for backward compatibility.  It's ok that we attach a local
+     * variable, as it should only be useful in the calls down from here.
+     * This is cleared as soon as it isn't useful any more, i.e. directly
+     * after the evp_keymgmt_util_gen() call.
+     */
+    ctx->keygen_info = gentmp;
+    ctx->keygen_info_count = 2;
 
     ret = 1;
     if (ctx->pkey != NULL) {
@@ -191,38 +188,20 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
                                  ossl_callback_to_pkey_gencb, ctx)
             != NULL);
 
+    ctx->keygen_info = NULL;
+
 #ifndef FIPS_MODULE
     /* In case |*ppkey| was originally a legacy key */
     if (ret)
         evp_pkey_free_legacy(*ppkey);
 #endif
 
-/* TODO remove when SM2 key have been cleanly separated from EC keys */
-#ifdef TMP_SM2_HACK
     /*
-     * Legacy SM2 keys are implemented as EC_KEY with a twist.  The legacy
-     * key generation detects the SM2 curve and "magically" changes the pkey
-     * id accordingly.
-     * Since we don't have SM2 in the provider implementation, we need to
-     * downgrade the generated provider side key to a legacy one under the
-     * same conditions.
-     *
-     * THIS IS AN UGLY BUT TEMPORARY HACK
+     * Because we still have legacy keys, and evp_pkey_downgrade()
+     * TODO remove this #legacy internal keys are gone
      */
-    {
-        char curve_name[OSSL_MAX_NAME_SIZE] = "";
+    (*ppkey)->type = ctx->legacy_keytype;
 
-        if (!EVP_PKEY_get_utf8_string_param(*ppkey, OSSL_PKEY_PARAM_EC_NAME,
-                                            curve_name, sizeof(curve_name),
-                                            NULL)
-            || strcmp(curve_name, "SM2") != 0)
-            goto end;
-    }
-
-    if (!evp_pkey_downgrade(*ppkey)
-        || !EVP_PKEY_set_alias_type(*ppkey, EVP_PKEY_SM2))
-        ret = 0;
-#endif
     goto end;
 
  legacy:
@@ -360,7 +339,8 @@ static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
     return 1;
 
  not_supported:
-    ctx->operation = EVP_PKEY_OP_UNDEFINED;
+    if (ctx != NULL)
+        ctx->operation = EVP_PKEY_OP_UNDEFINED;
     ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
 }

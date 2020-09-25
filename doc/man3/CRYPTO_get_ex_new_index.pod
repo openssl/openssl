@@ -25,7 +25,7 @@ CRYPTO_free_ex_data, CRYPTO_new_ex_data
  typedef int CRYPTO_EX_dup(CRYPTO_EX_DATA *to, const CRYPTO_EX_DATA *from,
                            void **from_d, int idx, long argl, void *argp);
 
- int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad)
+ int CRYPTO_new_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad);
 
  int CRYPTO_alloc_ex_data(int class_index, void *obj, CRYPTO_EX_DATA *ad,
                           int idx);
@@ -50,7 +50,6 @@ The specific structures are:
     EC_KEY
     ENGINE
     EVP_PKEY
-    RAND_DRBG
     RSA
     SSL
     SSL_CTX
@@ -163,8 +162,11 @@ dup_func() should return 0 for failure and 1 for success.
 =head1 HISTORY
 
 CRYPTO_alloc_ex_data() was added in OpenSSL 3.0.
+
 The signature of the dup_func() callback was changed in OpenSSL 3.0 to use the
 type B<void **> for B<from_d>.  Previously this parameter was of type B<void *>.
+
+Support for ENGINE "exdata" was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

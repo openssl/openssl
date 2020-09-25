@@ -228,8 +228,9 @@ This option has no effect and is retained for backward compatibility only.
 
 =item B<-cert_chain>
 
-A file containing untrusted certificates to use when attempting to build the
+A file or URI of untrusted certificates to use when attempting to build the
 certificate chain related to the certificate specified via the B<-cert> option.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-build_chain>
 
@@ -257,7 +258,7 @@ See L<openssl(1)/Format Options> for details.
 
 =item B<-pass> I<val>
 
-The private key password source.
+The private key and certificate file password source.
 For more information about the format of I<val>,
 see L<openssl(1)/Pass Phrase Options>.
 
@@ -274,9 +275,10 @@ by using an appropriate certificate.
 
 =item B<-dcert_chain>
 
-A file containing untrusted certificates to use when attempting to build the
+A file or URI of untrusted certificates to use when attempting to build the
 server certificate chain when a certificate specified via the B<-dcert> option
 is in use.
+The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-dcertform> B<DER>|B<PEM>|B<P12>
 
@@ -291,7 +293,7 @@ See L<openssl(1)/Format Options>.
 
 =item B<-dpass> I<val>
 
-The passphrase for the additional private key.
+The passphrase for the additional private key and certificate.
 For more information about the format of I<val>,
 see L<openssl(1)/Pass Phrase Options>.
 
@@ -433,9 +435,9 @@ For more information on shutting down a connection, see L<SSL_shutdown(3)>.
 =item B<-id_prefix> I<val>
 
 Generate SSL/TLS session IDs prefixed by I<val>. This is mostly useful
-for testing any SSL/TLS code (eg. proxies) that wish to deal with multiple
+for testing any SSL/TLS code (e.g. proxies) that wish to deal with multiple
 servers, when each of which might be generating a unique range of session
-IDs (eg. with a certain prefix).
+IDs (e.g. with a certain prefix).
 
 =item B<-verify_return_error>
 
@@ -839,6 +841,8 @@ have become obsolete in OpenSSL 3.0.0 and have no effect.
 
 The B<-certform> and B<-dcertform> options have become obsolete in OpenSSL 3.0.0
 and have no effect.
+
+The B<-engine> option was deprecated in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 

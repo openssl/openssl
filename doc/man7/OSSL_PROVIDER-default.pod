@@ -124,6 +124,8 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item PBKDF2, see L<EVP_KDF-PBKDF2(7)>
 
+=item PKCS12KDF, see L<EVP_KDF-PKCS12KDF(7)>
+
 =item SSHKDF, see L<EVP_KDF-SSHKDF(7)>
 
 =item TLS1-PRF, see L<EVP_KDF-TLS1_PRF(7)>
@@ -162,6 +164,14 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item RSA, see L<EVP_SIGNATURE-RSA(7)>
 
+=item HMAC, see L<EVP_SIGNATURE-HMAC(7)>
+
+=item SIPHASH, see L<EVP_SIGNATURE-Siphash(7)>
+
+=item POLY1305, see L<EVP_SIGNATURE-Poly1305(7)>
+
+=item CMAC, see L<EVP_SIGNATURE-CMAC(7)>
+
 =back
 
 =head2 Asymmetric Cipher
@@ -169,6 +179,16 @@ The OpenSSL default provider supports these operations and algorithms:
 =over 4
 
 =item RSA, see L<EVP_ASYM_CIPHER-RSA(7)>
+
+=item SM2, see L<EVP_ASYM_CIPHER-SM2(7)>
+
+=back
+
+=head2 Asymmetric Key Encapsulation
+
+=over 4
+
+=item RSA, see L<EVP_KEM-RSA(7)>
 
 =back
 
@@ -190,31 +210,32 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =back
 
-=head2 Asymmetric Key Serializer
+=head2 Asymmetric Key Encoder
 
-In addition to "provider=default", this set of implementations define the
-property "fips=yes", to allow them to be used together with the FIPS
-provider.
+The default provider also includes all of the encoding algorithms
+present in the base provider.  Some of these have the property "fips=yes",
+to allow them to be used together with the FIPS provider.
 
 =over 4
 
-=item RSA, see L<OSSL_SERIALIZER-RSA(7)>
+=item RSA, see L<OSSL_ENCODER-RSA(7)>
 
-=item DH, see L<OSSL_SERIALIZER-DH(7)>
+=item DH, see L<OSSL_ENCODER-DH(7)>
 
-=item DSA, see L<OSSL_SERIALIZER-DSA(7)>
+=item DSA, see L<OSSL_ENCODER-DSA(7)>
 
-=item EC, see L<OSSL_SERIALIZER-EC(7)>
+=item EC, see L<OSSL_ENCODER-EC(7)>
 
-=item X25519, see L<OSSL_SERIALIZER-X25519(7)>
+=item X25519, see L<OSSL_ENCODER-X25519(7)>
 
-=item X448, see L<OSSL_SERIALIZER-X448(7)>
+=item X448, see L<OSSL_ENCODER-X448(7)>
 
 =back
 
 =head1 SEE ALSO
 
-L<openssl-core.h(7)>, L<openssl-core_numbers.h(7)>, L<provider(7)>
+L<openssl-core.h(7)>, L<openssl-core_dispatch.h(7)>, L<provider(7)>,
+L<OSSL_PROVIDER-base(7)>
 
 =head1 COPYRIGHT
 

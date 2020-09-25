@@ -57,61 +57,61 @@ static void *evp_keyexch_from_dispatch(int name_id,
         case OSSL_FUNC_KEYEXCH_NEWCTX:
             if (exchange->newctx != NULL)
                 break;
-            exchange->newctx = OSSL_get_OP_keyexch_newctx(fns);
+            exchange->newctx = OSSL_FUNC_keyexch_newctx(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_INIT:
             if (exchange->init != NULL)
                 break;
-            exchange->init = OSSL_get_OP_keyexch_init(fns);
+            exchange->init = OSSL_FUNC_keyexch_init(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SET_PEER:
             if (exchange->set_peer != NULL)
                 break;
-            exchange->set_peer = OSSL_get_OP_keyexch_set_peer(fns);
+            exchange->set_peer = OSSL_FUNC_keyexch_set_peer(fns);
             break;
         case OSSL_FUNC_KEYEXCH_DERIVE:
             if (exchange->derive != NULL)
                 break;
-            exchange->derive = OSSL_get_OP_keyexch_derive(fns);
+            exchange->derive = OSSL_FUNC_keyexch_derive(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_FREECTX:
             if (exchange->freectx != NULL)
                 break;
-            exchange->freectx = OSSL_get_OP_keyexch_freectx(fns);
+            exchange->freectx = OSSL_FUNC_keyexch_freectx(fns);
             fncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_DUPCTX:
             if (exchange->dupctx != NULL)
                 break;
-            exchange->dupctx = OSSL_get_OP_keyexch_dupctx(fns);
+            exchange->dupctx = OSSL_FUNC_keyexch_dupctx(fns);
             break;
         case OSSL_FUNC_KEYEXCH_GET_CTX_PARAMS:
             if (exchange->get_ctx_params != NULL)
                 break;
-            exchange->get_ctx_params = OSSL_get_OP_keyexch_get_ctx_params(fns);
+            exchange->get_ctx_params = OSSL_FUNC_keyexch_get_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_GETTABLE_CTX_PARAMS:
             if (exchange->gettable_ctx_params != NULL)
                 break;
             exchange->gettable_ctx_params
-                = OSSL_get_OP_keyexch_gettable_ctx_params(fns);
+                = OSSL_FUNC_keyexch_gettable_ctx_params(fns);
             gparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SET_CTX_PARAMS:
             if (exchange->set_ctx_params != NULL)
                 break;
-            exchange->set_ctx_params = OSSL_get_OP_keyexch_set_ctx_params(fns);
+            exchange->set_ctx_params = OSSL_FUNC_keyexch_set_ctx_params(fns);
             sparamfncnt++;
             break;
         case OSSL_FUNC_KEYEXCH_SETTABLE_CTX_PARAMS:
             if (exchange->settable_ctx_params != NULL)
                 break;
             exchange->settable_ctx_params
-                = OSSL_get_OP_keyexch_settable_ctx_params(fns);
+                = OSSL_FUNC_keyexch_settable_ctx_params(fns);
             sparamfncnt++;
             break;
         }
@@ -202,11 +202,31 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
 
     /*
      * Ensure that the key is provided, either natively, or as a cached export.
-     *  If not, go legacy
+     * If not, goto legacy
      */
     tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
-                                          &tmp_keymgmt, ctx->propquery);
+    if (ctx->pkey == NULL) {
+        /*
+         * Some algorithms (e.g. legacy KDFs) don't have a pkey - so we create
+         * a blank one.
+         */
+        EVP_PKEY *pkey = EVP_PKEY_new();
+
+        if (pkey == NULL || !EVP_PKEY_set_type_by_keymgmt(pkey, tmp_keymgmt)) {
+            ERR_clear_last_mark();
+            EVP_PKEY_free(pkey);
+            ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
+            goto err;
+        }
+        provkey = pkey->keydata = evp_keymgmt_newdata(tmp_keymgmt);
+        if (provkey == NULL)
+            EVP_PKEY_free(pkey);
+        else
+            ctx->pkey = pkey;
+    } else {
+        provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                            &tmp_keymgmt, ctx->propquery);
+    }
     if (provkey == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
@@ -453,4 +473,25 @@ void EVP_KEYEXCH_names_do_all(const EVP_KEYEXCH *keyexch,
 {
     if (keyexch->prov != NULL)
         evp_names_do_all(keyexch->prov, keyexch->name_id, fn, data);
+}
+
+const OSSL_PARAM *EVP_KEYEXCH_gettable_ctx_params(const EVP_KEYEXCH *keyexch)
+{
+    void *provctx;
+
+    if (keyexch == NULL || keyexch->gettable_ctx_params == NULL)
+        return NULL;
+
+    provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
+    return keyexch->gettable_ctx_params(provctx);
+}
+
+const OSSL_PARAM *EVP_KEYEXCH_settable_ctx_params(const EVP_KEYEXCH *keyexch)
+{
+    void *provctx;
+
+    if (keyexch == NULL || keyexch->settable_ctx_params == NULL)
+        return NULL;
+    provctx = ossl_provider_ctx(EVP_KEYEXCH_provider(keyexch));
+    return keyexch->settable_ctx_params(provctx);
 }

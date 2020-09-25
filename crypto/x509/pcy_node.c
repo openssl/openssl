@@ -14,9 +14,6 @@
 
 #include "pcy_local.h"
 
-DEFINE_STACK_OF(X509_POLICY_NODE)
-DEFINE_STACK_OF(ASN1_OBJECT)
-
 static int node_cmp(const X509_POLICY_NODE *const *a,
                     const X509_POLICY_NODE *const *b)
 {

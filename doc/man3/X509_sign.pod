@@ -2,10 +2,10 @@
 
 =head1 NAME
 
-X509_sign, X509_sign_ctx, X509_verify_ex, X509_verify, X509_REQ_sign,
-X509_REQ_sign_ctx, X509_REQ_verify_ex, X509_REQ_verify, X509_CRL_sign,
-X509_CRL_sign_ctx, X509_CRL_verify
-- sign or verify certificate, certificate request or CRL signature
+X509_sign, X509_sign_ctx,
+X509_REQ_sign, X509_REQ_sign_ctx,
+X509_CRL_sign, X509_CRL_sign_ctx -
+sign certificate, certificate request, or CRL signature
 
 =head1 SYNOPSIS
 
@@ -13,18 +13,12 @@ X509_CRL_sign_ctx, X509_CRL_verify
 
  int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx);
- int X509_verify_ex(X509 *x, EVP_PKEY *pkey, OPENSSL_CTX *libctx, const char *propq);
- int X509_verify(X509 *x, EVP_PKEY *pkey;
 
  int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx);
- int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *pkey, OPENSSL_CTX *libctx,
-                        const char *propq);
- int X509_REQ_verify(X509_REQ *a, EVP_PKEY *pkey);
 
  int X509_CRL_sign(X509_CRL *x, EVP_PKEY *pkey, const EVP_MD *md);
  int X509_CRL_sign_ctx(X509_CRL *x, EVP_MD_CTX *ctx);
- int X509_CRL_verify(X509_CRL *a, EVP_PKEY *pkey);
 
 =head1 DESCRIPTION
 
@@ -32,18 +26,9 @@ X509_sign() signs certificate I<x> using private key I<pkey> and message
 digest I<md> and sets the signature in I<x>. X509_sign_ctx() also signs
 certificate I<x> but uses the parameters contained in digest context I<ctx>.
 
-X509_verify_ex() verifies the signature of certificate I<x> using public key
-I<pkey>. Any cryptographic algorithms required for the verification are fetched
-using the library context I<libctx> and the property query string I<propq>. Only
-the signature is checked: no other checks (such as certificate chain validity)
-are performed.
-
-X509_verify() is the same as X509_verify_ex() except that the default library
-context and property query string are used.
-
-X509_REQ_sign(), X509_REQ_sign_ctx(), X509_REQ_verify_ex(), X509_REQ_verify(),
-X509_CRL_sign(), X509_CRL_sign_ctx() and X509_CRL_verify() sign and verify
-certificate requests and CRLs respectively.
+X509_REQ_sign(), X509_REQ_sign_ctx(),
+X509_CRL_sign(), and X509_CRL_sign_ctx()
+sign certificate requests and CRLs, respectively.
 
 =head1 NOTES
 
@@ -60,34 +45,18 @@ signature and signing will always update the encoding.
 
 =head1 RETURN VALUES
 
-X509_sign(), X509_sign_ctx(), X509_REQ_sign(), X509_REQ_sign_ctx(),
-X509_CRL_sign() and X509_CRL_sign_ctx() return the size of the signature
+All functions return the size of the signature
 in bytes for success and zero for failure.
-
-X509_verify_ex(), X509_verify(), X509_REQ_verify_ex(), X509_REQ_verify() and
-X509_CRL_verify() return 1 if the signature is valid and 0 if the signature
-check fails. If the signature could not be checked at all because it was invalid
-or some other error occurred then -1 is returned.
 
 =head1 SEE ALSO
 
-L<d2i_X509(3)>,
 L<ERR_get_error(3)>,
-L<X509_CRL_get0_by_serial(3)>,
-L<X509_get0_signature(3)>,
-L<X509_get_ext_d2i(3)>,
-L<X509_get_extension_flags(3)>,
-L<X509_get_pubkey(3)>,
-L<X509_get_subject_name(3)>,
-L<X509_get_version(3)>,
 L<X509_NAME_add_entry_by_txt(3)>,
-L<X509_NAME_ENTRY_get_object(3)>,
-L<X509_NAME_get_index_by_NID(3)>,
-L<X509_NAME_print_ex(3)>,
 L<X509_new(3)>,
-L<X509V3_get_d2i(3)>,
 L<X509_verify_cert(3)>,
-L<OPENSSL_CTX(3)>
+L<X509_verify(3)>,
+L<X509_REQ_verify_with_libctx(3)>, L<X509_REQ_verify(3)>,
+L<X509_CRL_verify(3)>
 
 =head1 HISTORY
 
@@ -95,9 +64,7 @@ The X509_sign(), X509_REQ_sign() and X509_CRL_sign() functions are
 available in all versions of OpenSSL.
 
 The X509_sign_ctx(), X509_REQ_sign_ctx()
-and X509_CRL_sign_ctx() functions were added OpenSSL 1.0.1.
-
-X509_verify_ex() and X509_REQ_verify_ex() were added in OpenSSL 3.0.
+and X509_CRL_sign_ctx() functions were added in OpenSSL 1.0.1.
 
 =head1 COPYRIGHT
 

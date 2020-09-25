@@ -26,6 +26,12 @@ support the following.
 
 =over 4
 
+=item "group" (B<OSSL_PKEY_PARAM_GROUP_NAME>) <UTF8 string>
+
+This is only supported by X25519 and X448. The group name must be "x25519" or
+"x448" respectively for those algorithms. This is only present for consistency
+with other key exchange algorithms and is typically not needed.
+
 =item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
 
 The public key value.
@@ -33,6 +39,11 @@ The public key value.
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
 The private key value.
+
+=item "tls-encoded-pt" (B<OSSL_PKEY_PARAM_TLS_ENCODED_PT>) <octet string>
+
+Used for getting and setting the encoding of the public key used in a key exchange
+message for the TLS protocol.
 
 =back
 

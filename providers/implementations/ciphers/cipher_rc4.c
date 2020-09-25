@@ -17,25 +17,31 @@
 
 #include "cipher_rc4.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 /* TODO (3.0) Figure out what flags are required */
 #define RC4_FLAGS EVP_CIPH_FLAG_DEFAULT_ASN1
 
-static OSSL_OP_cipher_freectx_fn rc4_freectx;
-static OSSL_OP_cipher_dupctx_fn rc4_dupctx;
+static OSSL_FUNC_cipher_freectx_fn rc4_freectx;
+static OSSL_FUNC_cipher_dupctx_fn rc4_dupctx;
 
 static void rc4_freectx(void *vctx)
 {
     PROV_RC4_CTX *ctx = (PROV_RC4_CTX *)vctx;
 
+    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
 static void *rc4_dupctx(void *ctx)
 {
     PROV_RC4_CTX *in = (PROV_RC4_CTX *)ctx;
-    PROV_RC4_CTX *ret = OPENSSL_malloc(sizeof(*ret));
+    PROV_RC4_CTX *ret;
 
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    ret = OPENSSL_malloc(sizeof(*ret));
     if (ret == NULL) {
         ERR_raise(ERR_LIB_PROV, ERR_R_MALLOC_FAILURE);
         return NULL;
@@ -46,16 +52,19 @@ static void *rc4_dupctx(void *ctx)
 }
 
 #define IMPLEMENT_cipher(alg, UCALG, flags, kbits, blkbits, ivbits, typ)       \
-static OSSL_OP_cipher_get_params_fn alg##_##kbits##_get_params;                \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_get_params;              \
 static int alg##_##kbits##_get_params(OSSL_PARAM params[])                     \
 {                                                                              \
     return cipher_generic_get_params(params, 0, flags,                         \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-static OSSL_OP_cipher_newctx_fn alg##_##kbits##_newctx;                        \
+static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_newctx;                      \
 static void * alg##_##kbits##_newctx(void *provctx)                            \
 {                                                                              \
-     PROV_##UCALG##_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));                   \
+     PROV_##UCALG##_CTX *ctx;                                                  \
+     if (!ossl_prov_is_running())                                               \
+        return NULL;                                                           \
+     ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits, 0, flags,         \
                                 PROV_CIPHER_HW_##alg(kbits), NULL);            \

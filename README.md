@@ -105,13 +105,13 @@ detailed instructions about building and installing OpenSSL. For some
 platforms, the installation instructions are amended by a platform specific
 document.
 
- * [NOTES.ANDROID](NOTES.ANDROID)
- * [NOTES.DJGPP](NOTES.DJGPP)
- * [NOTES.PERL](NOTES.PERL)
- * [NOTES.UNIX](NOTES.UNIX)
- * [NOTES.VALGRIND](NOTES.VALGRIND)
- * [NOTES.VMS](NOTES.VMS)
- * [NOTES.WIN](NOTES.WIN)
+ * [NOTES-Android.md](NOTES-Android.md)
+ * [NOTES-DJGPP.md](NOTES-DJGPP.md)
+ * [NOTES-Unix.md](NOTES-Unix.md)
+ * [NOTES-VMS.md](NOTES-VMS.md)
+ * [NOTES-Windows.txt](NOTES-Windows.txt)
+ * [NOTES-Perl.m](NOTES-Perl.md)
+ * [NOTES-Valgrind.md](NOTES-Valgrind.md)
 
 Specific notes on upgrading to OpenSSL 3.0 from previous versions, as well as
 known issues are available on the OpenSSL
@@ -142,7 +142,7 @@ OpenSSL is licensed under the Apache License 2.0, which means that
 you are free to get and use it for commercial and non-commercial
 purposes as long as you fulfill its conditions.
 
-See the [LICENSE](LICENSE) file for more details.
+See the [LICENSE.txt](LICENSE.txt) file for more details.
 
 Support
 =======
@@ -155,11 +155,6 @@ Contributing
 
 If you are interested and willing to contribute to the OpenSSL project,
 please take a look at the [CONTRIBUTING](CONTRIBUTING.md) file.
-
-Since 2016, development takes place in public on the GitHub open source
-platform. The OpenSSL Project Pages at [openssl.github.io][] are a
-valuable source of information if you want to get familiar with our
-development process on GitHub.
 
 Legalities
 ==========
@@ -195,10 +190,6 @@ All rights reserved.
     <https://github.com/openssl/openssl>
     "OpenSSL GitHub Mirror"
 
-[openssl.github.io]:
-    <https://mspncp.github.io>
-    "OpenSSL Project Pages"
-
 [wiki.openssl.org]:
     <https://wiki.openssl.org>
     "OpenSSL Wiki"
@@ -207,13 +198,6 @@ All rights reserved.
      <https://tools.ietf.org/html/rfc8446>
 
 <!-- Logos and Badges -->
-<!--
-  Note: The security token for the appveyor badge (the random number in
-  the URL below) was obtained for the mspncp/openssl project.
-  It needs to be replaced by the correct token by some core member
-  (@levitte, @mattcaswell?). It can be obtained for project members at
-  https://ci.appveyor.com/project/openssl/openssl/settings/badges.
--->
 
 [openssl logo]:
     doc/images/openssl.svg
@@ -228,7 +212,7 @@ All rights reserved.
     "Travis Jobs"
 
 [appveyor badge]:
-    <https://ci.appveyor.com/api/projects/status/ikn2l4u1xsume63u/branch/master?svg=true>
+    <https://ci.appveyor.com/api/projects/status/8e10o7xfrg73v98f/branch/master?svg=true>
     "AppVeyor Build Status"
 
 [appveyor jobs]:

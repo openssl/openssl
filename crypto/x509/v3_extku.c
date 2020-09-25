@@ -14,9 +14,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-DEFINE_STACK_OF(ASN1_OBJECT)
-DEFINE_STACK_OF(CONF_VALUE)
-
 static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
                                     X509V3_CTX *ctx,
                                     STACK_OF(CONF_VALUE) *nval);
@@ -97,7 +94,7 @@ static void *v2i_EXTENDED_KEY_USAGE(const X509V3_EXT_METHOD *method,
             sk_ASN1_OBJECT_pop_free(extku, ASN1_OBJECT_free);
             X509V3err(X509V3_F_V2I_EXTENDED_KEY_USAGE,
                       X509V3_R_INVALID_OBJECT_IDENTIFIER);
-            X509V3_conf_err(val);
+            ERR_add_error_data(1, extval);
             return NULL;
         }
         sk_ASN1_OBJECT_push(extku, objtmp);  /* no failure as it was reserved */

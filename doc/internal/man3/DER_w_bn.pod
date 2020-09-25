@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-DER_w_boolean, DER_w_ulong, DER_w_bn, DER_w_null
+DER_w_boolean, DER_w_ulong, DER_w_bn, DER_w_null,
+DER_w_octet_string, DER_w_octet_string_uint32
 - internal DER writers for DER primitives
 
 =head1 SYNOPSIS
@@ -13,6 +14,9 @@ DER_w_boolean, DER_w_ulong, DER_w_bn, DER_w_null
  int DER_w_ulong(WPACKET *pkt, int tag, unsigned long v);
  int DER_w_bn(WPACKET *pkt, int tag, const BIGNUM *v);
  int DER_w_null(WPACKET *pkt, int tag);
+ int DER_w_octet_string(WPACKET *pkt, int tag,
+                        const unsigned char *data, size_t data_n);
+ int DER_w_octet_string_uint32(WPACKET *pkt, int tag, uint32_t value);
 
 =head1 DESCRIPTION
 
@@ -32,6 +36,12 @@ the value I<v>.
 added.
 
 DER_w_null() writes the primitive NULL.
+
+DER_w_octet_string() writes the primitive OCTET STRING using the bytes from
+I<data> with a length of I<data_n>.
+
+DER_w_octet_string_uint32() writes the primitive OCTET STRING using a 32 bit
+value in I<value>.
 
 =head1 RETURN VALUES
 
