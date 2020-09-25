@@ -1379,6 +1379,13 @@ size_t EVP_PKEY_get1_tls_encodedpoint(EVP_PKEY *pkey, unsigned char **ppt)
 
 /*- All methods below can also be used in FIPS_MODULE */
 
+/*
+ * This reset function must be used very carefully, as it literally throws
+ * away everything in an EVP_PKEY without freeing them, and may cause leaks
+ * of memory, locks, what have you.
+ * The only reason we have this is to have the same code for EVP_PKEY_new()
+ * and evp_pkey_downgrade().
+ */
 static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
 {
     if (pk == NULL)
@@ -1389,6 +1396,12 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
     pk->save_type = EVP_PKEY_NONE;
     pk->references = 1;
     pk->save_parameters = 1;
+
+    pk->lock = CRYPTO_THREAD_lock_new();
+    if (pk->lock == NULL) {
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     return 1;
 }
 
@@ -1404,11 +1417,6 @@ EVP_PKEY *EVP_PKEY_new(void)
     if (!evp_pkey_reset_unlocked(ret))
         goto err;
 
-    ret->lock = CRYPTO_THREAD_lock_new();
-    if (ret->lock == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
-        goto err;
-    }
 #ifndef FIPS_MODULE
     if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_EVP_PKEY, ret, &ret->ex_data)) {
         EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
@@ -1908,24 +1916,41 @@ int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src)
 
 int evp_pkey_downgrade(EVP_PKEY *pk)
 {
-    EVP_PKEY tmp_copy;           /* Stack allocated! */
+    EVP_PKEY tmp_copy;              /* Stack allocated! */
+    CRYPTO_RWLOCK *tmp_lock = NULL; /* Temporary lock */
+    int rv = 0;
+
+    if (!ossl_assert(pk != NULL))
+        return 0;
+
+    /*
+     * Throughout this whole function, we must ensure that we lock / unlock
+     * the exact same lock.  Note that we do pass it around a bit.
+     */
+    if (!CRYPTO_THREAD_write_lock(pk->lock))
+        return 0;
 
     /* If this isn't an assigned provider side key, we're done */
-    if (!evp_pkey_is_assigned(pk) || !evp_pkey_is_provided(pk))
-        return 1;
+    if (!evp_pkey_is_assigned(pk) || !evp_pkey_is_provided(pk)) {
+        rv = 1;
+        goto end;
+    }
 
     /*
      * To be able to downgrade, we steal the contents of |pk|, then reset
      * it, and finally try to make it a downgraded copy.  If any of that
      * fails, we restore the copied contents into |pk|.
      */
-    tmp_copy = *pk;
+    tmp_copy = *pk;              /* |tmp_copy| now owns THE lock */
 
     if (evp_pkey_reset_unlocked(pk)
         && evp_pkey_copy_downgraded(&pk, &tmp_copy)) {
+        /* Grab the temporary lock to avoid lock leak */
+        tmp_lock = pk->lock;
+
         /* Restore the common attributes, then empty |tmp_copy| */
         pk->references = tmp_copy.references;
-        pk->lock = tmp_copy.lock;
+        pk->lock = tmp_copy.lock; /* |pk| now owns THE lock */
         pk->attributes = tmp_copy.attributes;
         pk->save_parameters = tmp_copy.save_parameters;
         pk->ex_data = tmp_copy.ex_data;
@@ -1955,12 +1980,22 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         tmp_copy.keydata = NULL;
 
         evp_pkey_free_it(&tmp_copy);
+        rv = 1;
+    } else {
+        /* Grab the temporary lock to avoid lock leak */
+        tmp_lock = pk->lock;
 
-        return 1;
+        /* Restore the original key */
+        *pk = tmp_copy;          /* |pk| now owns THE lock */
     }
 
-    *pk = tmp_copy;
-    return 0;
+    /* Free the temporary lock.  It should never be NULL */
+    CRYPTO_THREAD_lock_free(tmp_lock);
+
+ end:
+    if (!CRYPTO_THREAD_unlock(pk->lock))
+        return 0;
+    return rv;
 }
 #endif  /* FIPS_MODULE */
 
