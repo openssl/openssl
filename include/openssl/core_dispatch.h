@@ -193,13 +193,16 @@ OSSL_CORE_MAKE_FUNC(int,provider_get_params,(void *provctx,
 # define OSSL_FUNC_PROVIDER_QUERY_OPERATION    1027
 OSSL_CORE_MAKE_FUNC(const OSSL_ALGORITHM *,provider_query_operation,
                     (void *provctx, int operation_id, int *no_store))
-# define OSSL_FUNC_PROVIDER_GET_REASON_STRINGS 1028
+# define OSSL_FUNC_PROVIDER_UNQUERY_OPERATION  1028
+OSSL_CORE_MAKE_FUNC(void, provider_unquery_operation,
+                    (void *provctx, int operation_id, const OSSL_ALGORITHM *))
+# define OSSL_FUNC_PROVIDER_GET_REASON_STRINGS 1029
 OSSL_CORE_MAKE_FUNC(const OSSL_ITEM *,provider_get_reason_strings,
                     (void *provctx))
-# define OSSL_FUNC_PROVIDER_GET_CAPABILITIES   1029
+# define OSSL_FUNC_PROVIDER_GET_CAPABILITIES   1030
 OSSL_CORE_MAKE_FUNC(int, provider_get_capabilities, (void *provctx,
                     const char *capability, OSSL_CALLBACK *cb, void *arg))
-# define OSSL_FUNC_PROVIDER_SELF_TEST          1030
+# define OSSL_FUNC_PROVIDER_SELF_TEST          1031
 OSSL_CORE_MAKE_FUNC(int, provider_self_test, (void *provctx))
 
 /* Operations */

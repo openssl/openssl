@@ -86,6 +86,8 @@ provider-base
  const OSSL_ALGORITHM *provider_query_operation(void *provctx,
                                                 int operation_id,
                                                 const int *no_store);
+ void provider_unquery_operation(void *provctx, int operation_id,
+                                 const OSSL_ALGORITHM *algs);
  const OSSL_ITEM *provider_get_reason_strings(void *provctx);
  int provider_get_capabilities(void *provctx, const char *capability,
                                OSSL_CALLBACK *cb, void *arg);
@@ -154,6 +156,7 @@ F<libcrypto>):
  provider_gettable_params       OSSL_FUNC_PROVIDER_GETTABLE_PARAMS
  provider_get_params            OSSL_FUNC_PROVIDER_GET_PARAMS
  provider_query_operation       OSSL_FUNC_PROVIDER_QUERY_OPERATION
+ provider_unquery_operation     OSSL_FUNC_PROVIDER_UNQUERY_OPERATION
  provider_get_reason_strings    OSSL_FUNC_PROVIDER_GET_REASON_STRINGS
  provider_get_capabilities      OSSL_FUNC_PROVIDER_GET_CAPABILITIES
  provider_self_test             OSSL_FUNC_PROVIDER_SELF_TEST
@@ -273,6 +276,11 @@ that corresponds to the given I<operation_id>.
 It should indicate if the core may store a reference to this array by
 setting I<*no_store> to 0 (core may store a reference) or 1 (core may
 not store a reference).
+
+provider_unquery_operation() informs the provider that the result of a
+provider_query_operation() is no longer directly required and that the function
+pointers have been copied.  The I<operation_id> should match that passed to
+provider_query_operation() and I<algs> should be its return value.
 
 provider_get_reason_strings() should return a constant B<OSSL_ITEM>
 array that provides reason strings for reason codes the provider may

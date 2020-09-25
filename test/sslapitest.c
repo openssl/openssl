@@ -38,6 +38,7 @@
 #include "internal/nelem.h"
 #include "internal/ktls.h"
 #include "../ssl/ssl_local.h"
+#include "filterprov.h"
 
 #undef OSSL_NO_USABLE_TLS1_3
 #if defined(OPENSSL_NO_TLS1_3) \
@@ -48,10 +49,6 @@
  */
 # define OSSL_NO_USABLE_TLS1_3
 #endif
-
-/* Defined in filterprov.c */
-OSSL_provider_init_fn filter_provider_init;
-int filter_provider_set_filter(int operation, const char *name);
 
 /* Defined in tls-provider.c */
 int tls_provider_init(const OSSL_CORE_HANDLE *handle,
@@ -8058,7 +8055,7 @@ static int test_sigalgs_available(int idx)
                                                  : NID_rsassaPss))
         goto end;
 
-    testresult = 1;
+    testresult = filter_provider_check_clean_finish();
 
  end:
     SSL_free(serverssl);
