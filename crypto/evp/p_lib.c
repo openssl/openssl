@@ -1399,7 +1399,7 @@ static int evp_pkey_reset_unlocked(EVP_PKEY *pk)
 
     pk->lock = CRYPTO_THREAD_lock_new();
     if (pk->lock == NULL) {
-        EVPerr(EVP_F_EVP_PKEY_NEW, ERR_R_MALLOC_FAILURE);
+        EVPerr(0, ERR_R_MALLOC_FAILURE);
         return 0;
     }
     return 1;
