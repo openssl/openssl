@@ -1149,6 +1149,7 @@ static int test_decoder_ctx_setup_for_EVP_PKEY_input_type_pem() {
   ctx = OPENSSL_CTX_new();
   dctx = OSSL_DECODER_CTX_new();
   OSSL_DECODER_CTX_set_input_type(dctx, "PEM");
+  pem_decoder = NULL;
 
   ret = TEST_true(ossl_decoder_ctx_setup_for_EVP_PKEY(dctx, &pkey, ctx, NULL))
         && TEST_ptr(pem_decoder = OSSL_DECODER_fetch(ctx, "RSA",
