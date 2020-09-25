@@ -304,10 +304,6 @@ EVP_PKEY_CTX_set_tls1_prf_md            define
 EVP_PKEY_assign_DH                      define
 EVP_PKEY_assign_DSA                     define
 EVP_PKEY_assign_EC_KEY                  define
-EVP_PKEY_assign_ED25519                 define
-EVP_PKEY_assign_ED448                   define
-EVP_PKEY_assign_X25519                  define
-EVP_PKEY_assign_X448                    define
 EVP_PKEY_assign_POLY1305                define
 EVP_PKEY_assign_RSA                     define
 EVP_PKEY_assign_SIPHASH                 define
