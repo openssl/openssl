@@ -161,9 +161,9 @@ my $guess_patterns = [
     [ 'vxworks.*',                  '${MACHINE}-whatever-vxworks' ],
 
     # Note: there's also NEO and NSR, but they are old and unsupported
-    [ 'NSE-.*?:NONSTOP_KERNEL:.*',  'nse-tandem-nsk${RELEASE}' ],
-    [ 'NSV-.*?:NONSTOP_KERNEL:.*',  'nsv-tandem-nsk${RELEASE}' ],
-    [ 'NSX-.*?:NONSTOP_KERNEL:.*',  'nsx-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSE-.*?',  'nse-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSV-.*?',  'nsv-tandem-nsk${RELEASE}' ],
+    [ 'NONSTOP_KERNEL:.*:NSX-.*?',  'nsx-tandem-nsk${RELEASE}' ],
 
     [ sub { -d '/usr/apollo' },     'whatever-apollo-whatever' ],
 ];
