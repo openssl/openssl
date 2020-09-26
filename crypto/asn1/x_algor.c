@@ -96,7 +96,7 @@ int X509_ALGOR_cmp(const X509_ALGOR *a, const X509_ALGOR *b)
 int X509_ALGOR_copy(X509_ALGOR *dest, const X509_ALGOR *src)
 {
     if (src == NULL || dest == NULL)
-	return 0;
+        return 0;
 
     if (dest->algorithm)
          ASN1_OBJECT_free(dest->algorithm);

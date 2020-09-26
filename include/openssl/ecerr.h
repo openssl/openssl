@@ -241,6 +241,7 @@ int ERR_load_EC_strings(void);
 #  define EC_R_GF2M_NOT_SUPPORTED                          147
 #  define EC_R_GROUP2PKPARAMETERS_FAILURE                  120
 #  define EC_R_I2D_ECPKPARAMETERS_FAILURE                  121
+#  define EC_R_IMPLICIT_CURVE                              117
 #  define EC_R_INCOMPATIBLE_OBJECTS                        101
 #  define EC_R_INVALID_A                                   168
 #  define EC_R_INVALID_ARGUMENT                            112

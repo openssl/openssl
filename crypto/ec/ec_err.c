@@ -40,6 +40,7 @@ static const ERR_STRING_DATA EC_str_reasons[] = {
     "group2pkparameters failure"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_I2D_ECPKPARAMETERS_FAILURE),
     "i2d ecpkparameters failure"},
+    {ERR_PACK(ERR_LIB_EC, 0, EC_R_IMPLICIT_CURVE), "implicit curve"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_INCOMPATIBLE_OBJECTS),
     "incompatible objects"},
     {ERR_PACK(ERR_LIB_EC, 0, EC_R_INVALID_A), "invalid a"},

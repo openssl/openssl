@@ -122,17 +122,12 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval,
         const unsigned char *pm = pstr->data;
         int pmlen = pstr->length;
 
-
         if (d2i_ECParameters(&eckey, &pm, pmlen) == NULL) {
             ECerr(EC_F_ECKEY_TYPE2PARAM, EC_R_DECODE_ERROR);
             goto ecerr;
         }
-    } else if (ptype == V_ASN1_OBJECT) {
+    } else if (ptype == V_ASN1_OBJECT) { /* curve is named an asn1 OID */
         const ASN1_OBJECT *poid = pval;
-
-        /*
-         * type == V_ASN1_OBJECT => the parameters are given by an asn1 OID
-         */
 
         group = EC_GROUP_new_by_curve_name_with_libctx(libctx, propq,
                                                        OBJ_obj2nid(poid));
@@ -143,7 +138,10 @@ static EC_KEY *eckey_type2param(int ptype, const void *pval,
             goto ecerr;
         EC_GROUP_free(group);
     } else {
-        ECerr(EC_F_ECKEY_TYPE2PARAM, EC_R_DECODE_ERROR);
+        if (ptype == V_ASN1_NULL) /* implicitCurve */
+            ECerr(EC_F_ECKEY_TYPE2PARAM, EC_R_IMPLICIT_CURVE);
+        else
+            ECerr(EC_F_ECKEY_TYPE2PARAM, EC_R_DECODE_ERROR);
         goto ecerr;
     }
 
@@ -171,11 +169,8 @@ static int eckey_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
     eckey = eckey_type2param(ptype, pval, libctx, propq);
-
-    if (!eckey) {
-        ECerr(EC_F_ECKEY_PUB_DECODE, ERR_R_EC_LIB);
+    if (eckey == NULL)
         return 0;
-    }
 
     /* We have parameters now set public key */
     if (!o2i_ECPublicKey(&eckey, &p, pklen)) {
