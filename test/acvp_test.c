@@ -1434,18 +1434,9 @@ int setup_tests(void)
         }
     }
 
-    prov_null = OSSL_PROVIDER_load(NULL, "null");
-    if (prov_null == NULL) {
-        opt_printf_stderr("Failed to load null provider into default libctx\n");
+    if (!test_get_libctx(&libctx, &prov_null, config_file, NULL, NULL))
         return 0;
-    }
 
-    libctx = OSSL_LIB_CTX_new();
-    if (libctx == NULL
-        || !OSSL_LIB_CTX_load_config(libctx, config_file)) {
-        opt_printf_stderr("Failed to load config\n");
-        return 0;
-    }
     OSSL_SELF_TEST_set_callback(libctx, self_test_events, &self_test_args);
 
     ADD_ALL_TESTS(cipher_enc_dec_test, OSSL_NELEM(cipher_enc_data));

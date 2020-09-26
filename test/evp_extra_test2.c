@@ -272,13 +272,7 @@ static int test_d2i_PrivateKey_ex(void) {
 
 int setup_tests(void)
 {
-    mainctx = OSSL_LIB_CTX_new();
-
-    if (!TEST_ptr(mainctx))
-        return 0;
-
-    nullprov = OSSL_PROVIDER_load(NULL, "null");
-    if (!TEST_ptr(nullprov)) {
+    if (!test_get_libctx(&mainctx, &nullprov, NULL, NULL, NULL)) {
         OSSL_LIB_CTX_free(mainctx);
         mainctx = NULL;
         return 0;

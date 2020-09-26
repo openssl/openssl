@@ -648,19 +648,7 @@ int setup_tests(void)
         }
     }
 
-    nullprov = OSSL_PROVIDER_load(NULL, "null");
-    if (!TEST_ptr(nullprov))
-        return 0;
-
-    libctx = OSSL_LIB_CTX_new();
-    if (!TEST_ptr(libctx))
-        return 0;
-    if (config_file != NULL
-        && !TEST_true(OSSL_LIB_CTX_load_config(libctx, config_file)))
-        return 0;
-
-    libprov = OSSL_PROVIDER_load(libctx, prov_name);
-    if (!TEST_ptr(libprov))
+    if (!test_get_libctx(&libctx, &nullprov, config_file, &libprov, prov_name))
         return 0;
 
 #if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DH)
