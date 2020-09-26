@@ -371,11 +371,6 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
         int default_salt_len;
         EVP_MAC *mac = EVP_MAC_CTX_mac(ctx->macctx);
 
-        /*
-         * TODO(3.0) investigate the necessity to have all these controls.
-         * Why does KMAC require a salt length that's shorter than the MD
-         * block size?
-         */
         if (EVP_MAC_is_a(mac, OSSL_MAC_NAME_HMAC)) {
             /* H(x) = HMAC(x, salt, hash) */
             if (md == NULL) {
