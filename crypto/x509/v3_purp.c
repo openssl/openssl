@@ -362,16 +362,26 @@ static int setup_crldp(X509 *x)
 }
 
 /* Check that issuer public key algorithm matches subject signature algorithm */
-static int check_sig_alg_match(const EVP_PKEY *pkey, const X509 *subject)
+static int check_sig_alg_match(const X509 *issuer, const X509 *subject)
 {
-    int pkey_nid;
+    const EVP_PKEY *pkey = X509_get0_pubkey(issuer);
+    ASN1_OBJECT *alg;
+    int pkey_nid, sig_nid;
 
-    if (pkey == NULL)
-        return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+    if (pkey != NULL) {
+        pkey_nid = EVP_PKEY_base_id(pkey);
+    } else {
+        /* fallback in case key params are not yet known, e.g., implicitCurve */
+        X509_PUBKEY_get0_param(&alg, NULL, NULL, NULL, issuer->cert_info.key);
+        if (alg == NULL || (pkey_nid = OBJ_obj2nid(alg)) == NID_undef)
+            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+    }
+
     if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),
-                            NULL, &pkey_nid) == 0)
+                            NULL, &sig_nid) == 0)
         return X509_V_ERR_UNSUPPORTED_SIGNATURE_ALGORITHM;
-    if (EVP_PKEY_type(pkey_nid) != EVP_PKEY_base_id(pkey))
+
+    if (EVP_PKEY_type(sig_nid) != pkey_nid)
         return X509_V_ERR_SIGNATURE_ALGORITHM_MISMATCH;
     return X509_V_OK;
 }
@@ -554,7 +564,7 @@ int x509v3_cache_extensions(X509 *x)
         x->ex_flags |= EXFLAG_SI; /* cert is self-issued */
         if (X509_check_akid(x, x->akid) == X509_V_OK /* SKID matches AKID */
                 /* .. and the signature alg matches the PUBKEY alg: */
-                && check_sig_alg_match(X509_get0_pubkey(x), x) == X509_V_OK)
+                && check_sig_alg_match(x, x) == X509_V_OK)
             x->ex_flags |= EXFLAG_SS; /* indicate self-signed */
         /* This is very related to x509_likely_issued(x, x) == X509_V_OK */
     }
@@ -927,8 +937,8 @@ int x509_likely_issued(X509 *issuer, X509 *subject)
     if (ret != X509_V_OK)
         return ret;
 
-    /* check if the subject signature alg matches the issuer's PUBKEY alg */
-    return check_sig_alg_match(X509_get0_pubkey(issuer), subject);
+    /* check if the subject signature alg the issuer's PUBKEY algor nid */
+    return check_sig_alg_match(issuer, subject);
 }
 
 /*-
