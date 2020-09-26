@@ -99,6 +99,7 @@ int ERR_load_X509_strings(void);
  * X509 reason codes.
  */
 # define X509_R_AKID_MISMATCH                             110
+# define X509_R_ALGORITHM_MISMATCH                        140
 # define X509_R_BAD_SELECTOR                              133
 # define X509_R_BAD_X509_FILETYPE                         100
 # define X509_R_BASE64_DECODE_ERROR                       118

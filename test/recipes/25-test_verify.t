@@ -16,18 +16,23 @@ use OpenSSL::Test::Utils;
 
 setup("test_verify");
 
-sub verify {
-    my ($cert, $purpose, $trusted, $untrusted, @opts) = @_;
+sub verify_ext {
+    my ($cert, $ext, $purpose, $trusted, $untrusted, @opts) = @_;
     my @args = qw(openssl verify -auth_level 1 -purpose);
     my @path = qw(test certs);
     push(@args, "$purpose", @opts);
     for (@$trusted) { push(@args, "-trusted", srctop_file(@path, "$_.pem")) }
     for (@$untrusted) { push(@args, "-untrusted", srctop_file(@path, "$_.pem")) }
-    push(@args, srctop_file(@path, "$cert.pem"));
+    push(@args, srctop_file(@path, "$cert$ext"));
     run(app([@args]));
 }
 
-plan tests => 151;
+sub verify {
+    my ($cert, @opts) = @_;
+    return verify_ext($cert, ".pem", @opts);
+}
+
+plan tests => 158;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -289,10 +294,11 @@ ok(verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"], "-auth_level",
 ok(!verify("ee-cert-md5", "sslserver", ["root-cert"], ["ca-cert"]),
    "reject md5 leaf at auth level 1");
 
-# Explicit vs named curve tests
 SKIP: {
-    skip "EC is not supported by this OpenSSL build", 3
+    skip "EC is not supported by this OpenSSL build", 10
         if disabled("ec");
+
+    # Explicit vs named curve tests
     ok(!verify("ee-cert-ec-explicit", "sslserver", ["root-cert"],
                ["ca-cert-ec-named"]),
         "reject explicit curve leaf with named curve intermediate");
@@ -302,6 +308,27 @@ SKIP: {
     ok(verify("ee-cert-ec-named-named", "sslserver", ["root-cert"],
               ["ca-cert-ec-named"]),
         "accept named curve leaf with named curve intermediate");
+
+    # Implicit vs named curve tests
+    ok(verify("p384-ee", "any", ["p384-root"], ["p384-inter"]),
+        "accept inter and leaf named curve");
+    ok(!verify("p384-ee", "any", ["p384-root"], ["p384-inter-implicitCurve"]),
+        "reject inter implicitCurve");
+    ok(!verify_ext("p384-ee-implicitCurve", ".der",
+                   "any", ["p384-root"], ["p384-inter"]),
+        "reject leaf implicitCurve");
+    ok(!verify("p384-ee-implicitCurve-selfsigned", "any",
+                   ["p384-ee-implicitCurve-selfsigned"], [], "-partial_chain"),
+        "reject directly trusted self-signed implicitCurve");
+    ok(verify_ext("p384-ee-implicitCurve", ".der",
+                  "any", ["p384-root"], ["p384-inter-implicitCurve"],
+                  "-inherit_pkparam"),
+        "accept inter and leaf implicitCurve using -inherit_pkparam");
+    ok(verify("p384-ee", "any", ["p384-inter"], [], "-partial_chain"),
+        "accept partial chain with inter cert with named curve");
+    ok(!verify("p384-ee", "any", ["p384-inter-implicitCurve"], [],
+                  "-inherit_pkparam", "-partial_chain"),
+        "cannot inherit implicitCurve parameters even using -inherit_pkparam");
 }
 
 # Depth tests, note the depth limit bounds the number of CA certificates

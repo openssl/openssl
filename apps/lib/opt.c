@@ -664,6 +664,9 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_PARTIAL_CHAIN:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_PARTIAL_CHAIN);
         break;
+    case OPT_V_INHERIT_PKPARAM:
+        X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_INHERIT_PKPARAM);
+        break;
     case OPT_V_NO_ALT_CHAINS:
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_NO_ALT_CHAINS);
         break;

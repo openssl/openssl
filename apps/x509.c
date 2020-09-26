@@ -60,9 +60,8 @@ typedef enum OPTION_choice {
     OPT_PURPOSE, OPT_STARTDATE, OPT_ENDDATE, OPT_CHECKEND, OPT_CHECKHOST,
     OPT_CHECKEMAIL, OPT_CHECKIP, OPT_NOOUT, OPT_TRUSTOUT, OPT_CLRTRUST,
     OPT_CLRREJECT, OPT_ALIAS, OPT_CACREATESERIAL, OPT_CLREXT, OPT_OCSPID,
-    OPT_SUBJECT_HASH_OLD,
-    OPT_ISSUER_HASH_OLD,
-    OPT_BADSIG, OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
+    OPT_SUBJECT_HASH_OLD, OPT_ISSUER_HASH_OLD, OPT_BADSIG, OPT_NULL_PKPARAM,
+    OPT_MD, OPT_ENGINE, OPT_NOCERT, OPT_PRESERVE_DATES,
     OPT_R_ENUM, OPT_PROV_ENUM, OPT_EXT
 } OPTION_CHOICE;
 
@@ -142,13 +141,13 @@ const OPTIONS x509_options[] = {
     {"subj", OPT_SUBJ, 's', "Set or override certificate subject (and issuer)"},
 
     OPT_SECTION("CA"),
-    {"CA", OPT_CA, '<', "Set the CA certificate, must be PEM format"},
+    {"CA", OPT_CA, '<', "The CA certificate"},
     {"CAkey", OPT_CAKEY, 's',
-     "The CA key, must be PEM format; if not in CAfile"},
+     "The CA key, if not in CAfile"},
     {"extfile", OPT_EXTFILE, '<', "File with X509V3 extensions to add"},
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
-    {"CAform", OPT_CAFORM, 'F', "CA cert format (PEM/DER/P12); has no effect"},
+    {"CAform", OPT_CAFORM, 'F', "CA cert format; has no effect"},
     {"CAkeyform", OPT_CAKEYFORM, 'E', "CA key format (ENGINE, other values ignored)"},
     {"sigopt", OPT_SIGOPT, 's', "Signature parameter in n:v form"},
     {"CAcreateserial", OPT_CACREATESERIAL, '-',
@@ -159,6 +158,7 @@ const OPTIONS x509_options[] = {
     {"clrreject", OPT_CLRREJECT, '-',
      "Clears all the prohibited or rejected uses of the certificate"},
     {"badsig", OPT_BADSIG, '-', "Corrupt last byte of certificate signature (for test)"},
+    {"null_pkparam", OPT_NULL_PKPARAM, '-', "Replace parameter of cert public key by NULL"},
     {"", OPT_MD, '-', "Any supported digest"},
     {"preserve_dates", OPT_PRESERVE_DATES, '-', "preserve existing dates when signing"},
     {NULL}
@@ -194,7 +194,8 @@ int x509_main(int argc, char **argv)
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
     int noout = 0, sign_flag = 0, CA_flag = 0, CA_createserial = 0, email = 0;
     int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
-    int ret = 1, i, num = 0, badsig = 0, clrext = 0, nocert = 0;
+    int ret = 1, i, num = 0;
+    int badsig = 0, null_pkparam = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
     time_t checkoffset = 0;
@@ -445,6 +446,9 @@ int x509_main(int argc, char **argv)
         case OPT_BADSIG:
             badsig = 1;
             break;
+        case OPT_NULL_PKPARAM:
+            null_pkparam = 1;
+            break;
 #ifndef OPENSSL_NO_MD5
         case OPT_SUBJECT_HASH_OLD:
             subject_hash_old = ++num;
@@ -536,7 +540,7 @@ int x509_main(int argc, char **argv)
             && (fsubj = parse_name(subj, chtype, multirdn, "subject")) == NULL)
         goto end;
 
-    if (CAkeyfile == NULL && CA_flag && CAformat == FORMAT_PEM) {
+    if (CAkeyfile == NULL && CA_flag) {
         CAkeyfile = CAfile;
     } else if (CA_flag && CAkeyfile == NULL) {
         BIO_printf(bio_err,
@@ -562,7 +566,7 @@ int x509_main(int argc, char **argv)
         X509V3_set_nconf(&ctx2, extconf);
         if (!X509V3_EXT_add_nconf(extconf, &ctx2, extsect, NULL)) {
             BIO_printf(bio_err,
-                       "Error Loading extension section %s\n", extsect);
+                       "Error loading extension section %s\n", extsect);
             ERR_print_errors(bio_err);
             goto end;
         }
@@ -680,6 +684,15 @@ int x509_main(int argc, char **argv)
 
         X509_get0_signature(&signature, NULL, x);
         corrupt_signature(signature);
+    }
+
+    if (null_pkparam) {
+        ASN1_OBJECT *aobj;
+        X509_ALGOR *algor;
+
+        X509_PUBKEY_get0_param(&aobj, NULL, NULL, &algor,
+                               X509_get_X509_PUBKEY(x));
+        X509_ALGOR_set0(algor, aobj, V_ASN1_NULL, NULL);
     }
 
     if (num) {

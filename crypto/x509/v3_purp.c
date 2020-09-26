@@ -374,7 +374,7 @@ static int check_sig_alg_match(const X509 *issuer, const X509 *subject)
         /* fallback in case key params are not yet known, e.g., implicitCurve */
         X509_PUBKEY_get0_param(&alg, NULL, NULL, NULL, issuer->cert_info.key);
         if (alg == NULL || (pkey_nid = OBJ_obj2nid(alg)) == NID_undef)
-            return X509_V_ERR_NO_ISSUER_PUBLIC_KEY;
+            return X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
     }
 
     if (OBJ_find_sigid_algs(OBJ_obj2nid(subject->cert_info.signature.algorithm),

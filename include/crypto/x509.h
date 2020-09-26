@@ -319,3 +319,5 @@ int X509_add_cert_new(STACK_OF(X509) **sk, X509 *cert, int flags);
 
 int X509_PUBKEY_get0_libctx(OPENSSL_CTX **plibctx, const char **ppropq,
                             const X509_PUBKEY *key);
+int X509_PUBKEY_copy_algor_parameter(X509_PUBKEY *dest, const X509_PUBKEY *src);
+int X509_PUBKEY_chain_inherit_parameter(STACK_OF(X509) *chain);

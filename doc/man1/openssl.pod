@@ -944,6 +944,12 @@ self-signed trust-anchor, provided it is possible to construct a chain to a
 trusted certificate that might not be self-signed.
 This certificate may be self-issued or belong to an intermediate CA.
 
+=item B<-inherit_pkparam>
+
+Allow inheriting public key parameters along cert chains from the root side.
+This is useful for instance in case EC certificates use the implictCurve option.
+Note that according to RFC 5480, EC implicitCurve must not be used in PKIX.
+
 =item B<-check_ss_sig>
 
 Verify the signature of

@@ -15,6 +15,8 @@
 
 static const ERR_STRING_DATA X509_str_reasons[] = {
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_AKID_MISMATCH), "akid mismatch"},
+    {ERR_PACK(ERR_LIB_X509, 0, X509_R_ALGORITHM_MISMATCH),
+    "algorithm mismatch"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_BAD_SELECTOR), "bad selector"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_BAD_X509_FILETYPE), "bad x509 filetype"},
     {ERR_PACK(ERR_LIB_X509, 0, X509_R_BASE64_DECODE_ERROR),

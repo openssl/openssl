@@ -116,16 +116,16 @@ int X509_self_signed(X509 *cert, int verify_signature)
 {
     EVP_PKEY *pkey;
 
-    if ((pkey = X509_get0_pubkey(cert)) == NULL) { /* handles cert == NULL */
-        X509err(0, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
-        return -1;
-    }
-    if (!x509v3_cache_extensions(cert))
+    if (cert == NULL || !x509v3_cache_extensions(cert))
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;
     if (!verify_signature)
         return 1;
+    if ((pkey = X509_get0_pubkey(cert)) == NULL) {
+        X509err(0, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
+        return -1;
+    }
     return X509_verify(cert, pkey);
 }
 
@@ -185,7 +185,7 @@ static int verify_cb_crl(X509_STORE_CTX *ctx, int err)
 
 static int check_auth_level(X509_STORE_CTX *ctx)
 {
-    int i;
+    int i, res;
     int num = sk_X509_num(ctx->chain);
 
     if (ctx->param->auth_level <= 0)
@@ -194,12 +194,13 @@ static int check_auth_level(X509_STORE_CTX *ctx)
     for (i = 0; i < num; ++i) {
         X509 *cert = sk_X509_value(ctx->chain, i);
 
-        /*
-         * We've already checked the security of the leaf key, so here we only
-         * check the security of issuer keys.
-         */
-        if (i > 0 && !check_key_level(ctx, cert) &&
-            verify_cb_cert(ctx, cert, i, X509_V_ERR_CA_KEY_TOO_SMALL) == 0)
+        if ((res = check_key_level(ctx, cert)) <= 0 &&
+            verify_cb_cert(ctx, cert, i,
+                           res < 0
+                           ? X509_V_ERR_NO_SUBJECT_PUBLIC_KEY
+                           : i == 0
+                             ? X509_V_ERR_EE_KEY_TOO_SMALL
+                             : X509_V_ERR_CA_KEY_TOO_SMALL) == 0)
             return 0;
         /*
          * We also check the signature algorithm security of all certificates
@@ -225,7 +226,7 @@ static int verify_chain(X509_STORE_CTX *ctx)
         (ok = check_chain(ctx)) == 0 ||
         (ok = check_auth_level(ctx)) == 0 ||
         (ok = check_id(ctx)) == 0 || 1)
-        X509_get_pubkey_parameters(NULL, ctx->chain);
+        X509_get_pubkey_parameters(NULL, ctx->chain); /* TODO remove legacy? */
     if (ok == 0 || (ok = ctx->check_revocation(ctx)) == 0)
         return ok;
 
@@ -285,11 +286,6 @@ int X509_verify_cert(X509_STORE_CTX *ctx)
     }
     ctx->num_untrusted = 1;
 
-    /* If the peer's public key is too weak, we can stop early. */
-    if (!check_key_level(ctx, ctx->cert) &&
-        !verify_cb_cert(ctx, ctx->cert, 0, X509_V_ERR_EE_KEY_TOO_SMALL))
-        return 0;
-
     if (DANETLS_ENABLED(dane))
         ret = dane_verify(ctx);
     else
@@ -336,7 +332,7 @@ static X509 *find_issuer(X509_STORE_CTX *ctx, STACK_OF(X509) *sk, X509 *x)
 static int check_issued(X509_STORE_CTX *ctx, X509 *x, X509 *issuer)
 {
     if (x509_likely_issued(issuer, x) != X509_V_OK)
-        return 0;
+        return 0; /* TODO would be nice to report the reason for failure */
     if ((x->ex_flags & EXFLAG_SI) == 0 || sk_X509_num(ctx->chain) != 1) {
         int i;
         X509 *ch;
@@ -450,6 +446,9 @@ static int check_chain(X509_STORE_CTX *ctx)
     int allow_proxy_certs;
     int num = sk_X509_num(ctx->chain);
 
+    if ((ctx->param->flags & X509_V_FLAG_INHERIT_PKPARAM) != 0)
+        X509_PUBKEY_chain_inherit_parameter(ctx->chain);
+
     /*-
      *  must_be_ca can have 1 of 3 values:
      * -1: we accept both CA and non-CA certificates, to allow direct
@@ -517,13 +516,13 @@ static int check_chain(X509_STORE_CTX *ctx)
         if (num > 1) {
             /* Check for presence of explicit elliptic curve parameters */
             ret = check_curve(x);
-            if (ret < 0)
-                ctx->error = X509_V_ERR_UNSPECIFIED;
+            if (ret < 0) /* likely due to implicitCurve */
+                ctx->error = X509_V_ERR_UNSUPPORTED_OR_MALFORMED_KEY;
             else if (ret == 0)
                 ctx->error = X509_V_ERR_EC_KEY_EXPLICIT_PARAMS;
         }
         /*
-         * Do the following set of checks only if strict checking is requrested
+         * Do the following set of checks only if strict checking is requested
          * and not for self-issued (including self-signed) EE (non-CA) certs
          * because RFC 5280 does not apply to them according RFC 6818 section 2.
          */
@@ -1841,8 +1840,8 @@ static int internal_verify(X509_STORE_CTX *ctx)
              * step (n) we must check any given key usage extension in a CA cert
              * when preparing the verification of a certificate issued by it.
              * According to https://tools.ietf.org/html/rfc5280#section-4.2.1.3
-             * we must not verify a certifiate signature if the key usage of the
-             * CA certificate that issued the certificate prohibits signing.
+             * we must not verify a certificate signature if the key usage of
+             * the CA certificate that issued the certificate prohibits signing.
              * In case the 'issuing' certificate is the last in the chain and is
              * not a CA certificate but a 'self-issued' end-entity cert (i.e.,
              * xs == xi && !(xi->ex_flags & EXFLAG_CA)) RFC 5280 does not apply
@@ -2016,6 +2015,7 @@ ASN1_TIME *X509_time_adj_ex(ASN1_TIME *s,
     return ASN1_TIME_adj(s, t, offset_day, offset_sec);
 }
 
+/* TODO remove this legacy function or rename it for clarity and document it */
 int X509_get_pubkey_parameters(EVP_PKEY *pkey, STACK_OF(X509) *chain)
 {
     EVP_PKEY *ktmp = NULL, *ktmp2;
@@ -2973,7 +2973,7 @@ static int dane_verify(X509_STORE_CTX *ctx)
     done = matched != 0 || (!DANETLS_HAS_TA(dane) && dane->mdpth < 0);
 
     if (done)
-        X509_get_pubkey_parameters(NULL, ctx->chain);
+        X509_get_pubkey_parameters(NULL, ctx->chain); /* TODO remove legacy? */
 
     if (matched > 0) {
         /* Callback invoked as needed */
@@ -3416,7 +3416,7 @@ static const int NUM_AUTH_LEVELS = OSSL_NELEM(minbits_table);
  * Check whether the public key of ``cert`` meets the security level of
  * ``ctx``.
  *
- * Returns 1 on success, 0 otherwise.
+ * Returns 1 on success, 0 if check fails, -1 for other errors.
  */
 static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
 {
@@ -3434,7 +3434,7 @@ static int check_key_level(X509_STORE_CTX *ctx, X509 *cert)
 
     /* Unsupported or malformed keys are not secure */
     if (pkey == NULL)
-        return 0;
+        return -1;
 
     if (level > NUM_AUTH_LEVELS)
         level = NUM_AUTH_LEVELS;

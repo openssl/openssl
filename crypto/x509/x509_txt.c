@@ -69,8 +69,8 @@ const char *X509_verify_cert_error_string(long n)
         return "certificate chain too long";
     case X509_V_ERR_CERT_REVOKED:
         return "certificate revoked";
-    case X509_V_ERR_NO_ISSUER_PUBLIC_KEY:
-        return "issuer certificate doesn't have a public key";
+    case X509_V_ERR_NO_SUBJECT_PUBLIC_KEY:
+        return "certificate doesn't have a complete public key";
     case X509_V_ERR_PATH_LENGTH_EXCEEDED:
         return "path length constraint exceeded";
     case X509_V_ERR_INVALID_PURPOSE:
@@ -212,6 +212,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Using cert extension requires at least X509v3";
     case X509_V_ERR_EC_KEY_EXPLICIT_PARAMS:
         return "Certificate public key has explicit ECC parameters";
+    case X509_V_ERR_UNSUPPORTED_OR_MALFORMED_KEY:
+        return "Certificate public key is unsupported or malformed";
 
     default:
         /* Printing an error number into a static buffer is not thread-safe */

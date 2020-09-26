@@ -59,7 +59,7 @@ key() {
         *) printf "Unsupported key algorithm: %s\n" "$alg" >&2; return 1;;
         esac
         stderr_onerror \
-            openssl genpkey "${args[@]}" -out "${key}.pem"
+            openssl genpkey ${OPTS} "${args[@]}" -out "${key}.pem"
     fi
 }
 
@@ -70,6 +70,7 @@ req() {
     key "$key"
     local errs
 
+    # for some reason, including ${OPTS} in this call leads to strange failure:
     stderr_onerror \
         openssl req -new -"${OPENSSL_SIGALG}" -key "${key}.pem" \
             -config <(printf "string_mask=%s\n[req]\n%s\n%s\n[dn]\n" \
@@ -82,7 +83,7 @@ req_nocn() {
 
     key "$key"
     stderr_onerror \
-        openssl req -new -"${OPENSSL_SIGALG}" -subj / -key "${key}.pem" \
+        openssl req -new ${OPTS} -"${OPENSSL_SIGALG}" -subj / -key "${key}.pem" \
             -config <(printf "[req]\n%s\n[dn]\nCN_default =\n" \
 		      "distinguished_name = dn")
 }
@@ -92,7 +93,7 @@ cert() {
     local exts=$1; shift
 
     stderr_onerror \
-        openssl x509 -req -"${OPENSSL_SIGALG}" -out "${cert}.pem" \
+        openssl x509 -req ${OPTS} -"${OPENSSL_SIGALG}" -out "${cert}.pem" \
             -extfile <(printf "%s\n" "$exts") "$@"
 }
 

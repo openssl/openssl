@@ -403,9 +403,16 @@ OPENSSL_SIGALG=ED448 OPENSSL_KEYALG=ed448 ./mkcert.sh genee ed448 \
 
 # non-critical unknown extension
 ./mkcert.sh geneeextra server.example ee-key ee-cert-noncrit-unknown-ext ca-key ca-cert "1.2.3.4=DER:05:00"
-
 # critical unknown extension
 ./mkcert.sh geneeextra server.example ee-key ee-cert-crit-unknown-ext ca-key ca-cert "1.2.3.4=critical,DER:05:00"
-
 # critical id-pkix-ocsp-no-check extension
 ./mkcert.sh geneeextra server.example ee-key ee-cert-ocsp-nocheck ca-key ca-cert "1.3.6.1.5.5.7.48.1.5=critical,DER:05:00"
+
+# implicitCurve
+./mkcert.sh genca "ECDSA P-384 inter" p384-inter-key p384-inter p384-root-key p384-root
+./mkcert.sh genee "ECDSA P-384 ee" p384-ee-key p384-ee p384-inter-key p384-inter
+OPTS="-null_pkparam" ./mkcert.sh genca "ECDSA P-384 inter" p384-inter-key p384-inter-implicitCurve p384-root-key p384-root
+OPTS="-null_pkparam -outform DER" ./mkcert.sh genee "ECDSA P-384 ee" p384-ee-key p384-ee-implicitCurve p384-inter-key p384-inter && mv p384-ee-implicitCurve.{pem,der}
+OPTS="-null_pkparam" ./mkcert.sh genee "ECDSA P-384 ee" p384-ee-key p384-ee-implicitCurve p384-inter-key p384-inter
+OPTS="-null_pkparam" ./mkcert.sh genee "ECDSA P-384 ee" p384-ee-key p384-ee-implicitCurve-selfsigned p384-ee-key p384-ee
+

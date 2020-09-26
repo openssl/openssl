@@ -325,6 +325,11 @@ Thus, when an intermediate certificate is found in the trust store, the
 verified chain passed to callbacks may be shorter than it otherwise would
 be without the B<X509_V_FLAG_PARTIAL_CHAIN> flag.
 
+The B<X509_V_FLAG_INHERIT_PKPARAM> allows
+inheriting public key parameters along certificate chains from the root side.
+This is useful for instance in case EC certificates use the implictCurve option.
+Note that according to RFC 5480, EC implicitCurve must not be used in PKIX.
+
 The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
 of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
 is used to specify a verification time, the check is not suppressed.

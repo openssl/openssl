@@ -117,6 +117,7 @@ B<openssl> B<cmp>
 [B<-suiteB_128>]
 [B<-suiteB_192>]
 [B<-partial_chain>]
+[B<-inherit_pkparam>]
 [B<-no_alt_chains>]
 [B<-no_check_time>]
 [B<-allow_proxy_certs>]
@@ -875,7 +876,7 @@ B<-x509_strict>, B<-extended_crl>, B<-use_deltas>,
 B<-policy_print>, B<-check_ss_sig>, B<-crl_check>, B<-crl_check_all>,
 B<-trusted_first>,
 B<-suiteB_128_only>, B<-suiteB_128>, B<-suiteB_192>,
-B<-partial_chain>, B<-no_alt_chains>, B<-no_check_time>,
+B<-partial_chain>, B<-inherit_pkparam>, B<-no_alt_chains>, B<-no_check_time>,
 B<-auth_level>,
 B<-allow_proxy_certs>
 

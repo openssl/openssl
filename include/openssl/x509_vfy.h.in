@@ -156,7 +156,7 @@ X509_LOOKUP_ctrl_with_libctx((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_ERR_UNABLE_TO_VERIFY_LEAF_SIGNATURE      21
 # define X509_V_ERR_CERT_CHAIN_TOO_LONG                  22
 # define X509_V_ERR_CERT_REVOKED                         23
-# define X509_V_ERR_NO_ISSUER_PUBLIC_KEY                 24
+# define X509_V_ERR_NO_SUBJECT_PUBLIC_KEY                24
 # define X509_V_ERR_PATH_LENGTH_EXCEEDED                 25
 # define X509_V_ERR_INVALID_PURPOSE                      26
 # define X509_V_ERR_CERT_UNTRUSTED                       27
@@ -243,6 +243,7 @@ X509_LOOKUP_ctrl_with_libctx((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_ERR_CA_CERT_MISSING_KEY_USAGE            92
 # define X509_V_ERR_EXTENSIONS_REQUIRE_VERSION_3         93
 # define X509_V_ERR_EC_KEY_EXPLICIT_PARAMS               94
+# define X509_V_ERR_UNSUPPORTED_OR_MALFORMED_KEY         95
 
 /* Certificate verify flags */
 # ifndef OPENSSL_NO_DEPRECATED_1_1_0
@@ -294,6 +295,8 @@ X509_LOOKUP_ctrl_with_libctx((x), X509_L_ADD_STORE, (name), 0, NULL,           \
 # define X509_V_FLAG_NO_ALT_CHAINS               0x100000
 /* Do not check certificate/CRL validity against current time */
 # define X509_V_FLAG_NO_CHECK_TIME               0x200000
+/* Allow inheriting public key parameters along chain, e.g. for implictCurve */
+# define X509_V_FLAG_INHERIT_PKPARAM             0x400000
 
 # define X509_VP_FLAG_DEFAULT                    0x1
 # define X509_VP_FLAG_OVERWRITE                  0x2

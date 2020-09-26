@@ -158,8 +158,6 @@ int X509_PUBKEY_set(X509_PUBKEY **x, EVP_PKEY *pkey)
  * Returns 1 on success, 0 for a decode failure and -1 for a fatal
  * error e.g. malloc failure.
  */
-
-
 static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
 {
     EVP_PKEY *pkey = EVP_PKEY_new();
@@ -175,15 +173,8 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
     }
 
     if (pkey->ameth->pub_decode) {
-        /*
-         * Treat any failure of pub_decode as a decode error. In
-         * future we could have different return codes for decode
-         * errors and fatal errors such as malloc failure.
-         */
-        if (!pkey->ameth->pub_decode(pkey, key)) {
-            X509err(X509_F_X509_PUBKEY_DECODE, X509_R_PUBLIC_KEY_DECODE_ERROR);
+        if (!pkey->ameth->pub_decode(pkey, key))
             goto error;
-        }
     } else {
         X509err(X509_F_X509_PUBKEY_DECODE, X509_R_METHOD_NOT_SUPPORTED);
         goto error;
@@ -195,6 +186,79 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
  error:
     EVP_PKEY_free(pkey);
     return 0;
+}
+
+int X509_PUBKEY_copy_algor_parameter(X509_PUBKEY *dest, const X509_PUBKEY *src)
+{
+    const ASN1_OBJECT *dest_algorithm, *src_algorithm;
+    int ptype;
+    const void *pval;
+
+    if (dest == NULL || dest->algor == NULL
+            || src == NULL || src->algor == NULL) {
+        X509err(0, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    X509_ALGOR_get0(&dest_algorithm, NULL, NULL, dest->algor);
+    X509_ALGOR_get0(&src_algorithm, &ptype, &pval, src->algor);
+    if (OBJ_cmp(dest_algorithm, src_algorithm) != 0) {
+        X509err(0, X509_R_ALGORITHM_MISMATCH);
+        return 0;
+    }
+    return X509_ALGOR_copy(dest->algor, src->algor);
+}
+
+/*
+ * When the key ASN.1 is initially parsed an attempt is made to
+ * decode the public key and cache the EVP_PKEY structure.
+ * If this operation fails the cached value will be NULL. Parsing continues
+ * to allow parsing of incomplete keys, unknown key types, or unsupported forms.
+ * The decode operation can be retried using this function, for instance after
+ * parameters have been inheried using X509_PUBKEY_copy_algor_parameter().
+ */
+static EVP_PKEY *X509_PUBKEY_retry_parse(X509_PUBKEY *key)
+{
+    EVP_PKEY *ret = NULL;
+
+    if (key == NULL || key->public_key == NULL) {
+        X509err(0, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+
+    ret = key->pkey;
+    if (ret == NULL && x509_pubkey_decode(&ret, key))
+        key->pkey = ret;
+    return ret;
+}
+
+int X509_PUBKEY_chain_inherit_parameter(STACK_OF(X509) *chain)
+{
+    X509 *ref_cert = NULL, *cert;
+    EVP_PKEY *pkey;
+    int i, j;
+
+    for (i = 0; i < sk_X509_num(chain); i++) {
+        ref_cert = sk_X509_value(chain, i);
+        pkey = X509_get0_pubkey(ref_cert);
+        if (pkey != NULL && !EVP_PKEY_missing_parameters(pkey))
+            break;
+    }
+
+    if (i == 0)
+        return 1;
+    if (i == sk_X509_num(chain)) {
+        X509err(0, X509_R_UNABLE_TO_FIND_PARAMETERS_IN_CHAIN);
+        return 0;
+    }
+
+    for (j = i - 1; j >= 0; j--) {
+        cert = sk_X509_value(chain, j);
+        if (!X509_PUBKEY_copy_algor_parameter(cert->cert_info.key,
+                                              ref_cert->cert_info.key)
+                || X509_PUBKEY_retry_parse(cert->cert_info.key) == NULL)
+            return 0;
+    }
+    return 1;
 }
 
 EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key)
@@ -210,8 +274,8 @@ EVP_PKEY *X509_PUBKEY_get0(const X509_PUBKEY *key)
     /*
      * When the key ASN.1 is initially parsed an attempt is made to
      * decode the public key and cache the EVP_PKEY structure. If this
-     * operation fails the cached value will be NULL. Parsing continues
-     * to allow parsing of unknown key types or unsupported forms.
+     * operation fails the cached value will be NULL. Parsing continues to allow
+     * parsing of incomplete keys, unknown key types, or unsupported forms.
      * We repeat the decode operation so the appropriate errors are left
      * in the queue.
      */

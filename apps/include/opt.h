@@ -27,7 +27,8 @@
         OPT_V_X509_STRICT, OPT_V_EXTENDED_CRL, OPT_V_USE_DELTAS, \
         OPT_V_POLICY_PRINT, OPT_V_CHECK_SS_SIG, OPT_V_TRUSTED_FIRST, \
         OPT_V_SUITEB_128_ONLY, OPT_V_SUITEB_128, OPT_V_SUITEB_192, \
-        OPT_V_PARTIAL_CHAIN, OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
+        OPT_V_PARTIAL_CHAIN, OPT_V_INHERIT_PKPARAM, \
+        OPT_V_NO_ALT_CHAINS, OPT_V_NO_CHECK_TIME, \
         OPT_V_VERIFY_AUTH_LEVEL, OPT_V_ALLOW_PROXY_CERTS, \
         OPT_V__LAST
 
@@ -78,6 +79,8 @@
         { "suiteB_192", OPT_V_SUITEB_192, '-', "Suite B 192-bit-only mode" }, \
         { "partial_chain", OPT_V_PARTIAL_CHAIN, '-', \
             "accept chains anchored by intermediate trust-store CAs"}, \
+        { "inherit_pkparam", OPT_V_INHERIT_PKPARAM, '-', \
+            "allow inheriting public key parameter along certificate chain"}, \
         { "no_alt_chains", OPT_V_NO_ALT_CHAINS, '-', "(deprecated)" }, \
         { "no_check_time", OPT_V_NO_CHECK_TIME, '-', "ignore certificate validity time" }, \
         { "allow_proxy_certs", OPT_V_ALLOW_PROXY_CERTS, '-', "allow the use of proxy certificates" }
@@ -111,6 +114,7 @@
         case OPT_V_SUITEB_128: \
         case OPT_V_SUITEB_192: \
         case OPT_V_PARTIAL_CHAIN: \
+        case OPT_V_INHERIT_PKPARAM: \
         case OPT_V_NO_ALT_CHAINS: \
         case OPT_V_NO_CHECK_TIME: \
         case OPT_V_ALLOW_PROXY_CERTS

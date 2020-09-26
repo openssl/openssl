@@ -47,6 +47,7 @@ B<openssl> B<x509>
 [B<-set_serial> I<n>]
 [B<-signkey> I<arg>]
 [B<-badsig>]
+[B<-null_pkparam>]
 [B<-passin> I<arg>]
 [B<-x509toreq>]
 [B<-req>]
@@ -373,6 +374,11 @@ this includes, for example, any existing key identifier extensions.
 
 Corrupt the signature before writing it; this can be useful
 for testing.
+
+=item B<-null_pkparam>
+
+Replace parameter of certificate public key by NULL.
+This can be useful for producing EC certificates with implicitCurve.
 
 =item B<-sigopt> I<nm>:I<v>
 
