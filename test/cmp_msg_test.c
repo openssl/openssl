@@ -561,7 +561,7 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 3, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 3, USAGE))
         return 0;
 
     if (!TEST_ptr(newkey = load_pem_key(newkey_f, libctx))

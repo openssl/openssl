@@ -57,6 +57,7 @@
 # include <openssl/ct.h>
 #endif
 #include <openssl/provider.h>
+#include "testutil.h"
 
 /*
  * Or gethostname won't be declared properly
@@ -103,7 +104,6 @@ static unsigned int psk_server_callback(SSL *ssl, const char *identity,
                                         unsigned int max_psk_len);
 #endif
 
-static BIO *bio_err = NULL;
 static BIO *bio_stdout = NULL;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
@@ -1344,22 +1344,9 @@ int main(int argc, char *argv[])
     }
 #endif
 
-    if (provider != NULL) {
-        defctxnull = OSSL_PROVIDER_load(NULL, "null");
-        if (defctxnull == NULL)
-            goto end;
-        libctx = OSSL_LIB_CTX_new();
-        if (libctx == NULL)
-            goto end;
-
-        if (config != NULL
-                && !OSSL_LIB_CTX_load_config(libctx, config))
-            goto end;
-
-        thisprov = OSSL_PROVIDER_load(libctx, provider);
-        if (thisprov == NULL)
-            goto end;
-    }
+    if (provider != NULL
+            && !test_get_libctx(&libctx, &defctxnull, config, &thisprov, provider))
+        goto end;
 
     c_ctx = SSL_CTX_new_ex(libctx, NULL, meth);
     s_ctx = SSL_CTX_new_ex(libctx, NULL, meth);

@@ -530,7 +530,7 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!test_get_libctx(&libctx, &defctxnull, &thisprov, 1, USAGE))
+    if (!test_arg_libctx(&libctx, &defctxnull, &thisprov, 1, USAGE))
         return 0;
 
     ADD_ALL_TESTS(test_handshake, (int)num_tests);

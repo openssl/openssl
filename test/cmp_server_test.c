@@ -145,7 +145,7 @@ int setup_tests(void)
         return 0;
     }
 
-    if (!test_get_libctx(&libctx, &default_null_provider, &provider, 1, USAGE))
+    if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 1, USAGE))
         return 0;
 
     if (!TEST_ptr(request = load_pkimsg(request_f))) {
