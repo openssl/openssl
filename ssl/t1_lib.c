@@ -249,6 +249,7 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
     TLS_GROUP_INFO *ginf = NULL;
     EVP_KEYMGMT *keymgmt;
     unsigned int gid;
+    unsigned int is_kem = 0;
     int ret = 0;
 
     if (ctx->group_list_max_len == ctx->group_list_len) {
@@ -320,6 +321,13 @@ static int add_provider_groups(const OSSL_PARAM params[], void *data)
         SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
+
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_IS_KEM);
+    if (p != NULL && (!OSSL_PARAM_get_uint(p, &is_kem) || is_kem > 1)) {
+        SSLerr(0, ERR_R_PASSED_INVALID_ARGUMENT);
+        goto err;
+    }
+    ginf->is_kem = 1 & is_kem;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_GROUP_MIN_TLS);
     if (p == NULL || !OSSL_PARAM_get_int(p, &ginf->mintls)) {
