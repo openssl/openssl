@@ -218,17 +218,12 @@ static int verify_chain(X509_STORE_CTX *ctx)
     int err;
     int ok;
 
-    /*
-     * Before either returning with an error, or continuing with CRL checks,
-     * instantiate chain public key parameters.
-     */
-    if ((ok = build_chain(ctx)) == 0 ||
-        (ok = check_chain(ctx)) == 0 ||
-        (ok = check_auth_level(ctx)) == 0 ||
-        (ok = check_id(ctx)) == 0 || 1)
-        X509_get_pubkey_parameters(NULL, ctx->chain); /* TODO remove legacy? */
-    if (ok == 0 || (ok = ctx->check_revocation(ctx)) == 0)
-        return ok;
+    if (!build_chain(ctx)
+        || !check_chain(ctx)
+        || !check_auth_level(ctx)
+        || !check_id(ctx)
+        || !ctx->check_revocation(ctx))
+        return 0;
 
     err = X509_chain_check_suiteb(&ctx->error_depth, NULL, ctx->chain,
                                   ctx->param->flags);
@@ -2971,9 +2966,6 @@ static int dane_verify(X509_STORE_CTX *ctx)
      */
     matched = dane_match(ctx, ctx->cert, 0);
     done = matched != 0 || (!DANETLS_HAS_TA(dane) && dane->mdpth < 0);
-
-    if (done)
-        X509_get_pubkey_parameters(NULL, ctx->chain); /* TODO remove legacy? */
 
     if (matched > 0) {
         /* Callback invoked as needed */
