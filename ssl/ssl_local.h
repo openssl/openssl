@@ -818,6 +818,7 @@ typedef struct tls_group_info_st {
     int maxtls;              /* Maximum TLS version (or 0 for undefined) */
     int mindtls;             /* Minimum DTLS version, -1 unsupported */
     int maxdtls;             /* Maximum DTLS version (or 0 for undefined) */
+    char is_kem;             /* Mode for this Group: 0 is KEX, 1 is KEM */
 } TLS_GROUP_INFO;
 
 /* flags values */

@@ -49,6 +49,7 @@ struct tls_group_st {
     unsigned int maxtls;
     unsigned int mindtls;
     unsigned int maxdtls;
+    unsigned int is_kem; /* boolean */
 };
 
 #define XORGROUP_NAME "xorgroup"
@@ -59,7 +60,8 @@ static struct tls_group_st xor_group = {
     TLS1_3_VERSION,     /* mintls */
     0,                  /* maxtls */
     -1,                 /* mindtls */
-    -1                  /* maxdtls */
+    -1,                 /* maxdtls */
+    0                   /* is_kem */
 };
 
 #define XORKEMGROUP_NAME "xorkemgroup"
@@ -70,7 +72,8 @@ static struct tls_group_st xor_kemgroup = {
     TLS1_3_VERSION,     /* mintls */
     0,                  /* maxtls */
     -1,                 /* mindtls */
-    -1                  /* maxdtls */
+    -1,                 /* maxdtls */
+    1                   /* is_kem */
 };
 
 #define ALGORITHM "XOR"
@@ -90,6 +93,7 @@ static const OSSL_PARAM xor_group_params[] = {
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS, &xor_group.maxtls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS, &xor_group.mindtls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS, &xor_group.maxdtls),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_IS_KEM, &xor_group.is_kem),
     OSSL_PARAM_END
 };
 
@@ -108,6 +112,7 @@ static const OSSL_PARAM xor_kemgroup_params[] = {
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS, &xor_kemgroup.maxtls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS, &xor_kemgroup.mindtls),
     OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS, &xor_kemgroup.maxdtls),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_IS_KEM, &xor_kemgroup.is_kem),
     OSSL_PARAM_END
 };
 
