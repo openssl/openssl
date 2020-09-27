@@ -62,6 +62,17 @@ static struct tls_group_st xor_group = {
     -1                  /* maxdtls */
 };
 
+#define XORKEMGROUP_NAME "xorkemgroup"
+#define XORKEMGROUP_NAME_INTERNAL "xorkemgroup-int"
+static struct tls_group_st xor_kemgroup = {
+    0,                  /* group_id */
+    128,                /* secbits */
+    TLS1_3_VERSION,     /* mintls */
+    0,                  /* maxtls */
+    -1,                 /* mindtls */
+    -1                  /* maxdtls */
+};
+
 #define ALGORITHM "XOR"
 
 static const OSSL_PARAM xor_group_params[] = {
@@ -82,12 +93,31 @@ static const OSSL_PARAM xor_group_params[] = {
     OSSL_PARAM_END
 };
 
+static const OSSL_PARAM xor_kemgroup_params[] = {
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME,
+                           XORKEMGROUP_NAME, sizeof(XORKEMGROUP_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL,
+                           XORKEMGROUP_NAME_INTERNAL,
+                           sizeof(XORKEMGROUP_NAME_INTERNAL)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_ALG, ALGORITHM,
+                           sizeof(ALGORITHM)),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_ID, &xor_kemgroup.group_id),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,
+                    &xor_kemgroup.secbits),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_TLS, &xor_kemgroup.mintls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS, &xor_kemgroup.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS, &xor_kemgroup.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS, &xor_kemgroup.maxdtls),
+    OSSL_PARAM_END
+};
+
+
 static int tls_prov_get_capabilities(void *provctx, const char *capability,
                                      OSSL_CALLBACK *cb, void *arg)
 {
-    /* We're only adding one group so we only call the callback once */
     if (strcmp(capability, "TLS-GROUP") == 0)
-        return cb(xor_group_params, arg);
+        return cb(xor_group_params, arg)
+            && cb(xor_kemgroup_params, arg);
 
     /* We don't support this capability */
     return 0;
@@ -367,7 +397,8 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-                || strcmp(p->data, XORGROUP_NAME_INTERNAL) != 0)
+                || (strcmp(p->data, XORGROUP_NAME_INTERNAL) != 0
+                    &&  strcmp(p->data, XORKEMGROUP_NAME_INTERNAL) != 0))
             return 0;
     }
 
@@ -467,7 +498,11 @@ unsigned int randomize_tls_group_id(OPENSSL_CTX *libctx)
      * with anything but ourselves.
      */
     unsigned int group_id;
+    static unsigned int mem[10] = { 0 };
+    static int in_mem = 0;
+    int i;
 
+ retry:
     if (!RAND_bytes_ex(libctx, (unsigned char *)&group_id, sizeof(group_id)))
         return 0;
     /*
@@ -476,6 +511,14 @@ unsigned int randomize_tls_group_id(OPENSSL_CTX *libctx)
      */
     group_id %= 65279 - 65024;
     group_id += 65024;
+
+    /* Ensure we did not already issue this group_id */
+    for (i = 0; i < in_mem; i++)
+        if (mem[i] == group_id)
+            goto retry;
+
+    /* Add this group_id to the list of ids issued by this function */
+    mem[in_mem++] = group_id;
 
     return group_id;
 }
@@ -494,6 +537,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
      * with anything but ourselves.
      */
     xor_group.group_id = randomize_tls_group_id(libctx);
+    xor_kemgroup.group_id = randomize_tls_group_id(libctx);
 
     *out = tls_prov_dispatch_table;
     return 1;
