@@ -7935,7 +7935,7 @@ static int test_sigalgs_available(int idx)
 #endif /* OPENSSL_NO_EC */
 
 #ifndef OPENSSL_NO_TLS1_3
-static int test_pluggable_group(void)
+static int test_pluggable_group(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
@@ -7943,6 +7943,7 @@ static int test_pluggable_group(void)
     OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
     /* Check that we are not impacted by a provider without any groups */
     OSSL_PROVIDER *legacyprov = OSSL_PROVIDER_load(libctx, "legacy");
+    const char *group_name = idx == 0 ? "xorgroup" : "xorkemgroup";
 
     if (!TEST_ptr(tlsprov) || !TEST_ptr(legacyprov))
         goto end;
@@ -7956,8 +7957,8 @@ static int test_pluggable_group(void)
                                              NULL, NULL)))
         goto end;
 
-    if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup"))
-            || !TEST_true(SSL_set1_groups_list(clientssl, "xorgroup")))
+    if (!TEST_true(SSL_set1_groups_list(serverssl, group_name))
+            || !TEST_true(SSL_set1_groups_list(clientssl, group_name)))
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
@@ -8136,10 +8137,10 @@ int setup_tests(void)
         goto err;
 
 #if !defined(OPENSSL_NO_KTLS) && !defined(OPENSSL_NO_SOCK)
-#if !defined(OPENSSL_NO_TLS1_2) || !defined(OPENSSL_NO_TLS1_3)
+# if !defined(OPENSSL_NO_TLS1_2) || !defined(OPENSSL_NO_TLS1_3)
     ADD_ALL_TESTS(test_ktls, 32);
     ADD_ALL_TESTS(test_ktls_sendfile_anytls, 6);
-#endif
+# endif
 #endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
@@ -8247,7 +8248,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sigalgs_available, 6);
 #endif
 #ifndef OPENSSL_NO_TLS1_3
-    ADD_TEST(test_pluggable_group);
+    ADD_ALL_TESTS(test_pluggable_group, 2);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
