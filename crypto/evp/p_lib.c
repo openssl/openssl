@@ -1928,8 +1928,10 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
         return 0;
 
     /* If this isn't an assigned provider side key, we're done */
-    if (!evp_pkey_is_assigned(pk) || !evp_pkey_is_provided(pk))
-        return 1;
+    if (!evp_pkey_is_assigned(pk) || !evp_pkey_is_provided(pk)) {
+        rv = 1;
+        goto end;
+    }
 
     /*
      * To be able to downgrade, we steal the contents of |pk|, then reset
@@ -1987,6 +1989,7 @@ int evp_pkey_downgrade(EVP_PKEY *pk)
     /* Free the temporary lock.  It should never be NULL */
     CRYPTO_THREAD_lock_free(tmp_lock);
 
+ end:
     if (!CRYPTO_THREAD_unlock(pk->lock))
         return 0;
     return rv;
