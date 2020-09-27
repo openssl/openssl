@@ -42,31 +42,43 @@ typedef struct xorkey_st {
 } XORKEY;
 
 /* We define a dummy TLS group called "xorgroup" for test purposes */
+struct tls_group_st {
+    unsigned int group_id; /* IANA reserved for private use */
+    unsigned int secbits;
+    unsigned int mintls;
+    unsigned int maxtls;
+    unsigned int mindtls;
+    unsigned int maxdtls;
+};
 
-static unsigned int group_id = 0; /* IANA reserved for private use */
-static unsigned int secbits = 128;
-static unsigned int mintls = TLS1_3_VERSION;
-static unsigned int maxtls = 0;
-static unsigned int mindtls = -1;
-static unsigned int maxdtls = -1;
+#define XORGROUP_NAME "xorgroup"
+#define XORGROUP_NAME_INTERNAL "xorgroup-int"
+static struct tls_group_st xor_group = {
+    0,                  /* group_id */
+    128,                /* secbits */
+    TLS1_3_VERSION,     /* mintls */
+    0,                  /* maxtls */
+    -1,                 /* mindtls */
+    -1                  /* maxdtls */
+};
 
-#define GROUP_NAME "xorgroup"
-#define GROUP_NAME_INTERNAL "xorgroup-int"
 #define ALGORITHM "XOR"
 
 static const OSSL_PARAM xor_group_params[] = {
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME,
-                           GROUP_NAME, sizeof(GROUP_NAME)),
+                           XORGROUP_NAME, sizeof(XORGROUP_NAME)),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL,
-                           GROUP_NAME_INTERNAL, sizeof(GROUP_NAME_INTERNAL)),
+                           XORGROUP_NAME_INTERNAL,
+                           sizeof(XORGROUP_NAME_INTERNAL)),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_GROUP_ALG, ALGORITHM,
                            sizeof(ALGORITHM)),
-    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_ID, &group_id),
-    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS, &secbits),
-    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_TLS, &mintls),
-    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS, &maxtls),
-    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS, &mindtls),
-    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS, &maxdtls),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_ID, &xor_group.group_id),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS,
+                    &xor_group.secbits),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_TLS, &xor_group.mintls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_TLS, &xor_group.maxtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS, &xor_group.mindtls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS, &xor_group.maxdtls),
     OSSL_PARAM_END
 };
 
@@ -269,7 +281,7 @@ static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
         return 0;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_SECURITY_BITS)) != NULL
-        && !OSSL_PARAM_set_int(p, secbits))
+        && !OSSL_PARAM_set_int(p, xor_group.secbits))
         return 0;
 
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_TLS_ENCODED_PT)) != NULL) {
@@ -355,7 +367,7 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-                || strcmp(p->data, GROUP_NAME_INTERNAL) != 0)
+                || strcmp(p->data, XORGROUP_NAME_INTERNAL) != 0)
             return 0;
     }
 
@@ -447,6 +459,27 @@ static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
     { 0, NULL }
 };
 
+static
+unsigned int randomize_tls_group_id(OPENSSL_CTX *libctx)
+{
+    /*
+     * Randomise the group_id we're going to use to ensure we don't interoperate
+     * with anything but ourselves.
+     */
+    unsigned int group_id;
+
+    if (!RAND_bytes_ex(libctx, (unsigned char *)&group_id, sizeof(group_id)))
+        return 0;
+    /*
+     * Ensure group_id is within the IANA Reserved for private use range
+     * (65024-65279)
+     */
+    group_id %= 65279 - 65024;
+    group_id += 65024;
+
+    return group_id;
+}
+
 int tls_provider_init(const OSSL_CORE_HANDLE *handle,
                       const OSSL_DISPATCH *in,
                       const OSSL_DISPATCH **out,
@@ -460,14 +493,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
      * Randomise the group_id we're going to use to ensure we don't interoperate
      * with anything but ourselves.
      */
-    if (!RAND_bytes_ex(libctx, (unsigned char *)&group_id, sizeof(group_id)))
-        return 0;
-    /*
-     * Ensure group_id is within the IANA Reserved for private use range
-     * (65024-65279)
-     */
-    group_id %= 65279 - 65024;
-    group_id += 65024;
+    xor_group.group_id = randomize_tls_group_id(libctx);
 
     *out = tls_prov_dispatch_table;
     return 1;
