@@ -172,10 +172,8 @@ static int eckey_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 
     eckey = eckey_type2param(ptype, pval, libctx, propq);
 
-    if (!eckey) {
-        ECerr(EC_F_ECKEY_PUB_DECODE, ERR_R_EC_LIB);
+    if (!eckey)
         return 0;
-    }
 
     /* We have parameters now set public key */
     if (!o2i_ECPublicKey(&eckey, &p, pklen)) {
@@ -224,22 +222,19 @@ static int eckey_priv_decode_with_libctx(EVP_PKEY *pkey,
     X509_ALGOR_get0(NULL, &ptype, &pval, palg);
 
     eckey = eckey_type2param(ptype, pval, libctx, propq);
-
     if (eckey == NULL)
-        goto ecliberr;
+        goto err;
 
     /* We have parameters now set private key */
     if (!d2i_ECPrivateKey(&eckey, &p, pklen)) {
         ECerr(0, EC_R_DECODE_ERROR);
-        goto ecerr;
+        goto err;
     }
 
     EVP_PKEY_assign_EC_KEY(pkey, eckey);
     return 1;
 
- ecliberr:
-    ECerr(0, ERR_R_EC_LIB);
- ecerr:
+ err:
     EC_KEY_free(eckey);
     return 0;
 }
@@ -472,10 +467,8 @@ static int old_ec_priv_decode(EVP_PKEY *pkey,
 {
     EC_KEY *ec;
 
-    if ((ec = d2i_ECPrivateKey(NULL, pder, derlen)) == NULL) {
-        ECerr(EC_F_OLD_EC_PRIV_DECODE, EC_R_DECODE_ERROR);
+    if ((ec = d2i_ECPrivateKey(NULL, pder, derlen)) == NULL)
         return 0;
-    }
     EVP_PKEY_assign_EC_KEY(pkey, ec);
     return 1;
 }

@@ -41,12 +41,12 @@ static int x509_pubkey_decode(EVP_PKEY **pk, const X509_PUBKEY *key);
 static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                      void *exarg)
 {
+    X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
+
     if (operation == ASN1_OP_FREE_POST) {
-        X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
         EVP_PKEY_free(pubkey->pkey);
     } else if (operation == ASN1_OP_D2I_POST) {
         /* Attempt to decode public key and cache in pubkey structure. */
-        X509_PUBKEY *pubkey = (X509_PUBKEY *)*pval;
         EVP_PKEY_free(pubkey->pkey);
         pubkey->pkey = NULL;
         /*
@@ -55,8 +55,10 @@ static int pubkey_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
          * will return an appropriate error.
          */
         ERR_set_mark();
-        if (x509_pubkey_decode(&pubkey->pkey, pubkey) == -1)
+        if (x509_pubkey_decode(&pubkey->pkey, pubkey) == -1) {
+            ERR_clear_last_mark();
             return 0;
+        }
         ERR_pop_to_mark();
     }
     return 1;
@@ -180,10 +182,8 @@ static int x509_pubkey_decode(EVP_PKEY **ppkey, const X509_PUBKEY *key)
          * future we could have different return codes for decode
          * errors and fatal errors such as malloc failure.
          */
-        if (!pkey->ameth->pub_decode(pkey, key)) {
-            X509err(X509_F_X509_PUBKEY_DECODE, X509_R_PUBLIC_KEY_DECODE_ERROR);
+        if (!pkey->ameth->pub_decode(pkey, key))
             goto error;
-        }
     } else {
         X509err(X509_F_X509_PUBKEY_DECODE, X509_R_METHOD_NOT_SUPPORTED);
         goto error;

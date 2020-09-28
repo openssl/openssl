@@ -88,6 +88,7 @@ static int try_pkcs12(struct extracted_param_data_st *, OSSL_STORE_INFO **,
                                                                         \
         if (ERR_GET_LIB(err) == ERR_LIB_ASN1                            \
             && (ERR_GET_REASON(err) == ASN1_R_UNKNOWN_PUBLIC_KEY_TYPE   \
+                || ERR_GET_REASON(err) == ASN1_R_NO_MATCHING_CHOICE_TYPE \
                 || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))     \
             ERR_pop_to_mark();                                          \
         else                                                            \

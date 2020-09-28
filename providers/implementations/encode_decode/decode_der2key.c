@@ -30,6 +30,25 @@
 #include "prov/providercommonerr.h"
 #include "endecoder_local.h"
 
+#define SET_ERR_MARK() ERR_set_mark()
+#define CLEAR_ERR_MARK()                                                \
+    do {                                                                \
+        int err = ERR_peek_last_error();                                \
+                                                                        \
+        if (ERR_GET_LIB(err) == ERR_LIB_ASN1                            \
+            && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG           \
+                || ERR_GET_REASON(err) == ASN1_R_UNSUPPORTED_TYPE       \
+                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))     \
+            ERR_pop_to_mark();                                          \
+        else                                                            \
+            ERR_clear_last_mark();                                      \
+    } while(0)
+#define RESET_ERR_MARK()                                                \
+    do {                                                                \
+        CLEAR_ERR_MARK();                                               \
+        SET_ERR_MARK();                                                 \
+    } while(0)
+
 static int read_der(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
                     unsigned char **data, long *len)
 {
@@ -165,9 +184,9 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
     long new_der_len;
     EVP_PKEY *pkey = NULL;
     void *key = NULL;
-    int err, ok = 0;
+    int ok = 0;
 
-    ERR_set_mark();
+    SET_ERR_MARK();
     if (!read_der(ctx->provctx, cin, &der, &der_len))
         goto err;
 
@@ -180,16 +199,19 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
         der = new_der;
         der_len = new_der_len;
     }
+    RESET_ERR_MARK();
 
     derp = der;
     pkey = d2i_PrivateKey_ex(ctx->desc->type, NULL, &derp, der_len,
                              libctx, NULL);
     if (pkey == NULL) {
+        RESET_ERR_MARK();
         derp = der;
         pkey = d2i_PUBKEY_ex(NULL, &derp, der_len, libctx, NULL);
     }
 
     if (pkey == NULL) {
+        RESET_ERR_MARK();
         derp = der;
         pkey = d2i_KeyParams(ctx->desc->type, NULL, &derp, der_len);
     }
@@ -198,13 +220,7 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin,
      * Prune low-level ASN.1 parse errors from error queue, assuming that
      * this is called by decoder_process() in a loop trying several formats.
      */
-    err = ERR_peek_last_error();
-    if (ERR_GET_LIB(err) == ERR_LIB_ASN1
-            && (ERR_GET_REASON(err) == ASN1_R_HEADER_TOO_LONG
-                || ERR_GET_REASON(err) == ERR_R_NESTED_ASN1_ERROR))
-        ERR_pop_to_mark();
-    else
-        ERR_clear_last_mark();
+    CLEAR_ERR_MARK();
 
     if (pkey != NULL) {
         /*
