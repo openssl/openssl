@@ -29,6 +29,13 @@ int f(void) /*
         /* entire-line comment may have same indent as normal code */
     }
 
+    for (;;)
+        ;
+    for (i = 0;;)
+        ;
+    for (i = 0; i < 1;)
+        ;
+
 #if X
     if (1) /* bad style: just part of control structure depends on #if */
 #else
