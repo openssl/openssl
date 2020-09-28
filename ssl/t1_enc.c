@@ -176,7 +176,7 @@ int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
 }
 
 
-int EVP_CIPHER_iv_length_within_key_block(const EVP_CIPHER *c)
+static int EVP_CIPHER_iv_length_within_key_block(const EVP_CIPHER *c)
 {
     /* If GCM/CCM mode only part of IV comes from PRF */
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
