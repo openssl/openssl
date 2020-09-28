@@ -178,15 +178,13 @@ int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
 
 int EVP_CIPHER_iv_length_within_key_block(const EVP_CIPHER *c)
 {
-    int k;
     /* If GCM/CCM mode only part of IV comes from PRF */
     if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
-        k = EVP_GCM_TLS_FIXED_IV_LEN;
+        return EVP_GCM_TLS_FIXED_IV_LEN;
     else if (EVP_CIPHER_mode(c) == EVP_CIPH_CCM_MODE)
-        k = EVP_CCM_TLS_FIXED_IV_LEN;
+        return EVP_CCM_TLS_FIXED_IV_LEN;
     else
-        k = EVP_CIPHER_iv_length(c);
-    return k;
+        return EVP_CIPHER_iv_length(c);
 }
 
 int tls1_change_cipher_state(SSL *s, int which)
