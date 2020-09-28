@@ -396,15 +396,31 @@ void OPENSSL_showfatal(const char *fmta, ...)
 # endif
 }
 #else
+
+# ifdef __APPLE__
+extern void _os_crash(const char *) __attribute__((weak_import));
+# endif
+
 void OPENSSL_showfatal(const char *fmta, ...)
 {
-#ifndef OPENSSL_NO_STDIO
     va_list ap;
 
     va_start(ap, fmta);
+
+# ifdef __APPLE__
+    if (_os_crash != NULL) {
+        char *msg;
+        va_list ap2;
+        va_copy(ap2, ap);
+        if (vasprintf(&msg, fmta, ap2) > 0)
+            _os_crash(msg);
+    }
+# endif
+
+# ifndef OPENSSL_NO_STDIO
     vfprintf(stderr, fmta, ap);
+# endif
     va_end(ap);
-#endif
 }
 
 int OPENSSL_isservice(void)
