@@ -46,7 +46,7 @@ static const PROV_GCM_HW t4_aes_gcm = {
     gcm_cipher_final,
     gcm_one_shot
 };
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
     return SPARC_AES_CAPABLE ? &t4_aes_gcm : &aes_gcm;
 }

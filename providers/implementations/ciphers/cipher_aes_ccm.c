@@ -29,7 +29,7 @@ static void *aes_ccm_newctx(void *provctx, size_t keybits)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        ccm_initctx(&ctx->base, keybits, PROV_AES_HW_ccm(keybits));
+        ccm_initctx(&ctx->base, keybits, ossl_prov_aes_hw_ccm(keybits));
     return ctx;
 }
 

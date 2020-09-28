@@ -22,7 +22,7 @@ int cipher_capable_aes_cbc_hmac_sha256(void)
     return 0;
 }
 
-const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void)
+const PROV_CIPHER_HW_AES_HMAC_SHA *ossl_prov_cipher_hw_aes_cbc_hmac_sha256(void)
 {
     return NULL;
 }
@@ -837,7 +837,7 @@ static const PROV_CIPHER_HW_AES_HMAC_SHA cipher_hw_aes_hmac_sha256 = {
 # endif
 };
 
-const PROV_CIPHER_HW_AES_HMAC_SHA *PROV_CIPHER_HW_aes_cbc_hmac_sha256(void)
+const PROV_CIPHER_HW_AES_HMAC_SHA *ossl_prov_cipher_hw_aes_cbc_hmac_sha256(void)
 {
     return &cipher_hw_aes_hmac_sha256;
 }

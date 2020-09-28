@@ -32,4 +32,4 @@ typedef struct prov_aes_xts_ctx_st {
     OSSL_xts_stream_fn stream;
 } PROV_AES_XTS_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_xts(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts(size_t keybits);

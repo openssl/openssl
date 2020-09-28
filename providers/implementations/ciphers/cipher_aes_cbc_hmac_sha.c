@@ -308,7 +308,7 @@ static void *aes_cbc_hmac_sha1_newctx(void *provctx, size_t kbits,
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         base_init(provctx, &ctx->base_ctx,
-                  PROV_CIPHER_HW_aes_cbc_hmac_sha1(), kbits, blkbits,
+                  ossl_prov_cipher_hw_aes_cbc_hmac_sha1(), kbits, blkbits,
                   ivbits, flags);
     return ctx;
 }
@@ -335,7 +335,7 @@ static void *aes_cbc_hmac_sha256_newctx(void *provctx, size_t kbits,
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
         base_init(provctx, &ctx->base_ctx,
-                  PROV_CIPHER_HW_aes_cbc_hmac_sha256(), kbits, blkbits,
+                  ossl_prov_cipher_hw_aes_cbc_hmac_sha256(), kbits, blkbits,
                   ivbits, flags);
     return ctx;
 }

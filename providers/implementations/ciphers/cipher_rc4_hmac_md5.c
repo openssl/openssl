@@ -58,7 +58,7 @@ static void *rc4_hmac_md5_newctx(void *provctx)
                                RC4_HMAC_MD5_BLOCK_BITS,
                                RC4_HMAC_MD5_IV_BITS,
                                RC4_HMAC_MD5_MODE, RC4_HMAC_MD5_FLAGS,
-                               PROV_CIPHER_HW_rc4_hmac_md5(RC4_HMAC_MD5_KEY_BITS),
+                               ossl_prov_cipher_hw_rc4_hmac_md5(RC4_HMAC_MD5_KEY_BITS),
                                NULL);
      return ctx;
 }

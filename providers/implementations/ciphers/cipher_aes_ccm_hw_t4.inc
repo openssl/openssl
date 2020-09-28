@@ -30,7 +30,7 @@ static const PROV_CCM_HW t4_aes_ccm = {
     ccm_generic_gettag
 };
 
-const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keybits)
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
     return SPARC_AES_CAPABLE ? &t4_aes_ccm : &aes_ccm;
 }

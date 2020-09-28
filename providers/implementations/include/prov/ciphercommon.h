@@ -186,7 +186,7 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
                                 EVP_CIPH_##UCMODE##_MODE, flags,               \
-                                PROV_CIPHER_HW_##alg##_##lcmode(kbits),        \
+                                ossl_prov_cipher_hw_##alg##_##lcmode(kbits),   \
                                 provctx);                                      \
      }                                                                         \
      return ctx;                                                               \

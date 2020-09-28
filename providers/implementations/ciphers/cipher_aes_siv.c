@@ -39,7 +39,7 @@ static void *aes_siv_newctx(void *provctx, size_t keybits, unsigned int mode,
         ctx->mode = mode;
         ctx->flags = flags;
         ctx->keylen = keybits / 8;
-        ctx->hw = PROV_CIPHER_HW_aes_siv(keybits);
+        ctx->hw = ossl_prov_cipher_hw_aes_siv(keybits);
         ctx->libctx = PROV_LIBRARY_CONTEXT_OF(provctx);
     }
     return ctx;

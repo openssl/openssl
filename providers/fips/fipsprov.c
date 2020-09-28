@@ -519,7 +519,8 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
     case OSSL_OP_DIGEST:
         return fips_digests;
     case OSSL_OP_CIPHER:
-        ossl_prov_cache_exported_algorithms(fips_ciphers, exported_fips_ciphers);
+        ossl_prov_cache_exported_algorithms(fips_ciphers,
+                                            exported_fips_ciphers);
         return exported_fips_ciphers;
     case OSSL_OP_MAC:
         return fips_macs;
@@ -544,7 +545,7 @@ static const OSSL_ALGORITHM *fips_query(void *provctx, int operation_id,
 static void fips_teardown(void *provctx)
 {
     OPENSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
-    PROV_CTX_free(provctx);
+    ossl_prov_ctx_free(provctx);
 }
 
 static void fips_intern_teardown(void *provctx)
@@ -553,7 +554,7 @@ static void fips_intern_teardown(void *provctx)
      * We know that the library context is the same as for the outer provider,
      * so no need to destroy it here.
      */
-    PROV_CTX_free(provctx);
+    ossl_prov_ctx_free(provctx);
 }
 
 /* Functions we provide to the core */
@@ -690,7 +691,7 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         fips_security_checks = 0;
 
     /*  Create a context. */
-    if ((*provctx = PROV_CTX_new()) == NULL
+    if ((*provctx = ossl_prov_ctx_new()) == NULL
         || (libctx = OPENSSL_CTX_new()) == NULL) {
         /*
          * We free libctx separately here and only here because it hasn't
@@ -700,8 +701,8 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
         OPENSSL_CTX_free(libctx);
         goto err;
     }
-    PROV_CTX_set0_library_context(*provctx, libctx);
-    PROV_CTX_set0_handle(*provctx, handle);
+    ossl_prov_ctx_set0_library_context(*provctx, libctx);
+    ossl_prov_ctx_set0_handle(*provctx, handle);
 
     if ((fgbl = openssl_ctx_get_data(libctx, OPENSSL_CTX_FIPS_PROV_INDEX,
                                      &fips_prov_ossl_ctx_method)) == NULL)
@@ -754,7 +755,7 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
     if (c_internal_get_libctx == NULL)
         return 0;
 
-    if ((*provctx = PROV_CTX_new()) == NULL)
+    if ((*provctx = ossl_prov_ctx_new()) == NULL)
         return 0;
 
     /*
@@ -762,9 +763,10 @@ int fips_intern_provider_init(const OSSL_CORE_HANDLE *handle,
      * internal provider. This is not something that most providers would be
      * able to do.
      */
-    PROV_CTX_set0_library_context(*provctx,
-                                  (OPENSSL_CTX *)c_internal_get_libctx(handle));
-    PROV_CTX_set0_handle(*provctx, handle);
+    ossl_prov_ctx_set0_library_context(
+        *provctx, (OPENSSL_CTX *)c_internal_get_libctx(handle)
+    );
+    ossl_prov_ctx_set0_handle(*provctx, handle);
 
     *out = intern_dispatch_table;
     return 1;

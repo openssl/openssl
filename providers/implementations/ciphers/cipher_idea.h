@@ -18,7 +18,7 @@ typedef struct prov_idea_ctx_st {
     } ks;
 } PROV_IDEA_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_ofb64(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_idea_cfb64(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_cbc(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_ecb(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_ofb64(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_idea_cfb64(size_t keybits);

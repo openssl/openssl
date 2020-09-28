@@ -308,7 +308,7 @@ static void *aes_ocb_newctx(void *provctx, size_t kbits, size_t blkbits,
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags,
-                               PROV_CIPHER_HW_aes_ocb(kbits), NULL);
+                               ossl_prov_cipher_hw_aes_ocb(kbits), NULL);
         ctx->taglen = OCB_DEFAULT_TAG_LEN;
     }
     return ctx;

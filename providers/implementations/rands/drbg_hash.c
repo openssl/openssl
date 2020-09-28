@@ -270,8 +270,8 @@ static int drbg_hash_instantiate_wrapper(void *vdrbg, unsigned int strength,
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
-    return PROV_DRBG_instantiate(drbg, strength, prediction_resistance,
-                                 pstr, pstr_len);
+    return ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
+                                      pstr, pstr_len);
 }
 
 /*
@@ -304,8 +304,8 @@ static int drbg_hash_reseed_wrapper(void *vdrbg, int prediction_resistance,
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
-    return PROV_DRBG_reseed(drbg, prediction_resistance, ent, ent_len,
-                            adin, adin_len);
+    return ossl_prov_drbg_reseed(drbg, prediction_resistance, ent, ent_len,
+                                 adin, adin_len);
 }
 
 /*
@@ -352,8 +352,8 @@ static int drbg_hash_generate_wrapper
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
-    return PROV_DRBG_generate(drbg, out, outlen, strength,
-                              prediction_resistance, adin, adin_len);
+    return ossl_prov_drbg_generate(drbg, out, outlen, strength,
+                                   prediction_resistance, adin, adin_len);
 }
 
 static int drbg_hash_uninstantiate(PROV_DRBG *drbg)
@@ -363,7 +363,7 @@ static int drbg_hash_uninstantiate(PROV_DRBG *drbg)
     OPENSSL_cleanse(hash->V, sizeof(hash->V));
     OPENSSL_cleanse(hash->C, sizeof(hash->C));
     OPENSSL_cleanse(hash->vtmp, sizeof(hash->vtmp));
-    return PROV_DRBG_uninstantiate(drbg);
+    return ossl_prov_drbg_uninstantiate(drbg);
 }
 
 static int drbg_hash_uninstantiate_wrapper(void *vdrbg)

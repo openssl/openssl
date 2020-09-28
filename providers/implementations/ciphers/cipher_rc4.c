@@ -67,7 +67,7 @@ static void * alg##_##kbits##_newctx(void *provctx)                            \
      ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits, 0, flags,         \
-                                PROV_CIPHER_HW_##alg(kbits), NULL);            \
+                                ossl_prov_cipher_hw_##alg(kbits), NULL);       \
      }                                                                         \
      return ctx;                                                               \
 }                                                                              \

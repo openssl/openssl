@@ -213,7 +213,7 @@ BIO_METHOD *bio_prov_init_bio_method(void)
 BIO *bio_new_from_core_bio(PROV_CTX *provctx, OSSL_CORE_BIO *corebio)
 {
     BIO *outbio;
-    BIO_METHOD *corebiometh = PROV_CTX_get0_core_bio_method(provctx);
+    BIO_METHOD *corebiometh = ossl_prov_ctx_get0_core_bio_method(provctx);
 
     if (corebiometh == NULL)
         return NULL;

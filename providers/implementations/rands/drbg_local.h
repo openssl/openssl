@@ -205,19 +205,19 @@ PROV_DRBG *prov_rand_drbg_new
                      const unsigned char *adin, size_t adin_len));
 void prov_rand_drbg_free(PROV_DRBG *drbg);
 
-int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
-                          int prediction_resistance,
-                          const unsigned char *pers, size_t perslen);
+int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
+                               int prediction_resistance,
+                               const unsigned char *pers, size_t perslen);
 
-int PROV_DRBG_uninstantiate(PROV_DRBG *drbg);
+int ossl_prov_drbg_uninstantiate(PROV_DRBG *drbg);
 
-int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
-                     const unsigned char *ent, size_t ent_len,
-                     const unsigned char *adin, size_t adinlen);
+int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
+                          const unsigned char *ent, size_t ent_len,
+                          const unsigned char *adin, size_t adinlen);
 
-int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
-                       unsigned int strength, int prediction_resistance,
-                       const unsigned char *adin, size_t adinlen);
+int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
+                            unsigned int strength, int prediction_resistance,
+                            const unsigned char *adin, size_t adinlen);
 
 /* Verify that an array of numeric values is all zero */
 #define PROV_DRBG_VERYIFY_ZEROIZATION(v)    \

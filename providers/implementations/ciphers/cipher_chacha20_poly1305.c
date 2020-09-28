@@ -56,9 +56,9 @@ static void *chacha20_poly1305_newctx(void *provctx)
                                CHACHA20_POLY1305_IVLEN * 8,
                                CHACHA20_POLY1305_MODE,
                                CHACHA20_POLY1305_FLAGS,
-                               PROV_CIPHER_HW_chacha20_poly1305(
+                               ossl_prov_cipher_hw_chacha20_poly1305(
                                    CHACHA20_POLY1305_KEYLEN * 8),
-                               NULL);
+                                   NULL);
         ctx->nonce_len = CHACHA20_POLY1305_IVLEN;
         ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
         chacha20_initctx(&ctx->chacha);

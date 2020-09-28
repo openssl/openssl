@@ -51,12 +51,12 @@ typedef struct prov_aes_ctx_st {
 
 } PROV_AES_CTX;
 
-#define PROV_CIPHER_HW_aes_ofb PROV_CIPHER_HW_aes_ofb128
-#define PROV_CIPHER_HW_aes_cfb PROV_CIPHER_HW_aes_cfb128
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ofb128(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb128(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb1(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_cfb8(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ctr(size_t keybits);
+#define ossl_prov_cipher_hw_aes_ofb ossl_prov_cipher_hw_aes_ofb128
+#define ossl_prov_cipher_hw_aes_cfb ossl_prov_cipher_hw_aes_cfb128
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ecb(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cbc(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ofb128(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cfb128(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cfb1(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cfb8(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ctr(size_t keybits);

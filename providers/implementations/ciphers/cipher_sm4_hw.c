@@ -34,7 +34,7 @@ static const PROV_CIPHER_HW sm4_##mode = {                                     \
     cipher_hw_chunked_##mode,                                                  \
     cipher_hw_sm4_copyctx                                                      \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_##mode(size_t keybits)                \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_##mode(size_t keybits)           \
 {                                                                              \
     return &sm4_##mode;                                                        \
 }

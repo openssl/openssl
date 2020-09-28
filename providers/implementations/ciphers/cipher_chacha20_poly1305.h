@@ -40,4 +40,4 @@ typedef struct prov_cipher_hw_chacha_aead_st {
                             size_t flen);
 } PROV_CIPHER_HW_CHACHA20_POLY1305;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20_poly1305(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20_poly1305(size_t keybits);
