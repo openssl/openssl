@@ -183,6 +183,7 @@ int ERR_load_SSL_strings(void);
 #  define SSL_F_SSL_CTX_USE_SERVERINFO_FILE                0
 #  define SSL_F_SSL_DANE_DUP                               0
 #  define SSL_F_SSL_DANE_ENABLE                            0
+#  define SSL_F_SSL_DECAPSULATE                            0
 #  define SSL_F_SSL_DERIVE                                 0
 #  define SSL_F_SSL_DO_CONFIG                              0
 #  define SSL_F_SSL_DO_HANDSHAKE                           0
