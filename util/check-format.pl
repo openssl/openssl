@@ -798,7 +798,7 @@ while (<>) { # loop over all lines of all input files
             $local_offset = -INDENT_LEVEL;
         } else {
             if (m/^([\s@]*)(\w+):/) { # (leading) label, cannot be "default"
-                $local_offset = -INDENT_LEVEL + 1 ;
+                $local_offset = -INDENT_LEVEL;
                 $has_label = 1;
             }
         }
