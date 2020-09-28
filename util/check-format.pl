@@ -17,6 +17,10 @@
 #                   [-h|--sloppy-hang] [-1|--1-stmt]
 #                   <files>
 #
+# run self-tests:
+#   util/check-format.pl util/check-format-test-positives.c
+#   util/check-format.pl util/check-format-test-negatives.c
+#
 # checks adherence to the formatting rules of the OpenSSL coding guidelines
 # assuming that the input files contain syntactically correct C code.
 # This pragmatic tool is incomplete and yields some false positives.
