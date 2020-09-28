@@ -110,7 +110,8 @@ push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 plan tests =>
     ($no_fips ? 0 : 1)          # FIPS install test
     + (scalar(@configs) * scalar(@files))
-    + scalar(@defltfiles);
+    + scalar(@defltfiles)
+    + 3; # error output tests
 
 unless ($no_fips) {
     my $infile = bldtop_file('providers', platform->dso('fips'));
@@ -138,4 +139,39 @@ foreach my $f ( @defltfiles ) {
                  "-config", $conf,
                  data_file("$f")])),
        "running evp_test -config $conf $f");
+}
+
+sub test_errors { # actually tests diagnostics of OSSL_STORE
+    my ($expected, $key, @opts) = @_;
+    my $infile = srctop_file('test', 'certs', $key);
+    my @args = qw(openssl pkey -in);
+    push(@args, $infile, @opts);
+    my $tmpfile = 'out.txt';
+    my $res = !run(app([@args], stderr => $tmpfile));
+    my $found = 0;
+    open(my $in, '<', $tmpfile) or die "Could not open file $tmpfile";
+    while(<$in>) {
+        print; # this may help debugging
+        $res &&= !m/asn1 encoding/; # output must not include ASN.1 parse errors
+        $found = 1 if m/$expected/; # output must include $expected
+    }
+    close $in;
+    # $tmpfile is kept to help with investigation in case of failure
+    return $res && $found;
+}
+
+SKIP: {
+    skip "DSA not disabled", 2 if !disabled("dsa");
+
+    ok(test_errors("unsupported algorithm", "server-dsa-key.pem"),
+       "error loading unsupported dsa private key");
+    ok(test_errors("unsupported algorithm", "server-dsa-pubkey.pem", "-pubin"),
+       "error loading unsupported dsa public key");
+}
+
+SKIP: {
+    skip "sm2 not disabled", 1 if !disabled("sm2");
+
+    ok(test_errors("unknown group|unsupported algorithm", "sm2.key"),
+       "error loading unsupported sm2 private key");
 }

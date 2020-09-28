@@ -41,10 +41,8 @@ EVP_PKEY *EVP_PKCS82PKEY_with_libctx(const PKCS8_PRIV_KEY_INFO *p8,
     }
 
     if (pkey->ameth->priv_decode_with_libctx != NULL) {
-        if (!pkey->ameth->priv_decode_with_libctx(pkey, p8, libctx, propq)) {
-            EVPerr(0, EVP_R_PRIVATE_KEY_DECODE_ERROR);
+        if (!pkey->ameth->priv_decode_with_libctx(pkey, p8, libctx, propq))
             goto error;
-        }
     } else if (pkey->ameth->priv_decode != NULL) {
         if (!pkey->ameth->priv_decode(pkey, p8)) {
             EVPerr(0, EVP_R_PRIVATE_KEY_DECODE_ERROR);

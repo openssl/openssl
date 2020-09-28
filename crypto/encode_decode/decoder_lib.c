@@ -11,6 +11,9 @@
 #include <openssl/bio.h>
 #include <openssl/params.h>
 #include <openssl/provider.h>
+#include <openssl/evperr.h>
+#include <openssl/ecerr.h>
+#include <openssl/x509err.h>
 #include "internal/passphrase.h"
 #include "crypto/decoder.h"
 #include "encoder_local.h"
@@ -424,7 +427,7 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
     BIO *bio = data->bio;
     long loc;
     size_t i;
-    int ok = 0;
+    int err, ok = 0;
     /* For recursions */
     struct decoder_process_data_st new_data;
 
@@ -532,6 +535,16 @@ static int decoder_process(const OSSL_PARAM params[], void *arg)
                                  &new_data.ctx->pwdata);
         if (ok)
             break;
+        err = ERR_peek_last_error();
+        if ((ERR_GET_LIB(err) == ERR_LIB_EVP
+             && ERR_GET_REASON(err) == EVP_R_UNSUPPORTED_PRIVATE_KEY_ALGORITHM)
+#ifndef OPENSSL_NO_EC
+            || (ERR_GET_LIB(err) == ERR_LIB_EC
+                && ERR_GET_REASON(err) == EC_R_UNKNOWN_GROUP)
+#endif
+            || (ERR_GET_LIB(err) == ERR_LIB_X509
+                && ERR_GET_REASON(err) == X509_R_UNSUPPORTED_ALGORITHM))
+            break; /* fatal error; preserve it on the error queue and stop */
     }
 
  end:
