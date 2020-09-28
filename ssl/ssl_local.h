@@ -2456,6 +2456,9 @@ __owur int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 __owur EVP_PKEY *ssl_generate_pkey(SSL *s, EVP_PKEY *pm);
 __owur int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey,
                       int genmaster);
+__owur int ssl_decapsulate(SSL *s, EVP_PKEY *privkey,
+                           const unsigned char *ct, size_t ctlen,
+                           int gensecret);
 __owur EVP_PKEY *ssl_dh_to_pkey(DH *dh);
 __owur unsigned int ssl_get_max_send_fragment(const SSL *ssl);
 __owur unsigned int ssl_get_split_send_fragment(const SSL *ssl);
