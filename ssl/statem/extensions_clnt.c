@@ -1830,6 +1830,7 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
     unsigned int group_id;
     PACKET encoded_pt;
     EVP_PKEY *ckey = s->s3.tmp.pkey, *skey = NULL;
+    const TLS_GROUP_INFO *ginf = NULL;
 
     /* Sanity check */
     if (ckey == NULL || s->s3.peer_tmp != NULL) {
@@ -1893,6 +1894,12 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
+    if ((ginf = tls1_group_id_lookup(s->ctx, group_id)) == NULL) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
+                 SSL_R_BAD_KEY_SHARE);
+        return 0;
+    }
+
     if (!PACKET_as_length_prefixed_2(pkt, &encoded_pt)
             || PACKET_remaining(&encoded_pt) == 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
@@ -1900,27 +1907,39 @@ int tls_parse_stoc_key_share(SSL *s, PACKET *pkt, unsigned int context, X509 *x,
         return 0;
     }
 
-    skey = EVP_PKEY_new();
-    if (skey == NULL || EVP_PKEY_copy_parameters(skey, ckey) <= 0) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
-                 SSL_R_COPY_PARAMETERS_FAILED);
-        return 0;
-    }
+    if (!ginf->is_kem) {
+        /* Regular KEX */
+        skey = EVP_PKEY_new();
+        if (skey == NULL || EVP_PKEY_copy_parameters(skey, ckey) <= 0) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
+                    SSL_R_COPY_PARAMETERS_FAILED);
+            return 0;
+        }
 
-    if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
-                                        PACKET_remaining(&encoded_pt))) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
-                 SSL_R_BAD_ECPOINT);
-        EVP_PKEY_free(skey);
-        return 0;
-    }
+        if (!EVP_PKEY_set1_tls_encodedpoint(skey, PACKET_data(&encoded_pt),
+                    PACKET_remaining(&encoded_pt))) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_F_TLS_PARSE_STOC_KEY_SHARE,
+                    SSL_R_BAD_ECPOINT);
+            EVP_PKEY_free(skey);
+            return 0;
+        }
 
-    if (ssl_derive(s, ckey, skey, 1) == 0) {
-        /* SSLfatal() already called */
-        EVP_PKEY_free(skey);
-        return 0;
+        if (ssl_derive(s, ckey, skey, 1) == 0) {
+            /* SSLfatal() already called */
+            EVP_PKEY_free(skey);
+            return 0;
+        }
+        s->s3.peer_tmp = skey;
+    } else {
+        /* KEM Mode */
+        const unsigned char *ct = PACKET_data(&encoded_pt);
+        size_t ctlen = PACKET_remaining(&encoded_pt);
+
+        if (ssl_decapsulate(s, ckey, ct, ctlen, 1) == 0) {
+            /* SSLfatal() already called */
+            return 0;
+        }
     }
-    s->s3.peer_tmp = skey;
 #endif
 
     return 1;

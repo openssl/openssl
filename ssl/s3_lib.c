@@ -4832,6 +4832,33 @@ EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id)
     return pkey;
 }
 
+/* Generate secrets from pms */
+__owur static
+int ssl_gensecret(SSL *s, unsigned char *pms, size_t pmslen)
+{
+    int rv = 0;
+
+    /* SSLfatal() called as appropriate in the below functions */
+    if (SSL_IS_TLS13(s)) {
+        /*
+         * If we are resuming then we already generated the early secret
+         * when we created the ClientHello, so don't recreate it.
+         */
+        if (!s->hit)
+            rv = tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL,
+                    0,
+                    (unsigned char *)&s->early_secret);
+        else
+            rv = 1;
+
+        rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
+    } else {
+        rv = ssl_generate_master_secret(s, pms, pmslen, 0);
+    }
+
+    return rv;
+}
+
 /* Derive secrets for ECDH/DH */
 int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
 {
@@ -4876,22 +4903,62 @@ int ssl_derive(SSL *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gensecret)
 
     if (gensecret) {
         /* SSLfatal() called as appropriate in the below functions */
-        if (SSL_IS_TLS13(s)) {
-            /*
-             * If we are resuming then we already generated the early secret
-             * when we created the ClientHello, so don't recreate it.
-             */
-            if (!s->hit)
-                rv = tls13_generate_secret(s, ssl_handshake_md(s), NULL, NULL,
-                                           0,
-                                           (unsigned char *)&s->early_secret);
-            else
-                rv = 1;
+        rv = ssl_gensecret(s, pms, pmslen);
+    } else {
+        /* Save premaster secret */
+        s->s3.tmp.pms = pms;
+        s->s3.tmp.pmslen = pmslen;
+        pms = NULL;
+        rv = 1;
+    }
 
-            rv = rv && tls13_generate_handshake_secret(s, pms, pmslen);
-        } else {
-            rv = ssl_generate_master_secret(s, pms, pmslen, 0);
-        }
+ err:
+    OPENSSL_clear_free(pms, pmslen);
+    EVP_PKEY_CTX_free(pctx);
+    return rv;
+}
+
+/* Decapsulate secrets for KEM */
+int ssl_decapsulate(SSL *s, EVP_PKEY *privkey,
+                    const unsigned char *ct, size_t ctlen,
+                    int gensecret)
+{
+    int rv = 0;
+    unsigned char *pms = NULL;
+    size_t pmslen = 0;
+    EVP_PKEY_CTX *pctx;
+
+    if (privkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DECAPSULATE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, privkey, s->ctx->propq);
+
+    if (EVP_PKEY_decapsulate_init(pctx) <= 0
+            || EVP_PKEY_decapsulate(pctx, NULL, &pmslen, ct, ctlen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DECAPSULATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    pms = OPENSSL_malloc(pmslen);
+    if (pms == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DECAPSULATE,
+                 ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (EVP_PKEY_decapsulate(pctx, pms, &pmslen, ct, ctlen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_DECAPSULATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (gensecret) {
+        /* SSLfatal() called as appropriate in the below functions */
+        rv = ssl_gensecret(s, pms, pmslen);
     } else {
         /* Save premaster secret */
         s->s3.tmp.pms = pms;
