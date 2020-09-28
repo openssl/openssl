@@ -117,7 +117,9 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
         do f(c, c); /*@ (non-brace) code after 'do' */
         while ( 2); /*@ space after '(', reported unless sloppy-spc */
     b; c;           /*@ more than one statement per line */
+  outer:            /*@ outer label special indent off by 1 */
     do{             /*@ no space before '{', reported unless sloppy-spc */
+     inner:         /*@ inner label normal indent off by 1 */
         f (3,       /*@ space after fn before '(', reported unless sloppy-spc */
            4);      /*@0 false negative: should report single stmt in braces */
     }               /*@0 'while' not on same line as preceding '}' */
@@ -127,7 +129,6 @@ int f (int a,       /*@ space after fn before '(', reported unless sloppy-spc */
     case(2):        /*@ no space after 'case', reported unless sloppy-spc */
     default: ;      /*@ code after 'default:' */
 }                   /*@ statement indent off by -4 */
-  label:            /*@ label special statement indent off by 1 */
     return(         /*@ no space after 'return', reported unless sloppy-spc */
            x); }    /*@ code before block-level '}' */
 /* Here the tool should stop complaining apart from the below issues at EOF */
