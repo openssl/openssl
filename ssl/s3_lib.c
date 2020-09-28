@@ -4833,7 +4833,6 @@ EVP_PKEY *ssl_generate_param_group(SSL *s, uint16_t id)
 }
 
 /* Generate secrets from pms */
-__owur static
 int ssl_gensecret(SSL *s, unsigned char *pms, size_t pmslen)
 {
     int rv = 0;
@@ -4969,6 +4968,70 @@ int ssl_decapsulate(SSL *s, EVP_PKEY *privkey,
 
  err:
     OPENSSL_clear_free(pms, pmslen);
+    EVP_PKEY_CTX_free(pctx);
+    return rv;
+}
+
+int ssl_encapsulate(SSL *s, EVP_PKEY *pubkey,
+                    unsigned char **ctp, size_t *ctlenp,
+                    int gensecret)
+{
+    int rv = 0;
+    unsigned char *pms = NULL, *ct = NULL;
+    size_t pmslen = 0, ctlen = 0;
+    EVP_PKEY_CTX *pctx;
+
+    if (pubkey == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ENCAPSULATE,
+                 ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    pctx = EVP_PKEY_CTX_new_from_pkey(s->ctx->libctx, pubkey, s->ctx->propq);
+
+    if (EVP_PKEY_encapsulate_init(pctx) <= 0
+            || EVP_PKEY_encapsulate(pctx, NULL, &ctlen, NULL, &pmslen) <= 0
+            || pmslen == 0 || ctlen == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ENCAPSULATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    pms = OPENSSL_malloc(pmslen);
+    ct = OPENSSL_malloc(ctlen);
+    if (pms == NULL || ct == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ENCAPSULATE,
+                 ERR_R_MALLOC_FAILURE);
+        goto err;
+    }
+
+    if (EVP_PKEY_encapsulate(pctx, ct, &ctlen, pms, &pmslen) <= 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_F_SSL_ENCAPSULATE,
+                 ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
+
+    if (gensecret) {
+        /* SSLfatal() called as appropriate in the below functions */
+        rv = ssl_gensecret(s, pms, pmslen);
+    } else {
+        /* Save premaster secret */
+        s->s3.tmp.pms = pms;
+        s->s3.tmp.pmslen = pmslen;
+        pms = NULL;
+        rv = 1;
+    }
+
+    if (rv > 0) {
+        /* Pass ownership of ct to caller */
+        *ctp = ct;
+        *ctlenp = ctlen;
+        ct = NULL;
+    }
+
+ err:
+    OPENSSL_clear_free(pms, pmslen);
+    OPENSSL_free(ct);
     EVP_PKEY_CTX_free(pctx);
     return rv;
 }
