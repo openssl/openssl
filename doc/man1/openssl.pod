@@ -1051,18 +1051,18 @@ B<-verify_depth> limit.
 
 =item B<-verify_email> I<email>
 
-Verify if I<email> matches the email address in Subject Alternative Name or
-the email in the subject Distinguished Name.
+Verify if I<email> matches any email address in a Subject Alternative Name or
+(if no SAN is included) the email address in the subject Distinguished Name.
 
 =item B<-verify_hostname> I<hostname>
 
-Verify if I<hostname> matches DNS name in Subject Alternative Name or
-Common Name in the subject certificate.
+Verify if I<hostname> matches any DNS name in a Subject Alternative Name or
+(if no SAN is included) the Common Name in the subject Distinguished Name.
 
 =item B<-verify_ip> I<ip>
 
-Verify if I<ip> matches the IP address in Subject Alternative Name of
-the subject certificate.
+Verify if I<ip> matches any IP address in a Subject Alternative Name or
+(if no SAN is included) the Common Name in the subject Distinguished Name.
 
 =item B<-verify_name> I<name>
 
