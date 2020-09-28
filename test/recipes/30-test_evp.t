@@ -23,6 +23,11 @@ use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $no_legacy = disabled('legacy') || ($ENV{NO_LEGACY} // 0);
+my $no_dh = disabled("dh");
+my $no_dsa = disabled("dsa");
+my $no_ec = disabled("ec");
+my $no_gost = disabled("gost");
+my $no_sm2 = disabled("sm2");
 
 # Default config depends on if the legacy module is built or not
 my $defaultcnf = $no_legacy ? 'default.cnf' : 'default-and-legacy.cnf';
@@ -46,18 +51,20 @@ my @files = qw(
                 evpmac_common.txt
                 evpmd_sha.txt
                 evppbe_pbkdf2.txt
-                evppkey_dsa.txt 
-                evppkey_ecc.txt
-                evppkey_ecdh.txt
-                evppkey_ecdsa.txt
-                evppkey_ecx.txt
-                evppkey_ffdhe.txt
-                evppkey_kas.txt
                 evppkey_kdf_hkdf.txt
-                evppkey_mismatch.txt
                 evppkey_rsa_common.txt
                 evprand.txt
               );
+push @files, qw(evppkey_ffdhe.txt) unless $no_dh;
+push @files, qw(evppkey_dsa.txt) unless $no_dsa;
+push @files, qw(evppkey_ecx.txt) unless $no_ec;
+push @files, qw(
+                evppkey_ecc.txt
+                evppkey_ecdh.txt
+                evppkey_ecdsa.txt
+                evppkey_kas.txt
+                evppkey_mismatch.txt
+              ) unless $no_ec || $no_gost;
 
 # A list of tests that only run with the default provider
 # (i.e. The algorithms are not present in the fips provider)
@@ -93,12 +100,12 @@ my @defltfiles = qw(
                      evpmd_whirlpool.txt
                      evppbe_scrypt.txt
                      evppbe_pkcs12.txt
-                     evppkey_brainpool.txt
                      evppkey_kdf_scrypt.txt
                      evppkey_kdf_tls1_prf.txt
                      evppkey_rsa.txt
-                     evppkey_sm2.txt
                     );
+push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
+push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 
 plan tests =>
     ($no_fips ? 0 : 1)          # FIPS install test
