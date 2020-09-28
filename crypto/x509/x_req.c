@@ -48,7 +48,6 @@ static int rinf_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
                   void *exarg)
 {
-#ifndef OPENSSL_NO_SM2
     X509_REQ *ret = (X509_REQ *)*pval;
 
     switch (operation) {
@@ -63,7 +62,6 @@ static int req_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
     }
-#endif
 
     return 1;
 }
