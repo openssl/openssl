@@ -242,13 +242,14 @@ static int ms2key_export_object(void *vctx,
         return ms2key_newctx(provctx, &keytype##_desc);                 \
     }                                                                   \
     static const struct keytype_desc_st keytype##_desc =                \
-        { EVP_PKEY_##KEYTYPE, KEYTYPEstr, keytype##_keymgmt_functions,  \
+        { EVP_PKEY_##KEYTYPE, KEYTYPEstr,                               \
+          ossl_##keytype##_keymgmt_functions,                           \
           (extract_key_fn *)extract,                                    \
           (free_key_fn *)free }
 
 #define IMPLEMENT_MS(mstype, keytype)                                   \
     const OSSL_DISPATCH                                                 \
-        mstype##_to_##keytype##_decoder_functions[] = {                 \
+        ossl_##mstype##_to_##keytype##_decoder_functions[] = {          \
         { OSSL_FUNC_DECODER_NEWCTX,                                     \
           (void (*)(void))ms2##keytype##_newctx },                      \
         { OSSL_FUNC_DECODER_FREECTX,                                    \

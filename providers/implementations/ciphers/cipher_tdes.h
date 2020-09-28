@@ -44,7 +44,7 @@ static int tdes_##type##_##lcmode##_get_params(OSSL_PARAM params[])            \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-const OSSL_DISPATCH tdes_##type##_##lcmode##_functions[] = {                   \
+const OSSL_DISPATCH ossl_tdes_##type##_##lcmode##_functions[] = {              \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))tdes_einit },             \
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))tdes_dinit },             \
     { OSSL_FUNC_CIPHER_UPDATE,                                                 \

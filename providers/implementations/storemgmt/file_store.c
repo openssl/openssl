@@ -906,7 +906,7 @@ static int file_close(void *loaderctx)
     return 1;
 }
 
-const OSSL_DISPATCH file_store_functions[] = {
+const OSSL_DISPATCH ossl_file_store_functions[] = {
     { OSSL_FUNC_STORE_OPEN, (void (*)(void))file_open },
     { OSSL_FUNC_STORE_ATTACH, (void (*)(void))file_attach },
     { OSSL_FUNC_STORE_SETTABLE_CTX_PARAMS,

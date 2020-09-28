@@ -154,7 +154,7 @@ static int poly1305_set_ctx_params(void *vmacctx, const OSSL_PARAM *params)
     return 1;
 }
 
-const OSSL_DISPATCH poly1305_functions[] = {
+const OSSL_DISPATCH ossl_poly1305_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))poly1305_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))poly1305_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))poly1305_free },

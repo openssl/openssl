@@ -873,12 +873,12 @@ static int key2any_encode_params(struct key2any_ctx_st *ctx,
                                     const OSSL_PARAM params[])              \
     {                                                                       \
         struct key2any_ctx_st *ctx = vctx;                                  \
-        return ossl_prov_import_key(impl##_keymgmt_functions,               \
+        return ossl_prov_import_key(ossl_##impl##_keymgmt_functions,        \
                                     ctx->provctx, selection, params);       \
     }                                                                       \
     static void impl##2##output##_free_object(void *key)                    \
     {                                                                       \
-        ossl_prov_free_key(impl##_keymgmt_functions, key);                  \
+        ossl_prov_free_key(ossl_##impl##_keymgmt_functions, key);           \
     }                                                                       \
     static int                                                              \
     impl##2##output##_encode(void *ctx, OSSL_CORE_BIO *cout,                \
@@ -915,7 +915,7 @@ static int key2any_encode_params(struct key2any_ctx_st *ctx,
         ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);             \
         return 0;                                                           \
     }                                                                       \
-    const OSSL_DISPATCH impl##_to_##output##_encoder_functions[] = {        \
+    const OSSL_DISPATCH ossl_##impl##_to_##output##_encoder_functions[] = { \
         { OSSL_FUNC_ENCODER_NEWCTX,                                         \
           (void (*)(void))key2any_newctx },                                 \
         { OSSL_FUNC_ENCODER_FREECTX,                                        \

@@ -518,7 +518,7 @@ static void *aes_##kbits##_##mode##_newctx(void *provctx)                      \
     return aes_##mode##_newctx(provctx, kbits, blkbits, ivbits,                \
                                EVP_CIPH_##UCMODE##_MODE, flags);               \
 }                                                                              \
-const OSSL_DISPATCH aes##kbits##mode##_functions[] = {                         \
+const OSSL_DISPATCH ossl_##aes##kbits##mode##_functions[] = {                  \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
         (void (*)(void))aes_##kbits##_##mode##_newctx },                       \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_##mode##_einit },     \

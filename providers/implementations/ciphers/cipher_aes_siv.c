@@ -266,7 +266,7 @@ static void * alg##kbits##lc##_newctx(void *provctx)                           \
     return alg##_##lc##_newctx(provctx, 2*kbits, EVP_CIPH_##UCMODE##_MODE,     \
                                flags);                                         \
 }                                                                              \
-const OSSL_DISPATCH alg##kbits##lc##_functions[] = {                           \
+const OSSL_DISPATCH ossl_##alg##kbits##lc##_functions[] = {                    \
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))alg##kbits##lc##_newctx },      \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))alg##_##lc##_freectx },        \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) lc##_dupctx },                 \

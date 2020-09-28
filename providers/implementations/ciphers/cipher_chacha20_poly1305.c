@@ -308,8 +308,8 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-/* chacha20_poly1305_functions */
-const OSSL_DISPATCH chacha20_poly1305_functions[] = {
+/* ossl_chacha20_ossl_poly1305_functions */
+const OSSL_DISPATCH ossl_chacha20_ossl_poly1305_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_poly1305_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_poly1305_freectx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_poly1305_einit },

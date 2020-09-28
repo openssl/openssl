@@ -334,7 +334,7 @@ static int rsakem_recover(void *vprsactx, unsigned char *out, size_t *outlen,
     }
 }
 
-const OSSL_DISPATCH rsa_asym_kem_functions[] = {
+const OSSL_DISPATCH ossl_rsa_asym_kem_functions[] = {
     { OSSL_FUNC_KEM_NEWCTX, (void (*)(void))rsakem_newctx },
     { OSSL_FUNC_KEM_ENCAPSULATE_INIT,
       (void (*)(void))rsakem_encapsulate_init },
