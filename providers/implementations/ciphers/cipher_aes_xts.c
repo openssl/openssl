@@ -115,7 +115,7 @@ static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
 
     if (ctx != NULL) {
         cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode, flags,
-                               PROV_CIPHER_HW_aes_xts(kbits), NULL);
+                               ossl_prov_cipher_hw_aes_xts(kbits), NULL);
     }
     return ctx;
 }

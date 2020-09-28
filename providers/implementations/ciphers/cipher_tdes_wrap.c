@@ -175,7 +175,7 @@ static OSSL_FUNC_cipher_newctx_fn tdes_wrap_newctx;                            \
 static void *tdes_wrap_newctx(void *provctx)                                   \
 {                                                                              \
     return tdes_newctx(provctx, EVP_CIPH_WRAP_MODE, kbits, blkbits, ivbits,    \
-                       flags, PROV_CIPHER_HW_tdes_wrap_cbc());                 \
+                       flags, ossl_prov_cipher_hw_tdes_wrap_cbc());            \
 }                                                                              \
 static OSSL_FUNC_cipher_get_params_fn tdes_wrap_get_params;                    \
 static int tdes_wrap_get_params(OSSL_PARAM params[])                           \

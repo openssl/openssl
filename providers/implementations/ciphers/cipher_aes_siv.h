@@ -34,4 +34,4 @@ typedef struct prov_siv_ctx_st {
     OPENSSL_CTX *libctx;
 } PROV_AES_SIV_CTX;
 
-const PROV_CIPHER_HW_AES_SIV *PROV_CIPHER_HW_aes_siv(size_t keybits);
+const PROV_CIPHER_HW_AES_SIV *ossl_prov_cipher_hw_aes_siv(size_t keybits);

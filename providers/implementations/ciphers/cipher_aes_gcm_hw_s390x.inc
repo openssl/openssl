@@ -290,7 +290,7 @@ static const PROV_GCM_HW s390x_aes_gcm = {
     s390x_aes_gcm_one_shot
 };
 
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
     if ((keybits == 128 && S390X_aes_128_gcm_CAPABLE)
          || (keybits == 192 && S390X_aes_192_gcm_CAPABLE)

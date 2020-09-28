@@ -130,7 +130,7 @@ static const PROV_CIPHER_HW aes_##mode = {                                     \
     cipher_hw_aes_copyctx                                                      \
 };                                                                             \
 PROV_CIPHER_HW_declare(mode)                                                   \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_##mode(size_t keybits)                \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_##mode(size_t keybits)           \
 {                                                                              \
     PROV_CIPHER_HW_select(mode)                                                \
     return &aes_##mode;                                                        \

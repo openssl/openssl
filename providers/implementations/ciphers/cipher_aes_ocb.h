@@ -36,4 +36,4 @@ typedef struct prov_aes_ocb_ctx_st {
     unsigned char aad_buf[OCB_MAX_AAD_LEN];   /* Store partial AAD blocks */
 } PROV_AES_OCB_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aes_ocb(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ocb(size_t keybits);

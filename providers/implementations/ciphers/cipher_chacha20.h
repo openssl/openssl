@@ -27,7 +27,7 @@ typedef struct prov_cipher_hw_chacha20_st {
 
 } PROV_CIPHER_HW_CHACHA20;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_chacha20(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_chacha20(size_t keybits);
 
 OSSL_FUNC_cipher_encrypt_init_fn chacha20_einit;
 OSSL_FUNC_cipher_decrypt_init_fn chacha20_dinit;

@@ -94,8 +94,8 @@ static int test_rng_instantiate_wrapper(void *vdrbg, unsigned int strength,
     if (pstr != NULL && pstr_len >= drbg->max_perslen)
         return 0;
 
-    return PROV_DRBG_instantiate(drbg, strength, prediction_resistance,
-                                 pstr, pstr_len);
+    return ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
+                                      pstr, pstr_len);
 }
 
 static int test_rng_uninstantiate(PROV_DRBG *drbg)
@@ -103,7 +103,7 @@ static int test_rng_uninstantiate(PROV_DRBG *drbg)
     PROV_TEST_RNG *t = (PROV_TEST_RNG *)drbg->data;
 
     t->entropy_pos = 0;
-    return PROV_DRBG_uninstantiate(drbg);
+    return ossl_prov_drbg_uninstantiate(drbg);
 }
 
 static int test_rng_uninstantiate_wrapper(void *vdrbg)

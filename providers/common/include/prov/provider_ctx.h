@@ -26,15 +26,15 @@ typedef struct prov_ctx_st {
  * fetching functions.
  */
 # define PROV_LIBRARY_CONTEXT_OF(provctx)        \
-    PROV_CTX_get0_library_context((provctx))
+    ossl_prov_ctx_get0_library_context((provctx))
 
-PROV_CTX *PROV_CTX_new(void);
-void PROV_CTX_free(PROV_CTX *ctx);
-void PROV_CTX_set0_library_context(PROV_CTX *ctx, OPENSSL_CTX *libctx);
-void PROV_CTX_set0_handle(PROV_CTX *ctx, const OSSL_CORE_HANDLE *handle);
-void PROV_CTX_set0_core_bio_method(PROV_CTX *ctx, BIO_METHOD *corebiometh);
-OPENSSL_CTX *PROV_CTX_get0_library_context(PROV_CTX *ctx);
-const OSSL_CORE_HANDLE *PROV_CTX_get0_handle(PROV_CTX *ctx);
-BIO_METHOD *PROV_CTX_get0_core_bio_method(PROV_CTX *ctx);
+PROV_CTX *ossl_prov_ctx_new(void);
+void ossl_prov_ctx_free(PROV_CTX *ctx);
+void ossl_prov_ctx_set0_library_context(PROV_CTX *ctx, OPENSSL_CTX *libctx);
+void ossl_prov_ctx_set0_handle(PROV_CTX *ctx, const OSSL_CORE_HANDLE *handle);
+void ossl_prov_ctx_set0_core_bio_method(PROV_CTX *ctx, BIO_METHOD *corebiometh);
+OPENSSL_CTX *ossl_prov_ctx_get0_library_context(PROV_CTX *ctx);
+const OSSL_CORE_HANDLE *ossl_prov_ctx_get0_handle(PROV_CTX *ctx);
+BIO_METHOD *ossl_prov_ctx_get0_core_bio_method(PROV_CTX *ctx);
 
 #endif

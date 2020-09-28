@@ -330,8 +330,8 @@ static int drbg_ctr_instantiate_wrapper(void *vdrbg, unsigned int strength,
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
-    return PROV_DRBG_instantiate(drbg, strength, prediction_resistance,
-                                 pstr, pstr_len);
+    return ossl_prov_drbg_instantiate(drbg, strength, prediction_resistance,
+                                      pstr, pstr_len);
 }
 
 static int drbg_ctr_reseed(PROV_DRBG *drbg,
@@ -355,8 +355,8 @@ static int drbg_ctr_reseed_wrapper(void *vdrbg, int prediction_resistance,
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
-    return PROV_DRBG_reseed(drbg, prediction_resistance, ent, ent_len,
-                            adin, adin_len);
+    return ossl_prov_drbg_reseed(drbg, prediction_resistance, ent, ent_len,
+                                 adin, adin_len);
 }
 
 static void ctr96_inc(unsigned char *counter)
@@ -452,8 +452,8 @@ static int drbg_ctr_generate_wrapper
 {
     PROV_DRBG *drbg = (PROV_DRBG *)vdrbg;
 
-    return PROV_DRBG_generate(drbg, out, outlen, strength,
-                              prediction_resistance, adin, adin_len);
+    return ossl_prov_drbg_generate(drbg, out, outlen, strength,
+                                   prediction_resistance, adin, adin_len);
 }
 
 static int drbg_ctr_uninstantiate(PROV_DRBG *drbg)
@@ -465,7 +465,7 @@ static int drbg_ctr_uninstantiate(PROV_DRBG *drbg)
     OPENSSL_cleanse(ctr->bltmp, sizeof(ctr->bltmp));
     OPENSSL_cleanse(ctr->KX, sizeof(ctr->KX));
     ctr->bltmp_pos = 0;
-    return PROV_DRBG_uninstantiate(drbg);
+    return ossl_prov_drbg_uninstantiate(drbg);
 }
 
 static int drbg_ctr_uninstantiate_wrapper(void *vdrbg)

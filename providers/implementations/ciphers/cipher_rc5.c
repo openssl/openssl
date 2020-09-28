@@ -121,7 +121,8 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
                                 EVP_CIPH_##UCMODE##_MODE, flags,               \
-                                PROV_CIPHER_HW_##alg##_##lcmode(kbits), NULL); \
+                                ossl_prov_cipher_hw_##alg##_##lcmode(kbits),   \
+                                NULL);                                         \
          ctx->rounds = RC5_12_ROUNDS;                                          \
      }                                                                         \
      return ctx;                                                               \

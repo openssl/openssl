@@ -10,16 +10,16 @@
 #include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_ofb(void);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_cfb(void);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_cfb1(void);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_cfb8(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_ofb(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_cfb(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_cfb1(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_cfb8(void);
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede2_cbc(void);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede2_ecb(void);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede2_ofb(void);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede2_cfb(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede2_cbc(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede2_ecb(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede2_ofb(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede2_cfb(void);
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_desx_cbc(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_desx_cbc(void);
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_wrap_cbc(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_wrap_cbc(void);

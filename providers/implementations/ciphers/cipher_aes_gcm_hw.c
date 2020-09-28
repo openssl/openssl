@@ -142,7 +142,7 @@ static const PROV_GCM_HW aes_gcm = {
 #elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
 # include "cipher_aes_gcm_hw_armv8.inc"
 #else
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
     return &aes_gcm;
 }
