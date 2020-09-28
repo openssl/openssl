@@ -413,10 +413,13 @@ int OPENSSL_isservice(void)
 }
 #endif
 
-void OPENSSL_die(const char *message, const char *file, int line)
+void OPENSSL_die2(const char *message, const char *file, int line, const char *func)
 {
-    OPENSSL_showfatal("%s:%d: OpenSSL internal error: %s\n",
-                      file, line, message);
+    if (func == NULL)
+        OPENSSL_die(message, file, line);
+
+    OPENSSL_showfatal("%s:%d: Function %s: OpenSSL internal error: %s\n",
+                      file, line, func, message);
 #if !defined(_WIN32)
     abort();
 #else
@@ -428,6 +431,11 @@ void OPENSSL_die(const char *message, const char *file, int line)
 # endif
     _exit(3);
 #endif
+}
+
+void OPENSSL_die(const char *message, const char *file, int line)
+{
+    OPENSSL_die2(message, file, line, "(unknown function)");
 }
 
 #if !defined(OPENSSL_CPUID_OBJ)
