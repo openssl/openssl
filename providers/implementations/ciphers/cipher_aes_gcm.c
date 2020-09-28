@@ -45,9 +45,9 @@ static void aes_gcm_freectx(void *vctx)
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
-/* aes128gcm_functions */
+/* ossl_aes128gcm_functions */
 IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 128, 8, 96);
-/* aes192gcm_functions */
+/* ossl_aes192gcm_functions */
 IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 192, 8, 96);
-/* aes256gcm_functions */
+/* ossl_aes256gcm_functions */
 IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 256, 8, 96);

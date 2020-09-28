@@ -299,7 +299,7 @@ static void *test_rng_new_wrapper(void *provctx, void *parent,
                               &test_rng_generate);
 }
 
-const OSSL_DISPATCH test_rng_functions[] = {
+const OSSL_DISPATCH ossl_test_rng_functions[] = {
     { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))test_rng_new_wrapper },
     { OSSL_FUNC_RAND_FREECTX, (void(*)(void))test_rng_free },
     { OSSL_FUNC_RAND_INSTANTIATE,

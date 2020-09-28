@@ -26,7 +26,7 @@
 #define BLAKE2_PARAM_SET_SALT blake2b_param_set_salt
 
 /* OSSL_DISPATCH symbol */
-#define BLAKE2_FUNCTIONS blake2bmac_functions
+#define BLAKE2_FUNCTIONS ossl_blake2bmac_functions
 
 #include "blake2_mac_impl.c"
 

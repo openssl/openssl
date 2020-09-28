@@ -237,7 +237,7 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         return aes_##mode##_newctx(kbits, blkbits, ivbits,                     \
                                    EVP_CIPH_##UCMODE##_MODE, flags);           \
     }                                                                          \
-    const OSSL_DISPATCH aes##kbits##fname##_functions[] = {                    \
+    const OSSL_DISPATCH ossl_##aes##kbits##fname##_functions[] = {             \
         { OSSL_FUNC_CIPHER_NEWCTX,                                             \
             (void (*)(void))aes_##kbits##fname##_newctx },                     \
         { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_##mode##_einit }, \

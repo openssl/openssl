@@ -270,7 +270,8 @@ static int der2key_export_object(void *vctx,
 
 #define IMPLEMENT_NEWCTX(KEYTYPEstr, KEYTYPE, keytype, extract, free)   \
     static const struct keytype_desc_st keytype##_desc =                \
-        { EVP_PKEY_##KEYTYPE, KEYTYPEstr, keytype##_keymgmt_functions,  \
+        { EVP_PKEY_##KEYTYPE, KEYTYPEstr,                               \
+          ossl_##keytype##_keymgmt_functions,                           \
           (extract_key_fn *)extract,                                    \
           (free_key_fn *)free };                                        \
     static OSSL_FUNC_decoder_newctx_fn der2##keytype##_newctx;          \
@@ -278,7 +279,7 @@ static int der2key_export_object(void *vctx,
     {                                                                   \
         return der2key_newctx(provctx, &keytype##_desc);                \
     }                                                                   \
-    const OSSL_DISPATCH der_to_##keytype##_decoder_functions[] = {      \
+    const OSSL_DISPATCH ossl_der_to_##keytype##_decoder_functions[] = { \
         { OSSL_FUNC_DECODER_NEWCTX,                                     \
           (void (*)(void))der2##keytype##_newctx },                     \
         { OSSL_FUNC_DECODER_FREECTX,                                    \

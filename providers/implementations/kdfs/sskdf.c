@@ -519,7 +519,7 @@ static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *provctx)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_sskdf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_sskdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))sskdf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))sskdf_reset },
@@ -533,7 +533,7 @@ const OSSL_DISPATCH kdf_sskdf_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH kdf_x963_kdf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))sskdf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))sskdf_reset },

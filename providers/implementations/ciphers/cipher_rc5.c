@@ -126,7 +126,7 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      }                                                                         \
      return ctx;                                                               \
 }                                                                              \
-const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
+const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
@@ -151,11 +151,11 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
     { 0, NULL }                                                                \
 };
 
-/* rc5128ecb_functions */
+/* ossl_rc5128ecb_functions */
 IMPLEMENT_cipher(rc5, RC5, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
-/* rc5128cbc_functions */
+/* ossl_rc5128cbc_functions */
 IMPLEMENT_cipher(rc5, RC5, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
-/* rc5128ofb64_functions */
+/* ossl_rc5128ofb64_functions */
 IMPLEMENT_cipher(rc5, RC5, ofb64, OFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)
-/* rc5128cfb64_functions */
+/* ossl_rc5128cfb64_functions */
 IMPLEMENT_cipher(rc5, RC5, cfb64,  CFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)

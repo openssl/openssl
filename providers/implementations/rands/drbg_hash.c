@@ -498,7 +498,7 @@ static const OSSL_PARAM *drbg_hash_settable_ctx_params(ossl_unused void *p_ctx)
     return known_settable_ctx_params;
 }
 
-const OSSL_DISPATCH drbg_hash_functions[] = {
+const OSSL_DISPATCH ossl_drbg_hash_functions[] = {
     { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))drbg_hash_new_wrapper },
     { OSSL_FUNC_RAND_FREECTX, (void(*)(void))drbg_hash_free },
     { OSSL_FUNC_RAND_INSTANTIATE,

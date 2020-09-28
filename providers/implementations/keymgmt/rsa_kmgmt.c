@@ -616,7 +616,7 @@ static const char *rsa_query_operation_name(int operation_id)
     return "RSA";
 }
 
-const OSSL_DISPATCH rsa_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_rsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsa_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))rsa_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS,
@@ -639,7 +639,7 @@ const OSSL_DISPATCH rsa_keymgmt_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH rsapss_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))rsapss_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))rsapss_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))rsa_gen_set_params },

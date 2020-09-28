@@ -735,7 +735,7 @@ static const OSSL_PARAM *drbg_ctr_settable_ctx_params(ossl_unused void *provctx)
     return known_settable_ctx_params;
 }
 
-const OSSL_DISPATCH drbg_ctr_functions[] = {
+const OSSL_DISPATCH ossl_drbg_ctr_functions[] = {
     { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))drbg_ctr_new_wrapper },
     { OSSL_FUNC_RAND_FREECTX, (void(*)(void))drbg_ctr_free },
     { OSSL_FUNC_RAND_INSTANTIATE,

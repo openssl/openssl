@@ -37,10 +37,10 @@ static void aria_gcm_freectx(void *vctx)
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
-/* aria128gcm_functions */
+/* ossl_aria128gcm_functions */
 IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 128, 8, 96);
-/* aria192gcm_functions */
+/* ossl_aria192gcm_functions */
 IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 192, 8, 96);
-/* aria256gcm_functions */
+/* ossl_aria256gcm_functions */
 IMPLEMENT_aead_cipher(aria, gcm, GCM, AEAD_FLAGS, 256, 8, 96);
 

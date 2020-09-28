@@ -170,7 +170,7 @@ static int null_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-const OSSL_DISPATCH null_functions[] = {
+const OSSL_DISPATCH ossl_null_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX,
       (void (*)(void)) null_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) null_freectx },

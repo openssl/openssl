@@ -170,7 +170,7 @@ KDF_SETTABLE_CTX_PARAMS(hkdf, "HKDF")
 KDF_SETTABLE_CTX_PARAMS(scrypt, "SCRYPT")
 
 #define KDF_KEYEXCH_FUNCTIONS(funcname) \
-    const OSSL_DISPATCH kdf_##funcname##_keyexch_functions[] = { \
+    const OSSL_DISPATCH ossl_kdf_##funcname##_keyexch_functions[] = { \
         { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))kdf_##funcname##_newctx }, \
         { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))kdf_init }, \
         { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))kdf_derive }, \

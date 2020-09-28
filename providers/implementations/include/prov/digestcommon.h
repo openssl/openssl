@@ -70,7 +70,7 @@ static int name##_internal_final(void *ctx, unsigned char *out, size_t *outl,  \
     return 0;                                                                  \
 }                                                                              \
 PROV_FUNC_DIGEST_GET_PARAM(name, blksize, dgstsize, flags)                     \
-const OSSL_DISPATCH name##_functions[] = {                                     \
+const OSSL_DISPATCH ossl_##name##_functions[] = {                              \
     { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))name##_newctx },                \
     { OSSL_FUNC_DIGEST_INIT, (void (*)(void))name##_internal_init },           \
     { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))upd },                          \

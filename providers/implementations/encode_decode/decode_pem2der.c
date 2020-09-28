@@ -158,7 +158,7 @@ static int pem2der_decode(void *vctx, OSSL_CORE_BIO *cin,
     return ok;
 }
 
-const OSSL_DISPATCH pem_to_der_decoder_functions[] = {
+const OSSL_DISPATCH ossl_pem_to_der_decoder_functions[] = {
     { OSSL_FUNC_DECODER_NEWCTX, (void (*)(void))pem2der_newctx },
     { OSSL_FUNC_DECODER_FREECTX, (void (*)(void))pem2der_freectx },
     { OSSL_FUNC_DECODER_GETTABLE_PARAMS,

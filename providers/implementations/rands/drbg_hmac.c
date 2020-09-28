@@ -412,7 +412,7 @@ static const OSSL_PARAM *drbg_hmac_settable_ctx_params(ossl_unused void *p_ctx)
     return known_settable_ctx_params;
 }
 
-const OSSL_DISPATCH drbg_hmac_functions[] = {
+const OSSL_DISPATCH ossl_drbg_ossl_hmac_functions[] = {
     { OSSL_FUNC_RAND_NEWCTX, (void(*)(void))drbg_hmac_new_wrapper },
     { OSSL_FUNC_RAND_FREECTX, (void(*)(void))drbg_hmac_free },
     { OSSL_FUNC_RAND_INSTANTIATE,

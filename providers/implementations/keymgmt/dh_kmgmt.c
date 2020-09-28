@@ -707,7 +707,7 @@ void *dh_load(const void *reference, size_t reference_sz)
     return NULL;
 }
 
-const OSSL_DISPATCH dh_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_dh_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dh_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dh_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dh_gen_set_template },
@@ -738,7 +738,7 @@ static const char *dhx_query_operation_name(int operation_id)
     return "DH";
 }
 
-const OSSL_DISPATCH dhx_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_dhx_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dhx_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dhx_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dh_gen_set_template },

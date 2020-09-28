@@ -841,17 +841,17 @@ static int key2text_encode(void *vctx, const void *key, int selection,
                                                                         \
     static int impl##2text_get_params(OSSL_PARAM params[])              \
     {                                                                   \
-        return key2text_get_params(params, impl##_input_type);           \
+        return key2text_get_params(params, impl##_input_type);          \
     }                                                                   \
     static void *impl##2text_import_object(void *ctx, int selection,    \
                                            const OSSL_PARAM params[])   \
     {                                                                   \
-        return ossl_prov_import_key(impl##_keymgmt_functions,           \
+        return ossl_prov_import_key(ossl_##impl##_keymgmt_functions,    \
                                     ctx, selection, params);            \
     }                                                                   \
     static void impl##2text_free_object(void *key)                      \
     {                                                                   \
-        ossl_prov_free_key(impl##_keymgmt_functions, key);              \
+        ossl_prov_free_key(ossl_##impl##_keymgmt_functions, key);       \
     }                                                                   \
     static int impl##2text_encode(void *vctx, OSSL_CORE_BIO *cout,      \
                                   const void *key,                      \
@@ -868,7 +868,7 @@ static int key2text_encode(void *vctx, const void *key, int selection,
         return key2text_encode(vctx, key, selection, cout,              \
                                type##_to_text, cb, cbarg);              \
     }                                                                   \
-    const OSSL_DISPATCH impl##_to_text_encoder_functions[] = {          \
+    const OSSL_DISPATCH ossl_##impl##_to_text_encoder_functions[] = {   \
         { OSSL_FUNC_ENCODER_NEWCTX,                                     \
           (void (*)(void))key2text_newctx },                            \
         { OSSL_FUNC_ENCODER_FREECTX,                                    \

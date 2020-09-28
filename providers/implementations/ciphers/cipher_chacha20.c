@@ -173,8 +173,8 @@ int chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return ret;
 }
 
-/* chacha20_functions */
-const OSSL_DISPATCH chacha20_functions[] = {
+/* ossl_chacha20_functions */
+const OSSL_DISPATCH ossl_chacha20_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_freectx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_einit },
