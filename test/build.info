@@ -30,7 +30,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}= \
           confdump \
           versions \
-          aborttest test_test pkcs12_format_test \
+          aborttest asserttest test_test pkcs12_format_test \
           sanitytest rsa_complex exdatatest bntest \
           ectest ecstresstest gmdifftest pbelutest \
           destest mdc2test \
@@ -74,6 +74,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[aborttest]=aborttest.c
   INCLUDE[aborttest]=../include ../apps/include
   DEPEND[aborttest]=../libcrypto
+
+  SOURCE[asserttest]=asserttest.c
+  INCLUDE[asserttest]=../include ../apps/include
+  DEPEND[asserttest]=../libcrypto
 
   SOURCE[sanitytest]=sanitytest.c
   INCLUDE[sanitytest]=../include ../apps/include
