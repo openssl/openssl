@@ -156,7 +156,7 @@ sub test_errors { # actually tests diagnostics of OSSL_STORE
         $found = 1 if m/$expected/; # output must include $expected
     }
     close $in;
-    # unlink $tmpfile;
+    # $tmpfile is kept to help with investigation in case of failure
     return $res && $found;
 }
 
