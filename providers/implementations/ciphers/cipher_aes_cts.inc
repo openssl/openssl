@@ -28,7 +28,7 @@ static int aes_cbc_cts_get_ctx_params(void *vctx, OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CTS_MODE);
     if (p != NULL) {
-        const char *name = aes_cbc_cts_mode_id2name(ctx->cts_mode);
+        const char *name = ossl_aes_cbc_cts_mode_id2name(ctx->cts_mode);
 
         if (name == NULL || !OSSL_PARAM_set_utf8_string(p, name)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
@@ -52,7 +52,7 @@ static int aes_cbc_cts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             goto err;
-        id = aes_cbc_cts_mode_name2id(p->data);
+        id = ossl_aes_cbc_cts_mode_name2id(p->data);
         if (id < 0)
             goto err;
 
