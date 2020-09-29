@@ -27,10 +27,15 @@
 #include "names.h"
 
 static int verbose = 0;
+static const char *select_name = NULL;
 
 static void legacy_cipher_fn(const EVP_CIPHER *c,
                              const char *from, const char *to, void *arg)
 {
+    if (select_name != NULL
+        && (c == NULL
+            || strcasecmp(select_name,  EVP_CIPHER_name(c)) != 0))
+        return;
     if (c != NULL) {
         BIO_printf(arg, "  %s\n", EVP_CIPHER_name(c));
     } else {
@@ -80,17 +85,19 @@ static void list_ciphers(void)
     sk_EVP_CIPHER_sort(ciphers);
     for (i = 0; i < sk_EVP_CIPHER_num(ciphers); i++) {
         const EVP_CIPHER *c = sk_EVP_CIPHER_value(ciphers, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
+        if (select_name != NULL && !EVP_CIPHER_is_a(c, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
         EVP_CIPHER_names_do_all(c, collect_names, names);
-
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
         BIO_printf(bio_out, " @ %s\n",
                    OSSL_PROVIDER_name(EVP_CIPHER_provider(c)));
-
-        sk_OPENSSL_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -155,17 +162,18 @@ static void list_digests(void)
     sk_EVP_MD_sort(digests);
     for (i = 0; i < sk_EVP_MD_num(digests); i++) {
         const EVP_MD *m = sk_EVP_MD_value(digests, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
+        if (select_name != NULL && !EVP_MD_is_a(m, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
         EVP_MD_names_do_all(m, collect_names, names);
-
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_MD_provider(m)));
-
         sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MD_provider(m)));
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -213,17 +221,18 @@ static void list_macs(void)
     sk_EVP_MAC_sort(macs);
     for (i = 0; i < sk_EVP_MAC_num(macs); i++) {
         const EVP_MAC *m = sk_EVP_MAC_value(macs, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
+        if (select_name != NULL && !EVP_MAC_is_a(m, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
         EVP_MAC_names_do_all(m, collect_names, names);
-
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_MAC_provider(m)));
-
         sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_MAC_provider(m)));
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -274,17 +283,18 @@ static void list_kdfs(void)
     sk_EVP_KDF_sort(kdfs);
     for (i = 0; i < sk_EVP_KDF_num(kdfs); i++) {
         const EVP_KDF *k = sk_EVP_KDF_value(kdfs, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
+        if (select_name != NULL && !EVP_KDF_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
         EVP_KDF_names_do_all(k, collect_names, names);
-
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_KDF_provider(k)));
-
         sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KDF_provider(k)));
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -337,9 +347,11 @@ static void list_random_generators(void)
     for (i = 0; i < sk_EVP_RAND_num(rands); i++) {
         const EVP_RAND *m = sk_EVP_RAND_value(rands, i);
 
+        if (select_name != NULL
+            && strcasecmp(EVP_RAND_name(m), select_name) != 0)
+            continue;
         BIO_printf(bio_out, "  %s", EVP_RAND_name(m));
-        BIO_printf(bio_out, " @ %s\n",
-                   OSSL_PROVIDER_name(EVP_RAND_provider(m)));
+        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_RAND_provider(m)));
 
         if (verbose) {
             print_param_types("retrievable algorithm parameters",
@@ -460,18 +472,20 @@ static void list_encoders(void)
 
     for (i = 0; i < sk_OSSL_ENCODER_num(encoders); i++) {
         OSSL_ENCODER *k = sk_OSSL_ENCODER_value(encoders, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
+        if (select_name != NULL && !OSSL_ENCODER_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
         OSSL_ENCODER_names_do_all(k, collect_names, names);
-
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
         BIO_printf(bio_out, " @ %s (%s)\n",
                    OSSL_PROVIDER_name(OSSL_ENCODER_provider(k)),
                    OSSL_ENCODER_properties(k));
-
-        sk_OPENSSL_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("settable operation parameters",
@@ -521,18 +535,20 @@ static void list_decoders(void)
 
     for (i = 0; i < sk_OSSL_DECODER_num(decoders); i++) {
         OSSL_DECODER *k = sk_OSSL_DECODER_value(decoders, i);
-        STACK_OF(OPENSSL_CSTRING) *names =
-            sk_OPENSSL_CSTRING_new(name_cmp);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
 
+        if (select_name != NULL && !OSSL_DECODER_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
         OSSL_DECODER_names_do_all(k, collect_names, names);
-
         BIO_printf(bio_out, "  ");
         print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
         BIO_printf(bio_out, " @ %s (%s)\n",
                    OSSL_PROVIDER_name(OSSL_DECODER_provider(k)),
                    OSSL_DECODER_properties(k));
-
-        sk_OPENSSL_CSTRING_free(names);
 
         if (verbose) {
             print_param_types("settable operation parameters",
@@ -540,6 +556,290 @@ static void list_decoders(void)
         }
     }
     sk_OSSL_DECODER_pop_free(decoders, OSSL_DECODER_free);
+}
+
+DEFINE_STACK_OF(EVP_KEYMGMT)
+static int keymanager_cmp(const EVP_KEYMGMT * const *a,
+                          const EVP_KEYMGMT * const *b)
+{
+    int ret = EVP_KEYMGMT_number(*a) - EVP_KEYMGMT_number(*b);
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYMGMT_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEYMGMT_provider(*b)));
+    return ret;
+}
+
+static void collect_keymanagers(EVP_KEYMGMT *km, void *stack)
+{
+    STACK_OF(EVP_KEYMGMT) *km_stack = stack;
+
+    sk_EVP_KEYMGMT_push(km_stack, km);
+    EVP_KEYMGMT_up_ref(km);
+}
+
+static void list_keymanagers(void)
+{
+    int i;
+    STACK_OF(EVP_KEYMGMT) *km_stack = sk_EVP_KEYMGMT_new(keymanager_cmp);
+
+    EVP_KEYMGMT_do_all_provided(NULL, collect_keymanagers, km_stack);
+    sk_EVP_KEYMGMT_sort(km_stack);
+
+    for (i = 0; i < sk_EVP_KEYMGMT_num(km_stack); i++) {
+        EVP_KEYMGMT *k = sk_EVP_KEYMGMT_value(km_stack, i);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
+
+        if (select_name != NULL && !EVP_KEYMGMT_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
+        EVP_KEYMGMT_names_do_all(k, collect_names, names);
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_KEYMGMT_provider(k)));
+
+        if (verbose) {
+            print_param_types("settable key generation parameters",
+                              EVP_KEYMGMT_gen_settable_params(k), 4);
+            print_param_types("settable operation parameters",
+                              EVP_KEYMGMT_settable_params(k), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_KEYMGMT_gettable_params(k), 4);
+        }
+    }
+    sk_EVP_KEYMGMT_pop_free(km_stack, EVP_KEYMGMT_free);
+}
+
+DEFINE_STACK_OF(EVP_SIGNATURE)
+static int signature_cmp(const EVP_SIGNATURE * const *a,
+                         const EVP_SIGNATURE * const *b)
+{
+    int ret = EVP_SIGNATURE_number(*a) - EVP_SIGNATURE_number(*b);
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_SIGNATURE_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_SIGNATURE_provider(*b)));
+    return ret;
+}
+
+static void collect_signatures(EVP_SIGNATURE *km, void *stack)
+{
+    STACK_OF(EVP_SIGNATURE) *km_stack = stack;
+
+    sk_EVP_SIGNATURE_push(km_stack, km);
+    EVP_SIGNATURE_up_ref(km);
+}
+
+static void list_signatures(void)
+{
+    int i, count = 0;
+    STACK_OF(EVP_SIGNATURE) *sig_stack = sk_EVP_SIGNATURE_new(signature_cmp);
+
+    EVP_SIGNATURE_do_all_provided(NULL, collect_signatures, sig_stack);
+    sk_EVP_SIGNATURE_sort(sig_stack);
+
+    for (i = 0; i < sk_EVP_SIGNATURE_num(sig_stack); i++) {
+        EVP_SIGNATURE *k = sk_EVP_SIGNATURE_value(sig_stack, i);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
+
+        if (select_name != NULL && !EVP_SIGNATURE_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
+        EVP_SIGNATURE_names_do_all(k, collect_names, names);
+        count++;
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_SIGNATURE_provider(k)));
+
+        if (verbose) {
+            print_param_types("settable operation parameters",
+                              EVP_SIGNATURE_settable_ctx_params(k), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_SIGNATURE_gettable_ctx_params(k), 4);
+        }
+    }
+    sk_EVP_SIGNATURE_pop_free(sig_stack, EVP_SIGNATURE_free);
+    if (count == 0)
+        BIO_printf(bio_out, " -\n");
+}
+
+DEFINE_STACK_OF(EVP_KEM)
+static int kem_cmp(const EVP_KEM * const *a,
+                   const EVP_KEM * const *b)
+{
+    int ret = EVP_KEM_number(*a) - EVP_KEM_number(*b);
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEM_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEM_provider(*b)));
+    return ret;
+}
+
+static void collect_kem(EVP_KEM *km, void *stack)
+{
+    STACK_OF(EVP_KEM) *km_stack = stack;
+
+    sk_EVP_KEM_push(km_stack, km);
+    EVP_KEM_up_ref(km);
+}
+
+static void list_kems(void)
+{
+    int i, count = 0;
+    STACK_OF(EVP_KEM) *kem_stack = sk_EVP_KEM_new(kem_cmp);
+
+    EVP_KEM_do_all_provided(NULL, collect_kem, kem_stack);
+    sk_EVP_KEM_sort(kem_stack);
+
+    for (i = 0; i < sk_EVP_KEM_num(kem_stack); i++) {
+        EVP_KEM *k = sk_EVP_KEM_value(kem_stack, i);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
+
+        if (select_name != NULL && !EVP_KEM_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
+        EVP_KEM_names_do_all(k, collect_names, names);
+        count++;
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n", OSSL_PROVIDER_name(EVP_KEM_provider(k)));
+
+        if (verbose) {
+            print_param_types("settable operation parameters",
+                              EVP_KEM_settable_ctx_params(k), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_KEM_gettable_ctx_params(k), 4);
+        }
+    }
+    sk_EVP_KEM_pop_free(kem_stack, EVP_KEM_free);
+    if (count == 0)
+        BIO_printf(bio_out, " -\n");
+}
+
+DEFINE_STACK_OF(EVP_ASYM_CIPHER)
+static int asymcipher_cmp(const EVP_ASYM_CIPHER * const *a,
+                          const EVP_ASYM_CIPHER * const *b)
+{
+    int ret = EVP_ASYM_CIPHER_number(*a) - EVP_ASYM_CIPHER_number(*b);
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(*b)));
+    return ret;
+}
+
+static void collect_asymciph(EVP_ASYM_CIPHER *km, void *stack)
+{
+    STACK_OF(EVP_ASYM_CIPHER) *km_stack = stack;
+
+    sk_EVP_ASYM_CIPHER_push(km_stack, km);
+    EVP_ASYM_CIPHER_up_ref(km);
+}
+
+static void list_asymciphers(void)
+{
+    int i, count = 0;
+    STACK_OF(EVP_ASYM_CIPHER) *asymciph_stack =
+        sk_EVP_ASYM_CIPHER_new(asymcipher_cmp);
+
+    EVP_ASYM_CIPHER_do_all_provided(NULL, collect_asymciph, asymciph_stack);
+    sk_EVP_ASYM_CIPHER_sort(asymciph_stack);
+
+    for (i = 0; i < sk_EVP_ASYM_CIPHER_num(asymciph_stack); i++) {
+        EVP_ASYM_CIPHER *k = sk_EVP_ASYM_CIPHER_value(asymciph_stack, i);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
+
+        if (select_name != NULL && !EVP_ASYM_CIPHER_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
+        EVP_ASYM_CIPHER_names_do_all(k, collect_names, names);
+        count++;
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_ASYM_CIPHER_provider(k)));
+
+        if (verbose) {
+            print_param_types("settable operation parameters",
+                              EVP_ASYM_CIPHER_settable_ctx_params(k), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_ASYM_CIPHER_gettable_ctx_params(k), 4);
+        }
+    }
+    sk_EVP_ASYM_CIPHER_pop_free(asymciph_stack, EVP_ASYM_CIPHER_free);
+    if (count == 0)
+        BIO_printf(bio_out, " -\n");
+}
+
+DEFINE_STACK_OF(EVP_KEYEXCH)
+static int kex_cmp(const EVP_KEYEXCH * const *a,
+                   const EVP_KEYEXCH * const *b)
+{
+    int ret = EVP_KEYEXCH_number(*a) - EVP_KEYEXCH_number(*b);
+
+    if (ret == 0)
+        ret = strcmp(OSSL_PROVIDER_name(EVP_KEYEXCH_provider(*a)),
+                     OSSL_PROVIDER_name(EVP_KEYEXCH_provider(*b)));
+    return ret;
+}
+
+static void collect_kex(EVP_KEYEXCH *ke, void *stack)
+{
+    STACK_OF(EVP_KEYEXCH) *kex_stack = stack;
+
+    sk_EVP_KEYEXCH_push(kex_stack, ke);
+    EVP_KEYEXCH_up_ref(ke);
+}
+
+static void list_keyexchanges(void)
+{
+    int i, count = 0;
+    STACK_OF(EVP_KEYEXCH) *kex_stack = sk_EVP_KEYEXCH_new(kex_cmp);
+
+    EVP_KEYEXCH_do_all_provided(NULL, collect_kex, kex_stack);
+    sk_EVP_KEYEXCH_sort(kex_stack);
+
+    for (i = 0; i < sk_EVP_KEYEXCH_num(kex_stack); i++) {
+        EVP_KEYEXCH *k = sk_EVP_KEYEXCH_value(kex_stack, i);
+        STACK_OF(OPENSSL_CSTRING) *names = NULL;
+
+        if (select_name != NULL && !EVP_KEYEXCH_is_a(k, select_name))
+            continue;
+
+        names = sk_OPENSSL_CSTRING_new(name_cmp);
+        EVP_KEYEXCH_names_do_all(k, collect_names, names);
+        count++;
+        BIO_printf(bio_out, "  ");
+        print_names(bio_out, names);
+        sk_OPENSSL_CSTRING_free(names);
+
+        BIO_printf(bio_out, " @ %s\n",
+                   OSSL_PROVIDER_name(EVP_KEYEXCH_provider(k)));
+
+        if (verbose) {
+            print_param_types("settable operation parameters",
+                              EVP_KEYEXCH_settable_ctx_params(k), 4);
+            print_param_types("retrievable operation parameters",
+                              EVP_KEYEXCH_gettable_ctx_params(k), 4);
+        }
+    }
+    sk_EVP_KEYEXCH_pop_free(kex_stack, EVP_KEYEXCH_free);
+    if (count == 0)
+        BIO_printf(bio_out, " -\n");
 }
 
 static void list_missing_help(void)
@@ -673,50 +973,69 @@ static void list_type(FUNC_TYPE ft, int one)
 
 static void list_pkey(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     int i;
 
-    for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
-        const EVP_PKEY_ASN1_METHOD *ameth;
-        int pkey_id, pkey_base_id, pkey_flags;
-        const char *pinfo, *pem_str;
-        ameth = EVP_PKEY_asn1_get0(i);
-        EVP_PKEY_asn1_get0_info(&pkey_id, &pkey_base_id, &pkey_flags,
-                                &pinfo, &pem_str, ameth);
-        if (pkey_flags & ASN1_PKEY_ALIAS) {
-            BIO_printf(bio_out, "Name: %s\n", OBJ_nid2ln(pkey_id));
-            BIO_printf(bio_out, "\tAlias for: %s\n",
-                       OBJ_nid2ln(pkey_base_id));
-        } else {
-            BIO_printf(bio_out, "Name: %s\n", pinfo);
-            BIO_printf(bio_out, "\tType: %s Algorithm\n",
-                       pkey_flags & ASN1_PKEY_DYNAMIC ?
-                       "External" : "Builtin");
-            BIO_printf(bio_out, "\tOID: %s\n", OBJ_nid2ln(pkey_id));
-            if (pem_str == NULL)
-                pem_str = "(none)";
-            BIO_printf(bio_out, "\tPEM string: %s\n", pem_str);
+    if (select_name == NULL) {
+        BIO_printf(bio_out, "Legacy:\n");
+        for (i = 0; i < EVP_PKEY_asn1_get_count(); i++) {
+            const EVP_PKEY_ASN1_METHOD *ameth;
+            int pkey_id, pkey_base_id, pkey_flags;
+            const char *pinfo, *pem_str;
+            ameth = EVP_PKEY_asn1_get0(i);
+            EVP_PKEY_asn1_get0_info(&pkey_id, &pkey_base_id, &pkey_flags,
+                                    &pinfo, &pem_str, ameth);
+            if (pkey_flags & ASN1_PKEY_ALIAS) {
+                BIO_printf(bio_out, " Name: %s\n", OBJ_nid2ln(pkey_id));
+                BIO_printf(bio_out, "\tAlias for: %s\n",
+                           OBJ_nid2ln(pkey_base_id));
+            } else {
+                BIO_printf(bio_out, " Name: %s\n", pinfo);
+                BIO_printf(bio_out, "\tType: %s Algorithm\n",
+                           pkey_flags & ASN1_PKEY_DYNAMIC ?
+                           "External" : "Builtin");
+                BIO_printf(bio_out, "\tOID: %s\n", OBJ_nid2ln(pkey_id));
+                if (pem_str == NULL)
+                    pem_str = "(none)";
+                BIO_printf(bio_out, "\tPEM string: %s\n", pem_str);
+            }
         }
-
     }
+#endif
+    BIO_printf(bio_out, "Provided:\n");
+    BIO_printf(bio_out, " Key Managers:\n");
+    list_keymanagers();
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_3_0
 static void list_pkey_meth(void)
 {
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     size_t i;
     size_t meth_count = EVP_PKEY_meth_get_count();
 
-    for (i = 0; i < meth_count; i++) {
-        const EVP_PKEY_METHOD *pmeth = EVP_PKEY_meth_get0(i);
-        int pkey_id, pkey_flags;
+    if (select_name == NULL) {
+        BIO_printf(bio_out, "Legacy:\n");
+        for (i = 0; i < meth_count; i++) {
+            const EVP_PKEY_METHOD *pmeth = EVP_PKEY_meth_get0(i);
+            int pkey_id, pkey_flags;
 
-        EVP_PKEY_meth_get0_info(&pkey_id, &pkey_flags, pmeth);
-        BIO_printf(bio_out, "%s\n", OBJ_nid2ln(pkey_id));
-        BIO_printf(bio_out, "\tType: %s Algorithm\n",
-                   pkey_flags & ASN1_PKEY_DYNAMIC ?  "External" : "Builtin");
+            EVP_PKEY_meth_get0_info(&pkey_id, &pkey_flags, pmeth);
+            BIO_printf(bio_out, " %s\n", OBJ_nid2ln(pkey_id));
+            BIO_printf(bio_out, "\tType: %s Algorithm\n",
+                       pkey_flags & ASN1_PKEY_DYNAMIC ?  "External" : "Builtin");
+        }
     }
-}
 #endif
+    BIO_printf(bio_out, "Provided:\n");
+    BIO_printf(bio_out, " Encryption:\n");
+    list_asymciphers();
+    BIO_printf(bio_out, " Key Exchange:\n");
+    list_keyexchanges();
+    BIO_printf(bio_out, " Signatures:\n");
+    list_signatures();
+    BIO_printf(bio_out, " Key encapsulation:\n");
+    list_kems();
+}
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 static void list_engines(void)
@@ -889,8 +1208,9 @@ typedef enum HELPLIST_CHOICE {
     OPT_DIGEST_ALGORITHMS, OPT_CIPHER_COMMANDS, OPT_CIPHER_ALGORITHMS,
     OPT_PK_ALGORITHMS, OPT_PK_METHOD, OPT_DISABLED,
     OPT_KDF_ALGORITHMS, OPT_RANDOM_INSTANCES, OPT_RANDOM_GENERATORS,
-    OPT_ENCODERS, OPT_DECODERS,
-    OPT_MISSING_HELP, OPT_OBJECTS,
+    OPT_ENCODERS, OPT_DECODERS, OPT_KEYMANAGERS, OPT_KEYEXCHANGE_ALGORITHMS,
+    OPT_KEM_ALGORITHMS, OPT_SIGNATURE_ALGORITHMS, OPT_ASYM_CIPHER_ALGORITHMS,
+    OPT_MISSING_HELP, OPT_OBJECTS, OPT_SELECT_NAME,
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     OPT_ENGINES, 
 #endif
@@ -905,6 +1225,7 @@ const OPTIONS list_options[] = {
     OPT_SECTION("Output"),
     {"1", OPT_ONE, '-', "List in one column"},
     {"verbose", OPT_VERBOSE, '-', "Verbose listing"},
+    {"select", OPT_SELECT_NAME, 's', "Select a single algorithm"},
     {"commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"standard-commands", OPT_COMMANDS, '-', "List of standard commands"},
     {"digest-commands", OPT_DIGEST_COMMANDS, '-',
@@ -924,11 +1245,20 @@ const OPTIONS list_options[] = {
      "List of cipher algorithms"},
     {"encoders", OPT_ENCODERS, '-', "List of encoding methods" },
     {"decoders", OPT_DECODERS, '-', "List of decoding methods" },
+    {"key-managers", OPT_KEYMANAGERS, '-', "List of key managers" },
+    {"key-exchange-algorithms", OPT_KEYEXCHANGE_ALGORITHMS, '-',
+     "List of key exchange algorithms" },
+    {"kem-algorithms", OPT_KEM_ALGORITHMS, '-',
+     "List of key encapsulation mechanism algorithms" },
+    {"signature-algorithms", OPT_SIGNATURE_ALGORITHMS, '-',
+     "List of signature algorithms" },
+    { "asymcipher-algorithms", OPT_ASYM_CIPHER_ALGORITHMS, '-',
+      "List of asymmetric cipher algorithms" },
     {"public-key-algorithms", OPT_PK_ALGORITHMS, '-',
      "List of public key algorithms"},
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"public-key-methods", OPT_PK_METHOD, '-',
      "List of public key methods"},
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     {"engines", OPT_ENGINES, '-',
      "List of loaded engines"},
 #endif
@@ -961,6 +1291,11 @@ int list_main(int argc, char **argv)
         unsigned int cipher_algorithms:1;
         unsigned int encoder_algorithms:1;
         unsigned int decoder_algorithms:1;
+        unsigned int keymanager_algorithms:1;
+        unsigned int signature_algorithms:1;
+        unsigned int keyexchange_algorithms:1;
+        unsigned int kem_algorithms:1;
+        unsigned int asym_cipher_algorithms:1;
         unsigned int pk_algorithms:1;
         unsigned int pk_method:1;
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -1021,6 +1356,21 @@ opthelp:
         case OPT_DECODERS:
             todo.decoder_algorithms = 1;
             break;
+        case OPT_KEYMANAGERS:
+            todo.keymanager_algorithms = 1;
+            break;
+        case OPT_SIGNATURE_ALGORITHMS:
+            todo.signature_algorithms = 1;
+            break;
+        case OPT_KEYEXCHANGE_ALGORITHMS:
+            todo.keyexchange_algorithms = 1;
+            break;
+        case OPT_KEM_ALGORITHMS:
+            todo.kem_algorithms = 1;
+            break;
+        case OPT_ASYM_CIPHER_ALGORITHMS:
+            todo.asym_cipher_algorithms = 1;
+            break;
         case OPT_PK_ALGORITHMS:
             todo.pk_algorithms = 1;
             break;
@@ -1046,6 +1396,9 @@ opthelp:
             break;
         case OPT_VERBOSE:
             verbose = 1;
+            break;
+        case OPT_SELECT_NAME:
+            select_name = opt_arg();
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -1081,11 +1434,21 @@ opthelp:
         list_encoders();
     if (todo.decoder_algorithms)
         list_decoders();
+    if (todo.keymanager_algorithms)
+        list_keymanagers();
+    if (todo.signature_algorithms)
+        list_signatures();
+    if (todo.asym_cipher_algorithms)
+        list_asymciphers();
+    if (todo.keyexchange_algorithms)
+        list_keyexchanges();
+    if (todo.kem_algorithms)
+        list_kems();
     if (todo.pk_algorithms)
         list_pkey();
-#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (todo.pk_method)
         list_pkey_meth();
+#ifndef OPENSSL_NO_DEPRECATED_3_0
     if (todo.engines)
         list_engines();
 #endif

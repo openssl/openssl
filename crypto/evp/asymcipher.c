@@ -444,3 +444,24 @@ void EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,
         evp_names_do_all(cipher->prov, cipher->name_id, fn, data);
 }
 
+const OSSL_PARAM *EVP_ASYM_CIPHER_gettable_ctx_params(const EVP_ASYM_CIPHER *cip)
+{
+    void *provctx;
+
+    if (cip == NULL || cip->gettable_ctx_params == NULL)
+        return NULL;
+
+    provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
+    return cip->gettable_ctx_params(provctx);
+}
+
+const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *cip)
+{
+    void *provctx;
+
+    if (cip == NULL || cip->settable_ctx_params == NULL)
+        return NULL;
+
+    provctx = ossl_provider_ctx(EVP_ASYM_CIPHER_provider(cip));
+    return cip->settable_ctx_params(provctx);
+}

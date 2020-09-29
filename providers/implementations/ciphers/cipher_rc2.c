@@ -210,12 +210,13 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
                                 EVP_CIPH_##UCMODE##_MODE, flags,               \
-                                PROV_CIPHER_HW_##alg##_##lcmode(kbits), NULL); \
+                                ossl_prov_cipher_hw_##alg##_##lcmode(kbits),   \
+                                NULL);                                         \
          ctx->key_bits = kbits;                                                \
      }                                                                         \
      return ctx;                                                               \
 }                                                                              \
-const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
+const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
@@ -240,16 +241,16 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
     { 0, NULL }                                                                \
 };
 
-/* rc2128ecb_functions */
+/* ossl_rc2128ecb_functions */
 IMPLEMENT_cipher(rc2, RC2, ecb, ECB, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 0, block)
-/* rc2128cbc_functions */
+/* ossl_rc2128cbc_functions */
 IMPLEMENT_cipher(rc2, RC2, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 128, 64, 64, block)
-/* rc240cbc_functions */
+/* ossl_rc240cbc_functions */
 IMPLEMENT_cipher(rc2, RC2, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 40, 64, 64, block)
-/* rc264cbc_functions */
+/* ossl_rc264cbc_functions */
 IMPLEMENT_cipher(rc2, RC2, cbc, CBC, EVP_CIPH_VARIABLE_LENGTH, 64, 64, 64, block)
 
-/* rc2128ofb128_functions */
+/* ossl_rc2128ofb128_functions */
 IMPLEMENT_cipher(rc2, RC2, ofb128, OFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)
-/* rc2128cfb128_functions */
+/* ossl_rc2128cfb128_functions */
 IMPLEMENT_cipher(rc2, RC2, cfb128, CFB, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 64, stream)

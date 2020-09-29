@@ -582,7 +582,7 @@ void *dsa_load(const void *reference, size_t reference_sz)
     return NULL;
 }
 
-const OSSL_DISPATCH dsa_keymgmt_functions[] = {
+const OSSL_DISPATCH ossl_dsa_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dsa_newdata },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))dsa_gen_init },
     { OSSL_FUNC_KEYMGMT_GEN_SET_TEMPLATE, (void (*)(void))dsa_gen_set_template },

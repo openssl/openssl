@@ -62,7 +62,7 @@ static const PROV_CCM_HW aes_ccm = {
 #elif defined(SPARC_AES_CAPABLE)
 # include "cipher_aes_ccm_hw_t4.inc"
 #else
-const PROV_CCM_HW *PROV_AES_HW_ccm(size_t keybits)
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
     return &aes_ccm;
 }

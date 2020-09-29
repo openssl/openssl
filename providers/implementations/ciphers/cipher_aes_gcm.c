@@ -32,7 +32,7 @@ static void *aes_gcm_newctx(void *provctx, size_t keybits)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        gcm_initctx(provctx, &ctx->base, keybits, PROV_AES_HW_gcm(keybits),
+        gcm_initctx(provctx, &ctx->base, keybits, ossl_prov_aes_hw_gcm(keybits),
                     AES_GCM_IV_MIN_SIZE);
     return ctx;
 }
@@ -45,9 +45,9 @@ static void aes_gcm_freectx(void *vctx)
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
-/* aes128gcm_functions */
+/* ossl_aes128gcm_functions */
 IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 128, 8, 96);
-/* aes192gcm_functions */
+/* ossl_aes192gcm_functions */
 IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 192, 8, 96);
-/* aes256gcm_functions */
+/* ossl_aes256gcm_functions */
 IMPLEMENT_aead_cipher(aes, gcm, GCM, AEAD_FLAGS, 256, 8, 96);

@@ -35,7 +35,6 @@ DEPEND[]= \
          openssl-pkey.pod \
          openssl-pkeyutl.pod \
          openssl-prime.pod \
-         openssl-provider.pod \
          openssl-rand.pod \
          openssl-rehash.pod \
          openssl-req.pod \
@@ -90,7 +89,6 @@ DEPEND[openssl-pkeyparam.pod]=../perlvars.pm
 DEPEND[openssl-pkey.pod]=../perlvars.pm
 DEPEND[openssl-pkeyutl.pod]=../perlvars.pm
 DEPEND[openssl-prime.pod]=../perlvars.pm
-DEPEND[openssl-provider.pod]=../perlvars.pm
 DEPEND[openssl-rand.pod]=../perlvars.pm
 DEPEND[openssl-rehash.pod]=../perlvars.pm
 DEPEND[openssl-req.pod]=../perlvars.pm
@@ -145,7 +143,6 @@ GENERATE[openssl-pkeyparam.pod]=openssl-pkeyparam.pod.in
 GENERATE[openssl-pkey.pod]=openssl-pkey.pod.in
 GENERATE[openssl-pkeyutl.pod]=openssl-pkeyutl.pod.in
 GENERATE[openssl-prime.pod]=openssl-prime.pod.in
-GENERATE[openssl-provider.pod]=openssl-provider.pod.in
 GENERATE[openssl-rand.pod]=openssl-rand.pod.in
 GENERATE[openssl-rehash.pod]=openssl-rehash.pod.in
 GENERATE[openssl-req.pod]=openssl-req.pod.in

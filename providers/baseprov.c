@@ -116,8 +116,8 @@ static const OSSL_ALGORITHM *base_query(void *provctx, int operation_id,
 
 static void base_teardown(void *provctx)
 {
-    BIO_meth_free(PROV_CTX_get0_core_bio_method(provctx));
-    PROV_CTX_free(provctx);
+    BIO_meth_free(ossl_prov_ctx_get0_core_bio_method(provctx));
+    ossl_prov_ctx_free(provctx);
 }
 
 /* Functions we provide to the core */
@@ -169,15 +169,16 @@ int ossl_base_provider_init(const OSSL_CORE_HANDLE *handle,
      * This only works for built-in providers.  Most providers should
      * create their own library context.
      */
-    if ((*provctx = PROV_CTX_new()) == NULL
+    if ((*provctx = ossl_prov_ctx_new()) == NULL
             || (corebiometh = bio_prov_init_bio_method()) == NULL) {
-        PROV_CTX_free(*provctx);
+        ossl_prov_ctx_free(*provctx);
         *provctx = NULL;
         return 0;
     }
-    PROV_CTX_set0_library_context(*provctx, (OPENSSL_CTX *)c_get_libctx(handle));
-    PROV_CTX_set0_handle(*provctx, handle);
-    PROV_CTX_set0_core_bio_method(*provctx, corebiometh);
+    ossl_prov_ctx_set0_library_context(*provctx,
+                                       (OPENSSL_CTX *)c_get_libctx(handle));
+    ossl_prov_ctx_set0_handle(*provctx, handle);
+    ossl_prov_ctx_set0_core_bio_method(*provctx, corebiometh);
 
     *out = base_dispatch_table;
 

@@ -1295,7 +1295,7 @@ static const OSSL_PARAM *rsa_settable_ctx_md_params(void *vprsactx)
     return EVP_MD_settable_ctx_params(prsactx->md);
 }
 
-const OSSL_DISPATCH rsa_signature_functions[] = {
+const OSSL_DISPATCH ossl_rsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))rsa_newctx },
     { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))rsa_sign_init },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))rsa_sign },

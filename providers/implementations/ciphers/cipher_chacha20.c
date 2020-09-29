@@ -38,7 +38,7 @@ void chacha20_initctx(PROV_CHACHA20_CTX *ctx)
                            CHACHA20_BLKLEN * 8,
                            CHACHA20_IVLEN * 8,
                            0, CHACHA20_FLAGS,
-                           PROV_CIPHER_HW_chacha20(CHACHA20_KEYLEN * 8),
+                           ossl_prov_cipher_hw_chacha20(CHACHA20_KEYLEN * 8),
                            NULL);
 }
 
@@ -173,8 +173,8 @@ int chacha20_dinit(void *vctx, const unsigned char *key, size_t keylen,
     return ret;
 }
 
-/* chacha20_functions */
-const OSSL_DISPATCH chacha20_functions[] = {
+/* ossl_chacha20_functions */
+const OSSL_DISPATCH ossl_chacha20_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_freectx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_einit },

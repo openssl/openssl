@@ -136,7 +136,7 @@ static unsigned int get_parent_reseed_count(PROV_DRBG *drbg)
  * Implements the get_entropy() callback
  *
  * If the DRBG has a parent, then the required amount of entropy input
- * is fetched using the parent's PROV_DRBG_generate().
+ * is fetched using the parent's ossl_prov_drbg_generate().
  *
  * Otherwise, the entropy is polled from the system entropy sources
  * using prov_pool_acquire_entropy().
@@ -390,9 +390,9 @@ static void prov_drbg_clear_nonce(PROV_DRBG *drbg, unsigned char *nonce,
  *
  * Returns 1 on success, 0 on failure.
  */
-int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
-                          int prediction_resistance,
-                          const unsigned char *pers, size_t perslen)
+int ossl_prov_drbg_instantiate(PROV_DRBG *drbg, unsigned int strength,
+                               int prediction_resistance,
+                               const unsigned char *pers, size_t perslen)
 {
     unsigned char *nonce = NULL, *entropy = NULL;
     size_t noncelen = 0, entropylen = 0;
@@ -520,7 +520,7 @@ int PROV_DRBG_instantiate(PROV_DRBG *drbg, unsigned int strength,
  *
  * Returns 1 on success, 0 on failure.
  */
-int PROV_DRBG_uninstantiate(PROV_DRBG *drbg)
+int ossl_prov_drbg_uninstantiate(PROV_DRBG *drbg)
 {
     drbg->state = EVP_RAND_STATE_UNINITIALISED;
     return 1;
@@ -533,9 +533,9 @@ int PROV_DRBG_uninstantiate(PROV_DRBG *drbg)
  *
  * Returns 1 on success, 0 on failure.
  */
-int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
-                     const unsigned char *ent, size_t ent_len,
-                     const unsigned char *adin, size_t adinlen)
+int ossl_prov_drbg_reseed(PROV_DRBG *drbg, int prediction_resistance,
+                          const unsigned char *ent, size_t ent_len,
+                          const unsigned char *adin, size_t adinlen)
 {
     unsigned char *entropy = NULL;
     size_t entropylen = 0;
@@ -647,9 +647,9 @@ int PROV_DRBG_reseed(PROV_DRBG *drbg, int prediction_resistance,
  * Returns 1 on success, 0 on failure.
  *
  */
-int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
-                       unsigned int strength, int prediction_resistance,
-                       const unsigned char *adin, size_t adinlen)
+int ossl_prov_drbg_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
+                            unsigned int strength, int prediction_resistance,
+                            const unsigned char *adin, size_t adinlen)
 {
     int fork_id;
     int reseed_required = 0;
@@ -706,8 +706,8 @@ int PROV_DRBG_generate(PROV_DRBG *drbg, unsigned char *out, size_t outlen,
         reseed_required = 1;
 
     if (reseed_required || prediction_resistance) {
-        if (!PROV_DRBG_reseed(drbg, prediction_resistance, NULL, 0,
-                              adin, adinlen)) {
+        if (!ossl_prov_drbg_reseed(drbg, prediction_resistance, NULL, 0,
+                                   adin, adinlen)) {
             PROVerr(0, PROV_R_RESEED_ERROR);
             return 0;
         }
@@ -760,7 +760,7 @@ static int rand_drbg_restart(PROV_DRBG *drbg)
     /* repair uninitialized state */
     if (drbg->state == EVP_RAND_STATE_UNINITIALISED)
         /* reinstantiate drbg */
-        PROV_DRBG_instantiate(drbg, drbg->strength, 0, NULL, 0);
+        ossl_prov_drbg_instantiate(drbg, drbg->strength, 0, NULL, 0);
 
     rand_pool_free(drbg->seed_pool);
     drbg->seed_pool = NULL;

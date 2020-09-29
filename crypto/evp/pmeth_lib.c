@@ -402,6 +402,7 @@ void EVP_PKEY_CTX_free(EVP_PKEY_CTX *ctx)
 #if !defined(OPENSSL_NO_ENGINE) && !defined(FIPS_MODULE)
     ENGINE_finish(ctx->engine);
 #endif
+    BN_free(ctx->rsa_pubexp);
     OPENSSL_free(ctx);
 }
 

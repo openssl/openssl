@@ -3426,6 +3426,7 @@ int speed_main(int argc, char **argv)
             }
 
             EVP_PKEY_free(ed_pkey);
+            ed_pkey = NULL;
         }
         if (st == 0) {
             BIO_printf(bio_err, "EdDSA failure.\n");

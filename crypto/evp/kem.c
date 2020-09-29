@@ -349,11 +349,32 @@ void EVP_KEM_do_all_provided(OPENSSL_CTX *libctx,
                        (void (*)(void *))EVP_KEM_free);
 }
 
-
 void EVP_KEM_names_do_all(const EVP_KEM *kem,
                           void (*fn)(const char *name, void *data),
                           void *data)
 {
     if (kem->prov != NULL)
         evp_names_do_all(kem->prov, kem->name_id, fn, data);
+}
+
+const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem)
+{
+    void *provctx;
+
+    if (kem == NULL || kem->gettable_ctx_params == NULL)
+        return NULL;
+
+    provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
+    return kem->gettable_ctx_params(provctx);
+}
+
+const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem)
+{
+    void *provctx;
+
+    if (kem == NULL || kem->settable_ctx_params == NULL)
+        return NULL;
+
+    provctx = ossl_provider_ctx(EVP_KEM_provider(kem));
+    return kem->settable_ctx_params(provctx);
 }

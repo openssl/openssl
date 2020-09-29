@@ -37,7 +37,7 @@ static const PROV_CIPHER_HW aria_##mode = {                                    \
     cipher_hw_chunked_##mode,                                                  \
     cipher_hw_aria_copyctx                                                     \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_aria_##mode(size_t keybits)               \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aria_##mode(size_t keybits)          \
 {                                                                              \
     return &aria_##mode;                                                       \
 }

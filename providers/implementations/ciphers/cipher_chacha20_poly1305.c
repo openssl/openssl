@@ -56,9 +56,9 @@ static void *chacha20_poly1305_newctx(void *provctx)
                                CHACHA20_POLY1305_IVLEN * 8,
                                CHACHA20_POLY1305_MODE,
                                CHACHA20_POLY1305_FLAGS,
-                               PROV_CIPHER_HW_chacha20_poly1305(
+                               ossl_prov_cipher_hw_chacha20_poly1305(
                                    CHACHA20_POLY1305_KEYLEN * 8),
-                               NULL);
+                                   NULL);
         ctx->nonce_len = CHACHA20_POLY1305_IVLEN;
         ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
         chacha20_initctx(&ctx->chacha);
@@ -308,8 +308,8 @@ static int chacha20_poly1305_final(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-/* chacha20_poly1305_functions */
-const OSSL_DISPATCH chacha20_poly1305_functions[] = {
+/* ossl_chacha20_ossl_poly1305_functions */
+const OSSL_DISPATCH ossl_chacha20_ossl_poly1305_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))chacha20_poly1305_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))chacha20_poly1305_freectx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))chacha20_poly1305_einit },

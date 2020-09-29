@@ -18,8 +18,8 @@ typedef struct prov_cast_ctx_st {
     } ks;
 } PROV_SM4_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_ctr(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_ofb128(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_sm4_cfb128(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_cbc(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_ecb(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_ctr(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_ofb128(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_cfb128(size_t keybits);

@@ -19,10 +19,10 @@ typedef struct prov_rc2_ctx_st {
     size_t key_bits;
 } PROV_RC2_CTX;
 
-#define PROV_CIPHER_HW_rc2_ofb128 PROV_CIPHER_HW_rc2_ofb64
-#define PROV_CIPHER_HW_rc2_cfb128 PROV_CIPHER_HW_rc2_cfb64
+#define ossl_prov_cipher_hw_rc2_ofb128 ossl_prov_cipher_hw_rc2_ofb64
+#define ossl_prov_cipher_hw_rc2_cfb128 ossl_prov_cipher_hw_rc2_cfb64
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc2_cbc(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc2_ecb(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc2_ofb64(size_t keybits);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc2_cfb64(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc2_cbc(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc2_ecb(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc2_ofb64(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc2_cfb64(size_t keybits);

@@ -563,7 +563,7 @@ static const OSSL_PARAM *rsa_settable_ctx_params(ossl_unused void *provctx)
     return known_settable_ctx_params;
 }
 
-const OSSL_DISPATCH rsa_asym_cipher_functions[] = {
+const OSSL_DISPATCH ossl_rsa_asym_cipher_functions[] = {
     { OSSL_FUNC_ASYM_CIPHER_NEWCTX, (void (*)(void))rsa_newctx },
     { OSSL_FUNC_ASYM_CIPHER_ENCRYPT_INIT, (void (*)(void))rsa_encrypt_init },
     { OSSL_FUNC_ASYM_CIPHER_ENCRYPT, (void (*)(void))rsa_encrypt },

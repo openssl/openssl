@@ -18,4 +18,4 @@ typedef struct prov_rc4_ctx_st {
     } ks;
 } PROV_RC4_CTX;
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_rc4(size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rc4(size_t keybits);

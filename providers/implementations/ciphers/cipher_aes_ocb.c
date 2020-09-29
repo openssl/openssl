@@ -308,7 +308,7 @@ static void *aes_ocb_newctx(void *provctx, size_t kbits, size_t blkbits,
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
         cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags,
-                               PROV_CIPHER_HW_aes_ocb(kbits), NULL);
+                               ossl_prov_cipher_hw_aes_ocb(kbits), NULL);
         ctx->taglen = OCB_DEFAULT_TAG_LEN;
     }
     return ctx;
@@ -518,7 +518,7 @@ static void *aes_##kbits##_##mode##_newctx(void *provctx)                      \
     return aes_##mode##_newctx(provctx, kbits, blkbits, ivbits,                \
                                EVP_CIPH_##UCMODE##_MODE, flags);               \
 }                                                                              \
-const OSSL_DISPATCH aes##kbits##mode##_functions[] = {                         \
+const OSSL_DISPATCH ossl_##aes##kbits##mode##_functions[] = {                  \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
         (void (*)(void))aes_##kbits##_##mode##_newctx },                       \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_##mode##_einit },     \

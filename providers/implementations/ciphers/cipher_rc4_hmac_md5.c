@@ -58,7 +58,7 @@ static void *rc4_hmac_md5_newctx(void *provctx)
                                RC4_HMAC_MD5_BLOCK_BITS,
                                RC4_HMAC_MD5_IV_BITS,
                                RC4_HMAC_MD5_MODE, RC4_HMAC_MD5_FLAGS,
-                               PROV_CIPHER_HW_rc4_hmac_md5(RC4_HMAC_MD5_KEY_BITS),
+                               ossl_prov_cipher_hw_rc4_hmac_md5(RC4_HMAC_MD5_KEY_BITS),
                                NULL);
      return ctx;
 }
@@ -180,7 +180,7 @@ static int rc4_hmac_md5_get_params(OSSL_PARAM params[])
                                      RC4_HMAC_MD5_IV_BITS);
 }
 
-const OSSL_DISPATCH rc4_hmac_md5_functions[] = {
+const OSSL_DISPATCH ossl_rc4_hmac_ossl_md5_functions[] = {
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))rc4_hmac_md5_newctx },
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))rc4_hmac_md5_freectx },
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))rc4_hmac_md5_einit },

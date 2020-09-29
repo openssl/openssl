@@ -224,7 +224,7 @@ static int gmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
-const OSSL_DISPATCH gmac_functions[] = {
+const OSSL_DISPATCH ossl_gmac_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))gmac_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))gmac_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))gmac_free },

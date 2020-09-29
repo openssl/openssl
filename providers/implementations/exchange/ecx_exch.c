@@ -219,7 +219,7 @@ static void *ecx_dupctx(void *vecxctx)
     return dstctx;
 }
 
-const OSSL_DISPATCH x25519_keyexch_functions[] = {
+const OSSL_DISPATCH ossl_x25519_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x25519_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))ecx_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },
@@ -229,7 +229,7 @@ const OSSL_DISPATCH x25519_keyexch_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH x448_keyexch_functions[] = {
+const OSSL_DISPATCH ossl_x448_keyexch_functions[] = {
     { OSSL_FUNC_KEYEXCH_NEWCTX, (void (*)(void))x448_newctx },
     { OSSL_FUNC_KEYEXCH_INIT, (void (*)(void))ecx_init },
     { OSSL_FUNC_KEYEXCH_DERIVE, (void (*)(void))ecx_derive },

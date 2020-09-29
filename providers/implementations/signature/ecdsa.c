@@ -504,7 +504,7 @@ static const OSSL_PARAM *ecdsa_settable_ctx_md_params(void *vctx)
     return EVP_MD_settable_ctx_params(ctx->md);
 }
 
-const OSSL_DISPATCH ecdsa_signature_functions[] = {
+const OSSL_DISPATCH ecossl_dsa_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))ecdsa_newctx },
     { OSSL_FUNC_SIGNATURE_SIGN_INIT, (void (*)(void))ecdsa_sign_init },
     { OSSL_FUNC_SIGNATURE_SIGN, (void (*)(void))ecdsa_sign },

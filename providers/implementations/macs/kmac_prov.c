@@ -524,7 +524,7 @@ static int kmac_bytepad_encode_key(unsigned char *out, int *out_len,
     return bytepad(out, out_len, tmp, tmp_len, NULL, 0, w);
 }
 
-const OSSL_DISPATCH kmac128_functions[] = {
+const OSSL_DISPATCH ossl_kmac128_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))kmac128_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))kmac_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))kmac_free },
@@ -540,7 +540,7 @@ const OSSL_DISPATCH kmac128_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH kmac256_functions[] = {
+const OSSL_DISPATCH ossl_kmac256_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))kmac256_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))kmac_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))kmac_free },

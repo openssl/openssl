@@ -67,11 +67,11 @@ static void * alg##_##kbits##_newctx(void *provctx)                            \
      ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits, 0, flags,         \
-                                PROV_CIPHER_HW_##alg(kbits), NULL);            \
+                                ossl_prov_cipher_hw_##alg(kbits), NULL);       \
      }                                                                         \
      return ctx;                                                               \
 }                                                                              \
-const OSSL_DISPATCH alg##kbits##_functions[] = {                               \
+const OSSL_DISPATCH ossl_##alg##kbits##_functions[] = {                        \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_newctx },                               \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
@@ -96,7 +96,7 @@ const OSSL_DISPATCH alg##kbits##_functions[] = {                               \
     { 0, NULL }                                                                \
 };
 
-/* rc440_functions */
+/* ossl_rc440_functions */
 IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 40, 8, 0, stream)
-/* rc4128_functions */
+/* ossl_rc4128_functions */
 IMPLEMENT_cipher(rc4, RC4, EVP_CIPH_VARIABLE_LENGTH, 128, 8, 0, stream)

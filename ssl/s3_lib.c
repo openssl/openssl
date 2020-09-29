@@ -4132,8 +4132,7 @@ const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname)
             if (tbl->stdname == NULL)
                 continue;
             if (strcmp(stdname, tbl->stdname) == 0) {
-                c = tbl;
-                break;
+                return tbl;
             }
         }
     }

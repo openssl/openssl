@@ -31,7 +31,7 @@ static const PROV_GCM_HW aesni_gcm = {
     gcm_one_shot
 };
 
-const PROV_GCM_HW *PROV_AES_HW_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
     return AESNI_CAPABLE ? &aesni_gcm : &aes_gcm;
 }

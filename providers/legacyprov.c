@@ -71,77 +71,77 @@ static int legacy_get_params(void *provctx, OSSL_PARAM params[])
 
 static const OSSL_ALGORITHM legacy_digests[] = {
 #ifndef OPENSSL_NO_MD2
-    ALG("MD2", md2_functions),
+    ALG("MD2", ossl_md2_functions),
 #endif
 #ifndef OPENSSL_NO_MD4
-    ALG("MD4", md4_functions),
+    ALG("MD4", ossl_md4_functions),
 #endif
 #ifndef OPENSSL_NO_MDC2
-    ALG("MDC2", mdc2_functions),
+    ALG("MDC2", ossl_mdc2_functions),
 #endif /* OPENSSL_NO_MDC2 */
 #ifndef OPENSSL_NO_WHIRLPOOL
-    ALG("WHIRLPOOL", wp_functions),
+    ALG("WHIRLPOOL", ossl_wp_functions),
 #endif /* OPENSSL_NO_WHIRLPOOL */
 #ifndef OPENSSL_NO_RMD160
-    ALG("RIPEMD-160:RIPEMD160:RIPEMD:RMD160", ripemd160_functions),
+    ALG("RIPEMD-160:RIPEMD160:RIPEMD:RMD160", ossl_ripemd160_functions),
 #endif /* OPENSSL_NO_RMD160 */
     { NULL, NULL, NULL }
 };
 
 static const OSSL_ALGORITHM legacy_ciphers[] = {
 #ifndef OPENSSL_NO_CAST
-    ALG("CAST5-ECB", cast5128ecb_functions),
-    ALG("CAST5-CBC:CAST-CBC:CAST", cast5128cbc_functions),
-    ALG("CAST5-OFB", cast5128ofb64_functions),
-    ALG("CAST5-CFB", cast5128cfb64_functions),
+    ALG("CAST5-ECB", ossl_cast5128ecb_functions),
+    ALG("CAST5-CBC:CAST-CBC:CAST", ossl_cast5128cbc_functions),
+    ALG("CAST5-OFB", ossl_cast5128ofb64_functions),
+    ALG("CAST5-CFB", ossl_cast5128cfb64_functions),
 #endif /* OPENSSL_NO_CAST */
 #ifndef OPENSSL_NO_BF
-    ALG("BF-ECB", blowfish128ecb_functions),
-    ALG("BF-CBC:BF:BLOWFISH", blowfish128cbc_functions),
-    ALG("BF-OFB", blowfish64ofb64_functions),
-    ALG("BF-CFB", blowfish64cfb64_functions),
+    ALG("BF-ECB", ossl_blowfish128ecb_functions),
+    ALG("BF-CBC:BF:BLOWFISH", ossl_blowfish128cbc_functions),
+    ALG("BF-OFB", ossl_blowfish64ofb64_functions),
+    ALG("BF-CFB", ossl_blowfish64cfb64_functions),
 #endif /* OPENSSL_NO_BF */
 #ifndef OPENSSL_NO_IDEA
-    ALG("IDEA-ECB", idea128ecb_functions),
-    ALG("IDEA-CBC:IDEA", idea128cbc_functions),
-    ALG("IDEA-OFB:IDEA-OFB64", idea128ofb64_functions),
-    ALG("IDEA-CFB:IDEA-CFB64", idea128cfb64_functions),
+    ALG("IDEA-ECB", ossl_idea128ecb_functions),
+    ALG("IDEA-CBC:IDEA", ossl_idea128cbc_functions),
+    ALG("IDEA-OFB:IDEA-OFB64", ossl_idea128ofb64_functions),
+    ALG("IDEA-CFB:IDEA-CFB64", ossl_idea128cfb64_functions),
 #endif /* OPENSSL_NO_IDEA */
 #ifndef OPENSSL_NO_SEED
-    ALG("SEED-ECB", seed128ecb_functions),
-    ALG("SEED-CBC:SEED", seed128cbc_functions),
-    ALG("SEED-OFB:SEED-OFB128", seed128ofb128_functions),
-    ALG("SEED-CFB:SEED-CFB128", seed128cfb128_functions),
+    ALG("SEED-ECB", ossl_seed128ecb_functions),
+    ALG("SEED-CBC:SEED", ossl_seed128cbc_functions),
+    ALG("SEED-OFB:SEED-OFB128", ossl_seed128ofb128_functions),
+    ALG("SEED-CFB:SEED-CFB128", ossl_seed128cfb128_functions),
 #endif /* OPENSSL_NO_SEED */
 #ifndef OPENSSL_NO_RC2
-    ALG("RC2-ECB", rc2128ecb_functions),
-    ALG("RC2-CBC:RC2:RC2-128", rc2128cbc_functions),
-    ALG("RC2-40-CBC:RC2-40", rc240cbc_functions),
-    ALG("RC2-64-CBC:RC2-64", rc264cbc_functions),
-    ALG("RC2-CFB", rc2128cfb128_functions),
-    ALG("RC2-OFB", rc2128ofb128_functions),
+    ALG("RC2-ECB", ossl_rc2128ecb_functions),
+    ALG("RC2-CBC:RC2:RC2-128", ossl_rc2128cbc_functions),
+    ALG("RC2-40-CBC:RC2-40", ossl_rc240cbc_functions),
+    ALG("RC2-64-CBC:RC2-64", ossl_rc264cbc_functions),
+    ALG("RC2-CFB", ossl_rc2128cfb128_functions),
+    ALG("RC2-OFB", ossl_rc2128ofb128_functions),
 #endif /* OPENSSL_NO_RC2 */
 #ifndef OPENSSL_NO_RC4
-    ALG("RC4", rc4128_functions),
-    ALG("RC4-40", rc440_functions),
+    ALG("RC4", ossl_rc4128_functions),
+    ALG("RC4-40", ossl_rc440_functions),
 # ifndef OPENSSL_NO_MD5
-    ALG("RC4-HMAC-MD5", rc4_hmac_md5_functions),
+    ALG("RC4-HMAC-MD5", ossl_rc4_hmac_ossl_md5_functions),
 # endif /* OPENSSL_NO_MD5 */
 #endif /* OPENSSL_NO_RC4 */
 #ifndef OPENSSL_NO_RC5
-    ALG("RC5-ECB", rc5128ecb_functions),
-    ALG("RC5-CBC:RC5", rc5128cbc_functions),
-    ALG("RC5-OFB", rc5128ofb64_functions),
-    ALG("RC5-CFB", rc5128cfb64_functions),
+    ALG("RC5-ECB", ossl_rc5128ecb_functions),
+    ALG("RC5-CBC:RC5", ossl_rc5128cbc_functions),
+    ALG("RC5-OFB", ossl_rc5128ofb64_functions),
+    ALG("RC5-CFB", ossl_rc5128cfb64_functions),
 #endif /* OPENSSL_NO_RC5 */
 #ifndef OPENSSL_NO_DES
-    ALG("DESX-CBC:DESX", tdes_desx_cbc_functions),
-    ALG("DES-ECB", des_ecb_functions),
-    ALG("DES-CBC:DES", des_cbc_functions),
-    ALG("DES-OFB", des_ofb64_functions),
-    ALG("DES-CFB", des_cfb64_functions),
-    ALG("DES-CFB1", des_cfb1_functions),
-    ALG("DES-CFB8", des_cfb8_functions),
+    ALG("DESX-CBC:DESX", ossl_tdes_desx_cbc_functions),
+    ALG("DES-ECB", ossl_des_ecb_functions),
+    ALG("DES-CBC:DES", ossl_des_cbc_functions),
+    ALG("DES-OFB", ossl_des_ofb64_functions),
+    ALG("DES-CFB", ossl_des_cfb64_functions),
+    ALG("DES-CFB1", ossl_des_cfb1_functions),
+    ALG("DES-CFB8", ossl_des_cfb8_functions),
 #endif /* OPENSSL_NO_DES */
     { NULL, NULL, NULL }
 };
@@ -162,7 +162,7 @@ static const OSSL_ALGORITHM *legacy_query(void *provctx, int operation_id,
 static void legacy_teardown(void *provctx)
 {
     OPENSSL_CTX_free(PROV_LIBRARY_CONTEXT_OF(provctx));
-    PROV_CTX_free(provctx);
+    ossl_prov_ctx_free(provctx);
 }
 
 /* Functions we provide to the core */
@@ -202,15 +202,15 @@ int OSSL_provider_init(const OSSL_CORE_HANDLE *handle,
     if (c_get_libctx == NULL)
         return 0;
 
-    if ((*provctx = PROV_CTX_new()) == NULL
+    if ((*provctx = ossl_prov_ctx_new()) == NULL
         || (libctx = OPENSSL_CTX_new()) == NULL) {
         OPENSSL_CTX_free(libctx);
         legacy_teardown(*provctx);
         *provctx = NULL;
         return 0;
     }
-    PROV_CTX_set0_library_context(*provctx, libctx);
-    PROV_CTX_set0_handle(*provctx, handle);
+    ossl_prov_ctx_set0_library_context(*provctx, libctx);
+    ossl_prov_ctx_set0_handle(*provctx, handle);
 
     *out = legacy_dispatch_table;
 

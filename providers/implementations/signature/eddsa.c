@@ -261,7 +261,7 @@ static const OSSL_PARAM *eddsa_gettable_ctx_params(ossl_unused void *provctx)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH ed25519_signature_functions[] = {
+const OSSL_DISPATCH ossl_ed25519_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
       (void (*)(void))eddsa_digest_signverify_init },
@@ -279,7 +279,7 @@ const OSSL_DISPATCH ed25519_signature_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH ed448_signature_functions[] = {
+const OSSL_DISPATCH ossl_ed448_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))eddsa_newctx },
     { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT,
       (void (*)(void))eddsa_digest_signverify_init },
