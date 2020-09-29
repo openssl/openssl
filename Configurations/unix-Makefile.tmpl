@@ -733,9 +733,6 @@ uninstall_engines:
 	@set -e; for e in dummy $(INSTALL_ENGINES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
-		if [ "$$fn" = '{- platform->dso("ossltest") -}' ]; then \
-			continue; \
-		fi; \
 		$(ECHO) "$(RM) $(DESTDIR)$(ENGINESDIR)/$$fn"; \
 		$(RM) $(DESTDIR)$(ENGINESDIR)/$$fn; \
 	done
@@ -760,9 +757,6 @@ uninstall_modules:
 	@set -e; for e in dummy $(INSTALL_MODULES); do \
 		if [ "$$e" = "dummy" ]; then continue; fi; \
 		fn=`basename $$e`; \
-		if [ "$$fn" = '{- platform->dso("ossltest") -}' ]; then \
-			continue; \
-		fi; \
 		$(ECHO) "$(RM) $(DESTDIR)$(MODULESDIR)/$$fn"; \
 		$(RM) $(DESTDIR)$(MODULESDIR)/$$fn; \
 	done
