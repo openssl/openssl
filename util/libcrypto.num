@@ -4984,7 +4984,8 @@ OSSL_CMP_MSG_read                       ?	3_0_0	EXIST::FUNCTION:CMP
 OSSL_CMP_MSG_write                      ?	3_0_0	EXIST::FUNCTION:CMP
 EVP_PKEY_gen                            ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_CTX_set_rsa_keygen_bits        ?	3_0_0	EXIST::FUNCTION:RSA
-EVP_PKEY_CTX_set_rsa_keygen_pubexp      ?	3_0_0	EXIST::FUNCTION:RSA
+EVP_PKEY_CTX_set_rsa_keygen_pubexp      ?	3_0_0	EXIST::FUNCTION:DEPRECATEDIN_3_0,RSA
+EVP_PKEY_CTX_set1_rsa_keygen_pubexp     ?	3_0_0	EXIST::FUNCTION:RSA
 EVP_PKEY_CTX_set_rsa_keygen_primes      ?	3_0_0	EXIST::FUNCTION:RSA
 NCONF_new_with_libctx                   ?	3_0_0	EXIST::FUNCTION:
 CONF_modules_load_file_with_libctx      ?	3_0_0	EXIST::FUNCTION:
@@ -5302,3 +5303,7 @@ OSSL_ENCODER_CTX_set_cleanup            ?	3_0_0	EXIST::FUNCTION:
 OSSL_ENCODER_CTX_set_passphrase_cb      ?	3_0_0	EXIST::FUNCTION:
 EVP_PKEY_typenames_do_all               ?	3_0_0	EXIST::FUNCTION:
 OSSL_DECODER_INSTANCE_get_input_type    ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_gettable_ctx_params     ?	3_0_0	EXIST::FUNCTION:
+EVP_ASYM_CIPHER_settable_ctx_params     ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_gettable_ctx_params             ?	3_0_0	EXIST::FUNCTION:
+EVP_KEM_settable_ctx_params             ?	3_0_0	EXIST::FUNCTION:

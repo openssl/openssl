@@ -225,7 +225,7 @@ MAC_SETTABLE_CTX_PARAMS(poly1305, "POLY1305")
 MAC_SETTABLE_CTX_PARAMS(cmac, "CMAC")
 
 #define MAC_SIGNATURE_FUNCTIONS(funcname) \
-    const OSSL_DISPATCH mac_legacy_##funcname##_signature_functions[] = { \
+    const OSSL_DISPATCH ossl_mac_legacy_##funcname##_signature_functions[] = { \
         { OSSL_FUNC_SIGNATURE_NEWCTX, (void (*)(void))mac_##funcname##_newctx }, \
         { OSSL_FUNC_SIGNATURE_DIGEST_SIGN_INIT, \
         (void (*)(void))mac_digest_sign_init }, \

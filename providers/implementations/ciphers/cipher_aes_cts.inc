@@ -73,7 +73,7 @@ static int alg##_cts_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])      \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-const OSSL_DISPATCH alg##kbits##lcmode##_cts_functions[] = {                   \
+const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_cts_functions[] = {            \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
@@ -100,9 +100,9 @@ const OSSL_DISPATCH alg##kbits##lcmode##_cts_functions[] = {                   \
     { 0, NULL }                                                                \
 };
 
-/* aes256cbc_cts_functions */
+/* ossl_aes256cbc_cts_functions */
 IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, EVP_CIPH_FLAG_CTS, 256, 128, 128, block)
-/* aes192cbc_cts_functions */
+/* ossl_aes192cbc_cts_functions */
 IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, EVP_CIPH_FLAG_CTS, 192, 128, 128, block)
-/* aes128cbc_cts_functions */
+/* ossl_aes128cbc_cts_functions */
 IMPLEMENT_cts_cipher(aes, AES, cbc, CBC, EVP_CIPH_FLAG_CTS, 128, 128, 128, block)

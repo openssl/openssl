@@ -26,7 +26,8 @@ static int ocsp_req_find_signer(X509 **psigner, OCSP_REQUEST *req,
                                 unsigned long flags);
 
 /* Returns 1 on success, 0 on failure, or -1 on fatal error */
-static int ocsp_verify_signer(X509 *signer, X509_STORE *st, unsigned long flags,
+static int ocsp_verify_signer(X509 *signer, int response,
+                              X509_STORE *st, unsigned long flags,
                               STACK_OF(X509) *untrusted, STACK_OF(X509) **chain)
 {
     X509_STORE_CTX *ctx = X509_STORE_CTX_new();
@@ -41,9 +42,17 @@ static int ocsp_verify_signer(X509 *signer, X509_STORE *st, unsigned long flags,
         OCSPerr(0, ERR_R_X509_LIB);
         goto end;
     }
-    if ((flags & OCSP_PARTIAL_CHAIN) != 0
-            && (vp = X509_STORE_CTX_get0_param(ctx)) != NULL)
+    if ((vp = X509_STORE_CTX_get0_param(ctx)) == NULL)
+        goto end;
+    if ((flags & OCSP_PARTIAL_CHAIN) != 0)
         X509_VERIFY_PARAM_set_flags(vp, X509_V_FLAG_PARTIAL_CHAIN);
+    if (response
+            && X509_get_ext_by_NID(signer, NID_id_pkix_OCSP_noCheck, -1) >= 0)
+        /*
+         * Locally disable revocation status checking for OCSP responder cert.
+         * Done here for CRLs; TODO should be done also for OCSP-based checks.
+         */
+        X509_VERIFY_PARAM_clear_flags(vp, X509_V_FLAG_CRL_CHECK);
     X509_STORE_CTX_set_purpose(ctx, X509_PURPOSE_OCSP_HELPER);
     X509_STORE_CTX_set_trust(ctx, X509_TRUST_OCSP_REQUEST);
     /* TODO: why is X509_TRUST_OCSP_REQUEST set? Seems to get ignored. */
@@ -117,7 +126,7 @@ int OCSP_basic_verify(OCSP_BASICRESP *bs, STACK_OF(X509) *certs,
         } else {
             untrusted = bs->certs;
         }
-        ret = ocsp_verify_signer(signer, st, flags, untrusted, &chain);
+        ret = ocsp_verify_signer(signer, 1, st, flags, untrusted, &chain);
         if (ret <= 0)
             goto end;
         if ((flags & OCSP_NOCHECKS) != 0) {
@@ -390,7 +399,7 @@ int OCSP_request_verify(OCSP_REQUEST *req, STACK_OF(X509) *certs,
         return 0; /* not returning 'ret' here for backward compatibility*/
     if ((flags & OCSP_NOVERIFY) != 0)
         return 1;
-    return ocsp_verify_signer(signer, store, flags,
+    return ocsp_verify_signer(signer, 0, store, flags,
                               (flags & OCSP_NOCHAIN) != 0 ?
                               NULL : req->optionalSignature->certs, NULL) > 0;
     /* using '> 0' here to avoid breaking backward compatibility returning -1 */

@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2019-2020 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -115,7 +116,7 @@ static void *aes_xts_newctx(void *provctx, unsigned int mode, uint64_t flags,
 
     if (ctx != NULL) {
         cipher_generic_initkey(&ctx->base, kbits, blkbits, ivbits, mode, flags,
-                               PROV_CIPHER_HW_aes_xts(kbits), NULL);
+                               ossl_prov_cipher_hw_aes_xts(kbits), NULL);
     }
     return ctx;
 }
@@ -265,7 +266,7 @@ static void *aes_##kbits##_xts_newctx(void *provctx)                           \
     return aes_xts_newctx(provctx, EVP_CIPH_##UCMODE##_MODE, flags, 2 * kbits, \
                           AES_XTS_BLOCK_BITS, AES_XTS_IV_BITS);                \
 }                                                                              \
-const OSSL_DISPATCH aes##kbits##xts_functions[] = {                            \
+const OSSL_DISPATCH ossl_aes##kbits##xts_functions[] = {                       \
     { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))aes_##kbits##_xts_newctx },     \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))aes_xts_einit },          \
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))aes_xts_dinit },          \

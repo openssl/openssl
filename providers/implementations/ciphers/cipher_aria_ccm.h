@@ -19,4 +19,4 @@ typedef struct prov_aria_ccm_ctx_st {
     } ks;                       /* ARIA key schedule to use */
 } PROV_ARIA_CCM_CTX;
 
-const PROV_CCM_HW *PROV_ARIA_HW_ccm(size_t keylen);
+const PROV_CCM_HW *ossl_prov_aria_hw_ccm(size_t keylen);

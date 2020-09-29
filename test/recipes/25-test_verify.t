@@ -27,7 +27,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 148;
+plan tests => 151;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -44,6 +44,15 @@ ok(!verify("ee-cert", "sslserver", [qw(root-cert2)], [qw(ca-cert)]),
    "fail wrong root key");
 ok(!verify("ee-cert", "sslserver", [qw(root-name2)], [qw(ca-cert)]),
    "fail wrong root DN");
+
+# Critical extensions
+
+ok(verify("ee-cert-noncrit-unknown-ext", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept non-critical unknown extension");
+ok(!verify("ee-cert-crit-unknown-ext", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "reject critical unknown extension");
+ok(verify("ee-cert-ocsp-nocheck", "sslserver", [qw(root-cert)], [qw(ca-cert)]),
+   "accept critical OCSP No Check");
 
 # Explicit trust/purpose combinations
 #

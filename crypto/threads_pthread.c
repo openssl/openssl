@@ -195,8 +195,6 @@ int CRYPTO_atomic_add(int *val, int amount, int *ret, CRYPTO_RWLOCK *lock)
 }
 
 # ifndef FIPS_MODULE
-/* TODO(3.0): No fork protection in FIPS module yet! */
-
 #  ifdef OPENSSL_SYS_UNIX
 static pthread_once_t fork_once_control = PTHREAD_ONCE_INIT;
 

@@ -315,7 +315,10 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
     if (!EVP_RAND_set_ctx_params(test, drbg_params))
         goto err;
 
-    /* This calls PROV_DRBG_reseed() internally when prediction_resistance = 1 */
+    /*
+     * This calls ossl_prov_drbg_reseed() internally when
+     * prediction_resistance = 1
+     */
     if (!EVP_RAND_generate(drbg, out, t->expectedlen, strength,
                            prediction_resistance,
                            t->entropyaddin2, t->entropyaddin2len))
@@ -329,7 +332,8 @@ static int self_test_drbg(const ST_KAT_DRBG *t, OSSL_SELF_TEST *st,
     if (!EVP_RAND_uninstantiate(drbg))
         goto err;
     /*
-     * Check that the DRBG data has been zeroized after PROV_DRBG_uninstantiate.
+     * Check that the DRBG data has been zeroized after
+     * ossl_prov_drbg_uninstantiate.
      */
     if (!EVP_RAND_verify_zeroization(drbg))
         goto err;

@@ -29,7 +29,7 @@ static void *aes_ccm_newctx(void *provctx, size_t keybits)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        ccm_initctx(&ctx->base, keybits, PROV_AES_HW_ccm(keybits));
+        ccm_initctx(&ctx->base, keybits, ossl_prov_aes_hw_ccm(keybits));
     return ctx;
 }
 
@@ -41,9 +41,9 @@ static void aes_ccm_freectx(void *vctx)
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
-/* aes128ccm_functions */
+/* ossl_aes128ccm_functions */
 IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 128, 8, 96);
-/* aes192ccm_functions */
+/* ossl_aes192ccm_functions */
 IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 192, 8, 96);
-/* aes256ccm_functions */
+/* ossl_aes256ccm_functions */
 IMPLEMENT_aead_cipher(aes, ccm, CCM, AEAD_FLAGS, 256, 8, 96);

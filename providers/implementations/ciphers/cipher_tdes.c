@@ -23,7 +23,7 @@
  * TODO(3.0) - ECB mode does not use an IV - but existing test code is setting
  * an IV. Fixing this could potentially make applications break.
  */
-/* tdes_ede3_ecb_functions */
+/* ossl_tdes_ede3_ecb_functions */
 IMPLEMENT_tdes_cipher(ede3, EDE3, ecb, ECB, TDES_FLAGS, 64*3, 64, 64, block);
-/* tdes_ede3_cbc_functions */
+/* ossl_tdes_ede3_cbc_functions */
 IMPLEMENT_tdes_cipher(ede3, EDE3, cbc, CBC, TDES_FLAGS, 64*3, 64, 64, block);

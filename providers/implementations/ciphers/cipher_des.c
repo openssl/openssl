@@ -157,7 +157,7 @@ static int des_##lcmode##_get_params(OSSL_PARAM params[])                      \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-const OSSL_DISPATCH des_##lcmode##_functions[] = {                             \
+const OSSL_DISPATCH ossl_##des_##lcmode##_functions[] = {                      \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))des_einit },              \
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))des_dinit },              \
     { OSSL_FUNC_CIPHER_UPDATE,                                                 \
@@ -182,15 +182,15 @@ const OSSL_DISPATCH des_##lcmode##_functions[] = {                             \
     { 0, NULL }                                                                \
 }
 
-/* des_ecb_functions */
+/* ossl_des_ecb_functions */
 IMPLEMENT_des_cipher(des, ecb, ECB, DES_FLAGS, 64, 64, 0, block);
-/* des_cbc_functions */
+/* ossl_des_cbc_functions */
 IMPLEMENT_des_cipher(des, cbc, CBC, DES_FLAGS, 64, 64, 64, block);
-/* des_ofb64_functions */
+/* ossl_des_ofb64_functions */
 IMPLEMENT_des_cipher(des, ofb64, OFB, DES_FLAGS, 64, 8, 64, stream);
-/* des_cfb64_functions */
+/* ossl_des_cfb64_functions */
 IMPLEMENT_des_cipher(des, cfb64, CFB, DES_FLAGS, 64, 8, 64, stream);
-/* des_cfb1_functions */
+/* ossl_des_cfb1_functions */
 IMPLEMENT_des_cipher(des, cfb1, CFB, DES_FLAGS, 64, 8, 64, stream);
-/* des_cfb8_functions */
+/* ossl_des_cfb8_functions */
 IMPLEMENT_des_cipher(des, cfb8, CFB, DES_FLAGS, 64, 8, 64, stream);

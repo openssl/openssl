@@ -175,7 +175,7 @@ static OSSL_FUNC_cipher_newctx_fn tdes_wrap_newctx;                            \
 static void *tdes_wrap_newctx(void *provctx)                                   \
 {                                                                              \
     return tdes_newctx(provctx, EVP_CIPH_WRAP_MODE, kbits, blkbits, ivbits,    \
-                       flags, PROV_CIPHER_HW_tdes_wrap_cbc());                 \
+                       flags, ossl_prov_cipher_hw_tdes_wrap_cbc());            \
 }                                                                              \
 static OSSL_FUNC_cipher_get_params_fn tdes_wrap_get_params;                    \
 static int tdes_wrap_get_params(OSSL_PARAM params[])                           \
@@ -183,7 +183,7 @@ static int tdes_wrap_get_params(OSSL_PARAM params[])                           \
     return cipher_generic_get_params(params, EVP_CIPH_WRAP_MODE, flags,        \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-const OSSL_DISPATCH tdes_wrap_cbc_functions[] =                                \
+const OSSL_DISPATCH ossl_tdes_wrap_cbc_functions[] =                           \
 {                                                                              \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void)) tdes_einit },            \
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void)) tdes_dinit },            \
@@ -205,5 +205,5 @@ const OSSL_DISPATCH tdes_wrap_cbc_functions[] =                                \
     { 0, NULL }                                                                \
 }
 
-/* tdes_wrap_cbc_functions */
+/* ossl_tdes_wrap_cbc_functions */
 IMPLEMENT_WRAP_CIPHER(TDES_WRAP_FLAGS, 64*3, 64, 0);

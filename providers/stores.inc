@@ -11,4 +11,4 @@
 # error Macro STORE undefined
 #endif
 
-STORE("file", "yes", file_store_functions)
+STORE("file", "yes", ossl_file_store_functions)

@@ -371,11 +371,6 @@ static int sskdf_derive(void *vctx, unsigned char *key, size_t keylen)
         int default_salt_len;
         EVP_MAC *mac = EVP_MAC_CTX_mac(ctx->macctx);
 
-        /*
-         * TODO(3.0) investigate the necessity to have all these controls.
-         * Why does KMAC require a salt length that's shorter than the MD
-         * block size?
-         */
         if (EVP_MAC_is_a(mac, OSSL_MAC_NAME_HMAC)) {
             /* H(x) = HMAC(x, salt, hash) */
             if (md == NULL) {
@@ -524,7 +519,7 @@ static const OSSL_PARAM *sskdf_gettable_ctx_params(ossl_unused void *provctx)
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_sskdf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_sskdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))sskdf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))sskdf_reset },
@@ -538,7 +533,7 @@ const OSSL_DISPATCH kdf_sskdf_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_DISPATCH kdf_x963_kdf_functions[] = {
+const OSSL_DISPATCH ossl_kdf_x963_kdf_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))sskdf_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))sskdf_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))sskdf_reset },

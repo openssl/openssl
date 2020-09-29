@@ -167,7 +167,7 @@ static int siphash_set_params(void *vmacctx, const OSSL_PARAM *params)
     return 1;
 }
 
-const OSSL_DISPATCH siphash_functions[] = {
+const OSSL_DISPATCH ossl_siphash_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))siphash_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))siphash_dup },
     { OSSL_FUNC_MAC_FREECTX, (void (*)(void))siphash_free },

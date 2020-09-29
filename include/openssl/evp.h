@@ -1675,6 +1675,8 @@ void EVP_ASYM_CIPHER_do_all_provided(OPENSSL_CTX *libctx,
 void EVP_ASYM_CIPHER_names_do_all(const EVP_ASYM_CIPHER *cipher,
                                   void (*fn)(const char *name, void *data),
                                   void *data);
+const OSSL_PARAM *EVP_ASYM_CIPHER_gettable_ctx_params(const EVP_ASYM_CIPHER *ciph);
+const OSSL_PARAM *EVP_ASYM_CIPHER_settable_ctx_params(const EVP_ASYM_CIPHER *ciph);
 
 void EVP_KEM_free(EVP_KEM *wrap);
 int EVP_KEM_up_ref(EVP_KEM *wrap);
@@ -1687,6 +1689,8 @@ void EVP_KEM_do_all_provided(OPENSSL_CTX *libctx,
                              void (*fn)(EVP_KEM *wrap, void *arg), void *arg);
 void EVP_KEM_names_do_all(const EVP_KEM *wrap,
                           void (*fn)(const char *name, void *data), void *data);
+const OSSL_PARAM *EVP_KEM_gettable_ctx_params(const EVP_KEM *kem);
+const OSSL_PARAM *EVP_KEM_settable_ctx_params(const EVP_KEM *kem);
 
 int EVP_PKEY_sign_init(EVP_PKEY_CTX *ctx);
 int EVP_PKEY_sign(EVP_PKEY_CTX *ctx,

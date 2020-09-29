@@ -671,7 +671,7 @@ void *ecx_load(const void *reference, size_t reference_sz)
 }
 
 #define MAKE_KEYMGMT_FUNCTIONS(alg) \
-    const OSSL_DISPATCH alg##_keymgmt_functions[] = { \
+    const OSSL_DISPATCH ossl_##alg##_keymgmt_functions[] = { \
         { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))alg##_new_key }, \
         { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ecx_key_free }, \
         { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*) (void))alg##_get_params }, \

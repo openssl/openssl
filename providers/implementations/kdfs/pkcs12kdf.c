@@ -278,7 +278,7 @@ static const OSSL_PARAM *kdf_pkcs12_gettable_ctx_params(ossl_unused void *provct
     return known_gettable_ctx_params;
 }
 
-const OSSL_DISPATCH kdf_pkcs12_functions[] = {
+const OSSL_DISPATCH ossl_kdf_pkcs12_functions[] = {
     { OSSL_FUNC_KDF_NEWCTX, (void(*)(void))kdf_pkcs12_new },
     { OSSL_FUNC_KDF_FREECTX, (void(*)(void))kdf_pkcs12_free },
     { OSSL_FUNC_KDF_RESET, (void(*)(void))kdf_pkcs12_reset },

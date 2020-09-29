@@ -58,7 +58,7 @@ static const PROV_CIPHER_HW camellia_##mode = {                                \
     cipher_hw_camellia_copyctx                                                 \
 };                                                                             \
 PROV_CIPHER_HW_declare(mode)                                                   \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_camellia_##mode(size_t keybits)           \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_camellia_##mode(size_t keybits)      \
 {                                                                              \
     PROV_CIPHER_HW_select(mode)                                                \
     return &camellia_##mode;                                                   \

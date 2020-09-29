@@ -18,7 +18,7 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 
-/* md2_functions */
+/* ossl_md2_functions */
 IMPLEMENT_digest_functions(md2, MD2_CTX,
                            MD2_BLOCK, MD2_DIGEST_LENGTH, 0,
                            MD2_Init, MD2_Update, MD2_Final)

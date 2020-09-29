@@ -36,7 +36,8 @@ static OSSL_FUNC_cipher_newctx_fn tdes_##type##_##lcmode##_newctx;              
 static void *tdes_##type##_##lcmode##_newctx(void *provctx)                    \
 {                                                                              \
     return tdes_newctx(provctx, EVP_CIPH_##UCMODE##_MODE, kbits, blkbits,      \
-                       ivbits, flags, PROV_CIPHER_HW_tdes_##type##_##lcmode());\
+                       ivbits, flags,                                          \
+                       ossl_prov_cipher_hw_tdes_##type##_##lcmode());          \
 }                                                                              \
 static OSSL_FUNC_cipher_get_params_fn tdes_##type##_##lcmode##_get_params;       \
 static int tdes_##type##_##lcmode##_get_params(OSSL_PARAM params[])            \
@@ -44,7 +45,7 @@ static int tdes_##type##_##lcmode##_get_params(OSSL_PARAM params[])            \
     return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
                                      kbits, blkbits, ivbits);                  \
 }                                                                              \
-const OSSL_DISPATCH tdes_##type##_##lcmode##_functions[] = {                   \
+const OSSL_DISPATCH ossl_tdes_##type##_##lcmode##_functions[] = {              \
     { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))tdes_einit },             \
     { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))tdes_dinit },             \
     { OSSL_FUNC_CIPHER_UPDATE,                                                 \
@@ -84,7 +85,7 @@ static const PROV_CIPHER_HW type##_##mode = {                                  \
     cipher_hw_tdes_##mode,                                                     \
     cipher_hw_tdes_copyctx                                                     \
 };                                                                             \
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_##type##_##mode(void)                \
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_##type##_##mode(void)           \
 {                                                                              \
     return &type##_##mode;                                                     \
 }
@@ -97,5 +98,5 @@ int cipher_hw_tdes_cbc(PROV_CIPHER_CTX *ctx, unsigned char *out,
 int cipher_hw_tdes_ecb(PROV_CIPHER_CTX *ctx, unsigned char *out,
                        const unsigned char *in, size_t len);
 
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_cbc(void);
-const PROV_CIPHER_HW *PROV_CIPHER_HW_tdes_ede3_ecb(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_cbc(void);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_ecb(void);

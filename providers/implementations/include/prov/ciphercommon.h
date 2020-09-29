@@ -117,7 +117,7 @@ void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
 
 #define IMPLEMENT_generic_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,\
                                       blkbits, ivbits, typ)                    \
-const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
+const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
@@ -144,7 +144,7 @@ const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
 
 #define IMPLEMENT_var_keylen_cipher_func(alg, UCALG, lcmode, UCMODE, flags,    \
                                          kbits, blkbits, ivbits, typ)          \
-const OSSL_DISPATCH alg##kbits##lcmode##_functions[] = {                       \
+const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
@@ -186,7 +186,7 @@ static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
      if (ctx != NULL) {                                                        \
          cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
                                 EVP_CIPH_##UCMODE##_MODE, flags,               \
-                                PROV_CIPHER_HW_##alg##_##lcmode(kbits),        \
+                                ossl_prov_cipher_hw_##alg##_##lcmode(kbits),   \
                                 provctx);                                      \
      }                                                                         \
      return ctx;                                                               \
