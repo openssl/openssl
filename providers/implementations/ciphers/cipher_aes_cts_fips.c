@@ -72,7 +72,7 @@ static CTS_MODE_NAME2ID cts_modes[] =
 #endif
 };
 
-const char *aes_cbc_cts_mode_id2name(unsigned int id)
+const char *ossl_aes_cbc_cts_mode_id2name(unsigned int id)
 {
     size_t i;
 
@@ -83,7 +83,7 @@ const char *aes_cbc_cts_mode_id2name(unsigned int id)
     return NULL;
 }
 
-int aes_cbc_cts_mode_name2id(const char *name)
+int ossl_aes_cbc_cts_mode_name2id(const char *name)
 {
     size_t i;
 
@@ -307,7 +307,7 @@ static size_t cts128_cs2_decrypt(PROV_CIPHER_CTX *ctx, const unsigned char *in,
 }
 #endif
 
-int aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
+int ossl_aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
                              size_t outsize, const unsigned char *in,
                              size_t inl)
 {
@@ -360,7 +360,7 @@ int aes_cbc_cts_block_update(void *vctx, unsigned char *out, size_t *outl,
     return 1;
 }
 
-int aes_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
+int ossl_aes_cbc_cts_block_final(void *vctx, unsigned char *out, size_t *outl,
                             size_t outsize)
 {
     *outl = 0;
