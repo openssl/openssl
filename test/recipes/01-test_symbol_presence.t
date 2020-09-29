@@ -14,6 +14,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_symbol_presence");
 
+plan skip_all => "Test is disabled on NonStop" if config('target') =~ m|^nonstop|;
 plan skip_all => "Only useful when building shared libraries"
     if disabled("shared");
 
