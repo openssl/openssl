@@ -34,16 +34,6 @@ my $defaultconf = srctop_file("test", "default.cnf");
 my $tbs_data = $fipsmodule;
 my $bogus_data = $fipsconf;
 
-# output a fipsmodule.cnf file containing mac data
-ok(run(app(['openssl', 'fipsinstall', '-out', 'fipsmodule.cnf',
-            '-module', $fipsmodule, ])),
-   "fipsinstall");
-
-# verify the $fipsconf file
-ok(run(app(['openssl', 'fipsinstall', '-in', 'fipsmodule.cnf', '-module', $fipsmodule,
-            '-verify'])),
-   "fipsinstall verify");
-
 $ENV{OPENSSL_CONF_INCLUDE} = abs2rel(curdir());
 $ENV{OPENSSL_CONF} = $fipsconf;
 

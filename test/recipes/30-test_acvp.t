@@ -27,12 +27,7 @@ use platform;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
 
-plan tests => 2;
-
-ok(run(app(['openssl', 'fipsinstall',
-           '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-           '-module', $infile])),
-   "fipsinstall");
+plan tests => 1;
 
 ok(run(test(["acvp_test", "-config", srctop_file("test","fips.cnf")])),
    "running acvp_test");

@@ -108,19 +108,9 @@ push @defltfiles, qw(evppkey_brainpool.txt) unless $no_ec;
 push @defltfiles, qw(evppkey_sm2.txt) unless $no_sm2;
 
 plan tests =>
-    ($no_fips ? 0 : 1)          # FIPS install test
     + (scalar(@configs) * scalar(@files))
     + scalar(@defltfiles)
     + 3; # error output tests
-
-unless ($no_fips) {
-    my $infile = bldtop_file('providers', platform->dso('fips'));
-
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile])),
-       "fipsinstall");
-}
 
 foreach (@configs) {
     my $conf = srctop_file("test", $_);

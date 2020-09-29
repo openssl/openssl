@@ -52,16 +52,11 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 $no_rc2 = 1 if disabled("legacy");
 
 plan tests =>
-    ($no_fips ? 0 : 1)          # FIPS install test
     + 10;
 
 unless ($no_fips) {
     my $infile = bldtop_file('providers', platform->dso('fips'));
 
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile])),
-       "fipsinstall");
     @config = ( "-config", srctop_file("test", "fips-and-base.cnf") );
     $provname = 'fips';
 }

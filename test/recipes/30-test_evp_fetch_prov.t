@@ -25,7 +25,6 @@ my $infile = bldtop_file('providers', platform->dso('fips'));
 
 my @types = ( "digest", "cipher" );
 
-my @setups = ();
 my @testdata = (
     { config    => srctop_file("test", "default.cnf"),
       providers => [ 'default' ],
@@ -44,12 +43,6 @@ my @testdata = (
 );
 
 unless ($no_fips) {
-    push @setups, {
-        cmd     => app(['openssl', 'fipsinstall',
-                        '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                        '-module', $infile]),
-        message => "fipsinstall"
-    };
     push @testdata, (
         { config    => srctop_file("test", "fips.cnf"),
           providers => [ 'fips' ],
@@ -105,14 +98,10 @@ foreach (@testdata) {
     $testcount += scalar @{$_->{tests}};
 }
 
-plan tests => 1 + scalar @setups + $testcount * scalar(@types);
+plan tests => 1 + $testcount * scalar(@types);
 
 ok(run(test(["evp_fetch_prov_test", "-defaultctx"])),
    "running evp_fetch_prov_test using the default libctx");
-
-foreach my $setup (@setups) {
-    ok(run($setup->{cmd}), $setup->{message});
-}
 
 foreach my $alg (@types) {
     foreach my $testcase (@testdata) {

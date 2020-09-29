@@ -26,14 +26,9 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 plan skip_all => "provider_status is not supported by this test"
     if $no_fips;
 
-plan tests => 2;
+plan tests => 1;
 
 my $infile = bldtop_file('providers', platform->dso('fips'));
-
-ok(run(app(['openssl', 'fipsinstall',
-            '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-            '-module', $infile])),
-   "fipsinstall");
 
 ok(run(test(["provider_status_test", "-config", srctop_file("test","fips.cnf"),
              "-provider_name", "fips"])),
