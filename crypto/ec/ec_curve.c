@@ -3299,7 +3299,9 @@ EC_GROUP *EC_GROUP_new_by_curve_name_with_libctx(OPENSSL_CTX *libctx,
     if ((curve = ec_curve_nid2curve(nid)) == NULL
         || (ret = ec_group_new_from_data(libctx, propq, *curve)) == NULL) {
         ECerr(0, EC_R_UNKNOWN_GROUP);
+#ifndef FIPS_MODULE
         ERR_add_error_data(2, "name=", OBJ_nid2sn(nid));
+#endif
         return NULL;
     }
 
