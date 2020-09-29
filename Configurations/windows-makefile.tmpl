@@ -51,6 +51,13 @@ SHLIBPDBS={- join(" ", map { platform->sharedlibpdb($_) // () } @{$unified_info{
 MODULES={- our @MODULES = map { platform->dso($_) } @{$unified_info{modules}};
            join(" ", @MODULES) -}
 MODULEPDBS={- join(" ", map { platform->dsopdb($_) } @{$unified_info{modules}}) -}
+FIPSMODULENAME={- # We do some extra checking here, as there should be only one
+                  my @fipsmodules =
+                      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                             && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                      @{$unified_info{modules}};
+                  die "More that one FIPS module" if scalar @fipsmodules > 1;
+                  join(" ", map { basename platform->dso($_) } @fipsmodules) -}
 PROGRAMS={- our @PROGRAMS = map { platform->bin($_) } @{$unified_info{programs}}; join(" ", @PROGRAMS) -}
 PROGRAMPDBS={- join(" ", map { $_.".pdb" } @{$unified_info{programs}}) -}
 SCRIPTS={- our @SCRIPTS = @{$unified_info{scripts}}; join(" ", @SCRIPTS) -}
@@ -462,6 +469,18 @@ uninstall_sw: uninstall_runtime uninstall_modules uninstall_engines uninstall_de
 install_docs: install_html_docs
 
 uninstall_docs: uninstall_html_docs
+
+install_fips: install_sw
+	@$(ECHO) "*** Installing FIPS module configuration"
+	@$(ECHO) "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
+	@openssl fipsinstall -module $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME) \
+		-out $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf \
+		-macopt "key:$(FIPSKEY)"
+
+uninstall_fips: uninstall_sw
+	@$(ECHO) "*** Uninstalling FIPS module configuration"
+	@$(ECHO) "$(RM) $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
+	@$(RM) $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf
 
 install_ssldirs:
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(OPENSSLDIR)\certs"
