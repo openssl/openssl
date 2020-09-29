@@ -493,6 +493,14 @@ list-tests:
 
 install: install_sw install_ssldirs install_docs
 
+install_fips: install_sw
+	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
+	@$(ECHO) "*** Installing FIPS module configuration"
+	@modfn=`basename $(FIPSMODULE)`; \
+	    openssl fipsinstall -module $(DESTDIR)$(MODULESDIR)/$$modfn \
+		-out $(DESTDIR)$(MODULESDIR)/$$modfn.cnf \
+		-macopt 'key:$(FIPSKEY)'
+
 uninstall: uninstall_docs uninstall_sw
 
 libclean:
