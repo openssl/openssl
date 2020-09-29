@@ -18,20 +18,10 @@ setup("test_threads");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-
-plan tests => 1 + ($no_fips ? 0 : 1);
-
-if (!$no_fips) {
-    my $infile = bldtop_file('providers', platform->dso('fips'));
-    ok(run(app(['openssl', 'fipsinstall',
-            '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-            '-module', $infile])),
-    "fipsinstall");
-}
+plan tests => 1;
 
 if ($no_fips) {
     $ENV{OPENSSL_CONF} = abs_path(srctop_file("test", "default.cnf"));

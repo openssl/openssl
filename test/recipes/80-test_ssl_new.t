@@ -22,10 +22,8 @@ setup("test_ssl_new");
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
-my $infile = bldtop_file('providers', platform->dso('fips'));
 
 $ENV{TEST_CERTS_DIR} = srctop_dir("test", "certs");
 
@@ -36,8 +34,7 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 30 # = scalar @conf_srcs
-              + ($no_fips ? 0 : 1); # fipsinstall
+plan tests => 30;
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -117,13 +114,6 @@ my %skip = (
   "26-tls13_client_auth.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
 );
-
-unless ($no_fips) {
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', $infile])),
-       "fipsinstall");
-}
 
 foreach my $conf (@conf_files) {
     subtest "Test configuration $conf" => sub {

@@ -20,24 +20,18 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
-my $infile = bldtop_file('providers', platform->dso('fips'));
 # If no fips then run the test with no extra arguments.
 my @test_args = ( );
 
 plan tests =>
-    ($no_fips ? 0 : 2)          # FIPS install test
+    ($no_fips ? 0 : 1)          # FIPS install test
     + 1;
 
 unless ($no_fips) {
     @test_args = ("-config", srctop_file("test","fips-and-base.cnf"),
                   "-provider", "fips");
 
-    ok(run(app(['openssl', 'fipsinstall',
-               '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-               '-module', $infile])),
-       "fipsinstall");
     ok(run(test(["evp_libctx_test", @test_args])), "running fips evp_libctx_test");
 }
 

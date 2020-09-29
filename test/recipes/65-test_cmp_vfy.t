@@ -18,7 +18,6 @@ BEGIN {
 
 use lib srctop_dir('Configurations');
 use lib bldtop_dir('.');
-use platform;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -28,7 +27,7 @@ plan skip_all => "This test is not supported in a no-cmp build"
 plan skip_all => "This test is not supported in a no-ec build"
     if disabled("ec");
 
-plan tests => 2 + ($no_fips ? 0 : 2); #fips install + fips test
+plan tests => 2 + ($no_fips ? 0 : 1); #fips test
 
 my @basic_cmd = ("cmp_vfy_test",
                  data_file("server.crt"),     data_file("client.crt"),
@@ -48,10 +47,5 @@ ok(run(test([@basic_cmd, "none"])));
 ok(run(test([@basic_cmd, "default", srctop_file("test", "default.cnf")])));
 
 unless ($no_fips) {
-    ok(run(app(['openssl', 'fipsinstall',
-                '-out', bldtop_file('providers', 'fipsmodule.cnf'),
-                '-module', bldtop_file('providers', platform->dso('fips'))])),
-       "fipsinstall");
-
     ok(run(test([@basic_cmd, "fips", srctop_file("test", "fips.cnf")])));
 }
