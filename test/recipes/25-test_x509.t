@@ -107,7 +107,8 @@ sub test_errors { # actually tests diagnostics of OSSL_STORE
     my @args = qw(openssl x509 -in);
     push(@args, $infile, @opts);
     my $tmpfile = 'out.txt';
-    my $res = !run(app([@args], stderr => $tmpfile));
+    my $res =  grep(/-text/, @opts) ? run(app([@args], stdout => $tmpfile))
+                                    : !run(app([@args], stderr => $tmpfile));
     my $found = 0;
     open(my $in, '<', $tmpfile) or die "Could not open file $tmpfile";
     while(<$in>) {
@@ -116,7 +117,7 @@ sub test_errors { # actually tests diagnostics of OSSL_STORE
         $found = 1 if m/$expected/; # output must include $expected
     }
     close $in;
-    unlink $tmpfile;
+    # unlink $tmpfile;
     return $res && $found;
 }
 
@@ -127,6 +128,6 @@ ok(test_errors("RC2-40-CBC", "v3-certs-RC2.p12", '-passin', 'pass:v3-certs'),
 SKIP: {
     skip "sm2 not disabled", 1 if !disabled("sm2");
 
-    ok(test_errors("unknown group", "sm2.pem"),
+    ok(test_errors("unknown group|unsupported algorithm", "sm2.pem", '-text'),
        "error loading unsupported sm2 cert");
 }
