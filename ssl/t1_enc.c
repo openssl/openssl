@@ -175,6 +175,18 @@ int tls_provider_set_tls_params(SSL *s, EVP_CIPHER_CTX *ctx,
     return 1;
 }
 
+
+static int tls_iv_length_within_key_block(const EVP_CIPHER *c)
+{
+    /* If GCM/CCM mode only part of IV comes from PRF */
+    if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
+        return EVP_GCM_TLS_FIXED_IV_LEN;
+    else if (EVP_CIPHER_mode(c) == EVP_CIPH_CCM_MODE)
+        return EVP_CCM_TLS_FIXED_IV_LEN;
+    else
+        return EVP_CIPHER_iv_length(c);
+}
+
 int tls1_change_cipher_state(SSL *s, int which)
 {
     unsigned char *p, *mac_secret;
@@ -337,14 +349,7 @@ int tls1_change_cipher_state(SSL *s, int which)
     /* TODO(size_t): convert me */
     cl = EVP_CIPHER_key_length(c);
     j = cl;
-    /* Was j=(exp)?5:EVP_CIPHER_key_length(c); */
-    /* If GCM/CCM mode only part of IV comes from PRF */
-    if (EVP_CIPHER_mode(c) == EVP_CIPH_GCM_MODE)
-        k = EVP_GCM_TLS_FIXED_IV_LEN;
-    else if (EVP_CIPHER_mode(c) == EVP_CIPH_CCM_MODE)
-        k = EVP_CCM_TLS_FIXED_IV_LEN;
-    else
-        k = EVP_CIPHER_iv_length(c);
+    k = tls_iv_length_within_key_block(c);
     if ((which == SSL3_CHANGE_CIPHER_CLIENT_WRITE) ||
         (which == SSL3_CHANGE_CIPHER_SERVER_READ)) {
         ms = &(p[0]);
@@ -565,7 +570,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3.tmp.new_hash = hash;
     s->s3.tmp.new_mac_pkey_type = mac_type;
     s->s3.tmp.new_mac_secret_size = mac_secret_size;
-    num = EVP_CIPHER_key_length(c) + mac_secret_size + EVP_CIPHER_iv_length(c);
+    num = mac_secret_size + EVP_CIPHER_key_length(c) + tls_iv_length_within_key_block(c);
     num *= 2;
 
     ssl3_cleanup_key_block(s);
@@ -580,6 +585,7 @@ int tls1_setup_key_block(SSL *s)
     s->s3.tmp.key_block = p;
 
     OSSL_TRACE_BEGIN(TLS) {
+        BIO_printf(trc_out, "key block length: %ld\n", num);
         BIO_printf(trc_out, "client random\n");
         BIO_dump_indent(trc_out, s->s3.client_random, SSL3_RANDOM_SIZE, 4);
         BIO_printf(trc_out, "server random\n");
