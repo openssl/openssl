@@ -100,7 +100,7 @@ static int null_final(void *vctx, unsigned char *out, size_t *outl,
 static OSSL_FUNC_cipher_get_params_fn null_get_params;
 static int null_get_params(OSSL_PARAM params[])
 {
-    return cipher_generic_get_params(params, 0, 0, 0, 8, 0);
+    return ossl_cipher_generic_get_params(params, 0, 0, 0, 8, 0);
 }
 
 static const OSSL_PARAM null_known_gettable_ctx_params[] = {
@@ -182,7 +182,7 @@ const OSSL_DISPATCH ossl_null_functions[] = {
     { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))null_cipher },
     { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void)) null_get_params },
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
-        (void (*)(void))cipher_generic_gettable_params },
+        (void (*)(void))ossl_cipher_generic_gettable_params },
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS, (void (*)(void))null_get_ctx_params },
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
       (void (*)(void))null_gettable_ctx_params },

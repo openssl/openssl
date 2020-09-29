@@ -10,8 +10,8 @@
 #include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
 
-int cipher_capable_aes_cbc_hmac_sha1(void);
-int cipher_capable_aes_cbc_hmac_sha256(void);
+int ossl_cipher_capable_aes_cbc_hmac_sha1(void);
+int ossl_cipher_capable_aes_cbc_hmac_sha256(void);
 
 typedef struct prov_cipher_hw_aes_hmac_sha_ctx_st {
     PROV_CIPHER_HW base; /* must be first */

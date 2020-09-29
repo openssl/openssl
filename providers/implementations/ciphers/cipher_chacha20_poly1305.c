@@ -38,8 +38,8 @@ static OSSL_FUNC_cipher_set_ctx_params_fn chacha20_poly1305_set_ctx_params;
 static OSSL_FUNC_cipher_cipher_fn chacha20_poly1305_cipher;
 static OSSL_FUNC_cipher_final_fn chacha20_poly1305_final;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn chacha20_poly1305_gettable_ctx_params;
-#define chacha20_poly1305_settable_ctx_params cipher_aead_settable_ctx_params
-#define chacha20_poly1305_gettable_params cipher_generic_gettable_params
+#define chacha20_poly1305_settable_ctx_params ossl_cipher_aead_settable_ctx_params
+#define chacha20_poly1305_gettable_params ossl_cipher_generic_gettable_params
 #define chacha20_poly1305_update chacha20_poly1305_cipher
 
 static void *chacha20_poly1305_newctx(void *provctx)
@@ -51,14 +51,14 @@ static void *chacha20_poly1305_newctx(void *provctx)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL) {
-        cipher_generic_initkey(&ctx->base, CHACHA20_POLY1305_KEYLEN * 8,
-                               CHACHA20_POLY1305_BLKLEN * 8,
-                               CHACHA20_POLY1305_IVLEN * 8,
-                               CHACHA20_POLY1305_MODE,
-                               CHACHA20_POLY1305_FLAGS,
-                               ossl_prov_cipher_hw_chacha20_poly1305(
-                                   CHACHA20_POLY1305_KEYLEN * 8),
-                                   NULL);
+        ossl_cipher_generic_initkey(&ctx->base, CHACHA20_POLY1305_KEYLEN * 8,
+                                    CHACHA20_POLY1305_BLKLEN * 8,
+                                    CHACHA20_POLY1305_IVLEN * 8,
+                                    CHACHA20_POLY1305_MODE,
+                                    CHACHA20_POLY1305_FLAGS,
+                                    ossl_prov_cipher_hw_chacha20_poly1305(
+                                        CHACHA20_POLY1305_KEYLEN * 8),
+                                    NULL);
         ctx->nonce_len = CHACHA20_POLY1305_IVLEN;
         ctx->tls_payload_length = NO_TLS_PAYLOAD_LENGTH;
         chacha20_initctx(&ctx->chacha);
@@ -71,17 +71,17 @@ static void chacha20_poly1305_freectx(void *vctx)
     PROV_CHACHA20_POLY1305_CTX *ctx = (PROV_CHACHA20_POLY1305_CTX *)vctx;
 
     if (ctx != NULL) {
-        cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+        ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
         OPENSSL_clear_free(ctx, sizeof(*ctx));
     }
 }
 
 static int chacha20_poly1305_get_params(OSSL_PARAM params[])
 {
-    return cipher_generic_get_params(params, 0, CHACHA20_POLY1305_FLAGS,
-                                     CHACHA20_POLY1305_KEYLEN * 8,
-                                     CHACHA20_POLY1305_BLKLEN * 8,
-                                     CHACHA20_POLY1305_IVLEN * 8);
+    return ossl_cipher_generic_get_params(params, 0, CHACHA20_POLY1305_FLAGS,
+                                          CHACHA20_POLY1305_KEYLEN * 8,
+                                          CHACHA20_POLY1305_BLKLEN * 8,
+                                          CHACHA20_POLY1305_IVLEN * 8);
 }
 
 static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
@@ -235,7 +235,7 @@ static int chacha20_poly1305_einit(void *vctx, const unsigned char *key,
     int ret;
 
     /* The generic function checks for ossl_prov_is_running() */
-    ret = cipher_generic_einit(vctx, key, keylen, iv, ivlen);
+    ret = ossl_cipher_generic_einit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =
@@ -253,7 +253,7 @@ static int chacha20_poly1305_dinit(void *vctx, const unsigned char *key,
     int ret;
 
     /* The generic function checks for ossl_prov_is_running() */
-    ret = cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
+    ret = ossl_cipher_generic_dinit(vctx, key, keylen, iv, ivlen);
     if (ret && iv != NULL) {
         PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
         PROV_CIPHER_HW_CHACHA20_POLY1305 *hw =

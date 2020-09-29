@@ -17,7 +17,7 @@
 #include "cipher_aes_cbc_hmac_sha.h"
 
 #if !defined(AES_CBC_HMAC_SHA_CAPABLE) || !defined(AESNI_CAPABLE)
-int cipher_capable_aes_cbc_hmac_sha1(void)
+int ossl_cipher_capable_aes_cbc_hmac_sha1(void)
 {
     return 0;
 }
@@ -37,7 +37,7 @@ void aesni_cbc_sha1_enc(const void *inp, void *out, size_t blocks,
                         const AES_KEY *key, unsigned char iv[16],
                         SHA_CTX *ctx, const void *in0);
 
-int cipher_capable_aes_cbc_hmac_sha1(void)
+int ossl_cipher_capable_aes_cbc_hmac_sha1(void)
 {
     return AESNI_CBC_HMAC_SHA_CAPABLE;
 }

@@ -90,28 +90,28 @@ struct prov_cipher_hw_st {
     void (*copyctx)(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src);
 };
 
-void cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx);
-OSSL_FUNC_cipher_encrypt_init_fn cipher_generic_einit;
-OSSL_FUNC_cipher_decrypt_init_fn cipher_generic_dinit;
-OSSL_FUNC_cipher_update_fn cipher_generic_block_update;
-OSSL_FUNC_cipher_final_fn cipher_generic_block_final;
-OSSL_FUNC_cipher_update_fn cipher_generic_stream_update;
-OSSL_FUNC_cipher_final_fn cipher_generic_stream_final;
-OSSL_FUNC_cipher_cipher_fn cipher_generic_cipher;
-OSSL_FUNC_cipher_get_ctx_params_fn cipher_generic_get_ctx_params;
-OSSL_FUNC_cipher_set_ctx_params_fn cipher_generic_set_ctx_params;
-OSSL_FUNC_cipher_gettable_params_fn     cipher_generic_gettable_params;
-OSSL_FUNC_cipher_gettable_ctx_params_fn cipher_generic_gettable_ctx_params;
-OSSL_FUNC_cipher_settable_ctx_params_fn cipher_generic_settable_ctx_params;
-OSSL_FUNC_cipher_set_ctx_params_fn cipher_var_keylen_set_ctx_params;
-OSSL_FUNC_cipher_settable_ctx_params_fn cipher_var_keylen_settable_ctx_params;
-OSSL_FUNC_cipher_gettable_ctx_params_fn cipher_aead_gettable_ctx_params;
-OSSL_FUNC_cipher_settable_ctx_params_fn cipher_aead_settable_ctx_params;
+void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx);
+OSSL_FUNC_cipher_encrypt_init_fn ossl_cipher_generic_einit;
+OSSL_FUNC_cipher_decrypt_init_fn ossl_cipher_generic_dinit;
+OSSL_FUNC_cipher_update_fn ossl_cipher_generic_block_update;
+OSSL_FUNC_cipher_final_fn ossl_cipher_generic_block_final;
+OSSL_FUNC_cipher_update_fn ossl_cipher_generic_stream_update;
+OSSL_FUNC_cipher_final_fn ossl_cipher_generic_stream_final;
+OSSL_FUNC_cipher_cipher_fn ossl_cipher_generic_cipher;
+OSSL_FUNC_cipher_get_ctx_params_fn ossl_cipher_generic_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn ossl_cipher_generic_set_ctx_params;
+OSSL_FUNC_cipher_gettable_params_fn     ossl_cipher_generic_gettable_params;
+OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_cipher_generic_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_generic_settable_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn ossl_cipher_var_keylen_set_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_var_keylen_settable_ctx_params;
+OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_cipher_aead_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_aead_settable_ctx_params;
 
-int cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
+int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
                               unsigned long flags,
                               size_t kbits, size_t blkbits, size_t ivbits);
-void cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
+void ossl_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
                             size_t ivbits, unsigned int mode, uint64_t flags,
                             const PROV_CIPHER_HW *hw, void *provctx);
 
@@ -122,23 +122,23 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) alg##_dupctx },                \
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))cipher_generic_einit },   \
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))cipher_generic_dinit },   \
-    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))cipher_generic_##typ##_update },\
-    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))cipher_generic_##typ##_final },  \
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))cipher_generic_cipher },        \
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_cipher_generic_einit },   \
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_cipher_generic_dinit },   \
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_cipher_generic_##typ##_update },\
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_cipher_generic_##typ##_final },  \
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_cipher_generic_cipher },        \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void)) alg##_##kbits##_##lcmode##_get_params },                \
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
-      (void (*)(void))cipher_generic_get_ctx_params },                         \
+      (void (*)(void))ossl_cipher_generic_get_ctx_params },                    \
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
-      (void (*)(void))cipher_generic_set_ctx_params },                         \
+      (void (*)(void))ossl_cipher_generic_set_ctx_params },                    \
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
-      (void (*)(void))cipher_generic_gettable_params },                        \
+      (void (*)(void))ossl_cipher_generic_gettable_params },                   \
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
-      (void (*)(void))cipher_generic_gettable_ctx_params },                    \
+      (void (*)(void))ossl_cipher_generic_gettable_ctx_params },               \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))cipher_generic_settable_ctx_params },                     \
+     (void (*)(void))ossl_cipher_generic_settable_ctx_params },                \
     { 0, NULL }                                                                \
 };
 
@@ -149,45 +149,45 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) alg##_dupctx },                \
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))cipher_generic_einit },   \
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))cipher_generic_dinit },   \
-    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))cipher_generic_##typ##_update },\
-    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))cipher_generic_##typ##_final },  \
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))cipher_generic_cipher },        \
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_cipher_generic_einit },\
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_cipher_generic_dinit },\
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_cipher_generic_##typ##_update },\
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_cipher_generic_##typ##_final },  \
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_cipher_generic_cipher },   \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void)) alg##_##kbits##_##lcmode##_get_params },                \
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
-      (void (*)(void))cipher_generic_get_ctx_params },                         \
+      (void (*)(void))ossl_cipher_generic_get_ctx_params },                    \
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \
-      (void (*)(void))cipher_var_keylen_set_ctx_params },                      \
+      (void (*)(void))ossl_cipher_var_keylen_set_ctx_params },                 \
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
-      (void (*)(void))cipher_generic_gettable_params },                        \
+      (void (*)(void))ossl_cipher_generic_gettable_params },                   \
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
-      (void (*)(void))cipher_generic_gettable_ctx_params },                    \
+      (void (*)(void))ossl_cipher_generic_gettable_ctx_params },               \
     { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                    \
-     (void (*)(void))cipher_var_keylen_settable_ctx_params },                  \
+     (void (*)(void))ossl_cipher_var_keylen_settable_ctx_params },             \
     { 0, NULL }                                                                \
 };
 
 
 #define IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags,      \
                                        kbits, blkbits, ivbits, typ)            \
-static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;     \
+static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;   \
 static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 {                                                                              \
-    return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
-                                     kbits, blkbits, ivbits);                  \
+    return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
+                                          flags, kbits, blkbits, ivbits);      \
 }                                                                              \
-static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;             \
+static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
      PROV_##UCALG##_CTX *ctx = ossl_prov_is_running() ? OPENSSL_zalloc(sizeof(*ctx))\
                                                      : NULL;                   \
      if (ctx != NULL) {                                                        \
-         cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
-                                EVP_CIPH_##UCMODE##_MODE, flags,               \
-                                ossl_prov_cipher_hw_##alg##_##lcmode(kbits),   \
-                                provctx);                                      \
+         ossl_cipher_generic_initkey(ctx, kbits, blkbits, ivbits,              \
+                                     EVP_CIPH_##UCMODE##_MODE, flags,          \
+                                     ossl_prov_cipher_hw_##alg##_##lcmode(kbits),\
+                                     provctx);                                 \
      }                                                                         \
      return ctx;                                                               \
 }                                                                              \
@@ -206,20 +206,20 @@ IMPLEMENT_generic_cipher_genfn(alg, UCALG, lcmode, UCMODE, flags, kbits,       \
 IMPLEMENT_var_keylen_cipher_func(alg, UCALG, lcmode, UCMODE, flags, kbits,     \
                                  blkbits, ivbits, typ)
 
-PROV_CIPHER_HW_FN cipher_hw_generic_cbc;
-PROV_CIPHER_HW_FN cipher_hw_generic_ecb;
-PROV_CIPHER_HW_FN cipher_hw_generic_ofb128;
-PROV_CIPHER_HW_FN cipher_hw_generic_cfb128;
-PROV_CIPHER_HW_FN cipher_hw_generic_cfb8;
-PROV_CIPHER_HW_FN cipher_hw_generic_cfb1;
-PROV_CIPHER_HW_FN cipher_hw_generic_ctr;
-PROV_CIPHER_HW_FN cipher_hw_chunked_cbc;
-PROV_CIPHER_HW_FN cipher_hw_chunked_cfb8;
-PROV_CIPHER_HW_FN cipher_hw_chunked_cfb128;
-PROV_CIPHER_HW_FN cipher_hw_chunked_ofb128;
-#define cipher_hw_chunked_ecb  cipher_hw_generic_ecb
-#define cipher_hw_chunked_ctr  cipher_hw_generic_ctr
-#define cipher_hw_chunked_cfb1 cipher_hw_generic_cfb1
+PROV_CIPHER_HW_FN ossl_cipher_hw_generic_cbc;
+PROV_CIPHER_HW_FN ossl_cipher_hw_generic_ecb;
+PROV_CIPHER_HW_FN ossl_cipher_hw_generic_ofb128;
+PROV_CIPHER_HW_FN ossl_cipher_hw_generic_cfb128;
+PROV_CIPHER_HW_FN ossl_cipher_hw_generic_cfb8;
+PROV_CIPHER_HW_FN ossl_cipher_hw_generic_cfb1;
+PROV_CIPHER_HW_FN ossl_cipher_hw_generic_ctr;
+PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_cbc;
+PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_cfb8;
+PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_cfb128;
+PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_ofb128;
+#define ossl_cipher_hw_chunked_ecb  ossl_cipher_hw_generic_ecb
+#define ossl_cipher_hw_chunked_ctr  ossl_cipher_hw_generic_ctr
+#define ossl_cipher_hw_chunked_cfb1 ossl_cipher_hw_generic_cfb1
 
 #define IMPLEMENT_CIPHER_HW_OFB(MODE, NAME, CTX_NAME, KEY_NAME, FUNC_PREFIX)   \
 static int cipher_hw_##NAME##_##MODE##_cipher(PROV_CIPHER_CTX *ctx,            \
@@ -338,8 +338,8 @@ const OSSL_PARAM * name##_settable_ctx_params(ossl_unused void *provctx)       \
     return name##_known_settable_ctx_params;                                   \
 }
 
-int cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
-                          size_t ivlen);
+int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
+                               size_t ivlen);
 
 size_t fillblock(unsigned char *buf, size_t *buflen, size_t blocksize,
                  const unsigned char **in, size_t *inlen);
