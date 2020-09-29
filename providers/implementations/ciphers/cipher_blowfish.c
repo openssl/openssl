@@ -28,7 +28,7 @@ static void blowfish_freectx(void *vctx)
 {
     PROV_BLOWFISH_CTX *ctx = (PROV_BLOWFISH_CTX *)vctx;
 
-    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 

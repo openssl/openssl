@@ -126,7 +126,7 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_aes_copyctx, PROV_AES_CTX)
 #define PROV_CIPHER_HW_aes_mode(mode)                                          \
 static const PROV_CIPHER_HW aes_##mode = {                                     \
     cipher_hw_aes_initkey,                                                     \
-    cipher_hw_generic_##mode,                                                  \
+    ossl_cipher_hw_generic_##mode,                                             \
     cipher_hw_aes_copyctx                                                      \
 };                                                                             \
 PROV_CIPHER_HW_declare(mode)                                                   \

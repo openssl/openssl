@@ -59,8 +59,8 @@ static void *aes_wrap_newctx(size_t kbits, size_t blkbits,
     wctx = OPENSSL_zalloc(sizeof(*wctx));
     ctx = (PROV_CIPHER_CTX *)wctx;
     if (ctx != NULL) {
-        cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags,
-                               NULL, NULL);
+        ossl_cipher_generic_initkey(ctx, kbits, blkbits, ivbits, mode, flags,
+                                    NULL, NULL);
         ctx->pad = (ctx->ivlen == AES_WRAP_PAD_IVLEN);
     }
     return wctx;
@@ -70,7 +70,7 @@ static void aes_wrap_freectx(void *vctx)
 {
     PROV_AES_WRAP_CTX *wctx = (PROV_AES_WRAP_CTX *)vctx;
 
-    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(wctx,  sizeof(*wctx));
 }
 
@@ -92,7 +92,7 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
         wctx->wrapfn = enc ? CRYPTO_128_wrap : CRYPTO_128_unwrap;
 
     if (iv != NULL) {
-        if (!cipher_generic_initiv(ctx, iv, ivlen))
+        if (!ossl_cipher_generic_initiv(ctx, iv, ivlen))
             return 0;
     }
     if (key != NULL) {
@@ -228,8 +228,8 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     static OSSL_FUNC_cipher_get_params_fn aes_##kbits##_##fname##_get_params;  \
     static int aes_##kbits##_##fname##_get_params(OSSL_PARAM params[])         \
     {                                                                          \
-        return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,     \
-                                         flags, kbits, blkbits, ivbits);       \
+        return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,\
+                                              flags, kbits, blkbits, ivbits);  \
     }                                                                          \
     static OSSL_FUNC_cipher_newctx_fn aes_##kbits##fname##_newctx;             \
     static void *aes_##kbits##fname##_newctx(void *provctx)                    \
@@ -248,15 +248,15 @@ static int aes_wrap_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         { OSSL_FUNC_CIPHER_GET_PARAMS,                                         \
             (void (*)(void))aes_##kbits##_##fname##_get_params },              \
         { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                    \
-            (void (*)(void))cipher_generic_gettable_params },                  \
+            (void (*)(void))ossl_cipher_generic_gettable_params },             \
         { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                     \
-            (void (*)(void))cipher_generic_get_ctx_params },                   \
+            (void (*)(void))ossl_cipher_generic_get_ctx_params },              \
         { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                     \
             (void (*)(void))aes_wrap_set_ctx_params },                         \
         { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                \
-            (void (*)(void))cipher_generic_gettable_ctx_params },              \
+            (void (*)(void))ossl_cipher_generic_gettable_ctx_params },         \
         { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                \
-            (void (*)(void))cipher_generic_settable_ctx_params },              \
+            (void (*)(void))ossl_cipher_generic_settable_ctx_params },         \
         { 0, NULL }                                                            \
     }
 

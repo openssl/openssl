@@ -15,6 +15,6 @@
 
 #include "cipher_tdes_default.h"
 
-#define cipher_hw_tdes_wrap_initkey cipher_hw_tdes_ede3_initkey
+#define ossl_cipher_hw_tdes_wrap_initkey ossl_cipher_hw_tdes_ede3_initkey
 
 PROV_CIPHER_HW_tdes_mode(wrap, cbc)

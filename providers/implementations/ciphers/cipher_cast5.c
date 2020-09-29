@@ -29,7 +29,7 @@ static void cast5_freectx(void *vctx)
 {
     PROV_CAST_CTX *ctx = (PROV_CAST_CTX *)vctx;
 
-    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 

@@ -35,7 +35,7 @@ static int aes_cbc_cts_get_ctx_params(void *vctx, OSSL_PARAM params[])
             return 0;
         }
     }
-    return cipher_generic_get_ctx_params(vctx, params);
+    return ossl_cipher_generic_get_ctx_params(vctx, params);
 }
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(aes_cbc_cts)
@@ -58,7 +58,7 @@ static int aes_cbc_cts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
         ctx->cts_mode = (unsigned int)id;
     }
-    return cipher_generic_set_ctx_params(vctx, params);
+    return ossl_cipher_generic_set_ctx_params(vctx, params);
 err:
     ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
     return 0;
@@ -70,25 +70,25 @@ err:
 static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;   \
 static int alg##_cts_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])      \
 {                                                                              \
-    return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
-                                     kbits, blkbits, ivbits);                  \
+    return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags, \
+                                          kbits, blkbits, ivbits);             \
 }                                                                              \
 const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_cts_functions[] = {            \
     { OSSL_FUNC_CIPHER_NEWCTX,                                                 \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) alg##_dupctx },                \
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))cipher_generic_einit },   \
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))cipher_generic_dinit },   \
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_cipher_generic_einit }, \
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_cipher_generic_dinit }, \
     { OSSL_FUNC_CIPHER_UPDATE,                                                 \
-      (void (*)(void)) alg##_##lcmode##_cts_block_update },                    \
+      (void (*)(void)) ossl_##alg##_##lcmode##_cts_block_update },             \
     { OSSL_FUNC_CIPHER_FINAL,                                                  \
-      (void (*)(void)) alg##_##lcmode##_cts_block_final },                     \
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))cipher_generic_cipher },        \
+      (void (*)(void)) ossl_##alg##_##lcmode##_cts_block_final },              \
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_cipher_generic_cipher },   \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void)) alg##_cts_##kbits##_##lcmode##_get_params },            \
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
-      (void (*)(void))cipher_generic_gettable_params },                        \
+      (void (*)(void))ossl_cipher_generic_gettable_params },                   \
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
       (void (*)(void))aes_cbc_cts_get_ctx_params },                            \
     { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                         \

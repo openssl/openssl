@@ -38,12 +38,12 @@ static OSSL_FUNC_cipher_gettable_ctx_params_fn rc4_hmac_md5_gettable_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn rc4_hmac_md5_set_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn rc4_hmac_md5_settable_ctx_params;
 static OSSL_FUNC_cipher_get_params_fn rc4_hmac_md5_get_params;
-#define rc4_hmac_md5_gettable_params cipher_generic_gettable_params
-#define rc4_hmac_md5_einit cipher_generic_einit
-#define rc4_hmac_md5_dinit cipher_generic_dinit
-#define rc4_hmac_md5_update cipher_generic_stream_update
-#define rc4_hmac_md5_final cipher_generic_stream_final
-#define rc4_hmac_md5_cipher cipher_generic_cipher
+#define rc4_hmac_md5_gettable_params ossl_cipher_generic_gettable_params
+#define rc4_hmac_md5_einit ossl_cipher_generic_einit
+#define rc4_hmac_md5_dinit ossl_cipher_generic_dinit
+#define rc4_hmac_md5_update ossl_cipher_generic_stream_update
+#define rc4_hmac_md5_final ossl_cipher_generic_stream_final
+#define rc4_hmac_md5_cipher ossl_cipher_generic_cipher
 
 static void *rc4_hmac_md5_newctx(void *provctx)
 {
@@ -54,12 +54,13 @@ static void *rc4_hmac_md5_newctx(void *provctx)
 
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx != NULL)
-        cipher_generic_initkey(ctx, RC4_HMAC_MD5_KEY_BITS,
-                               RC4_HMAC_MD5_BLOCK_BITS,
-                               RC4_HMAC_MD5_IV_BITS,
-                               RC4_HMAC_MD5_MODE, RC4_HMAC_MD5_FLAGS,
-                               ossl_prov_cipher_hw_rc4_hmac_md5(RC4_HMAC_MD5_KEY_BITS),
-                               NULL);
+        ossl_cipher_generic_initkey(ctx, RC4_HMAC_MD5_KEY_BITS,
+                                    RC4_HMAC_MD5_BLOCK_BITS,
+                                    RC4_HMAC_MD5_IV_BITS,
+                                    RC4_HMAC_MD5_MODE, RC4_HMAC_MD5_FLAGS,
+                                    ossl_prov_cipher_hw_rc4_hmac_md5(
+                                        RC4_HMAC_MD5_KEY_BITS
+                                    ), NULL);
      return ctx;
 }
 
@@ -67,7 +68,7 @@ static void rc4_hmac_md5_freectx(void *vctx)
 {
     PROV_RC4_HMAC_MD5_CTX *ctx = (PROV_RC4_HMAC_MD5_CTX *)vctx;
 
-    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
@@ -173,7 +174,7 @@ static int rc4_hmac_md5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
 static int rc4_hmac_md5_get_params(OSSL_PARAM params[])
 {
-    return cipher_generic_get_params(params, RC4_HMAC_MD5_MODE,
+    return ossl_cipher_generic_get_params(params, RC4_HMAC_MD5_MODE,
                                      RC4_HMAC_MD5_FLAGS,
                                      RC4_HMAC_MD5_KEY_BITS,
                                      RC4_HMAC_MD5_BLOCK_BITS,

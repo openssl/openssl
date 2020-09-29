@@ -29,7 +29,7 @@ static void rc5_freectx(void *vctx)
 {
     PROV_RC5_CTX *ctx = (PROV_RC5_CTX *)vctx;
 
-    cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
+    ossl_cipher_generic_reset_ctx((PROV_CIPHER_CTX *)vctx);
     OPENSSL_clear_free(ctx,  sizeof(*ctx));
 }
 
@@ -56,7 +56,7 @@ static int rc5_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_RC5_CTX *ctx = (PROV_RC5_CTX *)vctx;
     const OSSL_PARAM *p;
 
-    if (!cipher_var_keylen_set_ctx_params(vctx, params))
+    if (!ossl_cipher_var_keylen_set_ctx_params(vctx, params))
         return 0;
 
     p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_ROUNDS);
@@ -93,7 +93,7 @@ static int rc5_get_ctx_params(void *vctx, OSSL_PARAM params[])
     PROV_RC5_CTX *ctx = (PROV_RC5_CTX *)vctx;
     OSSL_PARAM *p;
 
-    if (!cipher_generic_get_ctx_params(vctx, params))
+    if (!ossl_cipher_generic_get_ctx_params(vctx, params))
         return 0;
     p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ROUNDS);
     if (p != NULL && !OSSL_PARAM_set_uint(p, ctx->rounds)) {
@@ -108,20 +108,20 @@ static int rc5_get_ctx_params(void *vctx, OSSL_PARAM params[])
 static OSSL_FUNC_cipher_get_params_fn alg##_##kbits##_##lcmode##_get_params;   \
 static int alg##_##kbits##_##lcmode##_get_params(OSSL_PARAM params[])          \
 {                                                                              \
-    return cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE, flags,  \
-                                     kbits, blkbits, ivbits);                  \
+    return ossl_cipher_generic_get_params(params, EVP_CIPH_##UCMODE##_MODE,    \
+                                          flags, kbits, blkbits, ivbits);      \
 }                                                                              \
 static OSSL_FUNC_cipher_newctx_fn alg##_##kbits##_##lcmode##_newctx;           \
 static void * alg##_##kbits##_##lcmode##_newctx(void *provctx)                 \
 {                                                                              \
      PROV_##UCALG##_CTX *ctx;                                                  \
-     if (!ossl_prov_is_running())                                               \
+     if (!ossl_prov_is_running())                                              \
         return NULL;                                                           \
      ctx = OPENSSL_zalloc(sizeof(*ctx));                                       \
      if (ctx != NULL) {                                                        \
-         cipher_generic_initkey(ctx, kbits, blkbits, ivbits,                   \
-                                EVP_CIPH_##UCMODE##_MODE, flags,               \
-                                ossl_prov_cipher_hw_##alg##_##lcmode(kbits),   \
+         ossl_cipher_generic_initkey(ctx, kbits, blkbits, ivbits,              \
+                                     EVP_CIPH_##UCMODE##_MODE, flags,          \
+                                     ossl_prov_cipher_hw_##alg##_##lcmode(kbits),\
                                 NULL);                                         \
          ctx->rounds = RC5_12_ROUNDS;                                          \
      }                                                                         \
@@ -132,15 +132,15 @@ const OSSL_DISPATCH ossl_##alg##kbits##lcmode##_functions[] = {                \
       (void (*)(void)) alg##_##kbits##_##lcmode##_newctx },                    \
     { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void)) alg##_freectx },              \
     { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void)) alg##_dupctx },                \
-    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))cipher_generic_einit },   \
-    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))cipher_generic_dinit },   \
-    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))cipher_generic_##typ##_update },\
-    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))cipher_generic_##typ##_final },  \
-    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))cipher_generic_cipher },        \
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_cipher_generic_einit },\
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_cipher_generic_dinit },\
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_cipher_generic_##typ##_update },\
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_cipher_generic_##typ##_final },  \
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_cipher_generic_cipher },   \
     { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
       (void (*)(void)) alg##_##kbits##_##lcmode##_get_params },                \
     { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
-      (void (*)(void))cipher_generic_gettable_params },                        \
+      (void (*)(void))ossl_cipher_generic_gettable_params },                   \
     { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
       (void (*)(void))rc5_get_ctx_params },                                    \
     { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
