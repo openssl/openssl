@@ -140,7 +140,7 @@ ENDIF
 IF[{- !$disabled{fips} -}]
   # This is the trigger to actually build the FIPS module.  Without these
   # statements, the final build file will not have a trace of it.
-  MODULES=$FIPSGOAL
+  MODULES{fips}=$FIPSGOAL
   LIBS{noinst}=$LIBFIPS
 ENDIF
 
