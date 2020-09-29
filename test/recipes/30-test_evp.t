@@ -172,6 +172,6 @@ SKIP: {
 SKIP: {
     skip "sm2 not disabled", 1 if !disabled("sm2");
 
-    ok(test_errors("unknown group", "sm2.key"),
+    ok(test_errors("unknown group|unsupported algorithm", "sm2.key"),
        "error loading unsupported sm2 private key");
 }
