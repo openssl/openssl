@@ -121,6 +121,13 @@ SHLIB_TARGET={- $target{shared_target} -}
 
 LIBS={- join(", ", map { "-\n\t".$_.".OLB" } @libs) -}
 SHLIBS={- join(", ", map { "-\n\t".$_.".EXE" } @shlibs) -}
+FIPSMODULENAME={- # We do some extra checking here, as there should be only one
+                  my @fipsmodules =
+                      grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                             && $unified_info{attributes}->{modules}->{$_}->{fips} }
+                      @{$unified_info{modules}};
+                  die "More that one FIPS module" if scalar @fipsmodules > 1;
+                  join(", ", map { basename platform->dso($_) } @fipsmodules) -}
 MODULES={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{modules}}) -}
 PROGRAMS={- join(", ", map { "-\n\t".$_.".EXE" } @{$unified_info{programs}}) -}
 SCRIPTS={- join(", ", map { "-\n\t".$_ } @{$unified_info{scripts}}) -}
@@ -538,6 +545,18 @@ uninstall_sw : uninstall_dev uninstall_modules uninstall_engines -
 install_docs : install_html_docs
 
 uninstall_docs : uninstall_html_docs
+
+install_fips: install_sw
+	@ WRITE SYS$OUTPUT "*** Installing FIPS module configuration"
+	@ WRITE SYS$OUTPUT "fipsinstall $(DESTDIR)$(MODULESDIR)/$(FIPSMODULENAME).cnf"
+	openssl fipsinstall -
+		-module ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME) -
+		-out ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf -
+		-macopt "key:$(FIPSKEY)"
+
+uninstall_fips: uninstall_sw
+	@ WRITE SYS$OUTPUT "*** Uninstalling FIPS module configuration"
+	DELETE ossl_installroot:[MODULES{- $sover_dirname.$target{pointer_size} -}.'arch']$(FIPSMODULENAME).cnf;*
 
 install_ssldirs : check_INSTALLTOP
         - CREATE/DIR/PROT=(S:RWED,O:RWE,G:RE,W:RE) OSSL_DATAROOT:[000000]
