@@ -493,14 +493,6 @@ list-tests:
 
 install: install_sw install_ssldirs install_docs
 
-install_fips: install_sw
-	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
-	@$(ECHO) "*** Installing FIPS module configuration"
-	@modfn=`basename $(FIPSMODULE)`; \
-	    openssl fipsinstall -module $(DESTDIR)$(MODULESDIR)/$$modfn \
-		-out $(DESTDIR)$(MODULESDIR)/$$modfn.cnf \
-		-macopt 'key:$(FIPSKEY)'
-
 uninstall: uninstall_docs uninstall_sw
 
 libclean:
@@ -558,6 +550,19 @@ install_docs: install_man_docs install_html_docs
 
 uninstall_docs: uninstall_man_docs uninstall_html_docs
 	$(RM) -r $(DESTDIR)$(DOCDIR)
+
+install_fips: install_sw
+	@$(ECHO) "*** Installing FIPS module configuration"
+	@modfn=`basename $(FIPSMODULE)`; \
+	    $(ECHO) "fipsinstall $(DESTDIR)$(MODULESDIR)/$$modfn.cnf"; \
+	    openssl fipsinstall -module $(DESTDIR)$(MODULESDIR)/$$modfn \
+		-out $(DESTDIR)$(MODULESDIR)/$$modfn.cnf \
+		-macopt 'key:$(FIPSKEY)'
+
+uninstall_fips: uninstall_sw
+	@$(ECHO) "*** Uninstalling FIPS module configuration"
+	@$(ECHO) "$(RM) $(DESTDIR)$(MODULESDIR)/$$modfn.cnf"
+	@$(RM) $(DESTDIR)$(MODULESDIR)/$$modfn.cnf
 
 install_ssldirs:
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl $(DESTDIR)$(OPENSSLDIR)/certs
