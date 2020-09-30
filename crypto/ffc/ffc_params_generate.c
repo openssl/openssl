@@ -510,9 +510,10 @@ static const char *default_mdname(size_t N)
  *   - FFC_PARAM_RET_STATUS_UNVERIFIABLE_G if the validation of G succeeded,
  *     but G is unverifiable.
  */
-int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int mode, int type, size_t L, size_t N,
-                                    int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx,
+                                         FFC_PARAMS *params, int mode, int type,
+                                         size_t L, size_t N, int *res,
+                                         BN_GENCB *cb)
 {
     int ok = FFC_PARAM_RET_STATUS_FAILED;
     unsigned char *seed = NULL, *seed_tmp = NULL;
@@ -728,8 +729,8 @@ g_only:
         goto err;
 
     if (((flags & FFC_PARAM_FLAG_VALIDATE_G) != 0)
-        && !ffc_params_validate_unverifiable_g(ctx, mont, p, q, params->g,
-                                               tmp, res))
+        && !ossl_ffc_params_validate_unverifiable_g(ctx, mont, p, q, params->g,
+                                                    tmp, res))
         goto err;
 
     /*
@@ -777,7 +778,8 @@ g_only:
         }
         if (params->p == NULL || params->q == NULL || params->g == NULL)
             goto err;
-        if (!ffc_params_set_validate_params(params, seed, seedlen, pcounter))
+        if (!ossl_ffc_params_set_validate_params(params, seed, seedlen,
+                                                 pcounter))
             goto err;
         params->h = hret;
     }
@@ -801,9 +803,10 @@ err:
 }
 
 /* Note this function is only used for verification in fips mode */
-int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int mode, int type, size_t L, size_t N,
-                                    int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx,
+                                         FFC_PARAMS *params, int mode, int type,
+                                         size_t L, size_t N, int *res,
+                                         BN_GENCB *cb)
 {
     int ok = FFC_PARAM_RET_STATUS_FAILED;
     unsigned char seed[SHA256_DIGEST_LENGTH];
@@ -988,8 +991,9 @@ g_only:
         if (!generate_unverifiable_g(ctx, mont, g, tmp, p, r0, test, &hret))
             goto err;
     } else if (((flags & FFC_PARAM_FLAG_VALIDATE_G) != 0)
-               && !ffc_params_validate_unverifiable_g(ctx, mont, p, q,
-                                                      params->g, tmp, res)) {
+               && !ossl_ffc_params_validate_unverifiable_g(ctx, mont, p, q,
+                                                           params->g, tmp,
+                                                           res)) {
         goto err;
     }
 
@@ -1011,7 +1015,7 @@ g_only:
         }
         if (params->p == NULL || params->q == NULL || params->g == NULL)
             goto err;
-        if (!ffc_params_set_validate_params(params, seed, qsize, pcounter))
+        if (!ossl_ffc_params_set_validate_params(params, seed, qsize, pcounter))
             goto err;
         params->h = hret;
     }
@@ -1029,21 +1033,21 @@ err:
     return ok;
 }
 
-int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                  int type, size_t L, size_t N,
-                                  int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                       int type, size_t L, size_t N,
+                                       int *res, BN_GENCB *cb)
 {
-    return ffc_params_FIPS186_4_gen_verify(libctx, params,
-                                           FFC_PARAM_MODE_GENERATE,
-                                           type, L, N, res, cb);
+    return ossl_ffc_params_FIPS186_4_gen_verify(libctx, params,
+                                                FFC_PARAM_MODE_GENERATE,
+                                                type, L, N, res, cb);
 }
 
 /* This should no longer be used in FIPS mode */
-int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                  int type, size_t L, size_t N,
-                                  int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                       int type, size_t L, size_t N,
+                                       int *res, BN_GENCB *cb)
 {
-    return ffc_params_FIPS186_2_gen_verify(libctx, params,
-                                           FFC_PARAM_MODE_GENERATE,
-                                           type, L, N, res, cb);
+    return ossl_ffc_params_FIPS186_2_gen_verify(libctx, params,
+                                                FFC_PARAM_MODE_GENERATE,
+                                                type, L, N, res, cb);
 }

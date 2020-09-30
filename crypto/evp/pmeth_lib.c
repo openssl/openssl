@@ -1569,7 +1569,7 @@ static int legacy_ctrl_str_to_param(EVP_PKEY_CTX *ctx, const char *name,
         name = OSSL_PKEY_PARAM_GROUP_NAME;
     else if (strcmp(name, "dh_rfc5114") == 0) {
         name = OSSL_PKEY_PARAM_GROUP_NAME;
-        value = ffc_named_group_from_uid(atoi(value));
+        value = ossl_ffc_named_group_from_uid(atoi(value));
     } else if (strcmp(name, "dh_pad") == 0)
         name = OSSL_EXCHANGE_PARAM_PAD;
 # endif

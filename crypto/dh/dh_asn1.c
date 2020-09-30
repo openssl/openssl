@@ -108,13 +108,14 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
 
     params = &dh->params;
     DH_set0_pqg(dh, dhx->p, dhx->q, dhx->g);
-    ffc_params_set0_j(params, dhx->j);
+    ossl_ffc_params_set0_j(params, dhx->j);
 
     if (dhx->vparams != NULL) {
         /* The counter has a maximum value of 4 * numbits(p) - 1 */
         size_t counter = (size_t)BN_get_word(dhx->vparams->counter);
-        ffc_params_set_validate_params(params, dhx->vparams->seed->data,
-                                       dhx->vparams->seed->length, counter);
+        ossl_ffc_params_set_validate_params(params, dhx->vparams->seed->data,
+                                            dhx->vparams->seed->length,
+                                            counter);
         ASN1_BIT_STRING_free(dhx->vparams->seed);
         BN_free(dhx->vparams->counter);
         OPENSSL_free(dhx->vparams);
@@ -135,10 +136,10 @@ int i2d_DHxparams(const DH *dh, unsigned char **pp)
     const FFC_PARAMS *params = &dh->params;
     int counter;
 
-    ffc_params_get0_pqg(params, (const BIGNUM **)&dhx.p,
-                        (const BIGNUM **)&dhx.q, (const BIGNUM **)&dhx.g);
+    ossl_ffc_params_get0_pqg(params, (const BIGNUM **)&dhx.p,
+                             (const BIGNUM **)&dhx.q, (const BIGNUM **)&dhx.g);
     dhx.j = params->j;
-    ffc_params_get_validate_params(params, &seed.data, &seedlen, &counter);
+    ossl_ffc_params_get_validate_params(params, &seed.data, &seedlen, &counter);
     seed.length = (int)seedlen;
 
     if (counter != -1 && seed.data != NULL && seed.length > 0) {

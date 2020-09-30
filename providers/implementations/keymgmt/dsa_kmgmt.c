@@ -159,7 +159,7 @@ static int dsa_match(const void *keydata1, const void *keydata2, int selection)
         FFC_PARAMS *dsaparams1 = dsa_get0_params((DSA *)dsa1);
         FFC_PARAMS *dsaparams2 = dsa_get0_params((DSA *)dsa2);
 
-        ok = ok && ffc_params_cmp(dsaparams1, dsaparams2, 1);
+        ok = ok && ossl_ffc_params_cmp(dsaparams1, dsaparams2, 1);
     }
     return ok;
 }
@@ -195,7 +195,7 @@ static int dsa_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         goto err;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && ffc_params_todata(dsa_get0_params(dsa), tmpl, NULL);
+        ok = ok && ossl_ffc_params_todata(dsa_get0_params(dsa), tmpl, NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && dsa_key_todata(dsa, tmpl, NULL);
 
@@ -285,7 +285,7 @@ static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
     if ((p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_DEFAULT_DIGEST)) != NULL
         && !OSSL_PARAM_set_utf8_string(p, DSA_DEFAULT_MD))
         return 0;
-    return ffc_params_todata(dsa_get0_params(dsa), NULL, params)
+    return ossl_ffc_params_todata(dsa_get0_params(dsa), NULL, params)
            && dsa_key_todata(dsa, NULL, params);
 }
 
@@ -513,21 +513,21 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     ffc = dsa_get0_params(dsa);
     /* Copy the template value if one was passed */
     if (gctx->ffc_params != NULL
-        && !ffc_params_copy(ffc, gctx->ffc_params))
+        && !ossl_ffc_params_copy(ffc, gctx->ffc_params))
         goto end;
 
     if (gctx->seed != NULL
-        && !ffc_params_set_seed(ffc, gctx->seed, gctx->seedlen))
+        && !ossl_ffc_params_set_seed(ffc, gctx->seed, gctx->seedlen))
         goto end;
     if (gctx->gindex != -1) {
-        ffc_params_set_gindex(ffc, gctx->gindex);
+        ossl_ffc_params_set_gindex(ffc, gctx->gindex);
         if (gctx->pcounter != -1)
-            ffc_params_set_pcounter(ffc, gctx->pcounter);
+            ossl_ffc_params_set_pcounter(ffc, gctx->pcounter);
     } else if (gctx->hindex != 0) {
-        ffc_params_set_h(ffc, gctx->hindex);
+        ossl_ffc_params_set_h(ffc, gctx->hindex);
     }
     if (gctx->mdname != NULL) {
-        if (!ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
+        if (!ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
             goto end;
     }
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0) {
@@ -537,8 +537,8 @@ static void *dsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
                                          gencb) <= 0)
              goto end;
     }
-    ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,
-                            gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_186_2);
+    ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,
+                                 gctx->gen_type == DSA_PARAMGEN_TYPE_FIPS_186_2);
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         if (ffc->p == NULL
             || ffc->q == NULL

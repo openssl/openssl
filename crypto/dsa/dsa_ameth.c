@@ -300,7 +300,7 @@ static int dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
         if (to->pkey.dsa == NULL)
             return 0;
     }
-    if (!ffc_params_copy(&to->pkey.dsa->params, &from->pkey.dsa->params))
+    if (!ossl_ffc_params_copy(&to->pkey.dsa->params, &from->pkey.dsa->params))
         return 0;
 
     to->pkey.dsa->dirty_cnt++;
@@ -309,7 +309,7 @@ static int dsa_copy_parameters(EVP_PKEY *to, const EVP_PKEY *from)
 
 static int dsa_cmp_parameters(const EVP_PKEY *a, const EVP_PKEY *b)
 {
-    return ffc_params_cmp(&a->pkey.dsa->params, &b->pkey.dsa->params, 1);
+    return ossl_ffc_params_cmp(&a->pkey.dsa->params, &b->pkey.dsa->params, 1);
 }
 
 static int dsa_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
@@ -363,7 +363,7 @@ static int do_dsa_print(BIO *bp, const DSA *x, int off, int ptype)
         goto err;
     if (!ASN1_bn_print(bp, "pub: ", pub_key, NULL, off))
         goto err;
-    if (!ffc_params_print(bp, &x->params, off))
+    if (!ossl_ffc_params_print(bp, &x->params, off))
         goto err;
     ret = 1;
  err:

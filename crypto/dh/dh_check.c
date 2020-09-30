@@ -62,8 +62,8 @@ int DH_check_params(const DH *dh, int *ret)
      * (2b) FFC domain params conform to FIPS-186-4 explicit domain param
      * validity tests.
      */
-    return ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
-                                         FFC_PARAM_TYPE_DH, ret, NULL);
+    return ossl_ffc_params_FIPS186_4_validate(dh->libctx, &dh->params,
+                                              FFC_PARAM_TYPE_DH, ret, NULL);
 }
 #else
 int DH_check_params(const DH *dh, int *ret)
@@ -235,7 +235,7 @@ int DH_check_pub_key_ex(const DH *dh, const BIGNUM *pub_key)
  */
 int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
-    return ffc_validate_public_key(&dh->params, pub_key, ret);
+    return ossl_ffc_validate_public_key(&dh->params, pub_key, ret);
 }
 
 /*
@@ -245,7 +245,7 @@ int DH_check_pub_key(const DH *dh, const BIGNUM *pub_key, int *ret)
  */
 int dh_check_pub_key_partial(const DH *dh, const BIGNUM *pub_key, int *ret)
 {
-    return ffc_validate_public_key_partial(&dh->params, pub_key, ret);
+    return ossl_ffc_validate_public_key_partial(&dh->params, pub_key, ret);
 }
 
 int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
@@ -268,7 +268,7 @@ int dh_check_priv_key(const DH *dh, const BIGNUM *priv_key, int *ret)
         if (BN_cmp(two_powN, dh->params.q) < 0)
             upper = two_powN;
     }
-    if (!ffc_validate_private_key(upper, priv_key, ret))
+    if (!ossl_ffc_validate_private_key(upper, priv_key, ret))
         goto err;
 
     ok = 1;
