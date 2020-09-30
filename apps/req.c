@@ -7,9 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/* We need to use some engine deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
@@ -287,13 +284,11 @@ int req_main(int argc, char **argv)
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_KEYGEN_ENGINE:
-#ifndef OPENSSL_NO_ENGINE
-            gen_eng = ENGINE_by_id(opt_arg());
+            gen_eng = setup_engine(opt_arg(), 0);
             if (gen_eng == NULL) {
                 BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
                 goto opthelp;
             }
-#endif
             break;
         case OPT_KEY:
             keyfile = opt_arg();
@@ -992,7 +987,7 @@ int req_main(int argc, char **argv)
     lh_OPENSSL_STRING_doall(addexts, exts_cleanup);
     lh_OPENSSL_STRING_free(addexts);
 #ifndef OPENSSL_NO_ENGINE
-    ENGINE_free(gen_eng);
+    release_engine(gen_eng);
 #endif
     OPENSSL_free(keyalgstr);
     X509_REQ_free(req);
@@ -1511,7 +1506,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
 
         EVP_PKEY_asn1_get0_info(NULL, pkey_type, NULL, NULL, NULL, ameth);
 #ifndef OPENSSL_NO_ENGINE
-        ENGINE_finish(tmpeng);
+        finish_engine(tmpeng);
 #endif
         if (*pkey_type == EVP_PKEY_RSA) {
             if (p != NULL) {
@@ -1572,7 +1567,7 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
         EVP_PKEY_asn1_get0_info(NULL, NULL, NULL, NULL, &anam, ameth);
         *palgnam = OPENSSL_strdup(anam);
 #ifndef OPENSSL_NO_ENGINE
-        ENGINE_finish(tmpeng);
+        finish_engine(tmpeng);
 #endif
     }
 
