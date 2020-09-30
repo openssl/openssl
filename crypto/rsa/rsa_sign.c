@@ -150,7 +150,7 @@ ENCODE_DIGESTINFO_SHA(sha3_512, 0x0a, SHA512_DIGEST_LENGTH)
         *len = sizeof(digestinfo_##name##_der);                                \
         return digestinfo_##name##_der;
 
-const unsigned char *rsa_digestinfo_encoding(int md_nid, size_t *len)
+const unsigned char *ossl_rsa_digestinfo_encoding(int md_nid, size_t *len)
 {
     switch (md_nid) {
 #ifndef FIPS_MODULE
@@ -250,7 +250,7 @@ static int encode_pkcs1(unsigned char **out, size_t *out_len, int type,
         RSAerr(RSA_F_ENCODE_PKCS1, RSA_R_UNKNOWN_ALGORITHM_TYPE);
         return 0;
     }
-    di_prefix = rsa_digestinfo_encoding(type, &di_prefix_len);
+    di_prefix = ossl_rsa_digestinfo_encoding(type, &di_prefix_len);
     if (di_prefix == NULL) {
         RSAerr(RSA_F_ENCODE_PKCS1,
                RSA_R_THE_ASN1_OBJECT_IDENTIFIER_IS_NOT_KNOWN_FOR_THIS_MD);

@@ -126,7 +126,7 @@ static int rsakem_init(void *vprsactx, void *vrsa, int operation)
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
 
-    if (!rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCAPSULATE)) {
+    if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCAPSULATE)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
@@ -205,7 +205,7 @@ static int rsasve_gen_rand_bytes(RSA *rsa_pub,
     BN_CTX *bnctx;
     BIGNUM *z, *nminus3;
 
-    bnctx = BN_CTX_secure_new_ex(rsa_get0_libctx(rsa_pub));
+    bnctx = BN_CTX_secure_new_ex(ossl_rsa_get0_libctx(rsa_pub));
     if (bnctx == NULL)
         return 0;
 

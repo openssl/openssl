@@ -25,7 +25,7 @@
  * Set protect = 1 for encryption or signing operations, or 0 otherwise. See
  * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-131Ar2.pdf.
  */
-int rsa_check_key(const RSA *rsa, int protect)
+int ossl_rsa_check_key(const RSA *rsa, int protect)
 {
 #if !defined(OPENSSL_NO_FIPS_SECURITYCHECKS)
     if (securitycheck_enabled()) {

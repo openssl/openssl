@@ -777,7 +777,7 @@ static int rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
     RSA_PSS_PARAMS_30 pss_params;
 
     /* Get the defaults from the ONE place */
-    (void)rsa_pss_params_30_set_defaults(&pss_params);
+    (void)ossl_rsa_pss_params_30_set_defaults(&pss_params);
 
     if (pss == NULL)
         return 0;
@@ -790,11 +790,11 @@ static int rsa_pss_get_param_unverified(const RSA_PSS_PARAMS *pss,
     if (pss->saltLength)
         *psaltlen = ASN1_INTEGER_get(pss->saltLength);
     else
-        *psaltlen = rsa_pss_params_30_saltlen(&pss_params);
+        *psaltlen = ossl_rsa_pss_params_30_saltlen(&pss_params);
     if (pss->trailerField)
         *ptrailerField = ASN1_INTEGER_get(pss->trailerField);
     else
-        *ptrailerField = rsa_pss_params_30_trailerfield(&pss_params);;
+        *ptrailerField = ossl_rsa_pss_params_30_trailerfield(&pss_params);;
 
     return 1;
 }
@@ -838,11 +838,13 @@ static int rsa_sync_to_pss_params_30(RSA *rsa)
             return 0;
         md_nid = EVP_MD_type(md);
         mgf1md_nid = EVP_MD_type(mgf1md);
-        if (!rsa_pss_params_30_set_defaults(&pss_params)
-            || !rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
-            || !rsa_pss_params_30_set_maskgenhashalg(&pss_params, mgf1md_nid)
-            || !rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
-            || !rsa_pss_params_30_set_trailerfield(&pss_params, trailerField))
+        if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
+            || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
+            || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
+                                                          mgf1md_nid)
+            || !ossl_rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
+            || !ossl_rsa_pss_params_30_set_trailerfield(&pss_params,
+                                                        trailerField))
             return 0;
         rsa->pss_params = pss_params;
     }
@@ -1214,7 +1216,7 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
     if (RSA_get0_n(rsa) == NULL || RSA_get0_e(rsa) == NULL)
         goto err;
 
-    if (!rsa_todata(rsa, tmpl, NULL))
+    if (!ossl_rsa_todata(rsa, tmpl, NULL))
         goto err;
 
     selection |= OSSL_KEYMGMT_SELECT_PUBLIC_KEY;
@@ -1231,11 +1233,12 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
             goto err;
         md_nid = EVP_MD_type(md);
         mgf1md_nid = EVP_MD_type(mgf1md);
-        if (!rsa_pss_params_30_set_defaults(&pss_params)
-            || !rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
-            || !rsa_pss_params_30_set_maskgenhashalg(&pss_params, mgf1md_nid)
-            || !rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
-            || !rsa_pss_params_30_todata(&pss_params, tmpl, NULL))
+        if (!ossl_rsa_pss_params_30_set_defaults(&pss_params)
+            || !ossl_rsa_pss_params_30_set_hashalg(&pss_params, md_nid)
+            || !ossl_rsa_pss_params_30_set_maskgenhashalg(&pss_params,
+                                                          mgf1md_nid)
+            || !ossl_rsa_pss_params_30_set_saltlen(&pss_params, saltlen)
+            || !ossl_rsa_pss_params_30_todata(&pss_params, tmpl, NULL))
             goto err;
         selection |= OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
     }
@@ -1257,7 +1260,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
 {
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
-    RSA *rsa = rsa_new_with_ctx(pctx->libctx);
+    RSA *rsa = ossl_rsa_new_with_ctx(pctx->libctx);
     RSA_PSS_PARAMS_30 rsa_pss_params = { 0, };
     int ok = 0;
 
@@ -1269,7 +1272,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
     RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
     RSA_set_flags(rsa, rsa_type);
 
-    if (!rsa_pss_params_30_fromdata(&rsa_pss_params, params, pctx->libctx))
+    if (!ossl_rsa_pss_params_30_fromdata(&rsa_pss_params, params, pctx->libctx))
         goto err;
 
     switch (rsa_type) {
@@ -1278,7 +1281,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
          * Were PSS parameters filled in?
          * In that case, something's wrong
          */
-        if (!rsa_pss_params_30_is_unrestricted(&rsa_pss_params))
+        if (!ossl_rsa_pss_params_30_is_unrestricted(&rsa_pss_params))
             goto err;
         break;
     case RSA_FLAG_TYPE_RSASSAPSS:
@@ -1286,11 +1289,11 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
          * Were PSS parameters filled in?  In that case, create the old
          * RSA_PSS_PARAMS structure.  Otherwise, this is an unrestricted key.
          */
-        if (!rsa_pss_params_30_is_unrestricted(&rsa_pss_params)) {
+        if (!ossl_rsa_pss_params_30_is_unrestricted(&rsa_pss_params)) {
             /* Create the older RSA_PSS_PARAMS from RSA_PSS_PARAMS_30 data */
-            int mdnid = rsa_pss_params_30_hashalg(&rsa_pss_params);
-            int mgf1mdnid = rsa_pss_params_30_maskgenhashalg(&rsa_pss_params);
-            int saltlen = rsa_pss_params_30_saltlen(&rsa_pss_params);
+            int mdnid = ossl_rsa_pss_params_30_hashalg(&rsa_pss_params);
+            int mgf1mdnid = ossl_rsa_pss_params_30_maskgenhashalg(&rsa_pss_params);
+            int saltlen = ossl_rsa_pss_params_30_saltlen(&rsa_pss_params);
             const EVP_MD *md = EVP_get_digestbynid(mdnid);
             const EVP_MD *mgf1md = EVP_get_digestbynid(mgf1mdnid);
 
@@ -1303,7 +1306,7 @@ static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
         goto err;
     }
 
-    if (!rsa_fromdata(rsa, params))
+    if (!ossl_rsa_fromdata(rsa, params))
         goto err;
 
     switch (rsa_type) {

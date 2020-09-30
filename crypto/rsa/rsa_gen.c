@@ -92,7 +92,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     }
 
     /* A bad value for e can cause infinite loops */
-    if (e_value != NULL && !rsa_check_public_exponent(e_value)) {
+    if (e_value != NULL && !ossl_rsa_check_public_exponent(e_value)) {
         RSAerr(0, RSA_R_PUB_EXPONENT_OUT_OF_RANGE);
         return 0;
     }
@@ -429,7 +429,7 @@ static int rsa_keygen(OPENSSL_CTX *libctx, RSA *rsa, int bits, int primes,
      * the older rsa_multiprime_keygen().
      */
     if (primes == 2 && bits >= 2048)
-        ok = rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
+        ok = ossl_rsa_sp800_56b_generate_key(rsa, bits, e_value, cb);
 #ifndef FIPS_MODULE
     else
         ok = rsa_multiprime_keygen(rsa, bits, primes, e_value, cb);

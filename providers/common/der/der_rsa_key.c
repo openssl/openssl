@@ -242,8 +242,8 @@ static const unsigned char der_aid_mgf1SHA512_256Identifier[] = {
 static int DER_w_MaskGenAlgorithm(WPACKET *pkt, int tag,
                                   const RSA_PSS_PARAMS_30 *pss)
 {
-    if (pss != NULL && rsa_pss_params_30_maskgenalg(pss) == NID_mgf1) {
-        int maskgenhashalg_nid = rsa_pss_params_30_maskgenhashalg(pss);
+    if (pss != NULL && ossl_rsa_pss_params_30_maskgenalg(pss) == NID_mgf1) {
+        int maskgenhashalg_nid = ossl_rsa_pss_params_30_maskgenhashalg(pss);
         const unsigned char *maskgenalg = NULL;
         size_t maskgenalg_sz = 0;
 
@@ -292,17 +292,18 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
      * intent.  Therefore, we assert that here, the PSS parameters must show
      * that the key is restricted.
      */
-    if (!ossl_assert(pss != NULL && !rsa_pss_params_30_is_unrestricted(pss)))
+    if (!ossl_assert(pss != NULL
+                     && !ossl_rsa_pss_params_30_is_unrestricted(pss)))
         return 0;
 
-    hashalg_nid = rsa_pss_params_30_hashalg(pss);
-    saltlen = rsa_pss_params_30_saltlen(pss);
-    trailerfield = rsa_pss_params_30_trailerfield(pss);
+    hashalg_nid = ossl_rsa_pss_params_30_hashalg(pss);
+    saltlen = ossl_rsa_pss_params_30_saltlen(pss);
+    trailerfield = ossl_rsa_pss_params_30_trailerfield(pss);
 
     /* Getting default values */
-    default_hashalg_nid = rsa_pss_params_30_hashalg(NULL);
-    default_saltlen = rsa_pss_params_30_saltlen(NULL);
-    default_trailerfield = rsa_pss_params_30_trailerfield(NULL);
+    default_hashalg_nid = ossl_rsa_pss_params_30_hashalg(NULL);
+    default_saltlen = ossl_rsa_pss_params_30_saltlen(NULL);
+    default_trailerfield = ossl_rsa_pss_params_30_trailerfield(NULL);
 
     /*
      * From https://tools.ietf.org/html/rfc8017#appendix-A.2.1:
@@ -354,7 +355,7 @@ int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
     int rsa_nid = NID_undef;
     const unsigned char *rsa_oid = NULL;
     size_t rsa_oid_sz = 0;
-    RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30(rsa);
+    RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
 
     switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
     case RSA_FLAG_TYPE_RSA:
@@ -368,7 +369,7 @@ int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
 
     return ossl_DER_w_begin_sequence(pkt, tag)
         && (rsa_nid != NID_rsassaPss
-            || rsa_pss_params_30_is_unrestricted(pss_params)
+            || ossl_rsa_pss_params_30_is_unrestricted(pss_params)
             || ossl_DER_w_RSASSA_PSS_params(pkt, -1, pss_params))
         && ossl_DER_w_precompiled(pkt, -1, rsa_oid, rsa_oid_sz)
         && ossl_DER_w_end_sequence(pkt, tag);

@@ -113,7 +113,7 @@ static int rsa_init(void *vprsactx, void *vrsa, int operation)
         ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
-    if (!rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCRYPT)) {
+    if (!ossl_rsa_check_key(vrsa, operation == EVP_PKEY_OP_ENCRYPT)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY_LENGTH);
         return 0;
     }
@@ -165,11 +165,12 @@ static int rsa_encrypt(void *vprsactx, unsigned char *out, size_t *outlen,
             return 0;
         }
         ret =
-            rsa_padding_add_PKCS1_OAEP_mgf1_ex(prsactx->libctx, tbuf, rsasize,
-                                               in, inlen, prsactx->oaep_label,
-                                               prsactx->oaep_labellen,
-                                               prsactx->oaep_md,
-                                               prsactx->mgf1_md);
+            ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(prsactx->libctx, tbuf,
+                                                    rsasize, in, inlen,
+                                                    prsactx->oaep_label,
+                                                    prsactx->oaep_labellen,
+                                                    prsactx->oaep_md,
+                                                    prsactx->mgf1_md);
 
         if (!ret) {
             OPENSSL_free(tbuf);
@@ -263,11 +264,9 @@ static int rsa_decrypt(void *vprsactx, unsigned char *out, size_t *outlen,
                 ERR_raise(ERR_LIB_PROV, PROV_R_BAD_TLS_CLIENT_VERSION);
                 return 0;
             }
-            ret = rsa_padding_check_PKCS1_type_2_TLS(prsactx->libctx, out,
-                                                     outsize,
-                                                     tbuf, len,
-                                                     prsactx->client_version,
-                                                     prsactx->alt_version);
+            ret = ossl_rsa_padding_check_PKCS1_type_2_TLS(
+                        prsactx->libctx, out, outsize, tbuf, len,
+                        prsactx->client_version, prsactx->alt_version);
         }
         OPENSSL_free(tbuf);
     } else {
