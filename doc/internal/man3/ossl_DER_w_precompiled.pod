@@ -2,16 +2,16 @@
 
 =head1 NAME
 
-DER_w_precompiled
+ossl_DER_w_precompiled
 - internal DER writers for precompiled DER blobs
 
 =head1 SYNOPSIS
 
  #include "internal/der.h"
 
- int DER_w_precompiled(WPACKET *pkt, int tag,
-                       const unsigned char *precompiled,
-                       size_t precompiled_n);
+ int ossl_DER_w_precompiled(WPACKET *pkt, int tag,
+                            const unsigned char *precompiled,
+                            size_t precompiled_n);
 
 =head1 DESCRIPTION
 
@@ -19,15 +19,15 @@ There may be already existing DER blobs that can simply be copied to
 the buffer held by I<pkt>.  For example, precompiled values, such as
 OIDs (for example, C<id-sha256>) or complete AlgorithmIdentifiers
 (for example, C<sha256Identifier>).  To add those as an element in a
-structure being DER encoded, use DER_w_precompiled().
+structure being DER encoded, use ossl_DER_w_precompiled().
 
-DER_w_precompiled() will simply take the DER encoded blob given as
+ossl_DER_w_precompiled() will simply take the DER encoded blob given as
 I<precompiled> with length I<precompiled_n> and add it to the buffer
 held by I<pkt>.
 
 =head1 RETURN VALUES
 
-DER_w_precompiled() returns 1 on success and 0 on failure.  Failure
+ossl_DER_w_precompiled() returns 1 on success and 0 on failure.  Failure
 may mean that the buffer held by the I<pkt> is too small, but may also
 mean that the values given to the functions are invalid, such as the provided
 I<tag> value being too large for the implementation.

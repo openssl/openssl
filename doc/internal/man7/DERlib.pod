@@ -50,10 +50,10 @@ which is defined like this in ASN.1 terms:
 With the DER library, this is the corresponding code, given two OpenSSL
 B<BIGNUM>s I<r> and I<s>:
 
-    int ok = DER_w_begin_sequence(pkt, -1)
-          && DER_w_bn(pkg, -1, s)
-          && DER_w_bn(pkg, -1, r)
-          && DER_w_end_sequence(pkt, -1);
+    int ok = ossl_DER_w_begin_sequence(pkt, -1)
+          && ossl_DER_w_bn(pkg, -1, s)
+          && ossl_DER_w_bn(pkg, -1, r)
+          && ossl_DER_w_end_sequence(pkt, -1);
 
 As an example of the use of I<tag>, an ASN.1 element like this:
 
@@ -61,7 +61,7 @@ As an example of the use of I<tag>, an ASN.1 element like this:
 
 Would be encoded like this:
 
-    DER_w_bn(pkt, 1, v)
+    ossl_DER_w_bn(pkt, 1, v)
 
 =begin comment
 
@@ -116,25 +116,26 @@ value:
                                                      int tag,
                                                      RSA *rsa)
     {
-        return DER_w_begin_sequence(pkt, tag)
-            && (DER_w_begin_sequence(pkt, DER_NO_CONTEXT)
-                && DER_w_ulong(pkt, 2, 20)
-                && DER_w_precompiled(pkt, 1,
-                                     der_mgf1SHA256Identifier,
-                                     sizeof(der_mgf1SHA256Identifier))
-                && DER_w_precompiled(pkt, 0,
-                                     der_sha256Identifier,
-                                     sizeof(der_sha256Identifier))
-                && DER_w_end_sequence(pkt, DER_NO_CONTEXT))
-            && DER_w_precompiled(pkt, DER_NO_CONTEXT,
-                                 der_id_RSASSA_PSS,
-                                 sizeof(der_id_RSASSA_PSS))
-            && DER_w_end_sequence(pkt, tag);
+        return ossl_DER_w_begin_sequence(pkt, tag)
+            && (ossl_DER_w_begin_sequence(pkt, DER_NO_CONTEXT)
+                && ossl_DER_w_ulong(pkt, 2, 20)
+                && ossl_DER_w_precompiled(pkt, 1,
+                                          der_mgf1SHA256Identifier,
+                                          sizeof(der_mgf1SHA256Identifier))
+                && ossl_DER_w_precompiled(pkt, 0,
+                                          der_sha256Identifier,
+                                          sizeof(der_sha256Identifier))
+                && ossl_DER_w_end_sequence(pkt, DER_NO_CONTEXT))
+            && ossl_DER_w_precompiled(pkt, DER_NO_CONTEXT,
+                                      der_id_RSASSA_PSS,
+                                      sizeof(der_id_RSASSA_PSS))
+            && ossl_DER_w_end_sequence(pkt, tag);
     }
 
 =head1 SEE ALSO
 
-L<DER_w_bn(3)>, L<DER_w_begin_sequence(3)>, L<DER_w_precompiled(3)>
+L<ossl_DER_w_bn(3)>, L<ossl_DER_w_begin_sequence(3)>,
+L<ossl_DER_w_precompiled(3)>
 
 =head1 COPYRIGHT
 

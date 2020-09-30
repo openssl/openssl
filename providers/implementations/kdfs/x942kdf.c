@@ -94,14 +94,14 @@ static int DER_w_keyinfo(WPACKET *pkt,
                          const unsigned char *der_oid, size_t der_oidlen,
                          unsigned char **pcounter)
 {
-    return DER_w_begin_sequence(pkt, -1)
+    return ossl_DER_w_begin_sequence(pkt, -1)
            /* Store the initial value of 1 into the counter */
-           && DER_w_octet_string_uint32(pkt, -1, 1)
+           && ossl_DER_w_octet_string_uint32(pkt, -1, 1)
            /* Remember where we stored the counter in the buffer */
            && (pcounter == NULL
                || (*pcounter = WPACKET_get_curr(pkt)) != NULL)
-           && DER_w_precompiled(pkt, -1, der_oid, der_oidlen)
-           && DER_w_end_sequence(pkt, -1);
+           && ossl_DER_w_precompiled(pkt, -1, der_oid, der_oidlen)
+           && ossl_DER_w_end_sequence(pkt, -1);
 }
 
 static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen,
@@ -111,11 +111,11 @@ static int der_encode_sharedinfo(WPACKET *pkt, unsigned char *buf, size_t buflen
 {
     return (buf != NULL ? WPACKET_init_der(pkt, buf, buflen) :
                           WPACKET_init_null_der(pkt))
-           && DER_w_begin_sequence(pkt, -1)
-           && DER_w_octet_string_uint32(pkt, 2, keylen_bits)
-           && (ukm == NULL || DER_w_octet_string(pkt, 0, ukm, ukmlen))
+           && ossl_DER_w_begin_sequence(pkt, -1)
+           && ossl_DER_w_octet_string_uint32(pkt, 2, keylen_bits)
+           && (ukm == NULL || ossl_DER_w_octet_string(pkt, 0, ukm, ukmlen))
            && DER_w_keyinfo(pkt, der_oid, der_oidlen, pcounter)
-           && DER_w_end_sequence(pkt, -1)
+           && ossl_DER_w_end_sequence(pkt, -1)
            && WPACKET_finish(pkt);
 }
 

@@ -264,7 +264,7 @@ static int DER_w_MaskGenAlgorithm(WPACKET *pkt, int tag,
         if (maskgenalg == NULL)
             return 1;
 
-        return DER_w_precompiled(pkt, tag, maskgenalg, maskgenalg_sz);
+        return ossl_DER_w_precompiled(pkt, tag, maskgenalg, maskgenalg_sz);
     }
     return 0;
 }
@@ -275,7 +275,8 @@ static int DER_w_MaskGenAlgorithm(WPACKET *pkt, int tag,
         var##_sz = sizeof(der_oid_id_##name);                           \
         break;
 
-int DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag, const RSA_PSS_PARAMS_30 *pss)
+int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
+                                 const RSA_PSS_PARAMS_30 *pss)
 {
     int hashalg_nid, default_hashalg_nid;
     int saltlen, default_saltlen;
@@ -329,14 +330,14 @@ int DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag, const RSA_PSS_PARAMS_30 *pss)
         return 0;
     }
 
-    return DER_w_begin_sequence(pkt, tag)
+    return ossl_DER_w_begin_sequence(pkt, tag)
         && (trailerfield == default_trailerfield
-            || DER_w_ulong(pkt, 3, trailerfield))
-        && (saltlen == default_saltlen || DER_w_ulong(pkt, 2, saltlen))
+            || ossl_DER_w_ulong(pkt, 3, trailerfield))
+        && (saltlen == default_saltlen || ossl_DER_w_ulong(pkt, 2, saltlen))
         && DER_w_MaskGenAlgorithm(pkt, 1, pss)
         && (hashalg_nid == default_hashalg_nid
-            || DER_w_precompiled(pkt, 0, hashalg, hashalg_sz))
-        && DER_w_end_sequence(pkt, tag);
+            || ossl_DER_w_precompiled(pkt, 0, hashalg, hashalg_sz))
+        && ossl_DER_w_end_sequence(pkt, tag);
 }
 
 /* Aliases so we can have a uniform RSA_CASE */
@@ -348,7 +349,7 @@ int DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag, const RSA_PSS_PARAMS_30 *pss)
     var##_oid_sz = sizeof(der_oid_##name);                              \
     break;
 
-int DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
+int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
 {
     int rsa_nid = NID_undef;
     const unsigned char *rsa_oid = NULL;
@@ -365,10 +366,10 @@ int DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
     if (rsa_oid == NULL)
         return 0;
 
-    return DER_w_begin_sequence(pkt, tag)
+    return ossl_DER_w_begin_sequence(pkt, tag)
         && (rsa_nid != NID_rsassaPss
             || rsa_pss_params_30_is_unrestricted(pss_params)
-            || DER_w_RSASSA_PSS_params(pkt, -1, pss_params))
-        && DER_w_precompiled(pkt, -1, rsa_oid, rsa_oid_sz)
-        && DER_w_end_sequence(pkt, tag);
+            || ossl_DER_w_RSASSA_PSS_params(pkt, -1, pss_params))
+        && ossl_DER_w_precompiled(pkt, -1, rsa_oid, rsa_oid_sz)
+        && ossl_DER_w_end_sequence(pkt, tag);
 }

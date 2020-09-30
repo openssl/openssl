@@ -130,5 +130,5 @@ static const OSSL_DISPATCH der_to_obj_decoder_functions[] = {
     { 0, NULL }
 };
 
-const OSSL_ALGORITHM der_to_obj_algorithm =
+const OSSL_ALGORITHM ossl_der_to_obj_algorithm =
     { "obj", NULL, der_to_obj_decoder_functions };

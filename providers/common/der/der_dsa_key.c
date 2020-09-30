@@ -11,10 +11,11 @@
 #include "internal/packet.h"
 #include "prov/der_dsa.h"
 
-int DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa)
+int ossl_DER_w_algorithmIdentifier_DSA(WPACKET *pkt, int tag, DSA *dsa)
 {
-    return DER_w_begin_sequence(pkt, tag)
+    return ossl_DER_w_begin_sequence(pkt, tag)
         /* No parameters (yet?) */
-        && DER_w_precompiled(pkt, -1, der_oid_id_dsa, sizeof(der_oid_id_dsa))
-        && DER_w_end_sequence(pkt, tag);
+        && ossl_DER_w_precompiled(pkt, -1, der_oid_id_dsa,
+                                  sizeof(der_oid_id_dsa))
+        && ossl_DER_w_end_sequence(pkt, tag);
 }

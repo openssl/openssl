@@ -657,7 +657,7 @@ static int prepare_rsa_params(const void *rsa, int nid,
                     }
                     break;
                 }
-                if (!DER_w_RSASSA_PSS_params(&pkt, -1, pss)
+                if (!ossl_DER_w_RSASSA_PSS_params(&pkt, -1, pss)
                     || !WPACKET_finish(&pkt)
                     || !WPACKET_get_total_written(&pkt, &str_sz))
                     goto err;
