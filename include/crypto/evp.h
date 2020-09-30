@@ -18,6 +18,22 @@
  */
 #define EVP_MD_CTX_FLAG_KEEP_PKEY_CTX   0x0400
 
+/*
+ * An EVP_PKEY can have the following support states:
+ *
+ * Supports legacy implementations only:
+ *
+ *      engine != NULL || keytype == NULL
+ *
+ * Supports provided implementations:
+ *
+ *      engine == NULL && keytype != NULL
+ */
+#define evp_pkey_ctx_is_legacy(ctx)                             \
+    ((ctx)->engine != NULL || (ctx)->keytype == NULL)
+#define evp_pkey_ctx_is_provided(ctx)                           \
+    (!evp_pkey_ctx_is_legacy(ctx))
+
 struct evp_pkey_ctx_st {
     /* Actual operation */
     int operation;

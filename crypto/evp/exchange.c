@@ -197,7 +197,7 @@ int EVP_PKEY_derive_init(EVP_PKEY_CTX *ctx)
      */
     ERR_set_mark();
 
-    if (ctx->keymgmt == NULL)
+    if (evp_pkey_ctx_is_legacy(ctx))
         goto legacy;
 
     /*

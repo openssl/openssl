@@ -80,7 +80,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      */
     ERR_set_mark();
 
-    if (locpctx->engine != NULL || locpctx->keytype == NULL)
+    if (evp_pkey_ctx_is_legacy(locpctx))
         goto legacy;
 
     /*

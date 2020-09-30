@@ -381,7 +381,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
      */
     ERR_set_mark();
 
-    if (ctx->keymgmt == NULL)
+    if (evp_pkey_ctx_is_legacy(ctx))
         goto legacy;
 
     /*
