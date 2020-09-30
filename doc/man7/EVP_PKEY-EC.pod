@@ -166,10 +166,6 @@ An B<EVP_PKEY> EC CDH (Cofactor Diffie-Hellman) key can be generated with a
     EVP_PKEY_CTX *gctx =
         EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
 
-    EVP_PKEY *key = NULL;
-    OSSL_PARAM params[3];
-    EVP_PKEY_CTX *gctx = EVP_PKEY_CTX_new_from_name(NULL, "EC", NULL);
-
     EVP_PKEY_keygen_init(gctx);
 
     params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
