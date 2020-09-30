@@ -151,6 +151,12 @@ __owur int ctx_set_ctlog_list_file(SSL_CTX *ctx, const char *path);
 ENGINE *setup_engine_methods(const char *id, unsigned int methods, int debug);
 # define setup_engine(e, debug) setup_engine_methods(e, (unsigned int)-1, debug)
 void release_engine(ENGINE *e);
+int init_engine(ENGINE *e);
+int finish_engine(ENGINE *e);
+EVP_PKEY *load_engine_private_key(ENGINE *e, const char *keyid,
+                                  const char *pass, const char *desc);
+EVP_PKEY *load_engine_public_key(ENGINE *e, const char *keyid,
+                                 const char *pass, const char *desc);
 
 # ifndef OPENSSL_NO_OCSP
 OCSP_RESPONSE *process_responder(OCSP_REQUEST *req,
