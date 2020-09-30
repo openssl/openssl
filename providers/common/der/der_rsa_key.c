@@ -64,66 +64,66 @@ const unsigned char der_aid_sha1Identifier[] = {
         DER_OID_SZ_id_sha224 + DER_SZ_NULL,                             \
         DER_OID_V_id_sha224,                                            \
         DER_V_NULL
-extern const unsigned char der_aid_sha224Identifier[];
-const unsigned char der_aid_sha224Identifier[] = {
+extern const unsigned char ossl_der_aid_sha224Identifier[];
+const unsigned char ossl_der_aid_sha224Identifier[] = {
     DER_AID_V_sha224Identifier
 };
-#define DER_AID_SZ_sha224Identifier sizeof(der_aid_sha224Identifier)
+#define DER_AID_SZ_sha224Identifier sizeof(ossl_der_aid_sha224Identifier)
 
 #define DER_AID_V_sha256Identifier                                      \
     DER_P_SEQUENCE|DER_F_CONSTRUCTED,                                   \
         DER_OID_SZ_id_sha256 + DER_SZ_NULL,                             \
         DER_OID_V_id_sha256,                                            \
         DER_V_NULL
-extern const unsigned char der_aid_sha256Identifier[];
-const unsigned char der_aid_sha256Identifier[] = {
+extern const unsigned char ossl_der_aid_sha256Identifier[];
+const unsigned char ossl_der_aid_sha256Identifier[] = {
     DER_AID_V_sha256Identifier
 };
-#define DER_AID_SZ_sha256Identifier sizeof(der_aid_sha256Identifier)
+#define DER_AID_SZ_sha256Identifier sizeof(ossl_der_aid_sha256Identifier)
 
 #define DER_AID_V_sha384Identifier                                      \
     DER_P_SEQUENCE|DER_F_CONSTRUCTED,                                   \
         DER_OID_SZ_id_sha384 + DER_SZ_NULL,                             \
         DER_OID_V_id_sha384,                                            \
         DER_V_NULL
-extern const unsigned char der_aid_sha384Identifier[];
-const unsigned char der_aid_sha384Identifier[] = {
+extern const unsigned char ossl_der_aid_sha384Identifier[];
+const unsigned char ossl_der_aid_sha384Identifier[] = {
     DER_AID_V_sha384Identifier
 };
-#define DER_AID_SZ_sha384Identifier sizeof(der_aid_sha384Identifier)
+#define DER_AID_SZ_sha384Identifier sizeof(ossl_der_aid_sha384Identifier)
 
 #define DER_AID_V_sha512Identifier                                      \
     DER_P_SEQUENCE|DER_F_CONSTRUCTED,                                   \
         DER_OID_SZ_id_sha512 + DER_SZ_NULL,                             \
         DER_OID_V_id_sha512,                                            \
         DER_V_NULL
-extern const unsigned char der_aid_sha512Identifier[];
-const unsigned char der_aid_sha512Identifier[] = {
+extern const unsigned char ossl_der_aid_sha512Identifier[];
+const unsigned char ossl_der_aid_sha512Identifier[] = {
     DER_AID_V_sha512Identifier
 };
-#define DER_AID_SZ_sha512Identifier sizeof(der_aid_sha512Identifier)
+#define DER_AID_SZ_sha512Identifier sizeof(ossl_der_aid_sha512Identifier)
 
 #define DER_AID_V_sha512_224Identifier                                  \
     DER_P_SEQUENCE|DER_F_CONSTRUCTED,                                   \
         DER_OID_SZ_id_sha512_224 + DER_SZ_NULL,                         \
         DER_OID_V_id_sha512_224,                                        \
         DER_V_NULL
-extern const unsigned char der_aid_sha512_224Identifier[];
-const unsigned char der_aid_sha512_224Identifier[] = {
+extern const unsigned char ossl_der_aid_sha512_224Identifier[];
+const unsigned char ossl_der_aid_sha512_224Identifier[] = {
     DER_AID_V_sha512_224Identifier
 };
-#define DER_AID_SZ_sha512_224Identifier sizeof(der_aid_sha512_224Identifier)
+#define DER_AID_SZ_sha512_224Identifier sizeof(ossl_der_aid_sha512_224Identifier)
 
 #define DER_AID_V_sha512_256Identifier                                  \
     DER_P_SEQUENCE|DER_F_CONSTRUCTED,                                   \
         DER_OID_SZ_id_sha512_256 + DER_SZ_NULL,                         \
         DER_OID_V_id_sha512_256,                                        \
         DER_V_NULL
-extern const unsigned char der_aid_sha512_256Identifier[];
-const unsigned char der_aid_sha512_256Identifier[] = {
+extern const unsigned char ossl_der_aid_sha512_256Identifier[];
+const unsigned char ossl_der_aid_sha512_256Identifier[] = {
     DER_AID_V_sha512_256Identifier
 };
-#define DER_AID_SZ_sha512_256Identifier sizeof(der_aid_sha512_256Identifier)
+#define DER_AID_SZ_sha512_256Identifier sizeof(ossl_der_aid_sha512_256Identifier)
 
 /*-
  * From https://tools.ietf.org/html/rfc8017#appendix-A.2.1
@@ -271,8 +271,8 @@ static int DER_w_MaskGenAlgorithm(WPACKET *pkt, int tag,
 
 #define OAEP_PSS_MD_CASE(name, var)                                     \
     case NID_##name:                                                    \
-        var = der_oid_id_##name;                                        \
-        var##_sz = sizeof(der_oid_id_##name);                           \
+        var = ossl_der_oid_id_##name;                                   \
+        var##_sz = sizeof(ossl_der_oid_id_##name);                      \
         break;
 
 int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
@@ -341,12 +341,12 @@ int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
 }
 
 /* Aliases so we can have a uniform RSA_CASE */
-#define der_oid_rsassaPss der_oid_id_RSASSA_PSS
+#define ossl_der_oid_rsassaPss ossl_der_oid_id_RSASSA_PSS
 
 #define RSA_CASE(name, var)                                             \
     var##_nid = NID_##name;                                             \
-    var##_oid = der_oid_##name;                                         \
-    var##_oid_sz = sizeof(der_oid_##name);                              \
+    var##_oid = ossl_der_oid_##name;                                    \
+    var##_oid_sz = sizeof(ossl_der_oid_##name);                         \
     break;
 
 int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa)
