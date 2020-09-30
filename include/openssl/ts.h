@@ -486,7 +486,7 @@ int TS_CONF_set_def_policy(CONF *conf, const char *section,
 int TS_CONF_set_policies(CONF *conf, const char *section, TS_RESP_CTX *ctx);
 int TS_CONF_set_digests(CONF *conf, const char *section, TS_RESP_CTX *ctx);
 int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx);
-int TS_CONF_set_clock_precision_digits(CONF *conf, const char *section,
+int TS_CONF_set_clock_precision_digits(const CONF *conf, const char *section,
                                        TS_RESP_CTX *ctx);
 int TS_CONF_set_ordering(CONF *conf, const char *section, TS_RESP_CTX *ctx);
 int TS_CONF_set_tsa_name(CONF *conf, const char *section, TS_RESP_CTX *ctx);

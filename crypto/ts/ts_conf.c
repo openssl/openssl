@@ -17,6 +17,7 @@
 #include <openssl/pem.h>
 #include <openssl/engine.h>
 #include <openssl/ts.h>
+#include <openssl/conf_api.h>
 
 /* Macro definitions for the configuration file. */
 #define BASE_SECTION                    "tsa"
@@ -418,7 +419,7 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     return ret;
 }
 
-int TS_CONF_set_clock_precision_digits(CONF *conf, const char *section,
+int TS_CONF_set_clock_precision_digits(const CONF *conf, const char *section,
                                        TS_RESP_CTX *ctx)
 {
     int ret = 0;
@@ -427,9 +428,7 @@ int TS_CONF_set_clock_precision_digits(CONF *conf, const char *section,
     /*
      * If not specified, set the default value to 0, i.e. sec precision
      */
-    if (!NCONF_get_number_e(conf, section, ENV_CLOCK_PRECISION_DIGITS,
-                            &digits))
-        digits = 0;
+    digits = _CONF_get_number(conf, section, ENV_CLOCK_PRECISION_DIGITS);
     if (digits < 0 || digits > TS_MAX_CLOCK_PRECISION_DIGITS) {
         ts_CONF_invalid(section, ENV_CLOCK_PRECISION_DIGITS);
         goto err;
