@@ -198,7 +198,7 @@ static int dh_match(const void *keydata1, const void *keydata2, int selection)
         FFC_PARAMS *dhparams1 = dh_get0_params((DH *)dh1);
         FFC_PARAMS *dhparams2 = dh_get0_params((DH *)dh2);
 
-        ok = ok && ffc_params_cmp(dhparams1, dhparams2, 1);
+        ok = ok && ossl_ffc_params_cmp(dhparams1, dhparams2, 1);
     }
     return ok;
 }
@@ -239,7 +239,7 @@ static int dh_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_ALL_PARAMETERS) != 0)
-        ok = ok && ffc_params_todata(dh_get0_params(dh), tmpl, NULL);
+        ok = ok && ossl_ffc_params_todata(dh_get0_params(dh), tmpl, NULL);
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
         ok = ok && dh_key_todata(dh, tmpl, NULL);
 
@@ -337,7 +337,7 @@ static ossl_inline int dh_get_params(void *key, OSSL_PARAM params[])
             return 0;
     }
 
-    return ffc_params_todata(dh_get0_params(dh), NULL, params)
+    return ossl_ffc_params_todata(dh_get0_params(dh), NULL, params)
            && dh_key_todata(dh, NULL, params);
 }
 
@@ -511,7 +511,7 @@ static int dh_gen_set_params(void *genctx, const OSSL_PARAM params[])
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (p != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING
-           || ((gctx->group_nid = ffc_named_group_to_uid(p->data)) == NID_undef)) {
+           || ((gctx->group_nid = ossl_ffc_named_group_to_uid(p->data)) == NID_undef)) {
             ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
             return 0;
         }
@@ -620,20 +620,20 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
         /* Copy the template value if one was passed */
         if (gctx->ffc_params != NULL
-            && !ffc_params_copy(ffc, gctx->ffc_params))
+            && !ossl_ffc_params_copy(ffc, gctx->ffc_params))
             goto end;
 
-        if (!ffc_params_set_seed(ffc, gctx->seed, gctx->seedlen))
+        if (!ossl_ffc_params_set_seed(ffc, gctx->seed, gctx->seedlen))
             goto end;
         if (gctx->gindex != -1) {
-            ffc_params_set_gindex(ffc, gctx->gindex);
+            ossl_ffc_params_set_gindex(ffc, gctx->gindex);
             if (gctx->pcounter != -1)
-                ffc_params_set_pcounter(ffc, gctx->pcounter);
+                ossl_ffc_params_set_pcounter(ffc, gctx->pcounter);
         } else if (gctx->hindex != 0) {
-            ffc_params_set_h(ffc, gctx->hindex);
+            ossl_ffc_params_set_h(ffc, gctx->hindex);
         }
         if (gctx->mdname != NULL) {
-            if (!ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
+            if (!ossl_ffc_set_digest(ffc, gctx->mdname, gctx->mdprops))
                 goto end;
         }
         gctx->cb = osslcb;
@@ -664,8 +664,8 @@ static void *dh_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
             goto end;
         if (gctx->priv_len > 0)
             DH_set_length(dh, (long)gctx->priv_len);
-        ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,
-                                gctx->gen_type == DH_PARAMGEN_TYPE_FIPS_186_2);
+        ossl_ffc_params_enable_flags(ffc, FFC_PARAM_FLAG_VALIDATE_LEGACY,
+                                     gctx->gen_type == DH_PARAMGEN_TYPE_FIPS_186_2);
         if (DH_generate_key(dh) <= 0)
             goto end;
     }

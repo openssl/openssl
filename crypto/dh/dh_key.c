@@ -155,7 +155,7 @@ static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
 static int dh_init(DH *dh)
 {
     dh->flags |= DH_FLAG_CACHE_MONT_P;
-    ffc_params_init(&dh->params);
+    ossl_ffc_params_init(&dh->params);
     dh->dirty_cnt++;
     return 1;
 }
@@ -260,8 +260,8 @@ static int generate_key(DH *dh)
                 || dh->length > BN_num_bits(dh->params.q))
                 goto err;
             /* dh->length = maximum bit length of generated private key */
-            if (!ffc_generate_private_key(ctx, &dh->params, dh->length,
-                                          max_strength, priv_key))
+            if (!ossl_ffc_generate_private_key(ctx, &dh->params, dh->length,
+                                               max_strength, priv_key))
                 goto err;
         } else {
 #ifdef FIPS_MODULE
@@ -288,18 +288,18 @@ static int generate_key(DH *dh)
 #endif
             {
                 /* Do a partial check for invalid p, q, g */
-                if (!ffc_params_simple_validate(dh->libctx, &dh->params,
-                                                FFC_PARAM_TYPE_DH))
+                if (!ossl_ffc_params_simple_validate(dh->libctx, &dh->params,
+                                                     FFC_PARAM_TYPE_DH))
                     goto err;
                 /*
                  * For FFC FIPS 186-4 keygen
                  * security strength s = 112,
                  * Max Private key size N = len(q)
                  */
-                if (!ffc_generate_private_key(ctx, &dh->params,
-                                              BN_num_bits(dh->params.q),
-                                              MIN_STRENGTH,
-                                              priv_key))
+                if (!ossl_ffc_generate_private_key(ctx, &dh->params,
+                                                   BN_num_bits(dh->params.q),
+                                                   MIN_STRENGTH,
+                                                   priv_key))
                     goto err;
             }
         }

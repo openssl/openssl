@@ -149,7 +149,7 @@ void DH_free(DH *r)
 
     CRYPTO_THREAD_lock_free(r->lock);
 
-    ffc_params_cleanup(&r->params);
+    ossl_ffc_params_cleanup(&r->params);
     BN_clear_free(r->pub_key);
     BN_clear_free(r->priv_key);
     OPENSSL_free(r);
@@ -204,7 +204,7 @@ int DH_security_bits(const DH *dh)
 void DH_get0_pqg(const DH *dh,
                  const BIGNUM **p, const BIGNUM **q, const BIGNUM **g)
 {
-    ffc_params_get0_pqg(&dh->params, p, q, g);
+    ossl_ffc_params_get0_pqg(&dh->params, p, q, g);
 }
 
 int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
@@ -217,7 +217,7 @@ int DH_set0_pqg(DH *dh, BIGNUM *p, BIGNUM *q, BIGNUM *g)
         || (dh->params.g == NULL && g == NULL))
         return 0;
 
-    ffc_params_set0_pqg(&dh->params, p, q, g);
+    ossl_ffc_params_set0_pqg(&dh->params, p, q, g);
     dh_cache_named_group(dh);
     if (q != NULL)
         dh->length = BN_num_bits(q);
@@ -337,7 +337,7 @@ int dh_ffc_params_fromdata(DH *dh, const OSSL_PARAM params[])
     if (ffc == NULL)
         return 0;
 
-    ret = ffc_params_fromdata(ffc, params);
+    ret = ossl_ffc_params_fromdata(ffc, params);
     if (ret) {
         dh_cache_named_group(dh);
         dh->dirty_cnt++;

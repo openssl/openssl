@@ -76,8 +76,8 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
     }
 
     /* Do a partial check for invalid p, q, g */
-    if (!ffc_params_simple_validate(dsa->libctx, &dsa->params,
-                                    FFC_PARAM_TYPE_DSA))
+    if (!ossl_ffc_params_simple_validate(dsa->libctx, &dsa->params,
+                                         FFC_PARAM_TYPE_DSA))
         goto err;
 
     /*
@@ -85,8 +85,9 @@ static int dsa_keygen(DSA *dsa, int pairwise_test)
      * security strength s = 112,
      * Max Private key size N = len(q)
      */
-    if (!ffc_generate_private_key(ctx, &dsa->params, BN_num_bits(dsa->params.q),
-                                  MIN_STRENGTH, priv_key))
+    if (!ossl_ffc_generate_private_key(ctx, &dsa->params,
+                                       BN_num_bits(dsa->params.q),
+                                       MIN_STRENGTH, priv_key))
         goto err;
 
     if (dsa->pub_key == NULL) {

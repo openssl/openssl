@@ -16,9 +16,10 @@
 #include "internal/ffc.h"
 
 /* FIPS186-4 A.2.2 Unverifiable partial validation of Generator g */
-int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
-                                       const BIGNUM *p, const BIGNUM *q,
-                                       const BIGNUM *g, BIGNUM *tmp, int *ret)
+int ossl_ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
+                                            const BIGNUM *p, const BIGNUM *q,
+                                            const BIGNUM *g, BIGNUM *tmp,
+                                            int *ret)
 {
     /*
      * A.2.2 Step (1) AND
@@ -44,8 +45,9 @@ int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
     return 1;
 }
 
-int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
-                                  int type, int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx,
+                                       const FFC_PARAMS *params, int type,
+                                       int *res, BN_GENCB *cb)
 {
     size_t L, N;
 
@@ -55,14 +57,15 @@ int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ffc_params_FIPS186_4_gen_verify(libctx, (FFC_PARAMS *)params,
-                                           FFC_PARAM_MODE_VERIFY, type,
-                                           L, N, res, cb);
+    return ossl_ffc_params_FIPS186_4_gen_verify(libctx, (FFC_PARAMS *)params,
+                                                FFC_PARAM_MODE_VERIFY, type,
+                                                L, N, res, cb);
 }
 
 /* This may be used in FIPS mode to validate deprecated FIPS-186-2 Params */
-int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
-                                  int type, int *res, BN_GENCB *cb)
+int ossl_ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx,
+                                       const FFC_PARAMS *params, int type,
+                                       int *res, BN_GENCB *cb)
 {
     size_t L, N;
 
@@ -74,9 +77,9 @@ int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
     /* A.1.1.3 Step (1..2) : L = len(p), N = len(q) */
     L = BN_num_bits(params->p);
     N = BN_num_bits(params->q);
-    return ffc_params_FIPS186_2_gen_verify(libctx, (FFC_PARAMS *)params,
-                                           FFC_PARAM_MODE_VERIFY, type,
-                                           L, N, res, cb);
+    return ossl_ffc_params_FIPS186_2_gen_verify(libctx, (FFC_PARAMS *)params,
+                                                FFC_PARAM_MODE_VERIFY, type,
+                                                L, N, res, cb);
 }
 
 /*
@@ -85,7 +88,8 @@ int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
  * extra parameters such as the digest and seed, which may not be available for
  * this test.
  */
-int ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params, int type)
+int ossl_ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                    int type)
 {
     int ret, res = 0;
     int save_gindex;
@@ -101,10 +105,12 @@ int ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params, int type
 
 #ifndef FIPS_MODULE
     if (save_flags & FFC_PARAM_FLAG_VALIDATE_LEGACY)
-        ret = ffc_params_FIPS186_2_validate(libctx, params, type, &res, NULL);
+        ret = ossl_ffc_params_FIPS186_2_validate(libctx, params, type, &res,
+                                                 NULL);
     else
 #endif
-        ret = ffc_params_FIPS186_4_validate(libctx, params, type, &res, NULL);
+        ret = ossl_ffc_params_FIPS186_4_validate(libctx, params, type, &res,
+                                                 NULL);
     params->flags = save_flags;
     params->gindex = save_gindex;
     return ret != FFC_PARAM_RET_STATUS_FAILED;

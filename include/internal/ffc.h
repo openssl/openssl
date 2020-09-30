@@ -27,7 +27,7 @@
 
 /*
  * The mode used by functions that share code for both generation and
- * verification. See ffc_params_FIPS186_4_gen_verify().
+ * verification. See ossl_ffc_params_FIPS186_4_gen_verify().
  */
 #define FFC_PARAM_MODE_VERIFY   0
 #define FFC_PARAM_MODE_GENERATE 1
@@ -113,78 +113,86 @@ typedef struct ffc_params_st {
     const char *mdprops;
 } FFC_PARAMS;
 
-void ffc_params_init(FFC_PARAMS *params);
-void ffc_params_cleanup(FFC_PARAMS *params);
-void ffc_params_set0_pqg(FFC_PARAMS *params, BIGNUM *p, BIGNUM *q, BIGNUM *g);
-void ffc_params_get0_pqg(const FFC_PARAMS *params, const BIGNUM **p,
-                         const BIGNUM **q, const BIGNUM **g);
-void ffc_params_set0_j(FFC_PARAMS *d, BIGNUM *j);
-int ffc_params_set_seed(FFC_PARAMS *params,
-                        const unsigned char *seed, size_t seedlen);
-void ffc_params_set_gindex(FFC_PARAMS *params, int index);
-void ffc_params_set_pcounter(FFC_PARAMS *params, int index);
-void ffc_params_set_h(FFC_PARAMS *params, int index);
-void ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags);
-void ffc_params_enable_flags(FFC_PARAMS *params, unsigned int flags, int enable);
-int ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
+void ossl_ffc_params_init(FFC_PARAMS *params);
+void ossl_ffc_params_cleanup(FFC_PARAMS *params);
+void ossl_ffc_params_set0_pqg(FFC_PARAMS *params, BIGNUM *p, BIGNUM *q,
+                              BIGNUM *g);
+void ossl_ffc_params_get0_pqg(const FFC_PARAMS *params, const BIGNUM **p,
+                              const BIGNUM **q, const BIGNUM **g);
+void ossl_ffc_params_set0_j(FFC_PARAMS *d, BIGNUM *j);
+int ossl_ffc_params_set_seed(FFC_PARAMS *params,
+                             const unsigned char *seed, size_t seedlen);
+void ossl_ffc_params_set_gindex(FFC_PARAMS *params, int index);
+void ossl_ffc_params_set_pcounter(FFC_PARAMS *params, int index);
+void ossl_ffc_params_set_h(FFC_PARAMS *params, int index);
+void ossl_ffc_params_set_flags(FFC_PARAMS *params, unsigned int flags);
+void ossl_ffc_params_enable_flags(FFC_PARAMS *params, unsigned int flags,
+                                  int enable);
+int ossl_ffc_set_digest(FFC_PARAMS *params, const char *alg, const char *props);
 
-int ffc_params_set_validate_params(FFC_PARAMS *params,
-                                   const unsigned char *seed, size_t seedlen,
-                                   int counter);
-void ffc_params_get_validate_params(const FFC_PARAMS *params,
-                                    unsigned char **seed, size_t *seedlen,
-                                    int *pcounter);
+int ossl_ffc_params_set_validate_params(FFC_PARAMS *params,
+                                        const unsigned char *seed,
+                                        size_t seedlen, int counter);
+void ossl_ffc_params_get_validate_params(const FFC_PARAMS *params,
+                                         unsigned char **seed, size_t *seedlen,
+                                         int *pcounter);
 
-int ffc_params_copy(FFC_PARAMS *dst, const FFC_PARAMS *src);
-int ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q);
+int ossl_ffc_params_copy(FFC_PARAMS *dst, const FFC_PARAMS *src);
+int ossl_ffc_params_cmp(const FFC_PARAMS *a, const FFC_PARAMS *b, int ignore_q);
 
 #ifndef FIPS_MODULE
-int ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent);
+int ossl_ffc_params_print(BIO *bp, const FFC_PARAMS *ffc, int indent);
 #endif /* FIPS_MODULE */
 
 
-int ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                  int type, size_t L, size_t N,
-                                  int *res, BN_GENCB *cb);
-int ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                  int type, size_t L, size_t N,
-                                  int *res, BN_GENCB *cb);
+int ossl_ffc_params_FIPS186_4_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                       int type, size_t L, size_t N,
+                                       int *res, BN_GENCB *cb);
+int ossl_ffc_params_FIPS186_2_generate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                       int type, size_t L, size_t N,
+                                       int *res, BN_GENCB *cb);
 
-int ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int mode, int type, size_t L, size_t N,
-                                    int *res, BN_GENCB *cb);
-int ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx, FFC_PARAMS *params,
-                                    int mode, int type, size_t L, size_t N,
-                                    int *res, BN_GENCB *cb);
+int ossl_ffc_params_FIPS186_4_gen_verify(OPENSSL_CTX *libctx,
+                                         FFC_PARAMS *params, int mode, int type,
+                                         size_t L, size_t N, int *res,
+                                         BN_GENCB *cb);
+int ossl_ffc_params_FIPS186_2_gen_verify(OPENSSL_CTX *libctx,
+                                         FFC_PARAMS *params, int mode, int type,
+                                         size_t L, size_t N, int *res,
+                                         BN_GENCB *cb);
 
-int ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params, int type);
-int ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
-                                  int type, int *res, BN_GENCB *cb);
-int ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx, const FFC_PARAMS *params,
-                                  int type, int *res, BN_GENCB *cb);
+int ossl_ffc_params_simple_validate(OPENSSL_CTX *libctx, FFC_PARAMS *params,
+                                    int type);
+int ossl_ffc_params_FIPS186_4_validate(OPENSSL_CTX *libctx,
+                                       const FFC_PARAMS *params,
+                                       int type, int *res, BN_GENCB *cb);
+int ossl_ffc_params_FIPS186_2_validate(OPENSSL_CTX *libctx,
+                                       const FFC_PARAMS *params,
+                                       int type, int *res, BN_GENCB *cb);
 
-int ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
-                             int N, int s, BIGNUM *priv);
+int ossl_ffc_generate_private_key(BN_CTX *ctx, const FFC_PARAMS *params,
+                                  int N, int s, BIGNUM *priv);
 
-int ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
-                                       const BIGNUM *p, const BIGNUM *q,
-                                       const BIGNUM *g, BIGNUM *tmp, int *ret);
+int ossl_ffc_params_validate_unverifiable_g(BN_CTX *ctx, BN_MONT_CTX *mont,
+                                            const BIGNUM *p, const BIGNUM *q,
+                                            const BIGNUM *g, BIGNUM *tmp,
+                                            int *ret);
 
-int ffc_validate_public_key(const FFC_PARAMS *params, const BIGNUM *pub_key,
-                            int *ret);
-int ffc_validate_public_key_partial(const FFC_PARAMS *params,
-                                    const BIGNUM *pub_key, int *ret);
-int ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
-                             int *ret);
+int ossl_ffc_validate_public_key(const FFC_PARAMS *params,
+                                 const BIGNUM *pub_key, int *ret);
+int ossl_ffc_validate_public_key_partial(const FFC_PARAMS *params,
+                                         const BIGNUM *pub_key, int *ret);
+int ossl_ffc_validate_private_key(const BIGNUM *upper, const BIGNUM *priv_key,
+                                 int *ret);
 
-int ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *tmpl,
-                      OSSL_PARAM params[]);
-int ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
-int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
-int ffc_named_group_to_uid(const char *name);
-const char *ffc_named_group_from_uid(int nid);
-int ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
-const char *ffc_params_flags_to_name(int flags);
-int ffc_params_flags_from_name(const char *name);
+int ossl_ffc_params_todata(const FFC_PARAMS *ffc, OSSL_PARAM_BLD *tmpl,
+                           OSSL_PARAM params[]);
+int ossl_ffc_params_fromdata(FFC_PARAMS *ffc, const OSSL_PARAM params[]);
+int ossl_ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
+int ossl_ffc_named_group_to_uid(const char *name);
+const char *ossl_ffc_named_group_from_uid(int nid);
+int ossl_ffc_set_group_pqg(FFC_PARAMS *ffc, const char *group_name);
+const char *ossl_ffc_params_flags_to_name(int flags);
+int ossl_ffc_params_flags_from_name(const char *name);
 
 #endif /* OSSL_INTERNAL_FFC_H */

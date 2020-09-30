@@ -42,14 +42,14 @@ int dh_generate_ffc_parameters(DH *dh, int type, int pbits, int qbits,
 
 #ifndef FIPS_MODULE
     if (type == DH_PARAMGEN_TYPE_FIPS_186_2)
-        ret = ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
-                                            FFC_PARAM_TYPE_DH,
-                                            pbits, qbits, &res, cb);
+        ret = ossl_ffc_params_FIPS186_2_generate(dh->libctx, &dh->params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 pbits, qbits, &res, cb);
     else
 #endif
-        ret = ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
-                                            FFC_PARAM_TYPE_DH,
-                                            pbits, qbits, &res, cb);
+        ret = ossl_ffc_params_FIPS186_4_generate(dh->libctx, &dh->params,
+                                                 FFC_PARAM_TYPE_DH,
+                                                 pbits, qbits, &res, cb);
     if (ret > 0)
         dh->dirty_cnt++;
     return ret;
@@ -102,7 +102,7 @@ static int dh_gen_named_group(OPENSSL_CTX *libctx, DH *ret, int prime_len)
 
     dh = dh_new_by_nid_ex(libctx, nid);
     if (dh != NULL
-        && ffc_params_copy(&ret->params, &dh->params)) {
+        && ossl_ffc_params_copy(&ret->params, &dh->params)) {
         ok = 1;
         ret->dirty_cnt++;
     }
