@@ -69,7 +69,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
         return 0;
 
     locpctx = ctx->pctx;
-    evp_pkey_ctx_free_old_ops(locpctx);
+    ossl_evp_pkey_ctx_free_old_ops(locpctx);
 
     if (props == NULL)
         props = locpctx->propquery;
@@ -87,8 +87,9 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
      * Ensure that the key is provided, either natively, or as a cached export.
      */
     tmp_keymgmt = locpctx->keymgmt;
-    provkey = evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
-                                          &tmp_keymgmt, locpctx->propquery);
+    provkey = ossl_evp_pkey_export_to_provider(locpctx->pkey, locpctx->libctx,
+                                               &tmp_keymgmt,
+                                               locpctx->propquery);
     if (provkey == NULL) {
         /*
          * If we couldn't find a keymgmt at all try legacy.
@@ -168,9 +169,8 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
             mdname = canon_mdname(EVP_MD_name(type));
     } else {
         if (mdname == NULL) {
-            if (evp_keymgmt_util_get_deflt_digest_name(tmp_keymgmt, provkey,
-                                                       locmdname,
-                                                       sizeof(locmdname)) > 0) {
+            if (ossl_evp_keymgmt_util_get_deflt_digest_name(
+                    tmp_keymgmt, provkey, locmdname, sizeof(locmdname)) > 0) {
                 mdname = canon_mdname(locmdname);
             }
         }
@@ -180,7 +180,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
              * We're about to get a new digest so clear anything associated with
              * an old digest.
              */
-            evp_md_ctx_clear_digest(ctx, 1);
+            ossl_evp_md_ctx_clear_digest(ctx, 1);
 
             /* legacy code support for engines */
             ERR_set_mark();
@@ -226,7 +226,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     goto end;
 
  err:
-    evp_pkey_ctx_free_old_ops(locpctx);
+    ossl_evp_pkey_ctx_free_old_ops(locpctx);
     locpctx->operation = EVP_PKEY_OP_UNDEFINED;
     return 0;
 
@@ -239,7 +239,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
     ERR_pop_to_mark();
 
     if (type == NULL && mdname != NULL)
-        type = evp_get_digestbyname_ex(locpctx->libctx, mdname);
+        type = ossl_evp_get_digestbyname_ex(locpctx->libctx, mdname);
 
     if (ctx->pctx->pmeth == NULL) {
         EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
@@ -304,7 +304,7 @@ static int do_sigver_init(EVP_MD_CTX *ctx, EVP_PKEY_CTX **pctx,
  end:
 #ifndef FIPS_MODULE
     if (ret > 0)
-        ret = evp_pkey_ctx_use_cached_data(locpctx);
+        ret = ossl_evp_pkey_ctx_use_cached_data(locpctx);
 #endif
 
     return ret > 0 ? 1 : 0;

@@ -23,18 +23,19 @@
 static int match_type(const EVP_KEYMGMT *keymgmt1, const EVP_KEYMGMT *keymgmt2)
 {
     const OSSL_PROVIDER *prov2 = EVP_KEYMGMT_provider(keymgmt2);
-    const char *name2 = evp_first_name(prov2, EVP_KEYMGMT_number(keymgmt2));
+    const char *name2 = ossl_evp_first_name(prov2,
+                                            EVP_KEYMGMT_number(keymgmt2));
 
     return EVP_KEYMGMT_is_a(keymgmt1, name2);
 }
 
-int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg)
+int ossl_evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg)
 {
     struct evp_keymgmt_util_try_import_data_st *data = arg;
 
     /* Just in time creation of keydata */
     if (data->keydata == NULL
-        && (data->keydata = evp_keymgmt_newdata(data->keymgmt)) == NULL) {
+        && (data->keydata = ossl_evp_keymgmt_newdata(data->keymgmt)) == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
         return 0;
     }
@@ -46,12 +47,12 @@ int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg)
     if (params[0].key == NULL)
         return 1;
 
-    return evp_keymgmt_import(data->keymgmt, data->keydata, data->selection,
-                              params);
+    return ossl_evp_keymgmt_import(data->keymgmt, data->keydata,
+                                   data->selection, params);
 }
 
-int evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
-                                 void *keydata)
+int ossl_evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
+                                      void *keydata)
 {
     if (pkey == NULL || keymgmt == NULL || keydata == NULL
         || !EVP_PKEY_set_type_by_keymgmt(pkey, keymgmt)) {
@@ -59,32 +60,33 @@ int evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
         return 0;
     }
     pkey->keydata = keydata;
-    evp_keymgmt_util_cache_keyinfo(pkey);
+    ossl_evp_keymgmt_util_cache_keyinfo(pkey);
     return 1;
 }
 
-EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata)
+EVP_PKEY *ossl_evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata)
 {
     EVP_PKEY *pkey = NULL;
 
     if (keymgmt == NULL
         || keydata == NULL
         || (pkey = EVP_PKEY_new()) == NULL
-        || !evp_keymgmt_util_assign_pkey(pkey, keymgmt, keydata)) {
+        || !ossl_evp_keymgmt_util_assign_pkey(pkey, keymgmt, keydata)) {
         EVP_PKEY_free(pkey);
         return NULL;
     }
     return pkey;
 }
 
-int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
+int ossl_evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
                             OSSL_CALLBACK *export_cb, void *export_cbarg)
 {
-    return evp_keymgmt_export(pk->keymgmt, pk->keydata, selection,
+    return ossl_evp_keymgmt_export(pk->keymgmt, pk->keydata, selection,
                               export_cb, export_cbarg);
 }
 
-void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
+void *ossl_evp_keymgmt_util_export_to_provider(EVP_PKEY *pk,
+                                               EVP_KEYMGMT *keymgmt)
 {
     struct evp_keymgmt_util_try_import_data_st import_data;
     size_t i = 0;
@@ -102,15 +104,15 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
         return pk->keydata;
 
     /* If this key is already exported to |keymgmt|, no more to do */
-    i = evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
+    i = ossl_evp_keymgmt_util_find_operation_cache_index(pk, keymgmt);
     if (i < OSSL_NELEM(pk->operation_cache)
         && pk->operation_cache[i].keymgmt != NULL)
         return pk->operation_cache[i].keydata;
 
     /* If the "origin" |keymgmt| doesn't support exporting, give up */
     /*
-     * TODO(3.0) consider an evp_keymgmt_export() return value that indicates
-     * that the method is unsupported.
+     * TODO(3.0) consider an ossl_evp_keymgmt_export() return value that
+     * indicates that the method is unsupported.
      */
     if (pk->keymgmt->export == NULL)
         return NULL;
@@ -138,31 +140,33 @@ void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt)
      */
 
     /* Setup for the export callback */
-    import_data.keydata = NULL;  /* evp_keymgmt_util_try_import will create it */
+    import_data.keydata = NULL;  /* ossl_evp_keymgmt_util_try_import will create it */
     import_data.keymgmt = keymgmt;
     import_data.selection = OSSL_KEYMGMT_SELECT_ALL;
 
     /*
-     * The export function calls the callback (evp_keymgmt_util_try_import),
+     * The export function calls the callback (ossl_evp_keymgmt_util_try_import),
      * which does the import for us.  If successful, we're done.
      */
-    if (!evp_keymgmt_util_export(pk, OSSL_KEYMGMT_SELECT_ALL,
-                                 &evp_keymgmt_util_try_import, &import_data)) {
+    if (!ossl_evp_keymgmt_util_export(pk, OSSL_KEYMGMT_SELECT_ALL,
+                                      &ossl_evp_keymgmt_util_try_import,
+                                      &import_data)) {
         /* If there was an error, bail out */
-        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+        ossl_evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
 
     /* Add the new export to the operation cache */
-    if (!evp_keymgmt_util_cache_keydata(pk, i, keymgmt, import_data.keydata)) {
-        evp_keymgmt_freedata(keymgmt, import_data.keydata);
+    if (!ossl_evp_keymgmt_util_cache_keydata(pk, i, keymgmt,
+                                             import_data.keydata)) {
+        ossl_evp_keymgmt_freedata(keymgmt, import_data.keydata);
         return NULL;
     }
 
     return import_data.keydata;
 }
 
-void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
+void ossl_evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
 {
     size_t i, end = OSSL_NELEM(pk->operation_cache);
 
@@ -173,14 +177,14 @@ void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk)
 
             pk->operation_cache[i].keymgmt = NULL;
             pk->operation_cache[i].keydata = NULL;
-            evp_keymgmt_freedata(keymgmt, keydata);
+            ossl_evp_keymgmt_freedata(keymgmt, keydata);
             EVP_KEYMGMT_free(keymgmt);
         }
     }
 }
 
-size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
-                                                   EVP_KEYMGMT *keymgmt)
+size_t ossl_evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
+                                                        EVP_KEYMGMT *keymgmt)
 {
     size_t i, end = OSSL_NELEM(pk->operation_cache);
 
@@ -192,8 +196,8 @@ size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
     return i;
 }
 
-int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
-                                   EVP_KEYMGMT *keymgmt, void *keydata)
+int ossl_evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+                                        EVP_KEYMGMT *keymgmt, void *keydata)
 {
     if (keydata != NULL) {
         if (!EVP_KEYMGMT_up_ref(keymgmt))
@@ -204,7 +208,7 @@ int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
     return 1;
 }
 
-void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
+void ossl_evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
 {
     /*
      * Cache information about the provider "origin" key.
@@ -222,7 +226,7 @@ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
                                              &security_bits);
         params[2] = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_MAX_SIZE, &size);
         params[3] = OSSL_PARAM_construct_end();
-        if (evp_keymgmt_get_params(pk->keymgmt, pk->keydata, params)) {
+        if (ossl_evp_keymgmt_get_params(pk->keymgmt, pk->keydata, params)) {
             pk->cache.size = size;
             pk->cache.bits = bits;
             pk->cache.security_bits = security_bits;
@@ -230,35 +234,35 @@ void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk)
     }
 }
 
-void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                                int selection, const OSSL_PARAM params[])
+void *ossl_evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                     int selection, const OSSL_PARAM params[])
 {
     void *keydata = NULL;
 
-    if ((keydata = evp_keymgmt_newdata(keymgmt)) == NULL
-        || !evp_keymgmt_import(keymgmt, keydata, selection, params)
-        || !evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
-        evp_keymgmt_freedata(keymgmt, keydata);
+    if ((keydata = ossl_evp_keymgmt_newdata(keymgmt)) == NULL
+        || !ossl_evp_keymgmt_import(keymgmt, keydata, selection, params)
+        || !ossl_evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
+        ossl_evp_keymgmt_freedata(keymgmt, keydata);
         keydata = NULL;
     }
     return keydata;
 }
 
-int evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
+int ossl_evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
 {
     /* Check if key is even assigned */
     if (pk->keymgmt == NULL)
         return 0;
 
-    return evp_keymgmt_has(pk->keymgmt, pk->keydata, selection);
+    return ossl_evp_keymgmt_has(pk->keymgmt, pk->keydata, selection);
 }
 
 /*
- * evp_keymgmt_util_match() doesn't just look at the provider side "origin",
- * but also in the operation cache to see if there's any common keymgmt that
- * supplies OP_keymgmt_match.
+ * ossl_evp_keymgmt_util_match() doesn't just look at the provider side
+ * "origin", but also in the operation cache to see if there's any common
+ * keymgmt that supplies OP_keymgmt_match.
  *
- * evp_keymgmt_util_match() adheres to the return values that EVP_PKEY_eq()
+ * ossl_evp_keymgmt_util_match() adheres to the return values that EVP_PKEY_eq()
  * and EVP_PKEY_parameters_eq() return, i.e.:
  *
  *  1   same key
@@ -266,7 +270,7 @@ int evp_keymgmt_util_has(EVP_PKEY *pk, int selection)
  * -1   not same key type
  * -2   unsupported operation
  */
-int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
+int ossl_evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
 {
     EVP_KEYMGMT *keymgmt1 = NULL, *keymgmt2 = NULL;
     void *keydata1 = NULL, *keydata2 = NULL;
@@ -287,7 +291,7 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
          * The condition for a successful cross export is that the
          * keydata to be exported is NULL (typed, but otherwise empty
          * EVP_PKEY), or that it was possible to export it with
-         * evp_keymgmt_util_export_to_provider().
+         * ossl_evp_keymgmt_util_export_to_provider().
          *
          * We use |ok| to determine if it's ok to cross export one way,
          * but also to determine if we should attempt a cross export
@@ -314,7 +318,7 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
             ok = 1;
             if (keydata1 != NULL) {
                 tmp_keydata =
-                    evp_keymgmt_util_export_to_provider(pk1, keymgmt2);
+                    ossl_evp_keymgmt_util_export_to_provider(pk1, keymgmt2);
                 ok = (tmp_keydata != NULL);
             }
             if (ok) {
@@ -334,7 +338,7 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
             ok = 1;
             if (keydata2 != NULL) {
                 tmp_keydata =
-                    evp_keymgmt_util_export_to_provider(pk2, keymgmt1);
+                    ossl_evp_keymgmt_util_export_to_provider(pk2, keymgmt1);
                 ok = (tmp_keydata != NULL);
             }
             if (ok) {
@@ -355,10 +359,10 @@ int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection)
     if (keydata1 == NULL || keydata2 == NULL)
         return 0;
     /* If both keydata are non-NULL, we let the backend decide */
-    return evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
+    return ossl_evp_keymgmt_match(keymgmt1, keydata1, keydata2, selection);
 }
 
-int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
+int ossl_evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
 {
     /* Save copies of pointers we want to play with without affecting |to| */
     EVP_KEYMGMT *to_keymgmt = to->keymgmt;
@@ -379,7 +383,7 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
     if (to_keymgmt == from->keymgmt && to_keymgmt->copy != NULL) {
         /* Make sure there's somewhere to copy to */
         if (to_keydata == NULL
-            && ((to_keydata = alloc_keydata = evp_keymgmt_newdata(to_keymgmt))
+            && ((to_keydata = alloc_keydata = ossl_evp_keymgmt_newdata(to_keymgmt))
                 == NULL)) {
             ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
             return 0;
@@ -389,8 +393,8 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
          * |to| and |from| have the same keymgmt, and the copy function is
          * implemented, so just copy and be done
          */
-        if (!evp_keymgmt_copy(to_keymgmt, to_keydata, from->keydata,
-                              selection))
+        if (!ossl_evp_keymgmt_copy(to_keymgmt, to_keydata, from->keydata,
+                                   selection))
             return 0;
     } else if (match_type(to_keymgmt, from->keymgmt)) {
         struct evp_keymgmt_util_try_import_data_st import_data;
@@ -399,16 +403,16 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
         import_data.keydata = to_keydata;
         import_data.selection = selection;
 
-        if (!evp_keymgmt_util_export(from, selection,
-                                     &evp_keymgmt_util_try_import,
-                                     &import_data)) {
-            evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
+        if (!ossl_evp_keymgmt_util_export(from, selection,
+                                          &ossl_evp_keymgmt_util_try_import,
+                                          &import_data)) {
+            ossl_evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
             return 0;
         }
 
         /*
          * In case to_keydata was previously unallocated,
-         * evp_keymgmt_util_try_import() may have created it for us.
+         * ossl_evp_keymgmt_util_try_import() may have created it for us.
          */
         if (to_keydata == NULL)
             to_keydata = alloc_keydata = import_data.keydata;
@@ -421,30 +425,30 @@ int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection)
      * We only need to set the |to| type when its |keymgmt| isn't set.
      * We can then just set its |keydata| to what we have, which might
      * be exactly what it had when entering this function.
-     * This is a bit different from using evp_keymgmt_util_assign_pkey(),
+     * This is a bit different from using ossl_evp_keymgmt_util_assign_pkey(),
      * which isn't as careful with |to|'s original |keymgmt|, since it's
      * meant to forcibly reassign an EVP_PKEY no matter what, which is
      * why we don't use that one here.
      */
     if (to->keymgmt == NULL
         && !EVP_PKEY_set_type_by_keymgmt(to, to_keymgmt)) {
-        evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
+        ossl_evp_keymgmt_freedata(to_keymgmt, alloc_keydata);
         return 0;
     }
     to->keydata = to_keydata;
-    evp_keymgmt_util_cache_keyinfo(to);
+    ossl_evp_keymgmt_util_cache_keyinfo(to);
 
     return 1;
 }
 
-void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                           void *genctx, OSSL_CALLBACK *cb, void *cbarg)
+void *ossl_evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                void *genctx, OSSL_CALLBACK *cb, void *cbarg)
 {
     void *keydata = NULL;
 
-    if ((keydata = evp_keymgmt_gen(keymgmt, genctx, cb, cbarg)) == NULL
-        || !evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
-        evp_keymgmt_freedata(keymgmt, keydata);
+    if ((keydata = ossl_evp_keymgmt_gen(keymgmt, genctx, cb, cbarg)) == NULL
+        || !ossl_evp_keymgmt_util_assign_pkey(target, keymgmt, keydata)) {
+        ossl_evp_keymgmt_freedata(keymgmt, keydata);
         keydata = NULL;
     }
 
@@ -457,9 +461,9 @@ void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
  * SN_undef, since that corresponds to what EVP_PKEY_get_default_nid()
  * returns for no digest.
  */
-int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
-                                           void *keydata,
-                                           char *mdname, size_t mdname_sz)
+int ossl_evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
+                                                void *keydata,
+                                                char *mdname, size_t mdname_sz)
 {
     OSSL_PARAM params[3];
     char mddefault[100] = "";
@@ -476,7 +480,7 @@ int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
                                          sizeof(mdmandatory));
     params[2] = OSSL_PARAM_construct_end();
 
-    if (!evp_keymgmt_get_params(keymgmt, keydata, params))
+    if (!ossl_evp_keymgmt_get_params(keymgmt, keydata, params))
         return 0;
 
     if (OSSL_PARAM_modified(params + 1)) {

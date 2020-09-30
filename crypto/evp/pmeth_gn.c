@@ -27,7 +27,7 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
     if (ctx == NULL)
         goto not_supported;
 
-    evp_pkey_ctx_free_old_ops(ctx);
+    ossl_evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
     if (ctx->keymgmt == NULL || ctx->keymgmt->gen_init == NULL)
@@ -36,12 +36,13 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
     switch (operation) {
     case EVP_PKEY_OP_PARAMGEN:
         ctx->op.keymgmt.genctx =
-            evp_keymgmt_gen_init(ctx->keymgmt,
-                                 OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+            ossl_evp_keymgmt_gen_init(ctx->keymgmt,
+                                      OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
         break;
     case EVP_PKEY_OP_KEYGEN:
         ctx->op.keymgmt.genctx =
-            evp_keymgmt_gen_init(ctx->keymgmt, OSSL_KEYMGMT_SELECT_KEYPAIR);
+            ossl_evp_keymgmt_gen_init(ctx->keymgmt,
+                                      OSSL_KEYMGMT_SELECT_KEYPAIR);
         break;
     }
 
@@ -77,7 +78,7 @@ static int gen_init(EVP_PKEY_CTX *ctx, int operation)
 
  end:
     if (ret <= 0 && ctx != NULL) {
-        evp_pkey_ctx_free_old_ops(ctx);
+        ossl_evp_pkey_ctx_free_old_ops(ctx);
         ctx->operation = EVP_PKEY_OP_UNDEFINED;
     }
     return ret;
@@ -157,7 +158,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
      * space for backward compatibility.  It's ok that we attach a local
      * variable, as it should only be useful in the calls down from here.
      * This is cleared as soon as it isn't useful any more, i.e. directly
-     * after the evp_keymgmt_util_gen() call.
+     * after the ossl_evp_keymgmt_util_gen() call.
      */
     ctx->keygen_info = gentmp;
     ctx->keygen_info_count = 2;
@@ -166,8 +167,8 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
     if (ctx->pkey != NULL) {
         EVP_KEYMGMT *tmp_keymgmt = ctx->keymgmt;
         void *keydata =
-            evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
-                                        &tmp_keymgmt, ctx->propquery);
+            ossl_evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                             &tmp_keymgmt, ctx->propquery);
 
         if (tmp_keymgmt == NULL)
             goto not_supported;
@@ -175,17 +176,19 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
          * It's ok if keydata is NULL here.  The backend is expected to deal
          * with that as it sees fit.
          */
-        ret = evp_keymgmt_gen_set_template(ctx->keymgmt,
-                                           ctx->op.keymgmt.genctx, keydata);
+        ret = ossl_evp_keymgmt_gen_set_template(ctx->keymgmt,
+                                                ctx->op.keymgmt.genctx,
+                                                keydata);
     }
 
     /*
-     * the returned value from evp_keymgmt_util_gen() is cached in *ppkey,
+     * the returned value from ossl_evp_keymgmt_util_gen() is cached in *ppkey,
      * so we so not need to save it, just check it.
      */
     ret = ret
-        && (evp_keymgmt_util_gen(*ppkey, ctx->keymgmt, ctx->op.keymgmt.genctx,
-                                 ossl_callback_to_pkey_gencb, ctx)
+        && (ossl_evp_keymgmt_util_gen(*ppkey, ctx->keymgmt,
+                                      ctx->op.keymgmt.genctx,
+                                      ossl_callback_to_pkey_gencb, ctx)
             != NULL);
 
     ctx->keygen_info = NULL;
@@ -193,11 +196,11 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 #ifndef FIPS_MODULE
     /* In case |*ppkey| was originally a legacy key */
     if (ret)
-        evp_pkey_free_legacy(*ppkey);
+        ossl_evp_pkey_free_legacy(*ppkey);
 #endif
 
     /*
-     * Because we still have legacy keys, and evp_pkey_downgrade()
+     * Because we still have legacy keys, and ossl_evp_pkey_downgrade()
      * TODO remove this #legacy internal keys are gone
      */
     (*ppkey)->type = ctx->legacy_keytype;
@@ -208,7 +211,7 @@ int EVP_PKEY_gen(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey)
 #ifdef FIPS_MODULE
     goto not_supported;
 #else
-    if (ctx->pkey && !evp_pkey_downgrade(ctx->pkey))
+    if (ctx->pkey && !ossl_evp_pkey_downgrade(ctx->pkey))
         goto not_accessible;
     switch (ctx->operation) {
     case EVP_PKEY_OP_PARAMGEN:
@@ -331,7 +334,7 @@ static int fromdata_init(EVP_PKEY_CTX *ctx, int operation)
     if (ctx == NULL || ctx->keytype == NULL)
         goto not_supported;
 
-    evp_pkey_ctx_free_old_ops(ctx);
+    ossl_evp_pkey_ctx_free_old_ops(ctx);
     if (ctx->keymgmt == NULL)
         goto not_supported;
 
@@ -380,8 +383,8 @@ int EVP_PKEY_fromdata(EVP_PKEY_CTX *ctx, EVP_PKEY **ppkey, OSSL_PARAM params[])
         selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
     else
         selection = OSSL_KEYMGMT_SELECT_ALL;
-    keydata = evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection,
-                                        params);
+    keydata = ossl_evp_keymgmt_util_fromdata(*ppkey, ctx->keymgmt, selection,
+                                             params);
 
     if (keydata == NULL)
         return 0;
@@ -400,8 +403,8 @@ const OSSL_PARAM *EVP_PKEY_param_fromdata_settable(EVP_PKEY_CTX *ctx)
 {
     /* We call fromdata_init to get ctx->keymgmt populated */
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
-        return evp_keymgmt_import_types(ctx->keymgmt,
-                                        OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+        return ossl_evp_keymgmt_import_types(ctx->keymgmt,
+                                             OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
     return NULL;
 }
 
@@ -409,7 +412,7 @@ const OSSL_PARAM *EVP_PKEY_key_fromdata_settable(EVP_PKEY_CTX *ctx)
 {
     /* We call fromdata_init to get ctx->keymgmt populated */
     if (fromdata_init(ctx, EVP_PKEY_OP_UNDEFINED))
-        return evp_keymgmt_import_types(ctx->keymgmt,
-                                        OSSL_KEYMGMT_SELECT_ALL);
+        return ossl_evp_keymgmt_import_types(ctx->keymgmt,
+                                             OSSL_KEYMGMT_SELECT_ALL);
     return NULL;
 }

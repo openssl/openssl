@@ -172,8 +172,9 @@ encoder_construct_EVP_PKEY(OSSL_ENCODER_INSTANCE *encoder_inst, void *arg)
         if (k_prov != e_prov) {
             data->encoder_inst = encoder_inst;
 
-            if (!evp_keymgmt_export(pk->keymgmt, pk->keydata, data->selection,
-                                    &encoder_import_cb, data))
+            if (!ossl_evp_keymgmt_export(pk->keymgmt, pk->keydata,
+                                         data->selection,
+                                         &encoder_import_cb, data))
                 return NULL;
             data->obj = data->constructed_obj;
         } else {

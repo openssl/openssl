@@ -22,7 +22,7 @@
 
 EVP_CIPHER *EVP_CIPHER_meth_new(int cipher_type, int block_size, int key_len)
 {
-    EVP_CIPHER *cipher = evp_cipher_new();
+    EVP_CIPHER *cipher = ossl_evp_cipher_new();
 
     if (cipher != NULL) {
         cipher->nid = cipher_type;

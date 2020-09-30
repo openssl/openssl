@@ -182,7 +182,7 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
 
     if (evp_pkey_is_assigned(x)
         && evp_pkey_is_provided(x)
-        && evp_pkey_copy_downgraded(&copy, x))
+        && ossl_evp_pkey_copy_downgraded(&copy, x))
         x = copy;
 
     if (x->ameth == NULL || x->ameth->old_priv_encode == NULL) {

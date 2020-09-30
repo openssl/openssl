@@ -301,15 +301,15 @@ OSSL_PROVIDER *EVP_SIGNATURE_provider(const EVP_SIGNATURE *signature)
 EVP_SIGNATURE *EVP_SIGNATURE_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                                    const char *properties)
 {
-    return evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
-                             evp_signature_from_dispatch,
-                             (int (*)(void *))EVP_SIGNATURE_up_ref,
-                             (void (*)(void *))EVP_SIGNATURE_free);
+    return ossl_evp_generic_fetch(ctx, OSSL_OP_SIGNATURE, algorithm, properties,
+                                  evp_signature_from_dispatch,
+                                  (int (*)(void *))EVP_SIGNATURE_up_ref,
+                                  (void (*)(void *))EVP_SIGNATURE_free);
 }
 
 int EVP_SIGNATURE_is_a(const EVP_SIGNATURE *signature, const char *name)
 {
-    return evp_is_a(signature->prov, signature->name_id, NULL, name);
+    return ossl_evp_is_a(signature->prov, signature->name_id, NULL, name);
 }
 
 int EVP_SIGNATURE_number(const EVP_SIGNATURE *signature)
@@ -322,10 +322,10 @@ void EVP_SIGNATURE_do_all_provided(OPENSSL_CTX *libctx,
                                               void *arg),
                                    void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
-                       (void (*)(void *, void *))fn, arg,
-                       evp_signature_from_dispatch,
-                       (void (*)(void *))EVP_SIGNATURE_free);
+    ossl_evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
+                            (void (*)(void *, void *))fn, arg,
+                            evp_signature_from_dispatch,
+                            (void (*)(void *))EVP_SIGNATURE_free);
 }
 
 
@@ -334,7 +334,7 @@ void EVP_SIGNATURE_names_do_all(const EVP_SIGNATURE *signature,
                                 void *data)
 {
     if (signature->prov != NULL)
-        evp_names_do_all(signature->prov, signature->name_id, fn, data);
+        ossl_evp_names_do_all(signature->prov, signature->name_id, fn, data);
 }
 
 const OSSL_PARAM *EVP_SIGNATURE_gettable_ctx_params(const EVP_SIGNATURE *sig)
@@ -372,7 +372,7 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
         return -2;
     }
 
-    evp_pkey_ctx_free_old_ops(ctx);
+    ossl_evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = operation;
 
     /*
@@ -389,8 +389,8 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
      *  If not, go legacy
      */
     tmp_keymgmt = ctx->keymgmt;
-    provkey = evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
-                                          &tmp_keymgmt, ctx->propquery);
+    provkey = ossl_evp_pkey_export_to_provider(ctx->pkey, ctx->libctx,
+                                               &tmp_keymgmt, ctx->propquery);
     if (tmp_keymgmt == NULL)
         goto legacy;
     if (!EVP_KEYMGMT_up_ref(tmp_keymgmt)) {
@@ -526,12 +526,12 @@ static int evp_pkey_signature_init(EVP_PKEY_CTX *ctx, int operation)
  end:
 #ifndef FIPS_MODULE
     if (ret > 0)
-        ret = evp_pkey_ctx_use_cached_data(ctx);
+        ret = ossl_evp_pkey_ctx_use_cached_data(ctx);
 #endif
 
     return ret;
  err:
-    evp_pkey_ctx_free_old_ops(ctx);
+    ossl_evp_pkey_ctx_free_old_ops(ctx);
     ctx->operation = EVP_PKEY_OP_UNDEFINED;
     return ret;
 }

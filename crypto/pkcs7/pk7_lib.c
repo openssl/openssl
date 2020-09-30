@@ -318,7 +318,7 @@ int PKCS7_SIGNER_INFO_set(PKCS7_SIGNER_INFO *p7i, X509 *x509, EVP_PKEY *pkey,
      * Meanwhile, we downgrade the key.
      * #legacy
      */
-    if (!evp_pkey_downgrade(pkey)) {
+    if (!ossl_evp_pkey_downgrade(pkey)) {
         PKCS7err(PKCS7_F_PKCS7_SIGNER_INFO_SET,
                  PKCS7_R_SIGNING_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
         goto err;

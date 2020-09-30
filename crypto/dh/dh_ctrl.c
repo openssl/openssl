@@ -250,7 +250,7 @@ int EVP_PKEY_CTX_set_dh_kdf_type(EVP_PKEY_CTX *ctx, int kdf)
                                             (char *)kdf_type, 0);
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -278,7 +278,7 @@ int EVP_PKEY_CTX_get_dh_kdf_type(EVP_PKEY_CTX *ctx)
                                             kdf_type, sizeof(kdf_type));
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -314,7 +314,7 @@ int EVP_PKEY_CTX_set0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT *oid)
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_CEK_ALG,
                                             (char *)oid_name, 0);
     *p = OSSL_PARAM_construct_end();
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -342,7 +342,7 @@ int EVP_PKEY_CTX_get0_dh_kdf_oid(EVP_PKEY_CTX *ctx, ASN1_OBJECT **oid)
                                             oid_name, sizeof(oid_name));
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -381,7 +381,7 @@ int EVP_PKEY_CTX_set_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD *md)
                                             (char *)md_name, 0);
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -408,7 +408,7 @@ int EVP_PKEY_CTX_get_dh_kdf_md(EVP_PKEY_CTX *ctx, const EVP_MD **pmd)
                                             name, sizeof(name));
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -450,7 +450,7 @@ int EVP_PKEY_CTX_set_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int inlen)
                                        &len);
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -478,7 +478,7 @@ int EVP_PKEY_CTX_get_dh_kdf_outlen(EVP_PKEY_CTX *ctx, int *plen)
                                        &len);
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -521,7 +521,7 @@ int EVP_PKEY_CTX_set0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char *ukm, int len)
                                             (size_t)len);
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_set_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_set_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */
@@ -553,7 +553,7 @@ int EVP_PKEY_CTX_get0_dh_kdf_ukm(EVP_PKEY_CTX *ctx, unsigned char **pukm)
                                        &ukmlen);
     *p = OSSL_PARAM_construct_end();
 
-    ret = evp_pkey_ctx_get_params_strict(ctx, params);
+    ret = ossl_evp_pkey_ctx_get_params_strict(ctx, params);
     if (ret == -2) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);
         /* Uses the same return values as EVP_PKEY_CTX_ctrl */

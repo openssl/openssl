@@ -102,7 +102,8 @@ int ASN1_item_verify_with_libctx(const ASN1_ITEM *it, const X509_ALGOR *alg,
     EVP_MD_CTX *ctx;
     int rv = -1;
 
-    if ((ctx = evp_md_ctx_new_with_libctx(pkey, id, libctx, propq)) != NULL) {
+    if ((ctx = ossl_evp_md_ctx_new_with_libctx(pkey, id, libctx, propq))
+            != NULL) {
         rv = ASN1_item_verify_ctx(it, alg, signature, data, ctx);
         EVP_PKEY_CTX_free(EVP_MD_CTX_pkey_ctx(ctx));
         EVP_MD_CTX_free(ctx);

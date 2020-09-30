@@ -71,11 +71,11 @@ static void seterr(void)
 }
 
 PARAM_FUNCTIONS(EVP_CIPHER,
-                evp_do_ciph_getparams, get_params,
-                evp_do_ciph_ctx_getparams, get_ctx_params,
-                evp_do_ciph_ctx_setparams, set_ctx_params)
+                ossl_evp_do_ciph_getparams, get_params,
+                ossl_evp_do_ciph_ctx_getparams, get_ctx_params,
+                ossl_evp_do_ciph_ctx_setparams, set_ctx_params)
 
 PARAM_FUNCTIONS(EVP_MD,
-                evp_do_md_getparams, get_params,
-                evp_do_md_ctx_getparams, get_ctx_params,
-                evp_do_md_ctx_setparams, set_ctx_params)
+                ossl_evp_do_md_getparams, get_params,
+                ossl_evp_do_md_ctx_getparams, get_ctx_params,
+                ossl_evp_do_md_ctx_setparams, set_ctx_params)

@@ -1006,7 +1006,7 @@ int EVP_PKEY_CTX_get_rsa_oaep_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return -1;
 
     /* May be NULL meaning "unknown" */
-    *md = evp_get_digestbyname_ex(ctx->libctx, name);
+    *md = ossl_evp_get_digestbyname_ex(ctx->libctx, name);
 
     return 1;
 }
@@ -1159,7 +1159,7 @@ int EVP_PKEY_CTX_get_rsa_mgf1_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         return -1;
 
     /* May be NULL meaning "unknown" */
-    *md = evp_get_digestbyname_ex(ctx->libctx, name);
+    *md = ossl_evp_get_digestbyname_ex(ctx->libctx, name);
 
     return 1;
 }

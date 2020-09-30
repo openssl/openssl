@@ -91,13 +91,13 @@ int EVP_KDF_number(const EVP_KDF *kdf)
 const char *EVP_KDF_name(const EVP_KDF *kdf)
 {
     if (kdf->prov != NULL)
-        return evp_first_name(kdf->prov, kdf->name_id);
+        return ossl_evp_first_name(kdf->prov, kdf->name_id);
     return NULL;
 }
 
 int EVP_KDF_is_a(const EVP_KDF *kdf, const char *name)
 {
-    return evp_is_a(kdf->prov, kdf->name_id, NULL, name);
+    return ossl_evp_is_a(kdf->prov, kdf->name_id, NULL, name);
 }
 
 const OSSL_PROVIDER *EVP_KDF_provider(const EVP_KDF *kdf)
@@ -177,5 +177,5 @@ void EVP_KDF_names_do_all(const EVP_KDF *kdf,
                           void *data)
 {
     if (kdf->prov != NULL)
-        evp_names_do_all(kdf->prov, kdf->name_id, fn, data);
+        ossl_evp_names_do_all(kdf->prov, kdf->name_id, fn, data);
 }

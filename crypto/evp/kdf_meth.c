@@ -150,9 +150,9 @@ static void *evp_kdf_from_dispatch(int name_id,
 EVP_KDF *EVP_KDF_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
-                             evp_kdf_from_dispatch, evp_kdf_up_ref,
-                             evp_kdf_free);
+    return ossl_evp_generic_fetch(libctx, OSSL_OP_KDF, algorithm, properties,
+                                  evp_kdf_from_dispatch, evp_kdf_up_ref,
+                                  evp_kdf_free);
 }
 
 int EVP_KDF_up_ref(EVP_KDF *kdf)
@@ -190,7 +190,7 @@ void EVP_KDF_do_all_provided(OPENSSL_CTX *libctx,
                              void (*fn)(EVP_KDF *kdf, void *arg),
                              void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_KDF,
-                       (void (*)(void *, void *))fn, arg,
-                       evp_kdf_from_dispatch, evp_kdf_free);
+    ossl_evp_generic_do_all(libctx, OSSL_OP_KDF,
+                            (void (*)(void *, void *))fn, arg,
+                            evp_kdf_from_dispatch, evp_kdf_free);
 }

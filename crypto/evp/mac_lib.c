@@ -165,13 +165,13 @@ int EVP_MAC_number(const EVP_MAC *mac)
 const char *EVP_MAC_name(const EVP_MAC *mac)
 {
     if (mac->prov != NULL)
-        return evp_first_name(mac->prov, mac->name_id);
+        return ossl_evp_first_name(mac->prov, mac->name_id);
     return NULL;
 }
 
 int EVP_MAC_is_a(const EVP_MAC *mac, const char *name)
 {
-    return evp_is_a(mac->prov, mac->name_id, NULL, name);
+    return ossl_evp_is_a(mac->prov, mac->name_id, NULL, name);
 }
 
 void EVP_MAC_names_do_all(const EVP_MAC *mac,
@@ -179,5 +179,5 @@ void EVP_MAC_names_do_all(const EVP_MAC *mac,
                           void *data)
 {
     if (mac->prov != NULL)
-        evp_names_do_all(mac->prov, mac->name_id, fn, data);
+        ossl_evp_names_do_all(mac->prov, mac->name_id, fn, data);
 }

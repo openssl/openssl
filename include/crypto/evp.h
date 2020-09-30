@@ -527,11 +527,11 @@ typedef struct {
     unsigned int tag_len;
 } evp_cipher_aead_asn1_params;
 
-int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
-                                evp_cipher_aead_asn1_params *params);
+int ossl_evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                     evp_cipher_aead_asn1_params *params);
 
-int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
-                                evp_cipher_aead_asn1_params *params);
+int ossl_evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                     evp_cipher_aead_asn1_params *params);
 
 /*
  * An EVP_PKEY can have the following states:
@@ -601,7 +601,7 @@ struct evp_pkey_st {
 # endif
 
     /* == Common attributes == */
-    /* If these are modified, so must evp_pkey_downgrade() */
+    /* If these are modified, so must ossl_evp_pkey_downgrade() */
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(X509_ATTRIBUTE) *attributes; /* [ 0 ] */
@@ -683,13 +683,13 @@ void openssl_add_all_ciphers_int(void);
 void openssl_add_all_digests_int(void);
 void evp_cleanup_int(void);
 void evp_app_cleanup_int(void);
-void *evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
-                                  EVP_KEYMGMT **keymgmt,
-                                  const char *propquery);
+void *ossl_evp_pkey_export_to_provider(EVP_PKEY *pk, OPENSSL_CTX *libctx,
+                                       EVP_KEYMGMT **keymgmt,
+                                       const char *propquery);
 #ifndef FIPS_MODULE
-int evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
-int evp_pkey_downgrade(EVP_PKEY *pk);
-void evp_pkey_free_legacy(EVP_PKEY *x);
+int ossl_evp_pkey_copy_downgraded(EVP_PKEY **dest, const EVP_PKEY *src);
+int ossl_evp_pkey_downgrade(EVP_PKEY *pk);
+void ossl_evp_pkey_free_legacy(EVP_PKEY *x);
 #endif
 
 /*
@@ -705,70 +705,73 @@ struct evp_keymgmt_util_try_import_data_st {
 
     int selection;
 };
-int evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg);
-int evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
-                                 void *keydata);
-EVP_PKEY *evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata);
+int ossl_evp_keymgmt_util_try_import(const OSSL_PARAM params[], void *arg);
+int ossl_evp_keymgmt_util_assign_pkey(EVP_PKEY *pkey, EVP_KEYMGMT *keymgmt,
+                                      void *keydata);
+EVP_PKEY *ossl_evp_keymgmt_util_make_pkey(EVP_KEYMGMT *keymgmt, void *keydata);
 
-int evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
-                            OSSL_CALLBACK *export_cb, void *export_cbarg);
-void *evp_keymgmt_util_export_to_provider(EVP_PKEY *pk, EVP_KEYMGMT *keymgmt);
-size_t evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
-                                                   EVP_KEYMGMT *keymgmt);
-void evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
-int evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
-                                   EVP_KEYMGMT *keymgmt, void *keydata);
-void evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
-void *evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                                int selection, const OSSL_PARAM params[]);
-int evp_keymgmt_util_has(EVP_PKEY *pk, int selection);
-int evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection);
-int evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection);
-void *evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
-                           void *genctx, OSSL_CALLBACK *cb, void *cbarg);
-int evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
-                                           void *keydata,
-                                           char *mdname, size_t mdname_sz);
+int ossl_evp_keymgmt_util_export(const EVP_PKEY *pk, int selection,
+                                 OSSL_CALLBACK *export_cb, void *export_cbarg);
+void *ossl_evp_keymgmt_util_export_to_provider(EVP_PKEY *pk,
+                                               EVP_KEYMGMT *keymgmt);
+size_t ossl_evp_keymgmt_util_find_operation_cache_index(EVP_PKEY *pk,
+                                                        EVP_KEYMGMT *keymgmt);
+void ossl_evp_keymgmt_util_clear_operation_cache(EVP_PKEY *pk);
+int ossl_evp_keymgmt_util_cache_keydata(EVP_PKEY *pk, size_t index,
+                                        EVP_KEYMGMT *keymgmt, void *keydata);
+void ossl_evp_keymgmt_util_cache_keyinfo(EVP_PKEY *pk);
+void *ossl_evp_keymgmt_util_fromdata(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                     int selection, const OSSL_PARAM params[]);
+int ossl_evp_keymgmt_util_has(EVP_PKEY *pk, int selection);
+int ossl_evp_keymgmt_util_match(EVP_PKEY *pk1, EVP_PKEY *pk2, int selection);
+int ossl_evp_keymgmt_util_copy(EVP_PKEY *to, EVP_PKEY *from, int selection);
+void *ossl_evp_keymgmt_util_gen(EVP_PKEY *target, EVP_KEYMGMT *keymgmt,
+                                void *genctx, OSSL_CALLBACK *cb, void *cbarg);
+int ossl_evp_keymgmt_util_get_deflt_digest_name(EVP_KEYMGMT *keymgmt,
+                                                void *keydata,
+                                                char *mdname, size_t mdname_sz);
 
 /*
  * KEYMGMT provider interface functions
  */
-void *evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
-void evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
-int evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
-                           void *keydata, OSSL_PARAM params[]);
-int evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt,
-                           void *keydata, const OSSL_PARAM params[]);
-void *evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection);
-int evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt, void *genctx,
-                                 void *template);
-int evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
-                               const OSSL_PARAM params[]);
-void *evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
-                      OSSL_CALLBACK *cb, void *cbarg);
-void evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);
+void *ossl_evp_keymgmt_newdata(const EVP_KEYMGMT *keymgmt);
+void ossl_evp_keymgmt_freedata(const EVP_KEYMGMT *keymgmt, void *keyddata);
+int ossl_evp_keymgmt_get_params(const EVP_KEYMGMT *keymgmt,
+                                void *keydata, OSSL_PARAM params[]);
+int ossl_evp_keymgmt_set_params(const EVP_KEYMGMT *keymgmt,
+                                void *keydata, const OSSL_PARAM params[]);
+void *ossl_evp_keymgmt_gen_init(const EVP_KEYMGMT *keymgmt, int selection);
+int ossl_evp_keymgmt_gen_set_template(const EVP_KEYMGMT *keymgmt,
+                                      void *genctx, void *template);
+int ossl_evp_keymgmt_gen_set_params(const EVP_KEYMGMT *keymgmt, void *genctx,
+                                    const OSSL_PARAM params[]);
+void *ossl_evp_keymgmt_gen(const EVP_KEYMGMT *keymgmt, void *genctx,
+                           OSSL_CALLBACK *cb, void *cbarg);
+void ossl_evp_keymgmt_gen_cleanup(const EVP_KEYMGMT *keymgmt, void *genctx);
 
-void *evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
-                       const void *objref, size_t objref_sz);
+void *ossl_evp_keymgmt_load(const EVP_KEYMGMT *keymgmt,
+                            const void *objref, size_t objref_sz);
 
-int evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata, int selection);
-int evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
+int ossl_evp_keymgmt_has(const EVP_KEYMGMT *keymgmt, void *keyddata,
                          int selection);
-int evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
-                      const void *keydata1, const void *keydata2,
-                      int selection);
+int ossl_evp_keymgmt_validate(const EVP_KEYMGMT *keymgmt, void *keydata,
+                              int selection);
+int ossl_evp_keymgmt_match(const EVP_KEYMGMT *keymgmt,
+                           const void *keydata1, const void *keydata2,
+                           int selection);
 
-int evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
-                       int selection, const OSSL_PARAM params[]);
-const OSSL_PARAM *evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
-                                           int selection);
-int evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
-                       int selection, OSSL_CALLBACK *param_cb, void *cbarg);
-const OSSL_PARAM *evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
-                                           int selection);
-int evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
-                     void *keydata_to, const void *keydata_from,
-                     int selection);
+int ossl_evp_keymgmt_import(const EVP_KEYMGMT *keymgmt, void *keydata,
+                            int selection, const OSSL_PARAM params[]);
+const OSSL_PARAM *ossl_evp_keymgmt_import_types(const EVP_KEYMGMT *keymgmt,
+                                                int selection);
+int ossl_evp_keymgmt_export(const EVP_KEYMGMT *keymgmt, void *keydata,
+                            int selection,
+                            OSSL_CALLBACK *param_cb, void *cbarg);
+const OSSL_PARAM *ossl_evp_keymgmt_export_types(const EVP_KEYMGMT *keymgmt,
+                                                int selection);
+int ossl_evp_keymgmt_copy(const EVP_KEYMGMT *keymgmt,
+                          void *keydata_to, const void *keydata_from,
+                          int selection);
 
 /* Pulling defines out of C source files */
 
@@ -785,8 +788,10 @@ void evp_encode_ctx_set_flags(EVP_ENCODE_CTX *ctx, unsigned int flags);
 /* Use the SRP base64 alphabet instead of the standard one */
 #define EVP_ENCODE_CTX_USE_SRP_ALPHABET     2
 
-const EVP_CIPHER *evp_get_cipherbyname_ex(OPENSSL_CTX *libctx, const char *name);
-const EVP_MD *evp_get_digestbyname_ex(OPENSSL_CTX *libctx, const char *name);
+const EVP_CIPHER *ossl_evp_get_cipherbyname_ex(OPENSSL_CTX *libctx,
+                                               const char *name);
+const EVP_MD *ossl_evp_get_digestbyname_ex(OPENSSL_CTX *libctx,
+                                           const char *name);
 
 int pkcs5_pbkdf2_hmac_with_libctx(const char *pass, int passlen,
                                   const unsigned char *salt, int saltlen,
@@ -807,22 +812,23 @@ int pkcs5_pbkdf2_hmac_with_libctx(const char *pass, int passlen,
  *      - EVP_PKEY_CTX_{gettable,settable}_params()
  *
  */
-int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
-int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+int ossl_evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
+int ossl_evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params);
 
-EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
-                                       const ASN1_OCTET_STRING *id,
-                                       OPENSSL_CTX *libctx, const char *propq);
-int evp_pkey_name2type(const char *name);
+EVP_MD_CTX *ossl_evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
+                                            const ASN1_OCTET_STRING *id,
+                                            OPENSSL_CTX *libctx,
+                                            const char *propq);
+int ossl_evp_pkey_name2type(const char *name);
 
-int evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
-int evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
-int evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
+int ossl_evp_pkey_ctx_set1_id_prov(EVP_PKEY_CTX *ctx, const void *id, int len);
+int ossl_evp_pkey_ctx_get1_id_prov(EVP_PKEY_CTX *ctx, void *id);
+int ossl_evp_pkey_ctx_get1_id_len_prov(EVP_PKEY_CTX *ctx, size_t *id_len);
 
-int evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
+int ossl_evp_pkey_ctx_use_cached_data(EVP_PKEY_CTX *ctx);
 #endif /* !defined(FIPS_MODULE) */
-void evp_method_store_flush(OPENSSL_CTX *libctx);
-int evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
-                                   int loadconfig);
+void ossl_evp_method_store_flush(OPENSSL_CTX *libctx);
+int ossl_evp_set_default_properties_int(OPENSSL_CTX *libctx, const char *propq,
+                                        int loadconfig);
 
-void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);
+void ossl_evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force);

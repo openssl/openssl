@@ -138,7 +138,8 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
              * result in the keymgmt.
              */
             if (keymgmt_prov == decoder_prov) {
-                keydata = evp_keymgmt_load(keymgmt, object_ref, object_ref_sz);
+                keydata = ossl_evp_keymgmt_load(keymgmt, object_ref,
+                                                object_ref_sz);
             } else {
                 struct evp_keymgmt_util_try_import_data_st import_data;
 
@@ -152,7 +153,7 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
                  */
                 (void)decoder->export_object(decoderctx,
                                              object_ref, object_ref_sz,
-                                             &evp_keymgmt_util_try_import,
+                                             &ossl_evp_keymgmt_util_try_import,
                                              &import_data);
                 keydata = import_data.keydata;
                 import_data.keydata = NULL;
@@ -160,8 +161,8 @@ static int decoder_construct_EVP_PKEY(OSSL_DECODER_INSTANCE *decoder_inst,
 
             if (keydata != NULL
                 && (pkey =
-                    evp_keymgmt_util_make_pkey(keymgmt, keydata)) == NULL)
-                evp_keymgmt_freedata(keymgmt, keydata);
+                    ossl_evp_keymgmt_util_make_pkey(keymgmt, keydata)) == NULL)
+                ossl_evp_keymgmt_freedata(keymgmt, keydata);
 
             *data->object = pkey;
 

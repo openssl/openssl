@@ -14,7 +14,7 @@
 #include <openssl/params.h>
 #include <openssl/opensslv.h>
 #include "crypto/cryptlib.h"
-#include "crypto/evp.h" /* evp_method_store_flush */
+#include "crypto/evp.h" /* ossl_evp_method_store_flush */
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
 #include "internal/provider.h"
@@ -849,7 +849,7 @@ int ossl_provider_self_test(const OSSL_PROVIDER *prov)
         return 1;
     ret = prov->self_test(prov->provctx);
     if (ret == 0)
-        evp_method_store_flush(ossl_provider_library_context(prov));
+        ossl_evp_method_store_flush(ossl_provider_library_context(prov));
     return ret;
 }
 

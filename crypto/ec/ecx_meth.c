@@ -426,7 +426,7 @@ static int ecx_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
     params = OSSL_PARAM_BLD_to_param(tmpl);
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = ossl_evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
     OSSL_PARAM_BLD_free(tmpl);

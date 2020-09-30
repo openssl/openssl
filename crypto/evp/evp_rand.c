@@ -266,9 +266,9 @@ static void *evp_rand_from_dispatch(int name_id,
 EVP_RAND *EVP_RAND_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                          const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,
-                             evp_rand_from_dispatch, evp_rand_up_ref,
-                             evp_rand_free);
+    return ossl_evp_generic_fetch(libctx, OSSL_OP_RAND, algorithm, properties,
+                                  evp_rand_from_dispatch, evp_rand_up_ref,
+                                  evp_rand_free);
 }
 
 int EVP_RAND_up_ref(EVP_RAND *rand)
@@ -288,12 +288,12 @@ int EVP_RAND_number(const EVP_RAND *rand)
 
 const char *EVP_RAND_name(const EVP_RAND *rand)
 {
-    return evp_first_name(rand->prov, rand->name_id);
+    return ossl_evp_first_name(rand->prov, rand->name_id);
 }
 
 int EVP_RAND_is_a(const EVP_RAND *rand, const char *name)
 {
-    return evp_is_a(rand->prov, rand->name_id, NULL, name);
+    return ossl_evp_is_a(rand->prov, rand->name_id, NULL, name);
 }
 
 const OSSL_PROVIDER *EVP_RAND_provider(const EVP_RAND *rand)
@@ -451,9 +451,9 @@ void EVP_RAND_do_all_provided(OPENSSL_CTX *libctx,
                               void (*fn)(EVP_RAND *rand, void *arg),
                               void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_RAND,
-                       (void (*)(void *, void *))fn, arg,
-                       evp_rand_from_dispatch, evp_rand_free);
+    ossl_evp_generic_do_all(libctx, OSSL_OP_RAND,
+                            (void (*)(void *, void *))fn, arg,
+                            evp_rand_from_dispatch, evp_rand_free);
 }
 
 void EVP_RAND_names_do_all(const EVP_RAND *rand,
@@ -461,7 +461,7 @@ void EVP_RAND_names_do_all(const EVP_RAND *rand,
                            void *data)
 {
     if (rand->prov != NULL)
-        evp_names_do_all(rand->prov, rand->name_id, fn, data);
+        ossl_evp_names_do_all(rand->prov, rand->name_id, fn, data);
 }
 
 static int evp_rand_instantiate_locked

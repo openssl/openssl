@@ -88,7 +88,8 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
             piv = iv;
         }
     } else {
-        if (evp_cipher_asn1_to_param_ex(ctx, calg->parameter, &aparams) <= 0) {
+        if (ossl_evp_cipher_asn1_to_param_ex(ctx, calg->parameter,
+                                             &aparams) <= 0) {
             CMSerr(0, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
             goto err;
         }
@@ -170,7 +171,8 @@ BIO *cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
                 goto err;
         }
 
-        if (evp_cipher_param_to_asn1_ex(ctx, calg->parameter, &aparams) <= 0) {
+        if (ossl_evp_cipher_param_to_asn1_ex(ctx, calg->parameter,
+                                             &aparams) <= 0) {
             CMSerr(CMS_F_CMS_ENCRYPTEDCONTENT_INIT_BIO,
                    CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
             goto err;

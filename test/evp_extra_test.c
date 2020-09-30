@@ -894,8 +894,9 @@ static int test_EC_keygen_with_enc(int idx)
         goto done;
 
     /* Check that the encoding got all the way into the key */
-    if (!TEST_true(evp_keymgmt_util_export(key, OSSL_KEYMGMT_SELECT_ALL,
-                                           ec_export_get_encoding_cb, &enc))
+    if (!TEST_true(ossl_evp_keymgmt_util_export(key, OSSL_KEYMGMT_SELECT_ALL,
+                                                ec_export_get_encoding_cb,
+                                                &enc))
         || !TEST_int_eq(enc, ec_encodings[idx].encoding))
         goto done;
 

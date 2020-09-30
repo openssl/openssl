@@ -32,8 +32,8 @@ int EVP_PKEY_public_check(EVP_PKEY_CTX *ctx)
     key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key,
-                                    OSSL_KEYMGMT_SELECT_PUBLIC_KEY);
+        return ossl_evp_keymgmt_validate(keymgmt, key,
+                                         OSSL_KEYMGMT_SELECT_PUBLIC_KEY);
 
     if (pkey->type == EVP_PKEY_NONE)
         goto not_supported;
@@ -70,8 +70,8 @@ int EVP_PKEY_param_check(EVP_PKEY_CTX *ctx)
     key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key,
-                                    OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
+        return ossl_evp_keymgmt_validate(keymgmt, key,
+                                         OSSL_KEYMGMT_SELECT_ALL_PARAMETERS);
 
     if (pkey->type == EVP_PKEY_NONE)
         goto not_supported;
@@ -108,8 +108,8 @@ int EVP_PKEY_private_check(EVP_PKEY_CTX *ctx)
     key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key,
-                                    OSSL_KEYMGMT_SELECT_PRIVATE_KEY);
+        return ossl_evp_keymgmt_validate(keymgmt, key,
+                                         OSSL_KEYMGMT_SELECT_PRIVATE_KEY);
     /* not supported for legacy keys */
     EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
@@ -130,7 +130,8 @@ int EVP_PKEY_pairwise_check(EVP_PKEY_CTX *ctx)
     key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_KEYPAIR);
+        return ossl_evp_keymgmt_validate(keymgmt, key,
+                                         OSSL_KEYMGMT_SELECT_KEYPAIR);
     /* not supported for legacy keys */
     EVPerr(0, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
     return -2;
@@ -151,7 +152,8 @@ int EVP_PKEY_check(EVP_PKEY_CTX *ctx)
     key = pkey->keydata;
 
     if (key != NULL && keymgmt != NULL)
-        return evp_keymgmt_validate(keymgmt, key, OSSL_KEYMGMT_SELECT_ALL);
+        return ossl_evp_keymgmt_validate(keymgmt, key,
+                                         OSSL_KEYMGMT_SELECT_ALL);
 
     if (pkey->type == EVP_PKEY_NONE)
         goto not_supported;

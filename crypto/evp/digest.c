@@ -23,7 +23,7 @@
 #include "evp_local.h"
 
 
-void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
+void ossl_evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force)
 {
     EVP_MD_free(ctx->fetched_digest);
     ctx->fetched_digest = NULL;
@@ -75,16 +75,17 @@ int EVP_MD_CTX_reset(EVP_MD_CTX *ctx)
     }
 #endif
 
-    evp_md_ctx_clear_digest(ctx, 0);
+    ossl_evp_md_ctx_clear_digest(ctx, 0);
     OPENSSL_cleanse(ctx, sizeof(*ctx));
 
     return 1;
 }
 
 #ifndef FIPS_MODULE
-EVP_MD_CTX *evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
-                                       const ASN1_OCTET_STRING *id,
-                                       OPENSSL_CTX *libctx, const char *propq)
+EVP_MD_CTX *ossl_evp_md_ctx_new_with_libctx(EVP_PKEY *pkey,
+                                            const ASN1_OCTET_STRING *id,
+                                            OPENSSL_CTX *libctx,
+                                            const char *propq)
 {
     EVP_MD_CTX *ctx;
     EVP_PKEY_CTX *pctx = NULL;
@@ -784,7 +785,7 @@ int EVP_MD_CTX_ctrl(EVP_MD_CTX *ctx, int cmd, int p1, void *p2)
     return ret;
 }
 
-EVP_MD *evp_md_new(void)
+EVP_MD *ossl_evp_md_new(void)
 {
     EVP_MD *md = OPENSSL_zalloc(sizeof(*md));
 
@@ -839,7 +840,7 @@ static void *evp_md_from_dispatch(int name_id,
     int fncnt = 0;
 
     /* EVP_MD_fetch() will set the legacy NID if available */
-    if ((md = evp_md_new()) == NULL) {
+    if ((md = ossl_evp_md_new()) == NULL) {
         EVPerr(0, ERR_R_MALLOC_FAILURE);
         return NULL;
     }
@@ -847,7 +848,7 @@ static void *evp_md_from_dispatch(int name_id,
 #ifndef FIPS_MODULE
     /* TODO(3.x) get rid of the need for legacy NIDs */
     md->type = NID_undef;
-    evp_names_do_all(prov, name_id, set_legacy_nid, &md->type);
+    ossl_evp_names_do_all(prov, name_id, set_legacy_nid, &md->type);
     if (md->type == -1) {
         ERR_raise(ERR_LIB_EVP, ERR_R_INTERNAL_ERROR);
         EVP_MD_free(md);
@@ -959,8 +960,9 @@ EVP_MD *EVP_MD_fetch(OPENSSL_CTX *ctx, const char *algorithm,
                      const char *properties)
 {
     EVP_MD *md =
-        evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-                          evp_md_from_dispatch, evp_md_up_ref, evp_md_free);
+        ossl_evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+                               evp_md_from_dispatch, evp_md_up_ref,
+                               evp_md_free);
 
     return md;
 }
@@ -992,7 +994,7 @@ void EVP_MD_do_all_provided(OPENSSL_CTX *libctx,
                             void (*fn)(EVP_MD *mac, void *arg),
                             void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_DIGEST,
-                       (void (*)(void *, void *))fn, arg,
-                       evp_md_from_dispatch, evp_md_free);
+    ossl_evp_generic_do_all(libctx, OSSL_OP_DIGEST,
+                            (void (*)(void *, void *))fn, arg,
+                            evp_md_from_dispatch, evp_md_free);
 }

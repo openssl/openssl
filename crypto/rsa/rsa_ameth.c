@@ -1244,7 +1244,7 @@ static int rsa_int_export_to(const EVP_PKEY *from, int rsa_type,
         goto err;
 
     /* We export, the provider imports */
-    rv = evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
+    rv = ossl_evp_keymgmt_import(to_keymgmt, to_keydata, selection, params);
 
  err:
     OSSL_PARAM_BLD_free_params(params);

@@ -152,9 +152,9 @@ static void *evp_mac_from_dispatch(int name_id,
 EVP_MAC *EVP_MAC_fetch(OPENSSL_CTX *libctx, const char *algorithm,
                        const char *properties)
 {
-    return evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
-                             evp_mac_from_dispatch, evp_mac_up_ref,
-                             evp_mac_free);
+    return ossl_evp_generic_fetch(libctx, OSSL_OP_MAC, algorithm, properties,
+                                  evp_mac_from_dispatch, evp_mac_up_ref,
+                                  evp_mac_free);
 }
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
@@ -197,7 +197,7 @@ void EVP_MAC_do_all_provided(OPENSSL_CTX *libctx,
                              void (*fn)(EVP_MAC *mac, void *arg),
                              void *arg)
 {
-    evp_generic_do_all(libctx, OSSL_OP_MAC,
-                       (void (*)(void *, void *))fn, arg,
-                       evp_mac_from_dispatch, evp_mac_free);
+    ossl_evp_generic_do_all(libctx, OSSL_OP_MAC,
+                            (void (*)(void *, void *))fn, arg,
+                            evp_mac_from_dispatch, evp_mac_free);
 }

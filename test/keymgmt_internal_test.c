@@ -213,10 +213,11 @@ static int test_pass_rsa(FIXTURE *fixture)
         || !TEST_ptr_ne(km1, km2))
         goto err;
 
-    if (!TEST_ptr(provkey = evp_pkey_export_to_provider(pk, NULL, &km1, NULL))
-        || !TEST_true(evp_keymgmt_export(km2, provkey,
-                                         OSSL_KEYMGMT_SELECT_KEYPAIR,
-                                         &export_cb, keydata)))
+    if (!TEST_ptr(provkey = ossl_evp_pkey_export_to_provider(pk, NULL, &km1,
+                                                             NULL))
+        || !TEST_true(ossl_evp_keymgmt_export(km2, provkey,
+                                              OSSL_KEYMGMT_SELECT_KEYPAIR,
+                                              &export_cb, keydata)))
         goto err;
 
     /*

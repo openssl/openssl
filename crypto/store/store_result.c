@@ -207,12 +207,12 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
          * There are two possible cases
          *
          * 1.  The keymgmt is from the same provider as the loader,
-         *     so we can use evp_keymgmt_load()
+         *     so we can use ossl_evp_keymgmt_load()
          * 2.  The keymgmt is from another provider, then we must
          *     do the export/import dance.
          */
         if (EVP_KEYMGMT_provider(keymgmt) == provider) {
-            keydata = evp_keymgmt_load(keymgmt, data->ref, data->ref_size);
+            keydata = ossl_evp_keymgmt_load(keymgmt, data->ref, data->ref_size);
         } else {
             struct evp_keymgmt_util_try_import_data_st import_data;
             OSSL_FUNC_store_export_object_fn *export_object =
@@ -229,7 +229,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
                  */
                 (void)export_object(ctx->loader_ctx,
                                     data->ref, data->ref_size,
-                                    &evp_keymgmt_util_try_import,
+                                    &ossl_evp_keymgmt_util_try_import,
                                     &import_data);
             }
 
@@ -237,7 +237,7 @@ static EVP_PKEY *try_key_ref(struct extracted_param_data_st *data,
         }
     }
     if (keydata != NULL)
-        pk = evp_keymgmt_util_make_pkey(keymgmt, keydata);
+        pk = ossl_evp_keymgmt_util_make_pkey(keymgmt, keydata);
     EVP_KEYMGMT_free(keymgmt);
 
     return pk;
@@ -405,10 +405,10 @@ static int try_key(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                  * The logic is that an EVP_PKEY with actual key material
                  * always has the public half.
                  */
-                if (evp_keymgmt_util_has(pk, OSSL_KEYMGMT_SELECT_PRIVATE_KEY))
+                if (ossl_evp_keymgmt_util_has(pk, OSSL_KEYMGMT_SELECT_PRIVATE_KEY))
                     store_info_new = OSSL_STORE_INFO_new_PKEY;
-                else if (evp_keymgmt_util_has(pk,
-                                              OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
+                else if (ossl_evp_keymgmt_util_has(pk,
+                                                   OSSL_KEYMGMT_SELECT_PUBLIC_KEY))
                     store_info_new = OSSL_STORE_INFO_new_PUBKEY;
                 else
                     store_info_new = OSSL_STORE_INFO_new_PARAMS;

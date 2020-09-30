@@ -232,40 +232,39 @@ int is_partially_overlapping(const void *ptr1, const void *ptr2, int len);
 #include <openssl/types.h>
 #include <openssl/core.h>
 
-void *evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
-                        const char *name, const char *properties,
-                        void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov),
-                        int (*up_ref_method)(void *),
-                        void (*free_method)(void *));
-void *evp_generic_fetch_by_number(OPENSSL_CTX *ctx, int operation_id,
-                                  int name_id, const char *properties,
-                                  void *(*new_method)(int name_id,
-                                                      const OSSL_DISPATCH *fns,
-                                                      OSSL_PROVIDER *prov),
-                                  int (*up_ref_method)(void *),
-                                  void (*free_method)(void *));
-void evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
-                        void (*user_fn)(void *method, void *arg),
-                        void *user_arg,
-                        void *(*new_method)(int name_id,
-                                            const OSSL_DISPATCH *fns,
-                                            OSSL_PROVIDER *prov),
-                        void (*free_method)(void *));
+void *ossl_evp_generic_fetch(OPENSSL_CTX *ctx, int operation_id,
+                             const char *name, const char *properties,
+                             void *(*new_method)(int name_id,
+                                                 const OSSL_DISPATCH *fns,
+                                                 OSSL_PROVIDER *prov),
+                             int (*up_ref_method)(void *),
+                             void (*free_method)(void *));
+void *ossl_evp_generic_fetch_by_number(
+    OPENSSL_CTX *ctx, int operation_id, int name_id, const char *properties,
+    void *(*new_method)(int name_id,
+                        const OSSL_DISPATCH *fns,
+                        OSSL_PROVIDER *prov),
+    int (*up_ref_method)(void *), void (*free_method)(void *));
+void ossl_evp_generic_do_all(OPENSSL_CTX *libctx, int operation_id,
+                             void (*user_fn)(void *method, void *arg),
+                             void *user_arg,
+                             void *(*new_method)(int name_id,
+                                                 const OSSL_DISPATCH *fns,
+                                                 OSSL_PROVIDER *prov),
+                             void (*free_method)(void *));
 
 /* Internal fetchers for method types that are to be combined with others */
-EVP_KEYMGMT *evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
-                                         const char *properties);
+EVP_KEYMGMT *ossl_evp_keymgmt_fetch_by_number(OPENSSL_CTX *ctx, int name_id,
+                                              const char *properties);
 
 /* Internal structure constructors for fetched methods */
-EVP_MD *evp_md_new(void);
-EVP_CIPHER *evp_cipher_new(void);
+EVP_MD *ossl_evp_md_new(void);
+EVP_CIPHER *ossl_evp_cipher_new(void);
 
-int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
-                                    evp_cipher_aead_asn1_params *asn1_params);
-int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
-                                    evp_cipher_aead_asn1_params *asn1_params);
+int ossl_evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                         evp_cipher_aead_asn1_params *asn1_params);
+int ossl_evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+                                         evp_cipher_aead_asn1_params *asn1_params);
 
 /* Helper functions to avoid duplicating code */
 
@@ -280,16 +279,16 @@ int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
  * or the return value from the desired function
  *    (evp_do_param will return it to the caller)
  */
-int evp_do_ciph_getparams(const EVP_CIPHER *ciph, OSSL_PARAM params[]);
-int evp_do_ciph_ctx_getparams(const EVP_CIPHER *ciph, void *provctx,
-                              OSSL_PARAM params[]);
-int evp_do_ciph_ctx_setparams(const EVP_CIPHER *ciph, void *provctx,
-                              OSSL_PARAM params[]);
-int evp_do_md_getparams(const EVP_MD *md, OSSL_PARAM params[]);
-int evp_do_md_ctx_getparams(const EVP_MD *md, void *provctx,
-                            OSSL_PARAM params[]);
-int evp_do_md_ctx_setparams(const EVP_MD *md, void *provctx,
-                            OSSL_PARAM params[]);
+int ossl_evp_do_ciph_getparams(const EVP_CIPHER *ciph, OSSL_PARAM params[]);
+int ossl_evp_do_ciph_ctx_getparams(const EVP_CIPHER *ciph, void *provctx,
+                                   OSSL_PARAM params[]);
+int ossl_evp_do_ciph_ctx_setparams(const EVP_CIPHER *ciph, void *provctx,
+                                   OSSL_PARAM params[]);
+int ossl_evp_do_md_getparams(const EVP_MD *md, OSSL_PARAM params[]);
+int ossl_evp_do_md_ctx_getparams(const EVP_MD *md, void *provctx,
+                                 OSSL_PARAM params[]);
+int ossl_evp_do_md_ctx_setparams(const EVP_MD *md, void *provctx,
+                                 OSSL_PARAM params[]);
 
 OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
 
@@ -311,13 +310,13 @@ OSSL_PARAM *evp_pkey_to_param(EVP_PKEY *pkey, size_t *sz);
         }                                                         \
     }
 
-void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
+void ossl_evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx);
 
 /* OSSL_PROVIDER * is only used to get the library context */
-const char *evp_first_name(const OSSL_PROVIDER *prov, int name_id);
-int evp_is_a(OSSL_PROVIDER *prov, int number,
-             const char *legacy_name, const char *name);
-void evp_names_do_all(OSSL_PROVIDER *prov, int number,
-                      void (*fn)(const char *name, void *data),
-                      void *data);
-int evp_cipher_cache_constants(EVP_CIPHER *cipher);
+const char *ossl_evp_first_name(const OSSL_PROVIDER *prov, int name_id);
+int ossl_evp_is_a(OSSL_PROVIDER *prov, int number,
+                  const char *legacy_name, const char *name);
+void ossl_evp_names_do_all(OSSL_PROVIDER *prov, int number,
+                           void (*fn)(const char *name, void *data),
+                           void *data);
+int ossl_evp_cipher_cache_constants(EVP_CIPHER *cipher);
