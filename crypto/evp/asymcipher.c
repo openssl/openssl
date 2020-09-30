@@ -38,7 +38,7 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation)
      */
     ERR_set_mark();
 
-    if (ctx->engine != NULL || ctx->keytype == NULL)
+    if (evp_pkey_ctx_is_legacy(ctx))
         goto legacy;
 
     /*
