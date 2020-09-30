@@ -101,6 +101,7 @@ STACK_OF(CONF_VALUE) *CONF_get_section(LHASH_OF(CONF_VALUE) *conf,
         return NULL;
     } else {
         CONF ctmp;
+
         CONF_set_nconf(&ctmp, conf);
         return NCONF_get_section(&ctmp, section);
     }
@@ -113,6 +114,7 @@ char *CONF_get_string(LHASH_OF(CONF_VALUE) *conf, const char *group,
         return NCONF_get_string(NULL, group, name);
     } else {
         CONF ctmp;
+
         CONF_set_nconf(&ctmp, conf);
         return NCONF_get_string(&ctmp, group, name);
     }
@@ -129,6 +131,7 @@ long CONF_get_number(LHASH_OF(CONF_VALUE) *conf, const char *group,
         status = NCONF_get_number_e(NULL, group, name, &result);
     } else {
         CONF ctmp;
+
         CONF_set_nconf(&ctmp, conf);
         status = NCONF_get_number_e(&ctmp, group, name, &result);
     }
@@ -162,6 +165,7 @@ int CONF_dump_fp(LHASH_OF(CONF_VALUE) *conf, FILE *out)
 int CONF_dump_bio(LHASH_OF(CONF_VALUE) *conf, BIO *out)
 {
     CONF ctmp;
+
     CONF_set_nconf(&ctmp, conf);
     return NCONF_dump_bio(&ctmp, out);
 }
@@ -327,6 +331,18 @@ int NCONF_get_number_e(const CONF *conf, const char *group, const char *name,
 
     *result = res;
     return 1;
+}
+
+long _CONF_get_number(const CONF *conf, const char *section,
+                      const char *name)
+{
+    int status;
+    long result = 0;
+
+    ERR_set_mark();
+    status = NCONF_get_number_e(conf, section, name, &result);
+    ERR_pop_to_mark();
+    return status == 0 ? 0L : result;
 }
 
 #ifndef OPENSSL_NO_STDIO

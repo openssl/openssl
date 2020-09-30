@@ -2626,7 +2626,6 @@ int cmp_main(int argc, char **argv)
     char mock_server[] = "mock server:1";
     int ret = 0; /* default: failure */
 
-    ERR_clear_error(); /* clear leftover errors on loading libengines.so etc. */
     if (argc <= 1) {
         opt_help(cmp_options);
         goto err;
