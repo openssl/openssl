@@ -288,7 +288,7 @@ static const RSA_PSS_PARAMS_30 default_RSASSA_PSS_params = {
     1                            /* default trailerField (0xBC) */
 };
 
-int rsa_pss_params_30_set_defaults(RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_set_defaults(RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     if (rsa_pss_params == NULL)
         return 0;
@@ -296,7 +296,7 @@ int rsa_pss_params_30_set_defaults(RSA_PSS_PARAMS_30 *rsa_pss_params)
     return 1;
 }
 
-int rsa_pss_params_30_is_unrestricted(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_is_unrestricted(const RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     static RSA_PSS_PARAMS_30 pss_params_cmp = { 0, };
 
@@ -305,15 +305,15 @@ int rsa_pss_params_30_is_unrestricted(const RSA_PSS_PARAMS_30 *rsa_pss_params)
                   sizeof(*rsa_pss_params)) == 0;
 }
 
-int rsa_pss_params_30_copy(RSA_PSS_PARAMS_30 *to,
-                           const RSA_PSS_PARAMS_30 *from)
+int ossl_rsa_pss_params_30_copy(RSA_PSS_PARAMS_30 *to,
+                                const RSA_PSS_PARAMS_30 *from)
 {
     memcpy(to, from, sizeof(*to));
     return 1;
 }
 
-int rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                  int hashalg_nid)
+int ossl_rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                       int hashalg_nid)
 {
     if (rsa_pss_params == NULL)
         return 0;
@@ -321,8 +321,8 @@ int rsa_pss_params_30_set_hashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
     return 1;
 }
 
-int rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                     int maskgenalg_nid)
+int ossl_rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                          int maskgenalg_nid)
 {
     if (rsa_pss_params == NULL)
         return 0;
@@ -330,8 +330,8 @@ int rsa_pss_params_30_set_maskgenalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
     return 1;
 }
 
-int rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                         int maskgenhashalg_nid)
+int ossl_rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                              int maskgenhashalg_nid)
 {
     if (rsa_pss_params == NULL)
         return 0;
@@ -339,8 +339,8 @@ int rsa_pss_params_30_set_maskgenhashalg(RSA_PSS_PARAMS_30 *rsa_pss_params,
     return 1;
 }
 
-int rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                  int saltlen)
+int ossl_rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                       int saltlen)
 {
     if (rsa_pss_params == NULL)
         return 0;
@@ -348,8 +348,8 @@ int rsa_pss_params_30_set_saltlen(RSA_PSS_PARAMS_30 *rsa_pss_params,
     return 1;
 }
 
-int rsa_pss_params_30_set_trailerfield(RSA_PSS_PARAMS_30 *rsa_pss_params,
-                                       int trailerfield)
+int ossl_rsa_pss_params_30_set_trailerfield(RSA_PSS_PARAMS_30 *rsa_pss_params,
+                                            int trailerfield)
 {
     if (rsa_pss_params == NULL)
         return 0;
@@ -357,35 +357,35 @@ int rsa_pss_params_30_set_trailerfield(RSA_PSS_PARAMS_30 *rsa_pss_params,
     return 1;
 }
 
-int rsa_pss_params_30_hashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_hashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     if (rsa_pss_params == NULL)
         return default_RSASSA_PSS_params.hash_algorithm_nid;
     return rsa_pss_params->hash_algorithm_nid;
 }
 
-int rsa_pss_params_30_maskgenalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_maskgenalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     if (rsa_pss_params == NULL)
         return default_RSASSA_PSS_params.mask_gen.algorithm_nid;
     return rsa_pss_params->mask_gen.algorithm_nid;
 }
 
-int rsa_pss_params_30_maskgenhashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_maskgenhashalg(const RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     if (rsa_pss_params == NULL)
         return default_RSASSA_PSS_params.hash_algorithm_nid;
     return rsa_pss_params->mask_gen.hash_algorithm_nid;
 }
 
-int rsa_pss_params_30_saltlen(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_saltlen(const RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     if (rsa_pss_params == NULL)
         return default_RSASSA_PSS_params.salt_len;
     return rsa_pss_params->salt_len;
 }
 
-int rsa_pss_params_30_trailerfield(const RSA_PSS_PARAMS_30 *rsa_pss_params)
+int ossl_rsa_pss_params_30_trailerfield(const RSA_PSS_PARAMS_30 *rsa_pss_params)
 {
     if (rsa_pss_params == NULL)
         return default_RSASSA_PSS_params.trailer_field;

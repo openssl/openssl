@@ -40,8 +40,8 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
                                const unsigned char *from, int flen,
                                const unsigned char *param, int plen)
 {
-    return rsa_padding_add_PKCS1_OAEP_mgf1_ex(NULL, to, tlen, from, flen, param,
-                                              plen, NULL, NULL);
+    return ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(NULL, to, tlen, from, flen,
+                                                   param, plen, NULL, NULL);
 }
 
 /*
@@ -51,11 +51,12 @@ int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,
  * Step numbers are included here but not in the constant time inverse below
  * to avoid complicating an already difficult enough function.
  */
-int rsa_padding_add_PKCS1_OAEP_mgf1_ex(OPENSSL_CTX *libctx, unsigned char *to,
-                                       int tlen, const unsigned char *from,
-                                       int flen, const unsigned char *param,
-                                       int plen, const EVP_MD *md,
-                                       const EVP_MD *mgf1md)
+int ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(OPENSSL_CTX *libctx,
+                                            unsigned char *to, int tlen,
+                                            const unsigned char *from, int flen,
+                                            const unsigned char *param,
+                                            int plen, const EVP_MD *md,
+                                            const EVP_MD *mgf1md)
 {
     int rv = 0;
     int i, emlen = tlen - 1;
@@ -138,8 +139,8 @@ int RSA_padding_add_PKCS1_OAEP_mgf1(unsigned char *to, int tlen,
                                     const unsigned char *param, int plen,
                                     const EVP_MD *md, const EVP_MD *mgf1md)
 {
-    return rsa_padding_add_PKCS1_OAEP_mgf1_ex(NULL, to, tlen, from, flen, param,
-                                              plen, md, mgf1md);
+    return ossl_rsa_padding_add_PKCS1_OAEP_mgf1_ex(NULL, to, tlen, from, flen,
+                                                   param, plen, md, mgf1md);
 }
 
 int RSA_padding_check_PKCS1_OAEP(unsigned char *to, int tlen,

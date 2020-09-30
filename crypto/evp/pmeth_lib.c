@@ -50,7 +50,7 @@ static STACK_OF(EVP_PKEY_METHOD) *app_pkey_methods = NULL;
 /* This array needs to be in order of NIDs */
 static pmeth_fn standard_methods[] = {
 # ifndef OPENSSL_NO_RSA
-    rsa_pkey_method,
+    ossl_rsa_pkey_method,
 # endif
 # ifndef OPENSSL_NO_DH
     dh_pkey_method,
@@ -62,7 +62,7 @@ static pmeth_fn standard_methods[] = {
     ec_pkey_method,
 # endif
 # ifndef OPENSSL_NO_RSA
-    rsa_pss_pkey_method,
+    ossl_rsa_pss_pkey_method,
 # endif
 # ifndef OPENSSL_NO_DH
     dhx_pkey_method,

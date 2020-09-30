@@ -183,8 +183,8 @@ const EVP_PKEY_METHOD *ecx25519_pkey_method(void);
 const EVP_PKEY_METHOD *ecx448_pkey_method(void);
 const EVP_PKEY_METHOD *ed25519_pkey_method(void);
 const EVP_PKEY_METHOD *ed448_pkey_method(void);
-const EVP_PKEY_METHOD *rsa_pkey_method(void);
-const EVP_PKEY_METHOD *rsa_pss_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_rsa_pkey_method(void);
+const EVP_PKEY_METHOD *ossl_rsa_pss_pkey_method(void);
 
 struct evp_mac_st {
     OSSL_PROVIDER *prov;

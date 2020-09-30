@@ -627,7 +627,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     STACK_OF(BIGNUM_const) *exps = NULL;
     STACK_OF(BIGNUM_const) *coeffs = NULL;
     int primes;
-    const RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30((RSA *)rsa);
+    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30((RSA *)rsa);
     int ret = 0;
 
     if (out == NULL || rsa == NULL) {
@@ -655,7 +655,7 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     }
 
     RSA_get0_key(rsa, &rsa_n, &rsa_e, &rsa_d);
-    rsa_get0_all_params((RSA *)rsa, factors, exps, coeffs);
+    ossl_rsa_get0_all_params((RSA *)rsa, factors, exps, coeffs);
     primes = sk_BIGNUM_const_num(factors);
 
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
@@ -714,33 +714,35 @@ static int rsa_to_text(BIO *out, const void *key, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0) {
         switch (RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK)) {
         case RSA_FLAG_TYPE_RSA:
-            if (!rsa_pss_params_30_is_unrestricted(pss_params)) {
+            if (!ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
                 if (BIO_printf(out, "(INVALID PSS PARAMETERS)\n") <= 0)
                     goto err;
             }
             break;
         case RSA_FLAG_TYPE_RSASSAPSS:
-            if (rsa_pss_params_30_is_unrestricted(pss_params)) {
+            if (ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
                 if (BIO_printf(out, "No PSS parameter restrictions\n") <= 0)
                     goto err;
             } else {
-                int hashalg_nid = rsa_pss_params_30_hashalg(pss_params);
-                int maskgenalg_nid = rsa_pss_params_30_maskgenalg(pss_params);
+                int hashalg_nid = ossl_rsa_pss_params_30_hashalg(pss_params);
+                int maskgenalg_nid =
+                    ossl_rsa_pss_params_30_maskgenalg(pss_params);
                 int maskgenhashalg_nid =
-                    rsa_pss_params_30_maskgenhashalg(pss_params);
-                int saltlen = rsa_pss_params_30_saltlen(pss_params);
-                int trailerfield = rsa_pss_params_30_trailerfield(pss_params);
+                    ossl_rsa_pss_params_30_maskgenhashalg(pss_params);
+                int saltlen = ossl_rsa_pss_params_30_saltlen(pss_params);
+                int trailerfield =
+                    ossl_rsa_pss_params_30_trailerfield(pss_params);
 
                 if (BIO_printf(out, "PSS parameter restrictions:\n") <= 0)
                     goto err;
                 if (BIO_printf(out, "  Hash Algorithm: %s%s\n",
-                               rsa_oaeppss_nid2name(hashalg_nid),
+                               ossl_rsa_oaeppss_nid2name(hashalg_nid),
                                (hashalg_nid == NID_sha1
                                 ? " (default)" : "")) <= 0)
                     goto err;
                 if (BIO_printf(out, "  Mask Algorithm: %s with %s%s\n",
-                               rsa_mgf_nid2name(maskgenalg_nid),
-                               rsa_oaeppss_nid2name(maskgenhashalg_nid),
+                               ossl_rsa_mgf_nid2name(maskgenalg_nid),
+                               ossl_rsa_oaeppss_nid2name(maskgenhashalg_nid),
                                (maskgenalg_nid == NID_mgf1
                                 && maskgenhashalg_nid == NID_sha1
                                 ? " (default)" : "")) <= 0)

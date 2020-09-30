@@ -624,7 +624,7 @@ static int ecx_priv_to_der(const void *vecxkey, unsigned char **pder)
 static int prepare_rsa_params(const void *rsa, int nid,
                               void **pstr, int *pstrtype)
 {
-    const RSA_PSS_PARAMS_30 *pss = rsa_get0_pss_params_30((RSA *)rsa);
+    const RSA_PSS_PARAMS_30 *pss = ossl_rsa_get0_pss_params_30((RSA *)rsa);
 
     *pstr = NULL;
 
@@ -634,7 +634,7 @@ static int prepare_rsa_params(const void *rsa, int nid,
         *pstrtype = V_ASN1_NULL;
         return 1;
     case RSA_FLAG_TYPE_RSASSAPSS:
-        if (rsa_pss_params_30_is_unrestricted(pss)) {
+        if (ossl_rsa_pss_params_30_is_unrestricted(pss)) {
             *pstrtype = V_ASN1_UNDEF;
             return 1;
         } else {

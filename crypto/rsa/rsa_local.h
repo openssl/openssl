@@ -169,37 +169,38 @@ RSA_PRIME_INFO *rsa_multip_info_new(void);
 int rsa_multip_calc_product(RSA *rsa);
 int rsa_multip_cap(int bits);
 
-int rsa_sp800_56b_validate_strength(int nbits, int strength);
-int rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
-                           int nbits);
-int rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
-                BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
-                BIGNUM *p1q1);
+int ossl_rsa_sp800_56b_validate_strength(int nbits, int strength);
+int ossl_rsa_check_pminusq_diff(BIGNUM *diff, const BIGNUM *p, const BIGNUM *q,
+                                int nbits);
+int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
+                     BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
+                     BIGNUM *p1q1);
 
-int rsa_check_public_exponent(const BIGNUM *e);
-int rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx);
-int rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx);
-int rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx);
-int rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx);
+int ossl_rsa_check_public_exponent(const BIGNUM *e);
+int ossl_rsa_check_private_exponent(const RSA *rsa, int nbits, BN_CTX *ctx);
+int ossl_rsa_check_prime_factor(BIGNUM *p, BIGNUM *e, int nbits, BN_CTX *ctx);
+int ossl_rsa_check_prime_factor_range(const BIGNUM *p, int nbits, BN_CTX *ctx);
+int ossl_rsa_check_crt_components(const RSA *rsa, BN_CTX *ctx);
 
-int rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx);
-int rsa_sp800_56b_check_public(const RSA *rsa);
-int rsa_sp800_56b_check_private(const RSA *rsa);
-int rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
-                                int strength, int nbits);
-int rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
-                               BN_GENCB *cb);
+int ossl_rsa_sp800_56b_pairwise_test(RSA *rsa, BN_CTX *ctx);
+int ossl_rsa_sp800_56b_check_public(const RSA *rsa);
+int ossl_rsa_sp800_56b_check_private(const RSA *rsa);
+int ossl_rsa_sp800_56b_check_keypair(const RSA *rsa, const BIGNUM *efixed,
+                                     int strength, int nbits);
+int ossl_rsa_sp800_56b_generate_key(RSA *rsa, int nbits, const BIGNUM *efixed,
+                                    BN_GENCB *cb);
 
-int rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
-                                        const BIGNUM *e, BN_CTX *ctx);
-int rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
-                                  int nbits, const BIGNUM *e, BN_CTX *ctx,
-                                  BN_GENCB *cb);
+int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
+                                             const BIGNUM *e, BN_CTX *ctx);
+int ossl_rsa_fips186_4_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
+                                       int nbits, const BIGNUM *e, BN_CTX *ctx,
+                                       BN_GENCB *cb);
 
-int rsa_padding_add_SSLv23_ex(OPENSSL_CTX *libctx, unsigned char *to, int tlen,
-                              const unsigned char *from, int flen);
-int rsa_padding_add_PKCS1_type_2_ex(OPENSSL_CTX *libctx, unsigned char *to,
-                                    int tlen, const unsigned char *from,
-                                    int flen);
+int ossl_rsa_padding_add_SSLv23_ex(OPENSSL_CTX *libctx, unsigned char *to,
+                                   int tlen, const unsigned char *from,
+                                   int flen);
+int ossl_rsa_padding_add_PKCS1_type_2_ex(OPENSSL_CTX *libctx, unsigned char *to,
+                                         int tlen, const unsigned char *from,
+                                         int flen);
 
 #endif /* OSSL_CRYPTO_RSA_LOCAL_H */

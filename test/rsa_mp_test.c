@@ -231,7 +231,7 @@ static int key2048p3_v2(RSA *key)
         || !TEST_int_ne(sk_BIGNUM_push(coeffs, num), 0))
         goto err;
 
-    if (!TEST_true(rsa_set0_all_params(key, primes, exps, coeffs)))
+    if (!TEST_true(ossl_rsa_set0_all_params(key, primes, exps, coeffs)))
         goto err;
 
  ret:

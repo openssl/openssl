@@ -60,12 +60,12 @@ static int pss_params_fromdata(RSA_PSS_PARAMS_30 *pss_params,
                                const OSSL_PARAM params[], int rsa_type,
                                OPENSSL_CTX *libctx)
 {
-    if (!rsa_pss_params_30_fromdata(pss_params, params, libctx))
+    if (!ossl_rsa_pss_params_30_fromdata(pss_params, params, libctx))
         return 0;
 
     /* If not a PSS type RSA, sending us PSS parameters is wrong */
     if (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
-        && !rsa_pss_params_30_is_unrestricted(pss_params))
+        && !ossl_rsa_pss_params_30_is_unrestricted(pss_params))
         return 0;
 
     return 1;
@@ -79,7 +79,7 @@ static void *rsa_newdata(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    rsa = rsa_new_with_ctx(libctx);
+    rsa = ossl_rsa_new_with_ctx(libctx);
     if (rsa != NULL) {
         RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
         RSA_set_flags(rsa, RSA_FLAG_TYPE_RSA);
@@ -95,7 +95,7 @@ static void *rsapss_newdata(void *provctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-    rsa = rsa_new_with_ctx(libctx);
+    rsa = ossl_rsa_new_with_ctx(libctx);
     if (rsa != NULL) {
         RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
         RSA_set_flags(rsa, RSA_FLAG_TYPE_RSASSAPSS);
@@ -165,10 +165,10 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
     /* TODO(3.0) OAEP should bring on parameters as well */
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && pss_params_fromdata(rsa_get0_pss_params_30(rsa), params,
-                                       rsa_type, rsa_get0_libctx(rsa));
+        ok = ok && pss_params_fromdata(ossl_rsa_get0_pss_params_30(rsa), params,
+                                       rsa_type, ossl_rsa_get0_libctx(rsa));
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && rsa_fromdata(rsa, params);
+        ok = ok && ossl_rsa_fromdata(rsa, params);
 
     return ok;
 }
@@ -177,7 +177,7 @@ static int rsa_export(void *keydata, int selection,
                       OSSL_CALLBACK *param_callback, void *cbarg)
 {
     RSA *rsa = keydata;
-    const RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30(rsa);
+    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
     int ok = 1;
@@ -192,10 +192,10 @@ static int rsa_export(void *keydata, int selection,
         return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        ok = ok && (rsa_pss_params_30_is_unrestricted(pss_params)
-                    || rsa_pss_params_30_todata(pss_params, tmpl, NULL));
+        ok = ok && (ossl_rsa_pss_params_30_is_unrestricted(pss_params)
+                    || ossl_rsa_pss_params_30_todata(pss_params, tmpl, NULL));
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        ok = ok && rsa_todata(rsa, tmpl, NULL);
+        ok = ok && ossl_rsa_todata(rsa, tmpl, NULL);
 
     if (!ok
         || (params = OSSL_PARAM_BLD_to_param(tmpl)) == NULL)
@@ -297,7 +297,7 @@ static const OSSL_PARAM *rsa_export_types(int selection)
 static int rsa_get_params(void *key, OSSL_PARAM params[])
 {
     RSA *rsa = key;
-    const RSA_PSS_PARAMS_30 *pss_params = rsa_get0_pss_params_30(rsa);
+    const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
     int rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
     OSSL_PARAM *p;
 
@@ -330,17 +330,17 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         && rsa_type == RSA_FLAG_TYPE_RSASSAPSS) {
         const char *mdname = RSA_PSS_DEFAULT_MD;
 
-        if (!rsa_pss_params_30_is_unrestricted(pss_params)) {
+        if (!ossl_rsa_pss_params_30_is_unrestricted(pss_params)) {
             mdname =
-                rsa_oaeppss_nid2name(rsa_pss_params_30_hashalg(pss_params));
+                ossl_rsa_oaeppss_nid2name(ossl_rsa_pss_params_30_hashalg(pss_params));
 
             if (mdname == NULL || !OSSL_PARAM_set_utf8_string(p, mdname))
                 return 0;
         }
     }
     return (rsa_type != RSA_FLAG_TYPE_RSASSAPSS
-            || rsa_pss_params_30_todata(pss_params, NULL, params))
-        && rsa_todata(rsa, NULL, params);
+            || ossl_rsa_pss_params_30_todata(pss_params, NULL, params))
+        && ossl_rsa_todata(rsa, NULL, params);
 }
 
 static const OSSL_PARAM rsa_params[] = {
@@ -371,12 +371,12 @@ static int rsa_validate(void *keydata, int selection)
     /* If the whole key is selected, we do a pairwise validation */
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR)
         == OSSL_KEYMGMT_SELECT_KEYPAIR) {
-        ok = ok && rsa_validate_pairwise(rsa);
+        ok = ok && ossl_rsa_validate_pairwise(rsa);
     } else {
         if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-            ok = ok && rsa_validate_private(rsa);
+            ok = ok && ossl_rsa_validate_private(rsa);
         if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-            ok = ok && rsa_validate_public(rsa);
+            ok = ok && ossl_rsa_validate_public(rsa);
     }
     return ok;
 }
@@ -489,7 +489,7 @@ static int rsa_gen_set_params(void *genctx, const OSSL_PARAM params[])
     OSSL_PARAM_BN(OSSL_PKEY_PARAM_RSA_E, NULL, 0)
 
 /*
- * The following must be kept in sync with rsa_pss_params_30_fromdata()
+ * The following must be kept in sync with ossl_rsa_pss_params_30_fromdata()
  * in crypto/rsa/rsa_backend.c
  */
 #define rsa_gen_pss                                                     \
@@ -532,7 +532,7 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     switch (gctx->rsa_type) {
     case RSA_FLAG_TYPE_RSA:
         /* For plain RSA keys, PSS parameters must not be set */
-        if (!rsa_pss_params_30_is_unrestricted(&gctx->pss_params))
+        if (!ossl_rsa_pss_params_30_is_unrestricted(&gctx->pss_params))
             goto err;
         break;
     case RSA_FLAG_TYPE_RSASSAPSS:
@@ -546,7 +546,7 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return NULL;
     }
 
-    if ((rsa_tmp = rsa_new_with_ctx(gctx->libctx)) == NULL)
+    if ((rsa_tmp = ossl_rsa_new_with_ctx(gctx->libctx)) == NULL)
         return NULL;
 
     gctx->cb = osslcb;
@@ -567,8 +567,8 @@ static void *rsa_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
                                       gctx->pub_exp, gencb))
         goto err;
 
-    if (!rsa_pss_params_30_copy(rsa_get0_pss_params_30(rsa_tmp),
-                                &gctx->pss_params))
+    if (!ossl_rsa_pss_params_30_copy(ossl_rsa_get0_pss_params_30(rsa_tmp),
+                                     &gctx->pss_params))
         goto err;
 
     RSA_clear_flags(rsa_tmp, RSA_FLAG_TYPE_MASK);

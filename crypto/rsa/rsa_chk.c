@@ -230,20 +230,20 @@ static int rsa_validate_keypair_multiprime(const RSA *key, BN_GENCB *cb)
 }
 #endif /* FIPS_MODULE */
 
-int rsa_validate_public(const RSA *key)
+int ossl_rsa_validate_public(const RSA *key)
 {
-    return rsa_sp800_56b_check_public(key);
+    return ossl_rsa_sp800_56b_check_public(key);
 }
 
-int rsa_validate_private(const RSA *key)
+int ossl_rsa_validate_private(const RSA *key)
 {
-    return rsa_sp800_56b_check_private(key);
+    return ossl_rsa_sp800_56b_check_private(key);
 }
 
-int rsa_validate_pairwise(const RSA *key)
+int ossl_rsa_validate_pairwise(const RSA *key)
 {
 #ifdef FIPS_MODULE
-    return rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key));
+    return ossl_rsa_sp800_56b_check_keypair(key, NULL, -1, RSA_bits(key));
 #else
     return rsa_validate_keypair_multiprime(key, NULL);
 #endif
@@ -257,9 +257,9 @@ int RSA_check_key(const RSA *key)
 int RSA_check_key_ex(const RSA *key, BN_GENCB *cb)
 {
 #ifdef FIPS_MODULE
-    return rsa_validate_public(key)
-           && rsa_validate_private(key)
-           && rsa_validate_pairwise(key);
+    return ossl_rsa_validate_public(key)
+           && ossl_rsa_validate_private(key)
+           && ossl_rsa_validate_pairwise(key);
 #else
     return rsa_validate_keypair_multiprime(key, cb);
 #endif /* FIPS_MODULE */
