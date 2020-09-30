@@ -19,10 +19,10 @@
 -}
 
 /* PSS parameters */
-int DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
-                            const RSA_PSS_PARAMS_30 *pss);
+int ossl_DER_w_RSASSA_PSS_params(WPACKET *pkt, int tag,
+                                 const RSA_PSS_PARAMS_30 *pss);
 /* Subject Public Key Info */
-int DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa);
+int ossl_DER_w_algorithmIdentifier_RSA(WPACKET *pkt, int tag, RSA *rsa);
 /* Signature */
-int DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
-                                                  RSA *rsa, int mdnid);
+int ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
+                                                       RSA *rsa, int mdnid);

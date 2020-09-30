@@ -24,8 +24,8 @@
         precompiled_sz = sizeof(der_oid_id_ecdsa_with_##name);          \
         break;
 
-int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
-                                            EC_KEY *ec, int mdnid)
+int ossl_DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
+                                                 EC_KEY *ec, int mdnid)
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
@@ -44,8 +44,8 @@ int DER_w_algorithmIdentifier_ECDSA_with_MD(WPACKET *pkt, int cont,
         return 0;
     }
 
-    return DER_w_begin_sequence(pkt, cont)
+    return ossl_DER_w_begin_sequence(pkt, cont)
         /* No parameters (yet?) */
-        && DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
-        && DER_w_end_sequence(pkt, cont);
+        && ossl_DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
+        && ossl_DER_w_end_sequence(pkt, cont);
 }

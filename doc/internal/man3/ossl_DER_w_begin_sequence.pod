@@ -2,15 +2,15 @@
 
 =head1 NAME
 
-DER_w_begin_sequence, DER_w_end_sequence
+ossl_DER_w_begin_sequence, ossl_DER_w_end_sequence
 - internal DER writers for DER constructed elements
 
 =head1 SYNOPSIS
 
  #include "internal/der.h"
 
- int DER_w_begin_sequence(WPACKET *pkt, int tag);
- int DER_w_end_sequence(WPACKET *pkt, int tag);
+ int ossl_DER_w_begin_sequence(WPACKET *pkt, int tag);
+ int ossl_DER_w_end_sequence(WPACKET *pkt, int tag);
 
 =head1 DESCRIPTION
 
@@ -22,7 +22,7 @@ and B<end>.
 When using these, special care must be taken to ensure that the ASN.1 tag
 value I<tag> is the same in the matching C<begin> and C<end> function calls.
 
-DER_w_begin_sequence() and DER_w_end_sequence() begins and ends a
+ossl_DER_w_begin_sequence() and ossl_DER_w_end_sequence() begins and ends a
 SEQUENCE.
 
 =head1 RETURN VALUES

@@ -94,10 +94,10 @@ static int eddsa_digest_signverify_init(void *vpeddsactx, const char *mdname,
     ret = WPACKET_init_der(&pkt, peddsactx->aid_buf, sizeof(peddsactx->aid_buf));
     switch (edkey->type) {
     case ECX_KEY_TYPE_ED25519:
-        ret = ret && DER_w_algorithmIdentifier_ED25519(&pkt, -1, edkey);
+        ret = ret && ossl_DER_w_algorithmIdentifier_ED25519(&pkt, -1, edkey);
         break;
     case ECX_KEY_TYPE_ED448:
-        ret = ret && DER_w_algorithmIdentifier_ED448(&pkt, -1, edkey);
+        ret = ret && ossl_DER_w_algorithmIdentifier_ED448(&pkt, -1, edkey);
         break;
     default:
         /* Should never happen */

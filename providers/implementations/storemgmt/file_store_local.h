@@ -7,5 +7,5 @@
  * https://www.openssl.org/source/license.html
  */
 
-extern const OSSL_ALGORITHM der_to_obj_algorithm;
+extern const OSSL_ALGORITHM ossl_der_to_obj_algorithm;
 

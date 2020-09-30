@@ -152,7 +152,7 @@ int encode_der_dsa_sig(WPACKET *pkt, const BIGNUM *r, const BIGNUM *s)
  *
  * Returns 1 on success or 0 on failure.
  */
-int decode_der_length(PACKET *pkt, PACKET *subpkt)
+int ossl_decode_der_length(PACKET *pkt, PACKET *subpkt)
 {
     unsigned int byte;
 
@@ -184,7 +184,7 @@ int decode_der_length(PACKET *pkt, PACKET *subpkt)
  * trailing garbage then it is up to the caller to verify that all bytes
  * were consumed.
  */
-int decode_der_integer(PACKET *pkt, BIGNUM *n)
+int ossl_decode_der_integer(PACKET *pkt, BIGNUM *n)
 {
     PACKET contpkt, tmppkt;
     unsigned int tag, tmp;
@@ -192,7 +192,7 @@ int decode_der_integer(PACKET *pkt, BIGNUM *n)
     /* Check we have an integer and get the content bytes */
     if (!PACKET_get_1(pkt, &tag)
             || tag != ID_INTEGER
-            || !decode_der_length(pkt, &contpkt))
+            || !ossl_decode_der_length(pkt, &contpkt))
         return 0;
 
     /* Peek ahead at the first bytes to check for proper encoding */
@@ -230,8 +230,8 @@ int decode_der_integer(PACKET *pkt, BIGNUM *n)
  * trailing garbage then it is up to the caller to verify that all bytes
  * were consumed.
  */
-size_t decode_der_dsa_sig(BIGNUM *r, BIGNUM *s, const unsigned char **ppin,
-                          size_t len)
+size_t ossl_decode_der_dsa_sig(BIGNUM *r, BIGNUM *s,
+                               const unsigned char **ppin, size_t len)
 {
     size_t consumed;
     PACKET pkt, contpkt;
@@ -240,9 +240,9 @@ size_t decode_der_dsa_sig(BIGNUM *r, BIGNUM *s, const unsigned char **ppin,
     if (!PACKET_buf_init(&pkt, *ppin, len)
             || !PACKET_get_1(&pkt, &tag)
             || tag != ID_SEQUENCE
-            || !decode_der_length(&pkt, &contpkt)
-            || !decode_der_integer(&contpkt, r)
-            || !decode_der_integer(&contpkt, s)
+            || !ossl_decode_der_length(&pkt, &contpkt)
+            || !ossl_decode_der_integer(&contpkt, r)
+            || !ossl_decode_der_integer(&contpkt, s)
             || PACKET_remaining(&contpkt) != 0)
         return 0;
 

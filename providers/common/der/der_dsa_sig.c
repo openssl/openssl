@@ -17,8 +17,8 @@
         precompiled_sz = sizeof(der_oid_id_dsa_with_##name);     \
         break;
 
-int DER_w_algorithmIdentifier_DSA_with_MD(WPACKET *pkt, int tag,
-                                          DSA *dsa, int mdnid)
+int ossl_DER_w_algorithmIdentifier_DSA_with_MD(WPACKET *pkt, int tag,
+                                               DSA *dsa, int mdnid)
 {
     const unsigned char *precompiled = NULL;
     size_t precompiled_sz = 0;
@@ -37,8 +37,8 @@ int DER_w_algorithmIdentifier_DSA_with_MD(WPACKET *pkt, int tag,
         return 0;
     }
 
-    return DER_w_begin_sequence(pkt, tag)
+    return ossl_DER_w_begin_sequence(pkt, tag)
         /* No parameters (yet?) */
-        && DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
-        && DER_w_end_sequence(pkt, tag);
+        && ossl_DER_w_precompiled(pkt, -1, precompiled, precompiled_sz)
+        && ossl_DER_w_end_sequence(pkt, tag);
 }
