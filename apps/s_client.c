@@ -1200,11 +1200,13 @@ int s_client_main(int argc, char **argv)
             e = setup_engine(opt_arg(), 1);
             break;
         case OPT_SSL_CLIENT_ENGINE:
+#ifndef OPENSSL_NO_ENGINE
             ssl_client_engine = setup_engine(opt_arg(), 0);
             if (ssl_client_engine == NULL) {
                 BIO_printf(bio_err, "Error getting client auth engine\n");
                 goto opthelp;
             }
+#endif
             break;
         case OPT_R_CASES:
             if (!opt_rand(o))

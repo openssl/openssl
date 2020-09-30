@@ -284,11 +284,13 @@ int req_main(int argc, char **argv)
             e = setup_engine(opt_arg(), 0);
             break;
         case OPT_KEYGEN_ENGINE:
+#ifndef OPENSSL_NO_ENGINE
             gen_eng = setup_engine(opt_arg(), 0);
             if (gen_eng == NULL) {
                 BIO_printf(bio_err, "Can't find keygen engine %s\n", *argv);
                 goto opthelp;
             }
+#endif
             break;
         case OPT_KEY:
             keyfile = opt_arg();
