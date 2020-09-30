@@ -58,12 +58,15 @@ static const struct {
     size_t oid_len;
     size_t keklen; /* size in bytes */
 } kek_algs[] = {
-    { "AES-128-WRAP", der_oid_id_aes128_wrap, DER_OID_SZ_id_aes128_wrap, 16 },
-    { "AES-192-WRAP", der_oid_id_aes192_wrap, DER_OID_SZ_id_aes192_wrap, 24 },
-    { "AES-256-WRAP", der_oid_id_aes256_wrap, DER_OID_SZ_id_aes256_wrap, 32 },
-#ifndef FIPS_MODULE
-    { "DES3-WRAP", der_oid_id_alg_CMS3DESwrap, DER_OID_SZ_id_alg_CMS3DESwrap,
+    { "AES-128-WRAP", ossl_der_oid_id_aes128_wrap, DER_OID_SZ_id_aes128_wrap,
+      16 },
+    { "AES-192-WRAP", ossl_der_oid_id_aes192_wrap, DER_OID_SZ_id_aes192_wrap,
       24 },
+    { "AES-256-WRAP", ossl_der_oid_id_aes256_wrap, DER_OID_SZ_id_aes256_wrap,
+      32 },
+#ifndef FIPS_MODULE
+    { "DES3-WRAP", ossl_der_oid_id_alg_CMS3DESwrap,
+      DER_OID_SZ_id_alg_CMS3DESwrap, 24 },
 #endif
 };
 

@@ -13,8 +13,8 @@
 
 #define MD_CASE(name)                                                   \
     case NID_##name:                                                    \
-        precompiled = der_oid_id_dsa_with_##name;                \
-        precompiled_sz = sizeof(der_oid_id_dsa_with_##name);     \
+        precompiled = ossl_der_oid_id_dsa_with_##name;                  \
+        precompiled_sz = sizeof(ossl_der_oid_id_dsa_with_##name);       \
         break;
 
 int ossl_DER_w_algorithmIdentifier_DSA_with_MD(WPACKET *pkt, int tag,

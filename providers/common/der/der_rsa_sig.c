@@ -13,19 +13,19 @@
 #include "prov/der_digests.h"
 
 /* Aliases so we can have a uniform MD_with_RSA_CASE */
-#define der_oid_sha3_224WithRSAEncryption \
-    der_oid_id_rsassa_pkcs1_v1_5_with_sha3_224
-#define der_oid_sha3_256WithRSAEncryption \
-    der_oid_id_rsassa_pkcs1_v1_5_with_sha3_256
-#define der_oid_sha3_384WithRSAEncryption \
-    der_oid_id_rsassa_pkcs1_v1_5_with_sha3_384
-#define der_oid_sha3_512WithRSAEncryption \
-    der_oid_id_rsassa_pkcs1_v1_5_with_sha3_512
+#define ossl_der_oid_sha3_224WithRSAEncryption \
+    ossl_der_oid_id_rsassa_pkcs1_v1_5_with_sha3_224
+#define ossl_der_oid_sha3_256WithRSAEncryption \
+    ossl_der_oid_id_rsassa_pkcs1_v1_5_with_sha3_256
+#define ossl_der_oid_sha3_384WithRSAEncryption \
+    ossl_der_oid_id_rsassa_pkcs1_v1_5_with_sha3_384
+#define ossl_der_oid_sha3_512WithRSAEncryption \
+    ossl_der_oid_id_rsassa_pkcs1_v1_5_with_sha3_512
 
 #define MD_with_RSA_CASE(name, var)                                     \
     case NID_##name:                                                    \
-        var = der_oid_##name##WithRSAEncryption;                        \
-        var##_sz = sizeof(der_oid_##name##WithRSAEncryption);           \
+        var = ossl_der_oid_##name##WithRSAEncryption;                   \
+        var##_sz = sizeof(ossl_der_oid_##name##WithRSAEncryption);      \
         break;
 
 int ossl_DER_w_algorithmIdentifier_MDWithRSAEncryption(WPACKET *pkt, int tag,
