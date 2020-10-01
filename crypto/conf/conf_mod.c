@@ -175,7 +175,6 @@ int CONF_modules_load_file_ex(OPENSSL_CTX *libctx, const char *filename,
         }
         goto err;
     }
-    ERR_pop_to_mark();
 
     ret = CONF_modules_load(conf, appname, flags);
     diagnostics = conf_diagnostics(conf);
