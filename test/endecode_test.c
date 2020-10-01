@@ -118,16 +118,21 @@ static int test_encode_decode(const char *type, EVP_PKEY *pkey,
      * encoding |pkey2| as well.  That last encoding is for checking and
      * dumping purposes.
      */
-    if (!encode_cb(&encoded, &encoded_len, pkey, output_type, selection,
-                   pass, pcipher)
-        || !check_cb(type, encoded, encoded_len)
-        || !decode_cb((void **)&pkey2, encoded, encoded_len, pass)
-        || !encode_cb(&encoded2, &encoded2_len, pkey2, output_type, selection,
-                      pass, pcipher))
+    if (!TEST_true(encode_cb(&encoded, &encoded_len, pkey, output_type,
+                             selection, pass, pcipher))
+        || !TEST_true(check_cb(type, encoded, encoded_len))
+        || !TEST_true(decode_cb((void **)&pkey2, encoded, encoded_len, pass))
+        || !TEST_true(encode_cb(&encoded2, &encoded2_len, pkey2, output_type,
+                                selection, pass, pcipher)))
         goto end;
 
-    if (!TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 1))
-        goto end;
+    if (selection == OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) {
+        if (!TEST_int_eq(EVP_PKEY_parameters_eq(pkey, pkey2), 1))
+            goto end;
+    } else {
+        if (!TEST_int_eq(EVP_PKEY_eq(pkey, pkey2), 1))
+            goto end;
+    }
 
     /*
      * Double check the encoding, but only for unprotected keys,
@@ -457,6 +462,63 @@ static int test_unprotected_via_PEM(const char *type, EVP_PKEY *key)
                               dump_pem);
 }
 
+static int check_params_DER(const char *type, const void *data, size_t data_len)
+{
+    const unsigned char *datap = data;
+    int ok = 0;
+    int itype = NID_undef;
+    EVP_PKEY *pkey = NULL;
+
+    if (strcmp(type, "DH") == 0)
+        itype = EVP_PKEY_DH;
+    else if (strcmp(type, "X9.42 DH") == 0)
+        itype = EVP_PKEY_DHX;
+    else if (strcmp(type, "DSA") ==  0)
+        itype = EVP_PKEY_DSA;
+    else if (strcmp(type, "EC") ==  0)
+        itype = EVP_PKEY_EC;
+
+    if (itype != NID_undef) {
+        pkey = d2i_KeyParams(itype, NULL, &datap, data_len);
+        ok = (pkey != NULL);
+        EVP_PKEY_free(pkey);
+    }
+
+    return ok;
+}
+
+static int check_params_PEM(const char *type,
+                                       const void *data, size_t data_len)
+{
+    static char expected_pem_header[80];
+
+    return
+        TEST_int_gt(BIO_snprintf(expected_pem_header,
+                                 sizeof(expected_pem_header),
+                                 "-----BEGIN %s PARAMETERS-----", type), 0)
+        && TEST_strn_eq(data, expected_pem_header, strlen(expected_pem_header));
+}
+
+static int test_params_via_DER(const char *type, EVP_PKEY *key)
+{
+    return test_encode_decode(type, key,
+                              "DER", OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                              NULL, NULL,
+                              encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
+                              test_mem, check_params_DER,
+                              dump_der);
+}
+
+static int test_params_via_PEM(const char *type, EVP_PKEY *key)
+{
+    return test_encode_decode(type, key,
+                              "PEM", OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                              NULL, NULL,
+                              encode_EVP_PKEY_prov, decode_EVP_PKEY_prov,
+                              test_text, check_params_PEM,
+                              dump_pem);
+}
+
 static int check_unprotected_legacy_PEM(const char *type,
                                         const void *data, size_t data_len)
 {
@@ -726,6 +788,20 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     ADD_TEST(test_public_##KEYTYPE##_via_DER);                  \
     ADD_TEST(test_public_##KEYTYPE##_via_PEM)
 
+#define IMPLEMENT_TEST_SUITE_PARAMS(KEYTYPE, KEYTYPEstr)           \
+    static int test_params_##KEYTYPE##_via_DER(void)               \
+    {                                                              \
+        return test_params_via_DER(KEYTYPEstr, key_##KEYTYPE);     \
+    }                                                              \
+    static int test_params_##KEYTYPE##_via_PEM(void)               \
+    {                                                              \
+        return test_params_via_PEM(KEYTYPEstr, key_##KEYTYPE);     \
+    }
+
+#define ADD_TEST_SUITE_PARAMS(KEYTYPE)                          \
+    ADD_TEST(test_params_##KEYTYPE##_via_DER);                  \
+    ADD_TEST(test_params_##KEYTYPE##_via_PEM)
+
 #define IMPLEMENT_TEST_SUITE_LEGACY(KEYTYPE, KEYTYPEstr)                \
     static int test_unprotected_##KEYTYPE##_via_legacy_PEM(void)        \
     {                                                                   \
@@ -777,8 +853,10 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
 #ifndef OPENSSL_NO_DH
 DOMAIN_KEYS(DH);
 IMPLEMENT_TEST_SUITE(DH, "DH")
+IMPLEMENT_TEST_SUITE_PARAMS(DH, "DH")
 DOMAIN_KEYS(DHX);
 IMPLEMENT_TEST_SUITE(DHX, "X9.42 DH")
+IMPLEMENT_TEST_SUITE_PARAMS(DHX, "X9.42 DH")
 /*
  * DH has no support for PEM_write_bio_PrivateKey_traditional(),
  * so no legacy tests.
@@ -787,6 +865,7 @@ IMPLEMENT_TEST_SUITE(DHX, "X9.42 DH")
 #ifndef OPENSSL_NO_DSA
 DOMAIN_KEYS(DSA);
 IMPLEMENT_TEST_SUITE(DSA, "DSA")
+IMPLEMENT_TEST_SUITE_PARAMS(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_LEGACY(DSA, "DSA")
 IMPLEMENT_TEST_SUITE_MSBLOB(DSA, "DSA")
 # ifndef OPENSSL_NO_RC4
@@ -796,6 +875,7 @@ IMPLEMENT_TEST_SUITE_PVK(DSA, "DSA")
 #ifndef OPENSSL_NO_EC
 DOMAIN_KEYS(EC);
 IMPLEMENT_TEST_SUITE(EC, "EC")
+IMPLEMENT_TEST_SUITE_PARAMS(EC, "EC")
 IMPLEMENT_TEST_SUITE_LEGACY(EC, "EC")
 DOMAIN_KEYS(ECExplicitPrimeNamedCurve);
 IMPLEMENT_TEST_SUITE(ECExplicitPrimeNamedCurve, "EC")
@@ -1101,7 +1181,9 @@ int setup_tests(void)
     if (ok) {
 #ifndef OPENSSL_NO_DH
         ADD_TEST_SUITE(DH);
+        ADD_TEST_SUITE_PARAMS(DH);
         ADD_TEST_SUITE(DHX);
+        ADD_TEST_SUITE_PARAMS(DHX);
         /*
          * DH has no support for PEM_write_bio_PrivateKey_traditional(),
          * so no legacy tests.
@@ -1109,6 +1191,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_DSA
         ADD_TEST_SUITE(DSA);
+        ADD_TEST_SUITE_PARAMS(DSA);
         ADD_TEST_SUITE_LEGACY(DSA);
         ADD_TEST_SUITE_MSBLOB(DSA);
 # ifndef OPENSSL_NO_RC4
@@ -1117,6 +1200,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
         ADD_TEST_SUITE(EC);
+        ADD_TEST_SUITE_PARAMS(EC);
         ADD_TEST_SUITE_LEGACY(EC);
         ADD_TEST_SUITE(ECExplicitPrimeNamedCurve);
         ADD_TEST_SUITE_LEGACY(ECExplicitPrimeNamedCurve);
