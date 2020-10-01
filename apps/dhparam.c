@@ -18,10 +18,14 @@
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/dh.h>
 #include <openssl/x509.h>
 #include <openssl/pem.h>
 #include <openssl/core_names.h>
+#include <openssl/core_dispatch.h>
 #include <openssl/param_build.h>
+#include <openssl/encoder.h>
 #include <openssl/decoder.h>
 
 #define DEFBITS 2048
@@ -80,10 +84,8 @@ int dhparam_main(int argc, char **argv)
     EVP_PKEY_CTX *ctx = NULL;
     char *infile = NULL, *outfile = NULL, *prog;
     ENGINE *e = NULL;
-#if !defined(OPENSSL_NO_DSA) && !defined(OPENSSL_NO_DEPRECATED_3_0)
     int dsaparam = 0;
-#endif
-    int i, text = 0, ret = 1, num = 0, g = 0;
+    int text = 0, ret = 1, num = 0, g = 0;
     int informat = FORMAT_PEM, outformat = FORMAT_PEM, check = 0, noout = 0;
     OPTION_CHOICE o;
 
@@ -253,8 +255,10 @@ int dhparam_main(int argc, char **argv)
                 = OSSL_DECODER_CTX_new_by_EVP_PKEY(&tmppkey,
                                                     (informat == FORMAT_ASN1)
                                                     ? "DER" : "PEM",
+                                                    NULL,
                                                     (informat == FORMAT_ASN1)
                                                     ? keytype : NULL,
+                                                    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
                                                     NULL, NULL);
 
             if (decoderctx != NULL
@@ -308,45 +312,32 @@ int dhparam_main(int argc, char **argv)
         EVP_PKEY_print_params(out, pkey, 4, NULL);
 
     if (check) {
-        ctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL);
+        ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
         if (ctx == NULL) {
             BIO_printf(bio_err, "Error, failed to check DH parameters\n");
             goto end;
         }
-        if (!EVP_PKEY_param_check(ctx) /* DH_check(dh, &i) */) {
+        if (!EVP_PKEY_param_check(ctx)) {
             BIO_printf(bio_err, "Error, invalid parameters generated\n");
             goto end;
         }
         BIO_printf(bio_err, "DH parameters appear to be ok.\n");
-        if (num != 0) {
-            /*
-             * We have generated parameters but DH_check() indicates they are
-             * invalid! This should never happen!
-             */
-            BIO_printf(bio_err, "Error, invalid parameters generated\n");
-            goto end;
-        }
     }
 
     if (!noout) {
-        const BIGNUM *q;
-        /* Temporary: FIXME */
-        dh = EVP_PKEY_get0_DH(pkey);
-        DH_get0_pqg(dh, NULL, &q, NULL);
-        if (outformat == FORMAT_ASN1) {
-            if (q != NULL)
-                i = ASN1_i2d_bio_of(DH, i2d_DHxparams, out, dh);
-            else
-                i = ASN1_i2d_bio_of(DH, i2d_DHparams, out, dh);
-        } else if (q != NULL) {
-            i = PEM_write_bio_DHxparams(out, dh);
-        } else {
-            i = PEM_write_bio_DHparams(out, dh);
-        }
-        if (!i) {
+        OSSL_ENCODER_CTX *ectx =
+            OSSL_ENCODER_CTX_new_by_EVP_PKEY(pkey,
+                                             OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS,
+                                             outformat == FORMAT_ASN1
+                                             ? "DER" : "PEM",
+                                             NULL, NULL, NULL);
+
+        if (ectx == NULL || !OSSL_ENCODER_to_bio(ectx, out)) {
+            OSSL_ENCODER_CTX_free(ectx);
             BIO_printf(bio_err, "Error, unable to write DH parameters\n");
             goto end;
         }
+        OSSL_ENCODER_CTX_free(ectx);
     }
     ret = 0;
  end:
