@@ -581,7 +581,7 @@ EVP_PKEY *load_pubkey(const char *uri, int format, int maybe_stdin,
         if (e == NULL) {
             BIO_printf(bio_err, "No engine specified for loading %s\n", desc);
         } else {
-            pkey = load_engine_private_key(e, uri, pass, desc);
+            pkey = load_engine_public_key(e, uri, pass, desc);
             if (pkey == NULL) {
                 BIO_printf(bio_err, "Cannot load %s from engine\n", desc);
                 ERR_print_errors(bio_err);
