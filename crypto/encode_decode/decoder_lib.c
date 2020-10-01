@@ -259,7 +259,7 @@ int OSSL_DECODER_CTX_add_extra(OSSL_DECODER_CTX *ctx,
              * on top of this one, so we don't.
              */
             if (ctx->start_input_type != NULL
-                && strcasecmp(ctx->start_input_type, input_type) != 0)
+                && strcasecmp(ctx->start_input_type, input_type) == 0)
                 continue;
 
             ERR_set_mark();
