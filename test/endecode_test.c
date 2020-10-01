@@ -93,7 +93,7 @@ typedef int (encoder)(void **encoded, long *encoded_len, void *object,
                       const char *output_type, int selection,
                       const char *pass, const char *pcipher);
 typedef int (decoder)(void **object, void *encoded, long encoded_len,
-                      const char *pass);
+                      const char *type, int selection, const char *pass);
 typedef int (tester)(const void *data1, size_t data1_len,
                      const void *data2, size_t data2_len);
 typedef int (checker)(const char *type, const void *data, size_t data_len);
@@ -121,7 +121,8 @@ static int test_encode_decode(const char *type, EVP_PKEY *pkey,
     if (!TEST_true(encode_cb(&encoded, &encoded_len, pkey, output_type,
                              selection, pass, pcipher))
         || !TEST_true(check_cb(type, encoded, encoded_len))
-        || !TEST_true(decode_cb((void **)&pkey2, encoded, encoded_len, pass))
+        || !TEST_true(decode_cb((void **)&pkey2, encoded, encoded_len,
+                                output_type, selection, pass))
         || !TEST_true(encode_cb(&encoded2, &encoded2_len, pkey2, output_type,
                                 selection, pass, pcipher)))
         goto end;
@@ -198,24 +199,67 @@ static int encode_EVP_PKEY_prov(void **encoded, long *encoded_len,
 }
 
 static int decode_EVP_PKEY_prov(void **object, void *encoded, long encoded_len,
+                                const char *type, int selection,
                                 const char *pass)
 {
-    EVP_PKEY *pkey = NULL;
+    EVP_PKEY *pkey = NULL, *testpkey = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
     BIO *mem_deser = NULL;
     const unsigned char *upass = (const unsigned char *)pass;
     int ok = 0;
+    int i;
+    const char *badtype;
 
-    if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&pkey, NULL, NULL,
-                                                          NULL, NULL))
-        || (pass != NULL
-            && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))
-        || !TEST_ptr(mem_deser = BIO_new_mem_buf(encoded, encoded_len))
-        || !TEST_true(OSSL_DECODER_from_bio(dctx, mem_deser)))
+    if (strcmp(type, "DER") == 0)
+        badtype = "PEM";
+    else
+        badtype = "DER";
+
+    if (!TEST_ptr(mem_deser = BIO_new_mem_buf(encoded, encoded_len)))
         goto end;
+
+    /*
+     * We attempt the decode 3 times. The first time we provide the expected
+     * starting input type. The second time we provide NULL for the starting
+     * type. The third time we provide a bad starting input type.
+     * The bad starting input type should fail. The other two should succeed
+     * and produce the same result.
+     */
+    for (i = 0; i < 3; i++) {
+        const char *testtype = (i == 0) ? type
+                                        : ((i == 1) ? NULL : badtype);
+
+        if (!TEST_ptr(dctx = OSSL_DECODER_CTX_new_by_EVP_PKEY(&testpkey,
+                                                              testtype, NULL,
+                                                              NULL, NULL))
+            || (pass != NULL
+                && !OSSL_DECODER_CTX_set_passphrase(dctx, upass, strlen(pass)))
+            || !TEST_int_gt(BIO_reset(mem_deser), 0)
+               /* We expect to fail when using a bad input type */
+            || !TEST_int_eq(OSSL_DECODER_from_bio(dctx, mem_deser),
+                            (i == 2) ? 0 : 1))
+            goto end;
+
+        if (i == 0) {
+            pkey = testpkey;
+            testpkey = NULL;
+        } else if (i == 1) {
+            if (selection == OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) {
+                if (!TEST_int_eq(EVP_PKEY_parameters_eq(pkey, testpkey), 1))
+                    goto end;
+            } else {
+                if (!TEST_int_eq(EVP_PKEY_eq(pkey, testpkey), 1))
+                    goto end;
+            }
+        }
+    }
     ok = 1;
     *object = pkey;
+    pkey = NULL;
+
  end:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_free(testpkey);
     BIO_free(mem_deser);
     OSSL_DECODER_CTX_free(dctx);
     return ok;
