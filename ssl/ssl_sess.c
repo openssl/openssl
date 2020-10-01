@@ -110,7 +110,7 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *dest;
 
-    dest = OPENSSL_malloc(sizeof(*src));
+    dest = OPENSSL_malloc(sizeof(*dest));
     if (dest == NULL) {
         goto err;
     }
