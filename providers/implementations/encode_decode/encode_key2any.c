@@ -319,12 +319,23 @@ static int dh_priv_to_der(const void *dh, unsigned char **pder)
 
 static int dh_params_to_der_bio(BIO *out, const void *key)
 {
-    return i2d_DHparams_bio(out, key);
+    int type =
+        DH_test_flags(key, DH_FLAG_TYPE_DHX) ? EVP_PKEY_DHX : EVP_PKEY_DH;
+
+    if (type == EVP_PKEY_DH)
+        return i2d_DHparams_bio(out, key);
+    return i2d_DHxparams_bio(out, key);
 }
 
 static int dh_params_to_pem_bio(BIO *out, const void *key)
 {
-    return PEM_write_bio_DHparams(out, key);
+    int type =
+        DH_test_flags(key, DH_FLAG_TYPE_DHX) ? EVP_PKEY_DHX : EVP_PKEY_DH;
+
+    if (type == EVP_PKEY_DH)
+        return PEM_write_bio_DHparams(out, key);
+
+    return PEM_write_bio_DHxparams(out, key);
 }
 
 static int dh_check_key_type(const void *key, int expected_type)
@@ -940,8 +951,8 @@ static int key2any_encode_params(struct key2any_ctx_st *ctx,
 #ifndef OPENSSL_NO_DH
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, der);
 MAKE_ENCODER(dh, dh, EVP_PKEY_DH, pem);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, der);
-MAKE_ENCODER(dhx, dh, EVP_PKEY_DH, pem);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, der);
+MAKE_ENCODER(dhx, dh, EVP_PKEY_DHX, pem);
 #endif
 #ifndef OPENSSL_NO_DSA
 MAKE_ENCODER(dsa, dsa, EVP_PKEY_DSA, der);
